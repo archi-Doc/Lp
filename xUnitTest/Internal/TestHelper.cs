@@ -11,7 +11,7 @@ namespace xUnitTest
 {
     public static class TestHelper
     {
-        public static bool IsAlmostEqual(byte[]? array1, byte[]? array2, int length)
+        public static bool AlmostEqual(byte[]? array1, byte[]? array2, int length)
         {
             if (array1 == null || array2 == null)
             {

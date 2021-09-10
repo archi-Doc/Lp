@@ -35,26 +35,35 @@ internal class Program
     {
         Console.WriteLine("ConsoleApp1");
 
-        var b = new RsCoder(8, 8);
         var source = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, };
         byte[][]? destination = null;
-        b.Encode(source, source.Length);
 
-        b.Decode(b.EncodedBuffer!, b.EncodedBufferLength);
-        var comp = IsAlmostEqual(source, b.DecodedBuffer, source.Length);
+        RsCoder b;
+        using (b = new RsCoder(8, 8, 285))
+        {
+            b.Encode(source, source.Length);
 
-        destination = b.EncodedBuffer!;
-        destination[1] = null!;
-        destination[2] = null!;
-        destination[4] = null!;
-        destination[5] = null!;
-        destination[6] = null!;
-        destination[8] = null!;
-        destination[9] = null!;
-        destination[10] = null!;
-        // destination[11] = null!;
-        b.Decode(destination, b.EncodedBufferLength);
-        comp = IsAlmostEqual(source, b.DecodedBuffer, source.Length);
+            b.Decode(b.EncodedBuffer!, b.EncodedBufferLength);
+            var comp = IsAlmostEqual(source, b.DecodedBuffer, source.Length);
+
+            // b.InvalidateEncodedBufferForUnitTest(new Random(3), 2);
+            b.Decode(b.EncodedBuffer!, b.EncodedBufferLength);
+
+            destination = b.EncodedBuffer!;
+            destination[0] = null!;
+            destination[1] = null!;
+            destination[2] = null!;
+            destination[6] = null!;
+            destination[10] = null!;
+            destination[14] = null!;
+            destination[15] = null!;
+            b.Decode(b.EncodedBuffer!, b.EncodedBufferLength);
+
+            destination = b.EncodedBuffer!;
+            b.InvalidateEncodedBufferForUnitTest(new Random(3), 8);
+            b.Decode(destination, b.EncodedBufferLength);
+            comp = IsAlmostEqual(source, b.DecodedBuffer, source.Length);
+        }
 
         source = new byte[1024 * 1024 * 10];
         Random.Shared.NextBytes(source);
@@ -73,6 +82,7 @@ internal class Program
         b.Decode(b.EncodedBuffer!, b.EncodedBufferLength);
         sw.Stop();
 
+        b.Dispose();
         Console.WriteLine($"{10 / ((double)sw.ElapsedMilliseconds / 1000):F2} MB/sec");
     }
 }

@@ -4,7 +4,7 @@ using System.Buffers;
 
 namespace LP.Zen;
 
-public class RsCoder
+public class RsCoder : IDisposable
 {
     public RsCoder(int dataSize, int checkSize, int fieldGenPoly = 285)
     {
@@ -177,12 +177,12 @@ public class RsCoder
         for (var x = 0; x < n; x++)
         {
             if (x == u && source[u] != null)
-            {
+            {// Data
                 z = u;
                 u++;
             }
             else
-            {
+            {// Search valid check
                 while (source[u] == null && u < n)
                 {
                     u++;
@@ -322,6 +322,39 @@ public class RsCoder
         }
     }
 
+    public override string ToString() => $"RsCoder Data: {this.DataSize}, Check: {this.CheckSize}";
+
+    public void InvalidateEncodedBufferForUnitTest(Random random, int number)
+    {
+        if (this.rentEncodeBuffer == null)
+        {
+            return;
+        }
+        else if (this.rentEncodeBuffer.Length < number)
+        {
+            throw new InvalidOperationException();
+        }
+
+        while (true)
+        {
+            var invalidNumber = this.rentEncodeBuffer.Count(a => a == null);
+            if (invalidNumber >= number)
+            {
+                return;
+            }
+
+            int i;
+            do
+            {
+                i = random.Next(this.rentEncodeBuffer.Length);
+            }
+            while (this.rentEncodeBuffer[i] == null);
+
+            ArrayPool<byte>.Shared.Return(this.rentEncodeBuffer[i]);
+            this.rentEncodeBuffer[i] = null!; // Invalidate
+        }
+    }
+
     private byte[][]? rentEncodeBuffer;
 
     private byte[]? rentDecodeBuffer;
@@ -336,12 +369,19 @@ public class RsCoder
                 this.rentEncodeBuffer[n] = ArrayPool<byte>.Shared.Rent(length);
             }
         }
-        else if (this.rentEncodeBuffer[0] == null || this.rentEncodeBuffer[0]!.Length < length)
-        {// Insufficient buffer, return and rent. rentEncodeBuffer[n] is guaranteed to have valid value.
-            this.ReturnEncodeBuffer();
+        else
+        {
             for (var n = 0; n < this.TotalSize; n++)
             {
-                this.rentEncodeBuffer[n] = ArrayPool<byte>.Shared.Rent(length);
+                if (this.rentEncodeBuffer[n] == null)
+                {// Rent
+                    this.rentEncodeBuffer[n] = ArrayPool<byte>.Shared.Rent(length);
+                }
+                else if (this.rentEncodeBuffer[n].Length < length)
+                {// Insufficient buffer, return and rent.
+                    ArrayPool<byte>.Shared.Return(this.rentEncodeBuffer[n]);
+                    this.rentEncodeBuffer[n] = ArrayPool<byte>.Shared.Rent(length);
+                }
             }
         }
     }
@@ -382,4 +422,46 @@ public class RsCoder
             this.rentDecodeBuffer = null;
         }
     }
+
+#pragma warning disable SA1124 // Do not use regions
+    #region IDisposable Support
+#pragma warning restore SA1124 // Do not use regions
+
+    private bool disposed = false; // To detect redundant calls.
+
+    /// <summary>
+    /// Finalizes an instance of the <see cref="RsCoder"/> class.
+    /// </summary>
+    ~RsCoder()
+    {
+        this.Dispose(false);
+    }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        this.Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// free managed/native resources.
+    /// </summary>
+    /// <param name="disposing">true: free managed resources.</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!this.disposed)
+        {
+            if (disposing)
+            {
+                // free managed resources.
+                this.ReturnDecodeBuffer();
+                this.ReturnEncodeBuffer();
+            }
+
+            // free native resources here if there are any.
+            this.disposed = true;
+        }
+    }
+    #endregion
 }
