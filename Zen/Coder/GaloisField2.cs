@@ -2,45 +2,55 @@
 
 namespace LP.Zen;
 
-public class GaloisField
+public class GaloisField2
 {
     public const int Max = 256;
     public const int Mask = Max - 1;
-    public const int PrimePoly = 285; // 285, 301, 435
+    public const int PrimePoly = 285; // 285, 435
 
-    public static GaloisField Get(int fieldGenPoly)
+    public static GaloisField2 Get(int fieldGenPoly)
     {
-        GaloisField? field;
+        GaloisField2? field;
         if (!fieldCache.TryGetValue(fieldGenPoly, out field))
         {
-            field = new GaloisField(fieldGenPoly);
+            field = new GaloisField2(fieldGenPoly);
             fieldCache[fieldGenPoly] = field;
         }
 
         return field;
     }
 
-    private static Dictionary<int, GaloisField> fieldCache = new();
+    private static Dictionary<int, GaloisField2> fieldCache = new();
 
-    private GaloisField(int fieldGenPoly)
+    private GaloisField2(int fieldGenPoly)
     {
         this.GF = new byte[Max];
-        this.GFI = new byte[Max];
         this.GF[0] = (byte)Mask;
-        this.GFI[Mask] = 0;
+        this.GFI = new byte[Max];
+        this.GFI[0] = 0;
 
         var y = 1;
         unchecked
         {
-            for (var x = 0; x < Mask; x++)
+            for (var x = 1; x < Max; x++)
             {
-                this.GF[y] = (byte)x;
+                this.GF[y] = (byte)(x - 1);
                 this.GFI[x] = (byte)y;
                 y <<= 1;
                 if (y >= Max)
                 {
                     y = (y ^ fieldGenPoly) & Mask;
                 }
+            }
+        }
+
+        this.Inverse = new byte[Max];
+        for (var a = 0; a < Max; a++)
+        {
+            this.Inverse[0] = 0;
+            for (var b = 1; b < Max; b++)
+            {
+                this.Inverse[this.GFI[b]] = this.InternalDiv(1, this.GFI[b]);
             }
         }
 
@@ -55,6 +65,15 @@ public class GaloisField
                 this.Div[i] = this.InternalDiv(a, b);
             }
         }
+
+        for (var a = 0; a < Max; a++)
+        {
+            for (var b = 0; b < Max; b++)
+            {
+                var i = (a * Max) + b;
+                // this.Div[i] = this.Multi[(a * Max) + this.Inverse[b]];
+            }
+        }
     }
 
     public byte[] GF { get; }
@@ -65,6 +84,8 @@ public class GaloisField
 
     public byte[] Div { get; }
 
+    public byte[] Inverse { get; }
+
     internal byte InternalMulti(int a, int b)
     {
         if (a == 0 || b == 0)
@@ -72,17 +93,8 @@ public class GaloisField
             return 0;
         }
 
-        var c = this.GF[a] + this.GF[b];
-        return this.GFI[c % Mask];
-
-        /*if (c < Mask)
-        {
-            return this.GFI[c];
-        }
-        else
-        {
-            return this.GFI[c - Mask];
-        }*/
+        int c = this.GF[a] + this.GF[b];
+        return this.GFI[(c % Mask) + 1];
     }
 
     internal byte InternalDiv(int a, int b)
@@ -91,23 +103,8 @@ public class GaloisField
         {
             return 0;
         }
-        else if (b == 0)
-        {
-            return 0;
-        }
 
-        var c = this.GF[a] - this.GF[b];
-        return this.GFI[(c + Mask) % Mask];
-
-        /*var gfa = this.GF[a];
-        var gfb = this.GF[b];
-        if (gfb <= gfa)
-        {
-            return this.GFI[gfa - gfb];
-        }
-        else
-        {
-            return this.GFI[GaloisField.Mask + gfa - gfb];
-        }*/
+        int c = this.GF[a] - this.GF[b] + Mask;
+        return this.GFI[(c % Mask) + 1];
     }
 }

@@ -6,7 +6,7 @@ namespace LP.Zen;
 
 public class RsCoder : IDisposable
 {
-    public RsCoder(int dataSize, int checkSize, int fieldGenPoly = 285)
+    public RsCoder(int dataSize, int checkSize, int fieldGenPoly = GaloisField.PrimePoly)
     {
         this.DataSize = dataSize;
         if (dataSize < 1)
@@ -26,7 +26,23 @@ public class RsCoder : IDisposable
             throw new ArgumentOutOfRangeException();
         }
 
-        this.GaloisField = GaloisField.Get(fieldGenPoly);
+        this.GaloisField = GaloisField.Get((int)fieldGenPoly);
+
+        this.F = new byte[this.DataSize * this.CheckSize];
+        for (var x = 0; x < this.DataSize; x++)
+        {
+            this.F[x] = 1; // 1
+            // this.F[x] = (byte)(x + 1); // this.GaloisField.GFI[x];
+        }
+
+        for (var y = 1; y < this.CheckSize; y++)
+        {
+            for (var x = 0; x < this.DataSize; x++)
+            {
+                this.F[x + (this.DataSize * y)] = this.GaloisField.Multi[(this.F[x + (this.DataSize * (y - 1))] * GaloisField.Max) + this.GaloisField.GFI[x]]; // 1
+                // this.F[x + (this.DataSize * y)] = this.GaloisField.Multi[(this.F[x + (this.DataSize * (y - 1))] * GaloisField.Max) + x + 1];
+            }
+        }
     }
 
     public GaloisField GaloisField { get; }
@@ -63,20 +79,7 @@ public class RsCoder : IDisposable
         this.EnsureEncodeBuffer(this.EncodedBufferLength);
         var destination = this.rentEncodeBuffer!;
         var destinationLength = this.EncodedBufferLength;
-
-        var ef = new byte[n * m];
-        for (var x = 0; x < n; x++)
-        {
-            ef[x] = 1;
-        }
-
-        for (var y = 1; y < m; y++)
-        {
-            for (var x = 0; x < n; x++)
-            {
-                ef[x + (n * y)] = multi[(ef[x + (n * (y - 1))] * GaloisField.Max) + (x + 1)];
-            }
-        }
+        var ef = this.F;
 
         /*encode core (original)
         Span<byte> b = source;
@@ -141,7 +144,6 @@ public class RsCoder : IDisposable
         var n = this.DataSize;
         var m = this.CheckSize;
         var multi = this.GaloisField.Multi;
-        var div = this.GaloisField.Div;
 
         for (var x = 0; x < nm; x++)
         {
@@ -154,20 +156,7 @@ public class RsCoder : IDisposable
         this.DecodedBufferLength = length * n;
         this.EnsureDecodeBuffer(this.DecodedBufferLength);
         var destination = this.rentDecodeBuffer!;
-
-        var ef = new byte[n * m];
-        for (var x = 0; x < n; x++)
-        {
-            ef[x] = 1;
-        }
-
-        for (var y = 1; y < m; y++)
-        {
-            for (var x = 0; x < n; x++)
-            {
-                ef[x + (n * y)] = multi[(ef[x + (n * (y - 1))] * GaloisField.Max) + x + 1];
-            }
-        }
+        var ef = this.F;
 
         var el = new byte[n * 2 * n];
         var u = 0; // data
@@ -239,7 +228,7 @@ public class RsCoder : IDisposable
         }
 
         // reverse
-        for (var x = 0; x < n; x++)
+        /*for (var x = 0; x < n; x++)
         {
             var e = el[x + (x * n * 2)];
             if (e == 0)
@@ -265,6 +254,30 @@ public class RsCoder : IDisposable
                         {
                             el[u + (y * n * 2)] ^= multi[(el[u + (x * n * 2)] * GaloisField.Max) + e];
                         }
+                    }
+                }
+            }
+        }*/
+
+        this.MakeReverseMatrix(el, n, s);
+
+        // check
+        for (var y = 0; y < n; y++)
+        {
+            for (var x = 0; x < n; x++)
+            {
+                if (x == y)
+                {
+                    if (el[x + (y * n * 2)] != 1)
+                    {
+                        throw new Exception();
+                    }
+                }
+                else
+                {
+                    if (el[x + (y * n * 2)] != 0)
+                    {
+                        throw new Exception();
                     }
                 }
             }
@@ -355,9 +368,220 @@ public class RsCoder : IDisposable
         }
     }
 
+    public void TestReverseMatrix(uint sourceBits)
+    {
+        var n = this.DataSize;
+        var m = this.CheckSize;
+
+        var ef = this.F;
+        var el = new byte[n * 2 * n];
+        var u = 0; // data
+        var v = 0; // check
+        var z = 0;
+        for (var x = 0; x < n; x++)
+        {
+            if (x == u && ((sourceBits & (1 << u)) != 0))
+            {// Data
+                z = u;
+                u++;
+            }
+            else
+            {// Search valid check
+                while (((sourceBits & (1 << u)) == 0) && u < n)
+                {
+                    u++;
+                }
+
+                while ((sourceBits & (1 << (n + v))) == 0)
+                {
+                    v++;
+                    if (v >= m)
+                    {
+                        throw new InvalidDataException("The number of valid byte arrays must be greater than RsCoder.DataSize.");
+                    }
+                }
+
+                z = n + v;
+                v++;
+            }
+
+            if (z < n)
+            {// data
+                el[z + (x * n * 2)] = 1;
+            }
+            else
+            {// check
+                for (var y = 0; y < n; y++)
+                {
+                    el[y + (x * n * 2)] = ef[y + ((z - n) * n)];
+                }
+            }
+
+            el[x + (x * n * 2) + n] = 1;
+        }
+
+        this.MakeReverseMatrix(el, n, null);
+    }
+
+    public void MakeReverseMatrix(byte[] el, int n, byte[][]? s)
+    {
+        if (el.Length != (2 * n * n))
+        {
+            throw new InvalidDataException();
+        }
+
+        var multi = this.GaloisField.Multi;
+        var div = this.GaloisField.Div;
+        var pivot = false;
+        for (var x = 0; x < n; x++)
+        {
+            // Pivot
+            /*var max = el[x + (x * n * 2)];
+            var maxLine = x;
+            for (var y = x + 1; y < n; y++)
+            {
+                // if (el[x + (y * n * 2)] != 0 && (el[x + (y * n * 2)] < max || max == 0))
+                if (el[x + (y * n * 2)] > max)
+                {
+                    max = el[x + (y * n * 2)];
+                    maxLine = y;
+                }
+            }*/
+
+            if (el[x + (x * n * 2)] != 0)
+            {
+                goto Normalize;
+            }
+
+            pivot = true;
+            // throw new InvalidDataException("Sorry for this.");
+
+            // Pivoting (Row)
+            /*var max = el[x + (x * n * 2)];
+            var maxLine = x;
+            for (var y = x + 1; y < n; y++)
+            {
+                if (el[x + (y * n * 2)] > max)
+                {
+                    max = el[x + (y * n * 2)];
+                    maxLine = y;
+                }
+            }
+
+            if (max > 0)
+            {
+                for (var u = 0; u < (n * 2); u++)
+                {
+                    var temp = el[u + (x * n * 2)];
+                    el[u + (x * n * 2)] = el[u + (maxLine * n * 2)];
+                    el[u + (maxLine * n * 2)] = temp;
+                }
+
+                goto Normalize;
+            }*/
+
+            // Pivoting (Row)
+            for (var y = x + 1; y < n; y++)
+            {
+                if (el[x + (y * n * 2)] != 0)
+                {
+                    for (var u = 0; u < (n * 2); u++)
+                    {
+                        var temp = el[u + (y * n * 2)];
+                        el[u + (y * n * 2)] = el[u + (x * n * 2)];
+                        el[u + (x * n * 2)] = temp;
+                    }
+
+                    goto Normalize;
+                }
+            }
+
+            // Pivoting (Column)
+            for (var y = x + 1; y < n; y++)
+            {
+                if (el[y + (x * n * 2)] != 0)
+                {
+                    for (var u = 0; u < n; u++)
+                    {
+                        var temp = el[y + (u * n * 2)];
+                        el[y + (u * n * 2)] = el[x + (u * n * 2)];
+                        el[x + (u * n * 2)] = temp;
+                    }
+
+                    if (s != null)
+                    {
+                        var temp = s[y];
+                        s[y] = s[x];
+                        s[x] = temp;
+                    }
+
+                    goto Normalize;
+                }
+            }
+
+            // el[x + (x * n * 2)] is 0...
+            throw new InvalidDataException("Sorry for this.");
+
+Normalize:
+            var e = el[x + (x * n * 2)];
+            if (e != 1)
+            {
+                for (var y = 0; y < (n * 2); y++)
+                {
+                    el[y + (x * n * 2)] = div[(el[y + (x * n * 2)] * GaloisField.Max) + e];
+                }
+            }
+
+            for (var y = 0; y < n; y++)
+            {
+                if (x != y)
+                {
+                    e = el[x + (y * n * 2)];
+                    if (e != 0)
+                    {
+                        e = div[(e * GaloisField.Max) + 1];
+                        for (var u = 0; u < (n * 2); u++)
+                        {
+                            el[u + (y * n * 2)] ^= multi[(el[u + (x * n * 2)] * GaloisField.Max) + e];
+                        }
+                    }
+                }
+            }
+        }
+
+        if (pivot)
+        {
+            Console.WriteLine("Pivoting");
+        }
+    }
+
+    private byte[] F { get; }
+
     private byte[][]? rentEncodeBuffer;
 
     private byte[]? rentDecodeBuffer;
+
+    public string MatrixToString(byte[] m, int row, int column)
+    {
+        if (m.Length != (row * column))
+        {
+            throw new InvalidDataException();
+        }
+
+        var sb = new System.Text.StringBuilder();
+        for (var y = 0; y < row; y++)
+        {
+            for (var x = 0; x < column; x++)
+            {
+                sb.Append(string.Format("{0, 3}", m[x + (y * column)]));
+                sb.Append(", ");
+            }
+
+            sb.AppendLine();
+        }
+
+        return sb.ToString();
+    }
 
     private void EnsureEncodeBuffer(int length)
     {

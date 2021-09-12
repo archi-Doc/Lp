@@ -9,7 +9,6 @@ public class RsCoderTest
     public void Test1()
     {// (n, m) = (data, check)
         (int n, int m)[] nm = new[] { (4, 2), (4, 4), (4, 8), (8, 4), (8, 8), (8, 10), (16, 8), (16, 16), (5, 3), (5, 5), (13, 3), (13, 7), };
-        // (int n, int m)[] nm = new[] { (4, 2), (4, 4), (8, 8), (16, 16), };
         var sizes = new[] { 0, 4, 16, 256, 1000, 10_000 };
 
         var random = new Random(42);
@@ -51,15 +50,6 @@ public class RsCoderTest
 
         for (var i = 1; i <= coder.CheckSize; i++)
         {
-            if (coder.DataSize == 4 && coder.CheckSize == 2 && i == 1)
-            {
-                var a = 44;
-            }
-            if (coder.DataSize == 4 && coder.CheckSize == 8 && i == 7)
-            {
-                var a = 44;
-            }
-
             coder.Encode(source, length);
             coder.InvalidateEncodedBufferForUnitTest(random, i);
             coder.Decode(coder.EncodedBuffer!, coder.EncodedBufferLength);
