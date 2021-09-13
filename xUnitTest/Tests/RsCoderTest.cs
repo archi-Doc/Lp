@@ -1,3 +1,4 @@
+using System.Numerics;
 using LP.Zen;
 using Xunit;
 
@@ -6,36 +7,113 @@ namespace xUnitTest;
 public class RsCoderTest
 {
     [Fact]
-    public void Test1()
-    {// (n, m) = (data, check)
-        (int n, int m)[] nm = new[] { (4, 2), (4, 4), (4, 8), (8, 4), (8, 8), (8, 10), (16, 8), (16, 16), (5, 3), (5, 5), (13, 3), (13, 7), };
-        var sizes = new[] { 0, 1, 16, 256, 1000, 10_000 };
+    public void ComprehensiveTest()
+    {
+        // (int data, int check)[] nm = new[] { (4, 2), (4, 4), (4, 8), (8, 4), (8, 8), (8, 10), (16, 8), (16, 16), (5, 3), (5, 5), (13, 3), (13, 7), }; // Not supported
+        (int data, int check)[] nm = new[] { (4, 2), (4, 4), (8, 2), (8, 4), (16, 2), (16, 4), };
 
+        foreach (var x in nm)
+        {
+            ComprehensiveTestNM(x.data, x.check);
+            ComprehensiveTestNM_Data(x.data, x.check);
+        }
+    }
+
+    private void ComprehensiveTestNM_Data(int n, int m)
+    {
+        var source = new byte[n];
+        for (var i = 0; i < n; i++)
+        {
+            source[i] = (byte)i;
+        }
+
+        using (var coder = new RsCoder(n, m))
+        {
+            var total = 1 << coder.TotalSize;
+            for (uint i = 0; i < total; i++)
+            {
+                if (BitOperations.PopCount(i) < n)
+                {// N blocks of valid data is required.
+                    continue;
+                }
+
+                coder.Encode(source, source.Length);
+                coder.InvalidateEncodedBufferForUnitTest(i);
+                coder.Decode(coder.EncodedBuffer!, coder.EncodedBufferLength);
+                TestHelper.ByteArrayEqual(source, coder.DecodedBuffer, source.Length).IsTrue();
+            }
+        }
+    }
+
+    private void ComprehensiveTestNM(int n, int m)
+    {
+        using (var coder = new RsCoder(n, m))
+        {
+            var total = 1 << coder.TotalSize;
+            for (uint i = 0; i < total; i++)
+            {
+                if (BitOperations.PopCount(i) < n)
+                {// N blocks of valid data is required.
+                    continue;
+                }
+
+                coder.TestReverseMatrix(i);
+            }
+        }
+    }
+
+    [Fact]
+    public void RandomTest()
+    {
+        (int data, int check)[] nm = new[] { (4, 2), (4, 4), (8, 2), (8, 4), (16, 2), (16, 4), };
+        var sizes = new[] { 0, 4, 16, 256, 1000, 10_000 };
+
+        var random = new Random(42);
         var sources = new byte[sizes.Length][];
         for (var n = 0; n < sizes.Length; n++)
         {
             sources[n] = new byte[sizes[n]];
-            Random.Shared.NextBytes(sources[n]);
+            random.NextBytes(sources[n]);
         }
 
         foreach (var x in nm)
         {
-            TestNM(x.n, x.m, sources);
+            RandomTestNM(x.data, x.check, sources, random);
         }
     }
 
-    private void TestNM(int n, int m, byte[][] sources)
+    private void RandomTestNM(int n, int m, byte[][] sources, Random random)
     {
         // using (var coder = new RsCoder)
 
-        var coder = new RsCoder(n, m);
-        foreach (var x in sources)
+        using (var coder = new RsCoder(n, m))
         {
-            TestSource(coder, x);
+            foreach (var x in sources)
+            {
+                RandomTestSource(coder, x, random);
+            }
         }
     }
 
-    private void TestSource(RsCoder coder, byte[] source)
+    private void RandomTestSource(RsCoder coder, byte[] source, Random random)
     {
+        var length = source.Length;
+        length = (length / coder.DataSize) * coder.DataSize; // length must be a multiple of coder.DataSize
+
+        // Simple encode and decode.
+        coder.Encode(source, length);
+        coder.Decode(coder.EncodedBuffer!, coder.EncodedBufferLength);
+        TestHelper.ByteArrayEqual(source, coder.DecodedBuffer, length).IsTrue();
+
+        for (var i = 1; i <= coder.CheckSize; i++)
+        {
+            for (var j = 0; j < 10; j++)
+            {
+                coder.Encode(source, length);
+                coder.InvalidateEncodedBufferForUnitTest(random, i);
+                coder.Decode(coder.EncodedBuffer!, coder.EncodedBufferLength);
+                TestHelper.ByteArrayEqual(source, coder.DecodedBuffer, length).IsTrue();
+            }
+        }
     }
 }

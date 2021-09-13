@@ -6,6 +6,7 @@ public class GaloisField
 {
     public const int Max = 256;
     public const int Mask = Max - 1;
+    public const int FieldGenPoly = 301; // 301 > 285 > 435
 
     public static GaloisField Get(int fieldGenPoly)
     {
@@ -52,9 +53,6 @@ public class GaloisField
                 var i = (a * Max) + b;
                 this.Multi[i] = this.InternalMulti(a, b);
                 this.Div[i] = this.InternalDiv(a, b);
-
-                // this.Multi[a, b] = this.InternalMulti(a, b);
-                // this.Div[a, b] = this.InternalDiv(a, b);
             }
         }
     }
@@ -75,14 +73,16 @@ public class GaloisField
         }
 
         var c = this.GF[a] + this.GF[b];
-        if (c < Mask)
+        return this.GFI[c % Mask];
+
+        /*if (c < Mask)
         {
             return this.GFI[c];
         }
         else
         {
             return this.GFI[c - Mask];
-        }
+        }*/
     }
 
     internal byte InternalDiv(int a, int b)
@@ -93,10 +93,13 @@ public class GaloisField
         }
         else if (b == 0)
         {
-            return Mask;
+            return 0;
         }
 
-        var gfa = this.GF[a];
+        var c = this.GF[a] - this.GF[b];
+        return this.GFI[(c + Mask) % Mask];
+
+        /*var gfa = this.GF[a];
         var gfb = this.GF[b];
         if (gfb <= gfa)
         {
@@ -105,6 +108,6 @@ public class GaloisField
         else
         {
             return this.GFI[GaloisField.Mask + gfa - gfb];
-        }
+        }*/
     }
 }
