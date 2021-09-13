@@ -12,7 +12,9 @@ internal class Program
     public static async Task Main(string[] args)
     {
         Console.WriteLine("Manual test");
+        Console.WriteLine();
 
-        ComprehensiveRsCoderTest.Test();
+        RsCoderTest.SampleCode();
+        RsCoderTest.ComprehensiveTest();
     }
 }

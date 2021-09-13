@@ -79,25 +79,5 @@ internal class Program
             b.Decode(destination, b.EncodedBufferLength);
             comp = IsAlmostEqual(source, b.DecodedBuffer, source.Length);
         }
-
-        source = new byte[1024 * 1024 * 10];
-        Random.Shared.NextBytes(source);
-
-        b = new RsCoder(16, 16);
-        b = new RsCoder(16, 16);
-        var sw = new Stopwatch();
-
-        sw.Restart();
-        b.Encode(source, source.Length);
-        sw.Stop();
-
-        Console.WriteLine($"{10 / ((double)sw.ElapsedMilliseconds / 1000):F2} MB/sec");
-
-        sw.Restart();
-        b.Decode(b.EncodedBuffer!, b.EncodedBufferLength);
-        sw.Stop();
-
-        b.Dispose();
-        Console.WriteLine($"{10 / ((double)sw.ElapsedMilliseconds / 1000):F2} MB/sec");
     }
 }

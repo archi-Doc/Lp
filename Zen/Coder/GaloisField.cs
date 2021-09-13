@@ -6,7 +6,7 @@ public class GaloisField
 {
     public const int Max = 256;
     public const int Mask = Max - 1;
-    public const int PrimePoly = 285; // 301 > 285 > 435
+    public const int FieldGenPoly = 301; // 301 > 285 > 435
 
     public static GaloisField Get(int fieldGenPoly)
     {

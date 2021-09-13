@@ -6,7 +6,13 @@ namespace LP.Zen;
 
 public class RsCoder : IDisposable
 {
-    public RsCoder(int dataSize, int checkSize, int fieldGenPoly = GaloisField.PrimePoly)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RsCoder"/> class (Reed-Solomon Coder.).
+    /// </summary>
+    /// <param name="dataSize">The Number of blocks of data to be split.</param>
+    /// <param name="checkSize">The Number of blocks of checksum.</param>
+    /// <param name="fieldGenPoly">Field generator polymoninal (default 301).</param>
+    public RsCoder(int dataSize, int checkSize, int fieldGenPoly = GaloisField.FieldGenPoly)
     {
         this.DataSize = dataSize;
         if (dataSize < 1)
@@ -21,76 +27,15 @@ public class RsCoder : IDisposable
         }
 
         this.TotalSize = dataSize + checkSize;
-        if (this.TotalSize > GaloisField.Max)
+        if (this.TotalSize >= GaloisField.Max)
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        this.GaloisField = GaloisField.Get((int)fieldGenPoly);
+        this.GaloisField = GaloisField.Get(fieldGenPoly);
 
         this.EnsureBuffers(false);
-        var f = this.rentEF!;
-        for (var x = 0; x < this.DataSize; x++)
-        {
-            f[x] = 1; // best
-            // this.F[x] = 1;
-        }
-
-        for (var y = 1; y < this.CheckSize; y++)
-        {
-            for (var x = 0; x < this.DataSize; x++)
-            {
-                f[x + (this.DataSize * y)] = this.GaloisField.Multi[(f[x + (this.DataSize * (y - 1))] * GaloisField.Max) + this.GaloisField.GFI[x]]; // best
-                // this.F[x + (this.DataSize * y)] = this.GaloisField.Multi[(this.F[x + (this.DataSize * (y - 1))] * GaloisField.Max) + x + 1]; // Obsolete
-            }
-        }
-
-        for (var y = 0; y < this.CheckSize; y++)
-        {
-            for (var x = 0; x < this.DataSize; x++)
-            {
-                // f[x + (this.DataSize * y)] = this.GaloisField.GFI[x * y]; // soso
-            }
-        }
-
-        /*var temp = new byte[this.DataSize];
-        for (var x = 0; x < this.DataSize; x++)
-        {
-            temp[x] = 1;
-        }
-
-        for (var y = 0; y < this.CheckSize; y++)
-        {
-            for (var x = 0; x < this.DataSize; x++)
-            {
-                this.F[x + (this.DataSize * y)] = this.GaloisField.GFI[temp[x]];
-                temp[x] = this.GaloisField.Multi[((x + 1) * GaloisField.Max) + temp[x]];
-            }
-        }*/
-
-        // Random...
-        /*var array = GetUniqueRandomNumbers(new Random(191), 0, 256, 256).ToArray();
-        for (var y = 0; y < this.F.Length; y++)
-        {
-            this.F[y] = this.GaloisField.GFI[(byte)array[y]];
-        }*/
-    }
-
-    public static System.Collections.Generic.IEnumerable<int> GetUniqueRandomNumbers(Random r, int start, int end, int count)
-    {
-        var work = new int[end - start + 1];
-        for (int n = start, i = 0; n <= end; n++, i++)
-        {
-            work[i] = n;
-        }
-
-        for (int resultPos = 0; resultPos < count; resultPos++)
-        {
-            int nextResultPos = r.Next(resultPos, work.Length);
-            (work[resultPos], work[nextResultPos]) = (work[nextResultPos], work[resultPos]);
-        }
-
-        return work.Take(count);
+        this.GenerateEF();
     }
 
     public GaloisField GaloisField { get; }
@@ -127,7 +72,7 @@ public class RsCoder : IDisposable
         this.EnsureEncodeBuffer(this.EncodedBufferLength);
         var destination = this.rentEncodeBuffer!;
         var destinationLength = this.EncodedBufferLength;
-        var ef = this.rentEF;
+        var ef = this.rentEF!;
 
         /*encode core (original)
         Span<byte> b = source;
@@ -153,10 +98,74 @@ public class RsCoder : IDisposable
         }*/
 
         // encode core (n = 4, 8, other)
-        /*if (n == 16)
+        if (n == 4)
         {
+            fixed (byte* ps = source, pef = ef, pm = multi)
+            fixed (byte* pd0 = destination[0], pd1 = destination[1], pd2 = destination[2], pd3 = destination[3])
+            {
+                var ps2 = ps;
+                for (var x = 0; x < destinationLength; x++)
+                {
+                    pd0[x] = ps2[0];
+                    pd1[x] = ps2[1];
+                    pd2[x] = ps2[2];
+                    pd3[x] = ps2[3];
+
+                    for (var y = 0; y < m; y++)
+                    {
+                        var d = 0;
+                        var yn = y * n;
+                        d ^= pm[(ps2[0] * GaloisField.Max) + pef[yn + 0]];
+                        d ^= pm[(ps2[1] * GaloisField.Max) + pef[yn + 1]];
+                        d ^= pm[(ps2[2] * GaloisField.Max) + pef[yn + 2]];
+                        d ^= pm[(ps2[3] * GaloisField.Max) + pef[yn + 3]];
+
+                        destination[n + y][x] = (byte)d;
+                    }
+
+                    ps2 += n;
+                }
+            }
         }
-        else*/
+        else if (n == 8)
+        {
+            fixed (byte* ps = source, pef = ef, pm = multi)
+            fixed (byte* pd0 = destination[0], pd1 = destination[1], pd2 = destination[2], pd3 = destination[3],
+                pd4 = destination[4], pd5 = destination[5], pd6 = destination[6], pd7 = destination[7])
+            {// 0..n: $"pd{i} = destination[{i}], "
+                var ps2 = ps;
+                for (var x = 0; x < destinationLength; x++)
+                {
+                    pd0[x] = ps2[0];
+                    pd1[x] = ps2[1];
+                    pd2[x] = ps2[2];
+                    pd3[x] = ps2[3];
+                    pd4[x] = ps2[4];
+                    pd5[x] = ps2[5];
+                    pd6[x] = ps2[6];
+                    pd7[x] = ps2[7];
+
+                    for (var y = 0; y < m; y++)
+                    {
+                        var d = 0;
+                        var yn = y * n;
+                        d ^= pm[(ps2[0] * GaloisField.Max) + pef[yn + 0]];
+                        d ^= pm[(ps2[1] * GaloisField.Max) + pef[yn + 1]];
+                        d ^= pm[(ps2[2] * GaloisField.Max) + pef[yn + 2]];
+                        d ^= pm[(ps2[3] * GaloisField.Max) + pef[yn + 3]];
+                        d ^= pm[(ps2[4] * GaloisField.Max) + pef[yn + 4]];
+                        d ^= pm[(ps2[5] * GaloisField.Max) + pef[yn + 5]];
+                        d ^= pm[(ps2[6] * GaloisField.Max) + pef[yn + 6]];
+                        d ^= pm[(ps2[7] * GaloisField.Max) + pef[yn + 7]];
+
+                        destination[n + y][x] = (byte)d;
+                    }
+
+                    ps2 += n;
+                }
+            }
+        }
+        else
         {
             fixed (byte* ps = source, pef = ef, pm = multi)
             {// 0..n: $"pd{i} = destination[{i}], "
@@ -197,7 +206,7 @@ public class RsCoder : IDisposable
         {
             if (source[x] != null && source[x]!.Length < length)
             {
-                throw new InvalidDataException("The length of source byte arrays must be greater than 'length'.");
+                throw new InvalidDataException("Length of source byte arrays must be greater than 'length'.");
             }
         }
 
@@ -209,11 +218,12 @@ public class RsCoder : IDisposable
         this.EnsureBuffers(true);
         var ef = this.rentEF!;
         var el = this.rentEL!;
+        el.AsSpan().Fill(0);
 
         var u = 0; // data
         var v = 0; // check
         var z = 0;
-        var s = new byte[n][];
+        var s = this.rentS!;
         for (var x = 0; x < n; x++)
         {
             if (x == u && source[u] != null)
@@ -233,7 +243,7 @@ public class RsCoder : IDisposable
                     v++;
                     if (v >= m)
                     {
-                        throw new InvalidDataException("The number of valid byte arrays must be greater than RsCoder.DataSize.");
+                        throw new InvalidDataException("Number of valid byte arrays must be greater than or equal to RsCoder.DataSize.");
                     }
                 }
 
@@ -248,10 +258,6 @@ public class RsCoder : IDisposable
                     if (y == z)
                     {
                         el[y + (x * n * 2)] = 1;
-                    }
-                    else
-                    {
-                        el[y + (x * n * 2)] = 0;
                     }
                 }
             }
@@ -269,73 +275,15 @@ public class RsCoder : IDisposable
                 {
                     el[y + (x * n * 2) + n] = 1;
                 }
-                else
-                {
-                    el[y + (x * n * 2) + n] = 0;
-                }
             }
 
             s[x] = source[z]!;
         }
 
-        // reverse
-        /*for (var x = 0; x < n; x++)
-        {
-            var e = el[x + (x * n * 2)];
-            if (e == 0)
-            {
-                throw new InvalidDataException();
-            }
-            else if (e != 1)
-            {
-                for (var y = x; y < (n * 2); y++)
-                {
-                    el[y + (x * n * 2)] = div[(el[y + (x * n * 2)] * GaloisField.Max) + e];
-                }
-            }
-
-            for (var y = 0; y < n; y++)
-            {
-                if (x != y)
-                {
-                    e = el[x + (y * n * 2)];
-                    if (e != 0)
-                    {
-                        for (u = x; u < (n * 2); u++)
-                        {
-                            el[u + (y * n * 2)] ^= multi[(el[u + (x * n * 2)] * GaloisField.Max) + e];
-                        }
-                    }
-                }
-            }
-        }*/
-
-        this.MakeReverseMatrix(el, n, s);
-
-        // check
-        for (var y = 0; y < n; y++)
-        {
-            for (var x = 0; x < n; x++)
-            {
-                if (x == y)
-                {
-                    if (el[x + (y * n * 2)] != 1)
-                    {
-                        throw new Exception();
-                    }
-                }
-                else
-                {
-                    if (el[x + (y * n * 2)] != 0)
-                    {
-                        throw new Exception();
-                    }
-                }
-            }
-        }
+        this.GenerateEL(s);
 
         // copy reverse
-        var er = new byte[n * n]; // byte[n, n] is slower.
+        var er = this.rentER!;
         for (var y = 0; y < n; y++)
         {
             for (var x = 0; x < n; x++)
@@ -360,23 +308,70 @@ public class RsCoder : IDisposable
             }
         }*/
 
-        // decode core (n = 4, 8, 16, other)
-        /*if (n == 16)
-        {
-        }
-        else*/
+        // decode core (n = 4, 8, other)
+        if (n == 4)
         {
             fixed (byte* um = multi, uer = er, ud = destination)
+            fixed (byte* ps0 = s[0], ps1 = s[1], ps2 = s[2], ps3 = s[3])
             {
                 var ud2 = ud;
                 for (var x = 0; x < length; x++)
                 {
                     for (var y = 0; y < n; y++)
                     {
+                        var yn = y * n;
+
+                        u = um[(uer[0 + yn] * GaloisField.Max) + ps0[x]];
+                        u ^= um[(uer[1 + yn] * GaloisField.Max) + ps1[x]];
+                        u ^= um[(uer[2 + yn] * GaloisField.Max) + ps2[x]];
+                        u ^= um[(uer[3 + yn] * GaloisField.Max) + ps3[x]];
+
+                        *ud2++ = (byte)u; // fixed
+                    }
+                }
+            }
+        }
+        else if (n == 8)
+        {
+            fixed (byte* um = multi, uer = er, ud = destination)
+            fixed (byte* ps0 = s[0], ps1 = s[1], ps2 = s[2], ps3 = s[3],
+ps4 = s[4], ps5 = s[5], ps6 = s[6], ps7 = s[7])
+            {
+                var ud2 = ud;
+                for (var x = 0; x < length; x++)
+                {
+                    for (var y = 0; y < n; y++)
+                    {
+                        var yn = y * n;
+
+                        u = um[(uer[0 + yn] * GaloisField.Max) + ps0[x]];
+                        u ^= um[(uer[1 + yn] * GaloisField.Max) + ps1[x]];
+                        u ^= um[(uer[2 + yn] * GaloisField.Max) + ps2[x]];
+                        u ^= um[(uer[3 + yn] * GaloisField.Max) + ps3[x]];
+                        u ^= um[(uer[4 + yn] * GaloisField.Max) + ps4[x]];
+                        u ^= um[(uer[5 + yn] * GaloisField.Max) + ps5[x]];
+                        u ^= um[(uer[6 + yn] * GaloisField.Max) + ps6[x]];
+                        u ^= um[(uer[7 + yn] * GaloisField.Max) + ps7[x]];
+
+                        *ud2++ = (byte)u; // fixed
+                    }
+                }
+            }
+        }
+        else
+        {
+            fixed (byte* um = multi, uer = er, ud = destination)
+            {// $"ps{i} = s[{i}], "
+                var ud2 = ud;
+                for (var x = 0; x < length; x++)
+                {
+                    for (var y = 0; y < n; y++)
+                    {
+                        var yn = y * n;
                         u = 0;
                         for (z = 0; z < n; z++)
-                        {
-                            u ^= um[(uer[z + (y * n)] * GaloisField.Max) + s[z][x]];
+                        {// $"u ^= um[(uer[{i} + yn] * GaloisField.Max) + ps{i}[x]];"
+                            u ^= um[(uer[z + yn] * GaloisField.Max) + s[z][x]];
                         }
 
                         *ud2++ = (byte)u; // fixed
@@ -491,35 +486,92 @@ public class RsCoder : IDisposable
             el[x + (x * n * 2) + n] = 1;
         }
 
-        this.MakeReverseMatrix(el, n, null);
+        this.GenerateEL(null);
+
+        // check
+        for (var y = 0; y < n; y++)
+        {
+            for (var x = 0; x < n; x++)
+            {
+                if (x == y)
+                {
+                    if (el[x + (y * n * 2)] != 1)
+                    {
+                        throw new Exception();
+                    }
+                }
+                else
+                {
+                    if (el[x + (y * n * 2)] != 0)
+                    {
+                        throw new Exception();
+                    }
+                }
+            }
+        }
     }
 
-    private void MakeReverseMatrix(byte[] el, int n, byte[][]? s)
+    private void GenerateEF()
     {
+        var ef = this.rentEF!;
+        for (var y = 0; y < this.CheckSize; y++)
+        {
+            for (var x = 0; x < this.DataSize; x++)
+            {
+                ef[x + (this.DataSize * y)] = this.GaloisField.GFI[x * y]; // 1st
+            }
+        }
+
+        /*for (var x = 0; x < this.DataSize; x++)
+        {
+            ef[x] = 1; // 2nd
+            // this.F[x] = 1;
+        }
+
+        for (var y = 1; y < this.CheckSize; y++)
+        {
+            for (var x = 0; x < this.DataSize; x++)
+            {
+                ef[x + (this.DataSize * y)] = this.GaloisField.Multi[(ef[x + (this.DataSize * (y - 1))] * GaloisField.Max) + this.GaloisField.GFI[x]]; // 2nd
+                // this.F[x + (this.DataSize * y)] = this.GaloisField.Multi[(this.F[x + (this.DataSize * (y - 1))] * GaloisField.Max) + x + 1]; // Obsolete
+            }
+        }*/
+
+        /*var temp = new byte[this.DataSize];
+        for (var x = 0; x < this.DataSize; x++)
+        {
+            temp[x] = 1;
+        }
+
+        for (var y = 0; y < this.CheckSize; y++)
+        {
+            for (var x = 0; x < this.DataSize; x++)
+            {
+                this.F[x + (this.DataSize * y)] = this.GaloisField.GFI[temp[x]];
+                temp[x] = this.GaloisField.Multi[((x + 1) * GaloisField.Max) + temp[x]];
+            }
+        }*/
+
+        // Random...
+        /*for (var y = 0; y < ef.Length; y++)
+        {
+            ef[y] = this.GaloisField.GFI[Random.Shared.Next() & GaloisField.Mask];
+        }*/
+    }
+
+    private void GenerateEL(byte[][]? s)
+    {
+        var n = this.DataSize;
         var multi = this.GaloisField.Multi;
         var div = this.GaloisField.Div;
-        var pivot = false;
+        var el = this.rentEL!;
+
         for (var x = 0; x < n; x++)
         {
-            // Pivot
-            /*var max = el[x + (x * n * 2)];
-            var maxLine = x;
-            for (var y = x + 1; y < n; y++)
-            {
-                // if (el[x + (y * n * 2)] != 0 && (el[x + (y * n * 2)] < max || max == 0))
-                if (el[x + (y * n * 2)] > max)
-                {
-                    max = el[x + (y * n * 2)];
-                    maxLine = y;
-                }
-            }*/
-
             if (el[x + (x * n * 2)] != 0)
             {
                 goto Normalize;
             }
-
-            pivot = true;
 
             // Pivoting (Row)
             for (var y = x + 1; y < n; y++)
@@ -589,22 +641,16 @@ Normalize:
                 }
             }
         }
-
-        if (pivot)
-        {
-            Console.WriteLine("Pivoting");
-        }
     }
 
     private byte[]? rentEF;
-
     private byte[]? rentEL;
-
+    private byte[][]? rentS;
+    private byte[]? rentER;
     private byte[][]? rentEncodeBuffer;
-
     private byte[]? rentDecodeBuffer;
 
-    public string MatrixToString(byte[] m)
+    private string MatrixToString(byte[] m)
     {
         int row, column;
         var length = m.Length;
@@ -657,6 +703,16 @@ Normalize:
             {
                 this.rentEL = ArrayPool<byte>.Shared.Rent(this.DataSize * this.DataSize * 2);
             }
+
+            if (this.rentER == null)
+            {
+                this.rentER = ArrayPool<byte>.Shared.Rent(this.DataSize * this.DataSize);
+            }
+
+            if (this.rentS == null)
+            {
+                this.rentS = ArrayPool<byte[]>.Shared.Rent(this.DataSize);
+            }
         }
     }
 
@@ -672,6 +728,18 @@ Normalize:
         {
             ArrayPool<byte>.Shared.Return(this.rentEL);
             this.rentEL = null;
+        }
+
+        if (this.rentER != null)
+        {
+            ArrayPool<byte>.Shared.Return(this.rentER);
+            this.rentER = null;
+        }
+
+        if (this.rentS != null)
+        {
+            ArrayPool<byte[]>.Shared.Return(this.rentS);
+            this.rentS = null;
         }
     }
 
@@ -714,6 +782,8 @@ Normalize:
                     this.rentEncodeBuffer[n] = null!;
                 }
             }
+
+            this.rentEncodeBuffer = null!;
         }
     }
 
