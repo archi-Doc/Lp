@@ -28,21 +28,69 @@ public class RsCoder : IDisposable
 
         this.GaloisField = GaloisField.Get((int)fieldGenPoly);
 
-        this.F = new byte[this.DataSize * this.CheckSize];
+        this.EnsureBuffers(false);
+        var f = this.rentEF!;
         for (var x = 0; x < this.DataSize; x++)
         {
-            this.F[x] = 1; // 1
-            // this.F[x] = (byte)(x + 1); // this.GaloisField.GFI[x];
+            f[x] = 1; // best
+            // this.F[x] = 1;
         }
 
         for (var y = 1; y < this.CheckSize; y++)
         {
             for (var x = 0; x < this.DataSize; x++)
             {
-                this.F[x + (this.DataSize * y)] = this.GaloisField.Multi[(this.F[x + (this.DataSize * (y - 1))] * GaloisField.Max) + this.GaloisField.GFI[x]]; // 1
-                // this.F[x + (this.DataSize * y)] = this.GaloisField.Multi[(this.F[x + (this.DataSize * (y - 1))] * GaloisField.Max) + x + 1];
+                f[x + (this.DataSize * y)] = this.GaloisField.Multi[(f[x + (this.DataSize * (y - 1))] * GaloisField.Max) + this.GaloisField.GFI[x]]; // best
+                // this.F[x + (this.DataSize * y)] = this.GaloisField.Multi[(this.F[x + (this.DataSize * (y - 1))] * GaloisField.Max) + x + 1]; // Obsolete
             }
         }
+
+        for (var y = 0; y < this.CheckSize; y++)
+        {
+            for (var x = 0; x < this.DataSize; x++)
+            {
+                // f[x + (this.DataSize * y)] = this.GaloisField.GFI[x * y]; // soso
+            }
+        }
+
+        /*var temp = new byte[this.DataSize];
+        for (var x = 0; x < this.DataSize; x++)
+        {
+            temp[x] = 1;
+        }
+
+        for (var y = 0; y < this.CheckSize; y++)
+        {
+            for (var x = 0; x < this.DataSize; x++)
+            {
+                this.F[x + (this.DataSize * y)] = this.GaloisField.GFI[temp[x]];
+                temp[x] = this.GaloisField.Multi[((x + 1) * GaloisField.Max) + temp[x]];
+            }
+        }*/
+
+        // Random...
+        /*var array = GetUniqueRandomNumbers(new Random(191), 0, 256, 256).ToArray();
+        for (var y = 0; y < this.F.Length; y++)
+        {
+            this.F[y] = this.GaloisField.GFI[(byte)array[y]];
+        }*/
+    }
+
+    public static System.Collections.Generic.IEnumerable<int> GetUniqueRandomNumbers(Random r, int start, int end, int count)
+    {
+        var work = new int[end - start + 1];
+        for (int n = start, i = 0; n <= end; n++, i++)
+        {
+            work[i] = n;
+        }
+
+        for (int resultPos = 0; resultPos < count; resultPos++)
+        {
+            int nextResultPos = r.Next(resultPos, work.Length);
+            (work[resultPos], work[nextResultPos]) = (work[nextResultPos], work[resultPos]);
+        }
+
+        return work.Take(count);
     }
 
     public GaloisField GaloisField { get; }
@@ -79,7 +127,7 @@ public class RsCoder : IDisposable
         this.EnsureEncodeBuffer(this.EncodedBufferLength);
         var destination = this.rentEncodeBuffer!;
         var destinationLength = this.EncodedBufferLength;
-        var ef = this.F;
+        var ef = this.rentEF;
 
         /*encode core (original)
         Span<byte> b = source;
@@ -104,7 +152,7 @@ public class RsCoder : IDisposable
             b = b.Slice(n);
         }*/
 
-        // encode core (n = 4, 8, 16, other)
+        // encode core (n = 4, 8, other)
         /*if (n == 16)
         {
         }
@@ -156,9 +204,12 @@ public class RsCoder : IDisposable
         this.DecodedBufferLength = length * n;
         this.EnsureDecodeBuffer(this.DecodedBufferLength);
         var destination = this.rentDecodeBuffer!;
-        var ef = this.F;
 
-        var el = new byte[n * 2 * n];
+        // Rent buffers
+        this.EnsureBuffers(true);
+        var ef = this.rentEF!;
+        var el = this.rentEL!;
+
         var u = 0; // data
         var v = 0; // check
         var z = 0;
@@ -368,13 +419,33 @@ public class RsCoder : IDisposable
         }
     }
 
+    public void InvalidateEncodedBufferForUnitTest(uint bufferbits)
+    {
+        if (this.rentEncodeBuffer == null)
+        {
+            return;
+        }
+
+        for (var i = 0; i < this.rentEncodeBuffer.Length; i++)
+        {
+            if ((bufferbits & (1 << i)) == 0)
+            {
+                ArrayPool<byte>.Shared.Return(this.rentEncodeBuffer[i]);
+                this.rentEncodeBuffer[i] = null!; // Invalidate
+            }
+        }
+    }
+
     public void TestReverseMatrix(uint sourceBits)
     {
         var n = this.DataSize;
         var m = this.CheckSize;
 
-        var ef = this.F;
-        var el = new byte[n * 2 * n];
+        this.EnsureBuffers(true);
+        var ef = this.rentEF!;
+        var el = this.rentEL!;
+        el.AsSpan().Fill(0);
+
         var u = 0; // data
         var v = 0; // check
         var z = 0;
@@ -423,13 +494,8 @@ public class RsCoder : IDisposable
         this.MakeReverseMatrix(el, n, null);
     }
 
-    public void MakeReverseMatrix(byte[] el, int n, byte[][]? s)
+    private void MakeReverseMatrix(byte[] el, int n, byte[][]? s)
     {
-        if (el.Length != (2 * n * n))
-        {
-            throw new InvalidDataException();
-        }
-
         var multi = this.GaloisField.Multi;
         var div = this.GaloisField.Div;
         var pivot = false;
@@ -454,31 +520,6 @@ public class RsCoder : IDisposable
             }
 
             pivot = true;
-            // throw new InvalidDataException("Sorry for this.");
-
-            // Pivoting (Row)
-            /*var max = el[x + (x * n * 2)];
-            var maxLine = x;
-            for (var y = x + 1; y < n; y++)
-            {
-                if (el[x + (y * n * 2)] > max)
-                {
-                    max = el[x + (y * n * 2)];
-                    maxLine = y;
-                }
-            }
-
-            if (max > 0)
-            {
-                for (var u = 0; u < (n * 2); u++)
-                {
-                    var temp = el[u + (x * n * 2)];
-                    el[u + (x * n * 2)] = el[u + (maxLine * n * 2)];
-                    el[u + (maxLine * n * 2)] = temp;
-                }
-
-                goto Normalize;
-            }*/
 
             // Pivoting (Row)
             for (var y = x + 1; y < n; y++)
@@ -555,17 +596,36 @@ Normalize:
         }
     }
 
-    private byte[] F { get; }
+    private byte[]? rentEF;
+
+    private byte[]? rentEL;
 
     private byte[][]? rentEncodeBuffer;
 
     private byte[]? rentDecodeBuffer;
 
-    public string MatrixToString(byte[] m, int row, int column)
+    public string MatrixToString(byte[] m)
     {
-        if (m.Length != (row * column))
+        int row, column;
+        var length = m.Length;
+        if (length == (this.DataSize * this.DataSize))
         {
-            throw new InvalidDataException();
+            row = this.DataSize;
+            column = this.DataSize;
+        }
+        else if (length == (this.DataSize * this.DataSize * 2))
+        {
+            row = this.DataSize;
+            column = this.DataSize * 2;
+        }
+        else if ((length % this.DataSize) == 0)
+        {
+            row = length / this.DataSize;
+            column = this.DataSize;
+        }
+        else
+        {
+            return string.Empty;
         }
 
         var sb = new System.Text.StringBuilder();
@@ -581,6 +641,38 @@ Normalize:
         }
 
         return sb.ToString();
+    }
+
+    private void EnsureBuffers(bool decodeBuffer)
+    {
+        if (this.rentEF == null)
+        {
+            this.rentEF = ArrayPool<byte>.Shared.Rent(this.DataSize * this.CheckSize);
+            Array.Fill<byte>(this.rentEF, 0);
+        }
+
+        if (decodeBuffer)
+        {
+            if (this.rentEL == null)
+            {
+                this.rentEL = ArrayPool<byte>.Shared.Rent(this.DataSize * this.DataSize * 2);
+            }
+        }
+    }
+
+    private void ReturnBuffers()
+    {
+        if (this.rentEF != null)
+        {
+            ArrayPool<byte>.Shared.Return(this.rentEF);
+            this.rentEF = null;
+        }
+
+        if (this.rentEL != null)
+        {
+            ArrayPool<byte>.Shared.Return(this.rentEL);
+            this.rentEL = null;
+        }
     }
 
     private void EnsureEncodeBuffer(int length)
@@ -679,6 +771,7 @@ Normalize:
             if (disposing)
             {
                 // free managed resources.
+                this.ReturnBuffers();
                 this.ReturnDecodeBuffer();
                 this.ReturnEncodeBuffer();
             }
