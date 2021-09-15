@@ -3,6 +3,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using LP.Zen;
 
 namespace Test;
@@ -15,6 +16,6 @@ internal class Program
         Console.WriteLine();
 
         RsCoderTest.SampleCode();
-        RsCoderTest.ComprehensiveTest();
+        RsCoderTest.SpeedTest();
     }
 }
