@@ -7,7 +7,7 @@ using System.Net.Sockets;
 using System.Threading;
 using Arc.Threading;
 
-namespace LP.Netsphere;
+namespace LP.Net;
 
 public class RawPipe
 {

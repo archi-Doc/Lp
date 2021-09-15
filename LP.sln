@@ -13,11 +13,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LP", "LP\LP.csproj", "{0863
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "xUnitTest", "xUnitTest\xUnitTest.csproj", "{D9157F7C-B66D-4AF8-ABA7-2D71CC41E865}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Netsphere", "Netsphere\Netsphere.csproj", "{86C46839-ECBA-45E1-AABF-00AC3821302E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Netsphere", "Netsphere\Netsphere.csproj", "{86C46839-ECBA-45E1-AABF-00AC3821302E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{AE9492F0-6E89-4A0A-A835-81581B242E38}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleTest", "Tests\ConsoleTest\ConsoleTest.csproj", "{9B38E161-5277-4690-A3CB-28684ACAA0B2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LPConsole", "LPConsole\LPConsole.csproj", "{CCFC7A4A-2B12-4DE7-87BD-3AB40E5D7B7B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -53,6 +55,10 @@ Global
 		{9B38E161-5277-4690-A3CB-28684ACAA0B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9B38E161-5277-4690-A3CB-28684ACAA0B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9B38E161-5277-4690-A3CB-28684ACAA0B2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CCFC7A4A-2B12-4DE7-87BD-3AB40E5D7B7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CCFC7A4A-2B12-4DE7-87BD-3AB40E5D7B7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CCFC7A4A-2B12-4DE7-87BD-3AB40E5D7B7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CCFC7A4A-2B12-4DE7-87BD-3AB40E5D7B7B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -3,7 +3,7 @@
 using System;
 using SimpleCommandLine;
 
-namespace LP.Netsphere;
+namespace LP.Net;
 
 public class NetsphereOptions
 {

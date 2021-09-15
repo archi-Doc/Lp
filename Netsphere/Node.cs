@@ -4,7 +4,7 @@ using System;
 using System.Net;
 using Arc.Threading;
 
-namespace LP.Netsphere;
+namespace LP.Net;
 
 public enum NodeType : byte
 {
