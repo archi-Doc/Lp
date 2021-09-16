@@ -23,7 +23,7 @@ namespace LPConsole
             var commandTypes = new Type[]
             {
                 typeof(LPConsoleCommand),
-                typeof(TestCommand2),
+                // typeof(TestCommand2),
             };
 
             // DI Container
@@ -54,6 +54,7 @@ namespace LPConsole
                 RequireStrictOptionName = true
             };
 
+            args = new string[] { "-help" };
             await SimpleParser.ParseAndRunAsync(commandTypes, args, parserOptions); // Main process
             await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
             ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).
