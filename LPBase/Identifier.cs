@@ -14,6 +14,8 @@ public partial class Identifier : IEquatable<Identifier>
 
     public static Identifier Two { get; } = new(2);
 
+    public static Identifier Three { get; } = new(3);
+
     public Identifier()
     {
     }

@@ -9,9 +9,6 @@ using Arc.Crypto;
 
 namespace LP;
 
-/// <summary>
-/// LP Hash (SHA3-256) class.
-/// </summary>
 public class Hash : SHA3_256
 {
     public Identifier GetIdentifier(ReadOnlySpan<byte> input)

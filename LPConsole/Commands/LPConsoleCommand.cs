@@ -18,10 +18,16 @@ namespace LPConsole
         public LPConsoleCommand(LPCore core)
         {
             this.LPCore = core;
+            this.LPCore.Initialize(true, string.Empty);
         }
 
         public async Task Run(LPConsoleOptions option, string[] args)
         {
+            this.LPCore.Prepare(option);
+            this.LPCore.Start();
+
+            await Task.Delay(1000);
+
             this.LPCore.Terminate();
         }
 
