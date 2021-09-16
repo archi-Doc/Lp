@@ -2,6 +2,7 @@
 
 using System;
 using Arc.Threading;
+using BigMachines;
 using DryIoc;
 using LP;
 using LP.Net;
@@ -14,6 +15,7 @@ public class LPCore
     {
         // Main services
         container.Register<LPCore>(Reuse.Singleton);
+        container.RegisterDelegate(x => new BigMachine<Identifier>(ThreadCore.Root, container), Reuse.Singleton);
         container.Register<Netsphere>(Reuse.Singleton);
     }
 
@@ -21,6 +23,10 @@ public class LPCore
     {
         this.Core = new(ThreadCore.Root);
         this.Netsphere = netsphere;
+    }
+
+    public void Initialize()
+    {
     }
 
     public void Terminate()
