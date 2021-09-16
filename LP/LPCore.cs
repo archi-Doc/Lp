@@ -13,9 +13,12 @@ public class LPCore
 {
     public static void Register(Container container)
     {
+        // Base
+        container.Register<Hash>(Reuse.Transient);
+        container.RegisterDelegate(x => new BigMachine<Identifier>(ThreadCore.Root, container), Reuse.Singleton);
+
         // Main services
         container.Register<LPCore>(Reuse.Singleton);
-        container.RegisterDelegate(x => new BigMachine<Identifier>(ThreadCore.Root, container), Reuse.Singleton);
         container.Register<Netsphere>(Reuse.Singleton);
     }
 

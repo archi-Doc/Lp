@@ -39,6 +39,10 @@ public partial class Identifier : IEquatable<Identifier>
         this.Id3 = identifier.Id3;
     }
 
+    public Identifier(byte[] b)
+    {
+    }
+
     [Key(0)]
     public ulong Id0 { get; set; }
 
