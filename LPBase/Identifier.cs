@@ -39,8 +39,21 @@ public partial class Identifier : IEquatable<Identifier>
         this.Id3 = identifier.Id3;
     }
 
-    public Identifier(byte[] b)
+    public Identifier(byte[] byteArray)
     {
+        if (byteArray.Length < Constants.HashBytes)
+        {
+            throw new ArgumentException($"Length of a byte array must be at least {Constants.HashBytes}");
+        }
+
+        var s = byteArray.AsSpan();
+        this.Id0 = BitConverter.ToUInt64(s);
+        s = s.Slice(8);
+        this.Id1 = BitConverter.ToUInt64(s);
+        s = s.Slice(8);
+        this.Id2 = BitConverter.ToUInt64(s);
+        s = s.Slice(8);
+        this.Id3 = BitConverter.ToUInt64(s);
     }
 
     [Key(0)]
@@ -54,6 +67,24 @@ public partial class Identifier : IEquatable<Identifier>
 
     [Key(3)]
     public ulong Id3 { get; set; }
+
+    public bool TryWriteBytes(Span<byte> destination)
+    {
+        if (destination.Length <= Constants.HashBytes)
+        {
+            throw new ArgumentException($"Length of a byte array must be at least {Constants.HashBytes}");
+        }
+
+        var d = destination;
+        BitConverter.TryWriteBytes(d, this.Id0);
+        d = d.Slice(8);
+        BitConverter.TryWriteBytes(d, this.Id1);
+        d = d.Slice(8);
+        BitConverter.TryWriteBytes(d, this.Id2);
+        d = d.Slice(8);
+        BitConverter.TryWriteBytes(d, this.Id3);
+        return true;
+    }
 
     public bool Equals(Identifier? other)
     {
