@@ -33,6 +33,14 @@ public partial class Identifier : IEquatable<Identifier>
         this.Id3 = id3;
     }
 
+    public Identifier((ulong Id0, ulong Id1, ulong Id2, ulong Id3) id)
+    {
+        this.Id0 = id.Id0;
+        this.Id1 = id.Id1;
+        this.Id2 = id.Id2;
+        this.Id3 = id.Id3;
+    }
+
     public Identifier(Identifier identifier)
     {
         this.Id0 = identifier.Id0;

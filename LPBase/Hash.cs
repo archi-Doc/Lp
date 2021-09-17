@@ -13,13 +13,11 @@ public class Hash : SHA3_256
 {
     public Identifier GetIdentifier(ReadOnlySpan<byte> input)
     {
-        var b = this.GetHash(input);
-        return new Identifier(b);
+        return new Identifier(this.GetHashULong(input));
     }
 
     public Identifier IdentifierFinal()
     {
-        var b = this.HashFinal();
-        return new Identifier(b);
+        return new Identifier(this.HashFinalULong());
     }
 }
