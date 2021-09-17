@@ -22,19 +22,22 @@ public class LPCore
 
         // Main services
         container.Register<LPCore>(Reuse.Singleton);
+        container.Register<LPInfo>(Reuse.Singleton);
         container.Register<Netsphere>(Reuse.Singleton);
     }
 
-    public LPCore(Net.Netsphere netsphere)
+    public LPCore(LPInfo info, Netsphere netsphere)
     {
         this.Core = new(ThreadCore.Root);
+
+        this.Info = info;
         this.Netsphere = netsphere;
     }
 
     public void Initialize(bool isConsole, string directory)
     {
-        this.IsConsole = isConsole;
-        this.Directory = directory;
+        this.Info.IsConsole = isConsole;
+        this.Info.Directory = directory;
 
         // Logger: Debug, Information, Warning, Error, Fatal
         Log.Logger = new LoggerConfiguration()
@@ -55,7 +58,7 @@ public class LPCore
 
     public void Start()
     {
-        var s = this.IsConsole ? " (Console)" : string.Empty;
+        var s = this.Info.IsConsole ? " (Console)" : string.Empty;
         Log.Information("LP Start" + s);
     }
 
@@ -67,9 +70,7 @@ public class LPCore
 
     public ThreadCoreGroup Core { get; }
 
+    public LPInfo Info { get; }
+
     public Netsphere Netsphere { get; }
-
-    public bool IsConsole { get; private set; }
-
-    public string Directory { get; private set; } = string.Empty;
 }

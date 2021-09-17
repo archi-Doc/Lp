@@ -15,8 +15,9 @@ namespace LPConsole
     [SimpleCommand("lp", Default = true)]
     public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
     {
-        public LPConsoleCommand(LPCore core)
+        public LPConsoleCommand(LPInfo info, LPCore core)
         {
+            this.Info = info;
             this.LPCore = core;
             this.LPCore.Initialize(true, string.Empty);
         }
@@ -30,6 +31,8 @@ namespace LPConsole
 
             this.LPCore.Terminate();
         }
+
+        public LPInfo Info { get; }
 
         public LPCore LPCore { get; }
     }

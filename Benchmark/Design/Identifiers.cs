@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System;
-using Tinyhand;
 
 namespace Benchmark;
 
@@ -40,7 +39,7 @@ public class Identifier_ClassByte
         this.Identifier = identifier;
     }
 
-    public byte[] Identifier {  get; set; }
+    public byte[] Identifier { get; set; }
 }
 
 public struct Identifier_StructByte

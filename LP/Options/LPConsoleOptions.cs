@@ -6,7 +6,7 @@ using SimpleCommandLine;
 
 namespace LP;
 
-public class LPConsoleOptions
+public record LPConsoleOptions
 {
     [SimpleOption("ns", description: "Netsphere option")]
     public NetsphereOptions NetsphereOptions { get; set; } = default!;
