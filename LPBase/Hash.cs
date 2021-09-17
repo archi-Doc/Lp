@@ -9,7 +9,7 @@ using Arc.Crypto;
 
 namespace LP;
 
-public class Hash : SHA3_256
+/*public class Hash : SHA3_256
 {
     public Identifier GetIdentifier(ReadOnlySpan<byte> input)
     {
@@ -21,3 +21,4 @@ public class Hash : SHA3_256
         return new Identifier(this.HashFinalULong());
     }
 }
+*/

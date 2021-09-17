@@ -14,7 +14,9 @@
   <ItemGroup>
     <PackageReference Include="Arc.Crypto" Version="1.2.1" />
     <PackageReference Include="BenchmarkDotNet" Version="0.13.1" />
-    <PackageReference Include="StyleCop.Analyzers" Version="1.1.118">
+    <PackageReference Include="BigMachines" Version="0.11.4" />
+
+    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.354">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

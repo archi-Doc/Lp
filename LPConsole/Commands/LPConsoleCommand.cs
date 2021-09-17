@@ -27,7 +27,7 @@ namespace LPConsole
             this.LPCore.Prepare(option);
             this.LPCore.Start();
 
-            await Task.Delay(1000);
+            ThreadCore.Root.Sleep(1000);
 
             this.LPCore.Terminate();
         }
