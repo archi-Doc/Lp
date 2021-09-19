@@ -25,6 +25,8 @@ public class IdentifierBenchmark
         {
             this.ByteArray[i] = (byte)i;
         }
+
+        this.Destination = new byte[32];
     }
 
     [GlobalCleanup]
@@ -37,6 +39,8 @@ public class IdentifierBenchmark
 
     public byte[] ByteArray { get; set; } = default!;
 
+    public byte[] Destination { get; set; } = default!;
+
     public SHA3_256 Instance { get; } = new();
 
     [Benchmark]
@@ -44,6 +48,13 @@ public class IdentifierBenchmark
     {
         var r = this.Instance.GetHashULong(this.ByteArray);
         return new Identifier_ClassULong(r.hash0, r.hash1, r.hash2, r.hash3);
+    }
+
+    [Benchmark]
+    public Identifier_ClassULong New_ClassULong2()
+    {
+        var r = this.Instance.GetHashULong(this.ByteArray);
+        return new Identifier_ClassULong(r);
     }
 
     [Benchmark]
@@ -58,5 +69,32 @@ public class IdentifierBenchmark
     {
         var r = this.Instance.GetHash(this.ByteArray);
         return new Identifier_StructByte(r);
+    }
+
+    [Benchmark]
+    public byte[] NewAndWrite_ClassULong()
+    {
+        var r = this.Instance.GetHashULong(this.ByteArray);
+        var i = new Identifier_ClassULong(r);
+        i.TryWriteBytes(this.Destination);
+        return this.Destination;
+    }
+
+    [Benchmark]
+    public byte[] NewAndWrite_ClassByte()
+    {
+        var r = this.Instance.GetHash(this.ByteArray);
+        var i = new Identifier_ClassByte(r);
+        i.TryWriteBytes(this.Destination);
+        return this.Destination;
+    }
+
+    [Benchmark]
+    public byte[] NewAndWrite_StructByte()
+    {
+        var r = this.Instance.GetHash(this.ByteArray);
+        var i = new Identifier_StructByte(r);
+        i.TryWriteBytes(this.Destination);
+        return this.Destination;
     }
 }
