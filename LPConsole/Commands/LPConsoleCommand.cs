@@ -18,6 +18,8 @@ namespace LPConsole
         public LPConsoleCommand(LPInfo info, LPCore core)
         {
             this.Info = info;
+            this.Info.IsConsole = true;
+
             this.LPCore = core;
             this.LPCore.Initialize(true, string.Empty);
         }
