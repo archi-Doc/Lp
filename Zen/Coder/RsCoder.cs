@@ -9,13 +9,16 @@ namespace LP.Zen;
 
 public class RsCoder : IDisposable
 {
+    public const int DefaultDataSize = 8;
+    public const int DefaultCheckSize = 4;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="RsCoder"/> class (Reed-Solomon Coder.).
     /// </summary>
     /// <param name="dataSize">The Number of blocks of data to be split.</param>
     /// <param name="checkSize">The Number of blocks of checksum.</param>
     /// <param name="fieldGenPoly">Field generator polymoninal (default 301).</param>
-    public RsCoder(int dataSize, int checkSize, int fieldGenPoly = GaloisField.FieldGenPoly)
+    public RsCoder(int dataSize = DefaultDataSize, int checkSize = DefaultCheckSize, int fieldGenPoly = GaloisField.FieldGenPoly)
     {
         this.DataSize = dataSize;
         if (dataSize < 1)
