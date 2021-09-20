@@ -17,7 +17,6 @@ public class LPCore
     public static void Register(Container container)
     {
         // Base
-        container.RegisterInstance<Container>(container);
         container.Register<Hash>(Reuse.Transient);
         container.RegisterDelegate(x => new BigMachine<Identifier>(ThreadCore.Root, container), Reuse.Singleton);
 
@@ -27,13 +26,17 @@ public class LPCore
         container.Register<Netsphere>(Reuse.Singleton);
     }
 
-    public LPCore(LPInfo info, Netsphere netsphere)
+    public LPCore(LPInfo info, BigMachine<Identifier> bigMachine, Netsphere netsphere)
     {
-        this.Core = new(ThreadCore.Root);
-
         this.Info = info;
+        this.BigMachine = bigMachine;
         this.Netsphere = netsphere;
 
+        this.Core = new(ThreadCore.Root);
+    }
+
+    public void ConfigureLogger()
+    {
         // Logger: Debug, Information, Warning, Error, Fatal
         Log.Logger = new LoggerConfiguration()
         .MinimumLevel.Information()
@@ -51,6 +54,8 @@ public class LPCore
     {
         var s = this.Info.IsConsole ? " (Console)" : string.Empty;
         Log.Information("LP Start" + s);
+
+        this.Netsphere.Start(this.Core);
     }
 
     public void Terminate()
@@ -59,11 +64,14 @@ public class LPCore
         this.Core.WaitForTermination(-1);
 
         Log.Information("LP Teminated");
+        Log.CloseAndFlush();
     }
 
     public ThreadCoreGroup Core { get; }
 
     public LPInfo Info { get; }
+
+    public BigMachine<Identifier> BigMachine { get; }
 
     public Netsphere Netsphere { get; }
 }

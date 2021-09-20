@@ -16,24 +16,22 @@ namespace LPConsole
     [SimpleCommand("lp", Default = true)]
     public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
     {
-        public LPConsoleCommand(Container container)
+        public LPConsoleCommand()
         {
-            this.Container = container;
         }
 
         public async Task Run(LPConsoleOptions option, string[] args)
         {
-            var info = this.Container.Resolve<LPInfo>();
+            var info = Program.Container.Resolve<LPInfo>();
             info.Configure(option, true);
 
-            var core = this.Container.Resolve<LPCore>();
+            var core = Program.Container.Resolve<LPCore>();
+            core.ConfigureLogger();
             core.Start();
 
             ThreadCore.Root.Sleep(1000);
 
             core.Terminate();
         }
-
-        public Container Container { get; }
     }
 }

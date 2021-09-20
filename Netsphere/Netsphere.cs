@@ -11,5 +11,9 @@ public class Netsphere
     {
     }
 
+    public void Start(ThreadCoreBase parent)
+    {
+    }
+
     public MyStatus MyStatus { get; } = new();
 }
