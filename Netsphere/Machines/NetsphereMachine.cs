@@ -20,6 +20,11 @@ public partial class NetsphereMachine : Machine<Identifier>
     protected StateResult Initial(StateParameter parameter)
     {
         Console.WriteLine($"{this.Netsphere.MyStatus.Type}");
+
+        if (this.Netsphere.MyStatus.Type == MyStatus.ConnectionType.Unknown)
+        {
+        }
+
         return StateResult.Continue;
     }
 }
