@@ -8,9 +8,12 @@ namespace LP;
 
 public record LPConsoleOptions
 {
-    [SimpleOption("ns", description: "Netsphere option")]
-    public NetsphereOptions NetsphereOptions { get; set; } = default!;
-
     [SimpleOption("mode", description: "LP mode (merger, user)")]
     public string Mode { get; set; } = string.Empty;
+
+    [SimpleOption("directory", description: "Root directory")]
+    public string Directory { get; set; } = string.Empty;
+
+    [SimpleOption("ns", description: "Netsphere option")]
+    public NetsphereOptions NetsphereOptions { get; set; } = default!;
 }

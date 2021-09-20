@@ -10,9 +10,32 @@ namespace LP;
 
 public class LPInfo
 {
+    public LPInfo()
+    {
+    }
+
     public bool IsConsole { get; set; }
 
-    public string Directory { get; set; } = string.Empty;
+    public string RootDirectory { get; set; } = default!;
 
-    public LPConsoleOptions ConsoleOptions { get; set; } = new();
+    public LPConsoleOptions ConsoleOptions { get; set; } = default!;
+
+    public void Configure(LPConsoleOptions options, bool isConsole)
+    {
+        this.ConsoleOptions = options;
+        this.IsConsole = isConsole;
+
+        // Root directory
+        if (Path.IsPathRooted(this.ConsoleOptions.Directory) &&
+            File.GetAttributes(this.ConsoleOptions.Directory).HasFlag(FileAttributes.Directory))
+        {
+            this.RootDirectory = this.ConsoleOptions.Directory;
+        }
+        else
+        {
+            this.RootDirectory = Path.Combine(Directory.GetCurrentDirectory(), this.ConsoleOptions.Directory);
+        }
+
+        Directory.CreateDirectory(this.RootDirectory);
+    }
 }

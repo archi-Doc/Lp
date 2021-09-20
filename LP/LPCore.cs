@@ -17,12 +17,13 @@ public class LPCore
     public static void Register(Container container)
     {
         // Base
+        container.RegisterInstance<Container>(container);
         container.Register<Hash>(Reuse.Transient);
         container.RegisterDelegate(x => new BigMachine<Identifier>(ThreadCore.Root, container), Reuse.Singleton);
 
         // Main services
-        container.Register<LPCore>(Reuse.Singleton);
         container.Register<LPInfo>(Reuse.Singleton);
+        container.Register<LPCore>(Reuse.Singleton);
         container.Register<Netsphere>(Reuse.Singleton);
     }
 
@@ -32,28 +33,18 @@ public class LPCore
 
         this.Info = info;
         this.Netsphere = netsphere;
-    }
-
-    public void Initialize(bool isConsole, string directory)
-    {
-        this.Info.IsConsole = isConsole;
-        this.Info.Directory = directory;
 
         // Logger: Debug, Information, Warning, Error, Fatal
         Log.Logger = new LoggerConfiguration()
         .MinimumLevel.Information()
         .WriteTo.Console()
         .WriteTo.File(
-            Path.Combine(directory, "logs", "log.txt"),
+            Path.Combine(this.Info.RootDirectory, "logs", "log.txt"),
             rollingInterval: RollingInterval.Day,
             retainedFileCountLimit: 31,
             buffered: true,
             flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
         .CreateLogger();
-    }
-
-    public void Prepare(LPConsoleOptions options)
-    {
     }
 
     public void Start()
@@ -66,6 +57,8 @@ public class LPCore
     {
         this.Core.Terminate();
         this.Core.WaitForTermination(-1);
+
+        Log.Information("LP Teminated");
     }
 
     public ThreadCoreGroup Core { get; }

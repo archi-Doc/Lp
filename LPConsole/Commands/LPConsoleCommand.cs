@@ -4,6 +4,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Arc.Threading;
+using DryIoc;
 using LP;
 using Serilog;
 using SimpleCommandLine;
@@ -15,27 +16,24 @@ namespace LPConsole
     [SimpleCommand("lp", Default = true)]
     public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
     {
-        public LPConsoleCommand(LPInfo info, LPCore core)
+        public LPConsoleCommand(Container container)
         {
-            this.Info = info;
-            this.Info.IsConsole = true;
-
-            this.LPCore = core;
-            this.LPCore.Initialize(true, string.Empty);
+            this.Container = container;
         }
 
         public async Task Run(LPConsoleOptions option, string[] args)
         {
-            this.LPCore.Prepare(option);
-            this.LPCore.Start();
+            var info = this.Container.Resolve<LPInfo>();
+            info.Configure(option, true);
+
+            var core = this.Container.Resolve<LPCore>();
+            core.Start();
 
             ThreadCore.Root.Sleep(1000);
 
-            this.LPCore.Terminate();
+            core.Terminate();
         }
 
-        public LPInfo Info { get; }
-
-        public LPCore LPCore { get; }
+        public Container Container { get; }
     }
 }
