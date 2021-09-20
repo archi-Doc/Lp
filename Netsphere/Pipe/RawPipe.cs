@@ -1,11 +1,13 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 using Arc.Threading;
 
-namespace LP.Netsphere;
+namespace LP.Net;
 
 public class RawPipe
 {
@@ -43,7 +45,17 @@ public class RawPipe
             }
             else if (this.udpPort.Available == 0)
             {
-                Thread.Sleep(1);
+                this.Stopwatch.Start();
+                while (this.Stopwatch.Elapsed < TimeSpan.FromMilliseconds(1))
+                {
+                    if (core.IsTerminated)
+                    {
+                        break;
+                    }
+
+                    Thread.Sleep(0); // Thread.Sleep(1) is actually not 1 millisecond.
+                }
+
                 continue;
             }
 
@@ -62,4 +74,6 @@ public class RawPipe
 
     private ThreadCore core;
     private UdpClient udpPort;
+
+    private Stopwatch Stopwatch { get; } = new();
 }

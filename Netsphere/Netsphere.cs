@@ -3,11 +3,15 @@
 using System;
 using Arc.Threading;
 
-namespace LP.Netsphere;
+namespace LP.Net;
 
 public class Netsphere
 {
     public Netsphere()
+    {
+    }
+
+    public void Start(ThreadCoreBase parent)
     {
     }
 

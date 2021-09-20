@@ -9,7 +9,7 @@ using System.Reflection;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 
-#pragma warning disable SA1401 // Fields should be private
+#pragma warning disable SA1401 // Fields should be pvriate
 
 namespace Benchmark;
 
@@ -17,11 +17,12 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        DebugRun<TemplateBenchmark>();
+        DebugRun<IdentifierBenchmark>();
 
         // var summary = BenchmarkRunner.Run<TestBenchmark>();
         var switcher = new BenchmarkSwitcher(new[]
         {
+            typeof(IdentifierBenchmark),
             typeof(TemplateBenchmark),
         });
         switcher.Run(args);

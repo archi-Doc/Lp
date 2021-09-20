@@ -3,10 +3,13 @@
 using System;
 using SimpleCommandLine;
 
-namespace LP.Netsphere;
+namespace LP.Net;
 
 public class NetsphereOptions
 {
-    [SimpleOption("address", null, "global IP address")]
+    [SimpleOption("address", null, "Global IP address")]
     public string Address { get; set; } = string.Empty;
+
+    [SimpleOption("port", null, "Port number associated with the address")]
+    public int Port { get; set; }
 }
