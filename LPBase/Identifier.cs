@@ -8,6 +8,8 @@ namespace LP;
 [TinyhandObject]
 public partial class Identifier : IEquatable<Identifier>
 {
+    public const string Name = "Identifier";
+
     public static Identifier Zero { get; } = new();
 
     public static Identifier One { get; } = new(1);
@@ -108,5 +110,12 @@ public partial class Identifier : IEquatable<Identifier>
 
     public override int GetHashCode() => HashCode.Combine(this.Id0, this.Id1, this.Id2, this.Id3);
 
-    public override string ToString() => $"Identifier {this.Id0:D16}";
+    public override string ToString() => this.Id0 switch
+    {
+        0 => $"{Name} Zero",
+        1 => $"{Name} One",
+        2 => $"{Name} Two",
+        4 => $"{Name} Three",
+        _ => $"{Name} {this.Id0:D16}",
+    };
 }

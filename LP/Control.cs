@@ -7,6 +7,7 @@ global using Arc.Threading;
 global using BigMachines;
 global using LP;
 global using Serilog;
+global using Tinyhand;
 using DryIoc;
 using LP.Net;
 
@@ -52,14 +53,29 @@ public class Control
 
     public void Start()
     {
-        var s = this.Info.IsConsole ? " (Console)" : string.Empty;
+        var s = this.Info.IsConsole ? " (Console), press any key to exit" : string.Empty;
         Log.Information("LP Start" + s);
 
         this.Netsphere.Start(this.Core);
     }
 
+    public void MainLoop()
+    {
+        while (!this.Core.IsTerminated)
+        {
+            if (this.SafeKeyAvailable)
+            {
+                break;
+            }
+
+            this.Core.Sleep(100, 100);
+        }
+    }
+
     public void Terminate()
     {
+        Log.Information("LP Termination process initiated");
+
         this.BigMachine.Core.Terminate();
         this.Core.Terminate();
 
@@ -68,6 +84,21 @@ public class Control
 
         Log.Information("LP Teminated");
         Log.CloseAndFlush();
+    }
+
+    public bool SafeKeyAvailable
+    {
+        get
+        {
+            try
+            {
+                return Console.KeyAvailable;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 
     public ThreadCoreGroup Core { get; }

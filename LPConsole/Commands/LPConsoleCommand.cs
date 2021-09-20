@@ -25,13 +25,14 @@ namespace LPConsole
             var info = Program.Container.Resolve<Information>();
             info.Configure(option, true);
 
-            var core = Program.Container.Resolve<Control>();
-            core.ConfigureLogger();
-            core.Start();
+            var control = Program.Container.Resolve<Control>();
+            control.ConfigureLogger();
+            control.Start();
+            control.BigMachine.TryCreate<LP.Machines.SingleMachine.Interface>(Identifier.Zero);
 
-            ThreadCore.Root.Sleep(1000);
+            control.MainLoop();
 
-            core.Terminate();
+            control.Terminate();
         }
     }
 }
