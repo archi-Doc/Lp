@@ -12,14 +12,19 @@ public enum NodeType : byte
     Release,
 }
 
-public class NodeAddress
+[TinyhandObject]
+public partial class NodeAddress
 {
+    [Key(0)]
     public NodeType Type { get; set; }
 
+    [Key(1)]
     public byte Engagement { get; set; }
 
+    [Key(2)]
     public ushort Port { get; set; }
 
+    [Key(3)]
     public IPAddress Address { get; set; } = IPAddress.None;
 }
 

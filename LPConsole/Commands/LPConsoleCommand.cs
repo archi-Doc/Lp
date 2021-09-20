@@ -26,7 +26,7 @@ namespace LPConsole
             info.Configure(option, true);
 
             var control = Program.Container.Resolve<Control>();
-            control.ConfigureLogger();
+            control.Configure();
             control.Start();
             control.BigMachine.TryCreate<LP.Machines.SingleMachine.Interface>(Identifier.Zero);
 

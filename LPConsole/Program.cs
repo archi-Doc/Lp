@@ -51,7 +51,7 @@ namespace LPConsole
             {
                 ServiceProvider = Container,
                 RequireStrictCommandName = false,
-                RequireStrictOptionName = true
+                RequireStrictOptionName = true,
             };
 
             await SimpleParser.ParseAndRunAsync(commandTypes, args, parserOptions); // Main process

@@ -6,7 +6,7 @@ namespace LP.Machines;
 // [TinyhandObject(UseServiceProvider = true)]
 public partial class SingleMachine : Machine<Identifier>
 {
-    public SingleMachine(BigMachine<Identifier> bigMachine)
+    public SingleMachine(BigMachine<Identifier> bigMachine, Control control)
         : base(bigMachine)
     {
         this.DefaultTimeout = TimeSpan.FromSeconds(1);

@@ -1,14 +1,46 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
-using Arc.Threading;
+global using System;
+global using System.IO;
+global using Arc.Threading;
+global using BigMachines;
+global using LP;
+global using LP.Net;
+global using Serilog;
+global using Tinyhand;
 
 namespace LP.Net;
 
 public class Netsphere
 {
-    public Netsphere()
+    public Netsphere(BigMachine<Identifier> bigMachine, Information information)
     {
+        this.bigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
+        this.information = information;
+    }
+
+    public void Configure()
+    {
+        // Set port number
+        if (this.information.ConsoleOptions.NetsphereOptions.Port < Constants.MinPort ||
+            this.information.ConsoleOptions.NetsphereOptions.Port > Constants.MaxPort)
+        {
+            var showWarning = false;
+            if (this.information.ConsoleOptions.NetsphereOptions.Port != 0)
+            {
+                showWarning = true;
+            }
+
+            this.information.ConsoleOptions.NetsphereOptions.Port = (int)(Constants.MinPort + ((Constants.MaxPort - Constants.MinPort + 1) * Random.Shared.NextDouble()));
+            if (showWarning)
+            {
+                Log.Warning($"Port number must be between {Constants.MinPort} and {Constants.MaxPort}");
+                Log.Information($"Port number is set to {this.information.ConsoleOptions.NetsphereOptions.Port}");
+            }
+        }
+
+        // Machines
+        this.bigMachine.TryCreate<Machines.NetsphereMachine.Interface>(Identifier.Zero);
     }
 
     public void Start(ThreadCoreBase parent)
@@ -16,4 +48,10 @@ public class Netsphere
     }
 
     public MyStatus MyStatus { get; } = new();
+
+    public NetStatus NetStatus { get; } = new();
+
+    private BigMachine<Identifier> bigMachine;
+
+    private Information information;
 }
