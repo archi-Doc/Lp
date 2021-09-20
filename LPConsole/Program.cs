@@ -27,7 +27,7 @@ namespace LPConsole
             };
 
             // DI Container
-            LPCore.Register(Container);
+            Control.Register(Container);
             foreach (var x in commandTypes)
             {
                 Container.Register(x, Reuse.Singleton);

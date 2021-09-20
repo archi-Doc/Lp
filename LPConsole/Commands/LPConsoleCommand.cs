@@ -22,10 +22,10 @@ namespace LPConsole
 
         public async Task Run(LPConsoleOptions option, string[] args)
         {
-            var info = Program.Container.Resolve<LPInfo>();
+            var info = Program.Container.Resolve<Information>();
             info.Configure(option, true);
 
-            var core = Program.Container.Resolve<LPCore>();
+            var core = Program.Container.Resolve<Control>();
             core.ConfigureLogger();
             core.Start();
 

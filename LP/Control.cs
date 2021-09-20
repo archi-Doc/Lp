@@ -12,7 +12,7 @@ using LP.Net;
 
 namespace LP;
 
-public class LPCore
+public class Control
 {
     public static void Register(Container container)
     {
@@ -21,12 +21,12 @@ public class LPCore
         container.RegisterDelegate(x => new BigMachine<Identifier>(ThreadCore.Root, container), Reuse.Singleton);
 
         // Main services
-        container.Register<LPInfo>(Reuse.Singleton);
-        container.Register<LPCore>(Reuse.Singleton);
+        container.Register<Information>(Reuse.Singleton);
+        container.Register<Control>(Reuse.Singleton);
         container.Register<Netsphere>(Reuse.Singleton);
     }
 
-    public LPCore(LPInfo info, BigMachine<Identifier> bigMachine, Netsphere netsphere)
+    public Control(Information info, BigMachine<Identifier> bigMachine, Netsphere netsphere)
     {
         this.Info = info;
         this.BigMachine = bigMachine;
@@ -60,7 +60,10 @@ public class LPCore
 
     public void Terminate()
     {
+        this.BigMachine.Core.Terminate();
         this.Core.Terminate();
+
+        this.BigMachine.Core.WaitForTermination(-1);
         this.Core.WaitForTermination(-1);
 
         Log.Information("LP Teminated");
@@ -69,7 +72,7 @@ public class LPCore
 
     public ThreadCoreGroup Core { get; }
 
-    public LPInfo Info { get; }
+    public Information Info { get; }
 
     public BigMachine<Identifier> BigMachine { get; }
 

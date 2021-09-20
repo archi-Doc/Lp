@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 
 namespace LP;
 
-public class LPInfo
+public class Information
 {
-    public LPInfo()
+    public Information()
     {
     }
 

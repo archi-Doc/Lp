@@ -17,7 +17,7 @@ internal class Program
         Console.WriteLine("Sandbox");
 
         var container = new Container();
-        LPCore.Register(container);
+        Control.Register(container);
 
         container.ValidateAndThrow();
     }
