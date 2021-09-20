@@ -5,14 +5,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Arc.Collection;
+using Arc.Collections;
 using Arc.Crypto;
 
 namespace LP;
 
 public class Hash : SHA3_256
 {
-    public static LooseObjectPool<Hash> ObjectPool { get; } = new(static () => new Hash());
+    public static ObjectPool<Hash> ObjectPool { get; } = new(static () => new Hash());
 
     public Identifier GetIdentifier(ReadOnlySpan<byte> input)
     {
