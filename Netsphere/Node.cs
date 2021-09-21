@@ -7,7 +7,7 @@ public partial struct NetTerminalGene : IEquatable<NetTerminalGene>
 {
     public static NetTerminalGene New()
     {
-
+        return new NetTerminalGene(0);
     }
 
     public NetTerminalGene(ulong gene)

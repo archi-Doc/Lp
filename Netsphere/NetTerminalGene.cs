@@ -4,6 +4,8 @@ using System;
 using System.Net;
 using Arc.Threading;
 
+#pragma warning disable SA1401
+
 namespace LP.Net;
 
 public enum NodeType : byte
