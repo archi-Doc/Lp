@@ -43,6 +43,7 @@ public class Control
     public void Configure()
     {
         this.ConfigureLogger();
+        this.ConfigureControl();
         this.Netsphere.Configure();
     }
 
@@ -61,10 +62,17 @@ public class Control
         .CreateLogger();
     }
 
+    public void ConfigureControl()
+    {
+    }
+
     public void Start()
     {
         var s = this.Info.IsConsole ? " (Console), press any key to exit" : string.Empty;
         Log.Information("LP Start" + s);
+
+        Log.Information($"Console: {this.Info.IsConsole}, Root directory: {this.Info.RootDirectory}");
+        Log.Information(this.Info.ToString());
 
         this.Netsphere.Start(this.Core);
     }

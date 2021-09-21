@@ -4,6 +4,7 @@ global using System;
 global using System.IO;
 global using Arc.Threading;
 global using BigMachines;
+global using CrossLink;
 global using LP;
 global using LP.Net;
 global using Serilog;

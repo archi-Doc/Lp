@@ -15,6 +15,10 @@ public enum NodeType : byte
 [TinyhandObject]
 public partial class NodeAddress : IEquatable<NodeAddress>
 {
+    public NodeAddress()
+    {
+    }
+
     [Key(0)]
     public NodeType Type { get; set; }
 
@@ -39,12 +43,23 @@ public partial class NodeAddress : IEquatable<NodeAddress>
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(this.Type, this, Engagement, this.Port, this.Address);
+        return HashCode.Combine(this.Type, this.Engagement, this.Port, this.Address);
     }
 }
 
-public class NodeInformation : NodeAddress
+[CrossLinkObject]
+[TinyhandObject]
+public partial class NodeInformation : NodeAddress
 {
+    [Link(Primary = true, Type = ChainType.QueueList, Name = "Queue")]
+    public NodeInformation()
+    {
+    }
+
+    [Link(Type = ChainType.Ordered)]
+    [Key(4)]
+    public ulong identifier0;
+
     public bool Equals(NodeInformation? other)
     {
         if (other == null)
@@ -57,6 +72,6 @@ public class NodeInformation : NodeAddress
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(this.Type, this, Engagement, this.Port, this.Address);
+        return HashCode.Combine(this.Type, this.Engagement, this.Port, this.Address);
     }
 }

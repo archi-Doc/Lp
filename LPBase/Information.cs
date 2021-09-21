@@ -9,6 +9,12 @@ using System.Threading.Tasks;
 
 namespace LP;
 
+public enum LPMode
+{
+    Merger,
+    User,
+}
+
 public class Information
 {
     public Information()
@@ -18,6 +24,8 @@ public class Information
     public bool IsConsole { get; set; }
 
     public string RootDirectory { get; set; } = default!;
+
+    public LPMode Mode { get; set; }
 
     public LPConsoleOptions ConsoleOptions { get; set; } = default!;
 
@@ -38,5 +46,19 @@ public class Information
         }
 
         Directory.CreateDirectory(this.RootDirectory);
+
+        // Mode
+        LPMode mode;
+        if (!Enum.TryParse<LPMode>(this.ConsoleOptions.Mode, out mode))
+        {
+            mode = LPMode.Merger;
+        }
+
+        this.Mode = mode;
+    }
+
+    public override string ToString()
+    {
+        return $"Mode: {this.Mode}, {this.ConsoleOptions.ToString()}";
     }
 }
