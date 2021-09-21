@@ -58,7 +58,7 @@ public partial class NodeInformation : NodeAddress
 
     [Link(Type = ChainType.Ordered)]
     [Key(4)]
-    public ulong identifier0;
+    protected ulong identifier0;
 
     public bool Equals(NodeInformation? other)
     {
