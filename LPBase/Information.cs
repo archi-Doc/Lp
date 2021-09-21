@@ -21,13 +21,13 @@ public class Information
     {
     }
 
-    public bool IsConsole { get; set; }
+    public bool IsConsole { get; private set; }
 
-    public string RootDirectory { get; set; } = default!;
+    public string RootDirectory { get; private set; } = default!;
 
-    public LPMode Mode { get; set; }
+    public LPMode Mode { get; private set; }
 
-    public LPConsoleOptions ConsoleOptions { get; set; } = default!;
+    public LPConsoleOptions ConsoleOptions { get; private set; } = default!;
 
     public void Configure(LPConsoleOptions options, bool isConsole)
     {

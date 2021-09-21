@@ -9,13 +9,13 @@ namespace LP;
 public record LPConsoleOptions
 {
     [SimpleOption("mode", description: "LP mode (merger, user)")]
-    public string Mode { get; set; } = string.Empty;
+    public string Mode { get; init; } = string.Empty;
 
     [SimpleOption("directory", description: "Root directory")]
-    public string Directory { get; set; } = string.Empty;
+    public string Directory { get; init; } = string.Empty;
 
     [SimpleOption("ns", description: "Netsphere option")]
-    public NetsphereOptions NetsphereOptions { get; set; } = default!;
+    public NetsphereOptions NetsphereOptions { get; init; } = default!;
 
     public override string ToString()
     {
