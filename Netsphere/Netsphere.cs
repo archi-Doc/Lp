@@ -2,6 +2,7 @@
 
 global using System;
 global using System.IO;
+global using System.Net;
 global using Arc.Threading;
 global using BigMachines;
 global using CrossLink;
