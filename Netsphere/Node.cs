@@ -2,20 +2,72 @@
 
 namespace LP.Net;
 
-[TinyhandObject]
-public partial struct NetTerminalGene : IEquatable<NetTerminalGene>
+public enum NodeType : byte
 {
-    public static NetTerminalGene New()
+    Development,
+    Release,
+}
+
+[TinyhandObject]
+public partial class NodeAddress : IEquatable<NodeAddress>
+{
+    public NodeAddress()
     {
-        return new NetTerminalGene(0);
     }
 
-    public NetTerminalGene(ulong gene)
+    [Key(0)]
+    public NodeType Type { get; set; }
+
+    [Key(1)]
+    public byte Engagement { get; set; }
+
+    [Key(2)]
+    public ushort Port { get; set; }
+
+    [Key(3)]
+    public IPAddress Address { get; set; } = IPAddress.None;
+
+    public bool Equals(NodeAddress? other)
     {
-        this.Gene = gene;
+        if (other == null)
+        {
+            return false;
+        }
+
+        return this.Type == other.Type && this.Engagement == other.Engagement && this.Port == other.Port && this.Address.Equals(other.Address);
     }
 
-    public ulong Gene { get; }
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(this.Type, this.Engagement, this.Port, this.Address);
+    }
+}
 
-    public bool Equals(NetTerminalGene other) => this.Gene == other.Gene;
+[CrossLinkObject]
+[TinyhandObject]
+public partial class NodeInformation : NodeAddress
+{
+    [Link(Primary = true, Type = ChainType.QueueList, Name = "Queue")]
+    public NodeInformation()
+    {
+    }
+
+    [Link(Type = ChainType.Ordered)]
+    [Key(4)]
+    protected ulong identifier0;
+
+    public bool Equals(NodeInformation? other)
+    {
+        if (other == null)
+        {
+            return false;
+        }
+
+        return this.Type == other.Type && this.Engagement == other.Engagement && this.Port == other.Port && this.Address.Equals(other.Address);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(this.Type, this.Engagement, this.Port, this.Address);
+    }
 }
