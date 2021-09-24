@@ -54,7 +54,9 @@ public partial class NodeInformation : NodeAddress
 
     [Link(Type = ChainType.Ordered)]
     [Key(4)]
+#pragma warning disable SA1401 // Fields should be private
     protected ulong identifier0;
+#pragma warning restore SA1401 // Fields should be private
 
     public bool Equals(NodeInformation? other)
     {

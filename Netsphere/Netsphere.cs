@@ -33,7 +33,7 @@ public class Netsphere
                 showWarning = true;
             }
 
-            this.information.ConsoleOptions.NetsphereOptions.Port = (int)(Constants.MinPort + ((Constants.MaxPort - Constants.MinPort + 1) * Random.Shared.NextDouble()));
+            this.information.ConsoleOptions.NetsphereOptions.Port = Random.Pseudo.NextInt(Constants.MinPort, Constants.MaxPort + 1);
             if (showWarning)
             {
                 Log.Warning($"Port number must be between {Constants.MinPort} and {Constants.MaxPort}");

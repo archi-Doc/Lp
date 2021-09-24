@@ -1,26 +1,21 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Arc.Collections;
-using Arc.Crypto;
+using System.Security.Cryptography;
 
 namespace LP;
 
-public class Hash : SHA3_256
+public static class Random
 {
-    public static ObjectPool<Hash> ObjectPool { get; } = new(static () => new Hash());
+    public const int VaultSize = 1024;
 
-    public Identifier GetIdentifier(ReadOnlySpan<byte> input)
+    static Random()
     {
-        return new Identifier(this.GetHashULong(input));
+        var xo = new Xoshiro256StarStar();
+        Pseudo = new RandomVault(() => xo.NextULong(), x => xo.NextBytes(x), VaultSize);
+        Crypto = new RandomVault(null, x => RandomNumberGenerator.Fill(x), VaultSize);
     }
 
-    public Identifier IdentifierFinal()
-    {
-        return new Identifier(this.HashFinalULong());
-    }
+    public static RandomVault Crypto { get; }
+
+    public static RandomVault Pseudo { get; }
 }

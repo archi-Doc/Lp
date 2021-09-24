@@ -1,25 +1,26 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Security.Cryptography;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Arc.Collections;
+using Arc.Crypto;
 
 namespace LP;
 
-public static class Random
+public class Hash : SHA3_256
 {
-    static Random()
+    public static ObjectPool<Hash> ObjectPool { get; } = new(static () => new Hash());
+
+    public Identifier GetIdentifier(ReadOnlySpan<byte> input)
     {
-        Span<byte> b = stackalloc byte[1024];
-        RandomNumberGenerator.Fill(b);
-        mt = new MersenneTwister();
+        return new Identifier(this.GetHashULong(input));
     }
 
-    public static long NextLong()
+    public Identifier IdentifierFinal()
     {
-        lock (mt)
-        {
-            return mt.NextLong();
-        }
+        return new Identifier(this.HashFinalULong());
     }
-
-    private static MersenneTwister mt;
 }

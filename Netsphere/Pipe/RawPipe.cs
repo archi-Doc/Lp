@@ -11,11 +11,6 @@ namespace LP.Net;
 
 public class RawPipe
 {
-    public RawPipe(ThreadCoreBase core)
-        : this(core, (int)(Constants.MinPort + ((Constants.MaxPort - Constants.MinPort + 1) * Random.Shared.NextDouble())))
-    {
-    }
-
     public RawPipe(ThreadCoreBase core, int port)
     {
         this.core = new ThreadCore(ThreadCore.Root, this.Process, false);

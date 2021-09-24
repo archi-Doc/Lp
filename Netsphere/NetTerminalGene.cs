@@ -13,7 +13,7 @@ public partial struct NetTerminalGene : IEquatable<NetTerminalGene>
 {
     public static NetTerminalGene New()
     {
-        return new NetTerminalGene(0);
+        return new NetTerminalGene(Random.Crypto.NextULong());
     }
 
     public NetTerminalGene(ulong gene)
