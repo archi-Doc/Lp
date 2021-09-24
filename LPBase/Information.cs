@@ -1,12 +1,12 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace LP;
+
+public enum LPMode
+{
+    Merger,
+    User,
+}
 
 public class Information
 {
@@ -14,11 +14,13 @@ public class Information
     {
     }
 
-    public bool IsConsole { get; set; }
+    public bool IsConsole { get; private set; }
 
-    public string RootDirectory { get; set; } = default!;
+    public string RootDirectory { get; private set; } = default!;
 
-    public LPConsoleOptions ConsoleOptions { get; set; } = default!;
+    public LPMode Mode { get; private set; }
+
+    public LPConsoleOptions ConsoleOptions { get; private set; } = default!;
 
     public void Configure(LPConsoleOptions options, bool isConsole)
     {
@@ -37,5 +39,19 @@ public class Information
         }
 
         Directory.CreateDirectory(this.RootDirectory);
+
+        // Mode
+        LPMode mode;
+        if (!Enum.TryParse<LPMode>(this.ConsoleOptions.Mode, out mode))
+        {
+            mode = LPMode.Merger;
+        }
+
+        this.Mode = mode;
+    }
+
+    public override string ToString()
+    {
+        return $"Mode: {this.Mode}, {this.ConsoleOptions.ToString()}";
     }
 }

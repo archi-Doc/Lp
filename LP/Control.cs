@@ -25,15 +25,26 @@ public class Control
         container.Register<Information>(Reuse.Singleton);
         container.Register<Control>(Reuse.Singleton);
         container.Register<Netsphere>(Reuse.Singleton);
+
+        // Machines
+        container.Register<Machines.SingleMachine>();
+        container.Register<Machines.NetsphereMachine>();
     }
 
     public Control(Information info, BigMachine<Identifier> bigMachine, Netsphere netsphere)
     {
         this.Info = info;
-        this.BigMachine = bigMachine;
+        this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.Netsphere = netsphere;
 
         this.Core = new(ThreadCore.Root);
+    }
+
+    public void Configure()
+    {
+        this.ConfigureLogger();
+        this.ConfigureControl();
+        this.Netsphere.Configure();
     }
 
     public void ConfigureLogger()
@@ -51,10 +62,17 @@ public class Control
         .CreateLogger();
     }
 
+    public void ConfigureControl()
+    {
+    }
+
     public void Start()
     {
         var s = this.Info.IsConsole ? " (Console), press any key to exit" : string.Empty;
         Log.Information("LP Start" + s);
+
+        Log.Information($"Console: {this.Info.IsConsole}, Root directory: {this.Info.RootDirectory}");
+        Log.Information(this.Info.ToString());
 
         this.Netsphere.Start(this.Core);
     }

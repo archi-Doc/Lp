@@ -12,4 +12,9 @@ public class NetsphereOptions
 
     [SimpleOption("port", null, "Port number associated with the address")]
     public int Port { get; set; }
+
+    public override string ToString()
+    {
+        return $"Address: {this.Address}, Port: {this.Port}";
+    }
 }

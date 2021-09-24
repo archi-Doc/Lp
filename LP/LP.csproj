@@ -3,9 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-  </PropertyGroup>
 
-  <PropertyGroup>
     <PackageId>LP</PackageId>
     <Authors>archi-Doc</Authors>
     <Product>LP</Product>
