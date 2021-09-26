@@ -19,7 +19,7 @@ public partial class NetsphereMachine : Machine<Identifier>
     [StateMethod(0)]
     protected StateResult Initial(StateParameter parameter)
     {
-        Console.WriteLine($"{Time.LocalTime}");
+        Console.WriteLine($"{Time.StartupTime}");
         Console.WriteLine($"{this.Netsphere.MyStatus.Type}");
 
         if (this.Netsphere.MyStatus.Type == MyStatus.ConnectionType.Unknown)

@@ -17,17 +17,21 @@ public static class Time
     {
     }
 
-    public static DateTime LocalTime
+    /// <summary>
+    /// Gets the time since LP has started (0001/01/01 0:00:00).<br/>
+    /// Not affected by manual date/time changes.
+    /// </summary>
+    public static DateTime StartupTime
     {
         get
         {
             var ticks = Stopwatch.GetTimestamp() - initialTimestamp;
-            return initialLocalTime + new TimeSpan(ticks);
+            return new DateTime(ticks);
         }
     }
 
     public static double ReciprocalOfFrequency { get; } = 1.0d / Stopwatch.Frequency;
 
-    private static DateTime initialLocalTime = DateTime.Now;
+    // private static DateTime initialLocalTime = new DateTime(0);
     private static long initialTimestamp = Stopwatch.GetTimestamp();
 }

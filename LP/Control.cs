@@ -73,7 +73,7 @@ public class Control
 
         Log.Information($"Console: {this.Info.IsConsole}, Root directory: {this.Info.RootDirectory}");
         Log.Information(this.Info.ToString());
-        Log.Information($"Current time: {Time.LocalTime}");
+        Log.Information($"Current time: {Time.StartupTime}");
 
         this.Netsphere.Start(this.Core);
     }
