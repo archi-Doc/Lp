@@ -4,6 +4,7 @@ namespace LP;
 
 public enum LPMode
 {
+    Relay,
     Merger,
     User,
 }
@@ -22,7 +23,7 @@ public class Information
 
     public LPConsoleOptions ConsoleOptions { get; private set; } = default!;
 
-    public void Configure(LPConsoleOptions options, bool isConsole)
+    public void Configure(LPConsoleOptions options, bool isConsole, string defaultMode)
     {
         this.ConsoleOptions = options;
         this.IsConsole = isConsole;
@@ -42,9 +43,12 @@ public class Information
 
         // Mode
         LPMode mode;
-        if (!Enum.TryParse<LPMode>(this.ConsoleOptions.Mode, out mode))
+        if (!Enum.TryParse<LPMode>(this.ConsoleOptions.Mode, true, out mode))
         {
-            mode = LPMode.Merger;
+            if (!Enum.TryParse<LPMode>(defaultMode, true, out mode))
+            {
+                mode = LPMode.Merger;
+            }
         }
 
         this.Mode = mode;

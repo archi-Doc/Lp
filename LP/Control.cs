@@ -68,8 +68,9 @@ public class Control
 
     public void Start()
     {
-        var s = this.Info.IsConsole ? " (Console), press any key to exit" : string.Empty;
+        var s = this.Info.IsConsole ? " (Console)" : string.Empty;
         Log.Information("LP Start" + s);
+        Log.Information("Press any key to exit");
 
         Log.Information($"Console: {this.Info.IsConsole}, Root directory: {this.Info.RootDirectory}");
         Log.Information(this.Info.ToString());

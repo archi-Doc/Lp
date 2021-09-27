@@ -23,7 +23,7 @@ namespace LPConsole
         public async Task Run(LPConsoleOptions option, string[] args)
         {
             var info = Program.Container.Resolve<Information>();
-            info.Configure(option, true);
+            info.Configure(option, true, "relay");
 
             var control = Program.Container.Resolve<Control>();
             control.Configure();
