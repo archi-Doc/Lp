@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+#pragma warning disable SA1401 // Fields should be private
+
 namespace LP.Net;
 
 public enum NodeType : byte
@@ -43,7 +45,6 @@ public partial class NodeAddress : IEquatable<NodeAddress>
     }
 }
 
-[CrossLinkObject]
 [TinyhandObject]
 public partial class NodeInformation : NodeAddress
 {
@@ -52,11 +53,8 @@ public partial class NodeInformation : NodeAddress
     {
     }
 
-    [Link(Type = ChainType.Ordered)]
     [Key(4)]
-#pragma warning disable SA1401 // Fields should be private
     protected ulong identifier0;
-#pragma warning restore SA1401 // Fields should be private
 
     public bool Equals(NodeInformation? other)
     {
