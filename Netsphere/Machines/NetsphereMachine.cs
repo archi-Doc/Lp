@@ -23,6 +23,8 @@ public partial class NetsphereMachine : Machine<Identifier>
         Console.WriteLine($"{Time.StartupTime}, {correctedResult}: {time}");
         Console.WriteLine($"{this.Netsphere.MyStatus.Type}");
 
+        Time.AddTimeForCorrection(DateTime.UtcNow.Ticks + Ticks.FromMinutes(5));
+
         if (this.Netsphere.MyStatus.Type == MyStatus.ConnectionType.Unknown)
         {
         }

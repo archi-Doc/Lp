@@ -29,17 +29,12 @@ internal partial class TimeCorrection
     internal long difference;
 }
 
-public static class Ticks
-{
-    public static long FromSeconds(double seconds) => (long)(seconds * TimeSpan.TicksPerSecond);
-}
-
 public static class Time
 {
     /// <summary>
     /// The maximum number of time corrections.
     /// </summary>
-    public const uint MaxCorrections = 100;
+    public const uint MaxCorrections = 1000;
 
     /// <summary>
     /// The minimum number of corrections required for a valid corrected time.
@@ -115,7 +110,7 @@ public static class Time
     private static long GetCollectionDifference(long current)
     {
         var diff = correctionDifference;
-        if (diff != 0 && (current - correctionTimestamp) < TimeSpan.FromSeconds(1.0d))
+        if (diff != 0 && System.Math.Abs(current - correctionTimestamp) < Ticks.FromSeconds(1.0d))
         {
             return diff;
         }
