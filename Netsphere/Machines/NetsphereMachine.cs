@@ -19,15 +19,19 @@ public partial class NetsphereMachine : Machine<Identifier>
     [StateMethod(0)]
     protected StateResult Initial(StateParameter parameter)
     {
-        var correctedResult = Time.GetCorrectedTime(out var time);
-        Console.WriteLine($"{Time.StartupTime}, {correctedResult}: {time}");
         Console.WriteLine($"{this.Netsphere.MyStatus.Type}");
 
-        Time.AddTimeForCorrection(DateTime.UtcNow.Ticks + Ticks.FromMinutes(5));
-
-        if (this.Netsphere.MyStatus.Type == MyStatus.ConnectionType.Unknown)
+        /*if (this.Netsphere.MyStatus.Type == MyStatus.ConnectionType.Unknown)
         {
-        }
+            if (this.Netsphere.World.GetRandomNodeAddress(out var nodeAddress))
+            {
+                using (var terminal = this.Netsphere.NetTerminal.Create(nodeAddress, this.BigMachine.Core))
+                {
+                    terminal.Send(Punch);
+                    terminal.Receive();
+                }
+            }
+        }*/
 
         return StateResult.Continue;
     }
