@@ -21,9 +21,17 @@ public partial class NetsphereMachine : Machine<Identifier>
     {
         Console.WriteLine($"{this.Netsphere.MyStatus.Type}");
 
-        if (this.Netsphere.MyStatus.Type == MyStatus.ConnectionType.Unknown)
+        /*if (this.Netsphere.MyStatus.Type == MyStatus.ConnectionType.Unknown)
         {
-        }
+            if (this.Netsphere.World.GetRandomNodeAddress(out var nodeAddress))
+            {
+                using (var terminal = this.Netsphere.NetTerminal.Create(nodeAddress, this.BigMachine.Core))
+                {
+                    terminal.Send(Punch);
+                    terminal.Receive();
+                }
+            }
+        }*/
 
         return StateResult.Continue;
     }

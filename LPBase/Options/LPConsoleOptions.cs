@@ -8,7 +8,7 @@ namespace LP;
 
 public record LPConsoleOptions
 {
-    [SimpleOption("mode", description: "LP mode (merger, user)")]
+    [SimpleOption("mode", description: "LP mode (relay, merger, user)")]
     public string Mode { get; init; } = string.Empty;
 
     [SimpleOption("directory", description: "Root directory")]
