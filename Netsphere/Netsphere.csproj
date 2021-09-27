@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CrossLink" Version="0.17.0" />
+    <PackageReference Include="CrossLink" Version="0.18.0" />
     <PackageReference Include="SimpleCommandLine" Version="0.5.0" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.354">
       <PrivateAssets>all</PrivateAssets>

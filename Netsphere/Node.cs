@@ -10,6 +10,9 @@ public enum NodeType : byte
     Release,
 }
 
+/// <summary>
+/// Represents a basic node information.
+/// </summary>
 [TinyhandObject]
 public partial class NodeAddress : IEquatable<NodeAddress>
 {
@@ -18,16 +21,16 @@ public partial class NodeAddress : IEquatable<NodeAddress>
     }
 
     [Key(0)]
-    public NodeType Type { get; set; }
+    public NodeType Type;
 
     [Key(1)]
-    public byte Engagement { get; set; }
+    public byte Engagement;
 
     [Key(2)]
-    public ushort Port { get; set; }
+    public ushort Port;
 
     [Key(3)]
-    public IPAddress Address { get; set; } = IPAddress.None;
+    public IPAddress Address = IPAddress.None;
 
     public bool Equals(NodeAddress? other)
     {
@@ -45,16 +48,35 @@ public partial class NodeAddress : IEquatable<NodeAddress>
     }
 }
 
+/// <summary>
+/// Represents an essential node information.
+/// </summary>
+[CrossLinkObject]
+[TinyhandObject]
+public partial class NodeAddressEssential : NodeAddress
+{
+    [Link(Type = ChainType.QueueList, Name = "Queue", Primary = true)]
+    public NodeAddressEssential()
+    {
+    }
+}
+
+/// <summary>
+/// Represents a advanced node information.<br/>
+/// UpdateTime, Differentiation.
+/// </summary>
 [TinyhandObject]
 public partial class NodeInformation : NodeAddress
 {
-    [Link(Primary = true, Type = ChainType.QueueList, Name = "Queue")]
     public NodeInformation()
     {
     }
 
     [Key(4)]
-    protected ulong identifier0;
+    public ulong UpdateTime;
+
+    [Key(5)]
+    public ulong Differentiation;
 
     public bool Equals(NodeInformation? other)
     {
