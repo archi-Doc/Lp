@@ -48,7 +48,7 @@ public class Netsphere
         {
             if (NodeAddress.TryParse(x, out var address))
             {
-                this.World.AddEssential(address);
+                // this.World.AddEssential(address);
             }
         }
 

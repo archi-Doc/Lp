@@ -2,6 +2,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 
+#pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
 #pragma warning disable SA1401 // Fields should be private
 
 namespace LP.Net;
@@ -67,7 +68,7 @@ public partial class NodeAddress : IEquatable<NodeAddress>
 
     public NodeAddress(IPAddress address)
     {
-        this.Address = address;
+        this.address = address;
     }
 
     [Key(0)]
@@ -80,7 +81,7 @@ public partial class NodeAddress : IEquatable<NodeAddress>
     public ushort Port;
 
     [Key(3)]
-    public IPAddress Address = IPAddress.None;
+    public IPAddress address = IPAddress.None;
 
     public bool Equals(NodeAddress? other)
     {
@@ -89,12 +90,12 @@ public partial class NodeAddress : IEquatable<NodeAddress>
             return false;
         }
 
-        return this.Type == other.Type && this.Engagement == other.Engagement && this.Port == other.Port && this.Address.Equals(other.Address);
+        return this.Type == other.Type && this.Engagement == other.Engagement && this.Port == other.Port && this.address.Equals(other.address);
     }
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(this.Type, this.Engagement, this.Port, this.Address);
+        return HashCode.Combine(this.Type, this.Engagement, this.Port, this.address);
     }
 }
 
@@ -105,6 +106,7 @@ public partial class NodeAddress : IEquatable<NodeAddress>
 [TinyhandObject]
 public partial class NodeAddressEssential : NodeAddress
 {
+    [Link(TargetMember = nameof(address), Type = ChainType.Unordered)]
     [Link(Type = ChainType.QueueList, Name = "Queue", Primary = true)]
     public NodeAddressEssential()
     {
@@ -116,7 +118,7 @@ public partial class NodeAddressEssential : NodeAddress
 /// UpdateTime, Differentiation.
 /// </summary>
 [TinyhandObject]
-public partial class NodeInformation : NodeAddress
+public partial class NodeInformation : NodeAddress, IEquatable<NodeInformation>
 {
     public NodeInformation()
     {
@@ -135,11 +137,11 @@ public partial class NodeInformation : NodeAddress
             return false;
         }
 
-        return this.Type == other.Type && this.Engagement == other.Engagement && this.Port == other.Port && this.Address.Equals(other.Address);
+        return this.Type == other.Type && this.Engagement == other.Engagement && this.Port == other.Port && this.address.Equals(other.address);
     }
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(this.Type, this.Engagement, this.Port, this.Address);
+        return HashCode.Combine(this.Type, this.Engagement, this.Port, this.address);
     }
 }
