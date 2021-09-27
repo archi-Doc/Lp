@@ -41,6 +41,17 @@ public class Netsphere
             }
         }
 
+        // Nodes
+        var nodes = this.information.ConsoleOptions.NetsphereOptions.Nodes;
+        nodes = "192.168.0.1:100,, [192.168.0.2]:200";
+        foreach (var x in nodes.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (NodeAddress.TryParse(x, out var address))
+            {
+                this.World.AddEssential(address);
+            }
+        }
+
         // Machines
         this.bigMachine.TryCreate<Machines.NetsphereMachine.Interface>(Identifier.Zero);
     }

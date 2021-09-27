@@ -13,6 +13,9 @@ public class NetsphereOptions
     [SimpleOption("port", null, "Port number associated with the address")]
     public int Port { get; set; }
 
+    [SimpleOption("node", null, "Node addresses to connect")]
+    public string Nodes { get; set; } = string.Empty;
+
     public override string ToString()
     {
         return $"Address: {this.Address}, Port: {this.Port}";

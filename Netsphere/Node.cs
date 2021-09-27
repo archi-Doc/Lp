@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
+
 #pragma warning disable SA1401 // Fields should be private
 
 namespace LP.Net;
@@ -16,8 +18,56 @@ public enum NodeType : byte
 [TinyhandObject]
 public partial class NodeAddress : IEquatable<NodeAddress>
 {
+    public static bool TryParse(string text, [NotNullWhen(true)] out NodeAddress? node)
+    {
+        string address, port;
+        node = null;
+
+        text = text.Trim();
+        if (text.StartsWith('['))
+        {
+            var index = text.IndexOf(']');
+            if (index < 0)
+            {
+                return false;
+            }
+
+            address = text.Substring(1, index - 1);
+            port = text.Substring(index + 1);
+            if (port.StartsWith(':'))
+            {
+                port = port.Substring(1);
+            }
+        }
+        else
+        {
+            var index = text.LastIndexOf(':');
+            if (index < 0)
+            {
+                return false;
+            }
+
+            address = text.Substring(0, index);
+            port = text.Substring(index + 1);
+        }
+
+        if (!IPAddress.TryParse(address, out var ipAddress))
+        {
+            return false;
+        }
+
+        node = new NodeAddress(ipAddress);
+        ushort.TryParse(port, out node.Port);
+        return true;
+    }
+
     public NodeAddress()
     {
+    }
+
+    public NodeAddress(IPAddress address)
+    {
+        this.Address = address;
     }
 
     [Key(0)]
