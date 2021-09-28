@@ -5,6 +5,7 @@ global using System;
 global using System.IO;
 global using Arc.Collections;
 global using Arc.Crypto;
+global using CrossChannel;
 global using Tinyhand;
 
 namespace LP;

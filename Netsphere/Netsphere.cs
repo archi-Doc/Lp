@@ -5,6 +5,7 @@ global using System.IO;
 global using System.Net;
 global using Arc.Threading;
 global using BigMachines;
+global using CrossChannel;
 global using CrossLink;
 global using LP;
 global using LP.Net;
@@ -19,6 +20,13 @@ public class Netsphere
     {
         this.bigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.information = information;
+
+        Radio.Open<Message.Configure>(this.Configure);
+    }
+
+    public void Configure(Message.Configure message)
+    {
+        return;
     }
 
     public void Configure()

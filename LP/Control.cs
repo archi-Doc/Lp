@@ -5,6 +5,7 @@ global using System;
 global using System.IO;
 global using Arc.Threading;
 global using BigMachines;
+global using CrossChannel;
 global using LP;
 global using Serilog;
 global using Tinyhand;
@@ -44,6 +45,10 @@ public class Control
     {
         this.ConfigureLogger();
         this.ConfigureControl();
+
+        Radio.Send(new Message.Configure());
+        Radio.SendAsync(new Message.DeserializeAsync(this.Core.CancellationToken)).Wait();
+
         this.Netsphere.Configure();
     }
 
