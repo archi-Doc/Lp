@@ -57,8 +57,8 @@ public partial class NodeAddress : IEquatable<NodeAddress>
             return false;
         }
 
-        node = new NodeAddress(ipAddress);
-        ushort.TryParse(port, out node.Port);
+        ushort.TryParse(port, out var nodePort);
+        node = new NodeAddress(ipAddress, nodePort);
         return true;
     }
 
@@ -66,22 +66,23 @@ public partial class NodeAddress : IEquatable<NodeAddress>
     {
     }
 
-    public NodeAddress(IPAddress address)
+    public NodeAddress(IPAddress address, ushort port)
     {
-        this.address = address;
+        this.Address = address;
+        this.Port = port;
     }
 
     [Key(0)]
-    public NodeType Type;
+    public NodeType Type { get; protected set; }
 
     [Key(1)]
-    public byte Engagement;
+    public byte Engagement { get; protected set; }
 
     [Key(2)]
-    public ushort Port;
+    public ushort Port { get; protected set; }
 
     [Key(3)]
-    public IPAddress address = IPAddress.None;
+    public IPAddress Address { get; protected set; } = IPAddress.None;
 
     public bool Equals(NodeAddress? other)
     {
@@ -90,12 +91,12 @@ public partial class NodeAddress : IEquatable<NodeAddress>
             return false;
         }
 
-        return this.Type == other.Type && this.Engagement == other.Engagement && this.Port == other.Port && this.address.Equals(other.address);
+        return this.Type == other.Type && this.Engagement == other.Engagement && this.Port == other.Port && this.Address.Equals(other.Address);
     }
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(this.Type, this.Engagement, this.Port, this.address);
+        return HashCode.Combine(this.Type, this.Engagement, this.Port, this.Address);
     }
 }
 
@@ -106,7 +107,7 @@ public partial class NodeAddress : IEquatable<NodeAddress>
 [TinyhandObject]
 public partial class NodeAddressEssential : NodeAddress
 {
-    [Link(TargetMember = nameof(address), Type = ChainType.Unordered)]
+    [Link(TargetMember = nameof(Address), Type = ChainType.Unordered)]
     [Link(Type = ChainType.QueueList, Name = "Queue", Primary = true)]
     public NodeAddressEssential()
     {
@@ -137,11 +138,11 @@ public partial class NodeInformation : NodeAddress, IEquatable<NodeInformation>
             return false;
         }
 
-        return this.Type == other.Type && this.Engagement == other.Engagement && this.Port == other.Port && this.address.Equals(other.address);
+        return this.Type == other.Type && this.Engagement == other.Engagement && this.Port == other.Port && this.Address.Equals(other.Address);
     }
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(this.Type, this.Engagement, this.Port, this.address);
+        return HashCode.Combine(this.Type, this.Engagement, this.Port, this.Address);
     }
 }
