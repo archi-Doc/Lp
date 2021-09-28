@@ -102,7 +102,7 @@ public partial class NodeAddress : IEquatable<NodeAddress>
 /// <summary>
 /// Represents an essential node information.
 /// </summary>
-[CrossLinkObject]
+[ValueLinkObject]
 [TinyhandObject]
 public partial class NodeAddressEssential : NodeAddress
 {

@@ -6,11 +6,11 @@ global using System.Net;
 global using Arc.Threading;
 global using BigMachines;
 global using CrossChannel;
-global using CrossLink;
 global using LP;
 global using LP.Net;
 global using Serilog;
 global using Tinyhand;
+global using ValueLink;
 
 namespace LP.Net;
 
