@@ -1,8 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 global using System;
-global using System.IO;
 global using System.Net;
+global using System.Threading.Tasks;
 global using Arc.Threading;
 global using BigMachines;
 global using CrossChannel;
@@ -71,6 +71,8 @@ public class Netsphere
     public MyStatus MyStatus { get; } = new();
 
     public NetStatus NetStatus { get; } = new();
+
+    public Node Node { get; } = new();
 
     private BigMachine<Identifier> bigMachine;
 

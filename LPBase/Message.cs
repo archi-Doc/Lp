@@ -14,7 +14,7 @@ public static class Message
     {
     }
 
-    public record DeserializeAsync(CancellationToken CancellationToken);
+    public record DeserializeAsync();
 
     public class Start
     {

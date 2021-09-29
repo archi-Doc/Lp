@@ -27,11 +27,13 @@ namespace LPConsole
 
             var control = Program.Container.Resolve<Control>();
             control.Configure();
+            control.Deserialize();
             control.Start();
             control.BigMachine.TryCreate<LP.Machines.SingleMachine.Interface>(Identifier.Zero);
 
             control.MainLoop();
 
+            control.Serialize();
             control.Terminate();
         }
     }

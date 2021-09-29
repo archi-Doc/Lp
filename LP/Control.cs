@@ -47,9 +47,18 @@ public class Control
         this.ConfigureControl();
 
         Radio.Send(new Message.Configure());
-        Radio.SendAsync(new Message.DeserializeAsync(this.Core.CancellationToken)).Wait(this.Core.CancellationToken);
 
         this.Netsphere.Configure();
+    }
+
+    public void Deserialize()
+    {
+        Radio.SendAsync(new Message.DeserializeAsync()).Wait(this.Core.CancellationToken);
+    }
+
+    public void Serialize()
+    {
+        Radio.SendAsync(new Message.SerializeAsync()).Wait(this.Core.CancellationToken);
     }
 
     public void ConfigureLogger()
