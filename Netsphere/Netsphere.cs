@@ -16,10 +16,11 @@ namespace LP.Net;
 
 public class Netsphere
 {
-    public Netsphere(BigMachine<Identifier> bigMachine, Information information)
+    public Netsphere(BigMachine<Identifier> bigMachine, Information information, Node node)
     {
         this.bigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.information = information;
+        this.Node = node;
 
         Radio.Open<Message.Configure>(this.Configure);
     }
@@ -49,17 +50,6 @@ public class Netsphere
             }
         }
 
-        // Nodes
-        var nodes = this.information.ConsoleOptions.NetsphereOptions.Nodes;
-        nodes = "192.168.0.1:100,, [192.168.0.2]:200";
-        foreach (var x in nodes.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-        {
-            if (NodeAddress.TryParse(x, out var address))
-            {
-                // this.World.AddEssential(address);
-            }
-        }
-
         // Machines
         this.bigMachine.TryCreate<Machines.NetsphereMachine.Interface>(Identifier.Zero);
     }
@@ -72,7 +62,7 @@ public class Netsphere
 
     public NetStatus NetStatus { get; } = new();
 
-    public Node Node { get; } = new();
+    public Node Node { get; }
 
     private BigMachine<Identifier> bigMachine;
 

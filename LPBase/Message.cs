@@ -5,7 +5,7 @@ using System.Threading;
 namespace LP;
 
 public static class Message
-{
+{// Create instance -> Configure -> SerializeAsync -> Start/Stop loop -> DeserializeAsync
     public class Configure
     {
     }

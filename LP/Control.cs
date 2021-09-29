@@ -26,6 +26,7 @@ public class Control
         container.Register<Information>(Reuse.Singleton);
         container.Register<Control>(Reuse.Singleton);
         container.Register<Netsphere>(Reuse.Singleton);
+        container.Register<Node>(Reuse.Singleton);
 
         // Machines
         container.Register<Machines.SingleMachine>();
