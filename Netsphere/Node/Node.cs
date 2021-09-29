@@ -10,6 +10,8 @@ namespace LP.Net;
 
 public class Node
 {
+    public const string FileName = "node.tinyhand";
+
     public Node(Information information)
     {
         this.information = information;
@@ -21,46 +23,27 @@ public class Node
 
     public void Configure(Message.Configure message)
     {
-        var nodes = this.information.ConsoleOptions.NetsphereOptions.Nodes;
-        nodes = "192.168.0.1:100,, [192.168.0.2]:200, 192.168.0.1:100";
-        foreach (var x in nodes.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-        {
-            if (NodeAddress.TryParse(x, out var address))
-            {
-                if (!this.essentialNodes.AddressChain.ContainsKey(address))
-                {
-                    this.essentialNodes.Add(new EssentialNodeAddress(address));
-                }
-            }
-        }
     }
 
     public async Task Deserialize(Message.DeserializeAsync message)
     {
         try
         {
-            var path = Path.Combine(this.information.RootDirectory, "node.txt");
-            // using (var file = File.Open(path, FileMode.Open))
+            var path = Path.Combine(this.information.RootDirectory, FileName);
+            var bytes = await File.ReadAllBytesAsync(path);
+            // this.essentialNodes = TinyhandSerializer.Deserialize<EssentialNodeAddress.GoshujinClass>(bytes);
+            var g = TinyhandSerializer.DeserializeFromUtf8<EssentialNodeAddress.GoshujinClass>(bytes);
+            if (g != null)
             {
-                var bytes = await File.ReadAllBytesAsync(path);
-                // this.essentialNodes = TinyhandSerializer.Deserialize<EssentialNodeAddress.GoshujinClass>(bytes);
-                var g = TinyhandSerializer.DeserializeFromUtf8<EssentialNodeAddress.GoshujinClass>(bytes);
-                if (g != null)
-                {// Merge
-                    foreach (var x in g.QueueChain)
-                    {
-                        if (!this.essentialNodes.AddressChain.ContainsKey(x.Address))
-                        {
-                            this.essentialNodes.Add(x);
-                        }
-                    }
-                }
+                this.essentialNodes = g;
             }
         }
         catch
         {
+            Log.Error($"Load error: {FileName}");
         }
 
+        // Load NetsphereOptions.Nodes
         var nodes = this.information.ConsoleOptions.NetsphereOptions.Nodes;
         nodes = "192.168.0.1:100,, [192.168.0.2]:200, 192.168.0.1:100";
         foreach (var x in nodes.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
@@ -79,7 +62,7 @@ public class Node
 
     public async Task Serialize(Message.SerializeAsync message)
     {
-        var path = Path.Combine(this.information.RootDirectory, "node.txt");
+        var path = Path.Combine(this.information.RootDirectory, FileName);
         using (var file = File.Open(path, FileMode.Create))
         {
             file.Write(TinyhandSerializer.SerializeToUtf8(this.essentialNodes));
