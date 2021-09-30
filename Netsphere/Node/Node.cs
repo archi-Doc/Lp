@@ -45,7 +45,7 @@ public class Node
 
         // Load NetsphereOptions.Nodes
         var nodes = this.information.ConsoleOptions.NetsphereOptions.Nodes;
-        nodes = "192.168.0.1:100,, [192.168.0.2]:200, 192.168.0.1:100";
+        // nodes = "192.168.0.1:100,, [192.168.0.2]:200, 192.168.0.1:100";
         foreach (var x in nodes.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
             if (NodeAddress.TryParse(x, out var address))
