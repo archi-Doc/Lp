@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 
@@ -57,6 +58,8 @@ public class Node
             }
         }
 
+        this.Validate();
+
         Console.WriteLine("Node.Deserialize");
     }
 
@@ -70,6 +73,23 @@ public class Node
         }
 
         Console.WriteLine("Node.Serialize");
+    }
+
+    public void Validate()
+    {
+        List<EssentialNodeAddress> toDelete = new();
+        foreach (var x in this.essentialNodes.QueueChain)
+        {
+            if (!x.Address.IsValid())
+            {
+                toDelete.Add(x);
+            }
+        }
+
+        foreach (var x in toDelete)
+        {
+            x.Goshujin = null;
+        }
     }
 
     private Information information;
