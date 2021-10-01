@@ -52,14 +52,14 @@ public class Control
         this.Netsphere.Configure();
     }
 
-    public void Deserialize()
+    public void Load()
     {
-        Radio.SendAsync(new Message.DeserializeAsync()).Wait(this.Core.CancellationToken);
+        Radio.SendAsync(new Message.LoadAsync()).Wait(this.Core.CancellationToken);
     }
 
-    public void Serialize()
+    public void Save()
     {
-        Radio.SendAsync(new Message.SerializeAsync()).Wait(this.Core.CancellationToken);
+        Radio.SendAsync(new Message.SaveAsync()).Wait(this.Core.CancellationToken);
     }
 
     public void ConfigureLogger()

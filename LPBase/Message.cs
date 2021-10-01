@@ -5,22 +5,14 @@ using System.Threading;
 namespace LP;
 
 public static class Message
-{// Create instance -> Configure -> SerializeAsync -> Start/Stop loop -> DeserializeAsync
-    public class Configure
-    {
-    }
+{// Create instance -> Configure -> LoadAsync -> Start/Stop loop -> SaveAsync
+    public record Configure();
 
-    public class SerializeAsync
-    {
-    }
+    public record SaveAsync();
 
-    public record DeserializeAsync();
+    public record LoadAsync();
 
-    public class Start
-    {
-    }
+    public record Start();
 
-    public class Stop
-    {
-    }
+    public record Stop();
 }

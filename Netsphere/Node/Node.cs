@@ -18,15 +18,15 @@ public class Node
         this.information = information;
 
         Radio.Open<Message.Configure>(this.Configure);
-        Radio.OpenAsync<Message.DeserializeAsync>(this.Deserialize);
-        Radio.OpenAsync<Message.SerializeAsync>(this.Serialize);
+        Radio.OpenAsync<Message.LoadAsync>(this.Load);
+        Radio.OpenAsync<Message.SaveAsync>(this.Save);
     }
 
     public void Configure(Message.Configure message)
     {
     }
 
-    public async Task Deserialize(Message.DeserializeAsync message)
+    public async Task Load(Message.LoadAsync message)
     {
         try
         {
@@ -63,7 +63,7 @@ public class Node
         Console.WriteLine("Node.Deserialize");
     }
 
-    public async Task Serialize(Message.SerializeAsync message)
+    public async Task Save(Message.SaveAsync message)
     {
         var path = Path.Combine(this.information.RootDirectory, FileName);
         using (var file = File.Open(path, FileMode.Create))
@@ -75,8 +75,9 @@ public class Node
         Console.WriteLine("Node.Serialize");
     }
 
-    public void Validate()
+    private void Validate()
     {
+        // Validate essential nodes.
         List<EssentialNodeAddress> toDelete = new();
         foreach (var x in this.essentialNodes.QueueChain)
         {
