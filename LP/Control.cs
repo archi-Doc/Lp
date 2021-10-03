@@ -3,6 +3,7 @@
 #pragma warning disable SA1210 // Using directives should be ordered alphabetically by namespace
 global using System;
 global using System.IO;
+global using System.Threading.Tasks;
 global using Arc.Threading;
 global using BigMachines;
 global using CrossChannel;
@@ -20,7 +21,7 @@ public class Control
     {
         // Base
         container.Register<Hash>(Reuse.Transient);
-        container.RegisterDelegate(x => new BigMachine<Identifier>(ThreadCore.Root, container), Reuse.Singleton);
+        container.RegisterDelegate(x => new BigMachine<Identifier>(container), Reuse.Singleton);
 
         // Main services
         container.Register<Information>(Reuse.Singleton);
@@ -40,6 +41,7 @@ public class Control
         this.Netsphere = netsphere;
 
         this.Core = new(ThreadCore.Root);
+        this.BigMachine.Core.ChangeParent(this.Core);
     }
 
     public void Configure()
@@ -48,18 +50,16 @@ public class Control
         this.ConfigureControl();
 
         Radio.Send(new Message.Configure());
-
-        this.Netsphere.Configure();
     }
 
-    public void Load()
+    public async Task LoadAsync()
     {
-        Radio.SendAsync(new Message.LoadAsync()).Wait(this.Core.CancellationToken);
+        await Radio.SendAsync(new Message.LoadAsync());
     }
 
-    public void Save()
+    public async Task SaveAsync()
     {
-        Radio.SendAsync(new Message.SaveAsync()).Wait(this.Core.CancellationToken);
+        await Radio.SendAsync(new Message.SaveAsync());
     }
 
     public void ConfigureLogger()
@@ -91,7 +91,9 @@ public class Control
         Log.Information(this.Info.ToString());
         Log.Information($"Current time: {Time.StartupTime}");
 
-        this.Netsphere.Start(this.Core);
+        Radio.Send(new Message.Start(this.Core));
+
+        this.BigMachine.Start();
     }
 
     public void MainLoop()

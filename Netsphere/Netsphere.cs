@@ -23,14 +23,10 @@ public class Netsphere
         this.Node = node;
 
         Radio.Open<Message.Configure>(this.Configure);
+        Radio.Open<Message.Start>(this.Start);
     }
 
     public void Configure(Message.Configure message)
-    {
-        return;
-    }
-
-    public void Configure()
     {
         // Set port number
         if (this.information.ConsoleOptions.NetsphereOptions.Port < Constants.MinPort ||
@@ -54,7 +50,7 @@ public class Netsphere
         this.bigMachine.TryCreate<Machines.NetsphereMachine.Interface>(Identifier.Zero);
     }
 
-    public void Start(ThreadCoreBase parent)
+    public void Start(Message.Start message)
     {
     }
 

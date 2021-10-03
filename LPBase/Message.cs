@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Threading;
+using Arc.Threading;
 
 namespace LP;
 
@@ -12,7 +13,7 @@ public static class Message
 
     public record LoadAsync();
 
-    public record Start();
+    public record Start(ThreadCoreBase Parent);
 
     public record Stop();
 }
