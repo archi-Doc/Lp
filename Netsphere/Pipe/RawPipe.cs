@@ -30,6 +30,8 @@ public class RawPipe
         {
         }
 
+        this.udpPort.Client.ReceiveTimeout = 100;
+
         this.core.Start();
     }
 
@@ -39,6 +41,27 @@ public class RawPipe
         while (true)
         {
             if (core.IsTerminated)
+            {
+                break;
+            }
+
+            try
+            {
+                IPEndPoint remoteEP = default!;
+                var bytes = this.udpPort.Receive(ref remoteEP);
+                var text = $"Received: {bytes.Length}";
+                if (bytes.Length >= sizeof(int))
+                {
+                    text += $", First data: {BitConverter.ToInt32(bytes)}";
+                }
+
+                Log.Debug(text);
+            }
+            catch
+            {
+            }
+
+            /*if (core.IsTerminated)
             {
                 break;
             }
@@ -52,7 +75,8 @@ public class RawPipe
                         break;
                     }
 
-                    Thread.Sleep(0); // Thread.Sleep(1) is actually not 1 millisecond.
+                    // Thread.Sleep(0); // Thread.Sleep(1) is actually not 1 millisecond. almost the same as Thread.Yield()
+                    Thread.Sleep(1); // 12-15 ms
                     // Log.Debug(this.Stopwatch.ElapsedTicks.ToString());
                 }
 
@@ -67,10 +91,7 @@ public class RawPipe
             if (bytes.Length >= sizeof(int))
             {
                 text += $", First data: {BitConverter.ToInt32(bytes)}";
-            }
-
-            // Log.Debug(text);
-            // Log.Debug($"Sender address: {remoteEP.Address}, port: {remoteEP.Port}");
+            }*/
         }
     }
 
