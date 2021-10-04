@@ -19,10 +19,9 @@ public partial class NetsphereMachine : Machine<Identifier>
     [StateMethod(0)]
     protected StateResult Initial(StateParameter parameter)
     {
-
         /*if (this.Netsphere.MyStatus.Type == MyStatus.ConnectionType.Unknown)
         {
-            if (this.Netsphere.World.GetRandomNodeAddress(out var nodeAddress))
+            if (this.Netsphere.Node.GetRandomNodeAddress(out var nodeAddress))
             {
                 using (var terminal = this.Netsphere.NetTerminal.Create(nodeAddress, this.BigMachine.Core))
                 {

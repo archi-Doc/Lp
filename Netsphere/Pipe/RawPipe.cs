@@ -11,9 +11,13 @@ namespace LP.Net;
 
 public class RawPipe
 {
-    public RawPipe(ThreadCoreBase core, int port)
+    public RawPipe()
     {
-        this.core = new ThreadCore(ThreadCore.Root, this.Process, false);
+    }
+
+    public void Start(ThreadCoreBase parentCore, int port)
+    {
+        this.core = new ThreadCore(parentCore, this.Process, false);
         this.core.Thread.Priority = ThreadPriority.AboveNormal;
 
         this.udpPort = new UdpClient(port);
@@ -40,7 +44,7 @@ public class RawPipe
             }
             else if (this.udpPort.Available == 0)
             {
-                this.Stopwatch.Start();
+                this.Stopwatch.Restart();
                 while (this.Stopwatch.Elapsed < TimeSpan.FromMilliseconds(1))
                 {
                     if (core.IsTerminated)
@@ -49,7 +53,10 @@ public class RawPipe
                     }
 
                     Thread.Sleep(0); // Thread.Sleep(1) is actually not 1 millisecond.
+                    // Log.Debug(this.Stopwatch.ElapsedTicks.ToString());
                 }
+
+                Log.Debug("");
 
                 continue;
             }

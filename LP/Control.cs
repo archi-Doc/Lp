@@ -20,7 +20,6 @@ public class Control
     public static void Register(Container container)
     {
         // Base
-        container.Register<Hash>(Reuse.Transient);
         container.RegisterDelegate(x => new BigMachine<Identifier>(container), Reuse.Singleton);
 
         // Main services
@@ -28,6 +27,7 @@ public class Control
         container.Register<Control>(Reuse.Singleton);
         container.Register<Netsphere>(Reuse.Singleton);
         container.Register<Node>(Reuse.Singleton);
+        container.Register<RawPipe>(Reuse.Singleton);
 
         // Machines
         container.Register<Machines.SingleMachine>();
@@ -66,8 +66,8 @@ public class Control
     {
         // Logger: Debug, Information, Warning, Error, Fatal
         Log.Logger = new LoggerConfiguration()
-        .MinimumLevel.Information()
-        .WriteTo.Console()
+        .MinimumLevel.Debug()
+        .WriteTo.Console(restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information)
         .WriteTo.File(
             Path.Combine(this.Info.RootDirectory, "logs", "log.txt"),
             rollingInterval: RollingInterval.Day,

@@ -16,11 +16,12 @@ namespace LP.Net;
 
 public class Netsphere
 {
-    public Netsphere(BigMachine<Identifier> bigMachine, Information information, Node node)
+    public Netsphere(BigMachine<Identifier> bigMachine, Information information, Node node, RawPipe rawPipe)
     {
         this.bigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.information = information;
         this.Node = node;
+        this.rawPipe = rawPipe;
 
         Radio.Open<Message.Configure>(this.Configure);
         Radio.Open<Message.Start>(this.Start);
@@ -52,6 +53,7 @@ public class Netsphere
 
     public void Start(Message.Start message)
     {
+        this.rawPipe.Start(message.ParentCore, this.information.ConsoleOptions.NetsphereOptions.Port);
     }
 
     public MyStatus MyStatus { get; } = new();
@@ -63,4 +65,6 @@ public class Netsphere
     private BigMachine<Identifier> bigMachine;
 
     private Information information;
+
+    private RawPipe rawPipe;
 }

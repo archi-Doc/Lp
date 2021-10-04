@@ -13,7 +13,7 @@ public static class Message
 
     public record LoadAsync();
 
-    public record Start(ThreadCoreBase Parent);
+    public record Start(ThreadCoreBase ParentCore);
 
     public record Stop();
 }
