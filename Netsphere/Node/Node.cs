@@ -59,8 +59,6 @@ public class Node
         }
 
         this.Validate();
-
-        Console.WriteLine("Node.Deserialize");
     }
 
     public async Task Save(Message.SaveAsync message)
@@ -71,8 +69,6 @@ public class Node
             file.Write(TinyhandSerializer.SerializeToUtf8(this.essentialNodes));
             // file.Write(TinyhandSerializer.Serialize(this.essentialNodes));
         }
-
-        Console.WriteLine("Node.Serialize");
     }
 
     private void Validate()

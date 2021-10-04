@@ -84,8 +84,7 @@ public class Control
     public void Start()
     {
         var s = this.Info.IsConsole ? " (Console)" : string.Empty;
-        Log.Information("LP Start" + s);
-        Log.Information("Press any key to exit");
+        Log.Information("LP Start" + s + " : Press any key to exit");
 
         Log.Information($"Console: {this.Info.IsConsole}, Root directory: {this.Info.RootDirectory}");
         Log.Information(this.Info.ToString());
@@ -102,7 +101,15 @@ public class Control
         {
             if (this.SafeKeyAvailable)
             {
-                break;
+                var keyInfo = Console.ReadKey(true);
+                if (keyInfo.Key == ConsoleKey.D)
+                {
+                    this.Dump();
+                }
+                else
+                {
+                    break;
+                }
             }
 
             this.Core.Sleep(100, 100);
@@ -145,4 +152,10 @@ public class Control
     public BigMachine<Identifier> BigMachine { get; }
 
     public Netsphere Netsphere { get; }
+
+    private void Dump()
+    {
+        Log.Information($"Dump:");
+        Log.Information($"MyStatus: {this.Netsphere.MyStatus.Type}");
+    }
 }
