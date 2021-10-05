@@ -25,6 +25,8 @@ namespace LPConsole
             var info = Program.Container.Resolve<Information>();
             info.Configure(option, true, "relay");
 
+            MultimediaTimer.TryCreate(1000, () => Console.WriteLine("Multimedia timer."));
+
             var control = Program.Container.Resolve<Control>();
             control.Configure();
             await control.LoadAsync();
