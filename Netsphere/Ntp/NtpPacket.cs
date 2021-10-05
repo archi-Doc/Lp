@@ -19,7 +19,7 @@ public class NtpPacket
     public static NtpPacket CreateSendPacket()
     {
         var packet = new byte[48];
-        var time = BitConverter.GetBytes(IPAddress.HostToNetworkOrder(DateTimeToNtpTimeStamp(DateTime.UtcNow)));
+        var time = BitConverter.GetBytes(IPAddress.HostToNetworkOrder(DateTimeToNtpTimeStamp(Time.GetFixedUtcNow())));
 
         packet[0] = 0x1B;
         Array.Copy(time, 0, packet, 40, 8);
@@ -29,7 +29,7 @@ public class NtpPacket
     public NtpPacket(byte[] packetData)
     {
         this.PacketData = packetData;
-        this.PacketCreatedTime = DateTime.UtcNow;
+        this.PacketCreatedTime = Time.GetFixedUtcNow();
     }
 
     private static DateTime GetCompensatingDatetime(uint seconds)
@@ -109,5 +109,5 @@ public class NtpPacket
     public TimeSpan RoundtripTime // t3 - t0 - (t2 - t1)
         => this.PacketCreatedTime - this.OriginateTimestamp - (this.TransmitTimestamp - this.ReceiveTimestamp);
 
-    public DateTime CorrectedUtcNow => DateTime.UtcNow + this.TimeOffset;
+    public DateTime CorrectedUtcNow => Time.GetFixedUtcNow() + this.TimeOffset;
 }

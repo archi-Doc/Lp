@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Net.Sockets;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using Netsphere;
 
@@ -9,7 +10,7 @@ namespace Netsphere.Ntp;
 public partial class NtpCorrection : UnitBase, IUnitSerializable
 {
     private const string FileName = "NtpNode.tinyhand";
-    private const int ParallelNumber = 4;
+    private const int ParallelNumber = 2;
     private const int MaxRoundtripMilliseconds = 1000;
     private readonly string[] hostNames =
     {
@@ -25,6 +26,13 @@ public partial class NtpCorrection : UnitBase, IUnitSerializable
     [ValueLinkObject]
     private partial class Item
     {
+        public enum State
+        {
+            Initial,
+            Retrieved,
+        }
+
+        [Link(Type = ChainType.List, Name = "List", Primary = true)]
         public Item()
         {
         }
@@ -34,21 +42,19 @@ public partial class NtpCorrection : UnitBase, IUnitSerializable
             this.hostname = hostname;
         }
 
-        public bool TimeoffsetRetrieved => this.TimeoffsetMillisecondsValue != 0;
+        [IgnoreMember]
+        public State CurrentState { get; set; } = State.Initial;
 
-        public void ResetTimeoffset() => this.TimeoffsetMillisecondsValue = 0;
+        [IgnoreMember]
+        public long TimeoffsetMilliseconds { get; set; }
 
-        [Link(Type = ChainType.Ordered, Primary = true)]
+        [Link(Type = ChainType.Ordered)]
         [Key(0)]
         private string hostname = string.Empty;
 
         [Link(Type = ChainType.Ordered, Accessibility = ValueLinkAccessibility.Public)]
         [Key(1)]
         private int roundtripMilliseconds = MaxRoundtripMilliseconds;
-
-        [Link(Type = ChainType.ReverseOrdered, Accessibility = ValueLinkAccessibility.Public)]
-        [Key(2)]
-        private int timeoffsetMilliseconds = 0;
     }
 
     public NtpCorrection(UnitContext context, ILogger<NtpCorrection> logger)
@@ -63,7 +69,7 @@ Retry:
         string[] hostnames;
         lock (this.syncObject)
         {
-            hostnames = this.goshujin.RoundtripMillisecondsChain.Where(x => !x.TimeoffsetRetrieved).Select(x => x.HostnameValue).Take(ParallelNumber).ToArray();
+            hostnames = this.goshujin.RoundtripMillisecondsChain.Where(x => x.CurrentState == Item.State.Initial).Select(x => x.HostnameValue).Take(ParallelNumber).ToArray();
         }
 
         if (hostnames.Length == 0)
@@ -105,19 +111,19 @@ Retry:
         return true;
     }
 
-    public (int MeanTimeoffset, int TimeoffsetCount) GetTimeoffset()
+    public (long MeanTimeoffset, int TimeoffsetCount) GetTimeoffset()
         => (this.meanTimeoffset, this.timeoffsetCount);
 
     public bool TryGetCorrectedUtcNow(out DateTime utcNow)
     {
         if (this.timeoffsetCount == 0)
         {
-            utcNow = DateTime.UtcNow;
+            utcNow = Time.GetFixedUtcNow();
             return false;
         }
         else
         {
-            utcNow = DateTime.UtcNow + TimeSpan.FromMilliseconds(this.meanTimeoffset);
+            utcNow = Time.GetFixedUtcNow() + TimeSpan.FromMilliseconds(this.meanTimeoffset);
             return true;
         }
     }
@@ -157,10 +163,10 @@ Retry:
                 }
             }
 
-            // Reset TimeoffsetMilliseconds
+            // Reset host
             foreach (var x in this.goshujin)
             {
-                x.ResetTimeoffset();
+                x.CurrentState = Item.State.Initial;
             }
         }
     }
@@ -198,15 +204,16 @@ Retry:
                 var result = await client.ReceiveAsync().WaitAsync(TimeSpan.FromSeconds(1), cancellationToken);
                 packet = new NtpPacket(result.Buffer);
 
-                this.logger?.TryGet()?.Log($"{hostname}, RoundtripTime: {packet.RoundtripTime.Milliseconds.ToString()} ms, TimeOffset: {packet.TimeOffset.Milliseconds.ToString()} ms");
+                this.logger?.TryGet()?.Log($"{hostname}, RoundtripTime: {(int)packet.RoundtripTime.TotalMilliseconds} ms, TimeOffset: {(int)packet.TimeOffset.TotalMilliseconds} ms");
 
                 lock (this.syncObject)
                 {
                     var item = this.goshujin.HostnameChain.FindFirst(hostname);
                     if (item != null)
                     {
-                        item.TimeoffsetMillisecondsValue = packet.TimeOffset.Milliseconds;
-                        item.RoundtripMillisecondsValue = packet.RoundtripTime.Milliseconds;
+                        item.CurrentState = Item.State.Retrieved;
+                        item.TimeoffsetMilliseconds = (long)packet.TimeOffset.TotalMilliseconds;
+                        item.RoundtripMillisecondsValue = (int)packet.RoundtripTime.TotalMilliseconds;
                         this.UpdateTimeoffset();
                     }
                 }
@@ -230,20 +237,12 @@ Retry:
     private void UpdateTimeoffset()
     {// lock (this.syncObject)
         int count = 0;
-        int timeoffset = 0;
+        long timeoffset = 0;
 
-        var item = this.goshujin.TimeoffsetMillisecondsChain.First;
-        while (item != null)
+        foreach (var x in this.goshujin.Where(x => x.CurrentState == Item.State.Retrieved))
         {
-            if (!item.TimeoffsetRetrieved)
-            {
-                break;
-            }
-
             count++;
-            timeoffset += item.TimeoffsetMillisecondsValue;
-
-            item = item.TimeoffsetMillisecondsLink.Next;
+            timeoffset += x.TimeoffsetMilliseconds;
         }
 
         this.timeoffsetCount = count;
@@ -260,6 +259,6 @@ Retry:
     private object syncObject = new();
     private Item.GoshujinClass goshujin = new();
     private int timeoffsetCount;
-    private int meanTimeoffset;
+    private long meanTimeoffset;
     private ILogger<NtpCorrection>? logger;
 }

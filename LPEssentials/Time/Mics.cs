@@ -21,10 +21,13 @@ public static class Mics
     public const long MicsPerMillisecond = 1_000;
     public const double MicsPerNanosecond = 0.001d;
     public static readonly double TimestampToMics;
+    private static readonly long FixedMics; // Fixed mics at application startup.
 
     static Mics()
     {
         TimestampToMics = 1_000_000d / Stopwatch.Frequency;
+        FixedMics = GetUtcNow() - (long)(Stopwatch.GetTimestamp() * TimestampToMics);
+
         TimeCorrection.Start();
     }
 
@@ -46,6 +49,13 @@ public static class Mics
     /// </summary>
     /// <returns><see cref="Mics"/> (microseconds).</returns>
     public static long GetUtcNow() => (long)(DateTime.UtcNow.Ticks * 0.1d);
+
+    /// <summary>
+    /// Gets the fixed <see cref="Mics"/> (microseconds) expressed as UTC.
+    /// Not affected by manual date/time changes.
+    /// </summary>
+    /// <returns><see cref="Mics"/> (microseconds).</returns>
+    public static long GetFixedUtcNow() => FixedMics + GetSystem();
 
     /// <summary>
     /// Get the corrected <see cref="Mics"/> expressed as UTC.
