@@ -15,6 +15,7 @@ namespace LP.Net;
 public class Pipe
 {
     private const int ReceiveTimeout = 100;
+    private const int SendIntervalMilliseconds = 1;
 
     internal class PipeRecvCore : ThreadCore
     {
@@ -86,7 +87,7 @@ public class Pipe
                 }
 
                 core.ProcessSend();
-                core.Sleep(1);
+                core.Sleep(SendIntervalMilliseconds);
             }
         }
 
@@ -94,16 +95,27 @@ public class Pipe
                 : base(parent, Process, false)
         {
             this.pipe = pipe;
-            this.timer = MultimediaTimer.TryCreate(1, this.ProcessSend);
+            this.timer = MultimediaTimer.TryCreate(1, this.ProcessSend); // Use multimedia timer if available.
         }
 
         public void ProcessSend()
-        {
+        {// Invoked by multiple threads.
             var udp = this.pipe.udpClient;
             if (udp == null)
             {
                 return;
             }
+
+            // Check interval.
+            var timeStamp = Stopwatch.GetTimestamp();
+            var previous = Volatile.Read(ref this.previousTimestamp);
+            var interval = Ticks.FromMilliseconds((double)SendIntervalMilliseconds / 2); // Half for margin.
+            if (timeStamp < (previous + interval))
+            {
+                return;
+            }
+
+            Volatile.Write(ref this.previousTimestamp, timeStamp);
         }
 
         protected override void Dispose(bool disposing)
@@ -114,6 +126,7 @@ public class Pipe
 
         private Pipe pipe;
         private MultimediaTimer? timer;
+        private long previousTimestamp;
     }
 
     public Pipe(Information information)
@@ -134,6 +147,7 @@ public class Pipe
         this.PrepareUdpClient(this.information.ConsoleOptions.NetsphereOptions.Port);
 
         this.recvCore.Start();
+        this.sendCore.Start();
     }
 
     public void Stop(Message.Stop message)

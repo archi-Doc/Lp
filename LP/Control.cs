@@ -125,10 +125,7 @@ public class Control
 
     public void Terminate()
     {
-        this.BigMachine.Core.Terminate();
         this.Core.Terminate();
-
-        this.BigMachine.Core.WaitForTermination(-1);
         this.Core.WaitForTermination(-1);
 
         Log.Information("LP Teminated");
