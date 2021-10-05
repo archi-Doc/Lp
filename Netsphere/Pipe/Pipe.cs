@@ -16,11 +16,11 @@ public class Pipe
 {
     private const int ReceiveTimeout = 100;
 
-    internal class PipeReadCore : ThreadCore
+    internal class PipeRecvCore : ThreadCore
     {
         public static void Process(object? parameter)
         {
-            var core = (PipeReadCore)parameter!;
+            var core = (PipeRecvCore)parameter!;
             while (true)
             {
                 if (core.IsTerminated)
@@ -64,7 +64,7 @@ public class Pipe
             }
         }
 
-        public PipeReadCore(ThreadCoreBase parent, Pipe pipe)
+        public PipeRecvCore(ThreadCoreBase parent, Pipe pipe)
                 : base(parent, Process, false)
         {
             this.pipe = pipe;
@@ -73,34 +73,100 @@ public class Pipe
         private Pipe pipe;
     }
 
+    internal class PipeSendCore : ThreadCore
+    {
+        public static void Process(object? parameter)
+        {
+            var core = (PipeSendCore)parameter!;
+            while (true)
+            {
+                if (core.IsTerminated)
+                {
+                    break;
+                }
+
+                core.ProcessSend();
+                core.Sleep(1);
+            }
+        }
+
+        public PipeSendCore(ThreadCoreBase parent, Pipe pipe)
+                : base(parent, Process, false)
+        {
+            this.pipe = pipe;
+            this.timer = MultimediaTimer.TryCreate(1, this.ProcessSend);
+        }
+
+        public void ProcessSend()
+        {
+            var udp = this.pipe.udpClient;
+            if (udp == null)
+            {
+                return;
+            }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            this.timer?.Dispose();
+            base.Dispose(disposing);
+        }
+
+        private Pipe pipe;
+        private MultimediaTimer? timer;
+    }
+
     public Pipe(Information information)
     {
         this.information = information;
 
         Radio.Open<Message.Start>(this.Start);
+        Radio.Open<Message.Stop>(this.Stop);
     }
 
     public void Start(Message.Start message)
     {
-        this.readCore = new PipeReadCore(message.ParentCore, this);
-        this.readCore.Thread.Priority = ThreadPriority.AboveNormal;
+        this.recvCore = new PipeRecvCore(message.ParentCore, this);
+        this.recvCore.Thread.Priority = ThreadPriority.AboveNormal;
+        this.sendCore = new PipeSendCore(message.ParentCore, this);
+        this.sendCore.Thread.Priority = ThreadPriority.AboveNormal;
 
-        this.udpClient = new UdpClient(this.information.ConsoleOptions.NetsphereOptions.Port);
+        this.PrepareUdpClient(this.information.ConsoleOptions.NetsphereOptions.Port);
+
+        this.recvCore.Start();
+    }
+
+    public void Stop(Message.Stop message)
+    {
+        this.recvCore?.Dispose();
+        this.sendCore?.Dispose();
+        this.udpClient?.Dispose();
+    }
+
+    private void PrepareUdpClient(int port)
+    {
+        var udp = new UdpClient(port);
         try
         {
             const int SIO_UDP_CONNRESET = -1744830452;
-            this.udpClient.Client.IOControl((IOControlCode)SIO_UDP_CONNRESET, new byte[] { 0, 0, 0, 0 }, null);
+            udp.Client.IOControl((IOControlCode)SIO_UDP_CONNRESET, new byte[] { 0, 0, 0, 0 }, null);
         }
         catch
         {
         }
 
-        this.udpClient.Client.ReceiveTimeout = ReceiveTimeout;
-        this.readCore.Start();
+        udp.Client.ReceiveTimeout = ReceiveTimeout;
+
+        var prev = Interlocked.Exchange(ref this.udpClient, udp);
+        if (prev != null)
+        {
+            prev.Dispose();
+        }
     }
 
     private Information information;
-    private PipeReadCore? readCore;
+    private PipeRecvCore? recvCore;
+    private PipeSendCore? sendCore;
     private UdpClient? udpClient;
 
     private Stopwatch Stopwatch { get; } = new();
