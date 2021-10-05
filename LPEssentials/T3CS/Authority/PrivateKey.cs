@@ -136,7 +136,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
     [Key(4)]
     private readonly byte[] d = Array.Empty<byte>();
 
-    public uint KeyType => (uint)(this.rawType >>> 2);
+    public uint KeyType => (uint)(this.rawType >> 2);
 
     public uint YTilde => (uint)(this.rawType & 1);
 

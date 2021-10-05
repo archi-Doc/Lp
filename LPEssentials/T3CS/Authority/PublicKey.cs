@@ -62,7 +62,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
     [Key(4)]
     private readonly ulong x3;
 
-    public uint KeyType => (uint)(this.rawType >>> 2);
+    public uint KeyType => (uint)(this.rawType >> 2);
 
     public uint YTilde => (uint)(this.rawType & 1);
 
