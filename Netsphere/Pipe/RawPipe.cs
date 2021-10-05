@@ -11,92 +11,88 @@ namespace LP.Net;
 
 public class RawPipe
 {
-    public RawPipe()
+    internal class PipeReadCore : ThreadCore
     {
+        public static void Process(object? parameter)
+        {
+            var core = (PipeReadCore)parameter!;
+            while (true)
+            {
+                if (core.IsTerminated)
+                {
+                    break;
+                }
+
+                var udp = core.rawPipe.udpClient;
+                if (udp == null)
+                {
+                    break;
+                }
+
+                try
+                {
+                    IPEndPoint remoteEP = default!;
+                    var bytes = udp.Receive(ref remoteEP);
+
+                    var memory = new ReadOnlyMemory<byte>(bytes);
+                    try
+                    {
+
+                    }
+
+                    /*IPEndPoint remoteEP = default!;
+                    var bytes = this.udpClient.Receive(ref remoteEP);
+                    var text = $"Received: {bytes.Length}";
+                    if (bytes.Length >= sizeof(int))
+                    {
+                        text += $", First data: {BitConverter.ToInt32(bytes)}";
+                    }
+
+                    Log.Debug(text);*/
+                }
+                catch
+                {
+                }
+            }
+        }
+
+        public PipeReadCore(ThreadCoreBase parent, RawPipe pipe)
+                : base(parent, Process, false)
+        {
+            this.rawPipe = pipe;
+        }
+
+        private RawPipe rawPipe;
     }
 
-    public void Start(ThreadCoreBase parentCore, int port)
+    public RawPipe(Information information)
     {
-        this.core = new ThreadCore(parentCore, this.Process, false);
-        this.core.Thread.Priority = ThreadPriority.AboveNormal;
+        this.information = information;
 
-        this.udpPort = new UdpClient(port);
+        Radio.Open<Message.Start>(this.Start);
+    }
+
+    public void Start(Message.Start message)
+    {
+        this.readCore = new PipeReadCore(message.ParentCore, this);
+        this.readCore.Thread.Priority = ThreadPriority.AboveNormal;
+
+        this.udpClient = new UdpClient(this.information.ConsoleOptions.NetsphereOptions.Port);
         try
         {
             const int SIO_UDP_CONNRESET = -1744830452;
-            this.udpPort.Client.IOControl((IOControlCode)SIO_UDP_CONNRESET, new byte[] { 0, 0, 0, 0 }, null);
+            this.udpClient.Client.IOControl((IOControlCode)SIO_UDP_CONNRESET, new byte[] { 0, 0, 0, 0 }, null);
         }
         catch
         {
         }
 
-        this.udpPort.Client.ReceiveTimeout = 100;
-
-        this.core.Start();
+        this.readCore.Start();
     }
 
-    private void Process(object? param)
-    {
-        var core = (ThreadCore)param!;
-        while (true)
-        {
-            if (core.IsTerminated)
-            {
-                break;
-            }
-
-            try
-            {
-                IPEndPoint remoteEP = default!;
-                var bytes = this.udpPort.Receive(ref remoteEP);
-                var text = $"Received: {bytes.Length}";
-                if (bytes.Length >= sizeof(int))
-                {
-                    text += $", First data: {BitConverter.ToInt32(bytes)}";
-                }
-
-                Log.Debug(text);
-            }
-            catch
-            {
-            }
-
-            /*if (core.IsTerminated)
-            {
-                break;
-            }
-            else if (this.udpPort.Available == 0)
-            {
-                this.Stopwatch.Restart();
-                while (this.Stopwatch.Elapsed < TimeSpan.FromMilliseconds(1))
-                {
-                    if (core.IsTerminated)
-                    {
-                        break;
-                    }
-
-                    // Thread.Sleep(0); // Thread.Sleep(1) is actually not 1 millisecond. almost the same as Thread.Yield()
-                    Thread.Sleep(1); // 12-15 ms
-                    // Log.Debug(this.Stopwatch.ElapsedTicks.ToString());
-                }
-
-                Log.Debug("");
-
-                continue;
-            }
-
-            IPEndPoint remoteEP = default!;
-            var bytes = this.udpPort.Receive(ref remoteEP);
-            var text = $"Received: {bytes.Length}";
-            if (bytes.Length >= sizeof(int))
-            {
-                text += $", First data: {BitConverter.ToInt32(bytes)}";
-            }*/
-        }
-    }
-
-    private ThreadCore core;
-    private UdpClient udpPort;
+    private Information information;
+    private PipeReadCore? readCore;
+    private UdpClient? udpClient;
 
     private Stopwatch Stopwatch { get; } = new();
 }
