@@ -148,9 +148,7 @@ public class Pipe
     public void Start(Message.Start message)
     {
         this.recvCore = new PipeRecvCore(message.ParentCore, this);
-        this.recvCore.Thread.Priority = ThreadPriority.AboveNormal;
         this.sendCore = new PipeSendCore(message.ParentCore, this);
-        this.sendCore.Thread.Priority = ThreadPriority.AboveNormal;
 
         this.PrepareUdpClient(this.information.ConsoleOptions.NetsphereOptions.Port);
 
