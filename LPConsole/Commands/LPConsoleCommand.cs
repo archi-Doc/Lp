@@ -34,6 +34,7 @@ namespace LPConsole
 
             control.MainLoop();
 
+            control.Stop();
             await control.SaveAsync();
             control.Terminate();
         }

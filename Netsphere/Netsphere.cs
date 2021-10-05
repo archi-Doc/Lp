@@ -16,7 +16,7 @@ namespace LP.Net;
 
 public class Netsphere
 {
-    public Netsphere(BigMachine<Identifier> bigMachine, Information information, Node node, RawPipe rawPipe)
+    public Netsphere(BigMachine<Identifier> bigMachine, Information information, Node node, Pipe rawPipe)
     {
         this.bigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.information = information;
@@ -65,5 +65,5 @@ public class Netsphere
 
     private Information information;
 
-    private RawPipe rawPipe;
+    private Pipe rawPipe;
 }

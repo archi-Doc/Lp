@@ -9,7 +9,10 @@ using Arc.Threading;
 
 namespace LP.Net;
 
-public class RawPipe
+/// <summary>
+/// Pipe provides low-level network service.
+/// </summary>
+public class Pipe
 {
     private const int ReceiveTimeout = 100;
 
@@ -25,7 +28,7 @@ public class RawPipe
                     break;
                 }
 
-                var udp = core.rawPipe.udpClient;
+                var udp = core.pipe.udpClient;
                 if (udp == null)
                 {
                     break;
@@ -61,16 +64,16 @@ public class RawPipe
             }
         }
 
-        public PipeReadCore(ThreadCoreBase parent, RawPipe pipe)
+        public PipeReadCore(ThreadCoreBase parent, Pipe pipe)
                 : base(parent, Process, false)
         {
-            this.rawPipe = pipe;
+            this.pipe = pipe;
         }
 
-        private RawPipe rawPipe;
+        private Pipe pipe;
     }
 
-    public RawPipe(Information information)
+    public Pipe(Information information)
     {
         this.information = information;
 

@@ -27,7 +27,7 @@ public class Control
         container.Register<Control>(Reuse.Singleton);
         container.Register<Netsphere>(Reuse.Singleton);
         container.Register<Node>(Reuse.Singleton);
-        container.Register<RawPipe>(Reuse.Singleton);
+        container.Register<Pipe>(Reuse.Singleton);
 
         // Machines
         container.Register<Machines.SingleMachine>();
@@ -95,6 +95,13 @@ public class Control
         this.BigMachine.Start();
     }
 
+    public void Stop()
+    {
+        Log.Information("LP Termination process initiated");
+
+        Radio.Send(new Message.Stop());
+    }
+
     public void MainLoop()
     {
         while (!this.Core.IsTerminated)
@@ -118,8 +125,6 @@ public class Control
 
     public void Terminate()
     {
-        Log.Information("LP Termination process initiated");
-
         this.BigMachine.Core.Terminate();
         this.Core.Terminate();
 
