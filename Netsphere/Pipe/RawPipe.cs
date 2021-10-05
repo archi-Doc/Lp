@@ -11,6 +11,8 @@ namespace LP.Net;
 
 public class RawPipe
 {
+    private const int ReceiveTimeout = 100;
+
     internal class PipeReadCore : ThreadCore
     {
         public static void Process(object? parameter)
@@ -37,9 +39,10 @@ public class RawPipe
                     var memory = new ReadOnlyMemory<byte>(bytes);
                     while (!memory.IsEmpty)
                     {
-                        var piece = TinyhandSerializer.Deserialize<IPiece>(memory, null, out var bytesRead);
+                        /*var piece = TinyhandSerializer.Deserialize<IPiece>(memory, null, out var bytesRead);
                         core.NetSpherer.Receive(remoteEP, piece);
-                        memory = memory.Slice(bytesRead);
+                        memory = memory.Slice(bytesRead);*/
+                        memory = memory.Slice(1);
                     }
 
                     /*IPEndPoint remoteEP = default!;
@@ -89,6 +92,7 @@ public class RawPipe
         {
         }
 
+        this.udpClient.Client.ReceiveTimeout = ReceiveTimeout;
         this.readCore.Start();
     }
 

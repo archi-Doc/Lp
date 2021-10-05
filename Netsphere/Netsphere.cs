@@ -53,7 +53,6 @@ public class Netsphere
 
     public void Start(Message.Start message)
     {
-        this.rawPipe.Start(message.ParentCore, this.information.ConsoleOptions.NetsphereOptions.Port);
     }
 
     public MyStatus MyStatus { get; } = new();
