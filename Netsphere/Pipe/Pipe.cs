@@ -116,6 +116,11 @@ public class Pipe
             }
 
             Volatile.Write(ref this.previousTimestamp, timeStamp);
+
+            if (this.count++ < 50)
+            {
+                Log.Debug("First 50");
+            }
         }
 
         protected override void Dispose(bool disposing)
@@ -127,6 +132,8 @@ public class Pipe
         private Pipe pipe;
         private MultimediaTimer? timer;
         private long previousTimestamp;
+
+        private int count = 0;
     }
 
     public Pipe(Information information)
