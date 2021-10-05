@@ -1,12 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace LPBase
+namespace LP;
+
+[TinyhandUnion(0, typeof(Piece_Punch))]
+public partial interface IPiece
 {
-    internal class Piece
-    {
-    }
+}
+
+[TinyhandObject]
+public partial class Piece_Punch : IPiece
+{
 }

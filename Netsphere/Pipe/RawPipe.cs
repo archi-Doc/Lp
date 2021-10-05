@@ -35,9 +35,11 @@ public class RawPipe
                     var bytes = udp.Receive(ref remoteEP);
 
                     var memory = new ReadOnlyMemory<byte>(bytes);
-                    try
+                    while (!memory.IsEmpty)
                     {
-
+                        var piece = TinyhandSerializer.Deserialize<IPiece>(memory, null, out var bytesRead);
+                        core.NetSpherer.Receive(remoteEP, piece);
+                        memory = memory.Slice(bytesRead);
                     }
 
                     /*IPEndPoint remoteEP = default!;
