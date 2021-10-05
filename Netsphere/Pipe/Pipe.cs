@@ -87,7 +87,7 @@ public class Pipe
                 }
 
                 core.ProcessSend();
-                core.Sleep(SendIntervalMilliseconds);
+                core.Sleep(SendIntervalMilliseconds, SendIntervalMilliseconds);
             }
         }
 
