@@ -89,7 +89,7 @@ public class Pipe
                 core.ProcessSend();
 
                 // core.Sleep(SendIntervalMilliseconds);
-                ThreadCore.TryNanoSleep(SendIntervalNanoseconds);
+                core.TryNanoSleep(SendIntervalNanoseconds);
             }
         }
 
