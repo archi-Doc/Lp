@@ -50,9 +50,9 @@ public partial class Identifier : IEquatable<Identifier>
 
     public Identifier(byte[] byteArray)
     {
-        if (byteArray.Length < Constants.HashBytes)
+        if (byteArray.Length < Hash.HashBytes)
         {
-            throw new ArgumentException($"Length of a byte array must be at least {Constants.HashBytes}");
+            throw new ArgumentException($"Length of a byte array must be at least {Hash.HashBytes}");
         }
 
         var s = byteArray.AsSpan();
@@ -79,9 +79,9 @@ public partial class Identifier : IEquatable<Identifier>
 
     public bool TryWriteBytes(Span<byte> destination)
     {
-        if (destination.Length <= Constants.HashBytes)
+        if (destination.Length <= Hash.HashBytes)
         {
-            throw new ArgumentException($"Length of a byte array must be at least {Constants.HashBytes}");
+            throw new ArgumentException($"Length of a byte array must be at least {Hash.HashBytes}");
         }
 
         var d = destination;

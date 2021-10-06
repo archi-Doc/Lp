@@ -40,5 +40,5 @@ public class NodeTest
         CreateAddress("2404:6800:4004:80a::2004").IsValid().IsTrue();
     }
 
-    public NodeAddress CreateAddress(string address) => new NodeAddress(IPAddress.Parse(address), LP.Net.Constants.MinPort);
+    public NodeAddress CreateAddress(string address) => new NodeAddress(IPAddress.Parse(address), Netsphere.MinPort);
 }

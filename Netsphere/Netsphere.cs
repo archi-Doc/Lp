@@ -16,6 +16,10 @@ namespace LP.Net;
 
 public class Netsphere
 {
+    public const int MaxPayload = 1432; // 1432 bytes
+    public const int MinPort = 49152; // Ephemeral port 49152 - 60999
+    public const int MaxPort = 60999;
+
     public Netsphere(BigMachine<Identifier> bigMachine, Information information, Node node, Pipe rawPipe)
     {
         this.bigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
@@ -30,8 +34,8 @@ public class Netsphere
     public void Configure(Message.Configure message)
     {
         // Set port number
-        if (this.information.ConsoleOptions.NetsphereOptions.Port < Constants.MinPort ||
-            this.information.ConsoleOptions.NetsphereOptions.Port > Constants.MaxPort)
+        if (this.information.ConsoleOptions.NetsphereOptions.Port < Netsphere.MinPort ||
+            this.information.ConsoleOptions.NetsphereOptions.Port > Netsphere.MaxPort)
         {
             var showWarning = false;
             if (this.information.ConsoleOptions.NetsphereOptions.Port != 0)
@@ -39,10 +43,10 @@ public class Netsphere
                 showWarning = true;
             }
 
-            this.information.ConsoleOptions.NetsphereOptions.Port = Random.Pseudo.NextInt(Constants.MinPort, Constants.MaxPort + 1);
+            this.information.ConsoleOptions.NetsphereOptions.Port = Random.Pseudo.NextInt(Netsphere.MinPort, Netsphere.MaxPort + 1);
             if (showWarning)
             {
-                Log.Warning($"Port number must be between {Constants.MinPort} and {Constants.MaxPort}");
+                Log.Warning($"Port number must be between {Netsphere.MinPort} and {Netsphere.MaxPort}");
                 Log.Information($"Port number is set to {this.information.ConsoleOptions.NetsphereOptions.Port}");
             }
         }
