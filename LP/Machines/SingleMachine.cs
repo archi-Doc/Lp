@@ -17,7 +17,7 @@ public partial class SingleMachine : Machine<Identifier>
     [StateMethod(0)]
     protected StateResult Initial(StateParameter parameter)
     {
-        Console.WriteLine($"Single: ({this.Identifier.ToString()}) - {this.Count++}");
+        // Console.WriteLine($"Single: ({this.Identifier.ToString()}) - {this.Count++}");
 
         return StateResult.Continue;
     }

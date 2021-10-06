@@ -8,6 +8,9 @@ namespace LP;
 
 public record LPConsoleOptions
 {
+    [SimpleOption("development", description: "Development")]
+    public bool Development { get; init; } = false;
+
     [SimpleOption("mode", description: "LP mode (relay, merger, user)")]
     public string Mode { get; init; } = string.Empty;
 

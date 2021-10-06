@@ -9,24 +9,24 @@ using System.Threading;
 using System.Threading.Tasks;
 using Arc.Collections;
 using Arc.Crypto;
-using CrossLink;
+using ValueLink;
 
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
 #pragma warning disable SA1401 // Fields should be private
 
 namespace LP;
 
-[CrossLinkObject]
+[ValueLinkObject]
 internal partial class TimeCorrection
 {
     [Link(Type = ChainType.QueueList, Name = "Queue")]
     internal TimeCorrection(long difference)
     {
-        this.difference = difference;
+        this.Difference = difference;
     }
 
     [Link(Type = ChainType.Ordered)]
-    internal long difference;
+    internal long Difference;
 }
 
 public static class Time
@@ -34,7 +34,7 @@ public static class Time
     /// <summary>
     /// The maximum number of time corrections.
     /// </summary>
-    public const uint MaxCorrections = 1000;
+    public const uint MaxCorrections = 1_000;
 
     /// <summary>
     /// The minimum number of corrections required for a valid corrected time.
@@ -129,7 +129,7 @@ public static class Time
             long total = 0;
             for (var i = 0; i < half; i++)
             {
-                total += node!.difference;
+                total += node!.Difference;
                 node = node!.DifferenceLink.Next;
             }
 

@@ -3,8 +3,10 @@
 #pragma warning disable SA1210 // Using directives should be ordered alphabetically by namespace
 global using System;
 global using System.IO;
+global using System.Threading.Tasks;
 global using Arc.Threading;
 global using BigMachines;
+global using CrossChannel;
 global using LP;
 global using Serilog;
 global using Tinyhand;
@@ -18,13 +20,14 @@ public class Control
     public static void Register(Container container)
     {
         // Base
-        container.Register<Hash>(Reuse.Transient);
-        container.RegisterDelegate(x => new BigMachine<Identifier>(ThreadCore.Root, container), Reuse.Singleton);
+        container.RegisterDelegate(x => new BigMachine<Identifier>(container), Reuse.Singleton);
 
         // Main services
         container.Register<Information>(Reuse.Singleton);
         container.Register<Control>(Reuse.Singleton);
         container.Register<Netsphere>(Reuse.Singleton);
+        container.Register<Node>(Reuse.Singleton);
+        container.Register<Pipe>(Reuse.Singleton);
 
         // Machines
         container.Register<Machines.SingleMachine>();
@@ -38,21 +41,33 @@ public class Control
         this.Netsphere = netsphere;
 
         this.Core = new(ThreadCore.Root);
+        this.BigMachine.Core.ChangeParent(this.Core);
     }
 
     public void Configure()
     {
         this.ConfigureLogger();
         this.ConfigureControl();
-        this.Netsphere.Configure();
+
+        Radio.Send(new Message.Configure());
+    }
+
+    public async Task LoadAsync()
+    {
+        await Radio.SendAsync(new Message.LoadAsync());
+    }
+
+    public async Task SaveAsync()
+    {
+        await Radio.SendAsync(new Message.SaveAsync());
     }
 
     public void ConfigureLogger()
     {
         // Logger: Debug, Information, Warning, Error, Fatal
         Log.Logger = new LoggerConfiguration()
-        .MinimumLevel.Information()
-        .WriteTo.Console()
+        .MinimumLevel.Debug()
+        .WriteTo.Console(restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information)
         .WriteTo.File(
             Path.Combine(this.Info.RootDirectory, "logs", "log.txt"),
             rollingInterval: RollingInterval.Day,
@@ -69,14 +84,22 @@ public class Control
     public void Start()
     {
         var s = this.Info.IsConsole ? " (Console)" : string.Empty;
-        Log.Information("LP Start" + s);
-        Log.Information("Press any key to exit");
+        Log.Information("LP Start" + s + " : Press any key to exit");
 
         Log.Information($"Console: {this.Info.IsConsole}, Root directory: {this.Info.RootDirectory}");
         Log.Information(this.Info.ToString());
         Log.Information($"Current time: {Time.StartupTime}");
 
-        this.Netsphere.Start(this.Core);
+        Radio.Send(new Message.Start(this.Core));
+
+        this.BigMachine.Start();
+    }
+
+    public void Stop()
+    {
+        Log.Information("LP Termination process initiated");
+
+        Radio.Send(new Message.Stop());
     }
 
     public void MainLoop()
@@ -85,7 +108,15 @@ public class Control
         {
             if (this.SafeKeyAvailable)
             {
-                break;
+                var keyInfo = Console.ReadKey(true);
+                if (keyInfo.Key == ConsoleKey.D)
+                {
+                    this.Dump();
+                }
+                else
+                {
+                    break;
+                }
             }
 
             this.Core.Sleep(100, 100);
@@ -94,12 +125,7 @@ public class Control
 
     public void Terminate()
     {
-        Log.Information("LP Termination process initiated");
-
-        this.BigMachine.Core.Terminate();
         this.Core.Terminate();
-
-        this.BigMachine.Core.WaitForTermination(-1);
         this.Core.WaitForTermination(-1);
 
         Log.Information("LP Teminated");
@@ -128,4 +154,10 @@ public class Control
     public BigMachine<Identifier> BigMachine { get; }
 
     public Netsphere Netsphere { get; }
+
+    private void Dump()
+    {
+        Log.Information($"Dump:");
+        Log.Information($"MyStatus: {this.Netsphere.MyStatus.Type}");
+    }
 }
