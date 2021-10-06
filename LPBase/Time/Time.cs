@@ -34,7 +34,7 @@ public static class Time
     /// <summary>
     /// The maximum number of time corrections.
     /// </summary>
-    public const uint MaxCorrections = 1000;
+    public const uint MaxCorrections = 1_000;
 
     /// <summary>
     /// The minimum number of corrections required for a valid corrected time.

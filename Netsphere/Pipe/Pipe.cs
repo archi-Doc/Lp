@@ -15,7 +15,7 @@ namespace LP.Net;
 public class Pipe
 {
     private const int ReceiveTimeout = 100;
-    private const int SendIntervalMilliseconds = 1;
+    private const int SendIntervalNanoseconds = 1_000_000;
 
     internal class PipeRecvCore : ThreadCore
     {
@@ -87,8 +87,9 @@ public class Pipe
                 }
 
                 core.ProcessSend();
-                // core.Sleep(SendIntervalMilliseconds, SendIntervalMilliseconds);
-                Thread.Sleep(1);
+
+                // core.Sleep(SendIntervalMilliseconds);
+                ThreadCore.TryNanoSleep(SendIntervalNanoseconds);
             }
         }
 
@@ -108,15 +109,15 @@ public class Pipe
             }
 
             // Check interval.
-            var timeStamp = Stopwatch.GetTimestamp();
+            var currentTicks = Ticks.GetCurrent();
             var previous = Volatile.Read(ref this.previousTimestamp);
-            var interval = Ticks.FromMilliseconds((double)SendIntervalMilliseconds / 2); // Half for margin.
-            if (timeStamp < (previous + interval))
+            var interval = Ticks.FromNanoseconds((double)SendIntervalNanoseconds / 2); // Half for margin.
+            if (currentTicks < (previous + interval))
             {
                 return;
             }
 
-            Volatile.Write(ref this.previousTimestamp, timeStamp);
+            Volatile.Write(ref this.previousTimestamp, currentTicks);
 
             if (this.count++ < 50)
             {
