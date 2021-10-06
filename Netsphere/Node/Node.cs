@@ -31,12 +31,15 @@ public class Node
         try
         {
             var path = Path.Combine(this.information.RootDirectory, FileName);
-            var bytes = await File.ReadAllBytesAsync(path);
-            // this.essentialNodes = TinyhandSerializer.Deserialize<EssentialNodeAddress.GoshujinClass>(bytes);
-            var g = TinyhandSerializer.DeserializeFromUtf8<EssentialNodeAddress.GoshujinClass>(bytes);
-            if (g != null)
+            if (File.Exists(path))
             {
-                this.essentialNodes = g;
+                var bytes = await File.ReadAllBytesAsync(path);
+                // this.essentialNodes = TinyhandSerializer.Deserialize<EssentialNodeAddress.GoshujinClass>(bytes);
+                var g = TinyhandSerializer.DeserializeFromUtf8<EssentialNodeAddress.GoshujinClass>(bytes);
+                if (g != null)
+                {
+                    this.essentialNodes = g;
+                }
             }
         }
         catch
