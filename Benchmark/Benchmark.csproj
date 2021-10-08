@@ -5,6 +5,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <LangVersion>default</LangVersion>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
