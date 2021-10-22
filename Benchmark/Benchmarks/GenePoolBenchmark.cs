@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using Arc.Crypto;
 using Benchmark.Design;
 using BenchmarkDotNet.Attributes;
+using LP;
 
 namespace Benchmark;
 

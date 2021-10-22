@@ -2,7 +2,7 @@
 
 using System;
 
-namespace Benchmark;
+namespace Benchmark.Design;
 
 public class Identifier_ClassULong
 {
