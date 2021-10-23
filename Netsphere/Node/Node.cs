@@ -49,7 +49,6 @@ public class Node
 
         // Load NetsphereOptions.Nodes
         var nodes = this.information.ConsoleOptions.NetsphereOptions.Nodes;
-        // nodes = "192.168.0.1:1000,, [192.168.0.2]:200, 192.168.0.1:100";
         foreach (var x in nodes.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
             if (NodeAddress.TryParse(x, out var address))
@@ -69,9 +68,31 @@ public class Node
         var path = Path.Combine(this.information.RootDirectory, FileName);
         using (var file = File.Open(path, FileMode.Create))
         {
-            file.Write(TinyhandSerializer.SerializeToUtf8(this.essentialNodes));
-            // file.Write(TinyhandSerializer.Serialize(this.essentialNodes));
+            byte[] b;
+            lock (this.essentialNodes)
+            {
+                b = TinyhandSerializer.SerializeToUtf8(this.essentialNodes); // TinyhandSerializer.Serialize(this.essentialNodes)
+            }
+
+            file.Write(b);
         }
+    }
+
+    public bool GetRandomNodeAddress([NotNullWhen(true)] out NodeAddress? nodeAddress)
+    {
+        nodeAddress = null;
+        lock (this.essentialNodes)
+        {
+            var n = Random.Pseudo.NextInt(0, this.essentialNodes.QueueChain.Count);
+            this.essentialNodes.QueueChain.TryPeek(out var node);
+            if (node != null)
+            {
+                nodeAddress = node.Address;
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void Validate()

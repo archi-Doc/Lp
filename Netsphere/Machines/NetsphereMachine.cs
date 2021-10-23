@@ -19,17 +19,17 @@ public partial class NetsphereMachine : Machine<Identifier>
     [StateMethod(0)]
     protected StateResult Initial(StateParameter parameter)
     {
-        /*if (this.Netsphere.MyStatus.Type == MyStatus.ConnectionType.Unknown)
+        if (this.Netsphere.MyStatus.Type == MyStatus.ConnectionType.Unknown)
         {
             if (this.Netsphere.Node.GetRandomNodeAddress(out var nodeAddress))
             {
-                using (var terminal = this.Netsphere.NetTerminal.Create(nodeAddress, this.BigMachine.Core))
+                /*using (var terminal = this.Netsphere.NetTerminal.Create(nodeAddress, this.BigMachine.Core))
                 {
                     terminal.Send(Punch);
                     terminal.Receive();
-                }
+                }*/
             }
-        }*/
+        }
 
         return StateResult.Continue;
     }
