@@ -83,10 +83,12 @@ public class Node
         nodeAddress = null;
         lock (this.essentialNodes)
         {
-            var n = Random.Pseudo.NextInt(0, this.essentialNodes.QueueChain.Count);
-            this.essentialNodes.QueueChain.TryPeek(out var node);
+            var node = this.essentialNodes.LinkedListChain.First;
             if (node != null)
             {
+                this.essentialNodes.LinkedListChain.Remove(node);
+                this.essentialNodes.LinkedListChain.AddLast(node);
+
                 nodeAddress = node.Address;
                 return true;
             }
@@ -99,7 +101,7 @@ public class Node
     {
         // Validate essential nodes.
         List<EssentialNodeAddress> toDelete = new();
-        foreach (var x in this.essentialNodes.QueueChain)
+        foreach (var x in this.essentialNodes.LinkedListChain)
         {
             if (!x.Address.IsValid())
             {
@@ -128,7 +130,7 @@ internal partial class EssentialNodeAddress
     [Key(0)]
     public NodeAddress Address { get; private set; }
 
-    [Link(Type = ChainType.QueueList, Name = "Queue", Primary = true)]
+    [Link(Type = ChainType.LinkedList, Name = "LinkedList", Primary = true)]
     public EssentialNodeAddress(NodeAddress address)
     {
         this.Address = address;
