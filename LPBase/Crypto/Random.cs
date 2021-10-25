@@ -47,7 +47,13 @@ public static class Random
         }
     }
 
+    /// <summary>
+    ///  Gets cryptographically secure pseudo random number pool.
+    /// </summary>
     public static RandomVault Crypto { get; }
 
+    /// <summary>
+    ///  Gets pseudo random number pool.
+    /// </summary>
     public static RandomVault Pseudo { get; }
 }

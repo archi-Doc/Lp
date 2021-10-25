@@ -26,11 +26,11 @@ public partial class EssentialNetMachine : Machine<Identifier>
         {
             this.Netsphere.EssentialNode.Report(nodeAddress, NodeConnectionResult.Success);
 
-            /*using (var terminal = this.Netsphere.NetTerminal.Create(nodeAddress, this.BigMachine.Core))
+            using (var terminal = this.Netsphere.NetTerminal.Create(nodeAddress))
             {
-                terminal.Send(Punch);
-                terminal.Receive();
-            }*/
+                // terminal.Send(Punch);
+                // terminal.Receive();
+            }
         }
 
         if (this.Netsphere.MyStatus.Type == MyStatus.ConnectionType.Unknown)
