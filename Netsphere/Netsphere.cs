@@ -52,7 +52,7 @@ public class Netsphere
         }
 
         // Machines
-        this.bigMachine.TryCreate<Machines.NetsphereMachine.Interface>(Identifier.Zero);
+        this.bigMachine.TryCreate<Machines.EssentialNetMachine.Interface>(Identifier.Zero);
     }
 
     public void Start(Message.Start message)

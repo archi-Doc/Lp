@@ -78,16 +78,14 @@ public class Node
         }
     }
 
-    public bool GetRandomNodeAddress([NotNullWhen(true)] out NodeAddress? nodeAddress)
+    public bool GetUncheckedEssentialNode([NotNullWhen(true)] out NodeAddress? nodeAddress)
     {
         nodeAddress = null;
         lock (this.essentialNodes)
         {
-            var node = this.essentialNodes.LinkedListChain.First;
-            if (node != null)
+            if (this.essentialNodes.QueueChain.TryDequeue(out var node))
             {
-                this.essentialNodes.LinkedListChain.Remove(node);
-                this.essentialNodes.LinkedListChain.AddLast(node);
+                this.essentialNodes.QueueChain.Enqueue(node);
 
                 nodeAddress = node.Address;
                 return true;
@@ -101,7 +99,7 @@ public class Node
     {
         // Validate essential nodes.
         List<EssentialNodeAddress> toDelete = new();
-        foreach (var x in this.essentialNodes.LinkedListChain)
+        foreach (var x in this.essentialNodes.QueueChain)
         {
             if (!x.Address.IsValid())
             {
@@ -126,11 +124,13 @@ public class Node
 [TinyhandObject]
 internal partial class EssentialNodeAddress
 {
+    public const int FailureLimit = 3;
+
     [Link(Type = ChainType.Unordered)]
     [Key(0)]
     public NodeAddress Address { get; private set; }
 
-    [Link(Type = ChainType.LinkedList, Name = "LinkedList", Primary = true)]
+    [Link(Type = ChainType.QueueList, Name = "Queue", Primary = true)]
     public EssentialNodeAddress(NodeAddress address)
     {
         this.Address = address;
@@ -140,4 +140,21 @@ internal partial class EssentialNodeAddress
     {
         this.Address = new();
     }
+
+    public bool IncrementFailureCount()
+    {
+        return ++this.FailureCount >= FailureLimit;
+    }
+
+    public void UpdateValidTicks()
+    {
+        this.ValidTicks = Ticks.GetCurrent();
+        this.FailureCount = 0;
+    }
+
+    [Key(1)]
+    public long ValidTicks { get; private set; }
+
+    [IgnoreMember]
+    public int FailureCount { get; private set; }
 }

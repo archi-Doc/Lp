@@ -4,10 +4,13 @@ using LP.Net;
 
 namespace LP.Machines;
 
+/// <summary>
+/// Check essential nodes and determine MyStatus.ConnectionType.
+/// </summary>
 [MachineObject(0x4792ab0f, Group = typeof(MachineSingle<>))]
-public partial class NetsphereMachine : Machine<Identifier>
+public partial class EssentialNetMachine : Machine<Identifier>
 {
-    public NetsphereMachine(BigMachine<Identifier> bigMachine, Netsphere netsphere)
+    public EssentialNetMachine(BigMachine<Identifier> bigMachine, Netsphere netsphere)
         : base(bigMachine)
     {
         this.Netsphere = netsphere;
@@ -21,7 +24,7 @@ public partial class NetsphereMachine : Machine<Identifier>
     {
         if (this.Netsphere.MyStatus.Type == MyStatus.ConnectionType.Unknown)
         {
-            if (this.Netsphere.Node.GetRandomNodeAddress(out var nodeAddress))
+            if (this.Netsphere.Node.GetUncheckedEssentialNode(out var nodeAddress))
             {
                 /*using (var terminal = this.Netsphere.NetTerminal.Create(nodeAddress, this.BigMachine.Core))
                 {

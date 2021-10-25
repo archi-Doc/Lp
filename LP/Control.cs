@@ -31,7 +31,7 @@ public class Control
 
         // Machines
         container.Register<Machines.SingleMachine>();
-        container.Register<Machines.NetsphereMachine>();
+        container.Register<Machines.EssentialNetMachine>();
     }
 
     public Control(Information info, BigMachine<Identifier> bigMachine, Netsphere netsphere)

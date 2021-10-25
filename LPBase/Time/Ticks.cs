@@ -17,6 +17,10 @@ public struct Ticks
     public const double TicksPerNanosecond = TimeSpan.TicksPerMillisecond / 1000000d;
     // public const long NanosecondsPerTicks = 1_000_000 / TimeSpan.TicksPerMillisecond;
 
+    /// <summary>
+    /// Stopwatch.GetTimestamp().
+    /// </summary>
+    /// <returns>A long integer representing the tick counter value of the underlying timer mechanism.</returns>
     public static long GetCurrent() => Stopwatch.GetTimestamp();
 
     public static long FromDays(double days) => (long)(days * TicksPerDay);
