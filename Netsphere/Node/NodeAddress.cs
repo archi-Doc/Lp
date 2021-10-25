@@ -86,6 +86,11 @@ public partial class NodeAddress : IEquatable<NodeAddress>
 
     public bool IsValid()
     {
+        if (this.Port < Netsphere.MinPort || this.Port > Netsphere.MaxPort)
+        {
+            return false;
+        }
+
         return this.Address.AddressFamily switch
         {
             System.Net.Sockets.AddressFamily.InterNetwork => this.IsValidIPv4(),

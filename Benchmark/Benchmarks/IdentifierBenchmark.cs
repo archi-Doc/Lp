@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Arc.Crypto;
+using Benchmark.Design;
 using BenchmarkDotNet.Attributes;
 
 namespace Benchmark;
