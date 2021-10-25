@@ -26,12 +26,13 @@ public class Control
         container.Register<Information>(Reuse.Singleton);
         container.Register<Control>(Reuse.Singleton);
         container.Register<Netsphere>(Reuse.Singleton);
-        container.Register<Node>(Reuse.Singleton);
+        container.Register<NetTerminal>(Reuse.Singleton);
+        container.Register<EssentialNode>(Reuse.Singleton);
         container.Register<Pipe>(Reuse.Singleton);
 
         // Machines
         container.Register<Machines.SingleMachine>();
-        container.Register<Machines.NetsphereMachine>();
+        container.Register<Machines.EssentialNetMachine>();
     }
 
     public Control(Information info, BigMachine<Identifier> bigMachine, Netsphere netsphere)
