@@ -8,20 +8,35 @@ using Arc.Threading;
 
 namespace LP.Net;
 
-[TinyhandObject]
-public partial struct NetTerminalGene : IEquatable<NetTerminalGene>
+[ValueLinkObject]
+public partial class NetTerminalGene : IEquatable<NetTerminalGene>
 {
-    public static NetTerminalGene New()
+    /*public static NetTerminalGene New()
     {
         return new NetTerminalGene(Random.Crypto.NextULong());
-    }
+    }*/
 
-    public NetTerminalGene(ulong gene)
+    [Link(Type = ChainType.QueueList, Name = "Queue")]
+    public NetTerminalGene(ulong gene, NetTerminal netTerminal)
     {
         this.Gene = gene;
+        this.NetTerminal = netTerminal;
     }
 
-    public ulong Gene { get; }
+    [Link(Type = ChainType.Ordered)]
+    public ulong Gene { get; private set; }
 
-    public bool Equals(NetTerminalGene other) => this.Gene == other.Gene;
+    public NetTerminal NetTerminal { get; }
+
+    // public long CreatedTicks { get; } = Ticks.GetCurrent();
+
+    public bool Equals(NetTerminalGene? other)
+    {
+        if (other == null)
+        {
+            return false;
+        }
+
+        return this.Gene == other.Gene;
+    }
 }

@@ -26,10 +26,13 @@ public partial class EssentialNetMachine : Machine<Identifier>
         {
             this.Netsphere.EssentialNode.Report(nodeAddress, NodeConnectionResult.Success);
 
-            using (var terminal = this.Netsphere.NetTerminal.Create(nodeAddress))
+            using (var terminal = this.Netsphere.Terminal.Create(nodeAddress))
             {
+                terminal.SendPunch();
                 // terminal.Send(Punch);
                 // terminal.Receive();
+
+                return StateResult.Continue;
             }
         }
 
