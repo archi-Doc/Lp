@@ -9,11 +9,18 @@ using System.IO;
 
 namespace LP.Net;
 
-public class Node
+public enum NodeConnectionResult
 {
-    public const string FileName = "node.tinyhand";
+    Success,
+    Failure,
+}
 
-    public Node(Information information)
+public class EssentialNode
+{
+    public const string FileName = "EssentialNode.tinyhand";
+    public const int ValidTimeInMinutes = 5;
+
+    public EssentialNode(Information information)
     {
         this.information = information;
 
@@ -60,6 +67,20 @@ public class Node
             }
         }
 
+        // Unchecked Queue
+        var ticks = Ticks.GetCurrent();
+        this.essentialNodes.UncheckedChain.Clear();
+        foreach (var x in this.essentialNodes.LinkedListChain)
+        {
+            if (x.ValidTicks <= ticks && ticks <= (x.ValidTicks + Ticks.FromMinutes(ValidTimeInMinutes)))
+            {// [x.ValidTicks, x.ValidTicks + Ticks.FromMinutes(ValidTimeInMinutes)]
+            }
+            else
+            {
+                this.essentialNodes.UncheckedChain.Enqueue(x);
+            }
+        }
+
         this.Validate();
     }
 
@@ -78,15 +99,14 @@ public class Node
         }
     }
 
-    public bool GetUncheckedEssentialNode([NotNullWhen(true)] out NodeAddress? nodeAddress)
+    public bool GetUncheckedNode([NotNullWhen(true)] out NodeAddress? nodeAddress)
     {
         nodeAddress = null;
         lock (this.essentialNodes)
         {
-            if (this.essentialNodes.QueueChain.TryDequeue(out var node))
+            if (this.essentialNodes.UncheckedChain.TryDequeue(out var node))
             {
-                this.essentialNodes.QueueChain.Enqueue(node);
-
+                this.essentialNodes.UncheckedChain.Enqueue(node);
                 nodeAddress = node.Address;
                 return true;
             }
@@ -95,11 +115,62 @@ public class Node
         return false;
     }
 
+    public bool GetNode([NotNullWhen(true)] out NodeAddress? nodeAddress)
+    {
+        nodeAddress = null;
+        lock (this.essentialNodes)
+        {
+            var node = this.essentialNodes.LinkedListChain.First;
+            if (node != null)
+            {
+                this.essentialNodes.LinkedListChain.Remove(node);
+                this.essentialNodes.LinkedListChain.AddLast(node);
+                nodeAddress = node.Address;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public void Report(NodeAddress nodeAddress, NodeConnectionResult result)
+    {
+        lock (this.essentialNodes)
+        {
+            var node = this.essentialNodes.AddressChain.FindFirst(nodeAddress);
+            if (node != null)
+            {
+                if (node.UncheckedLink.IsLinked)
+                {// Unchecked
+                    if (result == NodeConnectionResult.Success)
+                    {// Success
+                        node.UpdateValidTicks();
+                        this.essentialNodes.UncheckedChain.Remove(node);
+                    }
+                    else
+                    {// Failure
+                        if (node.IncrementFailureCount())
+                        {// Remove
+                            node.Goshujin = null;
+                        }
+                    }
+                }
+                else
+                {// Checked
+                    if (result == NodeConnectionResult.Success)
+                    {// Success
+                        node.UpdateValidTicks();
+                    }
+                }
+            }
+        }
+    }
+
     private void Validate()
     {
         // Validate essential nodes.
         List<EssentialNodeAddress> toDelete = new();
-        foreach (var x in this.essentialNodes.QueueChain)
+        foreach (var x in this.essentialNodes.LinkedListChain)
         {
             if (!x.Address.IsValid())
             {
@@ -130,7 +201,8 @@ internal partial class EssentialNodeAddress
     [Key(0)]
     public NodeAddress Address { get; private set; }
 
-    [Link(Type = ChainType.QueueList, Name = "Queue", Primary = true)]
+    [Link(Type = ChainType.LinkedList, Name = "LinkedList", Primary = true)]
+    [Link(Type = ChainType.QueueList, Name = "Unchecked")]
     public EssentialNodeAddress(NodeAddress address)
     {
         this.Address = address;

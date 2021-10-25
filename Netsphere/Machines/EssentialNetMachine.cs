@@ -24,8 +24,10 @@ public partial class EssentialNetMachine : Machine<Identifier>
     {
         if (this.Netsphere.MyStatus.Type == MyStatus.ConnectionType.Unknown)
         {
-            if (this.Netsphere.Node.GetUncheckedEssentialNode(out var nodeAddress))
+            if (this.Netsphere.Node.GetUncheckedNode(out var nodeAddress))
             {
+                this.Netsphere.Node.Report(nodeAddress, NodeConnectionResult.Success);
+
                 /*using (var terminal = this.Netsphere.NetTerminal.Create(nodeAddress, this.BigMachine.Core))
                 {
                     terminal.Send(Punch);
