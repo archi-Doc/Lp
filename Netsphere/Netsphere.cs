@@ -24,7 +24,7 @@ public class Netsphere
     {
         this.bigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.information = information;
-        this.Node = node;
+        this.EssentialNode = node;
         this.rawPipe = rawPipe;
 
         Radio.Open<Message.Configure>(this.Configure);
@@ -63,7 +63,7 @@ public class Netsphere
 
     public NetStatus NetStatus { get; } = new();
 
-    public EssentialNode Node { get; }
+    public EssentialNode EssentialNode { get; }
 
     private BigMachine<Identifier> bigMachine;
 

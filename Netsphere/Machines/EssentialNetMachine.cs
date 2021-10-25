@@ -22,18 +22,19 @@ public partial class EssentialNetMachine : Machine<Identifier>
     [StateMethod(0)]
     protected StateResult Initial(StateParameter parameter)
     {
+        if (this.Netsphere.EssentialNode.GetUncheckedNode(out var nodeAddress))
+        {
+            this.Netsphere.EssentialNode.Report(nodeAddress, NodeConnectionResult.Success);
+
+            /*using (var terminal = this.Netsphere.NetTerminal.Create(nodeAddress, this.BigMachine.Core))
+            {
+                terminal.Send(Punch);
+                terminal.Receive();
+            }*/
+        }
+
         if (this.Netsphere.MyStatus.Type == MyStatus.ConnectionType.Unknown)
         {
-            if (this.Netsphere.Node.GetUncheckedNode(out var nodeAddress))
-            {
-                this.Netsphere.Node.Report(nodeAddress, NodeConnectionResult.Success);
-
-                /*using (var terminal = this.Netsphere.NetTerminal.Create(nodeAddress, this.BigMachine.Core))
-                {
-                    terminal.Send(Punch);
-                    terminal.Receive();
-                }*/
-            }
         }
 
         return StateResult.Continue;
