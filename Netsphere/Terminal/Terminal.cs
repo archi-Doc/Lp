@@ -2,7 +2,8 @@
 
 namespace LP.Net;
 
-public class Terminal : IDisposable
+[ValueLinkObject]
+public partial class Terminal : IDisposable
 {
     internal Terminal(ulong gene, NodeAddress nodeAddress)
     {
@@ -10,7 +11,11 @@ public class Terminal : IDisposable
         this.NodeAddress = nodeAddress;
     }
 
-    public ulong Gene { get; }
+    [Link(Type = ChainType.Ordered)]
+    public ulong Gene { get; private set; }
+
+    [Link(Type = ChainType.Ordered)]
+    public long CreatedTicks { get; private set; } = Ticks.GetCurrent();
 
     public NodeAddress NodeAddress { get; }
 

@@ -6,16 +6,23 @@ namespace LP.Net;
 
 public class NetTerminal
 {
-    public NetTerminal Create(NodeAddress nodeAddress)
+    public Terminal Create(NodeAddress nodeAddress)
     {
         var gene = Random.Crypto.NextULong();
         var terminal = new Terminal(gene, nodeAddress);
-        this.GeneToTerminal.TryAdd(gene, terminal);
+        lock (this.terminals)
+        {
+            this.terminals.Add(terminal);
+        }
+
+        return terminal;
     }
 
     public NetTerminal()
     {
     }
 
-    public ConcurrentDictionary<ulong, Terminal> GeneToTerminal { get; } = new();
+    private Terminal.GoshujinClass terminals = new();
+
+    // public ConcurrentDictionary<ulong, Terminal> GeneToTerminal { get; } = new();
 }
