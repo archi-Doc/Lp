@@ -1,61 +1,28 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Collections.Concurrent;
+
 namespace LP.Net;
 
-[ValueLinkObject]
-public partial class Terminal : IDisposable
+public class Terminal
 {
-    internal Terminal(ulong gene, NodeAddress nodeAddress)
+    public NetTerminal Create(NodeAddress nodeAddress)
     {
-        this.Gene = gene;
-        this.NodeAddress = nodeAddress;
-    }
-
-    [Link(Type = ChainType.Ordered)]
-    public ulong Gene { get; private set; }
-
-    [Link(Type = ChainType.Ordered)]
-    public long CreatedTicks { get; private set; } = Ticks.GetCurrent();
-
-    public NodeAddress NodeAddress { get; }
-
-#pragma warning disable SA1124 // Do not use regions
-    #region IDisposable Support
-#pragma warning restore SA1124 // Do not use regions
-
-    private bool disposed = false; // To detect redundant calls.
-
-    /// <summary>
-    /// Finalizes an instance of the <see cref="Terminal"/> class.
-    /// </summary>
-    ~Terminal()
-    {
-        this.Dispose(false);
-    }
-
-    /// <inheritdoc/>
-    public void Dispose()
-    {
-        this.Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    /// <summary>
-    /// free managed/native resources.
-    /// </summary>
-    /// <param name="disposing">true: free managed resources.</param>
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!this.disposed)
+        var gene = Random.Crypto.NextULong();
+        var terminal = new NetTerminal(gene, nodeAddress);
+        lock (this.terminals)
         {
-            if (disposing)
-            {
-                // free managed resources.
-            }
-
-            // free native resources here if there are any.
-            this.disposed = true;
+            this.terminals.Add(terminal);
         }
+
+        return terminal;
     }
-    #endregion
+
+    public Terminal()
+    {
+    }
+
+    private NetTerminal.GoshujinClass terminals = new();
+
+    private ConcurrentDictionary<ulong, NetTerminalGene> recvGenes = new();
 }
