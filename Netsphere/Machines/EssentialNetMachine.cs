@@ -24,11 +24,12 @@ public partial class EssentialNetMachine : Machine<Identifier>
     {
         if (this.Netsphere.EssentialNode.GetUncheckedNode(out var nodeAddress))
         {
-            this.Netsphere.EssentialNode.Report(nodeAddress, NodeConnectionResult.Success);
+            // this.Netsphere.EssentialNode.Report(nodeAddress, NodeConnectionResult.Success);
 
             using (var terminal = this.Netsphere.Terminal.Create(nodeAddress))
             {
                 terminal.SendPunch();
+                this.BigMachine.Core.Sleep(100);
                 // terminal.Send(Punch);
                 // terminal.Receive();
 

@@ -37,8 +37,7 @@ public class MultimediaTimer : IDisposable
     {
         try
         {
-            var timerId = timeSetEvent(intervalMilliseconds, 1, (a, b, c, d, e) => { timerProc(); }, 0, 1);
-            return new MultimediaTimer(timerId);
+            return new MultimediaTimer(intervalMilliseconds, timerProc);
         }
         catch
         {
@@ -46,12 +45,14 @@ public class MultimediaTimer : IDisposable
         }
     }
 
-    private MultimediaTimer(int timerId)
+    private MultimediaTimer(int intervalMilliseconds, TimerProc timerProc)
     {
-        this.timerId = timerId;
+        this.timerProc = new Proc((a, b, c, d, e) => { timerProc(); }); // Avoid exception: A callback was made on a garbage collected delegate of type
+        var timerId = timeSetEvent(intervalMilliseconds, 1, this.timerProc, 0, 1);
     }
 
     private int timerId;
+    private Proc timerProc;
 
 #pragma warning disable SA1124 // Do not use regions
     #region IDisposable Support

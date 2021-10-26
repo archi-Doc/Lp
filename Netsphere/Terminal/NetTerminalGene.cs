@@ -28,8 +28,6 @@ public partial class NetTerminalGene// : IEquatable<NetTerminalGene>
 
     public NetTerminal NetTerminal { get; }
 
-    internal NetTerminalGene? Next;
-
     // public long CreatedTicks { get; } = Ticks.GetCurrent();
 
     /*public bool Equals(NetTerminalGene? other)

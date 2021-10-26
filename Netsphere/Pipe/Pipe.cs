@@ -39,14 +39,14 @@ public class Pipe
                 {
                     IPEndPoint remoteEP = default!;
                     var bytes = udp.Receive(ref remoteEP);
+                    core.pipe.terminal.ProcessReceive(remoteEP, bytes);
 
-                    var memory = new ReadOnlyMemory<byte>(bytes);
-                    while (!memory.IsEmpty)
+                    // var memory = new ReadOnlyMemory<byte>(bytes);
+                    // while (!memory.IsEmpty)
                     {
                         /*var piece = TinyhandSerializer.Deserialize<IPiece>(memory, null, out var bytesRead);
                         core.NetSpherer.Receive(remoteEP, piece);
                         memory = memory.Slice(bytesRead);*/
-                        memory = memory.Slice(1);
                     }
 
                     /*IPEndPoint remoteEP = default!;
@@ -117,12 +117,9 @@ public class Pipe
                 return;
             }
 
-            Volatile.Write(ref this.previousTimestamp, currentTicks);
+            this.pipe.terminal.ProcessSend(udp, currentTicks);
 
-            if (this.count++ < 50)
-            {
-                Log.Debug("First 50");
-            }
+            Volatile.Write(ref this.previousTimestamp, currentTicks);
         }
 
         protected override void Dispose(bool disposing)
@@ -134,13 +131,12 @@ public class Pipe
         private Pipe pipe;
         private MultimediaTimer? timer;
         private long previousTimestamp;
-
-        private int count = 0;
     }
 
-    public Pipe(Information information)
+    public Pipe(Information information, Terminal terminal)
     {
         this.information = information;
+        this.terminal = terminal;
 
         Radio.Open<Message.Start>(this.Start);
         Radio.Open<Message.Stop>(this.Stop);
@@ -186,6 +182,7 @@ public class Pipe
     }
 
     private Information information;
+    private Terminal terminal;
     private PipeRecvCore? recvCore;
     private PipeSendCore? sendCore;
     private UdpClient? udpClient;

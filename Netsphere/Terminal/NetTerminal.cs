@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Threading;
 
@@ -20,6 +21,7 @@ public partial class NetTerminal : IDisposable
         public byte[] Data { get; }
     }*/
 
+    [Link(Type = ChainType.QueueList, Name = "Queue", Primary = true)]
     internal NetTerminal(ulong gene, NodeAddress nodeAddress)
     {
         this.Gene = gene;
@@ -41,22 +43,29 @@ public partial class NetTerminal : IDisposable
         this.SendRaw(buffer);
     }
 
-    private bool SendRaw(byte[] buffer)
+    internal bool SendRaw(byte[] buffer)
     {
-        var gene = new NetTerminalGene(this.Gene, this);
         lock (this.syncObject)
         {
-            gene.Next = this.sendGene;
-            this.sendGene = gene;
+            if (this.sendGene != null)
+            {
+                return false;
+            }
+
+            this.sendGene = new NetTerminalGene[] { new NetTerminalGene(this.Gene, this) };
         }
 
         return true;
     }
 
+    internal void ProcessSend(UdpClient udp, long currentTicks)
+    {
+    }
+
 #pragma warning disable SA1307
 #pragma warning disable SA1401 // Fields should be private
-    internal NetTerminalGene? sendGene;
-    internal NetTerminalGene? recvGene;
+    internal NetTerminalGene[]? sendGene;
+    internal NetTerminalGene[]? recvGene;
 #pragma warning restore SA1401 // Fields should be private
 
     private object syncObject = new();
