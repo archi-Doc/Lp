@@ -20,6 +20,7 @@ public partial class NetTerminal : IDisposable
         public byte[] Data { get; }
     }*/
 
+    [Link(Type = ChainType.QueueList, Name = "Queue", Primary = true)]
     internal NetTerminal(ulong gene, NodeAddress nodeAddress)
     {
         this.Gene = gene;
@@ -43,11 +44,14 @@ public partial class NetTerminal : IDisposable
 
     private bool SendRaw(byte[] buffer)
     {
-        var gene = new NetTerminalGene(this.Gene, this);
         lock (this.syncObject)
         {
-            gene.Next = this.sendGene;
-            this.sendGene = gene;
+            if (this.sendGene != null)
+            {
+                return false;
+            }
+
+            this.sendGene = new NetTerminalGene[] { new NetTerminalGene(this.Gene, this) };
         }
 
         return true;
@@ -55,8 +59,8 @@ public partial class NetTerminal : IDisposable
 
 #pragma warning disable SA1307
 #pragma warning disable SA1401 // Fields should be private
-    internal NetTerminalGene? sendGene;
-    internal NetTerminalGene? recvGene;
+    internal NetTerminalGene[]? sendGene;
+    internal NetTerminalGene[]? recvGene;
 #pragma warning restore SA1401 // Fields should be private
 
     private object syncObject = new();
