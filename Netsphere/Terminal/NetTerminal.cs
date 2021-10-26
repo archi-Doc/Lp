@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Threading;
 
@@ -42,7 +43,7 @@ public partial class NetTerminal : IDisposable
         this.SendRaw(buffer);
     }
 
-    private bool SendRaw(byte[] buffer)
+    internal bool SendRaw(byte[] buffer)
     {
         lock (this.syncObject)
         {
@@ -55,6 +56,10 @@ public partial class NetTerminal : IDisposable
         }
 
         return true;
+    }
+
+    internal void ProcessSend(UdpClient udp, long currentTicks)
+    {
     }
 
 #pragma warning disable SA1307
