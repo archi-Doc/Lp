@@ -5,19 +5,6 @@ using System.Threading;
 
 namespace LP.Net;
 
-[StructLayout(LayoutKind.Explicit)]
-internal struct Packet_Header
-{
-    [FieldOffset(0)]
-    public byte Engagement;
-
-    [FieldOffset(1)]
-    public byte Id;
-
-    [FieldOffset(2)]
-    public ulong Gene;
-}
-
 [ValueLinkObject]
 public partial class NetTerminal : IDisposable
 {
@@ -49,36 +36,27 @@ public partial class NetTerminal : IDisposable
 
     public unsafe void SendPunch()
     {
-        var header = default(Packet_Header);
-        header.Gene = this.Gene;
-        header.Id = 1;
-
-        int size = Marshal.SizeOf(header);
-        var buffer = new byte[size];
-        fixed (byte* pb = buffer)
-        {
-            *(Packet_Header*)pb = header;
-        }
-
+        var buffer = new byte[PacketHelper.HeaderSize];
+        PacketHelper.SetHeader(buffer, this.Gene, PacketId.Punch);
         this.SendRaw(buffer);
     }
 
     private bool SendRaw(byte[] buffer)
     {
-        var original = Interlocked.CompareExchange(ref this.SendBuffer, buffer, null);
-        if (original != null)
+        var gene = new NetTerminalGene(this.Gene, this);
+        lock (this.syncObject)
         {
-            return false;
+            gene.Next = this.sendGene;
+            this.sendGene = gene;
         }
 
-        this.SendBufferTicks = Ticks.GetCurrent();
-        // this.SendBuffer = buffer;
         return true;
     }
 
+#pragma warning disable SA1307
 #pragma warning disable SA1401 // Fields should be private
-    internal long SendBufferTicks;
-    internal byte[]? SendBuffer;
+    internal NetTerminalGene? sendGene;
+    internal NetTerminalGene? recvGene;
 #pragma warning restore SA1401 // Fields should be private
 
     private object syncObject = new();

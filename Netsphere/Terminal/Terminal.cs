@@ -10,15 +10,9 @@ public class Terminal
     {
         var gene = Random.Crypto.NextULong();
         var terminal = new NetTerminal(gene, nodeAddress);
-        var terminalGene = new NetTerminalGene(gene, terminal);
         lock (this.terminals)
         {
             this.terminals.Add(terminal);
-        }
-
-        lock (this.genes)
-        {
-            this.genes.Add(terminalGene);
         }
 
         return terminal;
@@ -30,5 +24,5 @@ public class Terminal
 
     private NetTerminal.GoshujinClass terminals = new();
 
-    private NetTerminalGene.GoshujinClass genes = new();
+    private ConcurrentDictionary<ulong, NetTerminalGene> recvGenes = new();
 }

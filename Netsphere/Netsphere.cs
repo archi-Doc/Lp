@@ -20,11 +20,11 @@ public class Netsphere
     public const int MinPort = 49152; // Ephemeral port 49152 - 60999
     public const int MaxPort = 60999;
 
-    public Netsphere(BigMachine<Identifier> bigMachine, Information information, Terminal netTerminal, EssentialNode node, Pipe rawPipe)
+    public Netsphere(BigMachine<Identifier> bigMachine, Information information, Terminal terminal, EssentialNode node, Pipe rawPipe)
     {
         this.bigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.information = information;
-        this.NetTerminal = netTerminal;
+        this.Terminal = terminal;
         this.EssentialNode = node;
         this.rawPipe = rawPipe;
 

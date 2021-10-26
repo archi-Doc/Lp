@@ -8,29 +8,31 @@ using Arc.Threading;
 
 namespace LP.Net;
 
-[ValueLinkObject]
-public partial class NetTerminalGene : IEquatable<NetTerminalGene>
+// [ValueLinkObject]
+public partial class NetTerminalGene// : IEquatable<NetTerminalGene>
 {
     /*public static NetTerminalGene New()
     {
         return new NetTerminalGene(Random.Crypto.NextULong());
     }*/
 
-    [Link(Type = ChainType.QueueList, Name = "Queue")]
+    // [Link(Type = ChainType.QueueList, Name = "Queue", Primary = true)]
     public NetTerminalGene(ulong gene, NetTerminal netTerminal)
     {
         this.Gene = gene;
         this.NetTerminal = netTerminal;
     }
 
-    [Link(Type = ChainType.Ordered)]
+    // [Link(Type = ChainType.Ordered)]
     public ulong Gene { get; private set; }
 
     public NetTerminal NetTerminal { get; }
 
+    internal NetTerminalGene? Next;
+
     // public long CreatedTicks { get; } = Ticks.GetCurrent();
 
-    public bool Equals(NetTerminalGene? other)
+    /*public bool Equals(NetTerminalGene? other)
     {
         if (other == null)
         {
@@ -38,5 +40,5 @@ public partial class NetTerminalGene : IEquatable<NetTerminalGene>
         }
 
         return this.Gene == other.Gene;
-    }
+    }*/
 }
