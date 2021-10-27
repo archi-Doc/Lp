@@ -26,6 +26,7 @@ public partial class NetTerminal : IDisposable
     {
         this.Gene = gene;
         this.NodeAddress = nodeAddress;
+        this.EndPoint = this.NodeAddress.CreateEndPoint();
     }
 
     [Link(Type = ChainType.Ordered)]
@@ -33,6 +34,8 @@ public partial class NetTerminal : IDisposable
 
     // [Link(Type = ChainType.Ordered)]
     // public long CreatedTicks { get; private set; } = Ticks.GetCurrent();
+
+    public IPEndPoint EndPoint { get; }
 
     public NodeAddress NodeAddress { get; }
 
@@ -70,7 +73,7 @@ public partial class NetTerminal : IDisposable
                 {
                     if (x.Data != null)
                     {
-                        udp.Send(x.Data, new IPEndPoint(this.NodeAddress.Address, this.NodeAddress.Port));
+                        udp.Send(x.Data, this.EndPoint);
                     }
                 }
             }
