@@ -8,6 +8,11 @@ namespace LP.Net;
 
 public class Terminal
 {
+    /// <summary>
+    /// Create raw (without public key) NetTerminal instance.
+    /// </summary>
+    /// <param name="nodeAddress">NodeAddress.</param>
+    /// <returns>NetTerminal.</returns>
     public NetTerminal Create(NodeAddress nodeAddress)
     {
         var gene = Random.Crypto.NextULong();

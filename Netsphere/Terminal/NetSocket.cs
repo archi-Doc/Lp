@@ -102,12 +102,6 @@ public class NetSocket
 
         public void ProcessSend()
         {// Invoked by multiple threads.
-            var udp = this.socket.udpClient;
-            if (udp == null)
-            {
-                return;
-            }
-
             // Check interval.
             var currentTicks = Ticks.GetCurrent();
             var previous = Volatile.Read(ref this.previousTimestamp);
@@ -117,7 +111,13 @@ public class NetSocket
                 return;
             }
 
-            this.socket.terminal.ProcessSend(udp, currentTicks);
+            lock (this.socket.udpSync)
+            {
+                if (this.socket.udpClient != null)
+                {
+                    this.socket.terminal.ProcessSend(this.socket.udpClient, currentTicks);
+                }
+            }
 
             Volatile.Write(ref this.previousTimestamp, currentTicks);
         }
@@ -157,7 +157,11 @@ public class NetSocket
     {
         this.recvCore?.Dispose();
         this.sendCore?.Dispose();
-        this.udpClient?.Dispose();
+        lock (this.udpSync)
+        {
+            this.udpClient?.Dispose();
+            this.udpClient = null;
+        }
     }
 
     private void PrepareUdpClient(int port)
@@ -174,10 +178,14 @@ public class NetSocket
 
         udp.Client.ReceiveTimeout = ReceiveTimeout;
 
-        var prev = Interlocked.Exchange(ref this.udpClient, udp);
-        if (prev != null)
+        lock (this.udpSync)
         {
-            prev.Dispose();
+            if (this.udpClient != null)
+            {
+                this.udpClient.Dispose();
+            }
+
+            this.udpClient = udp;
         }
     }
 
@@ -185,6 +193,7 @@ public class NetSocket
     private Terminal terminal;
     private NetSocketRecvCore? recvCore;
     private NetSocketSendCore? sendCore;
+    private object udpSync = new(); // sync object for UpdClient.
     private UdpClient? udpClient;
 
     private Stopwatch Stopwatch { get; } = new();
