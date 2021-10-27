@@ -10,21 +10,42 @@ using System.Threading.Tasks;
 namespace LP.Net;
 
 [StructLayout(LayoutKind.Explicit)]
-internal struct PacketHeader
+[TinyhandObject]
+internal partial struct PacketHeader
 {
     [FieldOffset(0)]
+    [Key(0)]
     public byte Engagement;
 
     [FieldOffset(1)]
+    [Key(1)]
     public PacketId Id;
 
     [FieldOffset(2)]
+    [Key(2)]
     public ulong Gene;
 }
 
 internal enum PacketId : byte
 {
     Punch,
+}
+
+[TinyhandUnion(0, typeof(PacketPunchResponse))]
+internal abstract partial class IPacket
+{
+    [Key(0)]
+    public PacketHeader Header { get; set; }
+}
+
+[TinyhandObject]
+internal partial class PacketPunchResponse : IPacket
+{
+    [Key(1)]
+    public IPEndPoint EndPoint { get; set; } = default!;
+
+    [Key(2)]
+    public long UtcTicks { get; set; }
 }
 
 internal static class PacketHelper

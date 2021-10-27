@@ -8,6 +8,19 @@ namespace LP.Net;
 
 public class Terminal
 {
+    internal struct UnregisteredSend
+    {
+        public UnregisteredSend(IPEndPoint endPoint, byte[] data)
+        {
+            this.EndPoint = endPoint;
+            this.Data = data;
+        }
+
+        public IPEndPoint EndPoint { get; }
+
+        public byte[] Data { get; }
+    }
+
     /// <summary>
     /// Create raw (without public key) NetTerminal instance.
     /// </summary>
@@ -31,6 +44,11 @@ public class Terminal
 
     internal void ProcessSend(UdpClient udp, long currentTicks)
     {
+        while (this.unregisteredSends.TryDequeue(out var unregisteredSend))
+        {
+            udp.Send(unregisteredSend.Data, unregisteredSend.EndPoint);
+        }
+
         NetTerminal[] array;
         lock (this.terminals)
         {
@@ -70,11 +88,23 @@ public class Terminal
         }
     }
 
-    internal void ProcessUnregisteredRecv(IPEndPoint endPoint, ref PacketHeader header, byte[]data)
+    internal void ProcessUnregisteredRecv(IPEndPoint endPoint, ref PacketHeader header, byte[] data)
     {
+        if (header.Id == PacketId.Punch)
+        {
+            var r = new PacketPunchResponse();
+            r.Header = header;
+            r.EndPoint = endPoint;
+            r.UtcTicks = DateTime.UtcNow.Ticks;
+
+            var b = TinyhandSerializer.Serialize(r);
+            this.unregisteredSends.Enqueue(new UnregisteredSend(endPoint, b));
+        }
     }
 
     private NetTerminal.GoshujinClass terminals = new();
 
     private ConcurrentDictionary<ulong, NetTerminalGene> recvGenes = new();
+
+    private ConcurrentQueue<UnregisteredSend> unregisteredSends = new();
 }
