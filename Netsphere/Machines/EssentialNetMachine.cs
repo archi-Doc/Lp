@@ -10,12 +10,15 @@ namespace LP.Machines;
 [MachineObject(0x4792ab0f, Group = typeof(MachineSingle<>))]
 public partial class EssentialNetMachine : Machine<Identifier>
 {
-    public EssentialNetMachine(BigMachine<Identifier> bigMachine, Netsphere netsphere)
+    public EssentialNetMachine(BigMachine<Identifier> bigMachine, Information information, Netsphere netsphere)
         : base(bigMachine)
     {
+        this.Information = information;
         this.Netsphere = netsphere;
         this.DefaultTimeout = TimeSpan.FromSeconds(1);
     }
+
+    public Information Information { get; }
 
     public Netsphere Netsphere { get; }
 
@@ -26,6 +29,7 @@ public partial class EssentialNetMachine : Machine<Identifier>
         {
             // this.Netsphere.EssentialNode.Report(nodeAddress, NodeConnectionResult.Success);
 
+            nodeAddress = new(IPAddress.Loopback, (ushort)this.Information.ConsoleOptions.NetsphereOptions.Port);
             using (var terminal = this.Netsphere.Terminal.Create(nodeAddress))
             {
                 terminal.SendPunch();

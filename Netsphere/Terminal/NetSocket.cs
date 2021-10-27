@@ -10,18 +10,18 @@ using Arc.Threading;
 namespace LP.Net;
 
 /// <summary>
-/// Pipe provides low-level network service.
+/// NetSocket provides low-level network service.
 /// </summary>
-public class Pipe
+public class NetSocket
 {
     private const int ReceiveTimeout = 100;
     private const int SendIntervalNanoseconds = 1_000_000;
 
-    internal class PipeRecvCore : ThreadCore
+    internal class NetSocketRecvCore : ThreadCore
     {
         public static void Process(object? parameter)
         {
-            var core = (PipeRecvCore)parameter!;
+            var core = (NetSocketRecvCore)parameter!;
             while (true)
             {
                 if (core.IsTerminated)
@@ -65,20 +65,20 @@ public class Pipe
             }
         }
 
-        public PipeRecvCore(ThreadCoreBase parent, Pipe pipe)
+        public NetSocketRecvCore(ThreadCoreBase parent, NetSocket pipe)
                 : base(parent, Process, false)
         {
             this.pipe = pipe;
         }
 
-        private Pipe pipe;
+        private NetSocket pipe;
     }
 
-    internal class PipeSendCore : ThreadCore
+    internal class NetSocketSendCore : ThreadCore
     {
         public static void Process(object? parameter)
         {
-            var core = (PipeSendCore)parameter!;
+            var core = (NetSocketSendCore)parameter!;
             while (true)
             {
                 if (core.IsTerminated)
@@ -93,21 +93,15 @@ public class Pipe
             }
         }
 
-        public PipeSendCore(ThreadCoreBase parent, Pipe pipe)
+        public NetSocketSendCore(ThreadCoreBase parent, NetSocket pipe)
                 : base(parent, Process, false)
         {
-            this.pipe = pipe;
+            this.socket = pipe;
             this.timer = MultimediaTimer.TryCreate(1, this.ProcessSend); // Use multimedia timer if available.
         }
 
         public void ProcessSend()
         {// Invoked by multiple threads.
-            var udp = this.pipe.udpClient;
-            if (udp == null)
-            {
-                return;
-            }
-
             // Check interval.
             var currentTicks = Ticks.GetCurrent();
             var previous = Volatile.Read(ref this.previousTimestamp);
@@ -117,7 +111,13 @@ public class Pipe
                 return;
             }
 
-            this.pipe.terminal.ProcessSend(udp, currentTicks);
+            lock (this.socket.udpSync)
+            {
+                if (this.socket.udpClient != null)
+                {
+                    this.socket.terminal.ProcessSend(this.socket.udpClient, currentTicks);
+                }
+            }
 
             Volatile.Write(ref this.previousTimestamp, currentTicks);
         }
@@ -128,12 +128,12 @@ public class Pipe
             base.Dispose(disposing);
         }
 
-        private Pipe pipe;
+        private NetSocket socket;
         private MultimediaTimer? timer;
         private long previousTimestamp;
     }
 
-    public Pipe(Information information, Terminal terminal)
+    public NetSocket(Information information, Terminal terminal)
     {
         this.information = information;
         this.terminal = terminal;
@@ -144,8 +144,8 @@ public class Pipe
 
     public void Start(Message.Start message)
     {
-        this.recvCore = new PipeRecvCore(message.ParentCore, this);
-        this.sendCore = new PipeSendCore(message.ParentCore, this);
+        this.recvCore = new NetSocketRecvCore(message.ParentCore, this);
+        this.sendCore = new NetSocketSendCore(message.ParentCore, this);
 
         this.PrepareUdpClient(this.information.ConsoleOptions.NetsphereOptions.Port);
 
@@ -157,7 +157,11 @@ public class Pipe
     {
         this.recvCore?.Dispose();
         this.sendCore?.Dispose();
-        this.udpClient?.Dispose();
+        lock (this.udpSync)
+        {
+            this.udpClient?.Dispose();
+            this.udpClient = null;
+        }
     }
 
     private void PrepareUdpClient(int port)
@@ -174,17 +178,22 @@ public class Pipe
 
         udp.Client.ReceiveTimeout = ReceiveTimeout;
 
-        var prev = Interlocked.Exchange(ref this.udpClient, udp);
-        if (prev != null)
+        lock (this.udpSync)
         {
-            prev.Dispose();
+            if (this.udpClient != null)
+            {
+                this.udpClient.Dispose();
+            }
+
+            this.udpClient = udp;
         }
     }
 
     private Information information;
     private Terminal terminal;
-    private PipeRecvCore? recvCore;
-    private PipeSendCore? sendCore;
+    private NetSocketRecvCore? recvCore;
+    private NetSocketSendCore? sendCore;
+    private object udpSync = new(); // sync object for UpdClient.
     private UdpClient? udpClient;
 
     private Stopwatch Stopwatch { get; } = new();

@@ -43,7 +43,7 @@ public partial class NetTerminal : IDisposable
         this.SendRaw(buffer);
     }
 
-    internal bool SendRaw(byte[] buffer)
+    internal bool SendRaw(byte[] data)
     {
         lock (this.syncObject)
         {
@@ -52,13 +52,32 @@ public partial class NetTerminal : IDisposable
                 return false;
             }
 
-            this.sendGene = new NetTerminalGene[] { new NetTerminalGene(this.Gene, this) };
+            var netTerminalGene = new NetTerminalGene(this.Gene, this);
+            netTerminalGene.Data = data;
+            this.sendGene = new NetTerminalGene[] { netTerminalGene, };
         }
 
         return true;
     }
 
     internal void ProcessSend(UdpClient udp, long currentTicks)
+    {
+        lock (this.syncObject)
+        {
+            if (this.sendGene != null)
+            {
+                foreach (var x in this.sendGene)
+                {
+                    if (x.Data != null)
+                    {
+                        udp.Send(x.Data, new IPEndPoint(this.NodeAddress.Address, this.NodeAddress.Port));
+                    }
+                }
+            }
+        }
+    }
+
+    internal void ProcessRecv(NetTerminalGene netTerminalGene, IPEndPoint endPoint, ref PacketHeader header, byte[] data)
     {
     }
 

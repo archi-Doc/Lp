@@ -8,6 +8,11 @@ namespace LP.Net;
 
 public class Terminal
 {
+    /// <summary>
+    /// Create raw (without public key) NetTerminal instance.
+    /// </summary>
+    /// <param name="nodeAddress">NodeAddress.</param>
+    /// <returns>NetTerminal.</returns>
     public NetTerminal Create(NodeAddress nodeAddress)
     {
         var gene = Random.Crypto.NextULong();
@@ -38,7 +43,34 @@ public class Terminal
         }
     }
 
-    internal void ProcessReceive(IPEndPoint endPoint, byte[] data)
+    internal unsafe void ProcessReceive(IPEndPoint endPoint, byte[] data)
+    {
+        if (data.Length < PacketHelper.HeaderSize)
+        {
+            return;
+        }
+
+        PacketHeader header;
+        fixed (byte* pb = data)
+        {
+            header = *(PacketHeader*)pb;
+        }
+
+        if (header.Engagement != 0)
+        {
+        }
+
+        if (this.recvGenes.TryGetValue(header.Gene, out var terminalGene))
+        {
+            terminalGene.NetTerminal.ProcessRecv(terminalGene, endPoint, ref header, data);
+        }
+        else
+        {
+            this.ProcessUnregisteredRecv(endPoint, ref header, data);
+        }
+    }
+
+    internal void ProcessUnregisteredRecv(IPEndPoint endPoint, ref PacketHeader header, byte[]data)
     {
     }
 
