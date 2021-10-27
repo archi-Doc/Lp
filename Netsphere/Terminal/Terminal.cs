@@ -29,7 +29,7 @@ public class Terminal
     public NetTerminal Create(NodeAddress nodeAddress)
     {
         var gene = Random.Crypto.NextULong();
-        var terminal = new NetTerminal(gene, nodeAddress);
+        var terminal = new NetTerminal(this, gene, nodeAddress);
         lock (this.terminals)
         {
             this.terminals.Add(terminal);
@@ -78,6 +78,19 @@ public class Terminal
         {
         }
 
+        if (header.Id == PacketId.Punch)
+        {
+            var r = new PacketPunchResponse();
+            r.Header = header;
+            r.Header.Id = PacketId.PunchResponse;
+            r.EndPoint = endPoint;
+            r.UtcTicks = DateTime.UtcNow.Ticks;
+
+            var b = TinyhandSerializer.Serialize(r);
+            this.unregisteredSends.Enqueue(new UnregisteredSend(endPoint, b));
+            return;
+        }
+
         if (this.recvGenes.TryGetValue(header.Gene, out var terminalGene))
         {
             terminalGene.NetTerminal.ProcessRecv(terminalGene, endPoint, ref header, data);
@@ -99,6 +112,14 @@ public class Terminal
 
             var b = TinyhandSerializer.Serialize(r);
             this.unregisteredSends.Enqueue(new UnregisteredSend(endPoint, b));
+        }
+    }
+
+    internal void AddRecvGene(NetTerminalGene[] recvGenes)
+    {
+        foreach (var x in recvGenes)
+        {
+            this.recvGenes.TryAdd(x.Gene, x);
         }
     }
 

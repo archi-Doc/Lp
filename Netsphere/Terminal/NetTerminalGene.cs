@@ -30,6 +30,10 @@ public partial class NetTerminalGene// : IEquatable<NetTerminalGene>
 
     public byte[]? Data { get; set; }
 
+    public long InvokeTicks { get; set; }
+
+    public long CompleteTicks { get; set; }
+
     // public long CreatedTicks { get; } = Ticks.GetCurrent();
 
     /*public bool Equals(NetTerminalGene? other)

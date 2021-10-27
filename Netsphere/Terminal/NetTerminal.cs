@@ -22,12 +22,15 @@ public partial class NetTerminal : IDisposable
     }*/
 
     [Link(Type = ChainType.QueueList, Name = "Queue", Primary = true)]
-    internal NetTerminal(ulong gene, NodeAddress nodeAddress)
+    internal NetTerminal(Terminal terminal, ulong gene, NodeAddress nodeAddress)
     {
+        this.Terminal = terminal;
         this.Gene = gene;
         this.NodeAddress = nodeAddress;
         this.EndPoint = this.NodeAddress.CreateEndPoint();
     }
+
+    public Terminal Terminal { get; }
 
     [Link(Type = ChainType.Ordered)]
     public ulong Gene { get; private set; }
@@ -50,14 +53,18 @@ public partial class NetTerminal : IDisposable
     {
         lock (this.syncObject)
         {
-            if (this.sendGene != null)
+            if (this.sendGene != null || this.recvGene != null)
             {
                 return false;
             }
 
-            var netTerminalGene = new NetTerminalGene(this.Gene, this);
-            netTerminalGene.Data = data;
-            this.sendGene = new NetTerminalGene[] { netTerminalGene, };
+            var send = new NetTerminalGene(this.Gene, this);
+            send.Data = data;
+            this.sendGene = new NetTerminalGene[] { send, };
+
+            var recv = new NetTerminalGene(this.Gene, this);
+            this.recvGene = new NetTerminalGene[] { recv, };
+            this.Terminal.AddRecvGene(this.recvGene);
         }
 
         return true;
@@ -74,6 +81,7 @@ public partial class NetTerminal : IDisposable
                     if (x.Data != null)
                     {
                         udp.Send(x.Data, this.EndPoint);
+                        x.InvokeTicks = currentTicks;
                     }
                 }
             }

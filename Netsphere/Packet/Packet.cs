@@ -29,13 +29,14 @@ internal partial struct PacketHeader
 internal enum PacketId : byte
 {
     Punch,
+    PunchResponse,
 }
 
 [TinyhandUnion(0, typeof(PacketPunchResponse))]
 internal abstract partial class IPacket
 {
     [Key(0)]
-    public PacketHeader Header { get; set; }
+    public PacketHeader Header;
 }
 
 [TinyhandObject]
@@ -46,6 +47,11 @@ internal partial class PacketPunchResponse : IPacket
 
     [Key(2)]
     public long UtcTicks { get; set; }
+
+    public PacketPunchResponse()
+    {
+        this.Header.Id = PacketId.PunchResponse;
+    }
 }
 
 internal static class PacketHelper
