@@ -8,9 +8,9 @@ namespace LP.Net;
 
 public class Terminal
 {
-    internal struct UnregisteredSend
+    internal struct UnmanagedSend
     {
-        public UnregisteredSend(IPEndPoint endPoint, byte[] data)
+        public UnmanagedSend(IPEndPoint endPoint, byte[] data)
         {
             this.EndPoint = endPoint;
             this.Data = data;
@@ -44,7 +44,7 @@ public class Terminal
 
     internal void ProcessSend(UdpClient udp, long currentTicks)
     {
-        while (this.unregisteredSends.TryDequeue(out var unregisteredSend))
+        while (this.unmanagedSends.TryDequeue(out var unregisteredSend))
         {
             udp.Send(unregisteredSend.Data, unregisteredSend.EndPoint);
         }
@@ -64,7 +64,7 @@ public class Terminal
     internal unsafe void ProcessReceive(IPEndPoint endPoint, byte[] data)
     {
         if (data.Length < PacketHelper.HeaderSize)
-        {
+        {// Below the minimum header size.
             return;
         }
 
@@ -72,6 +72,11 @@ public class Terminal
         fixed (byte* pb = data)
         {
             header = *(PacketHeader*)pb;
+        }
+
+        if (data.Length != (PacketHelper.HeaderSize + header.DataSize))
+        {// Invalid DataSize
+            return;
         }
 
         if (header.Engagement != 0)
@@ -91,41 +96,72 @@ public class Terminal
             return;
         }*/
 
-        if (this.recvGenes.TryGetValue(header.Gene, out var terminalGene) && terminalGene.State != NetTerminalGene.State.Unmanaged)
+        var span = data.AsSpan(PacketHelper.HeaderSize);
+        if (this.managedGenes.TryGetValue(header.Gene, out var terminalGene) && terminalGene.State != NetTerminalGeneState.Unmanaged)
         {
-            terminalGene.NetTerminal.ProcessRecv(terminalGene, endPoint, ref header, data);
+            var netTerminal = terminalGene.NetTerminal;
+            if (!netTerminal.EndPoint.Equals(endPoint))
+            {// EndPoint mismatch.
+                return;
+            }
+
+            if (!terminalGene.NetTerminal.ProcessRecv(terminalGene, endPoint, ref header, span))
+            {
+                this.ProcessUnmanagedRecv(endPoint, ref header, span);
+            }
         }
         else
         {
-            this.ProcessUnmanagedRecv(endPoint, ref header, data);
+            this.ProcessUnmanagedRecv(endPoint, ref header, span);
         }
     }
 
-    internal void ProcessUnmanagedRecv(IPEndPoint endPoint, ref PacketHeader header, byte[] data)
+    internal unsafe void ProcessUnmanagedRecv(IPEndPoint endPoint, ref PacketHeader header, Span<byte> data)
     {
         if (header.Id == PacketId.Punch)
-        {
+        {// Punch
+            var w = new Tinyhand.IO.TinyhandWriter(initialBuffer);
+            var span = w.GetSpan(PacketHelper.HeaderSize);
+            w.Advance(PacketHelper.HeaderSize);
+
             var r = new PacketPunchResponse();
-            r.Header = header;
             r.EndPoint = endPoint;
             r.UtcTicks = DateTime.UtcNow.Ticks;
 
-            var b = TinyhandSerializer.Serialize(r);
-            this.unregisteredSends.Enqueue(new UnregisteredSend(endPoint, b));
+            var written = w.Written;
+            TinyhandSerializer.Serialize(ref w, r);
+            fixed (byte* pb = span)
+            {
+                header.Id = PacketId.PunchResponse;
+                header.DataSize = (ushort)(w.Written - written);
+                *(PacketHeader*)pb = header;
+            }
+
+            this.unmanagedSends.Enqueue(new UnmanagedSend(endPoint, w.FlushAndGetArray()));
+        }
+        else
+        {// Not supported
         }
     }
 
-    internal void AddRecvGene(NetTerminalGene[] recvGenes)
+    internal void AddNetTerminalGene(NetTerminalGene[] genes)
     {
-        foreach (var x in recvGenes)
+        foreach (var x in genes)
         {
-            this.recvGenes.TryAdd(x.Gene, x);
+            if (x.State == NetTerminalGeneState.WaitingToSend ||
+                x.State == NetTerminalGeneState.WaitingToReceive)
+            {
+                this.managedGenes.TryAdd(x.Gene, x);
+            }
         }
     }
+
+    [ThreadStatic]
+    private static byte[] initialBuffer = new byte[2048];
 
     private NetTerminal.GoshujinClass terminals = new();
 
-    private ConcurrentDictionary<ulong, NetTerminalGene> recvGenes = new();
+    private ConcurrentDictionary<ulong, NetTerminalGene> managedGenes = new();
 
-    private ConcurrentQueue<UnregisteredSend> unregisteredSends = new();
+    private ConcurrentQueue<UnmanagedSend> unmanagedSends = new();
 }

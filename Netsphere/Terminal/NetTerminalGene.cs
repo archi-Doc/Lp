@@ -8,18 +8,18 @@ using Arc.Threading;
 
 namespace LP.Net;
 
-// [ValueLinkObject]
-public partial class NetTerminalGene// : IEquatable<NetTerminalGene>
+internal enum NetTerminalGeneState
 {
-    internal enum State
-    {
-        Unmanaged,
-        WaitingToSend,
-        WaitingForConfirmation,
-        ReceivedAndConfirmed,
-        WaitingToReceive,
-    }
+    Unmanaged,
+    WaitingToSend,
+    WaitingForConfirmation,
+    ReceivedOrConfirmed,
+    WaitingToReceive,
+}
 
+// [ValueLinkObject]
+internal class NetTerminalGene// : IEquatable<NetTerminalGene>
+{
     /*public static NetTerminalGene New()
     {
         return new NetTerminalGene(Random.Crypto.NextULong());
@@ -37,7 +37,7 @@ public partial class NetTerminalGene// : IEquatable<NetTerminalGene>
 
     public NetTerminal NetTerminal { get; }
 
-    public State State { get; set; }
+    public NetTerminalGeneState State { get; set; }
 
     public byte[]? Data { get; set; }
 

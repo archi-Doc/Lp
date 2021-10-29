@@ -49,11 +49,27 @@ public partial class NetTerminal : IDisposable
         this.SendRaw(buffer);
     }
 
+    public byte[]? Receive(int millisecondsToWait)
+    {
+        return null;
+    }
+
     internal bool SendRaw(byte[] data)
     {
         lock (this.syncObject)
         {
-            if (this.sendGene != null || this.recvGene != null)
+            if (this.genes != null)
+            {
+                return false;
+            }
+
+            var gene = new NetTerminalGene(this.Gene, this);
+            gene.State = NetTerminalGeneState.WaitingToSend;
+            gene.Data = data;
+            this.genes = new NetTerminalGene[] { gene, };
+            this.Terminal.AddNetTerminalGene(this.genes);
+
+            /*if (this.sendGene != null || this.recvGene != null)
             {
                 return false;
             }
@@ -64,7 +80,7 @@ public partial class NetTerminal : IDisposable
 
             var recv = new NetTerminalGene(this.Gene, this);
             this.recvGene = new NetTerminalGene[] { recv, };
-            this.Terminal.AddRecvGene(this.recvGene);
+            this.Terminal.AddRecvGene(this.recvGene);*/
         }
 
         return true;
@@ -74,13 +90,14 @@ public partial class NetTerminal : IDisposable
     {
         lock (this.syncObject)
         {
-            if (this.sendGene != null)
+            if (this.genes != null)
             {
-                foreach (var x in this.sendGene)
+                foreach (var x in this.genes)
                 {
-                    if (x.Data != null)
+                    if (x.State == NetTerminalGeneState.WaitingToSend && x.Data != null)
                     {
                         udp.Send(x.Data, this.EndPoint);
+                        x.State = NetTerminalGeneState.WaitingForConfirmation;
                         x.InvokeTicks = currentTicks;
                     }
                 }
@@ -88,14 +105,26 @@ public partial class NetTerminal : IDisposable
         }
     }
 
-    internal void ProcessRecv(NetTerminalGene netTerminalGene, IPEndPoint endPoint, ref PacketHeader header, byte[] data)
+    internal bool ProcessRecv(NetTerminalGene netTerminalGene, IPEndPoint endPoint, ref PacketHeader header, Span<byte> data)
     {
+        if (netTerminalGene.State == NetTerminalGeneState.WaitingForConfirmation)
+        {
+            if (!header.Id.IsResponse())
+            {
+                return false;
+            }
+
+            netTerminalGene.State = NetTerminalGeneState.ReceivedOrConfirmed;
+        }
+
+        return false;
     }
 
 #pragma warning disable SA1307
 #pragma warning disable SA1401 // Fields should be private
-    internal NetTerminalGene[]? sendGene;
-    internal NetTerminalGene[]? recvGene;
+    internal NetTerminalGene[]? genes;
+    // internal NetTerminalGene[]? sendGene;
+    // internal NetTerminalGene[]? recvGene;
 #pragma warning restore SA1401 // Fields should be private
 
     private object syncObject = new();

@@ -23,6 +23,10 @@ internal partial struct PacketHeader
 
     [FieldOffset(2)]
     [Key(2)]
+    public ushort DataSize;
+
+    [FieldOffset(4)]
+    [Key(3)]
     public ulong Gene;
 }
 
@@ -32,26 +36,19 @@ internal enum PacketId : byte
     PunchResponse,
 }
 
-[TinyhandUnion(0, typeof(PacketPunchResponse))]
+/*[TinyhandUnion(0, typeof(PacketPunchResponse))]
 internal abstract partial class IPacket
 {
-    [Key(0)]
-    public PacketHeader Header;
-}
+}*/
 
 [TinyhandObject]
-internal partial class PacketPunchResponse : IPacket
+internal partial class PacketPunchResponse// : IPacket
 {
-    [Key(1)]
+    [Key(0)]
     public IPEndPoint EndPoint { get; set; } = default!;
 
-    [Key(2)]
+    [Key(1)]
     public long UtcTicks { get; set; }
-
-    public PacketPunchResponse()
-    {
-        this.Header.Id = PacketId.PunchResponse;
-    }
 }
 
 internal static class PacketHelper
@@ -78,4 +75,10 @@ internal static class PacketHelper
             *(PacketHeader*)pb = header;
         }
     }
+
+    public static bool IsResponse(this PacketId id) => id switch
+    {
+        PacketId.PunchResponse => true,
+        _ => false,
+    };
 }
