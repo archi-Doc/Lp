@@ -11,6 +11,15 @@ namespace LP.Net;
 // [ValueLinkObject]
 public partial class NetTerminalGene// : IEquatable<NetTerminalGene>
 {
+    internal enum State
+    {
+        Unmanaged,
+        WaitingToSend,
+        WaitingForConfirmation,
+        ReceivedAndConfirmed,
+        WaitingToReceive,
+    }
+
     /*public static NetTerminalGene New()
     {
         return new NetTerminalGene(Random.Crypto.NextULong());
@@ -27,6 +36,8 @@ public partial class NetTerminalGene// : IEquatable<NetTerminalGene>
     public ulong Gene { get; private set; }
 
     public NetTerminal NetTerminal { get; }
+
+    public State State { get; set; }
 
     public byte[]? Data { get; set; }
 

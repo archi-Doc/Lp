@@ -78,7 +78,7 @@ public class Terminal
         {
         }
 
-        if (header.Id == PacketId.Punch)
+        /*if (header.Id == PacketId.Punch)
         {
             var r = new PacketPunchResponse();
             r.Header = header;
@@ -89,19 +89,19 @@ public class Terminal
             var b = TinyhandSerializer.Serialize(r);
             this.unregisteredSends.Enqueue(new UnregisteredSend(endPoint, b));
             return;
-        }
+        }*/
 
-        if (this.recvGenes.TryGetValue(header.Gene, out var terminalGene))
+        if (this.recvGenes.TryGetValue(header.Gene, out var terminalGene) && terminalGene.State != NetTerminalGene.State.Unmanaged)
         {
             terminalGene.NetTerminal.ProcessRecv(terminalGene, endPoint, ref header, data);
         }
         else
         {
-            this.ProcessUnregisteredRecv(endPoint, ref header, data);
+            this.ProcessUnmanagedRecv(endPoint, ref header, data);
         }
     }
 
-    internal void ProcessUnregisteredRecv(IPEndPoint endPoint, ref PacketHeader header, byte[] data)
+    internal void ProcessUnmanagedRecv(IPEndPoint endPoint, ref PacketHeader header, byte[] data)
     {
         if (header.Id == PacketId.Punch)
         {
