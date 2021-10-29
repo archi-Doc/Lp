@@ -34,7 +34,7 @@ public partial class EssentialNetMachine : Machine<Identifier>
             {
                 terminal.SendPunch();
                 this.BigMachine.Core.Sleep(100);
-                var data = terminal.Receive(1000);
+                var data = terminal.Receive<PacketPunchResponse>(1000);
 
                 return StateResult.Continue;
             }

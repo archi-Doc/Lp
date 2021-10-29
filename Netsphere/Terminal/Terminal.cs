@@ -40,7 +40,22 @@ public class Terminal
 
     public Terminal()
     {
+        Radio.Open<Message.Start>(this.Start);
+        Radio.Open<Message.Stop>(this.Stop);
     }
+
+    public void Start(Message.Start message)
+    {
+        this.Core = new ThreadCoreGroup(message.ParentCore);
+    }
+
+    public void Stop(Message.Stop message)
+    {
+        this.Core?.Dispose();
+        this.Core = null;
+    }
+
+    public ThreadCoreBase? Core { get; private set; }
 
     internal void ProcessSend(UdpClient udp, long currentTicks)
     {

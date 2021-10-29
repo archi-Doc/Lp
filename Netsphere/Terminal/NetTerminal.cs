@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -49,8 +50,63 @@ public partial class NetTerminal : IDisposable
         this.SendRaw(buffer);
     }
 
+    public T? Receive<T>(int millisecondsToWait)
+    {
+        var b = this.Receive(millisecondsToWait);
+        if (b == null)
+        {
+            return default(T);
+        }
+
+        try
+        {
+            return TinyhandSerializer.Deserialize<T>(b);
+        }
+        catch
+        {
+            return default(T);
+        }
+    }
+
     public byte[]? Receive(int millisecondsToWait)
     {
+        var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);
+
+        while (this.Terminal.Core?.IsTerminated == false)
+        {
+            if (Stopwatch.GetTimestamp() >= end)
+            {
+                return null;
+            }
+
+            lock (this.syncObject)
+            {
+                if (this.genes == null)
+                {
+                    return null;
+                }
+
+                var b = this.ReceiveData();
+                if (b != null)
+                {
+                    return b;
+                }
+            }
+
+            try
+            {
+                var cancelled = this.Terminal.Core?.CancellationToken.WaitHandle.WaitOne(1);
+                if (cancelled != false)
+                {
+                    return null;
+                }
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         return null;
     }
 
@@ -115,6 +171,7 @@ public partial class NetTerminal : IDisposable
             }
 
             netTerminalGene.State = NetTerminalGeneState.ReceivedOrConfirmed;
+            netTerminalGene.Data = data.ToArray();
         }
 
         return false;
@@ -126,6 +183,31 @@ public partial class NetTerminal : IDisposable
     // internal NetTerminalGene[]? sendGene;
     // internal NetTerminalGene[]? recvGene;
 #pragma warning restore SA1401 // Fields should be private
+
+    private byte[]? ReceiveData()
+    {
+        if (this.genes == null)
+        {
+            return null;
+        }
+        else if (this.genes.Length == 0)
+        {
+            return Array.Empty<byte>();
+        }
+        else if (this.genes.Length == 1)
+        {
+            if (this.genes[0].State == NetTerminalGeneState.ReceivedOrConfirmed)
+            {
+                return this.genes[0].Data;
+            }
+        }
+
+        foreach (var x in this.genes)
+        {
+        }
+
+        return null;
+    }
 
     private object syncObject = new();
 
