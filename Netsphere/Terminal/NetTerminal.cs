@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -22,17 +23,23 @@ public partial class NetTerminal : IDisposable
     }*/
 
     [Link(Type = ChainType.QueueList, Name = "Queue", Primary = true)]
-    internal NetTerminal(ulong gene, NodeAddress nodeAddress)
+    internal NetTerminal(Terminal terminal, ulong gene, NodeAddress nodeAddress)
     {
+        this.Terminal = terminal;
         this.Gene = gene;
         this.NodeAddress = nodeAddress;
+        this.EndPoint = this.NodeAddress.CreateEndPoint();
     }
+
+    public Terminal Terminal { get; }
 
     [Link(Type = ChainType.Ordered)]
     public ulong Gene { get; private set; }
 
     // [Link(Type = ChainType.Ordered)]
     // public long CreatedTicks { get; private set; } = Ticks.GetCurrent();
+
+    public IPEndPoint EndPoint { get; }
 
     public NodeAddress NodeAddress { get; }
 
@@ -43,18 +50,93 @@ public partial class NetTerminal : IDisposable
         this.SendRaw(buffer);
     }
 
+    public T? Receive<T>(int millisecondsToWait)
+    {
+        var b = this.Receive(millisecondsToWait);
+        if (b == null)
+        {
+            return default(T);
+        }
+
+        try
+        {
+            return TinyhandSerializer.Deserialize<T>(b);
+        }
+        catch
+        {
+            return default(T);
+        }
+    }
+
+    public byte[]? Receive(int millisecondsToWait)
+    {
+        var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);
+
+        while (this.Terminal.Core?.IsTerminated == false)
+        {
+            if (Stopwatch.GetTimestamp() >= end)
+            {
+                return null;
+            }
+
+            lock (this.syncObject)
+            {
+                if (this.genes == null)
+                {
+                    return null;
+                }
+
+                var b = this.ReceiveData();
+                if (b != null)
+                {
+                    return b;
+                }
+            }
+
+            try
+            {
+                var cancelled = this.Terminal.Core?.CancellationToken.WaitHandle.WaitOne(1);
+                if (cancelled != false)
+                {
+                    return null;
+                }
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        return null;
+    }
+
     internal bool SendRaw(byte[] data)
     {
         lock (this.syncObject)
         {
-            if (this.sendGene != null)
+            if (this.genes != null)
             {
                 return false;
             }
 
-            var netTerminalGene = new NetTerminalGene(this.Gene, this);
-            netTerminalGene.Data = data;
-            this.sendGene = new NetTerminalGene[] { netTerminalGene, };
+            var gene = new NetTerminalGene(this.Gene, this);
+            gene.State = NetTerminalGeneState.WaitingToSend;
+            gene.Data = data;
+            this.genes = new NetTerminalGene[] { gene, };
+            this.Terminal.AddNetTerminalGene(this.genes);
+
+            /*if (this.sendGene != null || this.recvGene != null)
+            {
+                return false;
+            }
+
+            var send = new NetTerminalGene(this.Gene, this);
+            send.Data = data;
+            this.sendGene = new NetTerminalGene[] { send, };
+
+            var recv = new NetTerminalGene(this.Gene, this);
+            this.recvGene = new NetTerminalGene[] { recv, };
+            this.Terminal.AddRecvGene(this.recvGene);*/
         }
 
         return true;
@@ -64,28 +146,68 @@ public partial class NetTerminal : IDisposable
     {
         lock (this.syncObject)
         {
-            if (this.sendGene != null)
+            if (this.genes != null)
             {
-                foreach (var x in this.sendGene)
+                foreach (var x in this.genes)
                 {
-                    if (x.Data != null)
+                    if (x.State == NetTerminalGeneState.WaitingToSend && x.Data != null)
                     {
-                        udp.Send(x.Data, new IPEndPoint(this.NodeAddress.Address, this.NodeAddress.Port));
+                        udp.Send(x.Data, this.EndPoint);
+                        x.State = NetTerminalGeneState.WaitingForConfirmation;
+                        x.InvokeTicks = currentTicks;
                     }
                 }
             }
         }
     }
 
-    internal void ProcessRecv(NetTerminalGene netTerminalGene, IPEndPoint endPoint, ref PacketHeader header, byte[] data)
+    internal bool ProcessRecv(NetTerminalGene netTerminalGene, IPEndPoint endPoint, ref PacketHeader header, Span<byte> data)
     {
+        if (netTerminalGene.State == NetTerminalGeneState.WaitingForConfirmation)
+        {
+            if (!header.Id.IsResponse())
+            {
+                return false;
+            }
+
+            netTerminalGene.State = NetTerminalGeneState.ReceivedOrConfirmed;
+            netTerminalGene.Data = data.ToArray();
+        }
+
+        return false;
     }
 
 #pragma warning disable SA1307
 #pragma warning disable SA1401 // Fields should be private
-    internal NetTerminalGene[]? sendGene;
-    internal NetTerminalGene[]? recvGene;
+    internal NetTerminalGene[]? genes;
+    // internal NetTerminalGene[]? sendGene;
+    // internal NetTerminalGene[]? recvGene;
 #pragma warning restore SA1401 // Fields should be private
+
+    private byte[]? ReceiveData()
+    {
+        if (this.genes == null)
+        {
+            return null;
+        }
+        else if (this.genes.Length == 0)
+        {
+            return Array.Empty<byte>();
+        }
+        else if (this.genes.Length == 1)
+        {
+            if (this.genes[0].State == NetTerminalGeneState.ReceivedOrConfirmed)
+            {
+                return this.genes[0].Data;
+            }
+        }
+
+        foreach (var x in this.genes)
+        {
+        }
+
+        return null;
+    }
 
     private object syncObject = new();
 

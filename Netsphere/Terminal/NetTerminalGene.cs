@@ -8,8 +8,17 @@ using Arc.Threading;
 
 namespace LP.Net;
 
+internal enum NetTerminalGeneState
+{
+    Unmanaged,
+    WaitingToSend,
+    WaitingForConfirmation,
+    ReceivedOrConfirmed,
+    WaitingToReceive,
+}
+
 // [ValueLinkObject]
-public partial class NetTerminalGene// : IEquatable<NetTerminalGene>
+internal class NetTerminalGene// : IEquatable<NetTerminalGene>
 {
     /*public static NetTerminalGene New()
     {
@@ -28,7 +37,13 @@ public partial class NetTerminalGene// : IEquatable<NetTerminalGene>
 
     public NetTerminal NetTerminal { get; }
 
+    public NetTerminalGeneState State { get; set; }
+
     public byte[]? Data { get; set; }
+
+    public long InvokeTicks { get; set; }
+
+    public long CompleteTicks { get; set; }
 
     // public long CreatedTicks { get; } = Ticks.GetCurrent();
 
