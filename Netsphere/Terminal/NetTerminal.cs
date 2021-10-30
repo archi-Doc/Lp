@@ -10,6 +10,7 @@ namespace LP.Net;
 [ValueLinkObject]
 public partial class NetTerminal : IDisposable
 {
+    public const int DefaultMillisecondsToWait = 2000;
     /*internal struct Packet
     {
         public Packet(byte[] data)
@@ -50,7 +51,7 @@ public partial class NetTerminal : IDisposable
         this.SendRaw(buffer);
     }
 
-    public T? Receive<T>(int millisecondsToWait)
+    public T? Receive<T>(int millisecondsToWait = DefaultMillisecondsToWait)
     {
         var b = this.Receive(millisecondsToWait);
         if (b == null)
@@ -68,7 +69,7 @@ public partial class NetTerminal : IDisposable
         }
     }
 
-    public byte[]? Receive(int millisecondsToWait)
+    public byte[]? Receive(int millisecondsToWait = DefaultMillisecondsToWait)
     {
         var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);
 
@@ -110,7 +111,7 @@ public partial class NetTerminal : IDisposable
         return null;
     }
 
-    internal bool SendRaw(byte[] data)
+    internal bool SendRaw(byte[] packet)
     {
         lock (this.syncObject)
         {
@@ -121,7 +122,7 @@ public partial class NetTerminal : IDisposable
 
             var gene = new NetTerminalGene(this.Gene, this);
             gene.State = NetTerminalGeneState.WaitingToSend;
-            gene.Data = data;
+            gene.Packet = packet;
             this.genes = new NetTerminalGene[] { gene, };
             this.Terminal.AddNetTerminalGene(this.genes);
 
@@ -150,9 +151,9 @@ public partial class NetTerminal : IDisposable
             {
                 foreach (var x in this.genes)
                 {
-                    if (x.State == NetTerminalGeneState.WaitingToSend && x.Data != null)
+                    if (x.State == NetTerminalGeneState.WaitingToSend && x.Packet != null)
                     {
-                        udp.Send(x.Data, this.EndPoint);
+                        udp.Send(x.Packet, this.EndPoint);
                         x.State = NetTerminalGeneState.WaitingForConfirmation;
                         x.InvokeTicks = currentTicks;
                     }
@@ -161,7 +162,7 @@ public partial class NetTerminal : IDisposable
         }
     }
 
-    internal bool ProcessRecv(NetTerminalGene netTerminalGene, IPEndPoint endPoint, ref PacketHeader header, Span<byte> data)
+    internal bool ProcessRecv(NetTerminalGene netTerminalGene, IPEndPoint endPoint, ref PacketHeader header, byte[] packet)
     {
         if (netTerminalGene.State == NetTerminalGeneState.WaitingForConfirmation)
         {
@@ -171,7 +172,7 @@ public partial class NetTerminal : IDisposable
             }
 
             netTerminalGene.State = NetTerminalGeneState.ReceivedOrConfirmed;
-            netTerminalGene.Data = data.ToArray();
+            netTerminalGene.Packet = packet;
         }
 
         return false;
@@ -198,7 +199,7 @@ public partial class NetTerminal : IDisposable
         {
             if (this.genes[0].State == NetTerminalGeneState.ReceivedOrConfirmed)
             {
-                return this.genes[0].Data;
+                return this.genes[0].Packet;
             }
         }
 

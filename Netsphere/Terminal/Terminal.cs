@@ -76,20 +76,20 @@ public class Terminal
         }
     }
 
-    internal unsafe void ProcessReceive(IPEndPoint endPoint, byte[] data)
+    internal unsafe void ProcessReceive(IPEndPoint endPoint, byte[] packet)
     {
-        if (data.Length < PacketHelper.HeaderSize)
+        if (packet.Length < PacketHelper.HeaderSize)
         {// Below the minimum header size.
             return;
         }
 
         PacketHeader header;
-        fixed (byte* pb = data)
+        fixed (byte* pb = packet)
         {
             header = *(PacketHeader*)pb;
         }
 
-        if (data.Length != (PacketHelper.HeaderSize + header.DataSize))
+        if (packet.Length != (PacketHelper.HeaderSize + header.DataSize))
         {// Invalid DataSize
             return;
         }
@@ -111,7 +111,6 @@ public class Terminal
             return;
         }*/
 
-        var span = data.AsSpan(PacketHelper.HeaderSize);
         if (this.managedGenes.TryGetValue(header.Gene, out var terminalGene) && terminalGene.State != NetTerminalGeneState.Unmanaged)
         {
             var netTerminal = terminalGene.NetTerminal;
@@ -120,18 +119,18 @@ public class Terminal
                 return;
             }
 
-            if (!terminalGene.NetTerminal.ProcessRecv(terminalGene, endPoint, ref header, span))
+            if (!terminalGene.NetTerminal.ProcessRecv(terminalGene, endPoint, ref header, packet))
             {
-                this.ProcessUnmanagedRecv(endPoint, ref header, span);
+                this.ProcessUnmanagedRecv(endPoint, ref header, packet);
             }
         }
         else
         {
-            this.ProcessUnmanagedRecv(endPoint, ref header, span);
+            this.ProcessUnmanagedRecv(endPoint, ref header, packet);
         }
     }
 
-    internal unsafe void ProcessUnmanagedRecv(IPEndPoint endPoint, ref PacketHeader header, Span<byte> data)
+    internal unsafe void ProcessUnmanagedRecv(IPEndPoint endPoint, ref PacketHeader header, byte[] packet)
     {
         if (header.Id == PacketId.Punch)
         {// Punch

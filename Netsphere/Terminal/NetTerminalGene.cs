@@ -39,7 +39,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
 
     public NetTerminalGeneState State { get; set; }
 
-    public byte[]? Data { get; set; }
+    public byte[]? Packet { get; set; }
 
     public long InvokeTicks { get; set; }
 
