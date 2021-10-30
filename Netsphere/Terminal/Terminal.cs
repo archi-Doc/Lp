@@ -12,15 +12,15 @@ public class Terminal
 
     internal struct UnmanagedSend
     {
-        public UnmanagedSend(IPEndPoint endPoint, byte[] data)
+        public UnmanagedSend(IPEndPoint endPoint, byte[] packet)
         {
             this.EndPoint = endPoint;
-            this.Data = data;
+            this.Packet = packet;
         }
 
         public IPEndPoint EndPoint { get; }
 
-        public byte[] Data { get; }
+        public byte[] Packet { get; }
     }
 
     /// <summary>
@@ -63,7 +63,7 @@ public class Terminal
     {
         while (this.unmanagedSends.TryDequeue(out var unregisteredSend))
         {
-            udp.Send(unregisteredSend.Data, unregisteredSend.EndPoint);
+            udp.Send(unregisteredSend.Packet, unregisteredSend.EndPoint);
         }
 
         NetTerminal[] array;
@@ -80,39 +80,36 @@ public class Terminal
 
     internal unsafe void ProcessReceive(IPEndPoint endPoint, byte[] packet)
     {
-        if (packet.Length < PacketHelper.HeaderSize)
-        {// Below the minimum header size.
-            return;
-        }
+        var position = 0;
+        var remaining = packet.Length;
 
-        PacketHeader header;
-        fixed (byte* pb = packet)
+        while (remaining >= PacketHelper.HeaderSize)
         {
-            header = *(PacketHeader*)pb;
+            PacketHeader header;
+            fixed (byte* pb = packet)
+            {
+                header = *(PacketHeader*)pb;
+            }
+
+            var dataSize = header.DataSize;
+            if (remaining < (PacketHelper.HeaderSize + dataSize))
+            {// Invalid DataSize
+                return;
+            }
+
+            if (header.Engagement != 0)
+            {
+            }
+
+            position += PacketHelper.HeaderSize;
+            this.ProcessReceiveCore(endPoint, ref header, packet, position, dataSize);
+            position += dataSize;
+            remaining -= PacketHelper.HeaderSize + dataSize;
         }
+    }
 
-        if (packet.Length != (PacketHelper.HeaderSize + header.DataSize))
-        {// Invalid DataSize
-            return;
-        }
-
-        if (header.Engagement != 0)
-        {
-        }
-
-        /*if (header.Id == PacketId.Punch)
-        {
-            var r = new PacketPunchResponse();
-            r.Header = header;
-            r.Header.Id = PacketId.PunchResponse;
-            r.EndPoint = endPoint;
-            r.UtcTicks = DateTime.UtcNow.Ticks;
-
-            var b = TinyhandSerializer.Serialize(r);
-            this.unregisteredSends.Enqueue(new UnregisteredSend(endPoint, b));
-            return;
-        }*/
-
+    internal void ProcessReceiveCore(IPEndPoint endPoint, ref PacketHeader header, byte[] packet, int dataPosition, int dataSize)
+    {
         if (this.managedGenes.TryGetValue(header.Gene, out var terminalGene) && terminalGene.State != NetTerminalGeneState.Unmanaged)
         {
             var netTerminal = terminalGene.NetTerminal;
