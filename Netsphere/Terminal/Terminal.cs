@@ -8,6 +8,8 @@ namespace LP.Net;
 
 public class Terminal
 {
+    private const int InitialBufferLength = 2048;
+
     internal struct UnmanagedSend
     {
         public UnmanagedSend(IPEndPoint endPoint, byte[] data)
@@ -134,28 +136,40 @@ public class Terminal
     {
         if (header.Id == PacketId.Punch)
         {// Punch
-            var w = new Tinyhand.IO.TinyhandWriter(initialBuffer);
-            var span = w.GetSpan(PacketHelper.HeaderSize);
-            w.Advance(PacketHelper.HeaderSize);
-
             var r = new PacketPunchResponse();
             r.EndPoint = endPoint;
             r.UtcTicks = DateTime.UtcNow.Ticks;
 
-            var written = w.Written;
-            TinyhandSerializer.Serialize(ref w, r);
-            fixed (byte* pb = span)
-            {
-                header.Id = PacketId.PunchResponse;
-                header.DataSize = (ushort)(w.Written - written);
-                *(PacketHeader*)pb = header;
-            }
+            header.Id = PacketId.PunchResponse;
+            var p = this.CreatePacket(ref header, r);
 
-            this.unmanagedSends.Enqueue(new UnmanagedSend(endPoint, w.FlushAndGetArray()));
+            this.unmanagedSends.Enqueue(new UnmanagedSend(endPoint, p));
         }
         else
         {// Not supported
         }
+    }
+
+    internal unsafe byte[] CreatePacket<T>(ref PacketHeader header, T value)
+    {
+        if (initialBuffer == null)
+        {
+            initialBuffer = new byte[InitialBufferLength];
+        }
+
+        var writer = new Tinyhand.IO.TinyhandWriter(initialBuffer);
+        var span = writer.GetSpan(PacketHelper.HeaderSize);
+        writer.Advance(PacketHelper.HeaderSize);
+
+        var written = writer.Written;
+        TinyhandSerializer.Serialize(ref writer, value);
+        fixed (byte* pb = span)
+        {
+            header.DataSize = (ushort)(writer.Written - written);
+            *(PacketHeader*)pb = header;
+        }
+
+        return writer.FlushAndGetArray();
     }
 
     internal void AddNetTerminalGene(NetTerminalGene[] genes)
@@ -171,7 +185,7 @@ public class Terminal
     }
 
     [ThreadStatic]
-    private static byte[] initialBuffer = new byte[2048];
+    private static byte[]? initialBuffer;
 
     private NetTerminal.GoshujinClass terminals = new();
 
