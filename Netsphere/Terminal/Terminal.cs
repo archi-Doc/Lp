@@ -113,7 +113,7 @@ public class Terminal
         if (this.managedGenes.TryGetValue(header.Gene, out var terminalGene) && terminalGene.State != NetTerminalGeneState.Unmanaged)
         {
             var netTerminal = terminalGene.NetTerminal;
-            if (!netTerminal.EndPoint.Equals(endPoint))
+            if (!netTerminal.Endpoint.Equals(endPoint))
             {// EndPoint mismatch.
                 return;
             }

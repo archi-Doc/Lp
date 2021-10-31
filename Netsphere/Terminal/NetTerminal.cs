@@ -7,6 +7,9 @@ using System.Threading;
 
 namespace LP.Net;
 
+/// <summary>
+/// 
+/// </summary>
 [ValueLinkObject]
 public partial class NetTerminal : IDisposable
 {
@@ -29,7 +32,7 @@ public partial class NetTerminal : IDisposable
         this.Terminal = terminal;
         this.Gene = gene;
         this.NodeAddress = nodeAddress;
-        this.EndPoint = this.NodeAddress.CreateEndPoint();
+        this.Endpoint = this.NodeAddress.CreateEndpoint();
     }
 
     public Terminal Terminal { get; }
@@ -40,7 +43,7 @@ public partial class NetTerminal : IDisposable
     // [Link(Type = ChainType.Ordered)]
     // public long CreatedTicks { get; private set; } = Ticks.GetCurrent();
 
-    public IPEndPoint EndPoint { get; }
+    public IPEndPoint Endpoint { get; }
 
     public NodeAddress NodeAddress { get; }
 
@@ -153,7 +156,7 @@ public partial class NetTerminal : IDisposable
                 {
                     if (x.State == NetTerminalGeneState.WaitingToSend && x.Packet != null)
                     {
-                        udp.Send(x.Packet, this.EndPoint);
+                        udp.Send(x.Packet, this.Endpoint);
                         x.State = NetTerminalGeneState.WaitingForConfirmation;
                         x.InvokeTicks = currentTicks;
                     }
