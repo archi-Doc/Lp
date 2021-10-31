@@ -42,7 +42,7 @@ public class IdentifierBenchmark
 
     public byte[] Destination { get; set; } = default!;
 
-    public SHA3_256 Instance { get; } = new();
+    public Sha3_256 Instance { get; } = new();
 
     [Benchmark]
     public Identifier_ClassULong New_ClassULong()

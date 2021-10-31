@@ -19,7 +19,7 @@ public static class Random
 
     public static unsafe byte[] GenerateGenePool(ReadOnlySpan<byte> source, int destinationSize)
     { // length <= 3k ?, 3k x 8 bytes = 24 kbytes
-        var hash = XXHash64.Hash64(source);
+        var hash = XxHash64.Hash64(source);
         var xo = new Xoshiro256StarStar(hash);
 
         byte[]? rentBytes = null;
