@@ -39,7 +39,10 @@ public class NetSocket
                 {
                     IPEndPoint remoteEP = default!;
                     var bytes = udp.Receive(ref remoteEP);
-                    core.pipe.terminal.ProcessReceive(remoteEP, bytes);
+                    if (bytes.Length <= Netsphere.MaxPayload)
+                    {
+                        core.pipe.terminal.ProcessReceive(remoteEP, bytes);
+                    }
 
                     // var memory = new ReadOnlyMemory<byte>(bytes);
                     // while (!memory.IsEmpty)

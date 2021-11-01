@@ -28,22 +28,6 @@ internal class PacketService
     [ThreadStatic]
     private static byte[]? initialBuffer;
 
-    public unsafe void SetHeader(byte[] buffer, ulong gene, PacketId id)
-    {
-        if (buffer.Length < HeaderSize)
-        {
-            throw new ArgumentException();
-        }
-
-        var header = default(PacketHeader);
-        header.Gene = gene;
-        header.Id = id;
-        fixed (byte* pb = buffer)
-        {
-            *(PacketHeader*)pb = header;
-        }
-    }
-
     internal static unsafe byte[] CreatePacket<T>(ref PacketHeader header, T value)
         where T : IPacket
     {

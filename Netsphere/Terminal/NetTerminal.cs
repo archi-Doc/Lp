@@ -14,17 +14,6 @@ namespace LP.Net;
 public partial class NetTerminal : IDisposable
 {
     public const int DefaultMillisecondsToWait = 2000;
-    /*internal struct Packet
-    {
-        public Packet(byte[] data)
-        {
-            this.Data = data;
-        }
-
-        public long CreatedTicks { get; } = Ticks.GetCurrent();
-
-        public byte[] Data { get; }
-    }*/
 
     [Link(Type = ChainType.QueueList, Name = "Queue", Primary = true)]
     internal NetTerminal(Terminal terminal, ulong gene, NodeAddress nodeAddress)
@@ -60,14 +49,15 @@ public partial class NetTerminal : IDisposable
     public T? Receive<T>(int millisecondsToWait = DefaultMillisecondsToWait)
     {
         var b = this.Receive(millisecondsToWait);
-        if (b == null)
+        if (b == null || b.Length < PacketService.HeaderSize)
         {
             return default(T);
         }
 
         try
         {
-            return TinyhandSerializer.Deserialize<T>(b);
+            var memory = b.AsMemory(PacketService.HeaderSize);
+            return TinyhandSerializer.Deserialize<T>(memory);
         }
         catch
         {

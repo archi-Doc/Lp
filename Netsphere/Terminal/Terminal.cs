@@ -22,7 +22,7 @@ public class Terminal
     }
 
     /// <summary>
-    /// Create raw (without public key) NetTerminal instance.
+    /// Create unmanaged (without public key) NetTerminal instance.
     /// </summary>
     /// <param name="nodeAddress">NodeAddress.</param>
     /// <returns>NetTerminal.</returns>
@@ -109,7 +109,7 @@ public class Terminal
     internal void ProcessReceiveCore(IPEndPoint endPoint, ref PacketHeader header, byte[] packet, int dataPosition, int dataSize)
     {
         if (this.managedGenes.TryGetValue(header.Gene, out var terminalGene) && terminalGene.State != NetTerminalGeneState.Unmanaged)
-        {
+        {// NetTerminalGene is found and the state is not unmanaged.
             var netTerminal = terminalGene.NetTerminal;
             if (!netTerminal.Endpoint.Equals(endPoint))
             {// Endpoint mismatch.

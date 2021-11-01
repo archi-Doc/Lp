@@ -41,7 +41,7 @@ internal partial struct PacketHeader
     // [Key(2)]
     public ushort DataSize;
 
-    [FieldOffset(4)]
+    [FieldOffset(8)]
     // [Key(3)]
     public ulong Gene;
 }
