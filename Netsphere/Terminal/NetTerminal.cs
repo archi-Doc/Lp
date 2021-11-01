@@ -8,7 +8,7 @@ using System.Threading;
 namespace LP.Net;
 
 /// <summary>
-/// 
+/// Initializes a new instance of the <see cref="NetTerminal"/> class.
 /// </summary>
 [ValueLinkObject]
 public partial class NetTerminal : IDisposable
@@ -49,9 +49,12 @@ public partial class NetTerminal : IDisposable
 
     public unsafe void SendPunch()
     {
-        var buffer = new byte[PacketHelper.HeaderSize];
-        PacketHelper.SetHeader(buffer, this.Gene, PacketId.Punch);
-        this.SendRaw(buffer);
+        var p = new PacketPunch();
+        p.UtcTicks = DateTime.UtcNow.Ticks;
+
+        this.CreateHeader(out var header);
+        var packet = PacketService.CreatePacket(ref header, p);
+        this.SendRaw(packet);
     }
 
     public T? Receive<T>(int millisecondsToWait = DefaultMillisecondsToWait)
@@ -112,6 +115,13 @@ public partial class NetTerminal : IDisposable
         }
 
         return null;
+    }
+
+    internal void CreateHeader(out PacketHeader header)
+    {
+        header = default;
+        header.Gene = this.Gene;
+        header.Engagement = this.NodeAddress.Engagement;
     }
 
     internal bool SendRaw(byte[] packet)
@@ -214,6 +224,8 @@ public partial class NetTerminal : IDisposable
     }
 
     private object syncObject = new();
+
+    private PacketService packetService = new();
 
 #pragma warning disable SA1124 // Do not use regions
     #region IDisposable Support

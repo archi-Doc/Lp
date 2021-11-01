@@ -4,78 +4,50 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LP.Net;
 
-[StructLayout(LayoutKind.Explicit)]
-[TinyhandObject]
-internal partial struct PacketHeader
-{
-    [FieldOffset(0)]
-    [Key(0)]
-    public byte Engagement;
-
-    [FieldOffset(1)]
-    [Key(1)]
-    public PacketId Id;
-
-    [FieldOffset(2)]
-    [Key(2)]
-    public ushort DataSize;
-
-    [FieldOffset(4)]
-    [Key(3)]
-    public ulong Gene;
-}
-
 internal enum PacketId : byte
 {
+    Invalid,
     Punch,
     PunchResponse,
 }
 
-/*[TinyhandUnion(0, typeof(PacketPunchResponse))]
-internal abstract partial class IPacket
-{
-}*/
+// internal record PacketInfo(Type PacketType, byte PacketId, bool IsResponse);
 
-[TinyhandObject]
-internal partial class PacketPunchResponse// : IPacket
+// [TinyhandUnion((int)PacketId.Punch, typeof(PacketPunch))]
+// [TinyhandUnion((int)PacketId.PunchResponse, typeof(PacketPunchResponse))]
+internal interface IPacket
 {
-    [Key(0)]
-    public IPEndPoint EndPoint { get; set; } = default!;
+    public bool IsResponse { get; }
 
-    [Key(1)]
-    public long UtcTicks { get; set; }
+    public PacketId Id { get; }
 }
 
-internal static class PacketHelper
+[StructLayout(LayoutKind.Explicit)]
+// [TinyhandObject]
+internal partial struct PacketHeader
 {
-    static PacketHelper()
-    {
-        HeaderSize = Marshal.SizeOf(default(PacketHeader));
-    }
+    [FieldOffset(0)]
+    // [Key(0)]
+    public byte Engagement;
 
-    public static int HeaderSize { get; }
+    [FieldOffset(1)]
+    // [Key(1)]
+    public PacketId Id;
 
-    public static unsafe void SetHeader(byte[] buffer, ulong gene, PacketId id)
-    {
-        if (buffer.Length < HeaderSize)
-        {
-            throw new ArgumentException();
-        }
+    [FieldOffset(2)]
+    // [Key(2)]
+    public ushort DataSize;
 
-        var header = default(PacketHeader);
-        header.Gene = gene;
-        header.Id = id;
-        fixed (byte* pb = buffer)
-        {
-            *(PacketHeader*)pb = header;
-        }
-    }
+    [FieldOffset(4)]
+    // [Key(3)]
+    public ulong Gene;
+}
 
+internal static class PacketExtentions
+{
     public static bool IsResponse(this PacketId id) => id switch
     {
         PacketId.PunchResponse => true,

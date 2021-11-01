@@ -8,17 +8,15 @@ namespace LP.Net;
 
 public class Terminal
 {
-    private const int InitialBufferLength = 2048;
-
     internal struct UnmanagedSend
     {
         public UnmanagedSend(IPEndPoint endPoint, byte[] packet)
         {
-            this.EndPoint = endPoint;
+            this.Endpoint = endPoint;
             this.Packet = packet;
         }
 
-        public IPEndPoint EndPoint { get; }
+        public IPEndPoint Endpoint { get; }
 
         public byte[] Packet { get; }
     }
@@ -63,7 +61,7 @@ public class Terminal
     {
         while (this.unmanagedSends.TryDequeue(out var unregisteredSend))
         {
-            udp.Send(unregisteredSend.Packet, unregisteredSend.EndPoint);
+            udp.Send(unregisteredSend.Packet, unregisteredSend.Endpoint);
         }
 
         NetTerminal[] array;
@@ -83,7 +81,7 @@ public class Terminal
         var position = 0;
         var remaining = packet.Length;
 
-        while (remaining >= PacketHelper.HeaderSize)
+        while (remaining >= PacketService.HeaderSize)
         {
             PacketHeader header;
             fixed (byte* pb = packet)
@@ -92,7 +90,7 @@ public class Terminal
             }
 
             var dataSize = header.DataSize;
-            if (remaining < (PacketHelper.HeaderSize + dataSize))
+            if (remaining < (PacketService.HeaderSize + dataSize))
             {// Invalid DataSize
                 return;
             }
@@ -101,10 +99,10 @@ public class Terminal
             {
             }
 
-            position += PacketHelper.HeaderSize;
+            position += PacketService.HeaderSize;
             this.ProcessReceiveCore(endPoint, ref header, packet, position, dataSize);
             position += dataSize;
-            remaining -= PacketHelper.HeaderSize + dataSize;
+            remaining -= PacketService.HeaderSize + dataSize;
         }
     }
 
@@ -114,7 +112,7 @@ public class Terminal
         {
             var netTerminal = terminalGene.NetTerminal;
             if (!netTerminal.Endpoint.Equals(endPoint))
-            {// EndPoint mismatch.
+            {// Endpoint mismatch.
                 return;
             }
 
@@ -134,39 +132,16 @@ public class Terminal
         if (header.Id == PacketId.Punch)
         {// Punch
             var r = new PacketPunchResponse();
-            r.EndPoint = endPoint;
+            r.Endpoint = endPoint;
             r.UtcTicks = DateTime.UtcNow.Ticks;
 
-            header.Id = PacketId.PunchResponse;
-            var p = this.CreatePacket(ref header, r);
+            var p = PacketService.CreatePacket(ref header, r);
 
             this.unmanagedSends.Enqueue(new UnmanagedSend(endPoint, p));
         }
         else
         {// Not supported
         }
-    }
-
-    internal unsafe byte[] CreatePacket<T>(ref PacketHeader header, T value)
-    {
-        if (initialBuffer == null)
-        {
-            initialBuffer = new byte[InitialBufferLength];
-        }
-
-        var writer = new Tinyhand.IO.TinyhandWriter(initialBuffer);
-        var span = writer.GetSpan(PacketHelper.HeaderSize);
-        writer.Advance(PacketHelper.HeaderSize);
-
-        var written = writer.Written;
-        TinyhandSerializer.Serialize(ref writer, value);
-        fixed (byte* pb = span)
-        {
-            header.DataSize = (ushort)(writer.Written - written);
-            *(PacketHeader*)pb = header;
-        }
-
-        return writer.FlushAndGetArray();
     }
 
     internal void AddNetTerminalGene(NetTerminalGene[] genes)
@@ -180,9 +155,6 @@ public class Terminal
             }
         }
     }
-
-    [ThreadStatic]
-    private static byte[]? initialBuffer;
 
     private NetTerminal.GoshujinClass terminals = new();
 
