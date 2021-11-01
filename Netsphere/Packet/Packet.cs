@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace LP.Net;
 
-internal enum PacketId : byte
+public enum PacketId : byte
 {
     Invalid,
     Punch,
@@ -18,7 +18,7 @@ internal enum PacketId : byte
 
 // [TinyhandUnion((int)PacketId.Punch, typeof(PacketPunch))]
 // [TinyhandUnion((int)PacketId.PunchResponse, typeof(PacketPunchResponse))]
-internal interface IPacket
+public interface IPacket
 {
     public bool IsResponse { get; }
 

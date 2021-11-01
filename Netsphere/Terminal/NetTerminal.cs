@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -14,6 +15,11 @@ namespace LP.Net;
 public partial class NetTerminal : IDisposable
 {
     public const int DefaultMillisecondsToWait = 2000;
+
+    /// <summary>
+    /// The default interval time in milliseconds.
+    /// </summary>
+    public const int DefaultInterval = 10;
 
     [Link(Type = ChainType.QueueList, Name = "Queue", Primary = true)]
     internal NetTerminal(Terminal terminal, ulong gene, NodeAddress nodeAddress)
@@ -36,28 +42,28 @@ public partial class NetTerminal : IDisposable
 
     public NodeAddress NodeAddress { get; }
 
-    public unsafe void SendPunch()
+    public unsafe void SendUnmanaged_Punch()
     {
         var p = new PacketPunch();
         p.UtcTicks = DateTime.UtcNow.Ticks;
 
         this.CreateHeader(out var header);
         var packet = PacketService.CreatePacket(ref header, p);
-        this.SendRaw(packet);
+        this.SendUnmanaged(packet);
     }
 
     public T? Receive<T>(int millisecondsToWait = DefaultMillisecondsToWait)
+        where T : IPacket
     {
-        var b = this.Receive(millisecondsToWait);
-        if (b == null || b.Length < PacketService.HeaderSize)
+        var result = this.ReceiveUnmanaged(out var header, out var data, millisecondsToWait);
+        if (!result || data.Length < PacketService.HeaderSize)
         {
             return default(T);
         }
 
         try
         {
-            var memory = b.AsMemory(PacketService.HeaderSize);
-            return TinyhandSerializer.Deserialize<T>(memory);
+            return TinyhandSerializer.Deserialize<T>(data);
         }
         catch
         {
@@ -65,7 +71,7 @@ public partial class NetTerminal : IDisposable
         }
     }
 
-    public byte[]? Receive(int millisecondsToWait = DefaultMillisecondsToWait)
+    internal bool ReceiveUnmanaged(out PacketHeader header, out Memory<byte> data, int millisecondsToWait = DefaultMillisecondsToWait)
     {
         var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);
 
@@ -73,20 +79,19 @@ public partial class NetTerminal : IDisposable
         {
             if (Stopwatch.GetTimestamp() >= end)
             {
-                return null;
+                goto ReceiveUnmanaged_Error;
             }
 
             lock (this.syncObject)
             {
                 if (this.genes == null)
                 {
-                    return null;
+                    goto ReceiveUnmanaged_Error;
                 }
 
-                var b = this.ReceiveData();
-                if (b != null)
-                {
-                    return b;
+                if (this.ReceivePacket(out header, out data))
+                {// Received
+                    return true;
                 }
             }
 
@@ -95,16 +100,19 @@ public partial class NetTerminal : IDisposable
                 var cancelled = this.Terminal.Core?.CancellationToken.WaitHandle.WaitOne(1);
                 if (cancelled != false)
                 {
-                    return null;
+                    goto ReceiveUnmanaged_Error;
                 }
             }
             catch
             {
-                return null;
+                goto ReceiveUnmanaged_Error;
             }
         }
 
-        return null;
+ReceiveUnmanaged_Error:
+        header = default;
+        data = default;
+        return false;
     }
 
     internal void CreateHeader(out PacketHeader header)
@@ -114,7 +122,7 @@ public partial class NetTerminal : IDisposable
         header.Engagement = this.NodeAddress.Engagement;
     }
 
-    internal bool SendRaw(byte[] packet)
+    internal bool SendUnmanaged(byte[] packet)
     {
         lock (this.syncObject)
         {
@@ -128,19 +136,6 @@ public partial class NetTerminal : IDisposable
             gene.Packet = packet;
             this.genes = new NetTerminalGene[] { gene, };
             this.Terminal.AddNetTerminalGene(this.genes);
-
-            /*if (this.sendGene != null || this.recvGene != null)
-            {
-                return false;
-            }
-
-            var send = new NetTerminalGene(this.Gene, this);
-            send.Data = data;
-            this.sendGene = new NetTerminalGene[] { send, };
-
-            var recv = new NetTerminalGene(this.Gene, this);
-            this.recvGene = new NetTerminalGene[] { recv, };
-            this.Terminal.AddRecvGene(this.recvGene);*/
         }
 
         return true;
@@ -167,8 +162,9 @@ public partial class NetTerminal : IDisposable
 
     internal bool ProcessRecv(NetTerminalGene netTerminalGene, IPEndPoint endPoint, ref PacketHeader header, byte[] packet)
     {
-        if (netTerminalGene.State == NetTerminalGeneState.WaitingForConfirmation)
-        {
+        if (netTerminalGene.State == NetTerminalGeneState.WaitingForConfirmation ||
+            netTerminalGene.State == NetTerminalGeneState.WaitingToReceive)
+        {// Sent and waiting for confirmation, or waiting for the packet to arrive.
             if (!header.Id.IsResponse())
             {
                 return false;
@@ -188,21 +184,32 @@ public partial class NetTerminal : IDisposable
     // internal NetTerminalGene[]? recvGene;
 #pragma warning restore SA1401 // Fields should be private
 
-    private byte[]? ReceiveData()
+    private protected unsafe bool ReceivePacket(out PacketHeader header, [MaybeNullWhen(false)] out Memory<byte> data)
     {
         if (this.genes == null)
         {
-            return null;
+            goto ReceivePacket_Error;
         }
         else if (this.genes.Length == 0)
         {
-            return Array.Empty<byte>();
+            goto ReceivePacket_Error;
         }
         else if (this.genes.Length == 1)
         {
-            if (this.genes[0].State == NetTerminalGeneState.ReceivedOrConfirmed)
+            if (this.genes[0].State == NetTerminalGeneState.ReceivedOrConfirmed && this.genes[0].Packet is { } packet)
             {
-                return this.genes[0].Packet;
+                if (packet.Length < PacketService.HeaderSize)
+                {
+                    goto ReceivePacket_Error;
+                }
+
+                fixed (byte* pb = packet)
+                {
+                    header = *(PacketHeader*)pb;
+                }
+
+                data = new(packet, PacketService.HeaderSize, header.DataSize);
+                return true;
             }
         }
 
@@ -210,12 +217,15 @@ public partial class NetTerminal : IDisposable
         {
         }
 
-        return null;
+ReceivePacket_Error:
+        header = default;
+        data = default;
+        return true;
     }
 
     private object syncObject = new();
 
-    private PacketService packetService = new();
+    // private PacketService packetService = new();
 
 #pragma warning disable SA1124 // Do not use regions
     #region IDisposable Support

@@ -39,6 +39,9 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
 
     public NetTerminalGeneState State { get; set; }
 
+    /// <summary>
+    ///  Gets or sets the byte array of a packet (header + data).
+    /// </summary>
     public byte[]? Packet { get; set; }
 
     public long InvokeTicks { get; set; }

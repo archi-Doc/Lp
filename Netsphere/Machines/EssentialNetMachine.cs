@@ -32,7 +32,7 @@ public partial class EssentialNetMachine : Machine<Identifier>
             nodeAddress = new(IPAddress.Loopback, (ushort)this.Information.ConsoleOptions.NetsphereOptions.Port);
             using (var terminal = this.Netsphere.Terminal.Create(nodeAddress))
             {
-                terminal.SendPunch();
+                terminal.SendUnmanaged_Punch();
                 this.BigMachine.Core.Sleep(100);
                 var data = terminal.Receive<PacketPunchResponse>(1000);
 
