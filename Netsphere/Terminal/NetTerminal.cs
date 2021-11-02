@@ -160,7 +160,7 @@ ReceiveUnmanaged_Error:
         }
     }
 
-    internal bool ProcessRecv(NetTerminalGene netTerminalGene, IPEndPoint endPoint, ref PacketHeader header, byte[] packet)
+    internal bool ProcessRecv(NetTerminalGene netTerminalGene, IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data)
     {
         if (netTerminalGene.State == NetTerminalGeneState.WaitingForConfirmation ||
             netTerminalGene.State == NetTerminalGeneState.WaitingToReceive)

@@ -15,7 +15,7 @@ internal partial class PacketPunch : IPacket
     public PacketId Id => PacketId.Punch;
 
     [Key(0)]
-    public IPEndPoint? RelayEndpoint { get; set; } = default!;
+    public IPEndPoint? NextEndpoint { get; set; }
 
     [Key(1)]
     public long UtcTicks { get; set; }

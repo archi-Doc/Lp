@@ -100,13 +100,14 @@ public class Terminal
             }
 
             position += PacketService.HeaderSize;
-            this.ProcessReceiveCore(endPoint, ref header, packet, position, dataSize);
+            var data = new Memory<byte>(packet, position, dataSize);
+            this.ProcessReceiveCore(endPoint, ref header, data);
             position += dataSize;
             remaining -= PacketService.HeaderSize + dataSize;
         }
     }
 
-    internal void ProcessReceiveCore(IPEndPoint endPoint, ref PacketHeader header, byte[] packet, int dataPosition, int dataSize)
+    internal void ProcessReceiveCore(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data)
     {
         if (this.managedGenes.TryGetValue(header.Gene, out var terminalGene) && terminalGene.State != NetTerminalGeneState.Unmanaged)
         {// NetTerminalGene is found and the state is not unmanaged.
@@ -116,23 +117,33 @@ public class Terminal
                 return;
             }
 
-            if (!terminalGene.NetTerminal.ProcessRecv(terminalGene, endPoint, ref header, packet))
+            if (!terminalGene.NetTerminal.ProcessRecv(terminalGene, endPoint, ref header, data))
             {
-                this.ProcessUnmanagedRecv(endPoint, ref header, packet);
+                this.ProcessUnmanagedRecv(endPoint, ref header, data);
             }
         }
         else
         {
-            this.ProcessUnmanagedRecv(endPoint, ref header, packet);
+            this.ProcessUnmanagedRecv(endPoint, ref header, data);
         }
     }
 
-    internal unsafe void ProcessUnmanagedRecv(IPEndPoint endPoint, ref PacketHeader header, byte[] packet)
+    internal unsafe void ProcessUnmanagedRecv(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data)
     {
         if (header.Id == PacketId.Punch)
         {// Punch
+            PacketPunch? punch;
+            try
+            {
+                punch = TinyhandSerializer.Deserialize<PacketPunch>(data);
+            }
+            catch
+            {
+                return;
+            }
+
             var r = new PacketPunchResponse();
-            r.Endpoint = endPoint;
+            r.Endpoint = punch.NextEndpoint;
             r.UtcTicks = DateTime.UtcNow.Ticks;
 
             var p = PacketService.CreatePacket(ref header, r);
