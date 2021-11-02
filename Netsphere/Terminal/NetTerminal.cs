@@ -49,7 +49,7 @@ public partial class NetTerminal : IDisposable
 
         this.CreateHeader(out var header);
         var packet = PacketService.CreatePacket(ref header, p);
-        this.SendUnmanaged(packet);
+        this.SendPacket(packet, PacketId.PunchResponse);
     }
 
     public T? Receive<T>(int millisecondsToWait = DefaultMillisecondsToWait)
@@ -122,7 +122,7 @@ ReceiveUnmanaged_Error:
         header.Engagement = this.NodeAddress.Engagement;
     }
 
-    internal bool SendUnmanaged(byte[] packet)
+    internal bool SendPacket(byte[] packet, PacketId responseId)
     {
         lock (this.syncObject)
         {
@@ -132,6 +132,7 @@ ReceiveUnmanaged_Error:
             }
 
             var gene = new NetTerminalGene(this.Gene, this);
+            gene.PacketId = responseId;
             gene.State = NetTerminalGeneState.WaitingToSend;
             gene.Packet = packet;
             this.genes = new NetTerminalGene[] { gene, };
@@ -160,15 +161,15 @@ ReceiveUnmanaged_Error:
         }
     }
 
-    internal bool ProcessRecv(NetTerminalGene netTerminalGene, IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data)
+    internal bool ProcessRecv(NetTerminalGene netTerminalGene, IPEndPoint endPoint, ref PacketHeader header, byte[] packet)
     {
         if (netTerminalGene.State == NetTerminalGeneState.WaitingForConfirmation ||
             netTerminalGene.State == NetTerminalGeneState.WaitingToReceive)
         {// Sent and waiting for confirmation, or waiting for the packet to arrive.
-            if (!header.Id.IsResponse())
+            /*if (!header.Id.IsResponse())
             {
                 return false;
-            }
+            }*/
 
             netTerminalGene.State = NetTerminalGeneState.ReceivedOrConfirmed;
             netTerminalGene.Packet = packet;

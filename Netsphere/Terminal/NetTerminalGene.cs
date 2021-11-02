@@ -32,17 +32,27 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         this.NetTerminal = netTerminal;
     }
 
-    // [Link(Type = ChainType.Ordered)]
-    public ulong Gene { get; private set; }
-
     public NetTerminal NetTerminal { get; }
 
     public NetTerminalGeneState State { get; set; }
 
+    // [Link(Type = ChainType.Ordered)]
+    public ulong Gene { get; private set; }
+
+    /// <summary>
+    /// Gets or sets the PacketId of the packet.
+    /// </summary>
+    public PacketId PacketId { get; set; }
+
     /// <summary>
     ///  Gets or sets the byte array of a packet (header + data).
     /// </summary>
-    public byte[]? Packet { get; set; }
+    public byte[]? PacketToSend { get; set; }
+
+    /*/// <summary>
+    ///  Gets or sets the data of the packet.
+    /// </summary>
+    public Memory<byte>? Data { get; set; }*/
 
     public long InvokeTicks { get; set; }
 
