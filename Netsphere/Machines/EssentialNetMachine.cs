@@ -29,7 +29,7 @@ public partial class EssentialNetMachine : Machine<Identifier>
         {
             // this.Netsphere.EssentialNode.Report(nodeAddress, NodeConnectionResult.Success);
 
-            nodeAddress = new(IPAddress.Loopback, (ushort)this.Information.ConsoleOptions.NetsphereOptions.Port);
+            // nodeAddress = new(IPAddress.Loopback, (ushort)this.Information.ConsoleOptions.NetsphereOptions.Port);
             using (var terminal = this.Netsphere.Terminal.Create(nodeAddress))
             {
                 terminal.SendUnmanaged_Punch();

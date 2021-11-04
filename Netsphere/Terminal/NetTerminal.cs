@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Threading;
+using Serilog;
 
 namespace LP.Net;
 
@@ -79,6 +80,7 @@ public partial class NetTerminal : IDisposable
         {
             if (Stopwatch.GetTimestamp() >= end)
             {
+                Log.Debug($"Receive timeout.");
                 goto ReceiveUnmanaged_Error;
             }
 
@@ -209,7 +211,7 @@ ReceiveUnmanaged_Error:
 ReceivePacket_Error:
         packetId = default;
         data = default;
-        return true;
+        return false;
     }
 
     private void ClearGenes()
