@@ -18,6 +18,11 @@ internal enum NetTerminalGeneState
     WaitingToReceive,
 }
 
+/// <summary>
+/// Initializes a new instance of the <see cref="NetTerminalGene"/> class.
+/// Send: Unmanaged, ReceivedOrConfirmed -> SetSend(): WaitingToSend -> Send(): WaitingForConfirmation -> Receive(): ReceivedOrConfirmed.
+/// Receive: Unmanaged, ReceivedOrConfirmed -> SetReceive(): WaitingToReceive -> Receive(): ReceivedOrConfirmed.
+/// </summary>
 // [ValueLinkObject]
 internal class NetTerminalGene// : IEquatable<NetTerminalGene>
 {
@@ -59,12 +64,13 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         {
             udp.Send(this.packetToSend, this.NetTerminal.Endpoint);
             this.State = NetTerminalGeneState.WaitingForConfirmation;
+            return true;
         }
 
         return false;
     }
 
-    public bool SetReceive(Memory<byte> data)
+    public bool Receive(Memory<byte> data)
     {
         if (this.State == NetTerminalGeneState.WaitingForConfirmation ||
             this.State == NetTerminalGeneState.WaitingToReceive)
@@ -81,6 +87,15 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         }
 
         return false;
+    }
+
+    public void Clear()
+    {
+        this.State = NetTerminalGeneState.Unmanaged;
+        this.Gene = 0;
+        this.PacketId = PacketId.Invalid;
+        this.ReceivedData = default;
+        this.packetToSend = null;
     }
 
     public NetTerminal NetTerminal { get; }

@@ -186,6 +186,14 @@ public class Terminal
         }
     }
 
+    internal void RemoveNetTerminalGene(NetTerminalGene[] genes)
+    {
+        foreach (var x in genes)
+        {
+            this.managedGenes.TryRemove(x.Gene, out _);
+        }
+    }
+
     private NetTerminal.GoshujinClass terminals = new();
 
     private ConcurrentDictionary<ulong, NetTerminalGene> managedGenes = new();

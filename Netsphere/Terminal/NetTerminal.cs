@@ -159,7 +159,7 @@ ReceiveUnmanaged_Error:
 
     internal bool ProcessRecv(NetTerminalGene netTerminalGene, IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data)
     {
-        if (netTerminalGene.SetReceive(data))
+        if (netTerminalGene.Receive(data))
         {
         }
 
@@ -194,18 +194,36 @@ ReceiveUnmanaged_Error:
 
                 packetId = this.genes[0].PacketId;
                 data = this.genes[0].ReceivedData;
+
+                this.genes = null;
                 return true;
             }
         }
-
-        foreach (var x in this.genes)
+        else
         {
+            foreach (var x in this.genes)
+            {
+            }
         }
 
 ReceivePacket_Error:
         packetId = default;
         data = default;
         return true;
+    }
+
+    private void ClearGenes()
+    {
+        if (this.genes != null)
+        {
+            this.Terminal.RemoveNetTerminalGene(this.genes);
+            foreach (var x in this.genes)
+            {
+                x.Clear();
+            }
+
+            this.genes = null;
+        }
     }
 
     private object syncObject = new();
@@ -244,6 +262,7 @@ ReceivePacket_Error:
             if (disposing)
             {
                 // free managed resources.
+                this.ClearGenes();
             }
 
             // free native resources here if there are any.
