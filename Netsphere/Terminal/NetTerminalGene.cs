@@ -2,6 +2,7 @@
 
 using System;
 using System.Net;
+using System.Net.Sockets;
 using Arc.Threading;
 
 #pragma warning disable SA1401
@@ -32,22 +33,72 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         this.NetTerminal = netTerminal;
     }
 
+    public bool SetSend(byte[] packet, PacketId responseId)
+    {
+        if (this.State == NetTerminalGeneState.Unmanaged ||
+            this.State == NetTerminalGeneState.ReceivedOrConfirmed)
+        {
+            this.PacketId = responseId;
+            this.State = NetTerminalGeneState.WaitingToSend;
+            this.packetToSend = packet;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    public bool Send(UdpClient udp)
+    {
+        if (this.packetToSend == null)
+        {
+            return false;
+        }
+
+        if (this.State == NetTerminalGeneState.WaitingToSend)
+        {
+            udp.Send(this.packetToSend, this.NetTerminal.Endpoint);
+            this.State = NetTerminalGeneState.WaitingForConfirmation;
+        }
+
+        return false;
+    }
+
+    public bool SetReceive(Memory<byte> data)
+    {
+        if (this.State == NetTerminalGeneState.WaitingForConfirmation ||
+            this.State == NetTerminalGeneState.WaitingToReceive)
+        {// Sent and waiting for confirmation, or waiting for the packet to arrive.
+            /*if (!header.Id.IsResponse())
+            {
+                return false;
+            }*/
+
+            this.State = NetTerminalGeneState.ReceivedOrConfirmed;
+            this.ReceivedData = data;
+
+            return true;
+        }
+
+        return false;
+    }
+
     public NetTerminal NetTerminal { get; }
 
-    public NetTerminalGeneState State { get; set; }
+    public NetTerminalGeneState State { get; private set; }
 
     // [Link(Type = ChainType.Ordered)]
     public ulong Gene { get; private set; }
 
     /// <summary>
-    /// Gets or sets the PacketId of the packet.
+    /// Gets the PacketId of the packet.
     /// </summary>
-    public PacketId PacketId { get; set; }
+    public PacketId PacketId { get; private set; }
 
     /// <summary>
-    ///  Gets or sets the byte array of a packet (header + data).
+    ///  Gets the received data.
     /// </summary>
-    public Memory<byte> Packet { get; set; }
+    public Memory<byte> ReceivedData { get; private set; }
 
     /*/// <summary>
     ///  Gets or sets the data of the packet.
@@ -57,6 +108,11 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
     public long InvokeTicks { get; set; }
 
     public long CompleteTicks { get; set; }
+
+    /// <summary>
+    ///  The byte array (header + data) to send.
+    /// </summary>
+    private byte[]? packetToSend;
 
     // public long CreatedTicks { get; } = Ticks.GetCurrent();
 

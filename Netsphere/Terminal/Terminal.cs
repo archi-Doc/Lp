@@ -107,7 +107,7 @@ public class Terminal
         }
     }
 
-    internal void ProcessReceiveCore(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> packet)
+    internal void ProcessReceiveCore(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data)
     {
         if (this.managedGenes.TryGetValue(header.Gene, out var terminalGene) &&
             terminalGene.State != NetTerminalGeneState.Unmanaged &&
@@ -119,7 +119,7 @@ public class Terminal
                 return;
             }
 
-            terminalGene.NetTerminal.ProcessRecv(terminalGene, endPoint, ref header, packet);
+            terminalGene.NetTerminal.ProcessRecv(terminalGene, endPoint, ref header, data);
 
             /*if (!terminalGene.NetTerminal.ProcessRecv(terminalGene, endPoint, ref header, data))
             {
@@ -128,14 +128,12 @@ public class Terminal
         }
         else
         {
-            this.ProcessUnmanagedRecv(endPoint, ref header, packet);
+            this.ProcessUnmanagedRecv(endPoint, ref header, data);
         }
     }
 
-    internal unsafe void ProcessUnmanagedRecv(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> packet)
+    internal unsafe void ProcessUnmanagedRecv(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data)
     {
-        var data = packet.Slice(PacketService.HeaderSize);
-
         if (header.Id == PacketId.Punch)
         {// Punch
             PacketPunch? punch;

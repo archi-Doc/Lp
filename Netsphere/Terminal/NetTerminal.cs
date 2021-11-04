@@ -55,7 +55,7 @@ public partial class NetTerminal : IDisposable
     public T? Receive<T>(int millisecondsToWait = DefaultMillisecondsToWait)
         where T : IPacket
     {
-        var result = this.ReceiveUnmanaged(out var header, out var data, millisecondsToWait);
+        var result = this.Receive(out var header, out var data, millisecondsToWait);
         if (!result || data.Length < PacketService.HeaderSize)
         {
             return default(T);
@@ -71,7 +71,7 @@ public partial class NetTerminal : IDisposable
         }
     }
 
-    internal bool ReceiveUnmanaged(out PacketHeader header, out Memory<byte> data, int millisecondsToWait = DefaultMillisecondsToWait)
+    internal bool Receive(out PacketId packetId, out Memory<byte> data, int millisecondsToWait = DefaultMillisecondsToWait)
     {
         var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);
 
@@ -89,7 +89,7 @@ public partial class NetTerminal : IDisposable
                     goto ReceiveUnmanaged_Error;
                 }
 
-                if (this.ReceivePacket(out header, out data))
+                if (this.ReceivePacket(out packetId, out data))
                 {// Received
                     return true;
                 }
@@ -110,7 +110,7 @@ public partial class NetTerminal : IDisposable
         }
 
 ReceiveUnmanaged_Error:
-        header = default;
+        packetId = default;
         data = default;
         return false;
     }
@@ -132,9 +132,7 @@ ReceiveUnmanaged_Error:
             }
 
             var gene = new NetTerminalGene(this.Gene, this);
-            gene.PacketId = responseId;
-            gene.State = NetTerminalGeneState.WaitingToSend;
-            gene.Packet = packet.AsMemory();
+            gene.SetSend(packet, responseId);
             this.genes = new NetTerminalGene[] { gene, };
             this.Terminal.AddNetTerminalGene(this.genes);
         }
@@ -152,27 +150,17 @@ ReceiveUnmanaged_Error:
                 {
                     if (x.State == NetTerminalGeneState.WaitingToSend)
                     {
-                        udp.Send(x.Packet.ToArray(), this.Endpoint);
-                        x.State = NetTerminalGeneState.WaitingForConfirmation;
-                        x.InvokeTicks = currentTicks;
+                        x.Send(udp);
                     }
                 }
             }
         }
     }
 
-    internal bool ProcessRecv(NetTerminalGene netTerminalGene, IPEndPoint endPoint, ref PacketHeader header, Memory<byte> packet)
+    internal bool ProcessRecv(NetTerminalGene netTerminalGene, IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data)
     {
-        if (netTerminalGene.State == NetTerminalGeneState.WaitingForConfirmation ||
-            netTerminalGene.State == NetTerminalGeneState.WaitingToReceive)
-        {// Sent and waiting for confirmation, or waiting for the packet to arrive.
-            /*if (!header.Id.IsResponse())
-            {
-                return false;
-            }*/
-
-            netTerminalGene.State = NetTerminalGeneState.ReceivedOrConfirmed;
-            netTerminalGene.Packet = packet;
+        if (netTerminalGene.SetReceive(data))
+        {
         }
 
         return false;
@@ -185,7 +173,7 @@ ReceiveUnmanaged_Error:
     // internal NetTerminalGene[]? recvGene;
 #pragma warning restore SA1401 // Fields should be private
 
-    private protected unsafe bool ReceivePacket(out PacketHeader header, [MaybeNullWhen(false)] out Memory<byte> data)
+    private protected unsafe bool ReceivePacket(out PacketId packetId, [MaybeNullWhen(false)] out Memory<byte> data)
     {
         if (this.genes == null)
         {
@@ -197,19 +185,15 @@ ReceiveUnmanaged_Error:
         }
         else if (this.genes.Length == 1)
         {
-            if (this.genes[0].State == NetTerminalGeneState.ReceivedOrConfirmed && !this.genes[0].Packet.IsEmpty)
+            if (this.genes[0].State == NetTerminalGeneState.ReceivedOrConfirmed && !this.genes[0].ReceivedData.IsEmpty)
             {
-                if (this.genes[0].Packet.Length < PacketService.HeaderSize)
+                if (this.genes[0].ReceivedData.Length < PacketService.HeaderSize)
                 {
                     goto ReceivePacket_Error;
                 }
 
-                fixed (byte* pb = this.genes[0].Packet)
-                {
-                    header = *(PacketHeader*)pb;
-                }
-
-                data = new(packet, PacketService.HeaderSize, header.DataSize);
+                packetId = this.genes[0].PacketId;
+                data = this.genes[0].ReceivedData;
                 return true;
             }
         }
@@ -219,7 +203,7 @@ ReceiveUnmanaged_Error:
         }
 
 ReceivePacket_Error:
-        header = default;
+        packetId = default;
         data = default;
         return true;
     }
