@@ -107,19 +107,19 @@ public class Terminal
         }
     }
 
-    internal void ProcessReceiveCore(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data)
+    internal void ProcessReceiveCore(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> packet)
     {
         if (this.managedGenes.TryGetValue(header.Gene, out var terminalGene) &&
             terminalGene.State != NetTerminalGeneState.Unmanaged &&
             terminalGene.PacketId == header.Id)
-        {// NetTerminalGene is found and the state is not unmanaged.
+        {// NetTerminalGene is found and the state is not unmanaged and packet ids are identical.
             var netTerminal = terminalGene.NetTerminal;
             if (!netTerminal.Endpoint.Equals(endPoint))
             {// Endpoint mismatch.
                 return;
             }
 
-            terminalGene.NetTerminal.ProcessRecv(terminalGene, endPoint, ref header, data);
+            terminalGene.NetTerminal.ProcessRecv(terminalGene, endPoint, ref header, packet);
 
             /*if (!terminalGene.NetTerminal.ProcessRecv(terminalGene, endPoint, ref header, data))
             {
@@ -128,12 +128,14 @@ public class Terminal
         }
         else
         {
-            this.ProcessUnmanagedRecv(endPoint, ref header, data);
+            this.ProcessUnmanagedRecv(endPoint, ref header, packet);
         }
     }
 
-    internal unsafe void ProcessUnmanagedRecv(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data)
+    internal unsafe void ProcessUnmanagedRecv(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> packet)
     {
+        var data = packet.Slice(PacketService.HeaderSize);
+
         if (header.Id == PacketId.Punch)
         {// Punch
             PacketPunch? punch;

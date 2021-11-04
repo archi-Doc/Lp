@@ -134,7 +134,7 @@ ReceiveUnmanaged_Error:
             var gene = new NetTerminalGene(this.Gene, this);
             gene.PacketId = responseId;
             gene.State = NetTerminalGeneState.WaitingToSend;
-            gene.Packet = packet;
+            gene.Packet = packet.AsMemory();
             this.genes = new NetTerminalGene[] { gene, };
             this.Terminal.AddNetTerminalGene(this.genes);
         }
@@ -150,9 +150,9 @@ ReceiveUnmanaged_Error:
             {
                 foreach (var x in this.genes)
                 {
-                    if (x.State == NetTerminalGeneState.WaitingToSend && x.Packet != null)
+                    if (x.State == NetTerminalGeneState.WaitingToSend)
                     {
-                        udp.Send(x.Packet, this.Endpoint);
+                        udp.Send(x.Packet.ToArray(), this.Endpoint);
                         x.State = NetTerminalGeneState.WaitingForConfirmation;
                         x.InvokeTicks = currentTicks;
                     }
@@ -161,7 +161,7 @@ ReceiveUnmanaged_Error:
         }
     }
 
-    internal bool ProcessRecv(NetTerminalGene netTerminalGene, IPEndPoint endPoint, ref PacketHeader header, byte[] packet)
+    internal bool ProcessRecv(NetTerminalGene netTerminalGene, IPEndPoint endPoint, ref PacketHeader header, Memory<byte> packet)
     {
         if (netTerminalGene.State == NetTerminalGeneState.WaitingForConfirmation ||
             netTerminalGene.State == NetTerminalGeneState.WaitingToReceive)
@@ -197,14 +197,14 @@ ReceiveUnmanaged_Error:
         }
         else if (this.genes.Length == 1)
         {
-            if (this.genes[0].State == NetTerminalGeneState.ReceivedOrConfirmed && this.genes[0].Packet is { } packet)
+            if (this.genes[0].State == NetTerminalGeneState.ReceivedOrConfirmed && !this.genes[0].Packet.IsEmpty)
             {
-                if (packet.Length < PacketService.HeaderSize)
+                if (this.genes[0].Packet.Length < PacketService.HeaderSize)
                 {
                     goto ReceivePacket_Error;
                 }
 
-                fixed (byte* pb = packet)
+                fixed (byte* pb = this.genes[0].Packet)
                 {
                     header = *(PacketHeader*)pb;
                 }

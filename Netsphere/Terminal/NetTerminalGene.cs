@@ -47,7 +47,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
     /// <summary>
     ///  Gets or sets the byte array of a packet (header + data).
     /// </summary>
-    public byte[]? PacketToSend { get; set; }
+    public Memory<byte> Packet { get; set; }
 
     /*/// <summary>
     ///  Gets or sets the data of the packet.
