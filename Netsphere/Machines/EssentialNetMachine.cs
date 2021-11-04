@@ -35,6 +35,10 @@ public partial class EssentialNetMachine : Machine<Identifier>
                 terminal.SendUnmanaged_Punch();
                 this.BigMachine.Core.Sleep(100);
                 var data = terminal.Receive<PacketPunchResponse>(1000);
+                if (data != null)
+                {
+                    Console.WriteLine(data.Endpoint);
+                }
 
                 return StateResult.Continue;
             }
