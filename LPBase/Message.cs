@@ -24,7 +24,13 @@ public static class Message
     /// Called once after LoadAsync().
     /// </summary>
     /// <param name="ParentCore">ParentCore.</param>
-    public record Start(ThreadCoreBase ParentCore);
+    public record Start(ThreadCoreBase ParentCore)
+    {
+        /// <summary>
+        /// Gets or sets a value indicating whether an error occured in the start process.
+        /// </summary>
+        public bool Error { get; set; }
+    }
 
     /// <summary>
     /// Stop objects.<br/>

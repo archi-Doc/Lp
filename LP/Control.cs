@@ -77,7 +77,13 @@ public class Control
         Logger.Information("Press the Enter key to change to console mode.");
         Logger.Information("Press Ctrl+C to exit.");
 
-        Radio.Send(new Message.Start(this.Core));
+        var message = new Message.Start(this.Core);
+        Radio.Send(message);
+        if (message.Error)
+        {
+            Radio.Send(new Message.Stop());
+            return;
+        }
 
         this.BigMachine.Start();
     }

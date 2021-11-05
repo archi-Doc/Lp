@@ -150,7 +150,15 @@ public class NetSocket
         this.recvCore = new NetSocketRecvCore(message.ParentCore, this);
         this.sendCore = new NetSocketSendCore(message.ParentCore, this);
 
-        this.PrepareUdpClient(this.information.ConsoleOptions.NetsphereOptions.Port);
+        try
+        {
+            this.PrepareUdpClient(this.information.ConsoleOptions.NetsphereOptions.Port);
+        }
+        catch
+        {
+            Logger.Error($"Could not create a UDP socket with port {this.information.ConsoleOptions.NetsphereOptions.Port}.");
+            message.Error = true;
+        }
 
         this.recvCore.Start();
         this.sendCore.Start();
