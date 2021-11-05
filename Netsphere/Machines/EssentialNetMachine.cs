@@ -37,9 +37,11 @@ public partial class EssentialNetMachine : Machine<Identifier>
                 var data = terminal.Receive<PacketPunchResponse>(1000);
                 if (data != null)
                 {
-                    Console.WriteLine(data.Endpoint);
+                    Console.WriteLine($"{this.count} - {data.Endpoint}");
                 }
 
+                // this.count <<= 1;
+                // this.SetTimeout(TimeSpan.FromSeconds(this.count));
                 return StateResult.Continue;
             }
         }
@@ -50,4 +52,6 @@ public partial class EssentialNetMachine : Machine<Identifier>
 
         return StateResult.Continue;
     }
+
+    private int count = 1;
 }
