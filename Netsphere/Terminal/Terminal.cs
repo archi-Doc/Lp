@@ -136,17 +136,7 @@ public class Terminal
     {
         if (header.Id == PacketId.Punch)
         {// Punch
-            PacketPunch? punch;
-            try
-            {
-                punch = TinyhandSerializer.Deserialize<PacketPunch>(data);
-            }
-            catch
-            {
-                return;
-            }
-
-            if (punch == null)
+            if (!TinyhandSerializer.TryDeserialize<PacketPunch>(data, out var punch))
             {
                 return;
             }

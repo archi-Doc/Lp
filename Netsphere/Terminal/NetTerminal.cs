@@ -62,14 +62,8 @@ public partial class NetTerminal : IDisposable
             return default(T);
         }
 
-        try
-        {
-            return TinyhandSerializer.Deserialize<T>(data);
-        }
-        catch
-        {
-            return default(T);
-        }
+        TinyhandSerializer.TryDeserialize<T>(data, out var value);
+        return value;
     }
 
     internal bool Receive(out PacketId packetId, out Memory<byte> data, int millisecondsToWait = DefaultMillisecondsToWait)
@@ -175,7 +169,7 @@ ReceiveUnmanaged_Error:
     // internal NetTerminalGene[]? recvGene;
 #pragma warning restore SA1401 // Fields should be private
 
-    private protected unsafe bool ReceivePacket(out PacketId packetId, [MaybeNullWhen(false)] out Memory<byte> data)
+    private protected unsafe bool ReceivePacket(out PacketId packetId, out Memory<byte> data)
     {
         if (this.genes == null)
         {
