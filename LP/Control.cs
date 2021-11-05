@@ -107,9 +107,12 @@ public class Control
     {
         while (!this.Core.IsTerminated)
         {
+            Console.Write(">> ");
+            var command = Console.ReadLine();
+
             if (this.SafeKeyAvailable)
             {
-                var keyInfo = Console.ReadKey(true);
+                /*var keyInfo = Console.ReadKey(true);
                 if (keyInfo.Key == ConsoleKey.D)
                 {
                     this.Dump();
@@ -117,7 +120,7 @@ public class Control
                 else
                 {
                     break;
-                }
+                }*/
             }
 
             this.Core.Sleep(100, 100);
