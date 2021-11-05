@@ -4,7 +4,6 @@ using System;
 using System.Net;
 using System.Net.Sockets;
 using Arc.Threading;
-using Serilog;
 
 #pragma warning disable SA1401
 
@@ -49,7 +48,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
             this.packetToSend = packet;
 
             var packetId = (PacketId)packet[1];
-            Log.Debug($"SetSend: {packetId} -> {this.PacketId}, {this.State}");
+            Logger.Debug($"SetSend: {packetId} -> {this.PacketId}, {this.State}");
             return true;
         }
 
@@ -68,7 +67,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
             udp.Send(this.packetToSend, this.NetTerminal.Endpoint);
             this.State = NetTerminalGeneState.WaitingForConfirmation;
 
-            Log.Debug($"Send: {this.PacketId}, {this.NetTerminal.Endpoint}");
+            Logger.Debug($"Send: {this.PacketId}, {this.NetTerminal.Endpoint}");
             return true;
         }
 
@@ -88,7 +87,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
             this.State = NetTerminalGeneState.ReceivedOrConfirmed;
             this.ReceivedData = data;
 
-            Log.Debug($"Receive: {this.PacketId}, {this.NetTerminal.Endpoint}");
+            Logger.Debug($"Receive: {this.PacketId}, {this.NetTerminal.Endpoint}");
             return true;
         }
 

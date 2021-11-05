@@ -41,8 +41,8 @@ public partial class EssentialNetMachine : Machine<Identifier>
                     Console.WriteLine($"{this.count} - {data.Endpoint}");
                 }
 
-                // this.count <<= 1;
-                // this.SetTimeout(TimeSpan.FromSeconds(this.count));
+                this.count <<= 1;
+                this.SetTimeout(TimeSpan.FromSeconds(this.count));
                 return StateResult.Continue;
             }
         }
