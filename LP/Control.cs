@@ -23,8 +23,8 @@ public class Control
         container.RegisterDelegate(x => new BigMachine<Identifier>(container), Reuse.Singleton);
 
         // Main services
-        container.Register<Information>(Reuse.Singleton);
         container.Register<Control>(Reuse.Singleton);
+        container.Register<Information>(Reuse.Singleton);
         container.Register<Netsphere>(Reuse.Singleton);
         container.Register<Terminal>(Reuse.Singleton);
         container.Register<EssentialNode>(Reuse.Singleton);
@@ -85,11 +85,13 @@ public class Control
     public void Start()
     {
         var s = this.Info.IsConsole ? " (Console)" : string.Empty;
-        Log.Information("LP Start" + s + " : Press any key to exit");
+        Log.Information("LP Start" + s);
 
         Log.Information($"Console: {this.Info.IsConsole}, Root directory: {this.Info.RootDirectory}");
         Log.Information(this.Info.ToString());
         Log.Information($"Current time: {Time.StartupTime}");
+        Log.Information("Press the Enter key to change to console mode.");
+        Log.Information("Press Ctrl+C to exit.");
 
         Radio.Send(new Message.Start(this.Core));
 
@@ -103,30 +105,6 @@ public class Control
         Radio.Send(new Message.Stop());
     }
 
-    public void MainLoop()
-    {
-        while (!this.Core.IsTerminated)
-        {
-            Console.Write(">> ");
-            var command = Console.ReadLine();
-
-            if (this.SafeKeyAvailable)
-            {
-                /*var keyInfo = Console.ReadKey(true);
-                if (keyInfo.Key == ConsoleKey.D)
-                {
-                    this.Dump();
-                }
-                else
-                {
-                    break;
-                }*/
-            }
-
-            this.Core.Sleep(100, 100);
-        }
-    }
-
     public void Terminate()
     {
         this.Core.Terminate();
@@ -134,21 +112,6 @@ public class Control
 
         Log.Information("LP Teminated");
         Log.CloseAndFlush();
-    }
-
-    public bool SafeKeyAvailable
-    {
-        get
-        {
-            try
-            {
-                return Console.KeyAvailable;
-            }
-            catch
-            {
-                return false;
-            }
-        }
     }
 
     public ThreadCoreGroup Core { get; }

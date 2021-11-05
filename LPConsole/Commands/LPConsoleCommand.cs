@@ -30,11 +30,73 @@ namespace LPConsole
             await control.LoadAsync();
             control.Start();
 
-            control.MainLoop();
+            this.MainLoop(control);
 
             control.Stop();
             await control.SaveAsync();
             control.Terminate();
+        }
+
+        private void MainLoop(Control control)
+        {
+            while (!control.Core.IsTerminated)
+            {
+                if (Logger.ViewMode)
+                {// View mode
+                    if (this.SafeKeyAvailable)
+                    {
+                        var keyInfo = Console.ReadKey(true);
+                        if (keyInfo.Key == ConsoleKey.Enter || keyInfo.Key == ConsoleKey.Escape)
+                        { // To console mode
+                            Logger.ViewMode = false;
+                            Console.Write("> ");
+                        }
+
+                        /* if (keyInfo.Key == ConsoleKey.D)
+                        {
+                            this.Dump();
+                        }
+                        else
+                        {
+                            break;
+                        }*/
+                    }
+                }
+                else
+                {// Console mode
+                    var command = Console.ReadLine();
+                    if (!string.IsNullOrEmpty(command))
+                    {
+                        if (string.Compare(command, "exit", true) == 0)
+                        {// Exit
+                            return;
+                        }
+                        else
+                        {
+                        }
+                    }
+
+                    // To view mode
+                    Logger.ViewMode = true;
+                }
+
+                control.Core.Sleep(100, 100);
+            }
+        }
+
+        private bool SafeKeyAvailable
+        {
+            get
+            {
+                try
+                {
+                    return Console.KeyAvailable;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
         }
     }
 }
