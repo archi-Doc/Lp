@@ -27,7 +27,6 @@ public partial class EssentialNetMachine : Machine<Identifier>
     {
         if (this.Netsphere.EssentialNode.GetUncheckedNode(out var nodeAddress))
         {
-            Logger.Information("test");
             // this.Netsphere.EssentialNode.Report(nodeAddress, NodeConnectionResult.Success);
 
             // nodeAddress = new(IPAddress.Loopback, (ushort)this.Information.ConsoleOptions.NetsphereOptions.Port);
@@ -38,7 +37,7 @@ public partial class EssentialNetMachine : Machine<Identifier>
                 var data = terminal.Receive<PacketPunchResponse>(1000);
                 if (data != null)
                 {
-                    Console.WriteLine($"{this.count} - {data.Endpoint}");
+                    Logger.Information($"{this.count} - {data.Endpoint}");
                 }
 
                 this.count <<= 1;
