@@ -73,7 +73,6 @@ public class Control
 
         Logger.Information($"Console: {this.Info.IsConsole}, Root directory: {this.Info.RootDirectory}");
         Logger.Information(this.Info.ToString());
-        Logger.Information($"Current time: {Time.StartupTime}");
         Logger.Information("Press the Enter key to change to console mode.");
         Logger.Information("Press Ctrl+C to exit.");
 
