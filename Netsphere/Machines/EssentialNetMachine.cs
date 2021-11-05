@@ -29,13 +29,19 @@ public partial class EssentialNetMachine : Machine<Identifier>
         {
             // this.Netsphere.EssentialNode.Report(nodeAddress, NodeConnectionResult.Success);
 
-            nodeAddress = new(IPAddress.Loopback, (ushort)this.Information.ConsoleOptions.NetsphereOptions.Port);
+            // nodeAddress = new(IPAddress.Loopback, (ushort)this.Information.ConsoleOptions.NetsphereOptions.Port);
             using (var terminal = this.Netsphere.Terminal.Create(nodeAddress))
             {
-                terminal.SendPunch();
+                terminal.SendUnmanaged_Punch();
                 this.BigMachine.Core.Sleep(100);
                 var data = terminal.Receive<PacketPunchResponse>(1000);
+                if (data != null)
+                {
+                    Logger.Information($"{this.count} - {data.Endpoint}");
+                }
 
+                this.count <<= 1;
+                this.SetTimeout(TimeSpan.FromSeconds(this.count));
                 return StateResult.Continue;
             }
         }
@@ -46,4 +52,6 @@ public partial class EssentialNetMachine : Machine<Identifier>
 
         return StateResult.Continue;
     }
+
+    private int count = 1;
 }

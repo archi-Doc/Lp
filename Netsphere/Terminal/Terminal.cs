@@ -10,19 +10,19 @@ public class Terminal
 {
     internal struct UnmanagedSend
     {
-        public UnmanagedSend(IPEndPoint endPoint, byte[] data)
+        public UnmanagedSend(IPEndPoint endPoint, byte[] packet)
         {
-            this.EndPoint = endPoint;
-            this.Data = data;
+            this.Endpoint = endPoint;
+            this.Packet = packet;
         }
 
-        public IPEndPoint EndPoint { get; }
+        public IPEndPoint Endpoint { get; }
 
-        public byte[] Data { get; }
+        public byte[] Packet { get; }
     }
 
     /// <summary>
-    /// Create raw (without public key) NetTerminal instance.
+    /// Create unmanaged (without public key) NetTerminal instance.
     /// </summary>
     /// <param name="nodeAddress">NodeAddress.</param>
     /// <returns>NetTerminal.</returns>
@@ -61,7 +61,7 @@ public class Terminal
     {
         while (this.unmanagedSends.TryDequeue(out var unregisteredSend))
         {
-            udp.Send(unregisteredSend.Data, unregisteredSend.EndPoint);
+            udp.Send(unregisteredSend.Packet, unregisteredSend.Endpoint);
         }
 
         NetTerminal[] array;
@@ -76,83 +76,88 @@ public class Terminal
         }
     }
 
-    internal unsafe void ProcessReceive(IPEndPoint endPoint, byte[] data)
+    internal unsafe void ProcessReceive(IPEndPoint endPoint, byte[] packet)
     {
-        if (data.Length < PacketHelper.HeaderSize)
-        {// Below the minimum header size.
-            return;
-        }
+        var position = 0;
+        var remaining = packet.Length;
 
-        PacketHeader header;
-        fixed (byte* pb = data)
+        while (remaining >= PacketService.HeaderSize)
         {
-            header = *(PacketHeader*)pb;
-        }
+            PacketHeader header;
+            fixed (byte* pb = packet)
+            {
+                header = *(PacketHeader*)(pb + position);
+            }
 
-        if (data.Length != (PacketHelper.HeaderSize + header.DataSize))
-        {// Invalid DataSize
-            return;
-        }
-
-        if (header.Engagement != 0)
-        {
-        }
-
-        /*if (header.Id == PacketId.Punch)
-        {
-            var r = new PacketPunchResponse();
-            r.Header = header;
-            r.Header.Id = PacketId.PunchResponse;
-            r.EndPoint = endPoint;
-            r.UtcTicks = DateTime.UtcNow.Ticks;
-
-            var b = TinyhandSerializer.Serialize(r);
-            this.unregisteredSends.Enqueue(new UnregisteredSend(endPoint, b));
-            return;
-        }*/
-
-        var span = data.AsSpan(PacketHelper.HeaderSize);
-        if (this.managedGenes.TryGetValue(header.Gene, out var terminalGene) && terminalGene.State != NetTerminalGeneState.Unmanaged)
-        {
-            var netTerminal = terminalGene.NetTerminal;
-            if (!netTerminal.EndPoint.Equals(endPoint))
-            {// EndPoint mismatch.
+            var dataSize = header.DataSize;
+            if (remaining < (PacketService.HeaderSize + dataSize))
+            {// Invalid DataSize
                 return;
             }
 
-            if (!terminalGene.NetTerminal.ProcessRecv(terminalGene, endPoint, ref header, span))
+            if (header.Engagement != 0)
             {
-                this.ProcessUnmanagedRecv(endPoint, ref header, span);
             }
-        }
-        else
-        {
-            this.ProcessUnmanagedRecv(endPoint, ref header, span);
+
+            position += PacketService.HeaderSize;
+            var data = new Memory<byte>(packet, position, dataSize);
+            this.ProcessReceiveCore(endPoint, ref header, data);
+            position += dataSize;
+            remaining -= PacketService.HeaderSize + dataSize;
         }
     }
 
-    internal unsafe void ProcessUnmanagedRecv(IPEndPoint endPoint, ref PacketHeader header, Span<byte> data)
+    internal void ProcessReceiveCore(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data)
+    {
+        if (this.managedGenes.TryGetValue(header.Gene, out var terminalGene) &&
+            terminalGene.State != NetTerminalGeneState.Unmanaged &&
+            terminalGene.PacketId == header.Id)
+        {// NetTerminalGene is found and the state is not unmanaged and packet ids are identical.
+            var netTerminal = terminalGene.NetTerminal;
+            if (!netTerminal.Endpoint.Equals(endPoint))
+            {// Endpoint mismatch.
+                return;
+            }
+
+            terminalGene.NetTerminal.ProcessRecv(terminalGene, endPoint, ref header, data);
+
+            /*if (!terminalGene.NetTerminal.ProcessRecv(terminalGene, endPoint, ref header, data))
+            {
+                this.ProcessUnmanagedRecv(endPoint, ref header, data);
+            }*/
+        }
+        else
+        {
+            this.ProcessUnmanagedRecv(endPoint, ref header, data);
+        }
+    }
+
+    internal unsafe void ProcessUnmanagedRecv(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data)
     {
         if (header.Id == PacketId.Punch)
         {// Punch
-            var w = new Tinyhand.IO.TinyhandWriter(initialBuffer);
-            var span = w.GetSpan(PacketHelper.HeaderSize);
-            w.Advance(PacketHelper.HeaderSize);
-
-            var r = new PacketPunchResponse();
-            r.EndPoint = endPoint;
-            r.UtcTicks = DateTime.UtcNow.Ticks;
-
-            var written = w.Written;
-            TinyhandSerializer.Serialize(ref w, r);
-            fixed (byte* pb = span)
+            if (!TinyhandSerializer.TryDeserialize<PacketPunch>(data, out var punch))
             {
-                header.Id = PacketId.PunchResponse;
-                header.DataSize = (ushort)(w.Written - written);
-                *(PacketHeader*)pb = header;
+                return;
             }
 
-            this.unmanagedSends.Enqueue(new UnmanagedSend(endPoint, w.FlushAndGetArray()));
+            Time.AddTimeForCorrection(punch.UtcTicks);
+
+            var r = new PacketPunchResponse();
+            if (punch.NextEndpoint != null)
+            {
+                r.Endpoint = punch.NextEndpoint;
+            }
+            else
+            {
+                r.Endpoint = endPoint;
+            }
+
+            r.UtcTicks = DateTime.UtcNow.Ticks;
+
+            var p = PacketService.CreatePacket(ref header, r);
+
+            this.unmanagedSends.Enqueue(new UnmanagedSend(endPoint, p));
         }
         else
         {// Not supported
@@ -171,8 +176,13 @@ public class Terminal
         }
     }
 
-    [ThreadStatic]
-    private static byte[] initialBuffer = new byte[2048];
+    internal void RemoveNetTerminalGene(NetTerminalGene[] genes)
+    {
+        foreach (var x in genes)
+        {
+            this.managedGenes.TryRemove(x.Gene, out _);
+        }
+    }
 
     private NetTerminal.GoshujinClass terminals = new();
 

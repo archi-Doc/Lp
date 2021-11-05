@@ -10,7 +10,7 @@ using Arc.Crypto;
 
 namespace LP;
 
-public class Hash : SHA3_256
+public class Hash : Sha3_256
 {
     public static readonly new string HashName = "SHA3-256";
     public static readonly new uint HashBits = 256;

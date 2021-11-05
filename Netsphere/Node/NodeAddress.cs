@@ -84,7 +84,7 @@ public partial class NodeAddress : IEquatable<NodeAddress>
     [Key(3)]
     public IPAddress Address { get; protected set; } = IPAddress.None;
 
-    public IPEndPoint CreateEndPoint() => new IPEndPoint(this.Address, this.Port);
+    public IPEndPoint CreateEndpoint() => new IPEndPoint(this.Address, this.Port);
 
     public bool IsValid()
     {

@@ -2,6 +2,7 @@
 
 using System;
 using System.Net;
+using System.Net.Sockets;
 using Arc.Threading;
 
 #pragma warning disable SA1401
@@ -17,6 +18,11 @@ internal enum NetTerminalGeneState
     WaitingToReceive,
 }
 
+/// <summary>
+/// Initializes a new instance of the <see cref="NetTerminalGene"/> class.
+/// Send: Unmanaged, ReceivedOrConfirmed -> SetSend(): WaitingToSend -> Send(): WaitingForConfirmation -> Receive(): ReceivedOrConfirmed.
+/// Receive: Unmanaged, ReceivedOrConfirmed -> SetReceive(): WaitingToReceive -> Receive(): ReceivedOrConfirmed.
+/// </summary>
 // [ValueLinkObject]
 internal class NetTerminalGene// : IEquatable<NetTerminalGene>
 {
@@ -32,18 +38,101 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         this.NetTerminal = netTerminal;
     }
 
-    // [Link(Type = ChainType.Ordered)]
-    public ulong Gene { get; private set; }
+    public bool SetSend(byte[] packet, PacketId responseId)
+    {
+        if (this.State == NetTerminalGeneState.Unmanaged ||
+            this.State == NetTerminalGeneState.ReceivedOrConfirmed)
+        {
+            this.PacketId = responseId;
+            this.State = NetTerminalGeneState.WaitingToSend;
+            this.packetToSend = packet;
+
+            var packetId = (PacketId)packet[1];
+            Logger.Debug($"SetSend: {packetId} -> {this.PacketId}, {this.State}");
+            return true;
+        }
+
+        return false;
+    }
+
+    public bool Send(UdpClient udp)
+    {
+        if (this.packetToSend == null)
+        {
+            return false;
+        }
+
+        if (this.State == NetTerminalGeneState.WaitingToSend)
+        {
+            udp.Send(this.packetToSend, this.NetTerminal.Endpoint);
+            this.State = NetTerminalGeneState.WaitingForConfirmation;
+
+            Logger.Debug($"Send: {this.PacketId}, {this.NetTerminal.Endpoint}");
+            return true;
+        }
+
+        return false;
+    }
+
+    public bool Receive(Memory<byte> data)
+    {
+        if (this.State == NetTerminalGeneState.WaitingForConfirmation ||
+            this.State == NetTerminalGeneState.WaitingToReceive)
+        {// Sent and waiting for confirmation, or waiting for the packet to arrive.
+            /*if (!header.Id.IsResponse())
+            {
+                return false;
+            }*/
+
+            this.State = NetTerminalGeneState.ReceivedOrConfirmed;
+            this.ReceivedData = data;
+
+            Logger.Debug($"Receive: {this.PacketId}, {this.NetTerminal.Endpoint}");
+            return true;
+        }
+
+        return false;
+    }
+
+    public void Clear()
+    {
+        this.State = NetTerminalGeneState.Unmanaged;
+        this.Gene = 0;
+        this.PacketId = PacketId.Invalid;
+        this.ReceivedData = default;
+        this.packetToSend = null;
+    }
 
     public NetTerminal NetTerminal { get; }
 
-    public NetTerminalGeneState State { get; set; }
+    public NetTerminalGeneState State { get; private set; }
 
-    public byte[]? Data { get; set; }
+    // [Link(Type = ChainType.Ordered)]
+    public ulong Gene { get; private set; }
+
+    /// <summary>
+    /// Gets the PacketId of the packet.
+    /// </summary>
+    public PacketId PacketId { get; private set; }
+
+    /// <summary>
+    ///  Gets the received data.
+    /// </summary>
+    public Memory<byte> ReceivedData { get; private set; }
+
+    /*/// <summary>
+    ///  Gets or sets the data of the packet.
+    /// </summary>
+    public Memory<byte>? Data { get; set; }*/
 
     public long InvokeTicks { get; set; }
 
     public long CompleteTicks { get; set; }
+
+    /// <summary>
+    ///  The byte array (header + data) to send.
+    /// </summary>
+    private byte[]? packetToSend;
 
     // public long CreatedTicks { get; } = Ticks.GetCurrent();
 

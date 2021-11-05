@@ -8,7 +8,6 @@ global using Arc.Threading;
 global using BigMachines;
 global using CrossChannel;
 global using LP;
-global using Serilog;
 global using Tinyhand;
 using DryIoc;
 using LP.Net;
@@ -23,8 +22,8 @@ public class Control
         container.RegisterDelegate(x => new BigMachine<Identifier>(container), Reuse.Singleton);
 
         // Main services
-        container.Register<Information>(Reuse.Singleton);
         container.Register<Control>(Reuse.Singleton);
+        container.Register<Information>(Reuse.Singleton);
         container.Register<Netsphere>(Reuse.Singleton);
         container.Register<Terminal>(Reuse.Singleton);
         container.Register<EssentialNode>(Reuse.Singleton);
@@ -47,7 +46,7 @@ public class Control
 
     public void Configure()
     {
-        this.ConfigureLogger();
+        Logger.Configure(this.Info);
         this.ConfigureControl();
 
         Radio.Send(new Message.Configure());
@@ -63,21 +62,6 @@ public class Control
         await Radio.SendAsync(new Message.SaveAsync());
     }
 
-    public void ConfigureLogger()
-    {
-        // Logger: Debug, Information, Warning, Error, Fatal
-        Log.Logger = new LoggerConfiguration()
-        .MinimumLevel.Debug()
-        .WriteTo.Console(restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information)
-        .WriteTo.File(
-            Path.Combine(this.Info.RootDirectory, "logs", "log.txt"),
-            rollingInterval: RollingInterval.Day,
-            retainedFileCountLimit: 31,
-            buffered: true,
-            flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
-        .CreateLogger();
-    }
-
     public void ConfigureControl()
     {
     }
@@ -85,43 +69,29 @@ public class Control
     public void Start()
     {
         var s = this.Info.IsConsole ? " (Console)" : string.Empty;
-        Log.Information("LP Start" + s + " : Press any key to exit");
+        Logger.Information("LP Start" + s);
 
-        Log.Information($"Console: {this.Info.IsConsole}, Root directory: {this.Info.RootDirectory}");
-        Log.Information(this.Info.ToString());
-        Log.Information($"Current time: {Time.StartupTime}");
+        Logger.Information($"Console: {this.Info.IsConsole}, Root directory: {this.Info.RootDirectory}");
+        Logger.Information(this.Info.ToString());
+        Logger.Information("Press the Enter key to change to console mode.");
+        Logger.Information("Press Ctrl+C to exit.");
 
-        Radio.Send(new Message.Start(this.Core));
+        var message = new Message.Start(this.Core);
+        Radio.Send(message);
+        if (message.Error)
+        {
+            Radio.Send(new Message.Stop());
+            return;
+        }
 
         this.BigMachine.Start();
     }
 
     public void Stop()
     {
-        Log.Information("LP Termination process initiated");
+        Logger.Information("LP Termination process initiated");
 
         Radio.Send(new Message.Stop());
-    }
-
-    public void MainLoop()
-    {
-        while (!this.Core.IsTerminated)
-        {
-            if (this.SafeKeyAvailable)
-            {
-                var keyInfo = Console.ReadKey(true);
-                if (keyInfo.Key == ConsoleKey.D)
-                {
-                    this.Dump();
-                }
-                else
-                {
-                    break;
-                }
-            }
-
-            this.Core.Sleep(100, 100);
-        }
     }
 
     public void Terminate()
@@ -129,23 +99,8 @@ public class Control
         this.Core.Terminate();
         this.Core.WaitForTermination(-1);
 
-        Log.Information("LP Teminated");
-        Log.CloseAndFlush();
-    }
-
-    public bool SafeKeyAvailable
-    {
-        get
-        {
-            try
-            {
-                return Console.KeyAvailable;
-            }
-            catch
-            {
-                return false;
-            }
-        }
+        Logger.Information("LP Teminated");
+        Logger.CloseAndFlush();
     }
 
     public ThreadCoreGroup Core { get; }
@@ -158,7 +113,7 @@ public class Control
 
     private void Dump()
     {
-        Log.Information($"Dump:");
-        Log.Information($"MyStatus: {this.Netsphere.MyStatus.Type}");
+        Logger.Information($"Dump:");
+        Logger.Information($"MyStatus: {this.Netsphere.MyStatus.Type}");
     }
 }

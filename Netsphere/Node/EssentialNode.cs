@@ -51,7 +51,7 @@ public class EssentialNode
         }
         catch
         {
-            Log.Error($"Load error: {FileName}");
+            Logger.Error($"Load error: {FileName}");
         }
 
         // Load NetsphereOptions.Nodes
