@@ -69,12 +69,12 @@ public class Control
     public void Start()
     {
         var s = this.Info.IsConsole ? " (Console)" : string.Empty;
-        Logger.Information("LP Start" + s);
+        Logger.Default.Information("LP Start" + s);
 
-        Logger.Information($"Console: {this.Info.IsConsole}, Root directory: {this.Info.RootDirectory}");
-        Logger.Information(this.Info.ToString());
-        Logger.Information("Press the Enter key to change to console mode.");
-        Logger.Information("Press Ctrl+C to exit.");
+        Logger.Default.Information($"Console: {this.Info.IsConsole}, Root directory: {this.Info.RootDirectory}");
+        Logger.Default.Information(this.Info.ToString());
+        Logger.Console.Information("Press the Enter key to change to console mode.");
+        Logger.Console.Information("Press Ctrl+C to exit.");
 
         var message = new Message.Start(this.Core);
         Radio.Send(message);
@@ -89,7 +89,7 @@ public class Control
 
     public void Stop()
     {
-        Logger.Information("LP Termination process initiated");
+        Logger.Default.Information("LP Termination process initiated");
 
         Radio.Send(new Message.Stop());
     }
@@ -99,7 +99,7 @@ public class Control
         this.Core.Terminate();
         this.Core.WaitForTermination(-1);
 
-        Logger.Information("LP Teminated");
+        Logger.Default.Information("LP Teminated");
         Logger.CloseAndFlush();
     }
 
@@ -113,7 +113,7 @@ public class Control
 
     private void Dump()
     {
-        Logger.Information($"Dump:");
-        Logger.Information($"MyStatus: {this.Netsphere.MyStatus.Type}");
+        Logger.Default.Information($"Dump:");
+        Logger.Default.Information($"MyStatus: {this.Netsphere.MyStatus.Type}");
     }
 }

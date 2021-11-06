@@ -37,11 +37,11 @@ public partial class EssentialNetMachine : Machine<Identifier>
                 var data = terminal.Receive<PacketPunchResponse>(1000);
                 if (data != null)
                 {
-                    Logger.Information($"{this.count} - {data.Endpoint}");
+                    Logger.Default.Information($"{this.count} - {data.Endpoint}");
                 }
                 else
                 {
-                    Logger.Information($"Receive timeout: {nodeAddress}");
+                    Logger.Default.Information($"Receive timeout: {nodeAddress}");
                 }
 
                 this.count <<= 1;

@@ -48,7 +48,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
             this.packetToSend = packet;
 
             var packetId = (PacketId)packet[1];
-            Logger.Debug($"SetSend: {packetId} -> {this.PacketId}, {this.State}");
+            Logger.Default.Debug($"SetSend: {packetId} -> {this.PacketId}, {this.State}");
             return true;
         }
 
@@ -67,7 +67,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
             udp.Send(this.packetToSend, this.NetTerminal.Endpoint);
             this.State = NetTerminalGeneState.WaitingForConfirmation;
 
-            Logger.Debug($"Send: {this.PacketId}, {this.NetTerminal.Endpoint}");
+            Logger.Default.Debug($"Send: {this.PacketId}, {this.NetTerminal.Endpoint}");
             return true;
         }
 
@@ -87,7 +87,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
             this.State = NetTerminalGeneState.ReceivedOrConfirmed;
             this.ReceivedData = data;
 
-            Logger.Debug($"Receive: {this.PacketId}, {this.NetTerminal.Endpoint}");
+            Logger.Default.Debug($"Receive: {this.PacketId}, {this.NetTerminal.Endpoint}");
             return true;
         }
 

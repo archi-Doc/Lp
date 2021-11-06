@@ -156,7 +156,7 @@ public class NetSocket
         }
         catch
         {
-            Logger.Error($"Could not create a UDP socket with port {this.information.ConsoleOptions.NetsphereOptions.Port}.");
+            Logger.Default.Error($"Could not create a UDP socket with port {this.information.ConsoleOptions.NetsphereOptions.Port}.");
             message.Error = true;
         }
 
