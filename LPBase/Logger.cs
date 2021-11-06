@@ -15,7 +15,7 @@ public static class Logger
     public static void Configure(Information info)
     {
         // Logger: Debug, Information, Warning, Error, Fatal
-        Log.Logger = new LoggerConfiguration()
+        fileLogger = new LoggerConfiguration()
         .MinimumLevel.Debug()
         .WriteTo.File(
             Path.Combine(info.RootDirectory, "logs", "log.txt"),
@@ -39,7 +39,7 @@ public static class Logger
 
     public static void Debug(string message)
     {
-        Log.Debug(message);
+        fileLogger?.Debug(message);
         if (viewMode)
         {
             consoleLogger?.Debug(message);
@@ -48,7 +48,7 @@ public static class Logger
 
     public static void Information(string message)
     {
-        Log.Information(message);
+        fileLogger?.Information(message);
         if (viewMode)
         {
             consoleLogger?.Information(message);
@@ -57,7 +57,7 @@ public static class Logger
 
     public static void Warning(string message)
     {
-        Log.Warning(message);
+        fileLogger?.Warning(message);
         if (viewMode)
         {
             consoleLogger?.Warning(message);
@@ -66,7 +66,7 @@ public static class Logger
 
     public static void Error(string message)
     {
-        Log.Error(message);
+        fileLogger?.Error(message);
         if (viewMode)
         {
             consoleLogger?.Error(message);
@@ -78,6 +78,7 @@ public static class Logger
         Log.CloseAndFlush();
     }
 
+    private static Serilog.ILogger? fileLogger;
     private static Serilog.ILogger? consoleLogger;
     private static bool viewMode = true;
 }
