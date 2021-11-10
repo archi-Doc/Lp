@@ -19,6 +19,14 @@ namespace LPConsole
         public async Task Run(CreateKeyOptions options, string[] args)
         {
             Console.WriteLine($"Create Key: {options.Type}");
+
+            if (string.IsNullOrEmpty(options.Filename))
+            {
+                options.Filename = "Node.key";
+            }
+
+            Console.WriteLine($"Filename: {options.Filename}");
+
             Console.WriteLine();
 
             Console.Write("Enter name: ");
@@ -31,7 +39,13 @@ namespace LPConsole
             var data = TinyhandSerializer.Serialize(nodeKey);
             var encrypted = PasswordEncrypt.Encrypt(data, password);
 
-            await File.WriteAllBytesAsync(options.Filename, encrypted);
+            try
+            {
+                await File.WriteAllBytesAsync(options.Filename, encrypted);
+            }
+            catch
+            {
+            }
         }
     }
 
@@ -44,7 +58,7 @@ namespace LPConsole
         // public string Password { get; init; } = string.Empty;
 
         [SimpleOption("file", description: "File name")]
-        public string Filename { get; init; } = string.Empty;
+        public string Filename { get; internal set; } = string.Empty;
 
         public override string ToString() => $"";
     }
