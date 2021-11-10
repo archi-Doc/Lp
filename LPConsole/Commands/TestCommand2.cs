@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,11 +25,13 @@ namespace LPConsole
             var name = Console.ReadLine();
 
             Console.Write("Enter password: ");
-            var password = Console.ReadLine();
+            var password = Console.ReadLine() ?? string.Empty;
 
             var nodeKey = NodePrivateKey.Create(name);
             var data = TinyhandSerializer.Serialize(nodeKey);
-            PasswordEncrypt.Encrypt
+            var encrypted = PasswordEncrypt.Encrypt(data, password);
+
+            File.Write(options.Filename, encrypted);
         }
     }
 
@@ -41,7 +44,7 @@ namespace LPConsole
         // public string Password { get; init; } = string.Empty;
 
         [SimpleOption("file", description: "File name")]
-        public string FileName { get; init; } = string.Empty;
+        public string Filename { get; init; } = string.Empty;
 
         public override string ToString() => $"";
     }
