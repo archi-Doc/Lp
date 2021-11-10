@@ -14,9 +14,9 @@ using Tinyhand;
 namespace LPConsole
 {
     [SimpleCommand("createkey")]
-    public class CreateKeyCommand : ISimpleCommand<CreateKeyOptions>
+    public class CreateKeyCommand : ISimpleCommandAsync<CreateKeyOptions>
     {
-        public void Run(CreateKeyOptions options, string[] args)
+        public async Task Run(CreateKeyOptions options, string[] args)
         {
             Console.WriteLine($"Create Key: {options.Type}");
             Console.WriteLine();
@@ -31,7 +31,7 @@ namespace LPConsole
             var data = TinyhandSerializer.Serialize(nodeKey);
             var encrypted = PasswordEncrypt.Encrypt(data, password);
 
-            File.Write(options.Filename, encrypted);
+            await File.WriteAllBytesAsync(options.Filename, encrypted);
         }
     }
 
