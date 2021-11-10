@@ -13,10 +13,10 @@ using Tinyhand;
 
 namespace LPConsole
 {
-    [SimpleCommand("createkey")]
-    public class CreateKeyCommand : ISimpleCommandAsync<CreateKeyOptions>
+    [SimpleCommand("test")]
+    public class TestCommand : ISimpleCommandAsync<TestOptions>
     {
-        public async Task Run(CreateKeyOptions options, string[] args)
+        public async Task Run(TestOptions options, string[] args)
         {
             Console.WriteLine($"Create Key: {options.Type}");
 
@@ -49,7 +49,7 @@ namespace LPConsole
         }
     }
 
-    public record CreateKeyOptions
+    public record TestOptions
     {
         [SimpleOption("type", description: "Key type (node)")]
         public string Type { get; init; } = string.Empty;
