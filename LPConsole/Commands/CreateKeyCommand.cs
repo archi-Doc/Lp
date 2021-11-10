@@ -22,7 +22,7 @@ namespace LPConsole
 
             if (string.IsNullOrEmpty(options.Filename))
             {
-                options.Filename = "Node.key";
+                options.Filename = $"{options.Type}.key";
             }
 
             Console.WriteLine($"Filename: {options.Filename}");
@@ -31,9 +31,17 @@ namespace LPConsole
 
             Console.Write("Enter name: ");
             var name = Console.ReadLine();
+            if (name == null)
+            {
+                goto Abort;
+            }
 
             Console.Write("Enter password: ");
-            var password = Console.ReadLine() ?? string.Empty;
+            var password = Console.ReadLine();
+            if (password == null)
+            {
+                goto Abort;
+            }
 
             var nodeKey = NodePrivateKey.Create(name);
             var data = TinyhandSerializer.Serialize(nodeKey);
@@ -46,13 +54,22 @@ namespace LPConsole
             catch
             {
             }
+
+            Console.WriteLine();
+            Console.WriteLine($"{options.Filename} was successfully created.");
+
+            return;
+
+Abort:
+            Console.WriteLine();
+            Console.WriteLine("aborted.");
         }
     }
 
     public record CreateKeyOptions
     {
         [SimpleOption("type", description: "Key type (node)")]
-        public string Type { get; init; } = string.Empty;
+        public KeyType Type { get; init; } = KeyType.Node;
 
         // [SimpleOption("password", description: "Password", Required = true)]
         // public string Password { get; init; } = string.Empty;
@@ -61,5 +78,10 @@ namespace LPConsole
         public string Filename { get; internal set; } = string.Empty;
 
         public override string ToString() => $"";
+    }
+
+    public enum KeyType
+    {
+        Node,
     }
 }
