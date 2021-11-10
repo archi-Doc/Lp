@@ -22,6 +22,7 @@ namespace LPConsole
             var commandTypes = new Type[]
             {
                 typeof(LPConsoleCommand),
+                typeof(CreateKeyCommand),
                 // typeof(TestCommand2),
             };
 
