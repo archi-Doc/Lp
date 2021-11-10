@@ -24,6 +24,12 @@ public partial class NodeInformation : NodeAddress, IEquatable<NodeInformation>
     [Key(5)]
     public ulong Differentiation { get; protected set; }
 
+    [Key(6)]
+    public byte[] PublicKeyX { get; protected set; } = default!;
+
+    [Key(7)]
+    public byte[] PublicKeyY { get; protected set; } = default!;
+
     public bool Equals(NodeInformation? other)
     {
         if (other == null)

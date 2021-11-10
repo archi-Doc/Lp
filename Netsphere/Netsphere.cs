@@ -46,8 +46,8 @@ public class Netsphere
             this.information.ConsoleOptions.NetsphereOptions.Port = Random.Pseudo.NextInt(Netsphere.MinPort, Netsphere.MaxPort + 1);
             if (showWarning)
             {
-                Logger.Warning($"Port number must be between {Netsphere.MinPort} and {Netsphere.MaxPort}");
-                Logger.Information($"Port number is set to {this.information.ConsoleOptions.NetsphereOptions.Port}");
+                Logger.Default.Warning($"Port number must be between {Netsphere.MinPort} and {Netsphere.MaxPort}");
+                Logger.Default.Information($"Port number is set to {this.information.ConsoleOptions.NetsphereOptions.Port}");
             }
         }
 

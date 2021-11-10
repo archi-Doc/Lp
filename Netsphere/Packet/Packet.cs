@@ -10,9 +10,11 @@ namespace LP.Net;
 public enum PacketId : byte
 {
     Invalid,
-    Relay,
     Punch,
     PunchResponse,
+    Relay,
+    Encrypt,
+    Data,
 }
 
 // internal record PacketInfo(Type PacketType, byte PacketId, bool IsResponse);

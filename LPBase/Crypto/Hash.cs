@@ -14,7 +14,7 @@ public class Hash : Sha3_256
 {
     public static readonly new string HashName = "SHA3-256";
     public static readonly new uint HashBits = 256;
-    public static readonly uint HashBytes = HashBits / 8;
+    public static readonly new uint HashBytes = HashBits / 8;
 
     public static ObjectPool<Hash> ObjectPool { get; } = new(static () => new Hash());
 

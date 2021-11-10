@@ -184,6 +184,8 @@ public class Terminal
         }
     }
 
+    internal Serilog.ILogger? TerminalLogger { get; private set; }
+
     private NetTerminal.GoshujinClass terminals = new();
 
     private ConcurrentDictionary<ulong, NetTerminalGene> managedGenes = new();

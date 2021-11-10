@@ -37,7 +37,11 @@ public partial class EssentialNetMachine : Machine<Identifier>
                 var data = terminal.Receive<PacketPunchResponse>(1000);
                 if (data != null)
                 {
-                    Logger.Information($"{this.count} - {data.Endpoint}");
+                    Logger.Default.Information($"{this.count} - {data.Endpoint}");
+                }
+                else
+                {
+                    Logger.Default.Information($"Receive timeout: {nodeAddress}");
                 }
 
                 this.count <<= 1;
@@ -53,5 +57,6 @@ public partial class EssentialNetMachine : Machine<Identifier>
         return StateResult.Continue;
     }
 
+    // private Serilog.ILogger? logger = Logger.
     private int count = 1;
 }

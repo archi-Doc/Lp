@@ -73,7 +73,7 @@ public partial class NetTerminal : IDisposable
         {
             if (Stopwatch.GetTimestamp() >= end)
             {
-                Logger.Debug($"Receive timeout.");
+                this.TerminalLogger?.Information($"Receive timeout.");
                 goto ReceiveUnmanaged_Error;
             }
 
@@ -167,6 +167,8 @@ ReceiveUnmanaged_Error:
     // internal NetTerminalGene[]? sendGene;
     // internal NetTerminalGene[]? recvGene;
 #pragma warning restore SA1401 // Fields should be private
+
+    internal Serilog.ILogger? TerminalLogger => this.Terminal.TerminalLogger;
 
     private protected unsafe bool ReceivePacket(out PacketId packetId, out Memory<byte> data)
     {
