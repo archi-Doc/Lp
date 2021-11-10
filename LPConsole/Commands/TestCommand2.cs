@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Arc.Crypto;
 using LP;
 using SimpleCommandLine;
 using Tinyhand;
@@ -27,6 +28,7 @@ namespace LPConsole
 
             var nodeKey = NodePrivateKey.Create(name);
             var data = TinyhandSerializer.Serialize(nodeKey);
+            PasswordEncrypt.Encrypt
         }
     }
 
