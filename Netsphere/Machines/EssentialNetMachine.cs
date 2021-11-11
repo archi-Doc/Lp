@@ -37,6 +37,7 @@ public partial class EssentialNetMachine : Machine<Identifier>
                 var data = terminal.Receive<PacketPunchResponse>(1000);
                 if (data != null)
                 {
+                    Logger.Default.Information(DateTime.UtcNow.ToString());
                     Logger.Default.Information($"{this.count} - {data.Endpoint} - {new DateTime(data.UtcTicks)}");
                     this.Netsphere.EssentialNode.Report(nodeAddress, NodeConnectionResult.Success);
                 }
