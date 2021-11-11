@@ -7,6 +7,21 @@ namespace LP;
 public static class NodeKey
 {
     public const string ECCurveName = "secp256r1";
+
+    public static NodePrivateKey AlternativePrivateKey
+    {
+        get
+        {
+            if (alternativePrivateKey == null)
+            {
+                alternativePrivateKey = NodePrivateKey.Create("Alternative");
+            }
+
+            return alternativePrivateKey;
+        }
+    }
+
+    private static NodePrivateKey? alternativePrivateKey;
 }
 
 [TinyhandObject]

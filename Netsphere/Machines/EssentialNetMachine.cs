@@ -27,6 +27,7 @@ public partial class EssentialNetMachine : Machine<Identifier>
     {
         if (this.Netsphere.EssentialNode.GetUncheckedNode(out var nodeAddress))
         {
+            // var alt = NodeInformation.Alternative;
             // this.Netsphere.EssentialNode.Report(nodeAddress, NodeConnectionResult.Success);
 
             // nodeAddress = NodeAddress.Alternative;

@@ -14,12 +14,33 @@ namespace LP.Net;
 [TinyhandObject]
 public partial class NodeInformation : NodeAddress, IEquatable<NodeInformation>
 {
+    public static new NodeInformation Alternative
+    {
+        get
+        {
+            if (alternative == null)
+            {
+                alternative = new NodeInformation(NodeAddress.Alternative);
+                alternative.UpdateTime = DateTime.UtcNow.Ticks;
+                alternative.PublicKeyX = NodeKey.AlternativePrivateKey.X;
+                alternative.PublicKeyY = NodeKey.AlternativePrivateKey.Y;
+            }
+
+            return alternative;
+        }
+    }
+
     public NodeInformation()
     {
     }
 
+    public NodeInformation(NodeAddress nodeAddress)
+        : base(nodeAddress.Address, nodeAddress.Port)
+    {
+    }
+
     [Key(4)]
-    public ulong UpdateTime { get; protected set; }
+    public long UpdateTime { get; protected set; }
 
     [Key(5)]
     public ulong Differentiation { get; protected set; }
@@ -44,4 +65,6 @@ public partial class NodeInformation : NodeAddress, IEquatable<NodeInformation>
     {
         return HashCode.Combine(this.Type, this.Engagement, this.Port, this.Address);
     }
+
+    private static NodeInformation? alternative;
 }
