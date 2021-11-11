@@ -11,23 +11,23 @@ using LP;
 using SimpleCommandLine;
 using Tinyhand;
 
-namespace LPConsole
+namespace LPConsole;
+
+[SimpleCommand("createkey")]
+public class CreateKeyCommand : ISimpleCommandAsync<CreateKeyOptions>
 {
-    [SimpleCommand("createkey")]
-    public class CreateKeyCommand : ISimpleCommandAsync<CreateKeyOptions>
+    public async Task Run(CreateKeyOptions options, string[] args)
     {
-        public async Task Run(CreateKeyOptions options, string[] args)
-        {
-            Console.WriteLine($"Create Key: {options.Type}");
+        Console.WriteLine($"Create Key: {options.Type}");
 
             if (string.IsNullOrEmpty(options.Filename))
             {
                 options.Filename = $"{options.Type}.key";
             }
 
-            Console.WriteLine($"Filename: {options.Filename}");
+        Console.WriteLine($"Filename: {options.Filename}");
 
-            Console.WriteLine();
+        Console.WriteLine();
 
             Console.Write("Enter name: ");
             var name = Console.ReadLine();
@@ -43,9 +43,9 @@ namespace LPConsole
                 goto Abort;
             }
 
-            var nodeKey = NodePrivateKey.Create(name);
-            var data = TinyhandSerializer.Serialize(nodeKey);
-            var encrypted = PasswordEncrypt.Encrypt(data, password);
+        var nodeKey = NodePrivateKey.Create(name);
+        var data = TinyhandSerializer.Serialize(nodeKey);
+        var encrypted = PasswordEncrypt.Encrypt(data, password);
 
             try
             {
@@ -71,11 +71,11 @@ Abort:
         [SimpleOption("type", description: "Key type (node)")]
         public KeyType Type { get; init; } = KeyType.Node;
 
-        // [SimpleOption("password", description: "Password", Required = true)]
-        // public string Password { get; init; } = string.Empty;
+    // [SimpleOption("password", description: "Password", Required = true)]
+    // public string Password { get; init; } = string.Empty;
 
-        [SimpleOption("file", description: "File name")]
-        public string Filename { get; internal set; } = string.Empty;
+    [SimpleOption("file", description: "File name")]
+    public string Filename { get; internal set; } = string.Empty;
 
         public override string ToString() => $"";
     }
