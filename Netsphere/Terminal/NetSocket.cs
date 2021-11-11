@@ -156,7 +156,7 @@ public class NetSocket
             return false;
         }
 
-        this.recvCore.Start();
+        // this.recvCore.Start();
         this.sendCore.Start();
 
         return true;
