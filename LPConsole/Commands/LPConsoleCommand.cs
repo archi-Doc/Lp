@@ -27,7 +27,11 @@ public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
         var control = Program.Container.Resolve<Control>();
         control.Configure();
         await control.LoadAsync();
-        control.Start();
+        if (!control.TryStart())
+        {
+            Logger.Default.Information("LP Aborted");
+            return;
+        }
 
         this.MainLoop(control);
 
@@ -50,15 +54,6 @@ public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
                         Logger.ViewMode = false;
                         Console.Write("> ");
                     }
-
-                    /* if (keyInfo.Key == ConsoleKey.D)
-                    {
-                        this.Dump();
-                    }
-                    else
-                    {
-                        break;
-                    }*/
                 }
             }
             else

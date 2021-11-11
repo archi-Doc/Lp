@@ -24,6 +24,8 @@ public class Netsphere
         this.bigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.information = information;
         this.Terminal = terminal;
+        this.Alternative = new(information); // For debug
+        this.Alternative.Port = 1000;
         this.EssentialNode = node;
 
         Radio.Open<Message.Configure>(this.Configure);

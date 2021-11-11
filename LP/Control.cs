@@ -66,7 +66,7 @@ public class Control
     {
     }
 
-    public void Start()
+    public bool TryStart()
     {
         var s = this.Info.IsConsole ? " (Console)" : string.Empty;
         Logger.Default.Information("LP Start" + s);
@@ -81,10 +81,12 @@ public class Control
         if (message.Abort)
         {
             Radio.Send(new Message.Stop());
-            return;
+            return false;
         }
 
         this.BigMachine.Start();
+
+        return true;
     }
 
     public void Stop()

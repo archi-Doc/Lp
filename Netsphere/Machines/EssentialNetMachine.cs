@@ -37,15 +37,17 @@ public partial class EssentialNetMachine : Machine<Identifier>
                 var data = terminal.Receive<PacketPunchResponse>(1000);
                 if (data != null)
                 {
-                    Logger.Default.Information($"{this.count} - {data.Endpoint}");
+                    Logger.Default.Information($"{this.count} - {data.Endpoint} - {new DateTime(data.UtcTicks)}");
+                    this.Netsphere.EssentialNode.Report(nodeAddress, NodeConnectionResult.Success);
                 }
                 else
                 {
                     Logger.Default.Information($"Receive timeout: {nodeAddress}");
+                    this.Netsphere.EssentialNode.Report(nodeAddress, NodeConnectionResult.Failure);
                 }
 
-                this.count <<= 1;
-                this.SetTimeout(TimeSpan.FromSeconds(this.count));
+                // this.count <<= 1;
+                // this.SetTimeout(TimeSpan.FromSeconds(this.count));
                 return StateResult.Continue;
             }
         }

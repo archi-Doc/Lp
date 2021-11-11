@@ -51,7 +51,13 @@ public class Terminal
     public void Start(Message.Start message)
     {
         this.Core = new ThreadCoreGroup(message.ParentCore);
-        if (!this.netSocket.TryStart(this.Core, this.Information.ConsoleOptions.NetsphereOptions.Port))
+
+        if (this.Port == 0)
+        {
+            this.Port = this.Information.ConsoleOptions.NetsphereOptions.Port;
+        }
+
+        if (!this.netSocket.TryStart(this.Core, this.Port))
         {
             message.Abort = true;
             return;
@@ -67,6 +73,8 @@ public class Terminal
     public ThreadCoreBase? Core { get; private set; }
 
     public Information Information { get; }
+
+    public int Port { get; set; }
 
     internal void ProcessSend(UdpClient udp, long currentTicks)
     {
