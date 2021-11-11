@@ -25,7 +25,7 @@ public class Netsphere
         this.information = information;
         this.Terminal = terminal;
         this.Alternative = new(information); // For debug
-        this.Alternative.Port = 1000;
+        this.Alternative.Port = NodeAddress.Alternative.Port;
         this.EssentialNode = node;
 
         Radio.Open<Message.Configure>(this.Configure);
