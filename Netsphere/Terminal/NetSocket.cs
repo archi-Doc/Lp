@@ -92,8 +92,8 @@ public class NetSocket
 
                 core.ProcessSend();
 
-                core.Sleep(SendIntervalMilliseconds);
-                // core.TryNanoSleep(SendIntervalNanoseconds);
+                // core.Sleep(SendIntervalMilliseconds);
+                core.TryNanoSleep(SendIntervalNanoseconds);
             }
         }
 
