@@ -11,55 +11,54 @@ using LP;
 using SimpleCommandLine;
 using Tinyhand;
 
-namespace LPConsole
+namespace LPConsole;
+
+[SimpleCommand("createkey")]
+public class CreateKeyCommand : ISimpleCommandAsync<CreateKeyOptions>
 {
-    [SimpleCommand("createkey")]
-    public class CreateKeyCommand : ISimpleCommandAsync<CreateKeyOptions>
+    public async Task Run(CreateKeyOptions options, string[] args)
     {
-        public async Task Run(CreateKeyOptions options, string[] args)
+        Console.WriteLine($"Create Key: {options.Type}");
+
+        if (string.IsNullOrEmpty(options.Filename))
         {
-            Console.WriteLine($"Create Key: {options.Type}");
+            options.Filename = "Node.key";
+        }
 
-            if (string.IsNullOrEmpty(options.Filename))
-            {
-                options.Filename = "Node.key";
-            }
+        Console.WriteLine($"Filename: {options.Filename}");
 
-            Console.WriteLine($"Filename: {options.Filename}");
+        Console.WriteLine();
 
-            Console.WriteLine();
+        Console.Write("Enter name: ");
+        var name = Console.ReadLine();
 
-            Console.Write("Enter name: ");
-            var name = Console.ReadLine();
+        Console.Write("Enter password: ");
+        var password = Console.ReadLine() ?? string.Empty;
 
-            Console.Write("Enter password: ");
-            var password = Console.ReadLine() ?? string.Empty;
+        var nodeKey = NodePrivateKey.Create(name);
+        var data = TinyhandSerializer.Serialize(nodeKey);
+        var encrypted = PasswordEncrypt.Encrypt(data, password);
 
-            var nodeKey = NodePrivateKey.Create(name);
-            var data = TinyhandSerializer.Serialize(nodeKey);
-            var encrypted = PasswordEncrypt.Encrypt(data, password);
-
-            try
-            {
-                await File.WriteAllBytesAsync(options.Filename, encrypted);
-            }
-            catch
-            {
-            }
+        try
+        {
+            await File.WriteAllBytesAsync(options.Filename, encrypted);
+        }
+        catch
+        {
         }
     }
+}
 
-    public record CreateKeyOptions
-    {
-        [SimpleOption("type", description: "Key type (node)")]
-        public string Type { get; init; } = string.Empty;
+public record CreateKeyOptions
+{
+    [SimpleOption("type", description: "Key type (node)")]
+    public string Type { get; init; } = string.Empty;
 
-        // [SimpleOption("password", description: "Password", Required = true)]
-        // public string Password { get; init; } = string.Empty;
+    // [SimpleOption("password", description: "Password", Required = true)]
+    // public string Password { get; init; } = string.Empty;
 
-        [SimpleOption("file", description: "File name")]
-        public string Filename { get; internal set; } = string.Empty;
+    [SimpleOption("file", description: "File name")]
+    public string Filename { get; internal set; } = string.Empty;
 
-        public override string ToString() => $"";
-    }
+    public override string ToString() => $"";
 }
