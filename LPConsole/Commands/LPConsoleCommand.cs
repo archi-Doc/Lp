@@ -10,91 +10,90 @@ using SimpleCommandLine;
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
 
-namespace LPConsole
+namespace LPConsole;
+
+[SimpleCommand("lp", Default = true)]
+public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
 {
-    [SimpleCommand("lp", Default = true)]
-    public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
+    public LPConsoleCommand()
     {
-        public LPConsoleCommand()
+    }
+
+    public async Task Run(LPConsoleOptions option, string[] args)
+    {
+        var info = Program.Container.Resolve<Information>();
+        info.Configure(option, true, "relay");
+
+        var control = Program.Container.Resolve<Control>();
+        control.Configure();
+        await control.LoadAsync();
+        control.Start();
+
+        this.MainLoop(control);
+
+        control.Stop();
+        await control.SaveAsync();
+        control.Terminate();
+    }
+
+    private void MainLoop(Control control)
+    {
+        while (!control.Core.IsTerminated)
         {
-        }
-
-        public async Task Run(LPConsoleOptions option, string[] args)
-        {
-            var info = Program.Container.Resolve<Information>();
-            info.Configure(option, true, "relay");
-
-            var control = Program.Container.Resolve<Control>();
-            control.Configure();
-            await control.LoadAsync();
-            control.Start();
-
-            this.MainLoop(control);
-
-            control.Stop();
-            await control.SaveAsync();
-            control.Terminate();
-        }
-
-        private void MainLoop(Control control)
-        {
-            while (!control.Core.IsTerminated)
-            {
-                if (Logger.ViewMode)
-                {// View mode
-                    if (this.SafeKeyAvailable)
-                    {
-                        var keyInfo = Console.ReadKey(true);
-                        if (keyInfo.Key == ConsoleKey.Enter || keyInfo.Key == ConsoleKey.Escape)
-                        { // To console mode
-                            Logger.ViewMode = false;
-                            Console.Write("> ");
-                        }
-
-                        /* if (keyInfo.Key == ConsoleKey.D)
-                        {
-                            this.Dump();
-                        }
-                        else
-                        {
-                            break;
-                        }*/
-                    }
-                }
-                else
-                {// Console mode
-                    var command = Console.ReadLine();
-                    if (!string.IsNullOrEmpty(command))
-                    {
-                        if (string.Compare(command, "exit", true) == 0)
-                        {// Exit
-                            return;
-                        }
-                        else
-                        {
-                        }
+            if (Logger.ViewMode)
+            {// View mode
+                if (this.SafeKeyAvailable)
+                {
+                    var keyInfo = Console.ReadKey(true);
+                    if (keyInfo.Key == ConsoleKey.Enter || keyInfo.Key == ConsoleKey.Escape)
+                    { // To console mode
+                        Logger.ViewMode = false;
+                        Console.Write("> ");
                     }
 
-                    // To view mode
-                    Logger.ViewMode = true;
+                    /* if (keyInfo.Key == ConsoleKey.D)
+                    {
+                        this.Dump();
+                    }
+                    else
+                    {
+                        break;
+                    }*/
                 }
-
-                control.Core.Sleep(100, 100);
             }
-        }
+            else
+            {// Console mode
+                var command = Console.ReadLine();
+                if (!string.IsNullOrEmpty(command))
+                {
+                    if (string.Compare(command, "exit", true) == 0)
+                    {// Exit
+                        return;
+                    }
+                    else
+                    {
+                    }
+                }
 
-        private bool SafeKeyAvailable
+                // To view mode
+                Logger.ViewMode = true;
+            }
+
+            control.Core.Sleep(100, 100);
+        }
+    }
+
+    private bool SafeKeyAvailable
+    {
+        get
         {
-            get
+            try
             {
-                try
-                {
-                    return Console.KeyAvailable;
-                }
-                catch
-                {
-                    return false;
-                }
+                return Console.KeyAvailable;
+            }
+            catch
+            {
+                return false;
             }
         }
     }
