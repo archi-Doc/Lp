@@ -29,8 +29,7 @@ public partial class EssentialNetMachine : Machine<Identifier>
         {
             // this.Netsphere.EssentialNode.Report(nodeAddress, NodeConnectionResult.Success);
 
-            // nodeAddress = new(IPAddress.Loopback, (ushort)this.Information.ConsoleOptions.NetsphereOptions.Port);
-            nodeAddress = NodeAddress.Alternative;
+            // nodeAddress = NodeAddress.Alternative;
             using (var terminal = this.Netsphere.Terminal.Create(nodeAddress))
             {
                 terminal.SendUnmanaged_Punch();
@@ -61,6 +60,5 @@ public partial class EssentialNetMachine : Machine<Identifier>
         return StateResult.Continue;
     }
 
-    // private Serilog.ILogger? logger = Logger.
     private int count = 1;
 }

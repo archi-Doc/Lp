@@ -19,7 +19,8 @@ public enum NodeType : byte
 [TinyhandObject]
 public partial class NodeAddress : IEquatable<NodeAddress>
 {
-    public static readonly NodeAddress Alternative = new(IPAddress.Loopback, 1000);
+    public const int AlternativePort = 1002;
+    public static readonly NodeAddress Alternative = new(IPAddress.Loopback, AlternativePort);
 
     public static bool TryParse(string text, [NotNullWhen(true)] out NodeAddress? node)
     {

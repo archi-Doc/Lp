@@ -57,11 +57,11 @@ public class Terminal
             this.Port = this.Information.ConsoleOptions.NetsphereOptions.Port;
         }
 
-        if (!this.netSocket.TryStart(this.Core, this.Port))
+        /*if (!this.netSocket.TryStart(this.Core, this.Port))
         {
             message.Abort = true;
             return;
-        }
+        }*/
     }
 
     public void Stop(Message.Stop message)

@@ -8,8 +8,8 @@ using System.Diagnostics.CodeAnalysis;
 namespace LP.Net;
 
 /// <summary>
-/// Represents a advanced node information.<br/>
-/// UpdateTime, Differentiation.
+/// Represents a node information.<br/>
+/// UpdateTime, Differentiation, PublicKey.
 /// </summary>
 [TinyhandObject]
 public partial class NodeInformation : NodeAddress, IEquatable<NodeInformation>
