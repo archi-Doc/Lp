@@ -29,7 +29,7 @@ public static class Message
         /// <summary>
         /// Gets or sets a value indicating whether an error occured in the start process.
         /// </summary>
-        public bool Error { get; set; }
+        public bool Abort { get; set; }
     }
 
     /// <summary>

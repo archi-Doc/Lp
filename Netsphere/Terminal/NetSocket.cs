@@ -136,32 +136,30 @@ public class NetSocket
         private long previousTimestamp;
     }
 
-    public NetSocket(Information information, Terminal terminal)
+    public NetSocket(Terminal terminal)
     {
-        this.information = information;
         this.terminal = terminal;
-
-        Radio.Open<Message.Start>(this.Start);
-        Radio.Open<Message.Stop>(this.Stop);
     }
 
-    public void Start(Message.Start message)
+    public bool TryStart(ThreadCoreBase parent, int port)
     {
-        this.recvCore = new NetSocketRecvCore(message.ParentCore, this);
-        this.sendCore = new NetSocketSendCore(message.ParentCore, this);
+        this.recvCore = new NetSocketRecvCore(parent, this);
+        this.sendCore = new NetSocketSendCore(parent, this);
 
         try
         {
-            this.PrepareUdpClient(this.information.ConsoleOptions.NetsphereOptions.Port);
+            this.PrepareUdpClient(port);
         }
         catch
         {
-            Logger.Default.Error($"Could not create a UDP socket with port {this.information.ConsoleOptions.NetsphereOptions.Port}.");
-            message.Error = true;
+            Logger.Default.Error($"Could not create a UDP socket with port {port}.");
+            return false;
         }
 
         this.recvCore.Start();
         this.sendCore.Start();
+
+        return true;
     }
 
     public void Stop(Message.Stop message)
@@ -200,7 +198,6 @@ public class NetSocket
         }
     }
 
-    private Information information;
     private Terminal terminal;
     private NetSocketRecvCore? recvCore;
     private NetSocketSendCore? sendCore;

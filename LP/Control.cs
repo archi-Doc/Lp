@@ -78,7 +78,7 @@ public class Control
 
         var message = new Message.Start(this.Core);
         Radio.Send(message);
-        if (message.Error)
+        if (message.Abort)
         {
             Radio.Send(new Message.Stop());
             return;

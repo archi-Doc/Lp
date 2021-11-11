@@ -38,15 +38,24 @@ public class Terminal
         return terminal;
     }
 
-    public Terminal()
+    public Terminal(Information information)
     {
+        this.Information = information;
+
         Radio.Open<Message.Start>(this.Start);
         Radio.Open<Message.Stop>(this.Stop);
+
+        this.netSocket = new(this);
     }
 
     public void Start(Message.Start message)
     {
         this.Core = new ThreadCoreGroup(message.ParentCore);
+        if (!this.netSocket.TryStart(this.Core, this.Information.ConsoleOptions.NetsphereOptions.Port))
+        {
+            message.Abort = true;
+            return;
+        }
     }
 
     public void Stop(Message.Stop message)
@@ -56,6 +65,8 @@ public class Terminal
     }
 
     public ThreadCoreBase? Core { get; private set; }
+
+    public Information Information { get; }
 
     internal void ProcessSend(UdpClient udp, long currentTicks)
     {
@@ -185,6 +196,8 @@ public class Terminal
     }
 
     internal Serilog.ILogger? TerminalLogger { get; private set; }
+
+    private NetSocket netSocket;
 
     private NetTerminal.GoshujinClass terminals = new();
 
