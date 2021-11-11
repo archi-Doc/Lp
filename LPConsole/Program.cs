@@ -37,15 +37,15 @@ public class Program
 
         AppDomain.CurrentDomain.ProcessExit += (s, e) =>
         {// Console window closing or process terminated.
-                ThreadCore.Root.Terminate(); // Send a termination signal to the root.
-                ThreadCore.Root.TerminationEvent.WaitOne(2000); // Wait until the termination process is complete (#1).
-            };
+            ThreadCore.Root.Terminate(); // Send a termination signal to the root.
+            ThreadCore.Root.TerminationEvent.WaitOne(2000); // Wait until the termination process is complete (#1).
+        };
 
         Console.CancelKeyPress += (s, e) =>
         {// Ctrl+C pressed
-                e.Cancel = true;
+            e.Cancel = true;
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
-            };
+        };
 
         var parserOptions = SimpleParserOptions.Standard with
         {

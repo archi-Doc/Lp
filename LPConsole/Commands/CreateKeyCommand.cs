@@ -20,56 +20,56 @@ public class CreateKeyCommand : ISimpleCommandAsync<CreateKeyOptions>
     {
         Console.WriteLine($"Create Key: {options.Type}");
 
-            if (string.IsNullOrEmpty(options.Filename))
-            {
-                options.Filename = $"{options.Type}.key";
-            }
+        if (string.IsNullOrEmpty(options.Filename))
+        {
+            options.Filename = $"{options.Type}.key";
+        }
 
         Console.WriteLine($"Filename: {options.Filename}");
 
         Console.WriteLine();
 
-            Console.Write("Enter name: ");
-            var name = Console.ReadLine();
-            if (name == null)
-            {
-                goto Abort;
-            }
+        Console.Write("Enter name: ");
+        var name = Console.ReadLine();
+        if (name == null)
+        {
+            goto Abort;
+        }
 
-            Console.Write("Enter password: ");
-            var password = Console.ReadLine();
-            if (password == null)
-            {
-                goto Abort;
-            }
+        Console.Write("Enter password: ");
+        var password = Console.ReadLine();
+        if (password == null)
+        {
+            goto Abort;
+        }
 
         var nodeKey = NodePrivateKey.Create(name);
         var data = TinyhandSerializer.Serialize(nodeKey);
         var encrypted = PasswordEncrypt.Encrypt(data, password);
 
-            try
-            {
-                await File.WriteAllBytesAsync(options.Filename, encrypted);
-            }
-            catch
-            {
-            }
+        try
+        {
+            await File.WriteAllBytesAsync(options.Filename, encrypted);
+        }
+        catch
+        {
+        }
 
-            Console.WriteLine();
-            Console.WriteLine($"{options.Filename} was successfully created.");
+        Console.WriteLine();
+        Console.WriteLine($"{options.Filename} was successfully created.");
 
-            return;
+        return;
 
 Abort:
-            Console.WriteLine();
-            Console.WriteLine("aborted.");
-        }
+        Console.WriteLine();
+        Console.WriteLine("aborted.");
     }
+}
 
-    public record CreateKeyOptions
-    {
-        [SimpleOption("type", description: "Key type (node)")]
-        public KeyType Type { get; init; } = KeyType.Node;
+public record CreateKeyOptions
+{
+    [SimpleOption("type", description: "Key type (node)")]
+    public KeyType Type { get; init; } = KeyType.Node;
 
     // [SimpleOption("password", description: "Password", Required = true)]
     // public string Password { get; init; } = string.Empty;
@@ -77,11 +77,10 @@ Abort:
     [SimpleOption("file", description: "File name")]
     public string Filename { get; internal set; } = string.Empty;
 
-        public override string ToString() => $"";
-    }
+    public override string ToString() => $"";
+}
 
-    public enum KeyType
-    {
-        Node,
-    }
+public enum KeyType
+{
+    Node,
 }
