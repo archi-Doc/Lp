@@ -89,7 +89,7 @@ public class NetSocket
                     break;
                 }
 
-                core.ProcessSend();
+                // core.ProcessSend();
 
                 // core.Sleep(SendIntervalMilliseconds);
                 core.TryNanoSleep(SendIntervalNanoseconds);
