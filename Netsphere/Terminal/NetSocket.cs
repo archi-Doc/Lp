@@ -15,7 +15,8 @@ namespace LP.Net;
 public class NetSocket
 {
     private const int ReceiveTimeout = 100;
-    private const int SendIntervalNanoseconds = 2_000_000;
+    private const int SendIntervalMilliseconds = 1;
+    private const int SendIntervalNanoseconds = 1_000_000;
 
     internal class NetSocketRecvCore : ThreadCore
     {
@@ -91,8 +92,8 @@ public class NetSocket
 
                 core.ProcessSend();
 
-                // core.Sleep(SendIntervalMilliseconds);
-                core.TryNanoSleep(SendIntervalNanoseconds);
+                core.Sleep(SendIntervalMilliseconds);
+                // core.TryNanoSleep(SendIntervalNanoseconds);
             }
         }
 
@@ -100,7 +101,7 @@ public class NetSocket
                 : base(parent, Process, false)
         {
             this.socket = pipe;
-            this.timer = MultimediaTimer.TryCreate(1, this.ProcessSend); // Use multimedia timer if available.
+            this.timer = MultimediaTimer.TryCreate(SendIntervalMilliseconds, this.ProcessSend); // Use multimedia timer if available.
         }
 
         public void ProcessSend()
@@ -156,7 +157,7 @@ public class NetSocket
             return false;
         }
 
-        // this.recvCore.Start();
+        this.recvCore.Start();
         this.sendCore.Start();
 
         return true;
