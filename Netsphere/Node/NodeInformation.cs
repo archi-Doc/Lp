@@ -22,8 +22,8 @@ public partial class NodeInformation : NodeAddress, IEquatable<NodeInformation>
             {
                 alternative = new NodeInformation(NodeAddress.Alternative);
                 alternative.UpdateTime = DateTime.UtcNow.Ticks;
-                alternative.PublicKeyX = NodeKey.AlternativePrivateKey.X;
-                alternative.PublicKeyY = NodeKey.AlternativePrivateKey.Y;
+                alternative.PublicKeyX = Crypto.AlternativePrivateKey.X;
+                alternative.PublicKeyY = Crypto.AlternativePrivateKey.Y;
             }
 
             return alternative;
