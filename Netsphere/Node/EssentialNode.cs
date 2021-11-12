@@ -25,7 +25,7 @@ public class EssentialNode
         this.information = information;
 
         Radio.Open<Message.Configure>(this.Configure);
-        Radio.OpenAsync<Message.LoadAsync>(this.Load);
+        Radio.OpenAsync<Message.LoadAsync>(this.LoadAsync);
         Radio.OpenAsync<Message.SaveAsync>(this.Save);
     }
 
@@ -33,7 +33,7 @@ public class EssentialNode
     {
     }
 
-    public async Task Load(Message.LoadAsync message)
+    public async Task LoadAsync(Message.LoadAsync message)
     {
         try
         {

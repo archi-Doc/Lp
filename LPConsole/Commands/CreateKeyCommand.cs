@@ -62,7 +62,7 @@ public class CreateKeyCommand : ISimpleCommandAsync<CreateKeyOptions>
 
 Abort:
         Console.WriteLine();
-        Console.WriteLine("aborted.");
+        Console.WriteLine("Aborted.");
     }
 }
 

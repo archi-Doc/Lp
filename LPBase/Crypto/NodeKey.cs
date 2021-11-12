@@ -7,9 +7,24 @@ namespace LP;
 [TinyhandObject]
 public partial class NodePrivateKey
 {
+    public const string ECCurveName = "secp256r1";
+
+    public static NodePrivateKey AlternativePrivateKey
+    {
+        get
+        {
+            if (alternativePrivateKey == null)
+            {
+                alternativePrivateKey = NodePrivateKey.Create("Alternative");
+            }
+
+            return alternativePrivateKey;
+        }
+    }
+
     public static NodePrivateKey Create(string? name)
     {
-        var curve = ECCurve.CreateFromFriendlyName(Crypto.ECCurveNodeKey);
+        var curve = ECCurve.CreateFromFriendlyName(ECCurveName);
         var ecdh = ECDiffieHellman.Create(curve);
         var key = ecdh.ExportParameters(true);
 
@@ -39,6 +54,8 @@ public partial class NodePrivateKey
 
     [Key(3)]
     public byte[] Y { get; set; } = default!;
+
+    private static NodePrivateKey? alternativePrivateKey;
 }
 
 [TinyhandObject]

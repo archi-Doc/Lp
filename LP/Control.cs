@@ -27,7 +27,6 @@ public class Control
         container.Register<Netsphere>(Reuse.Singleton);
         container.Register<Terminal>(Reuse.Singleton);
         container.Register<EssentialNode>(Reuse.Singleton);
-        container.Register<NetSocket>(Reuse.Singleton);
 
         // Machines
         container.Register<Machines.SingleMachine>();
