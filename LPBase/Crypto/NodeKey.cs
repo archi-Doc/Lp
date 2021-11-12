@@ -7,6 +7,8 @@ namespace LP;
 public static class NodeKey
 {
     public const string ECCurveName = "secp256r1";
+    public const int PublicKeySize = 64;
+    public const int PrivateKeySize = 64;
     public const string Filename = "Node.key";
 
     public static ECCurve ECCurve { get; }
