@@ -38,6 +38,23 @@ public class Terminal
         return terminal;
     }
 
+    /// <summary>
+    /// Create managed (with public key) NetTerminal instance.
+    /// </summary>
+    /// <param name="nodeInformation">NodeInformation.</param>
+    /// <returns>NetTerminal.</returns>
+    public NetTerminal Create(NodeInformation nodeInformation)
+    {
+        var gene = Random.Crypto.NextULong();
+        var terminal = new NetTerminal(this, gene, nodeInformation);
+        lock (this.terminals)
+        {
+            this.terminals.Add(terminal);
+        }
+
+        return terminal;
+    }
+
     public Terminal(Information information)
     {
         this.Information = information;

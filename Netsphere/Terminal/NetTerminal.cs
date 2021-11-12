@@ -30,6 +30,15 @@ public partial class NetTerminal : IDisposable
         this.Endpoint = this.NodeAddress.CreateEndpoint();
     }
 
+    internal NetTerminal(Terminal terminal, ulong gene, NodeInformation nodeInformation)
+    {
+        this.Terminal = terminal;
+        this.Gene = gene;
+        this.NodeAddress = nodeInformation;
+        this.NodeInformation = nodeInformation;
+        this.Endpoint = this.NodeAddress.CreateEndpoint();
+    }
+
     public Terminal Terminal { get; }
 
     [Link(Type = ChainType.Ordered)]
@@ -42,6 +51,10 @@ public partial class NetTerminal : IDisposable
 
     public NodeAddress NodeAddress { get; }
 
+    public NodeInformation? NodeInformation { get; }
+
+    public bool IsManaged => this.NodeInformation != null;
+
     public unsafe void SendUnmanaged_Punch()
     {
         var p = new PacketPunch();
@@ -50,6 +63,24 @@ public partial class NetTerminal : IDisposable
         this.CreateHeader(out var header);
         var packet = PacketService.CreatePacket(ref header, p);
         this.SendPacket(packet, PacketId.PunchResponse);
+    }
+
+    public enum SendResult
+    {
+        Success,
+        Error,
+        Timeout,
+    }
+
+    public SendResult Send<T>(int millisecondsToWait = DefaultMillisecondsToWait)
+        where T : IPacket
+    {
+        if (!this.IsManaged)
+        {
+            return SendResult.Error;
+        }
+
+        return SendResult.Success;
     }
 
     public T? Receive<T>(int millisecondsToWait = DefaultMillisecondsToWait)
