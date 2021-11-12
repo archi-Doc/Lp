@@ -10,5 +10,5 @@ public class Private
     {
     }
 
-    public NodePrivateKey? NodePrivateKey { get; set; }
+    public NodePrivateKey NodePrivateKey { get; set; } = default!;
 }

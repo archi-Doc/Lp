@@ -2,6 +2,7 @@
 
 using System;
 using System.IO;
+using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 using Arc.Crypto;
@@ -26,14 +27,14 @@ public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
         var info = Program.Container.Resolve<Information>();
         info.Configure(option, true, "relay");
 
-        var control = Program.Container.Resolve<Control>();
-        control.Configure();
-        await control.LoadAsync();
-
         if (await this.LoadAsync() == AbortOrContinue.Abort)
         {
             goto Abort;
         }
+
+        var control = Program.Container.Resolve<Control>();
+        control.Configure();
+        await control.LoadAsync();
 
         if (!control.TryStart())
         {
@@ -64,6 +65,47 @@ Abort:
         return AbortOrContinue.Continue;
     }
 
+    private string? GetPassword(string? text = null)
+    {
+        if (text == null)
+        {
+            text = "Enter password: ";
+        }
+
+        Console.Write(text);
+
+        ConsoleKey key;
+        var password = string.Empty;
+        do
+        {
+            var keyInfo = Console.ReadKey(intercept: true);
+            key = keyInfo.Key;
+            if (ThreadCore.Root.IsTerminated)
+            {
+                return null;
+            }
+
+            if (key == ConsoleKey.Backspace && password.Length > 0)
+            {
+                Console.Write("\b \b");
+                password = password[0..^1];
+            }
+            else if (!char.IsControl(keyInfo.KeyChar))
+            {
+                Console.Write("*");
+                password += keyInfo.KeyChar;
+            }
+            else if (key == ConsoleKey.Escape)
+            {
+                return null;
+            }
+        }
+        while (key != ConsoleKey.Enter);
+
+        Console.WriteLine();
+        return password;
+    }
+
     private async Task<AbortOrContinue> LoadNodeKey(Private pri)
     {
         var file = NodePrivateKey.Filename;
@@ -83,8 +125,7 @@ Abort:
 
             Console.WriteLine(file);
 EnterNodeKeyPassword:
-            Console.Write("Enter password: ");
-            var password = Console.ReadLine();
+            var password = this.GetPassword();
             if (password == null)
             {
                 Console.WriteLine();

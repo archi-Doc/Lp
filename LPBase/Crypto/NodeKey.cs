@@ -23,7 +23,7 @@ public partial class NodePrivateKey
         }
     }
 
-    public static NodePrivateKey Create(string? name)
+    public static NodePrivateKey Create(string? name = null)
     {
         var curve = ECCurve.CreateFromFriendlyName(ECCurveName);
         var ecdh = ECDiffieHellman.Create(curve);

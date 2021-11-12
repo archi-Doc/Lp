@@ -34,9 +34,10 @@ public class Control
         container.Register<Machines.EssentialNetMachine>();
     }
 
-    public Control(Information info, BigMachine<Identifier> bigMachine, Netsphere netsphere)
+    public Control(Information info, Private pri, BigMachine<Identifier> bigMachine, Netsphere netsphere)
     {
         this.Info = info;
+        this.Pri = pri;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.Netsphere = netsphere;
 
@@ -64,6 +65,10 @@ public class Control
 
     public void ConfigureControl()
     {
+        if (this.Pri.NodePrivateKey == null)
+        {
+            this.Pri.NodePrivateKey = NodePrivateKey.Create();
+        }
     }
 
     public bool TryStart()
@@ -108,6 +113,8 @@ public class Control
     public ThreadCoreGroup Core { get; }
 
     public Information Info { get; }
+
+    public Private Pri { get; }
 
     public BigMachine<Identifier> BigMachine { get; }
 
