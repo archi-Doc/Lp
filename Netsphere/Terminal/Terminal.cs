@@ -55,9 +55,10 @@ public class Terminal
         return terminal;
     }
 
-    public Terminal(Information information)
+    public Terminal(Information information, Private @private)
     {
         this.Information = information;
+        this.Private = @private;
 
         Radio.Open<Message.Start>(this.Start);
         Radio.Open<Message.Stop>(this.Stop);
@@ -90,6 +91,8 @@ public class Terminal
     public ThreadCoreBase? Core { get; private set; }
 
     public Information Information { get; }
+
+    public Private Private { get; }
 
     public int Port { get; set; }
 

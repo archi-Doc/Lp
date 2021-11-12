@@ -34,10 +34,10 @@ public class Control
         container.Register<Machines.EssentialNetMachine>();
     }
 
-    public Control(Information info, Private pri, BigMachine<Identifier> bigMachine, Netsphere netsphere)
+    public Control(Information information, Private @private, BigMachine<Identifier> bigMachine, Netsphere netsphere)
     {
-        this.Info = info;
-        this.Pri = pri;
+        this.Information = information;
+        this.Private = @private;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.Netsphere = netsphere;
 
@@ -47,7 +47,7 @@ public class Control
 
     public void Configure()
     {
-        Logger.Configure(this.Info);
+        Logger.Configure(this.Information);
         this.ConfigureControl();
 
         Radio.Send(new Message.Configure());
@@ -65,19 +65,19 @@ public class Control
 
     public void ConfigureControl()
     {
-        if (this.Pri.NodePrivateKey == null)
+        if (this.Private.NodePrivateKey == null)
         {
-            this.Pri.NodePrivateKey = NodePrivateKey.Create();
+            this.Private.NodePrivateKey = NodePrivateKey.Create();
         }
     }
 
     public bool TryStart()
     {
-        var s = this.Info.IsConsole ? " (Console)" : string.Empty;
+        var s = this.Information.IsConsole ? " (Console)" : string.Empty;
         Logger.Default.Information("LP Start" + s);
 
-        Logger.Default.Information($"Console: {this.Info.IsConsole}, Root directory: {this.Info.RootDirectory}");
-        Logger.Default.Information(this.Info.ToString());
+        Logger.Default.Information($"Console: {this.Information.IsConsole}, Root directory: {this.Information.RootDirectory}");
+        Logger.Default.Information(this.Information.ToString());
         Logger.Console.Information("Press the Enter key to change to console mode.");
         Logger.Console.Information("Press Ctrl+C to exit.");
 
@@ -112,9 +112,9 @@ public class Control
 
     public ThreadCoreGroup Core { get; }
 
-    public Information Info { get; }
+    public Information Information { get; }
 
-    public Private Pri { get; }
+    public Private Private { get; }
 
     public BigMachine<Identifier> BigMachine { get; }
 
