@@ -4,6 +4,37 @@ using System.Security.Cryptography;
 
 namespace LP;
 
+public static class NodeKey
+{
+    public const string ECCurveName = "secp256r1";
+    public const string Filename = "Node.key";
+
+    public static ECCurve ECCurve { get; }
+
+    static NodeKey()
+    {
+        ECCurve = ECCurve.CreateFromFriendlyName(ECCurveName);
+    }
+
+    public static ECDiffieHellman FromPrivateKey(NodePrivateKey key)
+    {
+        ECParameters p = default;
+        p.Curve = ECCurve;
+        p.D = key.D;
+        return ECDiffieHellman.Create(p);
+    }
+
+    public static ECDiffieHellman FromPublicKey(byte[] x, byte[] y)
+    {
+        ECParameters p = default;
+        p.Curve = ECCurve;
+        p.Q.X = x;
+        p.Q.Y = y;
+        p.Validate();
+        return ECDiffieHellman.Create(p);
+    }
+}
+
 [TinyhandObject]
 public partial class NodePrivateKey
 {

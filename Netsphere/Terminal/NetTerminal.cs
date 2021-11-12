@@ -78,8 +78,9 @@ public partial class NetTerminal : IDisposable
             return SendResult.Error;
         }
 
+        var ecdh = NodeKey.FromPublicKey(this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
         var p = new PacketEncrypt(this.NodeInformation);
-        SendPacket(p, PacketId.Encrypt);
+        this.SendPacket(p, PacketId.Encrypt);
 
         return SendResult.Success;
     }
