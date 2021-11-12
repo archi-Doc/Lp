@@ -20,16 +20,24 @@ public class CreateKeyCommand : ISimpleCommandAsync<CreateKeyOptions>
     {
         Console.WriteLine($"Create Key: {options.Type}");
 
+        if (options.Type == KeyType.Node)
+        {
+            await this.CreateNodeKey(options, args);
+        }
+    }
+
+    public async Task CreateNodeKey(CreateKeyOptions options, string[] args)
+    {
         if (string.IsNullOrEmpty(options.Filename))
         {
-            options.Filename = $"{options.Type}.key";
+            options.Filename = NodePrivateKey.Filename;
         }
 
         Console.WriteLine($"Filename: {options.Filename}");
 
         Console.WriteLine();
 
-        Console.Write("Enter name: ");
+        Console.Write("Enter key name: ");
         var name = Console.ReadLine();
         if (name == null)
         {

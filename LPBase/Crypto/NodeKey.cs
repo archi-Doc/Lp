@@ -8,6 +8,7 @@ namespace LP;
 public partial class NodePrivateKey
 {
     public const string ECCurveName = "secp256r1";
+    public const string Filename = "Node.key";
 
     public static NodePrivateKey AlternativePrivateKey
     {

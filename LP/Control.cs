@@ -24,6 +24,7 @@ public class Control
         // Main services
         container.Register<Control>(Reuse.Singleton);
         container.Register<Information>(Reuse.Singleton);
+        container.Register<Private>(Reuse.Singleton);
         container.Register<Netsphere>(Reuse.Singleton);
         container.Register<Terminal>(Reuse.Singleton);
         container.Register<EssentialNode>(Reuse.Singleton);
