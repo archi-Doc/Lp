@@ -27,7 +27,8 @@ public partial class EssentialNetMachine : Machine<Identifier>
     {
         var ni = NodeInformation.Alternative;
         var ta = this.Netsphere.Terminal.Create(ni);
-        ta.SendPacket();
+        var pp = new PacketPunch(null, DateTime.UtcNow.Ticks);
+        ta.Send(pp);
 
         if (this.Netsphere.EssentialNode.GetUncheckedNode(out var nodeAddress))
         {

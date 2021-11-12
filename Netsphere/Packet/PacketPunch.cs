@@ -10,6 +10,16 @@ namespace LP.Net;
 [TinyhandObject]
 internal partial class PacketPunch : IPacket
 {
+    public PacketPunch()
+    {
+    }
+
+    public PacketPunch(IPEndPoint? nextEndpoint, long utcTicks)
+    {
+        this.NextEndpoint = nextEndpoint;
+        this.UtcTicks = utcTicks;
+    }
+
     public bool IsResponse => false;
 
     public PacketId Id => PacketId.Punch;

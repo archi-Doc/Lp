@@ -57,8 +57,7 @@ public partial class NetTerminal : IDisposable
 
     public unsafe void SendUnmanaged_Punch()
     {
-        var p = new PacketPunch();
-        p.UtcTicks = DateTime.UtcNow.Ticks;
+        var p = new PacketPunch(null, DateTime.UtcNow.Ticks);
 
         this.CreateHeader(out var header);
         var packet = PacketService.CreatePacket(ref header, p);
@@ -72,12 +71,26 @@ public partial class NetTerminal : IDisposable
         Timeout,
     }
 
-    public SendResult Send<T>(int millisecondsToWait = DefaultMillisecondsToWait)
+    public SendResult CheckManagedAndEncrypted()
+    {
+        if (this.NodeInformation == null)
+        {// Unmanaged
+            return SendResult.Error;
+        }
+
+        var p = new PacketEncrypt(this.NodeInformation);
+        SendPacket(p, PacketId.Encrypt);
+
+        return SendResult.Success;
+    }
+
+    public SendResult Send<T>(T value, int millisecondsToWait = DefaultMillisecondsToWait)
         where T : IPacket
     {
-        if (!this.IsManaged)
+        var result = this.CheckManagedAndEncrypted();
+        if (result != SendResult.Success)
         {
-            return SendResult.Error;
+            return result;
         }
 
         return SendResult.Success;
@@ -148,13 +161,21 @@ ReceiveUnmanaged_Error:
         header.Engagement = this.NodeAddress.Engagement;
     }
 
-    internal bool SendPacket(byte[] packet, PacketId responseId)
+    internal SendResult SendPacket<T>(T value, PacketId responseId)
+        where T : IPacket
+    {
+        this.CreateHeader(out var header);
+        var packet = PacketService.CreatePacket(ref header, value);
+        return this.SendPacket(packet, responseId);
+    }
+
+    internal SendResult SendPacket(byte[] packet, PacketId responseId)
     {
         lock (this.syncObject)
         {
             if (this.genes != null)
             {
-                return false;
+                return SendResult.Error;
             }
 
             var gene = new NetTerminalGene(this.Gene, this);
@@ -163,7 +184,7 @@ ReceiveUnmanaged_Error:
             this.Terminal.AddNetTerminalGene(this.genes);
         }
 
-        return true;
+        return SendResult.Success;
     }
 
     internal void ProcessSend(UdpClient udp, long currentTicks)
