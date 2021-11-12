@@ -18,6 +18,8 @@ public class Hash : Sha3_256
 
     public static ObjectPool<Hash> ObjectPool { get; } = new(static () => new Hash());
 
+    public static ObjectPool<Sha3_384> Sha3_384Pool { get; } = new(static () => new Sha3_384());
+
     public Identifier GetIdentifier(ReadOnlySpan<byte> input)
     {
         return new Identifier(this.GetHashULong(input));

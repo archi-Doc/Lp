@@ -9,7 +9,8 @@ using System.Threading;
 namespace LP.Net;
 
 /// <summary>
-/// Initializes a new instance of the <see cref="NetTerminal"/> class.
+/// Initializes a new instance of the <see cref="NetTerminal"/> class.<br/>
+/// NOT thread-safe.
 /// </summary>
 [ValueLinkObject]
 public partial class NetTerminal : IDisposable
@@ -85,23 +86,12 @@ public partial class NetTerminal : IDisposable
         var p = new PacketEncrypt(this.NodeInformation);
         this.SendPacket(p, PacketId.Encrypt);
         var r = this.Receive<PacketEncrypt>();
-        if (r != null)
+        if (r != null && this.CreateEmbryo(p.Salt))
         {
-            var ecdh = NodeKey.FromPublicKey(this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
-            var material = this.Terminal.Private.NodePrivateEcdh.DeriveKeyMaterial(ecdh.PublicKey);
-            Span<byte> buffer = stackalloc byte[sizeof(ulong) + NodeKey.PrivateKeySize + sizeof(ulong)];
-            var span = buffer;
-            BitConverter.TryWriteBytes(span, p.Salt);
-            span = span.Slice(sizeof(ulong));
-            material.AsSpan().CopyTo(span);
-            span = span.Slice(NodeKey.PrivateKeySize);
-            BitConverter.TryWriteBytes(span, p.Salt);
-
-            var sha = new Arc.Crypto.Sha3_384();
-            this.embryo = sha.GetHash(buffer);
+            return SendResult.Success;
         }
 
-        return SendResult.Success;
+        return SendResult.Timeout;
     }
 
     public SendResult Send<T>(T value, int millisecondsToWait = DefaultMillisecondsToWait)
@@ -279,6 +269,30 @@ ReceivePacket_Error:
         packetId = default;
         data = default;
         return false;
+    }
+
+    private bool CreateEmbryo(ulong salt)
+    {
+        if (this.NodeInformation == null)
+        {
+            return false;
+        }
+
+        var ecdh = NodeKey.FromPublicKey(this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
+        var material = this.Terminal.Private.NodePrivateEcdh.DeriveKeyMaterial(ecdh.PublicKey);
+        Span<byte> buffer = stackalloc byte[sizeof(ulong) + NodeKey.PrivateKeySize + sizeof(ulong)];
+        var span = buffer;
+        BitConverter.TryWriteBytes(span, salt);
+        span = span.Slice(sizeof(ulong));
+        material.AsSpan().CopyTo(span);
+        span = span.Slice(NodeKey.PrivateKeySize);
+        BitConverter.TryWriteBytes(span, salt);
+
+        var sha = Hash.Sha3_384Pool.Get();
+        this.embryo = sha.GetHash(buffer);
+        Hash.Sha3_384Pool.Return(sha);
+
+        return true;
     }
 
     private void ClearGenes()
