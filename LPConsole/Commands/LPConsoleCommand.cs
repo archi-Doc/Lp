@@ -144,8 +144,11 @@ EnterNodeKeyPassword:
 
 Deserialize:
             var key = Tinyhand.TinyhandSerializer.Deserialize<NodePrivateKey>(data);
-            pri.NodePrivateKey = key;
-            Logger.Default.Information($"Loaded: {file}");
+            if (key != null)
+            {
+                pri.NodePrivateKey = key;
+                Logger.Default.Information($"Loaded: {file}");
+            }
         }
         catch
         {

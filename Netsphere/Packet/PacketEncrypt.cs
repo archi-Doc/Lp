@@ -13,7 +13,7 @@ internal partial class PacketEncrypt : IPacket
     {
         this.PublicKeyX = nodeInformation.PublicKeyX;
         this.PublicKeyY = nodeInformation.PublicKeyY;
-        this.Hint = Random.Crypto.NextULong();
+        this.Salt = Random.Crypto.NextULong();
     }
 
     public bool IsResponse => false;
@@ -27,5 +27,5 @@ internal partial class PacketEncrypt : IPacket
     public byte[] PublicKeyY { get; set; } = default!;
 
     [Key(2)]
-    public ulong Hint { get; set; }
+    public ulong Salt { get; set; }
 }
