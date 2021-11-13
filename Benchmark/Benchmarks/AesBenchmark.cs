@@ -54,7 +54,7 @@ public class AesBenchmark
     {
     }
 
-    /*[Benchmark]
+    [Benchmark]
     public byte[] CreateEncrypt()
     {
         using (var aes = Aes.Create())
@@ -76,7 +76,7 @@ public class AesBenchmark
         var result = aes.EncryptCbc(this.Source, this.Iv);
         this.AesPool.Return(aes);
         return result;
-    }*/
+    }
 
     [Benchmark]
     public byte[] PoolHashEncrypt()
