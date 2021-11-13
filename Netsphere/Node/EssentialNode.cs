@@ -68,7 +68,7 @@ public class EssentialNode
         }
 
         // Unchecked Queue
-        var ticks = Ticks.GetCurrent();
+        var ticks = Ticks.GetTimestamp();
         this.essentialNodes.UncheckedChain.Clear();
         foreach (var x in this.essentialNodes.LinkedListChain)
         {
@@ -220,7 +220,7 @@ internal partial class EssentialNodeAddress
 
     public void UpdateValidTicks()
     {
-        this.ValidTicks = Ticks.GetCurrent();
+        this.ValidTicks = Ticks.GetTimestamp();
         this.FailureCount = 0;
     }
 

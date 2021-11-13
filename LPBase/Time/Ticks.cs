@@ -21,7 +21,7 @@ public struct Ticks
     /// Stopwatch.GetTimestamp().
     /// </summary>
     /// <returns>A long integer representing the tick counter value of the underlying timer mechanism.</returns>
-    public static long GetCurrent() => Stopwatch.GetTimestamp();
+    public static long GetTimestamp() => Stopwatch.GetTimestamp();
 
     public static long FromDays(double days) => (long)(days * TicksPerDay);
 
@@ -42,7 +42,7 @@ public struct TicksRange
 {
     public TicksRange(long ticks)
     {
-        this.LowerBound = Ticks.GetCurrent();
+        this.LowerBound = Ticks.GetTimestamp();
         this.UpperBound = this.LowerBound + ticks;
     }
 
