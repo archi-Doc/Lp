@@ -15,7 +15,7 @@ public static class Seconds
     public const double SecondsPerMicrosecond = 0.000001d;
     public const double SecondsPerNanosecond = 0.000000001d;
 
-    public static double GetCurrent() => Stopwatch.GetTimestamp() * ReverseFrequency;
+    public static double GetSystem() => Stopwatch.GetTimestamp() * ReverseFrequency;
 
     public static double FromDays(double days) => days * SecondsPerDay;
 

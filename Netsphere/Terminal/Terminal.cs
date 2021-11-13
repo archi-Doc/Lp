@@ -180,7 +180,7 @@ public class Terminal
                 return;
             }
 
-            Time.AddTimeForCorrection(punch.UtcTicks);
+            TimeCorrection.AddCorrection(punch.UtcTicks);
 
             var r = new PacketPunchResponse();
             if (punch.NextEndpoint != null)

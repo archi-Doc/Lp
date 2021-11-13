@@ -29,7 +29,7 @@ public partial class EssentialNetMachine : Machine<Identifier>
         var ta = this.Netsphere.Terminal.Create(ni);
         var pp = new PacketPunch(null, DateTime.UtcNow.Ticks);
         ta.Send(pp);
-        var ticks1 = Ticks.GetTimestamp();
+        var ticks1 = Ticks.GetSystem();
         var ticks2 = DateTime.UtcNow.Ticks;
 
         if (this.Netsphere.EssentialNode.GetUncheckedNode(out var nodeAddress))

@@ -107,7 +107,7 @@ public class NetSocket
         public void ProcessSend()
         {// Invoked by multiple threads.
             // Check interval.
-            var currentTicks = Ticks.GetTimestamp();
+            var currentTicks = Ticks.GetSystem();
             var previous = Volatile.Read(ref this.previousTimestamp);
             var interval = Ticks.FromNanoseconds((double)SendIntervalNanoseconds / 2); // Half for margin.
             if (currentTicks < (previous + interval))

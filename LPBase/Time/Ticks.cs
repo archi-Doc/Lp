@@ -4,9 +4,12 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
+#pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
+#pragma warning disable SA1401 // Fields should be private
+
 namespace LP;
 
-public struct Ticks
+public static class Ticks
 {
     public const long TicksPerDay = TimeSpan.TicksPerDay;
     public const long TicksPerHour = TimeSpan.TicksPerHour;
@@ -15,13 +18,32 @@ public struct Ticks
     public const long TicksPerMillisecond = TimeSpan.TicksPerMillisecond;
     public const long TicksPerMicrosecond = TimeSpan.TicksPerMillisecond / 1000;
     public const double TicksPerNanosecond = TimeSpan.TicksPerMillisecond / 1000000d;
-    // public const long NanosecondsPerTicks = 1_000_000 / TimeSpan.TicksPerMillisecond;
 
     /// <summary>
-    /// Stopwatch.GetTimestamp().
+    /// Gets the number of ticks since system startup (Stopwatch.GetTimestamp()).
     /// </summary>
-    /// <returns>A long integer representing the tick counter value of the underlying timer mechanism.</returns>
-    public static long GetTimestamp() => Stopwatch.GetTimestamp();
+    /// <returns>Ticks.</returns>
+    public static long GetSystem() => Stopwatch.GetTimestamp();
+
+    /// <summary>
+    /// Gets the number of ticks since LP has started.<br/>
+    /// Not affected by manual date/time changes.
+    /// </summary>
+    /// <returns>Ticks.</returns>
+    public static long GetApplication() => Stopwatch.GetTimestamp() - TimeCorrection.InitialSystemTicks;
+
+    /// <summary>
+    /// Gets the number of ticks expressed as UTC.
+    /// </summary>
+    /// <returns>Ticks.</returns>
+    public static long GetUtc() => DateTime.UtcNow.Ticks;
+
+    /// <summary>
+    /// Get the corrected <see cref="DateTime"/> expressed as UTC.
+    /// </summary>
+    /// <param name="correctedTime">The corrected time.</param>
+    /// <returns><see cref="CorrectedResult"/>.</returns>
+    public static CorrectedResult GetCorrected(out long correctedTime) => TimeCorrection.GetCorrectedTicks(out correctedTime);
 
     public static long FromDays(double days) => (long)(days * TicksPerDay);
 
@@ -42,7 +64,7 @@ public struct TicksRange
 {
     public TicksRange(long ticks)
     {
-        this.LowerBound = Ticks.GetTimestamp();
+        this.LowerBound = Ticks.GetSystem();
         this.UpperBound = this.LowerBound + ticks;
     }
 
