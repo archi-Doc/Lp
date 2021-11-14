@@ -185,13 +185,13 @@ ReceiveUnmanaged_Error:
                 return SendResult.Error;
             }
 
-            ulong headerGene;
+            /*ulong headerGene;
             fixed (byte* pb = packet)
             {
                 headerGene = (*(PacketHeader*)pb).Gene;
-            }
+            }*/
 
-            var gene = new NetTerminalGene(headerGene, this);
+            var gene = new NetTerminalGene(this.GenePool.GetGene(), this);
             gene.SetSend(packet, responseId);
             this.genes = new NetTerminalGene[] { gene, };
             this.Terminal.AddNetTerminalGene(this.genes);
