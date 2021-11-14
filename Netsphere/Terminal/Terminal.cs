@@ -227,7 +227,7 @@ public class Terminal
         }
     }
 
-    internal void ProcessUnmanagedRecv_Encrypt(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data)
+    internal void ProcessUnmanagedRecv_Encrypt(IPEndPoint endpoint, ref PacketHeader header, Memory<byte> data)
     {
         if (!TinyhandSerializer.TryDeserialize<PacketEncrypt>(data, out var packet))
         {
@@ -236,6 +236,7 @@ public class Terminal
 
         if (packet.NodeInformation != null)
         {
+            packet.NodeInformation.SetIPEndPoint(endpoint);
             var terminal = this.Create(packet.NodeInformation, packet.Salt);
         }
     }

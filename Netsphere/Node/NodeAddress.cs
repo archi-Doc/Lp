@@ -89,6 +89,12 @@ public partial class NodeAddress : IEquatable<NodeAddress>
 
     public IPEndPoint CreateEndpoint() => new IPEndPoint(this.Address, this.Port);
 
+    public void SetIPEndPoint(IPEndPoint endpoint)
+    {
+        this.Address = endpoint.Address;
+        this.Port = (ushort)endpoint.Port;
+    }
+
     public bool IsValid()
     {
         if (this.Port < Netsphere.MinPort || this.Port > Netsphere.MaxPort)
