@@ -26,7 +26,7 @@ public partial class NetTerminal : IDisposable
     internal NetTerminal(Terminal terminal, NodeAddress nodeAddress)
     {// NodeAddress: Unmanaged
         this.Terminal = terminal;
-        this.Gene = Random.Crypto.NextULong();
+        this.GenePool = new();
         this.NodeAddress = nodeAddress;
         this.Endpoint = this.NodeAddress.CreateEndpoint();
     }
@@ -34,15 +34,13 @@ public partial class NetTerminal : IDisposable
     internal NetTerminal(Terminal terminal, NodeInformation nodeInformation)
     {// NodeInformation: Managed
         this.Terminal = terminal;
-        this.Gene = Random.Crypto.NextULong();
+        this.GenePool = new();
         this.NodeAddress = nodeInformation;
         this.NodeInformation = nodeInformation;
         this.Endpoint = this.NodeAddress.CreateEndpoint();
     }
 
     public Terminal Terminal { get; }
-
-    public ulong Gene { get; private set; }
 
     // [Link(Type = ChainType.Ordered)]
     // public long CreatedTicks { get; private set; } = Ticks.GetCurrent();
@@ -115,6 +113,8 @@ public partial class NetTerminal : IDisposable
         return value;
     }
 
+    internal GenePool GenePool { get; }
+
     internal bool Receive(out PacketId packetId, out Memory<byte> data, int millisecondsToWait = DefaultMillisecondsToWait)
     {
         var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);
@@ -160,22 +160,23 @@ ReceiveUnmanaged_Error:
         return false;
     }
 
-    internal void CreateHeader(out PacketHeader header)
+    internal void CreateHeader(out PacketHeader header, ulong gene)
     {
         header = default;
-        header.Gene = this.Gene;
+        header.Gene = gene;
         header.Engagement = this.NodeAddress.Engagement;
     }
 
     internal SendResult SendPacket<T>(T value, PacketId responseId)
         where T : IPacket
     {
-        this.CreateHeader(out var header);
+        var gene = this.GenePool.GetGene();
+        this.CreateHeader(out var header, gene);
         var packet = PacketService.CreatePacket(ref header, value);
         return this.SendPacket(packet, responseId);
     }
 
-    internal SendResult SendPacket(byte[] packet, PacketId responseId)
+    internal unsafe SendResult SendPacket(byte[] packet, PacketId responseId)
     {
         lock (this.syncObject)
         {
@@ -184,7 +185,13 @@ ReceiveUnmanaged_Error:
                 return SendResult.Error;
             }
 
-            var gene = new NetTerminalGene(this.Gene, this);
+            ulong headerGene;
+            fixed (byte* pb = packet)
+            {
+                headerGene = (*(PacketHeader*)pb).Gene;
+            }
+
+            var gene = new NetTerminalGene(headerGene, this);
             gene.SetSend(packet, responseId);
             this.genes = new NetTerminalGene[] { gene, };
             this.Terminal.AddNetTerminalGene(this.genes);

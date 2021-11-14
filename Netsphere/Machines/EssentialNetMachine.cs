@@ -29,9 +29,11 @@ public partial class EssentialNetMachine : Machine<Identifier>
     protected StateResult Initial(StateParameter parameter)
     {
         var ni = NodeInformation.Alternative;
-        var ta = this.Netsphere.Terminal.Create(ni);
-        var pp = new PacketPunch(null);
-        ta.Send(pp);
+        using (var ta = this.Netsphere.Terminal.Create(ni))
+        {
+            var pp = new PacketPunch(null);
+            ta.Send(pp);
+        }
 
         if (this.Netsphere.EssentialNode.GetUncheckedNode(out var nodeAddress))
         {
