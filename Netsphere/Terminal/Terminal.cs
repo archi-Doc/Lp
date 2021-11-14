@@ -170,7 +170,7 @@ public class Terminal
         }
     }
 
-    internal unsafe void ProcessUnmanagedRecv(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data)
+    internal void ProcessUnmanagedRecv(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data)
     {
         if (header.Id == PacketId.Punch)
         {// Punch
@@ -193,13 +193,28 @@ public class Terminal
 
             r.UtcTicks = Ticks.GetUtcNow();
 
+            header.Gene = GenePool.GetNext(header.Gene);
             var p = PacketService.CreatePacket(ref header, r);
 
             this.unmanagedSends.Enqueue(new UnmanagedSend(endPoint, p));
         }
+        else if (header.Id == PacketId.Encrypt)
+        {
+            this.ProcessUnmanagedRecv_Encrypt(endPoint, ref header, data);
+        }
         else
         {// Not supported
         }
+    }
+
+    internal void ProcessUnmanagedRecv_Encrypt(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data)
+    {
+        if (!TinyhandSerializer.TryDeserialize<PacketEncrypt>(data, out var packet))
+        {
+            return;
+        }
+
+        // var nodeInformation = (NodeInformation)packet.Id;
     }
 
     internal void AddNetTerminalGene(NetTerminalGene[] genes)

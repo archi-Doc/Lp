@@ -32,7 +32,7 @@ public partial class EssentialNetMachine : Machine<Identifier>
         using (var ta = this.Netsphere.Terminal.Create(ni))
         {
             var pp = new PacketPunch(null);
-            ta.Send(pp);
+            ta.Send(pp, PacketId.PunchResponse);
         }
 
         if (this.Netsphere.EssentialNode.GetUncheckedNode(out var nodeAddress))

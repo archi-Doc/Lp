@@ -88,7 +88,7 @@ public partial class NetTerminal : IDisposable
         return SendResult.Timeout;
     }
 
-    public SendResult Send<T>(T value, int millisecondsToWait = DefaultMillisecondsToWait)
+    public SendResult Send<T>(T value, PacketId responseId, int millisecondsToWait = DefaultMillisecondsToWait)
         where T : IPacket
     {
         var result = this.CheckManagedAndEncrypted();
@@ -97,7 +97,7 @@ public partial class NetTerminal : IDisposable
             return result;
         }
 
-        return SendResult.Success;
+        return this.SendPacket(value, responseId);
     }
 
     public T? Receive<T>(int millisecondsToWait = DefaultMillisecondsToWait)
