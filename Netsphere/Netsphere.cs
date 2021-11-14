@@ -54,7 +54,7 @@ public class Netsphere
         }
 
         // Terminals
-        this.Terminal.Initialize(false, @private.NodePrivateEcdh);
+        this.Terminal.Initialize(false, this.@private.NodePrivateEcdh);
         if (this.Alternative != null)
         {
             this.Alternative.Initialize(true, NodeKey.FromPrivateKey(NodePrivateKey.AlternativePrivateKey)!);

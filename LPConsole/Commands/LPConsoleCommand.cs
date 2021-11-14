@@ -186,6 +186,11 @@ Deserialize:
                     }
                     else
                     {
+                        if (!control.Commandline.Process(command))
+                        {
+                            Console.Write("> ");
+                            continue;
+                        }
                     }
                 }
 

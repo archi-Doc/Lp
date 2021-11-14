@@ -272,6 +272,8 @@ public class Terminal
         }
     }
 
+    public NetTerminal.GoshujinClass NetTerminals => this.terminals;
+
     internal Serilog.ILogger? TerminalLogger { get; private set; }
 
     internal ECDiffieHellman NodePrivateECDH { get; private set; } = default!;

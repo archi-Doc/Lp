@@ -23,6 +23,7 @@ public class Control
 
         // Main services
         container.Register<Control>(Reuse.Singleton);
+        container.Register<Commandline>(Reuse.Singleton);
         container.Register<Information>(Reuse.Singleton);
         container.Register<Private>(Reuse.Singleton);
         container.Register<Netsphere>(Reuse.Singleton);
@@ -35,8 +36,9 @@ public class Control
         container.Register<Machines.EssentialNetMachine>();
     }
 
-    public Control(Information information, Private @private, BigMachine<Identifier> bigMachine, Netsphere netsphere)
+    public Control(Commandline commandline, Information information, Private @private, BigMachine<Identifier> bigMachine, Netsphere netsphere)
     {
+        this.Commandline = commandline;
         this.Information = information;
         this.Private = @private;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
@@ -113,6 +115,8 @@ public class Control
     }
 
     public ThreadCoreGroup Core { get; }
+
+    public Commandline Commandline { get; }
 
     public Information Information { get; }
 

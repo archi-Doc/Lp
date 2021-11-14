@@ -379,6 +379,11 @@ ReceivePacket_Error:
             {
                 // free managed resources.
                 this.ClearGenes();
+                // lock (this.Terminal.terminals)
+                {
+                    this.Goshujin = null;
+                    // this.terminals.Add(terminal);
+                }
             }
 
             // free native resources here if there are any.
