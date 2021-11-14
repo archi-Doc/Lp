@@ -14,7 +14,7 @@ public enum NodeType : byte
 }
 
 /// <summary>
-/// Represents a basic node information.
+/// Represents a basic node information (Address, Port, Engagement, Type).
 /// </summary>
 [TinyhandObject]
 public partial class NodeAddress : IEquatable<NodeAddress>
