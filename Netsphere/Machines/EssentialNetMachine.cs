@@ -5,7 +5,10 @@ using LP.Net;
 namespace LP.Machines;
 
 /// <summary>
-/// Check essential nodes and determine MyStatus.ConnectionType.
+/// Check essential nodes and determine MyStatus.ConnectionType.<br/>
+/// 1: Connect and get nodes.<br/>
+/// 2: Determine MyStatus.ConnectionType.<br/>
+/// 3: Check essential nodes.
 /// </summary>
 [MachineObject(0x4792ab0f, Group = typeof(MachineSingle<>))]
 public partial class EssentialNetMachine : Machine<Identifier>
@@ -38,7 +41,7 @@ public partial class EssentialNetMachine : Machine<Identifier>
             // nodeAddress = NodeAddress.Alternative;
             using (var terminal = this.Netsphere.Terminal.Create(nodeAddress))
             {
-                terminal.SendUnmanaged_Punch();
+                terminal.SendUnmanaged(new PacketPunch(null), PacketId.PunchResponse);
                 var data = terminal.Receive<PacketPunchResponse>(1000);
                 if (data != null)
                 {

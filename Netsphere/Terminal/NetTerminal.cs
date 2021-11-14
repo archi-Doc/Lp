@@ -55,17 +55,17 @@ public partial class NetTerminal : IDisposable
 
     public bool IsManaged => this.NodeInformation != null;
 
-    public unsafe void SendUnmanaged_Punch()
-    {
-        var p = new PacketPunch(null);
-        this.SendPacket(p, PacketId.PunchResponse);
-    }
-
     public enum SendResult
     {
         Success,
         Error,
         Timeout,
+    }
+
+    public SendResult SendUnmanaged<T>(T value, PacketId responseId)
+        where T : IPacket
+    {
+        return this.SendPacket(value, responseId);
     }
 
     public SendResult CheckManagedAndEncrypted()
