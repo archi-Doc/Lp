@@ -23,7 +23,6 @@ public class Program
         var switcher = new BenchmarkSwitcher(new[]
         {
             typeof(AesBenchmark),
-            typeof(GenePoolBenchmark),
             typeof(IdentifierBenchmark),
             typeof(TemplateBenchmark),
         });

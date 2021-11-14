@@ -35,30 +35,27 @@ public static class Aes256
     public static Aes PKCS7 { get; }
 }
 
-public class Aes128
+public static class Aes128
 {
     public const int KeyBits = 128;
-    public const int KeyBytes = KeyBits / 8;
     public const int IVBits = 128;
+    public const int KeyBytes = KeyBits / 8;
     public const int IVBytes = IVBits / 8;
 
-    public static ObjectPool<Aes128> ObjectPool { get; } = new(() => new Aes128());
-
-    public Aes128()
+    static Aes128()
     {
-        this.Aes = Aes.Create();
-        this.Aes.KeySize = KeyBits;
+        NoPadding = Aes.Create();
+        NoPadding.KeySize = KeyBits;
+        NoPadding.Mode = CipherMode.CBC;
+        NoPadding.Padding = PaddingMode.None;
 
-        this.Key = new byte[KeyBytes];
-        this.Aes.Key = this.Key;
-
-        this.IV = new byte[IVBytes];
-        this.Aes.IV = this.IV;
+        PKCS7 = Aes.Create();
+        PKCS7.KeySize = KeyBits;
+        PKCS7.Mode = CipherMode.CBC;
+        PKCS7.Padding = PaddingMode.PKCS7;
     }
 
-    public Aes Aes { get; }
+    public static Aes NoPadding { get; }
 
-    public byte[] Key { get; }
-
-    public byte[] IV { get; }
+    public static Aes PKCS7 { get; }
 }

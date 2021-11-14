@@ -12,6 +12,7 @@ public enum PacketId : byte
     Invalid,
     Punch,
     PunchResponse,
+    GetNodeInformation,
     Relay,
     Encrypt,
     Data,
