@@ -30,6 +30,15 @@ public partial class NodeInformation : NodeAddress, IEquatable<NodeInformation>
         }
     }
 
+    public static NodeInformation GetMyNodeInformation()
+    {
+        var nodeInformation = new NodeInformation();
+        // nodeInformation.PublicKeyX = this.Information.NodePublicKey.X;
+        // nodeInformation.PublicKeyY = this.Information.NodePublicKey.Y;
+
+        return nodeInformation;
+    }
+
     public NodeInformation()
     {
     }

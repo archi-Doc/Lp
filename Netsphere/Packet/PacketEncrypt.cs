@@ -9,10 +9,9 @@ internal partial class PacketEncrypt : IPacket
     {
     }
 
-    public PacketEncrypt(NodePublicKey key)
+    public PacketEncrypt(NodeInformation nodeInformation)
     {
-        this.PublicKeyX = key.X;
-        this.PublicKeyY = key.X;
+        this.NodeInformation = nodeInformation;
         this.Salt = Random.Crypto.NextULong();
     }
 
@@ -21,11 +20,8 @@ internal partial class PacketEncrypt : IPacket
     public PacketId Id => PacketId.Encrypt;
 
     [Key(0)]
-    public byte[] PublicKeyX { get; set; } = default!;
+    public NodeInformation? NodeInformation { get; set; }
 
     [Key(1)]
-    public byte[] PublicKeyY { get; set; } = default!;
-
-    [Key(2)]
     public ulong Salt { get; set; }
 }

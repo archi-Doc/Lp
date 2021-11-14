@@ -18,22 +18,36 @@ public static class NodeKey
         ECCurve = ECCurve.CreateFromFriendlyName(ECCurveName);
     }
 
-    public static ECDiffieHellman FromPrivateKey(NodePrivateKey key)
+    public static ECDiffieHellman? FromPrivateKey(NodePrivateKey key)
     {
-        ECParameters p = default;
-        p.Curve = ECCurve;
-        p.D = key.D;
-        return ECDiffieHellman.Create(p);
+        try
+        {
+            ECParameters p = default;
+            p.Curve = ECCurve;
+            p.D = key.D;
+            return ECDiffieHellman.Create(p);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
-    public static ECDiffieHellman FromPublicKey(byte[] x, byte[] y)
+    public static ECDiffieHellman? FromPublicKey(byte[] x, byte[] y)
     {
-        ECParameters p = default;
-        p.Curve = ECCurve;
-        p.Q.X = x;
-        p.Q.Y = y;
-        p.Validate();
-        return ECDiffieHellman.Create(p);
+        try
+        {
+            ECParameters p = default;
+            p.Curve = ECCurve;
+            p.Q.X = x;
+            p.Q.Y = y;
+            p.Validate();
+            return ECDiffieHellman.Create(p);
+        }
+        catch
+        {
+            return null;
+        }
     }
 }
 

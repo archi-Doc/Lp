@@ -53,10 +53,28 @@ public class Terminal
         return terminal;
     }
 
-    public Terminal(Information information, Private @private)
+    /// <summary>
+    /// Create managed (with public key) and encrypted NetTerminal instance.
+    /// </summary>
+    /// <param name="nodeInformation">NodeInformation.</param>
+    /// <param name="salt">Salt.</param>
+    /// <returns>NetTerminal.</returns>
+    public NetTerminal Create(NodeInformation nodeInformation, ulong salt)
+    {
+        var terminal = new NetTerminal(this, nodeInformation, salt);
+        lock (this.terminals)
+        {
+            this.terminals.Add(terminal);
+        }
+
+        return terminal;
+    }
+
+    public Terminal(Information information, Private @private, NetStatus netStatus)
     {
         this.Information = information;
         this.Private = @private;
+        this.NetStatus = netStatus;
 
         Radio.Open<Message.Start>(this.Start);
         Radio.Open<Message.Stop>(this.Stop);
@@ -91,6 +109,8 @@ public class Terminal
     public Information Information { get; }
 
     public Private Private { get; }
+
+    public NetStatus NetStatus { get; }
 
     public int Port { get; set; }
 
@@ -214,7 +234,10 @@ public class Terminal
             return;
         }
 
-        // var nodeInformation = (NodeInformation)packet.Id;
+        if (packet.NodeInformation != null)
+        {
+            var terminal = this.Create(packet.NodeInformation, packet.Salt);
+        }
     }
 
     internal void AddNetTerminalGene(NetTerminalGene[] genes)

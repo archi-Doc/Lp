@@ -7,7 +7,10 @@ namespace LP.Net;
 
 public class NetStatus
 {
-    public NetStatus()
+    public NetStatus(Information information)
     {
+        this.Information = information;
     }
+
+    public Information Information { get; }
 }

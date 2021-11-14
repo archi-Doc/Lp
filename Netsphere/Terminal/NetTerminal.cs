@@ -40,6 +40,12 @@ public partial class NetTerminal : IDisposable
         this.Endpoint = this.NodeAddress.CreateEndpoint();
     }
 
+    internal NetTerminal(Terminal terminal, NodeInformation nodeInformation, ulong salt)
+        : this(terminal, nodeInformation)
+    {// NodeInformation: Encrypted
+        this.CreateEmbryo(salt);
+    }
+
     public Terminal Terminal { get; }
 
     // [Link(Type = ChainType.Ordered)]
@@ -77,7 +83,8 @@ public partial class NetTerminal : IDisposable
             return SendResult.Error;
         }
 
-        var p = new PacketEncrypt(this.Terminal.Information.NodePublicKey);
+        // var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
+        var p = new PacketEncrypt(NodeInformation.GetMyNodeInformation());
         this.SendPacket(p, PacketId.Encrypt);
         var r = this.Receive<PacketEncrypt>();
         if (r != null && this.CreateEmbryo(p.Salt))
@@ -282,6 +289,11 @@ ReceivePacket_Error:
         }
 
         var ecdh = NodeKey.FromPublicKey(this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
+        if (ecdh == null)
+        {
+            return false;
+        }
+
         var material = this.Terminal.Private.NodePrivateEcdh.DeriveKeyMaterial(ecdh.PublicKey);
         Span<byte> buffer = stackalloc byte[sizeof(ulong) + NodeKey.PrivateKeySize + sizeof(ulong)];
         var span = buffer;
@@ -294,6 +306,8 @@ ReceivePacket_Error:
         var sha = Hash.Sha3_384Pool.Get();
         this.embryo = sha.GetHash(buffer);
         Hash.Sha3_384Pool.Return(sha);
+
+        this.GenePool.SetEmbryo(this.embryo);
 
         return true;
     }

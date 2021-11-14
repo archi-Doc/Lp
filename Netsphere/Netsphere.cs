@@ -19,14 +19,15 @@ public class Netsphere
     public const int MinPort = 49152; // Ephemeral port 49152 - 60999
     public const int MaxPort = 60999;
 
-    public Netsphere(BigMachine<Identifier> bigMachine, Information information, Private @private, Terminal terminal, EssentialNode node)
+    public Netsphere(BigMachine<Identifier> bigMachine, Information information, Private @private, Terminal terminal, EssentialNode node, NetStatus netStatus)
     {
         this.bigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.information = information;
         this.Terminal = terminal;
-        this.Alternative = new(information, @private); // For debug
+        this.Alternative = new(information, @private, netStatus); // For debug
         this.Alternative.Port = NodeAddress.Alternative.Port;
         this.EssentialNode = node;
+        this.NetStatus = netStatus;
 
         Radio.Open<Message.Configure>(this.Configure);
         Radio.Open<Message.Start>(this.Start);
@@ -62,7 +63,7 @@ public class Netsphere
 
     public MyStatus MyStatus { get; } = new();
 
-    public NetStatus NetStatus { get; } = new();
+    public NetStatus NetStatus { get; }
 
     public Terminal Terminal { get; }
 

@@ -22,6 +22,11 @@ internal class GenePool : IDisposable
         this.OriginalGene = Random.Crypto.NextULong();
     }
 
+    public GenePool(ulong gene)
+    {
+        this.OriginalGene = gene;
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public unsafe ulong GetGene()
     {
