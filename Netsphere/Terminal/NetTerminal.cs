@@ -69,7 +69,7 @@ public partial class NetTerminal : IDisposable
     public SendResult CheckManagedAndEncrypted()
     {
         if (this.embryo != null)
-        {
+        {// Encrypted
             return SendResult.Success;
         }
         else if (this.NodeInformation == null)
@@ -77,7 +77,7 @@ public partial class NetTerminal : IDisposable
             return SendResult.Error;
         }
 
-        var p = new PacketEncrypt(this.NodeInformation);
+        var p = new PacketEncrypt(this.Terminal.Information.NodePublicKey);
         this.SendPacket(p, PacketId.Encrypt);
         var r = this.Receive<PacketEncrypt>();
         if (r != null && this.CreateEmbryo(p.Salt))

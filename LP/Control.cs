@@ -68,6 +68,7 @@ public class Control
         if (this.Private.NodePrivateKey == null)
         {
             this.Private.NodePrivateKey = NodePrivateKey.Create();
+            this.Information.NodePublicKey = new NodePublicKey(this.Private.NodePrivateKey);
         }
     }
 

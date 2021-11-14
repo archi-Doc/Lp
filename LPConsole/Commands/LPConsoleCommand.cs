@@ -24,8 +24,10 @@ public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
 
     public async Task Run(LPConsoleOptions option, string[] args)
     {
-        var info = Program.Container.Resolve<Information>();
-        info.Configure(option, true, "relay");
+        this.information = Program.Container.Resolve<Information>();
+        this.@private = Program.Container.Resolve<Private>();
+
+        this.information.Initialize(option, true, "relay");
 
         if (await this.LoadAsync() == AbortOrContinue.Abort)
         {
@@ -54,10 +56,8 @@ Abort:
 
     private async Task<AbortOrContinue> LoadAsync()
     {
-        var pri = Program.Container.Resolve<Private>();
-
         // Load node key.
-        if (await this.LoadNodeKey(pri) == AbortOrContinue.Abort)
+        if (await this.LoadNodeKey() == AbortOrContinue.Abort)
         {
             return AbortOrContinue.Abort;
         }
@@ -106,7 +106,7 @@ Abort:
         return password;
     }
 
-    private async Task<AbortOrContinue> LoadNodeKey(Private pri)
+    private async Task<AbortOrContinue> LoadNodeKey()
     {
         var file = NodePrivateKey.Filename;
         if (!File.Exists(file))
@@ -146,7 +146,9 @@ Deserialize:
             var key = Tinyhand.TinyhandSerializer.Deserialize<NodePrivateKey>(data);
             if (key != null)
             {
-                pri.NodePrivateKey = key;
+                this.information.NodePublicKey = new NodePublicKey(key);
+                this.@private.NodePrivateKey = key;
+
                 Logger.Default.Information($"Loaded: {file}");
             }
         }
@@ -209,4 +211,7 @@ Deserialize:
             }
         }
     }
+
+    private Information information = default!;
+    private Private @private = default!;
 }

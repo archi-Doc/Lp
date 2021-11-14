@@ -9,10 +9,10 @@ internal partial class PacketEncrypt : IPacket
     {
     }
 
-    public PacketEncrypt(NodeInformation nodeInformation)
+    public PacketEncrypt(NodePublicKey key)
     {
-        this.PublicKeyX = nodeInformation.PublicKeyX;
-        this.PublicKeyY = nodeInformation.PublicKeyY;
+        this.PublicKeyX = key.X;
+        this.PublicKeyY = key.X;
         this.Salt = Random.Crypto.NextULong();
     }
 
