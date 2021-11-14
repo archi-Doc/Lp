@@ -31,11 +31,6 @@ public partial class EssentialNetMachine : Machine<Identifier>
         var ni = NodeInformation.Alternative;
         using (var ta = this.Netsphere.Terminal.Create(ni))
         {
-            ta.GenePool.SetEmbryo(new byte[] { 1, 2, });
-            for (var n = 0; n < 1024; n++)
-            {
-                var gg = ta.GenePool.GetGene();
-            }
             var pp = new PacketPunch(null);
             ta.Send(pp);
         }

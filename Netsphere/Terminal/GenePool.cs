@@ -9,8 +9,7 @@ namespace LP.Net;
 
 internal class GenePool : IDisposable
 {
-    public const int PoolLength = 64;
-    public const int PoolSize = PoolLength * sizeof(ulong);
+    public const int PoolSize = 64 * sizeof(ulong);
     public const int EmbryoMax = 1024;
 
     public GenePool()
@@ -19,12 +18,21 @@ internal class GenePool : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ulong GetGene()
+    public unsafe ulong GetGene()
     {
-        if (this.aes != null)
+        if (this.encryptor != null)
         {// Managed
             this.EnsurePool();
-            return this.pool![this.poolPosition++];
+            fixed (byte* bp = this.pool)
+            {
+                ulong* up = (ulong*)(bp + this.poolPosition);
+                this.poolPosition += sizeof(ulong);
+                return *up;
+            }
+
+            /*var gene = BitConverter.ToUInt64(this.bytePool.AsSpan(this.poolPosition));
+            this.poolPosition += sizeof(ulong);
+            return gene;*/
         }
         else
         {// Unmanaged
@@ -63,59 +71,19 @@ internal class GenePool : IDisposable
         var keyIv = sha.GetHash(span);
         Hash.Sha3_384Pool.Return(sha);
 
-        if (this.aes == null)
-        {
-            this.aes = Aes.Create();
-        }
-
-        this.aes.Padding = PaddingMode.None;
-        this.aes.Mode = CipherMode.CBC;
-        this.aes.Key = keyIv.AsSpan(0, 32).ToArray();
-        this.aes.IV = keyIv.AsSpan(32, 16).ToArray();
-
         if (this.encryptor != null)
         {
             this.encryptor.Dispose();
         }
 
-        var encryptor = this.aes.CreateEncryptor(keyIv.AsSpan(0, 32).ToArray(), keyIv.AsSpan(32, 16).ToArray());
-        this.encryptor = this.aes.CreateEncryptor(keyIv.AsSpan(0, 32).ToArray(), keyIv.AsSpan(32, 16).ToArray());
-        this.EnsurePool2(encryptor);
+        this.encryptor = Aes256.NoPadding.CreateEncryptor(keyIv.AsSpan(0, 32).ToArray(), keyIv.AsSpan(32, 16).ToArray());
     }
 
     public ulong OriginalGene { get; }
 
-    private void EnsurePool2(ICryptoTransform encryptor)
-    {
-        if (this.pool != null && this.poolPosition < PoolLength)
-        {
-            return;
-        }
-
-        this.poolPosition = 0;
-        if (this.pool == null)
-        {
-            this.pool = new ulong[PoolLength];
-        }
-
-        if (this.bytePool == null)
-        {
-            this.bytePool = new byte[PoolSize];
-        }
-
-        var buffer2 = new byte[PoolSize];
-        this.pseudoRandom!.NextBytes(this.bytePool);
-
-        var blockSize = encryptor.InputBlockSize;
-        encryptor.TransformBlock(this.bytePool, 0, PoolSize, buffer2, 0);
-
-        this.aes!.TryEncryptCbc(this.bytePool, this.aes!.IV, MemoryMarshal.AsBytes<ulong>(this.pool), out var written, PaddingMode.None);
-        this.aes!.TryEncryptCbc(this.bytePool, this.aes!.IV, MemoryMarshal.AsBytes<ulong>(this.pool), out written, PaddingMode.None);
-    }
-
     private void EnsurePool()
     {
-        if (this.pool != null && this.poolPosition < PoolLength)
+        if (this.pool != null && this.poolPosition < PoolSize)
         {
             return;
         }
@@ -123,20 +91,25 @@ internal class GenePool : IDisposable
         this.poolPosition = 0;
         if (this.pool == null)
         {
-            this.pool = new ulong[PoolLength];
+            this.pool = new byte[PoolSize];
         }
 
-        Span<byte> buffer = stackalloc byte[PoolSize];
-        this.pseudoRandom!.NextBytes(buffer);
+        if (this.buffer == null)
+        {
+            this.buffer = new byte[PoolSize];
+        }
 
-        this.aes!.TryEncryptCbc(buffer, this.aes!.IV, MemoryMarshal.AsBytes<ulong>(this.pool), out var written, PaddingMode.None);
+        this.pseudoRandom!.NextBytes(this.buffer);
+
+        this.encryptor!.TransformBlock(this.buffer, 0, PoolSize, this.pool, 0);
+
+        // this.aes!.TryEncryptCbc(this.bytePool, this.aes!.IV, MemoryMarshal.AsBytes<ulong>(this.pool), out written, PaddingMode.None);
     }
 
     private Xoshiro256StarStar? pseudoRandom;
-    private Aes? aes;
     private ICryptoTransform? encryptor;
-    private ulong[]? pool;
-    private byte[]? bytePool;
+    private byte[]? pool;
+    private byte[]? buffer;
     private int poolPosition;
 
 #pragma warning disable SA1124 // Do not use regions
@@ -172,7 +145,6 @@ internal class GenePool : IDisposable
             {
                 // free managed resources.
                 this.encryptor?.Dispose();
-                this.aes?.Dispose();
             }
 
             // free native resources here if there are any.

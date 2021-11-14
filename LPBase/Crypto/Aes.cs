@@ -21,16 +21,18 @@ public static class Aes256
     {
         NoPadding = Aes.Create();
         NoPadding.KeySize = KeyBits;
+        NoPadding.Mode = CipherMode.CBC;
         NoPadding.Padding = PaddingMode.None;
 
         PKCS7 = Aes.Create();
         PKCS7.KeySize = KeyBits;
+        PKCS7.Mode = CipherMode.CBC;
         PKCS7.Padding = PaddingMode.PKCS7;
     }
 
-    public Aes NoPadding { get; }
+    public static Aes NoPadding { get; }
 
-    public Aes PKCS7 { get; }
+    public static Aes PKCS7 { get; }
 }
 
 public class Aes128
