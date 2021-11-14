@@ -10,6 +10,29 @@ using Arc.Collections;
 
 namespace LP;
 
+public static class Aes256
+{
+    public const int KeyBits = 256;
+    public const int IVBits = 128;
+    public const int KeyBytes = KeyBits / 8;
+    public const int IVBytes = IVBits / 8;
+
+    static Aes256()
+    {
+        NoPadding = Aes.Create();
+        NoPadding.KeySize = KeyBits;
+        NoPadding.Padding = PaddingMode.None;
+
+        PKCS7 = Aes.Create();
+        PKCS7.KeySize = KeyBits;
+        PKCS7.Padding = PaddingMode.PKCS7;
+    }
+
+    public Aes NoPadding { get; }
+
+    public Aes PKCS7 { get; }
+}
+
 public class Aes128
 {
     public const int KeyBits = 128;
