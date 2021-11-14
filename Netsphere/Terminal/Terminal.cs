@@ -28,8 +28,7 @@ public class Terminal
     /// <returns>NetTerminal.</returns>
     public NetTerminal Create(NodeAddress nodeAddress)
     {
-        var gene = Random.Crypto.NextULong();
-        var terminal = new NetTerminal(this, gene, nodeAddress);
+        var terminal = new NetTerminal(this, nodeAddress);
         lock (this.terminals)
         {
             this.terminals.Add(terminal);
@@ -45,8 +44,7 @@ public class Terminal
     /// <returns>NetTerminal.</returns>
     public NetTerminal Create(NodeInformation nodeInformation)
     {
-        var gene = Random.Crypto.NextULong();
-        var terminal = new NetTerminal(this, gene, nodeInformation);
+        var terminal = new NetTerminal(this, nodeInformation);
         lock (this.terminals)
         {
             this.terminals.Add(terminal);
@@ -192,7 +190,7 @@ public class Terminal
                 r.Endpoint = endPoint;
             }
 
-            r.UtcTicks = DateTime.UtcNow.Ticks;
+            r.UtcTicks = Ticks.GetUtcNow();
 
             var p = PacketService.CreatePacket(ref header, r);
 

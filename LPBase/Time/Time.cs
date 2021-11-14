@@ -12,7 +12,7 @@ public static class Time
     /// <summary>
     /// Gets a DateTime since system startup (Stopwatch.GetTimestamp()).
     /// </summary>
-    /// <returns>Ticks.</returns>
+    /// <returns><see cref="DateTime"/>.</returns>
     public static DateTime GetSystem() => new DateTime(Ticks.GetSystem());
 
     /// <summary>
@@ -26,7 +26,7 @@ public static class Time
     /// Gets a <see cref="DateTime"/> expressed as UTC.
     /// </summary>
     /// <returns><see cref="DateTime"/>.</returns>
-    public static DateTime GetUtc() => DateTime.UtcNow;
+    public static DateTime GetUtcNow() => DateTime.UtcNow;
 
     /// <summary>
     /// Get a corrected <see cref="DateTime"/> expressed as UTC.

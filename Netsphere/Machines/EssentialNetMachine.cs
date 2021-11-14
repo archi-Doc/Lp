@@ -27,10 +27,8 @@ public partial class EssentialNetMachine : Machine<Identifier>
     {
         var ni = NodeInformation.Alternative;
         var ta = this.Netsphere.Terminal.Create(ni);
-        var pp = new PacketPunch(null, DateTime.UtcNow.Ticks);
-        ta.Send(pp);
-        var ticks1 = Ticks.GetSystem();
-        var ticks2 = DateTime.UtcNow.Ticks;
+        var pp = new PacketPunch(null);
+        // ta.Send(pp);
 
         if (this.Netsphere.EssentialNode.GetUncheckedNode(out var nodeAddress))
         {
@@ -45,7 +43,7 @@ public partial class EssentialNetMachine : Machine<Identifier>
                 var data = terminal.Receive<PacketPunchResponse>(1000);
                 if (data != null)
                 {
-                    Logger.Default.Information(DateTime.UtcNow.ToString());
+                    Logger.Default.Information(Time.GetUtcNow().ToString());
                     Logger.Default.Information($"{this.count} - {data.Endpoint} - {new DateTime(data.UtcTicks)}");
                     this.Netsphere.EssentialNode.Report(nodeAddress, NodeConnectionResult.Success);
                 }

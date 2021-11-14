@@ -71,26 +71,6 @@ public class TimeCorrection
         return CorrectedResult.Corrected;
     }
 
-    /// <summary>
-    /// Get the corrected <see cref="DateTime"/> expressed as UTC.
-    /// </summary>
-    /// <param name="correctedTime">The corrected time.</param>
-    /// <returns><see cref="CorrectedResult"/>.</returns>
-    public static CorrectedResult GetCorrectedTime(out DateTime correctedTime)
-    {
-        var currentTicks = Stopwatch.GetTimestamp() - InitialSystemTicks + InitialUtcTicks;
-        if (timeCorrections.QueueChain.Count < MinCorrections)
-        {
-            correctedTime = new DateTime(currentTicks);
-            return CorrectedResult.NotCorrected;
-        }
-
-        var difference = GetCollectionDifference(currentTicks);
-        correctedTime = new DateTime(currentTicks + difference);
-
-        return CorrectedResult.Corrected;
-    }
-
     public static void AddCorrection(long utcTicks)
     {
         var difference = utcTicks - (Stopwatch.GetTimestamp() + initialDifference);

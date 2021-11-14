@@ -14,10 +14,10 @@ internal partial class PacketPunch : IPacket
     {
     }
 
-    public PacketPunch(IPEndPoint? nextEndpoint, long utcTicks)
+    public PacketPunch(IPEndPoint? nextEndpoint)
     {
         this.NextEndpoint = nextEndpoint;
-        this.UtcTicks = utcTicks;
+        this.UtcTicks = Ticks.GetUtcNow();
     }
 
     public bool IsResponse => false;

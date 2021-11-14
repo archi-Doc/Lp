@@ -23,18 +23,18 @@ public partial class NetTerminal : IDisposable
     public const int DefaultInterval = 10;
 
     [Link(Type = ChainType.QueueList, Name = "Queue", Primary = true)]
-    internal NetTerminal(Terminal terminal, ulong gene, NodeAddress nodeAddress)
-    {
+    internal NetTerminal(Terminal terminal, NodeAddress nodeAddress)
+    {// NodeAddress: Unmanaged
         this.Terminal = terminal;
-        this.Gene = gene;
+        this.Gene = Random.Crypto.NextULong();
         this.NodeAddress = nodeAddress;
         this.Endpoint = this.NodeAddress.CreateEndpoint();
     }
 
-    internal NetTerminal(Terminal terminal, ulong gene, NodeInformation nodeInformation)
-    {
+    internal NetTerminal(Terminal terminal, NodeInformation nodeInformation)
+    {// NodeInformation: Managed
         this.Terminal = terminal;
-        this.Gene = gene;
+        this.Gene = Random.Crypto.NextULong();
         this.NodeAddress = nodeInformation;
         this.NodeInformation = nodeInformation;
         this.Endpoint = this.NodeAddress.CreateEndpoint();
@@ -58,7 +58,7 @@ public partial class NetTerminal : IDisposable
 
     public unsafe void SendUnmanaged_Punch()
     {
-        var p = new PacketPunch(null, DateTime.UtcNow.Ticks);
+        var p = new PacketPunch(null);
 
         this.CreateHeader(out var header);
         var packet = PacketService.CreatePacket(ref header, p);
