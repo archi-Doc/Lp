@@ -15,7 +15,16 @@ public class Private
 
     public void Configure(Message.Configure message)
     {
-        this.NodePrivateEcdh = NodeKey.FromPrivateKey(this.NodePrivateKey);
+        var ecdh = NodeKey.FromPrivateKey(this.NodePrivateKey);
+        if (ecdh != null)
+        {
+            this.NodePrivateEcdh = ecdh;
+        }
+        else
+        {
+            var nodePrivateKey = NodePrivateKey.Create();
+            this.NodePrivateEcdh = NodeKey.FromPrivateKey(nodePrivateKey)!;
+        }
     }
 
     public NodePrivateKey NodePrivateKey { get; set; } = default!;

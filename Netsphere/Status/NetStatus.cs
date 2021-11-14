@@ -12,5 +12,15 @@ public class NetStatus
         this.Information = information;
     }
 
+    public NodeInformation GetMyNodeInformation()
+    {
+        this.myNodeInformation.PublicKeyX = this.Information.NodePublicKey.X;
+        this.myNodeInformation.PublicKeyY = this.Information.NodePublicKey.Y;
+
+        return this.myNodeInformation;
+    }
+
     public Information Information { get; }
+
+    private NodeInformation myNodeInformation = new(new NodeAddress(IPAddress.None, 0));
 }

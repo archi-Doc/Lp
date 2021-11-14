@@ -17,11 +17,6 @@ internal class GenePool : IDisposable
         return new Xoshiro256StarStar(gene).NextULong();
     }
 
-    public GenePool()
-    {
-        this.OriginalGene = Random.Crypto.NextULong();
-    }
-
     public GenePool(ulong gene)
     {
         this.OriginalGene = gene;

@@ -30,15 +30,6 @@ public partial class NodeInformation : NodeAddress, IEquatable<NodeInformation>
         }
     }
 
-    public static NodeInformation GetMyNodeInformation()
-    {
-        var nodeInformation = new NodeInformation();
-        // nodeInformation.PublicKeyX = this.Information.NodePublicKey.X;
-        // nodeInformation.PublicKeyY = this.Information.NodePublicKey.Y;
-
-        return nodeInformation;
-    }
-
     public NodeInformation()
     {
     }
@@ -49,16 +40,16 @@ public partial class NodeInformation : NodeAddress, IEquatable<NodeInformation>
     }
 
     [Key(4)]
-    public long UpdateTime { get; protected set; }
+    public long UpdateTime { get; internal protected set; }
 
     [Key(5)]
     public ulong Differentiation { get; protected set; }
 
     [Key(6)]
-    public byte[] PublicKeyX { get; protected set; } = default!;
+    public byte[] PublicKeyX { get; internal protected set; } = default!;
 
     [Key(7)]
-    public byte[] PublicKeyY { get; protected set; } = default!;
+    public byte[] PublicKeyY { get; internal protected set; } = default!;
 
     public bool Equals(NodeInformation? other)
     {

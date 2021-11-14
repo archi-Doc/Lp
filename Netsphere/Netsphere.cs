@@ -23,9 +23,9 @@ public class Netsphere
     {
         this.bigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.information = information;
+        this.@private = @private;
         this.Terminal = terminal;
-        this.Alternative = new(information, @private, netStatus); // For debug
-        this.Alternative.Port = NodeAddress.Alternative.Port;
+        this.Alternative = new(information, netStatus); // For debug
         this.EssentialNode = node;
         this.NetStatus = netStatus;
 
@@ -53,6 +53,14 @@ public class Netsphere
             }
         }
 
+        // Terminals
+        this.Terminal.Initialize(false, @private.NodePrivateEcdh);
+        if (this.Alternative != null)
+        {
+            this.Alternative.Initialize(true, NodeKey.FromPrivateKey(NodePrivateKey.AlternativePrivateKey)!);
+            this.Alternative.Port = NodeAddress.Alternative.Port;
+        }
+
         // Machines
         this.bigMachine.TryCreate<Machines.EssentialNetMachine.Interface>(Identifier.Zero);
     }
@@ -74,4 +82,6 @@ public class Netsphere
     private BigMachine<Identifier> bigMachine;
 
     private Information information;
+
+    private Private @private;
 }

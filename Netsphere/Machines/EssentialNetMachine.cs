@@ -35,6 +35,8 @@ public partial class EssentialNetMachine : Machine<Identifier>
             ta.Send(pp, PacketId.PunchResponse);
         }
 
+        return StateResult.Continue;
+
         if (this.Netsphere.EssentialNode.GetUncheckedNode(out var nodeAddress))
         {
             // var alt = NodeInformation.Alternative;

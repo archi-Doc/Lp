@@ -3,6 +3,7 @@
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Net.Sockets;
+using System.Security.Cryptography;
 
 namespace LP.Net;
 
@@ -57,11 +58,11 @@ public class Terminal
     /// Create managed (with public key) and encrypted NetTerminal instance.
     /// </summary>
     /// <param name="nodeInformation">NodeInformation.</param>
-    /// <param name="salt">Salt.</param>
+    /// <param name="gene">gene.</param>
     /// <returns>NetTerminal.</returns>
-    public NetTerminal Create(NodeInformation nodeInformation, ulong salt)
+    public NetTerminal Create(NodeInformation nodeInformation, ulong gene)
     {
-        var terminal = new NetTerminal(this, nodeInformation, salt);
+        var terminal = new NetTerminal(this, nodeInformation, gene);
         lock (this.terminals)
         {
             this.terminals.Add(terminal);
@@ -70,10 +71,10 @@ public class Terminal
         return terminal;
     }
 
-    public Terminal(Information information, Private @private, NetStatus netStatus)
+    public Terminal(Information information, NetStatus netStatus)
     {
         this.Information = information;
-        this.Private = @private;
+        // this.Private = @private;
         this.NetStatus = netStatus;
 
         Radio.Open<Message.Start>(this.Start);
@@ -108,11 +109,16 @@ public class Terminal
 
     public Information Information { get; }
 
-    public Private Private { get; }
+    // public Private Private { get; }
 
     public NetStatus NetStatus { get; }
 
     public int Port { get; set; }
+
+    internal void Initialize(bool isAlternative, ECDiffieHellman nodePrivateKey)
+    {
+        this.NodePrivateECDH = nodePrivateKey;
+    }
 
     internal void ProcessSend(UdpClient udp, long currentTicks)
     {
@@ -236,8 +242,13 @@ public class Terminal
 
         if (packet.NodeInformation != null)
         {
+            // Logger.Default.Information($"Recv_Encrypt: {header.Gene.ToString()}");
             packet.NodeInformation.SetIPEndPoint(endpoint);
-            var terminal = this.Create(packet.NodeInformation, packet.Salt);
+
+            var terminal = this.Create(packet.NodeInformation, header.Gene);
+            terminal.GenePool.GetGene(); // Dispose the first gene.
+            terminal.SendPacket(new PacketEncrypt(), PacketId.Invalid);
+            terminal.CreateEmbryo(packet.Salt);
         }
     }
 
@@ -262,6 +273,8 @@ public class Terminal
     }
 
     internal Serilog.ILogger? TerminalLogger { get; private set; }
+
+    internal ECDiffieHellman NodePrivateECDH { get; private set; } = default!;
 
     private NetSocket netSocket;
 

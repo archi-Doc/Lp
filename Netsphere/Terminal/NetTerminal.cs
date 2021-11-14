@@ -26,24 +26,23 @@ public partial class NetTerminal : IDisposable
     internal NetTerminal(Terminal terminal, NodeAddress nodeAddress)
     {// NodeAddress: Unmanaged
         this.Terminal = terminal;
-        this.GenePool = new();
+        this.GenePool = new(Random.Crypto.NextULong());
         this.NodeAddress = nodeAddress;
         this.Endpoint = this.NodeAddress.CreateEndpoint();
     }
 
     internal NetTerminal(Terminal terminal, NodeInformation nodeInformation)
+        : this(terminal, nodeInformation, Random.Crypto.NextULong())
     {// NodeInformation: Managed
+    }
+
+    internal NetTerminal(Terminal terminal, NodeInformation nodeInformation, ulong gene)
+    {// NodeInformation: Encrypted
         this.Terminal = terminal;
-        this.GenePool = new();
+        this.GenePool = new(gene);
         this.NodeAddress = nodeInformation;
         this.NodeInformation = nodeInformation;
         this.Endpoint = this.NodeAddress.CreateEndpoint();
-    }
-
-    internal NetTerminal(Terminal terminal, NodeInformation nodeInformation, ulong salt)
-        : this(terminal, nodeInformation)
-    {// NodeInformation: Encrypted
-        this.CreateEmbryo(salt);
     }
 
     public Terminal Terminal { get; }
@@ -84,12 +83,19 @@ public partial class NetTerminal : IDisposable
         }
 
         // var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
-        var p = new PacketEncrypt(NodeInformation.GetMyNodeInformation());
+        var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
         this.SendPacket(p, PacketId.Encrypt);
         var r = this.Receive<PacketEncrypt>();
-        if (r != null && this.CreateEmbryo(p.Salt))
+        if (r != null)
         {
-            return SendResult.Success;
+            if (this.CreateEmbryo(p.Salt))
+            {
+                return SendResult.Success;
+            }
+            else
+            {
+                return SendResult.Error;
+            }
         }
 
         return SendResult.Timeout;
@@ -111,7 +117,7 @@ public partial class NetTerminal : IDisposable
         where T : IPacket
     {
         var result = this.Receive(out var header, out var data, millisecondsToWait);
-        if (!result || data.Length < PacketService.HeaderSize)
+        if (!result)
         {
             return default(T);
         }
@@ -178,6 +184,8 @@ ReceiveUnmanaged_Error:
         where T : IPacket
     {
         var gene = this.GenePool.GetGene();
+        // Logger.Default.Information($"Send: {gene.ToString()}");
+
         this.CreateHeader(out var header, gene);
         var packet = PacketService.CreatePacket(ref header, value);
         return this.SendPacket(packet, responseId);
@@ -192,13 +200,21 @@ ReceiveUnmanaged_Error:
                 return SendResult.Error;
             }
 
-            /*ulong headerGene;
-            fixed (byte* pb = packet)
+            ulong headerGene;
+            if (responseId == PacketId.Invalid)
             {
-                headerGene = (*(PacketHeader*)pb).Gene;
-            }*/
+                fixed (byte* pb = packet)
+                {
+                    headerGene = (*(PacketHeader*)pb).Gene;
+                }
+            }
+            else
+            {
+                headerGene = this.GenePool.GetGene();
+            }
 
-            var gene = new NetTerminalGene(this.GenePool.GetGene(), this);
+            // Logger.Default.Information($"Recv: {g.ToString()}");
+            var gene = new NetTerminalGene(headerGene, this);
             gene.SetSend(packet, responseId);
             this.genes = new NetTerminalGene[] { gene, };
             this.Terminal.AddNetTerminalGene(this.genes);
@@ -242,7 +258,41 @@ ReceiveUnmanaged_Error:
 
     internal Serilog.ILogger? TerminalLogger => this.Terminal.TerminalLogger;
 
-    private protected unsafe bool ReceivePacket(out PacketId packetId, out Memory<byte> data)
+    internal bool CreateEmbryo(ulong salt)
+    {
+        Logger.Default.Information($"Salt {salt.ToString()}");
+        if (this.NodeInformation == null)
+        {
+            return false;
+        }
+
+        var ecdh = NodeKey.FromPublicKey(this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
+        if (ecdh == null)
+        {
+            return false;
+        }
+
+        var material = this.Terminal.NodePrivateECDH.DeriveKeyMaterial(ecdh.PublicKey);
+        Span<byte> buffer = stackalloc byte[sizeof(ulong) + NodeKey.PrivateKeySize + sizeof(ulong)];
+        var span = buffer;
+        BitConverter.TryWriteBytes(span, salt);
+        span = span.Slice(sizeof(ulong));
+        material.AsSpan().CopyTo(span);
+        span = span.Slice(NodeKey.PrivateKeySize);
+        BitConverter.TryWriteBytes(span, salt);
+
+        var sha = Hash.Sha3_384Pool.Get();
+        this.embryo = sha.GetHash(buffer);
+        Hash.Sha3_384Pool.Return(sha);
+
+        Logger.Default.Information($"embryo {this.embryo[0].ToString()}");
+        this.GenePool.SetEmbryo(this.embryo);
+        Logger.Default.Information($"First gene {this.GenePool.GetGene().ToString()}");
+
+        return true;
+    }
+
+    private unsafe bool ReceivePacket(out PacketId packetId, out Memory<byte> data)
     {
         if (this.genes == null)
         {
@@ -256,11 +306,6 @@ ReceiveUnmanaged_Error:
         {
             if (this.genes[0].State == NetTerminalGeneState.ReceivedOrConfirmed && !this.genes[0].ReceivedData.IsEmpty)
             {
-                if (this.genes[0].ReceivedData.Length < PacketService.HeaderSize)
-                {
-                    goto ReceivePacket_Error;
-                }
-
                 packetId = this.genes[0].PacketId;
                 data = this.genes[0].ReceivedData;
 
@@ -279,37 +324,6 @@ ReceivePacket_Error:
         packetId = default;
         data = default;
         return false;
-    }
-
-    private bool CreateEmbryo(ulong salt)
-    {
-        if (this.NodeInformation == null)
-        {
-            return false;
-        }
-
-        var ecdh = NodeKey.FromPublicKey(this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
-        if (ecdh == null)
-        {
-            return false;
-        }
-
-        var material = this.Terminal.Private.NodePrivateEcdh.DeriveKeyMaterial(ecdh.PublicKey);
-        Span<byte> buffer = stackalloc byte[sizeof(ulong) + NodeKey.PrivateKeySize + sizeof(ulong)];
-        var span = buffer;
-        BitConverter.TryWriteBytes(span, salt);
-        span = span.Slice(sizeof(ulong));
-        material.AsSpan().CopyTo(span);
-        span = span.Slice(NodeKey.PrivateKeySize);
-        BitConverter.TryWriteBytes(span, salt);
-
-        var sha = Hash.Sha3_384Pool.Get();
-        this.embryo = sha.GetHash(buffer);
-        Hash.Sha3_384Pool.Return(sha);
-
-        this.GenePool.SetEmbryo(this.embryo);
-
-        return true;
     }
 
     private void ClearGenes()
