@@ -42,7 +42,6 @@ public partial class NetTerminal : IDisposable
 
     public Terminal Terminal { get; }
 
-    [Link(Type = ChainType.Ordered)]
     public ulong Gene { get; private set; }
 
     // [Link(Type = ChainType.Ordered)]
@@ -59,10 +58,7 @@ public partial class NetTerminal : IDisposable
     public unsafe void SendUnmanaged_Punch()
     {
         var p = new PacketPunch(null);
-
-        this.CreateHeader(out var header);
-        var packet = PacketService.CreatePacket(ref header, p);
-        this.SendPacket(packet, PacketId.PunchResponse);
+        this.SendPacket(p, PacketId.PunchResponse);
     }
 
     public enum SendResult

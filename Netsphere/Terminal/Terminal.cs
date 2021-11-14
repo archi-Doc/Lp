@@ -153,6 +153,7 @@ public class Terminal
             var netTerminal = terminalGene.NetTerminal;
             if (!netTerminal.Endpoint.Equals(endPoint))
             {// Endpoint mismatch.
+                Logger.Default.Error("Endpoint mismatch.");
                 return;
             }
 

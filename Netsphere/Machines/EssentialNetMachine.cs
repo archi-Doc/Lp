@@ -28,7 +28,7 @@ public partial class EssentialNetMachine : Machine<Identifier>
         var ni = NodeInformation.Alternative;
         var ta = this.Netsphere.Terminal.Create(ni);
         var pp = new PacketPunch(null);
-        // ta.Send(pp);
+        ta.Send(pp);
 
         if (this.Netsphere.EssentialNode.GetUncheckedNode(out var nodeAddress))
         {
@@ -39,7 +39,6 @@ public partial class EssentialNetMachine : Machine<Identifier>
             using (var terminal = this.Netsphere.Terminal.Create(nodeAddress))
             {
                 terminal.SendUnmanaged_Punch();
-                this.BigMachine.Core.Sleep(100);
                 var data = terminal.Receive<PacketPunchResponse>(1000);
                 if (data != null)
                 {
