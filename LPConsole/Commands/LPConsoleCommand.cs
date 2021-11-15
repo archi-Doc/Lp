@@ -147,13 +147,19 @@ Deserialize:
             if (key != null)
             {
                 this.information.NodePublicKey = new NodePublicKey(key);
+                this.information.NodePublicEcdh = NodeKey.FromPublicKey(this.information.NodePublicKey.X, this.information.NodePublicKey.Y) ?? throw new InvalidDataException();
                 this.@private.NodePrivateKey = key;
+                this.@private.NodePrivateEcdh = NodeKey.FromPrivateKey(this.@private.NodePrivateKey) ?? throw new InvalidDataException();
 
                 Logger.Default.Information($"Loaded: {file}");
             }
         }
         catch
         {
+            this.information.NodePublicKey = null!;
+            this.information.NodePublicEcdh = null!;
+            this.@private.NodePrivateKey = null!;
+            this.@private.NodePrivateEcdh = null!;
         }
 
         return AbortOrContinue.Continue;

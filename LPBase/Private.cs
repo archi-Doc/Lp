@@ -10,21 +10,6 @@ public class Private
 {
     public Private()
     {
-        Radio.Open<Message.Configure>(this.Configure);
-    }
-
-    public void Configure(Message.Configure message)
-    {
-        var ecdh = NodeKey.FromPrivateKey(this.NodePrivateKey);
-        if (ecdh != null)
-        {
-            this.NodePrivateEcdh = ecdh;
-        }
-        else
-        {
-            var nodePrivateKey = NodePrivateKey.Create();
-            this.NodePrivateEcdh = NodeKey.FromPrivateKey(nodePrivateKey)!;
-        }
     }
 
     public NodePrivateKey NodePrivateKey { get; set; } = default!;

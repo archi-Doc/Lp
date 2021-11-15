@@ -30,7 +30,6 @@ public class Information
 {
     public Information()
     {
-        Radio.Open<Message.Configure>(this.Configure);
     }
 
     public bool IsConsole { get; private set; }
@@ -74,11 +73,6 @@ public class Information
         }
 
         this.Mode = mode;
-    }
-
-    public void Configure(Message.Configure message)
-    {
-        this.NodePublicEcdh = NodeKey.FromPublicKey(this.NodePublicKey.X, this.NodePublicKey.Y);
     }
 
     public override string ToString()

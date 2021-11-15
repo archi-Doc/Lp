@@ -41,7 +41,6 @@ public static class NodeKey
             p.Curve = ECCurve;
             p.Q.X = x;
             p.Q.Y = y;
-            p.Validate();
             return ECDiffieHellman.Create(p);
         }
         catch
