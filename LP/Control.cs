@@ -18,6 +18,9 @@ public class Control
 {
     public static void Register(Container container)
     {
+        // Container instance
+        containerInstance = container;
+
         // Base
         container.RegisterDelegate(x => new BigMachine<Identifier>(container), Reuse.Singleton);
 
@@ -30,6 +33,7 @@ public class Control
         container.Register<Terminal>(Reuse.Singleton);
         container.Register<EssentialNode>(Reuse.Singleton);
         container.Register<NetStatus>(Reuse.Singleton);
+        container.Register<PassiveTerminal>(Reuse.Transient);
 
         // Machines
         container.Register<Machines.SingleMachine>();
@@ -43,6 +47,7 @@ public class Control
         this.Private = @private;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.Netsphere = netsphere;
+        this.Netsphere.SetPassiveTerminalDelegate(CreatePassiveTerminal);
 
         this.Core = new(ThreadCore.Root);
         this.BigMachine.Core.ChangeParent(this.Core);
@@ -125,6 +130,24 @@ public class Control
     public BigMachine<Identifier> BigMachine { get; }
 
     public Netsphere Netsphere { get; }
+
+    private static Container containerInstance = default!;
+
+    private static void CreatePassiveTerminal(NetTerminal terminal)
+    {
+        Task.Run(() =>
+        {
+            var passiveTerminal = containerInstance.Resolve<PassiveTerminal>();
+            try
+            {
+                passiveTerminal.Process(terminal);
+            }
+            finally
+            {
+                terminal.Dispose();
+            }
+        });
+    }
 
     private void Dump()
     {

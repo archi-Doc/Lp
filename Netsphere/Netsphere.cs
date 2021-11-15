@@ -15,6 +15,8 @@ namespace LP.Net;
 
 public class Netsphere
 {
+    public delegate void CreatePassiveTerminalDelegate(NetTerminal terminal);
+
     public const int MaxPayload = 1432; // 1432 bytes
     public const int MinPort = 49152; // Ephemeral port 49152 - 60999
     public const int MaxPort = 60999;
@@ -69,6 +71,11 @@ public class Netsphere
     {
     }
 
+    public void SetPassiveTerminalDelegate(CreatePassiveTerminalDelegate @delegate)
+    {
+        this.createPassiveTerminalDelegate = @delegate;
+    }
+
     public MyStatus MyStatus { get; } = new();
 
     public NetStatus NetStatus { get; }
@@ -84,4 +91,6 @@ public class Netsphere
     private Information information;
 
     private Private @private;
+
+    private CreatePassiveTerminalDelegate? createPassiveTerminalDelegate;
 }
