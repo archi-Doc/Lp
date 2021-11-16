@@ -27,7 +27,6 @@ public class Control
 
         // Main services
         container.Register<Control>(Reuse.Singleton);
-        container.Register<Commandline>(Reuse.Singleton);
         container.Register<Information>(Reuse.Singleton);
         container.Register<Private>(Reuse.Singleton);
         container.Register<Netsphere>(Reuse.Singleton);
@@ -46,9 +45,10 @@ public class Control
 
     public static void RegisterSubcommands(Container container)
     {
-        // Simple Commands
+        // Subcommands
         var subcommandTypes = new Type[]
         {
+                typeof(LP.Subcommands.GCSubCommand),
                 typeof(LP.Subcommands.TestSubCommand),
         };
 
@@ -68,9 +68,8 @@ public class Control
         subcommandParser = new SimpleParser(subcommandTypes, subcommandParserOptions);
     }
 
-    public Control(Commandline commandline, Information information, Private @private, BigMachine<Identifier> bigMachine, Netsphere netsphere)
+    public Control(Information information, Private @private, BigMachine<Identifier> bigMachine, Netsphere netsphere)
     {
-        this.Commandline = commandline;
         this.Information = information;
         this.Private = @private;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
@@ -162,13 +161,16 @@ public class Control
         }
 
         subcommandParser.Run();
+        if (subcommandParser.HelpCommand != string.Empty)
+        {
+            return false;
+        }
+
         Console.WriteLine();
         return true;
     }
 
     public ThreadCoreGroup Core { get; }
-
-    public Commandline Commandline { get; }
 
     public Information Information { get; }
 
