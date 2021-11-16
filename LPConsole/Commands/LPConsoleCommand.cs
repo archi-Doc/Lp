@@ -188,11 +188,13 @@ Deserialize:
                 {
                     if (string.Compare(command, "exit", true) == 0)
                     {// Exit
+                        // To view mode
+                        Logger.ViewMode = true;
                         return;
                     }
                     else
                     {
-                        if (!control.Commandline.Process(command))
+                        if (control.Subcommand(command))
                         {
                             Console.Write("> ");
                             continue;

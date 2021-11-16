@@ -67,11 +67,51 @@ public static class Logger
         public bool FatalFlag { get; private set; }
     }
 
+    public class SubcommandLogger : ISimpleLogger
+    {
+        public SubcommandLogger()
+        {
+        }
+
+        public void Debug(string message)
+        {
+            File?.Debug(message);
+            Console?.Debug(message);
+        }
+
+        public void Information(string message)
+        {
+            File?.Information(message);
+            Console?.Information(message);
+        }
+
+        public void Warning(string message)
+        {
+            File?.Warning(message);
+            Console?.Warning(message);
+        }
+
+        public void Error(string message)
+        {
+            File?.Error(message);
+            Console?.Error(message);
+        }
+
+        public void Fatal(string message)
+        {
+            File?.Fatal(message);
+            Console?.Fatal(message);
+        }
+
+        public bool FatalFlag { get; private set; }
+    }
+
     static Logger()
     {
         Default = new DefaultLogger();
         Console = new EmptyLogger();
         File = new EmptyLogger();
+        Subcommand = new SubcommandLogger();
     }
 
     public static void Configure(Information info)
@@ -109,6 +149,8 @@ public static class Logger
     public static ISimpleLogger File { get; private set; }
 
     public static ISimpleLogger Console { get; private set; }
+
+    public static ISimpleLogger Subcommand { get; }
 
     private static bool viewMode = true;
 }

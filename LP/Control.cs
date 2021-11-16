@@ -11,6 +11,7 @@ global using LP;
 global using Tinyhand;
 using DryIoc;
 using LP.Net;
+using SimpleCommandLine;
 
 namespace LP;
 
@@ -38,6 +39,32 @@ public class Control
         // Machines
         container.Register<Machines.SingleMachine>();
         container.Register<Machines.EssentialNetMachine>();
+
+        // Subcommands
+        RegisterSubcommands(container);
+    }
+
+    public static void RegisterSubcommands(Container container)
+    {
+        // Simple Commands
+        var subcommandTypes = new Type[]
+        {
+                typeof(LP.Subcommands.TestSubCommand),
+        };
+
+        foreach (var x in subcommandTypes)
+        {
+            container.Register(x, Reuse.Singleton);
+        }
+
+        var subcommandParserOptions = SimpleParserOptions.Standard with
+        {
+            ServiceProvider = container,
+            RequireStrictCommandName = true,
+            RequireStrictOptionName = true,
+        };
+
+        subcommandParser = new SimpleParser(subcommandTypes, subcommandParserOptions);
     }
 
     public Control(Commandline commandline, Information information, Private @private, BigMachine<Identifier> bigMachine, Netsphere netsphere)
@@ -121,6 +148,17 @@ public class Control
         Logger.CloseAndFlush();
     }
 
+    public bool Subcommand(string subcommand)
+    {
+        if (!subcommandParser.Parse(subcommand))
+        {
+            return false;
+        }
+
+        subcommandParser.Run();
+        return true;
+    }
+
     public ThreadCoreGroup Core { get; }
 
     public Commandline Commandline { get; }
@@ -134,6 +172,8 @@ public class Control
     public Netsphere Netsphere { get; }
 
     private static Container containerInstance = default!;
+
+    private static SimpleParser subcommandParser = default!;
 
     private static void CreatePassiveTerminal(NetTerminal terminal)
     {

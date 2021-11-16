@@ -28,14 +28,14 @@ public partial class EssentialNetMachine : Machine<Identifier>
     [StateMethod(0)]
     protected StateResult Initial(StateParameter parameter)
     {
+        return StateResult.Continue;
+
         var ni = NodeInformation.Alternative;
         using (var ta = this.Netsphere.Terminal.Create(ni))
         {
             var pp = new PacketPunch(null);
             ta.Send(pp, PacketId.PunchResponse);
         }
-
-        return StateResult.Continue;
 
         if (this.Netsphere.EssentialNode.GetUncheckedNode(out var nodeAddress))
         {
