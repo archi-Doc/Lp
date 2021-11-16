@@ -20,7 +20,13 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
     {
         if (!NodeAddress.TryParse(options.Node, out var node))
         {
-            Logger.Subcommand.Information($"Node parse error: {options.Node.ToString()}");
+            Logger.Subcommand.Error($"Could not parse: {options.Node.ToString()}");
+            return;
+        }
+
+        if (!node.IsValid())
+        {
+            Logger.Subcommand.Error($"Invalid node address: {options.Node.ToString()}");
             return;
         }
 
