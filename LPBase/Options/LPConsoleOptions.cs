@@ -17,6 +17,9 @@ public record LPConsoleOptions
     [SimpleOption("directory", description: "Root directory")]
     public string Directory { get; init; } = string.Empty;
 
+    [SimpleOption("name", description: "Node name")]
+    public string NodeName { get; init; } = string.Empty;
+
     [SimpleOption("ns", description: "Netsphere option")]
     public NetsphereOptions NetsphereOptions { get; init; } = default!;
 

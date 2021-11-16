@@ -20,7 +20,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         Logger.Subcommand.Information($"Test subcommand: {options.ToString()}");
         // this.Control.Netsphere.NetStatus
 
-        Logger.Subcommand.Information(System.Environment.OSVersion.ToString());
+        // Logger.Subcommand.Information(System.Environment.OSVersion.ToString());
     }
 
     public Control Control { get; set; }

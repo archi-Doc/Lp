@@ -3,13 +3,13 @@
 namespace LP.Net;
 
 [TinyhandObject]
-internal partial class PacketTest : IPacket
+internal partial class PacketPing : IPacket
 {
-    public PacketTest()
+    public PacketPing()
     {
     }
 
-    public PacketTest(NodeInformation nodeInformation, string text)
+    public PacketPing(NodeInformation nodeInformation, string text)
     {
         this.NodeInformation = nodeInformation;
         this.Text = text;
@@ -17,7 +17,7 @@ internal partial class PacketTest : IPacket
 
     public bool IsResponse => false;
 
-    public PacketId Id => PacketId.Data;
+    public PacketId Id => PacketId.Ping;
 
     [Key(0)]
     public NodeInformation NodeInformation { get; set; } = default!;
