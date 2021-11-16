@@ -8,9 +8,9 @@ using Tinyhand;
 namespace LP.Subcommands;
 
 [SimpleCommand("gc")]
-public class GCSubCommand : ISimpleCommand
+public class GCSubcommand : ISimpleCommand
 {
-    public GCSubCommand(Control control)
+    public GCSubcommand(Control control)
     {
         this.Control = control;
     }

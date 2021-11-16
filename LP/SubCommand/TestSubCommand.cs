@@ -8,9 +8,9 @@ using Tinyhand;
 namespace LP.Subcommands;
 
 [SimpleCommand("test")]
-public class TestSubCommand : ISimpleCommandAsync<TestOptions>
+public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 {
-    public TestSubCommand(Control control)
+    public TestSubcommand(Control control)
     {
         this.Control = control;
     }
@@ -19,6 +19,8 @@ public class TestSubCommand : ISimpleCommandAsync<TestOptions>
     {
         Logger.Subcommand.Information($"Test subcommand: {options.ToString()}");
         // this.Control.Netsphere.NetStatus
+
+        Logger.Subcommand.Information(System.Environment.OSVersion.ToString());
     }
 
     public Control Control { get; set; }

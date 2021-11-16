@@ -48,8 +48,8 @@ public class Control
         // Subcommands
         var subcommandTypes = new Type[]
         {
-                typeof(LP.Subcommands.GCSubCommand),
-                typeof(LP.Subcommands.TestSubCommand),
+                typeof(LP.Subcommands.GCSubcommand),
+                typeof(LP.Subcommands.TestSubcommand),
         };
 
         foreach (var x in subcommandTypes)
