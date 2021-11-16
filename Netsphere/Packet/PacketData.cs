@@ -22,5 +22,8 @@ internal partial class PacketData : IPacket
     [Key(2)]
     public uint DataSize { get; set; }
 
+    [Key(3)]
+    public ulong Checksum { get; set; }
+
     // byte[DataSize] Data
 }

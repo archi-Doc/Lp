@@ -10,6 +10,7 @@ namespace LP.Net;
 public enum PacketId : byte
 {
     Invalid,
+    Test,
     Punch,
     PunchResponse,
     GetNodeInformation,
