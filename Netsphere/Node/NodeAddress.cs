@@ -39,7 +39,7 @@ public partial class NodeAddress : IEquatable<NodeAddress>
             }
 
             address = span.Slice(1, index - 1).ToString();
-            span = span.Slice(index + 1);
+            span = span.Slice(index + 2);
         }
         else
         {
