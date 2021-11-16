@@ -62,6 +62,7 @@ public class Control
             ServiceProvider = container,
             RequireStrictCommandName = true,
             RequireStrictOptionName = true,
+            DoNotDisplayUsage = true,
         };
 
         subcommandParser = new SimpleParser(subcommandTypes, subcommandParserOptions);
@@ -152,11 +153,16 @@ public class Control
     {
         if (!subcommandParser.Parse(subcommand))
         {
-            subcommandParser.ShowHelp();
+            if (subcommandParser.HelpCommand != string.Empty)
+            {
+                subcommandParser.ShowHelp();
+            }
+
             return false;
         }
 
         subcommandParser.Run();
+        Console.WriteLine();
         return true;
     }
 

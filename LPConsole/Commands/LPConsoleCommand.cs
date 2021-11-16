@@ -194,7 +194,7 @@ Deserialize:
                     }
                     else
                     {
-                        if (control.Subcommand(command))
+                        if (!control.Subcommand(command))
                         {
                             Console.Write("> ");
                             continue;
