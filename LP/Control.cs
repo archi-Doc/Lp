@@ -152,6 +152,7 @@ public class Control
     {
         if (!subcommandParser.Parse(subcommand))
         {
+            subcommandParser.ShowHelp();
             return false;
         }
 
