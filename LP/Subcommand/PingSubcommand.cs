@@ -18,20 +18,34 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
 
     public async Task Run(PingOptions options, string[] args)
     {
-        if (!NodeAddress.TryParse(options.Node, out var node))
-        {
-            Logger.Subcommand.Error($"Could not parse: {options.Node.ToString()}");
-            return;
-        }
+        NodeAddress? node;
 
-        if (!node.IsValid())
+        if (string.Compare(options.Node, "alternative", true) == 0)
         {
-            Logger.Subcommand.Error($"Invalid node address: {options.Node.ToString()}");
-            return;
+            node = NodeAddress.Alternative;
+        }
+        else
+        {
+            if (!NodeAddress.TryParse(options.Node, out node))
+            {
+                Logger.Subcommand.Error($"Could not parse: {options.Node.ToString()}");
+                return;
+            }
+
+            if (!node.IsValid())
+            {
+                Logger.Subcommand.Error($"Invalid node address: {options.Node.ToString()}");
+                return;
+            }
         }
 
         for (var n = 0; n < options.Count; n++)
         {
+            if (this.Control.Core.IsTerminated)
+            {
+                break;
+            }
+
             await this.Ping(node, options);
 
             if (n < options.Count - 1)
@@ -44,6 +58,22 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
     public async Task Ping(NodeAddress node, PingOptions options)
     {
         Logger.Subcommand.Information($"Ping: {node.ToString()}");
+
+        using (var terminal = this.Control.Netsphere.Terminal.Create(node))
+        {
+            var p = new PacketPing(this.Control.Netsphere.NetStatus.GetMyNodeInformation(), "test");
+            terminal.SendUnmanaged(p, PacketId.Ping);
+
+            p = terminal.Receive<PacketPing>();
+            if (p == null)
+            {
+                Logger.Subcommand.Information($"Timeout.");
+            }
+            else
+            {
+                Logger.Subcommand.Information($"{p.ToString()}");
+            }
+        }
 
         // this.Control.Netsphere.NetStatus
         // Logger.Subcommand.Information(System.Environment.OSVersion.ToString());
