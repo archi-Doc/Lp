@@ -30,10 +30,22 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
             return;
         }
 
+        for (var n = 0; n < options.Count; n++)
+        {
+            await this.Ping(node, options);
+
+            if (n < options.Count - 1)
+            {
+                this.Control.Core.Sleep(TimeSpan.FromSeconds(options.Interval), TimeSpan.FromSeconds(0.1));
+            }
+        }
+    }
+
+    public async Task Ping(NodeAddress node, PingOptions options)
+    {
         Logger.Subcommand.Information($"Ping: {node.ToString()}");
 
         // this.Control.Netsphere.NetStatus
-
         // Logger.Subcommand.Information(System.Environment.OSVersion.ToString());
     }
 
@@ -47,6 +59,9 @@ public record PingOptions
 
     [SimpleOption("count", description: "Count")]
     public int Count { get; init; } = 1;
+
+    [SimpleOption("interval", description: "Interval (seconds)")]
+    public int Interval { get; init; } = 2;
 
     public override string ToString() => $"{this.Node}";
 }

@@ -33,7 +33,7 @@ public partial class NodeAddress : IEquatable<NodeAddress>
         if (span.StartsWith("["))
         {
             index = span.IndexOf(']');
-            if (index < 0)
+            if (index < 0 || index >= (span.Length - 1))
             {
                 return false;
             }
