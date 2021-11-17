@@ -20,12 +20,6 @@ public enum LPMode
     User,
 }
 
-public enum AbortOrContinue
-{
-    Abort,
-    Continue,
-}
-
 public class Information
 {
     public Information()

@@ -29,7 +29,7 @@ public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
 
         this.information.Initialize(option, true, "relay");
 
-        if (await this.LoadAsync() == AbortOrContinue.Abort)
+        if (await this.LoadAsync() == AbortOrComplete.Abort)
         {
             goto Abort;
         }
@@ -54,15 +54,15 @@ Abort:
         return;
     }
 
-    private async Task<AbortOrContinue> LoadAsync()
+    private async Task<AbortOrComplete> LoadAsync()
     {
         // Load node key.
-        if (await this.LoadNodeKey() == AbortOrContinue.Abort)
+        if (await this.LoadNodeKey() == AbortOrComplete.Abort)
         {
-            return AbortOrContinue.Abort;
+            return AbortOrComplete.Abort;
         }
 
-        return AbortOrContinue.Continue;
+        return AbortOrComplete.Complete;
     }
 
     private string? GetPassword(string? text = null)
@@ -106,12 +106,12 @@ Abort:
         return password;
     }
 
-    private async Task<AbortOrContinue> LoadNodeKey()
+    private async Task<AbortOrComplete> LoadNodeKey()
     {
         var file = NodePrivateKey.Filename;
         if (!File.Exists(file))
         {
-            return AbortOrContinue.Continue;
+            return AbortOrComplete.Complete;
         }
 
         try
@@ -129,7 +129,7 @@ EnterNodeKeyPassword:
             if (password == null)
             {
                 Console.WriteLine();
-                return AbortOrContinue.Abort;
+                return AbortOrComplete.Abort;
             }
             else if (!PasswordEncrypt.TryDecrypt(encrypted, password, out data))
             {// Incorrect
@@ -162,7 +162,7 @@ Deserialize:
             this.@private.NodePrivateEcdh = null!;
         }
 
-        return AbortOrContinue.Continue;
+        return AbortOrComplete.Complete;
     }
 
     private void MainLoop(Control control)
