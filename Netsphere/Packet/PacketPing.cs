@@ -25,5 +25,5 @@ public partial class PacketPing : IPacket
     [Key(1)]
     public string Text { get; set; } = default!;
 
-    public override string ToString() => $"{this.NodeAddress} : {this.Text}";
+    public override string ToString() => $"{this.NodeAddress} - {this.Text}";
 }

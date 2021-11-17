@@ -32,6 +32,8 @@ public class Information
 
     public LPMode Mode { get; private set; }
 
+    public string NodeName { get; private set; } = default!;
+
     public LPConsoleOptions ConsoleOptions { get; private set; } = default!;
 
     public NodePublicKey NodePublicKey { get; set; } = default!;
@@ -67,6 +69,12 @@ public class Information
         }
 
         this.Mode = mode;
+
+        this.NodeName = this.ConsoleOptions.NodeName;
+        if (string.IsNullOrEmpty(this.NodeName))
+        {
+            this.NodeName = System.Environment.OSVersion.ToString();
+        }
     }
 
     public override string ToString()

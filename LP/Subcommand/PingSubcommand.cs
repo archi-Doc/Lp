@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics;
 using Arc.Crypto;
 using LP;
 using LP.Net;
@@ -59,19 +60,22 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
     {
         Logger.Subcommand.Information($"Ping: {node.ToString()}");
 
+        var sw = Stopwatch.StartNew();
         using (var terminal = this.Control.Netsphere.Terminal.Create(node))
         {
             var p = new PacketPing(this.Control.Netsphere.NetStatus.GetMyNodeInformation(), "test");
+            sw.Restart();
             terminal.SendUnmanaged(p, PacketId.Ping);
 
             p = terminal.Receive<PacketPing>();
+            sw.Stop();
             if (p == null)
             {
                 Logger.Subcommand.Information($"Timeout.");
             }
             else
             {
-                Logger.Subcommand.Information($"{p.ToString()}");
+                Logger.Subcommand.Information($"Received: {p.ToString()} - {sw.ElapsedMilliseconds} ms");
             }
         }
 

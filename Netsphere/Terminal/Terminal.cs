@@ -196,7 +196,7 @@ public class Terminal
         }
     }
 
-    internal void ProcessUnmanagedRecv(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data)
+    internal void ProcessUnmanagedRecv(IPEndPoint endpoint, ref PacketHeader header, Memory<byte> data)
     {
         if (header.Id == PacketId.Punch)
         {// Punch
@@ -214,7 +214,7 @@ public class Terminal
             }
             else
             {
-                r.Endpoint = endPoint;
+                r.Endpoint = endpoint;
             }
 
             r.UtcTicks = Ticks.GetUtcNow();
@@ -222,11 +222,15 @@ public class Terminal
             header.Gene = GenePool.GetNext(header.Gene);
             var p = PacketService.CreatePacket(ref header, r);
 
-            this.unmanagedSends.Enqueue(new UnmanagedSend(endPoint, p));
+            this.unmanagedSends.Enqueue(new UnmanagedSend(endpoint, p));
         }
         else if (header.Id == PacketId.Encrypt)
         {
-            this.ProcessUnmanagedRecv_Encrypt(endPoint, ref header, data);
+            this.ProcessUnmanagedRecv_Encrypt(endpoint, ref header, data);
+        }
+        else if (header.Id == PacketId.Ping)
+        {
+            this.ProcessUnmanagedRecv_Ping(endpoint, ref header, data);
         }
         else
         {// Not supported
@@ -250,6 +254,22 @@ public class Terminal
             terminal.SendPacket(new PacketEncrypt(), PacketId.Invalid);
             terminal.CreateEmbryo(packet.Salt);
         }
+    }
+
+    internal void ProcessUnmanagedRecv_Ping(IPEndPoint endpoint, ref PacketHeader header, Memory<byte> data)
+    {
+        if (!TinyhandSerializer.TryDeserialize<PacketPing>(data, out var packet))
+        {
+            return;
+        }
+
+        Logger.Default.Information($"Ping received from: {packet.ToString()}");
+
+        packet.NodeAddress = new(endpoint.Address, (ushort)endpoint.Port, header.Engagement);
+        packet.Text = this.Information.NodeName;
+        header.Gene = GenePool.GetNext(header.Gene);
+        var p = PacketService.CreatePacket(ref header, packet);
+        this.unmanagedSends.Enqueue(new UnmanagedSend(endpoint, p));
     }
 
     internal void AddNetTerminalGene(NetTerminalGene[] genes)

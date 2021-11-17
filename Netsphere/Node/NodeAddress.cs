@@ -147,7 +147,17 @@ public partial class NodeAddress : IEquatable<NodeAddress>
         return HashCode.Combine(this.Type, this.Engagement, this.Port, this.Address);
     }
 
-    public override string ToString() => $"{this.Address}:{this.Port}({this.Engagement})";
+    public override string ToString()
+    {
+        if (this.Address.Equals(IPAddress.None))
+        {
+            return "None";
+        }
+        else
+        {
+            return $"{this.Address}:{this.Port}({this.Engagement})";
+        }
+    }
 
     private bool IsValidIPv4()
     {
