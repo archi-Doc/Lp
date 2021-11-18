@@ -5,10 +5,15 @@ namespace LP.Net;
 [TinyhandObject]
 internal partial class PacketRelay : IPacket
 {
+    public const int EndpointAliveInSeconds = 10;
+
     public bool IsResponse => false;
 
     public PacketId Id => PacketId.Relay;
 
     [Key(0)]
     public IPEndPoint? NextEndpoint { get; set; }
+
+    [Key(1)]
+    public bool IsDestination { get; set; }
 }
