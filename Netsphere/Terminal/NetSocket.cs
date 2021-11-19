@@ -42,7 +42,7 @@ public class NetSocket
                     var bytes = udp.Receive(ref remoteEP);
                     if (bytes.Length <= Netsphere.MaxPayload)
                     {
-                        core.pipe.terminal.ProcessReceive(remoteEP, bytes);
+                        core.pipe.terminal.ProcessReceive(remoteEP, bytes, Ticks.GetSystem());
                     }
 
                     // var memory = new ReadOnlyMemory<byte>(bytes);
@@ -108,7 +108,7 @@ public class NetSocket
         {// Invoked by multiple threads.
             // Check interval.
             var currentTicks = Ticks.GetSystem();
-            var previous = Volatile.Read(ref this.previousTimestamp);
+            var previous = Volatile.Read(ref this.previousTicks);
             var interval = Ticks.FromNanoseconds((double)SendIntervalNanoseconds / 2); // Half for margin.
             if (currentTicks < (previous + interval))
             {
@@ -123,7 +123,7 @@ public class NetSocket
                 }
             }
 
-            Volatile.Write(ref this.previousTimestamp, currentTicks);
+            Volatile.Write(ref this.previousTicks, currentTicks);
         }
 
         protected override void Dispose(bool disposing)
@@ -134,7 +134,7 @@ public class NetSocket
 
         private NetSocket socket;
         private MultimediaTimer? timer;
-        private long previousTimestamp;
+        private long previousTicks;
     }
 
     public NetSocket(Terminal terminal)

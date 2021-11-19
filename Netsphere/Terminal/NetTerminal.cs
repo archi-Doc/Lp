@@ -229,7 +229,7 @@ ReceiveUnmanaged_Error:
             var gene = new NetTerminalGene(this.GenePool.GetGene(), this);
             gene.SetReceive();
             this.recvGenes = new NetTerminalGene[] { gene, };
-            this.Terminal.AddGene(this.recvGenes);
+            this.Terminal.AddInbound(this.recvGenes);
         }
 
         return SendResult.Success;
@@ -250,6 +250,43 @@ ReceiveUnmanaged_Error:
                             x.SentTicks = currentTicks;
                         }
                     }
+                }
+            }
+        }
+    }
+
+    internal void ProcessReceive(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data, long currentTicks, NetTerminalGene gene)
+    {
+        lock (this.syncObject)
+        {
+            if (this.recvGenes == null)
+            {// No receive gene.
+                Logger.Default.Error("No receive gene.");
+                return;
+            }
+
+            if (!this.Endpoint.Equals(endPoint))
+            {// Endpoint mismatch.
+                Logger.Default.Error("Endpoint mismatch.");
+                return;
+            }
+
+            if (header.Id == PacketId.Ack)
+            {// Ack (header.Gene + data(ulong[]))
+                gene.ReceiveAck();
+                var g = MemoryMarshal.Cast<byte, ulong>(data.Span);
+                foreach (var x in g)
+                {
+                    if (this.Terminal.TryGetInbound(x, out var gene2))
+                    {
+                        gene2.ReceiveAck();
+                    }
+                }
+            }
+            else
+            {// Receive data
+                if (gene.Receive(data))
+                {// Received.
                 }
             }
         }
@@ -379,7 +416,7 @@ ReceivePacket_Error:
     {
         if (this.sendGenes != null)
         {
-            this.Terminal.RemoveGene(this.sendGenes);
+            this.Terminal.RemoveInbound(this.sendGenes);
             foreach (var x in this.sendGenes)
             {
                 x.Clear();
@@ -390,7 +427,7 @@ ReceivePacket_Error:
 
         if (this.recvGenes != null)
         {
-            this.Terminal.RemoveGene(this.recvGenes);
+            this.Terminal.RemoveInbound(this.recvGenes);
             foreach (var x in this.recvGenes)
             {
                 x.Clear();

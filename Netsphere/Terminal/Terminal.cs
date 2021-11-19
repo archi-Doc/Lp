@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
@@ -28,7 +29,7 @@ public class Terminal
     {
         logger.Information($"Terminal: {this.terminals.QueueChain.Count}");
         logger.Information($"Unmanaged sends: {this.unmanagedSends.Count}");
-        logger.Information($"Managed genes: {this.managedGenes.Count}");
+        logger.Information($"Managed genes: {this.inboundGenes.Count}");
     }
 
     /// <summary>
@@ -148,7 +149,7 @@ public class Terminal
         }
     }
 
-    internal unsafe void ProcessReceive(IPEndPoint endPoint, byte[] outerPacket)
+    internal unsafe void ProcessReceive(IPEndPoint endPoint, byte[] outerPacket, long currentTicks)
     {
         var position = 0;
         var remaining = outerPacket.Length;
@@ -173,41 +174,17 @@ public class Terminal
 
             position += PacketService.HeaderSize;
             var data = new Memory<byte>(outerPacket, position, dataSize);
-            this.ProcessReceiveCore(endPoint, ref header, data);
+            this.ProcessReceiveCore(endPoint, ref header, data, currentTicks);
             position += dataSize;
             remaining -= PacketService.HeaderSize + dataSize;
         }
     }
 
-    internal void ProcessReceiveCore(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data)
+    internal void ProcessReceiveCore(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data, long currentTicks)
     {
-        if (this.managedGenes.TryGetValue(header.Gene, out var gene))
+        if (this.inboundGenes.TryGetValue(header.Gene, out var gene))
         {// NetTerminalGene is found.
-            var netTerminal = gene.NetTerminal;
-            if (!netTerminal.Endpoint.Equals(endPoint))
-            {// Endpoint mismatch.
-                Logger.Default.Error("Endpoint mismatch.");
-                return;
-            }
-
-            if (header.Id == PacketId.Ack)
-            {// Ack (header.Gene + data(ulong[]))
-                gene.ReceiveAck();
-                var g = MemoryMarshal.Cast<byte, ulong>(data.Span);
-                foreach (var x in g)
-                {
-                    if (this.managedGenes.TryGetValue(x, out gene))
-                    {
-                        gene.ReceiveAck();
-                    }
-                }
-            }
-            else
-            {// Receive data
-                if (gene.Receive(data))
-                {// Received.
-                }
-            }
+            gene.NetTerminal.ProcessReceive(endPoint, ref header, data, currentTicks, gene);
         }
         else
         {
@@ -296,25 +273,26 @@ public class Terminal
         this.unmanagedSends.Enqueue(new UnmanagedSend(endpoint, p));
     }
 
-    internal void AddGene(NetTerminalGene[] genes)
+    internal void AddInbound(NetTerminalGene[] genes)
     {
         foreach (var x in genes)
         {
-            if (x.State == NetTerminalGeneState.WaitingToSend ||
-                x.State == NetTerminalGeneState.WaitingToReceive)
+            if (x.State == NetTerminalGeneState.WaitingToReceive)
             {
-                this.managedGenes.TryAdd(x.Gene, x);
+                this.inboundGenes.TryAdd(x.Gene, x);
             }
         }
     }
 
-    internal void RemoveGene(NetTerminalGene[] genes)
+    internal void RemoveInbound(NetTerminalGene[] genes)
     {
         foreach (var x in genes)
         {
-            this.managedGenes.TryRemove(x.Gene, out _);
+            this.inboundGenes.TryRemove(x.Gene, out _);
         }
     }
+
+    internal bool TryGetInbound(ulong gene, [MaybeNullWhen(false)] out NetTerminalGene netTerminalGene) => this.inboundGenes.TryGetValue(gene, out netTerminalGene);
 
     public NetTerminal.GoshujinClass NetTerminals => this.terminals;
 
@@ -326,7 +304,7 @@ public class Terminal
 
     private NetTerminal.GoshujinClass terminals = new();
 
-    private ConcurrentDictionary<ulong, NetTerminalGene> managedGenes = new();
+    private ConcurrentDictionary<ulong, NetTerminalGene> inboundGenes = new();
 
     private ConcurrentQueue<UnmanagedSend> unmanagedSends = new();
 }
