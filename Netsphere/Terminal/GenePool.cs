@@ -12,7 +12,7 @@ internal class GenePool : IDisposable
     public const int PoolSize = 64 * sizeof(ulong);
     public const int EmbryoMax = 1024;
 
-    public static ulong GetNext(ulong gene)
+    public static ulong GetSecond(ulong gene)
     {
         return new Xoshiro256StarStar(gene).NextULong();
     }

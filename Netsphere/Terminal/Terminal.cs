@@ -3,6 +3,7 @@
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -180,18 +181,33 @@ public class Terminal
 
     internal void ProcessReceiveCore(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data)
     {
-        if (this.managedGenes.TryGetValue(header.Gene, out var terminalGene) &&
-            terminalGene.State != NetTerminalGeneState.Unmanaged &&
-            terminalGene.PacketId == header.Id)
-        {// NetTerminalGene is found and the state is not unmanaged and packet ids are identical.
-            var netTerminal = terminalGene.NetTerminal;
+        if (this.managedGenes.TryGetValue(header.Gene, out var gene))
+        {// NetTerminalGene is found.
+            var netTerminal = gene.NetTerminal;
             if (!netTerminal.Endpoint.Equals(endPoint))
             {// Endpoint mismatch.
                 Logger.Default.Error("Endpoint mismatch.");
                 return;
             }
 
-            terminalGene.Receive(data);
+            if (header.Id == PacketId.Ack)
+            {// Ack (header.Gene + data(ulong[]))
+                gene.ReceiveAck();
+                var g = MemoryMarshal.Cast<byte, ulong>(data.Span);
+                foreach (var x in g)
+                {
+                    if (this.managedGenes.TryGetValue(x, out gene))
+                    {
+                        gene.ReceiveAck();
+                    }
+                }
+            }
+            else
+            {// Receive data
+                if (gene.Receive(data))
+                {// Received.
+                }
+            }
         }
         else
         {
@@ -203,29 +219,7 @@ public class Terminal
     {
         if (header.Id == PacketId.Punch)
         {// Punch
-            if (!TinyhandSerializer.TryDeserialize<PacketPunch>(data, out var punch))
-            {
-                return;
-            }
-
-            TimeCorrection.AddCorrection(punch.UtcTicks);
-
-            var r = new PacketPunchResponse();
-            if (punch.NextEndpoint != null)
-            {
-                r.Endpoint = punch.NextEndpoint;
-            }
-            else
-            {
-                r.Endpoint = endpoint;
-            }
-
-            r.UtcTicks = Ticks.GetUtcNow();
-
-            header.Gene = GenePool.GetNext(header.Gene);
-            var p = PacketService.CreatePacket(ref header, r);
-
-            this.unmanagedSends.Enqueue(new UnmanagedSend(endpoint, p));
+            this.ProcessUnmanagedRecv_Punch(endpoint, ref header, data);
         }
         else if (header.Id == PacketId.Encrypt)
         {
@@ -238,6 +232,33 @@ public class Terminal
         else
         {// Not supported
         }
+    }
+
+    internal void ProcessUnmanagedRecv_Punch(IPEndPoint endpoint, ref PacketHeader header, Memory<byte> data)
+    {
+        if (!TinyhandSerializer.TryDeserialize<PacketPunch>(data, out var punch))
+        {
+            return;
+        }
+
+        TimeCorrection.AddCorrection(punch.UtcTicks);
+
+        var r = new PacketPunchResponse();
+        if (punch.NextEndpoint != null)
+        {
+            r.Endpoint = punch.NextEndpoint;
+        }
+        else
+        {
+            r.Endpoint = endpoint;
+        }
+
+        r.UtcTicks = Ticks.GetUtcNow();
+
+        header.Gene = GenePool.GetSecond(header.Gene);
+        var p = PacketService.CreatePacket(ref header, r);
+
+        this.unmanagedSends.Enqueue(new UnmanagedSend(endpoint, p));
     }
 
     internal void ProcessUnmanagedRecv_Encrypt(IPEndPoint endpoint, ref PacketHeader header, Memory<byte> data)
@@ -254,7 +275,7 @@ public class Terminal
 
             var terminal = this.Create(packet.NodeInformation, header.Gene);
             terminal.GenePool.GetGene(); // Dispose the first gene.
-            terminal.SendPacket(new PacketEncrypt(), PacketId.Invalid);
+            terminal.SendPacket(new PacketEncrypt());
             terminal.CreateEmbryo(packet.Salt);
         }
     }
@@ -270,12 +291,12 @@ public class Terminal
 
         packet.NodeAddress = new(endpoint.Address, (ushort)endpoint.Port, header.Engagement);
         packet.Text = this.Information.NodeName;
-        header.Gene = GenePool.GetNext(header.Gene);
+        header.Gene = GenePool.GetSecond(header.Gene);
         var p = PacketService.CreatePacket(ref header, packet);
         this.unmanagedSends.Enqueue(new UnmanagedSend(endpoint, p));
     }
 
-    internal void AddNetTerminalGene(NetTerminalGene[] genes)
+    internal void AddGene(NetTerminalGene[] genes)
     {
         foreach (var x in genes)
         {
@@ -287,7 +308,7 @@ public class Terminal
         }
     }
 
-    internal void RemoveNetTerminalGene(NetTerminalGene[] genes)
+    internal void RemoveGene(NetTerminalGene[] genes)
     {
         foreach (var x in genes)
         {

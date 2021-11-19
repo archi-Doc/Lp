@@ -9,39 +9,53 @@ using Arc.Threading;
 
 namespace LP.Net;
 
+internal static class NetTerminalGeneExtension
+{
+    public static bool IsUnavailable(this NetTerminalGene[] genes)
+    {
+        foreach (var gene in genes)
+        {
+            if (!gene.IsAvailable)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}
+
 internal enum NetTerminalGeneState
 {
-    // Send: Initial -> SetSend() -> WaitingToSend -> (Send) -> WaitingForAck -> (Ack) -> Complete.
-    // Receive: Initial -> SetReceive() -> WaitingToReceive -> (Receive) -> Complete.
+    // NetTerminalGeneState:
+    // Send: Initial -> SetSend() -> WaitingToSend -> (Send) -> WaitingForAck -> (Receive Ack) -> Complete.
+    // Receive: Initial -> SetReceive() -> WaitingToReceive -> (Receive) -> (Managed: SendingAck) -> (Send Ack) -> Complete.
     Initial,
     WaitingToSend,
     WaitingForAck,
     WaitingToReceive,
+    SendingAck,
     Complete,
 }
 
 /// <summary>
 /// Initializes a new instance of the <see cref="NetTerminalGene"/> class.
 /// </summary>
-// [ValueLinkObject]
 internal class NetTerminalGene// : IEquatable<NetTerminalGene>
 {
-    /*public static NetTerminalGene New()
-    {
-        return new NetTerminalGene(Random.Crypto.NextULong());
-    }*/
-
-    // [Link(Type = ChainType.QueueList, Name = "Queue", Primary = true)]
     public NetTerminalGene(ulong gene, NetTerminal netTerminal)
     {
         this.Gene = gene;
         this.NetTerminal = netTerminal;
     }
 
+    public bool IsAvailable => this.State == NetTerminalGeneState.Initial || this.State == NetTerminalGeneState.Complete;
+
+    public bool IsComplete => this.State == NetTerminalGeneState.Complete;
+
     public bool SetSend(byte[] packet)
     {
-        if (this.State == NetTerminalGeneState.Initial ||
-            this.State == NetTerminalGeneState.ReceivedOrConfirmed)
+        if (this.IsAvailable)
         {
             this.State = NetTerminalGeneState.WaitingToSend;
             this.packetToSend = packet;
@@ -54,19 +68,46 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         return false;
     }
 
-    public bool Send(UdpClient udp)
+    public bool SetReceive()
     {
-        if (this.packetToSend == null)
+        if (this.IsAvailable)
         {
-            return false;
+            this.State = NetTerminalGeneState.WaitingToReceive;
+            this.ReceivedData = default;
+            return true;
         }
 
-        if (this.State == NetTerminalGeneState.WaitingToSend)
-        {
-            udp.Send(this.packetToSend, this.NetTerminal.Endpoint);
-            this.State = NetTerminalGeneState.WaitingForAck;
+        return false;
+    }
 
-            Logger.Default.Debug($"Send: {this.PacketId}, {this.NetTerminal.Endpoint}");
+    public bool Send(UdpClient udp)
+    {
+        if (this.State == NetTerminalGeneState.WaitingToSend ||
+            this.State == NetTerminalGeneState.WaitingForAck)
+        {
+            if (this.packetToSend == null)
+            {// Error
+                this.State = NetTerminalGeneState.Initial;
+            }
+            else
+            {
+                udp.Send(this.packetToSend, this.NetTerminal.Endpoint);
+                this.State = NetTerminalGeneState.WaitingForAck;
+
+                // var packetId = (PacketId)packetToSend[1];
+                // Logger.Default.Debug($"Send: {packetId}, {this.NetTerminal.Endpoint}");
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public bool ReceiveAck()
+    {
+        if (this.State == NetTerminalGeneState.WaitingForAck)
+        {
+            this.State = NetTerminalGeneState.Complete;
             return true;
         }
 
@@ -75,18 +116,16 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
 
     public bool Receive(Memory<byte> data)
     {
-        if (this.State == NetTerminalGeneState.WaitingForAck ||
-            this.State == NetTerminalGeneState.WaitingToReceive)
-        {// Sent and waiting for confirmation, or waiting for the packet to arrive.
-            /*if (!header.Id.IsResponse())
-            {
-                return false;
-            }*/
-
-            this.State = NetTerminalGeneState.ReceivedOrConfirmed;
+        if (this.State == NetTerminalGeneState.WaitingToReceive)
+        {// Receive data
+            this.State = NetTerminalGeneState.SendingAck;
             this.ReceivedData = data;
 
-            Logger.Default.Debug($"Receive: {this.PacketId}, {this.NetTerminal.Endpoint}");
+            // Logger.Default.Debug($"Receive: {this.PacketId}, {this.NetTerminal.Endpoint}");
+            return true;
+        }
+        else if (this.State == NetTerminalGeneState.SendingAck)
+        {// Already received.
             return true;
         }
 
@@ -105,42 +144,19 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
 
     public NetTerminalGeneState State { get; private set; }
 
-    // [Link(Type = ChainType.Ordered)]
     public ulong Gene { get; private set; }
-
-    /// <summary>
-    /// Gets the PacketId of the packet.
-    /// </summary>
-    // public PacketId PacketId { get; private set; }
 
     /// <summary>
     ///  Gets the received data.
     /// </summary>
     public Memory<byte> ReceivedData { get; private set; }
 
-    /*/// <summary>
-    ///  Gets or sets the data of the packet.
-    /// </summary>
-    public Memory<byte>? Data { get; set; }*/
-
-    public long InvokeTicks { get; set; }
-
-    public long CompleteTicks { get; set; }
-
     /// <summary>
     ///  The byte array (header + data) to send.
     /// </summary>
     private byte[]? packetToSend;
 
-    // public long CreatedTicks { get; } = Ticks.GetCurrent();
-
-    /*public bool Equals(NetTerminalGene? other)
-    {
-        if (other == null)
-        {
-            return false;
-        }
-
-        return this.Gene == other.Gene;
-    }*/
+#pragma warning disable SA1202 // Elements should be ordered by access
+    internal long SentTicks;
+#pragma warning restore SA1202 // Elements should be ordered by access
 }
