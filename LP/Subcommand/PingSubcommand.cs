@@ -29,13 +29,13 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
         {
             if (!NodeAddress.TryParse(options.Node, out node))
             {
-                Logger.Subcommand.Error($"Could not parse: {options.Node.ToString()}");
+                Logger.Priority.Error($"Could not parse: {options.Node.ToString()}");
                 return;
             }
 
             if (!node.IsValid())
             {
-                Logger.Subcommand.Error($"Invalid node address: {options.Node.ToString()}");
+                Logger.Priority.Error($"Invalid node address: {options.Node.ToString()}");
                 return;
             }
         }
@@ -58,7 +58,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
 
     public async Task Ping(NodeAddress node, PingOptions options)
     {
-        Logger.Subcommand.Information($"Ping: {node.ToString()}");
+        Logger.Priority.Information($"Ping: {node.ToString()}");
 
         var sw = Stopwatch.StartNew();
         using (var terminal = this.Control.Netsphere.Terminal.Create(node))
@@ -71,11 +71,11 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
             sw.Stop();
             if (p == null)
             {
-                Logger.Subcommand.Information($"Timeout.");
+                Logger.Priority.Information($"Timeout.");
             }
             else
             {
-                Logger.Subcommand.Information($"Received: {p.ToString()} - {sw.ElapsedMilliseconds} ms");
+                Logger.Priority.Information($"Received: {p.ToString()} - {sw.ElapsedMilliseconds} ms");
             }
         }
 

@@ -67,9 +67,9 @@ public static class Logger
         public bool FatalFlag { get; private set; }
     }
 
-    public class SubcommandLogger : ISimpleLogger
+    public class PriorityLogger : ISimpleLogger
     {
-        public SubcommandLogger()
+        public PriorityLogger()
         {
         }
 
@@ -111,7 +111,7 @@ public static class Logger
         Default = new DefaultLogger();
         Console = new EmptyLogger();
         File = new EmptyLogger();
-        Subcommand = new SubcommandLogger();
+        Priority = new PriorityLogger();
     }
 
     public static void Configure(Information info)
@@ -150,7 +150,7 @@ public static class Logger
 
     public static ISimpleLogger Console { get; private set; }
 
-    public static ISimpleLogger Subcommand { get; }
+    public static ISimpleLogger Priority { get; }
 
     private static bool viewMode = true;
 }

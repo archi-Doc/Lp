@@ -90,6 +90,7 @@ public class Terminal
         Radio.Open<Message.Start>(this.Start);
         Radio.Open<Message.Stop>(this.Stop);
 
+        this.TerminalLogger = new Logger.PriorityLogger();
         this.netSocket = new(this);
     }
 
@@ -296,7 +297,7 @@ public class Terminal
 
     public NetTerminal.GoshujinClass NetTerminals => this.terminals;
 
-    internal Serilog.ILogger? TerminalLogger { get; private set; }
+    internal ISimpleLogger? TerminalLogger { get; private set; }
 
     internal ECDiffieHellman NodePrivateECDH { get; private set; } = default!;
 

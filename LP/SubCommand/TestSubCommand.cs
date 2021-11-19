@@ -17,7 +17,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
     public async Task Run(TestOptions options, string[] args)
     {
-        Logger.Subcommand.Information($"Test subcommand: {options.ToString()}");
+        Logger.Priority.Information($"Test subcommand: {options.ToString()}");
         // this.Control.Netsphere.NetStatus
 
         // Logger.Subcommand.Information(System.Environment.OSVersion.ToString());

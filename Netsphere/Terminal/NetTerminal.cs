@@ -298,7 +298,7 @@ ReceiveUnmanaged_Error:
     internal NetTerminalGene[]? recvGenes;
 #pragma warning restore SA1401 // Fields should be private
 
-    internal Serilog.ILogger? TerminalLogger => this.Terminal.TerminalLogger;
+    internal ISimpleLogger? TerminalLogger => this.Terminal.TerminalLogger;
 
     internal bool CreateEmbryo(ulong salt)
     {
