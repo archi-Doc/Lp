@@ -227,6 +227,7 @@ ReceiveUnmanaged_Error:
 
             var gene = new NetTerminalGene(this.GenePool.GetGene(), this);
             gene.SetReceive();
+            this.TerminalLogger?.Information($"RegisterReceive: {gene.ToString()}");
             this.recvGenes = new NetTerminalGene[] { gene, };
             this.Terminal.AddInbound(this.recvGenes);
         }

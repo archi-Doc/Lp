@@ -270,6 +270,7 @@ public class Terminal
         packet.NodeAddress = new(endpoint.Address, (ushort)endpoint.Port, header.Engagement);
         packet.Text = this.Information.NodeName;
         header.Gene = GenePool.GetSecond(header.Gene);
+        this.TerminalLogger?.Information($"Recv Ping: to gene {header.Gene.To4Hex()}");
         var p = PacketService.CreatePacket(ref header, packet);
         this.unmanagedSends.Enqueue(new UnmanagedSend(endpoint, p));
     }

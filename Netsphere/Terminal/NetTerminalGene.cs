@@ -23,6 +23,8 @@ internal static class NetTerminalGeneExtension
 
         return true;
     }
+
+    public static string To4Hex(this ulong gene) => $"{(ushort)gene:x4}";
 }
 
 internal enum NetTerminalGeneState
@@ -118,7 +120,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
     {
         if (this.State == NetTerminalGeneState.WaitingToReceive)
         {// Receive data
-            this.State = NetTerminalGeneState.SendingAck;
+            this.State = NetTerminalGeneState.Complete;
             this.ReceivedData = data;
 
             // Logger.Default.Debug($"Receive: {this.PacketId}, {this.NetTerminal.Endpoint}");
@@ -143,7 +145,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
     public override string ToString()
     {
         var sendData = this.packetToSend == null ? 0 : this.packetToSend.Length;
-        return $"{this.Gene:x4} {this.State}, SendData: {sendData}, RecvData: {this.ReceivedData.Length}";
+        return $"{this.Gene.To4Hex()}, {this.State}, SendData: {sendData}, RecvData: {this.ReceivedData.Length}";
     }
 
     public NetTerminal NetTerminal { get; }
