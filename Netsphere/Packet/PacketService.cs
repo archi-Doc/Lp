@@ -13,6 +13,11 @@ internal class PacketService
     {
         HeaderSize = Marshal.SizeOf(default(PacketHeader));
         // PacketInfo = new PacketInfo[] { new(typeof(PacketPunch), 0, false), };
+
+        var relay = new PacketRelay();
+        relay.NextEndpoint = new(IPAddress.IPv6Loopback, Netsphere.MaxPort);
+        RelayPacketSize = Tinyhand.TinyhandSerializer.Serialize(relay).Length;
+        SafeMaxPacketSize = Netsphere.MaxPayload - HeaderSize - RelayPacketSize - 8;
     }
 
     public PacketService()
@@ -20,6 +25,10 @@ internal class PacketService
     }
 
     public static int HeaderSize { get; }
+
+    public static int RelayPacketSize { get; }
+
+    public static int SafeMaxPacketSize { get; }
 
     // public static PacketInfo[] PacketInfo;
 
