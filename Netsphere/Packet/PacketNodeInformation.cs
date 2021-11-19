@@ -14,7 +14,7 @@ internal partial class PacketGetNodeInformation : IPacket
     {
     }
 
-    public bool IsResponse => false;
+    public bool IsManaged => false;
 
     public PacketId Id => PacketId.GetNodeInformation;
 

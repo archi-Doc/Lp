@@ -15,7 +15,7 @@ internal partial class PacketEncrypt : IPacket
         this.Salt = Random.Crypto.NextULong();
     }
 
-    public bool IsResponse => false;
+    public bool IsManaged => false;
 
     public PacketId Id => PacketId.Encrypt;
 

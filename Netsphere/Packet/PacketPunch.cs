@@ -20,7 +20,7 @@ internal partial class PacketPunch : IPacket
         this.UtcTicks = Ticks.GetUtcNow();
     }
 
-    public bool IsResponse => false;
+    public bool IsManaged => false;
 
     public PacketId Id => PacketId.Punch;
 

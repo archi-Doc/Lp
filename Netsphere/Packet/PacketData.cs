@@ -5,7 +5,7 @@ namespace LP.Net;
 [TinyhandObject]
 internal partial class PacketData : IPacket
 {
-    public bool IsResponse => false;
+    public bool IsManaged => false;
 
     public PacketId Id => PacketId.Data;
 

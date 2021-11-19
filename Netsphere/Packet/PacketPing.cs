@@ -15,7 +15,7 @@ public partial class PacketPing : IPacket
         this.Text = text;
     }
 
-    public bool IsResponse => false;
+    public bool IsManaged => false;
 
     public PacketId Id => PacketId.Ping;
 

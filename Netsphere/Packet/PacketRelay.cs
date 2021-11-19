@@ -7,7 +7,7 @@ internal partial class PacketRelay : IPacket
 {
     public const int EndpointAliveInSeconds = 10;
 
-    public bool IsResponse => false;
+    public bool IsManaged => false;
 
     public PacketId Id => PacketId.Relay;
 
