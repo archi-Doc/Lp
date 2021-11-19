@@ -65,10 +65,10 @@ public partial class NetTerminal : IDisposable
         Timeout,
     }
 
-    public SendResult SendUnmanaged<T>(T value, PacketId responseId)
+    public SendResult SendUnmanaged<T>(T value)
         where T : IPacket
     {
-        return this.SendPacket(value, responseId);
+        return this.SendPacket(value);
     }
 
     public SendResult CheckManagedAndEncrypted()
@@ -180,7 +180,7 @@ ReceiveUnmanaged_Error:
         header.Engagement = this.NodeAddress.Engagement;
     }
 
-    internal SendResult SendPacket<T>(T value, PacketId responseId)
+    internal SendResult SendPacket<T>(T value)
         where T : IPacket
     {
         var gene = this.GenePool.GetGene();
@@ -188,29 +188,22 @@ ReceiveUnmanaged_Error:
 
         this.CreateHeader(out var header, gene);
         var packet = PacketService.CreatePacket(ref header, value);
-        return this.SendPacket(packet, responseId);
+        return this.RegisterSend(packet);
     }
 
-    internal unsafe SendResult SendPacket(byte[] packet, PacketId responseId)
+    internal unsafe SendResult RegisterSend(byte[] packet)
     {
         lock (this.syncObject)
         {
-            if (this.genes != null)
+            if (this.sendGenes != null)
             {
                 return SendResult.Error;
             }
 
             ulong headerGene;
-            if (responseId == PacketId.Invalid)
+            fixed (byte* pb = packet)
             {
-                fixed (byte* pb = packet)
-                {
-                    headerGene = (*(PacketHeader*)pb).Gene;
-                }
-            }
-            else
-            {
-                headerGene = this.GenePool.GetGene();
+                headerGene = (*(PacketHeader*)pb).Gene;
             }
 
             // Logger.Default.Information($"Recv: {g.ToString()}");
@@ -242,9 +235,8 @@ ReceiveUnmanaged_Error:
 
 #pragma warning disable SA1307
 #pragma warning disable SA1401 // Fields should be private
-    internal NetTerminalGene[]? genes;
-    // internal NetTerminalGene[]? sendGene;
-    // internal NetTerminalGene[]? recvGene;
+    internal NetTerminalGene[]? sendGenes;
+    internal NetTerminalGene[]? recvGenes;
 #pragma warning restore SA1401 // Fields should be private
 
     internal Serilog.ILogger? TerminalLogger => this.Terminal.TerminalLogger;

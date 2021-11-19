@@ -11,17 +11,17 @@ namespace LP.Net;
 
 internal enum NetTerminalGeneState
 {
-    Unmanaged,
+    // Send: Initial -> SetSend() -> WaitingToSend -> (Send) -> WaitingForAck -> (Ack) -> Complete.
+    // Receive: Initial -> SetReceive() -> WaitingToReceive -> (Receive) -> Complete.
+    Initial,
     WaitingToSend,
-    WaitingForConfirmation,
-    ReceivedOrConfirmed,
+    WaitingForAck,
     WaitingToReceive,
+    Complete,
 }
 
 /// <summary>
 /// Initializes a new instance of the <see cref="NetTerminalGene"/> class.
-/// Send: Unmanaged, ReceivedOrConfirmed -> SetSend(): WaitingToSend -> Send(): WaitingForConfirmation -> Receive(): ReceivedOrConfirmed.
-/// Receive: Unmanaged, ReceivedOrConfirmed -> SetReceive(): WaitingToReceive -> Receive(): ReceivedOrConfirmed.
 /// </summary>
 // [ValueLinkObject]
 internal class NetTerminalGene// : IEquatable<NetTerminalGene>
@@ -38,17 +38,16 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         this.NetTerminal = netTerminal;
     }
 
-    public bool SetSend(byte[] packet, PacketId responseId)
+    public bool SetSend(byte[] packet)
     {
-        if (this.State == NetTerminalGeneState.Unmanaged ||
+        if (this.State == NetTerminalGeneState.Initial ||
             this.State == NetTerminalGeneState.ReceivedOrConfirmed)
         {
-            this.PacketId = responseId;
             this.State = NetTerminalGeneState.WaitingToSend;
             this.packetToSend = packet;
 
-            var packetId = (PacketId)packet[1];
-            Logger.Default.Debug($"SetSend: {packetId} -> {this.PacketId}, {this.State}");
+            // var packetId = (PacketId)packet[1];
+            // Logger.Default.Debug($"SetSend: {packetId} -> {this.PacketId}, {this.State}");
             return true;
         }
 
@@ -65,7 +64,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         if (this.State == NetTerminalGeneState.WaitingToSend)
         {
             udp.Send(this.packetToSend, this.NetTerminal.Endpoint);
-            this.State = NetTerminalGeneState.WaitingForConfirmation;
+            this.State = NetTerminalGeneState.WaitingForAck;
 
             Logger.Default.Debug($"Send: {this.PacketId}, {this.NetTerminal.Endpoint}");
             return true;
@@ -76,7 +75,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
 
     public bool Receive(Memory<byte> data)
     {
-        if (this.State == NetTerminalGeneState.WaitingForConfirmation ||
+        if (this.State == NetTerminalGeneState.WaitingForAck ||
             this.State == NetTerminalGeneState.WaitingToReceive)
         {// Sent and waiting for confirmation, or waiting for the packet to arrive.
             /*if (!header.Id.IsResponse())
@@ -96,9 +95,8 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
 
     public void Clear()
     {
-        this.State = NetTerminalGeneState.Unmanaged;
+        this.State = NetTerminalGeneState.Initial;
         this.Gene = 0;
-        this.PacketId = PacketId.Invalid;
         this.ReceivedData = default;
         this.packetToSend = null;
     }
@@ -113,7 +111,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
     /// <summary>
     /// Gets the PacketId of the packet.
     /// </summary>
-    public PacketId PacketId { get; private set; }
+    // public PacketId PacketId { get; private set; }
 
     /// <summary>
     ///  Gets the received data.

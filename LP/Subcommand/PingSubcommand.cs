@@ -65,7 +65,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
         {
             var p = new PacketPing(this.Control.Netsphere.NetStatus.GetMyNodeInformation(), "test");
             sw.Restart();
-            terminal.SendUnmanaged(p, PacketId.Ping);
+            terminal.SendUnmanaged(p);
 
             p = terminal.Receive<PacketPing>();
             sw.Stop();
