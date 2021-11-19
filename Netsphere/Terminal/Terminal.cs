@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Net.Sockets;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace LP.Net;
 
@@ -20,6 +21,13 @@ public class Terminal
         public IPEndPoint Endpoint { get; }
 
         public byte[] Packet { get; }
+    }
+
+    public void Dump(ISimpleLogger logger)
+    {
+        logger.Information($"Terminal: {this.terminals.QueueChain.Count}");
+        logger.Information($"Unmanaged sends: {this.unmanagedSends.Count}");
+        logger.Information($"Managed genes: {this.managedGenes.Count}");
     }
 
     /// <summary>

@@ -48,6 +48,7 @@ public class Control
         // Subcommands
         var subcommandTypes = new Type[]
         {
+                typeof(LP.Subcommands.DumpSubcommand),
                 typeof(LP.Subcommands.GCSubcommand),
                 typeof(LP.Subcommands.PingSubcommand),
                 typeof(LP.Subcommands.TestSubcommand),
