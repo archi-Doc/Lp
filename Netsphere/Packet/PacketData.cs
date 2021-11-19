@@ -3,11 +3,9 @@
 namespace LP.Net;
 
 [TinyhandObject]
-internal partial class PacketData : IPacket
+internal partial class PacketData : IUnmanagedPacket
 {
-    public bool IsManaged => false;
-
-    public PacketId Id => PacketId.Data;
+    public UnmanagedPacketId Id => UnmanagedPacketId.Data;
 
     [Key(0)]
     public bool Response { get; set; }

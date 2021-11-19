@@ -38,7 +38,7 @@ internal class PacketService
     private static byte[]? initialBuffer;
 
     internal static unsafe byte[] CreatePacket<T>(ref PacketHeader header, T value)
-        where T : IPacket
+        where T : IUnmanagedPacket
     {
         if (initialBuffer == null)
         {

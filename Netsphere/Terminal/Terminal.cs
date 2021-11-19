@@ -195,15 +195,15 @@ public class Terminal
 
     internal void ProcessUnmanagedRecv(IPEndPoint endpoint, ref PacketHeader header, Memory<byte> data)
     {
-        if (header.Id == PacketId.Punch)
+        if (header.Id == UnmanagedPacketId.Punch)
         {// Punch
             this.ProcessUnmanagedRecv_Punch(endpoint, ref header, data);
         }
-        else if (header.Id == PacketId.Encrypt)
+        else if (header.Id == UnmanagedPacketId.Encrypt)
         {
             this.ProcessUnmanagedRecv_Encrypt(endpoint, ref header, data);
         }
-        else if (header.Id == PacketId.Ping)
+        else if (header.Id == UnmanagedPacketId.Ping)
         {
             this.ProcessUnmanagedRecv_Ping(endpoint, ref header, data);
         }

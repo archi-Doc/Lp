@@ -66,7 +66,7 @@ public partial class NetTerminal : IDisposable
     }
 
     public SendResult SendUnmanaged<T>(T value)
-        where T : IPacket
+        where T : IUnmanagedPacket
     {
         return this.SendPacket(value);
     }
@@ -102,7 +102,7 @@ public partial class NetTerminal : IDisposable
     }
 
     public SendResult Send<T>(T value, int millisecondsToWait = DefaultMillisecondsToWait)
-        where T : IPacket
+        where T : IUnmanagedPacket
     {
         var result = this.CheckManagedAndEncrypted();
         if (result != SendResult.Success)
@@ -114,7 +114,7 @@ public partial class NetTerminal : IDisposable
     }
 
     public T? Receive<T>(int millisecondsToWait = DefaultMillisecondsToWait)
-        where T : IPacket
+        where T : IUnmanagedPacket
     {
         var result = this.Receive(out var data, millisecondsToWait);
         if (!result)
@@ -183,11 +183,9 @@ ReceiveUnmanaged_Error:
     }
 
     internal SendResult SendPacket<T>(T value)
-        where T : IPacket
+        where T : IUnmanagedPacket
     {
         var gene = this.GenePool.GetGene();
-        // Logger.Default.Information($"Send: {gene.ToString()}");
-
         this.CreateHeader(out var header, gene);
         var packet = PacketService.CreatePacket(ref header, value);
         return this.RegisterSend(packet);
@@ -199,6 +197,7 @@ ReceiveUnmanaged_Error:
         {
             if (!this.PrepareSend())
             {
+                this.TerminalLogger?.Error("PrepareSend()");
                 return SendResult.Error;
             }
 
@@ -211,7 +210,7 @@ ReceiveUnmanaged_Error:
             var gene = new NetTerminalGene(headerGene, this);
             gene.SetSend(packet);
             this.sendGenes = new NetTerminalGene[] { gene, };
-            // this.Terminal.AddGene(new NetTerminalGene[] { gene, });
+            this.TerminalLogger?.Information($"RegisterSend: {gene.ToString()}");
         }
 
         return SendResult.Success;
@@ -247,6 +246,7 @@ ReceiveUnmanaged_Error:
                     {
                         if (x.Send(udp))
                         {
+                            this.TerminalLogger?.Information($"Udp Sent: {x.ToString()}");
                             x.SentTicks = currentTicks;
                         }
                     }
@@ -261,20 +261,21 @@ ReceiveUnmanaged_Error:
         {
             if (this.recvGenes == null)
             {// No receive gene.
-                Logger.Default.Error("No receive gene.");
+                this.TerminalLogger?.Error("No receive gene.");
                 return;
             }
 
             if (!this.Endpoint.Equals(endPoint))
             {// Endpoint mismatch.
-                Logger.Default.Error("Endpoint mismatch.");
+                this.TerminalLogger?.Error("Endpoint mismatch.");
                 return;
             }
 
-            if (header.Id == PacketId.Ack)
+            if (header.Id == UnmanagedPacketId.Ack)
             {// Ack (header.Gene + data(ulong[]))
                 gene.ReceiveAck();
                 var g = MemoryMarshal.Cast<byte, ulong>(data.Span);
+                this.TerminalLogger?.Information($"Recv Ack 1+{g.Length}");
                 foreach (var x in g)
                 {
                     if (this.Terminal.TryGetInbound(x, out var gene2))
@@ -287,6 +288,7 @@ ReceiveUnmanaged_Error:
             {// Receive data
                 if (gene.Receive(data))
                 {// Received.
+                    this.TerminalLogger?.Information($"Recv data: {gene.ToString()}");
                 }
             }
         }

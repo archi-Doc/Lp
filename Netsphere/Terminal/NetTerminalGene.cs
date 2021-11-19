@@ -140,6 +140,12 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         this.packetToSend = null;
     }
 
+    public override string ToString()
+    {
+        var sendData = this.packetToSend == null ? 0 : this.packetToSend.Length;
+        return $"{this.Gene:x4} {this.State}, SendData: {sendData}, RecvData: {this.ReceivedData.Length}";
+    }
+
     public NetTerminal NetTerminal { get; }
 
     public NetTerminalGeneState State { get; private set; }

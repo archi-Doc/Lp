@@ -3,7 +3,7 @@
 namespace LP.Net;
 
 [TinyhandObject]
-public partial class PacketPing : IPacket
+public partial class PacketPing : IUnmanagedPacket
 {
     public PacketPing()
     {
@@ -15,9 +15,7 @@ public partial class PacketPing : IPacket
         this.Text = text;
     }
 
-    public bool IsManaged => false;
-
-    public PacketId Id => PacketId.Ping;
+    public UnmanagedPacketId Id => UnmanagedPacketId.Ping;
 
     [Key(0)]
     public NodeAddress? NodeAddress { get; set; }

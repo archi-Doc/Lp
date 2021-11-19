@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 namespace LP.Net;
 
 [TinyhandObject]
-internal partial class PacketPunch : IPacket
+internal partial class PacketPunch : IUnmanagedPacket
 {
     public PacketPunch()
     {
@@ -22,7 +22,7 @@ internal partial class PacketPunch : IPacket
 
     public bool IsManaged => false;
 
-    public PacketId Id => PacketId.Punch;
+    public UnmanagedPacketId Id => UnmanagedPacketId.Punch;
 
     [Key(0)]
     public IPEndPoint? NextEndpoint { get; set; }
@@ -32,11 +32,11 @@ internal partial class PacketPunch : IPacket
 }
 
 [TinyhandObject]
-internal partial class PacketPunchResponse : IPacket
+internal partial class PacketPunchResponse : IUnmanagedPacket
 {
     public bool IsResponse => true;
 
-    public PacketId Id => PacketId.PunchResponse;
+    public UnmanagedPacketId Id => UnmanagedPacketId.PunchResponse;
 
     [Key(0)]
     public IPEndPoint Endpoint { get; set; } = default!;

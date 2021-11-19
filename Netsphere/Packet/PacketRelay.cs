@@ -3,13 +3,13 @@
 namespace LP.Net;
 
 [TinyhandObject]
-internal partial class PacketRelay : IPacket
+internal partial class PacketRelay : IUnmanagedPacket
 {
     public const int EndpointAliveInSeconds = 10;
 
     public bool IsManaged => false;
 
-    public PacketId Id => PacketId.Relay;
+    public UnmanagedPacketId Id => UnmanagedPacketId.Relay;
 
     [Key(0)]
     public IPEndPoint? NextEndpoint { get; set; }

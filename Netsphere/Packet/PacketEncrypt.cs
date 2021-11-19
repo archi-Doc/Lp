@@ -3,7 +3,7 @@
 namespace LP.Net;
 
 [TinyhandObject]
-internal partial class PacketEncrypt : IPacket
+internal partial class PacketEncrypt : IUnmanagedPacket
 {
     public PacketEncrypt()
     {
@@ -17,7 +17,7 @@ internal partial class PacketEncrypt : IPacket
 
     public bool IsManaged => false;
 
-    public PacketId Id => PacketId.Encrypt;
+    public UnmanagedPacketId Id => UnmanagedPacketId.Encrypt;
 
     [Key(0)]
     public NodeInformation? NodeInformation { get; set; }
