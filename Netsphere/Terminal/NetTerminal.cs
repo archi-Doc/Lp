@@ -240,15 +240,6 @@ ReceiveUnmanaged_Error:
         }
     }
 
-    internal bool ProcessRecv(NetTerminalGene netTerminalGene, IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data)
-    {
-        if (netTerminalGene.Receive(data))
-        {
-        }
-
-        return false;
-    }
-
 #pragma warning disable SA1307
 #pragma warning disable SA1401 // Fields should be private
     internal NetTerminalGene[]? genes;

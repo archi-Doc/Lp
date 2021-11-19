@@ -139,15 +139,15 @@ public class Terminal
         }
     }
 
-    internal unsafe void ProcessReceive(IPEndPoint endPoint, byte[] packet)
+    internal unsafe void ProcessReceive(IPEndPoint endPoint, byte[] outerPacket)
     {
         var position = 0;
-        var remaining = packet.Length;
+        var remaining = outerPacket.Length;
 
         while (remaining >= PacketService.HeaderSize)
         {
             PacketHeader header;
-            fixed (byte* pb = packet)
+            fixed (byte* pb = outerPacket)
             {
                 header = *(PacketHeader*)(pb + position);
             }
@@ -163,7 +163,7 @@ public class Terminal
             }
 
             position += PacketService.HeaderSize;
-            var data = new Memory<byte>(packet, position, dataSize);
+            var data = new Memory<byte>(outerPacket, position, dataSize);
             this.ProcessReceiveCore(endPoint, ref header, data);
             position += dataSize;
             remaining -= PacketService.HeaderSize + dataSize;
@@ -183,12 +183,7 @@ public class Terminal
                 return;
             }
 
-            terminalGene.NetTerminal.ProcessRecv(terminalGene, endPoint, ref header, data);
-
-            /*if (!terminalGene.NetTerminal.ProcessRecv(terminalGene, endPoint, ref header, data))
-            {
-                this.ProcessUnmanagedRecv(endPoint, ref header, data);
-            }*/
+            terminalGene.Receive(data);
         }
         else
         {
