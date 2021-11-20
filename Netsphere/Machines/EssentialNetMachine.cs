@@ -33,7 +33,7 @@ public partial class EssentialNetMachine : Machine<Identifier>
         var ni = NodeInformation.Alternative;
         using (var ta = this.Netsphere.Terminal.Create(ni))
         {
-            var pp = new PacketPunch(null);
+            var pp = new RawPacketPunch(null);
             ta.Send(pp);
         }
 
@@ -45,7 +45,7 @@ public partial class EssentialNetMachine : Machine<Identifier>
             // nodeAddress = NodeAddress.Alternative;
             using (var terminal = this.Netsphere.Terminal.Create(nodeAddress))
             {
-                terminal.SendUnmanaged(new PacketPunch(null));
+                terminal.SendUnmanaged(new RawPacketPunch(null));
                 var data = terminal.Receive<PacketPunchResponse>(1000);
                 if (data != null)
                 {

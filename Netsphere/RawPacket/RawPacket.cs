@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace LP.Net;
 
-public enum UnmanagedPacketId : byte
+public enum RawPacketId : byte
 {
     Invalid,
     Ack,
@@ -20,19 +20,19 @@ public enum UnmanagedPacketId : byte
     Data,
 }
 
-public interface IUnmanagedPacket
+public interface IRawPacket
 {
-    public UnmanagedPacketId Id { get; }
+    public RawPacketId Id { get; }
 }
 
 [StructLayout(LayoutKind.Explicit)]
-internal partial struct PacketHeader
+internal partial struct RawPacketHeader
 {
     [FieldOffset(0)]
     public byte Engagement;
 
     [FieldOffset(1)]
-    public UnmanagedPacketId Id;
+    public RawPacketId Id;
 
     [FieldOffset(2)]
     public ushort DataSize;

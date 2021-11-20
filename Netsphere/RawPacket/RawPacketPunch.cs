@@ -8,19 +8,19 @@ using System.Runtime.InteropServices;
 namespace LP.Net;
 
 [TinyhandObject]
-internal partial class PacketPunch : IUnmanagedPacket
+internal partial class RawPacketPunch : IRawPacket
 {
-    public PacketPunch()
+    public RawPacketPunch()
     {
     }
 
-    public PacketPunch(IPEndPoint? nextEndpoint)
+    public RawPacketPunch(IPEndPoint? nextEndpoint)
     {
         this.NextEndpoint = nextEndpoint;
         this.UtcTicks = Ticks.GetUtcNow();
     }
 
-    public UnmanagedPacketId Id => UnmanagedPacketId.Punch;
+    public RawPacketId Id => RawPacketId.Punch;
 
     [Key(0)]
     public IPEndPoint? NextEndpoint { get; set; }
@@ -30,9 +30,9 @@ internal partial class PacketPunch : IUnmanagedPacket
 }
 
 [TinyhandObject]
-internal partial class PacketPunchResponse : IUnmanagedPacket
+internal partial class PacketPunchResponse : IRawPacket
 {
-    public UnmanagedPacketId Id => UnmanagedPacketId.PunchResponse;
+    public RawPacketId Id => RawPacketId.PunchResponse;
 
     [Key(0)]
     public IPEndPoint Endpoint { get; set; } = default!;

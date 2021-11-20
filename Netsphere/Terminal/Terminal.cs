@@ -157,10 +157,10 @@ public class Terminal
 
         while (remaining >= PacketService.HeaderSize)
         {
-            PacketHeader header;
+            RawPacketHeader header;
             fixed (byte* pb = outerPacket)
             {
-                header = *(PacketHeader*)(pb + position);
+                header = *(RawPacketHeader*)(pb + position);
             }
 
             var dataSize = header.DataSize;
@@ -181,7 +181,7 @@ public class Terminal
         }
     }
 
-    internal void ProcessReceiveCore(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data, long currentTicks)
+    internal void ProcessReceiveCore(IPEndPoint endPoint, ref RawPacketHeader header, Memory<byte> data, long currentTicks)
     {
         if (this.inboundGenes.TryGetValue(header.Gene, out var gene))
         {// NetTerminalGene is found.
@@ -193,17 +193,17 @@ public class Terminal
         }
     }
 
-    internal void ProcessUnmanagedRecv(IPEndPoint endpoint, ref PacketHeader header, Memory<byte> data)
+    internal void ProcessUnmanagedRecv(IPEndPoint endpoint, ref RawPacketHeader header, Memory<byte> data)
     {
-        if (header.Id == UnmanagedPacketId.Punch)
+        if (header.Id == RawPacketId.Punch)
         {// Punch
             this.ProcessUnmanagedRecv_Punch(endpoint, ref header, data);
         }
-        else if (header.Id == UnmanagedPacketId.Encrypt)
+        else if (header.Id == RawPacketId.Encrypt)
         {
             this.ProcessUnmanagedRecv_Encrypt(endpoint, ref header, data);
         }
-        else if (header.Id == UnmanagedPacketId.Ping)
+        else if (header.Id == RawPacketId.Ping)
         {
             this.ProcessUnmanagedRecv_Ping(endpoint, ref header, data);
         }
@@ -212,9 +212,9 @@ public class Terminal
         }
     }
 
-    internal void ProcessUnmanagedRecv_Punch(IPEndPoint endpoint, ref PacketHeader header, Memory<byte> data)
+    internal void ProcessUnmanagedRecv_Punch(IPEndPoint endpoint, ref RawPacketHeader header, Memory<byte> data)
     {
-        if (!TinyhandSerializer.TryDeserialize<PacketPunch>(data, out var punch))
+        if (!TinyhandSerializer.TryDeserialize<RawPacketPunch>(data, out var punch))
         {
             return;
         }
@@ -239,9 +239,9 @@ public class Terminal
         this.unmanagedSends.Enqueue(new UnmanagedSend(endpoint, p));
     }
 
-    internal void ProcessUnmanagedRecv_Encrypt(IPEndPoint endpoint, ref PacketHeader header, Memory<byte> data)
+    internal void ProcessUnmanagedRecv_Encrypt(IPEndPoint endpoint, ref RawPacketHeader header, Memory<byte> data)
     {
-        if (!TinyhandSerializer.TryDeserialize<PacketEncrypt>(data, out var packet))
+        if (!TinyhandSerializer.TryDeserialize<RawPacketEncrypt>(data, out var packet))
         {
             return;
         }
@@ -253,14 +253,14 @@ public class Terminal
 
             var terminal = this.Create(packet.NodeInformation, header.Gene);
             terminal.GenePool.GetGene(); // Dispose the first gene.
-            terminal.SendPacket(new PacketEncrypt());
+            terminal.SendPacket(new RawPacketEncrypt());
             terminal.CreateEmbryo(packet.Salt);
         }
     }
 
-    internal void ProcessUnmanagedRecv_Ping(IPEndPoint endpoint, ref PacketHeader header, Memory<byte> data)
+    internal void ProcessUnmanagedRecv_Ping(IPEndPoint endpoint, ref RawPacketHeader header, Memory<byte> data)
     {
-        if (!TinyhandSerializer.TryDeserialize<PacketPing>(data, out var packet))
+        if (!TinyhandSerializer.TryDeserialize<RawPacketPing>(data, out var packet))
         {
             return;
         }

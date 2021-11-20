@@ -3,19 +3,19 @@
 namespace LP.Net;
 
 [TinyhandObject]
-public partial class PacketPing : IUnmanagedPacket
+public partial class RawPacketPing : IRawPacket
 {
-    public PacketPing()
+    public RawPacketPing()
     {
     }
 
-    public PacketPing(NodeAddress? nodeAddress, string text)
+    public RawPacketPing(NodeAddress? nodeAddress, string text)
     {
         this.NodeAddress = nodeAddress;
         this.Text = text;
     }
 
-    public UnmanagedPacketId Id => UnmanagedPacketId.Ping;
+    public RawPacketId Id => RawPacketId.Ping;
 
     [Key(0)]
     public NodeAddress? NodeAddress { get; set; }

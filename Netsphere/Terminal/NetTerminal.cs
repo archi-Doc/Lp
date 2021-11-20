@@ -66,7 +66,7 @@ public partial class NetTerminal : IDisposable
     }
 
     public SendResult SendUnmanaged<T>(T value)
-        where T : IUnmanagedPacket
+        where T : IRawPacket
     {
         return this.SendPacket(value);
     }
@@ -83,9 +83,9 @@ public partial class NetTerminal : IDisposable
         }
 
         // var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
-        var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
+        var p = new RawPacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
         this.SendPacket(p);
-        var r = this.Receive<PacketEncrypt>();
+        var r = this.Receive<RawPacketEncrypt>();
         if (r != null)
         {
             if (this.CreateEmbryo(p.Salt))
@@ -102,7 +102,7 @@ public partial class NetTerminal : IDisposable
     }
 
     public SendResult Send<T>(T value, int millisecondsToWait = DefaultMillisecondsToWait)
-        where T : IUnmanagedPacket
+        where T : IRawPacket
     {
         var result = this.CheckManagedAndEncrypted();
         if (result != SendResult.Success)
@@ -114,7 +114,7 @@ public partial class NetTerminal : IDisposable
     }
 
     public T? Receive<T>(int millisecondsToWait = DefaultMillisecondsToWait)
-        where T : IUnmanagedPacket
+        where T : IRawPacket
     {
         var result = this.Receive(out var data, millisecondsToWait);
         if (!result)
@@ -175,7 +175,7 @@ ReceiveUnmanaged_Error:
         return false;
     }
 
-    internal void CreateHeader(out PacketHeader header, ulong gene)
+    internal void CreateHeader(out RawPacketHeader header, ulong gene)
     {
         header = default;
         header.Gene = gene;
@@ -183,7 +183,7 @@ ReceiveUnmanaged_Error:
     }
 
     internal SendResult SendPacket<T>(T value)
-        where T : IUnmanagedPacket
+        where T : IRawPacket
     {
         var gene = this.GenePool.GetGene();
         this.CreateHeader(out var header, gene);
@@ -204,7 +204,7 @@ ReceiveUnmanaged_Error:
             ulong headerGene;
             fixed (byte* pb = packet)
             {
-                headerGene = (*(PacketHeader*)pb).Gene;
+                headerGene = (*(RawPacketHeader*)pb).Gene;
             }
 
             var gene = new NetTerminalGene(headerGene, this);
@@ -256,7 +256,7 @@ ReceiveUnmanaged_Error:
         }
     }
 
-    internal void ProcessReceive(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data, long currentTicks, NetTerminalGene gene)
+    internal void ProcessReceive(IPEndPoint endPoint, ref RawPacketHeader header, Memory<byte> data, long currentTicks, NetTerminalGene gene)
     {
         lock (this.syncObject)
         {
@@ -272,7 +272,7 @@ ReceiveUnmanaged_Error:
                 return;
             }
 
-            if (header.Id == UnmanagedPacketId.Ack)
+            if (header.Id == RawPacketId.Ack)
             {// Ack (header.Gene + data(ulong[]))
                 gene.ReceiveAck();
                 var g = MemoryMarshal.Cast<byte, ulong>(data.Span);

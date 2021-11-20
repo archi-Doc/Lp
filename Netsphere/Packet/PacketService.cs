@@ -11,10 +11,10 @@ internal class PacketService
 {
     static PacketService()
     {
-        HeaderSize = Marshal.SizeOf(default(PacketHeader));
+        HeaderSize = Marshal.SizeOf(default(RawPacketHeader));
         // PacketInfo = new PacketInfo[] { new(typeof(PacketPunch), 0, false), };
 
-        var relay = new PacketRelay();
+        var relay = new RawPacketRelay();
         relay.NextEndpoint = new(IPAddress.IPv6Loopback, Netsphere.MaxPort);
         RelayPacketSize = Tinyhand.TinyhandSerializer.Serialize(relay).Length;
         SafeMaxPacketSize = Netsphere.MaxPayload - HeaderSize - RelayPacketSize - 8;
@@ -37,8 +37,8 @@ internal class PacketService
     [ThreadStatic]
     private static byte[]? initialBuffer;
 
-    internal static unsafe byte[] CreatePacket<T>(ref PacketHeader header, T value)
-        where T : IUnmanagedPacket
+    internal static unsafe byte[] CreatePacket<T>(ref RawPacketHeader header, T value)
+        where T : IRawPacket
     {
         if (initialBuffer == null)
         {
@@ -56,7 +56,7 @@ internal class PacketService
         {
             header.Id = value.Id;
             header.DataSize = (ushort)(writer.Written - written);
-            *(PacketHeader*)pb = header;
+            *(RawPacketHeader*)pb = header;
         }
 
         return writer.FlushAndGetArray();

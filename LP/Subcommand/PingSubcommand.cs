@@ -63,11 +63,11 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
         var sw = Stopwatch.StartNew();
         using (var terminal = this.Control.Netsphere.Terminal.Create(node))
         {
-            var p = new PacketPing(this.Control.Netsphere.NetStatus.GetMyNodeInformation(), "test");
+            var p = new RawPacketPing(this.Control.Netsphere.NetStatus.GetMyNodeInformation(), "test");
             sw.Restart();
             terminal.SendUnmanaged(p);
 
-            p = terminal.Receive<PacketPing>();
+            p = terminal.Receive<RawPacketPing>();
             sw.Stop();
             if (p == null)
             {

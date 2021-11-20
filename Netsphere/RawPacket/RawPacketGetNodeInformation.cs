@@ -8,13 +8,13 @@ using System.Runtime.InteropServices;
 namespace LP.Net;
 
 [TinyhandObject]
-internal partial class PacketGetNodeInformation : IUnmanagedPacket
+internal partial class PacketGetNodeInformation : IRawPacket
 {
     public PacketGetNodeInformation()
     {
     }
 
-    public UnmanagedPacketId Id => UnmanagedPacketId.GetNodeInformation;
+    public RawPacketId Id => RawPacketId.GetNodeInformation;
 
     [Key(0)]
     public long UtcTicks { get; set; }
