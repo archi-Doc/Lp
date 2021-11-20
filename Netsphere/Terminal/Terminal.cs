@@ -265,13 +265,14 @@ public class Terminal
             return;
         }
 
-        Logger.Default.Information($"Ping received from: {packet.ToString()}");
+        Logger.Default.Information($"Ping From: {packet.ToString()}");
 
-        packet.NodeAddress = new(endpoint.Address, (ushort)endpoint.Port, header.Engagement);
-        packet.Text = this.Information.NodeName;
+        var response = new RawPacketPingResponse(new(endpoint.Address, (ushort)endpoint.Port, header.Engagement), this.Information.NodeName);
+        var firstGene = header.Gene;
         header.Gene = GenePool.GetSecond(header.Gene);
-        this.TerminalLogger?.Information($"Recv Ping: to gene {header.Gene.To4Hex()}");
-        var p = PacketService.CreatePacket(ref header, packet);
+        this.TerminalLogger?.Information($"Ping Response: {firstGene.To4Hex()} to {header.Gene.To4Hex()}");
+
+        var p = PacketService.CreateAckAndPacket(ref header, firstGene, response);
         this.unmanagedSends.Enqueue(new UnmanagedSend(endpoint, p));
     }
 
@@ -279,7 +280,9 @@ public class Terminal
     {
         foreach (var x in genes)
         {
-            if (x.State == NetTerminalGeneState.WaitingToReceive)
+            if (x.State == NetTerminalGeneState.WaitingToReceive ||
+                x.State == NetTerminalGeneState.WaitingToSend || 
+                x.State == NetTerminalGeneState.WaitingForAck)
             {
                 this.inboundGenes.TryAdd(x.Gene, x);
             }

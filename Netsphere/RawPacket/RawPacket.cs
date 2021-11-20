@@ -12,6 +12,7 @@ public enum RawPacketId : byte
     Invalid,
     Ack,
     Ping,
+    PingResponse,
     Punch,
     PunchResponse,
     GetNodeInformation,

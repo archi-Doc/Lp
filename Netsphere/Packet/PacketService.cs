@@ -61,4 +61,34 @@ internal class PacketService
 
         return writer.FlushAndGetArray();
     }
+
+    internal static unsafe byte[] CreateAckAndPacket<T>(ref RawPacketHeader header, ulong ackGene, T value)
+        where T : IRawPacket
+    {
+        if (initialBuffer == null)
+        {
+            initialBuffer = new byte[InitialBufferLength];
+        }
+
+        var writer = new Tinyhand.IO.TinyhandWriter(initialBuffer);
+        var span = writer.GetSpan(PacketService.HeaderSize * 2);
+        writer.Advance(PacketService.HeaderSize * 2);
+
+        var written = writer.Written;
+        TinyhandSerializer.Serialize(ref writer, value);
+
+        fixed (byte* pb = span)
+        {
+            (*(RawPacketHeader*)pb).Engagement = header.Engagement;
+            (*(RawPacketHeader*)pb).Id = RawPacketId.Ack;
+            (*(RawPacketHeader*)pb).DataSize = 0;
+            (*(RawPacketHeader*)pb).Gene = ackGene;
+
+            header.Id = value.Id;
+            header.DataSize = (ushort)(writer.Written - written);
+            *(RawPacketHeader*)(pb + PacketService.HeaderSize) = header;
+        }
+
+        return writer.FlushAndGetArray();
+    }
 }

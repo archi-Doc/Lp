@@ -9,19 +9,39 @@ public partial class RawPacketPing : IRawPacket
     {
     }
 
-    public RawPacketPing(NodeAddress? nodeAddress, string text)
+    public RawPacketPing(string text)
     {
-        this.NodeAddress = nodeAddress;
         this.Text = text;
     }
 
     public RawPacketId Id => RawPacketId.Ping;
 
     [Key(0)]
-    public NodeAddress? NodeAddress { get; set; }
-
-    [Key(1)]
     public string Text { get; set; } = default!;
 
-    public override string ToString() => $"{this.NodeAddress} - {this.Text}";
+    public override string ToString() => $"{this.Text}";
+}
+
+[TinyhandObject]
+public partial class RawPacketPingResponse : IRawPacket
+{
+    public RawPacketPingResponse()
+    {
+    }
+
+    public RawPacketPingResponse(NodeAddress? nodeAddress, string text)
+    {
+        this.NodeAddress = nodeAddress;
+        this.Text = text;
+    }
+
+    public RawPacketId Id => RawPacketId.PingResponse;
+
+    [Key(0)]
+    public string Text { get; set; } = default!;
+
+    [Key(1)]
+    public NodeAddress? NodeAddress { get; set; }
+
+    public override string ToString() => $"{this.Text} - {this.NodeAddress}";
 }

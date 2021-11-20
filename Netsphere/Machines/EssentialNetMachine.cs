@@ -45,7 +45,7 @@ public partial class EssentialNetMachine : Machine<Identifier>
             // nodeAddress = NodeAddress.Alternative;
             using (var terminal = this.Netsphere.Terminal.Create(nodeAddress))
             {
-                terminal.SendUnmanaged(new RawPacketPunch(null));
+                terminal.SendRaw(new RawPacketPunch(null));
                 var data = terminal.Receive<PacketPunchResponse>(1000);
                 if (data != null)
                 {

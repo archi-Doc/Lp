@@ -65,7 +65,7 @@ public partial class NetTerminal : IDisposable
         Timeout,
     }
 
-    public SendResult SendUnmanaged<T>(T value)
+    public SendResult SendRaw<T>(T value)
         where T : IRawPacket
     {
         return this.SendPacket(value);
@@ -195,12 +195,6 @@ ReceiveUnmanaged_Error:
     {
         lock (this.syncObject)
         {
-            if (!this.PrepareSend())
-            {
-                this.TerminalLogger?.Error("PrepareSend()");
-                return SendResult.Error;
-            }
-
             ulong headerGene;
             fixed (byte* pb = packet)
             {
@@ -209,8 +203,10 @@ ReceiveUnmanaged_Error:
 
             var gene = new NetTerminalGene(headerGene, this);
             gene.SetSend(packet);
-            this.sendGenes = new NetTerminalGene[] { gene, };
+            var index = this.EnsureSend();
+            this.sendGenes![index] = gene;
             this.TerminalLogger?.Information($"RegisterSend   : {gene.ToString()}");
+            this.Terminal.AddInbound(this.sendGenes);
         }
 
         return SendResult.Success;
@@ -335,6 +331,30 @@ ReceiveUnmanaged_Error:
         Logger.Default.Information($"First gene {this.GenePool.GetGene().ToString()}");
 
         return true;
+    }
+
+    private int EnsureSend()
+    {
+        if (this.sendGenes != null)
+        {
+            for (var i = 0; i < this.sendGenes.Length; i++)
+            {
+                if (this.sendGenes[i].IsAvailable)
+                {// Available.
+                    this.sendGenes[i].Clear();
+                    return i;
+                }
+            }
+
+            var originalLength = this.sendGenes.Length;
+            Array.Resize<NetTerminalGene>(ref this.sendGenes, this.sendGenes.Length + 1);
+            return originalLength;
+        }
+        else
+        {
+            this.sendGenes = new NetTerminalGene[1];
+            return 0;
+        }
     }
 
     private bool PrepareSend()

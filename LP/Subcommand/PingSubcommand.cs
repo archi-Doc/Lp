@@ -63,19 +63,19 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
         var sw = Stopwatch.StartNew();
         using (var terminal = this.Control.Netsphere.Terminal.Create(node))
         {
-            var p = new RawPacketPing(this.Control.Netsphere.NetStatus.GetMyNodeInformation(), "test");
+            var p = new RawPacketPing("test");
             sw.Restart();
-            terminal.SendUnmanaged(p);
+            terminal.SendRaw(p);
 
-            p = terminal.Receive<RawPacketPing>();
+            var r = terminal.Receive<RawPacketPingResponse>();
             sw.Stop();
-            if (p == null)
+            if (r == null)
             {
                 Logger.Priority.Information($"Timeout.");
             }
             else
             {
-                Logger.Priority.Information($"Received: {p.ToString()} - {sw.ElapsedMilliseconds} ms");
+                Logger.Priority.Information($"Received: {r.ToString()} - {sw.ElapsedMilliseconds} ms");
             }
         }
 
