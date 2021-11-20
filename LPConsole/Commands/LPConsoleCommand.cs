@@ -179,6 +179,13 @@ Deserialize:
                         Logger.ViewMode = false;
                         Console.Write("> ");
                     }
+                    else
+                    {
+                        while (this.SafeKeyAvailable)
+                        {
+                            Console.ReadKey(true);
+                        }
+                    }
                 }
             }
             else
