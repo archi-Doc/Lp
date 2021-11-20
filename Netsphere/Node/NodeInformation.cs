@@ -8,27 +8,48 @@ using System.Diagnostics.CodeAnalysis;
 namespace LP.Net;
 
 /// <summary>
-/// Represents a advanced node information.<br/>
-/// UpdateTime, Differentiation.
+/// Represents a node information.<br/>
+/// UpdateTime, Differentiation, PublicKey.
 /// </summary>
 [TinyhandObject]
 public partial class NodeInformation : NodeAddress, IEquatable<NodeInformation>
 {
+    public static new NodeInformation Alternative
+    {
+        get
+        {
+            if (alternative == null)
+            {
+                alternative = new NodeInformation(NodeAddress.Alternative);
+                alternative.UpdateTime = Ticks.GetUtcNow();
+                alternative.PublicKeyX = NodePrivateKey.AlternativePrivateKey.X;
+                alternative.PublicKeyY = NodePrivateKey.AlternativePrivateKey.Y;
+            }
+
+            return alternative;
+        }
+    }
+
     public NodeInformation()
     {
     }
 
+    public NodeInformation(NodeAddress nodeAddress)
+        : base(nodeAddress.Address, nodeAddress.Port)
+    {
+    }
+
     [Key(4)]
-    public ulong UpdateTime { get; protected set; }
+    public long UpdateTime { get; internal protected set; }
 
     [Key(5)]
     public ulong Differentiation { get; protected set; }
 
     [Key(6)]
-    public byte[] PublicKeyX { get; protected set; } = default!;
+    public byte[] PublicKeyX { get; internal protected set; } = default!;
 
     [Key(7)]
-    public byte[] PublicKeyY { get; protected set; } = default!;
+    public byte[] PublicKeyY { get; internal protected set; } = default!;
 
     public bool Equals(NodeInformation? other)
     {
@@ -44,4 +65,6 @@ public partial class NodeInformation : NodeAddress, IEquatable<NodeInformation>
     {
         return HashCode.Combine(this.Type, this.Engagement, this.Port, this.Address);
     }
+
+    private static NodeInformation? alternative;
 }

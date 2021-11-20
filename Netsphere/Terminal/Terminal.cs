@@ -1,16 +1,20 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace LP.Net;
 
 public class Terminal
 {
-    internal struct UnmanagedSend
+    internal struct RawSend
     {
-        public UnmanagedSend(IPEndPoint endPoint, byte[] packet)
+        public RawSend(IPEndPoint endPoint, byte[] packet)
         {
             this.Endpoint = endPoint;
             this.Packet = packet;
@@ -21,6 +25,13 @@ public class Terminal
         public byte[] Packet { get; }
     }
 
+    public void Dump(ISimpleLogger logger)
+    {
+        logger.Information($"Terminal: {this.terminals.QueueChain.Count}");
+        logger.Information($"Raw sends: {this.rawSends.Count}");
+        logger.Information($"Inbound genes: {this.inboundGenes.Count}");
+    }
+
     /// <summary>
     /// Create unmanaged (without public key) NetTerminal instance.
     /// </summary>
@@ -28,8 +39,7 @@ public class Terminal
     /// <returns>NetTerminal.</returns>
     public NetTerminal Create(NodeAddress nodeAddress)
     {
-        var gene = Random.Crypto.NextULong();
-        var terminal = new NetTerminal(this, gene, nodeAddress);
+        var terminal = new NetTerminal(this, nodeAddress);
         lock (this.terminals)
         {
             this.terminals.Add(terminal);
@@ -38,15 +48,66 @@ public class Terminal
         return terminal;
     }
 
-    public Terminal()
+    /// <summary>
+    /// Create managed (with public key) NetTerminal instance.
+    /// </summary>
+    /// <param name="nodeInformation">NodeInformation.</param>
+    /// <returns>NetTerminal.</returns>
+    public NetTerminal Create(NodeInformation nodeInformation)
     {
+        var terminal = new NetTerminal(this, nodeInformation);
+        lock (this.terminals)
+        {
+            this.terminals.Add(terminal);
+        }
+
+        return terminal;
+    }
+
+    /// <summary>
+    /// Create managed (with public key) and encrypted NetTerminal instance.
+    /// </summary>
+    /// <param name="nodeInformation">NodeInformation.</param>
+    /// <param name="gene">gene.</param>
+    /// <returns>NetTerminal.</returns>
+    public NetTerminal Create(NodeInformation nodeInformation, ulong gene)
+    {
+        var terminal = new NetTerminal(this, nodeInformation, gene);
+        lock (this.terminals)
+        {
+            this.terminals.Add(terminal);
+        }
+
+        return terminal;
+    }
+
+    public Terminal(Information information, NetStatus netStatus)
+    {
+        this.Information = information;
+        // this.Private = @private;
+        this.NetStatus = netStatus;
+
         Radio.Open<Message.Start>(this.Start);
         Radio.Open<Message.Stop>(this.Stop);
+
+        this.TerminalLogger = new Logger.PriorityLogger();
+        this.netSocket = new(this);
     }
 
     public void Start(Message.Start message)
     {
         this.Core = new ThreadCoreGroup(message.ParentCore);
+
+        if (this.Port == 0)
+        {
+            this.Port = this.Information.ConsoleOptions.NetsphereOptions.Port;
+        }
+
+        if (!this.netSocket.TryStart(this.Core, this.Port))
+        {
+            message.Abort = true;
+            return;
+        }
     }
 
     public void Stop(Message.Stop message)
@@ -57,9 +118,22 @@ public class Terminal
 
     public ThreadCoreBase? Core { get; private set; }
 
+    public Information Information { get; }
+
+    // public Private Private { get; }
+
+    public NetStatus NetStatus { get; }
+
+    public int Port { get; set; }
+
+    internal void Initialize(bool isAlternative, ECDiffieHellman nodePrivateKey)
+    {
+        this.NodePrivateECDH = nodePrivateKey;
+    }
+
     internal void ProcessSend(UdpClient udp, long currentTicks)
     {
-        while (this.unmanagedSends.TryDequeue(out var unregisteredSend))
+        while (this.rawSends.TryDequeue(out var unregisteredSend))
         {
             udp.Send(unregisteredSend.Packet, unregisteredSend.Endpoint);
         }
@@ -76,17 +150,17 @@ public class Terminal
         }
     }
 
-    internal unsafe void ProcessReceive(IPEndPoint endPoint, byte[] packet)
+    internal unsafe void ProcessReceive(IPEndPoint endPoint, byte[] outerPacket, long currentTicks)
     {
         var position = 0;
-        var remaining = packet.Length;
+        var remaining = outerPacket.Length;
 
         while (remaining >= PacketService.HeaderSize)
         {
-            PacketHeader header;
-            fixed (byte* pb = packet)
+            RawPacketHeader header;
+            fixed (byte* pb = outerPacket)
             {
-                header = *(PacketHeader*)(pb + position);
+                header = *(RawPacketHeader*)(pb + position);
             }
 
             var dataSize = header.DataSize;
@@ -100,31 +174,18 @@ public class Terminal
             }
 
             position += PacketService.HeaderSize;
-            var data = new Memory<byte>(packet, position, dataSize);
-            this.ProcessReceiveCore(endPoint, ref header, data);
+            var data = new Memory<byte>(outerPacket, position, dataSize);
+            this.ProcessReceiveCore(endPoint, ref header, data, currentTicks);
             position += dataSize;
             remaining -= PacketService.HeaderSize + dataSize;
         }
     }
 
-    internal void ProcessReceiveCore(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data)
+    internal void ProcessReceiveCore(IPEndPoint endPoint, ref RawPacketHeader header, Memory<byte> data, long currentTicks)
     {
-        if (this.managedGenes.TryGetValue(header.Gene, out var terminalGene) &&
-            terminalGene.State != NetTerminalGeneState.Unmanaged &&
-            terminalGene.PacketId == header.Id)
-        {// NetTerminalGene is found and the state is not unmanaged and packet ids are identical.
-            var netTerminal = terminalGene.NetTerminal;
-            if (!netTerminal.Endpoint.Equals(endPoint))
-            {// Endpoint mismatch.
-                return;
-            }
-
-            terminalGene.NetTerminal.ProcessRecv(terminalGene, endPoint, ref header, data);
-
-            /*if (!terminalGene.NetTerminal.ProcessRecv(terminalGene, endPoint, ref header, data))
-            {
-                this.ProcessUnmanagedRecv(endPoint, ref header, data);
-            }*/
+        if (this.inboundGenes.TryGetValue(header.Gene, out var gene))
+        {// NetTerminalGene is found.
+            gene.NetTerminal.ProcessReceive(endPoint, ref header, data, currentTicks, gene);
         }
         else
         {
@@ -132,63 +193,123 @@ public class Terminal
         }
     }
 
-    internal unsafe void ProcessUnmanagedRecv(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data)
+    internal void ProcessUnmanagedRecv(IPEndPoint endpoint, ref RawPacketHeader header, Memory<byte> data)
     {
-        if (header.Id == PacketId.Punch)
+        if (header.Id == RawPacketId.Punch)
         {// Punch
-            if (!TinyhandSerializer.TryDeserialize<PacketPunch>(data, out var punch))
-            {
-                return;
-            }
-
-            Time.AddTimeForCorrection(punch.UtcTicks);
-
-            var r = new PacketPunchResponse();
-            if (punch.NextEndpoint != null)
-            {
-                r.Endpoint = punch.NextEndpoint;
-            }
-            else
-            {
-                r.Endpoint = endPoint;
-            }
-
-            r.UtcTicks = DateTime.UtcNow.Ticks;
-
-            var p = PacketService.CreatePacket(ref header, r);
-
-            this.unmanagedSends.Enqueue(new UnmanagedSend(endPoint, p));
+            this.ProcessUnmanagedRecv_Punch(endpoint, ref header, data);
+        }
+        else if (header.Id == RawPacketId.Encrypt)
+        {
+            this.ProcessUnmanagedRecv_Encrypt(endpoint, ref header, data);
+        }
+        else if (header.Id == RawPacketId.Ping)
+        {
+            this.ProcessUnmanagedRecv_Ping(endpoint, ref header, data);
         }
         else
         {// Not supported
         }
     }
 
-    internal void AddNetTerminalGene(NetTerminalGene[] genes)
+    internal void ProcessUnmanagedRecv_Punch(IPEndPoint endpoint, ref RawPacketHeader header, Memory<byte> data)
+    {
+        if (!TinyhandSerializer.TryDeserialize<RawPacketPunch>(data, out var punch))
+        {
+            return;
+        }
+
+        TimeCorrection.AddCorrection(punch.UtcTicks);
+
+        var r = new PacketPunchResponse();
+        if (punch.NextEndpoint != null)
+        {
+            r.Endpoint = punch.NextEndpoint;
+        }
+        else
+        {
+            r.Endpoint = endpoint;
+        }
+
+        r.UtcTicks = Ticks.GetUtcNow();
+
+        header.Gene = GenePool.GetSecond(header.Gene);
+        var p = PacketService.CreatePacket(ref header, r);
+
+        this.rawSends.Enqueue(new RawSend(endpoint, p));
+    }
+
+    internal void ProcessUnmanagedRecv_Encrypt(IPEndPoint endpoint, ref RawPacketHeader header, Memory<byte> data)
+    {
+        if (!TinyhandSerializer.TryDeserialize<RawPacketEncrypt>(data, out var packet))
+        {
+            return;
+        }
+
+        if (packet.NodeInformation != null)
+        {
+            // Logger.Default.Information($"Recv_Encrypt: {header.Gene.ToString()}");
+            packet.NodeInformation.SetIPEndPoint(endpoint);
+
+            var terminal = this.Create(packet.NodeInformation, header.Gene);
+            terminal.GenePool.GetGene(); // Dispose the first gene.
+            terminal.SendPacket(new RawPacketEncrypt());
+            terminal.CreateEmbryo(packet.Salt);
+        }
+    }
+
+    internal void ProcessUnmanagedRecv_Ping(IPEndPoint endpoint, ref RawPacketHeader header, Memory<byte> data)
+    {
+        if (!TinyhandSerializer.TryDeserialize<RawPacketPing>(data, out var packet))
+        {
+            return;
+        }
+
+        Logger.Default.Information($"Ping From: {packet.ToString()}");
+
+        var response = new RawPacketPingResponse(new(endpoint.Address, (ushort)endpoint.Port, header.Engagement), this.Information.NodeName);
+        var firstGene = header.Gene;
+        header.Gene = GenePool.GetSecond(header.Gene);
+        this.TerminalLogger?.Information($"Ping Response: {firstGene.To4Hex()} to {header.Gene.To4Hex()}");
+
+        var p = PacketService.CreateAckAndPacket(ref header, firstGene, response);
+        this.rawSends.Enqueue(new RawSend(endpoint, p));
+    }
+
+    internal void AddInbound(NetTerminalGene[] genes)
     {
         foreach (var x in genes)
         {
-            if (x.State == NetTerminalGeneState.WaitingToSend ||
-                x.State == NetTerminalGeneState.WaitingToReceive)
+            if (x.State == NetTerminalGeneState.WaitingToReceive ||
+                x.State == NetTerminalGeneState.WaitingToSend ||
+                x.State == NetTerminalGeneState.WaitingForAck)
             {
-                this.managedGenes.TryAdd(x.Gene, x);
+                this.inboundGenes.TryAdd(x.Gene, x);
             }
         }
     }
 
-    internal void RemoveNetTerminalGene(NetTerminalGene[] genes)
+    internal void RemoveInbound(NetTerminalGene[] genes)
     {
         foreach (var x in genes)
         {
-            this.managedGenes.TryRemove(x.Gene, out _);
+            this.inboundGenes.TryRemove(x.Gene, out _);
         }
     }
 
-    internal Serilog.ILogger? TerminalLogger { get; private set; }
+    internal bool TryGetInbound(ulong gene, [MaybeNullWhen(false)] out NetTerminalGene netTerminalGene) => this.inboundGenes.TryGetValue(gene, out netTerminalGene);
+
+    public NetTerminal.GoshujinClass NetTerminals => this.terminals;
+
+    internal ISimpleLogger? TerminalLogger { get; private set; }
+
+    internal ECDiffieHellman NodePrivateECDH { get; private set; } = default!;
+
+    private NetSocket netSocket;
 
     private NetTerminal.GoshujinClass terminals = new();
 
-    private ConcurrentDictionary<ulong, NetTerminalGene> managedGenes = new();
+    private ConcurrentDictionary<ulong, NetTerminalGene> inboundGenes = new();
 
-    private ConcurrentQueue<UnmanagedSend> unmanagedSends = new();
+    private ConcurrentQueue<RawSend> rawSends = new();
 }

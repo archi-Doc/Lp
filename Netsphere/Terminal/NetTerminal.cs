@@ -9,7 +9,8 @@ using System.Threading;
 namespace LP.Net;
 
 /// <summary>
-/// Initializes a new instance of the <see cref="NetTerminal"/> class.
+/// Initializes a new instance of the <see cref="NetTerminal"/> class.<br/>
+/// NOT thread-safe.
 /// </summary>
 [ValueLinkObject]
 public partial class NetTerminal : IDisposable
@@ -22,18 +23,29 @@ public partial class NetTerminal : IDisposable
     public const int DefaultInterval = 10;
 
     [Link(Type = ChainType.QueueList, Name = "Queue", Primary = true)]
-    internal NetTerminal(Terminal terminal, ulong gene, NodeAddress nodeAddress)
-    {
+    internal NetTerminal(Terminal terminal, NodeAddress nodeAddress)
+    {// NodeAddress: Unmanaged
         this.Terminal = terminal;
-        this.Gene = gene;
+        this.GenePool = new(Random.Crypto.NextULong());
         this.NodeAddress = nodeAddress;
         this.Endpoint = this.NodeAddress.CreateEndpoint();
     }
 
-    public Terminal Terminal { get; }
+    internal NetTerminal(Terminal terminal, NodeInformation nodeInformation)
+        : this(terminal, nodeInformation, Random.Crypto.NextULong())
+    {// NodeInformation: Managed
+    }
 
-    [Link(Type = ChainType.Ordered)]
-    public ulong Gene { get; private set; }
+    internal NetTerminal(Terminal terminal, NodeInformation nodeInformation, ulong gene)
+    {// NodeInformation: Encrypted
+        this.Terminal = terminal;
+        this.GenePool = new(gene);
+        this.NodeAddress = nodeInformation;
+        this.NodeInformation = nodeInformation;
+        this.Endpoint = this.NodeAddress.CreateEndpoint();
+    }
+
+    public Terminal Terminal { get; }
 
     // [Link(Type = ChainType.Ordered)]
     // public long CreatedTicks { get; private set; } = Ticks.GetCurrent();
@@ -42,21 +54,68 @@ public partial class NetTerminal : IDisposable
 
     public NodeAddress NodeAddress { get; }
 
-    public unsafe void SendUnmanaged_Punch()
-    {
-        var p = new PacketPunch();
-        p.UtcTicks = DateTime.UtcNow.Ticks;
+    public NodeInformation? NodeInformation { get; }
 
-        this.CreateHeader(out var header);
-        var packet = PacketService.CreatePacket(ref header, p);
-        this.SendPacket(packet, PacketId.PunchResponse);
+    public enum SendResult
+    {
+        Success,
+        Error,
+        Timeout,
+    }
+
+    public SendResult SendRaw<T>(T value)
+        where T : IRawPacket
+    {
+        return this.SendPacket(value);
+    }
+
+    public SendResult CheckManagedAndEncrypted()
+    {
+        if (this.embryo != null)
+        {// Encrypted
+            return SendResult.Success;
+        }
+        else if (this.NodeInformation == null)
+        {// Unmanaged
+            return SendResult.Error;
+        }
+
+        // var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
+        var p = new RawPacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
+        this.SendPacket(p);
+        var r = this.Receive<RawPacketEncrypt>();
+        if (r != null)
+        {
+            if (this.CreateEmbryo(p.Salt))
+            {
+                return SendResult.Success;
+            }
+            else
+            {
+                return SendResult.Error;
+            }
+        }
+
+        return SendResult.Timeout;
+    }
+
+    public SendResult Send<T>(T value, int millisecondsToWait = DefaultMillisecondsToWait)
+        where T : IRawPacket
+    {
+        var result = this.CheckManagedAndEncrypted();
+        if (result != SendResult.Success)
+        {
+            return result;
+        }
+
+        return this.SendPacket(value);
     }
 
     public T? Receive<T>(int millisecondsToWait = DefaultMillisecondsToWait)
-        where T : IPacket
+        where T : IRawPacket
     {
-        var result = this.Receive(out var header, out var data, millisecondsToWait);
-        if (!result || data.Length < PacketService.HeaderSize)
+        var result = this.Receive(out var data, millisecondsToWait);
+        if (!result)
         {
             return default(T);
         }
@@ -65,8 +124,18 @@ public partial class NetTerminal : IDisposable
         return value;
     }
 
-    internal bool Receive(out PacketId packetId, out Memory<byte> data, int millisecondsToWait = DefaultMillisecondsToWait)
+    internal GenePool GenePool { get; }
+
+    internal bool Receive(out Memory<byte> data, int millisecondsToWait = DefaultMillisecondsToWait)
     {
+        lock (this.syncObject)
+        {
+            if (this.recvGenes == null)
+            {
+                this.RegisterReceive(1);
+            }
+        }
+
         var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);
 
         while (this.Terminal.Core?.IsTerminated == false)
@@ -79,12 +148,7 @@ public partial class NetTerminal : IDisposable
 
             lock (this.syncObject)
             {
-                if (this.genes == null)
-                {
-                    goto ReceiveUnmanaged_Error;
-                }
-
-                if (this.ReceivePacket(out packetId, out data))
+                if (this.ReceivePacket(out data))
                 {// Received
                     return true;
                 }
@@ -105,125 +169,301 @@ public partial class NetTerminal : IDisposable
         }
 
 ReceiveUnmanaged_Error:
-        packetId = default;
         data = default;
         return false;
     }
 
-    internal void CreateHeader(out PacketHeader header)
+    internal void CreateHeader(out RawPacketHeader header, ulong gene)
     {
         header = default;
-        header.Gene = this.Gene;
+        header.Gene = gene;
         header.Engagement = this.NodeAddress.Engagement;
     }
 
-    internal bool SendPacket(byte[] packet, PacketId responseId)
+    internal SendResult SendPacket<T>(T value)
+        where T : IRawPacket
+    {
+        var gene = this.GenePool.GetGene();
+        this.CreateHeader(out var header, gene);
+        var packet = PacketService.CreatePacket(ref header, value);
+        return this.RegisterSend(packet);
+    }
+
+    internal unsafe SendResult RegisterSend(byte[] packet)
     {
         lock (this.syncObject)
         {
-            if (this.genes != null)
+            ulong headerGene;
+            fixed (byte* pb = packet)
             {
-                return false;
+                headerGene = (*(RawPacketHeader*)pb).Gene;
             }
 
-            var gene = new NetTerminalGene(this.Gene, this);
-            gene.SetSend(packet, responseId);
-            this.genes = new NetTerminalGene[] { gene, };
-            this.Terminal.AddNetTerminalGene(this.genes);
+            var gene = new NetTerminalGene(headerGene, this);
+            gene.SetSend(packet);
+            var index = this.EnsureSend();
+            this.sendGenes![index] = gene;
+            this.TerminalLogger?.Information($"RegisterSend   : {gene.ToString()}");
+            this.Terminal.AddInbound(this.sendGenes);
         }
 
-        return true;
+        return SendResult.Success;
+    }
+
+    internal unsafe SendResult RegisterReceive(int numberOfGenes)
+    {
+        lock (this.syncObject)
+        {
+            if (!this.PrepareReceive())
+            {
+                return SendResult.Error;
+            }
+
+            var gene = new NetTerminalGene(this.GenePool.GetGene(), this);
+            gene.SetReceive();
+            this.TerminalLogger?.Information($"RegisterReceive: {gene.ToString()}");
+            this.recvGenes = new NetTerminalGene[] { gene, };
+            this.Terminal.AddInbound(this.recvGenes);
+        }
+
+        return SendResult.Success;
     }
 
     internal void ProcessSend(UdpClient udp, long currentTicks)
     {
         lock (this.syncObject)
         {
-            if (this.genes != null)
+            if (this.sendGenes != null)
             {
-                foreach (var x in this.genes)
+                foreach (var x in this.sendGenes)
                 {
                     if (x.State == NetTerminalGeneState.WaitingToSend)
                     {
-                        x.Send(udp);
+                        if (x.Send(udp))
+                        {
+                            this.TerminalLogger?.Information($"Udp Sent       : {x.ToString()}");
+                            x.SentTicks = currentTicks;
+                        }
                     }
                 }
             }
         }
     }
 
-    internal bool ProcessRecv(NetTerminalGene netTerminalGene, IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data)
+    internal void ProcessReceive(IPEndPoint endPoint, ref RawPacketHeader header, Memory<byte> data, long currentTicks, NetTerminalGene gene)
     {
-        if (netTerminalGene.Receive(data))
+        lock (this.syncObject)
         {
-        }
+            if (this.recvGenes == null)
+            {// No receive gene.
+                this.TerminalLogger?.Error("No receive gene.");
+                return;
+            }
 
-        return false;
+            if (!this.Endpoint.Equals(endPoint))
+            {// Endpoint mismatch.
+                this.TerminalLogger?.Error("Endpoint mismatch.");
+                return;
+            }
+
+            if (header.Id == RawPacketId.Ack)
+            {// Ack (header.Gene + data(ulong[]))
+                gene.ReceiveAck();
+                var g = MemoryMarshal.Cast<byte, ulong>(data.Span);
+                this.TerminalLogger?.Information($"Recv Ack 1+{g.Length}");
+                foreach (var x in g)
+                {
+                    if (this.Terminal.TryGetInbound(x, out var gene2))
+                    {
+                        if (gene2.NetTerminal == this)
+                        {
+                            gene2.ReceiveAck();
+                        }
+                    }
+                }
+            }
+            else
+            {// Receive data
+                if (gene.Receive(data))
+                {// Received.
+                    this.TerminalLogger?.Information($"Recv data: {gene.ToString()}");
+                }
+            }
+        }
     }
 
 #pragma warning disable SA1307
 #pragma warning disable SA1401 // Fields should be private
-    internal NetTerminalGene[]? genes;
-    // internal NetTerminalGene[]? sendGene;
-    // internal NetTerminalGene[]? recvGene;
+    internal NetTerminalGene[]? sendGenes;
+    internal NetTerminalGene[]? recvGenes;
 #pragma warning restore SA1401 // Fields should be private
 
-    internal Serilog.ILogger? TerminalLogger => this.Terminal.TerminalLogger;
+    internal ISimpleLogger? TerminalLogger => this.Terminal.TerminalLogger;
 
-    private protected unsafe bool ReceivePacket(out PacketId packetId, out Memory<byte> data)
+    internal bool CreateEmbryo(ulong salt)
     {
-        if (this.genes == null)
+        Logger.Default.Information($"Salt {salt.ToString()}");
+        if (this.NodeInformation == null)
         {
-            goto ReceivePacket_Error;
+            return false;
         }
-        else if (this.genes.Length == 0)
+
+        var ecdh = NodeKey.FromPublicKey(this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
+        if (ecdh == null)
         {
-            goto ReceivePacket_Error;
+            return false;
         }
-        else if (this.genes.Length == 1)
+
+        var material = this.Terminal.NodePrivateECDH.DeriveKeyMaterial(ecdh.PublicKey);
+        Span<byte> buffer = stackalloc byte[sizeof(ulong) + NodeKey.PrivateKeySize + sizeof(ulong)];
+        var span = buffer;
+        BitConverter.TryWriteBytes(span, salt);
+        span = span.Slice(sizeof(ulong));
+        material.AsSpan().CopyTo(span);
+        span = span.Slice(NodeKey.PrivateKeySize);
+        BitConverter.TryWriteBytes(span, salt);
+
+        var sha = Hash.Sha3_384Pool.Get();
+        this.embryo = sha.GetHash(buffer);
+        Hash.Sha3_384Pool.Return(sha);
+
+        Logger.Default.Information($"embryo {this.embryo[0].ToString()}");
+        this.GenePool.SetEmbryo(this.embryo);
+        Logger.Default.Information($"First gene {this.GenePool.GetGene().ToString()}");
+
+        return true;
+    }
+
+    private int EnsureSend()
+    {
+        if (this.sendGenes != null)
         {
-            if (this.genes[0].State == NetTerminalGeneState.ReceivedOrConfirmed && !this.genes[0].ReceivedData.IsEmpty)
+            for (var i = 0; i < this.sendGenes.Length; i++)
             {
-                if (this.genes[0].ReceivedData.Length < PacketService.HeaderSize)
-                {
-                    goto ReceivePacket_Error;
+                if (this.sendGenes[i].IsAvailable)
+                {// Available.
+                    this.sendGenes[i].Clear();
+                    return i;
                 }
+            }
 
-                packetId = this.genes[0].PacketId;
-                data = this.genes[0].ReceivedData;
+            var originalLength = this.sendGenes.Length;
+            Array.Resize<NetTerminalGene>(ref this.sendGenes, this.sendGenes.Length + 1);
+            return originalLength;
+        }
+        else
+        {
+            this.sendGenes = new NetTerminalGene[1];
+            return 0;
+        }
+    }
 
-                this.genes = null;
+    private bool PrepareSend()
+    {
+        if (this.sendGenes != null)
+        {
+            foreach (var x in this.sendGenes)
+            {
+                if (!x.IsAvailable)
+                {// Not available.
+                    return false;
+                }
+            }
+
+            foreach (var x in this.sendGenes)
+            {
+                x.Clear();
+            }
+
+            this.sendGenes = null;
+        }
+
+        return true;
+    }
+
+    private bool PrepareReceive()
+    {
+        if (this.recvGenes != null)
+        {
+            foreach (var x in this.recvGenes)
+            {
+                if (!x.IsAvailable)
+                {// Not available.
+                    return false;
+                }
+            }
+
+            foreach (var x in this.recvGenes)
+            {
+                x.Clear();
+            }
+
+            this.recvGenes = null;
+        }
+
+        return true;
+    }
+
+    private unsafe bool ReceivePacket(out Memory<byte> data)
+    {
+        if (this.recvGenes == null)
+        {
+            goto ReceivePacket_Error;
+        }
+        else if (this.recvGenes.Length == 0)
+        {
+            goto ReceivePacket_Error;
+        }
+        else if (this.recvGenes.Length == 1)
+        {
+            if (this.recvGenes[0].State == NetTerminalGeneState.Complete && !this.recvGenes[0].ReceivedData.IsEmpty)
+            {
+                data = this.recvGenes[0].ReceivedData;
+                this.recvGenes[0].Clear();
+                this.recvGenes = null;
                 return true;
             }
         }
         else
         {
-            foreach (var x in this.genes)
+            foreach (var x in this.recvGenes)
             {
             }
         }
 
 ReceivePacket_Error:
-        packetId = default;
         data = default;
         return false;
     }
 
     private void ClearGenes()
     {
-        if (this.genes != null)
+        if (this.sendGenes != null)
         {
-            this.Terminal.RemoveNetTerminalGene(this.genes);
-            foreach (var x in this.genes)
+            this.Terminal.RemoveInbound(this.sendGenes);
+            foreach (var x in this.sendGenes)
             {
                 x.Clear();
             }
 
-            this.genes = null;
+            this.sendGenes = null;
+        }
+
+        if (this.recvGenes != null)
+        {
+            this.Terminal.RemoveInbound(this.recvGenes);
+            foreach (var x in this.recvGenes)
+            {
+                x.Clear();
+            }
+
+            this.recvGenes = null;
         }
     }
 
     private object syncObject = new();
+
+    private byte[]? embryo;
 
     // private PacketService packetService = new();
 
@@ -260,6 +500,11 @@ ReceivePacket_Error:
             {
                 // free managed resources.
                 this.ClearGenes();
+                // lock (this.Terminal.terminals)
+                {
+                    this.Goshujin = null;
+                    // this.terminals.Add(terminal);
+                }
             }
 
             // free native resources here if there are any.

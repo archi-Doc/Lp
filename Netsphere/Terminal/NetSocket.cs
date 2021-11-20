@@ -15,6 +15,7 @@ namespace LP.Net;
 public class NetSocket
 {
     private const int ReceiveTimeout = 100;
+    private const int SendIntervalMilliseconds = 1;
     private const int SendIntervalNanoseconds = 1_000_000;
 
     internal class NetSocketRecvCore : ThreadCore
@@ -41,7 +42,7 @@ public class NetSocket
                     var bytes = udp.Receive(ref remoteEP);
                     if (bytes.Length <= Netsphere.MaxPayload)
                     {
-                        core.pipe.terminal.ProcessReceive(remoteEP, bytes);
+                        core.pipe.terminal.ProcessReceive(remoteEP, bytes, Ticks.GetSystem());
                     }
 
                     // var memory = new ReadOnlyMemory<byte>(bytes);
@@ -92,7 +93,7 @@ public class NetSocket
                 core.ProcessSend();
 
                 // core.Sleep(SendIntervalMilliseconds);
-                core.TryNanoSleep(SendIntervalNanoseconds);
+                core.TryNanoSleep(SendIntervalNanoseconds); // Performs better than core.Sleep() on Linux.
             }
         }
 
@@ -100,14 +101,14 @@ public class NetSocket
                 : base(parent, Process, false)
         {
             this.socket = pipe;
-            this.timer = MultimediaTimer.TryCreate(1, this.ProcessSend); // Use multimedia timer if available.
+            this.timer = MultimediaTimer.TryCreate(SendIntervalMilliseconds, this.ProcessSend); // Use multimedia timer if available.
         }
 
         public void ProcessSend()
         {// Invoked by multiple threads.
             // Check interval.
-            var currentTicks = Ticks.GetCurrent();
-            var previous = Volatile.Read(ref this.previousTimestamp);
+            var currentTicks = Ticks.GetSystem();
+            var previous = Volatile.Read(ref this.previousTicks);
             var interval = Ticks.FromNanoseconds((double)SendIntervalNanoseconds / 2); // Half for margin.
             if (currentTicks < (previous + interval))
             {
@@ -122,7 +123,7 @@ public class NetSocket
                 }
             }
 
-            Volatile.Write(ref this.previousTimestamp, currentTicks);
+            Volatile.Write(ref this.previousTicks, currentTicks);
         }
 
         protected override void Dispose(bool disposing)
@@ -133,35 +134,33 @@ public class NetSocket
 
         private NetSocket socket;
         private MultimediaTimer? timer;
-        private long previousTimestamp;
+        private long previousTicks;
     }
 
-    public NetSocket(Information information, Terminal terminal)
+    public NetSocket(Terminal terminal)
     {
-        this.information = information;
         this.terminal = terminal;
-
-        Radio.Open<Message.Start>(this.Start);
-        Radio.Open<Message.Stop>(this.Stop);
     }
 
-    public void Start(Message.Start message)
+    public bool TryStart(ThreadCoreBase parent, int port)
     {
-        this.recvCore = new NetSocketRecvCore(message.ParentCore, this);
-        this.sendCore = new NetSocketSendCore(message.ParentCore, this);
+        this.recvCore = new NetSocketRecvCore(parent, this);
+        this.sendCore = new NetSocketSendCore(parent, this);
 
         try
         {
-            this.PrepareUdpClient(this.information.ConsoleOptions.NetsphereOptions.Port);
+            this.PrepareUdpClient(port);
         }
         catch
         {
-            Logger.Default.Error($"Could not create a UDP socket with port {this.information.ConsoleOptions.NetsphereOptions.Port}.");
-            message.Error = true;
+            Logger.Default.Error($"Could not create a UDP socket with port {port}.");
+            return false;
         }
 
         this.recvCore.Start();
         this.sendCore.Start();
+
+        return true;
     }
 
     public void Stop(Message.Stop message)
@@ -200,7 +199,6 @@ public class NetSocket
         }
     }
 
-    private Information information;
     private Terminal terminal;
     private NetSocketRecvCore? recvCore;
     private NetSocketSendCore? sendCore;

@@ -17,12 +17,12 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        DebugRun<GenePoolBenchmark>();
+        DebugRun<AesBenchmark>();
 
         // var summary = BenchmarkRunner.Run<TestBenchmark>();
         var switcher = new BenchmarkSwitcher(new[]
         {
-            typeof(GenePoolBenchmark),
+            typeof(AesBenchmark),
             typeof(IdentifierBenchmark),
             typeof(TemplateBenchmark),
         });

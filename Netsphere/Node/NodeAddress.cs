@@ -14,42 +14,64 @@ public enum NodeType : byte
 }
 
 /// <summary>
-/// Represents a basic node information.
+/// Represents a basic node information (Address, Port, Engagement, Type).
 /// </summary>
 [TinyhandObject]
 public partial class NodeAddress : IEquatable<NodeAddress>
 {
+    public const int AlternativePort = 1002;
+    public static readonly NodeAddress Alternative = new(IPAddress.Loopback, AlternativePort);
+
     public static bool TryParse(string text, [NotNullWhen(true)] out NodeAddress? node)
-    {
-        string address, port;
+    {// 127.0.0.1:100(1)
+        string address, port, engagement;
+        int index;
         node = null;
 
         text = text.Trim();
-        if (text.StartsWith('['))
+        var span = text.AsSpan();
+        if (span.StartsWith("["))
         {
-            var index = text.IndexOf(']');
+            index = span.IndexOf(']');
+            if (index < 0 || index >= (span.Length - 1))
+            {
+                return false;
+            }
+
+            address = span.Slice(1, index - 1).ToString();
+            span = span.Slice(index + 2);
+        }
+        else
+        {
+            index = span.LastIndexOf(':');
             if (index < 0)
             {
                 return false;
             }
 
-            address = text.Substring(1, index - 1);
-            port = text.Substring(index + 1);
-            if (port.StartsWith(':'))
+            address = span.Slice(0, index).ToString();
+            span = span.Slice(index + 1);
+        }
+
+        index = span.IndexOf('(');
+        if (index >= 0)
+        {
+            port = span.Slice(0, index).ToString();
+            span = span.Slice(index + 1);
+            index = span.IndexOf(')');
+            if (index >= 0)
             {
-                port = port.Substring(1);
+                engagement = span.Slice(0, index).ToString();
+            }
+            else
+            {
+                engagement = span.ToString();
             }
         }
         else
         {
-            var index = text.LastIndexOf(':');
-            if (index < 0)
-            {
-                return false;
-            }
-
-            address = text.Substring(0, index);
-            port = text.Substring(index + 1);
+            port = span.ToString();
+            engagement = string.Empty;
         }
 
         if (!IPAddress.TryParse(address, out var ipAddress))
@@ -58,7 +80,9 @@ public partial class NodeAddress : IEquatable<NodeAddress>
         }
 
         ushort.TryParse(port, out var nodePort);
-        node = new NodeAddress(ipAddress, nodePort);
+        byte.TryParse(engagement, out var engage);
+
+        node = new NodeAddress(ipAddress, nodePort, engage);
         return true;
     }
 
@@ -66,10 +90,11 @@ public partial class NodeAddress : IEquatable<NodeAddress>
     {
     }
 
-    public NodeAddress(IPAddress address, ushort port)
+    public NodeAddress(IPAddress address, ushort port, byte engagement = 0)
     {
         this.Address = address;
         this.Port = port;
+        this.Engagement = engagement;
     }
 
     [Key(0)]
@@ -85,6 +110,12 @@ public partial class NodeAddress : IEquatable<NodeAddress>
     public IPAddress Address { get; protected set; } = IPAddress.None;
 
     public IPEndPoint CreateEndpoint() => new IPEndPoint(this.Address, this.Port);
+
+    public void SetIPEndPoint(IPEndPoint endpoint)
+    {
+        this.Address = endpoint.Address;
+        this.Port = (ushort)endpoint.Port;
+    }
 
     public bool IsValid()
     {
@@ -116,7 +147,17 @@ public partial class NodeAddress : IEquatable<NodeAddress>
         return HashCode.Combine(this.Type, this.Engagement, this.Port, this.Address);
     }
 
-    public override string ToString() => $"{this.Address}:{this.Port}({this.Engagement})";
+    public override string ToString()
+    {
+        if (this.Address.Equals(IPAddress.None))
+        {
+            return "None";
+        }
+        else
+        {
+            return $"{this.Address}:{this.Port}({this.Engagement})";
+        }
+    }
 
     private bool IsValidIPv4()
     {

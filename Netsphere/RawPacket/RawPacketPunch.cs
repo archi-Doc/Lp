@@ -8,11 +8,19 @@ using System.Runtime.InteropServices;
 namespace LP.Net;
 
 [TinyhandObject]
-internal partial class PacketPunch : IPacket
+internal partial class RawPacketPunch : IRawPacket
 {
-    public bool IsResponse => false;
+    public RawPacketPunch()
+    {
+    }
 
-    public PacketId Id => PacketId.Punch;
+    public RawPacketPunch(IPEndPoint? nextEndpoint)
+    {
+        this.NextEndpoint = nextEndpoint;
+        this.UtcTicks = Ticks.GetUtcNow();
+    }
+
+    public RawPacketId Id => RawPacketId.Punch;
 
     [Key(0)]
     public IPEndPoint? NextEndpoint { get; set; }
@@ -22,11 +30,9 @@ internal partial class PacketPunch : IPacket
 }
 
 [TinyhandObject]
-internal partial class PacketPunchResponse : IPacket
+internal partial class PacketPunchResponse : IRawPacket
 {
-    public bool IsResponse => true;
-
-    public PacketId Id => PacketId.PunchResponse;
+    public RawPacketId Id => RawPacketId.PunchResponse;
 
     [Key(0)]
     public IPEndPoint Endpoint { get; set; } = default!;
