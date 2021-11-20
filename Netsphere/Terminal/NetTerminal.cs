@@ -210,7 +210,7 @@ ReceiveUnmanaged_Error:
             var gene = new NetTerminalGene(headerGene, this);
             gene.SetSend(packet);
             this.sendGenes = new NetTerminalGene[] { gene, };
-            this.TerminalLogger?.Information($"RegisterSend: {gene.ToString()}");
+            this.TerminalLogger?.Information($"RegisterSend   : {gene.ToString()}");
         }
 
         return SendResult.Success;
@@ -247,7 +247,7 @@ ReceiveUnmanaged_Error:
                     {
                         if (x.Send(udp))
                         {
-                            this.TerminalLogger?.Information($"Udp Sent: {x.ToString()}");
+                            this.TerminalLogger?.Information($"Udp Sent       : {x.ToString()}");
                             x.SentTicks = currentTicks;
                         }
                     }
