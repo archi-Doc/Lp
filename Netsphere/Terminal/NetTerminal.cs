@@ -56,8 +56,6 @@ public partial class NetTerminal : IDisposable
 
     public NodeInformation? NodeInformation { get; }
 
-    public bool IsManaged => this.NodeInformation != null;
-
     public enum SendResult
     {
         Success,
@@ -277,7 +275,10 @@ ReceiveUnmanaged_Error:
                 {
                     if (this.Terminal.TryGetInbound(x, out var gene2))
                     {
-                        gene2.ReceiveAck();
+                        if (gene2.NetTerminal == this)
+                        {
+                            gene2.ReceiveAck();
+                        }
                     }
                 }
             }

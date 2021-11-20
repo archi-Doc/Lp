@@ -11,14 +11,15 @@ public enum RawPacketId : byte
 {
     Invalid,
     Ack,
+    Relay,
+    Encrypt,
+    Data,
     Ping,
     PingResponse,
     Punch,
     PunchResponse,
-    GetNodeInformation,
-    Relay,
-    Encrypt,
-    Data,
+    GetNode,
+    GetNodeResponse,
 }
 
 public interface IRawPacket

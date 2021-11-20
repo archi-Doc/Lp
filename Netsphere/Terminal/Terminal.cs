@@ -12,9 +12,9 @@ namespace LP.Net;
 
 public class Terminal
 {
-    internal struct UnmanagedSend
+    internal struct RawSend
     {
-        public UnmanagedSend(IPEndPoint endPoint, byte[] packet)
+        public RawSend(IPEndPoint endPoint, byte[] packet)
         {
             this.Endpoint = endPoint;
             this.Packet = packet;
@@ -28,8 +28,8 @@ public class Terminal
     public void Dump(ISimpleLogger logger)
     {
         logger.Information($"Terminal: {this.terminals.QueueChain.Count}");
-        logger.Information($"Unmanaged sends: {this.unmanagedSends.Count}");
-        logger.Information($"Managed genes: {this.inboundGenes.Count}");
+        logger.Information($"Raw sends: {this.rawSends.Count}");
+        logger.Information($"Inbound genes: {this.inboundGenes.Count}");
     }
 
     /// <summary>
@@ -133,7 +133,7 @@ public class Terminal
 
     internal void ProcessSend(UdpClient udp, long currentTicks)
     {
-        while (this.unmanagedSends.TryDequeue(out var unregisteredSend))
+        while (this.rawSends.TryDequeue(out var unregisteredSend))
         {
             udp.Send(unregisteredSend.Packet, unregisteredSend.Endpoint);
         }
@@ -236,7 +236,7 @@ public class Terminal
         header.Gene = GenePool.GetSecond(header.Gene);
         var p = PacketService.CreatePacket(ref header, r);
 
-        this.unmanagedSends.Enqueue(new UnmanagedSend(endpoint, p));
+        this.rawSends.Enqueue(new RawSend(endpoint, p));
     }
 
     internal void ProcessUnmanagedRecv_Encrypt(IPEndPoint endpoint, ref RawPacketHeader header, Memory<byte> data)
@@ -273,7 +273,7 @@ public class Terminal
         this.TerminalLogger?.Information($"Ping Response: {firstGene.To4Hex()} to {header.Gene.To4Hex()}");
 
         var p = PacketService.CreateAckAndPacket(ref header, firstGene, response);
-        this.unmanagedSends.Enqueue(new UnmanagedSend(endpoint, p));
+        this.rawSends.Enqueue(new RawSend(endpoint, p));
     }
 
     internal void AddInbound(NetTerminalGene[] genes)
@@ -281,7 +281,7 @@ public class Terminal
         foreach (var x in genes)
         {
             if (x.State == NetTerminalGeneState.WaitingToReceive ||
-                x.State == NetTerminalGeneState.WaitingToSend || 
+                x.State == NetTerminalGeneState.WaitingToSend ||
                 x.State == NetTerminalGeneState.WaitingForAck)
             {
                 this.inboundGenes.TryAdd(x.Gene, x);
@@ -311,5 +311,5 @@ public class Terminal
 
     private ConcurrentDictionary<ulong, NetTerminalGene> inboundGenes = new();
 
-    private ConcurrentQueue<UnmanagedSend> unmanagedSends = new();
+    private ConcurrentQueue<RawSend> rawSends = new();
 }
