@@ -20,8 +20,6 @@ internal partial class PacketPunch : IUnmanagedPacket
         this.UtcTicks = Ticks.GetUtcNow();
     }
 
-    public bool IsManaged => false;
-
     public UnmanagedPacketId Id => UnmanagedPacketId.Punch;
 
     [Key(0)]
@@ -34,8 +32,6 @@ internal partial class PacketPunch : IUnmanagedPacket
 [TinyhandObject]
 internal partial class PacketPunchResponse : IUnmanagedPacket
 {
-    public bool IsResponse => true;
-
     public UnmanagedPacketId Id => UnmanagedPacketId.PunchResponse;
 
     [Key(0)]

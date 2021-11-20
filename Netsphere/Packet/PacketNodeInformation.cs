@@ -14,8 +14,6 @@ internal partial class PacketGetNodeInformation : IUnmanagedPacket
     {
     }
 
-    public bool IsManaged => false;
-
     public UnmanagedPacketId Id => UnmanagedPacketId.GetNodeInformation;
 
     [Key(0)]

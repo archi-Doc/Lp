@@ -7,8 +7,6 @@ internal partial class PacketRelay : IUnmanagedPacket
 {
     public const int EndpointAliveInSeconds = 10;
 
-    public bool IsManaged => false;
-
     public UnmanagedPacketId Id => UnmanagedPacketId.Relay;
 
     [Key(0)]

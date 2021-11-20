@@ -15,8 +15,6 @@ internal partial class PacketEncrypt : IUnmanagedPacket
         this.Salt = Random.Crypto.NextULong();
     }
 
-    public bool IsManaged => false;
-
     public UnmanagedPacketId Id => UnmanagedPacketId.Encrypt;
 
     [Key(0)]
