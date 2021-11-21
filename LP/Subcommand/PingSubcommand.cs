@@ -67,7 +67,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
             sw.Restart();
             terminal.SendRaw(p);
 
-            var r = terminal.Receive<RawPacketPingResponse>();
+            var r = terminal.ReceiveRaw<RawPacketPingResponse>();
             sw.Stop();
             if (r == null)
             {

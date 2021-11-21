@@ -83,7 +83,7 @@ public partial class NetTerminal : IDisposable
         // var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
         var p = new RawPacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
         this.SendPacket(p);
-        var r = this.Receive<RawPacketEncrypt>();
+        var r = this.ReceiveRaw<RawPacketEncrypt>();
         if (r != null)
         {
             if (this.CreateEmbryo(p.Salt))
@@ -100,7 +100,7 @@ public partial class NetTerminal : IDisposable
     }
 
     public SendResult Send<T>(T value, int millisecondsToWait = DefaultMillisecondsToWait)
-        where T : IRawPacket
+        where T : IRawPacket, IPacket
     {
         var result = this.CheckManagedAndEncrypted();
         if (result != SendResult.Success)
@@ -111,7 +111,7 @@ public partial class NetTerminal : IDisposable
         return this.SendPacket(value);
     }
 
-    public T? Receive<T>(int millisecondsToWait = DefaultMillisecondsToWait)
+    public T? ReceiveRaw<T>(int millisecondsToWait = DefaultMillisecondsToWait)
         where T : IRawPacket
     {
         var result = this.Receive(out var data, millisecondsToWait);
@@ -191,21 +191,23 @@ ReceiveUnmanaged_Error:
 
     internal unsafe SendResult RegisterSend(byte[] packet)
     {
+        ulong headerGene;
+        fixed (byte* pb = packet)
+        {
+            headerGene = (*(RawPacketHeader*)pb).Gene;
+        }
+
+        NetTerminalGene gene;
         lock (this.syncObject)
         {
-            ulong headerGene;
-            fixed (byte* pb = packet)
-            {
-                headerGene = (*(RawPacketHeader*)pb).Gene;
-            }
-
-            var gene = new NetTerminalGene(headerGene, this);
+            gene = new NetTerminalGene(headerGene, this);
             gene.SetSend(packet);
             var index = this.EnsureSend();
             this.sendGenes![index] = gene;
-            this.TerminalLogger?.Information($"RegisterSend   : {gene.ToString()}");
-            this.Terminal.AddInbound(this.sendGenes);
+            this.Terminal.AddInbound(gene);
         }
+
+        this.TerminalLogger?.Information($"RegisterSend   : {gene.ToString()}");
 
         return SendResult.Success;
     }
@@ -356,29 +358,6 @@ ReceiveUnmanaged_Error:
             this.sendGenes = new NetTerminalGene[1];
             return 0;
         }
-    }
-
-    private bool PrepareSend()
-    {
-        if (this.sendGenes != null)
-        {
-            foreach (var x in this.sendGenes)
-            {
-                if (!x.IsAvailable)
-                {// Not available.
-                    return false;
-                }
-            }
-
-            foreach (var x in this.sendGenes)
-            {
-                x.Clear();
-            }
-
-            this.sendGenes = null;
-        }
-
-        return true;
     }
 
     private bool PrepareReceive()

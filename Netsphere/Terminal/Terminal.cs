@@ -289,12 +289,27 @@ public class Terminal
         }
     }
 
+    internal void AddInbound(NetTerminalGene x)
+    {
+        if (x.State == NetTerminalGeneState.WaitingToReceive ||
+            x.State == NetTerminalGeneState.WaitingToSend ||
+            x.State == NetTerminalGeneState.WaitingForAck)
+        {
+            this.inboundGenes.TryAdd(x.Gene, x);
+        }
+    }
+
     internal void RemoveInbound(NetTerminalGene[] genes)
     {
         foreach (var x in genes)
         {
             this.inboundGenes.TryRemove(x.Gene, out _);
         }
+    }
+
+    internal void RemoveInbound(NetTerminalGene x)
+    {
+        this.inboundGenes.TryRemove(x.Gene, out _);
     }
 
     internal bool TryGetInbound(ulong gene, [MaybeNullWhen(false)] out NetTerminalGene netTerminalGene) => this.inboundGenes.TryGetValue(gene, out netTerminalGene);

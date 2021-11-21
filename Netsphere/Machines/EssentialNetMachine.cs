@@ -34,7 +34,7 @@ public partial class EssentialNetMachine : Machine<Identifier>
         using (var ta = this.Netsphere.Terminal.Create(ni))
         {
             var pp = new RawPacketPunch(null);
-            ta.Send(pp);
+            ta.SendRaw(pp);
         }
 
         if (this.Netsphere.EssentialNode.GetUncheckedNode(out var nodeAddress))
@@ -46,7 +46,7 @@ public partial class EssentialNetMachine : Machine<Identifier>
             using (var terminal = this.Netsphere.Terminal.Create(nodeAddress))
             {
                 terminal.SendRaw(new RawPacketPunch(null));
-                var data = terminal.Receive<PacketPunchResponse>(1000);
+                var data = terminal.ReceiveRaw<PacketPunchResponse>(1000);
                 if (data != null)
                 {
                     Logger.Default.Information(Time.GetUtcNow().ToString());
