@@ -90,7 +90,7 @@ public partial class NodeAddress : IEquatable<NodeAddress>
     {
     }
 
-    public NodeAddress(IPAddress address, ushort port, byte engagement = 0)
+    public NodeAddress(IPAddress address, ushort port, ushort engagement = 0)
     {
         this.Address = address;
         this.Port = port;
@@ -101,7 +101,7 @@ public partial class NodeAddress : IEquatable<NodeAddress>
     public NodeType Type { get; protected set; }
 
     [Key(1)]
-    public byte Engagement { get; protected set; }
+    public ushort Engagement { get; protected set; }
 
     [Key(2)]
     public ushort Port { get; protected set; }
