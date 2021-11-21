@@ -128,12 +128,16 @@ public partial class NetTerminal : IDisposable
 
     internal bool Receive(out Memory<byte> data, int millisecondsToWait = DefaultMillisecondsToWait)
     {
+        ulong recvGene;
         lock (this.syncObject)
         {
-            if (this.recvGenes == null)
-            {
-                this.RegisterReceive(1);
-            }
+            recvGene = this.GenePool.GetGene();
+            var gene = new NetTerminalGene(recvGene, this);
+            gene.SetReceive();
+
+            var index = this.EnsureReceive();
+            this.recvGenes![index] = gene;
+            this.Terminal.AddInbound(gene);
         }
 
         var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);
@@ -148,9 +152,16 @@ public partial class NetTerminal : IDisposable
 
             lock (this.syncObject)
             {
-                if (this.ReceivePacket(out data))
-                {// Received
-                    return true;
+                if (this.Terminal.TryGetInbound(recvGene, out var gene))
+                {
+                    if (gene.State == NetTerminalGeneState.Complete && !gene.ReceivedData.IsEmpty)
+                    {
+                        this.Terminal.RemoveInbound(gene);
+                        data = gene.ReceivedData;
+                        gene.Clear();
+                        this.recvGenes = null;
+                        return true;
+                    }
                 }
             }
 
@@ -360,6 +371,30 @@ ReceiveUnmanaged_Error:
         }
     }
 
+    private int EnsureReceive()
+    {
+        if (this.recvGenes != null)
+        {
+            for (var i = 0; i < this.recvGenes.Length; i++)
+            {
+                if (this.recvGenes[i].IsAvailable)
+                {// Available.
+                    this.recvGenes[i].Clear();
+                    return i;
+                }
+            }
+
+            var originalLength = this.recvGenes.Length;
+            Array.Resize<NetTerminalGene>(ref this.recvGenes, this.recvGenes.Length + 1);
+            return originalLength;
+        }
+        else
+        {
+            this.recvGenes = new NetTerminalGene[1];
+            return 0;
+        }
+    }
+
     private bool PrepareReceive()
     {
         if (this.recvGenes != null)
@@ -417,26 +452,29 @@ ReceivePacket_Error:
 
     private void ClearGenes()
     {
-        if (this.sendGenes != null)
+        lock (this.syncObject)
         {
-            this.Terminal.RemoveInbound(this.sendGenes);
-            foreach (var x in this.sendGenes)
+            if (this.sendGenes != null)
             {
-                x.Clear();
+                this.Terminal.RemoveInbound(this.sendGenes);
+                foreach (var x in this.sendGenes)
+                {
+                    x.Clear();
+                }
+
+                this.sendGenes = null;
             }
 
-            this.sendGenes = null;
-        }
-
-        if (this.recvGenes != null)
-        {
-            this.Terminal.RemoveInbound(this.recvGenes);
-            foreach (var x in this.recvGenes)
+            if (this.recvGenes != null)
             {
-                x.Clear();
-            }
+                this.Terminal.RemoveInbound(this.recvGenes);
+                foreach (var x in this.recvGenes)
+                {
+                    x.Clear();
+                }
 
-            this.recvGenes = null;
+                this.recvGenes = null;
+            }
         }
     }
 
@@ -479,11 +517,7 @@ ReceivePacket_Error:
             {
                 // free managed resources.
                 this.ClearGenes();
-                // lock (this.Terminal.terminals)
-                {
-                    this.Goshujin = null;
-                    // this.terminals.Add(terminal);
-                }
+                this.Terminal.TryRemove(this);
             }
 
             // free native resources here if there are any.

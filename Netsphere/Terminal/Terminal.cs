@@ -81,6 +81,14 @@ public class Terminal
         return terminal;
     }
 
+    public void TryRemove(NetTerminal netTerminal)
+    {
+        lock (this.terminals)
+        {
+            this.terminals.Remove(netTerminal);
+        }
+    }
+
     public Terminal(Information information, NetStatus netStatus)
     {
         this.Information = information;
@@ -221,21 +229,13 @@ public class Terminal
 
         TimeCorrection.AddCorrection(punch.UtcTicks);
 
-        var r = new PacketPunchResponse();
-        if (punch.NextEndpoint != null)
-        {
-            r.Endpoint = punch.NextEndpoint;
-        }
-        else
-        {
-            r.Endpoint = endpoint;
-        }
+        var response = new PacketPunchResponse();
+        response.Endpoint = endpoint;
+        response.UtcTicks = Ticks.GetUtcNow();
+        var secondGene = GenePool.GetSecond(header.Gene);
+        this.TerminalLogger?.Information($"Punch Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
-        r.UtcTicks = Ticks.GetUtcNow();
-
-        header.Gene = GenePool.GetSecond(header.Gene);
-        var p = PacketService.CreatePacket(ref header, r);
-
+        var p = PacketService.CreateAckAndPacket(ref header, secondGene, response);
         this.rawSends.Enqueue(new RawSend(endpoint, p));
     }
 
@@ -267,12 +267,11 @@ public class Terminal
 
         Logger.Default.Information($"Ping From: {packet.ToString()}");
 
-        var response = new RawPacketPingResponse(new(endpoint.Address, (ushort)endpoint.Port, header.Engagement), this.Information.NodeName);
-        var firstGene = header.Gene;
-        header.Gene = GenePool.GetSecond(header.Gene);
-        this.TerminalLogger?.Information($"Ping Response: {firstGene.To4Hex()} to {header.Gene.To4Hex()}");
+        var response = new RawPacketPingResponse(new(endpoint.Address, (ushort)endpoint.Port, 0), this.Information.NodeName);
+        var secondGene = GenePool.GetSecond(header.Gene);
+        this.TerminalLogger?.Information($"Ping Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
-        var p = PacketService.CreateAckAndPacket(ref header, firstGene, response);
+        var p = PacketService.CreateAckAndPacket(ref header, secondGene, response);
         this.rawSends.Enqueue(new RawSend(endpoint, p));
     }
 
