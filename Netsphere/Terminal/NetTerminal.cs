@@ -62,6 +62,12 @@ public partial class NetTerminal : IDisposable
         return this.SendPacket(value);
     }
 
+    public INetInterface<TSend, TReceive> SendAndReceiveRaw<TSend, TReceive>(TSend value)
+        where TSend : IRawPacket
+    {
+        return this.SendAndReceivePacket<TSend, TReceive>(value);
+    }
+
     public enum SendResult
     {
         Success,
@@ -187,6 +193,14 @@ ReceiveUnmanaged_Error:
         return netInterface;
     }
 
+    internal INetInterface<TSend, TReceive> SendAndReceivePacket<TSend, TReceive>(TSend value)
+        where TSend : IRawPacket
+    {
+        var netInterface = new NetInterface<TSend, TReceive>(this);
+        netInterface.Initialize(value, value.Id, true);
+        return netInterface;
+    }
+
     internal void ProcessSend(UdpClient udp, long currentTicks)
     {
         lock (this.syncObject)
@@ -249,6 +263,8 @@ ReceiveUnmanaged_Error:
             }
         }
     }
+
+    internal object SyncObject { get; } = new();
 
 #pragma warning disable SA1307
 #pragma warning disable SA1401 // Fields should be private
@@ -422,8 +438,6 @@ ReceivePacket_Error:
             }
         }
     }
-
-    private object syncObject = new();
 
     private byte[]? embryo;
 

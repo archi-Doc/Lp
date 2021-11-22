@@ -65,17 +65,16 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
         {
             var p = new RawPacketPing("test");
             sw.Restart();
-            terminal.SendRaw(p);
-
-            var r = terminal.ReceiveRaw<RawPacketPingResponse>();
+            var ni = terminal.SendAndReceiveRaw<RawPacketPing, RawPacketPingResponse>(p);
+            var result = ni.Receive(out var r);
             sw.Stop();
-            if (r == null)
+            if (result == NetInterfaceReceiveResult.Success)
             {
-                Logger.Priority.Information($"Timeout.");
+                Logger.Priority.Information($"Received: {r.ToString()} - {sw.ElapsedMilliseconds} ms");
             }
             else
             {
-                Logger.Priority.Information($"Received: {r.ToString()} - {sw.ElapsedMilliseconds} ms");
+                Logger.Priority.Error($"{result}");
             }
         }
 
