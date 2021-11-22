@@ -56,17 +56,17 @@ public partial class NetTerminal : IDisposable
 
     public NodeInformation? NodeInformation { get; }
 
+    public INetInterface<TSend> SendRaw<TSend>(TSend value)
+        where TSend : IRawPacket
+    {
+        return this.SendPacket(value);
+    }
+
     public enum SendResult
     {
         Success,
         Error,
         Timeout,
-    }
-
-    public SendResult SendRaw<T>(T value)
-        where T : IRawPacket
-    {
-        return this.SendPacket(value);
     }
 
     public SendResult CheckManagedAndEncrypted()
@@ -191,13 +191,12 @@ ReceiveUnmanaged_Error:
         header.Engagement = this.NodeAddress.Engagement;
     }
 
-    internal SendResult SendPacket<T>(T value)
-        where T : IRawPacket
+    internal INetInterface<TSend> SendPacket<TSend>(TSend value)
+        where TSend : IRawPacket
     {
-        var gene = this.GenePool.GetGene();
-        this.CreateHeader(out var header, gene);
-        var packet = PacketService.CreatePacket(ref header, value);
-        return this.RegisterSend(packet);
+        var netInterface = new NetInterface<TSend, object>();
+        netInterface.Initialize(value);
+        return netInterface;
     }
 
     internal unsafe SendResult RegisterSend(byte[] packet)
@@ -311,6 +310,7 @@ ReceiveUnmanaged_Error:
     internal NetTerminalGene[]? recvGenes;
 #pragma warning restore SA1401 // Fields should be private
 
+    internal object syncInterfaceGene = new();
     internal ISimpleLogger? TerminalLogger => this.Terminal.TerminalLogger;
 
     internal bool CreateEmbryo(ulong salt)

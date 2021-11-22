@@ -38,7 +38,6 @@ internal class PacketService
     private static byte[]? initialBuffer;
 
     internal static unsafe byte[] CreatePacket<T>(ref RawPacketHeader header, T value)
-        where T : IRawPacket
     {
         if (initialBuffer == null)
         {
@@ -63,7 +62,6 @@ internal class PacketService
     }
 
     internal static unsafe byte[] CreateAckAndPacket<T>(ref RawPacketHeader header, ulong secondGene, T value)
-        where T : IRawPacket
     {
         if (initialBuffer == null)
         {

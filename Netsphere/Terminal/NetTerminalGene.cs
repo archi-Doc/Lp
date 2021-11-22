@@ -45,10 +45,10 @@ internal enum NetTerminalGeneState
 /// </summary>
 internal class NetTerminalGene// : IEquatable<NetTerminalGene>
 {
-    public NetTerminalGene(ulong gene, NetTerminal netTerminal)
+    public NetTerminalGene(ulong gene, NetInterface netInterface)
     {
         this.Gene = gene;
-        this.NetTerminal = netTerminal;
+        this.NetInterface = netInterface;
     }
 
     public bool IsAvailable => this.State == NetTerminalGeneState.Initial || this.State == NetTerminalGeneState.Complete;
@@ -93,7 +93,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
             }
             else
             {
-                udp.Send(this.packetToSend, this.NetTerminal.Endpoint);
+                udp.Send(this.packetToSend, this.NetInterface.NetTerminal.Endpoint);
                 this.State = NetTerminalGeneState.WaitingForAck;
 
                 // var packetId = (PacketId)packetToSend[1];
@@ -148,7 +148,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         return $"{this.Gene.To4Hex()}, {this.State}, SendData: {sendData}, RecvData: {this.ReceivedData.Length}";
     }
 
-    public NetTerminal NetTerminal { get; }
+    public NetInterface NetInterface { get; }
 
     public NetTerminalGeneState State { get; private set; }
 
