@@ -109,7 +109,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
     }
 
     public bool ReceiveAck()
-    {
+    {// lock (this.NetTerminal.SyncObject)
         if (this.State == NetTerminalGeneState.WaitingForAck)
         {
             this.State = NetTerminalGeneState.Complete;
@@ -120,11 +120,26 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
     }
 
     public bool Receive(Memory<byte> data)
-    {
+    {// lock (this.NetTerminal.SyncObject)
         if (this.State == NetTerminalGeneState.WaitingToReceive)
         {// Receive data
-            this.State = NetTerminalGeneState.Complete;
             this.ReceivedData = data;
+            if (this.NetInterface.NoReceivedAck)
+            {
+                this.State = NetTerminalGeneState.Complete;
+            }
+            else
+            {
+                if (this.NetInterface.RecvGenes?.Length == 1)
+                {
+                    this.NetInterface.NetTerminal.SendAck(this.Gene);
+                    this.State = NetTerminalGeneState.Complete;
+                }
+                else
+                {
+                    this.State = NetTerminalGeneState.SendingAck;
+                }
+            }
 
             // Logger.Default.Debug($"Receive: {this.PacketId}, {this.NetTerminal.Endpoint}");
             return true;

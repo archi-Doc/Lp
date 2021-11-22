@@ -140,10 +140,24 @@ public partial class NetTerminal : IDisposable
         header.Engagement = this.NodeAddress.Engagement;
     }
 
+    internal unsafe void SendAck(ulong gene)
+    {
+        this.CreateHeader(out var header, gene);
+        header.Id = RawPacketId.Ack;
+
+        var packet = new byte[PacketService.HeaderSize];
+        fixed (byte* bp = packet)
+        {
+            *(RawPacketHeader*)bp = header;
+        }
+
+        this.Terminal.AddRawSend(this.Endpoint, packet);
+    }
+
     internal NetInterface<TSend, object> SendPacket<TSend>(TSend value)
         where TSend : IRawPacket
     {
-        var netInterface = new NetInterface<TSend, object>(this);
+        var netInterface = new NetInterface<TSend, object>(this, true);
         netInterface.Initialize(value, value.Id, false);
         return netInterface;
     }
@@ -151,7 +165,7 @@ public partial class NetTerminal : IDisposable
     internal NetInterface<TSend, TReceive> SendAndReceivePacket<TSend, TReceive>(TSend value)
         where TSend : IRawPacket
     {
-        var netInterface = new NetInterface<TSend, TReceive>(this);
+        var netInterface = new NetInterface<TSend, TReceive>(this, true);
         netInterface.Initialize(value, value.Id, true);
         return netInterface;
     }

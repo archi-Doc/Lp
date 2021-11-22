@@ -141,9 +141,9 @@ public class Terminal
 
     internal void ProcessSend(UdpClient udp, long currentTicks)
     {
-        while (this.rawSends.TryDequeue(out var unregisteredSend))
+        while (this.rawSends.TryDequeue(out var rawSend))
         {
-            udp.Send(unregisteredSend.Packet, unregisteredSend.Endpoint);
+            udp.Send(rawSend.Packet, rawSend.Endpoint);
         }
 
         NetTerminal[] array;
@@ -236,7 +236,7 @@ public class Terminal
         this.TerminalLogger?.Information($"Punch Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
         var p = PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id);
-        this.rawSends.Enqueue(new RawSend(endpoint, p));
+        this.AddRawSend(endpoint, p);
     }
 
     internal void ProcessUnmanagedRecv_Encrypt(IPEndPoint endpoint, ref RawPacketHeader header, Memory<byte> data)
@@ -272,7 +272,12 @@ public class Terminal
         this.TerminalLogger?.Information($"Ping Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
         var p = PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id);
-        this.rawSends.Enqueue(new RawSend(endpoint, p));
+        this.AddRawSend(endpoint, p);
+    }
+
+    internal void AddRawSend(IPEndPoint endpoint, byte[] packet)
+    {
+        this.rawSends.Enqueue(new RawSend(endpoint, packet));
     }
 
     internal void AddInbound(NetTerminalGene[] genes)

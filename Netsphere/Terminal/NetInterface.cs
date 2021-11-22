@@ -40,8 +40,8 @@ public interface INetInterface<TSend>
 
 internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend, TReceive>
 {
-    public NetInterface(NetTerminal netTerminal)
-        : base(netTerminal)
+    public NetInterface(NetTerminal netTerminal, bool noReceivedAck)
+        : base(netTerminal, noReceivedAck)
     {
     }
 
@@ -99,10 +99,11 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
 
 internal class NetInterface : IDisposable
 {
-    public NetInterface(NetTerminal netTerminal)
+    public NetInterface(NetTerminal netTerminal, bool noReceivedAck)
     {
         this.Terminal = netTerminal.Terminal;
         this.NetTerminal = netTerminal;
+        this.NoReceivedAck = noReceivedAck;
     }
 
     public Terminal Terminal { get; }
@@ -196,6 +197,8 @@ WaitForSendCompletionWait:
     }
 
     internal ISimpleLogger? TerminalLogger => this.Terminal.TerminalLogger;
+
+    internal bool NoReceivedAck { get; }
 
     protected bool ReceivedGeneToData(ref Memory<byte> data)
     {// lock (this.NetTerminal.SyncObject)
