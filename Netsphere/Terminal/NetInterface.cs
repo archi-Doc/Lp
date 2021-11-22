@@ -44,11 +44,11 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         throw new NotImplementedException();
     }
 
-    internal void Initialize(TSend value, bool receive)
+    internal void Initialize(TSend value, RawPacketId id, bool receive)
     {
         var gene = this.NetTerminal.GenePool.GetGene(); // Send gene
         this.NetTerminal.CreateHeader(out var header, gene);
-        var packet = PacketService.CreatePacket(ref header, value);
+        var packet = PacketService.CreatePacket(ref header, value, id);
         if (packet.Length <= PacketService.SafeMaxPacketSize)
         {// Single packet.
             var ntg = new NetTerminalGene(gene, this);

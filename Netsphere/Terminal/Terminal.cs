@@ -193,7 +193,7 @@ public class Terminal
     {
         if (this.inboundGenes.TryGetValue(header.Gene, out var gene))
         {// NetTerminalGene is found.
-            gene.NetTerminal.ProcessReceive(endPoint, ref header, data, currentTicks, gene);
+            gene.NetInterface.NetTerminal.ProcessReceive(endPoint, ref header, data, currentTicks, gene);
         }
         else
         {
@@ -235,7 +235,7 @@ public class Terminal
         var secondGene = GenePool.GetSecond(header.Gene);
         this.TerminalLogger?.Information($"Punch Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
-        var p = PacketService.CreateAckAndPacket(ref header, secondGene, response);
+        var p = PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id);
         this.rawSends.Enqueue(new RawSend(endpoint, p));
     }
 
@@ -271,7 +271,7 @@ public class Terminal
         var secondGene = GenePool.GetSecond(header.Gene);
         this.TerminalLogger?.Information($"Ping Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
-        var p = PacketService.CreateAckAndPacket(ref header, secondGene, response);
+        var p = PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id);
         this.rawSends.Enqueue(new RawSend(endpoint, p));
     }
 

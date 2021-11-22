@@ -99,7 +99,7 @@ public partial class NetTerminal : IDisposable
         return SendResult.Timeout;
     }
 
-    public SendResult Send<T>(T value, int millisecondsToWait = DefaultMillisecondsToWait)
+    /*public SendResult Send<T>(T value, int millisecondsToWait = DefaultMillisecondsToWait)
         where T : IRawPacket, IPacket
     {
         var result = this.CheckManagedAndEncrypted();
@@ -109,7 +109,7 @@ public partial class NetTerminal : IDisposable
         }
 
         return this.SendPacket(value);
-    }
+    }*/
 
     public T? ReceiveRaw<T>(int millisecondsToWait = DefaultMillisecondsToWait)
         where T : IRawPacket
@@ -128,18 +128,6 @@ public partial class NetTerminal : IDisposable
 
     internal bool Receive(out Memory<byte> data, int millisecondsToWait = DefaultMillisecondsToWait)
     {
-        ulong recvGene;
-        lock (this.syncObject)
-        {
-            recvGene = this.GenePool.GetGene();
-            var gene = new NetTerminalGene(recvGene, this);
-            gene.SetReceive();
-
-            var index = this.EnsureReceive();
-            this.recvGenes![index] = gene;
-            this.Terminal.AddInbound(gene);
-        }
-
         var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);
 
         while (this.Terminal.Core?.IsTerminated == false)
@@ -152,7 +140,7 @@ public partial class NetTerminal : IDisposable
 
             lock (this.syncObject)
             {
-                if (this.Terminal.TryGetInbound(recvGene, out var gene))
+                if (this.Terminal.TryGetInbound(0, out var gene))
                 {
                     if (gene.State == NetTerminalGeneState.Complete && !gene.ReceivedData.IsEmpty)
                     {
@@ -194,51 +182,9 @@ ReceiveUnmanaged_Error:
     internal INetInterface<TSend> SendPacket<TSend>(TSend value)
         where TSend : IRawPacket
     {
-        var netInterface = new NetInterface<TSend, object>();
-        netInterface.Initialize(value);
+        var netInterface = new NetInterface<TSend, object>(this);
+        netInterface.Initialize(value, value.Id, false);
         return netInterface;
-    }
-
-    internal unsafe SendResult RegisterSend(byte[] packet)
-    {
-        ulong headerGene;
-        fixed (byte* pb = packet)
-        {
-            headerGene = (*(RawPacketHeader*)pb).Gene;
-        }
-
-        NetTerminalGene gene;
-        lock (this.syncObject)
-        {
-            gene = new NetTerminalGene(headerGene, this);
-            gene.SetSend(packet);
-            var index = this.EnsureSend();
-            this.sendGenes![index] = gene;
-            this.Terminal.AddInbound(gene);
-        }
-
-        this.TerminalLogger?.Information($"RegisterSend   : {gene.ToString()}");
-
-        return SendResult.Success;
-    }
-
-    internal unsafe SendResult RegisterReceive(int numberOfGenes)
-    {
-        lock (this.syncObject)
-        {
-            if (!this.PrepareReceive())
-            {
-                return SendResult.Error;
-            }
-
-            var gene = new NetTerminalGene(this.GenePool.GetGene(), this);
-            gene.SetReceive();
-            this.TerminalLogger?.Information($"RegisterReceive: {gene.ToString()}");
-            this.recvGenes = new NetTerminalGene[] { gene, };
-            this.Terminal.AddInbound(this.recvGenes);
-        }
-
-        return SendResult.Success;
     }
 
     internal void ProcessSend(UdpClient udp, long currentTicks)
@@ -287,7 +233,7 @@ ReceiveUnmanaged_Error:
                 {
                     if (this.Terminal.TryGetInbound(x, out var gene2))
                     {
-                        if (gene2.NetTerminal == this)
+                        if (gene2.NetInterface.NetTerminal == this)
                         {
                             gene2.ReceiveAck();
                         }
@@ -310,7 +256,6 @@ ReceiveUnmanaged_Error:
     internal NetTerminalGene[]? recvGenes;
 #pragma warning restore SA1401 // Fields should be private
 
-    internal object syncInterfaceGene = new();
     internal ISimpleLogger? TerminalLogger => this.Terminal.TerminalLogger;
 
     internal bool CreateEmbryo(ulong salt)
