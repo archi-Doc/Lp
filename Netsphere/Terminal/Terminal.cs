@@ -193,7 +193,7 @@ public class Terminal
     {
         if (this.inboundGenes.TryGetValue(header.Gene, out var gene))
         {// NetTerminalGene is found.
-            gene.NetInterface.NetTerminal.ProcessReceive(endPoint, ref header, data, currentTicks, gene);
+            gene.NetInterface.ProcessReceive(endPoint, ref header, data, currentTicks, gene);
         }
         else
         {

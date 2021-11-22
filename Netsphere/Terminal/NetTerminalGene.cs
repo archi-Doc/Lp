@@ -55,15 +55,17 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
 
     public bool IsComplete => this.State == NetTerminalGeneState.Complete;
 
+    public bool IsSent => this.State == NetTerminalGeneState.Complete;
+
+    public bool IsReceived => this.State == NetTerminalGeneState.SendingAck || this.State == NetTerminalGeneState.Complete;
+
     public bool SetSend(byte[] packet)
     {
         if (this.IsAvailable)
         {
             this.State = NetTerminalGeneState.WaitingToSend;
             this.packetToSend = packet;
-
-            // var packetId = (PacketId)packet[1];
-            // Logger.Default.Debug($"SetSend: {packetId} -> {this.PacketId}, {this.State}");
+            this.NetInterface.Terminal.AddInbound(this);
             return true;
         }
 
@@ -76,6 +78,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         {
             this.State = NetTerminalGeneState.WaitingToReceive;
             this.ReceivedData = default;
+            this.NetInterface.Terminal.AddInbound(this);
             return true;
         }
 
@@ -134,14 +137,6 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         return false;
     }
 
-    public void Clear()
-    {
-        this.State = NetTerminalGeneState.Initial;
-        this.Gene = 0;
-        this.ReceivedData = default;
-        this.packetToSend = null;
-    }
-
     public override string ToString()
     {
         var sendData = this.packetToSend == null ? 0 : this.packetToSend.Length;
@@ -158,6 +153,15 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
     ///  Gets the received data.
     /// </summary>
     public Memory<byte> ReceivedData { get; private set; }
+
+    internal void Clear()
+    {// // lock (this.NetTerminal.SyncObject)
+        this.NetInterface.Terminal.RemoveInbound(this);
+        this.State = NetTerminalGeneState.Initial;
+        this.Gene = 0;
+        this.ReceivedData = default;
+        this.packetToSend = null;
+    }
 
     /// <summary>
     ///  The byte array (header + data) to send.

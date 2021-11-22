@@ -68,7 +68,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
             var ni = terminal.SendAndReceiveRaw<RawPacketPing, RawPacketPingResponse>(p);
             var result = ni.Receive(out var r);
             sw.Stop();
-            if (result == NetInterfaceReceiveResult.Success)
+            if (r != null)
             {
                 Logger.Priority.Information($"Received: {r.ToString()} - {sw.ElapsedMilliseconds} ms");
             }
