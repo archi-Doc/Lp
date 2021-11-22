@@ -160,6 +160,11 @@ public partial class NetTerminal : IDisposable
     {
         lock (this.SyncObject)
         {
+            if (this.IsClosed)
+            {
+                return;
+            }
+
             foreach (var x in this.netInterfaces)
             {
                 x.ProcessSend(udp, currentTicks);

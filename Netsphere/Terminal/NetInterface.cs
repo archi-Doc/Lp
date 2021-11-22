@@ -79,7 +79,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
             this.SendGenes = new NetTerminalGene[] { ntg, };
             ntg.SetSend(packet);
 
-            this.NetTerminal.TerminalLogger?.Information($"RegisterSend   : {gene.ToString()}");
+            this.NetTerminal.TerminalLogger?.Information($"RegisterSend   : {gene.To4Hex()}");
         }
         else
         {// Split into multiple packets.
@@ -92,7 +92,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
             this.RecvGenes = new NetTerminalGene[] { ntg, };
             ntg.SetReceive();
 
-            this.NetTerminal.TerminalLogger?.Information($"RegisterReceive: {gene.ToString()}");
+            this.NetTerminal.TerminalLogger?.Information($"RegisterReceive: {gene.To4Hex()}");
         }
     }
 }
@@ -203,8 +203,13 @@ WaitForSendCompletionWait:
         {// Empty
             return true;
         }
-        else if (this.RecvGenes.Length == 1 && this.RecvGenes[0].IsReceived)
+        else if (this.RecvGenes.Length == 1)
         {// Single gene
+            if (!this.RecvGenes[0].IsReceived)
+            {
+                return false;
+            }
+
             data = this.RecvGenes[0].ReceivedData;
             return true;
         }
@@ -262,6 +267,11 @@ WaitForSendCompletionWait:
     {
         lock (this.NetTerminal.SyncObject)
         {
+            if (this.NetTerminal.IsClosed)
+            {
+                return;
+            }
+
             if (this.RecvGenes == null)
             {// No receive gene.
                 this.TerminalLogger?.Error("No receive gene.");

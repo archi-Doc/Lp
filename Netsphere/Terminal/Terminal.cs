@@ -204,7 +204,7 @@ public class Terminal
     internal void ProcessUnmanagedRecv(IPEndPoint endpoint, ref RawPacketHeader header, Memory<byte> data)
     {
         if (header.Id == RawPacketId.Punch)
-        {// Punch
+        {
             this.ProcessUnmanagedRecv_Punch(endpoint, ref header, data);
         }
         else if (header.Id == RawPacketId.Encrypt)
