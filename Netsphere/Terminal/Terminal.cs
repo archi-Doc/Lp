@@ -12,6 +12,8 @@ namespace LP.Net;
 
 public class Terminal
 {
+    public delegate void CreateServerTerminalDelegate(NetTerminalServer terminal);
+
     internal struct RawSend
     {
         public RawSend(IPEndPoint endPoint, byte[] packet)
@@ -70,9 +72,9 @@ public class Terminal
     /// <param name="nodeInformation">NodeInformation.</param>
     /// <param name="gene">gene.</param>
     /// <returns>NetTerminal.</returns>
-    public NetTerminal Create(NodeInformation nodeInformation, ulong gene)
+    public NetTerminalServer Create(NodeInformation nodeInformation, ulong gene)
     {
-        var terminal = new NetTerminal(this, nodeInformation, gene);
+        var terminal = new NetTerminalServer(this, nodeInformation, gene);
         lock (this.terminals)
         {
             this.terminals.Add(terminal);
@@ -133,6 +135,11 @@ public class Terminal
     public NetStatus NetStatus { get; }
 
     public int Port { get; set; }
+
+    internal void SetServerTerminalDelegate(CreateServerTerminalDelegate @delegate)
+    {
+        this.createServerTerminalDelegate = @delegate;
+    }
 
     internal void Initialize(bool isAlternative, ECDiffieHellman nodePrivateKey)
     {
@@ -256,6 +263,11 @@ public class Terminal
             terminal.GenePool.GetGene();
             terminal.GenePool.GetGene();
             terminal.CreateEmbryo(packet.Salt);
+            terminal.PrepareReceive();
+            if (this.createServerTerminalDelegate != null)
+            {
+                this.createServerTerminalDelegate(terminal);
+            }
         }
     }
 
@@ -324,6 +336,8 @@ public class Terminal
     internal ISimpleLogger? TerminalLogger { get; private set; }
 
     internal ECDiffieHellman NodePrivateECDH { get; private set; } = default!;
+
+    private CreateServerTerminalDelegate? createServerTerminalDelegate;
 
     private NetSocket netSocket;
 

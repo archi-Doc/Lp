@@ -8,4 +8,9 @@ public class NetTerminalServer : NetTerminal
         : base(terminal, nodeInformation, gene)
     {// NodeInformation: Managed
     }
+
+    internal void PrepareReceive()
+    {
+
+    }
 }

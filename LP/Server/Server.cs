@@ -13,6 +13,7 @@ internal class Server
 
     public void Process(NetTerminalServer terminal)
     {
+        terminal.Receive();
     }
 
     public Information Information { get; }
