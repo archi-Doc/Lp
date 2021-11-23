@@ -1,0 +1,93 @@
+﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+
+using System.Diagnostics;
+using Arc.Crypto;
+using LP;
+using LP.Net;
+using SimpleCommandLine;
+using Tinyhand;
+
+namespace LP.Subcommands;
+
+[SimpleCommand("punch")]
+public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
+{
+    public PunchSubcommand(Control control)
+    {
+        this.Control = control;
+    }
+
+    public async Task Run(PunchOptions options, string[] args)
+    {
+        if (!SubcommandService.TryParseNodeAddress(options.Node, out var node))
+        {
+            return;
+        }
+
+        NodeAddress? nextNode = null;
+        if (!string.IsNullOrEmpty(options.NextNode))
+        {
+            SubcommandService.TryParseNodeAddress(options.NextNode, out nextNode);
+        }
+
+        for (var n = 0; n < options.Count; n++)
+        {
+            if (this.Control.Core.IsTerminated)
+            {
+                break;
+            }
+
+            await this.Punch(node, nextNode, options);
+
+            if (n < options.Count - 1)
+            {
+                this.Control.Core.Sleep(TimeSpan.FromSeconds(options.Interval), TimeSpan.FromSeconds(0.1));
+            }
+        }
+    }
+
+    public async Task Punch(NodeAddress node, NodeAddress? nextNode, PunchOptions options)
+    {
+        Logger.Priority.Information($"Punch: {node.ToString()}");
+
+        var sw = Stopwatch.StartNew();
+        using (var terminal = this.Control.Netsphere.Terminal.Create(node))
+        {
+            var p = new RawPacketPunch();
+            p.NextEndpoint = nextNode?.CreateEndpoint();
+            p.UtcTicks = Ticks.GetUtcNow();
+
+            sw.Restart();
+            var netInterface = terminal.SendAndReceiveRaw<RawPacketPunch, RawPacketPunchResponse>(p);
+            var result = netInterface.Receive(out var r);
+            sw.Stop();
+            if (r != null)
+            {
+                Logger.Priority.Information($"Received: {r.ToString()} - {sw.ElapsedMilliseconds} ms");
+            }
+            else
+            {
+                Logger.Priority.Error($"{result}");
+            }
+        }
+    }
+
+    public Control Control { get; set; }
+}
+
+public record PunchOptions
+{
+    [SimpleOption("node", description: "Node address", Required = true)]
+    public string Node { get; init; } = string.Empty;
+
+    [SimpleOption("next", description: "Next node address")]
+    public string NextNode { get; init; } = string.Empty;
+
+    [SimpleOption("count", description: "Count")]
+    public int Count { get; init; } = 1;
+
+    [SimpleOption("interval", description: "Interval (seconds)")]
+    public int Interval { get; init; } = 2;
+
+    public override string ToString() => $"{this.Node}";
+}

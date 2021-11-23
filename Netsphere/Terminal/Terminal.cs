@@ -229,7 +229,7 @@ public class Terminal
 
         TimeCorrection.AddCorrection(punch.UtcTicks);
 
-        var response = new PacketPunchResponse();
+        var response = new RawPacketPunchResponse();
         response.Endpoint = endpoint;
         response.UtcTicks = Ticks.GetUtcNow();
         var secondGene = GenePool.GetSecond(header.Gene);

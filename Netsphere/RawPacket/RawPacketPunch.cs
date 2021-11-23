@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 namespace LP.Net;
 
 [TinyhandObject]
-internal partial class RawPacketPunch : IRawPacket
+public partial class RawPacketPunch : IRawPacket
 {
     public RawPacketPunch()
     {
@@ -30,7 +30,7 @@ internal partial class RawPacketPunch : IRawPacket
 }
 
 [TinyhandObject]
-internal partial class PacketPunchResponse : IRawPacket
+public partial class RawPacketPunchResponse : IRawPacket
 {
     public RawPacketId Id => RawPacketId.PunchResponse;
 
@@ -39,4 +39,6 @@ internal partial class PacketPunchResponse : IRawPacket
 
     [Key(1)]
     public long UtcTicks { get; set; }
+
+    public override string ToString() => $"{this.Endpoint}";
 }
