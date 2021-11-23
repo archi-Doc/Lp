@@ -248,12 +248,13 @@ public class Terminal
 
         if (packet.NodeInformation != null)
         {
-            // Logger.Default.Information($"Recv_Encrypt: {header.Gene.ToString()}");
+            this.TerminalLogger?.Information($"Encrypt Response: {header.Gene.To4Hex()}");
             packet.NodeInformation.SetIPEndPoint(endpoint);
 
             var terminal = this.Create(packet.NodeInformation, header.Gene);
-            terminal.GenePool.GetGene(); // Dispose the first gene.
-            terminal.SendPacket(new RawPacketEncrypt());
+            terminal.SendAck(header.Gene);
+            terminal.GenePool.GetGene();
+            terminal.GenePool.GetGene();
             terminal.CreateEmbryo(packet.Salt);
         }
     }

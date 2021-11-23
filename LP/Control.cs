@@ -52,6 +52,7 @@ public class Control
                 typeof(LP.Subcommands.GCSubcommand),
                 typeof(LP.Subcommands.PingSubcommand),
                 typeof(LP.Subcommands.PunchSubcommand),
+                typeof(LP.Subcommands.SendDataSubcommand),
                 typeof(LP.Subcommands.TestSubcommand),
         };
 

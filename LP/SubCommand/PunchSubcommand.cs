@@ -53,9 +53,7 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
         var sw = Stopwatch.StartNew();
         using (var terminal = this.Control.Netsphere.Terminal.Create(node))
         {
-            var p = new RawPacketPunch();
-            p.NextEndpoint = nextNode?.CreateEndpoint();
-            p.UtcTicks = Ticks.GetUtcNow();
+            var p = new RawPacketPunch(nextNode?.CreateEndpoint());
 
             sw.Restart();
             var netInterface = terminal.SendAndReceiveRaw<RawPacketPunch, RawPacketPunchResponse>(p);

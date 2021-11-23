@@ -275,12 +275,6 @@ WaitForSendCompletionWait:
                 return;
             }
 
-            if (this.RecvGenes == null)
-            {// No receive gene.
-                this.TerminalLogger?.Error("No receive gene.");
-                return;
-            }
-
             if (!this.NetTerminal.Endpoint.Equals(endPoint))
             {// Endpoint mismatch.
                 this.TerminalLogger?.Error("Endpoint mismatch.");

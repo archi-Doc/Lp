@@ -60,55 +60,6 @@ public partial class NetTerminal : IDisposable
 
     public NodeInformation? NodeInformation { get; }
 
-    /*public enum SendResult
-    {
-        Success,
-        Error,
-        Timeout,
-    }
-
-    public SendResult CheckManagedAndEncrypted()
-    {
-        if (this.embryo != null)
-        {// Encrypted
-            return SendResult.Success;
-        }
-        else if (this.NodeInformation == null)
-        {// Unmanaged
-            return SendResult.Error;
-        }
-
-        // var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
-        var p = new RawPacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
-        this.SendPacket(p);
-        var r = this.ReceiveRaw<RawPacketEncrypt>();
-        if (r != null)
-        {
-            if (this.CreateEmbryo(p.Salt))
-            {
-                return SendResult.Success;
-            }
-            else
-            {
-                return SendResult.Error;
-            }
-        }
-
-        return SendResult.Timeout;
-    }*/
-
-    /*public SendResult Send<T>(T value, int millisecondsToWait = DefaultMillisecondsToWait)
-        where T : IRawPacket, IPacket
-    {
-        var result = this.CheckManagedAndEncrypted();
-        if (result != SendResult.Success)
-        {
-            return result;
-        }
-
-        return this.SendPacket(value);
-    }*/
-
     internal GenePool GenePool { get; }
 
     internal void CreateHeader(out RawPacketHeader header, ulong gene)
@@ -170,7 +121,7 @@ public partial class NetTerminal : IDisposable
 
     internal bool CreateEmbryo(ulong salt)
     {
-        Logger.Default.Information($"Salt {salt.ToString()}");
+        Logger.Priority.Information($"Salt {salt.ToString()}");
         if (this.NodeInformation == null)
         {
             return false;
@@ -195,9 +146,9 @@ public partial class NetTerminal : IDisposable
         this.embryo = sha.GetHash(buffer);
         Hash.Sha3_384Pool.Return(sha);
 
-        Logger.Default.Information($"embryo {this.embryo[0].ToString()}");
+        Logger.Priority.Information($"embryo {this.embryo[0].ToString()}");
         this.GenePool.SetEmbryo(this.embryo);
-        Logger.Default.Information($"First gene {this.GenePool.GetGene().ToString()}");
+        Logger.Priority.Information($"First gene {this.GenePool.GetGene().ToString()}");
 
         return true;
     }

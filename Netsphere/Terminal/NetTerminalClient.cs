@@ -37,4 +37,42 @@ public class NetTerminalClient : NetTerminal
 
         return netInterface;
     }
+
+    public INetInterface<TSend, TReceive> SendAndReceive<TSend, TReceive>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
+        where TSend : IRawPacket
+    {
+        if (!this.CheckManagedAndEncrypted())
+        {
+            return null!;
+        }
+
+        var netInterface = this.SendAndReceivePacket<TSend, TReceive>(value);
+        lock (this.SyncObject)
+        {
+            this.netInterfaces.Add(netInterface);
+        }
+
+        return netInterface;
+    }
+
+    protected bool CheckManagedAndEncrypted()
+    {
+        if (this.embryo != null)
+        {// Encrypted
+            return true;
+        }
+        else if (this.NodeInformation == null)
+        {// Unmanaged
+            return false;
+        }
+
+        var p = new RawPacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
+        var netInterface = this.SendRaw<RawPacketEncrypt>(p);
+        if (netInterface.WaitForSendCompletion() == NetInterfaceSendResult.Success)
+        {
+            return this.CreateEmbryo(p.Salt);
+        }
+
+        return false;
+    }
 }
