@@ -97,9 +97,9 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
     }
 }
 
-internal class NetInterface : IDisposable
+public class NetInterface : IDisposable
 {
-    public NetInterface(NetTerminal netTerminal, bool noReceivedAck)
+    internal NetInterface(NetTerminal netTerminal, bool noReceivedAck)
     {
         this.Terminal = netTerminal.Terminal;
         this.NetTerminal = netTerminal;
@@ -244,8 +244,8 @@ WaitForSendCompletionWait:
     }
 
 #pragma warning disable SA1401 // Fields should be private
-    protected internal NetTerminalGene[]? SendGenes;
-    protected internal NetTerminalGene[]? RecvGenes;
+    internal NetTerminalGene[]? SendGenes;
+    internal NetTerminalGene[]? RecvGenes;
 #pragma warning restore SA1401 // Fields should be private
 
     internal void ProcessSend(UdpClient udp, long currentTicks)

@@ -4,14 +4,14 @@ using LP.Net;
 
 namespace LP;
 
-internal class PassiveTerminal
+internal class Server
 {
-    public PassiveTerminal(Information information)
+    public Server(Information information)
     {
         this.Information = information;
     }
 
-    public void Process(NetTerminal terminal)
+    public void Process(NetTerminalServer terminal)
     {
     }
 

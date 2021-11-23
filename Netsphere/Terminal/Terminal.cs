@@ -37,9 +37,9 @@ public class Terminal
     /// </summary>
     /// <param name="nodeAddress">NodeAddress.</param>
     /// <returns>NetTerminal.</returns>
-    public NetTerminal Create(NodeAddress nodeAddress)
+    public NetTerminalClient Create(NodeAddress nodeAddress)
     {
-        var terminal = new NetTerminal(this, nodeAddress);
+        var terminal = new NetTerminalClient(this, nodeAddress);
         lock (this.terminals)
         {
             this.terminals.Add(terminal);
@@ -53,9 +53,9 @@ public class Terminal
     /// </summary>
     /// <param name="nodeInformation">NodeInformation.</param>
     /// <returns>NetTerminal.</returns>
-    public NetTerminal Create(NodeInformation nodeInformation)
+    public NetTerminalClient Create(NodeInformation nodeInformation)
     {
-        var terminal = new NetTerminal(this, nodeInformation);
+        var terminal = new NetTerminalClient(this, nodeInformation);
         lock (this.terminals)
         {
             this.terminals.Add(terminal);

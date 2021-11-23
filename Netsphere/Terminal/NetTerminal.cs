@@ -8,6 +8,8 @@ using System.Threading;
 
 namespace LP.Net;
 
+#pragma warning disable SA1401 // Fields should be private
+
 /// <summary>
 /// Initializes a new instance of the <see cref="NetTerminal"/> class.<br/>
 /// NOT thread-safe.
@@ -57,30 +59,6 @@ public partial class NetTerminal : IDisposable
     public NodeAddress NodeAddress { get; }
 
     public NodeInformation? NodeInformation { get; }
-
-    public INetInterface<TSend> SendRaw<TSend>(TSend value)
-        where TSend : IRawPacket
-    {
-        var netInterface = this.SendPacket(value);
-        lock (this.SyncObject)
-        {
-            this.netInterfaces.Add(netInterface);
-        }
-
-        return netInterface;
-    }
-
-    public INetInterface<TSend, TReceive> SendAndReceiveRaw<TSend, TReceive>(TSend value)
-        where TSend : IRawPacket
-    {
-        var netInterface = this.SendAndReceivePacket<TSend, TReceive>(value);
-        lock (this.SyncObject)
-        {
-            this.netInterfaces.Add(netInterface);
-        }
-
-        return netInterface;
-    }
 
     /*public enum SendResult
     {
@@ -232,8 +210,8 @@ public partial class NetTerminal : IDisposable
         }
     }
 
-    private List<NetInterface> netInterfaces = new();
-    private byte[]? embryo;
+    protected List<NetInterface> netInterfaces = new();
+    protected byte[]? embryo;
 
     // private PacketService packetService = new();
 
