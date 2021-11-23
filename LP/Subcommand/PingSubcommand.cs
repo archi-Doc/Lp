@@ -19,25 +19,9 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
 
     public async Task Run(PingOptions options, string[] args)
     {
-        NodeAddress? node;
-
-        if (string.Compare(options.Node, "alternative", true) == 0)
+        if (!SubcommandService.TryParseNodeAddress(options.Node, out var node))
         {
-            node = NodeAddress.Alternative;
-        }
-        else
-        {
-            if (!NodeAddress.TryParse(options.Node, out node))
-            {
-                Logger.Priority.Error($"Could not parse: {options.Node.ToString()}");
-                return;
-            }
-
-            if (!node.IsValid())
-            {
-                Logger.Priority.Error($"Invalid node address: {options.Node.ToString()}");
-                return;
-            }
+            return;
         }
 
         for (var n = 0; n < options.Count; n++)
