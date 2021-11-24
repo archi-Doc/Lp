@@ -151,11 +151,13 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
             {
                 if (this.NetInterface.RecvGenes?.Length == 1)
                 {
+                    this.NetInterface.TerminalLogger?.Information("ACK");
                     this.NetInterface.NetTerminal.SendAck(this.Gene);
                     this.State = NetTerminalGeneState.Complete;
                 }
                 else
                 {
+                    this.NetInterface.TerminalLogger?.Information("ACK2");
                     this.State = NetTerminalGeneState.SendingAck;
                 }
             }

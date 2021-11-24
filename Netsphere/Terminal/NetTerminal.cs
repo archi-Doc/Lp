@@ -115,13 +115,25 @@ public partial class NetTerminal : IDisposable
         }
     }
 
+    internal void Add(NetInterface netInterface)
+    {
+        lock (this.SyncObject)
+        {
+            this.netInterfaces.Add(netInterface);
+        }
+    }
+
+    internal bool RemoveInternal(NetInterface netInterface)
+    {// lock (this.SyncObject)
+        return this.netInterfaces.Remove(netInterface);
+    }
+
     internal object SyncObject { get; } = new();
 
     internal ISimpleLogger? TerminalLogger => this.Terminal.TerminalLogger;
 
     internal bool CreateEmbryo(ulong salt)
     {
-        Logger.Priority.Information($"Salt {salt.ToString()}");
         if (this.NodeInformation == null)
         {
             return false;
@@ -146,7 +158,6 @@ public partial class NetTerminal : IDisposable
         this.embryo = sha.GetHash(buffer);
         Hash.Sha3_384Pool.Return(sha);
 
-        Logger.Priority.Information($"embryo {this.embryo[0].ToString()}");
         this.GenePool.SetEmbryo(this.embryo);
         Logger.Priority.Information($"First gene {this.GenePool.GetGene().ToString()}");
 
@@ -159,6 +170,8 @@ public partial class NetTerminal : IDisposable
         {
             x.Clear();
         }
+
+        this.netInterfaces.Clear();
     }
 
     protected List<NetInterface> netInterfaces = new();
@@ -203,6 +216,8 @@ public partial class NetTerminal : IDisposable
                 {
                     this.Clear();
                 }
+
+                // this.TerminalLogger?.Information("terminal disposed.");
             }
 
             // free native resources here if there are any.

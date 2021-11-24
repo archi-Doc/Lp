@@ -18,11 +18,6 @@ public class NetTerminalClient : NetTerminal
         where TSend : IRawPacket
     {
         var netInterface = this.SendPacket(value);
-        lock (this.SyncObject)
-        {
-            this.netInterfaces.Add(netInterface);
-        }
-
         return netInterface;
     }
 
@@ -30,11 +25,6 @@ public class NetTerminalClient : NetTerminal
         where TSend : IRawPacket
     {
         var netInterface = this.SendAndReceivePacket<TSend, TReceive>(value);
-        lock (this.SyncObject)
-        {
-            this.netInterfaces.Add(netInterface);
-        }
-
         return netInterface;
     }
 
@@ -47,11 +37,6 @@ public class NetTerminalClient : NetTerminal
         }
 
         var netInterface = this.SendAndReceivePacket<TSend, TReceive>(value);
-        lock (this.SyncObject)
-        {
-            this.netInterfaces.Add(netInterface);
-        }
-
         return netInterface;
     }
 

@@ -199,6 +199,7 @@ public class Control
             }
             finally
             {
+                server.Core?.Sleep(1000);
                 terminal.Dispose();
             }
         });

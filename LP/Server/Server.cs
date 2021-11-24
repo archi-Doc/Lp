@@ -6,9 +6,10 @@ namespace LP;
 
 internal class Server
 {
-    public Server(Information information)
+    public Server(Information information, Netsphere netsphere)
     {
         this.Information = information;
+        this.Netsphere = netsphere;
     }
 
     public void Process(NetTerminalServer terminal)
@@ -16,5 +17,9 @@ internal class Server
         // terminal.Receive();
     }
 
+    public ThreadCoreBase? Core => this.Netsphere.Terminal.Core;
+
     public Information Information { get; }
+
+    public Netsphere Netsphere { get; }
 }

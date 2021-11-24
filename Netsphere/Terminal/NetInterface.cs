@@ -94,6 +94,8 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
 
             this.NetTerminal.TerminalLogger?.Information($"RegisterReceive: {gene.To4Hex()}");
         }
+
+        this.NetTerminal.Add(this);
     }
 
     internal void InitializeReceive(ulong gene, Memory<byte> data)
@@ -104,6 +106,8 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         // ntg.Receive(data);
 
         this.NetTerminal.TerminalLogger?.Information($"InitializeReceive: {gene.To4Hex()}");
+
+        this.NetTerminal.Add(this);
     }
 }
 
@@ -384,6 +388,7 @@ WaitForSendCompletionWait:
                 lock (this.NetTerminal.SyncObject)
                 {
                     this.Clear();
+                    this.NetTerminal.RemoveInternal(this);
                 }
             }
 
