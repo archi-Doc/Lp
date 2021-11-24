@@ -31,7 +31,7 @@ public interface INetInterface<TSend, TReceive> : INetInterface<TSend>
     public NetInterfaceReceiveResult Receive(out TReceive? value, int millisecondsToWait = DefaultMillisecondsToWait);
 }
 
-public interface INetInterface<TSend>
+public interface INetInterface<TSend> : IDisposable
 {
     public const int DefaultMillisecondsToWait = 2000;
 
@@ -69,7 +69,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
     }
 
     internal void Initialize(TSend value, RawPacketId id, bool receive)
-    {
+    {// Send and Receive(optional) NetTerminalGene.
         var gene = this.NetTerminal.GenePool.GetGene(); // Send gene
         this.NetTerminal.CreateHeader(out var header, gene);
         var packet = PacketService.CreatePacket(ref header, value, id);
@@ -94,6 +94,16 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
 
             this.NetTerminal.TerminalLogger?.Information($"RegisterReceive: {gene.To4Hex()}");
         }
+    }
+
+    internal void InitializeReceive(ulong gene, Memory<byte> data)
+    {// Only Receive NetTerminalGene.
+        var ntg = new NetTerminalGene(gene, this);
+        this.RecvGenes = new NetTerminalGene[] { ntg, };
+        ntg.SetReceive();
+        // ntg.Receive(data);
+
+        this.NetTerminal.TerminalLogger?.Information($"InitializeReceive: {gene.To4Hex()}");
     }
 }
 
@@ -259,6 +269,15 @@ WaitForSendCompletionWait:
                     if (x.Send(udp))
                     {
                         this.TerminalLogger?.Information($"Udp Sent       : {x.ToString()}");
+                        x.SentTicks = currentTicks;
+                    }
+                }
+                else if (x.State == NetTerminalGeneState.WaitingForAck &&
+                    (currentTicks - x.SentTicks) > Ticks.FromSeconds(0.5))
+                {
+                    if (x.Send(udp))
+                    {
+                        this.TerminalLogger?.Information($"Udp Resent     : {x.ToString()}");
                         x.SentTicks = currentTicks;
                     }
                 }

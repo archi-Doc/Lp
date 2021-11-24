@@ -68,11 +68,12 @@ public class NetTerminalClient : NetTerminal
 
         var p = new RawPacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
         var netInterface = this.SendRaw<RawPacketEncrypt>(p);
-        if (netInterface.WaitForSendCompletion() == NetInterfaceSendResult.Success)
+        if (netInterface.WaitForSendCompletion() != NetInterfaceSendResult.Success)
         {
-            return this.CreateEmbryo(p.Salt);
+            netInterface.Dispose();
+            return false;
         }
 
-        return false;
+        return this.CreateEmbryo(p.Salt);
     }
 }

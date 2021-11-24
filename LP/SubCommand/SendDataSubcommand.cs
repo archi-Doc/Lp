@@ -31,7 +31,10 @@ public class SendDataSubcommand : ISimpleCommandAsync<SendDataOptions>
         {
             var p = new RawPacketPunch(null);
             var netInterface = terminal.SendAndReceive<RawPacketPunch, RawPacketPunchResponse>(p);
-            netInterface.Receive(out var r);
+            if (netInterface != null)
+            {
+                netInterface.Receive(out var r);
+            }
         }
     }
 

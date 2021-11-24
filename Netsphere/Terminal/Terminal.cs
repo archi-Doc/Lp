@@ -259,7 +259,9 @@ public class Terminal
             packet.NodeInformation.SetIPEndPoint(endpoint);
 
             var terminal = this.Create(packet.NodeInformation, header.Gene);
-            terminal.SendAck(header.Gene);
+            var netInterface = new NetInterface<object, RawPacketEncrypt>(terminal, false);
+            netInterface.InitializeReceive(header.Gene, data);
+            // terminal.SendAck(header.Gene);
             terminal.GenePool.GetGene();
             terminal.GenePool.GetGene();
             terminal.CreateEmbryo(packet.Salt);
