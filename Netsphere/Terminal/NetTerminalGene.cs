@@ -124,6 +124,25 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         if (this.State == NetTerminalGeneState.WaitingToReceive)
         {// Receive data
             this.ReceivedData = data;
+            SendAck();
+
+            // Logger.Default.Debug($"Receive: {this.PacketId}, {this.NetTerminal.Endpoint}");
+            return true;
+        }
+        else if (this.State == NetTerminalGeneState.SendingAck)
+        {// Already received.
+            return true;
+        }
+        else if (this.State == NetTerminalGeneState.Complete)
+        {// Resend Ack
+            SendAck();
+            return true;
+        }
+
+        return false;
+
+        void SendAck()
+        {
             if (this.NetInterface.NoReceivedAck)
             {
                 this.State = NetTerminalGeneState.Complete;
@@ -140,16 +159,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
                     this.State = NetTerminalGeneState.SendingAck;
                 }
             }
-
-            // Logger.Default.Debug($"Receive: {this.PacketId}, {this.NetTerminal.Endpoint}");
-            return true;
         }
-        else if (this.State == NetTerminalGeneState.SendingAck)
-        {// Already received.
-            return true;
-        }
-
-        return false;
     }
 
     public override string ToString()

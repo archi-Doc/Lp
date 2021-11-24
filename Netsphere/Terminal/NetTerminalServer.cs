@@ -11,6 +11,5 @@ public class NetTerminalServer : NetTerminal
 
     internal void PrepareReceive()
     {
-
     }
 }
