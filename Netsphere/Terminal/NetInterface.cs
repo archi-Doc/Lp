@@ -40,8 +40,55 @@ public interface INetInterface<TSend> : IDisposable
 
 internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend, TReceive>
 {
-    public NetInterface(NetTerminal netTerminal, bool noReceivedAck)
-        : base(netTerminal, noReceivedAck)
+    internal static NetInterface<TSend, TReceive> Create(NetTerminal netTerminal, TSend value, RawPacketId id, bool receive, bool sendReceiveAck)
+    {// Send and Receive(optional) NetTerminalGene.
+        var netInterface = new NetInterface<TSend, TReceive>(netTerminal, sendReceiveAck);
+        var gene = netTerminal.GenePool.GetGene(); // Send gene
+        netTerminal.CreateHeader(out var header, gene);
+        var packet = PacketService.CreatePacket(ref header, value, id);
+        if (packet.Length <= PacketService.SafeMaxPacketSize)
+        {// Single packet.
+            var ntg = new NetTerminalGene(gene, netInterface);
+            netInterface.SendGenes = new NetTerminalGene[] { ntg, };
+            ntg.SetSend(packet);
+
+            netTerminal.TerminalLogger?.Information($"RegisterSend   : {gene.To4Hex()}");
+        }
+        else
+        {// Split into multiple packets.
+        }
+
+        gene = netTerminal.GenePool.GetGene(); // Receive gene
+        if (receive)
+        {
+            var ntg = new NetTerminalGene(gene, netInterface);
+            netInterface.RecvGenes = new NetTerminalGene[] { ntg, };
+            ntg.SetReceive();
+
+            netTerminal.TerminalLogger?.Information($"RegisterReceive: {gene.To4Hex()}");
+        }
+
+        netTerminal.Add(netInterface);
+        return netInterface;
+    }
+
+    internal static NetInterface<TSend, TReceive> CreateReceive(NetTerminal netTerminal, ulong gene, Memory<byte> data)
+    {// Only Receive NetTerminalGene.
+        var netInterface = new NetInterface<TSend, TReceive>(netTerminal, true);
+        var ntg = new NetTerminalGene(gene, netInterface);
+        netInterface.RecvGenes = new NetTerminalGene[] { ntg, };
+        ntg.SetReceive();
+        ntg.Receive(data);
+
+        netInterface.NetTerminal.TerminalLogger?.Information($"InitializeReceive: {gene.To4Hex()}");
+
+        netInterface.NetTerminal.Add(netInterface);
+
+        return netInterface;
+    }
+
+    protected NetInterface(NetTerminal netTerminal, bool sendReceiveAck)
+    : base(netTerminal, sendReceiveAck)
     {
     }
 
@@ -67,57 +114,15 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
     {
         return this.WaitForSendCompletionCore(millisecondsToWait);
     }
-
-    internal void Initialize(TSend value, RawPacketId id, bool receive)
-    {// Send and Receive(optional) NetTerminalGene.
-        var gene = this.NetTerminal.GenePool.GetGene(); // Send gene
-        this.NetTerminal.CreateHeader(out var header, gene);
-        var packet = PacketService.CreatePacket(ref header, value, id);
-        if (packet.Length <= PacketService.SafeMaxPacketSize)
-        {// Single packet.
-            var ntg = new NetTerminalGene(gene, this);
-            this.SendGenes = new NetTerminalGene[] { ntg, };
-            ntg.SetSend(packet);
-
-            this.NetTerminal.TerminalLogger?.Information($"RegisterSend   : {gene.To4Hex()}");
-        }
-        else
-        {// Split into multiple packets.
-        }
-
-        gene = this.NetTerminal.GenePool.GetGene(); // Receive gene
-        if (receive)
-        {
-            var ntg = new NetTerminalGene(gene, this);
-            this.RecvGenes = new NetTerminalGene[] { ntg, };
-            ntg.SetReceive();
-
-            this.NetTerminal.TerminalLogger?.Information($"RegisterReceive: {gene.To4Hex()}");
-        }
-
-        this.NetTerminal.Add(this);
-    }
-
-    internal void InitializeReceive(ulong gene, Memory<byte> data)
-    {// Only Receive NetTerminalGene.
-        var ntg = new NetTerminalGene(gene, this);
-        this.RecvGenes = new NetTerminalGene[] { ntg, };
-        ntg.SetReceive();
-        // ntg.Receive(data);
-
-        this.NetTerminal.TerminalLogger?.Information($"InitializeReceive: {gene.To4Hex()}");
-
-        this.NetTerminal.Add(this);
-    }
 }
 
 public class NetInterface : IDisposable
 {
-    internal NetInterface(NetTerminal netTerminal, bool noReceivedAck)
+    protected NetInterface(NetTerminal netTerminal, bool sendReceiveAck)
     {
         this.Terminal = netTerminal.Terminal;
         this.NetTerminal = netTerminal;
-        this.NoReceivedAck = noReceivedAck;
+        this.SendReceiveAck = sendReceiveAck;
     }
 
     public Terminal Terminal { get; }
@@ -212,7 +217,7 @@ WaitForSendCompletionWait:
 
     internal ISimpleLogger? TerminalLogger => this.Terminal.TerminalLogger;
 
-    internal bool NoReceivedAck { get; }
+    internal bool SendReceiveAck { get; }
 
     protected bool ReceivedGeneToData(ref Memory<byte> data)
     {// lock (this.NetTerminal.SyncObject)

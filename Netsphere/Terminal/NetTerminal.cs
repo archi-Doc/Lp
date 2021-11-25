@@ -86,17 +86,17 @@ public partial class NetTerminal : IDisposable
     internal NetInterface<TSend, object> SendPacket<TSend>(TSend value)
         where TSend : IRawPacket
     {
-        var netInterface = new NetInterface<TSend, object>(this, true);
-        netInterface.Initialize(value, value.Id, false);
-        return netInterface;
+        // var netInterface = new NetInterface<TSend, object>(this, true);
+        // netInterface.Initialize(value, value.Id, false);
+        return NetInterface<TSend, object>.Create(this, value, value.Id, false, false);
     }
 
     internal NetInterface<TSend, TReceive> SendAndReceivePacket<TSend, TReceive>(TSend value)
         where TSend : IRawPacket
     {
-        var netInterface = new NetInterface<TSend, TReceive>(this, true);
-        netInterface.Initialize(value, value.Id, true);
-        return netInterface;
+        /*var netInterface = new NetInterface<TSend, TReceive>(this, true);
+        netInterface.Initialize(value, value.Id, true);*/
+        return NetInterface<TSend, TReceive>.Create(this, value, value.Id, true, false);
     }
 
     internal void ProcessSend(UdpClient udp, long currentTicks)

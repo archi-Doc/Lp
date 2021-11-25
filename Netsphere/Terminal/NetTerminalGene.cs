@@ -143,7 +143,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
 
         void SendAck()
         {
-            if (this.NetInterface.NoReceivedAck)
+            if (!this.NetInterface.SendReceiveAck)
             {
                 this.State = NetTerminalGeneState.Complete;
             }
