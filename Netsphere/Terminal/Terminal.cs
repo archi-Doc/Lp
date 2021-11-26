@@ -12,6 +12,8 @@ namespace LP.Net;
 
 public class Terminal
 {
+    public delegate void CreateServerTerminalDelegate(NetTerminalServer terminal);
+
     internal struct RawSend
     {
         public RawSend(IPEndPoint endPoint, byte[] packet)
@@ -37,9 +39,9 @@ public class Terminal
     /// </summary>
     /// <param name="nodeAddress">NodeAddress.</param>
     /// <returns>NetTerminal.</returns>
-    public NetTerminal Create(NodeAddress nodeAddress)
+    public NetTerminalClient Create(NodeAddress nodeAddress)
     {
-        var terminal = new NetTerminal(this, nodeAddress);
+        var terminal = new NetTerminalClient(this, nodeAddress);
         lock (this.terminals)
         {
             this.terminals.Add(terminal);
@@ -53,9 +55,9 @@ public class Terminal
     /// </summary>
     /// <param name="nodeInformation">NodeInformation.</param>
     /// <returns>NetTerminal.</returns>
-    public NetTerminal Create(NodeInformation nodeInformation)
+    public NetTerminalClient Create(NodeInformation nodeInformation)
     {
-        var terminal = new NetTerminal(this, nodeInformation);
+        var terminal = new NetTerminalClient(this, nodeInformation);
         lock (this.terminals)
         {
             this.terminals.Add(terminal);
@@ -70,15 +72,23 @@ public class Terminal
     /// <param name="nodeInformation">NodeInformation.</param>
     /// <param name="gene">gene.</param>
     /// <returns>NetTerminal.</returns>
-    public NetTerminal Create(NodeInformation nodeInformation, ulong gene)
+    public NetTerminalServer Create(NodeInformation nodeInformation, ulong gene)
     {
-        var terminal = new NetTerminal(this, nodeInformation, gene);
+        var terminal = new NetTerminalServer(this, nodeInformation, gene);
         lock (this.terminals)
         {
             this.terminals.Add(terminal);
         }
 
         return terminal;
+    }
+
+    public void TryRemove(NetTerminal netTerminal)
+    {
+        lock (this.terminals)
+        {
+            this.terminals.Remove(netTerminal);
+        }
     }
 
     public Terminal(Information information, NetStatus netStatus)
@@ -126,6 +136,11 @@ public class Terminal
 
     public int Port { get; set; }
 
+    internal void SetServerTerminalDelegate(CreateServerTerminalDelegate @delegate)
+    {
+        this.createServerTerminalDelegate = @delegate;
+    }
+
     internal void Initialize(bool isAlternative, ECDiffieHellman nodePrivateKey)
     {
         this.NodePrivateECDH = nodePrivateKey;
@@ -133,9 +148,9 @@ public class Terminal
 
     internal void ProcessSend(UdpClient udp, long currentTicks)
     {
-        while (this.rawSends.TryDequeue(out var unregisteredSend))
+        while (this.rawSends.TryDequeue(out var rawSend))
         {
-            udp.Send(unregisteredSend.Packet, unregisteredSend.Endpoint);
+            udp.Send(rawSend.Packet, rawSend.Endpoint);
         }
 
         NetTerminal[] array;
@@ -185,7 +200,7 @@ public class Terminal
     {
         if (this.inboundGenes.TryGetValue(header.Gene, out var gene))
         {// NetTerminalGene is found.
-            gene.NetTerminal.ProcessReceive(endPoint, ref header, data, currentTicks, gene);
+            gene.NetInterface.ProcessReceive(endPoint, ref header, data, currentTicks, gene);
         }
         else
         {
@@ -196,7 +211,7 @@ public class Terminal
     internal void ProcessUnmanagedRecv(IPEndPoint endpoint, ref RawPacketHeader header, Memory<byte> data)
     {
         if (header.Id == RawPacketId.Punch)
-        {// Punch
+        {
             this.ProcessUnmanagedRecv_Punch(endpoint, ref header, data);
         }
         else if (header.Id == RawPacketId.Encrypt)
@@ -221,22 +236,14 @@ public class Terminal
 
         TimeCorrection.AddCorrection(punch.UtcTicks);
 
-        var r = new PacketPunchResponse();
-        if (punch.NextEndpoint != null)
-        {
-            r.Endpoint = punch.NextEndpoint;
-        }
-        else
-        {
-            r.Endpoint = endpoint;
-        }
+        var response = new RawPacketPunchResponse();
+        response.Endpoint = endpoint;
+        response.UtcTicks = Ticks.GetUtcNow();
+        var secondGene = GenePool.GetSecond(header.Gene);
+        this.TerminalLogger?.Information($"Punch Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
-        r.UtcTicks = Ticks.GetUtcNow();
-
-        header.Gene = GenePool.GetSecond(header.Gene);
-        var p = PacketService.CreatePacket(ref header, r);
-
-        this.rawSends.Enqueue(new RawSend(endpoint, p));
+        var p = PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id);
+        this.AddRawSend(endpoint, p);
     }
 
     internal void ProcessUnmanagedRecv_Encrypt(IPEndPoint endpoint, ref RawPacketHeader header, Memory<byte> data)
@@ -248,13 +255,21 @@ public class Terminal
 
         if (packet.NodeInformation != null)
         {
-            // Logger.Default.Information($"Recv_Encrypt: {header.Gene.ToString()}");
+            this.TerminalLogger?.Information($"Encrypt Response: {header.Gene.To4Hex()}");
             packet.NodeInformation.SetIPEndPoint(endpoint);
 
             var terminal = this.Create(packet.NodeInformation, header.Gene);
-            terminal.GenePool.GetGene(); // Dispose the first gene.
-            terminal.SendPacket(new RawPacketEncrypt());
+            var netInterface = NetInterface<object, RawPacketEncrypt>.CreateReceive(terminal, header.Gene, data);
+            // var netInterface = new NetInterface<object, RawPacketEncrypt>(terminal, false);
+            // netInterface.InitializeReceive(header.Gene, data);
+            terminal.GenePool.GetGene();
+            terminal.GenePool.GetGene();
             terminal.CreateEmbryo(packet.Salt);
+            terminal.PrepareReceive();
+            if (this.createServerTerminalDelegate != null)
+            {
+                this.createServerTerminalDelegate(terminal);
+            }
         }
     }
 
@@ -267,13 +282,17 @@ public class Terminal
 
         Logger.Default.Information($"Ping From: {packet.ToString()}");
 
-        var response = new RawPacketPingResponse(new(endpoint.Address, (ushort)endpoint.Port, header.Engagement), this.Information.NodeName);
-        var firstGene = header.Gene;
-        header.Gene = GenePool.GetSecond(header.Gene);
-        this.TerminalLogger?.Information($"Ping Response: {firstGene.To4Hex()} to {header.Gene.To4Hex()}");
+        var response = new RawPacketPingResponse(new(endpoint.Address, (ushort)endpoint.Port, 0), this.Information.NodeName);
+        var secondGene = GenePool.GetSecond(header.Gene);
+        this.TerminalLogger?.Information($"Ping Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
-        var p = PacketService.CreateAckAndPacket(ref header, firstGene, response);
-        this.rawSends.Enqueue(new RawSend(endpoint, p));
+        var p = PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id);
+        this.AddRawSend(endpoint, p);
+    }
+
+    internal void AddRawSend(IPEndPoint endpoint, byte[] packet)
+    {
+        this.rawSends.Enqueue(new RawSend(endpoint, packet));
     }
 
     internal void AddInbound(NetTerminalGene[] genes)
@@ -289,12 +308,27 @@ public class Terminal
         }
     }
 
+    internal void AddInbound(NetTerminalGene x)
+    {
+        if (x.State == NetTerminalGeneState.WaitingToReceive ||
+            x.State == NetTerminalGeneState.WaitingToSend ||
+            x.State == NetTerminalGeneState.WaitingForAck)
+        {
+            this.inboundGenes.TryAdd(x.Gene, x);
+        }
+    }
+
     internal void RemoveInbound(NetTerminalGene[] genes)
     {
         foreach (var x in genes)
         {
             this.inboundGenes.TryRemove(x.Gene, out _);
         }
+    }
+
+    internal void RemoveInbound(NetTerminalGene x)
+    {
+        this.inboundGenes.TryRemove(x.Gene, out _);
     }
 
     internal bool TryGetInbound(ulong gene, [MaybeNullWhen(false)] out NetTerminalGene netTerminalGene) => this.inboundGenes.TryGetValue(gene, out netTerminalGene);
@@ -304,6 +338,8 @@ public class Terminal
     internal ISimpleLogger? TerminalLogger { get; private set; }
 
     internal ECDiffieHellman NodePrivateECDH { get; private set; } = default!;
+
+    private CreateServerTerminalDelegate? createServerTerminalDelegate;
 
     private NetSocket netSocket;
 

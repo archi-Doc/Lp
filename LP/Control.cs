@@ -33,7 +33,7 @@ public class Control
         container.Register<Terminal>(Reuse.Singleton);
         container.Register<EssentialNode>(Reuse.Singleton);
         container.Register<NetStatus>(Reuse.Singleton);
-        container.Register<PassiveTerminal>(Reuse.Transient);
+        container.Register<Server>(Reuse.Transient);
 
         // Machines
         container.Register<Machines.SingleMachine>();
@@ -51,6 +51,8 @@ public class Control
                 typeof(LP.Subcommands.DumpSubcommand),
                 typeof(LP.Subcommands.GCSubcommand),
                 typeof(LP.Subcommands.PingSubcommand),
+                typeof(LP.Subcommands.PunchSubcommand),
+                typeof(LP.Subcommands.SendDataSubcommand),
                 typeof(LP.Subcommands.TestSubcommand),
         };
 
@@ -76,7 +78,7 @@ public class Control
         this.Private = @private;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.Netsphere = netsphere;
-        this.Netsphere.SetPassiveTerminalDelegate(CreatePassiveTerminal);
+        this.Netsphere.SetServerTerminalDelegate(CreateServerTerminal);
 
         this.Core = new(ThreadCore.Root);
         this.BigMachine.Core.ChangeParent(this.Core);
@@ -186,17 +188,18 @@ public class Control
 
     private static SimpleParser subcommandParser = default!;
 
-    private static void CreatePassiveTerminal(NetTerminal terminal)
+    private static void CreateServerTerminal(NetTerminalServer terminal)
     {
         Task.Run(() =>
         {
-            var passiveTerminal = containerInstance.Resolve<PassiveTerminal>();
+            var server = containerInstance.Resolve<Server>();
             try
             {
-                passiveTerminal.Process(terminal);
+                server.Process(terminal);
             }
             finally
             {
+                server.Core?.Sleep(1000);
                 terminal.Dispose();
             }
         });

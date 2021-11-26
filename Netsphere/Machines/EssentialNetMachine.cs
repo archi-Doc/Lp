@@ -28,13 +28,14 @@ public partial class EssentialNetMachine : Machine<Identifier>
     [StateMethod(0)]
     protected StateResult Initial(StateParameter parameter)
     {
+        this.count++;
         return StateResult.Continue;
 
         var ni = NodeInformation.Alternative;
         using (var ta = this.Netsphere.Terminal.Create(ni))
         {
             var pp = new RawPacketPunch(null);
-            ta.Send(pp);
+            // ta.SendRaw(pp);
         }
 
         if (this.Netsphere.EssentialNode.GetUncheckedNode(out var nodeAddress))
@@ -45,8 +46,8 @@ public partial class EssentialNetMachine : Machine<Identifier>
             // nodeAddress = NodeAddress.Alternative;
             using (var terminal = this.Netsphere.Terminal.Create(nodeAddress))
             {
-                terminal.SendRaw(new RawPacketPunch(null));
-                var data = terminal.Receive<PacketPunchResponse>(1000);
+                /*terminal.SendRaw(new RawPacketPunch(null));
+                var data = terminal.ReceiveRaw<PacketPunchResponse>(1000);
                 if (data != null)
                 {
                     Logger.Default.Information(Time.GetUtcNow().ToString());
@@ -57,7 +58,7 @@ public partial class EssentialNetMachine : Machine<Identifier>
                 {
                     Logger.Default.Information($"Receive timeout: {nodeAddress}");
                     this.Netsphere.EssentialNode.Report(nodeAddress, NodeConnectionResult.Failure);
-                }
+                }*/
 
                 // this.count <<= 1;
                 // this.SetTimeout(TimeSpan.FromSeconds(this.count));

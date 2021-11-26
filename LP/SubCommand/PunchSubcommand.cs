@@ -9,19 +9,25 @@ using Tinyhand;
 
 namespace LP.Subcommands;
 
-[SimpleCommand("ping")]
-public class PingSubcommand : ISimpleCommandAsync<PingOptions>
+[SimpleCommand("punch")]
+public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
 {
-    public PingSubcommand(Control control)
+    public PunchSubcommand(Control control)
     {
         this.Control = control;
     }
 
-    public async Task Run(PingOptions options, string[] args)
+    public async Task Run(PunchOptions options, string[] args)
     {
         if (!SubcommandService.TryParseNodeAddress(options.Node, out var node))
         {
             return;
+        }
+
+        NodeAddress? nextNode = null;
+        if (!string.IsNullOrEmpty(options.NextNode))
+        {
+            SubcommandService.TryParseNodeAddress(options.NextNode, out nextNode);
         }
 
         for (var n = 0; n < options.Count; n++)
@@ -31,7 +37,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
                 break;
             }
 
-            await this.Ping(node, options);
+            await this.Punch(node, nextNode, options);
 
             if (n < options.Count - 1)
             {
@@ -40,17 +46,18 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
         }
     }
 
-    public async Task Ping(NodeAddress node, PingOptions options)
+    public async Task Punch(NodeAddress node, NodeAddress? nextNode, PunchOptions options)
     {
-        Logger.Priority.Information($"Ping: {node.ToString()}");
+        Logger.Priority.Information($"Punch: {node.ToString()}");
 
         var sw = Stopwatch.StartNew();
         using (var terminal = this.Control.Netsphere.Terminal.Create(node))
         {
-            var p = new RawPacketPing("test");
+            var p = new RawPacketPunch(nextNode?.CreateEndpoint());
+
             sw.Restart();
-            var ni = terminal.SendAndReceiveRaw<RawPacketPing, RawPacketPingResponse>(p);
-            var result = ni.Receive(out var r);
+            var netInterface = terminal.SendAndReceiveRaw<RawPacketPunch, RawPacketPunchResponse>(p);
+            var result = netInterface.Receive(out var r);
             sw.Stop();
             if (r != null)
             {
@@ -61,18 +68,18 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
                 Logger.Priority.Error($"{result}");
             }
         }
-
-        // this.Control.Netsphere.NetStatus
-        // Logger.Subcommand.Information(System.Environment.OSVersion.ToString());
     }
 
     public Control Control { get; set; }
 }
 
-public record PingOptions
+public record PunchOptions
 {
     [SimpleOption("node", description: "Node address", Required = true)]
     public string Node { get; init; } = string.Empty;
+
+    [SimpleOption("next", description: "Next node address")]
+    public string NextNode { get; init; } = string.Empty;
 
     [SimpleOption("count", description: "Count")]
     public int Count { get; init; } = 1;

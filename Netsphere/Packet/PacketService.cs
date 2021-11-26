@@ -37,8 +37,7 @@ internal class PacketService
     [ThreadStatic]
     private static byte[]? initialBuffer;
 
-    internal static unsafe byte[] CreatePacket<T>(ref RawPacketHeader header, T value)
-        where T : IRawPacket
+    internal static unsafe byte[] CreatePacket<T>(ref RawPacketHeader header, T value, RawPacketId rawPacketId)
     {
         if (initialBuffer == null)
         {
@@ -54,7 +53,7 @@ internal class PacketService
 
         fixed (byte* pb = span)
         {
-            header.Id = value.Id;
+            header.Id = rawPacketId;
             header.DataSize = (ushort)(writer.Written - written);
             *(RawPacketHeader*)pb = header;
         }
@@ -62,8 +61,7 @@ internal class PacketService
         return writer.FlushAndGetArray();
     }
 
-    internal static unsafe byte[] CreateAckAndPacket<T>(ref RawPacketHeader header, ulong ackGene, T value)
-        where T : IRawPacket
+    internal static unsafe byte[] CreateAckAndPacket<T>(ref RawPacketHeader header, ulong secondGene, T value, RawPacketId rawPacketId)
     {
         if (initialBuffer == null)
         {
@@ -82,10 +80,11 @@ internal class PacketService
             (*(RawPacketHeader*)pb).Engagement = header.Engagement;
             (*(RawPacketHeader*)pb).Id = RawPacketId.Ack;
             (*(RawPacketHeader*)pb).DataSize = 0;
-            (*(RawPacketHeader*)pb).Gene = ackGene;
+            (*(RawPacketHeader*)pb).Gene = header.Gene;
 
-            header.Id = value.Id;
+            header.Id = rawPacketId;
             header.DataSize = (ushort)(writer.Written - written);
+            header.Gene = secondGene;
             *(RawPacketHeader*)(pb + PacketService.HeaderSize) = header;
         }
 
