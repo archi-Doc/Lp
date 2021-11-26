@@ -2,9 +2,9 @@
 
 using LP.Net;
 
-namespace LP;
+namespace LP.Net;
 
-internal class Server
+public class Server
 {
     public Server(Information information, Netsphere netsphere)
     {
