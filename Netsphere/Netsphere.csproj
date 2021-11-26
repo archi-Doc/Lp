@@ -4,7 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     
-    <PackageId>LP.Net</PackageId>
+    <PackageId>Netsphere</PackageId>
     <Authors>archi-Doc</Authors>
     <Product>Netsphere</Product>
     <Description>Netsphere is a network protocol for LP.</Description>
