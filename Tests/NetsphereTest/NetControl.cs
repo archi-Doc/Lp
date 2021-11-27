@@ -118,28 +118,6 @@ public class NetControl
         Logger.CloseAndFlush();
     }
 
-    public bool Subcommand(string subcommand)
-    {
-        if (!subcommandParser.Parse(subcommand))
-        {
-            if (subcommandParser.HelpCommand != string.Empty)
-            {
-                subcommandParser.ShowHelp();
-            }
-
-            return false;
-        }
-
-        subcommandParser.Run();
-        if (subcommandParser.HelpCommand != string.Empty)
-        {
-            return false;
-        }
-
-        Console.WriteLine();
-        return true;
-    }
-
     public ThreadCoreGroup Core { get; }
 
     public Information Information { get; }
