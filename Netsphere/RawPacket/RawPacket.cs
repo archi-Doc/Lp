@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace LP.Net;
 
-public enum RawPacketId : ushort
+public enum RawPacketId : byte
 {
     Invalid,
     Ack,
@@ -34,6 +34,9 @@ internal partial struct RawPacketHeader
     public ushort Engagement;
 
     [FieldOffset(2)]
+    public byte Cage;
+
+    [FieldOffset(3)]
     public RawPacketId Id;
 
     [FieldOffset(4)]

@@ -130,8 +130,6 @@ public class NetControl
 
     private static Container containerInstance = default!;
 
-    private static SimpleParser subcommandParser = default!;
-
     private static void CreateServerTerminal(NetTerminalServer terminal)
     {
         Task.Run(() =>
