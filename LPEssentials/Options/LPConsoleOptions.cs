@@ -1,10 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System;
-using LP.Net;
 using SimpleCommandLine;
 
-namespace LP;
+namespace LP.Options;
 
 public record LPConsoleOptions
 {

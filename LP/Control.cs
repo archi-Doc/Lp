@@ -22,39 +22,33 @@ public class Control
         // Container instance
         containerInstance = container;
 
+        // Subcommand types
+        var subcommandTypes = new List<Type>();
+
         // Base
         container.RegisterDelegate(x => new BigMachine<Identifier>(container), Reuse.Singleton);
 
         // Main services
         container.Register<Control>(Reuse.Singleton);
         container.Register<Information>(Reuse.Singleton);
-        container.Register<Private>(Reuse.Singleton);
-        container.Register<Netsphere>(Reuse.Singleton);
-        container.Register<Terminal>(Reuse.Singleton);
-        container.Register<EssentialNode>(Reuse.Singleton);
-        container.Register<NetStatus>(Reuse.Singleton);
-        container.Register<Server>(Reuse.Transient);
+
+        NetControl.Register(container, subcommandTypes);
 
         // Machines
         container.Register<Machines.SingleMachine>();
-        container.Register<Machines.EssentialNetMachine>();
 
         // Subcommands
-        RegisterSubcommands(container);
+        RegisterSubcommands(container, subcommandTypes);
     }
 
-    public static void RegisterSubcommands(Container container)
+    public static void RegisterSubcommands(Container container, List<Type> subcommandTypes)
     {
         // Subcommands
-        var subcommandTypes = new Type[]
-        {
-                typeof(LP.Subcommands.DumpSubcommand),
-                typeof(LP.Subcommands.GCSubcommand),
-                typeof(LP.Subcommands.PingSubcommand),
-                typeof(LP.Subcommands.PunchSubcommand),
-                typeof(LP.Subcommands.SendDataSubcommand),
-                typeof(LP.Subcommands.TestSubcommand),
-        };
+        subcommandTypes.Add(typeof(LP.Subcommands.DumpSubcommand));
+        subcommandTypes.Add(typeof(LP.Subcommands.GCSubcommand));
+        subcommandTypes.Add(typeof(LP.Subcommands.PingSubcommand));
+        subcommandTypes.Add(typeof(LP.Subcommands.PunchSubcommand));
+        subcommandTypes.Add(typeof(LP.Subcommands.TestSubcommand));
 
         foreach (var x in subcommandTypes)
         {
@@ -72,13 +66,11 @@ public class Control
         subcommandParser = new SimpleParser(subcommandTypes, subcommandParserOptions);
     }
 
-    public Control(Information information, Private @private, BigMachine<Identifier> bigMachine, Netsphere netsphere)
+    public Control(Information information, BigMachine<Identifier> bigMachine, NetControl netsphere)
     {
         this.Information = information;
-        this.Private = @private;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
-        this.Netsphere = netsphere;
-        this.Netsphere.SetServerTerminalDelegate(CreateServerTerminal);
+        this.NetControl = netsphere;
 
         this.Core = new(ThreadCore.Root);
         this.BigMachine.Core.ChangeParent(this.Core);
@@ -87,7 +79,6 @@ public class Control
     public void Configure()
     {
         Logger.Configure(this.Information);
-        this.ConfigureControl();
 
         Radio.Send(new Message.Configure());
     }
@@ -100,17 +91,6 @@ public class Control
     public async Task SaveAsync()
     {
         await Radio.SendAsync(new Message.SaveAsync());
-    }
-
-    public void ConfigureControl()
-    {
-        if (this.Private.NodePrivateKey == null)
-        {
-            this.Private.NodePrivateKey = NodePrivateKey.Create();
-            this.Private.NodePrivateEcdh = NodeKey.FromPrivateKey(this.Private.NodePrivateKey)!;
-            this.Information.NodePublicKey = new NodePublicKey(this.Private.NodePrivateKey);
-            this.Information.NodePublicEcdh = NodeKey.FromPublicKey(this.Information.NodePublicKey.X, this.Information.NodePublicKey.Y)!;
-        }
     }
 
     public bool TryStart()
@@ -178,11 +158,9 @@ public class Control
 
     public Information Information { get; }
 
-    public Private Private { get; }
-
     public BigMachine<Identifier> BigMachine { get; }
 
-    public Netsphere Netsphere { get; }
+    public NetControl NetControl { get; }
 
     private static Container containerInstance = default!;
 
@@ -208,6 +186,6 @@ public class Control
     private void Dump()
     {
         Logger.Default.Information($"Dump:");
-        Logger.Default.Information($"MyStatus: {this.Netsphere.MyStatus.Type}");
+        Logger.Default.Information($"MyStatus: {this.NetControl.MyStatus.Type}");
     }
 }

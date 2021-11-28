@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Arc.Threading;
 using DryIoc;
 using LP;
+using LP.Net;
 using SimpleCommandLine;
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
@@ -18,15 +19,12 @@ public class Program
 
     public static async Task Main(string[] args)
     {
-        // Simple Commands
-        var commandTypes = new Type[]
-        {
-                typeof(SendDataSubcommand),
-            // typeof(TestCommand2),
-        };
+        // Subcommands
+        var commandTypes = new List<Type>();
 
         // DI Container
-        NetControl.Register(Container);
+        NetControl.Register(Container, commandTypes);
+
         foreach (var x in commandTypes)
         {
             Container.Register(x, Reuse.Singleton);

@@ -91,10 +91,9 @@ public class Terminal
         }
     }
 
-    public Terminal(Information information, NetStatus netStatus)
+    public Terminal(NetBase netBase, NetStatus netStatus)
     {
-        this.Information = information;
-        // this.Private = @private;
+        this.NetBase = netBase;
         this.NetStatus = netStatus;
 
         Radio.Open<Message.Start>(this.Start);
@@ -110,7 +109,7 @@ public class Terminal
 
         if (this.Port == 0)
         {
-            this.Port = this.Information.ConsoleOptions.NetsphereOptions.Port;
+            this.Port = this.NetBase.NetsphereOptions.Port;
         }
 
         if (!this.netSocket.TryStart(this.Core, this.Port))
@@ -126,20 +125,18 @@ public class Terminal
         this.Core = null;
     }
 
+    public void SetServerTerminalDelegate(CreateServerTerminalDelegate @delegate)
+    {
+        this.createServerTerminalDelegate = @delegate;
+    }
+
     public ThreadCoreBase? Core { get; private set; }
 
-    public Information Information { get; }
-
-    // public Private Private { get; }
+    public NetBase NetBase { get; }
 
     public NetStatus NetStatus { get; }
 
     public int Port { get; set; }
-
-    internal void SetServerTerminalDelegate(CreateServerTerminalDelegate @delegate)
-    {
-        this.createServerTerminalDelegate = @delegate;
-    }
 
     internal void Initialize(bool isAlternative, ECDiffieHellman nodePrivateKey)
     {
@@ -282,7 +279,7 @@ public class Terminal
 
         Logger.Default.Information($"Ping From: {packet.ToString()}");
 
-        var response = new RawPacketPingResponse(new(endpoint.Address, (ushort)endpoint.Port, 0), this.Information.NodeName);
+        var response = new RawPacketPingResponse(new(endpoint.Address, (ushort)endpoint.Port, 0), this.NetBase.NodeName);
         var secondGene = GenePool.GetSecond(header.Gene);
         this.TerminalLogger?.Information($"Ping Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 

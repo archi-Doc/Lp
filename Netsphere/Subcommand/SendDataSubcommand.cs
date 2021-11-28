@@ -5,26 +5,21 @@ using Arc.Crypto;
 using LP;
 using LP.Net;
 using SimpleCommandLine;
+using Tinyhand;
 
-namespace NetsphereTest;
+namespace LP.Subcommands;
 
 [SimpleCommand("senddata")]
 public class SendDataSubcommand : ISimpleCommandAsync<SendDataOptions>
 {
-    public SendDataSubcommand(NetControl control)
+    public SendDataSubcommand(NetControl netControl)
     {
-        this.Control = control;
+        this.NetControl = netControl;
     }
 
     public async Task Run(SendDataOptions options, string[] args)
     {
-        var nodeName = options.Node;
-        if (string.IsNullOrEmpty(nodeName))
-        {
-            nodeName = "alternative";
-        }
-
-        if (!SubcommandService.TryParseNodeAddress(nodeName, out var node))
+        if (!SubcommandService.TryParseNodeAddress(options.Node, out var node))
         {
             return;
         }
@@ -32,7 +27,7 @@ public class SendDataSubcommand : ISimpleCommandAsync<SendDataOptions>
         Logger.Priority.Information($"SendData: {node.ToString()}");
 
         var nodeInformation = NodeInformation.Alternative;
-        using (var terminal = this.Control.Netsphere.Terminal.Create(nodeInformation))
+        using (var terminal = this.NetControl.Terminal.Create(nodeInformation))
         {
             var p = new RawPacketPunch(null);
             var netInterface = terminal.SendAndReceive<RawPacketPunch, RawPacketPunchResponse>(p);
@@ -43,12 +38,12 @@ public class SendDataSubcommand : ISimpleCommandAsync<SendDataOptions>
         }
     }
 
-    public NetControl Control { get; set; }
+    public NetControl NetControl { get; set; }
 }
 
 public record SendDataOptions
 {
-    [SimpleOption("node", description: "Node address")]
+    [SimpleOption("node", description: "Node address", Required = true)]
     public string Node { get; init; } = string.Empty;
 
     public override string ToString() => $"{this.Node}";

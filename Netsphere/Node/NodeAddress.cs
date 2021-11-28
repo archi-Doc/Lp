@@ -119,7 +119,7 @@ public partial class NodeAddress : IEquatable<NodeAddress>
 
     public bool IsValid()
     {
-        if (this.Port < Netsphere.MinPort || this.Port > Netsphere.MaxPort)
+        if (this.Port < NetControl.MinPort || this.Port > NetControl.MaxPort)
         {
             return false;
         }

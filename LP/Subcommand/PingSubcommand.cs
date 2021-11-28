@@ -45,7 +45,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
         Logger.Priority.Information($"Ping: {node.ToString()}");
 
         var sw = Stopwatch.StartNew();
-        using (var terminal = this.Control.Netsphere.Terminal.Create(node))
+        using (var terminal = this.Control.NetControl.Terminal.Create(node))
         {
             var p = new RawPacketPing("test");
             sw.Restart();

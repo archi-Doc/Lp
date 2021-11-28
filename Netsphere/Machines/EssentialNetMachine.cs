@@ -13,17 +13,17 @@ namespace LP.Machines;
 [MachineObject(0x4792ab0f, Group = typeof(MachineSingle<>))]
 public partial class EssentialNetMachine : Machine<Identifier>
 {
-    public EssentialNetMachine(BigMachine<Identifier> bigMachine, Information information, Netsphere netsphere)
+    public EssentialNetMachine(BigMachine<Identifier> bigMachine, NetBase netBase, NetControl netControl)
         : base(bigMachine)
     {
-        this.Information = information;
-        this.Netsphere = netsphere;
+        this.NetBase = netBase;
+        this.NetControl = netControl;
         this.DefaultTimeout = TimeSpan.FromSeconds(1);
     }
 
-    public Information Information { get; }
+    public NetBase NetBase { get; }
 
-    public Netsphere Netsphere { get; }
+    public NetControl NetControl { get; }
 
     [StateMethod(0)]
     protected StateResult Initial(StateParameter parameter)
@@ -32,19 +32,19 @@ public partial class EssentialNetMachine : Machine<Identifier>
         return StateResult.Continue;
 
         var ni = NodeInformation.Alternative;
-        using (var ta = this.Netsphere.Terminal.Create(ni))
+        using (var ta = this.NetControl.Terminal.Create(ni))
         {
             var pp = new RawPacketPunch(null);
             // ta.SendRaw(pp);
         }
 
-        if (this.Netsphere.EssentialNode.GetUncheckedNode(out var nodeAddress))
+        if (this.NetControl.EssentialNode.GetUncheckedNode(out var nodeAddress))
         {
             // var alt = NodeInformation.Alternative;
             // this.Netsphere.EssentialNode.Report(nodeAddress, NodeConnectionResult.Success);
 
             // nodeAddress = NodeAddress.Alternative;
-            using (var terminal = this.Netsphere.Terminal.Create(nodeAddress))
+            using (var terminal = this.NetControl.Terminal.Create(nodeAddress))
             {
                 /*terminal.SendRaw(new RawPacketPunch(null));
                 var data = terminal.ReceiveRaw<PacketPunchResponse>(1000);
@@ -66,7 +66,7 @@ public partial class EssentialNetMachine : Machine<Identifier>
             }
         }
 
-        if (this.Netsphere.MyStatus.Type == MyStatus.ConnectionType.Unknown)
+        if (this.NetControl.MyStatus.Type == MyStatus.ConnectionType.Unknown)
         {
         }
 

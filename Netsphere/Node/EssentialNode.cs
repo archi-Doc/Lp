@@ -20,9 +20,9 @@ public class EssentialNode
     public const string FileName = "EssentialNode.tinyhand";
     public const int ValidTimeInMinutes = 5;
 
-    public EssentialNode(Information information)
+    public EssentialNode(NetBase netBase)
     {
-        this.information = information;
+        this.NetBase = netBase;
 
         Radio.Open<Message.Configure>(this.Configure);
         Radio.OpenAsync<Message.LoadAsync>(this.LoadAsync);
@@ -37,7 +37,8 @@ public class EssentialNode
     {
         try
         {
-            var path = Path.Combine(this.information.RootDirectory, FileName);
+            // this.information.RootDirectory
+            var path = Path.Combine(string.Empty, FileName);
             if (File.Exists(path))
             {
                 var bytes = await File.ReadAllBytesAsync(path);
@@ -55,7 +56,7 @@ public class EssentialNode
         }
 
         // Load NetsphereOptions.Nodes
-        var nodes = this.information.ConsoleOptions.NetsphereOptions.Nodes;
+        var nodes = this.NetBase.NetsphereOptions.Nodes;
         foreach (var x in nodes.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
             if (NodeAddress.TryParse(x, out var address))
@@ -86,7 +87,8 @@ public class EssentialNode
 
     public async Task Save(Message.SaveAsync message)
     {
-        var path = Path.Combine(this.information.RootDirectory, FileName);
+        // this.information.RootDirectory
+        var path = Path.Combine(string.Empty, FileName);
         using (var file = File.Open(path, FileMode.Create))
         {
             byte[] b;
@@ -166,6 +168,8 @@ public class EssentialNode
         }
     }
 
+    public NetBase NetBase { get; }
+
     private void Validate()
     {
         // Validate essential nodes.
@@ -184,7 +188,6 @@ public class EssentialNode
         }
     }
 
-    private Information information;
     private EssentialNodeAddress.GoshujinClass essentialNodes = new();
 }
 

@@ -15,9 +15,9 @@ internal class PacketService
         // PacketInfo = new PacketInfo[] { new(typeof(PacketPunch), 0, false), };
 
         var relay = new RawPacketRelay();
-        relay.NextEndpoint = new(IPAddress.IPv6Loopback, Netsphere.MaxPort);
+        relay.NextEndpoint = new(IPAddress.IPv6Loopback, NetControl.MaxPort);
         RelayPacketSize = Tinyhand.TinyhandSerializer.Serialize(relay).Length;
-        SafeMaxPacketSize = Netsphere.MaxPayload - HeaderSize - RelayPacketSize - 8;
+        SafeMaxPacketSize = NetControl.MaxPayload - HeaderSize - RelayPacketSize - 8;
     }
 
     public PacketService()

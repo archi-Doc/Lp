@@ -7,20 +7,20 @@ namespace LP.Net;
 
 public class NetStatus
 {
-    public NetStatus(Information information)
+    public NetStatus(NetBase netBase)
     {
-        this.Information = information;
+        this.NetBase = netBase;
     }
 
     public NodeInformation GetMyNodeInformation()
     {
-        this.myNodeInformation.PublicKeyX = this.Information.NodePublicKey.X;
-        this.myNodeInformation.PublicKeyY = this.Information.NodePublicKey.Y;
+        this.myNodeInformation.PublicKeyX = this.NetBase.NodePublicKey.X;
+        this.myNodeInformation.PublicKeyY = this.NetBase.NodePublicKey.Y;
 
         return this.myNodeInformation;
     }
 
-    public Information Information { get; }
+    public NetBase NetBase { get; }
 
     private NodeInformation myNodeInformation = new(new NodeAddress(IPAddress.None, 0));
 }

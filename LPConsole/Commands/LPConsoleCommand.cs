@@ -9,6 +9,7 @@ using Arc.Crypto;
 using Arc.Threading;
 using DryIoc;
 using LP;
+using LP.Options;
 using SimpleCommandLine;
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
@@ -25,9 +26,10 @@ public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
     public async Task Run(LPConsoleOptions option, string[] args)
     {
         this.information = Program.Container.Resolve<Information>();
-        this.@private = Program.Container.Resolve<Private>();
-
         this.information.Initialize(option, true, "relay");
+
+        this.netBase = Program.Container.Resolve<NetBase>();
+        this.netBase.Initialize(string.Empty, option.NetsphereOptions);
 
         if (await this.LoadAsync() == AbortOrComplete.Abort)
         {
@@ -146,20 +148,12 @@ Deserialize:
             var key = Tinyhand.TinyhandSerializer.Deserialize<NodePrivateKey>(data);
             if (key != null)
             {
-                this.information.NodePublicKey = new NodePublicKey(key);
-                this.information.NodePublicEcdh = NodeKey.FromPublicKey(this.information.NodePublicKey.X, this.information.NodePublicKey.Y) ?? throw new InvalidDataException();
-                this.@private.NodePrivateKey = key;
-                this.@private.NodePrivateEcdh = NodeKey.FromPrivateKey(this.@private.NodePrivateKey) ?? throw new InvalidDataException();
-
+                this.netBase.SetNodeKey(key);
                 Logger.Default.Information($"Loaded: {file}");
             }
         }
         catch
         {
-            this.information.NodePublicKey = null!;
-            this.information.NodePublicEcdh = null!;
-            this.@private.NodePrivateKey = null!;
-            this.@private.NodePrivateEcdh = null!;
         }
 
         return AbortOrComplete.Complete;
@@ -233,5 +227,6 @@ Deserialize:
     }
 
     private Information information = default!;
-    private Private @private = default!;
+
+    private NetBase netBase = default!;
 }

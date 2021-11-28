@@ -3,9 +3,9 @@
 using System.Diagnostics.CodeAnalysis;
 using LP.Net;
 
-namespace NetsphereTest;
+namespace LP.Subcommands;
 
-public static class SubcommandService
+public static partial class SubcommandService
 {
     public static bool TryParseNodeAddress(string node, [MaybeNullWhen(false)] out NodeAddress nodeAddress)
     {

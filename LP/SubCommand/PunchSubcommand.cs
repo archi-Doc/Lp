@@ -51,7 +51,7 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
         Logger.Priority.Information($"Punch: {node.ToString()}");
 
         var sw = Stopwatch.StartNew();
-        using (var terminal = this.Control.Netsphere.Terminal.Create(node))
+        using (var terminal = this.Control.NetControl.Terminal.Create(node))
         {
             var p = new RawPacketPunch(nextNode?.CreateEndpoint());
 

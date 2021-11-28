@@ -6,10 +6,10 @@ namespace LP.Net;
 
 public class Server
 {
-    public Server(Information information, Netsphere netsphere)
+    public Server(NetBase netBase, NetControl netControl)
     {
-        this.Information = information;
-        this.Netsphere = netsphere;
+        this.NetBase = netBase;
+        this.NetControl = netControl;
     }
 
     public void Process(NetTerminalServer terminal)
@@ -17,9 +17,9 @@ public class Server
         // terminal.Receive();
     }
 
-    public ThreadCoreBase? Core => this.Netsphere.Terminal.Core;
+    public ThreadCoreBase? Core => this.NetControl.Terminal.Core;
 
-    public Information Information { get; }
+    public NetBase NetBase { get; }
 
-    public Netsphere Netsphere { get; }
+    public NetControl NetControl { get; }
 }

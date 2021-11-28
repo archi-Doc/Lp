@@ -11,6 +11,7 @@ public enum RawPacketId : byte
 {
     Invalid,
     Ack,
+    Close,
     Relay,
     Encrypt,
     Data,
