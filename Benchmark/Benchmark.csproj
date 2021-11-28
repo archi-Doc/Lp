@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\LPBase\LPBase.csproj" />
+    <ProjectReference Include="..\LPEssentials\LPEssentials.csproj" />
   </ItemGroup>
 
 </Project>

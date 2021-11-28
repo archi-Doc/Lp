@@ -32,7 +32,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\LPBase\LPBase.csproj" />
     <ProjectReference Include="..\Netsphere\Netsphere.csproj" />
     <ProjectReference Include="..\Zen\Zen.csproj" />
   </ItemGroup>

@@ -15,8 +15,8 @@ namespace LP.Net;
 public class NetSocket
 {
     private const int ReceiveTimeout = 100;
-    private const int SendIntervalMilliseconds = 1;
-    private const int SendIntervalNanoseconds = 1_000_000;
+    private const int SendIntervalMilliseconds = 2;
+    private const int SendIntervalNanoseconds = 2_000_000;
 
     internal class NetSocketRecvCore : ThreadCore
     {
