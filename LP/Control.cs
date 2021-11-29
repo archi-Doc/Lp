@@ -91,11 +91,13 @@ public class Control
     public async Task LoadAsync()
     {
         await Radio.SendAsync(new Message.LoadAsync());
+        await this.NetControl.EssentialNode.LoadAsync(Path.Combine(this.Information.RootDirectory, EssentialNode.FileName));
     }
 
     public async Task SaveAsync()
     {
         await Radio.SendAsync(new Message.SaveAsync());
+        await this.NetControl.EssentialNode.SaveAsync(Path.Combine(this.Information.RootDirectory, EssentialNode.FileName));
     }
 
     public bool TryStart()

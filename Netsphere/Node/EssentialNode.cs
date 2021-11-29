@@ -25,23 +25,19 @@ public class EssentialNode
         this.NetBase = netBase;
 
         Radio.Open<Message.Configure>(this.Configure);
-        Radio.OpenAsync<Message.LoadAsync>(this.LoadAsync);
-        Radio.OpenAsync<Message.SaveAsync>(this.Save);
     }
 
     public void Configure(Message.Configure message)
     {
     }
 
-    public async Task LoadAsync(Message.LoadAsync message)
+    public async Task LoadAsync(string filename)
     {
         try
         {
-            // this.information.RootDirectory
-            var path = Path.Combine(string.Empty, FileName);
-            if (File.Exists(path))
+            if (File.Exists(filename))
             {
-                var bytes = await File.ReadAllBytesAsync(path);
+                var bytes = await File.ReadAllBytesAsync(filename);
                 // this.essentialNodes = TinyhandSerializer.Deserialize<EssentialNodeAddress.GoshujinClass>(bytes);
                 var g = TinyhandSerializer.DeserializeFromUtf8<EssentialNodeAddress.GoshujinClass>(bytes);
                 if (g != null)
@@ -85,11 +81,10 @@ public class EssentialNode
         this.Validate();
     }
 
-    public async Task Save(Message.SaveAsync message)
+    public async Task SaveAsync(string filename)
     {
         // this.information.RootDirectory
-        var path = Path.Combine(string.Empty, FileName);
-        using (var file = File.Open(path, FileMode.Create))
+        using (var file = File.Open(filename, FileMode.Create))
         {
             byte[] b;
             lock (this.essentialNodes)

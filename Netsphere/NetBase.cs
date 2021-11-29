@@ -2,7 +2,7 @@
 
 using System.Security.Cryptography;
 
-namespace LP;
+namespace LP.Net;
 
 public class NetBase
 {
@@ -13,6 +13,24 @@ public class NetBase
 
     public void Configure(Message.Configure message)
     {
+        // Set port number
+        if (this.NetsphereOptions.Port < NetControl.MinPort ||
+            this.NetsphereOptions.Port > NetControl.MaxPort)
+        {
+            var showWarning = false;
+            if (this.NetsphereOptions.Port != 0)
+            {
+                showWarning = true;
+            }
+
+            this.NetsphereOptions.Port = LP.Random.Pseudo.NextInt(NetControl.MinPort, NetControl.MaxPort + 1);
+            if (showWarning)
+            {
+                Logger.Default.Warning($"Port number must be between {NetControl.MinPort} and {NetControl.MaxPort}");
+                Logger.Default.Information($"Port number is set to {this.NetsphereOptions.Port}");
+            }
+        }
+
         // Node key
         if (this.NodePrivateKey == null)
         {

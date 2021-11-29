@@ -66,6 +66,8 @@ public class NetControl
         var options = new LP.Options.NetsphereOptions();
         netBase.Initialize(string.Empty, options);
 
+        var netControl = containerInstance.Resolve<NetControl>();
+        Logger.Configure(null);
         Radio.Send(new Message.Configure());
         var message = new Message.Start(ThreadCore.Root);
         Radio.Send(message);
@@ -92,24 +94,6 @@ public class NetControl
 
     public void Configure(Message.Configure message)
     {
-        // Set port number
-        if (this.NetBase.NetsphereOptions.Port < NetControl.MinPort ||
-            this.NetBase.NetsphereOptions.Port > NetControl.MaxPort)
-        {
-            var showWarning = false;
-            if (this.NetBase.NetsphereOptions.Port != 0)
-            {
-                showWarning = true;
-            }
-
-            this.NetBase.NetsphereOptions.Port = LP.Random.Pseudo.NextInt(NetControl.MinPort, NetControl.MaxPort + 1);
-            if (showWarning)
-            {
-                Logger.Default.Warning($"Port number must be between {NetControl.MinPort} and {NetControl.MaxPort}");
-                Logger.Default.Information($"Port number is set to {this.NetBase.NetsphereOptions.Port}");
-            }
-        }
-
         // Terminals
         this.Terminal.Initialize(false, this.NetBase.NodePrivateEcdh);
         if (this.Alternative != null)
