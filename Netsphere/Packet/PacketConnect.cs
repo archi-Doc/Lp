@@ -37,5 +37,8 @@ internal partial class PacketConnectResponse : IPacket
     public PacketId Id => PacketId.ConnectResponse;
 
     [Key(0)]
+    public NodeAddress? HandOver { get; set; }
+
+    [Key(1)]
     public bool CanRelay { get; set; }
 }
