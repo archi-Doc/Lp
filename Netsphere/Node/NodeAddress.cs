@@ -7,11 +7,11 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace LP.Net;
 
-public enum NodeType : byte
+/*public enum NodeType : byte
 {
     Development,
     Release,
-}
+}*/
 
 /// <summary>
 /// Represents a basic node information (Address, Port, Engagement, Type).
@@ -98,15 +98,12 @@ public partial class NodeAddress : IEquatable<NodeAddress>
     }
 
     [Key(0)]
-    public NodeType Type { get; protected set; }
-
-    [Key(1)]
     public ushort Engagement { get; protected set; }
 
-    [Key(2)]
+    [Key(1)]
     public ushort Port { get; protected set; }
 
-    [Key(3)]
+    [Key(2)]
     public IPAddress Address { get; protected set; } = IPAddress.None;
 
     public IPEndPoint CreateEndpoint() => new IPEndPoint(this.Address, this.Port);
@@ -139,12 +136,12 @@ public partial class NodeAddress : IEquatable<NodeAddress>
             return false;
         }
 
-        return this.Type == other.Type && this.Engagement == other.Engagement && this.Port == other.Port && this.Address.Equals(other.Address);
+        return this.Engagement == other.Engagement && this.Port == other.Port && this.Address.Equals(other.Address);
     }
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(this.Type, this.Engagement, this.Port, this.Address);
+        return HashCode.Combine(this.Engagement, this.Port, this.Address);
     }
 
     public override string ToString()
