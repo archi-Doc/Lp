@@ -29,8 +29,8 @@ public class SendDataSubcommand : ISimpleCommandAsync<SendDataOptions>
         var nodeInformation = NodeInformation.Alternative;
         using (var terminal = this.NetControl.Terminal.Create(nodeInformation))
         {
-            var p = new RawPacketPunch(null);
-            var netInterface = terminal.SendAndReceive<RawPacketPunch, RawPacketPunchResponse>(p);
+            var p = new PacketPunch(null);
+            var netInterface = terminal.SendAndReceive<PacketPunch, PacketPunchResponse>(p);
             if (netInterface != null)
             {
                 netInterface.Receive(out var r);

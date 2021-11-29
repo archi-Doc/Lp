@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace LP.Net;
 
-public enum RawPacketId : byte
+public enum PacketId : byte
 {
     Invalid,
     Ack,
@@ -23,13 +23,13 @@ public enum RawPacketId : byte
     GetNodeResponse,
 }
 
-public interface IRawPacket
+public interface IPacket
 {
-    public RawPacketId Id { get; }
+    public PacketId Id { get; }
 }
 
 [StructLayout(LayoutKind.Explicit)]
-internal partial struct RawPacketHeader
+internal partial struct PacketHeader
 {
     [FieldOffset(0)]
     public ushort Engagement;
@@ -38,7 +38,7 @@ internal partial struct RawPacketHeader
     public byte Cage;
 
     [FieldOffset(3)]
-    public RawPacketId Id;
+    public PacketId Id;
 
     [FieldOffset(4)]
     public ushort DataSize;

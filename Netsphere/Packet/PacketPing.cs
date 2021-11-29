@@ -3,18 +3,18 @@
 namespace LP.Net;
 
 [TinyhandObject]
-public partial class RawPacketPing : IRawPacket
+public partial class PacketPing : IPacket
 {
-    public RawPacketPing()
+    public PacketPing()
     {
     }
 
-    public RawPacketPing(string text)
+    public PacketPing(string text)
     {
         this.Text = text;
     }
 
-    public RawPacketId Id => RawPacketId.Ping;
+    public PacketId Id => PacketId.Ping;
 
     [Key(0)]
     public string Text { get; set; } = default!;
@@ -23,19 +23,19 @@ public partial class RawPacketPing : IRawPacket
 }
 
 [TinyhandObject]
-public partial class RawPacketPingResponse : IRawPacket
+public partial class PacketPingResponse : IPacket
 {
-    public RawPacketPingResponse()
+    public PacketPingResponse()
     {
     }
 
-    public RawPacketPingResponse(NodeAddress? nodeAddress, string text)
+    public PacketPingResponse(NodeAddress? nodeAddress, string text)
     {
         this.NodeAddress = nodeAddress;
         this.Text = text;
     }
 
-    public RawPacketId Id => RawPacketId.PingResponse;
+    public PacketId Id => PacketId.PingResponse;
 
     [Key(0)]
     public string Text { get; set; } = default!;

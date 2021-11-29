@@ -169,10 +169,10 @@ public class Terminal
 
         while (remaining >= PacketService.HeaderSize)
         {
-            RawPacketHeader header;
+            PacketHeader header;
             fixed (byte* pb = outerPacket)
             {
-                header = *(RawPacketHeader*)(pb + position);
+                header = *(PacketHeader*)(pb + position);
             }
 
             var dataSize = header.DataSize;
@@ -193,7 +193,7 @@ public class Terminal
         }
     }
 
-    internal void ProcessReceiveCore(IPEndPoint endPoint, ref RawPacketHeader header, Memory<byte> data, long currentTicks)
+    internal void ProcessReceiveCore(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data, long currentTicks)
     {
         if (this.inboundGenes.TryGetValue(header.Gene, out var gene))
         {// NetTerminalGene is found.
@@ -205,17 +205,17 @@ public class Terminal
         }
     }
 
-    internal void ProcessUnmanagedRecv(IPEndPoint endpoint, ref RawPacketHeader header, Memory<byte> data)
+    internal void ProcessUnmanagedRecv(IPEndPoint endpoint, ref PacketHeader header, Memory<byte> data)
     {
-        if (header.Id == RawPacketId.Punch)
+        if (header.Id == PacketId.Punch)
         {
             this.ProcessUnmanagedRecv_Punch(endpoint, ref header, data);
         }
-        else if (header.Id == RawPacketId.Encrypt)
+        else if (header.Id == PacketId.Encrypt)
         {
             this.ProcessUnmanagedRecv_Encrypt(endpoint, ref header, data);
         }
-        else if (header.Id == RawPacketId.Ping)
+        else if (header.Id == PacketId.Ping)
         {
             this.ProcessUnmanagedRecv_Ping(endpoint, ref header, data);
         }
@@ -224,16 +224,16 @@ public class Terminal
         }
     }
 
-    internal void ProcessUnmanagedRecv_Punch(IPEndPoint endpoint, ref RawPacketHeader header, Memory<byte> data)
+    internal void ProcessUnmanagedRecv_Punch(IPEndPoint endpoint, ref PacketHeader header, Memory<byte> data)
     {
-        if (!TinyhandSerializer.TryDeserialize<RawPacketPunch>(data, out var punch))
+        if (!TinyhandSerializer.TryDeserialize<PacketPunch>(data, out var punch))
         {
             return;
         }
 
         TimeCorrection.AddCorrection(punch.UtcTicks);
 
-        var response = new RawPacketPunchResponse();
+        var response = new PacketPunchResponse();
         response.Endpoint = endpoint;
         response.UtcTicks = Ticks.GetUtcNow();
         var secondGene = GenePool.GetSecond(header.Gene);
@@ -243,9 +243,9 @@ public class Terminal
         this.AddRawSend(endpoint, p);
     }
 
-    internal void ProcessUnmanagedRecv_Encrypt(IPEndPoint endpoint, ref RawPacketHeader header, Memory<byte> data)
+    internal void ProcessUnmanagedRecv_Encrypt(IPEndPoint endpoint, ref PacketHeader header, Memory<byte> data)
     {
-        if (!TinyhandSerializer.TryDeserialize<RawPacketEncrypt>(data, out var packet))
+        if (!TinyhandSerializer.TryDeserialize<PacketEncrypt>(data, out var packet))
         {
             return;
         }
@@ -256,7 +256,7 @@ public class Terminal
             packet.NodeInformation.SetIPEndPoint(endpoint);
 
             var terminal = this.Create(packet.NodeInformation, header.Gene);
-            var netInterface = NetInterface<object, RawPacketEncrypt>.CreateReceive(terminal, header.Gene, data);
+            var netInterface = NetInterface<object, PacketEncrypt>.CreateReceive(terminal, header.Gene, data);
             // var netInterface = new NetInterface<object, RawPacketEncrypt>(terminal, false);
             // netInterface.InitializeReceive(header.Gene, data);
             terminal.GenePool.GetGene();
@@ -270,16 +270,16 @@ public class Terminal
         }
     }
 
-    internal void ProcessUnmanagedRecv_Ping(IPEndPoint endpoint, ref RawPacketHeader header, Memory<byte> data)
+    internal void ProcessUnmanagedRecv_Ping(IPEndPoint endpoint, ref PacketHeader header, Memory<byte> data)
     {
-        if (!TinyhandSerializer.TryDeserialize<RawPacketPing>(data, out var packet))
+        if (!TinyhandSerializer.TryDeserialize<PacketPing>(data, out var packet))
         {
             return;
         }
 
         Logger.Default.Information($"Ping From: {packet.ToString()}");
 
-        var response = new RawPacketPingResponse(new(endpoint.Address, (ushort)endpoint.Port, 0), this.NetBase.NodeName);
+        var response = new PacketPingResponse(new(endpoint.Address, (ushort)endpoint.Port, 0), this.NetBase.NodeName);
         var secondGene = GenePool.GetSecond(header.Gene);
         this.TerminalLogger?.Information($"Ping Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 

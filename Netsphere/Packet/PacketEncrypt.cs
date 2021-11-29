@@ -3,19 +3,19 @@
 namespace LP.Net;
 
 [TinyhandObject]
-internal partial class RawPacketEncrypt : IRawPacket
+internal partial class PacketEncrypt : IPacket
 {
-    public RawPacketEncrypt()
+    public PacketEncrypt()
     {
     }
 
-    public RawPacketEncrypt(NodeInformation nodeInformation)
+    public PacketEncrypt(NodeInformation nodeInformation)
     {
         this.NodeInformation = nodeInformation;
         this.Salt = Random.Crypto.NextULong();
     }
 
-    public RawPacketId Id => RawPacketId.Encrypt;
+    public PacketId Id => PacketId.Encrypt;
 
     [Key(0)]
     public NodeInformation? NodeInformation { get; set; }

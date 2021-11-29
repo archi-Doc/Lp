@@ -11,10 +11,10 @@ internal class PacketService
 {
     static PacketService()
     {
-        HeaderSize = Marshal.SizeOf(default(RawPacketHeader));
+        HeaderSize = Marshal.SizeOf(default(PacketHeader));
         // PacketInfo = new PacketInfo[] { new(typeof(PacketPunch), 0, false), };
 
-        var relay = new RawPacketRelay();
+        var relay = new PacketRelay();
         relay.NextEndpoint = new(IPAddress.IPv6Loopback, NetControl.MaxPort);
         RelayPacketSize = Tinyhand.TinyhandSerializer.Serialize(relay).Length;
         SafeMaxPacketSize = NetControl.MaxPayload - HeaderSize - RelayPacketSize - 8;
@@ -37,7 +37,7 @@ internal class PacketService
     [ThreadStatic]
     private static byte[]? initialBuffer;
 
-    internal static unsafe byte[] CreatePacket<T>(ref RawPacketHeader header, T value, RawPacketId rawPacketId)
+    internal static unsafe byte[] CreatePacket<T>(ref PacketHeader header, T value, PacketId rawPacketId)
     {
         if (initialBuffer == null)
         {
@@ -55,13 +55,13 @@ internal class PacketService
         {
             header.Id = rawPacketId;
             header.DataSize = (ushort)(writer.Written - written);
-            *(RawPacketHeader*)pb = header;
+            *(PacketHeader*)pb = header;
         }
 
         return writer.FlushAndGetArray();
     }
 
-    internal static unsafe byte[] CreateAckAndPacket<T>(ref RawPacketHeader header, ulong secondGene, T value, RawPacketId rawPacketId)
+    internal static unsafe byte[] CreateAckAndPacket<T>(ref PacketHeader header, ulong secondGene, T value, PacketId rawPacketId)
     {
         if (initialBuffer == null)
         {
@@ -77,15 +77,15 @@ internal class PacketService
 
         fixed (byte* pb = span)
         {
-            (*(RawPacketHeader*)pb).Engagement = header.Engagement;
-            (*(RawPacketHeader*)pb).Id = RawPacketId.Ack;
-            (*(RawPacketHeader*)pb).DataSize = 0;
-            (*(RawPacketHeader*)pb).Gene = header.Gene;
+            (*(PacketHeader*)pb).Engagement = header.Engagement;
+            (*(PacketHeader*)pb).Id = PacketId.Ack;
+            (*(PacketHeader*)pb).DataSize = 0;
+            (*(PacketHeader*)pb).Gene = header.Gene;
 
             header.Id = rawPacketId;
             header.DataSize = (ushort)(writer.Written - written);
             header.Gene = secondGene;
-            *(RawPacketHeader*)(pb + PacketService.HeaderSize) = header;
+            *(PacketHeader*)(pb + PacketService.HeaderSize) = header;
         }
 
         return writer.FlushAndGetArray();

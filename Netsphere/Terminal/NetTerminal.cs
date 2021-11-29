@@ -62,7 +62,7 @@ public partial class NetTerminal : IDisposable
 
     internal GenePool GenePool { get; }
 
-    internal void CreateHeader(out RawPacketHeader header, ulong gene)
+    internal void CreateHeader(out PacketHeader header, ulong gene)
     {
         header = default;
         header.Gene = gene;
@@ -72,19 +72,19 @@ public partial class NetTerminal : IDisposable
     internal unsafe void SendAck(ulong gene)
     {
         this.CreateHeader(out var header, gene);
-        header.Id = RawPacketId.Ack;
+        header.Id = PacketId.Ack;
 
         var packet = new byte[PacketService.HeaderSize];
         fixed (byte* bp = packet)
         {
-            *(RawPacketHeader*)bp = header;
+            *(PacketHeader*)bp = header;
         }
 
         this.Terminal.AddRawSend(this.Endpoint, packet);
     }
 
     internal NetInterface<TSend, object> SendPacket<TSend>(TSend value)
-        where TSend : IRawPacket
+        where TSend : IPacket
     {
         // var netInterface = new NetInterface<TSend, object>(this, true);
         // netInterface.Initialize(value, value.Id, false);
@@ -92,7 +92,7 @@ public partial class NetTerminal : IDisposable
     }
 
     internal NetInterface<TSend, TReceive> SendAndReceivePacket<TSend, TReceive>(TSend value)
-        where TSend : IRawPacket
+        where TSend : IPacket
     {
         /*var netInterface = new NetInterface<TSend, TReceive>(this, true);
         netInterface.Initialize(value, value.Id, true);*/

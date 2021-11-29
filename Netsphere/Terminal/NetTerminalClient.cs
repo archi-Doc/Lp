@@ -15,21 +15,21 @@ public class NetTerminalClient : NetTerminal
     }
 
     public INetInterface<TSend> SendRaw<TSend>(TSend value)
-        where TSend : IRawPacket
+        where TSend : IPacket
     {
         var netInterface = this.SendPacket(value);
         return netInterface;
     }
 
     public INetInterface<TSend, TReceive> SendAndReceiveRaw<TSend, TReceive>(TSend value)
-        where TSend : IRawPacket
+        where TSend : IPacket
     {
         var netInterface = this.SendAndReceivePacket<TSend, TReceive>(value);
         return netInterface;
     }
 
     public INetInterface<TSend, TReceive> SendAndReceive<TSend, TReceive>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
-        where TSend : IRawPacket
+        where TSend : IPacket
     {
         if (!this.CheckManagedAndEncrypted())
         {
@@ -51,8 +51,8 @@ public class NetTerminalClient : NetTerminal
             return false;
         }
 
-        var p = new RawPacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
-        var netInterface = this.SendRaw<RawPacketEncrypt>(p);
+        var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
+        var netInterface = this.SendRaw<PacketEncrypt>(p);
         if (netInterface.WaitForSendCompletion() != NetInterfaceSendResult.Success)
         {
             netInterface.Dispose();

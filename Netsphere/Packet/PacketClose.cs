@@ -3,7 +3,7 @@
 namespace LP.Net;
 
 [TinyhandObject]
-internal partial class PacketClose : IRawPacket
+internal partial class PacketClose : IPacket
 {
-    public RawPacketId Id => RawPacketId.Close;
+    public PacketId Id => PacketId.Close;
 }

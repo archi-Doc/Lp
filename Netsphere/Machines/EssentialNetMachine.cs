@@ -34,7 +34,7 @@ public partial class EssentialNetMachine : Machine<Identifier>
         var ni = NodeInformation.Alternative;
         using (var ta = this.NetControl.Terminal.Create(ni))
         {
-            var pp = new RawPacketPunch(null);
+            var pp = new PacketPunch(null);
             // ta.SendRaw(pp);
         }
 

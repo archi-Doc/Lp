@@ -3,9 +3,9 @@
 namespace LP.Net;
 
 [TinyhandObject]
-internal partial class RawPacketData : IRawPacket
+internal partial class PacketData : IPacket
 {
-    public RawPacketId Id => RawPacketId.Data;
+    public PacketId Id => PacketId.Data;
 
     [Key(0)]
     public bool Response { get; set; }

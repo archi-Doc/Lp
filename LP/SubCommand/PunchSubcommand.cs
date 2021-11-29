@@ -53,10 +53,10 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
         var sw = Stopwatch.StartNew();
         using (var terminal = this.Control.NetControl.Terminal.Create(node))
         {
-            var p = new RawPacketPunch(nextNode?.CreateEndpoint());
+            var p = new PacketPunch(nextNode?.CreateEndpoint());
 
             sw.Restart();
-            var netInterface = terminal.SendAndReceiveRaw<RawPacketPunch, RawPacketPunchResponse>(p);
+            var netInterface = terminal.SendAndReceiveRaw<PacketPunch, PacketPunchResponse>(p);
             var result = netInterface.Receive(out var r);
             sw.Stop();
             if (r != null)

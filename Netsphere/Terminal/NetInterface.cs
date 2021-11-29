@@ -40,7 +40,7 @@ public interface INetInterface<TSend> : IDisposable
 
 internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend, TReceive>
 {
-    internal static NetInterface<TSend, TReceive> Create(NetTerminal netTerminal, TSend value, RawPacketId id, bool receive, bool sendReceiveAck)
+    internal static NetInterface<TSend, TReceive> Create(NetTerminal netTerminal, TSend value, PacketId id, bool receive, bool sendReceiveAck)
     {// Send and Receive(optional) NetTerminalGene.
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal, sendReceiveAck);
         var gene = netTerminal.GenePool.GetGene(); // Send gene
@@ -294,7 +294,7 @@ WaitForSendCompletionWait:
         }
     }
 
-    internal void ProcessReceive(IPEndPoint endPoint, ref RawPacketHeader header, Memory<byte> data, long currentTicks, NetTerminalGene gene)
+    internal void ProcessReceive(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data, long currentTicks, NetTerminalGene gene)
     {
         lock (this.NetTerminal.SyncObject)
         {
@@ -309,7 +309,7 @@ WaitForSendCompletionWait:
                 return;
             }
 
-            if (header.Id == RawPacketId.Ack)
+            if (header.Id == PacketId.Ack)
             {// Ack (header.Gene + data(ulong[]))
                 gene.ReceiveAck();
                 var g = MemoryMarshal.Cast<byte, ulong>(data.Span);
