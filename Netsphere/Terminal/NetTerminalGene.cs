@@ -7,7 +7,7 @@ using Arc.Threading;
 
 #pragma warning disable SA1401
 
-namespace LP.Net;
+namespace Netsphere;
 
 internal static class NetTerminalGeneExtension
 {

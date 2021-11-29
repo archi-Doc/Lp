@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace LP.Net;
+namespace Netsphere;
 
 [TinyhandObject]
 internal partial class PacketConnect : IPacket
@@ -12,7 +12,7 @@ internal partial class PacketConnect : IPacket
     public PacketConnect(NodeInformation nodeInformation)
     {
         this.NodeInformation = nodeInformation;
-        this.Salt = Random.Crypto.NextULong();
+        this.Salt = LP.Random.Crypto.NextULong();
     }
 
     public PacketId Id => PacketId.Connect;

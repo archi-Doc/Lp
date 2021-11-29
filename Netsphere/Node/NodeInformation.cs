@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
 #pragma warning disable SA1401 // Fields should be private
 
-namespace LP.Net;
+namespace Netsphere;
 
 /// <summary>
 /// Represents a node information.<br/>

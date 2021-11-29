@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 
-namespace LP.Net;
+namespace Netsphere;
 
 internal class PacketService
 {

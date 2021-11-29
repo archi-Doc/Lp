@@ -6,7 +6,7 @@ using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Threading;
 
-namespace LP.Net;
+namespace Netsphere;
 
 #pragma warning disable SA1401 // Fields should be private
 
@@ -28,13 +28,13 @@ public partial class NetTerminal : IDisposable
     internal NetTerminal(Terminal terminal, NodeAddress nodeAddress)
     {// NodeAddress: Unmanaged
         this.Terminal = terminal;
-        this.GenePool = new(Random.Crypto.NextULong());
+        this.GenePool = new(LP.Random.Crypto.NextULong());
         this.NodeAddress = nodeAddress;
         this.Endpoint = this.NodeAddress.CreateEndpoint();
     }
 
     internal NetTerminal(Terminal terminal, NodeInformation nodeInformation)
-        : this(terminal, nodeInformation, Random.Crypto.NextULong())
+        : this(terminal, nodeInformation, LP.Random.Crypto.NextULong())
     {// NodeInformation: Managed
     }
 

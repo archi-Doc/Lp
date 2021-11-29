@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace LP.Net;
+namespace Netsphere;
 
 public class NetTerminalClient : NetTerminal
 {
@@ -10,7 +10,7 @@ public class NetTerminalClient : NetTerminal
     }
 
     internal NetTerminalClient(Terminal terminal, NodeInformation nodeInformation)
-        : base(terminal, nodeInformation, Random.Crypto.NextULong())
+        : base(terminal, nodeInformation, LP.Random.Crypto.NextULong())
     {// NodeInformation: Managed
     }
 

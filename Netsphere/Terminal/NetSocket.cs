@@ -7,7 +7,7 @@ using System.Net.Sockets;
 using System.Threading;
 using Arc.Threading;
 
-namespace LP.Net;
+namespace Netsphere;
 
 /// <summary>
 /// NetSocket provides low-level network service.

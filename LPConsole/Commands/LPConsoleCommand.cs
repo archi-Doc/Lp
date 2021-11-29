@@ -9,7 +9,7 @@ using Arc.Crypto;
 using Arc.Threading;
 using DryIoc;
 using LP;
-using LP.Net;
+using Netsphere;
 using LP.Options;
 using SimpleCommandLine;
 

@@ -10,7 +10,7 @@ global using CrossChannel;
 global using LP;
 global using Tinyhand;
 using DryIoc;
-using LP.Net;
+using Netsphere;
 using SimpleCommandLine;
 
 namespace LP;

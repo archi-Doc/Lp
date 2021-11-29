@@ -2,7 +2,7 @@
 
 using System.Security.Cryptography;
 
-namespace LP.Net;
+namespace Netsphere;
 
 public class NetBase
 {

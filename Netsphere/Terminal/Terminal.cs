@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace LP.Net;
+namespace Netsphere;
 
 public class Terminal
 {

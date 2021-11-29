@@ -14,10 +14,10 @@ global using ValueLink;
 
 using System.Security.Cryptography;
 using DryIoc;
-using LP.Net;
+using Netsphere;
 using SimpleCommandLine;
 
-namespace LP.Net;
+namespace Netsphere;
 
 public class NetControl
 {
@@ -103,7 +103,7 @@ public class NetControl
         }
 
         // Machines
-        this.BigMachine.TryCreate<Machines.EssentialNetMachine.Interface>(Identifier.Zero);
+        this.BigMachine.TryCreate<LP.Machines.EssentialNetMachine.Interface>(Identifier.Zero);
     }
 
     public void SetServerTerminalDelegate(Terminal.CreateServerTerminalDelegate @delegate)

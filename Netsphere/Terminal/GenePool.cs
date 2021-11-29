@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Arc.Crypto;
 
-namespace LP.Net;
+namespace Netsphere;
 
 internal class GenePool : IDisposable
 {

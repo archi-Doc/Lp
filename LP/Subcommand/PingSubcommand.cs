@@ -3,7 +3,7 @@
 using System.Diagnostics;
 using Arc.Crypto;
 using LP;
-using LP.Net;
+using Netsphere;
 using SimpleCommandLine;
 using Tinyhand;
 
