@@ -51,12 +51,14 @@ public class Control
         subcommandTypes.Add(typeof(LP.Subcommands.KeyVaultSubcommand));
         subcommandTypes.Add(typeof(LP.Subcommands.TestSubcommand));
 
+        LP.Subcommands.KeyVaultSubcommand.Register(container);
+
         foreach (var x in subcommandTypes)
         {
             container.Register(x, Reuse.Singleton);
         }
 
-        var subcommandParserOptions = SimpleParserOptions.Standard with
+        SubcommandParserOptions = SimpleParserOptions.Standard with
         {
             ServiceProvider = container,
             RequireStrictCommandName = true,
@@ -64,7 +66,7 @@ public class Control
             DoNotDisplayUsage = true,
         };
 
-        subcommandParser = new SimpleParser(subcommandTypes, subcommandParserOptions);
+        subcommandParser = new SimpleParser(subcommandTypes, SubcommandParserOptions);
     }
 
     public Control(Information information, BigMachine<Identifier> bigMachine, NetControl netsphere)
@@ -141,6 +143,10 @@ public class Control
             {
                 subcommandParser.ShowHelp();
             }
+            else
+            {
+                Console.WriteLine("Invalid subcommand.");
+            }
 
             return false;
         }
@@ -154,6 +160,8 @@ public class Control
         Console.WriteLine();
         return true;
     }
+
+    public static SimpleParserOptions SubcommandParserOptions { get; private set; } = default!;
 
     public ThreadCoreGroup Core { get; }
 
