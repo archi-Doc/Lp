@@ -25,7 +25,7 @@ public class NetControl
     public const int MinPort = 49152; // Ephemeral port 49152 - 60999
     public const int MaxPort = 60999;
 
-    public static void Register(Container container, List<Type> subcommandTypes)
+    public static void Register(Container container, List<Type> commandList)
     {
         // Container instance
         containerInstance = container;
@@ -48,7 +48,32 @@ public class NetControl
         container.Register<LP.Machines.EssentialNetMachine>();
 
         // Subcommands
-        subcommandTypes.Add(typeof(LP.Subcommands.SendDataSubcommand));
+        var commandTypes = new Type[]
+        {
+            typeof(LP.Subcommands.SendDataSubcommand),
+        };
+
+        commandList.AddRange(commandTypes);
+        foreach (var x in commandTypes)
+        {
+            container.Register(x, Reuse.Singleton);
+        }
+    }
+
+    public static void QuickStart()
+    {
+        var netBase = containerInstance.Resolve<NetBase>();
+        var options = new LP.Options.NetsphereOptions();
+        netBase.Initialize(string.Empty, options);
+
+        Radio.Send(new Message.Configure());
+        var message = new Message.Start(ThreadCore.Root);
+        Radio.Send(message);
+        if (message.Abort)
+        {
+            Radio.Send(new Message.Stop());
+            return;
+        }
     }
 
     public NetControl(NetBase netBase, BigMachine<Identifier> bigMachine, Terminal terminal, EssentialNode node, NetStatus netStatus)

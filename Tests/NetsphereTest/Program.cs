@@ -4,6 +4,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Arc.Threading;
+using CrossChannel;
 using DryIoc;
 using LP;
 using LP.Net;
@@ -25,11 +26,6 @@ public class Program
         // DI Container
         NetControl.Register(Container, commandTypes);
 
-        foreach (var x in commandTypes)
-        {
-            Container.Register(x, Reuse.Singleton);
-        }
-
         Container.ValidateAndThrow();
 
         AppDomain.CurrentDomain.ProcessExit += (s, e) =>
@@ -50,6 +46,8 @@ public class Program
             RequireStrictCommandName = false,
             RequireStrictOptionName = true,
         };
+
+        NetControl.QuickStart();
 
         await SimpleParser.ParseAndRunAsync(commandTypes, args, parserOptions); // Main process
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.

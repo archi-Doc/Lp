@@ -40,8 +40,7 @@ public class KeyVaultSubcommand : ISimpleCommandAsync
             keyVaultParser ??= new(commandTypes, Control.SubcommandParserOptions);
         }
 
-        keyVaultParser.Parse(args);
-        await keyVaultParser.RunAsync();
+        await keyVaultParser.ParseAndRunAsync(args);
     }
 
     private static Type[]? commandTypes;

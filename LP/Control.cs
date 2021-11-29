@@ -22,9 +22,6 @@ public class Control
         // Container instance
         containerInstance = container;
 
-        // Subcommand types
-        var subcommandTypes = new List<Type>();
-
         // Base
         container.RegisterDelegate(x => new BigMachine<Identifier>(container), Reuse.Singleton);
 
@@ -32,28 +29,32 @@ public class Control
         container.Register<Control>(Reuse.Singleton);
         container.Register<Information>(Reuse.Singleton);
 
-        NetControl.Register(container, subcommandTypes);
+        var commandList = new List<Type>();
+        NetControl.Register(container, commandList);
 
         // Machines
         container.Register<Machines.SingleMachine>();
 
         // Subcommands
-        RegisterSubcommands(container, subcommandTypes);
+        RegisterSubcommands(container, commandList);
     }
 
-    public static void RegisterSubcommands(Container container, List<Type> subcommandTypes)
+    public static void RegisterSubcommands(Container container, List<Type> commandList)
     {
         // Subcommands
-        subcommandTypes.Add(typeof(LP.Subcommands.DumpSubcommand));
-        subcommandTypes.Add(typeof(LP.Subcommands.GCSubcommand));
-        subcommandTypes.Add(typeof(LP.Subcommands.PingSubcommand));
-        subcommandTypes.Add(typeof(LP.Subcommands.PunchSubcommand));
-        subcommandTypes.Add(typeof(LP.Subcommands.KeyVaultSubcommand));
-        subcommandTypes.Add(typeof(LP.Subcommands.TestSubcommand));
+        var commandTypes = new Type[]
+        {
+            typeof(LP.Subcommands.DumpSubcommand),
+            typeof(LP.Subcommands.GCSubcommand),
+            typeof(LP.Subcommands.PingSubcommand),
+            typeof(LP.Subcommands.PunchSubcommand),
+            typeof(LP.Subcommands.KeyVaultSubcommand),
+            typeof(LP.Subcommands.TestSubcommand),
+        };
 
         LP.Subcommands.KeyVaultSubcommand.Register(container);
 
-        foreach (var x in subcommandTypes)
+        foreach (var x in commandTypes)
         {
             container.Register(x, Reuse.Singleton);
         }
@@ -66,7 +67,8 @@ public class Control
             DoNotDisplayUsage = true,
         };
 
-        subcommandParser = new SimpleParser(subcommandTypes, SubcommandParserOptions);
+        commandList.AddRange(commandTypes);
+        subcommandParser = new SimpleParser(commandList, SubcommandParserOptions);
     }
 
     public Control(Information information, BigMachine<Identifier> bigMachine, NetControl netsphere)
