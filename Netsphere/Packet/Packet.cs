@@ -27,6 +27,10 @@ public enum PacketId : byte
 public interface IPacket
 {
     public PacketId Id { get; }
+
+    public bool AllowUnencrypted => false;
+
+    public bool ManualAck => false;
 }
 
 [StructLayout(LayoutKind.Explicit)]

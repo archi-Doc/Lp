@@ -5,6 +5,12 @@ namespace Netsphere;
 [TinyhandObject]
 internal partial class PacketConnect : IPacket
 {
+    public PacketId Id => PacketId.Connect;
+
+    public bool AllowUnencrypted => true;
+
+    public bool ManualAck => true;
+
     public PacketConnect()
     {
     }
@@ -15,7 +21,6 @@ internal partial class PacketConnect : IPacket
         this.Salt = LP.Random.Crypto.NextULong();
     }
 
-    public PacketId Id => PacketId.Connect;
 
     [Key(0)]
     public NodeInformation? NodeInformation { get; set; }
@@ -30,11 +35,15 @@ internal partial class PacketConnect : IPacket
 [TinyhandObject]
 internal partial class PacketConnectResponse : IPacket
 {
+    public PacketId Id => PacketId.ConnectResponse;
+
+    public bool AllowUnencrypted => true;
+
+    public bool ManualAck => true;
+
     public PacketConnectResponse()
     {
     }
-
-    public PacketId Id => PacketId.ConnectResponse;
 
     [Key(0)]
     public NodeAddress? HandOver { get; set; }

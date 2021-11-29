@@ -25,6 +25,12 @@ public partial class PacketPing : IPacket
 [TinyhandObject]
 public partial class PacketPingResponse : IPacket
 {
+    public PacketId Id => PacketId.PingResponse;
+
+    public bool AllowUnencrypted => true;
+
+    public bool ManualAck => true;
+
     public PacketPingResponse()
     {
     }
@@ -35,7 +41,6 @@ public partial class PacketPingResponse : IPacket
         this.Text = text;
     }
 
-    public PacketId Id => PacketId.PingResponse;
 
     [Key(0)]
     public string Text { get; set; } = default!;
