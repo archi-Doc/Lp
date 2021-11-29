@@ -48,6 +48,7 @@ public class Control
         subcommandTypes.Add(typeof(LP.Subcommands.GCSubcommand));
         subcommandTypes.Add(typeof(LP.Subcommands.PingSubcommand));
         subcommandTypes.Add(typeof(LP.Subcommands.PunchSubcommand));
+        subcommandTypes.Add(typeof(LP.Subcommands.KeyVaultSubcommand));
         subcommandTypes.Add(typeof(LP.Subcommands.TestSubcommand));
 
         foreach (var x in subcommandTypes)
