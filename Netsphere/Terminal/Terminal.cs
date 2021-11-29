@@ -211,7 +211,7 @@ public class Terminal
         {
             this.ProcessUnmanagedRecv_Punch(endpoint, ref header, data);
         }
-        else if (header.Id == PacketId.Encrypt)
+        else if (header.Id == PacketId.Connect)
         {
             this.ProcessUnmanagedRecv_Encrypt(endpoint, ref header, data);
         }
@@ -245,7 +245,7 @@ public class Terminal
 
     internal void ProcessUnmanagedRecv_Encrypt(IPEndPoint endpoint, ref PacketHeader header, Memory<byte> data)
     {
-        if (!TinyhandSerializer.TryDeserialize<PacketEncrypt>(data, out var packet))
+        if (!TinyhandSerializer.TryDeserialize<PacketConnect>(data, out var packet))
         {
             return;
         }
@@ -256,7 +256,7 @@ public class Terminal
             packet.NodeInformation.SetIPEndPoint(endpoint);
 
             var terminal = this.Create(packet.NodeInformation, header.Gene);
-            var netInterface = NetInterface<object, PacketEncrypt>.CreateReceive(terminal, header.Gene, data);
+            var netInterface = NetInterface<object, PacketConnect>.CreateReceive(terminal, header.Gene, data);
             // var netInterface = new NetInterface<object, RawPacketEncrypt>(terminal, false);
             // netInterface.InitializeReceive(header.Gene, data);
             terminal.GenePool.GetGene();

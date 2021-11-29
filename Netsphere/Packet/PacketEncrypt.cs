@@ -3,23 +3,39 @@
 namespace LP.Net;
 
 [TinyhandObject]
-internal partial class PacketEncrypt : IPacket
+internal partial class PacketConnect : IPacket
 {
-    public PacketEncrypt()
+    public PacketConnect()
     {
     }
 
-    public PacketEncrypt(NodeInformation nodeInformation)
+    public PacketConnect(NodeInformation nodeInformation)
     {
         this.NodeInformation = nodeInformation;
         this.Salt = Random.Crypto.NextULong();
     }
 
-    public PacketId Id => PacketId.Encrypt;
+    public PacketId Id => PacketId.Connect;
 
     [Key(0)]
     public NodeInformation? NodeInformation { get; set; }
 
     [Key(1)]
     public ulong Salt { get; set; }
+
+    [Key(2)]
+    public bool RequestRelay { get; set; }
+}
+
+[TinyhandObject]
+internal partial class PacketConnectResponse : IPacket
+{
+    public PacketConnectResponse()
+    {
+    }
+
+    public PacketId Id => PacketId.ConnectResponse;
+
+    [Key(0)]
+    public bool CanRelay { get; set; }
 }

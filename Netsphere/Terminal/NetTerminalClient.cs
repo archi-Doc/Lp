@@ -51,8 +51,8 @@ public class NetTerminalClient : NetTerminal
             return false;
         }
 
-        var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
-        var netInterface = this.SendRaw<PacketEncrypt>(p);
+        var p = new PacketConnect(this.Terminal.NetStatus.GetMyNodeInformation());
+        var netInterface = this.SendRaw<PacketConnect>(p);
         if (netInterface.WaitForSendCompletion() != NetInterfaceSendResult.Success)
         {
             netInterface.Dispose();
