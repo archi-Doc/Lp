@@ -139,7 +139,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
 
     public async Task<TReceive?> ReceiveAsync(int millisecondsToWait = 2000)
     {
-        var r = await this.ReceiveAsyncCore(millisecondsToWait);
+        var r = await this.ReceiveAsyncCore(millisecondsToWait).ConfigureAwait(false);
         if (r.result != NetInterfaceReceiveResult.Success)
         {
             return default;
@@ -270,7 +270,7 @@ WaitForSendCompletionWait:
             try
             {
                 var ct = this.Terminal.Core?.CancellationToken ?? CancellationToken.None;
-                await Task.Delay(NetInterface.IntervalInMilliseconds, ct);
+                await Task.Delay(NetInterface.IntervalInMilliseconds, ct).ConfigureAwait(false);
             }
             catch
             {
@@ -345,7 +345,7 @@ WaitForSendCompletionWait:
             try
             {
                 var ct = this.Terminal.Core?.CancellationToken ?? CancellationToken.None;
-                await Task.Delay(NetInterface.IntervalInMilliseconds, ct);
+                await Task.Delay(NetInterface.IntervalInMilliseconds, ct).ConfigureAwait(false);
             }
             catch
             {

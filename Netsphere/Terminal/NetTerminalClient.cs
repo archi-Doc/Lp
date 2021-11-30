@@ -48,7 +48,7 @@ public class NetTerminalClient : NetTerminal
         }
 
         var p = new PacketConnect(this.Terminal.NetStatus.GetMyNodeInformation());
-        var response = await this.SendSingleAndReceiveAsync<PacketConnect, PacketConnectResponse>(p);
+        var response = await this.SendSingleAndReceiveAsync<PacketConnect, PacketConnectResponse>(p).ConfigureAwait(false);
         if (response == null)
         {
             return NetInterfaceResult.NoSecureConnection;

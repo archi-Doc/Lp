@@ -71,7 +71,7 @@ public partial class NetTerminal : IDisposable
     {
         if (!value.AllowUnencrypted)
         {
-            var result = await this.ConnectAndEncryptAsync();
+            var result = await this.ConnectAndEncryptAsync().ConfigureAwait(false);
             if (result != NetInterfaceResult.Success)
             {
                 return false;
@@ -81,7 +81,7 @@ public partial class NetTerminal : IDisposable
         var netInterface = this.SendPacket(value);
         try
         {
-            return await netInterface.WaitForSendCompletionAsync(millisecondsToWait);
+            return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
         }
         finally
         {
@@ -109,7 +109,7 @@ public partial class NetTerminal : IDisposable
     {
         if (!value.AllowUnencrypted)
         {
-            var result = await this.ConnectAndEncryptAsync();
+            var result = await this.ConnectAndEncryptAsync().ConfigureAwait(false);
             if (result != NetInterfaceResult.Success)
             {
                 return default;
@@ -119,7 +119,7 @@ public partial class NetTerminal : IDisposable
         var netInterface = this.SendAndReceivePacket<TSend, TReceive>(value);
         try
         {
-            return await netInterface.ReceiveAsync(millisecondsToWait);
+            return await netInterface.ReceiveAsync(millisecondsToWait).ConfigureAwait(false);
         }
         finally
         {
@@ -161,7 +161,7 @@ public partial class NetTerminal : IDisposable
     {
         if (!value.AllowUnencrypted)
         {
-            var result = await this.ConnectAndEncryptAsync();
+            var result = await this.ConnectAndEncryptAsync().ConfigureAwait(false);
             if (result != NetInterfaceResult.Success)
             {
                 return false;
@@ -169,7 +169,7 @@ public partial class NetTerminal : IDisposable
         }
 
         var netInterface = this.SendPacket<TSend>(value);
-        return await netInterface.WaitForSendCompletionAsync(millisecondsToWait);
+        return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
     }
 
     public Terminal Terminal { get; }
