@@ -19,7 +19,7 @@ public class NetTerminalClient : NetTerminal
     {
         if (!value.AllowUnencrypted)
         {
-            var result = this.CheckManagedAndEncrypted();
+            var result = this.ConnectAndEncrypt();
             if (result != NetInterfaceResult.Success)
             {
                 return NetInterface<TSend, object>.CreateError(this, result);
@@ -34,7 +34,7 @@ public class NetTerminalClient : NetTerminal
     {
         if (!value.AllowUnencrypted)
         {
-            var result = this.CheckManagedAndEncrypted();
+            var result = this.ConnectAndEncrypt();
             if (result != NetInterfaceResult.Success)
             {
                 return (INetInterface<TSend, TReceive>)NetInterface<TSend, object>.CreateError(this, result);
@@ -62,7 +62,7 @@ public class NetTerminalClient : NetTerminal
     {
         if (!value.AllowUnencrypted)
         {
-            var result = this.CheckManagedAndEncrypted();
+            var result = this.ConnectAndEncrypt();
             if (result != NetInterfaceResult.Success)
             {
                 return (INetInterface<TSend, TReceive>)NetInterface<TSend, object>.CreateError(this, result);
@@ -73,7 +73,7 @@ public class NetTerminalClient : NetTerminal
         return netInterface;
     }
 
-    protected NetInterfaceResult CheckManagedAndEncrypted()
+    public NetInterfaceResult ConnectAndEncrypt()
     {
         if (this.IsEncrypted)
         {// Encrypted
@@ -85,7 +85,7 @@ public class NetTerminalClient : NetTerminal
         }
 
         var p = new PacketConnect(this.Terminal.NetStatus.GetMyNodeInformation());
-        var netInterface = this.SendSingle<PacketConnect>(p);
+        var netInterface = this.SendSingle(p);
         if (netInterface.WaitForSendCompletion() != NetInterfaceSendResult.Success)
         {
             netInterface.Dispose();
