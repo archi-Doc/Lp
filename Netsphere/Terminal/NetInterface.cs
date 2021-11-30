@@ -137,14 +137,38 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         return result;
     }
 
+    public async Task<TReceive?> ReceiveAsync(int millisecondsToWait = 2000)
+    {
+        var r = await this.ReceiveAsyncCore(millisecondsToWait);
+        if (r.result != NetInterfaceReceiveResult.Success)
+        {
+            return default;
+        }
+
+        TinyhandSerializer.TryDeserialize<TReceive>(r.received, out var value);
+        if (value == null)
+        {
+            return default;
+        }
+
+        return value;
+    }
+
     public NetInterfaceSendResult WaitForSendCompletion(int millisecondsToWait = 2000)
     {
         return this.WaitForSendCompletionCore(millisecondsToWait);
+    }
+
+    public Task<bool> WaitForSendCompletionAsync(int millisecondsToWait = 2000)
+    {
+        return this.WaitForSendCompletionAsyncCore(millisecondsToWait);
     }
 }
 
 public class NetInterface : IDisposable
 {
+    public const int IntervalInMilliseconds = 2;
+
     protected NetInterface(NetTerminal netTerminal)
     {
         this.Terminal = netTerminal.Terminal;
@@ -212,6 +236,53 @@ WaitForSendCompletionWait:
         return NetInterfaceSendResult.Closed;
     }
 
+    protected async Task<bool> WaitForSendCompletionAsyncCore(int millisecondsToWait)
+    {
+        var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);
+
+        while (this.Terminal.Core?.IsTerminated == false && this.NetTerminal.IsClosed == false)
+        {
+            if (Stopwatch.GetTimestamp() >= end)
+            {
+                this.TerminalLogger?.Information($"Send timeout.");
+                return false;
+            }
+
+            lock (this.NetTerminal.SyncObject)
+            {
+                if (this.SendGenes == null)
+                {
+                    return true;
+                }
+
+                foreach (var x in this.SendGenes)
+                {
+                    if (!x.IsSent)
+                    {
+                        goto WaitForSendCompletionWait;
+                    }
+                }
+
+                return true;
+            }
+
+WaitForSendCompletionWait:
+            try
+            {
+                var ct = this.Terminal.Core?.CancellationToken ?? CancellationToken.None;
+                await Task.Delay(NetInterface.IntervalInMilliseconds, ct);
+            }
+            catch
+            {
+                this.Error = NetInterfaceResult.Closed;
+                return false;
+            }
+        }
+
+        this.Error = NetInterfaceResult.Closed;
+        return false;
+    }
+
     protected NetInterfaceReceiveResult ReceiveCore(out Memory<byte> data, int millisecondsToWait)
     {
         data = default;
@@ -248,6 +319,42 @@ WaitForSendCompletionWait:
         }
 
         return NetInterfaceReceiveResult.Closed;
+    }
+
+    protected async Task<(NetInterfaceReceiveResult result, Memory<byte> received)> ReceiveAsyncCore(int millisecondsToWait)
+    {
+        Memory<byte> data = default;
+        var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);
+
+        while (this.Terminal.Core?.IsTerminated == false && this.NetTerminal.IsClosed == false)
+        {
+            if (Stopwatch.GetTimestamp() >= end)
+            {
+                this.TerminalLogger?.Information($"Receive timeout.");
+                return (NetInterfaceReceiveResult.Timeout, data);
+            }
+
+            lock (this.NetTerminal.SyncObject)
+            {
+                if (this.ReceivedGeneToData(ref data))
+                {
+                    return (NetInterfaceReceiveResult.Success, data);
+                }
+            }
+
+            try
+            {
+                var ct = this.Terminal.Core?.CancellationToken ?? CancellationToken.None;
+                await Task.Delay(NetInterface.IntervalInMilliseconds, ct);
+            }
+            catch
+            {
+                this.Error = NetInterfaceResult.Closed;
+                return (NetInterfaceReceiveResult.Closed, data);
+            }
+        }
+
+        return (NetInterfaceReceiveResult.Closed, data);
     }
 
     internal ISimpleLogger? TerminalLogger => this.Terminal.TerminalLogger;

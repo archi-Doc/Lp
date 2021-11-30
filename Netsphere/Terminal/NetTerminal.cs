@@ -49,6 +49,8 @@ public partial class NetTerminal : IDisposable
 
     public virtual NetInterfaceResult ConnectAndEncrypt() => NetInterfaceResult.NoSecureConnection;
 
+    public virtual async Task<NetInterfaceResult> ConnectAndEncryptAsync() => NetInterfaceResult.NoSecureConnection;
+
     public INetInterface<TSend> SendSingle<TSend>(TSend value)
         where TSend : IPacket
     {
@@ -64,6 +66,29 @@ public partial class NetTerminal : IDisposable
         return this.SendPacket(value);
     }
 
+    public async Task<bool> SendSingleAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
+        where TSend : IPacket
+    {
+        if (!value.AllowUnencrypted)
+        {
+            var result = await this.ConnectAndEncryptAsync();
+            if (result != NetInterfaceResult.Success)
+            {
+                return false;
+            }
+        }
+
+        var netInterface = this.SendPacket(value);
+        try
+        {
+            return await netInterface.WaitForSendCompletionAsync(millisecondsToWait);
+        }
+        finally
+        {
+            netInterface.Dispose();
+        }
+    }
+
     public INetInterface<TSend, TReceive> SendSingleAndReceive<TSend, TReceive>(TSend value)
         where TSend : IPacket
     {
@@ -77,6 +102,29 @@ public partial class NetTerminal : IDisposable
         }
 
         return this.SendAndReceivePacket<TSend, TReceive>(value);
+    }
+
+    public async Task<TReceive?> SendSingleAndReceiveAsync<TSend, TReceive>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
+        where TSend : IPacket
+    {
+        if (!value.AllowUnencrypted)
+        {
+            var result = await this.ConnectAndEncryptAsync();
+            if (result != NetInterfaceResult.Success)
+            {
+                return default;
+            }
+        }
+
+        var netInterface = this.SendAndReceivePacket<TSend, TReceive>(value);
+        try
+        {
+            return await netInterface.ReceiveAsync(millisecondsToWait);
+        }
+        finally
+        {
+            netInterface.Dispose();
+        }
     }
 
     /*public INetInterface<TSend> Send<TSend>(TSend value)
@@ -106,6 +154,22 @@ public partial class NetTerminal : IDisposable
 
         var netInterface = this.SendAndReceivePacket<TSend, TReceive>(value);
         return netInterface;
+    }
+
+    public async Task<bool> SendAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
+        where TSend : IPacket
+    {
+        if (!value.AllowUnencrypted)
+        {
+            var result = await this.ConnectAndEncryptAsync();
+            if (result != NetInterfaceResult.Success)
+            {
+                return false;
+            }
+        }
+
+        var netInterface = this.SendPacket<TSend>(value);
+        return await netInterface.WaitForSendCompletionAsync(millisecondsToWait);
     }
 
     public Terminal Terminal { get; }
