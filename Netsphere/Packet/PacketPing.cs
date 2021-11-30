@@ -5,6 +5,12 @@ namespace Netsphere;
 [TinyhandObject]
 public partial class PacketPing : IPacket
 {
+    public PacketId Id => PacketId.Ping;
+
+    public bool AllowUnencrypted => true;
+
+    public bool ManualAck => true;
+
     public PacketPing()
     {
     }
@@ -13,8 +19,6 @@ public partial class PacketPing : IPacket
     {
         this.Text = text;
     }
-
-    public PacketId Id => PacketId.Ping;
 
     [Key(0)]
     public string Text { get; set; } = default!;

@@ -11,6 +11,15 @@ using System.Threading.Tasks;
 
 namespace Netsphere;
 
+public enum NetInterfaceResult
+{
+    Success,
+    Timeout,
+    Closed,
+    NoNodeInformation,
+    NoSecureConnection,
+}
+
 public enum NetInterfaceSendResult
 {
     Success,
@@ -40,6 +49,16 @@ public interface INetInterface<TSend> : IDisposable
 
 internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend, TReceive>
 {
+    internal static NetInterface<TSend, TReceive> CreateError(NetTerminal netTerminal, NetInterfaceResult error)
+    {
+        if (error == NetInterfaceResult.Success)
+        {
+            throw new InvalidOperationException();
+        }
+
+        return new NetInterface<TSend, TReceive>(netTerminal, error);
+    }
+
     internal static NetInterface<TSend, TReceive> Create(NetTerminal netTerminal, TSend value, PacketId id, bool receive, bool sendReceiveAck)
     {// Send and Receive(optional) NetTerminalGene.
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal, sendReceiveAck);
@@ -92,6 +111,11 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
     {
     }
 
+    protected NetInterface(NetTerminal netTerminal, NetInterfaceResult error)
+    : base(netTerminal, error)
+    {
+    }
+
     public NetInterfaceReceiveResult Receive(out TReceive? value, int millisecondsToWait = 2000)
     {
         var result = this.ReceiveCore(out var data, millisecondsToWait);
@@ -125,9 +149,18 @@ public class NetInterface : IDisposable
         this.SendReceiveAck = sendReceiveAck;
     }
 
+    protected NetInterface(NetTerminal netTerminal, NetInterfaceResult error)
+    {
+        this.Terminal = netTerminal.Terminal;
+        this.NetTerminal = netTerminal;
+        this.Error = error;
+    }
+
     public Terminal Terminal { get; }
 
     public NetTerminal NetTerminal { get; }
+
+    public NetInterfaceResult Error { get; protected set; }
 
     protected NetInterfaceSendResult WaitForSendCompletionCore(int millisecondsToWait)
     {

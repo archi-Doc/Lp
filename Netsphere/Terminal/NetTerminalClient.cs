@@ -14,49 +14,82 @@ public class NetTerminalClient : NetTerminal
     {// NodeInformation: Managed
     }
 
-    public INetInterface<TSend> SendRaw<TSend>(TSend value)
+    public INetInterface<TSend> SendSingle<TSend>(TSend value)
         where TSend : IPacket
     {
-        var netInterface = this.SendPacket(value);
-        return netInterface;
+        if (!value.AllowUnencrypted)
+        {
+            var result = this.CheckManagedAndEncrypted();
+            if (result != NetInterfaceResult.Success)
+            {
+                return NetInterface<TSend, object>.CreateError(this, result);
+            }
+        }
+
+        return this.SendPacket(value);
     }
 
-    public INetInterface<TSend, TReceive> SendAndReceiveRaw<TSend, TReceive>(TSend value)
+    public INetInterface<TSend, TReceive> SendSingleAndReceive<TSend, TReceive>(TSend value)
         where TSend : IPacket
     {
-        var netInterface = this.SendAndReceivePacket<TSend, TReceive>(value);
-        return netInterface;
+        if (!value.AllowUnencrypted)
+        {
+            var result = this.CheckManagedAndEncrypted();
+            if (result != NetInterfaceResult.Success)
+            {
+                return (INetInterface<TSend, TReceive>)NetInterface<TSend, object>.CreateError(this, result);
+            }
+        }
+
+        return this.SendAndReceivePacket<TSend, TReceive>(value);
     }
+
+    /*public INetInterface<TSend> Send<TSend>(TSend value)
+    {
+        if (value is IPacket packet && !packet.AllowUnencrypted)
+        {
+            if (!this.CheckManagedAndEncrypted())
+            {
+                return null!;
+            }
+        }
+
+        return this.SendPacket(value);
+    }*/
 
     public INetInterface<TSend, TReceive> SendAndReceive<TSend, TReceive>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
         where TSend : IPacket
     {
-        if (!this.CheckManagedAndEncrypted())
+        if (!value.AllowUnencrypted)
         {
-            return null!;
+            var result = this.CheckManagedAndEncrypted();
+            if (result != NetInterfaceResult.Success)
+            {
+                return (INetInterface<TSend, TReceive>)NetInterface<TSend, object>.CreateError(this, result);
+            }
         }
 
         var netInterface = this.SendAndReceivePacket<TSend, TReceive>(value);
         return netInterface;
     }
 
-    protected bool CheckManagedAndEncrypted()
+    protected NetInterfaceResult CheckManagedAndEncrypted()
     {
-        if (this.embryo != null)
+        if (this.IsEncrypted)
         {// Encrypted
-            return true;
+            return NetInterfaceResult.Success;
         }
         else if (this.NodeInformation == null)
         {// Unmanaged
-            return false;
+            return NetInterfaceResult.NoNodeInformation;
         }
 
         var p = new PacketConnect(this.Terminal.NetStatus.GetMyNodeInformation());
-        var netInterface = this.SendRaw<PacketConnect>(p);
+        var netInterface = this.SendSingle<PacketConnect>(p);
         if (netInterface.WaitForSendCompletion() != NetInterfaceSendResult.Success)
         {
             netInterface.Dispose();
-            return false;
+            return NetInterfaceResult.NoSecureConnection;
         }
 
         return this.CreateEmbryo(p.Salt);

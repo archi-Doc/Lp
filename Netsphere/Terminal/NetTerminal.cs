@@ -49,6 +49,14 @@ public partial class NetTerminal : IDisposable
 
     public Terminal Terminal { get; }
 
+    public bool IsEncrypted => this.embryo != null;
+
+    public bool IsSendComplete => false;
+
+    public bool IsReceiveComplete => false;
+
+    public bool IsHighTraffic => false;
+
     public bool IsClosed => this.disposed;
 
     // [Link(Type = ChainType.Ordered)]
@@ -86,16 +94,12 @@ public partial class NetTerminal : IDisposable
     internal NetInterface<TSend, object> SendPacket<TSend>(TSend value)
         where TSend : IPacket
     {
-        // var netInterface = new NetInterface<TSend, object>(this, true);
-        // netInterface.Initialize(value, value.Id, false);
         return NetInterface<TSend, object>.Create(this, value, value.Id, false, false);
     }
 
     internal NetInterface<TSend, TReceive> SendAndReceivePacket<TSend, TReceive>(TSend value)
         where TSend : IPacket
     {
-        /*var netInterface = new NetInterface<TSend, TReceive>(this, true);
-        netInterface.Initialize(value, value.Id, true);*/
         return NetInterface<TSend, TReceive>.Create(this, value, value.Id, true, false);
     }
 
@@ -132,17 +136,17 @@ public partial class NetTerminal : IDisposable
 
     internal ISimpleLogger? TerminalLogger => this.Terminal.TerminalLogger;
 
-    internal bool CreateEmbryo(ulong salt)
+    internal NetInterfaceResult CreateEmbryo(ulong salt)
     {
         if (this.NodeInformation == null)
         {
-            return false;
+            return NetInterfaceResult.NoNodeInformation;
         }
 
         var ecdh = NodeKey.FromPublicKey(this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
         if (ecdh == null)
         {
-            return false;
+            return NetInterfaceResult.NoNodeInformation;
         }
 
         var material = this.Terminal.NodePrivateECDH.DeriveKeyMaterial(ecdh.PublicKey);
@@ -161,7 +165,7 @@ public partial class NetTerminal : IDisposable
         this.GenePool.SetEmbryo(this.embryo);
         Logger.Priority.Information($"First gene {this.GenePool.GetGene().ToString()}");
 
-        return true;
+        return NetInterfaceResult.Success;
     }
 
     private void Clear()
