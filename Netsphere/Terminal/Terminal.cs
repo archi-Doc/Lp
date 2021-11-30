@@ -252,16 +252,15 @@ public class Terminal
 
         if (packet.NodeInformation != null)
         {
-            this.TerminalLogger?.Information($"Connect Response: {header.Gene.To4Hex()}");
             packet.NodeInformation.SetIPEndPoint(endpoint);
 
-            var terminal = this.Create(packet.NodeInformation, header.Gene);
-            var netInterface = NetInterface<object, PacketConnect>.CreateReceive(terminal, header.Gene, header.Id, data);
-
             var response = new PacketConnectResponse();
+            var firstGene = header.Gene;
             var secondGene = GenePool.GetSecond(header.Gene);
-            var p = PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id);
-            this.AddRawSend(endpoint, p);
+            var responsePacket = PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id);
+
+            var terminal = this.Create(packet.NodeInformation, firstGene);
+            var netInterface = NetInterface<PacketConnectResponse, PacketConnect>.CreateConnect(terminal, firstGene, PacketId.Connect, data, secondGene, responsePacket);
 
             terminal.GenePool.GetGene();
             terminal.GenePool.GetGene();

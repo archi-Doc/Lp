@@ -91,18 +91,21 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         return netInterface;
     }
 
-    internal static NetInterface<TSend, TReceive> CreateReceive(NetTerminal netTerminal, ulong gene, PacketId id, Memory<byte> data)
-    {// Only Receive NetTerminalGene.
+    internal static NetInterface<TSend, TReceive> CreateConnect(NetTerminal netTerminal, ulong gene, PacketId id, Memory<byte> data, ulong secondGene, byte[] send)
+    {// Only for connection.
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
-        var ntg = new NetTerminalGene(gene, netInterface);
-        netInterface.RecvGenes = new NetTerminalGene[] { ntg, };
-        ntg.SetReceive();
-        ntg.Receive(id, data);
+        var recvGene = new NetTerminalGene(gene, netInterface);
+        netInterface.RecvGenes = new NetTerminalGene[] { recvGene, };
+        recvGene.SetReceive();
+        recvGene.Receive(id, data);
 
-        netInterface.NetTerminal.TerminalLogger?.Information($"RegisterReceive: {gene.To4Hex()}");
+        var sendGene = new NetTerminalGene(secondGene, netInterface);
+        netInterface.SendGenes = new NetTerminalGene[] { sendGene, };
+        sendGene.SetSend(send);
+
+        netInterface.NetTerminal.TerminalLogger?.Information($"ConnectTerminal: {gene.To4Hex()} -> {secondGene.To4Hex()}");
 
         netInterface.NetTerminal.Add(netInterface);
-
         return netInterface;
     }
 
