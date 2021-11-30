@@ -40,11 +40,8 @@ internal class PacketService
     internal static bool IsManualAck(PacketId id) => id switch
     {
         PacketId.Connect => true,
-        PacketId.ConnectResponse => true,
         PacketId.Punch => true,
-        PacketId.PunchResponse => true,
         PacketId.Ping => true,
-        PacketId.PingResponse => true,
         _ => false,
     };
 

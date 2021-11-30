@@ -47,6 +47,67 @@ public partial class NetTerminal : IDisposable
         this.Endpoint = this.NodeAddress.CreateEndpoint();
     }
 
+    public virtual NetInterfaceResult ConnectAndEncrypt() => NetInterfaceResult.NoSecureConnection;
+
+    public INetInterface<TSend> SendSingle<TSend>(TSend value)
+        where TSend : IPacket
+    {
+        if (!value.AllowUnencrypted)
+        {
+            var result = this.ConnectAndEncrypt();
+            if (result != NetInterfaceResult.Success)
+            {
+                return NetInterface<TSend, object>.CreateError(this, result);
+            }
+        }
+
+        return this.SendPacket(value);
+    }
+
+    public INetInterface<TSend, TReceive> SendSingleAndReceive<TSend, TReceive>(TSend value)
+        where TSend : IPacket
+    {
+        if (!value.AllowUnencrypted)
+        {
+            var result = this.ConnectAndEncrypt();
+            if (result != NetInterfaceResult.Success)
+            {
+                return (INetInterface<TSend, TReceive>)NetInterface<TSend, object>.CreateError(this, result);
+            }
+        }
+
+        return this.SendAndReceivePacket<TSend, TReceive>(value);
+    }
+
+    /*public INetInterface<TSend> Send<TSend>(TSend value)
+    {
+        if (value is IPacket packet && !packet.AllowUnencrypted)
+        {
+            if (!this.CheckManagedAndEncrypted())
+            {
+                return null!;
+            }
+        }
+
+        return this.SendPacket(value);
+    }*/
+
+    public INetInterface<TSend, TReceive> SendAndReceive<TSend, TReceive>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
+        where TSend : IPacket
+    {
+        if (!value.AllowUnencrypted)
+        {
+            var result = this.ConnectAndEncrypt();
+            if (result != NetInterfaceResult.Success)
+            {
+                return (INetInterface<TSend, TReceive>)NetInterface<TSend, object>.CreateError(this, result);
+            }
+        }
+
+        var netInterface = this.SendAndReceivePacket<TSend, TReceive>(value);
+        return netInterface;
+    }
+
     public Terminal Terminal { get; }
 
     public bool IsEncrypted => this.embryo != null;

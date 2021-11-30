@@ -19,16 +19,6 @@ public class SendDataSubcommand : ISimpleCommandAsync<SendDataOptions>
 
     public async Task Run(SendDataOptions options, string[] args)
     {
-        var x = new Arc.Crypto.Xoshiro256StarStar(1);
-        var a = x.NextULong();
-        var b = x.NextULong();
-        var c = x.NextULong();
-        var y = new Arc.Crypto.Xoshiro256StarStar(a);
-        var d = y.NextULong();
-        var e = y.NextULong();
-        var z = new Arc.Crypto.Xoshiro256StarStar(b);
-        var f = y.NextULong();
-
         if (!SubcommandService.TryParseNodeAddress(options.Node, out var node))
         {
             return;
