@@ -50,7 +50,7 @@ public interface INetInterface<TSend> : IDisposable
 internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend, TReceive>
 {
     internal static NetInterface<TSend, TReceive> CreateError(NetTerminal netTerminal, NetInterfaceResult error)
-    {
+    {// Error (Invalid NetInterface)
         if (error == NetInterfaceResult.Success)
         {
             throw new InvalidOperationException();
@@ -59,9 +59,9 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         return new NetInterface<TSend, TReceive>(netTerminal, error);
     }
 
-    internal static NetInterface<TSend, TReceive> Create(NetTerminal netTerminal, TSend value, PacketId id, bool receive, bool sendReceiveAck)
+    internal static NetInterface<TSend, TReceive> Create(NetTerminal netTerminal, TSend value, PacketId id, bool receive)
     {// Send and Receive(optional) NetTerminalGene.
-        var netInterface = new NetInterface<TSend, TReceive>(netTerminal, sendReceiveAck);
+        var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
         var gene = netTerminal.GenePool.GetGene(); // Send gene
         netTerminal.CreateHeader(out var header, gene);
         var packet = PacketService.CreatePacket(ref header, value, id);
@@ -91,23 +91,23 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         return netInterface;
     }
 
-    internal static NetInterface<TSend, TReceive> CreateReceive(NetTerminal netTerminal, ulong gene, Memory<byte> data)
+    internal static NetInterface<TSend, TReceive> CreateReceive(NetTerminal netTerminal, ulong gene, PacketId id, Memory<byte> data)
     {// Only Receive NetTerminalGene.
-        var netInterface = new NetInterface<TSend, TReceive>(netTerminal, true);
+        var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
         var ntg = new NetTerminalGene(gene, netInterface);
         netInterface.RecvGenes = new NetTerminalGene[] { ntg, };
         ntg.SetReceive();
-        ntg.Receive(data);
+        ntg.Receive(id, data);
 
-        netInterface.NetTerminal.TerminalLogger?.Information($"InitializeReceive: {gene.To4Hex()}");
+        netInterface.NetTerminal.TerminalLogger?.Information($"RegisterReceive: {gene.To4Hex()}");
 
         netInterface.NetTerminal.Add(netInterface);
 
         return netInterface;
     }
 
-    protected NetInterface(NetTerminal netTerminal, bool sendReceiveAck)
-    : base(netTerminal, sendReceiveAck)
+    protected NetInterface(NetTerminal netTerminal)
+    : base(netTerminal)
     {
     }
 
@@ -142,11 +142,10 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
 
 public class NetInterface : IDisposable
 {
-    protected NetInterface(NetTerminal netTerminal, bool sendReceiveAck)
+    protected NetInterface(NetTerminal netTerminal)
     {
         this.Terminal = netTerminal.Terminal;
         this.NetTerminal = netTerminal;
-        this.SendReceiveAck = sendReceiveAck;
     }
 
     protected NetInterface(NetTerminal netTerminal, NetInterfaceResult error)
@@ -249,8 +248,6 @@ WaitForSendCompletionWait:
     }
 
     internal ISimpleLogger? TerminalLogger => this.Terminal.TerminalLogger;
-
-    internal bool SendReceiveAck { get; }
 
     protected bool ReceivedGeneToData(ref Memory<byte> data)
     {// lock (this.NetTerminal.SyncObject)
@@ -360,7 +357,7 @@ WaitForSendCompletionWait:
             }
             else
             {// Receive data
-                if (gene.Receive(data))
+                if (gene.Receive(header.Id, data))
                 {// Received.
                     this.TerminalLogger?.Information($"Recv data: {gene.ToString()}");
                 }

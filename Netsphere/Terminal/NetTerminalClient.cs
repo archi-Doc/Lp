@@ -85,9 +85,9 @@ public class NetTerminalClient : NetTerminal
         }
 
         var p = new PacketConnect(this.Terminal.NetStatus.GetMyNodeInformation());
-        var netInterface = this.SendSingle(p);
-        if (netInterface.WaitForSendCompletion() != NetInterfaceSendResult.Success)
-        {
+        var netInterface = this.SendSingleAndReceive<PacketConnect, PacketConnectResponse>(p);
+        if (netInterface.Receive(out var response) != NetInterfaceReceiveResult.Success)
+        {// if (netInterface.WaitForSendCompletion() != NetInterfaceSendResult.Success)
             netInterface.Dispose();
             return NetInterfaceResult.NoSecureConnection;
         }

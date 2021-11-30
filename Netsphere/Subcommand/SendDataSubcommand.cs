@@ -31,11 +31,11 @@ public class SendDataSubcommand : ISimpleCommandAsync<SendDataOptions>
         {
             terminal.ConnectAndEncrypt();
             var p = new PacketPunch(null);
-            var netInterface = terminal.SendAndReceive<PacketPunch, PacketPunchResponse>(p);
+            /*var netInterface = terminal.SendAndReceive<PacketPunch, PacketPunchResponse>(p);
             if (netInterface != null)
             {
                 netInterface.Receive(out var r);
-            }
+            }*/
         }
     }
 

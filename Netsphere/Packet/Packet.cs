@@ -13,9 +13,9 @@ public enum PacketId : byte
     Ack,
     Close,
     Relay,
+    Data,
     Connect,
     ConnectResponse,
-    Data,
     Ping,
     PingResponse,
     Punch,
@@ -30,7 +30,7 @@ public interface IPacket
 
     public bool AllowUnencrypted => false;
 
-    public bool ManualAck => false;
+    // public bool ManualAck => false;
 }
 
 [StructLayout(LayoutKind.Explicit)]

@@ -94,13 +94,13 @@ public partial class NetTerminal : IDisposable
     internal NetInterface<TSend, object> SendPacket<TSend>(TSend value)
         where TSend : IPacket
     {
-        return NetInterface<TSend, object>.Create(this, value, value.Id, false, false);
+        return NetInterface<TSend, object>.Create(this, value, value.Id, false);
     }
 
     internal NetInterface<TSend, TReceive> SendAndReceivePacket<TSend, TReceive>(TSend value)
         where TSend : IPacket
     {
-        return NetInterface<TSend, TReceive>.Create(this, value, value.Id, true, false);
+        return NetInterface<TSend, TReceive>.Create(this, value, value.Id, true);
     }
 
     internal void ProcessSend(UdpClient udp, long currentTicks)

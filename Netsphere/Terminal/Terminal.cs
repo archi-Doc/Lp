@@ -213,7 +213,7 @@ public class Terminal
         }
         else if (header.Id == PacketId.Connect)
         {
-            this.ProcessUnmanagedRecv_Encrypt(endpoint, ref header, data);
+            this.ProcessUnmanagedRecv_Connect(endpoint, ref header, data);
         }
         else if (header.Id == PacketId.Ping)
         {
@@ -243,7 +243,7 @@ public class Terminal
         this.AddRawSend(endpoint, p);
     }
 
-    internal void ProcessUnmanagedRecv_Encrypt(IPEndPoint endpoint, ref PacketHeader header, Memory<byte> data)
+    internal void ProcessUnmanagedRecv_Connect(IPEndPoint endpoint, ref PacketHeader header, Memory<byte> data)
     {
         if (!TinyhandSerializer.TryDeserialize<PacketConnect>(data, out var packet))
         {
@@ -252,13 +252,17 @@ public class Terminal
 
         if (packet.NodeInformation != null)
         {
-            this.TerminalLogger?.Information($"Encrypt Response: {header.Gene.To4Hex()}");
+            this.TerminalLogger?.Information($"Connect Response: {header.Gene.To4Hex()}");
             packet.NodeInformation.SetIPEndPoint(endpoint);
 
             var terminal = this.Create(packet.NodeInformation, header.Gene);
-            var netInterface = NetInterface<object, PacketConnect>.CreateReceive(terminal, header.Gene, data);
-            // var netInterface = new NetInterface<object, RawPacketEncrypt>(terminal, false);
-            // netInterface.InitializeReceive(header.Gene, data);
+            var netInterface = NetInterface<object, PacketConnect>.CreateReceive(terminal, header.Gene, header.Id, data);
+
+            var response = new PacketConnectResponse();
+            var secondGene = GenePool.GetSecond(header.Gene);
+            var p = PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id);
+            this.AddRawSend(endpoint, p);
+
             terminal.GenePool.GetGene();
             terminal.GenePool.GetGene();
             terminal.CreateEmbryo(packet.Salt);

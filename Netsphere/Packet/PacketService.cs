@@ -37,6 +37,17 @@ internal class PacketService
     [ThreadStatic]
     private static byte[]? initialBuffer;
 
+    internal static bool IsManualAck(PacketId id) => id switch
+    {
+        PacketId.Connect => true,
+        PacketId.ConnectResponse => true,
+        PacketId.Punch => true,
+        PacketId.PunchResponse => true,
+        PacketId.Ping => true,
+        PacketId.PingResponse => true,
+        _ => false,
+    };
+
     internal static unsafe byte[] CreatePacket<T>(ref PacketHeader header, T value, PacketId rawPacketId)
     {
         if (initialBuffer == null)
