@@ -3,7 +3,7 @@
 using System.Diagnostics;
 using Arc.Crypto;
 using LP;
-using LP.Net;
+using Netsphere;
 using SimpleCommandLine;
 using Tinyhand;
 
@@ -45,11 +45,11 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
         Logger.Priority.Information($"Ping: {node.ToString()}");
 
         var sw = Stopwatch.StartNew();
-        using (var terminal = this.Control.Netsphere.Terminal.Create(node))
+        using (var terminal = this.Control.NetControl.Terminal.Create(node))
         {
-            var p = new RawPacketPing("test");
+            var p = new PacketPing("test");
             sw.Restart();
-            var ni = terminal.SendAndReceiveRaw<RawPacketPing, RawPacketPingResponse>(p);
+            var ni = terminal.SendSingleAndReceive<PacketPing, PacketPingResponse>(p);
             var result = ni.Receive(out var r);
             sw.Stop();
             if (r != null)

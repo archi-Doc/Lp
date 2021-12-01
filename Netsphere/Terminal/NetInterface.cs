@@ -9,13 +9,15 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LP.Net;
+namespace Netsphere;
 
-public enum NetInterfaceSendResult
+public enum NetInterfaceResult
 {
     Success,
     Timeout,
     Closed,
+    NoNodeInformation,
+    NoEncryptedConnection,
 }
 
 public enum NetInterfaceReceiveResult
@@ -35,14 +37,24 @@ public interface INetInterface<TSend> : IDisposable
 {
     public const int DefaultMillisecondsToWait = 2000;
 
-    public NetInterfaceSendResult WaitForSendCompletion(int millisecondsToWait = DefaultMillisecondsToWait);
+    public NetInterfaceResult WaitForSendCompletion(int millisecondsToWait = DefaultMillisecondsToWait);
 }
 
 internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend, TReceive>
 {
-    internal static NetInterface<TSend, TReceive> Create(NetTerminal netTerminal, TSend value, RawPacketId id, bool receive, bool sendReceiveAck)
+    internal static NetInterface<TSend, TReceive> CreateError(NetTerminal netTerminal, NetInterfaceResult error)
+    {// Error (Invalid NetInterface)
+        if (error == NetInterfaceResult.Success)
+        {
+            throw new InvalidOperationException();
+        }
+
+        return new NetInterface<TSend, TReceive>(netTerminal, error);
+    }
+
+    internal static NetInterface<TSend, TReceive> Create(NetTerminal netTerminal, TSend value, PacketId id, bool receive)
     {// Send and Receive(optional) NetTerminalGene.
-        var netInterface = new NetInterface<TSend, TReceive>(netTerminal, sendReceiveAck);
+        var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
         var gene = netTerminal.GenePool.GetGene(); // Send gene
         netTerminal.CreateHeader(out var header, gene);
         var packet = PacketService.CreatePacket(ref header, value, id);
@@ -72,23 +84,31 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         return netInterface;
     }
 
-    internal static NetInterface<TSend, TReceive> CreateReceive(NetTerminal netTerminal, ulong gene, Memory<byte> data)
-    {// Only Receive NetTerminalGene.
-        var netInterface = new NetInterface<TSend, TReceive>(netTerminal, true);
-        var ntg = new NetTerminalGene(gene, netInterface);
-        netInterface.RecvGenes = new NetTerminalGene[] { ntg, };
-        ntg.SetReceive();
-        ntg.Receive(data);
+    internal static NetInterface<TSend, TReceive> CreateConnect(NetTerminal netTerminal, ulong gene, PacketId id, Memory<byte> data, ulong secondGene, byte[] send)
+    {// Only for connection.
+        var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
+        var recvGene = new NetTerminalGene(gene, netInterface);
+        netInterface.RecvGenes = new NetTerminalGene[] { recvGene, };
+        recvGene.SetReceive();
+        recvGene.Receive(id, data);
 
-        netInterface.NetTerminal.TerminalLogger?.Information($"InitializeReceive: {gene.To4Hex()}");
+        var sendGene = new NetTerminalGene(secondGene, netInterface);
+        netInterface.SendGenes = new NetTerminalGene[] { sendGene, };
+        sendGene.SetSend(send);
+
+        netInterface.NetTerminal.TerminalLogger?.Information($"ConnectTerminal: {gene.To4Hex()} -> {secondGene.To4Hex()}");
 
         netInterface.NetTerminal.Add(netInterface);
-
         return netInterface;
     }
 
-    protected NetInterface(NetTerminal netTerminal, bool sendReceiveAck)
-    : base(netTerminal, sendReceiveAck)
+    protected NetInterface(NetTerminal netTerminal)
+    : base(netTerminal)
+    {
+    }
+
+    protected NetInterface(NetTerminal netTerminal, NetInterfaceResult error)
+    : base(netTerminal, error)
     {
     }
 
@@ -110,26 +130,58 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         return result;
     }
 
-    public NetInterfaceSendResult WaitForSendCompletion(int millisecondsToWait = 2000)
+    public async Task<TReceive?> ReceiveAsync(int millisecondsToWait = 2000)
+    {
+        var r = await this.ReceiveAsyncCore(millisecondsToWait).ConfigureAwait(false);
+        if (r.result != NetInterfaceReceiveResult.Success)
+        {
+            return default;
+        }
+
+        TinyhandSerializer.TryDeserialize<TReceive>(r.received, out var value);
+        if (value == null)
+        {
+            return default;
+        }
+
+        return value;
+    }
+
+    public NetInterfaceResult WaitForSendCompletion(int millisecondsToWait = 2000)
     {
         return this.WaitForSendCompletionCore(millisecondsToWait);
+    }
+
+    public Task<NetInterfaceResult> WaitForSendCompletionAsync(int millisecondsToWait = 2000)
+    {
+        return this.WaitForSendCompletionAsyncCore(millisecondsToWait);
     }
 }
 
 public class NetInterface : IDisposable
 {
-    protected NetInterface(NetTerminal netTerminal, bool sendReceiveAck)
+    public const int IntervalInMilliseconds = 2;
+
+    protected NetInterface(NetTerminal netTerminal)
     {
         this.Terminal = netTerminal.Terminal;
         this.NetTerminal = netTerminal;
-        this.SendReceiveAck = sendReceiveAck;
+    }
+
+    protected NetInterface(NetTerminal netTerminal, NetInterfaceResult error)
+    {
+        this.Terminal = netTerminal.Terminal;
+        this.NetTerminal = netTerminal;
+        this.Error = error;
     }
 
     public Terminal Terminal { get; }
 
     public NetTerminal NetTerminal { get; }
 
-    protected NetInterfaceSendResult WaitForSendCompletionCore(int millisecondsToWait)
+    public NetInterfaceResult Error { get; protected set; }
+
+    protected NetInterfaceResult WaitForSendCompletionCore(int millisecondsToWait)
     {
         var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);
 
@@ -138,14 +190,14 @@ public class NetInterface : IDisposable
             if (Stopwatch.GetTimestamp() >= end)
             {
                 this.TerminalLogger?.Information($"Send timeout.");
-                return NetInterfaceSendResult.Timeout;
+                return NetInterfaceResult.Timeout;
             }
 
             lock (this.NetTerminal.SyncObject)
             {
                 if (this.SendGenes == null)
                 {
-                    return NetInterfaceSendResult.Success;
+                    return NetInterfaceResult.Success;
                 }
 
                 foreach (var x in this.SendGenes)
@@ -156,7 +208,7 @@ public class NetInterface : IDisposable
                     }
                 }
 
-                return NetInterfaceSendResult.Success;
+                return NetInterfaceResult.Success;
             }
 
 WaitForSendCompletionWait:
@@ -165,16 +217,63 @@ WaitForSendCompletionWait:
                 var cancelled = this.Terminal.Core?.CancellationToken.WaitHandle.WaitOne(1);
                 if (cancelled != false)
                 {
-                    return NetInterfaceSendResult.Closed;
+                    return NetInterfaceResult.Closed;
                 }
             }
             catch
             {
-                return NetInterfaceSendResult.Closed;
+                return NetInterfaceResult.Closed;
             }
         }
 
-        return NetInterfaceSendResult.Closed;
+        return NetInterfaceResult.Closed;
+    }
+
+    protected async Task<NetInterfaceResult> WaitForSendCompletionAsyncCore(int millisecondsToWait)
+    {
+        var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);
+
+        while (this.Terminal.Core?.IsTerminated == false && this.NetTerminal.IsClosed == false)
+        {
+            if (Stopwatch.GetTimestamp() >= end)
+            {
+                this.TerminalLogger?.Information($"Send timeout.");
+                return NetInterfaceResult.Timeout;
+            }
+
+            lock (this.NetTerminal.SyncObject)
+            {
+                if (this.SendGenes == null)
+                {
+                    return NetInterfaceResult.Success;
+                }
+
+                foreach (var x in this.SendGenes)
+                {
+                    if (!x.IsSent)
+                    {
+                        goto WaitForSendCompletionWait;
+                    }
+                }
+
+                return NetInterfaceResult.Success;
+            }
+
+WaitForSendCompletionWait:
+            try
+            {
+                var ct = this.Terminal.Core?.CancellationToken ?? CancellationToken.None;
+                await Task.Delay(NetInterface.IntervalInMilliseconds, ct).ConfigureAwait(false);
+            }
+            catch
+            {
+                this.Error = NetInterfaceResult.Closed;
+                return NetInterfaceResult.Closed;
+            }
+        }
+
+        this.Error = NetInterfaceResult.Closed;
+        return NetInterfaceResult.Closed;
     }
 
     protected NetInterfaceReceiveResult ReceiveCore(out Memory<byte> data, int millisecondsToWait)
@@ -215,9 +314,43 @@ WaitForSendCompletionWait:
         return NetInterfaceReceiveResult.Closed;
     }
 
-    internal ISimpleLogger? TerminalLogger => this.Terminal.TerminalLogger;
+    protected async Task<(NetInterfaceReceiveResult result, Memory<byte> received)> ReceiveAsyncCore(int millisecondsToWait)
+    {
+        Memory<byte> data = default;
+        var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);
 
-    internal bool SendReceiveAck { get; }
+        while (this.Terminal.Core?.IsTerminated == false && this.NetTerminal.IsClosed == false)
+        {
+            if (Stopwatch.GetTimestamp() >= end)
+            {
+                this.TerminalLogger?.Information($"Receive timeout.");
+                return (NetInterfaceReceiveResult.Timeout, data);
+            }
+
+            lock (this.NetTerminal.SyncObject)
+            {
+                if (this.ReceivedGeneToData(ref data))
+                {
+                    return (NetInterfaceReceiveResult.Success, data);
+                }
+            }
+
+            try
+            {
+                var ct = this.Terminal.Core?.CancellationToken ?? CancellationToken.None;
+                await Task.Delay(NetInterface.IntervalInMilliseconds, ct).ConfigureAwait(false);
+            }
+            catch
+            {
+                this.Error = NetInterfaceResult.Closed;
+                return (NetInterfaceReceiveResult.Closed, data);
+            }
+        }
+
+        return (NetInterfaceReceiveResult.Closed, data);
+    }
+
+    internal ISimpleLogger? TerminalLogger => this.Terminal.TerminalLogger;
 
     protected bool ReceivedGeneToData(ref Memory<byte> data)
     {// lock (this.NetTerminal.SyncObject)
@@ -294,7 +427,7 @@ WaitForSendCompletionWait:
         }
     }
 
-    internal void ProcessReceive(IPEndPoint endPoint, ref RawPacketHeader header, Memory<byte> data, long currentTicks, NetTerminalGene gene)
+    internal void ProcessReceive(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data, long currentTicks, NetTerminalGene gene)
     {
         lock (this.NetTerminal.SyncObject)
         {
@@ -309,7 +442,7 @@ WaitForSendCompletionWait:
                 return;
             }
 
-            if (header.Id == RawPacketId.Ack)
+            if (header.Id == PacketId.Ack)
             {// Ack (header.Gene + data(ulong[]))
                 gene.ReceiveAck();
                 var g = MemoryMarshal.Cast<byte, ulong>(data.Span);
@@ -327,9 +460,9 @@ WaitForSendCompletionWait:
             }
             else
             {// Receive data
-                if (gene.Receive(data))
+                if (gene.Receive(header.Id, data))
                 {// Received.
-                    this.TerminalLogger?.Information($"Recv data: {gene.ToString()}");
+                    this.TerminalLogger?.Information($"Recv data: {header.Id} {gene.ToString()}");
                 }
             }
         }

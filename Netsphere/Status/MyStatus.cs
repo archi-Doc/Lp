@@ -3,7 +3,7 @@
 using System;
 using Arc.Threading;
 
-namespace LP.Net;
+namespace Netsphere;
 
 public class MyStatus
 {

@@ -9,6 +9,7 @@ global using Arc.Crypto;
 global using CrossChannel;
 global using Tinyhand;
 
+using LP.Options;
 using System.Security.Cryptography;
 
 namespace LP;
@@ -35,10 +36,6 @@ public class Information
     public string NodeName { get; private set; } = default!;
 
     public LPConsoleOptions ConsoleOptions { get; private set; } = default!;
-
-    public NodePublicKey NodePublicKey { get; set; } = default!;
-
-    public ECDiffieHellman NodePublicEcdh { get; set; } = default!;
 
     public void Initialize(LPConsoleOptions options, bool isConsole, string defaultMode)
     {

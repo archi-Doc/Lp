@@ -1,20 +1,22 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace LP.Net;
+namespace Netsphere;
 
 [TinyhandObject]
-public partial class RawPacketPing : IRawPacket
+public partial class PacketPing : IPacket
 {
-    public RawPacketPing()
+    public PacketId Id => PacketId.Ping;
+
+    public bool AllowUnencrypted => true;
+
+    public PacketPing()
     {
     }
 
-    public RawPacketPing(string text)
+    public PacketPing(string text)
     {
         this.Text = text;
     }
-
-    public RawPacketId Id => RawPacketId.Ping;
 
     [Key(0)]
     public string Text { get; set; } = default!;
@@ -23,19 +25,22 @@ public partial class RawPacketPing : IRawPacket
 }
 
 [TinyhandObject]
-public partial class RawPacketPingResponse : IRawPacket
+public partial class PacketPingResponse : IPacket
 {
-    public RawPacketPingResponse()
+    public PacketId Id => PacketId.PingResponse;
+
+    public bool AllowUnencrypted => true;
+
+    public PacketPingResponse()
     {
     }
 
-    public RawPacketPingResponse(NodeAddress? nodeAddress, string text)
+    public PacketPingResponse(NodeAddress? nodeAddress, string text)
     {
         this.NodeAddress = nodeAddress;
         this.Text = text;
     }
 
-    public RawPacketId Id => RawPacketId.PingResponse;
 
     [Key(0)]
     public string Text { get; set; } = default!;

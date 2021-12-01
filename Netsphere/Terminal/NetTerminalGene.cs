@@ -7,7 +7,7 @@ using Arc.Threading;
 
 #pragma warning disable SA1401
 
-namespace LP.Net;
+namespace Netsphere;
 
 internal static class NetTerminalGeneExtension
 {
@@ -119,10 +119,11 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         return false;
     }
 
-    public bool Receive(Memory<byte> data)
+    public bool Receive(PacketId id, Memory<byte> data)
     {// lock (this.NetTerminal.SyncObject)
         if (this.State == NetTerminalGeneState.WaitingToReceive)
         {// Receive data
+            this.ReceivedId = id;
             this.ReceivedData = data;
             SendAck();
 
@@ -143,7 +144,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
 
         void SendAck()
         {
-            if (!this.NetInterface.SendReceiveAck)
+            if (PacketService.IsManualAck(this.ReceivedId))
             {
                 this.State = NetTerminalGeneState.Complete;
             }
@@ -176,6 +177,8 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
 
     public ulong Gene { get; private set; }
 
+    public PacketId ReceivedId { get; private set; }
+
     /// <summary>
     ///  Gets the received data.
     /// </summary>
@@ -186,6 +189,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         this.NetInterface.Terminal.RemoveInbound(this);
         this.State = NetTerminalGeneState.Initial;
         this.Gene = 0;
+        this.ReceivedId = PacketId.Invalid;
         this.ReceivedData = default;
         this.packetToSend = null;
     }

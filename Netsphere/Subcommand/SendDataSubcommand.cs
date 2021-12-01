@@ -3,7 +3,7 @@
 using System.Diagnostics;
 using Arc.Crypto;
 using LP;
-using LP.Net;
+using Netsphere;
 using SimpleCommandLine;
 using Tinyhand;
 
@@ -12,9 +12,9 @@ namespace LP.Subcommands;
 [SimpleCommand("senddata")]
 public class SendDataSubcommand : ISimpleCommandAsync<SendDataOptions>
 {
-    public SendDataSubcommand(Control control)
+    public SendDataSubcommand(NetControl netControl)
     {
-        this.Control = control;
+        this.NetControl = netControl;
     }
 
     public async Task Run(SendDataOptions options, string[] args)
@@ -27,18 +27,24 @@ public class SendDataSubcommand : ISimpleCommandAsync<SendDataOptions>
         Logger.Priority.Information($"SendData: {node.ToString()}");
 
         var nodeInformation = NodeInformation.Alternative;
-        using (var terminal = this.Control.Netsphere.Terminal.Create(nodeInformation))
+        using (var terminal = this.NetControl.Terminal.Create(nodeInformation))
         {
-            var p = new RawPacketPunch(null);
-            var netInterface = terminal.SendAndReceive<RawPacketPunch, RawPacketPunchResponse>(p);
+            var result = await terminal.EncryptConnectionAsync();
+            if (result != NetInterfaceResult.Success)
+            {
+                return;
+            }
+
+            var p = new PacketPunch(null);
+            /*var netInterface = terminal.SendAndReceive<PacketPunch, PacketPunchResponse>(p);
             if (netInterface != null)
             {
                 netInterface.Receive(out var r);
-            }
+            }*/
         }
     }
 
-    public Control Control { get; set; }
+    public NetControl NetControl { get; set; }
 }
 
 public record SendDataOptions

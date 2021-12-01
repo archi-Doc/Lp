@@ -3,7 +3,7 @@
 using System.Diagnostics;
 using Arc.Crypto;
 using LP;
-using LP.Net;
+using Netsphere;
 using SimpleCommandLine;
 using Tinyhand;
 
@@ -51,12 +51,12 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
         Logger.Priority.Information($"Punch: {node.ToString()}");
 
         var sw = Stopwatch.StartNew();
-        using (var terminal = this.Control.Netsphere.Terminal.Create(node))
+        using (var terminal = this.Control.NetControl.Terminal.Create(node))
         {
-            var p = new RawPacketPunch(nextNode?.CreateEndpoint());
+            var p = new PacketPunch(nextNode?.CreateEndpoint());
 
             sw.Restart();
-            var netInterface = terminal.SendAndReceiveRaw<RawPacketPunch, RawPacketPunchResponse>(p);
+            var netInterface = terminal.SendSingleAndReceive<PacketPunch, PacketPunchResponse>(p);
             var result = netInterface.Receive(out var r);
             sw.Stop();
             if (r != null)

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
-using LP.Net;
+using Netsphere;
 using Xunit;
 
 namespace xUnitTest;
@@ -40,5 +40,5 @@ public class NodeTest
         CreateAddress("2404:6800:4004:80a::2004").IsValid().IsTrue();
     }
 
-    public NodeAddress CreateAddress(string address) => new NodeAddress(IPAddress.Parse(address), Netsphere.MinPort);
+    public NodeAddress CreateAddress(string address) => new NodeAddress(IPAddress.Parse(address), NetControl.MinPort);
 }

@@ -1,11 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
-using LP.Net;
+using Netsphere;
 
 namespace LP.Subcommands;
 
-public static class SubcommandService
+public static partial class SubcommandService
 {
     public static bool TryParseNodeAddress(string node, [MaybeNullWhen(false)] out NodeAddress nodeAddress)
     {

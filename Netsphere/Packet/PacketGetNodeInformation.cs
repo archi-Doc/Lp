@@ -5,16 +5,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 
-namespace LP.Net;
+namespace Netsphere;
 
 [TinyhandObject]
-internal partial class PacketGetNode : IRawPacket
+internal partial class PacketGetNode : IPacket
 {
     public PacketGetNode()
     {
     }
 
-    public RawPacketId Id => RawPacketId.GetNode;
+    public PacketId Id => PacketId.GetNode;
 
     [Key(0)]
     public long UtcTicks { get; set; }

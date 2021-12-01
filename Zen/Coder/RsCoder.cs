@@ -391,7 +391,7 @@ ps4 = s[4], ps5 = s[5], ps6 = s[6], ps7 = s[7])
 
     public override string ToString() => $"RsCoder Data: {this.DataSize}, Check: {this.CheckSize}";
 
-    public void InvalidateEncodedBufferForUnitTest(Random random, int number)
+    public void InvalidateEncodedBufferForUnitTest(System.Random random, int number)
     {
         if (this.rentEncodeBuffer == null)
         {

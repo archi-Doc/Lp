@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace LP.Net;
+namespace Netsphere;
 
 public class NetTerminalClient : NetTerminal
 {
@@ -10,53 +10,48 @@ public class NetTerminalClient : NetTerminal
     }
 
     internal NetTerminalClient(Terminal terminal, NodeInformation nodeInformation)
-        : base(terminal, nodeInformation, Random.Crypto.NextULong())
+        : base(terminal, nodeInformation, LP.Random.Crypto.NextULong())
     {// NodeInformation: Managed
     }
 
-    public INetInterface<TSend> SendRaw<TSend>(TSend value)
-        where TSend : IRawPacket
+    public override NetInterfaceResult EncryptConnection()
     {
-        var netInterface = this.SendPacket(value);
-        return netInterface;
-    }
-
-    public INetInterface<TSend, TReceive> SendAndReceiveRaw<TSend, TReceive>(TSend value)
-        where TSend : IRawPacket
-    {
-        var netInterface = this.SendAndReceivePacket<TSend, TReceive>(value);
-        return netInterface;
-    }
-
-    public INetInterface<TSend, TReceive> SendAndReceive<TSend, TReceive>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
-        where TSend : IRawPacket
-    {
-        if (!this.CheckManagedAndEncrypted())
-        {
-            return null!;
-        }
-
-        var netInterface = this.SendAndReceivePacket<TSend, TReceive>(value);
-        return netInterface;
-    }
-
-    protected bool CheckManagedAndEncrypted()
-    {
-        if (this.embryo != null)
+        if (this.IsEncrypted)
         {// Encrypted
-            return true;
+            return NetInterfaceResult.Success;
         }
         else if (this.NodeInformation == null)
         {// Unmanaged
-            return false;
+            return NetInterfaceResult.NoNodeInformation;
         }
 
-        var p = new RawPacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
-        var netInterface = this.SendRaw<RawPacketEncrypt>(p);
-        if (netInterface.WaitForSendCompletion() != NetInterfaceSendResult.Success)
+        var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
+        var netInterface = this.SendSingleAndReceive<PacketEncrypt, PacketEncryptResponse>(p);
+        if (netInterface.Receive(out var response) != NetInterfaceReceiveResult.Success)
         {
             netInterface.Dispose();
-            return false;
+            return NetInterfaceResult.NoEncryptedConnection;
+        }
+
+        return this.CreateEmbryo(p.Salt);
+    }
+
+    public override async Task<NetInterfaceResult> EncryptConnectionAsync()
+    {
+        if (this.IsEncrypted)
+        {// Encrypted
+            return NetInterfaceResult.Success;
+        }
+        else if (this.NodeInformation == null)
+        {// Unmanaged
+            return NetInterfaceResult.NoNodeInformation;
+        }
+
+        var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
+        var response = await this.SendSingleAndReceiveAsync<PacketEncrypt, PacketEncryptResponse>(p).ConfigureAwait(false);
+        if (response == null)
+        {
+            return NetInterfaceResult.NoEncryptedConnection;
         }
 
         return this.CreateEmbryo(p.Salt);

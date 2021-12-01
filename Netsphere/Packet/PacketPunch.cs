@@ -5,22 +5,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 
-namespace LP.Net;
+namespace Netsphere;
 
 [TinyhandObject]
-public partial class RawPacketPunch : IRawPacket
+public partial class PacketPunch : IPacket
 {
-    public RawPacketPunch()
+    public PacketId Id => PacketId.Punch;
+
+    public bool AllowUnencrypted => true;
+
+    public PacketPunch()
     {
     }
 
-    public RawPacketPunch(IPEndPoint? nextEndpoint)
+    public PacketPunch(IPEndPoint? nextEndpoint)
     {
         this.NextEndpoint = nextEndpoint;
         this.UtcTicks = Ticks.GetUtcNow();
     }
-
-    public RawPacketId Id => RawPacketId.Punch;
 
     [Key(0)]
     public IPEndPoint? NextEndpoint { get; set; }
@@ -30,9 +32,11 @@ public partial class RawPacketPunch : IRawPacket
 }
 
 [TinyhandObject]
-public partial class RawPacketPunchResponse : IRawPacket
+public partial class PacketPunchResponse : IPacket
 {
-    public RawPacketId Id => RawPacketId.PunchResponse;
+    public PacketId Id => PacketId.PunchResponse;
+
+    public bool AllowUnencrypted => true;
 
     [Key(0)]
     public IPEndPoint Endpoint { get; set; } = default!;

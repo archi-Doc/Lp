@@ -5,12 +5,47 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 
-namespace LP.Net;
+namespace Netsphere;
 
-public enum PacketId
+public enum PacketId : byte
 {
+    Invalid,
+    Ack,
+    Close,
+    Relay,
+    Data,
+    Encrypt,
+    EncryptResponse,
+    Ping,
+    PingResponse,
+    Punch,
+    PunchResponse,
+    GetNode,
+    GetNodeResponse,
 }
 
 public interface IPacket
 {
+    public PacketId Id { get; }
+
+    public bool AllowUnencrypted => false;
+}
+
+[StructLayout(LayoutKind.Explicit)]
+internal partial struct PacketHeader
+{
+    [FieldOffset(0)]
+    public ushort Engagement;
+
+    [FieldOffset(2)]
+    public byte Cage;
+
+    [FieldOffset(3)]
+    public PacketId Id;
+
+    [FieldOffset(4)]
+    public ushort DataSize;
+
+    [FieldOffset(8)]
+    public ulong Gene;
 }

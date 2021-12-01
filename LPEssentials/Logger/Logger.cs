@@ -114,23 +114,26 @@ public static class Logger
         Priority = new PriorityLogger();
     }
 
-    public static void Configure(Information info)
+    public static void Configure(Information? info)
     {
         // Logger: Debug, Information, Warning, Error, Fatal
-        File = new SerilogLogger(new LoggerConfiguration()
-        .MinimumLevel.Debug()
-        .WriteTo.File(
-            Path.Combine(info.RootDirectory, "logs", "log.txt"),
-            rollingInterval: RollingInterval.Day,
-            retainedFileCountLimit: 31,
-            buffered: true,
-            flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
-        .CreateLogger());
-
         Console = new SerilogLogger(new LoggerConfiguration()
-        .MinimumLevel.Information()
-        .WriteTo.Console()
-        .CreateLogger());
+            .MinimumLevel.Information()
+            .WriteTo.Console()
+            .CreateLogger());
+
+        if (info != null)
+        {
+            File = new SerilogLogger(new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .WriteTo.File(
+                Path.Combine(info.RootDirectory, "logs", "log.txt"),
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 31,
+                buffered: true,
+                flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
+            .CreateLogger());
+        }
     }
 
     public static bool ViewMode

@@ -3,10 +3,11 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 
-namespace LP.Net;
+namespace Netsphere;
 
 #pragma warning disable SA1401 // Fields should be private
 
@@ -28,13 +29,13 @@ public partial class NetTerminal : IDisposable
     internal NetTerminal(Terminal terminal, NodeAddress nodeAddress)
     {// NodeAddress: Unmanaged
         this.Terminal = terminal;
-        this.GenePool = new(Random.Crypto.NextULong());
+        this.GenePool = new(LP.Random.Crypto.NextULong());
         this.NodeAddress = nodeAddress;
         this.Endpoint = this.NodeAddress.CreateEndpoint();
     }
 
     internal NetTerminal(Terminal terminal, NodeInformation nodeInformation)
-        : this(terminal, nodeInformation, Random.Crypto.NextULong())
+        : this(terminal, nodeInformation, LP.Random.Crypto.NextULong())
     {// NodeInformation: Managed
     }
 
@@ -47,7 +48,167 @@ public partial class NetTerminal : IDisposable
         this.Endpoint = this.NodeAddress.CreateEndpoint();
     }
 
+    public virtual NetInterfaceResult EncryptConnection() => NetInterfaceResult.NoEncryptedConnection;
+
+    public virtual async Task<NetInterfaceResult> EncryptConnectionAsync() => NetInterfaceResult.NoEncryptedConnection;
+
+    public INetInterface<TSend> SendSingle<TSend>(TSend value)
+        where TSend : IPacket
+    {
+        if (!value.AllowUnencrypted)
+        {
+            var result = this.EncryptConnection();
+            if (result != NetInterfaceResult.Success)
+            {
+                return NetInterface<TSend, object>.CreateError(this, result);
+            }
+        }
+
+        return this.CreateSendInterface(value);
+    }
+
+    public async Task<NetInterfaceResult> SendSingleAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
+        where TSend : IPacket
+    {
+        if (!value.AllowUnencrypted)
+        {
+            var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
+            if (result != NetInterfaceResult.Success)
+            {
+                return NetInterfaceResult.NoEncryptedConnection;
+            }
+        }
+
+        var netInterface = this.CreateSendInterface(value);
+        try
+        {
+            return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
+        }
+        finally
+        {
+            netInterface.Dispose();
+        }
+    }
+
+    public INetInterface<TSend, TReceive> SendSingleAndReceive<TSend, TReceive>(TSend value)
+        where TSend : IPacket
+    {
+        if (!value.AllowUnencrypted)
+        {
+            var result = this.EncryptConnection();
+            if (result != NetInterfaceResult.Success)
+            {
+                return (INetInterface<TSend, TReceive>)NetInterface<TSend, object>.CreateError(this, result);
+            }
+        }
+
+        return this.CreateSendAndReceiveInterface<TSend, TReceive>(value);
+    }
+
+    public async Task<TReceive?> SendSingleAndReceiveAsync<TSend, TReceive>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
+        where TSend : IPacket
+    {
+        if (!value.AllowUnencrypted)
+        {
+            var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
+            if (result != NetInterfaceResult.Success)
+            {
+                return default;
+            }
+        }
+
+        var netInterface = this.CreateSendAndReceiveInterface<TSend, TReceive>(value);
+        try
+        {
+            return await netInterface.ReceiveAsync(millisecondsToWait).ConfigureAwait(false);
+        }
+        finally
+        {
+            netInterface.Dispose();
+        }
+    }
+
+    /*public INetInterface<TSend> Send<TSend>(TSend value)
+    {
+        if (value is IPacket packet && !packet.AllowUnencrypted)
+        {
+            if (!this.CheckManagedAndEncrypted())
+            {
+                return null!;
+            }
+        }
+
+        return this.SendPacket(value);
+    }*/
+
+    public INetInterface<TSend, TReceive> SendAndReceive<TSend, TReceive>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
+        where TSend : IPacket
+    {
+        if (!value.AllowUnencrypted)
+        {
+            var result = this.EncryptConnection();
+            if (result != NetInterfaceResult.Success)
+            {
+                return (INetInterface<TSend, TReceive>)NetInterface<TSend, object>.CreateError(this, result);
+            }
+        }
+
+        var netInterface = this.CreateSendAndReceiveInterface<TSend, TReceive>(value);
+        return netInterface;
+    }
+
+    public async Task<NetInterfaceResult> SendAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
+        where TSend : IPacket
+    {
+        if (!value.AllowUnencrypted)
+        {
+            var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
+            if (result != NetInterfaceResult.Success)
+            {
+                return result;
+            }
+        }
+
+        var netInterface = this.CreateSendInterface<TSend>(value);
+        return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
+    }
+
+    public async Task<NetInterfaceResult> SendDataAsync(uint id, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
+        => await this.SendDataAsync(PacketId.Data, id, data, millisecondsToWait).ConfigureAwait(false);
+
+    public async Task<NetInterfaceResult> SendDataAsync(PacketId packetId, ulong id, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
+    {
+        if (!this.IsEncrypted)
+        {
+            var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
+            if (result != NetInterfaceResult.Success)
+            {
+                return result;
+            }
+        }
+
+        var netInterface = this.CreateSendInterface(packetId, id, data);
+        if (netInterface.RequiresReservation)
+        {
+            var result = await netInterface.WaitForReservation(millisecondsToWait).ConfigureAwait(false);
+            if (result != NetInterfaceResult.Success)
+            {
+                return result;
+            }
+        }
+        
+        return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
+    }
+
     public Terminal Terminal { get; }
+
+    public bool IsEncrypted => this.embryo != null;
+
+    public bool IsSendComplete => false;
+
+    public bool IsReceiveComplete => false;
+
+    public bool IsHighTraffic => false;
 
     public bool IsClosed => this.disposed;
 
@@ -62,7 +223,7 @@ public partial class NetTerminal : IDisposable
 
     internal GenePool GenePool { get; }
 
-    internal void CreateHeader(out RawPacketHeader header, ulong gene)
+    internal void CreateHeader(out PacketHeader header, ulong gene)
     {
         header = default;
         header.Gene = gene;
@@ -72,31 +233,35 @@ public partial class NetTerminal : IDisposable
     internal unsafe void SendAck(ulong gene)
     {
         this.CreateHeader(out var header, gene);
-        header.Id = RawPacketId.Ack;
+        header.Id = PacketId.Ack;
 
         var packet = new byte[PacketService.HeaderSize];
         fixed (byte* bp = packet)
         {
-            *(RawPacketHeader*)bp = header;
+            *(PacketHeader*)bp = header;
         }
 
         this.Terminal.AddRawSend(this.Endpoint, packet);
     }
 
-    internal NetInterface<TSend, object> SendPacket<TSend>(TSend value)
-        where TSend : IRawPacket
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal NetInterface<TSend, object> CreateSendInterface<TSend>(TSend value)
+        where TSend : IPacket
     {
-        // var netInterface = new NetInterface<TSend, object>(this, true);
-        // netInterface.Initialize(value, value.Id, false);
-        return NetInterface<TSend, object>.Create(this, value, value.Id, false, false);
+        return NetInterface<TSend, object>.Create(this, value, value.Id, false);
     }
 
-    internal NetInterface<TSend, TReceive> SendAndReceivePacket<TSend, TReceive>(TSend value)
-        where TSend : IRawPacket
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal NetInterface<byte[], object> CreateSendInterface(PacketId packetId, ulong id, byte[] data)
     {
-        /*var netInterface = new NetInterface<TSend, TReceive>(this, true);
-        netInterface.Initialize(value, value.Id, true);*/
-        return NetInterface<TSend, TReceive>.Create(this, value, value.Id, true, false);
+        return NetInterface<byte[], object>.Create(this, packetId, id, data, false);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal NetInterface<TSend, TReceive> CreateSendAndReceiveInterface<TSend, TReceive>(TSend value)
+        where TSend : IPacket
+    {
+        return NetInterface<TSend, TReceive>.Create(this, value, value.Id, true);
     }
 
     internal void ProcessSend(UdpClient udp, long currentTicks)
@@ -132,17 +297,17 @@ public partial class NetTerminal : IDisposable
 
     internal ISimpleLogger? TerminalLogger => this.Terminal.TerminalLogger;
 
-    internal bool CreateEmbryo(ulong salt)
+    internal NetInterfaceResult CreateEmbryo(ulong salt)
     {
         if (this.NodeInformation == null)
         {
-            return false;
+            return NetInterfaceResult.NoNodeInformation;
         }
 
         var ecdh = NodeKey.FromPublicKey(this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
         if (ecdh == null)
         {
-            return false;
+            return NetInterfaceResult.NoNodeInformation;
         }
 
         var material = this.Terminal.NodePrivateECDH.DeriveKeyMaterial(ecdh.PublicKey);
@@ -161,7 +326,7 @@ public partial class NetTerminal : IDisposable
         this.GenePool.SetEmbryo(this.embryo);
         Logger.Priority.Information($"First gene {this.GenePool.GetGene().ToString()}");
 
-        return true;
+        return NetInterfaceResult.Success;
     }
 
     private void Clear()

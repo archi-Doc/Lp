@@ -1,11 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace LP.Net;
+namespace Netsphere;
 
 [TinyhandObject]
-internal partial class RawPacketData : IRawPacket
+internal partial class PacketData : IPacket
 {
-    public RawPacketId Id => RawPacketId.Data;
+    public PacketId Id => PacketId.Data;
 
     [Key(0)]
     public bool Response { get; set; }

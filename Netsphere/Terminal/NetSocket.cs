@@ -7,7 +7,7 @@ using System.Net.Sockets;
 using System.Threading;
 using Arc.Threading;
 
-namespace LP.Net;
+namespace Netsphere;
 
 /// <summary>
 /// NetSocket provides low-level network service.
@@ -15,8 +15,8 @@ namespace LP.Net;
 public class NetSocket
 {
     private const int ReceiveTimeout = 100;
-    private const int SendIntervalMilliseconds = 1;
-    private const int SendIntervalNanoseconds = 1_000_000;
+    private const int SendIntervalMilliseconds = 2;
+    private const int SendIntervalNanoseconds = 2_000_000;
 
     internal class NetSocketRecvCore : ThreadCore
     {
@@ -40,7 +40,7 @@ public class NetSocket
                 {
                     IPEndPoint remoteEP = default!;
                     var bytes = udp.Receive(ref remoteEP);
-                    if (bytes.Length <= Netsphere.MaxPayload)
+                    if (bytes.Length <= NetControl.MaxPayload)
                     {
                         core.pipe.terminal.ProcessReceive(remoteEP, bytes, Ticks.GetSystem());
                     }

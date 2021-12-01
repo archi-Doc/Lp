@@ -7,7 +7,7 @@ using System.IO;
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
 #pragma warning disable SA1401 // Fields should be private
 
-namespace LP.Net;
+namespace Netsphere;
 
 public enum NodeConnectionResult
 {
@@ -20,27 +20,24 @@ public class EssentialNode
     public const string FileName = "EssentialNode.tinyhand";
     public const int ValidTimeInMinutes = 5;
 
-    public EssentialNode(Information information)
+    public EssentialNode(NetBase netBase)
     {
-        this.information = information;
+        this.NetBase = netBase;
 
         Radio.Open<Message.Configure>(this.Configure);
-        Radio.OpenAsync<Message.LoadAsync>(this.LoadAsync);
-        Radio.OpenAsync<Message.SaveAsync>(this.Save);
     }
 
     public void Configure(Message.Configure message)
     {
     }
 
-    public async Task LoadAsync(Message.LoadAsync message)
+    public async Task LoadAsync(string filename)
     {
         try
         {
-            var path = Path.Combine(this.information.RootDirectory, FileName);
-            if (File.Exists(path))
+            if (File.Exists(filename))
             {
-                var bytes = await File.ReadAllBytesAsync(path);
+                var bytes = await File.ReadAllBytesAsync(filename);
                 // this.essentialNodes = TinyhandSerializer.Deserialize<EssentialNodeAddress.GoshujinClass>(bytes);
                 var g = TinyhandSerializer.DeserializeFromUtf8<EssentialNodeAddress.GoshujinClass>(bytes);
                 if (g != null)
@@ -55,7 +52,7 @@ public class EssentialNode
         }
 
         // Load NetsphereOptions.Nodes
-        var nodes = this.information.ConsoleOptions.NetsphereOptions.Nodes;
+        var nodes = this.NetBase.NetsphereOptions.Nodes;
         foreach (var x in nodes.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
             if (NodeAddress.TryParse(x, out var address))
@@ -84,10 +81,10 @@ public class EssentialNode
         this.Validate();
     }
 
-    public async Task Save(Message.SaveAsync message)
+    public async Task SaveAsync(string filename)
     {
-        var path = Path.Combine(this.information.RootDirectory, FileName);
-        using (var file = File.Open(path, FileMode.Create))
+        // this.information.RootDirectory
+        using (var file = File.Open(filename, FileMode.Create))
         {
             byte[] b;
             lock (this.essentialNodes)
@@ -166,6 +163,8 @@ public class EssentialNode
         }
     }
 
+    public NetBase NetBase { get; }
+
     private void Validate()
     {
         // Validate essential nodes.
@@ -184,7 +183,6 @@ public class EssentialNode
         }
     }
 
-    private Information information;
     private EssentialNodeAddress.GoshujinClass essentialNodes = new();
 }
 

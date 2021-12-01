@@ -21,7 +21,7 @@ public class DumpSubcommand : ISimpleCommand<DumpOptions>
         var logger = Logger.Priority;
         logger.Information($"Dump:");
         logger.Information(System.Environment.OSVersion.ToString());
-        this.Control.Netsphere.Terminal.Dump(logger);
+        this.Control.NetControl.Terminal.Dump(logger);
     }
 
     public Control Control { get; set; }

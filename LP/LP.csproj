@@ -22,17 +22,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Server\**" />
+    <EmbeddedResource Remove="Server\**" />
+    <None Remove="Server\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <AdditionalFiles Include="..\stylecop.json" Link="stylecop.json" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\LPBase\LPBase.csproj" />
     <ProjectReference Include="..\Netsphere\Netsphere.csproj" />
     <ProjectReference Include="..\Zen\Zen.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DryIoc.dll" Version="4.8.4" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.354">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

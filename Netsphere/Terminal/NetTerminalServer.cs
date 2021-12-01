@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace LP.Net;
+namespace Netsphere;
 
 public class NetTerminalServer : NetTerminal
 {

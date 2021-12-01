@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
 #pragma warning disable SA1401 // Fields should be private
 
-namespace LP.Net;
+namespace Netsphere;
 
 /// <summary>
 /// Represents a node information.<br/>
@@ -58,12 +58,12 @@ public partial class NodeInformation : NodeAddress, IEquatable<NodeInformation>
             return false;
         }
 
-        return this.Type == other.Type && this.Engagement == other.Engagement && this.Port == other.Port && this.Address.Equals(other.Address);
+        return this.Engagement == other.Engagement && this.Port == other.Port && this.Address.Equals(other.Address);
     }
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(this.Type, this.Engagement, this.Port, this.Address);
+        return HashCode.Combine(this.Engagement, this.Port, this.Address);
     }
 
     private static NodeInformation? alternative;
