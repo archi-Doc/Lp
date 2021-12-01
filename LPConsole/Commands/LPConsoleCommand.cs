@@ -9,8 +9,8 @@ using Arc.Crypto;
 using Arc.Threading;
 using DryIoc;
 using LP;
-using Netsphere;
 using LP.Options;
+using Netsphere;
 using SimpleCommandLine;
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously

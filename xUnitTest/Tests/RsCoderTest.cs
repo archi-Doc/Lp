@@ -1,7 +1,11 @@
+// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+
 using System;
 using System.Numerics;
 using LP.Zen;
 using Xunit;
+
+#pragma warning disable SA1202 // Elements should be ordered by access
 
 namespace xUnitTest;
 
@@ -10,13 +14,13 @@ public class RsCoderTest
     [Fact]
     public void ComprehensiveTest()
     {
-        // (int data, int check)[] nm = new[] { (4, 2), (4, 4), (4, 8), (8, 4), (8, 8), (8, 10), (16, 8), (16, 16), (5, 3), (5, 5), (13, 3), (13, 7), }; // Not supported
-        (int data, int check)[] nm = new[] { (4, 2), (4, 4), (8, 2), (8, 4), (16, 2), (16, 4), };
+        // (int Data, int Check)[] nm = new[] { (4, 2), (4, 4), (4, 8), (8, 4), (8, 8), (8, 10), (16, 8), (16, 16), (5, 3), (5, 5), (13, 3), (13, 7), }; // Not supported
+        (int Data, int Check)[] nm = new[] { (4, 2), (4, 4), (8, 2), (8, 4), (16, 2), (16, 4), };
 
         foreach (var x in nm)
         {
-            ComprehensiveTestNM(x.data, x.check);
-            ComprehensiveTestNM_Data(x.data, x.check);
+            this.ComprehensiveTestNM(x.Data, x.Check);
+            this.ComprehensiveTestNM_Data(x.Data, x.Check);
         }
     }
 
@@ -66,7 +70,7 @@ public class RsCoderTest
     [Fact]
     public void RandomTest()
     {
-        (int data, int check)[] nm = new[] { (4, 2), (4, 4), (8, 2), (8, 4), (16, 2), (16, 4), };
+        (int Data, int Check)[] nm = new[] { (4, 2), (4, 4), (8, 2), (8, 4), (16, 2), (16, 4), };
         var sizes = new[] { 0, 4, 16, 256, 1000, 10_000 };
 
         var random = new Random(42);
@@ -79,7 +83,7 @@ public class RsCoderTest
 
         foreach (var x in nm)
         {
-            RandomTestNM(x.data, x.check, sources, random);
+            this.RandomTestNM(x.Data, x.Check, sources, random);
         }
     }
 
@@ -91,7 +95,7 @@ public class RsCoderTest
         {
             foreach (var x in sources)
             {
-                RandomTestSource(coder, x, random);
+                this.RandomTestSource(coder, x, random);
             }
         }
     }
