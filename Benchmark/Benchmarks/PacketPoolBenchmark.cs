@@ -5,9 +5,11 @@ using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
+using LP;
 
 namespace Benchmark;
 
@@ -21,10 +23,17 @@ public class PacketPoolBenchmark
 
     public ConcurrentQueue<byte[]> Queue { get; set; } = new();
 
+    public FixedArrayPool FixedArrayPool { get; set; }
+
     public byte[][] Arrays { get; set; }
 
     public PacketPoolBenchmark()
     {
+        this.FixedArrayPool = new(this.Length, 200);
+        this.FixedArrayPool.Rent();
+        var bb = this.FixedArrayPool.Rent();
+        this.FixedArrayPool.Return(bb);
+        this.FixedArrayPool.Rent();
         this.Arrays = new byte[N][];
         for (var n = 0; n < N; n++)
         {
@@ -42,7 +51,7 @@ public class PacketPoolBenchmark
     {
     }
 
-    [Benchmark]
+    /*[Benchmark]
     public byte[] NewArray()
     {
         return new byte[this.Length];
@@ -67,7 +76,7 @@ public class PacketPoolBenchmark
 
         this.Queue.Enqueue(array);
         return array;
-    }
+    }*/
 
     [Benchmark]
     public byte[][] NewArrayN()
@@ -113,6 +122,22 @@ public class PacketPoolBenchmark
         for (var n = 0; n < N; n++)
         {
             this.Queue.Enqueue(this.Arrays[n]);
+        }
+
+        return this.Arrays;
+    }
+
+    [Benchmark]
+    public byte[][] FixedArrayPoolN()
+    {
+        for (var n = 0; n < N; n++)
+        {
+            this.Arrays[n] = this.FixedArrayPool.Rent();
+        }
+
+        for (var n = 0; n < N; n++)
+        {
+            this.FixedArrayPool.Return(this.Arrays[n]);
         }
 
         return this.Arrays;
