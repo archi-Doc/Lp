@@ -9,8 +9,6 @@ internal partial class PacketConnect : IPacket
 
     public bool AllowUnencrypted => true;
 
-    // public bool ManualAck => true;
-
     public PacketConnect()
     {
     }

@@ -14,8 +14,6 @@ public partial class PacketPunch : IPacket
 
     public bool AllowUnencrypted => true;
 
-    // public bool ManualAck => true;
-
     public PacketPunch()
     {
     }
@@ -39,8 +37,6 @@ public partial class PacketPunchResponse : IPacket
     public PacketId Id => PacketId.PunchResponse;
 
     public bool AllowUnencrypted => true;
-
-    // public bool ManualAck => true;
 
     [Key(0)]
     public IPEndPoint Endpoint { get; set; } = default!;

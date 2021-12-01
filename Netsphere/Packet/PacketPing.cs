@@ -9,8 +9,6 @@ public partial class PacketPing : IPacket
 
     public bool AllowUnencrypted => true;
 
-    // public bool ManualAck => true;
-
     public PacketPing()
     {
     }
@@ -32,8 +30,6 @@ public partial class PacketPingResponse : IPacket
     public PacketId Id => PacketId.PingResponse;
 
     public bool AllowUnencrypted => true;
-
-    // public bool ManualAck => true;
 
     public PacketPingResponse()
     {
