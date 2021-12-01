@@ -173,8 +173,8 @@ public partial class NetTerminal : IDisposable
         return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
     }
 
-    public async Task<NetInterfaceResult> SendDataAsync(uint id, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
-        => await this.SendDataAsync(PacketId.Data, id, data, millisecondsToWait).ConfigureAwait(false);
+    public Task<NetInterfaceResult> SendDataAsync(uint id, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
+        => this.SendDataAsync(PacketId.Data, id, data, millisecondsToWait);
 
     public async Task<NetInterfaceResult> SendDataAsync(PacketId packetId, ulong id, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
     {
@@ -190,7 +190,7 @@ public partial class NetTerminal : IDisposable
         var netInterface = this.CreateSendInterface(packetId, id, data);
         if (netInterface.RequiresReservation)
         {
-            var result = await netInterface.WaitForReservation(millisecondsToWait).ConfigureAwait(false);
+            var result = await netInterface.WaitForReservationAsync(millisecondsToWait).ConfigureAwait(false);
             if (result != NetInterfaceResult.Success)
             {
                 return result;

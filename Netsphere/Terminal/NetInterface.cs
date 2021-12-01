@@ -16,6 +16,7 @@ public enum NetInterfaceResult
     Success,
     Timeout,
     Closed,
+    NoDataToSend,
     NoNodeInformation,
     NoEncryptedConnection,
 }
@@ -67,6 +68,8 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         {// Split into multiple packets.
 
         }
+
+        return netInterface;
     }
 
     internal static NetInterface<TSend, TReceive> Create(NetTerminal netTerminal, TSend value, PacketId id, bool receive)
@@ -166,14 +169,13 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
     }
 
     public NetInterfaceResult WaitForSendCompletion(int millisecondsToWait = 2000)
-    {
-        return this.WaitForSendCompletionCore(millisecondsToWait);
-    }
+        => this.WaitForSendCompletionCore(millisecondsToWait);
 
     public Task<NetInterfaceResult> WaitForSendCompletionAsync(int millisecondsToWait = 2000)
-    {
-        return this.WaitForSendCompletionAsyncCore(millisecondsToWait);
-    }
+        => this.WaitForSendCompletionAsyncCore(millisecondsToWait);
+
+    internal Task<NetInterfaceResult> WaitForReservationAsync(int millisecondsToWait = 2000)
+        => this.WaitForReservationAsyncCore(millisecondsToWait);
 }
 
 public class NetInterface : IDisposable
@@ -197,6 +199,8 @@ public class NetInterface : IDisposable
 
     public NetTerminal NetTerminal { get; }
 
+    public bool RequiresReservation { get; private set; }
+
     public NetInterfaceResult Error { get; protected set; }
 
     protected NetInterfaceResult WaitForSendCompletionCore(int millisecondsToWait)
@@ -215,7 +219,7 @@ public class NetInterface : IDisposable
             {
                 if (this.SendGenes == null)
                 {
-                    return NetInterfaceResult.Success;
+                    return NetInterfaceResult.NoDataToSend;
                 }
 
                 foreach (var x in this.SendGenes)
@@ -263,7 +267,7 @@ WaitForSendCompletionWait:
             {
                 if (this.SendGenes == null)
                 {
-                    return NetInterfaceResult.Success;
+                    return NetInterfaceResult.NoDataToSend;
                 }
 
                 foreach (var x in this.SendGenes)
@@ -294,7 +298,17 @@ WaitForSendCompletionWait:
         return NetInterfaceResult.Closed;
     }
 
-    protected NetInterfaceReceiveResult ReceiveCore(out Memory<byte> data, int millisecondsToWait)
+    protected async Task<NetInterfaceResult> WaitForReservationAsyncCore(int millisecondsToWait)
+    {
+        if (!this.RequiresReservation)
+        {
+            return NetInterfaceResult.Success;
+        }
+
+        return NetInterfaceResult.Success;
+    }
+
+        protected NetInterfaceReceiveResult ReceiveCore(out Memory<byte> data, int millisecondsToWait)
     {
         data = default;
         var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);
