@@ -17,14 +17,7 @@ public enum NetInterfaceResult
     Timeout,
     Closed,
     NoNodeInformation,
-    NoSecureConnection,
-}
-
-public enum NetInterfaceSendResult
-{
-    Success,
-    Timeout,
-    Closed,
+    NoEncryptedConnection,
 }
 
 public enum NetInterfaceReceiveResult
@@ -44,7 +37,7 @@ public interface INetInterface<TSend> : IDisposable
 {
     public const int DefaultMillisecondsToWait = 2000;
 
-    public NetInterfaceSendResult WaitForSendCompletion(int millisecondsToWait = DefaultMillisecondsToWait);
+    public NetInterfaceResult WaitForSendCompletion(int millisecondsToWait = DefaultMillisecondsToWait);
 }
 
 internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend, TReceive>
@@ -154,12 +147,12 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         return value;
     }
 
-    public NetInterfaceSendResult WaitForSendCompletion(int millisecondsToWait = 2000)
+    public NetInterfaceResult WaitForSendCompletion(int millisecondsToWait = 2000)
     {
         return this.WaitForSendCompletionCore(millisecondsToWait);
     }
 
-    public Task<bool> WaitForSendCompletionAsync(int millisecondsToWait = 2000)
+    public Task<NetInterfaceResult> WaitForSendCompletionAsync(int millisecondsToWait = 2000)
     {
         return this.WaitForSendCompletionAsyncCore(millisecondsToWait);
     }
@@ -188,7 +181,7 @@ public class NetInterface : IDisposable
 
     public NetInterfaceResult Error { get; protected set; }
 
-    protected NetInterfaceSendResult WaitForSendCompletionCore(int millisecondsToWait)
+    protected NetInterfaceResult WaitForSendCompletionCore(int millisecondsToWait)
     {
         var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);
 
@@ -197,14 +190,14 @@ public class NetInterface : IDisposable
             if (Stopwatch.GetTimestamp() >= end)
             {
                 this.TerminalLogger?.Information($"Send timeout.");
-                return NetInterfaceSendResult.Timeout;
+                return NetInterfaceResult.Timeout;
             }
 
             lock (this.NetTerminal.SyncObject)
             {
                 if (this.SendGenes == null)
                 {
-                    return NetInterfaceSendResult.Success;
+                    return NetInterfaceResult.Success;
                 }
 
                 foreach (var x in this.SendGenes)
@@ -215,7 +208,7 @@ public class NetInterface : IDisposable
                     }
                 }
 
-                return NetInterfaceSendResult.Success;
+                return NetInterfaceResult.Success;
             }
 
 WaitForSendCompletionWait:
@@ -224,19 +217,19 @@ WaitForSendCompletionWait:
                 var cancelled = this.Terminal.Core?.CancellationToken.WaitHandle.WaitOne(1);
                 if (cancelled != false)
                 {
-                    return NetInterfaceSendResult.Closed;
+                    return NetInterfaceResult.Closed;
                 }
             }
             catch
             {
-                return NetInterfaceSendResult.Closed;
+                return NetInterfaceResult.Closed;
             }
         }
 
-        return NetInterfaceSendResult.Closed;
+        return NetInterfaceResult.Closed;
     }
 
-    protected async Task<bool> WaitForSendCompletionAsyncCore(int millisecondsToWait)
+    protected async Task<NetInterfaceResult> WaitForSendCompletionAsyncCore(int millisecondsToWait)
     {
         var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);
 
@@ -245,14 +238,14 @@ WaitForSendCompletionWait:
             if (Stopwatch.GetTimestamp() >= end)
             {
                 this.TerminalLogger?.Information($"Send timeout.");
-                return false;
+                return NetInterfaceResult.Timeout;
             }
 
             lock (this.NetTerminal.SyncObject)
             {
                 if (this.SendGenes == null)
                 {
-                    return true;
+                    return NetInterfaceResult.Success;
                 }
 
                 foreach (var x in this.SendGenes)
@@ -263,7 +256,7 @@ WaitForSendCompletionWait:
                     }
                 }
 
-                return true;
+                return NetInterfaceResult.Success;
             }
 
 WaitForSendCompletionWait:
@@ -275,12 +268,12 @@ WaitForSendCompletionWait:
             catch
             {
                 this.Error = NetInterfaceResult.Closed;
-                return false;
+                return NetInterfaceResult.Closed;
             }
         }
 
         this.Error = NetInterfaceResult.Closed;
-        return false;
+        return NetInterfaceResult.Closed;
     }
 
     protected NetInterfaceReceiveResult ReceiveCore(out Memory<byte> data, int millisecondsToWait)

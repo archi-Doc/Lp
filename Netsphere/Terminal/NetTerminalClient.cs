@@ -14,7 +14,7 @@ public class NetTerminalClient : NetTerminal
     {// NodeInformation: Managed
     }
 
-    public override NetInterfaceResult ConnectAndEncrypt()
+    public override NetInterfaceResult EncryptConnection()
     {
         if (this.IsEncrypted)
         {// Encrypted
@@ -25,18 +25,18 @@ public class NetTerminalClient : NetTerminal
             return NetInterfaceResult.NoNodeInformation;
         }
 
-        var p = new PacketConnect(this.Terminal.NetStatus.GetMyNodeInformation());
-        var netInterface = this.SendSingleAndReceive<PacketConnect, PacketConnectResponse>(p);
+        var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
+        var netInterface = this.SendSingleAndReceive<PacketEncrypt, PacketEncryptResponse>(p);
         if (netInterface.Receive(out var response) != NetInterfaceReceiveResult.Success)
         {
             netInterface.Dispose();
-            return NetInterfaceResult.NoSecureConnection;
+            return NetInterfaceResult.NoEncryptedConnection;
         }
 
         return this.CreateEmbryo(p.Salt);
     }
 
-    public override async Task<NetInterfaceResult> ConnectAndEncryptAsync()
+    public override async Task<NetInterfaceResult> EncryptConnectionAsync()
     {
         if (this.IsEncrypted)
         {// Encrypted
@@ -47,11 +47,11 @@ public class NetTerminalClient : NetTerminal
             return NetInterfaceResult.NoNodeInformation;
         }
 
-        var p = new PacketConnect(this.Terminal.NetStatus.GetMyNodeInformation());
-        var response = await this.SendSingleAndReceiveAsync<PacketConnect, PacketConnectResponse>(p).ConfigureAwait(false);
+        var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
+        var response = await this.SendSingleAndReceiveAsync<PacketEncrypt, PacketEncryptResponse>(p).ConfigureAwait(false);
         if (response == null)
         {
-            return NetInterfaceResult.NoSecureConnection;
+            return NetInterfaceResult.NoEncryptedConnection;
         }
 
         return this.CreateEmbryo(p.Salt);

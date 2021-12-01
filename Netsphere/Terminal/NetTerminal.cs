@@ -3,6 +3,7 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 
@@ -47,38 +48,38 @@ public partial class NetTerminal : IDisposable
         this.Endpoint = this.NodeAddress.CreateEndpoint();
     }
 
-    public virtual NetInterfaceResult ConnectAndEncrypt() => NetInterfaceResult.NoSecureConnection;
+    public virtual NetInterfaceResult EncryptConnection() => NetInterfaceResult.NoEncryptedConnection;
 
-    public virtual async Task<NetInterfaceResult> ConnectAndEncryptAsync() => NetInterfaceResult.NoSecureConnection;
+    public virtual async Task<NetInterfaceResult> EncryptConnectionAsync() => NetInterfaceResult.NoEncryptedConnection;
 
     public INetInterface<TSend> SendSingle<TSend>(TSend value)
         where TSend : IPacket
     {
         if (!value.AllowUnencrypted)
         {
-            var result = this.ConnectAndEncrypt();
+            var result = this.EncryptConnection();
             if (result != NetInterfaceResult.Success)
             {
                 return NetInterface<TSend, object>.CreateError(this, result);
             }
         }
 
-        return this.SendPacket(value);
+        return this.CreateSendInterface(value);
     }
 
-    public async Task<bool> SendSingleAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<NetInterfaceResult> SendSingleAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
         where TSend : IPacket
     {
         if (!value.AllowUnencrypted)
         {
-            var result = await this.ConnectAndEncryptAsync().ConfigureAwait(false);
+            var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
             if (result != NetInterfaceResult.Success)
             {
-                return false;
+                return NetInterfaceResult.NoEncryptedConnection;
             }
         }
 
-        var netInterface = this.SendPacket(value);
+        var netInterface = this.CreateSendInterface(value);
         try
         {
             return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
@@ -94,14 +95,14 @@ public partial class NetTerminal : IDisposable
     {
         if (!value.AllowUnencrypted)
         {
-            var result = this.ConnectAndEncrypt();
+            var result = this.EncryptConnection();
             if (result != NetInterfaceResult.Success)
             {
                 return (INetInterface<TSend, TReceive>)NetInterface<TSend, object>.CreateError(this, result);
             }
         }
 
-        return this.SendAndReceivePacket<TSend, TReceive>(value);
+        return this.CreateSendAndReceiveInterface<TSend, TReceive>(value);
     }
 
     public async Task<TReceive?> SendSingleAndReceiveAsync<TSend, TReceive>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
@@ -109,14 +110,14 @@ public partial class NetTerminal : IDisposable
     {
         if (!value.AllowUnencrypted)
         {
-            var result = await this.ConnectAndEncryptAsync().ConfigureAwait(false);
+            var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
             if (result != NetInterfaceResult.Success)
             {
                 return default;
             }
         }
 
-        var netInterface = this.SendAndReceivePacket<TSend, TReceive>(value);
+        var netInterface = this.CreateSendAndReceiveInterface<TSend, TReceive>(value);
         try
         {
             return await netInterface.ReceiveAsync(millisecondsToWait).ConfigureAwait(false);
@@ -145,30 +146,57 @@ public partial class NetTerminal : IDisposable
     {
         if (!value.AllowUnencrypted)
         {
-            var result = this.ConnectAndEncrypt();
+            var result = this.EncryptConnection();
             if (result != NetInterfaceResult.Success)
             {
                 return (INetInterface<TSend, TReceive>)NetInterface<TSend, object>.CreateError(this, result);
             }
         }
 
-        var netInterface = this.SendAndReceivePacket<TSend, TReceive>(value);
+        var netInterface = this.CreateSendAndReceiveInterface<TSend, TReceive>(value);
         return netInterface;
     }
 
-    public async Task<bool> SendAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<NetInterfaceResult> SendAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
         where TSend : IPacket
     {
         if (!value.AllowUnencrypted)
         {
-            var result = await this.ConnectAndEncryptAsync().ConfigureAwait(false);
+            var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
             if (result != NetInterfaceResult.Success)
             {
-                return false;
+                return result;
             }
         }
 
-        var netInterface = this.SendPacket<TSend>(value);
+        var netInterface = this.CreateSendInterface<TSend>(value);
+        return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
+    }
+
+    public async Task<NetInterfaceResult> SendDataAsync(uint id, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
+        => await this.SendDataAsync(PacketId.Data, id, data, millisecondsToWait).ConfigureAwait(false);
+
+    public async Task<NetInterfaceResult> SendDataAsync(PacketId packetId, ulong id, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
+    {
+        if (!this.IsEncrypted)
+        {
+            var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
+            if (result != NetInterfaceResult.Success)
+            {
+                return result;
+            }
+        }
+
+        var netInterface = this.CreateSendInterface(packetId, id, data);
+        if (netInterface.RequiresReservation)
+        {
+            var result = await netInterface.WaitForReservation(millisecondsToWait).ConfigureAwait(false);
+            if (result != NetInterfaceResult.Success)
+            {
+                return result;
+            }
+        }
+        
         return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
     }
 
@@ -216,13 +244,21 @@ public partial class NetTerminal : IDisposable
         this.Terminal.AddRawSend(this.Endpoint, packet);
     }
 
-    internal NetInterface<TSend, object> SendPacket<TSend>(TSend value)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal NetInterface<TSend, object> CreateSendInterface<TSend>(TSend value)
         where TSend : IPacket
     {
         return NetInterface<TSend, object>.Create(this, value, value.Id, false);
     }
 
-    internal NetInterface<TSend, TReceive> SendAndReceivePacket<TSend, TReceive>(TSend value)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal NetInterface<byte[], object> CreateSendInterface(PacketId packetId, ulong id, byte[] data)
+    {
+        return NetInterface<byte[], object>.Create(this, packetId, id, data, false);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal NetInterface<TSend, TReceive> CreateSendAndReceiveInterface<TSend, TReceive>(TSend value)
         where TSend : IPacket
     {
         return NetInterface<TSend, TReceive>.Create(this, value, value.Id, true);

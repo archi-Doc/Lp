@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Netsphere;
@@ -37,9 +38,10 @@ internal class PacketService
     [ThreadStatic]
     private static byte[]? initialBuffer;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static bool IsManualAck(PacketId id) => id switch
     {
-        PacketId.Connect => true,
+        PacketId.Encrypt => true,
         PacketId.Punch => true,
         PacketId.Ping => true,
         _ => false,

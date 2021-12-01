@@ -14,8 +14,8 @@ public enum PacketId : byte
     Close,
     Relay,
     Data,
-    Connect,
-    ConnectResponse,
+    Encrypt,
+    EncryptResponse,
     Ping,
     PingResponse,
     Punch,
@@ -29,8 +29,6 @@ public interface IPacket
     public PacketId Id { get; }
 
     public bool AllowUnencrypted => false;
-
-    // public bool ManualAck => false;
 }
 
 [StructLayout(LayoutKind.Explicit)]
