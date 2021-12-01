@@ -13,12 +13,14 @@ internal class PacketService
     static PacketService()
     {
         HeaderSize = Marshal.SizeOf(default(PacketHeader));
+        DataHeaderSize = Marshal.SizeOf(default(DataHeader));
         // PacketInfo = new PacketInfo[] { new(typeof(PacketPunch), 0, false), };
 
         var relay = new PacketRelay();
         relay.NextEndpoint = new(IPAddress.IPv6Loopback, NetControl.MaxPort);
         RelayPacketSize = Tinyhand.TinyhandSerializer.Serialize(relay).Length;
-        SafeMaxPacketSize = NetControl.MaxPayload - HeaderSize - RelayPacketSize - 8;
+        SafeMaxPacketSize = NetControl.MaxPayload - HeaderSize - DataHeaderSize - RelayPacketSize;
+        SafeMaxPacketSize -= 8; // Safety margin
     }
 
     public PacketService()
@@ -26,6 +28,8 @@ internal class PacketService
     }
 
     public static int HeaderSize { get; }
+
+    public static int DataHeaderSize { get; }
 
     public static int RelayPacketSize { get; }
 
@@ -47,6 +51,41 @@ internal class PacketService
         _ => false,
     };
 
+    internal static unsafe byte[] CreatePacket(ref PacketHeader header, PacketId packetId, ulong id, byte[] data)
+    {// PacketHeader, DataHeader, Data
+        if (data.Length > PacketService.SafeMaxPacketSize)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        var dataSpan = data.AsSpan();
+        var size = PacketService.HeaderSize + PacketService.DataHeaderSize + data.Length;
+        var buffer = new byte[size];
+        var span = buffer.AsSpan();
+
+        fixed (byte* pb = span)
+        {
+            header.Id = PacketId.Data;
+            header.DataSize = (ushort)(PacketService.DataHeaderSize + data.Length);
+            *(PacketHeader*)pb = header;
+        }
+
+        span = span.Slice(PacketService.HeaderSize);
+        DataHeader dataHeader = default;
+        dataHeader.PacketId = packetId;
+        dataHeader.Id = id;
+        dataHeader.Checksum = Arc.Crypto.FarmHash.Hash64(dataSpan);
+        fixed (byte* pb = span)
+        {
+            *(DataHeader*)pb = dataHeader;
+        }
+
+        span = span.Slice(PacketService.DataHeaderSize);
+        dataSpan.CopyTo(span);
+
+        return buffer;
+    }
+
     internal static unsafe byte[] CreatePacket<T>(ref PacketHeader header, T value, PacketId rawPacketId)
     {
         if (initialBuffer == null)
@@ -55,13 +94,13 @@ internal class PacketService
         }
 
         var writer = new Tinyhand.IO.TinyhandWriter(initialBuffer);
-        var span = writer.GetSpan(PacketService.HeaderSize);
+        var packetHeaderSpan = writer.GetSpan(PacketService.HeaderSize);
         writer.Advance(PacketService.HeaderSize);
 
         var written = writer.Written;
         TinyhandSerializer.Serialize(ref writer, value);
 
-        fixed (byte* pb = span)
+        fixed (byte* pb = packetHeaderSpan)
         {
             header.Id = rawPacketId;
             header.DataSize = (ushort)(writer.Written - written);

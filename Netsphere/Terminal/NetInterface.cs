@@ -52,9 +52,27 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         return new NetInterface<TSend, TReceive>(netTerminal, error);
     }
 
+    internal static NetInterface<TSend, TReceive> Create(NetTerminal netTerminal, PacketId packetId, ulong id, byte[] data, bool receive)
+    {// Send and Receive(optional) NetTerminalGene.
+        var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
+
+        var gene = netTerminal.GenePool.GetGene(); // Send gene
+        netTerminal.CreateHeader(out var header, gene);
+        if (data.Length < PacketService.SafeMaxPacketSize)
+        {// Single packet.
+            var packet = PacketService.CreatePacket(ref header, packetId, id, data);
+
+        }
+        else
+        {// Split into multiple packets.
+
+        }
+    }
+
     internal static NetInterface<TSend, TReceive> Create(NetTerminal netTerminal, TSend value, PacketId id, bool receive)
     {// Send and Receive(optional) NetTerminalGene.
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
+
         var gene = netTerminal.GenePool.GetGene(); // Send gene
         netTerminal.CreateHeader(out var header, gene);
         var packet = PacketService.CreatePacket(ref header, value, id);

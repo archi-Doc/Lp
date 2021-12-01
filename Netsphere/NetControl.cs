@@ -22,6 +22,7 @@ namespace Netsphere;
 public class NetControl
 {
     public const int MaxPayload = 1432; // 1432 bytes
+    public const int MaxDataSize = 4 * 1024 * 1024; // 4 MB
     public const int MinPort = 49152; // Ephemeral port 49152 - 60999
     public const int MaxPort = 60999;
 

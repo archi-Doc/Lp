@@ -40,6 +40,7 @@ public class NetSocket
                 {
                     IPEndPoint remoteEP = default!;
                     var bytes = udp.Receive(ref remoteEP);
+                    // var received = udp.Client.ReceiveFrom(buffer, 0, size, SocketFlags.None, ref remoteEP);
                     if (bytes.Length <= NetControl.MaxPayload)
                     {
                         core.pipe.terminal.ProcessReceive(remoteEP, bytes, Ticks.GetSystem());

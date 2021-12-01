@@ -14,6 +14,8 @@ public enum PacketId : byte
     Close,
     Relay,
     Data,
+    Reserve,
+    RPC,
     Encrypt,
     EncryptResponse,
     Ping,
@@ -32,7 +34,7 @@ public interface IPacket
 }
 
 [StructLayout(LayoutKind.Explicit)]
-internal partial struct PacketHeader
+internal struct PacketHeader
 {
     [FieldOffset(0)]
     public ushort Engagement;
