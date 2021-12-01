@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+#pragma warning disable SA1208 // System using directives should be placed before other using directives
 #pragma warning disable SA1210 // Using directives should be ordered alphabetically by namespace
 global using System;
 global using System.Net;
@@ -11,7 +12,6 @@ global using LP;
 global using LP.Options;
 global using Tinyhand;
 global using ValueLink;
-
 using System.Security.Cryptography;
 using DryIoc;
 using Netsphere;

@@ -41,7 +41,6 @@ public partial class PacketPingResponse : IPacket
         this.Text = text;
     }
 
-
     [Key(0)]
     public string Text { get; set; } = default!;
 

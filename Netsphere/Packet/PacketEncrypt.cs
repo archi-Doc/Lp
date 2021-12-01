@@ -19,7 +19,6 @@ internal partial class PacketEncrypt : IPacket
         this.Salt = LP.Random.Crypto.NextULong();
     }
 
-
     [Key(0)]
     public NodeInformation? NodeInformation { get; set; }
 

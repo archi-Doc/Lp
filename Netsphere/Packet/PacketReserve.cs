@@ -20,4 +20,3 @@ internal partial class PacketReserve : IPacket
     [Key(1)]
     public uint DataSize { get; set; }
 }
-

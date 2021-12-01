@@ -62,11 +62,9 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         if (data.Length < PacketService.SafeMaxPacketSize)
         {// Single packet.
             var packet = PacketService.CreatePacket(ref header, packetId, id, data);
-
         }
         else
         {// Split into multiple packets.
-
         }
 
         return netInterface;
@@ -154,12 +152,12 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
     public async Task<TReceive?> ReceiveAsync(int millisecondsToWait = 2000)
     {
         var r = await this.ReceiveAsyncCore(millisecondsToWait).ConfigureAwait(false);
-        if (r.result != NetInterfaceReceiveResult.Success)
+        if (r.Result != NetInterfaceReceiveResult.Success)
         {
             return default;
         }
 
-        TinyhandSerializer.TryDeserialize<TReceive>(r.received, out var value);
+        TinyhandSerializer.TryDeserialize<TReceive>(r.Received, out var value);
         if (value == null)
         {
             return default;
@@ -308,7 +306,7 @@ WaitForSendCompletionWait:
         return NetInterfaceResult.Success;
     }
 
-        protected NetInterfaceReceiveResult ReceiveCore(out Memory<byte> data, int millisecondsToWait)
+    protected NetInterfaceReceiveResult ReceiveCore(out Memory<byte> data, int millisecondsToWait)
     {
         data = default;
         var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);
@@ -346,7 +344,7 @@ WaitForSendCompletionWait:
         return NetInterfaceReceiveResult.Closed;
     }
 
-    protected async Task<(NetInterfaceReceiveResult result, Memory<byte> received)> ReceiveAsyncCore(int millisecondsToWait)
+    protected async Task<(NetInterfaceReceiveResult Result, Memory<byte> Received)> ReceiveAsyncCore(int millisecondsToWait)
     {
         Memory<byte> data = default;
         var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);

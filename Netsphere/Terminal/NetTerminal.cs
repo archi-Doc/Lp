@@ -196,7 +196,7 @@ public partial class NetTerminal : IDisposable
                 return result;
             }
         }
-        
+
         return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
     }
 

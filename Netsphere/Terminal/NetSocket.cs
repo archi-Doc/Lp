@@ -30,7 +30,7 @@ public class NetSocket
                     break;
                 }
 
-                var udp = core.pipe.udpClient;
+                var udp = core.socket.udpClient;
                 if (udp == null)
                 {
                     break;
@@ -43,7 +43,7 @@ public class NetSocket
                     // var received = udp.Client.ReceiveFrom(buffer, 0, size, SocketFlags.None, ref remoteEP);
                     if (bytes.Length <= NetControl.MaxPayload)
                     {
-                        core.pipe.terminal.ProcessReceive(remoteEP, bytes, Ticks.GetSystem());
+                        core.socket.terminal.ProcessReceive(remoteEP, bytes, Ticks.GetSystem());
                     }
 
                     // var memory = new ReadOnlyMemory<byte>(bytes);
@@ -70,13 +70,13 @@ public class NetSocket
             }
         }
 
-        public NetSocketRecvCore(ThreadCoreBase parent, NetSocket pipe)
+        public NetSocketRecvCore(ThreadCoreBase parent, NetSocket socket)
                 : base(parent, Process, false)
         {
-            this.pipe = pipe;
+            this.socket = socket;
         }
 
-        private NetSocket pipe;
+        private NetSocket socket;
     }
 
     internal class NetSocketSendCore : ThreadCore
@@ -98,10 +98,10 @@ public class NetSocket
             }
         }
 
-        public NetSocketSendCore(ThreadCoreBase parent, NetSocket pipe)
+        public NetSocketSendCore(ThreadCoreBase parent, NetSocket socket)
                 : base(parent, Process, false)
         {
-            this.socket = pipe;
+            this.socket = socket;
             this.timer = MultimediaTimer.TryCreate(SendIntervalMilliseconds, this.ProcessSend); // Use multimedia timer if available.
         }
 
