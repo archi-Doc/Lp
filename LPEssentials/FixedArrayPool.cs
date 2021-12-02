@@ -46,6 +46,11 @@ public class FixedArrayPool
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Return(byte[] array)
     {
+        if (array.Length != this.ArrayLength)
+        {
+            throw new InvalidDataException("The length of the byte array does not match the specified length.");
+        }
+
         if (array.Length == this.ArrayLength)
         {
             if (this.MaxPool == 0 || this.queue.Count <= this.MaxPool)

@@ -34,6 +34,7 @@ public class NetSocket
                 anyEP = new IPEndPoint(IPAddress.IPv6Any, IPEndPoint.MinPort);
             }
 
+            byte[]? rentArray = null;
             while (true)
             {
                 if (core.IsTerminated)
@@ -52,11 +53,11 @@ public class NetSocket
                     // IPEndPoint remoteEP = default!;
                     // var bytes = udp.Receive(ref remoteEP);
                     var remoteEP = (EndPoint)anyEP;
-                    var packetArray = PacketPool.Rent();
-                    var received = udp.Client.ReceiveFrom(packetArray, 0, packetArray.Length, SocketFlags.None, ref remoteEP);
+                    rentArray ??= PacketPool.Rent();
+                    var received = udp.Client.ReceiveFrom(rentArray, 0, rentArray.Length, SocketFlags.None, ref remoteEP);
                     if (received <= NetControl.MaxPayload)
                     {
-                        core.socket.terminal.ProcessReceive((IPEndPoint)remoteEP, packetArray, Ticks.GetSystem());
+                        core.socket.terminal.ProcessReceive((IPEndPoint)remoteEP, ref rentArray, Ticks.GetSystem());
                     }
 
                     // var memory = new ReadOnlyMemory<byte>(bytes);

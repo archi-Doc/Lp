@@ -181,15 +181,16 @@ public class Terminal
         }
     }
 
-    internal unsafe void ProcessReceive(IPEndPoint endPoint, byte[] outerPacket, long currentTicks)
+    internal unsafe void ProcessReceive(IPEndPoint endPoint, ref byte[]? rentArray, long currentTicks)
     {
+        var packetArray = rentArray!;
         var position = 0;
-        var remaining = outerPacket.Length;
+        var remaining = packetArray.Length;
 
         while (remaining >= PacketService.HeaderSize)
         {
             PacketHeader header;
-            fixed (byte* pb = outerPacket)
+            fixed (byte* pb = packetArray)
             {
                 header = *(PacketHeader*)(pb + position);
             }
@@ -205,14 +206,14 @@ public class Terminal
             }
 
             position += PacketService.HeaderSize;
-            var data = new ReadOnlyMemory<byte>(outerPacket, position, dataSize);
-            this.ProcessReceiveCore(endPoint, ref header, data, currentTicks);
+            var data = new ReadOnlyMemory<byte>(packetArray, position, dataSize);
+            this.ProcessReceiveCore(ref rentArray, endPoint, ref header, data, currentTicks);
             position += dataSize;
             remaining -= PacketService.HeaderSize + dataSize;
         }
     }
 
-    internal void ProcessReceiveCore(IPEndPoint endPoint, ref PacketHeader header, ReadOnlyMemory<byte> data, long currentTicks)
+    internal void ProcessReceiveCore(ref byte[]? rentArray, IPEndPoint endPoint, ref PacketHeader header, ReadOnlyMemory<byte> data, long currentTicks)
     {
         if (this.inboundGenes.TryGetValue(header.Gene, out var gene))
         {// NetTerminalGene is found.
