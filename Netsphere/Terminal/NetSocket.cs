@@ -23,6 +23,17 @@ public class NetSocket
         public static void Process(object? parameter)
         {
             var core = (NetSocketRecvCore)parameter!;
+
+            IPEndPoint anyEP;
+            if (core.socket.udpClient?.Client.AddressFamily == AddressFamily.InterNetwork)
+            {
+                anyEP = new IPEndPoint(IPAddress.Any, IPEndPoint.MinPort);
+            }
+            else
+            {
+                anyEP = new IPEndPoint(IPAddress.IPv6Any, IPEndPoint.MinPort);
+            }
+
             while (true)
             {
                 if (core.IsTerminated)
@@ -38,12 +49,14 @@ public class NetSocket
 
                 try
                 {
-                    IPEndPoint remoteEP = default!;
-                    var bytes = udp.Receive(ref remoteEP);
-                    // var received = udp.Client.ReceiveFrom(buffer, 0, size, SocketFlags.None, ref remoteEP);
-                    if (bytes.Length <= NetControl.MaxPayload)
+                    // IPEndPoint remoteEP = default!;
+                    // var bytes = udp.Receive(ref remoteEP);
+                    var remoteEP = (EndPoint)anyEP;
+                    var packetArray = PacketPool.Rent();
+                    var received = udp.Client.ReceiveFrom(packetArray, 0, packetArray.Length, SocketFlags.None, ref remoteEP);
+                    if (received <= NetControl.MaxPayload)
                     {
-                        core.socket.terminal.ProcessReceive(remoteEP, bytes, Ticks.GetSystem());
+                        core.socket.terminal.ProcessReceive((IPEndPoint)remoteEP, packetArray, Ticks.GetSystem());
                     }
 
                     // var memory = new ReadOnlyMemory<byte>(bytes);

@@ -119,7 +119,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         return false;
     }
 
-    public bool Receive(PacketId id, Memory<byte> data)
+    public bool Receive(PacketId id, ReadOnlyMemory<byte> data)
     {// lock (this.NetTerminal.SyncObject)
         if (this.State == NetTerminalGeneState.WaitingToReceive)
         {// Receive data
@@ -182,7 +182,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
     /// <summary>
     ///  Gets the received data.
     /// </summary>
-    public Memory<byte> ReceivedData { get; private set; }
+    public ReadOnlyMemory<byte> ReceivedData { get; private set; }
 
     internal void Clear()
     {// // lock (this.NetTerminal.SyncObject)

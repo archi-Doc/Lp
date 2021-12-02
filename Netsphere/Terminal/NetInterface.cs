@@ -103,7 +103,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         return netInterface;
     }
 
-    internal static NetInterface<TSend, TReceive> CreateConnect(NetTerminal netTerminal, ulong gene, PacketId id, Memory<byte> data, ulong secondGene, byte[] send)
+    internal static NetInterface<TSend, TReceive> CreateConnect(NetTerminal netTerminal, ulong gene, PacketId id, ReadOnlyMemory<byte> data, ulong secondGene, byte[] send)
     {// Only for connection.
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
         var recvGene = new NetTerminalGene(gene, netInterface);
@@ -306,7 +306,7 @@ WaitForSendCompletionWait:
         return NetInterfaceResult.Success;
     }
 
-    protected NetInterfaceReceiveResult ReceiveCore(out Memory<byte> data, int millisecondsToWait)
+    protected NetInterfaceReceiveResult ReceiveCore(out ReadOnlyMemory<byte> data, int millisecondsToWait)
     {
         data = default;
         var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);
@@ -344,9 +344,9 @@ WaitForSendCompletionWait:
         return NetInterfaceReceiveResult.Closed;
     }
 
-    protected async Task<(NetInterfaceReceiveResult Result, Memory<byte> Received)> ReceiveAsyncCore(int millisecondsToWait)
+    protected async Task<(NetInterfaceReceiveResult Result, ReadOnlyMemory<byte> Received)> ReceiveAsyncCore(int millisecondsToWait)
     {
-        Memory<byte> data = default;
+        ReadOnlyMemory<byte> data = default;
         var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);
 
         while (this.Terminal.Core?.IsTerminated == false && this.NetTerminal.IsClosed == false)
@@ -382,7 +382,7 @@ WaitForSendCompletionWait:
 
     internal ISimpleLogger? TerminalLogger => this.Terminal.TerminalLogger;
 
-    protected bool ReceivedGeneToData(ref Memory<byte> data)
+    protected bool ReceivedGeneToData(ref ReadOnlyMemory<byte> data)
     {// lock (this.NetTerminal.SyncObject)
         if (this.RecvGenes == null)
         {// Empty
@@ -457,7 +457,7 @@ WaitForSendCompletionWait:
         }
     }
 
-    internal void ProcessReceive(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data, long currentTicks, NetTerminalGene gene)
+    internal void ProcessReceive(IPEndPoint endPoint, ref PacketHeader header, ReadOnlyMemory<byte> data, long currentTicks, NetTerminalGene gene)
     {
         lock (this.NetTerminal.SyncObject)
         {

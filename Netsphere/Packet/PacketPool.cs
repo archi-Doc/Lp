@@ -15,8 +15,12 @@ internal static class PacketPool
 
     static PacketPool()
     {
-        packetPool = ArrayPool<byte>.Create();
+        packetPool = new FixedArrayPool(MaxPacketSize);
     }
 
-    private static ArrayPool<byte> packetPool;
+    public static byte[] Rent() => packetPool.Rent();
+
+    public static void Return(byte[] array) => packetPool.Return(array);
+
+    private static FixedArrayPool packetPool;
 }

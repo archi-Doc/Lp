@@ -187,14 +187,14 @@ public class Terminal
             }
 
             position += PacketService.HeaderSize;
-            var data = new Memory<byte>(outerPacket, position, dataSize);
+            var data = new ReadOnlyMemory<byte>(outerPacket, position, dataSize);
             this.ProcessReceiveCore(endPoint, ref header, data, currentTicks);
             position += dataSize;
             remaining -= PacketService.HeaderSize + dataSize;
         }
     }
 
-    internal void ProcessReceiveCore(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data, long currentTicks)
+    internal void ProcessReceiveCore(IPEndPoint endPoint, ref PacketHeader header, ReadOnlyMemory<byte> data, long currentTicks)
     {
         if (this.inboundGenes.TryGetValue(header.Gene, out var gene))
         {// NetTerminalGene is found.
@@ -206,7 +206,7 @@ public class Terminal
         }
     }
 
-    internal void ProcessUnmanagedRecv(IPEndPoint endpoint, ref PacketHeader header, Memory<byte> data)
+    internal void ProcessUnmanagedRecv(IPEndPoint endpoint, ref PacketHeader header, ReadOnlyMemory<byte> data)
     {
         if (header.Id == PacketId.Punch)
         {
@@ -225,7 +225,7 @@ public class Terminal
         }
     }
 
-    internal void ProcessUnmanagedRecv_Punch(IPEndPoint endpoint, ref PacketHeader header, Memory<byte> data)
+    internal void ProcessUnmanagedRecv_Punch(IPEndPoint endpoint, ref PacketHeader header, ReadOnlyMemory<byte> data)
     {
         if (!TinyhandSerializer.TryDeserialize<PacketPunch>(data, out var punch))
         {
@@ -244,7 +244,7 @@ public class Terminal
         this.AddRawSend(endpoint, p);
     }
 
-    internal void ProcessUnmanagedRecv_Connect(IPEndPoint endpoint, ref PacketHeader header, Memory<byte> data)
+    internal void ProcessUnmanagedRecv_Connect(IPEndPoint endpoint, ref PacketHeader header, ReadOnlyMemory<byte> data)
     {
         if (!TinyhandSerializer.TryDeserialize<PacketEncrypt>(data, out var packet))
         {
@@ -274,7 +274,7 @@ public class Terminal
         }
     }
 
-    internal void ProcessUnmanagedRecv_Ping(IPEndPoint endpoint, ref PacketHeader header, Memory<byte> data)
+    internal void ProcessUnmanagedRecv_Ping(IPEndPoint endpoint, ref PacketHeader header, ReadOnlyMemory<byte> data)
     {
         if (!TinyhandSerializer.TryDeserialize<PacketPing>(data, out var packet))
         {
