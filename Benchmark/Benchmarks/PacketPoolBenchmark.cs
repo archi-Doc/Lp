@@ -18,32 +18,32 @@ public class PacketPoolBenchmark
 {
     public const int N = 100;
 
-    [Params(2048)]
+    [Params(512, 1024, 2048)]
     public int Length { get; set; }
 
     public ConcurrentQueue<byte[]> Queue { get; set; } = new();
 
-    public FixedArrayPool FixedArrayPool { get; set; }
+    public FixedArrayPool FixedArrayPool { get; set; } = default!;
 
-    public byte[][] Arrays { get; set; }
+    public ArrayPool<byte> ArrayPool { get; set; } = default!;
+
+    public byte[][] Arrays { get; set; } = default!;
 
     public PacketPoolBenchmark()
     {
-        this.FixedArrayPool = new(this.Length, 200);
-        this.FixedArrayPool.Rent();
-        var bb = this.FixedArrayPool.Rent();
-        this.FixedArrayPool.Return(bb);
-        this.FixedArrayPool.Rent();
-        this.Arrays = new byte[N][];
-        for (var n = 0; n < N; n++)
-        {
-            this.Queue.Enqueue(new byte[this.Length]);
-        }
     }
 
     [GlobalSetup]
     public void Setup()
     {
+        this.FixedArrayPool = new(this.Length, N);
+        this.Arrays = new byte[N][];
+        for (var n = 0; n < N; n++)
+        {
+            this.Queue.Enqueue(new byte[this.Length]);
+        }
+
+        this.ArrayPool = ArrayPool<byte>.Create(this.Length, N);
     }
 
     [GlobalCleanup]
@@ -100,6 +100,22 @@ public class PacketPoolBenchmark
         for (var n = 0; n < N; n++)
         {
             ArrayPool<byte>.Shared.Return(this.Arrays[n]);
+        }
+
+        return this.Arrays;
+    }
+
+    [Benchmark]
+    public byte[][] ArrayPool2N()
+    {
+        for (var n = 0; n < N; n++)
+        {
+            this.Arrays[n] = this.ArrayPool.Rent(this.Length);
+        }
+
+        for (var n = 0; n < N; n++)
+        {
+            this.ArrayPool.Return(this.Arrays[n]);
         }
 
         return this.Arrays;

@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 namespace LP;
 
 /// <summary>
-/// A fast and thread-safe pool of fixed-length byte arrays (uses <see cref="ConcurrentQueue{T}"/>).<br/>
+/// A fast and thread-safe pool of fixed-length (1 kbytes or more) byte arrays (uses <see cref="ConcurrentQueue{T}"/>).<br/>
 /// </summary>
 public class FixedArrayPool
 {
@@ -15,11 +15,11 @@ public class FixedArrayPool
     /// Initializes a new instance of the <see cref="FixedArrayPool"/> class.<br/>
     /// </summary>
     /// <param name="arrayLength">The length of fixed-length byte array.</param>
-    /// <param name="maxArrays">The maximum number of arrays in the pool (0 for unlimited).</param>
-    public FixedArrayPool(int arrayLength, int maxArrays = 0)
+    /// <param name="maxPool">The maximum number of pooled arrays (0 for unlimited).</param>
+    public FixedArrayPool(int arrayLength, int maxPool = 0)
     {
         this.ArrayLength = arrayLength;
-        this.MaxArrays = maxArrays >= 0 ? maxArrays : 0;
+        this.MaxPool = maxPool >= 0 ? maxPool : 0;
     }
 
     /// <summary>
@@ -39,7 +39,8 @@ public class FixedArrayPool
     }
 
     /// <summary>
-    /// Returns a byte array to the pool.
+    /// Returns a byte array to the pool.<br/>
+    /// Failure to return a rented array is not a fatal error (eventually be garbage-collected).
     /// </summary>
     /// <param name="array">A buffer to return to the pool.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -47,7 +48,7 @@ public class FixedArrayPool
     {
         if (array.Length == this.ArrayLength)
         {
-            if (this.MaxArrays == 0 || this.queue.Count <= this.MaxArrays)
+            if (this.MaxPool == 0 || this.queue.Count <= this.MaxPool)
             {
                 this.queue.Enqueue(array);
             }
@@ -56,7 +57,7 @@ public class FixedArrayPool
 
     public int ArrayLength { get; }
 
-    public int MaxArrays { get; }
+    public int MaxPool { get; }
 
     private ConcurrentQueue<byte[]> queue = new();
 }
