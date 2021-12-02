@@ -51,12 +51,9 @@ public class FixedArrayPool
             throw new InvalidDataException("The length of the byte array does not match the specified length.");
         }
 
-        if (array.Length == this.ArrayLength)
+        if (this.MaxPool == 0 || this.queue.Count <= this.MaxPool)
         {
-            if (this.MaxPool == 0 || this.queue.Count <= this.MaxPool)
-            {
-                this.queue.Enqueue(array);
-            }
+            this.queue.Enqueue(array);
         }
     }
 

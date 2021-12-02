@@ -21,6 +21,7 @@ internal class PacketService
         RelayPacketSize = Tinyhand.TinyhandSerializer.Serialize(relay).Length;
         SafeMaxPacketSize = NetControl.MaxPayload - HeaderSize - DataHeaderSize - RelayPacketSize;
         SafeMaxPacketSize -= 8; // Safety margin
+        DataPacketSize = 1369;
     }
 
     public PacketService()
@@ -34,6 +35,8 @@ internal class PacketService
     public static int RelayPacketSize { get; }
 
     public static int SafeMaxPacketSize { get; }
+
+    public static int DataPacketSize { get; }
 
     // public static PacketInfo[] PacketInfo;
 

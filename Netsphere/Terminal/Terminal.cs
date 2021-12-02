@@ -162,11 +162,7 @@ public class Terminal
         while (this.rawSends.TryDequeue(out var rawSend))
         {
             udp.Send(rawSend.PacketMemory.Span, rawSend.Endpoint);
-            if (rawSend.RentBuffer != null)
-            {
-                PacketPool.Return(rawSend.RentBuffer);
-                rawSend.Clear();
-            }
+            rawSend.Clear();
         }
 
         NetTerminal[] array;
@@ -217,7 +213,7 @@ public class Terminal
     {
         if (this.inboundGenes.TryGetValue(header.Gene, out var gene))
         {// NetTerminalGene is found.
-            gene.NetInterface.ProcessReceive(endPoint, ref header, data, currentTicks, gene);
+            gene.NetInterface.ProcessReceive(rentArray, endPoint, ref header, data, currentTicks, gene);
         }
         else
         {
@@ -280,7 +276,7 @@ public class Terminal
             PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id, out var packetMemory, out var rentBuffer);
 
             var terminal = this.Create(packet.NodeInformation, firstGene);
-            var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(terminal, firstGene, PacketId.Encrypt, data, secondGene, packetMemory);
+            var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(terminal, firstGene, PacketId.Encrypt, data, secondGene, packetMemory, rentBuffer);
 
             terminal.GenePool.GetGene();
             terminal.GenePool.GetGene();

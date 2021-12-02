@@ -59,24 +59,6 @@ public class NetSocket
                     {
                         core.socket.terminal.ProcessReceive((IPEndPoint)remoteEP, ref rentArray, Ticks.GetSystem());
                     }
-
-                    // var memory = new ReadOnlyMemory<byte>(bytes);
-                    // while (!memory.IsEmpty)
-                    {
-                        /*var piece = TinyhandSerializer.Deserialize<IPiece>(memory, null, out var bytesRead);
-                        core.NetSpherer.Receive(remoteEP, piece);
-                        memory = memory.Slice(bytesRead);*/
-                    }
-
-                    /*IPEndPoint remoteEP = default!;
-                    var bytes = this.udpClient.Receive(ref remoteEP);
-                    var text = $"Received: {bytes.Length}";
-                    if (bytes.Length >= sizeof(int))
-                    {
-                        text += $", First data: {BitConverter.ToInt32(bytes)}";
-                    }
-
-                    Log.Debug(text);*/
                 }
                 catch
                 {

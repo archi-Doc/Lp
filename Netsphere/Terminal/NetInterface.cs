@@ -103,7 +103,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         return netInterface;
     }
 
-    internal static NetInterface<TSend, TReceive> CreateConnect(NetTerminal netTerminal, ulong gene, PacketId id, ReadOnlyMemory<byte> data, ulong secondGene, byte[] send)
+    internal static NetInterface<TSend, TReceive> CreateConnect(NetTerminal netTerminal, ulong gene, PacketId id, ReadOnlyMemory<byte> data, ulong secondGene, ReadOnlyMemory<byte> packetMemory, byte[]? rentBuffer)
     {// Only for connection.
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
         var recvGene = new NetTerminalGene(gene, netInterface);
@@ -113,7 +113,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
 
         var sendGene = new NetTerminalGene(secondGene, netInterface);
         netInterface.SendGenes = new NetTerminalGene[] { sendGene, };
-        sendGene.SetSend(send);
+        sendGene.SetSend(packetMemory, rentBuffer);
 
         netInterface.NetTerminal.TerminalLogger?.Information($"ConnectTerminal: {gene.To4Hex()} -> {secondGene.To4Hex()}");
 
@@ -457,7 +457,7 @@ WaitForSendCompletionWait:
         }
     }
 
-    internal void ProcessReceive(IPEndPoint endPoint, ref PacketHeader header, ReadOnlyMemory<byte> data, long currentTicks, NetTerminalGene gene)
+    internal void ProcessReceive(ref byted[]? rentArray, IPEndPoint endPoint, ref PacketHeader header, ReadOnlyMemory<byte> data, long currentTicks, NetTerminalGene gene)
     {
         lock (this.NetTerminal.SyncObject)
         {
