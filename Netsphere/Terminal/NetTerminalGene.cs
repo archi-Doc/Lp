@@ -84,6 +84,12 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         {
             this.State = NetTerminalGeneState.WaitingToReceive;
             this.PacketOrData = default;
+            if (this.rentBuffer != null)
+            {
+                PacketPool.Return(this.rentBuffer);
+                this.rentBuffer = null;
+            }
+
             this.NetInterface.Terminal.AddInbound(this);
             return true;
         }
