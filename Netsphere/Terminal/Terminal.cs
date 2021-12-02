@@ -17,15 +17,28 @@ public class Terminal
 
     internal struct RawSend
     {
-        public RawSend(IPEndPoint endPoint, byte[] packet)
+        public RawSend(IPEndPoint endPoint, ReadOnlyMemory<byte> packetMemory, byte[]? rentBuffer)
         {
             this.Endpoint = endPoint;
-            this.Packet = packet;
+            this.PacketMemory = packetMemory;
+            this.RentBuffer = rentBuffer;
+        }
+
+        public void Clear()
+        {
+            this.PacketMemory = default;
+            if (this.RentBuffer != null)
+            {
+                PacketPool.Return(this.RentBuffer);
+                this.RentBuffer = null;
+            }
         }
 
         public IPEndPoint Endpoint { get; }
 
-        public byte[] Packet { get; }
+        public ReadOnlyMemory<byte> PacketMemory { get; private set; }
+
+        public byte[]? RentBuffer { get; private set; }
     }
 
     public void Dump(ISimpleLogger logger)
@@ -148,7 +161,12 @@ public class Terminal
     {
         while (this.rawSends.TryDequeue(out var rawSend))
         {
-            udp.Send(rawSend.Packet, rawSend.Endpoint);
+            udp.Send(rawSend.PacketMemory.Span, rawSend.Endpoint);
+            if (rawSend.RentBuffer != null)
+            {
+                PacketPool.Return(rawSend.RentBuffer);
+                rawSend.Clear();
+            }
         }
 
         NetTerminal[] array;
@@ -240,8 +258,8 @@ public class Terminal
         var secondGene = GenePool.GetSecond(header.Gene);
         this.TerminalLogger?.Information($"Punch Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
-        var p = PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id);
-        this.AddRawSend(endpoint, p);
+        PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id, out var packetMemory, out var rentBuffer);
+        this.AddRawSend(endpoint, packetMemory, rentBuffer);
     }
 
     internal void ProcessUnmanagedRecv_Connect(IPEndPoint endpoint, ref PacketHeader header, ReadOnlyMemory<byte> data)
@@ -258,10 +276,10 @@ public class Terminal
             var response = new PacketEncryptResponse();
             var firstGene = header.Gene;
             var secondGene = GenePool.GetSecond(header.Gene);
-            var responsePacket = PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id);
+            PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id, out var packetMemory, out var rentBuffer);
 
             var terminal = this.Create(packet.NodeInformation, firstGene);
-            var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(terminal, firstGene, PacketId.Encrypt, data, secondGene, responsePacket);
+            var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(terminal, firstGene, PacketId.Encrypt, data, secondGene, packetMemory);
 
             terminal.GenePool.GetGene();
             terminal.GenePool.GetGene();
@@ -287,13 +305,13 @@ public class Terminal
         var secondGene = GenePool.GetSecond(header.Gene);
         this.TerminalLogger?.Information($"Ping Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
-        var p = PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id);
-        this.AddRawSend(endpoint, p);
+        PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id, out var packetMemory, out var rentBuffer);
+        this.AddRawSend(endpoint, packetMemory, rentBuffer);
     }
 
-    internal void AddRawSend(IPEndPoint endpoint, byte[] packet)
+    internal void AddRawSend(IPEndPoint endpoint, ReadOnlyMemory<byte> packetMemory, byte[]? rentBuffer)
     {
-        this.rawSends.Enqueue(new RawSend(endpoint, packet));
+        this.rawSends.Enqueue(new RawSend(endpoint, packetMemory, rentBuffer));
     }
 
     internal void AddInbound(NetTerminalGene[] genes)

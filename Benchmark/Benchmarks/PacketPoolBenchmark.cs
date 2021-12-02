@@ -29,6 +29,8 @@ public class PacketPoolBenchmark
 
     public byte[][] Arrays { get; set; } = default!;
 
+    public IMemoryOwner<byte>[] MemoryOwnerArray { get; set; } = default!;
+
     public PacketPoolBenchmark()
     {
     }
@@ -38,6 +40,7 @@ public class PacketPoolBenchmark
     {
         this.FixedArrayPool = new(this.Length, N);
         this.Arrays = new byte[N][];
+        this.MemoryOwnerArray = new IMemoryOwner<byte>[N];
         for (var n = 0; n < N; n++)
         {
             this.Queue.Enqueue(new byte[this.Length]);
@@ -119,6 +122,22 @@ public class PacketPoolBenchmark
         }
 
         return this.Arrays;
+    }
+
+    [Benchmark]
+    public IMemoryOwner<byte>[] MemoryPoolN()
+    {
+        for (var n = 0; n < N; n++)
+        {// Surprisingly, MemoryPool is virtually the same as ArrayPool.
+            this.MemoryOwnerArray[n] = MemoryPool<byte>.Shared.Rent(this.Length);
+        }
+
+        for (var n = 0; n < N; n++)
+        {
+            this.MemoryOwnerArray[n].Dispose();
+        }
+
+        return this.MemoryOwnerArray;
     }
 
     [Benchmark]

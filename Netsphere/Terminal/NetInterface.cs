@@ -61,7 +61,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         netTerminal.CreateHeader(out var header, gene);
         if (data.Length < PacketService.SafeMaxPacketSize)
         {// Single packet.
-            var packet = PacketService.CreatePacket(ref header, packetId, id, data);
+            PacketService.CreatePacket(ref header, packetId, id, data, out var packetMemory, out var rentBuffer);
         }
         else
         {// Split into multiple packets.
@@ -76,12 +76,12 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
 
         var gene = netTerminal.GenePool.GetGene(); // Send gene
         netTerminal.CreateHeader(out var header, gene);
-        var packet = PacketService.CreatePacket(ref header, value, id);
-        if (packet.Length <= PacketService.SafeMaxPacketSize)
+        PacketService.CreatePacket(ref header, value, id, out var packetMemory, out var rentBuffer);
+        if (packetMemory.Length <= PacketService.SafeMaxPacketSize)
         {// Single packet.
             var ntg = new NetTerminalGene(gene, netInterface);
             netInterface.SendGenes = new NetTerminalGene[] { ntg, };
-            ntg.SetSend(packet);
+            ntg.SetSend(packetMemory, rentBuffer);
 
             netTerminal.TerminalLogger?.Information($"RegisterSend   : {gene.To4Hex()}");
         }
@@ -395,7 +395,7 @@ WaitForSendCompletionWait:
                 return false;
             }
 
-            data = this.RecvGenes[0].ReceivedData;
+            data = this.RecvGenes[0].PacketOrData;
             return true;
         }
 
@@ -409,7 +409,7 @@ WaitForSendCompletionWait:
             }
             else
             {
-                total += this.RecvGenes[i].ReceivedData.Length;
+                total += this.RecvGenes[i].PacketOrData.Length;
             }
         }
 
@@ -417,8 +417,8 @@ WaitForSendCompletionWait:
         var mem = buffer.AsMemory();
         for (var i = 0; i < this.RecvGenes.Length; i++)
         {
-            this.RecvGenes[i].ReceivedData.CopyTo(mem);
-            mem = mem.Slice(this.RecvGenes[i].ReceivedData.Length);
+            this.RecvGenes[i].PacketOrData.CopyTo(mem);
+            mem = mem.Slice(this.RecvGenes[i].PacketOrData.Length);
         }
 
         data = buffer;

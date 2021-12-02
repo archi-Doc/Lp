@@ -59,12 +59,18 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
 
     public bool IsReceived => this.State == NetTerminalGeneState.SendingAck || this.State == NetTerminalGeneState.Complete;
 
-    public bool SetSend(byte[] packet)
+    public bool SetSend(ReadOnlyMemory<byte> packet, byte[]? rentBuffer)
     {
         if (this.IsAvailable)
         {
             this.State = NetTerminalGeneState.WaitingToSend;
-            this.packetToSend = packet;
+            this.PacketOrData = packet;
+            if (this.rentBuffer != null)
+            {
+                PacketPool.Return(this.rentBuffer);
+            }
+
+            this.rentBuffer = rentBuffer;
             this.NetInterface.Terminal.AddInbound(this);
             return true;
         }
@@ -77,7 +83,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         if (this.IsAvailable)
         {
             this.State = NetTerminalGeneState.WaitingToReceive;
-            this.ReceivedData = default;
+            this.PacketOrData = default;
             this.NetInterface.Terminal.AddInbound(this);
             return true;
         }
@@ -90,19 +96,12 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         if (this.State == NetTerminalGeneState.WaitingToSend ||
             this.State == NetTerminalGeneState.WaitingForAck)
         {
-            if (this.packetToSend == null)
-            {// Error
-                this.State = NetTerminalGeneState.Initial;
-            }
-            else
-            {
-                udp.Send(this.packetToSend, this.NetInterface.NetTerminal.Endpoint);
-                this.State = NetTerminalGeneState.WaitingForAck;
+            udp.Send(this.PacketOrData.Span, this.NetInterface.NetTerminal.Endpoint);
+            this.State = NetTerminalGeneState.WaitingForAck;
 
-                // var packetId = (PacketId)packetToSend[1];
-                // Logger.Default.Debug($"Send: {packetId}, {this.NetTerminal.Endpoint}");
-                return true;
-            }
+            // var packetId = (PacketId)packetToSend[1];
+            // Logger.Default.Debug($"Send: {packetId}, {this.NetTerminal.Endpoint}");
+            return true;
         }
 
         return false;
@@ -124,7 +123,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         if (this.State == NetTerminalGeneState.WaitingToReceive)
         {// Receive data
             this.ReceivedId = id;
-            this.ReceivedData = data;
+            this.PacketOrData = data;
             SendAck();
 
             // Logger.Default.Debug($"Receive: {this.PacketId}, {this.NetTerminal.Endpoint}");
@@ -167,8 +166,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
 
     public override string ToString()
     {
-        var sendData = this.packetToSend == null ? 0 : this.packetToSend.Length;
-        return $"{this.Gene.To4Hex()}, {this.State}, SendData: {sendData}, RecvData: {this.ReceivedData.Length}";
+        return $"{this.Gene.To4Hex()}, {this.State}, Data: {this.PacketOrData.Length}";
     }
 
     public NetInterface NetInterface { get; }
@@ -180,9 +178,9 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
     public PacketId ReceivedId { get; private set; }
 
     /// <summary>
-    ///  Gets the received data.
+    ///  Gets the packet (header + data) to send or the received data.
     /// </summary>
-    public ReadOnlyMemory<byte> ReceivedData { get; private set; }
+    public ReadOnlyMemory<byte> PacketOrData { get; private set; }
 
     internal void Clear()
     {// // lock (this.NetTerminal.SyncObject)
@@ -190,16 +188,17 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         this.State = NetTerminalGeneState.Initial;
         this.Gene = 0;
         this.ReceivedId = PacketId.Invalid;
-        this.ReceivedData = default;
-        this.packetToSend = null;
+        this.PacketOrData = default;
+        if (this.rentBuffer != null)
+        {
+            PacketPool.Return(this.rentBuffer);
+            this.rentBuffer = null;
+        }
     }
-
-    /// <summary>
-    ///  The byte array (header + data) to send.
-    /// </summary>
-    private byte[]? packetToSend;
 
 #pragma warning disable SA1202 // Elements should be ordered by access
     internal long SentTicks;
 #pragma warning restore SA1202 // Elements should be ordered by access
+
+    private byte[]? rentBuffer;
 }
