@@ -194,7 +194,7 @@ public class Terminal
             }
 
             position += PacketService.HeaderSize;
-            var memoryOwner = new ByteArrayPool.MemoryOwner(arrayOwner, position, dataSize);
+            var memoryOwner = arrayOwner.ToMemoryOwner(position, dataSize);
             this.ProcessReceiveCore(memoryOwner, endPoint, ref header, currentTicks);
             position += dataSize;
             remaining -= PacketService.HeaderSize + dataSize;

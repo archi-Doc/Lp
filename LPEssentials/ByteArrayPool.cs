@@ -77,6 +77,10 @@ public class ByteArrayPool
             return null;
         }
 
+        public MemoryOwner ToMemoryOwner() => new MemoryOwner(this);
+
+        public MemoryOwner ToMemoryOwner(int start, int length) => new MemoryOwner(this, start, length);
+
         internal void SetCount1() => Volatile.Write(ref this.count, 1);
 
         /// <summary>
@@ -99,19 +103,19 @@ public class ByteArrayPool
 
     public readonly struct MemoryOwner
     {
-        public MemoryOwner(Owner owner)
+        internal MemoryOwner(Owner owner)
         {
             this.Owner = owner;
             this.Memory = owner.ByteArray.AsMemory();
         }
 
-        public MemoryOwner(Owner owner, int start, int length)
+        internal MemoryOwner(Owner owner, int start, int length)
         {
             this.Owner = owner;
             this.Memory = owner.ByteArray.AsMemory(start, length);
         }
 
-        public MemoryOwner(Owner owner, Memory<byte> memory)
+        internal MemoryOwner(Owner owner, Memory<byte> memory)
         {
             this.Owner = owner;
             this.Memory = memory;

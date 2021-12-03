@@ -82,7 +82,8 @@ internal class PacketService
 
         span = span.Slice(PacketService.DataHeaderSize);
         dataSpan.CopyTo(span);
-        owner = new ByteArrayPool.MemoryOwner(arrayOwner, 0, size);
+
+        owner = arrayOwner.ToMemoryOwner(0, size);
     }
 
     internal static unsafe void CreatePacket<T>(ref PacketHeader header, T value, PacketId rawPacketId, out ByteArrayPool.MemoryOwner owner)
@@ -108,7 +109,7 @@ internal class PacketService
             arrayOwner = new(array);
         }
 
-        owner = new ByteArrayPool.MemoryOwner(arrayOwner, 0, arrayLength);
+        owner = arrayOwner.ToMemoryOwner(0, arrayLength);
         writer.Dispose();
     }
 
@@ -141,7 +142,7 @@ internal class PacketService
             arrayOwner = new(array);
         }
 
-        owner = new ByteArrayPool.MemoryOwner(arrayOwner, 0, arrayLength);
+        owner = arrayOwner.ToMemoryOwner(0, arrayLength);
         writer.Dispose();
     }
 }

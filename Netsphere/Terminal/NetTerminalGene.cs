@@ -67,9 +67,6 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
             this.Owner.Owner?.Return();
             this.Owner = owner.IncrementAndShare();
 
-            this.PacketOrData = packet;
-            ByteArrayPool.ReturnAndSetNull(ref this.arrayOwner);
-            this.arrayOwner = owner;
             this.NetInterface.Terminal.AddInbound(this);
             return true;
         }
