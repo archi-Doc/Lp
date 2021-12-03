@@ -104,6 +104,31 @@ public class ByteArrayPool
             this.Memory = owner.ByteArray.AsMemory(start, length);
         }
 
+        public MemoryOwner(Owner? owner, Memory<byte> memory)
+        {
+            this.Owner = owner;
+            this.Memory = memory;
+        }
+
+        /// <summary>
+        ///  Increment the reference count.
+        /// </summary>
+        /// <returns><see cref="Owner"/> instance (<see langword="this"/>).</returns>
+        public MemoryOwner IncrementAndShare()
+        {
+            return new(this.Owner?.IncrementAndShare(), this.Memory);
+        }
+
+        public MemoryOwner IncrementAndShare(int start, int length)
+        {
+            if (this.Owner == null)
+            {
+                throw new InvalidOperationException();
+            }
+
+            return new(this.Owner.IncrementAndShare(), start, length);
+        }
+
         public MemoryOwner Return()
         {
             this.Owner?.Return();
@@ -164,7 +189,7 @@ public class ByteArrayPool
         return new MemoryOwner(owner, start, length);
     }
 
-    /// <summary>
+    /*/// <summary>
     /// Returns a byte array to the pool.<br/>
     /// Failure to return a rented array is not a fatal error (eventually be garbage-collected).
     /// </summary>
@@ -179,7 +204,7 @@ public class ByteArrayPool
                 this.queue.Enqueue(owner);
             }
         }
-    }
+    }*/
 
     /// <summary>
     /// Gets the length of fixed-length byte array.
