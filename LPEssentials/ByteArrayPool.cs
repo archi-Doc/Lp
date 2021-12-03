@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 namespace LP;
 
 /// <summary>
-/// A fast and thread-safe pool of fixed-length (1 kbytes or more) byte arrays (uses <see cref="ConcurrentQueue{T}"/>).<br/>
+/// A thread-safe pool of fixed-length (1 kbytes or more) byte arrays (uses <see cref="ConcurrentQueue{T}"/>).<br/>
 /// </summary>
 public class ByteArrayPool
 {
@@ -47,7 +47,7 @@ public class ByteArrayPool
         public MemoryOwner IncrementAndShare(int start, int length)
         {
             Interlocked.Increment(ref this.count);
-            return new MemoryOwner(this, new(this.ByteArray, start, length));
+            return new MemoryOwner(this, start, length);
         }
 
         /// <summary>
@@ -90,16 +90,23 @@ public class ByteArrayPool
 
     public struct MemoryOwner
     {
-        public MemoryOwner(Owner owner, Memory<byte> memory)
+        public MemoryOwner(Owner owner)
         {
             this.Owner = owner;
-            this.Memory = memory;
+            this.Memory = owner.ByteArray.AsMemory();
+        }
+
+        public MemoryOwner(Owner owner, int start, int length)
+        {
+            this.Owner = owner;
+            this.Memory = owner.ByteArray.AsMemory(start, length);
         }
 
         public void Return()
         {
             this.Owner?.Return();
             this.Owner = null;
+            this.Memory = default;
         }
 
         public Owner? Owner;
@@ -153,7 +160,7 @@ public class ByteArrayPool
             owner.SetCount1();
         }
 
-        return new MemoryOwner(owner, new(owner.ByteArray, start, length));
+        return new MemoryOwner(owner, start, length);
     }
 
     /// <summary>

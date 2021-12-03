@@ -59,7 +59,7 @@ public class NetSocket
                     {
                         core.socket.terminal.ProcessReceive((IPEndPoint)remoteEP, arrayOwner, received, Ticks.GetSystem());
                         if (arrayOwner.Count > 1)
-                        {
+                        {// Byte array is used by multiple owners. Return and rent a new one next time.
                             ByteArrayPool.ReturnAndSetNull(ref arrayOwner);
                         }
                     }

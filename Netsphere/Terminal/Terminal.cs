@@ -198,6 +198,7 @@ public class Terminal
             }
 
             position += PacketService.HeaderSize;
+            var memoryOwner = new ByteArrayPool.MemoryOwner(arrayOwner, position, dataSize);
             var data = new ReadOnlyMemory<byte>(packetArray, position, dataSize);
             this.ProcessReceiveCore(arrayOwner, endPoint, ref header, data, currentTicks);
             position += dataSize;
