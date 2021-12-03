@@ -11,14 +11,14 @@ namespace LP;
 /// </summary>
 public class ByteArrayPool
 {
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    /*[MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ReturnAndSetNull(ref Owner? owner)
     {
         if (owner != null)
         {
             owner = owner.Return();
         }
-    }
+    }*/
 
     /// <summary>
     /// An owner class of a byte array (one owner for each byte array).<br/>
