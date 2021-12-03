@@ -17,24 +17,20 @@ public class Terminal
 
     internal struct RawSend
     {
-        public RawSend(IPEndPoint endPoint, ReadOnlyMemory<byte> packetMemory, ByteArrayPool.Owner? arrayOwner)
+        public RawSend(IPEndPoint endPoint, ByteArrayPool.MemoryOwner owner)
         {
             this.Endpoint = endPoint;
-            this.PacketMemory = packetMemory;
-            this.arrayOwner = arrayOwner;
+            this.SendOwner = owner;
         }
 
         public void Clear()
         {
-            this.PacketMemory = default;
-            ByteArrayPool.ReturnAndSetNull(ref this.arrayOwner);
+            this.SendOwner = this.SendOwner.Return();
         }
 
         public IPEndPoint Endpoint { get; }
 
-        public ReadOnlyMemory<byte> PacketMemory { get; private set; }
-
-        private ByteArrayPool.Owner? arrayOwner;
+        public ByteArrayPool.MemoryOwner SendOwner { get; private set; }
     }
 
     public void Dump(ISimpleLogger logger)
@@ -157,7 +153,7 @@ public class Terminal
     {
         while (this.rawSends.TryDequeue(out var rawSend))
         {
-            udp.Send(rawSend.PacketMemory.Span, rawSend.Endpoint);
+            udp.Send(rawSend.SendOwner.Memory.Span, rawSend.Endpoint);
             rawSend.Clear();
         }
 
@@ -251,13 +247,13 @@ public class Terminal
         var secondGene = GenePool.GetSecond(header.Gene);
         this.TerminalLogger?.Information($"Punch Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
-        PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id, out var packetMemory, out var arrayOwner);
-        this.AddRawSend(endpoint, packetMemory, arrayOwner);
+        PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id, out var sendOwner);
+        this.AddRawSend(endpoint, sendOwner);
     }
 
     internal void ProcessUnmanagedRecv_Connect(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
     {
-        if (!TinyhandSerializer.TryDeserialize<PacketEncrypt>(data, out var packet))
+        if (!TinyhandSerializer.TryDeserialize<PacketEncrypt>(owner.Memory, out var packet))
         {
             return;
         }
@@ -269,10 +265,10 @@ public class Terminal
             var response = new PacketEncryptResponse();
             var firstGene = header.Gene;
             var secondGene = GenePool.GetSecond(header.Gene);
-            PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id, out var packetMemory, out var sendOwner);
+            PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id, out var sendOwner);
 
             var terminal = this.Create(packet.NodeInformation, firstGene);
-            var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(terminal, firstGene, data, receiveOwner, secondGene, packetMemory, sendOwner);
+            var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(terminal, firstGene, owner, secondGene, sendOwner);
 
             terminal.GenePool.GetGene();
             terminal.GenePool.GetGene();
@@ -302,9 +298,9 @@ public class Terminal
         this.AddRawSend(endpoint, packetOwner);
     }
 
-    internal void AddRawSend(IPEndPoint endpoint, ReadOnlyMemory<byte> packetMemory, ByteArrayPool.Owner? arrayOwner)
+    internal void AddRawSend(IPEndPoint endpoint, ByteArrayPool.MemoryOwner owner)
     {
-        this.rawSends.Enqueue(new RawSend(endpoint, packetMemory, arrayOwner));
+        this.rawSends.Enqueue(new RawSend(endpoint, owner));
     }
 
     internal void AddInbound(NetTerminalGene[] genes)

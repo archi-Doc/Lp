@@ -61,7 +61,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         netTerminal.CreateHeader(out var header, gene);
         if (data.Length < PacketService.SafeMaxPacketSize)
         {// Single packet.
-            PacketService.CreatePacket(ref header, packetId, id, data, out var packetMemory, out var rentBuffer);
+            PacketService.CreatePacket(ref header, packetId, id, data, out var sendOwner);
         }
         else
         {// Split into multiple packets.
@@ -76,12 +76,12 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
 
         var gene = netTerminal.GenePool.GetGene(); // Send gene
         netTerminal.CreateHeader(out var header, gene);
-        PacketService.CreatePacket(ref header, value, id, out var packetMemory, out var rentBuffer);
-        if (packetMemory.Length <= PacketService.SafeMaxPacketSize)
+        PacketService.CreatePacket(ref header, value, id, out var sendOwner);
+        if (sendOwner.Memory.Length <= PacketService.SafeMaxPacketSize)
         {// Single packet.
             var ntg = new NetTerminalGene(gene, netInterface);
             netInterface.SendGenes = new NetTerminalGene[] { ntg, };
-            ntg.SetSend(packetMemory, rentBuffer);
+            ntg.SetSend(sendOwner);
 
             netTerminal.TerminalLogger?.Information($"RegisterSend   : {gene.To4Hex()}");
         }
@@ -103,17 +103,17 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         return netInterface;
     }
 
-    internal static NetInterface<TSend, TReceive> CreateConnect(NetTerminal netTerminal, ulong gene, ReadOnlyMemory<byte> data, ByteArrayPool.Owner receiveOwner, ulong secondGene, ReadOnlyMemory<byte> packetMemory, ByteArrayPool.Owner? sendOwner)
+    internal static NetInterface<TSend, TReceive> CreateConnect(NetTerminal netTerminal, ulong gene, ByteArrayPool.MemoryOwner receiveOwner, ulong secondGene, ByteArrayPool.MemoryOwner sendOwner)
     {// Only for connection.
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
         var recvGene = new NetTerminalGene(gene, netInterface);
         netInterface.RecvGenes = new NetTerminalGene[] { recvGene, };
         recvGene.SetReceive();
-        recvGene.Receive(PacketId.Encrypt, data, receiveOwner);
+        recvGene.Receive(PacketId.Encrypt, receiveOwner);
 
         var sendGene = new NetTerminalGene(secondGene, netInterface);
         netInterface.SendGenes = new NetTerminalGene[] { sendGene, };
-        sendGene.SetSend(packetMemory, sendOwner);
+        sendGene.SetSend(sendOwner);
 
         netInterface.NetTerminal.TerminalLogger?.Information($"ConnectTerminal: {gene.To4Hex()} -> {secondGene.To4Hex()}");
 
@@ -395,7 +395,7 @@ WaitForSendCompletionWait:
                 return false;
             }
 
-            data = this.RecvGenes[0].PacketOrData;
+            data = this.RecvGenes[0].Owner.Memory;
             return true;
         }
 
@@ -409,7 +409,7 @@ WaitForSendCompletionWait:
             }
             else
             {
-                total += this.RecvGenes[i].PacketOrData.Length;
+                total += this.RecvGenes[i].Owner.Memory.Length;
             }
         }
 
@@ -417,8 +417,8 @@ WaitForSendCompletionWait:
         var mem = buffer.AsMemory();
         for (var i = 0; i < this.RecvGenes.Length; i++)
         {
-            this.RecvGenes[i].PacketOrData.CopyTo(mem);
-            mem = mem.Slice(this.RecvGenes[i].PacketOrData.Length);
+            this.RecvGenes[i].Owner.Memory.CopyTo(mem);
+            mem = mem.Slice(this.RecvGenes[i].Owner.Memory.Length);
         }
 
         data = buffer;

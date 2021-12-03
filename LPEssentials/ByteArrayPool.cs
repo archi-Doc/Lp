@@ -26,6 +26,13 @@ public class ByteArrayPool
     /// </summary>
     public class Owner
     {
+        public Owner(byte[] byteArray)
+        {
+            this.Pool = null;
+            this.ByteArray = byteArray;
+            this.SetCount1();
+        }
+
         internal Owner(ByteArrayPool pool)
         {
             this.Pool = pool;
@@ -58,7 +65,7 @@ public class ByteArrayPool
         public Owner? Return()
         {
             var count = Interlocked.Decrement(ref this.count);
-            if (count == 0)
+            if (count == 0 && this.Pool != null)
             {
                 // this.Pool.Return(this);
                 if (this.Pool.MaxPool == 0 || this.Pool.queue.Count <= this.Pool.MaxPool)
@@ -75,7 +82,7 @@ public class ByteArrayPool
         /// <summary>
         /// Gets a <see cref="ByteArrayPool"/> instance.
         /// </summary>
-        public ByteArrayPool Pool { get; }
+        public ByteArrayPool? Pool { get; }
 
         /// <summary>
         /// Gets a fixed-length byte array.
@@ -104,7 +111,7 @@ public class ByteArrayPool
             this.Memory = owner.ByteArray.AsMemory(start, length);
         }
 
-        public MemoryOwner(Owner? owner, Memory<byte> memory)
+        public MemoryOwner(Owner owner, Memory<byte> memory)
         {
             this.Owner = owner;
             this.Memory = memory;
@@ -116,7 +123,12 @@ public class ByteArrayPool
         /// <returns><see cref="Owner"/> instance (<see langword="this"/>).</returns>
         public MemoryOwner IncrementAndShare()
         {
-            return new(this.Owner?.IncrementAndShare(), this.Memory);
+            if (this.Owner == null)
+            {
+                throw new InvalidOperationException();
+            }
+
+            return new(this.Owner.IncrementAndShare(), this.Memory);
         }
 
         public MemoryOwner IncrementAndShare(int start, int length)
