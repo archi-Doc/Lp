@@ -114,57 +114,6 @@ public class ByteArrayPool
         public readonly Memory<byte> Memory;
     }
 
-    /*public struct MemoryOwner
-    {
-        public MemoryOwner(Owner owner)
-        {
-            this.Owner = owner;
-            this.Memory = owner.ByteArray.AsMemory();
-        }
-
-        public MemoryOwner(Owner owner, int start, int length)
-        {
-            this.Owner = owner;
-            this.Memory = owner.ByteArray.AsMemory(start, length);
-        }
-
-        public void Return()
-        {
-            this.Owner?.Return();
-            this.Owner = null;
-            this.Memory = default;
-        }
-
-        public Owner? Owner;
-        public Memory<byte> Memory;
-    }*/
-
-    public class MemoryOwner2
-    {
-        public MemoryOwner2(Owner owner)
-        {
-            this.Owner = owner;
-            this.Memory = owner.ByteArray.AsMemory();
-        }
-
-        public MemoryOwner2(Owner owner, int start, int length)
-        {
-            this.Owner = owner;
-            this.Memory = owner.ByteArray.AsMemory(start, length);
-        }
-
-        public void Return()
-        {
-            this.Owner?.Return();
-            this.Owner = null;
-            this.Memory = default;
-        }
-
-        public Owner? Owner { get; set; }
-
-        public Memory<byte> Memory { get; set; }
-    }
-
     /// <summary>
     /// Initializes a new instance of the <see cref="ByteArrayPool"/> class.<br/>
     /// </summary>
@@ -213,22 +162,6 @@ public class ByteArrayPool
         }
 
         return new MemoryOwner(owner, start, length);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public MemoryOwner2 Rent2(int start, int length)
-    {
-        Owner? owner;
-        if (!this.queue.TryDequeue(out owner))
-        {// Allocate a new byte array.
-            owner = new Owner(this);
-        }
-        else
-        {
-            owner.SetCount1();
-        }
-
-        return new MemoryOwner2(owner, start, length);
     }
 
     /// <summary>

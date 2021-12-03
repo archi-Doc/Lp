@@ -49,8 +49,6 @@ public class PacketPoolBenchmark
 
     public ByteArrayPool.MemoryOwner[] MemoryArray { get; set; } = default!;
 
-    public ByteArrayPool.MemoryOwner2[] MemoryArray2 { get; set; } = default!;
-
     public IMemoryOwner<byte>[] MemoryOwnerArray { get; set; } = default!;
 
     public PacketPoolBenchmark()
@@ -66,7 +64,6 @@ public class PacketPoolBenchmark
         this.ArrayMemoryPairs = new ArrayMemoryPair[N];
         this.OwnerArray = new ByteArrayPool.Owner[N];
         this.MemoryArray = new ByteArrayPool.MemoryOwner[N];
-        this.MemoryArray2 = new ByteArrayPool.MemoryOwner2[N];
         this.MemoryOwnerArray = new IMemoryOwner<byte>[N];
         for (var n = 0; n < N; n++)
         {
@@ -280,21 +277,5 @@ public class PacketPoolBenchmark
         }
 
         return this.MemoryArray;
-    }
-
-    [Benchmark]
-    public ByteArrayPool.MemoryOwner2[] MemoryOwner2N()
-    {
-        for (var n = 0; n < N; n++)
-        {
-            this.MemoryArray2[n] = this.ByteArrayPool.Rent2(0, 10);
-        }
-
-        for (var n = 0; n < N; n++)
-        {
-            this.MemoryArray2[n].Owner?.Return();
-        }
-
-        return this.MemoryArray2;
     }
 }
