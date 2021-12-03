@@ -103,17 +103,17 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         return netInterface;
     }
 
-    internal static NetInterface<TSend, TReceive> CreateConnect(NetTerminal netTerminal, ulong gene, PacketId id, ReadOnlyMemory<byte> data, ulong secondGene, ReadOnlyMemory<byte> packetMemory, byte[]? rentBuffer)
+    internal static NetInterface<TSend, TReceive> CreateConnect(NetTerminal netTerminal, ulong gene, ReadOnlyMemory<byte> data, ByteArrayPool.Owner receiveOwner, ulong secondGene, ReadOnlyMemory<byte> packetMemory, ByteArrayPool.Owner? sendOwner)
     {// Only for connection.
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
         var recvGene = new NetTerminalGene(gene, netInterface);
         netInterface.RecvGenes = new NetTerminalGene[] { recvGene, };
         recvGene.SetReceive();
-        recvGene.Receive(id, data);
+        recvGene.Receive(PacketId.Encrypt, data, receiveOwner);
 
         var sendGene = new NetTerminalGene(secondGene, netInterface);
         netInterface.SendGenes = new NetTerminalGene[] { sendGene, };
-        sendGene.SetSend(packetMemory, rentBuffer);
+        sendGene.SetSend(packetMemory, sendOwner);
 
         netInterface.NetTerminal.TerminalLogger?.Information($"ConnectTerminal: {gene.To4Hex()} -> {secondGene.To4Hex()}");
 
@@ -457,7 +457,7 @@ WaitForSendCompletionWait:
         }
     }
 
-    internal void ProcessReceive(ref byted[]? rentArray, IPEndPoint endPoint, ref PacketHeader header, ReadOnlyMemory<byte> data, long currentTicks, NetTerminalGene gene)
+    internal void ProcessReceive(ByteArrayPool.Owner arrayOwner, IPEndPoint endPoint, ref PacketHeader header, ReadOnlyMemory<byte> data, long currentTicks, NetTerminalGene gene)
     {
         lock (this.NetTerminal.SyncObject)
         {
@@ -490,7 +490,7 @@ WaitForSendCompletionWait:
             }
             else
             {// Receive data
-                if (gene.Receive(header.Id, data))
+                if (gene.Receive(header.Id, data, arrayOwner))
                 {// Received.
                     this.TerminalLogger?.Information($"Recv data: {header.Id} {gene.ToString()}");
                 }

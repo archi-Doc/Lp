@@ -235,13 +235,13 @@ public partial class NetTerminal : IDisposable
         this.CreateHeader(out var header, gene);
         header.Id = PacketId.Ack;
 
-        var rentBuffer = PacketPool.Rent();
-        fixed (byte* bp = rentBuffer)
+        var arrayOwner = PacketPool.Rent();
+        fixed (byte* bp = arrayOwner.ByteArray)
         {
             *(PacketHeader*)bp = header;
         }
 
-        this.Terminal.AddRawSend(this.Endpoint, rentBuffer.AsMemory(0, PacketService.HeaderSize), rentBuffer);
+        this.Terminal.AddRawSend(this.Endpoint, arrayOwner.ByteArray.AsMemory(0, PacketService.HeaderSize), arrayOwner);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

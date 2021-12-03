@@ -51,17 +51,17 @@ internal class PacketService
         _ => false,
     };
 
-    internal static unsafe void CreatePacket(ref PacketHeader header, PacketId packetId, ulong id, byte[] data, out Memory<byte> packetMemory, out byte[] rentBuffer)
+    internal static unsafe void CreatePacket(ref PacketHeader header, PacketId packetId, ulong id, byte[] data, out Memory<byte> packetMemory, out ByteArrayPool.Owner arrayOwner)
     {// PacketHeader, DataHeader, Data
         if (data.Length > PacketService.SafeMaxPacketSize)
         {
             throw new ArgumentOutOfRangeException();
         }
 
-        rentBuffer = PacketPool.Rent();
+        arrayOwner = PacketPool.Rent();
         var dataSpan = data.AsSpan();
         var size = PacketService.HeaderSize + PacketService.DataHeaderSize + data.Length;
-        var span = rentBuffer.AsSpan();
+        var span = arrayOwner.ByteArray.AsSpan();
 
         fixed (byte* pb = span)
         {
@@ -82,13 +82,13 @@ internal class PacketService
 
         span = span.Slice(PacketService.DataHeaderSize);
         dataSpan.CopyTo(span);
-        packetMemory = rentBuffer.AsMemory(0, size);
+        packetMemory = arrayOwner.ByteArray.AsMemory(0, size);
     }
 
-    internal static unsafe void CreatePacket<T>(ref PacketHeader header, T value, PacketId rawPacketId, out Memory<byte> packetMemory, out byte[]? rentBuffer)
+    internal static unsafe void CreatePacket<T>(ref PacketHeader header, T value, PacketId rawPacketId, out Memory<byte> packetMemory, out ByteArrayPool.Owner? arrayOwner)
     {
-        rentBuffer = PacketPool.Rent();
-        var writer = new Tinyhand.IO.TinyhandWriter(rentBuffer);
+        arrayOwner = PacketPool.Rent();
+        var writer = new Tinyhand.IO.TinyhandWriter(arrayOwner.ByteArray);
         var packetHeaderSpan = writer.GetSpan(PacketService.HeaderSize);
         writer.Advance(PacketService.HeaderSize);
 
@@ -105,16 +105,16 @@ internal class PacketService
         writer.FlushAndGetMemory(out packetMemory, out var useInitialBuffer);
         if (!useInitialBuffer)
         {
-            rentBuffer = null;
+            ByteArrayPool.ReturnAndSetNull(ref arrayOwner);
         }
 
         writer.Dispose();
     }
 
-    internal static unsafe void CreateAckAndPacket<T>(ref PacketHeader header, ulong secondGene, T value, PacketId rawPacketId, out Memory<byte> packetMemory, out byte[]? rentBuffer)
+    internal static unsafe void CreateAckAndPacket<T>(ref PacketHeader header, ulong secondGene, T value, PacketId rawPacketId, out Memory<byte> packetMemory, out ByteArrayPool.Owner? arrayOwner)
     {
-        rentBuffer = PacketPool.Rent();
-        var writer = new Tinyhand.IO.TinyhandWriter(rentBuffer);
+        arrayOwner = PacketPool.Rent();
+        var writer = new Tinyhand.IO.TinyhandWriter(arrayOwner.ByteArray);
         var span = writer.GetSpan(PacketService.HeaderSize * 2);
         writer.Advance(PacketService.HeaderSize * 2);
 
@@ -137,7 +137,7 @@ internal class PacketService
         writer.FlushAndGetMemory(out packetMemory, out var useInitialBuffer);
         if (!useInitialBuffer)
         {
-            rentBuffer = null;
+            ByteArrayPool.ReturnAndSetNull(ref arrayOwner);
         }
 
         writer.Dispose();

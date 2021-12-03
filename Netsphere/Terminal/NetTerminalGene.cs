@@ -59,18 +59,14 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
 
     public bool IsReceived => this.State == NetTerminalGeneState.SendingAck || this.State == NetTerminalGeneState.Complete;
 
-    public bool SetSend(ReadOnlyMemory<byte> packet, byte[]? rentBuffer)
+    public bool SetSend(ReadOnlyMemory<byte> packet, ByteArrayPool.Owner? arrayOwner)
     {
         if (this.IsAvailable)
         {
             this.State = NetTerminalGeneState.WaitingToSend;
             this.PacketOrData = packet;
-            if (this.rentBuffer != null)
-            {
-                PacketPool.Return(this.rentBuffer);
-            }
-
-            this.rentBuffer = rentBuffer;
+            ByteArrayPool.ReturnAndSetNull(ref this.arrayOwner);
+            this.arrayOwner = arrayOwner;
             this.NetInterface.Terminal.AddInbound(this);
             return true;
         }
@@ -84,11 +80,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         {
             this.State = NetTerminalGeneState.WaitingToReceive;
             this.PacketOrData = default;
-            if (this.rentBuffer != null)
-            {
-                PacketPool.Return(this.rentBuffer);
-                this.rentBuffer = null;
-            }
+            ByteArrayPool.ReturnAndSetNull(ref this.arrayOwner);
 
             this.NetInterface.Terminal.AddInbound(this);
             return true;
@@ -124,12 +116,14 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         return false;
     }
 
-    public bool Receive(PacketId id, ReadOnlyMemory<byte> data)
+    public bool Receive(PacketId id, ReadOnlyMemory<byte> data, ByteArrayPool.Owner arrayOwner)
     {// lock (this.NetTerminal.SyncObject)
         if (this.State == NetTerminalGeneState.WaitingToReceive)
         {// Receive data
             this.ReceivedId = id;
             this.PacketOrData = data;
+            ByteArrayPool.ReturnAndSetNull(ref this.arrayOwner);
+            this.arrayOwner = arrayOwner.IncrementAndShare();
             SendAck();
 
             // Logger.Default.Debug($"Receive: {this.PacketId}, {this.NetTerminal.Endpoint}");
@@ -195,10 +189,9 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         this.Gene = 0;
         this.ReceivedId = PacketId.Invalid;
         this.PacketOrData = default;
-        if (this.rentBuffer != null)
+        if (this.arrayOwner != null)
         {
-            PacketPool.Return(this.rentBuffer);
-            this.rentBuffer = null;
+            this.arrayOwner = this.arrayOwner.Return();
         }
     }
 
@@ -206,5 +199,5 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
     internal long SentTicks;
 #pragma warning restore SA1202 // Elements should be ordered by access
 
-    private byte[]? rentBuffer;
+    private ByteArrayPool.Owner? arrayOwner;
 }

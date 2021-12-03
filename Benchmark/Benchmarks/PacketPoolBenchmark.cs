@@ -18,16 +18,20 @@ public class PacketPoolBenchmark
 {
     public const int N = 100;
 
-    [Params(512, 1024, 2048)]
+    [Params(1024, 2048)]
     public int Length { get; set; }
 
     public ConcurrentQueue<byte[]> Queue { get; set; } = new();
 
     public FixedArrayPool FixedArrayPool { get; set; } = default!;
 
+    public ByteArrayPool ByteArrayPool { get; set; } = default!;
+
     public ArrayPool<byte> ArrayPool { get; set; } = default!;
 
     public byte[][] Arrays { get; set; } = default!;
+
+    public ByteArrayPool.Owner[] OwnerArray { get; set; } = default!;
 
     public IMemoryOwner<byte>[] MemoryOwnerArray { get; set; } = default!;
 
@@ -39,7 +43,9 @@ public class PacketPoolBenchmark
     public void Setup()
     {
         this.FixedArrayPool = new(this.Length, N);
+        this.ByteArrayPool = new(this.Length, N);
         this.Arrays = new byte[N][];
+        this.OwnerArray = new ByteArrayPool.Owner[N];
         this.MemoryOwnerArray = new IMemoryOwner<byte>[N];
         for (var n = 0; n < N; n++)
         {
@@ -176,5 +182,21 @@ public class PacketPoolBenchmark
         }
 
         return this.Arrays;
+    }
+
+    [Benchmark]
+    public ByteArrayPool.Owner[] ByteArrayPoolN()
+    {
+        for (var n = 0; n < N; n++)
+        {
+            this.OwnerArray[n] = this.ByteArrayPool.Rent();
+        }
+
+        for (var n = 0; n < N; n++)
+        {
+            this.OwnerArray[n].Return();
+        }
+
+        return this.OwnerArray;
     }
 }
