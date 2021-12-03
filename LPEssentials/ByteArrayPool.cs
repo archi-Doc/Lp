@@ -16,8 +16,7 @@ public class ByteArrayPool
     {
         if (owner != null)
         {
-            owner.Return();
-            owner = null;
+            owner = owner.Return();
         }
     }
 
@@ -54,8 +53,9 @@ public class ByteArrayPool
         /// Decrement the reference count. When it reaches zero, it returns the byte array to the pool.<br/>
         /// Failure to return a rented array is not a fatal error (eventually be garbage-collected).
         /// </summary>
+        /// <returns><see langword="null"></see>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Return()
+        public Owner? Return()
         {
             var count = Interlocked.Decrement(ref this.count);
             if (count == 0)
@@ -66,6 +66,8 @@ public class ByteArrayPool
                     this.Pool.queue.Enqueue(this);
                 }
             }
+
+            return null;
         }
 
         internal void SetCount1() => Volatile.Write(ref this.count, 1);
@@ -88,7 +90,31 @@ public class ByteArrayPool
         private int count;
     }
 
-    public struct MemoryOwner
+    public readonly struct MemoryOwner
+    {
+        public MemoryOwner(Owner owner)
+        {
+            this.Owner = owner;
+            this.Memory = owner.ByteArray.AsMemory();
+        }
+
+        public MemoryOwner(Owner owner, int start, int length)
+        {
+            this.Owner = owner;
+            this.Memory = owner.ByteArray.AsMemory(start, length);
+        }
+
+        public MemoryOwner Return()
+        {
+            this.Owner?.Return();
+            return default;
+        }
+
+        public readonly Owner? Owner;
+        public readonly Memory<byte> Memory;
+    }
+
+    /*public struct MemoryOwner
     {
         public MemoryOwner(Owner owner)
         {
@@ -111,6 +137,32 @@ public class ByteArrayPool
 
         public Owner? Owner;
         public Memory<byte> Memory;
+    }*/
+
+    public class MemoryOwner2
+    {
+        public MemoryOwner2(Owner owner)
+        {
+            this.Owner = owner;
+            this.Memory = owner.ByteArray.AsMemory();
+        }
+
+        public MemoryOwner2(Owner owner, int start, int length)
+        {
+            this.Owner = owner;
+            this.Memory = owner.ByteArray.AsMemory(start, length);
+        }
+
+        public void Return()
+        {
+            this.Owner?.Return();
+            this.Owner = null;
+            this.Memory = default;
+        }
+
+        public Owner? Owner { get; set; }
+
+        public Memory<byte> Memory { get; set; }
     }
 
     /// <summary>
@@ -161,6 +213,22 @@ public class ByteArrayPool
         }
 
         return new MemoryOwner(owner, start, length);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public MemoryOwner2 Rent2(int start, int length)
+    {
+        Owner? owner;
+        if (!this.queue.TryDequeue(out owner))
+        {// Allocate a new byte array.
+            owner = new Owner(this);
+        }
+        else
+        {
+            owner.SetCount1();
+        }
+
+        return new MemoryOwner2(owner, start, length);
     }
 
     /// <summary>

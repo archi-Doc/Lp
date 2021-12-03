@@ -457,7 +457,7 @@ WaitForSendCompletionWait:
         }
     }
 
-    internal void ProcessReceive(ByteArrayPool.Owner arrayOwner, IPEndPoint endPoint, ref PacketHeader header, ReadOnlyMemory<byte> data, long currentTicks, NetTerminalGene gene)
+    internal void ProcessReceive(ByteArrayPool.MemoryOwner owner, IPEndPoint endPoint, ref PacketHeader header, long currentTicks, NetTerminalGene gene)
     {
         lock (this.NetTerminal.SyncObject)
         {
@@ -475,7 +475,7 @@ WaitForSendCompletionWait:
             if (header.Id == PacketId.Ack)
             {// Ack (header.Gene + data(ulong[]))
                 gene.ReceiveAck();
-                var g = MemoryMarshal.Cast<byte, ulong>(data.Span);
+                var g = MemoryMarshal.Cast<byte, ulong>(owner.Memory.Span);
                 this.TerminalLogger?.Information($"Recv Ack 1+{g.Length}");
                 foreach (var x in g)
                 {
@@ -490,7 +490,7 @@ WaitForSendCompletionWait:
             }
             else
             {// Receive data
-                if (gene.Receive(header.Id, data, arrayOwner))
+                if (gene.Receive(header.Id, owner))
                 {// Received.
                     this.TerminalLogger?.Information($"Recv data: {header.Id} {gene.ToString()}");
                 }

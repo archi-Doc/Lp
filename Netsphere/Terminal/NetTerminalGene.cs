@@ -116,7 +116,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         return false;
     }
 
-    public bool Receive(PacketId id, ReadOnlyMemory<byte> data, ByteArrayPool.Owner arrayOwner)
+    public bool Receive(PacketId id, ByteArrayPool.MemoryOwner owner)
     {// lock (this.NetTerminal.SyncObject)
         if (this.State == NetTerminalGeneState.WaitingToReceive)
         {// Receive data

@@ -199,47 +199,46 @@ public class Terminal
 
             position += PacketService.HeaderSize;
             var memoryOwner = new ByteArrayPool.MemoryOwner(arrayOwner, position, dataSize);
-            var data = new ReadOnlyMemory<byte>(packetArray, position, dataSize);
-            this.ProcessReceiveCore(arrayOwner, endPoint, ref header, data, currentTicks);
+            this.ProcessReceiveCore(memoryOwner, endPoint, ref header, currentTicks);
             position += dataSize;
             remaining -= PacketService.HeaderSize + dataSize;
         }
     }
 
-    internal void ProcessReceiveCore(ByteArrayPool.Owner arrayOwner, IPEndPoint endPoint, ref PacketHeader header, ReadOnlyMemory<byte> data, long currentTicks)
+    internal void ProcessReceiveCore(ByteArrayPool.MemoryOwner owner, IPEndPoint endPoint, ref PacketHeader header, long currentTicks)
     {
         if (this.inboundGenes.TryGetValue(header.Gene, out var gene))
         {// NetTerminalGene is found.
-            gene.NetInterface.ProcessReceive(arrayOwner, endPoint, ref header, data, currentTicks, gene);
+            gene.NetInterface.ProcessReceive(owner, endPoint, ref header, currentTicks, gene);
         }
         else
         {
-            this.ProcessUnmanagedRecv(arrayOwner, endPoint, ref header, data);
+            this.ProcessUnmanagedRecv(owner, endPoint, ref header);
         }
     }
 
-    internal void ProcessUnmanagedRecv(ByteArrayPool.Owner arrayOwner, IPEndPoint endpoint, ref PacketHeader header, ReadOnlyMemory<byte> data)
+    internal void ProcessUnmanagedRecv(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
     {
         if (header.Id == PacketId.Punch)
         {
-            this.ProcessUnmanagedRecv_Punch(endpoint, ref header, data);
+            this.ProcessUnmanagedRecv_Punch(owner, endpoint, ref header);
         }
         else if (header.Id == PacketId.Encrypt)
         {
-            this.ProcessUnmanagedRecv_Connect(arrayOwner, endpoint, ref header, data);
+            this.ProcessUnmanagedRecv_Connect(owner, endpoint, ref header);
         }
         else if (header.Id == PacketId.Ping)
         {
-            this.ProcessUnmanagedRecv_Ping(endpoint, ref header, data);
+            this.ProcessUnmanagedRecv_Ping(owner, endpoint, ref header);
         }
         else
         {// Not supported
         }
     }
 
-    internal void ProcessUnmanagedRecv_Punch(IPEndPoint endpoint, ref PacketHeader header, ReadOnlyMemory<byte> data)
+    internal void ProcessUnmanagedRecv_Punch(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
     {
-        if (!TinyhandSerializer.TryDeserialize<PacketPunch>(data, out var punch))
+        if (!TinyhandSerializer.TryDeserialize<PacketPunch>(owner.Memory, out var punch))
         {
             return;
         }
@@ -256,7 +255,7 @@ public class Terminal
         this.AddRawSend(endpoint, packetMemory, arrayOwner);
     }
 
-    internal void ProcessUnmanagedRecv_Connect(ByteArrayPool.Owner receiveOwner, IPEndPoint endpoint, ref PacketHeader header, ReadOnlyMemory<byte> data)
+    internal void ProcessUnmanagedRecv_Connect(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
     {
         if (!TinyhandSerializer.TryDeserialize<PacketEncrypt>(data, out var packet))
         {
@@ -286,9 +285,9 @@ public class Terminal
         }
     }
 
-    internal void ProcessUnmanagedRecv_Ping(IPEndPoint endpoint, ref PacketHeader header, ReadOnlyMemory<byte> data)
+    internal void ProcessUnmanagedRecv_Ping(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
     {
-        if (!TinyhandSerializer.TryDeserialize<PacketPing>(data, out var packet))
+        if (!TinyhandSerializer.TryDeserialize<PacketPing>(owner.Memory, out var packet))
         {
             return;
         }
@@ -299,8 +298,8 @@ public class Terminal
         var secondGene = GenePool.GetSecond(header.Gene);
         this.TerminalLogger?.Information($"Ping Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
-        PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id, out var packetMemory, out var arrayOwner);
-        this.AddRawSend(endpoint, packetMemory, arrayOwner);
+        PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id, out var packetOwner);
+        this.AddRawSend(endpoint, packetOwner);
     }
 
     internal void AddRawSend(IPEndPoint endpoint, ReadOnlyMemory<byte> packetMemory, ByteArrayPool.Owner? arrayOwner)
