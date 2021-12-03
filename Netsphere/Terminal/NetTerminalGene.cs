@@ -191,7 +191,8 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         this.PacketOrData = default;
         if (this.arrayOwner != null)
         {
-            this.arrayOwner = this.arrayOwner.Return();
+            this.arrayOwner.Return();
+            this.arrayOwner = null;
         }
     }
 

@@ -16,7 +16,8 @@ public class ByteArrayPool
     {
         if (owner != null)
         {
-            owner = owner.Return();
+            owner.Return();
+            owner = null;
         }
     }
 
@@ -53,17 +54,18 @@ public class ByteArrayPool
         /// Decrement the reference count. When it reaches zero, it returns the byte array to the pool.<br/>
         /// Failure to return a rented array is not a fatal error (eventually be garbage-collected).
         /// </summary>
-        /// <returns><see langword="null"></see>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Owner? Return()
+        public void Return()
         {
             var count = Interlocked.Decrement(ref this.count);
             if (count == 0)
             {
-                this.Pool.Return(this);
+                // this.Pool.Return(this);
+                if (this.Pool.MaxPool == 0 || this.Pool.queue.Count <= this.Pool.MaxPool)
+                {
+                    this.Pool.queue.Enqueue(this);
+                }
             }
-
-            return null;
         }
 
         internal void SetCount1() => Volatile.Write(ref this.count, 1);
@@ -86,7 +88,7 @@ public class ByteArrayPool
         private int count;
     }
 
-    public readonly struct MemoryOwner
+    public struct MemoryOwner
     {
         public MemoryOwner(Owner owner, Memory<byte> memory)
         {
@@ -94,8 +96,14 @@ public class ByteArrayPool
             this.Memory = memory;
         }
 
-        public readonly Owner Owner;
-        public readonly Memory<byte> Memory;
+        public void Return()
+        {
+            this.Owner?.Return();
+            this.Owner = null;
+        }
+
+        public Owner? Owner;
+        public Memory<byte> Memory;
     }
 
     /// <summary>
