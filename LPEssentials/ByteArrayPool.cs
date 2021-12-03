@@ -43,6 +43,12 @@ public class ByteArrayPool
             return this;
         }
 
+        public MemoryOwner IncrementAndShare(int start, int length)
+        {
+            Interlocked.Increment(ref this.count);
+            return new MemoryOwner(this, new(this.ByteArray, start, length));
+        }
+
         /// <summary>
         /// Decrement the reference count. When it reaches zero, it returns the byte array to the pool.<br/>
         /// Failure to return a rented array is not a fatal error (eventually be garbage-collected).
@@ -80,6 +86,18 @@ public class ByteArrayPool
         private int count;
     }
 
+    public readonly struct MemoryOwner
+    {
+        public MemoryOwner(Owner owner, Memory<byte> memory)
+        {
+            this.Owner = owner;
+            this.Memory = memory;
+        }
+
+        public readonly Owner Owner;
+        public readonly Memory<byte> Memory;
+    }
+
     /// <summary>
     /// Initializes a new instance of the <see cref="ByteArrayPool"/> class.<br/>
     /// </summary>
@@ -101,11 +119,33 @@ public class ByteArrayPool
         Owner? owner;
         if (!this.queue.TryDequeue(out owner))
         {// Allocate a new byte array.
-            owner = new Owner(this);
+            return new Owner(this);
         }
 
         owner.SetCount1();
         return owner;
+    }
+
+    /// <summary>
+    /// Gets a fixed-length byte array from the pool or create a new byte array if not available.<br/>
+    /// </summary>
+    /// <param name="start">The index of the first byte to include in the new <see cref="Memory{T}"/>.</param>
+    /// <param name="length">The number of bytes to include in the new <see cref="Memory{T}"/>.</param>
+    /// <returns>A fixed-length byte array.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public MemoryOwner Rent(int start, int length)
+    {
+        Owner? owner;
+        if (!this.queue.TryDequeue(out owner))
+        {// Allocate a new byte array.
+            owner = new Owner(this);
+        }
+        else
+        {
+            owner.SetCount1();
+        }
+
+        return new MemoryOwner(owner, new(owner.ByteArray, start, length));
     }
 
     /// <summary>

@@ -13,12 +13,24 @@ using LP;
 
 namespace Benchmark;
 
+public readonly struct ArrayMemoryPair
+{
+    public ArrayMemoryPair(byte[] array, Memory<byte> memory)
+    {
+        this.Array = array;
+        this.Memory = memory;
+    }
+
+    public readonly byte[] Array;
+    public readonly Memory<byte> Memory;
+}
+
 [Config(typeof(BenchmarkConfig))]
 public class PacketPoolBenchmark
 {
     public const int N = 100;
 
-    [Params(1024, 2048)]
+    [Params(2048)]
     public int Length { get; set; }
 
     public ConcurrentQueue<byte[]> Queue { get; set; } = new();
@@ -31,7 +43,11 @@ public class PacketPoolBenchmark
 
     public byte[][] Arrays { get; set; } = default!;
 
+    public ArrayMemoryPair[] ArrayMemoryPairs { get; set; } = default!;
+
     public ByteArrayPool.Owner[] OwnerArray { get; set; } = default!;
+
+    public ByteArrayPool.MemoryOwner[] MemoryArray { get; set; } = default!;
 
     public IMemoryOwner<byte>[] MemoryOwnerArray { get; set; } = default!;
 
@@ -45,7 +61,9 @@ public class PacketPoolBenchmark
         this.FixedArrayPool = new(this.Length, N);
         this.ByteArrayPool = new(this.Length, N);
         this.Arrays = new byte[N][];
+        this.ArrayMemoryPairs = new ArrayMemoryPair[N];
         this.OwnerArray = new ByteArrayPool.Owner[N];
+        this.MemoryArray = new ByteArrayPool.MemoryOwner[N];
         this.MemoryOwnerArray = new IMemoryOwner<byte>[N];
         for (var n = 0; n < N; n++)
         {
@@ -130,7 +148,7 @@ public class PacketPoolBenchmark
         return this.Arrays;
     }
 
-    [Benchmark]
+    /*[Benchmark]
     public IMemoryOwner<byte>[] MemoryPoolN()
     {
         for (var n = 0; n < N; n++)
@@ -144,7 +162,7 @@ public class PacketPoolBenchmark
         }
 
         return this.MemoryOwnerArray;
-    }
+    }*/
 
     [Benchmark]
     public byte[][] ConcurrentQueueN()
@@ -198,5 +216,43 @@ public class PacketPoolBenchmark
         }
 
         return this.OwnerArray;
+    }
+
+    [Benchmark]
+    public ArrayMemoryPair[] ArrayMemoryPairsN()
+    {
+        for (var n = 0; n < N; n++)
+        {
+            byte[]? array;
+            if (!this.Queue.TryDequeue(out array))
+            {
+                array = new byte[this.Length];
+            }
+
+            this.ArrayMemoryPairs[n] = new(array, new(array, 0, 10));
+        }
+
+        for (var n = 0; n < N; n++)
+        {
+            this.Queue.Enqueue(this.ArrayMemoryPairs[n].Array);
+        }
+
+        return this.ArrayMemoryPairs;
+    }
+
+    [Benchmark]
+    public ByteArrayPool.MemoryOwner[] MemoryOwnerN()
+    {
+        for (var n = 0; n < N; n++)
+        {
+            this.MemoryArray[n] = this.ByteArrayPool.Rent(0, 10);
+        }
+
+        for (var n = 0; n < N; n++)
+        {
+            this.MemoryArray[n].Owner.Return();
+        }
+
+        return this.MemoryArray;
     }
 }
