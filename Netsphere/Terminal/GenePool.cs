@@ -14,12 +14,21 @@ internal class GenePool : IDisposable
 
     public static ulong GetSecond(ulong gene)
     {
-        return new Xoshiro256StarStar(gene).NextULong();
+        var count = gene >> 59;
+        gene ^= gene >> (int)(5 + count);
+        gene *= 12605985483714917081u;
+        return gene ^ (gene >> 43);
+        // return RandomULong.SplitMix64(ref gene);
     }
 
     public GenePool(ulong gene)
     {
-        this.OriginalGene = gene;
+        this.currentGene = gene;
+    }
+
+    public void ResetGene()
+    {
+        this.currentGene = LP.Random.Crypto.NextULong();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -41,15 +50,9 @@ internal class GenePool : IDisposable
         }
         else
         {// Unmanaged
-            if (this.pseudoRandom == null)
-            {
-                this.pseudoRandom = new(this.OriginalGene);
-                return this.OriginalGene;
-            }
-            else
-            {
-                return this.pseudoRandom.NextULong();
-            }
+            var prev = this.currentGene;
+            this.currentGene = GetSecond(this.currentGene);
+            return prev;
         }
     }
 
@@ -57,7 +60,7 @@ internal class GenePool : IDisposable
     {
         if (this.pseudoRandom == null)
         {
-            this.pseudoRandom = new(this.OriginalGene);
+            this.pseudoRandom = new(this.currentGene);
         }
 
         var source = embryo.AsSpan();
@@ -111,6 +114,7 @@ internal class GenePool : IDisposable
         // this.aes!.TryEncryptCbc(this.bytePool, this.aes!.IV, MemoryMarshal.AsBytes<ulong>(this.pool), out written, PaddingMode.None);
     }
 
+    private ulong currentGene;
     private Xoshiro256StarStar? pseudoRandom;
     private ICryptoTransform? encryptor;
     private byte[]? pool;

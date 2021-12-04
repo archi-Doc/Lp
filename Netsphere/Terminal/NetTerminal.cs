@@ -54,7 +54,7 @@ public partial class NetTerminal : IDisposable
 
     public INetInterface<TSend> SendSingle<TSend>(TSend value)
         where TSend : IPacket
-    {
+    {// checked
         if (!value.AllowUnencrypted)
         {
             var result = this.EncryptConnection();
@@ -64,12 +64,12 @@ public partial class NetTerminal : IDisposable
             }
         }
 
-        return this.CreateSendInterface(value);
+        return this.CreateSendValue(value);
     }
 
     public async Task<NetInterfaceResult> SendSingleAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
         where TSend : IPacket
-    {
+    {// checked
         if (!value.AllowUnencrypted)
         {
             var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
@@ -79,7 +79,7 @@ public partial class NetTerminal : IDisposable
             }
         }
 
-        var netInterface = this.CreateSendInterface(value);
+        var netInterface = this.CreateSendValue(value);
         try
         {
             return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
@@ -102,7 +102,7 @@ public partial class NetTerminal : IDisposable
             }
         }
 
-        return this.CreateSendAndReceiveInterface<TSend, TReceive>(value);
+        return this.CreateSendAndReceiveValue<TSend, TReceive>(value);
     }
 
     public async Task<TReceive?> SendSingleAndReceiveAsync<TSend, TReceive>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
@@ -117,7 +117,7 @@ public partial class NetTerminal : IDisposable
             }
         }
 
-        var netInterface = this.CreateSendAndReceiveInterface<TSend, TReceive>(value);
+        var netInterface = this.CreateSendAndReceiveValue<TSend, TReceive>(value);
         try
         {
             return await netInterface.ReceiveAsync(millisecondsToWait).ConfigureAwait(false);
@@ -127,19 +127,6 @@ public partial class NetTerminal : IDisposable
             netInterface.Dispose();
         }
     }
-
-    /*public INetInterface<TSend> Send<TSend>(TSend value)
-    {
-        if (value is IPacket packet && !packet.AllowUnencrypted)
-        {
-            if (!this.CheckManagedAndEncrypted())
-            {
-                return null!;
-            }
-        }
-
-        return this.SendPacket(value);
-    }*/
 
     public INetInterface<TSend, TReceive> SendAndReceive<TSend, TReceive>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
         where TSend : IPacket
@@ -153,7 +140,7 @@ public partial class NetTerminal : IDisposable
             }
         }
 
-        var netInterface = this.CreateSendAndReceiveInterface<TSend, TReceive>(value);
+        var netInterface = this.CreateSendAndReceiveValue<TSend, TReceive>(value);
         return netInterface;
     }
 
@@ -169,7 +156,7 @@ public partial class NetTerminal : IDisposable
             }
         }
 
-        var netInterface = this.CreateSendInterface<TSend>(value);
+        var netInterface = this.CreateSendValue<TSend>(value);
         return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
     }
 
@@ -187,7 +174,7 @@ public partial class NetTerminal : IDisposable
             }
         }
 
-        var netInterface = this.CreateSendInterface(packetId, id, data);
+        var netInterface = this.CreateSendData(packetId, id, data);
         if (netInterface.RequiresReservation)
         {
             var result = await netInterface.WaitForReservationAsync(millisecondsToWait).ConfigureAwait(false);
@@ -245,20 +232,20 @@ public partial class NetTerminal : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal NetInterface<TSend, object> CreateSendInterface<TSend>(TSend value)
+    internal NetInterface<TSend, object> CreateSendValue<TSend>(TSend value)
         where TSend : IPacket
     {
         return NetInterface<TSend, object>.Create(this, value, value.Id, false);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal NetInterface<byte[], object> CreateSendInterface(PacketId packetId, ulong id, byte[] data)
+    internal NetInterface<byte[], object> CreateSendData(PacketId packetId, ulong id, byte[] data)
     {
         return NetInterface<byte[], object>.Create(this, packetId, id, data, false);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal NetInterface<TSend, TReceive> CreateSendAndReceiveInterface<TSend, TReceive>(TSend value)
+    internal NetInterface<TSend, TReceive> CreateSendAndReceiveValue<TSend, TReceive>(TSend value)
         where TSend : IPacket
     {
         return NetInterface<TSend, TReceive>.Create(this, value, value.Id, true);
