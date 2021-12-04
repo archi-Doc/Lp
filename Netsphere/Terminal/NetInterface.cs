@@ -106,6 +106,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
     internal static NetInterface<TSend, TReceive> CreateConnect(NetTerminal netTerminal, ulong gene, ByteArrayPool.MemoryOwner receiveOwner, ulong secondGene, ByteArrayPool.MemoryOwner sendOwner)
     {// Only for connection.
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
+
         var recvGene = new NetTerminalGene(gene, netInterface);
         netInterface.RecvGenes = new NetTerminalGene[] { recvGene, };
         recvGene.SetReceive();
