@@ -12,14 +12,11 @@ internal class GenePool : IDisposable
     public const int PoolSize = 64 * sizeof(ulong);
     public const int EmbryoMax = 1024;
 
-    public static ulong GetSecond(ulong gene)
-    {
-        var count = gene >> 59;
-        gene ^= gene >> (int)(5 + count);
-        gene *= 12605985483714917081u;
-        return gene ^ (gene >> 43);
-        // return RandomULong.SplitMix64(ref gene);
-    }
+    public static void NextGene(ref ulong gene)
+        => Arc.Crypto.Xorshift.Xor64(ref gene);
+
+    public static ulong NextGene(ulong gene)
+        => Arc.Crypto.Xorshift.Xor64(gene);
 
     public GenePool(ulong gene)
     {
@@ -50,9 +47,8 @@ internal class GenePool : IDisposable
         }
         else
         {// Unmanaged
-            var prev = this.currentGene;
-            this.currentGene = GetSecond(this.currentGene);
-            return prev;
+            NextGene(ref this.currentGene);
+            return this.currentGene;
         }
     }
 
@@ -108,7 +104,6 @@ internal class GenePool : IDisposable
         }
 
         this.pseudoRandom!.NextBytes(this.buffer);
-
         this.encryptor!.TransformBlock(this.buffer, 0, PoolSize, this.pool, 0);
 
         // this.aes!.TryEncryptCbc(this.bytePool, this.aes!.IV, MemoryMarshal.AsBytes<ulong>(this.pool), out written, PaddingMode.None);

@@ -215,6 +215,14 @@ public class Terminal
 
     internal void ProcessUnmanagedRecv(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
     {
+        if (header.Id == PacketId.Data)
+        {
+            if (!PacketService.GetData(ref header, ref owner))
+            {// Data packet to other packets (e.g Punch, Encrypt).
+                return;
+            }
+        }
+
         if (header.Id == PacketId.Punch)
         {
             this.ProcessUnmanagedRecv_Punch(owner, endpoint, ref header);
@@ -244,7 +252,7 @@ public class Terminal
         var response = new PacketPunchResponse();
         response.Endpoint = endpoint;
         response.UtcTicks = Ticks.GetUtcNow();
-        var secondGene = GenePool.GetSecond(header.Gene);
+        var secondGene = GenePool.NextGene(header.Gene);
         this.TerminalLogger?.Information($"Punch Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
         PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id, out var sendOwner);
@@ -264,7 +272,7 @@ public class Terminal
 
             var response = new PacketEncryptResponse();
             var firstGene = header.Gene;
-            var secondGene = GenePool.GetSecond(header.Gene);
+            var secondGene = GenePool.NextGene(header.Gene);
             PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id, out var sendOwner);
 
             var terminal = this.Create(packet.NodeInformation, firstGene);
@@ -291,7 +299,7 @@ public class Terminal
         Logger.Default.Information($"Ping From: {packet.ToString()}");
 
         var response = new PacketPingResponse(new(endpoint.Address, (ushort)endpoint.Port, 0), this.NetBase.NodeName);
-        var secondGene = GenePool.GetSecond(header.Gene);
+        var secondGene = GenePool.NextGene(header.Gene);
         this.TerminalLogger?.Information($"Ping Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
         PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id, out var packetOwner);

@@ -51,6 +51,35 @@ internal class PacketService
         _ => false,
     };
 
+    internal static unsafe bool GetData(ref PacketHeader header, ref ByteArrayPool.MemoryOwner owner)
+    {
+        if (header.Id != PacketId.Data)
+        {
+            return false;
+        }
+        else if (owner.Memory.Length < DataHeaderSize)
+        {
+            return false;
+        }
+
+        var span = owner.Memory.Span;
+        DataHeader dataHeader = default;
+        fixed (byte* pb = span)
+        {
+            dataHeader = *(DataHeader*)pb;
+        }
+
+        span = span.Slice(DataHeaderSize);
+        if (Arc.Crypto.FarmHash.Hash64(span) != dataHeader.Checksum)
+        {
+            return false;
+        }
+
+        header.Id = dataHeader.PacketId;
+        owner = owner.Slice(DataHeaderSize);
+        return true;
+    }
+
     internal static unsafe void CreatePacket(ref PacketHeader header, PacketId packetId, ulong id, byte[] data, out ByteArrayPool.MemoryOwner owner)
     {// PacketHeader, DataHeader, Data
         if (data.Length > PacketService.SafeMaxPacketSize)

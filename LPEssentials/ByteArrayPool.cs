@@ -145,6 +145,16 @@ public class ByteArrayPool
             return new(this.Owner.IncrementAndShare(), start, length);
         }
 
+        /// <summary>
+        /// Forms a slice out of the current memory that begins at a specified index.
+        /// </summary>
+        /// <param name="start">The index at which to begin the slice.</param>
+        /// <returns><see cref="MemoryOwner"/>.</returns>
+        public MemoryOwner Slice(int start)
+        {
+            return new(this.Owner!, this.Memory.Slice(start));
+        }
+
         public MemoryOwner Return()
         {
             this.Owner?.Return();

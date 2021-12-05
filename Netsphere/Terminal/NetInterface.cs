@@ -53,24 +53,41 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         return new NetInterface<TSend, TReceive>(netTerminal, error);
     }
 
-    internal static NetInterface<TSend, TReceive> Create(NetTerminal netTerminal, PacketId packetId, ulong id, byte[] data, bool receive)
+    internal static NetInterface<TSend, TReceive> CreateData(NetTerminal netTerminal, PacketId packetId, ulong id, byte[] data, bool receive)
     {// Send and Receive(optional) NetTerminalGene.
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
 
         var gene = netTerminal.GenePool.GetGene(); // Send gene
         netTerminal.CreateHeader(out var header, gene);
-        if (data.Length < PacketService.SafeMaxPacketSize)
+        if (data.Length <= PacketService.SafeMaxPacketSize)
         {// Single packet.
             PacketService.CreatePacket(ref header, packetId, id, data, out var sendOwner);
+
+            var ntg = new NetTerminalGene(gene, netInterface);
+            netInterface.SendGenes = new NetTerminalGene[] { ntg, };
+            ntg.SetSend(sendOwner);
+
+            netTerminal.TerminalLogger?.Information($"RegisterSend2  : {gene.To4Hex()}");
         }
         else
         {// Split into multiple packets.
         }
 
+        gene = netTerminal.GenePool.GetGene(); // Receive gene
+        if (receive)
+        {
+            var ntg = new NetTerminalGene(gene, netInterface);
+            netInterface.RecvGenes = new NetTerminalGene[] { ntg, };
+            ntg.SetReceive();
+
+            netTerminal.TerminalLogger?.Information($"RegisterReceive2:{gene.To4Hex()}");
+        }
+
+        netTerminal.Add(netInterface);
         return netInterface;
     }
 
-    internal static NetInterface<TSend, TReceive> Create(NetTerminal netTerminal, TSend value, PacketId id, bool receive)
+    internal static NetInterface<TSend, TReceive> CreateValue(NetTerminal netTerminal, TSend value, PacketId id, bool receive)
     {// Send and Receive(optional) NetTerminalGene.
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
 
@@ -165,6 +182,17 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         }
 
         return value;
+    }
+
+    public async Task<byte[]?> ReceiveDataAsync(int millisecondsToWait = 2000)
+    {
+        var r = await this.ReceiveAsyncCore(millisecondsToWait).ConfigureAwait(false);
+        if (r.Result != NetInterfaceReceiveResult.Success)
+        {
+            return default;
+        }
+
+        return r.Received.ToArray();
     }
 
     public NetInterfaceResult WaitForSendCompletion(int millisecondsToWait = 2000)
