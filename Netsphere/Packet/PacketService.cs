@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 
 namespace Netsphere;
 
-internal class PacketService
+internal static class PacketService
 {
     static PacketService()
     {
@@ -22,10 +22,6 @@ internal class PacketService
         SafeMaxPacketSize = NetControl.MaxPayload - HeaderSize - DataHeaderSize - RelayPacketSize;
         SafeMaxPacketSize -= 8; // Safety margin
         DataPacketSize = 1369;
-    }
-
-    public PacketService()
-    {
     }
 
     public static int HeaderSize { get; }
@@ -80,7 +76,7 @@ internal class PacketService
         return true;
     }
 
-    internal static unsafe void CreatePacket(ref PacketHeader header, PacketId packetId, ulong id, byte[] data, out ByteArrayPool.MemoryOwner owner)
+    internal static unsafe void CreatePacket(ref PacketHeader header, PacketId packetId, ulong id, ReadOnlySpan<byte> data, out ByteArrayPool.MemoryOwner owner)
     {// PacketHeader, DataHeader, Data
         if (data.Length > PacketService.SafeMaxPacketSize)
         {
@@ -88,7 +84,6 @@ internal class PacketService
         }
 
         var arrayOwner = PacketPool.Rent();
-        var dataSpan = data.AsSpan();
         var size = PacketService.HeaderSize + PacketService.DataHeaderSize + data.Length;
         var span = arrayOwner.ByteArray.AsSpan();
 
@@ -103,14 +98,14 @@ internal class PacketService
         DataHeader dataHeader = default;
         dataHeader.PacketId = packetId;
         dataHeader.Id = id;
-        dataHeader.Checksum = Arc.Crypto.FarmHash.Hash64(dataSpan);
+        dataHeader.Checksum = Arc.Crypto.FarmHash.Hash64(data);
         fixed (byte* pb = span)
         {
             *(DataHeader*)pb = dataHeader;
         }
 
         span = span.Slice(PacketService.DataHeaderSize);
-        dataSpan.CopyTo(span);
+        data.CopyTo(span);
 
         owner = arrayOwner.ToMemoryOwner(0, size);
     }

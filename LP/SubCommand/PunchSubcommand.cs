@@ -56,7 +56,7 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
             var p = new PacketPunch(nextNode?.CreateEndpoint());
 
             sw.Restart();
-            var netInterface = terminal.SendSingleAndReceive<PacketPunch, PacketPunchResponse>(p);
+            var netInterface = terminal.SendPacketAndReceive<PacketPunch, PacketPunchResponse>(p);
             var result = netInterface.Receive(out var r);
             sw.Stop();
             if (r != null)

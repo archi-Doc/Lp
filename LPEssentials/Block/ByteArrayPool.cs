@@ -24,8 +24,13 @@ public class ByteArrayPool
     /// An owner class of a byte array (one owner for each byte array).<br/>
     /// <see cref="Owner"/> has a reference count, and when it reaches zero, it returns the byte array to the pool.
     /// </summary>
-    public class Owner
+    public class Owner : IDisposable
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Owner"/> class from a byte array.<br/>
+        /// This is a feature for compatibility with <see cref="ByteArrayPool"/>, and the byte array will not be returned when <see cref="Return"/> is called.
+        /// </summary>
+        /// <param name="byteArray">A byte array (other than <see cref="ByteArrayPool"/>).</param>
         public Owner(byte[] byteArray)
         {
             this.Pool = null;
@@ -77,6 +82,8 @@ public class ByteArrayPool
             return null;
         }
 
+        public void Dispose() => this.Return();
+
         public MemoryOwner ToMemoryOwner() => new MemoryOwner(this);
 
         public MemoryOwner ToMemoryOwner(int start, int length) => new MemoryOwner(this, start, length);
@@ -101,8 +108,19 @@ public class ByteArrayPool
         private int count;
     }
 
-    public readonly struct MemoryOwner
+    public readonly struct MemoryOwner : IDisposable
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MemoryOwner"/> struct from a byte array.<br/>
+        /// This is a feature for compatibility with <see cref="ByteArrayPool"/>, and the byte array will not be returned when <see cref="Return"/> is called.
+        /// </summary>
+        /// <param name="byteArray">A byte array (other than <see cref="ByteArrayPool"/>).</param>
+        public MemoryOwner(byte[] byteArray)
+        {
+            this.Owner = new(byteArray);
+            this.Memory = byteArray.AsMemory();
+        }
+
         internal MemoryOwner(Owner owner)
         {
             this.Owner = owner;
@@ -151,15 +169,15 @@ public class ByteArrayPool
         /// <param name="start">The index at which to begin the slice.</param>
         /// <returns><see cref="MemoryOwner"/>.</returns>
         public MemoryOwner Slice(int start)
-        {
-            return new(this.Owner!, this.Memory.Slice(start));
-        }
+            => new(this.Owner!, this.Memory.Slice(start));
 
         public MemoryOwner Return()
         {
             this.Owner?.Return();
             return default;
         }
+
+        public void Dispose() => this.Return();
 
         public readonly Owner? Owner;
         public readonly Memory<byte> Memory;

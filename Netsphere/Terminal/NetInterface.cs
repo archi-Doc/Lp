@@ -47,19 +47,20 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         return new NetInterface<TSend, TReceive>(netTerminal, error);
     }
 
-    internal static NetInterface<TSend, TReceive> CreateData(NetTerminal netTerminal, PacketId packetId, ulong id, byte[] data, bool receive)
+    internal static NetInterface<TSend, TReceive> CreateData(NetTerminal netTerminal, PacketId packetId, ulong id, ByteArrayPool.MemoryOwner owner, bool receive)
     {// Send and Receive(optional) NetTerminalGene.
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
 
         var gene = netTerminal.GenePool.GetGene(); // Send gene
         netTerminal.CreateHeader(out var header, gene);
-        if (data.Length <= PacketService.SafeMaxPacketSize)
+        if (owner.Memory.Length <= PacketService.SafeMaxPacketSize)
         {// Single packet.
-            PacketService.CreatePacket(ref header, packetId, id, data, out var sendOwner);
+            PacketService.CreatePacket(ref header, packetId, id, owner.Memory.Span, out var sendOwner);
 
             var ntg = new NetTerminalGene(gene, netInterface);
             netInterface.SendGenes = new NetTerminalGene[] { ntg, };
             ntg.SetSend(sendOwner);
+            sendOwner.Return();
 
             netTerminal.TerminalLogger?.Information($"RegisterSend2  : {gene.To4Hex()}");
         }

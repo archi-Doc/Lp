@@ -49,7 +49,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
         {
             var p = new PacketPing("test");
             sw.Restart();
-            var ni = terminal.SendSingleAndReceive<PacketPing, PacketPingResponse>(p);
+            var ni = terminal.SendPacketAndReceive<PacketPing, PacketPingResponse>(p);
             var result = ni.Receive(out var r);
             sw.Stop();
             if (r != null)

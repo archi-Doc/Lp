@@ -26,7 +26,7 @@ public class NetTerminalClient : NetTerminal
         }
 
         var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
-        var netInterface = this.SendSingleAndReceive<PacketEncrypt, PacketEncryptResponse>(p);
+        var netInterface = this.SendPacketAndReceive<PacketEncrypt, PacketEncryptResponse>(p);
         if (netInterface.Receive(out var response) != NetInterfaceResult.Success)
         {
             netInterface.Dispose();
@@ -48,7 +48,7 @@ public class NetTerminalClient : NetTerminal
         }
 
         var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
-        var response = await this.SendSingleAndReceiveAsync<PacketEncrypt, PacketEncryptResponse>(p).ConfigureAwait(false);
+        var response = await this.SendPacketAndReceiveAsync<PacketEncrypt, PacketEncryptResponse>(p).ConfigureAwait(false);
         if (response == null)
         {
             return NetInterfaceResult.NoEncryptedConnection;
