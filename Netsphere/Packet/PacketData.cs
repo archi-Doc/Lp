@@ -20,7 +20,7 @@ internal struct DataHeader
     public PacketId PacketId;
 
     [FieldOffset(4)]
-    public ulong Id;
+    public uint Id;
 
     [FieldOffset(8)]
     public ulong Checksum; // FarmHash64

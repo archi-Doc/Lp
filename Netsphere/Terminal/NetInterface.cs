@@ -27,7 +27,7 @@ public enum NetInterfaceResult
 
 public interface INetInterface<TSend, TReceive> : INetInterface<TSend>
 {
-    public NetInterfaceResult Receive(out TReceive? value, int millisecondsToWait = DefaultMillisecondsToWait);
+    // public NetInterfaceResult Receive(out TReceive? value, int millisecondsToWait = DefaultMillisecondsToWait);
 }
 
 public interface INetInterface<TSend> : IDisposable
@@ -49,7 +49,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         return new NetInterface<TSend, TReceive>(netTerminal, error);
     }
 
-    internal static NetInterface<TSend, TReceive> CreateData(NetTerminal netTerminal, PacketId packetId, ulong id, ByteArrayPool.MemoryOwner owner, bool receive)
+    internal static NetInterface<TSend, TReceive> CreateData(NetTerminal netTerminal, PacketId packetId, uint id, ByteArrayPool.MemoryOwner owner, bool receive)
     {// Send and Receive(optional) NetTerminalGene.
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
 
@@ -176,9 +176,8 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
     {// Receive
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
 
-        var sendGene = netTerminal.GenePool.GetGene();
         var receiveGene = netTerminal.GenePool.GetGene();
-
+        var sendGene = netTerminal.GenePool.GetGene();
         var gene = new NetTerminalGene(receiveGene, netInterface);
         netInterface.RecvGenes = new NetTerminalGene[] { gene, };
         gene.SetReceive();
@@ -199,7 +198,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
     {
     }
 
-    public NetInterfaceResult Receive(out TReceive? value, int millisecondsToWait = 2000)
+    /*public NetInterfaceResult Receive(out TReceive? value, int millisecondsToWait = 2000)
     {
         var result = this.ReceiveCore(out var data, millisecondsToWait);
         if (result != NetInterfaceResult.Success)
@@ -215,7 +214,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         }
 
         return result;
-    }
+    }*/
 
     public async Task<(NetInterfaceResult Result, TReceive? Value)> ReceiveAsync(int millisecondsToWait = 2000)
     {
@@ -234,15 +233,15 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         return (NetInterfaceResult.Success, value);
     }
 
-    public async Task<(NetInterfaceResult Result, byte[]? Value)> ReceiveDataAsync(int millisecondsToWait = 2000)
+    public async Task<(NetInterfaceResult Result, PacketId PacketId, byte[]? Value)> ReceiveDataAsync(int millisecondsToWait = 2000)
     {
         var r = await this.ReceiveAsyncCore(millisecondsToWait).ConfigureAwait(false);
         if (r.Result != NetInterfaceResult.Success)
         {
-            return (r.Result, default);
+            return (r.Result, default, default);
         }
 
-        return (NetInterfaceResult.Success, r.Received.ToArray());
+        return (NetInterfaceResult.Success, r.PacketId, r.Received.ToArray());
     }
 
     public NetInterfaceResult WaitForSendCompletion(int millisecondsToWait = 2000)
@@ -370,8 +369,9 @@ WaitForSendCompletionWait:
         return NetInterfaceResult.Closed;
     }
 
-    protected NetInterfaceResult ReceiveCore(out ReadOnlyMemory<byte> data, int millisecondsToWait)
+    protected NetInterfaceResult ReceiveCore(out PacketId packetId, out ReadOnlyMemory<byte> data, int millisecondsToWait)
     {
+        packetId = PacketId.Invalid;
         data = default;
         var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);
 
@@ -385,7 +385,7 @@ WaitForSendCompletionWait:
 
             lock (this.NetTerminal.SyncObject)
             {
-                if (this.ReceivedGeneToData(ref data))
+                if (this.ReceivedGeneToData(out packetId, ref data))
                 {
                     return NetInterfaceResult.Success;
                 }
@@ -408,7 +408,7 @@ WaitForSendCompletionWait:
         return NetInterfaceResult.Closed;
     }
 
-    protected async Task<(NetInterfaceResult Result, ReadOnlyMemory<byte> Received)> ReceiveAsyncCore(int millisecondsToWait)
+    protected async Task<(NetInterfaceResult Result, PacketId PacketId, ReadOnlyMemory<byte> Received)> ReceiveAsyncCore(int millisecondsToWait)
     {
         ReadOnlyMemory<byte> data = default;
         var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);
@@ -418,14 +418,14 @@ WaitForSendCompletionWait:
             if (Stopwatch.GetTimestamp() >= end)
             {
                 this.TerminalLogger?.Information($"Receive timeout.");
-                return (NetInterfaceResult.Timeout, data);
+                return (NetInterfaceResult.Timeout, default, data);
             }
 
             lock (this.NetTerminal.SyncObject)
             {
-                if (this.ReceivedGeneToData(ref data))
+                if (this.ReceivedGeneToData(out var packetId, ref data))
                 {
-                    return (NetInterfaceResult.Success, data);
+                    return (NetInterfaceResult.Success, packetId, data);
                 }
             }
 
@@ -437,17 +437,18 @@ WaitForSendCompletionWait:
             catch
             {
                 this.Error = NetInterfaceResult.Closed;
-                return (NetInterfaceResult.Closed, data);
+                return (NetInterfaceResult.Closed, default, data);
             }
         }
 
-        return (NetInterfaceResult.Closed, data);
+        return (NetInterfaceResult.Closed, default, data);
     }
 
     internal ISimpleLogger? TerminalLogger => this.Terminal.TerminalLogger;
 
-    protected bool ReceivedGeneToData(ref ReadOnlyMemory<byte> data)
+    protected bool ReceivedGeneToData(out PacketId packetId, ref ReadOnlyMemory<byte> data)
     {// lock (this.NetTerminal.SyncObject)
+        packetId = PacketId.Invalid;
         if (this.RecvGenes == null)
         {// Empty
             return true;
@@ -459,6 +460,7 @@ WaitForSendCompletionWait:
                 return false;
             }
 
+            packetId = this.RecvGenes[0].ReceivedId;
             data = this.RecvGenes[0].Owner.Memory;
             return true;
         }
@@ -485,6 +487,7 @@ WaitForSendCompletionWait:
             mem = mem.Slice(this.RecvGenes[i].Owner.Memory.Length);
         }
 
+        packetId = this.RecvGenes[0].ReceivedId;
         data = buffer;
         return true;
     }

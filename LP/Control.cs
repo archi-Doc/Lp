@@ -179,23 +179,6 @@ public class Control
 
     private static SimpleParser subcommandParser = default!;
 
-    private static void CreateServerTerminal(NetTerminalServer terminal)
-    {
-        Task.Run(() =>
-        {
-            var server = containerInstance.Resolve<Server>();
-            try
-            {
-                server.Process(terminal);
-            }
-            finally
-            {
-                server.Core?.Sleep(1000);
-                terminal.Dispose();
-            }
-        });
-    }
-
     private void Dump()
     {
         Logger.Default.Information($"Dump:");

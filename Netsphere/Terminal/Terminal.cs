@@ -278,10 +278,10 @@ public class Terminal
             var terminal = this.Create(packet.NodeInformation, firstGene);
             var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(terminal, firstGene, owner, secondGene, sendOwner);
 
-            terminal.GenePool.GetGene();
+            // terminal.GenePool.GetGene();
             terminal.GenePool.GetGene();
             terminal.CreateEmbryo(packet.Salt);
-            terminal.EnsureReceiveQueue();
+            terminal.SetReceiverNumber();
             if (this.createServerTerminalDelegate != null)
             {
                 this.createServerTerminalDelegate(terminal);

@@ -2,24 +2,69 @@
 
 namespace Netsphere;
 
-public struct NetTerminalServerPacket
+public class NetTerminalServerPacket
 {
-    public PacketId PacketId;
-    public uint Id;
-    public ByteArrayPool.MemoryOwner Owner;
+    public unsafe NetTerminalServerPacket(PacketId packetId, byte[] data)
+    {
+        this.PacketId = packetId;
+        this.Data = data;
+
+        if (this.PacketId == PacketId.Data && this.Data.Length >= PacketService.DataHeaderSize)
+        {
+            var span = this.Data.Span;
+            DataHeader dataHeader = default;
+            fixed (byte* pb = span)
+            {
+                dataHeader = *(DataHeader*)pb;
+            }
+
+            span = span.Slice(PacketService.DataHeaderSize);
+            if (Arc.Crypto.FarmHash.Hash64(span) != dataHeader.Checksum)
+            {
+                return;
+            }
+
+            this.PacketId = dataHeader.PacketId;
+            this.Id = dataHeader.Id;
+            this.Data = this.Data.Slice(PacketService.DataHeaderSize);
+        }
+    }
+
+    public PacketId PacketId { get; }
+
+    public uint Id { get; }
+
+    public Memory<byte> Data { get; }
 }
 
 public class NetTerminalServer : NetTerminal
 {
+    public const ushort DefaultReceiverNumber = 1;
+
     internal NetTerminalServer(Terminal terminal, NodeInformation nodeInformation, ulong gene)
         : base(terminal, nodeInformation, gene)
     {// NodeInformation: Managed
     }
 
+    public void SetReceiverNumber(ushort receiverNumber = DefaultReceiverNumber)
+    {
+        if (receiverNumber > DefaultReceiverNumber)
+        {
+            receiverNumber = DefaultReceiverNumber;
+        }
+        else if (receiverNumber == 0)
+        {
+            receiverNumber = 1;
+        }
+
+        this.ReceiverNumber = receiverNumber;
+        this.EnsureReceiverQueue();
+    }
+
     public async Task<(NetInterfaceResult Result, NetTerminalServerPacket? Packet)> ReceiveAsync(int millisecondsToWait = DefaultMillisecondsToWait)
     {
         NetInterface<object, byte[]>? netInterface;
-        if (!this.receiveQueue.TryPeek(out netInterface))
+        if (!this.receiverQueue.TryPeek(out netInterface))
         {
             return (NetInterfaceResult.Timeout, null);
         }
@@ -27,12 +72,20 @@ public class NetTerminalServer : NetTerminal
         try
         {
             var received = await netInterface.ReceiveDataAsync(millisecondsToWait).ConfigureAwait(false);
-            if (received.Result != NetInterfaceResult.Success)
-            {
+            if (received.Result == NetInterfaceResult.Timeout)
+            {// Timeout
                 return (received.Result, null);
             }
 
-            return (received.Result, new());
+            this.receiverQueue.TryDequeue(out _);
+            this.EnsureReceiverQueue();
+            if (received.Result != NetInterfaceResult.Success || received.Value == null)
+            {// Error
+                return (received.Result, null);
+            }
+
+            var packet = new NetTerminalServerPacket(received.PacketId, received.Value);
+            return (received.Result, packet);
         }
         finally
         {
@@ -40,14 +93,16 @@ public class NetTerminalServer : NetTerminal
         }
     }
 
-    internal void EnsureReceiveQueue(int numberOfReceive = 1)
+    public void EnsureReceiverQueue()
     {
-        while (this.receiveQueue.Count < numberOfReceive)
+        while (this.receiverQueue.Count < this.ReceiverNumber)
         {
             var netInterface = NetInterface<object, byte[]>.CreateReceive(this);
-            this.receiveQueue.Enqueue(netInterface);
+            this.receiverQueue.Enqueue(netInterface);
         }
     }
 
-    private Queue<NetInterface<object, byte[]>> receiveQueue = new();
+    public ushort ReceiverNumber { get; private set; } = DefaultReceiverNumber;
+
+    private Queue<NetInterface<object, byte[]>> receiverQueue = new();
 }

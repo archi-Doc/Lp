@@ -51,7 +51,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
             sw.Restart();
             var result = await terminal.SendPacketAndReceiveAsync<PacketPing, PacketPingResponse>(p);
             sw.Stop();
-            if (result != null)
+            if (result.Value != null)
             {
                 Logger.Priority.Information($"Received: {result.ToString()} - {sw.ElapsedMilliseconds} ms");
             }

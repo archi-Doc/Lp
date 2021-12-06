@@ -58,7 +58,7 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
             sw.Restart();
             var result = await terminal.SendPacketAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
             sw.Stop();
-            if (result != null)
+            if (result.Value != null)
             {
                 Logger.Priority.Information($"Received: {result.ToString()} - {sw.ElapsedMilliseconds} ms");
             }

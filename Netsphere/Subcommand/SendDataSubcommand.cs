@@ -30,9 +30,9 @@ public class SendDataSubcommand : ISimpleCommandAsync<SendDataOptions>
         using (var terminal = this.NetControl.Terminal.Create(nodeInformation))
         {
             var p = new PacketPunch(null);
-            var r = await terminal.SendPacketAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
+            /*var r = await terminal.SendPacketAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
             Logger.Priority.Information($"r: {r}");
-            Logger.Priority.Information($"");
+            Logger.Priority.Information($"");*/
 
             var result = await terminal.EncryptConnectionAsync();
             if (result != NetInterfaceResult.Success)
@@ -40,7 +40,7 @@ public class SendDataSubcommand : ISimpleCommandAsync<SendDataOptions>
                 return;
             }
 
-            r = await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
+            var r = await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
             Logger.Priority.Information($"r: {r}");
 
             /*var netInterface = terminal.SendAndReceive<PacketPunch, PacketPunchResponse>(p);

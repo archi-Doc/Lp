@@ -131,16 +131,15 @@ public class NetControl
 
     private static void CreateServerTerminal(NetTerminalServer terminal)
     {
-        Task.Run(() =>
+        Task.Run(async () =>
         {
             var server = containerInstance.Resolve<Server>();
             try
             {
-                server.Process(terminal);
+                await server.Process(terminal);
             }
             finally
             {
-                server.Core?.Sleep(1000);
                 terminal.Dispose();
             }
         });

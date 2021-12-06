@@ -196,7 +196,8 @@ public partial class NetTerminal : IDisposable
         var netInterface = this.CreateSendAndReceiveData(packetId, id, owner);
         try
         {
-            return await netInterface.ReceiveDataAsync(millisecondsToWait).ConfigureAwait(false);
+            var r = await netInterface.ReceiveDataAsync(millisecondsToWait).ConfigureAwait(false);
+            return (r.Result, r.Value);
         }
         finally
         {
@@ -228,7 +229,7 @@ public partial class NetTerminal : IDisposable
     public async Task<NetInterfaceResult> SendDataAsync(uint id, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
         => await this.SendDataAsync(true, PacketId.Data, id, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);
 
-    private async Task<NetInterfaceResult> SendDataAsync(bool encrypt, PacketId packetId, ulong id, ByteArrayPool.MemoryOwner owner, int millisecondsToWait = DefaultMillisecondsToWait)
+    private async Task<NetInterfaceResult> SendDataAsync(bool encrypt, PacketId packetId, uint id, ByteArrayPool.MemoryOwner owner, int millisecondsToWait = DefaultMillisecondsToWait)
     {
         if (encrypt)
         {
@@ -307,11 +308,11 @@ public partial class NetTerminal : IDisposable
         => NetInterface<TSend, TReceive>.CreateValue(this, value, value.Id, true);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal NetInterface<byte[], object> CreateSendData(PacketId packetId, ulong id, ByteArrayPool.MemoryOwner sendOwner)
+    internal NetInterface<byte[], object> CreateSendData(PacketId packetId, uint id, ByteArrayPool.MemoryOwner sendOwner)
         => NetInterface<byte[], object>.CreateData(this, packetId, id, sendOwner, false);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal NetInterface<byte[], byte[]> CreateSendAndReceiveData(PacketId packetId, ulong id, ByteArrayPool.MemoryOwner sendOwner)
+    internal NetInterface<byte[], byte[]> CreateSendAndReceiveData(PacketId packetId, uint id, ByteArrayPool.MemoryOwner sendOwner)
         => NetInterface<byte[], byte[]>.CreateData(this, packetId, id, sendOwner, true);
 
     internal void ProcessSend(UdpClient udp, long currentTicks)
@@ -360,6 +361,7 @@ public partial class NetTerminal : IDisposable
             return NetInterfaceResult.NoNodeInformation;
         }
 
+        // ulong Salt, byte[] material, ulong Salt
         var material = this.Terminal.NodePrivateECDH.DeriveKeyMaterial(ecdh.PublicKey);
         Span<byte> buffer = stackalloc byte[sizeof(ulong) + NodeKey.PrivateKeySize + sizeof(ulong)];
         var span = buffer;

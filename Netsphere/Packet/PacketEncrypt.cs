@@ -27,6 +27,9 @@ internal partial class PacketEncrypt : IPacket
 
     [Key(2)]
     public bool RequestRelay { get; set; }
+
+    [Key(3)]
+    public ushort RequestReceiverNumber { get; set; }
 }
 
 [TinyhandObject]
@@ -47,4 +50,7 @@ internal partial class PacketEncryptResponse : IPacket
 
     [Key(1)]
     public bool CanRelay { get; set; }
+
+    [Key(2)]
+    public ushort EnsuredReceiverNumber { get; set; }
 }
