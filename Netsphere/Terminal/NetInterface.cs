@@ -200,32 +200,32 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         return result;
     }
 
-    public async Task<TReceive?> ReceiveAsync(int millisecondsToWait = 2000)
+    public async Task<(NetInterfaceResult Result, TReceive? Value)> ReceiveAsync(int millisecondsToWait = 2000)
     {
         var r = await this.ReceiveAsyncCore(millisecondsToWait).ConfigureAwait(false);
         if (r.Result != NetInterfaceResult.Success)
         {
-            return default;
+            return (r.Result, default);
         }
 
         TinyhandSerializer.TryDeserialize<TReceive>(r.Received, out var value);
         if (value == null)
         {
-            return default;
+            return (NetInterfaceResult.DeserializationError, default);
         }
 
-        return value;
+        return (NetInterfaceResult.Success, value);
     }
 
-    public async Task<byte[]?> ReceiveDataAsync(int millisecondsToWait = 2000)
+    public async Task<(NetInterfaceResult Result, byte[]? Value)> ReceiveDataAsync(int millisecondsToWait = 2000)
     {
         var r = await this.ReceiveAsyncCore(millisecondsToWait).ConfigureAwait(false);
         if (r.Result != NetInterfaceResult.Success)
         {
-            return default;
+            return (r.Result, default);
         }
 
-        return r.Received.ToArray();
+        return (NetInterfaceResult.Success, r.Received.ToArray());
     }
 
     public NetInterfaceResult WaitForSendCompletion(int millisecondsToWait = 2000)

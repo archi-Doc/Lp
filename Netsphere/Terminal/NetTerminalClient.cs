@@ -49,9 +49,9 @@ public class NetTerminalClient : NetTerminal
 
         var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
         var response = await this.SendPacketAndReceiveAsync<PacketEncrypt, PacketEncryptResponse>(p).ConfigureAwait(false);
-        if (response == null)
+        if (response.Result != NetInterfaceResult.Success)
         {
-            return NetInterfaceResult.NoEncryptedConnection;
+            return response.Result;
         }
 
         return this.CreateEmbryo(p.Salt);

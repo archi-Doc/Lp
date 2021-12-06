@@ -105,7 +105,7 @@ public partial class NetTerminal : IDisposable
         }
     }
 
-    public async Task<TReceive?> SendPacketAndReceiveAsync<TSend, TReceive>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<(NetInterfaceResult Result, TReceive? Value)> SendPacketAndReceiveAsync<TSend, TReceive>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
         where TSend : IPacket
     {// checked
         if (!value.AllowUnencrypted)
@@ -113,7 +113,7 @@ public partial class NetTerminal : IDisposable
             var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
             if (result != NetInterfaceResult.Success)
             {
-                return default;
+                return (result, default);
             }
         }
 
@@ -128,14 +128,14 @@ public partial class NetTerminal : IDisposable
         }
     }
 
-    public async Task<TReceive?> SendAndReceiveAsync<TSend, TReceive>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<(NetInterfaceResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
     {
         if (!BlockService.TrySerialize(value, out var owner))
         {
-            return default;
+            return (NetInterfaceResult.SerializationError, default);
         }
 
-        Task<byte[]?> task;
+        Task<(NetInterfaceResult Result, byte[]? Value)> task;
         if (value is IPacket packet)
         {
             task = this.SendAndReceiveDataAsync(!packet.AllowUnencrypted, packet.Id, 0, owner, millisecondsToWait);
@@ -147,21 +147,26 @@ public partial class NetTerminal : IDisposable
 
         owner.Return();
 
-        TinyhandSerializer.TryDeserialize<TReceive>(task.Result, out var received);
-        return received;
+        TinyhandSerializer.TryDeserialize<TReceive>(task.Result.Value, out var received);
+        if (received == null)
+        {
+            return (NetInterfaceResult.DeserializationError, default);
+        }
+
+        return (NetInterfaceResult.Success, received);
     }
 
-    public async Task<byte[]?> SendAndReceiveDataAsync(uint id, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<(NetInterfaceResult Result, byte[]? Value)> SendAndReceiveDataAsync(uint id, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
         => await this.SendAndReceiveDataAsync(true, PacketId.Data, id, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);
 
-    private async Task<byte[]?> SendAndReceiveDataAsync(bool encrypt, PacketId packetId, uint id, ByteArrayPool.MemoryOwner owner, int millisecondsToWait = DefaultMillisecondsToWait)
+    private async Task<(NetInterfaceResult Result, byte[]? Value)> SendAndReceiveDataAsync(bool encrypt, PacketId packetId, uint id, ByteArrayPool.MemoryOwner owner, int millisecondsToWait = DefaultMillisecondsToWait)
     {
         if (encrypt)
         {
             var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
             if (result != NetInterfaceResult.Success)
             {
-                return default;
+                return (result, default);
             }
         }
 
@@ -174,12 +179,12 @@ public partial class NetTerminal : IDisposable
             var result = await this.SendPacketAsync(reserve, millisecondsToWait).ConfigureAwait(false);
             if (result != NetInterfaceResult.Success)
             {
-                return null;
+                return (result, default);
             }
         }
         else
         {// Block size limit exceeded.
-            return null;
+            return (NetInterfaceResult.BlockSizeLimit, default);
         }
 
         var netInterface = this.CreateSendAndReceiveData(packetId, id, owner);
