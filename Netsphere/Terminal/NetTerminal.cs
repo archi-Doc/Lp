@@ -147,7 +147,13 @@ public partial class NetTerminal : IDisposable
 
         owner.Return();
 
-        TinyhandSerializer.TryDeserialize<TReceive>(task.Result.Value, out var received);
+        var response = task.Result;
+        if (response.Result != NetInterfaceResult.Success)
+        {
+            return (response.Result, default);
+        }
+
+        TinyhandSerializer.TryDeserialize<TReceive>(response.Value, out var received);
         if (received == null)
         {
             return (NetInterfaceResult.DeserializationError, default);

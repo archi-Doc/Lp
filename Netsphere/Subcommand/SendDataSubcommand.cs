@@ -29,16 +29,16 @@ public class SendDataSubcommand : ISimpleCommandAsync<SendDataOptions>
         var nodeInformation = NodeInformation.Alternative;
         using (var terminal = this.NetControl.Terminal.Create(nodeInformation))
         {
-            /*var result = await terminal.EncryptConnectionAsync();
-            if (result != NetInterfaceResult.Success)
-            {
-                return;
-            }*/
-
             var p = new PacketPunch(null);
             var r = await terminal.SendPacketAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
             Logger.Priority.Information($"r: {r}");
             Logger.Priority.Information($"");
+
+            var result = await terminal.EncryptConnectionAsync();
+            if (result != NetInterfaceResult.Success)
+            {
+                return;
+            }
 
             r = await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
             Logger.Priority.Information($"r: {r}");
