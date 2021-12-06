@@ -195,9 +195,6 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
 
     public Task<NetInterfaceResult> WaitForSendCompletionAsync(int millisecondsToWait = 2000)
         => this.WaitForSendCompletionAsyncCore(millisecondsToWait);
-
-    internal Task<NetInterfaceResult> WaitForReservationAsync(int millisecondsToWait = 2000)
-        => this.WaitForReservationAsyncCore(millisecondsToWait);
 }
 
 public class NetInterface : IDisposable
@@ -220,8 +217,6 @@ public class NetInterface : IDisposable
     public Terminal Terminal { get; }
 
     public NetTerminal NetTerminal { get; }
-
-    public bool RequiresReservation { get; private set; }
 
     public NetInterfaceResult Error { get; protected set; }
 
@@ -318,16 +313,6 @@ WaitForSendCompletionWait:
 
         this.Error = NetInterfaceResult.Closed;
         return NetInterfaceResult.Closed;
-    }
-
-    protected async Task<NetInterfaceResult> WaitForReservationAsyncCore(int millisecondsToWait)
-    {
-        if (!this.RequiresReservation)
-        {
-            return NetInterfaceResult.Success;
-        }
-
-        return NetInterfaceResult.Success;
     }
 
     protected NetInterfaceResult ReceiveCore(out ReadOnlyMemory<byte> data, int millisecondsToWait)

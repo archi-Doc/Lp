@@ -14,7 +14,7 @@ public class NetTerminalClient : NetTerminal
     {// NodeInformation: Managed
     }
 
-    public override NetInterfaceResult EncryptConnection()
+    /*public override NetInterfaceResult EncryptConnection()
     {
         if (this.IsEncrypted)
         {// Encrypted
@@ -34,7 +34,7 @@ public class NetTerminalClient : NetTerminal
         }
 
         return this.CreateEmbryo(p.Salt);
-    }
+    }*/
 
     public override async Task<NetInterfaceResult> EncryptConnectionAsync()
     {
