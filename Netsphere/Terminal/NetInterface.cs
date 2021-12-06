@@ -172,6 +172,23 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         return genes;
     }
 
+    internal static NetInterface<TSend, TReceive> CreateReceive(NetTerminal netTerminal)
+    {// Receive
+        var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
+
+        var sendGene = netTerminal.GenePool.GetGene();
+        var receiveGene = netTerminal.GenePool.GetGene();
+
+        var gene = new NetTerminalGene(receiveGene, netInterface);
+        netInterface.RecvGenes = new NetTerminalGene[] { gene, };
+        gene.SetReceive();
+
+        netInterface.NetTerminal.TerminalLogger?.Information($"ReceiveInterface: {receiveGene.To4Hex()}");
+
+        netInterface.NetTerminal.Add(netInterface);
+        return netInterface;
+    }
+
     protected NetInterface(NetTerminal netTerminal)
     : base(netTerminal)
     {

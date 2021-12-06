@@ -229,7 +229,7 @@ public class Terminal
         }
         else if (header.Id == PacketId.Encrypt)
         {
-            this.ProcessUnmanagedRecv_Connect(owner, endpoint, ref header);
+            this.ProcessUnmanagedRecv_Encrypt(owner, endpoint, ref header);
         }
         else if (header.Id == PacketId.Ping)
         {
@@ -259,7 +259,7 @@ public class Terminal
         this.AddRawSend(endpoint, sendOwner);
     }
 
-    internal void ProcessUnmanagedRecv_Connect(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
+    internal void ProcessUnmanagedRecv_Encrypt(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
     {
         if (!TinyhandSerializer.TryDeserialize<PacketEncrypt>(owner.Memory, out var packet))
         {
@@ -281,7 +281,7 @@ public class Terminal
             terminal.GenePool.GetGene();
             terminal.GenePool.GetGene();
             terminal.CreateEmbryo(packet.Salt);
-            terminal.PrepareReceive();
+            terminal.EnsureReceiveQueue();
             if (this.createServerTerminalDelegate != null)
             {
                 this.createServerTerminalDelegate(terminal);
