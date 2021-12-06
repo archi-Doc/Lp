@@ -58,13 +58,13 @@ public class NetTerminalServer : NetTerminal
         }
 
         this.ReceiverNumber = receiverNumber;
-        this.EnsureReceiverQueue();
+        this.EnsureInterfaceQueue();
     }
 
     public async Task<(NetInterfaceResult Result, NetTerminalServerPacket? Packet)> ReceiveAsync(int millisecondsToWait = DefaultMillisecondsToWait)
     {
         NetInterface<object, byte[]>? netInterface;
-        if (!this.receiverQueue.TryPeek(out netInterface))
+        if (!this.interfaceQueue.TryPeek(out netInterface))
         {
             return (NetInterfaceResult.Timeout, null);
         }
@@ -75,8 +75,8 @@ public class NetTerminalServer : NetTerminal
             return (received.Result, null);
         }
 
-        this.receiverQueue.TryDequeue(out _);
-        this.EnsureReceiverQueue();
+        this.interfaceQueue.TryDequeue(out _);
+        this.EnsureInterfaceQueue();
         if (received.Result != NetInterfaceResult.Success || received.Value == null)
         {// Error
             netInterface.Dispose();
@@ -88,17 +88,17 @@ public class NetTerminalServer : NetTerminal
         return (received.Result, packet);
     }
 
-    public void EnsureReceiverQueue()
+    public void EnsureInterfaceQueue()
     {
-        while (this.receiverQueue.Count < this.ReceiverNumber)
+        while (this.interfaceQueue.Count < this.ReceiverNumber)
         {
             var netInterface = NetInterface<object, byte[]>.CreateReceive(this);
-            this.receiverQueue.Enqueue(netInterface);
+            this.interfaceQueue.Enqueue(netInterface);
         }
     }
 
     public ushort ReceiverNumber { get; private set; } = DefaultReceiverNumber;
 
-    private Queue<NetInterface<object, byte[]>> receiverQueue = new();
-    private Queue<NetInterface<object, byte[]>> senderQueue = new();
+    private NetInterface<object, byte[]> currentInterface = default!;
+    private Queue<NetInterface<object, byte[]>> interfaceQueue = new();
 }
