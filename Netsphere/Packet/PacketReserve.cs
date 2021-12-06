@@ -13,22 +13,11 @@ internal partial class PacketReserve : IPacket
     {
     }
 
-    public PacketReserve(int size)
+    public PacketReserve(int totalSize)
     {
-        var number = size / PacketService.DataPacketSize;
-        var remaining = size - (number * PacketService.DataPacketSize);
-        if (remaining > 0)
-        {
-            number++;
-        }
-
-        if (number > MaxGenes)
-        {
-            throw new ArgumentOutOfRangeException();
-        }
-
-        this.NumberOfGenes = (ushort)number;
-        this.DataSize = (uint)size;
+        var info = PacketService.GetDataInfo(totalSize);
+        this.NumberOfGenes = (ushort)info.NumberOfGenes;
+        this.DataSize = (uint)info.DataSize;
     }
 
     // public bool Response { get; set; }
@@ -39,6 +28,9 @@ internal partial class PacketReserve : IPacket
     [Key(0)]
     public ushort NumberOfGenes { get; set; }
 
+    /// <summary>
+    /// Gets or sets the size of the total data in bytes.
+    /// </summary>
     [Key(1)]
     public uint DataSize { get; set; }
 }

@@ -68,7 +68,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         }
         else if (owner.Memory.Length <= BlockService.MaxBlockSize)
         {// Split into multiple packets.
-            netInterface.SendGenes = CreateSendGenes(owner);
+            netInterface.SendGenes = CreateSendGenes(netInterface, gene, owner);
         }
         else
         {// Block size limit exceeded.
@@ -145,9 +145,31 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         return netInterface;
     }
 
-    internal static NetTerminalGene[] CreateSendGenes(ByteArrayPool.MemoryOwner owner)
+    internal static NetTerminalGene[] CreateSendGenes(NetInterface<TSend, TReceive> netInterface, ulong gene, ByteArrayPool.MemoryOwner owner)
     {
+        ReadOnlySpan<byte> span = owner.Memory.Span;
+        var netTerminal = netInterface.NetTerminal;
+        var info = PacketService.GetDataInfo(owner.Memory.Length);
 
+        var genes = new NetTerminalGene[info.NumberOfGenes];
+        for (var i = 0; i < info.NumberOfGenes; i++)
+        {
+            var size = info.DataSize;
+            if (i == (info.NumberOfGenes - 1))
+            {
+                size = info.LastDataSize;
+            }
+
+            netTerminal.CreateHeader(out var header, gene);
+            PacketService.CreatePacket(ref header, PacketId.Data, 0, span.Slice(0, size), out var sendOwner);
+            span = span.Slice(size);
+
+            genes[i] = new(gene, netInterface);
+            genes[i].SetSend(sendOwner);
+            sendOwner.Return();
+        }
+
+        return genes;
     }
 
     protected NetInterface(NetTerminal netTerminal)

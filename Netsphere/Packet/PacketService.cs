@@ -47,6 +47,18 @@ internal static class PacketService
         _ => false,
     };
 
+    internal static (int NumberOfGenes, int DataSize, int LastDataSize) GetDataInfo(int totalSize)
+    {
+        var numberOfGenes = totalSize / PacketService.DataPacketSize;
+        var lastDataSize = totalSize - (numberOfGenes * PacketService.DataPacketSize);
+        if (lastDataSize > 0)
+        {
+            numberOfGenes++;
+        }
+
+        return (numberOfGenes, PacketService.DataPacketSize, lastDataSize);
+    }
+
     internal static unsafe bool GetData(ref PacketHeader header, ref ByteArrayPool.MemoryOwner owner)
     {
         if (header.Id != PacketId.Data)
