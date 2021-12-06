@@ -27,7 +27,7 @@ public class NetTerminalClient : NetTerminal
 
         var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
         var netInterface = this.SendSingleAndReceive<PacketEncrypt, PacketEncryptResponse>(p);
-        if (netInterface.Receive(out var response) != NetInterfaceReceiveResult.Success)
+        if (netInterface.Receive(out var response) != NetInterfaceResult.Success)
         {
             netInterface.Dispose();
             return NetInterfaceResult.NoEncryptedConnection;
