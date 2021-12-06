@@ -292,7 +292,7 @@ public partial class NetTerminal : IDisposable
             *(PacketHeader*)bp = header;
         }
 
-        this.Terminal.AddRawSend(this.Endpoint, arrayOwner.ToMemoryOwner());
+        this.Terminal.AddRawSend(this.Endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -10,7 +10,7 @@ public class NetTerminalServerPacket
         this.Data = data;
 
         if (this.PacketId == PacketId.Data && this.Data.Length >= PacketService.DataHeaderSize)
-        {
+        {// PacketData
             var span = this.Data.Span;
             DataHeader dataHeader = default;
             fixed (byte* pb = span)
@@ -69,28 +69,23 @@ public class NetTerminalServer : NetTerminal
             return (NetInterfaceResult.Timeout, null);
         }
 
-        try
-        {
-            var received = await netInterface.ReceiveDataAsync(millisecondsToWait).ConfigureAwait(false);
-            if (received.Result == NetInterfaceResult.Timeout)
-            {// Timeout
-                return (received.Result, null);
-            }
-
-            this.receiverQueue.TryDequeue(out _);
-            this.EnsureReceiverQueue();
-            if (received.Result != NetInterfaceResult.Success || received.Value == null)
-            {// Error
-                return (received.Result, null);
-            }
-
-            var packet = new NetTerminalServerPacket(received.PacketId, received.Value);
-            return (received.Result, packet);
+        var received = await netInterface.ReceiveDataAsync(millisecondsToWait).ConfigureAwait(false);
+        if (received.Result == NetInterfaceResult.Timeout)
+        {// Timeout
+            return (received.Result, null);
         }
-        finally
-        {
+
+        this.receiverQueue.TryDequeue(out _);
+        this.EnsureReceiverQueue();
+        if (received.Result != NetInterfaceResult.Success || received.Value == null)
+        {// Error
             netInterface.Dispose();
+            return (received.Result, null);
         }
+
+        var packet = new NetTerminalServerPacket(received.PacketId, received.Value);
+        this.senderQueue.Enqueue(netInterface);
+        return (received.Result, packet);
     }
 
     public void EnsureReceiverQueue()
@@ -105,4 +100,5 @@ public class NetTerminalServer : NetTerminal
     public ushort ReceiverNumber { get; private set; } = DefaultReceiverNumber;
 
     private Queue<NetInterface<object, byte[]>> receiverQueue = new();
+    private Queue<NetInterface<object, byte[]>> senderQueue = new();
 }

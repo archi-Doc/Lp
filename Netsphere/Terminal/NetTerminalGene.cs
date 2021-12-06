@@ -149,13 +149,13 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
             {
                 if (this.NetInterface.RecvGenes?.Length == 1)
                 {
-                    this.NetInterface.TerminalLogger?.Information("ACK");
+                    this.NetInterface.TerminalLogger?.Information($"SendAck {this.Gene.To4Hex()}");
                     this.NetInterface.NetTerminal.SendAck(this.Gene);
                     this.State = NetTerminalGeneState.Complete;
                 }
                 else
                 {
-                    this.NetInterface.TerminalLogger?.Information("ACK2");
+                    this.NetInterface.TerminalLogger?.Information($"SendingAck {this.Gene.To4Hex()}");
                     this.State = NetTerminalGeneState.SendingAck;
                 }
             }
@@ -182,9 +182,11 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
 
     internal void Clear()
     {// // lock (this.NetTerminal.SyncObject)
-        this.NetInterface.Terminal.RemoveInbound(this);
-        this.State = NetTerminalGeneState.Initial;
-        this.Gene = 0;
+        this.NetInterface.TerminalLogger?.Information($"Clear: {this.Gene.To4Hex()}");
+
+        // this.NetInterface.Terminal.RemoveInbound(this);
+        this.State = NetTerminalGeneState.Complete;
+        // this.Gene = 0;
         this.ReceivedId = PacketId.Invalid;
         this.Owner = this.Owner.Return();
     }

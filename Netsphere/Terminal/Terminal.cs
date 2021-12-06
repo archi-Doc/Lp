@@ -203,6 +203,7 @@ public class Terminal
 
     internal void ProcessReceiveCore(ByteArrayPool.MemoryOwner owner, IPEndPoint endPoint, ref PacketHeader header, long currentTicks)
     {
+        // this.TerminalLogger?.Information($"{header.Gene.To4Hex()}, {header.Id}");
         if (this.inboundGenes.TryGetValue(header.Gene, out var gene))
         {// NetTerminalGene is found.
             gene.NetInterface.ProcessReceive(owner, endPoint, ref header, currentTicks, gene);
@@ -219,6 +220,7 @@ public class Terminal
         {
             if (!PacketService.GetData(ref header, ref owner))
             {// Data packet to other packets (e.g Punch, Encrypt).
+                this.TerminalLogger?.Error($"GetData error: {header.Gene.To4Hex()}");
                 return;
             }
         }
@@ -237,6 +239,7 @@ public class Terminal
         }
         else
         {// Not supported
+            this.TerminalLogger?.Error($"Unhandled: {header.Gene.To4Hex()}");
         }
     }
 

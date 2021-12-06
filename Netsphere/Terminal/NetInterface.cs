@@ -543,7 +543,7 @@ WaitForSendCompletionWait:
             {// Ack (header.Gene + data(ulong[]))
                 gene.ReceiveAck();
                 var g = MemoryMarshal.Cast<byte, ulong>(owner.Memory.Span);
-                this.TerminalLogger?.Information($"Recv Ack 1+{g.Length}");
+                this.TerminalLogger?.Information($"Recv Ack 1+{g.Length}, {header.Gene.To4Hex()}");
                 foreach (var x in g)
                 {
                     if (this.Terminal.TryGetInbound(x, out var gene2))
