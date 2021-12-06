@@ -21,6 +21,8 @@ public enum NetInterfaceResult
     NoEncryptedConnection,
     SerializationError,
     DeserializationError,
+    PacketSizeLimit,
+    BlockSizeLimit,
 }
 
 public interface INetInterface<TSend, TReceive> : INetInterface<TSend>
@@ -64,8 +66,14 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
 
             netTerminal.TerminalLogger?.Information($"RegisterSend2  : {gene.To4Hex()}");
         }
-        else
+        else if (owner.Memory.Length <= BlockService.MaxBlockSize)
         {// Split into multiple packets.
+            netInterface.SendGenes = CreateSendGenes(owner);
+        }
+        else
+        {// Block size limit exceeded.
+            netTerminal.GenePool.GetGene();
+            return new NetInterface<TSend, TReceive>(netTerminal, NetInterfaceResult.BlockSizeLimit);
         }
 
         gene = netTerminal.GenePool.GetGene(); // Receive gene
@@ -98,7 +106,10 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
             netTerminal.TerminalLogger?.Information($"RegisterSend   : {gene.To4Hex()}");
         }
         else
-        {// Split into multiple packets.
+        {// Packet size limit exceeded.
+            sendOwner.Return();
+            netTerminal.GenePool.GetGene();
+            return new NetInterface<TSend, TReceive>(netTerminal, NetInterfaceResult.PacketSizeLimit);
         }
 
         gene = netTerminal.GenePool.GetGene(); // Receive gene
@@ -132,6 +143,11 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
 
         netInterface.NetTerminal.Add(netInterface);
         return netInterface;
+    }
+
+    internal static NetTerminalGene[] CreateSendGenes(ByteArrayPool.MemoryOwner owner)
+    {
+
     }
 
     protected NetInterface(NetTerminal netTerminal)

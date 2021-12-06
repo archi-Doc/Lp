@@ -11,11 +11,9 @@ namespace LP;
 
 internal static class BlockPool
 {
-    public const int MaxBlockSize = 1024 * 1024 * 4; // 4MB
-
     static BlockPool()
     {
-        blockPool = new ByteArrayPool(MaxBlockSize);
+        blockPool = new ByteArrayPool(BlockService.MaxBlockSize);
     }
 
     public static ByteArrayPool.Owner Rent() => blockPool.Rent();

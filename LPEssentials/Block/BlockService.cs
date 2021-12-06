@@ -10,6 +10,8 @@ namespace LP;
 
 public static class BlockService
 {
+    public const int MaxBlockSize = 1024 * 1024 * 4; // 4MB
+
     public static bool TrySerialize<T>(T value, out ByteArrayPool.MemoryOwner owner)
     {
         var arrayOwner = BlockPool.Rent();

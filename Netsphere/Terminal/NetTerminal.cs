@@ -165,6 +165,23 @@ public partial class NetTerminal : IDisposable
             }
         }
 
+        if (owner.Memory.Length <= PacketService.SafeMaxPacketSize)
+        {// Single packet.
+        }
+        else if (owner.Memory.Length <= BlockService.MaxBlockSize)
+        {// Split into multiple packets.
+            var reserve = new PacketReserve(owner.Memory.Length);
+            var result = await this.SendPacketAsync(reserve, millisecondsToWait).ConfigureAwait(false);
+            if (result != NetInterfaceResult.Success)
+            {
+                return null;
+            }
+        }
+        else
+        {// Block size limit exceeded.
+            return null;
+        }
+
         var netInterface = this.CreateSendAndReceiveData(packetId, id, owner);
         try
         {

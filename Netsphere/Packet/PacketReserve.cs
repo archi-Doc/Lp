@@ -9,6 +9,28 @@ internal partial class PacketReserve : IPacket
 
     public PacketId Id => PacketId.Reserve;
 
+    public PacketReserve()
+    {
+    }
+
+    public PacketReserve(int size)
+    {
+        var number = size / PacketService.DataPacketSize;
+        var remaining = size - (number * PacketService.DataPacketSize);
+        if (remaining > 0)
+        {
+            number++;
+        }
+
+        if (number > MaxGenes)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        this.NumberOfGenes = (ushort)number;
+        this.DataSize = (uint)size;
+    }
+
     // public bool Response { get; set; }
 
     /// <summary>
