@@ -47,6 +47,14 @@ internal static class PacketService
         _ => false,
     };
 
+    internal static unsafe void InsertGene(Memory<byte> memory, ulong gene)
+    {
+        fixed (byte* pb = memory.Span)
+        {
+            (*(PacketHeader*)pb).Gene = gene;
+        }
+    }
+
     internal static (int NumberOfGenes, int DataSize, int LastDataSize) GetDataInfo(int totalSize)
     {
         var numberOfGenes = totalSize / PacketService.DataPacketSize;

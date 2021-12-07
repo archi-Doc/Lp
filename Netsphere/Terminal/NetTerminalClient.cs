@@ -167,6 +167,23 @@ public class NetTerminalClient : NetTerminal
             }
         }
 
+        if (owner.Memory.Length <= PacketService.SafeMaxPacketSize)
+        {// Single packet.
+        }
+        else if (owner.Memory.Length <= BlockService.MaxBlockSize)
+        {// Split into multiple packets. Send PacketReserve.
+            var reserve = new PacketReserve(owner.Memory.Length);
+            var result = await this.SendPacketAsync(reserve, millisecondsToWait).ConfigureAwait(false);
+            if (result != NetInterfaceResult.Success)
+            {
+                return result;
+            }
+        }
+        else
+        {// Block size limit exceeded.
+            return NetInterfaceResult.BlockSizeLimit;
+        }
+
         var netInterface = this.CreateSendData(packetId, id, owner, out var interfaceResult);
         if (netInterface == null)
         {
