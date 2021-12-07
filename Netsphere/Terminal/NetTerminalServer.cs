@@ -39,7 +39,8 @@ public class NetTerminalServerPacket
 
 public class NetTerminalServer : NetTerminal
 {
-    public const ushort DefaultReceiverNumber = 1;
+    public const ushort DefaultReceiverNumber = 4;
+    public const ushort MaxReceiverNumber = 16;
 
     internal NetTerminalServer(Terminal terminal, NodeInformation nodeInformation, ulong gene)
         : base(terminal, nodeInformation, gene)
@@ -48,9 +49,9 @@ public class NetTerminalServer : NetTerminal
 
     public void SetReceiverNumber(ushort receiverNumber = DefaultReceiverNumber)
     {
-        if (receiverNumber > DefaultReceiverNumber)
+        if (receiverNumber > MaxReceiverNumber)
         {
-            receiverNumber = DefaultReceiverNumber;
+            receiverNumber = MaxReceiverNumber;
         }
         else if (receiverNumber == 0)
         {
@@ -81,23 +82,6 @@ public class NetTerminalServer : NetTerminal
         return (received.Result, packet);
     }
 
-    public void EnsureReceiver()
-    {
-        while (this.receiverQueue.Count < this.ReceiverNumber)
-        {
-            var netInterface = NetInterface<object, byte[]>.CreateReceive(this);
-            this.receiverQueue.Enqueue(netInterface);
-        }
-    }
-
-    public void ClearSender()
-    {
-        while (this.senderQueue.TryDequeue(out var netInterface))
-        {
-            netInterface.Dispose();
-        }
-    }
-
     public async Task<NetInterfaceResult> SendPacketAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
         where TSend : IPacket
     {
@@ -118,6 +102,23 @@ public class NetTerminalServer : NetTerminal
             return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
         }
         finally
+        {
+            netInterface.Dispose();
+        }
+    }
+
+    public void EnsureReceiver()
+    {
+        while (this.receiverQueue.Count < this.ReceiverNumber)
+        {
+            var netInterface = NetInterface<object, byte[]>.CreateReceive(this);
+            this.receiverQueue.Enqueue(netInterface);
+        }
+    }
+
+    public void ClearSender()
+    {
+        while (this.senderQueue.TryDequeue(out var netInterface))
         {
             netInterface.Dispose();
         }

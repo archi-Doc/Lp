@@ -40,9 +40,10 @@ public class SendDataSubcommand : ISimpleCommandAsync<SendDataOptions>
                 return;
             }
 
+            var t = terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
+            Logger.Priority.Information($"t:");
             var r = await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
-            Logger.Priority.Information($"r: {r}");
-            r = await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
+            Logger.Priority.Information($"t: {t.Result}");
             Logger.Priority.Information($"r: {r}");
 
             // await Task.Delay(2000);

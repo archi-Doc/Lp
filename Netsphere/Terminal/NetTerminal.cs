@@ -52,36 +52,6 @@ public partial class NetTerminal : IDisposable
 
     public virtual async Task<NetInterfaceResult> EncryptConnectionAsync() => NetInterfaceResult.NoEncryptedConnection;
 
-    /*public INetInterface<TSend> SendPacket<TSend>(TSend value)
-        where TSend : IPacket
-    {// checked
-        if (!value.AllowUnencrypted)
-        {
-            var result = this.EncryptConnection();
-            if (result != NetInterfaceResult.Success)
-            {
-                return NetInterface<TSend, object>.CreateError(this, result);
-            }
-        }
-
-        return this.CreateSendValue(value);
-    }
-
-    public INetInterface<TSend, TReceive> SendPacketAndReceive<TSend, TReceive>(TSend value)
-        where TSend : IPacket
-    {// checked
-        if (!value.AllowUnencrypted)
-        {
-            var result = this.EncryptConnection();
-            if (result != NetInterfaceResult.Success)
-            {
-                return (INetInterface<TSend, TReceive>)NetInterface<TSend, object>.CreateError(this, result);
-            }
-        }
-
-        return this.CreateSendAndReceiveValue<TSend, TReceive>(value);
-    }*/
-
     public Terminal Terminal { get; }
 
     public bool IsEncrypted => this.embryo != null;

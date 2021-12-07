@@ -467,6 +467,7 @@ WaitForSendCompletionWait:
             }
         }
 
+        this.Error = NetInterfaceResult.Closed;
         return (NetInterfaceResult.Closed, default, data);
     }
 
