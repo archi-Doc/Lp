@@ -97,24 +97,24 @@ public partial class NetTerminal : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal NetInterface<TSend, object> CreateSendValue<TSend>(TSend value)
+    internal NetInterface<TSend, object>? CreateSendValue<TSend>(TSend value, out NetInterfaceResult interfaceResult)
         where TSend : IPacket
     {
-        return NetInterface<TSend, object>.CreateValue(this, value, value.Id, false);
+        return NetInterface<TSend, object>.CreateValue(this, value, value.Id, false, out interfaceResult);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal NetInterface<TSend, TReceive> CreateSendAndReceiveValue<TSend, TReceive>(TSend value)
+    internal NetInterface<TSend, TReceive>? CreateSendAndReceiveValue<TSend, TReceive>(TSend value, out NetInterfaceResult interfaceResult)
         where TSend : IPacket
-        => NetInterface<TSend, TReceive>.CreateValue(this, value, value.Id, true);
+        => NetInterface<TSend, TReceive>.CreateValue(this, value, value.Id, true, out interfaceResult);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal NetInterface<byte[], object> CreateSendData(PacketId packetId, ulong id, ByteArrayPool.MemoryOwner sendOwner)
-        => NetInterface<byte[], object>.CreateData(this, packetId, id, sendOwner, false);
+    internal NetInterface<byte[], object>? CreateSendData(PacketId packetId, ulong id, ByteArrayPool.MemoryOwner sendOwner, out NetInterfaceResult interfaceResult)
+        => NetInterface<byte[], object>.CreateData(this, packetId, id, sendOwner, false, out interfaceResult);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal NetInterface<byte[], byte[]> CreateSendAndReceiveData(PacketId packetId, ulong id, ByteArrayPool.MemoryOwner sendOwner)
-        => NetInterface<byte[], byte[]>.CreateData(this, packetId, id, sendOwner, true);
+    internal NetInterface<byte[], byte[]>? CreateSendAndReceiveData(PacketId packetId, ulong id, ByteArrayPool.MemoryOwner sendOwner, out NetInterfaceResult interfaceResult)
+        => NetInterface<byte[], byte[]>.CreateData(this, packetId, id, sendOwner, true, out interfaceResult);
 
     internal void ProcessSend(UdpClient udp, long currentTicks)
     {

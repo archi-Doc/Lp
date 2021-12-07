@@ -39,18 +39,9 @@ public interface INetInterface<TSend> : IDisposable
 
 internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend, TReceive>
 {
-    internal static NetInterface<TSend, TReceive> CreateError(NetTerminal netTerminal, NetInterfaceResult error)
-    {// Error (Invalid NetInterface)
-        if (error == NetInterfaceResult.Success)
-        {
-            throw new InvalidOperationException();
-        }
-
-        return new NetInterface<TSend, TReceive>(netTerminal, error);
-    }
-
-    internal static NetInterface<TSend, TReceive> CreateData(NetTerminal netTerminal, PacketId packetId, ulong id, ByteArrayPool.MemoryOwner owner, bool receive)
+    internal static NetInterface<TSend, TReceive>? CreateData(NetTerminal netTerminal, PacketId packetId, ulong id, ByteArrayPool.MemoryOwner owner, bool receive, out NetInterfaceResult interfaceResult)
     {// Send and Receive(optional) NetTerminalGene.
+        interfaceResult = NetInterfaceResult.Success;
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
 
         var gene = netTerminal.GenePool.GetGene(); // Send gene
@@ -73,7 +64,8 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         else
         {// Block size limit exceeded.
             netTerminal.GenePool.GetGene();
-            return new NetInterface<TSend, TReceive>(netTerminal, NetInterfaceResult.BlockSizeLimit);
+            interfaceResult = NetInterfaceResult.BlockSizeLimit;
+            return null;
         }
 
         gene = netTerminal.GenePool.GetGene(); // Receive gene
@@ -90,8 +82,9 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         return netInterface;
     }
 
-    internal static NetInterface<TSend, TReceive> CreateValue(NetTerminal netTerminal, TSend value, PacketId id, bool receive)
+    internal static NetInterface<TSend, TReceive>? CreateValue(NetTerminal netTerminal, TSend value, PacketId id, bool receive, out NetInterfaceResult interfaceResult)
     {// Send and Receive(optional) NetTerminalGene.
+        interfaceResult = NetInterfaceResult.Success;
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
 
         var gene = netTerminal.GenePool.GetGene(); // Send gene
@@ -108,8 +101,8 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         else
         {// Packet size limit exceeded.
             sendOwner.Return();
-            netTerminal.GenePool.GetGene();
-            return new NetInterface<TSend, TReceive>(netTerminal, NetInterfaceResult.PacketSizeLimit);
+            interfaceResult = NetInterfaceResult.PacketSizeLimit;
+            return null;
         }
 
         gene = netTerminal.GenePool.GetGene(); // Receive gene
@@ -190,11 +183,6 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
 
     protected NetInterface(NetTerminal netTerminal)
     : base(netTerminal)
-    {
-    }
-
-    protected NetInterface(NetTerminal netTerminal, NetInterfaceResult error)
-    : base(netTerminal, error)
     {
     }
 
@@ -287,18 +275,9 @@ public class NetInterface : IDisposable
         this.NetTerminal = netTerminal;
     }
 
-    protected NetInterface(NetTerminal netTerminal, NetInterfaceResult error)
-    {
-        this.Terminal = netTerminal.Terminal;
-        this.NetTerminal = netTerminal;
-        this.Error = error;
-    }
-
     public Terminal Terminal { get; }
 
     public NetTerminal NetTerminal { get; }
-
-    public NetInterfaceResult Error { get; protected set; }
 
     protected NetInterfaceResult WaitForSendCompletionCore(int millisecondsToWait)
     {
@@ -386,12 +365,10 @@ WaitForSendCompletionWait:
             }
             catch
             {
-                this.Error = NetInterfaceResult.Closed;
                 return NetInterfaceResult.Closed;
             }
         }
 
-        this.Error = NetInterfaceResult.Closed;
         return NetInterfaceResult.Closed;
     }
 
@@ -462,12 +439,10 @@ WaitForSendCompletionWait:
             }
             catch
             {
-                this.Error = NetInterfaceResult.Closed;
                 return (NetInterfaceResult.Closed, default, data);
             }
         }
 
-        this.Error = NetInterfaceResult.Closed;
         return (NetInterfaceResult.Closed, default, data);
     }
 

@@ -47,7 +47,12 @@ public class NetTerminalClient : NetTerminal
             }
         }
 
-        var netInterface = this.CreateSendValue(value);
+        var netInterface = this.CreateSendValue(value, out var interfaceResult);
+        if (netInterface == null)
+        {
+            return interfaceResult;
+        }
+
         try
         {
             return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
@@ -70,7 +75,12 @@ public class NetTerminalClient : NetTerminal
             }
         }
 
-        var netInterface = this.CreateSendAndReceiveValue<TSend, TReceive>(value);
+        var netInterface = this.CreateSendAndReceiveValue<TSend, TReceive>(value, out var interfaceResult);
+        if (netInterface == null)
+        {
+            return (interfaceResult, default);
+        }
+
         try
         {
             return await netInterface.ReceiveAsync(millisecondsToWait).ConfigureAwait(false);
@@ -153,11 +163,16 @@ public class NetTerminalClient : NetTerminal
             var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
             if (result != NetInterfaceResult.Success)
             {
-                return default;
+                return result;
             }
         }
 
-        var netInterface = this.CreateSendData(packetId, id, owner);
+        var netInterface = this.CreateSendData(packetId, id, owner, out var interfaceResult);
+        if (netInterface == null)
+        {
+            return interfaceResult;
+        }
+
         try
         {
             return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
@@ -196,7 +211,12 @@ public class NetTerminalClient : NetTerminal
             return (NetInterfaceResult.BlockSizeLimit, default);
         }
 
-        var netInterface = this.CreateSendAndReceiveData(packetId, id, owner);
+        var netInterface = this.CreateSendAndReceiveData(packetId, id, owner, out var interfaceResult);
+        if (netInterface == null)
+        {
+            return (interfaceResult, default);
+        }
+
         try
         {
             var r = await netInterface.ReceiveDataAsync(millisecondsToWait).ConfigureAwait(false);
