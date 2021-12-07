@@ -139,7 +139,7 @@ public partial class NetTerminal : IDisposable
         => NetInterface<TSend, TReceive>.CreateValue(this, value, value.Id, true);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal NetInterface<byte[], object> CreateSendData(PacketId packetId, uint id, ByteArrayPool.MemoryOwner sendOwner)
+    internal NetInterface<byte[], object> CreateSendData(PacketId packetId, ulong id, ByteArrayPool.MemoryOwner sendOwner)
         => NetInterface<byte[], object>.CreateData(this, packetId, id, sendOwner, false);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

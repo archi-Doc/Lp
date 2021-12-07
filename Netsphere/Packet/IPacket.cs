@@ -26,6 +26,13 @@ public enum PacketId : byte
     GetNodeResponse,
 }
 
+/// <summary>
+/// Packet class requirements.<br/>
+/// 1. Inherit IPacket interface.<br/>
+/// 2. Has TinyhandObjectAttribute (Tinyhand serializable).<br/>
+/// 3. Has unique PacketId.<br/>
+/// 4. Length of serialized byte array is less than or equal to <see cref="PacketService.DataPacketSize"/>.
+/// </summary>
 public interface IPacket : IBlock
 {
     public new PacketId Id { get; }
