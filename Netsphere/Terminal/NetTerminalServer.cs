@@ -20,7 +20,7 @@ public class NetTerminalServerPacket
             }
 
             span = span.Slice(PacketService.DataHeaderSize);
-            if (Arc.Crypto.FarmHash.Hash64(span) != dataHeader.Checksum)
+            if (!dataHeader.ChecksumEquals(Arc.Crypto.FarmHash.Hash64(span)))
             {
                 return;
             }
@@ -35,7 +35,7 @@ public class NetTerminalServerPacket
 
     public ulong FirstGene { get; }
 
-    public uint Id { get; }
+    public ulong Id { get; }
 
     public Memory<byte> Data { get; }
 }

@@ -78,7 +78,7 @@ internal static class PacketService
         }
 
         span = span.Slice(DataHeaderSize);
-        if (Arc.Crypto.FarmHash.Hash64(span) != dataHeader.Checksum)
+        if (!dataHeader.ChecksumEquals(Arc.Crypto.FarmHash.Hash64(span)))
         {
             return false;
         }
@@ -107,10 +107,7 @@ internal static class PacketService
         }
 
         span = span.Slice(PacketService.HeaderSize);
-        DataHeader dataHeader = default;
-        dataHeader.PacketId = packetId;
-        dataHeader.Id = id;
-        dataHeader.Checksum = Arc.Crypto.FarmHash.Hash64(data);
+        var dataHeader = new DataHeader(id, packetId, Arc.Crypto.FarmHash.Hash64(data));
         fixed (byte* pb = span)
         {
             *(DataHeader*)pb = dataHeader;

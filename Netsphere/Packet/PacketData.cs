@@ -14,14 +14,26 @@ internal partial class PacketData : IPacket
 }
 
 [StructLayout(LayoutKind.Explicit)]
-internal struct DataHeader
+internal readonly struct DataHeader
 {
-    [FieldOffset(0)]
-    public PacketId PacketId;
+    public static ulong ChecksumMask = 0xffffffffffffff00ul;
 
-    [FieldOffset(4)]
-    public uint Id;
+    public DataHeader(ulong id, PacketId packetId, ulong checksum)
+    {
+        this.Id = id;
+        this.PacketId = packetId;
+        this.Checksum = (checksum & ChecksumMask) | (byte)packetId;
+    }
+
+    public bool ChecksumEquals(ulong checksum)
+        => (checksum & ChecksumMask) == (this.Checksum & ChecksumMask);
+
+    [FieldOffset(0)]
+    public readonly ulong Id;
 
     [FieldOffset(8)]
-    public ulong Checksum; // FarmHash64
+    public readonly PacketId PacketId;
+
+    [FieldOffset(8)]
+    public readonly ulong Checksum; // 1-7bytes, FarmHash64
 }
