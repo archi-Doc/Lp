@@ -177,7 +177,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
 
         var receiveGene = netTerminal.GenePool.GetGene();
-        var sendGene = netTerminal.GenePool.GetGene();
+        netInterface.StandbyGene = netTerminal.GenePool.GetGene();
         var gene = new NetTerminalGene(receiveGene, netInterface);
         netInterface.RecvGenes = new NetTerminalGene[] { gene, };
         gene.SetReceive();
@@ -495,6 +495,7 @@ WaitForSendCompletionWait:
 #pragma warning disable SA1401 // Fields should be private
     internal NetTerminalGene[]? SendGenes;
     internal NetTerminalGene[]? RecvGenes;
+    internal ulong StandbyGene;
 #pragma warning restore SA1401 // Fields should be private
 
     internal void ProcessSend(UdpClient udp, long currentTicks)

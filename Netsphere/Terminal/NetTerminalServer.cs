@@ -58,16 +58,13 @@ public class NetTerminalServer : NetTerminal
         }
 
         this.ReceiverNumber = receiverNumber;
-        this.EnsureInterfaceQueue();
+        this.EnsureInterface();
     }
 
     public async Task<(NetInterfaceResult Result, NetTerminalServerPacket? Packet)> ReceiveAsync(int millisecondsToWait = DefaultMillisecondsToWait)
     {
-        NetInterface<object, byte[]>? netInterface;
-        if (!this.interfaceQueue.TryPeek(out netInterface))
-        {
-            return (NetInterfaceResult.Timeout, null);
-        }
+        this.EnsureInterface();
+        var netInterface = this.GetInterface();
 
         var received = await netInterface.ReceiveDataAsync(millisecondsToWait).ConfigureAwait(false);
         if (received.Result == NetInterfaceResult.Timeout)
@@ -75,20 +72,17 @@ public class NetTerminalServer : NetTerminal
             return (received.Result, null);
         }
 
-        this.interfaceQueue.TryDequeue(out _);
-        this.EnsureInterfaceQueue();
         if (received.Result != NetInterfaceResult.Success || received.Value == null)
         {// Error
-            netInterface.Dispose();
+            this.NextInterface();
             return (received.Result, null);
         }
 
         var packet = new NetTerminalServerPacket(received.PacketId, received.Value);
-        this.senderQueue.Enqueue(netInterface);
         return (received.Result, packet);
     }
 
-    public void EnsureInterfaceQueue()
+    public void EnsureInterface()
     {
         while (this.interfaceQueue.Count < this.ReceiverNumber)
         {
@@ -97,8 +91,39 @@ public class NetTerminalServer : NetTerminal
         }
     }
 
+    public async Task<NetInterfaceResult> SendPacketAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
+        where TSend : IPacket
+    {
+        if (!value.AllowUnencrypted && !this.IsEncrypted)
+        {
+            return NetInterfaceResult.NoEncryptedConnection;
+        }
+
+        var netInterface = this.GetInterface();
+        netInterface.SetSend(value);
+        try
+        {
+            return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
+        }
+        finally
+        {
+            this.NextInterface();
+        }
+    }
+
+    private NetInterface<object, byte[]> GetInterface()
+    {
+        this.EnsureInterface();
+        return this.interfaceQueue.Peek();
+    }
+
+    private void NextInterface()
+    {
+        this.EnsureInterface();
+        this.interfaceQueue.Dequeue().Dispose();
+    }
+
     public ushort ReceiverNumber { get; private set; } = DefaultReceiverNumber;
 
-    private NetInterface<object, byte[]> currentInterface = default!;
     private Queue<NetInterface<object, byte[]>> interfaceQueue = new();
 }
