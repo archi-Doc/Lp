@@ -17,6 +17,7 @@ public class Server
         this.NetTerminal = terminal;
         while (true)
         {
+            terminal.ClearSender();
             var received = await terminal.ReceiveAsync();
             if (received.Result == NetInterfaceResult.Success && received.Packet is { } packet)
             {
@@ -45,7 +46,6 @@ public class Server
     {
         if (packet.PacketId == PacketId.Punch)
         {
-            // this.NetTerminal.SendAck();
             return this.ProcessEssential_Punch(packet);
         }
 
@@ -59,6 +59,7 @@ public class Server
             return false;
         }
 
+        // this.NetTerminal.SendAck(packet.FirstGene);
         TimeCorrection.AddCorrection(punch.UtcTicks);
 
         var response = new PacketPunchResponse();
@@ -66,6 +67,7 @@ public class Server
         response.UtcTicks = Ticks.GetUtcNow();
 
         var task = this.NetTerminal.SendPacketAsync(response);
+        this.NetTerminal.TerminalLogger?.Information("p");
         return true;
     }
 }

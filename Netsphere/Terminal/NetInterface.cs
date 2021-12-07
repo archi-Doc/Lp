@@ -233,15 +233,15 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         return (NetInterfaceResult.Success, value);
     }
 
-    public async Task<(NetInterfaceResult Result, PacketId PacketId, byte[]? Value)> ReceiveDataAsync(int millisecondsToWait = 2000)
+    public async Task<(NetInterfaceResult Result, PacketId PacketId, ulong FirstGene, byte[]? Value)> ReceiveDataAsync(int millisecondsToWait = 2000)
     {
         var r = await this.ReceiveAsyncCore(millisecondsToWait).ConfigureAwait(false);
         if (r.Result != NetInterfaceResult.Success)
         {
-            return (r.Result, default, default);
+            return (r.Result, default, 0, default);
         }
 
-        return (NetInterfaceResult.Success, r.PacketId, r.Received.ToArray());
+        return (NetInterfaceResult.Success, r.PacketId, r.FirstGene, r.Received.ToArray());
     }
 
     public NetInterfaceResult WaitForSendCompletion(int millisecondsToWait = 2000)
@@ -395,9 +395,10 @@ WaitForSendCompletionWait:
         return NetInterfaceResult.Closed;
     }
 
-    protected NetInterfaceResult ReceiveCore(out PacketId packetId, out ReadOnlyMemory<byte> data, int millisecondsToWait)
+    protected NetInterfaceResult ReceiveCore(out PacketId packetId, out ulong firstGene, out ReadOnlyMemory<byte> data, int millisecondsToWait)
     {
         packetId = PacketId.Invalid;
+        firstGene = 0;
         data = default;
         var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);
 
@@ -411,7 +412,7 @@ WaitForSendCompletionWait:
 
             lock (this.NetTerminal.SyncObject)
             {
-                if (this.ReceivedGeneToData(out packetId, ref data))
+                if (this.ReceivedGeneToData(out packetId, out firstGene, ref data))
                 {
                     return NetInterfaceResult.Success;
                 }
@@ -434,7 +435,7 @@ WaitForSendCompletionWait:
         return NetInterfaceResult.Closed;
     }
 
-    protected async Task<(NetInterfaceResult Result, PacketId PacketId, ReadOnlyMemory<byte> Received)> ReceiveAsyncCore(int millisecondsToWait)
+    protected async Task<(NetInterfaceResult Result, PacketId PacketId, ulong FirstGene, ReadOnlyMemory<byte> Received)> ReceiveAsyncCore(int millisecondsToWait)
     {
         ReadOnlyMemory<byte> data = default;
         var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);
@@ -444,14 +445,14 @@ WaitForSendCompletionWait:
             if (Stopwatch.GetTimestamp() >= end)
             {
                 this.TerminalLogger?.Information($"Receive timeout.");
-                return (NetInterfaceResult.Timeout, default, data);
+                return (NetInterfaceResult.Timeout, default, 0, data);
             }
 
             lock (this.NetTerminal.SyncObject)
             {
-                if (this.ReceivedGeneToData(out var packetId, ref data))
+                if (this.ReceivedGeneToData(out var packetId, out var firstGene, ref data))
                 {
-                    return (NetInterfaceResult.Success, packetId, data);
+                    return (NetInterfaceResult.Success, packetId, firstGene, data);
                 }
             }
 
@@ -463,18 +464,19 @@ WaitForSendCompletionWait:
             catch
             {
                 this.Error = NetInterfaceResult.Closed;
-                return (NetInterfaceResult.Closed, default, data);
+                return (NetInterfaceResult.Closed, default, 0, data);
             }
         }
 
-        return (NetInterfaceResult.Closed, default, data);
+        return (NetInterfaceResult.Closed, default, 0, data);
     }
 
     internal ISimpleLogger? TerminalLogger => this.Terminal.TerminalLogger;
 
-    protected bool ReceivedGeneToData(out PacketId packetId, ref ReadOnlyMemory<byte> data)
+    protected bool ReceivedGeneToData(out PacketId packetId, out ulong firstGene, ref ReadOnlyMemory<byte> data)
     {// lock (this.NetTerminal.SyncObject)
         packetId = PacketId.Invalid;
+        firstGene = 0;
         if (this.RecvGenes == null)
         {// Empty
             return true;
@@ -487,6 +489,7 @@ WaitForSendCompletionWait:
             }
 
             packetId = this.RecvGenes[0].ReceivedId;
+            firstGene = this.RecvGenes[0].Gene;
             data = this.RecvGenes[0].Owner.Memory;
             return true;
         }
@@ -514,6 +517,7 @@ WaitForSendCompletionWait:
         }
 
         packetId = this.RecvGenes[0].ReceivedId;
+        firstGene = this.RecvGenes[0].Gene;
         data = buffer;
         return true;
     }

@@ -4,9 +4,10 @@ namespace Netsphere;
 
 public class NetTerminalServerPacket
 {
-    public unsafe NetTerminalServerPacket(PacketId packetId, byte[] data)
+    public unsafe NetTerminalServerPacket(PacketId packetId, ulong firstGene, byte[] data)
     {
         this.PacketId = packetId;
+        this.FirstGene = firstGene;
         this.Data = data;
 
         if (this.PacketId == PacketId.Data && this.Data.Length >= PacketService.DataHeaderSize)
@@ -31,6 +32,8 @@ public class NetTerminalServerPacket
     }
 
     public PacketId PacketId { get; }
+
+    public ulong FirstGene { get; }
 
     public uint Id { get; }
 
@@ -58,14 +61,12 @@ public class NetTerminalServer : NetTerminal
         }
 
         this.ReceiverNumber = receiverNumber;
-        this.EnsureInterface();
+        this.EnsureReceiver();
     }
 
     public async Task<(NetInterfaceResult Result, NetTerminalServerPacket? Packet)> ReceiveAsync(int millisecondsToWait = DefaultMillisecondsToWait)
     {
-        this.EnsureInterface();
-        var netInterface = this.GetInterface();
-
+        var netInterface = this.GetReceiver();
         var received = await netInterface.ReceiveDataAsync(millisecondsToWait).ConfigureAwait(false);
         if (received.Result == NetInterfaceResult.Timeout)
         {// Timeout
@@ -74,20 +75,29 @@ public class NetTerminalServer : NetTerminal
 
         if (received.Result != NetInterfaceResult.Success || received.Value == null)
         {// Error
-            this.NextInterface();
+            this.NextReceiver();
             return (received.Result, null);
         }
 
-        var packet = new NetTerminalServerPacket(received.PacketId, received.Value);
+        this.ReceiverToSender();
+        var packet = new NetTerminalServerPacket(received.PacketId, received.FirstGene, received.Value);
         return (received.Result, packet);
     }
 
-    public void EnsureInterface()
+    public void EnsureReceiver()
     {
-        while (this.interfaceQueue.Count < this.ReceiverNumber)
+        while (this.receiverQueue.Count < this.ReceiverNumber)
         {
             var netInterface = NetInterface<object, byte[]>.CreateReceive(this);
-            this.interfaceQueue.Enqueue(netInterface);
+            this.receiverQueue.Enqueue(netInterface);
+        }
+    }
+
+    public void ClearSender()
+    {
+        while (this.senderQueue.TryDequeue(out var netInterface))
+        {
+            netInterface.Dispose();
         }
     }
 
@@ -99,7 +109,12 @@ public class NetTerminalServer : NetTerminal
             return NetInterfaceResult.NoEncryptedConnection;
         }
 
-        var netInterface = this.GetInterface();
+        NetInterface<object, byte[]>? netInterface;
+        if (!this.senderQueue.TryDequeue(out netInterface))
+        {
+            return NetInterfaceResult.NoEncryptedConnection;
+        }
+
         netInterface.SetSend(value);
         try
         {
@@ -107,23 +122,32 @@ public class NetTerminalServer : NetTerminal
         }
         finally
         {
-            this.NextInterface();
+            this.Dispose();
         }
     }
 
-    private NetInterface<object, byte[]> GetInterface()
+    private NetInterface<object, byte[]> GetReceiver()
     {
-        this.EnsureInterface();
-        return this.interfaceQueue.Peek();
+        this.EnsureReceiver();
+        return this.receiverQueue.Peek();
     }
 
-    private void NextInterface()
+    private void NextReceiver()
     {
-        this.EnsureInterface();
-        this.interfaceQueue.Dequeue().Dispose();
+        this.EnsureReceiver();
+        this.receiverQueue.Dequeue().Dispose();
+    }
+
+    private void ReceiverToSender()
+    {
+        if (this.receiverQueue.TryDequeue(out var netInterface))
+        {
+            this.senderQueue.Enqueue(netInterface);
+        }
     }
 
     public ushort ReceiverNumber { get; private set; } = DefaultReceiverNumber;
 
-    private Queue<NetInterface<object, byte[]>> interfaceQueue = new();
+    private Queue<NetInterface<object, byte[]>> senderQueue = new();
+    private Queue<NetInterface<object, byte[]>> receiverQueue = new();
 }
