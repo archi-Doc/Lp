@@ -182,7 +182,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
 
     internal void Clear()
     {// // lock (this.NetTerminal.SyncObject)
-        this.NetInterface.TerminalLogger?.Information($"Clear: {this.Gene.To4Hex()}");
+        // this.NetInterface.TerminalLogger?.Information($"Clear: {this.Gene.To4Hex()}");
 
         // this.NetInterface.Terminal.RemoveInbound(this);
         this.State = NetTerminalGeneState.Complete;

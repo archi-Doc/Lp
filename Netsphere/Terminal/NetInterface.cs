@@ -249,6 +249,32 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
 
     public Task<NetInterfaceResult> WaitForSendCompletionAsync(int millisecondsToWait = 2000)
         => this.WaitForSendCompletionAsyncCore(millisecondsToWait);
+
+    internal bool SetSend<TValue>(TValue value)
+        where TValue : IPacket
+    {
+        if (this.SendGenes != null)
+        {
+            return false;
+        }
+
+        var gene = this.StandbyGene;
+        this.NetTerminal.CreateHeader(out var header, gene);
+        PacketService.CreatePacket(ref header, value, value.Id, out var sendOwner);
+        if (sendOwner.Memory.Length <= PacketService.SafeMaxPacketSize)
+        {// Single packet.
+            var ntg = new NetTerminalGene(gene, this);
+            this.SendGenes = new NetTerminalGene[] { ntg, };
+            ntg.SetSend(sendOwner);
+
+            this.TerminalLogger?.Information($"RegisterSend3  : {gene.To4Hex()}");
+            return true;
+        }
+        else
+        {// Packet size limit exceeded.
+            return false;
+        }
+    }
 }
 
 public class NetInterface : IDisposable
