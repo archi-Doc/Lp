@@ -88,7 +88,7 @@ internal static class PacketService
         return true;
     }
 
-    internal static unsafe void CreatePacket(ref PacketHeader header, PacketId packetId, uint id, ReadOnlySpan<byte> data, out ByteArrayPool.MemoryOwner owner)
+    internal static unsafe void CreatePacket(ref PacketHeader header, PacketId packetId, ulong id, ReadOnlySpan<byte> data, out ByteArrayPool.MemoryOwner owner)
     {// PacketHeader, DataHeader, Data
         if (data.Length > PacketService.SafeMaxPacketSize)
         {

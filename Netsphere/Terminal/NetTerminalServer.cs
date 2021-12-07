@@ -4,10 +4,9 @@ namespace Netsphere;
 
 public class NetTerminalServerPacket
 {
-    public unsafe NetTerminalServerPacket(PacketId packetId, ulong firstGene, byte[] data)
+    public unsafe NetTerminalServerPacket(PacketId packetId, byte[] data)
     {
         this.PacketId = packetId;
-        this.FirstGene = firstGene;
         this.Data = data;
 
         if (this.PacketId == PacketId.Data && this.Data.Length >= PacketService.DataHeaderSize)
@@ -32,8 +31,6 @@ public class NetTerminalServerPacket
     }
 
     public PacketId PacketId { get; }
-
-    public ulong FirstGene { get; }
 
     public ulong Id { get; }
 
@@ -80,7 +77,7 @@ public class NetTerminalServer : NetTerminal
         }
 
         this.ReceiverToSender();
-        var packet = new NetTerminalServerPacket(received.PacketId, received.FirstGene, received.Value);
+        var packet = new NetTerminalServerPacket(received.PacketId, received.Value);
         return (received.Result, packet);
     }
 

@@ -14,28 +14,6 @@ public class NetTerminalClient : NetTerminal
     {// NodeInformation: Managed
     }
 
-    /*public override NetInterfaceResult EncryptConnection()
-    {
-        if (this.IsEncrypted)
-        {// Encrypted
-            return NetInterfaceResult.Success;
-        }
-        else if (this.NodeInformation == null)
-        {// Unmanaged
-            return NetInterfaceResult.NoNodeInformation;
-        }
-
-        var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
-        var netInterface = this.SendPacketAndReceive<PacketEncrypt, PacketEncryptResponse>(p);
-        if (netInterface.Receive(out var response) != NetInterfaceResult.Success)
-        {
-            netInterface.Dispose();
-            return NetInterfaceResult.NoEncryptedConnection;
-        }
-
-        return this.CreateEmbryo(p.Salt);
-    }*/
-
     public override async Task<NetInterfaceResult> EncryptConnectionAsync()
     {
         if (this.IsEncrypted)
@@ -186,7 +164,7 @@ public class NetTerminalClient : NetTerminal
         }
     }
 
-    private async Task<(NetInterfaceResult Result, byte[]? Value)> SendAndReceiveDataAsync(bool encrypt, PacketId packetId, uint id, ByteArrayPool.MemoryOwner owner, int millisecondsToWait = DefaultMillisecondsToWait)
+    private async Task<(NetInterfaceResult Result, byte[]? Value)> SendAndReceiveDataAsync(bool encrypt, PacketId packetId, ulong id, ByteArrayPool.MemoryOwner owner, int millisecondsToWait = DefaultMillisecondsToWait)
     {
         if (encrypt)
         {

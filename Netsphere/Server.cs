@@ -17,19 +17,25 @@ public class Server
         this.NetTerminal = terminal;
         while (true)
         {
-            terminal.ClearSender();
-            var received = await terminal.ReceiveAsync();
-            if (received.Result == NetInterfaceResult.Success && received.Packet is { } packet)
+            try
             {
-                if (this.ProcessEssential(packet))
+                var received = await terminal.ReceiveAsync();
+                if (received.Result == NetInterfaceResult.Success && received.Packet is { } packet)
                 {
-                    continue;
+                    if (this.ProcessEssential(packet))
+                    {
+                        continue;
+                    }
+                }
+                else if (received.Result == NetInterfaceResult.Timeout ||
+                    received.Result == NetInterfaceResult.Closed)
+                {
+                    break;
                 }
             }
-            else if (received.Result == NetInterfaceResult.Timeout ||
-                received.Result == NetInterfaceResult.Closed)
+            finally
             {
-                break;
+                terminal.ClearSender();
             }
         }
     }

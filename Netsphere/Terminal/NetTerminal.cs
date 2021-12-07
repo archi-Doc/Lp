@@ -143,7 +143,7 @@ public partial class NetTerminal : IDisposable
         => NetInterface<byte[], object>.CreateData(this, packetId, id, sendOwner, false);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal NetInterface<byte[], byte[]> CreateSendAndReceiveData(PacketId packetId, uint id, ByteArrayPool.MemoryOwner sendOwner)
+    internal NetInterface<byte[], byte[]> CreateSendAndReceiveData(PacketId packetId, ulong id, ByteArrayPool.MemoryOwner sendOwner)
         => NetInterface<byte[], byte[]>.CreateData(this, packetId, id, sendOwner, true);
 
     internal void ProcessSend(UdpClient udp, long currentTicks)
