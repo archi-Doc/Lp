@@ -91,17 +91,12 @@ public class NetTerminalClient : NetTerminal
         Task<NetInterfaceResult> task;
         if (value is IPacket packet)
         {
-            task = this.SendDataAsync(!packet.AllowUnencrypted, packet.Id, 0, owner, millisecondsToWait);
+            task = this.SendDataAsync(!packet.AllowUnencrypted, packet.Id, (ulong)packet.Id, owner, millisecondsToWait);
         }
         else
         {
-            ulong id;
-            if (value is IBlock block)
-            {
-                id = block.Id;
-            }
-
-            task = this.SendDataAsync(true, PacketId.Data, (ulong)id, owner, millisecondsToWait);
+            var id = BlockService.GetId<TSend>();
+            task = this.SendDataAsync(true, PacketId.Data, id, owner, millisecondsToWait);
         }
 
         owner.Return();
@@ -119,13 +114,16 @@ public class NetTerminalClient : NetTerminal
         }
 
         Task<(NetInterfaceResult Result, byte[]? Value)> task;
+        ulong id;
         if (value is IPacket packet)
         {
-            task = this.SendAndReceiveDataAsync(!packet.AllowUnencrypted, packet.Id, 0, owner, millisecondsToWait);
+            id = (ulong)packet.Id | ((ulong)BlockService.GetId<TReceive>() << 32);
+            task = this.SendAndReceiveDataAsync(!packet.AllowUnencrypted, packet.Id, id, owner, millisecondsToWait);
         }
         else
         {
-            task = this.SendAndReceiveDataAsync(true, PacketId.Data, 0, owner, millisecondsToWait);
+            id = BlockService.GetId<TSend>() | ((ulong)BlockService.GetId<TReceive>() << 32);
+            task = this.SendAndReceiveDataAsync(true, PacketId.Data, id, owner, millisecondsToWait);
         }
 
         owner.Return();
@@ -145,7 +143,7 @@ public class NetTerminalClient : NetTerminal
         return (NetInterfaceResult.Success, received);
     }
 
-    public async Task<(NetInterfaceResult Result, byte[]? Value)> SendAndReceiveDataAsync(uint id, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<(NetInterfaceResult Result, byte[]? Value)> SendAndReceiveDataAsync(ulong id, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
         => await this.SendAndReceiveDataAsync(true, PacketId.Data, id, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);
 
     private async Task<NetInterfaceResult> SendDataAsync(bool encrypt, PacketId packetId, ulong id, ByteArrayPool.MemoryOwner owner, int millisecondsToWait = DefaultMillisecondsToWait)

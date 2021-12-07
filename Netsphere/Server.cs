@@ -38,6 +38,8 @@ public class Server
                 terminal.ClearSender();
             }
         }
+
+        terminal.TerminalLogger?.Information($"Server offline.");
     }
 
     public ThreadCoreBase? Core => this.NetControl.Terminal.Core;

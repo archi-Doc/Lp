@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 
-namespace Netsphere;
+namespace LP;
 
 /// <summary>
 /// Block class requirements.<br/>

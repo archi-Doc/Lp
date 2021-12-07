@@ -119,7 +119,7 @@ public class NetTerminalServer : NetTerminal
         }
         finally
         {
-            this.Dispose();
+            netInterface.Dispose();
         }
     }
 
