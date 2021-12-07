@@ -141,7 +141,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
 
         void SendAck()
         {
-            if (PacketService.IsManualAck(this.ReceivedId))
+            if (!this.NetInterface.NetTerminal.IsEncrypted && PacketService.IsManualAck(this.ReceivedId))
             {
                 this.State = NetTerminalGeneState.Complete;
             }

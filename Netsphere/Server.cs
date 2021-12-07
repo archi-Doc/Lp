@@ -59,7 +59,6 @@ public class Server
             return false;
         }
 
-        // this.NetTerminal.SendAck(packet.FirstGene);
         TimeCorrection.AddCorrection(punch.UtcTicks);
 
         var response = new PacketPunchResponse();
@@ -67,7 +66,6 @@ public class Server
         response.UtcTicks = Ticks.GetUtcNow();
 
         var task = this.NetTerminal.SendPacketAsync(response);
-        this.NetTerminal.TerminalLogger?.Information("p");
         return true;
     }
 }

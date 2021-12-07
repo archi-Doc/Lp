@@ -9,5 +9,8 @@ namespace Netsphere;
 
 public interface IBlock
 {
+    /// <summary>
+    /// Gets an identifier of the block.
+    /// </summary>
     public uint Id { get; }
 }

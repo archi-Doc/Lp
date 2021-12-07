@@ -40,7 +40,7 @@ internal static class PacketService
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static bool IsManualAck(PacketId id) => id switch
-    {
+    {// Manual ack (only for unencrypted transfer)
         PacketId.Encrypt => true,
         PacketId.Punch => true,
         PacketId.Ping => true,

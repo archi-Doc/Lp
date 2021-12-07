@@ -26,9 +26,11 @@ public enum PacketId : byte
     GetNodeResponse,
 }
 
-public interface IPacket
+public interface IPacket : IBlock
 {
-    public PacketId Id { get; }
+    public new PacketId Id { get; }
+
+    uint IBlock.Id => (uint)this.Id;
 
     public bool AllowUnencrypted => false;
 }
