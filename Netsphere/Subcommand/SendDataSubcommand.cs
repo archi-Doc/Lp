@@ -56,7 +56,7 @@ public class SendDataSubcommand : ISimpleCommandAsync<SendDataOptions>
             Logger.Priority.Information($"r: {r}");
 
             var p2 = new TestDataClass();
-            p2.Y = new byte[1000];
+            p2.Y = new byte[2000];
             var t2 = await terminal.SendAndReceiveAsync<TestDataClass, TestDataClass>(p2);
             Logger.Priority.Information($"t2: {t2}");
 

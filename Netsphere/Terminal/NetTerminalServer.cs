@@ -77,6 +77,16 @@ public class NetTerminalServer : NetTerminal
             return (received.Result, null);
         }
 
+        if (received.PacketId == PacketId.Reserve)
+        {
+            if (!TinyhandSerializer.TryDeserialize<PacketReserve>(received.Value, out var reservePacket))
+            {
+                this.NextReceiver();
+                return (NetInterfaceResult.DeserializationError, null);
+            }
+
+        }
+
         this.ReceiverToSender();
         var packet = new NetTerminalServerPacket(received.PacketId, received.Value);
         return (received.Result, packet);
