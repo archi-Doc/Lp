@@ -107,6 +107,31 @@ public class NetTerminalServer : NetTerminal
         }
     }
 
+    public async Task<NetInterfaceResult> SendAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
+    {// checked
+        if (!BlockService.TrySerialize(value, out var owner))
+        {
+            return NetInterfaceResult.SerializationError;
+        }
+
+        Task<NetInterfaceResult> task;
+        if (value is IPacket packet)
+        {
+            task = this.SendDataAsync(!packet.AllowUnencrypted, packet.Id, (ulong)packet.Id, owner, millisecondsToWait);
+        }
+        else
+        {
+            var id = BlockService.GetId<TSend>();
+            task = this.SendDataAsync(true, PacketId.Data, id, owner, millisecondsToWait);
+        }
+
+        owner.Return();
+        return await task.ConfigureAwait(false);
+    }
+
+    public async Task<NetInterfaceResult> SendDataAsync(ulong id, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
+        => await this.SendDataAsync(true, PacketId.Data, id, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);
+
     public void EnsureReceiver()
     {
         while (this.receiverQueue.Count < this.ReceiverNumber)
@@ -119,6 +144,46 @@ public class NetTerminalServer : NetTerminal
     public void ClearSender()
     {
         while (this.senderQueue.TryDequeue(out var netInterface))
+        {
+            netInterface.Dispose();
+        }
+    }
+
+    private async Task<NetInterfaceResult> SendDataAsync(bool encrypt, PacketId packetId, ulong id, ByteArrayPool.MemoryOwner owner, int millisecondsToWait = DefaultMillisecondsToWait)
+    {// checked
+        if (encrypt && !this.IsEncrypted)
+        {
+            return NetInterfaceResult.NoEncryptedConnection;
+        }
+        else if (owner.Memory.Length > BlockService.MaxBlockSize)
+        {// Block size limit exceeded.
+            return NetInterfaceResult.BlockSizeLimit;
+        }
+
+        NetInterface<object, byte[]>? netInterface;
+        if (!this.senderQueue.TryDequeue(out netInterface))
+        {
+            return NetInterfaceResult.NoEncryptedConnection;
+        }
+
+        if (owner.Memory.Length <= PacketService.SafeMaxPacketSize)
+        {// Single packet.
+            netInterface.SetSend(packetId, id, owner);
+        }
+        else
+        {// Split into multiple packets. Send PacketReserve.
+            var reserve = new PacketReserve(owner.Memory.Length);
+            netInterface.SetSend(reserve);
+            await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
+        }
+
+        // netInterface.SetSend(reserve);
+
+        try
+        {
+            return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
+        }
+        finally
         {
             netInterface.Dispose();
         }

@@ -67,6 +67,31 @@ internal static class PacketService
         return (numberOfGenes, PacketService.DataPacketSize, lastDataSize);
     }
 
+    internal static unsafe ReadOnlyMemory<byte> GetDataMemory(ReadOnlyMemory<byte> memory)
+    {
+        if (memory.Length < DataHeaderSize)
+        {
+            return memory;
+        }
+
+        var span = memory.Span;
+        DataHeader dataHeader = default;
+        fixed (byte* pb = span)
+        {
+            dataHeader = *(DataHeader*)pb;
+        }
+
+        var dataMemory = memory.Slice(DataHeaderSize);
+        if (!dataHeader.ChecksumEquals(Arc.Crypto.FarmHash.Hash64(dataMemory.Span)))
+        {
+            return memory;
+        }
+        else
+        {
+            return dataMemory;
+        }
+    }
+
     internal static unsafe bool GetData(ref PacketHeader header, ref ByteArrayPool.MemoryOwner owner)
     {
         if (header.Id != PacketId.Data)

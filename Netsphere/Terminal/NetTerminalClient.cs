@@ -132,7 +132,7 @@ public class NetTerminalClient : NetTerminal
         }
         else
         {
-            id = BlockService.GetId<TSend>() | ((ulong)BlockService.GetId<TReceive>() << 32);
+            id = BlockService.GetId<TSend, TReceive>();
             task = this.SendAndReceiveDataAsync(true, PacketId.Data, id, owner, millisecondsToWait);
         }
 
@@ -144,7 +144,8 @@ public class NetTerminalClient : NetTerminal
             return (response.Result, default);
         }
 
-        TinyhandSerializer.TryDeserialize<TReceive>(response.Value, out var received);
+        var dataMemory = PacketService.GetDataMemory(response.Value);
+        TinyhandSerializer.TryDeserialize<TReceive>(dataMemory, out var received);
         if (received == null)
         {
             return (NetInterfaceResult.DeserializationError, default);

@@ -215,7 +215,17 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
             return (r.Result, default);
         }
 
-        TinyhandSerializer.TryDeserialize<TReceive>(r.Received, out var value);
+        ReadOnlyMemory<byte> dataMemory;
+        if (r.PacketId == PacketId.Data)
+        {
+            dataMemory = PacketService.GetDataMemory(r.Received);
+        }
+        else
+        {
+            dataMemory = r.Received;
+        }
+
+        TinyhandSerializer.TryDeserialize<TReceive>(dataMemory, out var value);
         if (value == null)
         {
             return (NetInterfaceResult.DeserializationError, default);
@@ -265,6 +275,30 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         {// Packet size limit exceeded.
             return false;
         }
+    }
+
+    internal bool SetSend(PacketId packetId, ulong id, ByteArrayPool.MemoryOwner owner)
+    {
+        if (this.SendGenes != null)
+        {
+            return false;
+        }
+
+        var gene = this.StandbyGene;
+        this.NetTerminal.CreateHeader(out var header, gene);
+        if (owner.Memory.Length <= PacketService.SafeMaxPacketSize)
+        {// Single packet.
+            PacketService.CreatePacket(ref header, packetId, id, owner.Memory.Span, out var sendOwner);
+            var ntg = new NetTerminalGene(gene, this);
+            this.SendGenes = new NetTerminalGene[] { ntg, };
+            ntg.SetSend(sendOwner);
+            sendOwner.Return();
+
+            this.TerminalLogger?.Information($"RegisterSend4  : {gene.To4Hex()}");
+            return true;
+        }
+
+        return false;
     }
 }
 

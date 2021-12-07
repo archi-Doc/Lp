@@ -9,6 +9,18 @@ using Tinyhand;
 
 namespace LP.Subcommands;
 
+[TinyhandObject]
+public partial class TestDataClass : IBlock
+{
+    [Key(0)]
+    public int X { get; set; }
+
+    [Key(1)]
+    public byte[] Y { get; set; } = Array.Empty<byte>();
+
+    public uint Id => 12345;
+}
+
 [SimpleCommand("senddata")]
 public class SendDataSubcommand : ISimpleCommandAsync<SendDataOptions>
 {
@@ -30,21 +42,23 @@ public class SendDataSubcommand : ISimpleCommandAsync<SendDataOptions>
         using (var terminal = this.NetControl.Terminal.Create(nodeInformation))
         {
             var p = new PacketPunch(null);
-            /*var r = await terminal.SendPacketAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
-            Logger.Priority.Information($"r: {r}");
-            Logger.Priority.Information($"");*/
 
-            var result = await terminal.EncryptConnectionAsync();
+            /*var result = await terminal.EncryptConnectionAsync();
             if (result != NetInterfaceResult.Success)
             {
                 return;
-            }
+            }*/
 
-            var t = terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
+            var t = terminal.SendPacketAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
             Logger.Priority.Information($"t:");
-            var r = await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
+            var r = await terminal.SendPacketAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
             Logger.Priority.Information($"t: {t.Result}");
             Logger.Priority.Information($"r: {r}");
+
+            var p2 = new TestDataClass();
+            p2.Y = new byte[1000];
+            var t2 = await terminal.SendAndReceiveAsync<TestDataClass, TestDataClass>(p2);
+            Logger.Priority.Information($"t2: {t2}");
 
             // await Task.Delay(2000);
 

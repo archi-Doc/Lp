@@ -145,6 +145,11 @@ public partial class NetTerminal : IDisposable
         return this.netInterfaces.Remove(netInterface);
     }
 
+    internal NetInterfaceResult ReportResult(NetInterfaceResult result)
+    {
+        return result;
+    }
+
     internal object SyncObject { get; } = new();
 
     internal ISimpleLogger? TerminalLogger => this.Terminal.TerminalLogger;

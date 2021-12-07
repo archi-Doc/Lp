@@ -56,6 +56,15 @@ public class Server
         {
             return this.ProcessEssential_Punch(packet);
         }
+        else if (packet.Id == BlockService.GetId<LP.Subcommands.TestDataClass, LP.Subcommands.TestDataClass>())
+        {
+            if (!TinyhandSerializer.TryDeserialize<LP.Subcommands.TestDataClass>(packet.Data, out var t))
+            {
+                return false;
+            }
+
+            var task = this.NetTerminal.SendAsync(t);
+        }
 
         return false;
     }
