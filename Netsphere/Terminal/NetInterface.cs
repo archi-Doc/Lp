@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -146,6 +147,8 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         ReadOnlySpan<byte> span = owner.Memory.Span;
         var netTerminal = netInterface.NetTerminal;
         var info = PacketService.GetDataInfo(owner.Memory.Length);
+        var rentArray = netTerminal.RentAndSetGeneArray(gene, info.NumberOfGenes);
+        var geneArray = MemoryMarshal.Cast<byte, ulong>(rentArray);
 
         var genes = new NetTerminalGene[info.NumberOfGenes];
         for (var i = 0; i < info.NumberOfGenes; i++)
@@ -156,14 +159,16 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
                 size = info.LastDataSize;
             }
 
-            netTerminal.CreateHeader(out var header, gene);
+            netTerminal.CreateHeader(out var header, geneArray[i]);
             PacketService.CreatePacket(ref header, PacketId.Data, 0, span.Slice(0, size), out var sendOwner);
             span = span.Slice(size);
 
-            genes[i] = new(gene, netInterface);
+            genes[i] = new(geneArray[i], netInterface);
             genes[i].SetSend(sendOwner);
             sendOwner.Return();
         }
+
+        ArrayPool<byte>.Shared.Return(rentArray);
 
         return genes;
     }
@@ -299,6 +304,31 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         }
 
         return false;
+    }
+
+    internal void SetReserve(PacketReserve reserve)
+    {
+        if (this.RecvGenes == null || this.RecvGenes.Length < 1)
+        {
+            return;
+        }
+
+        var gene = this.RecvGenes[0].Gene;
+        this.Clear();
+
+        var rentArray = this.NetTerminal.RentAndSetGeneArray(gene, reserve.NumberOfGenes);
+        var geneArray = MemoryMarshal.Cast<byte, ulong>(rentArray);
+
+        var genes = new NetTerminalGene[reserve.NumberOfGenes];
+        for (var i = 0; i < reserve.NumberOfGenes; i++)
+        {
+            var g = new NetTerminalGene(geneArray[i], this);
+            g.SetReceive();
+            genes[i] = g;
+        }
+
+        ArrayPool<byte>.Shared.Return(rentArray);
+        this.RecvGenes = genes;
     }
 }
 
@@ -540,6 +570,25 @@ WaitForSendCompletionWait:
 
     internal void ProcessSend(UdpClient udp, long currentTicks)
     {// lock (this.NetTerminal.SyncObject)
+        if (this.RecvGenes != null)
+        {
+            List<ulong>? sendingAck = null;
+            foreach (var x in this.RecvGenes)
+            {
+                if (x.State == NetTerminalGeneState.SendingAck)
+                {
+                    sendingAck ??= new();
+                    sendingAck.Add(x.Gene);
+                    x.State = NetTerminalGeneState.ReceiveComplete;
+                }
+            }
+
+            if (sendingAck != null)
+            {
+                this.SendAck(sendingAck);
+            }
+        }
+
         if (this.SendGenes != null)
         {
             foreach (var x in this.SendGenes)
@@ -563,6 +612,20 @@ WaitForSendCompletionWait:
                 }
             }
         }
+    }
+
+    internal unsafe void SendAck(List<ulong> genes)
+    {
+        this.NetTerminal.CreateHeader(out var header, genes.First());
+        header.Id = PacketId.Ack;
+
+        var arrayOwner = PacketPool.Rent();
+        fixed (byte* bp = arrayOwner.ByteArray)
+        {
+            *(PacketHeader*)bp = header;
+        }
+
+        this.Terminal.AddRawSend(this.NetTerminal.Endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
     }
 
     internal void ProcessReceive(ByteArrayPool.MemoryOwner owner, IPEndPoint endPoint, ref PacketHeader header, long currentTicks, NetTerminalGene gene)

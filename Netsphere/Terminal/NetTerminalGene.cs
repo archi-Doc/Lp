@@ -163,7 +163,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
 
     public NetInterface NetInterface { get; }
 
-    public NetTerminalGeneState State { get; private set; }
+    public NetTerminalGeneState State { get; internal set; }
 
     public ulong Gene { get; private set; }
 

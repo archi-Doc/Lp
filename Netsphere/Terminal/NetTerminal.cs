@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Buffers;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Sockets;
@@ -119,6 +120,25 @@ public partial class NetTerminal : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal NetInterface<byte[], byte[]>? CreateSendAndReceiveData(PacketId packetId, ulong id, ByteArrayPool.MemoryOwner sendOwner, out NetInterfaceResult interfaceResult)
         => NetInterface<byte[], byte[]>.CreateData(this, packetId, id, sendOwner, true, out interfaceResult);
+
+    internal byte[] RentAndSetGeneArray(ulong gene, int numberOfGenes)
+    {
+        var first = BitConverter.ToUInt64(this.embryo);
+        var rentBuffer = ArrayPool<byte>.Shared.Rent(sizeof(ulong) * numberOfGenes);
+        var rentGenes = ArrayPool<byte>.Shared.Rent(sizeof(ulong) * numberOfGenes);
+
+        var xo = new Arc.Crypto.Xoshiro256StarStar(gene ^ first);
+        xo.NextBytes(rentBuffer);
+
+        var iv = new byte[16];
+        BitConverter.TryWriteBytes(iv, gene);
+        this.embryo.AsSpan(40, 8).CopyTo(iv.AsSpan(8, 8));
+
+        var encryptor = Aes256.NoPadding.CreateEncryptor(this.embryo.AsSpan(8, 32).ToArray(), iv);
+        encryptor.TransformBlock(rentBuffer, 0, rentBuffer.Length, rentGenes, 0);
+        ArrayPool<byte>.Shared.Return(rentBuffer);
+        return rentGenes;
+    }
 
     internal void ProcessSend(UdpClient udp, long currentTicks)
     {
@@ -256,7 +276,7 @@ public partial class NetTerminal : IDisposable
 
     protected List<NetInterface> activeInterfaces = new();
     protected List<NetInterface> disposedInterfaces = new();
-    protected byte[]? embryo;
+    protected byte[]? embryo; // 48 bytes
 
     // private PacketService packetService = new();
 

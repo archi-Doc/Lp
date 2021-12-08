@@ -95,7 +95,15 @@ public class NetTerminalServer : NetTerminal
 
     public async Task<(NetInterfaceResult Result, NetTerminalServerPacket? Packet)> ReceiveAsync(int millisecondsToWait = DefaultMillisecondsToWait)
     {
+        PacketReserve? reserve = null;
+
+ReceiveAsyncStart:
         var netInterface = this.GetReceiver();
+        if (reserve != null)
+        {
+            netInterface.SetReserve(reserve);
+        }
+
         var received = await netInterface.ReceiveDataAsync(millisecondsToWait).ConfigureAwait(false);
         if (received.Result == NetInterfaceResult.Timeout)
         {// Timeout
@@ -110,11 +118,19 @@ public class NetTerminalServer : NetTerminal
 
         if (received.PacketId == PacketId.Reserve)
         {
-            if (!TinyhandSerializer.TryDeserialize<PacketReserve>(received.Value, out var reservePacket))
+            if (reserve != null)
             {
                 this.NextReceiver();
                 return (NetInterfaceResult.DeserializationError, null);
             }
+            else if (!TinyhandSerializer.TryDeserialize<PacketReserve>(received.Value, out reserve))
+            {
+                this.NextReceiver();
+                return (NetInterfaceResult.DeserializationError, null);
+            }
+
+            this.NextReceiver();
+            goto ReceiveAsyncStart;
         }
 
         this.ReceiverToSender();
