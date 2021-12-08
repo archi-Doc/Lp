@@ -535,6 +535,7 @@ WaitForSendCompletionWait:
     internal NetTerminalGene[]? SendGenes;
     internal NetTerminalGene[]? RecvGenes;
     internal ulong StandbyGene;
+    internal long DisposedTicks;
 #pragma warning restore SA1401 // Fields should be private
 
     internal void ProcessSend(UdpClient udp, long currentTicks)
@@ -644,6 +645,14 @@ WaitForSendCompletionWait:
 
     /// <inheritdoc/>
     public void Dispose()
+    {
+        if (this.DisposedTicks == 0)
+        {
+            this.DisposedTicks = Ticks.GetSystem();
+        }
+    }
+
+    internal void DisposeActual()
     {
         this.Dispose(true);
         GC.SuppressFinalize(this);

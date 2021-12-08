@@ -187,6 +187,35 @@ public partial class NetTerminal : IDisposable
         return NetInterfaceResult.Success;
     }
 
+    internal void TryDisposeNetInterface()
+    {
+        var ticks = Ticks.GetSystem() - Ticks.FromSeconds(1);
+        List<NetInterface>? list = null;
+        lock (this.SyncObject)k
+        {
+            foreach (var x in this.netInterfaces)
+            {
+                if (x.DisposedTicks != 0 && x.DisposedTicks < ticks)
+                {
+                    if (list == null)
+                    {
+                        list = new();
+                    }
+
+                    list.Add(x);
+                }
+            }
+
+            if (list != null)
+            {
+                foreach (var x in list)
+                {
+                    x.DisposeActual();
+                }
+            }
+        }
+    }
+
     private void Clear()
     {// lock (this.SyncObject)
         foreach (var x in this.netInterfaces)
