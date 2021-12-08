@@ -5,12 +5,16 @@ namespace LP.Blocks;
 [TinyhandObject]
 public partial class TestBlock : IBlock
 {
-    public static TestBlock Create()
+    public const uint DataMax = 4_000_000;
+
+    public static TestBlock Create(uint size = DataMax)
     {
+        size = size < DataMax ? size : DataMax;
+
         var testBlock = new TestBlock();
         testBlock.N = 10;
         testBlock.Message = "Test message";
-        testBlock.Data = new byte[4_000_000];
+        testBlock.Data = new byte[size];
         for (var n = 0; n < testBlock.Data.Length; n++)
         {
             testBlock.Data[n] = (byte)n;

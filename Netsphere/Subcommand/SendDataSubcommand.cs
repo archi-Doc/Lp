@@ -43,7 +43,7 @@ public class SendDataSubcommand : ISimpleCommandAsync<SendDataOptions>
             Logger.Priority.Information($"t: {t.Result}");
             Logger.Priority.Information($"r: {r}");
 
-            var p2 = TestBlock.Create();
+            var p2 = TestBlock.Create(2000);
             var t2 = await terminal.SendAndReceiveAsync<TestBlock, TestBlock>(p2);
             Logger.Priority.Information($"t2: {t2}");
 
