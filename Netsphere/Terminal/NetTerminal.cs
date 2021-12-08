@@ -52,6 +52,8 @@ public partial class NetTerminal : IDisposable
 
     public virtual async Task<NetInterfaceResult> EncryptConnectionAsync() => NetInterfaceResult.NoEncryptedConnection;
 
+    public virtual async Task<NetInterfaceResult> SendClose() => NetInterfaceResult.NoEncryptedConnection;
+
     public Terminal Terminal { get; }
 
     public bool IsEncrypted => this.embryo != null;
@@ -125,7 +127,7 @@ public partial class NetTerminal : IDisposable
                 return;
             }
 
-            foreach (var x in this.netInterfaces)
+            foreach (var x in this.activeInterfaces)
             {
                 x.ProcessSend(udp, currentTicks);
             }
@@ -136,13 +138,20 @@ public partial class NetTerminal : IDisposable
     {
         lock (this.SyncObject)
         {
-            this.netInterfaces.Add(netInterface);
+            this.activeInterfaces.Add(netInterface);
         }
     }
 
     internal bool RemoveInternal(NetInterface netInterface)
     {// lock (this.SyncObject)
-        return this.netInterfaces.Remove(netInterface);
+        if (netInterface.DisposedTicks == 0)
+        {// Active
+            return this.activeInterfaces.Remove(netInterface);
+        }
+        else
+        {// Disposed
+            return this.disposedInterfaces.Remove(netInterface);
+        }
     }
 
     internal NetInterfaceResult ReportResult(NetInterfaceResult result)
@@ -187,21 +196,19 @@ public partial class NetTerminal : IDisposable
         return NetInterfaceResult.Success;
     }
 
-    internal void TryDisposeNetInterface()
+    internal bool TryClean(long currentTicks)
     {
-        var ticks = Ticks.GetSystem() - Ticks.FromSeconds(1);
+        var canDispose = false;
+        var ticks = currentTicks - Ticks.FromSeconds(1);
         List<NetInterface>? list = null;
-        lock (this.SyncObject)k
-        {
-            foreach (var x in this.netInterfaces)
-            {
-                if (x.DisposedTicks != 0 && x.DisposedTicks < ticks)
-                {
-                    if (list == null)
-                    {
-                        list = new();
-                    }
 
+        lock (this.SyncObject)
+        {
+            foreach (var x in this.disposedInterfaces)
+            {
+                if (x.DisposedTicks < ticks)
+                {
+                    list ??= new();
                     list.Add(x);
                 }
             }
@@ -214,19 +221,35 @@ public partial class NetTerminal : IDisposable
                 }
             }
         }
+
+        return canDispose;
+    }
+
+    internal void ActiveToDisposed(NetInterface netInterface)
+    {// lock (this.SyncObject)
+        this.activeInterfaces.Remove(netInterface);
+        this.disposedInterfaces.Add(netInterface);
     }
 
     private void Clear()
     {// lock (this.SyncObject)
-        foreach (var x in this.netInterfaces)
+        foreach (var x in this.activeInterfaces)
         {
             x.Clear();
         }
 
-        this.netInterfaces.Clear();
+        this.activeInterfaces.Clear();
+
+        foreach (var x in this.disposedInterfaces)
+        {
+            x.Clear();
+        }
+
+        this.disposedInterfaces.Clear();
     }
 
-    protected List<NetInterface> netInterfaces = new();
+    protected List<NetInterface> activeInterfaces = new();
+    protected List<NetInterface> disposedInterfaces = new();
     protected byte[]? embryo;
 
     // private PacketService packetService = new();

@@ -646,9 +646,13 @@ WaitForSendCompletionWait:
     /// <inheritdoc/>
     public void Dispose()
     {
-        if (this.DisposedTicks == 0)
+        lock (this.NetTerminal.SyncObject)
         {
-            this.DisposedTicks = Ticks.GetSystem();
+            if (this.DisposedTicks == 0)
+            {
+                this.NetTerminal.ActiveToDisposed(this);
+                this.DisposedTicks = Ticks.GetSystem();
+            }
         }
     }
 

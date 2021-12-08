@@ -151,6 +151,12 @@ public class Terminal
 
     internal void ProcessSend(UdpClient udp, long currentTicks)
     {
+        if ((currentTicks - this.lastCleanedTicks) > Ticks.FromSeconds(1))
+        {
+            this.lastCleanedTicks = currentTicks;
+            this.CleanNetTerminal(currentTicks);
+        }
+
         while (this.rawSends.TryDequeue(out var rawSend))
         {
             udp.Send(rawSend.SendOwner.Memory.Span, rawSend.Endpoint);
@@ -351,6 +357,36 @@ public class Terminal
 
     internal bool TryGetInbound(ulong gene, [MaybeNullWhen(false)] out NetTerminalGene netTerminalGene) => this.inboundGenes.TryGetValue(gene, out netTerminalGene);
 
+    private void CleanNetTerminal(long currentTicks)
+    {
+        NetTerminal[] array;
+        lock (this.terminals)
+        {
+            array = this.terminals.QueueChain.ToArray();
+        }
+
+        List<NetTerminal>? list = null;
+        foreach (var x in array)
+        {
+            if (x.TryClean(currentTicks))
+            {
+                list ??= new();
+                list.Add(x);
+            }
+        }
+
+        if (list != null)
+        {
+            lock (this.terminals)
+            {
+                foreach (var x in list)
+                {
+                    x.Goshujin = null;
+                }
+            }
+        }
+    }
+
     public NetTerminal.GoshujinClass NetTerminals => this.terminals;
 
     internal ISimpleLogger? TerminalLogger { get; private set; }
@@ -358,12 +394,9 @@ public class Terminal
     internal ECDiffieHellman NodePrivateECDH { get; private set; } = default!;
 
     private CreateServerTerminalDelegate? createServerTerminalDelegate;
-
     private NetSocket netSocket;
-
     private NetTerminal.GoshujinClass terminals = new();
-
     private ConcurrentDictionary<ulong, NetTerminalGene> inboundGenes = new();
-
     private ConcurrentQueue<RawSend> rawSends = new();
+    private long lastCleanedTicks; // The last ticks Terminal.CleanNetTerminal() was called.
 }

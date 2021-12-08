@@ -35,6 +35,19 @@ public class NetTerminalClient : NetTerminal
         return this.CreateEmbryo(p.Salt);
     }
 
+    public override async Task<NetInterfaceResult> SendClose()
+    {
+        this.IsClosed = true;
+        if (!this.IsEncrypted)
+        {// Not encrypted (connected)
+            return NetInterfaceResult.Success;
+        }
+
+        var p = new PacketClose();
+        var response = await this.SendAsync(p).ConfigureAwait(false);
+        return response;
+    }
+
     public async Task<NetInterfaceResult> SendPacketAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
         where TSend : IPacket
     {// checked
