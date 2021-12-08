@@ -64,7 +64,7 @@ public partial class NetTerminal : IDisposable
 
     public bool IsHighTraffic => false;
 
-    public bool IsClosed => this.disposed;
+    public bool IsClosed { get; internal set; }
 
     // [Link(Type = ChainType.Ordered)]
     // public long CreatedTicks { get; private set; } = Ticks.GetCurrent();
@@ -198,7 +198,11 @@ public partial class NetTerminal : IDisposable
 
     internal bool TryClean(long currentTicks)
     {
-        var canDispose = false;
+        if (this.IsClosed)
+        {
+            return true;
+        }
+
         var ticks = currentTicks - Ticks.FromSeconds(1);
         List<NetInterface>? list = null;
 
@@ -222,7 +226,7 @@ public partial class NetTerminal : IDisposable
             }
         }
 
-        return canDispose;
+        return false;
     }
 
     internal void ActiveToDisposed(NetInterface netInterface)
@@ -286,6 +290,12 @@ public partial class NetTerminal : IDisposable
             if (disposing)
             {
                 // free managed resources.
+                if (this.IsEncrypted && !this.IsClosed)
+                {// Close connection.
+                    var task = this.SendClose();
+                }
+
+                this.IsClosed = true;
                 this.Terminal.TryRemove(this);
                 lock (this.SyncObject)
                 {

@@ -47,6 +47,19 @@ public class NetTerminalServer : NetTerminal
     {// NodeInformation: Managed
     }
 
+    public override async Task<NetInterfaceResult> SendClose()
+    {
+        this.IsClosed = true;
+        if (!this.IsEncrypted)
+        {// Not encrypted (connected)
+            return NetInterfaceResult.Success;
+        }
+
+        var p = new PacketClose();
+        var response = await this.SendPacketAsync(p).ConfigureAwait(false);
+        return response;
+    }
+
     public void SetReceiverNumber(ushort receiverNumber = DefaultReceiverNumber)
     {
         if (receiverNumber > MaxReceiverNumber)

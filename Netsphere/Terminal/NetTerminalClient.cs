@@ -44,7 +44,7 @@ public class NetTerminalClient : NetTerminal
         }
 
         var p = new PacketClose();
-        var response = await this.SendAsync(p).ConfigureAwait(false);
+        var response = await this.SendPacketAsync(p).ConfigureAwait(false);
         return response;
     }
 

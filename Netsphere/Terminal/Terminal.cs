@@ -377,12 +377,9 @@ public class Terminal
 
         if (list != null)
         {
-            lock (this.terminals)
+            foreach (var x in list)
             {
-                foreach (var x in list)
-                {
-                    x.Goshujin = null;
-                }
+                x.Dispose();
             }
         }
     }
