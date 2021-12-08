@@ -31,21 +31,20 @@ public class SendDataSubcommand : ISimpleCommandAsync<SendDataOptions>
         {
             var p = new PacketPunch(null);
 
-            /*var result = await terminal.EncryptConnectionAsync();
+            var result = await terminal.EncryptConnectionAsync();
             if (result != NetInterfaceResult.Success)
             {
                 return;
-            }*/
+            }
 
             var t = terminal.SendPacketAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
-            Logger.Priority.Information($"t:");
-            var r = await terminal.SendPacketAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
             Logger.Priority.Information($"t: {t.Result}");
-            Logger.Priority.Information($"r: {r}");
 
-            var p2 = TestBlock.Create(2000);
+            await Task.Delay(2000);
+
+            /*var p2 = TestBlock.Create(2000);
             var t2 = await terminal.SendAndReceiveAsync<TestBlock, TestBlock>(p2);
-            Logger.Priority.Information($"t2: {t2}");
+            Logger.Priority.Information($"t2: {t2}");*/
 
             // await Task.Delay(2000);
 

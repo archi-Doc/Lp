@@ -239,7 +239,7 @@ public class Terminal
         }
         else
         {// Not supported
-            this.TerminalLogger?.Error($"Unhandled: {header.Gene.To4Hex()}");
+            this.TerminalLogger?.Error($"Unhandled: {header.Gene.To4Hex()} - {header.Id}");
         }
     }
 

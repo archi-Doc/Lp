@@ -18,10 +18,10 @@ public enum PacketId : byte
     RPC,
     Encrypt,
     EncryptResponse,
-    Ping,
-    PingResponse,
     Punch,
     PunchResponse,
+    Ping,
+    PingResponse,
     GetNode,
     GetNodeResponse,
 }

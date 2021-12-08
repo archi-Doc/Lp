@@ -43,7 +43,9 @@ internal static class PacketService
     {// Manual ack (only for unencrypted transfer)
         PacketId.Encrypt => true,
         PacketId.Punch => true,
+        PacketId.PunchResponse => true,
         PacketId.Ping => true,
+        PacketId.PingResponse => true,
         _ => false,
     };
 
