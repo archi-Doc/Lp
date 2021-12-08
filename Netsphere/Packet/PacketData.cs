@@ -7,7 +7,7 @@ namespace Netsphere;
 [TinyhandObject]
 internal partial class PacketData : IPacket
 {
-    public PacketId Id => PacketId.Data;
+    public PacketId PacketId => PacketId.Data;
 
     // DataHeader
     // byte[DataSize] Data

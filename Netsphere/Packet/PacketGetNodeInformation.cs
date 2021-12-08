@@ -14,7 +14,7 @@ internal partial class PacketGetNode : IPacket
     {
     }
 
-    public PacketId Id => PacketId.GetNode;
+    public PacketId PacketId => PacketId.GetNode;
 
     [Key(0)]
     public long UtcTicks { get; set; }

@@ -258,7 +258,7 @@ public class Terminal
         var secondGene = GenePool.NextGene(header.Gene);
         this.TerminalLogger?.Information($"Punch Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
-        PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id, out var sendOwner);
+        PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var sendOwner);
         this.AddRawSend(endpoint, sendOwner);
     }
 
@@ -276,7 +276,7 @@ public class Terminal
             var response = new PacketEncryptResponse();
             var firstGene = header.Gene;
             var secondGene = GenePool.NextGene(header.Gene);
-            PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id, out var sendOwner);
+            PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var sendOwner);
 
             var terminal = this.Create(packet.NodeInformation, firstGene);
             var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(terminal, firstGene, owner, secondGene, sendOwner);
@@ -304,7 +304,7 @@ public class Terminal
         var secondGene = GenePool.NextGene(header.Gene);
         this.TerminalLogger?.Information($"Ping Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
-        PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id, out var packetOwner);
+        PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var packetOwner);
         this.AddRawSend(endpoint, packetOwner);
     }
 

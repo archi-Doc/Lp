@@ -261,7 +261,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
 
         var gene = this.StandbyGene;
         this.NetTerminal.CreateHeader(out var header, gene);
-        PacketService.CreatePacket(ref header, value, value.Id, out var sendOwner);
+        PacketService.CreatePacket(ref header, value, value.PacketId, out var sendOwner);
         if (sendOwner.Memory.Length <= PacketService.SafeMaxPacketSize)
         {// Single packet.
             var ntg = new NetTerminalGene(gene, this);

@@ -5,5 +5,5 @@ namespace Netsphere;
 [TinyhandObject]
 internal partial class PacketClose : IPacket
 {
-    public PacketId Id => PacketId.Close;
+    public PacketId PacketId => PacketId.Close;
 }

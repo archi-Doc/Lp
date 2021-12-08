@@ -5,7 +5,7 @@ namespace Netsphere;
 [TinyhandObject]
 public partial class PacketPing : IPacket
 {
-    public PacketId Id => PacketId.Ping;
+    public PacketId PacketId => PacketId.Ping;
 
     public bool AllowUnencrypted => true;
 
@@ -27,7 +27,7 @@ public partial class PacketPing : IPacket
 [TinyhandObject]
 public partial class PacketPingResponse : IPacket
 {
-    public PacketId Id => PacketId.PingResponse;
+    public PacketId PacketId => PacketId.PingResponse;
 
     public bool AllowUnencrypted => true;
 

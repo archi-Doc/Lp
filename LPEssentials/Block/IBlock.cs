@@ -11,7 +11,7 @@ namespace LP.Blocks;
 /// Block class requirements.<br/>
 /// 1. Inherit IBlock interface.<br/>
 /// 2. Has TinyhandObjectAttribute (Tinyhand serializable).<br/>
-/// 3. Unique id is prefered.<br/>
+/// 3. Unique block id is prefered.<br/>
 /// 4. Length of serialized byte array is less than or equal to <see cref="BlockService.MaxBlockSize"/>.
 /// </summary>
 public interface IBlock
@@ -19,5 +19,5 @@ public interface IBlock
     /// <summary>
     /// Gets an identifier of the block.
     /// </summary>
-    public uint Id { get; }
+    public uint BlockId { get; }
 }

@@ -54,7 +54,7 @@ public static class BlockService
                 var obj = TinyhandSerializer.Reconstruct<T>();
                 if (obj is IBlock block)
                 {
-                    Id = block.Id;
+                    Id = block.BlockId;
                 }
             }
             catch

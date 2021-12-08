@@ -28,7 +28,7 @@ public partial class TestBlock : IBlock
     [Key(2)]
     public byte[] Data { get; set; } = Array.Empty<byte>();
 
-    public uint Id => 0xd75af226;
+    public uint BlockId => 0xd75af226;
 
     public override string ToString()
         => $"TestBlock: {this.N}, {this.Message}, Size:{this.Data.Length}, Hash:{Arc.Crypto.FarmHash.Hash64(this.Data).To4Hex()}";

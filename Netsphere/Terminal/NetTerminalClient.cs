@@ -101,7 +101,7 @@ public class NetTerminalClient : NetTerminal
         Task<NetInterfaceResult> task;
         if (value is IPacket packet)
         {
-            task = this.SendDataAsync(!packet.AllowUnencrypted, packet.Id, (ulong)packet.Id, owner, millisecondsToWait);
+            task = this.SendDataAsync(!packet.AllowUnencrypted, packet.PacketId, (ulong)packet.PacketId, owner, millisecondsToWait);
         }
         else
         {
@@ -127,8 +127,8 @@ public class NetTerminalClient : NetTerminal
         ulong id;
         if (value is IPacket packet)
         {
-            id = (ulong)packet.Id | ((ulong)BlockService.GetId<TReceive>() << 32);
-            task = this.SendAndReceiveDataAsync(!packet.AllowUnencrypted, packet.Id, id, owner, millisecondsToWait);
+            id = (ulong)packet.PacketId | ((ulong)BlockService.GetId<TReceive>() << 32);
+            task = this.SendAndReceiveDataAsync(!packet.AllowUnencrypted, packet.PacketId, id, owner, millisecondsToWait);
         }
         else
         {

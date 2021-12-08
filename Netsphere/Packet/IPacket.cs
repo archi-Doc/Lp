@@ -35,9 +35,9 @@ public enum PacketId : byte
 /// </summary>
 public interface IPacket : IBlock
 {
-    public new PacketId Id { get; }
+    public PacketId PacketId { get; }
 
-    uint IBlock.Id => (uint)this.Id;
+    uint IBlock.BlockId => (uint)this.PacketId;
 
     public bool AllowUnencrypted => false;
 }

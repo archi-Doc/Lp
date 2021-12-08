@@ -84,7 +84,6 @@ public class NetTerminalServer : NetTerminal
                 this.NextReceiver();
                 return (NetInterfaceResult.DeserializationError, null);
             }
-
         }
 
         this.ReceiverToSender();
@@ -127,7 +126,7 @@ public class NetTerminalServer : NetTerminal
         Task<NetInterfaceResult> task;
         if (value is IPacket packet)
         {
-            task = this.SendDataAsync(!packet.AllowUnencrypted, packet.Id, (ulong)packet.Id, owner, millisecondsToWait);
+            task = this.SendDataAsync(!packet.AllowUnencrypted, packet.PacketId, (ulong)packet.PacketId, owner, millisecondsToWait);
         }
         else
         {

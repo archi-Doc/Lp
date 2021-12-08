@@ -7,7 +7,7 @@ internal partial class PacketRelay : IPacket
 {
     public const int EndpointAliveInSeconds = 10;
 
-    public PacketId Id => PacketId.Relay;
+    public PacketId PacketId => PacketId.Relay;
 
     [Key(0)]
     public IPEndPoint? NextEndpoint { get; set; }

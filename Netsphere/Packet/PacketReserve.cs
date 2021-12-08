@@ -7,7 +7,7 @@ internal partial class PacketReserve : IPacket
 {
     public const int MaxGenes = 4096;
 
-    public PacketId Id => PacketId.Reserve;
+    public PacketId PacketId => PacketId.Reserve;
 
     public PacketReserve()
     {

@@ -100,13 +100,13 @@ public partial class NetTerminal : IDisposable
     internal NetInterface<TSend, object>? CreateSendValue<TSend>(TSend value, out NetInterfaceResult interfaceResult)
         where TSend : IPacket
     {
-        return NetInterface<TSend, object>.CreateValue(this, value, value.Id, false, out interfaceResult);
+        return NetInterface<TSend, object>.CreateValue(this, value, value.PacketId, false, out interfaceResult);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal NetInterface<TSend, TReceive>? CreateSendAndReceiveValue<TSend, TReceive>(TSend value, out NetInterfaceResult interfaceResult)
         where TSend : IPacket
-        => NetInterface<TSend, TReceive>.CreateValue(this, value, value.Id, true, out interfaceResult);
+        => NetInterface<TSend, TReceive>.CreateValue(this, value, value.PacketId, true, out interfaceResult);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal NetInterface<byte[], object>? CreateSendData(PacketId packetId, ulong id, ByteArrayPool.MemoryOwner sendOwner, out NetInterfaceResult interfaceResult)
