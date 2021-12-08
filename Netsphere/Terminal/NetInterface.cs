@@ -337,7 +337,7 @@ public class NetInterface : IDisposable
 
                 foreach (var x in this.SendGenes)
                 {
-                    if (!x.IsSent)
+                    if (!x.IsSendComplete)
                     {
                         goto WaitForSendCompletionWait;
                     }
@@ -385,7 +385,7 @@ WaitForSendCompletionWait:
 
                 foreach (var x in this.SendGenes)
                 {
-                    if (!x.IsSent)
+                    if (!x.IsSendComplete)
                     {
                         goto WaitForSendCompletionWait;
                     }
