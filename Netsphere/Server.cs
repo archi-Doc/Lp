@@ -15,7 +15,7 @@ public class Server
     public async Task Process(NetTerminalServer terminal)
     {
         this.NetTerminal = terminal;
-        while (true)
+        while (!this.NetTerminal.IsClosed)
         {
             try
             {

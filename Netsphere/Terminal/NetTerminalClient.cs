@@ -35,23 +35,35 @@ public class NetTerminalClient : NetTerminal
         return this.CreateEmbryo(p.Salt);
     }
 
-    public override async Task<NetInterfaceResult> SendClose()
+    public unsafe override void SendClose()
     {
+        if (this.IsClosed)
+        {
+            return;
+        }
+
         this.IsClosed = true;
         if (!this.IsEncrypted)
         {// Not encrypted (connected)
-            return NetInterfaceResult.Success;
+            return;
         }
 
-        var p = new PacketClose();
-        var response = await this.SendPacketAsync(p).ConfigureAwait(false);
-        return response;
+        this.CreateHeader(out var header, this.GenePool.GetGene());
+        header.Id = PacketId.Close;
+
+        var arrayOwner = PacketPool.Rent();
+        fixed (byte* bp = arrayOwner.ByteArray)
+        {
+            *(PacketHeader*)bp = header;
+        }
+
+        this.Terminal.AddRawSend(this.Endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
     }
 
     public async Task<NetInterfaceResult> SendPacketAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
         where TSend : IPacket
     {// checked
-        if (!value.AllowUnencrypted)
+        if (!value.AllowUnencrypted && !this.IsEncrypted)
         {
             var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
             if (result != NetInterfaceResult.Success)
@@ -79,7 +91,7 @@ public class NetTerminalClient : NetTerminal
     public async Task<(NetInterfaceResult Result, TReceive? Value)> SendPacketAndReceiveAsync<TSend, TReceive>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
         where TSend : IPacket
     {// checked
-        if (!value.AllowUnencrypted)
+        if (!value.AllowUnencrypted && !this.IsEncrypted)
         {
             var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
             if (result != NetInterfaceResult.Success)

@@ -94,11 +94,11 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
 
     public bool ReceiveAck()
     {// lock (this.NetTerminal.SyncObject)
-        if (LP.Random.Pseudo.NextDouble() < 0.999)
+        /*if (LP.Random.Pseudo.NextDouble() < 0.99)
         {
             this.NetInterface.TerminalLogger?.Error($"Ack cancel: {this.Gene.To4Hex()}");
             return false;
-        }
+        }*/
 
         if (this.State == NetTerminalGeneState.WaitingForAck)
         {
@@ -175,19 +175,16 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
     public ByteArrayPool.MemoryOwner Owner { get; private set; }
 
     internal void Clear()
-    {// // lock (this.NetTerminal.SyncObject)
-        this.NetInterface.TerminalLogger?.Information($"Clear: {this.State} - {this.Gene.To4Hex()}");
+    {// lock (this.NetTerminal.SyncObject)
+        // this.NetInterface.TerminalLogger?.Information($"Clear: {this.State} - {this.Gene.To4Hex()}");
 
         /*if (this.State == NetTerminalGeneState.SendingAck || this.State == NetTerminalGeneState.ReceiveComplete)
         {// (this.State == NetTerminalGeneState.WaitingForAck)
-        }
-        else*/
-        {
-            this.NetInterface.Terminal.RemoveInbound(this);
-            this.State = NetTerminalGeneState.Initial;
-        }
+        }*/
 
-        // this.Gene = 0;
+        this.NetInterface.Terminal.RemoveInbound(this);
+        this.State = NetTerminalGeneState.Initial;
+        this.Gene = 0;
         this.ReceivedId = PacketId.Invalid;
         this.Owner = this.Owner.Return();
     }

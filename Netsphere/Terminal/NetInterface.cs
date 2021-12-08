@@ -99,7 +99,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
             netInterface.SendGenes = new NetTerminalGene[] { ntg, };
             ntg.SetSend(sendOwner);
 
-            netTerminal.TerminalLogger?.Information($"RegisterSend   : {gene.To4Hex()}");
+            netTerminal.TerminalLogger?.Information($"RegisterSend   : {gene.To4Hex()}, {id}");
         }
         else
         {// Packet size limit exceeded.
@@ -409,7 +409,7 @@ WaitForSendCompletionWait:
         return NetInterfaceResult.Closed;
     }
 
-    protected NetInterfaceResult ReceiveCore(out PacketId packetId, out ReadOnlyMemory<byte> data, int millisecondsToWait)
+    /*protected NetInterfaceResult ReceiveCore(out PacketId packetId, out ReadOnlyMemory<byte> data, int millisecondsToWait)
     {
         packetId = PacketId.Invalid;
         data = default;
@@ -446,7 +446,7 @@ WaitForSendCompletionWait:
         }
 
         return NetInterfaceResult.Closed;
-    }
+    }*/
 
     protected async Task<(NetInterfaceResult Result, PacketId PacketId, ReadOnlyMemory<byte> Received)> ReceiveAsyncCore(int millisecondsToWait)
     {
@@ -596,6 +596,11 @@ WaitForSendCompletionWait:
                     }
                 }
             }
+            else if (header.Id == PacketId.Close)
+            {
+                this.TerminalLogger?.Information($"Close, {header.Gene.To4Hex()}");
+                this.NetTerminal.IsClosed = true;
+            }
             else
             {// Receive data
                 if (gene.Receive(header.Id, owner))
@@ -676,7 +681,7 @@ WaitForSendCompletionWait:
                 lock (this.NetTerminal.SyncObject)
                 {
                     this.Clear();
-                    this.NetTerminal.RemoveInternal(this);
+                    Debug.Assert(this.NetTerminal.RemoveInternal(this) != false);
                 }
             }
 

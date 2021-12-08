@@ -52,7 +52,9 @@ public partial class NetTerminal : IDisposable
 
     public virtual async Task<NetInterfaceResult> EncryptConnectionAsync() => NetInterfaceResult.NoEncryptedConnection;
 
-    public virtual async Task<NetInterfaceResult> SendClose() => NetInterfaceResult.NoEncryptedConnection;
+    public virtual void SendClose()
+    {
+    }
 
     public Terminal Terminal { get; }
 
@@ -203,7 +205,7 @@ public partial class NetTerminal : IDisposable
             return true;
         }
 
-        var ticks = currentTicks - Ticks.FromSeconds(1);
+        var ticks = currentTicks - Ticks.FromSeconds(2);
         List<NetInterface>? list = null;
 
         lock (this.SyncObject)
@@ -292,7 +294,7 @@ public partial class NetTerminal : IDisposable
                 // free managed resources.
                 if (this.IsEncrypted && !this.IsClosed)
                 {// Close connection.
-                    var task = this.SendClose();
+                    this.SendClose();
                 }
 
                 this.IsClosed = true;
