@@ -9,24 +9,6 @@ using Arc.Threading;
 
 namespace Netsphere;
 
-internal static class NetTerminalGeneExtension
-{
-    public static bool IsUnavailable(this NetTerminalGene[] genes)
-    {
-        foreach (var gene in genes)
-        {
-            if (!gene.IsAvailable)
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    public static string To4Hex(this ulong gene) => $"{(ushort)gene:x4}";
-}
-
 internal enum NetTerminalGeneState
 {
     // NetTerminalGeneState:

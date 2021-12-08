@@ -6,7 +6,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace LP;
+namespace LP.Blocks;
 
 public static class BlockService
 {

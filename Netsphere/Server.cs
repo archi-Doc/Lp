@@ -56,9 +56,9 @@ public class Server
         {
             return this.ProcessEssential_Punch(packet);
         }
-        else if (packet.Id == BlockService.GetId<LP.Subcommands.TestDataClass, LP.Subcommands.TestDataClass>())
+        else if (packet.Id == BlockService.GetId<TestBlock, TestBlock>())
         {
-            if (!TinyhandSerializer.TryDeserialize<LP.Subcommands.TestDataClass>(packet.Data, out var t))
+            if (!TinyhandSerializer.TryDeserialize<TestBlock>(packet.Data, out var t))
             {
                 return false;
             }

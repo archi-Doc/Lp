@@ -156,7 +156,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
                 size = info.LastDataSize;
             }
 
-            netTerminal.CreateHeader(out var header, geen);
+            netTerminal.CreateHeader(out var header, gene);
             PacketService.CreatePacket(ref header, PacketId.Data, 0, span.Slice(0, size), out var sendOwner);
             span = span.Slice(size);
 

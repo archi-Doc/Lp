@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LP;
+namespace LP.Blocks;
 
 internal static class BlockPool
 {

@@ -9,18 +9,6 @@ using Tinyhand;
 
 namespace LP.Subcommands;
 
-[TinyhandObject]
-public partial class TestDataClass : IBlock
-{
-    [Key(0)]
-    public int X { get; set; }
-
-    [Key(1)]
-    public byte[] Y { get; set; } = Array.Empty<byte>();
-
-    public uint Id => 12345;
-}
-
 [SimpleCommand("senddata")]
 public class SendDataSubcommand : ISimpleCommandAsync<SendDataOptions>
 {
@@ -55,9 +43,8 @@ public class SendDataSubcommand : ISimpleCommandAsync<SendDataOptions>
             Logger.Priority.Information($"t: {t.Result}");
             Logger.Priority.Information($"r: {r}");
 
-            var p2 = new TestDataClass();
-            p2.Y = new byte[2000];
-            var t2 = await terminal.SendAndReceiveAsync<TestDataClass, TestDataClass>(p2);
+            var p2 = TestBlock.Create();
+            var t2 = await terminal.SendAndReceiveAsync<TestBlock, TestBlock>(p2);
             Logger.Priority.Information($"t2: {t2}");
 
             // await Task.Delay(2000);

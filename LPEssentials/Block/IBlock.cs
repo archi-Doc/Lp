@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 
-namespace LP;
+namespace LP.Blocks;
 
 /// <summary>
 /// Block class requirements.<br/>
