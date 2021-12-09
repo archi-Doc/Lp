@@ -15,7 +15,7 @@ internal partial class PacketReserve : IPacket
 
     public PacketReserve(int totalSize)
     {
-        var info = PacketService.GetDataInfo(totalSize);
+        var info = PacketService.GetDataSize(totalSize);
         this.NumberOfGenes = (ushort)info.NumberOfGenes;
         this.DataSize = (uint)info.DataSize;
     }

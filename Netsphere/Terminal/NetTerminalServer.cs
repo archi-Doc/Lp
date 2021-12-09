@@ -18,21 +18,15 @@ public class NetTerminalServerPacket
                 dataHeader = *(DataHeader*)pb;
             }
 
-            span = span.Slice(PacketService.DataHeaderSize);
-            if (!dataHeader.ChecksumEquals(Arc.Crypto.FarmHash.Hash64(span)))
-            {
-                return;
-            }
-
             this.PacketId = dataHeader.PacketId;
-            this.Id = dataHeader.Id;
+            this.DataId = dataHeader.DataId;
             this.Data = this.Data.Slice(PacketService.DataHeaderSize);
         }
     }
 
     public PacketId PacketId { get; }
 
-    public ulong Id { get; }
+    public ulong DataId { get; }
 
     public Memory<byte> Data { get; }
 }
@@ -186,16 +180,16 @@ ReceiveAsyncStart:
         }
         else
         {
-            var id = BlockService.GetId<TSend>();
-            task = this.SendDataAsync(true, PacketId.Data, id, owner, millisecondsToWait);
+            var dataId = BlockService.GetId<TSend>();
+            task = this.SendDataAsync(true, PacketId.Data, dataId, owner, millisecondsToWait);
         }
 
         owner.Return();
         return await task.ConfigureAwait(false);
     }
 
-    public async Task<NetInterfaceResult> SendDataAsync(ulong id, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
-        => await this.SendDataAsync(true, PacketId.Data, id, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);
+    public async Task<NetInterfaceResult> SendDataAsync(ulong dataId, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
+        => await this.SendDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);
 
     public void EnsureReceiver()
     {
@@ -214,7 +208,7 @@ ReceiveAsyncStart:
         }
     }
 
-    private async Task<NetInterfaceResult> SendDataAsync(bool encrypt, PacketId packetId, ulong id, ByteArrayPool.MemoryOwner owner, int millisecondsToWait = DefaultMillisecondsToWait)
+    private async Task<NetInterfaceResult> SendDataAsync(bool encrypt, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner, int millisecondsToWait = DefaultMillisecondsToWait)
     {// checked
         NetInterface<object, byte[]>? reserveInterface = null;
 
@@ -237,7 +231,7 @@ ReceiveAsyncStart:
 
             if (owner.Memory.Length <= PacketService.SafeMaxPacketSize)
             {// Single packet.
-                netInterface.SetSend(packetId, id, owner);
+                netInterface.SetSend(packetId, dataId, owner);
             }
             else
             {// Split into multiple packets. Send PacketReserve.

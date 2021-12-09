@@ -39,7 +39,7 @@ internal static class PacketService
     private const int InitialBufferLength = 2048;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static bool IsManualAck(PacketId id) => id switch
+    internal static bool IsManualAck(PacketId packetId) => packetId switch
     {// Manual ack (only for unencrypted transfer)
         PacketId.Encrypt => true,
         PacketId.Punch => true,
@@ -65,7 +65,7 @@ internal static class PacketService
         }
     }
 
-    internal static (int NumberOfGenes, int DataSize, int LastDataSize) GetDataInfo(int totalSize)
+    internal static (int NumberOfGenes, int DataSize, int LastDataSize) GetDataSize(int totalSize)
     {
         var numberOfGenes = totalSize / PacketService.DataPacketSize;
         var lastDataSize = totalSize - (numberOfGenes * PacketService.DataPacketSize);
@@ -77,11 +77,11 @@ internal static class PacketService
         return (numberOfGenes, PacketService.DataPacketSize, lastDataSize);
     }
 
-    internal static unsafe ReadOnlyMemory<byte> GetDataMemory(ReadOnlyMemory<byte> memory)
+    internal static unsafe (ulong DataId, ReadOnlyMemory<byte> DataMemory) GetData(ReadOnlyMemory<byte> memory)
     {
         if (memory.Length < DataHeaderSize)
         {
-            return memory;
+            return (0, memory);
         }
 
         var span = memory.Span;
@@ -94,11 +94,11 @@ internal static class PacketService
         var dataMemory = memory.Slice(DataHeaderSize);
         if (!dataHeader.ChecksumEquals(Arc.Crypto.FarmHash.Hash64(dataMemory.Span)))
         {
-            return memory;
+            return (dataHeader.DataId, memory);
         }
         else
         {
-            return dataMemory;
+            return (dataHeader.DataId, dataMemory);
         }
     }
 
@@ -131,7 +131,7 @@ internal static class PacketService
         return true;
     }
 
-    internal static unsafe void CreatePacket(ref PacketHeader header, PacketId packetId, ulong id, ReadOnlySpan<byte> data, out ByteArrayPool.MemoryOwner owner)
+    internal static unsafe void CreatePacket(ref PacketHeader header, PacketId packetId, ulong dataId, ReadOnlySpan<byte> data, out ByteArrayPool.MemoryOwner owner)
     {// PacketHeader, DataHeader, Data
         if (data.Length > PacketService.SafeMaxPacketSize)
         {
@@ -150,7 +150,7 @@ internal static class PacketService
         }
 
         span = span.Slice(PacketService.HeaderSize);
-        var dataHeader = new DataHeader(id, packetId, Arc.Crypto.FarmHash.Hash64(data));
+        var dataHeader = new DataHeader(dataId, packetId, Arc.Crypto.FarmHash.Hash64(data));
         fixed (byte* pb = span)
         {
             *(DataHeader*)pb = dataHeader;

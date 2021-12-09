@@ -18,9 +18,9 @@ internal readonly struct DataHeader
 {
     public static ulong ChecksumMask = 0xffffffffffffff00ul;
 
-    public DataHeader(ulong id, PacketId packetId, ulong checksum)
+    public DataHeader(ulong dataId, PacketId packetId, ulong checksum)
     {
-        this.Id = id;
+        this.DataId = dataId;
         this.PacketId = packetId;
         this.Checksum = (checksum & ChecksumMask) | (byte)packetId;
     }
@@ -29,7 +29,7 @@ internal readonly struct DataHeader
         => (checksum & ChecksumMask) == (this.Checksum & ChecksumMask);
 
     [FieldOffset(0)]
-    public readonly ulong Id;
+    public readonly ulong DataId;
 
     [FieldOffset(8)]
     public readonly PacketId PacketId;

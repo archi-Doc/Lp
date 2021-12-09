@@ -130,16 +130,16 @@ public class NetTerminalClient : NetTerminal
         }
         else
         {
-            var id = BlockService.GetId<TSend>();
-            task = this.SendDataAsync(true, PacketId.Data, id, owner, millisecondsToWait);
+            var dataId = BlockService.GetId<TSend>();
+            task = this.SendDataAsync(true, PacketId.Data, dataId, owner, millisecondsToWait);
         }
 
         owner.Return();
         return await task.ConfigureAwait(false);
     }
 
-    public async Task<NetInterfaceResult> SendDataAsync(ulong id, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
-        => await this.SendDataAsync(true, PacketId.Data, id, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);
+    public async Task<NetInterfaceResult> SendDataAsync(ulong dataId, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
+        => await this.SendDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);
 
     public async Task<(NetInterfaceResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
     {// checked
@@ -149,16 +149,16 @@ public class NetTerminalClient : NetTerminal
         }
 
         Task<(NetInterfaceResult Result, byte[]? Value)> task;
-        ulong id;
+        ulong dataId;
         if (value is IPacket packet)
         {
-            id = (ulong)packet.PacketId | ((ulong)BlockService.GetId<TReceive>() << 32);
-            task = this.SendAndReceiveDataAsync(!packet.AllowUnencrypted, packet.PacketId, id, owner, millisecondsToWait);
+            dataId = (ulong)packet.PacketId | ((ulong)BlockService.GetId<TReceive>() << 32);
+            task = this.SendAndReceiveDataAsync(!packet.AllowUnencrypted, packet.PacketId, dataId, owner, millisecondsToWait);
         }
         else
         {
-            id = BlockService.GetId<TSend, TReceive>();
-            task = this.SendAndReceiveDataAsync(true, PacketId.Data, id, owner, millisecondsToWait);
+            dataId = BlockService.GetId<TSend, TReceive>();
+            task = this.SendAndReceiveDataAsync(true, PacketId.Data, dataId, owner, millisecondsToWait);
         }
 
         owner.Return();
@@ -169,7 +169,7 @@ public class NetTerminalClient : NetTerminal
             return (response.Result, default);
         }
 
-        var dataMemory = PacketService.GetDataMemory(response.Value);
+        var dataMemory = PacketService.GetData(response.Value);
         TinyhandSerializer.TryDeserialize<TReceive>(dataMemory, out var received);
         if (received == null)
         {
@@ -179,10 +179,10 @@ public class NetTerminalClient : NetTerminal
         return (NetInterfaceResult.Success, received);
     }
 
-    public async Task<(NetInterfaceResult Result, byte[]? Value)> SendAndReceiveDataAsync(ulong id, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
-        => await this.SendAndReceiveDataAsync(true, PacketId.Data, id, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);
+    public async Task<(NetInterfaceResult Result, byte[]? Value)> SendAndReceiveDataAsync(ulong dataId, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
+        => await this.SendAndReceiveDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);
 
-    private async Task<NetInterfaceResult> SendDataAsync(bool encrypt, PacketId packetId, ulong id, ByteArrayPool.MemoryOwner owner, int millisecondsToWait = DefaultMillisecondsToWait)
+    private async Task<NetInterfaceResult> SendDataAsync(bool encrypt, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner, int millisecondsToWait = DefaultMillisecondsToWait)
     {// checked
         if (encrypt)
         {
@@ -210,7 +210,7 @@ public class NetTerminalClient : NetTerminal
             return NetInterfaceResult.BlockSizeLimit;
         }
 
-        var netInterface = this.CreateSendData(packetId, id, owner, out var interfaceResult);
+        var netInterface = this.CreateSendData(packetId, dataId, owner, out var interfaceResult);
         if (netInterface == null)
         {
             return interfaceResult;
@@ -226,7 +226,7 @@ public class NetTerminalClient : NetTerminal
         }
     }
 
-    private async Task<(NetInterfaceResult Result, byte[]? Value)> SendAndReceiveDataAsync(bool encrypt, PacketId packetId, ulong id, ByteArrayPool.MemoryOwner owner, int millisecondsToWait = DefaultMillisecondsToWait)
+    private async Task<(NetInterfaceResult Result, byte[]? Value)> SendAndReceiveDataAsync(bool encrypt, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner, int millisecondsToWait = DefaultMillisecondsToWait)
     {// checked
         if (encrypt)
         {
@@ -254,7 +254,7 @@ public class NetTerminalClient : NetTerminal
             return (NetInterfaceResult.BlockSizeLimit, default);
         }
 
-        var netInterface = this.CreateSendAndReceiveData(packetId, id, owner, out var interfaceResult);
+        var netInterface = this.CreateSendAndReceiveData(packetId, dataId, owner, out var interfaceResult);
         if (netInterface == null)
         {
             return (interfaceResult, default);
