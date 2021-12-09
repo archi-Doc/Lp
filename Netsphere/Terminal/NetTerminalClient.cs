@@ -199,10 +199,10 @@ public class NetTerminalClient : NetTerminal
         else if (owner.Memory.Length <= BlockService.MaxBlockSize)
         {// Split into multiple packets. Send PacketReserve.
             var reserve = new PacketReserve(owner.Memory.Length);
-            var result = await this.SendPacketAsync(reserve, millisecondsToWait).ConfigureAwait(false);
-            if (result != NetInterfaceResult.Success)
+            var received = await this.SendPacketAndReceiveAsync<PacketReserve, PacketReserveResponse>(reserve, millisecondsToWait).ConfigureAwait(false);
+            if (received.Result != NetInterfaceResult.Success)
             {
-                return result;
+                return received.Result;
             }
         }
         else
@@ -243,10 +243,10 @@ public class NetTerminalClient : NetTerminal
         else if (owner.Memory.Length <= BlockService.MaxBlockSize)
         {// Split into multiple packets. Send PacketReserve.
             var reserve = new PacketReserve(owner.Memory.Length);
-            var result = await this.SendPacketAsync(reserve, millisecondsToWait).ConfigureAwait(false);
-            if (result != NetInterfaceResult.Success)
+            var received = await this.SendPacketAndReceiveAsync<PacketReserve, PacketReserveResponse>(reserve, millisecondsToWait).ConfigureAwait(false);
+            if (received.Result != NetInterfaceResult.Success)
             {
-                return (result, default);
+                return (received.Result, default);
             }
         }
         else

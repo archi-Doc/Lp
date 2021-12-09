@@ -20,7 +20,7 @@ public class Terminal
         public RawSend(IPEndPoint endPoint, ByteArrayPool.MemoryOwner owner)
         {
             this.Endpoint = endPoint;
-            this.SendOwner = owner;
+            this.SendOwner = owner.IncrementAndShare();
         }
 
         public void Clear()

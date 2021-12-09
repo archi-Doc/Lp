@@ -24,6 +24,7 @@ public enum NetInterfaceResult
     DeserializationError,
     PacketSizeLimit,
     BlockSizeLimit,
+    ReserveError,
 }
 
 public interface INetInterface<TSend, TReceive> : INetInterface<TSend>
@@ -327,6 +328,8 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
             genes[i] = g;
         }
 
+        this.TerminalLogger?.Information($"SetReserve: {string.Join(", ", genes.Select(x => x.Gene.To4Hex()))}");
+
         ArrayPool<byte>.Shared.Return(rentArray);
         this.RecvGenes = genes;
     }
@@ -570,11 +573,6 @@ WaitForSendCompletionWait:
 
     internal void ProcessSend(UdpClient udp, long currentTicks)
     {// lock (this.NetTerminal.SyncObject)
-        if (this.RecvGenes != null)
-        {
-            this.ProcessSendingAck();
-        }
-
         if (this.SendGenes != null)
         {
             foreach (var x in this.SendGenes)
@@ -607,34 +605,55 @@ WaitForSendCompletionWait:
             return;
         }
 
+        PacketHeader header = default;
+        int size = 0;
+        int maxSize = PacketService.DataPacketSize - sizeof(ulong);
+        ByteArrayPool.Owner? rentArray = null;
         foreach (var x in this.RecvGenes)
         {
             if (x.State == NetTerminalGeneState.SendingAck)
             {
-                sendingAck ??= new();
-                sendingAck.Add(x.Gene);
+                if (size >= maxSize)
+                {
+                    PacketService.InsertDataSize(rentArray!.ByteArray, (ushort)(size - PacketService.HeaderSize));
+                    this.Terminal.AddRawSend(this.NetTerminal.Endpoint, rentArray!.ToMemoryOwner(0, size));
+                    size = 0;
+                }
+
+                if (size == 0)
+                {
+                    this.NetTerminal.CreateHeader(out header, x.Gene);
+                    header.Id = PacketId.Ack;
+
+                    rentArray ??= PacketPool.Rent();
+                    size += PacketService.HeaderSize;
+                    fixed (byte* bp = rentArray.ByteArray)
+                    {
+                        *(PacketHeader*)bp = header;
+                    }
+                }
+                else
+                {
+                    fixed (byte* bp = rentArray!.ByteArray)
+                    {
+                        *(ulong*)(bp + size) = x.Gene;
+                    }
+
+                    size += sizeof(ulong);
+                }
+
                 x.State = NetTerminalGeneState.ReceiveComplete;
             }
         }
 
-        if (sendingAck != null)
+        if (size > 0)
         {
-            this.SendAck(sendingAck);
-        }
-    }
-
-    internal unsafe void SendAck(List<ulong> genes)
-    {
-        this.NetTerminal.CreateHeader(out var header, genes.First());
-        header.Id = PacketId.Ack;
-
-        var arrayOwner = PacketPool.Rent();
-        fixed (byte* bp = arrayOwner.ByteArray)
-        {
-            *(PacketHeader*)bp = header;
+            PacketService.InsertDataSize(rentArray!.ByteArray, (ushort)(size - PacketService.HeaderSize));
+            this.Terminal.AddRawSend(this.NetTerminal.Endpoint, rentArray!.ToMemoryOwner(0, size));
+            size = 0;
         }
 
-        this.Terminal.AddRawSend(this.NetTerminal.Endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
+        rentArray?.Return();
     }
 
     internal void ProcessReceive(ByteArrayPool.MemoryOwner owner, IPEndPoint endPoint, ref PacketHeader header, long currentTicks, NetTerminalGene gene)

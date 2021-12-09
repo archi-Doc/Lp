@@ -57,6 +57,14 @@ internal static class PacketService
         }
     }
 
+    internal static unsafe void InsertDataSize(Memory<byte> memory, ushort size)
+    {
+        fixed (byte* pb = memory.Span)
+        {
+            (*(PacketHeader*)pb).DataSize = size;
+        }
+    }
+
     internal static (int NumberOfGenes, int DataSize, int LastDataSize) GetDataInfo(int totalSize)
     {
         var numberOfGenes = totalSize / PacketService.DataPacketSize;

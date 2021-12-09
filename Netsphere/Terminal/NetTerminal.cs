@@ -153,6 +153,21 @@ public partial class NetTerminal : IDisposable
             {
                 x.ProcessSend(udp, currentTicks);
             }
+
+            if ((currentTicks - this.lastSendingAckTicks) > Ticks.FromMilliseconds(500))
+            {
+                this.lastSendingAckTicks = currentTicks;
+
+                foreach (var x in this.activeInterfaces)
+                {
+                    x.ProcessSendingAck();
+                }
+
+                foreach (var x in this.disposedInterfaces)
+                {
+                    x.ProcessSendingAck();
+                }
+            }
         }
     }
 
@@ -277,6 +292,8 @@ public partial class NetTerminal : IDisposable
     protected List<NetInterface> activeInterfaces = new();
     protected List<NetInterface> disposedInterfaces = new();
     protected byte[]? embryo; // 48 bytes
+
+    private long lastSendingAckTicks;
 
     // private PacketService packetService = new();
 

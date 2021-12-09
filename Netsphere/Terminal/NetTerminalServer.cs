@@ -96,46 +96,55 @@ public class NetTerminalServer : NetTerminal
     public async Task<(NetInterfaceResult Result, NetTerminalServerPacket? Packet)> ReceiveAsync(int millisecondsToWait = DefaultMillisecondsToWait)
     {
         PacketReserve? reserve = null;
+        NetInterface<object, byte[]>? reserveInterface = null;
 
+        try
+        {
+            var netInterface = this.GetReceiver();
 ReceiveAsyncStart:
-        var netInterface = this.GetReceiver();
-        if (reserve != null)
-        {
-            netInterface.SetReserve(reserve);
-        }
 
-        var received = await netInterface.ReceiveDataAsync(millisecondsToWait).ConfigureAwait(false);
-        if (received.Result == NetInterfaceResult.Timeout)
-        {// Timeout
-            return (received.Result, null);
-        }
-
-        if (received.Result != NetInterfaceResult.Success || received.Value == null)
-        {// Error
-            this.NextReceiver();
-            return (received.Result, null);
-        }
-
-        if (received.PacketId == PacketId.Reserve)
-        {
-            if (reserve != null)
-            {
-                this.NextReceiver();
-                return (NetInterfaceResult.DeserializationError, null);
-            }
-            else if (!TinyhandSerializer.TryDeserialize<PacketReserve>(received.Value, out reserve))
-            {
-                this.NextReceiver();
-                return (NetInterfaceResult.DeserializationError, null);
+            var received = await netInterface.ReceiveDataAsync(millisecondsToWait).ConfigureAwait(false);
+            if (received.Result == NetInterfaceResult.Timeout)
+            {// Timeout
+                return (received.Result, null);
             }
 
-            this.NextReceiver();
-            goto ReceiveAsyncStart;
-        }
+            if (received.Result != NetInterfaceResult.Success || received.Value == null)
+            {// Error
+                this.NextReceiver();
+                return (received.Result, null);
+            }
 
-        this.ReceiverToSender();
-        var packet = new NetTerminalServerPacket(received.PacketId, received.Value);
-        return (received.Result, packet);
+            if (received.PacketId == PacketId.Reserve)
+            {
+                if (reserve != null)
+                {
+                    this.NextReceiver();
+                    return (NetInterfaceResult.ReserveError, null);
+                }
+                else if (!TinyhandSerializer.TryDeserialize<PacketReserve>(received.Value, out reserve))
+                {
+                    this.NextReceiver();
+                    return (NetInterfaceResult.DeserializationError, null);
+                }
+
+                reserveInterface = netInterface;
+                this.ReceiverToSender();
+                netInterface = this.GetReceiver();
+                netInterface.SetReserve(reserve);
+
+                reserveInterface.SetSend(new PacketReserveResponse());
+                goto ReceiveAsyncStart;
+            }
+
+            this.ReceiverToSender();
+            var packet = new NetTerminalServerPacket(received.PacketId, received.Value);
+            return (received.Result, packet);
+        }
+        finally
+        {
+            reserveInterface?.Dispose();
+        }
     }
 
     public async Task<NetInterfaceResult> SendPacketAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
@@ -207,41 +216,59 @@ ReceiveAsyncStart:
 
     private async Task<NetInterfaceResult> SendDataAsync(bool encrypt, PacketId packetId, ulong id, ByteArrayPool.MemoryOwner owner, int millisecondsToWait = DefaultMillisecondsToWait)
     {// checked
-        if (encrypt && !this.IsEncrypted)
-        {
-            return NetInterfaceResult.NoEncryptedConnection;
-        }
-        else if (owner.Memory.Length > BlockService.MaxBlockSize)
-        {// Block size limit exceeded.
-            return NetInterfaceResult.BlockSizeLimit;
-        }
-
-        NetInterface<object, byte[]>? netInterface;
-        if (!this.senderQueue.TryDequeue(out netInterface))
-        {
-            return NetInterfaceResult.NoEncryptedConnection;
-        }
-
-        if (owner.Memory.Length <= PacketService.SafeMaxPacketSize)
-        {// Single packet.
-            netInterface.SetSend(packetId, id, owner);
-        }
-        else
-        {// Split into multiple packets. Send PacketReserve.
-            var reserve = new PacketReserve(owner.Memory.Length);
-            netInterface.SetSend(reserve);
-            await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
-        }
-
-        // netInterface.SetSend(reserve);
+        NetInterface<object, byte[]>? reserveInterface = null;
 
         try
         {
-            return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
+            if (encrypt && !this.IsEncrypted)
+            {
+                return NetInterfaceResult.NoEncryptedConnection;
+            }
+            else if (owner.Memory.Length > BlockService.MaxBlockSize)
+            {// Block size limit exceeded.
+                return NetInterfaceResult.BlockSizeLimit;
+            }
+
+            NetInterface<object, byte[]>? netInterface;
+            if (!this.senderQueue.TryDequeue(out netInterface))
+            {
+                return NetInterfaceResult.NoEncryptedConnection;
+            }
+
+            if (owner.Memory.Length <= PacketService.SafeMaxPacketSize)
+            {// Single packet.
+                netInterface.SetSend(packetId, id, owner);
+            }
+            else
+            {// Split into multiple packets. Send PacketReserve.
+                reserveInterface = netInterface;
+                var reserve = new PacketReserve(owner.Memory.Length);
+                reserveInterface.SetSend(reserve);
+
+                netInterface = this.GetReceiver();
+                var received = await netInterface.ReceiveDataAsync(millisecondsToWait).ConfigureAwait(false);
+                if (received.Result != NetInterfaceResult.Success || received.PacketId != PacketId.ReserveResponse)
+                {
+                    return NetInterfaceResult.ReserveError;
+                }
+
+                // netInterface.SetSend(packetId, id, owner);
+            }
+
+            // netInterface.SetSend(reserve);
+
+            try
+            {
+                return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
+            }
+            finally
+            {
+                netInterface.Dispose();
+            }
         }
         finally
         {
-            netInterface.Dispose();
+            reserveInterface?.Dispose();
         }
     }
 

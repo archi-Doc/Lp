@@ -34,3 +34,13 @@ internal partial class PacketReserve : IPacket
     [Key(1)]
     public uint DataSize { get; set; }
 }
+
+[TinyhandObject]
+internal partial class PacketReserveResponse : IPacket
+{
+    public PacketId PacketId => PacketId.ReserveResponse;
+
+    public PacketReserveResponse()
+    {
+    }
+}
