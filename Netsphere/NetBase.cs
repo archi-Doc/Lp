@@ -23,7 +23,7 @@ public class NetBase
                 showWarning = true;
             }
 
-            this.NetsphereOptions.Port = LP.Random.Pseudo.NextInt(NetControl.MinPort, NetControl.MaxPort + 1);
+            this.NetsphereOptions.Port = LP.Random.Pseudo.NextInt32(NetControl.MinPort, NetControl.MaxPort + 1);
             if (showWarning)
             {
                 Logger.Default.Warning($"Port number must be between {NetControl.MinPort} and {NetControl.MaxPort}");

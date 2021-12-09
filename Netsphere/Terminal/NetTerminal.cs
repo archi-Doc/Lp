@@ -30,13 +30,13 @@ public partial class NetTerminal : IDisposable
     internal NetTerminal(Terminal terminal, NodeAddress nodeAddress)
     {// NodeAddress: Unmanaged
         this.Terminal = terminal;
-        this.GenePool = new(LP.Random.Crypto.NextULong());
+        this.GenePool = new(LP.Random.Crypto.NextUInt64());
         this.NodeAddress = nodeAddress;
         this.Endpoint = this.NodeAddress.CreateEndpoint();
     }
 
     internal NetTerminal(Terminal terminal, NodeInformation nodeInformation)
-        : this(terminal, nodeInformation, LP.Random.Crypto.NextULong())
+        : this(terminal, nodeInformation, LP.Random.Crypto.NextUInt64())
     {// NodeInformation: Managed
     }
 

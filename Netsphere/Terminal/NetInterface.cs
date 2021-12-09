@@ -572,21 +572,7 @@ WaitForSendCompletionWait:
     {// lock (this.NetTerminal.SyncObject)
         if (this.RecvGenes != null)
         {
-            List<ulong>? sendingAck = null;
-            foreach (var x in this.RecvGenes)
-            {
-                if (x.State == NetTerminalGeneState.SendingAck)
-                {
-                    sendingAck ??= new();
-                    sendingAck.Add(x.Gene);
-                    x.State = NetTerminalGeneState.ReceiveComplete;
-                }
-            }
-
-            if (sendingAck != null)
-            {
-                this.SendAck(sendingAck);
-            }
+            this.ProcessSendingAck();
         }
 
         if (this.SendGenes != null)
@@ -611,6 +597,29 @@ WaitForSendCompletionWait:
                     }
                 }
             }
+        }
+    }
+
+    internal unsafe void ProcessSendingAck()
+    {
+        if (this.RecvGenes == null)
+        {
+            return;
+        }
+
+        foreach (var x in this.RecvGenes)
+        {
+            if (x.State == NetTerminalGeneState.SendingAck)
+            {
+                sendingAck ??= new();
+                sendingAck.Add(x.Gene);
+                x.State = NetTerminalGeneState.ReceiveComplete;
+            }
+        }
+
+        if (sendingAck != null)
+        {
+            this.SendAck(sendingAck);
         }
     }
 

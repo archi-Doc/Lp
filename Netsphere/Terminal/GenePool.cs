@@ -25,7 +25,7 @@ internal class GenePool : IDisposable
 
     public void ResetGene()
     {
-        this.currentGene = LP.Random.Crypto.NextULong();
+        this.currentGene = LP.Random.Crypto.NextUInt64();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -67,7 +67,7 @@ internal class GenePool : IDisposable
 
         Span<byte> span = stackalloc byte[sizeof(ulong) + source.Length];
         var buffer = span;
-        BitConverter.TryWriteBytes(buffer, this.pseudoRandom.NextULong());
+        BitConverter.TryWriteBytes(buffer, this.pseudoRandom.NextUInt64());
         buffer = buffer.Slice(sizeof(ulong));
         source.CopyTo(buffer);
 

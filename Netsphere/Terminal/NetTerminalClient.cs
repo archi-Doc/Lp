@@ -10,7 +10,7 @@ public class NetTerminalClient : NetTerminal
     }
 
     internal NetTerminalClient(Terminal terminal, NodeInformation nodeInformation)
-        : base(terminal, nodeInformation, LP.Random.Crypto.NextULong())
+        : base(terminal, nodeInformation, LP.Random.Crypto.NextUInt64())
     {// NodeInformation: Managed
     }
 
