@@ -154,7 +154,7 @@ public partial class NetTerminal : IDisposable
                 x.ProcessSend(udp, currentTicks);
             }
 
-            if ((currentTicks - this.lastSendingAckTicks) > Ticks.FromMilliseconds(500))
+            if ((currentTicks - this.lastSendingAckTicks) > Ticks.FromMilliseconds(10))
             {
                 this.lastSendingAckTicks = currentTicks;
 
