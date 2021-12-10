@@ -11,15 +11,6 @@ namespace LP;
 /// </summary>
 public class ByteArrayPool
 {
-    /*[MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ReturnAndSetNull(ref Owner? owner)
-    {
-        if (owner != null)
-        {
-            owner = owner.Return();
-        }
-    }*/
-
     /// <summary>
     /// An owner class of a byte array (one owner for each byte array).<br/>
     /// <see cref="Owner"/> has a reference count, and when it reaches zero, it returns the byte array to the pool.
@@ -72,7 +63,6 @@ public class ByteArrayPool
             var count = Interlocked.Decrement(ref this.count);
             if (count == 0 && this.Pool != null)
             {
-                // this.Pool.Return(this);
                 if (this.Pool.MaxPool == 0 || this.Pool.queue.Count <= this.Pool.MaxPool)
                 {
                     this.Pool.queue.Enqueue(this);
@@ -219,45 +209,6 @@ public class ByteArrayPool
         owner.SetCount1();
         return owner;
     }
-
-    /// <summary>
-    /// Gets a fixed-length byte array from the pool or create a new byte array if not available.<br/>
-    /// </summary>
-    /// <param name="start">The index of the first byte to include in the new <see cref="Memory{T}"/>.</param>
-    /// <param name="length">The number of bytes to include in the new <see cref="Memory{T}"/>.</param>
-    /// <returns>A fixed-length byte array.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public MemoryOwner Rent(int start, int length)
-    {
-        Owner? owner;
-        if (!this.queue.TryDequeue(out owner))
-        {// Allocate a new byte array.
-            owner = new Owner(this);
-        }
-        else
-        {
-            owner.SetCount1();
-        }
-
-        return new MemoryOwner(owner, start, length);
-    }
-
-    /*/// <summary>
-    /// Returns a byte array to the pool.<br/>
-    /// Failure to return a rented array is not a fatal error (eventually be garbage-collected).
-    /// </summary>
-    /// <param name="owner">An owner of the byte array to return to the pool.</param>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void Return(Owner owner)
-    {
-        if (owner.ByteArray.Length == this.ArrayLength)
-        {
-            if (this.MaxPool == 0 || this.queue.Count <= this.MaxPool)
-            {
-                this.queue.Enqueue(owner);
-            }
-        }
-    }*/
 
     /// <summary>
     /// Gets the length of fixed-length byte array.

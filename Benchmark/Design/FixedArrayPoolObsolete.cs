@@ -9,14 +9,14 @@ namespace LP;
 /// <summary>
 /// A fast and thread-safe pool of fixed-length (1 kbytes or more) byte arrays (uses <see cref="ConcurrentQueue{T}"/>).<br/>
 /// </summary>
-public class FixedArrayPool
+public class FixedArrayPoolObsolete
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="FixedArrayPool"/> class.<br/>
+    /// Initializes a new instance of the <see cref="FixedArrayPoolObsolete"/> class.<br/>
     /// </summary>
     /// <param name="arrayLength">The length of fixed-length byte array.</param>
     /// <param name="maxPool">The maximum number of pooled arrays (0 for unlimited).</param>
-    public FixedArrayPool(int arrayLength, int maxPool = 0)
+    public FixedArrayPoolObsolete(int arrayLength, int maxPool = 0)
     {
         this.ArrayLength = arrayLength;
         this.MaxPool = maxPool >= 0 ? maxPool : 0;
