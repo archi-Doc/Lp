@@ -207,9 +207,14 @@ public class UnifiedArrayPool
     /// </summary>
     /// <param name="maxLength">The maximum length of a byte array instance that may be stored in the pool.</param>
     /// <param name="maxPool">The maximum number of array instances that may be stored in each bucket in the pool.</param>
-    public UnifiedArrayPool(uint maxLength, int maxPool = 100)
+    public UnifiedArrayPool(int maxLength, int maxPool = 100)
     {
-        var leadingZero = BitOperations.LeadingZeroCount(maxLength);
+        if (maxLength < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maxLength));
+        }
+
+        var leadingZero = BitOperations.LeadingZeroCount((uint)maxLength);
         var lowerBound = 32 - LowerBoundBits;
         if (leadingZero > lowerBound)
         {
@@ -247,9 +252,9 @@ public class UnifiedArrayPool
     /// <param name="minimumLength">The minimum length of the array.</param>
     /// <returns>A fixed-length byte array.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Owner Rent(uint minimumLength)
+    public Owner Rent(int minimumLength)
     {
-        var bucket = this.buckets[BitOperations.LeadingZeroCount(minimumLength)];
+        var bucket = this.buckets[BitOperations.LeadingZeroCount((uint)minimumLength)];
         if (bucket == null)
         {
             throw new ArgumentOutOfRangeException(nameof(minimumLength));
