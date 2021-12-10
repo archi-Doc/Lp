@@ -58,6 +58,15 @@ public class PacketPoolBenchmark
     [GlobalSetup]
     public void Setup()
     {
+        var unified = new UnifiedArrayPool(20);
+        var aa = unified.Rent(20);
+        aa.Return();
+        aa = unified.Rent(5);
+        aa = unified.Rent(6);
+        aa = unified.Rent(7);
+        aa = unified.Rent(8);
+        aa = unified.Rent(9);
+
         this.FixedArrayPoolObsolete = new(this.Length, N);
         this.FixedArrayPool = new(this.Length, N);
         this.Arrays = new byte[N][];

@@ -9,11 +9,11 @@ using System.Runtime.CompilerServices;
 namespace LP;
 
 /// <summary>
-/// A thread-safe pool of byte arrays (uses <see cref="ArrayPool{T}"/>).<br/>
+/// A thread-safe pool of byte arrays (uses <see cref="ConcurrentQueue{T}"/>).<br/>
 /// </summary>
 public class UnifiedArrayPool
 {
-    public const int LowerBoundBits = 3;
+    private const int LowerBoundBits = 3;
 
     /// <summary>
     /// An owner class of a byte array (one owner for each byte array).<br/>
@@ -236,7 +236,7 @@ public class UnifiedArrayPool
             }
             else
             {
-                this.buckets[i] = new(this, 1 << (31 - i), this.MaxPool);
+                this.buckets[i] = new(this, 1 << (32 - i), this.MaxPool);
             }
         }
     }
