@@ -134,24 +134,10 @@ public class ByteArrayPool
         /// </summary>
         /// <returns><see cref="Owner"/> instance (<see langword="this"/>).</returns>
         public MemoryOwner IncrementAndShare()
-        {
-            if (this.Owner == null)
-            {
-                throw new InvalidOperationException();
-            }
-
-            return new(this.Owner.IncrementAndShare(), this.Memory);
-        }
+            => new(this.Owner.IncrementAndShare(), this.Memory);
 
         public MemoryOwner IncrementAndShare(int start, int length)
-        {
-            if (this.Owner == null)
-            {
-                throw new InvalidOperationException();
-            }
-
-            return new(this.Owner.IncrementAndShare(), start, length);
-        }
+            => new(this.Owner.IncrementAndShare(), start, length);
 
         /// <summary>
         /// Forms a slice out of the current memory that begins at a specified index.
@@ -159,7 +145,7 @@ public class ByteArrayPool
         /// <param name="start">The index at which to begin the slice.</param>
         /// <returns><see cref="MemoryOwner"/>.</returns>
         public MemoryOwner Slice(int start)
-            => new(this.Owner!, this.Memory.Slice(start));
+            => new(this.Owner, this.Memory.Slice(start));
 
         /// <summary>
         /// Forms a slice out of the current memory starting at a specified index for a specified length.
@@ -168,17 +154,17 @@ public class ByteArrayPool
         /// <param name="length">The number of elements to include in the slice.</param>
         /// <returns><see cref="MemoryOwner"/>.</returns>
         public MemoryOwner Slice(int start, int length)
-            => new(this.Owner!, this.Memory.Slice(start, length));
+            => new(this.Owner, this.Memory.Slice(start, length));
 
         public MemoryOwner Return()
         {
-            this.Owner?.Return();
+            this.Owner.Return();
             return default;
         }
 
         public void Dispose() => this.Return();
 
-        public readonly Owner? Owner;
+        public readonly Owner Owner;
         public readonly Memory<byte> Memory;
     }
 
