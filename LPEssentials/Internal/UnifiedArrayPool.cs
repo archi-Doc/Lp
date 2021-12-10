@@ -13,10 +13,11 @@ namespace LP;
 /// </summary>
 public class UnifiedArrayPool
 {
+    private const int UpperBoundLength = 1024 * 1024 * 1024; // 1 GB
     private const int LowerBoundBits = 3;
 
     /// <summary>
-    /// An owner class of a byte array (one owner instance for each byte array).<br/>
+    /// Represents an owner of a byte array (one owner instance for each byte array).<br/>
     /// <see cref="Owner"/> has a reference count, and when it reaches zero, it returns the byte array to the pool.
     /// </summary>
     public class Owner : IDisposable
@@ -51,6 +52,12 @@ public class UnifiedArrayPool
             return this;
         }
 
+        /// <summary>
+        ///  Increment the reference count and create a <see cref="MemoryOwner"/> object by specifying the index and length.
+        /// </summary>
+        /// <param name="start">The index at which to begin the slice.</param>
+        /// <param name="length">The number of elements to include in the slice.</param>
+        /// <returns><see cref="MemoryOwner"/> object.</returns>
         public MemoryOwner IncrementAndShare(int start, int length)
         {
             Interlocked.Increment(ref this.count);
@@ -58,7 +65,8 @@ public class UnifiedArrayPool
         }
 
         /// <summary>
-        /// Decrement the reference count. When it reaches zero, it returns the byte array to the pool.<br/>
+        /// Decrement the reference count.<br/>
+        /// When it reaches zero, it returns the byte array to the pool.<br/>
         /// Failure to return a rented array is not a fatal error (eventually be garbage-collected).
         /// </summary>
         /// <returns><see langword="null"></see>.</returns>
@@ -79,16 +87,31 @@ public class UnifiedArrayPool
 
         public void Dispose() => this.Return();
 
+        /// <summary>
+        /// Create a <see cref="MemoryOwner"/> object from <see cref="Owner"/>.
+        /// </summary>
+        /// <returns><see cref="MemoryOwner"/>.</returns>
         public MemoryOwner ToMemoryOwner() => new MemoryOwner(this);
 
+        /// <summary>
+        /// Create a <see cref="MemoryOwner"/> object by specifying the index and length.
+        /// </summary>
+        /// <param name="start">The index at which to begin the slice.</param>
+        /// <param name="length">The number of elements to include in the slice.</param>
+        /// <returns><see cref="MemoryOwner"/>.</returns>
         public MemoryOwner ToMemoryOwner(int start, int length) => new MemoryOwner(this, start, length);
 
         internal void SetCount1() => Volatile.Write(ref this.count, 1);
 
         /// <summary>
-        /// Gets a fixed-length byte array.
+        /// Gets a rent byte array.
         /// </summary>
         public byte[] ByteArray { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether the owner (byte array) is returned or not.
+        /// </summary>
+        public bool IsReturned => Volatile.Read(ref this.count) <= 0;
 
         /// <summary>
         /// Gets the reference count of the owner.
@@ -99,6 +122,9 @@ public class UnifiedArrayPool
         private int count;
     }
 
+    /// <summary>
+    /// Represents an owner of a byte array and a <see cref="Memory{T}"/> object.
+    /// </summary>
     public readonly struct MemoryOwner : IDisposable
     {
         /// <summary>
@@ -144,6 +170,12 @@ public class UnifiedArrayPool
             return new(this.Owner.IncrementAndShare(), this.Memory);
         }
 
+        /// <summary>
+        ///  Increment the reference count and create a <see cref="MemoryOwner"/> object by specifying the index and length.
+        /// </summary>
+        /// <param name="start">The index at which to begin the slice.</param>
+        /// <param name="length">The number of elements to include in the slice.</param>
+        /// <returns><see cref="MemoryOwner"/> object.</returns>
         public MemoryOwner IncrementAndShare(int start, int length)
         {
             if (this.Owner == null)
@@ -171,6 +203,12 @@ public class UnifiedArrayPool
         public MemoryOwner Slice(int start, int length)
             => new(this.Owner!, this.Memory.Slice(start, length));
 
+        /// <summary>
+        /// Decrement the reference count.<br/>
+        /// When it reaches zero, it returns the byte array to the pool.<br/>
+        /// Failure to return a rented array is not a fatal error (eventually be garbage-collected).
+        /// </summary>
+        /// <returns><see langword="default"></see>.</returns>
         public MemoryOwner Return()
         {
             this.Owner?.Return();
@@ -178,6 +216,11 @@ public class UnifiedArrayPool
         }
 
         public void Dispose() => this.Return();
+
+        /// <summary>
+        /// Gets a value indicating whether the owner (byte array) is returned or not.
+        /// </summary>
+        public bool IsReturned => this.Owner == null || this.Owner.IsReturned == true;
 
         public readonly Owner? Owner;
         public readonly Memory<byte> Memory;
@@ -206,24 +249,24 @@ public class UnifiedArrayPool
     /// <summary>
     /// Initializes a new instance of the <see cref="UnifiedArrayPool"/> class.<br/>
     /// </summary>
-    /// <param name="maxLength">The maximum length of a byte array instance that may be stored in the pool.</param>
-    /// <param name="maxPool">The maximum number of array instances that may be stored in each bucket in the pool.</param>
-    public UnifiedArrayPool(int maxLength, int maxPool = 100)
+    /// <param name="maxLength">The maximum length of a byte array instance that may be stored in the pool (0 for max 1GB).</param>
+    /// <param name="maxPool">The maximum number of array instances that may be stored in each bucket in the pool (0 for unlimited).</param>
+    public UnifiedArrayPool(int maxLength = 0, int maxPool = 100)
     {
-        if (maxLength < 0)
+        if (maxLength <= 0 || maxLength > UpperBoundLength)
         {
-            throw new ArgumentOutOfRangeException(nameof(maxLength));
+            maxLength = UpperBoundLength;
         }
 
-        var leadingZero = BitOperations.LeadingZeroCount((uint)maxLength);
+        var leadingZero = BitOperations.LeadingZeroCount((uint)maxLength - 1);
         var lowerBound = 32 - LowerBoundBits;
         if (leadingZero > lowerBound)
         {
             leadingZero = lowerBound;
         }
-        else if (leadingZero < 1)
+        else if (leadingZero < 2)
         {
-            leadingZero = 1;
+            leadingZero = 2;
         }
 
         this.MaxLength = 1 << (32 - leadingZero);
@@ -248,17 +291,24 @@ public class UnifiedArrayPool
     }
 
     /// <summary>
-    /// Gets a fixed-length byte array from the pool or create a new byte array if not available.<br/>
+    /// Gets a byte array from the pool or allocate a new byte array if not available.<br/>
     /// </summary>
-    /// <param name="minimumLength">The minimum length of the array.</param>
-    /// <returns>A fixed-length byte array.</returns>
+    /// <param name="minimumLength">The minimum length of the byte array.</param>
+    /// <returns>A rent byte array.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Owner Rent(int minimumLength)
     {
-        var bucket = this.buckets[BitOperations.LeadingZeroCount((uint)minimumLength)];
+        var bucket = this.buckets[BitOperations.LeadingZeroCount((uint)minimumLength - 1)];
         if (bucket == null)
         {
-            throw new ArgumentOutOfRangeException(nameof(minimumLength));
+            if (minimumLength == 0)
+            {
+                bucket = this.buckets[32]!;
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException(nameof(minimumLength));
+            }
         }
 
         Owner? owner;

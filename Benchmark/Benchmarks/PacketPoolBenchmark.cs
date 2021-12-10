@@ -30,7 +30,7 @@ public class PacketPoolBenchmark
 {
     public const int N = 100;
 
-    [Params(2048 * 10)]
+    [Params(256)]
     public int Length { get; set; }
 
     public ConcurrentQueue<byte[]> Queue { get; set; } = new();
@@ -72,7 +72,7 @@ public class PacketPoolBenchmark
     {
         this.FixedArrayPoolObsolete = new(this.Length, N);
         this.FixedArrayPool = new(this.Length, N);
-        this.UnifiedArrayPool = new(this.Length, N);
+        this.UnifiedArrayPool = new(0, N);
         this.ByteArrayPool = new(this.Length, N);
         this.Arrays = new byte[N][];
         this.ArrayMemoryPairs = new ArrayMemoryPair[N];
