@@ -16,16 +16,17 @@ public class UnifiedArrayPool
     private const int LowerBoundBits = 3;
 
     /// <summary>
-    /// An owner class of a byte array (one owner for each byte array).<br/>
+    /// An owner class of a byte array (one owner instance for each byte array).<br/>
     /// <see cref="Owner"/> has a reference count, and when it reaches zero, it returns the byte array to the pool.
     /// </summary>
     public class Owner : IDisposable
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="Owner"/> class from a byte array.<br/>
-        /// This is a feature for compatibility with <see cref="UnifiedArrayPool"/>, and the byte array will not be returned when <see cref="Return"/> is called.
+        /// This is a feature for compatibility with conventional memory management (e.g new byte[]), <br/>
+        /// The byte array will not be returned when <see cref="Return"/> is called.
         /// </summary>
-        /// <param name="byteArray">A byte array (other than <see cref="UnifiedArrayPool"/>).</param>
+        /// <param name="byteArray">A byte array (allocated with 'new').</param>
         public Owner(byte[] byteArray)
         {
             this.bucket = null;
