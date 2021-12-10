@@ -16,7 +16,7 @@ public static class BlockService
 
     public static ulong GetId<TSend, TReceive>() => (ulong)IdCache<TSend>.Id | ((ulong)IdCache<TReceive>.Id << 32);
 
-    public static bool TrySerialize<T>(T value, out ByteArrayPool.MemoryOwner owner)
+    public static bool TrySerialize<T>(T value, out FixedArrayPool.MemoryOwner owner)
     {
         var arrayOwner = BlockPool.Rent();
         try

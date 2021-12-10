@@ -34,7 +34,7 @@ public class NetSocket
                 anyEP = new IPEndPoint(IPAddress.IPv6Any, IPEndPoint.MinPort);
             }
 
-            ByteArrayPool.Owner? arrayOwner = null;
+            FixedArrayPool.Owner? arrayOwner = null;
             while (true)
             {
                 if (core.IsTerminated)

@@ -37,7 +37,7 @@ public class PacketPoolBenchmark
 
     public FixedArrayPoolObsolete FixedArrayPoolObsolete { get; set; } = default!;
 
-    public ByteArrayPool FixedArrayPool { get; set; } = default!;
+    public FixedArrayPool FixedArrayPool { get; set; } = default!;
 
     public ArrayPool<byte> ArrayPool { get; set; } = default!;
 
@@ -45,9 +45,9 @@ public class PacketPoolBenchmark
 
     public ArrayMemoryPair[] ArrayMemoryPairs { get; set; } = default!;
 
-    public ByteArrayPool.Owner[] OwnerArray { get; set; } = default!;
+    public FixedArrayPool.Owner[] OwnerArray { get; set; } = default!;
 
-    public ByteArrayPool.MemoryOwner[] MemoryArray { get; set; } = default!;
+    public FixedArrayPool.MemoryOwner[] MemoryArray { get; set; } = default!;
 
     public IMemoryOwner<byte>[] MemoryOwnerArray { get; set; } = default!;
 
@@ -62,8 +62,8 @@ public class PacketPoolBenchmark
         this.FixedArrayPool = new(this.Length, N);
         this.Arrays = new byte[N][];
         this.ArrayMemoryPairs = new ArrayMemoryPair[N];
-        this.OwnerArray = new ByteArrayPool.Owner[N];
-        this.MemoryArray = new ByteArrayPool.MemoryOwner[N];
+        this.OwnerArray = new FixedArrayPool.Owner[N];
+        this.MemoryArray = new FixedArrayPool.MemoryOwner[N];
         this.MemoryOwnerArray = new IMemoryOwner<byte>[N];
         for (var n = 0; n < N; n++)
         {
@@ -114,7 +114,7 @@ public class PacketPoolBenchmark
     }
 
     [Benchmark]
-    public ByteArrayPool.Owner Owner1()
+    public FixedArrayPool.Owner Owner1()
     {
         var owner = this.FixedArrayPool.Rent();
         owner.Return();
@@ -122,7 +122,7 @@ public class PacketPoolBenchmark
     }
 
     [Benchmark]
-    public ByteArrayPool.MemoryOwner MemoryOwner1()
+    public FixedArrayPool.MemoryOwner MemoryOwner1()
     {
         var owner = this.FixedArrayPool.Rent().ToMemoryOwner(0, 10);
         return owner.Return();
@@ -248,7 +248,7 @@ public class PacketPoolBenchmark
     }
 
     [Benchmark]
-    public ByteArrayPool.Owner[] OwnerN()
+    public FixedArrayPool.Owner[] OwnerN()
     {
         for (var n = 0; n < N; n++)
         {
@@ -264,7 +264,7 @@ public class PacketPoolBenchmark
     }
 
     [Benchmark]
-    public ByteArrayPool.MemoryOwner[] MemoryOwnerN()
+    public FixedArrayPool.MemoryOwner[] MemoryOwnerN()
     {
         for (var n = 0; n < N; n++)
         {

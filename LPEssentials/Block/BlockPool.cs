@@ -13,10 +13,10 @@ internal static class BlockPool
 {
     static BlockPool()
     {
-        blockPool = new ByteArrayPool(BlockService.MaxBlockSize);
+        blockPool = new FixedArrayPool(BlockService.MaxBlockSize);
     }
 
-    public static ByteArrayPool.Owner Rent() => blockPool.Rent();
+    public static FixedArrayPool.Owner Rent() => blockPool.Rent();
 
-    private static ByteArrayPool blockPool;
+    private static FixedArrayPool blockPool;
 }

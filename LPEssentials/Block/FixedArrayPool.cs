@@ -9,7 +9,7 @@ namespace LP;
 /// <summary>
 /// A thread-safe pool of fixed-length (1 kbytes or more) byte arrays (uses <see cref="ConcurrentQueue{T}"/>).<br/>
 /// </summary>
-public class ByteArrayPool
+public class FixedArrayPool
 {
     /// <summary>
     /// An owner class of a byte array (one owner for each byte array).<br/>
@@ -19,9 +19,9 @@ public class ByteArrayPool
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="Owner"/> class from a byte array.<br/>
-        /// This is a feature for compatibility with <see cref="ByteArrayPool"/>, and the byte array will not be returned when <see cref="Return"/> is called.
+        /// This is a feature for compatibility with <see cref="FixedArrayPool"/>, and the byte array will not be returned when <see cref="Return"/> is called.
         /// </summary>
-        /// <param name="byteArray">A byte array (other than <see cref="ByteArrayPool"/>).</param>
+        /// <param name="byteArray">A byte array (other than <see cref="FixedArrayPool"/>).</param>
         public Owner(byte[] byteArray)
         {
             this.Pool = null;
@@ -29,7 +29,7 @@ public class ByteArrayPool
             this.SetCount1();
         }
 
-        internal Owner(ByteArrayPool pool)
+        internal Owner(FixedArrayPool pool)
         {
             this.Pool = pool;
             this.ByteArray = new byte[pool.ArrayLength];
@@ -81,9 +81,9 @@ public class ByteArrayPool
         internal void SetCount1() => Volatile.Write(ref this.count, 1);
 
         /// <summary>
-        /// Gets a <see cref="ByteArrayPool"/> instance.
+        /// Gets a <see cref="FixedArrayPool"/> instance.
         /// </summary>
-        public ByteArrayPool? Pool { get; }
+        public FixedArrayPool? Pool { get; }
 
         /// <summary>
         /// Gets a fixed-length byte array.
@@ -102,9 +102,9 @@ public class ByteArrayPool
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="MemoryOwner"/> struct from a byte array.<br/>
-        /// This is a feature for compatibility with <see cref="ByteArrayPool"/>, and the byte array will not be returned when <see cref="Return"/> is called.
+        /// This is a feature for compatibility with <see cref="FixedArrayPool"/>, and the byte array will not be returned when <see cref="Return"/> is called.
         /// </summary>
-        /// <param name="byteArray">A byte array (other than <see cref="ByteArrayPool"/>).</param>
+        /// <param name="byteArray">A byte array (other than <see cref="FixedArrayPool"/>).</param>
         public MemoryOwner(byte[] byteArray)
         {
             this.Owner = new(byteArray);
@@ -134,10 +134,24 @@ public class ByteArrayPool
         /// </summary>
         /// <returns><see cref="Owner"/> instance (<see langword="this"/>).</returns>
         public MemoryOwner IncrementAndShare()
-            => new(this.Owner.IncrementAndShare(), this.Memory);
+        {
+            if (this.Owner == null)
+            {
+                throw new InvalidOperationException();
+            }
+
+            return new(this.Owner.IncrementAndShare(), this.Memory);
+        }
 
         public MemoryOwner IncrementAndShare(int start, int length)
-            => new(this.Owner.IncrementAndShare(), start, length);
+        {
+            if (this.Owner == null)
+            {
+                throw new InvalidOperationException();
+            }
+
+            return new(this.Owner.IncrementAndShare(), start, length);
+        }
 
         /// <summary>
         /// Forms a slice out of the current memory that begins at a specified index.
@@ -145,7 +159,7 @@ public class ByteArrayPool
         /// <param name="start">The index at which to begin the slice.</param>
         /// <returns><see cref="MemoryOwner"/>.</returns>
         public MemoryOwner Slice(int start)
-            => new(this.Owner, this.Memory.Slice(start));
+            => new(this.Owner!, this.Memory.Slice(start));
 
         /// <summary>
         /// Forms a slice out of the current memory starting at a specified index for a specified length.
@@ -154,26 +168,26 @@ public class ByteArrayPool
         /// <param name="length">The number of elements to include in the slice.</param>
         /// <returns><see cref="MemoryOwner"/>.</returns>
         public MemoryOwner Slice(int start, int length)
-            => new(this.Owner, this.Memory.Slice(start, length));
+            => new(this.Owner!, this.Memory.Slice(start, length));
 
         public MemoryOwner Return()
         {
-            this.Owner.Return();
+            this.Owner?.Return();
             return default;
         }
 
         public void Dispose() => this.Return();
 
-        public readonly Owner Owner;
+        public readonly Owner? Owner;
         public readonly Memory<byte> Memory;
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ByteArrayPool"/> class.<br/>
+    /// Initializes a new instance of the <see cref="FixedArrayPool"/> class.<br/>
     /// </summary>
     /// <param name="arrayLength">The length of fixed-length byte array.</param>
     /// <param name="maxPool">The maximum number of pooled arrays (0 for unlimited).</param>
-    public ByteArrayPool(int arrayLength, int maxPool = 0)
+    public FixedArrayPool(int arrayLength, int maxPool = 0)
     {
         this.ArrayLength = arrayLength;
         this.MaxPool = maxPool >= 0 ? maxPool : 0;

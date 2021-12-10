@@ -65,7 +65,7 @@ public interface INetInterface<TSend> : IDisposable
 
 internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend, TReceive>
 {
-    internal static NetInterface<TSend, TReceive>? CreateData(NetTerminal netTerminal, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner, bool receive, out NetInterfaceResult interfaceResult)
+    internal static NetInterface<TSend, TReceive>? CreateData(NetTerminal netTerminal, PacketId packetId, ulong dataId, FixedArrayPool.MemoryOwner owner, bool receive, out NetInterfaceResult interfaceResult)
     {// Send and Receive(optional) NetTerminalGene.
         if (owner.Memory.Length > BlockService.MaxBlockSize)
         {
@@ -148,7 +148,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         return netInterface;
     }
 
-    internal static NetInterface<TSend, TReceive> CreateConnect(NetTerminal netTerminal, ulong gene, ByteArrayPool.MemoryOwner receiveOwner, ulong secondGene, ByteArrayPool.MemoryOwner sendOwner)
+    internal static NetInterface<TSend, TReceive> CreateConnect(NetTerminal netTerminal, ulong gene, FixedArrayPool.MemoryOwner receiveOwner, ulong secondGene, FixedArrayPool.MemoryOwner sendOwner)
     {// Only for connection.
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
 
@@ -167,7 +167,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         return netInterface;
     }
 
-    internal static NetTerminalGene[] CreateSendGenes(NetInterface<TSend, TReceive> netInterface, ulong gene, ByteArrayPool.MemoryOwner owner, ulong dataId)
+    internal static NetTerminalGene[] CreateSendGenes(NetInterface<TSend, TReceive> netInterface, ulong gene, FixedArrayPool.MemoryOwner owner, ulong dataId)
     {
         ReadOnlySpan<byte> span = owner.Memory.Span;
         var netTerminal = netInterface.NetTerminal;
@@ -292,7 +292,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         }
     }
 
-    internal bool SetSend(PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner)
+    internal bool SetSend(PacketId packetId, ulong dataId, FixedArrayPool.MemoryOwner owner)
     {
         if (this.SendGenes != null)
         {
@@ -627,7 +627,7 @@ WaitForSendCompletionWait:
         PacketHeader header = default;
         int size = 0;
         int maxSize = PacketService.DataPacketSize - sizeof(ulong);
-        ByteArrayPool.Owner? rentArray = null;
+        FixedArrayPool.Owner? rentArray = null;
         foreach (var x in this.RecvGenes)
         {
             if (x.State == NetTerminalGeneState.SendingAck)
@@ -675,7 +675,7 @@ WaitForSendCompletionWait:
         rentArray?.Return();
     }
 
-    internal void ProcessReceive(ByteArrayPool.MemoryOwner owner, IPEndPoint endPoint, ref PacketHeader header, long currentTicks, NetTerminalGene gene)
+    internal void ProcessReceive(FixedArrayPool.MemoryOwner owner, IPEndPoint endPoint, ref PacketHeader header, long currentTicks, NetTerminalGene gene)
     {
         lock (this.NetTerminal.SyncObject)
         {

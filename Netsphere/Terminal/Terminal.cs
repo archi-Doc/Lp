@@ -17,7 +17,7 @@ public class Terminal
 
     internal struct RawSend
     {
-        public RawSend(IPEndPoint endPoint, ByteArrayPool.MemoryOwner owner)
+        public RawSend(IPEndPoint endPoint, FixedArrayPool.MemoryOwner owner)
         {
             this.Endpoint = endPoint;
             this.SendOwner = owner.IncrementAndShare();
@@ -30,7 +30,7 @@ public class Terminal
 
         public IPEndPoint Endpoint { get; }
 
-        public ByteArrayPool.MemoryOwner SendOwner { get; private set; }
+        public FixedArrayPool.MemoryOwner SendOwner { get; private set; }
     }
 
     public void Dump(ISimpleLogger logger)
@@ -175,7 +175,7 @@ public class Terminal
         }
     }
 
-    internal unsafe void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner arrayOwner, int packetSize, long currentTicks)
+    internal unsafe void ProcessReceive(IPEndPoint endPoint, FixedArrayPool.Owner arrayOwner, int packetSize, long currentTicks)
     {
         var packetArray = arrayOwner.ByteArray;
         var position = 0;
@@ -207,7 +207,7 @@ public class Terminal
         }
     }
 
-    internal void ProcessReceiveCore(ByteArrayPool.MemoryOwner owner, IPEndPoint endPoint, ref PacketHeader header, long currentTicks)
+    internal void ProcessReceiveCore(FixedArrayPool.MemoryOwner owner, IPEndPoint endPoint, ref PacketHeader header, long currentTicks)
     {
         // this.TerminalLogger?.Information($"{header.Gene.To4Hex()}, {header.Id}");
         if (this.inboundGenes.TryGetValue(header.Gene, out var gene))
@@ -220,7 +220,7 @@ public class Terminal
         }
     }
 
-    internal void ProcessUnmanagedRecv(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
+    internal void ProcessUnmanagedRecv(FixedArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
     {
         if (header.Id == PacketId.Data)
         {
@@ -249,7 +249,7 @@ public class Terminal
         }
     }
 
-    internal void ProcessUnmanagedRecv_Punch(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
+    internal void ProcessUnmanagedRecv_Punch(FixedArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
     {
         if (!TinyhandSerializer.TryDeserialize<PacketPunch>(owner.Memory, out var punch))
         {
@@ -268,7 +268,7 @@ public class Terminal
         this.AddRawSend(endpoint, sendOwner);
     }
 
-    internal void ProcessUnmanagedRecv_Encrypt(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
+    internal void ProcessUnmanagedRecv_Encrypt(FixedArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
     {
         if (!TinyhandSerializer.TryDeserialize<PacketEncrypt>(owner.Memory, out var packet))
         {
@@ -297,7 +297,7 @@ public class Terminal
         }
     }
 
-    internal void ProcessUnmanagedRecv_Ping(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
+    internal void ProcessUnmanagedRecv_Ping(FixedArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
     {
         if (!TinyhandSerializer.TryDeserialize<PacketPing>(owner.Memory, out var packet))
         {
@@ -314,7 +314,7 @@ public class Terminal
         this.AddRawSend(endpoint, packetOwner);
     }
 
-    internal void AddRawSend(IPEndPoint endpoint, ByteArrayPool.MemoryOwner owner)
+    internal void AddRawSend(IPEndPoint endpoint, FixedArrayPool.MemoryOwner owner)
     {
         this.rawSends.Enqueue(new RawSend(endpoint, owner));
     }

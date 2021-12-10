@@ -102,7 +102,7 @@ internal static class PacketService
         }
     }
 
-    internal static unsafe bool GetData(ref PacketHeader header, ref ByteArrayPool.MemoryOwner owner)
+    internal static unsafe bool GetData(ref PacketHeader header, ref FixedArrayPool.MemoryOwner owner)
     {
         if (header.Id != PacketId.Data)
         {// Not PacketData
@@ -131,7 +131,7 @@ internal static class PacketService
         return true;
     }
 
-    internal static unsafe void CreatePacket(ref PacketHeader header, PacketId packetId, ulong dataId, ReadOnlySpan<byte> data, out ByteArrayPool.MemoryOwner owner)
+    internal static unsafe void CreatePacket(ref PacketHeader header, PacketId packetId, ulong dataId, ReadOnlySpan<byte> data, out FixedArrayPool.MemoryOwner owner)
     {// PacketHeader, DataHeader, Data
         if (data.Length > PacketService.SafeMaxPacketSize)
         {
@@ -162,7 +162,7 @@ internal static class PacketService
         owner = arrayOwner.ToMemoryOwner(0, size);
     }
 
-    internal static unsafe void CreatePacket<T>(ref PacketHeader header, T value, PacketId rawPacketId, out ByteArrayPool.MemoryOwner owner)
+    internal static unsafe void CreatePacket<T>(ref PacketHeader header, T value, PacketId rawPacketId, out FixedArrayPool.MemoryOwner owner)
     {
         var arrayOwner = PacketPool.Rent();
         var writer = new Tinyhand.IO.TinyhandWriter(arrayOwner.ByteArray);
@@ -189,7 +189,7 @@ internal static class PacketService
         writer.Dispose();
     }
 
-    internal static unsafe void CreateAckAndPacket<T>(ref PacketHeader header, ulong secondGene, T value, PacketId rawPacketId, out ByteArrayPool.MemoryOwner owner)
+    internal static unsafe void CreateAckAndPacket<T>(ref PacketHeader header, ulong secondGene, T value, PacketId rawPacketId, out FixedArrayPool.MemoryOwner owner)
     {
         var arrayOwner = PacketPool.Rent();
         var writer = new Tinyhand.IO.TinyhandWriter(arrayOwner.ByteArray);
