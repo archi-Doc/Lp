@@ -20,9 +20,9 @@ public class Server
             try
             {
                 var received = await terminal.ReceiveAsync();
-                if (received.Result == NetInterfaceResult.Success && received.Packet is { } packet)
+                if (received.Result == NetInterfaceResult.Success)
                 {
-                    if (this.ProcessEssential(packet))
+                    if (this.ProcessEssential(received))
                     {
                         continue;
                     }
@@ -50,15 +50,15 @@ public class Server
 
     public NetTerminalServer NetTerminal { get; private set; } = default!;
 
-    private bool ProcessEssential(NetTerminalServerPacket packet)
+    private bool ProcessEssential(NetInterfaceReceivedData received)
     {
-        if (packet.PacketId == PacketId.Punch)
+        if (received.PacketId == PacketId.Punch)
         {
-            return this.ProcessEssential_Punch(packet);
+            return this.ProcessEssential_Punch(received);
         }
-        else if (packet.DataId == BlockService.GetId<TestBlock, TestBlock>())
+        else if (received.DataId == BlockService.GetId<TestBlock, TestBlock>())
         {
-            if (!TinyhandSerializer.TryDeserialize<TestBlock>(packet.Data, out var t))
+            if (!TinyhandSerializer.TryDeserialize<TestBlock>(received.Received, out var t))
             {
                 return false;
             }
@@ -69,9 +69,9 @@ public class Server
         return false;
     }
 
-    private bool ProcessEssential_Punch(NetTerminalServerPacket packet)
+    private bool ProcessEssential_Punch(NetInterfaceReceivedData received)
     {
-        if (!TinyhandSerializer.TryDeserialize<PacketPunch>(packet.Data, out var punch))
+        if (!TinyhandSerializer.TryDeserialize<PacketPunch>(received.Received, out var punch))
         {
             return false;
         }

@@ -2,7 +2,7 @@
 
 namespace Netsphere;
 
-public class NetTerminalServerPacket
+/*public class NetTerminalServerPacket
 {
     public unsafe NetTerminalServerPacket(PacketId packetId, byte[] data)
     {
@@ -29,7 +29,7 @@ public class NetTerminalServerPacket
     public ulong DataId { get; }
 
     public Memory<byte> Data { get; }
-}
+}*/
 
 public class NetTerminalServer : NetTerminal
 {
@@ -87,7 +87,7 @@ public class NetTerminalServer : NetTerminal
         this.EnsureReceiver();
     }
 
-    public async Task<(NetInterfaceResult Result, NetTerminalServerPacket? Packet)> ReceiveAsync(int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<NetInterfaceReceivedData> ReceiveAsync(int millisecondsToWait = DefaultMillisecondsToWait)
     {
         PacketReserve? reserve = null;
         NetInterface<object, byte[]>? reserveInterface = null;
@@ -100,13 +100,13 @@ ReceiveAsyncStart:
             var received = await netInterface.ReceiveDataAsync(millisecondsToWait).ConfigureAwait(false);
             if (received.Result == NetInterfaceResult.Timeout)
             {// Timeout
-                return (received.Result, null);
+                return received;
             }
 
-            if (received.Result != NetInterfaceResult.Success || received.Value == null)
+            if (received.Result != NetInterfaceResult.Success)
             {// Error
                 this.NextReceiver();
-                return (received.Result, null);
+                return received;
             }
 
             if (received.PacketId == PacketId.Reserve)
@@ -114,12 +114,12 @@ ReceiveAsyncStart:
                 if (reserve != null)
                 {
                     this.NextReceiver();
-                    return (NetInterfaceResult.ReserveError, null);
+                    return new (NetInterfaceResult.ReserveError);
                 }
-                else if (!TinyhandSerializer.TryDeserialize<PacketReserve>(received.Value, out reserve))
+                else if (!TinyhandSerializer.TryDeserialize<PacketReserve>(received.Received, out reserve))
                 {
                     this.NextReceiver();
-                    return (NetInterfaceResult.DeserializationError, null);
+                    return new (NetInterfaceResult.DeserializationError);
                 }
 
                 reserveInterface = netInterface;
@@ -132,8 +132,7 @@ ReceiveAsyncStart:
             }
 
             this.ReceiverToSender();
-            var packet = new NetTerminalServerPacket(received.PacketId, received.Value);
-            return (received.Result, packet);
+            return received;
         }
         finally
         {

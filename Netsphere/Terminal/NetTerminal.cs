@@ -20,6 +20,7 @@ namespace Netsphere;
 public partial class NetTerminal : IDisposable
 {
     public const int DefaultMillisecondsToWait = 2000;
+    public const int SendingAckIntervalInMilliseconds = 10;
 
     /// <summary>
     /// The default interval time in milliseconds.
@@ -154,7 +155,7 @@ public partial class NetTerminal : IDisposable
                 x.ProcessSend(udp, currentTicks);
             }
 
-            if ((currentTicks - this.lastSendingAckTicks) > Ticks.FromMilliseconds(10))
+            if ((currentTicks - this.lastSendingAckTicks) > Ticks.FromMilliseconds(SendingAckIntervalInMilliseconds))
             {
                 this.lastSendingAckTicks = currentTicks;
 
