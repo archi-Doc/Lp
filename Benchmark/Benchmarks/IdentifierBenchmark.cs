@@ -47,14 +47,14 @@ public class IdentifierBenchmark
     [Benchmark]
     public Identifier_ClassULong New_ClassULong()
     {
-        var r = this.Instance.GetHashULong(this.ByteArray);
+        var r = this.Instance.GetHashUInt64(this.ByteArray);
         return new Identifier_ClassULong(r.hash0, r.hash1, r.hash2, r.hash3);
     }
 
     [Benchmark]
     public Identifier_ClassULong New_ClassULong2()
     {
-        var r = this.Instance.GetHashULong(this.ByteArray);
+        var r = this.Instance.GetHashUInt64(this.ByteArray);
         return new Identifier_ClassULong(r);
     }
 
@@ -75,7 +75,7 @@ public class IdentifierBenchmark
     [Benchmark]
     public byte[] NewAndWrite_ClassULong()
     {
-        var r = this.Instance.GetHashULong(this.ByteArray);
+        var r = this.Instance.GetHashUInt64(this.ByteArray);
         var i = new Identifier_ClassULong(r);
         i.TryWriteBytes(this.Destination);
         return this.Destination;

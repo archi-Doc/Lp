@@ -22,11 +22,11 @@ public class Hash : Sha3_256
 
     public Identifier GetIdentifier(ReadOnlySpan<byte> input)
     {
-        return new Identifier(this.GetHashULong(input));
+        return new Identifier(this.GetHashUInt64(input));
     }
 
     public Identifier IdentifierFinal()
     {
-        return new Identifier(this.HashFinalULong());
+        return new Identifier(this.HashFinalUInt64());
     }
 }

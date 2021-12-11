@@ -1,0 +1,67 @@
+﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+
+namespace LP.Block;
+
+public static class BlockService
+{
+    public const int MaxBlockSize = 1024 * 1024 * 4; // 4MB
+    public const int StandardBlockSize = 32 * 1024; // 32KB
+    public const int StandardBlockPool = 400;
+
+    public static uint GetId<T>() => IdCache<T>.Id;
+
+    public static ulong GetId<TSend, TReceive>() => (ulong)IdCache<TSend>.Id | ((ulong)IdCache<TReceive>.Id << 32);
+
+    public static bool TrySerialize<T>(T value, out FixedArrayPool.MemoryOwner owner)
+    {
+        var arrayOwner = BlockPool.Rent();
+        try
+        {
+            var writer = new Tinyhand.IO.TinyhandWriter(arrayOwner.ByteArray);
+            TinyhandSerializer.Serialize(ref writer, value);
+
+            writer.FlushAndGetArray(out var array, out var arrayLength);
+            if (array != arrayOwner.ByteArray)
+            {
+                arrayOwner.Return();
+                owner = default;
+                return false;
+            }
+
+            owner = arrayOwner.ToMemoryOwner(0, arrayLength);
+            return true;
+        }
+        catch
+        {
+            arrayOwner.Return();
+            owner = default;
+            return false;
+        }
+    }
+
+    private static class IdCache<T>
+    {
+        public static readonly uint Id;
+
+        static IdCache()
+        {
+            try
+            {
+                var obj = TinyhandSerializer.Reconstruct<T>();
+                if (obj is IBlock block)
+                {
+                    Id = block.BlockId;
+                }
+            }
+            catch
+            {
+            }
+        }
+    }
+}

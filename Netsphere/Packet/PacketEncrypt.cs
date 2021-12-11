@@ -5,7 +5,7 @@ namespace Netsphere;
 [TinyhandObject]
 internal partial class PacketEncrypt : IPacket
 {
-    public PacketId Id => PacketId.Encrypt;
+    public PacketId PacketId => PacketId.Encrypt;
 
     public bool AllowUnencrypted => true;
 
@@ -16,9 +16,8 @@ internal partial class PacketEncrypt : IPacket
     public PacketEncrypt(NodeInformation nodeInformation)
     {
         this.NodeInformation = nodeInformation;
-        this.Salt = LP.Random.Crypto.NextULong();
+        this.Salt = LP.Random.Crypto.NextUInt64();
     }
-
 
     [Key(0)]
     public NodeInformation? NodeInformation { get; set; }
@@ -28,12 +27,15 @@ internal partial class PacketEncrypt : IPacket
 
     [Key(2)]
     public bool RequestRelay { get; set; }
+
+    [Key(3)]
+    public ushort RequestReceiverNumber { get; set; }
 }
 
 [TinyhandObject]
 internal partial class PacketEncryptResponse : IPacket
 {
-    public PacketId Id => PacketId.EncryptResponse;
+    public PacketId PacketId => PacketId.EncryptResponse;
 
     public bool AllowUnencrypted => true;
 
@@ -48,4 +50,7 @@ internal partial class PacketEncryptResponse : IPacket
 
     [Key(1)]
     public bool CanRelay { get; set; }
+
+    [Key(2)]
+    public ushort EnsuredReceiverNumber { get; set; }
 }

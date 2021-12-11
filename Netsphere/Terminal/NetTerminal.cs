@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Buffers;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Sockets;
@@ -19,6 +20,7 @@ namespace Netsphere;
 public partial class NetTerminal : IDisposable
 {
     public const int DefaultMillisecondsToWait = 2000;
+    public const int SendingAckIntervalInMilliseconds = 10;
 
     /// <summary>
     /// The default interval time in milliseconds.
@@ -29,13 +31,13 @@ public partial class NetTerminal : IDisposable
     internal NetTerminal(Terminal terminal, NodeAddress nodeAddress)
     {// NodeAddress: Unmanaged
         this.Terminal = terminal;
-        this.GenePool = new(LP.Random.Crypto.NextULong());
+        this.GenePool = new(LP.Random.Crypto.NextUInt64());
         this.NodeAddress = nodeAddress;
         this.Endpoint = this.NodeAddress.CreateEndpoint();
     }
 
     internal NetTerminal(Terminal terminal, NodeInformation nodeInformation)
-        : this(terminal, nodeInformation, LP.Random.Crypto.NextULong())
+        : this(terminal, nodeInformation, LP.Random.Crypto.NextUInt64())
     {// NodeInformation: Managed
     }
 
@@ -48,156 +50,12 @@ public partial class NetTerminal : IDisposable
         this.Endpoint = this.NodeAddress.CreateEndpoint();
     }
 
-    public virtual NetInterfaceResult EncryptConnection() => NetInterfaceResult.NoEncryptedConnection;
+    // public virtual NetInterfaceResult EncryptConnection() => NetInterfaceResult.NoEncryptedConnection;
 
     public virtual async Task<NetInterfaceResult> EncryptConnectionAsync() => NetInterfaceResult.NoEncryptedConnection;
 
-    public INetInterface<TSend> SendSingle<TSend>(TSend value)
-        where TSend : IPacket
+    public virtual void SendClose()
     {
-        if (!value.AllowUnencrypted)
-        {
-            var result = this.EncryptConnection();
-            if (result != NetInterfaceResult.Success)
-            {
-                return NetInterface<TSend, object>.CreateError(this, result);
-            }
-        }
-
-        return this.CreateSendInterface(value);
-    }
-
-    public async Task<NetInterfaceResult> SendSingleAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
-        where TSend : IPacket
-    {
-        if (!value.AllowUnencrypted)
-        {
-            var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
-            if (result != NetInterfaceResult.Success)
-            {
-                return NetInterfaceResult.NoEncryptedConnection;
-            }
-        }
-
-        var netInterface = this.CreateSendInterface(value);
-        try
-        {
-            return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
-        }
-        finally
-        {
-            netInterface.Dispose();
-        }
-    }
-
-    public INetInterface<TSend, TReceive> SendSingleAndReceive<TSend, TReceive>(TSend value)
-        where TSend : IPacket
-    {
-        if (!value.AllowUnencrypted)
-        {
-            var result = this.EncryptConnection();
-            if (result != NetInterfaceResult.Success)
-            {
-                return (INetInterface<TSend, TReceive>)NetInterface<TSend, object>.CreateError(this, result);
-            }
-        }
-
-        return this.CreateSendAndReceiveInterface<TSend, TReceive>(value);
-    }
-
-    public async Task<TReceive?> SendSingleAndReceiveAsync<TSend, TReceive>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
-        where TSend : IPacket
-    {
-        if (!value.AllowUnencrypted)
-        {
-            var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
-            if (result != NetInterfaceResult.Success)
-            {
-                return default;
-            }
-        }
-
-        var netInterface = this.CreateSendAndReceiveInterface<TSend, TReceive>(value);
-        try
-        {
-            return await netInterface.ReceiveAsync(millisecondsToWait).ConfigureAwait(false);
-        }
-        finally
-        {
-            netInterface.Dispose();
-        }
-    }
-
-    /*public INetInterface<TSend> Send<TSend>(TSend value)
-    {
-        if (value is IPacket packet && !packet.AllowUnencrypted)
-        {
-            if (!this.CheckManagedAndEncrypted())
-            {
-                return null!;
-            }
-        }
-
-        return this.SendPacket(value);
-    }*/
-
-    public INetInterface<TSend, TReceive> SendAndReceive<TSend, TReceive>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
-        where TSend : IPacket
-    {
-        if (!value.AllowUnencrypted)
-        {
-            var result = this.EncryptConnection();
-            if (result != NetInterfaceResult.Success)
-            {
-                return (INetInterface<TSend, TReceive>)NetInterface<TSend, object>.CreateError(this, result);
-            }
-        }
-
-        var netInterface = this.CreateSendAndReceiveInterface<TSend, TReceive>(value);
-        return netInterface;
-    }
-
-    public async Task<NetInterfaceResult> SendAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
-        where TSend : IPacket
-    {
-        if (!value.AllowUnencrypted)
-        {
-            var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
-            if (result != NetInterfaceResult.Success)
-            {
-                return result;
-            }
-        }
-
-        var netInterface = this.CreateSendInterface<TSend>(value);
-        return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
-    }
-
-    public async Task<NetInterfaceResult> SendDataAsync(uint id, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
-        => await this.SendDataAsync(PacketId.Data, id, data, millisecondsToWait).ConfigureAwait(false);
-
-    public async Task<NetInterfaceResult> SendDataAsync(PacketId packetId, ulong id, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
-    {
-        if (!this.IsEncrypted)
-        {
-            var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
-            if (result != NetInterfaceResult.Success)
-            {
-                return result;
-            }
-        }
-
-        var netInterface = this.CreateSendInterface(packetId, id, data);
-        if (netInterface.RequiresReservation)
-        {
-            var result = await netInterface.WaitForReservation(millisecondsToWait).ConfigureAwait(false);
-            if (result != NetInterfaceResult.Success)
-            {
-                return result;
-            }
-        }
-        
-        return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
     }
 
     public Terminal Terminal { get; }
@@ -210,7 +68,7 @@ public partial class NetTerminal : IDisposable
 
     public bool IsHighTraffic => false;
 
-    public bool IsClosed => this.disposed;
+    public bool IsClosed { get; internal set; }
 
     // [Link(Type = ChainType.Ordered)]
     // public long CreatedTicks { get; private set; } = Ticks.GetCurrent();
@@ -235,33 +93,52 @@ public partial class NetTerminal : IDisposable
         this.CreateHeader(out var header, gene);
         header.Id = PacketId.Ack;
 
-        var packet = new byte[PacketService.HeaderSize];
-        fixed (byte* bp = packet)
+        var arrayOwner = PacketPool.Rent();
+        fixed (byte* bp = arrayOwner.ByteArray)
         {
             *(PacketHeader*)bp = header;
         }
 
-        this.Terminal.AddRawSend(this.Endpoint, packet);
+        this.Terminal.AddRawSend(this.Endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal NetInterface<TSend, object> CreateSendInterface<TSend>(TSend value)
+    internal NetInterface<TSend, object>? CreateSendValue<TSend>(TSend value, out NetInterfaceResult interfaceResult)
         where TSend : IPacket
     {
-        return NetInterface<TSend, object>.Create(this, value, value.Id, false);
+        return NetInterface<TSend, object>.CreateValue(this, value, value.PacketId, false, out interfaceResult);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal NetInterface<byte[], object> CreateSendInterface(PacketId packetId, ulong id, byte[] data)
-    {
-        return NetInterface<byte[], object>.Create(this, packetId, id, data, false);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal NetInterface<TSend, TReceive> CreateSendAndReceiveInterface<TSend, TReceive>(TSend value)
+    internal NetInterface<TSend, TReceive>? CreateSendAndReceiveValue<TSend, TReceive>(TSend value, out NetInterfaceResult interfaceResult)
         where TSend : IPacket
+        => NetInterface<TSend, TReceive>.CreateValue(this, value, value.PacketId, true, out interfaceResult);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal NetInterface<byte[], object>? CreateSendData(PacketId packetId, ulong dataId, FixedArrayPool.MemoryOwner sendOwner, out NetInterfaceResult interfaceResult)
+        => NetInterface<byte[], object>.CreateData(this, packetId, dataId, sendOwner, false, out interfaceResult);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal NetInterface<byte[], byte[]>? CreateSendAndReceiveData(PacketId packetId, ulong dataId, FixedArrayPool.MemoryOwner sendOwner, out NetInterfaceResult interfaceResult)
+        => NetInterface<byte[], byte[]>.CreateData(this, packetId, dataId, sendOwner, true, out interfaceResult);
+
+    internal byte[] RentAndSetGeneArray(ulong gene, int numberOfGenes)
     {
-        return NetInterface<TSend, TReceive>.Create(this, value, value.Id, true);
+        var first = BitConverter.ToUInt64(this.embryo);
+        var rentBuffer = ArrayPool<byte>.Shared.Rent(sizeof(ulong) * numberOfGenes);
+        var rentGenes = ArrayPool<byte>.Shared.Rent(sizeof(ulong) * numberOfGenes);
+
+        var xo = new Arc.Crypto.Xoshiro256StarStar(gene ^ first);
+        xo.NextBytes(rentBuffer);
+
+        var iv = new byte[16];
+        BitConverter.TryWriteBytes(iv, gene);
+        this.embryo.AsSpan(40, 8).CopyTo(iv.AsSpan(8, 8));
+
+        var encryptor = Aes256.NoPadding.CreateEncryptor(this.embryo.AsSpan(8, 32).ToArray(), iv);
+        encryptor.TransformBlock(rentBuffer, 0, rentBuffer.Length, rentGenes, 0);
+        ArrayPool<byte>.Shared.Return(rentBuffer);
+        return rentGenes;
     }
 
     internal void ProcessSend(UdpClient udp, long currentTicks)
@@ -273,9 +150,24 @@ public partial class NetTerminal : IDisposable
                 return;
             }
 
-            foreach (var x in this.netInterfaces)
+            foreach (var x in this.activeInterfaces)
             {
                 x.ProcessSend(udp, currentTicks);
+            }
+
+            if ((currentTicks - this.lastSendingAckTicks) > Ticks.FromMilliseconds(SendingAckIntervalInMilliseconds))
+            {
+                this.lastSendingAckTicks = currentTicks;
+
+                foreach (var x in this.activeInterfaces)
+                {
+                    x.ProcessSendingAck();
+                }
+
+                foreach (var x in this.disposedInterfaces)
+                {
+                    x.ProcessSendingAck();
+                }
             }
         }
     }
@@ -284,13 +176,25 @@ public partial class NetTerminal : IDisposable
     {
         lock (this.SyncObject)
         {
-            this.netInterfaces.Add(netInterface);
+            this.activeInterfaces.Add(netInterface);
         }
     }
 
     internal bool RemoveInternal(NetInterface netInterface)
     {// lock (this.SyncObject)
-        return this.netInterfaces.Remove(netInterface);
+        if (netInterface.DisposedTicks == 0)
+        {// Active
+            return this.activeInterfaces.Remove(netInterface);
+        }
+        else
+        {// Disposed
+            return this.disposedInterfaces.Remove(netInterface);
+        }
+    }
+
+    internal NetInterfaceResult ReportResult(NetInterfaceResult result)
+    {
+        return result;
     }
 
     internal object SyncObject { get; } = new();
@@ -310,6 +214,7 @@ public partial class NetTerminal : IDisposable
             return NetInterfaceResult.NoNodeInformation;
         }
 
+        // ulong Salt, byte[] material, ulong Salt
         var material = this.Terminal.NodePrivateECDH.DeriveKeyMaterial(ecdh.PublicKey);
         Span<byte> buffer = stackalloc byte[sizeof(ulong) + NodeKey.PrivateKeySize + sizeof(ulong)];
         var span = buffer;
@@ -329,18 +234,67 @@ public partial class NetTerminal : IDisposable
         return NetInterfaceResult.Success;
     }
 
+    internal bool TryClean(long currentTicks)
+    {
+        if (this.IsClosed)
+        {
+            return true;
+        }
+
+        var ticks = currentTicks - Ticks.FromSeconds(2);
+        List<NetInterface>? list = null;
+
+        lock (this.SyncObject)
+        {
+            foreach (var x in this.disposedInterfaces)
+            {
+                if (x.DisposedTicks < ticks)
+                {
+                    list ??= new();
+                    list.Add(x);
+                }
+            }
+
+            if (list != null)
+            {
+                foreach (var x in list)
+                {
+                    x.DisposeActual();
+                }
+            }
+        }
+
+        return false;
+    }
+
+    internal void ActiveToDisposed(NetInterface netInterface)
+    {// lock (this.SyncObject)
+        this.activeInterfaces.Remove(netInterface);
+        this.disposedInterfaces.Add(netInterface);
+    }
+
     private void Clear()
     {// lock (this.SyncObject)
-        foreach (var x in this.netInterfaces)
+        foreach (var x in this.activeInterfaces)
         {
             x.Clear();
         }
 
-        this.netInterfaces.Clear();
+        this.activeInterfaces.Clear();
+
+        foreach (var x in this.disposedInterfaces)
+        {
+            x.Clear();
+        }
+
+        this.disposedInterfaces.Clear();
     }
 
-    protected List<NetInterface> netInterfaces = new();
-    protected byte[]? embryo;
+    protected List<NetInterface> activeInterfaces = new();
+    protected List<NetInterface> disposedInterfaces = new();
+    protected byte[]? embryo; // 48 bytes
+
+    private long lastSendingAckTicks;
 
     // private PacketService packetService = new();
 
@@ -376,6 +330,12 @@ public partial class NetTerminal : IDisposable
             if (disposing)
             {
                 // free managed resources.
+                if (this.IsEncrypted && !this.IsClosed)
+                {// Close connection.
+                    this.SendClose();
+                }
+
+                this.IsClosed = true;
                 this.Terminal.TryRemove(this);
                 lock (this.SyncObject)
                 {

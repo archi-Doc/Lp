@@ -56,12 +56,11 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
             var p = new PacketPunch(nextNode?.CreateEndpoint());
 
             sw.Restart();
-            var netInterface = terminal.SendSingleAndReceive<PacketPunch, PacketPunchResponse>(p);
-            var result = netInterface.Receive(out var r);
+            var result = await terminal.SendPacketAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
             sw.Stop();
-            if (r != null)
+            if (result.Value != null)
             {
-                Logger.Priority.Information($"Received: {r.ToString()} - {sw.ElapsedMilliseconds} ms");
+                Logger.Priority.Information($"Received: {result.ToString()} - {sw.ElapsedMilliseconds} ms");
             }
             else
             {

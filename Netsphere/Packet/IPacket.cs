@@ -14,25 +14,37 @@ public enum PacketId : byte
     Close,
     Relay,
     Data,
+    Reserve,
+    ReserveResponse,
+    RPC,
     Encrypt,
     EncryptResponse,
-    Ping,
-    PingResponse,
     Punch,
     PunchResponse,
+    Ping,
+    PingResponse,
     GetNode,
     GetNodeResponse,
 }
 
-public interface IPacket
+/// <summary>
+/// Packet class requirements.<br/>
+/// 1. Inherit IPacket interface.<br/>
+/// 2. Has TinyhandObjectAttribute (Tinyhand serializable).<br/>
+/// 3. Has unique PacketId.<br/>
+/// 4. Length of serialized byte array is less than or equal to <see cref="PacketService.DataPacketSize"/>.
+/// </summary>
+public interface IPacket : IBlock
 {
-    public PacketId Id { get; }
+    public PacketId PacketId { get; }
+
+    uint IBlock.BlockId => (uint)this.PacketId;
 
     public bool AllowUnencrypted => false;
 }
 
 [StructLayout(LayoutKind.Explicit)]
-internal partial struct PacketHeader
+internal struct PacketHeader
 {
     [FieldOffset(0)]
     public ushort Engagement;

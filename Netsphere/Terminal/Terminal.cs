@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -16,15 +17,20 @@ public class Terminal
 
     internal struct RawSend
     {
-        public RawSend(IPEndPoint endPoint, byte[] packet)
+        public RawSend(IPEndPoint endPoint, FixedArrayPool.MemoryOwner owner)
         {
             this.Endpoint = endPoint;
-            this.Packet = packet;
+            this.SendOwner = owner.IncrementAndShare();
+        }
+
+        public void Clear()
+        {
+            this.SendOwner = this.SendOwner.Return();
         }
 
         public IPEndPoint Endpoint { get; }
 
-        public byte[] Packet { get; }
+        public FixedArrayPool.MemoryOwner SendOwner { get; private set; }
     }
 
     public void Dump(ISimpleLogger logger)
@@ -145,9 +151,16 @@ public class Terminal
 
     internal void ProcessSend(UdpClient udp, long currentTicks)
     {
+        if ((currentTicks - this.lastCleanedTicks) > Ticks.FromSeconds(1))
+        {
+            this.lastCleanedTicks = currentTicks;
+            this.CleanNetTerminal(currentTicks);
+        }
+
         while (this.rawSends.TryDequeue(out var rawSend))
         {
-            udp.Send(rawSend.Packet, rawSend.Endpoint);
+            udp.Send(rawSend.SendOwner.Memory.Span, rawSend.Endpoint);
+            rawSend.Clear();
         }
 
         NetTerminal[] array;
@@ -162,15 +175,16 @@ public class Terminal
         }
     }
 
-    internal unsafe void ProcessReceive(IPEndPoint endPoint, byte[] outerPacket, long currentTicks)
+    internal unsafe void ProcessReceive(IPEndPoint endPoint, FixedArrayPool.Owner arrayOwner, int packetSize, long currentTicks)
     {
+        var packetArray = arrayOwner.ByteArray;
         var position = 0;
-        var remaining = outerPacket.Length;
+        var remaining = packetSize;
 
         while (remaining >= PacketService.HeaderSize)
         {
             PacketHeader header;
-            fixed (byte* pb = outerPacket)
+            fixed (byte* pb = packetArray)
             {
                 header = *(PacketHeader*)(pb + position);
             }
@@ -186,47 +200,58 @@ public class Terminal
             }
 
             position += PacketService.HeaderSize;
-            var data = new Memory<byte>(outerPacket, position, dataSize);
-            this.ProcessReceiveCore(endPoint, ref header, data, currentTicks);
+            var memoryOwner = arrayOwner.ToMemoryOwner(position, dataSize);
+            this.ProcessReceiveCore(memoryOwner, endPoint, ref header, currentTicks);
             position += dataSize;
             remaining -= PacketService.HeaderSize + dataSize;
         }
     }
 
-    internal void ProcessReceiveCore(IPEndPoint endPoint, ref PacketHeader header, Memory<byte> data, long currentTicks)
+    internal void ProcessReceiveCore(FixedArrayPool.MemoryOwner owner, IPEndPoint endPoint, ref PacketHeader header, long currentTicks)
     {
+        // this.TerminalLogger?.Information($"{header.Gene.To4Hex()}, {header.Id}");
         if (this.inboundGenes.TryGetValue(header.Gene, out var gene))
         {// NetTerminalGene is found.
-            gene.NetInterface.ProcessReceive(endPoint, ref header, data, currentTicks, gene);
+            gene.NetInterface.ProcessReceive(owner, endPoint, ref header, currentTicks, gene);
         }
         else
         {
-            this.ProcessUnmanagedRecv(endPoint, ref header, data);
+            this.ProcessUnmanagedRecv(owner, endPoint, ref header);
         }
     }
 
-    internal void ProcessUnmanagedRecv(IPEndPoint endpoint, ref PacketHeader header, Memory<byte> data)
+    internal void ProcessUnmanagedRecv(FixedArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
     {
+        if (header.Id == PacketId.Data)
+        {
+            if (!PacketService.GetData(ref header, ref owner))
+            {// Data packet to other packets (e.g Punch, Encrypt).
+                this.TerminalLogger?.Error($"GetData error: {header.Gene.To4Hex()}");
+                return;
+            }
+        }
+
         if (header.Id == PacketId.Punch)
         {
-            this.ProcessUnmanagedRecv_Punch(endpoint, ref header, data);
+            this.ProcessUnmanagedRecv_Punch(owner, endpoint, ref header);
         }
         else if (header.Id == PacketId.Encrypt)
         {
-            this.ProcessUnmanagedRecv_Connect(endpoint, ref header, data);
+            this.ProcessUnmanagedRecv_Encrypt(owner, endpoint, ref header);
         }
         else if (header.Id == PacketId.Ping)
         {
-            this.ProcessUnmanagedRecv_Ping(endpoint, ref header, data);
+            this.ProcessUnmanagedRecv_Ping(owner, endpoint, ref header);
         }
         else
         {// Not supported
+            this.TerminalLogger?.Error($"Unhandled: {header.Gene.To4Hex()} - {header.Id}");
         }
     }
 
-    internal void ProcessUnmanagedRecv_Punch(IPEndPoint endpoint, ref PacketHeader header, Memory<byte> data)
+    internal void ProcessUnmanagedRecv_Punch(FixedArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
     {
-        if (!TinyhandSerializer.TryDeserialize<PacketPunch>(data, out var punch))
+        if (!TinyhandSerializer.TryDeserialize<PacketPunch>(owner.Memory, out var punch))
         {
             return;
         }
@@ -236,16 +261,16 @@ public class Terminal
         var response = new PacketPunchResponse();
         response.Endpoint = endpoint;
         response.UtcTicks = Ticks.GetUtcNow();
-        var secondGene = GenePool.GetSecond(header.Gene);
+        var secondGene = GenePool.NextGene(header.Gene);
         this.TerminalLogger?.Information($"Punch Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
-        var p = PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id);
-        this.AddRawSend(endpoint, p);
+        PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var sendOwner);
+        this.AddRawSend(endpoint, sendOwner);
     }
 
-    internal void ProcessUnmanagedRecv_Connect(IPEndPoint endpoint, ref PacketHeader header, Memory<byte> data)
+    internal void ProcessUnmanagedRecv_Encrypt(FixedArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
     {
-        if (!TinyhandSerializer.TryDeserialize<PacketEncrypt>(data, out var packet))
+        if (!TinyhandSerializer.TryDeserialize<PacketEncrypt>(owner.Memory, out var packet))
         {
             return;
         }
@@ -256,16 +281,15 @@ public class Terminal
 
             var response = new PacketEncryptResponse();
             var firstGene = header.Gene;
-            var secondGene = GenePool.GetSecond(header.Gene);
-            var responsePacket = PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id);
+            var secondGene = GenePool.NextGene(header.Gene);
+            PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var sendOwner);
 
             var terminal = this.Create(packet.NodeInformation, firstGene);
-            var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(terminal, firstGene, PacketId.Encrypt, data, secondGene, responsePacket);
+            var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(terminal, firstGene, owner, secondGene, sendOwner);
 
             terminal.GenePool.GetGene();
-            terminal.GenePool.GetGene();
             terminal.CreateEmbryo(packet.Salt);
-            terminal.PrepareReceive();
+            terminal.SetReceiverNumber();
             if (this.createServerTerminalDelegate != null)
             {
                 this.createServerTerminalDelegate(terminal);
@@ -273,9 +297,9 @@ public class Terminal
         }
     }
 
-    internal void ProcessUnmanagedRecv_Ping(IPEndPoint endpoint, ref PacketHeader header, Memory<byte> data)
+    internal void ProcessUnmanagedRecv_Ping(FixedArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
     {
-        if (!TinyhandSerializer.TryDeserialize<PacketPing>(data, out var packet))
+        if (!TinyhandSerializer.TryDeserialize<PacketPing>(owner.Memory, out var packet))
         {
             return;
         }
@@ -283,16 +307,16 @@ public class Terminal
         Logger.Default.Information($"Ping From: {packet.ToString()}");
 
         var response = new PacketPingResponse(new(endpoint.Address, (ushort)endpoint.Port, 0), this.NetBase.NodeName);
-        var secondGene = GenePool.GetSecond(header.Gene);
+        var secondGene = GenePool.NextGene(header.Gene);
         this.TerminalLogger?.Information($"Ping Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
-        var p = PacketService.CreateAckAndPacket(ref header, secondGene, response, response.Id);
-        this.AddRawSend(endpoint, p);
+        PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var packetOwner);
+        this.AddRawSend(endpoint, packetOwner);
     }
 
-    internal void AddRawSend(IPEndPoint endpoint, byte[] packet)
+    internal void AddRawSend(IPEndPoint endpoint, FixedArrayPool.MemoryOwner owner)
     {
-        this.rawSends.Enqueue(new RawSend(endpoint, packet));
+        this.rawSends.Enqueue(new RawSend(endpoint, owner));
     }
 
     internal void AddInbound(NetTerminalGene[] genes)
@@ -333,6 +357,33 @@ public class Terminal
 
     internal bool TryGetInbound(ulong gene, [MaybeNullWhen(false)] out NetTerminalGene netTerminalGene) => this.inboundGenes.TryGetValue(gene, out netTerminalGene);
 
+    private void CleanNetTerminal(long currentTicks)
+    {
+        NetTerminal[] array;
+        lock (this.terminals)
+        {
+            array = this.terminals.QueueChain.ToArray();
+        }
+
+        List<NetTerminal>? list = null;
+        foreach (var x in array)
+        {
+            if (x.TryClean(currentTicks))
+            {
+                list ??= new();
+                list.Add(x);
+            }
+        }
+
+        if (list != null)
+        {
+            foreach (var x in list)
+            {
+                x.Dispose();
+            }
+        }
+    }
+
     public NetTerminal.GoshujinClass NetTerminals => this.terminals;
 
     internal ISimpleLogger? TerminalLogger { get; private set; }
@@ -340,12 +391,9 @@ public class Terminal
     internal ECDiffieHellman NodePrivateECDH { get; private set; } = default!;
 
     private CreateServerTerminalDelegate? createServerTerminalDelegate;
-
     private NetSocket netSocket;
-
     private NetTerminal.GoshujinClass terminals = new();
-
     private ConcurrentDictionary<ulong, NetTerminalGene> inboundGenes = new();
-
     private ConcurrentQueue<RawSend> rawSends = new();
+    private long lastCleanedTicks; // The last ticks Terminal.CleanNetTerminal() was called.
 }

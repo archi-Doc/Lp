@@ -13,7 +13,7 @@ public static class Random
     static Random()
     {
         var xo = new Xoshiro256StarStar();
-        Pseudo = new RandomVault(() => xo.NextULong(), x => xo.NextBytes(x), VaultSize);
+        Pseudo = new RandomVault(() => xo.NextUInt64(), x => xo.NextBytes(x), VaultSize);
         Crypto = new RandomVault(null, x => RandomNumberGenerator.Fill(x), VaultSize);
     }
 

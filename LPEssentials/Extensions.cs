@@ -1,0 +1,8 @@
+﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+
+namespace LP;
+
+public static class LPExtentions
+{
+    public static string To4Hex(this ulong gene) => $"{(ushort)gene:x4}";
+}

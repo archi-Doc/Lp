@@ -23,6 +23,18 @@ public class NetSocket
         public static void Process(object? parameter)
         {
             var core = (NetSocketRecvCore)parameter!;
+
+            IPEndPoint anyEP;
+            if (core.socket.udpClient?.Client.AddressFamily == AddressFamily.InterNetwork)
+            {
+                anyEP = new IPEndPoint(IPAddress.Any, IPEndPoint.MinPort);
+            }
+            else
+            {
+                anyEP = new IPEndPoint(IPAddress.IPv6Any, IPEndPoint.MinPort);
+            }
+
+            FixedArrayPool.Owner? arrayOwner = null;
             while (true)
             {
                 if (core.IsTerminated)
@@ -30,7 +42,7 @@ public class NetSocket
                     break;
                 }
 
-                var udp = core.pipe.udpClient;
+                var udp = core.socket.udpClient;
                 if (udp == null)
                 {
                     break;
@@ -38,30 +50,19 @@ public class NetSocket
 
                 try
                 {
-                    IPEndPoint remoteEP = default!;
-                    var bytes = udp.Receive(ref remoteEP);
-                    if (bytes.Length <= NetControl.MaxPayload)
+                    // IPEndPoint remoteEP = default!;
+                    // var bytes = udp.Receive(ref remoteEP);
+                    var remoteEP = (EndPoint)anyEP;
+                    arrayOwner ??= PacketPool.Rent();
+                    var received = udp.Client.ReceiveFrom(arrayOwner.ByteArray, 0, arrayOwner.ByteArray.Length, SocketFlags.None, ref remoteEP);
+                    if (received <= NetControl.MaxPayload)
                     {
-                        core.pipe.terminal.ProcessReceive(remoteEP, bytes, Ticks.GetSystem());
+                        core.socket.terminal.ProcessReceive((IPEndPoint)remoteEP, arrayOwner, received, Ticks.GetSystem());
+                        if (arrayOwner.Count > 1)
+                        {// Byte array is used by multiple owners. Return and rent a new one next time.
+                            arrayOwner = arrayOwner.Return();
+                        }
                     }
-
-                    // var memory = new ReadOnlyMemory<byte>(bytes);
-                    // while (!memory.IsEmpty)
-                    {
-                        /*var piece = TinyhandSerializer.Deserialize<IPiece>(memory, null, out var bytesRead);
-                        core.NetSpherer.Receive(remoteEP, piece);
-                        memory = memory.Slice(bytesRead);*/
-                    }
-
-                    /*IPEndPoint remoteEP = default!;
-                    var bytes = this.udpClient.Receive(ref remoteEP);
-                    var text = $"Received: {bytes.Length}";
-                    if (bytes.Length >= sizeof(int))
-                    {
-                        text += $", First data: {BitConverter.ToInt32(bytes)}";
-                    }
-
-                    Log.Debug(text);*/
                 }
                 catch
                 {
@@ -69,13 +70,13 @@ public class NetSocket
             }
         }
 
-        public NetSocketRecvCore(ThreadCoreBase parent, NetSocket pipe)
+        public NetSocketRecvCore(ThreadCoreBase parent, NetSocket socket)
                 : base(parent, Process, false)
         {
-            this.pipe = pipe;
+            this.socket = socket;
         }
 
-        private NetSocket pipe;
+        private NetSocket socket;
     }
 
     internal class NetSocketSendCore : ThreadCore
@@ -97,10 +98,10 @@ public class NetSocket
             }
         }
 
-        public NetSocketSendCore(ThreadCoreBase parent, NetSocket pipe)
+        public NetSocketSendCore(ThreadCoreBase parent, NetSocket socket)
                 : base(parent, Process, false)
         {
-            this.socket = pipe;
+            this.socket = socket;
             this.timer = MultimediaTimer.TryCreate(SendIntervalMilliseconds, this.ProcessSend); // Use multimedia timer if available.
         }
 

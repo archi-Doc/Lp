@@ -12,14 +12,20 @@ internal class GenePool : IDisposable
     public const int PoolSize = 64 * sizeof(ulong);
     public const int EmbryoMax = 1024;
 
-    public static ulong GetSecond(ulong gene)
-    {
-        return new Xoshiro256StarStar(gene).NextULong();
-    }
+    public static void NextGene(ref ulong gene)
+        => Arc.Crypto.Xorshift.Xor64(ref gene);
+
+    public static ulong NextGene(ulong gene)
+        => Arc.Crypto.Xorshift.Xor64(gene);
 
     public GenePool(ulong gene)
     {
-        this.OriginalGene = gene;
+        this.currentGene = gene;
+    }
+
+    public void ResetGene()
+    {
+        this.currentGene = LP.Random.Crypto.NextUInt64();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -41,15 +47,8 @@ internal class GenePool : IDisposable
         }
         else
         {// Unmanaged
-            if (this.pseudoRandom == null)
-            {
-                this.pseudoRandom = new(this.OriginalGene);
-                return this.OriginalGene;
-            }
-            else
-            {
-                return this.pseudoRandom.NextULong();
-            }
+            NextGene(ref this.currentGene);
+            return this.currentGene;
         }
     }
 
@@ -57,7 +56,7 @@ internal class GenePool : IDisposable
     {
         if (this.pseudoRandom == null)
         {
-            this.pseudoRandom = new(this.OriginalGene);
+            this.pseudoRandom = new(this.currentGene);
         }
 
         var source = embryo.AsSpan();
@@ -68,7 +67,7 @@ internal class GenePool : IDisposable
 
         Span<byte> span = stackalloc byte[sizeof(ulong) + source.Length];
         var buffer = span;
-        BitConverter.TryWriteBytes(buffer, this.pseudoRandom.NextULong());
+        BitConverter.TryWriteBytes(buffer, this.pseudoRandom.NextUInt64());
         buffer = buffer.Slice(sizeof(ulong));
         source.CopyTo(buffer);
 
@@ -105,12 +104,12 @@ internal class GenePool : IDisposable
         }
 
         this.pseudoRandom!.NextBytes(this.buffer);
-
         this.encryptor!.TransformBlock(this.buffer, 0, PoolSize, this.pool, 0);
 
         // this.aes!.TryEncryptCbc(this.bytePool, this.aes!.IV, MemoryMarshal.AsBytes<ulong>(this.pool), out written, PaddingMode.None);
     }
 
+    private ulong currentGene;
     private Xoshiro256StarStar? pseudoRandom;
     private ICryptoTransform? encryptor;
     private byte[]? pool;

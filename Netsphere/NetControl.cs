@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+#pragma warning disable SA1208 // System using directives should be placed before other using directives
 #pragma warning disable SA1210 // Using directives should be ordered alphabetically by namespace
 global using System;
 global using System.Net;
@@ -8,10 +9,10 @@ global using Arc.Threading;
 global using BigMachines;
 global using CrossChannel;
 global using LP;
+global using LP.Block;
 global using LP.Options;
 global using Tinyhand;
 global using ValueLink;
-
 using System.Security.Cryptography;
 using DryIoc;
 using Netsphere;
@@ -22,6 +23,7 @@ namespace Netsphere;
 public class NetControl
 {
     public const int MaxPayload = 1432; // 1432 bytes
+    public const int MaxDataSize = 4 * 1024 * 1024; // 4 MB
     public const int MinPort = 49152; // Ephemeral port 49152 - 60999
     public const int MaxPort = 60999;
 
@@ -130,16 +132,15 @@ public class NetControl
 
     private static void CreateServerTerminal(NetTerminalServer terminal)
     {
-        Task.Run(() =>
+        Task.Run(async () =>
         {
             var server = containerInstance.Resolve<Server>();
             try
             {
-                server.Process(terminal);
+                await server.Process(terminal);
             }
             finally
             {
-                server.Core?.Sleep(1000);
                 terminal.Dispose();
             }
         });

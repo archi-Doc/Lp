@@ -49,12 +49,11 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
         {
             var p = new PacketPing("test");
             sw.Restart();
-            var ni = terminal.SendSingleAndReceive<PacketPing, PacketPingResponse>(p);
-            var result = ni.Receive(out var r);
+            var result = await terminal.SendPacketAndReceiveAsync<PacketPing, PacketPingResponse>(p);
             sw.Stop();
-            if (r != null)
+            if (result.Value != null)
             {
-                Logger.Priority.Information($"Received: {r.ToString()} - {sw.ElapsedMilliseconds} ms");
+                Logger.Priority.Information($"Received: {result.ToString()} - {sw.ElapsedMilliseconds} ms");
             }
             else
             {

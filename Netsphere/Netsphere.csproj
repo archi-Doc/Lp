@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    
+
     <PackageId>Netsphere</PackageId>
     <Authors>archi-Doc</Authors>
     <Product>Netsphere</Product>
@@ -15,11 +15,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <AdditionalFiles Include="..\stylecop.json" Link="stylecop.json" />
+    <ProjectReference Include="..\LPEssentials\LPEssentials.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\LPEssentials\LPEssentials.csproj" />
+    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.354">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <AdditionalFiles Include="..\stylecop.json" Link="stylecop.json" />
   </ItemGroup>
 
 </Project>
