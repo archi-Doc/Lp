@@ -115,11 +115,11 @@ public partial class NetTerminal : IDisposable
         => NetInterface<TSend, TReceive>.CreateValue(this, value, value.PacketId, true, out interfaceResult);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal NetInterface<byte[], object>? CreateSendData(PacketId packetId, ulong dataId, FixedArrayPool.MemoryOwner sendOwner, out NetInterfaceResult interfaceResult)
+    internal NetInterface<byte[], object>? CreateSendData(PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner sendOwner, out NetInterfaceResult interfaceResult)
         => NetInterface<byte[], object>.CreateData(this, packetId, dataId, sendOwner, false, out interfaceResult);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal NetInterface<byte[], byte[]>? CreateSendAndReceiveData(PacketId packetId, ulong dataId, FixedArrayPool.MemoryOwner sendOwner, out NetInterfaceResult interfaceResult)
+    internal NetInterface<byte[], byte[]>? CreateSendAndReceiveData(PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner sendOwner, out NetInterfaceResult interfaceResult)
         => NetInterface<byte[], byte[]>.CreateData(this, packetId, dataId, sendOwner, true, out interfaceResult);
 
     internal byte[] RentAndSetGeneArray(ulong gene, int numberOfGenes)

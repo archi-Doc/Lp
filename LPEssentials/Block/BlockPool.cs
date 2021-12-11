@@ -12,7 +12,6 @@ namespace LP.Block;
 public static class BlockPool
 {
     public const int MaxPool = 100;
-    
 
     static BlockPool()
     {

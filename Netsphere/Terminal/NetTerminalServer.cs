@@ -188,7 +188,7 @@ ReceiveAsyncStart:
     }
 
     public async Task<NetInterfaceResult> SendDataAsync(ulong dataId, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
-        => await this.SendDataAsync(true, PacketId.Data, dataId, new FixedArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);
+        => await this.SendDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);
 
     public void EnsureReceiver()
     {
@@ -207,7 +207,7 @@ ReceiveAsyncStart:
         }
     }
 
-    private async Task<NetInterfaceResult> SendDataAsync(bool encrypt, PacketId packetId, ulong dataId, FixedArrayPool.MemoryOwner owner, int millisecondsToWait = DefaultMillisecondsToWait)
+    private async Task<NetInterfaceResult> SendDataAsync(bool encrypt, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner, int millisecondsToWait = DefaultMillisecondsToWait)
     {// checked
         NetInterface<object, byte[]>? reserveInterface = null;
 
