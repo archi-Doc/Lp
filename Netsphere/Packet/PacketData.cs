@@ -4,14 +4,13 @@ using System.Runtime.InteropServices;
 
 namespace Netsphere;
 
-[TinyhandObject]
-internal partial class PacketData : IPacket
-{
-    public PacketId PacketId => PacketId.Data;
+// PacketId.Data (First)
+// DataHeader
+// byte[DataSize] Data
 
-    // DataHeader
-    // byte[DataSize] Data
-}
+// PacketId.Data2 (Second and later)
+// DataHeader2
+// byte[DataSize] Data
 
 [StructLayout(LayoutKind.Explicit)]
 internal readonly struct DataHeader
@@ -35,5 +34,17 @@ internal readonly struct DataHeader
     public readonly PacketId PacketId;
 
     [FieldOffset(8)]
+    public readonly ulong Checksum; // 1-7bytes, FarmHash64
+}
+
+[StructLayout(LayoutKind.Explicit)]
+internal readonly struct DataHeader2
+{
+    public DataHeader2(ulong checksum)
+    {
+        this.Checksum = checksum & DataHeader.ChecksumMask;
+    }
+
+    [FieldOffset(0)]
     public readonly ulong Checksum; // 1-7bytes, FarmHash64
 }

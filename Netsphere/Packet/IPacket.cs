@@ -14,6 +14,7 @@ public enum PacketId : byte
     Close,
     Relay,
     Data,
+    Data2,
     Reserve,
     ReserveResponse,
     RPC,
