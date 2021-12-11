@@ -41,7 +41,8 @@ public class SendDataSubcommand : ISimpleCommandAsync<SendDataOptions>
             Logger.Priority.Information($"t: {t.Result}");
 
             var p2 = TestBlock.Create(2000);
-            Logger.Priority.Information($"p2 send: {p2}");
+            BlockService.TrySerialize(p2, out var owner);
+            Logger.Priority.Information($"p2 send: {p2} ({owner.Memory.Length})");
             var t2 = await terminal.SendAndReceiveAsync<TestBlock, TestBlock>(p2);
             Logger.Priority.Information($"t2 received: {t2.Value}");
             // await Task.Delay(2000);

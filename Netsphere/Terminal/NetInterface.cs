@@ -537,7 +537,7 @@ WaitForSendCompletionWait:
         }
         else if (this.RecvGenes.Length == 1)
         {// Single gene
-            if (!this.RecvGenes[0].IsReceived)
+            if (!this.RecvGenes[0].IsReceiveComplete)
             {
                 return false;
             }
@@ -558,7 +558,7 @@ WaitForSendCompletionWait:
         var total = 0;
         for (var i = 0; i < this.RecvGenes.Length; i++)
         {
-            if (!this.RecvGenes[i].IsReceived)
+            if (!this.RecvGenes[i].IsReceiveComplete)
             { // Checked later: this.RecvGenes[i].Owner.Memory.Length < PacketService.DataHeaderSize
                 return false;
             }
