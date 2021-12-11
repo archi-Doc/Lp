@@ -11,7 +11,7 @@ namespace LP;
 /// <summary>
 /// A thread-safe pool of byte arrays (uses <see cref="ArrayPool{T}"/>).<br/>
 /// </summary>
-public class ByteArrayPool
+public class ByteArrayPoolObsolete
 {
     /// <summary>
     /// An owner struct of a byte array (one owner for each byte array).<br/>
@@ -20,16 +20,16 @@ public class ByteArrayPool
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="Owner"/> struct from a byte array.<br/>
-        /// This is a feature for compatibility with <see cref="ByteArrayPool"/>, and the byte array will not be returned when <see cref="Return"/> is called.
+        /// This is a feature for compatibility with <see cref="ByteArrayPoolObsolete"/>, and the byte array will not be returned when <see cref="Return"/> is called.
         /// </summary>
-        /// <param name="byteArray">A byte array (other than <see cref="ByteArrayPool"/>).</param>
+        /// <param name="byteArray">A byte array (other than <see cref="ByteArrayPoolObsolete"/>).</param>
         public Owner(byte[] byteArray)
         {
             this.pool = null;
             this.ByteArray = byteArray;
         }
 
-        internal Owner(ByteArrayPool pool, byte[] byteArray)
+        internal Owner(ByteArrayPoolObsolete pool, byte[] byteArray)
         {
             this.pool = pool;
             this.ByteArray = byteArray;
@@ -58,16 +58,16 @@ public class ByteArrayPool
         /// </summary>
         public readonly byte[] ByteArray;
 
-        private readonly ByteArrayPool? pool;
+        private readonly ByteArrayPoolObsolete? pool;
     }
 
     public readonly struct MemoryOwner : IDisposable
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="MemoryOwner"/> struct from a byte array.<br/>
-        /// This is a feature for compatibility with <see cref="ByteArrayPool"/>, and the byte array will not be returned when <see cref="Return"/> is called.
+        /// This is a feature for compatibility with <see cref="ByteArrayPoolObsolete"/>, and the byte array will not be returned when <see cref="Return"/> is called.
         /// </summary>
-        /// <param name="byteArray">A byte array (other than <see cref="ByteArrayPool"/>).</param>
+        /// <param name="byteArray">A byte array (other than <see cref="ByteArrayPoolObsolete"/>).</param>
         public MemoryOwner(byte[] byteArray)
         {
             this.Owner = new(byteArray);
@@ -122,11 +122,11 @@ public class ByteArrayPool
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ByteArrayPool"/> class.<br/>
+    /// Initializes a new instance of the <see cref="ByteArrayPoolObsolete"/> class.<br/>
     /// </summary>
     /// <param name="maxLength">The maximum length of a byte array instance that may be stored in the pool.</param>
     /// <param name="maxPool">The maximum number of array instances that may be stored in each bucket in the pool.</param>
-    public ByteArrayPool(int maxLength, int maxPool = 100)
+    public ByteArrayPoolObsolete(int maxLength, int maxPool = 100)
     {
         if (maxLength < 0)
         {

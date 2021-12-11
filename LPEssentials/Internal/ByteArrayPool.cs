@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System;
-using System.Buffers;
 using System.Collections.Concurrent;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -10,8 +9,12 @@ namespace LP;
 
 /// <summary>
 /// A thread-safe pool of byte arrays (uses <see cref="ConcurrentQueue{T}"/>).<br/>
+/// <see cref="ByteArrayPool"/> is slightly slower than 'new byte[]' or <see cref="System.Buffers.ArrayPool{T}"/> (especially byte arrays of 1kbytes or less), but it has some advantages.<br/>
+/// 1. Can handle a rent byte array and a created ('new byte[]') byte array in the same way.<br/>
+/// 2. By using <see cref="ByteArrayPool.MemoryOwner"/>, you can handle a rent byte array in the same way as <see cref="Memory{T}"/>.<br/>
+/// 3. Can be used by multiple users by incrementing the reference count.
 /// </summary>
-public class UnifiedArrayPool
+public class ByteArrayPool
 {
     private const int UpperBoundLength = 1024 * 1024 * 1024; // 1 GB
     private const int LowerBoundBits = 3;
@@ -35,7 +38,7 @@ public class UnifiedArrayPool
             this.SetCount1();
         }
 
-        internal Owner(UnifiedArrayPool.Bucket bucket)
+        internal Owner(Bucket bucket)
         {
             this.bucket = bucket;
             this.ByteArray = new byte[bucket.ArrayLength];
@@ -118,7 +121,7 @@ public class UnifiedArrayPool
         /// </summary>
         public int Count => Volatile.Read(ref this.count);
 
-        private UnifiedArrayPool.Bucket? bucket;
+        private Bucket? bucket;
         private int count;
     }
 
@@ -129,9 +132,9 @@ public class UnifiedArrayPool
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="MemoryOwner"/> struct from a byte array.<br/>
-        /// This is a feature for compatibility with <see cref="UnifiedArrayPool"/>, and the byte array will not be returned when <see cref="Return"/> is called.
+        /// This is a feature for compatibility with <see cref="ByteArrayPool"/>, and the byte array will not be returned when <see cref="Return"/> is called.
         /// </summary>
-        /// <param name="byteArray">A byte array (other than <see cref="UnifiedArrayPool"/>).</param>
+        /// <param name="byteArray">A byte array (other than <see cref="ByteArrayPool"/>).</param>
         public MemoryOwner(byte[] byteArray)
         {
             this.Owner = new(byteArray);
@@ -228,7 +231,7 @@ public class UnifiedArrayPool
 
     internal sealed class Bucket
     {
-        public Bucket(UnifiedArrayPool pool, int arrayLength, int maxPool)
+        public Bucket(ByteArrayPool pool, int arrayLength, int maxPool)
         {
             this.pool = pool;
             this.ArrayLength = arrayLength;
@@ -237,21 +240,26 @@ public class UnifiedArrayPool
 
         public int ArrayLength { get; }
 
-        public int MaxPool { get; }
+        public int MaxPool { get; private set; }
+
+        internal void SetMaxPool(int maxPool)
+        {
+            this.MaxPool = maxPool;
+        }
 
 #pragma warning disable SA1401 // Fields should be private
         internal ConcurrentQueue<Owner> Queue = new();
 #pragma warning restore SA1401 // Fields should be private
 
-        private UnifiedArrayPool pool;
+        private ByteArrayPool pool;
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="UnifiedArrayPool"/> class.<br/>
+    /// Initializes a new instance of the <see cref="ByteArrayPool"/> class.<br/>
     /// </summary>
     /// <param name="maxLength">The maximum length of a byte array instance that may be stored in the pool (0 for max 1GB).</param>
     /// <param name="maxPool">The maximum number of array instances that may be stored in each bucket in the pool (0 for unlimited).</param>
-    public UnifiedArrayPool(int maxLength = 0, int maxPool = 100)
+    public ByteArrayPool(int maxLength = 0, int maxPool = 100)
     {
         if (maxLength <= 0 || maxLength > UpperBoundLength)
         {
@@ -311,14 +319,36 @@ public class UnifiedArrayPool
             }
         }
 
-        Owner? owner;
-        if (!bucket.Queue.TryDequeue(out owner))
+        if (!bucket.Queue.TryDequeue(out var owner))
         {// Allocate a new byte array.
             return new Owner(bucket);
         }
 
         owner.SetCount1();
         return owner;
+    }
+
+    /// <summary>
+    /// Sets the maximum number of pooled byte arrays in the bucket corresponding to the specified size.
+    /// </summary>
+    /// <param name="length">The length of a byte array.</param>
+    /// <param name="maxPool">The maximum number of array instances that may be stored in the bucket (0 for unlimited).</param>
+    public void SetMaxPool(int length, int maxPool)
+    {
+        var bucket = this.buckets[BitOperations.LeadingZeroCount((uint)length - 1)];
+        if (bucket == null)
+        {
+            if (length == 0)
+            {
+                bucket = this.buckets[32]!;
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException(nameof(length));
+            }
+        }
+
+        bucket.SetMaxPool(maxPool);
     }
 
     /// <summary>
