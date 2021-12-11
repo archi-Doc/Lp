@@ -6,11 +6,13 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace LP.Blocks;
+namespace LP.Block;
 
 public static class BlockService
 {
     public const int MaxBlockSize = 1024 * 1024 * 4; // 4MB
+    public const int StandardBlockSize = 32 * 1024; // 32KB
+    public const int StandardBlockPool = 400;
 
     public static uint GetId<T>() => IdCache<T>.Id;
 

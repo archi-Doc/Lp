@@ -7,16 +7,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LP.Blocks;
+namespace LP.Block;
 
-internal static class BlockPool
+public static class BlockPool
 {
+    public const int MaxPool = 100;
+    
+
     static BlockPool()
     {
-        blockPool = new FixedArrayPool(BlockService.MaxBlockSize);
+        blockPool = new ByteArrayPool(BlockService.MaxBlockSize, MaxPool);
+        blockPool.SetMaxPool(BlockService.StandardBlockSize, BlockService.StandardBlockPool);
     }
 
-    public static FixedArrayPool.Owner Rent() => blockPool.Rent();
+    public static ByteArrayPool.Owner Rent(int minimumLength) => blockPool.Rent(minimumLength);
 
-    private static FixedArrayPool blockPool;
+    private static ByteArrayPool blockPool;
 }

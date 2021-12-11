@@ -9,7 +9,7 @@ global using Arc.Threading;
 global using BigMachines;
 global using CrossChannel;
 global using LP;
-global using LP.Blocks;
+global using LP.Block;
 global using LP.Options;
 global using Tinyhand;
 global using ValueLink;
