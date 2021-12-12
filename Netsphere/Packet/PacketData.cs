@@ -8,8 +8,8 @@ namespace Netsphere;
 // DataHeader
 // byte[DataSize] Data
 
-// PacketId.Data2 (Second and later)
-// DataHeader2
+// PacketId.DataFollowing (Second and later)
+// DataFollowingHeader
 // byte[DataSize] Data
 
 [StructLayout(LayoutKind.Explicit)]
@@ -38,12 +38,15 @@ internal readonly struct DataHeader
 }
 
 [StructLayout(LayoutKind.Explicit)]
-internal readonly struct DataHeader2
+internal readonly struct DataFollowingHeader
 {
-    public DataHeader2(ulong checksum)
+    public DataFollowingHeader(ulong checksum)
     {
         this.Checksum = checksum & DataHeader.ChecksumMask;
     }
+
+    public bool ChecksumEquals(ulong checksum)
+        => (checksum & DataHeader.ChecksumMask) == (this.Checksum & DataHeader.ChecksumMask);
 
     [FieldOffset(0)]
     public readonly ulong Checksum; // 1-7bytes, FarmHash64

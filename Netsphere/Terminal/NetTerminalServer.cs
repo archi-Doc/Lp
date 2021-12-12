@@ -228,7 +228,7 @@ ReceiveAsyncStart:
                 return NetInterfaceResult.NoEncryptedConnection;
             }
 
-            if (owner.Memory.Length <= PacketService.SafeMaxPacketSize)
+            if (owner.Memory.Length <= PacketService.SafeMaxPayloadSize)
             {// Single packet.
                 netInterface.SetSend(packetId, dataId, owner);
             }

@@ -169,8 +169,8 @@ public class NetTerminalClient : NetTerminal
             return (response.Result, default);
         }
 
-        var dataMemory = PacketService.GetData(response.Received);
-        TinyhandSerializer.TryDeserialize<TReceive>(dataMemory.DataMemory, out var received);
+        // var dataMemory = PacketService.GetData(response.Received);
+        TinyhandSerializer.TryDeserialize<TReceive>(response.Received, out var received);
         if (received == null)
         {
             return (NetInterfaceResult.DeserializationError, default);
@@ -196,7 +196,7 @@ public class NetTerminalClient : NetTerminal
             }
         }
 
-        if (owner.Memory.Length <= PacketService.SafeMaxPacketSize)
+        if (owner.Memory.Length <= PacketService.SafeMaxPayloadSize)
         {// Single packet.
         }
         else if (owner.Memory.Length <= BlockService.MaxBlockSize)
@@ -240,7 +240,7 @@ public class NetTerminalClient : NetTerminal
             }
         }
 
-        if (owner.Memory.Length <= PacketService.SafeMaxPacketSize)
+        if (owner.Memory.Length <= PacketService.SafeMaxPayloadSize)
         {// Single packet.
         }
         else if (owner.Memory.Length <= BlockService.MaxBlockSize)

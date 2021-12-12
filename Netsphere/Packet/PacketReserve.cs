@@ -17,7 +17,7 @@ internal partial class PacketReserve : IPacket
     {
         var info = PacketService.GetDataSize(totalSize);
         this.NumberOfGenes = (ushort)info.NumberOfGenes;
-        this.DataSize = (uint)info.DataSize;
+        this.TotalSize = totalSize;
     }
 
     // public bool Response { get; set; }
@@ -32,7 +32,7 @@ internal partial class PacketReserve : IPacket
     /// Gets or sets the size of the total data in bytes.
     /// </summary>
     [Key(1)]
-    public uint DataSize { get; set; }
+    public int TotalSize { get; set; }
 }
 
 [TinyhandObject]

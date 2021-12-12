@@ -77,9 +77,9 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
         var gene = netTerminal.GenePool.GetGene(); // Send gene
         netTerminal.CreateHeader(out var header, gene);
-        if (owner.Memory.Length <= PacketService.SafeMaxPacketSize)
+        if (owner.Memory.Length <= PacketService.SafeMaxPayloadSize)
         {// Single packet.
-            PacketService.CreatePacket(ref header, packetId, dataId, owner.Memory.Span, out var sendOwner);
+            PacketService.CreateDataPacket(ref header, packetId, dataId, owner.Memory.Span, out var sendOwner);
 
             var ntg = new NetTerminalGene(gene, netInterface);
             netInterface.SendGenes = new NetTerminalGene[] { ntg, };
@@ -115,7 +115,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
 
         netTerminal.CreateHeader(out var header, 0); // Set gene in a later code.
         PacketService.CreatePacket(ref header, value, id, out var sendOwner);
-        if (sendOwner.Memory.Length <= PacketService.SafeMaxPacketSize)
+        if (sendOwner.Memory.Length <= PacketService.SafeMaxPayloadSize)
         {// Single packet.
             gene = netTerminal.GenePool.GetGene(); // Send gene
             PacketService.InsertGene(sendOwner.Memory, gene);
@@ -178,14 +178,30 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         var genes = new NetTerminalGene[info.NumberOfGenes];
         for (var i = 0; i < info.NumberOfGenes; i++)
         {
-            var size = info.DataSize;
-            if (i == (info.NumberOfGenes - 1))
+            int size;
+            FixedArrayPool.MemoryOwner sendOwner;
+            if (i == 0)
+            {// First
+                size = info.FirstDataSize;
+
+                netTerminal.CreateHeader(out var header, geneArray[i]);
+                PacketService.CreateDataPacket(ref header, PacketId.Data, dataId, span.Slice(0, size), out sendOwner);
+            }
+            else
             {
-                size = info.LastDataSize;
+                if (i == (info.NumberOfGenes - 1))
+                {// Last
+                    size = info.LastDataSize;
+                }
+                else
+                {// Following
+                    size = info.FollowingDataSize;
+                }
+
+                netTerminal.CreateHeader(out var header, geneArray[i]);
+                PacketService.CreateDataFollowingPacket(ref header, span.Slice(0, size), out sendOwner);
             }
 
-            netTerminal.CreateHeader(out var header, geneArray[i]);
-            PacketService.CreatePacket(ref header, PacketId.Data, dataId, span.Slice(0, size), out var sendOwner);
             span = span.Slice(size);
 
             genes[i] = new(geneArray[i], netInterface);
@@ -277,7 +293,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         var gene = this.StandbyGene;
         this.NetTerminal.CreateHeader(out var header, gene);
         PacketService.CreatePacket(ref header, value, value.PacketId, out var sendOwner);
-        if (sendOwner.Memory.Length <= PacketService.SafeMaxPacketSize)
+        if (sendOwner.Memory.Length <= PacketService.SafeMaxPayloadSize)
         {// Single packet.
             var ntg = new NetTerminalGene(gene, this);
             this.SendGenes = new NetTerminalGene[] { ntg, };
@@ -301,9 +317,9 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
 
         var gene = this.StandbyGene;
         this.NetTerminal.CreateHeader(out var header, gene);
-        if (owner.Memory.Length <= PacketService.SafeMaxPacketSize)
+        if (owner.Memory.Length <= PacketService.SafeMaxPayloadSize)
         {// Single packet.
-            PacketService.CreatePacket(ref header, packetId, dataId, owner.Memory.Span, out var sendOwner);
+            PacketService.CreateDataPacket(ref header, packetId, dataId, owner.Memory.Span, out var sendOwner);
             var ntg = new NetTerminalGene(gene, this);
             this.SendGenes = new NetTerminalGene[] { ntg, };
             ntg.SetSend(sendOwner);
@@ -564,7 +580,14 @@ WaitForSendCompletionWait:
             }
             else
             {
-                total += this.RecvGenes[i].Owner.Memory.Length - PacketService.DataHeaderSize;
+                if (this.RecvGenes[i].ReceivedId == PacketId.Data)
+                {// Data
+                    total += this.RecvGenes[i].Owner.Memory.Length - PacketService.DataHeaderSize;
+                }
+                else
+                {// DataFollowing
+                    total += this.RecvGenes[i].Owner.Memory.Length - PacketService.DataFollowingHeaderSize;
+                }
             }
         }
 
@@ -572,10 +595,19 @@ WaitForSendCompletionWait:
         var mem = buffer.AsMemory();
         for (var i = 0; i < this.RecvGenes.Length; i++)
         {
-            var data = PacketService.GetData(this.RecvGenes[i].Owner.Memory);
-            dataId = data.DataId;
-            data.DataMemory.CopyTo(mem);
-            mem = mem.Slice(data.DataMemory.Length);
+            if (this.RecvGenes[i].ReceivedId == PacketId.Data)
+            {// Data
+                var data = PacketService.GetData(this.RecvGenes[i].Owner.Memory);
+                dataId = data.DataId;
+                data.DataMemory.CopyTo(mem);
+                mem = mem.Slice(data.DataMemory.Length);
+            }
+            else
+            {// DataFollowing
+                var data = PacketService.GetDataFollowing(this.RecvGenes[i].Owner.Memory);
+                data.CopyTo(mem);
+                mem = mem.Slice(data.Length);
+            }
         }
 
         packetId = this.RecvGenes[0].ReceivedId;
@@ -626,7 +658,7 @@ WaitForSendCompletionWait:
 
         PacketHeader header = default;
         int size = 0;
-        int maxSize = PacketService.DataPacketSize - sizeof(ulong);
+        int maxSize = PacketService.DataPayloadSize - sizeof(ulong);
         FixedArrayPool.Owner? rentArray = null;
         foreach (var x in this.RecvGenes)
         {
