@@ -287,7 +287,7 @@ public class Terminal
             var terminal = this.Create(packet.NodeInformation, firstGene);
             var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(terminal, firstGene, owner, secondGene, sendOwner);
 
-            terminal.GetGene();
+            terminal.GetSequential();
             terminal.CreateEmbryo(packet.Salt);
             terminal.SetReceiverNumber();
             if (this.createServerTerminalDelegate != null)

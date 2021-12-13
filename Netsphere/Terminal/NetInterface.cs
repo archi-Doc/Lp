@@ -75,7 +75,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
 
         interfaceResult = NetInterfaceResult.Success;
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
-        var sequentialGenes = netTerminal.Get2Genes(); // Send gene
+        var sequentialGenes = netTerminal.GetSequential2(); // Send gene
         netTerminal.CreateHeader(out var header, sequentialGenes.First);
         if (owner.Memory.Length <= PacketService.SafeMaxPayloadSize)
         {// Single packet.
@@ -117,7 +117,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         PacketService.CreatePacket(ref header, value, id, out var sendOwner);
         if (sendOwner.Memory.Length <= PacketService.SafeMaxPayloadSize)
         {// Single packet.
-            sequentialGenes = netTerminal.Get2Genes(); // Send gene
+            sequentialGenes = netTerminal.GetSequential2(); // Send gene
             PacketService.InsertGene(sendOwner.Memory, sequentialGenes.First);
 
             netInterface = new NetInterface<TSend, TReceive>(netTerminal);
@@ -218,7 +218,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
     {// Receive
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
 
-        (var receiveGene, netInterface.StandbyGene) = netTerminal.Get2Genes();
+        (var receiveGene, netInterface.StandbyGene) = netTerminal.GetSequential2();
         var gene = new NetTerminalGene(receiveGene, netInterface);
         netInterface.RecvGenes = new NetTerminalGene[] { gene, };
         gene.SetReceive();
