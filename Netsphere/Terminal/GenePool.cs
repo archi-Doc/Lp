@@ -9,7 +9,7 @@ namespace Netsphere;
 
 internal class GenePool : IDisposable
 {
-    public const int PoolSize = 64 * sizeof(ulong);
+    public const int PoolSize = 16 * sizeof(ulong);
     public const int EmbryoMax = 1024;
 
     public static void NextGene(ref ulong gene)
@@ -83,7 +83,29 @@ internal class GenePool : IDisposable
         this.encryptor = Aes256.NoPadding.CreateEncryptor(keyIv.AsSpan(0, 32).ToArray(), keyIv.AsSpan(32, 16).ToArray());
     }
 
-    public ulong OriginalGene { get; }
+    public GenePool Fork(byte[] embryo)
+    {
+        if (embryo.Length < 48)
+        {
+            throw new ArgumentOutOfRangeException();
+        }
+
+        if (this.encryptor == null)
+        {
+            this.SetEmbryo(embryo);
+        }
+
+        var gene = this.GetGene();
+        var first = BitConverter.ToUInt64(embryo);
+        var genePool = new GenePool(gene ^ first);
+
+        var iv = new byte[16];
+        BitConverter.TryWriteBytes(iv, gene);
+        embryo.AsSpan(40, 8).CopyTo(iv.AsSpan(8, 8));
+
+        genePool.encryptor = Aes256.NoPadding.CreateEncryptor(embryo.AsSpan(8, 32).ToArray(), iv);
+        return genePool;
+    }
 
     private void EnsurePool()
     {

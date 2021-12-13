@@ -95,8 +95,8 @@ public class NetTerminalServer : NetTerminal
         try
         {
             var netInterface = this.GetReceiver();
-ReceiveAsyncStart:
 
+ReceiveAsyncStart:
             var received = await netInterface.ReceiveDataAsync(millisecondsToWait).ConfigureAwait(false);
             if (received.Result == NetInterfaceResult.Timeout)
             {// Timeout
@@ -234,6 +234,7 @@ ReceiveAsyncStart:
             }
             else
             {// Split into multiple packets. Send PacketReserve.
+                this.TerminalLogger?.Error("a");
                 reserveInterface = netInterface;
                 var reserve = new PacketReserve(owner.Memory.Length);
                 reserveInterface.SetSend(reserve);
