@@ -75,7 +75,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
 
         interfaceResult = NetInterfaceResult.Success;
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
-        var gene = netTerminal.GenePool.GetGene(); // Send gene
+        var gene = netTerminal.genePool.GetGene(); // Send gene
         netTerminal.CreateHeader(out var header, gene);
         if (owner.Memory.Length <= PacketService.SafeMaxPayloadSize)
         {// Single packet.
@@ -93,7 +93,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
             netInterface.SendGenes = CreateSendGenes(netInterface, gene, owner, dataId);
         }
 
-        gene = netTerminal.GenePool.GetGene(); // Receive gene
+        gene = netTerminal.genePool.GetGene(); // Receive gene
         if (receive)
         {
             var ntg = new NetTerminalGene(gene, netInterface);
@@ -117,7 +117,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         PacketService.CreatePacket(ref header, value, id, out var sendOwner);
         if (sendOwner.Memory.Length <= PacketService.SafeMaxPayloadSize)
         {// Single packet.
-            gene = netTerminal.GenePool.GetGene(); // Send gene
+            gene = netTerminal.genePool.GetGene(); // Send gene
             PacketService.InsertGene(sendOwner.Memory, gene);
 
             netInterface = new NetInterface<TSend, TReceive>(netTerminal);
@@ -134,7 +134,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
             return null;
         }
 
-        gene = netTerminal.GenePool.GetGene(); // Receive gene
+        gene = netTerminal.genePool.GetGene(); // Receive gene
         if (receive)
         {
             var ntg = new NetTerminalGene(gene, netInterface);
@@ -218,8 +218,8 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
     {// Receive
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
 
-        var receiveGene = netTerminal.GenePool.GetGene();
-        netInterface.StandbyGene = netTerminal.GenePool.GetGene();
+        var receiveGene = netTerminal.genePool.GetGene();
+        netInterface.StandbyGene = netTerminal.genePool.GetGene();
         var gene = new NetTerminalGene(receiveGene, netInterface);
         netInterface.RecvGenes = new NetTerminalGene[] { gene, };
         gene.SetReceive();

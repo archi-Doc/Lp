@@ -48,7 +48,7 @@ public class NetTerminalClient : NetTerminal
             return;
         }
 
-        this.CreateHeader(out var header, this.GenePool.GetGene());
+        this.CreateHeader(out var header, this.genePool.GetGene());
         header.Id = PacketId.Close;
 
         var arrayOwner = PacketPool.Rent();

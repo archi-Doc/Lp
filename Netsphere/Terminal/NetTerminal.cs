@@ -31,7 +31,7 @@ public partial class NetTerminal : IDisposable
     internal NetTerminal(Terminal terminal, NodeAddress nodeAddress)
     {// NodeAddress: Unmanaged
         this.Terminal = terminal;
-        this.GenePool = new(LP.Random.Crypto.NextUInt64());
+        this.genePool = new(LP.Random.Crypto.NextUInt64());
         this.NodeAddress = nodeAddress;
         this.Endpoint = this.NodeAddress.CreateEndpoint();
     }
@@ -44,7 +44,7 @@ public partial class NetTerminal : IDisposable
     internal NetTerminal(Terminal terminal, NodeInformation nodeInformation, ulong gene)
     {// NodeInformation: Encrypted
         this.Terminal = terminal;
-        this.GenePool = new(gene);
+        this.genePool = new(gene);
         this.NodeAddress = nodeInformation;
         this.NodeInformation = nodeInformation;
         this.Endpoint = this.NodeAddress.CreateEndpoint();
@@ -78,8 +78,6 @@ public partial class NetTerminal : IDisposable
     public NodeAddress NodeAddress { get; }
 
     public NodeInformation? NodeInformation { get; }
-
-    internal GenePool GenePool { get; }
 
     internal void CreateHeader(out PacketHeader header, ulong gene)
     {
@@ -228,8 +226,8 @@ public partial class NetTerminal : IDisposable
         this.embryo = sha.GetHash(buffer);
         Hash.Sha3_384Pool.Return(sha);
 
-        this.GenePool.SetEmbryo(this.embryo);
-        Logger.Priority.Information($"First gene {this.GenePool.GetGene().ToString()}");
+        this.genePool.SetEmbryo(this.embryo);
+        Logger.Priority.Information($"First gene {this.genePool.GetGene().ToString()}");
 
         return NetInterfaceResult.Success;
     }
@@ -273,6 +271,8 @@ public partial class NetTerminal : IDisposable
         this.disposedInterfaces.Add(netInterface);
     }
 
+    internal ulong GetGene() => this.genePool.GetGene();
+
     private void Clear()
     {// lock (this.SyncObject)
         foreach (var x in this.activeInterfaces)
@@ -293,7 +293,7 @@ public partial class NetTerminal : IDisposable
     protected List<NetInterface> activeInterfaces = new();
     protected List<NetInterface> disposedInterfaces = new();
     protected byte[]? embryo; // 48 bytes
-
+    private protected GenePool genePool;
     private long lastSendingAckTicks;
 
     // private PacketService packetService = new();
