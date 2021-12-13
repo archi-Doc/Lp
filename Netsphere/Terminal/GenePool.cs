@@ -7,48 +7,56 @@ using Arc.Crypto;
 
 namespace Netsphere;
 
+/// <summary>
+/// Thread-safe pool of genes.
+/// </summary>
 internal class GenePool : IDisposable
 {
     public const int PoolSize = 16 * sizeof(ulong);
     public const int EmbryoMax = 1024;
 
-    public static void NextGene(ref ulong gene)
-        => Arc.Crypto.Xorshift.Xor64(ref gene);
-
     public static ulong NextGene(ulong gene)
         => Arc.Crypto.Xorshift.Xor64(gene);
 
-    public GenePool(ulong gene)
+    public GenePool(ulong first)
     {
-        this.currentGene = gene;
+        this.currentGene = first;
     }
 
-    public void ResetGene()
+    private GenePool(ulong first, GenePool original)
     {
-        this.currentGene = LP.Random.Crypto.NextUInt64();
+        this.currentGene = first;
+        this.pool = new byte[PoolSize];
+        original.GetSequential(MemoryMarshal.Cast<byte, ulong>(this.pool));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public unsafe ulong GetGene()
+    public unsafe ulong GetSequential()
     {
-        if (this.encryptor != null)
-        {// Managed
-            this.EnsurePool();
-            fixed (byte* bp = this.pool)
-            {
-                ulong* up = (ulong*)(bp + this.poolPosition);
-                this.poolPosition += sizeof(ulong);
-                return *up;
-            }
-
-            /*var gene = BitConverter.ToUInt64(this.bytePool.AsSpan(this.poolPosition));
-            this.poolPosition += sizeof(ulong);
-            return gene;*/
+        lock (this.syncObject)
+        {
+            return this.GetGene();
         }
-        else
-        {// Unmanaged
-            NextGene(ref this.currentGene);
-            return this.currentGene;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public unsafe void GetSequential(Span<ulong> span)
+    {
+        lock (this.syncObject)
+        {
+            for (var i = 0; i < span.Length; i++)
+            {
+                span[i] = this.GetGene();
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public unsafe (ulong First, ulong Second) GetSequential2()
+    {
+        lock (this.syncObject)
+        {
+            return (this.GetGene(), this.GetGene());
         }
     }
 
@@ -97,23 +105,37 @@ internal class GenePool : IDisposable
 
         var gene = this.GetGene();
         var first = BitConverter.ToUInt64(embryo);
-        var genePool = new GenePool(gene ^ first);
-
-        var iv = new byte[16];
-        BitConverter.TryWriteBytes(iv, gene);
-        embryo.AsSpan(40, 8).CopyTo(iv.AsSpan(8, 8));
-
-        genePool.encryptor = Aes256.NoPadding.CreateEncryptor(embryo.AsSpan(8, 32).ToArray(), iv);
+        var genePool = new GenePool(gene ^ first, this);
+        genePool.embryo = embryo;
         return genePool;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private unsafe ulong GetGene()
+    {// lock (this.syncObject)
+        if (this.pool != null || this.encryptor != null)
+        { // Pooled genes (Managed
+            if (this.poolPosition >= PoolSize)
+            {
+                this.EnsurePool();
+            }
+
+            fixed (byte* bp = this.pool)
+            {
+                ulong* up = (ulong*)(bp + this.poolPosition);
+                this.poolPosition += sizeof(ulong);
+                return *up;
+            }
+        }
+        else
+        {// Unmanaged
+            this.currentGene = NextGene(this.currentGene);
+            return this.currentGene;
+        }
     }
 
     private void EnsurePool()
     {
-        if (this.pool != null && this.poolPosition < PoolSize)
-        {
-            return;
-        }
-
         this.poolPosition = 0;
         if (this.pool == null)
         {
@@ -125,15 +147,31 @@ internal class GenePool : IDisposable
             this.buffer = new byte[PoolSize];
         }
 
-        this.pseudoRandom!.NextBytes(this.buffer);
+        if (this.pseudoRandom == null)
+        {
+            this.pseudoRandom = new(this.currentGene);
+        }
+
+        if (this.encryptor == null)
+        {
+            var iv = new byte[16];
+            BitConverter.TryWriteBytes(iv, this.currentGene);
+            this.embryo.AsSpan(40, 8).CopyTo(iv.AsSpan(8, 8));
+            this.encryptor = Aes256.NoPadding.CreateEncryptor(this.embryo.AsSpan(8, 32).ToArray(), iv);
+            this.embryo = null;
+        }
+
+        this.pseudoRandom.NextBytes(this.buffer);
         this.encryptor!.TransformBlock(this.buffer, 0, PoolSize, this.pool, 0);
 
         // this.aes!.TryEncryptCbc(this.bytePool, this.aes!.IV, MemoryMarshal.AsBytes<ulong>(this.pool), out written, PaddingMode.None);
     }
 
+    private object syncObject = new();
     private ulong currentGene;
     private Xoshiro256StarStar? pseudoRandom;
     private ICryptoTransform? encryptor;
+    private byte[]? embryo;
     private byte[]? pool;
     private byte[]? buffer;
     private int poolPosition;

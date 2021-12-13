@@ -227,7 +227,7 @@ public partial class NetTerminal : IDisposable
         Hash.Sha3_384Pool.Return(sha);
 
         this.genePool.SetEmbryo(this.embryo);
-        Logger.Priority.Information($"First gene {this.genePool.GetGene().ToString()}");
+        Logger.Priority.Information($"First gene {this.GetGene().ToString()}");
 
         return NetInterfaceResult.Success;
     }
@@ -277,7 +277,9 @@ public partial class NetTerminal : IDisposable
         this.geneAsyncLocal.Value = null;
     }
 
-    internal ulong GetGene() => this.genePool.GetGene();
+    internal ulong GetGene() => this.genePool.GetSequential();
+
+    internal (ulong First, ulong Second) Get2Genes() => this.genePool.GetSequential2();
 
     private void Clear()
     {// lock (this.SyncObject)

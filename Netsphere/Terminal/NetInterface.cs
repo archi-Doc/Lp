@@ -75,32 +75,32 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
 
         interfaceResult = NetInterfaceResult.Success;
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
-        var gene = netTerminal.genePool.GetGene(); // Send gene
-        netTerminal.CreateHeader(out var header, gene);
+        var sequentialGenes = netTerminal.Get2Genes(); // Send gene
+        netTerminal.CreateHeader(out var header, sequentialGenes.First);
         if (owner.Memory.Length <= PacketService.SafeMaxPayloadSize)
         {// Single packet.
             PacketService.CreateDataPacket(ref header, packetId, dataId, owner.Memory.Span, out var sendOwner);
 
-            var ntg = new NetTerminalGene(gene, netInterface);
+            var ntg = new NetTerminalGene(sequentialGenes.First, netInterface);
             netInterface.SendGenes = new NetTerminalGene[] { ntg, };
             ntg.SetSend(sendOwner);
             sendOwner.Return();
 
-            netTerminal.TerminalLogger?.Information($"RegisterSend2  : {gene.To4Hex()}");
+            netTerminal.TerminalLogger?.Information($"RegisterSend2  : {sequentialGenes.First.To4Hex()}");
         }
         else
         {
-            netInterface.SendGenes = CreateSendGenes(netInterface, gene, owner, dataId);
+            netInterface.SendGenes = CreateSendGenes(netInterface, sequentialGenes.First, owner, dataId);
         }
 
-        gene = netTerminal.genePool.GetGene(); // Receive gene
+        // Receive gene
         if (receive)
         {
-            var ntg = new NetTerminalGene(gene, netInterface);
+            var ntg = new NetTerminalGene(sequentialGenes.Second, netInterface);
             netInterface.RecvGenes = new NetTerminalGene[] { ntg, };
             ntg.SetReceive();
 
-            netTerminal.TerminalLogger?.Information($"RegisterReceive2:{gene.To4Hex()}");
+            netTerminal.TerminalLogger?.Information($"RegisterReceive2:{sequentialGenes.Second.To4Hex()}");
         }
 
         netTerminal.Add(netInterface);
@@ -110,22 +110,22 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
     internal static NetInterface<TSend, TReceive>? CreateValue(NetTerminal netTerminal, TSend value, PacketId id, bool receive, out NetInterfaceResult interfaceResult)
     {// Send and Receive(optional) NetTerminalGene.
         NetInterface<TSend, TReceive>? netInterface;
-        ulong gene;
+        (ulong First, ulong Second) sequentialGenes;
         interfaceResult = NetInterfaceResult.Success;
 
         netTerminal.CreateHeader(out var header, 0); // Set gene in a later code.
         PacketService.CreatePacket(ref header, value, id, out var sendOwner);
         if (sendOwner.Memory.Length <= PacketService.SafeMaxPayloadSize)
         {// Single packet.
-            gene = netTerminal.genePool.GetGene(); // Send gene
-            PacketService.InsertGene(sendOwner.Memory, gene);
+            sequentialGenes = netTerminal.Get2Genes(); // Send gene
+            PacketService.InsertGene(sendOwner.Memory, sequentialGenes.First);
 
             netInterface = new NetInterface<TSend, TReceive>(netTerminal);
-            var ntg = new NetTerminalGene(gene, netInterface);
+            var ntg = new NetTerminalGene(sequentialGenes.First, netInterface);
             netInterface.SendGenes = new NetTerminalGene[] { ntg, };
             ntg.SetSend(sendOwner);
 
-            netTerminal.TerminalLogger?.Information($"RegisterSend   : {gene.To4Hex()}, {id}");
+            netTerminal.TerminalLogger?.Information($"RegisterSend   : {sequentialGenes.First.To4Hex()}, {id}");
         }
         else
         {// Packet size limit exceeded.
@@ -134,14 +134,14 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
             return null;
         }
 
-        gene = netTerminal.genePool.GetGene(); // Receive gene
+        // Receive gene
         if (receive)
         {
-            var ntg = new NetTerminalGene(gene, netInterface);
+            var ntg = new NetTerminalGene(sequentialGenes.Second, netInterface);
             netInterface.RecvGenes = new NetTerminalGene[] { ntg, };
             ntg.SetReceive();
 
-            netTerminal.TerminalLogger?.Information($"RegisterReceive: {gene.To4Hex()}");
+            netTerminal.TerminalLogger?.Information($"RegisterReceive: {sequentialGenes.Second.To4Hex()}");
         }
 
         netTerminal.Add(netInterface);
@@ -218,8 +218,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
     {// Receive
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
 
-        var receiveGene = netTerminal.genePool.GetGene();
-        netInterface.StandbyGene = netTerminal.genePool.GetGene();
+        (var receiveGene, netInterface.StandbyGene) = netTerminal.Get2Genes();
         var gene = new NetTerminalGene(receiveGene, netInterface);
         netInterface.RecvGenes = new NetTerminalGene[] { gene, };
         gene.SetReceive();
