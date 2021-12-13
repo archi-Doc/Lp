@@ -277,6 +277,8 @@ public partial class NetTerminal : IDisposable
         this.geneAsyncLocal.Value = null;
     }
 
+    internal GenePool Fork() => this.genePool.Fork(this.embryo!);
+
     internal ulong GetSequential() => this.genePool.GetSequential();
 
     internal (ulong First, ulong Second) GetSequential2() => this.genePool.GetSequential2();

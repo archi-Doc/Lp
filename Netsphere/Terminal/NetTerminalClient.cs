@@ -14,7 +14,7 @@ public class NetTerminalClient : NetTerminal
     {// NodeInformation: Managed
     }
 
-    public override async Task<NetInterfaceResult> EncryptConnectionAsync()
+    public override async Task<NetInterfaceResult> EncryptConnectionAsync(GenePool? genePool = null)
     {// checked
         this.ClearAsyncLocal();
 
@@ -27,6 +27,7 @@ public class NetTerminalClient : NetTerminal
             return NetInterfaceResult.NoNodeInformation;
         }
 
+        genePool ??= this.Fork();
         var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
         var response = await this.SendPacketAndReceiveAsync<PacketEncrypt, PacketEncryptResponse>(p).ConfigureAwait(false);
         if (response.Result != NetInterfaceResult.Success)
