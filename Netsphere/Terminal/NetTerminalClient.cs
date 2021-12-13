@@ -16,6 +16,8 @@ public class NetTerminalClient : NetTerminal
 
     public override async Task<NetInterfaceResult> EncryptConnectionAsync()
     {// checked
+        this.ClearAsyncLocal();
+
         if (this.IsEncrypted)
         {// Encrypted
             return NetInterfaceResult.Success;

@@ -271,6 +271,12 @@ public partial class NetTerminal : IDisposable
         this.disposedInterfaces.Add(netInterface);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void ClearAsyncLocal()
+    {
+        this.geneAsyncLocal.Value = null;
+    }
+
     internal ulong GetGene() => this.genePool.GetGene();
 
     private void Clear()
@@ -294,6 +300,7 @@ public partial class NetTerminal : IDisposable
     protected List<NetInterface> disposedInterfaces = new();
     protected byte[]? embryo; // 48 bytes
     private protected GenePool genePool;
+    private AsyncLocal<GenePool?> geneAsyncLocal = new();
     private long lastSendingAckTicks;
 
     // private PacketService packetService = new();
