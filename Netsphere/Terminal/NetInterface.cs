@@ -65,7 +65,7 @@ public interface INetInterface<TSend> : IDisposable
 
 internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend, TReceive>
 {
-    internal static NetInterface<TSend, TReceive>? CreateData(NetTerminal netTerminal, PacketId packetId, ulong dataId, FixedArrayPool.MemoryOwner owner, bool receive, out NetInterfaceResult interfaceResult)
+    internal static NetInterface<TSend, TReceive>? CreateData(NetTerminal netTerminal, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner, bool receive, out NetInterfaceResult interfaceResult)
     {// Send and Receive(optional) NetTerminalGene.
         if (owner.Memory.Length > BlockService.MaxBlockSize)
         {
@@ -75,11 +75,11 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
 
         interfaceResult = NetInterfaceResult.Success;
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
-        var gene = netTerminal.GenePool.GetGene(); // Send gene
+        var gene = netTerminal.genePool.GetGene(); // Send gene
         netTerminal.CreateHeader(out var header, gene);
-        if (owner.Memory.Length <= PacketService.SafeMaxPacketSize)
+        if (owner.Memory.Length <= PacketService.SafeMaxPayloadSize)
         {// Single packet.
-            PacketService.CreatePacket(ref header, packetId, dataId, owner.Memory.Span, out var sendOwner);
+            PacketService.CreateDataPacket(ref header, packetId, dataId, owner.Memory.Span, out var sendOwner);
 
             var ntg = new NetTerminalGene(gene, netInterface);
             netInterface.SendGenes = new NetTerminalGene[] { ntg, };
@@ -93,7 +93,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
             netInterface.SendGenes = CreateSendGenes(netInterface, gene, owner, dataId);
         }
 
-        gene = netTerminal.GenePool.GetGene(); // Receive gene
+        gene = netTerminal.genePool.GetGene(); // Receive gene
         if (receive)
         {
             var ntg = new NetTerminalGene(gene, netInterface);
@@ -115,9 +115,9 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
 
         netTerminal.CreateHeader(out var header, 0); // Set gene in a later code.
         PacketService.CreatePacket(ref header, value, id, out var sendOwner);
-        if (sendOwner.Memory.Length <= PacketService.SafeMaxPacketSize)
+        if (sendOwner.Memory.Length <= PacketService.SafeMaxPayloadSize)
         {// Single packet.
-            gene = netTerminal.GenePool.GetGene(); // Send gene
+            gene = netTerminal.genePool.GetGene(); // Send gene
             PacketService.InsertGene(sendOwner.Memory, gene);
 
             netInterface = new NetInterface<TSend, TReceive>(netTerminal);
@@ -134,7 +134,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
             return null;
         }
 
-        gene = netTerminal.GenePool.GetGene(); // Receive gene
+        gene = netTerminal.genePool.GetGene(); // Receive gene
         if (receive)
         {
             var ntg = new NetTerminalGene(gene, netInterface);
@@ -167,7 +167,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         return netInterface;
     }
 
-    internal static NetTerminalGene[] CreateSendGenes(NetInterface<TSend, TReceive> netInterface, ulong gene, FixedArrayPool.MemoryOwner owner, ulong dataId)
+    internal static NetTerminalGene[] CreateSendGenes(NetInterface<TSend, TReceive> netInterface, ulong gene, ByteArrayPool.MemoryOwner owner, ulong dataId)
     {
         ReadOnlySpan<byte> span = owner.Memory.Span;
         var netTerminal = netInterface.NetTerminal;
@@ -178,14 +178,30 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         var genes = new NetTerminalGene[info.NumberOfGenes];
         for (var i = 0; i < info.NumberOfGenes; i++)
         {
-            var size = info.DataSize;
-            if (i == (info.NumberOfGenes - 1))
+            int size;
+            FixedArrayPool.MemoryOwner sendOwner;
+            if (i == 0)
+            {// First
+                size = info.FirstDataSize;
+
+                netTerminal.CreateHeader(out var header, geneArray[i]);
+                PacketService.CreateDataPacket(ref header, PacketId.Data, dataId, span.Slice(0, size), out sendOwner);
+            }
+            else
             {
-                size = info.LastDataSize;
+                if (i == (info.NumberOfGenes - 1))
+                {// Last
+                    size = info.LastDataSize;
+                }
+                else
+                {// Following
+                    size = info.FollowingDataSize;
+                }
+
+                netTerminal.CreateHeader(out var header, geneArray[i]);
+                PacketService.CreateDataFollowingPacket(ref header, span.Slice(0, size), out sendOwner);
             }
 
-            netTerminal.CreateHeader(out var header, geneArray[i]);
-            PacketService.CreatePacket(ref header, PacketId.Data, dataId, span.Slice(0, size), out var sendOwner);
             span = span.Slice(size);
 
             genes[i] = new(geneArray[i], netInterface);
@@ -202,8 +218,8 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
     {// Receive
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
 
-        var receiveGene = netTerminal.GenePool.GetGene();
-        netInterface.StandbyGene = netTerminal.GenePool.GetGene();
+        var receiveGene = netTerminal.genePool.GetGene();
+        netInterface.StandbyGene = netTerminal.genePool.GetGene();
         var gene = new NetTerminalGene(receiveGene, netInterface);
         netInterface.RecvGenes = new NetTerminalGene[] { gene, };
         gene.SetReceive();
@@ -277,7 +293,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         var gene = this.StandbyGene;
         this.NetTerminal.CreateHeader(out var header, gene);
         PacketService.CreatePacket(ref header, value, value.PacketId, out var sendOwner);
-        if (sendOwner.Memory.Length <= PacketService.SafeMaxPacketSize)
+        if (sendOwner.Memory.Length <= PacketService.SafeMaxPayloadSize)
         {// Single packet.
             var ntg = new NetTerminalGene(gene, this);
             this.SendGenes = new NetTerminalGene[] { ntg, };
@@ -292,7 +308,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         }
     }
 
-    internal bool SetSend(PacketId packetId, ulong dataId, FixedArrayPool.MemoryOwner owner)
+    internal bool SetSend(PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner)
     {
         if (this.SendGenes != null)
         {
@@ -301,9 +317,9 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
 
         var gene = this.StandbyGene;
         this.NetTerminal.CreateHeader(out var header, gene);
-        if (owner.Memory.Length <= PacketService.SafeMaxPacketSize)
+        if (owner.Memory.Length <= PacketService.SafeMaxPayloadSize)
         {// Single packet.
-            PacketService.CreatePacket(ref header, packetId, dataId, owner.Memory.Span, out var sendOwner);
+            PacketService.CreateDataPacket(ref header, packetId, dataId, owner.Memory.Span, out var sendOwner);
             var ntg = new NetTerminalGene(gene, this);
             this.SendGenes = new NetTerminalGene[] { ntg, };
             ntg.SetSend(sendOwner);
@@ -537,7 +553,7 @@ WaitForSendCompletionWait:
         }
         else if (this.RecvGenes.Length == 1)
         {// Single gene
-            if (!this.RecvGenes[0].IsReceived)
+            if (!this.RecvGenes[0].IsReceiveComplete)
             {
                 return false;
             }
@@ -558,13 +574,20 @@ WaitForSendCompletionWait:
         var total = 0;
         for (var i = 0; i < this.RecvGenes.Length; i++)
         {
-            if (!this.RecvGenes[i].IsReceived)
+            if (!this.RecvGenes[i].IsReceiveComplete)
             { // Checked later: this.RecvGenes[i].Owner.Memory.Length < PacketService.DataHeaderSize
                 return false;
             }
             else
             {
-                total += this.RecvGenes[i].Owner.Memory.Length - PacketService.DataHeaderSize;
+                if (this.RecvGenes[i].ReceivedId == PacketId.Data)
+                {// Data
+                    total += this.RecvGenes[i].Owner.Memory.Length - PacketService.DataHeaderSize;
+                }
+                else
+                {// DataFollowing
+                    total += this.RecvGenes[i].Owner.Memory.Length - PacketService.DataFollowingHeaderSize;
+                }
             }
         }
 
@@ -572,10 +595,19 @@ WaitForSendCompletionWait:
         var mem = buffer.AsMemory();
         for (var i = 0; i < this.RecvGenes.Length; i++)
         {
-            var data = PacketService.GetData(this.RecvGenes[i].Owner.Memory);
-            dataId = data.DataId;
-            data.DataMemory.CopyTo(mem);
-            mem = mem.Slice(data.DataMemory.Length);
+            if (this.RecvGenes[i].ReceivedId == PacketId.Data)
+            {// Data
+                var data = PacketService.GetData(this.RecvGenes[i].Owner.Memory);
+                dataId = data.DataId;
+                data.DataMemory.CopyTo(mem);
+                mem = mem.Slice(data.DataMemory.Length);
+            }
+            else
+            {// DataFollowing
+                var data = PacketService.GetDataFollowing(this.RecvGenes[i].Owner.Memory);
+                data.CopyTo(mem);
+                mem = mem.Slice(data.Length);
+            }
         }
 
         packetId = this.RecvGenes[0].ReceivedId;
@@ -626,7 +658,7 @@ WaitForSendCompletionWait:
 
         PacketHeader header = default;
         int size = 0;
-        int maxSize = PacketService.DataPacketSize - sizeof(ulong);
+        int maxSize = PacketService.DataPayloadSize - sizeof(ulong);
         FixedArrayPool.Owner? rentArray = null;
         foreach (var x in this.RecvGenes)
         {

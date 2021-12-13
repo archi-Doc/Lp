@@ -14,6 +14,7 @@ public enum PacketId : byte
     Close,
     Relay,
     Data,
+    DataFollowing,
     Reserve,
     ReserveResponse,
     RPC,
@@ -32,7 +33,7 @@ public enum PacketId : byte
 /// 1. Inherit IPacket interface.<br/>
 /// 2. Has TinyhandObjectAttribute (Tinyhand serializable).<br/>
 /// 3. Has unique PacketId.<br/>
-/// 4. Length of serialized byte array is less than or equal to <see cref="PacketService.DataPacketSize"/>.
+/// 4. Length of serialized byte array is less than or equal to <see cref="PacketService.DataPayloadSize"/>.
 /// </summary>
 public interface IPacket : IBlock
 {

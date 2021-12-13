@@ -95,8 +95,8 @@ public class NetTerminalServer : NetTerminal
         try
         {
             var netInterface = this.GetReceiver();
-ReceiveAsyncStart:
 
+ReceiveAsyncStart:
             var received = await netInterface.ReceiveDataAsync(millisecondsToWait).ConfigureAwait(false);
             if (received.Result == NetInterfaceResult.Timeout)
             {// Timeout
@@ -188,7 +188,7 @@ ReceiveAsyncStart:
     }
 
     public async Task<NetInterfaceResult> SendDataAsync(ulong dataId, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
-        => await this.SendDataAsync(true, PacketId.Data, dataId, new FixedArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);
+        => await this.SendDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);
 
     public void EnsureReceiver()
     {
@@ -207,7 +207,7 @@ ReceiveAsyncStart:
         }
     }
 
-    private async Task<NetInterfaceResult> SendDataAsync(bool encrypt, PacketId packetId, ulong dataId, FixedArrayPool.MemoryOwner owner, int millisecondsToWait = DefaultMillisecondsToWait)
+    private async Task<NetInterfaceResult> SendDataAsync(bool encrypt, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner, int millisecondsToWait = DefaultMillisecondsToWait)
     {// checked
         NetInterface<object, byte[]>? reserveInterface = null;
 
@@ -228,12 +228,13 @@ ReceiveAsyncStart:
                 return NetInterfaceResult.NoEncryptedConnection;
             }
 
-            if (owner.Memory.Length <= PacketService.SafeMaxPacketSize)
+            if (owner.Memory.Length <= PacketService.SafeMaxPayloadSize)
             {// Single packet.
                 netInterface.SetSend(packetId, dataId, owner);
             }
             else
             {// Split into multiple packets. Send PacketReserve.
+                this.TerminalLogger?.Error("a");
                 reserveInterface = netInterface;
                 var reserve = new PacketReserve(owner.Memory.Length);
                 reserveInterface.SetSend(reserve);

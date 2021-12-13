@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -14,24 +15,34 @@ public static class BlockService
     public const int StandardBlockSize = 32 * 1024; // 32KB
     public const int StandardBlockPool = 400;
 
+    public static TinyhandSerializerOptions SerializerOptions { get; } = TinyhandSerializerOptions.Standard;
+
     public static uint GetId<T>() => IdCache<T>.Id;
 
     public static ulong GetId<TSend, TReceive>() => (ulong)IdCache<TSend>.Id | ((ulong)IdCache<TReceive>.Id << 32);
 
-    public static bool TrySerialize<T>(T value, out FixedArrayPool.MemoryOwner owner)
+    public static bool TrySerialize<T>(T value, out ByteArrayPool.MemoryOwner owner)
     {
-        var arrayOwner = BlockPool.Rent();
+        var arrayOwner = BlockPool.Rent(StandardBlockSize);
         try
         {
             var writer = new Tinyhand.IO.TinyhandWriter(arrayOwner.ByteArray);
-            TinyhandSerializer.Serialize(ref writer, value);
+            TinyhandSerializer.Serialize(ref writer, value, SerializerOptions);
 
             writer.FlushAndGetArray(out var array, out var arrayLength);
             if (array != arrayOwner.ByteArray)
             {
                 arrayOwner.Return();
-                owner = default;
-                return false;
+                if (arrayLength > MaxBlockSize)
+                {
+                    owner = default;
+                    return false;
+                }
+                else
+                {
+                    owner = new ByteArrayPool.MemoryOwner(array);
+                    return true;
+                }
             }
 
             owner = arrayOwner.ToMemoryOwner(0, arrayLength);
@@ -44,6 +55,9 @@ public static class BlockService
             return false;
         }
     }
+
+    public static bool TryDeserialize<T>(ByteArrayPool.MemoryOwner owner, [MaybeNullWhen(false)] out T value)
+        => TinyhandSerializer.TryDeserialize<T>(owner.Memory, out value, SerializerOptions);
 
     private static class IdCache<T>
     {

@@ -42,9 +42,19 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
     public bool IsComplete
         => this.State == NetTerminalGeneState.SendComplete || this.State == NetTerminalGeneState.ReceiveComplete;
 
+    public bool IsSend =>
+        this.State == NetTerminalGeneState.WaitingToSend ||
+        this.State == NetTerminalGeneState.WaitingForAck ||
+        this.State == NetTerminalGeneState.SendComplete;
+
     public bool IsSendComplete => this.State == NetTerminalGeneState.SendComplete;
 
-    public bool IsReceived
+    public bool IsReceive =>
+        this.State == NetTerminalGeneState.WaitingToReceive ||
+        this.State == NetTerminalGeneState.SendingAck ||
+        this.State == NetTerminalGeneState.ReceiveComplete;
+
+    public bool IsReceiveComplete
         => this.State == NetTerminalGeneState.SendingAck || this.State == NetTerminalGeneState.ReceiveComplete;
 
     public bool SetSend(FixedArrayPool.MemoryOwner owner)
@@ -158,7 +168,13 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
 
     public override string ToString()
     {
-        return $"{this.Gene.To4Hex()}, {this.State}, Data: {this.Owner.Memory.Length}";
+        var length = this.Owner.Memory.Length;
+        if (this.IsSend && length >= PacketService.HeaderSize)
+        {
+            length -= PacketService.HeaderSize;
+        }
+
+        return $"{this.Gene.To4Hex()}, {this.State}, Data: {length}";
     }
 
     public NetInterface NetInterface { get; }
