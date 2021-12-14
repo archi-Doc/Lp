@@ -79,6 +79,8 @@ public partial class NetTerminal : IDisposable
 
     public NodeInformation? NodeInformation { get; }
 
+    internal NetOperation CreateOperation() => new NetOperation(this);
+
     internal void CreateHeader(out PacketHeader header, ulong gene)
     {
         header = default;
@@ -99,26 +101,6 @@ public partial class NetTerminal : IDisposable
 
         this.Terminal.AddRawSend(this.Endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal NetInterface<TSend, object>? CreateSendValue<TSend>(TSend value, out NetInterfaceResult interfaceResult)
-        where TSend : IPacket
-    {
-        return NetInterface<TSend, object>.CreateValue(this, value, value.PacketId, false, out interfaceResult);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal NetInterface<TSend, TReceive>? CreateSendAndReceiveValue<TSend, TReceive>(TSend value, out NetInterfaceResult interfaceResult)
-        where TSend : IPacket
-        => NetInterface<TSend, TReceive>.CreateValue(this, value, value.PacketId, true, out interfaceResult);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal NetInterface<byte[], object>? CreateSendData(PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner sendOwner, out NetInterfaceResult interfaceResult)
-        => NetInterface<byte[], object>.CreateData(this, packetId, dataId, sendOwner, false, out interfaceResult);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal NetInterface<byte[], byte[]>? CreateSendAndReceiveData(PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner sendOwner, out NetInterfaceResult interfaceResult)
-        => NetInterface<byte[], byte[]>.CreateData(this, packetId, dataId, sendOwner, true, out interfaceResult);
 
     internal byte[] RentAndSetGeneArray(ulong gene, int numberOfGenes)
     {
@@ -206,28 +188,36 @@ public partial class NetTerminal : IDisposable
             return NetInterfaceResult.NoNodeInformation;
         }
 
-        var ecdh = NodeKey.FromPublicKey(this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
-        if (ecdh == null)
+        lock (this.SyncObject)
         {
-            return NetInterfaceResult.NoNodeInformation;
+            if (this.embryo != null)
+            {
+                return NetInterfaceResult.Success;
+            }
+
+            var ecdh = NodeKey.FromPublicKey(this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
+            if (ecdh == null)
+            {
+                return NetInterfaceResult.NoNodeInformation;
+            }
+
+            // ulong Salt, byte[] material, ulong Salt
+            var material = this.Terminal.NodePrivateECDH.DeriveKeyMaterial(ecdh.PublicKey);
+            Span<byte> buffer = stackalloc byte[sizeof(ulong) + NodeKey.PrivateKeySize + sizeof(ulong)];
+            var span = buffer;
+            BitConverter.TryWriteBytes(span, salt);
+            span = span.Slice(sizeof(ulong));
+            material.AsSpan().CopyTo(span);
+            span = span.Slice(NodeKey.PrivateKeySize);
+            BitConverter.TryWriteBytes(span, salt);
+
+            var sha = Hash.Sha3_384Pool.Get();
+            this.embryo = sha.GetHash(buffer);
+            Hash.Sha3_384Pool.Return(sha);
+
+            this.genePool.SetEmbryo(this.embryo);
+            Logger.Priority.Information($"First gene {this.GetSequential().ToString()}");
         }
-
-        // ulong Salt, byte[] material, ulong Salt
-        var material = this.Terminal.NodePrivateECDH.DeriveKeyMaterial(ecdh.PublicKey);
-        Span<byte> buffer = stackalloc byte[sizeof(ulong) + NodeKey.PrivateKeySize + sizeof(ulong)];
-        var span = buffer;
-        BitConverter.TryWriteBytes(span, salt);
-        span = span.Slice(sizeof(ulong));
-        material.AsSpan().CopyTo(span);
-        span = span.Slice(NodeKey.PrivateKeySize);
-        BitConverter.TryWriteBytes(span, salt);
-
-        var sha = Hash.Sha3_384Pool.Get();
-        this.embryo = sha.GetHash(buffer);
-        Hash.Sha3_384Pool.Return(sha);
-
-        this.genePool.SetEmbryo(this.embryo);
-        Logger.Priority.Information($"First gene {this.GetSequential().ToString()}");
 
         return NetInterfaceResult.Success;
     }
@@ -271,12 +261,6 @@ public partial class NetTerminal : IDisposable
         this.disposedInterfaces.Add(netInterface);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void ClearAsyncLocal()
-    {
-        this.geneAsyncLocal.Value = null;
-    }
-
     internal GenePool Fork() => this.genePool.Fork(this.embryo!);
 
     internal ulong GetSequential() => this.genePool.GetSequential();
@@ -304,7 +288,6 @@ public partial class NetTerminal : IDisposable
     protected List<NetInterface> disposedInterfaces = new();
     protected byte[]? embryo; // 48 bytes
     private protected GenePool genePool;
-    private AsyncLocal<GenePool?> geneAsyncLocal = new();
     private long lastSendingAckTicks;
 
     // private PacketService packetService = new();

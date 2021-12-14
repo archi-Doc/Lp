@@ -2,35 +2,6 @@
 
 namespace Netsphere;
 
-/*public class NetTerminalServerPacket
-{
-    public unsafe NetTerminalServerPacket(PacketId packetId, byte[] data)
-    {
-        this.PacketId = packetId;
-        this.Data = data;
-
-        if (this.PacketId == PacketId.Data && this.Data.Length >= PacketService.DataHeaderSize)
-        {// PacketData
-            var span = this.Data.Span;
-            DataHeader dataHeader = default;
-            fixed (byte* pb = span)
-            {
-                dataHeader = *(DataHeader*)pb;
-            }
-
-            this.PacketId = dataHeader.PacketId;
-            this.DataId = dataHeader.DataId;
-            this.Data = this.Data.Slice(PacketService.DataHeaderSize);
-        }
-    }
-
-    public PacketId PacketId { get; }
-
-    public ulong DataId { get; }
-
-    public Memory<byte> Data { get; }
-}*/
-
 public class NetTerminalServer : NetTerminal
 {
     public const ushort DefaultReceiverNumber = 4;
