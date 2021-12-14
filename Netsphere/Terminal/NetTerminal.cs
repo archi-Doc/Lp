@@ -31,7 +31,7 @@ public partial class NetTerminal : IDisposable
     internal NetTerminal(Terminal terminal, NodeAddress nodeAddress)
     {// NodeAddress: Unmanaged
         this.Terminal = terminal;
-        this.genePool = new(LP.Random.Crypto.NextUInt64());
+        this.GenePool = new(LP.Random.Crypto.NextUInt64());
         this.NodeAddress = nodeAddress;
         this.Endpoint = this.NodeAddress.CreateEndpoint();
     }
@@ -44,7 +44,7 @@ public partial class NetTerminal : IDisposable
     internal NetTerminal(Terminal terminal, NodeInformation nodeInformation, ulong gene)
     {// NodeInformation: Encrypted
         this.Terminal = terminal;
-        this.genePool = new(gene);
+        this.GenePool = new(gene);
         this.NodeAddress = nodeInformation;
         this.NodeInformation = nodeInformation;
         this.Endpoint = this.NodeAddress.CreateEndpoint();
@@ -52,7 +52,7 @@ public partial class NetTerminal : IDisposable
 
     // public virtual NetInterfaceResult EncryptConnection() => NetInterfaceResult.NoEncryptedConnection;
 
-    public virtual async Task<NetInterfaceResult> EncryptConnectionAsync() => NetInterfaceResult.NoEncryptedConnection;
+    public virtual async Task<NetInterfaceResult> EncryptConnectionAsync(int millisecondsToWait = DefaultMillisecondsToWait) => NetInterfaceResult.NoEncryptedConnection;
 
     public virtual void SendClose()
     {
@@ -179,6 +179,8 @@ public partial class NetTerminal : IDisposable
 
     internal object SyncObject { get; } = new();
 
+    internal GenePool GenePool { get; }
+
     internal ISimpleLogger? TerminalLogger => this.Terminal.TerminalLogger;
 
     internal NetInterfaceResult CreateEmbryo(ulong salt)
@@ -215,7 +217,7 @@ public partial class NetTerminal : IDisposable
             this.embryo = sha.GetHash(buffer);
             Hash.Sha3_384Pool.Return(sha);
 
-            this.genePool.SetEmbryo(this.embryo);
+            this.GenePool.SetEmbryo(this.embryo);
             Logger.Priority.Information($"First gene {this.GetSequential().ToString()}");
         }
 
@@ -261,11 +263,7 @@ public partial class NetTerminal : IDisposable
         this.disposedInterfaces.Add(netInterface);
     }
 
-    internal GenePool Fork() => this.genePool.Fork(this.embryo!);
-
-    internal ulong GetSequential() => this.genePool.GetSequential();
-
-    internal (ulong First, ulong Second) GetSequential2() => this.genePool.GetSequential2();
+    internal GenePool? TryFork() => this.embryo == null ? null : this.GenePool.Fork(this.embryo);
 
     private void Clear()
     {// lock (this.SyncObject)
@@ -287,7 +285,6 @@ public partial class NetTerminal : IDisposable
     protected List<NetInterface> activeInterfaces = new();
     protected List<NetInterface> disposedInterfaces = new();
     protected byte[]? embryo; // 48 bytes
-    private protected GenePool genePool;
     private long lastSendingAckTicks;
 
     // private PacketService packetService = new();

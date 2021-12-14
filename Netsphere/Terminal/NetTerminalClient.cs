@@ -14,7 +14,7 @@ public class NetTerminalClient : NetTerminal
     {// NodeInformation: Managed
     }
 
-    public override async Task<NetInterfaceResult> EncryptConnectionAsync()
+    public override async Task<NetInterfaceResult> EncryptConnectionAsync(int millisecondsToWait = DefaultMillisecondsToWait)
     {
         if (this.IsEncrypted)
         {// Encrypted
@@ -27,7 +27,7 @@ public class NetTerminalClient : NetTerminal
 
         using (var operation = this.CreateOperation())
         {
-            return await operation.EncryptConnectionAsync().ConfigureAwait(false);
+            return await operation.EncryptConnectionAsync(millisecondsToWait).ConfigureAwait(false);
         }
     }
 

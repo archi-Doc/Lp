@@ -21,18 +21,31 @@ internal class NetOperation : IDisposable
             this.genePool = this.NetTerminal.TryFork();
         }
 
-        var genePool
-        if (this.genePool == null)
-        {
-            return this.NetTerminal.GetSequential();
-        }
-        else
-        {
-            return this.genePool.GetSequential();
-        }
+        var gp = this.genePool != null ? this.genePool : this.NetTerminal.GenePool;
+        return gp.GetSequential();
     }
 
-    public (ulong First, ulong Second) GetSequential2() => this.genePool.GetSequential2();
+    public (ulong First, ulong Second) Get2Genes()
+    {
+        if (this.genePool == null)
+        {
+            this.genePool = this.NetTerminal.TryFork();
+        }
+
+        var gp = this.genePool != null ? this.genePool : this.NetTerminal.GenePool;
+        return gp.GetSequential2();
+    }
+
+    public void GetGenes(Span<ulong> span)
+    {
+        if (this.genePool == null)
+        {
+            this.genePool = this.NetTerminal.TryFork();
+        }
+
+        var gp = this.genePool != null ? this.genePool : this.NetTerminal.GenePool;
+        gp.GetSequential(span);
+    }
 
     public async Task<NetInterfaceResult> EncryptConnectionAsync(int millisecondsToWait)
     {
