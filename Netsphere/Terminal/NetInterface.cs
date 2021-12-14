@@ -65,7 +65,7 @@ public interface INetInterface<TSend> : IDisposable
 
 internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend, TReceive>
 {
-    internal static NetInterface<TSend, TReceive>? CreateData(NetTerminal netTerminal, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner, bool receive, out NetInterfaceResult interfaceResult)
+    internal static NetInterface<TSend, TReceive>? CreateData(NetOperation netOperation, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner, bool receive, out NetInterfaceResult interfaceResult)
     {// Send and Receive(optional) NetTerminalGene.
         if (owner.Memory.Length > BlockService.MaxBlockSize)
         {
@@ -73,9 +73,10 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
             return null;
         }
 
+        var netTerminal = netOperation.NetTerminal;
         interfaceResult = NetInterfaceResult.Success;
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
-        var sequentialGenes = netTerminal.GetSequential2(); // Send gene
+        var sequentialGenes = netOperation.Get2Genes(); // Send gene
         netTerminal.CreateHeader(out var header, sequentialGenes.First);
         if (owner.Memory.Length <= PacketService.SafeMaxPayloadSize)
         {// Single packet.
@@ -107,17 +108,18 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         return netInterface;
     }
 
-    internal static NetInterface<TSend, TReceive>? CreateValue(NetTerminal netTerminal, TSend value, PacketId id, bool receive, out NetInterfaceResult interfaceResult)
+    internal static NetInterface<TSend, TReceive>? CreateValue(NetOperation netOperation, TSend value, PacketId id, bool receive, out NetInterfaceResult interfaceResult)
     {// Send and Receive(optional) NetTerminalGene.
         NetInterface<TSend, TReceive>? netInterface;
         (ulong First, ulong Second) sequentialGenes;
         interfaceResult = NetInterfaceResult.Success;
 
+        var netTerminal = netOperation.NetTerminal;
         netTerminal.CreateHeader(out var header, 0); // Set gene in a later code.
         PacketService.CreatePacket(ref header, value, id, out var sendOwner);
         if (sendOwner.Memory.Length <= PacketService.SafeMaxPayloadSize)
         {// Single packet.
-            sequentialGenes = netTerminal.GetSequential2(); // Send gene
+            sequentialGenes = netOperation.Get2Genes(); // Send gene
             PacketService.InsertGene(sendOwner.Memory, sequentialGenes.First);
 
             netInterface = new NetInterface<TSend, TReceive>(netTerminal);
@@ -214,11 +216,12 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         return genes;
     }
 
-    internal static NetInterface<TSend, TReceive> CreateReceive(NetTerminal netTerminal)
+    internal static NetInterface<TSend, TReceive> CreateReceive(NetOperation netOperation)
     {// Receive
+        var netTerminal = netOperation.NetTerminal;
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
 
-        (var receiveGene, netInterface.StandbyGene) = netTerminal.GetSequential2();
+        (var receiveGene, netInterface.StandbyGene) = netOperation.Get2Genes();
         var gene = new NetTerminalGene(receiveGene, netInterface);
         netInterface.RecvGenes = new NetTerminalGene[] { gene, };
         gene.SetReceive();
