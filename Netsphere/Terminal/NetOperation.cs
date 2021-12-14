@@ -14,7 +14,27 @@ internal class NetOperation : IDisposable
         this.NetTerminal = netTerminal;
     }
 
-    public async Task<NetInterfaceResult> EncryptConnectionAsync()
+    public ulong GetGene()
+    {
+        if (this.genePool == null)
+        {
+            this.genePool = this.NetTerminal.TryFork();
+        }
+
+        var genePool
+        if (this.genePool == null)
+        {
+            return this.NetTerminal.GetSequential();
+        }
+        else
+        {
+            return this.genePool.GetSequential();
+        }
+    }
+
+    public (ulong First, ulong Second) GetSequential2() => this.genePool.GetSequential2();
+
+    public async Task<NetInterfaceResult> EncryptConnectionAsync(int millisecondsToWait)
     {
         if (this.NetTerminal.IsEncrypted)
         {// Encrypted
@@ -26,7 +46,7 @@ internal class NetOperation : IDisposable
         }
 
         var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
-        var response = await this.SendPacketAndReceiveAsync<PacketEncrypt, PacketEncryptResponse>(p).ConfigureAwait(false);
+        var response = await this.SendPacketAndReceiveAsync<PacketEncrypt, PacketEncryptResponse>(p, millisecondsToWait).ConfigureAwait(false);
         if (response.Result != NetInterfaceResult.Success)
         {
             return response.Result;
@@ -40,7 +60,7 @@ internal class NetOperation : IDisposable
     {
         if (!value.AllowUnencrypted && !this.NetTerminal.IsEncrypted)
         {
-            var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
+            var result = await this.EncryptConnectionAsync(millisecondsToWait).ConfigureAwait(false);
             if (result != NetInterfaceResult.Success)
             {
                 return NetInterfaceResult.NoEncryptedConnection;
@@ -68,7 +88,7 @@ internal class NetOperation : IDisposable
     {// checked
         if (!value.AllowUnencrypted && !this.NetTerminal.IsEncrypted)
         {
-            var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
+            var result = await this.EncryptConnectionAsync(millisecondsToWait).ConfigureAwait(false);
             if (result != NetInterfaceResult.Success)
             {
                 return (result, default);
@@ -168,7 +188,7 @@ internal class NetOperation : IDisposable
     {
         if (encrypt)
         {
-            var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
+            var result = await this.EncryptConnectionAsync(millisecondsToWait).ConfigureAwait(false);
             if (result != NetInterfaceResult.Success)
             {
                 return result;
@@ -212,7 +232,7 @@ internal class NetOperation : IDisposable
     {// checked
         if (encrypt)
         {
-            var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
+            var result = await this.EncryptConnectionAsync(millisecondsToWait).ConfigureAwait(false);
             if (result != NetInterfaceResult.Success)
             {
                 return new(result);
@@ -252,6 +272,8 @@ internal class NetOperation : IDisposable
             netInterface.Dispose();
         }
     }
+
+    private GenePool? genePool;
 
 #pragma warning disable SA1124 // Do not use regions
     #region IDisposable Support
