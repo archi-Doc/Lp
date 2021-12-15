@@ -62,33 +62,36 @@ internal class GenePool : IDisposable
 
     public void SetEmbryo(byte[] embryo)
     {
-        if (this.pseudoRandom == null)
+        lock (this.syncObject)
         {
-            this.pseudoRandom = new(this.currentGene);
+            if (this.pseudoRandom == null)
+            {
+                this.pseudoRandom = new(this.currentGene);
+            }
+
+            var source = embryo.AsSpan();
+            if (source.Length > EmbryoMax)
+            {
+                source = source.Slice(0, EmbryoMax);
+            }
+
+            Span<byte> span = stackalloc byte[sizeof(ulong) + source.Length];
+            var buffer = span;
+            BitConverter.TryWriteBytes(buffer, this.pseudoRandom.NextUInt64());
+            buffer = buffer.Slice(sizeof(ulong));
+            source.CopyTo(buffer);
+
+            var sha = Hash.Sha3_384Pool.Get();
+            var keyIv = sha.GetHash(span);
+            Hash.Sha3_384Pool.Return(sha);
+
+            if (this.encryptor != null)
+            {
+                this.encryptor.Dispose();
+            }
+
+            this.encryptor = Aes256.NoPadding.CreateEncryptor(keyIv.AsSpan(0, 32).ToArray(), keyIv.AsSpan(32, 16).ToArray());
         }
-
-        var source = embryo.AsSpan();
-        if (source.Length > EmbryoMax)
-        {
-            source = source.Slice(0, EmbryoMax);
-        }
-
-        Span<byte> span = stackalloc byte[sizeof(ulong) + source.Length];
-        var buffer = span;
-        BitConverter.TryWriteBytes(buffer, this.pseudoRandom.NextUInt64());
-        buffer = buffer.Slice(sizeof(ulong));
-        source.CopyTo(buffer);
-
-        var sha = Hash.Sha3_384Pool.Get();
-        var keyIv = sha.GetHash(span);
-        Hash.Sha3_384Pool.Return(sha);
-
-        if (this.encryptor != null)
-        {
-            this.encryptor.Dispose();
-        }
-
-        this.encryptor = Aes256.NoPadding.CreateEncryptor(keyIv.AsSpan(0, 32).ToArray(), keyIv.AsSpan(32, 16).ToArray());
     }
 
     public GenePool Fork(byte[] embryo)
@@ -135,7 +138,7 @@ internal class GenePool : IDisposable
     }
 
     private void EnsurePool()
-    {
+    {// lock (this.syncObject)
         this.poolPosition = 0;
         if (this.pool == null)
         {
@@ -209,6 +212,7 @@ internal class GenePool : IDisposable
             {
                 // free managed resources.
                 this.encryptor?.Dispose();
+                this.encryptor = null;
             }
 
             // free native resources here if there are any.

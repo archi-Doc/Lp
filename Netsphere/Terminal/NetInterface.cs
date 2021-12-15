@@ -51,9 +51,9 @@ public struct NetInterfaceReceivedData
     public ReadOnlyMemory<byte> Received;
 }
 
-public interface INetInterface<TSend, TReceive> : INetInterface<TSend>
+/*public interface INetInterface<TSend, TReceive> : INetInterface<TSend>
 {
-    // public NetInterfaceResult Receive(out TReceive? value, int millisecondsToWait = DefaultMillisecondsToWait);
+    public NetInterfaceResult Receive(out TReceive? value, int millisecondsToWait = DefaultMillisecondsToWait);
 }
 
 public interface INetInterface<TSend> : IDisposable
@@ -61,9 +61,9 @@ public interface INetInterface<TSend> : IDisposable
     public const int DefaultMillisecondsToWait = 2000;
 
     public NetInterfaceResult WaitForSendCompletion(int millisecondsToWait = DefaultMillisecondsToWait);
-}
+}*/
 
-internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend, TReceive>
+internal class NetInterface<TSend, TReceive> : NetInterface
 {
     internal static NetInterface<TSend, TReceive>? CreateData(NetOperation netOperation, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner, bool receive, out NetInterfaceResult interfaceResult)
     {// Send and Receive(optional) NetTerminalGene.
@@ -75,7 +75,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
 
         var netTerminal = netOperation.NetTerminal;
         interfaceResult = NetInterfaceResult.Success;
-        var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
+        var netInterface = new NetInterface<TSend, TReceive>(netOperation);
         var sequentialGenes = netOperation.Get2Genes(); // Send gene
         netTerminal.CreateHeader(out var header, sequentialGenes.First);
         if (owner.Memory.Length <= PacketService.SafeMaxPayloadSize)
@@ -122,7 +122,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
             sequentialGenes = netOperation.Get2Genes(); // Send gene
             PacketService.InsertGene(sendOwner.Memory, sequentialGenes.First);
 
-            netInterface = new NetInterface<TSend, TReceive>(netTerminal);
+            netInterface = new NetInterface<TSend, TReceive>(netOperation);
             var ntg = new NetTerminalGene(sequentialGenes.First, netInterface);
             netInterface.SendGenes = new NetTerminalGene[] { ntg, };
             ntg.SetSend(sendOwner);
@@ -150,9 +150,9 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         return netInterface;
     }
 
-    internal static NetInterface<TSend, TReceive> CreateConnect(NetTerminal netTerminal, ulong gene, FixedArrayPool.MemoryOwner receiveOwner, ulong secondGene, FixedArrayPool.MemoryOwner sendOwner)
+    internal static NetInterface<TSend, TReceive> CreateConnect(NetOperation netOperation, ulong gene, FixedArrayPool.MemoryOwner receiveOwner, ulong secondGene, FixedArrayPool.MemoryOwner sendOwner)
     {// Only for connection.
-        var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
+        var netInterface = new NetInterface<TSend, TReceive>(netOperation);
 
         var recvGene = new NetTerminalGene(gene, netInterface);
         netInterface.RecvGenes = new NetTerminalGene[] { recvGene, };
@@ -218,8 +218,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
 
     internal static NetInterface<TSend, TReceive> CreateReceive(NetOperation netOperation)
     {// Receive
-        var netTerminal = netOperation.NetTerminal;
-        var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
+        var netInterface = new NetInterface<TSend, TReceive>(netOperation);
 
         (var receiveGene, netInterface.StandbyGene) = netOperation.Get2Genes();
         var gene = new NetTerminalGene(receiveGene, netInterface);
@@ -232,8 +231,8 @@ internal class NetInterface<TSend, TReceive> : NetInterface, INetInterface<TSend
         return netInterface;
     }
 
-    protected NetInterface(NetTerminal netTerminal)
-    : base(netTerminal)
+    protected NetInterface(NetOperation netOperation)
+    : base(netOperation)
     {
     }
 
@@ -366,15 +365,18 @@ public class NetInterface : IDisposable
 {
     public const int IntervalInMilliseconds = 2;
 
-    protected NetInterface(NetTerminal netTerminal)
+    protected private NetInterface(NetOperation netOperation)
     {
-        this.Terminal = netTerminal.Terminal;
-        this.NetTerminal = netTerminal;
+        this.NetOperation = netOperation;
+        this.Terminal = netOperation.NetTerminal.Terminal;
+        this.NetTerminal = netOperation.NetTerminal;
     }
 
     public Terminal Terminal { get; }
 
     public NetTerminal NetTerminal { get; }
+
+    internal NetOperation NetOperation { get; }
 
     protected NetInterfaceResult WaitForSendCompletionCore(int millisecondsToWait)
     {

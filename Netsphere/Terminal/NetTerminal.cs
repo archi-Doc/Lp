@@ -218,7 +218,7 @@ public partial class NetTerminal : IDisposable
             Hash.Sha3_384Pool.Return(sha);
 
             this.GenePool.SetEmbryo(this.embryo);
-            Logger.Priority.Information($"First gene {this.GetSequential().ToString()}");
+            Logger.Priority.Information($"First gene {this.GenePool.GetSequential().ToString()}");
         }
 
         return NetInterfaceResult.Success;

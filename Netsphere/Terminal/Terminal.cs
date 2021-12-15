@@ -285,7 +285,8 @@ public class Terminal
             PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var sendOwner);
 
             var terminal = this.Create(packet.NodeInformation, firstGene);
-            var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(terminal, firstGene, owner, secondGene, sendOwner);
+            var netOperation = new NetOperation(terminal);
+            var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(netOperation, firstGene, owner, secondGene, sendOwner);
 
             terminal.GenePool.GetSequential();
             terminal.CreateEmbryo(packet.Salt);

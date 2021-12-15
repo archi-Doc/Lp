@@ -165,7 +165,7 @@ ReceiveAsyncStart:
     {
         while (this.receiverQueue.Count < this.ReceiverNumber)
         {
-            var netInterface = NetInterface<object, byte[]>.CreateReceive(this);
+            var netInterface = NetInterface<object, byte[]>.CreateReceive(new NetOperation(this));
             this.receiverQueue.Enqueue(netInterface);
         }
     }

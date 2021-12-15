@@ -320,6 +320,8 @@ internal class NetOperation : IDisposable
             if (disposing)
             {
                 // free managed resources.
+                this.genePool?.Dispose();
+                this.genePool = null;
             }
 
             // free native resources here if there are any.
