@@ -13,7 +13,7 @@ namespace Netsphere;
 
 public class Terminal
 {
-    public delegate void CreateServerTerminalDelegate(NetTerminalServer terminal);
+    public delegate void CreateServerTerminalDelegate(ServerTerminal terminal);
 
     internal struct RawSend
     {
@@ -45,9 +45,9 @@ public class Terminal
     /// </summary>
     /// <param name="nodeAddress">NodeAddress.</param>
     /// <returns>NetTerminal.</returns>
-    public NetTerminalClient Create(NodeAddress nodeAddress)
+    public ClientTerminal Create(NodeAddress nodeAddress)
     {
-        var terminal = new NetTerminalClient(this, nodeAddress);
+        var terminal = new ClientTerminal(this, nodeAddress);
         lock (this.terminals)
         {
             this.terminals.Add(terminal);
@@ -61,9 +61,9 @@ public class Terminal
     /// </summary>
     /// <param name="nodeInformation">NodeInformation.</param>
     /// <returns>NetTerminal.</returns>
-    public NetTerminalClient Create(NodeInformation nodeInformation)
+    public ClientTerminal Create(NodeInformation nodeInformation)
     {
-        var terminal = new NetTerminalClient(this, nodeInformation);
+        var terminal = new ClientTerminal(this, nodeInformation);
         lock (this.terminals)
         {
             this.terminals.Add(terminal);
@@ -78,9 +78,9 @@ public class Terminal
     /// <param name="nodeInformation">NodeInformation.</param>
     /// <param name="gene">gene.</param>
     /// <returns>NetTerminal.</returns>
-    public NetTerminalServer Create(NodeInformation nodeInformation, ulong gene)
+    public ServerTerminal Create(NodeInformation nodeInformation, ulong gene)
     {
-        var terminal = new NetTerminalServer(this, nodeInformation, gene);
+        var terminal = new ServerTerminal(this, nodeInformation, gene);
         lock (this.terminals)
         {
             this.terminals.Add(terminal);

@@ -12,7 +12,7 @@ public class Server
         this.NetControl = netControl;
     }
 
-    public async Task Process(NetTerminalServer terminal)
+    public async Task Process(ServerTerminal terminal)
     {
         this.NetTerminal = terminal;
         while (!this.NetTerminal.IsClosed)
@@ -48,7 +48,7 @@ public class Server
 
     public NetControl NetControl { get; }
 
-    public NetTerminalServer NetTerminal { get; private set; } = default!;
+    public ServerTerminal NetTerminal { get; private set; } = default!;
 
     private bool ProcessEssential(NetInterfaceReceivedData received)
     {

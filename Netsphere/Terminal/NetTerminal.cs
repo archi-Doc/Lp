@@ -79,8 +79,6 @@ public partial class NetTerminal : IDisposable
 
     public NodeInformation? NodeInformation { get; }
 
-    internal NetOperation CreateOperation() => new NetOperation(this);
-
     internal void CreateHeader(out PacketHeader header, ulong gene)
     {
         header = default;

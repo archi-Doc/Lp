@@ -2,14 +2,14 @@
 
 namespace Netsphere;
 
-public class NetTerminalClient : NetTerminal
+public class ClientTerminal : NetTerminal
 {
-    internal NetTerminalClient(Terminal terminal, NodeAddress nodeAddress)
+    internal ClientTerminal(Terminal terminal, NodeAddress nodeAddress)
         : base(terminal, nodeAddress)
     {// NodeAddress: Unmanaged
     }
 
-    internal NetTerminalClient(Terminal terminal, NodeInformation nodeInformation)
+    internal ClientTerminal(Terminal terminal, NodeInformation nodeInformation)
         : base(terminal, nodeInformation, LP.Random.Crypto.NextUInt64())
     {// NodeInformation: Managed
     }
@@ -106,4 +106,6 @@ public class NetTerminalClient : NetTerminal
             return (response.Result, response.Received);
         }
     }
+
+    internal ClientOperation CreateOperation() => new ClientOperation(this);
 }

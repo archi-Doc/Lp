@@ -130,7 +130,7 @@ public class NetControl
 
     private static Container containerInstance = default!;
 
-    private static void CreateServerTerminal(NetTerminalServer terminal)
+    private static void CreateServerTerminal(ServerTerminal terminal)
     {
         Task.Run(async () =>
         {
