@@ -28,7 +28,8 @@ public class Server
                     }
                 }
                 else if (received.Result == NetInterfaceResult.Timeout ||
-                    received.Result == NetInterfaceResult.Closed)
+                    received.Result == NetInterfaceResult.Closed ||
+                    received.Result == NetInterfaceResult.NoReceiver)
                 {
                     break;
                 }

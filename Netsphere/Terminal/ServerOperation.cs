@@ -44,7 +44,7 @@ internal class ServerOperation : NetOperation
 
         var received = await this.receiverInterface.ReceiveDataAsync(millisecondsToWait).ConfigureAwait(false);
         if (received.Result != NetInterfaceResult.Success)
-        {// Error
+        {// Timeout/Error
             return received;
         }
 
@@ -72,19 +72,24 @@ internal class ServerOperation : NetOperation
     public async Task<NetInterfaceResult> SendPacketAsync<TSend>(TSend value, int millisecondsToWait)
        where TSend : IPacket
     {
-        if (this.senderInterface == null)
+        if (!value.AllowUnencrypted && !this.NetTerminal.IsEncrypted)
         {
-            throw new InvalidOperationException();
+            return NetInterfaceResult.NoEncryptedConnection;
         }
 
-        this.senderInterface.SetSend(value);
+        var netInterface = NetInterface<TSend, object>.CreateValue(this, value, value.PacketId, false, out var interfaceResult);
+        if (netInterface == null)
+        {
+            return interfaceResult;
+        }
+
         try
         {
-            return await this.senderInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
+            return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
         }
         finally
         {
-            this.senderInterface.Dispose();
+            netInterface.Dispose();
         }
     }
 
@@ -115,8 +120,37 @@ internal class ServerOperation : NetOperation
         return await task.ConfigureAwait(false);
     }
 
-    public async Task<NetInterfaceResult> SendDataAsync(ulong dataId, byte[] data, int millisecondsToWait)
-        => await this.SendDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);
+    internal async Task<NetInterfaceResult> SendDataAsync(bool encrypt, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner, int millisecondsToWait)
+    {
+        if (this.senderInterface == null)
+        {
+            throw new InvalidOperationException();
+        }
+
+        if (encrypt && !this.NetTerminal.IsEncrypted)
+        {
+            return NetInterfaceResult.NoEncryptedConnection;
+        }
+
+        if (owner.Memory.Length <= PacketService.SafeMaxPayloadSize)
+        {// Single packet.
+            this.senderInterface.SetSend(packetId, dataId, owner);
+            return await this.senderInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false); // Disposed in ServerOperation.Dispose()
+        }
+        else if (owner.Memory.Length <= BlockService.MaxBlockSize)
+        {// Split into multiple packets. Send PacketReserve.
+            var reserve = new PacketReserve(owner.Memory.Length);
+            var received = await this.SendPacketAndReceiveAsync<PacketReserve, PacketReserveResponse>(reserve, millisecondsToWait).ConfigureAwait(false);
+            if (received.Result != NetInterfaceResult.Success)
+            {
+                return received.Result;
+            }
+        }
+        else
+        {// Block size limit exceeded.
+            return NetInterfaceResult.BlockSizeLimit;
+        }
+    }
 
     /// <summary>
     /// free managed/native resources.
@@ -131,7 +165,6 @@ internal class ServerOperation : NetOperation
                 // free managed resources.
                 this.receiverInterface?.Dispose();
                 this.receiverInterface2?.Dispose();
-                this.senderInterface?.Dispose();
             }
 
             // free native resources here if there are any.
@@ -144,5 +177,4 @@ internal class ServerOperation : NetOperation
     private bool disposed = false; // To detect redundant calls.
     private NetInterface<object, byte[]>? receiverInterface;
     private NetInterface<object, byte[]>? receiverInterface2;
-    private NetInterface<object, byte[]>? senderInterface;
 }
