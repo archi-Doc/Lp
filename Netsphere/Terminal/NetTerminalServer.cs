@@ -12,6 +12,21 @@ public class NetTerminalServer : NetTerminal
     {// NodeInformation: Managed
     }
 
+    public void SetReceiverNumber(ushort receiverNumber = DefaultReceiverNumber)
+    {
+        if (receiverNumber > MaxReceiverNumber)
+        {
+            receiverNumber = MaxReceiverNumber;
+        }
+        else if (receiverNumber == 0)
+        {
+            receiverNumber = 1;
+        }
+
+        this.ReceiverNumber = receiverNumber;
+        this.EnsureReceiver();
+    }
+
     public unsafe override void SendClose()
     {
         if (this.IsClosed)
@@ -41,21 +56,8 @@ public class NetTerminalServer : NetTerminal
         }
 
         this.Terminal.AddRawSend(this.Endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
-    }
 
-    public void SetReceiverNumber(ushort receiverNumber = DefaultReceiverNumber)
-    {
-        if (receiverNumber > MaxReceiverNumber)
-        {
-            receiverNumber = MaxReceiverNumber;
-        }
-        else if (receiverNumber == 0)
-        {
-            receiverNumber = 1;
-        }
-
-        this.ReceiverNumber = receiverNumber;
-        this.EnsureReceiver();
+        this.DisposeInterface(netInterface);
     }
 
     public async Task<NetInterfaceReceivedData> ReceiveAsync(int millisecondsToWait = DefaultMillisecondsToWait)
@@ -246,7 +248,7 @@ ReceiveAsyncStart:
     private void NextReceiver()
     {
         this.EnsureReceiver();
-        this.receiverQueue.Dequeue().Dispose();
+        this.DisposeInterface(this.receiverQueue.Dequeue());
     }
 
     private void ReceiverToSender()
@@ -255,6 +257,13 @@ ReceiveAsyncStart:
         {
             this.senderQueue.Enqueue(netInterface);
         }
+    }
+
+    private void DisposeInterface(NetInterface netInterface)
+    {
+        var netOperation = netInterface.NetOperation;
+        netInterface.Dispose();
+        netOperation.Dispose();
     }
 
     public ushort ReceiverNumber { get; private set; } = DefaultReceiverNumber;
