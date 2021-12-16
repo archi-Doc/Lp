@@ -152,6 +152,48 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         return netInterface;
     }
 
+    internal static NetInterface<TSend, TReceive>? CreateReserve(NetOperation netOperation, PacketReserve reserve)
+    {// Send and Receive(optional) NetTerminalGene.
+        NetInterface<TSend, TReceive>? netInterface;
+        (ulong First, ulong Second) sequentialGenes;
+
+        var netTerminal = netOperation.NetTerminal;
+        sequentialGenes = netOperation.Get2Genes(); // Send gene
+
+        var response = new PacketReserveResponse();
+        netTerminal.CreateHeader(out var header, sequentialGenes.First);
+        PacketService.CreatePacket(ref header, response, response.PacketId, out var sendOwner);
+
+        netInterface = new NetInterface<TSend, TReceive>(netTerminal);
+        var ntg = new NetTerminalGene(sequentialGenes.First, netInterface);
+        netInterface.SendGenes = new NetTerminalGene[] { ntg, };
+        ntg.SetSend(sendOwner);
+
+        netTerminal.TerminalLogger?.Information($"RegisterSend5  : {sequentialGenes.First.To4Hex()}, {response.PacketId}");
+
+        // Receive gene
+        ntg = new NetTerminalGene(sequentialGenes.Second, netInterface);
+        netInterface.RecvGenes = new NetTerminalGene[] { ntg, };
+        ntg.SetReceive();
+
+        var rentArray = netTerminal.RentAndSetGeneArray(sequentialGenes.Second, reserve.NumberOfGenes);
+        var geneArray = MemoryMarshal.Cast<byte, ulong>(rentArray);
+
+        var genes = new NetTerminalGene[reserve.NumberOfGenes];
+        for (var i = 0; i < reserve.NumberOfGenes; i++)
+        {
+            var g = new NetTerminalGene(geneArray[i], netInterface);
+            g.SetReceive();
+            genes[i] = g;
+        }
+
+        ArrayPool<byte>.Shared.Return(rentArray);
+        netInterface.RecvGenes = genes;
+
+        netTerminal.Add(netInterface);
+        return netInterface;
+    }
+
     internal static NetInterface<TSend, TReceive> CreateConnect(NetTerminal netTerminal, ulong gene, FixedArrayPool.MemoryOwner receiveOwner, ulong secondGene, FixedArrayPool.MemoryOwner sendOwner)
     {// Only for connection.
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
@@ -330,6 +372,10 @@ internal class NetInterface<TSend, TReceive> : NetInterface
 
             this.TerminalLogger?.Information($"RegisterSend4  : {gene.To4Hex()}");
             return true;
+        }
+        else
+        {
+            this.SendGenes = CreateSendGenes(this, gene, owner, dataId);
         }
 
         return false;

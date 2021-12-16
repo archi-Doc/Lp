@@ -145,14 +145,12 @@ internal class ClientOperation : NetOperation
             return (response.Result, default);
         }
 
-        // var dataMemory = PacketService.GetData(response.Received);
-        TinyhandSerializer.TryDeserialize<TReceive>(response.Received, out var received);
-        if (received == null)
+        if (!TinyhandSerializer.TryDeserialize<TReceive>(response.Received, out var received))
         {
             return (NetInterfaceResult.DeserializationError, default);
         }
 
-        return (NetInterfaceResult.Success, received);
+        return (response.Result, received);
     }
 
     public async Task<(NetInterfaceResult Result, ReadOnlyMemory<byte> Value)> SendAndReceiveDataAsync(ulong dataId, byte[] data, int millisecondsToWait)
@@ -163,7 +161,7 @@ internal class ClientOperation : NetOperation
 
     internal async Task<NetInterfaceResult> SendDataAsync(bool encrypt, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner, int millisecondsToWait)
     {
-        if (encrypt)
+        if (!this.NetTerminal.IsEncrypted && encrypt)
         {
             var result = await this.EncryptConnectionAsync(millisecondsToWait).ConfigureAwait(false);
             if (result != NetInterfaceResult.Success)
@@ -241,8 +239,34 @@ internal class ClientOperation : NetOperation
 
         try
         {
-            var r = await netInterface.ReceiveDataAsync(millisecondsToWait).ConfigureAwait(false);
-            return r;
+            var response = await netInterface.ReceiveDataAsync(millisecondsToWait).ConfigureAwait(false);
+
+            if (response.PacketId == PacketId.Reserve)
+            {
+                // PacketId.Reserve
+                TinyhandSerializer.TryDeserialize<PacketReserve>(response.Received, out var reserve);
+                if (reserve == null)
+                {
+                    return new(NetInterfaceResult.DeserializationError);
+                }
+
+                var netInterface2 = NetInterface<PacketReserveResponse, byte[]>.CreateReserve(this, reserve);
+                if (netInterface2 == null)
+                {
+                    return new(interfaceResult);
+                }
+
+                try
+                {
+                    response = await netInterface2.ReceiveDataAsync(millisecondsToWait).ConfigureAwait(false);
+                }
+                finally
+                {
+                    netInterface2.Dispose();
+                }
+            }
+
+            return response;
         }
         finally
         {
