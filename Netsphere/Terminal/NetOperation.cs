@@ -49,6 +49,8 @@ internal abstract class NetOperation : IDisposable
         gp.GetSequential(span);
     }
 
+    public virtual async Task<NetInterfaceResult> EncryptConnectionAsync(int millisecondsToWait) => NetInterfaceResult.NoEncryptedConnection;
+
     public Terminal Terminal { get; }
 
     public NetTerminal NetTerminal { get; }
