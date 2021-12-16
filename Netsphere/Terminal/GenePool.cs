@@ -91,6 +91,7 @@ internal class GenePool : IDisposable
             }
 
             this.encryptor = Aes256.NoPadding.CreateEncryptor(keyIv.AsSpan(0, 32).ToArray(), keyIv.AsSpan(32, 16).ToArray());
+            this.EnsurePool();
         }
     }
 

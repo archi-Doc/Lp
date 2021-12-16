@@ -72,20 +72,14 @@ internal class ServerOperation : NetOperation
             return NetInterfaceResult.NoEncryptedConnection;
         }
 
-        var netInterface = NetInterface<TSend, object>.CreateValue(this, value, value.PacketId, false, out var interfaceResult);
+        var netInterface = this.receiverInterface2 ?? this.receiverInterface;
         if (netInterface == null)
         {
-            return interfaceResult;
+            return NetInterfaceResult.NoSender;
         }
 
-        try
-        {
-            return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
-        }
-        finally
-        {
-            netInterface.Dispose();
-        }
+        netInterface.SetSend(value);
+        return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
     }
 
     public async Task<(NetInterfaceResult Result, TReceive? Value)> SendPacketAndReceiveAsync<TSend, TReceive>(TSend value, int millisecondsToWait)
@@ -112,7 +106,6 @@ internal class ServerOperation : NetOperation
 
             if (response.Value is PacketReserve reserve)
             {
-
             }
 
             return await netInterface.ReceiveAsync(millisecondsToWait).ConfigureAwait(false);
