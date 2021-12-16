@@ -17,8 +17,14 @@ internal class ServerOperation : NetOperation
     }
 
     public unsafe void SendClose()
-    {
-        this.NetTerminal.CreateHeader(out var header, this.GetGene());
+    {// checked
+        var netInterface = this.receiverInterface2 ?? this.receiverInterface;
+        if (netInterface == null)
+        {
+            return;
+        }
+
+        this.NetTerminal.CreateHeader(out var header, netInterface.StandbyGene);
         header.Id = PacketId.Close;
 
         var arrayOwner = PacketPool.Rent();

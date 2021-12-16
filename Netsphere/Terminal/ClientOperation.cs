@@ -16,7 +16,7 @@ internal class ClientOperation : NetOperation
     }
 
     public override async Task<NetInterfaceResult> EncryptConnectionAsync(int millisecondsToWait)
-    {
+    {// checked
         if (this.NetTerminal.IsEncrypted)
         {// Encrypted
             return NetInterfaceResult.Success;

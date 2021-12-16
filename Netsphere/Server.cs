@@ -21,7 +21,7 @@ public class Server
             {
                 var received = await terminal.ReceiveAsync();
                 if (received.Result == NetInterfaceResult.Success)
-                {
+                {// Success
                     if (this.ProcessEssential(received))
                     {
                         continue;
@@ -64,7 +64,8 @@ public class Server
                 return false;
             }
 
-            var task = this.NetTerminal.SendAsync(t);
+            // var task = this.NetTerminal.SendAsync(t);
+            this.NetTerminal.SendClose();
         }
 
         return false;

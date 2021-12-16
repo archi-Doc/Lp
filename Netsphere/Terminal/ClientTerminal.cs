@@ -32,7 +32,7 @@ public class ClientTerminal : NetTerminal
     }
 
     public unsafe override void SendClose()
-    {
+    {// checked
         if (this.IsClosed)
         {
             return;
@@ -44,16 +44,19 @@ public class ClientTerminal : NetTerminal
             return;
         }
 
-        this.CreateHeader(out var header, this.GenePool.GetSequential());
-        header.Id = PacketId.Close;
-
-        var arrayOwner = PacketPool.Rent();
-        fixed (byte* bp = arrayOwner.ByteArray)
+        using (var operation = new ClientOperation(this))
         {
-            *(PacketHeader*)bp = header;
-        }
+            this.CreateHeader(out var header, operation.GetGene());
+            header.Id = PacketId.Close;
 
-        this.Terminal.AddRawSend(this.Endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
+            var arrayOwner = PacketPool.Rent();
+            fixed (byte* bp = arrayOwner.ByteArray)
+            {
+                *(PacketHeader*)bp = header;
+            }
+
+            this.Terminal.AddRawSend(this.Endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
+        }
     }
 
     public async Task<NetInterfaceResult> SendPacketAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
