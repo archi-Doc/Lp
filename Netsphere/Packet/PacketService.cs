@@ -23,8 +23,8 @@ internal static class PacketService
         SafeMaxPayloadSize = NetControl.MaxPayload - HeaderSize - DataHeaderSize - RelayPacketSize;
         SafeMaxPayloadSize -= 8; // Safety margin
 
-        DataPayloadSize = 1369;
-        DataFollowingPayloadSize = DataPayloadSize + DataHeaderSize - DataFollowingHeaderSize;
+        DataFollowingPayloadSize = 1369; // = SafeMaxPayloadSize
+        DataPayloadSize = DataFollowingPayloadSize - DataHeaderSize + DataFollowingHeaderSize;
     }
 
     public static int HeaderSize { get; }

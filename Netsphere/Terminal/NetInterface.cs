@@ -93,7 +93,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         }
         else
         {
-            netInterface.SendGenes = CreateSendGenes(netInterface, sequentialGenes.First, owner, dataId);
+            netInterface.SendGenes = CreateSendGenes(netOperation, netInterface, sequentialGenes.First, owner, dataId);
         }
 
         // Receive gene
@@ -176,18 +176,17 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         netInterface.RecvGenes = new NetTerminalGene[] { ntg, };
         ntg.SetReceive();
 
-        var rentArray = netTerminal.RentAndSetGeneArray(sequentialGenes.Second, reserve.NumberOfGenes);
-        var geneArray = MemoryMarshal.Cast<byte, ulong>(rentArray);
+        Span<ulong> arraySpan = stackalloc ulong[reserve.NumberOfGenes];
+        netOperation.GetGenes(arraySpan);
 
         var genes = new NetTerminalGene[reserve.NumberOfGenes];
         for (var i = 0; i < reserve.NumberOfGenes; i++)
         {
-            var g = new NetTerminalGene(geneArray[i], netInterface);
+            var g = new NetTerminalGene(arraySpan[i], netInterface);
             g.SetReceive();
             genes[i] = g;
         }
 
-        ArrayPool<byte>.Shared.Return(rentArray);
         netInterface.RecvGenes = genes;
 
         netTerminal.Add(netInterface);
@@ -213,13 +212,14 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         return netInterface;
     }
 
-    internal static NetTerminalGene[] CreateSendGenes(NetInterface<TSend, TReceive> netInterface, ulong gene, ByteArrayPool.MemoryOwner owner, ulong dataId)
+    internal static NetTerminalGene[] CreateSendGenes(NetOperation netOperation, NetInterface<TSend, TReceive> netInterface, ulong gene, ByteArrayPool.MemoryOwner owner, ulong dataId)
     {
         ReadOnlySpan<byte> span = owner.Memory.Span;
         var netTerminal = netInterface.NetTerminal;
         var info = PacketService.GetDataSize(owner.Memory.Length);
-        var rentArray = netTerminal.RentAndSetGeneArray(gene, info.NumberOfGenes);
-        var geneArray = MemoryMarshal.Cast<byte, ulong>(rentArray);
+
+        Span<ulong> arraySpan = stackalloc ulong[info.NumberOfGenes];
+        netOperation.GetGenes(arraySpan);
 
         var genes = new NetTerminalGene[info.NumberOfGenes];
         for (var i = 0; i < info.NumberOfGenes; i++)
@@ -230,7 +230,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
             {// First
                 size = info.FirstDataSize;
 
-                netTerminal.CreateHeader(out var header, geneArray[i]);
+                netTerminal.CreateHeader(out var header, arraySpan[i]);
                 PacketService.CreateDataPacket(ref header, PacketId.Data, dataId, span.Slice(0, size), out sendOwner);
             }
             else
@@ -244,18 +244,16 @@ internal class NetInterface<TSend, TReceive> : NetInterface
                     size = info.FollowingDataSize;
                 }
 
-                netTerminal.CreateHeader(out var header, geneArray[i]);
+                netTerminal.CreateHeader(out var header, arraySpan[i]);
                 PacketService.CreateDataFollowingPacket(ref header, span.Slice(0, size), out sendOwner);
             }
 
             span = span.Slice(size);
 
-            genes[i] = new(geneArray[i], netInterface);
+            genes[i] = new(arraySpan[i], netInterface);
             genes[i].SetSend(sendOwner);
             sendOwner.Return();
         }
-
-        ArrayPool<byte>.Shared.Return(rentArray);
 
         return genes;
     }
@@ -353,7 +351,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         }
     }
 
-    internal bool SetSend(PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner)
+    internal bool SetSend(NetOperation netOperation, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner)
     {
         if (this.SendGenes != null)
         {
@@ -375,13 +373,13 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         }
         else
         {
-            this.SendGenes = CreateSendGenes(this, gene, owner, dataId);
+            this.SendGenes = CreateSendGenes(netOperation, this, gene, owner, dataId);
         }
 
         return false;
     }
 
-    internal void SetReserve(PacketReserve reserve)
+    internal void SetReserve(NetOperation netOperation, PacketReserve reserve)
     {
         if (this.RecvGenes == null || this.RecvGenes.Length < 1)
         {
@@ -391,20 +389,19 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         var gene = this.RecvGenes[0].Gene;
         this.Clear();
 
-        var rentArray = this.NetTerminal.RentAndSetGeneArray(gene, reserve.NumberOfGenes);
-        var geneArray = MemoryMarshal.Cast<byte, ulong>(rentArray);
+        Span<ulong> arraySpan = stackalloc ulong[reserve.NumberOfGenes];
+        netOperation.GetGenes(arraySpan);
 
         var genes = new NetTerminalGene[reserve.NumberOfGenes];
         for (var i = 0; i < reserve.NumberOfGenes; i++)
         {
-            var g = new NetTerminalGene(geneArray[i], this);
+            var g = new NetTerminalGene(arraySpan[i], this);
             g.SetReceive();
             genes[i] = g;
         }
 
         this.TerminalLogger?.Information($"SetReserve: {string.Join(", ", genes.Select(x => x.Gene.To4Hex()))}");
 
-        ArrayPool<byte>.Shared.Return(rentArray);
         this.RecvGenes = genes;
     }
 }

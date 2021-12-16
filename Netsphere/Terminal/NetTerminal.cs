@@ -100,25 +100,6 @@ public partial class NetTerminal : IDisposable
         this.Terminal.AddRawSend(this.Endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
     }
 
-    internal byte[] RentAndSetGeneArray(ulong gene, int numberOfGenes)
-    {
-        var first = BitConverter.ToUInt64(this.embryo);
-        var rentBuffer = ArrayPool<byte>.Shared.Rent(sizeof(ulong) * numberOfGenes);
-        var rentGenes = ArrayPool<byte>.Shared.Rent(sizeof(ulong) * numberOfGenes);
-
-        var xo = new Arc.Crypto.Xoshiro256StarStar(gene ^ first);
-        xo.NextBytes(rentBuffer);
-
-        var iv = new byte[16];
-        BitConverter.TryWriteBytes(iv, gene);
-        this.embryo.AsSpan(40, 8).CopyTo(iv.AsSpan(8, 8));
-
-        var encryptor = Aes256.NoPadding.CreateEncryptor(this.embryo.AsSpan(8, 32).ToArray(), iv);
-        encryptor.TransformBlock(rentBuffer, 0, rentBuffer.Length, rentGenes, 0);
-        ArrayPool<byte>.Shared.Return(rentBuffer);
-        return rentGenes;
-    }
-
     internal void ProcessSend(UdpClient udp, long currentTicks)
     {
         lock (this.SyncObject)

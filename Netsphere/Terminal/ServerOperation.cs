@@ -56,7 +56,7 @@ internal class ServerOperation : NetOperation
         }
 
         this.receiverInterface2 = NetInterface<object, byte[]>.CreateReceive(this);
-        this.receiverInterface2.SetReserve(reserve);
+        this.receiverInterface2.SetReserve(this, reserve);
 
         this.receiverInterface.SetSend(new PacketReserveResponse());
 
@@ -122,7 +122,7 @@ internal class ServerOperation : NetOperation
 
         if (owner.Memory.Length <= PacketService.SafeMaxPayloadSize)
         {// Single packet.
-            netInterface.SetSend(packetId, dataId, owner);
+            netInterface.SetSend(this, packetId, dataId, owner);
             return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
         }
         else if (owner.Memory.Length > BlockService.MaxBlockSize)
@@ -152,7 +152,7 @@ internal class ServerOperation : NetOperation
                 return NetInterfaceResult.ReserveError;
             }
 
-            netInterface.SetSend(packetId, dataId, owner);
+            netInterface.SetSend(this, packetId, dataId, owner);
             return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
         }
         finally
