@@ -37,7 +37,7 @@ public class SendDataSubcommand : ISimpleCommandAsync<SendDataOptions>
                 return;
             }
 
-            var t = terminal.SendPacketAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
+            var t = terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
             Logger.Priority.Information($"t: {t.Result}");
 
             var p2 = TestBlock.Create(20000);

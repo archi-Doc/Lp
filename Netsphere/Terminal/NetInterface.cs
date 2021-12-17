@@ -637,6 +637,11 @@ WaitForSendCompletionWait:
             }
         }
 
+        if (total > BlockService.MaxBlockSize)
+        {
+            return false;
+        }
+
         var buffer = new byte[total]; // temporary
         var mem = buffer.AsMemory();
         for (var i = 0; i < this.RecvGenes.Length; i++)
