@@ -22,6 +22,14 @@ public class Server
                 var received = await terminal.ReceiveAsync();
                 if (received.Result == NetInterfaceResult.Success)
                 {// Success
+                    // Responder (DataId, RPC)
+                    if (this.NetControl.Respondes.TryGetValue(received.DataId, out var responder) &&
+                        responder.Respond(terminal, received))
+                    {
+                        continue;
+                    }
+
+                    // Essential (PacketPunch)
                     if (this.ProcessEssential(received))
                     {
                         continue;
@@ -56,15 +64,6 @@ public class Server
         if (received.PacketId == PacketId.Punch)
         {
             return this.ProcessEssential_Punch(received);
-        }
-        else if (received.DataId == BlockService.GetId<TestBlock, TestBlock>())
-        {
-            if (!TinyhandSerializer.TryDeserialize<TestBlock>(received.Received, out var t))
-            {
-                return false;
-            }
-
-            var task = this.NetTerminal.SendAsync(t);
         }
 
         return false;

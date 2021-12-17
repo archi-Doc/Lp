@@ -13,6 +13,7 @@ global using LP.Block;
 global using LP.Options;
 global using Tinyhand;
 global using ValueLink;
+using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using DryIoc;
 using Netsphere;
@@ -107,6 +108,9 @@ public class NetControl
             this.Alternative.Port = NodeAddress.Alternative.Port;
         }
 
+        // Responders
+        DefaultResponder.Register(this);
+
         // Machines
         this.BigMachine.TryCreate<LP.Machines.EssentialNetMachine.Interface>(Identifier.Zero);
     }
@@ -115,6 +119,11 @@ public class NetControl
     {
         this.Terminal.SetServerTerminalDelegate(@delegate);
         this.Alternative?.SetServerTerminalDelegate(@delegate);
+    }
+
+    public bool AddResponder(IServerResponder responder)
+    {
+        return this.Respondes.TryAdd(responder.GetDataId(), responder);
     }
 
     public NetBase NetBase { get; }
@@ -130,6 +139,8 @@ public class NetControl
     public EssentialNode EssentialNode { get; }
 
     internal Terminal? Alternative { get; }
+
+    internal ConcurrentDictionary<ulong, IServerResponder> Respondes { get; } = new();
 
     private static Container containerInstance = default!;
 
