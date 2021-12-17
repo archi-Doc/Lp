@@ -64,8 +64,7 @@ public class Server
                 return false;
             }
 
-            // var task = this.NetTerminal.SendAsync(t);
-            this.NetTerminal.SendClose();
+            var task = this.NetTerminal.SendAsync(t);
         }
 
         return false;

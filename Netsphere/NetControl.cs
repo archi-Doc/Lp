@@ -62,11 +62,10 @@ public class NetControl
         }
     }
 
-    public static void QuickStart()
+    public static void QuickStart(string nodeName, NetsphereOptions options)
     {
         var netBase = containerInstance.Resolve<NetBase>();
-        var options = new LP.Options.NetsphereOptions();
-        netBase.Initialize(string.Empty, options);
+        netBase.Initialize(nodeName, options);
 
         var netControl = containerInstance.Resolve<NetControl>();
         Logger.Configure(null);
@@ -86,7 +85,11 @@ public class NetControl
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
 
         this.Terminal = terminal;
-        this.Alternative = new(netBase, netStatus); // For debug
+        if (this.NetBase.NetsphereOptions.Alternative)
+        {
+            this.Alternative = new(netBase, netStatus); // For debug
+        }
+
         this.SetServerTerminalDelegate(CreateServerTerminal);
         this.EssentialNode = node;
         this.NetStatus = netStatus;

@@ -41,6 +41,8 @@ public class NetBase
         }
     }
 
+    public bool EnableAlternative { get; private set; }
+
     public string NodeName { get; private set; } = default!;
 
     public NetsphereOptions NetsphereOptions { get; private set; } = default!;

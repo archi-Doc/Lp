@@ -47,7 +47,10 @@ public class Program
             RequireStrictOptionName = true,
         };
 
-        NetControl.QuickStart();
+
+        var options = new LP.Options.NetsphereOptions();
+        options.Alternative = true;
+        NetControl.QuickStart("test", options);
 
         await SimpleParser.ParseAndRunAsync(commandTypes, "senddata -node alternative", parserOptions); // Main process
         // await SimpleParser.ParseAndRunAsync(commandTypes, args, parserOptions); // Main process
