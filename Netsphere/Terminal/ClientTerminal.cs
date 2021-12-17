@@ -101,7 +101,7 @@ public class ClientTerminal : NetTerminal
         }
     }
 
-    public async Task<(NetInterfaceResult Result, ReadOnlyMemory<byte> Value)> SendAndReceiveDataAsync(ulong dataId, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<(NetInterfaceResult Result, ByteArrayPool.MemoryOwner Value)> SendAndReceiveDataAsync(ulong dataId, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
     {
         using (var operation = this.CreateOperation())
         {

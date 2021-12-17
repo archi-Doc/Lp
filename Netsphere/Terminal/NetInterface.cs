@@ -31,7 +31,7 @@ public enum NetInterfaceResult
 
 public struct NetInterfaceReceivedData
 {
-    public NetInterfaceReceivedData(NetInterfaceResult result, PacketId packetId, ulong dataId, ReadOnlyMemory<byte> received)
+    public NetInterfaceReceivedData(NetInterfaceResult result, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner received)
     {
         this.Result = result;
         this.PacketId = packetId;
@@ -50,7 +50,7 @@ public struct NetInterfaceReceivedData
     public NetInterfaceResult Result;
     public PacketId PacketId;
     public ulong DataId;
-    public ReadOnlyMemory<byte> Received;
+    public ByteArrayPool.MemoryOwner Received;
 }
 
 /*public interface INetInterface<TSend, TReceive> : INetInterface<TSend>
@@ -193,7 +193,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         return netInterface;
     }
 
-    internal static NetInterface<TSend, TReceive> CreateConnect(NetTerminal netTerminal, ulong gene, FixedArrayPool.MemoryOwner receiveOwner, ulong secondGene, FixedArrayPool.MemoryOwner sendOwner)
+    internal static NetInterface<TSend, TReceive> CreateConnect(NetTerminal netTerminal, ulong gene, ByteArrayPool.MemoryOwner receiveOwner, ulong secondGene, ByteArrayPool.MemoryOwner sendOwner)
     {// Only for connection.
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
 
@@ -225,7 +225,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         for (var i = 0; i < info.NumberOfGenes; i++)
         {
             int size;
-            FixedArrayPool.MemoryOwner sendOwner;
+            ByteArrayPool.MemoryOwner sendOwner;
             if (i == 0)
             {// First
                 size = info.FirstDataSize;
@@ -301,10 +301,11 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         var r = await this.ReceiveAsyncCore(millisecondsToWait).ConfigureAwait(false);
         if (r.Result != NetInterfaceResult.Success)
         {
+            r.Received.Return();
             return (r.Result, default);
         }
 
-        TinyhandSerializer.TryDeserialize<TReceive>(r.Received, out var value);
+        TinyhandSerializer.TryDeserialize<TReceive>(r.Received.Memory, out var value);
         if (value == null)
         {
             return (NetInterfaceResult.DeserializationError, default);
@@ -554,7 +555,7 @@ WaitForSendCompletionWait:
 
     private protected async Task<NetInterfaceReceivedData> ReceiveAsyncCore(int millisecondsToWait)
     {
-        ReadOnlyMemory<byte> data = default;
+        ByteArrayPool.MemoryOwner data = default;
         var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);
 
         while (this.Terminal.Core?.IsTerminated == false && this.NetTerminal.IsClosed == false)
@@ -589,7 +590,7 @@ WaitForSendCompletionWait:
 
     internal ISimpleLogger? TerminalLogger => this.Terminal.TerminalLogger;
 
-    protected bool ReceivedGeneToData(out PacketId packetId, out ulong dataId, ref ReadOnlyMemory<byte> dataMemory)
+    protected bool ReceivedGeneToData(out PacketId packetId, out ulong dataId, ref ByteArrayPool.MemoryOwner dataMemory)
     {// lock (this.NetTerminal.SyncObject)
         packetId = PacketId.Invalid;
         dataId = 0;
@@ -605,7 +606,7 @@ WaitForSendCompletionWait:
             }
 
             packetId = this.RecvGenes[0].ReceivedId;
-            dataMemory = this.RecvGenes[0].Owner.Memory;
+            dataMemory = this.RecvGenes[0].Owner.IncrementAndShare();
             if (packetId == PacketId.Data)
             {
                 var data = PacketService.GetData(dataMemory);
@@ -643,27 +644,26 @@ WaitForSendCompletionWait:
             return false;
         }
 
-        var buffer = new byte[total]; // temporary
-        var mem = buffer.AsMemory();
+        dataMemory = BlockPool.Rent(total).ToMemoryOwner();
+        var memory = dataMemory.Memory;
         for (var i = 0; i < this.RecvGenes.Length; i++)
         {
             if (this.RecvGenes[i].ReceivedId == PacketId.Data)
             {// Data
-                var data = PacketService.GetData(this.RecvGenes[i].Owner.Memory);
+                var data = PacketService.GetData(this.RecvGenes[i].Owner);
                 dataId = data.DataId;
-                data.DataMemory.CopyTo(mem);
-                mem = mem.Slice(data.DataMemory.Length);
+                data.DataMemory.Memory.CopyTo(memory);
+                memory = memory.Slice(data.DataMemory.Memory.Length);
             }
             else
             {// DataFollowing
                 var data = PacketService.GetDataFollowing(this.RecvGenes[i].Owner.Memory);
-                data.CopyTo(mem);
-                mem = mem.Slice(data.Length);
+                data.CopyTo(memory);
+                memory = memory.Slice(data.Length);
             }
         }
 
         packetId = this.RecvGenes[0].ReceivedId;
-        dataMemory = buffer;
         return true;
     }
 
@@ -711,7 +711,7 @@ WaitForSendCompletionWait:
         PacketHeader header = default;
         int size = 0;
         int maxSize = PacketService.DataPayloadSize - sizeof(ulong);
-        FixedArrayPool.Owner? rentArray = null;
+        ByteArrayPool.Owner? rentArray = null;
         foreach (var x in this.RecvGenes)
         {
             if (x.State == NetTerminalGeneState.SendingAck)
@@ -759,7 +759,7 @@ WaitForSendCompletionWait:
         rentArray?.Return();
     }
 
-    internal void ProcessReceive(FixedArrayPool.MemoryOwner owner, IPEndPoint endPoint, ref PacketHeader header, long currentTicks, NetTerminalGene gene)
+    internal void ProcessReceive(ByteArrayPool.MemoryOwner owner, IPEndPoint endPoint, ref PacketHeader header, long currentTicks, NetTerminalGene gene)
     {
         lock (this.NetTerminal.SyncObject)
         {

@@ -16,7 +16,7 @@ public abstract class NetResponder<TSend, TReceive> : INetResponder
 
     public bool Respond(ServerTerminal terminal, NetInterfaceReceivedData received)
     {
-        if (!TinyhandSerializer.TryDeserialize<TSend>(received.Received, out var t))
+        if (!TinyhandSerializer.TryDeserialize<TSend>(received.Received.Memory, out var t))
         {
             return false;
         }

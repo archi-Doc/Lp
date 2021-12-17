@@ -56,7 +56,7 @@ internal class ServerOperation : NetOperation
         }
 
         // PacketId.Reserve
-        if (!TinyhandSerializer.TryDeserialize<PacketReserve>(received.Received, out var reserve))
+        if (!TinyhandSerializer.TryDeserialize<PacketReserve>(received.Received.Memory, out var reserve))
         {
             return new(NetInterfaceResult.DeserializationError);
         }

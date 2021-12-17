@@ -57,7 +57,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
     public bool IsReceiveComplete
         => this.State == NetTerminalGeneState.SendingAck || this.State == NetTerminalGeneState.ReceiveComplete;
 
-    public bool SetSend(FixedArrayPool.MemoryOwner owner)
+    public bool SetSend(ByteArrayPool.MemoryOwner owner)
     {
         if (this.IsAvailable)
         {
@@ -119,7 +119,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         return false;
     }
 
-    public bool Receive(PacketId id, FixedArrayPool.MemoryOwner owner)
+    public bool Receive(PacketId id, ByteArrayPool.MemoryOwner owner)
     {// lock (this.NetTerminal.SyncObject)
         if (this.State == NetTerminalGeneState.WaitingToReceive)
         {// Receive data
@@ -188,7 +188,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
     /// <summary>
     ///  Gets the packet (header + data) to send or the received data.
     /// </summary>
-    public FixedArrayPool.MemoryOwner Owner { get; private set; }
+    public ByteArrayPool.MemoryOwner Owner { get; private set; }
 
     internal void Clear()
     {// lock (this.NetTerminal.SyncObject)

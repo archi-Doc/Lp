@@ -91,24 +91,24 @@ internal static class PacketService
         return (n + 1, PacketService.DataPayloadSize, PacketService.DataFollowingPayloadSize, lastDataSize);
     }
 
-    internal static unsafe (ulong DataId, PacketId PacketId, ReadOnlyMemory<byte> DataMemory) GetData(ReadOnlyMemory<byte> memory)
+    internal static unsafe (ulong DataId, PacketId PacketId, ByteArrayPool.MemoryOwner DataMemory) GetData(ByteArrayPool.MemoryOwner owner)
     {
-        if (memory.Length < DataHeaderSize)
+        if (owner.Memory.Length < DataHeaderSize)
         {
-            return (0, PacketId.Invalid, ReadOnlyMemory<byte>.Empty);
+            return (0, PacketId.Invalid, ByteArrayPool.MemoryOwner.Empty);
         }
 
-        var span = memory.Span;
+        var span = owner.Memory.Span;
         DataHeader dataHeader = default;
         fixed (byte* pb = span)
         {
             dataHeader = *(DataHeader*)pb;
         }
 
-        var dataMemory = memory.Slice(DataHeaderSize);
-        if (!dataHeader.ChecksumEquals(Arc.Crypto.FarmHash.Hash64(dataMemory.Span)))
+        var dataMemory = owner.Slice(DataHeaderSize);
+        if (!dataHeader.ChecksumEquals(Arc.Crypto.FarmHash.Hash64(dataMemory.Memory.Span)))
         {
-            return (dataHeader.DataId, dataHeader.PacketId, memory);
+            return (dataHeader.DataId, dataHeader.PacketId, owner);
         }
         else
         {
@@ -141,7 +141,7 @@ internal static class PacketService
         }
     }
 
-    internal static unsafe bool GetData(ref PacketHeader header, ref FixedArrayPool.MemoryOwner owner)
+    internal static unsafe bool GetData(ref PacketHeader header, ref ByteArrayPool.MemoryOwner owner)
     {
         if (header.Id != PacketId.Data)
         {// Not PacketData
@@ -170,7 +170,7 @@ internal static class PacketService
         return true;
     }
 
-    internal static unsafe void CreateDataPacket(ref PacketHeader header, PacketId packetId, ulong dataId, ReadOnlySpan<byte> data, out FixedArrayPool.MemoryOwner owner)
+    internal static unsafe void CreateDataPacket(ref PacketHeader header, PacketId packetId, ulong dataId, ReadOnlySpan<byte> data, out ByteArrayPool.MemoryOwner owner)
     {// PacketHeader, DataHeader, Data
         if (data.Length > PacketService.SafeMaxPayloadSize)
         {
@@ -201,7 +201,7 @@ internal static class PacketService
         owner = arrayOwner.ToMemoryOwner(0, size);
     }
 
-    internal static unsafe void CreateDataFollowingPacket(ref PacketHeader header, ReadOnlySpan<byte> data, out FixedArrayPool.MemoryOwner owner)
+    internal static unsafe void CreateDataFollowingPacket(ref PacketHeader header, ReadOnlySpan<byte> data, out ByteArrayPool.MemoryOwner owner)
     {// PacketHeader, DataHeader, Data
         if (data.Length > PacketService.SafeMaxPayloadSize)
         {
@@ -232,7 +232,7 @@ internal static class PacketService
         owner = arrayOwner.ToMemoryOwner(0, size);
     }
 
-    internal static unsafe void CreatePacket<T>(ref PacketHeader header, T value, PacketId rawPacketId, out FixedArrayPool.MemoryOwner owner)
+    internal static unsafe void CreatePacket<T>(ref PacketHeader header, T value, PacketId rawPacketId, out ByteArrayPool.MemoryOwner owner)
     {
         var arrayOwner = PacketPool.Rent();
         var writer = new Tinyhand.IO.TinyhandWriter(arrayOwner.ByteArray);
@@ -259,7 +259,7 @@ internal static class PacketService
         writer.Dispose();
     }
 
-    internal static unsafe void CreateAckAndPacket<T>(ref PacketHeader header, ulong secondGene, T value, PacketId rawPacketId, out FixedArrayPool.MemoryOwner owner)
+    internal static unsafe void CreateAckAndPacket<T>(ref PacketHeader header, ulong secondGene, T value, PacketId rawPacketId, out ByteArrayPool.MemoryOwner owner)
     {
         var arrayOwner = PacketPool.Rent();
         var writer = new Tinyhand.IO.TinyhandWriter(arrayOwner.ByteArray);

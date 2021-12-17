@@ -130,6 +130,8 @@ public class ByteArrayPool
     /// </summary>
     public readonly struct MemoryOwner : IDisposable
     {
+        public static readonly MemoryOwner Empty = new((Owner?)null);
+
         /// <summary>
         /// Initializes a new instance of the <see cref="MemoryOwner"/> struct from a byte array.<br/>
         /// This is a feature for compatibility with <see cref="ByteArrayPool"/>, and the byte array will not be returned when <see cref="Return"/> is called.
@@ -141,10 +143,10 @@ public class ByteArrayPool
             this.Memory = byteArray.AsMemory();
         }
 
-        internal MemoryOwner(Owner owner)
+        internal MemoryOwner(Owner? owner)
         {
             this.Owner = owner;
-            this.Memory = owner.ByteArray.AsMemory();
+            this.Memory = owner == null ? default : owner.ByteArray.AsMemory();
         }
 
         internal MemoryOwner(Owner owner, int start, int length)

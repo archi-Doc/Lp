@@ -145,7 +145,7 @@ internal class ClientOperation : NetOperation
             return (response.Result, default);
         }
 
-        if (!TinyhandSerializer.TryDeserialize<TReceive>(response.Received, out var received))
+        if (!TinyhandSerializer.TryDeserialize<TReceive>(response.Received.Memory, out var received))
         {
             return (NetInterfaceResult.DeserializationError, default);
         }
@@ -153,7 +153,7 @@ internal class ClientOperation : NetOperation
         return (response.Result, received);
     }
 
-    public async Task<(NetInterfaceResult Result, ReadOnlyMemory<byte> Value)> SendAndReceiveDataAsync(ulong dataId, byte[] data, int millisecondsToWait)
+    public async Task<(NetInterfaceResult Result, ByteArrayPool.MemoryOwner Value)> SendAndReceiveDataAsync(ulong dataId, byte[] data, int millisecondsToWait)
     {// Checked
         var response = await this.SendAndReceiveDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);
         return (response.Result, response.Received);
@@ -244,7 +244,7 @@ internal class ClientOperation : NetOperation
             if (response.PacketId == PacketId.Reserve)
             {
                 // PacketId.Reserve
-                TinyhandSerializer.TryDeserialize<PacketReserve>(response.Received, out var reserve);
+                TinyhandSerializer.TryDeserialize<PacketReserve>(response.Received.Memory, out var reserve);
                 if (reserve == null)
                 {
                     return new(NetInterfaceResult.DeserializationError);

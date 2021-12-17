@@ -73,7 +73,7 @@ public class Server
 
     private bool ProcessEssential_Punch(NetInterfaceReceivedData received)
     {
-        if (!TinyhandSerializer.TryDeserialize<PacketPunch>(received.Received, out var punch))
+        if (!TinyhandSerializer.TryDeserialize<PacketPunch>(received.Received.Memory, out var punch))
         {
             return false;
         }
