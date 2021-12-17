@@ -3,6 +3,7 @@
 using System.Text;
 using Arc.Crypto;
 using LP;
+using LP.Block;
 using SimpleCommandLine;
 using Tinyhand;
 
@@ -19,9 +20,21 @@ public class DumpSubcommand : ISimpleCommand<DumpOptions>
     public void Run(DumpOptions options, string[] args)
     {
         var logger = Logger.Priority;
-        logger.Information($"Dump:");
-        logger.Information(System.Environment.OSVersion.ToString());
-        this.Control.NetControl.Terminal.Dump(logger);
+        var target = args.Length > 0 ? args[0] : string.Empty;
+
+        logger.Information($"Dump: {target}");
+
+        if (string.Compare("bytearraypool", target, true) == 0)
+        {
+            var arrayOwner = BlockPool.Rent(123);
+            arrayOwner.Return();
+            BlockPool.Dump(logger);
+        }
+        else
+        {
+            logger.Information(System.Environment.OSVersion.ToString());
+            this.Control.NetControl.Terminal.Dump(logger);
+        }
     }
 
     public Control Control { get; set; }

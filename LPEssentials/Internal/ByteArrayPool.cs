@@ -4,6 +4,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace LP;
 
@@ -351,6 +352,23 @@ public class ByteArrayPool
         }
 
         bucket.SetMaxPool(maxPool);
+    }
+
+    public void Dump(ISimpleLogger logger)
+    {
+        var sb = new StringBuilder();
+        for (var i = 32; i >= 0; i--)
+        {
+            var b = this.buckets[i];
+            if (b == null || b.Queue.Count == 0)
+            {
+                continue;
+            }
+
+            sb.Append($"{b.Queue.Count}({b.ArrayLength}) ");
+        }
+
+        logger.Information(sb.ToString());
     }
 
     /// <summary>
