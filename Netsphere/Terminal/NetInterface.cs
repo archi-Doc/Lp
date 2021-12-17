@@ -610,6 +610,7 @@ WaitForSendCompletionWait:
             {
                 var data = PacketService.GetData(dataMemory);
                 dataId = data.DataId;
+                packetId = data.PacketId;
                 dataMemory = data.DataMemory;
             }
 

@@ -91,11 +91,11 @@ internal static class PacketService
         return (n + 1, PacketService.DataPayloadSize, PacketService.DataFollowingPayloadSize, lastDataSize);
     }
 
-    internal static unsafe (ulong DataId, ReadOnlyMemory<byte> DataMemory) GetData(ReadOnlyMemory<byte> memory)
+    internal static unsafe (ulong DataId, PacketId PacketId, ReadOnlyMemory<byte> DataMemory) GetData(ReadOnlyMemory<byte> memory)
     {
         if (memory.Length < DataHeaderSize)
         {
-            return (0, ReadOnlyMemory<byte>.Empty);
+            return (0, PacketId.Invalid, ReadOnlyMemory<byte>.Empty);
         }
 
         var span = memory.Span;
@@ -108,11 +108,11 @@ internal static class PacketService
         var dataMemory = memory.Slice(DataHeaderSize);
         if (!dataHeader.ChecksumEquals(Arc.Crypto.FarmHash.Hash64(dataMemory.Span)))
         {
-            return (dataHeader.DataId, memory);
+            return (dataHeader.DataId, dataHeader.PacketId, memory);
         }
         else
         {
-            return (dataHeader.DataId, dataMemory);
+            return (dataHeader.DataId, dataHeader.PacketId, dataMemory);
         }
     }
 
