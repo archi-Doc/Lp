@@ -6,9 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Netsphere;
+namespace Netsphere.Responder;
 
-public abstract class ServerResponder<TSend, TReceive> : IServerResponder
+public abstract class NetResponder<TSend, TReceive> : INetResponder
 {
     public ulong GetDataId() => BlockService.GetId<TSend, TReceive>();
 
@@ -32,7 +32,7 @@ public abstract class ServerResponder<TSend, TReceive> : IServerResponder
     }
 }
 
-public interface IServerResponder
+public interface INetResponder
 {
     public ulong GetDataId();
 

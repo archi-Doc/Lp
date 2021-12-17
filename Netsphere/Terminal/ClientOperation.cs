@@ -16,7 +16,7 @@ internal class ClientOperation : NetOperation
     }
 
     public override async Task<NetInterfaceResult> EncryptConnectionAsync(int millisecondsToWait)
-    {// checked
+    {// Checked
         if (this.NetTerminal.IsEncrypted)
         {// Encrypted
             return NetInterfaceResult.Success;
@@ -38,7 +38,7 @@ internal class ClientOperation : NetOperation
 
     public async Task<NetInterfaceResult> SendPacketAsync<TSend>(TSend value, int millisecondsToWait)
         where TSend : IPacket
-    {
+    {// Checked
         if (!value.AllowUnencrypted && !this.NetTerminal.IsEncrypted)
         {
             var result = await this.EncryptConnectionAsync(millisecondsToWait).ConfigureAwait(false);
@@ -66,7 +66,7 @@ internal class ClientOperation : NetOperation
 
     public async Task<(NetInterfaceResult Result, TReceive? Value)> SendPacketAndReceiveAsync<TSend, TReceive>(TSend value, int millisecondsToWait)
         where TSend : IPacket
-    {// checked
+    {// Checked
         if (!value.AllowUnencrypted && !this.NetTerminal.IsEncrypted)
         {
             var result = await this.EncryptConnectionAsync(millisecondsToWait).ConfigureAwait(false);
@@ -93,7 +93,7 @@ internal class ClientOperation : NetOperation
     }
 
     public async Task<NetInterfaceResult> SendAsync<TSend>(TSend value, int millisecondsToWait)
-    {
+    {// Checked
         if (!BlockService.TrySerialize(value, out var owner))
         {
             return NetInterfaceResult.SerializationError;
@@ -118,7 +118,7 @@ internal class ClientOperation : NetOperation
         => await this.SendDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);
 
     public async Task<(NetInterfaceResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(TSend value, int millisecondsToWait)
-    {// checked
+    {// Checked
         if (!BlockService.TrySerialize(value, out var owner))
         {
             return (NetInterfaceResult.SerializationError, default);
@@ -154,13 +154,13 @@ internal class ClientOperation : NetOperation
     }
 
     public async Task<(NetInterfaceResult Result, ReadOnlyMemory<byte> Value)> SendAndReceiveDataAsync(ulong dataId, byte[] data, int millisecondsToWait)
-    {
+    {// Checked
         var response = await this.SendAndReceiveDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);
         return (response.Result, response.Received);
     }
 
     internal async Task<NetInterfaceResult> SendDataAsync(bool encrypt, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner, int millisecondsToWait)
-    {
+    {// Checked
         if (!this.NetTerminal.IsEncrypted && encrypt)
         {
             var result = await this.EncryptConnectionAsync(millisecondsToWait).ConfigureAwait(false);
@@ -204,7 +204,7 @@ internal class ClientOperation : NetOperation
     }
 
     internal async Task<NetInterfaceReceivedData> SendAndReceiveDataAsync(bool encrypt, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner, int millisecondsToWait)
-    {// checked
+    {// Checked
         if (encrypt)
         {
             var result = await this.EncryptConnectionAsync(millisecondsToWait).ConfigureAwait(false);

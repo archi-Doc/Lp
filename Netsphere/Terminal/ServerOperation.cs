@@ -17,7 +17,7 @@ internal class ServerOperation : NetOperation
     }
 
     public unsafe void SendClose()
-    {// checked
+    {// Checked
         var netInterface = this.receiverInterface2 ?? this.receiverInterface;
         if (netInterface == null)
         {

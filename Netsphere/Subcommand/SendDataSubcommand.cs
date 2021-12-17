@@ -40,7 +40,7 @@ public class SendDataSubcommand : ISimpleCommandAsync<SendDataOptions>
             var t = terminal.SendPacketAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
             Logger.Priority.Information($"t: {t.Result}");
 
-            var p2 = TestBlock.Create(2000);
+            var p2 = TestBlock.Create(20000);
             BlockService.TrySerialize(p2, out var owner);
             Logger.Priority.Information($"p2 send: {p2} ({owner.Memory.Length})");
             var t2 = await terminal.SendAndReceiveAsync<TestBlock, TestBlock>(p2);

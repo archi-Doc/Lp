@@ -32,7 +32,7 @@ public class ClientTerminal : NetTerminal
     }
 
     public unsafe override void SendClose()
-    {// checked
+    {// Checked
         if (this.IsClosed)
         {
             return;

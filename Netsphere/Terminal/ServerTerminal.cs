@@ -30,7 +30,7 @@ public class ServerTerminal : NetTerminal
     }
 
     public unsafe override void SendClose()
-    {
+    {// Checked
         if (this.IsClosed)
         {
             return;
@@ -49,7 +49,7 @@ public class ServerTerminal : NetTerminal
     }
 
     public async Task<NetInterfaceReceivedData> ReceiveAsync(int millisecondsToWait = DefaultMillisecondsToWait)
-    {
+    {// Checked
         this.EnsureReceiver();
         if (!this.receiverQueue.TryDequeue(out var operation))
         {
@@ -68,7 +68,7 @@ public class ServerTerminal : NetTerminal
 
     public async Task<NetInterfaceResult> SendPacketAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
         where TSend : IPacket
-    {
+    {// Checked
         if (!this.senderQueue.TryDequeue(out var operation))
         {
             return NetInterfaceResult.NoSender;
@@ -80,7 +80,7 @@ public class ServerTerminal : NetTerminal
     }
 
     public async Task<NetInterfaceResult> SendAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
-    {
+    {// Checked
         if (!this.senderQueue.TryDequeue(out var operation))
         {
             return NetInterfaceResult.NoSender;
@@ -92,7 +92,7 @@ public class ServerTerminal : NetTerminal
     }
 
     public async Task<NetInterfaceResult> SendDataAsync(ulong dataId, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
-    {
+    {// Checked
         if (!this.senderQueue.TryDequeue(out var operation))
         {
             return NetInterfaceResult.NoSender;
@@ -104,7 +104,7 @@ public class ServerTerminal : NetTerminal
     }
 
     public void EnsureReceiver()
-    {
+    {// Checked
         while (this.receiverQueue.Count < this.ReceiverNumber)
         {
             this.receiverQueue.Enqueue(new ServerOperation(this));
@@ -112,14 +112,12 @@ public class ServerTerminal : NetTerminal
     }
 
     public void ClearSender()
-    {
+    {// Checked
         while (this.senderQueue.TryDequeue(out var operation))
         {
             operation.Dispose();
         }
     }
-
-    internal ServerOperation CreateOperation() => new ServerOperation(this);
 
     public ushort ReceiverNumber { get; private set; } = DefaultReceiverNumber;
 

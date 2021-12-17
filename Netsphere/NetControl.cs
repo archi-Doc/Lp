@@ -16,7 +16,7 @@ global using ValueLink;
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using DryIoc;
-using Netsphere;
+using Netsphere.Responder;
 using SimpleCommandLine;
 
 namespace Netsphere;
@@ -121,7 +121,7 @@ public class NetControl
         this.Alternative?.SetServerTerminalDelegate(@delegate);
     }
 
-    public bool AddResponder(IServerResponder responder)
+    public bool AddResponder(INetResponder responder)
     {
         return this.Respondes.TryAdd(responder.GetDataId(), responder);
     }
@@ -140,7 +140,7 @@ public class NetControl
 
     internal Terminal? Alternative { get; }
 
-    internal ConcurrentDictionary<ulong, IServerResponder> Respondes { get; } = new();
+    internal ConcurrentDictionary<ulong, INetResponder> Respondes { get; } = new();
 
     private static Container containerInstance = default!;
 
