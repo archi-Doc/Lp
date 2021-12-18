@@ -23,7 +23,7 @@ public class NetsphereOptions
     public bool EnableLogger { get; set; } = false;
 
     [SimpleOption("test", null, "Enable test functions")]
-    public bool EnablTest { get; set; } = false;
+    public bool EnableTest { get; set; } = false;
 
     public override string ToString()
     {

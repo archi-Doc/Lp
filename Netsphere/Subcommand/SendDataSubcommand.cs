@@ -50,7 +50,7 @@ public class SendDataSubcommand : ISimpleCommandAsync<SendDataOptions>
 
             p2 = TestPacket.Create(2000);
             BlockService.TrySerialize(p2, out owner);
-            Logger.Priority.Information($"p2 send: {p2} ({owner.Memory.Length})");
+            Logger.Priority.Information($"p2b send: {p2} ({owner.Memory.Length})");
             var t3 = await terminal.SendAndReceiveAsync<TestPacket, TestPacket>(p2);
             Logger.Priority.Information($"t2 received: {t2.Value}");
             Logger.Priority.Information($"t3 received: {t3.Value}");
