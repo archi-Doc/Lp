@@ -40,18 +40,18 @@ public class SendDataSubcommand : ISimpleCommandAsync<SendDataOptions>
             var t = terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
             Logger.Priority.Information($"t: {t.Result}");
 
-            // var t5 = terminal.SendPacketAndReceiveAsync<TestPacket, TestPacket>(TestPacket.Create(11));
-            // Logger.Priority.Information($"t5: {t5.Result}");
+            var t5 = terminal.SendPacketAndReceiveAsync<TestPacket, TestPacket>(TestPacket.Create(11));
+            Logger.Priority.Information($"t5: {t5.Result}");
 
-            var p2 = TestPacket.Create(20000);
+            var p2 = TestBlock.Create(20000);
             BlockService.TrySerialize(p2, out var owner);
             Logger.Priority.Information($"p2 send: {p2} ({owner.Memory.Length})");
-            var t2 = await terminal.SendAndReceiveAsync<TestPacket, TestPacket>(p2);
+            var t2 = await terminal.SendAndReceiveAsync<TestBlock, TestBlock>(p2);
 
-            p2 = TestPacket.Create(2000);
+            p2 = TestBlock.Create(2000);
             BlockService.TrySerialize(p2, out owner);
             Logger.Priority.Information($"p2b send: {p2} ({owner.Memory.Length})");
-            var t3 = await terminal.SendAndReceiveAsync<TestPacket, TestPacket>(p2);
+            var t3 = await terminal.SendAndReceiveAsync<TestBlock, TestBlock>(p2);
             Logger.Priority.Information($"t2 received: {t2.Value}");
             Logger.Priority.Information($"t3 received: {t3.Value}");
 

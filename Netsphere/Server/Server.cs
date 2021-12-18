@@ -98,12 +98,12 @@ public class Server
 
     private bool ProcessEssential_Test(NetInterfaceReceivedData received)
     {
-        if (!TinyhandSerializer.TryDeserialize<TestPacket>(received.Received.Memory, out var punch))
+        if (!TinyhandSerializer.TryDeserialize<TestPacket>(received.Received.Memory, out var r))
         {
             return false;
         }
 
-        var response = TestPacket.Create(111);
+        var response = TestPacket.Create(2000);
         var task = this.NetTerminal.SendPacketAsync(response);
         return true;
     }
