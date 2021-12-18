@@ -55,6 +55,8 @@ public struct NetReceivedData
         this.Received = default;
     }
 
+    public void Return() => this.Received.Return();
+
     public NetResult Result;
     public PacketId PacketId;
     public ulong DataId;

@@ -247,6 +247,10 @@ public class Terminal
         {
             this.ProcessUnmanagedRecv_Ping(owner, endpoint, ref header);
         }
+        else if (header.Id == PacketId.GetNodeInformation)
+        {
+            this.ProcessUnmanagedRecv_GetNodeInformation(owner, endpoint, ref header);
+        }
         else
         {// Not supported
             this.TerminalLogger?.Error($"Unhandled: {header.Gene.To4Hex()} - {header.Id}");
@@ -313,6 +317,21 @@ public class Terminal
         var response = new PacketPingResponse(new(endpoint.Address, (ushort)endpoint.Port, 0), this.NetBase.NodeName);
         var secondGene = GenePool.NextGene(header.Gene);
         this.TerminalLogger?.Information($"Ping Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
+
+        PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var packetOwner);
+        this.AddRawSend(endpoint, packetOwner);
+    }
+
+    internal void ProcessUnmanagedRecv_GetNodeInformation(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
+    {
+        if (!TinyhandSerializer.TryDeserialize<PacketGetNodeInformation>(owner.Memory, out var packet))
+        {
+            return;
+        }
+
+        var response = new PacketGetNodeInformationResponse(this.NetStatus.GetMyNodeInformation());
+        var secondGene = GenePool.NextGene(header.Gene);
+        this.TerminalLogger?.Information($"GetNodeInformation Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
         PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var packetOwner);
         this.AddRawSend(endpoint, packetOwner);

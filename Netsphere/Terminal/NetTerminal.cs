@@ -77,7 +77,7 @@ public partial class NetTerminal : IDisposable
 
     public NodeAddress NodeAddress { get; }
 
-    public NodeInformation? NodeInformation { get; }
+    public NodeInformation? NodeInformation { get; protected set; }
 
     internal void CreateHeader(out PacketHeader header, ulong gene)
     {
@@ -197,7 +197,7 @@ public partial class NetTerminal : IDisposable
             Hash.Sha3_384Pool.Return(sha);
 
             this.GenePool.SetEmbryo(this.embryo);
-            // this.TerminalLogger?.Information($"First gene {this.GenePool.GetSequential().ToString()}");
+            this.TerminalLogger?.Information($"First gene {this.GenePool.GetSequential().ToString()}");
         }
 
         return NetResult.Success;

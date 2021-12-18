@@ -14,13 +14,33 @@ public class ClientTerminal : NetTerminal
     {// NodeInformation: Managed
     }
 
+    public async Task<NetResult> UnsafeGetNodeInformation(int millisecondsToWait = DefaultMillisecondsToWait)
+    {
+        if (this.IsEncrypted || this.NodeInformation != null)
+        {// Encrypted
+            return NetResult.Success;
+        }
+
+        using (var operation = this.CreateOperation())
+        {
+            var r = await operation.SendPacketAndReceiveAsync<PacketGetNodeInformation, PacketGetNodeInformationResponse>(new(), millisecondsToWait);
+            if (r.Result != NetResult.Success)
+            {
+                return r.Result;
+            }
+
+            this.NodeInformation = Netsphere.NodeInformation.Merge(this.NodeAddress, r.Value!.Node);
+            return NetResult.Success;
+        }
+    }
+
     public override async Task<NetResult> EncryptConnectionAsync(int millisecondsToWait = DefaultMillisecondsToWait)
     {
         if (this.IsEncrypted)
         {// Encrypted
             return NetResult.Success;
         }
-        else if (this.NodeInformation == null)
+        else if (this.NodeInformation == null && !this.Terminal.NetBase.AllowUnsafeConnection)
         {// Unmanaged
             return NetResult.NoNodeInformation;
         }

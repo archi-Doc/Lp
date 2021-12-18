@@ -21,7 +21,7 @@ internal class ClientOperation : NetOperation
         {// Encrypted
             return NetResult.Success;
         }
-        else if (this.NetTerminal.NodeInformation == null)
+        else if (this.NetTerminal.NodeInformation == null && !this.Terminal.NetBase.AllowUnsafeConnection)
         {// Unmanaged
             return NetResult.NoNodeInformation;
         }
@@ -90,6 +90,7 @@ internal class ClientOperation : NetOperation
             {
                 // PacketId.Reserve
                 TinyhandSerializer.TryDeserialize<PacketReserve>(response.Received.Memory, out var reserve);
+                response.Return();
                 if (reserve == null)
                 {
                     return new(NetResult.DeserializationError, default);
@@ -113,11 +114,12 @@ internal class ClientOperation : NetOperation
 
             if (response.Result != NetResult.Success)
             {
-                response.Received.Return();
+                response.Return();
                 return (response.Result, default);
             }
 
             TinyhandSerializer.TryDeserialize<TReceive>(response.Received.Memory, out var r);
+            response.Return();
             if (r == null)
             {
                 return (NetResult.DeserializationError, default);

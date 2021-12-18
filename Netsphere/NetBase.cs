@@ -47,6 +47,8 @@ public class NetBase
 
     public NetsphereOptions NetsphereOptions { get; private set; } = default!;
 
+    public bool AllowUnsafeConnection { get; set; } = false;
+
     public NodePublicKey NodePublicKey { get; private set; } = default!;
 
     public ECDiffieHellman NodePublicEcdh { get; private set; } = default!;

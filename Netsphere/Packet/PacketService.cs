@@ -53,6 +53,8 @@ internal static class PacketService
         PacketId.PunchResponse => true,
         PacketId.Ping => true,
         PacketId.PingResponse => true,
+        PacketId.GetNodeInformation => true,
+        PacketId.GetNodeInformationResponse => true,
         _ => false,
     };
 

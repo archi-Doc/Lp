@@ -26,9 +26,13 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
 
         Logger.Priority.Information($"SendData: {node.ToString()}");
 
-        var nodeInformation = NodeInformation.Alternative;
-        using (var terminal = this.NetControl.Terminal.Create(nodeInformation))
+        // var nodeInformation = NodeInformation.Alternative;
+        using (var terminal = this.NetControl.Terminal.Create(node))
         {
+            await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(new PacketPunch());
+
+            await terminal.UnsafeGetNodeInformation();
+
             var p = new PacketPunch(null);
 
             var result = await terminal.EncryptConnectionAsync();
@@ -37,11 +41,13 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
                 return;
             }
 
+            var sw = Stopwatch.StartNew();
             var t = terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
-            Logger.Priority.Information($"t: {t.Result}");
+            Logger.Priority.Information($"t: {t.Result} ({sw.ElapsedMilliseconds} ms)");
 
+            sw.Restart();
             var t5 = terminal.SendPacketAndReceiveAsync<TestPacket, TestPacket>(TestPacket.Create(11));
-            Logger.Priority.Information($"t5: {t5.Result}");
+            Logger.Priority.Information($"t5: {t5.Result} ({sw.ElapsedMilliseconds} ms)");
 
             var p2 = TestBlock.Create(20000);
             BlockService.TrySerialize(p2, out var owner);

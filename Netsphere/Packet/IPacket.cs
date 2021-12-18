@@ -25,8 +25,8 @@ public enum PacketId : byte
     PunchResponse,
     Ping,
     PingResponse,
-    GetNode,
-    GetNodeResponse,
+    GetNodeInformation,
+    GetNodeInformationResponse,
 }
 
 /// <summary>
