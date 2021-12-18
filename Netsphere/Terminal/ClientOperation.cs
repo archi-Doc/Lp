@@ -15,20 +15,20 @@ internal class ClientOperation : NetOperation
     {
     }
 
-    public override async Task<NetInterfaceResult> EncryptConnectionAsync(int millisecondsToWait)
+    public override async Task<NetResult> EncryptConnectionAsync(int millisecondsToWait)
     {// Checked
         if (this.NetTerminal.IsEncrypted)
         {// Encrypted
-            return NetInterfaceResult.Success;
+            return NetResult.Success;
         }
         else if (this.NetTerminal.NodeInformation == null)
         {// Unmanaged
-            return NetInterfaceResult.NoNodeInformation;
+            return NetResult.NoNodeInformation;
         }
 
         var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
         var response = await this.SendPacketAndReceiveAsync<PacketEncrypt, PacketEncryptResponse>(p, millisecondsToWait).ConfigureAwait(false);
-        if (response.Result != NetInterfaceResult.Success)
+        if (response.Result != NetResult.Success)
         {
             return response.Result;
         }
@@ -36,15 +36,15 @@ internal class ClientOperation : NetOperation
         return this.NetTerminal.CreateEmbryo(p.Salt);
     }
 
-    public async Task<NetInterfaceResult> SendPacketAsync<TSend>(TSend value, int millisecondsToWait)
+    public async Task<NetResult> SendPacketAsync<TSend>(TSend value, int millisecondsToWait)
         where TSend : IPacket
     {// Checked
         if (!value.AllowUnencrypted && !this.NetTerminal.IsEncrypted)
         {
             var result = await this.EncryptConnectionAsync(millisecondsToWait).ConfigureAwait(false);
-            if (result != NetInterfaceResult.Success)
+            if (result != NetResult.Success)
             {
-                return NetInterfaceResult.NoEncryptedConnection;
+                return NetResult.NoEncryptedConnection;
             }
         }
 
@@ -64,13 +64,13 @@ internal class ClientOperation : NetOperation
         }
     }
 
-    public async Task<(NetInterfaceResult Result, TReceive? Value)> SendPacketAndReceiveAsync<TSend, TReceive>(TSend value, int millisecondsToWait)
+    public async Task<(NetResult Result, TReceive? Value)> SendPacketAndReceiveAsync<TSend, TReceive>(TSend value, int millisecondsToWait)
         where TSend : IPacket
     {// Checked
         if (!value.AllowUnencrypted && !this.NetTerminal.IsEncrypted)
         {
             var result = await this.EncryptConnectionAsync(millisecondsToWait).ConfigureAwait(false);
-            if (result != NetInterfaceResult.Success)
+            if (result != NetResult.Success)
             {
                 return (result, default);
             }
@@ -92,7 +92,7 @@ internal class ClientOperation : NetOperation
                 TinyhandSerializer.TryDeserialize<PacketReserve>(response.Received.Memory, out var reserve);
                 if (reserve == null)
                 {
-                    return new(NetInterfaceResult.DeserializationError, default);
+                    return new(NetResult.DeserializationError, default);
                 }
 
                 var netInterface2 = NetInterface<PacketReserveResponse, byte[]>.CreateReserve(this, reserve);
@@ -111,7 +111,7 @@ internal class ClientOperation : NetOperation
                 }
             }
 
-            if (response.Result != NetInterfaceResult.Success)
+            if (response.Result != NetResult.Success)
             {
                 response.Received.Return();
                 return (response.Result, default);
@@ -120,10 +120,10 @@ internal class ClientOperation : NetOperation
             TinyhandSerializer.TryDeserialize<TReceive>(response.Received.Memory, out var r);
             if (r == null)
             {
-                return (NetInterfaceResult.DeserializationError, default);
+                return (NetResult.DeserializationError, default);
             }
 
-            return (NetInterfaceResult.Success, r);
+            return (NetResult.Success, r);
         }
         finally
         {
@@ -131,14 +131,14 @@ internal class ClientOperation : NetOperation
         }
     }
 
-    public async Task<NetInterfaceResult> SendAsync<TSend>(TSend value, int millisecondsToWait)
+    public async Task<NetResult> SendAsync<TSend>(TSend value, int millisecondsToWait)
     {// Checked
         if (!BlockService.TrySerialize(value, out var owner))
         {
-            return NetInterfaceResult.SerializationError;
+            return NetResult.SerializationError;
         }
 
-        Task<NetInterfaceResult> task;
+        Task<NetResult> task;
         if (value is IPacket packet)
         {
             task = this.SendDataAsync(!packet.AllowUnencrypted, packet.PacketId, (ulong)packet.PacketId, owner, millisecondsToWait);
@@ -153,17 +153,17 @@ internal class ClientOperation : NetOperation
         return await task.ConfigureAwait(false);
     }
 
-    public async Task<NetInterfaceResult> SendDataAsync(ulong dataId, byte[] data, int millisecondsToWait)
+    public async Task<NetResult> SendDataAsync(ulong dataId, byte[] data, int millisecondsToWait)
         => await this.SendDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);
 
-    public async Task<(NetInterfaceResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(TSend value, int millisecondsToWait)
+    public async Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(TSend value, int millisecondsToWait)
     {// Checked
         if (!BlockService.TrySerialize(value, out var owner))
         {
-            return (NetInterfaceResult.SerializationError, default);
+            return (NetResult.SerializationError, default);
         }
 
-        Task<NetInterfaceReceivedData> task;
+        Task<NetReceivedData> task;
         ulong dataId;
         if (value is IPacket packet)
         {
@@ -179,31 +179,31 @@ internal class ClientOperation : NetOperation
         owner.Return();
 
         var response = await task.ConfigureAwait(false);
-        if (response.Result != NetInterfaceResult.Success)
+        if (response.Result != NetResult.Success)
         {
             return (response.Result, default);
         }
 
         if (!TinyhandSerializer.TryDeserialize<TReceive>(response.Received.Memory, out var received))
         {
-            return (NetInterfaceResult.DeserializationError, default);
+            return (NetResult.DeserializationError, default);
         }
 
         return (response.Result, received);
     }
 
-    public async Task<(NetInterfaceResult Result, ByteArrayPool.MemoryOwner Value)> SendAndReceiveDataAsync(ulong dataId, byte[] data, int millisecondsToWait)
+    public async Task<(NetResult Result, ByteArrayPool.MemoryOwner Value)> SendAndReceiveDataAsync(ulong dataId, byte[] data, int millisecondsToWait)
     {// Checked
         var response = await this.SendAndReceiveDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);
         return (response.Result, response.Received);
     }
 
-    internal async Task<NetInterfaceResult> SendDataAsync(bool encrypt, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner, int millisecondsToWait)
+    internal async Task<NetResult> SendDataAsync(bool encrypt, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner, int millisecondsToWait)
     {// Checked
         if (!this.NetTerminal.IsEncrypted && encrypt)
         {
             var result = await this.EncryptConnectionAsync(millisecondsToWait).ConfigureAwait(false);
-            if (result != NetInterfaceResult.Success)
+            if (result != NetResult.Success)
             {
                 return result;
             }
@@ -216,14 +216,14 @@ internal class ClientOperation : NetOperation
         {// Split into multiple packets. Send PacketReserve.
             var reserve = new PacketReserve(owner.Memory.Length);
             var received = await this.SendPacketAndReceiveAsync<PacketReserve, PacketReserveResponse>(reserve, millisecondsToWait).ConfigureAwait(false);
-            if (received.Result != NetInterfaceResult.Success)
+            if (received.Result != NetResult.Success)
             {
                 return received.Result;
             }
         }
         else
         {// Block size limit exceeded.
-            return NetInterfaceResult.BlockSizeLimit;
+            return NetResult.BlockSizeLimit;
         }
 
         var netInterface = NetInterface<byte[], object>.CreateData(this, packetId, dataId, owner, false, out var interfaceResult);
@@ -242,12 +242,12 @@ internal class ClientOperation : NetOperation
         }
     }
 
-    internal async Task<NetInterfaceReceivedData> SendAndReceiveDataAsync(bool encrypt, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner, int millisecondsToWait)
+    internal async Task<NetReceivedData> SendAndReceiveDataAsync(bool encrypt, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner, int millisecondsToWait)
     {// Checked
         if (encrypt)
         {
             var result = await this.EncryptConnectionAsync(millisecondsToWait).ConfigureAwait(false);
-            if (result != NetInterfaceResult.Success)
+            if (result != NetResult.Success)
             {
                 return new(result);
             }
@@ -260,14 +260,14 @@ internal class ClientOperation : NetOperation
         {// Split into multiple packets. Send PacketReserve.
             var reserve = new PacketReserve(owner.Memory.Length);
             var received = await this.SendPacketAndReceiveAsync<PacketReserve, PacketReserveResponse>(reserve, millisecondsToWait).ConfigureAwait(false);
-            if (received.Result != NetInterfaceResult.Success)
+            if (received.Result != NetResult.Success)
             {
                 return new(received.Result);
             }
         }
         else
         {// Block size limit exceeded.
-            return new(NetInterfaceResult.BlockSizeLimit);
+            return new(NetResult.BlockSizeLimit);
         }
 
         var netInterface = NetInterface<byte[], byte[]>.CreateData(this, packetId, dataId, owner, true, out var interfaceResult);
@@ -286,7 +286,7 @@ internal class ClientOperation : NetOperation
                 TinyhandSerializer.TryDeserialize<PacketReserve>(response.Received.Memory, out var reserve);
                 if (reserve == null)
                 {
-                    return new(NetInterfaceResult.DeserializationError);
+                    return new(NetResult.DeserializationError);
                 }
 
                 var netInterface2 = NetInterface<PacketReserveResponse, byte[]>.CreateReserve(this, reserve);

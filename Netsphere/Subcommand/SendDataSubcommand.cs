@@ -32,7 +32,7 @@ public class SendDataSubcommand : ISimpleCommandAsync<SendDataOptions>
             var p = new PacketPunch(null);
 
             var result = await terminal.EncryptConnectionAsync();
-            if (result != NetInterfaceResult.Success)
+            if (result != NetResult.Success)
             {
                 return;
             }

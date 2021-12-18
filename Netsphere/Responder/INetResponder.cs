@@ -14,7 +14,7 @@ public abstract class NetResponder<TSend, TReceive> : INetResponder
 
     public virtual TReceive? Respond(TSend value) => default;
 
-    public bool Respond(ServerTerminal terminal, NetInterfaceReceivedData received)
+    public bool Respond(ServerTerminal terminal, NetReceivedData received)
     {
         if (!TinyhandSerializer.TryDeserialize<TSend>(received.Received.Memory, out var t))
         {
@@ -36,5 +36,5 @@ public interface INetResponder
 {
     public ulong GetDataId();
 
-    public bool Respond(ServerTerminal terminal, NetInterfaceReceivedData received);
+    public bool Respond(ServerTerminal terminal, NetReceivedData received);
 }

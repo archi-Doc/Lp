@@ -52,7 +52,7 @@ public partial class NetTerminal : IDisposable
 
     // public virtual NetInterfaceResult EncryptConnection() => NetInterfaceResult.NoEncryptedConnection;
 
-    public virtual async Task<NetInterfaceResult> EncryptConnectionAsync(int millisecondsToWait = DefaultMillisecondsToWait) => NetInterfaceResult.NoEncryptedConnection;
+    public virtual async Task<NetResult> EncryptConnectionAsync(int millisecondsToWait = DefaultMillisecondsToWait) => NetResult.NoEncryptedConnection;
 
     public virtual void SendClose()
     {
@@ -151,7 +151,7 @@ public partial class NetTerminal : IDisposable
         }
     }
 
-    internal NetInterfaceResult ReportResult(NetInterfaceResult result)
+    internal NetResult ReportResult(NetResult result)
     {
         return result;
     }
@@ -162,24 +162,24 @@ public partial class NetTerminal : IDisposable
 
     internal ISimpleLogger? TerminalLogger => this.Terminal.TerminalLogger;
 
-    internal NetInterfaceResult CreateEmbryo(ulong salt)
+    internal NetResult CreateEmbryo(ulong salt)
     {
         if (this.NodeInformation == null)
         {
-            return NetInterfaceResult.NoNodeInformation;
+            return NetResult.NoNodeInformation;
         }
 
         lock (this.SyncObject)
         {
             if (this.embryo != null)
             {
-                return NetInterfaceResult.Success;
+                return NetResult.Success;
             }
 
             var ecdh = NodeKey.FromPublicKey(this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
             if (ecdh == null)
             {
-                return NetInterfaceResult.NoNodeInformation;
+                return NetResult.NoNodeInformation;
             }
 
             // ulong Salt, byte[] material, ulong Salt
@@ -200,7 +200,7 @@ public partial class NetTerminal : IDisposable
             Logger.Priority.Information($"First gene {this.GenePool.GetSequential().ToString()}");
         }
 
-        return NetInterfaceResult.Success;
+        return NetResult.Success;
     }
 
     internal bool TryClean(long currentTicks)

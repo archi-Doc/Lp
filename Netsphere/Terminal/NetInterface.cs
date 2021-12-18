@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Netsphere;
 
-public enum NetInterfaceResult
+public enum NetResult
 {
     Success,
     Timeout,
@@ -29,9 +29,9 @@ public enum NetInterfaceResult
     ReserveError,
 }
 
-public struct NetInterfaceReceivedData
+public struct NetReceivedData
 {
-    public NetInterfaceReceivedData(NetInterfaceResult result, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner received)
+    public NetReceivedData(NetResult result, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner received)
     {
         this.Result = result;
         this.PacketId = packetId;
@@ -39,7 +39,7 @@ public struct NetInterfaceReceivedData
         this.Received = received;
     }
 
-    public NetInterfaceReceivedData(NetInterfaceResult result)
+    public NetReceivedData(NetResult result)
     {
         this.Result = result;
         this.PacketId = PacketId.Invalid;
@@ -47,7 +47,7 @@ public struct NetInterfaceReceivedData
         this.Received = default;
     }
 
-    public NetInterfaceResult Result;
+    public NetResult Result;
     public PacketId PacketId;
     public ulong DataId;
     public ByteArrayPool.MemoryOwner Received;
@@ -67,16 +67,16 @@ public interface INetInterface<TSend> : IDisposable
 
 internal class NetInterface<TSend, TReceive> : NetInterface
 {
-    internal static NetInterface<TSend, TReceive>? CreateData(NetOperation netOperation, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner, bool receive, out NetInterfaceResult interfaceResult)
+    internal static NetInterface<TSend, TReceive>? CreateData(NetOperation netOperation, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner, bool receive, out NetResult interfaceResult)
     {// Send and Receive(optional) NetTerminalGene.
         if (owner.Memory.Length > BlockService.MaxBlockSize)
         {
-            interfaceResult = NetInterfaceResult.BlockSizeLimit;
+            interfaceResult = NetResult.BlockSizeLimit;
             return null;
         }
 
         var netTerminal = netOperation.NetTerminal;
-        interfaceResult = NetInterfaceResult.Success;
+        interfaceResult = NetResult.Success;
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
         var sequentialGenes = netOperation.Get2Genes(); // Send gene
         netTerminal.CreateHeader(out var header, sequentialGenes.First);
@@ -110,11 +110,11 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         return netInterface;
     }
 
-    internal static NetInterface<TSend, TReceive>? CreateValue(NetOperation netOperation, TSend value, PacketId id, bool receive, out NetInterfaceResult interfaceResult)
+    internal static NetInterface<TSend, TReceive>? CreateValue(NetOperation netOperation, TSend value, PacketId id, bool receive, out NetResult interfaceResult)
     {// Send and Receive(optional) NetTerminalGene.
         NetInterface<TSend, TReceive>? netInterface;
         (ulong First, ulong Second) sequentialGenes;
-        interfaceResult = NetInterfaceResult.Success;
+        interfaceResult = NetResult.Success;
 
         var netTerminal = netOperation.NetTerminal;
         netTerminal.CreateHeader(out var header, 0); // Set gene in a later code.
@@ -134,7 +134,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         else
         {// Packet size limit exceeded.
             sendOwner.Return();
-            interfaceResult = NetInterfaceResult.PacketSizeLimit;
+            interfaceResult = NetResult.PacketSizeLimit;
             return null;
         }
 
@@ -373,7 +373,7 @@ public class NetInterface : IDisposable
 
     public NetTerminal NetTerminal { get; }
 
-    public async Task<NetInterfaceResult> WaitForSendCompletionAsync(int millisecondsToWait)
+    public async Task<NetResult> WaitForSendCompletionAsync(int millisecondsToWait)
     {
         var end = Ticks.GetSystem() + Ticks.FromMilliseconds(millisecondsToWait);
 
@@ -382,14 +382,14 @@ public class NetInterface : IDisposable
             if (Ticks.GetSystem() >= end)
             {
                 this.TerminalLogger?.Information($"Send timeout.");
-                return NetInterfaceResult.Timeout;
+                return NetResult.Timeout;
             }
 
             lock (this.NetTerminal.SyncObject)
             {
                 if (this.SendGenes == null)
                 {
-                    return NetInterfaceResult.NoDataToSend;
+                    return NetResult.NoDataToSend;
                 }
 
                 foreach (var x in this.SendGenes)
@@ -400,7 +400,7 @@ public class NetInterface : IDisposable
                     }
                 }
 
-                return NetInterfaceResult.Success;
+                return NetResult.Success;
             }
 
 WaitForSendCompletionWait:
@@ -411,14 +411,14 @@ WaitForSendCompletionWait:
             }
             catch
             {
-                return NetInterfaceResult.Closed;
+                return NetResult.Closed;
             }
         }
 
-        return NetInterfaceResult.Closed;
+        return NetResult.Closed;
     }
 
-    public async Task<NetInterfaceReceivedData> ReceiveAsync(int millisecondsToWait)
+    public async Task<NetReceivedData> ReceiveAsync(int millisecondsToWait)
     {
         ByteArrayPool.MemoryOwner data = default;
         var end = Ticks.GetSystem() + Ticks.FromMilliseconds(millisecondsToWait);
@@ -428,14 +428,14 @@ WaitForSendCompletionWait:
             if (Stopwatch.GetTimestamp() >= end)
             {
                 this.TerminalLogger?.Information($"Receive timeout.");
-                return new NetInterfaceReceivedData(NetInterfaceResult.Timeout);
+                return new NetReceivedData(NetResult.Timeout);
             }
 
             lock (this.NetTerminal.SyncObject)
             {
                 if (this.ReceivedGeneToData(out var packetId, out var dataId, ref data))
                 {
-                    return new NetInterfaceReceivedData(NetInterfaceResult.Success, packetId, dataId, data);
+                    return new NetReceivedData(NetResult.Success, packetId, dataId, data);
                 }
             }
 
@@ -446,11 +446,11 @@ WaitForSendCompletionWait:
             }
             catch
             {
-                return new NetInterfaceReceivedData(NetInterfaceResult.Closed);
+                return new NetReceivedData(NetResult.Closed);
             }
         }
 
-        return new NetInterfaceReceivedData(NetInterfaceResult.Closed);
+        return new NetReceivedData(NetResult.Closed);
     }
 
     internal ISimpleLogger? TerminalLogger => this.Terminal.TerminalLogger;

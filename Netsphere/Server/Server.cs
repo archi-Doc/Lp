@@ -22,7 +22,7 @@ public class Server
             try
             {
                 var received = await terminal.ReceiveAsync(DefaultMillisecondsToWait);
-                if (received.Result == NetInterfaceResult.Success)
+                if (received.Result == NetResult.Success)
                 {// Success
                     // Responder (DataId, RPC)
                     if (this.NetControl.Respondes.TryGetValue(received.DataId, out var responder) &&
@@ -37,9 +37,9 @@ public class Server
                         continue;
                     }
                 }
-                else if (received.Result == NetInterfaceResult.Timeout ||
-                    received.Result == NetInterfaceResult.Closed ||
-                    received.Result == NetInterfaceResult.NoReceiver)
+                else if (received.Result == NetResult.Timeout ||
+                    received.Result == NetResult.Closed ||
+                    received.Result == NetResult.NoReceiver)
                 {
                     break;
                 }
@@ -61,7 +61,7 @@ public class Server
 
     public ServerTerminal NetTerminal { get; private set; } = default!;
 
-    private bool ProcessEssential(NetInterfaceReceivedData received)
+    private bool ProcessEssential(NetReceivedData received)
     {
         if (received.PacketId == PacketId.Punch)
         {
@@ -79,7 +79,7 @@ public class Server
         return false;
     }
 
-    private bool ProcessEssential_Punch(NetInterfaceReceivedData received)
+    private bool ProcessEssential_Punch(NetReceivedData received)
     {
         if (!TinyhandSerializer.TryDeserialize<PacketPunch>(received.Received.Memory, out var punch))
         {
@@ -96,7 +96,7 @@ public class Server
         return true;
     }
 
-    private bool ProcessEssential_Test(NetInterfaceReceivedData received)
+    private bool ProcessEssential_Test(NetReceivedData received)
     {
         if (!TinyhandSerializer.TryDeserialize<TestPacket>(received.Received.Memory, out var r))
         {

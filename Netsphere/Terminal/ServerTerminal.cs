@@ -48,16 +48,16 @@ public class ServerTerminal : NetTerminal
         }
     }
 
-    public async Task<NetInterfaceReceivedData> ReceiveAsync(int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<NetReceivedData> ReceiveAsync(int millisecondsToWait = DefaultMillisecondsToWait)
     {// Checked
         this.EnsureReceiver();
         if (!this.receiverQueue.TryDequeue(out var operation))
         {
-            return new(NetInterfaceResult.NoReceiver);
+            return new(NetResult.NoReceiver);
         }
 
         var received = await operation.ReceiveAsync(millisecondsToWait);
-        if (received.Result != NetInterfaceResult.Success)
+        if (received.Result != NetResult.Success)
         {// Timeout or error
             return received;
         }
@@ -66,12 +66,12 @@ public class ServerTerminal : NetTerminal
         return received;
     }
 
-    public async Task<NetInterfaceResult> SendPacketAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<NetResult> SendPacketAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
         where TSend : IPacket
     {// Checked
         if (!this.senderQueue.TryDequeue(out var operation))
         {
-            return NetInterfaceResult.NoSender;
+            return NetResult.NoSender;
         }
 
         var result = await operation.SendPacketAsync(value, millisecondsToWait);
@@ -79,11 +79,11 @@ public class ServerTerminal : NetTerminal
         return result;
     }
 
-    public async Task<NetInterfaceResult> SendAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<NetResult> SendAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
     {// Checked
         if (!this.senderQueue.TryDequeue(out var operation))
         {
-            return NetInterfaceResult.NoSender;
+            return NetResult.NoSender;
         }
 
         var result = await operation.SendAsync(value, millisecondsToWait);
@@ -91,11 +91,11 @@ public class ServerTerminal : NetTerminal
         return result;
     }
 
-    public async Task<NetInterfaceResult> SendDataAsync(ulong dataId, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<NetResult> SendDataAsync(ulong dataId, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
     {// Checked
         if (!this.senderQueue.TryDequeue(out var operation))
         {
-            return NetInterfaceResult.NoSender;
+            return NetResult.NoSender;
         }
 
         var result = await operation.SendDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);

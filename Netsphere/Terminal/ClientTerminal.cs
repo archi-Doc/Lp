@@ -14,15 +14,15 @@ public class ClientTerminal : NetTerminal
     {// NodeInformation: Managed
     }
 
-    public override async Task<NetInterfaceResult> EncryptConnectionAsync(int millisecondsToWait = DefaultMillisecondsToWait)
+    public override async Task<NetResult> EncryptConnectionAsync(int millisecondsToWait = DefaultMillisecondsToWait)
     {
         if (this.IsEncrypted)
         {// Encrypted
-            return NetInterfaceResult.Success;
+            return NetResult.Success;
         }
         else if (this.NodeInformation == null)
         {// Unmanaged
-            return NetInterfaceResult.NoNodeInformation;
+            return NetResult.NoNodeInformation;
         }
 
         using (var operation = this.CreateOperation())
@@ -59,7 +59,7 @@ public class ClientTerminal : NetTerminal
         }
     }
 
-    public async Task<NetInterfaceResult> SendPacketAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<NetResult> SendPacketAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
         where TSend : IPacket
     {
         using (var operation = this.CreateOperation())
@@ -68,7 +68,7 @@ public class ClientTerminal : NetTerminal
         }
     }
 
-    public async Task<(NetInterfaceResult Result, TReceive? Value)> SendPacketAndReceiveAsync<TSend, TReceive>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<(NetResult Result, TReceive? Value)> SendPacketAndReceiveAsync<TSend, TReceive>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
         where TSend : IPacket
     {
         using (var operation = this.CreateOperation())
@@ -77,7 +77,7 @@ public class ClientTerminal : NetTerminal
         }
     }
 
-    public async Task<NetInterfaceResult> SendAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<NetResult> SendAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
     {
         using (var operation = this.CreateOperation())
         {
@@ -85,7 +85,7 @@ public class ClientTerminal : NetTerminal
         }
     }
 
-    public async Task<NetInterfaceResult> SendDataAsync(ulong dataId, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<NetResult> SendDataAsync(ulong dataId, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
     {
         using (var operation = this.CreateOperation())
         {
@@ -93,7 +93,7 @@ public class ClientTerminal : NetTerminal
         }
     }
 
-    public async Task<(NetInterfaceResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
     {// checked
         using (var operation = this.CreateOperation())
         {
@@ -101,7 +101,7 @@ public class ClientTerminal : NetTerminal
         }
     }
 
-    public async Task<(NetInterfaceResult Result, ByteArrayPool.MemoryOwner Value)> SendAndReceiveDataAsync(ulong dataId, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<(NetResult Result, ByteArrayPool.MemoryOwner Value)> SendAndReceiveDataAsync(ulong dataId, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
     {
         using (var operation = this.CreateOperation())
         {
