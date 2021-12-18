@@ -84,7 +84,7 @@ internal class ClientOperation : NetOperation
 
         try
         {
-            var response = await netInterface.ReceiveDataAsync(millisecondsToWait).ConfigureAwait(false);
+            var response = await netInterface.ReceiveAsync(millisecondsToWait).ConfigureAwait(false);
 
             if (response.PacketId == PacketId.Reserve)
             {
@@ -103,7 +103,7 @@ internal class ClientOperation : NetOperation
 
                 try
                 {
-                    response = await netInterface2.ReceiveDataAsync(millisecondsToWait).ConfigureAwait(false);
+                    response = await netInterface2.ReceiveAsync(millisecondsToWait).ConfigureAwait(false);
                 }
                 finally
                 {
@@ -278,7 +278,7 @@ internal class ClientOperation : NetOperation
 
         try
         {
-            var response = await netInterface.ReceiveDataAsync(millisecondsToWait).ConfigureAwait(false);
+            var response = await netInterface.ReceiveAsync(millisecondsToWait).ConfigureAwait(false);
 
             if (response.PacketId == PacketId.Reserve)
             {
@@ -297,7 +297,7 @@ internal class ClientOperation : NetOperation
 
                 try
                 {
-                    response = await netInterface2.ReceiveDataAsync(millisecondsToWait).ConfigureAwait(false);
+                    response = await netInterface2.ReceiveAsync(millisecondsToWait).ConfigureAwait(false);
                 }
                 finally
                 {

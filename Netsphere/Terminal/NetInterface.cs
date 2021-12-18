@@ -278,54 +278,6 @@ internal class NetInterface<TSend, TReceive> : NetInterface
     {
     }
 
-    /*public NetInterfaceResult Receive(out TReceive? value, int millisecondsToWait = 2000)
-    {
-        var result = this.ReceiveCore(out var data, millisecondsToWait);
-        if (result != NetInterfaceResult.Success)
-        {
-            value = default;
-            return result;
-        }
-
-        TinyhandSerializer.TryDeserialize<TReceive>(data, out value);
-        if (value == null)
-        {
-            return NetInterfaceResult.DeserializationError;
-        }
-
-        return result;
-    }*/
-
-    public async Task<(NetInterfaceResult Result, TReceive? Value)> ReceiveAsync(int millisecondsToWait = 2000)
-    {
-        var r = await this.ReceiveAsyncCore(millisecondsToWait).ConfigureAwait(false);
-        if (r.Result != NetInterfaceResult.Success)
-        {
-            r.Received.Return();
-            return (r.Result, default);
-        }
-
-        TinyhandSerializer.TryDeserialize<TReceive>(r.Received.Memory, out var value);
-        if (value == null)
-        {
-            return (NetInterfaceResult.DeserializationError, default);
-        }
-
-        return (NetInterfaceResult.Success, value);
-    }
-
-    public async Task<NetInterfaceReceivedData> ReceiveDataAsync(int millisecondsToWait = 2000)
-    {
-        var r = await this.ReceiveAsyncCore(millisecondsToWait).ConfigureAwait(false);
-        return r;
-    }
-
-    public NetInterfaceResult WaitForSendCompletion(int millisecondsToWait = 2000)
-        => this.WaitForSendCompletionCore(millisecondsToWait);
-
-    public Task<NetInterfaceResult> WaitForSendCompletionAsync(int millisecondsToWait = 2000)
-        => this.WaitForSendCompletionAsyncCore(millisecondsToWait);
-
     internal bool SetSend<TValue>(TValue value)
         where TValue : IPacket
     {
@@ -421,61 +373,13 @@ public class NetInterface : IDisposable
 
     public NetTerminal NetTerminal { get; }
 
-    protected NetInterfaceResult WaitForSendCompletionCore(int millisecondsToWait)
+    public async Task<NetInterfaceResult> WaitForSendCompletionAsync(int millisecondsToWait)
     {
-        var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);
+        var end = Ticks.GetSystem() + Ticks.FromMilliseconds(millisecondsToWait);
 
         while (this.Terminal.Core?.IsTerminated == false && this.NetTerminal.IsClosed == false)
         {
-            if (Stopwatch.GetTimestamp() >= end)
-            {
-                this.TerminalLogger?.Information($"Send timeout.");
-                return NetInterfaceResult.Timeout;
-            }
-
-            lock (this.NetTerminal.SyncObject)
-            {
-                if (this.SendGenes == null)
-                {
-                    return NetInterfaceResult.NoDataToSend;
-                }
-
-                foreach (var x in this.SendGenes)
-                {
-                    if (!x.IsSendComplete)
-                    {
-                        goto WaitForSendCompletionWait;
-                    }
-                }
-
-                return NetInterfaceResult.Success;
-            }
-
-WaitForSendCompletionWait:
-            try
-            {
-                var cancelled = this.Terminal.Core?.CancellationToken.WaitHandle.WaitOne(1);
-                if (cancelled != false)
-                {
-                    return NetInterfaceResult.Closed;
-                }
-            }
-            catch
-            {
-                return NetInterfaceResult.Closed;
-            }
-        }
-
-        return NetInterfaceResult.Closed;
-    }
-
-    protected async Task<NetInterfaceResult> WaitForSendCompletionAsyncCore(int millisecondsToWait)
-    {
-        var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);
-
-        while (this.Terminal.Core?.IsTerminated == false && this.NetTerminal.IsClosed == false)
-        {
-            if (Stopwatch.GetTimestamp() >= end)
+            if (Ticks.GetSystem() >= end)
             {
                 this.TerminalLogger?.Information($"Send timeout.");
                 return NetInterfaceResult.Timeout;
@@ -514,49 +418,10 @@ WaitForSendCompletionWait:
         return NetInterfaceResult.Closed;
     }
 
-    /*protected NetInterfaceResult ReceiveCore(out PacketId packetId, out ReadOnlyMemory<byte> data, int millisecondsToWait)
-    {
-        packetId = PacketId.Invalid;
-        data = default;
-        var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);
-
-        while (this.Terminal.Core?.IsTerminated == false && this.NetTerminal.IsClosed == false)
-        {
-            if (Stopwatch.GetTimestamp() >= end)
-            {
-                this.TerminalLogger?.Information($"Receive timeout.");
-                return NetInterfaceResult.Timeout;
-            }
-
-            lock (this.NetTerminal.SyncObject)
-            {
-                if (this.ReceivedGeneToData(out packetId, ref data))
-                {
-                    return NetInterfaceResult.Success;
-                }
-            }
-
-            try
-            {
-                var cancelled = this.Terminal.Core?.CancellationToken.WaitHandle.WaitOne(1);
-                if (cancelled != false)
-                {
-                    return NetInterfaceResult.Closed;
-                }
-            }
-            catch
-            {
-                return NetInterfaceResult.Closed;
-            }
-        }
-
-        return NetInterfaceResult.Closed;
-    }*/
-
-    private protected async Task<NetInterfaceReceivedData> ReceiveAsyncCore(int millisecondsToWait)
+    public async Task<NetInterfaceReceivedData> ReceiveAsync(int millisecondsToWait)
     {
         ByteArrayPool.MemoryOwner data = default;
-        var end = Stopwatch.GetTimestamp() + (long)(millisecondsToWait * (double)Stopwatch.Frequency / 1000);
+        var end = Ticks.GetSystem() + Ticks.FromMilliseconds(millisecondsToWait);
 
         while (this.Terminal.Core?.IsTerminated == false && this.NetTerminal.IsClosed == false)
         {

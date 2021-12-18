@@ -43,7 +43,7 @@ internal class ServerOperation : NetOperation
             throw new InvalidOperationException();
         }
 
-        var received = await this.receiverInterface.ReceiveDataAsync(millisecondsToWait).ConfigureAwait(false);
+        var received = await this.receiverInterface.ReceiveAsync(millisecondsToWait).ConfigureAwait(false);
         if (received.Result != NetInterfaceResult.Success)
         {// Timeout/Error
             return received;
@@ -66,7 +66,7 @@ internal class ServerOperation : NetOperation
 
         this.receiverInterface.SetSend(new PacketReserveResponse());
 
-        received = await this.receiverInterface2.ReceiveDataAsync(millisecondsToWait).ConfigureAwait(false);
+        received = await this.receiverInterface2.ReceiveAsync(millisecondsToWait).ConfigureAwait(false);
         return received;
     }
 
@@ -148,7 +148,7 @@ internal class ServerOperation : NetOperation
         netInterface = NetInterface<object, byte[]>.CreateReceive(this);
         try
         {
-            var received = await netInterface.ReceiveDataAsync(millisecondsToWait).ConfigureAwait(false);
+            var received = await netInterface.ReceiveAsync(millisecondsToWait).ConfigureAwait(false);
             if (received.Result != NetInterfaceResult.Success)
             {// Timeout/Error
                 return received.Result;
