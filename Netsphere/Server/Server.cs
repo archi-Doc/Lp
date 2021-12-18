@@ -104,7 +104,7 @@ public class Server
         }
 
         var response = TestPacket.Create(2000);
-        var task = this.NetTerminal.SendPacketAsync(response);
+        var task = this.NetTerminal.SendAsync(response);
         return true;
     }
 }

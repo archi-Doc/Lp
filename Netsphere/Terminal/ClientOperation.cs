@@ -84,7 +84,46 @@ internal class ClientOperation : NetOperation
 
         try
         {
-            return await netInterface.ReceiveAsync(millisecondsToWait).ConfigureAwait(false);
+            var response = await netInterface.ReceiveDataAsync(millisecondsToWait).ConfigureAwait(false);
+
+            if (response.PacketId == PacketId.Reserve)
+            {
+                // PacketId.Reserve
+                TinyhandSerializer.TryDeserialize<PacketReserve>(response.Received.Memory, out var reserve);
+                if (reserve == null)
+                {
+                    return new(NetInterfaceResult.DeserializationError, default);
+                }
+
+                var netInterface2 = NetInterface<PacketReserveResponse, byte[]>.CreateReserve(this, reserve);
+                if (netInterface2 == null)
+                {
+                    return new(interfaceResult, default);
+                }
+
+                try
+                {
+                    response = await netInterface2.ReceiveDataAsync(millisecondsToWait).ConfigureAwait(false);
+                }
+                finally
+                {
+                    netInterface2.Dispose();
+                }
+            }
+
+            if (response.Result != NetInterfaceResult.Success)
+            {
+                response.Received.Return();
+                return (response.Result, default);
+            }
+
+            TinyhandSerializer.TryDeserialize<TReceive>(response.Received.Memory, out var r);
+            if (r == null)
+            {
+                return (NetInterfaceResult.DeserializationError, default);
+            }
+
+            return (NetInterfaceResult.Success, r);
         }
         finally
         {
