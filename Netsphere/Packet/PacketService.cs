@@ -95,7 +95,7 @@ internal static class PacketService
     {
         if (owner.Memory.Length < DataHeaderSize)
         {
-            return (0, PacketId.Invalid, ByteArrayPool.MemoryOwner.Empty);
+            return (0, PacketId.Invalid, default);
         }
 
         var span = owner.Memory.Span;

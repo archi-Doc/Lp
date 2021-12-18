@@ -12,6 +12,9 @@ using System.Threading.Tasks;
 
 namespace Netsphere;
 
+/// <summary>
+/// Represents a result of network transmission.
+/// </summary>
 public enum NetResult
 {
     Success,
@@ -29,6 +32,11 @@ public enum NetResult
     ReserveError,
 }
 
+/// <summary>
+/// Represents a received data.<br/>
+/// <see cref="NetResult.Success"/>: <see cref="NetReceivedData.Received"/> is valid, and it's preferable to call Return() method.<br/>
+/// Other: <see cref="NetReceivedData.Received"/> is default (empty).
+/// </summary>
 public struct NetReceivedData
 {
     public NetReceivedData(NetResult result, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner received)
@@ -52,18 +60,6 @@ public struct NetReceivedData
     public ulong DataId;
     public ByteArrayPool.MemoryOwner Received;
 }
-
-/*public interface INetInterface<TSend, TReceive> : INetInterface<TSend>
-{
-    public NetInterfaceResult Receive(out TReceive? value, int millisecondsToWait = DefaultMillisecondsToWait);
-}
-
-public interface INetInterface<TSend> : IDisposable
-{
-    public const int DefaultMillisecondsToWait = 2000;
-
-    public NetInterfaceResult WaitForSendCompletion(int millisecondsToWait = DefaultMillisecondsToWait);
-}*/
 
 internal class NetInterface<TSend, TReceive> : NetInterface
 {
@@ -373,8 +369,13 @@ public class NetInterface : IDisposable
 
     public NetTerminal NetTerminal { get; }
 
+    /// <summary>
+    /// Wait until the data transmission is completed.
+    /// </summary>
+    /// <param name="millisecondsToWait">The number of milliseconds to wait.</param>
+    /// <returns><see cref="NetResult"/>.</returns>
     public async Task<NetResult> WaitForSendCompletionAsync(int millisecondsToWait)
-    {
+    {// Checked
         var end = Ticks.GetSystem() + Ticks.FromMilliseconds(millisecondsToWait);
 
         while (this.Terminal.Core?.IsTerminated == false && this.NetTerminal.IsClosed == false)
@@ -418,8 +419,13 @@ WaitForSendCompletionWait:
         return NetResult.Closed;
     }
 
+    /// <summary>
+    /// Wait until data reception is complete.
+    /// </summary>
+    /// <param name="millisecondsToWait">The number of milliseconds to wait.</param>
+    /// <returns><see cref="NetReceivedData"/>.</returns>
     public async Task<NetReceivedData> ReceiveAsync(int millisecondsToWait)
-    {
+    {// Checked
         ByteArrayPool.MemoryOwner data = default;
         var end = Ticks.GetSystem() + Ticks.FromMilliseconds(millisecondsToWait);
 

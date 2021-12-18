@@ -54,7 +54,7 @@ public class Program
         options.EnableTest = true;
         NetControl.QuickStart("test", options);
 
-        await SimpleParser.ParseAndRunAsync(commandTypes, "senddata -node alternative", parserOptions); // Main process
+        await SimpleParser.ParseAndRunAsync(commandTypes, "nettest -node alternative", parserOptions); // Main process
         // await SimpleParser.ParseAndRunAsync(commandTypes, args, parserOptions); // Main process
 
         ThreadCore.Root.Terminate();

@@ -53,7 +53,7 @@ public class NetControl
         // Subcommands
         var commandTypes = new Type[]
         {
-            typeof(LP.Subcommands.SendDataSubcommand),
+            typeof(LP.Subcommands.NetTestSubcommand),
         };
 
         commandList.AddRange(commandTypes);

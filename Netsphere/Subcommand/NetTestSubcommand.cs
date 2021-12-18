@@ -9,15 +9,15 @@ using Tinyhand;
 
 namespace LP.Subcommands;
 
-[SimpleCommand("senddata")]
-public class SendDataSubcommand : ISimpleCommandAsync<SendDataOptions>
+[SimpleCommand("nettest")]
+public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
 {
-    public SendDataSubcommand(NetControl netControl)
+    public NetTestSubcommand(NetControl netControl)
     {
         this.NetControl = netControl;
     }
 
-    public async Task Run(SendDataOptions options, string[] args)
+    public async Task Run(NetTestOptions options, string[] args)
     {
         if (!SubcommandService.TryParseNodeAddress(options.Node, out var node))
         {
@@ -66,7 +66,7 @@ public class SendDataSubcommand : ISimpleCommandAsync<SendDataOptions>
     public NetControl NetControl { get; set; }
 }
 
-public record SendDataOptions
+public record NetTestOptions
 {
     [SimpleOption("node", description: "Node address", Required = true)]
     public string Node { get; init; } = string.Empty;
