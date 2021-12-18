@@ -18,6 +18,7 @@ public enum PacketId : byte
     Reserve,
     ReserveResponse,
     RPC,
+    Test,
     Encrypt,
     EncryptResponse,
     Punch,

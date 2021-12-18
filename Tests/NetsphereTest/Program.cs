@@ -49,8 +49,8 @@ public class Program
 
 
         var options = new LP.Options.NetsphereOptions();
-        options.Alternative = true;
-        options.Logger = true;
+        options.EnableAlternative = true;
+        options.EnableLogger = true;
         NetControl.QuickStart("test", options);
 
         await SimpleParser.ParseAndRunAsync(commandTypes, "senddata -node alternative", parserOptions); // Main process

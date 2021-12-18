@@ -105,7 +105,7 @@ public class Terminal
         Radio.Open<Message.Start>(this.Start);
         Radio.Open<Message.Stop>(this.Stop);
 
-        if (this.NetBase.NetsphereOptions.Logger)
+        if (this.NetBase.NetsphereOptions.EnableLogger)
         {
             this.TerminalLogger = new Logger.PriorityLogger();
         }

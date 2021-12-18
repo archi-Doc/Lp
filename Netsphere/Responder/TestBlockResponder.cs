@@ -2,11 +2,11 @@
 
 namespace Netsphere.Responder;
 
-internal class TestBlockResponder : NetResponder<TestBlock, TestBlock>
+internal class TestBlockResponder : NetResponder<TestPacket, TestPacket>
 {
-    public static readonly NetResponder<TestBlock, TestBlock> Instance = new TestBlockResponder();
+    public static readonly NetResponder<TestPacket, TestPacket> Instance = new TestBlockResponder();
 
-    public override TestBlock? Respond(TestBlock value)
+    public override TestPacket? Respond(TestPacket value)
     {
         return value;
     }

@@ -30,7 +30,7 @@ public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
         this.information.Initialize(option, true, "relay");
 
         this.netBase = Program.Container.Resolve<NetBase>();
-        option.NetsphereOptions.Alternative = true; // temporary
+        option.NetsphereOptions.EnableAlternative = true; // temporary
         this.netBase.Initialize(string.Empty, option.NetsphereOptions);
 
         if (await this.LoadAsync() == AbortOrComplete.Abort)

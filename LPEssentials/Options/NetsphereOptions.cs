@@ -17,10 +17,13 @@ public class NetsphereOptions
     public string Nodes { get; set; } = string.Empty;
 
     [SimpleOption("alternative", null, "Enable alternative (debug) terminal")]
-    public bool Alternative { get; set; } = false;
+    public bool EnableAlternative { get; set; } = false;
 
     [SimpleOption("logger", null, "Enable loggerl")]
-    public bool Logger { get; set; } = false;
+    public bool EnableLogger { get; set; } = false;
+
+    [SimpleOption("test", null, "Enable test functions")]
+    public bool EnablTest { get; set; } = false;
 
     public override string ToString()
     {

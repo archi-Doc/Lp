@@ -68,6 +68,14 @@ public class Server
             return this.ProcessEssential_Punch(received);
         }
 
+        if (this.NetBase.NetsphereOptions.EnablTest)
+        {
+            if (received.PacketId == PacketId.Test)
+            {
+                return this.ProcessEssential_Test(received);
+            }
+        }
+
         return false;
     }
 
@@ -84,6 +92,18 @@ public class Server
         response.Endpoint = this.NetTerminal.Endpoint;
         response.UtcTicks = Ticks.GetUtcNow();
 
+        var task = this.NetTerminal.SendPacketAsync(response);
+        return true;
+    }
+
+    private bool ProcessEssential_Test(NetInterfaceReceivedData received)
+    {
+        if (!TinyhandSerializer.TryDeserialize<TestPacket>(received.Received.Memory, out var punch))
+        {
+            return false;
+        }
+
+        var response = TestPacket.Create(111);
         var task = this.NetTerminal.SendPacketAsync(response);
         return true;
     }

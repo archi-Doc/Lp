@@ -86,7 +86,7 @@ public class NetControl
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
 
         this.Terminal = terminal;
-        if (this.NetBase.NetsphereOptions.Alternative)
+        if (this.NetBase.NetsphereOptions.EnableAlternative)
         {
             this.Alternative = new(netBase, netStatus); // For debug
         }
