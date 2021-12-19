@@ -50,7 +50,7 @@ public class Program
 
         var options = new LP.Options.NetsphereOptions();
         options.EnableAlternative = true;
-        options.EnableLogger = false;
+        options.EnableLogger = true;
         options.EnableTest = true;
         NetControl.QuickStart("test", options, true);
 

@@ -3,6 +3,7 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using Arc.Threading;
 
 #pragma warning disable SA1401
@@ -63,7 +64,15 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         {
             this.State = NetTerminalGeneState.WaitingToSend;
             this.Owner.Owner?.Return();
-            this.Owner = owner.IncrementAndShare();
+
+            if (this.NetInterface.NetTerminal.TryEncryptPacket(owner, this.Gene, out var owner2))
+            {// Encrypt
+                this.Owner = owner2;
+            }
+            else
+            {
+                this.Owner = owner.IncrementAndShare();
+            }
 
             this.NetInterface.Terminal.AddInbound(this);
             return true;
@@ -125,6 +134,8 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         {// Receive data
             this.ReceivedId = id;
             this.Owner.Owner?.Return();
+
+            // Decrypt
             this.Owner = owner.IncrementAndShare();
             SendAck();
 

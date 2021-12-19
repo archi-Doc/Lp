@@ -21,9 +21,9 @@ internal static class PacketService
         relay.NextEndpoint = new(IPAddress.IPv6Loopback, NetControl.MaxPort);
         RelayPacketSize = Tinyhand.TinyhandSerializer.Serialize(relay).Length;
         SafeMaxPayloadSize = NetControl.MaxPayload - HeaderSize - DataHeaderSize - RelayPacketSize;
-        SafeMaxPayloadSize -= 8; // Safety margin
+        SafeMaxPayloadSize = (SafeMaxPayloadSize / 16) * 16;
 
-        DataFollowingPayloadSize = 1369; // = SafeMaxPayloadSize
+        DataFollowingPayloadSize = 1376; // = SafeMaxPayloadSize
         DataPayloadSize = DataFollowingPayloadSize - DataHeaderSize + DataFollowingHeaderSize;
     }
 

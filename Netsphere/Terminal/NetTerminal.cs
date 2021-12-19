@@ -6,6 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Threading;
 
 namespace Netsphere;
@@ -203,6 +204,11 @@ public partial class NetTerminal : IDisposable
 
             this.GenePool.SetEmbryo(this.embryo);
             // this.TerminalLogger?.Information($"First gene {this.GenePool.GetSequential().ToString()}");
+
+            // Aes
+            this.aes = Aes.Create();
+            this.aes.KeySize = 256;
+            this.aes.Key = this.embryo.AsSpan(0, 32).ToArray();
         }
 
         return NetResult.Success;
@@ -247,6 +253,28 @@ public partial class NetTerminal : IDisposable
         this.disposedInterfaces.Add(netInterface);
     }
 
+    internal bool TryEncryptPacket(ByteArrayPool.MemoryOwner plain, ulong gene, out ByteArrayPool.MemoryOwner encrypted)
+    {
+        if (this.embryo == null || plain.Memory.Length < PacketService.HeaderSize)
+        {
+            encrypted = default;
+            return false;
+        }
+
+        var span = plain.Memory.Span;
+        var plainSpan = span.Slice(PacketService.HeaderSize);
+        Span<byte> iv = stackalloc byte[16];
+        BitConverter.TryWriteBytes(iv, gene);
+        this.embryo.AsSpan(32, 8).CopyTo(iv.Slice(8));
+
+        var packet = PacketPool.Rent();
+        span.Slice(0, PacketService.HeaderSize).CopyTo(packet.ByteArray);
+
+        this.aes!.TryEncryptCbc(plainSpan, iv, packet.ByteArray.AsSpan(PacketService.HeaderSize), out var written, PaddingMode.PKCS7);
+        encrypted = packet.ToMemoryOwner(0, PacketService.HeaderSize + written);
+        return true;
+    }
+
     internal GenePool? TryFork() => this.embryo == null ? null : this.GenePool.Fork(this.embryo);
 
     internal void IncrementResendCount() => Interlocked.Increment(ref this.resendCount);
@@ -273,6 +301,7 @@ public partial class NetTerminal : IDisposable
     protected List<NetInterface> activeInterfaces = new();
     protected List<NetInterface> disposedInterfaces = new();
     protected byte[]? embryo; // 48 bytes
+    private Aes? aes;
     private long lastSendingAckTicks;
 
     private uint resendCount;
