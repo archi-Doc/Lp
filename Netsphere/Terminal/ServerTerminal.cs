@@ -91,6 +91,18 @@ public class ServerTerminal : NetTerminal
         return result;
     }
 
+    public async Task<NetResult> SendDataAsync(ulong dataId, ByteArrayPool.MemoryOwner data, int millisecondsToWait = DefaultMillisecondsToWait)
+    {// Checked
+        if (!this.senderQueue.TryDequeue(out var operation))
+        {
+            return NetResult.NoSender;
+        }
+
+        var result = await operation.SendDataAsync(true, PacketId.Data, dataId, data, millisecondsToWait).ConfigureAwait(false);
+        operation.Dispose();
+        return result;
+    }
+
     public async Task<NetResult> SendDataAsync(ulong dataId, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
     {// Checked
         if (!this.senderQueue.TryDequeue(out var operation))

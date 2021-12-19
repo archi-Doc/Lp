@@ -37,7 +37,7 @@ internal class ServerOperation : NetOperation
     }
 
     public async Task<NetReceivedData> ReceiveAsync(int millisecondsToWait)
-    {
+    {// Checked
         if (this.receiverInterface == null)
         {
             throw new InvalidOperationException();
@@ -58,9 +58,11 @@ internal class ServerOperation : NetOperation
         // PacketId.Reserve
         if (!TinyhandSerializer.TryDeserialize<PacketReserve>(received.Received.Memory, out var reserve))
         {
+            received.Return();
             return new(NetResult.DeserializationError);
         }
 
+        received.Return();
         this.receiverInterface2 = NetInterface<object, byte[]>.CreateReceive(this);
         this.receiverInterface2.SetReserve(this, reserve);
 
@@ -72,7 +74,7 @@ internal class ServerOperation : NetOperation
 
     public async Task<NetResult> SendPacketAsync<TSend>(TSend value, int millisecondsToWait)
        where TSend : IPacket
-    {
+    {// Checked
         if (!value.AllowUnencrypted && !this.NetTerminal.IsEncrypted)
         {
             return NetResult.NoEncryptedConnection;
@@ -89,7 +91,7 @@ internal class ServerOperation : NetOperation
     }
 
     public async Task<NetResult> SendAsync<TSend>(TSend value, int millisecondsToWait)
-    {
+    {// Checked
         if (!BlockService.TrySerialize(value, out var owner))
         {
             return NetResult.SerializationError;
@@ -110,11 +112,11 @@ internal class ServerOperation : NetOperation
         return await task.ConfigureAwait(false);
     }
 
-    public async Task<NetResult> SendDataAsync(ulong dataId, byte[] data, int millisecondsToWait)
-        => await this.SendDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);
+    /*public async Task<NetResult> SendDataAsync(ulong dataId, byte[] data, int millisecondsToWait)
+        => await this.SendDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);*/
 
     internal async Task<NetResult> SendDataAsync(bool encrypt, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner, int millisecondsToWait)
-    {
+    {// Checked
         if (!this.NetTerminal.IsEncrypted && encrypt)
         {
             return NetResult.NoEncryptedConnection;
@@ -180,6 +182,8 @@ internal class ServerOperation : NetOperation
                 // free managed resources.
                 this.receiverInterface?.Dispose();
                 this.receiverInterface2?.Dispose();
+                this.receiverInterface = null;
+                this.receiverInterface2 = null;
             }
 
             // free native resources here if there are any.

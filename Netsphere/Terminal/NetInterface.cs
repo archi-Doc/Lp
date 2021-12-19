@@ -126,6 +126,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
             var ntg = new NetTerminalGene(sequentialGenes.First, netInterface);
             netInterface.SendGenes = new NetTerminalGene[] { ntg, };
             ntg.SetSend(sendOwner);
+            sendOwner.Return();
 
             netTerminal.TerminalLogger?.Information($"RegisterSend   : {sequentialGenes.First.To4Hex()}, {id}");
         }
@@ -166,14 +167,11 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         var ntg = new NetTerminalGene(sequentialGenes.First, netInterface);
         netInterface.SendGenes = new NetTerminalGene[] { ntg, };
         ntg.SetSend(sendOwner);
+        sendOwner.Return();
 
         netTerminal.TerminalLogger?.Information($"RegisterSend5  : {sequentialGenes.First.To4Hex()}, {response.PacketId}");
 
         // Receive gene
-        ntg = new NetTerminalGene(sequentialGenes.Second, netInterface);
-        netInterface.RecvGenes = new NetTerminalGene[] { ntg, };
-        ntg.SetReceive();
-
         Span<ulong> arraySpan = stackalloc ulong[reserve.NumberOfGenes];
         netOperation.GetGenes(arraySpan);
 
@@ -337,9 +335,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
             return;
         }
 
-        var gene = this.RecvGenes[0].Gene;
         this.Clear();
-
         Span<ulong> arraySpan = stackalloc ulong[reserve.NumberOfGenes];
         netOperation.GetGenes(arraySpan);
 
@@ -721,7 +717,7 @@ WaitForSendCompletionWait:
         lock (this.NetTerminal.SyncObject)
         {
             if (this.DisposedTicks == 0)
-            {
+            {// Delay the disposal.
                 this.NetTerminal.ActiveToDisposed(this);
                 this.DisposedTicks = Ticks.GetSystem();
             }
