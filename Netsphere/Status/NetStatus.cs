@@ -12,10 +12,18 @@ public class NetStatus
         this.NetBase = netBase;
     }
 
-    public NodeInformation GetMyNodeInformation()
+    public NodeInformation GetMyNodeInformation(bool isAlternative)
     {
-        this.myNodeInformation.PublicKeyX = this.NetBase.NodePublicKey.X;
-        this.myNodeInformation.PublicKeyY = this.NetBase.NodePublicKey.Y;
+        if (isAlternative)
+        {
+            this.myNodeInformation.PublicKeyX = NodePrivateKey.AlternativePrivateKey.X;
+            this.myNodeInformation.PublicKeyY = NodePrivateKey.AlternativePrivateKey.Y;
+        }
+        else
+        {
+            this.myNodeInformation.PublicKeyX = this.NetBase.NodePublicKey.X;
+            this.myNodeInformation.PublicKeyY = this.NetBase.NodePublicKey.Y;
+        }
 
         return this.myNodeInformation;
     }

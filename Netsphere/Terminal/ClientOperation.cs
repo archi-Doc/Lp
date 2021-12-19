@@ -26,7 +26,7 @@ internal class ClientOperation : NetOperation
             return NetResult.NoNodeInformation;
         }
 
-        var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation());
+        var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation(this.Terminal.IsAlternative));
         var response = await this.SendPacketAndReceiveAsync<PacketEncrypt, PacketEncryptResponse>(p, millisecondsToWait).ConfigureAwait(false);
         if (response.Result != NetResult.Success)
         {

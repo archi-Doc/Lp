@@ -146,10 +146,13 @@ public class Terminal
 
     public NetStatus NetStatus { get; }
 
+    public bool IsAlternative { get; private set; }
+
     public int Port { get; set; }
 
     internal void Initialize(bool isAlternative, ECDiffieHellman nodePrivateKey)
     {
+        this.IsAlternative = isAlternative;
         this.NodePrivateECDH = nodePrivateKey;
     }
 
@@ -329,7 +332,7 @@ public class Terminal
             return;
         }
 
-        var response = new PacketGetNodeInformationResponse(this.NetStatus.GetMyNodeInformation());
+        var response = new PacketGetNodeInformationResponse(this.NetStatus.GetMyNodeInformation(this.IsAlternative));
         var secondGene = GenePool.NextGene(header.Gene);
         this.TerminalLogger?.Information($"GetNodeInformation Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 

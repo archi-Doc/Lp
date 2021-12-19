@@ -197,7 +197,7 @@ public partial class NetTerminal : IDisposable
             Hash.Sha3_384Pool.Return(sha);
 
             this.GenePool.SetEmbryo(this.embryo);
-            this.TerminalLogger?.Information($"First gene {this.GenePool.GetSequential().ToString()}");
+            // this.TerminalLogger?.Information($"First gene {this.GenePool.GetSequential().ToString()}");
         }
 
         return NetResult.Success;
@@ -244,6 +244,10 @@ public partial class NetTerminal : IDisposable
 
     internal GenePool? TryFork() => this.embryo == null ? null : this.GenePool.Fork(this.embryo);
 
+    internal void IncrementResendCount() => Interlocked.Increment(ref this.resendCount);
+
+    internal uint ResendCount => Volatile.Read(ref this.resendCount);
+
     private void Clear()
     {// lock (this.SyncObject)
         foreach (var x in this.activeInterfaces)
@@ -265,6 +269,8 @@ public partial class NetTerminal : IDisposable
     protected List<NetInterface> disposedInterfaces = new();
     protected byte[]? embryo; // 48 bytes
     private long lastSendingAckTicks;
+
+    private uint resendCount;
 
     // private PacketService packetService = new();
 

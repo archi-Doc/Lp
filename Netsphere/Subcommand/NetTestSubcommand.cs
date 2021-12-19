@@ -43,15 +43,18 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
 
             var sw = Stopwatch.StartNew();
             var t = terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
-            Logger.Priority.Information($"t: {t.Result} ({sw.ElapsedMilliseconds} ms)");
+            Logger.Priority.Information($"t: {t.Result}");
+            Logger.Priority.Information($"{sw.ElapsedMilliseconds} ms, Resend: {terminal.ResendCount}");
 
             sw.Restart();
             var t5 = terminal.SendPacketAndReceiveAsync<TestPacket, TestPacket>(TestPacket.Create(11));
-            Logger.Priority.Information($"t5: {t5.Result} ({sw.ElapsedMilliseconds} ms)");
+            Logger.Priority.Information($"t5: {t5.Result}");
+            Logger.Priority.Information($"{sw.ElapsedMilliseconds} ms, Resend: {terminal.ResendCount}");
 
-            var p2 = TestBlock.Create(20000);
+            var p2 = TestBlock.Create(4_000_000);
             BlockService.TrySerialize(p2, out var owner);
             Logger.Priority.Information($"p2 send: {p2} ({owner.Memory.Length})");
+            sw.Restart();
             var t2 = await terminal.SendAndReceiveAsync<TestBlock, TestBlock>(p2);
 
             p2 = TestBlock.Create(2000);
@@ -60,6 +63,7 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
             var t3 = await terminal.SendAndReceiveAsync<TestBlock, TestBlock>(p2);
             Logger.Priority.Information($"t2 received: {t2.Value}");
             Logger.Priority.Information($"t3 received: {t3.Value}");
+            Logger.Priority.Information($"{sw.ElapsedMilliseconds} ms, Resend: {terminal.ResendCount}");
 
             /*var netInterface = terminal.SendAndReceive<PacketPunch, PacketPunchResponse>(p);
             if (netInterface != null)
