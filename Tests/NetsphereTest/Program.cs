@@ -52,7 +52,7 @@ public class Program
         options.EnableAlternative = true;
         options.EnableLogger = false;
         options.EnableTest = true;
-        NetControl.QuickStart("test", options);
+        NetControl.QuickStart("test", options, true);
 
         await SimpleParser.ParseAndRunAsync(commandTypes, "nettest -node alternative", parserOptions); // Main process
         // await SimpleParser.ParseAndRunAsync(commandTypes, args, parserOptions); // Main process

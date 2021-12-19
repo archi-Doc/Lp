@@ -63,10 +63,11 @@ public class NetControl
         }
     }
 
-    public static void QuickStart(string nodeName, NetsphereOptions options)
+    public static void QuickStart(string nodeName, NetsphereOptions options, bool allowUnsafeConnection)
     {
         var netBase = containerInstance.Resolve<NetBase>();
         netBase.Initialize(nodeName, options);
+        netBase.AllowUnsafeConnection = allowUnsafeConnection;
 
         var netControl = containerInstance.Resolve<NetControl>();
         Logger.Configure(null);

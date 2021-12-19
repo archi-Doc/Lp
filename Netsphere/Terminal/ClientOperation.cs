@@ -26,6 +26,17 @@ internal class ClientOperation : NetOperation
             return NetResult.NoNodeInformation;
         }
 
+        if (this.NetTerminal.NodeInformation == null)
+        {// Get NodeInformation (Unsafe connection).
+            var r = await this.SendPacketAndReceiveAsync<PacketGetNodeInformation, PacketGetNodeInformationResponse>(new(), millisecondsToWait);
+            if (r.Result != NetResult.Success)
+            {
+                return r.Result;
+            }
+
+            this.NetTerminal.MergeNodeInformation(r.Value!.Node);
+        }
+
         var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation(this.Terminal.IsAlternative));
         var response = await this.SendPacketAndReceiveAsync<PacketEncrypt, PacketEncryptResponse>(p, millisecondsToWait).ConfigureAwait(false);
         if (response.Result != NetResult.Success)
@@ -114,7 +125,6 @@ internal class ClientOperation : NetOperation
 
             if (response.Result != NetResult.Success)
             {
-                response.Return();
                 return (response.Result, default);
             }
 
@@ -155,8 +165,8 @@ internal class ClientOperation : NetOperation
         return await task.ConfigureAwait(false);
     }
 
-    public async Task<NetResult> SendDataAsync(ulong dataId, byte[] data, int millisecondsToWait)
-        => await this.SendDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);
+    /* public async Task<NetResult> SendDataAsync(ulong dataId, byte[] data, int millisecondsToWait)
+        => await this.SendDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);*/
 
     public async Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(TSend value, int millisecondsToWait)
     {// Checked
@@ -188,17 +198,19 @@ internal class ClientOperation : NetOperation
 
         if (!TinyhandSerializer.TryDeserialize<TReceive>(response.Received.Memory, out var received))
         {
+            response.Return();
             return (NetResult.DeserializationError, default);
         }
 
+        response.Return();
         return (response.Result, received);
     }
 
-    public async Task<(NetResult Result, ByteArrayPool.MemoryOwner Value)> SendAndReceiveDataAsync(ulong dataId, byte[] data, int millisecondsToWait)
+    /*public async Task<(NetResult Result, ByteArrayPool.MemoryOwner Value)> SendAndReceiveDataAsync(ulong dataId, byte[] data, int millisecondsToWait)
     {// Checked
         var response = await this.SendAndReceiveDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);
         return (response.Result, response.Received);
-    }
+    }*/
 
     internal async Task<NetResult> SendDataAsync(bool encrypt, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner, int millisecondsToWait)
     {// Checked
@@ -286,6 +298,7 @@ internal class ClientOperation : NetOperation
             {
                 // PacketId.Reserve
                 TinyhandSerializer.TryDeserialize<PacketReserve>(response.Received.Memory, out var reserve);
+                response.Return();
                 if (reserve == null)
                 {
                     return new(NetResult.DeserializationError);

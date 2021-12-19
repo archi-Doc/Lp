@@ -32,6 +32,7 @@ public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
         this.netBase = Program.Container.Resolve<NetBase>();
         option.NetsphereOptions.EnableAlternative = true; // temporary
         this.netBase.Initialize(string.Empty, option.NetsphereOptions);
+        this.netBase.AllowUnsafeConnection = true; // temporary
 
         if (await this.LoadAsync() == AbortOrComplete.Abort)
         {

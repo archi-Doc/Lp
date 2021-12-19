@@ -79,6 +79,11 @@ public partial class NetTerminal : IDisposable
 
     public NodeInformation? NodeInformation { get; protected set; }
 
+    internal void MergeNodeInformation(NodeInformation nodeInformation)
+    {
+        this.NodeInformation = Netsphere.NodeInformation.Merge(this.NodeAddress, nodeInformation);
+    }
+
     internal void CreateHeader(out PacketHeader header, ulong gene)
     {
         header = default;

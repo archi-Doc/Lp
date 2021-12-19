@@ -31,15 +31,13 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
         {
             await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(new PacketPunch());
 
-            await terminal.UnsafeGetNodeInformation();
-
             var p = new PacketPunch(null);
 
-            var result = await terminal.EncryptConnectionAsync();
+            /*var result = await terminal.EncryptConnectionAsync();
             if (result != NetResult.Success)
             {
                 return;
-            }
+            }*/
 
             var sw = Stopwatch.StartNew();
             var t = terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
