@@ -21,7 +21,6 @@ namespace Netsphere;
 public partial class NetTerminal : IDisposable
 {
     public const int DefaultMillisecondsToWait = 2000;
-    public const int SendingAckIntervalInMilliseconds = 10;
 
     /// <summary>
     /// The default interval time in milliseconds.
@@ -80,6 +79,11 @@ public partial class NetTerminal : IDisposable
 
     public NodeInformation? NodeInformation { get; protected set; }
 
+    internal void InternalClose()
+    {
+        this.IsClosed = true;
+    }
+
     internal void MergeNodeInformation(NodeInformation nodeInformation)
     {
         this.NodeInformation = Netsphere.NodeInformation.Merge(this.NodeAddress, nodeInformation);
@@ -115,12 +119,19 @@ public partial class NetTerminal : IDisposable
                 return;
             }
 
+            var sendCapacity = 1;
             foreach (var x in this.activeInterfaces)
             {
-                x.ProcessSend(udp, currentTicks);
+                if (sendCapacity == 0)
+                {
+                    break;
+                }
+
+                x.ProcessSend(udp, currentTicks, ref sendCapacity);
             }
 
-            if ((currentTicks - this.lastSendingAckTicks) > Ticks.FromMilliseconds(SendingAckIntervalInMilliseconds))
+            // Send Ack
+            if ((currentTicks - this.lastSendingAckTicks) > Ticks.FromMilliseconds(NetConstants.SendingAckIntervalInMilliseconds))
             {
                 this.lastSendingAckTicks = currentTicks;
 

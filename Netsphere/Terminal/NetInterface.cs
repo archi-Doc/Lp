@@ -543,27 +543,44 @@ WaitForSendCompletionWait:
     internal long DisposedTicks;
 #pragma warning restore SA1401 // Fields should be private
 
-    internal void ProcessSend(UdpClient udp, long currentTicks)
+    internal void ProcessSend(UdpClient udp, long currentTicks, ref int sendCapacity)
     {// lock (this.NetTerminal.SyncObject)
         if (this.SendGenes != null)
         {
             foreach (var x in this.SendGenes)
             {
+                if (sendCapacity == 0)
+                {
+                    return;
+                }
+
                 if (x.State == NetTerminalGeneState.WaitingToSend)
                 {
                     if (x.Send(udp))
                     {
                         this.TerminalLogger?.Information($"Udp Sent       : {x.ToString()}");
+
+                        sendCapacity--;
+                        x.SendCount = 1;
                         x.SentTicks = currentTicks;
                     }
                 }
-                else if (x.State == NetTerminalGeneState.WaitingForAck &&
-                    (currentTicks - x.SentTicks) > Ticks.FromSeconds(0.5))
+                else if (x.State == NetTerminalGeneState.WaitingForAck)
                 {
-                    if (x.Send(udp))
+                    if (x.SendCount > NetConstants.SendCountMax)
                     {
-                        this.TerminalLogger?.Information($"Udp Resent     : {x.ToString()}");
-                        x.SentTicks = currentTicks;
+                        this.TerminalLogger?.Information($"InternalClose (SentCount)");
+                        this.NetTerminal.InternalClose();
+                    }
+                    else if ((currentTicks - x.SentTicks) > Ticks.FromMilliseconds(NetConstants.ResendWaitMilliseconds))
+                    {
+                        if (x.Send(udp))
+                        {
+                            this.TerminalLogger?.Information($"Udp Resent     : {x.ToString()}");
+                            sendCapacity--;
+                            x.SendCount++;
+                            x.SentTicks = currentTicks;
+                        }
                     }
                 }
             }
