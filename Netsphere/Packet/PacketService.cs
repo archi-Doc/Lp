@@ -21,9 +21,9 @@ internal static class PacketService
         relay.NextEndpoint = new(IPAddress.IPv6Loopback, NetControl.MaxPort);
         RelayPacketSize = Tinyhand.TinyhandSerializer.Serialize(relay).Length;
         SafeMaxPayloadSize = NetControl.MaxPayload - HeaderSize - DataHeaderSize - RelayPacketSize;
-        SafeMaxPayloadSize = (SafeMaxPayloadSize / 16) * 16;
+        SafeMaxPayloadSize = ((SafeMaxPayloadSize / 16) * 16) - 1; // -1 for PKCS7 padding.
 
-        DataFollowingPayloadSize = 1376; // = SafeMaxPayloadSize
+        DataFollowingPayloadSize = 1375; // = SafeMaxPayloadSize
         DataPayloadSize = DataFollowingPayloadSize - DataHeaderSize + DataFollowingHeaderSize;
     }
 
@@ -66,6 +66,7 @@ internal static class PacketService
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static unsafe void InsertDataSize(Memory<byte> memory, ushort size)
     {
         fixed (byte* pb = memory.Span)

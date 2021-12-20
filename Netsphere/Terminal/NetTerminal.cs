@@ -272,6 +272,7 @@ public partial class NetTerminal : IDisposable
 
         this.aes!.TryEncryptCbc(plainSpan, iv, packet.ByteArray.AsSpan(PacketService.HeaderSize), out var written, PaddingMode.PKCS7);
         encrypted = packet.ToMemoryOwner(0, PacketService.HeaderSize + written);
+        PacketService.InsertDataSize(encrypted.Memory, (ushort)written);
         return true;
     }
 
