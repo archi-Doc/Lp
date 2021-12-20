@@ -114,12 +114,12 @@ public static class Logger
         Priority = new PriorityLogger();
     }
 
-    public static void Configure(Information? info)
+    public static void Configure(LPBase? info)
     {
         // Logger: Debug, Information, Warning, Error, Fatal
         Console = new SerilogLogger(new LoggerConfiguration()
             .MinimumLevel.Information()
-            .WriteTo.Console()
+            .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss.fff} {Level:u3}] {Message:lj}{NewLine}{Exception}")
             .CreateLogger());
 
         if (info != null)

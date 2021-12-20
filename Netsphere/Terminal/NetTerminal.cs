@@ -307,6 +307,10 @@ public partial class NetTerminal : IDisposable
         return true;
     }
 
+    internal void UpdateLastSuccessfulReceive(long currentTicks) => this.lastSuccessfulReceive = currentTicks;
+
+    internal long LastSuccessfulReceive => this.lastSuccessfulReceive;
+
     internal GenePool? TryFork() => this.embryo == null ? null : this.GenePool.Fork(this.embryo);
 
     internal void IncrementResendCount() => Interlocked.Increment(ref this.resendCount);
@@ -335,6 +339,7 @@ public partial class NetTerminal : IDisposable
     protected byte[]? embryo; // 48 bytes
     private Aes? aes;
     private long lastSendingAckTicks;
+    private long lastSuccessfulReceive;
 
     private uint resendCount;
 

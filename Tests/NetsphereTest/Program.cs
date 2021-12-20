@@ -47,7 +47,6 @@ public class Program
             RequireStrictOptionName = true,
         };
 
-
         var options = new LP.Options.NetsphereOptions();
         options.EnableAlternative = true;
         options.EnableLogger = true;

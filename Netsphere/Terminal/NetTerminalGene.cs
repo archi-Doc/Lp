@@ -128,7 +128,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         return false;
     }
 
-    public bool Receive(PacketId id, ByteArrayPool.MemoryOwner owner)
+    public bool Receive(PacketId id, ByteArrayPool.MemoryOwner owner, long currentTicks)
     {// lock (this.NetTerminal.SyncObject)
         if (this.State == NetTerminalGeneState.WaitingToReceive)
         {// Receive data
@@ -144,6 +144,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
                 this.Owner = owner.IncrementAndShare();
             }
 
+            this.NetInterface.NetTerminal.UpdateLastSuccessfulReceive(currentTicks);
             SendAck();
 
             // Logger.Default.Debug($"Receive: {this.PacketId}, {this.NetTerminal.Endpoint}");

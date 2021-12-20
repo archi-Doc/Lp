@@ -26,7 +26,7 @@ public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
 
     public async Task Run(LPConsoleOptions option, string[] args)
     {
-        this.information = Program.Container.Resolve<Information>();
+        this.information = Program.Container.Resolve<LPBase>();
         this.information.Initialize(option, true, "relay");
 
         this.netBase = Program.Container.Resolve<NetBase>();
@@ -229,7 +229,7 @@ Deserialize:
         }
     }
 
-    private Information information = default!;
+    private LPBase information = default!;
 
     private NetBase netBase = default!;
 }

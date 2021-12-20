@@ -196,7 +196,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         var recvGene = new NetTerminalGene(gene, netInterface);
         netInterface.RecvGenes = new NetTerminalGene[] { recvGene, };
         recvGene.SetReceive();
-        recvGene.Receive(PacketId.Encrypt, receiveOwner);
+        recvGene.Receive(PacketId.Encrypt, receiveOwner, Ticks.GetSystem());
 
         var sendGene = new NetTerminalGene(secondGene, netInterface);
         netInterface.SendGenes = new NetTerminalGene[] { sendGene, };
@@ -580,6 +580,7 @@ WaitForSendCompletionWait:
                             sendCapacity--;
                             x.SendCount++;
                             x.SentTicks = currentTicks;
+                            this.NetTerminal.IncrementResendCount();
                         }
                     }
                 }
@@ -683,7 +684,7 @@ WaitForSendCompletionWait:
             }
             else
             {// Receive data
-                if (gene.Receive(header.Id, owner))
+                if (gene.Receive(header.Id, owner, currentTicks))
                 {// Received.
                     this.TerminalLogger?.Information($"Recv data: {header.Id} {gene.ToString()}");
                 }

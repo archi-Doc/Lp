@@ -8,6 +8,7 @@ using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
+using Serilog;
 
 namespace Netsphere;
 
@@ -107,7 +108,16 @@ public class Terminal
 
         if (this.NetBase.NetsphereOptions.EnableLogger)
         {
-            this.TerminalLogger = new Logger.PriorityLogger();
+            // this.TerminalLogger = new Logger.PriorityLogger();
+            this.TerminalLogger = new SerilogLogger(new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .WriteTo.File(
+                Path.Combine(Directory.GetCurrentDirectory(), "logs", "log.txt"),
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 31,
+                buffered: true,
+                flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
+            .CreateLogger());
         }
 
         this.netSocket = new(this);
