@@ -50,17 +50,21 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
             Logger.Priority.Information($"{sw.ElapsedMilliseconds} ms, Resend: {terminal.ResendCount}");
 
             var p2 = TestBlock.Create(4_000_000);
-            BlockService.TrySerialize(p2, out var owner);
-            Logger.Priority.Information($"p2 send: {p2} ({owner.Memory.Length})");
+            Logger.Priority.Information($"p2 send: {p2}");
             sw.Restart();
             var t2 = await terminal.SendAndReceiveAsync<TestBlock, TestBlock>(p2);
 
             p2 = TestBlock.Create(2000);
-            BlockService.TrySerialize(p2, out owner);
-            Logger.Priority.Information($"p2b send: {p2} ({owner.Memory.Length})");
+            Logger.Priority.Information($"p2b send: {p2}");
             var t3 = await terminal.SendAndReceiveAsync<TestBlock, TestBlock>(p2);
             Logger.Priority.Information($"t2 received: {t2.Value}");
             Logger.Priority.Information($"t3 received: {t3.Value}");
+            Logger.Priority.Information($"{sw.ElapsedMilliseconds} ms, Resend: {terminal.ResendCount}");
+
+            Logger.Priority.Information($"4MB send: {TestBlock.Create(4_000_000)}");
+            sw.Restart();
+            var t4 = await terminal.SendAndReceiveAsync<TestBlock, TestBlock>(p2);
+            Logger.Priority.Information($"4MB received: {t4.Value}");
             Logger.Priority.Information($"{sw.ElapsedMilliseconds} ms, Resend: {terminal.ResendCount}");
 
             /*var netInterface = terminal.SendAndReceive<PacketPunch, PacketPunchResponse>(p);

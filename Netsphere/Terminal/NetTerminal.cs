@@ -262,7 +262,7 @@ public partial class NetTerminal : IDisposable
         }
 
         var span = plain.Memory.Span;
-        var plainSpan = span.Slice(PacketService.HeaderSize);
+        var source = span.Slice(PacketService.HeaderSize);
         Span<byte> iv = stackalloc byte[16];
         BitConverter.TryWriteBytes(iv, gene);
         this.embryo.AsSpan(32, 8).CopyTo(iv.Slice(8));
@@ -270,9 +270,29 @@ public partial class NetTerminal : IDisposable
         var packet = PacketPool.Rent();
         span.Slice(0, PacketService.HeaderSize).CopyTo(packet.ByteArray);
 
-        this.aes!.TryEncryptCbc(plainSpan, iv, packet.ByteArray.AsSpan(PacketService.HeaderSize), out var written, PaddingMode.PKCS7);
+        this.aes!.TryEncryptCbc(source, iv, packet.ByteArray.AsSpan(PacketService.HeaderSize), out var written, PaddingMode.PKCS7);
         encrypted = packet.ToMemoryOwner(0, PacketService.HeaderSize + written);
         PacketService.InsertDataSize(encrypted.Memory, (ushort)written);
+
+        return true;
+    }
+
+    internal bool TryDecryptPacket(ByteArrayPool.MemoryOwner encrypted, ulong gene, out ByteArrayPool.MemoryOwner destination)
+    {
+        if (this.embryo == null)
+        {
+            destination = default;
+            return false;
+        }
+
+        Span<byte> iv = stackalloc byte[16];
+        BitConverter.TryWriteBytes(iv, gene);
+        this.embryo.AsSpan(32, 8).CopyTo(iv.Slice(8));
+
+        var packet = PacketPool.Rent();
+        this.aes!.TryDecryptCbc(encrypted.Memory.Span, iv, packet.ByteArray, out var written, PaddingMode.PKCS7);
+        destination = packet.ToMemoryOwner(0, written);
+
         return true;
     }
 

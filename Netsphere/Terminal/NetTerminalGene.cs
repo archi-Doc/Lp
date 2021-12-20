@@ -135,8 +135,15 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
             this.ReceivedId = id;
             this.Owner.Owner?.Return();
 
-            // Decrypt
-            this.Owner = owner.IncrementAndShare();
+            if(this.NetInterface.NetTerminal.TryDecryptPacket(owner, this.Gene, out var owner2))
+            {// Decrypt
+                this.Owner = owner2;
+            }
+            else
+            {
+                this.Owner = owner.IncrementAndShare();
+            }
+
             SendAck();
 
             // Logger.Default.Debug($"Receive: {this.PacketId}, {this.NetTerminal.Endpoint}");

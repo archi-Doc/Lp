@@ -100,6 +100,7 @@ public class Server
     {
         if (!TinyhandSerializer.TryDeserialize<TestPacket>(received.Received.Memory, out var r))
         {
+            var task2 = this.NetTerminal.SendEmpty();
             return false;
         }
 

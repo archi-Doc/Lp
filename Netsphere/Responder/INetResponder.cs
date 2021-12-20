@@ -18,6 +18,7 @@ public abstract class NetResponder<TSend, TReceive> : INetResponder
     {
         if (!TinyhandSerializer.TryDeserialize<TSend>(received.Received.Memory, out var t))
         {
+            var emptyTask = terminal.SendEmpty();
             return false;
         }
 

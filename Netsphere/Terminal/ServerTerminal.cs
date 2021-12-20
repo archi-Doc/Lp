@@ -48,6 +48,11 @@ public class ServerTerminal : NetTerminal
         }
     }
 
+    public async Task<NetResult> SendEmpty()
+    {// Checked
+        return await this.SendDataAsync(0, Array.Empty<byte>());
+    }
+
     public async Task<NetReceivedData> ReceiveAsync(int millisecondsToWait = DefaultMillisecondsToWait)
     {// Checked
         this.EnsureReceiver();
