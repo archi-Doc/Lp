@@ -7,11 +7,13 @@ public class FlowControl
     public static readonly long TicksPerRound = Ticks.FromMilliseconds(2);
     public static readonly double TicksPerRoundRev = 1d / Ticks.FromMilliseconds(2);
     public static readonly double InitialSendCapacityPerRound = 2;
+    public static readonly long InitialWindowTicks = Ticks.FromMilliseconds(300);
 
     public FlowControl()
     {
         this.sendCapacityAccumulated = 0;
         this.sendCapacityPerRound = InitialSendCapacityPerRound;
+        this.windowTicks = InitialWindowTicks;
     }
 
     internal void Update(long currentTicks)
@@ -23,6 +25,18 @@ public class FlowControl
         else if (this.lastTicks == 0)
         {
             this.lastTicks = currentTicks - TicksPerRound;
+        }
+
+        // Window
+        if (this.nextWindowTicks == 0)
+        {
+            this.nextWindowTicks = currentTicks;
+        }
+        else if (this.nextWindowTicks <= currentTicks)
+        {
+            this.nextWindowTicks = currentTicks + this.windowTicks;
+
+            // Update
         }
 
         // Send Capacity
@@ -49,6 +63,8 @@ public class FlowControl
     }
 
     private long lastTicks;
+    private long windowTicks;
+    private long nextWindowTicks;
     private double sendCapacityAccumulated;
     private double sendCapacityPerRound;
 }

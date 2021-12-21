@@ -559,14 +559,19 @@ WaitForSendCompletionWait:
     {// lock (this.NetTerminal.SyncObject)
         if (this.SendGenes != null)
         {
-            foreach (var x in this.SendGenes)
+            for (var i = this.SendCompleteIndex; i < this.SendGenes.Length; i++)
             {
+                var x = this.SendGenes[i];
                 if (sendCapacity == 0)
                 {
                     return;
                 }
 
-                if (x.State == NetTerminalGeneState.WaitingToSend)
+                if (x.State == NetTerminalGeneState.SendComplete)
+                {
+                    this.SendCompleteIndex = i;
+                }
+                else if (x.State == NetTerminalGeneState.WaitingToSend)
                 {
                     if (x.Send(udp))
                     {
