@@ -21,7 +21,7 @@ public class Server
         {
             try
             {
-                var received = await terminal.ReceiveAsync(DefaultMillisecondsToWait);
+                var received = await terminal.ReceiveAsync(10000); // DefaultMillisecondsToWait
                 if (received.Result == NetResult.Success)
                 {// Success
                     // Responder (DataId, RPC)
@@ -44,10 +44,11 @@ public class Server
                 }
                 else if (received.Result == NetResult.Timeout)
                 {
-                    if ((terminal.LastSuccessfulReceive + Ticks.FromMilliseconds(2000)) < Ticks.GetSystem())
+                    this.NetTerminal.SendClose();
+                    /*if ((terminal.LastSuccessfulReceive + Ticks.FromMilliseconds(2000)) < Ticks.GetSystem())
                     {
                         break;
-                    }
+                    }*/
                 }
             }
             finally
