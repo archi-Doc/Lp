@@ -429,7 +429,8 @@ WaitForSendCompletionWait:
 
         while (this.Terminal.Core?.IsTerminated == false && this.NetTerminal.IsClosed == false)
         {
-            if (Stopwatch.GetTimestamp() >= end)
+            var currentTicks = Ticks.GetSystem();
+            if (currentTicks >= end || currentTicks >= (this.NetTerminal.LastSuccessfulReceive + Ticks.FromMilliseconds(500)))
             {
                 this.TerminalLogger?.Information($"Receive timeout.");
                 return new NetReceivedData(NetResult.Timeout);
@@ -661,6 +662,7 @@ WaitForSendCompletionWait:
                 return;
             }
 
+            this.NetTerminal.UpdateLastSuccessfulReceive(currentTicks);
             if (header.Id == PacketId.Ack)
             {// Ack (header.Gene + data(ulong[]))
                 gene.ReceiveAck();

@@ -44,7 +44,7 @@ public class Server
                 }
                 else if (received.Result == NetResult.Timeout)
                 {
-                    this.NetTerminal.SendClose();
+                    // this.NetTerminal.SendClose();
                     /*if ((terminal.LastSuccessfulReceive + Ticks.FromMilliseconds(2000)) < Ticks.GetSystem())
                     {
                         break;

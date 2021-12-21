@@ -144,7 +144,6 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
                 this.Owner = owner.IncrementAndShare();
             }
 
-            this.NetInterface.NetTerminal.UpdateLastSuccessfulReceive(currentTicks);
             SendAck();
 
             // Logger.Default.Debug($"Receive: {this.PacketId}, {this.NetTerminal.Endpoint}");

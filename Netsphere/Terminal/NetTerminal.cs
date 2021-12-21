@@ -34,6 +34,8 @@ public partial class NetTerminal : IDisposable
         this.GenePool = new(LP.Random.Crypto.NextUInt64());
         this.NodeAddress = nodeAddress;
         this.Endpoint = this.NodeAddress.CreateEndpoint();
+
+        this.InitializeState();
     }
 
     internal NetTerminal(Terminal terminal, NodeInformation nodeInformation)
@@ -48,6 +50,8 @@ public partial class NetTerminal : IDisposable
         this.NodeAddress = nodeInformation;
         this.NodeInformation = nodeInformation;
         this.Endpoint = this.NodeAddress.CreateEndpoint();
+
+        this.InitializeState();
     }
 
     // public virtual NetInterfaceResult EncryptConnection() => NetInterfaceResult.NoEncryptedConnection;
@@ -332,6 +336,11 @@ public partial class NetTerminal : IDisposable
         }
 
         this.disposedInterfaces.Clear();
+    }
+
+    private void InitializeState()
+    {
+        this.UpdateLastSuccessfulReceive(Ticks.GetSystem());
     }
 
     protected List<NetInterface> activeInterfaces = new();
