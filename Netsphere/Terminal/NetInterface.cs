@@ -568,11 +568,12 @@ WaitForSendCompletionWait:
                 }
 
                 if (x.State == NetTerminalGeneState.SendComplete)
-                {
+                {// Complete
+                    var dif = currentTicks - x.SentTicks;
                     this.SendCompleteIndex = i;
                 }
                 else if (x.State == NetTerminalGeneState.WaitingToSend)
-                {
+                {// Send
                     if (x.Send(udp))
                     {
                         this.TerminalLogger?.Information($"Udp Sent       : {x.ToString()}");
@@ -583,7 +584,7 @@ WaitForSendCompletionWait:
                     }
                 }
                 else if (x.State == NetTerminalGeneState.WaitingForAck)
-                {
+                {// Resend
                     if (x.SendCount > NetConstants.SendCountMax)
                     {
                         this.TerminalLogger?.Information($"InternalClose (SentCount)");

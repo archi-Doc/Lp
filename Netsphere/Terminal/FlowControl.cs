@@ -17,7 +17,7 @@ public class FlowControl
     }
 
     internal void Update(long currentTicks)
-    {
+    {// lock (NetTerminal.SyncObject)
         if (currentTicks <= this.lastTicks)
         {
             return;
@@ -52,13 +52,13 @@ public class FlowControl
     }
 
     internal void RentSendCapacity(out int sendCapacity)
-    {
+    {// lock (NetTerminal.SyncObject)
         sendCapacity = (int)this.sendCapacityAccumulated;
         this.sendCapacityAccumulated -= sendCapacity;
     }
 
     internal void ReturnSendCapacity(int sendCapacity)
-    {
+    {// lock (NetTerminal.SyncObject)
         this.sendCapacityAccumulated += sendCapacity;
     }
 

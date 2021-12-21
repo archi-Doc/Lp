@@ -36,8 +36,12 @@ public class Server
                     }
                 }
                 else if (received.Result == NetResult.Timeout ||
-                    received.Result == NetResult.Closed ||
                     received.Result == NetResult.NoReceiver)
+                {
+                    this.NetTerminal.SendClose();
+                    break;
+                }
+                else if (received.Result == NetResult.Closed)
                 {
                     break;
                 }

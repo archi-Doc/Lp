@@ -132,8 +132,6 @@ public partial class NetTerminal : IDisposable
 
     internal void ProcessSend(UdpClient udp, long currentTicks)
     {
-        this.FlowControl.Update(currentTicks);
-
         lock (this.SyncObject)
         {
             if (this.IsClosed)
@@ -141,6 +139,7 @@ public partial class NetTerminal : IDisposable
                 return;
             }
 
+            this.FlowControl.Update(currentTicks);
             this.FlowControl.RentSendCapacity(out var sendCapacity);
             foreach (var x in this.activeInterfaces)
             {
