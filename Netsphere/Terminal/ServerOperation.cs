@@ -36,14 +36,14 @@ internal class ServerOperation : NetOperation
         this.Terminal.AddRawSend(this.NetTerminal.Endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
     }
 
-    public async Task<NetReceivedData> ReceiveAsync(int millisecondsToWait)
+    public async Task<NetReceivedData> ReceiveAsync()
     {// Checked
         if (this.receiverInterface == null)
         {
             throw new InvalidOperationException();
         }
 
-        var received = await this.receiverInterface.ReceiveAsync(millisecondsToWait).ConfigureAwait(false);
+        var received = await this.receiverInterface.ReceiveAsync().ConfigureAwait(false);
         if (received.Result != NetResult.Success)
         {// Timeout/Error
             return received;
@@ -68,11 +68,11 @@ internal class ServerOperation : NetOperation
 
         this.receiverInterface.SetSend(new PacketReserveResponse());
 
-        received = await this.receiverInterface2.ReceiveAsync(millisecondsToWait).ConfigureAwait(false);
+        received = await this.receiverInterface2.ReceiveAsync().ConfigureAwait(false);
         return received;
     }
 
-    public async Task<NetResult> SendPacketAsync<TSend>(TSend value, int millisecondsToWait)
+    public async Task<NetResult> SendPacketAsync<TSend>(TSend value)
        where TSend : IPacket
     {// Checked
         if (!value.AllowUnencrypted && !this.NetTerminal.IsEncrypted)
@@ -87,10 +87,10 @@ internal class ServerOperation : NetOperation
         }
 
         netInterface.SetSend(value);
-        return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
+        return await netInterface.WaitForSendCompletionAsync().ConfigureAwait(false);
     }
 
-    public async Task<NetResult> SendAsync<TSend>(TSend value, int millisecondsToWait)
+    public async Task<NetResult> SendAsync<TSend>(TSend value)
     {// Checked
         if (!BlockService.TrySerialize(value, out var owner))
         {
@@ -100,22 +100,19 @@ internal class ServerOperation : NetOperation
         Task<NetResult> task;
         if (value is IPacket packet)
         {
-            task = this.SendDataAsync(!packet.AllowUnencrypted, packet.PacketId, (ulong)packet.PacketId, owner, millisecondsToWait);
+            task = this.SendDataAsync(!packet.AllowUnencrypted, packet.PacketId, (ulong)packet.PacketId, owner);
         }
         else
         {
             var dataId = BlockService.GetId<TSend>();
-            task = this.SendDataAsync(true, PacketId.Data, dataId, owner, millisecondsToWait);
+            task = this.SendDataAsync(true, PacketId.Data, dataId, owner);
         }
 
         owner.Return();
         return await task.ConfigureAwait(false);
     }
 
-    /*public async Task<NetResult> SendDataAsync(ulong dataId, byte[] data, int millisecondsToWait)
-        => await this.SendDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);*/
-
-    internal async Task<NetResult> SendDataAsync(bool encrypt, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner, int millisecondsToWait)
+    internal async Task<NetResult> SendDataAsync(bool encrypt, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner)
     {// Checked
         if (!this.NetTerminal.IsEncrypted && encrypt)
         {
@@ -131,7 +128,7 @@ internal class ServerOperation : NetOperation
         if (owner.Memory.Length <= PacketService.SafeMaxPayloadSize)
         {// Single packet.
             netInterface.SetSend(this, packetId, dataId, owner);
-            return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
+            return await netInterface.WaitForSendCompletionAsync().ConfigureAwait(false);
         }
         else if (owner.Memory.Length > BlockService.MaxBlockSize)
         {// Block size limit exceeded.
@@ -141,16 +138,11 @@ internal class ServerOperation : NetOperation
         // Split into multiple packets. Send PacketReserve.
         var reserve = new PacketReserve(owner.Memory.Length);
         netInterface.SetSend(reserve);
-        /*var result = await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
-        if (result != NetInterfaceResult.Success)
-        {
-            return result;
-        }*/
 
         netInterface = NetInterface<object, byte[]>.CreateReceive(this);
         try
         {
-            var received = await netInterface.ReceiveAsync(millisecondsToWait).ConfigureAwait(false);
+            var received = await netInterface.ReceiveAsync().ConfigureAwait(false);
             if (received.Result != NetResult.Success)
             {// Timeout/Error
                 return received.Result;
@@ -161,7 +153,7 @@ internal class ServerOperation : NetOperation
             }
 
             netInterface.SetSend(this, packetId, dataId, owner);
-            return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
+            return await netInterface.WaitForSendCompletionAsync().ConfigureAwait(false);
         }
         finally
         {

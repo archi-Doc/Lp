@@ -20,8 +20,6 @@ namespace Netsphere;
 [ValueLinkObject]
 public partial class NetTerminal : IDisposable
 {
-    public const int DefaultMillisecondsToWait = 2000;
-
     /// <summary>
     /// The default interval time in milliseconds.
     /// </summary>
@@ -68,7 +66,7 @@ public partial class NetTerminal : IDisposable
 
     public double MinimumBandwidth => this.minimumBandwidth;
 
-    public virtual async Task<NetResult> EncryptConnectionAsync(int millisecondsToWait = DefaultMillisecondsToWait) => NetResult.NoEncryptedConnection;
+    public virtual async Task<NetResult> EncryptConnectionAsync() => NetResult.NoEncryptedConnection;
 
     public virtual void SendClose()
     {
@@ -323,9 +321,11 @@ public partial class NetTerminal : IDisposable
         return true;
     }
 
-    internal void UpdateLastSuccessfulReceive(long currentTicks) => this.lastSuccessfulReceive = currentTicks;
+    internal void ResetLastResponseTicks() => this.lastResponseTicks = Ticks.GetSystem();
 
-    internal long LastSuccessfulReceive => this.lastSuccessfulReceive;
+    internal void SetLastResponseTicks(long ticks) => this.lastResponseTicks = ticks;
+
+    internal long LastResponseTicks => this.lastResponseTicks;
 
     internal GenePool? TryFork() => this.embryo == null ? null : this.GenePool.Fork(this.embryo);
 
@@ -354,7 +354,7 @@ public partial class NetTerminal : IDisposable
     {
         this.SetMaximumResponseTime();
         this.SetMinimumBandwidth();
-        this.UpdateLastSuccessfulReceive(Ticks.GetSystem());
+        this.ResetLastResponseTicks();
     }
 
     protected List<NetInterface> activeInterfaces = new();
@@ -365,7 +365,7 @@ public partial class NetTerminal : IDisposable
     private long maximumResponseTicks;
     private double minimumBandwidth;
     private long lastSendingAckTicks;
-    private long lastSuccessfulReceive;
+    private long lastResponseTicks;
 
     private uint resendCount;
 

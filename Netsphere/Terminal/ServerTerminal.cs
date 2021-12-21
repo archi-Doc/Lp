@@ -53,7 +53,7 @@ public class ServerTerminal : NetTerminal
         return await this.SendDataAsync(0, Array.Empty<byte>());
     }
 
-    public async Task<NetReceivedData> ReceiveAsync(int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<NetReceivedData> ReceiveAsync()
     {// Checked
         this.EnsureReceiver();
         if (!this.receiverQueue.TryDequeue(out var operation))
@@ -61,7 +61,7 @@ public class ServerTerminal : NetTerminal
             return new(NetResult.NoReceiver);
         }
 
-        var received = await operation.ReceiveAsync(millisecondsToWait);
+        var received = await operation.ReceiveAsync();
         if (received.Result != NetResult.Success)
         {// Timeout or error
             return received;
@@ -71,7 +71,7 @@ public class ServerTerminal : NetTerminal
         return received;
     }
 
-    public async Task<NetResult> SendPacketAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<NetResult> SendPacketAsync<TSend>(TSend value)
         where TSend : IPacket
     {// Checked
         if (!this.senderQueue.TryDequeue(out var operation))
@@ -79,43 +79,43 @@ public class ServerTerminal : NetTerminal
             return NetResult.NoSender;
         }
 
-        var result = await operation.SendPacketAsync(value, millisecondsToWait);
+        var result = await operation.SendPacketAsync(value);
         operation.Dispose();
         return result;
     }
 
-    public async Task<NetResult> SendAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<NetResult> SendAsync<TSend>(TSend value)
     {// Checked
         if (!this.senderQueue.TryDequeue(out var operation))
         {
             return NetResult.NoSender;
         }
 
-        var result = await operation.SendAsync(value, millisecondsToWait);
+        var result = await operation.SendAsync(value);
         operation.Dispose();
         return result;
     }
 
-    public async Task<NetResult> SendDataAsync(ulong dataId, ByteArrayPool.MemoryOwner data, int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<NetResult> SendDataAsync(ulong dataId, ByteArrayPool.MemoryOwner data)
     {// Checked
         if (!this.senderQueue.TryDequeue(out var operation))
         {
             return NetResult.NoSender;
         }
 
-        var result = await operation.SendDataAsync(true, PacketId.Data, dataId, data, millisecondsToWait).ConfigureAwait(false);
+        var result = await operation.SendDataAsync(true, PacketId.Data, dataId, data).ConfigureAwait(false);
         operation.Dispose();
         return result;
     }
 
-    public async Task<NetResult> SendDataAsync(ulong dataId, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<NetResult> SendDataAsync(ulong dataId, byte[] data)
     {// Checked
         if (!this.senderQueue.TryDequeue(out var operation))
         {
             return NetResult.NoSender;
         }
 
-        var result = await operation.SendDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);
+        var result = await operation.SendDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data)).ConfigureAwait(false);
         operation.Dispose();
         return result;
     }

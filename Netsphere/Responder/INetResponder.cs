@@ -28,7 +28,7 @@ public abstract class NetResponder<TSend, TReceive> : INetResponder
             return false;
         }
 
-        var task = terminal.SendAsync(response, 100000);
+        var task = terminal.SendAsync(response);
         return true;
     }
 }

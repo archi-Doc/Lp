@@ -6,8 +6,6 @@ namespace Netsphere;
 
 public class Server
 {
-    public const int DefaultMillisecondsToWait = 3000;
-
     public Server(NetBase netBase, NetControl netControl)
     {
         this.NetBase = netBase;
@@ -21,7 +19,7 @@ public class Server
         {
             try
             {
-                var received = await terminal.ReceiveAsync(10000); // DefaultMillisecondsToWait
+                var received = await terminal.ReceiveAsync();
                 if (received.Result == NetResult.Success)
                 {// Success
                     // Responder (DataId, RPC)

@@ -14,7 +14,7 @@ public class ClientTerminal : NetTerminal
     {// NodeInformation: Managed
     }
 
-    public override async Task<NetResult> EncryptConnectionAsync(int millisecondsToWait = DefaultMillisecondsToWait)
+    public override async Task<NetResult> EncryptConnectionAsync()
     {// Checked
         if (this.IsEncrypted)
         {// Encrypted
@@ -27,7 +27,7 @@ public class ClientTerminal : NetTerminal
 
         using (var operation = this.CreateOperation())
         {
-            return await operation.EncryptConnectionAsync(millisecondsToWait).ConfigureAwait(false);
+            return await operation.EncryptConnectionAsync().ConfigureAwait(false);
         }
     }
 
@@ -59,70 +59,70 @@ public class ClientTerminal : NetTerminal
         }
     }
 
-    public async Task<NetResult> SendPacketAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<NetResult> SendPacketAsync<TSend>(TSend value)
         where TSend : IPacket
     {// Checked
         using (var operation = this.CreateOperation())
         {
-            return await operation.SendPacketAsync(value, millisecondsToWait).ConfigureAwait(false);
+            return await operation.SendPacketAsync(value).ConfigureAwait(false);
         }
     }
 
-    public async Task<(NetResult Result, TReceive? Value)> SendPacketAndReceiveAsync<TSend, TReceive>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<(NetResult Result, TReceive? Value)> SendPacketAndReceiveAsync<TSend, TReceive>(TSend value)
         where TSend : IPacket
     {// Checked
         using (var operation = this.CreateOperation())
         {
-            return await operation.SendPacketAndReceiveAsync<TSend, TReceive>(value, millisecondsToWait).ConfigureAwait(false);
+            return await operation.SendPacketAndReceiveAsync<TSend, TReceive>(value).ConfigureAwait(false);
         }
     }
 
-    public async Task<NetResult> SendAsync<TSend>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<NetResult> SendAsync<TSend>(TSend value)
     {// Checked
         using (var operation = this.CreateOperation())
         {
-            return await operation.SendAsync(value, millisecondsToWait);
+            return await operation.SendAsync(value);
         }
     }
 
-    public async Task<NetResult> SendDataAsync(ulong dataId, ByteArrayPool.MemoryOwner data, int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<NetResult> SendDataAsync(ulong dataId, ByteArrayPool.MemoryOwner data)
     {// Checked
         using (var operation = this.CreateOperation())
         {
-            return await operation.SendDataAsync(true, PacketId.Data, dataId, data, millisecondsToWait).ConfigureAwait(false);
+            return await operation.SendDataAsync(true, PacketId.Data, dataId, data).ConfigureAwait(false);
         }
     }
 
-    public async Task<NetResult> SendDataAsync(ulong dataId, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<NetResult> SendDataAsync(ulong dataId, byte[] data)
     {// Checked
         using (var operation = this.CreateOperation())
         {
-            return await operation.SendDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);
+            return await operation.SendDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data)).ConfigureAwait(false);
         }
     }
 
-    public async Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(TSend value, int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(TSend value)
     {// Checked
         using (var operation = this.CreateOperation())
         {
-            return await operation.SendAndReceiveAsync<TSend, TReceive>(value, millisecondsToWait);
+            return await operation.SendAndReceiveAsync<TSend, TReceive>(value);
         }
     }
 
-    public async Task<(NetResult Result, ByteArrayPool.MemoryOwner Value)> SendAndReceiveDataAsync(ulong dataId, ByteArrayPool.MemoryOwner data, int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<(NetResult Result, ByteArrayPool.MemoryOwner Value)> SendAndReceiveDataAsync(ulong dataId, ByteArrayPool.MemoryOwner data)
     {// Checked
         using (var operation = this.CreateOperation())
         {
-            var response = await operation.SendAndReceiveDataAsync(true, PacketId.Data, dataId, data, millisecondsToWait).ConfigureAwait(false);
+            var response = await operation.SendAndReceiveDataAsync(true, PacketId.Data, dataId, data).ConfigureAwait(false);
             return (response.Result, response.Received);
         }
     }
 
-    public async Task<(NetResult Result, ByteArrayPool.MemoryOwner Value)> SendAndReceiveDataAsync(ulong dataId, byte[] data, int millisecondsToWait = DefaultMillisecondsToWait)
+    public async Task<(NetResult Result, ByteArrayPool.MemoryOwner Value)> SendAndReceiveDataAsync(ulong dataId, byte[] data)
     {// Checked
         using (var operation = this.CreateOperation())
         {
-            var response = await operation.SendAndReceiveDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);
+            var response = await operation.SendAndReceiveDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data)).ConfigureAwait(false);
             return (response.Result, response.Received);
         }
     }

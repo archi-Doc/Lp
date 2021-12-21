@@ -15,7 +15,7 @@ internal class ClientOperation : NetOperation
     {
     }
 
-    public override async Task<NetResult> EncryptConnectionAsync(int millisecondsToWait)
+    public override async Task<NetResult> EncryptConnectionAsync()
     {// Checked
         if (this.NetTerminal.IsEncrypted)
         {// Encrypted
@@ -28,7 +28,7 @@ internal class ClientOperation : NetOperation
 
         if (this.NetTerminal.NodeInformation == null)
         {// Get NodeInformation (Unsafe connection).
-            var r = await this.SendPacketAndReceiveAsync<PacketGetNodeInformation, PacketGetNodeInformationResponse>(new(), millisecondsToWait);
+            var r = await this.SendPacketAndReceiveAsync<PacketGetNodeInformation, PacketGetNodeInformationResponse>(new());
             if (r.Result != NetResult.Success)
             {
                 return r.Result;
@@ -38,7 +38,7 @@ internal class ClientOperation : NetOperation
         }
 
         var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation(this.Terminal.IsAlternative));
-        var response = await this.SendPacketAndReceiveAsync<PacketEncrypt, PacketEncryptResponse>(p, millisecondsToWait).ConfigureAwait(false);
+        var response = await this.SendPacketAndReceiveAsync<PacketEncrypt, PacketEncryptResponse>(p).ConfigureAwait(false);
         if (response.Result != NetResult.Success)
         {
             return response.Result;
@@ -47,12 +47,12 @@ internal class ClientOperation : NetOperation
         return this.NetTerminal.CreateEmbryo(p.Salt);
     }
 
-    public async Task<NetResult> SendPacketAsync<TSend>(TSend value, int millisecondsToWait)
+    public async Task<NetResult> SendPacketAsync<TSend>(TSend value)
         where TSend : IPacket
     {// Checked
         if (!value.AllowUnencrypted && !this.NetTerminal.IsEncrypted)
         {
-            var result = await this.EncryptConnectionAsync(millisecondsToWait).ConfigureAwait(false);
+            var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
             if (result != NetResult.Success)
             {
                 return NetResult.NoEncryptedConnection;
@@ -67,7 +67,7 @@ internal class ClientOperation : NetOperation
 
         try
         {
-            return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
+            return await netInterface.WaitForSendCompletionAsync().ConfigureAwait(false);
         }
         finally
         {
@@ -75,12 +75,12 @@ internal class ClientOperation : NetOperation
         }
     }
 
-    public async Task<(NetResult Result, TReceive? Value)> SendPacketAndReceiveAsync<TSend, TReceive>(TSend value, int millisecondsToWait)
+    public async Task<(NetResult Result, TReceive? Value)> SendPacketAndReceiveAsync<TSend, TReceive>(TSend value)
         where TSend : IPacket
     {// Checked
         if (!value.AllowUnencrypted && !this.NetTerminal.IsEncrypted)
         {
-            var result = await this.EncryptConnectionAsync(millisecondsToWait).ConfigureAwait(false);
+            var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
             if (result != NetResult.Success)
             {
                 return (result, default);
@@ -95,7 +95,7 @@ internal class ClientOperation : NetOperation
 
         try
         {
-            var response = await netInterface.ReceiveAsync(millisecondsToWait).ConfigureAwait(false);
+            var response = await netInterface.ReceiveAsync().ConfigureAwait(false);
 
             if (response.PacketId == PacketId.Reserve)
             {
@@ -115,7 +115,7 @@ internal class ClientOperation : NetOperation
 
                 try
                 {
-                    response = await netInterface2.ReceiveAsync(millisecondsToWait).ConfigureAwait(false);
+                    response = await netInterface2.ReceiveAsync().ConfigureAwait(false);
                 }
                 finally
                 {
@@ -143,7 +143,7 @@ internal class ClientOperation : NetOperation
         }
     }
 
-    public async Task<NetResult> SendAsync<TSend>(TSend value, int millisecondsToWait)
+    public async Task<NetResult> SendAsync<TSend>(TSend value)
     {// Checked
         if (!BlockService.TrySerialize(value, out var owner))
         {
@@ -153,22 +153,19 @@ internal class ClientOperation : NetOperation
         Task<NetResult> task;
         if (value is IPacket packet)
         {
-            task = this.SendDataAsync(!packet.AllowUnencrypted, packet.PacketId, (ulong)packet.PacketId, owner, millisecondsToWait);
+            task = this.SendDataAsync(!packet.AllowUnencrypted, packet.PacketId, (ulong)packet.PacketId, owner);
         }
         else
         {
             var dataId = BlockService.GetId<TSend>();
-            task = this.SendDataAsync(true, PacketId.Data, dataId, owner, millisecondsToWait);
+            task = this.SendDataAsync(true, PacketId.Data, dataId, owner);
         }
 
         owner.Return();
         return await task.ConfigureAwait(false);
     }
 
-    /* public async Task<NetResult> SendDataAsync(ulong dataId, byte[] data, int millisecondsToWait)
-        => await this.SendDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);*/
-
-    public async Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(TSend value, int millisecondsToWait)
+    public async Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(TSend value)
     {// Checked
         if (!BlockService.TrySerialize(value, out var owner))
         {
@@ -180,12 +177,12 @@ internal class ClientOperation : NetOperation
         if (value is IPacket packet)
         {
             dataId = (ulong)packet.PacketId | ((ulong)BlockService.GetId<TReceive>() << 32);
-            task = this.SendAndReceiveDataAsync(!packet.AllowUnencrypted, packet.PacketId, dataId, owner, millisecondsToWait);
+            task = this.SendAndReceiveDataAsync(!packet.AllowUnencrypted, packet.PacketId, dataId, owner);
         }
         else
         {
             dataId = BlockService.GetId<TSend, TReceive>();
-            task = this.SendAndReceiveDataAsync(true, PacketId.Data, dataId, owner, millisecondsToWait);
+            task = this.SendAndReceiveDataAsync(true, PacketId.Data, dataId, owner);
         }
 
         owner.Return();
@@ -206,17 +203,11 @@ internal class ClientOperation : NetOperation
         return (response.Result, received);
     }
 
-    /*public async Task<(NetResult Result, ByteArrayPool.MemoryOwner Value)> SendAndReceiveDataAsync(ulong dataId, byte[] data, int millisecondsToWait)
-    {// Checked
-        var response = await this.SendAndReceiveDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data), millisecondsToWait).ConfigureAwait(false);
-        return (response.Result, response.Received);
-    }*/
-
-    internal async Task<NetResult> SendDataAsync(bool encrypt, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner, int millisecondsToWait)
+    internal async Task<NetResult> SendDataAsync(bool encrypt, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner)
     {// Checked
         if (!this.NetTerminal.IsEncrypted && encrypt)
         {
-            var result = await this.EncryptConnectionAsync(millisecondsToWait).ConfigureAwait(false);
+            var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
             if (result != NetResult.Success)
             {
                 return result;
@@ -229,7 +220,7 @@ internal class ClientOperation : NetOperation
         else if (owner.Memory.Length <= BlockService.MaxBlockSize)
         {// Split into multiple packets. Send PacketReserve.
             var reserve = new PacketReserve(owner.Memory.Length);
-            var received = await this.SendPacketAndReceiveAsync<PacketReserve, PacketReserveResponse>(reserve, millisecondsToWait).ConfigureAwait(false);
+            var received = await this.SendPacketAndReceiveAsync<PacketReserve, PacketReserveResponse>(reserve).ConfigureAwait(false);
             if (received.Result != NetResult.Success)
             {
                 return received.Result;
@@ -248,7 +239,7 @@ internal class ClientOperation : NetOperation
 
         try
         {
-            return await netInterface.WaitForSendCompletionAsync(millisecondsToWait).ConfigureAwait(false);
+            return await netInterface.WaitForSendCompletionAsync().ConfigureAwait(false);
         }
         finally
         {
@@ -256,11 +247,11 @@ internal class ClientOperation : NetOperation
         }
     }
 
-    internal async Task<NetReceivedData> SendAndReceiveDataAsync(bool encrypt, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner, int millisecondsToWait)
+    internal async Task<NetReceivedData> SendAndReceiveDataAsync(bool encrypt, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner)
     {// Checked
         if (encrypt)
         {
-            var result = await this.EncryptConnectionAsync(millisecondsToWait).ConfigureAwait(false);
+            var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
             if (result != NetResult.Success)
             {
                 return new(result);
@@ -273,7 +264,7 @@ internal class ClientOperation : NetOperation
         else if (owner.Memory.Length <= BlockService.MaxBlockSize)
         {// Split into multiple packets. Send PacketReserve.
             var reserve = new PacketReserve(owner.Memory.Length);
-            var received = await this.SendPacketAndReceiveAsync<PacketReserve, PacketReserveResponse>(reserve, millisecondsToWait).ConfigureAwait(false);
+            var received = await this.SendPacketAndReceiveAsync<PacketReserve, PacketReserveResponse>(reserve).ConfigureAwait(false);
             if (received.Result != NetResult.Success)
             {
                 return new(received.Result);
@@ -292,7 +283,7 @@ internal class ClientOperation : NetOperation
 
         try
         {
-            var response = await netInterface.ReceiveAsync(millisecondsToWait).ConfigureAwait(false);
+            var response = await netInterface.ReceiveAsync().ConfigureAwait(false);
 
             if (response.PacketId == PacketId.Reserve)
             {
@@ -312,7 +303,7 @@ internal class ClientOperation : NetOperation
 
                 try
                 {
-                    response = await netInterface2.ReceiveAsync(millisecondsToWait).ConfigureAwait(false);
+                    response = await netInterface2.ReceiveAsync().ConfigureAwait(false);
                 }
                 finally
                 {

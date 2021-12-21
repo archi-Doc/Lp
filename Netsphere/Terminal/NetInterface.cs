@@ -370,15 +370,14 @@ public class NetInterface : IDisposable
     /// <summary>
     /// Wait until the data transmission is completed.
     /// </summary>
-    /// <param name="millisecondsToWait">The number of milliseconds to wait.</param>
     /// <returns><see cref="NetResult"/>.</returns>
-    public async Task<NetResult> WaitForSendCompletionAsync(int millisecondsToWait)
+    public async Task<NetResult> WaitForSendCompletionAsync()
     {// Checked
-        var end = Ticks.GetSystem() + Ticks.FromMilliseconds(millisecondsToWait);
+        this.NetTerminal.ResetLastResponseTicks();
 
         while (this.Terminal.Core?.IsTerminated == false && this.NetTerminal.IsClosed == false)
         {
-            if (Ticks.GetSystem() >= end)
+            if (Ticks.GetSystem() >= (this.NetTerminal.LastResponseTicks + this.NetTerminal.MaximumResponseTicks))
             {
                 this.TerminalLogger?.Information($"Send timeout.");
                 return NetResult.Timeout;
@@ -420,17 +419,15 @@ WaitForSendCompletionWait:
     /// <summary>
     /// Wait until data reception is complete.
     /// </summary>
-    /// <param name="millisecondsToWait">The number of milliseconds to wait.</param>
     /// <returns><see cref="NetReceivedData"/>.</returns>
-    public async Task<NetReceivedData> ReceiveAsync(int millisecondsToWait)
+    public async Task<NetReceivedData> ReceiveAsync()
     {// Checked
         ByteArrayPool.MemoryOwner data = default;
-        var end = Ticks.GetSystem() + Ticks.FromMilliseconds(millisecondsToWait);
+        this.NetTerminal.ResetLastResponseTicks();
 
         while (this.Terminal.Core?.IsTerminated == false && this.NetTerminal.IsClosed == false)
         {
-            var currentTicks = Ticks.GetSystem();
-            if (currentTicks >= end || currentTicks >= (this.NetTerminal.LastSuccessfulReceive + this.NetTerminal.MaximumResponseTicks))
+            if (Ticks.GetSystem() >= (this.NetTerminal.LastResponseTicks + this.NetTerminal.MaximumResponseTicks))
             {
                 this.TerminalLogger?.Information($"Receive timeout.");
                 return new NetReceivedData(NetResult.Timeout);
@@ -662,7 +659,7 @@ WaitForSendCompletionWait:
                 return;
             }
 
-            this.NetTerminal.UpdateLastSuccessfulReceive(currentTicks);
+            this.NetTerminal.SetLastResponseTicks(currentTicks);
             if (header.Id == PacketId.Ack)
             {// Ack (header.Gene + data(ulong[]))
                 gene.ReceiveAck();
