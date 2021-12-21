@@ -35,18 +35,11 @@ public class Server
                         continue;
                     }
                 }
-                else if (received.Result == NetResult.Closed ||
+                else if (received.Result == NetResult.Timeout ||
+                    received.Result == NetResult.Closed ||
                     received.Result == NetResult.NoReceiver)
                 {
                     break;
-                }
-                else if (received.Result == NetResult.Timeout)
-                {
-                    // this.NetTerminal.SendClose();
-                    /*if ((terminal.LastSuccessfulReceive + Ticks.FromMilliseconds(2000)) < Ticks.GetSystem())
-                    {
-                        break;
-                    }*/
                 }
             }
             finally

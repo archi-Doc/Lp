@@ -1,0 +1,54 @@
+﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+
+namespace Netsphere;
+
+public class FlowControl
+{
+    public static readonly long TicksPerRound = Ticks.FromMilliseconds(2);
+    public static readonly double TicksPerRoundRev = 1d / Ticks.FromMilliseconds(2);
+    public static readonly double InitialSendCapacityPerRound = 2;
+
+    public FlowControl()
+    {
+        this.sendCapacityAccumulated = 0;
+        this.sendCapacityPerRound = InitialSendCapacityPerRound;
+    }
+
+    internal void Update(long currentTicks)
+    {
+        if (currentTicks <= this.lastTicks)
+        {
+            return;
+        }
+        else if (this.lastTicks == 0)
+        {
+            this.lastTicks = currentTicks - TicksPerRound;
+        }
+
+        // Send Capacity
+        var roundElapsed = (currentTicks - this.lastTicks) * TicksPerRoundRev;
+        this.sendCapacityAccumulated += this.sendCapacityPerRound * roundElapsed;
+        var ceiling = Math.Ceiling(this.sendCapacityPerRound);
+        if (this.sendCapacityAccumulated > ceiling)
+        {
+            this.sendCapacityAccumulated = ceiling;
+        }
+
+        this.lastTicks = currentTicks;
+    }
+
+    internal void RentSendCapacity(out int sendCapacity)
+    {
+        sendCapacity = (int)this.sendCapacityAccumulated;
+        this.sendCapacityAccumulated -= sendCapacity;
+    }
+
+    internal void ReturnSendCapacity(int sendCapacity)
+    {
+        this.sendCapacityAccumulated += sendCapacity;
+    }
+
+    private long lastTicks;
+    private double sendCapacityAccumulated;
+    private double sendCapacityPerRound;
+}

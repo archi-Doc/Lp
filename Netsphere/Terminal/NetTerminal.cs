@@ -33,6 +33,8 @@ public partial class NetTerminal : IDisposable
         this.NodeAddress = nodeAddress;
         this.Endpoint = this.NodeAddress.CreateEndpoint();
 
+        this.FlowControl = new();
+
         this.InitializeState();
     }
 
@@ -48,6 +50,8 @@ public partial class NetTerminal : IDisposable
         this.NodeAddress = nodeInformation;
         this.NodeInformation = nodeInformation;
         this.Endpoint = this.NodeAddress.CreateEndpoint();
+
+        this.FlowControl = new();
 
         this.InitializeState();
     }
@@ -73,6 +77,8 @@ public partial class NetTerminal : IDisposable
     }
 
     public Terminal Terminal { get; }
+
+    public FlowControl FlowControl { get; }
 
     public bool IsEncrypted => this.embryo != null;
 
@@ -126,6 +132,8 @@ public partial class NetTerminal : IDisposable
 
     internal void ProcessSend(UdpClient udp, long currentTicks)
     {
+        this.FlowControl.Update(currentTicks);
+
         lock (this.SyncObject)
         {
             if (this.IsClosed)
@@ -133,7 +141,7 @@ public partial class NetTerminal : IDisposable
                 return;
             }
 
-            var sendCapacity = 1;
+            this.FlowControl.RentSendCapacity(out var sendCapacity);
             foreach (var x in this.activeInterfaces)
             {
                 if (sendCapacity == 0)
@@ -143,6 +151,8 @@ public partial class NetTerminal : IDisposable
 
                 x.ProcessSend(udp, currentTicks, ref sendCapacity);
             }
+
+            this.FlowControl.ReturnSendCapacity(sendCapacity);
 
             // Send Ack
             if ((currentTicks - this.lastSendingAckTicks) > Ticks.FromMilliseconds(NetConstants.SendingAckIntervalInMilliseconds))
