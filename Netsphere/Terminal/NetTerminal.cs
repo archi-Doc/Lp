@@ -54,7 +54,19 @@ public partial class NetTerminal : IDisposable
         this.InitializeState();
     }
 
-    // public virtual NetInterfaceResult EncryptConnection() => NetInterfaceResult.NoEncryptedConnection;
+    public void SetMaximumResponseTime(int milliseconds = 500)
+    {
+        this.maximumResponseTicks = Ticks.FromMilliseconds(milliseconds);
+    }
+
+    public long MaximumResponseTicks => this.maximumResponseTicks;
+
+    public void SetMinimumBandwidth(double megabytesPerSecond = 0.1)
+    {
+        this.minimumBandwidth = megabytesPerSecond;
+    }
+
+    public double MinimumBandwidth => this.minimumBandwidth;
 
     public virtual async Task<NetResult> EncryptConnectionAsync(int millisecondsToWait = DefaultMillisecondsToWait) => NetResult.NoEncryptedConnection;
 
@@ -340,6 +352,8 @@ public partial class NetTerminal : IDisposable
 
     private void InitializeState()
     {
+        this.SetMaximumResponseTime();
+        this.SetMinimumBandwidth();
         this.UpdateLastSuccessfulReceive(Ticks.GetSystem());
     }
 
@@ -347,6 +361,9 @@ public partial class NetTerminal : IDisposable
     protected List<NetInterface> disposedInterfaces = new();
     protected byte[]? embryo; // 48 bytes
     private Aes? aes;
+
+    private long maximumResponseTicks;
+    private double minimumBandwidth;
     private long lastSendingAckTicks;
     private long lastSuccessfulReceive;
 

@@ -430,7 +430,7 @@ WaitForSendCompletionWait:
         while (this.Terminal.Core?.IsTerminated == false && this.NetTerminal.IsClosed == false)
         {
             var currentTicks = Ticks.GetSystem();
-            if (currentTicks >= end || currentTicks >= (this.NetTerminal.LastSuccessfulReceive + Ticks.FromMilliseconds(500)))
+            if (currentTicks >= end || currentTicks >= (this.NetTerminal.LastSuccessfulReceive + this.NetTerminal.MaximumResponseTicks))
             {
                 this.TerminalLogger?.Information($"Receive timeout.");
                 return new NetReceivedData(NetResult.Timeout);
