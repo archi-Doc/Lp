@@ -486,32 +486,44 @@ WaitForSendCompletionWait:
         }
 
         // Multiple genes (PacketData)
-        var total = 0;
-        for (var i = 0; i < this.RecvGenes.Length; i++)
+
+        // Check
+        while (true)
         {
-            if (!this.RecvGenes[i].IsReceiveComplete)
-            { // Checked later: this.RecvGenes[i].Owner.Memory.Length < PacketService.DataHeaderSize
+            if (this.RecvCompleteIndex == this.RecvGenes.Length)
+            {// Complete
+                break;
+            }
+            else if (!this.RecvGenes[this.RecvCompleteIndex].IsReceiveComplete)
+            {// Not received
                 return false;
             }
             else
             {
-                if (this.RecvGenes[i].ReceivedId == PacketId.Data)
-                {// Data
-                    total += this.RecvGenes[i].Owner.Memory.Length - PacketService.DataHeaderSize;
-                }
-                else
-                {// DataFollowing
-                    total += this.RecvGenes[i].Owner.Memory.Length - PacketService.DataFollowingHeaderSize;
-                }
+                this.RecvCompleteIndex++;
             }
         }
 
-        if (total > BlockService.MaxBlockSize)
+        // Complete
+        var totalSize = 0;
+        for (var i = 0; i < this.RecvGenes.Length; i++)
+        {
+            if (this.RecvGenes[i].ReceivedId == PacketId.Data)
+            {// Data
+                totalSize += this.RecvGenes[i].Owner.Memory.Length - PacketService.DataHeaderSize;
+            }
+            else
+            {// DataFollowing
+                totalSize += this.RecvGenes[i].Owner.Memory.Length - PacketService.DataFollowingHeaderSize;
+            }
+        }
+
+        if (totalSize > BlockService.MaxBlockSize)
         {
             return false;
         }
 
-        dataMemory = BlockPool.Rent(total).ToMemoryOwner();
+        dataMemory = BlockPool.Rent(totalSize).ToMemoryOwner();
         var memory = dataMemory.Memory;
         for (var i = 0; i < this.RecvGenes.Length; i++)
         {
@@ -537,6 +549,8 @@ WaitForSendCompletionWait:
 #pragma warning disable SA1401 // Fields should be private
     internal NetTerminalGene[]? SendGenes;
     internal NetTerminalGene[]? RecvGenes;
+    internal int SendCompleteIndex;
+    internal int RecvCompleteIndex;
     internal ulong StandbyGene;
     internal long DisposedTicks;
 #pragma warning restore SA1401 // Fields should be private
