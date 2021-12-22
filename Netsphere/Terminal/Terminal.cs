@@ -108,8 +108,8 @@ public class Terminal
 
         if (this.NetBase.NetsphereOptions.EnableLogger)
         {
-            // this.TerminalLogger = new Logger.PriorityLogger();
-            this.TerminalLogger = new SerilogLogger(new LoggerConfiguration()
+            this.TerminalLogger = new Logger.PriorityLogger();
+            /*this.TerminalLogger = new SerilogLogger(new LoggerConfiguration()
             .MinimumLevel.Debug()
             .WriteTo.File(
                 Path.Combine(lpBase.RootDirectory, "logs", "log.txt"),
@@ -117,7 +117,7 @@ public class Terminal
                 retainedFileCountLimit: 31,
                 buffered: true,
                 flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
-            .CreateLogger());
+            .CreateLogger());*/
         }
 
         this.netSocket = new(this);
