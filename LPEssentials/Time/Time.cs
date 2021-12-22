@@ -13,14 +13,14 @@ public static class Time
     /// Gets a DateTime since system startup (Stopwatch.GetTimestamp()).
     /// </summary>
     /// <returns><see cref="DateTime"/>.</returns>
-    public static DateTime GetSystem() => new DateTime(Ticks.GetSystem());
+    public static DateTime GetSystem() => new DateTime(Stopwatch.GetTimestamp() / Nsec.TimestampToNsec);
 
     /// <summary>
     /// Gets a <see cref="DateTime"/> since LP has started (0001/01/01 0:00:00).<br/>
     /// Not affected by manual date/time changes.
     /// </summary>
     /// <returns><see cref="DateTime"/>.</returns>
-    public static DateTime GetApplication() => new DateTime(Ticks.GetApplication());
+    public static DateTime GetApplication() => new DateTime(Nsec.GetApplication() / Nsec.TimestampToNsec);
 
     /// <summary>
     /// Gets a <see cref="DateTime"/> expressed as UTC.
@@ -35,8 +35,8 @@ public static class Time
     /// <returns><see cref="CorrectedResult"/>.</returns>
     public static CorrectedResult GetCorrected(out DateTime correctedTime)
     {
-        var result = TimeCorrection.GetCorrectedTicks(out var ticks);
-        correctedTime = new DateTime(ticks);
+        var result = TimeCorrection.GetCorrectedNsec(out var nsec);
+        correctedTime = new DateTime(nsec / Nsec.TimestampToNsec);
         return result;
     }
 }

@@ -10,10 +10,10 @@ using Tinyhand;
 
 namespace LP.Subcommands;
 
-[SimpleCommand("ticks")]
-public class TicksSubcommand : ISimpleCommand
+[SimpleCommand("nsec")]
+public class NsecSubcommand : ISimpleCommand
 {
-    public TicksSubcommand(Control control)
+    public NsecSubcommand(Control control)
     {
         this.Control = control;
     }
@@ -23,7 +23,7 @@ public class TicksSubcommand : ISimpleCommand
         var logger = Logger.Priority;
 
         logger.Information($"Stopwatch.Frequency: {Stopwatch.Frequency}");
-        logger.Information($"Ticks.GetSystem(): {Ticks.GetSystem()}");
+        logger.Information($"Nsec.GetSystem(): {Nsec.GetSystem()}");
         logger.Information($"Time.GetSystem(): {Time.GetSystem()}");
         logger.Information($"Time.GetUtcNow(): {Time.GetUtcNow()}");
         Time.GetCorrected(out var correctedTime);
@@ -33,4 +33,3 @@ public class TicksSubcommand : ISimpleCommand
 
     public Control Control { get; set; }
 }
-

@@ -58,7 +58,7 @@ public partial class NetTerminal : IDisposable
 
     public void SetMaximumResponseTime(int milliseconds = 500)
     {
-        this.maximumResponseTicks = Ticks.FromMilliseconds(milliseconds);
+        this.maximumResponseTicks = Nsec.FromMilliseconds(milliseconds);
     }
 
     public long MaximumResponseTicks => this.maximumResponseTicks;
@@ -154,7 +154,7 @@ public partial class NetTerminal : IDisposable
             this.FlowControl.ReturnSendCapacity(sendCapacity);
 
             // Send Ack
-            if ((currentTicks - this.lastSendingAckTicks) > Ticks.FromMilliseconds(NetConstants.SendingAckIntervalInMilliseconds))
+            if ((currentTicks - this.lastSendingAckTicks) > Nsec.FromMilliseconds(NetConstants.SendingAckIntervalInMilliseconds))
             {
                 this.lastSendingAckTicks = currentTicks;
 
@@ -255,7 +255,7 @@ public partial class NetTerminal : IDisposable
             return true;
         }
 
-        var ticks = currentTicks - Ticks.FromSeconds(2);
+        var ticks = currentTicks - Nsec.FromSeconds(2);
         List<NetInterface>? list = null;
 
         lock (this.SyncObject)
@@ -330,7 +330,7 @@ public partial class NetTerminal : IDisposable
         return true;
     }
 
-    internal void ResetLastResponseTicks() => this.lastResponseTicks = Ticks.GetSystem();
+    internal void ResetLastResponseTicks() => this.lastResponseTicks = Nsec.GetSystem();
 
     internal void SetLastResponseTicks(long ticks) => this.lastResponseTicks = ticks;
 

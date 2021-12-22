@@ -108,8 +108,8 @@ public class Terminal
 
         if (this.NetBase.NetsphereOptions.EnableLogger)
         {
-            this.TerminalLogger = new Logger.PriorityLogger();
-            /*this.TerminalLogger = new SerilogLogger(new LoggerConfiguration()
+            // this.TerminalLogger = new Logger.PriorityLogger();
+            this.TerminalLogger = new SerilogLogger(new LoggerConfiguration()
             .MinimumLevel.Debug()
             .WriteTo.File(
                 Path.Combine(lpBase.RootDirectory, "logs", "log.txt"),
@@ -117,7 +117,7 @@ public class Terminal
                 retainedFileCountLimit: 31,
                 buffered: true,
                 flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
-            .CreateLogger());*/
+            .CreateLogger());
         }
 
         this.netSocket = new(this);
@@ -168,7 +168,7 @@ public class Terminal
 
     internal void ProcessSend(UdpClient udp, long currentTicks)
     {
-        if ((currentTicks - this.lastCleanedTicks) > Ticks.FromSeconds(1))
+        if ((currentTicks - this.lastCleanedTicks) > Nsec.FromSeconds(1))
         {
             this.lastCleanedTicks = currentTicks;
             this.CleanNetTerminal(currentTicks);
@@ -281,7 +281,7 @@ public class Terminal
 
         var response = new PacketPunchResponse();
         response.Endpoint = endpoint;
-        response.UtcTicks = Ticks.GetUtcNow();
+        response.UtcTicks = Nsec.GetUtcNow();
         var secondGene = GenePool.NextGene(header.Gene);
         this.TerminalLogger?.Information($"Punch Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 

@@ -21,7 +21,7 @@ public partial class PacketPunch : IPacket
     public PacketPunch(IPEndPoint? nextEndpoint)
     {
         this.NextEndpoint = nextEndpoint;
-        this.UtcTicks = Ticks.GetUtcNow();
+        this.UtcTicks = Nsec.GetUtcNow();
     }
 
     [Key(0)]

@@ -44,10 +44,10 @@ public class TimeCorrection
 
     static TimeCorrection()
     {
-        InitialUtcTicks = DateTime.UtcNow.Ticks;
-        InitialSystemTicks = Stopwatch.GetTimestamp();
+        InitialUtcNsec = DateTime.UtcNow.Ticks * Nsec.TimestampToNsec;
+        InitialSystemNsec = Nsec.GetSystem();
 
-        initialDifference = InitialUtcTicks - InitialSystemTicks;
+        initialDifference = InitialUtcNsec - InitialSystemNsec;
         timeCorrections = new();
     }
 
@@ -56,9 +56,9 @@ public class TimeCorrection
     /// </summary>
     /// <param name="correctedTicks">The corrected number of ticks.</param>
     /// <returns><see cref="CorrectedResult"/>.</returns>
-    public static CorrectedResult GetCorrectedTicks(out long correctedTicks)
+    public static CorrectedResult GetCorrectedNsec(out long correctedTicks)
     {
-        var currentTicks = Stopwatch.GetTimestamp() - InitialSystemTicks + InitialUtcTicks;
+        var currentTicks = Nsec.GetSystem() - InitialSystemNsec + InitialUtcNsec;
         if (timeCorrections.QueueChain.Count < MinCorrections)
         {
             correctedTicks = currentTicks;
@@ -73,7 +73,7 @@ public class TimeCorrection
 
     public static void AddCorrection(long utcTicks)
     {
-        var difference = utcTicks - (Stopwatch.GetTimestamp() + initialDifference);
+        var difference = utcTicks - (Nsec.GetSystem() + initialDifference);
 
         lock (timeCorrections)
         {
@@ -93,7 +93,7 @@ public class TimeCorrection
     private static long GetCollectionDifference(long currentTicks)
     {
         var diff = correctionDifference;
-        if (diff != 0 && System.Math.Abs(currentTicks - correctionTicks) < Ticks.FromSeconds(1.0d))
+        if (diff != 0 && System.Math.Abs(currentTicks - correctionTicks) < Nsec.FromSeconds(1.0d))
         {
             return diff;
         }
@@ -124,9 +124,9 @@ public class TimeCorrection
         return diff;
     }
 
-    public static long InitialUtcTicks { get; }
+    public static long InitialUtcNsec { get; }
 
-    public static long InitialSystemTicks { get; }
+    public static long InitialSystemNsec { get; }
 
     private static long initialDifference;
     private static TimeDifference.GoshujinClass timeCorrections;

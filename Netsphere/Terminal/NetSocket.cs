@@ -57,7 +57,7 @@ public class NetSocket
                     var received = udp.Client.ReceiveFrom(arrayOwner.ByteArray, 0, arrayOwner.ByteArray.Length, SocketFlags.None, ref remoteEP);
                     if (received <= NetControl.MaxPayload)
                     {
-                        core.socket.terminal.ProcessReceive((IPEndPoint)remoteEP, arrayOwner, received, Ticks.GetSystem());
+                        core.socket.terminal.ProcessReceive((IPEndPoint)remoteEP, arrayOwner, received, Nsec.GetSystem());
                         if (arrayOwner.Count > 1)
                         {// Byte array is used by multiple owners. Return and rent a new one next time.
                             arrayOwner = arrayOwner.Return();
@@ -108,9 +108,9 @@ public class NetSocket
         public void ProcessSend()
         {// Invoked by multiple threads.
             // Check interval.
-            var currentTicks = Ticks.GetSystem();
+            var currentTicks = Nsec.GetSystem();
             var previous = Volatile.Read(ref this.previousTicks);
-            var interval = Ticks.FromNanoseconds((double)SendIntervalNanoseconds / 2); // Half for margin.
+            var interval = Nsec.FromNanoseconds((double)SendIntervalNanoseconds / 2); // Half for margin.
             if (currentTicks < (previous + interval))
             {
                 return;
