@@ -33,7 +33,7 @@ public partial class NetTerminal : IDisposable
         this.NodeAddress = nodeAddress;
         this.Endpoint = this.NodeAddress.CreateEndpoint();
 
-        this.FlowControl = new();
+        this.FlowControl = new(this);
 
         this.InitializeState();
     }
