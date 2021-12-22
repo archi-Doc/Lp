@@ -575,9 +575,9 @@ WaitForSendCompletionWait:
                     return;
                 }
 
+                this.TerminalLogger?.Information($"{currentTicks} - {x.SentTicks}");
                 if (x.State == NetTerminalGeneState.WaitingToSend)
                 {// Send
-                    this.TerminalLogger?.Information($"{currentTicks} - {x.SentTicks}");
                     if (x.Send(udp))
                     {
                         this.TerminalLogger?.Information($"Udp Sent       : {x.ToString()}");
