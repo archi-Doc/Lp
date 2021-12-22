@@ -9,12 +9,16 @@ public class FlowControl
     public static readonly double InitialSendCapacityPerRound = 2;
     public static readonly long InitialWindowTicks = Ticks.FromMilliseconds(300);
 
-    public FlowControl()
+    public FlowControl(NetTerminal netTerminal)
     {
+        this.NetTerminal = netTerminal;
+
         this.sendCapacityAccumulated = 0;
         this.sendCapacityPerRound = InitialSendCapacityPerRound;
         this.windowTicks = InitialWindowTicks;
     }
+
+    public NetTerminal NetTerminal { get; }
 
     internal void Update(long currentTicks)
     {// lock (NetTerminal.SyncObject)
@@ -53,6 +57,7 @@ public class FlowControl
 
     internal void ReportAck(long currentTicks, long sentTicks)
     {
+        this.NetTerminal.TerminalLogger?.Information($"{currentTicks - sentTicks}");
     }
 
     internal void RentSendCapacity(out int sendCapacity)
