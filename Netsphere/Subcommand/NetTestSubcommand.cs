@@ -25,6 +25,7 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
         }
 
         Logger.Priority.Information($"SendData: {node.ToString()}");
+        Logger.Priority.Information($"{Stopwatch.Frequency}");
 
         // var nodeInformation = NodeInformation.Alternative;
         using (var terminal = this.NetControl.Terminal.Create(node))
