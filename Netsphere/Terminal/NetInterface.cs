@@ -559,6 +559,14 @@ WaitForSendCompletionWait:
     {// lock (this.NetTerminal.SyncObject)
         if (this.SendGenes != null)
         {
+            var index = this.SendCompleteIndex;
+            while (index < this.SendGenes.Length && this.SendGenes[index].State == NetTerminalGeneState.SendComplete)
+            {
+                index++;
+            }
+
+            this.SendCompleteIndex = index;
+
             for (var i = this.SendCompleteIndex; i < this.SendGenes.Length; i++)
             {
                 var x = this.SendGenes[i];
@@ -567,12 +575,7 @@ WaitForSendCompletionWait:
                     return;
                 }
 
-                if (x.State == NetTerminalGeneState.SendComplete)
-                {// Complete
-                    var dif = currentTicks - x.SentTicks;
-                    this.SendCompleteIndex = i;
-                }
-                else if (x.State == NetTerminalGeneState.WaitingToSend)
+                if (x.State == NetTerminalGeneState.WaitingToSend)
                 {// Send
                     if (x.Send(udp))
                     {
@@ -585,12 +588,7 @@ WaitForSendCompletionWait:
                 }
                 else if (x.State == NetTerminalGeneState.WaitingForAck)
                 {// Resend
-                    if (x.SendCount > NetConstants.SendCountMax)
-                    {
-                        this.TerminalLogger?.Information($"InternalClose (SentCount)");
-                        this.NetTerminal.InternalClose();
-                    }
-                    else if ((currentTicks - x.SentTicks) > Ticks.FromMilliseconds(NetConstants.ResendWaitMilliseconds))
+                    if ((currentTicks - x.SentTicks) > Ticks.FromMilliseconds(NetConstants.ResendWaitMilliseconds))
                     {
                         if (x.Send(udp))
                         {
@@ -682,7 +680,7 @@ WaitForSendCompletionWait:
             this.NetTerminal.SetLastResponseTicks(currentTicks);
             if (header.Id == PacketId.Ack)
             {// Ack (header.Gene + data(ulong[]))
-                gene.ReceiveAck();
+                gene.ReceiveAck(currentTicks);
                 var g = MemoryMarshal.Cast<byte, ulong>(owner.Memory.Span);
                 this.TerminalLogger?.Information($"Recv Ack 1+{g.Length}, {header.Gene.To4Hex()}");
                 foreach (var x in g)
@@ -691,7 +689,7 @@ WaitForSendCompletionWait:
                     {
                         if (gene2.NetInterface.NetTerminal == this.NetTerminal)
                         {
-                            gene2.ReceiveAck();
+                            gene2.ReceiveAck(currentTicks);
                         }
                     }
                 }

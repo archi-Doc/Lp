@@ -51,6 +51,10 @@ public class FlowControl
         this.lastTicks = currentTicks;
     }
 
+    internal void ReportAck(long currentTicks, long sentTicks)
+    {
+    }
+
     internal void RentSendCapacity(out int sendCapacity)
     {// lock (NetTerminal.SyncObject)
         sendCapacity = (int)this.sendCapacityAccumulated;

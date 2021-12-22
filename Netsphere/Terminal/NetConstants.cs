@@ -13,5 +13,4 @@ public static class NetConstants
     public const int SendingAckIntervalInMilliseconds = 10;
 
     public const double ResendWaitMilliseconds = 500;
-    public const int SendCountMax = 3;
 }

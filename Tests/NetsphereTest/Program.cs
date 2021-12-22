@@ -58,6 +58,7 @@ public class Program
 
         ThreadCore.Root.Terminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
+        Logger.CloseAndFlush();
         ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).
     }
 }

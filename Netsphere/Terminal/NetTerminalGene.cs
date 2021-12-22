@@ -100,6 +100,12 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         if (this.State == NetTerminalGeneState.WaitingToSend ||
             this.State == NetTerminalGeneState.WaitingForAck)
         {
+            /*if (LP.Random.Pseudo.NextDouble() < 0.1)
+            {// temporary
+                this.State = NetTerminalGeneState.WaitingForAck;
+                return true;
+            }*/
+
             udp.Send(this.Owner.Memory.Span, this.NetInterface.NetTerminal.Endpoint);
             this.State = NetTerminalGeneState.WaitingForAck;
 
@@ -111,9 +117,9 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         return false;
     }
 
-    public bool ReceiveAck()
+    public bool ReceiveAck(long currentTicks)
     {// lock (this.NetTerminal.SyncObject)
-        /*if (LP.Random.Pseudo.NextDouble() < 0.99)
+        /*if (LP.Random.Pseudo.NextDouble() < 0.5)
         {
             this.NetInterface.TerminalLogger?.Error($"Ack cancel: {this.Gene.To4Hex()}");
             return false;
@@ -121,6 +127,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
 
         if (this.State == NetTerminalGeneState.WaitingForAck)
         {
+            this.NetInterface.NetTerminal.FlowControl.ReportAck(currentTicks, this.SentTicks);
             this.State = NetTerminalGeneState.SendComplete;
             return true;
         }
