@@ -81,7 +81,7 @@ public class NetControl
         }
     }
 
-    public NetControl(NetBase netBase, BigMachine<Identifier> bigMachine, Terminal terminal, EssentialNode node, NetStatus netStatus)
+    public NetControl(LPBase lpBase, NetBase netBase, BigMachine<Identifier> bigMachine, Terminal terminal, EssentialNode node, NetStatus netStatus)
     {
         this.NetBase = netBase;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
@@ -89,7 +89,7 @@ public class NetControl
         this.Terminal = terminal;
         if (this.NetBase.NetsphereOptions.EnableAlternative)
         {
-            this.Alternative = new(netBase, netStatus); // For debug
+            this.Alternative = new(lpBase, netBase, netStatus); // For debug
         }
 
         this.SetServerTerminalDelegate(CreateServerTerminal);

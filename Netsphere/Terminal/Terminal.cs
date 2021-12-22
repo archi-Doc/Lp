@@ -98,7 +98,7 @@ public class Terminal
         }
     }
 
-    public Terminal(NetBase netBase, NetStatus netStatus)
+    public Terminal(LPBase lpBase, NetBase netBase, NetStatus netStatus)
     {
         this.NetBase = netBase;
         this.NetStatus = netStatus;
@@ -112,7 +112,7 @@ public class Terminal
             this.TerminalLogger = new SerilogLogger(new LoggerConfiguration()
             .MinimumLevel.Debug()
             .WriteTo.File(
-                Path.Combine(Directory.GetCurrentDirectory(), "logs", "log.txt"),
+                Path.Combine(lpBase.RootDirectory, "logs", "log.txt"),
                 rollingInterval: RollingInterval.Day,
                 retainedFileCountLimit: 31,
                 buffered: true,
