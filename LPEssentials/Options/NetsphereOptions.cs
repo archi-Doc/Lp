@@ -16,6 +16,15 @@ public class NetsphereOptions
     [SimpleOption("node", null, "Node addresses to connect")]
     public string Nodes { get; set; } = string.Empty;
 
+    [SimpleOption("alternative", null, "Enable alternative (debug) terminal")]
+    public bool EnableAlternative { get; set; } = false;
+
+    [SimpleOption("logger", null, "Enable loggerl")]
+    public bool EnableLogger { get; set; } = false;
+
+    [SimpleOption("test", null, "Enable test functions")]
+    public bool EnableTest { get; set; } = false;
+
     public override string ToString()
     {
         return $"Address: {this.Address}, Port: {this.Port}";

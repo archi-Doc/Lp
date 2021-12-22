@@ -9,7 +9,7 @@ public static class Message
 {// Create instance -> Configure -> LoadAsync -> Start/Stop loop -> SaveAsync (multiple)
     /// <summary>
     /// Configure objects.<br/>
-    /// Ready: <see cref="Information"/>.
+    /// Ready: <see cref="LPBase"/>.
     /// </summary>
     public record Configure();
 

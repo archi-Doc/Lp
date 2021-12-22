@@ -8,16 +8,17 @@ using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
+using Serilog;
 
 namespace Netsphere;
 
 public class Terminal
 {
-    public delegate void CreateServerTerminalDelegate(NetTerminalServer terminal);
+    public delegate void CreateServerTerminalDelegate(ServerTerminal terminal);
 
     internal struct RawSend
     {
-        public RawSend(IPEndPoint endPoint, FixedArrayPool.MemoryOwner owner)
+        public RawSend(IPEndPoint endPoint, ByteArrayPool.MemoryOwner owner)
         {
             this.Endpoint = endPoint;
             this.SendOwner = owner.IncrementAndShare();
@@ -30,7 +31,7 @@ public class Terminal
 
         public IPEndPoint Endpoint { get; }
 
-        public FixedArrayPool.MemoryOwner SendOwner { get; private set; }
+        public ByteArrayPool.MemoryOwner SendOwner { get; private set; }
     }
 
     public void Dump(ISimpleLogger logger)
@@ -45,9 +46,9 @@ public class Terminal
     /// </summary>
     /// <param name="nodeAddress">NodeAddress.</param>
     /// <returns>NetTerminal.</returns>
-    public NetTerminalClient Create(NodeAddress nodeAddress)
+    public ClientTerminal Create(NodeAddress nodeAddress)
     {
-        var terminal = new NetTerminalClient(this, nodeAddress);
+        var terminal = new ClientTerminal(this, nodeAddress);
         lock (this.terminals)
         {
             this.terminals.Add(terminal);
@@ -61,9 +62,9 @@ public class Terminal
     /// </summary>
     /// <param name="nodeInformation">NodeInformation.</param>
     /// <returns>NetTerminal.</returns>
-    public NetTerminalClient Create(NodeInformation nodeInformation)
+    public ClientTerminal Create(NodeInformation nodeInformation)
     {
-        var terminal = new NetTerminalClient(this, nodeInformation);
+        var terminal = new ClientTerminal(this, nodeInformation);
         lock (this.terminals)
         {
             this.terminals.Add(terminal);
@@ -78,9 +79,9 @@ public class Terminal
     /// <param name="nodeInformation">NodeInformation.</param>
     /// <param name="gene">gene.</param>
     /// <returns>NetTerminal.</returns>
-    public NetTerminalServer Create(NodeInformation nodeInformation, ulong gene)
+    public ServerTerminal Create(NodeInformation nodeInformation, ulong gene)
     {
-        var terminal = new NetTerminalServer(this, nodeInformation, gene);
+        var terminal = new ServerTerminal(this, nodeInformation, gene);
         lock (this.terminals)
         {
             this.terminals.Add(terminal);
@@ -105,7 +106,20 @@ public class Terminal
         Radio.Open<Message.Start>(this.Start);
         Radio.Open<Message.Stop>(this.Stop);
 
-        this.TerminalLogger = new Logger.PriorityLogger();
+        if (this.NetBase.NetsphereOptions.EnableLogger)
+        {
+            // this.TerminalLogger = new Logger.PriorityLogger();
+            this.TerminalLogger = new SerilogLogger(new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .WriteTo.File(
+                Path.Combine(Directory.GetCurrentDirectory(), "logs", "log.txt"),
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 31,
+                buffered: true,
+                flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
+            .CreateLogger());
+        }
+
         this.netSocket = new(this);
     }
 
@@ -142,10 +156,13 @@ public class Terminal
 
     public NetStatus NetStatus { get; }
 
+    public bool IsAlternative { get; private set; }
+
     public int Port { get; set; }
 
     internal void Initialize(bool isAlternative, ECDiffieHellman nodePrivateKey)
     {
+        this.IsAlternative = isAlternative;
         this.NodePrivateECDH = nodePrivateKey;
     }
 
@@ -175,7 +192,7 @@ public class Terminal
         }
     }
 
-    internal unsafe void ProcessReceive(IPEndPoint endPoint, FixedArrayPool.Owner arrayOwner, int packetSize, long currentTicks)
+    internal unsafe void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner arrayOwner, int packetSize, long currentTicks)
     {
         var packetArray = arrayOwner.ByteArray;
         var position = 0;
@@ -207,7 +224,7 @@ public class Terminal
         }
     }
 
-    internal void ProcessReceiveCore(FixedArrayPool.MemoryOwner owner, IPEndPoint endPoint, ref PacketHeader header, long currentTicks)
+    internal void ProcessReceiveCore(ByteArrayPool.MemoryOwner owner, IPEndPoint endPoint, ref PacketHeader header, long currentTicks)
     {
         // this.TerminalLogger?.Information($"{header.Gene.To4Hex()}, {header.Id}");
         if (this.inboundGenes.TryGetValue(header.Gene, out var gene))
@@ -220,7 +237,7 @@ public class Terminal
         }
     }
 
-    internal void ProcessUnmanagedRecv(FixedArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
+    internal void ProcessUnmanagedRecv(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
     {
         if (header.Id == PacketId.Data)
         {
@@ -243,13 +260,17 @@ public class Terminal
         {
             this.ProcessUnmanagedRecv_Ping(owner, endpoint, ref header);
         }
+        else if (header.Id == PacketId.GetNodeInformation)
+        {
+            this.ProcessUnmanagedRecv_GetNodeInformation(owner, endpoint, ref header);
+        }
         else
         {// Not supported
             this.TerminalLogger?.Error($"Unhandled: {header.Gene.To4Hex()} - {header.Id}");
         }
     }
 
-    internal void ProcessUnmanagedRecv_Punch(FixedArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
+    internal void ProcessUnmanagedRecv_Punch(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
     {
         if (!TinyhandSerializer.TryDeserialize<PacketPunch>(owner.Memory, out var punch))
         {
@@ -268,7 +289,7 @@ public class Terminal
         this.AddRawSend(endpoint, sendOwner);
     }
 
-    internal void ProcessUnmanagedRecv_Encrypt(FixedArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
+    internal void ProcessUnmanagedRecv_Encrypt(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
     {
         if (!TinyhandSerializer.TryDeserialize<PacketEncrypt>(owner.Memory, out var packet))
         {
@@ -287,7 +308,7 @@ public class Terminal
             var terminal = this.Create(packet.NodeInformation, firstGene);
             var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(terminal, firstGene, owner, secondGene, sendOwner);
 
-            terminal.GetGene();
+            terminal.GenePool.GetSequential();
             terminal.CreateEmbryo(packet.Salt);
             terminal.SetReceiverNumber();
             if (this.createServerTerminalDelegate != null)
@@ -297,7 +318,7 @@ public class Terminal
         }
     }
 
-    internal void ProcessUnmanagedRecv_Ping(FixedArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
+    internal void ProcessUnmanagedRecv_Ping(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
     {
         if (!TinyhandSerializer.TryDeserialize<PacketPing>(owner.Memory, out var packet))
         {
@@ -314,7 +335,22 @@ public class Terminal
         this.AddRawSend(endpoint, packetOwner);
     }
 
-    internal void AddRawSend(IPEndPoint endpoint, FixedArrayPool.MemoryOwner owner)
+    internal void ProcessUnmanagedRecv_GetNodeInformation(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
+    {
+        if (!TinyhandSerializer.TryDeserialize<PacketGetNodeInformation>(owner.Memory, out var packet))
+        {
+            return;
+        }
+
+        var response = new PacketGetNodeInformationResponse(this.NetStatus.GetMyNodeInformation(this.IsAlternative));
+        var secondGene = GenePool.NextGene(header.Gene);
+        this.TerminalLogger?.Information($"GetNodeInformation Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
+
+        PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var packetOwner);
+        this.AddRawSend(endpoint, packetOwner);
+    }
+
+    internal void AddRawSend(IPEndPoint endpoint, ByteArrayPool.MemoryOwner owner)
     {
         this.rawSends.Enqueue(new RawSend(endpoint, owner));
     }

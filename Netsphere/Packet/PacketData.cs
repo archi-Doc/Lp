@@ -5,7 +5,8 @@ using System.Runtime.InteropServices;
 namespace Netsphere;
 
 // PacketId.Data (First)
-// DataHeader
+// PacketHeader byte[16]
+// DataHeader byte[16]
 // byte[DataSize] Data
 
 // PacketId.DataFollowing (Second and later)

@@ -6,6 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Threading;
 
 namespace Netsphere;
@@ -19,9 +20,6 @@ namespace Netsphere;
 [ValueLinkObject]
 public partial class NetTerminal : IDisposable
 {
-    public const int DefaultMillisecondsToWait = 2000;
-    public const int SendingAckIntervalInMilliseconds = 10;
-
     /// <summary>
     /// The default interval time in milliseconds.
     /// </summary>
@@ -31,9 +29,13 @@ public partial class NetTerminal : IDisposable
     internal NetTerminal(Terminal terminal, NodeAddress nodeAddress)
     {// NodeAddress: Unmanaged
         this.Terminal = terminal;
-        this.genePool = new(LP.Random.Crypto.NextUInt64());
+        this.GenePool = new(LP.Random.Crypto.NextUInt64());
         this.NodeAddress = nodeAddress;
         this.Endpoint = this.NodeAddress.CreateEndpoint();
+
+        this.FlowControl = new();
+
+        this.InitializeState();
     }
 
     internal NetTerminal(Terminal terminal, NodeInformation nodeInformation)
@@ -44,21 +46,39 @@ public partial class NetTerminal : IDisposable
     internal NetTerminal(Terminal terminal, NodeInformation nodeInformation, ulong gene)
     {// NodeInformation: Encrypted
         this.Terminal = terminal;
-        this.genePool = new(gene);
+        this.GenePool = new(gene);
         this.NodeAddress = nodeInformation;
         this.NodeInformation = nodeInformation;
         this.Endpoint = this.NodeAddress.CreateEndpoint();
+
+        this.FlowControl = new(this);
+
+        this.InitializeState();
     }
 
-    // public virtual NetInterfaceResult EncryptConnection() => NetInterfaceResult.NoEncryptedConnection;
+    public void SetMaximumResponseTime(int milliseconds = 500)
+    {
+        this.maximumResponseTicks = Ticks.FromMilliseconds(milliseconds);
+    }
 
-    public virtual async Task<NetInterfaceResult> EncryptConnectionAsync() => NetInterfaceResult.NoEncryptedConnection;
+    public long MaximumResponseTicks => this.maximumResponseTicks;
+
+    public void SetMinimumBandwidth(double megabytesPerSecond = 0.1)
+    {
+        this.minimumBandwidth = megabytesPerSecond;
+    }
+
+    public double MinimumBandwidth => this.minimumBandwidth;
+
+    public virtual async Task<NetResult> EncryptConnectionAsync() => NetResult.NoEncryptedConnection;
 
     public virtual void SendClose()
     {
     }
 
     public Terminal Terminal { get; }
+
+    public FlowControl FlowControl { get; }
 
     public bool IsEncrypted => this.embryo != null;
 
@@ -77,7 +97,17 @@ public partial class NetTerminal : IDisposable
 
     public NodeAddress NodeAddress { get; }
 
-    public NodeInformation? NodeInformation { get; }
+    public NodeInformation? NodeInformation { get; protected set; }
+
+    internal void InternalClose()
+    {
+        this.IsClosed = true;
+    }
+
+    internal void MergeNodeInformation(NodeInformation nodeInformation)
+    {
+        this.NodeInformation = Netsphere.NodeInformation.Merge(this.NodeAddress, nodeInformation);
+    }
 
     internal void CreateHeader(out PacketHeader header, ulong gene)
     {
@@ -100,45 +130,6 @@ public partial class NetTerminal : IDisposable
         this.Terminal.AddRawSend(this.Endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal NetInterface<TSend, object>? CreateSendValue<TSend>(TSend value, out NetInterfaceResult interfaceResult)
-        where TSend : IPacket
-    {
-        return NetInterface<TSend, object>.CreateValue(this, value, value.PacketId, false, out interfaceResult);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal NetInterface<TSend, TReceive>? CreateSendAndReceiveValue<TSend, TReceive>(TSend value, out NetInterfaceResult interfaceResult)
-        where TSend : IPacket
-        => NetInterface<TSend, TReceive>.CreateValue(this, value, value.PacketId, true, out interfaceResult);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal NetInterface<byte[], object>? CreateSendData(PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner sendOwner, out NetInterfaceResult interfaceResult)
-        => NetInterface<byte[], object>.CreateData(this, packetId, dataId, sendOwner, false, out interfaceResult);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal NetInterface<byte[], byte[]>? CreateSendAndReceiveData(PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner sendOwner, out NetInterfaceResult interfaceResult)
-        => NetInterface<byte[], byte[]>.CreateData(this, packetId, dataId, sendOwner, true, out interfaceResult);
-
-    internal byte[] RentAndSetGeneArray(ulong gene, int numberOfGenes)
-    {
-        var first = BitConverter.ToUInt64(this.embryo);
-        var rentBuffer = ArrayPool<byte>.Shared.Rent(sizeof(ulong) * numberOfGenes);
-        var rentGenes = ArrayPool<byte>.Shared.Rent(sizeof(ulong) * numberOfGenes);
-
-        var xo = new Arc.Crypto.Xoshiro256StarStar(gene ^ first);
-        xo.NextBytes(rentBuffer);
-
-        var iv = new byte[16];
-        BitConverter.TryWriteBytes(iv, gene);
-        this.embryo.AsSpan(40, 8).CopyTo(iv.AsSpan(8, 8));
-
-        var encryptor = Aes256.NoPadding.CreateEncryptor(this.embryo.AsSpan(8, 32).ToArray(), iv);
-        encryptor.TransformBlock(rentBuffer, 0, rentBuffer.Length, rentGenes, 0);
-        ArrayPool<byte>.Shared.Return(rentBuffer);
-        return rentGenes;
-    }
-
     internal void ProcessSend(UdpClient udp, long currentTicks)
     {
         lock (this.SyncObject)
@@ -148,12 +139,22 @@ public partial class NetTerminal : IDisposable
                 return;
             }
 
+            this.FlowControl.Update(currentTicks);
+            this.FlowControl.RentSendCapacity(out var sendCapacity);
             foreach (var x in this.activeInterfaces)
             {
-                x.ProcessSend(udp, currentTicks);
+                if (sendCapacity == 0)
+                {
+                    break;
+                }
+
+                x.ProcessSend(udp, currentTicks, ref sendCapacity);
             }
 
-            if ((currentTicks - this.lastSendingAckTicks) > Ticks.FromMilliseconds(SendingAckIntervalInMilliseconds))
+            this.FlowControl.ReturnSendCapacity(sendCapacity);
+
+            // Send Ack
+            if ((currentTicks - this.lastSendingAckTicks) > Ticks.FromMilliseconds(NetConstants.SendingAckIntervalInMilliseconds))
             {
                 this.lastSendingAckTicks = currentTicks;
 
@@ -190,46 +191,61 @@ public partial class NetTerminal : IDisposable
         }
     }
 
-    internal NetInterfaceResult ReportResult(NetInterfaceResult result)
+    internal NetResult ReportResult(NetResult result)
     {
         return result;
     }
 
     internal object SyncObject { get; } = new();
 
+    internal GenePool GenePool { get; }
+
     internal ISimpleLogger? TerminalLogger => this.Terminal.TerminalLogger;
 
-    internal NetInterfaceResult CreateEmbryo(ulong salt)
+    internal NetResult CreateEmbryo(ulong salt)
     {
         if (this.NodeInformation == null)
         {
-            return NetInterfaceResult.NoNodeInformation;
+            return NetResult.NoNodeInformation;
         }
 
-        var ecdh = NodeKey.FromPublicKey(this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
-        if (ecdh == null)
+        lock (this.SyncObject)
         {
-            return NetInterfaceResult.NoNodeInformation;
+            if (this.embryo != null)
+            {
+                return NetResult.Success;
+            }
+
+            var ecdh = NodeKey.FromPublicKey(this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
+            if (ecdh == null)
+            {
+                return NetResult.NoNodeInformation;
+            }
+
+            // ulong Salt, byte[] material, ulong Salt
+            var material = this.Terminal.NodePrivateECDH.DeriveKeyMaterial(ecdh.PublicKey);
+            Span<byte> buffer = stackalloc byte[sizeof(ulong) + NodeKey.PrivateKeySize + sizeof(ulong)];
+            var span = buffer;
+            BitConverter.TryWriteBytes(span, salt);
+            span = span.Slice(sizeof(ulong));
+            material.AsSpan().CopyTo(span);
+            span = span.Slice(NodeKey.PrivateKeySize);
+            BitConverter.TryWriteBytes(span, salt);
+
+            var sha = Hash.Sha3_384Pool.Get();
+            this.embryo = sha.GetHash(buffer);
+            Hash.Sha3_384Pool.Return(sha);
+
+            this.GenePool.SetEmbryo(this.embryo);
+            // this.TerminalLogger?.Information($"First gene {this.GenePool.GetSequential().ToString()}");
+
+            // Aes
+            this.aes = Aes.Create();
+            this.aes.KeySize = 256;
+            this.aes.Key = this.embryo.AsSpan(0, 32).ToArray();
         }
 
-        // ulong Salt, byte[] material, ulong Salt
-        var material = this.Terminal.NodePrivateECDH.DeriveKeyMaterial(ecdh.PublicKey);
-        Span<byte> buffer = stackalloc byte[sizeof(ulong) + NodeKey.PrivateKeySize + sizeof(ulong)];
-        var span = buffer;
-        BitConverter.TryWriteBytes(span, salt);
-        span = span.Slice(sizeof(ulong));
-        material.AsSpan().CopyTo(span);
-        span = span.Slice(NodeKey.PrivateKeySize);
-        BitConverter.TryWriteBytes(span, salt);
-
-        var sha = Hash.Sha3_384Pool.Get();
-        this.embryo = sha.GetHash(buffer);
-        Hash.Sha3_384Pool.Return(sha);
-
-        this.genePool.SetEmbryo(this.embryo);
-        Logger.Priority.Information($"First gene {this.genePool.GetGene().ToString()}");
-
-        return NetInterfaceResult.Success;
+        return NetResult.Success;
     }
 
     internal bool TryClean(long currentTicks)
@@ -271,13 +287,60 @@ public partial class NetTerminal : IDisposable
         this.disposedInterfaces.Add(netInterface);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void ClearAsyncLocal()
+    internal bool TryEncryptPacket(ByteArrayPool.MemoryOwner plain, ulong gene, out ByteArrayPool.MemoryOwner encrypted)
     {
-        this.geneAsyncLocal.Value = null;
+        if (this.embryo == null || plain.Memory.Length < PacketService.HeaderSize)
+        {
+            encrypted = default;
+            return false;
+        }
+
+        var span = plain.Memory.Span;
+        var source = span.Slice(PacketService.HeaderSize);
+        Span<byte> iv = stackalloc byte[16];
+        BitConverter.TryWriteBytes(iv, gene);
+        this.embryo.AsSpan(32, 8).CopyTo(iv.Slice(8));
+
+        var packet = PacketPool.Rent();
+        span.Slice(0, PacketService.HeaderSize).CopyTo(packet.ByteArray);
+
+        this.aes!.TryEncryptCbc(source, iv, packet.ByteArray.AsSpan(PacketService.HeaderSize), out var written, PaddingMode.PKCS7);
+        encrypted = packet.ToMemoryOwner(0, PacketService.HeaderSize + written);
+        PacketService.InsertDataSize(encrypted.Memory, (ushort)written);
+
+        return true;
     }
 
-    internal ulong GetGene() => this.genePool.GetGene();
+    internal bool TryDecryptPacket(ByteArrayPool.MemoryOwner encrypted, ulong gene, out ByteArrayPool.MemoryOwner destination)
+    {
+        if (this.embryo == null)
+        {
+            destination = default;
+            return false;
+        }
+
+        Span<byte> iv = stackalloc byte[16];
+        BitConverter.TryWriteBytes(iv, gene);
+        this.embryo.AsSpan(32, 8).CopyTo(iv.Slice(8));
+
+        var packet = PacketPool.Rent();
+        this.aes!.TryDecryptCbc(encrypted.Memory.Span, iv, packet.ByteArray, out var written, PaddingMode.PKCS7);
+        destination = packet.ToMemoryOwner(0, written);
+
+        return true;
+    }
+
+    internal void ResetLastResponseTicks() => this.lastResponseTicks = Ticks.GetSystem();
+
+    internal void SetLastResponseTicks(long ticks) => this.lastResponseTicks = ticks;
+
+    internal long LastResponseTicks => this.lastResponseTicks;
+
+    internal GenePool? TryFork() => this.embryo == null ? null : this.GenePool.Fork(this.embryo);
+
+    internal void IncrementResendCount() => Interlocked.Increment(ref this.resendCount);
+
+    internal uint ResendCount => Volatile.Read(ref this.resendCount);
 
     private void Clear()
     {// lock (this.SyncObject)
@@ -296,12 +359,24 @@ public partial class NetTerminal : IDisposable
         this.disposedInterfaces.Clear();
     }
 
+    private void InitializeState()
+    {
+        this.SetMaximumResponseTime();
+        this.SetMinimumBandwidth();
+        this.ResetLastResponseTicks();
+    }
+
     protected List<NetInterface> activeInterfaces = new();
     protected List<NetInterface> disposedInterfaces = new();
     protected byte[]? embryo; // 48 bytes
-    private protected GenePool genePool;
-    private AsyncLocal<GenePool?> geneAsyncLocal = new();
+    private Aes? aes;
+
+    private long maximumResponseTicks;
+    private double minimumBandwidth;
     private long lastSendingAckTicks;
+    private long lastResponseTicks;
+
+    private uint resendCount;
 
     // private PacketService packetService = new();
 

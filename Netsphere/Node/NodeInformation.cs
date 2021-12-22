@@ -30,6 +30,16 @@ public partial class NodeInformation : NodeAddress, IEquatable<NodeInformation>
         }
     }
 
+    public static NodeInformation Merge(NodeAddress nodeAddress, NodeInformation nodeInformation)
+    {
+        var x = TinyhandSerializer.Clone(nodeInformation);
+        x.Engagement = nodeAddress.Engagement;
+        x.Port = nodeAddress.Port;
+        x.Address = nodeAddress.Address;
+
+        return x;
+    }
+
     public NodeInformation()
     {
     }

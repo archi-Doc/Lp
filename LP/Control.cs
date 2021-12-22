@@ -27,7 +27,7 @@ public class Control
 
         // Main services
         container.Register<Control>(Reuse.Singleton);
-        container.Register<Information>(Reuse.Singleton);
+        container.Register<LPBase>(Reuse.Singleton);
 
         var commandList = new List<Type>();
         NetControl.Register(container, commandList);
@@ -71,7 +71,7 @@ public class Control
         subcommandParser = new SimpleParser(commandList, SubcommandParserOptions);
     }
 
-    public Control(Information information, BigMachine<Identifier> bigMachine, NetControl netsphere)
+    public Control(LPBase information, BigMachine<Identifier> bigMachine, NetControl netsphere)
     {
         this.Information = information;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
@@ -169,7 +169,7 @@ public class Control
 
     public ThreadCoreGroup Core { get; }
 
-    public Information Information { get; }
+    public LPBase Information { get; }
 
     public BigMachine<Identifier> BigMachine { get; }
 

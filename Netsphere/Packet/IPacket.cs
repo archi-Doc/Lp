@@ -18,14 +18,15 @@ public enum PacketId : byte
     Reserve,
     ReserveResponse,
     RPC,
+    Test,
     Encrypt,
     EncryptResponse,
     Punch,
     PunchResponse,
     Ping,
     PingResponse,
-    GetNode,
-    GetNodeResponse,
+    GetNodeInformation,
+    GetNodeInformationResponse,
 }
 
 /// <summary>

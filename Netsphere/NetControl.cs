@@ -13,9 +13,10 @@ global using LP.Block;
 global using LP.Options;
 global using Tinyhand;
 global using ValueLink;
+using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using DryIoc;
-using Netsphere;
+using Netsphere.Responder;
 using SimpleCommandLine;
 
 namespace Netsphere;
@@ -52,7 +53,7 @@ public class NetControl
         // Subcommands
         var commandTypes = new Type[]
         {
-            typeof(LP.Subcommands.SendDataSubcommand),
+            typeof(LP.Subcommands.NetTestSubcommand),
         };
 
         commandList.AddRange(commandTypes);
@@ -62,11 +63,11 @@ public class NetControl
         }
     }
 
-    public static void QuickStart()
+    public static void QuickStart(string nodeName, NetsphereOptions options, bool allowUnsafeConnection)
     {
         var netBase = containerInstance.Resolve<NetBase>();
-        var options = new LP.Options.NetsphereOptions();
-        netBase.Initialize(string.Empty, options);
+        netBase.Initialize(nodeName, options);
+        netBase.AllowUnsafeConnection = allowUnsafeConnection;
 
         var netControl = containerInstance.Resolve<NetControl>();
         Logger.Configure(null);
@@ -86,7 +87,11 @@ public class NetControl
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
 
         this.Terminal = terminal;
-        this.Alternative = new(netBase, netStatus); // For debug
+        if (this.NetBase.NetsphereOptions.EnableAlternative)
+        {
+            this.Alternative = new(netBase, netStatus); // For debug
+        }
+
         this.SetServerTerminalDelegate(CreateServerTerminal);
         this.EssentialNode = node;
         this.NetStatus = netStatus;
@@ -104,6 +109,9 @@ public class NetControl
             this.Alternative.Port = NodeAddress.Alternative.Port;
         }
 
+        // Responders
+        DefaultResponder.Register(this);
+
         // Machines
         this.BigMachine.TryCreate<LP.Machines.EssentialNetMachine.Interface>(Identifier.Zero);
     }
@@ -112,6 +120,11 @@ public class NetControl
     {
         this.Terminal.SetServerTerminalDelegate(@delegate);
         this.Alternative?.SetServerTerminalDelegate(@delegate);
+    }
+
+    public bool AddResponder(INetResponder responder)
+    {
+        return this.Respondes.TryAdd(responder.GetDataId(), responder);
     }
 
     public NetBase NetBase { get; }
@@ -128,9 +141,11 @@ public class NetControl
 
     internal Terminal? Alternative { get; }
 
+    internal ConcurrentDictionary<ulong, INetResponder> Respondes { get; } = new();
+
     private static Container containerInstance = default!;
 
-    private static void CreateServerTerminal(NetTerminalServer terminal)
+    private static void CreateServerTerminal(ServerTerminal terminal)
     {
         Task.Run(async () =>
         {

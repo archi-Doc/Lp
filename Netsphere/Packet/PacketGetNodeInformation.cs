@@ -8,17 +8,33 @@ using System.Runtime.InteropServices;
 namespace Netsphere;
 
 [TinyhandObject]
-internal partial class PacketGetNode : IPacket
+internal partial class PacketGetNodeInformation : IPacket
 {
-    public PacketGetNode()
+    public PacketGetNodeInformation()
     {
     }
 
-    public PacketId PacketId => PacketId.GetNode;
+    public PacketId PacketId => PacketId.GetNodeInformation;
+
+    public bool AllowUnencrypted => true;
+}
+
+[TinyhandObject]
+internal partial class PacketGetNodeInformationResponse : IPacket
+{
+    public PacketGetNodeInformationResponse()
+    {
+    }
+
+    public PacketGetNodeInformationResponse(NodeInformation node)
+    {
+        this.Node = node;
+    }
+
+    public PacketId PacketId => PacketId.GetNodeInformationResponse;
+
+    public bool AllowUnencrypted => true;
 
     [Key(0)]
-    public long UtcTicks { get; set; }
-
-    [Key(1)]
-    public NodeInformation[]? Nodes { get; set; }
+    public NodeInformation Node { get; set; } = default!;
 }

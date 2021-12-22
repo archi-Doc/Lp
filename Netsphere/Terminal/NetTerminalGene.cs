@@ -3,6 +3,7 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using Arc.Threading;
 
 #pragma warning disable SA1401
@@ -57,13 +58,21 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
     public bool IsReceiveComplete
         => this.State == NetTerminalGeneState.SendingAck || this.State == NetTerminalGeneState.ReceiveComplete;
 
-    public bool SetSend(FixedArrayPool.MemoryOwner owner)
+    public bool SetSend(ByteArrayPool.MemoryOwner owner)
     {
         if (this.IsAvailable)
         {
             this.State = NetTerminalGeneState.WaitingToSend;
             this.Owner.Owner?.Return();
-            this.Owner = owner.IncrementAndShare();
+
+            if (this.NetInterface.NetTerminal.TryEncryptPacket(owner, this.Gene, out var owner2))
+            {// Encrypt
+                this.Owner = owner2;
+            }
+            else
+            {
+                this.Owner = owner.IncrementAndShare();
+            }
 
             this.NetInterface.Terminal.AddInbound(this);
             return true;
@@ -91,6 +100,12 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         if (this.State == NetTerminalGeneState.WaitingToSend ||
             this.State == NetTerminalGeneState.WaitingForAck)
         {
+            /*if (LP.Random.Pseudo.NextDouble() < 0.1)
+            {// temporary
+                this.State = NetTerminalGeneState.WaitingForAck;
+                return true;
+            }*/
+
             udp.Send(this.Owner.Memory.Span, this.NetInterface.NetTerminal.Endpoint);
             this.State = NetTerminalGeneState.WaitingForAck;
 
@@ -102,9 +117,9 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         return false;
     }
 
-    public bool ReceiveAck()
+    public bool ReceiveAck(long currentTicks)
     {// lock (this.NetTerminal.SyncObject)
-        /*if (LP.Random.Pseudo.NextDouble() < 0.99)
+        /*if (LP.Random.Pseudo.NextDouble() < 0.5)
         {
             this.NetInterface.TerminalLogger?.Error($"Ack cancel: {this.Gene.To4Hex()}");
             return false;
@@ -112,6 +127,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
 
         if (this.State == NetTerminalGeneState.WaitingForAck)
         {
+            this.NetInterface.NetTerminal.FlowControl.ReportAck(currentTicks, this.SentTicks);
             this.State = NetTerminalGeneState.SendComplete;
             return true;
         }
@@ -119,13 +135,22 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         return false;
     }
 
-    public bool Receive(PacketId id, FixedArrayPool.MemoryOwner owner)
+    public bool Receive(PacketId id, ByteArrayPool.MemoryOwner owner, long currentTicks)
     {// lock (this.NetTerminal.SyncObject)
         if (this.State == NetTerminalGeneState.WaitingToReceive)
         {// Receive data
             this.ReceivedId = id;
             this.Owner.Owner?.Return();
-            this.Owner = owner.IncrementAndShare();
+
+            if(this.NetInterface.NetTerminal.TryDecryptPacket(owner, this.Gene, out var owner2))
+            {// Decrypt
+                this.Owner = owner2;
+            }
+            else
+            {
+                this.Owner = owner.IncrementAndShare();
+            }
+
             SendAck();
 
             // Logger.Default.Debug($"Receive: {this.PacketId}, {this.NetTerminal.Endpoint}");
@@ -188,7 +213,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
     /// <summary>
     ///  Gets the packet (header + data) to send or the received data.
     /// </summary>
-    public FixedArrayPool.MemoryOwner Owner { get; private set; }
+    public ByteArrayPool.MemoryOwner Owner { get; private set; }
 
     internal void Clear()
     {// lock (this.NetTerminal.SyncObject)
@@ -206,6 +231,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
     }
 
 #pragma warning disable SA1202 // Elements should be ordered by access
+    internal int SendCount;
     internal long SentTicks;
 #pragma warning restore SA1202 // Elements should be ordered by access
 }

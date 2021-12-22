@@ -13,7 +13,7 @@ public static class BlockService
 {
     public const int MaxBlockSize = 1024 * 1024 * 4; // 4MB
     public const int StandardBlockSize = 32 * 1024; // 32KB
-    public const int StandardBlockPool = 400;
+    public const int StandardBlockPool = 500;
 
     public static TinyhandSerializerOptions SerializerOptions { get; } = TinyhandSerializerOptions.Standard;
 
@@ -22,7 +22,7 @@ public static class BlockService
     public static ulong GetId<TSend, TReceive>() => (ulong)IdCache<TSend>.Id | ((ulong)IdCache<TReceive>.Id << 32);
 
     public static bool TrySerialize<T>(T value, out ByteArrayPool.MemoryOwner owner)
-    {
+    {// checked
         var arrayOwner = BlockPool.Rent(StandardBlockSize);
         try
         {

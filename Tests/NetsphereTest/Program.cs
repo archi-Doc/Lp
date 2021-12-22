@@ -47,13 +47,18 @@ public class Program
             RequireStrictOptionName = true,
         };
 
-        NetControl.QuickStart();
+        var options = new LP.Options.NetsphereOptions();
+        options.EnableAlternative = true;
+        options.EnableLogger = true;
+        options.EnableTest = true;
+        NetControl.QuickStart("test", options, true);
 
-        await SimpleParser.ParseAndRunAsync(commandTypes, "senddata -node alternative", parserOptions); // Main process
+        await SimpleParser.ParseAndRunAsync(commandTypes, "nettest -node alternative", parserOptions); // Main process
         // await SimpleParser.ParseAndRunAsync(commandTypes, args, parserOptions); // Main process
 
         ThreadCore.Root.Terminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
+        Logger.CloseAndFlush();
         ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).
     }
 }

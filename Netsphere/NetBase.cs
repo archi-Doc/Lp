@@ -41,9 +41,13 @@ public class NetBase
         }
     }
 
+    public bool EnableAlternative { get; private set; }
+
     public string NodeName { get; private set; } = default!;
 
     public NetsphereOptions NetsphereOptions { get; private set; } = default!;
+
+    public bool AllowUnsafeConnection { get; set; } = false;
 
     public NodePublicKey NodePublicKey { get; private set; } = default!;
 

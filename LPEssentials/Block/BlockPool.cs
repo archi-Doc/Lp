@@ -21,5 +21,7 @@ public static class BlockPool
 
     public static ByteArrayPool.Owner Rent(int minimumLength) => blockPool.Rent(minimumLength);
 
+    public static void Dump(ISimpleLogger logger) => blockPool.Dump(logger);
+
     private static ByteArrayPool blockPool;
 }

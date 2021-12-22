@@ -21,9 +21,9 @@ public enum LPMode
     User,
 }
 
-public class Information
+public class LPBase
 {
-    public Information()
+    public LPBase()
     {
     }
 
