@@ -13,23 +13,21 @@ public struct TicksRange
 {
     public TicksRange(long ticks)
     {
-        this.LowerBound = Nsec.GetSystem();
+        this.LowerBound = Mics.GetSystem();
         this.UpperBound = this.LowerBound + ticks;
     }
 
-    public static TicksRange FromDays(double days) => new TicksRange((long)(days * Nsec.NsecPerDay));
+    public static TicksRange FromDays(double days) => new TicksRange((long)(days * Mics.MicsPerDay));
 
-    public static TicksRange FromHours(double hours) => new TicksRange((long)(hours * Nsec.NsecPerHour));
+    public static TicksRange FromHours(double hours) => new TicksRange((long)(hours * Mics.MicsPerHour));
 
-    public static TicksRange FromMinutes(double minutes) => new TicksRange((long)(minutes * Nsec.NsecPerMinute));
+    public static TicksRange FromMinutes(double minutes) => new TicksRange((long)(minutes * Mics.MicsPerMinute));
 
-    public static TicksRange FromSeconds(double seconds) => new TicksRange((long)(seconds * Nsec.NsecPerSecond));
+    public static TicksRange FromSeconds(double seconds) => new TicksRange((long)(seconds * Mics.MicsPerSecond));
 
-    public static TicksRange FromMilliseconds(double milliseconds) => new TicksRange((long)(milliseconds * Nsec.NsecPerMillisecond));
+    public static TicksRange FromMilliseconds(double milliseconds) => new TicksRange((long)(milliseconds * Mics.MicsPerMillisecond));
 
-    public static TicksRange FromMicroseconds(double microseconds) => new TicksRange((long)(microseconds * Nsec.NsecPerMicrosecond));
-
-    public static TicksRange FromNanoseconds(double nanoseconds) => new TicksRange((long)nanoseconds);
+    public static TicksRange FromMicroseconds(double microseconds) => new TicksRange((long)microseconds);
 
     public bool IsIn(long ticks) => this.LowerBound <= ticks && ticks <= this.UpperBound;
 

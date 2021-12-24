@@ -168,7 +168,7 @@ public class Terminal
 
     internal void ProcessSend(UdpClient udp, long currentTicks)
     {
-        if ((currentTicks - this.lastCleanedTicks) > Nsec.FromSeconds(1))
+        if ((currentTicks - this.lastCleanedTicks) > Mics.FromSeconds(1))
         {
             this.lastCleanedTicks = currentTicks;
             this.CleanNetTerminal(currentTicks);
@@ -281,7 +281,7 @@ public class Terminal
 
         var response = new PacketPunchResponse();
         response.Endpoint = endpoint;
-        response.UtcTicks = Nsec.GetUtcNow();
+        response.UtcTicks = Mics.GetUtcNow();
         var secondGene = GenePool.NextGene(header.Gene);
         this.TerminalLogger?.Information($"Punch Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 

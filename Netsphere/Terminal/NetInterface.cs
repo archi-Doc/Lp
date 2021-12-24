@@ -196,7 +196,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         var recvGene = new NetTerminalGene(gene, netInterface);
         netInterface.RecvGenes = new NetTerminalGene[] { recvGene, };
         recvGene.SetReceive();
-        recvGene.Receive(PacketId.Encrypt, receiveOwner, Nsec.GetSystem());
+        recvGene.Receive(PacketId.Encrypt, receiveOwner, Mics.GetSystem());
 
         var sendGene = new NetTerminalGene(secondGene, netInterface);
         netInterface.SendGenes = new NetTerminalGene[] { sendGene, };
@@ -377,7 +377,7 @@ public class NetInterface : IDisposable
 
         while (this.Terminal.Core?.IsTerminated == false && this.NetTerminal.IsClosed == false)
         {
-            if (Nsec.GetSystem() >= (this.NetTerminal.LastResponseTicks + this.NetTerminal.MaximumResponseTicks))
+            if (Mics.GetSystem() >= (this.NetTerminal.LastResponseTicks + this.NetTerminal.MaximumResponseTicks))
             {
                 this.TerminalLogger?.Information($"Send timeout.");
                 return NetResult.Timeout;
@@ -427,7 +427,7 @@ WaitForSendCompletionWait:
 
         while (this.Terminal.Core?.IsTerminated == false && this.NetTerminal.IsClosed == false)
         {
-            if (Nsec.GetSystem() >= (this.NetTerminal.LastResponseTicks + this.NetTerminal.MaximumResponseTicks))
+            if (Mics.GetSystem() >= (this.NetTerminal.LastResponseTicks + this.NetTerminal.MaximumResponseTicks))
             {
                 this.TerminalLogger?.Information($"Receive timeout.");
                 return new NetReceivedData(NetResult.Timeout);
@@ -588,7 +588,7 @@ WaitForSendCompletionWait:
                 }
                 else if (x.State == NetTerminalGeneState.WaitingForAck)
                 {// Resend
-                    if ((currentTicks - x.SentTicks) > Nsec.FromMilliseconds(NetConstants.ResendWaitMilliseconds))
+                    if ((currentTicks - x.SentTicks) > Mics.FromMilliseconds(NetConstants.ResendWaitMilliseconds))
                     {
                         if (x.Send(udp))
                         {
@@ -754,7 +754,7 @@ WaitForSendCompletionWait:
             if (this.DisposedTicks == 0)
             {// Delay the disposal.
                 this.NetTerminal.ActiveToDisposed(this);
-                this.DisposedTicks = Nsec.GetSystem();
+                this.DisposedTicks = Mics.GetSystem();
             }
         }
     }

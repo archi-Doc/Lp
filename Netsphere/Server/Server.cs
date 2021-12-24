@@ -92,7 +92,7 @@ public class Server
 
         var response = new PacketPunchResponse();
         response.Endpoint = this.NetTerminal.Endpoint;
-        response.UtcTicks = Nsec.GetUtcNow();
+        response.UtcTicks = Mics.GetUtcNow();
 
         var task = this.NetTerminal.SendPacketAsync(response);
         return true;

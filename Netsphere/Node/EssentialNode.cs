@@ -65,11 +65,11 @@ public class EssentialNode
         }
 
         // Unchecked Queue
-        var ticks = Nsec.GetSystem();
+        var ticks = Mics.GetSystem();
         this.essentialNodes.UncheckedChain.Clear();
         foreach (var x in this.essentialNodes.LinkedListChain)
         {
-            if (x.ValidTicks <= ticks && ticks <= (x.ValidTicks + Nsec.FromMinutes(ValidTimeInMinutes)))
+            if (x.ValidTicks <= ticks && ticks <= (x.ValidTicks + Mics.FromMinutes(ValidTimeInMinutes)))
             {// [x.ValidTicks, x.ValidTicks + Ticks.FromMinutes(ValidTimeInMinutes)]
             }
             else
@@ -218,7 +218,7 @@ internal partial class EssentialNodeAddress
 
     public void UpdateValidTicks()
     {
-        this.ValidTicks = Nsec.GetSystem();
+        this.ValidTicks = Mics.GetSystem();
         this.FailureCount = 0;
     }
 

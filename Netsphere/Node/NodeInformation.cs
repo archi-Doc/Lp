@@ -21,7 +21,7 @@ public partial class NodeInformation : NodeAddress, IEquatable<NodeInformation>
             if (alternative == null)
             {
                 alternative = new NodeInformation(NodeAddress.Alternative);
-                alternative.UpdateTime = Nsec.GetUtcNow();
+                alternative.UpdateTime = Mics.GetUtcNow();
                 alternative.PublicKeyX = NodePrivateKey.AlternativePrivateKey.X;
                 alternative.PublicKeyY = NodePrivateKey.AlternativePrivateKey.Y;
             }

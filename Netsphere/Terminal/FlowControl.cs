@@ -4,10 +4,10 @@ namespace Netsphere;
 
 public class FlowControl
 {
-    public static readonly long TicksPerRound = Nsec.FromMilliseconds(2);
-    public static readonly double TicksPerRoundRev = 1d / Nsec.FromMilliseconds(2);
+    public static readonly long TicksPerRound = Mics.FromMilliseconds(2);
+    public static readonly double TicksPerRoundRev = 1d / Mics.FromMilliseconds(2);
     public static readonly double InitialSendCapacityPerRound = 20;
-    public static readonly long InitialWindowTicks = Nsec.FromMilliseconds(300);
+    public static readonly long InitialWindowTicks = Mics.FromMilliseconds(300);
 
     public FlowControl(NetTerminal netTerminal)
     {
