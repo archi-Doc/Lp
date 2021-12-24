@@ -101,7 +101,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
             this.State == NetTerminalGeneState.WaitingForAck)
         {
             /*if (LP.Random.Pseudo.NextDouble() < 0.1)
-            {// temporary
+            {
                 this.State = NetTerminalGeneState.WaitingForAck;
                 return true;
             }*/

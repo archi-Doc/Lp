@@ -98,7 +98,7 @@ public class Terminal
         }
     }
 
-    public Terminal(LPBase lpBase, NetBase netBase, NetStatus netStatus)
+    public Terminal(NetBase netBase, NetStatus netStatus)
     {
         this.NetBase = netBase;
         this.NetStatus = netStatus;
@@ -109,15 +109,19 @@ public class Terminal
         if (this.NetBase.NetsphereOptions.EnableLogger)
         {
             // this.TerminalLogger = new Logger.PriorityLogger();
+
+            var logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "logs");
+            Directory.CreateDirectory(logDirectory);
+
             this.TerminalLogger = new SerilogLogger(new LoggerConfiguration()
-            .MinimumLevel.Debug()
-            .WriteTo.File(
-                Path.Combine(lpBase.RootDirectory, "logs", "log.txt"),
-                rollingInterval: RollingInterval.Day,
-                retainedFileCountLimit: 31,
-                buffered: true,
-                flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
-            .CreateLogger());
+                .MinimumLevel.Debug()
+                .WriteTo.File(
+                    Path.Combine(logDirectory, "logs", "log.txt"),
+                    rollingInterval: RollingInterval.Day,
+                    retainedFileCountLimit: 31,
+                    buffered: true,
+                    flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
+                .CreateLogger());
         }
 
         this.netSocket = new(this);

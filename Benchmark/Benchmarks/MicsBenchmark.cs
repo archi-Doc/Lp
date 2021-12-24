@@ -66,7 +66,7 @@ public class MicsBenchmark
         return (long)(this.TimestampDouble * 1000d);
     }
 
-    /*[Benchmark]
+    [Benchmark]
     public long GetTimestamp()
     {
         return Stopwatch.GetTimestamp();
@@ -112,5 +112,5 @@ public class MicsBenchmark
     public long Constant_MicsDouble()
     {
         return (long)(this.Timestamp * this.TimestampToMicsDouble);
-    }*/
+    }
 }
