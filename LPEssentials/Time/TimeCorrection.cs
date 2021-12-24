@@ -75,9 +75,9 @@ public class TimeCorrection
         return CorrectedResult.Corrected;
     }
 
-    public static void AddCorrection(long utcTicks)
+    public static void AddCorrection(long utcMics)
     {
-        var difference = utcTicks - (Mics.GetSystem() + initialDifference);
+        var difference = utcMics - (Mics.GetSystem() + initialDifference);
 
         lock (timeCorrections)
         {
@@ -94,10 +94,10 @@ public class TimeCorrection
         }
     }
 
-    private static long GetCollectionDifference(long currentTicks)
+    private static long GetCollectionDifference(long currentMics)
     {
         var diff = correctionDifference;
-        if (diff != 0 && System.Math.Abs(currentTicks - correctionTicks) < Mics.FromSeconds(1.0d))
+        if (diff != 0 && System.Math.Abs(currentMics - correctionMics) < Mics.FromSeconds(1.0d))
         {
             return diff;
         }
@@ -122,7 +122,7 @@ public class TimeCorrection
 
             diff = total / half;
             correctionDifference = diff;
-            correctionTicks = currentTicks;
+            correctionMics = currentMics;
         }
 
         return diff;
@@ -135,5 +135,5 @@ public class TimeCorrection
     private static long initialDifference;
     private static TimeDifference.GoshujinClass timeCorrections;
     private static long correctionDifference;
-    private static long correctionTicks;
+    private static long correctionMics;
 }

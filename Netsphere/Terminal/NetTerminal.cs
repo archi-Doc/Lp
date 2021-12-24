@@ -90,9 +90,6 @@ public partial class NetTerminal : IDisposable
 
     public bool IsClosed { get; internal set; }
 
-    // [Link(Type = ChainType.Ordered)]
-    // public long CreatedTicks { get; private set; } = Ticks.GetCurrent();
-
     public IPEndPoint Endpoint { get; }
 
     public NodeAddress NodeAddress { get; }

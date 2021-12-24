@@ -29,22 +29,22 @@ public static class Mics
     }
 
     /// <summary>
-    /// Gets the number of Nsec since system startup (Stopwatch.GetTimestamp()).
+    /// Gets the <see cref="Mics"/> (microseconds) since system startup (Stopwatch.GetTimestamp()).
     /// </summary>
-    /// <returns>Nsec (Nanosecond).</returns>
+    /// <returns><see cref="Mics"/> (microseconds).</returns>
     public static long GetSystem() => (long)(Stopwatch.GetTimestamp() * TimestampToMics);
 
     /// <summary>
-    /// Gets the number of ticks since LP has started.<br/>
+    /// Gets the <see cref="Mics"/> (microseconds) since LP has started.<br/>
     /// Not affected by manual date/time changes.
     /// </summary>
-    /// <returns>Ticks.</returns>
+    /// <returns><see cref="Mics"/> (microseconds).</returns>
     public static long GetApplication() => (long)(Stopwatch.GetTimestamp() * TimestampToMics) - TimeCorrection.InitialSystemMics;
 
     /// <summary>
-    /// Gets the number of ticks expressed as UTC.
+    /// Gets the <see cref="Mics"/> (microseconds) expressed as UTC.
     /// </summary>
-    /// <returns>Ticks.</returns>
+    /// <returns><see cref="Mics"/> (microseconds).</returns>
     public static long GetUtcNow() => (long)(DateTime.UtcNow.Ticks * 0.1d);
 
     /// <summary>
