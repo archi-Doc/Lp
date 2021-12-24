@@ -25,8 +25,10 @@ public class MicsSubcommand : ISimpleCommand
         logger.Information($"Stopwatch.Frequency: {Stopwatch.Frequency}");
         logger.Information($"Mics.TimestampToMics: {Mics.TimestampToMics}");
         logger.Information($"Mics.GetSystem(): {Mics.GetSystem()}");
+        logger.Information($"Mics.GetApplication(): {Mics.GetApplication()}");
         logger.Information($"Time.TimestampToTicks: {Time.TimestampToTicks}");
         logger.Information($"Time.GetSystem(): {Time.GetSystem()}");
+        logger.Information($"Time.GetApplication(): {Time.GetApplication()}");
         logger.Information($"Time.GetUtcNow(): {Time.GetUtcNow()}");
         Time.GetCorrected(out var correctedTime);
         logger.Information($"Time.GetCorrected(): {correctedTime}");

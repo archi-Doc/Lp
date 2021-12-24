@@ -51,6 +51,10 @@ public class TimeCorrection
         timeCorrections = new();
     }
 
+    public static void Start()
+    {// For initialization.
+    }
+
     /// <summary>
     /// Get the corrected number of ticks expressed as UTC.
     /// </summary>

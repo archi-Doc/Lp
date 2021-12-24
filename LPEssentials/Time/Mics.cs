@@ -25,6 +25,7 @@ public static class Mics
     static Mics()
     {
         TimestampToMics = 1_000_000d / Stopwatch.Frequency;
+        TimeCorrection.Start();
     }
 
     /// <summary>
