@@ -45,7 +45,7 @@ public static class Mics
     /// Gets the number of ticks expressed as UTC.
     /// </summary>
     /// <returns>Ticks.</returns>
-    public static long GetUtcNow() => (long)(DateTime.UtcNow.Ticks * TimestampToMics);
+    public static long GetUtcNow() => (long)(DateTime.UtcNow.Ticks * 0.1d);
 
     /// <summary>
     /// Get the corrected <see cref="Mics"/> expressed as UTC.

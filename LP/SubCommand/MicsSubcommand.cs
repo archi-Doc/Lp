@@ -26,6 +26,7 @@ public class MicsSubcommand : ISimpleCommand
         logger.Information($"Mics.TimestampToMics: {Mics.TimestampToMics}");
         logger.Information($"Mics.GetSystem(): {Mics.GetSystem()}");
         logger.Information($"Mics.GetApplication(): {Mics.GetApplication()}");
+        logger.Information($"Mics.GetUtcNow(): {Mics.GetUtcNow()}");
         Mics.GetCorrected(out var correctedMics);
         logger.Information($"Mics.GetCorrected(): {correctedMics}");
         logger.Information($"Time.TimestampToTicks: {Time.TimestampToTicks}");
