@@ -44,7 +44,7 @@ public class TimeCorrection
 
     static TimeCorrection()
     {
-        InitialUtcMics = (long)(DateTime.UtcNow.Ticks * Mics.TimestampToMics);
+        InitialUtcMics = Mics.GetUtcNow();
         InitialSystemMics = Mics.GetSystem();
 
         initialDifference = InitialUtcMics - InitialSystemMics;
@@ -56,21 +56,21 @@ public class TimeCorrection
     }
 
     /// <summary>
-    /// Get the corrected number of ticks expressed as UTC.
+    /// Get the corrected <see cref="Mics"/> expressed as UTC.
     /// </summary>
-    /// <param name="correctedTicks">The corrected number of ticks.</param>
+    /// <param name="correctedMics">The corrected <see cref="Mics"/>.</param>
     /// <returns><see cref="CorrectedResult"/>.</returns>
-    public static CorrectedResult GetCorrectedMics(out long correctedTicks)
+    public static CorrectedResult GetCorrectedMics(out long correctedMics)
     {
-        var currentTicks = Mics.GetSystem() - InitialSystemMics + InitialUtcMics;
+        var currentMics = Mics.GetSystem() - InitialSystemMics + InitialUtcMics;
         if (timeCorrections.QueueChain.Count < MinCorrections)
         {
-            correctedTicks = currentTicks;
+            correctedMics = currentMics;
             return CorrectedResult.NotCorrected;
         }
 
-        var difference = GetCollectionDifference(currentTicks);
-        correctedTicks = currentTicks + difference;
+        var difference = GetCollectionDifference(currentMics);
+        correctedMics = currentMics + difference;
 
         return CorrectedResult.Corrected;
     }

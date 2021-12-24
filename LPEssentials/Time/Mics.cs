@@ -48,11 +48,11 @@ public static class Mics
     public static long GetUtcNow() => (long)(DateTime.UtcNow.Ticks * TimestampToMics);
 
     /// <summary>
-    /// Get the number of corrected ticks expressed as UTC.
+    /// Get the corrected <see cref="Mics"/> expressed as UTC.
     /// </summary>
-    /// <param name="correctedTicks">The corrected ticks.</param>
+    /// <param name="correctedMics">The corrected <see cref="Mics"/>.</param>
     /// <returns><see cref="CorrectedResult"/>.</returns>
-    public static CorrectedResult GetCorrected(out long correctedTicks) => TimeCorrection.GetCorrectedMics(out correctedTicks);
+    public static CorrectedResult GetCorrected(out long correctedMics) => TimeCorrection.GetCorrectedMics(out correctedMics);
 
     public static long FromDays(double days) => (long)(days * MicsPerDay);
 
