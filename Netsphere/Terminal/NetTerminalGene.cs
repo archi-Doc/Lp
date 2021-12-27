@@ -231,7 +231,6 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
     }
 
 #pragma warning disable SA1202 // Elements should be ordered by access
-    internal int SendCount;
     internal long SentMics;
 #pragma warning restore SA1202 // Elements should be ordered by access
 }

@@ -8,7 +8,8 @@ public class FlowControl
     public static readonly double MicsPerRoundRev = 1d / Mics.FromMilliseconds(2);
     public static readonly double InitialSendCapacityPerRound = 1; // 1 = 5 MBits/sec.
     public static readonly long InitialWindowMics = Mics.FromMilliseconds(300);
-    public static readonly long MinimumWindowMics = Mics.FromMilliseconds(50);
+    public static readonly long MinimumWindowMics = Mics.FromMilliseconds(100);
+    public static readonly double MinimumARR = 0.05;
 
     private class Window
     {
@@ -21,6 +22,9 @@ public class FlowControl
         {
             this.StartMics = startMics;
             this.DurationMics = durationMics;
+            this.SendCount = 0;
+            this.ResendCount = 0;
+            this.SendCapacityPerRound = InitialSendCapacityPerRound;
 
             this.rttCount = 0;
             this.totalRTT = 0;
@@ -32,7 +36,11 @@ public class FlowControl
             this.totalRTT += mics;
         }
 
-        internal void IncrementResend() => this.ResendCount++;
+        internal void IncrementSendCount() => this.SendCount++;
+
+        internal void IncrementResendCount() => this.ResendCount++;
+
+        internal void SetSendCapacityPerRound(double sendCapacityPerRound) => this.SendCapacityPerRound = sendCapacityPerRound;
 
         public long StartMics { get; private set; }
 
@@ -40,22 +48,26 @@ public class FlowControl
 
         public long EndMics => this.StartMics + this.DurationMics;
 
-        public long MeanRTT
+        public (int Count, long Mean) MeanRTT
         {
             get
             {
                 if (this.rttCount == 0)
                 {
-                    return InitialWindowMics;
+                    return (0, InitialWindowMics);
                 }
                 else
                 {
-                    return this.totalRTT / this.rttCount;
+                    return (this.rttCount, this.totalRTT / this.rttCount);
                 }
             }
         }
 
+        public int SendCount { get; private set; }
+
         public int ResendCount { get; private set; }
+
+        public double SendCapacityPerRound { get; private set; }
 
         public override string ToString() => $"{this.StartMics / 1_000_000d,0:F3} - {this.EndMics / 1_000_000d,0:F3} ({this.DurationMics / 1_000,0:F0} ms)";
 
@@ -68,7 +80,6 @@ public class FlowControl
         this.NetTerminal = netTerminal;
 
         this.sendCapacityAccumulated = 0;
-        this.sendCapacityPerRound = InitialSendCapacityPerRound;
 
         this.twoPreviousWindow = new(0, 0);
         this.previousWindow = new(0, 0);
@@ -93,8 +104,8 @@ public class FlowControl
 
         // Send Capacity
         var roundElapsed = (currentMics - this.lastMics) * MicsPerRoundRev;
-        this.sendCapacityAccumulated += this.sendCapacityPerRound * roundElapsed;
-        var ceiling = Math.Ceiling(this.sendCapacityPerRound);
+        this.sendCapacityAccumulated += this.currentWindow.SendCapacityPerRound * roundElapsed;
+        var ceiling = Math.Ceiling(this.currentWindow.SendCapacityPerRound);
         if (this.sendCapacityAccumulated > ceiling)
         {
             this.sendCapacityAccumulated = ceiling;
@@ -126,6 +137,27 @@ public class FlowControl
         }
     }
 
+    internal void ReportSend(long currentMics)
+    {// lock (this.NetTerminal.SyncObject)
+        // Find window
+        if (currentMics >= this.currentWindow.StartMics && currentMics < this.currentWindow.EndMics)
+        {
+            this.currentWindow.IncrementSendCount();
+        }
+        else if (currentMics >= this.previousWindow.StartMics)
+        {
+            this.previousWindow.IncrementSendCount();
+        }
+        else if (currentMics >= this.twoPreviousWindow.StartMics)
+        {
+            this.twoPreviousWindow.IncrementSendCount();
+        }
+        else
+        {
+            return;
+        }
+    }
+
     internal void RentSendCapacity(out int sendCapacity)
     {// lock (NetTerminal.SyncObject)
         sendCapacity = (int)this.sendCapacityAccumulated;
@@ -144,7 +176,7 @@ public class FlowControl
         {
             if ((currentMics - sentMics) > window.DurationMics * 2)
             {
-                this.twoPreviousWindow.IncrementResend();
+                this.twoPreviousWindow.IncrementResendCount();
                 return true;
             }
         }
@@ -159,27 +191,74 @@ public class FlowControl
             return;
         }
 
-        var durationMics = this.previousWindow.MeanRTT;
-        if (durationMics < MinimumWindowMics)
+        var rtt = this.previousWindow.MeanRTT;
+        if (rtt.Count == 0)
         {
-            durationMics = MinimumWindowMics;
+            rtt.Mean = this.lastMeanRTT;
         }
+
+        if (rtt.Mean < MinimumWindowMics)
+        {
+            rtt.Mean = MinimumWindowMics;
+        }
+
+        var sendCapacityPerRound = this.CalculateSendCapacityPerRound();
+        var resent = this.twoPreviousWindow.ResendCount;
 
         var window = this.twoPreviousWindow;
         this.twoPreviousWindow = this.previousWindow;
         this.previousWindow = this.currentWindow;
-        window.Reset(this.previousWindow.EndMics, durationMics);
+        window.Reset(this.previousWindow.EndMics, rtt.Mean);
+        window.SetSendCapacityPerRound(sendCapacityPerRound);
         this.currentWindow = window;
+        this.lastMeanRTT = rtt.Mean;
 
         if (!this.NetTerminal.Terminal.IsAlternative)
         {
-            Console.WriteLine($"UpdateWindow: {this.currentWindow.ToString()}");
+            Console.WriteLine($"RTT: {rtt.Mean / 1000d,0:F0} ({rtt.Count}), Resent: {resent} => {sendCapacityPerRound,0:F2}");
+            // Console.WriteLine($"UpdateWindow: {this.currentWindow.ToString()}");
+        }
+    }
+
+    private double CalculateSendCapacityPerRound()
+    {
+        if (this.twoPreviousWindow.StartMics == 0)
+        {
+            return this.currentWindow.SendCapacityPerRound * 2;
+        }
+
+        var window = this.twoPreviousWindow;
+        var sendResend = window.SendCount + window.ResendCount;
+        if (sendResend == 0)
+        {
+            sendResend = 1;
+        }
+
+        var arr = window.ResendCount / (double)sendResend;
+        /*if (arr < MinimumARR)
+        {
+            arr = MinimumARR;
+        }*/
+
+        if (!this.NetTerminal.Terminal.IsAlternative)
+        {
+            Console.WriteLine($"Plot: {window.SendCapacityPerRound} - {arr,0:F2}");
+            Console.WriteLine($"Send: {this.twoPreviousWindow.SendCount}, Resend: {this.twoPreviousWindow.ResendCount}");
+        }
+
+        if (arr < 0.05)
+        {
+            return this.currentWindow.SendCapacityPerRound * 2;
+        }
+        else
+        {
+            return this.currentWindow.SendCapacityPerRound;
         }
     }
 
     private long lastMics;
     private double sendCapacityAccumulated;
-    private double sendCapacityPerRound;
+    private long lastMeanRTT;
 
     private Window twoPreviousWindow;
     private Window previousWindow;

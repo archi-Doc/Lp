@@ -582,8 +582,8 @@ WaitForSendCompletionWait:
                         this.TerminalLogger?.Information($"Udp Sent       : {x.ToString()}");
 
                         sendCapacity--;
-                        x.SendCount = 1;
                         x.SentMics = currentMics;
+                        this.NetTerminal.FlowControl.ReportSend(currentMics);
                     }
                 }
                 else if (x.State == NetTerminalGeneState.WaitingForAck)
@@ -595,7 +595,6 @@ WaitForSendCompletionWait:
                         {
                             this.TerminalLogger?.Information($"Udp Resent     : {x.ToString()}");
                             sendCapacity--;
-                            x.SendCount++;
                             x.SentMics = currentMics;
                             this.NetTerminal.IncrementResendCount();
                         }
@@ -624,15 +623,18 @@ WaitForSendCompletionWait:
                 {
                     PacketService.InsertDataSize(rentArray!.ByteArray, (ushort)(size - PacketService.HeaderSize));
                     this.Terminal.AddRawSend(this.NetTerminal.Endpoint, rentArray!.ToMemoryOwner(0, size));
+                    rentArray!.Return();
+                    this.NetTerminal.TerminalLogger?.Information($"AACK {size}");
                     size = 0;
                 }
 
+                // this.NetTerminal.TerminalLogger?.Information(x.Gene.To4Hex());
                 if (size == 0)
                 {
                     this.NetTerminal.CreateHeader(out header, x.Gene);
                     header.Id = PacketId.Ack;
 
-                    rentArray ??= PacketPool.Rent();
+                    rentArray = PacketPool.Rent();
                     size += PacketService.HeaderSize;
                     fixed (byte* bp = rentArray.ByteArray)
                     {
@@ -657,10 +659,10 @@ WaitForSendCompletionWait:
         {
             PacketService.InsertDataSize(rentArray!.ByteArray, (ushort)(size - PacketService.HeaderSize));
             this.Terminal.AddRawSend(this.NetTerminal.Endpoint, rentArray!.ToMemoryOwner(0, size));
+            rentArray!.Return();
+            this.NetTerminal.TerminalLogger?.Information($"AACK {size}");
             size = 0;
         }
-
-        rentArray?.Return();
     }
 
     internal void ProcessReceive(ByteArrayPool.MemoryOwner owner, IPEndPoint endPoint, ref PacketHeader header, long currentMics, NetTerminalGene gene)
