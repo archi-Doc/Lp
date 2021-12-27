@@ -588,7 +588,8 @@ WaitForSendCompletionWait:
                 }
                 else if (x.State == NetTerminalGeneState.WaitingForAck)
                 {// Resend
-                    if ((currentMics - x.SentMics) > Mics.FromMilliseconds(NetConstants.ResendWaitMilliseconds))
+                    // if ((currentMics - x.SentMics) > Mics.FromMilliseconds(NetConstants.ResendWaitMilliseconds))
+                    if (this.NetTerminal.FlowControl.CheckResend(x.SentMics, currentMics))
                     {
                         if (x.Send(udp))
                         {
