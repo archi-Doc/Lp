@@ -248,7 +248,7 @@ public class FlowControl
 
         if (arr < 0.05)
         {
-            return this.currentWindow.SendCapacityPerRound * 2;
+            return this.currentWindow.SendCapacityPerRound;
         }
         else
         {

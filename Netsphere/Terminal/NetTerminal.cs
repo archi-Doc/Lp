@@ -138,6 +138,7 @@ public partial class NetTerminal : IDisposable
 
             this.FlowControl.Update(currentMics);
             this.FlowControl.RentSendCapacity(out var sendCapacity);
+            // this.Terminal.TerminalLogger?.Information(sendCapacity.ToString());
             foreach (var x in this.activeInterfaces)
             {
                 if (sendCapacity == 0)

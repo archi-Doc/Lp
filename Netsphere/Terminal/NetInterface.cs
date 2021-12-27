@@ -579,6 +579,7 @@ WaitForSendCompletionWait:
                 {// Send
                     if (x.Send(udp))
                     {
+                        // this.Terminal.TerminalLogger?.Information($"cap {sendCapacity}");
                         this.TerminalLogger?.Information($"Udp Sent       : {x.ToString()}");
 
                         sendCapacity--;
