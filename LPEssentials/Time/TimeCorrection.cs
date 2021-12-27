@@ -38,7 +38,7 @@ public class TimeCorrection
     public const uint MaxCorrections = 1_000;
 
     /// <summary>
-    /// The minimum number of corrections required for a valid corrected ticks/time.
+    /// The minimum number of corrections required for a valid corrected mics/time.
     /// </summary>
     public const uint MinCorrections = 10;
 

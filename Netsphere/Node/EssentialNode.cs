@@ -65,12 +65,12 @@ public class EssentialNode
         }
 
         // Unchecked Queue
-        var ticks = Mics.GetSystem();
+        var mics = Mics.GetSystem();
         this.essentialNodes.UncheckedChain.Clear();
         foreach (var x in this.essentialNodes.LinkedListChain)
         {
-            if (x.ValidTicks <= ticks && ticks <= (x.ValidTicks + Mics.FromMinutes(ValidTimeInMinutes)))
-            {// [x.ValidTicks, x.ValidTicks + Ticks.FromMinutes(ValidTimeInMinutes)]
+            if (x.ValidMics <= mics && mics <= (x.ValidMics + Mics.FromMinutes(ValidTimeInMinutes)))
+            {// [x.ValidMics, x.ValidMics + Mics.FromMinutes(ValidTimeInMinutes)]
             }
             else
             {
@@ -141,7 +141,7 @@ public class EssentialNode
                 {// Unchecked
                     if (result == NodeConnectionResult.Success)
                     {// Success
-                        node.UpdateValidTicks();
+                        node.UpdateValidMics();
                         this.essentialNodes.UncheckedChain.Remove(node);
                     }
                     else
@@ -156,7 +156,7 @@ public class EssentialNode
                 {// Checked
                     if (result == NodeConnectionResult.Success)
                     {// Success
-                        node.UpdateValidTicks();
+                        node.UpdateValidMics();
                     }
                 }
             }
@@ -216,14 +216,14 @@ internal partial class EssentialNodeAddress
         return ++this.FailureCount >= FailureLimit;
     }
 
-    public void UpdateValidTicks()
+    public void UpdateValidMics()
     {
-        this.ValidTicks = Mics.GetSystem();
+        this.ValidMics = Mics.GetSystem();
         this.FailureCount = 0;
     }
 
     [Key(1)]
-    public long ValidTicks { get; private set; }
+    public long ValidMics { get; private set; }
 
     [IgnoreMember]
     public int FailureCount { get; private set; }

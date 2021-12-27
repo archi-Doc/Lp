@@ -4,10 +4,10 @@ namespace Netsphere;
 
 public class FlowControl
 {
-    public static readonly long TicksPerRound = Mics.FromMilliseconds(2);
-    public static readonly double TicksPerRoundRev = 1d / Mics.FromMilliseconds(2);
+    public static readonly long MicsPerRound = Mics.FromMilliseconds(2);
+    public static readonly double MicsPerRoundRev = 1d / Mics.FromMilliseconds(2);
     public static readonly double InitialSendCapacityPerRound = 20;
-    public static readonly long InitialWindowTicks = Mics.FromMilliseconds(300);
+    public static readonly long InitialWindowMics = Mics.FromMilliseconds(300);
 
     public FlowControl(NetTerminal netTerminal)
     {
@@ -15,36 +15,36 @@ public class FlowControl
 
         this.sendCapacityAccumulated = 0;
         this.sendCapacityPerRound = InitialSendCapacityPerRound;
-        this.windowTicks = InitialWindowTicks;
+        this.windowMics = InitialWindowMics;
     }
 
     public NetTerminal NetTerminal { get; }
 
-    internal void Update(long currentTicks)
+    internal void Update(long currentMics)
     {// lock (NetTerminal.SyncObject)
-        if (currentTicks <= this.lastTicks)
+        if (currentMics <= this.lastMics)
         {
             return;
         }
-        else if (this.lastTicks == 0)
+        else if (this.lastMics == 0)
         {
-            this.lastTicks = currentTicks - TicksPerRound;
+            this.lastMics = currentMics - MicsPerRound;
         }
 
         // Window
-        if (this.nextWindowTicks == 0)
+        if (this.nextWindowMics == 0)
         {
-            this.nextWindowTicks = currentTicks;
+            this.nextWindowMics = currentMics;
         }
-        else if (this.nextWindowTicks <= currentTicks)
+        else if (this.nextWindowMics <= currentMics)
         {
-            this.nextWindowTicks = currentTicks + this.windowTicks;
+            this.nextWindowMics = currentMics + this.windowMics;
 
             // Update
         }
 
         // Send Capacity
-        var roundElapsed = (currentTicks - this.lastTicks) * TicksPerRoundRev;
+        var roundElapsed = (currentMics - this.lastMics) * MicsPerRoundRev;
         this.sendCapacityAccumulated += this.sendCapacityPerRound * roundElapsed;
         var ceiling = Math.Ceiling(this.sendCapacityPerRound);
         if (this.sendCapacityAccumulated > ceiling)
@@ -52,12 +52,12 @@ public class FlowControl
             this.sendCapacityAccumulated = ceiling;
         }
 
-        this.lastTicks = currentTicks;
+        this.lastMics = currentMics;
     }
 
-    internal void ReportAck(long currentTicks, long sentTicks)
+    internal void ReportAck(long currentMics, long sentMics)
     {
-        this.NetTerminal.TerminalLogger?.Information($"{currentTicks - sentTicks}");
+        this.NetTerminal.TerminalLogger?.Information($"{currentMics - sentMics}");
     }
 
     internal void RentSendCapacity(out int sendCapacity)
@@ -71,9 +71,9 @@ public class FlowControl
         this.sendCapacityAccumulated += sendCapacity;
     }
 
-    private long lastTicks;
-    private long windowTicks;
-    private long nextWindowTicks;
+    private long lastMics;
+    private long windowMics;
+    private long nextWindowMics;
     private double sendCapacityAccumulated;
     private double sendCapacityPerRound;
 }

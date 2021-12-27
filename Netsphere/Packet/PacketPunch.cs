@@ -21,14 +21,14 @@ public partial class PacketPunch : IPacket
     public PacketPunch(IPEndPoint? nextEndpoint)
     {
         this.NextEndpoint = nextEndpoint;
-        this.UtcTicks = Mics.GetUtcNow();
+        this.UtcMics = Mics.GetUtcNow();
     }
 
     [Key(0)]
     public IPEndPoint? NextEndpoint { get; set; }
 
     [Key(1)]
-    public long UtcTicks { get; set; }
+    public long UtcMics { get; set; }
 }
 
 [TinyhandObject]
@@ -42,7 +42,7 @@ public partial class PacketPunchResponse : IPacket
     public IPEndPoint Endpoint { get; set; } = default!;
 
     [Key(1)]
-    public long UtcTicks { get; set; }
+    public long UtcMics { get; set; }
 
     public override string ToString() => $"{this.Endpoint}";
 }

@@ -58,10 +58,10 @@ public partial class NetTerminal : IDisposable
 
     public void SetMaximumResponseTime(int milliseconds = 500)
     {
-        this.maximumResponseTicks = Mics.FromMilliseconds(milliseconds);
+        this.maximumResponseMics = Mics.FromMilliseconds(milliseconds);
     }
 
-    public long MaximumResponseTicks => this.maximumResponseTicks;
+    public long MaximumResponseMics => this.maximumResponseMics;
 
     public void SetMinimumBandwidth(double megabytesPerSecond = 0.1)
     {
@@ -127,7 +127,7 @@ public partial class NetTerminal : IDisposable
         this.Terminal.AddRawSend(this.Endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
     }
 
-    internal void ProcessSend(UdpClient udp, long currentTicks)
+    internal void ProcessSend(UdpClient udp, long currentMics)
     {
         lock (this.SyncObject)
         {
@@ -136,7 +136,7 @@ public partial class NetTerminal : IDisposable
                 return;
             }
 
-            this.FlowControl.Update(currentTicks);
+            this.FlowControl.Update(currentMics);
             this.FlowControl.RentSendCapacity(out var sendCapacity);
             foreach (var x in this.activeInterfaces)
             {
@@ -145,15 +145,15 @@ public partial class NetTerminal : IDisposable
                     break;
                 }
 
-                x.ProcessSend(udp, currentTicks, ref sendCapacity);
+                x.ProcessSend(udp, currentMics, ref sendCapacity);
             }
 
             this.FlowControl.ReturnSendCapacity(sendCapacity);
 
             // Send Ack
-            if ((currentTicks - this.lastSendingAckTicks) > Mics.FromMilliseconds(NetConstants.SendingAckIntervalInMilliseconds))
+            if ((currentMics - this.lastSendingAckMics) > Mics.FromMilliseconds(NetConstants.SendingAckIntervalInMilliseconds))
             {
-                this.lastSendingAckTicks = currentTicks;
+                this.lastSendingAckMics = currentMics;
 
                 foreach (var x in this.activeInterfaces)
                 {
@@ -178,7 +178,7 @@ public partial class NetTerminal : IDisposable
 
     internal bool RemoveInternal(NetInterface netInterface)
     {// lock (this.SyncObject)
-        if (netInterface.DisposedTicks == 0)
+        if (netInterface.DisposedMics == 0)
         {// Active
             return this.activeInterfaces.Remove(netInterface);
         }
@@ -245,21 +245,21 @@ public partial class NetTerminal : IDisposable
         return NetResult.Success;
     }
 
-    internal bool TryClean(long currentTicks)
+    internal bool TryClean(long currentMics)
     {
         if (this.IsClosed)
         {
             return true;
         }
 
-        var ticks = currentTicks - Mics.FromSeconds(2);
+        var mics = currentMics - Mics.FromSeconds(2);
         List<NetInterface>? list = null;
 
         lock (this.SyncObject)
         {
             foreach (var x in this.disposedInterfaces)
             {
-                if (x.DisposedTicks < ticks)
+                if (x.DisposedMics < mics)
                 {
                     list ??= new();
                     list.Add(x);
@@ -327,11 +327,11 @@ public partial class NetTerminal : IDisposable
         return true;
     }
 
-    internal void ResetLastResponseTicks() => this.lastResponseTicks = Mics.GetSystem();
+    internal void ResetLastResponseMics() => this.lastResponseMics = Mics.GetSystem();
 
-    internal void SetLastResponseTicks(long ticks) => this.lastResponseTicks = ticks;
+    internal void SetLastResponseMics(long mics) => this.lastResponseMics = mics;
 
-    internal long LastResponseTicks => this.lastResponseTicks;
+    internal long LastResponseMics => this.lastResponseMics;
 
     internal GenePool? TryFork() => this.embryo == null ? null : this.GenePool.Fork(this.embryo);
 
@@ -360,7 +360,7 @@ public partial class NetTerminal : IDisposable
     {
         this.SetMaximumResponseTime();
         this.SetMinimumBandwidth();
-        this.ResetLastResponseTicks();
+        this.ResetLastResponseMics();
     }
 
     protected List<NetInterface> activeInterfaces = new();
@@ -368,10 +368,10 @@ public partial class NetTerminal : IDisposable
     protected byte[]? embryo; // 48 bytes
     private Aes? aes;
 
-    private long maximumResponseTicks;
+    private long maximumResponseMics;
     private double minimumBandwidth;
-    private long lastSendingAckTicks;
-    private long lastResponseTicks;
+    private long lastSendingAckMics;
+    private long lastResponseMics;
 
     private uint resendCount;
 

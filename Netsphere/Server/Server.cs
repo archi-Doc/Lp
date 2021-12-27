@@ -88,11 +88,11 @@ public class Server
             return false;
         }
 
-        TimeCorrection.AddCorrection(punch.UtcTicks);
+        TimeCorrection.AddCorrection(punch.UtcMics);
 
         var response = new PacketPunchResponse();
         response.Endpoint = this.NetTerminal.Endpoint;
-        response.UtcTicks = Mics.GetUtcNow();
+        response.UtcMics = Mics.GetUtcNow();
 
         var task = this.NetTerminal.SendPacketAsync(response);
         return true;
