@@ -74,7 +74,8 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
             sw.Restart();
             // var t4 = await terminal.SendAndReceiveAsync<TestBlock, TestBlock>(p4);
             // Logger.Priority.Information($"4MB received: {t4.Value}");
-            await terminal.SendAsync<TestBlock>(p4);
+            var result = await terminal.SendAsync<TestBlock>(p4);
+            Logger.Priority.Information(result.ToString());
             Logger.Priority.Information($"{sw.ElapsedMilliseconds} ms, Resend: {terminal.ResendCount}");
         }
     }
