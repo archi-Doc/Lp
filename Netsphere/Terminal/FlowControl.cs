@@ -224,10 +224,17 @@ public class FlowControl
     {
         if (this.twoPreviousWindow.StartMics == 0)
         {
-            return this.currentWindow.SendCapacityPerRound * 2;
+            return this.currentWindow.SendCapacityPerRound * 1.5;
         }
 
         var window = this.twoPreviousWindow;
+        var sendCapacity = window.SendCapacityPerRound * window.DurationMics * MicsPerRoundRev;
+        if (window.SendCount < (sendCapacity * 0.8))
+        {
+            Console.WriteLine($"Send: {window.SendCount}, Capacity: {sendCapacity:F0}");
+            return this.currentWindow.SendCapacityPerRound;
+        }
+
         var sendResend = window.SendCount + window.ResendCount;
         if (sendResend == 0)
         {
@@ -243,12 +250,12 @@ public class FlowControl
         if (!this.NetTerminal.Terminal.IsAlternative)
         {
             Console.WriteLine($"Plot: {window.SendCapacityPerRound} - {arr,0:F2}");
-            Console.WriteLine($"Send: {this.twoPreviousWindow.SendCount}, Resend: {this.twoPreviousWindow.ResendCount}");
+            Console.WriteLine($"Send: {this.twoPreviousWindow.SendCount}, Resend: {this.twoPreviousWindow.ResendCount}, Capacity: {sendCapacity:F0}");
         }
 
         if (arr < 0.05)
         {
-            return this.currentWindow.SendCapacityPerRound;
+            return this.currentWindow.SendCapacityPerRound * 2;
         }
         else
         {
