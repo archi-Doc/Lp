@@ -597,6 +597,7 @@ WaitForSendCompletionWait:
                             this.TerminalLogger?.Information($"Udp Resent     : {x.ToString()}");
                             sendCapacity--;
                             x.SentMics = currentMics;
+                            this.NetTerminal.FlowControl.ReportSend(currentMics);
                             this.NetTerminal.IncrementResendCount();
                         }
                     }

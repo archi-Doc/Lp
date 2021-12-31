@@ -6,7 +6,7 @@ public class FlowControl
 {
     public static readonly long MicsPerRound = Mics.FromMilliseconds(2);
     public static readonly double MicsPerRoundRev = 1d / Mics.FromMilliseconds(2);
-    public static readonly double InitialSendCapacityPerRound = 1; // 1 = 5 MBits/sec.
+    public static readonly double InitialSendCapacityPerRound = 2; // 1 = 5 MBits/sec.
     public static readonly long InitialWindowMics = Mics.FromMilliseconds(300);
     public static readonly long MinimumWindowMics = Mics.FromMilliseconds(50);
     public static readonly double TargetARR = 0.05;
@@ -14,7 +14,7 @@ public class FlowControl
     public static readonly double ProbeRatio = 1.5;
     public static readonly double GoRatio = 1.05;
     public static readonly double GoRatio2 = 0.95;
-    public static readonly double SendCapacityThreshold = 0.8;
+    public static readonly double SendCapacityThreshold = 0.7;
 
     public enum ControlState
     {
@@ -24,8 +24,9 @@ public class FlowControl
 
     private class Window
     {
-        public Window(long startMics, long durationMics)
+        public Window(FlowControl flowControl, long startMics, long durationMics)
         {
+            this.FlowControl = flowControl;
             this.Reset(startMics, durationMics);
         }
 
@@ -57,6 +58,8 @@ public class FlowControl
         internal void IncrementResendCount() => this.ResendCount++;
 
         internal void SetSendCapacityPerRound(double sendCapacityPerRound) => this.SendCapacityPerRound = sendCapacityPerRound;
+
+        public FlowControl FlowControl { get; }
 
         public bool IsValid => this.StartMics != 0;
 
@@ -102,9 +105,9 @@ public class FlowControl
         this.resendMics = InitialWindowMics * 2;
         this.minRTT = double.MaxValue;
 
-        this.twoPreviousWindow = new(0, 0);
-        this.previousWindow = new(0, 0);
-        this.currentWindow = new(Mics.GetSystem(), InitialWindowMics);
+        this.twoPreviousWindow = new(this, 0, 0);
+        this.previousWindow = new(this, 0, 0);
+        this.currentWindow = new(this, Mics.GetSystem(), InitialWindowMics);
     }
 
     public NetTerminal NetTerminal { get; }
@@ -142,7 +145,11 @@ public class FlowControl
         var elapsedMics = currentMics - sentMics;
 
         // Find window
-        if (sentMics >= this.currentWindow.StartMics && sentMics < this.currentWindow.EndMics)
+        if (currentMics >= this.currentWindow.EndMics)
+        {
+            return;
+        }
+        else if (sentMics >= this.currentWindow.StartMics)
         {
             this.currentWindow.AddRTT(elapsedMics);
         }
@@ -154,16 +161,16 @@ public class FlowControl
         {
             this.twoPreviousWindow.AddRTT(elapsedMics);
         }
-        else
-        {
-            return;
-        }
     }
 
     internal void ReportSend(long currentMics)
     {// lock (this.NetTerminal.SyncObject)
         // Find window
-        if (currentMics >= this.currentWindow.StartMics && currentMics < this.currentWindow.EndMics)
+        if (currentMics >= this.currentWindow.EndMics)
+        {
+            return;
+        }
+        else if (currentMics >= this.currentWindow.StartMics)
         {
             this.currentWindow.IncrementSendCount();
         }
@@ -174,10 +181,6 @@ public class FlowControl
         else if (currentMics >= this.twoPreviousWindow.StartMics)
         {
             this.twoPreviousWindow.IncrementSendCount();
-        }
-        else
-        {
-            return;
         }
     }
 
@@ -224,7 +227,6 @@ public class FlowControl
             rtt.Mean = this.lastMeanRTT;
         }
 
-        Console.WriteLine(rtt.Mean);
         if (rtt.Mean < MinimumWindowMics)
         {
             rtt.Mean = MinimumWindowMics;
@@ -275,13 +277,7 @@ public class FlowControl
 
         var window = this.twoPreviousWindow;
         var sendCapacity = window.SendCapacityPerRound * window.DurationMics * MicsPerRoundRev;
-        if (this.sendPerWindow < (sendCapacity * SendCapacityThreshold))
-        {
-            Console.WriteLine($"Under, SendPerWindow: {this.sendPerWindow}, Send: {window.SendCount}, Capacity: {sendCapacity:F0}");
-            return this.currentWindow.SendCapacityPerRound;
-        }
-
-        Console.WriteLine($"SendPerWindow: {this.sendPerWindow}, Send: {window.SendCount}, Capacity: {sendCapacity:F0}");
+        Console.WriteLine($"SendPerWindow: {this.sendPerWindow}, Send: {window.SendCount}/{sendCapacity:F0}");
 
         var sendResend = window.SendCount + window.ResendCount;
         if (sendResend == 0)
@@ -299,10 +295,17 @@ public class FlowControl
                 Console.WriteLine("ControlState.Go");
                 return this.currentWindow.SendCapacityPerRound / ProbeRatio / ProbeRatio;
             }
-            else
-            {
-                return this.currentWindow.SendCapacityPerRound * ProbeRatio;
-            }
+        }
+
+        if (window.SendCount < (sendCapacity * SendCapacityThreshold))
+        {
+            Console.WriteLine("Under");
+            return this.currentWindow.SendCapacityPerRound;
+        }
+
+        if (this.State == ControlState.Probe)
+        {// Probe
+            return this.currentWindow.SendCapacityPerRound * ProbeRatio;
         }
 
         // ControlState.Go
@@ -311,7 +314,7 @@ public class FlowControl
             Console.WriteLine($"Send: {this.twoPreviousWindow.SendCount}, Resend: {this.twoPreviousWindow.ResendCount}, Capacity: {sendCapacity:F0}");
         }
 
-        var next = window.SendCapacityPerRound;
+        var next = this.currentWindow.SendCapacityPerRound;
         if (arr > TargetARR || rtt > TargetRTT)
         {
             next *= GoRatio2;
