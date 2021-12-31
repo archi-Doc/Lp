@@ -6,7 +6,7 @@ public class FlowControl
 {
     public static readonly long MicsPerRound = Mics.FromMilliseconds(2);
     public static readonly double MicsPerRoundRev = 1d / Mics.FromMilliseconds(2);
-    public static readonly double InitialSendCapacityPerRound = 2; // 1 = 5 MBits/sec.
+    public static readonly double InitialSendCapacityPerRound = 1; // 1 = 5 MBits/sec.
     public static readonly long InitialWindowMics = Mics.FromMilliseconds(300);
     public static readonly long MinimumWindowMics = Mics.FromMilliseconds(50);
     public static readonly double TargetARR = 0.05;
@@ -15,6 +15,7 @@ public class FlowControl
     public static readonly double GoRatio = 1.05;
     public static readonly double GoRatio2 = 0.95;
     public static readonly double SendCapacityThreshold = 0.7;
+    public static readonly double MinRTTThresholdRatio = 0.7;
 
     public enum ControlState
     {
@@ -44,8 +45,8 @@ public class FlowControl
 
         internal void AddRTT(long mics)
         {
-            if (mics < Mics.FromMilliseconds(10))
-            {// temporary
+            if (mics < this.FlowControl.minRTTThreshold)
+            {
                 return;
             }
 
@@ -104,6 +105,7 @@ public class FlowControl
         this.sendCapacityAccumulated = 0;
         this.resendMics = InitialWindowMics * 2;
         this.minRTT = double.MaxValue;
+        this.minRTTThreshold = 0;
 
         this.twoPreviousWindow = new(this, 0, 0);
         this.previousWindow = new(this, 0, 0);
@@ -273,6 +275,7 @@ public class FlowControl
         if (meanRTT.Count > 0 && this.minRTT > meanRTT.Mean)
         {
             this.minRTT = meanRTT.Mean;
+            this.minRTTThreshold = this.minRTT * MinRTTThresholdRatio;
         }
 
         var window = this.twoPreviousWindow;
@@ -361,6 +364,7 @@ public class FlowControl
     private long resendMics;
     private long lastMeanRTT;
     private double minRTT;
+    private double minRTTThreshold;
 
     private Window twoPreviousWindow;
     private Window previousWindow;
