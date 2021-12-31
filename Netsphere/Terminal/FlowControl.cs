@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
+
 namespace Netsphere;
 
 public class FlowControl
@@ -199,11 +201,12 @@ public class FlowControl
         this.sendCapacityAccumulated += sendCapacity;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool CheckResend(long sentMics, long currentMics)
     {// lock (NetTerminal.SyncObject)
-        var window = this.twoPreviousWindow;
         if ((currentMics - sentMics) > this.resendMics)
         {
+            var window = this.twoPreviousWindow;
             if (sentMics >= window.StartMics && sentMics < window.EndMics)
             {
                 window.IncrementResendCount();

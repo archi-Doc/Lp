@@ -549,7 +549,8 @@ WaitForSendCompletionWait:
 #pragma warning disable SA1401 // Fields should be private
     internal NetTerminalGene[]? SendGenes;
     internal NetTerminalGene[]? RecvGenes;
-    internal int SendCompleteIndex;
+    internal int SendIndex;
+    internal int SendRemaining = -1;
     internal int RecvCompleteIndex;
     internal ulong StandbyGene;
     internal long DisposedMics;
@@ -559,27 +560,32 @@ WaitForSendCompletionWait:
     {// lock (this.NetTerminal.SyncObject)
         if (this.SendGenes != null)
         {
-            var index = this.SendCompleteIndex;
-            while (index < this.SendGenes.Length && this.SendGenes[index].State == NetTerminalGeneState.SendComplete)
+            if (this.SendRemaining == -1)
             {
-                index++;
+                this.SendRemaining = this.SendGenes.Length;
             }
 
-            this.SendCompleteIndex = index;
-
-            for (var i = this.SendCompleteIndex; i < this.SendGenes.Length; i++)
+            var remaining = this.SendRemaining;
+            for (var i = 0; i < remaining; i++)
             {
-                var x = this.SendGenes[i];
+                var x = this.SendGenes[this.SendIndex];
                 if (sendCapacity == 0)
                 {
                     return;
                 }
 
-                if (x.State == NetTerminalGeneState.WaitingToSend)
+                if (x.State == NetTerminalGeneState.SendComplete)
+                {
+                    this.SendRemaining--;
+                    if (this.SendIndex < this.SendRemaining)
+                    {
+                        (this.SendGenes[this.SendIndex], this.SendGenes[this.SendRemaining]) = (this.SendGenes[this.SendRemaining], this.SendGenes[this.SendIndex]);
+                    }
+                }
+                else if (x.State == NetTerminalGeneState.WaitingToSend)
                 {// Send
                     if (x.Send(udp))
                     {
-                        // this.Terminal.TerminalLogger?.Information($"cap {sendCapacity}");
                         this.TerminalLogger?.Information($"Udp Sent       : {x.ToString()}");
 
                         sendCapacity--;
@@ -589,7 +595,6 @@ WaitForSendCompletionWait:
                 }
                 else if (x.State == NetTerminalGeneState.WaitingForAck)
                 {// Resend
-                    // if ((currentMics - x.SentMics) > Mics.FromMilliseconds(NetConstants.ResendWaitMilliseconds))
                     if (this.NetTerminal.FlowControl.CheckResend(x.SentMics, currentMics))
                     {
                         if (x.Send(udp))
@@ -601,6 +606,12 @@ WaitForSendCompletionWait:
                             this.NetTerminal.IncrementResendCount();
                         }
                     }
+                }
+
+                this.SendIndex++;
+                if (this.SendIndex >= this.SendRemaining)
+                {
+                    this.SendIndex = 0;
                 }
             }
         }
