@@ -577,10 +577,7 @@ WaitForSendCompletionWait:
                 if (x.State == NetTerminalGeneState.SendComplete)
                 {
                     this.SendRemaining--;
-                    if (this.SendIndex < this.SendRemaining)
-                    {
-                        (this.SendGenes[this.SendIndex], this.SendGenes[this.SendRemaining]) = (this.SendGenes[this.SendRemaining], this.SendGenes[this.SendIndex]);
-                    }
+                    (this.SendGenes[this.SendIndex], this.SendGenes[this.SendRemaining]) = (this.SendGenes[this.SendRemaining], this.SendGenes[this.SendIndex]);
                 }
                 else if (x.State == NetTerminalGeneState.WaitingToSend)
                 {// Send
