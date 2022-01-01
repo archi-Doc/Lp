@@ -22,11 +22,21 @@ public class Server
                 var received = await terminal.ReceiveAsync();
                 if (received.Result == NetResult.Success)
                 {// Success
-                    // Responder (DataId, RPC)
-                    if (this.NetControl.Responders.TryGetValue(received.DataId, out var responder) &&
+                    if (received.PacketId == PacketId.Data &&
+                        this.NetControl.Responders.TryGetValue(received.DataId, out var responder) &&
                         responder.Respond(terminal, received))
-                    {
+                    {// Responder
                         continue;
+                    }
+                    else if (received.PacketId == PacketId.Rpc &&
+                        this.NetControl.Rpc.TryGetValue(received.DataId, out var rpcServer))
+                    {// RPC
+                        if (rpcServer.Process(received.Received, out var sendOwner))
+                        {
+                            this.NetTerminal.SendDataAsync(dataId, sendOwner);
+                            sendOwner.Return();
+                            continue;
+                        }
                     }
 
                     // Essential (PacketPunch)
