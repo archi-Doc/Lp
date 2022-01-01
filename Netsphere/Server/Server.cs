@@ -23,7 +23,7 @@ public class Server
                 if (received.Result == NetResult.Success)
                 {// Success
                     // Responder (DataId, RPC)
-                    if (this.NetControl.Respondes.TryGetValue(received.DataId, out var responder) &&
+                    if (this.NetControl.Responders.TryGetValue(received.DataId, out var responder) &&
                         responder.Respond(terminal, received))
                     {
                         continue;
