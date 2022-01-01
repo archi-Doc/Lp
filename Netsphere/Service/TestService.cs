@@ -51,9 +51,15 @@ public class TestServiceClient : ITestService
 
 internal class TestServiceServer
 {
-    public TestServiceServer()
+    public TestServiceServer(IServiceProvider serviceProvider)
     {
-        this.impl = new();
+        var impl = serviceProvider.GetService(typeof(TestServiceImpl)) as TestServiceImpl;
+        if (impl == null)
+        {
+            throw new InvalidOperationException();
+        }
+
+        this.impl = impl;
     }
 
     public ByteArrayPool.MemoryOwner Identifier3323(ByteArrayPool.MemoryOwner owner)
