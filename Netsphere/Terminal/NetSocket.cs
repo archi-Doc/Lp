@@ -57,7 +57,7 @@ public class NetSocket
                     var received = udp.Client.ReceiveFrom(arrayOwner.ByteArray, 0, arrayOwner.ByteArray.Length, SocketFlags.None, ref remoteEP);
                     if (received <= NetControl.MaxPayload)
                     {
-                        core.socket.terminal.ProcessReceive((IPEndPoint)remoteEP, arrayOwner, received, Ticks.GetSystem());
+                        core.socket.terminal.ProcessReceive((IPEndPoint)remoteEP, arrayOwner, received, Mics.GetSystem());
                         if (arrayOwner.Count > 1)
                         {// Byte array is used by multiple owners. Return and rent a new one next time.
                             arrayOwner = arrayOwner.Return();
@@ -108,10 +108,10 @@ public class NetSocket
         public void ProcessSend()
         {// Invoked by multiple threads.
             // Check interval.
-            var currentTicks = Ticks.GetSystem();
-            var previous = Volatile.Read(ref this.previousTicks);
-            var interval = Ticks.FromNanoseconds((double)SendIntervalNanoseconds / 2); // Half for margin.
-            if (currentTicks < (previous + interval))
+            var currentMics = Mics.GetSystem();
+            var previous = Volatile.Read(ref this.previousMics);
+            var interval = Mics.FromNanoseconds((double)SendIntervalNanoseconds / 2); // Half for margin.
+            if (currentMics < (previous + interval))
             {
                 return;
             }
@@ -120,11 +120,11 @@ public class NetSocket
             {
                 if (this.socket.udpClient != null)
                 {
-                    this.socket.terminal.ProcessSend(this.socket.udpClient, currentTicks);
+                    this.socket.terminal.ProcessSend(this.socket.udpClient, currentMics);
                 }
             }
 
-            Volatile.Write(ref this.previousTicks, currentTicks);
+            Volatile.Write(ref this.previousMics, currentMics);
         }
 
         protected override void Dispose(bool disposing)
@@ -135,7 +135,7 @@ public class NetSocket
 
         private NetSocket socket;
         private MultimediaTimer? timer;
-        private long previousTicks;
+        private long previousMics;
     }
 
     public NetSocket(Terminal terminal)

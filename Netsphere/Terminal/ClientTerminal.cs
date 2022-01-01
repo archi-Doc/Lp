@@ -127,5 +127,21 @@ public class ClientTerminal : NetTerminal
         }
     }
 
+    public async Task<(NetResult Result, ByteArrayPool.MemoryOwner Value)> SendAndReceiveRpcAsync(ulong dataId, ByteArrayPool.MemoryOwner data)
+    {// Checked
+        using (var operation = this.CreateOperation())
+        {
+            var response = await operation.SendAndReceiveDataAsync(true, PacketId.Rpc, dataId, data).ConfigureAwait(false);
+            return (response.Result, response.Received);
+        }
+    }
+
+    public INetService GetService<TService>()
+        where TService : INetService
+    {
+        var info = this.Terminal.GetServiceInfo<TService>();
+        return info.Create(this);
+    }
+
     internal ClientOperation CreateOperation() => new ClientOperation(this);
 }

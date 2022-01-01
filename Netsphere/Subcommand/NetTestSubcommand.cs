@@ -25,11 +25,12 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
         }
 
         Logger.Priority.Information($"SendData: {node.ToString()}");
+        Logger.Priority.Information($"{Stopwatch.Frequency}");
 
         // var nodeInformation = NodeInformation.Alternative;
         using (var terminal = this.NetControl.Terminal.Create(node))
         {
-            await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(new PacketPunch());
+            // await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(new PacketPunch());
 
             var p = new PacketPunch(null);
 
@@ -40,9 +41,9 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
             }*/
 
             var sw = Stopwatch.StartNew();
-            var t = terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
+            /*var t = terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
             Logger.Priority.Information($"t: {t.Result}");
-            Logger.Priority.Information($"{sw.ElapsedMilliseconds} ms, Resend: {terminal.ResendCount}");
+            Logger.Priority.Information($"{sw.ElapsedMilliseconds} ms, Resend: {terminal.ResendCount}");*/
 
             /*sw.Restart();
             var t5 = terminal.SendPacketAndReceiveAsync<TestPacket, TestPacket>(TestPacket.Create(11));
@@ -69,10 +70,12 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
             Logger.Priority.Information($"{sw.ElapsedMilliseconds} ms, Resend: {terminal.ResendCount}");*/
 
             var p4 = TestBlock.Create(4000_000);
-            Logger.Priority.Information($"40KB send: {p4}");
+            Logger.Priority.Information($"4MB send: {p4}");
             sw.Restart();
-            var t4 = await terminal.SendAndReceiveAsync<TestBlock, TestBlock>(p4);
-            Logger.Priority.Information($"40KB received: {t4.Value}");
+            // var t4 = await terminal.SendAndReceiveAsync<TestBlock, TestBlock>(p4);
+            // Logger.Priority.Information($"4MB received: {t4.Value}");
+            var result = await terminal.SendAsync<TestBlock>(p4);
+            Logger.Priority.Information(result.ToString());
             Logger.Priority.Information($"{sw.ElapsedMilliseconds} ms, Resend: {terminal.ResendCount}");
         }
     }

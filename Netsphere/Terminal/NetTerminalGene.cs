@@ -101,7 +101,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
             this.State == NetTerminalGeneState.WaitingForAck)
         {
             /*if (LP.Random.Pseudo.NextDouble() < 0.1)
-            {// temporary
+            {
                 this.State = NetTerminalGeneState.WaitingForAck;
                 return true;
             }*/
@@ -117,7 +117,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         return false;
     }
 
-    public bool ReceiveAck(long currentTicks)
+    public bool ReceiveAck(long currentMics)
     {// lock (this.NetTerminal.SyncObject)
         /*if (LP.Random.Pseudo.NextDouble() < 0.5)
         {
@@ -127,7 +127,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
 
         if (this.State == NetTerminalGeneState.WaitingForAck)
         {
-            this.NetInterface.NetTerminal.FlowControl.ReportAck(currentTicks, this.SentTicks);
+            this.NetInterface.NetTerminal.FlowControl.ReportAck(currentMics, this.SentMics);
             this.State = NetTerminalGeneState.SendComplete;
             return true;
         }
@@ -135,7 +135,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         return false;
     }
 
-    public bool Receive(PacketId id, ByteArrayPool.MemoryOwner owner, long currentTicks)
+    public bool Receive(PacketId id, ByteArrayPool.MemoryOwner owner, long currentMics)
     {// lock (this.NetTerminal.SyncObject)
         if (this.State == NetTerminalGeneState.WaitingToReceive)
         {// Receive data
@@ -231,7 +231,6 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
     }
 
 #pragma warning disable SA1202 // Elements should be ordered by access
-    internal int SendCount;
-    internal long SentTicks;
+    internal long SentMics;
 #pragma warning restore SA1202 // Elements should be ordered by access
 }

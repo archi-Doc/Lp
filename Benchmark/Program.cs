@@ -17,11 +17,12 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        DebugRun<PacketPoolBenchmark>();
+        DebugRun<MicsBenchmark>();
 
         // var summary = BenchmarkRunner.Run<TestBenchmark>();
         var switcher = new BenchmarkSwitcher(new[]
         {
+            typeof(MicsBenchmark),
             typeof(PacketPoolBenchmark),
             typeof(AesBenchmark),
             typeof(IdentifierBenchmark),

@@ -25,6 +25,7 @@ public class LPBase
 {
     public LPBase()
     {
+        TimeCorrection.Start();
     }
 
     public bool IsConsole { get; private set; }

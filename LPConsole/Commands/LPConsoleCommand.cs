@@ -30,7 +30,6 @@ public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
         this.information.Initialize(option, true, "relay");
 
         this.netBase = Program.Container.Resolve<NetBase>();
-        option.NetsphereOptions.EnableAlternative = true; // temporary
         this.netBase.Initialize(string.Empty, option.NetsphereOptions);
         this.netBase.AllowUnsafeConnection = true; // temporary
 

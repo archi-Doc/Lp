@@ -196,7 +196,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         var recvGene = new NetTerminalGene(gene, netInterface);
         netInterface.RecvGenes = new NetTerminalGene[] { recvGene, };
         recvGene.SetReceive();
-        recvGene.Receive(PacketId.Encrypt, receiveOwner, Ticks.GetSystem());
+        recvGene.Receive(PacketId.Encrypt, receiveOwner, Mics.GetSystem());
 
         var sendGene = new NetTerminalGene(secondGene, netInterface);
         netInterface.SendGenes = new NetTerminalGene[] { sendGene, };
@@ -373,11 +373,11 @@ public class NetInterface : IDisposable
     /// <returns><see cref="NetResult"/>.</returns>
     public async Task<NetResult> WaitForSendCompletionAsync()
     {// Checked
-        this.NetTerminal.ResetLastResponseTicks();
+        this.NetTerminal.ResetLastResponseMics();
 
         while (this.Terminal.Core?.IsTerminated == false && this.NetTerminal.IsClosed == false)
         {
-            if (Ticks.GetSystem() >= (this.NetTerminal.LastResponseTicks + this.NetTerminal.MaximumResponseTicks))
+            if (Mics.GetSystem() >= (this.NetTerminal.LastResponseMics + this.NetTerminal.MaximumResponseMics))
             {
                 this.TerminalLogger?.Information($"Send timeout.");
                 return NetResult.Timeout;
@@ -423,11 +423,11 @@ WaitForSendCompletionWait:
     public async Task<NetReceivedData> ReceiveAsync()
     {// Checked
         ByteArrayPool.MemoryOwner data = default;
-        this.NetTerminal.ResetLastResponseTicks();
+        this.NetTerminal.ResetLastResponseMics();
 
         while (this.Terminal.Core?.IsTerminated == false && this.NetTerminal.IsClosed == false)
         {
-            if (Ticks.GetSystem() >= (this.NetTerminal.LastResponseTicks + this.NetTerminal.MaximumResponseTicks))
+            if (Mics.GetSystem() >= (this.NetTerminal.LastResponseMics + this.NetTerminal.MaximumResponseMics))
             {
                 this.TerminalLogger?.Information($"Receive timeout.");
                 return new NetReceivedData(NetResult.Timeout);
@@ -549,56 +549,66 @@ WaitForSendCompletionWait:
 #pragma warning disable SA1401 // Fields should be private
     internal NetTerminalGene[]? SendGenes;
     internal NetTerminalGene[]? RecvGenes;
-    internal int SendCompleteIndex;
+    internal int SendIndex;
+    internal int SendRemaining = -1;
     internal int RecvCompleteIndex;
     internal ulong StandbyGene;
-    internal long DisposedTicks;
+    internal long DisposedMics;
 #pragma warning restore SA1401 // Fields should be private
 
-    internal void ProcessSend(UdpClient udp, long currentTicks, ref int sendCapacity)
+    internal void ProcessSend(UdpClient udp, long currentMics, ref int sendCapacity)
     {// lock (this.NetTerminal.SyncObject)
         if (this.SendGenes != null)
         {
-            var index = this.SendCompleteIndex;
-            while (index < this.SendGenes.Length && this.SendGenes[index].State == NetTerminalGeneState.SendComplete)
+            if (this.SendRemaining == -1)
             {
-                index++;
+                this.SendRemaining = this.SendGenes.Length;
             }
 
-            this.SendCompleteIndex = index;
-
-            for (var i = this.SendCompleteIndex; i < this.SendGenes.Length; i++)
+            var remaining = this.SendRemaining;
+            for (var i = 0; i < remaining; i++)
             {
-                var x = this.SendGenes[i];
+                var x = this.SendGenes[this.SendIndex];
                 if (sendCapacity == 0)
                 {
                     return;
                 }
 
-                if (x.State == NetTerminalGeneState.WaitingToSend)
+                if (x.State == NetTerminalGeneState.SendComplete)
+                {
+                    this.SendRemaining--;
+                    (this.SendGenes[this.SendIndex], this.SendGenes[this.SendRemaining]) = (this.SendGenes[this.SendRemaining], this.SendGenes[this.SendIndex]);
+                }
+                else if (x.State == NetTerminalGeneState.WaitingToSend)
                 {// Send
                     if (x.Send(udp))
                     {
                         this.TerminalLogger?.Information($"Udp Sent       : {x.ToString()}");
 
                         sendCapacity--;
-                        x.SendCount = 1;
-                        x.SentTicks = currentTicks;
+                        x.SentMics = currentMics;
+                        this.NetTerminal.FlowControl.ReportSend(currentMics);
                     }
                 }
                 else if (x.State == NetTerminalGeneState.WaitingForAck)
                 {// Resend
-                    if ((currentTicks - x.SentTicks) > Ticks.FromMilliseconds(NetConstants.ResendWaitMilliseconds))
+                    if (this.NetTerminal.FlowControl.CheckResend(x.SentMics, currentMics))
                     {
                         if (x.Send(udp))
                         {
                             this.TerminalLogger?.Information($"Udp Resent     : {x.ToString()}");
                             sendCapacity--;
-                            x.SendCount++;
-                            x.SentTicks = currentTicks;
+                            x.SentMics = currentMics;
+                            this.NetTerminal.FlowControl.ReportSend(currentMics);
                             this.NetTerminal.IncrementResendCount();
                         }
                     }
+                }
+
+                this.SendIndex++;
+                if (this.SendIndex >= this.SendRemaining)
+                {
+                    this.SendIndex = 0;
                 }
             }
         }
@@ -623,15 +633,18 @@ WaitForSendCompletionWait:
                 {
                     PacketService.InsertDataSize(rentArray!.ByteArray, (ushort)(size - PacketService.HeaderSize));
                     this.Terminal.AddRawSend(this.NetTerminal.Endpoint, rentArray!.ToMemoryOwner(0, size));
+                    rentArray!.Return();
+                    this.NetTerminal.TerminalLogger?.Information($"AACK {size}");
                     size = 0;
                 }
 
+                // this.NetTerminal.TerminalLogger?.Information(x.Gene.To4Hex());
                 if (size == 0)
                 {
                     this.NetTerminal.CreateHeader(out header, x.Gene);
                     header.Id = PacketId.Ack;
 
-                    rentArray ??= PacketPool.Rent();
+                    rentArray = PacketPool.Rent();
                     size += PacketService.HeaderSize;
                     fixed (byte* bp = rentArray.ByteArray)
                     {
@@ -656,13 +669,13 @@ WaitForSendCompletionWait:
         {
             PacketService.InsertDataSize(rentArray!.ByteArray, (ushort)(size - PacketService.HeaderSize));
             this.Terminal.AddRawSend(this.NetTerminal.Endpoint, rentArray!.ToMemoryOwner(0, size));
+            rentArray!.Return();
+            this.NetTerminal.TerminalLogger?.Information($"AACK {size}");
             size = 0;
         }
-
-        rentArray?.Return();
     }
 
-    internal void ProcessReceive(ByteArrayPool.MemoryOwner owner, IPEndPoint endPoint, ref PacketHeader header, long currentTicks, NetTerminalGene gene)
+    internal void ProcessReceive(ByteArrayPool.MemoryOwner owner, IPEndPoint endPoint, ref PacketHeader header, long currentMics, NetTerminalGene gene)
     {
         lock (this.NetTerminal.SyncObject)
         {
@@ -677,10 +690,10 @@ WaitForSendCompletionWait:
                 return;
             }
 
-            this.NetTerminal.SetLastResponseTicks(currentTicks);
+            this.NetTerminal.SetLastResponseMics(currentMics);
             if (header.Id == PacketId.Ack)
             {// Ack (header.Gene + data(ulong[]))
-                gene.ReceiveAck(currentTicks);
+                gene.ReceiveAck(currentMics);
                 var g = MemoryMarshal.Cast<byte, ulong>(owner.Memory.Span);
                 this.TerminalLogger?.Information($"Recv Ack 1+{g.Length}, {header.Gene.To4Hex()}");
                 foreach (var x in g)
@@ -689,7 +702,7 @@ WaitForSendCompletionWait:
                     {
                         if (gene2.NetInterface.NetTerminal == this.NetTerminal)
                         {
-                            gene2.ReceiveAck(currentTicks);
+                            gene2.ReceiveAck(currentMics);
                         }
                     }
                 }
@@ -701,7 +714,7 @@ WaitForSendCompletionWait:
             }
             else
             {// Receive data
-                if (gene.Receive(header.Id, owner, currentTicks))
+                if (gene.Receive(header.Id, owner, currentMics))
                 {// Received.
                     this.TerminalLogger?.Information($"Recv data: {header.Id} {gene.ToString()}");
                 }
@@ -751,10 +764,10 @@ WaitForSendCompletionWait:
     {
         lock (this.NetTerminal.SyncObject)
         {
-            if (this.DisposedTicks == 0)
+            if (this.DisposedMics == 0)
             {// Delay the disposal.
                 this.NetTerminal.ActiveToDisposed(this);
-                this.DisposedTicks = Ticks.GetSystem();
+                this.DisposedMics = Mics.GetSystem();
             }
         }
     }

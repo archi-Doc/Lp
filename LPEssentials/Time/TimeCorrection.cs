@@ -38,42 +38,46 @@ public class TimeCorrection
     public const uint MaxCorrections = 1_000;
 
     /// <summary>
-    /// The minimum number of corrections required for a valid corrected ticks/time.
+    /// The minimum number of corrections required for a valid corrected mics/time.
     /// </summary>
     public const uint MinCorrections = 10;
 
     static TimeCorrection()
     {
-        InitialUtcTicks = DateTime.UtcNow.Ticks;
-        InitialSystemTicks = Stopwatch.GetTimestamp();
+        InitialUtcMics = Mics.GetUtcNow();
+        InitialSystemMics = Mics.GetSystem();
 
-        initialDifference = InitialUtcTicks - InitialSystemTicks;
+        initialDifference = InitialUtcMics - InitialSystemMics;
         timeCorrections = new();
     }
 
+    public static void Start()
+    {// For initialization.
+    }
+
     /// <summary>
-    /// Get the corrected number of ticks expressed as UTC.
+    /// Get the corrected <see cref="Mics"/> expressed as UTC.
     /// </summary>
-    /// <param name="correctedTicks">The corrected number of ticks.</param>
+    /// <param name="correctedMics">The corrected <see cref="Mics"/>.</param>
     /// <returns><see cref="CorrectedResult"/>.</returns>
-    public static CorrectedResult GetCorrectedTicks(out long correctedTicks)
+    public static CorrectedResult GetCorrectedMics(out long correctedMics)
     {
-        var currentTicks = Stopwatch.GetTimestamp() - InitialSystemTicks + InitialUtcTicks;
+        var currentMics = Mics.GetSystem() - InitialSystemMics + InitialUtcMics;
         if (timeCorrections.QueueChain.Count < MinCorrections)
         {
-            correctedTicks = currentTicks;
+            correctedMics = currentMics;
             return CorrectedResult.NotCorrected;
         }
 
-        var difference = GetCollectionDifference(currentTicks);
-        correctedTicks = currentTicks + difference;
+        var difference = GetCollectionDifference(currentMics);
+        correctedMics = currentMics + difference;
 
         return CorrectedResult.Corrected;
     }
 
-    public static void AddCorrection(long utcTicks)
+    public static void AddCorrection(long utcMics)
     {
-        var difference = utcTicks - (Stopwatch.GetTimestamp() + initialDifference);
+        var difference = utcMics - (Mics.GetSystem() + initialDifference);
 
         lock (timeCorrections)
         {
@@ -90,10 +94,10 @@ public class TimeCorrection
         }
     }
 
-    private static long GetCollectionDifference(long currentTicks)
+    private static long GetCollectionDifference(long currentMics)
     {
         var diff = correctionDifference;
-        if (diff != 0 && System.Math.Abs(currentTicks - correctionTicks) < Ticks.FromSeconds(1.0d))
+        if (diff != 0 && System.Math.Abs(currentMics - correctionMics) < Mics.FromSeconds(1.0d))
         {
             return diff;
         }
@@ -118,18 +122,18 @@ public class TimeCorrection
 
             diff = total / half;
             correctionDifference = diff;
-            correctionTicks = currentTicks;
+            correctionMics = currentMics;
         }
 
         return diff;
     }
 
-    public static long InitialUtcTicks { get; }
+    public static long InitialUtcMics { get; }
 
-    public static long InitialSystemTicks { get; }
+    public static long InitialSystemMics { get; }
 
     private static long initialDifference;
     private static TimeDifference.GoshujinClass timeCorrections;
     private static long correctionDifference;
-    private static long correctionTicks;
+    private static long correctionMics;
 }

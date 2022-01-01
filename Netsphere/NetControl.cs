@@ -124,7 +124,7 @@ public class NetControl
 
     public bool AddResponder(INetResponder responder)
     {
-        return this.Respondes.TryAdd(responder.GetDataId(), responder);
+        return this.Responders.TryAdd(responder.GetDataId(), responder);
     }
 
     public NetBase NetBase { get; }
@@ -141,7 +141,7 @@ public class NetControl
 
     internal Terminal? Alternative { get; }
 
-    internal ConcurrentDictionary<ulong, INetResponder> Respondes { get; } = new();
+    internal ConcurrentDictionary<ulong, INetResponder> Responders { get; } = new();
 
     private static Container containerInstance = default!;
 

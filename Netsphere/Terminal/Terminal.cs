@@ -109,15 +109,19 @@ public class Terminal
         if (this.NetBase.NetsphereOptions.EnableLogger)
         {
             // this.TerminalLogger = new Logger.PriorityLogger();
+
+            var logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "logs");
+            Directory.CreateDirectory(logDirectory);
+
             this.TerminalLogger = new SerilogLogger(new LoggerConfiguration()
-            .MinimumLevel.Debug()
-            .WriteTo.File(
-                Path.Combine(Directory.GetCurrentDirectory(), "logs", "log.txt"),
-                rollingInterval: RollingInterval.Day,
-                retainedFileCountLimit: 31,
-                buffered: true,
-                flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
-            .CreateLogger());
+                .MinimumLevel.Debug()
+                .WriteTo.File(
+                    Path.Combine(logDirectory, "logs", "log.txt"),
+                    rollingInterval: RollingInterval.Day,
+                    retainedFileCountLimit: 31,
+                    buffered: true,
+                    flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
+                .CreateLogger());
         }
 
         this.netSocket = new(this);
@@ -166,12 +170,12 @@ public class Terminal
         this.NodePrivateECDH = nodePrivateKey;
     }
 
-    internal void ProcessSend(UdpClient udp, long currentTicks)
+    internal void ProcessSend(UdpClient udp, long currentMics)
     {
-        if ((currentTicks - this.lastCleanedTicks) > Ticks.FromSeconds(1))
+        if ((currentMics - this.lastCleanedMics) > Mics.FromSeconds(1))
         {
-            this.lastCleanedTicks = currentTicks;
-            this.CleanNetTerminal(currentTicks);
+            this.lastCleanedMics = currentMics;
+            this.CleanNetTerminal(currentMics);
         }
 
         while (this.rawSends.TryDequeue(out var rawSend))
@@ -188,11 +192,11 @@ public class Terminal
 
         foreach (var x in array)
         {
-            x.ProcessSend(udp, currentTicks);
+            x.ProcessSend(udp, currentMics);
         }
     }
 
-    internal unsafe void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner arrayOwner, int packetSize, long currentTicks)
+    internal unsafe void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner arrayOwner, int packetSize, long currentMics)
     {
         var packetArray = arrayOwner.ByteArray;
         var position = 0;
@@ -218,18 +222,18 @@ public class Terminal
 
             position += PacketService.HeaderSize;
             var memoryOwner = arrayOwner.ToMemoryOwner(position, dataSize);
-            this.ProcessReceiveCore(memoryOwner, endPoint, ref header, currentTicks);
+            this.ProcessReceiveCore(memoryOwner, endPoint, ref header, currentMics);
             position += dataSize;
             remaining -= PacketService.HeaderSize + dataSize;
         }
     }
 
-    internal void ProcessReceiveCore(ByteArrayPool.MemoryOwner owner, IPEndPoint endPoint, ref PacketHeader header, long currentTicks)
+    internal void ProcessReceiveCore(ByteArrayPool.MemoryOwner owner, IPEndPoint endPoint, ref PacketHeader header, long currentMics)
     {
         // this.TerminalLogger?.Information($"{header.Gene.To4Hex()}, {header.Id}");
         if (this.inboundGenes.TryGetValue(header.Gene, out var gene))
         {// NetTerminalGene is found.
-            gene.NetInterface.ProcessReceive(owner, endPoint, ref header, currentTicks, gene);
+            gene.NetInterface.ProcessReceive(owner, endPoint, ref header, currentMics, gene);
         }
         else
         {
@@ -277,11 +281,11 @@ public class Terminal
             return;
         }
 
-        TimeCorrection.AddCorrection(punch.UtcTicks);
+        TimeCorrection.AddCorrection(punch.UtcMics);
 
         var response = new PacketPunchResponse();
         response.Endpoint = endpoint;
-        response.UtcTicks = Ticks.GetUtcNow();
+        response.UtcMics = Mics.GetUtcNow();
         var secondGene = GenePool.NextGene(header.Gene);
         this.TerminalLogger?.Information($"Punch Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
@@ -393,7 +397,7 @@ public class Terminal
 
     internal bool TryGetInbound(ulong gene, [MaybeNullWhen(false)] out NetTerminalGene netTerminalGene) => this.inboundGenes.TryGetValue(gene, out netTerminalGene);
 
-    private void CleanNetTerminal(long currentTicks)
+    private void CleanNetTerminal(long currentMics)
     {
         NetTerminal[] array;
         lock (this.terminals)
@@ -404,7 +408,7 @@ public class Terminal
         List<NetTerminal>? list = null;
         foreach (var x in array)
         {
-            if (x.TryClean(currentTicks))
+            if (x.TryClean(currentMics))
             {
                 list ??= new();
                 list.Add(x);
@@ -431,5 +435,5 @@ public class Terminal
     private NetTerminal.GoshujinClass terminals = new();
     private ConcurrentDictionary<ulong, NetTerminalGene> inboundGenes = new();
     private ConcurrentQueue<RawSend> rawSends = new();
-    private long lastCleanedTicks; // The last ticks Terminal.CleanNetTerminal() was called.
+    private long lastCleanedMics; // The last mics Terminal.CleanNetTerminal() was called.
 }

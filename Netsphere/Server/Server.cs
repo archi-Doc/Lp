@@ -23,7 +23,7 @@ public class Server
                 if (received.Result == NetResult.Success)
                 {// Success
                     // Responder (DataId, RPC)
-                    if (this.NetControl.Respondes.TryGetValue(received.DataId, out var responder) &&
+                    if (this.NetControl.Responders.TryGetValue(received.DataId, out var responder) &&
                         responder.Respond(terminal, received))
                     {
                         continue;
@@ -88,11 +88,11 @@ public class Server
             return false;
         }
 
-        TimeCorrection.AddCorrection(punch.UtcTicks);
+        TimeCorrection.AddCorrection(punch.UtcMics);
 
         var response = new PacketPunchResponse();
         response.Endpoint = this.NetTerminal.Endpoint;
-        response.UtcTicks = Ticks.GetUtcNow();
+        response.UtcMics = Mics.GetUtcNow();
 
         var task = this.NetTerminal.SendPacketAsync(response);
         return true;

@@ -9,18 +9,27 @@ namespace LP;
 
 public static class Time
 {
+    public static readonly double TimestampToTicks;
+    public static readonly double MicsToTicks;
+
+    static Time()
+    {
+        TimestampToTicks = 10_000_000d / Stopwatch.Frequency;
+        MicsToTicks = TimestampToTicks / Mics.TimestampToMics;
+    }
+
     /// <summary>
     /// Gets a DateTime since system startup (Stopwatch.GetTimestamp()).
     /// </summary>
     /// <returns><see cref="DateTime"/>.</returns>
-    public static DateTime GetSystem() => new DateTime(Ticks.GetSystem());
+    public static DateTime GetSystem() => new DateTime((long)(Stopwatch.GetTimestamp() * TimestampToTicks));
 
     /// <summary>
     /// Gets a <see cref="DateTime"/> since LP has started (0001/01/01 0:00:00).<br/>
     /// Not affected by manual date/time changes.
     /// </summary>
     /// <returns><see cref="DateTime"/>.</returns>
-    public static DateTime GetApplication() => new DateTime(Ticks.GetApplication());
+    public static DateTime GetApplication() => new DateTime((long)(Mics.GetApplication() * MicsToTicks));
 
     /// <summary>
     /// Gets a <see cref="DateTime"/> expressed as UTC.
@@ -35,8 +44,8 @@ public static class Time
     /// <returns><see cref="CorrectedResult"/>.</returns>
     public static CorrectedResult GetCorrected(out DateTime correctedTime)
     {
-        var result = TimeCorrection.GetCorrectedTicks(out var ticks);
-        correctedTime = new DateTime(ticks);
+        var result = TimeCorrection.GetCorrectedMics(out var mics);
+        correctedTime = new DateTime((long)(mics * MicsToTicks));
         return result;
     }
 }

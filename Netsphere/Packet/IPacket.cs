@@ -17,7 +17,7 @@ public enum PacketId : byte
     DataFollowing,
     Reserve,
     ReserveResponse,
-    RPC,
+    Rpc,
     Test,
     Encrypt,
     EncryptResponse,

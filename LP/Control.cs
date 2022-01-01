@@ -44,6 +44,7 @@ public class Control
         // Subcommands
         var commandTypes = new Type[]
         {
+            typeof(LP.Subcommands.MicsSubcommand),
             typeof(LP.Subcommands.DumpSubcommand),
             typeof(LP.Subcommands.GCSubcommand),
             typeof(LP.Subcommands.PingSubcommand),
@@ -73,7 +74,7 @@ public class Control
 
     public Control(LPBase information, BigMachine<Identifier> bigMachine, NetControl netsphere)
     {
-        this.Information = information;
+        this.LPBase = information;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.NetControl = netsphere;
 
@@ -83,7 +84,7 @@ public class Control
 
     public void Configure()
     {
-        Logger.Configure(this.Information);
+        Logger.Configure(this.LPBase);
 
         Radio.Send(new Message.Configure());
     }
@@ -91,22 +92,22 @@ public class Control
     public async Task LoadAsync()
     {
         await Radio.SendAsync(new Message.LoadAsync());
-        await this.NetControl.EssentialNode.LoadAsync(Path.Combine(this.Information.RootDirectory, EssentialNode.FileName));
+        await this.NetControl.EssentialNode.LoadAsync(Path.Combine(this.LPBase.RootDirectory, EssentialNode.FileName));
     }
 
     public async Task SaveAsync()
     {
         await Radio.SendAsync(new Message.SaveAsync());
-        await this.NetControl.EssentialNode.SaveAsync(Path.Combine(this.Information.RootDirectory, EssentialNode.FileName));
+        await this.NetControl.EssentialNode.SaveAsync(Path.Combine(this.LPBase.RootDirectory, EssentialNode.FileName));
     }
 
     public bool TryStart()
     {
-        var s = this.Information.IsConsole ? " (Console)" : string.Empty;
+        var s = this.LPBase.IsConsole ? " (Console)" : string.Empty;
         Logger.Default.Information("LP Start" + s);
 
-        Logger.Default.Information($"Console: {this.Information.IsConsole}, Root directory: {this.Information.RootDirectory}");
-        Logger.Default.Information(this.Information.ToString());
+        Logger.Default.Information($"Console: {this.LPBase.IsConsole}, Root directory: {this.LPBase.RootDirectory}");
+        Logger.Default.Information(this.LPBase.ToString());
         Logger.Console.Information("Press the Enter key to change to console mode.");
         Logger.Console.Information("Press Ctrl+C to exit.");
 
@@ -169,7 +170,7 @@ public class Control
 
     public ThreadCoreGroup Core { get; }
 
-    public LPBase Information { get; }
+    public LPBase LPBase { get; }
 
     public BigMachine<Identifier> BigMachine { get; }
 
