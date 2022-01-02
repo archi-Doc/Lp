@@ -46,6 +46,7 @@ public class NetControl
         container.Register<EssentialNode>(Reuse.Singleton);
         container.Register<NetStatus>(Reuse.Singleton);
         container.Register<Server>(Reuse.Transient);
+        container.Register<NetService>(Reuse.Transient);
 
         // Machines
         container.Register<LP.Machines.EssentialNetMachine>();

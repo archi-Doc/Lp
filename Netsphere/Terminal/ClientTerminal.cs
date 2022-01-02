@@ -101,6 +101,14 @@ public class ClientTerminal : NetTerminal
         }
     }
 
+    public async Task<NetResult> SendServiceAsync(ulong dataId, ByteArrayPool.MemoryOwner data)
+    {// Checked
+        using (var operation = this.CreateOperation())
+        {
+            return await operation.SendDataAsync(true, PacketId.Rpc, dataId, data).ConfigureAwait(false);
+        }
+    }
+
     public async Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(TSend value)
     {// Checked
         using (var operation = this.CreateOperation())
@@ -127,7 +135,7 @@ public class ClientTerminal : NetTerminal
         }
     }
 
-    public async Task<(NetResult Result, ByteArrayPool.MemoryOwner Value)> SendAndReceiveRpcAsync(ulong dataId, ByteArrayPool.MemoryOwner data)
+    public async Task<(NetResult Result, ByteArrayPool.MemoryOwner Value)> SendAndReceiveServiceAsync(ulong dataId, ByteArrayPool.MemoryOwner data)
     {// Checked
         using (var operation = this.CreateOperation())
         {
@@ -136,11 +144,10 @@ public class ClientTerminal : NetTerminal
         }
     }
 
-    public INetService GetService<TService>()
+    public TService GetService<TService>()
         where TService : INetService
     {
-        var info = this.Terminal.GetServiceInfo<TService>();
-        return info.Create(this);
+        return StaticNetService.CreateClient<TService>(this);
     }
 
     internal ClientOperation CreateOperation() => new ClientOperation(this);
