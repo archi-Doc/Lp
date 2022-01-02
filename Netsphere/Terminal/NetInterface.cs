@@ -30,6 +30,7 @@ public enum NetResult
     PacketSizeLimit,
     BlockSizeLimit,
     ReserveError,
+    NoNetService,
 }
 
 /// <summary>

@@ -30,7 +30,7 @@ public class Server
                         continue;
                     }
                     else if (received.PacketId == PacketId.Rpc &&
-                        await this.NetService.Process(terminal, received).ConfigureAwait(false) == true)
+                        await this.NetService.Process(terminal, received).ConfigureAwait(false) == NetResult.Success)
                     {// RPC
                         continue;
                     }

@@ -27,7 +27,7 @@ public static class StaticNetService
             return service;
         }
 
-        throw new InvalidOperationException($"Could not create an instance of net service {typeof(TService)}.");
+        throw new InvalidOperationException($"Could not create an instance of net service {typeof(TService).ToString()}.");
     }
 
     private static ConcurrentDictionary<uint, NetService.ServiceInfo> idToInfo = new();

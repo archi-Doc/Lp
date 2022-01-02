@@ -6,7 +6,7 @@ namespace Netsphere;
 
 public class NetService
 {
-    public delegate bool ServiceDelegate(object instance, ByteArrayPool.MemoryOwner received, out ByteArrayPool.MemoryOwner send);
+    public delegate NetResult ServiceDelegate(object instance, ByteArrayPool.MemoryOwner received, out ByteArrayPool.MemoryOwner send);
 
     public delegate INetService CreateClientDelegate(ClientTerminal clientTerminal);
 
@@ -14,38 +14,60 @@ public class NetService
 
     public class ServiceInfo
     {
-        public CreateServerDelegate CreateServer { get; }
-    }
-
-    public class MethodInfo
-    {
-        public MethodInfo(ServiceInfo serviceInfo, object serverInstance)
+        public ServiceInfo(uint serviceId, CreateServerDelegate createServer)
         {
-            this.ServiceInfo = serviceInfo;
-            this.ServerInstance = serverInstance;
+            this.ServiceId = serviceId;
+            this.CreateServer = createServer;
         }
 
-        public ServiceInfo ServiceInfo { get; }
+        public uint ServiceId { get; }
+
+        public CreateServerDelegate CreateServer { get; }
+
+        public Dictionary<ulong, ServiceMethod> ServiceMethods { get; } = new();
+    }
+
+    public class ServiceMethod
+    {
+        public ServiceMethod(ulong id, ServiceDelegate process)
+        {
+            this.Id = id;
+            this.Process = process;
+        }
+
+        // public ServiceInfo ServiceInfo { get; }
 
         public ulong Id { get; }
 
-        public object ServerInstance { get; }
+        public object? ServerInstance { get; private set; }
 
         public ServiceDelegate Process { get; }
+
+        public ServiceMethod CloneWithInstance(object serverInstance)
+        {
+            var serviceMethod = new ServiceMethod(this.Id, this.Process);
+            serviceMethod.ServerInstance = serverInstance;
+            return serviceMethod;
+        }
     }
 
     public NetService()
     {
     }
 
-    public async Task<bool> Process(ServerTerminal serverTerminal, NetReceivedData received)
+    public async Task<NetResult> Process(ServerTerminal serverTerminal, NetReceivedData received)
     {
-        if (!this.idToMethodInfo.TryGetValue(received.DataId, out var methodInfo))
+        if (!this.idToServiceMethod.TryGetValue(received.DataId, out var serviceMethod))
         {
             var serviceId = (uint)(received.DataId >> 32);
             if (!StaticNetService.TryGetServiceInfo(serviceId, out var serviceInfo))
             {
-                return false;
+                return NetResult.NoNetService;
+            }
+
+            if (!serviceInfo.ServiceMethods.TryGetValue(received.DataId, out serviceMethod))
+            {
+                return NetResult.NoNetService;
             }
 
             if (!this.idToInstance.TryGetValue(serviceId, out var serverInstance))
@@ -54,20 +76,21 @@ public class NetService
                 this.idToInstance.TryAdd(serviceId, serverInstance);
             }
 
-            methodInfo = new MethodInfo(serviceInfo, serverInstance);
+            serviceMethod = serviceMethod.CloneWithInstance(serverInstance);
         }
 
-        if (!methodInfo.Process(methodInfo.ServerInstance, received.Received, out var sendOwner))
+        var result = serviceMethod.Process(serviceMethod.ServerInstance!, received.Received, out var sendOwner);
+        if (result != NetResult.Success)
         {
-            return false;
+            return result;
         }
 
-        await serverTerminal.SendDataAsync(methodInfo.Id, sendOwner);
+        result = await serverTerminal.SendDataAsync(serviceMethod.Id, sendOwner);
         sendOwner.Return();
-        return true;
+        return result;
     }
 
-    private Dictionary<ulong, MethodInfo> idToMethodInfo = new();
+    private Dictionary<ulong, ServiceMethod> idToServiceMethod = new();
 
     private Dictionary<uint, object> idToInstance = new();
 }
