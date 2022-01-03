@@ -36,9 +36,14 @@ public class TestServiceImpl : ITestService
     }
 }
 
-public class TestServiceClient : ITestService
+public class TestServiceFrontend : ITestService
 {
-    public TestServiceClient(ClientTerminal clientTerminal)
+    public static readonly uint ServiceId = 0x6F;
+    public static readonly ulong Id0 = 0x6F000000DEul;
+    public static readonly ulong Id1 = 0x6F000000DFul;
+    public static readonly ulong Id2 = 0x6F000000E0ul;
+
+    public TestServiceFrontend(ClientTerminal clientTerminal)
     {
         this.ClientTerminal = clientTerminal;
     }
@@ -52,7 +57,7 @@ public class TestServiceClient : ITestService
             return default;
         }
 
-        var response = await this.ClientTerminal.SendAndReceiveServiceAsync(TestServiceServer.Id0, owner);
+        var response = await this.ClientTerminal.SendAndReceiveServiceAsync(Id0, owner);
         owner.Return();
         if (response.Result != NetResult.Success)
         {
@@ -75,7 +80,7 @@ public class TestServiceClient : ITestService
         owner.Return();
         return result;*/
 
-        var response = await this.ClientTerminal.SendAndReceiveServiceAsync(TestServiceServer.Id1, owner);
+        var response = await this.ClientTerminal.SendAndReceiveServiceAsync(Id1, owner);
         owner.Return();
         if (response.Result != NetResult.Success)
         {
@@ -94,19 +99,14 @@ public class TestServiceClient : ITestService
             return;
         }
 
-        var result = await this.ClientTerminal.SendServiceAsync(TestServiceServer.Id2, owner);
+        var result = await this.ClientTerminal.SendServiceAsync(Id2, owner);
         owner.Return();
     }
 }
 
-public class TestServiceServer
+public class TestServiceBackend
 {
-    public static readonly uint ServiceId = 0x6F;
-    public static readonly ulong Id0 = 0x6F000000DEul;
-    public static readonly ulong Id1 = 0x6F000000DFul;
-    public static readonly ulong Id2 = 0x6F000000E0ul;
-
-    public TestServiceServer(IServiceProvider? serviceProvider)
+    public TestServiceBackend(IServiceProvider? serviceProvider)
     {
         var impl = serviceProvider?.GetService(typeof(TestServiceImpl)) as TestServiceImpl;
         if (impl == null)
@@ -126,7 +126,7 @@ public class TestServiceServer
             return NetResult.DeserializationError;
         }
 
-        var r = ((TestServiceServer)obj).impl.Increment(value);
+        var r = ((TestServiceBackend)obj).impl.Increment(value);
         return BlockService.TrySerialize(r.Result, out send) ? NetResult.Success : NetResult.SerializationError;
     }
 
@@ -138,7 +138,7 @@ public class TestServiceServer
             return NetResult.DeserializationError;
         }
 
-        var r = ((TestServiceServer)obj).impl.Send(value.Item1, value.Item2);
+        var r = ((TestServiceBackend)obj).impl.Send(value.Item1, value.Item2);
         return BlockService.TrySerialize(r.Result, out send) ? NetResult.Success : NetResult.SerializationError;
     }
 
@@ -150,16 +150,17 @@ public class TestServiceServer
             return NetResult.DeserializationError;
         }
 
-        var r = ((TestServiceServer)obj).impl.Send(value.Item1, value.Item2);
-        return BlockService.TrySerialize(r.Result, out send) ? NetResult.Success : NetResult.SerializationError;
+        var r = ((TestServiceBackend)obj).impl.Send2(value.Item1, value.Item2);
+        r.Wait();
+        return BlockService.TrySerialize(NetResult.Success, out send) ? NetResult.Success : NetResult.SerializationError;
     }
 
     public static NetService.ServiceInfo CreateServiceInfo()
     {
-        var serviceInfo = new NetService.ServiceInfo(TestServiceServer.ServiceId, static x => new TestServiceServer(x));
-        serviceInfo.AddMethod(new NetService.ServiceMethod(Id0, Identifier3323));
-        serviceInfo.AddMethod(new NetService.ServiceMethod(Id1, Identifier3324));
-        serviceInfo.AddMethod(new NetService.ServiceMethod(Id2, Identifier3325));
+        var serviceInfo = new NetService.ServiceInfo(TestServiceFrontend.ServiceId, static x => new TestServiceBackend(x));
+        serviceInfo.AddMethod(new NetService.ServiceMethod(TestServiceFrontend.Id0, Identifier3323));
+        serviceInfo.AddMethod(new NetService.ServiceMethod(TestServiceFrontend.Id1, Identifier3324));
+        serviceInfo.AddMethod(new NetService.ServiceMethod(TestServiceFrontend.Id2, Identifier3325));
         return serviceInfo;
     }
 
