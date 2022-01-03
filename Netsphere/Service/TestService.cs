@@ -52,7 +52,7 @@ public class TestServiceClient : ITestService
             return default;
         }
 
-        var response = await this.ClientTerminal.SendAndReceiveServiceAsync(0, owner);
+        var response = await this.ClientTerminal.SendAndReceiveServiceAsync(TestServiceServer.Id0, owner);
         owner.Return();
         if (response.Result != NetResult.Success)
         {
@@ -75,7 +75,7 @@ public class TestServiceClient : ITestService
         owner.Return();
         return result;*/
 
-        var response = await this.ClientTerminal.SendAndReceiveServiceAsync(0, owner);
+        var response = await this.ClientTerminal.SendAndReceiveServiceAsync(TestServiceServer.Id1, owner);
         owner.Return();
         if (response.Result != NetResult.Success)
         {
@@ -94,13 +94,18 @@ public class TestServiceClient : ITestService
             return;
         }
 
-        var result = await this.ClientTerminal.SendServiceAsync(0, owner);
+        var result = await this.ClientTerminal.SendServiceAsync(TestServiceServer.Id2, owner);
         owner.Return();
     }
 }
 
-internal class TestServiceServer
+public class TestServiceServer
 {
+    public static readonly uint ServiceId = 0x6F;
+    public static readonly ulong Id0 = 0x6F000000DEul;
+    public static readonly ulong Id1 = 0x6F000000DFul;
+    public static readonly ulong Id2 = 0x6F000000E0ul;
+
     public TestServiceServer(IServiceProvider? serviceProvider)
     {
         var impl = serviceProvider?.GetService(typeof(TestServiceImpl)) as TestServiceImpl;
@@ -113,16 +118,16 @@ internal class TestServiceServer
         this.impl = impl;
     }
 
-    public static ByteArrayPool.MemoryOwner Identifier3323(object obj, ByteArrayPool.MemoryOwner owner)
+    public static NetResult Identifier3323(object obj, ByteArrayPool.MemoryOwner receive, out ByteArrayPool.MemoryOwner send)
     {
-        if (!BlockService.TryDeserialize<int>(owner, out var value))
+        if (!BlockService.TryDeserialize<int>(receive, out var value))
         {
-            return ByteArrayPool.MemoryOwner.Empty;
+            send = default;
+            return NetResult.DeserializationError;
         }
 
         var r = ((TestServiceServer)obj).impl.Increment(value);
-        BlockService.TrySerialize(r.Result, out var owner2);
-        return owner;
+        return BlockService.TrySerialize(r.Result, out send) ? NetResult.Success : NetResult.SerializationError;
     }
 
     public static NetResult Identifier3324(object obj, ByteArrayPool.MemoryOwner receive, out ByteArrayPool.MemoryOwner send)
@@ -134,14 +139,27 @@ internal class TestServiceServer
         }
 
         var r = ((TestServiceServer)obj).impl.Send(value.Item1, value.Item2);
-        BlockService.TrySerialize(r.Result, out send);
-        return NetResult.Success;
+        return BlockService.TrySerialize(r.Result, out send) ? NetResult.Success : NetResult.SerializationError;
     }
 
-    public static NetService.ServiceInfo GetServiceInfo()
+    public static NetResult Identifier3325(object obj, ByteArrayPool.MemoryOwner receive, out ByteArrayPool.MemoryOwner send)
     {
-        var serviceInfo = new NetService.ServiceInfo(0, static x => new TestServiceServer(x));
-        serviceInfo.ServiceMethods.TryAdd(0, new NetService.ServiceMethod(0, Identifier3324));
+        if (!BlockService.TryDeserialize<(int, int)>(receive, out var value))
+        {
+            send = default;
+            return NetResult.DeserializationError;
+        }
+
+        var r = ((TestServiceServer)obj).impl.Send(value.Item1, value.Item2);
+        return BlockService.TrySerialize(r.Result, out send) ? NetResult.Success : NetResult.SerializationError;
+    }
+
+    public static NetService.ServiceInfo CreateServiceInfo()
+    {
+        var serviceInfo = new NetService.ServiceInfo(TestServiceServer.ServiceId, static x => new TestServiceServer(x));
+        serviceInfo.AddMethod(new NetService.ServiceMethod(Id0, Identifier3323));
+        serviceInfo.AddMethod(new NetService.ServiceMethod(Id1, Identifier3324));
+        serviceInfo.AddMethod(new NetService.ServiceMethod(Id2, Identifier3325));
         return serviceInfo;
     }
 

@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace Netsphere;
 
@@ -20,11 +21,17 @@ public class NetService
             this.CreateServer = createServer;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddMethod(ServiceMethod serviceMethod) => this.serviceMethods.TryAdd(serviceMethod.Id, serviceMethod);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetMethod(ulong id, [MaybeNullWhen(false)] out ServiceMethod serviceMethod) => this.serviceMethods.TryGetValue(id, out serviceMethod);
+
         public uint ServiceId { get; }
 
         public CreateServerDelegate CreateServer { get; }
 
-        public Dictionary<ulong, ServiceMethod> ServiceMethods { get; } = new();
+        private Dictionary<ulong, ServiceMethod> serviceMethods = new();
     }
 
     public class ServiceMethod
@@ -51,8 +58,9 @@ public class NetService
         }
     }
 
-    public NetService()
+    public NetService(IServiceProvider? serviceProvider = null)
     {
+        this.serviceProvider = serviceProvider;
     }
 
     public async Task<NetResult> Process(ServerTerminal serverTerminal, NetReceivedData received)
@@ -65,14 +73,14 @@ public class NetService
                 return NetResult.NoNetService;
             }
 
-            if (!serviceInfo.ServiceMethods.TryGetValue(received.DataId, out serviceMethod))
+            if (!serviceInfo.TryGetMethod(received.DataId, out serviceMethod))
             {
                 return NetResult.NoNetService;
             }
 
             if (!this.idToInstance.TryGetValue(serviceId, out var serverInstance))
             {
-                serverInstance = serviceInfo.CreateServer(null);
+                serverInstance = serviceInfo.CreateServer(this.serviceProvider);
                 this.idToInstance.TryAdd(serviceId, serverInstance);
             }
 
@@ -90,7 +98,7 @@ public class NetService
         return result;
     }
 
+    private IServiceProvider? serviceProvider;
     private Dictionary<ulong, ServiceMethod> idToServiceMethod = new();
-
     private Dictionary<uint, object> idToInstance = new();
 }

@@ -13,6 +13,11 @@ public static class StaticNetService
         DelegateCache<TService>.Create = @delegate;
     }
 
+    public static void SetServiceInfo(NetService.ServiceInfo info)
+    {
+        idToInfo[info.ServiceId] = info;
+    }
+
     public static bool TryGetServiceInfo(uint id, [MaybeNullWhen(false)] out NetService.ServiceInfo info)
     {
         return idToInfo.TryGetValue(id, out info);
