@@ -20,90 +20,66 @@ namespace Netsphere.Generator;
 
 public class NetsphereBody : VisceralBody<NetsphereObject>
 {
-    public const string BigMachineIdentifier = "Netsphere";
-    public const string IMachineGroupIdentifier = "IMachineGroup<TIdentifier>";
-    public const string StateIdentifier = "State";
-    public const string InterfaceIdentifier = "Interface";
-    public const string CreateInterfaceIdentifier = "CreateInterface";
-    public const string InternalRunIdentifier = "InternalRun";
-    public const string ChangeState = "ChangeState";
-    public const string GetCurrentState = "GetCurrentState";
-    public const string InternalChangeState = "InternalChangeState";
-    public const string IntInitState = "IntInitState";
-    public const string RegisterBM = "RegisterBM";
-
-    public const string StateResultFullName = "BigMachines.StateResult";
-    public const string StateParameterFullName = "BigMachines.StateParameter";
-
-    public static readonly DiagnosticDescriptor Error_NotPartial = new DiagnosticDescriptor(
-        id: "BMG001", title: "Not a partial class", messageFormat: "MachineObject '{0}' is not a partial class",
-        category: "BigMachinesGenerator", DiagnosticSeverity.Error, isEnabledByDefault: true);
-
-    public static readonly DiagnosticDescriptor Error_NotPartialParent = new DiagnosticDescriptor(
-        id: "BMG002", title: "Not a partial class/struct", messageFormat: "Parent object '{0}' is not a partial class/struct",
-        category: "BigMachinesGenerator", DiagnosticSeverity.Error, isEnabledByDefault: true);
+    public const string GeneratorName = "NetsphereGenerator";
 
     public static readonly DiagnosticDescriptor Error_AttributePropertyError = new DiagnosticDescriptor(
         id: "BMG003", title: "Attribute property type error", messageFormat: "The argument specified does not match the type of the property",
-        category: "BigMachinesGenerator", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
     public static readonly DiagnosticDescriptor Error_KeywordUsed = new DiagnosticDescriptor(
         id: "BMG004", title: "Keyword used", messageFormat: "The type '{0}' already contains a definition for '{1}'",
-        category: "BigMachinesGenerator", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
     public static readonly DiagnosticDescriptor Error_NotDerived = new DiagnosticDescriptor(
         id: "BMG005", title: "Not derived", messageFormat: "MachineObject '{0}' must be derived from Machine class",
-        category: "BigMachinesGenerator", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
     public static readonly DiagnosticDescriptor Error_MethodFormat = new DiagnosticDescriptor(
         id: "BMG006", title: "Invalid method", messageFormat: "State method must be in the format of 'protected StateResult TestMethod(StateParameter parameter)'",
-        category: "BigMachinesGenerator", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
     public static readonly DiagnosticDescriptor Error_OpenGenericClass = new DiagnosticDescriptor(
         id: "BMG007", title: "Not closed generic", messageFormat: "MachineObject '{0}' is not a closed generic class",
-        category: "BigMachinesGenerator", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
     public static readonly DiagnosticDescriptor Error_DuplicateTypeId = new DiagnosticDescriptor(
-        id: "BMG008", title: "Duplicate TypeId", messageFormat: "Machine Type Id '{0}' must be unique",
-        category: "BigMachinesGenerator", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        id: "BMG008", title: "Duplicate Service Id", messageFormat: "Service Id '{0}' must be unique",
+        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
     public static readonly DiagnosticDescriptor Error_DuplicateStateId = new DiagnosticDescriptor(
         id: "BMG009", title: "Duplicate state id", messageFormat: "State method id must be unique",
-        category: "BigMachinesGenerator", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
     public static readonly DiagnosticDescriptor Error_NoDefaultStateMethod = new DiagnosticDescriptor(
         id: "BMG010", title: "No default state method", messageFormat: "Default state method (state method id = 0) is required",
-        category: "BigMachinesGenerator", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
     public static readonly DiagnosticDescriptor Error_GroupType = new DiagnosticDescriptor(
         id: "BMG011", title: "Group type error", messageFormat: "Group must implement IMachineGroup<TIdentifier> interface",
-        category: "BigMachinesGenerator", DiagnosticSeverity.Error, isEnabledByDefault: true);
+        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
     public static readonly DiagnosticDescriptor Error_IdentifierIsNotSerializable = new DiagnosticDescriptor(
         id: "BMG012", title: "Identifier not serializable", messageFormat: "Identifier type '{0}' must be serializable (have TinyhandObject attribute)",
-        category: "BigMachinesGenerator", DiagnosticSeverity.Error, isEnabledByDefault: true);
-
-    public NetsphereBody(GeneratorExecutionContext context)
-        : base(context)
-    {
-    }
+        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
     public NetsphereBody(SourceProductionContext context)
         : base(context)
     {
     }
 
-    internal Dictionary<uint, NetsphereObject> Machines = new();
+    internal Dictionary<uint, NetsphereObject> Interfaces = new();
+
+    internal Dictionary<uint, NetsphereObject> Implementations = new();
 
     internal Dictionary<string, List<NetsphereObject>> Namespaces = new();
 
     public void Prepare()
     {
         // Configure objects.
-        var array = this.FullNameToObject.ToArray();
+        var array = this.FullNameToObject.Values.ToArray();
         foreach (var x in array)
         {
-            x.Value.Configure();
+            x.Configure();
         }
 
         this.FlushDiagnostic();
@@ -112,16 +88,16 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
             return;
         }
 
-        array = this.FullNameToObject.Where(x => x.Value.ObjectAttribute != null).ToArray();
+        array = this.Interfaces.Values.Concat(this.Implementations.Values).ToArray();
         foreach (var x in array)
         {
-            x.Value.ConfigureRelation();
+            x.ConfigureRelation();
         }
 
         // Check
         foreach (var x in array)
         {
-            x.Value.Check();
+            x.Check();
         }
 
         this.FlushDiagnostic();
@@ -163,12 +139,12 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
 
             if (generator.GenerateToFile && generator.TargetFolder != null && Directory.Exists(generator.TargetFolder))
             {
-                this.StringToFile(result, Path.Combine(generator.TargetFolder, $"gen.BigMachines.{x.Key}.cs"));
+                this.StringToFile(result, Path.Combine(generator.TargetFolder, $"gen.Netsphere.{x.Key}.cs"));
             }
             else
             {
-                this.Context?.AddSource($"gen.BigMachines.{x.Key}", SourceText.From(result, Encoding.UTF8));
-                this.Context2?.AddSource($"gen.BigMachines.{x.Key}", SourceText.From(result, Encoding.UTF8));
+                this.Context?.AddSource($"gen.Netsphere.{x.Key}", SourceText.From(result, Encoding.UTF8));
+                this.Context2?.AddSource($"gen.Netsphere.{x.Key}", SourceText.From(result, Encoding.UTF8));
             }
         }
 
@@ -185,7 +161,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
         ssb.AddUsing("System.Collections.Generic");
         ssb.AddUsing("System.Diagnostics.CodeAnalysis");
         ssb.AddUsing("System.Runtime.CompilerServices");
-        ssb.AddUsing("BigMachines");
+        ssb.AddUsing("Netsphere");
 
         ssb.AppendLine("#nullable enable", false);
         ssb.AppendLine("#pragma warning disable CS1591", false);
@@ -197,7 +173,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
         var ssb = new ScopingStringBuilder();
         this.GenerateHeader(ssb);
 
-        using (var scopeFormatter = ssb.ScopeNamespace("BigMachines.Generator"))
+        using (var scopeFormatter = ssb.ScopeNamespace("Netsphere.Generator"))
         {
             using (var methods = ssb.ScopeBrace("static class Generated"))
             {
@@ -213,19 +189,19 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
 
         if (generator.GenerateToFile && generator.TargetFolder != null && Directory.Exists(generator.TargetFolder))
         {
-            this.StringToFile(result, Path.Combine(generator.TargetFolder, "gen.BigMachinesGenerated.cs"));
+            this.StringToFile(result, Path.Combine(generator.TargetFolder, "gen.NetsphereGenerated.cs"));
         }
         else
         {
-            this.Context?.AddSource($"gen.BigMachinesLoader", SourceText.From(result, Encoding.UTF8));
-            this.Context2?.AddSource($"gen.BigMachinesLoader", SourceText.From(result, Encoding.UTF8));
+            this.Context?.AddSource($"gen.NetsphereLoader", SourceText.From(result, Encoding.UTF8));
+            this.Context2?.AddSource($"gen.NetsphereLoader", SourceText.From(result, Encoding.UTF8));
         }
     }
 
     private void GenerateInitializer(IGeneratorInformation generator, ScopingStringBuilder ssb, GeneratorInformation info)
     {
         // Namespace
-        var ns = "BigMachines";
+        var ns = "Netsphere";
         var assemblyId = string.Empty; // Assembly ID
         if (!string.IsNullOrEmpty(generator.CustomNamespace))
         {// Custom namespace.

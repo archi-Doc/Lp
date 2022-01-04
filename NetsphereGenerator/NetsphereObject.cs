@@ -23,7 +23,7 @@ public enum DeclarationCondition
 }
 
 [Flags]
-public enum BigMachinesObjectFlag
+public enum NetsphereObjectFlag
 {
     Configured = 1 << 0,
     RelationConfigured = 1 << 1,
@@ -40,21 +40,9 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     public new NetsphereBody Body => (NetsphereBody)((VisceralObjectBase<NetsphereObject>)this).Body;
 
-    public BigMachinesObjectFlag ObjectFlag { get; private set; }
+    public NetsphereObjectFlag ObjectFlag { get; private set; }
 
     public NetServiceObjectAttributeMock? ObjectAttribute { get; private set; }
-
-    public NetsphereObject? MachineObject { get; private set; }
-
-    public NetsphereObject? IdentifierObject { get; private set; }
-
-    public string StateName { get; private set; } = string.Empty;
-
-    public string? LoaderIdentifier { get; private set; }
-
-    public int LoaderNumber { get; private set; } = -1;
-
-    public bool IsAbstractOrInterface => this.Kind == VisceralObjectKind.Interface || (this.symbol is INamedTypeSymbol nts && nts.IsAbstract);
 
     public List<NetsphereObject>? Children { get; private set; } // The opposite of ContainingObject
 
@@ -66,11 +54,9 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     public string GenericsNumberString => this.GenericsNumber > 1 ? this.GenericsNumber.ToString() : string.Empty;
 
-    public NetsphereObject? ClosedGenericHint { get; private set; }
+    public NetsphereObject? TargetInterface { get; private set; }
 
-    public string? GroupType { get; private set; }
-
-    public string NewIfDerived { get; private set; } = string.Empty;
+    public uint ServiceId { get; private set; }
 
     public Arc.Visceral.NullableAnnotation NullableAnnotationIfReferenceType
     {
@@ -109,12 +95,12 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     public void Configure()
     {
-        if (this.ObjectFlag.HasFlag(BigMachinesObjectFlag.Configured))
+        if (this.ObjectFlag.HasFlag(NetsphereObjectFlag.Configured))
         {
             return;
         }
 
-        this.ObjectFlag |= BigMachinesObjectFlag.Configured;
+        this.ObjectFlag |= NetsphereObjectFlag.Configured;
 
         // Generic type is not supported.
         if (this.Generics_Kind != VisceralGenericsKind.NotGeneric)
@@ -122,7 +108,13 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             return;
         }
 
-        // MachineObjectAttribute
+        // Check INetService
+        if (!this.AllInterfaces.Any(x => x == INetService.FullName))
+        {
+            return;
+        }
+
+        // NetServiceObjectAttribute
         if (this.AllAttributes.FirstOrDefault(x => x.FullName == NetServiceObjectAttributeMock.FullName) is { } objectAttribute)
         {
             this.Location = objectAttribute.Location;
@@ -136,30 +128,77 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             }
         }
 
-        if (this.ObjectAttribute != null)
-        {
-            this.ConfigureObject();
-        }
-    }
-
-    private void ConfigureObject()
-    {
         // Used keywords
-        this.Identifier = new VisceralIdentifier("__gen_bm_identifier__");
+        this.Identifier = new VisceralIdentifier("__gen_ns_identifier__");
         foreach (var x in this.AllMembers.Where(a => a.ContainingObject == this))
         {
             this.Identifier.Add(x.SimpleName);
         }
+
+        // Service ID
+        this.ServiceId = (uint)Arc.Crypto.FarmHash.Hash64(this.FullName);
+        if (this.ObjectAttribute != null && this.ObjectAttribute.ServiceId != 0)
+        {
+            this.ServiceId = this.ObjectAttribute.ServiceId;
+        }
+
+        if (this.Kind == VisceralObjectKind.Class || this.Kind == VisceralObjectKind.Record || this.Kind == VisceralObjectKind.Struct)
+        {
+            this.TargetInterface = this.FindTargetInterface();
+            if (this.TargetInterface != null)
+            {
+                if (this.Body.Implementations.ContainsKey(this.ServiceId))
+                {
+                    this.Body.ReportDiagnostic(NetsphereBody.Error_DuplicateTypeId, this.Location, this.ServiceId);
+                }
+                else
+                {
+                    this.Body.Implementations.Add(this.ServiceId, this);
+                }
+            }
+        }
+        else if (this.Kind == VisceralObjectKind.Interface)
+        {
+            if (this.Body.Interfaces.ContainsKey(this.ServiceId))
+            {
+                this.Body.ReportDiagnostic(NetsphereBody.Error_DuplicateTypeId, this.Location, this.ServiceId);
+            }
+            else
+            {
+                this.Body.Interfaces.Add(this.ServiceId, this);
+            }
+        }
+    }
+
+    private NetsphereObject? FindTargetInterface()
+    {
+        NetsphereObject current = this;
+
+        while (current != null)
+        {
+            foreach (var x in current.Interfaces)
+            {
+                this.Body.Add(x)
+            }
+        }
+
+        var baseObject = this.BaseObject;
+        if (baseObject == null)
+        {
+            return null;
+        }
+
+
     }
 
     public void ConfigureRelation()
     {// Create an object tree.
-        if (this.ObjectFlag.HasFlag(BigMachinesObjectFlag.RelationConfigured))
+        if (this.ObjectFlag.HasFlag(NetsphereObjectFlag.RelationConfigured))
         {
             return;
         }
 
-        this.ObjectFlag |= BigMachinesObjectFlag.RelationConfigured;
+        this.ObjectFlag |= NetsphereObjectFlag.RelationConfigured;
 
         if (!this.Kind.IsType())
         {// Not type
@@ -217,115 +256,6 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         }
     }
 
-    public void CheckObject()
-    {
-        // partial class required.
-        /*if (!this.IsPartial)
-        {
-            this.Body.ReportDiagnostic(NetsphereBody.Error_NotPartial, this.Location, this.FullName);
-        }
-
-        // Parent class also needs to be a partial class.
-        var parent = this.ContainingObject;
-        while (parent != null)
-        {
-            if (!parent.IsPartial)
-            {
-                this.Body.ReportDiagnostic(NetsphereBody.Error_NotPartialParent, parent.Location, parent.FullName);
-            }
-
-            parent = parent.ContainingObject;
-        }*/
-
-        var id = this.ObjectAttribute!.ServiceId;
-        if (this.Body.Machines.ContainsKey(id))
-        {
-            this.Body.ReportDiagnostic(NetsphereBody.Error_DuplicateTypeId, this.Location, id);
-        }
-        else
-        {
-            this.Body.Machines.Add(id, this);
-        }
-
-        // Machine<TIdentifier>
-        var machineObject = this.BaseObject;
-        var derivedMachine = false;
-        while (machineObject != null)
-        {
-            if (machineObject.OriginalDefinition?.FullName == "BigMachines.Machine<TIdentifier>")
-            {
-                break;
-            }
-            else if (machineObject.ObjectAttribute != null)
-            {
-                derivedMachine = true;
-            }
-
-            machineObject = machineObject.BaseObject;
-        }
-
-        if (derivedMachine)
-        {
-            this.NewIfDerived = "new ";
-        }
-
-        if (machineObject == null)
-        {
-            this.Body.ReportDiagnostic(NetsphereBody.Error_NotDerived, this.Location);
-            return;
-        }
-        else
-        {
-            if (machineObject.Generics_Arguments.Length == 1)
-            {
-                this.MachineObject = machineObject;
-                this.IdentifierObject = machineObject.Generics_Arguments[0];
-                this.StateName = this.FullName + ".State";
-            }
-        }
-
-        if (this.IdentifierObject != null && this.IdentifierObject.Kind != VisceralObjectKind.TypeParameter)
-        {
-            if (this.IdentifierObject.Location.IsInSource)
-            {
-                if (!this.IdentifierObject.AllAttributes.Any(x => x.FullName == "Tinyhand.TinyhandObjectAttribute"))
-                {
-                    this.Body.AddDiagnostic(NetsphereBody.Error_IdentifierIsNotSerializable, this.IdentifierObject.Location, this.IdentifierObject.FullName);
-                }
-            }
-        }
-
-        var idToStateMethod = new Dictionary<uint, ServiceMethod>();
-        foreach (var x in this.GetMembers(VisceralTarget.Method))
-        {
-            if (x.AllAttributes.FirstOrDefault(x => x.FullName == StateMethodAttributeMock.FullName) is { } attribute)
-            {
-                var stateMethod = ServiceMethod.Create(this, x, attribute);
-                if (stateMethod != null)
-                {// Add
-                    this.StateMethodList.Add(stateMethod);
-
-                    if (idToStateMethod.TryGetValue(stateMethod.Id, out var s))
-                    {// Duplicated
-                        stateMethod.DuplicateId = true;
-                        s.DuplicateId = true;
-                    }
-                    else
-                    {
-                        idToStateMethod.Add(stateMethod.Id, stateMethod);
-                    }
-                }
-            }
-            else if (x.Method_IsConstructor && x.ContainingObject == this)
-            {// Constructor
-                if (x.Method_Parameters.Length == 0)
-                {
-                    this.ObjectFlag |= BigMachinesObjectFlag.HasDefaultConstructor;
-                }
-            }
-        }
-    }
-
     public bool CheckKeyword(string keyword, Location? location = null)
     {
         if (!this.Identifier.Add(keyword))
@@ -339,20 +269,41 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     public void Check()
     {
-        if (this.ObjectFlag.HasFlag(BigMachinesObjectFlag.Checked))
+        if (this.ObjectFlag.HasFlag(NetsphereObjectFlag.Checked))
         {
             return;
         }
 
-        if (this.Generics_Kind == VisceralGenericsKind.ClosedGeneric)
-        {// Close generic is not necessary.
-            return;
+        this.ObjectFlag |= NetsphereObjectFlag.Checked;
+
+        var idToStateMethod = new Dictionary<uint, ServiceMethod>();
+        foreach (var x in this.GetMembers(VisceralTarget.Method))
+        {
+            if (x.Method_IsConstructor && x.ContainingObject == this)
+            {// Constructor
+                if (x.Method_Parameters.Length == 0)
+                {
+                    this.ObjectFlag |= NetsphereObjectFlag.HasDefaultConstructor;
+                    continue;
+                }
+            }
+
+            var stateMethod = ServiceMethod.Create(this, x);
+            if (stateMethod != null)
+            {// Add
+                this.StateMethodList.Add(stateMethod);
+
+                if (idToStateMethod.TryGetValue(stateMethod.Id, out var s))
+                {// Duplicated
+                    stateMethod.DuplicateId = true;
+                    s.DuplicateId = true;
+                }
+                else
+                {
+                    idToStateMethod.Add(stateMethod.Id, stateMethod);
+                }
+            }
         }
-
-        this.ObjectFlag |= BigMachinesObjectFlag.Checked;
-
-        this.Body.DebugAssert(this.ObjectAttribute != null, "this.ObjectAttribute != null");
-        this.CheckObject();
     }
 
     public static void GenerateLoader(ScopingStringBuilder ssb, GeneratorInformation info, NetsphereObject? parent, List<NetsphereObject> list)
@@ -408,7 +359,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 }
             }
 
-            foreach (var x in list.Where(a => a.ObjectFlag.HasFlag(BigMachinesObjectFlag.HasRegisterBM)))
+            foreach (var x in list.Where(a => a.ObjectFlag.HasFlag(NetsphereObjectFlag.HasRegisterBM)))
             {// Children
                 ssb.AppendLine($"{x.FullName}.RegisterBM();");
             }

@@ -10,17 +10,17 @@ namespace Netsphere.Generator;
 
 public class ServiceMethod
 {
-    public static ServiceMethod? Create(NetsphereObject machine, NetsphereObject method, VisceralAttribute attribute)
+    public static ServiceMethod? Create(NetsphereObject machine, NetsphereObject method)
     {
         var flag = false;
-        if (method.Method_ReturnObject?.FullName != NetsphereBody.StateResultFullName)
+        if (method.Method_ReturnObject?.FullName != "Task")
         {// Invalid return type
             flag = true;
         }
 
         if (flag)
         {
-            method.Body.ReportDiagnostic(NetsphereBody.Error_MethodFormat, attribute.Location);
+            method.Body.ReportDiagnostic(NetsphereBody.Error_MethodFormat, method.Location);
         }
 
         if (method.Body.Abort)
@@ -29,13 +29,13 @@ public class ServiceMethod
         }
 
         var stateMethod = new ServiceMethod();
-        stateMethod.Location = attribute.Location;
+        // stateMethod.Location = attribute.Location;
         stateMethod.Name = method.SimpleName;
 
         return stateMethod;
     }
 
-    public Location Location { get; private set; } = Location.None;
+    // public Location Location { get; private set; } = Location.None;
 
     public string Name { get; private set; } = string.Empty;
 
