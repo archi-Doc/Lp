@@ -43,6 +43,10 @@ public class TestServiceFrontend : ITestService
     public static readonly ulong Id1 = 0x6F000000DFul;
     public static readonly ulong Id2 = 0x6F000000E0ul;
 
+    public NetResult Result => this.result;
+
+    private NetResult result;
+
     public TestServiceFrontend(ClientTerminal clientTerminal)
     {
         this.ClientTerminal = clientTerminal;
@@ -54,53 +58,96 @@ public class TestServiceFrontend : ITestService
     {
         if (!BlockService.TrySerialize(x, out var owner))
         {
+            this.result = NetResult.SerializationError;
             return default;
         }
 
         var response = await this.ClientTerminal.SendAndReceiveServiceAsync(Id0, owner);
+        this.result = response.Result;
         owner.Return();
-        if (response.Result != NetResult.Success)
+        if (this.result == NetResult.Success && response.Value.Memory.Length == 0)
+        {
+            this.result = NetResult.NoNetService;
+        }
+
+        if (this.result != NetResult.Success)
         {
             return default;
         }
 
-        TinyhandSerializer.TryDeserialize<int>(response.Value.Memory, out var result);
+        if (!TinyhandSerializer.TryDeserialize<(NetResult, int)>(response.Value.Memory, out var result))
+        {
+            this.result = NetResult.DeserializationError;
+            return default;
+        }
+
+        this.result = result.Item1;
         response.Value.Return();
-        return result;
+        return result.Item2;
     }
 
     public async Task<NetResult> Send(int x, int y)
     {
         if (!BlockService.TrySerialize((x, y), out var owner))
         {
-            return NetResult.SerializationError;
+            this.result = NetResult.SerializationError;
+            return this.result;
         }
-
-        /*var result = await this.ClientTerminal.SendServiceAsync(0, owner);
-        owner.Return();
-        return result;*/
 
         var response = await this.ClientTerminal.SendAndReceiveServiceAsync(Id1, owner);
+        this.result = response.Result;
         owner.Return();
-        if (response.Result != NetResult.Success)
+        if (this.result == NetResult.Success && response.Value.Memory.Length == 0)
         {
-            return response.Result;
+            this.result = NetResult.NoNetService;
         }
 
-        TinyhandSerializer.TryDeserialize<NetResult>(response.Value.Memory, out var result);
+        if (this.result != NetResult.Success)
+        {
+            return this.result;
+        }
+
+        if (!TinyhandSerializer.TryDeserialize<NetResult>(response.Value.Memory, out var result))
+        {
+            this.result = NetResult.DeserializationError;
+            return this.result;
+        }
+
+        this.result = result;
         response.Value.Return();
-        return result;
+        return this.result;
     }
 
     public async Task Send2(int x, int y)
     {
         if (!BlockService.TrySerialize((x, y), out var owner))
         {
+            this.result = NetResult.SerializationError;
             return;
         }
 
-        var result = await this.ClientTerminal.SendServiceAsync(Id2, owner);
+        var response = await this.ClientTerminal.SendAndReceiveServiceAsync(Id2, owner);
+        this.result = response.Result;
         owner.Return();
+        if (this.result == NetResult.Success && response.Value.Memory.Length == 0)
+        {
+            this.result = NetResult.NoNetService;
+        }
+
+        if (this.result != NetResult.Success)
+        {
+            return;
+        }
+
+        if (!TinyhandSerializer.TryDeserialize<NetResult>(response.Value.Memory, out var result))
+        {
+            this.result = result;
+            return;
+        }
+
+        this.result = result;
+        response.Value.Return();
+        return;
     }
 }
 
@@ -127,7 +174,7 @@ public class TestServiceBackend
         }
 
         var r = ((TestServiceBackend)obj).impl.Increment(value);
-        return BlockService.TrySerialize(r.Result, out send) ? NetResult.Success : NetResult.SerializationError;
+        return BlockService.TrySerialize((NetResult.Success, r.Result), out send) ? NetResult.Success : NetResult.SerializationError;
     }
 
     public static NetResult Identifier3324(object obj, ByteArrayPool.MemoryOwner receive, out ByteArrayPool.MemoryOwner send)

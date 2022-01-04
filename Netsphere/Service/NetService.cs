@@ -63,19 +63,19 @@ public class NetService
         this.serviceProvider = serviceProvider;
     }
 
-    public async Task<NetResult> Process(ServerTerminal serverTerminal, NetReceivedData received)
+    public async Task Process(ServerTerminal serverTerminal, NetReceivedData received)
     {
         if (!this.idToServiceMethod.TryGetValue(received.DataId, out var serviceMethod))
         {
             var serviceId = (uint)(received.DataId >> 32);
             if (!StaticNetService.TryGetServiceInfo(serviceId, out var serviceInfo))
             {
-                return NetResult.NoNetService;
+                goto SendEmpty;
             }
 
             if (!serviceInfo.TryGetMethod(received.DataId, out serviceMethod))
             {
-                return NetResult.NoNetService;
+                goto SendEmpty;
             }
 
             if (!this.idToInstance.TryGetValue(serviceId, out var serverInstance))
@@ -90,12 +90,15 @@ public class NetService
         var result = serviceMethod.Process(serviceMethod.ServerInstance!, received.Received, out var sendOwner);
         if (result != NetResult.Success)
         {
-            return result;
+            goto SendEmpty;
         }
 
-        result = await serverTerminal.SendDataAsync(serviceMethod.Id, sendOwner);
+        result = await serverTerminal.SendServiceAsync(serviceMethod.Id, sendOwner);
         sendOwner.Return();
-        return result;
+        return;
+
+SendEmpty:
+        await serverTerminal.SendServiceAsync(received.DataId, ByteArrayPool.MemoryOwner.Empty);
     }
 
     private IServiceProvider? serviceProvider;

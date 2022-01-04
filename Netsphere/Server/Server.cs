@@ -29,9 +29,9 @@ public class Server
                     {// Responder
                         continue;
                     }
-                    else if (received.PacketId == PacketId.Rpc &&
-                        await this.NetService.Process(terminal, received).ConfigureAwait(false) == NetResult.Success)
+                    else if (received.PacketId == PacketId.Rpc)
                     {// RPC
+                        await this.NetService.Process(terminal, received).ConfigureAwait(false);
                         continue;
                     }
 
