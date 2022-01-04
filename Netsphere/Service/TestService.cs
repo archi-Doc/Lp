@@ -165,41 +165,41 @@ public class TestServiceBackend
         this.impl = impl;
     }
 
-    public static NetResult Identifier3323(object obj, ByteArrayPool.MemoryOwner receive, out ByteArrayPool.MemoryOwner send)
+    public static async Task<ByteArrayPool.MemoryOwner> Identifier3323(object obj, ByteArrayPool.MemoryOwner receive)
     {
         if (!BlockService.TryDeserialize<int>(receive, out var value))
         {
-            send = default;
-            return NetResult.DeserializationError;
+            return default;
         }
 
-        var r = ((TestServiceBackend)obj).impl.Increment(value);
-        return BlockService.TrySerialize((NetResult.Success, r.Result), out send) ? NetResult.Success : NetResult.SerializationError;
+        var result = await ((TestServiceBackend)obj).impl.Increment(value);
+        BlockService.TrySerialize((NetResult.Success, result), out var send);
+        return send;
     }
 
-    public static NetResult Identifier3324(object obj, ByteArrayPool.MemoryOwner receive, out ByteArrayPool.MemoryOwner send)
+    public static async Task<ByteArrayPool.MemoryOwner> Identifier3324(object obj, ByteArrayPool.MemoryOwner receive)
     {
         if (!BlockService.TryDeserialize<(int, int)>(receive, out var value))
         {
-            send = default;
-            return NetResult.DeserializationError;
+            return default;
         }
 
-        var r = ((TestServiceBackend)obj).impl.Send(value.Item1, value.Item2);
-        return BlockService.TrySerialize(r.Result, out send) ? NetResult.Success : NetResult.SerializationError;
+        var result = await ((TestServiceBackend)obj).impl.Send(value.Item1, value.Item2);
+        BlockService.TrySerialize(result, out var send);
+        return send;
     }
 
-    public static NetResult Identifier3325(object obj, ByteArrayPool.MemoryOwner receive, out ByteArrayPool.MemoryOwner send)
+    public static async Task<ByteArrayPool.MemoryOwner> Identifier3325(object obj, ByteArrayPool.MemoryOwner receive)
     {
         if (!BlockService.TryDeserialize<(int, int)>(receive, out var value))
         {
-            send = default;
-            return NetResult.DeserializationError;
+            return default;
         }
 
-        var r = ((TestServiceBackend)obj).impl.Send2(value.Item1, value.Item2);
-        r.Wait();
-        return BlockService.TrySerialize(NetResult.Success, out send) ? NetResult.Success : NetResult.SerializationError;
+        await ((TestServiceBackend)obj).impl.Send2(value.Item1, value.Item2);
+        var result = NetResult.Success;
+        BlockService.TrySerialize(result, out var send);
+        return send;
     }
 
     public static NetService.ServiceInfo CreateServiceInfo()

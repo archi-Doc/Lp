@@ -7,7 +7,7 @@ namespace Netsphere;
 
 public class NetService
 {
-    public delegate NetResult ServiceDelegate(object instance, ByteArrayPool.MemoryOwner received, out ByteArrayPool.MemoryOwner send);
+    public delegate Task<ByteArrayPool.MemoryOwner> ServiceDelegate(object instance, ByteArrayPool.MemoryOwner received);
 
     public delegate INetService CreateClientDelegate(ClientTerminal clientTerminal);
 
@@ -87,13 +87,13 @@ public class NetService
             serviceMethod = serviceMethod.CloneWithInstance(serverInstance);
         }
 
-        var result = serviceMethod.Process(serviceMethod.ServerInstance!, received.Received, out var sendOwner);
-        if (result != NetResult.Success)
+        var sendOwner = await serviceMethod.Process(serviceMethod.ServerInstance!, received.Received);
+        if (sendOwner.IsEmpty)
         {
             goto SendEmpty;
         }
 
-        result = await serverTerminal.SendServiceAsync(serviceMethod.Id, sendOwner);
+        await serverTerminal.SendServiceAsync(serviceMethod.Id, sendOwner);
         sendOwner.Return();
         return;
 
