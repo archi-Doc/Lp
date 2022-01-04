@@ -81,7 +81,7 @@ public class FarmHash : IHash
     /// <param name="str">The string containing the characters to calculates.</param>
     /// <returns>A 32bit hash.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static unsafe uint Hash32(string str) => Hash32(MemoryMarshal.Cast<char, byte>(str));
+    public static unsafe uint Hash32(string str) => Hash32(MemoryMarshal.Cast<char, byte>(str.AsSpan()));
 
     /// <summary>
     /// Static function: Calculates a 64bit hash from the given data.
@@ -111,7 +111,7 @@ public class FarmHash : IHash
     /// <param name="str">The string containing the characters to calculates.</param>
     /// <returns>A 64bit hash.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static unsafe ulong Hash64(string str) => Hash64(MemoryMarshal.Cast<char, byte>(str));
+    public static unsafe ulong Hash64(string str) => Hash64(MemoryMarshal.Cast<char, byte>(str.AsSpan()));
 
     /// <inheritdoc/>
     public byte[] GetHash(ReadOnlySpan<byte> input) => BitConverter.GetBytes(Hash64(input));

@@ -44,6 +44,8 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     public NetServiceObjectAttributeMock? ObjectAttribute { get; private set; }
 
+    public int LoaderNumber { get; private set; } = -1;
+
     public List<NetsphereObject>? Children { get; private set; } // The opposite of ContainingObject
 
     public List<NetsphereObject>? ConstructedObjects { get; private set; } // The opposite of ConstructedFrom
@@ -57,6 +59,8 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
     public NetsphereObject? TargetInterface { get; private set; }
 
     public uint ServiceId { get; private set; }
+
+    public Dictionary<uint, ServiceMethod>? ServiceMethods { get; private set; }
 
     public Arc.Visceral.NullableAnnotation NullableAnnotationIfReferenceType
     {
@@ -172,7 +176,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     private NetsphereObject? FindTargetInterface()
     {
-        NetsphereObject current = this;
+        /*NetsphereObject current = this;
 
         while (current != null)
         {
@@ -188,7 +192,9 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             return null;
         }
 
+        */
 
+        return null;
     }
 
     public void ConfigureRelation()
@@ -276,7 +282,6 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
         this.ObjectFlag |= NetsphereObjectFlag.Checked;
 
-        var idToStateMethod = new Dictionary<uint, ServiceMethod>();
         foreach (var x in this.GetMembers(VisceralTarget.Method))
         {
             if (x.Method_IsConstructor && x.ContainingObject == this)
@@ -291,16 +296,19 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             var stateMethod = ServiceMethod.Create(this, x);
             if (stateMethod != null)
             {// Add
-                this.StateMethodList.Add(stateMethod);
+                if (this.ServiceMethods == null)
+                {
+                    this.ServiceMethods = new();
+                }
 
-                if (idToStateMethod.TryGetValue(stateMethod.Id, out var s))
+                if (this.ServiceMethods.TryGetValue(stateMethod.MethodId, out var s))
                 {// Duplicated
                     stateMethod.DuplicateId = true;
                     s.DuplicateId = true;
                 }
                 else
                 {
-                    idToStateMethod.Add(stateMethod.Id, stateMethod);
+                    this.ServiceMethods.Add(stateMethod.MethodId, stateMethod);
                 }
             }
         }
@@ -338,7 +346,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 {
                     foreach (var x in list3)
                     {
-                        ssb.AppendLine($"{x.FullName}.RegisterBM({x.ObjectAttribute!.MachineTypeId});");
+                        ssb.AppendLine($"{x.FullName}.RegisterBM({x.ServiceId});");
                     }
                 }
             }
@@ -346,9 +354,9 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
         using (var m = ssb.ScopeBrace("internal static void RegisterBM()"))
         {
-            foreach (var x in list2)
+            /*foreach (var x in list2)
             {
-                if (x.ObjectAttribute == null || x.IdentifierObject == null)
+                if (x.ObjectAttribute == null)
                 {
                     continue;
                 }
@@ -362,7 +370,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             foreach (var x in list.Where(a => a.ObjectFlag.HasFlag(NetsphereObjectFlag.HasRegisterBM)))
             {// Children
                 ssb.AppendLine($"{x.FullName}.RegisterBM();");
-            }
+            }*/
 
             if (loaderIdentifier != null)
             {// Loader
@@ -406,179 +414,6 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     internal void Generate2(ScopingStringBuilder ssb, GeneratorInformation info)
     {
-        this.Generate_State(ssb, info);
-        this.Generate_Interface(ssb, info);
-        this.Generate_CreateInterface(ssb, info);
-        this.Generate_InternalRun(ssb, info);
-        this.Generate_ChangeStateInternal(ssb, info);
-
         return;
-    }
-
-    internal void Generate_State(ScopingStringBuilder ssb, GeneratorInformation info)
-    {
-        if (this.StateMethodList == null)
-        {
-            return;
-        }
-
-        using (var scope = ssb.ScopeBrace($"public {this.NewIfDerived}enum State"))
-        {
-            foreach (var x in this.StateMethodList)
-            {
-                ssb.AppendLine($"{x.Name} = {x.Id},");
-            }
-        }
-
-        ssb.AppendLine();
-    }
-
-    internal void Generate_Interface(ScopingStringBuilder ssb, GeneratorInformation info)
-    {
-        if (this.MachineObject == null)
-        {
-            return;
-        }
-
-        var identifierName = this.IdentifierObject!.FullName;
-        using (var scope = ssb.ScopeBrace($"public {this.NewIfDerived}class Interface : ManMachineInterface<{identifierName}, {this.StateName}>"))
-        {
-            using (var scope2 = ssb.ScopeBrace($"public Interface(IMachineGroup<{identifierName}> group, {identifierName} identifier) : base(group, identifier)"))
-            {
-            }
-        }
-
-        ssb.AppendLine();
-    }
-
-    internal void Generate_CreateInterface(ScopingStringBuilder ssb, GeneratorInformation info)
-    {
-        if (this.MachineObject == null)
-        {
-            return;
-        }
-
-        var identifierName = this.IdentifierObject!.FullName;
-        using (var scope = ssb.ScopeBrace($"protected override void CreateInterface({identifierName} identifier)"))
-        {
-            using (var scope2 = ssb.ScopeBrace("if (this.InterfaceInstance == null)"))
-            {
-                ssb.AppendLine("this.Identifier = identifier;");
-                ssb.AppendLine("this.InterfaceInstance = new Interface(this.Group, identifier);");
-            }
-        }
-
-        ssb.AppendLine();
-    }
-
-    internal void Generate_InternalRun(ScopingStringBuilder ssb, GeneratorInformation info)
-    {
-        if (this.MachineObject == null || this.StateMethodList == null)
-        {
-            return;
-        }
-
-        using (var scope = ssb.ScopeBrace("protected override StateResult InternalRun(StateParameter parameter)"))
-        {
-            ssb.AppendLine($"var state = Unsafe.As<int, {this.StateName}>(ref this.CurrentState);");
-            ssb.AppendLine("return state switch");
-            ssb.AppendLine("{");
-            ssb.IncrementIndent();
-
-            foreach (var x in this.StateMethodList)
-            {
-                ssb.AppendLine($"State.{x.Name} => this.{x.Name}(parameter),");
-            }
-
-            ssb.AppendLine("_ => StateResult.Terminate,");
-            ssb.DecrementIndent();
-            ssb.AppendLine("};");
-        }
-
-        ssb.AppendLine();
-    }
-
-    internal void Generate_ChangeStateInternal(ScopingStringBuilder ssb, GeneratorInformation info)
-    {
-        if (this.MachineObject == null || this.StateMethodList == null)
-        {
-            return;
-        }
-
-        using (var scope = ssb.ScopeBrace("protected override bool InternalChangeState(int state, bool rerun)"))
-        {
-            using (var scopeTerminated = ssb.ScopeBrace("if (this.Status == MachineStatus.Terminated)"))
-            {
-                ssb.AppendLine("return false;");
-            }
-
-            using (var scopeElse = ssb.ScopeBrace("else if (this.CurrentState == state)"))
-            {
-                ssb.AppendLine("return true;");
-            }
-
-            ssb.AppendLine();
-            ssb.AppendLine($"var current = Unsafe.As<int, {this.StateName}>(ref this.CurrentState);");
-            ssb.AppendLine("bool canExit = current switch");
-            ssb.AppendLine("{");
-            ssb.IncrementIndent();
-            foreach (var x in this.StateMethodList)
-            {
-                if (x.CanExit)
-                {
-                    ssb.AppendLine($"State.{x.Name} => this.{x.Name}{ServiceMethod.CanExitName}(),");
-                }
-            }
-
-            ssb.AppendLine("_ => true,");
-            ssb.DecrementIndent();
-            ssb.AppendLine("};");
-            ssb.AppendLine();
-
-            ssb.AppendLine($"var next = Unsafe.As<int, {this.StateName}>(ref state);");
-            ssb.AppendLine("bool canEnter = next switch");
-            ssb.AppendLine("{");
-            ssb.IncrementIndent();
-            foreach (var x in this.StateMethodList)
-            {
-                if (x.CanEnter)
-                {
-                    ssb.AppendLine($"State.{x.Name} => this.{x.Name}{ServiceMethod.CanEnterName}(),");
-                }
-                else
-                {
-                    ssb.AppendLine($"State.{x.Name} => true,");
-                }
-            }
-
-            ssb.AppendLine("_ => false,");
-            ssb.DecrementIndent();
-            ssb.AppendLine("};");
-            ssb.AppendLine();
-
-            using (var scope2 = ssb.ScopeBrace("if (canExit && canEnter)"))
-            {
-                ssb.AppendLine($"this.CurrentState = state;");
-                ssb.AppendLine("this.RequestRerun = rerun;");
-                ssb.AppendLine("return true;");
-            }
-
-            using (var scope2 = ssb.ScopeBrace("else"))
-            {
-                ssb.AppendLine("return false;");
-            }
-        }
-
-        ssb.AppendLine();
-        ssb.AppendLine($"protected bool ChangeState({this.StateName} state, bool rerun = true) => this.InternalChangeState(Unsafe.As<{this.StateName}, int>(ref state), rerun);");
-        ssb.AppendLine();
-        ssb.AppendLine($"protected {this.NewIfDerived}{this.StateName} GetCurrentState() => Unsafe.As<int, {this.StateName}>(ref this.CurrentState);");
-        ssb.AppendLine();
-
-        /*if (this.DefaultStateMethod != null)
-        {
-            ssb.AppendLine();
-            ssb.AppendLine($"protected override void IntInitState() => this.CurrentState = {this.DefaultStateMethod.Id};");
-        }*/
     }
 }

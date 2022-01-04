@@ -28,16 +28,19 @@ public class ServiceMethod
             return null;
         }
 
-        var stateMethod = new ServiceMethod();
+        var serviceMethod = new ServiceMethod();
         // stateMethod.Location = attribute.Location;
-        stateMethod.Name = method.SimpleName;
+        serviceMethod.Name = method.SimpleName;
+        serviceMethod.MethodId = (uint)Arc.Crypto.FarmHash.Hash64(method.FullName);
 
-        return stateMethod;
+        return serviceMethod;
     }
 
     // public Location Location { get; private set; } = Location.None;
 
     public string Name { get; private set; } = string.Empty;
+
+    public uint MethodId { get; private set; }
 
     public bool DuplicateId { get; internal set; }
 }
