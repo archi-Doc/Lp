@@ -75,15 +75,14 @@ public class TestServiceFrontend : ITestService
             return default;
         }
 
-        if (!TinyhandSerializer.TryDeserialize<(NetResult, int)>(response.Value.Memory, out var result))
+        if (!TinyhandSerializer.TryDeserialize<int>(response.Value.Memory, out var result))
         {
             this.result = NetResult.DeserializationError;
             return default;
         }
 
-        this.result = result.Item1;
         response.Value.Return();
-        return result.Item2;
+        return result;
     }
 
     public async Task<NetResult> Send(int x, int y)
@@ -173,7 +172,7 @@ public class TestServiceBackend
         }
 
         var result = await ((TestServiceBackend)obj).impl.Increment(value);
-        BlockService.TrySerialize((NetResult.Success, result), out var send);
+        BlockService.TrySerialize(result, out var send);
         return send;
     }
 
