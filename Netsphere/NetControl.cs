@@ -46,6 +46,10 @@ public class NetControl
         container.Register<EssentialNode>(Reuse.Singleton);
         container.Register<NetStatus>(Reuse.Singleton);
         container.Register<Server>(Reuse.Transient);
+        container.RegisterDelegate(x => new NetService(container), Reuse.Transient);
+
+        // RPCs
+        container.Register<TestServiceImpl>(Reuse.Transient);
 
         // Machines
         container.Register<LP.Machines.EssentialNetMachine>();

@@ -5,6 +5,10 @@ namespace Netsphere;
 public interface ITestService : INetService
 {
     public Task<int> Increment(int x);
+
+    public Task<NetResult> Send(int x, int y);
+
+    public Task Send2(int x, int y);
 }
 
 // [NetServiceObject(true)]
@@ -16,13 +20,34 @@ public class TestServiceImpl : ITestService
 
     public async Task<int> Increment(int x)
     {
+        Console.WriteLine($"Increment: {x + 1}");
         return x + 1;
+    }
+
+    public async Task<NetResult> Send(int x, int y)
+    {
+        Console.WriteLine($"Send: {x}, {y}");
+        return default;
+    }
+
+    public async Task Send2(int x, int y)
+    {
+        Console.WriteLine($"Send2: {x}, {y}");
     }
 }
 
-public class TestServiceClient : ITestService
+public class TestServiceFrontend : ITestService
 {
-    public TestServiceClient(ClientTerminal clientTerminal)
+    public static readonly uint ServiceId = 0x6F;
+    public static readonly ulong Id0 = 0x6F000000DEul;
+    public static readonly ulong Id1 = 0x6F000000DFul;
+    public static readonly ulong Id2 = 0x6F000000E0ul;
+
+    public NetResult Result => this.result;
+
+    private NetResult result;
+
+    public TestServiceFrontend(ClientTerminal clientTerminal)
     {
         this.ClientTerminal = clientTerminal;
     }
@@ -33,39 +58,156 @@ public class TestServiceClient : ITestService
     {
         if (!BlockService.TrySerialize(x, out var owner))
         {
+            this.result = NetResult.SerializationError;
             return default;
         }
 
-        var response = await this.ClientTerminal.SendAndReceiveRpcAsync(0, owner);
+        var response = await this.ClientTerminal.SendAndReceiveServiceAsync(Id0, owner);
+        this.result = response.Result;
         owner.Return();
-        if (response.Result != NetResult.Success)
+        if (this.result == NetResult.Success && response.Value.IsEmpty)
+        {
+            this.result = NetResult.NoNetService;
+        }
+
+        if (this.result != NetResult.Success)
         {
             return default;
         }
 
-        TinyhandSerializer.TryDeserialize<int>(response.Value.Memory, out var result);
+        if (!TinyhandSerializer.TryDeserialize<int>(response.Value.Memory, out var result))
+        {
+            this.result = NetResult.DeserializationError;
+            return default;
+        }
+
         response.Value.Return();
         return result;
     }
-}
 
-internal class TestServiceServer
-{
-    public TestServiceServer()
+    public async Task<NetResult> Send(int x, int y)
     {
-        this.impl = new();
-    }
-
-    public ByteArrayPool.MemoryOwner Identifier3323(ByteArrayPool.MemoryOwner owner)
-    {
-        if (!BlockService.TryDeserialize<int>(owner, out var value))
+        if (!BlockService.TrySerialize((x, y), out var owner))
         {
-            return ByteArrayPool.MemoryOwner.Empty;
+            this.result = NetResult.SerializationError;
+            return this.result;
         }
 
-        var r = this.impl.Increment(value);
-        BlockService.TrySerialize(r.Result, out var owner2);
-        return owner;
+        var response = await this.ClientTerminal.SendAndReceiveServiceAsync(Id1, owner);
+        this.result = response.Result;
+        owner.Return();
+        if (this.result == NetResult.Success && response.Value.IsEmpty)
+        {
+            this.result = NetResult.NoNetService;
+        }
+
+        if (this.result != NetResult.Success)
+        {
+            return this.result;
+        }
+
+        if (!TinyhandSerializer.TryDeserialize<NetResult>(response.Value.Memory, out var result))
+        {
+            this.result = NetResult.DeserializationError;
+            return this.result;
+        }
+
+        this.result = result;
+        response.Value.Return();
+        return this.result;
+    }
+
+    public async Task Send2(int x, int y)
+    {
+        if (!BlockService.TrySerialize((x, y), out var owner))
+        {
+            this.result = NetResult.SerializationError;
+            return;
+        }
+
+        var response = await this.ClientTerminal.SendAndReceiveServiceAsync(Id2, owner);
+        this.result = response.Result;
+        owner.Return();
+        if (this.result == NetResult.Success && response.Value.IsEmpty)
+        {
+            this.result = NetResult.NoNetService;
+        }
+
+        if (this.result != NetResult.Success)
+        {
+            return;
+        }
+
+        if (!TinyhandSerializer.TryDeserialize<NetResult>(response.Value.Memory, out var result))
+        {
+            this.result = result;
+            return;
+        }
+
+        this.result = result;
+        response.Value.Return();
+        return;
+    }
+}
+
+public class TestServiceBackend
+{
+    public TestServiceBackend(IServiceProvider? serviceProvider)
+    {
+        var impl = serviceProvider?.GetService(typeof(TestServiceImpl)) as TestServiceImpl;
+        if (impl == null)
+        {
+            // impl = new TestServiceImpl();
+            throw new InvalidOperationException($"Could not create an instance of net service {typeof(TestServiceImpl).ToString()}.");
+        }
+
+        this.impl = impl;
+    }
+
+    public static async Task<ByteArrayPool.MemoryOwner> Identifier3323(object obj, ByteArrayPool.MemoryOwner receive)
+    {
+        if (!BlockService.TryDeserialize<int>(receive, out var value))
+        {
+            return default;
+        }
+
+        var result = await ((TestServiceBackend)obj).impl.Increment(value);
+        BlockService.TrySerialize(result, out var send);
+        return send;
+    }
+
+    public static async Task<ByteArrayPool.MemoryOwner> Identifier3324(object obj, ByteArrayPool.MemoryOwner receive)
+    {
+        if (!BlockService.TryDeserialize<(int, int)>(receive, out var value))
+        {
+            return default;
+        }
+
+        var result = await ((TestServiceBackend)obj).impl.Send(value.Item1, value.Item2);
+        BlockService.TrySerialize(result, out var send);
+        return send;
+    }
+
+    public static async Task<ByteArrayPool.MemoryOwner> Identifier3325(object obj, ByteArrayPool.MemoryOwner receive)
+    {
+        if (!BlockService.TryDeserialize<(int, int)>(receive, out var value))
+        {
+            return default;
+        }
+
+        await ((TestServiceBackend)obj).impl.Send2(value.Item1, value.Item2);
+        var result = NetResult.Success;
+        BlockService.TrySerialize(result, out var send);
+        return send;
+    }
+
+    public static NetService.ServiceInfo CreateServiceInfo()
+    {
+        var serviceInfo = new NetService.ServiceInfo(TestServiceFrontend.ServiceId, static x => new TestServiceBackend(x));
+        serviceInfo.AddMethod(new NetService.ServiceMethod(TestServiceFrontend.Id0, Identifier3323));
+        serviceInfo.AddMethod(new NetService.ServiceMethod(TestServiceFrontend.Id1, Identifier3324));
+        serviceInfo.AddMethod(new NetService.ServiceMethod(TestServiceFrontend.Id2, Identifier3325));
+        return serviceInfo;
     }
 
     private TestServiceImpl impl;

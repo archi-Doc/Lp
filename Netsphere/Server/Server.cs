@@ -6,10 +6,11 @@ namespace Netsphere;
 
 public class Server
 {
-    public Server(NetBase netBase, NetControl netControl)
+    public Server(NetBase netBase, NetControl netControl, NetService netService)
     {
         this.NetBase = netBase;
         this.NetControl = netControl;
+        this.NetService = netService;
     }
 
     public async Task Process(ServerTerminal terminal)
@@ -22,10 +23,15 @@ public class Server
                 var received = await terminal.ReceiveAsync();
                 if (received.Result == NetResult.Success)
                 {// Success
-                    // Responder (DataId, RPC)
-                    if (this.NetControl.Responders.TryGetValue(received.DataId, out var responder) &&
+                    if (received.PacketId == PacketId.Data &&
+                        this.NetControl.Responders.TryGetValue(received.DataId, out var responder) &&
                         responder.Respond(terminal, received))
-                    {
+                    {// Responder
+                        continue;
+                    }
+                    else if (received.PacketId == PacketId.Rpc)
+                    {// RPC
+                        await this.NetService.Process(terminal, received).ConfigureAwait(false);
                         continue;
                     }
 
@@ -60,6 +66,8 @@ public class Server
     public NetBase NetBase { get; }
 
     public NetControl NetControl { get; }
+
+    public NetService NetService { get; }
 
     public ServerTerminal NetTerminal { get; private set; } = default!;
 

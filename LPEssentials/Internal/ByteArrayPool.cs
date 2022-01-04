@@ -228,6 +228,11 @@ public class ByteArrayPool
         /// </summary>
         public bool IsReturned => this.Owner == null || this.Owner.IsReturned == true;
 
+        /// <summary>
+        /// Gets a value indicating whether the memory is empty.
+        /// </summary>
+        public bool IsEmpty => this.Memory.IsEmpty;
+
         public readonly Owner? Owner;
         public readonly Memory<byte> Memory;
     }

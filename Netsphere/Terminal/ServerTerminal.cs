@@ -120,6 +120,18 @@ public class ServerTerminal : NetTerminal
         return result;
     }
 
+    public async Task<NetResult> SendServiceAsync(ulong dataId, ByteArrayPool.MemoryOwner data)
+    {// Checked
+        if (!this.senderQueue.TryDequeue(out var operation))
+        {
+            return NetResult.NoSender;
+        }
+
+        var result = await operation.SendDataAsync(true, PacketId.Rpc, dataId, data).ConfigureAwait(false);
+        operation.Dispose();
+        return result;
+    }
+
     public void EnsureReceiver()
     {// Checked
         while (this.receiverQueue.Count < this.ReceiverNumber)
