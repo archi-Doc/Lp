@@ -67,17 +67,20 @@ public class NetService
     {
         if (!this.idToServiceMethod.TryGetValue(received.DataId, out var serviceMethod))
         {
+            // Get ServiceInfo.
             var serviceId = (uint)(received.DataId >> 32);
             if (!StaticNetService.TryGetServiceInfo(serviceId, out var serviceInfo))
             {
                 goto SendEmpty;
             }
 
+            // Get ServiceMethod.
             if (!serviceInfo.TryGetMethod(received.DataId, out serviceMethod))
             {
                 goto SendEmpty;
             }
 
+            // Get ServiceInstance.
             if (!this.idToInstance.TryGetValue(serviceId, out var serverInstance))
             {
                 serverInstance = serviceInfo.CreateServer(this.serviceProvider);
@@ -88,11 +91,6 @@ public class NetService
         }
 
         var sendOwner = await serviceMethod.Process(serviceMethod.ServerInstance!, received.Received);
-        if (sendOwner.IsEmpty)
-        {
-            goto SendEmpty;
-        }
-
         await serverTerminal.SendServiceAsync(serviceMethod.Id, sendOwner);
         sendOwner.Return();
         return;

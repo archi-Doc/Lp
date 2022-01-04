@@ -65,7 +65,7 @@ public class TestServiceFrontend : ITestService
         var response = await this.ClientTerminal.SendAndReceiveServiceAsync(Id0, owner);
         this.result = response.Result;
         owner.Return();
-        if (this.result == NetResult.Success && response.Value.Memory.Length == 0)
+        if (this.result == NetResult.Success && response.Value.IsEmpty)
         {
             this.result = NetResult.NoNetService;
         }
@@ -97,7 +97,7 @@ public class TestServiceFrontend : ITestService
         var response = await this.ClientTerminal.SendAndReceiveServiceAsync(Id1, owner);
         this.result = response.Result;
         owner.Return();
-        if (this.result == NetResult.Success && response.Value.Memory.Length == 0)
+        if (this.result == NetResult.Success && response.Value.IsEmpty)
         {
             this.result = NetResult.NoNetService;
         }
@@ -129,7 +129,7 @@ public class TestServiceFrontend : ITestService
         var response = await this.ClientTerminal.SendAndReceiveServiceAsync(Id2, owner);
         this.result = response.Result;
         owner.Return();
-        if (this.result == NetResult.Success && response.Value.Memory.Length == 0)
+        if (this.result == NetResult.Success && response.Value.IsEmpty)
         {
             this.result = NetResult.NoNetService;
         }
@@ -159,7 +159,7 @@ public class TestServiceBackend
         if (impl == null)
         {
             // impl = new TestServiceImpl();
-            throw new InvalidOperationException();
+            throw new InvalidOperationException($"Could not create an instance of net service {typeof(TestServiceImpl).ToString()}.");
         }
 
         this.impl = impl;
