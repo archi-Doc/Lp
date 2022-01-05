@@ -360,6 +360,8 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
                     if (this.ServiceMethods.TryGetValue(serviceMethod.MethodId, out var s))
                     {// Duplicated
+                        this.Body.AddDiagnostic(NetsphereBody.Error_DuplicateServiceMethod, s.Location, serviceMethod.MethodId);
+                        this.Body.AddDiagnostic(NetsphereBody.Error_DuplicateServiceMethod, serviceMethod.Location, serviceMethod.MethodId);
                     }
                     else
                     {

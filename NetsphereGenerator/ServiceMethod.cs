@@ -12,9 +12,9 @@ public class ServiceMethod
 {
     public static ServiceMethod? Create(NetsphereObject machine, NetsphereObject method)
     {
+        const string taskName = "System.Threading.Tasks.Task";
         var returnObject = method.Method_ReturnObject;
-        if (returnObject?.BaseObject?.FullName != "System.Threading.Tasks.Task" &&
-            returnObject?.FullName != "System.Threading.Tasks.Task")
+        if (returnObject?.BaseObject?.FullName != taskName && returnObject?.FullName != taskName)
         {// Invalid return type
             method.Body.ReportDiagnostic(NetsphereBody.Error_MethodReturnType, method.Location);
         }
@@ -25,14 +25,14 @@ public class ServiceMethod
         }
 
         var serviceMethod = new ServiceMethod();
-        // stateMethod.Location = attribute.Location;
+        serviceMethod.Location = method.Location;
         serviceMethod.Name = method.SimpleName;
         serviceMethod.MethodId = (uint)Arc.Crypto.FarmHash.Hash64(method.FullName);
 
         return serviceMethod;
     }
 
-    // public Location Location { get; private set; } = Location.None;
+    public Location Location { get; private set; } = Location.None;
 
     public string Name { get; private set; } = string.Empty;
 

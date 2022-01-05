@@ -46,6 +46,10 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
         id: "NSG006", title: "Method return type", messageFormat: "The return type of service method must be Task or Task<T>",
         category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
+    public static readonly DiagnosticDescriptor Error_DuplicateServiceMethod = new DiagnosticDescriptor(
+        id: "NSG007", title: "Duplicate Service Method", messageFormat: "Duplicate Service Method {0} is found",
+        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
+
     public static readonly DiagnosticDescriptor Error_AttributePropertyError = new DiagnosticDescriptor(
         id: "BMG003", title: "Attribute property type error", messageFormat: "The argument specified does not match the type of the property",
         category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);

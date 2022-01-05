@@ -21,6 +21,8 @@ public interface ITestService2 : INetService
 [NetServiceInterface]
 public interface ITestService3 : INetService
 {
+    public Task Send3(string x, int y);
+
     public Task<int> Increment3(int x);
 }
 
@@ -63,6 +65,10 @@ public class ParentClass
         public async Task<int> Increment3(int x)
         {
             return x + 1;
+        }
+
+        public async Task Send3(string x, int y)
+        {
         }
     }
 
