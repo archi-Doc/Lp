@@ -10,7 +10,8 @@ public sealed class NetServiceInterfaceAttribute : Attribute
     /// </summary>
     public uint ServiceId { get; set; } = 0;
 
-    public NetServiceInterfaceAttribute()
+    public NetServiceInterfaceAttribute(uint serviceId = 0)
     {
+        this.ServiceId = serviceId;
     }
 }

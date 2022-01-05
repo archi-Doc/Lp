@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Microsoft.CodeAnalysis;
+
 namespace Netsphere.Generator;
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
@@ -12,6 +14,8 @@ public sealed class NetServiceObjectAttributeMock : Attribute
     public NetServiceObjectAttributeMock()
     {
     }
+
+    public Location Location { get; set; } = Location.None;
 
     public static NetServiceObjectAttributeMock FromArray(object?[] constructorArguments, KeyValuePair<string, object?>[] namedArguments)
     {

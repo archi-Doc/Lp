@@ -25,6 +25,11 @@ public interface ITestService3 : INetService
 }
 
 [NetServiceObject]
+public class TestServiceImpl0 : INetService
+{
+}
+
+// [NetServiceObject]
 public class TestServiceImpl : ITestService
 {
     public async Task Send(int x)
@@ -42,10 +47,18 @@ public class TestServiceImpl2 : TestServiceImpl, ITestService2
     }
 }
 
+[NetServiceObject]
+public class ExternalServiceImpl : IExternalService
+{
+    public async Task SendExternal(int x)
+    {
+    }
+}
+
 public class ParentClass
 {
     [NetServiceObject]
-    private class NestedServiceImpl3 : ITestService3
+    internal class NestedServiceImpl3 : ITestService3
     {
         public async Task<int> Increment3(int x)
         {

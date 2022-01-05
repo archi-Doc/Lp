@@ -12,15 +12,11 @@ public class ServiceMethod
 {
     public static ServiceMethod? Create(NetsphereObject machine, NetsphereObject method)
     {
-        var flag = false;
-        if (method.Method_ReturnObject?.FullName != "Task")
+        var returnObject = method.Method_ReturnObject;
+        if (returnObject?.BaseObject?.FullName != "System.Threading.Tasks.Task" &&
+            returnObject?.FullName != "System.Threading.Tasks.Task")
         {// Invalid return type
-            flag = true;
-        }
-
-        if (flag)
-        {
-            method.Body.ReportDiagnostic(NetsphereBody.Error_MethodFormat, method.Location);
+            method.Body.ReportDiagnostic(NetsphereBody.Error_MethodReturnType, method.Location);
         }
 
         if (method.Body.Abort)

@@ -30,6 +30,22 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
         id: "NSG002", title: "INetService", messageFormat: "NetServiceObject or NetServiceInterface must be derived from INetService",
         category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
+    public static readonly DiagnosticDescriptor Error_Accessibility = new DiagnosticDescriptor(
+        id: "NSG003", title: "Accessibility", messageFormat: "Access modifier of NetServiceObject must be public or internal",
+        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor Error_DuplicateServiceId = new DiagnosticDescriptor(
+        id: "NSG004", title: "Duplicate Service Id", messageFormat: "Duplicate Service Id {0} is found",
+        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor Error_DuplicateServiceObject = new DiagnosticDescriptor(
+        id: "NSG005", title: "Duplicate Service Object", messageFormat: "Multiple service objects implement service interface {0}",
+        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor Error_MethodReturnType = new DiagnosticDescriptor(
+        id: "NSG006", title: "Method return type", messageFormat: "The return type of service method must be Task or Task<T>",
+        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
+
     public static readonly DiagnosticDescriptor Error_AttributePropertyError = new DiagnosticDescriptor(
         id: "BMG003", title: "Attribute property type error", messageFormat: "The argument specified does not match the type of the property",
         category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
@@ -42,16 +58,8 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
         id: "BMG005", title: "Not derived", messageFormat: "MachineObject '{0}' must be derived from Machine class",
         category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
-    public static readonly DiagnosticDescriptor Error_MethodFormat = new DiagnosticDescriptor(
-        id: "BMG006", title: "Invalid method", messageFormat: "State method must be in the format of 'protected StateResult TestMethod(StateParameter parameter)'",
-        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
-
     public static readonly DiagnosticDescriptor Error_OpenGenericClass = new DiagnosticDescriptor(
         id: "BMG007", title: "Not closed generic", messageFormat: "MachineObject '{0}' is not a closed generic class",
-        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
-
-    public static readonly DiagnosticDescriptor Error_DuplicateTypeId = new DiagnosticDescriptor(
-        id: "BMG008", title: "Duplicate Service Id", messageFormat: "Service Id '{0}' must be unique",
         category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
     public static readonly DiagnosticDescriptor Error_DuplicateStateId = new DiagnosticDescriptor(
@@ -75,9 +83,11 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
     {
     }
 
-    internal Dictionary<uint, NetsphereObject> Interfaces = new();
+    internal Dictionary<uint, NetsphereObject> IdToNetInterface = new();
 
-    internal Dictionary<uint, NetsphereObject> Implementations = new();
+    internal List<NetsphereObject> NetObjects = new();
+
+    internal Dictionary<uint, NetsphereObject> IdToNetObject = new();
 
     internal Dictionary<string, List<NetsphereObject>> Namespaces = new();
 
@@ -96,7 +106,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
             return;
         }
 
-        array = this.Interfaces.Values.Concat(this.Implementations.Values).ToArray();
+        array = this.IdToNetInterface.Values.Concat(this.NetObjects).ToArray();
         foreach (var x in array)
         {
             x.ConfigureRelation();
@@ -140,7 +150,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
 
                 firstFlag = false;
 
-                y.Generate(ssb, info); // Primary objects
+                // y.Generate(ssb, info); // Primary objects
             }
 
             var result = ssb.Finalize();
@@ -157,7 +167,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
         }
 
         cancellationToken.ThrowIfCancellationRequested();
-        this.GenerateLoader(generator, info, rootObjects);
+        // this.GenerateLoader(generator, info, rootObjects);
 
         this.FlushDiagnostic();
     }
@@ -224,11 +234,11 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
             }
         }
 
-        info.ModuleInitializerClass.Add("BigMachines.Generator.Generated");
+        info.ModuleInitializerClass.Add("Netsphere.Generator.Generated");
 
         ssb.AppendLine();
         using (var scopeCrossLink = ssb.ScopeNamespace(ns!))
-        using (var scopeClass = ssb.ScopeBrace("public static class BigMachinesModule" + assemblyId))
+        using (var scopeClass = ssb.ScopeBrace("public static class NetsphereModule" + assemblyId))
         {
             ssb.AppendLine("private static bool Initialized;");
             ssb.AppendLine();
