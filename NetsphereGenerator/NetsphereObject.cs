@@ -444,12 +444,12 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             return;
         }
 
-        /*else if (this.IsAbstractOrInterface)
-        {
-            return;
-        }*/
+        if (this.ObjectFlag.HasFlag(NetsphereObjectFlag.NetServiceInterface))
+        {// NetServiceInterface (Frontend)
+            this.GenerateFrontend(ssb, info);
+        }
 
-        using (var cls = ssb.ScopeBrace($"{this.AccessibilityName} partial {this.KindName} {this.LocalName}"))
+        /*using (var cls = ssb.ScopeBrace($"{this.AccessibilityName} partial {this.KindName} {this.LocalName}"))
         {
             if (this.NetServiceObjectAttribute != null)
             {
@@ -467,6 +467,47 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 ssb.AppendLine();
                 GenerateLoader(ssb, info, this, this.Children);
             }
+        }*/
+    }
+
+    internal void GenerateFrontend(ScopingStringBuilder ssb, GeneratorInformation info)
+    {
+        var name = NetsphereBody.FrontendClassName + this.NetServiceInterfaceAttribute!.ServiceId.ToString("x4");
+        using (var cls = ssb.ScopeBrace($"{this.AccessibilityName} class {name} : {this.SimpleName}"))
+        {
+            ssb.AppendLine("public NetResult Result => this.result;");
+            ssb.AppendLine();
+            ssb.AppendLine("private NetResult result;");
+            ssb.AppendLine();
+
+            using (var ctr = ssb.ScopeBrace($"public {name}(ClientTerminal clientTerminal)"))
+            {
+                ssb.AppendLine("this.result = default;");
+                ssb.AppendLine("this.ClientTerminal = clientTerminal;");
+            }
+
+            ssb.AppendLine();
+            ssb.AppendLine("public ClientTerminal ClientTerminal { get; }");
+
+            if (this.ServiceMethods != null)
+            {
+                foreach (var x in this.ServiceMethods.Values)
+                {
+                    ssb.AppendLine();
+                    this.GenerateFrontend_Method(ssb, info, x);
+                }
+            }
+        }
+    }
+
+    internal void GenerateFrontend_Method(ScopingStringBuilder ssb, GeneratorInformation info, ServiceMethod method)
+    {
+        var taskString = method.ReturnType == null ? "Task" : $"Task<{method.ReturnType.FullName}>";
+        var returnString = method.ReturnType == null ? "return;" : "return default;";
+
+        using (var scopeMethod = ssb.ScopeBrace($"public async {taskString} {method.SimpleName}({method.GetArguments()})"))
+        {
+            ssb.AppendLine(returnString);
         }
     }
 

@@ -14,7 +14,12 @@ public class ServiceMethod
     {
         const string taskName = "System.Threading.Tasks.Task";
         var returnObject = method.Method_ReturnObject;
-        if (returnObject?.BaseObject?.FullName != taskName && returnObject?.FullName != taskName)
+        if (returnObject == null)
+        {
+            return null;
+        }
+
+        if (returnObject.BaseObject?.FullName != taskName && returnObject.FullName != taskName)
         {// Invalid return type
             method.Body.ReportDiagnostic(NetsphereBody.Error_MethodReturnType, method.Location);
         }
@@ -24,19 +29,47 @@ public class ServiceMethod
             return null;
         }
 
-        var serviceMethod = new ServiceMethod();
-        serviceMethod.Location = method.Location;
-        serviceMethod.Name = method.SimpleName;
+        var serviceMethod = new ServiceMethod(method);
         serviceMethod.MethodId = (uint)Arc.Crypto.FarmHash.Hash64(method.FullName);
+        if (returnObject.Generics_Arguments.Length > 0)
+        {
+            serviceMethod.ReturnType = returnObject.Generics_Arguments[0];
+        }
 
         return serviceMethod;
     }
 
-    public Location Location { get; private set; } = Location.None;
+    public ServiceMethod(NetsphereObject method)
+    {
+        this.method = method;
+    }
 
-    public string Name { get; private set; } = string.Empty;
+    public Location Location => this.method.Location;
+
+    public string SimpleName => this.method.SimpleName;
 
     public uint MethodId { get; private set; }
 
-    public bool DuplicateId { get; internal set; }
+    public NetsphereObject? ReturnType { get; internal set; }
+
+    public string GetArguments()
+    {
+        var sb = new StringBuilder();
+        for (var i = 0; i < this.method.Method_Parameters.Length; i++)
+        {
+            if (i != 0)
+            {
+                sb.Append(", ");
+            }
+
+            sb.Append(this.method.Method_Parameters[i]);
+            sb.Append(" ");
+            sb.Append(NetsphereBody.ArgumentName);
+            sb.Append(i);
+        }
+
+        return sb.ToString();
+    }
+
+    private NetsphereObject method;
 }

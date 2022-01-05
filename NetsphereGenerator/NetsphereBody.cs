@@ -21,6 +21,9 @@ namespace Netsphere.Generator;
 public class NetsphereBody : VisceralBody<NetsphereObject>
 {
     public const string GeneratorName = "NetsphereGenerator";
+    public const string FrontendClassName = "__gen_frontend__";
+    public const string BackendClassName = "__gen_backend__";
+    public const string ArgumentName = "a";
 
     public static readonly DiagnosticDescriptor Error_GenericType = new DiagnosticDescriptor(
         id: "NSG001", title: "Generic type", messageFormat: "Generic type is not supported",
@@ -154,7 +157,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
 
                 firstFlag = false;
 
-                // y.Generate(ssb, info); // Primary objects
+                y.Generate(ssb, info); // Primary objects
             }
 
             var result = ssb.Finalize();
@@ -187,6 +190,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
 
         ssb.AppendLine("#nullable enable", false);
         ssb.AppendLine("#pragma warning disable CS1591", false);
+        ssb.AppendLine("#pragma warning disable CS1998", false);
         ssb.AppendLine();
     }
 
