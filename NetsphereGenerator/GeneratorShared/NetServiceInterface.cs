@@ -2,7 +2,7 @@
 
 namespace Netsphere.Generator;
 
-[AttributeUsage(AttributeTargets.Interface, AllowMultiple = false, Inherited = true)]
+[AttributeUsage(AttributeTargets.Interface, AllowMultiple = false, Inherited = false)]
 public sealed class NetServiceInterfaceAttributeMock : Attribute
 {
     public static readonly string SimpleName = "NetServiceInterface";
@@ -13,9 +13,6 @@ public sealed class NetServiceInterfaceAttributeMock : Attribute
     {
     }
 
-    /// <summary>
-    /// Gets or sets an identifier of the net service [0 : auto-generated from the interface name].
-    /// </summary>
     public uint ServiceId { get; set; } = 0;
 
     public static NetServiceInterfaceAttributeMock FromArray(object?[] constructorArguments, KeyValuePair<string, object?>[] namedArguments)

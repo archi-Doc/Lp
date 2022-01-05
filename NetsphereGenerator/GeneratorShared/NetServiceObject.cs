@@ -2,7 +2,7 @@
 
 namespace Netsphere.Generator;
 
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = true)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
 public sealed class NetServiceObjectAttributeMock : Attribute
 {
     public static readonly string SimpleName = "NetServiceObject";

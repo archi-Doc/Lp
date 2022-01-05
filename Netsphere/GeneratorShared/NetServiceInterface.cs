@@ -2,7 +2,7 @@
 
 namespace Netsphere;
 
-[AttributeUsage(AttributeTargets.Interface, AllowMultiple = false, Inherited = true)]
+[AttributeUsage(AttributeTargets.Interface, AllowMultiple = false, Inherited = false)]
 public sealed class NetServiceInterfaceAttribute : Attribute
 {
     /// <summary>

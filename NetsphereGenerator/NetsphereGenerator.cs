@@ -154,8 +154,7 @@ public class NetsphereGeneratorV2 : IIncrementalGenerator, IGeneratorInformation
                         body.Add(s);
                         break;
                     }
-
-                    if (!generatorOptionSet &&
+                    else if (!generatorOptionSet &&
                         SymbolEqualityComparer.Default.Equals(y.AttributeClass, netsphereGeneratorOptionAttributeSymbol))
                     {// NetsphereGeneratorOption
                         generatorOptionSet = true;

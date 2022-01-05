@@ -29,7 +29,9 @@ public enum NetsphereObjectFlag
     RelationConfigured = 1 << 1,
     Checked = 1 << 2,
 
-    HasDefaultConstructor = 1 << 13, // Has default constructor
+    NetServiceInterface = 1 << 10, // NetServiceInterface
+    NetServiceObject = 1 << 11, // NetServiceObject
+    HasDefaultConstructor = 1 << 12, // Has default constructor
 }
 
 public class NetsphereObject : VisceralObjectBase<NetsphereObject>
@@ -42,7 +44,9 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     public NetsphereObjectFlag ObjectFlag { get; private set; }
 
-    public NetServiceObjectAttributeMock? ObjectAttribute { get; private set; }
+    public NetServiceObjectAttributeMock? NetServiceObjectAttribute { get; private set; }
+
+    public NetServiceInterfaceAttributeMock? NetServiceInterfaceAttribute { get; private set; }
 
     public int LoaderNumber { get; private set; } = -1;
 
@@ -106,30 +110,47 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
         this.ObjectFlag |= NetsphereObjectFlag.Configured;
 
-        // Generic type is not supported.
-        if (this.Generics_Kind != VisceralGenericsKind.NotGeneric)
-        {
-            return;
-        }
-
-        // Check INetService
-        if (!this.AllInterfaces.Any(x => x == INetService.FullName))
-        {
-            return;
-        }
-
-        // NetServiceObjectAttribute
         if (this.AllAttributes.FirstOrDefault(x => x.FullName == NetServiceObjectAttributeMock.FullName) is { } objectAttribute)
-        {
-            this.Location = objectAttribute.Location;
+        {// NetServiceObjectAttribute
             try
             {
-                this.ObjectAttribute = NetServiceObjectAttributeMock.FromArray(objectAttribute.ConstructorArguments, objectAttribute.NamedArguments);
+                this.NetServiceObjectAttribute = NetServiceObjectAttributeMock.FromArray(objectAttribute.ConstructorArguments, objectAttribute.NamedArguments);
+                this.ObjectFlag |= NetsphereObjectFlag.NetServiceObject;
             }
             catch (InvalidCastException)
             {
                 this.Body.ReportDiagnostic(NetsphereBody.Error_AttributePropertyError, objectAttribute.Location);
             }
+        }
+        else if (this.AllAttributes.FirstOrDefault(x => x.FullName == NetServiceInterfaceAttributeMock.FullName) is { } interfaceAttribute)
+        {// NetServiceInterfaceAttribute
+            try
+            {
+                this.NetServiceInterfaceAttribute = NetServiceInterfaceAttributeMock.FromArray(interfaceAttribute.ConstructorArguments, interfaceAttribute.NamedArguments);
+                this.ObjectFlag |= NetsphereObjectFlag.NetServiceInterface;
+            }
+            catch (InvalidCastException)
+            {
+                this.Body.ReportDiagnostic(NetsphereBody.Error_AttributePropertyError, interfaceAttribute.Location);
+            }
+        }
+        else
+        {
+            return;
+        }
+
+        // Generic type is not supported.
+        if (this.Generics_Kind != VisceralGenericsKind.NotGeneric)
+        {
+            this.Body.AddDiagnostic(NetsphereBody.Error_GenericType, this.Location);
+            return;
+        }
+
+        // Must be derived from INetService
+        if (!this.AllInterfaces.Any(x => x == INetService.FullName))
+        {
+            this.Body.AddDiagnostic(NetsphereBody.Error_INetService, this.Location);
+            return;
         }
 
         // Used keywords
@@ -139,8 +160,11 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             this.Identifier.Add(x.SimpleName);
         }
 
-        // Service ID
-        this.ServiceId = (uint)Arc.Crypto.FarmHash.Hash64(this.FullName);
+        if (this.ObjectFlag.HasFlag(NetsphereObjectFlag.NetServiceInterface))
+        {
+            // Service ID
+            this.ServiceId = (uint)Arc.Crypto.FarmHash.Hash64(this.FullName);
+        }
 
         if (this.Kind == VisceralObjectKind.Class || this.Kind == VisceralObjectKind.Record || this.Kind == VisceralObjectKind.Struct)
         {
@@ -318,7 +342,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         }
 
         var classFormat = "__gen__bm__{0:D4}";
-        var list2 = list.SelectMany(x => x.ConstructedObjects).Where(x => x.ObjectAttribute != null).ToArray();
+        var list2 = list.SelectMany(x => x.ConstructedObjects).Where(x => x.NetServiceObjectAttribute != null).ToArray();
 
         string? loaderIdentifier = null;
         var list3 = list2.ToArray();
@@ -389,7 +413,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
         using (var cls = ssb.ScopeBrace($"{this.AccessibilityName} partial {this.KindName} {this.LocalName}"))
         {
-            if (this.ObjectAttribute != null)
+            if (this.NetServiceObjectAttribute != null)
             {
                 this.Generate2(ssb, info);
             }

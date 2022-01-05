@@ -2,7 +2,7 @@
 
 namespace Netsphere;
 
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = true)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
 public sealed class NetServiceObjectAttribute : Attribute
 {
     public NetServiceObjectAttribute()

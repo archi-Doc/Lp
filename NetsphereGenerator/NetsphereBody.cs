@@ -22,6 +22,14 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
 {
     public const string GeneratorName = "NetsphereGenerator";
 
+    public static readonly DiagnosticDescriptor Error_GenericType = new DiagnosticDescriptor(
+        id: "NSG001", title: "Generic type", messageFormat: "Generic type is not supported",
+        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor Error_INetService = new DiagnosticDescriptor(
+        id: "NSG002", title: "INetService", messageFormat: "NetServiceObject or NetServiceInterface must be derived from INetService",
+        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
+
     public static readonly DiagnosticDescriptor Error_AttributePropertyError = new DiagnosticDescriptor(
         id: "BMG003", title: "Attribute property type error", messageFormat: "The argument specified does not match the type of the property",
         category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
