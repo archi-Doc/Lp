@@ -141,10 +141,6 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
         // Service ID
         this.ServiceId = (uint)Arc.Crypto.FarmHash.Hash64(this.FullName);
-        if (this.ObjectAttribute != null && this.ObjectAttribute.ServiceId != 0)
-        {
-            this.ServiceId = this.ObjectAttribute.ServiceId;
-        }
 
         if (this.Kind == VisceralObjectKind.Class || this.Kind == VisceralObjectKind.Record || this.Kind == VisceralObjectKind.Struct)
         {

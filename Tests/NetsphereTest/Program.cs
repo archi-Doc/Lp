@@ -1,13 +1,13 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Arc.Threading;
-using CrossChannel;
+global using System;
+global using System.Threading;
+global using System.Threading.Tasks;
+global using Arc.Threading;
+global using CrossChannel;
+global using LP;
+global using Netsphere;
 using DryIoc;
-using LP;
-using Netsphere;
 using SimpleCommandLine;
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
