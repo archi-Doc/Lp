@@ -9,7 +9,7 @@ public class NetService
 {
     public delegate Task<ByteArrayPool.MemoryOwner> ServiceDelegate(object instance, ByteArrayPool.MemoryOwner received);
 
-    public delegate INetService CreateClientDelegate(ClientTerminal clientTerminal);
+    public delegate INetService CreateFrontendDelegate(ClientTerminal clientTerminal);
 
     public delegate object CreateServerDelegate(IServiceProvider? serviceProvider);
 

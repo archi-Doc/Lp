@@ -53,7 +53,7 @@ public class Program
         options.EnableTest = true;
         NetControl.QuickStart("test", options, true);
 
-        StaticNetService.SetClientDelegate<ITestService>(static x => new TestServiceFrontend(x));
+        StaticNetService.SetFrontendDelegate<ITestService>(static x => new TestServiceFrontend(x));
         StaticNetService.SetServiceInfo(TestServiceBackend.CreateServiceInfo());
 
         // await SimpleParser.ParseAndRunAsync(commandTypes, "nettest -node 3.18.216.240:49152", parserOptions); // Main process

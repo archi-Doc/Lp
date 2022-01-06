@@ -98,6 +98,7 @@ public class ServiceMethod
         else
         {
             var sb = new StringBuilder();
+            sb.Append("(");
             for (var i = 0; i < this.method.Method_Parameters.Length; i++)
             {
                 if (i != 0)
@@ -109,6 +110,37 @@ public class ServiceMethod
                 sb.Append(i);
             }
 
+            sb.Append(")");
+            return sb.ToString();
+        }
+    }
+
+    public string GetParameterTypes()
+    {// (int, string)
+        var parameters = this.method.Method_Parameters;
+        if (parameters.Length == 0)
+        {
+            return string.Empty;
+        }
+        else if (parameters.Length == 1)
+        {
+            return parameters[0];
+        }
+        else
+        {
+            var sb = new StringBuilder();
+            sb.Append("(");
+            for (var i = 0; i < this.method.Method_Parameters.Length; i++)
+            {
+                if (i != 0)
+                {
+                    sb.Append(", ");
+                }
+
+                sb.Append(parameters[i]);
+            }
+
+            sb.Append(")");
             return sb.ToString();
         }
     }

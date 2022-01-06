@@ -183,7 +183,7 @@ public class TestServiceBackend
             return default;
         }
 
-        var result = await ((TestServiceBackend)obj).impl.Send(value.Item1, value.Item2);
+        var result = await ((ITestService)((TestServiceBackend)obj).impl).Send(value.Item1, value.Item2);
         BlockService.TrySerialize(result, out var send);
         return send;
     }

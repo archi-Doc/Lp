@@ -21,7 +21,7 @@ namespace Netsphere.Generator;
 public class NetsphereBody : VisceralBody<NetsphereObject>
 {
     public const string GeneratorName = "NetsphereGenerator";
-    public const string FrontendClassName = "__gen_frontend__";
+    public const string FrontendClassName = "Frontend_"; // "__gen_frontend__";
     public const string BackendClassName = "__gen_backend__";
     public const string ArgumentName = "a";
     public const string NetResultFullName = "Netsphere.NetResult";
@@ -135,30 +135,115 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
 
     public void Generate(IGeneratorInformation generator, CancellationToken cancellationToken)
     {
+        var assemblyId = string.Empty; // Assembly ID
+        if (!string.IsNullOrEmpty(generator.AssemblyName))
+        {
+            assemblyId = VisceralHelper.AssemblyNameToIdentifier("_" + generator.AssemblyName);
+        }
+
+        this.GenerateFrontend(generator, assemblyId);
+    }
+
+    public void GenerateFrontend(IGeneratorInformation generator, string assemblyId)
+    {
+        ScopingStringBuilder ssb = new();
+        GeneratorInformation info = new();
+
+        var array = this.IdToNetInterface.Values.ToArray();
+
+        this.GenerateHeader(ssb);
+        ssb.AppendLine($"namespace Netsphere.Generated;");
+        ssb.AppendLine();
+
+        using (var scopeClass = ssb.ScopeBrace("internal static class Frontend" + assemblyId))
+        {
+            ssb.AppendLine("private static bool Initialized;");
+            ssb.AppendLine();
+            ssb.AppendLine("[ModuleInitializer]");
+
+            using (var scopeMethod = ssb.ScopeBrace("public static void Initialize()"))
+            {
+                ssb.AppendLine("if (Initialized) return;");
+                ssb.AppendLine("Initialized = true;");
+                ssb.AppendLine();
+
+                foreach (var y in array.Where(a => a.ObjectFlag.HasFlag(NetsphereObjectFlag.NetServiceInterface)))
+                {
+                    ssb.AppendLine($"StaticNetService.SetFrontendDelegate<{y.FullName}>(static x => new {y.ClassName}(x));");
+                }
+            }
+
+            foreach (var y in array)
+            {
+                if (y.ObjectFlag.HasFlag(NetsphereObjectFlag.NetServiceInterface))
+                {// NetServiceInterface (Frontend)
+                    ssb.AppendLine();
+                    y.GenerateFrontend(ssb, info);
+                }
+            }
+
+            var result = ssb.Finalize();
+
+            if (generator.GenerateToFile && generator.TargetFolder != null && Directory.Exists(generator.TargetFolder))
+            {
+                this.StringToFile(result, Path.Combine(generator.TargetFolder, $"gen.Netsphere.Frontend.cs"));
+            }
+            else
+            {
+                this.Context?.AddSource($"gen.Netsphere.Frontend", SourceText.From(result, Encoding.UTF8));
+                this.Context2?.AddSource($"gen.Netsphere.Frontend", SourceText.From(result, Encoding.UTF8));
+            }
+        }
+
+        this.FlushDiagnostic();
+    }
+
+    /*public void Generate(IGeneratorInformation generator, CancellationToken cancellationToken)
+    {
         ScopingStringBuilder ssb = new();
         GeneratorInformation info = new();
         List<NetsphereObject> rootObjects = new();
+
+        // Namespace
+        var assemblyId = string.Empty; // Assembly ID
+        if (!string.IsNullOrEmpty(generator.AssemblyName))
+        {
+            assemblyId = VisceralHelper.AssemblyNameToIdentifier("_" + generator.AssemblyName);
+        }
 
         // Namespace
         foreach (var x in this.Namespaces)
         {
             cancellationToken.ThrowIfCancellationRequested();
             this.GenerateHeader(ssb);
-            var ns = ssb.ScopeNamespace(x.Key);
+            ssb.AppendLine($"namespace {x.Key};");
+            ssb.AppendLine();
 
             rootObjects.AddRange(x.Value); // For loader generation
 
-            var firstFlag = true;
-            foreach (var y in x.Value)
+            using (var scopeClass = ssb.ScopeBrace("internal static class NetsphereModule" + assemblyId))
             {
-                if (!firstFlag)
+                ssb.AppendLine("private static bool Initialized;");
+                ssb.AppendLine();
+                ssb.AppendLine("[ModuleInitializer]");
+
+                using (var scopeMethod = ssb.ScopeBrace("public static void Initialize()"))
                 {
+                    ssb.AppendLine("if (Initialized) return;");
+                    ssb.AppendLine("Initialized = true;");
                     ssb.AppendLine();
+
+                    foreach (var y in x.Value.Where(a => a.ObjectFlag.HasFlag(NetsphereObjectFlag.NetServiceInterface)))
+                    {
+                        ssb.AppendLine($"StaticNetService.SetFrontendDelegate<{y.FullName}>(static x => new {y.ClassName}(x));");
+                    }
                 }
 
-                firstFlag = false;
-
-                y.Generate(ssb, info); // Primary objects
+                foreach (var y in x.Value)
+                {
+                    ssb.AppendLine();
+                    y.Generate(ssb, info); // Primary objects
+                }
             }
 
             var result = ssb.Finalize();
@@ -178,7 +263,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
         // this.GenerateLoader(generator, info, rootObjects);
 
         this.FlushDiagnostic();
-    }
+    }*/
 
     private void GenerateHeader(ScopingStringBuilder ssb)
     {

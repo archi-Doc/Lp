@@ -66,6 +66,8 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     public Dictionary<uint, ServiceMethod>? ServiceMethods { get; private set; } // For NetServiceInterface; Methods included in this net service interface.
 
+    public string ClassName { get; set; } = string.Empty;
+
     public Arc.Visceral.NullableAnnotation NullableAnnotationIfReferenceType
     {
         get
@@ -348,6 +350,8 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         }
         else if (this.NetServiceInterfaceAttribute != null)
         {// NetServiceInterface
+            this.ClassName = NetsphereBody.FrontendClassName + this.NetServiceInterfaceAttribute.ServiceId.ToString("x4");
+
             foreach (var x in this.GetMembers(VisceralTarget.Method))
             {
                 var serviceMethod = ServiceMethod.Create(this, x);
@@ -472,15 +476,14 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     internal void GenerateFrontend(ScopingStringBuilder ssb, GeneratorInformation info)
     {
-        var name = NetsphereBody.FrontendClassName + this.NetServiceInterfaceAttribute!.ServiceId.ToString("x4");
-        using (var cls = ssb.ScopeBrace($"{this.AccessibilityName} class {name} : {this.SimpleName}"))
+        using (var cls = ssb.ScopeBrace($"private class {this.ClassName} : {this.FullName}")) // {this.AccessibilityName}
         {
             ssb.AppendLine("public NetResult Result => this.result;");
             ssb.AppendLine();
             ssb.AppendLine("private NetResult result;");
             ssb.AppendLine();
 
-            using (var ctr = ssb.ScopeBrace($"public {name}(ClientTerminal clientTerminal)"))
+            using (var ctr = ssb.ScopeBrace($"public {this.ClassName}(ClientTerminal clientTerminal)"))
             {
                 ssb.AppendLine("this.result = default;");
                 ssb.AppendLine("this.ClientTerminal = clientTerminal;");
