@@ -504,10 +504,58 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
     {
         var taskString = method.ReturnType == null ? "Task" : $"Task<{method.ReturnType.FullName}>";
         var returnString = method.ReturnType == null ? "return;" : "return default;";
+        var deserializeString = method.ReturnType == null ? "NetResult" : method.ReturnType.FullName;
 
-        using (var scopeMethod = ssb.ScopeBrace($"public async {taskString} {method.SimpleName}({method.GetArguments()})"))
+        using (var scopeMethod = ssb.ScopeBrace($"public async {taskString} {method.SimpleName}({method.GetParameters()})"))
         {
-            ssb.AppendLine(returnString);
+            using (var scopeSerialize = ssb.ScopeBrace($"if (!LP.Block.BlockService.TrySerialize({method.GetParameterNames()}, out var owner))"))
+            {
+                ssb.AppendLine("this.result = NetResult.SerializationError;");
+                ssb.AppendLine(returnString);
+            }
+
+            ssb.AppendLine();
+            ssb.AppendLine($"var response = await this.ClientTerminal.SendAndReceiveServiceAsync({method.IdString}, owner);");
+            ssb.AppendLine("this.result = response.Result;");
+            ssb.AppendLine("owner.Return();");
+
+            ssb.AppendLine();
+            using (var scopeNoNetService = ssb.ScopeBrace("if (this.result == NetResult.Success && response.Value.IsEmpty)"))
+            {
+                ssb.AppendLine("this.result = NetResult.NoNetService;");
+            }
+
+            ssb.AppendLine();
+            using (var scopeNotSuccess = ssb.ScopeBrace("if (this.result != NetResult.Success)"))
+            {
+                ssb.AppendLine(returnString);
+            }
+
+            ssb.AppendLine();
+            using (var scopeDeserialize = ssb.ScopeBrace($"if (!Tinyhand.TinyhandSerializer.TryDeserialize<{deserializeString}>(response.Value.Memory, out var result))"))
+            {
+                ssb.AppendLine("this.result = NetResult.DeserializationError;");
+                if (method.ReturnType?.FullName == NetsphereBody.NetResultFullName)
+                {
+                    ssb.AppendLine("return this.result;");
+                }
+                else
+                {
+                    ssb.AppendLine(returnString);
+                }
+            }
+
+            ssb.AppendLine();
+            if (method.ReturnType?.FullName == NetsphereBody.NetResultFullName)
+            {
+                ssb.AppendLine("this.result = result;");
+            }
+
+            ssb.AppendLine("response.Value.Return();");
+            if (method.ReturnType != null)
+            {
+                ssb.AppendLine("return result;");
+            }
         }
     }
 

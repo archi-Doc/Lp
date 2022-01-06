@@ -24,6 +24,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
     public const string FrontendClassName = "__gen_frontend__";
     public const string BackendClassName = "__gen_backend__";
     public const string ArgumentName = "a";
+    public const string NetResultFullName = "Netsphere.NetResult";
 
     public static readonly DiagnosticDescriptor Error_GenericType = new DiagnosticDescriptor(
         id: "NSG001", title: "Generic type", messageFormat: "Generic type is not supported",

@@ -10,7 +10,7 @@ namespace Netsphere.Generator;
 
 public class ServiceMethod
 {
-    public static ServiceMethod? Create(NetsphereObject machine, NetsphereObject method)
+    public static ServiceMethod? Create(NetsphereObject obj, NetsphereObject method)
     {
         const string taskName = "System.Threading.Tasks.Task";
         var returnObject = method.Method_ReturnObject;
@@ -31,6 +31,15 @@ public class ServiceMethod
 
         var serviceMethod = new ServiceMethod(method);
         serviceMethod.MethodId = (uint)Arc.Crypto.FarmHash.Hash64(method.FullName);
+        if (obj.NetServiceInterfaceAttribute == null)
+        {
+            serviceMethod.Id = serviceMethod.MethodId;
+        }
+        else
+        {
+            serviceMethod.Id = (ulong)obj.NetServiceInterfaceAttribute.ServiceId << 32 | serviceMethod.MethodId;
+        }
+
         if (returnObject.Generics_Arguments.Length > 0)
         {
             serviceMethod.ReturnType = returnObject.Generics_Arguments[0];
@@ -50,10 +59,14 @@ public class ServiceMethod
 
     public uint MethodId { get; private set; }
 
+    public ulong Id { get; private set; }
+
+    public string IdString => $"0x{this.Id:x8}ul";
+
     public NetsphereObject? ReturnType { get; internal set; }
 
-    public string GetArguments()
-    {
+    public string GetParameters()
+    {// int a0, string a1
         var sb = new StringBuilder();
         for (var i = 0; i < this.method.Method_Parameters.Length; i++)
         {
@@ -69,6 +82,35 @@ public class ServiceMethod
         }
 
         return sb.ToString();
+    }
+
+    public string GetParameterNames()
+    {// (a0, a1)
+        var parameters = this.method.Method_Parameters;
+        if (parameters.Length == 0)
+        {
+            return string.Empty;
+        }
+        else if (parameters.Length == 1)
+        {
+            return NetsphereBody.ArgumentName + "0";
+        }
+        else
+        {
+            var sb = new StringBuilder();
+            for (var i = 0; i < this.method.Method_Parameters.Length; i++)
+            {
+                if (i != 0)
+                {
+                    sb.Append(", ");
+                }
+
+                sb.Append(NetsphereBody.ArgumentName);
+                sb.Append(i);
+            }
+
+            return sb.ToString();
+        }
     }
 
     private NetsphereObject method;
