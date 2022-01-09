@@ -7,7 +7,7 @@ namespace Netsphere;
 
 public static class StaticNetService
 {
-    public static void SetClientDelegate<TService>(NetService.CreateClientDelegate @delegate)
+    public static void SetFrontendDelegate<TService>(NetService.CreateFrontendDelegate @delegate)
         where TService : INetService
     {
         DelegateCache<TService>.Create = @delegate;
@@ -40,7 +40,7 @@ public static class StaticNetService
     private static class DelegateCache<T>
     {
 #pragma warning disable SA1401 // Fields should be private
-        internal static NetService.CreateClientDelegate? Create;
+        internal static NetService.CreateFrontendDelegate? Create;
 #pragma warning restore SA1401 // Fields should be private
 
         static DelegateCache()

@@ -1,13 +1,13 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Arc.Threading;
-using CrossChannel;
+global using System;
+global using System.Threading;
+global using System.Threading.Tasks;
+global using Arc.Threading;
+global using CrossChannel;
+global using LP;
+global using Netsphere;
 using DryIoc;
-using LP;
-using Netsphere;
 using SimpleCommandLine;
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
@@ -53,7 +53,7 @@ public class Program
         options.EnableTest = true;
         NetControl.QuickStart("test", options, true);
 
-        StaticNetService.SetClientDelegate<ITestService>(static x => new TestServiceFrontend(x));
+        StaticNetService.SetFrontendDelegate<ITestService>(static x => new TestServiceFrontend(x));
         StaticNetService.SetServiceInfo(TestServiceBackend.CreateServiceInfo());
 
         // await SimpleParser.ParseAndRunAsync(commandTypes, "nettest -node 3.18.216.240:49152", parserOptions); // Main process

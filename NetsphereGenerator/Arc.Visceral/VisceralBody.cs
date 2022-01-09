@@ -324,10 +324,10 @@ public class VisceralBody<T>
                 hash ^= this.Location.GetHashCode();
             }
 
-            if (this.Args != null)
+            /*if (this.Args != null)
             {
                 hash ^= this.Args.GetHashCode();
-            }
+            }*/
 
             return hash;
         }
@@ -340,7 +340,7 @@ public class VisceralBody<T>
             }
 
             var x = (DiagnosticIdentification)obj;
-            return this.Descriptor == x.Descriptor && this.Location == x.Location && this.Args == x.Args;
+            return this.Descriptor == x.Descriptor && this.Location == x.Location; // && this.Args == x.Args;
         }
     }
 

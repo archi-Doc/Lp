@@ -23,13 +23,15 @@ public enum DeclarationCondition
 }
 
 [Flags]
-public enum BigMachinesObjectFlag
+public enum NetsphereObjectFlag
 {
     Configured = 1 << 0,
     RelationConfigured = 1 << 1,
     Checked = 1 << 2,
 
-    HasDefaultConstructor = 1 << 13, // Has default constructor
+    NetServiceInterface = 1 << 10, // NetServiceInterface
+    NetServiceObject = 1 << 11, // NetServiceObject
+    HasDefaultConstructor = 1 << 12, // Has default constructor
 }
 
 public class NetsphereObject : VisceralObjectBase<NetsphereObject>
@@ -40,21 +42,13 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     public new NetsphereBody Body => (NetsphereBody)((VisceralObjectBase<NetsphereObject>)this).Body;
 
-    public BigMachinesObjectFlag ObjectFlag { get; private set; }
+    public NetsphereObjectFlag ObjectFlag { get; private set; }
 
-    public NetServiceObjectAttributeMock? ObjectAttribute { get; private set; }
+    public NetServiceObjectAttributeMock? NetServiceObjectAttribute { get; private set; }
 
-    public NetsphereObject? MachineObject { get; private set; }
-
-    public NetsphereObject? IdentifierObject { get; private set; }
-
-    public string StateName { get; private set; } = string.Empty;
-
-    public string? LoaderIdentifier { get; private set; }
+    public NetServiceInterfaceAttributeMock? NetServiceInterfaceAttribute { get; private set; }
 
     public int LoaderNumber { get; private set; } = -1;
-
-    public bool IsAbstractOrInterface => this.Kind == VisceralObjectKind.Interface || (this.symbol is INamedTypeSymbol nts && nts.IsAbstract);
 
     public List<NetsphereObject>? Children { get; private set; } // The opposite of ContainingObject
 
@@ -66,11 +60,13 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     public string GenericsNumberString => this.GenericsNumber > 1 ? this.GenericsNumber.ToString() : string.Empty;
 
-    public NetsphereObject? ClosedGenericHint { get; private set; }
+    public NetsphereObject? Implementation { get; private set; } // For NetServiceInterface; NetsphereObject that implements this net service interface.
 
-    public string? GroupType { get; private set; }
+    public List<NetsphereObject>? ServiceInterfaces { get; private set; } // For NetServiceObjectAttribute; Net service interfaces implemented by this net service object.
 
-    public string NewIfDerived { get; private set; } = string.Empty;
+    public Dictionary<uint, ServiceMethod>? ServiceMethods { get; private set; } // For NetServiceInterface; Methods included in this net service interface.
+
+    public string ClassName { get; set; } = string.Empty;
 
     public Arc.Visceral.NullableAnnotation NullableAnnotationIfReferenceType
     {
@@ -109,57 +105,138 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     public void Configure()
     {
-        if (this.ObjectFlag.HasFlag(BigMachinesObjectFlag.Configured))
+        if (this.ObjectFlag.HasFlag(NetsphereObjectFlag.Configured))
         {
             return;
         }
 
-        this.ObjectFlag |= BigMachinesObjectFlag.Configured;
+        this.ObjectFlag |= NetsphereObjectFlag.Configured;
+
+        if (this.AllAttributes.FirstOrDefault(x => x.FullName == NetServiceObjectAttributeMock.FullName) is { } objectAttribute)
+        {// NetServiceObjectAttribute
+            try
+            {
+                this.NetServiceObjectAttribute = NetServiceObjectAttributeMock.FromArray(objectAttribute.ConstructorArguments, objectAttribute.NamedArguments);
+                this.NetServiceObjectAttribute.Location = objectAttribute.Location;
+                this.ObjectFlag |= NetsphereObjectFlag.NetServiceObject;
+            }
+            catch (InvalidCastException)
+            {
+                this.Body.AddDiagnostic(NetsphereBody.Error_AttributePropertyError, objectAttribute.Location);
+            }
+        }
+        else if (TryGetNetServiceInterfaceAttribute(this))
+        {// NetServiceInterfaceAttribute
+        }
+        else
+        {
+            return;
+        }
 
         // Generic type is not supported.
         if (this.Generics_Kind != VisceralGenericsKind.NotGeneric)
         {
+            this.Body.AddDiagnostic(NetsphereBody.Error_GenericType, this.Location);
             return;
         }
 
-        // MachineObjectAttribute
-        if (this.AllAttributes.FirstOrDefault(x => x.FullName == NetServiceObjectAttributeMock.FullName) is { } objectAttribute)
+        // Must be derived from INetService
+        if (!this.AllInterfaces.Any(x => x == INetService.FullName))
         {
-            this.Location = objectAttribute.Location;
-            try
-            {
-                this.ObjectAttribute = NetServiceObjectAttributeMock.FromArray(objectAttribute.ConstructorArguments, objectAttribute.NamedArguments);
-            }
-            catch (InvalidCastException)
-            {
-                this.Body.ReportDiagnostic(NetsphereBody.Error_AttributePropertyError, objectAttribute.Location);
-            }
+            this.Body.AddDiagnostic(NetsphereBody.Error_INetService, this.Location);
+            return;
         }
 
-        if (this.ObjectAttribute != null)
-        {
-            this.ConfigureObject();
-        }
-    }
-
-    private void ConfigureObject()
-    {
         // Used keywords
-        this.Identifier = new VisceralIdentifier("__gen_bm_identifier__");
+        this.Identifier = new VisceralIdentifier("__gen_ns_identifier__");
         foreach (var x in this.AllMembers.Where(a => a.ContainingObject == this))
         {
             this.Identifier.Add(x.SimpleName);
+        }
+
+        if (this.NetServiceInterfaceAttribute != null)
+        {// NetServiceInterface
+            if (this.Body.IdToNetInterface.TryGetValue(this.NetServiceInterfaceAttribute.ServiceId, out var obj))
+            {
+                this.Body.AddDiagnostic(NetsphereBody.Error_DuplicateServiceId, this.NetServiceInterfaceAttribute.Location, this.NetServiceInterfaceAttribute.ServiceId);
+                this.Body.AddDiagnostic(NetsphereBody.Error_DuplicateServiceId, obj.NetServiceInterfaceAttribute!.Location, obj.NetServiceInterfaceAttribute!.ServiceId);
+            }
+            else
+            {
+                this.Body.IdToNetInterface.Add(this.NetServiceInterfaceAttribute.ServiceId, this);
+            }
+        }
+        else if (this.NetServiceObjectAttribute != null)
+        {// NetServiceObject
+            var accessibility = this.AccessibilityName;
+            if (accessibility != "public" && accessibility != "internal")
+            {
+                this.Body.AddDiagnostic(NetsphereBody.Error_Accessibility, this.Location);
+                return;
+            }
+
+            this.ServiceInterfaces = new();
+            foreach (var x in this.AllInterfaceObjects)
+            {
+                if (x.AllInterfaces.Any(x => x == INetService.FullName))
+                {
+                    if (x.NetServiceInterfaceAttribute == null)
+                    {
+                        if (!TryGetNetServiceInterfaceAttribute(x))
+                        {
+                            continue;
+                        }
+                    }
+
+                    this.ServiceInterfaces.Add(x);
+                }
+            }
+
+            if (this.ServiceInterfaces.Count == 0)
+            {
+                return;
+            }
+
+            this.Body.NetObjects.Add(this);
+        }
+
+        static bool TryGetNetServiceInterfaceAttribute(NetsphereObject obj)
+        {
+            if (obj.AllAttributes.FirstOrDefault(x => x.FullName == NetServiceInterfaceAttributeMock.FullName) is { } interfaceAttribute)
+            {// NetServiceInterfaceAttribute
+                try
+                {
+                    obj.NetServiceInterfaceAttribute = NetServiceInterfaceAttributeMock.FromArray(interfaceAttribute.ConstructorArguments, interfaceAttribute.NamedArguments);
+                    obj.NetServiceInterfaceAttribute.Location = interfaceAttribute.Location;
+                    obj.ObjectFlag |= NetsphereObjectFlag.NetServiceInterface;
+
+                    // Service ID
+                    if (obj.NetServiceInterfaceAttribute.ServiceId == 0)
+                    {
+                        obj.NetServiceInterfaceAttribute.ServiceId = (uint)Arc.Crypto.FarmHash.Hash64(obj.FullName);
+                    }
+
+                    return true;
+                }
+                catch (InvalidCastException)
+                {
+                    obj.Body.AddDiagnostic(NetsphereBody.Error_AttributePropertyError, interfaceAttribute.Location);
+                    return false;
+                }
+            }
+
+            return false;
         }
     }
 
     public void ConfigureRelation()
     {// Create an object tree.
-        if (this.ObjectFlag.HasFlag(BigMachinesObjectFlag.RelationConfigured))
+        if (this.ObjectFlag.HasFlag(NetsphereObjectFlag.RelationConfigured))
         {
             return;
         }
 
-        this.ObjectFlag |= BigMachinesObjectFlag.RelationConfigured;
+        this.ObjectFlag |= NetsphereObjectFlag.RelationConfigured;
 
         if (!this.Kind.IsType())
         {// Not type
@@ -217,115 +294,6 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         }
     }
 
-    public void CheckObject()
-    {
-        // partial class required.
-        /*if (!this.IsPartial)
-        {
-            this.Body.ReportDiagnostic(NetsphereBody.Error_NotPartial, this.Location, this.FullName);
-        }
-
-        // Parent class also needs to be a partial class.
-        var parent = this.ContainingObject;
-        while (parent != null)
-        {
-            if (!parent.IsPartial)
-            {
-                this.Body.ReportDiagnostic(NetsphereBody.Error_NotPartialParent, parent.Location, parent.FullName);
-            }
-
-            parent = parent.ContainingObject;
-        }*/
-
-        var id = this.ObjectAttribute!.ServiceId;
-        if (this.Body.Machines.ContainsKey(id))
-        {
-            this.Body.ReportDiagnostic(NetsphereBody.Error_DuplicateTypeId, this.Location, id);
-        }
-        else
-        {
-            this.Body.Machines.Add(id, this);
-        }
-
-        // Machine<TIdentifier>
-        var machineObject = this.BaseObject;
-        var derivedMachine = false;
-        while (machineObject != null)
-        {
-            if (machineObject.OriginalDefinition?.FullName == "BigMachines.Machine<TIdentifier>")
-            {
-                break;
-            }
-            else if (machineObject.ObjectAttribute != null)
-            {
-                derivedMachine = true;
-            }
-
-            machineObject = machineObject.BaseObject;
-        }
-
-        if (derivedMachine)
-        {
-            this.NewIfDerived = "new ";
-        }
-
-        if (machineObject == null)
-        {
-            this.Body.ReportDiagnostic(NetsphereBody.Error_NotDerived, this.Location);
-            return;
-        }
-        else
-        {
-            if (machineObject.Generics_Arguments.Length == 1)
-            {
-                this.MachineObject = machineObject;
-                this.IdentifierObject = machineObject.Generics_Arguments[0];
-                this.StateName = this.FullName + ".State";
-            }
-        }
-
-        if (this.IdentifierObject != null && this.IdentifierObject.Kind != VisceralObjectKind.TypeParameter)
-        {
-            if (this.IdentifierObject.Location.IsInSource)
-            {
-                if (!this.IdentifierObject.AllAttributes.Any(x => x.FullName == "Tinyhand.TinyhandObjectAttribute"))
-                {
-                    this.Body.AddDiagnostic(NetsphereBody.Error_IdentifierIsNotSerializable, this.IdentifierObject.Location, this.IdentifierObject.FullName);
-                }
-            }
-        }
-
-        var idToStateMethod = new Dictionary<uint, ServiceMethod>();
-        foreach (var x in this.GetMembers(VisceralTarget.Method))
-        {
-            if (x.AllAttributes.FirstOrDefault(x => x.FullName == StateMethodAttributeMock.FullName) is { } attribute)
-            {
-                var stateMethod = ServiceMethod.Create(this, x, attribute);
-                if (stateMethod != null)
-                {// Add
-                    this.StateMethodList.Add(stateMethod);
-
-                    if (idToStateMethod.TryGetValue(stateMethod.Id, out var s))
-                    {// Duplicated
-                        stateMethod.DuplicateId = true;
-                        s.DuplicateId = true;
-                    }
-                    else
-                    {
-                        idToStateMethod.Add(stateMethod.Id, stateMethod);
-                    }
-                }
-            }
-            else if (x.Method_IsConstructor && x.ContainingObject == this)
-            {// Constructor
-                if (x.Method_Parameters.Length == 0)
-                {
-                    this.ObjectFlag |= BigMachinesObjectFlag.HasDefaultConstructor;
-                }
-            }
-        }
-    }
-
     public bool CheckKeyword(string keyword, Location? location = null)
     {
         if (!this.Identifier.Add(keyword))
@@ -339,20 +307,73 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     public void Check()
     {
-        if (this.ObjectFlag.HasFlag(BigMachinesObjectFlag.Checked))
+        if (this.ObjectFlag.HasFlag(NetsphereObjectFlag.Checked))
         {
             return;
         }
 
-        if (this.Generics_Kind == VisceralGenericsKind.ClosedGeneric)
-        {// Close generic is not necessary.
-            return;
+        this.ObjectFlag |= NetsphereObjectFlag.Checked;
+
+        if (this.NetServiceObjectAttribute != null)
+        {// NetServiceObject
+            if (this.ServiceInterfaces != null)
+            {
+                foreach (var x in this.ServiceInterfaces)
+                {
+                    if (x.NetServiceInterfaceAttribute != null)
+                    {
+                        if (this.Body.IdToNetObject.TryGetValue(x.NetServiceInterfaceAttribute.ServiceId, out var obj))
+                        {
+                            var serviceInterface = x.ToString();
+                            this.Body.AddDiagnostic(NetsphereBody.Error_DuplicateServiceObject, obj.Location, serviceInterface);
+                            this.Body.AddDiagnostic(NetsphereBody.Error_DuplicateServiceObject, this.Location, serviceInterface);
+                        }
+                        else
+                        {
+                            this.Body.IdToNetObject.Add(x.NetServiceInterfaceAttribute.ServiceId, this);
+                        }
+                    }
+                }
+            }
+
+            foreach (var x in this.GetMembers(VisceralTarget.Method))
+            {
+                if (x.Method_IsConstructor && x.ContainingObject == this)
+                {// Constructor
+                    if (x.Method_Parameters.Length == 0)
+                    {
+                        this.ObjectFlag |= NetsphereObjectFlag.HasDefaultConstructor;
+                        break;
+                    }
+                }
+            }
         }
+        else if (this.NetServiceInterfaceAttribute != null)
+        {// NetServiceInterface
+            this.ClassName = NetsphereBody.FrontendClassName + this.NetServiceInterfaceAttribute.ServiceId.ToString("x4");
 
-        this.ObjectFlag |= BigMachinesObjectFlag.Checked;
+            foreach (var x in this.GetMembers(VisceralTarget.Method))
+            {
+                var serviceMethod = ServiceMethod.Create(this, x);
+                if (serviceMethod != null)
+                {// Add
+                    if (this.ServiceMethods == null)
+                    {
+                        this.ServiceMethods = new();
+                    }
 
-        this.Body.DebugAssert(this.ObjectAttribute != null, "this.ObjectAttribute != null");
-        this.CheckObject();
+                    if (this.ServiceMethods.TryGetValue(serviceMethod.MethodId, out var s))
+                    {// Duplicated
+                        this.Body.AddDiagnostic(NetsphereBody.Error_DuplicateServiceMethod, s.Location, serviceMethod.MethodId);
+                        this.Body.AddDiagnostic(NetsphereBody.Error_DuplicateServiceMethod, serviceMethod.Location, serviceMethod.MethodId);
+                    }
+                    else
+                    {
+                        this.ServiceMethods.Add(serviceMethod.MethodId, serviceMethod);
+                    }
+                }
+            }
+        }
     }
 
     public static void GenerateLoader(ScopingStringBuilder ssb, GeneratorInformation info, NetsphereObject? parent, List<NetsphereObject> list)
@@ -363,7 +384,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         }
 
         var classFormat = "__gen__bm__{0:D4}";
-        var list2 = list.SelectMany(x => x.ConstructedObjects).Where(x => x.ObjectAttribute != null).ToArray();
+        var list2 = list.SelectMany(x => x.ConstructedObjects).Where(x => x.NetServiceObjectAttribute != null).ToArray();
 
         string? loaderIdentifier = null;
         var list3 = list2.ToArray();
@@ -387,7 +408,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 {
                     foreach (var x in list3)
                     {
-                        ssb.AppendLine($"{x.FullName}.RegisterBM({x.ObjectAttribute!.MachineTypeId});");
+                        ssb.AppendLine($"{x.FullName}.RegisterBM({x.NetServiceInterfaceAttribute!.ServiceId});");
                     }
                 }
             }
@@ -395,9 +416,9 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
         using (var m = ssb.ScopeBrace("internal static void RegisterBM()"))
         {
-            foreach (var x in list2)
+            /*foreach (var x in list2)
             {
-                if (x.ObjectAttribute == null || x.IdentifierObject == null)
+                if (x.ObjectAttribute == null)
                 {
                     continue;
                 }
@@ -408,10 +429,10 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 }
             }
 
-            foreach (var x in list.Where(a => a.ObjectFlag.HasFlag(BigMachinesObjectFlag.HasRegisterBM)))
+            foreach (var x in list.Where(a => a.ObjectFlag.HasFlag(NetsphereObjectFlag.HasRegisterBM)))
             {// Children
                 ssb.AppendLine($"{x.FullName}.RegisterBM();");
-            }
+            }*/
 
             if (loaderIdentifier != null)
             {// Loader
@@ -420,214 +441,108 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         }
     }
 
-    internal void Generate(ScopingStringBuilder ssb, GeneratorInformation info)
+    internal void GenerateFrontend(ScopingStringBuilder ssb, GeneratorInformation info)
     {
-        if (this.ConstructedObjects == null)
+        using (var cls = ssb.ScopeBrace($"private class {this.ClassName} : {this.FullName}")) // {this.AccessibilityName}
         {
-            return;
-        }
+            /*ssb.AppendLine("public NetResult Result => this.result;");
+            ssb.AppendLine();
+            ssb.AppendLine("private NetResult result;");
+            ssb.AppendLine();*/
 
-        /*else if (this.IsAbstractOrInterface)
-        {
-            return;
-        }*/
-
-        using (var cls = ssb.ScopeBrace($"{this.AccessibilityName} partial {this.KindName} {this.LocalName}"))
-        {
-            if (this.ObjectAttribute != null)
+            using (var ctr = ssb.ScopeBrace($"public {this.ClassName}(ClientTerminal clientTerminal)"))
             {
-                this.Generate2(ssb, info);
+                // ssb.AppendLine("this.result = default;");
+                ssb.AppendLine("this.ClientTerminal = clientTerminal;");
             }
 
-            if (this.Children?.Count > 0)
-            {// Generate children and loader.
-                ssb.AppendLine();
-                foreach (var x in this.Children)
+            ssb.AppendLine();
+            ssb.AppendLine("public ClientTerminal ClientTerminal { get; }");
+
+            if (this.ServiceMethods != null)
+            {
+                foreach (var x in this.ServiceMethods.Values)
                 {
-                    x.Generate(ssb, info);
+                    ssb.AppendLine();
+                    this.GenerateFrontend_Method(ssb, info, x);
+                }
+            }
+        }
+    }
+
+    internal void GenerateFrontend_Method(ScopingStringBuilder ssb, GeneratorInformation info, ServiceMethod method)
+    {
+        var genericString = method.ReturnType == null ? string.Empty : $"<{method.ReturnType.FullName}>";
+        var taskString = $"NetTask{genericString}";
+        var returnTypeIsNetResult = method.ReturnType?.FullName == NetsphereBody.NetResultFullName;
+        var deserializeString = method.ReturnType == null ? "NetResult" : method.ReturnType.FullName;
+
+        using (var scopeMethod = ssb.ScopeBrace($"public {taskString} {method.SimpleName}({method.GetParameters()})"))
+        {
+            ssb.AppendLine($"return new {taskString}(Core());");
+            ssb.AppendLine();
+
+            using (var scopeCore = ssb.ScopeBrace($"async Task<ServiceResponse{genericString}> Core()"))
+            {
+                using (var scopeSerialize = ssb.ScopeBrace($"if (!LP.Block.BlockService.TrySerialize({method.GetParameterNames()}, out var owner))"))
+                {
+                    AppendReturn("NetResult.SerializationError");
                 }
 
                 ssb.AppendLine();
-                GenerateLoader(ssb, info, this, this.Children);
+                ssb.AppendLine($"var response = await this.ClientTerminal.SendAndReceiveServiceAsync({method.IdString}, owner);");
+                ssb.AppendLine("owner.Return();");
+                using (var scopeNoNetService = ssb.ScopeBrace("if (response.Result == NetResult.Success && response.Value.IsEmpty)"))
+                {
+                    AppendReturn("NetResult.NoNetService");
+                }
+
+                using (var scopeNotSuccess = ssb.ScopeBrace("else if (response.Result != NetResult.Success)"))
+                {
+                    AppendReturn("response.Result");
+                }
+
+                ssb.AppendLine();
+                using (var scopeDeserialize = ssb.ScopeBrace($"if (!Tinyhand.TinyhandSerializer.TryDeserialize<{deserializeString}>(response.Value.Memory, out var result))"))
+                {
+                    AppendReturn("NetResult.DeserializationError");
+                }
+
+                ssb.AppendLine();
+                ssb.AppendLine("response.Value.Return();");
+                if (method.ReturnType == null)
+                {
+                    ssb.AppendLine($"return default;");
+                }
+                else
+                {
+                    ssb.AppendLine($"return new(result);");
+                }
+            }
+        }
+
+        void AppendReturn(string netResult)
+        {
+            if (method.ReturnType == null)
+            {
+                ssb.AppendLine($"return new({netResult});");
+            }
+            else
+            {
+                if (returnTypeIsNetResult)
+                {
+                    ssb.AppendLine($"return new({netResult}, {netResult});");
+                }
+                else
+                {
+                    ssb.AppendLine($"return new(default, {netResult});");
+                }
             }
         }
     }
 
     internal void Generate2(ScopingStringBuilder ssb, GeneratorInformation info)
     {
-        this.Generate_State(ssb, info);
-        this.Generate_Interface(ssb, info);
-        this.Generate_CreateInterface(ssb, info);
-        this.Generate_InternalRun(ssb, info);
-        this.Generate_ChangeStateInternal(ssb, info);
-
         return;
-    }
-
-    internal void Generate_State(ScopingStringBuilder ssb, GeneratorInformation info)
-    {
-        if (this.StateMethodList == null)
-        {
-            return;
-        }
-
-        using (var scope = ssb.ScopeBrace($"public {this.NewIfDerived}enum State"))
-        {
-            foreach (var x in this.StateMethodList)
-            {
-                ssb.AppendLine($"{x.Name} = {x.Id},");
-            }
-        }
-
-        ssb.AppendLine();
-    }
-
-    internal void Generate_Interface(ScopingStringBuilder ssb, GeneratorInformation info)
-    {
-        if (this.MachineObject == null)
-        {
-            return;
-        }
-
-        var identifierName = this.IdentifierObject!.FullName;
-        using (var scope = ssb.ScopeBrace($"public {this.NewIfDerived}class Interface : ManMachineInterface<{identifierName}, {this.StateName}>"))
-        {
-            using (var scope2 = ssb.ScopeBrace($"public Interface(IMachineGroup<{identifierName}> group, {identifierName} identifier) : base(group, identifier)"))
-            {
-            }
-        }
-
-        ssb.AppendLine();
-    }
-
-    internal void Generate_CreateInterface(ScopingStringBuilder ssb, GeneratorInformation info)
-    {
-        if (this.MachineObject == null)
-        {
-            return;
-        }
-
-        var identifierName = this.IdentifierObject!.FullName;
-        using (var scope = ssb.ScopeBrace($"protected override void CreateInterface({identifierName} identifier)"))
-        {
-            using (var scope2 = ssb.ScopeBrace("if (this.InterfaceInstance == null)"))
-            {
-                ssb.AppendLine("this.Identifier = identifier;");
-                ssb.AppendLine("this.InterfaceInstance = new Interface(this.Group, identifier);");
-            }
-        }
-
-        ssb.AppendLine();
-    }
-
-    internal void Generate_InternalRun(ScopingStringBuilder ssb, GeneratorInformation info)
-    {
-        if (this.MachineObject == null || this.StateMethodList == null)
-        {
-            return;
-        }
-
-        using (var scope = ssb.ScopeBrace("protected override StateResult InternalRun(StateParameter parameter)"))
-        {
-            ssb.AppendLine($"var state = Unsafe.As<int, {this.StateName}>(ref this.CurrentState);");
-            ssb.AppendLine("return state switch");
-            ssb.AppendLine("{");
-            ssb.IncrementIndent();
-
-            foreach (var x in this.StateMethodList)
-            {
-                ssb.AppendLine($"State.{x.Name} => this.{x.Name}(parameter),");
-            }
-
-            ssb.AppendLine("_ => StateResult.Terminate,");
-            ssb.DecrementIndent();
-            ssb.AppendLine("};");
-        }
-
-        ssb.AppendLine();
-    }
-
-    internal void Generate_ChangeStateInternal(ScopingStringBuilder ssb, GeneratorInformation info)
-    {
-        if (this.MachineObject == null || this.StateMethodList == null)
-        {
-            return;
-        }
-
-        using (var scope = ssb.ScopeBrace("protected override bool InternalChangeState(int state, bool rerun)"))
-        {
-            using (var scopeTerminated = ssb.ScopeBrace("if (this.Status == MachineStatus.Terminated)"))
-            {
-                ssb.AppendLine("return false;");
-            }
-
-            using (var scopeElse = ssb.ScopeBrace("else if (this.CurrentState == state)"))
-            {
-                ssb.AppendLine("return true;");
-            }
-
-            ssb.AppendLine();
-            ssb.AppendLine($"var current = Unsafe.As<int, {this.StateName}>(ref this.CurrentState);");
-            ssb.AppendLine("bool canExit = current switch");
-            ssb.AppendLine("{");
-            ssb.IncrementIndent();
-            foreach (var x in this.StateMethodList)
-            {
-                if (x.CanExit)
-                {
-                    ssb.AppendLine($"State.{x.Name} => this.{x.Name}{ServiceMethod.CanExitName}(),");
-                }
-            }
-
-            ssb.AppendLine("_ => true,");
-            ssb.DecrementIndent();
-            ssb.AppendLine("};");
-            ssb.AppendLine();
-
-            ssb.AppendLine($"var next = Unsafe.As<int, {this.StateName}>(ref state);");
-            ssb.AppendLine("bool canEnter = next switch");
-            ssb.AppendLine("{");
-            ssb.IncrementIndent();
-            foreach (var x in this.StateMethodList)
-            {
-                if (x.CanEnter)
-                {
-                    ssb.AppendLine($"State.{x.Name} => this.{x.Name}{ServiceMethod.CanEnterName}(),");
-                }
-                else
-                {
-                    ssb.AppendLine($"State.{x.Name} => true,");
-                }
-            }
-
-            ssb.AppendLine("_ => false,");
-            ssb.DecrementIndent();
-            ssb.AppendLine("};");
-            ssb.AppendLine();
-
-            using (var scope2 = ssb.ScopeBrace("if (canExit && canEnter)"))
-            {
-                ssb.AppendLine($"this.CurrentState = state;");
-                ssb.AppendLine("this.RequestRerun = rerun;");
-                ssb.AppendLine("return true;");
-            }
-
-            using (var scope2 = ssb.ScopeBrace("else"))
-            {
-                ssb.AppendLine("return false;");
-            }
-        }
-
-        ssb.AppendLine();
-        ssb.AppendLine($"protected bool ChangeState({this.StateName} state, bool rerun = true) => this.InternalChangeState(Unsafe.As<{this.StateName}, int>(ref state), rerun);");
-        ssb.AppendLine();
-        ssb.AppendLine($"protected {this.NewIfDerived}{this.StateName} GetCurrentState() => Unsafe.As<int, {this.StateName}>(ref this.CurrentState);");
-        ssb.AppendLine();
-
-        /*if (this.DefaultStateMethod != null)
-        {
-            ssb.AppendLine();
-            ssb.AppendLine($"protected override void IntInitState() => this.CurrentState = {this.DefaultStateMethod.Id};");
-        }*/
     }
 }

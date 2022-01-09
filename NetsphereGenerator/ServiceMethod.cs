@@ -10,17 +10,20 @@ namespace Netsphere.Generator;
 
 public class ServiceMethod
 {
-    public static ServiceMethod? Create(NetsphereObject machine, NetsphereObject method, VisceralAttribute attribute)
+    public static ServiceMethod? Create(NetsphereObject obj, NetsphereObject method)
     {
-        var flag = false;
-        if (method.Method_ReturnObject?.FullName != NetsphereBody.StateResultFullName)
-        {// Invalid return type
-            flag = true;
+        const string taskName = "Netsphere.NetTask";
+        const string taskName2 = "Netsphere.NetTask<TResponse>";
+        var returnObject = method.Method_ReturnObject;
+        if (returnObject == null)
+        {
+            return null;
         }
 
-        if (flag)
-        {
-            method.Body.ReportDiagnostic(NetsphereBody.Error_MethodFormat, attribute.Location);
+        if (returnObject.FullName != taskName &&
+            returnObject.OriginalDefinition?.FullName != taskName2)
+        {// Invalid return type
+            method.Body.ReportDiagnostic(NetsphereBody.Error_MethodReturnType, method.Location);
         }
 
         if (method.Body.Abort)
@@ -28,16 +31,121 @@ public class ServiceMethod
             return null;
         }
 
-        var stateMethod = new ServiceMethod();
-        stateMethod.Location = attribute.Location;
-        stateMethod.Name = method.SimpleName;
+        var serviceMethod = new ServiceMethod(method);
+        serviceMethod.MethodId = (uint)Arc.Crypto.FarmHash.Hash64(method.FullName);
+        if (obj.NetServiceInterfaceAttribute == null)
+        {
+            serviceMethod.Id = serviceMethod.MethodId;
+        }
+        else
+        {
+            serviceMethod.Id = (ulong)obj.NetServiceInterfaceAttribute.ServiceId << 32 | serviceMethod.MethodId;
+        }
 
-        return stateMethod;
+        if (returnObject.Generics_Arguments.Length > 0)
+        {
+            serviceMethod.ReturnType = returnObject.Generics_Arguments[0];
+        }
+
+        return serviceMethod;
     }
 
-    public Location Location { get; private set; } = Location.None;
+    public ServiceMethod(NetsphereObject method)
+    {
+        this.method = method;
+    }
 
-    public string Name { get; private set; } = string.Empty;
+    public Location Location => this.method.Location;
 
-    public bool DuplicateId { get; internal set; }
+    public string SimpleName => this.method.SimpleName;
+
+    public uint MethodId { get; private set; }
+
+    public ulong Id { get; private set; }
+
+    public string IdString => $"0x{this.Id:x8}ul";
+
+    public NetsphereObject? ReturnType { get; internal set; }
+
+    public string GetParameters()
+    {// int a0, string a1
+        var sb = new StringBuilder();
+        for (var i = 0; i < this.method.Method_Parameters.Length; i++)
+        {
+            if (i != 0)
+            {
+                sb.Append(", ");
+            }
+
+            sb.Append(this.method.Method_Parameters[i]);
+            sb.Append(" ");
+            sb.Append(NetsphereBody.ArgumentName);
+            sb.Append(i);
+        }
+
+        return sb.ToString();
+    }
+
+    public string GetParameterNames()
+    {// (a0, a1)
+        var parameters = this.method.Method_Parameters;
+        if (parameters.Length == 0)
+        {
+            return string.Empty;
+        }
+        else if (parameters.Length == 1)
+        {
+            return NetsphereBody.ArgumentName + "0";
+        }
+        else
+        {
+            var sb = new StringBuilder();
+            sb.Append("(");
+            for (var i = 0; i < this.method.Method_Parameters.Length; i++)
+            {
+                if (i != 0)
+                {
+                    sb.Append(", ");
+                }
+
+                sb.Append(NetsphereBody.ArgumentName);
+                sb.Append(i);
+            }
+
+            sb.Append(")");
+            return sb.ToString();
+        }
+    }
+
+    public string GetParameterTypes()
+    {// (int, string)
+        var parameters = this.method.Method_Parameters;
+        if (parameters.Length == 0)
+        {
+            return string.Empty;
+        }
+        else if (parameters.Length == 1)
+        {
+            return parameters[0];
+        }
+        else
+        {
+            var sb = new StringBuilder();
+            sb.Append("(");
+            for (var i = 0; i < this.method.Method_Parameters.Length; i++)
+            {
+                if (i != 0)
+                {
+                    sb.Append(", ");
+                }
+
+                sb.Append(parameters[i]);
+            }
+
+            sb.Append(")");
+            return sb.ToString();
+        }
+    }
+
+    private NetsphereObject method;
 }

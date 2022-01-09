@@ -41,7 +41,7 @@ public class NetsphereGeneratorV2 : IIncrementalGenerator, IGeneratorInformation
     }
 
     private static bool IsSyntaxTargetForGeneration(SyntaxNode node) =>
-        node is TypeDeclarationSyntax m && m.BaseList?.Types.Count > 0;
+        node is TypeDeclarationSyntax m && m.AttributeLists.Count > 0; // m.BaseList?.Types.Count > 0;
 
     private static TypeDeclarationSyntax? GetSemanticTargetForGeneration(GeneratorSyntaxContext context)
     {
@@ -56,26 +56,29 @@ public class NetsphereGeneratorV2 : IIncrementalGenerator, IGeneratorInformation
                 {
                     return typeSyntax;
                 }
-
-                /*else if (name.EndsWith(NetServiceObjectAttributeMock.StandardName) ||
+                else if (name.EndsWith(NetServiceObjectAttributeMock.StandardName) ||
                     name.EndsWith(NetServiceObjectAttributeMock.SimpleName))
                 {
                     return typeSyntax;
-                }*/
-            }
-        }
-
-        if (typeSyntax.BaseList is { } baseList)
-        {
-            foreach (var baseType in baseList.Types)
-            {
-                var name = baseType.ToString();
-                if (name == INetService.FullName)
+                }
+                else if (name.EndsWith(NetServiceInterfaceAttributeMock.StandardName) ||
+                    name.EndsWith(NetServiceInterfaceAttributeMock.SimpleName))
                 {
                     return typeSyntax;
                 }
             }
         }
+
+        /*if (typeSyntax.BaseList is { } baseList)
+        {
+            foreach (var baseType in baseList.Types)
+            {
+                if (baseType.ToString() == INetService.StandardName)
+                {
+                    return typeSyntax;
+                }
+            }
+        }*/
 
         return null;
     }
@@ -83,11 +86,18 @@ public class NetsphereGeneratorV2 : IIncrementalGenerator, IGeneratorInformation
     private void Emit(SourceProductionContext context, (Compilation compilation, ImmutableArray<TypeDeclarationSyntax?> types) source)
     {
         var compilation = source.compilation;
-        /*var netServiceObjectAttributeSymbol = compilation.GetTypeByMetadataName(NetServiceObjectAttributeMock.FullName);
+
+        var netServiceObjectAttributeSymbol = compilation.GetTypeByMetadataName(NetServiceObjectAttributeMock.FullName);
         if (netServiceObjectAttributeSymbol == null)
         {
             return;
-        }*/
+        }
+
+        var netServiceInterfaceAttributeSymbol = compilation.GetTypeByMetadataName(NetServiceInterfaceAttributeMock.FullName);
+        if (netServiceInterfaceAttributeSymbol == null)
+        {
+            return;
+        }
 
         var netServiceInterfaceSymbol = compilation.GetTypeByMetadataName(INetService.FullName);
         if (netServiceInterfaceSymbol == null)
@@ -126,21 +136,25 @@ public class NetsphereGeneratorV2 : IIncrementalGenerator, IGeneratorInformation
             {
                 processed.Add(s);
 
-                if (s.AllInterfaces.Any(x => SymbolEqualityComparer.Default.Equals(netServiceInterfaceSymbol, x)))
+                /*if (s.AllInterfaces.Any(x => SymbolEqualityComparer.Default.Equals(netServiceInterfaceSymbol, x)))
                 {
                     body.Add(s);
                     break;
-                }
+                }*/
 
                 foreach (var y in s.GetAttributes())
                 {
-                    /*if (SymbolEqualityComparer.Default.Equals(y.AttributeClass, netServiceObjectAttributeSymbol))
-                    { // MachineObject
+                    if (SymbolEqualityComparer.Default.Equals(y.AttributeClass, netServiceObjectAttributeSymbol))
+                    { // NetServiceObject
                         body.Add(s);
                         break;
-                    }*/
-
-                    if (!generatorOptionSet &&
+                    }
+                    else if (SymbolEqualityComparer.Default.Equals(y.AttributeClass, netServiceInterfaceAttributeSymbol))
+                    { // NetServiceInterface
+                        body.Add(s);
+                        break;
+                    }
+                    else if (!generatorOptionSet &&
                         SymbolEqualityComparer.Default.Equals(y.AttributeClass, netsphereGeneratorOptionAttributeSymbol))
                     {// NetsphereGeneratorOption
                         generatorOptionSet = true;
