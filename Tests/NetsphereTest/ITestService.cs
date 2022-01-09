@@ -52,8 +52,18 @@ public class TestServiceImpl2 : TestServiceImpl, ITestService2
 [NetServiceObject]
 public class ExternalServiceImpl : IExternalService
 {
+    public Task<int> IncrementExternal(int x)
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task SendExternal(int x)
     {
+    }
+
+    public Task<NetResult> SendExternal(int x, string y)
+    {
+        throw new NotImplementedException();
     }
 }
 
