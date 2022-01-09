@@ -49,7 +49,7 @@ public class NetControl
         container.RegisterDelegate(x => new NetService(container), Reuse.Transient);
 
         // RPCs
-        container.Register<TestServiceImpl>(Reuse.Transient);
+        container.Register<Netsphere.Design.TestServiceImpl>(Reuse.Transient);
 
         // Machines
         container.Register<LP.Machines.EssentialNetMachine>();

@@ -53,8 +53,8 @@ public class Program
         options.EnableTest = true;
         NetControl.QuickStart("test", options, true);
 
-        StaticNetService.SetFrontendDelegate<ITestService>(static x => new TestServiceFrontend(x));
-        StaticNetService.SetServiceInfo(TestServiceBackend.CreateServiceInfo());
+        StaticNetService.SetFrontendDelegate<Netsphere.Design.ITestService>(static x => new Netsphere.Design.TestServiceFrontend(x));
+        StaticNetService.SetServiceInfo(Netsphere.Design.TestServiceBackend.CreateServiceInfo());
 
         // await SimpleParser.ParseAndRunAsync(commandTypes, "nettest -node 3.18.216.240:49152", parserOptions); // Main process
         await SimpleParser.ParseAndRunAsync(commandTypes, "nettest -node alternative", parserOptions); // Main process
