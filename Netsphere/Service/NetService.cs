@@ -7,7 +7,7 @@ namespace Netsphere;
 
 public class NetService
 {
-    public delegate Task<ByteArrayPool.MemoryOwner> ServiceDelegate(object instance, ByteArrayPool.MemoryOwner received);
+    public delegate NetTask<ByteArrayPool.MemoryOwner> ServiceDelegate(object instance, ByteArrayPool.MemoryOwner received);
 
     public delegate INetService CreateFrontendDelegate(ClientTerminal clientTerminal);
 

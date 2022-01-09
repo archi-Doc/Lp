@@ -47,7 +47,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
         category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
     public static readonly DiagnosticDescriptor Error_MethodReturnType = new DiagnosticDescriptor(
-        id: "NSG006", title: "Method return type", messageFormat: "The return type of service method must be Task or Task<T>",
+        id: "NSG006", title: "Method return type", messageFormat: "The return type of service method must be NetTask or NetTask<T>",
         category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
     public static readonly DiagnosticDescriptor Error_DuplicateServiceMethod = new DiagnosticDescriptor(

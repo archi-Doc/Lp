@@ -5,9 +5,9 @@ namespace NetsphereTest;
 [NetServiceInterface]
 public interface IExternalService : INetService
 {
-    public Task SendExternal(int x);
+    public NetTask SendExternal(int x);
 
-    public Task<int> IncrementExternal(int x);
+    public NetTask<int> IncrementExternal(int x);
 
-    public Task<NetResult> SendExternal(int x, string y);
+    public NetTask<NetResult> SendExternal(int x, string y);
 }

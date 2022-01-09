@@ -441,51 +441,18 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         }
     }
 
-    internal void Generate(ScopingStringBuilder ssb, GeneratorInformation info)
-    {
-        if (this.ConstructedObjects == null)
-        {
-            return;
-        }
-
-        if (this.ObjectFlag.HasFlag(NetsphereObjectFlag.NetServiceInterface))
-        {// NetServiceInterface (Frontend)
-            this.GenerateFrontend(ssb, info);
-        }
-
-        /*using (var cls = ssb.ScopeBrace($"{this.AccessibilityName} partial {this.KindName} {this.LocalName}"))
-        {
-            if (this.NetServiceObjectAttribute != null)
-            {
-                this.Generate2(ssb, info);
-            }
-
-            if (this.Children?.Count > 0)
-            {// Generate children and loader.
-                ssb.AppendLine();
-                foreach (var x in this.Children)
-                {
-                    x.Generate(ssb, info);
-                }
-
-                ssb.AppendLine();
-                GenerateLoader(ssb, info, this, this.Children);
-            }
-        }*/
-    }
-
     internal void GenerateFrontend(ScopingStringBuilder ssb, GeneratorInformation info)
     {
         using (var cls = ssb.ScopeBrace($"private class {this.ClassName} : {this.FullName}")) // {this.AccessibilityName}
         {
-            ssb.AppendLine("public NetResult Result => this.result;");
+            /*ssb.AppendLine("public NetResult Result => this.result;");
             ssb.AppendLine();
             ssb.AppendLine("private NetResult result;");
-            ssb.AppendLine();
+            ssb.AppendLine();*/
 
             using (var ctr = ssb.ScopeBrace($"public {this.ClassName}(ClientTerminal clientTerminal)"))
             {
-                ssb.AppendLine("this.result = default;");
+                // ssb.AppendLine("this.result = default;");
                 ssb.AppendLine("this.ClientTerminal = clientTerminal;");
             }
 
@@ -505,59 +472,71 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     internal void GenerateFrontend_Method(ScopingStringBuilder ssb, GeneratorInformation info, ServiceMethod method)
     {
-        var taskString = method.ReturnType == null ? "Task" : $"Task<{method.ReturnType.FullName}>";
-        var returnString = method.ReturnType == null ? "return;" : "return default;";
+        var genericString = method.ReturnType == null ? string.Empty : $"<{method.ReturnType.FullName}>";
+        var taskString = $"NetTask{genericString}";
+        var returnTypeIsNetResult = method.ReturnType?.FullName == NetsphereBody.NetResultFullName;
         var deserializeString = method.ReturnType == null ? "NetResult" : method.ReturnType.FullName;
 
-        using (var scopeMethod = ssb.ScopeBrace($"public async {taskString} {method.SimpleName}({method.GetParameters()})"))
+        using (var scopeMethod = ssb.ScopeBrace($"public {taskString} {method.SimpleName}({method.GetParameters()})"))
         {
-            using (var scopeSerialize = ssb.ScopeBrace($"if (!LP.Block.BlockService.TrySerialize({method.GetParameterNames()}, out var owner))"))
-            {
-                ssb.AppendLine("this.result = NetResult.SerializationError;");
-                ssb.AppendLine(returnString);
-            }
-
+            ssb.AppendLine($"return new {taskString}(Core());");
             ssb.AppendLine();
-            ssb.AppendLine($"var response = await this.ClientTerminal.SendAndReceiveServiceAsync({method.IdString}, owner);");
-            ssb.AppendLine("this.result = response.Result;");
-            ssb.AppendLine("owner.Return();");
 
-            ssb.AppendLine();
-            using (var scopeNoNetService = ssb.ScopeBrace("if (this.result == NetResult.Success && response.Value.IsEmpty)"))
+            using (var scopeCore = ssb.ScopeBrace($"async Task<ServiceResponse{genericString}> Core()"))
             {
-                ssb.AppendLine("this.result = NetResult.NoNetService;");
-            }
-
-            ssb.AppendLine();
-            using (var scopeNotSuccess = ssb.ScopeBrace("if (this.result != NetResult.Success)"))
-            {
-                ssb.AppendLine(returnString);
-            }
-
-            ssb.AppendLine();
-            using (var scopeDeserialize = ssb.ScopeBrace($"if (!Tinyhand.TinyhandSerializer.TryDeserialize<{deserializeString}>(response.Value.Memory, out var result))"))
-            {
-                ssb.AppendLine("this.result = NetResult.DeserializationError;");
-                if (method.ReturnType?.FullName == NetsphereBody.NetResultFullName)
+                using (var scopeSerialize = ssb.ScopeBrace($"if (!LP.Block.BlockService.TrySerialize({method.GetParameterNames()}, out var owner))"))
                 {
-                    ssb.AppendLine("return this.result;");
+                    AppendReturn("NetResult.SerializationError");
+                }
+
+                ssb.AppendLine();
+                ssb.AppendLine($"var response = await this.ClientTerminal.SendAndReceiveServiceAsync({method.IdString}, owner);");
+                ssb.AppendLine("owner.Return();");
+                using (var scopeNoNetService = ssb.ScopeBrace("if (response.Result == NetResult.Success && response.Value.IsEmpty)"))
+                {
+                    AppendReturn("NetResult.NoNetService");
+                }
+
+                using (var scopeNotSuccess = ssb.ScopeBrace("else if (response.Result != NetResult.Success)"))
+                {
+                    AppendReturn("response.Result");
+                }
+
+                ssb.AppendLine();
+                using (var scopeDeserialize = ssb.ScopeBrace($"if (!Tinyhand.TinyhandSerializer.TryDeserialize<{deserializeString}>(response.Value.Memory, out var result))"))
+                {
+                    AppendReturn("NetResult.DeserializationError");
+                }
+
+                ssb.AppendLine();
+                ssb.AppendLine("response.Value.Return();");
+                if (method.ReturnType == null)
+                {
+                    ssb.AppendLine($"return default;");
                 }
                 else
                 {
-                    ssb.AppendLine(returnString);
+                    ssb.AppendLine($"return new(result);");
                 }
             }
+        }
 
-            ssb.AppendLine();
-            if (method.ReturnType?.FullName == NetsphereBody.NetResultFullName)
+        void AppendReturn(string netResult)
+        {
+            if (method.ReturnType == null)
             {
-                ssb.AppendLine("this.result = result;");
+                ssb.AppendLine($"return new({netResult});");
             }
-
-            ssb.AppendLine("response.Value.Return();");
-            if (method.ReturnType != null)
+            else
             {
-                ssb.AppendLine("return result;");
+                if (returnTypeIsNetResult)
+                {
+                    ssb.AppendLine($"return new({netResult}, {netResult});");
+                }
+                else
+                {
+                    ssb.AppendLine($"return new(default, {netResult});");
+                }
             }
         }
     }

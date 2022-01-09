@@ -78,14 +78,15 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
             Logger.Priority.Information(testService.Result.ToString());*/
 
             // Multi-threaded
-            var tt0 = testService.Increment(3);
-            Logger.Priority.Information(testService.Result.ToString());
-            var tt = testService.Send(1, 2);
-            Logger.Priority.Information(testService.Result.ToString());
-            var tt2 = testService.Send2(2, 3);
-            Logger.Priority.Information(testService.Result.ToString());
-            await tt;
-            await tt2;
+            var tt1 = testService.Increment(3);
+            var xx = tt1.ResponseAsync;
+            var yy = xx.Result;
+            var zz = yy.ToString();
+            Logger.Priority.Information(tt1.ResponseAsync.Result.ToString());
+            var tt2 = testService.Send(1, 2);
+            Logger.Priority.Information(tt2.ResponseAsync.Result.ToString());
+            var tt3 = testService.Send2(2, 3);
+            Logger.Priority.Information(tt3.ResponseAsync.Result.ToString());
 
             /*var p4 = TestBlock.Create(4000_000);
             Logger.Priority.Information($"4MB send: {p4}");

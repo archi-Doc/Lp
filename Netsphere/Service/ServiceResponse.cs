@@ -11,6 +11,8 @@ public readonly struct ServiceResponse
 
     public NetResult Result => this.result;
 
+    public override string ToString() => $"{this.result.ToString()}";
+
     private readonly NetResult result;
 }
 
@@ -30,6 +32,18 @@ public readonly struct ServiceResponse<T>
     public T Value => this.value;
 
     public NetResult Result => this.result;
+
+    public override string ToString()
+    {
+        if (this.value == null)
+        {
+            return this.result.ToString();
+        }
+        else
+        {
+            return $"{this.result.ToString()}: {this.value.ToString()}";
+        }
+    }
 
     private readonly T value;
     private readonly NetResult result;

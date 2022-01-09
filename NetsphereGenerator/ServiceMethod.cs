@@ -12,14 +12,16 @@ public class ServiceMethod
 {
     public static ServiceMethod? Create(NetsphereObject obj, NetsphereObject method)
     {
-        const string taskName = "System.Threading.Tasks.Task";
+        const string taskName = "Netsphere.NetTask";
+        const string taskName2 = "Netsphere.NetTask<TResponse>";
         var returnObject = method.Method_ReturnObject;
         if (returnObject == null)
         {
             return null;
         }
 
-        if (returnObject.BaseObject?.FullName != taskName && returnObject.FullName != taskName)
+        if (returnObject.FullName != taskName &&
+            returnObject.OriginalDefinition?.FullName != taskName2)
         {// Invalid return type
             method.Body.ReportDiagnostic(NetsphereBody.Error_MethodReturnType, method.Location);
         }
