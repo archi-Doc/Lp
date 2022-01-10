@@ -22,9 +22,14 @@ public class Program
     {
         // Subcommands
         var commandTypes = new List<Type>();
+        commandTypes.Add(typeof(BasicTestSubcommand));
 
         // DI Container
         NetControl.Register(Container, commandTypes);
+        foreach (var x in commandTypes)
+        {
+            Container.Register(x, Reuse.Singleton);
+        }
 
         Container.ValidateAndThrow();
 
@@ -57,7 +62,7 @@ public class Program
         StaticNetService.SetServiceInfo(Netsphere.Design.TestServiceBackend.CreateServiceInfo());
 
         // await SimpleParser.ParseAndRunAsync(commandTypes, "nettest -node 3.18.216.240:49152", parserOptions); // Main process
-        await SimpleParser.ParseAndRunAsync(commandTypes, "nettest -node alternative", parserOptions); // Main process
+        await SimpleParser.ParseAndRunAsync(commandTypes, "basic -node alternative", parserOptions); // Main process
         // await SimpleParser.ParseAndRunAsync(commandTypes, args, parserOptions); // Main process
 
         ThreadCore.Root.Terminate();
