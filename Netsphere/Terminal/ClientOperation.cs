@@ -26,46 +26,38 @@ internal class ClientOperation : NetOperation
             return NetResult.NoNodeInformation;
         }
 
-        /*if (this.NetTerminal.NodeInformation == null)
-        {// Get NodeInformation (Unsafe connection).
-            var r = await this.SendPacketAndReceiveAsync<PacketGetNodeInformation, PacketGetNodeInformationResponse>(new()).ConfigureAwait(false);
-            if (r.Result != NetResult.Success)
-            {
-                return r.Result;
+        await this.NetTerminal.ConnectionSemaphore.WaitAsync();
+        try
+        {
+            if (this.NetTerminal.IsEncrypted)
+            {// Encrypted
+                return NetResult.Success;
             }
 
-            this.NetTerminal.MergeNodeInformation(r.Value!.Node);
-        }
+            if (this.NetTerminal.NodeInformation == null)
+            {// Get NodeInformation (Unsafe connection).
+                var r = await this.SendPacketAndReceiveAsync<PacketGetNodeInformation, PacketGetNodeInformationResponse>(new()).ConfigureAwait(false);
+                if (r.Result != NetResult.Success)
+                {
+                    return r.Result;
+                }
 
-        var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation(this.Terminal.IsAlternative));
-        var response = await this.SendPacketAndReceiveAsync<PacketEncrypt, PacketEncryptResponse>(p).ConfigureAwait(false);
-        if (response.Result != NetResult.Success)
-        {
-            return response.Result;
-        }*/
-
-        // Sync version
-        if (this.NetTerminal.NodeInformation == null)
-        {// Get NodeInformation (Unsafe connection).
-            var r = this.SendPacketAndReceiveAsync<PacketGetNodeInformation, PacketGetNodeInformationResponse>(new());
-            r.Wait();
-            if (r.Result.Result != NetResult.Success)
-            {
-                return r.Result.Result;
+                this.NetTerminal.MergeNodeInformation(r.Value!.Node);
             }
 
-            this.NetTerminal.MergeNodeInformation(r.Result.Value!.Node);
-        }
+            var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation(this.Terminal.IsAlternative));
+            var response = await this.SendPacketAndReceiveAsync<PacketEncrypt, PacketEncryptResponse>(p).ConfigureAwait(false);
+            if (response.Result != NetResult.Success)
+            {
+                return response.Result;
+            }
 
-        var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation(this.Terminal.IsAlternative));
-        var response = this.SendPacketAndReceiveAsync<PacketEncrypt, PacketEncryptResponse>(p);
-        response.Wait();
-        if (response.Result.Result != NetResult.Success)
-        {
-            return response.Result.Result;
+            return this.NetTerminal.CreateEmbryo(p.Salt);
         }
-        a
-        return this.NetTerminal.CreateEmbryo(p.Salt);
+        finally
+        {
+            this.NetTerminal.ConnectionSemaphore.Release();
+        }
     }
 
     public async Task<NetResult> SendPacketAsync<TSend>(TSend value)
@@ -273,6 +265,7 @@ internal class ClientOperation : NetOperation
         if (encrypt)
         {
             var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
+            // this.NetTerminal.TryFork(); // temporary
             if (result != NetResult.Success)
             {
                 return new(result);

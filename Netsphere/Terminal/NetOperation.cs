@@ -21,6 +21,7 @@ internal abstract class NetOperation : IDisposable
         if (this.genePool == null)
         {
             this.genePool = this.NetTerminal.TryFork();
+            this.Terminal.TerminalLogger?.Information("TryFork1"); // temporary
         }
 
         var gp = this.genePool != null ? this.genePool : this.NetTerminal.GenePool;
@@ -32,6 +33,7 @@ internal abstract class NetOperation : IDisposable
         if (this.genePool == null)
         {
             this.genePool = this.NetTerminal.TryFork();
+            this.Terminal.TerminalLogger?.Information("TryFork2"); // temporary
         }
 
         var gp = this.genePool != null ? this.genePool : this.NetTerminal.GenePool;
@@ -43,6 +45,7 @@ internal abstract class NetOperation : IDisposable
         if (this.genePool == null)
         {
             this.genePool = this.NetTerminal.TryFork();
+            this.Terminal.TerminalLogger?.Information("TryFork3"); // temporary
         }
 
         var gp = this.genePool != null ? this.genePool : this.NetTerminal.GenePool;
