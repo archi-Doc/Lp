@@ -74,10 +74,10 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             // Multi-threaded
 
             // IMPORTANT!
-            if (await terminal.EncryptConnectionAsync() != NetResult.Success)
+            /*if (await terminal.EncryptConnectionAsync() != NetResult.Success)
             {
                 return;
-            }
+            }*/
 
             var tt1 = testService.Increment(3);
             var tt2 = testService.Send(1, 2);

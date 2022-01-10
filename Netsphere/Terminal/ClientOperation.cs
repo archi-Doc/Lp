@@ -26,9 +26,9 @@ internal class ClientOperation : NetOperation
             return NetResult.NoNodeInformation;
         }
 
-        if (this.NetTerminal.NodeInformation == null)
+        /*if (this.NetTerminal.NodeInformation == null)
         {// Get NodeInformation (Unsafe connection).
-            var r = await this.SendPacketAndReceiveAsync<PacketGetNodeInformation, PacketGetNodeInformationResponse>(new());
+            var r = await this.SendPacketAndReceiveAsync<PacketGetNodeInformation, PacketGetNodeInformationResponse>(new()).ConfigureAwait(false);
             if (r.Result != NetResult.Success)
             {
                 return r.Result;
@@ -42,8 +42,29 @@ internal class ClientOperation : NetOperation
         if (response.Result != NetResult.Success)
         {
             return response.Result;
+        }*/
+
+        // Sync version
+        if (this.NetTerminal.NodeInformation == null)
+        {// Get NodeInformation (Unsafe connection).
+            var r = this.SendPacketAndReceiveAsync<PacketGetNodeInformation, PacketGetNodeInformationResponse>(new());
+            r.Wait();
+            if (r.Result.Result != NetResult.Success)
+            {
+                return r.Result.Result;
+            }
+
+            this.NetTerminal.MergeNodeInformation(r.Result.Value!.Node);
         }
 
+        var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation(this.Terminal.IsAlternative));
+        var response = this.SendPacketAndReceiveAsync<PacketEncrypt, PacketEncryptResponse>(p);
+        response.Wait();
+        if (response.Result.Result != NetResult.Success)
+        {
+            return response.Result.Result;
+        }
+        a
         return this.NetTerminal.CreateEmbryo(p.Salt);
     }
 
