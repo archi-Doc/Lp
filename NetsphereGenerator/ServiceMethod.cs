@@ -63,12 +63,14 @@ public class ServiceMethod
 
     public ulong Id { get; private set; }
 
-    public string IdString => $"0x{this.Id:x8}ul";
+    public string IdString => $"0x{this.Id:x}ul";
+
+    public string MethodString => $"Method_{this.MethodId:x}";
 
     public NetsphereObject? ReturnType { get; internal set; }
 
     public string GetParameters()
-    {// int a0, string a1
+    {// int a1, string a2
         var sb = new StringBuilder();
         for (var i = 0; i < this.method.Method_Parameters.Length; i++)
         {
@@ -80,14 +82,14 @@ public class ServiceMethod
             sb.Append(this.method.Method_Parameters[i]);
             sb.Append(" ");
             sb.Append(NetsphereBody.ArgumentName);
-            sb.Append(i);
+            sb.Append(i + 1);
         }
 
         return sb.ToString();
     }
 
-    public string GetParameterNames()
-    {// (a0, a1)
+    public string GetParameterNames(string name)
+    {// string.Empty, a1, (a1, a2)
         var parameters = this.method.Method_Parameters;
         if (parameters.Length == 0)
         {
@@ -95,7 +97,7 @@ public class ServiceMethod
         }
         else if (parameters.Length == 1)
         {
-            return NetsphereBody.ArgumentName + "0";
+            return name + "1";
         }
         else
         {
@@ -108,8 +110,8 @@ public class ServiceMethod
                     sb.Append(", ");
                 }
 
-                sb.Append(NetsphereBody.ArgumentName);
-                sb.Append(i);
+                sb.Append(name);
+                sb.Append(i + 1);
             }
 
             sb.Append(")");
@@ -143,6 +145,36 @@ public class ServiceMethod
             }
 
             sb.Append(")");
+            return sb.ToString();
+        }
+    }
+
+    public string GetTupleNames(string name)
+    {// value, value.Item1, value.Item2
+        var parameters = this.method.Method_Parameters;
+        if (parameters.Length == 0)
+        {
+            return string.Empty;
+        }
+        else if (parameters.Length == 1)
+        {
+            return name;
+        }
+        else
+        {
+            var sb = new StringBuilder();
+            for (var i = 0; i < this.method.Method_Parameters.Length; i++)
+            {
+                if (i != 0)
+                {
+                    sb.Append(", ");
+                }
+
+                sb.Append(name);
+                sb.Append(".Item");
+                sb.Append(i + 1);
+            }
+
             return sb.ToString();
         }
     }
