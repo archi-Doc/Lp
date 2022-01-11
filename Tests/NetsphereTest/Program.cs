@@ -32,6 +32,8 @@ public class Program
             Container.Register(x, Reuse.Singleton);
         }
 
+        Container.Register<ExternalServiceImpl>(Reuse.Singleton);
+
         Container.ValidateAndThrow();
 
         AppDomain.CurrentDomain.ProcessExit += (s, e) =>

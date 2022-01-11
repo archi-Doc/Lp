@@ -79,8 +79,8 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 return;
             }*/
 
-            var ts3 = terminal.GetService<IExternalService>();
-            Console.WriteLine(await ts3.IncrementExternal(10).ResponseAsync);
+            var es = terminal.GetService<IExternalService>();
+            Console.WriteLine(await es.IncrementExternal(10).ResponseAsync);
 
             var tt1 = testService.Increment(3);
             var tt2 = testService.Send(1, 2);

@@ -7,7 +7,4 @@ namespace Netsphere;
 /// </summary>
 public interface INetService
 {
-    /*public NetResult Result => NetResult.Success;
-
-    public bool IsSuccess => this.Result == NetResult.Success;*/
 }
