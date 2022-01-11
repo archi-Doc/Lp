@@ -106,24 +106,6 @@ public class Terminal
         Radio.Open<Message.Start>(this.Start);
         Radio.Open<Message.Stop>(this.Stop);
 
-        if (this.NetBase.NetsphereOptions.EnableLogger)
-        {
-            // this.TerminalLogger = new Logger.PriorityLogger();
-
-            var logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "logs");
-            Directory.CreateDirectory(logDirectory);
-
-            this.TerminalLogger = new SerilogLogger(new LoggerConfiguration()
-                .MinimumLevel.Debug()
-                .WriteTo.File(
-                    Path.Combine(logDirectory, "logs", "log.txt"),
-                    rollingInterval: RollingInterval.Day,
-                    retainedFileCountLimit: 31,
-                    buffered: true,
-                    flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
-                .CreateLogger());
-        }
-
         this.netSocket = new(this);
     }
 
@@ -152,6 +134,11 @@ public class Terminal
     public void SetServerTerminalDelegate(CreateServerTerminalDelegate @delegate)
     {
         this.createServerTerminalDelegate = @delegate;
+    }
+
+    public void SetLogger(ISimpleLogger logger)
+    {
+        this.TerminalLogger = logger;
     }
 
     public ThreadCoreBase? Core { get; private set; }

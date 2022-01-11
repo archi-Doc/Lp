@@ -143,7 +143,7 @@ public class NetControl
 
     public EssentialNode EssentialNode { get; }
 
-    internal Terminal? Alternative { get; }
+    public Terminal? Alternative { get; }
 
     internal ConcurrentDictionary<ulong, INetResponder> Responders { get; } = new();
 

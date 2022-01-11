@@ -8,6 +8,7 @@ global using CrossChannel;
 global using LP;
 global using Netsphere;
 using DryIoc;
+using Serilog;
 using SimpleCommandLine;
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
@@ -37,6 +38,7 @@ public class Program
         {// Console window closing or process terminated.
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
             ThreadCore.Root.TerminationEvent.WaitOne(2000); // Wait until the termination process is complete (#1).
+            Logger.CloseAndFlush();
         };
 
         Console.CancelKeyPress += (s, e) =>
@@ -54,9 +56,27 @@ public class Program
 
         var options = new LP.Options.NetsphereOptions();
         options.EnableAlternative = true;
-        options.EnableLogger = true;
         options.EnableTest = true;
         NetControl.QuickStart("test", options, true);
+
+        // Logger
+        var logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "logs");
+        Directory.CreateDirectory(logDirectory);
+        var netControl = Container.Resolve<NetControl>();
+        netControl.Terminal.SetLogger(new SerilogLogger(new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .WriteTo.File(
+                Path.Combine(logDirectory, "terminal.log.txt"),
+                buffered: true,
+                flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
+            .CreateLogger()));
+        netControl.Alternative?.SetLogger(new SerilogLogger(new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .WriteTo.File(
+                Path.Combine(logDirectory, "terminal2.log.txt"),
+                buffered: true,
+                flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
+            .CreateLogger()));
 
         StaticNetService.SetFrontendDelegate<Netsphere.Design.ITestService>(static x => new Netsphere.Design.TestServiceFrontend(x));
         StaticNetService.SetServiceInfo(Netsphere.Design.TestServiceBackend.CreateServiceInfo());
@@ -67,8 +87,7 @@ public class Program
 
         ThreadCore.Root.Terminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
-        Logger.CloseAndFlush();
-        await Task.Delay(1000);
+        // await Task.Delay(1000);
         ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).
     }
 }
