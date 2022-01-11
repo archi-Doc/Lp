@@ -42,8 +42,6 @@ public class NetService
             this.Process = process;
         }
 
-        // public ServiceInfo ServiceInfo { get; }
-
         public ulong Id { get; }
 
         public object? ServerInstance { get; private set; }
@@ -90,13 +88,25 @@ public class NetService
             serviceMethod = serviceMethod.CloneWithInstance(serverInstance);
         }
 
-        var sendOwner = await serviceMethod.Process(serviceMethod.ServerInstance!, received.Received);
-        await serverTerminal.SendServiceAsync(serviceMethod.Id, sendOwner).ConfigureAwait(false);
-        sendOwner.Return();
+        ByteArrayPool.MemoryOwner sendOwner = default;
+        try
+        {
+            sendOwner = await serviceMethod.Process(serviceMethod.ServerInstance!, received.Received);
+            await serverTerminal.SendServiceAsync(serviceMethod.Id, sendOwner).ConfigureAwait(false);
+        }
+        catch
+        {
+            await serverTerminal.SendServiceAsync(serviceMethod.Id, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
+        }
+        finally
+        {
+            sendOwner.Return();
+        }
+
         return;
 
 SendEmpty:
-        await serverTerminal.SendServiceAsync(received.DataId, ByteArrayPool.MemoryOwner.Empty);
+        await serverTerminal.SendServiceAsync(received.DataId, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
     }
 
     private IServiceProvider? serviceProvider;
