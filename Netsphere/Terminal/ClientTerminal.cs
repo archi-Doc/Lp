@@ -81,7 +81,7 @@ public class ClientTerminal : NetTerminal
     {// Checked
         using (var operation = this.CreateOperation())
         {
-            return await operation.SendAsync(value);
+            return await operation.SendAsync(value).ConfigureAwait(false);
         }
     }
 
@@ -113,7 +113,7 @@ public class ClientTerminal : NetTerminal
     {// Checked
         using (var operation = this.CreateOperation())
         {
-            return await operation.SendAndReceiveAsync<TSend, TReceive>(value);
+            return await operation.SendAndReceiveAsync<TSend, TReceive>(value).ConfigureAwait(false);
         }
     }
 

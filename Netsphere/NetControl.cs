@@ -156,7 +156,7 @@ public class NetControl
             var server = containerInstance.Resolve<Server>();
             try
             {
-                await server.Process(terminal);
+                await server.Process(terminal).ConfigureAwait(false);
             }
             finally
             {
