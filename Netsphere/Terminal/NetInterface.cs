@@ -682,6 +682,7 @@ WaitForSendCompletionWait:
         {
             if (this.NetTerminal.IsClosed)
             {
+                this.TerminalLogger?.Error("Closed(receive).");
                 return;
             }
 

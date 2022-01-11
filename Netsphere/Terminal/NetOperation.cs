@@ -21,11 +21,15 @@ internal abstract class NetOperation : IDisposable
         if (this.genePool == null)
         {
             this.genePool = this.NetTerminal.TryFork();
-            this.Terminal.TerminalLogger?.Information("TryFork1"); // temporary
+            this.Terminal.TerminalLogger?.Information($"TryFork1 - {this.NetTerminal.IsEncrypted}"); // temporary
         }
 
         var gp = this.genePool != null ? this.genePool : this.NetTerminal.GenePool;
-        return gp.GetSequential();
+        // return gp.GetSequential();
+
+        var x = gp.GetSequential();
+        this.Terminal.TerminalLogger?.Information(x.To4Hex());
+        return x;
     }
 
     public (ulong First, ulong Second) Get2Genes()
@@ -33,11 +37,15 @@ internal abstract class NetOperation : IDisposable
         if (this.genePool == null)
         {
             this.genePool = this.NetTerminal.TryFork();
-            this.Terminal.TerminalLogger?.Information("TryFork2"); // temporary
+            this.Terminal.TerminalLogger?.Information($"TryFork2 - {this.NetTerminal.IsEncrypted}"); // temporary
         }
 
         var gp = this.genePool != null ? this.genePool : this.NetTerminal.GenePool;
-        return gp.GetSequential2();
+        // return gp.GetSequential2();
+
+        var x = gp.GetSequential2();
+        this.Terminal.TerminalLogger?.Information($"{x.First.To4Hex()} - {x.Second.To4Hex()}");
+        return x;
     }
 
     public void GetGenes(Span<ulong> span)
@@ -45,11 +53,14 @@ internal abstract class NetOperation : IDisposable
         if (this.genePool == null)
         {
             this.genePool = this.NetTerminal.TryFork();
-            this.Terminal.TerminalLogger?.Information("TryFork3"); // temporary
+            this.Terminal.TerminalLogger?.Information($"TryFork3 - {this.NetTerminal.IsEncrypted}"); // temporary
         }
 
         var gp = this.genePool != null ? this.genePool : this.NetTerminal.GenePool;
+        // gp.GetSequential(span);
+
         gp.GetSequential(span);
+        this.Terminal.TerminalLogger?.Information($"Span {span.Length}");
     }
 
     public virtual async Task<NetResult> EncryptConnectionAsync() => NetResult.NoEncryptedConnection;

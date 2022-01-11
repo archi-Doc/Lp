@@ -38,7 +38,6 @@ public class Program
         {// Console window closing or process terminated.
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
             ThreadCore.Root.TerminationEvent.WaitOne(2000); // Wait until the termination process is complete (#1).
-            Logger.CloseAndFlush();
         };
 
         Console.CancelKeyPress += (s, e) =>
@@ -87,7 +86,8 @@ public class Program
 
         ThreadCore.Root.Terminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
-        // await Task.Delay(1000);
+        Logger.CloseAndFlush();
+        await Task.Delay(1000);
         ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).
     }
 }

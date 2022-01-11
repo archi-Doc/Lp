@@ -107,6 +107,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
             }*/
 
             udp.Send(this.Owner.Memory.Span, this.NetInterface.NetTerminal.Endpoint);
+            this.NetInterface.Terminal.TerminalLogger?.Information($"send:{this.Owner.Memory.Span.Length}"); // temporary
             this.State = NetTerminalGeneState.WaitingForAck;
 
             // var packetId = (PacketId)packetToSend[1];
