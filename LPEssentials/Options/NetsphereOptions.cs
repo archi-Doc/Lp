@@ -19,9 +19,6 @@ public class NetsphereOptions
     [SimpleOption("alternative", null, "Enable alternative (debug) terminal")]
     public bool EnableAlternative { get; set; } = false;
 
-    [SimpleOption("logger", null, "Enable loggerl")]
-    public bool EnableLogger { get; set; } = false;
-
     [SimpleOption("test", null, "Enable test functions")]
     public bool EnableTest { get; set; } = false;
 

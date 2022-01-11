@@ -55,6 +55,7 @@ public class NetSocket
                     var remoteEP = (EndPoint)anyEP;
                     arrayOwner ??= PacketPool.Rent();
                     var received = udp.Client.ReceiveFrom(arrayOwner.ByteArray, 0, arrayOwner.ByteArray.Length, SocketFlags.None, ref remoteEP);
+                    core.socket.terminal.TerminalLogger?.Information(received.ToString()); // temporary
                     if (received <= NetControl.MaxPayload)
                     {
                         core.socket.terminal.ProcessReceive((IPEndPoint)remoteEP, arrayOwner, received, Mics.GetSystem());

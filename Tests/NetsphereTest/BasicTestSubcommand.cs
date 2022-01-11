@@ -7,17 +7,17 @@ using Netsphere;
 using SimpleCommandLine;
 using Tinyhand;
 
-namespace LP.Subcommands;
+namespace NetsphereTest;
 
-[SimpleCommand("nettest")]
-public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
+[SimpleCommand("basic")]
+public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 {
-    public NetTestSubcommand(NetControl netControl)
+    public BasicTestSubcommand(NetControl netControl)
     {
         this.NetControl = netControl;
     }
 
-    public async Task Run(NetTestOptions options, string[] args)
+    public async Task Run(BasicTestOptions options, string[] args)
     {
         if (!SubcommandService.TryParseNodeAddress(options.Node, out var node))
         {
@@ -33,12 +33,6 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
             // await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(new PacketPunch());
 
             var p = new PacketPunch(null);
-
-            /*var result = await terminal.EncryptConnectionAsync();
-            if (result != NetResult.Success)
-            {
-                return;
-            }*/
 
             var sw = Stopwatch.StartNew();
             /*var t = terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
@@ -78,12 +72,35 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
             Logger.Priority.Information(testService.Result.ToString());*/
 
             // Multi-threaded
+
+            // IMPORTANT!
+            /*if (await terminal.EncryptConnectionAsync() != NetResult.Success)
+            {
+                return;
+            }*/
+
+            var ts3 = terminal.GetService<IExternalService>();
+            Console.WriteLine(await ts3.IncrementExternal(10).ResponseAsync);
+
             var tt1 = testService.Increment(3);
             var tt2 = testService.Send(1, 2);
             var tt3 = testService.Send2(2, 3);
             Logger.Priority.Information(tt1.ResponseAsync.Result.ToString());
             Logger.Priority.Information(tt2.ResponseAsync.Result.ToString());
             Logger.Priority.Information(tt3.ResponseAsync.Result.ToString());
+
+            /*var tt1 = testService.Increment(3);
+            Logger.Priority.Information(tt1.ResponseAsync.Result.ToString());
+            var tt2 = testService.Send(1, 2);
+            Logger.Priority.Information(tt2.ResponseAsync.Result.ToString());
+            var tt3 = testService.Send2(2, 3);
+            Logger.Priority.Information(tt3.ResponseAsync.Result.ToString());*/
+
+            var res = await tt1.ResponseAsync;
+            if (res.IsSuccess)
+            {
+                Logger.Priority.Information(res.ToString());
+            }
 
             /*var p4 = TestBlock.Create(4000_000);
             Logger.Priority.Information($"4MB send: {p4}");
@@ -99,7 +116,7 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
     public NetControl NetControl { get; set; }
 }
 
-public record NetTestOptions
+public record BasicTestOptions
 {
     [SimpleOption("node", description: "Node address", Required = true)]
     public string Node { get; init; } = string.Empty;

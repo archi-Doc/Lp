@@ -23,11 +23,14 @@ internal class GenePool : IDisposable
         this.currentGene = first;
     }
 
-    private GenePool(ulong first, GenePool original)
+    private GenePool(GenePool original)
     {
-        this.currentGene = first;
         this.pool = new byte[PoolSize];
-        original.GetSequential(MemoryMarshal.Cast<byte, ulong>(this.pool));
+        var ulongSpan = MemoryMarshal.Cast<byte, ulong>(this.pool);
+        original.GetSequential(ulongSpan);
+
+        this.currentGene = ulongSpan[0];
+        this.embryo = original.embryo;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -107,18 +110,14 @@ internal class GenePool : IDisposable
             this.SetEmbryo(embryo);
         }
 
-        var gene = this.GetGene();
-        var first = BitConverter.ToUInt64(embryo);
-        var genePool = new GenePool(gene ^ first, this);
-        genePool.embryo = embryo;
-        return genePool;
+        return new GenePool(this);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private unsafe ulong GetGene()
     {// lock (this.syncObject)
         if (this.pool != null || this.encryptor != null)
-        { // Pooled genes (Managed
+        { // Pooled genes (Managed)
             if (this.poolPosition >= PoolSize)
             {
                 this.EnsurePool();

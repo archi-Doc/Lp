@@ -22,7 +22,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
 {
     public const string GeneratorName = "NetsphereGenerator";
     public const string FrontendClassName = "Frontend_"; // "__gen_frontend__";
-    public const string BackendClassName = "__gen_backend__";
+    public const string BackendClassName = "Backend_";
     public const string ArgumentName = "a";
     public const string NetResultFullName = "Netsphere.NetResult";
 
@@ -142,6 +142,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
         }
 
         this.GenerateFrontend(generator, assemblyId);
+        this.GenerateBackend(generator, assemblyId);
     }
 
     public void GenerateFrontend(IGeneratorInformation generator, string assemblyId)
@@ -183,7 +184,6 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
             }
 
             var result = ssb.Finalize();
-
             if (generator.GenerateToFile && generator.TargetFolder != null && Directory.Exists(generator.TargetFolder))
             {
                 this.StringToFile(result, Path.Combine(generator.TargetFolder, $"gen.Netsphere.Frontend.cs"));
@@ -192,6 +192,65 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
             {
                 this.Context?.AddSource($"gen.Netsphere.Frontend", SourceText.From(result, Encoding.UTF8));
                 this.Context2?.AddSource($"gen.Netsphere.Frontend", SourceText.From(result, Encoding.UTF8));
+            }
+        }
+
+        this.FlushDiagnostic();
+    }
+
+    public void GenerateBackend(IGeneratorInformation generator, string assemblyId)
+    {
+        ScopingStringBuilder ssb = new();
+        GeneratorInformation info = new();
+
+        var array = this.NetObjects.ToArray();
+
+        this.GenerateHeader(ssb);
+        ssb.AppendLine($"namespace Netsphere.Generated;");
+        ssb.AppendLine();
+
+        using (var scopeClass = ssb.ScopeBrace("internal static class Backend" + assemblyId))
+        {
+            ssb.AppendLine("private static bool Initialized;");
+            ssb.AppendLine();
+            ssb.AppendLine("[ModuleInitializer]");
+
+            using (var scopeMethod = ssb.ScopeBrace("public static void Initialize()"))
+            {
+                ssb.AppendLine("if (Initialized) return;");
+                ssb.AppendLine("Initialized = true;");
+                ssb.AppendLine();
+
+                foreach (var y in array.Where(a => a.ObjectFlag.HasFlag(NetsphereObjectFlag.NetServiceObject)))
+                {
+                    if (y.ServiceInterfaces != null)
+                    {
+                        foreach (var z in y.ServiceInterfaces)
+                        {
+                            ssb.AppendLine($"StaticNetService.SetServiceInfo({y.ClassName}.ServiceInfo_{z.NetServiceInterfaceAttribute!.ServiceId.ToString("x")}());");
+                        }
+                    }
+                }
+            }
+
+            foreach (var y in array)
+            {
+                if (y.ObjectFlag.HasFlag(NetsphereObjectFlag.NetServiceObject))
+                {// NetServiceObject (Backend)
+                    ssb.AppendLine();
+                    y.GenerateBackend(ssb, info);
+                }
+            }
+
+            var result = ssb.Finalize();
+            if (generator.GenerateToFile && generator.TargetFolder != null && Directory.Exists(generator.TargetFolder))
+            {
+                this.StringToFile(result, Path.Combine(generator.TargetFolder, $"gen.Netsphere.Backend.cs"));
+            }
+            else
+            {
+                this.Context?.AddSource($"gen.Netsphere.Backend", SourceText.From(result, Encoding.UTF8));
+                this.Context2?.AddSource($"gen.Netsphere.Backend", SourceText.From(result, Encoding.UTF8));
             }
         }
 
@@ -278,36 +337,6 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
         ssb.AppendLine("#pragma warning disable CS1591", false);
         ssb.AppendLine("#pragma warning disable CS1998", false);
         ssb.AppendLine();
-    }
-
-    private void GenerateLoader(IGeneratorInformation generator, GeneratorInformation info, List<NetsphereObject> rootObjects)
-    {
-        var ssb = new ScopingStringBuilder();
-        this.GenerateHeader(ssb);
-
-        using (var scopeFormatter = ssb.ScopeNamespace("Netsphere.Generator"))
-        {
-            using (var methods = ssb.ScopeBrace("static class Generated"))
-            {
-                info.FinalizeBlock(ssb);
-
-                NetsphereObject.GenerateLoader(ssb, info, null, rootObjects);
-            }
-        }
-
-        this.GenerateInitializer(generator, ssb, info);
-
-        var result = ssb.Finalize();
-
-        if (generator.GenerateToFile && generator.TargetFolder != null && Directory.Exists(generator.TargetFolder))
-        {
-            this.StringToFile(result, Path.Combine(generator.TargetFolder, "gen.NetsphereGenerated.cs"));
-        }
-        else
-        {
-            this.Context?.AddSource($"gen.NetsphereLoader", SourceText.From(result, Encoding.UTF8));
-            this.Context2?.AddSource($"gen.NetsphereLoader", SourceText.From(result, Encoding.UTF8));
-        }
     }
 
     private void GenerateInitializer(IGeneratorInformation generator, ScopingStringBuilder ssb, GeneratorInformation info)

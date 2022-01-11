@@ -8,6 +8,7 @@ global using CrossChannel;
 global using LP;
 global using Netsphere;
 using DryIoc;
+using Serilog;
 using SimpleCommandLine;
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
@@ -22,9 +23,14 @@ public class Program
     {
         // Subcommands
         var commandTypes = new List<Type>();
+        commandTypes.Add(typeof(BasicTestSubcommand));
 
         // DI Container
         NetControl.Register(Container, commandTypes);
+        foreach (var x in commandTypes)
+        {
+            Container.Register(x, Reuse.Singleton);
+        }
 
         Container.ValidateAndThrow();
 
@@ -49,20 +55,39 @@ public class Program
 
         var options = new LP.Options.NetsphereOptions();
         options.EnableAlternative = true;
-        options.EnableLogger = true;
         options.EnableTest = true;
         NetControl.QuickStart("test", options, true);
 
-        StaticNetService.SetFrontendDelegate<ITestService>(static x => new TestServiceFrontend(x));
-        StaticNetService.SetServiceInfo(TestServiceBackend.CreateServiceInfo());
+        // Logger
+        var logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "logs");
+        Directory.CreateDirectory(logDirectory);
+        var netControl = Container.Resolve<NetControl>();
+        netControl.Terminal.SetLogger(new SerilogLogger(new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .WriteTo.File(
+                Path.Combine(logDirectory, "terminal.log.txt"),
+                buffered: true,
+                flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
+            .CreateLogger()));
+        netControl.Alternative?.SetLogger(new SerilogLogger(new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .WriteTo.File(
+                Path.Combine(logDirectory, "terminal2.log.txt"),
+                buffered: true,
+                flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
+            .CreateLogger()));
+
+        StaticNetService.SetFrontendDelegate<Netsphere.Design.ITestService>(static x => new Netsphere.Design.TestServiceFrontend(x));
+        StaticNetService.SetServiceInfo(Netsphere.Design.TestServiceBackend.CreateServiceInfo());
 
         // await SimpleParser.ParseAndRunAsync(commandTypes, "nettest -node 3.18.216.240:49152", parserOptions); // Main process
-        await SimpleParser.ParseAndRunAsync(commandTypes, "nettest -node alternative", parserOptions); // Main process
+        await SimpleParser.ParseAndRunAsync(commandTypes, "basic -node alternative", parserOptions); // Main process
         // await SimpleParser.ParseAndRunAsync(commandTypes, args, parserOptions); // Main process
 
         ThreadCore.Root.Terminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
         Logger.CloseAndFlush();
+        await Task.Delay(1000);
         ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).
     }
 }

@@ -17,4 +17,8 @@
     <PackageReference Include="DryIoc.dll" Version="4.8.4" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="Generated\*" />
+  </ItemGroup>
+
 </Project>

@@ -11,6 +11,8 @@ public readonly struct ServiceResponse
 
     public NetResult Result => this.result;
 
+    public bool IsSuccess => this.result == NetResult.Success;
+
     public override string ToString() => $"{this.result.ToString()}";
 
     private readonly NetResult result;
@@ -32,6 +34,8 @@ public readonly struct ServiceResponse<T>
     public T Value => this.value;
 
     public NetResult Result => this.result;
+
+    public bool IsSuccess => this.result == NetResult.Success;
 
     public override string ToString()
     {

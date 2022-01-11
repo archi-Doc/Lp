@@ -26,25 +26,39 @@ internal class ClientOperation : NetOperation
             return NetResult.NoNodeInformation;
         }
 
-        if (this.NetTerminal.NodeInformation == null)
-        {// Get NodeInformation (Unsafe connection).
-            var r = await this.SendPacketAndReceiveAsync<PacketGetNodeInformation, PacketGetNodeInformationResponse>(new());
-            if (r.Result != NetResult.Success)
-            {
-                return r.Result;
+        await this.NetTerminal.ConnectionSemaphore.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            if (this.NetTerminal.IsEncrypted)
+            {// Encrypted
+                return NetResult.Success;
             }
 
-            this.NetTerminal.MergeNodeInformation(r.Value!.Node);
-        }
+            if (this.NetTerminal.NodeInformation == null)
+            {// Get NodeInformation (Unsafe).
+                var r = await this.SendPacketAndReceiveAsync<PacketGetNodeInformation, PacketGetNodeInformationResponse>(new()).ConfigureAwait(false);
+                if (r.Result != NetResult.Success)
+                {
+                    return r.Result;
+                }
 
-        var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation(this.Terminal.IsAlternative));
-        var response = await this.SendPacketAndReceiveAsync<PacketEncrypt, PacketEncryptResponse>(p).ConfigureAwait(false);
-        if (response.Result != NetResult.Success)
+                this.NetTerminal.MergeNodeInformation(r.Value!.Node);
+            }
+
+            // Encrypt
+            var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation(this.Terminal.IsAlternative));
+            var response = await this.SendPacketAndReceiveAsync<PacketEncrypt, PacketEncryptResponse>(p).ConfigureAwait(false);
+            if (response.Result != NetResult.Success)
+            {
+                return response.Result;
+            }
+
+            return this.NetTerminal.CreateEmbryo(p.Salt);
+        }
+        finally
         {
-            return response.Result;
+            this.NetTerminal.ConnectionSemaphore.Release();
         }
-
-        return this.NetTerminal.CreateEmbryo(p.Salt);
     }
 
     public async Task<NetResult> SendPacketAsync<TSend>(TSend value)

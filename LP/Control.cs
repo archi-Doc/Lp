@@ -91,14 +91,14 @@ public class Control
 
     public async Task LoadAsync()
     {
-        await Radio.SendAsync(new Message.LoadAsync());
-        await this.NetControl.EssentialNode.LoadAsync(Path.Combine(this.LPBase.RootDirectory, EssentialNode.FileName));
+        await Radio.SendAsync(new Message.LoadAsync()).ConfigureAwait(false);
+        await this.NetControl.EssentialNode.LoadAsync(Path.Combine(this.LPBase.RootDirectory, EssentialNode.FileName)).ConfigureAwait(false);
     }
 
     public async Task SaveAsync()
     {
-        await Radio.SendAsync(new Message.SaveAsync());
-        await this.NetControl.EssentialNode.SaveAsync(Path.Combine(this.LPBase.RootDirectory, EssentialNode.FileName));
+        await Radio.SendAsync(new Message.SaveAsync()).ConfigureAwait(false);
+        await this.NetControl.EssentialNode.SaveAsync(Path.Combine(this.LPBase.RootDirectory, EssentialNode.FileName)).ConfigureAwait(false);
     }
 
     public bool TryStart()

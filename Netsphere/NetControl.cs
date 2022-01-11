@@ -49,7 +49,7 @@ public class NetControl
         container.RegisterDelegate(x => new NetService(container), Reuse.Transient);
 
         // RPCs
-        container.Register<TestServiceImpl>(Reuse.Transient);
+        container.Register<Netsphere.Design.TestServiceImpl>(Reuse.Transient);
 
         // Machines
         container.Register<LP.Machines.EssentialNetMachine>();
@@ -143,7 +143,7 @@ public class NetControl
 
     public EssentialNode EssentialNode { get; }
 
-    internal Terminal? Alternative { get; }
+    public Terminal? Alternative { get; }
 
     internal ConcurrentDictionary<ulong, INetResponder> Responders { get; } = new();
 
@@ -156,7 +156,7 @@ public class NetControl
             var server = containerInstance.Resolve<Server>();
             try
             {
-                await server.Process(terminal);
+                await server.Process(terminal).ConfigureAwait(false);
             }
             finally
             {

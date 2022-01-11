@@ -52,9 +52,10 @@ public class TestServiceImpl2 : TestServiceImpl, ITestService2
 [NetServiceObject]
 public class ExternalServiceImpl : IExternalService
 {
-    public NetTask<int> IncrementExternal(int x)
+    public async NetTask<int> IncrementExternal(int x)
     {
-        throw new NotImplementedException();
+        Console.WriteLine($"IncrementExternal {x} -> {x + 1}");
+        return x + 1;
     }
 
     public async NetTask SendExternal(int x)
@@ -74,6 +75,7 @@ public class ParentClass
     {
         public async NetTask<int> Increment3(int x)
         {
+            Console.WriteLine("Increment3");
             return x + 1;
         }
 

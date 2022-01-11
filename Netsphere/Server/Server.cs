@@ -20,7 +20,7 @@ public class Server
         {
             try
             {
-                var received = await terminal.ReceiveAsync();
+                var received = await terminal.ReceiveAsync().ConfigureAwait(false);
                 if (received.Result == NetResult.Success)
                 {// Success
                     if (received.PacketId == PacketId.Data &&

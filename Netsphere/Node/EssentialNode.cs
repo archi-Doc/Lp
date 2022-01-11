@@ -37,7 +37,7 @@ public class EssentialNode
         {
             if (File.Exists(filename))
             {
-                var bytes = await File.ReadAllBytesAsync(filename);
+                var bytes = await File.ReadAllBytesAsync(filename).ConfigureAwait(false);
                 // this.essentialNodes = TinyhandSerializer.Deserialize<EssentialNodeAddress.GoshujinClass>(bytes);
                 var g = TinyhandSerializer.DeserializeFromUtf8<EssentialNodeAddress.GoshujinClass>(bytes);
                 if (g != null)

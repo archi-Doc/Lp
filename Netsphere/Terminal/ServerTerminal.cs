@@ -50,7 +50,7 @@ public class ServerTerminal : NetTerminal
 
     public async Task<NetResult> SendEmpty()
     {// Checked
-        return await this.SendDataAsync(0, Array.Empty<byte>());
+        return await this.SendDataAsync(0, Array.Empty<byte>()).ConfigureAwait(false);
     }
 
     public async Task<NetReceivedData> ReceiveAsync()
@@ -61,7 +61,7 @@ public class ServerTerminal : NetTerminal
             return new(NetResult.NoReceiver);
         }
 
-        var received = await operation.ReceiveAsync();
+        var received = await operation.ReceiveAsync().ConfigureAwait(false);
         if (received.Result != NetResult.Success)
         {// Timeout or error
             return received;
@@ -79,7 +79,7 @@ public class ServerTerminal : NetTerminal
             return NetResult.NoSender;
         }
 
-        var result = await operation.SendPacketAsync(value);
+        var result = await operation.SendPacketAsync(value).ConfigureAwait(false);
         operation.Dispose();
         return result;
     }
@@ -91,7 +91,7 @@ public class ServerTerminal : NetTerminal
             return NetResult.NoSender;
         }
 
-        var result = await operation.SendAsync(value);
+        var result = await operation.SendAsync(value).ConfigureAwait(false);
         operation.Dispose();
         return result;
     }

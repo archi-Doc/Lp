@@ -91,7 +91,7 @@ public class NetService
         }
 
         var sendOwner = await serviceMethod.Process(serviceMethod.ServerInstance!, received.Received);
-        await serverTerminal.SendServiceAsync(serviceMethod.Id, sendOwner);
+        await serverTerminal.SendServiceAsync(serviceMethod.Id, sendOwner).ConfigureAwait(false);
         sendOwner.Return();
         return;
 

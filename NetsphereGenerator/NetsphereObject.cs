@@ -186,6 +186,8 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                         {
                             continue;
                         }
+
+                        x.Check();
                     }
 
                     this.ServiceInterfaces.Add(x);
@@ -316,6 +318,8 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
         if (this.NetServiceObjectAttribute != null)
         {// NetServiceObject
+            this.ClassName = NetsphereBody.BackendClassName + Arc.Crypto.FarmHash.Hash32(this.FullName).ToString("x");
+
             if (this.ServiceInterfaces != null)
             {
                 foreach (var x in this.ServiceInterfaces)
@@ -350,7 +354,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         }
         else if (this.NetServiceInterfaceAttribute != null)
         {// NetServiceInterface
-            this.ClassName = NetsphereBody.FrontendClassName + this.NetServiceInterfaceAttribute.ServiceId.ToString("x4");
+            this.ClassName = NetsphereBody.FrontendClassName + this.NetServiceInterfaceAttribute.ServiceId.ToString("x");
 
             foreach (var x in this.GetMembers(VisceralTarget.Method))
             {
@@ -484,13 +488,13 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
             using (var scopeCore = ssb.ScopeBrace($"async Task<ServiceResponse{genericString}> Core()"))
             {
-                using (var scopeSerialize = ssb.ScopeBrace($"if (!LP.Block.BlockService.TrySerialize({method.GetParameterNames()}, out var owner))"))
+                using (var scopeSerialize = ssb.ScopeBrace($"if (!LP.Block.BlockService.TrySerialize({method.GetParameterNames(NetsphereBody.ArgumentName)}, out var owner))"))
                 {
                     AppendReturn("NetResult.SerializationError");
                 }
 
                 ssb.AppendLine();
-                ssb.AppendLine($"var response = await this.ClientTerminal.SendAndReceiveServiceAsync({method.IdString}, owner);");
+                ssb.AppendLine($"var response = await this.ClientTerminal.SendAndReceiveServiceAsync({method.IdString}, owner).ConfigureAwait(false);");
                 ssb.AppendLine("owner.Return();");
                 using (var scopeNoNetService = ssb.ScopeBrace("if (response.Result == NetResult.Success && response.Value.IsEmpty)"))
                 {
@@ -541,8 +545,105 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         }
     }
 
-    internal void Generate2(ScopingStringBuilder ssb, GeneratorInformation info)
+    internal void GenerateBackend(ScopingStringBuilder ssb, GeneratorInformation info)
     {
-        return;
+        using (var cls = ssb.ScopeBrace($"private class {this.ClassName}"))
+        {
+            this.GenerateBackend_Constructor(ssb, info);
+
+            if (this.ServiceInterfaces != null)
+            {
+                foreach (var x in this.ServiceInterfaces)
+                {
+                    this.GenerateBackend_Interface(ssb, info, x);
+                }
+            }
+
+            ssb.AppendLine();
+            ssb.AppendLine($"private {this.FullName} impl;");
+        }
+    }
+
+    internal void GenerateBackend_Constructor(ScopingStringBuilder ssb, GeneratorInformation info)
+    {
+        using (var scopeMethod = ssb.ScopeBrace($"public {this.ClassName}(IServiceProvider? serviceProvider)"))
+        {
+            ssb.AppendLine($"var impl = serviceProvider?.GetService(typeof({this.FullName})) as {this.FullName};");
+            using (var scopeIf = ssb.ScopeBrace($"if (impl == null)"))
+            {
+                if (this.ObjectFlag.HasFlag(NetsphereObjectFlag.HasDefaultConstructor))
+                {
+                    ssb.AppendLine($"impl = new {this.FullName}();");
+                }
+                else
+                {
+                    ssb.AppendLine($"throw new InvalidOperationException($\"Could not create an instance of net service {{typeof({this.FullName}).ToString()}}.\");");
+                }
+            }
+
+            ssb.AppendLine();
+            ssb.AppendLine("this.impl = impl;");
+        }
+    }
+
+    internal void GenerateBackend_Interface(ScopingStringBuilder ssb, GeneratorInformation info, NetsphereObject serviceInterface)
+    {
+        if (serviceInterface.ServiceMethods != null)
+        {
+            foreach (var x in serviceInterface.ServiceMethods.Values)
+            {
+                ssb.AppendLine();
+                this.GenerateBackend_Method(ssb, info, serviceInterface, x);
+            }
+        }
+
+        ssb.AppendLine();
+        this.GenerateBackend_ServiceInfo(ssb, info, serviceInterface);
+    }
+
+    internal void GenerateBackend_Method(ScopingStringBuilder ssb, GeneratorInformation info, NetsphereObject serviceInterface, ServiceMethod method)
+    {
+        using (var scopeMethod = ssb.ScopeBrace($"private static async NetTask<ByteArrayPool.MemoryOwner> {method.MethodString}(object obj, ByteArrayPool.MemoryOwner receive)"))
+        {
+            using (var scopeDeserialize = ssb.ScopeBrace($"if (!LP.Block.BlockService.TryDeserialize<{method.GetParameterTypes()}>(receive, out var value))"))
+            {
+                ssb.AppendLine("return default;");
+            }
+
+            ssb.AppendLine();
+
+            var prefix = string.Empty;
+            if (method.ReturnType != null)
+            {
+                prefix = "var result = ";
+            }
+
+            ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})(({this.ClassName})obj).impl).{method.SimpleName}({method.GetTupleNames("value")});");
+            if (method.ReturnType == null)
+            {
+                ssb.AppendLine("var result = NetResult.Success;");
+            }
+
+            ssb.AppendLine("LP.Block.BlockService.TrySerialize(result, out var send);");
+            ssb.AppendLine("return send;");
+        }
+    }
+
+    internal void GenerateBackend_ServiceInfo(ScopingStringBuilder ssb, GeneratorInformation info, NetsphereObject serviceInterface)
+    {
+        var serviceIdString = serviceInterface.NetServiceInterfaceAttribute!.ServiceId.ToString("x");
+        using (var scopeMethod = ssb.ScopeBrace($"public static NetService.ServiceInfo ServiceInfo_{serviceIdString}()"))
+        {
+            ssb.AppendLine($"var si = new NetService.ServiceInfo(0x{serviceIdString}u, static x => new {this.ClassName}(x));");
+            if (serviceInterface.ServiceMethods != null)
+            {
+                foreach (var x in serviceInterface.ServiceMethods.Values)
+                {
+                    ssb.AppendLine($"si.AddMethod(new NetService.ServiceMethod({x.IdString}, {x.MethodString}));");
+                }
+            }
+
+            ssb.AppendLine("return si;");
+        }
     }
 }
