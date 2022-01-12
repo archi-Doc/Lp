@@ -147,6 +147,8 @@ public class Terminal
 
     public NetStatus NetStatus { get; }
 
+    public MyStatus MyStatus { get; } = new();
+
     public bool IsAlternative { get; private set; }
 
     public int Port { get; set; }

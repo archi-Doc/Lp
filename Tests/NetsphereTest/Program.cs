@@ -62,7 +62,7 @@ public class Program
         NetControl.QuickStart("test", options, true);
 
         // Logger
-        var logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "logs");
+        /*var logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "logs");
         Directory.CreateDirectory(logDirectory);
         var netControl = Container.Resolve<NetControl>();
         netControl.Terminal.SetLogger(new SerilogLogger(new LoggerConfiguration()
@@ -78,7 +78,7 @@ public class Program
                 Path.Combine(logDirectory, "terminal2.log.txt"),
                 buffered: true,
                 flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
-            .CreateLogger()));
+            .CreateLogger()));*/
 
         // await SimpleParser.ParseAndRunAsync(commandTypes, "netbench -node alternative", parserOptions); // Main process
         await SimpleParser.ParseAndRunAsync(commandTypes, args, parserOptions); // Main process
