@@ -26,65 +26,45 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
     public const string ArgumentName = "a";
     public const string NetResultFullName = "Netsphere.NetResult";
 
-    public static readonly DiagnosticDescriptor Error_GenericType = new DiagnosticDescriptor(
-        id: "NSG001", title: "Generic type", messageFormat: "Generic type is not supported",
-        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
-
-    public static readonly DiagnosticDescriptor Error_INetService = new DiagnosticDescriptor(
-        id: "NSG002", title: "INetService", messageFormat: "NetServiceObject or NetServiceInterface must be derived from INetService",
-        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
-
-    public static readonly DiagnosticDescriptor Error_Accessibility = new DiagnosticDescriptor(
-        id: "NSG003", title: "Accessibility", messageFormat: "Access modifier of NetServiceObject must be public or internal",
-        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
-
-    public static readonly DiagnosticDescriptor Error_DuplicateServiceId = new DiagnosticDescriptor(
-        id: "NSG004", title: "Duplicate Service Id", messageFormat: "Duplicate Service Id {0} is found",
-        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
-
-    public static readonly DiagnosticDescriptor Error_DuplicateServiceObject = new DiagnosticDescriptor(
-        id: "NSG005", title: "Duplicate Service Object", messageFormat: "Multiple service objects implement service interface {0}",
-        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
-
-    public static readonly DiagnosticDescriptor Error_MethodReturnType = new DiagnosticDescriptor(
-        id: "NSG006", title: "Method return type", messageFormat: "The return type of service method must be NetTask or NetTask<T>",
-        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
-
-    public static readonly DiagnosticDescriptor Error_DuplicateServiceMethod = new DiagnosticDescriptor(
-        id: "NSG007", title: "Duplicate Service Method", messageFormat: "Duplicate Service Method {0} is found",
-        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
-
     public static readonly DiagnosticDescriptor Error_AttributePropertyError = new DiagnosticDescriptor(
-        id: "BMG003", title: "Attribute property type error", messageFormat: "The argument specified does not match the type of the property",
+        id: "NSG001", title: "Attribute property type error", messageFormat: "The argument specified does not match the type of the property",
         category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
     public static readonly DiagnosticDescriptor Error_KeywordUsed = new DiagnosticDescriptor(
-        id: "BMG004", title: "Keyword used", messageFormat: "The type '{0}' already contains a definition for '{1}'",
+        id: "NSG002", title: "Keyword used", messageFormat: "The type '{0}' already contains a definition for '{1}'",
         category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
-    public static readonly DiagnosticDescriptor Error_NotDerived = new DiagnosticDescriptor(
-        id: "BMG005", title: "Not derived", messageFormat: "MachineObject '{0}' must be derived from Machine class",
+    public static readonly DiagnosticDescriptor Error_GenericType = new DiagnosticDescriptor(
+        id: "NSG003", title: "Generic type", messageFormat: "Generic type is not supported",
         category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
-    public static readonly DiagnosticDescriptor Error_OpenGenericClass = new DiagnosticDescriptor(
-        id: "BMG007", title: "Not closed generic", messageFormat: "MachineObject '{0}' is not a closed generic class",
+    public static readonly DiagnosticDescriptor Error_INetService = new DiagnosticDescriptor(
+        id: "NSG004", title: "INetService", messageFormat: "NetServiceObject or NetServiceInterface must be derived from INetService",
         category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
-    public static readonly DiagnosticDescriptor Error_DuplicateStateId = new DiagnosticDescriptor(
-        id: "BMG009", title: "Duplicate state id", messageFormat: "State method id must be unique",
+    public static readonly DiagnosticDescriptor Error_Accessibility = new DiagnosticDescriptor(
+        id: "NSG005", title: "Accessibility", messageFormat: "Access modifier of NetServiceObject must be public or internal",
         category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
-    public static readonly DiagnosticDescriptor Error_NoDefaultStateMethod = new DiagnosticDescriptor(
-        id: "BMG010", title: "No default state method", messageFormat: "Default state method (state method id = 0) is required",
+    public static readonly DiagnosticDescriptor Error_DuplicateServiceId = new DiagnosticDescriptor(
+        id: "NSG006", title: "Duplicate Service Id", messageFormat: "Duplicate Service Id {0} is found",
         category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
-    public static readonly DiagnosticDescriptor Error_GroupType = new DiagnosticDescriptor(
-        id: "BMG011", title: "Group type error", messageFormat: "Group must implement IMachineGroup<TIdentifier> interface",
+    public static readonly DiagnosticDescriptor Error_DuplicateServiceObject = new DiagnosticDescriptor(
+        id: "NSG007", title: "Duplicate Service Object", messageFormat: "Multiple service objects implement service interface {0}",
         category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
-    public static readonly DiagnosticDescriptor Error_IdentifierIsNotSerializable = new DiagnosticDescriptor(
-        id: "BMG012", title: "Identifier not serializable", messageFormat: "Identifier type '{0}' must be serializable (have TinyhandObject attribute)",
+    public static readonly DiagnosticDescriptor Error_MethodReturnType = new DiagnosticDescriptor(
+        id: "NSG008", title: "Method return type", messageFormat: "The return type of service method must be NetTask or NetTask<T>",
         category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor Error_DuplicateServiceMethod = new DiagnosticDescriptor(
+        id: "NSG009", title: "Duplicate Service Method", messageFormat: "Duplicate Service Method {0} is found",
+        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor Warning_NullableReferenceType = new DiagnosticDescriptor(
+        id: "NSG010", title: "Nullable not annotated", messageFormat: "The return type should be nullable '{0}?' for the reference type",
+        category: GeneratorName, DiagnosticSeverity.Warning, isEnabledByDefault: true);
 
     public NetsphereBody(SourceProductionContext context)
         : base(context)

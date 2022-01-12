@@ -59,7 +59,6 @@ public class ExternalServiceImpl : IExternalService
 
     public async NetTask<int> IncrementExternal(int x)
     {
-        throw new Exception();
         Console.WriteLine($"IncrementExternal {x} -> {x + 1}");
         return x + 1;
     }

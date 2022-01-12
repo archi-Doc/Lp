@@ -428,18 +428,18 @@ WaitForSendCompletionWait:
 
         while (this.Terminal.Core?.IsTerminated == false && this.NetTerminal.IsClosed == false)
         {
-            if (Mics.GetSystem() >= (this.NetTerminal.LastResponseMics + this.NetTerminal.MaximumResponseMics))
-            {
-                this.TerminalLogger?.Information($"Receive timeout.");
-                return new NetReceivedData(NetResult.Timeout);
-            }
-
             lock (this.NetTerminal.SyncObject)
             {
                 if (this.ReceivedGeneToData(out var packetId, out var dataId, ref data))
                 {
                     return new NetReceivedData(NetResult.Success, packetId, dataId, data);
                 }
+            }
+
+            if (Mics.GetSystem() >= (this.NetTerminal.LastResponseMics + this.NetTerminal.MaximumResponseMics))
+            {
+                this.TerminalLogger?.Information($"Receive timeout.");
+                return new NetReceivedData(NetResult.Timeout);
             }
 
             try
@@ -473,6 +473,7 @@ WaitForSendCompletionWait:
                 return false;
             }
 
+            // this.NetTerminal.TerminalLogger?.Information($"received {this.RecvGenes[0].Gene.To4Hex()}");
             packetId = this.RecvGenes[0].ReceivedId;
             dataMemory = this.RecvGenes[0].Owner.IncrementAndShare();
             if (packetId == PacketId.Data)

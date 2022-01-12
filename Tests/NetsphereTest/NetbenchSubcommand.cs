@@ -29,18 +29,20 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         // var nodeInformation = NodeInformation.Alternative;
         using (var terminal = this.NetControl.Terminal.Create(node))
         {
-            
-
-            await this.BenchLargeData(terminal);
+            // await this.BenchLargeData(terminal);
+            // await this.PingpongSmallData(terminal);
         }
+
+        await this.MassiveSmallData(node);
     }
 
     public NetControl NetControl { get; set; }
 
     private async Task BenchLargeData(ClientTerminal terminal)
     {
+        const int N = 4_000_000;
         var service = terminal.GetService<IBenchmarkService>();
-        var data = new byte[4_000_000];
+        var data = new byte[N];
 
         var sw = Stopwatch.StartNew();
         var response = await service.Send(data).ResponseAsync;
@@ -48,6 +50,66 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
 
         Console.WriteLine(response);
         Console.WriteLine(sw.ElapsedMilliseconds.ToString());
+    }
+
+    private async Task PingpongSmallData(ClientTerminal terminal)
+    {
+        const int N = 20;
+        var service = terminal.GetService<IBenchmarkService>();
+        var data = new byte[100];
+
+        var sw = Stopwatch.StartNew();
+        ServiceResponse<byte[]?> response = default;
+        var count = 0;
+        for (var i = 0; i < N; i++)
+        {
+            response = await service.Pingpong(data).ResponseAsync;
+            if (response.IsSuccess)
+            {
+                count++;
+            }
+        }
+
+        sw.Stop();
+
+        Console.WriteLine($"PingpongSmallData {count}/{N}, {sw.ElapsedMilliseconds.ToString()} ms");
+        Console.WriteLine();
+    }
+
+    private async Task MassiveSmallData(NodeAddress node)
+    {
+        const int N = 50;
+        var data = new byte[100];
+
+        ThreadPool.GetMinThreads(out var workMin, out var ioMin);
+        ThreadPool.SetMinThreads(50, ioMin);
+
+        var sw = Stopwatch.StartNew();
+        var count = 0;
+        Parallel.For(0, N, i =>
+        {
+            for (var j = 0; j < 20; j++)
+            {
+                using (var terminal = this.NetControl.Terminal.Create(node))
+                {
+                    var service = terminal.GetService<IBenchmarkService>();
+                    var response = service.Pingpong(data).ResponseAsync;
+                    if (response.Result.IsSuccess)
+                    {
+                        Interlocked.Increment(ref count);
+                    }
+                    else
+                    {
+                        Console.WriteLine(response.Result.Result.ToString());
+                    }
+                }
+            }
+        });
+
+        sw.Stop();
+
+        Console.WriteLine($"MassiveSmallData {count}/{N}, {sw.ElapsedMilliseconds.ToString()} ms");
+        Console.WriteLine();
     }
 }
 

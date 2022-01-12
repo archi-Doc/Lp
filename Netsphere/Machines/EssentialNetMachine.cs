@@ -29,14 +29,6 @@ public partial class EssentialNetMachine : Machine<Identifier>
     protected StateResult Initial(StateParameter parameter)
     {
         this.count++;
-        return StateResult.Continue;
-
-        var ni = NodeInformation.Alternative;
-        using (var ta = this.NetControl.Terminal.Create(ni))
-        {
-            var pp = new PacketPunch(null);
-            // ta.SendRaw(pp);
-        }
 
         if (this.NetControl.EssentialNode.GetUncheckedNode(out var nodeAddress))
         {

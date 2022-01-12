@@ -80,8 +80,8 @@ public class Program
                 flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
             .CreateLogger()));
 
-        await SimpleParser.ParseAndRunAsync(commandTypes, "netbench -node alternative", parserOptions); // Main process
-        // await SimpleParser.ParseAndRunAsync(commandTypes, args, parserOptions); // Main process
+        // await SimpleParser.ParseAndRunAsync(commandTypes, "netbench -node alternative", parserOptions); // Main process
+        await SimpleParser.ParseAndRunAsync(commandTypes, args, parserOptions); // Main process
 
         ThreadCore.Root.Terminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
