@@ -539,7 +539,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 }
                 else
                 {
-                    ssb.AppendLine($"return new(default, {netResult});");
+                    ssb.AppendLine($"return new(default!, {netResult});");
                 }
             }
         }

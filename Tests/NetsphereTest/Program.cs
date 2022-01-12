@@ -24,6 +24,7 @@ public class Program
         // Subcommands
         var commandTypes = new List<Type>();
         commandTypes.Add(typeof(BasicTestSubcommand));
+        commandTypes.Add(typeof(NetbenchSubcommand));
 
         // DI Container
         NetControl.Register(Container, commandTypes);
@@ -79,11 +80,7 @@ public class Program
                 flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
             .CreateLogger()));
 
-        StaticNetService.SetFrontendDelegate<Netsphere.Design.ITestService>(static x => new Netsphere.Design.TestServiceFrontend(x));
-        StaticNetService.SetServiceInfo(Netsphere.Design.TestServiceBackend.CreateServiceInfo());
-
-        // await SimpleParser.ParseAndRunAsync(commandTypes, "nettest -node 3.18.216.240:49152", parserOptions); // Main process
-        await SimpleParser.ParseAndRunAsync(commandTypes, "basic -node alternative", parserOptions); // Main process
+        await SimpleParser.ParseAndRunAsync(commandTypes, "netbench -node alternative", parserOptions); // Main process
         // await SimpleParser.ParseAndRunAsync(commandTypes, args, parserOptions); // Main process
 
         ThreadCore.Root.Terminate();
