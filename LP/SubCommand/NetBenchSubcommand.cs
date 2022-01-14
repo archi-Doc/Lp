@@ -49,7 +49,8 @@ public class NetBenchSubcommand : ISimpleCommandAsync<NetBenchOptions>
         var sw = Stopwatch.StartNew();
         using (var terminal = this.Control.NetControl.Terminal.Create(node))
         {
-            await this.BenchLargeData(terminal);
+            // await this.SendLargeData(terminal);
+            await this.PingpongSmallData(terminal);
         }
     }
 
@@ -57,9 +58,9 @@ public class NetBenchSubcommand : ISimpleCommandAsync<NetBenchOptions>
 
     public NetControl NetControl { get; set; }
 
-    private async Task BenchLargeData(ClientTerminal terminal)
+    private async Task SendLargeData(ClientTerminal terminal)
     {
-        const int N = 100; // 4_000_000;
+        const int N = 4_000_000;
         var service = terminal.GetService<IBenchmarkService>();
         var data = new byte[N];
 
@@ -73,7 +74,7 @@ public class NetBenchSubcommand : ISimpleCommandAsync<NetBenchOptions>
 
     private async Task PingpongSmallData(ClientTerminal terminal)
     {
-        const int N = 200;
+        const int N = 20;
         var service = terminal.GetService<IBenchmarkService>();
         var data = new byte[100];
 
