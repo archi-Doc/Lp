@@ -7,3 +7,4 @@ Work in progress
 
 LP is an experimental program that create value.
 
+L is a value and a constraint.
