@@ -82,7 +82,13 @@ public class FlowControl
                 }
                 else
                 {
-                    return (this.rttCount, this.totalRTT / this.rttCount);
+                    var rtt = this.totalRTT / this.rttCount;
+                    if (rtt < MinimumWindowMics)
+                    {
+                        rtt = MinimumWindowMics;
+                    }
+
+                    return (this.rttCount, rtt);
                 }
             }
         }
@@ -259,12 +265,12 @@ public class FlowControl
         this.sendPerWindow = 0;
         this.resendMics = rtt.Mean * 2;
 
+#if LOG_FLOWCONTROL
         if (!this.NetTerminal.Terminal.IsAlternative)
         {
-#if LOG_FLOWCONTROL
             Logger.Console.Information($"RTT: {rtt.Mean / 1000d,0:F0} ({rtt.Count}), Resent: {resent} => {sendCapacityPerRound,0:F2}");
-#endif
         }
+#endif
     }
 
     private double CalculateSendCapacityPerRound()
@@ -285,7 +291,10 @@ public class FlowControl
         var window = this.twoPreviousWindow;
         var sendCapacity = window.SendCapacityPerRound * window.DurationMics * MicsPerRoundRev;
 #if LOG_FLOWCONTROL
-        Logger.Console.Information($"SendPerWindow: {this.sendPerWindow}, Send: {window.SendCount}/{sendCapacity:F0}");
+        if (!this.NetTerminal.Terminal.IsAlternative)
+        {
+            Logger.Console.Information($"SendPerWindow: {this.sendPerWindow}, Send: {window.SendCount}/{sendCapacity:F0}");
+        }
 #endif
 
         var sendResend = window.SendCount + window.ResendCount;
@@ -296,13 +305,21 @@ public class FlowControl
 
         var arr = window.ResendCount / (double)sendResend;
         var rtt = (meanRTT.Mean - this.minRTT) / this.minRTT;
+        if (meanRTT.Count == 0)
+        {
+            rtt = 0;
+        }
+
         if (this.State == ControlState.Probe)
         {// Probe
             if (arr > TargetARR || rtt > TargetRTT)
             {
                 this.State = ControlState.Go;
 #if LOG_FLOWCONTROL
-                Logger.Console.Information($"ControlState.Go ARR:{arr:F2}, RTT:{rtt:F2}");
+                if (!this.NetTerminal.Terminal.IsAlternative)
+                {
+                    Logger.Console.Information($"ControlState.Go ARR:{arr:F2}, RTT:{rtt:F2}");
+                }
 #endif
                 return this.currentWindow.SendCapacityPerRound / ProbeRatio / ProbeRatio;
             }
@@ -311,7 +328,10 @@ public class FlowControl
         if (window.SendCount < (sendCapacity * SendCapacityThreshold))
         {
 #if LOG_FLOWCONTROL
-            Logger.Console.Information("Under");
+            if (!this.NetTerminal.Terminal.IsAlternative)
+            {
+                Logger.Console.Information("Under");
+            }
 #endif
             return this.currentWindow.SendCapacityPerRound;
         }
@@ -322,12 +342,14 @@ public class FlowControl
         }
 
         // ControlState.Go
+
+#if LOG_FLOWCONTROL
         if (!this.NetTerminal.Terminal.IsAlternative)
         {
-#if LOG_FLOWCONTROL
             Logger.Console.Information($"Send: {this.twoPreviousWindow.SendCount}, Resend: {this.twoPreviousWindow.ResendCount}, Capacity: {sendCapacity:F0}");
-#endif
+            Logger.Console.Information($"ARR:{arr:F2}, RTT:{rtt:F2}");
         }
+#endif
 
         var next = this.currentWindow.SendCapacityPerRound;
         if (arr > TargetARR || rtt > TargetRTT)
@@ -340,6 +362,7 @@ public class FlowControl
         }
 
         return next;
+
         // return ((next * 2d) + this.twoPreviousWindow.SendCapacityPerRound + this.previousWindow.SendCapacityPerRound) * 0.25d;
 
         /*if (arr < MinimumARR)

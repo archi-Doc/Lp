@@ -29,8 +29,8 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         // var nodeInformation = NodeInformation.Alternative;
         using (var terminal = this.NetControl.Terminal.Create(node))
         {
-            // await this.BenchLargeData(terminal);
-            await this.PingpongSmallData(terminal);
+            await this.BenchLargeData(terminal);
+            // await this.PingpongSmallData(terminal);
         }
 
         // await this.MassiveSmallData(node);
