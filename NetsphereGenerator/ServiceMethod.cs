@@ -10,10 +10,21 @@ namespace Netsphere.Generator;
 
 public class ServiceMethod
 {
+    private const string ByteArrayName = "byte[]";
+    private const string MemoryOwnerName = "LP.ByteArrayPool.MemoryOwner";
+
+    public enum Type
+    {
+        Other,
+        ByteArray,
+        MemoryOwner,
+    }
+
     public static ServiceMethod? Create(NetsphereObject obj, NetsphereObject method)
     {
         const string taskName = "Netsphere.NetTask";
         const string taskName2 = "Netsphere.NetTask<TResponse>";
+
         var returnObject = method.Method_ReturnObject;
         if (returnObject == null)
         {
@@ -44,13 +55,22 @@ public class ServiceMethod
 
         if (returnObject.Generics_Arguments.Length > 0)
         {
-            serviceMethod.ReturnType = returnObject.TypeObjectWithNullable?.Generics_ArgumentsWithNullable[0];
-            if (serviceMethod.ReturnType is { } rt &&
-                rt.Object.Kind.IsReferenceType() &&
-                rt.Nullable == Arc.Visceral.NullableAnnotation.NotAnnotated)
+            serviceMethod.ReturnObject = returnObject.TypeObjectWithNullable?.Generics_ArgumentsWithNullable[0];
+            if (serviceMethod.ReturnObject is { } rt)
             {
-                method.Body.AddDiagnostic(NetsphereBody.Warning_NullableReferenceType, method.Location, rt.Object.LocalName);
+                if (rt.Object.Kind.IsReferenceType() &&
+                rt.Nullable == Arc.Visceral.NullableAnnotation.NotAnnotated)
+                {
+                    method.Body.AddDiagnostic(NetsphereBody.Warning_NullableReferenceType, method.Location, rt.Object.LocalName);
+                }
+
+                serviceMethod.ReturnType = NameToType(rt.FullName);
             }
+        }
+
+        if (method.Method_Parameters.Length == 1)
+        {
+            serviceMethod.ParameterType = NameToType(method.Method_Parameters[0]);
         }
 
         return serviceMethod;
@@ -73,7 +93,11 @@ public class ServiceMethod
 
     public string MethodString => $"Method_{this.MethodId:x}";
 
-    public WithNullable<NetsphereObject>? ReturnType { get; internal set; }
+    public WithNullable<NetsphereObject>? ReturnObject { get; internal set; }
+
+    public Type ParameterType { get; private set; }
+
+    public Type ReturnType { get; private set; }
 
     public string GetParameters()
     {// int a1, string a2
@@ -184,6 +208,13 @@ public class ServiceMethod
             return sb.ToString();
         }
     }
+
+    private static Type NameToType(string name) => name switch
+    {
+        ByteArrayName => Type.ByteArray,
+        MemoryOwnerName => Type.MemoryOwner,
+        _ => Type.Other,
+    };
 
     private NetsphereObject method;
 }

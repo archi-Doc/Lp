@@ -476,10 +476,10 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     internal void GenerateFrontend_Method(ScopingStringBuilder ssb, GeneratorInformation info, ServiceMethod method)
     {
-        var genericString = method.ReturnType == null ? string.Empty : $"<{method.ReturnType.FullNameWithNullable}>";
+        var genericString = method.ReturnObject == null ? string.Empty : $"<{method.ReturnObject.FullNameWithNullable}>";
         var taskString = $"NetTask{genericString}";
-        var returnTypeIsNetResult = method.ReturnType?.FullName == NetsphereBody.NetResultFullName;
-        var deserializeString = method.ReturnType == null ? "NetResult" : method.ReturnType.FullNameWithNullable;
+        var returnTypeIsNetResult = method.ReturnObject?.FullName == NetsphereBody.NetResultFullName;
+        var deserializeString = method.ReturnObject == null ? "NetResult" : method.ReturnObject.FullNameWithNullable;
 
         using (var scopeMethod = ssb.ScopeBrace($"public {taskString} {method.SimpleName}({method.GetParameters()})"))
         {
@@ -488,9 +488,20 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
             using (var scopeCore = ssb.ScopeBrace($"async Task<ServiceResponse{genericString}> Core()"))
             {
-                using (var scopeSerialize = ssb.ScopeBrace($"if (!LP.Block.BlockService.TrySerialize({method.GetParameterNames(NetsphereBody.ArgumentName)}, out var owner))"))
+                if (method.ParameterType == ServiceMethod.Type.ByteArray)
                 {
-                    AppendReturn("NetResult.SerializationError");
+                    ssb.AppendLine("var owner = new ByteArrayPool.MemoryOwner(a1);");
+                }
+                else if (method.ParameterType == ServiceMethod.Type.MemoryOwner)
+                {
+                    ssb.AppendLine("var owner = a1.IncrementAndShare();");
+                }
+                else
+                {
+                    using (var scopeSerialize = ssb.ScopeBrace($"if (!LP.Block.BlockService.TrySerialize({method.GetParameterNames(NetsphereBody.ArgumentName)}, out var owner))"))
+                    {
+                        AppendReturn("NetResult.SerializationError");
+                    }
                 }
 
                 ssb.AppendLine();
@@ -507,14 +518,27 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 }
 
                 ssb.AppendLine();
-                using (var scopeDeserialize = ssb.ScopeBrace($"if (!Tinyhand.TinyhandSerializer.TryDeserialize<{deserializeString}>(response.Value.Memory, out var result))"))
+                if (method.ReturnType == ServiceMethod.Type.ByteArray)
                 {
-                    AppendReturn("NetResult.DeserializationError");
+                    ssb.AppendLine("var result = response.Value.Memory.ToArray();");
+                    ssb.AppendLine("response.Value.Return();");
+                }
+                else if (method.ReturnType == ServiceMethod.Type.MemoryOwner)
+                {
+                    ssb.AppendLine("var result = response.Value;");
+                }
+                else
+                {
+                    using (var scopeDeserialize = ssb.ScopeBrace($"if (!Tinyhand.TinyhandSerializer.TryDeserialize<{deserializeString}>(response.Value.Memory, out var result))"))
+                    {
+                        AppendReturn("NetResult.DeserializationError");
+                    }
+
+                    ssb.AppendLine();
+                    ssb.AppendLine("response.Value.Return();");
                 }
 
-                ssb.AppendLine();
-                ssb.AppendLine("response.Value.Return();");
-                if (method.ReturnType == null)
+                if (method.ReturnObject == null)
                 {
                     ssb.AppendLine($"return default;");
                 }
@@ -527,7 +551,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
         void AppendReturn(string netResult)
         {
-            if (method.ReturnType == null)
+            if (method.ReturnObject == null)
             {
                 ssb.AppendLine($"return new({netResult});");
             }
@@ -605,27 +629,49 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
     {
         using (var scopeMethod = ssb.ScopeBrace($"private static async NetTask<ByteArrayPool.MemoryOwner> {method.MethodString}(object obj, ByteArrayPool.MemoryOwner receive)"))
         {
-            using (var scopeDeserialize = ssb.ScopeBrace($"if (!LP.Block.BlockService.TryDeserialize<{method.GetParameterTypes()}>(receive, out var value))"))
+            if (method.ParameterType == ServiceMethod.Type.ByteArray)
             {
-                ssb.AppendLine("return default;");
+                ssb.AppendLine("var value = receive.Memory.ToArray();");
+            }
+            else if (method.ParameterType == ServiceMethod.Type.MemoryOwner)
+            {
+                ssb.AppendLine("var value = receive;");
+            }
+            else
+            {
+                using (var scopeDeserialize = ssb.ScopeBrace($"if (!LP.Block.BlockService.TryDeserialize<{method.GetParameterTypes()}>(receive, out var value))"))
+                {
+                    ssb.AppendLine("return default;");
+                }
             }
 
             ssb.AppendLine();
 
             var prefix = string.Empty;
-            if (method.ReturnType != null)
+            if (method.ReturnObject != null)
             {
                 prefix = "var result = ";
             }
 
             ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})(({this.ClassName})obj).impl).{method.SimpleName}({method.GetTupleNames("value")});");
-            if (method.ReturnType == null)
+            if (method.ReturnObject == null)
             {
                 ssb.AppendLine("var result = NetResult.Success;");
             }
 
-            ssb.AppendLine("LP.Block.BlockService.TrySerialize(result, out var send);");
-            ssb.AppendLine("return send;");
+            if (method.ReturnType == ServiceMethod.Type.ByteArray)
+            {
+                ssb.AppendLine("return result != null ? new ByteArrayPool.MemoryOwner(result) : default;");
+            }
+            else if (method.ReturnType == ServiceMethod.Type.MemoryOwner)
+            {
+                ssb.AppendLine("return result;");
+            }
+            else
+            {
+                ssb.AppendLine("LP.Block.BlockService.TrySerialize(result, out var send);");
+                ssb.AppendLine("return send;");
+            }
         }
     }
 
