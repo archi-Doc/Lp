@@ -79,8 +79,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 return;
             }*/
 
-            var ts3 = terminal.GetService<IExternalService>();
-            Console.WriteLine(await ts3.IncrementExternal(10).ResponseAsync);
+            var es = terminal.GetService<IBenchmarkService>();
 
             var tt1 = testService.Increment(3);
             var tt2 = testService.Send(1, 2);
@@ -88,6 +87,8 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             Logger.Priority.Information(tt1.ResponseAsync.Result.ToString());
             Logger.Priority.Information(tt2.ResponseAsync.Result.ToString());
             Logger.Priority.Information(tt3.ResponseAsync.Result.ToString());
+
+            
 
             /*var tt1 = testService.Increment(3);
             Logger.Priority.Information(tt1.ResponseAsync.Result.ToString());

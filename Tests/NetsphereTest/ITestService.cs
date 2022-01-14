@@ -52,6 +52,11 @@ public class TestServiceImpl2 : TestServiceImpl, ITestService2
 [NetServiceObject]
 public class ExternalServiceImpl : IExternalService
 {
+    public ExternalServiceImpl(Terminal terminal)
+    {
+        Console.WriteLine($"ext ctor {terminal.NetBase.NetsphereOptions.ToString()}");
+    }
+
     public async NetTask<int> IncrementExternal(int x)
     {
         Console.WriteLine($"IncrementExternal {x} -> {x + 1}");

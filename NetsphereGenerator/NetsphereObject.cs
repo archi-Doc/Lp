@@ -476,10 +476,10 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     internal void GenerateFrontend_Method(ScopingStringBuilder ssb, GeneratorInformation info, ServiceMethod method)
     {
-        var genericString = method.ReturnType == null ? string.Empty : $"<{method.ReturnType.FullName}>";
+        var genericString = method.ReturnType == null ? string.Empty : $"<{method.ReturnType.FullNameWithNullable}>";
         var taskString = $"NetTask{genericString}";
         var returnTypeIsNetResult = method.ReturnType?.FullName == NetsphereBody.NetResultFullName;
-        var deserializeString = method.ReturnType == null ? "NetResult" : method.ReturnType.FullName;
+        var deserializeString = method.ReturnType == null ? "NetResult" : method.ReturnType.FullNameWithNullable;
 
         using (var scopeMethod = ssb.ScopeBrace($"public {taskString} {method.SimpleName}({method.GetParameters()})"))
         {
@@ -539,7 +539,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 }
                 else
                 {
-                    ssb.AppendLine($"return new(default, {netResult});");
+                    ssb.AppendLine($"return new(default!, {netResult});");
                 }
             }
         }

@@ -92,7 +92,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         }
         else
         {
-            netInterface.SendGenes = CreateSendGenes(netOperation, netInterface, sequentialGenes.First, owner, dataId);
+            netInterface.SendGenes = CreateSendGenes(netOperation, netInterface, sequentialGenes.First, owner, packetId, dataId);
         }
 
         // Receive gene
@@ -209,7 +209,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         return netInterface;
     }
 
-    internal static NetTerminalGene[] CreateSendGenes(NetOperation netOperation, NetInterface<TSend, TReceive> netInterface, ulong gene, ByteArrayPool.MemoryOwner owner, ulong dataId)
+    internal static NetTerminalGene[] CreateSendGenes(NetOperation netOperation, NetInterface<TSend, TReceive> netInterface, ulong gene, ByteArrayPool.MemoryOwner owner, PacketId packetId, ulong dataId)
     {
         ReadOnlySpan<byte> span = owner.Memory.Span;
         var netTerminal = netInterface.NetTerminal;
@@ -228,7 +228,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
                 size = info.FirstDataSize;
 
                 netTerminal.CreateHeader(out var header, arraySpan[i]);
-                PacketService.CreateDataPacket(ref header, PacketId.Data, dataId, span.Slice(0, size), out sendOwner);
+                PacketService.CreateDataPacket(ref header, packetId, dataId, span.Slice(0, size), out sendOwner);
             }
             else
             {
@@ -323,7 +323,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         }
         else
         {
-            this.SendGenes = CreateSendGenes(netOperation, this, gene, owner, dataId);
+            this.SendGenes = CreateSendGenes(netOperation, this, gene, owner, packetId, dataId);
         }
 
         return false;
@@ -428,18 +428,18 @@ WaitForSendCompletionWait:
 
         while (this.Terminal.Core?.IsTerminated == false && this.NetTerminal.IsClosed == false)
         {
-            if (Mics.GetSystem() >= (this.NetTerminal.LastResponseMics + this.NetTerminal.MaximumResponseMics))
-            {
-                this.TerminalLogger?.Information($"Receive timeout.");
-                return new NetReceivedData(NetResult.Timeout);
-            }
-
             lock (this.NetTerminal.SyncObject)
             {
                 if (this.ReceivedGeneToData(out var packetId, out var dataId, ref data))
                 {
                     return new NetReceivedData(NetResult.Success, packetId, dataId, data);
                 }
+            }
+
+            if (Mics.GetSystem() >= (this.NetTerminal.LastResponseMics + this.NetTerminal.MaximumResponseMics))
+            {
+                this.TerminalLogger?.Information($"Receive timeout.");
+                return new NetReceivedData(NetResult.Timeout);
             }
 
             try
@@ -473,6 +473,7 @@ WaitForSendCompletionWait:
                 return false;
             }
 
+            // this.NetTerminal.TerminalLogger?.Information($"received {this.RecvGenes[0].Gene.To4Hex()}");
             packetId = this.RecvGenes[0].ReceivedId;
             dataMemory = this.RecvGenes[0].Owner.IncrementAndShare();
             if (packetId == PacketId.Data)
@@ -524,14 +525,16 @@ WaitForSendCompletionWait:
             return false;
         }
 
-        dataMemory = BlockPool.Rent(totalSize).ToMemoryOwner();
+        dataMemory = BlockPool.Rent(totalSize).ToMemoryOwner(0, totalSize);
         var memory = dataMemory.Memory;
+        packetId = this.RecvGenes[0].ReceivedId;
         for (var i = 0; i < this.RecvGenes.Length; i++)
         {
             if (this.RecvGenes[i].ReceivedId == PacketId.Data)
             {// Data
                 var data = PacketService.GetData(this.RecvGenes[i].Owner);
                 dataId = data.DataId;
+                packetId = data.PacketId;
                 data.DataMemory.Memory.CopyTo(memory);
                 memory = memory.Slice(data.DataMemory.Memory.Length);
             }
@@ -543,7 +546,6 @@ WaitForSendCompletionWait:
             }
         }
 
-        packetId = this.RecvGenes[0].ReceivedId;
         return true;
     }
 

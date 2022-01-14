@@ -44,7 +44,13 @@ public class ServiceMethod
 
         if (returnObject.Generics_Arguments.Length > 0)
         {
-            serviceMethod.ReturnType = returnObject.Generics_Arguments[0];
+            serviceMethod.ReturnType = returnObject.TypeObjectWithNullable?.Generics_ArgumentsWithNullable[0];
+            if (serviceMethod.ReturnType is { } rt &&
+                rt.Object.Kind.IsReferenceType() &&
+                rt.Nullable == Arc.Visceral.NullableAnnotation.NotAnnotated)
+            {
+                method.Body.AddDiagnostic(NetsphereBody.Warning_NullableReferenceType, method.Location, rt.Object.LocalName);
+            }
         }
 
         return serviceMethod;
@@ -67,7 +73,7 @@ public class ServiceMethod
 
     public string MethodString => $"Method_{this.MethodId:x}";
 
-    public NetsphereObject? ReturnType { get; internal set; }
+    public WithNullable<NetsphereObject>? ReturnType { get; internal set; }
 
     public string GetParameters()
     {// int a1, string a2

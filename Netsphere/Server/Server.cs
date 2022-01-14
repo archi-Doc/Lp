@@ -40,6 +40,8 @@ public class Server
                     {
                         continue;
                     }
+
+                    continue;
                 }
                 else if (received.Result == NetResult.Timeout ||
                     received.Result == NetResult.NoReceiver)

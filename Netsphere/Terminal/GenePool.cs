@@ -23,14 +23,14 @@ internal class GenePool : IDisposable
         this.currentGene = first;
     }
 
-    private GenePool(GenePool original)
+    private GenePool(GenePool original, byte[] embryo)
     {
         this.pool = new byte[PoolSize];
         var ulongSpan = MemoryMarshal.Cast<byte, ulong>(this.pool);
         original.GetSequential(ulongSpan);
 
         this.currentGene = ulongSpan[0];
-        this.embryo = original.embryo;
+        this.embryo = embryo;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -110,7 +110,7 @@ internal class GenePool : IDisposable
             this.SetEmbryo(embryo);
         }
 
-        return new GenePool(this);
+        return new GenePool(this, embryo);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

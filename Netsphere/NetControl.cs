@@ -135,7 +135,7 @@ public class NetControl
 
     public BigMachine<Identifier> BigMachine { get; }
 
-    public MyStatus MyStatus { get; } = new();
+    public MyStatus MyStatus => this.Terminal.MyStatus;
 
     public NetStatus NetStatus { get; }
 
@@ -154,6 +154,7 @@ public class NetControl
         Task.Run(async () =>
         {
             var server = containerInstance.Resolve<Server>();
+            terminal.Terminal.MyStatus.IncrementServerCount();
             try
             {
                 await server.Process(terminal).ConfigureAwait(false);

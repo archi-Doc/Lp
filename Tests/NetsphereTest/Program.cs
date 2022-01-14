@@ -24,6 +24,7 @@ public class Program
         // Subcommands
         var commandTypes = new List<Type>();
         commandTypes.Add(typeof(BasicTestSubcommand));
+        commandTypes.Add(typeof(NetbenchSubcommand));
 
         // DI Container
         NetControl.Register(Container, commandTypes);
@@ -31,6 +32,8 @@ public class Program
         {
             Container.Register(x, Reuse.Singleton);
         }
+
+        Container.Register<ExternalServiceImpl>(Reuse.Singleton);
 
         Container.ValidateAndThrow();
 
@@ -54,12 +57,12 @@ public class Program
         };
 
         var options = new LP.Options.NetsphereOptions();
-        options.EnableAlternative = true;
+        options.EnableAlternative = true; // temporary
         options.EnableTest = true;
         NetControl.QuickStart("test", options, true);
 
         // Logger
-        var logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "logs");
+        /*var logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "logs");
         Directory.CreateDirectory(logDirectory);
         var netControl = Container.Resolve<NetControl>();
         netControl.Terminal.SetLogger(new SerilogLogger(new LoggerConfiguration()
@@ -75,14 +78,10 @@ public class Program
                 Path.Combine(logDirectory, "terminal2.log.txt"),
                 buffered: true,
                 flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
-            .CreateLogger()));
+            .CreateLogger()));*/
 
-        StaticNetService.SetFrontendDelegate<Netsphere.Design.ITestService>(static x => new Netsphere.Design.TestServiceFrontend(x));
-        StaticNetService.SetServiceInfo(Netsphere.Design.TestServiceBackend.CreateServiceInfo());
-
-        // await SimpleParser.ParseAndRunAsync(commandTypes, "nettest -node 3.18.216.240:49152", parserOptions); // Main process
-        await SimpleParser.ParseAndRunAsync(commandTypes, "basic -node alternative", parserOptions); // Main process
-        // await SimpleParser.ParseAndRunAsync(commandTypes, args, parserOptions); // Main process
+        // await SimpleParser.ParseAndRunAsync(commandTypes, "netbench -node alternative", parserOptions); // Main process
+        await SimpleParser.ParseAndRunAsync(commandTypes, args, parserOptions); // Main process
 
         ThreadCore.Root.Terminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
