@@ -57,7 +57,7 @@ public class Program
         };
 
         var options = new LP.Options.NetsphereOptions();
-        options.EnableAlternative = true;
+        options.EnableAlternative = true; // temporary
         options.EnableTest = true;
         NetControl.QuickStart("test", options, true);
 
