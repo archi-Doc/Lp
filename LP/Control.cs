@@ -48,6 +48,7 @@ public class Control
             typeof(LP.Subcommands.DumpSubcommand),
             typeof(LP.Subcommands.GCSubcommand),
             typeof(LP.Subcommands.PingSubcommand),
+            typeof(LP.Subcommands.NetBenchSubcommand),
             typeof(LP.Subcommands.PunchSubcommand),
             typeof(LP.Subcommands.KeyVaultSubcommand),
             typeof(LP.Subcommands.TestSubcommand),
