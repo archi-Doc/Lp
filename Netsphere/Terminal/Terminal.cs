@@ -224,7 +224,7 @@ public class Terminal
         {// NetTerminalGene is found.
             gene.NetInterface.ProcessReceive(owner, endPoint, ref header, currentMics, gene);
         }
-        else
+        else if (this.NetBase.EnableServer)
         {
             this.ProcessUnmanagedRecv(owner, endPoint, ref header);
         }

@@ -26,14 +26,11 @@ public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
 
     public async Task Run(LPConsoleOptions option, string[] args)
     {
-        option.NetsphereOptions.EnableAlternative = true; // temporary
-        option.NetsphereOptions.EnableTest = true;
-
         this.information = Program.Container.Resolve<LPBase>();
         this.information.Initialize(option, true, "relay");
 
         this.netBase = Program.Container.Resolve<NetBase>();
-        this.netBase.Initialize(string.Empty, option.NetsphereOptions);
+        this.netBase.Initialize(true, string.Empty, option.NetsphereOptions);
         this.netBase.AllowUnsafeConnection = true; // temporary
 
         if (await this.LoadAsync() == AbortOrComplete.Abort)
