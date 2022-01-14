@@ -80,7 +80,7 @@ public class Server
             return this.ProcessEssential_Punch(received);
         }
 
-        if (this.NetBase.NetsphereOptions.EnableTest)
+        if (this.NetBase.NetsphereOptions.EnableTestFeatures)
         {
             if (received.PacketId == PacketId.Test)
             {

@@ -57,9 +57,9 @@ public class Program
         };
 
         var options = new LP.Options.NetsphereOptions();
-        options.EnableAlternative = true; // temporary
-        options.EnableTest = true;
-        NetControl.QuickStart("test", options, true);
+        options.EnableAlternative = true;
+        options.EnableTestFeatures = true;
+        NetControl.QuickStart(true, "test", options, true);
 
         // Logger
         /*var logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "logs");

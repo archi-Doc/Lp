@@ -19,8 +19,8 @@ public class NetsphereOptions
     [SimpleOption("alternative", null, "Enable alternative (debug) terminal")]
     public bool EnableAlternative { get; set; } = false;
 
-    [SimpleOption("test", null, "Enable test functions")]
-    public bool EnableTest { get; set; } = false;
+    [SimpleOption("test", null, "Enable test features")]
+    public bool EnableTestFeatures { get; set; } = false;
 
     public override string ToString()
     {

@@ -41,7 +41,7 @@ public class NetBase
         }
     }
 
-    public bool EnableAlternative { get; private set; }
+    public bool EnableServer { get; private set; }
 
     public string NodeName { get; private set; } = default!;
 
@@ -53,8 +53,9 @@ public class NetBase
 
     public ECDiffieHellman NodePublicEcdh { get; private set; } = default!;
 
-    public void Initialize(string nodeName, NetsphereOptions netsphereOptions)
+    public void Initialize(bool enableServer, string nodeName, NetsphereOptions netsphereOptions)
     {
+        this.EnableServer = enableServer;
         this.NodeName = nodeName;
         if (string.IsNullOrEmpty(this.NodeName))
         {
