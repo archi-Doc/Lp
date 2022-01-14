@@ -63,46 +63,6 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             Logger.Priority.Information($"4MB received: {t4.Value}");
             Logger.Priority.Information($"{sw.ElapsedMilliseconds} ms, Resend: {terminal.ResendCount}");*/
 
-            var testService = terminal.GetService<Netsphere.Design.ITestService>();
-            /*Logger.Priority.Information((await testService.Increment(3)).ToString());
-            Logger.Priority.Information(testService.Result.ToString());
-            await testService.Send(1, 2);
-            Logger.Priority.Information(testService.Result.ToString());
-            await testService.Send2(2, 3);
-            Logger.Priority.Information(testService.Result.ToString());*/
-
-            // Multi-threaded
-
-            // IMPORTANT!
-            /*if (await terminal.EncryptConnectionAsync() != NetResult.Success)
-            {
-                return;
-            }*/
-
-            var es = terminal.GetService<IBenchmarkService>();
-
-            var tt1 = testService.Increment(3);
-            var tt2 = testService.Send(1, 2);
-            var tt3 = testService.Send2(2, 3);
-            Logger.Priority.Information(tt1.ResponseAsync.Result.ToString());
-            Logger.Priority.Information(tt2.ResponseAsync.Result.ToString());
-            Logger.Priority.Information(tt3.ResponseAsync.Result.ToString());
-
-            
-
-            /*var tt1 = testService.Increment(3);
-            Logger.Priority.Information(tt1.ResponseAsync.Result.ToString());
-            var tt2 = testService.Send(1, 2);
-            Logger.Priority.Information(tt2.ResponseAsync.Result.ToString());
-            var tt3 = testService.Send2(2, 3);
-            Logger.Priority.Information(tt3.ResponseAsync.Result.ToString());*/
-
-            var res = await tt1.ResponseAsync;
-            if (res.IsSuccess)
-            {
-                Logger.Priority.Information(res.ToString());
-            }
-
             /*var p4 = TestBlock.Create(4000_000);
             Logger.Priority.Information($"4MB send: {p4}");
             sw.Restart();

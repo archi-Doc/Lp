@@ -49,8 +49,8 @@ public class NetBenchSubcommand : ISimpleCommandAsync<NetBenchOptions>
         var sw = Stopwatch.StartNew();
         using (var terminal = this.Control.NetControl.Terminal.Create(node))
         {
-            // await this.SendLargeData(terminal);
-            await this.PingpongSmallData(terminal);
+            await this.SendLargeData(terminal);
+            // await this.PingpongSmallData(terminal);
         }
     }
 

@@ -29,6 +29,9 @@ public class Control
         container.Register<Control>(Reuse.Singleton);
         container.Register<LPBase>(Reuse.Singleton);
 
+        // RPCs
+        container.Register<Services.BenchmarkServiceImpl>(Reuse.Transient);
+
         var commandList = new List<Type>();
         NetControl.Register(container, commandList);
 
