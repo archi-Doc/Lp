@@ -53,6 +53,13 @@ public class NetBase
 
     public ECDiffieHellman NodePublicEcdh { get; private set; } = default!;
 
+    public class LogFlag
+    {
+        public bool FlowControl { get; set; }
+    }
+
+    public LogFlag Log { get; } = new();
+
     public void Initialize(bool enableServer, string nodeName, NetsphereOptions netsphereOptions)
     {
         this.EnableServer = enableServer;
