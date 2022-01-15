@@ -4,7 +4,8 @@ using Netsphere;
 
 namespace Netsphere;
 
-public class Server
+public class Server<TServiceContext>
+    where TServiceContext : ServiceContext, new()
 {
     public Server(NetBase netBase, NetControl netControl, NetService netService)
     {
@@ -73,7 +74,7 @@ public class Server
 
     public ServerTerminal NetTerminal { get; private set; } = default!;
 
-    public ServiceContext ServiceContext { get; } = new();
+    public TServiceContext ServiceContext { get; } = new();
 
     private bool ProcessEssential(NetReceivedData received)
     {

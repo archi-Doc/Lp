@@ -3,7 +3,7 @@
 namespace Netsphere;
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, Inherited = true, AllowMultiple = true)]
-public abstract class NetServiceFilterAttribute : Attribute
+public class NetServiceFilterAttribute : Attribute
 {
     public int Order
     {
@@ -11,12 +11,21 @@ public abstract class NetServiceFilterAttribute : Attribute
         set => this.order = value;
     }
 
-    public NetServiceFilterAttribute()
+    public NetServiceFilterAttribute(Type filterType)
     {
         this.order = int.MaxValue;
     }
 
-    public abstract ValueTask Invoke(ServiceContext context, Func<ServiceContext, ValueTask> next);
-
     private int order;
+}
+
+public interface IServiceFilter
+{
+    public ValueTask Invoke(ServiceContext context, Func<ServiceContext, ValueTask> next);
+}
+
+public interface IServiceFilter<T>
+    where T : ServiceContext
+{
+    public ValueTask Invoke(T context, Func<T, ValueTask> next);
 }

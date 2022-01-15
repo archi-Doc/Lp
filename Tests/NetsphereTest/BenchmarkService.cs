@@ -2,6 +2,10 @@
 
 namespace NetsphereTest;
 
+public class CustomServiceContext : ServiceContext
+{
+}
+
 [NetServiceInterface]
 public interface IBenchmarkService : INetService
 {
@@ -10,7 +14,7 @@ public interface IBenchmarkService : INetService
     public NetTask<byte[]?> Pingpong(byte[] data);
 }
 
-[TestFilter]
+[NetServiceFilter(typeof(TestFilter), Order = 10)]
 [NetServiceObject]
 public class BenchmarkServiceImpl : IBenchmarkService
 {
@@ -24,9 +28,17 @@ public class BenchmarkServiceImpl : IBenchmarkService
     }
 }
 
-public class TestFilter : NetServiceFilterAttribute
+public class TestFilter : IServiceFilter
 {
-    public override async ValueTask Invoke(ServiceContext context, Func<ServiceContext, ValueTask> next)
+    public async ValueTask Invoke(ServiceContext context, Func<ServiceContext, ValueTask> next)
+    {
+        await next(context);
+    }
+}
+
+public class TestFilter2 : IServiceFilter<CustomServiceContext>
+{
+    public async ValueTask Invoke(CustomServiceContext context, Func<CustomServiceContext, ValueTask> next)
     {
         await next(context);
     }

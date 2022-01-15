@@ -45,7 +45,7 @@ public class NetControl
         container.Register<Terminal>(Reuse.Singleton);
         container.Register<EssentialNode>(Reuse.Singleton);
         container.Register<NetStatus>(Reuse.Singleton);
-        container.Register<Server>(Reuse.Transient);
+        container.Register<Server<ServiceContext>>(Reuse.Transient);
         container.RegisterDelegate(x => new NetService(container), Reuse.Transient);
 
         // Machines
@@ -150,7 +150,7 @@ public class NetControl
     {
         Task.Run(async () =>
         {
-            var server = containerInstance.Resolve<Server>();
+            var server = containerInstance.Resolve<Server<ServiceContext>>();
             terminal.Terminal.MyStatus.IncrementServerCount();
             try
             {
