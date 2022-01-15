@@ -73,6 +73,8 @@ public class Server
 
     public ServerTerminal NetTerminal { get; private set; } = default!;
 
+    public ServiceContext ServiceContext { get; } = new();
+
     private bool ProcessEssential(NetReceivedData received)
     {
         if (received.PacketId == PacketId.Punch)

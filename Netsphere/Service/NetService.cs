@@ -54,6 +54,11 @@ public class NetService
             serviceMethod.ServerInstance = serverInstance;
             return serviceMethod;
         }
+
+        public NetTask<ByteArrayPool.MemoryOwner> FilterAndProcess(object instance, ByteArrayPool.MemoryOwner received)
+        {
+            return default;
+        }
     }
 
     public NetService(IServiceProvider? serviceProvider = null)

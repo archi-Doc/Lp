@@ -10,6 +10,7 @@ public interface IBenchmarkService : INetService
     public NetTask<byte[]?> Pingpong(byte[] data);
 }
 
+[TestFilter]
 [NetServiceObject]
 public class BenchmarkServiceImpl : IBenchmarkService
 {
@@ -20,5 +21,13 @@ public class BenchmarkServiceImpl : IBenchmarkService
 
     public async NetTask Send(byte[] data)
     {
+    }
+}
+
+public class TestFilter : NetServiceFilterAttribute
+{
+    public override async ValueTask Invoke(ServiceContext context, Func<ServiceContext, ValueTask> next)
+    {
+        await next(context);
     }
 }
