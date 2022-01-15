@@ -29,8 +29,11 @@ public interface ITestService3 : INetService
 }
 
 [NetServiceObject]
-public class TestServiceImpl0 : INetService
+public class TestServiceImpl0 : NetServiceBase<CustomServiceContext>, INetService
 {
+    public void Test()
+    {
+    }
 }
 
 // [NetServiceObject]
