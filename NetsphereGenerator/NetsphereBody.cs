@@ -25,6 +25,8 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
     public const string BackendClassName = "Backend_";
     public const string ArgumentName = "a";
     public const string NetResultFullName = "Netsphere.NetResult";
+    public const string NetServiceBaseFullName = "Netsphere.NetServiceBase";
+    public const string NetServiceBaseFullName2 = "Netsphere.NetServiceBase<TServiceContext>";
 
     public static readonly DiagnosticDescriptor Error_AttributePropertyError = new DiagnosticDescriptor(
         id: "NSG001", title: "Attribute property type error", messageFormat: "The argument specified does not match the type of the property",

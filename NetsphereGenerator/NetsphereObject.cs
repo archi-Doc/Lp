@@ -64,6 +64,8 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     public List<NetsphereObject>? ServiceInterfaces { get; private set; } // For NetServiceObjectAttribute; Net service interfaces implemented by this net service object.
 
+    public NetsphereObject? NetServiceBase { get; private set; } // For NetServiceObjectAttribute; Net service base implemented by this net service object.
+
     public Dictionary<uint, ServiceMethod>? ServiceMethods { get; private set; } // For NetServiceInterface; Methods included in this net service interface.
 
     public string ClassName { get; set; } = string.Empty;
@@ -199,6 +201,8 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 return;
             }
 
+            this.ConfigureNetBase();
+
             this.Body.NetObjects.Add(this);
         }
 
@@ -228,6 +232,32 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             }
 
             return false;
+        }
+    }
+
+    public void ConfigureNetBase()
+    {
+        var baseObject = this.BaseObject;
+        while (baseObject != null)
+        {
+            if (baseObject.Generics_IsGeneric)
+            {// Generic
+                if (baseObject.OriginalDefinition?.FullName == NetsphereBody.NetServiceBaseFullName2)
+                {
+                    this.NetServiceBase = baseObject;
+                    return;
+                }
+            }
+            else
+            {// Not generic
+                if (baseObject.FullName == NetsphereBody.NetServiceBaseFullName)
+                {
+                    this.NetServiceBase = baseObject;
+                    return;
+                }
+            }
+
+            baseObject = baseObject.BaseObject;
         }
     }
 
@@ -627,7 +657,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     internal void GenerateBackend_Method(ScopingStringBuilder ssb, GeneratorInformation info, NetsphereObject serviceInterface, ServiceMethod method)
     {
-        using (var scopeMethod = ssb.ScopeBrace($"private static async NetTask<ByteArrayPool.MemoryOwner> {method.MethodString}(object obj, ByteArrayPool.MemoryOwner receive)"))
+        using (var scopeMethod = ssb.ScopeBrace($"private static async NetTask<ByteArrayPool.MemoryOwner> {method.MethodString}(object obj, object context, ByteArrayPool.MemoryOwner receive)"))
         {
             if (method.ParameterType == ServiceMethod.Type.ByteArray)
             {
@@ -647,13 +677,29 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
             ssb.AppendLine();
 
+            // Backend
+            ssb.AppendLine($"var backend = (({this.ClassName})obj).impl;");
+
+            // Set ServiceContext
+            if (this.NetServiceBase != null)
+            {
+                if (this.NetServiceBase.Generics_IsGeneric)
+                {
+                    ssb.AppendLine($"(({this.NetServiceBase.FullName})backend).Context = ({this.NetServiceBase.Generics_Arguments[0].FullName})context!;");
+                }
+                else
+                {
+                    ssb.AppendLine($"(({this.NetServiceBase.FullName})backend).Context = (ServiceContext)context!;");
+                }
+            }
+
             var prefix = string.Empty;
             if (method.ReturnObject != null)
             {
                 prefix = "var result = ";
             }
 
-            ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})(({this.ClassName})obj).impl).{method.SimpleName}({method.GetTupleNames("value")});");
+            ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})backend).{method.SimpleName}({method.GetTupleNames("value")});");
             if (method.ReturnObject == null)
             {
                 ssb.AppendLine("var result = NetResult.Success;");

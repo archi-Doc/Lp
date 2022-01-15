@@ -29,9 +29,13 @@ public interface ITestService3 : INetService
 }
 
 [NetServiceObject]
-public class TestServiceImpl0 : NetServiceBase<CustomServiceContext>, INetService
+public class TestServiceImpl0 : NetServiceBase<CustomServiceContext>, ITestService2
 {
     public void Test()
+    {
+    }
+
+    public async NetTask Send2(int x)
     {
     }
 }
@@ -46,7 +50,7 @@ public class TestServiceImpl : ITestService
 }
 
 [NetServiceObject]
-public class TestServiceImpl2 : TestServiceImpl, ITestService2
+public class TestServiceImpl2 : TestServiceImpl
 {
     public async NetTask Send2(int x)
     {
@@ -55,7 +59,7 @@ public class TestServiceImpl2 : TestServiceImpl, ITestService2
 }
 
 [NetServiceObject]
-public class ExternalServiceImpl : IExternalService
+public class ExternalServiceImpl : NetServiceBase, IExternalService
 {
     public ExternalServiceImpl(Terminal terminal)
     {

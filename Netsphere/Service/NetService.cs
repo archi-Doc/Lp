@@ -7,7 +7,7 @@ namespace Netsphere;
 
 public class NetService
 {
-    public delegate NetTask<ByteArrayPool.MemoryOwner> ServiceDelegate(object instance, ByteArrayPool.MemoryOwner received);
+    public delegate NetTask<ByteArrayPool.MemoryOwner> ServiceDelegate(object instance, object serviceContext, ByteArrayPool.MemoryOwner received);
 
     public delegate INetService CreateFrontendDelegate(ClientTerminal clientTerminal);
 
@@ -66,7 +66,7 @@ public class NetService
         this.serviceProvider = serviceProvider;
     }
 
-    public async Task Process(ServerTerminal serverTerminal, NetReceivedData received)
+    public async Task Process(object serviceContext, ServerTerminal serverTerminal, NetReceivedData received)
     {
         if (!this.idToServiceMethod.TryGetValue(received.DataId, out var serviceMethod))
         {
@@ -96,7 +96,7 @@ public class NetService
         ByteArrayPool.MemoryOwner sendOwner = default;
         try
         {
-            sendOwner = await serviceMethod.Process(serviceMethod.ServerInstance!, received.Received);
+            sendOwner = await serviceMethod.Process(serviceMethod.ServerInstance!, serviceContext, received.Received);
             await serverTerminal.SendServiceAsync(serviceMethod.Id, sendOwner).ConfigureAwait(false);
         }
         catch
