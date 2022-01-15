@@ -33,6 +33,7 @@ public class Program
             Container.Register(x, Reuse.Singleton);
         }
 
+        // Services
         Container.Register<ExternalServiceImpl>(Reuse.Singleton);
 
         Container.ValidateAndThrow();

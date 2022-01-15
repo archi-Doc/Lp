@@ -24,8 +24,8 @@ public interface IServiceFilter
     public ValueTask Invoke(ServiceContext context, Func<ServiceContext, ValueTask> next);
 }
 
-public interface IServiceFilter<T>
-    where T : ServiceContext
+public interface IServiceFilter<TServiceContext>
+    where TServiceContext : ServiceContext
 {
-    public ValueTask Invoke(T context, Func<T, ValueTask> next);
+    public ValueTask Invoke(TServiceContext context, Func<TServiceContext, ValueTask> next);
 }

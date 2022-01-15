@@ -29,6 +29,10 @@ public class NetControl
     public const int MaxPort = 60999;
 
     public static void Register(Container container, List<Type> commandList)
+        => Register<ServiceContext>(container, commandList);
+
+    public static void Register<TServiceContext>(Container container, List<Type> commandList)
+        where TServiceContext : ServiceContext, new()
     {
         // Container instance
         containerInstance = container;
@@ -45,7 +49,7 @@ public class NetControl
         container.Register<Terminal>(Reuse.Singleton);
         container.Register<EssentialNode>(Reuse.Singleton);
         container.Register<NetStatus>(Reuse.Singleton);
-        container.Register<Server<ServiceContext>>(Reuse.Transient);
+        container.Register<Server<TServiceContext>>(Reuse.Transient);
         container.RegisterDelegate(x => new NetService(container), Reuse.Transient);
 
         // Machines
@@ -65,12 +69,17 @@ public class NetControl
     }
 
     public static void QuickStart(bool enableServer, string nodeName, NetsphereOptions options, bool allowUnsafeConnection)
+        => QuickStart<ServiceContext>(enableServer, nodeName, options, allowUnsafeConnection);
+
+    public static void QuickStart<TServiceContext>(bool enableServer, string nodeName, NetsphereOptions options, bool allowUnsafeConnection)
+        where TServiceContext : ServiceContext, new()
     {
         var netBase = containerInstance.Resolve<NetBase>();
         netBase.Initialize(enableServer, nodeName, options);
         netBase.AllowUnsafeConnection = allowUnsafeConnection;
 
         var netControl = containerInstance.Resolve<NetControl>();
+        netControl.SetServiceContext<TServiceContext>();
         Logger.Configure(null);
         Radio.Send(new Message.Configure());
         var message = new Message.Start(ThreadCore.Root);
@@ -93,7 +102,6 @@ public class NetControl
             this.Alternative = new(netBase, netStatus); // For debug
         }
 
-        this.SetServerTerminalDelegate(CreateServerTerminal);
         this.EssentialNode = node;
         this.NetStatus = netStatus;
 
@@ -117,10 +125,28 @@ public class NetControl
         this.BigMachine.TryCreate<LP.Machines.EssentialNetMachine.Interface>(Identifier.Zero);
     }
 
-    public void SetServerTerminalDelegate(Terminal.CreateServerTerminalDelegate @delegate)
+    public void SetServiceContext<TServiceContext>()
+        where TServiceContext : ServiceContext, new()
     {
-        this.Terminal.SetServerTerminalDelegate(@delegate);
-        this.Alternative?.SetServerTerminalDelegate(@delegate);
+        this.Terminal.SetCreateServerDelegate(CreateServer);
+        this.Alternative?.SetCreateServerDelegate(CreateServer);
+
+        static void CreateServer(ServerTerminal terminal)
+        {
+            Task.Run(async () =>
+            {
+                var server = containerInstance.Resolve<Server<TServiceContext>>();
+                terminal.Terminal.MyStatus.IncrementServerCount();
+                try
+                {
+                    await server.Process(terminal).ConfigureAwait(false);
+                }
+                finally
+                {
+                    terminal.Dispose();
+                }
+            });
+        }
     }
 
     public bool AddResponder(INetResponder responder)
@@ -145,23 +171,6 @@ public class NetControl
     internal ConcurrentDictionary<ulong, INetResponder> Responders { get; } = new();
 
     private static Container containerInstance = default!;
-
-    private static void CreateServerTerminal(ServerTerminal terminal)
-    {
-        Task.Run(async () =>
-        {
-            var server = containerInstance.Resolve<Server<ServiceContext>>();
-            terminal.Terminal.MyStatus.IncrementServerCount();
-            try
-            {
-                await server.Process(terminal).ConfigureAwait(false);
-            }
-            finally
-            {
-                terminal.Dispose();
-            }
-        });
-    }
 
     private void Dump()
     {
