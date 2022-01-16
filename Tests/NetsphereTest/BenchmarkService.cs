@@ -16,7 +16,7 @@ public interface IBenchmarkService : INetService
     public NetTask Wait(int millisecondsToWait);
 }
 
-[NetServiceFilter(typeof(TestFilter), Order = 10)]
+[NetServiceFilter(typeof(TestFilter), Order = 1)]
 [NetServiceObject]
 public class BenchmarkServiceImpl : NetServiceBase, IBenchmarkService
 {
@@ -37,6 +37,14 @@ public class BenchmarkServiceImpl : NetServiceBase, IBenchmarkService
     }
 }
 
+public class TestFilterB : TestFilter
+{
+    public async ValueTask Invoke(ServiceContext context, Func<ServiceContext, ValueTask> next)
+    {
+        await next(context);
+    }
+
+}
 public class TestFilter : IServiceFilter
 {
     public async ValueTask Invoke(ServiceContext context, Func<ServiceContext, ValueTask> next)

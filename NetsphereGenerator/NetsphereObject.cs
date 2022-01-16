@@ -66,6 +66,8 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     public NetsphereObject? NetServiceBase { get; private set; } // For NetServiceObjectAttribute; Net service base implemented by this net service object.
 
+    public ServiceFilter? ServiceFilter { get; private set; } // For NetServiceObjectAttribute; Service filters.
+
     public Dictionary<uint, ServiceMethod>? ServiceMethods { get; private set; } // For NetServiceInterface; Methods included in this net service interface.
 
     public string ClassName { get; set; } = string.Empty;
@@ -202,6 +204,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             }
 
             this.ConfigureNetBase();
+            this.ServiceFilter = ServiceFilter.CreateFromObject(this);
 
             this.Body.NetObjects.Add(this);
         }
@@ -408,6 +411,8 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 }
             }
         }
+
+        this.ServiceFilter?.CheckAndPrepare();
     }
 
     internal void GenerateFrontend(ScopingStringBuilder ssb, GeneratorInformation info)
@@ -550,6 +555,9 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
             ssb.AppendLine();
             ssb.AppendLine($"private {this.FullName} impl;");
+
+            // Service filters
+            this.ServiceFilter?.GenerateDefinition(ssb);
         }
     }
 
@@ -571,6 +579,10 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             }
 
             ssb.AppendLine();
+
+            // Service filters
+            this.ServiceFilter?.GenerateInitialize(ssb, "impl");
+
             // Set ServiceContext
             if (this.NetServiceBase != null)
             {
