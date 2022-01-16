@@ -12,6 +12,8 @@ public interface IBenchmarkService : INetService
     public NetTask Send(byte[] data);
 
     public NetTask<byte[]?> Pingpong(byte[] data);
+
+    public NetTask Wait(int millisecondsToWait);
 }
 
 [NetServiceFilter(typeof(TestFilter), Order = 10)]
@@ -25,6 +27,13 @@ public class BenchmarkServiceImpl : IBenchmarkService
 
     public async NetTask Send(byte[] data)
     {
+    }
+
+    public async NetTask Wait(int millisecondsToWait)
+    {
+        Console.Write("Wait -> ");
+        await Task.Delay(millisecondsToWait);
+        Console.WriteLine($"{millisecondsToWait}");
     }
 }
 

@@ -32,7 +32,7 @@ public class Server<TServiceContext>
                     }
                     else if (received.PacketId == PacketId.Rpc)
                     {// RPC
-                        await this.NetService.Process(this.ServiceContext, terminal, received).ConfigureAwait(false);
+                        var task = this.NetService.Process(this.ServiceContext, terminal, received); // .ConfigureAwait(false);
                         continue;
                     }
 
