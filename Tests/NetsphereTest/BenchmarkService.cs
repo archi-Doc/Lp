@@ -18,7 +18,7 @@ public interface IBenchmarkService : INetService
 
 [NetServiceFilter(typeof(TestFilter), Order = 10)]
 [NetServiceObject]
-public class BenchmarkServiceImpl : IBenchmarkService
+public class BenchmarkServiceImpl : NetServiceBase, IBenchmarkService
 {
     public async NetTask<byte[]?> Pingpong(byte[] data)
     {

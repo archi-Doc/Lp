@@ -12,6 +12,7 @@ public class Server<TServiceContext>
         this.NetBase = netBase;
         this.NetControl = netControl;
         this.NetService = netService;
+        this.NetService.ServiceContext = this.ServiceContext;
     }
 
     public async Task Process(ServerTerminal terminal)

@@ -410,71 +410,6 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         }
     }
 
-    public static void GenerateLoader(ScopingStringBuilder ssb, GeneratorInformation info, NetsphereObject? parent, List<NetsphereObject> list)
-    {
-        if (parent?.Generics_Kind == VisceralGenericsKind.OpenGeneric)
-        {
-            return;
-        }
-
-        var classFormat = "__gen__bm__{0:D4}";
-        var list2 = list.SelectMany(x => x.ConstructedObjects).Where(x => x.NetServiceObjectAttribute != null).ToArray();
-
-        string? loaderIdentifier = null;
-        var list3 = list2.ToArray();
-        if (list3.Length > 0)
-        {
-            ssb.AppendLine();
-            if (parent == null)
-            {
-                loaderIdentifier = string.Format(classFormat, 0);
-            }
-            else
-            {
-                parent.LoaderNumber = info.FormatterCount++;
-                loaderIdentifier = string.Format(classFormat, parent.LoaderNumber);
-            }
-
-            ssb.AppendLine($"public class {loaderIdentifier}<TIdentifier> : IMachineLoader<TIdentifier>");
-            using (var scope = ssb.ScopeBrace($"    where TIdentifier : notnull"))
-            {
-                using (var scope2 = ssb.ScopeBrace("public void Load()"))
-                {
-                    foreach (var x in list3)
-                    {
-                        ssb.AppendLine($"{x.FullName}.RegisterBM({x.NetServiceInterfaceAttribute!.ServiceId});");
-                    }
-                }
-            }
-        }
-
-        using (var m = ssb.ScopeBrace("internal static void RegisterBM()"))
-        {
-            /*foreach (var x in list2)
-            {
-                if (x.ObjectAttribute == null)
-                {
-                    continue;
-                }
-
-                if (x.Generics_Kind != VisceralGenericsKind.OpenGeneric)
-                {// Register fixed types.
-                    ssb.AppendLine($"{x.FullName}.RegisterBM({x.ObjectAttribute.MachineTypeId});");
-                }
-            }
-
-            foreach (var x in list.Where(a => a.ObjectFlag.HasFlag(NetsphereObjectFlag.HasRegisterBM)))
-            {// Children
-                ssb.AppendLine($"{x.FullName}.RegisterBM();");
-            }*/
-
-            if (loaderIdentifier != null)
-            {// Loader
-                ssb.AppendLine($"MachineLoader.Add(typeof({loaderIdentifier}<>));");
-            }
-        }
-    }
-
     internal void GenerateFrontend(ScopingStringBuilder ssb, GeneratorInformation info)
     {
         using (var cls = ssb.ScopeBrace($"private class {this.ClassName} : {this.FullName}")) // {this.AccessibilityName}
@@ -620,7 +555,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     internal void GenerateBackend_Constructor(ScopingStringBuilder ssb, GeneratorInformation info)
     {
-        using (var scopeMethod = ssb.ScopeBrace($"public {this.ClassName}(IServiceProvider? serviceProvider)"))
+        using (var scopeMethod = ssb.ScopeBrace($"public {this.ClassName}(IServiceProvider? serviceProvider, ServiceContext context)"))
         {
             ssb.AppendLine($"var impl = serviceProvider?.GetService(typeof({this.FullName})) as {this.FullName};");
             using (var scopeIf = ssb.ScopeBrace($"if (impl == null)"))
@@ -636,6 +571,19 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             }
 
             ssb.AppendLine();
+            // Set ServiceContext
+            if (this.NetServiceBase != null)
+            {
+                if (this.NetServiceBase.Generics_IsGeneric)
+                {
+                    ssb.AppendLine($"(({this.NetServiceBase.FullName})impl).Context = ({this.NetServiceBase.Generics_Arguments[0].FullName})context;");
+                }
+                else
+                {
+                    ssb.AppendLine($"(({this.NetServiceBase.FullName})impl).Context = context;");
+                }
+            }
+
             ssb.AppendLine("this.impl = impl;");
         }
     }
@@ -657,7 +605,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     internal void GenerateBackend_Method(ScopingStringBuilder ssb, GeneratorInformation info, NetsphereObject serviceInterface, ServiceMethod method)
     {
-        using (var scopeMethod = ssb.ScopeBrace($"private static async NetTask<ByteArrayPool.MemoryOwner> {method.MethodString}(object obj, object context, ByteArrayPool.MemoryOwner receive)"))
+        using (var scopeMethod = ssb.ScopeBrace($"private static async NetTask<ByteArrayPool.MemoryOwner> {method.MethodString}(object obj, ByteArrayPool.MemoryOwner receive)"))
         {
             if (method.ParameterType == ServiceMethod.Type.ByteArray)
             {
@@ -678,7 +626,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             ssb.AppendLine();
 
             // Backend
-            ssb.AppendLine($"var backend = (({this.ClassName})obj).impl;");
+            /*ssb.AppendLine($"var backend = (({this.ClassName})obj).impl;");
 
             // Set ServiceContext
             if (this.NetServiceBase != null)
@@ -691,7 +639,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 {
                     ssb.AppendLine($"(({this.NetServiceBase.FullName})backend).Context = (ServiceContext)context!;");
                 }
-            }
+            }*/
 
             var prefix = string.Empty;
             if (method.ReturnObject != null)
@@ -699,7 +647,8 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 prefix = "var result = ";
             }
 
-            ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})backend).{method.SimpleName}({method.GetTupleNames("value")});");
+            // ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})backend).{method.SimpleName}({method.GetTupleNames("value")});");
+            ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})(({this.ClassName})obj).impl).{method.SimpleName}({method.GetTupleNames("value")});");
             if (method.ReturnObject == null)
             {
                 ssb.AppendLine("var result = NetResult.Success;");
@@ -726,7 +675,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         var serviceIdString = serviceInterface.NetServiceInterfaceAttribute!.ServiceId.ToString("x");
         using (var scopeMethod = ssb.ScopeBrace($"public static NetService.ServiceInfo ServiceInfo_{serviceIdString}()"))
         {
-            ssb.AppendLine($"var si = new NetService.ServiceInfo(0x{serviceIdString}u, static x => new {this.ClassName}(x));");
+            ssb.AppendLine($"var si = new NetService.ServiceInfo(0x{serviceIdString}u, static (x, y) => new {this.ClassName}(x, y));");
             if (serviceInterface.ServiceMethods != null)
             {
                 foreach (var x in serviceInterface.ServiceMethods.Values)

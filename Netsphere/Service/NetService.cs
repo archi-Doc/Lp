@@ -7,11 +7,11 @@ namespace Netsphere;
 
 public class NetService
 {
-    public delegate NetTask<ByteArrayPool.MemoryOwner> ServiceDelegate(object instance, object serviceContext, ByteArrayPool.MemoryOwner received);
+    public delegate NetTask<ByteArrayPool.MemoryOwner> ServiceDelegate(object instance, ByteArrayPool.MemoryOwner received);
 
     public delegate INetService CreateFrontendDelegate(ClientTerminal clientTerminal);
 
-    public delegate object CreateServerDelegate(IServiceProvider? serviceProvider);
+    public delegate object CreateServerDelegate(IServiceProvider? serviceProvider, ServiceContext serviceContext);
 
     public class ServiceInfo
     {
@@ -86,7 +86,7 @@ public class NetService
             // Get ServiceInstance.
             if (!this.idToInstance.TryGetValue(serviceId, out var serverInstance))
             {
-                serverInstance = serviceInfo.CreateServer(this.serviceProvider);
+                serverInstance = serviceInfo.CreateServer(this.serviceProvider, this.ServiceContext);
                 this.idToInstance.TryAdd(serviceId, serverInstance);
             }
 
@@ -96,7 +96,7 @@ public class NetService
         ByteArrayPool.MemoryOwner sendOwner = default;
         try
         {
-            sendOwner = await serviceMethod.Process(serviceMethod.ServerInstance!, serviceContext, received.Received);
+            sendOwner = await serviceMethod.Process(serviceMethod.ServerInstance!, received.Received);
             await serverTerminal.SendServiceAsync(serviceMethod.Id, sendOwner).ConfigureAwait(false);
         }
         catch
@@ -113,6 +113,8 @@ public class NetService
 SendEmpty:
         await serverTerminal.SendServiceAsync(received.DataId, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
     }
+
+    public ServiceContext ServiceContext { get; internal set; } = default!;
 
     private IServiceProvider? serviceProvider;
     private Dictionary<ulong, ServiceMethod> idToServiceMethod = new();
