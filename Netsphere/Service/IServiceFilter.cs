@@ -2,12 +2,16 @@
 
 namespace Netsphere;
 
-public interface IServiceFilter
+public interface IServiceFilterBase
+{
+}
+
+public interface IServiceFilter : IServiceFilterBase
 {
     public ValueTask Invoke(ServiceContext context, Func<ServiceContext, ValueTask> next);
 }
 
-public interface IServiceFilter<TServiceContext>
+public interface IServiceFilter<TServiceContext> : IServiceFilterBase
     where TServiceContext : ServiceContext
 {
     public ValueTask Invoke(TServiceContext context, Func<TServiceContext, ValueTask> next);

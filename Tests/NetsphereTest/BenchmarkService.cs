@@ -39,7 +39,7 @@ public class BenchmarkServiceImpl : NetServiceBase, IBenchmarkService
 
 public class TestFilterB : TestFilter
 {
-    public async ValueTask Invoke(ServiceContext context, Func<ServiceContext, ValueTask> next)
+    public new async ValueTask Invoke(ServiceContext context, Func<ServiceContext, ValueTask> next)
     {
         await next(context);
     }

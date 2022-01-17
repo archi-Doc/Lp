@@ -107,7 +107,7 @@ public class ServiceFilter
         {
             var obj = this.Object.Body.Add(this.FilterList[i].FilterType!);
             var filterObject = obj == null ? null : this.GetFilterObject(obj);
-            if (filterObject == null)
+            if (obj == null || filterObject == null)
             {
                 this.Object.Body.ReportDiagnostic(NetsphereBody.Error_FilterTypeNotDerived, this.FilterList[i].Location);
                 errorFlag = true;
@@ -142,7 +142,7 @@ public class ServiceFilter
         }
     }
 
-    public void GenerateInitialize(ScopingStringBuilder ssb, string name)
+    public void GenerateInitialize(ScopingStringBuilder ssb, string context)
     {
         if (this.Items == null)
         {
@@ -151,7 +151,17 @@ public class ServiceFilter
 
         foreach (var x in this.Items)
         {
-            // ssb.AppendLine($"{name}.{x.Identifier} = ");
+            string newInstance;
+            if (x.Object.ObjectFlag.HasFlag(NetsphereObjectFlag.HasDefaultConstructor))
+            {
+                newInstance = $"new {x.Object.FullName}()";
+            }
+            else
+            {
+                newInstance = $"{context}.ServiceProvider.GetService(typeof({x.Object.FullName}))!";
+            }
+
+            ssb.AppendLine($"this.{x.Identifier} = ({x.Object.FullName}){context}.ServiceFilters.GetOrAdd(typeof({x.Object.FullName}), x => (IServiceFilter){newInstance});");
         }
     }
 

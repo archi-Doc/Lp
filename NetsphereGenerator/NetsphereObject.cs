@@ -581,7 +581,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             ssb.AppendLine();
 
             // Service filters
-            this.ServiceFilter?.GenerateInitialize(ssb, "impl");
+            this.ServiceFilter?.GenerateInitialize(ssb, "context");
 
             // Set ServiceContext
             if (this.NetServiceBase != null)
