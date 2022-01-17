@@ -12,6 +12,8 @@ public class Server<TServiceContext>
         this.NetBase = netBase;
         this.NetControl = netControl;
         this.NetService = netService;
+
+        this.ServiceContext.ServiceProvider = this.NetControl.ServiceProvider;
         this.NetService.ServiceContext = this.ServiceContext;
     }
 

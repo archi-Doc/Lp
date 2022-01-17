@@ -93,6 +93,7 @@ public class NetControl
 
     public NetControl(NetBase netBase, BigMachine<Identifier> bigMachine, Terminal terminal, EssentialNode node, NetStatus netStatus)
     {
+        this.ServiceProvider = (IServiceProvider)containerInstance;
         this.NetBase = netBase;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
 
@@ -153,6 +154,8 @@ public class NetControl
     {
         return this.Responders.TryAdd(responder.GetDataId(), responder);
     }
+
+    public IServiceProvider ServiceProvider { get; }
 
     public NetBase NetBase { get; }
 

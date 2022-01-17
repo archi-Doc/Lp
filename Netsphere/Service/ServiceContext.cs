@@ -7,6 +7,8 @@ public class ServiceContext
     public ServiceContext()
     {
     }
+
+    public IServiceProvider ServiceProvider { get; internal set; } = default!;
 }
 
 /*public class ServiceContext : ServiceContext<ServiceContext>
