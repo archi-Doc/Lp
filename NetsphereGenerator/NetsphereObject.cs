@@ -617,21 +617,22 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     internal void GenerateBackend_Method(ScopingStringBuilder ssb, GeneratorInformation info, NetsphereObject serviceInterface, ServiceMethod method)
     {
-        using (var scopeMethod = ssb.ScopeBrace($"private static async NetTask<ByteArrayPool.MemoryOwner> {method.MethodString}(object obj, ByteArrayPool.MemoryOwner receive)"))
+        using (var scopeMethod = ssb.ScopeBrace($"private static async ValueTask {method.MethodString}(object obj, CallContext context)"))
         {
             if (method.ParameterType == ServiceMethod.Type.ByteArray)
             {
-                ssb.AppendLine("var value = receive.Memory.ToArray();");
+                ssb.AppendLine("var value = context.RentData.Memory.ToArray();");
             }
             else if (method.ParameterType == ServiceMethod.Type.MemoryOwner)
             {
-                ssb.AppendLine("var value = receive;");
+                ssb.AppendLine("var value = context.RentData;");
             }
             else
             {
-                using (var scopeDeserialize = ssb.ScopeBrace($"if (!LP.Block.BlockService.TryDeserialize<{method.GetParameterTypes()}>(receive, out var value))"))
+                using (var scopeDeserialize = ssb.ScopeBrace($"if (!LP.Block.BlockService.TryDeserialize<{method.GetParameterTypes()}>(context.RentData, out var value))"))
                 {
-                    ssb.AppendLine("return default;");
+                    ssb.AppendLine("context.Result = NetResult.DeserializationError;");
+                    ssb.AppendLine("return;");
                 }
             }
 
@@ -673,19 +674,25 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 ssb.AppendLine("var result = NetResult.Success;");
             }
 
+            ssb.AppendLine("context.RentData.Return();");
             if (method.ReturnType == ServiceMethod.Type.ByteArray)
-            {
-                ssb.AppendLine("return result != null ? new ByteArrayPool.MemoryOwner(result) : default;");
+            {// byte[] result;
+                ssb.AppendLine("context.RentData = result != null ? new ByteArrayPool.MemoryOwner(result) : default;");
             }
             else if (method.ReturnType == ServiceMethod.Type.MemoryOwner)
-            {
-                ssb.AppendLine("return result;");
+            {// new ByteArrayPool.MemoryOwner result;
+                ssb.AppendLine("context.RentData = result;");
             }
             else
             {
-                ssb.AppendLine("LP.Block.BlockService.TrySerialize(result, out var send);");
-                ssb.AppendLine("return send;");
+                using (var scopeSerialize = ssb.ScopeBrace($"if (!LP.Block.BlockService.TrySerialize(result, out context.RentData))"))
+                {
+                    ssb.AppendLine("context.Result = NetResult.SerializationError;");
+                    ssb.AppendLine("return;");
+                }
             }
+
+            ssb.AppendLine("context.Result = NetResult.Success;");
         }
     }
 

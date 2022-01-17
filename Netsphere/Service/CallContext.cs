@@ -4,6 +4,8 @@ using System.Collections.Concurrent;
 
 namespace Netsphere;
 
+#pragma warning disable SA1401 // Fields should be private
+
 public class CallContext
 {
     public CallContext(ServiceContext serviceContext, ByteArrayPool.MemoryOwner rentData)
@@ -14,7 +16,7 @@ public class CallContext
 
     public ServiceContext ServiceContext { get; }
 
-    public ByteArrayPool.MemoryOwner RentData { get; set; }
+    public ByteArrayPool.MemoryOwner RentData;
 
-    public NetResult Result { get; set; }
+    public NetResult Result;
 }

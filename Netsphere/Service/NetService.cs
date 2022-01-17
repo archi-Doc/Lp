@@ -7,7 +7,7 @@ namespace Netsphere;
 
 public class NetService
 {
-    public delegate NetTask<ByteArrayPool.MemoryOwner> ServiceDelegate(object instance, ByteArrayPool.MemoryOwner received);
+    public delegate ValueTask ServiceDelegate(object instance, CallContext context);
 
     public delegate INetService CreateFrontendDelegate(ClientTerminal clientTerminal);
 
@@ -93,13 +93,11 @@ public class NetService
             serviceMethod = serviceMethod.CloneWithInstance(serverInstance);
         }
 
-        ByteArrayPool.MemoryOwner sendOwner = default;
+        var context = new CallContext(this.ServiceContext, received.Received.IncrementAndShare());
         try
         {
-            // CallContext; ref NetReceivedData
-            var callContext = new CallContext(this.ServiceContext, received.Received.IncrementAndShare());
-            sendOwner = await serviceMethod.Process(serviceMethod.ServerInstance!, received.Received);
-            await serverTerminal.SendServiceAsync(serviceMethod.Id, sendOwner).ConfigureAwait(false);
+            await serviceMethod.Process(serviceMethod.ServerInstance!, context);
+            await serverTerminal.SendServiceAsync(serviceMethod.Id, context.RentData).ConfigureAwait(false);
         }
         catch
         {
@@ -107,7 +105,7 @@ public class NetService
         }
         finally
         {
-            sendOwner.Return();
+            context.RentData.Return();
         }
 
         return;
