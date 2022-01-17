@@ -19,4 +19,20 @@ public class CallContext
     public ByteArrayPool.MemoryOwner RentData;
 
     public NetResult Result;
+
+    public ConcurrentDictionary<string, object> Items
+    {
+        get
+        {
+            lock (this.syncObject)
+            {
+                this.items ??= new();
+            }
+
+            return this.items;
+        }
+    }
+
+    private object syncObject = new();
+    private ConcurrentDictionary<string, object>? items;
 }

@@ -20,7 +20,7 @@ public partial interface IBenchmarkService
 {
 }
 
-    [NetServiceFilter(typeof(TestFilter), Order = 1)]
+[NetServiceFilter(typeof(TestFilter), Order = 1)]
 [NetServiceFilter(typeof(TestFilterB), Order = 1)]
 [NetServiceObject]
 public class BenchmarkServiceImpl : NetServiceBase, IBenchmarkService

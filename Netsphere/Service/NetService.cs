@@ -39,18 +39,18 @@ public class NetService
         public ServiceMethod(ulong id, ServiceDelegate process)
         {
             this.Id = id;
-            this.Process = process;
+            this.Invoke = process;
         }
 
         public ulong Id { get; }
 
         public object? ServerInstance { get; private set; }
 
-        public ServiceDelegate Process { get; }
+        public ServiceDelegate Invoke { get; }
 
         public ServiceMethod CloneWithInstance(object serverInstance)
         {
-            var serviceMethod = new ServiceMethod(this.Id, this.Process);
+            var serviceMethod = new ServiceMethod(this.Id, this.Invoke);
             serviceMethod.ServerInstance = serverInstance;
             return serviceMethod;
         }
@@ -96,7 +96,7 @@ public class NetService
         var context = new CallContext(this.ServiceContext, received.Received.IncrementAndShare());
         try
         {
-            await serviceMethod.Process(serviceMethod.ServerInstance!, context);
+            await serviceMethod.Invoke(serviceMethod.ServerInstance!, context);
             await serverTerminal.SendServiceAsync(serviceMethod.Id, context.RentData).ConfigureAwait(false);
         }
         catch
