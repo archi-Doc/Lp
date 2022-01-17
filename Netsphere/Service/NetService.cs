@@ -66,7 +66,7 @@ public class NetService
         this.serviceProvider = serviceProvider;
     }
 
-    public async Task Process(object serviceContext, ServerTerminal serverTerminal, NetReceivedData received)
+    public async Task Process(ServerTerminal serverTerminal, NetReceivedData received)
     {
         if (!this.idToServiceMethod.TryGetValue(received.DataId, out var serviceMethod))
         {
@@ -96,6 +96,8 @@ public class NetService
         ByteArrayPool.MemoryOwner sendOwner = default;
         try
         {
+            // CallContext; ref NetReceivedData
+            var callContext = new CallContext(this.ServiceContext, received.Received.IncrementAndShare());
             sendOwner = await serviceMethod.Process(serviceMethod.ServerInstance!, received.Received);
             await serverTerminal.SendServiceAsync(serviceMethod.Id, sendOwner).ConfigureAwait(false);
         }

@@ -7,7 +7,7 @@ public class CustomServiceContext : ServiceContext
 }
 
 [NetServiceInterface]
-public interface IBenchmarkService : INetService
+public partial interface IBenchmarkService : INetService
 {
     public NetTask Send(byte[] data);
 
@@ -16,7 +16,11 @@ public interface IBenchmarkService : INetService
     public NetTask Wait(int millisecondsToWait);
 }
 
-[NetServiceFilter(typeof(TestFilter), Order = 1)]
+public partial interface IBenchmarkService
+{
+}
+
+    [NetServiceFilter(typeof(TestFilter), Order = 1)]
 [NetServiceFilter(typeof(TestFilterB), Order = 1)]
 [NetServiceObject]
 public class BenchmarkServiceImpl : NetServiceBase, IBenchmarkService
@@ -51,6 +55,10 @@ public class TestFilter : IServiceFilter
     public async ValueTask Invoke(ServiceContext context, Func<ServiceContext, ValueTask> next)
     {
         await next(context);
+    }
+
+    public async ValueTask Invoke(CallContext callContext)
+    {
     }
 }
 

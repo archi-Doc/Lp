@@ -22,9 +22,10 @@ public class Server<TServiceContext>
         this.NetTerminal = terminal;
         while (!this.NetTerminal.IsClosed)
         {
+            NetReceivedData received = default;
             try
             {
-                var received = await terminal.ReceiveAsync().ConfigureAwait(false);
+                received = await terminal.ReceiveAsync().ConfigureAwait(false);
                 if (received.Result == NetResult.Success)
                 {// Success
                     if (received.PacketId == PacketId.Data &&
@@ -35,7 +36,7 @@ public class Server<TServiceContext>
                     }
                     else if (received.PacketId == PacketId.Rpc)
                     {// RPC
-                        var task = this.NetService.Process(this.ServiceContext, terminal, received); // .ConfigureAwait(false);
+                        var task = this.NetService.Process(terminal, received); // .ConfigureAwait(false);
                         continue;
                     }
 
@@ -60,6 +61,7 @@ public class Server<TServiceContext>
             }
             finally
             {
+                received.Return();
                 terminal.ClearSender();
             }
         }
