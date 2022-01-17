@@ -638,10 +638,10 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             ssb.AppendLine();
 
             // Backend
-            /*ssb.AppendLine($"var backend = (({this.ClassName})obj).impl;");
+            ssb.AppendLine($"var backend = (({this.ClassName})obj).impl;");
 
             // Set ServiceContext
-            if (this.NetServiceBase != null)
+            /*if (this.NetServiceBase != null)
             {
                 if (this.NetServiceBase.Generics_IsGeneric)
                 {
@@ -659,8 +659,15 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 prefix = "var result = ";
             }
 
+            // task
+            ssb.AppendLine($"task = (({serviceInterface.FullName})backend).{method.SimpleName}({method.GetTupleNames("value")})");
+
+            if (this.ServiceFilter == null)
+            {
+
+            }
             // ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})backend).{method.SimpleName}({method.GetTupleNames("value")});");
-            ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})(({this.ClassName})obj).impl).{method.SimpleName}({method.GetTupleNames("value")});");
+            ssb.AppendLine($"{prefix}await task;");
             if (method.ReturnObject == null)
             {
                 ssb.AppendLine("var result = NetResult.Success;");

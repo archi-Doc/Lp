@@ -5,7 +5,7 @@ using Netsphere;
 
 namespace GeneratorOption;
 
-[NetsphereGeneratorOption(AttachDebugger = false, GenerateToFile = false)]
+[NetsphereGeneratorOption(AttachDebugger = false, GenerateToFile = true)]
 internal class GeneratorOption
 {
 }

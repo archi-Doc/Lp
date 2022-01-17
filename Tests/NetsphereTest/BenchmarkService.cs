@@ -17,6 +17,7 @@ public interface IBenchmarkService : INetService
 }
 
 [NetServiceFilter(typeof(TestFilter), Order = 1)]
+[NetServiceFilter(typeof(TestFilterB), Order = 1)]
 [NetServiceObject]
 public class BenchmarkServiceImpl : NetServiceBase, IBenchmarkService
 {
