@@ -67,7 +67,7 @@ public class NetControl
     /*public static void QuickStart(bool enableServer, string nodeName, NetsphereOptions options, bool allowUnsafeConnection)
         => QuickStart<ServerContext>(enableServer, nodeName, options, allowUnsafeConnection, () => new CallContext());*/
 
-    public static void QuickStart(bool enableServer, Func<CallContext> newCallContext, Func<ServerContext> newServerContext, string nodeName, NetsphereOptions options, bool allowUnsafeConnection)
+    public static void QuickStart(bool enableServer, Func<ServerContext> newServerContext, Func<CallContext> newCallContext, string nodeName, NetsphereOptions options, bool allowUnsafeConnection)
     {
         var netBase = containerInstance.Resolve<NetBase>();
         netBase.Initialize(enableServer, nodeName, options);

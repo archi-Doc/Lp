@@ -563,7 +563,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     internal void GenerateBackend_Constructor(ScopingStringBuilder ssb, GeneratorInformation info)
     {
-        using (var scopeMethod = ssb.ScopeBrace($"public {this.ClassName}(IServiceProvider? serviceProvider, ServiceContext context)"))
+        using (var scopeMethod = ssb.ScopeBrace($"public {this.ClassName}(IServiceProvider? serviceProvider, ServerContext context)"))
         {
             ssb.AppendLine($"var impl = serviceProvider?.GetService(typeof({this.FullName})) as {this.FullName};");
             using (var scopeIf = ssb.ScopeBrace($"if (impl == null)"))
@@ -583,7 +583,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             // Service filters
             this.ServiceFilter?.GenerateInitialize(ssb, "context");
 
-            // Set ServiceContext
+            // Set ServerContext
             if (this.NetServiceBase != null)
             {
                 if (this.NetServiceBase.Generics_IsGeneric)
@@ -641,7 +641,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             // Backend
             ssb.AppendLine($"var backend = (({this.ClassName})obj).impl;");
 
-            // Set ServiceContext
+            // Set ServerContext
             /*if (this.NetServiceBase != null)
             {
                 if (this.NetServiceBase.Generics_IsGeneric)
@@ -650,7 +650,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 }
                 else
                 {
-                    ssb.AppendLine($"(({this.NetServiceBase.FullName})backend).Context = (ServiceContext)context!;");
+                    ssb.AppendLine($"(({this.NetServiceBase.FullName})backend).Context = (ServerContext)context!;");
                 }
             }*/
 

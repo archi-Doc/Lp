@@ -7,7 +7,6 @@ namespace Netsphere;
 
 public class NetService
 {
-
     public delegate ValueTask ServiceDelegate(object instance, CallContext context);
 
     public delegate INetService CreateFrontendDelegate(ClientTerminal clientTerminal);
@@ -87,7 +86,7 @@ public class NetService
             // Get Backend instance.
             if (!this.idToInstance.TryGetValue(serviceId, out var backendInstance))
             {
-                backendInstance = serviceInfo.CreateBackend(this.serviceProvider, this.ServiceContext);
+                backendInstance = serviceInfo.CreateBackend(this.serviceProvider, this.ServerContext);
                 this.idToInstance.TryAdd(serviceId, backendInstance);
             }
 
@@ -95,7 +94,7 @@ public class NetService
         }
 
         var context = this.NewCallContext();
-        context.Initialize(this.ServiceContext, received.Received.IncrementAndShare());
+        context.Initialize(this.ServerContext, received.Received.IncrementAndShare());
         CallContext.CurrentCallContext.Value = context;
         try
         {
@@ -117,7 +116,7 @@ SendEmpty:
         await serverTerminal.SendServiceAsync(received.DataId, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
     }
 
-    public ServerContext ServiceContext { get; internal set; } = default!;
+    public ServerContext ServerContext { get; internal set; } = default!;
 
     public Func<CallContext> NewCallContext { get; internal set; } = default!;
 

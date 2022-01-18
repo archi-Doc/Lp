@@ -19,6 +19,21 @@ public class TestCallContext : CallContext<TestServerContext>
     }
 }
 
+/*[NetServiceInterface]
+public interface ICustomService : INetService
+{
+    public NetTask Test();
+}
+
+[NetServiceObject]
+public class CustomService : NetServiceBase<TestServerContext>, ICustomService
+{
+    public async NetTask Test()
+    {
+        var serverContext = TestCallContext.Current;
+    }
+}*/
+
 public class CustomFilter : IServiceFilter<TestCallContext>
 {
     public ValueTask Invoke(TestCallContext context, Func<TestCallContext, ValueTask> next)
