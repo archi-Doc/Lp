@@ -66,7 +66,9 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     public NetsphereObject? NetServiceBase { get; private set; } // For NetServiceObjectAttribute; Net service base implemented by this net service object.
 
-    public ServiceFilter? ServiceFilter { get; private set; } // For NetServiceObjectAttribute; Service filters.
+    public ServiceFilterGroup? FilterGroup { get; private set; } // For NetServiceObjectAttribute; Service filters.
+
+    public Dictionary<string, ServiceFilter>? MethodToFilter { get; private set; } // For NetServiceObjectAttribute; Method full name to Service filters.
 
     public Dictionary<uint, ServiceMethod>? ServiceMethods { get; private set; } // For NetServiceInterface; Methods included in this net service interface.
 
@@ -240,27 +242,24 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     public void ConfigureServiceFilters()
     {
-        var classFilters = ServiceFilter.CreateFromObject(this);
-        classFilters?.CheckAndPrepare();
+        var classFilters = ServiceFilter.CreateFromObject(this) ?? new ServiceFilter();
+        var allFilters = new ServiceFilter(classFilters);
 
+        this.MethodToFilter ??= new();
         foreach (var x in this.GetMembers(VisceralTarget.Method))
         {
             var methodFilters = ServiceFilter.CreateFromObject(x);
             if (methodFilters != null)
             {
-
-            }
-
-            if (classFilters != null && methodFilters != null)
-            {
-                methodFilters = new ServiceFilter(classFilters, methodFilters);
-            }
-
-            if (methodFilters != null)
-            {
-
+                allFilters.TryMerge(methodFilters);
+                methodFilters.TryMerge(classFilters);
+                methodFilters.Sort();
+                this.MethodToFilter[x.FullName] = methodFilters;
             }
         }
+
+        this.FilterGroup = new ServiceFilterGroup(this, allFilters);
+        this.FilterGroup.CheckAndPrepare();
     }
 
     public void ConfigureNetBase()
@@ -584,7 +583,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             ssb.AppendLine($"private {this.FullName} impl;");
 
             // Service filters
-            this.ServiceFilter?.GenerateDefinition(ssb);
+            this.FilterGroup?.GenerateDefinition(ssb);
         }
     }
 
@@ -608,7 +607,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             ssb.AppendLine();
 
             // Service filters
-            this.ServiceFilter?.GenerateInitialize(ssb, "context");
+            this.FilterGroup?.GenerateInitialize(ssb, "context");
 
             // Set ServerContext
             if (this.NetServiceBase != null)
@@ -642,11 +641,47 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         this.GenerateBackend_ServiceInfo(ssb, info, serviceInterface);
     }
 
+    internal ServiceFilter? GetServiceFilter(NetsphereObject serviceInterface, ServiceMethod method)
+    {
+        if (this.MethodToFilter == null)
+        {
+            return null;
+        }
+
+        var explicitName = this.FullName + "." + serviceInterface.FullName + "." + method.LocalName;
+        if (this.MethodToFilter.TryGetValue(explicitName, out var serviceFilter))
+        {
+            return serviceFilter;
+        }
+
+        var name = this.FullName + "." + method.LocalName;
+        if (this.MethodToFilter.TryGetValue(name, out var serviceFilter2))
+        {
+            return serviceFilter2;
+        }
+
+        return null;
+    }
+
     internal void GenerateBackend_Method(ScopingStringBuilder ssb, GeneratorInformation info, NetsphereObject serviceInterface, ServiceMethod method)
     {
         using (var scopeMethod = ssb.ScopeBrace($"private static async Task {method.MethodString}(object obj, CallContext context)"))
         {
-            ssb.AppendLine("await Core(obj, context);");
+            var serviceFilter = this.GetServiceFilter(serviceInterface, method);
+            if (serviceFilter == null)
+            {
+                ssb.AppendLine("await Core(obj, context);");
+            }
+            else
+            {
+                foreach (var x in serviceFilter.FilterList)
+                {
+                    var identifier = this.FilterGroup!.GetIdentifier(x.FilterType);
+                }
+
+                ssb.AppendLine();
+            }
+
             ssb.AppendLine();
 
             using (var scopeCore = ssb.ScopeBrace("static async Task Core(object obj, CallContext context)"))

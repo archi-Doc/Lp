@@ -32,21 +32,17 @@ public interface ICustomService2 : INetService
 }
 
 [NetServiceObject]
-[NetServiceFilter(typeof(CustomFilter))]
+[NetServiceFilter(typeof(CustomFilter), Order = 0)]
 public class CustomService : NetServiceBase<TestServerContext>, ICustomService, ICustomService2
 {
     [NetServiceFilter(typeof(CustomFilter2))]
-    public async NetTask Test()
-    {
-        var serverContext = TestCallContext.Current;
-    }
-
     async NetTask ICustomService.Test()
     {
         var serverContext = TestCallContext.Current;
     }
 
-    async NetTask ICustomService2.Test()
+    [NetServiceFilter(typeof(CustomFilter), Order = 0)]
+    public async NetTask Test()
     {
         var serverContext = TestCallContext.Current;
     }

@@ -85,6 +85,8 @@ public class ServiceMethod
 
     public string SimpleName => this.method.SimpleName;
 
+    public string LocalName => this.method.LocalName;
+
     public int ParameterLength => this.method.Method_Parameters.Length;
 
     public uint MethodId { get; private set; }
