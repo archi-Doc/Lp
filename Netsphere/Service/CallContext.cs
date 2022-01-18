@@ -8,6 +8,8 @@ namespace Netsphere;
 
 public class CallContext
 {
+    public static CallContext Current => CurrentCallContext.Value!;
+
     public CallContext(ServiceContext serviceContext, ByteArrayPool.MemoryOwner rentData)
     {
         this.ServiceContext = serviceContext;
@@ -33,6 +35,7 @@ public class CallContext
         }
     }
 
+    internal static AsyncLocal<CallContext?> CurrentCallContext = new();
     private object syncObject = new();
     private ConcurrentDictionary<string, object>? items;
 }

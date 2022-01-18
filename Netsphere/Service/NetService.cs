@@ -94,6 +94,7 @@ public class NetService
         }
 
         var context = new CallContext(this.ServiceContext, received.Received.IncrementAndShare());
+        CallContext.CurrentCallContext.Value = context;
         try
         {
             await serviceMethod.Invoke(serviceMethod.ServerInstance!, context);
