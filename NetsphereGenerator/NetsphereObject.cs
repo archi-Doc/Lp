@@ -635,6 +635,8 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
                 using (var scopeCatch = ssb.ScopeBrace("catch (NetException ne)"))
                 {
+                    ssb.AppendLine("context.RentData.Return();");
+                    ssb.AppendLine("context.RentData = ByteArrayPool.MemoryOwner.Empty;");
                     ssb.AppendLine("context.Result = ne.Result;");
                 }
             }

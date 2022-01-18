@@ -37,6 +37,8 @@ public class BenchmarkServiceImpl : NetServiceBase, IBenchmarkService
             throw new NetException(NetResult.SerializationError);
         }
 
+        throw new NetException(NetResult.NoNodeInformation);
+
         Console.Write("Wait -> ");
         await Task.Delay(millisecondsToWait);
         Console.WriteLine($"{millisecondsToWait}");

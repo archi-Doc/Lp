@@ -101,7 +101,7 @@ public class NetService
             await serviceMethod.Invoke(serviceMethod.ServerInstance!, context);
             try
             {
-                await serverTerminal.SendServiceAsync(serviceMethod.Id, context.RentData).ConfigureAwait(false);
+                await serverTerminal.SendServiceAsync((ulong)context.Result, context.RentData).ConfigureAwait(false);
             }
             catch
             {
@@ -109,13 +109,7 @@ public class NetService
         }
         catch
         {
-            var dataId = serviceMethod.Id;
-            if (context.Result != NetResult.Success)
-            {
-                dataId = (ulong)context.Result;
-            }
-
-            await serverTerminal.SendServiceAsync(dataId, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
+            await serverTerminal.SendServiceAsync((ulong)context.Result, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
         }
         finally
         {

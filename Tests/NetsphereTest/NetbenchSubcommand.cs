@@ -38,12 +38,15 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
             await service.Wait(500);
             await service.Wait(500);*/
 
-            var w1 = service.Wait(500);
+            var tt = await service.Wait(100).ResponseAsync;
+            Console.WriteLine(tt.ToString());
+
+            /*var w1 = service.Wait(500);
             var w2 = service.Wait(500);
             var w3 = service.Wait(500);
             w1.ResponseAsync.Wait();
             w2.ResponseAsync.Wait();
-            w3.ResponseAsync.Wait();
+            w3.ResponseAsync.Wait();*/
         }
 
         // await this.MassiveSmallData(node);
