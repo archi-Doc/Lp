@@ -466,6 +466,10 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 {
                     ssb.AppendLine("var owner = a1.IncrementAndShare();");
                 }
+                else if (method.ParameterLength == 0)
+                {
+                    ssb.AppendLine("var owner = ByteArrayPool.MemoryOwner.Empty;");
+                }
                 else
                 {
                     using (var scopeSerialize = ssb.ScopeBrace($"if (!LP.Block.BlockService.TrySerialize({method.GetParameterNames(NetsphereBody.ArgumentName)}, out var owner))"))
@@ -626,6 +630,10 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             else if (method.ParameterType == ServiceMethod.Type.MemoryOwner)
             {
                 ssb.AppendLine("var value = context.RentData;");
+            }
+            else if (method.ParameterLength == 0)
+            {
+                ssb.AppendLine("var owner = ByteArrayPool.MemoryOwner.Empty;");
             }
             else
             {

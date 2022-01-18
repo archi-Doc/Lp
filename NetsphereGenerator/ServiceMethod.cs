@@ -85,6 +85,8 @@ public class ServiceMethod
 
     public string SimpleName => this.method.SimpleName;
 
+    public int ParameterLength => this.method.Method_Parameters.Length;
+
     public uint MethodId { get; private set; }
 
     public ulong Id { get; private set; }

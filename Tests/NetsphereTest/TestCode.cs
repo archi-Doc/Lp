@@ -19,7 +19,7 @@ public class TestCallContext : CallContext<TestServerContext>
     }
 }
 
-/*[NetServiceInterface]
+[NetServiceInterface]
 public interface ICustomService : INetService
 {
     public NetTask Test();
@@ -32,7 +32,7 @@ public class CustomService : NetServiceBase<TestServerContext>, ICustomService
     {
         var serverContext = TestCallContext.Current;
     }
-}*/
+}
 
 public class CustomFilter : IServiceFilter<TestCallContext>
 {
