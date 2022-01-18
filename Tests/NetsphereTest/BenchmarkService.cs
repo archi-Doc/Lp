@@ -34,10 +34,8 @@ public class BenchmarkServiceImpl : NetServiceBase, IBenchmarkService
     {
         if (CallContext.Current is not TestCallContext context)
         {
-            throw new NetException(NetResult.SerializationError);
+            throw new NetException(NetResult.NoCallContext);
         }
-
-        throw new NetException(NetResult.NoNodeInformation);
 
         Console.Write("Wait -> ");
         await Task.Delay(millisecondsToWait);
@@ -55,7 +53,7 @@ public class TestFilterB : TestFilter
 }
 public class TestFilter : IServiceFilter
 {
-    public Task Invoke(CallContext context, Func<ServerContext, Task> next)
+    public Task Invoke(CallContext context, Func<CallContext, Task> next)
     {
         throw new NotImplementedException();
     }

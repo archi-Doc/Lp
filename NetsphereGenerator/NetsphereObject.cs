@@ -204,7 +204,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             }
 
             this.ConfigureNetBase();
-            this.ServiceFilter = ServiceFilter.CreateFromObject(this);
+            this.ConfigureServiceFilters();
 
             this.Body.NetObjects.Add(this);
         }
@@ -235,6 +235,31 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             }
 
             return false;
+        }
+    }
+
+    public void ConfigureServiceFilters()
+    {
+        var classFilters = ServiceFilter.CreateFromObject(this);
+        classFilters?.CheckAndPrepare();
+
+        foreach (var x in this.GetMembers(VisceralTarget.Method))
+        {
+            var methodFilters = ServiceFilter.CreateFromObject(x);
+            if (methodFilters != null)
+            {
+
+            }
+
+            if (classFilters != null && methodFilters != null)
+            {
+                methodFilters = new ServiceFilter(classFilters, methodFilters);
+            }
+
+            if (methodFilters != null)
+            {
+
+            }
         }
     }
 
@@ -411,8 +436,6 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 }
             }
         }
-
-        this.ServiceFilter?.CheckAndPrepare();
     }
 
     internal void GenerateFrontend(ScopingStringBuilder ssb, GeneratorInformation info)

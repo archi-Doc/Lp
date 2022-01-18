@@ -25,19 +25,45 @@ public interface ICustomService : INetService
     public NetTask Test();
 }
 
-[NetServiceObject]
-public class CustomService : NetServiceBase<TestServerContext>, ICustomService
+[NetServiceInterface]
+public interface ICustomService2 : INetService
 {
+    public NetTask Test();
+}
+
+[NetServiceObject]
+[NetServiceFilter(typeof(CustomFilter))]
+public class CustomService : NetServiceBase<TestServerContext>, ICustomService, ICustomService2
+{
+    [NetServiceFilter(typeof(CustomFilter2))]
     public async NetTask Test()
+    {
+        var serverContext = TestCallContext.Current;
+    }
+
+    async NetTask ICustomService.Test()
+    {
+        var serverContext = TestCallContext.Current;
+    }
+
+    async NetTask ICustomService2.Test()
     {
         var serverContext = TestCallContext.Current;
     }
 }
 
-public class CustomFilter : IServiceFilter<TestCallContext>
+public class CustomFilter : IServiceFilter
 {
-    public Task Invoke(TestCallContext context, Func<TestCallContext, Task> next)
+    public async Task Invoke(CallContext context, Func<CallContext, Task> next)
     {
-        throw new NotImplementedException();
+        await next(context);
+    }
+}
+
+public class CustomFilter2 : IServiceFilter<TestCallContext>
+{
+    public async Task Invoke(TestCallContext context, Func<TestCallContext, Task> next)
+    {
+        await next(context);
     }
 }

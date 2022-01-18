@@ -77,6 +77,22 @@ public class ServiceFilter
         this.FilterList = filterList;
     }
 
+    public ServiceFilter(ServiceFilter service, ServiceFilter method)
+    {
+        this.Object = method.Object;
+
+        var list = new List<NetServiceFilterAttributeMock>(service.FilterList);
+        foreach (var x in method.FilterList)
+        {
+            if (!list.Contains(x))
+            {
+                list.Add(x);
+            }
+        }
+
+        this.FilterList = list;
+    }
+
     public class Item
     {
         public Item(NetsphereObject obj, NetsphereObject filterObject, string identifier)
@@ -109,7 +125,7 @@ public class ServiceFilter
             var filterObject = obj == null ? null : this.GetFilterObject(obj);
             if (obj == null || filterObject == null)
             {
-                this.Object.Body.ReportDiagnostic(NetsphereBody.Error_FilterTypeNotDerived, this.FilterList[i].Location);
+                this.Object.Body.AddDiagnostic(NetsphereBody.Error_FilterTypeNotDerived, this.FilterList[i].Location);
                 errorFlag = true;
                 continue;
             }
