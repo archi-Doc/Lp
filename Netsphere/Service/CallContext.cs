@@ -6,6 +6,34 @@ namespace Netsphere;
 
 #pragma warning disable SA1401 // Fields should be private
 
+public class LPServerContext : ServiceContext
+{
+}
+
+public class LPCallContext : CallContext<LPServerContext>
+{
+    public LPCallContext(LPServerContext serviceContext, ByteArrayPool.MemoryOwner rentData)
+        : base(serviceContext, rentData)
+    {
+    }
+}
+
+public class CallContext<TServerContext> : CallContext
+    where TServerContext : ServiceContext
+{
+    public static new CallContext<TServerContext> Current => CurrentCallContext.Value!;
+
+    public CallContext(TServerContext serviceContext, ByteArrayPool.MemoryOwner rentData)
+        : base(serviceContext, rentData)
+    {
+        this.ServiceContext = serviceContext;
+    }
+
+    public new TServerContext ServiceContext { get; }
+
+    internal static new AsyncLocal<CallContext<TServerContext>?> CurrentCallContext = new();
+}
+
 public class CallContext
 {
     public static CallContext Current => CurrentCallContext.Value!;

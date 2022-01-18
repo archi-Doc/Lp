@@ -6,13 +6,21 @@ public interface IServiceFilterBase
 {
 }
 
+public class TestFilter : IServiceFilter<LPCallContext>
+{
+    public ValueTask Invoke(LPCallContext context, Func<LPServerContext, ValueTask> next)
+    {
+        throw new NotImplementedException();
+    }
+}
+
 public interface IServiceFilter : IServiceFilterBase
 {
     public ValueTask Invoke(CallContext context, Func<ServiceContext, ValueTask> next);
 }
 
-public interface IServiceFilter<TServiceContext> : IServiceFilterBase
-    where TServiceContext : ServiceContext
+public interface IServiceFilter<TCallContext> : IServiceFilterBase
+    where TCallContext : CallContext
 {
-    public ValueTask Invoke(CallContext<TServiceContext> context, Func<TServiceContext, ValueTask> next);
+    public ValueTask Invoke(TCallContext context, Func<TCallContext, ValueTask> next);
 }
