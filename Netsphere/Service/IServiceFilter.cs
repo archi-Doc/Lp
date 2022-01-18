@@ -8,11 +8,11 @@ public interface IServiceFilterBase
 
 public interface IServiceFilter : IServiceFilterBase
 {
-    public ValueTask Invoke(CallContext context, Func<ServerContext, ValueTask> next);
+    public Task Invoke(CallContext context, Func<ServerContext, Task> next);
 }
 
 public interface IServiceFilter<TCallContext> : IServiceFilterBase
     where TCallContext : CallContext
 {
-    public ValueTask Invoke(TCallContext context, Func<TCallContext, ValueTask> next);
+    public Task Invoke(TCallContext context, Func<TCallContext, Task> next);
 }

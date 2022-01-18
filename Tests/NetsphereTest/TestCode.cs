@@ -36,7 +36,7 @@ public class CustomService : NetServiceBase<TestServerContext>, ICustomService
 
 public class CustomFilter : IServiceFilter<TestCallContext>
 {
-    public ValueTask Invoke(TestCallContext context, Func<TestCallContext, ValueTask> next)
+    public Task Invoke(TestCallContext context, Func<TestCallContext, Task> next)
     {
         throw new NotImplementedException();
     }

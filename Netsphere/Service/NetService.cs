@@ -7,7 +7,7 @@ namespace Netsphere;
 
 public class NetService
 {
-    public delegate ValueTask ServiceDelegate(object instance, CallContext context);
+    public delegate Task ServiceDelegate(object instance, CallContext context);
 
     public delegate INetService CreateFrontendDelegate(ClientTerminal clientTerminal);
 

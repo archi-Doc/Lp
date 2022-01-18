@@ -45,7 +45,7 @@ public class BenchmarkServiceImpl : NetServiceBase, IBenchmarkService
 
 public class TestFilterB : TestFilter
 {
-    public async ValueTask Invoke(ServerContext context, Func<ServerContext, ValueTask> next)
+    public async Task Invoke(ServerContext context, Func<ServerContext, Task> next)
     {
         await next(context);
     }
@@ -53,7 +53,7 @@ public class TestFilterB : TestFilter
 }
 public class TestFilter : IServiceFilter
 {
-    public ValueTask Invoke(CallContext context, Func<ServerContext, ValueTask> next)
+    public Task Invoke(CallContext context, Func<ServerContext, Task> next)
     {
         throw new NotImplementedException();
     }
@@ -61,7 +61,7 @@ public class TestFilter : IServiceFilter
 
 public class TestFilter2 : IServiceFilter<CallContext>
 {
-    public async ValueTask Invoke(CallContext context, Func<CallContext, ValueTask> next)
+    public async Task Invoke(CallContext context, Func<CallContext, Task> next)
     {
         await next(context);
     }
