@@ -2,10 +2,6 @@
 
 namespace NetsphereTest;
 
-public class CustomServiceContext : ServerContext
-{
-}
-
 [NetServiceInterface]
 public partial interface IBenchmarkService : INetService
 {
@@ -36,6 +32,11 @@ public class BenchmarkServiceImpl : NetServiceBase, IBenchmarkService
 
     public async NetTask Wait(int millisecondsToWait)
     {
+        if (CallContext.Current is not TestCallContext context)
+        {
+            throw new NetException(NetResult.SerializationError);
+        }
+
         Console.Write("Wait -> ");
         await Task.Delay(millisecondsToWait);
         Console.WriteLine($"{millisecondsToWait}");
