@@ -64,13 +64,17 @@ public class NetControl
         }
     }
 
-    public static void QuickStart(bool enableServer, string nodeName, NetsphereOptions options, bool allowUnsafeConnection)
+    /*public static void QuickStart(bool enableServer, string nodeName, NetsphereOptions options, bool allowUnsafeConnection)
+        => QuickStart<ServerContext>(enableServer, nodeName, options, allowUnsafeConnection, () => new CallContext());*/
+
+    public static void QuickStart(bool enableServer, Func<CallContext> newCallContext, Func<ServerContext> newServerContext, string nodeName, NetsphereOptions options, bool allowUnsafeConnection)
     {
         var netBase = containerInstance.Resolve<NetBase>();
         netBase.Initialize(enableServer, nodeName, options);
         netBase.AllowUnsafeConnection = allowUnsafeConnection;
 
         var netControl = containerInstance.Resolve<NetControl>();
+        netControl.SetupServer(newServerContext, newCallContext);
         Logger.Configure(null);
         Radio.Send(new Message.Configure());
         var message = new Message.Start(ThreadCore.Root);
@@ -84,6 +88,9 @@ public class NetControl
 
     public NetControl(NetBase netBase, BigMachine<Identifier> bigMachine, Terminal terminal, EssentialNode node, NetStatus netStatus)
     {
+        this.ServiceProvider = (IServiceProvider)containerInstance;
+        this.NewServerContext = () => new ServerContext();
+        this.NewCallContext = () => new CallContext();
         this.NetBase = netBase;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
 
@@ -93,7 +100,6 @@ public class NetControl
             this.Alternative = new(netBase, netStatus); // For debug
         }
 
-        this.SetServerTerminalDelegate(CreateServerTerminal);
         this.EssentialNode = node;
         this.NetStatus = netStatus;
 
@@ -117,16 +123,49 @@ public class NetControl
         this.BigMachine.TryCreate<LP.Machines.EssentialNetMachine.Interface>(Identifier.Zero);
     }
 
-    public void SetServerTerminalDelegate(Terminal.CreateServerTerminalDelegate @delegate)
+    public void SetupServer(Func<ServerContext>? newServerContext = null, Func<CallContext>? newCallContext = null)
     {
-        this.Terminal.SetServerTerminalDelegate(@delegate);
-        this.Alternative?.SetServerTerminalDelegate(@delegate);
+        if (newServerContext != null)
+        {
+            this.NewServerContext = newServerContext;
+        }
+
+        if (newCallContext != null)
+        {
+            this.NewCallContext = newCallContext;
+        }
+
+        this.Terminal.SetCreateServerDelegate(CreateServer);
+        this.Alternative?.SetCreateServerDelegate(CreateServer);
+
+        static void CreateServer(ServerTerminal terminal)
+        {
+            Task.Run(async () =>
+            {
+                var server = containerInstance.Resolve<Server>();
+                terminal.Terminal.MyStatus.IncrementServerCount();
+                try
+                {
+                    await server.Process(terminal).ConfigureAwait(false);
+                }
+                finally
+                {
+                    terminal.Dispose();
+                }
+            });
+        }
     }
 
     public bool AddResponder(INetResponder responder)
     {
         return this.Responders.TryAdd(responder.GetDataId(), responder);
     }
+
+    public IServiceProvider ServiceProvider { get; }
+
+    public Func<ServerContext> NewServerContext { get; private set; }
+
+    public Func<CallContext> NewCallContext { get; private set; }
 
     public NetBase NetBase { get; }
 
@@ -145,23 +184,6 @@ public class NetControl
     internal ConcurrentDictionary<ulong, INetResponder> Responders { get; } = new();
 
     private static Container containerInstance = default!;
-
-    private static void CreateServerTerminal(ServerTerminal terminal)
-    {
-        Task.Run(async () =>
-        {
-            var server = containerInstance.Resolve<Server>();
-            terminal.Terminal.MyStatus.IncrementServerCount();
-            try
-            {
-                await server.Process(terminal).ConfigureAwait(false);
-            }
-            finally
-            {
-                terminal.Dispose();
-            }
-        });
-    }
 
     private void Dump()
     {

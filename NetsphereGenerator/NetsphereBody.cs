@@ -25,6 +25,10 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
     public const string BackendClassName = "Backend_";
     public const string ArgumentName = "a";
     public const string NetResultFullName = "Netsphere.NetResult";
+    public const string NetServiceBaseFullName = "Netsphere.NetServiceBase";
+    public const string NetServiceBaseFullName2 = "Netsphere.NetServiceBase<TServerContext>";
+    public const string ServiceFilterFullName = "Netsphere.IServiceFilter";
+    public const string ServiceFilterFullName2 = "Netsphere.IServiceFilter<TServerContext>";
 
     public static readonly DiagnosticDescriptor Error_AttributePropertyError = new DiagnosticDescriptor(
         id: "NSG001", title: "Attribute property type error", messageFormat: "The argument specified does not match the type of the property",
@@ -65,6 +69,18 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
     public static readonly DiagnosticDescriptor Warning_NullableReferenceType = new DiagnosticDescriptor(
         id: "NSG010", title: "Nullable not annotated", messageFormat: "The return type should be nullable '{0}?' for the reference type",
         category: GeneratorName, DiagnosticSeverity.Warning, isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor Error_NoFilterType = new DiagnosticDescriptor(
+        id: "NSG011", title: "No FilterType", messageFormat: "Could not get the filtertype from the specified string",
+        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor Error_FilterTypeConflicted = new DiagnosticDescriptor(
+        id: "NSG012", title: "FilterType conflict", messageFormat: "Service filters of the same type has been detected",
+        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor Error_FilterTypeNotDerived = new DiagnosticDescriptor(
+        id: "NSG013", title: "FilterType not derived", messageFormat: "Service filter must implement 'IServiceFilter'",
+        category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
     public NetsphereBody(SourceProductionContext context)
         : base(context)

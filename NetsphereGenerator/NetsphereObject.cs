@@ -64,6 +64,10 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     public List<NetsphereObject>? ServiceInterfaces { get; private set; } // For NetServiceObjectAttribute; Net service interfaces implemented by this net service object.
 
+    public NetsphereObject? NetServiceBase { get; private set; } // For NetServiceObjectAttribute; Net service base implemented by this net service object.
+
+    public ServiceFilter? ServiceFilter { get; private set; } // For NetServiceObjectAttribute; Service filters.
+
     public Dictionary<uint, ServiceMethod>? ServiceMethods { get; private set; } // For NetServiceInterface; Methods included in this net service interface.
 
     public string ClassName { get; set; } = string.Empty;
@@ -199,6 +203,9 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 return;
             }
 
+            this.ConfigureNetBase();
+            this.ServiceFilter = ServiceFilter.CreateFromObject(this);
+
             this.Body.NetObjects.Add(this);
         }
 
@@ -228,6 +235,32 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             }
 
             return false;
+        }
+    }
+
+    public void ConfigureNetBase()
+    {
+        var baseObject = this.BaseObject;
+        while (baseObject != null)
+        {
+            if (baseObject.Generics_IsGeneric)
+            {// Generic
+                if (baseObject.OriginalDefinition?.FullName == NetsphereBody.NetServiceBaseFullName2)
+                {
+                    this.NetServiceBase = baseObject;
+                    return;
+                }
+            }
+            else
+            {// Not generic
+                if (baseObject.FullName == NetsphereBody.NetServiceBaseFullName)
+                {
+                    this.NetServiceBase = baseObject;
+                    return;
+                }
+            }
+
+            baseObject = baseObject.BaseObject;
         }
     }
 
@@ -378,71 +411,8 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 }
             }
         }
-    }
 
-    public static void GenerateLoader(ScopingStringBuilder ssb, GeneratorInformation info, NetsphereObject? parent, List<NetsphereObject> list)
-    {
-        if (parent?.Generics_Kind == VisceralGenericsKind.OpenGeneric)
-        {
-            return;
-        }
-
-        var classFormat = "__gen__bm__{0:D4}";
-        var list2 = list.SelectMany(x => x.ConstructedObjects).Where(x => x.NetServiceObjectAttribute != null).ToArray();
-
-        string? loaderIdentifier = null;
-        var list3 = list2.ToArray();
-        if (list3.Length > 0)
-        {
-            ssb.AppendLine();
-            if (parent == null)
-            {
-                loaderIdentifier = string.Format(classFormat, 0);
-            }
-            else
-            {
-                parent.LoaderNumber = info.FormatterCount++;
-                loaderIdentifier = string.Format(classFormat, parent.LoaderNumber);
-            }
-
-            ssb.AppendLine($"public class {loaderIdentifier}<TIdentifier> : IMachineLoader<TIdentifier>");
-            using (var scope = ssb.ScopeBrace($"    where TIdentifier : notnull"))
-            {
-                using (var scope2 = ssb.ScopeBrace("public void Load()"))
-                {
-                    foreach (var x in list3)
-                    {
-                        ssb.AppendLine($"{x.FullName}.RegisterBM({x.NetServiceInterfaceAttribute!.ServiceId});");
-                    }
-                }
-            }
-        }
-
-        using (var m = ssb.ScopeBrace("internal static void RegisterBM()"))
-        {
-            /*foreach (var x in list2)
-            {
-                if (x.ObjectAttribute == null)
-                {
-                    continue;
-                }
-
-                if (x.Generics_Kind != VisceralGenericsKind.OpenGeneric)
-                {// Register fixed types.
-                    ssb.AppendLine($"{x.FullName}.RegisterBM({x.ObjectAttribute.MachineTypeId});");
-                }
-            }
-
-            foreach (var x in list.Where(a => a.ObjectFlag.HasFlag(NetsphereObjectFlag.HasRegisterBM)))
-            {// Children
-                ssb.AppendLine($"{x.FullName}.RegisterBM();");
-            }*/
-
-            if (loaderIdentifier != null)
-            {// Loader
-                ssb.AppendLine($"MachineLoader.Add(typeof({loaderIdentifier}<>));");
-            }
-        }
+        this.ServiceFilter?.CheckAndPrepare();
     }
 
     internal void GenerateFrontend(ScopingStringBuilder ssb, GeneratorInformation info)
@@ -585,12 +555,15 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
             ssb.AppendLine();
             ssb.AppendLine($"private {this.FullName} impl;");
+
+            // Service filters
+            this.ServiceFilter?.GenerateDefinition(ssb);
         }
     }
 
     internal void GenerateBackend_Constructor(ScopingStringBuilder ssb, GeneratorInformation info)
     {
-        using (var scopeMethod = ssb.ScopeBrace($"public {this.ClassName}(IServiceProvider? serviceProvider)"))
+        using (var scopeMethod = ssb.ScopeBrace($"public {this.ClassName}(IServiceProvider? serviceProvider, ServiceContext context)"))
         {
             ssb.AppendLine($"var impl = serviceProvider?.GetService(typeof({this.FullName})) as {this.FullName};");
             using (var scopeIf = ssb.ScopeBrace($"if (impl == null)"))
@@ -606,6 +579,23 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             }
 
             ssb.AppendLine();
+
+            // Service filters
+            this.ServiceFilter?.GenerateInitialize(ssb, "context");
+
+            // Set ServiceContext
+            if (this.NetServiceBase != null)
+            {
+                if (this.NetServiceBase.Generics_IsGeneric)
+                {
+                    ssb.AppendLine($"(({this.NetServiceBase.FullName})impl).Context = ({this.NetServiceBase.Generics_Arguments[0].FullName})context;");
+                }
+                else
+                {
+                    ssb.AppendLine($"(({this.NetServiceBase.FullName})impl).Context = context;");
+                }
+            }
+
             ssb.AppendLine("this.impl = impl;");
         }
     }
@@ -627,25 +617,42 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     internal void GenerateBackend_Method(ScopingStringBuilder ssb, GeneratorInformation info, NetsphereObject serviceInterface, ServiceMethod method)
     {
-        using (var scopeMethod = ssb.ScopeBrace($"private static async NetTask<ByteArrayPool.MemoryOwner> {method.MethodString}(object obj, ByteArrayPool.MemoryOwner receive)"))
+        using (var scopeMethod = ssb.ScopeBrace($"private static async ValueTask {method.MethodString}(object obj, CallContext context)"))
         {
             if (method.ParameterType == ServiceMethod.Type.ByteArray)
             {
-                ssb.AppendLine("var value = receive.Memory.ToArray();");
+                ssb.AppendLine("var value = context.RentData.Memory.ToArray();");
             }
             else if (method.ParameterType == ServiceMethod.Type.MemoryOwner)
             {
-                ssb.AppendLine("var value = receive;");
+                ssb.AppendLine("var value = context.RentData;");
             }
             else
             {
-                using (var scopeDeserialize = ssb.ScopeBrace($"if (!LP.Block.BlockService.TryDeserialize<{method.GetParameterTypes()}>(receive, out var value))"))
+                using (var scopeDeserialize = ssb.ScopeBrace($"if (!LP.Block.BlockService.TryDeserialize<{method.GetParameterTypes()}>(context.RentData, out var value))"))
                 {
-                    ssb.AppendLine("return default;");
+                    ssb.AppendLine("context.Result = NetResult.DeserializationError;");
+                    ssb.AppendLine("return;");
                 }
             }
 
             ssb.AppendLine();
+
+            // Backend
+            ssb.AppendLine($"var backend = (({this.ClassName})obj).impl;");
+
+            // Set ServiceContext
+            /*if (this.NetServiceBase != null)
+            {
+                if (this.NetServiceBase.Generics_IsGeneric)
+                {
+                    ssb.AppendLine($"(({this.NetServiceBase.FullName})backend).Context = ({this.NetServiceBase.Generics_Arguments[0].FullName})context!;");
+                }
+                else
+                {
+                    ssb.AppendLine($"(({this.NetServiceBase.FullName})backend).Context = (ServiceContext)context!;");
+                }
+            }*/
 
             var prefix = string.Empty;
             if (method.ReturnObject != null)
@@ -653,25 +660,39 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 prefix = "var result = ";
             }
 
-            ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})(({this.ClassName})obj).impl).{method.SimpleName}({method.GetTupleNames("value")});");
+            // task
+            ssb.AppendLine($"var task = (({serviceInterface.FullName})backend).{method.SimpleName}({method.GetTupleNames("value")});");
+
+            if (this.ServiceFilter == null)
+            {
+            }
+
+            // ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})backend).{method.SimpleName}({method.GetTupleNames("value")});");
+            ssb.AppendLine($"{prefix}await task;");
             if (method.ReturnObject == null)
             {
                 ssb.AppendLine("var result = NetResult.Success;");
             }
 
+            ssb.AppendLine("context.RentData.Return();");
             if (method.ReturnType == ServiceMethod.Type.ByteArray)
-            {
-                ssb.AppendLine("return result != null ? new ByteArrayPool.MemoryOwner(result) : default;");
+            {// byte[] result;
+                ssb.AppendLine("context.RentData = result != null ? new ByteArrayPool.MemoryOwner(result) : default;");
             }
             else if (method.ReturnType == ServiceMethod.Type.MemoryOwner)
-            {
-                ssb.AppendLine("return result;");
+            {// new ByteArrayPool.MemoryOwner result;
+                ssb.AppendLine("context.RentData = result;");
             }
             else
             {
-                ssb.AppendLine("LP.Block.BlockService.TrySerialize(result, out var send);");
-                ssb.AppendLine("return send;");
+                using (var scopeSerialize = ssb.ScopeBrace($"if (!LP.Block.BlockService.TrySerialize(result, out context.RentData))"))
+                {
+                    ssb.AppendLine("context.Result = NetResult.SerializationError;");
+                    ssb.AppendLine("return;");
+                }
             }
+
+            ssb.AppendLine("context.Result = NetResult.Success;");
         }
     }
 
@@ -680,7 +701,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         var serviceIdString = serviceInterface.NetServiceInterfaceAttribute!.ServiceId.ToString("x");
         using (var scopeMethod = ssb.ScopeBrace($"public static NetService.ServiceInfo ServiceInfo_{serviceIdString}()"))
         {
-            ssb.AppendLine($"var si = new NetService.ServiceInfo(0x{serviceIdString}u, static x => new {this.ClassName}(x));");
+            ssb.AppendLine($"var si = new NetService.ServiceInfo(0x{serviceIdString}u, static (x, y) => new {this.ClassName}(x, y));");
             if (serviceInterface.ServiceMethods != null)
             {
                 foreach (var x in serviceInterface.ServiceMethods.Values)

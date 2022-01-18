@@ -7,18 +7,19 @@ namespace Netsphere;
 
 public class NetService
 {
-    public delegate NetTask<ByteArrayPool.MemoryOwner> ServiceDelegate(object instance, ByteArrayPool.MemoryOwner received);
+
+    public delegate ValueTask ServiceDelegate(object instance, CallContext context);
 
     public delegate INetService CreateFrontendDelegate(ClientTerminal clientTerminal);
 
-    public delegate object CreateServerDelegate(IServiceProvider? serviceProvider);
+    public delegate object CreateBackendDelegate(IServiceProvider? serviceProvider, ServerContext serviceContext);
 
     public class ServiceInfo
     {
-        public ServiceInfo(uint serviceId, CreateServerDelegate createServer)
+        public ServiceInfo(uint serviceId, CreateBackendDelegate createBackend)
         {
             this.ServiceId = serviceId;
-            this.CreateServer = createServer;
+            this.CreateBackend = createBackend;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -29,7 +30,7 @@ public class NetService
 
         public uint ServiceId { get; }
 
-        public CreateServerDelegate CreateServer { get; }
+        public CreateBackendDelegate CreateBackend { get; }
 
         private Dictionary<ulong, ServiceMethod> serviceMethods = new();
     }
@@ -39,20 +40,25 @@ public class NetService
         public ServiceMethod(ulong id, ServiceDelegate process)
         {
             this.Id = id;
-            this.Process = process;
+            this.Invoke = process;
         }
 
         public ulong Id { get; }
 
         public object? ServerInstance { get; private set; }
 
-        public ServiceDelegate Process { get; }
+        public ServiceDelegate Invoke { get; }
 
         public ServiceMethod CloneWithInstance(object serverInstance)
         {
-            var serviceMethod = new ServiceMethod(this.Id, this.Process);
+            var serviceMethod = new ServiceMethod(this.Id, this.Invoke);
             serviceMethod.ServerInstance = serverInstance;
             return serviceMethod;
+        }
+
+        public NetTask<ByteArrayPool.MemoryOwner> FilterAndProcess(object instance, ByteArrayPool.MemoryOwner received)
+        {
+            return default;
         }
     }
 
@@ -78,21 +84,23 @@ public class NetService
                 goto SendEmpty;
             }
 
-            // Get ServiceInstance.
-            if (!this.idToInstance.TryGetValue(serviceId, out var serverInstance))
+            // Get Backend instance.
+            if (!this.idToInstance.TryGetValue(serviceId, out var backendInstance))
             {
-                serverInstance = serviceInfo.CreateServer(this.serviceProvider);
-                this.idToInstance.TryAdd(serviceId, serverInstance);
+                backendInstance = serviceInfo.CreateBackend(this.serviceProvider, this.ServiceContext);
+                this.idToInstance.TryAdd(serviceId, backendInstance);
             }
 
-            serviceMethod = serviceMethod.CloneWithInstance(serverInstance);
+            serviceMethod = serviceMethod.CloneWithInstance(backendInstance);
         }
 
-        ByteArrayPool.MemoryOwner sendOwner = default;
+        var context = this.NewCallContext();
+        context.Initialize(this.ServiceContext, received.Received.IncrementAndShare());
+        CallContext.CurrentCallContext.Value = context;
         try
         {
-            sendOwner = await serviceMethod.Process(serviceMethod.ServerInstance!, received.Received);
-            await serverTerminal.SendServiceAsync(serviceMethod.Id, sendOwner).ConfigureAwait(false);
+            await serviceMethod.Invoke(serviceMethod.ServerInstance!, context);
+            await serverTerminal.SendServiceAsync(serviceMethod.Id, context.RentData).ConfigureAwait(false);
         }
         catch
         {
@@ -100,7 +108,7 @@ public class NetService
         }
         finally
         {
-            sendOwner.Return();
+            context.RentData.Return();
         }
 
         return;
@@ -108,6 +116,10 @@ public class NetService
 SendEmpty:
         await serverTerminal.SendServiceAsync(received.DataId, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
     }
+
+    public ServerContext ServiceContext { get; internal set; } = default!;
+
+    public Func<CallContext> NewCallContext { get; internal set; } = default!;
 
     private IServiceProvider? serviceProvider;
     private Dictionary<ulong, ServiceMethod> idToServiceMethod = new();

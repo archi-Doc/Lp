@@ -33,6 +33,7 @@ public class Program
             Container.Register(x, Reuse.Singleton);
         }
 
+        // Services
         Container.Register<ExternalServiceImpl>(Reuse.Singleton);
 
         Container.ValidateAndThrow();
@@ -59,7 +60,8 @@ public class Program
         var options = new LP.Options.NetsphereOptions();
         options.EnableAlternative = true;
         options.EnableTestFeatures = true;
-        NetControl.QuickStart(true, "test", options, true);
+        // NetControl.QuickStart(true, "test", options, true);
+        NetControl.QuickStart(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);
 
         // Logger
         /*var logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "logs");

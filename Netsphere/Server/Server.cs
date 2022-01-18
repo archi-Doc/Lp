@@ -11,6 +11,11 @@ public class Server
         this.NetBase = netBase;
         this.NetControl = netControl;
         this.NetService = netService;
+
+        this.ServiceContext = this.NetControl.NewServerContext();
+        this.ServiceContext.ServiceProvider = this.NetControl.ServiceProvider;
+        this.NetService.ServiceContext = this.ServiceContext;
+        this.NetService.NewCallContext = this.NetControl.NewCallContext;
     }
 
     public async Task Process(ServerTerminal terminal)
@@ -18,9 +23,10 @@ public class Server
         this.NetTerminal = terminal;
         while (!this.NetTerminal.IsClosed)
         {
+            NetReceivedData received = default;
             try
             {
-                var received = await terminal.ReceiveAsync().ConfigureAwait(false);
+                received = await terminal.ReceiveAsync().ConfigureAwait(false);
                 if (received.Result == NetResult.Success)
                 {// Success
                     if (received.PacketId == PacketId.Data &&
@@ -31,7 +37,7 @@ public class Server
                     }
                     else if (received.PacketId == PacketId.Rpc)
                     {// RPC
-                        await this.NetService.Process(terminal, received).ConfigureAwait(false);
+                        var task = this.NetService.Process(terminal, received); // .ConfigureAwait(false);
                         continue;
                     }
 
@@ -56,6 +62,7 @@ public class Server
             }
             finally
             {
+                received.Return();
                 terminal.ClearSender();
             }
         }
@@ -72,6 +79,8 @@ public class Server
     public NetService NetService { get; }
 
     public ServerTerminal NetTerminal { get; private set; } = default!;
+
+    public ServerContext ServiceContext { get; }
 
     private bool ProcessEssential(NetReceivedData received)
     {

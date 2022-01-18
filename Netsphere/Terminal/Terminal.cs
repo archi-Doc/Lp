@@ -14,7 +14,7 @@ namespace Netsphere;
 
 public class Terminal
 {
-    public delegate void CreateServerTerminalDelegate(ServerTerminal terminal);
+    public delegate void CreateServerDelegate(ServerTerminal terminal);
 
     internal struct RawSend
     {
@@ -131,9 +131,9 @@ public class Terminal
         this.Core = null;
     }
 
-    public void SetServerTerminalDelegate(CreateServerTerminalDelegate @delegate)
+    public void SetCreateServerDelegate(CreateServerDelegate @delegate)
     {
-        this.createServerTerminalDelegate = @delegate;
+        this.createServerDelegate = @delegate;
     }
 
     public void SetLogger(ISimpleLogger logger)
@@ -304,9 +304,9 @@ public class Terminal
             terminal.GenePool.GetSequential();
             terminal.CreateEmbryo(packet.Salt);
             terminal.SetReceiverNumber();
-            if (this.createServerTerminalDelegate != null)
+            if (this.createServerDelegate != null)
             {
-                this.createServerTerminalDelegate(terminal);
+                this.createServerDelegate(terminal);
             }
         }
     }
@@ -419,7 +419,7 @@ public class Terminal
 
     internal ECDiffieHellman NodePrivateECDH { get; private set; } = default!;
 
-    private CreateServerTerminalDelegate? createServerTerminalDelegate;
+    private CreateServerDelegate? createServerDelegate;
     private NetSocket netSocket;
     private NetTerminal.GoshujinClass terminals = new();
     private ConcurrentDictionary<ulong, NetTerminalGene> inboundGenes = new();
