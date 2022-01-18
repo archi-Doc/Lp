@@ -483,7 +483,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 ssb.AppendLine("owner.Return();");
                 using (var scopeNoNetService = ssb.ScopeBrace("if (response.Result == NetResult.Success && response.Value.IsEmpty)"))
                 {
-                    AppendReturn("NetResult.NoNetService");
+                    AppendReturn("(NetResult)response.DataId");
                 }
 
                 using (var scopeNotSuccess = ssb.ScopeBrace("else if (response.Result != NetResult.Success)"))

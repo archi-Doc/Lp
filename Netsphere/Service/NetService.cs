@@ -74,13 +74,13 @@ public class NetService
             var serviceId = (uint)(received.DataId >> 32);
             if (!StaticNetService.TryGetServiceInfo(serviceId, out var serviceInfo))
             {
-                goto SendEmpty;
+                goto SendNoNetService;
             }
 
             // Get ServiceMethod.
             if (!serviceInfo.TryGetMethod(received.DataId, out serviceMethod))
             {
-                goto SendEmpty;
+                goto SendNoNetService;
             }
 
             // Get Backend instance.
@@ -99,11 +99,23 @@ public class NetService
         try
         {
             await serviceMethod.Invoke(serviceMethod.ServerInstance!, context);
-            await serverTerminal.SendServiceAsync(serviceMethod.Id, context.RentData).ConfigureAwait(false);
+            try
+            {
+                await serverTerminal.SendServiceAsync(serviceMethod.Id, context.RentData).ConfigureAwait(false);
+            }
+            catch
+            {
+            }
         }
         catch
         {
-            await serverTerminal.SendServiceAsync(serviceMethod.Id, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
+            var dataId = serviceMethod.Id;
+            if (context.Result != NetResult.Success)
+            {
+                dataId = (ulong)context.Result;
+            }
+
+            await serverTerminal.SendServiceAsync(dataId, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
         }
         finally
         {
@@ -112,8 +124,8 @@ public class NetService
 
         return;
 
-SendEmpty:
-        await serverTerminal.SendServiceAsync(received.DataId, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
+SendNoNetService:
+        await serverTerminal.SendServiceAsync((ulong)NetResult.NoNetService, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
     }
 
     public ServerContext ServerContext { get; internal set; } = default!;

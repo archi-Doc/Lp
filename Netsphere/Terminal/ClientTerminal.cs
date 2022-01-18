@@ -126,21 +126,21 @@ public class ClientTerminal : NetTerminal
         }
     }
 
-    public async Task<(NetResult Result, ByteArrayPool.MemoryOwner Value)> SendAndReceiveDataAsync(ulong dataId, byte[] data)
+    public async Task<(NetResult Result, ulong DataId, ByteArrayPool.MemoryOwner Value)> SendAndReceiveDataAsync(ulong dataId, byte[] data)
     {// Checked
         using (var operation = this.CreateOperation())
         {
             var response = await operation.SendAndReceiveDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data)).ConfigureAwait(false);
-            return (response.Result, response.Received);
+            return (response.Result, response.DataId, response.Received);
         }
     }
 
-    public async Task<(NetResult Result, ByteArrayPool.MemoryOwner Value)> SendAndReceiveServiceAsync(ulong dataId, ByteArrayPool.MemoryOwner data)
+    public async Task<(NetResult Result, ulong DataId, ByteArrayPool.MemoryOwner Value)> SendAndReceiveServiceAsync(ulong dataId, ByteArrayPool.MemoryOwner data)
     {// Checked
         using (var operation = this.CreateOperation())
         {
             var response = await operation.SendAndReceiveDataAsync(true, PacketId.Rpc, dataId, data).ConfigureAwait(false);
-            return (response.Result, response.Received);
+            return (response.Result, response.DataId, response.Received);
         }
     }
 
