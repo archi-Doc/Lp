@@ -4,6 +4,6 @@ using Netsphere;
 
 namespace LP.Services;
 
-public class LPServiceContext : ServiceContext
+public class LPServiceContext : ServerContext
 {
 }

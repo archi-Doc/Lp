@@ -7,18 +7,19 @@ namespace Netsphere;
 
 public class NetService
 {
+
     public delegate ValueTask ServiceDelegate(object instance, CallContext context);
 
     public delegate INetService CreateFrontendDelegate(ClientTerminal clientTerminal);
 
-    public delegate object CreateServerDelegate(IServiceProvider? serviceProvider, ServiceContext serviceContext);
+    public delegate object CreateBackendDelegate(IServiceProvider? serviceProvider, ServerContext serviceContext);
 
     public class ServiceInfo
     {
-        public ServiceInfo(uint serviceId, CreateServerDelegate createServer)
+        public ServiceInfo(uint serviceId, CreateBackendDelegate createBackend)
         {
             this.ServiceId = serviceId;
-            this.CreateServer = createServer;
+            this.CreateBackend = createBackend;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -29,7 +30,7 @@ public class NetService
 
         public uint ServiceId { get; }
 
-        public CreateServerDelegate CreateServer { get; }
+        public CreateBackendDelegate CreateBackend { get; }
 
         private Dictionary<ulong, ServiceMethod> serviceMethods = new();
     }
@@ -83,17 +84,18 @@ public class NetService
                 goto SendEmpty;
             }
 
-            // Get ServiceInstance.
-            if (!this.idToInstance.TryGetValue(serviceId, out var serverInstance))
+            // Get Backend instance.
+            if (!this.idToInstance.TryGetValue(serviceId, out var backendInstance))
             {
-                serverInstance = serviceInfo.CreateServer(this.serviceProvider, this.ServiceContext);
-                this.idToInstance.TryAdd(serviceId, serverInstance);
+                backendInstance = serviceInfo.CreateBackend(this.serviceProvider, this.ServiceContext);
+                this.idToInstance.TryAdd(serviceId, backendInstance);
             }
 
-            serviceMethod = serviceMethod.CloneWithInstance(serverInstance);
+            serviceMethod = serviceMethod.CloneWithInstance(backendInstance);
         }
 
-        var context = new CallContext(this.ServiceContext, received.Received.IncrementAndShare());
+        var context = this.NewCallContext();
+        context.Initialize(this.ServiceContext, received.Received.IncrementAndShare());
         CallContext.CurrentCallContext.Value = context;
         try
         {
@@ -115,7 +117,9 @@ SendEmpty:
         await serverTerminal.SendServiceAsync(received.DataId, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
     }
 
-    public ServiceContext ServiceContext { get; internal set; } = default!;
+    public ServerContext ServiceContext { get; internal set; } = default!;
+
+    public Func<CallContext> NewCallContext { get; internal set; } = default!;
 
     private IServiceProvider? serviceProvider;
     private Dictionary<ulong, ServiceMethod> idToServiceMethod = new();

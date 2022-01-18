@@ -81,7 +81,7 @@ public class Control
         this.LPBase = information;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.NetControl = netsphere;
-        this.NetControl.SetServiceContext<LP.Services.LPServiceContext>();
+        this.NetControl.SetupServer();
 
         this.Core = new(ThreadCore.Root);
         this.BigMachine.Core.ChangeParent(this.Core);

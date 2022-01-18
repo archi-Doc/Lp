@@ -4,11 +4,11 @@ namespace Netsphere;
 
 public class NetServiceBase
 {
-    public ServiceContext Context { get; set; } = default!;
+    public ServerContext Context { get; set; } = default!;
 }
 
-public class NetServiceBase<TServiceContext>
-    where TServiceContext : ServiceContext, new()
+public class NetServiceBase<TServerContext>
+    where TServerContext : ServerContext, new()
 {
-    public TServiceContext Context { get; set; } = default!;
+    public TServerContext Context { get; set; } = default!;
 }

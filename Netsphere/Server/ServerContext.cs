@@ -4,9 +4,9 @@ using System.Collections.Concurrent;
 
 namespace Netsphere;
 
-public class ServiceContext
+public class ServerContext
 {
-    public ServiceContext()
+    public ServerContext()
     {
     }
 

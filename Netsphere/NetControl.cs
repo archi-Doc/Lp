@@ -29,10 +29,6 @@ public class NetControl
     public const int MaxPort = 60999;
 
     public static void Register(Container container, List<Type> commandList)
-        => Register<ServiceContext>(container, commandList);
-
-    public static void Register<TServiceContext>(Container container, List<Type> commandList)
-        where TServiceContext : ServiceContext, new()
     {
         // Container instance
         containerInstance = container;
@@ -49,7 +45,7 @@ public class NetControl
         container.Register<Terminal>(Reuse.Singleton);
         container.Register<EssentialNode>(Reuse.Singleton);
         container.Register<NetStatus>(Reuse.Singleton);
-        container.Register<Server<TServiceContext>>(Reuse.Transient);
+        container.Register<Server>(Reuse.Transient);
         container.RegisterDelegate(x => new NetService(container), Reuse.Transient);
 
         // Machines
@@ -68,18 +64,17 @@ public class NetControl
         }
     }
 
-    public static void QuickStart(bool enableServer, string nodeName, NetsphereOptions options, bool allowUnsafeConnection)
-        => QuickStart<ServiceContext>(enableServer, nodeName, options, allowUnsafeConnection);
+    /*public static void QuickStart(bool enableServer, string nodeName, NetsphereOptions options, bool allowUnsafeConnection)
+        => QuickStart<ServerContext>(enableServer, nodeName, options, allowUnsafeConnection, () => new CallContext());*/
 
-    public static void QuickStart<TServiceContext>(bool enableServer, string nodeName, NetsphereOptions options, bool allowUnsafeConnection)
-        where TServiceContext : ServiceContext, new()
+    public static void QuickStart(bool enableServer, Func<CallContext> newCallContext, Func<ServerContext> newServerContext, string nodeName, NetsphereOptions options, bool allowUnsafeConnection)
     {
         var netBase = containerInstance.Resolve<NetBase>();
         netBase.Initialize(enableServer, nodeName, options);
         netBase.AllowUnsafeConnection = allowUnsafeConnection;
 
         var netControl = containerInstance.Resolve<NetControl>();
-        netControl.SetServiceContext<TServiceContext>();
+        netControl.SetupServer(newServerContext, newCallContext);
         Logger.Configure(null);
         Radio.Send(new Message.Configure());
         var message = new Message.Start(ThreadCore.Root);
@@ -94,6 +89,8 @@ public class NetControl
     public NetControl(NetBase netBase, BigMachine<Identifier> bigMachine, Terminal terminal, EssentialNode node, NetStatus netStatus)
     {
         this.ServiceProvider = (IServiceProvider)containerInstance;
+        this.NewServerContext = () => new ServerContext();
+        this.NewCallContext = () => new CallContext();
         this.NetBase = netBase;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
 
@@ -126,9 +123,18 @@ public class NetControl
         this.BigMachine.TryCreate<LP.Machines.EssentialNetMachine.Interface>(Identifier.Zero);
     }
 
-    public void SetServiceContext<TServiceContext>()
-        where TServiceContext : ServiceContext, new()
+    public void SetupServer(Func<ServerContext>? newServerContext = null, Func<CallContext>? newCallContext = null)
     {
+        if (newServerContext != null)
+        {
+            this.NewServerContext = newServerContext;
+        }
+
+        if (newCallContext != null)
+        {
+            this.NewCallContext = newCallContext;
+        }
+
         this.Terminal.SetCreateServerDelegate(CreateServer);
         this.Alternative?.SetCreateServerDelegate(CreateServer);
 
@@ -136,7 +142,7 @@ public class NetControl
         {
             Task.Run(async () =>
             {
-                var server = containerInstance.Resolve<Server<TServiceContext>>();
+                var server = containerInstance.Resolve<Server>();
                 terminal.Terminal.MyStatus.IncrementServerCount();
                 try
                 {
@@ -156,6 +162,10 @@ public class NetControl
     }
 
     public IServiceProvider ServiceProvider { get; }
+
+    public Func<ServerContext> NewServerContext { get; private set; }
+
+    public Func<CallContext> NewCallContext { get; private set; }
 
     public NetBase NetBase { get; }
 

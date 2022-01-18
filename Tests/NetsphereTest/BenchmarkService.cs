@@ -2,7 +2,7 @@
 
 namespace NetsphereTest;
 
-public class CustomServiceContext : ServiceContext
+public class CustomServiceContext : ServerContext
 {
 }
 
@@ -44,7 +44,7 @@ public class BenchmarkServiceImpl : NetServiceBase, IBenchmarkService
 
 public class TestFilterB : TestFilter
 {
-    public new async ValueTask Invoke(ServiceContext context, Func<ServiceContext, ValueTask> next)
+    public new async ValueTask Invoke(ServerContext context, Func<ServerContext, ValueTask> next)
     {
         await next(context);
     }
@@ -52,7 +52,7 @@ public class TestFilterB : TestFilter
 }
 public class TestFilter : IServiceFilter
 {
-    public async ValueTask Invoke(ServiceContext context, Func<ServiceContext, ValueTask> next)
+    public async ValueTask Invoke(ServerContext context, Func<ServerContext, ValueTask> next)
     {
         await next(context);
     }

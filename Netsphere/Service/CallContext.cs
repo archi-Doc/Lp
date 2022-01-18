@@ -6,45 +6,25 @@ namespace Netsphere;
 
 #pragma warning disable SA1401 // Fields should be private
 
-public class LPServerContext : ServiceContext
-{
-}
-
-public class LPCallContext : CallContext<LPServerContext>
-{
-    public LPCallContext(LPServerContext serviceContext, ByteArrayPool.MemoryOwner rentData)
-        : base(serviceContext, rentData)
-    {
-    }
-}
-
 public class CallContext<TServerContext> : CallContext
-    where TServerContext : ServiceContext
+    where TServerContext : ServerContext
 {
-    public static new CallContext<TServerContext> Current => CurrentCallContext.Value!;
-
-    public CallContext(TServerContext serviceContext, ByteArrayPool.MemoryOwner rentData)
-        : base(serviceContext, rentData)
+    public CallContext()
     {
-        this.ServiceContext = serviceContext;
     }
 
-    public new TServerContext ServiceContext { get; }
-
-    internal static new AsyncLocal<CallContext<TServerContext>?> CurrentCallContext = new();
+    public new TServerContext ServiceContext => (TServerContext)base.ServiceContext;
 }
 
 public class CallContext
 {
     public static CallContext Current => CurrentCallContext.Value!;
 
-    public CallContext(ServiceContext serviceContext, ByteArrayPool.MemoryOwner rentData)
+    public CallContext()
     {
-        this.ServiceContext = serviceContext;
-        this.RentData = rentData;
     }
 
-    public ServiceContext ServiceContext { get; }
+    public ServerContext ServiceContext { get; private set; } = default!;
 
     public ByteArrayPool.MemoryOwner RentData;
 
@@ -61,6 +41,12 @@ public class CallContext
 
             return this.items;
         }
+    }
+
+    internal void Initialize(ServerContext serviceContext, ByteArrayPool.MemoryOwner rentData)
+    {
+        this.ServiceContext = serviceContext;
+        this.RentData = rentData;
     }
 
     internal static AsyncLocal<CallContext?> CurrentCallContext = new();

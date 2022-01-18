@@ -4,8 +4,7 @@ using Netsphere;
 
 namespace Netsphere;
 
-public class Server<TServiceContext>
-    where TServiceContext : ServiceContext, new()
+public class Server
 {
     public Server(NetBase netBase, NetControl netControl, NetService netService)
     {
@@ -13,8 +12,10 @@ public class Server<TServiceContext>
         this.NetControl = netControl;
         this.NetService = netService;
 
+        this.ServiceContext = this.NetControl.NewServerContext();
         this.ServiceContext.ServiceProvider = this.NetControl.ServiceProvider;
         this.NetService.ServiceContext = this.ServiceContext;
+        this.NetService.NewCallContext = this.NetControl.NewCallContext;
     }
 
     public async Task Process(ServerTerminal terminal)
@@ -79,7 +80,7 @@ public class Server<TServiceContext>
 
     public ServerTerminal NetTerminal { get; private set; } = default!;
 
-    public TServiceContext ServiceContext { get; } = new();
+    public ServerContext ServiceContext { get; }
 
     private bool ProcessEssential(NetReceivedData received)
     {
