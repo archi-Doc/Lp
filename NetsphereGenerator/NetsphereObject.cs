@@ -701,17 +701,17 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
             using (var scopeCore = ssb.ScopeBrace("static async Task Core(object obj, CallContext context)"))
             {
-                using (var scopeTry = ssb.ScopeBrace("try"))
+                // using (var scopeTry = ssb.ScopeBrace("try"))
                 {
                     this.GenerateBackend_MethodCore(ssb, info, serviceInterface, method);
                 }
 
-                using (var scopeCatch = ssb.ScopeBrace("catch (NetException ne)"))
+                /*using (var scopeCatch = ssb.ScopeBrace("catch (NetException ne)"))
                 {
                     ssb.AppendLine("context.RentData.Return();");
                     ssb.AppendLine("context.RentData = ByteArrayPool.MemoryOwner.Empty;");
                     ssb.AppendLine("context.Result = ne.Result;");
-                }
+                }*/
             }
         }
     }

@@ -32,6 +32,7 @@ public enum NetResult
     ReserveError,
     NoNetService,
     NoCallContext,
+    UnknownException,
 }
 
 /// <summary>

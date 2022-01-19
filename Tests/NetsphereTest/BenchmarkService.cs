@@ -51,12 +51,15 @@ public class TestFilterB : TestFilter
         await next(context);
     }
 
+    public TestFilterB(NetControl aa)
+    {
+    }
 }
 public class TestFilter : IServiceFilter
 {
-    public Task Invoke(CallContext context, Func<CallContext, Task> next)
+    public async Task Invoke(CallContext context, Func<CallContext, Task> invoker)
     {
-        throw new NotImplementedException();
+        await invoker(context);
     }
 }
 
