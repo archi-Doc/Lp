@@ -2,10 +2,6 @@
 
 namespace NetsphereTest;
 
-public class CustomServiceContext : ServerContext
-{
-}
-
 [NetServiceInterface]
 public partial interface IBenchmarkService : INetService
 {
@@ -34,37 +30,53 @@ public class BenchmarkServiceImpl : NetServiceBase, IBenchmarkService
     {
     }
 
+    // [NetServiceFilter(typeof(NullFilter))]
     public async NetTask Wait(int millisecondsToWait)
     {
+        if (CallContext.Current is not TestCallContext context)
+        {
+            throw new NetException(NetResult.NoCallContext);
+        }
+
         Console.Write("Wait -> ");
         await Task.Delay(millisecondsToWait);
         Console.WriteLine($"{millisecondsToWait}");
+
+        context.Result = NetResult.NoEncryptedConnection;
     }
 }
 
 public class TestFilterB : TestFilter
 {
-    public new async ValueTask Invoke(ServerContext context, Func<ServerContext, ValueTask> next)
+    public async Task Invoke(ServerContext context, Func<ServerContext, Task> next)
     {
         await next(context);
     }
 
+    public TestFilterB(NetControl aa)
+    {
+    }
 }
+
 public class TestFilter : IServiceFilter
 {
-    public async ValueTask Invoke(ServerContext context, Func<ServerContext, ValueTask> next)
+    public async Task Invoke(CallContext context, Func<CallContext, Task> invoker)
     {
-        await next(context);
-    }
-
-    public async ValueTask Invoke(CallContext callContext)
-    {
+        await invoker(context);
     }
 }
 
-public class TestFilter2 : IServiceFilter<CustomServiceContext>
+public class NullFilter : IServiceFilter
 {
-    public async ValueTask Invoke(CustomServiceContext context, Func<CustomServiceContext, ValueTask> next)
+    public async Task Invoke(CallContext context, Func<CallContext, Task> next)
+    {
+        context.Result = NetResult.NoNetService;
+    }
+}
+
+public class TestFilter2 : IServiceFilter<CallContext>
+{
+    public async Task Invoke(CallContext context, Func<CallContext, Task> next)
     {
         await next(context);
     }

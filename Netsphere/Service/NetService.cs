@@ -7,8 +7,7 @@ namespace Netsphere;
 
 public class NetService
 {
-
-    public delegate ValueTask ServiceDelegate(object instance, CallContext context);
+    public delegate Task ServiceDelegate(object instance, CallContext context);
 
     public delegate INetService CreateFrontendDelegate(ClientTerminal clientTerminal);
 
@@ -67,60 +66,94 @@ public class NetService
         this.serviceProvider = serviceProvider;
     }
 
-    public async Task Process(ServerTerminal serverTerminal, NetReceivedData received)
-    {
-        if (!this.idToServiceMethod.TryGetValue(received.DataId, out var serviceMethod))
+    public async Task Process(ServerTerminal serverTerminal, NetReceivedData rent)
+    {// Thread-safe
+        ServiceMethod? serviceMethod;
+        lock (this.syncObject)
         {
-            // Get ServiceInfo.
-            var serviceId = (uint)(received.DataId >> 32);
-            if (!StaticNetService.TryGetServiceInfo(serviceId, out var serviceInfo))
+            if (!this.idToServiceMethod.TryGetValue(rent.DataId, out serviceMethod))
             {
-                goto SendEmpty;
-            }
+                // Get ServiceInfo.
+                var serviceId = (uint)(rent.DataId >> 32);
+                if (!StaticNetService.TryGetServiceInfo(serviceId, out var serviceInfo))
+                {
+                    goto SendNoNetService;
+                }
 
-            // Get ServiceMethod.
-            if (!serviceInfo.TryGetMethod(received.DataId, out serviceMethod))
-            {
-                goto SendEmpty;
-            }
+                // Get ServiceMethod.
+                if (!serviceInfo.TryGetMethod(rent.DataId, out serviceMethod))
+                {
+                    goto SendNoNetService;
+                }
 
-            // Get Backend instance.
-            if (!this.idToInstance.TryGetValue(serviceId, out var backendInstance))
-            {
-                backendInstance = serviceInfo.CreateBackend(this.serviceProvider, this.ServiceContext);
-                this.idToInstance.TryAdd(serviceId, backendInstance);
-            }
+                // Get Backend instance.
+                if (!this.idToInstance.TryGetValue(serviceId, out var backendInstance))
+                {
+                    try
+                    {
+                        backendInstance = serviceInfo.CreateBackend(this.serviceProvider, this.ServerContext);
+                    }
+                    catch
+                    {
+                        goto SendNoNetService;
+                    }
 
-            serviceMethod = serviceMethod.CloneWithInstance(backendInstance);
+                    this.idToInstance.TryAdd(serviceId, backendInstance);
+                }
+
+                serviceMethod = serviceMethod.CloneWithInstance(backendInstance);
+                this.idToServiceMethod.TryAdd(rent.DataId, serviceMethod);
+            }
         }
 
         var context = this.NewCallContext();
-        context.Initialize(this.ServiceContext, received.Received.IncrementAndShare());
+        context.Initialize(this.ServerContext, rent.Received.IncrementAndShare());
         CallContext.CurrentCallContext.Value = context;
         try
         {
             await serviceMethod.Invoke(serviceMethod.ServerInstance!, context);
-            await serverTerminal.SendServiceAsync(serviceMethod.Id, context.RentData).ConfigureAwait(false);
+            try
+            {
+                if (context.Result == NetResult.Success)
+                {// Success
+                    await serverTerminal.SendServiceAsync((ulong)context.Result, context.RentData).ConfigureAwait(false);
+                }
+                else
+                {// Failure
+                    await serverTerminal.SendServiceAsync((ulong)context.Result, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
+                }
+            }
+            catch
+            {
+            }
+        }
+        catch (NetException ne)
+        {// NetException
+            await serverTerminal.SendServiceAsync((ulong)ne.Result, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
         }
         catch
-        {
-            await serverTerminal.SendServiceAsync(serviceMethod.Id, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
+        {// Unknown exception
+            await serverTerminal.SendServiceAsync((ulong)NetResult.UnknownException, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
         }
         finally
         {
             context.RentData.Return();
         }
 
+        rent.Return();
         return;
 
-SendEmpty:
-        await serverTerminal.SendServiceAsync(received.DataId, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
+SendNoNetService:
+        await serverTerminal.SendServiceAsync((ulong)NetResult.NoNetService, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
+        rent.Return();
+        return;
     }
 
-    public ServerContext ServiceContext { get; internal set; } = default!;
+    public ServerContext ServerContext { get; internal set; } = default!;
 
     public Func<CallContext> NewCallContext { get; internal set; } = default!;
 
+    private object syncObject = new();
     private IServiceProvider? serviceProvider;
     private Dictionary<ulong, ServiceMethod> idToServiceMethod = new();
     private Dictionary<uint, object> idToInstance = new();

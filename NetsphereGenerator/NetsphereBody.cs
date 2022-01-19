@@ -28,7 +28,8 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
     public const string NetServiceBaseFullName = "Netsphere.NetServiceBase";
     public const string NetServiceBaseFullName2 = "Netsphere.NetServiceBase<TServerContext>";
     public const string ServiceFilterFullName = "Netsphere.IServiceFilter";
-    public const string ServiceFilterFullName2 = "Netsphere.IServiceFilter<TServerContext>";
+    public const string ServiceFilterFullName2 = "Netsphere.IServiceFilter<TCallContext>";
+    public const string ServiceFilterInvokeName = "Invoke";
 
     public static readonly DiagnosticDescriptor Error_AttributePropertyError = new DiagnosticDescriptor(
         id: "NSG001", title: "Attribute property type error", messageFormat: "The argument specified does not match the type of the property",

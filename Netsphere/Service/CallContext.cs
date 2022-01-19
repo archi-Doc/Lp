@@ -13,7 +13,7 @@ public class CallContext<TServerContext> : CallContext
     {
     }
 
-    public new TServerContext ServiceContext => (TServerContext)base.ServiceContext;
+    public new TServerContext ServerContext => (TServerContext)base.ServerContext;
 }
 
 public class CallContext
@@ -24,7 +24,7 @@ public class CallContext
     {
     }
 
-    public ServerContext ServiceContext { get; private set; } = default!;
+    public ServerContext ServerContext { get; private set; } = default!;
 
     public ByteArrayPool.MemoryOwner RentData;
 
@@ -45,7 +45,7 @@ public class CallContext
 
     internal void Initialize(ServerContext serviceContext, ByteArrayPool.MemoryOwner rentData)
     {
-        this.ServiceContext = serviceContext;
+        this.ServerContext = serviceContext;
         this.RentData = rentData;
     }
 

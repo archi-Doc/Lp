@@ -12,9 +12,9 @@ public class Server
         this.NetControl = netControl;
         this.NetService = netService;
 
-        this.ServiceContext = this.NetControl.NewServerContext();
-        this.ServiceContext.ServiceProvider = this.NetControl.ServiceProvider;
-        this.NetService.ServiceContext = this.ServiceContext;
+        this.ServerContext = this.NetControl.NewServerContext();
+        this.ServerContext.ServiceProvider = this.NetControl.ServiceProvider;
+        this.NetService.ServerContext = this.ServerContext;
         this.NetService.NewCallContext = this.NetControl.NewCallContext;
     }
 
@@ -37,6 +37,7 @@ public class Server
                     }
                     else if (received.PacketId == PacketId.Rpc)
                     {// RPC
+                        received.Received.IncrementAndShare();
                         var task = this.NetService.Process(terminal, received); // .ConfigureAwait(false);
                         continue;
                     }
@@ -63,7 +64,7 @@ public class Server
             finally
             {
                 received.Return();
-                terminal.ClearSender();
+                // terminal.ClearSender();
             }
         }
 
@@ -80,7 +81,7 @@ public class Server
 
     public ServerTerminal NetTerminal { get; private set; } = default!;
 
-    public ServerContext ServiceContext { get; }
+    public ServerContext ServerContext { get; }
 
     private bool ProcessEssential(NetReceivedData received)
     {

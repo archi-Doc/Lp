@@ -31,6 +31,8 @@ public enum NetResult
     BlockSizeLimit,
     ReserveError,
     NoNetService,
+    NoCallContext,
+    UnknownException,
 }
 
 /// <summary>
