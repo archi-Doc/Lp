@@ -63,7 +63,7 @@ public class Server
             finally
             {
                 received.Return();
-                terminal.ClearSender();
+                // terminal.ClearSender();
             }
         }
 

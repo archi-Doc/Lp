@@ -50,16 +50,16 @@ public class CustomService : NetServiceBase<TestServerContext>, ICustomService, 
 
 public class CustomFilter : IServiceFilter
 {
-    public async Task Invoke(CallContext context, Func<CallContext, Task> next)
+    public async Task Invoke(CallContext context, Func<CallContext, Task> invoker)
     {
-        await next(context);
+        await invoker(context);
     }
 }
 
 public class CustomFilter2 : IServiceFilter<TestCallContext>
 {
-    public async Task Invoke(TestCallContext context, Func<TestCallContext, Task> next)
+    public async Task Invoke(TestCallContext context, Func<TestCallContext, Task> invoker)
     {
-        await next(context);
+        await invoker(context);
     }
 }

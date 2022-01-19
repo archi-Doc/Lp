@@ -40,6 +40,7 @@ public class BenchmarkServiceImpl : NetServiceBase, IBenchmarkService
         Console.Write("Wait -> ");
         await Task.Delay(millisecondsToWait);
         Console.WriteLine($"{millisecondsToWait}");
+
     }
 }
 

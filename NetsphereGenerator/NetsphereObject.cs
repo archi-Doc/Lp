@@ -256,6 +256,10 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 methodFilters.Sort();
                 this.MethodToFilter[x.FullName] = methodFilters;
             }
+            else if (classFilters.FilterList.Count > 0)
+            {
+                this.MethodToFilter[x.FullName] = classFilters;
+            }
         }
 
         this.FilterGroup = new ServiceFilterGroup(this, allFilters);
@@ -665,23 +669,34 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     internal void GenerateBackend_Method(ScopingStringBuilder ssb, GeneratorInformation info, NetsphereObject serviceInterface, ServiceMethod method)
     {
-        using (var scopeMethod = ssb.ScopeBrace($"private static async Task {method.MethodString}(object obj, CallContext context)"))
+        using (var scopeMethod = ssb.ScopeBrace($"private static async Task {method.MethodString}(object obj, CallContext c0)"))
         {
-            var serviceFilter = this.GetServiceFilter(serviceInterface, method);
-            if (serviceFilter == null)
+            var filterList = this.GetServiceFilter(serviceInterface, method)?.FilterList;
+            var code = "Core(obj, c0)";
+
+            if (filterList != null)
             {
-                ssb.AppendLine("await Core(obj, context);");
-            }
-            else
-            {
-                foreach (var x in serviceFilter.FilterList)
+                ssb.AppendLine($"var b = ({this.ClassName})obj;");
+
+                var sb = new StringBuilder();
+                var n = 1;
+                for (var i = filterList.Count - 1; i >= 0; i--, n++)
                 {
-                    var identifier = this.FilterGroup!.GetIdentifier(x.FilterType);
-                }
+                    var item = this.FilterGroup!.GetIdentifier(filterList[i].FilterType);
+                    if (item == null)
+                    {
+                        continue;
+                    }
 
-                ssb.AppendLine();
+                    if (i != filterList.Count)
+                    {
+                        var filterType = item.CallContextObject == null ? string.Empty : $"({item.CallContextObject.FullName})";
+                        code = $"b.{item.Identifier}.{NetsphereBody.ServiceFilterInvokeName}({filterType}c0, c{n} => {code})";
+                    }
+                }
             }
 
+            ssb.AppendLine($"await {code};");
             ssb.AppendLine();
 
             using (var scopeCore = ssb.ScopeBrace("static async Task Core(object obj, CallContext context)"))

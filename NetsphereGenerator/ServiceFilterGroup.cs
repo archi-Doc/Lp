@@ -21,16 +21,16 @@ public class ServiceFilterGroup
 
     public class Item
     {
-        public Item(NetsphereObject obj, NetsphereObject filterObject, string identifier)
+        public Item(NetsphereObject obj, NetsphereObject? callContextObject, string identifier)
         {
             this.Object = obj;
-            this.FilterObject = filterObject;
+            this.CallContextObject = callContextObject;
             this.Identifier = identifier;
         }
 
         public NetsphereObject Object { get; private set; }
 
-        public NetsphereObject FilterObject { get; private set; }
+        public NetsphereObject? CallContextObject { get; private set; }
 
         public string Identifier { get; private set; }
     }
@@ -41,14 +41,14 @@ public class ServiceFilterGroup
 
     public Item[]? Items { get; private set; }
 
-    public Dictionary<ISymbol, string>? SymbolToIdentifier { get; private set; }
+    public Dictionary<ISymbol, Item>? SymbolToItem { get; private set; }
 
     public void CheckAndPrepare()
     {
         var errorFlag = false;
         var filterList = this.ServiceFilter.FilterList;
         var items = new Item[filterList.Count];
-        var dictionary = new Dictionary<ISymbol, string>();
+        var dictionary = new Dictionary<ISymbol, Item>();
         for (var i = 0; i < filterList.Count; i++)
         {
             var obj = this.Object.Body.Add(filterList[i].FilterType!);
@@ -60,10 +60,16 @@ public class ServiceFilterGroup
                 continue;
             }
 
-            var item = new Item(obj, filterObject, this.Object.Identifier.GetIdentifier());
+            NetsphereObject? callContextObject = null;
+            if (filterObject.Generics_Arguments.Length > 0)
+            {
+                callContextObject = filterObject.Generics_Arguments[0];
+            }
+
+            var item = new Item(obj, callContextObject, this.Object.Identifier.GetIdentifier());
             items[i] = item;
 
-            dictionary[filterList[i].FilterType!] = item.Identifier;
+            dictionary[filterList[i].FilterType!] = item;
         }
 
         if (errorFlag)
@@ -74,18 +80,18 @@ public class ServiceFilterGroup
         if (items.Length > 0)
         {
             this.Items = items;
-            this.SymbolToIdentifier = dictionary;
+            this.SymbolToItem = dictionary;
         }
     }
 
-    public string? GetIdentifier(ISymbol? symbol)
+    public Item? GetIdentifier(ISymbol? symbol)
     {
-        if (this.SymbolToIdentifier == null || symbol == null)
+        if (this.SymbolToItem == null || symbol == null)
         {
             return null;
         }
 
-        if (this.SymbolToIdentifier.TryGetValue(symbol, out var identifier))
+        if (this.SymbolToItem.TryGetValue(symbol, out var identifier))
         {
             return identifier;
         }
@@ -115,8 +121,21 @@ public class ServiceFilterGroup
 
         foreach (var x in this.Items)
         {
+            var hasDefaultConstructor = false;
+            foreach (var a in x.Object.GetMembers(VisceralTarget.Method))
+            {
+                if (a.Method_IsConstructor && a.ContainingObject == x.Object)
+                {// Constructor
+                    if (a.Method_Parameters.Length == 0)
+                    {
+                        hasDefaultConstructor = true;
+                        break;
+                    }
+                }
+            }
+
             string newInstance;
-            if (x.Object.ObjectFlag.HasFlag(NetsphereObjectFlag.HasDefaultConstructor))
+            if (hasDefaultConstructor)
             {
                 newInstance = $"new {x.Object.FullName}()";
             }
