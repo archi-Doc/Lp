@@ -114,18 +114,25 @@ public class NetService
             await serviceMethod.Invoke(serviceMethod.ServerInstance!, context);
             try
             {
-                await serverTerminal.SendServiceAsync((ulong)context.Result, context.RentData).ConfigureAwait(false);
+                if (context.Result == NetResult.Success)
+                {// Success
+                    await serverTerminal.SendServiceAsync((ulong)context.Result, context.RentData).ConfigureAwait(false);
+                }
+                else
+                {// Failure
+                    await serverTerminal.SendServiceAsync((ulong)context.Result, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
+                }
             }
             catch
             {
             }
         }
         catch (NetException ne)
-        {
+        {// NetException
             await serverTerminal.SendServiceAsync((ulong)ne.Result, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
         }
         catch
-        {
+        {// Unknown exception
             await serverTerminal.SendServiceAsync((ulong)NetResult.UnknownException, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
         }
         finally

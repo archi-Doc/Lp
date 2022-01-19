@@ -30,6 +30,7 @@ public class BenchmarkServiceImpl : NetServiceBase, IBenchmarkService
     {
     }
 
+    // [NetServiceFilter(typeof(NullFilter))]
     public async NetTask Wait(int millisecondsToWait)
     {
         if (CallContext.Current is not TestCallContext context)
@@ -60,6 +61,14 @@ public class TestFilter : IServiceFilter
     public async Task Invoke(CallContext context, Func<CallContext, Task> invoker)
     {
         await invoker(context);
+    }
+}
+
+public class NullFilter : IServiceFilter
+{
+    public async Task Invoke(CallContext context, Func<CallContext, Task> next)
+    {
+        context.Result = NetResult.NoNetService;
     }
 }
 
