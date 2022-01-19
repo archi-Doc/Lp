@@ -37,6 +37,7 @@ public class Server
                     }
                     else if (received.PacketId == PacketId.Rpc)
                     {// RPC
+                        received.Received.IncrementAndShare();
                         var task = this.NetService.Process(terminal, received); // .ConfigureAwait(false);
                         continue;
                     }

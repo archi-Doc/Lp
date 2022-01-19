@@ -66,19 +66,19 @@ public class NetService
         this.serviceProvider = serviceProvider;
     }
 
-    public async Task Process(ServerTerminal serverTerminal, NetReceivedData received)
+    public async Task Process(ServerTerminal serverTerminal, NetReceivedData rent)
     {
-        if (!this.idToServiceMethod.TryGetValue(received.DataId, out var serviceMethod))
+        if (!this.idToServiceMethod.TryGetValue(rent.DataId, out var serviceMethod))
         {
             // Get ServiceInfo.
-            var serviceId = (uint)(received.DataId >> 32);
+            var serviceId = (uint)(rent.DataId >> 32);
             if (!StaticNetService.TryGetServiceInfo(serviceId, out var serviceInfo))
             {
                 goto SendNoNetService;
             }
 
             // Get ServiceMethod.
-            if (!serviceInfo.TryGetMethod(received.DataId, out serviceMethod))
+            if (!serviceInfo.TryGetMethod(rent.DataId, out serviceMethod))
             {
                 goto SendNoNetService;
             }
@@ -94,7 +94,7 @@ public class NetService
         }
 
         var context = this.NewCallContext();
-        context.Initialize(this.ServerContext, received.Received.IncrementAndShare());
+        context.Initialize(this.ServerContext, rent.Received);
         CallContext.CurrentCallContext.Value = context;
         try
         {
@@ -111,15 +111,13 @@ public class NetService
         {
             await serverTerminal.SendServiceAsync((ulong)context.Result, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
         }
-        finally
-        {
-            context.RentData.Return();
-        }
 
+        rent.Return();
         return;
 
 SendNoNetService:
         await serverTerminal.SendServiceAsync((ulong)NetResult.NoNetService, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
+        rent.Return();
     }
 
     public ServerContext ServerContext { get; internal set; } = default!;
