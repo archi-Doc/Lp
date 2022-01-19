@@ -147,7 +147,7 @@ public class ServiceFilterGroup
             ssb.AppendLine($"this.{x.Identifier} = ({x.Object.FullName}){context}.ServiceFilters.GetOrAdd(typeof({x.Object.FullName}), x => (IServiceFilter){newInstance});");
             using (var scopeNull = ssb.ScopeBrace($"if (this.{x.Identifier} == null)"))
             {
-                ssb.AppendLine($"throw new InvalidOperationException($\"Could not create an instance of net filter '{x.Object.FullName}'.\");");
+                ssb.AppendLine($"throw new InvalidOperationException($\"Could not create an instance of the net filter '{x.Object.FullName}'.\");");
             }
         }
     }

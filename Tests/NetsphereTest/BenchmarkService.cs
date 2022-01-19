@@ -42,6 +42,7 @@ public class BenchmarkServiceImpl : NetServiceBase, IBenchmarkService
         await Task.Delay(millisecondsToWait);
         Console.WriteLine($"{millisecondsToWait}");
 
+        context.Result = NetResult.NoEncryptedConnection;
     }
 }
 
@@ -56,6 +57,7 @@ public class TestFilterB : TestFilter
     {
     }
 }
+
 public class TestFilter : IServiceFilter
 {
     public async Task Invoke(CallContext context, Func<CallContext, Task> invoker)

@@ -604,7 +604,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 }
                 else
                 {
-                    ssb.AppendLine($"throw new InvalidOperationException($\"Could not create an instance of net service {{typeof({this.FullName}).ToString()}}.\");");
+                    ssb.AppendLine($"throw new InvalidOperationException($\"Could not create an instance of the net service {{typeof({this.FullName}).ToString()}}.\");");
                 }
             }
 
@@ -719,15 +719,15 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
     internal void GenerateBackend_MethodCore(ScopingStringBuilder ssb, GeneratorInformation info, NetsphereObject serviceInterface, ServiceMethod method)
     {
         if (method.ParameterType == ServiceMethod.Type.ByteArray)
-        {
+        {// byte[]
             ssb.AppendLine("var value = context.RentData.Memory.ToArray();");
         }
         else if (method.ParameterType == ServiceMethod.Type.MemoryOwner)
-        {
+        {// ByteArrayPool.MemoryOwner
             ssb.AppendLine("var value = context.RentData;");
         }
         else if (method.ParameterLength == 0)
-        {
+        {// No parameter
             ssb.AppendLine("var owner = ByteArrayPool.MemoryOwner.Empty;");
         }
         else
@@ -767,13 +767,18 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         // ssb.AppendLine($"var task = (({serviceInterface.FullName})backend).{method.SimpleName}({method.GetTupleNames("value")});");
         ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})(({this.ClassName})obj).impl).{method.SimpleName}({method.GetTupleNames("value")});");
         // ssb.AppendLine($"{prefix}await task;");
-        if (method.ReturnObject == null)
+
+        /*if (method.ReturnObject == null)
         {
             ssb.AppendLine("var result = NetResult.Success;");
-        }
+        }*/
 
         ssb.AppendLine("context.RentData.Return();");
-        if (method.ReturnType == ServiceMethod.Type.ByteArray)
+        if (method.ReturnObject == null)
+        {// NetTask
+            ssb.AppendLine("context.RentData = ByteArrayPool.MemoryOwner.Empty;");
+        }
+        else if (method.ReturnType == ServiceMethod.Type.ByteArray)
         {// byte[] result;
             ssb.AppendLine("context.RentData = result != null ? new ByteArrayPool.MemoryOwner(result) : default;");
         }
@@ -782,15 +787,14 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             ssb.AppendLine("context.RentData = result;");
         }
         else
-        {
+        {// Other
             using (var scopeSerialize = ssb.ScopeBrace($"if (!LP.Block.BlockService.TrySerialize(result, out context.RentData))"))
             {
                 ssb.AppendLine("context.Result = NetResult.SerializationError;");
-                ssb.AppendLine("return;");
             }
         }
 
-        ssb.AppendLine("context.Result = NetResult.Success;");
+        // ssb.AppendLine("context.Result = NetResult.Success;");
     }
 
     internal void GenerateBackend_ServiceInfo(ScopingStringBuilder ssb, GeneratorInformation info, NetsphereObject serviceInterface)
