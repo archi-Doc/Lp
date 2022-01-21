@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using DryIoc;
 using Netsphere;
 using Xunit;
 
@@ -9,11 +8,15 @@ namespace xUnitTest.Netsphere;
 [Collection(TestServerCollection.Name)]
 public class NodeTest
 {
+    public NodeTest(TestServer testServer)
+    {
+        this.TestServer = testServer;
+    }
+
     [Fact]
     public async Task Test1()
     {
-        var netControl = TestServer.Container.Resolve<NetControl>();
-        using (var terminal = netControl.Terminal.Create(NodeInformation.Alternative))
+        using (var terminal = this.NetControl.Terminal.Create(NodeInformation.Alternative))
         {
             // terminal.SetMaximumResponseTime(3000);
             var basicService = terminal.GetService<IBasicService>();
@@ -29,4 +32,8 @@ public class NodeTest
             task2.Value.Is(7);
         }
     }
+
+    public TestServer TestServer { get; }
+
+    public NetControl NetControl => this.TestServer.NetControl;
 }

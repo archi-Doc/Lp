@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using DryIoc;
 using Netsphere;
 using Xunit;
 
@@ -9,11 +8,15 @@ namespace xUnitTest.Netsphere;
 [Collection(TestServerCollection.Name)]
 public class FilterTest
 {
+    public FilterTest(TestServer testServer)
+    {
+        this.TestServer = testServer;
+    }
+
     [Fact]
     public async Task Test1()
     {
-        var netControl = TestServer.Container.Resolve<NetControl>();
-        using (var terminal = netControl.Terminal.Create(NodeInformation.Alternative))
+        using (var terminal = this.NetControl.Terminal.Create(NodeInformation.Alternative))
         {
             var basicService = terminal.GetService<IFilterTestService>();
             var task = await basicService.NoFilter(1).ResponseAsync;
@@ -21,4 +24,8 @@ public class FilterTest
             task.Value.Is(1);
         }
     }
+
+    public TestServer TestServer { get; }
+
+    public NetControl NetControl => this.TestServer.NetControl;
 }

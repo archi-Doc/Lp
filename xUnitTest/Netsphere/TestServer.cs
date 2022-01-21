@@ -14,30 +14,34 @@ public class TestServerCollection : ICollectionFixture<TestServer>
 
 public class TestServer : IDisposable
 {
-    public static Container Container { get; } = new();
-
     public TestServer()
     {
         // DI Container
-        NetControl.Register(Container);
+        NetControl.Register(this.container);
 
         // Services
-        Container.Register<BasicServiceImpl>(Reuse.Singleton);
+        this.container.Register<BasicServiceImpl>(Reuse.Singleton);
 
         // Filters
-        Container.Register<NullFilter>(Reuse.Singleton);
+        this.container.Register<NullFilter>(Reuse.Singleton);
 
-        Container.ValidateAndThrow();
+        this.container.ValidateAndThrow();
 
         var options = new LP.Options.NetsphereOptions();
         options.EnableAlternative = true;
         options.EnableTestFeatures = true;
         NetControl.QuickStart(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);
+
+        this.NetControl = this.container.Resolve<NetControl>();
     }
 
     public void Dispose()
     {
     }
+
+    public NetControl NetControl { get; }
+
+    private Container container = new();
 }
 
 public class TestServerContext : ServerContext

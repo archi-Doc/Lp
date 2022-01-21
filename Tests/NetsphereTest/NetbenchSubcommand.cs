@@ -48,7 +48,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
             w2.ResponseAsync.Wait();
             w3.ResponseAsync.Wait();*/
 
-            ThreadCore.Root.Sleep(10000);
+            // ThreadCore.Root.Sleep(10000);
         }
 
         // await this.MassiveSmallData(node);
