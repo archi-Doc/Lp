@@ -20,4 +20,14 @@ public class MultiplyIntFilter : IServiceFilter
 
         await invoker(context);
     }
+
+    public void SetArguments(object[] args)
+    {
+        if (args[0] is int x)
+        {
+            this.multiplier = x;
+        }
+    }
+
+    private int multiplier = 2;
 }

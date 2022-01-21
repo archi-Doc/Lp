@@ -251,7 +251,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             var methodFilters = ServiceFilter.CreateFromObject(x);
             if (methodFilters != null)
             {
-                allFilters.TryMerge(methodFilters);
+                allFilters.TryAdd(methodFilters);
                 methodFilters.TryMerge(classFilters);
                 methodFilters.Sort();
                 this.MethodToFilter[x.FullName] = methodFilters;
@@ -682,7 +682,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 var n = 1;
                 for (var i = filterList.Count - 1; i >= 0; i--, n++)
                 {
-                    var item = this.FilterGroup!.GetIdentifier(filterList[i].FilterType);
+                    var item = this.FilterGroup!.GetIdentifier(filterList[i]);
                     if (item == null)
                     {
                         continue;
