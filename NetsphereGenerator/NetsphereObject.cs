@@ -66,9 +66,9 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
     public NetsphereObject? NetServiceBase { get; private set; } // For NetServiceObjectAttribute; Net service base implemented by this net service object.
 
-    public ServiceFilterGroup? FilterGroup { get; private set; } // For NetServiceObjectAttribute; Service filters.
+    public ServiceFilterGroup? ClassFilters { get; private set; } // For NetServiceObjectAttribute; Service filters.
 
-    public Dictionary<string, ServiceFilter>? MethodToFilter { get; private set; } // For NetServiceObjectAttribute; Method full name to Service filters.
+    public Dictionary<string, ServiceFilterGroup>? MethodToFilter { get; private set; } // For NetServiceObjectAttribute; Method full name to Service filters.
 
     public Dictionary<uint, ServiceMethod>? ServiceMethods { get; private set; } // For NetServiceInterface; Methods included in this net service interface.
 
@@ -243,7 +243,9 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
     public void ConfigureServiceFilters()
     {
         var classFilters = ServiceFilter.CreateFromObject(this) ?? new ServiceFilter();
-        var allFilters = new ServiceFilter(classFilters);
+        classFilters.Sort();
+        this.ClassFilters = new ServiceFilterGroup(this, classFilters);
+        this.ClassFilters.CheckAndPrepare();
 
         this.MethodToFilter ??= new();
         foreach (var x in this.GetMembers(VisceralTarget.Method))
@@ -251,19 +253,12 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             var methodFilters = ServiceFilter.CreateFromObject(x);
             if (methodFilters != null)
             {
-                allFilters.TryAdd(methodFilters);
-                methodFilters.TryMerge(classFilters);
                 methodFilters.Sort();
-                this.MethodToFilter[x.FullName] = methodFilters;
-            }
-            else if (classFilters.FilterList.Count > 0)
-            {
-                this.MethodToFilter[x.FullName] = classFilters;
+                var filterGroup = new ServiceFilterGroup(this, methodFilters);
+                filterGroup.CheckAndPrepare();
+                this.MethodToFilter[x.FullName] = filterGroup;
             }
         }
-
-        this.FilterGroup = new ServiceFilterGroup(this, allFilters);
-        this.FilterGroup.CheckAndPrepare();
     }
 
     public void ConfigureNetBase()
@@ -587,7 +582,14 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             ssb.AppendLine($"private {this.FullName} impl;");
 
             // Service filters
-            this.FilterGroup?.GenerateDefinition(ssb);
+            this.ClassFilters?.GenerateDefinition(ssb);
+            if (this.MethodToFilter != null)
+            {
+                foreach (var x in this.MethodToFilter.Values)
+                {
+                    x.GenerateDefinition(ssb);
+                }
+            }
         }
     }
 
@@ -611,7 +613,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             ssb.AppendLine();
 
             // Service filters
-            this.FilterGroup?.GenerateInitialize(ssb, "context");
+            ServiceFilterGroup.GenerateInitialize(ssb, "this", "context", this.ClassFilters?.Items);
 
             // Set ServerContext
             if (this.NetServiceBase != null)
@@ -645,7 +647,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         this.GenerateBackend_ServiceInfo(ssb, info, serviceInterface);
     }
 
-    internal ServiceFilter? GetServiceFilter(NetsphereObject serviceInterface, ServiceMethod method)
+    internal ServiceFilterGroup? GetServiceFilter(NetsphereObject serviceInterface, ServiceMethod method)
     {
         if (this.MethodToFilter == null)
         {
@@ -671,27 +673,25 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
     {
         using (var scopeMethod = ssb.ScopeBrace($"private static async Task {method.MethodString}(object obj, CallContext c0)"))
         {
-            var filterList = this.GetServiceFilter(serviceInterface, method)?.FilterList;
-            var code = "Core(obj, c0)";
+            var methodFilters = this.GetServiceFilter(serviceInterface, method);
+            var filters = ServiceFilterGroup.FromClassAndMethod(this.ClassFilters, methodFilters);
 
-            if (filterList != null)
+            var code = "Core(obj, c0)";
+            if (filters != null)
             {
                 ssb.AppendLine($"var b = ({this.ClassName})obj;");
+                ServiceFilterGroup.GenerateInitialize(ssb, "b", "c0.ServerContext", methodFilters?.Items);
+                ssb.AppendLine();
 
                 var sb = new StringBuilder();
                 var n = 1;
-                for (var i = filterList.Count - 1; i >= 0; i--, n++)
+                for (var i = filters.Length - 1; i >= 0; i--, n++)
                 {
-                    var item = this.FilterGroup!.GetIdentifier(filterList[i]);
-                    if (item == null)
-                    {
-                        continue;
-                    }
-
-                    if (i != filterList.Count)
+                    var item = filters[i];
+                    if (i != filters.Length)
                     {
                         var filterType = item.CallContextObject == null ? string.Empty : $"({item.CallContextObject.FullName})";
-                        code = $"b.{item.Identifier}.{NetsphereBody.ServiceFilterInvokeName}({filterType}c0, c{n} => {code})";
+                        code = $"b.{item.Identifier}!.{NetsphereBody.ServiceFilterInvokeName}({filterType}c0, c{n} => {code})";
                     }
                 }
             }
