@@ -121,7 +121,7 @@ public class ServiceFilterGroup
 
     public Item[]? Items { get; private set; }
 
-    public Dictionary<NetServiceFilterAttributeMock, Item>? AttributeToItem { get; private set; }
+    // public Dictionary<NetServiceFilterAttributeMock, Item>? AttributeToItem { get; private set; }
 
     public void CheckAndPrepare()
     {
@@ -166,11 +166,11 @@ public class ServiceFilterGroup
         if (items.Length > 0)
         {
             this.Items = items;
-            this.AttributeToItem = dictionary;
+            // this.AttributeToItem = dictionary;
         }
     }
 
-    public Item? GetIdentifier(NetServiceFilterAttributeMock? filterAttribute)
+    /*public Item? GetIdentifier(NetServiceFilterAttributeMock? filterAttribute)
     {
         if (this.AttributeToItem == null || filterAttribute == null)
         {
@@ -183,7 +183,7 @@ public class ServiceFilterGroup
         }
 
         return null;
-    }
+    }*/
 
     public void GenerateDefinition(ScopingStringBuilder ssb)
     {
