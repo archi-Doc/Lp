@@ -33,7 +33,7 @@ public interface ICustomService2 : INetService
 
 [NetServiceObject]
 [NetServiceFilter(typeof(CustomFilter), Order = 0)]
-public class CustomService : NetServiceBase<TestServerContext>, ICustomService, ICustomService2
+public class CustomService : ICustomService, ICustomService2
 {
     [NetServiceFilter(typeof(CustomFilter2))]
     async NetTask ICustomService.Test()
