@@ -29,7 +29,7 @@ public class ServerTerminal : NetTerminal
         this.EnsureReceiver();
     }
 
-    public unsafe override void SendClose()
+    /*public unsafe override void SendClose()
     {// Checked
         if (this.IsClosed)
         {
@@ -51,27 +51,9 @@ public class ServerTerminal : NetTerminal
     public async Task<NetResult> SendEmpty()
     {// Checked
         return await this.SendDataAsync(0, Array.Empty<byte>()).ConfigureAwait(false);
-    }
+    }*/
 
-    public async Task<NetReceivedData> ReceiveAsync()
-    {// Checked
-        this.EnsureReceiver();
-        if (!this.receiverQueue.TryDequeue(out var operation))
-        {
-            return new(NetResult.NoReceiver);
-        }
-
-        var received = await operation.ReceiveAsync().ConfigureAwait(false);
-        if (received.Result != NetResult.Success)
-        {// Timeout or error
-            return received;
-        }
-
-        this.senderQueue.Enqueue(operation);
-        return received;
-    }
-
-    public async Task<NetResult> SendPacketAsync<TSend>(TSend value)
+    /*public async Task<NetResult> SendPacketAsync<TSend>(TSend value)
         where TSend : IPacket
     {// Checked
         if (!this.senderQueue.TryDequeue(out var operation))
@@ -130,7 +112,7 @@ public class ServerTerminal : NetTerminal
         var result = await operation.SendDataAsync(true, PacketId.Rpc, dataId, data).ConfigureAwait(false);
         operation.Dispose();
         return result;
-    }
+    }*/
 
     public void EnsureReceiver()
     {// Checked
@@ -140,16 +122,26 @@ public class ServerTerminal : NetTerminal
         }
     }
 
-    public void ClearSender()
+    public ushort ReceiverNumber { get; private set; } = DefaultReceiverNumber;
+
+    internal async Task<(ServerOperation? Operation, NetReceivedData Received)> ReceiveAsync()
     {// Checked
-        while (this.senderQueue.TryDequeue(out var operation))
+        this.EnsureReceiver();
+        if (!this.receiverQueue.TryDequeue(out var operation))
         {
-            operation.Dispose();
+            return (default, new(NetResult.NoReceiver));
+        }
+
+        var received = await operation.ReceiveAsync().ConfigureAwait(false);
+        if (received.Result == NetResult.Success)
+        {// Success
+            return (operation, received);
+        }
+        else
+        {// Timeout, Error
+            return (default, received);
         }
     }
 
-    public ushort ReceiverNumber { get; private set; } = DefaultReceiverNumber;
-
-    private ConcurrentQueue<ServerOperation> senderQueue = new();
     private ConcurrentQueue<ServerOperation> receiverQueue = new();
 }

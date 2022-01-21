@@ -66,7 +66,7 @@ public class NetService
         this.serviceProvider = serviceProvider;
     }
 
-    public async Task Process(ServerTerminal serverTerminal, NetReceivedData rent)
+    public async Task Process(ServerOperation operation, NetReceivedData rent)
     {// Thread-safe
         ServiceMethod? serviceMethod;
         lock (this.syncObject)
@@ -116,11 +116,11 @@ public class NetService
             {
                 if (context.Result == NetResult.Success)
                 {// Success
-                    await serverTerminal.SendServiceAsync((ulong)context.Result, context.RentData).ConfigureAwait(false);
+                    await operation.SendServiceAsync((ulong)context.Result, context.RentData).ConfigureAwait(false);
                 }
                 else
                 {// Failure
-                    await serverTerminal.SendServiceAsync((ulong)context.Result, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
+                    await operation.SendServiceAsync((ulong)context.Result, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
                 }
             }
             catch
@@ -129,22 +129,24 @@ public class NetService
         }
         catch (NetException ne)
         {// NetException
-            await serverTerminal.SendServiceAsync((ulong)ne.Result, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
+            await operation.SendServiceAsync((ulong)ne.Result, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
         }
         catch
         {// Unknown exception
-            await serverTerminal.SendServiceAsync((ulong)NetResult.UnknownException, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
+            await operation.SendServiceAsync((ulong)NetResult.UnknownException, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
         }
         finally
         {
             context.RentData.Return();
         }
 
+        operation.Dispose();
         rent.Return();
         return;
 
 SendNoNetService:
-        await serverTerminal.SendServiceAsync((ulong)NetResult.NoNetService, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
+        await operation.SendServiceAsync((ulong)NetResult.NoNetService, ByteArrayPool.MemoryOwner.Empty).ConfigureAwait(false);
+        operation.Dispose();
         rent.Return();
         return;
     }

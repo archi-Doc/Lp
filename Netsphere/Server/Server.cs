@@ -23,27 +23,28 @@ public class Server
         this.NetTerminal = terminal;
         while (!this.NetTerminal.IsClosed)
         {
-            NetReceivedData received = default;
+            (var operation, var received) = await terminal.ReceiveAsync().ConfigureAwait(false);
             try
             {
-                received = await terminal.ReceiveAsync().ConfigureAwait(false);
                 if (received.Result == NetResult.Success)
                 {// Success
                     if (received.PacketId == PacketId.Data &&
                         this.NetControl.Responders.TryGetValue(received.DataId, out var responder) &&
-                        responder.Respond(terminal, received))
+                        responder.Respond(operation!, received))
                     {// Responder
                         continue;
                     }
                     else if (received.PacketId == PacketId.Rpc)
                     {// RPC
+                        var op = operation!;
+                        operation = null;
                         received.Received.IncrementAndShare();
-                        var task = this.NetService.Process(terminal, received); // .ConfigureAwait(false);
+                        var task = this.NetService.Process(op, received); // .ConfigureAwait(false);
                         continue;
                     }
 
                     // Essential (PacketPunch)
-                    if (this.ProcessEssential(received))
+                    if (this.ProcessEssential(operation!, received))
                     {
                         continue;
                     }
@@ -63,6 +64,7 @@ public class Server
             }
             finally
             {
+                operation?.Dispose();
                 received.Return();
                 // terminal.ClearSender();
             }
@@ -83,25 +85,25 @@ public class Server
 
     public ServerContext ServerContext { get; }
 
-    private bool ProcessEssential(NetReceivedData received)
+    private bool ProcessEssential(ServerOperation operation, NetReceivedData received)
     {
         if (received.PacketId == PacketId.Punch)
         {
-            return this.ProcessEssential_Punch(received);
+            return this.ProcessEssential_Punch(operation, received);
         }
 
         if (this.NetBase.NetsphereOptions.EnableTestFeatures)
         {
             if (received.PacketId == PacketId.Test)
             {
-                return this.ProcessEssential_Test(received);
+                return this.ProcessEssential_Test(operation, received);
             }
         }
 
         return false;
     }
 
-    private bool ProcessEssential_Punch(NetReceivedData received)
+    private bool ProcessEssential_Punch(ServerOperation operation, NetReceivedData received)
     {
         if (!TinyhandSerializer.TryDeserialize<PacketPunch>(received.Received.Memory, out var punch))
         {
@@ -114,20 +116,20 @@ public class Server
         response.Endpoint = this.NetTerminal.Endpoint;
         response.UtcMics = Mics.GetUtcNow();
 
-        var task = this.NetTerminal.SendPacketAsync(response);
+        var task = operation.SendPacketAsync(response);
         return true;
     }
 
-    private bool ProcessEssential_Test(NetReceivedData received)
+    private bool ProcessEssential_Test(ServerOperation operation, NetReceivedData received)
     {
         if (!TinyhandSerializer.TryDeserialize<TestPacket>(received.Received.Memory, out var r))
         {
-            var task2 = this.NetTerminal.SendEmpty();
+            var task2 = operation.SendEmpty();
             return false;
         }
 
         var response = TestPacket.Create(2000);
-        var task = this.NetTerminal.SendAsync(response);
+        var task = operation.SendAsync(response);
         return true;
     }
 }
