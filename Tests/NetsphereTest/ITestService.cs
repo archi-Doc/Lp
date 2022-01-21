@@ -29,7 +29,7 @@ public interface ITestService3 : INetService
 }
 
 [NetServiceObject]
-public class TestServiceImpl0 : NetServiceBase<TestServerContext>, ITestService2
+public class TestServiceImpl0 : ITestService2
 {
     public void Test()
     {
@@ -59,7 +59,7 @@ public class TestServiceImpl2 : TestServiceImpl
 }
 
 [NetServiceObject]
-public class ExternalServiceImpl : NetServiceBase, IExternalService
+public class ExternalServiceImpl : IExternalService
 {
     public ExternalServiceImpl(Terminal terminal)
     {

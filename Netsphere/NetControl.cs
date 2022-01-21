@@ -28,7 +28,7 @@ public class NetControl
     public const int MinPort = 49152; // Ephemeral port 49152 - 60999
     public const int MaxPort = 60999;
 
-    public static void Register(Container container, List<Type> commandList)
+    public static void Register(Container container, List<Type>? commandList = null)
     {
         // Container instance
         containerInstance = container;
@@ -57,7 +57,7 @@ public class NetControl
             typeof(LP.Subcommands.NetTestSubcommand),
         };
 
-        commandList.AddRange(commandTypes);
+        commandList?.AddRange(commandTypes);
         foreach (var x in commandTypes)
         {
             container.Register(x, Reuse.Singleton);
