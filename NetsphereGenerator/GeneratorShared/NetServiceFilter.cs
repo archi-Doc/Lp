@@ -20,6 +20,8 @@ public class NetServiceFilterAttributeMock : Attribute
 
     public int Order { get; set; } = int.MaxValue;
 
+    public string Arguments { get; set; } = string.Empty;
+
     public Location Location { get; set; } = Location.None;
 
     public static NetServiceFilterAttributeMock FromArray(object?[] constructorArguments, KeyValuePair<string, object?>[] namedArguments, Location location)
@@ -39,6 +41,12 @@ public class NetServiceFilterAttributeMock : Attribute
         if (val != null)
         {
             attribute.Order = (int)val;
+        }
+
+        val = AttributeHelper.GetValue(-1, nameof(Arguments), constructorArguments, namedArguments);
+        if (val != null)
+        {
+            attribute.Arguments = (string)val;
         }
 
         return attribute;

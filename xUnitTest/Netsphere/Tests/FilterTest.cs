@@ -31,6 +31,10 @@ public class FilterTest
             task.Result.Is(NetResult.Success);
             task.Value.Is(6);
 
+            task = await service.Multiply3(3).ResponseAsync;
+            task.Result.Is(NetResult.Success);
+            task.Value.Is(9);
+
             task = await service.IncrementAndMultiply2(4).ResponseAsync;
             task.Result.Is(NetResult.Success);
             task.Value.Is(10);

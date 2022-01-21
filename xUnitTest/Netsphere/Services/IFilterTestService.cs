@@ -13,6 +13,8 @@ public interface IFilterTestService : INetService
 
     public NetTask<int> Multiply2(int x);
 
+    public NetTask<int> Multiply3(int x);
+
     public NetTask<int> IncrementAndMultiply2(int x);
 
     public NetTask<int> Multiply2AndIncrement(int x);
@@ -28,6 +30,9 @@ public class FilterTestServiceImpl : IFilterTestService
 
     [NetServiceFilter(typeof(MultiplyIntFilter))]
     public async NetTask<int> Multiply2(int x) => x;
+
+    [NetServiceFilter(typeof(MultiplyIntFilter), Arguments = new object[] { 3, })]
+    public async NetTask<int> Multiply3(int x) => x;
 
     [NetServiceFilter(typeof(IncrementIntFilter))]
     [NetServiceFilter(typeof(MultiplyIntFilter))]

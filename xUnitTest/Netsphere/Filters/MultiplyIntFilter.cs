@@ -11,7 +11,7 @@ public class MultiplyIntFilter : IServiceFilter
     {
         if (TinyhandSerializer.TryDeserialize<int>(context.RentData.Memory, out var value))
         {
-            if (LP.Block.BlockService.TrySerialize(value * 2, out var owner))
+            if (LP.Block.BlockService.TrySerialize(value * this.multiplier, out var owner))
             {
                 context.RentData.Return();
                 context.RentData = owner;
@@ -20,4 +20,14 @@ public class MultiplyIntFilter : IServiceFilter
 
         await invoker(context);
     }
+
+    public void SetArguments(object[] args)
+    {
+        if (args[0] is int x)
+        {
+            this.multiplier = x;
+        }
+    }
+
+    private int multiplier = 2;
 }

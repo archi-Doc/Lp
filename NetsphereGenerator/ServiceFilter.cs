@@ -89,6 +89,15 @@ public class ServiceFilter
         this.FilterSet = new(serviceFilter.FilterSet);
     }
 
+    public void TryAdd(ServiceFilter serviceFilter)
+    {
+        foreach (var x in serviceFilter.FilterList)
+        {
+            this.FilterSet.Add(x.FilterType!);
+            this.FilterList.Add(x);
+        }
+    }
+
     public void TryMerge(ServiceFilter serviceFilter)
     {
         foreach (var x in serviceFilter.FilterList)

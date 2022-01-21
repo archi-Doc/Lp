@@ -9,6 +9,8 @@ public class NetServiceFilterAttribute : Attribute
 
     public int Order { get; set; } = int.MaxValue;
 
+    public object[] Arguments { get; set; } = Array.Empty<object>();
+
     public NetServiceFilterAttribute(Type filterType)
     {
         this.FilterType = filterType;

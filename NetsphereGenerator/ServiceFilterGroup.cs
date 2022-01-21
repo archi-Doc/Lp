@@ -21,11 +21,13 @@ public class ServiceFilterGroup
 
     public class Item
     {
-        public Item(NetsphereObject obj, NetsphereObject? callContextObject, string identifier)
+        public Item(NetsphereObject obj, NetsphereObject? callContextObject, string identifier, string? argument, int order)
         {
             this.Object = obj;
             this.CallContextObject = callContextObject;
             this.Identifier = identifier;
+            this.Arguments = argument;
+            this.Order = order;
         }
 
         public NetsphereObject Object { get; private set; }
@@ -33,6 +35,84 @@ public class ServiceFilterGroup
         public NetsphereObject? CallContextObject { get; private set; }
 
         public string Identifier { get; private set; }
+
+        public string? Arguments { get; private set; }
+
+        public int Order { get; private set; }
+    }
+
+    public static Item[]? FromClassAndMethod(ServiceFilterGroup? classFilters, ServiceFilterGroup? methodFilters)
+    {
+        Item[]? items = null;
+
+        if (classFilters?.Items != null)
+        {
+            if (methodFilters?.Items != null)
+            {
+                items = classFilters.Items.Concat(methodFilters.Items).OrderBy(x => x.Order).ToArray();
+            }
+            else
+            {
+                items = classFilters.Items;
+            }
+        }
+        else
+        {
+            if (methodFilters?.Items != null)
+            {
+                items = methodFilters.Items;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        return items;
+    }
+
+    public static void GenerateInitialize(ScopingStringBuilder ssb, string objectName, string context, Item[]? items)
+    {
+        if (items == null)
+        {
+            return;
+        }
+
+        foreach (var x in items)
+        {
+            var hasDefaultConstructor = false;
+            foreach (var a in x.Object.GetMembers(VisceralTarget.Method))
+            {
+                if (a.Method_IsConstructor && a.ContainingObject == x.Object)
+                {// Constructor
+                    if (a.Method_Parameters.Length == 0)
+                    {
+                        hasDefaultConstructor = true;
+                        break;
+                    }
+                }
+            }
+
+            // ssb.AppendLine($"this.{x.Identifier} = ({x.Object.FullName}){context}.ServiceFilters.GetOrAdd(typeof({x.Object.FullName}), x => (IServiceFilter){newInstance});");
+            if (hasDefaultConstructor)
+            {
+                ssb.AppendLine($"{objectName}.{x.Identifier} ??= new {x.Object.FullName}();");
+            }
+            else
+            {
+                ssb.AppendLine($"{objectName}.{x.Identifier} ??= {context}.ServiceProvider.GetService(typeof({x.Object.FullName})) as {x.Object.FullName};");
+            }
+
+            using (var scopeNull = ssb.ScopeBrace($"if ({objectName}.{x.Identifier} == null)"))
+            {
+                ssb.AppendLine($"throw new InvalidOperationException($\"Could not create an instance of the net filter '{x.Object.FullName}'.\");");
+            }
+
+            if (x.Arguments != null)
+            {
+                ssb.AppendLine($"(({NetsphereBody.ServiceFilterBaseName}){objectName}.{x.Identifier}).{NetsphereBody.ServiceFilterSetArgumentsName}({x.Arguments});");
+            }
+        }
     }
 
     public NetsphereObject Object { get; }
@@ -41,14 +121,14 @@ public class ServiceFilterGroup
 
     public Item[]? Items { get; private set; }
 
-    public Dictionary<ISymbol, Item>? SymbolToItem { get; private set; }
+    public Dictionary<NetServiceFilterAttributeMock, Item>? AttributeToItem { get; private set; }
 
     public void CheckAndPrepare()
     {
         var errorFlag = false;
         var filterList = this.ServiceFilter.FilterList;
         var items = new Item[filterList.Count];
-        var dictionary = new Dictionary<ISymbol, Item>();
+        var dictionary = new Dictionary<NetServiceFilterAttributeMock, Item>();
         for (var i = 0; i < filterList.Count; i++)
         {
             var obj = this.Object.Body.Add(filterList[i].FilterType!);
@@ -66,10 +146,16 @@ public class ServiceFilterGroup
                 callContextObject = filterObject.Generics_Arguments[0];
             }
 
-            var item = new Item(obj, callContextObject, this.Object.Identifier.GetIdentifier());
+            string? argument = null;
+            if (!string.IsNullOrEmpty(filterList[i].Arguments))
+            {
+                argument = filterList[i].Arguments;
+            }
+
+            var item = new Item(obj, callContextObject, this.Object.Identifier.GetIdentifier(), argument, filterList[i].Order);
             items[i] = item;
 
-            dictionary[filterList[i].FilterType!] = item;
+            dictionary[filterList[i]] = item;
         }
 
         if (errorFlag)
@@ -80,18 +166,18 @@ public class ServiceFilterGroup
         if (items.Length > 0)
         {
             this.Items = items;
-            this.SymbolToItem = dictionary;
+            this.AttributeToItem = dictionary;
         }
     }
 
-    public Item? GetIdentifier(ISymbol? symbol)
+    public Item? GetIdentifier(NetServiceFilterAttributeMock? filterAttribute)
     {
-        if (this.SymbolToItem == null || symbol == null)
+        if (this.AttributeToItem == null || filterAttribute == null)
         {
             return null;
         }
 
-        if (this.SymbolToItem.TryGetValue(symbol, out var identifier))
+        if (this.AttributeToItem.TryGetValue(filterAttribute, out var identifier))
         {
             return identifier;
         }
@@ -108,47 +194,7 @@ public class ServiceFilterGroup
 
         foreach (var x in this.Items)
         {
-            ssb.AppendLine($"private {x.Object.FullName} {x.Identifier};");
-        }
-    }
-
-    public void GenerateInitialize(ScopingStringBuilder ssb, string context)
-    {
-        if (this.Items == null)
-        {
-            return;
-        }
-
-        foreach (var x in this.Items)
-        {
-            var hasDefaultConstructor = false;
-            foreach (var a in x.Object.GetMembers(VisceralTarget.Method))
-            {
-                if (a.Method_IsConstructor && a.ContainingObject == x.Object)
-                {// Constructor
-                    if (a.Method_Parameters.Length == 0)
-                    {
-                        hasDefaultConstructor = true;
-                        break;
-                    }
-                }
-            }
-
-            string newInstance;
-            if (hasDefaultConstructor)
-            {
-                newInstance = $"new {x.Object.FullName}()";
-            }
-            else
-            {
-                newInstance = $"{context}.ServiceProvider.GetService(typeof({x.Object.FullName}))!";
-            }
-
-            ssb.AppendLine($"this.{x.Identifier} = ({x.Object.FullName}){context}.ServiceFilters.GetOrAdd(typeof({x.Object.FullName}), x => (IServiceFilter){newInstance});");
-            using (var scopeNull = ssb.ScopeBrace($"if (this.{x.Identifier} == null)"))
-            {
-                ssb.AppendLine($"throw new InvalidOperationException($\"Could not create an instance of the net filter '{x.Object.FullName}'.\");");
-            }
+            ssb.AppendLine($"private {x.Object.FullName}? {x.Identifier};");
         }
     }
 

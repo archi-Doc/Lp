@@ -4,6 +4,9 @@ namespace Netsphere;
 
 public interface IServiceFilterBase
 {
+    public void SetArguments(object[] args)
+    {
+    }
 }
 
 public interface IServiceFilter : IServiceFilterBase

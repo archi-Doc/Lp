@@ -12,7 +12,7 @@ public class ServerContext
 
     public IServiceProvider ServiceProvider { get; internal set; } = default!;
 
-    public ConcurrentDictionary<Type, IServiceFilterBase> ServiceFilters { get; } = new();
+    // public ConcurrentDictionary<Type, IServiceFilterBase> ServiceFilters { get; } = new();
 }
 
 /*public class ServiceContext : ServiceContext<ServiceContext>
