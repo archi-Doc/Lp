@@ -107,7 +107,7 @@ public class NetService
         }
 
         var context = this.NewCallContext();
-        context.Initialize(this.ServerContext, rent.Received.IncrementAndShare());
+        context.Initialize(this.ServerContext, rent.Received.IncrementAndShare(), rent.DataId);
         CallContext.CurrentCallContext.Value = context;
         try
         {

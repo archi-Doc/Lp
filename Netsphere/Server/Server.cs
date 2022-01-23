@@ -21,6 +21,8 @@ public class Server
     public async Task Process(ServerTerminal terminal)
     {
         this.NetTerminal = terminal;
+        this.NetTerminal.SetMaximumResponseTime(1000);
+
         while (!this.NetTerminal.IsClosed)
         {
             (var operation, var received) = await terminal.ReceiveAsync().ConfigureAwait(false);

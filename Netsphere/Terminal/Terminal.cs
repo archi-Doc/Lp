@@ -413,8 +413,6 @@ public class Terminal
         }
     }
 
-    public NetTerminal.GoshujinClass NetTerminals => this.terminals;
-
     internal ISimpleLogger? TerminalLogger { get; private set; }
 
     internal ECDiffieHellman NodePrivateECDH { get; private set; } = default!;
