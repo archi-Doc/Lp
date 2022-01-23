@@ -46,11 +46,14 @@ internal partial class PacketEncryptResponse : IPacket
     }
 
     [Key(0)]
-    public NodeAddress? HandOver { get; set; }
+    public ulong Salt2 { get; set; }
 
     [Key(1)]
-    public bool CanRelay { get; set; }
+    public NodeAddress? Handover { get; set; }
 
     [Key(2)]
+    public bool CanRelay { get; set; }
+
+    [Key(3)]
     public ushort EnsuredReceiverNumber { get; set; }
 }

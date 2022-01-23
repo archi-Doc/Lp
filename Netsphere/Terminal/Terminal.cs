@@ -294,6 +294,7 @@ public class Terminal
             packet.NodeInformation.SetIPEndPoint(endpoint);
 
             var response = new PacketEncryptResponse();
+            response.Salt2 = LP.Random.Crypto.NextUInt64();
             var firstGene = header.Gene;
             var secondGene = GenePool.NextGene(header.Gene);
             PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var sendOwner);
@@ -302,7 +303,7 @@ public class Terminal
             var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(terminal, firstGene, owner, secondGene, sendOwner);
 
             terminal.GenePool.GetSequential();
-            terminal.CreateEmbryo(packet.Salt);
+            terminal.CreateEmbryo(packet.Salt, response.Salt2);
             terminal.SetReceiverNumber();
             if (this.createServerDelegate != null)
             {
