@@ -11,6 +11,11 @@ public interface IServiceFilterBase
 
 public interface IServiceFilter : IServiceFilterBase
 {
+    public void Invoke(CallContext context, Action<CallContext> invoker);
+}
+
+public interface IServiceFilterAsync : IServiceFilterBase
+{
     public Task Invoke(CallContext context, Func<CallContext, Task> invoker);
 }
 

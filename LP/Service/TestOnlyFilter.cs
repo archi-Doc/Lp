@@ -4,7 +4,7 @@ using Netsphere;
 
 namespace LP.Services;
 
-public class TestOnlyFilter : IServiceFilter
+public class TestOnlyFilter : IServiceFilterAsync
 {
     public TestOnlyFilter(NetBase netBase)
     {

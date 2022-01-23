@@ -21,13 +21,14 @@ public class ServiceFilterGroup
 
     public class Item
     {
-        public Item(NetsphereObject obj, NetsphereObject? callContextObject, string identifier, string? argument, int order)
+        public Item(NetsphereObject obj, NetsphereObject? callContextObject, string identifier, string? argument, int order, bool isAsync)
         {
             this.Object = obj;
             this.CallContextObject = callContextObject;
             this.Identifier = identifier;
             this.Arguments = argument;
             this.Order = order;
+            this.IsAsync = isAsync;
         }
 
         public NetsphereObject Object { get; private set; }
@@ -39,6 +40,8 @@ public class ServiceFilterGroup
         public string? Arguments { get; private set; }
 
         public int Order { get; private set; }
+
+        public bool IsAsync { get; private set; }
     }
 
     public static Item[]? FromClassAndMethod(ServiceFilterGroup? classFilters, ServiceFilterGroup? methodFilters)
@@ -132,7 +135,8 @@ public class ServiceFilterGroup
         for (var i = 0; i < filterList.Count; i++)
         {
             var obj = this.Object.Body.Add(filterList[i].FilterType!);
-            var filterObject = obj == null ? null : this.GetFilterObject(obj);
+            bool isAsync = false;
+            var filterObject = obj == null ? null : this.GetFilterObject(obj, out isAsync);
             if (obj == null || filterObject == null)
             {
                 this.Object.Body.AddDiagnostic(NetsphereBody.Error_FilterTypeNotDerived, filterList[i].Location);
@@ -152,7 +156,7 @@ public class ServiceFilterGroup
                 argument = filterList[i].Arguments;
             }
 
-            var item = new Item(obj, callContextObject, this.Object.Identifier.GetIdentifier(), argument, filterList[i].Order);
+            var item = new Item(obj, callContextObject, this.Object.Identifier.GetIdentifier(), argument, filterList[i].Order, isAsync);
             items[i] = item;
 
             dictionary[filterList[i]] = item;
@@ -198,8 +202,9 @@ public class ServiceFilterGroup
         }
     }
 
-    private NetsphereObject? GetFilterObject(NetsphereObject obj)
+    private NetsphereObject? GetFilterObject(NetsphereObject obj, out bool isAsync)
     {
+        isAsync = false;
         foreach (var x in obj.AllInterfaceObjects)
         {
             if (x.Generics_IsGeneric)
@@ -208,11 +213,21 @@ public class ServiceFilterGroup
                 {
                     return x;
                 }
+                else if (x.OriginalDefinition?.FullName == NetsphereBody.ServiceFilterAsyncFullName2)
+                {
+                    isAsync = true;
+                    return x;
+                }
             }
             else
             {// Not generic
                 if (x.FullName == NetsphereBody.ServiceFilterFullName)
                 {
+                    return x;
+                }
+                else if (x.FullName == NetsphereBody.ServiceFilterAsyncFullName)
+                {
+                    isAsync = true;
                     return x;
                 }
             }

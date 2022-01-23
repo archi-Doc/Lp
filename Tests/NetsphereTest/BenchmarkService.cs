@@ -58,7 +58,7 @@ public class TestFilterB : TestFilter
     }
 }
 
-public class TestFilter : IServiceFilter
+public class TestFilter : IServiceFilterAsync
 {
     public async Task Invoke(CallContext context, Func<CallContext, Task> invoker)
     {
@@ -66,7 +66,7 @@ public class TestFilter : IServiceFilter
     }
 }
 
-public class NullFilter : IServiceFilter
+public class NullFilter : IServiceFilterAsync
 {
     public async Task Invoke(CallContext context, Func<CallContext, Task> next)
     {
@@ -74,7 +74,7 @@ public class NullFilter : IServiceFilter
     }
 }
 
-public class TestFilter2 : IServiceFilter
+public class TestFilter2 : IServiceFilterAsync
 {
     public async Task Invoke(CallContext context, Func<CallContext, Task> next)
     {

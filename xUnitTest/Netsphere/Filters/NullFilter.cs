@@ -4,7 +4,7 @@ using Netsphere;
 
 namespace xUnitTest.Netsphere;
 
-public class NullFilter : IServiceFilter
+public class NullFilter : IServiceFilterAsync
 {
     public async Task Invoke(CallContext context, Func<CallContext, Task> invoker)
     {

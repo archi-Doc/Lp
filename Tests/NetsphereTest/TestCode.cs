@@ -29,28 +29,34 @@ public interface ICustomService : INetService
 public interface ICustomService2 : INetService
 {
     public NetTask Test();
+
+    public NetTask AsyncSync();
 }
 
 [NetServiceObject]
 [NetServiceFilter(typeof(CustomFilter), Order = 0)]
 public class CustomService : ICustomService, ICustomService2
 {
-    [NetServiceFilter(typeof(CustomFilter2), Arguments = new object[] { 1, 2, new string?[] { "te" }, 3 })]
+    [NetServiceFilter(typeof(CustomFilterAsync), Arguments = new object[] { 1, 2, new string?[] { "te" }, 3 })]
     async NetTask ICustomService.Test()
     {
         var serverContext = TestCallContext.Current;
     }
 
-    [NetServiceFilter(typeof(CustomFilter), Order = 0)]
-    [NetServiceFilter(typeof(CustomFilter2), Arguments = new object[] { 9, })]
+    [NetServiceFilter(typeof(CustomFilterAsync), Arguments = new object[] { 9, })]
 
     public async NetTask Test()
     {
         var serverContext = TestCallContext.Current;
     }
+
+    [NetServiceFilter(typeof(CustomFilterAsync), Order = -1)]
+    public async NetTask AsyncSync()
+    {
+    }
 }
 
-public class CustomFilter : IServiceFilter
+public class CustomFilterAsync : IServiceFilterAsync
 {
     public async Task Invoke(CallContext context, Func<CallContext, Task> invoker)
     {
@@ -58,9 +64,18 @@ public class CustomFilter : IServiceFilter
     }
 }
 
-public class CustomFilter2 : IServiceFilter
+public class CustomFilter : IServiceFilter
 {
-    public async Task Invoke(CallContext context, Func<CallContext, Task> invoker)
+    public void Invoke(CallContext context, Action<CallContext> invoker)
+    {
+        if (context is not TestCallContext testContext)
+        {
+            throw new NetException(NetResult.NoCallContext);
+        }
+
+        invoker(context);
+    }
+    /*public async Task Invoke(CallContext context, Func<CallContext, Task> invoker)
     {
         if (context is not TestCallContext testContext)
         {
@@ -68,7 +83,7 @@ public class CustomFilter2 : IServiceFilter
         }
 
         await invoker(context);
-    }
+    }*/
 
     public void SetArguments(object[] args)
     {

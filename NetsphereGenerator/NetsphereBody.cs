@@ -29,6 +29,8 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
     public const string NetServiceBaseFullName2 = "Netsphere.NetServiceBase<TServerContext>";
     public const string ServiceFilterFullName = "Netsphere.IServiceFilter";
     public const string ServiceFilterFullName2 = "Netsphere.IServiceFilter<TCallContext>";
+    public const string ServiceFilterAsyncFullName = "Netsphere.IServiceFilterAsync";
+    public const string ServiceFilterAsyncFullName2 = "Netsphere.IServiceFilterAsync<TCallContext>";
     public const string ServiceFilterBaseName = "IServiceFilterBase";
     public const string ServiceFilterInvokeName = "Invoke";
     public const string ServiceFilterSetArgumentsName = "SetArguments";
@@ -82,7 +84,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
         category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
     public static readonly DiagnosticDescriptor Error_FilterTypeNotDerived = new DiagnosticDescriptor(
-        id: "NSG013", title: "FilterType not derived", messageFormat: "Service filter must implement 'IServiceFilter'",
+        id: "NSG013", title: "FilterType not derived", messageFormat: "Service filter must implement 'IServiceFilter' or 'IServiceFilterAsync'",
         category: GeneratorName, DiagnosticSeverity.Error, isEnabledByDefault: true);
 
     public NetsphereBody(SourceProductionContext context)
