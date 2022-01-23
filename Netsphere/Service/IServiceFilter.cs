@@ -14,8 +14,9 @@ public interface IServiceFilter : IServiceFilterBase
     public Task Invoke(CallContext context, Func<CallContext, Task> invoker);
 }
 
-public interface IServiceFilter<TCallContext> : IServiceFilterBase
+// Currently disabled.
+/*public interface IServiceFilter<TCallContext> : IServiceFilterBase
     where TCallContext : CallContext
 {
     public Task Invoke(TCallContext context, Func<TCallContext, Task> invoker);
-}
+}*/

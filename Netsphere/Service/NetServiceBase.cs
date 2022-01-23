@@ -2,6 +2,7 @@
 
 namespace Netsphere;
 
+// Currently disabled.
 /*public class NetServiceBase
 {
     public ServerContext Context { get; set; } = default!;

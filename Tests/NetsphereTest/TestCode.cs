@@ -58,10 +58,15 @@ public class CustomFilter : IServiceFilter
     }
 }
 
-public class CustomFilter2 : IServiceFilter<TestCallContext>
+public class CustomFilter2 : IServiceFilter
 {
-    public async Task Invoke(TestCallContext context, Func<TestCallContext, Task> invoker)
+    public async Task Invoke(CallContext context, Func<CallContext, Task> invoker)
     {
+        if (context is not TestCallContext testContext)
+        {
+            throw new NetException(NetResult.NoCallContext);
+        }
+
         await invoker(context);
     }
 
