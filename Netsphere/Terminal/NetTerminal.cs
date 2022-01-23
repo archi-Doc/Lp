@@ -127,6 +127,26 @@ public partial class NetTerminal : IDisposable
         this.Terminal.AddRawSend(this.Endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
     }
 
+    internal bool TryFastSend(NetInterface netInterface)
+    {
+        if (netInterface.SendGenes != null && netInterface.SendGenes.Length == 1)
+        {
+            lock (this.SyncObject)
+            {
+                var sendCapacity = 1;
+                var udp = this.Terminal.NetSocket.GetUdpClient(); // tempcode, deadlock
+                if (udp != null)
+                {
+                    netInterface.ProcessSend(udp, Mics.GetSystem(), ref sendCapacity);
+                }
+
+                this.Terminal.NetSocket.ReleaseUdpClient();
+            }
+        }
+
+        return false;
+    }
+
     internal void ProcessSend(UdpClient udp, long currentMics)
     {
         lock (this.SyncObject)

@@ -175,6 +175,17 @@ public class NetSocket
         }
     }
 
+    internal UdpClient? GetUdpClient()
+    {// tempcode
+        Monitor.Enter(this.udpSync);
+        return this.udpClient;
+    }
+
+    internal void ReleaseUdpClient()
+    {
+        Monitor.Exit(this.udpSync);
+    }
+
     private void PrepareUdpClient(int port)
     {
         var udp = new UdpClient(port);

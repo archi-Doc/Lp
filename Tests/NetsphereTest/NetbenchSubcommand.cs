@@ -30,7 +30,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         using (var terminal = this.NetControl.Terminal.Create(node))
         {
             // await this.BenchLargeData(terminal);
-            // await this.PingpongSmallData(terminal);
+            await this.PingpongSmallData(terminal);
 
             var service = terminal.GetService<IBenchmarkService>();
 
@@ -41,14 +41,12 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
             // var tt = await service.Wait(100).ResponseAsync;
             // Console.WriteLine(tt.ToString());
 
-            var w1 = service.Wait(200);
+            /*var w1 = service.Wait(200);
             var w2 = service.Wait(200);
             var w3 = service.Wait(200);
             w1.ResponseAsync.Wait();
             w2.ResponseAsync.Wait();
-            w3.ResponseAsync.Wait();
-
-            // ThreadCore.Root.Sleep(10000);
+            w3.ResponseAsync.Wait();*/
         }
 
         // await this.MassiveSmallData(node);
@@ -71,8 +69,8 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
     }
 
     private async Task PingpongSmallData(ClientTerminal terminal)
-    {
-        const int N = 200;
+    {// 680ms
+        const int N = 20;
         var service = terminal.GetService<IBenchmarkService>();
         var data = new byte[100];
 
