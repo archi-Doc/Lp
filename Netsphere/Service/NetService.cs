@@ -111,7 +111,7 @@ public class NetService
         CallContext.CurrentCallContext.Value = context;
         try
         {
-            await serviceMethod.Invoke(serviceMethod.ServerInstance!, context);
+            await serviceMethod.Invoke(serviceMethod.ServerInstance!, context).ConfigureAwait(false);
             try
             {
                 if (context.Result == NetResult.Success)

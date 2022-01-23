@@ -209,7 +209,7 @@ public class ServiceFilterGroup
         {
             if (x.Generics_IsGeneric)
             {// Generic
-                if (x.OriginalDefinition?.FullName == NetsphereBody.ServiceFilterFullName2)
+                if (x.OriginalDefinition?.FullName == NetsphereBody.ServiceFilterSyncFullName2)
                 {
                     return x;
                 }
@@ -221,7 +221,7 @@ public class ServiceFilterGroup
             }
             else
             {// Not generic
-                if (x.FullName == NetsphereBody.ServiceFilterFullName)
+                if (x.FullName == NetsphereBody.ServiceFilterSyncFullName)
                 {
                     return x;
                 }

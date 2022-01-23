@@ -27,10 +27,10 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
     public const string NetResultFullName = "Netsphere.NetResult";
     public const string NetServiceBaseFullName = "Netsphere.NetServiceBase";
     public const string NetServiceBaseFullName2 = "Netsphere.NetServiceBase<TServerContext>";
-    public const string ServiceFilterFullName = "Netsphere.IServiceFilter";
-    public const string ServiceFilterFullName2 = "Netsphere.IServiceFilter<TCallContext>";
-    public const string ServiceFilterAsyncFullName = "Netsphere.IServiceFilterAsync";
-    public const string ServiceFilterAsyncFullName2 = "Netsphere.IServiceFilterAsync<TCallContext>";
+    public const string ServiceFilterSyncFullName = "Netsphere.IServiceFilterSync";
+    public const string ServiceFilterSyncFullName2 = "Netsphere.IServiceFilterSync<TCallContext>";
+    public const string ServiceFilterAsyncFullName = "Netsphere.IServiceFilter";
+    public const string ServiceFilterAsyncFullName2 = "Netsphere.IServiceFilter<TCallContext>";
     public const string ServiceFilterBaseName = "IServiceFilterBase";
     public const string ServiceFilterInvokeName = "Invoke";
     public const string ServiceFilterSetArgumentsName = "SetArguments";

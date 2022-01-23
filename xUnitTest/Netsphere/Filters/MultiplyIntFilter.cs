@@ -5,7 +5,7 @@ using Tinyhand;
 
 namespace xUnitTest.Netsphere;
 
-public class MultiplyIntFilter : IServiceFilterAsync
+public class MultiplyIntFilter : IServiceFilter
 {
     public async Task Invoke(CallContext context, Func<CallContext, Task> invoker)
     {
