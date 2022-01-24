@@ -78,6 +78,8 @@ public partial class NetTerminal : IDisposable
 
     public Terminal Terminal { get; }
 
+    public AsyncManualResetEvent ReceiveEvent { get; } = new();
+
     public FlowControl FlowControl { get; }
 
     public bool IsEncrypted => this.embryo != null;

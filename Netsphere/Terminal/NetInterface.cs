@@ -448,7 +448,10 @@ WaitForSendCompletionWait:
             try
             {
                 var ct = this.Terminal.Core?.CancellationToken ?? CancellationToken.None;
-                await Task.Delay(NetInterface.IntervalInMilliseconds, ct).ConfigureAwait(false);
+                await Task.WhenAny(this.NetTerminal.ReceiveEvent.Task, Task.Delay(NetInterface.IntervalInMilliseconds, ct)).ConfigureAwait(false);
+                this.NetTerminal.ReceiveEvent.Reset();
+                // await this.NetTerminal.ReceiveEvent.Task.WaitAsync(TimeSpan.FromMilliseconds(NetInterface.IntervalInMilliseconds), ct).ConfigureAwait(false);
+                // await Task.Delay(NetInterface.IntervalInMilliseconds, ct).ConfigureAwait(false);
             }
             catch
             {
@@ -723,6 +726,7 @@ WaitForSendCompletionWait:
             {// Receive data
                 if (gene.Receive(header.Id, owner, currentMics))
                 {// Received.
+                    this.NetTerminal.ReceiveEvent.Set(); // tempcode
                     this.TerminalLogger?.Information($"Recv data: {header.Id} {gene.ToString()}");
                 }
             }
