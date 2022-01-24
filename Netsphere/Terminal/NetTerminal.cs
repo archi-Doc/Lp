@@ -136,7 +136,6 @@ public partial class NetTerminal : IDisposable
             lock (this.SyncObject)
             {
                 var sendCapacity = 1;
-                var udp = this.Terminal.NetSocket.GetUdpClient(); // tempcode, deadlock
                 if (udp != null)
                 {
                     netInterface.ProcessSend(udp, Mics.GetSystem(), ref sendCapacity);

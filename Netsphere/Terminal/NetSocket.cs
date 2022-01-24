@@ -175,17 +175,6 @@ public class NetSocket
         }
     }
 
-    internal UdpClient? GetUdpClient()
-    {// tempcode
-        Monitor.Enter(this.udpSync);
-        return this.udpClient;
-    }
-
-    internal void ReleaseUdpClient()
-    {
-        Monitor.Exit(this.udpSync);
-    }
-
     private void PrepareUdpClient(int port)
     {
         var udp = new UdpClient(port);
@@ -214,8 +203,6 @@ public class NetSocket
     private Terminal terminal;
     private NetSocketRecvCore? recvCore;
     private NetSocketSendCore? sendCore;
-    private object udpSync = new(); // sync object for UpdClient.
-    private UdpClient? udpClient;
 
     private Stopwatch Stopwatch { get; } = new();
 }

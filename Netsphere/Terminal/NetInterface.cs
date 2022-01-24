@@ -151,7 +151,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         }
 
         netTerminal.Add(netInterface);
-        // netTerminal.TryFastSend(netInterface);
+        netTerminal.TryFastSend(netInterface);
         return netInterface;
     }
 

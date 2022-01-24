@@ -7,11 +7,11 @@ namespace LP;
 
 public class AsyncManualResetEvent
 {
-    private volatile TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+    private volatile TaskCompletionSource tcs = new TaskCompletionSource();
 
     public Task Task => this.tcs.Task;
 
-    public void Set() => this.tcs.TrySetResult(true);
+    public void Set() => this.tcs.TrySetResult();
 
     public void Reset()
     {
@@ -19,7 +19,7 @@ public class AsyncManualResetEvent
         {
             var tcs = this.tcs;
             if (!tcs.Task.IsCompleted ||
-                Interlocked.CompareExchange(ref this.tcs, new TaskCompletionSource<bool>(), tcs) == tcs)
+                Interlocked.CompareExchange(ref this.tcs, new TaskCompletionSource(), tcs) == tcs)
             {
                 return;
             }
