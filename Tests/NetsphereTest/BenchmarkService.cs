@@ -74,7 +74,7 @@ public class NullFilter : IServiceFilter
     }
 }
 
-public class TestFilter2 : IServiceFilter<CallContext>
+public class TestFilter2 : IServiceFilter
 {
     public async Task Invoke(CallContext context, Func<CallContext, Task> next)
     {

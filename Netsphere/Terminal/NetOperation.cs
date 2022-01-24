@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Netsphere;
 
-internal abstract class NetOperation : IDisposable
+public abstract class NetOperation : IDisposable
 {
     internal NetOperation(NetTerminal netTerminal)
     {

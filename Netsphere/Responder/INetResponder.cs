@@ -14,11 +14,11 @@ public abstract class NetResponder<TSend, TReceive> : INetResponder
 
     public virtual TReceive? Respond(TSend value) => default;
 
-    public bool Respond(ServerTerminal terminal, NetReceivedData received)
+    public bool Respond(ServerOperation operation, NetReceivedData received)
     {
         if (!TinyhandSerializer.TryDeserialize<TSend>(received.Received.Memory, out var t))
         {
-            var emptyTask = terminal.SendEmpty();
+            var emptyTask = operation.SendEmpty();
             return false;
         }
 
@@ -28,7 +28,7 @@ public abstract class NetResponder<TSend, TReceive> : INetResponder
             return false;
         }
 
-        var task = terminal.SendAsync(response);
+        var task = operation.SendAsync(response);
         return true;
     }
 }
@@ -37,5 +37,5 @@ public interface INetResponder
 {
     public ulong GetDataId();
 
-    public bool Respond(ServerTerminal terminal, NetReceivedData received);
+    public bool Respond(ServerOperation operation, NetReceivedData received);
 }

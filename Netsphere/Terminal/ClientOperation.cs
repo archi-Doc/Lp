@@ -53,7 +53,7 @@ internal class ClientOperation : NetOperation
                 return response.Result;
             }
 
-            return this.NetTerminal.CreateEmbryo(p.Salt);
+            return this.NetTerminal.CreateEmbryo(p.Salt, response.Value!.Salt2);
         }
         finally
         {

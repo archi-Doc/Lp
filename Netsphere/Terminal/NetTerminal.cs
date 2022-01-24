@@ -78,6 +78,8 @@ public partial class NetTerminal : IDisposable
 
     public Terminal Terminal { get; }
 
+    public AsyncManualResetEvent ReceiveEvent { get; } = new();
+
     public FlowControl FlowControl { get; }
 
     public bool IsEncrypted => this.embryo != null;
@@ -125,6 +127,25 @@ public partial class NetTerminal : IDisposable
         }
 
         this.Terminal.AddRawSend(this.Endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
+    }
+
+    internal bool TryFastSend(NetInterface netInterface)
+    {
+        if (netInterface.SendGenes != null && netInterface.SendGenes.Length == 1)
+        {
+            lock (this.SyncObject)
+            {
+                var sendCapacity = 1;
+                if (udp != null)
+                {
+                    netInterface.ProcessSend(udp, Mics.GetSystem(), ref sendCapacity);
+                }
+
+                this.Terminal.NetSocket.ReleaseUdpClient();
+            }
+        }
+
+        return false;
     }
 
     internal void ProcessSend(UdpClient udp, long currentMics)
@@ -202,7 +223,7 @@ public partial class NetTerminal : IDisposable
 
     internal ISimpleLogger? TerminalLogger => this.Terminal.TerminalLogger;
 
-    internal NetResult CreateEmbryo(ulong salt)
+    internal NetResult CreateEmbryo(ulong salt, ulong salt2)
     {
         if (this.NodeInformation == null)
         {
@@ -222,15 +243,19 @@ public partial class NetTerminal : IDisposable
                 return NetResult.NoNodeInformation;
             }
 
-            // ulong Salt, byte[] material, ulong Salt
+            // ulong Salt, Salt2, byte[] material, ulong Salt, Salt2
             var material = this.Terminal.NodePrivateECDH.DeriveKeyMaterial(ecdh.PublicKey);
-            Span<byte> buffer = stackalloc byte[sizeof(ulong) + NodeKey.PrivateKeySize + sizeof(ulong)];
+            Span<byte> buffer = stackalloc byte[sizeof(ulong) + sizeof(ulong) + NodeKey.PrivateKeySize + sizeof(ulong) + sizeof(ulong)];
             var span = buffer;
             BitConverter.TryWriteBytes(span, salt);
+            span = span.Slice(sizeof(ulong));
+            BitConverter.TryWriteBytes(span, salt2);
             span = span.Slice(sizeof(ulong));
             material.AsSpan().CopyTo(span);
             span = span.Slice(NodeKey.PrivateKeySize);
             BitConverter.TryWriteBytes(span, salt);
+            span = span.Slice(sizeof(ulong));
+            BitConverter.TryWriteBytes(span, salt2);
 
             var sha = Hash.Sha3_384Pool.Get();
             this.embryo = sha.GetHash(buffer);

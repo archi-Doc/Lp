@@ -203,8 +203,6 @@ public class NetSocket
     private Terminal terminal;
     private NetSocketRecvCore? recvCore;
     private NetSocketSendCore? sendCore;
-    private object udpSync = new(); // sync object for UpdClient.
-    private UdpClient? udpClient;
 
     private Stopwatch Stopwatch { get; } = new();
 }

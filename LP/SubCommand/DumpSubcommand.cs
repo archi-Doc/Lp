@@ -26,8 +26,6 @@ public class DumpSubcommand : ISimpleCommand<DumpOptions>
 
         if (string.Compare("bytearraypool", target, true) == 0)
         {
-            var arrayOwner = BlockPool.Rent(123);
-            arrayOwner.Return();
             BlockPool.Dump(logger);
         }
         else

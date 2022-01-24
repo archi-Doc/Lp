@@ -106,7 +106,7 @@ public class Terminal
         Radio.Open<Message.Start>(this.Start);
         Radio.Open<Message.Stop>(this.Stop);
 
-        this.netSocket = new(this);
+        this.NetSocket = new(this);
     }
 
     public void Start(Message.Start message)
@@ -118,7 +118,7 @@ public class Terminal
             this.Port = this.NetBase.NetsphereOptions.Port;
         }
 
-        if (!this.netSocket.TryStart(this.Core, this.Port))
+        if (!this.NetSocket.TryStart(this.Core, this.Port))
         {
             message.Abort = true;
             return;
@@ -294,6 +294,7 @@ public class Terminal
             packet.NodeInformation.SetIPEndPoint(endpoint);
 
             var response = new PacketEncryptResponse();
+            response.Salt2 = LP.Random.Crypto.NextUInt64();
             var firstGene = header.Gene;
             var secondGene = GenePool.NextGene(header.Gene);
             PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var sendOwner);
@@ -302,7 +303,7 @@ public class Terminal
             var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(terminal, firstGene, owner, secondGene, sendOwner);
 
             terminal.GenePool.GetSequential();
-            terminal.CreateEmbryo(packet.Salt);
+            terminal.CreateEmbryo(packet.Salt, response.Salt2);
             terminal.SetReceiverNumber();
             if (this.createServerDelegate != null)
             {
@@ -413,14 +414,13 @@ public class Terminal
         }
     }
 
-    public NetTerminal.GoshujinClass NetTerminals => this.terminals;
-
     internal ISimpleLogger? TerminalLogger { get; private set; }
 
     internal ECDiffieHellman NodePrivateECDH { get; private set; } = default!;
 
+    internal NetSocket NetSocket { get; private set; }
+
     private CreateServerDelegate? createServerDelegate;
-    private NetSocket netSocket;
     private NetTerminal.GoshujinClass terminals = new();
     private ConcurrentDictionary<ulong, NetTerminalGene> inboundGenes = new();
     private ConcurrentQueue<RawSend> rawSends = new();

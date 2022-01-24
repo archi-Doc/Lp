@@ -677,6 +677,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
             var filters = ServiceFilterGroup.FromClassAndMethod(this.ClassFilters, methodFilters);
 
             var code = "Core(obj, c0)";
+            var previousAsync = true;
             if (filters != null)
             {
                 ssb.AppendLine($"var b = ({this.ClassName})obj;");
@@ -691,12 +692,33 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                     if (i != filters.Length)
                     {
                         var filterType = item.CallContextObject == null ? string.Empty : $"({item.CallContextObject.FullName})";
-                        code = $"b.{item.Identifier}!.{NetsphereBody.ServiceFilterInvokeName}({filterType}c0, c{n} => {code})";
+                        if (item.IsAsync == previousAsync)
+                        {
+                            code = $"b.{item.Identifier}!.{NetsphereBody.ServiceFilterInvokeName}({filterType}c0, c{n} => {code})";
+                        }
+                        else if (item.IsAsync)
+                        {
+                            code = $"b.{item.Identifier}!.{NetsphereBody.ServiceFilterInvokeName}({filterType}c0, async c{n} => {code})";
+                        }
+                        else
+                        {
+                            code = $"b.{item.Identifier}!.{NetsphereBody.ServiceFilterInvokeName}({filterType}c0, c{n} => {code}.Wait())";
+                        }
+
+                        previousAsync = item.IsAsync;
                     }
                 }
             }
 
-            ssb.AppendLine($"await {code};");
+            if (previousAsync)
+            {
+                ssb.AppendLine($"await {code}.ConfigureAwait(false);");
+            }
+            else
+            {
+                ssb.AppendLine($"{code};");
+            }
+
             ssb.AppendLine();
 
             using (var scopeCore = ssb.ScopeBrace("static async Task Core(object obj, CallContext context)"))
@@ -765,8 +787,8 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
         // task
         // ssb.AppendLine($"var task = (({serviceInterface.FullName})backend).{method.SimpleName}({method.GetTupleNames("value")});");
-        ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})(({this.ClassName})obj).impl).{method.SimpleName}({method.GetTupleNames("value")});");
-        // ssb.AppendLine($"{prefix}await task;");
+        ssb.AppendLine($"{prefix}await (({serviceInterface.FullName})(({this.ClassName})obj).impl).{method.SimpleName}({method.GetTupleNames("value")}).ValueAsync.ConfigureAwait(false);");
+        // ssb.AppendLine($"{prefix}await task.ValueAsync.ConfigureAwait(false);");
 
         /*if (method.ReturnObject == null)
         {

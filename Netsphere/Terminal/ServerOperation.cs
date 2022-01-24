@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Netsphere;
 
-internal class ServerOperation : NetOperation
+public class ServerOperation : NetOperation
 {
     internal ServerOperation(NetTerminal netTerminal)
         : base(netTerminal)
@@ -16,8 +16,39 @@ internal class ServerOperation : NetOperation
         this.receiverInterface = NetInterface<object, byte[]>.CreateReceive(this);
     }
 
+    public async Task<NetResult> SendEmpty()
+    {// Checked
+        return await this.SendDataAsync(0, Array.Empty<byte>()).ConfigureAwait(false);
+    }
+
+    public async Task<NetResult> SendDataAsync(ulong dataId, ByteArrayPool.MemoryOwner data)
+    {// Checked
+        return await this.SendDataAsync(true, PacketId.Data, dataId, data).ConfigureAwait(false);
+    }
+
+    public async Task<NetResult> SendDataAsync(ulong dataId, byte[] data)
+    {// Checked
+        return await this.SendDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data)).ConfigureAwait(false);
+    }
+
+    public async Task<NetResult> SendServiceAsync(ulong dataId, ByteArrayPool.MemoryOwner data)
+    {// Checked
+        return await this.SendDataAsync(true, PacketId.Rpc, dataId, data).ConfigureAwait(false);
+    }
+
     public unsafe void SendClose()
     {// Checked
+        if (this.NetTerminal.IsClosed)
+        {
+            return;
+        }
+
+        this.NetTerminal.IsClosed = true;
+        if (!this.NetTerminal.IsEncrypted)
+        {// Not encrypted (connected)
+            return;
+        }
+
         var netInterface = this.receiverInterface2 ?? this.receiverInterface;
         if (netInterface == null)
         {

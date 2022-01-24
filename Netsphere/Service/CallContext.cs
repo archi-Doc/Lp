@@ -28,7 +28,11 @@ public class CallContext
 
     public ByteArrayPool.MemoryOwner RentData;
 
-    public NetResult Result;
+    public NetResult Result { get; set; }
+
+    public ulong DataId { get; private set; }
+
+    public DateTime Timestamp { get; private set; }
 
     public ConcurrentDictionary<string, object> Items
     {
@@ -43,10 +47,12 @@ public class CallContext
         }
     }
 
-    internal void Initialize(ServerContext serviceContext, ByteArrayPool.MemoryOwner rentData)
+    internal void Initialize(ServerContext serviceContext, ByteArrayPool.MemoryOwner rentData, ulong dataId)
     {
         this.ServerContext = serviceContext;
         this.RentData = rentData;
+        this.DataId = dataId;
+        this.Timestamp = DateTime.UtcNow;
     }
 
     internal static AsyncLocal<CallContext?> CurrentCallContext = new();
