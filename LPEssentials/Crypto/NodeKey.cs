@@ -106,7 +106,7 @@ public partial class NodePrivateKey
 }
 
 [TinyhandObject]
-public partial class NodePublicKey
+public partial class NodePublicKey : IEquatable<NodePublicKey>
 {
     public NodePublicKey()
     {
@@ -119,8 +119,24 @@ public partial class NodePublicKey
     }
 
     [Key(0)]
-    public byte[] X { get; set; } = default!;
+    public byte[] X { get; set; } = Array.Empty<byte>();
 
     [Key(1)]
-    public byte[] Y { get; set; } = default!;
+    public byte[] Y { get; set; } = Array.Empty<byte>();
+
+    public bool Equals(NodePublicKey? other)
+    {
+        if (other == null)
+        {
+            return false;
+        }
+
+        return this.X.AsSpan().SequenceEqual(other.X) &&
+            this.Y.AsSpan().SequenceEqual(other.Y);
+    }
+
+    public override int GetHashCode()
+    {
+        return (int)(FarmHash.Hash64(this.X) ^ FarmHash.Hash64(this.Y));
+    }
 }
