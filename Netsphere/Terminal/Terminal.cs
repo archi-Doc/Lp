@@ -316,7 +316,7 @@ public class Terminal
                 terminal.GenePool.GetSequential();
                 terminal.CreateEmbryo(packet.Salt, response.Salt2);
                 terminal.SetReceiverNumber();
-                terminal.Add(netInterface); // Delay sending PacketEncryptResponse until receiver is ready.
+                terminal.Add(netInterface); // Delay sending PacketEncryptResponse until the receiver is ready.
                 if (this.invokeServerDelegate != null)
                 {
                     await this.invokeServerDelegate(terminal);
@@ -343,7 +343,7 @@ public class Terminal
     }
 
     internal void ProcessUnmanagedRecv_GetNodeInformation(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
-    {
+    {// Checked
         if (!TinyhandSerializer.TryDeserialize<PacketGetNodeInformation>(owner.Memory, out var packet))
         {
             return;
@@ -351,7 +351,7 @@ public class Terminal
 
         var response = new PacketGetNodeInformationResponse(this.NetStatus.GetMyNodeInformation(this.IsAlternative));
         var secondGene = GenePool.NextGene(header.Gene);
-        this.TerminalLogger?.Information($"GetNodeInformation Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
+        this.TerminalLogger?.Information($"GetNodeInformation Response {response.Node.PublicKeyX[0]}: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
         PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var packetOwner);
         this.AddRawSend(endpoint, packetOwner);

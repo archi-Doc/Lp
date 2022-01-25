@@ -440,7 +440,17 @@ WaitForSendCompletionWait:
 
             if (Mics.GetSystem() >= (this.NetTerminal.LastResponseMics + this.NetTerminal.MaximumResponseMics))
             {
-                this.TerminalLogger?.Information($"Receive timeout.");
+                if (this.TerminalLogger != null)
+                {
+                    string genes;
+                    lock (this.NetTerminal.SyncObject)
+                    {
+                        genes = this.RecvGenes == null ? string.Empty : string.Join(", ", this.RecvGenes.Select(x => x.Gene.To4Hex()));
+                    }
+
+                    this.TerminalLogger.Information($"Receive timeout ({genes}).");
+                }
+
                 return new NetReceivedData(NetResult.Timeout);
             }
 

@@ -14,21 +14,36 @@ public class NetStatus
 
     public NodeInformation GetMyNodeInformation(bool isAlternative)
     {
+        NodeInformation? nodeInformation;
         if (isAlternative)
         {
-            this.myNodeInformation.PublicKeyX = NodePrivateKey.AlternativePrivateKey.X;
-            this.myNodeInformation.PublicKeyY = NodePrivateKey.AlternativePrivateKey.Y;
+            if (this.alternativeNodeInformation == null)
+            {
+                this.alternativeNodeInformation = new(new NodeAddress(IPAddress.None, 0));
+                this.alternativeNodeInformation.PublicKeyX = NodePrivateKey.AlternativePrivateKey.X;
+                this.alternativeNodeInformation.PublicKeyY = NodePrivateKey.AlternativePrivateKey.Y;
+            }
+
+            nodeInformation = this.alternativeNodeInformation;
         }
         else
         {
-            this.myNodeInformation.PublicKeyX = this.NetBase.NodePublicKey.X;
-            this.myNodeInformation.PublicKeyY = this.NetBase.NodePublicKey.Y;
+            if (this.myNodeInformation == null)
+            {
+                this.myNodeInformation = new(new NodeAddress(IPAddress.None, 0));
+                this.myNodeInformation.PublicKeyX = this.NetBase.NodePublicKey.X;
+                this.myNodeInformation.PublicKeyY = this.NetBase.NodePublicKey.Y;
+            }
+
+            nodeInformation = this.myNodeInformation;
         }
 
-        return this.myNodeInformation;
+        return nodeInformation;
     }
 
     public NetBase NetBase { get; }
 
-    private NodeInformation myNodeInformation = new(new NodeAddress(IPAddress.None, 0));
+    private NodeInformation? myNodeInformation;
+
+    private NodeInformation? alternativeNodeInformation;
 }

@@ -255,6 +255,8 @@ public partial class NetTerminal : IDisposable
             var material = this.Terminal.NodePrivateECDH.DeriveKeyMaterial(ecdh.PublicKey);
             Cache.NodePublicKeyToECDH.Cache(key, ecdh);
 
+            // this.TerminalLogger?.Information($"Material {material[0]} ({salt.To4Hex()}/{salt2.To4Hex()}), {this.NodeInformation.PublicKeyX[0]}, {this.Terminal.NodePrivateKey.X[0]}");
+
             // ulong Salt, Salt2, byte[] material, ulong Salt, Salt2
             Span<byte> buffer = stackalloc byte[sizeof(ulong) + sizeof(ulong) + NodeKey.PrivateKeySize + sizeof(ulong) + sizeof(ulong)];
             var span = buffer;
@@ -273,7 +275,7 @@ public partial class NetTerminal : IDisposable
             Hash.Sha3_384Pool.Return(sha);
 
             this.GenePool.SetEmbryo(this.embryo);
-            this.TerminalLogger?.Information($"First gene {this.GenePool.GetSequential().To4Hex()}");
+            this.TerminalLogger?.Information($"First gene {this.GenePool.GetSequential().To4Hex()} ({salt.To4Hex()}/{salt2.To4Hex()})");
 
             // Aes
             this.aes = Aes.Create();
