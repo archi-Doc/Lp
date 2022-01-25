@@ -231,7 +231,7 @@ public class Terminal
         {// NetTerminalGene is found.
             gene.NetInterface.ProcessReceive(owner, endPoint, ref header, currentMics, gene);
         }
-        else if (this.NetBase.EnableServer)
+        else
         {
             this.ProcessUnmanagedRecv(owner, endPoint, ref header);
         }
@@ -252,7 +252,7 @@ public class Terminal
         {
             this.ProcessUnmanagedRecv_Punch(owner, endpoint, ref header);
         }
-        else if (header.Id == PacketId.Encrypt)
+        else if (header.Id == PacketId.Encrypt && this.NetBase.EnableServer)
         {
             this.ProcessUnmanagedRecv_Encrypt(owner, endpoint, ref header);
         }

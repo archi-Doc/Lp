@@ -74,7 +74,11 @@ public class NetControl
         netBase.AllowUnsafeConnection = allowUnsafeConnection;
 
         var netControl = containerInstance.Resolve<NetControl>();
-        netControl.SetupServer(newServerContext, newCallContext);
+        if (enableServer)
+        {
+            netControl.SetupServer(newServerContext, newCallContext);
+        }
+
         Logger.Configure(null);
         Radio.Send(new Message.Configure());
         var message = new Message.Start(ThreadCore.Root);
