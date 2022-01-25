@@ -447,7 +447,7 @@ WaitForSendCompletionWait:
             try
             {
                 var ct = this.Terminal.Core?.CancellationToken ?? CancellationToken.None;
-                await Task.WhenAny(this.NetTerminal.ReceiveEvent.Task, Task.Delay(NetInterface.IntervalInMilliseconds, ct)).ConfigureAwait(false);
+                await Task.WhenAny(this.NetTerminal.ReceiveEvent.AsTask, Task.Delay(NetInterface.IntervalInMilliseconds, ct)).ConfigureAwait(false);
                 this.NetTerminal.ReceiveEvent.Reset();
                 // await this.NetTerminal.ReceiveEvent.Task.WaitAsync(TimeSpan.FromMilliseconds(NetInterface.IntervalInMilliseconds), ct).ConfigureAwait(false);
                 // await Task.Delay(NetInterface.IntervalInMilliseconds, ct).ConfigureAwait(false);
@@ -462,6 +462,38 @@ WaitForSendCompletionWait:
     }
 
     internal ISimpleLogger? TerminalLogger => this.Terminal.TerminalLogger;
+
+    protected bool IsReceiveComplete()
+    {
+        if (this.RecvGenes == null)
+        {// Empty
+            return true;
+        }
+        else if (this.RecvGenes.Length == 1)
+        {// Single gene
+            return this.RecvGenes[0].IsReceiveComplete;
+        }
+
+        // Multiple genes (PacketData)
+        while (true)
+        {
+            if (this.RecvCompleteIndex == this.RecvGenes.Length)
+            {// Complete
+                break;
+            }
+            else if (!this.RecvGenes[this.RecvCompleteIndex].IsReceiveComplete)
+            {// Not received
+                return false;
+            }
+            else
+            {
+                this.RecvCompleteIndex++;
+            }
+        }
+
+        // Complete
+        return true;
+    }
 
     protected bool ReceivedGeneToData(out PacketId packetId, out ulong dataId, ref ByteArrayPool.MemoryOwner dataMemory)
     {// lock (this.NetTerminal.SyncObject)
@@ -493,22 +525,9 @@ WaitForSendCompletionWait:
         }
 
         // Multiple genes (PacketData)
-
-        // Check
-        while (true)
+        if (!this.IsReceiveComplete())
         {
-            if (this.RecvCompleteIndex == this.RecvGenes.Length)
-            {// Complete
-                break;
-            }
-            else if (!this.RecvGenes[this.RecvCompleteIndex].IsReceiveComplete)
-            {// Not received
-                return false;
-            }
-            else
-            {
-                this.RecvCompleteIndex++;
-            }
+            return false;
         }
 
         // Complete
@@ -725,7 +744,11 @@ WaitForSendCompletionWait:
             {// Receive data
                 if (gene.Receive(header.Id, owner, currentMics))
                 {// Received.
-                    this.NetTerminal.ReceiveEvent.Set(); // tempcode
+                    if (gene.NetInterface.IsReceiveComplete())
+                    {
+                        this.NetTerminal.ReceiveEvent.Set();
+                    }
+
                     this.TerminalLogger?.Information($"Recv data: {header.Id} {gene.ToString()}");
                 }
             }

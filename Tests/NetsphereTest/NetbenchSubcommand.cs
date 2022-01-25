@@ -79,6 +79,11 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         var count = 0;
         for (var i = 0; i < N; i++)
         {
+            if (ThreadCore.Root.IsTerminated)
+            {
+                break;
+            }
+
             response = await service.Pingpong(data).ResponseAsync;
             if (response.IsSuccess)
             {
