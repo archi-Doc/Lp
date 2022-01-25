@@ -207,7 +207,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
 
         netInterface.NetTerminal.TerminalLogger?.Information($"ConnectTerminal: {gene.To4Hex()} -> {secondGene.To4Hex()}");
 
-        netInterface.NetTerminal.Add(netInterface);
+        // netInterface.NetTerminal.Add(netInterface); // Delay
         return netInterface;
     }
 

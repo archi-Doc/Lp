@@ -178,7 +178,7 @@ public partial class NetTerminal : IDisposable
             this.activeInterfaces.Add(netInterface);
 
             if (netInterface.SendGenes != null && netInterface.SendGenes.Length == 1)
-            {// Fast send
+            {// Send immediately.
                 var sendCapacity = 1;
                 netInterface.ProcessSend(Mics.GetSystem(), ref sendCapacity);
             }

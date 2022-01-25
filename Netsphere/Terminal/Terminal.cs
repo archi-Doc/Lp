@@ -315,6 +315,7 @@ public class Terminal
                 terminal.GenePool.GetSequential();
                 terminal.CreateEmbryo(packet.Salt, response.Salt2);
                 terminal.SetReceiverNumber();
+                terminal.Add(netInterface); // Delay sending PacketEncryptResponse until receiver is ready.
                 if (this.invokeServerDelegate != null)
                 {
                     await this.invokeServerDelegate(terminal);
