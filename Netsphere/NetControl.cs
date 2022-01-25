@@ -113,10 +113,10 @@ public class NetControl
     public void Configure(Message.Configure message)
     {
         // Terminals
-        this.Terminal.Initialize(false, this.NetBase.NodePrivateEcdh);
+        this.Terminal.Initialize(false, this.NetBase.NodePrivateKey, this.NetBase.NodePrivateEcdh);
         if (this.Alternative != null)
         {
-            this.Alternative.Initialize(true, NodeKey.FromPrivateKey(NodePrivateKey.AlternativePrivateKey)!);
+            this.Alternative.Initialize(true, NodePrivateKey.AlternativePrivateKey, NodeKey.FromPrivateKey(NodePrivateKey.AlternativePrivateKey)!);
             this.Alternative.Port = NodeAddress.Alternative.Port;
         }
 

@@ -224,15 +224,38 @@ public partial class NetTerminal : IDisposable
                 return NetResult.Success;
             }
 
-            var ecdh = NodeKey.FromPublicKey(this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
-            if (ecdh == null)
+            // Cache material (about the same performance)
+            /*var key = new NodePublicPrivateKeyStruct(this.Terminal.NodePrivateKey.D, this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
+            var material = Cache.NodePublicPrivateKeyToMaterial.TryGet(key);
+            if (material == null)
             {
-                return NetResult.NoNodeInformation;
+                var ecdh = NodeKey.FromPublicKey(this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
+                if (ecdh == null)
+                {
+                    return NetResult.NoNodeInformation;
+                }
+
+                material = this.Terminal.NodePrivateECDH.DeriveKeyMaterial(ecdh.PublicKey);
             }
 
-            // ulong Salt, Salt2, byte[] material, ulong Salt, Salt2
+            Cache.NodePublicPrivateKeyToMaterial.Cache(key, material);*/
+
+            // Cache public key
+            var key = new NodePublicKeyStruct(this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
+            var ecdh = Cache.NodePublicKeyToECDH.TryGet(key);
+            if (ecdh == null)
+            {
+                ecdh = NodeKey.FromPublicKey(this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
+                if (ecdh == null)
+                {
+                    return NetResult.NoNodeInformation;
+                }
+            }
+
             var material = this.Terminal.NodePrivateECDH.DeriveKeyMaterial(ecdh.PublicKey);
-            ecdh.Dispose();
+            Cache.NodePublicKeyToECDH.Cache(key, ecdh);
+
+            // ulong Salt, Salt2, byte[] material, ulong Salt, Salt2
             Span<byte> buffer = stackalloc byte[sizeof(ulong) + sizeof(ulong) + NodeKey.PrivateKeySize + sizeof(ulong) + sizeof(ulong)];
             var span = buffer;
             BitConverter.TryWriteBytes(span, salt);

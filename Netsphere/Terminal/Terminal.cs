@@ -153,10 +153,11 @@ public class Terminal
 
     public int Port { get; set; }
 
-    internal void Initialize(bool isAlternative, ECDiffieHellman nodePrivateKey)
+    internal void Initialize(bool isAlternative, NodePrivateKey nodePrivateKey, ECDiffieHellman nodePrivateECDH)
     {
         this.IsAlternative = isAlternative;
-        this.NodePrivateECDH = nodePrivateKey;
+        this.NodePrivateKey = nodePrivateKey;
+        this.NodePrivateECDH = nodePrivateECDH;
     }
 
     internal void ProcessSend(long currentMics)
@@ -427,6 +428,8 @@ public class Terminal
     }
 
     internal ISimpleLogger? TerminalLogger { get; private set; }
+
+    internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
 
     internal ECDiffieHellman NodePrivateECDH { get; private set; } = default!;
 

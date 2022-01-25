@@ -26,7 +26,7 @@ internal class ClientOperation : NetOperation
             return NetResult.NoNodeInformation;
         }
 
-        await this.NetTerminal.ConnectionSemaphore.WaitAsync().ConfigureAwait(false);
+        await this.NetTerminal.ConnectionSemaphore.WaitAsync().ConfigureAwait(false); // Avoid simultaneous invocation.
         try
         {
             if (this.NetTerminal.IsEncrypted)

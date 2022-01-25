@@ -49,8 +49,8 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
             w3.ResponseAsync.Wait();*/
         }
 
-        await this.PingpongSmallData2(node);
-        // await this.MassiveSmallData(node);
+        // await this.PingpongSmallData2(node);
+        await this.MassiveSmallData(node);
     }
 
     public NetControl NetControl { get; set; }
@@ -70,7 +70,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
     }
 
     private async Task PingpongSmallData(ClientTerminal terminal)
-    {// 370ms
+    {// 395ms (release)
         const int N = 100; // 20;
         var service = terminal.GetService<IBenchmarkService>();
         var data = new byte[100];
@@ -99,7 +99,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
     }
 
     private async Task PingpongSmallData2(NodeAddress node)
-    {// 390ms
+    {// 380ms -> 340ms
         const int N = 50;
         var data = new byte[100];
 
@@ -131,7 +131,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
 
     private async Task MassiveSmallData(NodeAddress node)
     {
-        const int N = 50; //50;
+        const int N = 20; //50;
         var data = new byte[100];
 
         ThreadPool.GetMinThreads(out var workMin, out var ioMin);
