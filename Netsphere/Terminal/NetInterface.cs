@@ -151,7 +151,6 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         }
 
         netTerminal.Add(netInterface);
-        netTerminal.TryFastSend(netInterface);
         return netInterface;
     }
 
@@ -565,7 +564,7 @@ WaitForSendCompletionWait:
     internal long DisposedMics;
 #pragma warning restore SA1401 // Fields should be private
 
-    internal void ProcessSend(UdpClient udp, long currentMics, ref int sendCapacity)
+    internal void ProcessSend(long currentMics, ref int sendCapacity)
     {// lock (this.NetTerminal.SyncObject)
         if (this.SendGenes != null)
         {
@@ -590,7 +589,7 @@ WaitForSendCompletionWait:
                 }
                 else if (x.State == NetTerminalGeneState.WaitingToSend)
                 {// Send
-                    if (x.Send(udp))
+                    if (x.Send())
                     {
                         this.TerminalLogger?.Information($"Udp Sent       : {x.ToString()}");
 
@@ -603,7 +602,7 @@ WaitForSendCompletionWait:
                 {// Resend
                     if (this.NetTerminal.FlowControl.CheckResend(x.SentMics, currentMics))
                     {
-                        if (x.Send(udp))
+                        if (x.Send())
                         {
                             this.TerminalLogger?.Information($"Udp Resent     : {x.ToString()}");
                             sendCapacity--;

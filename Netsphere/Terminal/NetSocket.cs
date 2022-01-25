@@ -25,7 +25,7 @@ public class NetSocket
             var core = (NetSocketRecvCore)parameter!;
 
             IPEndPoint anyEP;
-            if (core.socket.udpClient?.Client.AddressFamily == AddressFamily.InterNetwork)
+            if (core.socket.UnsafeUdpClient?.Client.AddressFamily == AddressFamily.InterNetwork)
             {
                 anyEP = new IPEndPoint(IPAddress.Any, IPEndPoint.MinPort);
             }
@@ -42,7 +42,7 @@ public class NetSocket
                     break;
                 }
 
-                var udp = core.socket.udpClient;
+                var udp = core.socket.UnsafeUdpClient;
                 if (udp == null)
                 {
                     break;
@@ -74,9 +74,11 @@ public class NetSocket
                 : base(parent, Process, false)
         {
             this.socket = socket;
+            this.terminal = socket.terminal;
         }
 
         private NetSocket socket;
+        private Terminal terminal;
     }
 
     internal class NetSocketSendCore : ThreadCore
@@ -116,12 +118,9 @@ public class NetSocket
                 return;
             }
 
-            lock (this.socket.udpSync)
+            if (this.socket.UnsafeUdpClient != null)
             {
-                if (this.socket.udpClient != null)
-                {
-                    this.socket.terminal.ProcessSend(this.socket.udpClient, currentMics);
-                }
+                this.socket.terminal.ProcessSend(currentMics);
             }
 
             Volatile.Write(ref this.previousMics, currentMics);
@@ -168,10 +167,17 @@ public class NetSocket
     {
         this.recvCore?.Dispose();
         this.sendCore?.Dispose();
-        lock (this.udpSync)
+
+        try
         {
-            this.udpClient?.Dispose();
-            this.udpClient = null;
+            if (this.UnsafeUdpClient != null)
+            {
+                this.UnsafeUdpClient.Dispose();
+                this.UnsafeUdpClient = null;
+            }
+        }
+        catch
+        {
         }
     }
 
@@ -189,16 +195,24 @@ public class NetSocket
 
         udp.Client.ReceiveTimeout = ReceiveTimeout;
 
-        lock (this.udpSync)
+        try
         {
-            if (this.udpClient != null)
+            if (this.UnsafeUdpClient != null)
             {
-                this.udpClient.Dispose();
+                this.UnsafeUdpClient.Dispose();
+                this.UnsafeUdpClient = null;
             }
-
-            this.udpClient = udp;
         }
+        catch
+        {
+        }
+
+        this.UnsafeUdpClient = udp;
     }
+
+#pragma warning disable SA1401 // Fields should be private
+    internal UdpClient? UnsafeUdpClient;
+#pragma warning restore SA1401 // Fields should be private
 
     private Terminal terminal;
     private NetSocketRecvCore? recvCore;

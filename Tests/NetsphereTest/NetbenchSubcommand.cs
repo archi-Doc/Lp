@@ -69,8 +69,8 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
     }
 
     private async Task PingpongSmallData(ClientTerminal terminal)
-    {// 680ms -> 125ms
-        const int N = 20;
+    {// 370ms
+        const int N = 100; // 20;
         var service = terminal.GetService<IBenchmarkService>();
         var data = new byte[100];
 

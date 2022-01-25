@@ -129,26 +129,7 @@ public partial class NetTerminal : IDisposable
         this.Terminal.AddRawSend(this.Endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
     }
 
-    internal bool TryFastSend(NetInterface netInterface)
-    {
-        if (netInterface.SendGenes != null && netInterface.SendGenes.Length == 1)
-        {
-            lock (this.SyncObject)
-            {
-                var sendCapacity = 1;
-                if (udp != null)
-                {
-                    netInterface.ProcessSend(udp, Mics.GetSystem(), ref sendCapacity);
-                }
-
-                this.Terminal.NetSocket.ReleaseUdpClient();
-            }
-        }
-
-        return false;
-    }
-
-    internal void ProcessSend(UdpClient udp, long currentMics)
+    internal void ProcessSend(long currentMics)
     {
         lock (this.SyncObject)
         {
@@ -167,7 +148,7 @@ public partial class NetTerminal : IDisposable
                     break;
                 }
 
-                x.ProcessSend(udp, currentMics, ref sendCapacity);
+                x.ProcessSend(currentMics, ref sendCapacity);
             }
 
             this.FlowControl.ReturnSendCapacity(sendCapacity);
@@ -195,6 +176,12 @@ public partial class NetTerminal : IDisposable
         lock (this.SyncObject)
         {
             this.activeInterfaces.Add(netInterface);
+
+            if (netInterface.SendGenes != null && netInterface.SendGenes.Length == 1)
+            {// Fast send
+                var sendCapacity = 1;
+                netInterface.ProcessSend(Mics.GetSystem(), ref sendCapacity);
+            }
         }
     }
 

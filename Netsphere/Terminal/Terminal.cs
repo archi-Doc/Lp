@@ -159,7 +159,7 @@ public class Terminal
         this.NodePrivateECDH = nodePrivateKey;
     }
 
-    internal void ProcessSend(UdpClient udp, long currentMics)
+    internal void ProcessSend(long currentMics)
     {
         if ((currentMics - this.lastCleanedMics) > Mics.FromSeconds(1))
         {
@@ -169,7 +169,14 @@ public class Terminal
 
         while (this.rawSends.TryDequeue(out var rawSend))
         {
-            udp.Send(rawSend.SendOwner.Memory.Span, rawSend.Endpoint);
+            try
+            {
+                this.UnsafeUdpClient?.Send(rawSend.SendOwner.Memory.Span, rawSend.Endpoint);
+            }
+            catch
+            {
+            }
+
             rawSend.Clear();
         }
 
@@ -181,7 +188,7 @@ public class Terminal
 
         foreach (var x in array)
         {
-            x.ProcessSend(udp, currentMics);
+            x.ProcessSend(currentMics);
         }
     }
 
@@ -419,6 +426,8 @@ public class Terminal
     internal ECDiffieHellman NodePrivateECDH { get; private set; } = default!;
 
     internal NetSocket NetSocket { get; private set; }
+
+    internal UdpClient? UnsafeUdpClient => this.NetSocket.UnsafeUdpClient;
 
     private CreateServerDelegate? createServerDelegate;
     private NetTerminal.GoshujinClass terminals = new();
