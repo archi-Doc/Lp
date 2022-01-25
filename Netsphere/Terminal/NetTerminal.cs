@@ -232,6 +232,7 @@ public partial class NetTerminal : IDisposable
 
             // ulong Salt, Salt2, byte[] material, ulong Salt, Salt2
             var material = this.Terminal.NodePrivateECDH.DeriveKeyMaterial(ecdh.PublicKey);
+            ecdh.Dispose();
             Span<byte> buffer = stackalloc byte[sizeof(ulong) + sizeof(ulong) + NodeKey.PrivateKeySize + sizeof(ulong) + sizeof(ulong)];
             var span = buffer;
             BitConverter.TryWriteBytes(span, salt);
