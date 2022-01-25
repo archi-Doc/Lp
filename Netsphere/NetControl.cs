@@ -139,24 +139,21 @@ public class NetControl
             this.NewCallContext = newCallContext;
         }
 
-        this.Terminal.SetCreateServerDelegate(CreateServer);
-        this.Alternative?.SetCreateServerDelegate(CreateServer);
+        this.Terminal.SetInvokeServerDelegate(InvokeServer);
+        this.Alternative?.SetInvokeServerDelegate(InvokeServer);
 
-        static void CreateServer(ServerTerminal terminal)
+        static async Task InvokeServer(ServerTerminal terminal)
         {
-            Task.Run(async () =>
+            var server = containerInstance.Resolve<Server>();
+            terminal.Terminal.MyStatus.IncrementServerCount();
+            try
             {
-                var server = containerInstance.Resolve<Server>();
-                terminal.Terminal.MyStatus.IncrementServerCount();
-                try
-                {
-                    await server.Process(terminal).ConfigureAwait(false);
-                }
-                finally
-                {
-                    terminal.Dispose();
-                }
-            });
+                await server.Process(terminal).ConfigureAwait(false);
+            }
+            finally
+            {
+                terminal.Dispose();
+            }
         }
     }
 

@@ -14,7 +14,7 @@ namespace Netsphere;
 
 public class Terminal
 {
-    public delegate void CreateServerDelegate(ServerTerminal terminal);
+    public delegate Task InvokeServerDelegate(ServerTerminal terminal);
 
     internal struct RawSend
     {
@@ -131,9 +131,9 @@ public class Terminal
         this.Core = null;
     }
 
-    public void SetCreateServerDelegate(CreateServerDelegate @delegate)
+    public void SetInvokeServerDelegate(InvokeServerDelegate @delegate)
     {
-        this.createServerDelegate = @delegate;
+        this.invokeServerDelegate = @delegate;
     }
 
     public void SetLogger(ISimpleLogger logger)
@@ -308,14 +308,18 @@ public class Terminal
 
             var terminal = this.Create(packet.NodeInformation, firstGene);
             var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(terminal, firstGene, owner, secondGene, sendOwner);
+            sendOwner.Return();
 
-            terminal.GenePool.GetSequential();
-            terminal.CreateEmbryo(packet.Salt, response.Salt2);
-            terminal.SetReceiverNumber();
-            if (this.createServerDelegate != null)
+            Task.Run(async () =>
             {
-                this.createServerDelegate(terminal);
-            }
+                terminal.GenePool.GetSequential();
+                terminal.CreateEmbryo(packet.Salt, response.Salt2);
+                terminal.SetReceiverNumber();
+                if (this.invokeServerDelegate != null)
+                {
+                    await this.invokeServerDelegate(terminal);
+                }
+            });
         }
     }
 
@@ -429,7 +433,7 @@ public class Terminal
 
     internal UdpClient? UnsafeUdpClient => this.NetSocket.UnsafeUdpClient;
 
-    private CreateServerDelegate? createServerDelegate;
+    private InvokeServerDelegate? invokeServerDelegate;
     private NetTerminal.GoshujinClass terminals = new();
     private ConcurrentDictionary<ulong, NetTerminalGene> inboundGenes = new();
     private ConcurrentQueue<RawSend> rawSends = new();
