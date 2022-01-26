@@ -65,5 +65,11 @@ public partial class EssentialNetMachine : Machine<Identifier>
         return StateResult.Continue;
     }
 
+    [StateMethod(1)]
+    protected async Task<StateResult> First(StateParameter parameter)
+    {
+        return StateResult.Terminate;
+    }
+
     private int count = 1;
 }
