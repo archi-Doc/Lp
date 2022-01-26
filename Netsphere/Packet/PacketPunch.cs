@@ -20,15 +20,18 @@ public partial class PacketPunch : IPacket
 
     public PacketPunch(IPEndPoint? nextEndpoint)
     {
-        this.NextEndpoint = nextEndpoint;
         this.UtcMics = Mics.GetUtcNow();
+        this.NextEndpoint = nextEndpoint;
     }
 
     [Key(0)]
-    public IPEndPoint? NextEndpoint { get; set; }
+    public long UtcMics { get; set; }
 
     [Key(1)]
-    public long UtcMics { get; set; }
+    public bool Relay { get; set; } // Relay this packet to the next endpoint (NextEndpoint must be a valid value).
+
+    [Key(2)]
+    public IPEndPoint? NextEndpoint { get; set; }
 }
 
 [TinyhandObject]
@@ -39,10 +42,10 @@ public partial class PacketPunchResponse : IPacket
     public bool AllowUnencrypted => true;
 
     [Key(0)]
-    public IPEndPoint Endpoint { get; set; } = default!;
+    public long UtcMics { get; set; }
 
     [Key(1)]
-    public long UtcMics { get; set; }
+    public IPEndPoint Endpoint { get; set; } = default!;
 
     public override string ToString() => $"{this.Endpoint}";
 }

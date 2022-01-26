@@ -408,7 +408,8 @@ WaitForSendCompletionWait:
             try
             {
                 var ct = this.Terminal.Core?.CancellationToken ?? CancellationToken.None;
-                await Task.Delay(NetInterface.IntervalInMilliseconds, ct).ConfigureAwait(false);
+                await Task.WhenAny(this.NetTerminal.ReceiveEvent.AsTask, Task.Delay(NetInterface.IntervalInMilliseconds, ct)).ConfigureAwait(false);
+                this.NetTerminal.ReceiveEvent.Reset();
             }
             catch
             {

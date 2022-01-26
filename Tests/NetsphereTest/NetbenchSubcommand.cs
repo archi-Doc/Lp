@@ -29,10 +29,25 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         // var nodeInformation = NodeInformation.Alternative;
         using (var terminal = this.NetControl.Terminal.Create(node))
         {
-            // await this.BenchLargeData(terminal);
-            await this.PingpongSmallData(terminal);
+            var p = new PacketPunch(null);
+            var sw = Stopwatch.StartNew();
+            var t = await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
+            Logger.Priority.Information($"t: {t}");
+            Logger.Priority.Information($"{sw.ElapsedMilliseconds} ms");
+            sw.Restart();
 
-            var service = terminal.GetService<IBenchmarkService>();
+            for (var i = 0; i < 10; i++)
+            {
+                t = await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
+            }
+
+            Logger.Priority.Information($"t: {t}");
+            Logger.Priority.Information($"{sw.ElapsedMilliseconds} ms");
+
+            // await this.BenchLargeData(terminal);
+            // await this.PingpongSmallData(terminal);
+
+            // var service = terminal.GetService<IBenchmarkService>();
 
             /*await service.Wait(200);
             await service.Wait(200);

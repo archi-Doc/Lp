@@ -62,27 +62,31 @@ public class Program
         var options = new LP.Options.NetsphereOptions();
         options.EnableAlternative = true;
         options.EnableTestFeatures = true;
+        options.EnableLogger = false;
         // NetControl.QuickStart(true, "test", options, true);
         NetControl.QuickStart(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);
 
         // Logger
-        /*var logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "logs");
-        Directory.CreateDirectory(logDirectory);
-        var netControl = Container.Resolve<NetControl>();
-        netControl.Terminal.SetLogger(new SerilogLogger(new LoggerConfiguration()
-            .MinimumLevel.Debug()
-            .WriteTo.File(
-                Path.Combine(logDirectory, "terminal.log.txt"),
-                buffered: true,
-                flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
-            .CreateLogger()));
-        netControl.Alternative?.SetLogger(new SerilogLogger(new LoggerConfiguration()
-            .MinimumLevel.Debug()
-            .WriteTo.File(
-                Path.Combine(logDirectory, "terminal2.log.txt"),
-                buffered: true,
-                flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
-            .CreateLogger()));*/
+        if (options.EnableLogger)
+        {
+            var logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "logs");
+            Directory.CreateDirectory(logDirectory);
+            var netControl = Container.Resolve<NetControl>();
+            netControl.Terminal.SetLogger(new SerilogLogger(new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .WriteTo.File(
+                    Path.Combine(logDirectory, "terminal.log.txt"),
+                    buffered: true,
+                    flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
+                .CreateLogger()));
+            netControl.Alternative?.SetLogger(new SerilogLogger(new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .WriteTo.File(
+                    Path.Combine(logDirectory, "terminal2.log.txt"),
+                    buffered: true,
+                    flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
+                .CreateLogger()));
+        }
 
         // await SimpleParser.ParseAndRunAsync(commandTypes, "netbench -node alternative", parserOptions); // Main process
         await SimpleParser.ParseAndRunAsync(commandTypes, args, parserOptions); // Main process
