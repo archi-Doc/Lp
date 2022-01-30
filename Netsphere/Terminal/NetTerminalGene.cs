@@ -95,7 +95,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
         return false;
     }
 
-    public bool Send(UdpClient udp)
+    public bool Send()
     {
         if (this.State == NetTerminalGeneState.WaitingToSend ||
             this.State == NetTerminalGeneState.WaitingForAck)
@@ -106,7 +106,14 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
                 return true;
             }*/
 
-            udp.Send(this.Owner.Memory.Span, this.NetInterface.NetTerminal.Endpoint);
+            try
+            {
+                this.NetInterface.Terminal.UnsafeUdpClient?.Send(this.Owner.Memory.Span, this.NetInterface.NetTerminal.Endpoint);
+            }
+            catch
+            {
+            }
+
             this.State = NetTerminalGeneState.WaitingForAck;
 
             // var packetId = (PacketId)packetToSend[1];

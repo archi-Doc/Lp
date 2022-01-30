@@ -106,7 +106,7 @@ public partial class NodePrivateKey
 }
 
 [TinyhandObject]
-public partial class NodePublicKey
+public partial class NodePublicKey : IEquatable<NodePublicKey>
 {
     public NodePublicKey()
     {
@@ -119,8 +119,102 @@ public partial class NodePublicKey
     }
 
     [Key(0)]
-    public byte[] X { get; set; } = default!;
+    public byte[] X { get; set; } = Array.Empty<byte>();
 
     [Key(1)]
-    public byte[] Y { get; set; } = default!;
+    public byte[] Y { get; set; } = Array.Empty<byte>();
+
+    public bool Equals(NodePublicKey? other)
+    {
+        if (other == null)
+        {
+            return false;
+        }
+
+        return this.X.AsSpan().SequenceEqual(other.X) && this.Y.AsSpan().SequenceEqual(other.Y);
+    }
+
+    public override int GetHashCode()
+    {
+        return (int)(FarmHash.Hash64(this.X) ^ FarmHash.Hash64(this.Y));
+    }
+}
+
+public struct NodePublicKeyStruct : IEquatable<NodePublicKeyStruct>
+{
+    public byte[] X;
+
+    public byte[] Y;
+
+    public NodePublicKeyStruct(byte[] x, byte[] y)
+    {
+        this.X = x;
+        this.Y = y;
+    }
+
+    public bool Equals(NodePublicKeyStruct other)
+    {
+        var x1 = this.X == null ? Array.Empty<byte>() : this.X.AsSpan();
+        var x2 = other.X == null ? Array.Empty<byte>() : other.X.AsSpan();
+        if (!x1.SequenceEqual(x2))
+        {
+            return false;
+        }
+
+        var y1 = this.Y == null ? Array.Empty<byte>() : this.Y.AsSpan();
+        var y2 = other.Y == null ? Array.Empty<byte>() : other.Y.AsSpan();
+        return y1.SequenceEqual(y2);
+    }
+
+    public override int GetHashCode()
+    {
+        var x = this.X == null ? Array.Empty<byte>() : this.X.AsSpan();
+        var y = this.Y == null ? Array.Empty<byte>() : this.Y.AsSpan();
+        return (int)(FarmHash.Hash64(x) ^ FarmHash.Hash64(y));
+    }
+}
+
+public struct NodePublicPrivateKeyStruct : IEquatable<NodePublicPrivateKeyStruct>
+{
+    public byte[] D;
+
+    public byte[] X;
+
+    public byte[] Y;
+
+    public NodePublicPrivateKeyStruct(byte[] d, byte[] x, byte[] y)
+    {
+        this.D = d;
+        this.X = x;
+        this.Y = y;
+    }
+
+    public bool Equals(NodePublicPrivateKeyStruct other)
+    {
+        var d1 = this.D == null ? Array.Empty<byte>() : this.D.AsSpan();
+        var d2 = other.D == null ? Array.Empty<byte>() : other.D.AsSpan();
+        if (!d1.SequenceEqual(d2))
+        {
+            return false;
+        }
+
+        var x1 = this.X == null ? Array.Empty<byte>() : this.X.AsSpan();
+        var x2 = other.X == null ? Array.Empty<byte>() : other.X.AsSpan();
+        if (!x1.SequenceEqual(x2))
+        {
+            return false;
+        }
+
+        var y1 = this.Y == null ? Array.Empty<byte>() : this.Y.AsSpan();
+        var y2 = other.Y == null ? Array.Empty<byte>() : other.Y.AsSpan();
+        return y1.SequenceEqual(y2);
+    }
+
+    public override int GetHashCode()
+    {
+        var d = this.D == null ? Array.Empty<byte>() : this.D.AsSpan();
+        var x = this.X == null ? Array.Empty<byte>() : this.X.AsSpan();
+        var y = this.Y == null ? Array.Empty<byte>() : this.Y.AsSpan();
+        return (int)(FarmHash.Hash64(d) ^ FarmHash.Hash64(x) ^ FarmHash.Hash64(y));
+    }
 }

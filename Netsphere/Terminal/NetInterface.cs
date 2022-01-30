@@ -151,7 +151,6 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         }
 
         netTerminal.Add(netInterface);
-        netTerminal.TryFastSend(netInterface);
         return netInterface;
     }
 
@@ -208,7 +207,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
 
         netInterface.NetTerminal.TerminalLogger?.Information($"ConnectTerminal: {gene.To4Hex()} -> {secondGene.To4Hex()}");
 
-        netInterface.NetTerminal.Add(netInterface);
+        // netInterface.NetTerminal.Add(netInterface); // Delay
         return netInterface;
     }
 
@@ -409,7 +408,8 @@ WaitForSendCompletionWait:
             try
             {
                 var ct = this.Terminal.Core?.CancellationToken ?? CancellationToken.None;
-                await Task.Delay(NetInterface.IntervalInMilliseconds, ct).ConfigureAwait(false);
+                await Task.WhenAny(this.NetTerminal.ReceiveEvent.AsTask, Task.Delay(NetInterface.IntervalInMilliseconds, ct)).ConfigureAwait(false);
+                this.NetTerminal.ReceiveEvent.Reset();
             }
             catch
             {
@@ -441,14 +441,24 @@ WaitForSendCompletionWait:
 
             if (Mics.GetSystem() >= (this.NetTerminal.LastResponseMics + this.NetTerminal.MaximumResponseMics))
             {
-                this.TerminalLogger?.Information($"Receive timeout.");
+                if (this.TerminalLogger != null)
+                {
+                    string genes;
+                    lock (this.NetTerminal.SyncObject)
+                    {
+                        genes = this.RecvGenes == null ? string.Empty : string.Join(", ", this.RecvGenes.Select(x => x.Gene.To4Hex()));
+                    }
+
+                    this.TerminalLogger.Information($"Receive timeout ({genes}).");
+                }
+
                 return new NetReceivedData(NetResult.Timeout);
             }
 
             try
             {
                 var ct = this.Terminal.Core?.CancellationToken ?? CancellationToken.None;
-                await Task.WhenAny(this.NetTerminal.ReceiveEvent.Task, Task.Delay(NetInterface.IntervalInMilliseconds, ct)).ConfigureAwait(false);
+                await Task.WhenAny(this.NetTerminal.ReceiveEvent.AsTask, Task.Delay(NetInterface.IntervalInMilliseconds, ct)).ConfigureAwait(false);
                 this.NetTerminal.ReceiveEvent.Reset();
                 // await this.NetTerminal.ReceiveEvent.Task.WaitAsync(TimeSpan.FromMilliseconds(NetInterface.IntervalInMilliseconds), ct).ConfigureAwait(false);
                 // await Task.Delay(NetInterface.IntervalInMilliseconds, ct).ConfigureAwait(false);
@@ -463,6 +473,38 @@ WaitForSendCompletionWait:
     }
 
     internal ISimpleLogger? TerminalLogger => this.Terminal.TerminalLogger;
+
+    protected bool IsReceiveComplete()
+    {
+        if (this.RecvGenes == null)
+        {// Empty
+            return true;
+        }
+        else if (this.RecvGenes.Length == 1)
+        {// Single gene
+            return this.RecvGenes[0].IsReceiveComplete;
+        }
+
+        // Multiple genes (PacketData)
+        while (true)
+        {
+            if (this.RecvCompleteIndex == this.RecvGenes.Length)
+            {// Complete
+                break;
+            }
+            else if (!this.RecvGenes[this.RecvCompleteIndex].IsReceiveComplete)
+            {// Not received
+                return false;
+            }
+            else
+            {
+                this.RecvCompleteIndex++;
+            }
+        }
+
+        // Complete
+        return true;
+    }
 
     protected bool ReceivedGeneToData(out PacketId packetId, out ulong dataId, ref ByteArrayPool.MemoryOwner dataMemory)
     {// lock (this.NetTerminal.SyncObject)
@@ -494,22 +536,9 @@ WaitForSendCompletionWait:
         }
 
         // Multiple genes (PacketData)
-
-        // Check
-        while (true)
+        if (!this.IsReceiveComplete())
         {
-            if (this.RecvCompleteIndex == this.RecvGenes.Length)
-            {// Complete
-                break;
-            }
-            else if (!this.RecvGenes[this.RecvCompleteIndex].IsReceiveComplete)
-            {// Not received
-                return false;
-            }
-            else
-            {
-                this.RecvCompleteIndex++;
-            }
+            return false;
         }
 
         // Complete
@@ -565,7 +594,7 @@ WaitForSendCompletionWait:
     internal long DisposedMics;
 #pragma warning restore SA1401 // Fields should be private
 
-    internal void ProcessSend(UdpClient udp, long currentMics, ref int sendCapacity)
+    internal void ProcessSend(long currentMics, ref int sendCapacity)
     {// lock (this.NetTerminal.SyncObject)
         if (this.SendGenes != null)
         {
@@ -590,7 +619,7 @@ WaitForSendCompletionWait:
                 }
                 else if (x.State == NetTerminalGeneState.WaitingToSend)
                 {// Send
-                    if (x.Send(udp))
+                    if (x.Send())
                     {
                         this.TerminalLogger?.Information($"Udp Sent       : {x.ToString()}");
 
@@ -603,7 +632,7 @@ WaitForSendCompletionWait:
                 {// Resend
                     if (this.NetTerminal.FlowControl.CheckResend(x.SentMics, currentMics))
                     {
-                        if (x.Send(udp))
+                        if (x.Send())
                         {
                             this.TerminalLogger?.Information($"Udp Resent     : {x.ToString()}");
                             sendCapacity--;
@@ -726,7 +755,11 @@ WaitForSendCompletionWait:
             {// Receive data
                 if (gene.Receive(header.Id, owner, currentMics))
                 {// Received.
-                    this.NetTerminal.ReceiveEvent.Set(); // tempcode
+                    if (gene.NetInterface.IsReceiveComplete())
+                    {
+                        this.NetTerminal.ReceiveEvent.Set();
+                    }
+
                     this.TerminalLogger?.Information($"Recv data: {header.Id} {gene.ToString()}");
                 }
             }

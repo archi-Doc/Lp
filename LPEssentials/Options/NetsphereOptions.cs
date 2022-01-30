@@ -22,6 +22,9 @@ public class NetsphereOptions
     [SimpleOption("test", null, "Enable test features")]
     public bool EnableTestFeatures { get; set; } = false;
 
+    [SimpleOption("logger", null, "Enable network logger")]
+    public bool EnableLogger { get; set; } = false;
+
     public override string ToString()
     {
         return $"Address: {this.Address}, Port: {this.Port}";

@@ -26,7 +26,7 @@ public partial class EssentialNetMachine : Machine<Identifier>
     public NetControl NetControl { get; }
 
     [StateMethod(0)]
-    protected StateResult Initial(StateParameter parameter)
+    protected async Task<StateResult> Initial(StateParameter parameter)
     {
         this.count++;
 
@@ -38,6 +38,7 @@ public partial class EssentialNetMachine : Machine<Identifier>
             // nodeAddress = NodeAddress.Alternative;
             using (var terminal = this.NetControl.Terminal.Create(nodeAddress))
             {
+                // await terminal.EncryptConnectionAsync();
                 /*terminal.SendRaw(new RawPacketPunch(null));
                 var data = terminal.ReceiveRaw<PacketPunchResponse>(1000);
                 if (data != null)
@@ -63,6 +64,12 @@ public partial class EssentialNetMachine : Machine<Identifier>
         }
 
         return StateResult.Continue;
+    }
+
+    [StateMethod(1)]
+    protected async Task<StateResult> First(StateParameter parameter)
+    {
+        return StateResult.Terminate;
     }
 
     private int count = 1;

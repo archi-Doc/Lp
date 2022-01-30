@@ -129,26 +129,7 @@ public partial class NetTerminal : IDisposable
         this.Terminal.AddRawSend(this.Endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
     }
 
-    internal bool TryFastSend(NetInterface netInterface)
-    {
-        if (netInterface.SendGenes != null && netInterface.SendGenes.Length == 1)
-        {
-            lock (this.SyncObject)
-            {
-                var sendCapacity = 1;
-                if (udp != null)
-                {
-                    netInterface.ProcessSend(udp, Mics.GetSystem(), ref sendCapacity);
-                }
-
-                this.Terminal.NetSocket.ReleaseUdpClient();
-            }
-        }
-
-        return false;
-    }
-
-    internal void ProcessSend(UdpClient udp, long currentMics)
+    internal void ProcessSend(long currentMics)
     {
         lock (this.SyncObject)
         {
@@ -167,7 +148,7 @@ public partial class NetTerminal : IDisposable
                     break;
                 }
 
-                x.ProcessSend(udp, currentMics, ref sendCapacity);
+                x.ProcessSend(currentMics, ref sendCapacity);
             }
 
             this.FlowControl.ReturnSendCapacity(sendCapacity);
@@ -195,6 +176,12 @@ public partial class NetTerminal : IDisposable
         lock (this.SyncObject)
         {
             this.activeInterfaces.Add(netInterface);
+
+            if (netInterface.SendGenes != null && netInterface.SendGenes.Length == 1)
+            {// Send immediately.
+                var sendCapacity = 1;
+                netInterface.ProcessSend(Mics.GetSystem(), ref sendCapacity);
+            }
         }
     }
 
@@ -237,14 +224,40 @@ public partial class NetTerminal : IDisposable
                 return NetResult.Success;
             }
 
-            var ecdh = NodeKey.FromPublicKey(this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
-            if (ecdh == null)
+            // Cache material (about the same performance)
+            /*var key = new NodePublicPrivateKeyStruct(this.Terminal.NodePrivateKey.D, this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
+            var material = Cache.NodePublicPrivateKeyToMaterial.TryGet(key);
+            if (material == null)
             {
-                return NetResult.NoNodeInformation;
+                var ecdh = NodeKey.FromPublicKey(this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
+                if (ecdh == null)
+                {
+                    return NetResult.NoNodeInformation;
+                }
+
+                material = this.Terminal.NodePrivateECDH.DeriveKeyMaterial(ecdh.PublicKey);
             }
 
-            // ulong Salt, Salt2, byte[] material, ulong Salt, Salt2
+            Cache.NodePublicPrivateKeyToMaterial.Cache(key, material);*/
+
+            // Cache public key
+            var key = new NodePublicKeyStruct(this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
+            var ecdh = Cache.NodePublicKeyToECDH.TryGet(key);
+            if (ecdh == null)
+            {
+                ecdh = NodeKey.FromPublicKey(this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
+                if (ecdh == null)
+                {
+                    return NetResult.NoNodeInformation;
+                }
+            }
+
             var material = this.Terminal.NodePrivateECDH.DeriveKeyMaterial(ecdh.PublicKey);
+            Cache.NodePublicKeyToECDH.Cache(key, ecdh);
+
+            // this.TerminalLogger?.Information($"Material {material[0]} ({salt.To4Hex()}/{salt2.To4Hex()}), {this.NodeInformation.PublicKeyX[0]}, {this.Terminal.NodePrivateKey.X[0]}");
+
+            // ulong Salt, Salt2, byte[] material, ulong Salt, Salt2
             Span<byte> buffer = stackalloc byte[sizeof(ulong) + sizeof(ulong) + NodeKey.PrivateKeySize + sizeof(ulong) + sizeof(ulong)];
             var span = buffer;
             BitConverter.TryWriteBytes(span, salt);
@@ -262,7 +275,7 @@ public partial class NetTerminal : IDisposable
             Hash.Sha3_384Pool.Return(sha);
 
             this.GenePool.SetEmbryo(this.embryo);
-            this.TerminalLogger?.Information($"First gene {this.GenePool.GetSequential().To4Hex()}");
+            this.TerminalLogger?.Information($"First gene {this.GenePool.GetSequential().To4Hex()} ({salt.To4Hex()}/{salt2.To4Hex()})");
 
             // Aes
             this.aes = Aes.Create();

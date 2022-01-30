@@ -26,7 +26,7 @@ internal class ClientOperation : NetOperation
             return NetResult.NoNodeInformation;
         }
 
-        await this.NetTerminal.ConnectionSemaphore.WaitAsync().ConfigureAwait(false);
+        await this.NetTerminal.ConnectionSemaphore.WaitAsync().ConfigureAwait(false); // Avoid simultaneous invocation.
         try
         {
             if (this.NetTerminal.IsEncrypted)
@@ -42,6 +42,7 @@ internal class ClientOperation : NetOperation
                     return r.Result;
                 }
 
+                // this.NetTerminal.TerminalLogger?.Information($"npk {r.Value!.Node.PublicKeyX[0]}");
                 this.NetTerminal.MergeNodeInformation(r.Value!.Node);
             }
 

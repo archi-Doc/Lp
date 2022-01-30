@@ -74,7 +74,11 @@ public class NetControl
         netBase.AllowUnsafeConnection = allowUnsafeConnection;
 
         var netControl = containerInstance.Resolve<NetControl>();
-        netControl.SetupServer(newServerContext, newCallContext);
+        if (enableServer)
+        {
+            netControl.SetupServer(newServerContext, newCallContext);
+        }
+
         Logger.Configure(null);
         Radio.Send(new Message.Configure());
         var message = new Message.Start(ThreadCore.Root);
@@ -109,10 +113,10 @@ public class NetControl
     public void Configure(Message.Configure message)
     {
         // Terminals
-        this.Terminal.Initialize(false, this.NetBase.NodePrivateEcdh);
+        this.Terminal.Initialize(false, this.NetBase.NodePrivateKey, this.NetBase.NodePrivateEcdh);
         if (this.Alternative != null)
         {
-            this.Alternative.Initialize(true, NodeKey.FromPrivateKey(NodePrivateKey.AlternativePrivateKey)!);
+            this.Alternative.Initialize(true, NodePrivateKey.AlternativePrivateKey, NodeKey.FromPrivateKey(NodePrivateKey.AlternativePrivateKey)!);
             this.Alternative.Port = NodeAddress.Alternative.Port;
         }
 
@@ -120,7 +124,7 @@ public class NetControl
         DefaultResponder.Register(this);
 
         // Machines
-        this.BigMachine.TryCreate<LP.Machines.EssentialNetMachine.Interface>(Identifier.Zero);
+        this.BigMachine.CreateNew<LP.Machines.EssentialNetMachine.Interface>(Identifier.Zero);
     }
 
     public void SetupServer(Func<ServerContext>? newServerContext = null, Func<CallContext>? newCallContext = null)
@@ -135,24 +139,21 @@ public class NetControl
             this.NewCallContext = newCallContext;
         }
 
-        this.Terminal.SetCreateServerDelegate(CreateServer);
-        this.Alternative?.SetCreateServerDelegate(CreateServer);
+        this.Terminal.SetInvokeServerDelegate(InvokeServer);
+        this.Alternative?.SetInvokeServerDelegate(InvokeServer);
 
-        static void CreateServer(ServerTerminal terminal)
+        static async Task InvokeServer(ServerTerminal terminal)
         {
-            Task.Run(async () =>
+            var server = containerInstance.Resolve<Server>();
+            terminal.Terminal.MyStatus.IncrementServerCount();
+            try
             {
-                var server = containerInstance.Resolve<Server>();
-                terminal.Terminal.MyStatus.IncrementServerCount();
-                try
-                {
-                    await server.Process(terminal).ConfigureAwait(false);
-                }
-                finally
-                {
-                    terminal.Dispose();
-                }
-            });
+                await server.Process(terminal).ConfigureAwait(false);
+            }
+            finally
+            {
+                terminal.Dispose();
+            }
         }
     }
 

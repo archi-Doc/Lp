@@ -18,6 +18,6 @@ public class IncrementIntFilter : IServiceFilter
             }
         }
 
-        await invoker(context);
+        await invoker(context).ConfigureAwait(false);
     }
 }
