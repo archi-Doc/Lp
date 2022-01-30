@@ -124,7 +124,7 @@ public class NetControl
         DefaultResponder.Register(this);
 
         // Machines
-        this.BigMachine.TryCreate<LP.Machines.EssentialNetMachine.Interface>(Identifier.Zero);
+        this.BigMachine.CreateNew<LP.Machines.EssentialNetMachine.Interface>(Identifier.Zero);
     }
 
     public void SetupServer(Func<ServerContext>? newServerContext = null, Func<CallContext>? newCallContext = null)
