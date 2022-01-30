@@ -18,7 +18,7 @@ public class MultiplyIntFilter : IServiceFilter
             }
         }
 
-        await invoker(context);
+        await invoker(context).ConfigureAwait(false);
     }
 
     public void SetArguments(object[] args)

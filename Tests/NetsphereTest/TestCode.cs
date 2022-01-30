@@ -58,7 +58,7 @@ public class CustomFilter : IServiceFilter
             throw new NetException(NetResult.NoCallContext);
         }
 
-        await invoker(context);
+        await invoker(context).ConfigureAwait(false);
     }
     /*public async Task Invoke(CallContext context, Func<CallContext, Task> invoker)
     {
@@ -67,7 +67,7 @@ public class CustomFilter : IServiceFilter
             throw new NetException(NetResult.NoCallContext);
         }
 
-        await invoker(context);
+        await invoker(context).ConfigureAwait(false);
     }*/
 
     public void SetArguments(object[] args)

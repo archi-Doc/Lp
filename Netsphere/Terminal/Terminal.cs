@@ -350,7 +350,7 @@ public class Terminal
                 terminal.Add(netInterface); // Delay sending PacketEncryptResponse until the receiver is ready.
                 if (this.invokeServerDelegate != null)
                 {
-                    await this.invokeServerDelegate(terminal);
+                    await this.invokeServerDelegate(terminal).ConfigureAwait(false);
                 }
             });
         }
