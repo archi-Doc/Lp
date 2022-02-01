@@ -12,6 +12,7 @@ global using Tinyhand;
 using DryIoc;
 using Netsphere;
 using SimpleCommandLine;
+using ZenItz;
 
 namespace LP;
 
@@ -37,6 +38,7 @@ public class Control
 
         var commandList = new List<Type>();
         NetControl.Register(container, commandList);
+        ZenControl.Register(container, commandList);
 
         // Machines
         container.Register<Machines.SingleMachine>();
@@ -79,12 +81,13 @@ public class Control
         subcommandParser = new SimpleParser(commandList, SubcommandParserOptions);
     }
 
-    public Control(LPBase information, BigMachine<Identifier> bigMachine, NetControl netsphere)
+    public Control(LPBase information, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl)
     {
         this.LPBase = information;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.NetControl = netsphere;
         this.NetControl.SetupServer();
+        this.ZenControl = zenControl;
 
         this.Core = new(ThreadCore.Root);
         this.BigMachine.Core.ChangeParent(this.Core);
@@ -183,6 +186,8 @@ public class Control
     public BigMachine<Identifier> BigMachine { get; }
 
     public NetControl NetControl { get; }
+
+    public ZenControl ZenControl { get; }
 
     private static Container containerInstance = default!;
 
