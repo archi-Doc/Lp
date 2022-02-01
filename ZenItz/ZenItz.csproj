@@ -4,7 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
-    <PackageId>Zen.Itz</PackageId>
+    <PackageId>ZenItz</PackageId>
     <Authors>archi-Doc</Authors>
     <Product>Zen/Itz</Product>
     <Description>Zen/Itz is a storage engine for LP.</Description>
