@@ -29,6 +29,7 @@ public class ZenControl
         // Main services
         container.Register<ZenControl>(Reuse.Singleton);
         container.Register<Zen>(Reuse.Singleton);
+        container.Register<ShipControl>(Reuse.Singleton);
 
         // Subcommands
         var commandTypes = new Type[]

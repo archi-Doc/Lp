@@ -2,9 +2,14 @@
 
 namespace ZenItz;
 
-public class PrimaryObject
+[ValueLinkObject]
+public partial class PrimaryObject
 {
-    public PrimaryObject()
+    internal PrimaryObject(Identifier primaryId, uint shipId)
     {
+        this.PrimaryId = primaryId;
     }
+
+    [Link(Primary = true, Type = ChainType.Ordered)]
+    public Identifier PrimaryId { get; protected set; }
 }
