@@ -2,7 +2,7 @@
 
 using System.Collections.Generic;
 
-namespace LP.Zen;
+namespace ZenItz;
 
 public class GaloisField
 {
