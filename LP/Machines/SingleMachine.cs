@@ -2,7 +2,7 @@
 
 namespace LP.Machines;
 
-[MachineObject(0x0f0d509d, Group = typeof(MachineSingle<>))]
+[MachineObject(0x0f0d509d, Group = typeof(SingleGroup<>))]
 // [TinyhandObject(UseServiceProvider = true)]
 public partial class SingleMachine : Machine<Identifier>
 {

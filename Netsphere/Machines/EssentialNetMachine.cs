@@ -10,7 +10,7 @@ namespace LP.Machines;
 /// 2: Determine MyStatus.ConnectionType.<br/>
 /// 3: Check essential nodes.
 /// </summary>
-[MachineObject(0x4792ab0f, Group = typeof(MachineSingle<>))]
+[MachineObject(0x4792ab0f, Group = typeof(SingleGroup<>))]
 public partial class EssentialNetMachine : Machine<Identifier>
 {
     public EssentialNetMachine(BigMachine<Identifier> bigMachine, NetBase netBase, NetControl netControl)

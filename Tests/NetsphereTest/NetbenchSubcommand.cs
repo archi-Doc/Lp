@@ -29,7 +29,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         // var nodeInformation = NodeInformation.Alternative;
         using (var terminal = this.NetControl.Terminal.Create(node))
         {
-            var p = new PacketPunch(null);
+            /*var p = new PacketPunch(null);
             var sw = Stopwatch.StartNew();
             var t = await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
             Logger.Priority.Information($"t: {t}");
@@ -42,10 +42,10 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
             }
 
             Logger.Priority.Information($"t: {t}");
-            Logger.Priority.Information($"{sw.ElapsedMilliseconds} ms");
+            Logger.Priority.Information($"{sw.ElapsedMilliseconds} ms");*/
 
             // await this.BenchLargeData(terminal);
-            // await this.PingpongSmallData(terminal);
+            await this.PingpongSmallData(terminal); // 350ms
 
             // var service = terminal.GetService<IBenchmarkService>();
 
@@ -85,7 +85,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
     }
 
     private async Task PingpongSmallData(ClientTerminal terminal)
-    {// 395ms (release)
+    {
         const int N = 100; // 20;
         var service = terminal.GetService<IBenchmarkService>();
         var data = new byte[100];

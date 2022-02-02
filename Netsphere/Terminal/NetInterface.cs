@@ -408,8 +408,8 @@ WaitForSendCompletionWait:
             try
             {
                 var ct = this.Terminal.Core?.CancellationToken ?? CancellationToken.None;
-                await Task.WhenAny(this.NetTerminal.ReceiveEvent.AsTask, Task.Delay(NetInterface.IntervalInMilliseconds, ct)).ConfigureAwait(false);
-                this.NetTerminal.ReceiveEvent.Reset();
+                await Task.WhenAny(this.NetTerminal.ReceiveEvent.WaitAsync(ct), Task.Delay(NetInterface.IntervalInMilliseconds, ct)).ConfigureAwait(false);
+                // await this.NetTerminal.ReceiveEvent.WaitAsync(TimeSpan.FromMilliseconds(NetInterface.IntervalInMilliseconds), ct).ConfigureAwait(false);
             }
             catch
             {
@@ -458,8 +458,8 @@ WaitForSendCompletionWait:
             try
             {
                 var ct = this.Terminal.Core?.CancellationToken ?? CancellationToken.None;
-                await Task.WhenAny(this.NetTerminal.ReceiveEvent.AsTask, Task.Delay(NetInterface.IntervalInMilliseconds, ct)).ConfigureAwait(false);
-                this.NetTerminal.ReceiveEvent.Reset();
+                await Task.WhenAny(this.NetTerminal.ReceiveEvent.WaitAsync(ct), Task.Delay(NetInterface.IntervalInMilliseconds, ct)).ConfigureAwait(false);
+                // await this.NetTerminal.ReceiveEvent.WaitAsync(TimeSpan.FromMilliseconds(NetInterface.IntervalInMilliseconds), ct).ConfigureAwait(false);
                 // await this.NetTerminal.ReceiveEvent.Task.WaitAsync(TimeSpan.FromMilliseconds(NetInterface.IntervalInMilliseconds), ct).ConfigureAwait(false);
                 // await Task.Delay(NetInterface.IntervalInMilliseconds, ct).ConfigureAwait(false);
             }
@@ -757,7 +757,7 @@ WaitForSendCompletionWait:
                 {// Received.
                     if (gene.NetInterface.IsReceiveComplete())
                     {
-                        this.NetTerminal.ReceiveEvent.Set();
+                        this.NetTerminal.ReceiveEvent.Pulse();
                     }
 
                     this.TerminalLogger?.Information($"Recv data: {header.Id} {gene.ToString()}");
