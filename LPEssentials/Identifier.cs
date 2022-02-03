@@ -2,6 +2,9 @@
 
 namespace LP;
 
+/// <summary>
+/// Immutable identifier of objects in LP.
+/// </summary>
 [TinyhandObject]
 public partial class Identifier : IEquatable<Identifier>
 {
@@ -66,16 +69,16 @@ public partial class Identifier : IEquatable<Identifier>
     }
 
     [Key(0)]
-    public ulong Id0 { get; set; }
+    public ulong Id0 { get; private set; }
 
     [Key(1)]
-    public ulong Id1 { get; set; }
+    public ulong Id1 { get; private set; }
 
     [Key(2)]
-    public ulong Id2 { get; set; }
+    public ulong Id2 { get; private set; }
 
     [Key(3)]
-    public ulong Id3 { get; set; }
+    public ulong Id3 { get; private set; }
 
     public bool TryWriteBytes(Span<byte> destination)
     {
