@@ -30,10 +30,6 @@ public partial class ItzShip<T> : IItzShip<T>
         internal PrimarySecondaryIdentifier Key;
     }
 
-    public static void Test()
-    {
-    }
-
     public ItzShip(int maxCapacity)
     {
         this.MaxCapacity = maxCapacity;
