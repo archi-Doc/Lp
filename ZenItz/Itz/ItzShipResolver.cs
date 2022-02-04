@@ -12,28 +12,28 @@ internal class ItzShipResolver
     {
     }
 
-    public IItzShip<T>? TryGet<T>()
-        where T : struct
+    public IItzShip<TPayload>? TryGet<TPayload>()
+        where TPayload : IItzPayload
     {
-        return ShipCache<T>.Ship;
+        return ShipCache<TPayload>.Ship;
     }
 
-    public void Register<T>(IItzShip<T> ship)
-        where T : struct
+    public void Register<TPayload>(IItzShip<TPayload> ship)
+        where TPayload : IItzPayload
     {
-        TypeToShip.TryAdd(typeof(T), ship);
+        TypeToShip.TryAdd(typeof(TPayload), ship);
     }
 
-    private static class ShipCache<T>
-        where T : struct
+    private static class ShipCache<TPayload>
+        where TPayload : IItzPayload
     {
-        public static readonly IItzShip<T>? Ship;
+        public static readonly IItzShip<TPayload>? Ship;
 
         static ShipCache()
         {
-            if (ItzShipResolver.TypeToShip.TryGetValue(typeof(T), out var obj))
+            if (ItzShipResolver.TypeToShip.TryGetValue(typeof(TPayload), out var obj))
             {
-                ShipCache<T>.Ship = (IItzShip<T>)obj;
+                ShipCache<TPayload>.Ship = (IItzShip<TPayload>)obj;
             }
         }
     }
@@ -44,15 +44,15 @@ internal class ItzShipResolver
 public static class ResolverExtensions
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static IItzShip<T> GetShip<T>(this ItzShipResolver resolver)
-        where T : struct
+    internal static IItzShip<TPayload> GetShip<TPayload>(this ItzShipResolver resolver)
+        where TPayload : IItzPayload
     {
-        IItzShip<T>? ship;
+        IItzShip<TPayload>? ship;
 
-        ship = resolver.TryGet<T>();
+        ship = resolver.TryGet<TPayload>();
         if (ship == null)
         {
-            throw new InvalidOperationException(typeof(T).FullName + " is not registered in resolver: " + resolver.GetType());
+            throw new InvalidOperationException(typeof(TPayload).FullName + " is not registered in resolver: " + resolver.GetType());
         }
 
         return ship!;

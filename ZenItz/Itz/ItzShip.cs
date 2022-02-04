@@ -1,25 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Collections.Concurrent;
-
 #pragma warning disable SA1401 // Fields should be private
 
 namespace ZenItz;
 
-public interface IItzShip<T>
-    where T : struct
-{
-    void Set(Identifier primaryId, Identifier? secondaryId, ref T value);
-
-    ItzResult Get(Identifier primaryId, Identifier? secondaryId, out T value);
-
-    byte[] Serialize();
-
-    bool Deserialize(ReadOnlyMemory<byte> memory);
-}
-
 public partial class ItzShip<T> : IItzShip<T>
-    where T : struct
+    where T : IItzPayload
 {
     [TinyhandObject]
     [ValueLinkObject]
@@ -37,11 +23,15 @@ public partial class ItzShip<T> : IItzShip<T>
         }
 
         [Key(0)]
-        internal T Value;
+        internal T Value = default!;
 
         [Key(1)]
         [Link(Type = ChainType.Unordered)]
         internal PrimarySecondaryIdentifier Key;
+    }
+
+    public static void Test()
+    {
     }
 
     public ItzShip(int maxCapacity)
@@ -85,7 +75,7 @@ public partial class ItzShip<T> : IItzShip<T>
             }
         }
 
-        value = default;
+        value = default!;
         return ItzResult.NoData;
     }
 
