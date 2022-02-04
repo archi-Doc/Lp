@@ -72,7 +72,6 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         itz.Deserialize<IntPayload2>(ba);
 
         var z = new IntPayloadTest();
-        z.De
     }
 
     public ZenControl ZenControl { get; set; }

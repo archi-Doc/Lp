@@ -84,5 +84,7 @@ public class ZenControl
 
     public Itz Itz { get; }
 
+    public bool ExaltationOfIntegrality { get; } = true;
+
     private static Container containerInstance = default!;
 }
