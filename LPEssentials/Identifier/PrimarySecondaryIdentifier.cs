@@ -13,7 +13,7 @@ public partial struct PrimarySecondaryIdentifier : IEquatable<PrimarySecondaryId
 
     public PrimarySecondaryIdentifier()
     {
-        this.PrimaryId = Identifier.Zero;
+        this.PrimaryId = null!; // Identifier.Zero; ! Must be null since TinyhandSerializer might modify Identifier.Zero.
         this.SecondaryId = null;
     }
 

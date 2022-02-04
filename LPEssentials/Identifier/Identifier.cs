@@ -120,7 +120,7 @@ public partial class Identifier : IEquatable<Identifier>
         0 => $"{Name} Zero",
         1 => $"{Name} One",
         2 => $"{Name} Two",
-        4 => $"{Name} Three",
+        3 => $"{Name} Three",
         _ => $"{Name} {this.Id0:D4}",
     };
 }
