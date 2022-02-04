@@ -23,8 +23,17 @@ public partial struct IntPayload : IItzPayload
     public int Data;
 }
 
+public record struct IntPayloadTest : IItzPayload
+{
+    [Key(0)]
+    public int Data;
+}
+
 [TinyhandObject(ImplicitKeyAsName = true)]
 public partial record struct IntPayload2(int Data2) : IItzPayload;
+
+[TinyhandObject(ImplicitKeyAsName = true)]
+public partial record class IntPayload3(int Data2) : IItzPayload;
 
 [SimpleCommand("basic")]
 public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
@@ -61,6 +70,8 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         itz.Get<IntPayload2>(Identifier.One, Identifier.One, out var y2);
         ba = itz.Serialize<IntPayload2>();
         itz.Deserialize<IntPayload2>(ba);
+
+        var z = new IntPayloadTest();
     }
 
     public ZenControl ZenControl { get; set; }
