@@ -29,7 +29,7 @@ public class ZenControl
         // Main services
         container.Register<ZenControl>(Reuse.Singleton);
         container.Register<Zen>(Reuse.Singleton);
-        container.Register<ShipControl>(Reuse.Singleton);
+        container.Register<FlakeControl>(Reuse.Singleton);
         container.Register<Itz>(Reuse.Singleton);
 
         // Subcommands

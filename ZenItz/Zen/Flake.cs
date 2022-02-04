@@ -2,9 +2,9 @@
 
 namespace ZenItz;
 
-public class Ship
+public class Flake
 {
-    public Ship()
+    public Flake()
     {
     }
 }

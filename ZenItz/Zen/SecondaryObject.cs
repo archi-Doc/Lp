@@ -2,9 +2,18 @@
 
 namespace ZenItz;
 
-public class SecondaryObject
+[ValueLinkObject]
+internal partial class SecondaryObject
 {
-    public SecondaryObject()
+    internal SecondaryObject(Identifier secondaryId)
+    {
+        this.SecondaryId = secondaryId;
+    }
+
+    internal void Set(byte[] data)
     {
     }
+
+    [Link(Primary = true, Type = ChainType.Unordered)]
+    public Identifier SecondaryId { get; protected set; }
 }

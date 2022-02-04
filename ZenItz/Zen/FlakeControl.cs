@@ -2,14 +2,14 @@
 
 namespace ZenItz;
 
-public class ShipControl
+public class FlakeControl
 {
-    public ShipControl()
+    public FlakeControl()
     {
     }
 
-    public uint GetShipId(int sizeHint)
+    public Flake GetFlake()
     {
-        return 0;
+        return default!;
     }
 }
