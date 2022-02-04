@@ -14,7 +14,7 @@ public partial struct PrimarySecondaryIdentifier : IEquatable<PrimarySecondaryId
     public PrimarySecondaryIdentifier()
     {
         this.PrimaryId = Identifier.Zero;
-        this.SecondaryId = Identifier.Zero;
+        this.SecondaryId = null;
     }
 
     [Key(0)]
@@ -68,11 +68,11 @@ public partial struct PrimarySecondaryIdentifier : IEquatable<PrimarySecondaryId
     {
         if (this.SecondaryId != null)
         {
-            return $"Primary {this.PrimaryId.Id0:D16} Secondary {this.SecondaryId.Id0:D16} ";
+            return $"Primary {this.PrimaryId.Id0:D4} Secondary {this.SecondaryId.Id0:D4} ";
         }
         else
         {
-            return $"Primary {this.PrimaryId.Id0:D16}";
+            return $"Primary {this.PrimaryId.Id0:D4}";
         }
     }
 }

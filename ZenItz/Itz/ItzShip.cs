@@ -12,6 +12,10 @@ public interface IItzShip<T>
     void Set(Identifier primaryId, Identifier? secondaryId, ref T value);
 
     ItzResult Get(Identifier primaryId, Identifier? secondaryId, out T value);
+
+    byte[] Serialize();
+
+    bool Deserialize(ReadOnlyMemory<byte> memory);
 }
 
 public partial class ItzShip<T> : IItzShip<T>
@@ -85,8 +89,30 @@ public partial class ItzShip<T> : IItzShip<T>
         return ItzResult.NoData;
     }
 
+    public byte[] Serialize()
+    {
+        lock (this.goshujin)
+        {
+            return TinyhandSerializer.Serialize(this.goshujin);
+        }
+    }
+
+    public bool Deserialize(ReadOnlyMemory<byte> memory)
+    {
+        lock (this.goshujin)
+        {
+            var newGoshujin = TinyhandSerializer.Deserialize<Item.GoshujinClass>(memory);
+            if (newGoshujin == null)
+            {
+                return false;
+            }
+
+            this.goshujin = newGoshujin;
+            return true;
+        }
+    }
+
     public int MaxCapacity { get; }
 
     private Item.GoshujinClass goshujin = new();
-    private ConcurrentDictionary<PrimarySecondaryIdentifier, Item> concurrentDictionary = new();
 }

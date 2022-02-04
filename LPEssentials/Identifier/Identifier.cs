@@ -22,6 +22,11 @@ public partial class Identifier : IEquatable<Identifier>
     {
     }
 
+    public Identifier(int id0)
+    {
+        this.Id0 = (ulong)id0;
+    }
+
     public Identifier(ulong id0)
     {
         this.Id0 = id0;
@@ -116,6 +121,6 @@ public partial class Identifier : IEquatable<Identifier>
         1 => $"{Name} One",
         2 => $"{Name} Two",
         4 => $"{Name} Three",
-        _ => $"{Name} {this.Id0:D16}",
+        _ => $"{Name} {this.Id0:D4}",
     };
 }
