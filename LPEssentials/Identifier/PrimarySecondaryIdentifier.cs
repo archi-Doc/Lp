@@ -3,7 +3,7 @@
 namespace LP;
 
 [TinyhandObject]
-public partial struct PrimarySecondaryIdentifier : IEquatable<PrimarySecondaryIdentifier>
+public partial struct PrimarySecondaryIdentifier : IEquatable<PrimarySecondaryIdentifier>, IComparable<PrimarySecondaryIdentifier>
 {
     public PrimarySecondaryIdentifier(Identifier primaryId, Identifier? secondaryId = null)
     {

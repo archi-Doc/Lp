@@ -79,7 +79,7 @@ public class Itz
                 }
             }
 
-            return ItzShipResolver.Instance.Deserialize(byteArray);
+            return LP.TinyhandHelper.Deserialize(ItzShipResolver.IdToShip, byteArray);
         }
         catch
         {
@@ -89,13 +89,13 @@ public class Itz
 
     public async Task<bool> SaveAsync(string path, string? backupPath = null)
     {
-        var byteArray = ItzShipResolver.Instance.Serialize();
+        var byteArray = LP.TinyhandHelper.Serialize(ItzShipResolver.IdToShip);
         var hash = new byte[8];
         var result = false;
         BitConverter.TryWriteBytes(hash, Arc.Crypto.FarmHash.Hash64(byteArray));
         try
         {
-            using (var handle = File.OpenHandle(path, mode: FileMode.CreateNew, access: FileAccess.ReadWrite))
+            using (var handle = File.OpenHandle(path, mode: FileMode.Create, access: FileAccess.ReadWrite))
             {
                 await RandomAccess.WriteAsync(handle, hash, 0);
                 await RandomAccess.WriteAsync(handle, byteArray, hash.Length);

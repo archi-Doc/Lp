@@ -26,7 +26,7 @@ public partial class ItzShip<T> : IItzShip<T>
         internal T Value = default!;
 
         [Key(1)]
-        [Link(Type = ChainType.Unordered)]
+        [Link(Type = ChainType.Ordered)]
         internal PrimarySecondaryIdentifier Key;
     }
 
