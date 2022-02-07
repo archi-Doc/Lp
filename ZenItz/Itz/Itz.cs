@@ -49,4 +49,79 @@ public class Itz
     {
         return this.GetShip<TPayload>().Deserialize(memory, out _);
     }
+
+    public async Task<bool> LoadAsync(string path)
+    {
+        try
+        {
+            byte[]? byteArray;
+            using (var handle = File.OpenHandle(path, mode: FileMode.Open, access: FileAccess.Read))
+            {
+                var length = RandomAccess.GetLength(handle);
+                if (length < 8)
+                {
+                    return false;
+                }
+
+                var hash = new byte[8];
+                var read = await RandomAccess.ReadAsync(handle, hash, 0);
+                if (read != hash.Length)
+                {
+                    return false;
+                }
+
+                length -= hash.Length;
+                byteArray = new byte[length];
+                await RandomAccess.ReadAsync(handle, byteArray, hash.Length);
+                if (Arc.Crypto.FarmHash.Hash64(byteArray) != BitConverter.ToUInt64(hash))
+                {
+                    return false;
+                }
+            }
+
+            return ItzShipResolver.Instance.Deserialize(byteArray);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public async Task<bool> SaveAsync(string path, string? backupPath = null)
+    {
+        var byteArray = ItzShipResolver.Instance.Serialize();
+        var hash = new byte[8];
+        var result = false;
+        BitConverter.TryWriteBytes(hash, Arc.Crypto.FarmHash.Hash64(byteArray));
+        try
+        {
+            using (var handle = File.OpenHandle(path, mode: FileMode.CreateNew, access: FileAccess.ReadWrite))
+            {
+                await RandomAccess.WriteAsync(handle, hash, 0);
+                await RandomAccess.WriteAsync(handle, byteArray, hash.Length);
+                result = true;
+            }
+        }
+        catch
+        {
+            return false;
+        }
+
+        if (backupPath != null)
+        {
+            try
+            {
+                using (var handle = File.OpenHandle(path, mode: FileMode.CreateNew, access: FileAccess.ReadWrite))
+                {
+                    await RandomAccess.WriteAsync(handle, hash, 0);
+                    await RandomAccess.WriteAsync(handle, byteArray, hash.Length);
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        return result;
+    }
 }
