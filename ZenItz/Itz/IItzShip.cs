@@ -9,7 +9,7 @@ public interface IItzShip<TPayload>
 
     ItzResult Get(Identifier primaryId, Identifier? secondaryId, out TPayload value);
 
-    byte[] Serialize();
+    void Serialize(ref Tinyhand.IO.TinyhandWriter writer);
 
-    bool Deserialize(ReadOnlyMemory<byte> memory);
+    bool Deserialize(ReadOnlyMemory<byte> memory, out int bytesRead);
 }

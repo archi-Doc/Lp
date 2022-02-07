@@ -31,9 +31,22 @@ public class Itz
 
     public byte[] Serialize<TPayload>()
         where TPayload : IItzPayload
-        => this.GetShip<TPayload>().Serialize();
+    {
+        var writer = default(Tinyhand.IO.TinyhandWriter);
+        try
+        {
+            this.GetShip<TPayload>().Serialize(ref writer);
+            return writer.FlushAndGetArray();
+        }
+        finally
+        {
+            writer.Dispose();
+        }
+    }
 
-    public void Deserialize<TPayload>(ReadOnlyMemory<byte> memory)
+    public bool Deserialize<TPayload>(ReadOnlyMemory<byte> memory)
         where TPayload : IItzPayload
-        => this.GetShip<TPayload>().Deserialize(memory);
+    {
+        return this.GetShip<TPayload>().Deserialize(memory, out _);
+    }
 }

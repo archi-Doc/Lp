@@ -75,20 +75,19 @@ public partial class ItzShip<T> : IItzShip<T>
         return ItzResult.NoData;
     }
 
-    public byte[] Serialize()
+    public void Serialize(ref Tinyhand.IO.TinyhandWriter writer)
     {
         lock (this.goshujin)
         {
-            return TinyhandSerializer.Serialize(this.goshujin);
+            TinyhandSerializer.Serialize(ref writer, this.goshujin);
         }
     }
 
-    public bool Deserialize(ReadOnlyMemory<byte> memory)
+    public bool Deserialize(ReadOnlyMemory<byte> memory, out int bytesRead)
     {
         lock (this.goshujin)
         {
-            var newGoshujin = TinyhandSerializer.Deserialize<Item.GoshujinClass>(memory);
-            if (newGoshujin == null)
+            if (!TinyhandSerializer.TryDeserialize<Item.GoshujinClass>(memory, out var newGoshujin, out bytesRead))
             {
                 return false;
             }
