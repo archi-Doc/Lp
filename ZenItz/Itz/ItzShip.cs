@@ -83,6 +83,14 @@ public partial class ItzShip<T> : IItzShip<T>
         }
     }
 
+    public int Count()
+    {
+        lock (this.goshujin)
+        {
+            return this.goshujin.QueueChain.Count;
+        }
+    }
+
     public bool Deserialize(ReadOnlyMemory<byte> memory, out int bytesRead)
     {
         lock (this.goshujin)

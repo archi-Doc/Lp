@@ -12,4 +12,5 @@ public interface IItzShip<TPayload> : IItzShip
 
 public interface IItzShip : ITinyhandSerializable
 {
+    int Count();
 }

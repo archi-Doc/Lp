@@ -6,7 +6,7 @@ namespace LP;
 /// Immutable identifier of objects in LP.
 /// </summary>
 [TinyhandObject]
-public partial class Identifier : IEquatable<Identifier>, IComparer<Identifier>
+public partial class Identifier : IEquatable<Identifier>, IComparable<Identifier>
 {
     public const string Name = "Identifier";
 
@@ -126,11 +126,47 @@ public partial class Identifier : IEquatable<Identifier>, IComparer<Identifier>
 
     public int CompareTo(Identifier? other)
     {
-        throw new NotImplementedException();
-    }
+        if (other == null)
+        {
+            return 1;
+        }
 
-    public int Compare(Identifier? x, Identifier? y)
-    {
-        throw new NotImplementedException();
+        if (this.Id0 > other.Id0)
+        {
+            return 1;
+        }
+        else if (this.Id0 < other.Id0)
+        {
+            return -1;
+        }
+
+        if (this.Id1 > other.Id1)
+        {
+            return 1;
+        }
+        else if (this.Id1 < other.Id1)
+        {
+            return -1;
+        }
+
+        if (this.Id2 > other.Id2)
+        {
+            return 1;
+        }
+        else if (this.Id2 < other.Id2)
+        {
+            return -1;
+        }
+
+        if (this.Id3 > other.Id3)
+        {
+            return 1;
+        }
+        else if (this.Id3 < other.Id3)
+        {
+            return -1;
+        }
+
+        return 0;
     }
 }

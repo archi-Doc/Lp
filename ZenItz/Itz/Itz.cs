@@ -29,6 +29,24 @@ public class Itz
         where TPayload : IItzPayload
         => this.GetShip<TPayload>().Get(primaryId, secondaryId, out value);
 
+    public int Count<TPayload>()
+        where TPayload : IItzPayload
+        => this.GetShip<TPayload>().Count();
+
+    public int TotalCount()
+    {
+        int count = 0;
+        foreach (var x in ItzShipResolver.IdToShip.Values)
+        {
+            if (x is IItzShip ship)
+            {
+                count += ship.Count();
+            }
+        }
+
+        return count;
+    }
+
     public byte[] Serialize<TPayload>()
         where TPayload : IItzPayload
     {

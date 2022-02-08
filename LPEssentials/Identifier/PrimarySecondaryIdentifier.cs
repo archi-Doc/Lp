@@ -75,4 +75,36 @@ public partial struct PrimarySecondaryIdentifier : IEquatable<PrimarySecondaryId
             return $"Primary {this.PrimaryId.Id0:D4}";
         }
     }
+
+    public int CompareTo(PrimarySecondaryIdentifier other)
+    {
+        var cmp = this.PrimaryId.CompareTo(other.PrimaryId);
+        if (cmp != 0)
+        {
+            return cmp;
+        }
+
+        if (this.SecondaryId == null)
+        {
+            if (other.SecondaryId == null)
+            {
+                return 0;
+            }
+            else
+            {
+                return -1;
+            }
+        }
+        else
+        {
+            if (other.SecondaryId == null)
+            {
+                return 1;
+            }
+            else
+            {
+                return this.SecondaryId.CompareTo(other.SecondaryId);
+            }
+        }
+    }
 }
