@@ -4,20 +4,20 @@ namespace ZenItz;
 
 public class Zen
 {
-    public Zen(ShipControl shipControl)
+    public Zen(FlakeControl shipControl)
     {
-        this.shipControl = shipControl;
+        this.flakeControl = shipControl;
     }
 
-    public PrimaryObject CreateOrGet(Identifier primaryId, int sizeHint = 0)
+    public PrimaryObject CreateOrGet(Identifier primaryId)
     {
         PrimaryObject? primary;
         lock (this.primaryGoshujin)
         {
             if (!this.primaryGoshujin.PrimaryIdChain.TryGetValue(primaryId, out primary))
             {
-                var shipId = this.shipControl.GetShipId(sizeHint);
-                primary = new PrimaryObject(Identifier.One, shipId);
+                var flake = this.flakeControl.GetFlake();
+                primary = new PrimaryObject(flake, primaryId);
                 this.primaryGoshujin.Add(primary);
             }
         }
@@ -25,6 +25,16 @@ public class Zen
         return primary;
     }
 
-    private ShipControl shipControl;
+    public PrimaryObject? TryGet(Identifier primaryId)
+    {
+        PrimaryObject? primary;
+        lock (this.primaryGoshujin)
+        {
+            this.primaryGoshujin.PrimaryIdChain.TryGetValue(primaryId, out primary);
+            return primary;
+        }
+    }
+
+    private FlakeControl flakeControl;
     private PrimaryObject.GoshujinClass primaryGoshujin = new();
 }

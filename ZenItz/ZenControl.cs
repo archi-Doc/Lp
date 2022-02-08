@@ -29,7 +29,8 @@ public class ZenControl
         // Main services
         container.Register<ZenControl>(Reuse.Singleton);
         container.Register<Zen>(Reuse.Singleton);
-        container.Register<ShipControl>(Reuse.Singleton);
+        container.Register<FlakeControl>(Reuse.Singleton);
+        container.Register<Itz>(Reuse.Singleton);
 
         // Subcommands
         var commandTypes = new Type[]
@@ -63,11 +64,12 @@ public class ZenControl
         }
     }
 
-    public ZenControl(Zen zen)
+    public ZenControl(Zen zen, Itz itz)
     {
         this.ServiceProvider = (IServiceProvider)containerInstance;
 
         this.Zen = zen;
+        this.Itz = itz;
 
         Radio.Open<Message.Configure>(this.Configure);
     }
@@ -79,6 +81,10 @@ public class ZenControl
     public IServiceProvider ServiceProvider { get; }
 
     public Zen Zen { get; }
+
+    public Itz Itz { get; }
+
+    public bool ExaltationOfIntegrality { get; } = true;
 
     private static Container containerInstance = default!;
 }

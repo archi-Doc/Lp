@@ -1,9 +1,12 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace LP;
+namespace LP.Obsolete;
 
+/// <summary>
+/// Immutable identifier of objects in LP.
+/// </summary>
 [TinyhandObject]
-public partial class Identifier : IEquatable<Identifier>
+public partial class Identifier : IEquatable<Identifier>, IComparable<Identifier>
 {
     public const string Name = "Identifier";
 
@@ -17,6 +20,11 @@ public partial class Identifier : IEquatable<Identifier>
 
     public Identifier()
     {
+    }
+
+    public Identifier(int id0)
+    {
+        this.Id0 = (ulong)id0;
     }
 
     public Identifier(ulong id0)
@@ -66,16 +74,16 @@ public partial class Identifier : IEquatable<Identifier>
     }
 
     [Key(0)]
-    public ulong Id0 { get; set; }
+    public ulong Id0 { get; private set; }
 
     [Key(1)]
-    public ulong Id1 { get; set; }
+    public ulong Id1 { get; private set; }
 
     [Key(2)]
-    public ulong Id2 { get; set; }
+    public ulong Id2 { get; private set; }
 
     [Key(3)]
-    public ulong Id3 { get; set; }
+    public ulong Id3 { get; private set; }
 
     public bool TryWriteBytes(Span<byte> destination)
     {
@@ -112,7 +120,53 @@ public partial class Identifier : IEquatable<Identifier>
         0 => $"{Name} Zero",
         1 => $"{Name} One",
         2 => $"{Name} Two",
-        4 => $"{Name} Three",
-        _ => $"{Name} {this.Id0:D16}",
+        3 => $"{Name} Three",
+        _ => $"{Name} {this.Id0:D4}",
     };
+
+    public int CompareTo(Identifier? other)
+    {
+        if (other == null)
+        {
+            return 1;
+        }
+
+        if (this.Id0 > other.Id0)
+        {
+            return 1;
+        }
+        else if (this.Id0 < other.Id0)
+        {
+            return -1;
+        }
+
+        if (this.Id1 > other.Id1)
+        {
+            return 1;
+        }
+        else if (this.Id1 < other.Id1)
+        {
+            return -1;
+        }
+
+        if (this.Id2 > other.Id2)
+        {
+            return 1;
+        }
+        else if (this.Id2 < other.Id2)
+        {
+            return -1;
+        }
+
+        if (this.Id3 > other.Id3)
+        {
+            return 1;
+        }
+        else if (this.Id3 < other.Id3)
+        {
+            return -1;
+        }
+
+        return 0;
+    }
 }

@@ -78,7 +78,7 @@ public partial class NetTerminal : IDisposable
 
     public Terminal Terminal { get; }
 
-    public AsyncManualResetEvent ReceiveEvent { get; } = new();
+    public AsyncPulseEvent ReceiveEvent { get; } = new();
 
     public FlowControl FlowControl { get; }
 
