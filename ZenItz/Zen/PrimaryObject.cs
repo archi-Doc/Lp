@@ -5,6 +5,13 @@ namespace ZenItz;
 [ValueLinkObject]
 public partial class PrimaryObject
 {
+    public enum PrimaryState
+    {
+        Loaded, // Active and not saved
+        Saved, // Active and saved
+        Removed, // Removed
+    }
+
     internal PrimaryObject(Flake flake, Identifier primaryId)
     {
         this.Flake = flake;
@@ -15,6 +22,11 @@ public partial class PrimaryObject
     {
         lock (this.secondaryGoshujin)
         {
+            if (this.IsRemoved)
+            {
+                return ZenResult.Removed;
+            }
+
             if (!this.secondaryGoshujin.SecondaryIdChain.TryGetValue(secondaryId, out var secondary))
             {
                 secondary = new SecondaryObject(secondaryId);
@@ -27,10 +39,14 @@ public partial class PrimaryObject
         return ZenResult.Success;
     }
 
-    public Flake Flake { get; protected set; }
+    public Flake Flake { get; private set; }
 
-    [Link(Primary = true, Type = ChainType.Ordered)]
-    public Identifier PrimaryId { get; protected set; }
+    public PrimaryState State { get; private set; }
+
+    [Link(Primary = true, Type = ChainType.Ordered)] // Not unordered
+    public Identifier PrimaryId { get; private set; }
+
+    public bool IsRemoved => this.State == PrimaryState.Removed;
 
     private SecondaryObject.GoshujinClass secondaryGoshujin = new();
 }

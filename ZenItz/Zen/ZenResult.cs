@@ -5,5 +5,6 @@ namespace ZenItz;
 public enum ZenResult
 {
     Success,
+    Removed,
     NoData,
 }

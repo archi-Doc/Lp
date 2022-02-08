@@ -4,9 +4,9 @@ namespace ZenItz;
 
 public class Zen
 {
-    public Zen(FlakeControl shipControl)
+    public Zen(FlakeControl flakeControl)
     {
-        this.flakeControl = shipControl;
+        this.flakeControl = flakeControl;
     }
 
     public PrimaryObject CreateOrGet(Identifier primaryId)
