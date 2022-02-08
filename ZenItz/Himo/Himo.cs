@@ -22,5 +22,4 @@ internal partial class Himo
     internal PrimarySecondaryIdentifier Identifier;
 
     internal ByteArrayPool.MemoryOwner MemoryOwner;
-#pragma warning restore SA1401 // Fields should be private
 }

@@ -19,7 +19,7 @@ internal partial class SecondaryObject
 
     internal SecondaryObject(Identifier secondaryId)
     {// New object
-        this.SecondaryId = secondaryId;
+        this.secondaryId = secondaryId;
         this.FlakeId = FlakeControl.Instance.GetFlakeId();
     }
 

@@ -4,10 +4,10 @@ namespace ZenItz;
 
 public class Zen
 {
-    public Zen(FlakeControl flakeControl, HimoControl himoControl)
+    public Zen()
     {
-        this.FlakeControl = flakeControl;
-        this.HimoControl = himoControl;
+        this.FlakeControl = new();
+        this.HimoControl = new(this);
     }
 
     public PrimaryObject CreateOrGet(Identifier primaryId)

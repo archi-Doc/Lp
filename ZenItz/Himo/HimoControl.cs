@@ -8,8 +8,9 @@ public class HimoControl
 {
     public const long DefaultSizeLimit = 400_000_000;
 
-    public HimoControl()
+    public HimoControl(Zen zen)
     {
+        this.zen = zen;
         this.pool = new ByteArrayPool(BlockService.MaxBlockSize, 100);
         this.sizeLimit = DefaultSizeLimit;
     }
@@ -32,13 +33,12 @@ public class HimoControl
             himo.Goshujin = this.goshujin;
             this.totalSize += data.Length;
 
-            var sizeToRemove = this.totalSize - this.sizeLimit;
-            while (sizeToRemove > 0)
-            {
+            while (this.totalSize > this.sizeLimit)
+            {// Unload
                 var h = this.goshujin.QueueChain.Dequeue();
                 remove ??= new();
                 remove.Add(h.Identifier);
-                sizeToRemove -= h.MemoryOwner.Memory.Length;
+                this.totalSize -= h.MemoryOwner.Memory.Length;
             }
         }
 
@@ -46,7 +46,9 @@ public class HimoControl
         {
             foreach (var x in remove)
             {// Unload
-                this.Release(in x.PrimaryId, in x.SecondaryId);
+                // this.zen.Unload(in x.PrimaryId, in x.SecondaryId);
+                // this.
+                // this.Release(in x.PrimaryId, in x.SecondaryId);
             }
         }
 
@@ -66,6 +68,7 @@ public class HimoControl
         }
     }
 
+    private Zen zen;
     private ByteArrayPool pool;
     private Himo.GoshujinClass goshujin = new();
     private long sizeLimit;
