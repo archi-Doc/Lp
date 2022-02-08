@@ -4,12 +4,16 @@ namespace ZenItz;
 
 public class FlakeControl
 {
+    public static readonly FlakeControl Instance = new();
+
     public FlakeControl()
     {
     }
 
-    public Flake GetFlake()
+    public int GetFlakeId()
     {
-        return default!;
+        return 0;
     }
+
+    private Flake[] flakeArray;
 }

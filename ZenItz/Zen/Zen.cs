@@ -16,8 +16,7 @@ public class Zen
         {
             if (!this.primaryGoshujin.PrimaryIdChain.TryGetValue(primaryId, out primary))
             {
-                var flake = this.flakeControl.GetFlake();
-                primary = new PrimaryObject(flake, primaryId);
+                primary = new PrimaryObject(primaryId);
                 this.primaryGoshujin.Add(primary);
             }
         }

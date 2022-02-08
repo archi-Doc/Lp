@@ -12,9 +12,8 @@ public partial class PrimaryObject
         Removed, // Removed
     }
 
-    internal PrimaryObject(Flake flake, Identifier primaryId)
+    internal PrimaryObject(Identifier primaryId)
     {
-        this.Flake = flake;
         this.PrimaryId = primaryId;
     }
 
@@ -38,8 +37,6 @@ public partial class PrimaryObject
         // this.Flake.Set(this.PrimaryId, secondaryId, data);
         return ZenResult.Success;
     }
-
-    public Flake Flake { get; private set; }
 
     public PrimaryState State { get; private set; }
 
