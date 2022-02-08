@@ -4,9 +4,10 @@ namespace ZenItz;
 
 public class Zen
 {
-    public Zen(FlakeControl flakeControl)
+    public Zen(FlakeControl flakeControl, HimoControl himoControl)
     {
-        this.flakeControl = flakeControl;
+        this.FlakeControl = flakeControl;
+        this.HimoControl = himoControl;
     }
 
     public PrimaryObject CreateOrGet(Identifier primaryId)
@@ -16,7 +17,7 @@ public class Zen
         {
             if (!this.primaryGoshujin.PrimaryIdChain.TryGetValue(primaryId, out primary))
             {
-                primary = new PrimaryObject(primaryId);
+                primary = new PrimaryObject(this, primaryId);
                 this.primaryGoshujin.Add(primary);
             }
         }
@@ -34,6 +35,9 @@ public class Zen
         }
     }
 
-    private FlakeControl flakeControl;
+    public FlakeControl FlakeControl { get; }
+
+    public HimoControl HimoControl { get; }
+
     private PrimaryObject.GoshujinClass primaryGoshujin = new();
 }

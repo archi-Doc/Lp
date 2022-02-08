@@ -2,6 +2,9 @@
 
 namespace ZenItz;
 
+#pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
+#pragma warning disable SA1401 // Fields should be private
+
 [ValueLinkObject]
 public partial class PrimaryObject
 {
@@ -12,12 +15,13 @@ public partial class PrimaryObject
         Removed, // Removed
     }
 
-    internal PrimaryObject(Identifier primaryId)
+    internal PrimaryObject(Zen zen, Identifier primaryId)
     {
-        this.PrimaryId = primaryId;
+        this.Zen = zen;
+        this.primaryId = primaryId;
     }
 
-    public async Task<ZenResult> Set(Identifier secondaryId, byte[] data)
+    public ZenResult Set(Identifier secondaryId, ReadOnlySpan<byte> data)
     {
         lock (this.secondaryGoshujin)
         {
@@ -31,19 +35,27 @@ public partial class PrimaryObject
                 secondary = new SecondaryObject(secondaryId);
             }
 
-            secondary.Set(data);
+            secondary.Set(this, data);
         }
 
         // this.Flake.Set(this.PrimaryId, secondaryId, data);
         return ZenResult.Success;
     }
 
+    public void Unload()
+    {
+    }
+
+    public Zen Zen { get; }
+
     public PrimaryState State { get; private set; }
 
-    [Link(Primary = true, Type = ChainType.Ordered)] // Not unordered
-    public Identifier PrimaryId { get; private set; }
+    public Identifier PrimaryId => this.primaryId;
 
     public bool IsRemoved => this.State == PrimaryState.Removed;
+
+    [Link(Primary = true, Type = ChainType.Ordered)] // Not unordered
+    internal Identifier primaryId;
 
     private SecondaryObject.GoshujinClass secondaryGoshujin = new();
 }
