@@ -51,7 +51,8 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         itz.Register(new ItzShip<IntPayload>(1_000_000));
         itz.Register(new ItzShip<IntPayload2>(3));
 
-        // Console.WriteLine($"Loaded: {await itz.LoadAsync("itz.test")}, {itz.TotalCount()}");
+        var sw = Stopwatch.StartNew();
+        Console.WriteLine($"Loaded: {await itz.LoadAsync("itz.test")}, {itz.TotalCount()}");
 
         var x = new IntPayload(1);
         itz.Set(Identifier.One, Identifier.One, ref x);
@@ -65,7 +66,8 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 
         Console.WriteLine("Set");
 
-        // Console.WriteLine($"Saved: {await itz.SaveAsync("itz.test")}, {itz.TotalCount()}");
+        Console.WriteLine($"Saved: {await itz.SaveAsync("itz.test")}, {itz.TotalCount()}");
+        Console.WriteLine($"{sw.ElapsedMilliseconds} ms");
     }
 
     public ZenControl ZenControl { get; set; }

@@ -56,7 +56,7 @@ public partial struct PrimarySecondaryIdentifier : IEquatable<PrimarySecondaryId
     {
         if (this.SecondaryId != null)
         {
-            return (int)(this.PrimaryId.Id0 ^ this.SecondaryId.Id0);
+            return (int)(this.PrimaryId.Id0 ^ System.Numerics.BitOperations.RotateLeft(this.SecondaryId.Id0, 32));
         }
         else
         {
