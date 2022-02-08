@@ -55,19 +55,21 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         Console.WriteLine($"Loaded: {await itz.LoadAsync("itz.test")}, {itz.TotalCount()}");
 
         var x = new IntPayload(1);
-        itz.Set(Identifier.One, Identifier.One, ref x);
-        var result = itz.Get<IntPayload>(Identifier.One, Identifier.One, out var x2);
+        itz.Set(in Identifier.One, in Identifier.One, in x);
+        var result = itz.Get<IntPayload>(in Identifier.One, in Identifier.One, out var x2);
 
         for (var i = 2; i <= 1_000_000; i++)
         {
             x = new(i);
-            itz.Set(new Identifier(i), new Identifier(i), ref x);
+            var p = new Identifier(i);
+            var p2 = new Identifier(i);
+            itz.Set(in p, in p2, in x);
         }
 
         Console.WriteLine("Set");
 
         Console.WriteLine($"Saved: {await itz.SaveAsync("itz.test")}, {itz.TotalCount()}");
-        Console.WriteLine($"{sw.ElapsedMilliseconds} ms");
+        Console.WriteLine($"{sw.ElapsedMilliseconds} ms"); // 2300ms -> 1800ms -> 
     }
 
     public ZenControl ZenControl { get; set; }

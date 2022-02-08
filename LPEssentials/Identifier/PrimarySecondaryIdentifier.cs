@@ -3,9 +3,9 @@
 namespace LP;
 
 [TinyhandObject]
-public partial struct PrimarySecondaryIdentifier : IEquatable<PrimarySecondaryIdentifier>, IComparable<PrimarySecondaryIdentifier>
+public readonly partial struct PrimarySecondaryIdentifier : IEquatable<PrimarySecondaryIdentifier>, IComparable<PrimarySecondaryIdentifier>
 {
-    public PrimarySecondaryIdentifier(Identifier primaryId, Identifier? secondaryId = null)
+    public PrimarySecondaryIdentifier(Identifier primaryId, Identifier secondaryId)
     {
         this.PrimaryId = primaryId;
         this.SecondaryId = secondaryId;
@@ -13,15 +13,15 @@ public partial struct PrimarySecondaryIdentifier : IEquatable<PrimarySecondaryId
 
     public PrimarySecondaryIdentifier()
     {
-        this.PrimaryId = null!; // Identifier.Zero; ! Must be null since TinyhandSerializer might modify Identifier.Zero.
-        this.SecondaryId = null;
+        this.PrimaryId = default; // Identifier.Zero; ! Must be default since TinyhandSerializer might modify Identifier.Zero.
+        this.SecondaryId = default;
     }
 
     [Key(0)]
-    public Identifier PrimaryId;
+    public readonly Identifier PrimaryId;
 
     [Key(1)]
-    public Identifier? SecondaryId;
+    public readonly Identifier SecondaryId;
 
     public bool Equals(PrimarySecondaryIdentifier other)
     {
@@ -30,50 +30,17 @@ public partial struct PrimarySecondaryIdentifier : IEquatable<PrimarySecondaryId
             return false;
         }
 
-        if (this.SecondaryId == null)
-        {
-            if (other.SecondaryId == null)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-        else
-        {
-            if (other.SecondaryId == null)
-            {
-                return false;
-            }
-        }
-
         return this.SecondaryId.Equals(other.SecondaryId);
     }
 
     public override int GetHashCode()
     {
-        if (this.SecondaryId != null)
-        {
-            return (int)(this.PrimaryId.Id0 ^ System.Numerics.BitOperations.RotateLeft(this.SecondaryId.Id0, 32));
-        }
-        else
-        {
-            return (int)this.PrimaryId.Id0;
-        }
+        return (int)(this.PrimaryId.Id0 ^ System.Numerics.BitOperations.RotateLeft(this.SecondaryId.Id0, 32));
     }
 
     public override string ToString()
     {
-        if (this.SecondaryId != null)
-        {
-            return $"Primary {this.PrimaryId.Id0:D4} Secondary {this.SecondaryId.Id0:D4} ";
-        }
-        else
-        {
-            return $"Primary {this.PrimaryId.Id0:D4}";
-        }
+        return $"Primary {this.PrimaryId.Id0:D4} Secondary {this.SecondaryId.Id0:D4} ";
     }
 
     public int CompareTo(PrimarySecondaryIdentifier other)
@@ -84,27 +51,6 @@ public partial struct PrimarySecondaryIdentifier : IEquatable<PrimarySecondaryId
             return cmp;
         }
 
-        if (this.SecondaryId == null)
-        {
-            if (other.SecondaryId == null)
-            {
-                return 0;
-            }
-            else
-            {
-                return -1;
-            }
-        }
-        else
-        {
-            if (other.SecondaryId == null)
-            {
-                return 1;
-            }
-            else
-            {
-                return this.SecondaryId.CompareTo(other.SecondaryId);
-            }
-        }
+        return this.SecondaryId.CompareTo(other.SecondaryId);
     }
 }

@@ -5,9 +5,9 @@ namespace ZenItz;
 public interface IItzShip<TPayload> : IItzShip
     where TPayload : IItzPayload
 {
-    void Set(Identifier primaryId, Identifier? secondaryId, ref TPayload value);
+    void Set(in Identifier primaryId, in Identifier secondaryId, in TPayload value);
 
-    ItzResult Get(Identifier primaryId, Identifier? secondaryId, out TPayload value);
+    ItzResult Get(in Identifier primaryId, in Identifier secondaryId, out TPayload value);
 }
 
 public interface IItzShip : ITinyhandSerializable

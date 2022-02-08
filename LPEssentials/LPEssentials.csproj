@@ -25,7 +25,7 @@
     <PackageReference Include="BigMachines" Version="0.20.0" />
     <PackageReference Include="DryIoc.dll" Version="4.8.6" />
     <PackageReference Include="SimpleCommandLine" Version="0.9.1" />
-    <PackageReference Include="Tinyhand" Version="0.26.6" />
+    <PackageReference Include="Tinyhand" Version="0.27.1" />
     <PackageReference Include="ValueLink" Version="0.23.3" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.354">
       <PrivateAssets>all</PrivateAssets>
@@ -34,6 +34,10 @@
     <PackageReference Include="Serilog" Version="2.10.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="4.0.1" />
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Generated\*" />
   </ItemGroup>
 
 </Project>

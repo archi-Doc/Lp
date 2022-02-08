@@ -1,45 +1,35 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace LP;
+namespace LP.Obsolete;
 
 /// <summary>
 /// Immutable identifier of objects in LP.
 /// </summary>
 [TinyhandObject]
-public readonly partial struct Identifier : IEquatable<Identifier>, IComparable<Identifier>
+public partial class Identifier : IEquatable<Identifier>, IComparable<Identifier>
 {
     public const string Name = "Identifier";
 
-    public static readonly Identifier Zero = default;
+    public static Identifier Zero { get; } = new();
 
-    public static readonly Identifier One = new(1);
+    public static Identifier One { get; } = new(1);
 
-    public static readonly Identifier Two = new(2);
+    public static Identifier Two { get; } = new(2);
 
-    public static readonly Identifier Three = new(3);
+    public static Identifier Three { get; } = new(3);
 
     public Identifier()
     {
-        this.Id0 = 0;
-        this.Id1 = 0;
-        this.Id2 = 0;
-        this.Id3 = 0;
     }
 
     public Identifier(int id0)
     {
         this.Id0 = (ulong)id0;
-        this.Id1 = 0;
-        this.Id2 = 0;
-        this.Id3 = 0;
     }
 
     public Identifier(ulong id0)
     {
         this.Id0 = id0;
-        this.Id1 = 0;
-        this.Id2 = 0;
-        this.Id3 = 0;
     }
 
     public Identifier(ulong id0, ulong id1, ulong id2, ulong id3)
@@ -84,16 +74,16 @@ public readonly partial struct Identifier : IEquatable<Identifier>, IComparable<
     }
 
     [Key(0)]
-    public readonly ulong Id0;
+    public ulong Id0 { get; private set; }
 
     [Key(1)]
-    public readonly ulong Id1;
+    public ulong Id1 { get; private set; }
 
     [Key(2)]
-    public readonly ulong Id2;
+    public ulong Id2 { get; private set; }
 
     [Key(3)]
-    public readonly ulong Id3;
+    public ulong Id3 { get; private set; }
 
     public bool TryWriteBytes(Span<byte> destination)
     {
@@ -113,8 +103,13 @@ public readonly partial struct Identifier : IEquatable<Identifier>, IComparable<
         return true;
     }
 
-    public bool Equals(Identifier other)
+    public bool Equals(Identifier? other)
     {
+        if (other == null)
+        {
+            return false;
+        }
+
         return this.Id0 == other.Id0 && this.Id1 == other.Id1 && this.Id2 == other.Id2 && this.Id3 == other.Id3;
     }
 
@@ -129,8 +124,13 @@ public readonly partial struct Identifier : IEquatable<Identifier>, IComparable<
         _ => $"{Name} {this.Id0:D4}",
     };
 
-    public int CompareTo(Identifier other)
+    public int CompareTo(Identifier? other)
     {
+        if (other == null)
+        {
+            return 1;
+        }
+
         if (this.Id0 > other.Id0)
         {
             return 1;

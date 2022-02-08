@@ -21,11 +21,11 @@ public class Itz
         where TPayload : IItzPayload
         => ItzShipResolver.Instance.GetShip<TPayload>();
 
-    public void Set<TPayload>(Identifier primaryId, Identifier? secondaryId, ref TPayload value)
+    public void Set<TPayload>(in Identifier primaryId, in Identifier secondaryId, in TPayload value)
         where TPayload : IItzPayload
-        => this.GetShip<TPayload>().Set(primaryId, secondaryId, ref value);
+        => this.GetShip<TPayload>().Set(in primaryId, in secondaryId, in value);
 
-    public ItzResult Get<TPayload>(Identifier primaryId, Identifier? secondaryId, out TPayload value)
+    public ItzResult Get<TPayload>(in Identifier primaryId, in Identifier secondaryId, out TPayload value)
         where TPayload : IItzPayload
         => this.GetShip<TPayload>().Get(primaryId, secondaryId, out value);
 

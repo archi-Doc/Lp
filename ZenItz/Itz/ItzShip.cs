@@ -35,7 +35,7 @@ public partial class ItzShip<T> : IItzShip<T>
         this.MaxCapacity = maxCapacity;
     }
 
-    public void Set(Identifier primaryId, Identifier? secondaryId, ref T value)
+    public void Set(in Identifier primaryId, in Identifier secondaryId, in T value)
     {
         var key = new PrimarySecondaryIdentifier(primaryId, secondaryId);
         lock (this.goshujin)
@@ -59,7 +59,7 @@ public partial class ItzShip<T> : IItzShip<T>
         }
     }
 
-    public ItzResult Get(Identifier primaryId, Identifier? secondaryId, out T value)
+    public ItzResult Get(in Identifier primaryId, in Identifier secondaryId, out T value)
     {
         var key = new PrimarySecondaryIdentifier(primaryId, secondaryId);
         lock (this.goshujin)
