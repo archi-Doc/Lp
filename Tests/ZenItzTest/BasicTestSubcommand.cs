@@ -12,15 +12,25 @@ public partial struct IntPayload : IItzPayload
     public IntPayload()
     {
         this.Data = 0;
+        this.Data2 = 0;
+        this.Data3 = default!;
     }
 
     public IntPayload(int data)
     {
         this.Data = data;
+        this.Data2 = 0;
+        this.Data3 = default!;
     }
 
     [Key(0)]
     public int Data;
+
+    [Key(1)]
+    public long Data2;
+
+    [Key(2)]
+    public string Data3;
 }
 
 public record struct IntPayloadTest : IItzPayload

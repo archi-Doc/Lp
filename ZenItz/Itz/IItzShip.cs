@@ -10,7 +10,7 @@ public interface IItzShip<TPayload> : IItzShip
     ItzResult Get(in Identifier primaryId, in Identifier secondaryId, out TPayload value);
 }
 
-public interface IItzShip : ITinyhandSerializable
+public interface IItzShip : ILPSerializable
 {
     int Count();
 }

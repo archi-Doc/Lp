@@ -4,11 +4,11 @@ using System.Runtime.CompilerServices;
 
 namespace ZenItz;
 
-internal class ItzShipResolver
+internal class ItzShipControl
 {
-    public static readonly ItzShipResolver Instance = new();
+    public static readonly ItzShipControl Instance = new();
 
-    private ItzShipResolver()
+    private ItzShipControl()
     {
     }
 
@@ -25,7 +25,6 @@ internal class ItzShipResolver
         {
             var id = TypeToId<TPayload>();
             IdToShip.Add(id, ship);
-            // IdToType.Add(id, typeof(TPayload));
         }
     }
 
@@ -41,22 +40,21 @@ internal class ItzShipResolver
 
         static ShipCache()
         {
-            if (ItzShipResolver.TypeToShip.TryGetValue(typeof(TPayload), out var obj))
+            if (ItzShipControl.TypeToShip.TryGetValue(typeof(TPayload), out var obj))
             {
                 ShipCache<TPayload>.Ship = (IItzShip<TPayload>)obj;
             }
         }
     }
 
-    internal static readonly Dictionary<ulong, ITinyhandSerializable> IdToShip = new();
+    internal static readonly Dictionary<ulong, ILPSerializable> IdToShip = new();
     private static readonly Dictionary<Type, IItzShip> TypeToShip = new();
-    // private static readonly Dictionary<ulong, Type> IdToType = new();
 }
 
 public static class ResolverExtensions
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static IItzShip<TPayload> GetShip<TPayload>(this ItzShipResolver resolver)
+    internal static IItzShip<TPayload> GetShip<TPayload>(this ItzShipControl resolver)
         where TPayload : IItzPayload
     {
         IItzShip<TPayload>? ship;

@@ -13,13 +13,13 @@ public class Itz
     public void Register<TPayload>(IItzShip<TPayload> ship)
         where TPayload : IItzPayload
     {
-        ItzShipResolver.Instance.Register<TPayload>(ship);
+        ItzShipControl.Instance.Register<TPayload>(ship);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public IItzShip<TPayload> GetShip<TPayload>()
         where TPayload : IItzPayload
-        => ItzShipResolver.Instance.GetShip<TPayload>();
+        => ItzShipControl.Instance.GetShip<TPayload>();
 
     public void Set<TPayload>(in Identifier primaryId, in Identifier secondaryId, in TPayload value)
         where TPayload : IItzPayload
@@ -36,7 +36,7 @@ public class Itz
     public int TotalCount()
     {
         int count = 0;
-        foreach (var x in ItzShipResolver.IdToShip.Values)
+        foreach (var x in ItzShipControl.IdToShip.Values)
         {
             if (x is IItzShip ship)
             {
@@ -97,7 +97,7 @@ public class Itz
                 }
             }
 
-            return LP.TinyhandHelper.Deserialize(ItzShipResolver.IdToShip, byteArray);
+            return LP.SerializeHelper.Deserialize(ItzShipControl.IdToShip, byteArray);
         }
         catch
         {
@@ -107,7 +107,7 @@ public class Itz
 
     public async Task<bool> SaveAsync(string path, string? backupPath = null)
     {
-        var byteArray = LP.TinyhandHelper.Serialize(ItzShipResolver.IdToShip);
+        var byteArray = LP.SerializeHelper.Serialize(ItzShipControl.IdToShip);
         var hash = new byte[8];
         var result = false;
         BitConverter.TryWriteBytes(hash, Arc.Crypto.FarmHash.Hash64(byteArray));

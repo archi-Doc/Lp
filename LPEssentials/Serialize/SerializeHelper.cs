@@ -2,16 +2,9 @@
 
 namespace LP;
 
-public interface ITinyhandSerializable
+public static class SerializeHelper
 {
-    void Serialize(ref Tinyhand.IO.TinyhandWriter writer);
-
-    bool Deserialize(ReadOnlyMemory<byte> memory, out int bytesRead);
-}
-
-public static class TinyhandHelper
-{
-    public static byte[] Serialize(Dictionary<ulong, ITinyhandSerializable> dictionary)
+    public static byte[] Serialize(Dictionary<ulong, ILPSerializable> dictionary)
     {
         var writer = default(Tinyhand.IO.TinyhandWriter);
         byte[]? byteArray;
@@ -40,7 +33,7 @@ public static class TinyhandHelper
         return byteArray;
     }
 
-    public static bool Deserialize(Dictionary<ulong, ITinyhandSerializable> dictionary, ReadOnlyMemory<byte> memory)
+    public static bool Deserialize(Dictionary<ulong, ILPSerializable> dictionary, ReadOnlyMemory<byte> memory)
     {
         try
         {
