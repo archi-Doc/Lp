@@ -23,6 +23,11 @@ public partial class PrimaryObject
 
     public ZenResult Set(Identifier secondaryId, ReadOnlySpan<byte> data)
     {
+        if (data.Length > Zen.MaxSize)
+        {
+            return ZenResult.OverSizeLimit;
+        }
+
         lock (this.secondaryGoshujin)
         {
             if (this.IsRemoved)

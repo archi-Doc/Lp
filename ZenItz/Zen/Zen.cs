@@ -4,6 +4,8 @@ namespace ZenItz;
 
 public class Zen
 {
+    public const int MaxSize = 1024 * 1024 * 4; // 4MB
+
     public Zen()
     {
         this.FlakeControl = new();

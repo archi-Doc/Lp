@@ -5,6 +5,7 @@ namespace ZenItz;
 public enum ZenResult
 {
     Success,
+    OverSizeLimit,
     Removed,
     NoData,
 }
