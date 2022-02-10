@@ -12,14 +12,14 @@ public class Zen
         this.HimoControl = new(this);
     }
 
-    public PrimaryObject CreateOrGet(Identifier primaryId)
+    public Flake CreateOrGet(Identifier id)
     {
-        PrimaryObject? primary;
+        Flake? primary;
         lock (this.primaryGoshujin)
         {
-            if (!this.primaryGoshujin.PrimaryIdChain.TryGetValue(primaryId, out primary))
+            if (!this.primaryGoshujin.IdChain.TryGetValue(id, out primary))
             {
-                primary = new PrimaryObject(this, primaryId);
+                primary = new Flake(this, id);
                 this.primaryGoshujin.Add(primary);
             }
         }
@@ -27,19 +27,19 @@ public class Zen
         return primary;
     }
 
-    public PrimaryObject? TryGet(Identifier primaryId)
+    public Flake? TryGet(Identifier primaryId)
     {
-        PrimaryObject? primary;
+        Flake? primary;
         lock (this.primaryGoshujin)
         {
-            this.primaryGoshujin.PrimaryIdChain.TryGetValue(primaryId, out primary);
+            this.primaryGoshujin.IdChain.TryGetValue(primaryId, out primary);
             return primary;
         }
     }
 
-    public FlakeControl FlakeControl { get; }
+    public SnowmanControl FlakeControl { get; }
 
     public HimoControl HimoControl { get; }
 
-    private PrimaryObject.GoshujinClass primaryGoshujin = new();
+    private Flake.GoshujinClass primaryGoshujin = new();
 }

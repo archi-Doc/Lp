@@ -4,7 +4,7 @@ namespace ZenItz;
 
 [TinyhandObject(ExplicitKeyOnly = true)]
 [ValueLinkObject]
-internal partial class SecondaryObject
+internal partial class FlakeObject
 {
     public enum SecondaryState
     {
@@ -13,18 +13,18 @@ internal partial class SecondaryObject
         Saved, // Active and saved
     }
 
-    internal SecondaryObject()
+    internal FlakeObject()
     {// For serializer
     }
 
-    internal SecondaryObject(Identifier secondaryId)
+    internal FlakeObject(Identifier secondaryId)
     {// New object, lock (secondaryGoshujin)
         this.State = SecondaryState.Saved;
         this.secondaryId = secondaryId;
-        this.FlakeId = FlakeControl.Instance.GetFlakeId();
+        this.FlakeId = SnowmanControl.Instance.GetFlakeId();
     }
 
-    internal void Set(PrimaryObject primaryObject, ReadOnlySpan<byte> data)
+    internal void Set(Flake primaryObject, ReadOnlySpan<byte> data)
     {// lock (secondaryGoshujin)
         if (this.himo != null && data.SequenceEqual(this.himo.MemoryOwner.Memory.Span))
         {// Identical
@@ -32,7 +32,7 @@ internal partial class SecondaryObject
         }
 
         this.State = SecondaryState.Loaded;
-        this.himo = primaryObject.Zen.HimoControl.Create(in primaryObject.primaryId, in this.secondaryId, data);
+        this.himo = primaryObject.Zen.HimoControl.Create(in primaryObject.id, in this.secondaryId, data);
     }
 
     public SecondaryState State { get; private set; }

@@ -2,11 +2,11 @@
 
 namespace ZenItz;
 
-public class FlakeControl
+public class SnowmanControl
 {
-    public static readonly FlakeControl Instance = new();
+    public static readonly SnowmanControl Instance = new();
 
-    public FlakeControl()
+    public SnowmanControl()
     {
     }
 
@@ -15,5 +15,5 @@ public class FlakeControl
         return 0;
     }
 
-    private Flake[] flakeArray;
+    private Snowman[] flakeArray;
 }
