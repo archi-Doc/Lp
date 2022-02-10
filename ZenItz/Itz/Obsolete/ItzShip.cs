@@ -2,7 +2,7 @@
 
 #pragma warning disable SA1401 // Fields should be private
 
-namespace ZenItz;
+namespace ZenItz.Obsolete;
 
 public partial class ItzShip<T> : IItzShip<T>
     where T : IItzPayload
@@ -12,7 +12,7 @@ public partial class ItzShip<T> : IItzShip<T>
     private sealed partial class Item
     {
         [Link(Primary = true, Name = "Queue", Type = ChainType.QueueList)]
-        public Item(Identifier key, T value)
+        public Item(PrimarySecondaryIdentifier key, T value)
         {
             this.Key = key;
             this.Value = value;
@@ -23,11 +23,11 @@ public partial class ItzShip<T> : IItzShip<T>
         }
 
         [Key(0)]
-        [Link(Type = ChainType.Unordered)]
-        internal Identifier Key;
+        internal T Value = default!;
 
         [Key(1)]
-        internal T Value = default!;
+        [Link(Type = ChainType.Unordered)]
+        internal PrimarySecondaryIdentifier Key;
     }
 
     public ItzShip(int maxCapacity)
@@ -35,11 +35,12 @@ public partial class ItzShip<T> : IItzShip<T>
         this.MaxCapacity = maxCapacity;
     }
 
-    public void Set(in Identifier id, in T value)
+    public void Set(in Identifier primaryId, in Identifier secondaryId, in T value)
     {
+        var key = new PrimarySecondaryIdentifier(primaryId, secondaryId);
         lock (this.goshujin)
         {
-            if (this.goshujin.KeyChain.TryGetValue(id, out var item))
+            if (this.goshujin.KeyChain.TryGetValue(key, out var item))
             {// Update
                 item.Value = value;
                 this.goshujin.QueueChain.Remove(item);
@@ -47,7 +48,7 @@ public partial class ItzShip<T> : IItzShip<T>
             }
             else
             {// New
-                item = new Item(id, value);
+                item = new Item(key, value);
                 this.goshujin.Add(item);
 
                 if (this.goshujin.QueueChain.Count > this.MaxCapacity)
@@ -58,11 +59,12 @@ public partial class ItzShip<T> : IItzShip<T>
         }
     }
 
-    public ItzResult Get(in Identifier id, out T value)
+    public ItzResult Get(in Identifier primaryId, in Identifier secondaryId, out T value)
     {
+        var key = new PrimarySecondaryIdentifier(primaryId, secondaryId);
         lock (this.goshujin)
         {
-            if (this.goshujin.KeyChain.TryGetValue(id, out var item))
+            if (this.goshujin.KeyChain.TryGetValue(key, out var item))
             {// Get
                 value = item.Value;
                 return ItzResult.Success;
