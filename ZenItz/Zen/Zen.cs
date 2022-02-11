@@ -4,23 +4,25 @@ namespace ZenItz;
 
 public class Zen
 {
-    public const int MaxSize = 1024 * 1024 * 4; // 4MB
+    public const int MaxFlakeSize = 1024 * 1024 * 4; // 4MB
+    public const int MaxFragmentSize = 1024 * 4; // 4KB
+    public const int MaxFragmentCount = MaxFlakeSize / MaxFragmentSize;
 
     public Zen()
     {
-        this.FlakeControl = new();
+        this.SnowmanControl = new();
         this.HimoControl = new(this);
     }
 
     public Flake CreateOrGet(Identifier id)
     {
         Flake? primary;
-        lock (this.primaryGoshujin)
+        lock (this.flakeGoshujin)
         {
-            if (!this.primaryGoshujin.IdChain.TryGetValue(id, out primary))
+            if (!this.flakeGoshujin.IdChain.TryGetValue(id, out primary))
             {
                 primary = new Flake(this, id);
-                this.primaryGoshujin.Add(primary);
+                this.flakeGoshujin.Add(primary);
             }
         }
 
@@ -30,16 +32,16 @@ public class Zen
     public Flake? TryGet(Identifier primaryId)
     {
         Flake? primary;
-        lock (this.primaryGoshujin)
+        lock (this.flakeGoshujin)
         {
-            this.primaryGoshujin.IdChain.TryGetValue(primaryId, out primary);
+            this.flakeGoshujin.IdChain.TryGetValue(primaryId, out primary);
             return primary;
         }
     }
 
-    public SnowmanControl FlakeControl { get; }
+    public SnowmanControl SnowmanControl { get; }
 
     public HimoControl HimoControl { get; }
 
-    private Flake.GoshujinClass primaryGoshujin = new();
+    private Flake.GoshujinClass flakeGoshujin = new();
 }

@@ -4,22 +4,22 @@ namespace ZenItz;
 
 [TinyhandObject(ExplicitKeyOnly = true)]
 [ValueLinkObject]
-internal partial class FlakeObject
-{
-    public enum SecondaryState
+internal partial class Fragment
+{// by Yamamoto.
+    public enum FragmentState
     {
         NotLoaded, // Not active and saved
         Loaded, // Active and not saved
         Saved, // Active and saved
     }
 
-    internal FlakeObject()
+    internal Fragment()
     {// For serializer
     }
 
-    internal FlakeObject(Identifier secondaryId)
+    internal Fragment(Identifier secondaryId)
     {// New object, lock (secondaryGoshujin)
-        this.State = SecondaryState.Saved;
+        this.State = FragmentState.Saved;
         this.secondaryId = secondaryId;
         this.FlakeId = SnowmanControl.Instance.GetFlakeId();
     }
@@ -31,11 +31,11 @@ internal partial class FlakeObject
             return;
         }
 
-        this.State = SecondaryState.Loaded;
+        this.State = FragmentState.Loaded;
         this.himo = primaryObject.Zen.HimoControl.Create(in primaryObject.id, in this.secondaryId, data);
     }
 
-    public SecondaryState State { get; private set; }
+    public FragmentState State { get; private set; }
 
     [Key(0)]
     [Link(Primary = true, Type = ChainType.Unordered)]

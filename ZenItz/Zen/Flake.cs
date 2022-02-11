@@ -23,21 +23,21 @@ public partial class Flake
 
     public ZenResult Set(Identifier secondaryId, ReadOnlySpan<byte> data)
     {
-        if (data.Length > Zen.MaxSize)
+        if (data.Length > Zen.MaxFlakeSize)
         {
             return ZenResult.OverSizeLimit;
         }
 
-        lock (this.flakeGoshujin)
+        lock (this.fragmentGoshujin)
         {
             if (this.IsRemoved)
             {
                 return ZenResult.Removed;
             }
 
-            if (!this.flakeGoshujin.SecondaryIdChain.TryGetValue(secondaryId, out var secondary))
+            if (!this.fragmentGoshujin.SecondaryIdChain.TryGetValue(secondaryId, out var secondary))
             {
-                secondary = new FlakeObject(secondaryId);
+                secondary = new Fragment(secondaryId);
             }
 
             secondary.Set(this, data);
@@ -63,7 +63,6 @@ public partial class Flake
     [Link(Name = "OrderedId", Type = ChainType.Ordered)]
     internal Identifier id;
 
-    private FlakeObject? flakeObject;
-
-    private FlakeObject.GoshujinClass flakeGoshujin = new();
+    private Fragment.GoshujinClass fragmentGoshujin = new();
+    private Fragment? fragment;
 }
