@@ -19,10 +19,10 @@
 
   <ItemGroup>
     <PackageReference Include="Arc.Collections" Version="1.0.2" />
-    <PackageReference Include="Arc.CrossChannel" Version="0.4.0" />
+    <PackageReference Include="Arc.CrossChannel" Version="0.4.1" />
     <PackageReference Include="Arc.Threading" Version="0.11.1" />
     <PackageReference Include="Arc.Crypto" Version="1.8.0" />
-    <PackageReference Include="BigMachines" Version="0.20.0" />
+    <PackageReference Include="BigMachines" Version="0.20.1" />
     <PackageReference Include="DryIoc.dll" Version="4.8.6" />
     <PackageReference Include="SimpleCommandLine" Version="0.9.1" />
     <PackageReference Include="Tinyhand" Version="0.27.1" />

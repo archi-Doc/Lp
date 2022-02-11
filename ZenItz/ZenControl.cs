@@ -83,7 +83,7 @@ public class ZenControl
 
     public Itz Itz { get; }
 
-    public bool ExaltationOfIntegrality { get; } = true;
+    public bool ExaltationOfIntegrality { get; } = true; // by Baxter.
 
     private static Container containerInstance = default!;
 }
