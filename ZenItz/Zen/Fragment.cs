@@ -14,11 +14,11 @@ internal partial class Fragment
     }
 
     internal Fragment()
-    {// For serializer
+    {// 1.For serializer 2.New primary
     }
 
     internal Fragment(Identifier secondaryId)
-    {// New object, lock (secondaryGoshujin)
+    {// 1.New secondary, lock (secondaryGoshujin)
         this.State = FragmentState.Saved;
         this.secondaryId = secondaryId;
         this.FlakeId = SnowmanControl.Instance.GetFlakeId();

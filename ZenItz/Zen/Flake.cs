@@ -21,7 +21,7 @@ public partial class Flake
         this.id = id;
     }
 
-    public ZenResult Set(Identifier secondaryId, ReadOnlySpan<byte> data)
+    public ZenResult Set(ReadOnlySpan<byte> data)
     {
         if (data.Length > Zen.MaxFlakeSize)
         {
@@ -35,15 +35,35 @@ public partial class Flake
                 return ZenResult.Removed;
             }
 
-            if (!this.fragmentGoshujin.SecondaryIdChain.TryGetValue(secondaryId, out var secondary))
+            this.fragment ??= new();
+            this.fragment.Set(this, data);
+        }
+
+        return ZenResult.Success;
+    }
+
+    public ZenResult Set(Identifier fragmentId, ReadOnlySpan<byte> data)
+    {
+        if (data.Length > Zen.MaxFragmentSize)
+        {
+            return ZenResult.OverSizeLimit;
+        }
+
+        lock (this.fragmentGoshujin)
+        {
+            if (this.IsRemoved)
             {
-                secondary = new Fragment(secondaryId);
+                return ZenResult.Removed;
+            }
+
+            if (!this.fragmentGoshujin.SecondaryIdChain.TryGetValue(fragmentId, out var secondary))
+            {
+                secondary = new Fragment(fragmentId);
             }
 
             secondary.Set(this, data);
         }
 
-        // this.Flake.Set(this.PrimaryId, secondaryId, data);
         return ZenResult.Success;
     }
 
