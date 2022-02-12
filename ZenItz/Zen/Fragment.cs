@@ -8,8 +8,8 @@ internal partial class Fragment
 {// by Yamamoto.
     public enum FragmentState
     {
-        NotLoaded, // Not active and saved
-        Loaded, // Active and not saved
+        NotLoaded, // Not loaded
+        NotSaved, // Active and not saved
         Saved, // Active and saved
     }
 
@@ -21,7 +21,7 @@ internal partial class Fragment
     {// 1.New secondary, lock (secondaryGoshujin)
         this.State = FragmentState.Saved;
         this.secondaryId = secondaryId;
-        this.FlakeId = SnowmanControl.Instance.GetFlakeId();
+        this.SnowFlakeId = SnowmanControl.Instance.GetFlakeId();
     }
 
     internal void Set(Flake primaryObject, ReadOnlySpan<byte> data)
@@ -37,20 +37,25 @@ internal partial class Fragment
 
     public FragmentState State { get; private set; }
 
+    public Identifier SecondaryId => this.secondaryId;
+
+    // Serialization & Link
     [Key(0)]
     [Link(Primary = true, Type = ChainType.Unordered)]
     private Identifier secondaryId;
 
-    public Identifier SecondaryId => this.secondaryId;
-
+    /// <summary>
+    /// Gets Snowman id ((uint)(SnowFlakeId >> 32)) + Flake id ((uint)SnowFlakeId).<br/>
+    /// 0: Unassigned.
+    /// </summary>
     [Key(1)]
-    public int FlakeId { get; private set; }
+    public ulong SnowFlakeId { get; private set; }
 
+    /// <summary>
+    /// Gets a segment (offset: (int)(Segment >> 32), count: (int)(Segment)) of the flake.
+    /// </summary>
     [Key(2)]
-    public long Position { get; private set; } = -1; // -1: Not saved
-
-    [Key(3)]
-    public int Size { get; private set; }
+    public long Segment { get; private set; }
 
     private Himo? himo;
 }

@@ -6,7 +6,7 @@ namespace ZenItz;
 
 public class HimoControl
 {
-    public const long DefaultSizeLimit = 400_000_000;
+    public const long DefaultSizeLimit = 100_000_000;
 
     public HimoControl(Zen zen)
     {
