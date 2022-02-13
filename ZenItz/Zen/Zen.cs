@@ -14,8 +14,8 @@ public class Zen
     public Zen()
     {
         this.SnowmanControl = new();
-        this.HimoControl = new(this);
         this.PrimaryPool = new ByteArrayPool(BlockService.MaxBlockSize, (int)(DefaultPrimarySizeLimit / BlockService.MaxBlockSize));
+        this.SecondaryPool = new ByteArrayPool(MaxSecondaryFragmentSize, 0);
     }
 
     public Flake CreateOrGet(Identifier id)
@@ -62,9 +62,8 @@ public class Zen
 
     public SnowmanControl SnowmanControl { get; }
 
-    public HimoControl HimoControl { get; }
-
     internal Fragment.GoshujinClass FragmentGoshujin = new();
     internal ByteArrayPool PrimaryPool;
+    internal ByteArrayPool SecondaryPool;
     private Flake.GoshujinClass flakeGoshujin = new();
 }

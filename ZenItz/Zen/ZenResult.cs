@@ -6,6 +6,7 @@ public enum ZenResult
 {
     Success,
     OverSizeLimit,
+    OverNumberLimit,
     Removed,
     NoData,
 }

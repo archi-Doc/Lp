@@ -1,17 +1,17 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace LP;
+namespace ZenItz;
 
 [TinyhandObject]
-public readonly partial struct HimoIdentifier : IEquatable<HimoIdentifier>, IComparable<HimoIdentifier>
+public readonly partial struct FragmentIdentifier : IEquatable<FragmentIdentifier>, IComparable<FragmentIdentifier>
 {
-    public HimoIdentifier(Identifier id, bool isPrimary)
+    public FragmentIdentifier(Identifier id, bool isPrimary)
     {
         this.Id = id;
         this.IsPrimary = isPrimary;
     }
 
-    public HimoIdentifier()
+    public FragmentIdentifier()
     {
         this.Id = default; // Identifier.Zero; ! Must be default since TinyhandSerializer might modify Identifier.Zero.
         this.IsPrimary = true;
@@ -23,7 +23,7 @@ public readonly partial struct HimoIdentifier : IEquatable<HimoIdentifier>, ICom
     [Key(1)]
     public readonly bool IsPrimary;
 
-    public bool Equals(HimoIdentifier other)
+    public bool Equals(FragmentIdentifier other)
     {
         if (!this.Id.Equals(other.Id))
         {
@@ -43,7 +43,7 @@ public readonly partial struct HimoIdentifier : IEquatable<HimoIdentifier>, ICom
         return $"Id {this.Id.Id0:D4} Primary {this.IsPrimary.ToString()} ";
     }
 
-    public int CompareTo(HimoIdentifier other)
+    public int CompareTo(FragmentIdentifier other)
     {
         var cmp = this.Id.CompareTo(other.Id);
         if (cmp != 0)
