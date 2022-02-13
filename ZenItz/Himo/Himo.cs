@@ -7,7 +7,8 @@ namespace ZenItz;
 [ValueLinkObject]
 internal partial class Himo
 {
-    [Link(Name = "Queue", Type = ChainType.QueueList)]
+    [Link(Name = "UnloadQueue", Type = ChainType.QueueList)]
+    [Link(Name = "SaveQueue", Type = ChainType.QueueList)]
     public Himo()
     {
     }
@@ -18,8 +19,8 @@ internal partial class Himo
         this.Goshujin = null;
     }
 
-    [Link(Type = ChainType.Unordered)]
-    internal PrimarySecondaryIdentifier Identifier;
+    // [Link(Type = ChainType.Unordered)]
+    internal HimoIdentifier Identifier;
 
     internal ByteArrayPool.MemoryOwner MemoryOwner;
 }

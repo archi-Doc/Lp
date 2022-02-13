@@ -2,7 +2,7 @@
 
 namespace ZenItz;
 
-[TinyhandObject(ExplicitKeyOnly = true)]
+// [TinyhandObject(ExplicitKeyOnly = true)]
 [ValueLinkObject]
 internal partial class Fragment
 {// by Yamamoto.
@@ -32,7 +32,7 @@ internal partial class Fragment
         }
 
         this.State = FragmentState.Loaded;
-        this.himo = primaryObject.Zen.HimoControl.Create(in primaryObject.id, in this.secondaryId, data);
+        this.himo = primaryObject.Zen.HimoControl.Create(in primaryObject.identifier, in this.secondaryId, data);
     }
 
     public FragmentState State { get; private set; }
@@ -40,22 +40,9 @@ internal partial class Fragment
     public Identifier SecondaryId => this.secondaryId;
 
     // Serialization & Link
-    [Key(0)]
+    // [Key(0)]
     [Link(Primary = true, Type = ChainType.Unordered)]
     private Identifier secondaryId;
-
-    /// <summary>
-    /// Gets Snowman id ((uint)(SnowFlakeId >> 32)) + Flake id ((uint)SnowFlakeId).<br/>
-    /// 0: Unassigned.
-    /// </summary>
-    [Key(1)]
-    public ulong SnowFlakeId { get; private set; }
-
-    /// <summary>
-    /// Gets a segment (offset: (int)(Segment >> 32), count: (int)(Segment)) of the flake.
-    /// </summary>
-    [Key(2)]
-    public long Segment { get; private set; }
 
     private Himo? himo;
 }

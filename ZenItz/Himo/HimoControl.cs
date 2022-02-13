@@ -18,7 +18,7 @@ public class HimoControl
     internal Himo Create(in Identifier primaryId, in Identifier secondaryId, ReadOnlySpan<byte> data)
     {
         Himo? himo;
-        List<PrimarySecondaryIdentifier>? remove = null;
+        List<HimoIdentifier>? remove = null;
         lock (this.goshujin)
         {
             if (!this.freeHimo.TryDequeue(out himo))
@@ -28,14 +28,14 @@ public class HimoControl
 
             himo.MemoryOwner = this.pool.Rent(data.Length).ToMemoryOwner(0, data.Length);
             data.CopyTo(himo.MemoryOwner.Memory.Span);
-            himo.Identifier = new PrimarySecondaryIdentifier(primaryId, secondaryId);
+            himo.Identifier = new HimoIdentifier(primaryId, true);
 
             himo.Goshujin = this.goshujin;
             this.totalSize += data.Length;
 
             while (this.totalSize > this.sizeLimit)
             {// Unload
-                var h = this.goshujin.QueueChain.Dequeue();
+                var h = this.goshujin.UnloadQueueChain.Dequeue();
                 remove ??= new();
                 remove.Add(h.Identifier);
                 this.totalSize -= h.MemoryOwner.Memory.Length;
@@ -55,7 +55,7 @@ public class HimoControl
         return himo;
     }
 
-    internal void Release(in Identifier primaryId, in Identifier secondaryId)
+    /*internal void Release(in Identifier primaryId, in Identifier secondaryId)
     {
         lock (this.goshujin)
         {
@@ -66,7 +66,7 @@ public class HimoControl
                 this.freeHimo.Enqueue(himo);
             }
         }
-    }
+    }*/
 
     private Zen zen;
     private ByteArrayPool pool;
