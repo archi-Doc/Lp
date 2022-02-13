@@ -2,7 +2,8 @@
 
 namespace ZenItz;
 
-// [TinyhandObject(ExplicitKeyOnly = true)]
+#pragma warning disable SA1401 // Fields should be private
+
 [ValueLinkObject]
 internal partial class Fragment
 {// by Yamamoto.
@@ -13,36 +14,46 @@ internal partial class Fragment
         Saved, // Active and saved
     }
 
-    internal Fragment()
-    {// 1.For serializer 2.New primary
+    public enum FragmentOperation
+    {
+        Set, // Set value
+        Get, // Get value
     }
 
-    internal Fragment(Identifier secondaryId)
-    {// 1.New secondary, lock (secondaryGoshujin)
-        this.State = FragmentState.Saved;
-        this.secondaryId = secondaryId;
-        this.SnowFlakeId = SnowmanControl.Instance.GetFlakeId();
+    [Link(Name = "UnloadQueue", Type = ChainType.QueueList)]
+    [Link(Name = "SaveQueue", Type = ChainType.QueueList)]
+    public Fragment(Flake flake)
+    {
+        this.Flake = flake;
     }
 
-    internal void Set(Flake primaryObject, ReadOnlySpan<byte> data)
-    {// lock (secondaryGoshujin)
-        if (this.himo != null && data.SequenceEqual(this.himo.MemoryOwner.Memory.Span))
-        {// Identical
-            return;
+    internal void UpdateQueue(FragmentOperation operation)
+    {
+        lock (this.Flake.Zen.FragmentGoshujin)
+        {
+            if (this.Goshujin == null)
+            {// New
+                this.Goshujin = this.Flake.Zen.FragmentGoshujin;
+            }
+            else
+            {// Update
+                if (operation == FragmentOperation.Get)
+                {
+                    this.Goshujin.UnloadQueueChain.Remove(this);
+                    this.Goshujin.UnloadQueueChain.Enqueue(this);
+                }
+                else
+                {
+                    this.Goshujin.UnloadQueueChain.Remove(this);
+                    this.Goshujin.UnloadQueueChain.Enqueue(this);
+                    this.Goshujin.SaveQueueChain.Remove(this);
+                    this.Goshujin.SaveQueueChain.Enqueue(this);
+                }
+            }
         }
-
-        this.State = FragmentState.Loaded;
-        this.himo = primaryObject.Zen.HimoControl.Create(in primaryObject.identifier, in this.secondaryId, data);
     }
+
+    public Flake Flake { get; }
 
     public FragmentState State { get; private set; }
-
-    public Identifier SecondaryId => this.secondaryId;
-
-    // Serialization & Link
-    // [Key(0)]
-    [Link(Primary = true, Type = ChainType.Unordered)]
-    private Identifier secondaryId;
-
-    private Himo? himo;
 }

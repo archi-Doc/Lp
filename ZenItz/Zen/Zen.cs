@@ -9,11 +9,13 @@ public class Zen
     public const int MaxPrimaryFragmentSize = 1024 * 1024 * 4; // 4MB
     public const int MaxSecondaryFragmentSize = 1024 * 4; // 4KB
     public const int MaxSecondaryFragmentCount = MaxPrimaryFragmentSize / MaxSecondaryFragmentSize;
+    public const long DefaultPrimarySizeLimit = 100_000_000; // 100MB
 
     public Zen()
     {
         this.SnowmanControl = new();
         this.HimoControl = new(this);
+        this.PrimaryPool = new ByteArrayPool(BlockService.MaxBlockSize, (int)(DefaultPrimarySizeLimit / BlockService.MaxBlockSize));
     }
 
     public Flake CreateOrGet(Identifier id)
@@ -62,5 +64,7 @@ public class Zen
 
     public HimoControl HimoControl { get; }
 
+    internal Fragment.GoshujinClass FragmentGoshujin = new();
+    internal ByteArrayPool PrimaryPool;
     private Flake.GoshujinClass flakeGoshujin = new();
 }

@@ -9,11 +9,8 @@ namespace ZenItz;
 [ValueLinkObject]
 public partial class Flake
 {
-    public enum FlakeState
+    internal Flake()
     {
-        NotSaved, // Active and not saved
-        Saved, // Active and saved
-        Removed, // Removed
     }
 
     internal Flake(Zen zen, Identifier identifier)
@@ -36,37 +33,37 @@ public partial class Flake
                 return ZenResult.Removed;
             }
 
-            this.fragment ??= new();
-            this.fragment.Set(this, data);
+            this.primaryFragment ??= new(this);
+            this.primaryFragment.Set(data);
         }
 
         return ZenResult.Success;
     }
 
-    public ZenResult Set(Identifier fragmentId, ReadOnlySpan<byte> data)
-    {
-        if (data.Length > Zen.MaxSecondaryFragmentSize)
+    /*    public ZenResult Set(Identifier fragmentId, ReadOnlySpan<byte> data)
         {
-            return ZenResult.OverSizeLimit;
-        }
-
-        lock (this.fragmentGoshujin)
-        {
-            if (this.IsRemoved)
+            if (data.Length > Zen.MaxSecondaryFragmentSize)
             {
-                return ZenResult.Removed;
+                return ZenResult.OverSizeLimit;
             }
 
-            if (!this.fragmentGoshujin.SecondaryIdChain.TryGetValue(fragmentId, out var secondary))
+            lock (this.fragmentGoshujin)
             {
-                secondary = new Fragment(fragmentId);
+                if (this.IsRemoved)
+                {
+                    return ZenResult.Removed;
+                }
+
+                if (!this.fragmentGoshujin.SecondaryIdChain.TryGetValue(fragmentId, out var secondary))
+                {
+                    secondary = new Fragment(fragmentId);
+                }
+
+                secondary.Set(this, data);
             }
 
-            secondary.Set(this, data);
-        }
-
-        return ZenResult.Success;
-    }
+            return ZenResult.Success;
+        }*/
 
     public void Unload()
     {
@@ -74,9 +71,7 @@ public partial class Flake
 
     public bool TryRemove() => this.Zen.TryRemove(this.Identifier);
 
-    public Zen Zen { get; }
-
-    public FlakeState State { get; private set; }
+    public Zen Zen { get; } = default!;
 
     public Identifier Identifier => this.identifier;
 

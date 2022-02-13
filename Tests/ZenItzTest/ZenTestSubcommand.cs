@@ -20,7 +20,7 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
         var itz = this.ZenControl.Itz;
 
         var p = zen.CreateOrGet(Identifier.Zero);
-        p.Set(Identifier.Zero, new byte[] { 0, 1, });
+        p.Set(new byte[] { 0, 1, });
     }
 
     public ZenControl ZenControl { get; set; }
