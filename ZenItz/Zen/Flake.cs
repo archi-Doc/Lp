@@ -61,7 +61,7 @@ public partial class Flake
                 return ZenResult.Removed;
             }
 
-            this.snowFragmentObject ??= new(this);
+            this.snowFragmentObject ??= new(this.Zen.SnowFragmentGoshujin);
             return this.snowFragmentObject.Set(fragmentId, data);
         }
     }

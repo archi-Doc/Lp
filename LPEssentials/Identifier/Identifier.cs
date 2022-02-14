@@ -18,6 +18,14 @@ public readonly partial struct Identifier : IEquatable<Identifier>, IComparable<
 
     public static readonly Identifier Three = new(3);
 
+    public static Identifier FromReadOnlySpan(ReadOnlySpan<byte> input)
+    {
+        var hash = Hash.ObjectPool.Get();
+        var identifier = hash.GetIdentifier(input);
+        Hash.ObjectPool.Return(hash);
+        return identifier;
+    }
+
     public Identifier()
     {
         this.Id0 = 0;
