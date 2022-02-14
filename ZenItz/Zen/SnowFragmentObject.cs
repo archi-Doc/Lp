@@ -6,19 +6,19 @@ namespace ZenItz;
 
 internal partial class SnowFragmentObject : SnowObject
 {
-    public SnowFragmentObject(SnowObjectGoshujin goshujin)
-        : base(goshujin)
+    public SnowFragmentObject(Flake flake, SnowObjectGoshujin goshujin)
+        : base(flake, goshujin)
     {
     }
 
-    public ZenResult Set(Identifier fragmentId, ReadOnlySpan<byte> data)
+    public ZenResult Set(Identifier fragmentId, ReadOnlySpan<byte> data, bool loading)
     {// lock (Flake.syncObject)
         if (this.fragments == null)
         {// tempcode, load
             this.fragments = new();
         }
 
-        if (this.fragments.Count >= Zen.MaxSecondaryFragmentCount)
+        if (this.fragments.Count >= Zen.MaxFragmentCount)
         {
             return ZenResult.OverNumberLimit;
         }
@@ -32,7 +32,7 @@ internal partial class SnowFragmentObject : SnowObject
             memoryOwner.Return();
         }
 
-        var memoryOwner2 = this.SnowObjectGoshujin.Zen.SecondaryPool.Rent(data.Length).ToMemoryOwner(0, data.Length);
+        var memoryOwner2 = this.SnowObjectGoshujin.Pool.Rent(data.Length).ToMemoryOwner(0, data.Length);
         data.CopyTo(memoryOwner2.Memory.Span);
         this.fragments[fragmentId] = memoryOwner2;
 

@@ -21,8 +21,9 @@ internal partial class SnowObject
 
     [Link(Name = "UnloadQueue", Type = ChainType.QueueList)]
     [Link(Name = "SaveQueue", Type = ChainType.QueueList)]
-    public SnowObject(SnowObjectGoshujin snowObjectControl)
+    public SnowObject(Flake flake, SnowObjectGoshujin snowObjectControl)
     {
+        this.Flake = flake;
         this.SnowObjectGoshujin = snowObjectControl;
     }
 
@@ -69,7 +70,11 @@ internal partial class SnowObject
         }
     }
 
+    public Flake Flake { get; }
+
     public SnowObjectGoshujin SnowObjectGoshujin { get; }
 
     public SnowObjectState State { get; protected set; }
+
+    protected object? cachedObject;
 }

@@ -2,14 +2,17 @@
 
 namespace ZenItz;
 
-internal partial class SnowObjectGoshujin
+internal class SnowObjectGoshujin
 {
-    public SnowObjectGoshujin(Zen zen)
+    public SnowObjectGoshujin(Zen zen, ByteArrayPool pool)
     {
         this.Zen = zen;
+        this.Pool = pool;
     }
 
     public Zen Zen { get; }
+
+    public ByteArrayPool Pool { get; }
 
     public SnowObject.GoshujinClass Goshujin => this.goshujin;
 

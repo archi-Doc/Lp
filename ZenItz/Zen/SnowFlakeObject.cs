@@ -6,8 +6,8 @@ namespace ZenItz;
 
 internal partial class SnowFlakeObject : SnowObject
 {
-    public SnowFlakeObject(SnowObjectGoshujin goshujin)
-        : base(goshujin)
+    public SnowFlakeObject(Flake flake, SnowObjectGoshujin goshujin)
+        : base(flake, goshujin)
     {
     }
 
@@ -19,7 +19,7 @@ internal partial class SnowFlakeObject : SnowObject
         }
 
         this.MemoryOwner.Return();
-        this.MemoryOwner = this.SnowObjectGoshujin.Zen.PrimaryPool.Rent(data.Length).ToMemoryOwner(0, data.Length);
+        this.MemoryOwner = this.SnowObjectGoshujin.Pool.Rent(data.Length).ToMemoryOwner(0, data.Length);
         data.CopyTo(this.MemoryOwner.Memory.Span);
 
         this.State = loading ? SnowObjectState.Saved : SnowObjectState.NotSaved;

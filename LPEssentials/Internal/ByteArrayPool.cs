@@ -105,6 +105,20 @@ public class ByteArrayPool
         /// <returns><see cref="MemoryOwner"/>.</returns>
         public MemoryOwner ToMemoryOwner(int start, int length) => new MemoryOwner(this, start, length);
 
+        /// <summary>
+        /// Create a <see cref="ReadOnlyMemoryOwner"/> object from <see cref="Owner"/>.
+        /// </summary>
+        /// <returns><see cref="ReadOnlyMemoryOwner"/>.</returns>
+        public ReadOnlyMemoryOwner ToReadOnlyMemoryOwner() => new ReadOnlyMemoryOwner(this);
+
+        /// <summary>
+        /// Create a <see cref="ReadOnlyMemoryOwner"/> object by specifying the index and length.
+        /// </summary>
+        /// <param name="start">The index at which to begin the slice.</param>
+        /// <param name="length">The number of elements to include in the slice.</param>
+        /// <returns><see cref="ReadOnlyMemoryOwner"/>.</returns>
+        public ReadOnlyMemoryOwner ToReadOnlyMemoryOwner(int start, int length) => new ReadOnlyMemoryOwner(this, start, length);
+
         internal void SetCount1() => Volatile.Write(ref this.count, 1);
 
         /// <summary>
@@ -183,6 +197,36 @@ public class ByteArrayPool
         /// <param name="length">The number of elements to include in the slice.</param>
         /// <returns><see cref="MemoryOwner"/> object.</returns>
         public MemoryOwner IncrementAndShare(int start, int length)
+        {
+            if (this.Owner == null)
+            {
+                throw new InvalidOperationException();
+            }
+
+            return new(this.Owner.IncrementAndShare(), start, length);
+        }
+
+        /// <summary>
+        ///  Increment the reference count.
+        /// </summary>
+        /// <returns><see cref="Owner"/> instance (<see langword="this"/>).</returns>
+        public ReadOnlyMemoryOwner IncrementAndShareReadOnly()
+        {
+            if (this.Owner == null)
+            {
+                throw new InvalidOperationException();
+            }
+
+            return new(this.Owner.IncrementAndShare(), this.Memory);
+        }
+
+        /// <summary>
+        ///  Increment the reference count and create a <see cref="MemoryOwner"/> object by specifying the index and length.
+        /// </summary>
+        /// <param name="start">The index at which to begin the slice.</param>
+        /// <param name="length">The number of elements to include in the slice.</param>
+        /// <returns><see cref="MemoryOwner"/> object.</returns>
+        public ReadOnlyMemoryOwner IncrementAndShareReadOnly(int start, int length)
         {
             if (this.Owner == null)
             {

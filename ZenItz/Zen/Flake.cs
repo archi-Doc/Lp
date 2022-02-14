@@ -33,10 +33,10 @@ public partial class Flake
 
             if (this.snowFlakeObject != null)
             {// Loaded
-                return new(ZenResult.Success, this.snowFlakeObject.MemoryOwner.IncrementAndShare());
+                return new(ZenResult.Success, this.snowFlakeObject.MemoryOwner.IncrementAndShareReadOnly());
             }
 
-            idSegment = new(this.primarySnowFlakeId, this.primarySegment);
+            idSegment = new(this.flakeSnowId, this.flakeSnowSegment);
         }
 
         if (idSegment.IsValid)
@@ -49,7 +49,7 @@ public partial class Flake
 
     public ZenResult Set(Identifier fragmentId, ReadOnlySpan<byte> data)
     {
-        if (data.Length > Zen.MaxSecondaryFragmentSize)
+        if (data.Length > Zen.MaxFragmentSize)
         {
             return ZenResult.OverSizeLimit;
         }
@@ -61,7 +61,7 @@ public partial class Flake
                 return ZenResult.Removed;
             }
 
-            this.snowFragmentObject ??= new(this.Zen.SnowFragmentGoshujin);
+            this.snowFragmentObject ??= new(this, this.Zen.SnowFragmentGoshujin);
             return this.snowFragmentObject.Set(fragmentId, data);
         }
     }
@@ -78,9 +78,9 @@ public partial class Flake
 
     public bool IsRemoved => this.Goshujin == null;
 
-    public ZenResult SetInternal(ReadOnlySpan<byte> data, bool loading)
+    internal ZenResult SetInternal(ReadOnlySpan<byte> data, bool loading)
     {
-        if (data.Length > Zen.MaxPrimaryFragmentSize)
+        if (data.Length > Zen.MaxFlakeSize)
         {
             return ZenResult.OverSizeLimit;
         }
@@ -94,12 +94,34 @@ public partial class Flake
 
             if (!loading || this.snowFlakeObject == null)
             {// Not loading or Loading & empty
-                this.snowFlakeObject ??= new(this.Zen.SnowFlakeGoshujin);
+                this.snowFlakeObject ??= new(this, this.Zen.SnowFlakeGoshujin);
                 this.snowFlakeObject.Set(data, loading);
             }
         }
 
         return ZenResult.Success;
+    }
+
+    internal ZenResult SetInternal(Identifier fragmentId, ReadOnlySpan<byte> data, bool loading)
+    {
+        if (data.Length > Zen.MaxFragmentSize)
+        {
+            return ZenResult.OverSizeLimit;
+        }
+
+        lock (this.syncObject)
+        {
+            if (this.IsRemoved)
+            {
+                return ZenResult.Removed;
+            }
+
+            if (!loading || this.snowFlakeObject == null)
+            {// Not loading or Loading & empty
+                this.snowFragmentObject ??= new(this, this.Zen.SnowFragmentGoshujin);
+                return this.snowFragmentObject.Set(fragmentId, data, loading);
+            }
+        }
     }
 
     internal void CreateInternal(Flake.GoshujinClass goshujin)
@@ -139,19 +161,19 @@ public partial class Flake
     /// 0: Unassigned.
     /// </summary>
     [Key(1)]
-    internal ulong primarySnowFlakeId;
+    internal ulong flakeSnowId;
 
     /// <summary>
     /// Gets a segment (offset: (int)(Segment >> 32), count: (int)(Segment)) of the flake.
     /// </summary>
     [Key(2)]
-    internal long primarySegment;
+    internal long flakeSnowSegment;
 
     [Key(3)]
-    internal ulong secondarySnowFlakeId;
+    internal ulong fragmentSnowId;
 
     [Key(4)]
-    internal long secondarySegment;
+    internal long fragmentSnowSegment;
 
     private object syncObject = new();
     private SnowFlakeObject? snowFlakeObject;

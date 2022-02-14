@@ -4,7 +4,7 @@ namespace ZenItz;
 
 public readonly struct ZenDataResult
 {
-    public ZenDataResult(ZenResult result, ByteArrayPool.MemoryOwner data)
+    public ZenDataResult(ZenResult result, ByteArrayPool.ReadOnlyMemoryOwner data)
     {
         this.Result = result;
         this.Data = data;
@@ -20,5 +20,5 @@ public readonly struct ZenDataResult
 
     public readonly ZenResult Result;
 
-    public readonly ByteArrayPool.MemoryOwner Data;
+    public readonly ByteArrayPool.ReadOnlyMemoryOwner Data;
 }

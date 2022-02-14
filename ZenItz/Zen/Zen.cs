@@ -6,18 +6,18 @@ namespace ZenItz;
 
 public class Zen
 {
-    public const int MaxPrimaryFragmentSize = 1024 * 1024 * 4; // 4MB
-    public const int MaxSecondaryFragmentSize = 1024 * 4; // 4KB
-    public const int MaxSecondaryFragmentCount = MaxPrimaryFragmentSize / MaxSecondaryFragmentSize;
+    public const int MaxFlakeSize = 1024 * 1024 * 4; // 4MB
+    public const int MaxFragmentSize = 1024 * 4; // 4KB
+    public const int MaxFragmentCount = 1000;
     public const long DefaultPrimarySizeLimit = 100_000_000; // 100MB
 
     public Zen()
     {
         this.SnowmanControl = new();
-        this.SnowFlakeGoshujin = new(this);
-        this.SnowFragmentGoshujin = new(this);
-        this.PrimaryPool = new ByteArrayPool(BlockService.MaxBlockSize, (int)(DefaultPrimarySizeLimit / BlockService.MaxBlockSize));
-        this.SecondaryPool = new ByteArrayPool(MaxSecondaryFragmentSize, 0);
+        this.FlakePool = new ByteArrayPool(MaxFlakeSize, (int)(DefaultPrimarySizeLimit / MaxFlakeSize));
+        this.FragmentPool = new ByteArrayPool(MaxFragmentSize, 0);
+        this.SnowFlakeGoshujin = new(this, this.FlakePool);
+        this.SnowFragmentGoshujin = new(this, this.FragmentPool);
     }
 
     public Flake CreateOrGet(Identifier id)
@@ -64,9 +64,11 @@ public class Zen
 
     public SnowmanControl SnowmanControl { get; }
 
+    public ByteArrayPool FlakePool { get; }
+
+    public ByteArrayPool FragmentPool { get; }
+
     internal SnowObjectGoshujin SnowFlakeGoshujin;
     internal SnowObjectGoshujin SnowFragmentGoshujin;
-    internal ByteArrayPool PrimaryPool;
-    internal ByteArrayPool SecondaryPool;
     private Flake.GoshujinClass flakeGoshujin = new();
 }
