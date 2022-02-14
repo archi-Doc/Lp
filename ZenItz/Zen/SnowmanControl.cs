@@ -15,5 +15,10 @@ public class SnowmanControl
         return 0;
     }
 
+    public async Task<ZenDataResult> TryLoadPrimary(SnowFlakeIdSegment idSegment, Identifier identifier)
+    {
+        return new(ZenResult.Success);
+    }
+
     private Snowman[] flakeArray;
 }

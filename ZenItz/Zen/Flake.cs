@@ -21,32 +21,30 @@ public partial class Flake
 
     public ZenResult Set(ReadOnlySpan<byte> data) => this.SetInternal(data, false);
 
-    public async Task<(ZenResult Result, ByteArrayPool.MemoryOwner Value)> Get()
+    public async Task<ZenDataResult> Get()
     {
-        var tryLoad = false;
+        SnowFlakeIdSegment idSegment = default;
         lock (this.syncObject)
         {
             if (this.IsRemoved)
             {
-                return (ZenResult.Removed, default);
+                return new(ZenResult.Removed);
             }
 
             if (this.primaryFragment != null)
-            {
-                return (ZenResult.Success, this.primaryFragment.MemoryOwner.IncrementAndShare());
+            {// Loaded
+                return new(ZenResult.Success, this.primaryFragment.MemoryOwner.IncrementAndShare());
             }
-            else if (this.primarySnowFlakeId != 0)
-            {
-                tryLoad = true;
-            }
+
+            idSegment = new(this.primarySnowFlakeId, this.primarySegment);
         }
 
-        if (tryLoad)
+        if (idSegment.IsValid)
         {
-            return this.Zen.SnowmanControl.TryLoadPrimary(this.Identifier);
+            return await this.Zen.SnowmanControl.TryLoadPrimary(idSegment, this.Identifier).ConfigureAwait(false);
         }
 
-        return (ZenResult.NoData, default);
+        return new(ZenResult.NoData);
     }
 
     public ZenResult Set(Identifier fragmentId, ReadOnlySpan<byte> data)
