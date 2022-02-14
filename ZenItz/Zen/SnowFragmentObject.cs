@@ -4,10 +4,10 @@ namespace ZenItz;
 
 #pragma warning disable SA1401 // Fields should be private
 
-internal partial class SecondaryFragment : Fragment
+internal partial class SnowFragmentObject : SnowObject
 {
-    public SecondaryFragment(Flake flake)
-        : base(flake)
+    public SnowFragmentObject(SnowObjectGoshujin goshujin)
+        : base(goshujin)
     {
     }
 
@@ -32,11 +32,11 @@ internal partial class SecondaryFragment : Fragment
             memoryOwner.Return();
         }
 
-        var memoryOwner2 = this.Flake.Zen.SecondaryPool.Rent(data.Length).ToMemoryOwner(0, data.Length);
+        var memoryOwner2 = this.SnowObjectGoshujin.Zen.SecondaryPool.Rent(data.Length).ToMemoryOwner(0, data.Length);
         data.CopyTo(memoryOwner2.Memory.Span);
         this.fragments[fragmentId] = memoryOwner2;
 
-        this.UpdateQueue(FragmentOperation.Set);
+        this.UpdateQueue(SnowObjectOperation.Set);
         return ZenResult.Success;
     }
 

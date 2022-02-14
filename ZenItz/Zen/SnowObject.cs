@@ -5,15 +5,15 @@ namespace ZenItz;
 #pragma warning disable SA1401 // Fields should be private
 
 [ValueLinkObject]
-internal partial class Fragment
+internal partial class SnowObject
 {
-    public enum FragmentState
+    public enum SnowObjectState
     {
         NotSaved, // Active and not saved
         Saved, // Active and saved
     }
 
-    public enum FragmentOperation
+    public enum SnowObjectOperation
     {
         Set, // Set value
         Get, // Get value
@@ -21,31 +21,31 @@ internal partial class Fragment
 
     [Link(Name = "UnloadQueue", Type = ChainType.QueueList)]
     [Link(Name = "SaveQueue", Type = ChainType.QueueList)]
-    public Fragment(Flake flake)
+    public SnowObject(SnowObjectGoshujin snowObjectControl)
     {
-        this.Flake = flake;
+        this.SnowObjectGoshujin = snowObjectControl;
     }
 
-    internal void UpdateQueue(FragmentOperation operation)
+    internal void UpdateQueue(SnowObjectOperation operation)
     {// Update queue link.
         List<FragmentIdentifier>? remove = null;
-        lock (this.Flake.Zen.FragmentGoshujin)
+        lock (this.SnowObjectGoshujin.Goshujin)
         {
             if (this.Goshujin == null)
             {// New
-                this.Goshujin = this.Flake.Zen.FragmentGoshujin;
+                this.Goshujin = this.SnowObjectGoshujin.Goshujin;
 
-                while (this.totalSize > this.sizeLimit)
+                /*while (this.totalSize > this.sizeLimit)
                 {// Unload
                     var h = this.goshujin.UnloadQueueChain.Dequeue();
                     remove ??= new();
                     remove.Add(h.Identifier);
                     this.totalSize -= h.MemoryOwner.Memory.Length;
-                }
+                }*/
             }
             else
             {// Update
-                if (operation == FragmentOperation.Get)
+                if (operation == SnowObjectOperation.Get)
                 {// Get
                     this.Goshujin.UnloadQueueChain.Remove(this);
                     this.Goshujin.UnloadQueueChain.Enqueue(this);
@@ -63,13 +63,13 @@ internal partial class Fragment
 
     internal void RemoveQueue()
     {// Remove link
-        lock (this.Flake.Zen.FragmentGoshujin)
+        lock (this.SnowObjectGoshujin.Goshujin)
         {
             this.Goshujin = null;
         }
     }
 
-    public Flake Flake { get; }
+    public SnowObjectGoshujin SnowObjectGoshujin { get; }
 
-    public FragmentState State { get; protected set; }
+    public SnowObjectState State { get; protected set; }
 }

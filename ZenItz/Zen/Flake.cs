@@ -31,9 +31,9 @@ public partial class Flake
                 return new(ZenResult.Removed);
             }
 
-            if (this.primaryFragment != null)
+            if (this.snowFlakeObject != null)
             {// Loaded
-                return new(ZenResult.Success, this.primaryFragment.MemoryOwner.IncrementAndShare());
+                return new(ZenResult.Success, this.snowFlakeObject.MemoryOwner.IncrementAndShare());
             }
 
             idSegment = new(this.primarySnowFlakeId, this.primarySegment);
@@ -61,8 +61,8 @@ public partial class Flake
                 return ZenResult.Removed;
             }
 
-            this.secondaryFragment ??= new(this);
-            return this.secondaryFragment.Set(fragmentId, data);
+            this.snowFragmentObject ??= new(this);
+            return this.snowFragmentObject.Set(fragmentId, data);
         }
     }
 
@@ -92,10 +92,10 @@ public partial class Flake
                 return ZenResult.Removed;
             }
 
-            if (!loading || this.primaryFragment == null)
+            if (!loading || this.snowFlakeObject == null)
             {// Not loading or Loading & empty
-                this.primaryFragment ??= new(this);
-                this.primaryFragment.Set(data, loading);
+                this.snowFlakeObject ??= new(this.Zen.SnowFlakeGoshujin);
+                this.snowFlakeObject.Set(data, loading);
             }
         }
 
@@ -154,6 +154,6 @@ public partial class Flake
     internal long secondarySegment;
 
     private object syncObject = new();
-    private PrimaryFragment? primaryFragment;
-    private SecondaryFragment? secondaryFragment;
+    private SnowFlakeObject? snowFlakeObject;
+    private SnowFragmentObject? snowFragmentObject;
 }
