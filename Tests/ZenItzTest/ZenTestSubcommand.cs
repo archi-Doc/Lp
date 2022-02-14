@@ -21,6 +21,7 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
 
         var p = zen.CreateOrGet(Identifier.Zero);
         p.Set(new byte[] { 0, 1, });
+        var result = await p.Get();
     }
 
     public ZenControl ZenControl { get; set; }
