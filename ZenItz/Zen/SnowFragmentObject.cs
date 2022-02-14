@@ -18,6 +18,7 @@ internal partial class SnowFragmentObject : SnowObject
             this.fragments = new();
         }
 
+        int diff = 0;
         if (this.fragments.Count >= Zen.MaxFragmentCount)
         {
             return ZenResult.OverNumberLimit;
@@ -29,14 +30,16 @@ internal partial class SnowFragmentObject : SnowObject
                 return ZenResult.Success;
             }
 
+            diff = -memoryOwner.Memory.Length;
             memoryOwner.Return();
         }
 
+        diff += data.Length;
         var memoryOwner2 = this.SnowObjectGoshujin.Pool.Rent(data.Length).ToMemoryOwner(0, data.Length);
         data.CopyTo(memoryOwner2.Memory.Span);
         this.fragments[fragmentId] = memoryOwner2;
 
-        this.UpdateQueue(SnowObjectOperation.Set);
+        this.UpdateQueue(SnowObjectOperation.Set, diff);
         return ZenResult.Success;
     }
 

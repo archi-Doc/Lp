@@ -5,7 +5,7 @@ namespace ZenItz;
 #pragma warning disable SA1401 // Fields should be private
 
 [ValueLinkObject]
-internal partial class SnowObject
+internal abstract partial class SnowObject
 {
     public enum SnowObjectState
     {
@@ -27,22 +27,15 @@ internal partial class SnowObject
         this.SnowObjectGoshujin = snowObjectControl;
     }
 
-    internal void UpdateQueue(SnowObjectOperation operation)
+    internal abstract void Save(bool unload);
+
+    internal void UpdateQueue(SnowObjectOperation operation, int diff)
     {// Update queue link.
-        List<FragmentIdentifier>? remove = null;
         lock (this.SnowObjectGoshujin.Goshujin)
         {
             if (this.Goshujin == null)
             {// New
                 this.Goshujin = this.SnowObjectGoshujin.Goshujin;
-
-                /*while (this.totalSize > this.sizeLimit)
-                {// Unload
-                    var h = this.goshujin.UnloadQueueChain.Dequeue();
-                    remove ??= new();
-                    remove.Add(h.Identifier);
-                    this.totalSize -= h.MemoryOwner.Memory.Length;
-                }*/
             }
             else
             {// Update
@@ -59,13 +52,22 @@ internal partial class SnowObject
                     this.Goshujin.SaveQueueChain.Enqueue(this);
                 }
             }
+
+            // this.SnowObjectGoshujin.Update(diff);
+            this.SnowObjectGoshujin.TotalSize += diff;
+            while (this.SnowObjectGoshujin.TotalSize > Zen.DefaultPrimarySizeLimit)
+            {// Unload
+                var h = this.SnowObjectGoshujin.Goshujin.UnloadQueueChain.Peek();
+                h.Save(true);
+            }
         }
     }
 
-    internal void RemoveQueue()
+    internal void RemoveQueue(int diff)
     {// Remove link
         lock (this.SnowObjectGoshujin.Goshujin)
         {
+            this.SnowObjectGoshujin.TotalSize += diff;
             this.Goshujin = null;
         }
     }
