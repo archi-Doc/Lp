@@ -1,72 +1,59 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace ZenItz;
 
 #pragma warning disable SA1401 // Fields should be private
 
-internal partial class SnowFlakeObject : SnowObject
+internal class SnowFlakeObject : SnowObject
 {
     public SnowFlakeObject(Flake flake, SnowObjectGoshujin goshujin)
         : base(flake, goshujin)
     {
-        this.fragment = new(flake.Zen, flake.Identifier);
+        this.fragment = new(flake.Zen);
     }
 
-    public void Set(ReadOnlySpan<byte> data, bool loading)
+    public void SetSpan(ReadOnlySpan<byte> data)
     {// lock (Flake.syncObject)
-        if (data.SequenceEqual(this.MemoryOwner.Memory.Span))
-        {// Identical
-            return;
-        }
-
-        var diff = -this.MemoryOwner.Memory.Length;
-        this.MemoryOwner = this.MemoryOwner.Return();
-
-        diff += data.Length;
-        this.MemoryOwner = this.SnowObjectGoshujin.Pool.Rent(data.Length).ToMemoryOwner(0, data.Length);
-        data.CopyTo(this.MemoryOwner.Memory.Span);
-
-        this.CachedObject = null;
-        this.State = SnowObjectState.Memory;
-        // this.State = loading ? SnowObjectState.Saved : SnowObjectState.NotSaved;
-        this.UpdateQueue(SnowObjectOperation.Set, diff);
+        this.UpdateQueue(SnowObjectOperation.Set, this.fragment.SetSpan(data));
     }
 
-    public void Set(object obj)
+    public void SetObject(object obj)
     {// lock (Flake.syncObject)
-        if (obj == this.CachedObject)
-        {// Identical
-            return;
-        }
+        this.UpdateQueue(SnowObjectOperation.Set, this.fragment.SetObject(obj));
+    }
 
-        var diff = -this.MemoryOwner.Memory.Length;
-        this.MemoryOwner = this.MemoryOwner.Return();
+    public void SetMemoryOwner(ByteArrayPool.MemoryOwner dataToBeMoved)
+    {// lock (Flake.syncObject)
+        this.UpdateQueue(SnowObjectOperation.Set, this.fragment.SetMemoryOwner(dataToBeMoved));
+    }
 
-        this.CachedObject = obj;
-        this.State = SnowObjectState.Object;
-        this.UpdateQueue(SnowObjectOperation.Set, diff);
+    public bool TryGetSpan(out ReadOnlySpan<byte> data)
+    {// lock (Flake.syncObject)
+        return this.fragment.TryGetSpan(out data);
+    }
+
+    public bool TryGetMemoryOwner(out ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
+    {// lock (Flake.syncObject)
+        return this.fragment.TryGetMemoryOwner(out memoryOwner);
+    }
+
+    public bool TryGetObject([MaybeNullWhen(false)] out object? obj)
+    {// lock (Flake.syncObject)
+        return this.fragment.TryGetObject(out obj);
     }
 
     public void Unload()
-    {// Object, Memory
-        this.CachedObject = null;
-        var diff = -this.MemoryOwner.Memory.Length;
-        this.MemoryOwner = this.MemoryOwner.Return();
-        this.RemoveQueue(diff);
+    {// lock (Flake.syncObject)
+        this.RemoveQueue(this.fragment.Clear());
     }
 
     internal override void Save(bool unload)
     {// lock (this.SnowObjectGoshujin.Goshujin)
-        if (this.State == SnowObjectState.Object)
-        {// Object to Memory
-            this.Flake.Zen.ObjectToMemoryOwner(this.CachedObject, out this.MemoryOwner);
-            this.CachedObject = null;
-            this.State = SnowObjectState.Memory;
-        }
-
-        if (this.State == SnowObjectState.Memory)
-        {// Memory to File
-            this.Flake.Zen.SnowmanControl.Save(ref this.Flake.flakeSnowId, ref this.Flake.flakeSnowSegment, this.MemoryOwner.IncrementAndShareReadOnly());
+        if (this.fragment.TryGetMemoryOwner(out var memoryOwner))
+        {
+            this.Flake.Zen.SnowmanControl.Save(ref this.Flake.flakeSnowId, ref this.Flake.flakeSnowSegment, memoryOwner);
         }
 
         if (unload)
@@ -75,7 +62,5 @@ internal partial class SnowFlakeObject : SnowObject
         }
     }
 
-    internal ByteArrayPool.MemoryOwner MemoryOwner;
-    internal object? CachedObject;
     private Fragment fragment;
 }

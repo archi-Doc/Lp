@@ -31,9 +31,9 @@ public partial class Flake
                 return new(ZenResult.Removed);
             }
 
-            if (this.snowFlakeObject != null)
-            {// Loaded
-                return new(ZenResult.Success, this.snowFlakeObject.MemoryOwner.IncrementAndShareReadOnly());
+            if (this.snowFlakeObject != null && this.snowFlakeObject.TryGetMemoryOwner(out var memoryOwner))
+            {// Memory
+                return new(ZenResult.Success, memoryOwner);
             }
 
             idSegment = new(this.flakeSnowId, this.flakeSnowSegment);
@@ -62,7 +62,7 @@ public partial class Flake
             }
 
             this.snowFragmentObject ??= new(this, this.Zen.SnowFragmentGoshujin);
-            return this.snowFragmentObject.Set(fragmentId, data, false);
+            return this.snowFragmentObject.SetSpan(fragmentId, data);
         }
     }
 
@@ -95,7 +95,7 @@ public partial class Flake
             if (!loading || this.snowFlakeObject == null)
             {// Not loading or Loading & empty
                 this.snowFlakeObject ??= new(this, this.Zen.SnowFlakeGoshujin);
-                this.snowFlakeObject.Set(data, loading);
+                this.snowFlakeObject.SetSpan(data);
             }
         }
 
@@ -119,11 +119,11 @@ public partial class Flake
             if (!loading || this.snowFragmentObject == null)
             {// Not loading or Loading & empty
                 this.snowFragmentObject ??= new(this, this.Zen.SnowFragmentGoshujin);
-                return this.snowFragmentObject.Set(fragmentId, data, loading);
+                return this.snowFragmentObject.SetSpan(fragmentId, data);
             }
             else
             {// Loading & not empty
-                return this.snowFragmentObject.Set(fragmentId, data, loading);
+                return this.snowFragmentObject.SetSpan(fragmentId, data);
             }
         }
     }
