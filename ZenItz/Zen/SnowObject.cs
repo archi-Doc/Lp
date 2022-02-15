@@ -32,7 +32,7 @@ internal partial class SnowObject
     {
     }
 
-    internal void UpdateQueue(SnowObjectOperation operation, int diff)
+    internal void UpdateQueue(SnowObjectOperation operation, int memoryDifference)
     {// Update queue link.
         lock (this.SnowObjectGoshujin.Goshujin)
         {
@@ -57,7 +57,7 @@ internal partial class SnowObject
             }
 
             // this.SnowObjectGoshujin.Update(diff);
-            this.SnowObjectGoshujin.TotalSize += diff;
+            this.SnowObjectGoshujin.TotalSize += memoryDifference;
             while (this.SnowObjectGoshujin.TotalSize > Zen.DefaultPrimarySizeLimit)
             {// Unload
                 var h = this.SnowObjectGoshujin.Goshujin.UnloadQueueChain.Peek();
@@ -66,11 +66,11 @@ internal partial class SnowObject
         }
     }
 
-    internal void RemoveQueue(int diff)
+    internal void RemoveQueue(int memoryDifference)
     {// Remove link
         lock (this.SnowObjectGoshujin.Goshujin)
         {
-            this.SnowObjectGoshujin.TotalSize += diff;
+            this.SnowObjectGoshujin.TotalSize += memoryDifference;
             this.Goshujin = null;
         }
     }

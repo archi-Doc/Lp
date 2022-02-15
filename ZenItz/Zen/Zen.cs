@@ -11,16 +11,16 @@ public class Zen
     public const int MaxFragmentCount = 1000;
     public const long DefaultPrimarySizeLimit = 100_000_000; // 100MB
 
-    public delegate void ObjectToMemoryOwnerDelegate(object? obj, out ByteArrayPool.MemoryOwner memoryOwner);
+    public delegate void ObjectToMemoryOwnerDelegate(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved);
 
-    public delegate object? MemoryOwnerToObjectDelegate(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner);
+    public delegate object? MemoryOwnerToObjectDelegate(ByteArrayPool.MemoryOwner memoryOwner);
 
-    public static void DefaultObjectToMemoryOwner(object? obj, out ByteArrayPool.MemoryOwner memoryOwner)
+    public static void DefaultObjectToMemoryOwner(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved)
     {
-        memoryOwner = ByteArrayPool.MemoryOwner.Empty;
+        dataToBeMoved = ByteArrayPool.MemoryOwner.Empty;
     }
 
-    public static object? DefaultMemoryOwnerToObject(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
+    public static object? DefaultMemoryOwnerToObject(ByteArrayPool.MemoryOwner memoryOwner)
     {
         return null;
     }

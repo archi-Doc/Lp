@@ -18,44 +18,38 @@ internal partial class SnowFragmentObject : SnowObject
             this.fragments = new();
         }
 
-        int diff = 0;
-        if (this.fragments.Count >= Zen.MaxFragmentCount)
+        int memoryDifference = 0;
+        Fragment fragment;
+        if (this.fragments.IdChain.Count >= Zen.MaxFragmentCount)
         {
             return ZenResult.OverNumberLimit;
         }
-        else if (this.fragments.TryGetValue(fragmentId, out var memoryOwner))
+        else if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragment))
         {
-            if (data.SequenceEqual(memoryOwner.Memory.Span))
-            {// Identical
-                return ZenResult.Success;
-            }
-
-            diff = -memoryOwner.Memory.Length;
-            memoryOwner.Return();
+            fragment = new(this.Flake.Zen, fragmentId);
+            this.fragments.Add(fragment);
         }
 
-        diff += data.Length;
-        var memoryOwner2 = this.SnowObjectGoshujin.Pool.Rent(data.Length).ToMemoryOwner(0, data.Length);
-        data.CopyTo(memoryOwner2.Memory.Span);
-        this.fragments[fragmentId] = memoryOwner2;
-
-        this.UpdateQueue(SnowObjectOperation.Set, diff);
+        memoryDifference = fragment.SetSpan(data);
+        this.UpdateQueue(SnowObjectOperation.Set, memoryDifference);
         return ZenResult.Success;
     }
 
     public void Clear()
     {
+        int memoryDifference = 0;
         if (this.fragments != null)
         {
-            foreach (var x in this.fragments.Values)
+            foreach (var x in this.fragments.IdChain)
             {
-                x.Return();
+                memoryDifference += x.Clear();
             }
 
+            this.fragments.Clear();
             this.fragments = null;
         }
 
-        this.RemoveQueue(0);
+        this.RemoveQueue(memoryDifference);
     }
 
     internal override void Save(bool unload)
@@ -63,5 +57,5 @@ internal partial class SnowFragmentObject : SnowObject
         throw new NotImplementedException();
     }
 
-    private Dictionary<Identifier, ByteArrayPool.MemoryOwner>? fragments; // by Yamamoto.
+    private Fragment.GoshujinClass? fragments; // by Yamamoto.
 }
