@@ -19,7 +19,7 @@ internal partial class SnowFragmentObject : SnowObject
         }
 
         int memoryDifference = 0;
-        Fragment fragment;
+        Fragment? fragment;
         if (this.fragments.IdChain.Count >= Zen.MaxFragmentCount)
         {
             return ZenResult.OverNumberLimit;

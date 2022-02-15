@@ -9,6 +9,7 @@ internal partial class SnowFlakeObject : SnowObject
     public SnowFlakeObject(Flake flake, SnowObjectGoshujin goshujin)
         : base(flake, goshujin)
     {
+        this.fragment = new(flake.Zen, flake.Identifier);
     }
 
     public void Set(ReadOnlySpan<byte> data, bool loading)
@@ -76,4 +77,5 @@ internal partial class SnowFlakeObject : SnowObject
 
     internal ByteArrayPool.MemoryOwner MemoryOwner;
     internal object? CachedObject;
+    private Fragment fragment;
 }
