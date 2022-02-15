@@ -161,7 +161,7 @@ internal partial class SnowFragmentObject : SnowObject
                 if (x.TryGetSpan(out var span))
                 {
                     x.Identifier.Serialize(ref writer, options);
-                    writer.WriteSpan(span);
+                    writer.Write(span);
                 }
             }
 
@@ -175,5 +175,59 @@ internal partial class SnowFragmentObject : SnowObject
         }
     }
 
-    private Fragment2.GoshujinClass? fragments; // by Yamamoto.
+    internal bool Load(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
+    {
+        if (this.fragments != null)
+        {
+            return true;
+        }
+
+        this.fragments = new();
+        var reader = new Tinyhand.IO.TinyhandReader(memoryOwner.Memory);
+        var options = TinyhandSerializerOptions.Standard;
+        try
+        {
+            while (!reader.End)
+            {
+                var identifier = default(Identifier);
+                identifier.Deserialize(ref reader, options);
+                var byteArray = reader.ReadBytesToArray();
+
+                var fragment = new Fragment2(this.Flake.Zen, identifier);
+                fragment.SetSpan(byteArray);
+                this.fragments.Add(fragment);
+            }
+        }
+        finally
+        {
+        }
+
+        return true;
+    }
+
+    private Fragment2.GoshujinClass PrepareFragments()
+    {// lock (Flake.syncObject)
+        if (this.fragments != null)
+        {
+            return this.fragments;
+        }
+
+        var snowId = new SnowFlakeIdSegment(this.Flake.fragmentSnowId, this.Flake.fragmentSnowSegment);
+        if (this.Flake.Zen.SnowmanControl.TryGetSnowman(snowId, out var snowman))
+        {
+            var dataResult = snowman.Load(snowId).Result;
+            var dataResult = default(ZenDataResult);
+            if (dataResult.IsSuccess)
+            {
+                if (this.Load(dataResult.Data))
+                {
+                    return this.fragments!; // by Yamamoto.
+                }
+            }
+        }
+
+        return new();
+    }
+
+    private Fragment2.GoshujinClass? fragments;
 }

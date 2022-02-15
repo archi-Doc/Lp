@@ -2,9 +2,14 @@
 
 namespace ZenItz;
 
-public class Snowman
+internal class Snowman
 {
     public Snowman()
     {
+    }
+
+    public async Task<ZenDataResult> Load(SnowFlakeIdSegment idSegment)
+    {
+        return new ZenDataResult(ZenResult.Success, ByteArrayPool.ReadOnlyMemoryOwner.Empty);
     }
 }
