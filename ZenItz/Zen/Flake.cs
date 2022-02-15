@@ -62,7 +62,7 @@ public partial class Flake
             }
 
             this.snowFragmentObject ??= new(this, this.Zen.SnowFragmentGoshujin);
-            return this.snowFragmentObject.Set(fragmentId, data);
+            return this.snowFragmentObject.Set(fragmentId, data, false);
         }
     }
 
@@ -116,9 +116,13 @@ public partial class Flake
                 return ZenResult.Removed;
             }
 
-            if (!loading || this.snowFlakeObject == null)
+            if (!loading || this.snowFragmentObject == null)
             {// Not loading or Loading & empty
                 this.snowFragmentObject ??= new(this, this.Zen.SnowFragmentGoshujin);
+                return this.snowFragmentObject.Set(fragmentId, data, loading);
+            }
+            else
+            {// Loading & not empty
                 return this.snowFragmentObject.Set(fragmentId, data, loading);
             }
         }

@@ -11,6 +11,20 @@ public class Zen
     public const int MaxFragmentCount = 1000;
     public const long DefaultPrimarySizeLimit = 100_000_000; // 100MB
 
+    public delegate void ObjectToMemoryOwnerDelegate(object? obj, out ByteArrayPool.MemoryOwner memoryOwner);
+
+    public delegate object? MemoryOwnerToObjectDelegate(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner);
+
+    public static void DefaultObjectToMemoryOwner(object? obj, out ByteArrayPool.MemoryOwner memoryOwner)
+    {
+        memoryOwner = ByteArrayPool.MemoryOwner.Empty;
+    }
+
+    public static object? DefaultMemoryOwnerToObject(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
+    {
+        return null;
+    }
+
     public Zen()
     {
         this.SnowmanControl = new();
@@ -18,6 +32,12 @@ public class Zen
         this.FragmentPool = new ByteArrayPool(MaxFragmentSize, 0);
         this.SnowFlakeGoshujin = new(this, this.FlakePool);
         this.SnowFragmentGoshujin = new(this, this.FragmentPool);
+    }
+
+    public void SetDelegate(ObjectToMemoryOwnerDelegate objectToMemoryOwner, MemoryOwnerToObjectDelegate memoryOwnerToObject)
+    {
+        this.ObjectToMemoryOwner = objectToMemoryOwner;
+        this.MemoryOwnerToObject = memoryOwnerToObject;
     }
 
     public Flake CreateOrGet(Identifier id)
@@ -67,6 +87,10 @@ public class Zen
     public ByteArrayPool FlakePool { get; }
 
     public ByteArrayPool FragmentPool { get; }
+
+    public ObjectToMemoryOwnerDelegate ObjectToMemoryOwner { get; private set; } = DefaultObjectToMemoryOwner;
+
+    public MemoryOwnerToObjectDelegate MemoryOwnerToObject { get; private set; } = DefaultMemoryOwnerToObject;
 
     internal SnowObjectGoshujin SnowFlakeGoshujin;
     internal SnowObjectGoshujin SnowFragmentGoshujin;

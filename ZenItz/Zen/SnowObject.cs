@@ -5,12 +5,13 @@ namespace ZenItz;
 #pragma warning disable SA1401 // Fields should be private
 
 [ValueLinkObject]
-internal abstract partial class SnowObject
+internal partial class SnowObject
 {
     public enum SnowObjectState
     {
-        NotSaved, // Active and not saved
-        Saved, // Active and saved
+        File,
+        Memory,
+        Object,
     }
 
     public enum SnowObjectOperation
@@ -27,7 +28,9 @@ internal abstract partial class SnowObject
         this.SnowObjectGoshujin = snowObjectControl;
     }
 
-    internal abstract void Save(bool unload);
+    internal virtual void Save(bool unload)
+    {
+    }
 
     internal void UpdateQueue(SnowObjectOperation operation, int diff)
     {// Update queue link.
@@ -77,6 +80,4 @@ internal abstract partial class SnowObject
     public SnowObjectGoshujin SnowObjectGoshujin { get; }
 
     public SnowObjectState State { get; protected set; }
-
-    protected object? cachedObject;
 }

@@ -20,5 +20,9 @@ public class SnowmanControl
         return new(ZenResult.Success);
     }
 
-    private Snowman[] flakeArray;
+    public void Save(ref ulong snowId, ref long snowSegment, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
+    {
+    }
+
+    private Snowman[] flakeArray = Array.Empty<Snowman>();
 }

@@ -55,7 +55,12 @@ internal partial class SnowFragmentObject : SnowObject
             this.fragments = null;
         }
 
-        this.RemoveQueue();
+        this.RemoveQueue(0);
+    }
+
+    internal override void Save(bool unload)
+    {
+        throw new NotImplementedException();
     }
 
     private Dictionary<Identifier, ByteArrayPool.MemoryOwner>? fragments; // by Yamamoto.

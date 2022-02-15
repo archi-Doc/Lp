@@ -14,8 +14,6 @@ internal class SnowObjectGoshujin
 
     internal void Update(int diff)
     {// lock (this.goshujin)
-        
-
     }
 
     public Zen Zen { get; }
