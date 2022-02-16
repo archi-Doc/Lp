@@ -38,7 +38,7 @@ public class Zen
         this.SnowFragmentGoshujin = new(this, this.FragmentPool);
     }
 
-    public async Task<ZenStartResult> TryStartZen(ZenStart param)
+    public async Task<ZenStartResult> TryStartZen(ZenStartParam param)
     {
         var result = ZenStartResult.Success;
         if (this.ZenStarted)
@@ -53,34 +53,46 @@ public class Zen
         }
         catch
         {
-            result = ZenStartResult.ZenFileNotFound;
-            goto Exit;
+            if (await param.Query(ZenStartResult.ZenFileNotFound))
+            {
+                return await this.SnowmanControl.TryStart(param, null);
+            }
+            else
+            {
+                return ZenStartResult.ZenFileNotFound;
+            }
         }
 
         if (zenData.Length < 8)
         {
-            result = ZenStartResult.ZenFileError;
-            goto Exit;
+            if (await param.Query(ZenStartResult.ZenFileError))
+            {
+                return await this.SnowmanControl.TryStart(param, null);
+            }
+            else
+            {
+                return ZenStartResult.ZenFileError;
+            }
         }
 
         var memory = zenData.AsMemory(8);
         if (Arc.Crypto.FarmHash.Hash64(memory.Span) != BitConverter.ToUInt64(zenData))
         {
-            result = ZenStartResult.ZenFileError;
-            goto Exit;
+            if (await param.Query(ZenStartResult.ZenFileError))
+            {
+                return await this.SnowmanControl.TryStart(param, null);
+            }
+            else
+            {
+                return ZenStartResult.ZenFileError;
+            }
         }
 
-        result = this.SnowmanControl.TryStart(param, memory);
-
-Exit:
-        if (param.ForceStart)
-        {// Force start
-        }
-
+        result = await this.SnowmanControl.TryStart(param, memory);
         return result;
     }
 
-    public async Task StopZen(ZenStop param)
+    public async Task StopZen(ZenStopParam param)
     {
         if (!this.ZenStarted)
         {

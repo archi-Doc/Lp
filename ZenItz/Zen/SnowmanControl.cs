@@ -24,32 +24,38 @@ public class SnowmanControl
     {
     }
 
-    internal ZenStartResult TryStart(ZenStart param, ReadOnlyMemory<byte> data)
+    internal async Task<ZenStartResult> TryStart(ZenStartParam param, ReadOnlyMemory<byte>? data)
     {
-        Snowman.GoshujinClass? goshujin;
-        try
+        Snowman.GoshujinClass? goshujin = null;
+
+        if (data != null)
         {
-            goshujin = TinyhandSerializer.Deserialize<Snowman.GoshujinClass>(data);
-            if (goshujin == null)
+            try
             {
-                goshujin = new();
+                goshujin = TinyhandSerializer.Deserialize<Snowman.GoshujinClass>(data.Value);
+            }
+            catch
+            {
+                if (!await param.Query(ZenStartResult.ZenFileError))
+                {
+                    return ZenStartResult.ZenFileError;
+                }
             }
         }
-        catch
-        {
-            return ZenStartResult.ZenFileError;
-        }
 
-        var directoryError = false;
+        goshujin ??= new();
+        List<string>? errorDirectories = null;
         foreach (var x in goshujin.SnowmanIdChain)
         {
-            if (!x.Check(true))
+            if (!x.Check())
             {
-                directoryError = true;
+                errorDirectories ??= new();
+                errorDirectories.Add(x.SnowmanDirectory);
             }
         }
 
-        if (directoryError)
+        if (errorDirectories != null &&
+            !await param.Query(ZenStartResult.ZenDirectoryError, errorDirectories.ToArray()))
         {
             return ZenStartResult.ZenFileError;
         }
@@ -57,8 +63,15 @@ public class SnowmanControl
         if (param.DefaultFolder != null &&
             !goshujin.SnowmanIdChain.TryGetValue(Snowman.DefaultSnowmanId, out _))
         {
-            var defaultSnowman = new Snowman(param.DefaultFolder);
-            goshujin.Add(defaultSnowman);
+            try
+            {
+                Directory.CreateDirectory(param.DefaultFolder);
+                var defaultSnowman = new Snowman(param.DefaultFolder);
+                goshujin.Add(defaultSnowman);
+            }
+            catch
+            {
+            }
         }
 
         foreach (var x in goshujin.SnowmanIdChain)
@@ -66,8 +79,12 @@ public class SnowmanControl
             x.Start();
         }
 
-        this.snowmanGoshujin = goshujin;
+        if (goshujin.SnowmanIdChain.Count == 0)
+        {
+            return ZenStartResult.NoDirectoryAvailable;
+        }
 
+        this.snowmanGoshujin = goshujin;
         return ZenStartResult.Success;
     }
 

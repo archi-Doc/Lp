@@ -19,10 +19,12 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
         var zen = this.ZenControl.Zen;
         var itz = this.ZenControl.Itz;
 
-        await zen.TryStartZen(new());
+        await zen.TryStartZen(new("ZenDefault"));
         var p = zen.CreateOrGet(Identifier.Zero);
         p.Set(new byte[] { 0, 1, });
         var result = await p.Get();
+
+        await zen.StopZen(new());
     }
 
     public ZenControl ZenControl { get; set; }

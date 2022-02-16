@@ -20,15 +20,23 @@ internal partial class Snowman
         this.SnowmanDirectory = directory;
     }
 
-    public bool Check(bool createDirectory = false)
+    public bool Check()
     {
         try
         {
-            var directoryInfo = new DirectoryInfo(this.SnowmanDirectory);
+            Directory.CreateDirectory(this.SnowmanDirectory);
+            /*var directoryInfo = new DirectoryInfo(this.SnowmanDirectory);
             if (createDirectory)
             {
                 directoryInfo.Create();
             }
+            else
+            {
+                if (!directoryInfo.Exists)
+                {// No directory
+
+                }
+            }*/
 
             /*var testFile = Path.Combine(this.SnowmanDirectory, Path.GetRandomFileName());
             using (var fs = File.Create(testFile, 1, FileOptions.DeleteOnClose))
@@ -36,21 +44,12 @@ internal partial class Snowman
             }*/
 
             // Check snowman file
-            if (createDirectory)
+            using (var handle = File.OpenHandle(this.SnowmanFile, mode: FileMode.Open, access: FileAccess.ReadWrite))
             {
-                using (var handle = File.OpenHandle(this.SnowmanFile, mode: FileMode.Create, access: FileAccess.ReadWrite))
-                {
-                }
-            }
-            else
-            {
-                using (var handle = File.OpenHandle(this.SnowmanFile, mode: FileMode.Open, access: FileAccess.ReadWrite))
-                {
-                }
             }
         }
         catch
-        {
+        {// No snowman file
             return false;
         }
 
@@ -59,7 +58,7 @@ internal partial class Snowman
 
     public void Start()
     {
-        Directory.CreateDirectory(this.SnowmanDirectory);
+        // Directory.CreateDirectory(this.SnowmanDirectory);
 
         if (!this.TryLoadSnowman(this.SnowmanFile))
         {
