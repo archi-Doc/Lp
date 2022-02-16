@@ -14,9 +14,9 @@ internal partial class Snowman
     {
     }
 
-    public Snowman(string directory)
+    public Snowman(uint snowmanId, string directory)
     {// Default snowman
-        this.SnowmanId = DefaultSnowmanId;
+        this.SnowmanId = snowmanId; // DefaultSnowmanId;
         this.SnowmanDirectory = directory;
     }
 
@@ -94,13 +94,7 @@ internal partial class Snowman
             return false;
         }
 
-        if (span.Length < 8)
-        {
-            return false;
-        }
-
-        var data = span.Slice(8);
-        if (Arc.Crypto.FarmHash.Hash64(data) != BitConverter.ToUInt64(span))
+        if (!HashHelper.CheckFarmHashAndGetData(span, out var data))
         {
             return false;
         }

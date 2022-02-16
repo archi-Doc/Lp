@@ -60,13 +60,13 @@ public class SnowmanControl
             return ZenStartResult.ZenFileError;
         }
 
-        if (param.DefaultFolder != null &&
-            !goshujin.SnowmanIdChain.TryGetValue(Snowman.DefaultSnowmanId, out _))
+        // if (param.DefaultFolder != null && !goshujin.SnowmanIdChain.TryGetValue(Snowman.DefaultSnowmanId, out _))
+        if (param.DefaultFolder != null && goshujin.SnowmanIdChain.Count == 0)
         {
             try
             {
                 Directory.CreateDirectory(param.DefaultFolder);
-                var defaultSnowman = new Snowman(param.DefaultFolder);
+                var defaultSnowman = new Snowman(this.GetFreeSnowmanId(goshujin), param.DefaultFolder);
                 goshujin.Add(defaultSnowman);
             }
             catch
@@ -91,6 +91,23 @@ public class SnowmanControl
     internal bool TryGetSnowman(SnowFlakeIdSegment idSegment, [MaybeNullWhen(false)] out Snowman snowman)
     {
         return this.snowmanGoshujin.SnowmanIdChain.TryGetValue(idSegment.SnowmanId, out snowman);
+    }
+
+    internal byte[] Serialize()
+    {
+        return TinyhandSerializer.Serialize(this.snowmanGoshujin);
+    }
+
+    private uint GetFreeSnowmanId(Snowman.GoshujinClass goshujin)
+    {
+        while(true)
+        {
+            var id = LP.Random.Pseudo.NextUInt32();
+            if (!goshujin.SnowmanIdChain.ContainsKey(id))
+            {
+                return id;
+            }
+        }
     }
 
     private Snowman.GoshujinClass snowmanGoshujin = new();

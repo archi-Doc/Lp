@@ -55,7 +55,13 @@ public class Zen
         {
             if (await param.Query(ZenStartResult.ZenFileNotFound))
             {
-                return await this.SnowmanControl.TryStart(param, null);
+                result = await this.SnowmanControl.TryStart(param, null);
+                if (result == ZenStartResult.Success || param.ForceStart)
+                {
+                    this.ZenStarted = true;
+                }
+
+                return result;
             }
             else
             {
@@ -63,24 +69,16 @@ public class Zen
             }
         }
 
-        if (zenData.Length < 8)
+        if (!HashHelper.CheckFarmHashAndGetData(zenData.AsMemory(), out var memory))
         {
             if (await param.Query(ZenStartResult.ZenFileError))
             {
-                return await this.SnowmanControl.TryStart(param, null);
-            }
-            else
-            {
-                return ZenStartResult.ZenFileError;
-            }
-        }
-
-        var memory = zenData.AsMemory(8);
-        if (Arc.Crypto.FarmHash.Hash64(memory.Span) != BitConverter.ToUInt64(zenData))
-        {
-            if (await param.Query(ZenStartResult.ZenFileError))
-            {
-                return await this.SnowmanControl.TryStart(param, null);
+                result = await this.SnowmanControl.TryStart(param, null);
+                if (result == ZenStartResult.Success || param.ForceStart)
+                {
+                    this.ZenStarted = true;
+                    return result;
+                }
             }
             else
             {
@@ -89,6 +87,11 @@ public class Zen
         }
 
         result = await this.SnowmanControl.TryStart(param, memory);
+        if (result == ZenStartResult.Success || param.ForceStart)
+        {
+            this.ZenStarted = true;
+        }
+
         return result;
     }
 
@@ -100,6 +103,14 @@ public class Zen
         }
 
         this.ZenStarted = false;
+
+        // Unload flakes
+
+        // Save snow
+
+        // Save snowmans
+        var byteArray = this.SnowmanControl.Serialize();
+        await HashHelper.GetFarmHashAndSaveAsync(byteArray, param.ZenFile, param.BackupFile);
     }
 
     public void SetDelegate(ObjectToMemoryOwnerDelegate objectToMemoryOwner, MemoryOwnerToObjectDelegate memoryOwnerToObject)

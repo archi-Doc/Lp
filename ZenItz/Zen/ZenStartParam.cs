@@ -8,7 +8,7 @@ public record ZenStartParam(string? DefaultFolder = null, string ZenFile = Zen.D
         => (this.QueryDelegate == null || this.ForceStart) ? Task.FromResult(true) : this.QueryDelegate(query, list);
 }
 
-public record ZenStopParam(string ZenFile = Zen.DefaultZenFile, string BackupFile = Zen.DefaultZenFile);
+public record ZenStopParam(string ZenFile = Zen.DefaultZenFile, string BackupFile = Zen.DefaultZenBackup);
 
 public enum ZenStartResult
 {
