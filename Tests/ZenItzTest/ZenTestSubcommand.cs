@@ -19,6 +19,7 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
         var zen = this.ZenControl.Zen;
         var itz = this.ZenControl.Itz;
 
+        await zen.TryStartZen(new());
         var p = zen.CreateOrGet(Identifier.Zero);
         p.Set(new byte[] { 0, 1, });
         var result = await p.Get();

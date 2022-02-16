@@ -10,6 +10,20 @@ public class SnowmanControl
     {
     }
 
+    public int GetFlakeId()
+    {
+        return 0;
+    }
+
+    public async Task<ZenDataResult> TryLoadPrimary(SnowFlakeIdSegment idSegment, Identifier identifier)
+    {
+        return new(ZenResult.Success);
+    }
+
+    public void Save(ref ulong snowId, ref long snowSegment, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
+    {
+    }
+
     internal ZenStartResult TryStart(ZenStart param, ReadOnlyMemory<byte> data)
     {
         Snowman.GoshujinClass? goshujin;
@@ -52,26 +66,14 @@ public class SnowmanControl
             x.Start();
         }
 
+        this.snowmanGoshujin = goshujin;
+
         return ZenStartResult.Success;
     }
 
-    internal bool TryGetSnowman(SnowFlakeIdSegment idSegment, [MaybeNullWhen(false)] out Snowman? snowman)
+    internal bool TryGetSnowman(SnowFlakeIdSegment idSegment, [MaybeNullWhen(false)] out Snowman snowman)
     {
         return this.snowmanGoshujin.SnowmanIdChain.TryGetValue(idSegment.SnowmanId, out snowman);
-    }
-
-    public int GetFlakeId()
-    {
-        return 0;
-    }
-
-    public async Task<ZenDataResult> TryLoadPrimary(SnowFlakeIdSegment idSegment, Identifier identifier)
-    {
-        return new(ZenResult.Success);
-    }
-
-    public void Save(ref ulong snowId, ref long snowSegment, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
-    {
     }
 
     private Snowman.GoshujinClass snowmanGoshujin = new();

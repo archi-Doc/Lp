@@ -41,8 +41,7 @@ public partial class Flake
 
         if (idSegment.IsValid)
         {
-            var snowman = this.Zen.SnowmanControl.TryGetSnowman(idSegment);
-            if (snowman == null)
+            if (!this.Zen.SnowmanControl.TryGetSnowman(idSegment, out var snowman))
             {
                 return new(ZenResult.NoData);
             }
