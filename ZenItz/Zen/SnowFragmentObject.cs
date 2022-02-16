@@ -215,8 +215,8 @@ internal partial class SnowFragmentObject : SnowObject
         var snowId = new SnowFlakeIdSegment(this.Flake.fragmentSnowId, this.Flake.fragmentSnowSegment);
         if (this.Flake.Zen.SnowmanControl.TryGetSnowman(snowId, out var snowman))
         {
-            var dataResult = snowman.Load(snowId).Result;
-            var dataResult = default(ZenDataResult);
+            var dataResult = snowman.Load(snowId, Identifier.Zero).Result;
+            // var dataResult = default(ZenDataResult);
             if (dataResult.IsSuccess)
             {
                 if (this.Load(dataResult.Data))

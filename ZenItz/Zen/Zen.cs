@@ -10,6 +10,10 @@ public class Zen
     public const int MaxFragmentSize = 1024 * 4; // 4KB
     public const int MaxFragmentCount = 1000;
     public const long DefaultPrimarySizeLimit = 100_000_000; // 100MB
+    public const string DefaultZenFile = "Zen.main";
+    public const string DefaultZenBackup = "Zen.back";
+    public const string DefaultSnowmanFile = "Snow.main";
+    public const string DefaultSnowmanBackup = "Snow.back";
 
     public delegate void ObjectToMemoryOwnerDelegate(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved);
 
@@ -32,6 +36,58 @@ public class Zen
         this.FragmentPool = new ByteArrayPool(MaxFragmentSize, 0);
         this.SnowFlakeGoshujin = new(this, this.FlakePool);
         this.SnowFragmentGoshujin = new(this, this.FragmentPool);
+    }
+
+    public async Task<ZenStartResult> TryStartZen(ZenStart param)
+    {
+        var result = ZenStartResult.Success;
+        if (this.ZenStarted)
+        {
+            return ZenStartResult.AlreadyStarted;
+        }
+
+        byte[]? zenData;
+        try
+        {
+            zenData = await File.ReadAllBytesAsync(param.ZenFile);
+        }
+        catch
+        {
+            result = ZenStartResult.ZenFileNotFound;
+            goto Exit;
+        }
+
+        if (zenData.Length < 8)
+        {
+            result = ZenStartResult.ZenFileError;
+            goto Exit;
+        }
+
+        var memory = zenData.AsMemory(8);
+        if (Arc.Crypto.FarmHash.Hash64(memory.Span) != BitConverter.ToUInt64(zenData))
+        {
+            result = ZenStartResult.ZenFileError;
+            goto Exit;
+        }
+
+        result = this.SnowmanControl.TryStart(param, memory);
+
+Exit:
+        if (param.ForceStart)
+        {// Force start
+        }
+
+        return result;
+    }
+
+    public async Task StopZen(ZenStop param)
+    {
+        if (!this.ZenStarted)
+        {
+            return;
+        }
+
+        this.ZenStarted = false;
     }
 
     public void SetDelegate(ObjectToMemoryOwnerDelegate objectToMemoryOwner, MemoryOwnerToObjectDelegate memoryOwnerToObject)
@@ -92,6 +148,7 @@ public class Zen
 
     public MemoryOwnerToObjectDelegate MemoryOwnerToObject { get; private set; } = DefaultMemoryOwnerToObject;
 
+    internal volatile bool ZenStarted;
     internal SnowObjectGoshujin SnowFlakeGoshujin;
     internal SnowObjectGoshujin SnowFragmentGoshujin;
     private Flake.GoshujinClass flakeGoshujin = new();

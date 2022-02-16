@@ -41,7 +41,13 @@ public partial class Flake
 
         if (idSegment.IsValid)
         {
-            return await this.Zen.SnowmanControl.TryLoadPrimary(idSegment, this.Identifier).ConfigureAwait(false);
+            var snowman = this.Zen.SnowmanControl.TryGetSnowman(idSegment);
+            if (snowman == null)
+            {
+                return new(ZenResult.NoData);
+            }
+
+            return await snowman.Load(idSegment, this.Identifier).ConfigureAwait(false);
         }
 
         return new(ZenResult.NoData);
