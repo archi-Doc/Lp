@@ -29,7 +29,6 @@ public class ZenControl
         // Main services
         container.Register<ZenControl>(Reuse.Singleton);
         container.Register<Zen>(Reuse.Singleton);
-        container.Register<FlakeControl>(Reuse.Singleton);
         container.Register<Itz>(Reuse.Singleton);
 
         // Subcommands
@@ -84,7 +83,7 @@ public class ZenControl
 
     public Itz Itz { get; }
 
-    public bool ExaltationOfIntegrality { get; } = true;
+    public bool ExaltationOfIntegrality { get; } = true; // by Baxter.
 
     private static Container containerInstance = default!;
 }

@@ -22,6 +22,9 @@ public record LPConsoleOptions
     [SimpleOption("ns", description: "Netsphere option")]
     public NetsphereOptions NetsphereOptions { get; init; } = default!;
 
+    [SimpleOption("zen", description: "ZenItz option")]
+    public ZenItzOptions ZenItzOptions { get; init; } = default!;
+
     public override string ToString()
     {
         return $"{this.NetsphereOptions.ToString()}";

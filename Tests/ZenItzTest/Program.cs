@@ -23,7 +23,8 @@ public class Program
     {
         // Subcommands
         var commandTypes = new List<Type>();
-        commandTypes.Add(typeof(BasicTestSubcommand));
+        commandTypes.Add(typeof(ZenTestSubcommand));
+        commandTypes.Add(typeof(ItzTestSubcommand));
 
         // DI Container
         ZenControl.Register(Container, commandTypes);

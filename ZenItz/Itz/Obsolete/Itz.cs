@@ -2,7 +2,7 @@
 
 using System.Runtime.CompilerServices;
 
-namespace ZenItz;
+namespace ZenItz.Obsolete;
 
 public class Itz
 {
@@ -21,13 +21,13 @@ public class Itz
         where TPayload : IItzPayload
         => ItzShipControl.Instance.GetShip<TPayload>();
 
-    public void Set<TPayload>(in Identifier id, in TPayload value)
+    public void Set<TPayload>(in Identifier primaryId, in Identifier secondaryId, in TPayload value)
         where TPayload : IItzPayload
-        => this.GetShip<TPayload>().Set(in id, in value);
+        => this.GetShip<TPayload>().Set(in primaryId, in secondaryId, in value);
 
-    public ItzResult Get<TPayload>(in Identifier id, out TPayload value)
+    public ItzResult Get<TPayload>(in Identifier primaryId, in Identifier secondaryId, out TPayload value)
         where TPayload : IItzPayload
-        => this.GetShip<TPayload>().Get(id, out value);
+        => this.GetShip<TPayload>().Get(primaryId, secondaryId, out value);
 
     public int Count<TPayload>()
         where TPayload : IItzPayload

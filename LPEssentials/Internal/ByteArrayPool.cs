@@ -105,6 +105,20 @@ public class ByteArrayPool
         /// <returns><see cref="MemoryOwner"/>.</returns>
         public MemoryOwner ToMemoryOwner(int start, int length) => new MemoryOwner(this, start, length);
 
+        /// <summary>
+        /// Create a <see cref="ReadOnlyMemoryOwner"/> object from <see cref="Owner"/>.
+        /// </summary>
+        /// <returns><see cref="ReadOnlyMemoryOwner"/>.</returns>
+        public ReadOnlyMemoryOwner ToReadOnlyMemoryOwner() => new ReadOnlyMemoryOwner(this);
+
+        /// <summary>
+        /// Create a <see cref="ReadOnlyMemoryOwner"/> object by specifying the index and length.
+        /// </summary>
+        /// <param name="start">The index at which to begin the slice.</param>
+        /// <param name="length">The number of elements to include in the slice.</param>
+        /// <returns><see cref="ReadOnlyMemoryOwner"/>.</returns>
+        public ReadOnlyMemoryOwner ToReadOnlyMemoryOwner(int start, int length) => new ReadOnlyMemoryOwner(this, start, length);
+
         internal void SetCount1() => Volatile.Write(ref this.count, 1);
 
         /// <summary>
@@ -193,6 +207,36 @@ public class ByteArrayPool
         }
 
         /// <summary>
+        ///  Increment the reference count.
+        /// </summary>
+        /// <returns><see cref="Owner"/> instance (<see langword="this"/>).</returns>
+        public ReadOnlyMemoryOwner IncrementAndShareReadOnly()
+        {
+            if (this.Owner == null)
+            {
+                throw new InvalidOperationException();
+            }
+
+            return new(this.Owner.IncrementAndShare(), this.Memory);
+        }
+
+        /// <summary>
+        ///  Increment the reference count and create a <see cref="MemoryOwner"/> object by specifying the index and length.
+        /// </summary>
+        /// <param name="start">The index at which to begin the slice.</param>
+        /// <param name="length">The number of elements to include in the slice.</param>
+        /// <returns><see cref="MemoryOwner"/> object.</returns>
+        public ReadOnlyMemoryOwner IncrementAndShareReadOnly(int start, int length)
+        {
+            if (this.Owner == null)
+            {
+                throw new InvalidOperationException();
+            }
+
+            return new(this.Owner.IncrementAndShare(), start, length);
+        }
+
+        /// <summary>
         /// Forms a slice out of the current memory that begins at a specified index.
         /// </summary>
         /// <param name="start">The index at which to begin the slice.</param>
@@ -235,6 +279,117 @@ public class ByteArrayPool
 
         public readonly Owner? Owner;
         public readonly Memory<byte> Memory;
+    }
+
+    /// <summary>
+    /// Represents an owner of a byte array and a <see cref="ReadOnlyMemory{T}"/> object.
+    /// </summary>
+    public readonly struct ReadOnlyMemoryOwner : IDisposable
+    {
+        public static readonly ReadOnlyMemoryOwner Empty = new((Owner?)null);
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ReadOnlyMemoryOwner"/> struct from a byte array.<br/>
+        /// This is a feature for compatibility with <see cref="ByteArrayPool"/>, and the byte array will not be returned when <see cref="Return"/> is called.
+        /// </summary>
+        /// <param name="byteArray">A byte array (other than <see cref="ByteArrayPool"/>).</param>
+        public ReadOnlyMemoryOwner(byte[] byteArray)
+        {
+            this.Owner = new(byteArray);
+            this.Memory = byteArray.AsMemory();
+        }
+
+        internal ReadOnlyMemoryOwner(Owner? owner)
+        {
+            this.Owner = owner;
+            this.Memory = owner == null ? default : owner.ByteArray.AsMemory();
+        }
+
+        internal ReadOnlyMemoryOwner(Owner owner, int start, int length)
+        {
+            this.Owner = owner;
+            this.Memory = owner.ByteArray.AsMemory(start, length);
+        }
+
+        internal ReadOnlyMemoryOwner(Owner owner, ReadOnlyMemory<byte> memory)
+        {
+            this.Owner = owner;
+            this.Memory = memory;
+        }
+
+        /// <summary>
+        ///  Increment the reference count.
+        /// </summary>
+        /// <returns><see cref="Owner"/> instance (<see langword="this"/>).</returns>
+        public ReadOnlyMemoryOwner IncrementAndShare()
+        {
+            if (this.Owner == null)
+            {
+                throw new InvalidOperationException();
+            }
+
+            return new(this.Owner.IncrementAndShare(), this.Memory);
+        }
+
+        /// <summary>
+        ///  Increment the reference count and create a <see cref="ReadOnlyMemoryOwner"/> object by specifying the index and length.
+        /// </summary>
+        /// <param name="start">The index at which to begin the slice.</param>
+        /// <param name="length">The number of elements to include in the slice.</param>
+        /// <returns><see cref="MemoryOwner"/> object.</returns>
+        public ReadOnlyMemoryOwner IncrementAndShare(int start, int length)
+        {
+            if (this.Owner == null)
+            {
+                throw new InvalidOperationException();
+            }
+
+            return new(this.Owner.IncrementAndShare(), start, length);
+        }
+
+        /// <summary>
+        /// Forms a slice out of the current memory that begins at a specified index.
+        /// </summary>
+        /// <param name="start">The index at which to begin the slice.</param>
+        /// <returns><see cref="MemoryOwner"/>.</returns>
+        public ReadOnlyMemoryOwner Slice(int start)
+            => new(this.Owner!, this.Memory.Slice(start));
+
+        /// <summary>
+        /// Forms a slice out of the current memory starting at a specified index for a specified length.
+        /// </summary>
+        /// <param name="start">The index at which to begin the slice.</param>
+        /// <param name="length">The number of elements to include in the slice.</param>
+        /// <returns><see cref="MemoryOwner"/>.</returns>
+        public ReadOnlyMemoryOwner Slice(int start, int length)
+            => new(this.Owner!, this.Memory.Slice(start, length));
+
+        /// <summary>
+        /// Decrement the reference count.<br/>
+        /// When it reaches zero, it returns the byte array to the pool.<br/>
+        /// Failure to return a rented array is not a fatal error (eventually be garbage-collected).
+        /// </summary>
+        /// <returns><see langword="default"></see>.</returns>
+        public ReadOnlyMemoryOwner Return()
+        {
+            this.Owner?.Return();
+            return default;
+        }
+
+        public void Dispose() => this.Return();
+
+        /// <summary>
+        /// Gets a value indicating whether the owner (byte array) is returned or not.
+        /// </summary>
+        public bool IsReturned => this.Owner == null || this.Owner.IsReturned == true;
+
+        /// <summary>
+        /// Gets a value indicating whether the memory is empty.
+        /// </summary>
+        public bool IsEmpty => this.Memory.IsEmpty;
+
+        public readonly Owner? Owner;
+        public readonly ReadOnlyMemory<byte> Memory;
     }
 
     internal sealed class Bucket

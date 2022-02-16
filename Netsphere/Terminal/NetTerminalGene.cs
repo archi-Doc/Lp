@@ -27,8 +27,8 @@ internal enum NetTerminalGeneState
 /// <summary>
 /// Initializes a new instance of the <see cref="NetTerminalGene"/> class.
 /// </summary>
-internal class NetTerminalGene// : IEquatable<NetTerminalGene>
-{
+internal class NetTerminalGene
+{// NetTerminalGene by Nihei.
     public NetTerminalGene(ulong gene, NetInterface netInterface)
     {
         this.Gene = gene;
@@ -149,7 +149,7 @@ internal class NetTerminalGene// : IEquatable<NetTerminalGene>
             this.ReceivedId = id;
             this.Owner.Owner?.Return();
 
-            if(this.NetInterface.NetTerminal.TryDecryptPacket(owner, this.Gene, out var owner2))
+            if (this.NetInterface.NetTerminal.TryDecryptPacket(owner, this.Gene, out var owner2))
             {// Decrypt
                 this.Owner = owner2;
             }

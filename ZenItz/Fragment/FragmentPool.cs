@@ -7,16 +7,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LP.Block;
+namespace LP.Fragment;
 
-public static class BlockPool
+public static class FragmentPool
 {
-    public const int MaxPool = 100;
-
-    static BlockPool()
+    static FragmentPool()
     {
-        pool = new ByteArrayPool(BlockService.MaxBlockSize, MaxPool);
-        pool.SetMaxPool(BlockService.StandardBlockSize, BlockService.StandardBlockPool);
+        pool = new ByteArrayPool(FragmentService.MaxFragmentSize, 0);
     }
 
     public static ByteArrayPool.Owner Rent(int minimumLength) => pool.Rent(minimumLength);

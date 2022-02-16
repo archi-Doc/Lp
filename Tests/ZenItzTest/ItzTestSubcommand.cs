@@ -45,10 +45,10 @@ public partial record struct IntPayload2(int Data2) : IItzPayload;
 [TinyhandObject(ImplicitKeyAsName = true)]
 public partial record class IntPayload3(int Data2) : IItzPayload;
 
-[SimpleCommand("basic")]
-public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
+[SimpleCommand("itz")]
+public class ItzTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 {
-    public BasicTestSubcommand(ZenControl zenControl)
+    public ItzTestSubcommand(ZenControl zenControl)
     {
         this.ZenControl = zenControl;
     }
@@ -65,15 +65,15 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         Console.WriteLine($"Loaded: {await itz.LoadAsync("itz.test")}, {itz.TotalCount()}");
 
         var x = new IntPayload(1);
-        itz.Set(in Identifier.One, in Identifier.One, in x);
-        var result = itz.Get<IntPayload>(in Identifier.One, in Identifier.One, out var x2);
+        itz.Set(in Identifier.One, in x);
+        var result = itz.Get<IntPayload>(in Identifier.One, out var x2);
 
         for (var i = 2; i <= 1_000_000; i++)
         {
             x = new(i);
             var p = new Identifier(i);
             var p2 = new Identifier(i);
-            itz.Set(in p, in p2, in x);
+            itz.Set(in p, in x);
         }
 
         Console.WriteLine("Set");
