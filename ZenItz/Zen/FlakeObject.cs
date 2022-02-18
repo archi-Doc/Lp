@@ -58,7 +58,7 @@ internal class FlakeObject : FlakeObjectBase
     {// lock (this.FlakeObjectGoshujin.Goshujin)
         if (this.fragment.TryGetMemoryOwner(out var memoryOwner))
         {
-            this.Flake.Zen.IO.Save(ref this.Flake.flakeIO, ref this.Flake.flakeIO2, memoryOwner);
+            this.Flake.Zen.IO.Save(ref this.Flake.flakeIO, ref this.Flake.flakeIO2, memoryOwner, false);
         }
 
         if (unload)

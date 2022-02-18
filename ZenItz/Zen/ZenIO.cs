@@ -10,7 +10,7 @@ public class ZenIO
     {
     }
 
-    internal void Save(ref ulong io, ref long io2, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
+    internal void Save(ref ulong io, ref long io2, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner, bool exclusiveSnowflake)
     {
         ZenDirectory? directory;
         if (!ZenIdentifier.IsValidIO(io) || !this.directoryGoshujin.DirectoryIdChain.TryGetValue(ZenIdentifier.IOToDirectoryId(io), out directory))
@@ -18,7 +18,7 @@ public class ZenIO
             directory = new(); // tempcode
         }
 
-        directory.Save(ref io, ref io2, memoryOwner);
+        directory.Save(ref io, ref io2, memoryOwner, exclusiveSnowflake);
     }
 
     internal async Task<(ZenDataResult DataResult, ulong IO, long IO2)> Load(ulong io, long io2)

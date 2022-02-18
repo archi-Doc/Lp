@@ -21,7 +21,49 @@ internal partial class ZenDirectory
         this.DirectoryPath = path;
     }
 
-    internal void Save(ref ulong io, ref long io2, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner, bool exclusive)
+    private void GetSnowflake(bool exclusiveSnowflake, ref Snowflake? snowflake, out int offset)
+    {// lock (this.snowflakeGoshujin)
+        if (exclusiveSnowflake)
+        {
+            offset = 0;
+            if (snowflake != null)
+            {// Reset
+                this.MovePosition(snowflake, )
+                this.DirectorySize -= snowflake.Position;
+                snowflake.Position = 0;
+            }
+            else
+            {// New
+                snowflake = this.GetNewSnowflake();
+            }
+        }
+        else
+        {
+            if (snowflake != null)
+            {
+                if (snowflake.Position < DefaultMaxSnowflakeSize)
+                {
+                    offset = snowflake.Position;
+                    this.EnlargeSnowflake(snowflake, memoryOwner.Memory.Length);
+                    return;
+                }
+            }
+
+            snowflake = this.CurrentSnowflakeId;
+            if (snowflake.Position < DefaultMaxSnowflakeSize)
+            {
+                offset = snowflake.Position;
+                this.EnlargeSnowflake(snowflake, memoryOwner.Memory.Length);
+                return;
+            }
+
+            offset = 0;
+            snowflake = this.GetNewSnowflake();
+            this.CurrentSnowflakeId = snowflake.SnowflakeId;
+        }
+    }
+
+    internal void Save(ref ulong io, ref long io2, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner, bool exclusiveSnowflake)
     {// DirectoryId: valid, SnowflakeId: ?
         Snowflake? snowflake;
         var snowflakeId = ZenIdentifier.IOToSnowflakeId(io);
@@ -37,29 +79,18 @@ internal partial class ZenDirectory
                 }
                 else
                 {// Insufficient space
-                    if (snowflake.Position >= DefaultMaxSnowflakeSize)
-                    {// New snowflake
-                        snowflake = this.GetFreeSnowflake();
-                        offset = 0;
-                    }
-                    else
-                    {
-                        offset = snowflake.Position;
-                    }
-
+                    this.GetSnowflake(exclusiveSnowflake, ref snowflake, out offset);
                     count = memoryOwner.Memory.Length;
-                    this.EnlargeSnowflake(snowflake, memoryOwner.Memory.Length);
                 }
             }
             else
             {// Not found
-                snowflake = this.GetFreeSnowflake();
-                offset = 0;
+                snowflake = null;
+                this.GetSnowflake(exclusiveSnowflake, ref snowflake, out offset);
                 count = memoryOwner.Memory.Length;
-                this.EnlargeSnowflake(snowflake, memoryOwner.Memory.Length);
             }
 
-            io = ZenIdentifier.DirectorySnowflakeIdToIO(this.DirectoryId, snowflake.SnowflakeId);
+            io = ZenIdentifier.DirectorySnowflakeIdToIO(this.DirectoryId, snowflake!.SnowflakeId);
             io2 = ZenIdentifier.OffsetCountToIO2(offset, count);
         }
 
@@ -147,6 +178,9 @@ internal partial class ZenDirectory
     [Key(3)]
     public long DirectorySize { get; private set; }
 
+    [Key(4)]
+    public uint CurrentSnowflakeId { get; private set; }
+
     public string DirectoryFile => Path.Combine(this.DirectoryPath, Zen.DefaultDirectoryFile);
 
     public string DirectoryBackup => Path.Combine(this.DirectoryPath, Zen.DefaultDirectoryBackup);
@@ -171,7 +205,7 @@ internal partial class ZenDirectory
         return true;
     }
 
-    private Snowflake GetFreeSnowflake()
+    private Snowflake GetNewSnowflake()
     {// lock (this.snoflakeGoshujin)
         while (true)
         {
