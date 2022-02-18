@@ -14,6 +14,10 @@ public readonly struct ZenIdentifier
 
     public static int IO2ToCount(long io2) => (int)io2;
 
+    public static ulong DirectorySnowflakeIdToIO(uint directoryId, uint snowflakeId) => (ulong)directoryId << 32 | snowflakeId;
+
+    public static long OffsetCountToIO2(int offset, int count) => (long)offset << 32 | count;
+
     public ZenIdentifier(ulong io, long io2)
     {
         this.IO = io;

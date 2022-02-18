@@ -25,7 +25,7 @@ public partial class Flake
     {
         if (!this.Zen.ZenStarted)
         {
-            return;
+            return new(ZenResult.NotStarted);
         }
 
         ulong io = 0;

@@ -11,9 +11,12 @@ internal partial class Snowflake
     }
 
     [Key(0)]
-    [Link(Primary = true, Type = ChainType.Unordered)]
+    [Link(Primary = true, NoValue = true, Type = ChainType.Unordered)]
     public uint SnowflakeId { get; private set; }
 
     [Key(1)]
-    public int Unused { get; private set; }
+    public int Position { get; internal set; }
+
+    [Key(2)]
+    public int Unused { get; internal set; }
 }

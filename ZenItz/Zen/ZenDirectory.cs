@@ -8,7 +8,7 @@ namespace ZenItz;
 [ValueLinkObject]
 internal partial class ZenDirectory
 {
-    public const uint DefaultDirectoryId = 1;
+    public const int DefaultMaxSnowflakeSize = 1024 * 1024 * 1024; // 1GB = 4MB x 256
 
     public ZenDirectory()
     {
@@ -20,7 +20,52 @@ internal partial class ZenDirectory
         this.DirectoryPath = path;
     }
 
-    public bool Check()
+    internal void Save(ref ulong io, ref long io2, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
+    {// DirectoryId: valid, SnowflakeId: ?
+        var snowflakeId = ZenIdentifier.IOToSnowflakeId(io);
+        var offset = ZenIdentifier.IO2ToOffset(io2);
+        var count = ZenIdentifier.IO2ToCount(io2);
+
+        lock (this.snoflakeGoshujin)
+        {
+            if (this.snoflakeGoshujin.SnowflakeIdChain.TryGetValue(snowflakeId, out var snowflake))
+            {// Found
+                if (memoryOwner.Memory.Length <= count)
+                {// Ok
+                }
+                else
+                {// Insufficient space
+                    if (snowflake.Position >= DefaultMaxSnowflakeSize)
+                    {// New snowflake
+                        snowflake = this.GetFreeSnowflake();
+                        offset = 0;
+                    }
+                    else
+                    {
+                        offset = snowflake.Position;
+                    }
+
+                    count = memoryOwner.Memory.Length;
+                    snowflake.Position += memoryOwner.Memory.Length;
+                }
+            }
+            else
+            {// Not found
+                snowflake = this.GetFreeSnowflake();
+                offset = 0;
+                count = memoryOwner.Memory.Length;
+                snowflake.Position += memoryOwner.Memory.Length;
+            }
+
+            io = ZenIdentifier.DirectorySnowflakeIdToIO(this.DirectoryId, snowflake.SnowflakeId);
+            io2 = ZenIdentifier.OffsetCountToIO2(offset, count);
+        }
+
+        // Save. snowflake.SnowflakeId, offset, memoryOwner
+        var m = memoryOwner.IncrementAndShare();
+    }
+
+    internal bool Check()
     {
         try
         {
@@ -56,7 +101,7 @@ internal partial class ZenDirectory
         return true;
     }
 
-    public void Start()
+    internal void Start()
     {
         // Directory.CreateDirectory(this.DirectoryPath);
 
@@ -96,4 +141,10 @@ internal partial class ZenDirectory
 
         return true;
     }
+
+    private Snowflake GetFreeSnowflake()
+    {
+    }
+
+    private Snowflake.GoshujinClass snoflakeGoshujin = new();
 }

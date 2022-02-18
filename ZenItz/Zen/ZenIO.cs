@@ -23,12 +23,12 @@ public class ZenIO
 
     internal async Task<(ZenDataResult DataResult, ulong IO, long IO2)> Load(ulong io, long io2)
     {
-        if (!this.directoryGoshujin.DirectoryIdChain.TryGetValue(zenIdentifier.DirectoryId, out var directory))
-        {
-            return new(ZenResult.NoData);
+        if (!ZenIdentifier.IsValidIO(io) || !this.directoryGoshujin.DirectoryIdChain.TryGetValue(ZenIdentifier.IOToDirectoryId(io), out var directory))
+        {// Invalid io.
+            return new(new(ZenResult.NoData), 0, 0);
         }
 
-        return new ZenDataResult(ZenResult.Success, ByteArrayPool.ReadOnlyMemoryOwner.Empty);
+        return await directory.Load(ref io, ref io2);
     }
 
     internal async Task<ZenStartResult> TryStart(ZenStartParam param, ReadOnlyMemory<byte>? data)
@@ -67,7 +67,6 @@ public class ZenIO
             return ZenStartResult.ZenFileError;
         }
 
-        // if (param.DefaultFolder != null && !goshujin.DirectoryIdChain.TryGetValue(ZenDirectory.DefaultDirectoryId, out _))
         if (param.DefaultFolder != null && goshujin.DirectoryIdChain.Count == 0)
         {
             try
