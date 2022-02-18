@@ -20,7 +20,7 @@ public class ZenIO
         return new(ZenResult.Success);
     }
 
-    public void Save(ref ulong snowId, ref long snowSegment, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
+    public void Save(ref ulong io, ref long io2, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
     {
     }
 
@@ -45,12 +45,12 @@ public class ZenIO
 
         goshujin ??= new();
         List<string>? errorDirectories = null;
-        foreach (var x in goshujin.SnowmanIdChain)
+        foreach (var x in goshujin.DirectoryIdChain)
         {
             if (!x.Check())
             {
                 errorDirectories ??= new();
-                errorDirectories.Add(x.SnowmanDirectory);
+                errorDirectories.Add(x.DirectoryPath);
             }
         }
 
@@ -60,55 +60,55 @@ public class ZenIO
             return ZenStartResult.ZenFileError;
         }
 
-        // if (param.DefaultFolder != null && !goshujin.SnowmanIdChain.TryGetValue(ZenDirectory.DefaultSnowmanId, out _))
-        if (param.DefaultFolder != null && goshujin.SnowmanIdChain.Count == 0)
+        // if (param.DefaultFolder != null && !goshujin.DirectoryIdChain.TryGetValue(ZenDirectory.DefaultDirectoryId, out _))
+        if (param.DefaultFolder != null && goshujin.DirectoryIdChain.Count == 0)
         {
             try
             {
                 Directory.CreateDirectory(param.DefaultFolder);
-                var defaultSnowman = new ZenDirectory(this.GetFreeSnowmanId(goshujin), param.DefaultFolder);
-                goshujin.Add(defaultSnowman);
+                var defaultDirectory = new ZenDirectory(this.GetFreeDirectoryId(goshujin), param.DefaultFolder);
+                goshujin.Add(defaultDirectory);
             }
             catch
             {
             }
         }
 
-        foreach (var x in goshujin.SnowmanIdChain)
+        foreach (var x in goshujin.DirectoryIdChain)
         {
             x.Start();
         }
 
-        if (goshujin.SnowmanIdChain.Count == 0)
+        if (goshujin.DirectoryIdChain.Count == 0)
         {
             return ZenStartResult.NoDirectoryAvailable;
         }
 
-        this.snowmanGoshujin = goshujin;
+        this.directoryGoshujin = goshujin;
         return ZenStartResult.Success;
     }
 
-    internal bool TryGetSnowman(ZenIdentifier idSegment, [MaybeNullWhen(false)] out ZenDirectory snowman)
+    internal bool TryGetDirectory(ZenIdentifier zenIdentifier, [MaybeNullWhen(false)] out ZenDirectory directory)
     {
-        return this.snowmanGoshujin.SnowmanIdChain.TryGetValue(idSegment.DirectoryId, out snowman);
+        return this.directoryGoshujin.DirectoryIdChain.TryGetValue(zenIdentifier.DirectoryId, out directory);
     }
 
     internal byte[] Serialize()
     {
-        return TinyhandSerializer.Serialize(this.snowmanGoshujin);
+        return TinyhandSerializer.Serialize(this.directoryGoshujin);
     }
 
-    private uint GetFreeSnowmanId(ZenDirectory.GoshujinClass goshujin)
+    private uint GetFreeDirectoryId(ZenDirectory.GoshujinClass goshujin)
     {
         while(true)
         {
             var id = LP.Random.Pseudo.NextUInt32();
-            if (!goshujin.SnowmanIdChain.ContainsKey(id))
+            if (!goshujin.DirectoryIdChain.ContainsKey(id))
             {
                 return id;
             }
         }
     }
 
-    private ZenDirectory.GoshujinClass snowmanGoshujin = new();
+    private ZenDirectory.GoshujinClass directoryGoshujin = new();
 }

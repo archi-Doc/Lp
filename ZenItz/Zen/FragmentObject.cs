@@ -151,7 +151,7 @@ internal partial class FragmentObject : FlakeObjectBase
     }
 
     internal override void Save(bool unload)
-    {// lock (Flake.syncObject) -> lock (this.SnowObjectGoshujin.Goshujin)
+    {// lock (Flake.syncObject) -> lock (this.FlakeObjectGoshujin.Goshujin)
         if (this.fragments != null)
         {
             var writer = default(Tinyhand.IO.TinyhandWriter);
@@ -166,7 +166,7 @@ internal partial class FragmentObject : FlakeObjectBase
             }
 
             var memoryOwner = new ByteArrayPool.ReadOnlyMemoryOwner(writer.FlushAndGetArray());
-            this.Flake.Zen.SnowmanControl.Save(ref this.Flake.fragmentIO, ref this.Flake.fragmentIO2, memoryOwner);
+            this.Flake.Zen.IO.Save(ref this.Flake.fragmentIO, ref this.Flake.fragmentIO2, memoryOwner);
         }
 
         if (unload)
@@ -212,10 +212,10 @@ internal partial class FragmentObject : FlakeObjectBase
             return this.fragments;
         }
 
-        var snowId = new ZenIdentifier(this.Flake.fragmentIO, this.Flake.fragmentIO2);
-        if (this.Flake.Zen.SnowmanControl.TryGetSnowman(snowId, out var snowman))
+        var zenIdentifier = new ZenIdentifier(this.Flake.fragmentIO, this.Flake.fragmentIO2);
+        if (this.Flake.Zen.IO.TryGetDirectory(zenIdentifier, out var directory))
         {
-            var dataResult = snowman.Load(snowId, Identifier.Zero).Result;
+            var dataResult = directory.Load(zenIdentifier, Identifier.Zero).Result;
             // var dataResult = default(ZenDataResult);
             if (dataResult.IsSuccess)
             {

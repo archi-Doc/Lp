@@ -8,24 +8,24 @@ namespace ZenItz;
 [ValueLinkObject]
 internal partial class ZenDirectory
 {
-    public const uint DefaultSnowmanId = 1;
+    public const uint DefaultDirectoryId = 1;
 
     public ZenDirectory()
     {
     }
 
-    public ZenDirectory(uint snowmanId, string directory)
-    {// Default snowman
-        this.SnowmanId = snowmanId; // DefaultSnowmanId;
-        this.SnowmanDirectory = directory;
+    public ZenDirectory(uint directoryId, string path)
+    {
+        this.DirectoryId = directoryId;
+        this.DirectoryPath = path;
     }
 
     public bool Check()
     {
         try
         {
-            Directory.CreateDirectory(this.SnowmanDirectory);
-            /*var directoryInfo = new DirectoryInfo(this.SnowmanDirectory);
+            Directory.CreateDirectory(this.DirectoryPath);
+            /*var directoryInfo = new DirectoryInfo(this.DirectoryPath);
             if (createDirectory)
             {
                 directoryInfo.Create();
@@ -38,18 +38,18 @@ internal partial class ZenDirectory
                 }
             }*/
 
-            /*var testFile = Path.Combine(this.SnowmanDirectory, Path.GetRandomFileName());
+            /*var testFile = Path.Combine(this.DirectoryPath, Path.GetRandomFileName());
             using (var fs = File.Create(testFile, 1, FileOptions.DeleteOnClose))
             {
             }*/
 
-            // Check snowman file
-            using (var handle = File.OpenHandle(this.SnowmanFile, mode: FileMode.Open, access: FileAccess.ReadWrite))
+            // Check directory file
+            using (var handle = File.OpenHandle(this.DirectoryFile, mode: FileMode.Open, access: FileAccess.ReadWrite))
             {
             }
         }
         catch
-        {// No snowman file
+        {// No directory file
             return false;
         }
 
@@ -58,11 +58,11 @@ internal partial class ZenDirectory
 
     public void Start()
     {
-        // Directory.CreateDirectory(this.SnowmanDirectory);
+        // Directory.CreateDirectory(this.DirectoryPath);
 
-        if (!this.TryLoadSnowman(this.SnowmanFile))
+        if (!this.TryLoadDirectory(this.DirectoryFile))
         {
-            this.TryLoadSnowman(this.SnowmanBackup);
+            this.TryLoadDirectory(this.DirectoryBackup);
         }
     }
 
@@ -73,16 +73,16 @@ internal partial class ZenDirectory
 
     [Key(0)]
     [Link(Primary = true, Type = ChainType.Unordered)]
-    public uint SnowmanId { get; private set; }
+    public uint DirectoryId { get; private set; }
 
     [Key(1)]
-    public string SnowmanDirectory { get; private set; } = string.Empty;
+    public string DirectoryPath { get; private set; } = string.Empty;
 
-    public string SnowmanFile => Path.Combine(this.SnowmanDirectory, Zen.DefaultSnowmanFile);
+    public string DirectoryFile => Path.Combine(this.DirectoryPath, Zen.DefaultDirectoryFile);
 
-    public string SnowmanBackup => Path.Combine(this.SnowmanDirectory, Zen.DefaultSnowmanBackup);
+    public string DirectoryBackup => Path.Combine(this.DirectoryPath, Zen.DefaultDirectoryBackup);
 
-    private bool TryLoadSnowman(string path)
+    private bool TryLoadDirectory(string path)
     {
         ReadOnlySpan<byte> span;
         try

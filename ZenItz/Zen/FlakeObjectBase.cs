@@ -22,10 +22,10 @@ internal partial class FlakeObjectBase
 
     [Link(Name = "UnloadQueue", Type = ChainType.QueueList)]
     [Link(Name = "SaveQueue", Type = ChainType.QueueList)]
-    public FlakeObjectBase(Flake flake, FlakeObjectGoshujin snowObjectControl)
+    public FlakeObjectBase(Flake flake, FlakeObjectGoshujin goshujin)
     {
         this.Flake = flake;
-        this.FlakeObjectGoshujin = snowObjectControl;
+        this.FlakeObjectGoshujin = goshujin;
     }
 
     internal virtual void Save(bool unload)
@@ -56,7 +56,7 @@ internal partial class FlakeObjectBase
                 }
             }
 
-            // this.SnowObjectGoshujin.Update(diff);
+            // this.FlakeObjectGoshujin.Update(diff);
             this.FlakeObjectGoshujin.TotalSize += memoryDifference;
             while (this.FlakeObjectGoshujin.TotalSize > Zen.DefaultPrimarySizeLimit)
             {// Unload

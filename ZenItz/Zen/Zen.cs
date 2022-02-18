@@ -12,8 +12,8 @@ public class Zen
     public const long DefaultPrimarySizeLimit = 100_000_000; // 100MB
     public const string DefaultZenFile = "Zen.main";
     public const string DefaultZenBackup = "Zen.back";
-    public const string DefaultSnowmanFile = "Snow.main";
-    public const string DefaultSnowmanBackup = "Snow.back";
+    public const string DefaultDirectoryFile = "Dir.main";
+    public const string DefaultDirectoryBackup = "Dir.back";
 
     public delegate void ObjectToMemoryOwnerDelegate(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved);
 
@@ -31,11 +31,11 @@ public class Zen
 
     public Zen()
     {
-        this.SnowmanControl = new();
+        this.IO = new();
         this.FlakePool = new ByteArrayPool(MaxFlakeSize, (int)(DefaultPrimarySizeLimit / MaxFlakeSize));
         this.FragmentPool = new ByteArrayPool(MaxFragmentSize, 0);
-        this.SnowFlakeGoshujin = new(this, this.FlakePool);
-        this.SnowFragmentGoshujin = new(this, this.FragmentPool);
+        this.FlakeObjectGoshujin = new(this, this.FlakePool);
+        this.FragmentObjectGoshujin = new(this, this.FragmentPool);
     }
 
     public async Task<ZenStartResult> TryStartZen(ZenStartParam param)
@@ -55,7 +55,7 @@ public class Zen
         {
             if (await param.Query(ZenStartResult.ZenFileNotFound))
             {
-                result = await this.SnowmanControl.TryStart(param, null);
+                result = await this.IO.TryStart(param, null);
                 if (result == ZenStartResult.Success || param.ForceStart)
                 {
                     this.ZenStarted = true;
@@ -73,7 +73,7 @@ public class Zen
         {
             if (await param.Query(ZenStartResult.ZenFileError))
             {
-                result = await this.SnowmanControl.TryStart(param, null);
+                result = await this.IO.TryStart(param, null);
                 if (result == ZenStartResult.Success || param.ForceStart)
                 {
                     this.ZenStarted = true;
@@ -86,7 +86,7 @@ public class Zen
             }
         }
 
-        result = await this.SnowmanControl.TryStart(param, memory);
+        result = await this.IO.TryStart(param, memory);
         if (result == ZenStartResult.Success || param.ForceStart)
         {
             this.ZenStarted = true;
@@ -106,10 +106,10 @@ public class Zen
 
         // Unload flakes
 
-        // Save snow
+        // Save snowflakes
 
-        // Save snowmans
-        var byteArray = this.SnowmanControl.Serialize();
+        // Save directory information
+        var byteArray = this.IO.Serialize();
         await HashHelper.GetFarmHashAndSaveAsync(byteArray, param.ZenFile, param.BackupFile);
     }
 
@@ -161,7 +161,7 @@ public class Zen
         return false;
     }
 
-    public ZenIO SnowmanControl { get; }
+    public ZenIO IO { get; }
 
     public ByteArrayPool FlakePool { get; }
 
@@ -172,7 +172,7 @@ public class Zen
     public MemoryOwnerToObjectDelegate MemoryOwnerToObject { get; private set; } = DefaultMemoryOwnerToObject;
 
     internal volatile bool ZenStarted;
-    internal FlakeObjectGoshujin SnowFlakeGoshujin;
-    internal FlakeObjectGoshujin SnowFragmentGoshujin;
+    internal FlakeObjectGoshujin FlakeObjectGoshujin;
+    internal FlakeObjectGoshujin FragmentObjectGoshujin;
     private Flake.GoshujinClass flakeGoshujin = new();
 }

@@ -50,10 +50,10 @@ internal class FlakeObject : FlakeObjectBase
     }
 
     internal override void Save(bool unload)
-    {// lock (this.SnowObjectGoshujin.Goshujin)
+    {// lock (this.FlakeObjectGoshujin.Goshujin)
         if (this.fragment.TryGetMemoryOwner(out var memoryOwner))
         {
-            this.Flake.Zen.SnowmanControl.Save(ref this.Flake.flakeIO, ref this.Flake.flakeIO2, memoryOwner);
+            this.Flake.Zen.IO.Save(ref this.Flake.flakeIO, ref this.Flake.flakeIO2, memoryOwner);
         }
 
         if (unload)
