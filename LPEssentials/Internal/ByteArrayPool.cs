@@ -253,6 +253,11 @@ public class ByteArrayPool
         public MemoryOwner Slice(int start, int length)
             => new(this.Owner!, this.Memory.Slice(start, length));
 
+        public ReadOnlyMemoryOwner AsReadOnly()
+        {
+            return new ReadOnlyMemoryOwner(this.Owner!, this.Memory);
+        }
+
         /// <summary>
         /// Decrement the reference count.<br/>
         /// When it reaches zero, it returns the byte array to the pool.<br/>

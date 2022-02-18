@@ -26,9 +26,10 @@ internal partial class FlakeData
 
         memoryDifference += span.Length;
         this.Object = null;
-        this.MemoryOwner = this.Zen.FragmentPool.Rent(span.Length).ToMemoryOwner(0, span.Length);
+        var owner = this.Zen.FragmentPool.Rent(span.Length);
+        this.MemoryOwner = owner.ToReadOnlyMemoryOwner(0, span.Length);
         this.MemoryOwnerAvailable = true;
-        span.CopyTo(this.MemoryOwner.Memory.Span);
+        span.CopyTo(owner.ByteArray.AsSpan());
         return memoryDifference;
     }
 
@@ -45,7 +46,7 @@ internal partial class FlakeData
 
         memoryDifference += dataToBeMoved.Memory.Length;
         this.Object = null;
-        this.MemoryOwner = dataToBeMoved;
+        this.MemoryOwner = dataToBeMoved.AsReadOnly();
         this.MemoryOwnerAvailable = true;
         return memoryDifference;
     }
@@ -75,7 +76,8 @@ internal partial class FlakeData
         }
         else if (this.Object != null)
         {
-            this.Zen.ObjectToMemoryOwner(this.Object, out this.MemoryOwner);
+            this.Zen.ObjectToMemoryOwner(this.Object, out var m);
+            this.MemoryOwner = m.AsReadOnly();
             this.MemoryOwnerAvailable = true;
             data = this.MemoryOwner.Memory.Span;
             return true;
@@ -91,14 +93,15 @@ internal partial class FlakeData
     {
         if (this.MemoryOwnerAvailable)
         {
-            memoryOwmer = this.MemoryOwner.IncrementAndShareReadOnly();
+            memoryOwmer = this.MemoryOwner.IncrementAndShare();
             return true;
         }
         else if (this.Object != null)
         {
-            this.Zen.ObjectToMemoryOwner(this.Object, out this.MemoryOwner);
+            this.Zen.ObjectToMemoryOwner(this.Object, out var m);
+            this.MemoryOwner = m.AsReadOnly();
             this.MemoryOwnerAvailable = true;
-            memoryOwmer = this.MemoryOwner.IncrementAndShareReadOnly();
+            memoryOwmer = this.MemoryOwner.IncrementAndShare();
             return true;
         }
         else
@@ -128,5 +131,5 @@ internal partial class FlakeData
 
     public bool MemoryOwnerAvailable { get; private set; }
 
-    internal ByteArrayPool.MemoryOwner MemoryOwner;
+    internal ByteArrayPool.ReadOnlyMemoryOwner MemoryOwner;
 }

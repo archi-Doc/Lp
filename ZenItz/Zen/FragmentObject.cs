@@ -212,22 +212,19 @@ internal partial class FragmentObject : FlakeObjectBase
             return this.fragments;
         }
 
-        var zenIdentifier = new ZenIdentifier(this.Flake.fragmentIO, this.Flake.fragmentIO2);
-        if (this.Flake.Zen.IO.TryGetDirectory(zenIdentifier, out var directory))
+        var result = this.Flake.Zen.IO.Load(this.Flake.fragmentIO, this.Flake.fragmentIO2).Result;
+        this.Flake.fragmentIO = result.IO;
+        this.Flake.fragmentIO2 = result.IO2;
+        if (result.DataResult.IsSuccess)
         {
-            var dataResult = directory.Load(zenIdentifier, Identifier.Zero).Result;
-            // var dataResult = default(ZenDataResult);
-            if (dataResult.IsSuccess)
+            if (this.Load(result.DataResult.Data))
             {
-                if (this.Load(dataResult.Data))
-                {
-                    return this.fragments!; // by Yamamoto.
-                }
+                return this.fragments!;
             }
         }
 
         return new();
     }
 
-    private FragmentData.GoshujinClass? fragments;
+    private FragmentData.GoshujinClass? fragments; // by Yamamoto.
 }
