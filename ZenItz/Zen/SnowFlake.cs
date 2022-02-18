@@ -10,6 +10,11 @@ internal partial class Snowflake
     {
     }
 
+    public Snowflake(uint snowflakeId)
+    {
+        this.SnowflakeId = snowflakeId;
+    }
+
     [Key(0)]
     [Link(Primary = true, NoValue = true, Type = ChainType.Unordered)]
     public uint SnowflakeId { get; private set; }

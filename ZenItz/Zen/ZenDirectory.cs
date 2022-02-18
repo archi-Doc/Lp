@@ -26,9 +26,9 @@ internal partial class ZenDirectory
         var offset = ZenIdentifier.IO2ToOffset(io2);
         var count = ZenIdentifier.IO2ToCount(io2);
 
-        lock (this.snoflakeGoshujin)
+        lock (this.snowflakeGoshujin)
         {
-            if (this.snoflakeGoshujin.SnowflakeIdChain.TryGetValue(snowflakeId, out var snowflake))
+            if (this.snowflakeGoshujin.SnowflakeIdChain.TryGetValue(snowflakeId, out var snowflake))
             {// Found
                 if (memoryOwner.Memory.Length <= count)
                 {// Ok
@@ -118,6 +118,12 @@ internal partial class ZenDirectory
     [Key(1)]
     public string DirectoryPath { get; private set; } = string.Empty;
 
+    [Key(2)]
+    public long DirectoryCapacity { get; private set; }
+
+    [Key(3)]
+    public long DirectorySize { get; private set; }
+
     public string DirectoryFile => Path.Combine(this.DirectoryPath, Zen.DefaultDirectoryFile);
 
     public string DirectoryBackup => Path.Combine(this.DirectoryPath, Zen.DefaultDirectoryBackup);
@@ -143,8 +149,18 @@ internal partial class ZenDirectory
     }
 
     private Snowflake GetFreeSnowflake()
-    {
+    {// lock (this.snoflakeGoshujin)
+        while (true)
+        {
+            var id = LP.Random.Pseudo.NextUInt32();
+            if (id != 0 && !this.snowflakeGoshujin.SnowflakeIdChain.ContainsKey(id))
+            {
+                var snowflake = new Snowflake(id);
+                this.snowflakeGoshujin.Add(snowflake);
+                return snowflake;
+            }
+        }
     }
 
-    private Snowflake.GoshujinClass snoflakeGoshujin = new();
+    private Snowflake.GoshujinClass snowflakeGoshujin = new();
 }
