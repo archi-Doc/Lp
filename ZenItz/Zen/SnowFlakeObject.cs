@@ -62,5 +62,5 @@ internal class SnowFlakeObject : SnowObject
         }
     }
 
-    private Fragment fragment;
+    private FlakeData fragment;
 }

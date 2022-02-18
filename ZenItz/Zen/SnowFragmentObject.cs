@@ -20,18 +20,18 @@ internal partial class SnowFragmentObject : SnowObject
             this.fragments = new();
         }
 
-        Fragment2? fragment2;
+        FragmentData? fragmentData;
         if (this.fragments.IdChain.Count >= Zen.MaxFragmentCount)
         {
             return ZenResult.OverNumberLimit;
         }
-        else if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragment2))
+        else if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragmentData))
         {
-            fragment2 = new(this.Flake.Zen, fragmentId);
-            this.fragments.Add(fragment2);
+            fragmentData = new(this.Flake.Zen, fragmentId);
+            this.fragments.Add(fragmentData);
         }
 
-        this.UpdateQueue(SnowObjectOperation.Set, fragment2.SetSpan(data));
+        this.UpdateQueue(SnowObjectOperation.Set, fragmentData.SetSpan(data));
         return ZenResult.Success;
     }
 
@@ -42,18 +42,18 @@ internal partial class SnowFragmentObject : SnowObject
             this.fragments = new();
         }
 
-        Fragment2? fragment2;
+        FragmentData? fragmentData;
         if (this.fragments.IdChain.Count >= Zen.MaxFragmentCount)
         {
             return ZenResult.OverNumberLimit;
         }
-        else if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragment2))
+        else if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragmentData))
         {
-            fragment2 = new(this.Flake.Zen, fragmentId);
-            this.fragments.Add(fragment2);
+            fragmentData = new(this.Flake.Zen, fragmentId);
+            this.fragments.Add(fragmentData);
         }
 
-        this.UpdateQueue(SnowObjectOperation.Set, fragment2.SetObject(obj));
+        this.UpdateQueue(SnowObjectOperation.Set, fragmentData.SetObject(obj));
         return ZenResult.Success;
     }
 
@@ -64,18 +64,18 @@ internal partial class SnowFragmentObject : SnowObject
             this.fragments = new();
         }
 
-        Fragment2? fragment2;
+        FragmentData? fragmentData;
         if (this.fragments.IdChain.Count >= Zen.MaxFragmentCount)
         {
             return ZenResult.OverNumberLimit;
         }
-        else if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragment2))
+        else if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragmentData))
         {
-            fragment2 = new(this.Flake.Zen, fragmentId);
-            this.fragments.Add(fragment2);
+            fragmentData = new(this.Flake.Zen, fragmentId);
+            this.fragments.Add(fragmentData);
         }
 
-        this.UpdateQueue(SnowObjectOperation.Set, fragment2.SetMemoryOwner(dataToBeMoved));
+        this.UpdateQueue(SnowObjectOperation.Set, fragmentData.SetMemoryOwner(dataToBeMoved));
         return ZenResult.Success;
     }
 
@@ -86,9 +86,9 @@ internal partial class SnowFragmentObject : SnowObject
             this.fragments = new();
         }
 
-        if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragment2))
+        if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragment))
         {// Fount
-            return fragment2.TryGetSpan(out data);
+            return fragment.TryGetSpan(out data);
         }
         else
         {
@@ -104,9 +104,9 @@ internal partial class SnowFragmentObject : SnowObject
             this.fragments = new();
         }
 
-        if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragment2))
+        if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragmentData))
         {// Fount
-            return fragment2.TryGetMemoryOwner(out memoryOwner);
+            return fragmentData.TryGetMemoryOwner(out memoryOwner);
         }
         else
         {
@@ -122,9 +122,9 @@ internal partial class SnowFragmentObject : SnowObject
             this.fragments = new();
         }
 
-        if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragment2))
+        if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragmentData))
         {// Fount
-            return fragment2.TryGetObject(out obj);
+            return fragmentData.TryGetObject(out obj);
         }
         else
         {
@@ -193,7 +193,7 @@ internal partial class SnowFragmentObject : SnowObject
                 identifier.Deserialize(ref reader, options);
                 var byteArray = reader.ReadBytesToArray();
 
-                var fragment = new Fragment2(this.Flake.Zen, identifier);
+                var fragment = new FragmentData(this.Flake.Zen, identifier);
                 fragment.SetSpan(byteArray);
                 this.fragments.Add(fragment);
             }
@@ -205,7 +205,7 @@ internal partial class SnowFragmentObject : SnowObject
         return true;
     }
 
-    private Fragment2.GoshujinClass PrepareFragments()
+    private FragmentData.GoshujinClass PrepareFragments()
     {// lock (Flake.syncObject)
         if (this.fragments != null)
         {
@@ -229,5 +229,5 @@ internal partial class SnowFragmentObject : SnowObject
         return new();
     }
 
-    private Fragment2.GoshujinClass? fragments;
+    private FragmentData.GoshujinClass? fragments;
 }

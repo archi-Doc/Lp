@@ -6,9 +6,9 @@ namespace ZenItz;
 
 #pragma warning disable SA1401 // Fields should be private
 
-internal partial class Fragment
+internal partial class FlakeData
 {
-    public Fragment(Zen zen)
+    public FlakeData(Zen zen)
     {
         this.Zen = zen;
     }
