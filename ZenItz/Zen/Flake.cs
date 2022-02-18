@@ -49,26 +49,15 @@ public partial class Flake
         if (ZenIdentifier.IsValidIO(io))
         {
             var result = await this.Zen.IO.Load(io, io2);
-            if (result.DataResult.IsSuccess)
+            lock (this.syncObject)
             {
-                lock (this.syncObject)
+                if (!this.IsRemoved)
                 {
-                    if (!this.IsRemoved)
+                    this.flakeIO = io;
+                    this.flakeIO2 = io2;
+                    if (result.DataResult.IsSuccess)
                     {
                         this.flakeObject?.SetMemoryOwner(result.DataResult.Data);
-                        this.flakeIO = io;
-                        this.flakeIO2 = io2;
-                    }
-                }
-            }
-            else
-            {
-                lock (this.syncObject)
-                {
-                    if (!this.IsRemoved)
-                    {
-                        this.flakeIO = io;
-                        this.flakeIO2 = io2;
                     }
                 }
             }

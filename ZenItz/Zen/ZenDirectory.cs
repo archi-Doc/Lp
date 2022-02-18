@@ -21,7 +21,7 @@ internal partial class ZenDirectory
         this.DirectoryPath = path;
     }
 
-    internal void Save(ref ulong io, ref long io2, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
+    internal void Save(ref ulong io, ref long io2, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner, bool exclusive)
     {// DirectoryId: valid, SnowflakeId: ?
         Snowflake? snowflake;
         var snowflakeId = ZenIdentifier.IOToSnowflakeId(io);

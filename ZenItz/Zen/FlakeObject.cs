@@ -29,6 +29,11 @@ internal class FlakeObject : FlakeObjectBase
         this.UpdateQueue(FlakeObjectOperation.Set, this.fragment.SetMemoryOwner(dataToBeMoved));
     }
 
+    public void SetMemoryOwner(ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved)
+    {// lock (Flake.syncObject)
+        this.UpdateQueue(FlakeObjectOperation.Set, this.fragment.SetMemoryOwner(dataToBeMoved));
+    }
+
     public bool TryGetSpan(out ReadOnlySpan<byte> data)
     {// lock (Flake.syncObject)
         return this.fragment.TryGetSpan(out data);
