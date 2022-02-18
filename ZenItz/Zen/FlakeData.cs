@@ -50,7 +50,7 @@ internal partial class FlakeData
 
     public int SetObject(object? obj)
     {
-        /* No check
+        /* Skip (may be an updated object of the same instance)
         if (obj == this.Object)
         {// Identical
             return 0;

@@ -4,9 +4,9 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace ZenItz;
 
-public class SnowmanControl
+public class ZenIO
 {
-    public SnowmanControl()
+    public ZenIO()
     {
     }
 
@@ -15,7 +15,7 @@ public class SnowmanControl
         return 0;
     }
 
-    public async Task<ZenDataResult> TryLoadPrimary(SnowFlakeIdSegment idSegment, Identifier identifier)
+    public async Task<ZenDataResult> TryLoadPrimary(ZenIdentifier idSegment, Identifier identifier)
     {
         return new(ZenResult.Success);
     }
@@ -26,13 +26,13 @@ public class SnowmanControl
 
     internal async Task<ZenStartResult> TryStart(ZenStartParam param, ReadOnlyMemory<byte>? data)
     {
-        Snowman.GoshujinClass? goshujin = null;
+        ZenDirectory.GoshujinClass? goshujin = null;
 
         if (data != null)
         {
             try
             {
-                goshujin = TinyhandSerializer.Deserialize<Snowman.GoshujinClass>(data.Value);
+                goshujin = TinyhandSerializer.Deserialize<ZenDirectory.GoshujinClass>(data.Value);
             }
             catch
             {
@@ -60,13 +60,13 @@ public class SnowmanControl
             return ZenStartResult.ZenFileError;
         }
 
-        // if (param.DefaultFolder != null && !goshujin.SnowmanIdChain.TryGetValue(Snowman.DefaultSnowmanId, out _))
+        // if (param.DefaultFolder != null && !goshujin.SnowmanIdChain.TryGetValue(ZenDirectory.DefaultSnowmanId, out _))
         if (param.DefaultFolder != null && goshujin.SnowmanIdChain.Count == 0)
         {
             try
             {
                 Directory.CreateDirectory(param.DefaultFolder);
-                var defaultSnowman = new Snowman(this.GetFreeSnowmanId(goshujin), param.DefaultFolder);
+                var defaultSnowman = new ZenDirectory(this.GetFreeSnowmanId(goshujin), param.DefaultFolder);
                 goshujin.Add(defaultSnowman);
             }
             catch
@@ -88,9 +88,9 @@ public class SnowmanControl
         return ZenStartResult.Success;
     }
 
-    internal bool TryGetSnowman(SnowFlakeIdSegment idSegment, [MaybeNullWhen(false)] out Snowman snowman)
+    internal bool TryGetSnowman(ZenIdentifier idSegment, [MaybeNullWhen(false)] out ZenDirectory snowman)
     {
-        return this.snowmanGoshujin.SnowmanIdChain.TryGetValue(idSegment.SnowmanId, out snowman);
+        return this.snowmanGoshujin.SnowmanIdChain.TryGetValue(idSegment.DirectoryId, out snowman);
     }
 
     internal byte[] Serialize()
@@ -98,7 +98,7 @@ public class SnowmanControl
         return TinyhandSerializer.Serialize(this.snowmanGoshujin);
     }
 
-    private uint GetFreeSnowmanId(Snowman.GoshujinClass goshujin)
+    private uint GetFreeSnowmanId(ZenDirectory.GoshujinClass goshujin)
     {
         while(true)
         {
@@ -110,5 +110,5 @@ public class SnowmanControl
         }
     }
 
-    private Snowman.GoshujinClass snowmanGoshujin = new();
+    private ZenDirectory.GoshujinClass snowmanGoshujin = new();
 }

@@ -5,16 +5,16 @@ namespace ZenItz;
 #pragma warning disable SA1401 // Fields should be private
 
 [ValueLinkObject]
-internal partial class SnowObject
+internal partial class FlakeObjectBase
 {
-    public enum SnowObjectState
+    public enum FlakeObjectState
     {
         File,
         Memory,
         Object,
     }
 
-    public enum SnowObjectOperation
+    public enum FlakeObjectOperation
     {
         Set, // Set value
         Get, // Get value
@@ -22,27 +22,27 @@ internal partial class SnowObject
 
     [Link(Name = "UnloadQueue", Type = ChainType.QueueList)]
     [Link(Name = "SaveQueue", Type = ChainType.QueueList)]
-    public SnowObject(Flake flake, SnowObjectGoshujin snowObjectControl)
+    public FlakeObjectBase(Flake flake, FlakeObjectGoshujin snowObjectControl)
     {
         this.Flake = flake;
-        this.SnowObjectGoshujin = snowObjectControl;
+        this.FlakeObjectGoshujin = snowObjectControl;
     }
 
     internal virtual void Save(bool unload)
     {
     }
 
-    internal void UpdateQueue(SnowObjectOperation operation, int memoryDifference)
+    internal void UpdateQueue(FlakeObjectOperation operation, int memoryDifference)
     {// Update queue link.
-        lock (this.SnowObjectGoshujin.Goshujin)
+        lock (this.FlakeObjectGoshujin.Goshujin)
         {
             if (this.Goshujin == null)
             {// New
-                this.Goshujin = this.SnowObjectGoshujin.Goshujin;
+                this.Goshujin = this.FlakeObjectGoshujin.Goshujin;
             }
             else
             {// Update
-                if (operation == SnowObjectOperation.Get)
+                if (operation == FlakeObjectOperation.Get)
                 {// Get
                     this.Goshujin.UnloadQueueChain.Remove(this);
                     this.Goshujin.UnloadQueueChain.Enqueue(this);
@@ -57,10 +57,10 @@ internal partial class SnowObject
             }
 
             // this.SnowObjectGoshujin.Update(diff);
-            this.SnowObjectGoshujin.TotalSize += memoryDifference;
-            while (this.SnowObjectGoshujin.TotalSize > Zen.DefaultPrimarySizeLimit)
+            this.FlakeObjectGoshujin.TotalSize += memoryDifference;
+            while (this.FlakeObjectGoshujin.TotalSize > Zen.DefaultPrimarySizeLimit)
             {// Unload
-                var h = this.SnowObjectGoshujin.Goshujin.UnloadQueueChain.Peek();
+                var h = this.FlakeObjectGoshujin.Goshujin.UnloadQueueChain.Peek();
                 h.Save(true);
             }
         }
@@ -68,16 +68,16 @@ internal partial class SnowObject
 
     internal void RemoveQueue(int memoryDifference)
     {// Remove link
-        lock (this.SnowObjectGoshujin.Goshujin)
+        lock (this.FlakeObjectGoshujin.Goshujin)
         {
-            this.SnowObjectGoshujin.TotalSize += memoryDifference;
+            this.FlakeObjectGoshujin.TotalSize += memoryDifference;
             this.Goshujin = null;
         }
     }
 
     public Flake Flake { get; }
 
-    public SnowObjectGoshujin SnowObjectGoshujin { get; }
+    public FlakeObjectGoshujin FlakeObjectGoshujin { get; }
 
-    public SnowObjectState State { get; protected set; }
+    public FlakeObjectState State { get; protected set; }
 }

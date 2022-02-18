@@ -23,7 +23,7 @@ public partial class Flake
 
     public async Task<ZenDataResult> Get()
     {
-        SnowFlakeIdSegment idSegment = default;
+        ZenIdentifier idSegment = default;
         lock (this.syncObject)
         {
             if (this.IsRemoved)
@@ -36,7 +36,7 @@ public partial class Flake
                 return new(ZenResult.Success, memoryOwner);
             }
 
-            idSegment = new(this.flakeSnowId, this.flakeSnowSegment);
+            idSegment = new(this.flakeIO, this.flakeIO2);
         }
 
         if (idSegment.IsValid)
@@ -165,26 +165,19 @@ public partial class Flake
     [Link(Name = "OrderedId", Type = ChainType.Ordered)]
     internal Identifier identifier;
 
-    /// <summary>
-    /// Gets Snowman id ((uint)(SnowFlakeId >> 32)) + Flake id ((uint)SnowFlakeId).<br/>
-    /// 0: Unassigned.
-    /// </summary>
     [Key(1)]
-    internal ulong flakeSnowId;
+    internal ulong flakeIO;
 
-    /// <summary>
-    /// Gets a segment (offset: (int)(Segment >> 32), count: (int)(Segment)) of the flake.
-    /// </summary>
     [Key(2)]
-    internal long flakeSnowSegment;
+    internal long flakeIO2;
 
     [Key(3)]
-    internal ulong fragmentSnowId;
+    internal ulong fragmentIO;
 
     [Key(4)]
-    internal long fragmentSnowSegment;
+    internal long fragmentIO2;
 
     private object syncObject = new();
-    private SnowFlakeObject? snowFlakeObject;
-    private SnowFragmentObject? snowFragmentObject;
+    private FlakeObject? snowFlakeObject;
+    private FragmentObject? snowFragmentObject;
 }

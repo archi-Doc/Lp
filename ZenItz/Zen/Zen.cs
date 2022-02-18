@@ -161,7 +161,7 @@ public class Zen
         return false;
     }
 
-    public SnowmanControl SnowmanControl { get; }
+    public ZenIO SnowmanControl { get; }
 
     public ByteArrayPool FlakePool { get; }
 
@@ -172,7 +172,7 @@ public class Zen
     public MemoryOwnerToObjectDelegate MemoryOwnerToObject { get; private set; } = DefaultMemoryOwnerToObject;
 
     internal volatile bool ZenStarted;
-    internal SnowObjectGoshujin SnowFlakeGoshujin;
-    internal SnowObjectGoshujin SnowFragmentGoshujin;
+    internal FlakeObjectGoshujin SnowFlakeGoshujin;
+    internal FlakeObjectGoshujin SnowFragmentGoshujin;
     private Flake.GoshujinClass flakeGoshujin = new();
 }

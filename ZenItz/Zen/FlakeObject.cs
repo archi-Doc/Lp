@@ -6,9 +6,9 @@ namespace ZenItz;
 
 #pragma warning disable SA1401 // Fields should be private
 
-internal class SnowFlakeObject : SnowObject
+internal class FlakeObject : FlakeObjectBase
 {
-    public SnowFlakeObject(Flake flake, SnowObjectGoshujin goshujin)
+    public FlakeObject(Flake flake, FlakeObjectGoshujin goshujin)
         : base(flake, goshujin)
     {
         this.fragment = new(flake.Zen);
@@ -16,17 +16,17 @@ internal class SnowFlakeObject : SnowObject
 
     public void SetSpan(ReadOnlySpan<byte> data)
     {// lock (Flake.syncObject)
-        this.UpdateQueue(SnowObjectOperation.Set, this.fragment.SetSpan(data));
+        this.UpdateQueue(FlakeObjectOperation.Set, this.fragment.SetSpan(data));
     }
 
     public void SetObject(object obj)
     {// lock (Flake.syncObject)
-        this.UpdateQueue(SnowObjectOperation.Set, this.fragment.SetObject(obj));
+        this.UpdateQueue(FlakeObjectOperation.Set, this.fragment.SetObject(obj));
     }
 
     public void SetMemoryOwner(ByteArrayPool.MemoryOwner dataToBeMoved)
     {// lock (Flake.syncObject)
-        this.UpdateQueue(SnowObjectOperation.Set, this.fragment.SetMemoryOwner(dataToBeMoved));
+        this.UpdateQueue(FlakeObjectOperation.Set, this.fragment.SetMemoryOwner(dataToBeMoved));
     }
 
     public bool TryGetSpan(out ReadOnlySpan<byte> data)
@@ -53,7 +53,7 @@ internal class SnowFlakeObject : SnowObject
     {// lock (this.SnowObjectGoshujin.Goshujin)
         if (this.fragment.TryGetMemoryOwner(out var memoryOwner))
         {
-            this.Flake.Zen.SnowmanControl.Save(ref this.Flake.flakeSnowId, ref this.Flake.flakeSnowSegment, memoryOwner);
+            this.Flake.Zen.SnowmanControl.Save(ref this.Flake.flakeIO, ref this.Flake.flakeIO2, memoryOwner);
         }
 
         if (unload)

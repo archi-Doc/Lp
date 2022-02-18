@@ -6,15 +6,15 @@ namespace ZenItz;
 
 [TinyhandObject]
 [ValueLinkObject]
-internal partial class Snowman
+internal partial class ZenDirectory
 {
     public const uint DefaultSnowmanId = 1;
 
-    public Snowman()
+    public ZenDirectory()
     {
     }
 
-    public Snowman(uint snowmanId, string directory)
+    public ZenDirectory(uint snowmanId, string directory)
     {// Default snowman
         this.SnowmanId = snowmanId; // DefaultSnowmanId;
         this.SnowmanDirectory = directory;
@@ -66,7 +66,7 @@ internal partial class Snowman
         }
     }
 
-    public async Task<ZenDataResult> Load(SnowFlakeIdSegment idSegment, Identifier identifier)
+    public async Task<ZenDataResult> Load(ZenIdentifier idSegment, Identifier identifier)
     {
         return new ZenDataResult(ZenResult.Success, ByteArrayPool.ReadOnlyMemoryOwner.Empty);
     }

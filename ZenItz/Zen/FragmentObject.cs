@@ -6,9 +6,9 @@ namespace ZenItz;
 
 #pragma warning disable SA1401 // Fields should be private
 
-internal partial class SnowFragmentObject : SnowObject
+internal partial class FragmentObject : FlakeObjectBase
 {
-    public SnowFragmentObject(Flake flake, SnowObjectGoshujin goshujin)
+    public FragmentObject(Flake flake, FlakeObjectGoshujin goshujin)
         : base(flake, goshujin)
     {
     }
@@ -31,7 +31,7 @@ internal partial class SnowFragmentObject : SnowObject
             this.fragments.Add(fragmentData);
         }
 
-        this.UpdateQueue(SnowObjectOperation.Set, fragmentData.SetSpan(data));
+        this.UpdateQueue(FlakeObjectOperation.Set, fragmentData.SetSpan(data));
         return ZenResult.Success;
     }
 
@@ -53,7 +53,7 @@ internal partial class SnowFragmentObject : SnowObject
             this.fragments.Add(fragmentData);
         }
 
-        this.UpdateQueue(SnowObjectOperation.Set, fragmentData.SetObject(obj));
+        this.UpdateQueue(FlakeObjectOperation.Set, fragmentData.SetObject(obj));
         return ZenResult.Success;
     }
 
@@ -75,7 +75,7 @@ internal partial class SnowFragmentObject : SnowObject
             this.fragments.Add(fragmentData);
         }
 
-        this.UpdateQueue(SnowObjectOperation.Set, fragmentData.SetMemoryOwner(dataToBeMoved));
+        this.UpdateQueue(FlakeObjectOperation.Set, fragmentData.SetMemoryOwner(dataToBeMoved));
         return ZenResult.Success;
     }
 
@@ -166,7 +166,7 @@ internal partial class SnowFragmentObject : SnowObject
             }
 
             var memoryOwner = new ByteArrayPool.ReadOnlyMemoryOwner(writer.FlushAndGetArray());
-            this.Flake.Zen.SnowmanControl.Save(ref this.Flake.fragmentSnowId, ref this.Flake.fragmentSnowSegment, memoryOwner);
+            this.Flake.Zen.SnowmanControl.Save(ref this.Flake.fragmentIO, ref this.Flake.fragmentIO2, memoryOwner);
         }
 
         if (unload)
@@ -212,7 +212,7 @@ internal partial class SnowFragmentObject : SnowObject
             return this.fragments;
         }
 
-        var snowId = new SnowFlakeIdSegment(this.Flake.fragmentSnowId, this.Flake.fragmentSnowSegment);
+        var snowId = new ZenIdentifier(this.Flake.fragmentIO, this.Flake.fragmentIO2);
         if (this.Flake.Zen.SnowmanControl.TryGetSnowman(snowId, out var snowman))
         {
             var dataResult = snowman.Load(snowId, Identifier.Zero).Result;
