@@ -27,6 +27,7 @@ internal partial class FlakeData
         memoryDifference += span.Length;
         this.Object = null;
         this.MemoryOwner = this.Zen.FragmentPool.Rent(span.Length).ToMemoryOwner(0, span.Length);
+        this.MemoryOwnerAvailable = true;
         span.CopyTo(this.MemoryOwner.Memory.Span);
         return memoryDifference;
     }
@@ -45,6 +46,7 @@ internal partial class FlakeData
         memoryDifference += dataToBeMoved.Memory.Length;
         this.Object = null;
         this.MemoryOwner = dataToBeMoved;
+        this.MemoryOwnerAvailable = true;
         return memoryDifference;
     }
 

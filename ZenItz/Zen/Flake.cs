@@ -98,7 +98,7 @@ public partial class Flake
             }
 
             if (!loading || this.flakeObject == null)
-            {// Not loading or Loading & empty
+            {// Not loading or Loading & empty (Skip if loading and not empty)
                 this.flakeObject ??= new(this, this.Zen.FlakeObjectGoshujin);
                 this.flakeObject.SetSpan(data);
             }
