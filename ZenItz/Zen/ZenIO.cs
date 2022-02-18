@@ -12,19 +12,16 @@ public class ZenIO
 
     internal void Save(ref ulong io, ref long io2, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
     {
-        if (!ZenIdentifier.IsValidIO(io))
-        {// Get valid directory id.
-
+        ZenDirectory? directory;
+        if (!ZenIdentifier.IsValidIO(io) || !this.directoryGoshujin.DirectoryIdChain.TryGetValue(ZenIdentifier.IOToDirectoryId(io), out directory))
+        {// Get valid directory.
+            directory = new(); // tempcode
         }
 
-        var zenIdentifier = new ZenIdentifier(io, io2);
-        if (!zenIdentifier.IsValid)
-        {
-
-        }
+        directory.Save(ref io, ref io2, memoryOwner);
     }
 
-    internal async Task<ZenDataResult> Load(ZenIdentifier zenIdentifier)
+    internal async Task<(ZenDataResult DataResult, ulong IO, long IO2)> Load(ulong io, long io2)
     {
         if (!this.directoryGoshujin.DirectoryIdChain.TryGetValue(zenIdentifier.DirectoryId, out var directory))
         {

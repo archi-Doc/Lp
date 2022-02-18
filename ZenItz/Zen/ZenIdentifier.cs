@@ -6,6 +6,14 @@ public readonly struct ZenIdentifier
 {
     public static bool IsValidIO(ulong io) => io != 0;
 
+    public static uint IOToDirectoryId(ulong io) => (uint)(io >> 32);
+
+    public static uint IOToSnowflakeId(ulong io) => (uint)io;
+
+    public static int IO2ToOffset(long io2) => (int)(io2 >> 32);
+
+    public static int IO2ToCount(long io2) => (int)io2;
+
     public ZenIdentifier(ulong io, long io2)
     {
         this.IO = io;

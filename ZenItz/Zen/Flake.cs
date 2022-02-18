@@ -23,6 +23,11 @@ public partial class Flake
 
     public async Task<ZenDataResult> Get()
     {
+        if (!this.Zen.ZenStarted)
+        {
+            return;
+        }
+
         ulong io = 0;
         long io2 = 0;
         lock (this.syncObject)
@@ -43,19 +48,32 @@ public partial class Flake
 
         if (ZenIdentifier.IsValidIO(io))
         {
-            var dataResult = await this.Zen.IO.Load(zenIdentifier);
-            if (dataResult.IsSuccess)
+            var result = await this.Zen.IO.Load(io, io2);
+            if (result.DataResult.IsSuccess)
             {
                 lock (this.syncObject)
                 {
                     if (!this.IsRemoved)
                     {
-                        this.flakeObject?.SetMemoryOwner(dataResult.Data);
+                        this.flakeObject?.SetMemoryOwner(result.DataResult.Data);
+                        this.flakeIO = io;
+                        this.flakeIO2 = io2;
+                    }
+                }
+            }
+            else
+            {
+                lock (this.syncObject)
+                {
+                    if (!this.IsRemoved)
+                    {
+                        this.flakeIO = io;
+                        this.flakeIO2 = io2;
                     }
                 }
             }
 
-            return dataResult;
+            return result.DataResult;
         }
 
         return new(ZenResult.NoData);
@@ -63,7 +81,11 @@ public partial class Flake
 
     public ZenResult Set(Identifier fragmentId, ReadOnlySpan<byte> data)
     {
-        if (data.Length > Zen.MaxFragmentSize)
+        if (!this.Zen.ZenStarted)
+        {
+            return ZenResult.NotStarted;
+        }
+        else if (data.Length > Zen.MaxFragmentSize)
         {
             return ZenResult.OverSizeLimit;
         }
@@ -84,11 +106,7 @@ public partial class Flake
     {
         lock (this.syncObject)
         {
-            if (!this.Zen.ZenStarted)
-            {// ZenCheck
-                return;
-            }
-            else if (this.IsRemoved)
+            if (this.IsRemoved)
             {
                 return;
             }
