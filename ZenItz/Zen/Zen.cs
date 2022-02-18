@@ -9,7 +9,7 @@ public class Zen
     public const int MaxFlakeSize = 1024 * 1024 * 4; // 4MB
     public const int MaxFragmentSize = 1024 * 4; // 4KB
     public const int MaxFragmentCount = 1000;
-    public const long DefaultPrimarySizeLimit = 100_000_000; // 100MB
+    public const long DefaultMemorySizeLimit = 1024 * 1024 * 100; // 100MB
     public const string DefaultZenFile = "Zen.main";
     public const string DefaultZenBackup = "Zen.back";
     public const string DefaultDirectoryFile = "Dir.main";
@@ -32,7 +32,7 @@ public class Zen
     public Zen()
     {
         this.IO = new();
-        this.FlakePool = new ByteArrayPool(MaxFlakeSize, (int)(DefaultPrimarySizeLimit / MaxFlakeSize));
+        this.FlakePool = new ByteArrayPool(MaxFlakeSize, (int)(DefaultMemorySizeLimit / MaxFlakeSize));
         this.FragmentPool = new ByteArrayPool(MaxFragmentSize, 0);
         this.FlakeObjectGoshujin = new(this, this.FlakePool);
         this.FragmentObjectGoshujin = new(this, this.FragmentPool);
@@ -104,9 +104,14 @@ public class Zen
 
         this.ZenStarted = false;
 
-        // Unload flakes
-
-        // Save snowflakes
+        // Save & Unload flakes
+        lock (this.flakeGoshujin)
+        {
+            foreach (var x in this.flakeGoshujin.IdChain)
+            {
+                x.Save(true);
+            }
+        }
 
         // Save directory information
         var byteArray = this.IO.Serialize();

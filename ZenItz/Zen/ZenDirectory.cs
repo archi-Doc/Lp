@@ -66,11 +66,6 @@ internal partial class ZenDirectory
         }
     }
 
-    public async Task<ZenDataResult> Load(ZenIdentifier idSegment, Identifier identifier)
-    {
-        return new ZenDataResult(ZenResult.Success, ByteArrayPool.ReadOnlyMemoryOwner.Empty);
-    }
-
     [Key(0)]
     [Link(Primary = true, Type = ChainType.Unordered)]
     public uint DirectoryId { get; private set; }

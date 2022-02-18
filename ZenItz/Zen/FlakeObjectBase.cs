@@ -58,7 +58,7 @@ internal partial class FlakeObjectBase
 
             // this.FlakeObjectGoshujin.Update(diff);
             this.FlakeObjectGoshujin.TotalSize += memoryDifference;
-            while (this.FlakeObjectGoshujin.TotalSize > Zen.DefaultPrimarySizeLimit)
+            while (this.FlakeObjectGoshujin.TotalSize > Zen.DefaultMemorySizeLimit)
             {// Unload
                 var h = this.FlakeObjectGoshujin.Goshujin.UnloadQueueChain.Peek();
                 h.Save(true);

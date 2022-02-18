@@ -23,7 +23,8 @@ public partial class Flake
 
     public async Task<ZenDataResult> Get()
     {
-        ZenIdentifier idSegment = default;
+        ulong io = 0;
+        long io2 = 0;
         lock (this.syncObject)
         {
             if (this.IsRemoved)
@@ -36,17 +37,25 @@ public partial class Flake
                 return new(ZenResult.Success, memoryOwner);
             }
 
-            idSegment = new(this.flakeIO, this.flakeIO2);
+            io = this.flakeIO;
+            io2 = this.flakeIO2;
         }
 
-        if (idSegment.IsValid)
+        if (ZenIdentifier.IsValidIO(io))
         {
-            if (!this.Zen.IO.TryGetDirectory(idSegment, out var directory))
+            var dataResult = await this.Zen.IO.Load(zenIdentifier);
+            if (dataResult.IsSuccess)
             {
-                return new(ZenResult.NoData);
+                lock (this.syncObject)
+                {
+                    if (!this.IsRemoved)
+                    {
+                        this.flakeObject?.SetMemoryOwner(dataResult.Data);
+                    }
+                }
             }
 
-            return await directory.Load(idSegment, this.Identifier).ConfigureAwait(false);
+            return dataResult;
         }
 
         return new(ZenResult.NoData);
@@ -71,8 +80,22 @@ public partial class Flake
         }
     }
 
-    public void Unload()
+    public void Save(bool unload)
     {
+        lock (this.syncObject)
+        {
+            if (!this.Zen.ZenStarted)
+            {// ZenCheck
+                return;
+            }
+            else if (this.IsRemoved)
+            {
+                return;
+            }
+
+            this.flakeObject?.Save(unload);
+            this.fragmentObject?.Save(unload);
+        }
     }
 
     public bool TryRemove() => this.Zen.TryRemove(this.Identifier);

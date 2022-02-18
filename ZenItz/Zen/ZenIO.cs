@@ -10,18 +10,28 @@ public class ZenIO
     {
     }
 
-    public int GetFlakeId()
+    internal void Save(ref ulong io, ref long io2, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
     {
-        return 0;
+        if (!ZenIdentifier.IsValidIO(io))
+        {// Get valid directory id.
+
+        }
+
+        var zenIdentifier = new ZenIdentifier(io, io2);
+        if (!zenIdentifier.IsValid)
+        {
+
+        }
     }
 
-    public async Task<ZenDataResult> TryLoadPrimary(ZenIdentifier idSegment, Identifier identifier)
+    internal async Task<ZenDataResult> Load(ZenIdentifier zenIdentifier)
     {
-        return new(ZenResult.Success);
-    }
+        if (!this.directoryGoshujin.DirectoryIdChain.TryGetValue(zenIdentifier.DirectoryId, out var directory))
+        {
+            return new(ZenResult.NoData);
+        }
 
-    public void Save(ref ulong io, ref long io2, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
-    {
+        return new ZenDataResult(ZenResult.Success, ByteArrayPool.ReadOnlyMemoryOwner.Empty);
     }
 
     internal async Task<ZenStartResult> TryStart(ZenStartParam param, ReadOnlyMemory<byte>? data)
@@ -88,11 +98,6 @@ public class ZenIO
         return ZenStartResult.Success;
     }
 
-    internal bool TryGetDirectory(ZenIdentifier zenIdentifier, [MaybeNullWhen(false)] out ZenDirectory directory)
-    {
-        return this.directoryGoshujin.DirectoryIdChain.TryGetValue(zenIdentifier.DirectoryId, out directory);
-    }
-
     internal byte[] Serialize()
     {
         return TinyhandSerializer.Serialize(this.directoryGoshujin);
@@ -103,7 +108,7 @@ public class ZenIO
         while(true)
         {
             var id = LP.Random.Pseudo.NextUInt32();
-            if (!goshujin.DirectoryIdChain.ContainsKey(id))
+            if (id != 0 && !goshujin.DirectoryIdChain.ContainsKey(id))
             {
                 return id;
             }
