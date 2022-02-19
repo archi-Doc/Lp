@@ -11,6 +11,11 @@ internal partial class ZenDirectory
     public const int DefaultMaxSnowflakeSize = 1024 * 1024 * 1024; // 1GB = 4MB x 256
     public const int HashSize = 8;
 
+    public enum DirectoryType
+    {
+        Standard,
+    }
+
     public ZenDirectory()
     {
     }
@@ -170,15 +175,18 @@ internal partial class ZenDirectory
     public uint DirectoryId { get; private set; }
 
     [Key(1)]
-    public string DirectoryPath { get; private set; } = string.Empty;
+    public DirectoryType Type { get; private set; }
 
     [Key(2)]
-    public long DirectoryCapacity { get; private set; }
+    public string DirectoryPath { get; private set; } = string.Empty;
 
     [Key(3)]
-    public long DirectorySize { get; private set; }
+    public long DirectoryCapacity { get; private set; }
 
     [Key(4)]
+    public long DirectorySize { get; private set; }
+
+    [Key(5)]
     public uint CurrentSnowflakeId { get; private set; }
 
     public string DirectoryFile => Path.Combine(this.DirectoryPath, Zen.DefaultDirectoryFile);
