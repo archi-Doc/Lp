@@ -56,9 +56,14 @@ internal class FlakeObject : FlakeObjectBase
 
     internal override void Save(bool unload)
     {// lock (this.FlakeObjectGoshujin.Goshujin)
-        if (this.fragment.TryGetMemoryOwner(out var memoryOwner))
-        {
-            this.Flake.Zen.IO.Save(ref this.Flake.flakeFile, memoryOwner);
+        if (!this.IsSaved)
+        {// Not saved.
+            if (this.fragment.TryGetMemoryOwner(out var memoryOwner))
+            {
+                this.Flake.Zen.IO.Save(ref this.Flake.flakeFile, memoryOwner);
+            }
+
+            this.IsSaved = true;
         }
 
         if (unload)

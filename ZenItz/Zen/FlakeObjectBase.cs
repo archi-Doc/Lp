@@ -7,13 +7,6 @@ namespace ZenItz;
 [ValueLinkObject]
 internal partial class FlakeObjectBase
 {
-    public enum FlakeObjectState
-    {
-        File,
-        Memory,
-        Object,
-    }
-
     public enum FlakeObjectOperation
     {
         Set, // Set value
@@ -34,6 +27,11 @@ internal partial class FlakeObjectBase
 
     internal void UpdateQueue(FlakeObjectOperation operation, int memoryDifference)
     {// Update queue link.
+        if (operation == FlakeObjectOperation.Set)
+        {
+            this.IsSaved = false;
+        }
+
         lock (this.FlakeObjectGoshujin.Goshujin)
         {
             if (this.Goshujin == null)
@@ -56,7 +54,6 @@ internal partial class FlakeObjectBase
                 }
             }
 
-            // this.FlakeObjectGoshujin.Update(diff);
             this.FlakeObjectGoshujin.TotalSize += memoryDifference;
             while (this.FlakeObjectGoshujin.TotalSize > Zen.DefaultMemorySizeLimit)
             {// Unload
@@ -79,5 +76,5 @@ internal partial class FlakeObjectBase
 
     public FlakeObjectGoshujin FlakeObjectGoshujin { get; }
 
-    public FlakeObjectState State { get; protected set; }
+    public bool IsSaved { get; protected set; }
 }

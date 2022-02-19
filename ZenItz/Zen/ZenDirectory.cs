@@ -30,18 +30,22 @@ internal partial class ZenDirectory
     {
         Snowflake? snowflake;
         var snowflakeId = ZenFile.ToSnowflakeId(file);
+        int size = 0;
 
         lock (this.snowflakeGoshujin)
         {
             if (snowflakeId != 0 &&
                 this.snowflakeGoshujin.SnowflakeIdChain.TryGetValue(snowflakeId, out snowflake))
             {// Found
+                size = snowflake.Size;
             }
             else
             {// Not found
                 return new(ZenResult.NoFile);
             }
         }
+
+        // Load (snowflakeId, size)
 
         return new(ZenResult.Success);
     }

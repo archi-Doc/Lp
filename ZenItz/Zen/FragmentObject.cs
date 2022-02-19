@@ -16,8 +16,8 @@ internal partial class FragmentObject : FlakeObjectBase
     public ZenResult SetSpan(Identifier fragmentId, ReadOnlySpan<byte> data)
     {// lock (Flake.syncObject)
         if (this.fragments == null)
-        {// tempcode, load
-            this.fragments = new();
+        {
+            this.fragments = this.PrepareFragments();
         }
 
         FragmentData? fragmentData;
@@ -38,8 +38,8 @@ internal partial class FragmentObject : FlakeObjectBase
     public ZenResult SetObject(Identifier fragmentId, object obj)
     {// lock (Flake.syncObject)
         if (this.fragments == null)
-        {// tempcode, load
-            this.fragments = new();
+        {
+            this.fragments = this.PrepareFragments();
         }
 
         FragmentData? fragmentData;
@@ -60,8 +60,8 @@ internal partial class FragmentObject : FlakeObjectBase
     public ZenResult SetMemoryOwner(Identifier fragmentId, ByteArrayPool.MemoryOwner dataToBeMoved)
     {// lock (Flake.syncObject)
         if (this.fragments == null)
-        {// tempcode, load
-            this.fragments = new();
+        {
+            this.fragments = this.PrepareFragments();
         }
 
         FragmentData? fragmentData;
@@ -82,8 +82,8 @@ internal partial class FragmentObject : FlakeObjectBase
     public bool TryGetSpan(Identifier fragmentId, out ReadOnlySpan<byte> data)
     {// lock (Flake.syncObject)
         if (this.fragments == null)
-        {// tempcode, load
-            this.fragments = new();
+        {
+            this.fragments = this.PrepareFragments();
         }
 
         if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragment))
@@ -100,8 +100,8 @@ internal partial class FragmentObject : FlakeObjectBase
     public bool TryGetMemoryOwner(Identifier fragmentId, out ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
     {// lock (Flake.syncObject)
         if (this.fragments == null)
-        {// tempcode, load
-            this.fragments = new();
+        {
+            this.fragments = this.PrepareFragments();
         }
 
         if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragmentData))
@@ -118,8 +118,8 @@ internal partial class FragmentObject : FlakeObjectBase
     public bool TryGetObject(Identifier fragmentId, [MaybeNullWhen(false)] out object? obj)
     {// lock (Flake.syncObject)
         if (this.fragments == null)
-        {// tempcode, load
-            this.fragments = new();
+        {
+            this.fragments = this.PrepareFragments();
         }
 
         if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragmentData))
@@ -211,13 +211,15 @@ internal partial class FragmentObject : FlakeObjectBase
         {
             return this.fragments;
         }
-
-        var result = this.Flake.Zen.IO.Load(this.Flake.fragmentFile).Result;
-        if (result.IsSuccess)
+        else if (ZenFile.IsValidFile(this.Flake.fragmentFile))
         {
-            if (this.Load(result.Data))
+            var result = this.Flake.Zen.IO.Load(this.Flake.fragmentFile).Result;
+            if (result.IsSuccess)
             {
-                return this.fragments!;
+                if (this.Load(result.Data))
+                {
+                    return this.fragments!;
+                }
             }
         }
 
