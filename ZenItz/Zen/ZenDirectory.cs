@@ -16,6 +16,7 @@ internal partial class ZenDirectory
         Standard,
     }
 
+    [Link(Primary = true, Name = "List", Type = ChainType.List)]
     public ZenDirectory()
     {
     }
@@ -151,7 +152,7 @@ internal partial class ZenDirectory
     }
 
     [Key(0)]
-    [Link(Primary = true, Type = ChainType.Unordered)]
+    [Link(Type = ChainType.Unordered)]
     public uint DirectoryId { get; private set; }
 
     [Key(1)]
@@ -169,6 +170,30 @@ internal partial class ZenDirectory
     public string DirectoryFile => Path.Combine(this.DirectoryPath, Zen.DefaultDirectoryFile);
 
     public string DirectoryBackup => Path.Combine(this.DirectoryPath, Zen.DefaultDirectoryBackup);
+
+    [IgnoreMember]
+    internal double UsageRatio { get; private set; }
+
+    internal void CalculateUsageRatio()
+    {
+        if (this.DirectoryCapacity == 0)
+        {
+            this.UsageRatio = 0;
+            return;
+        }
+
+        var ratio = (double)this.DirectorySize / (double)this.DirectoryCapacity;
+        if (ratio < 0)
+        {
+            ratio = 0;
+        }
+        else if (ratio > 1)
+        {
+            ratio = 1;
+        }
+
+        this.UsageRatio = ratio;
+    }
 
     private bool TryLoadDirectory(string path)
     {

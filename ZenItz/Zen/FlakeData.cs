@@ -13,12 +13,12 @@ internal partial class FlakeData
         this.Zen = zen;
     }
 
-    public int SetSpan(ReadOnlySpan<byte> span)
+    public (bool Changed, int MemoryDifference) SetSpan(ReadOnlySpan<byte> span)
     {
         if (this.MemoryOwnerAvailable &&
             span.SequenceEqual(this.MemoryOwner.Memory.Span))
         {// Identical
-            return 0;
+            return (false, 0);
         }
 
         var memoryDifference = -this.MemoryOwner.Memory.Length;
@@ -30,15 +30,15 @@ internal partial class FlakeData
         this.MemoryOwner = owner.ToReadOnlyMemoryOwner(0, span.Length);
         this.MemoryOwnerAvailable = true;
         span.CopyTo(owner.ByteArray.AsSpan());
-        return memoryDifference;
+        return (true, memoryDifference);
     }
 
-    public int SetMemoryOwner(ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved)
+    public (bool Changed, int MemoryDifference) SetMemoryOwner(ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved)
     {
         if (this.MemoryOwnerAvailable &&
             dataToBeMoved.Memory.Span.SequenceEqual(this.MemoryOwner.Memory.Span))
         {// Identical
-            return 0;
+            return (false, 0);
         }
 
         var memoryDifference = -this.MemoryOwner.Memory.Length;
@@ -48,13 +48,13 @@ internal partial class FlakeData
         this.Object = null;
         this.MemoryOwner = dataToBeMoved;
         this.MemoryOwnerAvailable = true;
-        return memoryDifference;
+        return (true, memoryDifference);
     }
 
-    public int SetMemoryOwner(ByteArrayPool.MemoryOwner dataToBeMoved)
+    public (bool Changed, int MemoryDifference) SetMemoryOwner(ByteArrayPool.MemoryOwner dataToBeMoved)
         => this.SetMemoryOwner(dataToBeMoved.AsReadOnly());
 
-    public int SetObject(object? obj)
+    public (bool Changed, int MemoryDifference) SetObject(object? obj)
     {
         /* Skip (may be an updated object of the same instance)
         if (obj == this.Object)
@@ -67,7 +67,7 @@ internal partial class FlakeData
         this.MemoryOwnerAvailable = false;
 
         this.Object = obj;
-        return memoryDifference;
+        return (true, memoryDifference);
     }
 
     public bool TryGetSpan(out ReadOnlySpan<byte> data)

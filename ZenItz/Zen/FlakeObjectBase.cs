@@ -25,9 +25,9 @@ internal partial class FlakeObjectBase
     {
     }
 
-    internal void UpdateQueue(FlakeObjectOperation operation, int memoryDifference)
+    internal void UpdateQueue(FlakeObjectOperation operation, (bool Changed, int MemoryDifference) t)
     {// Update queue link.
-        if (operation == FlakeObjectOperation.Set)
+        if (operation == FlakeObjectOperation.Set && t.Changed)
         {
             this.IsSaved = false;
         }
@@ -54,7 +54,7 @@ internal partial class FlakeObjectBase
                 }
             }
 
-            this.FlakeObjectGoshujin.TotalSize += memoryDifference;
+            this.FlakeObjectGoshujin.TotalSize += t.MemoryDifference;
             while (this.FlakeObjectGoshujin.TotalSize > Zen.DefaultMemorySizeLimit)
             {// Unload
                 var h = this.FlakeObjectGoshujin.Goshujin.UnloadQueueChain.Peek();

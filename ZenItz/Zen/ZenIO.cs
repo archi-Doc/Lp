@@ -6,6 +6,8 @@ namespace ZenItz;
 
 public class ZenIO
 {
+    public const int DirectoryRotationThreshold = 1024 * 1024 * 1; // 100 MB
+
     public ZenIO()
     {
     }
@@ -13,9 +15,28 @@ public class ZenIO
     internal void Save(ref ulong file, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
     {
         ZenDirectory? directory;
-        if (!ZenFile.IsValidFile(file) || !this.directoryGoshujin.DirectoryIdChain.TryGetValue(ZenFile.ToDirectoryId(file), out directory))
+        if (this.directoryGoshujin.DirectoryIdChain.Count == 0)
+        {// No directory available.
+            return;
+        }
+        else if (!ZenFile.IsValidFile(file) || !this.directoryGoshujin.DirectoryIdChain.TryGetValue(ZenFile.ToDirectoryId(file), out directory))
         {// Get valid directory.
-            directory = new(); // tempcode
+            if (this.directoryRotationCount >= DirectoryRotationThreshold ||
+                this.currentDirectory == null)
+            {
+                this.currentDirectory = this.GetDirectory();
+                Volatile.Write(ref this.directoryRotationCount, 0);
+                if (this.currentDirectory == null)
+                {
+                    return;
+                }
+            }
+            else
+            {
+                Interlocked.Add(ref this.directoryRotationCount, memoryOwner.Memory.Length);
+            }
+
+            directory = this.currentDirectory;
         }
 
         directory.Save(ref file, memoryOwner);
@@ -116,5 +137,23 @@ public class ZenIO
         }
     }
 
+    private ZenDirectory? GetDirectory()
+    {
+        var array = this.directoryGoshujin.ListChain.ToArray();
+        if (array == null)
+        {
+            return null;
+        }
+
+        foreach (var x in array)
+        {
+            x.CalculateUsageRatio();
+        }
+
+        return array.MinBy(a => a.UsageRatio);
+    }
+
     private ZenDirectory.GoshujinClass directoryGoshujin = new();
+    private ZenDirectory? currentDirectory;
+    private int directoryRotationCount;
 }
