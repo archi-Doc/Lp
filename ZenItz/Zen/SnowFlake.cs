@@ -20,8 +20,5 @@ internal partial class Snowflake
     public uint SnowflakeId { get; private set; }
 
     [Key(1)]
-    public int Position { get; internal set; }
-
-    [Key(2)]
-    public int Unused { get; internal set; }
+    public int Size { get; internal set; }
 }

@@ -33,7 +33,7 @@ internal partial class FlakeData
         return memoryDifference;
     }
 
-    public int SetMemoryOwner(ByteArrayPool.MemoryOwner dataToBeMoved)
+    public int SetMemoryOwner(ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved)
     {
         if (this.MemoryOwnerAvailable &&
             dataToBeMoved.Memory.Span.SequenceEqual(this.MemoryOwner.Memory.Span))
@@ -46,10 +46,13 @@ internal partial class FlakeData
 
         memoryDifference += dataToBeMoved.Memory.Length;
         this.Object = null;
-        this.MemoryOwner = dataToBeMoved.AsReadOnly();
+        this.MemoryOwner = dataToBeMoved;
         this.MemoryOwnerAvailable = true;
         return memoryDifference;
     }
+
+    public int SetMemoryOwner(ByteArrayPool.MemoryOwner dataToBeMoved)
+        => this.SetMemoryOwner(dataToBeMoved.AsReadOnly());
 
     public int SetObject(object? obj)
     {

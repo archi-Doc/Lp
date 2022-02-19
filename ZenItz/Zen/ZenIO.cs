@@ -10,25 +10,30 @@ public class ZenIO
     {
     }
 
-    internal void Save(ref ulong io, ref long io2, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner, bool exclusiveSnowflake)
+    internal void Save(ref ulong file, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
     {
         ZenDirectory? directory;
-        if (!ZenIdentifier.IsValidIO(io) || !this.directoryGoshujin.DirectoryIdChain.TryGetValue(ZenIdentifier.IOToDirectoryId(io), out directory))
+        if (!ZenFile.IsValidFile(file) || !this.directoryGoshujin.DirectoryIdChain.TryGetValue(ZenFile.ToDirectoryId(file), out directory))
         {// Get valid directory.
             directory = new(); // tempcode
         }
 
-        directory.Save(ref io, ref io2, memoryOwner, exclusiveSnowflake);
+        directory.Save(ref file, memoryOwner);
     }
 
-    internal async Task<(ZenDataResult DataResult, ulong IO, long IO2)> Load(ulong io, long io2)
+    internal async Task<ZenDataResult> Load(ulong file)
     {
-        if (!ZenIdentifier.IsValidIO(io) || !this.directoryGoshujin.DirectoryIdChain.TryGetValue(ZenIdentifier.IOToDirectoryId(io), out var directory))
-        {// Invalid io.
-            return new(new(ZenResult.NoData), 0, 0);
+        ZenDirectory? directory;
+        if (!ZenFile.IsValidFile(file))
+        {// Invalid file.
+            return new(ZenResult.NoData);
+        }
+        else if (!this.directoryGoshujin.DirectoryIdChain.TryGetValue(ZenFile.ToDirectoryId(file), out directory))
+        {// No directory
+            return new(ZenResult.NoDirectory);
         }
 
-        return await directory.Load(ref io, ref io2);
+        return await directory.Load(file);
     }
 
     internal async Task<ZenStartResult> TryStart(ZenStartParam param, ReadOnlyMemory<byte>? data)

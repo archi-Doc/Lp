@@ -28,8 +28,7 @@ public partial class Flake
             return new(ZenResult.NotStarted);
         }
 
-        ulong io = 0;
-        long io2 = 0;
+        ulong file = 0;
         lock (this.syncObject)
         {
             if (this.IsRemoved)
@@ -42,27 +41,26 @@ public partial class Flake
                 return new(ZenResult.Success, memoryOwner);
             }
 
-            io = this.flakeIO;
-            io2 = this.flakeIO2;
+            file = this.flakeFile;
         }
 
-        if (ZenIdentifier.IsValidIO(io))
+        if (ZenFile.IsValidFile(file))
         {
-            var result = await this.Zen.IO.Load(io, io2);
+            var result = await this.Zen.IO.Load(file);
+            if (!result.IsSuccess)
+            {
+                return result;
+            }
+
             lock (this.syncObject)
             {
                 if (!this.IsRemoved)
                 {
-                    this.flakeIO = io;
-                    this.flakeIO2 = io2;
-                    if (result.DataResult.IsSuccess)
-                    {
-                        this.flakeObject?.SetMemoryOwner(result.DataResult.Data);
-                    }
+                    this.flakeObject?.SetMemoryOwner(result.Data);
                 }
             }
 
-            return result.DataResult;
+            return result;
         }
 
         return new(ZenResult.NoData);
@@ -196,16 +194,10 @@ public partial class Flake
     internal Identifier identifier;
 
     [Key(1)]
-    internal ulong flakeIO;
+    internal ulong flakeFile;
 
     [Key(2)]
-    internal long flakeIO2;
-
-    [Key(3)]
-    internal ulong fragmentIO;
-
-    [Key(4)]
-    internal long fragmentIO2;
+    internal ulong fragmentFile;
 
     private object syncObject = new();
     private FlakeObject? flakeObject;

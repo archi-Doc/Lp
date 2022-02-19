@@ -166,7 +166,7 @@ internal partial class FragmentObject : FlakeObjectBase
             }
 
             var memoryOwner = new ByteArrayPool.ReadOnlyMemoryOwner(writer.FlushAndGetArray());
-            this.Flake.Zen.IO.Save(ref this.Flake.fragmentIO, ref this.Flake.fragmentIO2, memoryOwner);
+            this.Flake.Zen.IO.Save(ref this.Flake.fragmentFile, memoryOwner);
         }
 
         if (unload)
@@ -212,12 +212,10 @@ internal partial class FragmentObject : FlakeObjectBase
             return this.fragments;
         }
 
-        var result = this.Flake.Zen.IO.Load(this.Flake.fragmentIO, this.Flake.fragmentIO2).Result;
-        this.Flake.fragmentIO = result.IO;
-        this.Flake.fragmentIO2 = result.IO2;
-        if (result.DataResult.IsSuccess)
+        var result = this.Flake.Zen.IO.Load(this.Flake.fragmentFile).Result;
+        if (result.IsSuccess)
         {
-            if (this.Load(result.DataResult.Data))
+            if (this.Load(result.Data))
             {
                 return this.fragments!;
             }

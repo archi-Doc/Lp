@@ -26,85 +26,61 @@ internal partial class ZenDirectory
         this.DirectoryPath = path;
     }
 
-    private void GetSnowflake(bool exclusiveSnowflake, ref Snowflake? snowflake, out int offset)
-    {// lock (this.snowflakeGoshujin)
-        if (exclusiveSnowflake)
-        {
-            offset = 0;
-            if (snowflake != null)
-            {// Reset
-                this.MovePosition(snowflake, )
-                this.DirectorySize -= snowflake.Position;
-                snowflake.Position = 0;
-            }
-            else
-            {// New
-                snowflake = this.GetNewSnowflake();
-            }
-        }
-        else
-        {
-            if (snowflake != null)
-            {
-                if (snowflake.Position < DefaultMaxSnowflakeSize)
-                {
-                    offset = snowflake.Position;
-                    this.EnlargeSnowflake(snowflake, memoryOwner.Memory.Length);
-                    return;
-                }
-            }
-
-            snowflake = this.CurrentSnowflakeId;
-            if (snowflake.Position < DefaultMaxSnowflakeSize)
-            {
-                offset = snowflake.Position;
-                this.EnlargeSnowflake(snowflake, memoryOwner.Memory.Length);
-                return;
-            }
-
-            offset = 0;
-            snowflake = this.GetNewSnowflake();
-            this.CurrentSnowflakeId = snowflake.SnowflakeId;
-        }
-    }
-
-    internal void Save(ref ulong io, ref long io2, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner, bool exclusiveSnowflake)
-    {// DirectoryId: valid, SnowflakeId: ?
+    internal async Task<ZenDataResult> Load(ulong file)
+    {
         Snowflake? snowflake;
-        var snowflakeId = ZenIdentifier.IOToSnowflakeId(io);
-        var offset = ZenIdentifier.IO2ToOffset(io2);
-        var count = ZenIdentifier.IO2ToCount(io2);
+        var snowflakeId = ZenFile.ToSnowflakeId(file);
 
         lock (this.snowflakeGoshujin)
         {
-            if (this.snowflakeGoshujin.SnowflakeIdChain.TryGetValue(snowflakeId, out snowflake))
+            if (snowflakeId != 0 &&
+                this.snowflakeGoshujin.SnowflakeIdChain.TryGetValue(snowflakeId, out snowflake))
             {// Found
-                if (memoryOwner.Memory.Length <= count)
-                {// Ok
-                }
-                else
-                {// Insufficient space
-                    this.GetSnowflake(exclusiveSnowflake, ref snowflake, out offset);
-                    count = memoryOwner.Memory.Length;
-                }
             }
             else
             {// Not found
-                snowflake = null;
-                this.GetSnowflake(exclusiveSnowflake, ref snowflake, out offset);
-                count = memoryOwner.Memory.Length;
+                return new(ZenResult.NoFile);
+            }
+        }
+
+        return new(ZenResult.Success);
+    }
+
+    internal void Save(ref ulong file, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
+    {// DirectoryId: valid, SnowflakeId: ?
+        Snowflake? snowflake;
+        var snowflakeId = ZenFile.ToSnowflakeId(file);
+        var dataSize = memoryOwner.Memory.Length;
+
+        lock (this.snowflakeGoshujin)
+        {
+            if (snowflakeId != 0 &&
+                this.snowflakeGoshujin.SnowflakeIdChain.TryGetValue(snowflakeId, out snowflake))
+            {// Found
+                if (dataSize > snowflake.Size)
+                {
+                    this.DirectorySize += dataSize - snowflake.Size;
+                }
+
+                snowflake.Size = dataSize;
+            }
+            else
+            {// Not found
+                snowflake = this.GetNewSnowflake();
+                this.DirectorySize += dataSize; // Forget about hash size.
+                snowflake.Size = dataSize;
             }
 
-            io = ZenIdentifier.DirectorySnowflakeIdToIO(this.DirectoryId, snowflake!.SnowflakeId);
-            io2 = ZenIdentifier.OffsetCountToIO2(offset, count);
+            file = ZenFile.ToFile(this.DirectoryId, snowflake.SnowflakeId);
         }
 
         var path = this.GetSnowflakeFile(snowflake.SnowflakeId);
+
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-        Save(path, offset, memoryOwner.IncrementAndShare());
+        Save(path, memoryOwner.IncrementAndShare());
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
 
-        async static Task Save(string path, int offset, ByteArrayPool.ReadOnlyMemoryOwner m)
+        async static Task Save(string path, ByteArrayPool.ReadOnlyMemoryOwner m)
         {
             var hash = new byte[HashSize];
             BitConverter.TryWriteBytes(hash, Arc.Crypto.FarmHash.Hash64(m.Memory.Span));
@@ -113,8 +89,8 @@ internal partial class ZenDirectory
             {
                 using (var handle = File.OpenHandle(path, mode: FileMode.OpenOrCreate, access: FileAccess.Write))
                 {
-                    await RandomAccess.WriteAsync(handle, hash, offset);
-                    await RandomAccess.WriteAsync(handle, m.Memory, offset + HashSize);
+                    await RandomAccess.WriteAsync(handle, hash, 0);
+                    await RandomAccess.WriteAsync(handle, m.Memory, HashSize);
                 }
             }
             finally
@@ -186,9 +162,6 @@ internal partial class ZenDirectory
     [Key(4)]
     public long DirectorySize { get; private set; }
 
-    [Key(5)]
-    public uint CurrentSnowflakeId { get; private set; }
-
     public string DirectoryFile => Path.Combine(this.DirectoryPath, Zen.DefaultDirectoryFile);
 
     public string DirectoryBackup => Path.Combine(this.DirectoryPath, Zen.DefaultDirectoryBackup);
@@ -227,24 +200,18 @@ internal partial class ZenDirectory
         }
     }
 
-    private void EnlargeSnowflake(Snowflake snowflake, int size)
-    {// lock (this.snoflakeGoshujin)
-        var i = size + HashSize;
-        snowflake.Position += i;
-        this.DirectorySize += i;
-    }
-
     private string GetSnowflakeFile(uint snowflakeId)
     {
-        Span<char> c = stackalloc char[8];
+        Span<char> c = stackalloc char[9];
         c[0] = (char)('a' + ((snowflakeId & 0xF0000000) >> 28));
-        c[1] = (char)('a' + ((snowflakeId & 0xF0000000) >> 24));
-        c[2] = (char)('a' + ((snowflakeId & 0xF0000000) >> 20));
-        c[3] = (char)('a' + ((snowflakeId & 0xF0000000) >> 16));
-        c[4] = (char)('a' + ((snowflakeId & 0xF0000000) >> 12));
-        c[5] = (char)('a' + ((snowflakeId & 0xF0000000) >> 8));
-        c[6] = (char)('a' + ((snowflakeId & 0xF0000000) >> 4));
-        c[7] = (char)('a' + snowflakeId & 0xF0000000);
+        c[1] = (char)('a' + ((snowflakeId & 0x0F000000) >> 24));
+        c[2] = '\\';
+        c[3] = (char)('a' + ((snowflakeId & 0x00F00000) >> 20));
+        c[4] = (char)('a' + ((snowflakeId & 0x000F0000) >> 16));
+        c[5] = (char)('a' + ((snowflakeId & 0x0000F000) >> 12));
+        c[6] = (char)('a' + ((snowflakeId & 0x00000F00) >> 8));
+        c[7] = (char)('a' + ((snowflakeId & 0x000000F0) >> 4));
+        c[8] = (char)('a' + snowflakeId & 0x0000000F);
 
         return Path.Combine(this.DirectoryPath, c.ToString());
     }
