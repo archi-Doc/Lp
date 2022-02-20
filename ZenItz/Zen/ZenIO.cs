@@ -25,7 +25,7 @@ public class ZenIO
                 this.currentDirectory == null)
             {
                 this.currentDirectory = this.GetDirectory();
-                Volatile.Write(ref this.directoryRotationCount, 0);
+                Volatile.Write(ref this.directoryRotationCount, memoryOwner.Memory.Length);
                 if (this.currentDirectory == null)
                 {
                     return;
@@ -78,7 +78,7 @@ public class ZenIO
 
         goshujin ??= new();
         List<string>? errorDirectories = null;
-        foreach (var x in goshujin.DirectoryIdChain)
+        foreach (var x in goshujin)
         {
             if (!x.Check())
             {
@@ -106,7 +106,7 @@ public class ZenIO
             }
         }
 
-        foreach (var x in goshujin.DirectoryIdChain)
+        foreach (var x in goshujin)
         {
             x.Start();
         }
@@ -118,6 +118,14 @@ public class ZenIO
 
         this.directoryGoshujin = goshujin;
         return ZenStartResult.Success;
+    }
+
+    internal void Stop()
+    {
+        foreach (var x in this.directoryGoshujin)
+        {
+            x.Stop();
+        }
     }
 
     internal byte[] Serialize()

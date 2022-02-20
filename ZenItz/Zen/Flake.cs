@@ -89,7 +89,7 @@ public partial class Flake
         }
     }
 
-    public void Save(bool unload)
+    public void Save(bool unload = false)
     {
         lock (this.syncObject)
         {

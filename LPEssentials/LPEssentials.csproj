@@ -20,13 +20,13 @@
   <ItemGroup>
     <PackageReference Include="Arc.Collections" Version="1.0.2" />
     <PackageReference Include="Arc.CrossChannel" Version="0.4.1" />
-    <PackageReference Include="Arc.Threading" Version="0.11.1" />
+    <PackageReference Include="Arc.Threading" Version="0.12.1" />
     <PackageReference Include="Arc.Crypto" Version="1.8.0" />
     <PackageReference Include="BigMachines" Version="0.20.1" />
     <PackageReference Include="DryIoc.dll" Version="4.8.6" />
     <PackageReference Include="SimpleCommandLine" Version="0.9.1" />
-    <PackageReference Include="Tinyhand" Version="0.27.1" />
-    <PackageReference Include="ValueLink" Version="0.25.0" />
+    <PackageReference Include="Tinyhand" Version="0.27.2" />
+    <PackageReference Include="ValueLink" Version="0.26.1" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.354">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

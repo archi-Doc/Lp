@@ -47,8 +47,28 @@ internal partial class ZenDirectory
         }
 
         // Load (snowflakeId, size)
+        var work = new ZenDirectoryWork(snowflake.SnowflakeId, size);
+        if (this.worker != null)
+        {
+            this.worker.AddLast(work);
+            if (await work.WaitForCompletionAsync().ConfigureAwait(false) == true)
+            {// Complete
+                if (work.Result is ByteArrayPool.MemoryOwner memoryOwner)
+                {// Success
+                    return new(ZenResult.Success, memoryOwner.AsReadOnly());
+                }
+                else
+                {// Error
+                    return new(ZenResult.NoFile);
+                }
+            }
+            else
+            {// Abort
+                return new(ZenResult.NoFile);
+            }
+        }
 
-        return new(ZenResult.Success);
+        return new(ZenResult.NotStarted);
     }
 
     internal void Save(ref ulong file, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
@@ -79,30 +99,7 @@ internal partial class ZenDirectory
             file = ZenFile.ToFile(this.DirectoryId, snowflake.SnowflakeId);
         }
 
-        var path = this.GetSnowflakeFile(snowflake.SnowflakeId);
-
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-        Save(path, memoryOwner.IncrementAndShare());
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-
-        async static Task Save(string path, ByteArrayPool.ReadOnlyMemoryOwner m)
-        {
-            var hash = new byte[HashSize];
-            BitConverter.TryWriteBytes(hash, Arc.Crypto.FarmHash.Hash64(m.Memory.Span));
-
-            try
-            {
-                using (var handle = File.OpenHandle(path, mode: FileMode.OpenOrCreate, access: FileAccess.Write))
-                {
-                    await RandomAccess.WriteAsync(handle, hash, 0);
-                    await RandomAccess.WriteAsync(handle, m.Memory, HashSize);
-                }
-            }
-            finally
-            {
-                m.Return();
-            }
-        }
+        this.worker?.AddLast(new(snowflake.SnowflakeId, memoryOwner.IncrementAndShare()));
     }
 
     internal bool Check()
@@ -143,11 +140,27 @@ internal partial class ZenDirectory
 
     internal void Start()
     {
+        if (this.worker != null)
+        {
+            return;
+        }
+
         // Directory.CreateDirectory(this.DirectoryPath);
 
         if (!this.TryLoadDirectory(this.DirectoryFile))
         {
             this.TryLoadDirectory(this.DirectoryBackup);
+        }
+
+        this.worker = new ZenDirectoryWorker(ThreadCore.Root, this);
+    }
+
+    internal void Stop()
+    {
+        if (this.worker != null)
+        {
+            this.worker.Dispose();
+            this.worker = null;
         }
     }
 
@@ -195,6 +208,24 @@ internal partial class ZenDirectory
         this.UsageRatio = ratio;
     }
 
+    internal (string Directory, string File) GetSnowflakePath(uint snowflakeId)
+    {
+        Span<char> c = stackalloc char[2];
+        Span<char> d = stackalloc char[6];
+
+        c[0] = (char)('a' + ((snowflakeId & 0xF0000000) >> 28));
+        c[1] = (char)('a' + ((snowflakeId & 0x0F000000) >> 24));
+
+        d[0] = (char)('a' + ((snowflakeId & 0x00F00000) >> 20));
+        d[1] = (char)('a' + ((snowflakeId & 0x000F0000) >> 16));
+        d[2] = (char)('a' + ((snowflakeId & 0x0000F000) >> 12));
+        d[3] = (char)('a' + ((snowflakeId & 0x00000F00) >> 8));
+        d[4] = (char)('a' + ((snowflakeId & 0x000000F0) >> 4));
+        d[5] = (char)('a' + (snowflakeId & 0x0000000F));
+
+        return (c.ToString(), d.ToString());
+    }
+
     private bool TryLoadDirectory(string path)
     {
         ReadOnlySpan<byte> span;
@@ -229,21 +260,6 @@ internal partial class ZenDirectory
         }
     }
 
-    private string GetSnowflakeFile(uint snowflakeId)
-    {
-        Span<char> c = stackalloc char[9];
-        c[0] = (char)('a' + ((snowflakeId & 0xF0000000) >> 28));
-        c[1] = (char)('a' + ((snowflakeId & 0x0F000000) >> 24));
-        c[2] = '\\';
-        c[3] = (char)('a' + ((snowflakeId & 0x00F00000) >> 20));
-        c[4] = (char)('a' + ((snowflakeId & 0x000F0000) >> 16));
-        c[5] = (char)('a' + ((snowflakeId & 0x0000F000) >> 12));
-        c[6] = (char)('a' + ((snowflakeId & 0x00000F00) >> 8));
-        c[7] = (char)('a' + ((snowflakeId & 0x000000F0) >> 4));
-        c[8] = (char)('a' + snowflakeId & 0x0000000F);
-
-        return Path.Combine(this.DirectoryPath, c.ToString());
-    }
-
     private Snowflake.GoshujinClass snowflakeGoshujin = new();
+    private ZenDirectoryWorker? worker;
 }

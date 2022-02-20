@@ -113,6 +113,9 @@ public class Zen
             }
         }
 
+        // Stop IO(ZenDirectory)
+        this.IO.Stop();
+
         // Save directory information
         var byteArray = this.IO.Serialize();
         await HashHelper.GetFarmHashAndSaveAsync(byteArray, param.ZenFile, param.BackupFile);
