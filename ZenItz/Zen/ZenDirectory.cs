@@ -4,17 +4,17 @@ using System.IO;
 
 namespace ZenItz;
 
+public enum ZenDirectoryType
+{
+    Standard,
+}
+
 [TinyhandObject]
 [ValueLinkObject]
 internal partial class ZenDirectory
 {
     public const int DefaultMaxSnowflakeSize = 1024 * 1024 * 1024; // 1GB = 4MB x 256
     public const int HashSize = 8;
-
-    public enum DirectoryType
-    {
-        Standard,
-    }
 
     [Link(Primary = true, Name = "List", Type = ChainType.List)]
     public ZenDirectory()
@@ -25,6 +25,12 @@ internal partial class ZenDirectory
     {
         this.DirectoryId = directoryId;
         this.DirectoryPath = path;
+    }
+
+    public ZenDirectoryInformation GetInformation()
+    {
+        this.CalculateUsageRatio();
+        return new(this.DirectoryId, this.Type, this.DirectoryPath, this.DirectoryCapacity, this.DirectorySize, this.UsageRatio);
     }
 
     internal async Task<ZenDataResult> Load(ulong file)
@@ -147,10 +153,19 @@ internal partial class ZenDirectory
         this.worker = new ZenDirectoryWorker(ThreadCore.Root, this);
     }
 
-    internal void Stop()
+    internal async Task WaitForCompletionAsync()
     {
         if (this.worker != null)
         {
+            await this.worker.WaitForCompletionAsync();
+        }
+    }
+
+    internal async Task StopAsync()
+    {
+        if (this.worker != null)
+        {
+            await this.worker.WaitForCompletionAsync();
             this.worker.Dispose();
             this.worker = null;
         }
@@ -161,7 +176,7 @@ internal partial class ZenDirectory
     public uint DirectoryId { get; private set; }
 
     [Key(1)]
-    public DirectoryType Type { get; private set; }
+    public ZenDirectoryType Type { get; private set; }
 
     [Key(2)]
     public string DirectoryPath { get; private set; } = string.Empty;

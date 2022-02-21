@@ -12,6 +12,7 @@ using LP;
 using LP.Options;
 using Netsphere;
 using SimpleCommandLine;
+using ZenItz;
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
 
@@ -41,6 +42,10 @@ public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
         var control = Program.Container.Resolve<Control>();
         control.Configure();
         await control.LoadAsync();
+        if (await this.TryStartZen(control.ZenControl) == AbortOrComplete.Abort)
+        {
+            goto Abort;
+        }
 
         if (!control.TryStart())
         {
@@ -56,6 +61,17 @@ public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
 Abort:
         Logger.Default.Information("LP Aborted");
         return;
+    }
+
+    private async Task<AbortOrComplete> TryStartZen(ZenControl zenControl)
+    {
+        var result = await zenControl.Zen.TryStartZen(new(Zen.DefaultZenFolder, Zen.DefaultZenFile, false, null));
+        if (result != ZenStartResult.Success)
+        {
+            return AbortOrComplete.Abort;
+        }
+
+        return AbortOrComplete.Complete;
     }
 
     private async Task<AbortOrComplete> LoadAsync()

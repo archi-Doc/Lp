@@ -10,6 +10,7 @@ public class Zen
     public const int MaxFragmentSize = 1024 * 4; // 4KB
     public const int MaxFragmentCount = 1000;
     public const long DefaultMemorySizeLimit = 1024 * 1024 * 100; // 100MB
+    public const string DefaultZenFolder = "Zen";
     public const string DefaultZenFile = "Zen.main";
     public const string DefaultZenBackup = "Zen.back";
     public const string DefaultDirectoryFile = "Dir.main";
@@ -114,7 +115,7 @@ public class Zen
         }
 
         // Stop IO(ZenDirectory)
-        this.IO.Stop();
+        await this.IO.StopAsync();
 
         // Save directory information
         var byteArray = this.IO.Serialize();

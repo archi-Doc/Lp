@@ -117,6 +117,7 @@ public class Control
     {
         await Radio.SendAsync(new Message.SaveAsync()).ConfigureAwait(false);
         await this.NetControl.EssentialNode.SaveAsync(Path.Combine(this.LPBase.RootDirectory, EssentialNode.FileName)).ConfigureAwait(false);
+        await this.ZenControl.Zen.StopZen(new());
         await this.ZenControl.Itz.SaveAsync(Path.Combine(this.LPBase.RootDirectory, ItzFilename), Path.Combine(this.LPBase.RootDirectory, ItzFilename, BackupExtention));
     }
 
