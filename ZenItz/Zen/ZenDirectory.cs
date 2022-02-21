@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.IO;
+using System.Runtime.CompilerServices;
 
 namespace ZenItz;
 
@@ -169,6 +170,8 @@ internal partial class ZenDirectory
             this.worker.Dispose();
             this.worker = null;
         }
+
+        await this.SaveDirectoryAsync(this.DirectoryFile, this.DirectoryBackup);
     }
 
     [Key(0)]
@@ -220,37 +223,75 @@ internal partial class ZenDirectory
         Span<char> c = stackalloc char[2];
         Span<char> d = stackalloc char[6];
 
-        c[0] = (char)('a' + ((snowflakeId & 0xF0000000) >> 28));
-        c[1] = (char)('a' + ((snowflakeId & 0x0F000000) >> 24));
+        c[0] = this.UInt32ToChar(snowflakeId >> 28);
+        c[1] = this.UInt32ToChar(snowflakeId >> 24);
 
-        d[0] = (char)('a' + ((snowflakeId & 0x00F00000) >> 20));
-        d[1] = (char)('a' + ((snowflakeId & 0x000F0000) >> 16));
-        d[2] = (char)('a' + ((snowflakeId & 0x0000F000) >> 12));
-        d[3] = (char)('a' + ((snowflakeId & 0x00000F00) >> 8));
-        d[4] = (char)('a' + ((snowflakeId & 0x000000F0) >> 4));
-        d[5] = (char)('a' + (snowflakeId & 0x0000000F));
+        d[0] = this.UInt32ToChar(snowflakeId >> 20);
+        d[1] = this.UInt32ToChar(snowflakeId >> 16);
+        d[2] = this.UInt32ToChar(snowflakeId >> 12);
+        d[3] = this.UInt32ToChar(snowflakeId >> 8);
+        d[4] = this.UInt32ToChar(snowflakeId >> 4);
+        d[5] = this.UInt32ToChar(snowflakeId);
 
         return (c.ToString(), d.ToString());
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private char UInt32ToChar(uint x)
+    {
+        var a = x & 0xF;
+        if (a < 10)
+        {
+            return (char)('0' + a);
+        }
+        else
+        {
+            return (char)('W' + a);
+        }
+    }
+
     private bool TryLoadDirectory(string path)
     {
-        ReadOnlySpan<byte> span;
+        byte[] file;
         try
         {
-            span = File.ReadAllBytes(path).AsSpan();
+            file = File.ReadAllBytes(path);
         }
         catch
         {
             return false;
         }
 
-        if (!HashHelper.CheckFarmHashAndGetData(span, out var data))
+        if (!HashHelper.CheckFarmHashAndGetData(file.AsMemory(), out var data))
+        {
+            return false;
+        }
+
+        try
+        {
+            var g = TinyhandSerializer.Deserialize<Snowflake.GoshujinClass>(data);
+            if (g != null)
+            {
+                this.snowflakeGoshujin = g;
+            }
+        }
+        catch
         {
             return false;
         }
 
         return true;
+    }
+
+    private Task<bool> SaveDirectoryAsync(string path, string? backupPath = null)
+    {
+        byte[] data;
+        lock (this.snowflakeGoshujin)
+        {
+            data = TinyhandSerializer.Serialize(this.snowflakeGoshujin);
+        }
+
+        return HashHelper.GetFarmHashAndSaveAsync(data, path, backupPath);
     }
 
     private Snowflake GetNewSnowflake()
