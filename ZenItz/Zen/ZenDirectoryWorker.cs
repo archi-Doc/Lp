@@ -76,7 +76,7 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
                         return AbortOrComplete.Abort;
                     }
 
-                    work.Result = memoryOwner;
+                    work.LoadData = memoryOwner;
                 }
             }
             catch (OperationCanceledException)
@@ -94,7 +94,7 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
     public ZenDirectory ZenDirectory { get; }
 }
 
-internal class ZenDirectoryWork : TaskWork, IEquatable<ZenDirectoryWork>
+internal class ZenDirectoryWork : IEquatable<ZenDirectoryWork>
 {
     public enum WorkType
     {
@@ -109,6 +109,8 @@ internal class ZenDirectoryWork : TaskWork, IEquatable<ZenDirectoryWork>
     public ByteArrayPool.ReadOnlyMemoryOwner SaveData { get; }
 
     public int LoadSize { get; }
+
+    public ByteArrayPool.MemoryOwner LoadData { get; internal set; }
 
     public ZenDirectoryWork(uint snowflakeId, ByteArrayPool.ReadOnlyMemoryOwner saveData)
     {// Save

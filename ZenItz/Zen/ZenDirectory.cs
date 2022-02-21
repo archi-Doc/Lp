@@ -47,20 +47,12 @@ internal partial class ZenDirectory
         }
 
         // Load (snowflakeId, size)
-        var work = new ZenDirectoryWork(snowflake.SnowflakeId, size);
         if (this.worker != null)
         {
-            this.worker.AddLast(work);
-            if (await work.WaitForCompletionAsync().ConfigureAwait(false) == true)
+            var workInterface = this.worker.AddLast(new(snowflake.SnowflakeId, size));
+            if (await workInterface.WaitForCompletionAsync().ConfigureAwait(false) == true)
             {// Complete
-                if (work.Result is ByteArrayPool.MemoryOwner memoryOwner)
-                {// Success
-                    return new(ZenResult.Success, memoryOwner.AsReadOnly());
-                }
-                else
-                {// Error
-                    return new(ZenResult.NoFile);
-                }
+                return new(ZenResult.Success, workInterface.Work.LoadData.AsReadOnly());
             }
             else
             {// Abort
