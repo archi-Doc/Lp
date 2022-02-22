@@ -2,6 +2,7 @@
 
 namespace ZenItz;
 
+#pragma warning disable SA1202 // Elements should be ordered by access
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
 #pragma warning disable SA1401 // Fields should be private
 
@@ -44,6 +45,47 @@ public partial class Flake
         return ZenResult.Success;
     }
 
+    internal ZenResult Set(ByteArrayPool.MemoryOwner dataToBeMoved)
+    {
+        if (!this.Zen.Started)
+        {
+            return ZenResult.NotStarted;
+        }
+        else if (dataToBeMoved.Memory.Length > Zen.MaxFlakeSize)
+        {
+            return ZenResult.OverSizeLimit;
+        }
+
+        lock (this.syncObject)
+        {
+            if (this.IsRemoved)
+            {
+                return ZenResult.Removed;
+            }
+
+            this.flakeObject ??= new(this, this.Zen.FlakeObjectGoshujin);
+            this.flakeObject.SetMemoryOwner(dataToBeMoved);
+        }
+
+        return ZenResult.Success;
+    }
+
+    public ZenResult SetObject<T>(T obj)
+    {
+        byte[]? byteArray;
+        try
+        {
+            byteArray = TinyhandSerializer.Serialize<T>(obj);
+        }
+        catch
+        {
+            return ZenResult.SerializationError;
+        }
+
+        var result = this.Set(byteArray);
+        return result;
+    }
+
     public ZenResult Set(Identifier fragmentId, ReadOnlySpan<byte> data)
     {
         if (!this.Zen.Started)
@@ -64,6 +106,29 @@ public partial class Flake
 
             this.fragmentObject ??= new(this, this.Zen.FragmentObjectGoshujin);
             return this.fragmentObject.SetSpan(fragmentId, data);
+        }
+    }
+
+    internal ZenResult Set(Identifier fragmentId, ByteArrayPool.MemoryOwner data)
+    {
+        if (!this.Zen.Started)
+        {
+            return ZenResult.NotStarted;
+        }
+        else if (data.Memory.Length > Zen.MaxFragmentSize)
+        {
+            return ZenResult.OverSizeLimit;
+        }
+
+        lock (this.syncObject)
+        {
+            if (this.IsRemoved)
+            {
+                return ZenResult.Removed;
+            }
+
+            this.fragmentObject ??= new(this, this.Zen.FragmentObjectGoshujin);
+            return this.fragmentObject.SetMemoryOwner(fragmentId, data);
         }
     }
 
@@ -110,6 +175,24 @@ public partial class Flake
         }
 
         return new(ZenResult.NoData);
+    }
+
+    public async Task<ZenObjectResult<T>> GetObject<T>()
+    {
+        var result = await this.Get().ConfigureAwait(false);
+        if (!result.IsSuccess)
+        {
+            return new(result.Result);
+        }
+
+        if (!TinyhandSerializer.TryDeserialize<T>(result.Data.Memory, out var obj))
+        {
+            result.Data.Return();
+            return new(ZenResult.DeserializationError);
+        }
+
+        result.Data.Return();
+        return new(ZenResult.Success, obj);
     }
 
     public void Save(bool unload = false)

@@ -12,4 +12,6 @@ public enum ZenResult
     NoData,
     NoDirectory,
     NoFile,
+    SerializationError,
+    DeserializationError,
 }

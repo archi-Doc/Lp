@@ -20,13 +20,14 @@ public class Zen
     public const string DefaultDirectoryFile = "Directory.main";
     public const string DefaultDirectoryBackup = "Directory.back";
 
-    public delegate void ObjectToMemoryOwnerDelegate(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved);
+    public delegate bool ObjectToMemoryOwnerDelegate(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved);
 
     public delegate object? MemoryOwnerToObjectDelegate(ByteArrayPool.MemoryOwner memoryOwner);
 
-    public static void DefaultObjectToMemoryOwner(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved)
+    public static bool DefaultObjectToMemoryOwner(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved)
     {
         dataToBeMoved = ByteArrayPool.MemoryOwner.Empty;
+        return false;
     }
 
     public static object? DefaultMemoryOwnerToObject(ByteArrayPool.MemoryOwner memoryOwner)
