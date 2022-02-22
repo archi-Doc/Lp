@@ -147,6 +147,8 @@ internal partial class ZenDirectory
                 this.RootedPath = Path.Combine(rootDirectory, this.DirectoryPath);
             }
 
+            Console.WriteLine(rootDirectory);
+            Console.WriteLine(this.RootedPath);
             Directory.CreateDirectory(this.RootedPath);
             /*var directoryInfo = new DirectoryInfo(this.DirectoryPath);
             if (createDirectory)
