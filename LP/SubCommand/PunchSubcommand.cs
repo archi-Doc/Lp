@@ -48,7 +48,7 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
 
     public async Task Punch(NodeAddress node, NodeAddress? nextNode, PunchOptions options)
     {
-        Logger.Priority.Information($"Punch: {node.ToString()}");
+        Logger.Subcommand.Information($"Punch: {node.ToString()}");
 
         var sw = Stopwatch.StartNew();
         using (var terminal = this.Control.NetControl.Terminal.Create(node))
@@ -60,11 +60,11 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
             sw.Stop();
             if (result.Value != null)
             {
-                Logger.Priority.Information($"Received: {result.ToString()} - {sw.ElapsedMilliseconds} ms");
+                Logger.Subcommand.Information($"Received: {result.ToString()} - {sw.ElapsedMilliseconds} ms");
             }
             else
             {
-                Logger.Priority.Error($"{result}");
+                Logger.Subcommand.Error($"{result}");
             }
         }
     }

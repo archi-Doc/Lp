@@ -6,9 +6,9 @@ namespace ZenItz;
 
 #pragma warning disable SA1401 // Fields should be private
 
-internal partial class SnowFragmentObject : SnowObject
+internal partial class FragmentObject : FlakeObjectBase
 {
-    public SnowFragmentObject(Flake flake, SnowObjectGoshujin goshujin)
+    public FragmentObject(Flake flake, FlakeObjectGoshujin goshujin)
         : base(flake, goshujin)
     {
     }
@@ -16,79 +16,79 @@ internal partial class SnowFragmentObject : SnowObject
     public ZenResult SetSpan(Identifier fragmentId, ReadOnlySpan<byte> data)
     {// lock (Flake.syncObject)
         if (this.fragments == null)
-        {// tempcode, load
-            this.fragments = new();
+        {
+            this.fragments = this.PrepareFragments();
         }
 
-        Fragment2? fragment2;
+        FragmentData? fragmentData;
         if (this.fragments.IdChain.Count >= Zen.MaxFragmentCount)
         {
             return ZenResult.OverNumberLimit;
         }
-        else if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragment2))
+        else if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragmentData))
         {
-            fragment2 = new(this.Flake.Zen, fragmentId);
-            this.fragments.Add(fragment2);
+            fragmentData = new(this.Flake.Zen, fragmentId);
+            this.fragments.Add(fragmentData);
         }
 
-        this.UpdateQueue(SnowObjectOperation.Set, fragment2.SetSpan(data));
+        this.UpdateQueue(FlakeObjectOperation.Set, fragmentData.SetSpan(data));
         return ZenResult.Success;
     }
 
     public ZenResult SetObject(Identifier fragmentId, object obj)
     {// lock (Flake.syncObject)
         if (this.fragments == null)
-        {// tempcode, load
-            this.fragments = new();
+        {
+            this.fragments = this.PrepareFragments();
         }
 
-        Fragment2? fragment2;
+        FragmentData? fragmentData;
         if (this.fragments.IdChain.Count >= Zen.MaxFragmentCount)
         {
             return ZenResult.OverNumberLimit;
         }
-        else if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragment2))
+        else if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragmentData))
         {
-            fragment2 = new(this.Flake.Zen, fragmentId);
-            this.fragments.Add(fragment2);
+            fragmentData = new(this.Flake.Zen, fragmentId);
+            this.fragments.Add(fragmentData);
         }
 
-        this.UpdateQueue(SnowObjectOperation.Set, fragment2.SetObject(obj));
+        this.UpdateQueue(FlakeObjectOperation.Set, fragmentData.SetObject(obj));
         return ZenResult.Success;
     }
 
     public ZenResult SetMemoryOwner(Identifier fragmentId, ByteArrayPool.MemoryOwner dataToBeMoved)
     {// lock (Flake.syncObject)
         if (this.fragments == null)
-        {// tempcode, load
-            this.fragments = new();
+        {
+            this.fragments = this.PrepareFragments();
         }
 
-        Fragment2? fragment2;
+        FragmentData? fragmentData;
         if (this.fragments.IdChain.Count >= Zen.MaxFragmentCount)
         {
             return ZenResult.OverNumberLimit;
         }
-        else if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragment2))
+        else if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragmentData))
         {
-            fragment2 = new(this.Flake.Zen, fragmentId);
-            this.fragments.Add(fragment2);
+            fragmentData = new(this.Flake.Zen, fragmentId);
+            this.fragments.Add(fragmentData);
         }
 
-        this.UpdateQueue(SnowObjectOperation.Set, fragment2.SetMemoryOwner(dataToBeMoved));
+        this.UpdateQueue(FlakeObjectOperation.Set, fragmentData.SetMemoryOwner(dataToBeMoved));
         return ZenResult.Success;
     }
 
     public bool TryGetSpan(Identifier fragmentId, out ReadOnlySpan<byte> data)
     {// lock (Flake.syncObject)
         if (this.fragments == null)
-        {// tempcode, load
-            this.fragments = new();
+        {
+            this.fragments = this.PrepareFragments();
         }
 
-        if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragment2))
+        if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragment))
         {// Fount
-            return fragment2.TryGetSpan(out data);
+            return fragment.TryGetSpan(out data);
         }
         else
         {
@@ -100,13 +100,13 @@ internal partial class SnowFragmentObject : SnowObject
     public bool TryGetMemoryOwner(Identifier fragmentId, out ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
     {// lock (Flake.syncObject)
         if (this.fragments == null)
-        {// tempcode, load
-            this.fragments = new();
+        {
+            this.fragments = this.PrepareFragments();
         }
 
-        if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragment2))
+        if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragmentData))
         {// Fount
-            return fragment2.TryGetMemoryOwner(out memoryOwner);
+            return fragmentData.TryGetMemoryOwner(out memoryOwner);
         }
         else
         {
@@ -118,13 +118,13 @@ internal partial class SnowFragmentObject : SnowObject
     public bool TryGetObject(Identifier fragmentId, [MaybeNullWhen(false)] out object? obj)
     {// lock (Flake.syncObject)
         if (this.fragments == null)
-        {// tempcode, load
-            this.fragments = new();
+        {
+            this.fragments = this.PrepareFragments();
         }
 
-        if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragment2))
+        if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragmentData))
         {// Fount
-            return fragment2.TryGetObject(out obj);
+            return fragmentData.TryGetObject(out obj);
         }
         else
         {
@@ -151,7 +151,7 @@ internal partial class SnowFragmentObject : SnowObject
     }
 
     internal override void Save(bool unload)
-    {// lock (Flake.syncObject) -> lock (this.SnowObjectGoshujin.Goshujin)
+    {// lock (Flake.syncObject) -> lock (this.FlakeObjectGoshujin.Goshujin)
         if (this.fragments != null)
         {
             var writer = default(Tinyhand.IO.TinyhandWriter);
@@ -166,7 +166,7 @@ internal partial class SnowFragmentObject : SnowObject
             }
 
             var memoryOwner = new ByteArrayPool.ReadOnlyMemoryOwner(writer.FlushAndGetArray());
-            this.Flake.Zen.SnowmanControl.Save(ref this.Flake.fragmentSnowId, ref this.Flake.fragmentSnowSegment, memoryOwner);
+            this.Flake.Zen.IO.Save(ref this.Flake.fragmentFile, memoryOwner);
         }
 
         if (unload)
@@ -193,7 +193,7 @@ internal partial class SnowFragmentObject : SnowObject
                 identifier.Deserialize(ref reader, options);
                 var byteArray = reader.ReadBytesToArray();
 
-                var fragment = new Fragment2(this.Flake.Zen, identifier);
+                var fragment = new FragmentData(this.Flake.Zen, identifier);
                 fragment.SetSpan(byteArray);
                 this.fragments.Add(fragment);
             }
@@ -205,23 +205,20 @@ internal partial class SnowFragmentObject : SnowObject
         return true;
     }
 
-    private Fragment2.GoshujinClass PrepareFragments()
+    private FragmentData.GoshujinClass PrepareFragments()
     {// lock (Flake.syncObject)
         if (this.fragments != null)
         {
             return this.fragments;
         }
-
-        var snowId = new SnowFlakeIdSegment(this.Flake.fragmentSnowId, this.Flake.fragmentSnowSegment);
-        if (this.Flake.Zen.SnowmanControl.TryGetSnowman(snowId, out var snowman))
+        else if (ZenFile.IsValidFile(this.Flake.fragmentFile))
         {
-            var dataResult = snowman.Load(snowId, Identifier.Zero).Result;
-            // var dataResult = default(ZenDataResult);
-            if (dataResult.IsSuccess)
+            var result = this.Flake.Zen.IO.Load(this.Flake.fragmentFile).Result;
+            if (result.IsSuccess)
             {
-                if (this.Load(dataResult.Data))
+                if (this.Load(result.Data))
                 {
-                    return this.fragments!; // by Yamamoto.
+                    return this.fragments!;
                 }
             }
         }
@@ -229,5 +226,5 @@ internal partial class SnowFragmentObject : SnowObject
         return new();
     }
 
-    private Fragment2.GoshujinClass? fragments;
+    private FragmentData.GoshujinClass? fragments; // by Yamamoto.
 }

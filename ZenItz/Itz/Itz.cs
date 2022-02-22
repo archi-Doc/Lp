@@ -6,6 +6,9 @@ namespace ZenItz;
 
 public class Itz
 {
+    public const string DefaultItzFile = "Itz.main";
+    public const string DefaultItzBackup = "Itz.back";
+
     public Itz()
     {
     }
@@ -129,7 +132,7 @@ public class Itz
         {
             try
             {
-                using (var handle = File.OpenHandle(path, mode: FileMode.CreateNew, access: FileAccess.ReadWrite))
+                using (var handle = File.OpenHandle(backupPath, mode: FileMode.Create, access: FileAccess.ReadWrite))
                 {
                     await RandomAccess.WriteAsync(handle, hash, 0);
                     await RandomAccess.WriteAsync(handle, byteArray, hash.Length);

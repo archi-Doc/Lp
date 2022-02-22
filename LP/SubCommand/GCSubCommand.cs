@@ -17,7 +17,7 @@ public class GCSubcommand : ISimpleCommand
 
     public void Run(string[] args)
     {
-        Logger.Priority.Information($"GC.Collect");
+        Logger.Subcommand.Information($"GC.Collect");
         GC.Collect();
     }
 

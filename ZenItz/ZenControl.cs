@@ -34,14 +34,28 @@ public class ZenControl
         // Subcommands
         var commandTypes = new Type[]
         {
-            // typeof(LP.Subcommands.NetTestSubcommand),
+            typeof(LP.Subcommands.ZenSubcommand),
+            typeof(LP.Subcommands.ZenDirSubcommand),
         };
+
+        LP.Subcommands.ZenSubcommand.Register(container);
+        LP.Subcommands.ZenDirSubcommand.Register(container);
 
         commandList?.AddRange(commandTypes);
         foreach (var x in commandTypes)
         {
             container.Register(x, Reuse.Singleton);
         }
+
+        SubcommandParserOptions = SimpleParserOptions.Standard with
+        {
+            ServiceProvider = container,
+            RequireStrictCommandName = true,
+            RequireStrictOptionName = true,
+            DoNotDisplayUsage = true,
+        };
+
+        SubcommandParser = new(commandTypes, SubcommandParserOptions);
     }
 
     public static void QuickStart()
@@ -76,6 +90,10 @@ public class ZenControl
     public void Configure(Message.Configure message)
     {
     }
+
+    public static SimpleParser SubcommandParser { get; private set; } = default!;
+
+    public static SimpleParserOptions SubcommandParserOptions { get; private set; } = default!;
 
     public IServiceProvider ServiceProvider { get; }
 

@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace ZenItz;
+namespace ZenItz.Obsolete;
 
 [TinyhandObject]
 public partial class FlakeHeader

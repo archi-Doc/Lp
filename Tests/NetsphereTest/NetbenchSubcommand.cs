@@ -24,7 +24,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
             return;
         }
 
-        Logger.Priority.Information($"Netbench: {node.ToString()}");
+        Logger.Subcommand.Information($"Netbench: {node.ToString()}");
 
         // var nodeInformation = NodeInformation.Alternative;
         using (var terminal = this.NetControl.Terminal.Create(node))

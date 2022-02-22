@@ -20,7 +20,7 @@ public class MicsSubcommand : ISimpleCommand
 
     public void Run(string[] args)
     {
-        var logger = Logger.Priority;
+        var logger = Logger.Subcommand;
 
         logger.Information($"Stopwatch.Frequency: {Stopwatch.Frequency}");
         logger.Information($"Mics.TimestampToMics: {Mics.TimestampToMics}");

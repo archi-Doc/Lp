@@ -6,19 +6,19 @@ namespace ZenItz;
 
 #pragma warning disable SA1401 // Fields should be private
 
-internal partial class Fragment
+internal partial class FlakeData
 {
-    public Fragment(Zen zen)
+    public FlakeData(Zen zen)
     {
         this.Zen = zen;
     }
 
-    public int SetSpan(ReadOnlySpan<byte> span)
+    public (bool Changed, int MemoryDifference) SetSpan(ReadOnlySpan<byte> span)
     {
         if (this.MemoryOwnerAvailable &&
             span.SequenceEqual(this.MemoryOwner.Memory.Span))
         {// Identical
-            return 0;
+            return (false, 0);
         }
 
         var memoryDifference = -this.MemoryOwner.Memory.Length;
@@ -26,17 +26,19 @@ internal partial class Fragment
 
         memoryDifference += span.Length;
         this.Object = null;
-        this.MemoryOwner = this.Zen.FragmentPool.Rent(span.Length).ToMemoryOwner(0, span.Length);
-        span.CopyTo(this.MemoryOwner.Memory.Span);
-        return memoryDifference;
+        var owner = this.Zen.FlakeFragmentPool.Rent(span.Length);
+        this.MemoryOwner = owner.ToReadOnlyMemoryOwner(0, span.Length);
+        this.MemoryOwnerAvailable = true;
+        span.CopyTo(owner.ByteArray.AsSpan());
+        return (true, memoryDifference);
     }
 
-    public int SetMemoryOwner(ByteArrayPool.MemoryOwner dataToBeMoved)
+    public (bool Changed, int MemoryDifference) SetMemoryOwner(ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved)
     {
         if (this.MemoryOwnerAvailable &&
             dataToBeMoved.Memory.Span.SequenceEqual(this.MemoryOwner.Memory.Span))
         {// Identical
-            return 0;
+            return (false, 0);
         }
 
         var memoryDifference = -this.MemoryOwner.Memory.Length;
@@ -45,12 +47,16 @@ internal partial class Fragment
         memoryDifference += dataToBeMoved.Memory.Length;
         this.Object = null;
         this.MemoryOwner = dataToBeMoved;
-        return memoryDifference;
+        this.MemoryOwnerAvailable = true;
+        return (true, memoryDifference);
     }
 
-    public int SetObject(object? obj)
+    public (bool Changed, int MemoryDifference) SetMemoryOwner(ByteArrayPool.MemoryOwner dataToBeMoved)
+        => this.SetMemoryOwner(dataToBeMoved.AsReadOnly());
+
+    public (bool Changed, int MemoryDifference) SetObject(object? obj)
     {
-        /* No check
+        /* Skip (may be an updated object of the same instance)
         if (obj == this.Object)
         {// Identical
             return 0;
@@ -61,7 +67,7 @@ internal partial class Fragment
         this.MemoryOwnerAvailable = false;
 
         this.Object = obj;
-        return memoryDifference;
+        return (true, memoryDifference);
     }
 
     public bool TryGetSpan(out ReadOnlySpan<byte> data)
@@ -73,7 +79,8 @@ internal partial class Fragment
         }
         else if (this.Object != null)
         {
-            this.Zen.ObjectToMemoryOwner(this.Object, out this.MemoryOwner);
+            this.Zen.ObjectToMemoryOwner(this.Object, out var m);
+            this.MemoryOwner = m.AsReadOnly();
             this.MemoryOwnerAvailable = true;
             data = this.MemoryOwner.Memory.Span;
             return true;
@@ -89,14 +96,15 @@ internal partial class Fragment
     {
         if (this.MemoryOwnerAvailable)
         {
-            memoryOwmer = this.MemoryOwner.IncrementAndShareReadOnly();
+            memoryOwmer = this.MemoryOwner.IncrementAndShare();
             return true;
         }
         else if (this.Object != null)
         {
-            this.Zen.ObjectToMemoryOwner(this.Object, out this.MemoryOwner);
+            this.Zen.ObjectToMemoryOwner(this.Object, out var m);
+            this.MemoryOwner = m.AsReadOnly();
             this.MemoryOwnerAvailable = true;
-            memoryOwmer = this.MemoryOwner.IncrementAndShareReadOnly();
+            memoryOwmer = this.MemoryOwner.IncrementAndShare();
             return true;
         }
         else
@@ -126,5 +134,5 @@ internal partial class Fragment
 
     public bool MemoryOwnerAvailable { get; private set; }
 
-    internal ByteArrayPool.MemoryOwner MemoryOwner;
+    internal ByteArrayPool.ReadOnlyMemoryOwner MemoryOwner;
 }

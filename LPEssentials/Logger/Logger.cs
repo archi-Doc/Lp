@@ -111,7 +111,7 @@ public static class Logger
         Default = new DefaultLogger();
         Console = new EmptyLogger();
         File = new EmptyLogger();
-        Priority = new PriorityLogger();
+        Subcommand = new PriorityLogger();
     }
 
     public static void Configure(LPBase? info)
@@ -153,7 +153,7 @@ public static class Logger
 
     public static ISimpleLogger Console { get; private set; }
 
-    public static ISimpleLogger Priority { get; }
+    public static ISimpleLogger Subcommand { get; }
 
     private static bool viewMode = true;
 }

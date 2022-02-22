@@ -44,7 +44,7 @@ public class NetBenchSubcommand : ISimpleCommandAsync<NetBenchOptions>
 
     public async Task Process(NodeAddress node, NetBenchOptions options)
     {
-        Logger.Priority.Information($"NetBench: {node.ToString()}");
+        Logger.Subcommand.Information($"NetBench: {node.ToString()}");
 
         var sw = Stopwatch.StartNew();
         using (var terminal = this.Control.NetControl.Terminal.Create(node))

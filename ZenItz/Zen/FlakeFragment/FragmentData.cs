@@ -5,9 +5,9 @@ namespace ZenItz;
 #pragma warning disable SA1401 // Fields should be private
 
 [ValueLinkObject]
-internal partial class Fragment2 : Fragment
+internal partial class FragmentData : FlakeData
 {
-    public Fragment2(Zen zen, Identifier identifier)
+    public FragmentData(Zen zen, Identifier identifier)
         : base(zen)
     {
         this.Identifier = identifier;

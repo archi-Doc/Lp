@@ -127,6 +127,11 @@ public class ByteArrayPool
         public byte[] ByteArray { get; }
 
         /// <summary>
+        /// Gets a value indicating whether the owner (byte array) is rent or not.
+        /// </summary>
+        public bool IsRent => Volatile.Read(ref this.count) > 0;
+
+        /// <summary>
         /// Gets a value indicating whether the owner (byte array) is returned or not.
         /// </summary>
         public bool IsReturned => Volatile.Read(ref this.count) <= 0;
@@ -253,6 +258,11 @@ public class ByteArrayPool
         public MemoryOwner Slice(int start, int length)
             => new(this.Owner!, this.Memory.Slice(start, length));
 
+        public ReadOnlyMemoryOwner AsReadOnly()
+        {
+            return new ReadOnlyMemoryOwner(this.Owner!, this.Memory);
+        }
+
         /// <summary>
         /// Decrement the reference count.<br/>
         /// When it reaches zero, it returns the byte array to the pool.<br/>
@@ -268,9 +278,14 @@ public class ByteArrayPool
         public void Dispose() => this.Return();
 
         /// <summary>
+        /// Gets a value indicating whether the owner (byte array) is rent or not.
+        /// </summary>
+        public bool IsRent => this.Owner != null && this.Owner.IsRent;
+
+        /// <summary>
         /// Gets a value indicating whether the owner (byte array) is returned or not.
         /// </summary>
-        public bool IsReturned => this.Owner == null || this.Owner.IsReturned == true;
+        public bool IsReturned => this.Owner == null || this.Owner.IsReturned;
 
         /// <summary>
         /// Gets a value indicating whether the memory is empty.
@@ -377,6 +392,11 @@ public class ByteArrayPool
         }
 
         public void Dispose() => this.Return();
+
+        /// <summary>
+        /// Gets a value indicating whether the owner (byte array) is rent or not.
+        /// </summary>
+        public bool IsRent => this.Owner != null && this.Owner.IsRent;
 
         /// <summary>
         /// Gets a value indicating whether the owner (byte array) is returned or not.
@@ -512,6 +532,34 @@ public class ByteArrayPool
         }
 
         bucket.SetMaxPool(maxPool);
+    }
+
+    /// <summary>
+    /// Sets the maximum number of pooled byte arrays that are less than or equal to the specified size.
+    /// </summary>
+    /// <param name="length">The length of a byte array.</param>
+    /// <param name="maxPool">The maximum number of array instances that may be stored in the bucket (0 for unlimited).</param>
+    public void SetMaxPoolBelow(int length, int maxPool)
+    {
+        var bucketIndex = BitOperations.LeadingZeroCount((uint)length - 1);
+        var bucket = this.buckets[bucketIndex];
+        if (bucket == null)
+        {
+            if (length == 0)
+            {
+                bucketIndex = 32;
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException(nameof(length));
+            }
+        }
+
+        while (bucketIndex <= 32)
+        {
+            this.buckets[bucketIndex]?.SetMaxPool(maxPool);
+            bucketIndex++;
+        }
     }
 
     public void Dump(ISimpleLogger logger)

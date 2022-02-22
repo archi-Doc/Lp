@@ -10,4 +10,6 @@ public enum ZenResult
     OverNumberLimit,
     Removed,
     NoData,
+    NoDirectory,
+    NoFile,
 }

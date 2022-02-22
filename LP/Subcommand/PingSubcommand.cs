@@ -42,7 +42,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
 
     public async Task Ping(NodeAddress node, PingOptions options)
     {
-        Logger.Priority.Information($"Ping: {node.ToString()}");
+        Logger.Subcommand.Information($"Ping: {node.ToString()}");
 
         var sw = Stopwatch.StartNew();
         using (var terminal = this.Control.NetControl.Terminal.Create(node))
@@ -53,11 +53,11 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
             sw.Stop();
             if (result.Value != null)
             {
-                Logger.Priority.Information($"Received: {result.ToString()} - {sw.ElapsedMilliseconds} ms");
+                Logger.Subcommand.Information($"Received: {result.ToString()} - {sw.ElapsedMilliseconds} ms");
             }
             else
             {
-                Logger.Priority.Error($"{result}");
+                Logger.Subcommand.Error($"{result}");
             }
         }
 
