@@ -10,6 +10,8 @@ public class Zen
     public const int MaxFragmentSize = 1024 * 4; // 4KB
     public const int MaxFragmentCount = 1000;
     public const long DefaultMemorySizeLimit = 1024 * 1024 * 100; // 100MB
+    public const long DefaultDirectoryCapacity = 1024L * 1024 * 1024 * 10; // 10GB
+
     public const string DefaultZenDirectory = "Zen";
     public const string DefaultZenFile = "Zen.main";
     public const string DefaultZenBackup = "Zen.back";
@@ -155,6 +157,40 @@ public class Zen
     public ObjectToMemoryOwnerDelegate ObjectToMemoryOwner { get; private set; } = DefaultObjectToMemoryOwner;
 
     public MemoryOwnerToObjectDelegate MemoryOwnerToObject { get; private set; } = DefaultMemoryOwnerToObject;
+
+    public void Restart()
+    {
+        if (this.Started)
+        {
+            return;
+        }
+
+        this.IO.Restart();
+
+        this.Started = true;
+    }
+
+    internal async Task Pause()
+    {
+        if (!this.Started)
+        {
+            return;
+        }
+
+        this.Started = false;
+
+        // Save & Unload flakes
+        lock (this.flakeGoshujin)
+        {
+            foreach (var x in this.flakeGoshujin.IdChain)
+            {
+                x.Save(true);
+            }
+        }
+
+        // Stop IO(ZenDirectory)
+        await this.IO.StopAsync();
+    }
 
     internal FlakeObjectGoshujin FlakeObjectGoshujin;
     internal FlakeObjectGoshujin FragmentObjectGoshujin;

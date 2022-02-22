@@ -193,7 +193,7 @@ internal partial class ZenDirectory
     public string DirectoryPath { get; private set; } = string.Empty;
 
     [Key(3)]
-    public long DirectoryCapacity { get; private set; }
+    public long DirectoryCapacity { get; internal set; }
 
     [Key(4)]
     public long DirectorySize { get; private set; }

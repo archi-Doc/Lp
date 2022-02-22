@@ -35,9 +35,11 @@ public class ZenControl
         var commandTypes = new Type[]
         {
             typeof(LP.Subcommands.ZenSubcommand),
+            typeof(LP.Subcommands.ZenDirSubcommand),
         };
 
         LP.Subcommands.ZenSubcommand.Register(container);
+        LP.Subcommands.ZenDirSubcommand.Register(container);
 
         commandList?.AddRange(commandTypes);
         foreach (var x in commandTypes)

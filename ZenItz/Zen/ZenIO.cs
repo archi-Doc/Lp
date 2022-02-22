@@ -17,6 +17,21 @@ public sealed class ZenIO
         return this.directoryGoshujin.Select(a => a.GetInformation()).ToArray();
     }
 
+    public void AddDirectory(string path, uint id = 0, long capacity = Zen.DefaultDirectoryCapacity)
+    {
+        if (this.Started)
+        {
+            return;
+        }
+
+        lock (this.directoryGoshujin)
+        {
+            var directory = new ZenDirectory(this.GetFreeDirectoryId(this.directoryGoshujin), path);
+            directory.DirectoryCapacity = capacity;
+            this.directoryGoshujin.Add(directory);
+        }
+    }
+
     public bool Started { get; private set; }
 
     internal void Save(ref ulong file, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
@@ -62,6 +77,25 @@ public sealed class ZenIO
         }
 
         return await directory.Load(file);
+    }
+
+    internal void Restart()
+    {
+        if (this.Started)
+        {
+            return;
+        }
+
+        lock (this.directoryGoshujin)
+        {
+            foreach (var x in this.directoryGoshujin)
+            {
+                x.Check();
+                x.Start();
+            }
+        }
+
+        this.Started = true;
     }
 
     internal async Task<ZenStartResult> TryStart(ZenStartParam param, ReadOnlyMemory<byte>? data)
@@ -163,7 +197,7 @@ public sealed class ZenIO
 
     private uint GetFreeDirectoryId(ZenDirectory.GoshujinClass goshujin)
     {
-        while(true)
+        while (true)
         {
             var id = LP.Random.Pseudo.NextUInt32();
             if (id != 0 && !goshujin.DirectoryIdChain.ContainsKey(id))

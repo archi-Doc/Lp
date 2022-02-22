@@ -90,7 +90,7 @@ public partial class Flake
     }
 
     public void Save(bool unload = false)
-    {
+    {// Skip checking Zen.Started
         lock (this.syncObject)
         {
             if (this.IsRemoved)
