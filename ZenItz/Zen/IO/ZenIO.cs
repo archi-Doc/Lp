@@ -119,6 +119,21 @@ public sealed class ZenIO
         return await directory.Load(file);
     }
 
+    internal void Remove(ulong file)
+    {
+        ZenDirectory? directory;
+        if (!ZenFile.IsValidFile(file))
+        {// Invalid file.
+            return;
+        }
+        else if (!this.directoryGoshujin.DirectoryIdChain.TryGetValue(ZenFile.ToDirectoryId(file), out directory))
+        {// No directory
+            return;
+        }
+
+        directory.Remove(file);
+    }
+
     internal void Restart()
     {
         if (this.Started)

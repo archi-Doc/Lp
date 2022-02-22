@@ -24,6 +24,7 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
         p.Set(new byte[] { 0, 1, });
         p.Save(true);
         var result = await p.Get();
+        p.Remove();
 
         await zen.StopZen(new());
     }

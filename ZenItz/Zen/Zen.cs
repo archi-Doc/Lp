@@ -114,10 +114,6 @@ public class Zen
                 flake = new Flake(this, id);
                 this.flakeGoshujin.Add(flake);
             }
-            else
-            {
-                flake.CreateInternal(this.flakeGoshujin);
-            }
         }
 
         return flake;
@@ -133,7 +129,7 @@ public class Zen
         }
     }
 
-    public bool TryRemove(Identifier id)
+    public bool Remove(Identifier id)
     {
         lock (this.flakeGoshujin)
         {

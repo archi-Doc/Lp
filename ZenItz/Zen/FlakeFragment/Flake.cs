@@ -19,7 +19,53 @@ public partial class Flake
         this.identifier = identifier;
     }
 
-    public ZenResult Set(ReadOnlySpan<byte> data) => this.SetInternal(data, false);
+    public ZenResult Set(ReadOnlySpan<byte> data)
+    {
+        if (!this.Zen.Started)
+        {
+            return ZenResult.NotStarted;
+        }
+        else if (data.Length > Zen.MaxFlakeSize)
+        {
+            return ZenResult.OverSizeLimit;
+        }
+
+        lock (this.syncObject)
+        {
+            if (this.IsRemoved)
+            {
+                return ZenResult.Removed;
+            }
+
+            this.flakeObject ??= new(this, this.Zen.FlakeObjectGoshujin);
+            this.flakeObject.SetSpan(data);
+        }
+
+        return ZenResult.Success;
+    }
+
+    public ZenResult Set(Identifier fragmentId, ReadOnlySpan<byte> data)
+    {
+        if (!this.Zen.Started)
+        {
+            return ZenResult.NotStarted;
+        }
+        else if (data.Length > Zen.MaxFragmentSize)
+        {
+            return ZenResult.OverSizeLimit;
+        }
+
+        lock (this.syncObject)
+        {
+            if (this.IsRemoved)
+            {
+                return ZenResult.Removed;
+            }
+
+            this.fragmentObject ??= new(this, this.Zen.FragmentObjectGoshujin);
+            return this.fragmentObject.SetSpan(fragmentId, data);
+        }
+    }
 
     public async Task<ZenDataResult> Get()
     {
@@ -66,29 +112,6 @@ public partial class Flake
         return new(ZenResult.NoData);
     }
 
-    public ZenResult Set(Identifier fragmentId, ReadOnlySpan<byte> data)
-    {
-        if (!this.Zen.Started)
-        {
-            return ZenResult.NotStarted;
-        }
-        else if (data.Length > Zen.MaxFragmentSize)
-        {
-            return ZenResult.OverSizeLimit;
-        }
-
-        lock (this.syncObject)
-        {
-            if (this.IsRemoved)
-            {
-                return ZenResult.Removed;
-            }
-
-            this.fragmentObject ??= new(this, this.Zen.FragmentObjectGoshujin);
-            return this.fragmentObject.SetSpan(fragmentId, data);
-        }
-    }
-
     public void Save(bool unload = false)
     {// Skip checking Zen.Started
         lock (this.syncObject)
@@ -103,7 +126,7 @@ public partial class Flake
         }
     }
 
-    public bool TryRemove() => this.Zen.TryRemove(this.Identifier);
+    public bool Remove() => this.Zen.Remove(this.Identifier);
 
     public Zen Zen { get; internal set; } = default!;
 
@@ -111,9 +134,13 @@ public partial class Flake
 
     public bool IsRemoved => this.Goshujin == null;
 
-    internal ZenResult SetInternal(ReadOnlySpan<byte> data, bool loading)
+    /*internal ZenResult SetInternal(ReadOnlySpan<byte> data, bool loading)
     {
-        if (data.Length > Zen.MaxFlakeSize)
+        if (!this.Zen.Started)
+        {
+            return ZenResult.NotStarted;
+        }
+        else if (data.Length > Zen.MaxFlakeSize)
         {
             return ZenResult.OverSizeLimit;
         }
@@ -159,7 +186,7 @@ public partial class Flake
                 return this.fragmentObject.SetSpan(fragmentId, data);
             }
         }
-    }
+    }*/
 
     internal void CreateInternal(Flake.GoshujinClass goshujin)
     {// lock (flakeGoshujin)
@@ -176,16 +203,15 @@ public partial class Flake
     {// lock (flakeGoshujin)
         lock (this.syncObject)
         {
-            if (this.Goshujin == null)
-            {
-                return false;
-            }
-            else
-            {
-                this.Goshujin = null;
-                return true;
-            }
+            this.flakeObject?.Unload();
+            this.fragmentObject?.Unload();
+            this.Goshujin = null;
+
+            this.Zen.IO.Remove(this.flakeFile);
+            this.Zen.IO.Remove(this.fragmentFile);
         }
+
+        return true;
     }
 
     [Key(0)]

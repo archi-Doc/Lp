@@ -54,7 +54,7 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
             }
         }
         else if (work.Type == ZenDirectoryWork.WorkType.Load)
-        {
+        {// Load
             try
             {
                 var path = worker.ZenDirectory.GetSnowflakePath(work.SnowflakeId);
@@ -86,6 +86,18 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
             catch (OperationCanceledException)
             {
                 return AbortOrComplete.Abort;
+            }
+            catch
+            {
+            }
+        }
+        else if (work.Type == ZenDirectoryWork.WorkType.Remove)
+        {
+            try
+            {
+                var path = worker.ZenDirectory.GetSnowflakePath(work.SnowflakeId);
+                filePath = Path.Combine(worker.ZenDirectory.DirectoryPath, path.Directory, path.File);
+                File.Delete(filePath);
             }
             catch
             {
@@ -128,6 +140,7 @@ internal class ZenDirectoryWork : IEquatable<ZenDirectoryWork>
     {
         Save,
         Load,
+        Remove,
     }
 
     public WorkType Type { get; }
@@ -148,10 +161,16 @@ internal class ZenDirectoryWork : IEquatable<ZenDirectoryWork>
     }
 
     public ZenDirectoryWork(uint snowflakeId, int loadSize)
-    {// Save
+    {// Load
         this.Type = WorkType.Load;
         this.SnowflakeId = snowflakeId;
         this.LoadSize = loadSize;
+    }
+
+    public ZenDirectoryWork(uint snowflakeId)
+    {// Remove
+        this.Type = WorkType.Remove;
+        this.SnowflakeId = snowflakeId;
     }
 
     public override int GetHashCode()

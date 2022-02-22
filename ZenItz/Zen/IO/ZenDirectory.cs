@@ -109,6 +109,31 @@ internal partial class ZenDirectory
         this.worker?.AddLast(new(snowflake.SnowflakeId, memoryOwner.IncrementAndShare()));
     }
 
+    internal void Remove(ulong file)
+    {
+        Snowflake? snowflake;
+        var snowflakeId = ZenFile.ToSnowflakeId(file);
+
+        lock (this.snowflakeGoshujin)
+        {
+            if (snowflakeId != 0 &&
+                this.snowflakeGoshujin.SnowflakeIdChain.TryGetValue(snowflakeId, out snowflake))
+            {// Found
+                snowflake.Goshujin = null;
+            }
+            else
+            {// Not found
+                return;
+            }
+        }
+
+        // Load (snowflakeId, size)
+        if (this.worker != null)
+        {
+            this.worker.AddLast(new(snowflake.SnowflakeId));
+        }
+    }
+
     internal bool Check()
     {
         try
