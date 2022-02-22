@@ -23,7 +23,7 @@ public partial class Flake
 
     public async Task<ZenDataResult> Get()
     {
-        if (!this.Zen.ZenStarted)
+        if (!this.Zen.Started)
         {
             return new(ZenResult.NotStarted);
         }
@@ -68,7 +68,7 @@ public partial class Flake
 
     public ZenResult Set(Identifier fragmentId, ReadOnlySpan<byte> data)
     {
-        if (!this.Zen.ZenStarted)
+        if (!this.Zen.Started)
         {
             return ZenResult.NotStarted;
         }

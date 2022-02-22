@@ -44,7 +44,7 @@ public class Zen
     public async Task<ZenStartResult> TryStartZen(ZenStartParam param)
     {
         var result = ZenStartResult.Success;
-        if (this.ZenStarted)
+        if (this.Started)
         {
             return ZenStartResult.AlreadyStarted;
         }
@@ -63,18 +63,18 @@ public class Zen
             return result;
         }
 
-        this.ZenStarted = true;
+        this.Started = true;
         return result;
     }
 
     public async Task StopZen(ZenStopParam param)
     {
-        if (!this.ZenStarted)
+        if (!this.Started)
         {
             return;
         }
 
-        this.ZenStarted = false;
+        this.Started = false;
 
         // Save & Unload flakes
         lock (this.flakeGoshujin)
@@ -144,6 +144,8 @@ public class Zen
         return false;
     }
 
+    public bool Started { get; private set; }
+
     public ZenIO IO { get; }
 
     public ByteArrayPool FlakePool { get; }
@@ -154,13 +156,13 @@ public class Zen
 
     public MemoryOwnerToObjectDelegate MemoryOwnerToObject { get; private set; } = DefaultMemoryOwnerToObject;
 
-    internal volatile bool ZenStarted;
     internal FlakeObjectGoshujin FlakeObjectGoshujin;
     internal FlakeObjectGoshujin FragmentObjectGoshujin;
     private Flake.GoshujinClass flakeGoshujin = new();
 
     private async Task<ZenStartResult> LoadZenDirectory(ZenStartParam param)
     {
+        // Load
         ZenStartResult result;
         byte[]? data;
         try
@@ -239,6 +241,7 @@ LoadBackup:
 
     private async Task<ZenStartResult> LoadZen(ZenStartParam param)
     {
+        // Load
         byte[]? data;
         try
         {
@@ -290,6 +293,7 @@ LoadBackup:
             }
         }
 
+        // Deserialize
         if (!this.DeserializeZen(memory))
         {
             if (await param.Query(ZenStartResult.ZenFileError))
