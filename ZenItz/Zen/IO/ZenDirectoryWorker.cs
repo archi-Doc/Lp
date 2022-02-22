@@ -11,11 +11,10 @@ namespace ZenItz;
 
 internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
 {
-    public ZenDirectoryWorker(ThreadCoreBase parent, ZenDirectory zenDirectory, ByteArrayPool pool)
+    public ZenDirectoryWorker(ThreadCoreBase parent, ZenDirectory zenDirectory)
         : base(parent, Process, true)
     {
         this.ZenDirectory = zenDirectory;
-        this.pool = pool;
     }
 
     public static async Task<AbortOrComplete> Process(TaskWorker<ZenDirectoryWork> w, ZenDirectoryWork work)
@@ -68,7 +67,7 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
                         goto DeleteAndExit;
                     }
 
-                    var memoryOwner = worker.pool.Rent(work.LoadSize).ToMemoryOwner(0, work.LoadSize);
+                    var memoryOwner = FlakeFragmentPool.Rent(work.LoadSize).ToMemoryOwner(0, work.LoadSize);
                     read = await RandomAccess.ReadAsync(handle, memoryOwner.Memory, ZenDirectory.HashSize, worker.CancellationToken);
                     if (read != work.LoadSize)
                     {
@@ -130,7 +129,6 @@ DeleteAndExit:
         }
     }
 
-    private ByteArrayPool pool;
     private HashSet<string> createdDirectories = new();
 }
 

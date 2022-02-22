@@ -1,20 +1,16 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
-using System.Buffers;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+namespace ZenItz;
 
-namespace LP.Fragment;
-
-public static class FragmentPool
+public static class FlakeFragmentPool
 {
-    static FragmentPool()
+    static FlakeFragmentPool()
     {
-        pool = new ByteArrayPool(FragmentService.MaxFragmentSize, 0);
+        pool = new ByteArrayPool(Zen.MaxFlakeSize, (int)(Zen.DefaultMemorySizeLimit / Zen.MaxFlakeSize));
+        pool.SetMaxPoolBelow(Zen.MaxFragmentSize, 0);
     }
+
+    public static ByteArrayPool Pool => pool;
 
     public static ByteArrayPool.Owner Rent(int minimumLength) => pool.Rent(minimumLength);
 

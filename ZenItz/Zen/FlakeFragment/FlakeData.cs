@@ -26,7 +26,7 @@ internal partial class FlakeData
 
         memoryDifference += span.Length;
         this.Object = null;
-        var owner = this.Zen.FlakeFragmentPool.Rent(span.Length);
+        var owner = FlakeFragmentPool.Rent(span.Length);
         this.MemoryOwner = owner.ToReadOnlyMemoryOwner(0, span.Length);
         this.MemoryOwnerAvailable = true;
         span.CopyTo(owner.ByteArray.AsSpan());

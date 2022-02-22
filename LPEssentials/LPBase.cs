@@ -32,6 +32,8 @@ public class LPBase
 
     public string RootDirectory { get; private set; } = default!;
 
+    public string DataDirectory { get; private set; } = default!;
+
     public LPMode Mode { get; private set; }
 
     public string NodeName { get; private set; } = default!;
@@ -55,6 +57,7 @@ public class LPBase
         }
 
         Directory.CreateDirectory(this.RootDirectory);
+        this.DataDirectory = Path.Combine(this.RootDirectory, "Data");
 
         // Mode
         LPMode mode;

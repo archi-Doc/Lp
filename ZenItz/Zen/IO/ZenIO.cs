@@ -8,9 +8,8 @@ public sealed class ZenIO
 {
     public const int DirectoryRotationThreshold = 1024 * 1024 * 1; // 100 MB
 
-    public ZenIO(ByteArrayPool pool)
+    public ZenIO()
     {
-        this.Pool = pool;
     }
 
     public ZenDirectoryInformation[] GetDirectoryInformation()
@@ -69,8 +68,6 @@ public sealed class ZenIO
 
         return AddDictionaryResult.Success;
     }
-
-    public ByteArrayPool Pool { get; }
 
     public bool Started { get; private set; }
 
@@ -146,7 +143,7 @@ public sealed class ZenIO
             foreach (var x in this.directoryGoshujin)
             {
                 x.Check();
-                x.Start(this.Pool);
+                x.Start();
             }
         }
 
@@ -208,7 +205,7 @@ public sealed class ZenIO
 
         foreach (var x in goshujin)
         {
-            x.Start(this.Pool);
+            x.Start();
         }
 
         if (goshujin.DirectoryIdChain.Count == 0)

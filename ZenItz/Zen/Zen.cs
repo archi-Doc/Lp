@@ -36,11 +36,9 @@ public class Zen
 
     public Zen()
     {
-        this.FlakeFragmentPool = new ByteArrayPool(MaxFlakeSize, (int)(DefaultMemorySizeLimit / MaxFlakeSize));
-        this.FlakeFragmentPool.SetMaxPoolBelow(MaxFragmentSize, 0);
-        this.IO = new(this.FlakeFragmentPool);
-        this.FlakeObjectGoshujin = new(this, this.FlakeFragmentPool);
-        this.FragmentObjectGoshujin = new(this, this.FlakeFragmentPool);
+        this.IO = new();
+        this.FlakeObjectGoshujin = new(this);
+        this.FragmentObjectGoshujin = new(this);
     }
 
     public async Task<ZenStartResult> TryStartZen(ZenStartParam param)
@@ -145,8 +143,6 @@ public class Zen
     public bool Started { get; private set; }
 
     public ZenIO IO { get; }
-
-    public ByteArrayPool FlakeFragmentPool { get; }
 
     public ObjectToMemoryOwnerDelegate ObjectToMemoryOwner { get; private set; } = DefaultObjectToMemoryOwner;
 

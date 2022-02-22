@@ -103,19 +103,21 @@ public class Control
     public async Task LoadAsync()
     {
         await Radio.SendAsync(new Message.LoadAsync()).ConfigureAwait(false);
-        await this.NetControl.EssentialNode.LoadAsync(Path.Combine(this.LPBase.RootDirectory, EssentialNode.FileName)).ConfigureAwait(false);
-        if (!await this.ZenControl.Itz.LoadAsync(Path.Combine(this.LPBase.RootDirectory, Itz.DefaultItzFile)).ConfigureAwait(false))
+        await this.NetControl.EssentialNode.LoadAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
+        if (!await this.ZenControl.Itz.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile)).ConfigureAwait(false))
         {
-            await this.ZenControl.Itz.LoadAsync(Path.Combine(this.LPBase.RootDirectory, Itz.DefaultItzBackup)).ConfigureAwait(false);
+            await this.ZenControl.Itz.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup)).ConfigureAwait(false);
         }
     }
 
     public async Task SaveAsync()
     {
         await Radio.SendAsync(new Message.SaveAsync()).ConfigureAwait(false);
-        await this.NetControl.EssentialNode.SaveAsync(Path.Combine(this.LPBase.RootDirectory, EssentialNode.FileName)).ConfigureAwait(false);
-        await this.ZenControl.Zen.StopZen(new());
-        await this.ZenControl.Itz.SaveAsync(Path.Combine(this.LPBase.RootDirectory, Itz.DefaultItzFile), Path.Combine(this.LPBase.RootDirectory, Itz.DefaultItzBackup));
+
+        Directory.CreateDirectory(this.LPBase.DataDirectory);
+        await this.NetControl.EssentialNode.SaveAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
+        await this.ZenControl.Zen.StopZen(new(Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenBackup), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryBackup)));
+        await this.ZenControl.Itz.SaveAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile), Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup));
     }
 
     public bool TryStart()
