@@ -12,6 +12,11 @@ public class ZenIO
     {
     }
 
+    public ZenDirectoryInformation[] GetDirectoryInformation()
+    {
+        return this.directoryGoshujin.Select(a => a.GetInformation()).ToArray();
+    }
+
     internal void Save(ref ulong file, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
     {
         ZenDirectory? directory;
@@ -120,11 +125,19 @@ public class ZenIO
         return ZenStartResult.Success;
     }
 
-    internal void Stop()
+    internal async Task WaitForCompletionAsync()
     {
         foreach (var x in this.directoryGoshujin)
         {
-            x.Stop();
+            await x.WaitForCompletionAsync().ConfigureAwait(false);
+        }
+    }
+
+    internal async Task StopAsync()
+    {
+        foreach (var x in this.directoryGoshujin)
+        {
+            await x.StopAsync().ConfigureAwait(false);
         }
     }
 

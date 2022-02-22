@@ -6,7 +6,7 @@ using Tinyhand;
 
 namespace ZenItzTest;
 
-[SimpleCommand("zen")]
+[SimpleCommand("zentest")]
 public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
 {
     public ZenTestSubcommand(ZenControl zenControl)
