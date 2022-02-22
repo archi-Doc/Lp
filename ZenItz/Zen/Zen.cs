@@ -10,11 +10,13 @@ public class Zen
     public const int MaxFragmentSize = 1024 * 4; // 4KB
     public const int MaxFragmentCount = 1000;
     public const long DefaultMemorySizeLimit = 1024 * 1024 * 100; // 100MB
-    public const string DefaultZenFolder = "Zen";
+    public const string DefaultZenDirectory = "Zen";
     public const string DefaultZenFile = "Zen.main";
     public const string DefaultZenBackup = "Zen.back";
-    public const string DefaultDirectoryFile = "Dir.main";
-    public const string DefaultDirectoryBackup = "Dir.back";
+    public const string DefaultZenDirectoryFile = "ZenDirectory.main";
+    public const string DefaultZenDirectoryBackup = "ZenDirectory.back";
+    public const string DefaultDirectoryFile = "Directory.main";
+    public const string DefaultDirectoryBackup = "Directory.back";
 
     public delegate void ObjectToMemoryOwnerDelegate(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved);
 
@@ -47,6 +49,7 @@ public class Zen
             return ZenStartResult.AlreadyStarted;
         }
 
+        // Load
         byte[]? zenData;
         try
         {
@@ -70,6 +73,7 @@ public class Zen
             }
         }
 
+        // Checksum
         if (!HashHelper.CheckFarmHashAndGetData(zenData.AsMemory(), out var memory))
         {
             if (await param.Query(ZenStartResult.ZenFileError))
@@ -88,11 +92,15 @@ public class Zen
         }
 
         result = await this.IO.TryStart(param, memory);
-        if (result == ZenStartResult.Success || param.ForceStart)
+        if (result != ZenStartResult.Success && !param.ForceStart)
         {
-            this.ZenStarted = true;
+            return result;
         }
 
+        // Load
+        this.LoadZen(memory);
+
+        this.ZenStarted = true;
         return result;
     }
 
@@ -117,9 +125,12 @@ public class Zen
         // Stop IO(ZenDirectory)
         await this.IO.StopAsync();
 
+        // Save Zen
+        await this.SaveZen(param.ZenFile, param.ZenBackup);
+
         // Save directory information
         var byteArray = this.IO.Serialize();
-        await HashHelper.GetFarmHashAndSaveAsync(byteArray, param.ZenFile, param.BackupFile);
+        await HashHelper.GetFarmHashAndSaveAsync(byteArray, param.ZenDirectoryFile, param.ZenDirectoryBackup);
     }
 
     public void SetDelegate(ObjectToMemoryOwnerDelegate objectToMemoryOwner, MemoryOwnerToObjectDelegate memoryOwnerToObject)
@@ -184,4 +195,32 @@ public class Zen
     internal FlakeObjectGoshujin FlakeObjectGoshujin;
     internal FlakeObjectGoshujin FragmentObjectGoshujin;
     private Flake.GoshujinClass flakeGoshujin = new();
+
+    private bool LoadZen(ReadOnlyMemory<byte> data)
+    {
+        if (!TinyhandSerializer.TryDeserialize<Flake.GoshujinClass>(data, out var g))
+        {
+            return false;
+        }
+
+        lock (this.flakeGoshujin)
+        {
+            this.FlakeObjectGoshujin.Goshujin.Clear();
+            this.FragmentObjectGoshujin.Goshujin.Clear();
+            this.flakeGoshujin = g;
+        }
+
+        return true;
+    }
+
+    private async Task SaveZen(string path, string? backupPath)
+    {
+        byte[]? byteArray;
+        lock (this.flakeGoshujin)
+        {
+            byteArray = TinyhandSerializer.Serialize(this.flakeGoshujin);
+        }
+
+        await HashHelper.GetFarmHashAndSaveAsync(byteArray, path, backupPath);
+    }
 }

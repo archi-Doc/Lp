@@ -127,6 +127,11 @@ public class ByteArrayPool
         public byte[] ByteArray { get; }
 
         /// <summary>
+        /// Gets a value indicating whether the owner (byte array) is rent or not.
+        /// </summary>
+        public bool IsRent => Volatile.Read(ref this.count) > 0;
+
+        /// <summary>
         /// Gets a value indicating whether the owner (byte array) is returned or not.
         /// </summary>
         public bool IsReturned => Volatile.Read(ref this.count) <= 0;
@@ -273,9 +278,14 @@ public class ByteArrayPool
         public void Dispose() => this.Return();
 
         /// <summary>
+        /// Gets a value indicating whether the owner (byte array) is rent or not.
+        /// </summary>
+        public bool IsRent => this.Owner != null && this.Owner.IsRent;
+
+        /// <summary>
         /// Gets a value indicating whether the owner (byte array) is returned or not.
         /// </summary>
-        public bool IsReturned => this.Owner == null || this.Owner.IsReturned == true;
+        public bool IsReturned => this.Owner == null || this.Owner.IsReturned;
 
         /// <summary>
         /// Gets a value indicating whether the memory is empty.
@@ -382,6 +392,11 @@ public class ByteArrayPool
         }
 
         public void Dispose() => this.Return();
+
+        /// <summary>
+        /// Gets a value indicating whether the owner (byte array) is rent or not.
+        /// </summary>
+        public bool IsRent => this.Owner != null && this.Owner.IsRent;
 
         /// <summary>
         /// Gets a value indicating whether the owner (byte array) is returned or not.

@@ -18,9 +18,6 @@ namespace LP;
 
 public class Control
 {
-    public const string BackupExtention = ".bak";
-    public const string ItzFilename = "LP.Itz";
-
     public static void Register(Container container)
     {
         // Container instance
@@ -107,9 +104,9 @@ public class Control
     {
         await Radio.SendAsync(new Message.LoadAsync()).ConfigureAwait(false);
         await this.NetControl.EssentialNode.LoadAsync(Path.Combine(this.LPBase.RootDirectory, EssentialNode.FileName)).ConfigureAwait(false);
-        if (!await this.ZenControl.Itz.LoadAsync(Path.Combine(this.LPBase.RootDirectory, ItzFilename)).ConfigureAwait(false))
+        if (!await this.ZenControl.Itz.LoadAsync(Path.Combine(this.LPBase.RootDirectory, Itz.DefaultItzFile)).ConfigureAwait(false))
         {
-            await this.ZenControl.Itz.LoadAsync(Path.Combine(this.LPBase.RootDirectory, ItzFilename, BackupExtention)).ConfigureAwait(false);
+            await this.ZenControl.Itz.LoadAsync(Path.Combine(this.LPBase.RootDirectory, Itz.DefaultItzBackup)).ConfigureAwait(false);
         }
     }
 
@@ -118,7 +115,7 @@ public class Control
         await Radio.SendAsync(new Message.SaveAsync()).ConfigureAwait(false);
         await this.NetControl.EssentialNode.SaveAsync(Path.Combine(this.LPBase.RootDirectory, EssentialNode.FileName)).ConfigureAwait(false);
         await this.ZenControl.Zen.StopZen(new());
-        await this.ZenControl.Itz.SaveAsync(Path.Combine(this.LPBase.RootDirectory, ItzFilename), Path.Combine(this.LPBase.RootDirectory, ItzFilename, BackupExtention));
+        await this.ZenControl.Itz.SaveAsync(Path.Combine(this.LPBase.RootDirectory, Itz.DefaultItzFile), Path.Combine(this.LPBase.RootDirectory, Itz.DefaultItzBackup));
     }
 
     public bool TryStart()

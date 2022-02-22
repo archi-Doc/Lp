@@ -2,13 +2,13 @@
 
 namespace ZenItz;
 
-public record ZenStartParam(string? DefaultFolder = null, string ZenFile = Zen.DefaultZenFile, bool ForceStart = false, ZenStartQueryDelegate? QueryDelegate = null)
+public record ZenStartParam(string? DefaultFolder = null, string ZenFile = Zen.DefaultZenFile, string ZenBackup = Zen.DefaultZenBackup, string ZenDirectoryFile = Zen.DefaultZenDirectoryFile, string ZenDirectoryBackup = Zen.DefaultZenDirectoryBackup, bool ForceStart = false, ZenStartQueryDelegate? QueryDelegate = null)
 {
     public Task<bool> Query(ZenStartResult query, string[]? list = null)
         => (this.QueryDelegate == null || this.ForceStart) ? Task.FromResult(true) : this.QueryDelegate(query, list);
 }
 
-public record ZenStopParam(string ZenFile = Zen.DefaultZenFile, string BackupFile = Zen.DefaultZenBackup);
+public record ZenStopParam(string ZenFile = Zen.DefaultZenFile, string ZenBackup = Zen.DefaultZenBackup, string ZenDirectoryFile = Zen.DefaultZenDirectoryFile, string ZenDirectoryBackup = Zen.DefaultZenDirectoryBackup);
 
 public enum ZenStartResult
 {

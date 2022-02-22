@@ -20,6 +20,8 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
     public static async Task<AbortOrComplete> Process(TaskWorker<ZenDirectoryWork> w, ZenDirectoryWork work)
     {
         var worker = (ZenDirectoryWorker)w;
+        string? filePath = null;
+
         if (work.Type == ZenDirectoryWork.WorkType.Save)
         {// Save
             var hash = new byte[ZenDirectory.HashSize];
@@ -31,7 +33,7 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
                 var directoryPath = Path.Combine(worker.ZenDirectory.DirectoryPath, path.Directory);
                 worker.CachedCreateDirectory(directoryPath);
 
-                var filePath = Path.Combine(directoryPath, path.File);
+                filePath = Path.Combine(directoryPath, path.File);
                 using (var handle = File.OpenHandle(filePath, mode: FileMode.OpenOrCreate, access: FileAccess.Write))
                 {
                     await RandomAccess.WriteAsync(handle, hash, 0, worker.CancellationToken);
@@ -55,26 +57,26 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
             try
             {
                 var path = worker.ZenDirectory.GetSnowflakePath(work.SnowflakeId);
-                var filePath = Path.Combine(worker.ZenDirectory.DirectoryPath, path.Directory, path.File);
+                filePath = Path.Combine(worker.ZenDirectory.DirectoryPath, path.Directory, path.File);
                 using (var handle = File.OpenHandle(filePath, mode: FileMode.Open, access: FileAccess.Read))
                 {
                     var hash = new byte[ZenDirectory.HashSize];
                     var read = await RandomAccess.ReadAsync(handle, hash, 0, worker.CancellationToken);
                     if (read != ZenDirectory.HashSize)
                     {
-                        return AbortOrComplete.Abort;
+                        goto DeleteAndExit;
                     }
 
                     var memoryOwner = new ByteArrayPool.MemoryOwner(new byte[100]); // tempcode Zen.FragmentPool.Rent(work.LoadSize).ToMemoryOwner();
                     read = await RandomAccess.ReadAsync(handle, memoryOwner.Memory, ZenDirectory.HashSize, worker.CancellationToken);
                     if (read != work.LoadSize)
                     {
-                        return AbortOrComplete.Abort;
+                        goto DeleteAndExit;
                     }
 
                     if (BitConverter.ToUInt64(hash) != Arc.Crypto.FarmHash.Hash64(memoryOwner.Memory.Span))
                     {
-                        return AbortOrComplete.Abort;
+                        goto DeleteAndExit;
                     }
 
                     work.LoadData = memoryOwner;
@@ -87,6 +89,14 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
             catch
             {
             }
+        }
+
+        return AbortOrComplete.Complete;
+
+DeleteAndExit:
+        if (filePath != null)
+        {
+            File.Delete(filePath);
         }
 
         return AbortOrComplete.Complete;

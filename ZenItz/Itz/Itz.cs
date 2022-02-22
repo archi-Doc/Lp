@@ -6,6 +6,9 @@ namespace ZenItz;
 
 public class Itz
 {
+    public const string DefaultItzFile = "Itz.main";
+    public const string DefaultItzBackup = "Itz.back";
+
     public Itz()
     {
     }

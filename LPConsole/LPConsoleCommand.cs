@@ -65,7 +65,7 @@ Abort:
 
     private async Task<AbortOrComplete> TryStartZen(ZenControl zenControl)
     {
-        var result = await zenControl.Zen.TryStartZen(new(Zen.DefaultZenFolder, Zen.DefaultZenFile, false, null));
+        var result = await zenControl.Zen.TryStartZen(new(Zen.DefaultZenDirectory, QueryDelegate: null));
         if (result != ZenStartResult.Success)
         {
             return AbortOrComplete.Abort;

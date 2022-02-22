@@ -59,7 +59,15 @@ internal partial class ZenDirectory
             var workInterface = this.worker.AddLast(new(snowflake.SnowflakeId, size));
             if (await workInterface.WaitForCompletionAsync().ConfigureAwait(false) == true)
             {// Complete
-                return new(ZenResult.Success, workInterface.Work.LoadData.AsReadOnly());
+                var data = workInterface.Work.LoadData;
+                if (data.IsRent)
+                {// Success
+                    return new(ZenResult.Success, data.AsReadOnly());
+                }
+                else
+                {// Failure
+                    return new(ZenResult.NoFile);
+                }
             }
             else
             {// Abort

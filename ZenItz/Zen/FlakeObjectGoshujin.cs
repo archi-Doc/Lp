@@ -12,10 +12,6 @@ internal class FlakeObjectGoshujin
         this.Pool = pool;
     }
 
-    internal void Update(int diff)
-    {// lock (this.goshujin)
-    }
-
     public Zen Zen { get; }
 
     public ByteArrayPool Pool { get; }
