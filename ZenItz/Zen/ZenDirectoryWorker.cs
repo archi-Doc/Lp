@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -28,7 +29,7 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
             {
                 var path = worker.ZenDirectory.GetSnowflakePath(work.SnowflakeId);
                 var directoryPath = Path.Combine(worker.ZenDirectory.DirectoryPath, path.Directory);
-                Directory.CreateDirectory(directoryPath);
+                worker.CachedCreateDirectory(directoryPath);
 
                 var filePath = Path.Combine(directoryPath, path.File);
                 using (var handle = File.OpenHandle(filePath, mode: FileMode.OpenOrCreate, access: FileAccess.Write))
@@ -92,6 +93,21 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
     }
 
     public ZenDirectory ZenDirectory { get; }
+
+    private bool CachedCreateDirectory(string path)
+    {
+        if (this.createdDirectories.Add(path))
+        {// Create
+            Directory.CreateDirectory(path);
+            return true;
+        }
+        else
+        {// Already created
+            return false;
+        }
+    }
+
+    private HashSet<string> createdDirectories = new();
 }
 
 internal class ZenDirectoryWork : TaskWork, IEquatable<ZenDirectoryWork>
