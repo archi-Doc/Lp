@@ -7,7 +7,7 @@ using ZenItz;
 
 namespace LP.Subcommands;
 
-[SimpleCommand("ls")]
+[SimpleCommand("ls", Description = "List zen directory information.")]
 public class ZenSubcommandLs : ISimpleCommandAsync
 {
     public ZenSubcommandLs(ZenControl control)

@@ -54,6 +54,8 @@ public class ZenControl
             RequireStrictOptionName = true,
             DoNotDisplayUsage = true,
         };
+
+        SubcommandParser = new(commandTypes, SubcommandParserOptions);
     }
 
     public static void QuickStart()
@@ -88,6 +90,8 @@ public class ZenControl
     public void Configure(Message.Configure message)
     {
     }
+
+    public static SimpleParser SubcommandParser { get; private set; } = default!;
 
     public static SimpleParserOptions SubcommandParserOptions { get; private set; } = default!;
 

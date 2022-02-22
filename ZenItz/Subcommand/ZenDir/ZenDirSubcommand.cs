@@ -45,8 +45,8 @@ public class ZenDirSubcommand : ISimpleCommandAsync
         await subcommandParser.ParseAndRunAsync(args);
     }
 
-    private static Type[]? commandTypes;
     private static SimpleParser? subcommandParser;
+    private static Type[]? commandTypes;
 
     public ZenControl Control { get; set; }
 }

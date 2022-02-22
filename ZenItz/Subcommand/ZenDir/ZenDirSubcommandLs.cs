@@ -21,7 +21,7 @@ public class ZenDirSubcommandLs : ISimpleCommandAsync
 
         foreach (var x in info)
         {
-            Console.WriteLine(x);
+            Console.WriteLine(x.ToString());
         }
     }
 

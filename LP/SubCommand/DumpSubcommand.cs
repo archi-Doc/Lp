@@ -19,7 +19,7 @@ public class DumpSubcommand : ISimpleCommand<DumpOptions>
 
     public void Run(DumpOptions options, string[] args)
     {
-        var logger = Logger.Priority;
+        var logger = Logger.Subcommand;
         var target = args.Length > 0 ? args[0] : string.Empty;
 
         logger.Information($"Dump: {target}");

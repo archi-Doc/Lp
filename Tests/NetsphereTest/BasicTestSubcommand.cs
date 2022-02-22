@@ -24,8 +24,8 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             return;
         }
 
-        Logger.Priority.Information($"SendData: {node.ToString()}");
-        Logger.Priority.Information($"{Stopwatch.Frequency}");
+        Logger.Subcommand.Information($"SendData: {node.ToString()}");
+        Logger.Subcommand.Information($"{Stopwatch.Frequency}");
 
         // var nodeInformation = NodeInformation.Alternative;
         using (var terminal = this.NetControl.Terminal.Create(node))
