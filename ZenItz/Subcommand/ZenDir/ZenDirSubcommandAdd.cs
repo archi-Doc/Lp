@@ -4,6 +4,7 @@ using Arc.Crypto;
 using LP;
 using SimpleCommandLine;
 using ZenItz;
+using ZenItz.Results;
 
 namespace LP.Subcommands;
 
@@ -24,8 +25,13 @@ public class ZenDirSubcommandAdd : ISimpleCommandAsync<ZenDirOptionsAdd>
         }
 
         await this.Control.Zen.Pause();
-        this.Control.Zen.IO.AddDirectory(option.Path, capacity: cap);
+        var result = this.Control.Zen.IO.AddDirectory(option.Path, capacity: cap);
         this.Control.Zen.Restart();
+
+        if (result == AddDictionaryResult.Success)
+        {
+            Logger.
+        }
     }
 
     public ZenControl Control { get; set; }

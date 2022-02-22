@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
+using ZenItz.Results;
 
 namespace ZenItz;
 
@@ -17,19 +17,56 @@ public sealed class ZenIO
         return this.directoryGoshujin.Select(a => a.GetInformation()).ToArray();
     }
 
-    public void AddDirectory(string path, uint id = 0, long capacity = Zen.DefaultDirectoryCapacity)
+    public AddDictionaryResult AddDirectory(string path, uint id = 0, long capacity = Zen.DefaultDirectoryCapacity)
     {
         if (this.Started)
         {
-            return;
+            return AddDictionaryResult.ZenRunning;
+        }
+        else if (capacity < 0)
+        {
+            capacity = Zen.DefaultDirectoryCapacity;
+        }
+
+        if (path.EndsWith('\\'))
+        {
+            path = path.Substring(0, path.Length - 1);
+        }
+
+        if (File.Exists(path))
+        {
+            return AddDictionaryResult.FileExists;
+        }
+
+        var relative = Path.GetRelativePath(this.rootDirectory, path);
+        if (!relative.StartsWith("..\\"))
+        {
+            path = relative;
         }
 
         lock (this.directoryGoshujin)
         {
-            var directory = new ZenDirectory(this.GetFreeDirectoryId(this.directoryGoshujin), path);
+            if (id == 0)
+            {
+                id = this.GetFreeDirectoryId(this.directoryGoshujin);
+            }
+
+            var directory = new ZenDirectory(id, path);
             directory.DirectoryCapacity = capacity;
+
+            if (this.directoryGoshujin.DirectoryIdChain.ContainsKey(id))
+            {
+                return AddDictionaryResult.DuplicateId;
+            }
+            else if (this.directoryGoshujin.DirectoryPathChain.ContainsKey(path))
+            {
+                return AddDictionaryResult.DuplicatePath;
+            }
+
             this.directoryGoshujin.Add(directory);
         }
+
+        return AddDictionaryResult.Success;
     }
 
     public bool Started { get; private set; }
@@ -225,5 +262,6 @@ public sealed class ZenIO
 
     private ZenDirectory.GoshujinClass directoryGoshujin = new();
     private ZenDirectory? currentDirectory;
+    private string rootDirectory = Directory.GetCurrentDirectory();
     private int directoryRotationCount;
 }

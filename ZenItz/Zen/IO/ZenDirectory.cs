@@ -190,6 +190,7 @@ internal partial class ZenDirectory
     public ZenDirectoryType Type { get; private set; }
 
     [Key(2)]
+    [Link(Type = ChainType.Unordered)]
     public string DirectoryPath { get; private set; } = string.Empty;
 
     [Key(3)]
