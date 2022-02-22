@@ -83,10 +83,9 @@ public class Control
 
     public static bool ObjectToMemoryOwner(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved)
     {
-        if (obj is IFlake flake)
+        if (obj is IFlake flake &&
+            FlakeFragmentService.TrySerialize<IFlake>(flake, out dataToBeMoved))
         {
-            var byteArray = TinyhandSerializer.Serialize<IFlake>(flake);
-            dataToBeMoved = new(byteArray); // tempcode
             return true;
         }
         else
