@@ -77,9 +77,8 @@ internal partial class FlakeData
             data = this.MemoryOwner.Memory.Span;
             return true;
         }
-        else if (this.Object != null)
+        else if (this.Object != null && this.Zen.ObjectToMemoryOwner(this.Object, out var m))
         {
-            this.Zen.ObjectToMemoryOwner(this.Object, out var m);
             this.MemoryOwner = m.AsReadOnly();
             this.MemoryOwnerAvailable = true;
             data = this.MemoryOwner.Memory.Span;
@@ -99,9 +98,8 @@ internal partial class FlakeData
             memoryOwmer = this.MemoryOwner.IncrementAndShare();
             return true;
         }
-        else if (this.Object != null)
+        else if (this.Object != null && this.Zen.ObjectToMemoryOwner(this.Object, out var m))
         {
-            this.Zen.ObjectToMemoryOwner(this.Object, out var m);
             this.MemoryOwner = m.AsReadOnly();
             this.MemoryOwnerAvailable = true;
             memoryOwmer = this.MemoryOwner.IncrementAndShare();
@@ -116,7 +114,21 @@ internal partial class FlakeData
 
     public bool TryGetObject([MaybeNullWhen(false)]out object? obj)
     {
-        return (obj = this.Object) != null ? true : false;
+        if (this.Object != null)
+        {
+            obj = this.Object;
+            return true;
+        }
+        else if (this.MemoryOwnerAvailable)
+        {
+            obj = this.Zen.MemoryOwnerToObject(this.MemoryOwner);
+            return obj != null;
+        }
+        else
+        {
+            obj = default;
+            return false;
+        }
     }
 
     public int Clear()

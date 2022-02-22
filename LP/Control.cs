@@ -81,6 +81,33 @@ public class Control
         subcommandParser = new SimpleParser(commandList, SubcommandParserOptions);
     }
 
+    public static bool ObjectToMemoryOwner(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved)
+    {
+        if (obj is IFlake flake)
+        {
+            var byteArray = TinyhandSerializer.Serialize<IFlake>(flake);
+            dataToBeMoved = new(byteArray); // tempcode
+            return true;
+        }
+        else
+        {
+            dataToBeMoved = default;
+            return false;
+        }
+    }
+
+    public static object? MemoryOwnerToObject(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
+    {
+        if (TinyhandSerializer.TryDeserialize<IFlake>(memoryOwner.Memory, out var value))
+        {
+            return value;
+        }
+        else
+        {
+            return null;
+        }
+    }
+
     public Control(LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl)
     {
         this.LPBase = lpBase;
@@ -89,6 +116,7 @@ public class Control
         this.NetControl.SetupServer();
         this.ZenControl = zenControl;
         this.ZenControl.Zen.IO.SetRootDirectory(this.LPBase.RootDirectory);
+        this.ZenControl.Zen.SetDelegate(ObjectToMemoryOwner, MemoryOwnerToObject);
 
         this.Core = new(ThreadCore.Root);
         this.BigMachine.Core.ChangeParent(this.Core);

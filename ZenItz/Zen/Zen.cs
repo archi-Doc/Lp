@@ -22,7 +22,7 @@ public class Zen
 
     public delegate bool ObjectToMemoryOwnerDelegate(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved);
 
-    public delegate object? MemoryOwnerToObjectDelegate(ByteArrayPool.MemoryOwner memoryOwner);
+    public delegate object? MemoryOwnerToObjectDelegate(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner);
 
     public static bool DefaultObjectToMemoryOwner(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved)
     {
@@ -30,7 +30,7 @@ public class Zen
         return false;
     }
 
-    public static object? DefaultMemoryOwnerToObject(ByteArrayPool.MemoryOwner memoryOwner)
+    public static object? DefaultMemoryOwnerToObject(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
     {
         return null;
     }
