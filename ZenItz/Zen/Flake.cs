@@ -105,7 +105,7 @@ public partial class Flake
 
     public bool TryRemove() => this.Zen.TryRemove(this.Identifier);
 
-    public Zen Zen { get; } = default!;
+    public Zen Zen { get; internal set; } = default!;
 
     public Identifier Identifier => this.identifier;
 

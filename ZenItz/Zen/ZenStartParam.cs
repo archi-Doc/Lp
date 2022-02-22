@@ -16,6 +16,7 @@ public enum ZenStartResult
     AlreadyStarted,
     ZenFileNotFound,
     ZenFileError,
+    ZenDirectoryNotFound,
     ZenDirectoryError,
     NoDirectoryAvailable,
 }

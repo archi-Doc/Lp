@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace ZenItz;
 
-public class ZenIO
+public sealed class ZenIO
 {
     public const int DirectoryRotationThreshold = 1024 * 1024 * 1; // 100 MB
 
@@ -16,6 +16,8 @@ public class ZenIO
     {
         return this.directoryGoshujin.Select(a => a.GetInformation()).ToArray();
     }
+
+    public bool Started { get; private set; }
 
     internal void Save(ref ulong file, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
     {
@@ -64,8 +66,12 @@ public class ZenIO
 
     internal async Task<ZenStartResult> TryStart(ZenStartParam param, ReadOnlyMemory<byte>? data)
     {
-        ZenDirectory.GoshujinClass? goshujin = null;
+        if (this.Started)
+        {
+            return ZenStartResult.Success;
+        }
 
+        ZenDirectory.GoshujinClass? goshujin = null;
         if (data != null)
         {
             try
@@ -122,6 +128,8 @@ public class ZenIO
         }
 
         this.directoryGoshujin = goshujin;
+
+        this.Started = true;
         return ZenStartResult.Success;
     }
 
@@ -135,10 +143,17 @@ public class ZenIO
 
     internal async Task StopAsync()
     {
+        if (!this.Started)
+        {
+            return;
+        }
+
         foreach (var x in this.directoryGoshujin)
         {
             await x.StopAsync().ConfigureAwait(false);
         }
+
+        this.Started = false;
     }
 
     internal byte[] Serialize()

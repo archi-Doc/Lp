@@ -49,56 +49,19 @@ public class Zen
             return ZenStartResult.AlreadyStarted;
         }
 
-        // Load
-        byte[]? zenData;
-        try
-        {
-            zenData = await File.ReadAllBytesAsync(param.ZenFile);
-        }
-        catch
-        {
-            if (await param.Query(ZenStartResult.ZenFileNotFound))
-            {
-                result = await this.IO.TryStart(param, null);
-                if (result == ZenStartResult.Success || param.ForceStart)
-                {
-                    this.ZenStarted = true;
-                }
-
-                return result;
-            }
-            else
-            {
-                return ZenStartResult.ZenFileNotFound;
-            }
-        }
-
-        // Checksum
-        if (!HashHelper.CheckFarmHashAndGetData(zenData.AsMemory(), out var memory))
-        {
-            if (await param.Query(ZenStartResult.ZenFileError))
-            {
-                result = await this.IO.TryStart(param, null);
-                if (result == ZenStartResult.Success || param.ForceStart)
-                {
-                    this.ZenStarted = true;
-                    return result;
-                }
-            }
-            else
-            {
-                return ZenStartResult.ZenFileError;
-            }
-        }
-
-        result = await this.IO.TryStart(param, memory);
-        if (result != ZenStartResult.Success && !param.ForceStart)
+        // Load ZenDirectory
+        result = await this.LoadZenDirectory(param);
+        if (result != ZenStartResult.Success)
         {
             return result;
         }
 
-        // Load
-        this.LoadZen(memory);
+        // Load Zen
+        result = await this.LoadZen(param);
+        if (result != ZenStartResult.Success)
+        {
+            return result;
+        }
 
         this.ZenStarted = true;
         return result;
@@ -126,7 +89,7 @@ public class Zen
         await this.IO.StopAsync();
 
         // Save Zen
-        await this.SaveZen(param.ZenFile, param.ZenBackup);
+        await this.SerializeZen(param.ZenFile, param.ZenBackup);
 
         // Save directory information
         var byteArray = this.IO.Serialize();
@@ -196,11 +159,162 @@ public class Zen
     internal FlakeObjectGoshujin FragmentObjectGoshujin;
     private Flake.GoshujinClass flakeGoshujin = new();
 
-    private bool LoadZen(ReadOnlyMemory<byte> data)
+    private async Task<ZenStartResult> LoadZenDirectory(ZenStartParam param)
+    {
+        ZenStartResult result;
+        byte[]? data;
+        try
+        {
+            data = await File.ReadAllBytesAsync(param.ZenDirectoryFile);
+        }
+        catch
+        {
+            goto LoadBackup;
+        }
+
+        // Checksum
+        if (!HashHelper.CheckFarmHashAndGetData(data.AsMemory(), out var memory))
+        {
+            goto LoadBackup;
+        }
+
+        result = await this.IO.TryStart(param, memory);
+        if (result == ZenStartResult.Success || param.ForceStart)
+        {
+            return ZenStartResult.Success;
+        }
+
+        return result;
+
+LoadBackup:
+        try
+        {
+            data = await File.ReadAllBytesAsync(param.ZenDirectoryBackup);
+        }
+        catch
+        {
+            if (await param.Query(ZenStartResult.ZenDirectoryNotFound))
+            {
+                result = await this.IO.TryStart(param, null);
+                if (result == ZenStartResult.Success || param.ForceStart)
+                {
+                    return ZenStartResult.Success;
+                }
+
+                return result;
+            }
+            else
+            {
+                return ZenStartResult.ZenDirectoryNotFound;
+            }
+        }
+
+        // Checksum Zen
+        if (!HashHelper.CheckFarmHashAndGetData(data.AsMemory(), out memory))
+        {
+            if (await param.Query(ZenStartResult.ZenDirectoryError))
+            {
+                result = await this.IO.TryStart(param, null);
+                if (result == ZenStartResult.Success || param.ForceStart)
+                {
+                    return ZenStartResult.Success;
+                }
+
+                return result;
+            }
+            else
+            {
+                return ZenStartResult.ZenDirectoryError;
+            }
+        }
+
+        result = await this.IO.TryStart(param, memory);
+        if (result == ZenStartResult.Success || param.ForceStart)
+        {
+            return ZenStartResult.Success;
+        }
+
+        return result;
+    }
+
+    private async Task<ZenStartResult> LoadZen(ZenStartParam param)
+    {
+        byte[]? data;
+        try
+        {
+            data = await File.ReadAllBytesAsync(param.ZenFile);
+        }
+        catch
+        {
+            goto LoadBackup;
+        }
+
+        // Checksum
+        if (!HashHelper.CheckFarmHashAndGetData(data.AsMemory(), out var memory))
+        {
+            goto LoadBackup;
+        }
+
+        if (this.DeserializeZen(memory))
+        {
+            return ZenStartResult.Success;
+        }
+
+LoadBackup:
+        try
+        {
+            data = await File.ReadAllBytesAsync(param.ZenBackup);
+        }
+        catch
+        {
+            if (await param.Query(ZenStartResult.ZenFileNotFound))
+            {
+                return ZenStartResult.Success;
+            }
+            else
+            {
+                return ZenStartResult.ZenFileNotFound;
+            }
+        }
+
+        // Checksum Zen
+        if (!HashHelper.CheckFarmHashAndGetData(data.AsMemory(), out memory))
+        {
+            if (await param.Query(ZenStartResult.ZenFileError))
+            {
+                return ZenStartResult.Success;
+            }
+            else
+            {
+                return ZenStartResult.ZenFileError;
+            }
+        }
+
+        if (!this.DeserializeZen(memory))
+        {
+            if (await param.Query(ZenStartResult.ZenFileError))
+            {
+                return ZenStartResult.Success;
+            }
+            else
+            {
+                return ZenStartResult.ZenFileError;
+            }
+        }
+
+        return ZenStartResult.Success;
+    }
+
+    private bool DeserializeZen(ReadOnlyMemory<byte> data)
     {
         if (!TinyhandSerializer.TryDeserialize<Flake.GoshujinClass>(data, out var g))
         {
             return false;
+        }
+
+        foreach (var x in g)
+        {
+            x.Zen = this;
         }
 
         lock (this.flakeGoshujin)
@@ -213,7 +327,7 @@ public class Zen
         return true;
     }
 
-    private async Task SaveZen(string path, string? backupPath)
+    private async Task SerializeZen(string path, string? backupPath)
     {
         byte[]? byteArray;
         lock (this.flakeGoshujin)
