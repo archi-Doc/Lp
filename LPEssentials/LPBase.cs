@@ -57,7 +57,7 @@ public class LPBase
         }
 
         Directory.CreateDirectory(this.RootDirectory);
-        this.DataDirectory = Path.Combine(this.RootDirectory, "Data");
+        this.DataDirectory = Path.Combine(this.RootDirectory, "LP");
 
         // Mode
         LPMode mode;

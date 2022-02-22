@@ -134,11 +134,20 @@ internal partial class ZenDirectory
         }
     }
 
-    internal bool Check()
+    internal bool PrepareAndCheck(string rootDirectory)
     {
         try
         {
-            Directory.CreateDirectory(this.DirectoryPath);
+            if (Path.IsPathRooted(this.DirectoryPath))
+            {
+                this.RootedPath = this.DirectoryPath;
+            }
+            else
+            {
+                this.RootedPath = Path.Combine(rootDirectory, this.DirectoryPath);
+            }
+
+            Directory.CreateDirectory(this.RootedPath);
             /*var directoryInfo = new DirectoryInfo(this.DirectoryPath);
             if (createDirectory)
             {
@@ -224,9 +233,12 @@ internal partial class ZenDirectory
     [Key(4)]
     public long DirectorySize { get; private set; }
 
-    public string DirectoryFile => Path.Combine(this.DirectoryPath, Zen.DefaultDirectoryFile);
+    [IgnoreMember]
+    public string RootedPath { get; private set; } = string.Empty;
 
-    public string DirectoryBackup => Path.Combine(this.DirectoryPath, Zen.DefaultDirectoryBackup);
+    public string DirectoryFile => Path.Combine(this.RootedPath, Zen.DefaultDirectoryFile);
+
+    public string DirectoryBackup => Path.Combine(this.RootedPath, Zen.DefaultDirectoryBackup);
 
     [IgnoreMember]
     internal double UsageRatio { get; private set; }

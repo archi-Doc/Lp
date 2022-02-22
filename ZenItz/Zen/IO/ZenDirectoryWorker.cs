@@ -30,7 +30,7 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
             try
             {
                 var path = worker.ZenDirectory.GetSnowflakePath(work.SnowflakeId);
-                var directoryPath = Path.Combine(worker.ZenDirectory.DirectoryPath, path.Directory);
+                var directoryPath = Path.Combine(worker.ZenDirectory.RootedPath, path.Directory);
                 worker.CachedCreateDirectory(directoryPath);
 
                 filePath = Path.Combine(directoryPath, path.File);
@@ -57,7 +57,7 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
             try
             {
                 var path = worker.ZenDirectory.GetSnowflakePath(work.SnowflakeId);
-                filePath = Path.Combine(worker.ZenDirectory.DirectoryPath, path.Directory, path.File);
+                filePath = Path.Combine(worker.ZenDirectory.RootedPath, path.Directory, path.File);
                 using (var handle = File.OpenHandle(filePath, mode: FileMode.Open, access: FileAccess.Read))
                 {
                     var hash = new byte[ZenDirectory.HashSize];
@@ -95,7 +95,7 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
             try
             {
                 var path = worker.ZenDirectory.GetSnowflakePath(work.SnowflakeId);
-                filePath = Path.Combine(worker.ZenDirectory.DirectoryPath, path.Directory, path.File);
+                filePath = Path.Combine(worker.ZenDirectory.RootedPath, path.Directory, path.File);
                 File.Delete(filePath);
             }
             catch

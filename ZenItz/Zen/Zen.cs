@@ -17,8 +17,8 @@ public class Zen
     public const string DefaultZenBackup = "Zen.back";
     public const string DefaultZenDirectoryFile = "ZenDirectory.main";
     public const string DefaultZenDirectoryBackup = "ZenDirectory.back";
-    public const string DefaultDirectoryFile = "Directory.main";
-    public const string DefaultDirectoryBackup = "Directory.back";
+    public const string DefaultDirectoryFile = "Snowflake.main";
+    public const string DefaultDirectoryBackup = "Snowflake.back";
 
     public delegate bool ObjectToMemoryOwnerDelegate(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved);
 
