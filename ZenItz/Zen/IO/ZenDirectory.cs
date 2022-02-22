@@ -145,7 +145,7 @@ internal partial class ZenDirectory
         return true;
     }
 
-    internal void Start()
+    internal void Start(ByteArrayPool pool)
     {
         if (this.worker != null)
         {
@@ -159,7 +159,7 @@ internal partial class ZenDirectory
             this.TryLoadDirectory(this.DirectoryBackup);
         }
 
-        this.worker = new ZenDirectoryWorker(ThreadCore.Root, this);
+        this.worker = new ZenDirectoryWorker(ThreadCore.Root, this, pool);
     }
 
     internal async Task WaitForCompletionAsync()
