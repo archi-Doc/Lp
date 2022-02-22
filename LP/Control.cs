@@ -81,13 +81,14 @@ public class Control
         subcommandParser = new SimpleParser(commandList, SubcommandParserOptions);
     }
 
-    public Control(LPBase information, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl)
+    public Control(LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl)
     {
-        this.LPBase = information;
+        this.LPBase = lpBase;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.NetControl = netsphere;
         this.NetControl.SetupServer();
         this.ZenControl = zenControl;
+        this.ZenControl.Zen.IO.SetRootDirectory(this.LPBase.RootDirectory);
 
         this.Core = new(ThreadCore.Root);
         this.BigMachine.Core.ChangeParent(this.Core);

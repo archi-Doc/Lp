@@ -13,6 +13,11 @@ public sealed class ZenIO
         this.RootDirectory = Directory.GetCurrentDirectory();
     }
 
+    public void SetRootDirectory(string rootDirectory)
+    {
+        this.RootDirectory = rootDirectory;
+    }
+
     public ZenDirectoryInformation[] GetDirectoryInformation()
     {
         return this.directoryGoshujin.Select(a => a.GetInformation()).ToArray();
