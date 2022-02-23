@@ -9,6 +9,7 @@ namespace LP;
 public readonly partial struct Identifier : IEquatable<Identifier>, IComparable<Identifier>
 {
     public const string Name = "Identifier";
+    public const int Length = 32;
 
     public static readonly Identifier Zero = default;
 
@@ -105,9 +106,9 @@ public readonly partial struct Identifier : IEquatable<Identifier>, IComparable<
 
     public bool TryWriteBytes(Span<byte> destination)
     {
-        if (destination.Length <= Hash.HashBytes)
+        if (destination.Length < Length)
         {
-            throw new ArgumentException($"Length of a byte array must be at least {Hash.HashBytes}");
+            throw new ArgumentException($"Length of a byte array must be at least {Length}");
         }
 
         var d = destination;

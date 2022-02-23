@@ -2,7 +2,7 @@
 
 using Netsphere;
 
-namespace xUnitTest.Netsphere;
+namespace xUnitTest.NetsphereTest;
 
 [NetServiceInterface]
 public interface IFilterTestService : INetService

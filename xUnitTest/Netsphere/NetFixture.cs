@@ -4,7 +4,7 @@ using DryIoc;
 using Netsphere;
 using Xunit;
 
-namespace xUnitTest.Netsphere;
+namespace xUnitTest.NetsphereTest;
 
 [CollectionDefinition(NetFixtureCollection.Name)]
 public class NetFixtureCollection : ICollectionFixture<NetFixture>

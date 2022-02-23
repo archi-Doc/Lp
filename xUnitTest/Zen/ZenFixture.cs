@@ -4,7 +4,7 @@ using DryIoc;
 using Xunit;
 using ZenItz;
 
-namespace xUnitTest.Zen;
+namespace xUnitTest.ZenTest;
 
 [CollectionDefinition(ZenFixtureCollection.Name)]
 public class ZenFixtureCollection : ICollectionFixture<ZenFixture>
@@ -22,7 +22,7 @@ public class ZenFixture : IDisposable
         this.container.ValidateAndThrow();
 
         this.ZenControl = this.container.Resolve<ZenControl>();
-        this.ZenControl.Zen.TryStartZen(new(ForceStart: true)).Wait();
+        this.ZenControl.Zen.StartZenForTest();
     }
 
     public void Dispose()

@@ -42,6 +42,17 @@ public class Zen
         this.FragmentObjectGoshujin = new(this);
     }
 
+    public ZenStartResult StartZenForTest()
+    {
+        if (this.Started)
+        {
+            return ZenStartResult.AlreadyStarted;
+        }
+
+        this.Started = true;
+        return ZenStartResult.Success;
+    }
+
     public async Task<ZenStartResult> TryStartZen(ZenStartParam param)
     {
         var result = ZenStartResult.Success;

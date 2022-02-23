@@ -3,7 +3,7 @@
 using Netsphere;
 using Xunit;
 
-namespace xUnitTest.Netsphere;
+namespace xUnitTest.NetsphereTest;
 
 [Collection(NetFixtureCollection.Name)]
 public class FilterTest

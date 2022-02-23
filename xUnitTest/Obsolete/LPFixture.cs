@@ -3,7 +3,7 @@
 using DryIoc;
 using Netsphere;
 using Xunit;
-using xUnitTest.Netsphere;
+using xUnitTest.NetsphereTest;
 using ZenItz;
 
 namespace xUnitTest.Obsolete;

@@ -3,7 +3,7 @@
 using Netsphere;
 using Tinyhand;
 
-namespace xUnitTest.Netsphere;
+namespace xUnitTest.NetsphereTest;
 
 public class MultiplyIntFilter : IServiceFilter
 {

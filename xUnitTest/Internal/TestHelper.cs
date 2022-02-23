@@ -5,13 +5,20 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using LP;
 using Xunit;
+using ZenItz;
 
 namespace xUnitTest;
 
 public static class TestHelper
 {
-    public static bool ByteArrayEqual(byte[]? array1, byte[]? array2, int length)
+    public static bool DataEquals(this ZenDataResult dataResult, Span<byte> span)
+    {
+        return dataResult.Data.Memory.Span.SequenceEqual(span);
+    }
+
+    public static bool ByteArrayEquals(byte[]? array1, byte[]? array2, int length)
     {
         if (array1 == null || array2 == null)
         {
