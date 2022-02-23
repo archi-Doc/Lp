@@ -6,22 +6,20 @@ using ZenItz;
 
 namespace xUnitTest.Zen;
 
-[CollectionDefinition(TestZenCollection.Name)]
-public class TestZenCollection : ICollectionFixture<TestZen>
+[CollectionDefinition(ZenFixtureCollection.Name)]
+public class ZenFixtureCollection : ICollectionFixture<ZenFixture>
 {
-    public const string Name = "TestZen";
+    public const string Name = "ZenFixture";
 }
 
-public class TestZen : IDisposable
+public class ZenFixture : IDisposable
 {
-    public TestZen()
+    public ZenFixture()
     {
         // DI Container
-        ZenControl.Register(this.container);
+        ZenControl.Register(this.container, null, false);
 
         this.container.ValidateAndThrow();
-
-        ZenControl.QuickStart();
 
         this.ZenControl = this.container.Resolve<ZenControl>();
         this.ZenControl.Zen.TryStartZen(new(ForceStart: true)).Wait();

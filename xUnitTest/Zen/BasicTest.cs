@@ -6,35 +6,48 @@ using ZenItz;
 
 namespace xUnitTest.Zen;
 
-[Collection(TestZenCollection.Name)]
+// [Collection(ZenFixtureCollection.Name)]
 public class BasicTest
 {
-    public BasicTest(TestZen testZen)
+    public BasicTest()
     {
-        this.TestZen = testZen;
+        // this.ZenFixture = zenFixture;
+    }
+
+    [Fact]
+    public async Task Test0()
+    {
+        var zen = new ZenFixture().ZenControl.Zen;
+
+        var f = zen.TryGet(Identifier.Zero);
+        f.IsNull();
+        // f.IsNotNull();
+        f = zen.TryCreateOrGet(Identifier.Zero);
     }
 
     [Fact]
     public async Task Test1()
     {
-        var zen = this.ZenControl.Zen;
+        var zen = new ZenFixture().ZenControl.Zen;
 
         var f = zen.TryGet(Identifier.Zero);
         f.IsNull();
-        // f.IsNotNull();
+
+        f = zen.TryCreateOrGet(Identifier.Zero);
+        f.IsNotNull();
+
+        // Thread.Sleep(3000);
     }
 
     [Fact]
     public async Task Test2()
     {
-        var zen = this.ZenControl.Zen;
+        var zen = new ZenFixture().ZenControl.Zen;
 
         var f = zen.TryGet(Identifier.Zero);
         f.IsNull();
         // f.IsNotNull();
     }
 
-    public TestZen TestZen { get; }
-
-    public ZenControl ZenControl => this.TestZen.ZenControl;
+    // public ZenFixture ZenFixture { get; }
 }

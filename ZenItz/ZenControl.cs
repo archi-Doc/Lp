@@ -21,7 +21,7 @@ namespace ZenItz;
 
 public class ZenControl
 {
-    public static void Register(Container container, List<Type>? commandList = null)
+    public static void Register(Container container, List<Type>? commandList = null, bool registerSubcommand = true)
     {
         // Container instance
         containerInstance = container;
@@ -30,6 +30,11 @@ public class ZenControl
         container.Register<ZenControl>(Reuse.Singleton);
         container.Register<Zen>(Reuse.Singleton);
         container.Register<Itz>(Reuse.Singleton);
+
+        if (!registerSubcommand)
+        {
+            return;
+        }
 
         // Subcommands
         var commandTypes = new Type[]
@@ -58,37 +63,12 @@ public class ZenControl
         SubcommandParser = new(commandTypes, SubcommandParserOptions);
     }
 
-    public static void QuickStart()
-    {
-        /*var netBase = containerInstance.Resolve<NetBase>();
-        netBase.Initialize(enableServer, nodeName, options);
-        netBase.AllowUnsafeConnection = allowUnsafeConnection;*/
-
-        var netControl = containerInstance.Resolve<ZenControl>();
-
-        Logger.Configure(null);
-        Radio.Send(new Message.Configure());
-        var message = new Message.Start(ThreadCore.Root);
-        Radio.Send(message);
-        if (message.Abort)
-        {
-            Radio.Send(new Message.Stop());
-            return;
-        }
-    }
-
     public ZenControl(Zen zen, Itz itz)
     {
         this.ServiceProvider = (IServiceProvider)containerInstance;
 
         this.Zen = zen;
         this.Itz = itz;
-
-        Radio.Open<Message.Configure>(this.Configure);
-    }
-
-    public void Configure(Message.Configure message)
-    {
     }
 
     public static SimpleParser SubcommandParser { get; private set; } = default!;

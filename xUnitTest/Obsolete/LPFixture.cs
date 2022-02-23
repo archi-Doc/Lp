@@ -3,21 +3,24 @@
 using DryIoc;
 using Netsphere;
 using Xunit;
+using xUnitTest.Netsphere;
+using ZenItz;
 
-namespace xUnitTest.Netsphere;
+namespace xUnitTest.Obsolete;
 
-[CollectionDefinition(TestServerCollection.Name)]
-public class TestServerCollection : ICollectionFixture<TestServer>
+[CollectionDefinition(LPCollection.Name)]
+public class LPCollection : ICollectionFixture<LPFixture>
 {
-    public const string Name = "TestServer";
+    public const string Name = "LPCollection";
 }
 
-public class TestServer : IDisposable
+public class LPFixture : IDisposable
 {
-    public TestServer()
+    public LPFixture()
     {
         // DI Container
         NetControl.Register(this.container);
+        ZenControl.Register(this.container);
 
         // Services
         this.container.Register<BasicServiceImpl>(Reuse.Singleton);
@@ -31,8 +34,10 @@ public class TestServer : IDisposable
         options.EnableAlternative = true;
         options.EnableTestFeatures = true;
         NetControl.QuickStart(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);
-
         this.NetControl = this.container.Resolve<NetControl>();
+
+        this.ZenControl = this.container.Resolve<ZenControl>();
+        this.ZenControl.Zen.TryStartZen(new(ForceStart: true)).Wait();
     }
 
     public void Dispose()
@@ -41,10 +46,12 @@ public class TestServer : IDisposable
 
     public NetControl NetControl { get; }
 
+    public ZenControl ZenControl { get; }
+
     private Container container = new();
 }
 
-public class TestServerContext : ServerContext
+/*public class TestServerContext : ServerContext
 {
 }
 
@@ -56,3 +63,4 @@ public class TestCallContext : CallContext<TestServerContext>
     {
     }
 }
+*/

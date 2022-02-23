@@ -56,8 +56,6 @@ public class Program
             RequireStrictOptionName = true,
         };
 
-        ZenControl.QuickStart();
-
         // Logger
         /*if (options.EnableLogger)
         {
