@@ -103,8 +103,13 @@ public class Zen
         this.MemoryOwnerToObject = memoryOwnerToObject;
     }
 
-    public Flake CreateOrGet(Identifier id)
+    public Flake? TryCreateOrGet(Identifier id)
     {
+        if (!this.Started)
+        {
+            return null;
+        }
+
         Flake? flake;
         lock (this.flakeGoshujin)
         {
@@ -120,6 +125,11 @@ public class Zen
 
     public Flake? TryGet(Identifier id)
     {
+        if (!this.Started)
+        {
+            return null;
+        }
+
         Flake? flake;
         lock (this.flakeGoshujin)
         {
@@ -130,6 +140,11 @@ public class Zen
 
     public bool Remove(Identifier id)
     {
+        if (!this.Started)
+        {
+            return false;
+        }
+
         lock (this.flakeGoshujin)
         {
             if (this.flakeGoshujin.IdChain.TryGetValue(id, out var flake))
@@ -149,7 +164,7 @@ public class Zen
 
     public MemoryOwnerToObjectDelegate MemoryOwnerToObject { get; private set; } = DefaultMemoryOwnerToObject;
 
-    public void Restart()
+    internal void Restart()
     {
         if (this.Started)
         {
