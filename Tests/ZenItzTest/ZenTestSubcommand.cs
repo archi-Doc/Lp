@@ -3,6 +3,7 @@
 using System.Diagnostics;
 using SimpleCommandLine;
 using Tinyhand;
+using LP.Fragments;
 
 namespace ZenItzTest;
 
@@ -27,6 +28,16 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
             p.Save(true);
             var result = await p.Get();
             p.Remove();
+        }
+
+        p = zen.TryCreateOrGet(Identifier.One);
+        if (p != null)
+        {
+            p.SetObject(new TestFragment());
+            var t = await p.GetObject<TestFragment>();
+
+            p.Save(true);
+            t = await p.GetObject<TestFragment>();
         }
 
         await zen.StopZen(new());
