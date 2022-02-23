@@ -83,16 +83,21 @@ public class EssentialNode
 
     public async Task SaveAsync(string filename)
     {
-        // this.information.RootDirectory
-        using (var file = File.Open(filename, FileMode.Create))
+        try
         {
-            byte[] b;
-            lock (this.essentialNodes)
+            using (var file = File.Open(filename, FileMode.Create))
             {
-                b = TinyhandSerializer.SerializeToUtf8(this.essentialNodes); // TinyhandSerializer.Serialize(this.essentialNodes)
-            }
+                byte[] b;
+                lock (this.essentialNodes)
+                {
+                    b = TinyhandSerializer.SerializeToUtf8(this.essentialNodes); // TinyhandSerializer.Serialize(this.essentialNodes)
+                }
 
-            file.Write(b);
+                file.Write(b);
+            }
+        }
+        catch
+        {
         }
     }
 

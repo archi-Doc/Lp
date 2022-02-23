@@ -12,4 +12,5 @@ public enum ZenResult
     NoData,
     NoDirectory,
     NoFile,
+    ObjectError,
 }

@@ -6,15 +6,12 @@ namespace ZenItz;
 
 internal class FlakeObjectGoshujin
 {
-    public FlakeObjectGoshujin(Zen zen, ByteArrayPool pool)
+    public FlakeObjectGoshujin(Zen zen)
     {
         this.Zen = zen;
-        this.Pool = pool;
     }
 
     public Zen Zen { get; }
-
-    public ByteArrayPool Pool { get; }
 
     public FlakeObjectBase.GoshujinClass Goshujin => this.goshujin;
 

@@ -2,6 +2,7 @@
 
 namespace ZenItz;
 
+#pragma warning disable SA1202 // Elements should be ordered by access
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
 #pragma warning disable SA1401 // Fields should be private
 
@@ -44,6 +45,68 @@ public partial class Flake
         return ZenResult.Success;
     }
 
+    internal ZenResult Set(ByteArrayPool.MemoryOwner dataToBeMoved)
+    {
+        if (!this.Zen.Started)
+        {
+            return ZenResult.NotStarted;
+        }
+        else if (dataToBeMoved.Memory.Length > Zen.MaxFlakeSize)
+        {
+            return ZenResult.OverSizeLimit;
+        }
+
+        lock (this.syncObject)
+        {
+            if (this.IsRemoved)
+            {
+                return ZenResult.Removed;
+            }
+
+            this.flakeObject ??= new(this, this.Zen.FlakeObjectGoshujin);
+            this.flakeObject.SetMemoryOwner(dataToBeMoved);
+        }
+
+        return ZenResult.Success;
+    }
+
+    public ZenResult SetObject(object obj)
+    {
+        if (!this.Zen.Started)
+        {
+            return ZenResult.NotStarted;
+        }
+
+        lock (this.syncObject)
+        {
+            if (this.IsRemoved)
+            {
+                return ZenResult.Removed;
+            }
+
+            this.flakeObject ??= new(this, this.Zen.FlakeObjectGoshujin);
+            this.flakeObject.SetObject(obj);
+        }
+
+        return ZenResult.Success;
+    }
+
+    /*public ZenResult SetObject<T>(T obj)
+    {
+        byte[]? byteArray;
+        try
+        {
+            byteArray = TinyhandSerializer.Serialize<T>(obj);
+        }
+        catch
+        {
+            return ZenResult.SerializationError;
+        }
+
+        var result = this.Set(byteArray);
+        return result;
+    }*/
+
     public ZenResult Set(Identifier fragmentId, ReadOnlySpan<byte> data)
     {
         if (!this.Zen.Started)
@@ -64,6 +127,29 @@ public partial class Flake
 
             this.fragmentObject ??= new(this, this.Zen.FragmentObjectGoshujin);
             return this.fragmentObject.SetSpan(fragmentId, data);
+        }
+    }
+
+    internal ZenResult Set(Identifier fragmentId, ByteArrayPool.MemoryOwner data)
+    {
+        if (!this.Zen.Started)
+        {
+            return ZenResult.NotStarted;
+        }
+        else if (data.Memory.Length > Zen.MaxFragmentSize)
+        {
+            return ZenResult.OverSizeLimit;
+        }
+
+        lock (this.syncObject)
+        {
+            if (this.IsRemoved)
+            {
+                return ZenResult.Removed;
+            }
+
+            this.fragmentObject ??= new(this, this.Zen.FragmentObjectGoshujin);
+            return this.fragmentObject.SetMemoryOwner(fragmentId, data);
         }
     }
 
@@ -107,6 +193,71 @@ public partial class Flake
             }
 
             return result;
+        }
+
+        return new(ZenResult.NoData);
+    }
+
+    public async Task<ZenObjectResult<T>> GetObject<T>()
+    {
+        if (!this.Zen.Started)
+        {
+            return new(ZenResult.NotStarted);
+        }
+
+        ulong file = 0;
+        lock (this.syncObject)
+        {
+            if (this.IsRemoved)
+            {
+                return new(ZenResult.Removed);
+            }
+
+            if (this.flakeObject != null && this.flakeObject.TryGetObject(out var obj))
+            {// Object
+                if (obj is T t)
+                {
+                    return new(ZenResult.Success, t);
+                }
+                else
+                {
+                    return new(ZenResult.ObjectError);
+                }
+            }
+
+            file = this.flakeFile;
+        }
+
+        if (ZenFile.IsValidFile(file))
+        {
+            var result = await this.Zen.IO.Load(file);
+            if (!result.IsSuccess)
+            {
+                return new(result.Result);
+            }
+
+            lock (this.syncObject)
+            {
+                if (this.IsRemoved)
+                {
+                    return new(ZenResult.Removed);
+                }
+
+                this.flakeObject?.SetMemoryOwner(result.Data);
+                if (this.flakeObject != null && this.flakeObject.TryGetObject(out var obj))
+                {// Object
+                    if (obj is T t)
+                    {
+                        return new(ZenResult.Success, t);
+                    }
+                    else
+                    {
+                        return new(ZenResult.ObjectError);
+                    }
+                }
+            }
+
+            return new(result.Result);
         }
 
         return new(ZenResult.NoData);

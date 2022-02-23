@@ -27,8 +27,8 @@ public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
 
     public async Task Run(LPConsoleOptions option, string[] args)
     {
-        this.information = Program.Container.Resolve<LPBase>();
-        this.information.Initialize(option, true, "relay");
+        this.lpBase = Program.Container.Resolve<LPBase>();
+        this.lpBase.Initialize(option, true, "relay");
 
         this.netBase = Program.Container.Resolve<NetBase>();
         this.netBase.Initialize(true, string.Empty, option.NetsphereOptions);
@@ -65,7 +65,7 @@ Abort:
 
     private async Task<AbortOrComplete> TryStartZen(ZenControl zenControl)
     {
-        var result = await zenControl.Zen.TryStartZen(new(Zen.DefaultZenDirectory, QueryDelegate: null));
+        var result = await zenControl.Zen.TryStartZen(new(Zen.DefaultZenDirectory, Path.Combine(this.lpBase.DataDirectory, Zen.DefaultZenFile), Path.Combine(this.lpBase.DataDirectory, Zen.DefaultZenBackup), Path.Combine(this.lpBase.DataDirectory, Zen.DefaultZenDirectoryFile), Path.Combine(this.lpBase.DataDirectory, Zen.DefaultZenDirectoryBackup), QueryDelegate: null));
         if (result != ZenStartResult.Success)
         {
             return AbortOrComplete.Abort;
@@ -244,7 +244,7 @@ Deserialize:
         }
     }
 
-    private LPBase information = default!;
+    private LPBase lpBase = default!;
 
     private NetBase netBase = default!;
 }

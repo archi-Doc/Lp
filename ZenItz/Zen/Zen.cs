@@ -17,30 +17,29 @@ public class Zen
     public const string DefaultZenBackup = "Zen.back";
     public const string DefaultZenDirectoryFile = "ZenDirectory.main";
     public const string DefaultZenDirectoryBackup = "ZenDirectory.back";
-    public const string DefaultDirectoryFile = "Directory.main";
-    public const string DefaultDirectoryBackup = "Directory.back";
+    public const string DefaultDirectoryFile = "Snowflake.main";
+    public const string DefaultDirectoryBackup = "Snowflake.back";
 
-    public delegate void ObjectToMemoryOwnerDelegate(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved);
+    public delegate bool ObjectToMemoryOwnerDelegate(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved);
 
-    public delegate object? MemoryOwnerToObjectDelegate(ByteArrayPool.MemoryOwner memoryOwner);
+    public delegate object? MemoryOwnerToObjectDelegate(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner);
 
-    public static void DefaultObjectToMemoryOwner(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved)
+    public static bool DefaultObjectToMemoryOwner(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved)
     {
         dataToBeMoved = ByteArrayPool.MemoryOwner.Empty;
+        return false;
     }
 
-    public static object? DefaultMemoryOwnerToObject(ByteArrayPool.MemoryOwner memoryOwner)
+    public static object? DefaultMemoryOwnerToObject(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
     {
         return null;
     }
 
     public Zen()
     {
-        this.FlakeFragmentPool = new ByteArrayPool(MaxFlakeSize, (int)(DefaultMemorySizeLimit / MaxFlakeSize));
-        this.FlakeFragmentPool.SetMaxPoolBelow(MaxFragmentSize, 0);
-        this.IO = new(this.FlakeFragmentPool);
-        this.FlakeObjectGoshujin = new(this, this.FlakeFragmentPool);
-        this.FragmentObjectGoshujin = new(this, this.FlakeFragmentPool);
+        this.IO = new();
+        this.FlakeObjectGoshujin = new(this);
+        this.FragmentObjectGoshujin = new(this);
     }
 
     public async Task<ZenStartResult> TryStartZen(ZenStartParam param)
@@ -104,8 +103,13 @@ public class Zen
         this.MemoryOwnerToObject = memoryOwnerToObject;
     }
 
-    public Flake CreateOrGet(Identifier id)
+    public Flake? TryCreateOrGet(Identifier id)
     {
+        if (!this.Started)
+        {
+            return null;
+        }
+
         Flake? flake;
         lock (this.flakeGoshujin)
         {
@@ -121,6 +125,11 @@ public class Zen
 
     public Flake? TryGet(Identifier id)
     {
+        if (!this.Started)
+        {
+            return null;
+        }
+
         Flake? flake;
         lock (this.flakeGoshujin)
         {
@@ -131,6 +140,11 @@ public class Zen
 
     public bool Remove(Identifier id)
     {
+        if (!this.Started)
+        {
+            return false;
+        }
+
         lock (this.flakeGoshujin)
         {
             if (this.flakeGoshujin.IdChain.TryGetValue(id, out var flake))
@@ -146,13 +160,11 @@ public class Zen
 
     public ZenIO IO { get; }
 
-    public ByteArrayPool FlakeFragmentPool { get; }
-
     public ObjectToMemoryOwnerDelegate ObjectToMemoryOwner { get; private set; } = DefaultObjectToMemoryOwner;
 
     public MemoryOwnerToObjectDelegate MemoryOwnerToObject { get; private set; } = DefaultMemoryOwnerToObject;
 
-    public void Restart()
+    internal void Restart()
     {
         if (this.Started)
         {

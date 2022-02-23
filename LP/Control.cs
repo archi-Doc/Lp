@@ -81,13 +81,41 @@ public class Control
         subcommandParser = new SimpleParser(commandList, SubcommandParserOptions);
     }
 
-    public Control(LPBase information, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl)
+    public static bool ObjectToMemoryOwner(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved)
     {
-        this.LPBase = information;
+        if (obj is IFlake flake &&
+            FlakeFragmentService.TrySerialize<IFlake>(flake, out dataToBeMoved))
+        {
+            return true;
+        }
+        else
+        {
+            dataToBeMoved = default;
+            return false;
+        }
+    }
+
+    public static object? MemoryOwnerToObject(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
+    {
+        if (TinyhandSerializer.TryDeserialize<IFlake>(memoryOwner.Memory, out var value))
+        {
+            return value;
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+    public Control(LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl)
+    {
+        this.LPBase = lpBase;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.NetControl = netsphere;
         this.NetControl.SetupServer();
         this.ZenControl = zenControl;
+        this.ZenControl.Zen.IO.SetRootDirectory(this.LPBase.RootDirectory);
+        this.ZenControl.Zen.SetDelegate(ObjectToMemoryOwner, MemoryOwnerToObject);
 
         this.Core = new(ThreadCore.Root);
         this.BigMachine.Core.ChangeParent(this.Core);
@@ -103,19 +131,21 @@ public class Control
     public async Task LoadAsync()
     {
         await Radio.SendAsync(new Message.LoadAsync()).ConfigureAwait(false);
-        await this.NetControl.EssentialNode.LoadAsync(Path.Combine(this.LPBase.RootDirectory, EssentialNode.FileName)).ConfigureAwait(false);
-        if (!await this.ZenControl.Itz.LoadAsync(Path.Combine(this.LPBase.RootDirectory, Itz.DefaultItzFile)).ConfigureAwait(false))
+        await this.NetControl.EssentialNode.LoadAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
+        if (!await this.ZenControl.Itz.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile)).ConfigureAwait(false))
         {
-            await this.ZenControl.Itz.LoadAsync(Path.Combine(this.LPBase.RootDirectory, Itz.DefaultItzBackup)).ConfigureAwait(false);
+            await this.ZenControl.Itz.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup)).ConfigureAwait(false);
         }
     }
 
     public async Task SaveAsync()
     {
         await Radio.SendAsync(new Message.SaveAsync()).ConfigureAwait(false);
-        await this.NetControl.EssentialNode.SaveAsync(Path.Combine(this.LPBase.RootDirectory, EssentialNode.FileName)).ConfigureAwait(false);
-        await this.ZenControl.Zen.StopZen(new());
-        await this.ZenControl.Itz.SaveAsync(Path.Combine(this.LPBase.RootDirectory, Itz.DefaultItzFile), Path.Combine(this.LPBase.RootDirectory, Itz.DefaultItzBackup));
+
+        Directory.CreateDirectory(this.LPBase.DataDirectory);
+        await this.NetControl.EssentialNode.SaveAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
+        await this.ZenControl.Zen.StopZen(new(Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenBackup), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryBackup)));
+        await this.ZenControl.Itz.SaveAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile), Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup));
     }
 
     public bool TryStart()

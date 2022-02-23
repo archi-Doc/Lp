@@ -127,7 +127,7 @@ public static class Logger
             File = new SerilogLogger(new LoggerConfiguration()
             .MinimumLevel.Debug()
             .WriteTo.File(
-                Path.Combine(info.RootDirectory, "logs", "log.txt"),
+                Path.Combine(info.RootDirectory, "Logs", "log.txt"),
                 rollingInterval: RollingInterval.Day,
                 retainedFileCountLimit: 31,
                 buffered: true,

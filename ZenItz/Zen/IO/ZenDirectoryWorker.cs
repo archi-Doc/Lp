@@ -11,11 +11,10 @@ namespace ZenItz;
 
 internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
 {
-    public ZenDirectoryWorker(ThreadCoreBase parent, ZenDirectory zenDirectory, ByteArrayPool pool)
+    public ZenDirectoryWorker(ThreadCoreBase parent, ZenDirectory zenDirectory)
         : base(parent, Process, true)
     {
         this.ZenDirectory = zenDirectory;
-        this.pool = pool;
     }
 
     public static async Task<AbortOrComplete> Process(TaskWorker<ZenDirectoryWork> w, ZenDirectoryWork work)
@@ -31,7 +30,7 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
             try
             {
                 var path = worker.ZenDirectory.GetSnowflakePath(work.SnowflakeId);
-                var directoryPath = Path.Combine(worker.ZenDirectory.DirectoryPath, path.Directory);
+                var directoryPath = Path.Combine(worker.ZenDirectory.RootedPath, path.Directory);
                 worker.CachedCreateDirectory(directoryPath);
 
                 filePath = Path.Combine(directoryPath, path.File);
@@ -58,7 +57,7 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
             try
             {
                 var path = worker.ZenDirectory.GetSnowflakePath(work.SnowflakeId);
-                filePath = Path.Combine(worker.ZenDirectory.DirectoryPath, path.Directory, path.File);
+                filePath = Path.Combine(worker.ZenDirectory.RootedPath, path.Directory, path.File);
                 using (var handle = File.OpenHandle(filePath, mode: FileMode.Open, access: FileAccess.Read))
                 {
                     var hash = new byte[ZenDirectory.HashSize];
@@ -68,7 +67,7 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
                         goto DeleteAndExit;
                     }
 
-                    var memoryOwner = worker.pool.Rent(work.LoadSize).ToMemoryOwner(0, work.LoadSize);
+                    var memoryOwner = FlakeFragmentPool.Rent(work.LoadSize).ToMemoryOwner(0, work.LoadSize);
                     read = await RandomAccess.ReadAsync(handle, memoryOwner.Memory, ZenDirectory.HashSize, worker.CancellationToken);
                     if (read != work.LoadSize)
                     {
@@ -96,7 +95,7 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
             try
             {
                 var path = worker.ZenDirectory.GetSnowflakePath(work.SnowflakeId);
-                filePath = Path.Combine(worker.ZenDirectory.DirectoryPath, path.Directory, path.File);
+                filePath = Path.Combine(worker.ZenDirectory.RootedPath, path.Directory, path.File);
                 File.Delete(filePath);
             }
             catch
@@ -130,7 +129,6 @@ DeleteAndExit:
         }
     }
 
-    private ByteArrayPool pool;
     private HashSet<string> createdDirectories = new();
 }
 

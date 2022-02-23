@@ -8,9 +8,14 @@ public sealed class ZenIO
 {
     public const int DirectoryRotationThreshold = 1024 * 1024 * 1; // 100 MB
 
-    public ZenIO(ByteArrayPool pool)
+    public ZenIO()
     {
-        this.Pool = pool;
+        this.RootDirectory = Directory.GetCurrentDirectory();
+    }
+
+    public void SetRootDirectory(string rootDirectory)
+    {
+        this.RootDirectory = rootDirectory;
     }
 
     public ZenDirectoryInformation[] GetDirectoryInformation()
@@ -39,7 +44,7 @@ public sealed class ZenIO
             return AddDictionaryResult.FileExists;
         }
 
-        var relative = Path.GetRelativePath(this.rootDirectory, path);
+        var relative = Path.GetRelativePath(this.RootDirectory, path);
         if (!relative.StartsWith("..\\"))
         {
             path = relative;
@@ -70,7 +75,7 @@ public sealed class ZenIO
         return AddDictionaryResult.Success;
     }
 
-    public ByteArrayPool Pool { get; }
+    public string RootDirectory { get; private set; } = string.Empty;
 
     public bool Started { get; private set; }
 
@@ -145,8 +150,8 @@ public sealed class ZenIO
         {
             foreach (var x in this.directoryGoshujin)
             {
-                x.Check();
-                x.Start(this.Pool);
+                x.PrepareAndCheck(this.RootDirectory);
+                x.Start();
             }
         }
 
@@ -180,7 +185,7 @@ public sealed class ZenIO
         List<string>? errorDirectories = null;
         foreach (var x in goshujin)
         {
-            if (!x.Check())
+            if (!x.PrepareAndCheck(this.RootDirectory))
             {
                 errorDirectories ??= new();
                 errorDirectories.Add(x.DirectoryPath);
@@ -197,8 +202,8 @@ public sealed class ZenIO
         {
             try
             {
-                Directory.CreateDirectory(param.DefaultFolder);
                 var defaultDirectory = new ZenDirectory(this.GetFreeDirectoryId(goshujin), param.DefaultFolder);
+                defaultDirectory.PrepareAndCheck(this.RootDirectory);
                 goshujin.Add(defaultDirectory);
             }
             catch
@@ -208,7 +213,7 @@ public sealed class ZenIO
 
         foreach (var x in goshujin)
         {
-            x.Start(this.Pool);
+            x.Start();
         }
 
         if (goshujin.DirectoryIdChain.Count == 0)
@@ -280,6 +285,5 @@ public sealed class ZenIO
 
     private ZenDirectory.GoshujinClass directoryGoshujin = new();
     private ZenDirectory? currentDirectory;
-    private string rootDirectory = Directory.GetCurrentDirectory();
     private int directoryRotationCount;
 }

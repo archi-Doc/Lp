@@ -5,12 +5,12 @@ using Xunit;
 
 namespace xUnitTest.Netsphere;
 
-[Collection(TestServerCollection.Name)]
+[Collection(NetFixtureCollection.Name)]
 public class NodeTest
 {
-    public NodeTest(TestServer testServer)
+    public NodeTest(NetFixture netFixture)
     {
-        this.TestServer = testServer;
+        this.NetFixture = netFixture;
     }
 
     [Fact]
@@ -33,7 +33,7 @@ public class NodeTest
         }
     }
 
-    public TestServer TestServer { get; }
+    public NetFixture NetFixture { get; }
 
-    public NetControl NetControl => this.TestServer.NetControl;
+    public NetControl NetControl => this.NetFixture.NetControl;
 }

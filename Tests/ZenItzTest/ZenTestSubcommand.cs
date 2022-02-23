@@ -20,11 +20,14 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
         var itz = this.ZenControl.Itz;
 
         await zen.TryStartZen(new(Zen.DefaultZenDirectory));
-        var p = zen.CreateOrGet(Identifier.Zero);
-        p.Set(new byte[] { 0, 1, });
-        p.Save(true);
-        var result = await p.Get();
-        p.Remove();
+        var p = zen.TryCreateOrGet(Identifier.Zero);
+        if (p != null)
+        {
+            p.Set(new byte[] { 0, 1, });
+            p.Save(true);
+            var result = await p.Get();
+            p.Remove();
+        }
 
         await zen.StopZen(new());
     }
