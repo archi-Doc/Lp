@@ -57,7 +57,7 @@ internal partial class FragmentObject : FlakeObjectBase
         return ZenResult.Success;
     }
 
-    public ZenResult SetMemoryOwner(Identifier fragmentId, ByteArrayPool.MemoryOwner dataToBeMoved)
+    public ZenResult SetMemoryOwner(Identifier fragmentId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved)
     {// lock (Flake.syncObject)
         if (this.fragments == null)
         {
@@ -150,6 +150,25 @@ internal partial class FragmentObject : FlakeObjectBase
         this.RemoveQueue(memoryDifference);
     }
 
+    public bool Remove(Identifier fragmentId)
+    {// lock (Flake.syncObject)
+        if (this.fragments == null)
+        {
+            this.fragments = this.PrepareFragments();
+        }
+
+        if (!this.fragments.IdChain.TryGetValue(fragmentId, out var fragmentData))
+        {// Not found
+            return false;
+        }
+
+        fragmentData.Clear();
+        this.fragments.Remove(fragmentData);
+
+        this.UpdateQueue(FlakeObjectOperation.Set, fragmentData.SetMemoryOwner(dataToBeMoved));
+        return ZenResult.Success;
+    }
+
     internal override void Save(bool unload)
     {// lock (Flake.syncObject) -> lock (this.FlakeObjectGoshujin.Goshujin)
         if (this.fragments != null)
@@ -178,7 +197,7 @@ internal partial class FragmentObject : FlakeObjectBase
     internal bool Load(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
     {
         if (this.fragments != null)
-        {
+        {// Already loaded
             return true;
         }
 

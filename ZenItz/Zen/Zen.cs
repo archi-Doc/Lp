@@ -91,7 +91,7 @@ public class Zen
         // Save & Unload flakes
         lock (this.flakeGoshujin)
         {
-            foreach (var x in this.flakeGoshujin.IdChain)
+            foreach (var x in this.flakeGoshujin)
             {
                 x.Save(true);
             }
@@ -199,7 +199,7 @@ public class Zen
         // Save & Unload flakes
         lock (this.flakeGoshujin)
         {
-            foreach (var x in this.flakeGoshujin.IdChain)
+            foreach (var x in this.flakeGoshujin)
             {
                 x.Save(true);
             }

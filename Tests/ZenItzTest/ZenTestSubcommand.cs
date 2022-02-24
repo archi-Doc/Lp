@@ -33,11 +33,12 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
         p = zen.TryCreateOrGet(Identifier.One);
         if (p != null)
         {
-            p.SetObject(new TestFragment());
+            p.SetFragment(new TestFragment());
             var t = await p.GetObject<TestFragment>();
 
             p.Save(true);
             t = await p.GetObject<TestFragment>();
+
         }
 
         await zen.StopZen(new());
