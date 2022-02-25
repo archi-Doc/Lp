@@ -43,7 +43,7 @@ public readonly struct ZenItem<TFlake, TUnprotected>
 [TinyhandObject]
 public partial class TestFragment : FlakeBase
 {
-    // [Key(0, MarkPosition = true)]
+    [Key(0, Marker = true)]
     public string Name { get; private set; } = string.Empty;
 }
 

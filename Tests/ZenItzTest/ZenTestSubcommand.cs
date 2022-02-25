@@ -21,32 +21,33 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
         var itz = this.ZenControl.Itz;
 
         await zen.TryStartZen(new(Zen.DefaultZenDirectory));
-        var p = zen.TryCreateOrGet(Identifier.Zero);
-        if (p != null)
+
+        var flake = zen.TryCreateOrGet(Identifier.Zero);
+        if (flake != null)
         {
-            p.Set(new byte[] { 0, 1, });
-            p.Save(true);
-            var result = await p.Get();
-            p.Remove();
+            flake.Set(new byte[] { 0, 1, });
+            flake.Save(true);
+            var result = await flake.Get();
+            flake.Remove();
         }
 
-        p = zen.TryCreateOrGet(Identifier.One);
-        if (p != null)
+        flake = zen.TryCreateOrGet(Identifier.One);
+        if (flake != null)
         {
-            p.SetFragment(new TestFragment());
-            var t = await p.GetObject<TestFragment>();
+            flake.SetFragment(new TestFragment());
+            var t = await flake.GetObject<TestFragment>();
 
-            p.Save(true);
-            t = await p.GetObject<TestFragment>();
+            flake.Save(true);
+            t = await flake.GetObject<TestFragment>();
 
-            p.Set(Identifier.One, new byte[] { 2, 3, });
-            var result = await p.Get(Identifier.One);
-            p.Save(true);
-            result = await p.Get(Identifier.One);
-            p.Remove(Identifier.One);
-            p.Save(true);
-            result = await p.Get(Identifier.One);
-            p.Save(true);
+            flake.Set(Identifier.One, new byte[] { 2, 3, });
+            var result = await flake.Get(Identifier.One);
+            flake.Save(true);
+            result = await flake.Get(Identifier.One);
+            flake.Remove(Identifier.One);
+            flake.Save(true);
+            result = await flake.Get(Identifier.One);
+            flake.Save(true);
         }
 
         await zen.StopZen(new());
