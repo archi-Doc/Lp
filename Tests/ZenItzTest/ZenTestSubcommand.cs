@@ -39,6 +39,14 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
             p.Save(true);
             t = await p.GetObject<TestFragment>();
 
+            p.Set(Identifier.One, new byte[] { 2, 3, });
+            var result = await p.Get(Identifier.One);
+            p.Save(true);
+            result = await p.Get(Identifier.One);
+            p.Remove(Identifier.One);
+            p.Save(true);
+            result = await p.Get(Identifier.One);
+            p.Save(true);
         }
 
         await zen.StopZen(new());

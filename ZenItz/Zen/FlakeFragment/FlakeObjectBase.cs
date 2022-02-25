@@ -11,6 +11,7 @@ internal partial class FlakeObjectBase
     {
         Set, // Set value
         Get, // Get value
+        Remove,
     }
 
     [Link(Name = "UnloadQueue", Type = ChainType.QueueList)]
@@ -27,30 +28,37 @@ internal partial class FlakeObjectBase
 
     internal void UpdateQueue(FlakeObjectOperation operation, (bool Changed, int MemoryDifference) t)
     {// Update queue link.
-        if (operation == FlakeObjectOperation.Set && t.Changed)
+        if (t.Changed)
         {
             this.IsSaved = false;
         }
 
         lock (this.FlakeObjectGoshujin.Goshujin)
         {
-            if (this.Goshujin == null)
-            {// New
-                this.Goshujin = this.FlakeObjectGoshujin.Goshujin;
+            if (operation == FlakeObjectOperation.Remove)
+            {// Remove
+                this.Goshujin = null;
             }
             else
-            {// Update
-                if (operation == FlakeObjectOperation.Get)
-                {// Get
-                    this.Goshujin.UnloadQueueChain.Remove(this);
-                    this.Goshujin.UnloadQueueChain.Enqueue(this);
+            {// Get or Set
+                if (this.Goshujin == null)
+                {// New
+                    this.Goshujin = this.FlakeObjectGoshujin.Goshujin;
                 }
                 else
-                {// Set and other
-                    this.Goshujin.UnloadQueueChain.Remove(this);
-                    this.Goshujin.UnloadQueueChain.Enqueue(this);
-                    this.Goshujin.SaveQueueChain.Remove(this);
-                    this.Goshujin.SaveQueueChain.Enqueue(this);
+                {// Update
+                    if (operation == FlakeObjectOperation.Get)
+                    {// Get
+                        this.Goshujin.UnloadQueueChain.Remove(this);
+                        this.Goshujin.UnloadQueueChain.Enqueue(this);
+                    }
+                    else
+                    {// Set
+                        this.Goshujin.UnloadQueueChain.Remove(this);
+                        this.Goshujin.UnloadQueueChain.Enqueue(this);
+                        this.Goshujin.SaveQueueChain.Remove(this);
+                        this.Goshujin.SaveQueueChain.Enqueue(this);
+                    }
                 }
             }
 

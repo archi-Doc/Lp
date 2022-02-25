@@ -8,6 +8,13 @@ namespace ZenItz;
 
 internal partial class FragmentObject : FlakeObjectBase
 {
+    public enum Result
+    {
+        Success,
+        NotFound,
+        NotLoaded,
+    }
+
     public FragmentObject(Flake flake, FlakeObjectGoshujin goshujin)
         : base(flake, goshujin)
     {
@@ -97,40 +104,52 @@ internal partial class FragmentObject : FlakeObjectBase
         }
     }
 
-    public bool TryGetMemoryOwner(Identifier fragmentId, out ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
+    public Result TryGetMemoryOwner(Identifier fragmentId, out ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
     {// lock (Flake.syncObject)
         if (this.fragments == null)
-        {
-            this.fragments = this.PrepareFragments();
-        }
-
-        if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragmentData))
-        {// Fount
-            return fragmentData.TryGetMemoryOwner(out memoryOwner);
-        }
-        else
         {
             memoryOwner = default;
-            return false;
-        }
-    }
-
-    public bool TryGetObject(Identifier fragmentId, [MaybeNullWhen(false)] out object? obj)
-    {// lock (Flake.syncObject)
-        if (this.fragments == null)
-        {
-            this.fragments = this.PrepareFragments();
+            return Result.NotLoaded;
         }
 
         if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragmentData))
         {// Fount
-            return fragmentData.TryGetObject(out obj);
+            if (fragmentData.TryGetMemoryOwner(out memoryOwner))
+            {
+                return Result.Success;
+            }
+            else
+            {
+                return Result.NotFound;
+            }
         }
-        else
+
+        memoryOwner = default;
+        return Result.NotFound;
+    }
+
+    public Result TryGetObject(Identifier fragmentId, [MaybeNullWhen(false)] out object? obj)
+    {// lock (Flake.syncObject)
+        if (this.fragments == null)
         {
             obj = default;
-            return false;
+            return Result.NotLoaded;
         }
+
+        if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragmentData))
+        {// Fount
+            if (fragmentData.TryGetObject(out obj))
+            {
+                return Result.Success;
+            }
+            else
+            {
+                return Result.NotFound;
+            }
+        }
+
+        obj = default;
+        return Result.NotFound;
     }
 
     public void Unload()
@@ -162,11 +181,9 @@ internal partial class FragmentObject : FlakeObjectBase
             return false;
         }
 
-        fragmentData.Clear();
         this.fragments.Remove(fragmentData);
-
-        this.UpdateQueue(FlakeObjectOperation.Set, fragmentData.SetMemoryOwner(dataToBeMoved));
-        return ZenResult.Success;
+        this.UpdateQueue(FlakeObjectOperation.Remove, (true, fragmentData.Clear()));
+        return true;
     }
 
     internal override void Save(bool unload)
@@ -233,6 +250,27 @@ internal partial class FragmentObject : FlakeObjectBase
         else if (ZenFile.IsValidFile(this.Flake.fragmentFile))
         {
             var result = this.Flake.Zen.IO.Load(this.Flake.fragmentFile).Result;
+            if (result.IsSuccess)
+            {
+                if (this.Load(result.Data))
+                {
+                    return this.fragments!;
+                }
+            }
+        }
+
+        return new();
+    }
+
+    private async Task<FragmentData.GoshujinClass> PrepareFragmentsAsync()
+    {// lock (Flake.syncObject)
+        if (this.fragments != null)
+        {
+            return this.fragments;
+        }
+        else if (ZenFile.IsValidFile(this.Flake.fragmentFile))
+        {
+            var result = await this.Flake.Zen.IO.Load(this.Flake.fragmentFile).ConfigureAwait(false);
             if (result.IsSuccess)
             {
                 if (this.Load(result.Data))
