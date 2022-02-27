@@ -34,7 +34,7 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
         flake = zen.TryCreateOrGet(Identifier.One);
         if (flake != null)
         {
-            flake.SetFragment(new TestFragment());
+            flake.SetObject(new TestFragment());
             var t = await flake.GetObject<TestFragment>();
 
             flake.Save(true);
