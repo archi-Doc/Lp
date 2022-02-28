@@ -52,6 +52,17 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
             var tc = await flake.GetFragment<TestFragment>(Identifier.One);
         }
 
+        var data = new byte[Zen.MaxFlakeSize];
+        for (var i = 0; i < 10; i++)
+        {
+            flake = zen.TryCreateOrGet(new(i));
+            if (flake != null)
+            {
+                var dt = await flake.Get();
+                flake.Set(data);
+            }
+        }
+
         await zen.StopZen(new());
     }
 
