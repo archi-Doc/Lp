@@ -94,7 +94,7 @@ public partial class Flake
         return ZenResult.Success;
     }
 
-    public ZenResult Set(Identifier fragmentId, ReadOnlySpan<byte> data)
+    public ZenResult SetFragment(Identifier fragmentId, ReadOnlySpan<byte> data)
     {
         if (!this.Zen.Started)
         {
@@ -140,7 +140,7 @@ public partial class Flake
         }
     }*/
 
-    public ZenResult SetObject(Identifier fragmentId, object obj)
+    public ZenResult SetFragmentObject(Identifier fragmentId, object obj)
     {
         if (!this.Zen.Started)
         {
@@ -274,7 +274,7 @@ public partial class Flake
         return new(ZenResult.NoData);
     }
 
-    public async Task<ZenDataResult> Get(Identifier fragmentId)
+    public async Task<ZenDataResult> GetFragment(Identifier fragmentId)
     {
         if (!this.Zen.Started)
         {
@@ -336,7 +336,7 @@ public partial class Flake
         return new(ZenResult.NoData);
     }
 
-    public async Task<ZenObjectResult<T>> GetObject<T>(Identifier fragmentId)
+    public async Task<ZenObjectResult<T>> GetFragmentObject<T>(Identifier fragmentId)
     {
         if (!this.Zen.Started)
         {

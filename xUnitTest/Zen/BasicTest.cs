@@ -66,13 +66,13 @@ public class BasicTest
             identifier = new Identifier(i);
             identifier.TryWriteBytes(buffer);
 
-            f!.Set(identifier, buffer).Is(ZenResult.Success);
+            f!.SetFragment(identifier, buffer).Is(ZenResult.Success);
         }
 
         identifier = new Identifier(Zen.MaxFragmentCount);
         identifier.TryWriteBytes(buffer);
 
-        f!.Set(identifier, buffer).Is(ZenResult.OverNumberLimit);
+        f!.SetFragment(identifier, buffer).Is(ZenResult.OverNumberLimit);
     }
 
     [Fact]

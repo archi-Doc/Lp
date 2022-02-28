@@ -40,14 +40,16 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
             flake.Save(true);
             t = await flake.GetObject<TestFragment>();
 
-            flake.Set(Identifier.One, new byte[] { 2, 3, });
-            var result = await flake.Get(Identifier.One);
+            flake.SetFragment(Identifier.One, new byte[] { 2, 3, });
+            var result = await flake.GetFragment(Identifier.One);
             flake.Save(true);
-            result = await flake.Get(Identifier.One);
+            result = await flake.GetFragment(Identifier.One);
             flake.Remove(Identifier.One);
             flake.Save(true);
-            result = await flake.Get(Identifier.One);
+            result = await flake.GetFragment(Identifier.One);
             flake.Save(true);
+
+            var tc = await flake.GetFragment<TestFragment>(Identifier.One);
         }
 
         await zen.StopZen(new());

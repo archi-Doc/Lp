@@ -5,7 +5,8 @@ using SimpleCommandLine;
 
 namespace LP.Options;
 
-public class NetsphereOptions
+[TinyhandObject(ImplicitKeyAsName = true)]
+public partial class NetsphereOptions
 {
     [SimpleOption("address", null, "Global IP address")]
     public string Address { get; set; } = string.Empty;

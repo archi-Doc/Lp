@@ -5,7 +5,8 @@ using SimpleCommandLine;
 
 namespace LP.Options;
 
-public record LPConsoleOptions
+[TinyhandObject(ImplicitKeyAsName = true)]
+public partial record LPConsoleOptions
 {
     [SimpleOption("development", description: "Development")]
     public bool Development { get; init; } = false;
