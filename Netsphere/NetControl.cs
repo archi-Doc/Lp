@@ -16,6 +16,8 @@ global using ValueLink;
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using DryIoc;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere.Responder;
 using SimpleCommandLine;
 
@@ -28,10 +30,15 @@ public class NetControl
     public const int MinPort = 49152; // Ephemeral port 49152 - 60999
     public const int MaxPort = 60999;
 
+    public static NetControlBuilder CreateBuilder()
+    {
+        return new NetControlBuilder();
+    }
+
     public static void Register(Container container, List<Type>? commandList = null)
     {
         // Container instance
-        containerInstance = container;
+        serviceProvider = container;
 
         // Base
         if (!container.IsRegistered<BigMachine<Identifier>>())
@@ -64,16 +71,52 @@ public class NetControl
         }
     }
 
+    public static void Register(IServiceCollection serviceCollection, List<Type>? commandList = null)
+    {
+        // Base
+        serviceCollection.TryAddSingleton<BigMachine<Identifier>>();
+
+        // Main services
+        serviceCollection.AddSingleton<NetControl>();
+        serviceCollection.AddSingleton<NetBase>();
+        serviceCollection.AddSingleton<Terminal>();
+        serviceCollection.AddSingleton<EssentialNode>();
+        serviceCollection.AddSingleton<NetStatus>();
+        serviceCollection.AddTransient<Server>();
+        serviceCollection.AddTransient<NetService>();
+        // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
+
+        // Machines
+        serviceCollection.AddTransient<LP.Machines.EssentialNetMachine>();
+
+        // Subcommands
+        var commandTypes = new Type[]
+        {
+            typeof(LP.Subcommands.NetTestSubcommand),
+        };
+
+        commandList?.AddRange(commandTypes);
+        foreach (var x in commandTypes)
+        {
+            serviceCollection.AddSingleton(x);
+        }
+    }
+
+    public static void SetServiceProvider(IServiceProvider provider)
+    {
+        serviceProvider = provider;
+    }
+
     /*public static void QuickStart(bool enableServer, string nodeName, NetsphereOptions options, bool allowUnsafeConnection)
         => QuickStart<ServerContext>(enableServer, nodeName, options, allowUnsafeConnection, () => new CallContext());*/
 
     public static void QuickStart(bool enableServer, Func<ServerContext> newServerContext, Func<CallContext> newCallContext, string nodeName, NetsphereOptions options, bool allowUnsafeConnection)
     {
-        var netBase = containerInstance.Resolve<NetBase>();
+        var netBase = serviceProvider.GetRequiredService<NetBase>();
         netBase.Initialize(enableServer, nodeName, options);
         netBase.AllowUnsafeConnection = allowUnsafeConnection;
 
-        var netControl = containerInstance.Resolve<NetControl>();
+        var netControl = serviceProvider.GetRequiredService<NetControl>();
         if (enableServer)
         {
             netControl.SetupServer(newServerContext, newCallContext);
@@ -92,7 +135,7 @@ public class NetControl
 
     public NetControl(NetBase netBase, BigMachine<Identifier> bigMachine, Terminal terminal, EssentialNode node, NetStatus netStatus)
     {
-        this.ServiceProvider = (IServiceProvider)containerInstance;
+        this.ServiceProvider = (IServiceProvider)serviceProvider;
         this.NewServerContext = () => new ServerContext();
         this.NewCallContext = () => new CallContext();
         this.NetBase = netBase;
@@ -144,7 +187,7 @@ public class NetControl
 
         static async Task InvokeServer(ServerTerminal terminal)
         {
-            var server = containerInstance.Resolve<Server>();
+            var server = serviceProvider.GetRequiredService<Server>();
             terminal.Terminal.MyStatus.IncrementServerCount();
             try
             {
@@ -184,7 +227,7 @@ public class NetControl
 
     internal ConcurrentDictionary<ulong, INetResponder> Responders { get; } = new();
 
-    private static Container containerInstance = default!;
+    private static IServiceProvider serviceProvider = default!;
 
     private void Dump()
     {
