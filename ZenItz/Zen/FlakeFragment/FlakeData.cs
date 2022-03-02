@@ -91,23 +91,23 @@ internal partial class FlakeData
         }
     }
 
-    public bool TryGetMemoryOwner(out ByteArrayPool.ReadOnlyMemoryOwner memoryOwmer)
+    public bool TryGetMemoryOwner(out ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
     {
         if (this.MemoryOwnerAvailable)
         {
-            memoryOwmer = this.MemoryOwner.IncrementAndShare();
+            memoryOwner = this.MemoryOwner.IncrementAndShare();
             return true;
         }
         else if (this.Object != null && this.Zen.ObjectToMemoryOwner(this.Object, out var m))
         {
             this.MemoryOwner = m.AsReadOnly();
             this.MemoryOwnerAvailable = true;
-            memoryOwmer = this.MemoryOwner.IncrementAndShare();
+            memoryOwner = this.MemoryOwner.IncrementAndShare();
             return true;
         }
         else
         {
-            memoryOwmer = default;
+            memoryOwner = default;
             return false;
         }
     }

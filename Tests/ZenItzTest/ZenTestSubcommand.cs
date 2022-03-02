@@ -3,6 +3,7 @@
 using System.Diagnostics;
 using SimpleCommandLine;
 using Tinyhand;
+using LP.Fragments;
 
 namespace ZenItzTest;
 
@@ -20,13 +21,46 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
         var itz = this.ZenControl.Itz;
 
         await zen.TryStartZen(new(Zen.DefaultZenDirectory));
-        var p = zen.TryCreateOrGet(Identifier.Zero);
-        if (p != null)
+
+        var flake = zen.TryCreateOrGet(Identifier.Zero);
+        if (flake != null)
         {
-            p.Set(new byte[] { 0, 1, });
-            p.Save(true);
-            var result = await p.Get();
-            p.Remove();
+            flake.Set(new byte[] { 0, 1, });
+            flake.Save(true);
+            var result = await flake.Get();
+            flake.Remove();
+        }
+
+        flake = zen.TryCreateOrGet(Identifier.One);
+        if (flake != null)
+        {
+            flake.SetObject(new TestFragment());
+            var t = await flake.GetObject<TestFragment>();
+
+            flake.Save(true);
+            t = await flake.GetObject<TestFragment>();
+
+            flake.SetFragment(Identifier.One, new byte[] { 2, 3, });
+            var result = await flake.GetFragment(Identifier.One);
+            flake.Save(true);
+            result = await flake.GetFragment(Identifier.One);
+            flake.Remove(Identifier.One);
+            flake.Save(true);
+            result = await flake.GetFragment(Identifier.One);
+            flake.Save(true);
+
+            var tc = await flake.GetFragment<TestFragment>(Identifier.One);
+        }
+
+        var data = new byte[Zen.MaxFlakeSize];
+        for (var i = 0; i < 10; i++)
+        {
+            flake = zen.TryCreateOrGet(new(i));
+            if (flake != null)
+            {
+                var dt = await flake.Get();
+                flake.Set(data);
+            }
         }
 
         await zen.StopZen(new());

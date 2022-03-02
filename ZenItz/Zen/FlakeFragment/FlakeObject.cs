@@ -61,6 +61,7 @@ internal class FlakeObject : FlakeObjectBase
             if (this.fragment.TryGetMemoryOwner(out var memoryOwner))
             {
                 this.Flake.Zen.IO.Save(ref this.Flake.flakeFile, memoryOwner);
+                memoryOwner.Return();
             }
 
             this.IsSaved = true;

@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
+
 namespace ZenItz;
 
 #pragma warning disable SA1202 // Elements should be ordered by access
@@ -10,6 +12,7 @@ namespace ZenItz;
 [ValueLinkObject]
 public partial class Flake
 {
+    [Link(Primary = true, Name = "RecentGet", Type = ChainType.LinkedList)]
     internal Flake()
     {
     }
@@ -45,7 +48,7 @@ public partial class Flake
         return ZenResult.Success;
     }
 
-    internal ZenResult Set(ByteArrayPool.MemoryOwner dataToBeMoved)
+    /*internal ZenResult Set(ByteArrayPool.MemoryOwner dataToBeMoved)
     {
         if (!this.Zen.Started)
         {
@@ -68,7 +71,7 @@ public partial class Flake
         }
 
         return ZenResult.Success;
-    }
+    }*/
 
     public ZenResult SetObject(object obj)
     {
@@ -91,23 +94,7 @@ public partial class Flake
         return ZenResult.Success;
     }
 
-    /*public ZenResult SetObject<T>(T obj)
-    {
-        byte[]? byteArray;
-        try
-        {
-            byteArray = TinyhandSerializer.Serialize<T>(obj);
-        }
-        catch
-        {
-            return ZenResult.SerializationError;
-        }
-
-        var result = this.Set(byteArray);
-        return result;
-    }*/
-
-    public ZenResult Set(Identifier fragmentId, ReadOnlySpan<byte> data)
+    public ZenResult SetFragment(Identifier fragmentId, ReadOnlySpan<byte> data)
     {
         if (!this.Zen.Started)
         {
@@ -130,7 +117,7 @@ public partial class Flake
         }
     }
 
-    internal ZenResult Set(Identifier fragmentId, ByteArrayPool.MemoryOwner data)
+    /*internal ZenResult Set(Identifier fragmentId, ByteArrayPool.MemoryOwner data)
     {
         if (!this.Zen.Started)
         {
@@ -151,6 +138,25 @@ public partial class Flake
             this.fragmentObject ??= new(this, this.Zen.FragmentObjectGoshujin);
             return this.fragmentObject.SetMemoryOwner(fragmentId, data);
         }
+    }*/
+
+    public ZenResult SetFragmentObject(Identifier fragmentId, object obj)
+    {
+        if (!this.Zen.Started)
+        {
+            return ZenResult.NotStarted;
+        }
+
+        lock (this.syncObject)
+        {
+            if (this.IsRemoved)
+            {
+                return ZenResult.Removed;
+            }
+
+            this.fragmentObject ??= new(this, this.Zen.FragmentObjectGoshujin);
+            return this.fragmentObject.SetObject(fragmentId, obj);
+        }
     }
 
     public async Task<ZenDataResult> Get()
@@ -170,6 +176,7 @@ public partial class Flake
 
             if (this.flakeObject != null && this.flakeObject.TryGetMemoryOwner(out var memoryOwner))
             {// Memory
+                this.UpdateGetRecentLink();
                 return new(ZenResult.Success, memoryOwner);
             }
 
@@ -186,13 +193,15 @@ public partial class Flake
 
             lock (this.syncObject)
             {
-                if (!this.IsRemoved)
+                if (this.IsRemoved)
                 {
-                    this.flakeObject?.SetMemoryOwner(result.Data);
+                    return new(ZenResult.Removed);
                 }
-            }
 
-            return result;
+                this.flakeObject?.SetMemoryOwner(result.Data);
+                this.UpdateGetRecentLink();
+                return result;
+            }
         }
 
         return new(ZenResult.NoData);
@@ -217,11 +226,12 @@ public partial class Flake
             {// Object
                 if (obj is T t)
                 {
+                    this.UpdateGetRecentLink();
                     return new(ZenResult.Success, t);
                 }
                 else
                 {
-                    return new(ZenResult.ObjectError);
+                    return new(ZenResult.InvalidCast);
                 }
             }
 
@@ -248,16 +258,155 @@ public partial class Flake
                 {// Object
                     if (obj is T t)
                     {
+                        this.UpdateGetRecentLink();
                         return new(ZenResult.Success, t);
                     }
                     else
                     {
-                        return new(ZenResult.ObjectError);
+                        return new(ZenResult.InvalidCast);
                     }
                 }
             }
 
             return new(result.Result);
+        }
+
+        return new(ZenResult.NoData);
+    }
+
+    public async Task<ZenDataResult> GetFragment(Identifier fragmentId)
+    {
+        if (!this.Zen.Started)
+        {
+            return new(ZenResult.NotStarted);
+        }
+
+        ulong file = 0;
+        lock (this.syncObject)
+        {
+            if (this.IsRemoved)
+            {
+                return new(ZenResult.Removed);
+            }
+
+            if (this.fragmentObject != null)
+            {// Memory
+                var fragmentResult = this.fragmentObject.TryGetMemoryOwner(fragmentId, out var memoryOwner);
+                if (fragmentResult == FragmentObject.Result.Success)
+                {
+                    // this.UpdateGetRecentLink();
+                    return new(ZenResult.Success, memoryOwner);
+                }
+                else if (fragmentResult == FragmentObject.Result.NotFound)
+                {
+                    return new(ZenResult.NoData);
+                }
+            }
+
+            file = this.fragmentFile;
+        }
+
+        if (ZenFile.IsValidFile(file))
+        {
+            var result = await this.Zen.IO.Load(file);
+            if (!result.IsSuccess)
+            {
+                return result;
+            }
+
+            lock (this.syncObject)
+            {
+                if (this.IsRemoved)
+                {
+                    return new(ZenResult.Removed);
+                }
+
+                this.fragmentObject ??= new(this, this.Zen.FragmentObjectGoshujin);
+                this.fragmentObject.Load(result.Data);
+
+                var fragmentResult = this.fragmentObject.TryGetMemoryOwner(fragmentId, out var memoryOwner);
+                if (fragmentResult == FragmentObject.Result.Success)
+                {
+                    // this.UpdateGetRecentLink();
+                    return new(ZenResult.Success, memoryOwner);
+                }
+            }
+        }
+
+        return new(ZenResult.NoData);
+    }
+
+    public async Task<ZenObjectResult<T>> GetFragmentObject<T>(Identifier fragmentId)
+    {
+        if (!this.Zen.Started)
+        {
+            return new(ZenResult.NotStarted);
+        }
+
+        ulong file = 0;
+        lock (this.syncObject)
+        {
+            if (this.IsRemoved)
+            {
+                return new(ZenResult.Removed);
+            }
+
+            if (this.fragmentObject != null)
+            {// Memory
+                var fragmentResult = this.fragmentObject.TryGetObject(fragmentId, out var obj);
+                if (fragmentResult == FragmentObject.Result.Success)
+                {
+                    if (obj is T t)
+                    {
+                        // this.UpdateGetRecentLink();
+                        return new(ZenResult.Success, t);
+                    }
+                    else
+                    {
+                        return new(ZenResult.InvalidCast);
+                    }
+                }
+                else if (fragmentResult == FragmentObject.Result.NotFound)
+                {
+                    return new(ZenResult.NoData);
+                }
+            }
+
+            file = this.fragmentFile;
+        }
+
+        if (ZenFile.IsValidFile(file))
+        {
+            var result = await this.Zen.IO.Load(file);
+            if (!result.IsSuccess)
+            {
+                return new(result.Result);
+            }
+
+            lock (this.syncObject)
+            {
+                if (this.IsRemoved)
+                {
+                    return new(ZenResult.Removed);
+                }
+
+                this.fragmentObject ??= new(this, this.Zen.FragmentObjectGoshujin);
+                this.fragmentObject.Load(result.Data);
+
+                var fragmentResult = this.fragmentObject.TryGetObject(fragmentId, out var obj);
+                if (fragmentResult == FragmentObject.Result.Success)
+                {
+                    if (obj is T t)
+                    {
+                        // this.UpdateGetRecentLink();
+                        return new(ZenResult.Success, t);
+                    }
+                    else
+                    {
+                        return new(ZenResult.InvalidCast);
+                    }
+                }
+            }
         }
 
         return new(ZenResult.NoData);
@@ -278,6 +427,25 @@ public partial class Flake
     }
 
     public bool Remove() => this.Zen.Remove(this.Identifier);
+
+    public bool Remove(Identifier fragmentId)
+    {
+        if (!this.Zen.Started)
+        {
+            return false;
+        }
+
+        lock (this.syncObject)
+        {
+            if (this.IsRemoved)
+            {
+                return false;
+            }
+
+            this.fragmentObject ??= new(this, this.Zen.FragmentObjectGoshujin);
+            return this.fragmentObject.Remove(fragmentId);
+        }
+    }
 
     public Zen Zen { get; internal set; } = default!;
 
@@ -366,7 +534,7 @@ public partial class Flake
     }
 
     [Key(0)]
-    [Link(Primary = true, Name = "Id", NoValue = true, Type = ChainType.Unordered)]
+    [Link(Name = "Id", NoValue = true, Type = ChainType.Unordered)]
     [Link(Name = "OrderedId", Type = ChainType.Ordered)]
     internal Identifier identifier;
 
@@ -379,4 +547,14 @@ public partial class Flake
     private object syncObject = new();
     private FlakeObject? flakeObject;
     private FragmentObject? fragmentObject;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void UpdateGetRecentLink()
+    {// lock (this.syncObject)
+        if (this.Goshujin != null)
+        {
+            this.Goshujin.RecentGetChain.Remove(this);
+            this.Goshujin.RecentGetChain.AddFirst(this);
+        }
+    }
 }

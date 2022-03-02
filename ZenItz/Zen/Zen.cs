@@ -42,6 +42,17 @@ public class Zen
         this.FragmentObjectGoshujin = new(this);
     }
 
+    public ZenStartResult StartZenForTest()
+    {
+        if (this.Started)
+        {
+            return ZenStartResult.AlreadyStarted;
+        }
+
+        this.Started = true;
+        return ZenStartResult.Success;
+    }
+
     public async Task<ZenStartResult> TryStartZen(ZenStartParam param)
     {
         var result = ZenStartResult.Success;
@@ -80,7 +91,7 @@ public class Zen
         // Save & Unload flakes
         lock (this.flakeGoshujin)
         {
-            foreach (var x in this.flakeGoshujin.IdChain)
+            foreach (var x in this.flakeGoshujin)
             {
                 x.Save(true);
             }
@@ -188,7 +199,7 @@ public class Zen
         // Save & Unload flakes
         lock (this.flakeGoshujin)
         {
-            foreach (var x in this.flakeGoshujin.IdChain)
+            foreach (var x in this.flakeGoshujin)
             {
                 x.Save(true);
             }

@@ -8,6 +8,7 @@ global using CrossChannel;
 global using LP;
 global using Netsphere;
 using DryIoc;
+using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using SimpleCommandLine;
 
@@ -17,7 +18,7 @@ namespace NetsphereTest;
 
 public class Program
 {
-    public static Container Container { get; } = new();
+    // public static Container Container { get; } = new();
 
     public static async Task Main(string[] args)
     {
@@ -27,7 +28,7 @@ public class Program
         commandTypes.Add(typeof(NetbenchSubcommand));
 
         // DI Container
-        NetControl.Register(Container, commandTypes);
+        /*NetControl.Register(Container, commandTypes);
         foreach (var x in commandTypes)
         {
             Container.Register(x, Reuse.Singleton);
@@ -38,7 +39,22 @@ public class Program
 
         Container.Register<TestFilterB>(Reuse.Singleton);
 
-        Container.ValidateAndThrow();
+        Container.ValidateAndThrow();*/
+
+        // Alternative
+        var services = new ServiceCollection();
+        NetControl.Register(services, commandTypes);
+        foreach (var x in commandTypes)
+        {
+            services.AddSingleton(x);
+        }
+
+        services.AddSingleton<ExternalServiceImpl>();
+
+        services.AddSingleton<TestFilterB>();
+
+        var serviceProvider = services.BuildServiceProvider();
+        NetControl.SetServiceProvider(serviceProvider);
 
         AppDomain.CurrentDomain.ProcessExit += (s, e) =>
         {// Console window closing or process terminated.
@@ -54,7 +70,7 @@ public class Program
 
         var parserOptions = SimpleParserOptions.Standard with
         {
-            ServiceProvider = Container,
+            ServiceProvider = serviceProvider,
             RequireStrictCommandName = false,
             RequireStrictOptionName = true,
         };
@@ -71,7 +87,7 @@ public class Program
         {
             var logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "logs");
             Directory.CreateDirectory(logDirectory);
-            var netControl = Container.Resolve<NetControl>();
+            var netControl = serviceProvider.GetRequiredService<NetControl>();
             netControl.Terminal.SetLogger(new SerilogLogger(new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.File(

@@ -5,7 +5,8 @@ using SimpleCommandLine;
 
 namespace LP.Options;
 
-public class ZenItzOptions
+[TinyhandObject(ImplicitKeyAsName = true)]
+public partial class ZenItzOptions
 {
     [SimpleOption("zenfile", null, ".")]
     public string ZenFile { get; set; } = string.Empty;

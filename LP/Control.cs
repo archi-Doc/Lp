@@ -83,8 +83,8 @@ public class Control
 
     public static bool ObjectToMemoryOwner(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved)
     {
-        if (obj is IFlake flake &&
-            FlakeFragmentService.TrySerialize<IFlake>(flake, out dataToBeMoved))
+        if (obj is LP.Fragments.FragmentBase flake &&
+            FlakeFragmentService.TrySerialize<LP.Fragments.FragmentBase>(flake, out dataToBeMoved))
         {
             return true;
         }
@@ -97,7 +97,7 @@ public class Control
 
     public static object? MemoryOwnerToObject(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
     {
-        if (TinyhandSerializer.TryDeserialize<IFlake>(memoryOwner.Memory, out var value))
+        if (TinyhandSerializer.TryDeserialize<LP.Fragments.FragmentBase>(memoryOwner.Memory, out var value))
         {
             return value;
         }

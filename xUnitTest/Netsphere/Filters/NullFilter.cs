@@ -2,7 +2,7 @@
 
 using Netsphere;
 
-namespace xUnitTest.Netsphere;
+namespace xUnitTest.NetsphereTest;
 
 public class NullFilter : IServiceFilter
 {

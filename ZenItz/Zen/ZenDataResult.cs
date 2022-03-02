@@ -16,6 +16,8 @@ public readonly struct ZenDataResult
         this.Data = default;
     }
 
+    public void Return() => this.Data.Return();
+
     public bool IsSuccess => this.Result == ZenResult.Success;
 
     public readonly ZenResult Result;

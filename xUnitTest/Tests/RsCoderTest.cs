@@ -45,7 +45,7 @@ public class RsCoderTest
                 coder.Encode(source, source.Length);
                 coder.InvalidateEncodedBufferForUnitTest(i);
                 coder.Decode(coder.EncodedBuffer!, coder.EncodedBufferLength);
-                TestHelper.ByteArrayEqual(source, coder.DecodedBuffer, source.Length).IsTrue();
+                TestHelper.ByteArrayEquals(source, coder.DecodedBuffer, source.Length).IsTrue();
             }
         }
     }
@@ -108,7 +108,7 @@ public class RsCoderTest
         // Simple encode and decode.
         coder.Encode(source, length);
         coder.Decode(coder.EncodedBuffer!, coder.EncodedBufferLength);
-        TestHelper.ByteArrayEqual(source, coder.DecodedBuffer, length).IsTrue();
+        TestHelper.ByteArrayEquals(source, coder.DecodedBuffer, length).IsTrue();
 
         for (var i = 1; i <= coder.CheckSize; i++)
         {
@@ -117,7 +117,7 @@ public class RsCoderTest
                 coder.Encode(source, length);
                 coder.InvalidateEncodedBufferForUnitTest(random, i);
                 coder.Decode(coder.EncodedBuffer!, coder.EncodedBufferLength);
-                TestHelper.ByteArrayEqual(source, coder.DecodedBuffer, length).IsTrue();
+                TestHelper.ByteArrayEquals(source, coder.DecodedBuffer, length).IsTrue();
             }
         }
     }

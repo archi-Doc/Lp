@@ -10,6 +10,7 @@ global using ZenItz;
 using DryIoc;
 using Serilog;
 using SimpleCommandLine;
+using Tinyhand;
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
 
@@ -78,6 +79,8 @@ public class Program
                 .CreateLogger()));
         }*/
 
+        Container.Resolve<ZenControl>().Zen.SetDelegate(ObjectToMemoryOwner, MemoryOwnerToObject);
+
         await SimpleParser.ParseAndRunAsync(commandTypes, args, parserOptions); // Main process
 
         ThreadCore.Root.Terminate();
@@ -85,5 +88,31 @@ public class Program
         Logger.CloseAndFlush();
         // await Task.Delay(1000);
         ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).
+    }
+
+    public static bool ObjectToMemoryOwner(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved)
+    {
+        if (obj is LP.Fragments.FragmentBase flake &&
+            FlakeFragmentService.TrySerialize<LP.Fragments.FragmentBase>(flake, out dataToBeMoved))
+        {
+            return true;
+        }
+        else
+        {
+            dataToBeMoved = default;
+            return false;
+        }
+    }
+
+    public static object? MemoryOwnerToObject(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
+    {
+        if (TinyhandSerializer.TryDeserialize<LP.Fragments.FragmentBase>(memoryOwner.Memory, out var value))
+        {
+            return value;
+        }
+        else
+        {
+            return null;
+        }
     }
 }
