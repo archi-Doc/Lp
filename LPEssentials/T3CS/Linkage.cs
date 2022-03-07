@@ -12,6 +12,11 @@ public partial class Linkage : IValidatable // , IEquatable<Linkage>, IComparabl
     public const double MinPoint = -1.0E15;
     public const int MaxMergers = 4;
 
+    public enum Type
+    {
+        A,
+    }
+
     public Linkage()
     {
         this.Point = 0;
@@ -62,11 +67,14 @@ public partial class Linkage : IValidatable // , IEquatable<Linkage>, IComparabl
     public double Point { get; private set; }
 
     [Key(1)]
-    public Authority Owner { get; private set; }
+    public Type LinkageType { get; private set; }
 
     [Key(2)]
+    public Authority Owner { get; private set; }
+
+    [Key(3)]
     public Authority[] Mergers { get; private set; }
 
-    [Key(3, Marker = true)]
+    [Key(4, Marker = true)]
     public byte[][] Signs { get; private set; }
 }
