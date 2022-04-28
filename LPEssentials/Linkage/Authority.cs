@@ -27,6 +27,11 @@ public partial class Authority : IValidatable // , IEquatable<Authority>, ICompa
         this.Y = default!;
     }
 
+    public bool Validate()
+    {
+        return true;
+    }
+
     [Key(0)]
     public string Name { get; private set; }
 

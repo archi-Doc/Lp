@@ -18,6 +18,11 @@ public partial class Linkage : IValidatable // , IEquatable<Linkage>, IComparabl
         this.Signs = default!;
     }
 
+    public bool Validate()
+    {
+        return true;
+    }
+
     [Key(0)]
     public double Point { get; private set; }
 
