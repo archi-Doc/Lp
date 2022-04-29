@@ -18,15 +18,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Arc.Collections" Version="1.0.3" />
-    <PackageReference Include="Arc.CrossChannel" Version="0.4.2" />
-    <PackageReference Include="Arc.Threading" Version="0.12.3" />
-    <PackageReference Include="Arc.Crypto" Version="1.8.1" />
-    <PackageReference Include="BigMachines" Version="0.20.2" />
+    <PackageReference Include="Arc.Collections" Version="1.1.0" />
+    <PackageReference Include="Arc.CrossChannel" Version="0.4.3" />
+    <PackageReference Include="Arc.Threading" Version="0.12.4" />
+    <PackageReference Include="Arc.Crypto" Version="1.8.2" />
+    <PackageReference Include="BigMachines" Version="0.20.3" />
     <PackageReference Include="DryIoc.dll" Version="5.0.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
-    <PackageReference Include="SimpleCommandLine" Version="0.9.2" />
-    <PackageReference Include="Tinyhand" Version="0.28.4" />
+    <PackageReference Include="SimpleCommandLine" Version="0.9.3" />
+    <PackageReference Include="Tinyhand" Version="0.28.5" />
     <PackageReference Include="ValueLink" Version="0.27.1" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.354">
       <PrivateAssets>all</PrivateAssets>
