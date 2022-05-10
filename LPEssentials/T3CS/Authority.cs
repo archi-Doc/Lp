@@ -10,8 +10,9 @@ public partial class Authority : IValidatable // , IEquatable<Authority>, ICompa
 {
     public const int NameLength = 16;
     public const string ECCurveName = "secp256r1";
-    public const int PublicKeySize = 64;
-    public const int PrivateKeySize = 32;
+    public const int PublicKeyLength = 64;
+    public const int PrivateKeyLength = 32;
+    public const int PublicKeyHalfLength = PublicKeyLength / 2;
 
     public Authority()
     {
@@ -40,4 +41,22 @@ public partial class Authority : IValidatable // , IEquatable<Authority>, ICompa
 
     [Key(2)]
     public byte[] Y { get; private set; }
+
+    public bool Validate()
+    {
+        if (this.Name == null || this.Name.Length > NameLength)
+        {
+            return false;
+        }
+        else if (this.X == null || this.X.Length != PublicKeyHalfLength)
+        {
+            return false;
+        }
+        else if (this.Y == null || this.Y.Length != PublicKeyHalfLength)
+        {
+            return false;
+        }
+
+        return true;
+    }
 }

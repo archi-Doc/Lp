@@ -17,11 +17,12 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        DebugRun<ZenIOBenchmark>();
+        DebugRun<DoubleDecimalBenchmark>();
 
         // var summary = BenchmarkRunner.Run<TestBenchmark>();
         var switcher = new BenchmarkSwitcher(new[]
         {
+            typeof(DoubleDecimalBenchmark),
             typeof(ZenIOBenchmark),
             typeof(MicsBenchmark),
             typeof(PacketPoolBenchmark),
