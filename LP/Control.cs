@@ -53,7 +53,6 @@ public class Control
         // Subcommands
         var commandTypes = new Type[]
         {
-            typeof(LP.Subcommands.DumpCommandLineSubcommand),
             typeof(LP.Subcommands.MicsSubcommand),
             typeof(LP.Subcommands.DumpSubcommand),
             typeof(LP.Subcommands.GCSubcommand),
@@ -75,7 +74,7 @@ public class Control
         SubcommandParserOptions = SimpleParserOptions.Standard with
         {
             ServiceProvider = container,
-            RequireStrictCommandName = true,
+            RequireStrictCommandName = false,
             RequireStrictOptionName = true,
             DoNotDisplayUsage = true,
         };

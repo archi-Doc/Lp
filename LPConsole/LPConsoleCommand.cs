@@ -12,6 +12,7 @@ using LP;
 using LP.Options;
 using Netsphere;
 using SimpleCommandLine;
+using Tinyhand;
 using ZenItz;
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
@@ -25,13 +26,30 @@ public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
     {
     }
 
-    public async Task Run(LPConsoleOptions option, string[] args)
+    public async Task Run(LPConsoleOptions options, string[] args)
     {
+        // Load options
+        if (!string.IsNullOrEmpty(options.OptionsPath))
+        {
+            try
+            {
+                var utf8 = File.ReadAllBytes(options.OptionsPath);
+                var op = TinyhandSerializer.DeserializeFromUtf8<LPConsoleOptions>(utf8);
+                if (op != null)
+                {
+                    options = op;
+                }
+            }
+            catch
+            {
+            }
+        }
+
         this.lpBase = Program.Container.Resolve<LPBase>();
-        this.lpBase.Initialize(option, true, "relay");
+        this.lpBase.Initialize(options, true, "relay");
 
         this.netBase = Program.Container.Resolve<NetBase>();
-        this.netBase.Initialize(true, string.Empty, option.NetsphereOptions);
+        this.netBase.Initialize(true, string.Empty, options.NetsphereOptions);
         this.netBase.AllowUnsafeConnection = true; // betacode
 
         if (await this.LoadAsync() == AbortOrComplete.Abort)

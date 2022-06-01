@@ -7,19 +7,19 @@ using Netsphere;
 using SimpleCommandLine;
 using Tinyhand;
 
-namespace LP.Subcommands;
+namespace LP.Subcommands.Dump;
 
-[SimpleCommand("dumpcommandline")]
-public class DumpCommandLineSubcommand : ISimpleCommandAsync<DumpCommandLineOptions>
+[SimpleCommand("options")]
+public class DumpSubcommandOptions : ISimpleCommandAsync<DumpSubcommandOptions2>
 {
-    public const string DefaultName = "commandline";
+    public const string DefaultName = "options.tinyhand";
 
-    public DumpCommandLineSubcommand(Control control)
+    public DumpSubcommandOptions(Control control)
     {
         this.Control = control;
     }
 
-    public async Task Run(DumpCommandLineOptions options, string[] args)
+    public async Task Run(DumpSubcommandOptions2 options, string[] args)
     {
         var output = options.Output;
         if (string.IsNullOrEmpty(output))
@@ -28,13 +28,12 @@ public class DumpCommandLineSubcommand : ISimpleCommandAsync<DumpCommandLineOpti
         }
 
         var path = Path.Combine(this.Control.LPBase.RootDirectory, output);
-        Logger.Subcommand.Information("Dump command line.");
         Logger.Subcommand.Information($"Output: {path}");
 
         try
         {
-            var st = TinyhandSerializer.SerializeToString(this.Control.LPBase.ConsoleOptions);
-            await File.WriteAllTextAsync(path, st);
+            var utf = TinyhandSerializer.SerializeToUtf8(this.Control.LPBase.ConsoleOptions);
+            await File.WriteAllBytesAsync(path, utf);
         }
         catch
         {
@@ -44,9 +43,9 @@ public class DumpCommandLineSubcommand : ISimpleCommandAsync<DumpCommandLineOpti
     public Control Control { get; set; }
 }
 
-public record DumpCommandLineOptions
+public record DumpSubcommandOptions2
 {
-    [SimpleOption("name", description: "Output name")]
+    [SimpleOption("output", description: "Output name")]
     public string Output { get; init; } = string.Empty;
 
     public override string ToString() => $"{this.Output}";
