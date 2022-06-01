@@ -10,6 +10,7 @@ global using CrossChannel;
 global using LP;
 global using Tinyhand;
 using DryIoc;
+using LP.Subcommands.Dump;
 using Netsphere;
 using SimpleCommandLine;
 using ZenItz;
@@ -63,6 +64,7 @@ public class Control
             typeof(LP.Subcommands.TestSubcommand),
         };
 
+        LP.Subcommands.DumpSubcommand.Register(container);
         LP.Subcommands.KeyVaultSubcommand.Register(container);
 
         foreach (var x in commandTypes)

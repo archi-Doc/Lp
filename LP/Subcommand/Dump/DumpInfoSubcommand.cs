@@ -2,22 +2,21 @@
 
 using System.Text;
 using Arc.Crypto;
-using LP;
 using LP.Block;
 using SimpleCommandLine;
 using Tinyhand;
 
-namespace LP.Subcommands;
+namespace LP.Subcommands.Dump;
 
-[SimpleCommand("dump")]
-public class DumpSubcommand : ISimpleCommand<DumpOptions>
+[SimpleCommand("info", Default = true)]
+public class DumpSubcommandInfo : ISimpleCommand<DumpSubcommandInfoOptions>
 {
-    public DumpSubcommand(Control control)
+    public DumpSubcommandInfo(Control control)
     {
         this.Control = control;
     }
 
-    public void Run(DumpOptions options, string[] args)
+    public void Run(DumpSubcommandInfoOptions options, string[] args)
     {
         var logger = Logger.Subcommand;
         var target = args.Length > 0 ? args[0] : string.Empty;
@@ -30,7 +29,7 @@ public class DumpSubcommand : ISimpleCommand<DumpOptions>
         }
         else
         {
-            logger.Information(System.Environment.OSVersion.ToString());
+            logger.Information(Environment.OSVersion.ToString());
             this.Control.NetControl.Terminal.Dump(logger);
         }
     }
@@ -38,7 +37,7 @@ public class DumpSubcommand : ISimpleCommand<DumpOptions>
     public Control Control { get; set; }
 }
 
-public record DumpOptions
+public record DumpSubcommandInfoOptions
 {
     [SimpleOption("count", description: "Count")]
     public int Count { get; init; }
