@@ -60,7 +60,7 @@ public class Control
             typeof(LP.Subcommands.NetBenchSubcommand),
             typeof(LP.Subcommands.PunchSubcommand),
             typeof(LP.Subcommands.KeyVaultSubcommand),
-            typeof(LP.Subcommands.TestSubcommand),
+            typeof(LP.Subcommands.BenchmarkSubcommand),
         };
 
         LP.Subcommands.DumpSubcommand.Register(container);
