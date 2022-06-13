@@ -50,6 +50,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
     private async Task RunBenchmark()
     {
         await this.RunCryptoBenchmark();
+        await this.RunSerializeBenchmark();
     }
 
     private async Task RunCryptoBenchmark()
@@ -71,7 +72,22 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
 
         sw.Stop();
 
-        Console.WriteLine($"Sign & verify: {sw.ElapsedMilliseconds.ToString()} ms");
+        Console.WriteLine($"Sign & Verify: {sw.ElapsedMilliseconds.ToString()} ms");
+    }
+
+    private async Task RunSerializeBenchmark()
+    {
+        var sw = Stopwatch.StartNew();
+
+        var obj = new ObjectH2H();
+        for (var i = 0; i < 1_000_000; i++)
+        {
+            TinyhandSerializer.Deserialize<ObjectH2H>(TinyhandSerializer.Serialize(obj));
+        }
+
+        sw.Stop();
+
+        Console.WriteLine($"Serialize & Deserialize: {sw.ElapsedMilliseconds.ToString()} ms");
     }
 
     private ECDsa? testKey;
@@ -80,5 +96,34 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
 public record BenchmarkOptions
 {
     [SimpleOption("repetition", "r", description: "Number of repetitions")]
-    public int Repetition { get; init; } = 2;
+    public int Repetition { get; init; } = 3;
+}
+
+[TinyhandObject]
+internal partial class ObjectH2H
+{
+    public const int ArrayN = 10;
+
+    public ObjectH2H()
+    {
+        this.B = Enumerable.Range(0, ArrayN).ToArray();
+    }
+
+    [Key(0)]
+    public int X { get; set; } = 0;
+
+    [Key(1)]
+    public int Y { get; set; } = 100;
+
+    [Key(2)]
+    public int Z { get; set; } = 10000;
+
+    [Key(3)]
+    public string A { get; set; } = "H2Htest";
+
+    [Key(4)]
+    public double C { get; set; } = 123456789;
+
+    [Key(8)]
+    public int[] B { get; set; } = new int[0];
 }
