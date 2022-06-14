@@ -39,21 +39,20 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
         Logger.Subcommand.Information($"Benchmark subcommand: {options.ToString()}");
 
         var repetitions = options.Repetition < MaxRepetitions ? options.Repetition : MaxRepetitions;
-        for (var i = 0; i < repetitions; i++)
-        {
-            await this.RunBenchmark();
-        }
+
+        // for (var i = 0; i < repetitions; i++)
+        await this.RunBenchmark(repetitions);
     }
 
     public Control Control { get; set; }
 
-    private async Task RunBenchmark()
+    private async Task RunBenchmark(int repetitions)
     {
-        await this.RunCryptoBenchmark();
-        await this.RunSerializeBenchmark();
+        await this.RunCryptoBenchmark(repetitions);
+        await this.RunSerializeBenchmark(repetitions);
     }
 
-    private async Task RunCryptoBenchmark()
+    private async Task RunCryptoBenchmark(int repetitions)
     {
         if (this.testKey == null)
         {
@@ -62,32 +61,42 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
         }
 
         var bytes = TinyhandSerializer.Serialize(TestKeyString);
-        var sw = Stopwatch.StartNew();
 
-        for (var i = 0; i < 1000; i++)
+        var benchTimer = new BenchTimer();
+        for (var r = 0; r < repetitions; r++)
         {
-            var sign = this.testKey.SignData(bytes, HashAlgorithmName.SHA256);
-            var valid = this.testKey.VerifyData(bytes, sign, HashAlgorithmName.SHA256);
+            benchTimer.Start();
+
+            for (var i = 0; i < 1000; i++)
+            {
+                var sign = this.testKey.SignData(bytes, HashAlgorithmName.SHA256);
+                var valid = this.testKey.VerifyData(bytes, sign, HashAlgorithmName.SHA256);
+            }
+
+            Console.WriteLine(benchTimer.StopAndGetText());
         }
 
-        sw.Stop();
-
-        Console.WriteLine($"Sign & Verify: {sw.ElapsedMilliseconds.ToString()} ms");
+        Console.WriteLine(benchTimer.GetResult("Sign & Verify"));
     }
 
-    private async Task RunSerializeBenchmark()
+    private async Task RunSerializeBenchmark(int repetitions)
     {
-        var sw = Stopwatch.StartNew();
-
         var obj = new ObjectH2H();
-        for (var i = 0; i < 1_000_000; i++)
+
+        var benchTimer = new BenchTimer();
+        for (var r = 0; r < repetitions; r++)
         {
-            TinyhandSerializer.Deserialize<ObjectH2H>(TinyhandSerializer.Serialize(obj));
+            benchTimer.Start();
+
+            for (var i = 0; i < 1_000_000; i++)
+            {
+                TinyhandSerializer.Deserialize<ObjectH2H>(TinyhandSerializer.Serialize(obj));
+            }
+
+            Console.WriteLine(benchTimer.StopAndGetText());
         }
 
-        sw.Stop();
-
-        Console.WriteLine($"Serialize & Deserialize: {sw.ElapsedMilliseconds.ToString()} ms");
+        Console.WriteLine(benchTimer.GetResult("Serialize & Deserialize"));
     }
 
     private ECDsa? testKey;
