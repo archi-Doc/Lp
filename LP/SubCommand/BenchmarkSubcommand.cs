@@ -84,7 +84,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
             Console.WriteLine(benchTimer.StopAndGetText());
         }
 
-        Console.WriteLine(benchTimer.GetResult("Sign & Verify"));
+        Logger.Subcommand.Information(benchTimer.GetResult("Sign & Verify"));
     }
 
     private async Task RunSerializeBenchmark(BenchmarkOptions options)
@@ -106,7 +106,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
             Console.WriteLine(benchTimer.StopAndGetText());
         }
 
-        Console.WriteLine(benchTimer.GetResult("Serialize & Deserialize"));
+        Logger.Subcommand.Information(benchTimer.GetResult("Serialize & Deserialize"));
     }
 
     private ECDsa? testKey;

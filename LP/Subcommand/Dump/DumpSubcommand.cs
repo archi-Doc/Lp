@@ -41,6 +41,11 @@ public class DumpSubcommand : ISimpleCommandAsync
             commandParser ??= new(commandTypes, Control.SubcommandParserOptions);
         }
 
+        if (args.Length == 0)
+        {// dump info
+            args = new string[] { "info", };
+        }
+
         await commandParser.ParseAndRunAsync(args);
     }
 
