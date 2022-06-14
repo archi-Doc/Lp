@@ -230,11 +230,18 @@ Deserialize:
                         return;
                     }
                     else
-                    {
-                        if (!control.Subcommand(command))
+                    {// Subcommand
+                        try
                         {
-                            Console.Write("> ");
-                            continue;
+                            if (!control.Subcommand(command))
+                            {
+                                Console.Write("> ");
+                                continue;
+                            }
+                        }
+                        catch
+                        {
+                            break;
                         }
                     }
                 }
@@ -245,6 +252,9 @@ Deserialize:
 
             control.Core.Sleep(100, 100);
         }
+
+        // To view mode
+        Logger.ViewMode = true;
     }
 
     private bool SafeKeyAvailable

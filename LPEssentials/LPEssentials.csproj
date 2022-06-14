@@ -23,9 +23,9 @@
     <PackageReference Include="Arc.Threading" Version="0.12.4" />
     <PackageReference Include="Arc.Crypto" Version="1.8.2" />
     <PackageReference Include="BigMachines" Version="0.21.0" />
-    <PackageReference Include="DryIoc.dll" Version="5.0.1" />
+    <PackageReference Include="DryIoc.dll" Version="5.1.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
-    <PackageReference Include="SimpleCommandLine" Version="0.9.3" />
+    <PackageReference Include="SimpleCommandLine" Version="0.10.0" />
     <PackageReference Include="Tinyhand" Version="0.29.0" />
     <PackageReference Include="ValueLink" Version="0.28.0" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.354">

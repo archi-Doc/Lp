@@ -205,6 +205,12 @@ public class Control
             return false;
         }
 
+        if (subcommandParser.HelpCommand == string.Empty)
+        {// help
+            subcommandParser.ShowList();
+            return false;
+        }
+
         subcommandParser.Run();
         if (subcommandParser.HelpCommand != string.Empty)
         {

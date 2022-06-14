@@ -9,7 +9,7 @@ using Tinyhand;
 
 namespace LP.Subcommands;
 
-[SimpleCommand("benchmark")]
+[SimpleCommand("benchmark", "Executes a simple benchmark")]
 public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
 {
     public const int MaxRepetitions = 100;
@@ -36,23 +36,29 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
 
     public async Task Run(BenchmarkOptions options, string[] args)
     {
+        if (options.Repetition < 1)
+        {
+            options.Repetition = 1;
+        }
+        else if (options.Repetition > MaxRepetitions)
+        {
+            options.Repetition = MaxRepetitions;
+        }
+
         Logger.Subcommand.Information($"Benchmark subcommand: {options.ToString()}");
 
-        var repetitions = options.Repetition < MaxRepetitions ? options.Repetition : MaxRepetitions;
-
-        // for (var i = 0; i < repetitions; i++)
-        await this.RunBenchmark(repetitions);
+        await this.RunBenchmark(options);
     }
 
     public Control Control { get; set; }
 
-    private async Task RunBenchmark(int repetitions)
+    private async Task RunBenchmark(BenchmarkOptions options)
     {
-        await this.RunCryptoBenchmark(repetitions);
-        await this.RunSerializeBenchmark(repetitions);
+        await this.RunCryptoBenchmark(options);
+        await this.RunSerializeBenchmark(options);
     }
 
-    private async Task RunCryptoBenchmark(int repetitions)
+    private async Task RunCryptoBenchmark(BenchmarkOptions options)
     {
         if (this.testKey == null)
         {
@@ -63,8 +69,10 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
         var bytes = TinyhandSerializer.Serialize(TestKeyString);
 
         var benchTimer = new BenchTimer();
-        for (var r = 0; r < repetitions; r++)
+        for (var r = 0; r < options.Repetition; r++)
         {
+            ThreadCore.Root.CancellationToken.ThrowIfCancellationRequested();
+
             benchTimer.Start();
 
             for (var i = 0; i < 1000; i++)
@@ -79,13 +87,15 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
         Console.WriteLine(benchTimer.GetResult("Sign & Verify"));
     }
 
-    private async Task RunSerializeBenchmark(int repetitions)
+    private async Task RunSerializeBenchmark(BenchmarkOptions options)
     {
         var obj = new ObjectH2H();
 
         var benchTimer = new BenchTimer();
-        for (var r = 0; r < repetitions; r++)
+        for (var r = 0; r < options.Repetition; r++)
         {
+            ThreadCore.Root.CancellationToken.ThrowIfCancellationRequested();
+
             benchTimer.Start();
 
             for (var i = 0; i < 1_000_000; i++)
@@ -105,7 +115,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
 public record BenchmarkOptions
 {
     [SimpleOption("repetition", "r", description: "Number of repetitions")]
-    public int Repetition { get; init; } = 3;
+    public int Repetition { get; set; } = 3;
 }
 
 [TinyhandObject]
