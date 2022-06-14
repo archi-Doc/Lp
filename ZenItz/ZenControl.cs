@@ -59,6 +59,7 @@ public class ZenControl
             RequireStrictCommandName = true,
             RequireStrictOptionName = true,
             DoNotDisplayUsage = true,
+            DisplayCommandListAsHelp = true,
         };
 
         SubcommandParser = new(commandTypes, SubcommandParserOptions);

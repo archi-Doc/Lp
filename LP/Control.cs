@@ -207,13 +207,15 @@ public class Control
         }
 
         subcommandParser.Run();
-        if (subcommandParser.HelpCommand != string.Empty)
+        return false;
+
+        /*if (subcommandParser.HelpCommand != string.Empty)
         {
             return false;
         }
 
         Console.WriteLine();
-        return true;
+        return true;*/
     }
 
     public static SimpleParserOptions SubcommandParserOptions { get; private set; } = default!;
