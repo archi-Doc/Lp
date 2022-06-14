@@ -74,9 +74,10 @@ public class Control
         SubcommandParserOptions = SimpleParserOptions.Standard with
         {
             ServiceProvider = container,
-            RequireStrictCommandName = false,
+            RequireStrictCommandName = true,
             RequireStrictOptionName = true,
             DoNotDisplayUsage = true,
+            DisplayCommandListAsHelp = true,
         };
 
         commandList.AddRange(commandTypes);
@@ -202,12 +203,6 @@ public class Control
                 Console.WriteLine("Invalid subcommand.");
             }
 
-            return false;
-        }
-
-        if (subcommandParser.HelpCommand == string.Empty)
-        {// help
-            subcommandParser.ShowList();
             return false;
         }
 

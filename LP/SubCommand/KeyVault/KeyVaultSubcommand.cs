@@ -8,7 +8,7 @@ using Tinyhand;
 
 namespace LP.Subcommands;
 
-[SimpleCommand("keyvault", AcceptUnknownOptionName = true)]
+[SimpleCommand("keyvault", IsSubcommand = true)]
 public class KeyVaultSubcommand : ISimpleCommandAsync
 {
     public static void Register(Container container)

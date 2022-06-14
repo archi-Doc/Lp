@@ -16,6 +16,7 @@ using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using DryIoc;
 using SimpleCommandLine;
+using ZenItz.Subcommand.Zen;
 
 namespace ZenItz;
 
@@ -39,11 +40,11 @@ public class ZenControl
         // Subcommands
         var commandTypes = new Type[]
         {
-            typeof(LP.Subcommands.ZenSubcommand),
+            typeof(ZenSubcommand),
             typeof(LP.Subcommands.ZenDirSubcommand),
         };
 
-        LP.Subcommands.ZenSubcommand.Register(container);
+        ZenSubcommand.Register(container);
         LP.Subcommands.ZenDirSubcommand.Register(container);
 
         commandList?.AddRange(commandTypes);

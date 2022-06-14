@@ -2,14 +2,13 @@
 
 using Arc.Crypto;
 using DryIoc;
-using LP;
 using SimpleCommandLine;
 using Tinyhand;
 using ZenItz;
 
-namespace LP.Subcommands;
+namespace ZenItz.Subcommand.Zen;
 
-[SimpleCommand("zen", AcceptUnknownOptionName = true)]
+[SimpleCommand("zen", IsSubcommand = true)]
 public class ZenSubcommand : ISimpleCommandAsync
 {
     public static void Register(Container container)

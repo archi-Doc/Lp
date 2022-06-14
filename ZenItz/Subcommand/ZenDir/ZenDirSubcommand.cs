@@ -9,7 +9,7 @@ using ZenItz;
 
 namespace LP.Subcommands;
 
-[SimpleCommand("zendir", AcceptUnknownOptionName = true, Description = "Zen directory subcommand")]
+[SimpleCommand("zendir", IsSubcommand = true, Description = "Zen directory subcommand")]
 public class ZenDirSubcommand : ISimpleCommandAsync
 {
     public static void Register(Container container)
