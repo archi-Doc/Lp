@@ -1,11 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Arc.Crypto;
-using LP;
 using SimpleCommandLine;
 using ZenItz;
 
-namespace LP.Subcommands;
+namespace ZenItz.Subcommand.Zen;
 
 [SimpleCommand("ls")]
 public class ZenSubcommandLs : ISimpleCommandAsync

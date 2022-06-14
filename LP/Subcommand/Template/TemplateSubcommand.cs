@@ -8,7 +8,7 @@ using Tinyhand;
 
 namespace LP.Subcommands;
 
-[SimpleCommand("template", AcceptUnknownOptionName = true)]
+[SimpleCommand("template", IsSubcommand = true)]
 public class TemplateSubcommand : ISimpleCommandAsync
 {
     public static void Register(Container container)

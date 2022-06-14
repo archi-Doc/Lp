@@ -8,14 +8,15 @@ using Tinyhand;
 
 namespace LP.Subcommands;
 
-[SimpleCommand("keyvault", IsSubcommand = true)]
-public class KeyVaultSubcommand : ISimpleCommandAsync
+[SimpleCommand("dump", IsSubcommand = true)]
+public class DumpSubcommand : ISimpleCommandAsync
 {
     public static void Register(Container container)
     {
         commandTypes = new Type[]
         {
-            typeof(KeyVaultSubcommandNew),
+            typeof(Dump.DumpSubcommandInfo),
+            typeof(Dump.DumpSubcommandOptions),
         };
 
         foreach (var x in commandTypes)
@@ -24,7 +25,7 @@ public class KeyVaultSubcommand : ISimpleCommandAsync
         }
     }
 
-    public KeyVaultSubcommand(Control control)
+    public DumpSubcommand(Control control)
     {
         this.Control = control;
     }
@@ -35,16 +36,16 @@ public class KeyVaultSubcommand : ISimpleCommandAsync
         {
             return;
         }
-        else if (keyVaultParser == null)
+        else if (commandParser == null)
         {
-            keyVaultParser ??= new(commandTypes, Control.SubcommandParserOptions);
+            commandParser ??= new(commandTypes, Control.SubcommandParserOptions);
         }
 
-        await keyVaultParser.ParseAndRunAsync(args);
+        await commandParser.ParseAndRunAsync(args);
     }
 
     private static Type[]? commandTypes;
-    private static SimpleParser? keyVaultParser;
+    private static SimpleParser? commandParser;
 
     public Control Control { get; set; }
 }
