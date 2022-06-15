@@ -4,13 +4,15 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LP;
 
 #pragma warning disable SA1313 // Parameter names should begin with lower-case letter
 
+/// <summary>
+/// Provides a set of methods that you can use to measure elapsed time for benchmark.<br/>
+/// { Start() -> Stop() } x repetition -> GetResult().
+/// </summary>
 public class BenchTimer
 {
     public BenchTimer()

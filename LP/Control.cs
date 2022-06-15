@@ -158,7 +158,7 @@ public class Control
 
         Logger.Default.Information($"Console: {this.LPBase.IsConsole}, Root directory: {this.LPBase.RootDirectory}");
         Logger.Default.Information(this.LPBase.ToString());
-        Logger.Console.Information("Press the Enter key to change to console mode.");
+        Logger.Console.Information("Press Enter key to switch to console mode.");
         Logger.Console.Information("Press Ctrl+C to exit.");
 
         var message = new Message.Start(this.Core);
