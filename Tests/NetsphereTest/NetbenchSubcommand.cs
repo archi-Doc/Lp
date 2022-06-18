@@ -44,8 +44,8 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
             Logger.Priority.Information($"t: {t}");
             Logger.Priority.Information($"{sw.ElapsedMilliseconds} ms");*/
 
-            // await this.BenchLargeData(terminal);
-            await this.PingpongSmallData(terminal); // 350ms
+            // await this.BenchLargeData(terminal); // 1060 ms
+            // await this.PingpongSmallData(terminal); // 350 ms
 
             // var service = terminal.GetService<IBenchmarkService>();
 
@@ -65,7 +65,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         }
 
         // await this.PingpongSmallData2(node);
-        // await this.MassiveSmallData(node);
+        await this.MassiveSmallData(node); // 1000 ms
     }
 
     public NetControl NetControl { get; set; }
