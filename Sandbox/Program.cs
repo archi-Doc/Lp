@@ -31,6 +31,6 @@ internal class Program
         var item = new KeyVaultItem("test.key", PasswordEncrypt.GetPasswordHint(pass), encrypted);
         var array = new KeyVaultItem[] { item, item, };
 
-        var t = Tinyhand.TinyhandSerializer.SerializeToString(array);
+        var t = Tinyhand.TinyhandSerializer.SerializeToString(array, Tinyhand.TinyhandSerializerOptions.Standard.WithCompose(Tinyhand.TinyhandComposeOption.Standard));
     }
 }
