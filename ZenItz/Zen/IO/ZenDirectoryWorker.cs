@@ -17,7 +17,7 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
         this.ZenDirectory = zenDirectory;
     }
 
-    public static async Task<AbortOrComplete> Process(TaskWorker<ZenDirectoryWork> w, ZenDirectoryWork work)
+    public static async Task Process(TaskWorker<ZenDirectoryWork> w, ZenDirectoryWork work)
     {
         var worker = (ZenDirectoryWorker)w;
         string? filePath = null;
@@ -42,7 +42,7 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
             }
             catch (OperationCanceledException)
             {
-                return AbortOrComplete.Abort;
+                return;
             }
             catch
             {
@@ -84,7 +84,7 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
             }
             catch (OperationCanceledException)
             {
-                return AbortOrComplete.Abort;
+                return;
             }
             catch
             {
@@ -103,7 +103,7 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
             }
         }
 
-        return AbortOrComplete.Complete;
+        return;
 
 DeleteAndExit:
         if (filePath != null)
@@ -111,7 +111,7 @@ DeleteAndExit:
             File.Delete(filePath);
         }
 
-        return AbortOrComplete.Complete;
+        return;
     }
 
     public ZenDirectory ZenDirectory { get; }
