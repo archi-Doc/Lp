@@ -4,6 +4,66 @@ namespace LP;
 
 public class KeyVault
 {
+    public static async Task<KeyVault?> Load(string path)
+    {
+        byte[] data;
+        try
+        {
+            data = await File.ReadAllBytesAsync(path);
+        }
+        catch
+        {
+            Logger.Subcommand.Error($"Could not load '{path}'");
+            return null;
+        }
+
+        KeyVaultItem?[]? items = null;
+        try
+        {
+            items = TinyhandSerializer.DeserializeFromUtf8<KeyVaultItem[]>(data);
+        }
+        catch
+        {
+        }
+
+        if (items == null)
+        {
+            Logger.Subcommand.Error($"Could not deserialize '{path}'");
+            return null;
+        }
+
+        var keyVault = new KeyVault();
+        string? password = null;
+        for (var i = 0; i < items.Length; i++)
+        {
+            if (items[i] == null)
+            {
+                continue;
+            }
+
+            if (PasswordEncrypt.TryDecrypt(items[i]!.Encrypted, string.Empty, out var decrypted))
+            {// No password
+                // keyVault.AddInternal(x.Name, decrypted);
+                items[i] = null;
+            }
+            else
+            {// Password required.
+                if (password == null)
+                {// Enter password
+
+                }
+            }
+        }
+
+        if (items.Length > 0)
+        {
+            
+        }
+    }
+
+    public KeyVault()
+    {
+    }
 }
 
 [TinyhandObject]
