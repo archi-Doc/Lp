@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 #pragma warning disable SA1210 // Using directives should be ordered alphabetically by namespace
+
 global using System;
 global using System.IO;
 global using System.Threading.Tasks;
@@ -11,6 +12,7 @@ global using LP;
 global using Tinyhand;
 using DryIoc;
 using LP.Subcommands.Dump;
+using LP.Services;
 using LPEssentials.Radio;
 using Netsphere;
 using SimpleCommandLine;
@@ -31,6 +33,7 @@ public class Control
         // Main services
         container.Register<Control>(Reuse.Singleton);
         container.Register<LPBase>(Reuse.Singleton);
+        container.Register<IViewService, ConsoleViewService>(Reuse.Singleton);
 
         // RPC / Services
         container.Register<Services.BenchmarkServiceImpl>(Reuse.Transient);
@@ -111,8 +114,9 @@ public class Control
         }
     }
 
-    public Control(LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl)
+    public Control(IViewService viewService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl)
     {
+        this.ViewService = viewService;
         this.LPBase = lpBase;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.NetControl = netsphere;
@@ -127,25 +131,6 @@ public class Control
 
     public void Configure()
     {
-        // Open channels
-        Radio.OpenAsync<MessageUI.RequestYesOrNo>(async a =>
-        {
-            if (!string.IsNullOrEmpty(a.Description))
-            {
-                Console.WriteLine(a.Description);
-            }
-
-            var input = Console.ReadLine()?.ToLower();
-            if (input == "y" || input == "yes")
-            {
-                a.Yes = true;
-            }
-            else
-            {
-                a.Yes = false;
-            }
-        });
-
         Logger.Configure(this.LPBase);
         Radio.Send(new Message.Configure());
     }
@@ -242,6 +227,8 @@ public class Control
 
     public ThreadCoreGroup Core { get; }
 
+    public IViewService ViewService { get; }
+
     public LPBase LPBase { get; }
 
     public BigMachine<Identifier> BigMachine { get; }
@@ -256,11 +243,10 @@ public class Control
 
     private async Task LoadKeyVaultAsync()
     {
-        var keyVault = await KeyVault.Load(this.LPBase.ConsoleOptions.KeyVault);
+        var keyVault = await KeyVault.Load(this.ViewService, this.LPBase.ConsoleOptions.KeyVault);
         if (keyVault == null)
         {
-            var message = new MessageUI.RequestYesOrNo("New keyvault?");
-            await Radio.SendAsync(message);
+            await this.ViewService.RequestYesOrNo("New keyvault?");
         }
     }
 

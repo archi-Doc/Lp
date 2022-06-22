@@ -1,12 +1,13 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using LP.Services;
 using LPEssentials.Radio;
 
 namespace LP;
 
 public class KeyVault
 {
-    public static async Task<KeyVault?> Load(string path)
+    public static async Task<KeyVault?> Load(IViewService viewService, string path)
     {
         byte[] data;
         try
@@ -52,10 +53,10 @@ public class KeyVault
             {// Password required.
                 if (password == null)
                 {// Enter password
-                    var results = await Radio.SendTwoWayAsync<MessageUI.RequestString, string>(new("Enter password"));
-                    if (results != null && results.Length > 0)
+                    var results = await viewService.RequestString("Enter password");
+                    if (results != null)
                     {
-                        password = results[0];
+                        password = results;
                     }
                 }
             }
