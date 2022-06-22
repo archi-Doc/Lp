@@ -2,8 +2,9 @@
 
 using System.Threading;
 using Arc.Threading;
+using LP;
 
-namespace LP;
+namespace LPEssentials.Radio;
 
 public static class Message
 {// Create instance -> Configure -> LoadAsync -> Start/Stop loop -> SaveAsync (multiple)

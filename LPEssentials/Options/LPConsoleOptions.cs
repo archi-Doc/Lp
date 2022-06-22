@@ -21,6 +21,9 @@ public partial record LPConsoleOptions
     [SimpleOption("directory", description: "Root directory")]
     public string Directory { get; init; } = string.Empty;
 
+    [SimpleOption("keyvault", description: "Key Vault path")]
+    public string KeyVault { get; init; } = "KeyVault.tinyhand";
+
     [SimpleOption("name", description: "Node name")]
     public string NodeName { get; init; } = string.Empty;
 

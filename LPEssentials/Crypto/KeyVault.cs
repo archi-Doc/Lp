@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using LPEssentials.Radio;
+
 namespace LP;
 
 public class KeyVault
@@ -50,15 +52,20 @@ public class KeyVault
             {// Password required.
                 if (password == null)
                 {// Enter password
-
+                    var results = await Radio.SendTwoWayAsync<MessageUI.RequestString, string>(new("Enter password"));
+                    if (results != null && results.Length > 0)
+                    {
+                        password = results[0];
+                    }
                 }
             }
         }
 
         if (items.Length > 0)
         {
-            
         }
+
+        return keyVault;
     }
 
     public KeyVault()

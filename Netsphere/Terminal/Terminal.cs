@@ -8,6 +8,7 @@ using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
+using LPEssentials.Radio;
 using Serilog;
 
 namespace Netsphere;

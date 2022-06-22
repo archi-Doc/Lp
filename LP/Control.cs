@@ -11,6 +11,7 @@ global using LP;
 global using Tinyhand;
 using DryIoc;
 using LP.Subcommands.Dump;
+using LPEssentials.Radio;
 using Netsphere;
 using SimpleCommandLine;
 using ZenItz;
@@ -126,13 +127,32 @@ public class Control
 
     public void Configure()
     {
-        Logger.Configure(this.LPBase);
+        // Open channels
+        Radio.OpenAsync<MessageUI.RequestYesOrNo>(async a =>
+        {
+            if (!string.IsNullOrEmpty(a.Description))
+            {
+                Console.WriteLine(a.Description);
+            }
 
+            var input = Console.ReadLine()?.ToLower();
+            if (input == "y" || input == "yes")
+            {
+                a.Yes = true;
+            }
+            else
+            {
+                a.Yes = false;
+            }
+        });
+
+        Logger.Configure(this.LPBase);
         Radio.Send(new Message.Configure());
     }
 
     public async Task LoadAsync()
     {
+        await this.LoadKeyVaultAsync().ConfigureAwait(false);
         await Radio.SendAsync(new Message.LoadAsync()).ConfigureAwait(false);
         await this.NetControl.EssentialNode.LoadAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
         if (!await this.ZenControl.Itz.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile)).ConfigureAwait(false))
@@ -233,6 +253,16 @@ public class Control
     private static Container containerInstance = default!;
 
     private static SimpleParser subcommandParser = default!;
+
+    private async Task LoadKeyVaultAsync()
+    {
+        var keyVault = await KeyVault.Load(this.LPBase.ConsoleOptions.KeyVault);
+        if (keyVault == null)
+        {
+            var message = new MessageUI.RequestYesOrNo("New keyvault?");
+            await Radio.SendAsync(message);
+        }
+    }
 
     private void Dump()
     {
