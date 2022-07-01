@@ -4,7 +4,7 @@ namespace LP.Services;
 
 public class ConsoleUserInterfaceService : IUserInterfaceService
 {
-    public async Task<string?> RequestString(string? description)
+    public async Task<string> RequestString(string? description)
     {
         if (!string.IsNullOrEmpty(description))
         {
@@ -16,9 +16,12 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
             var input = Console.ReadLine()?.ToLower();
             if (input == null)
             {// Ctrl+C
-                return null;
+                Console.WriteLine();
+                throw new PanicException();
             }
-            else if (input == string.Empty)
+
+            input = input.Ceanup();
+            if (input == string.Empty)
             {
                 continue;
             }
@@ -37,7 +40,12 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
         while (true)
         {
             var input = Console.ReadLine()?.ToLower();
-            if (input == "y" || input == "yes")
+            if (input == null)
+            {// Ctrl+C
+                Console.WriteLine();
+                throw new PanicException();
+            }
+            else if (input == "y" || input == "yes")
             {
                 return true;
             }
