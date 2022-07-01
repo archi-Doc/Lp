@@ -59,8 +59,10 @@ public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
         {// Configure
             control.Configure();
         }
-        catch
+        catch (PanicException)
         {
+            control.Terminate(true);
+            return;
         }
 
         try

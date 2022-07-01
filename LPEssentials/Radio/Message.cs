@@ -11,7 +11,6 @@ public static class Message
     /// <summary>
     /// Configure objects.<br/>
     /// Ready: <see cref="LPBase"/>.<br/>
-    /// No exceptions are expected.
     /// </summary>
     public record Configure();
 

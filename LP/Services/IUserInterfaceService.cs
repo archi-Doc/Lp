@@ -2,7 +2,7 @@
 
 namespace LP.Services;
 
-public interface IViewService
+public interface IUserInterfaceService
 {
     public Task<bool> RequestYesOrNo(string? description);
 

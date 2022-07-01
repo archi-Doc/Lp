@@ -7,7 +7,7 @@ namespace LP;
 
 public class KeyVault
 {
-    public static async Task<KeyVault?> Load(IViewService viewService, string path)
+    public static async Task<KeyVault?> Load(IUserInterfaceService viewService, string path)
     {
         byte[] data;
         try

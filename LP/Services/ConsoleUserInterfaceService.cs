@@ -2,11 +2,29 @@
 
 namespace LP.Services;
 
-public class ConsoleViewService : IViewService
+public class ConsoleUserInterfaceService : IUserInterfaceService
 {
     public async Task<string?> RequestString(string? description)
     {
-        throw new NotImplementedException();
+        if (!string.IsNullOrEmpty(description))
+        {
+            Console.Write(description + ": ");
+        }
+
+        while (true)
+        {
+            var input = Console.ReadLine()?.ToLower();
+            if (input == null)
+            {// Ctrl+C
+                return null;
+            }
+            else if (input == string.Empty)
+            {
+                continue;
+            }
+
+            return input;
+        }
     }
 
     public async Task<bool> RequestYesOrNo(string? description)

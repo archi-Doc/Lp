@@ -33,7 +33,7 @@ public class Control
         // Main services
         container.Register<Control>(Reuse.Singleton);
         container.Register<LPBase>(Reuse.Singleton);
-        container.Register<IViewService, ConsoleViewService>(Reuse.Singleton);
+        container.Register<IUserInterfaceService, ConsoleUserInterfaceService>(Reuse.Singleton);
 
         // RPC / Services
         container.Register<Services.BenchmarkServiceImpl>(Reuse.Transient);
@@ -114,7 +114,7 @@ public class Control
         }
     }
 
-    public Control(IViewService viewService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl)
+    public Control(IUserInterfaceService viewService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl)
     {
         this.ViewService = viewService;
         this.LPBase = lpBase;
@@ -238,7 +238,7 @@ public class Control
 
     public ThreadCoreGroup Core { get; }
 
-    public IViewService ViewService { get; }
+    public IUserInterfaceService ViewService { get; }
 
     public LPBase LPBase { get; }
 
@@ -254,6 +254,8 @@ public class Control
 
     private async Task<bool> LoadKeyVaultAsync()
     {
+        await this.ViewService.RequestString("Enter");
+
         var keyVault = await KeyVault.Load(this.ViewService, this.LPBase.ConsoleOptions.KeyVault);
         if (keyVault == null)
         {
