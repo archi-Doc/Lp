@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 #pragma warning disable SA1210 // Using directives should be ordered alphabetically by namespace
+
 global using System;
 global using System.IO;
 global using System.Threading.Tasks;
@@ -11,6 +12,8 @@ global using LP;
 global using Tinyhand;
 using DryIoc;
 using LP.Subcommands.Dump;
+using LP.Services;
+using LPEssentials.Radio;
 using Netsphere;
 using SimpleCommandLine;
 using ZenItz;
@@ -30,6 +33,7 @@ public class Control
         // Main services
         container.Register<Control>(Reuse.Singleton);
         container.Register<LPBase>(Reuse.Singleton);
+        container.Register<IViewService, ConsoleViewService>(Reuse.Singleton);
 
         // RPC / Services
         container.Register<Services.BenchmarkServiceImpl>(Reuse.Transient);
@@ -110,8 +114,9 @@ public class Control
         }
     }
 
-    public Control(LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl)
+    public Control(IViewService viewService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl)
     {
+        this.ViewService = viewService;
         this.LPBase = lpBase;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.NetControl = netsphere;
@@ -126,13 +131,17 @@ public class Control
 
     public void Configure()
     {
-        Logger.Configure(this.LPBase);
+        // Load strings
+        var asm = System.Reflection.Assembly.GetExecutingAssembly();
+        HashedString.LoadAssembly(null, asm, "Strings.strings-en.tinyhand");
 
+        Logger.Configure(this.LPBase);
         Radio.Send(new Message.Configure());
     }
 
     public async Task LoadAsync()
     {
+        await this.LoadKeyVaultAsync().ConfigureAwait(false);
         await Radio.SendAsync(new Message.LoadAsync()).ConfigureAwait(false);
         await this.NetControl.EssentialNode.LoadAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
         if (!await this.ZenControl.Itz.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile)).ConfigureAwait(false))
@@ -158,7 +167,7 @@ public class Control
 
         Logger.Default.Information($"Console: {this.LPBase.IsConsole}, Root directory: {this.LPBase.RootDirectory}");
         Logger.Default.Information(this.LPBase.ToString());
-        Logger.Console.Information("Press the Enter key to change to console mode.");
+        Logger.Console.Information("Press Enter key to switch to console mode.");
         Logger.Console.Information("Press Ctrl+C to exit.");
 
         var message = new Message.Start(this.Core);
@@ -207,18 +216,22 @@ public class Control
         }
 
         subcommandParser.Run();
-        if (subcommandParser.HelpCommand != string.Empty)
+        return false;
+
+        /*if (subcommandParser.HelpCommand != string.Empty)
         {
             return false;
         }
 
         Console.WriteLine();
-        return true;
+        return true;*/
     }
 
     public static SimpleParserOptions SubcommandParserOptions { get; private set; } = default!;
 
     public ThreadCoreGroup Core { get; }
+
+    public IViewService ViewService { get; }
 
     public LPBase LPBase { get; }
 
@@ -231,6 +244,15 @@ public class Control
     private static Container containerInstance = default!;
 
     private static SimpleParser subcommandParser = default!;
+
+    private async Task LoadKeyVaultAsync()
+    {
+        var keyVault = await KeyVault.Load(this.ViewService, this.LPBase.ConsoleOptions.KeyVault);
+        if (keyVault == null)
+        {
+            await this.ViewService.RequestYesOrNo("New keyvault?");
+        }
+    }
 
     private void Dump()
     {

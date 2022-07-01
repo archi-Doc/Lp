@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using Arc.Crypto;
 using DryIoc;
 using LP;
 
@@ -19,5 +20,17 @@ internal class Program
         Control.Register(container);
 
         container.ValidateAndThrow();
+
+        Test();
+    }
+
+    public static void Test()
+    {
+        var pass = "pass";
+        var encrypted = PasswordEncrypt.Encrypt(new byte[] { 1, 2, }, pass);
+        var item = new KeyVaultItem("test.key", PasswordEncrypt.GetPasswordHint(pass), encrypted);
+        var array = new KeyVaultItem[] { item, item, };
+
+        var t = Tinyhand.TinyhandSerializer.SerializeToString(array, Tinyhand.TinyhandSerializerOptions.Standard.WithCompose(Tinyhand.TinyhandComposeOption.Standard));
     }
 }

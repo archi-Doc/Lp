@@ -1,0 +1,13 @@
+// identifier = "string" /* null: Use the default value. */
+
+General = 
+{
+    LoadError = "Could not load '{0}'"
+    Output = "Output: {0}"
+}
+
+Subcommand = {
+    GC = {
+        Start = "GC.Collect"
+    }
+}
