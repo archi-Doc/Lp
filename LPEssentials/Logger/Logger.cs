@@ -147,12 +147,24 @@ public static class Logger
         Log.CloseAndFlush();
     }
 
+    /// <summary>
+    /// Gets a logging instance which output logs to <b>console (except in subcommand console) and file</b>.
+    /// </summary>
     public static ISimpleLogger Default { get; }
 
+    /// <summary>
+    /// Gets a logging instance which output logs to <b>file</b>.
+    /// </summary>
     public static ISimpleLogger File { get; private set; }
 
+    /// <summary>
+    /// Gets a logging instance which output logs to <b>console</b>.
+    /// </summary>
     public static ISimpleLogger Console { get; private set; }
 
+    /// <summary>
+    /// Gets a logging instance which output logs to <b>console (includes subcommand console) and file</b>.
+    /// </summary>
     public static ISimpleLogger Subcommand { get; }
 
     private static bool viewMode = true;

@@ -2,11 +2,21 @@
 
 General = 
 {
-    LoadError = "Could not load '{0}'"
     Output = "Output: {0}"
+    Error = {
+        Load = "Could not load '{0}'";
+        Deserialize = "Could not deserialize '{0}'"
+    }
 }
 
-Subcommand = {
+Services = {
+    KeyVault = {
+        AskNew = "Do you want to create a new keyvault?"
+        EnterPassword = "Enter password"
+    }
+}
+
+Subcommands = {
     GC = {
         Start = "GC.Collect"
     }

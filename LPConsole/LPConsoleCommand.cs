@@ -52,29 +52,49 @@ public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
         this.netBase.Initialize(true, string.Empty, options.NetsphereOptions);
         this.netBase.AllowUnsafeConnection = true; // betacode
 
-        if (await this.LoadAsync() == AbortOrComplete.Abort)
+        Control control;
+        try
+        {// Load, Configure, Start
+            if (await this.LoadAsync() == AbortOrComplete.Abort)
+            {
+                goto Abort;
+            }
+
+            control = Program.Container.Resolve<Control>();
+            control.Configure();
+            await control.LoadAsync();
+            if (await this.TryStartZen(control.ZenControl) == AbortOrComplete.Abort)
+            {
+                goto Abort;
+            }
+        }
+        catch (PanicException)
         {
-            goto Abort;
+            Logger.Default.Information("LP Aborted");
+            return;
         }
 
-        var control = Program.Container.Resolve<Control>();
-        control.Configure();
-        await control.LoadAsync();
-        if (await this.TryStartZen(control.ZenControl) == AbortOrComplete.Abort)
-        {
-            goto Abort;
+        try
+        {// Start, Main loop
+            if (!control.TryStart())
+            {
+                goto Abort;
+            }
+
+            this.MainLoop(control);
+
+            control.Stop();
+            await control.SaveAsync();
+            control.Terminate();
         }
-
-        if (!control.TryStart())
+        catch (PanicException)
         {
-            goto Abort;
+            control.Stop();
+            await control.SaveAsync();
+            control.Terminate();
+            Logger.Default.Information("LP Aborted");
+            return;
         }
-
-        this.MainLoop(control);
-
-        control.Stop();
-        await control.SaveAsync();
-        control.Terminate();
 
 Abort:
         Logger.Default.Information("LP Aborted");

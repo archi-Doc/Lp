@@ -16,7 +16,7 @@ public class KeyVault
         }
         catch
         {
-            Logger.Subcommand.Error($"Could not load '{path}'");
+            Logger.Default.Error(HashedString.Get(Hashed.General.Error.Load, path));
             return null;
         }
 
@@ -31,7 +31,7 @@ public class KeyVault
 
         if (items == null)
         {
-            Logger.Subcommand.Error($"Could not deserialize '{path}'");
+            Logger.Default.Error(HashedString.Get(Hashed.General.Error.Deserialize, path));
             return null;
         }
 
@@ -53,7 +53,7 @@ public class KeyVault
             {// Password required.
                 if (password == null)
                 {// Enter password
-                    var results = await viewService.RequestString("Enter password");
+                    var results = await viewService.RequestString(Hashed.Services.KeyVault.EnterPassword);
                     if (results != null)
                     {
                         password = results;

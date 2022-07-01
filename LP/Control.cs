@@ -5,13 +5,13 @@
 global using System;
 global using System.IO;
 global using System.Threading.Tasks;
+global using Arc.Crypto;
 global using Arc.Threading;
 global using BigMachines;
 global using CrossChannel;
 global using LP;
 global using Tinyhand;
 using DryIoc;
-using LP.Subcommands.Dump;
 using LP.Services;
 using LPEssentials.Radio;
 using Netsphere;
@@ -131,16 +131,16 @@ public class Control
 
     public void Configure()
     {
-        // Load strings
-        var asm = System.Reflection.Assembly.GetExecutingAssembly();
-        HashedString.LoadAssembly(null, asm, "Strings.strings-en.tinyhand");
-
         Logger.Configure(this.LPBase);
         Radio.Send(new Message.Configure());
     }
 
     public async Task LoadAsync()
     {
+        // Load strings
+        var asm = System.Reflection.Assembly.GetExecutingAssembly();
+        HashedString.LoadAssembly(null, asm, "Strings.strings-en.tinyhand");
+
         await this.LoadKeyVaultAsync().ConfigureAwait(false);
         await Radio.SendAsync(new Message.LoadAsync()).ConfigureAwait(false);
         await this.NetControl.EssentialNode.LoadAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
@@ -245,13 +245,19 @@ public class Control
 
     private static SimpleParser subcommandParser = default!;
 
-    private async Task LoadKeyVaultAsync()
+    private async Task<bool> LoadKeyVaultAsync()
     {
         var keyVault = await KeyVault.Load(this.ViewService, this.LPBase.ConsoleOptions.KeyVault);
         if (keyVault == null)
         {
-            await this.ViewService.RequestYesOrNo("New keyvault?");
+            var reply = await this.ViewService.RequestYesOrNo(Hashed.Services.KeyVault.AskNew);
+            if (!reply)
+            {// No
+                throw new PanicException();
+            }
         }
+
+        return true;
     }
 
     private void Dump()
