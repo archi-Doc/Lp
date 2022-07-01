@@ -143,7 +143,7 @@ public class NetSocket
         this.terminal = terminal;
     }
 
-    public bool TryStart(ThreadCoreBase parent, int port)
+    public bool Start(ThreadCoreBase parent, int port)
     {
         this.recvCore = new NetSocketRecvCore(parent, this);
         this.sendCore = new NetSocketSendCore(parent, this);
@@ -155,7 +155,7 @@ public class NetSocket
         catch
         {
             Logger.Default.Error($"Could not create a UDP socket with port {port}.");
-            return false;
+            throw new PanicException();
         }
 
         this.recvCore.Start();
@@ -164,7 +164,7 @@ public class NetSocket
         return true;
     }
 
-    public void Stop(Message.Stop message)
+    public void Stop(Message.StopAsync message)
     {
         this.recvCore?.Dispose();
         this.sendCore?.Dispose();

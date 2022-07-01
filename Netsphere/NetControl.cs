@@ -125,13 +125,7 @@ public class NetControl
 
         Logger.Configure(null);
         Radio.Send(new Message.Configure());
-        var message = new Message.Start(ThreadCore.Root);
-        Radio.Send(message);
-        if (message.Abort)
-        {
-            Radio.Send(new Message.Stop());
-            return;
-        }
+        Radio.SendAsync(new Message.StartAsync(ThreadCore.Root));
     }
 
     public NetControl(NetBase netBase, BigMachine<Identifier> bigMachine, Terminal terminal, EssentialNode node, NetStatus netStatus)

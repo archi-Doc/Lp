@@ -23,7 +23,7 @@ namespace LP;
 public class Control
 {
     public static void Register(Container container)
-    {
+    {// DI, NetServices/Filters, Machines, Subcommands
         // Container instance
         containerInstance = container;
 
@@ -141,61 +141,68 @@ public class Control
         var asm = System.Reflection.Assembly.GetExecutingAssembly();
         HashedString.LoadAssembly(null, asm, "Strings.strings-en.tinyhand");
 
-        await this.LoadKeyVaultAsync().ConfigureAwait(false);
-        await Radio.SendAsync(new Message.LoadAsync()).ConfigureAwait(false);
+        // Netsphere
         await this.NetControl.EssentialNode.LoadAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
         if (!await this.ZenControl.Itz.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile)).ConfigureAwait(false))
         {
             await this.ZenControl.Itz.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup)).ConfigureAwait(false);
         }
+
+        // ZenItz
+        var result = await this.ZenControl.Zen.TryStartZen(new(Zen.DefaultZenDirectory, Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenBackup), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryBackup), QueryDelegate: null));
+        if (result != ZenStartResult.Success)
+        {
+            throw new PanicException();
+        }
+
+        await this.LoadKeyVaultAsync().ConfigureAwait(false);
+        await Radio.SendAsync(new Message.LoadAsync()).ConfigureAwait(false);
+    }
+
+    public async Task AbortAsync()
+    {
+        await this.ZenControl.Zen.AbortZen();
     }
 
     public async Task SaveAsync()
     {
-        await Radio.SendAsync(new Message.SaveAsync()).ConfigureAwait(false);
-
         Directory.CreateDirectory(this.LPBase.DataDirectory);
+
         await this.NetControl.EssentialNode.SaveAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
-        await this.ZenControl.Zen.StopZen(new(Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenBackup), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryBackup)));
         await this.ZenControl.Itz.SaveAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile), Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup));
+
+        await Radio.SendAsync(new Message.SaveAsync()).ConfigureAwait(false);
     }
 
-    public bool TryStart()
+    public async Task StartAsync()
     {
-        var s = this.LPBase.IsConsole ? " (Console)" : string.Empty;
-        Logger.Default.Information("LP Start" + s);
-
+        Logger.Default.Information("LP Start");
         Logger.Default.Information($"Console: {this.LPBase.IsConsole}, Root directory: {this.LPBase.RootDirectory}");
         Logger.Default.Information(this.LPBase.ToString());
         Logger.Console.Information("Press Enter key to switch to console mode.");
         Logger.Console.Information("Press Ctrl+C to exit.");
 
-        var message = new Message.Start(this.Core);
-        Radio.Send(message);
-        if (message.Abort)
-        {
-            Radio.Send(new Message.Stop());
-            return false;
-        }
-
+        await Radio.SendAsync(new Message.StartAsync(this.Core)).ConfigureAwait(false);
         this.BigMachine.Start();
 
-        return true;
+        Logger.Default.Information("Running");
     }
 
-    public void Stop()
+    public async Task StopAsync()
     {
-        Logger.Default.Information("LP Termination process initiated");
+        Logger.Default.Information("Termination process initiated");
 
-        Radio.Send(new Message.Stop());
+        await this.ZenControl.Zen.StopZen(new(Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenBackup), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryBackup)));
+
+        await Radio.SendAsync(new Message.StopAsync()).ConfigureAwait(false);
     }
 
-    public void Terminate()
+    public void Terminate(bool abort)
     {
         this.Core.Terminate();
         this.Core.WaitForTermination(-1);
 
-        Logger.Default.Information("LP Teminated");
+        Logger.Default.Information(abort ? "Aborted" : "Terminated");
         Logger.CloseAndFlush();
     }
 
@@ -258,11 +265,5 @@ public class Control
         }
 
         return true;
-    }
-
-    private void Dump()
-    {
-        Logger.Default.Information($"Dump:");
-        Logger.Default.Information($"MyStatus: {this.NetControl.MyStatus.Type}");
     }
 }

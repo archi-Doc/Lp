@@ -7,16 +7,18 @@ using LP;
 namespace LPEssentials.Radio;
 
 public static class Message
-{// Create instance -> Configure -> LoadAsync -> Start/Stop loop -> SaveAsync (multiple)
+{// Create instance -> Configure -> LoadAsync -> StartAsync -> StopAsync -> SaveAsync (multiple)
     /// <summary>
     /// Configure objects.<br/>
-    /// Ready: <see cref="LPBase"/>.
+    /// Ready: <see cref="LPBase"/>.<br/>
+    /// No exceptions are expected.
     /// </summary>
     public record Configure();
 
     /// <summary>
     /// Deserialize objects.<br/>
-    /// Called once after Configure().
+    /// Called once after Configure().<br/>
+    /// Throw <see cref="PanicException"/> to abort the procedure.
     /// </summary>
     public record LoadAsync();
 
@@ -25,19 +27,13 @@ public static class Message
     /// Called once after LoadAsync().
     /// </summary>
     /// <param name="ParentCore">ParentCore.</param>
-    public record Start(ThreadCoreBase ParentCore)
-    {
-        /// <summary>
-        /// Gets or sets a value indicating whether an error occured in the start process.
-        /// </summary>
-        public bool Abort { get; set; }
-    }
+    public record StartAsync(ThreadCoreBase ParentCore);
 
     /// <summary>
     /// Stop objects.<br/>
-    /// Called once at the start of the LP termination process.
+    /// Called only once at the beginning of the LP termination process.
     /// </summary>
-    public record Stop();
+    public record StopAsync();
 
     /// <summary>
     ///  Serialize objects.<br/>

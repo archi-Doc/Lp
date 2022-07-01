@@ -7,9 +7,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Arc.Crypto;
 using Arc.Threading;
+using CrossChannel;
 using DryIoc;
 using LP;
 using LP.Options;
+using LPEssentials.Radio;
 using Netsphere;
 using SimpleCommandLine;
 using Tinyhand;
@@ -52,75 +54,43 @@ public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
         this.netBase.Initialize(true, string.Empty, options.NetsphereOptions);
         this.netBase.AllowUnsafeConnection = true; // betacode
 
-        Control control;
+        var control = Program.Container.Resolve<Control>();
         try
-        {// Load, Configure, Start
-            if (await this.LoadAsync() == AbortOrComplete.Abort)
-            {
-                goto Abort;
-            }
-
-            control = Program.Container.Resolve<Control>();
+        {// Configure
             control.Configure();
+        }
+        catch
+        {
+        }
+
+        try
+        {// Load
             await control.LoadAsync();
-            if (await this.TryStartZen(control.ZenControl) == AbortOrComplete.Abort)
-            {
-                goto Abort;
-            }
         }
         catch (PanicException)
         {
-            Logger.Default.Information("LP Aborted");
+            await control.AbortAsync();
+            control.Terminate(true);
             return;
         }
 
         try
         {// Start, Main loop
-            if (!control.TryStart())
-            {
-                goto Abort;
-            }
+            await control.StartAsync();
 
             this.MainLoop(control);
 
-            control.Stop();
+            await control.StopAsync();
             await control.SaveAsync();
-            control.Terminate();
+            control.Terminate(false);
         }
         catch (PanicException)
         {
-            control.Stop();
+            await control.StopAsync();
             await control.SaveAsync();
-            control.Terminate();
-            Logger.Default.Information("LP Aborted");
+            control.Terminate(true);
             return;
         }
-
-Abort:
-        Logger.Default.Information("LP Aborted");
-        return;
-    }
-
-    private async Task<AbortOrComplete> TryStartZen(ZenControl zenControl)
-    {
-        var result = await zenControl.Zen.TryStartZen(new(Zen.DefaultZenDirectory, Path.Combine(this.lpBase.DataDirectory, Zen.DefaultZenFile), Path.Combine(this.lpBase.DataDirectory, Zen.DefaultZenBackup), Path.Combine(this.lpBase.DataDirectory, Zen.DefaultZenDirectoryFile), Path.Combine(this.lpBase.DataDirectory, Zen.DefaultZenDirectoryBackup), QueryDelegate: null));
-        if (result != ZenStartResult.Success)
-        {
-            return AbortOrComplete.Abort;
-        }
-
-        return AbortOrComplete.Complete;
-    }
-
-    private async Task<AbortOrComplete> LoadAsync()
-    {
-        // Load node key.
-        if (await this.LoadNodeKey() == AbortOrComplete.Abort)
-        {
-            return AbortOrComplete.Abort;
-        }
-
-        return AbortOrComplete.Complete;
     }
 
     private string? GetPassword(string? text = null)
