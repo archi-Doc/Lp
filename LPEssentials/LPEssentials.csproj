@@ -26,7 +26,7 @@
     <PackageReference Include="DryIoc.dll" Version="5.1.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
     <PackageReference Include="SimpleCommandLine" Version="0.10.3" />
-    <PackageReference Include="Tinyhand" Version="0.31.2" />
+    <PackageReference Include="Tinyhand" Version="0.31.3" />
     <PackageReference Include="ValueLink" Version="0.28.0" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.354">
       <PrivateAssets>all</PrivateAssets>

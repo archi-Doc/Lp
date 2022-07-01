@@ -28,7 +28,7 @@ public class DumpSubcommandOptions : ISimpleCommandAsync<DumpSubcommandOptions2>
         }
 
         var path = Path.Combine(this.Control.LPBase.RootDirectory, output);
-        Logger.Subcommand.Information($"Output: {path}");
+        Logger.Subcommand.Information(HashedString.Get(Hashed.Subcommand.General.Output, path));
 
         try
         {

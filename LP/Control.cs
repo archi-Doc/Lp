@@ -17,7 +17,6 @@ using LPEssentials.Radio;
 using Netsphere;
 using SimpleCommandLine;
 using ZenItz;
-using System.Reflection;
 
 namespace LP;
 
@@ -133,7 +132,7 @@ public class Control
     public void Configure()
     {
         // Load strings
-        var asm = Assembly.GetExecutingAssembly();
+        var asm = System.Reflection.Assembly.GetExecutingAssembly();
         HashedString.LoadAssembly(null, asm, "Strings.strings-en.tinyhand");
 
         Logger.Configure(this.LPBase);
