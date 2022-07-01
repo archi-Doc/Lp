@@ -17,7 +17,7 @@ public class GCSubcommand : ISimpleCommand
 
     public void Run(string[] args)
     {
-        Logger.Subcommand.Information($"GC.Collect");
+        Logger.Subcommand.Information(Hashed.Subcommand.GC.Start);
         GC.Collect();
     }
 

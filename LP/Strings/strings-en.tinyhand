@@ -1,0 +1,6 @@
+// identifier = "string" /* null: Use the default value. */
+Subcommand = {
+    GC = {
+        Start = "GC.Collect"
+    }
+}
