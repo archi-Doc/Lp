@@ -254,7 +254,8 @@ public class Control
 
     private async Task<bool> LoadKeyVaultAsync()
     {
-        await this.ViewService.RequestString("Enter");
+        var st = await this.ViewService.RequestString("Enter");
+        Logger.Default.Information(st);
 
         var keyVault = await KeyVault.Load(this.ViewService, this.LPBase.ConsoleOptions.KeyVault);
         if (keyVault == null)

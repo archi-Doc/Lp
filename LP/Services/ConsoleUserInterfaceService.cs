@@ -13,14 +13,14 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
 
         while (true)
         {
-            var input = Console.ReadLine()?.ToLower();
+            var input = Console.ReadLine();
             if (input == null)
             {// Ctrl+C
                 Console.WriteLine();
                 throw new PanicException();
             }
 
-            input = input.Ceanup();
+            input = input.CleanupInput();
             if (input == string.Empty)
             {
                 continue;
@@ -39,13 +39,15 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
 
         while (true)
         {
-            var input = Console.ReadLine()?.ToLower();
+            var input = Console.ReadLine();
             if (input == null)
             {// Ctrl+C
                 Console.WriteLine();
                 throw new PanicException();
             }
-            else if (input == "y" || input == "yes")
+
+            input = input.CleanupInput().ToLower();
+            if (input == "y" || input == "yes")
             {
                 return true;
             }
