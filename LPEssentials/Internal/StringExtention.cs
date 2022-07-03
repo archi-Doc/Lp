@@ -49,7 +49,7 @@ public static class StringExtention
             return input;
         }
         else
-        {
+        {// Cleaned string.
             return dest.Slice(start, end - start + 1).ToString();
         }
     }
