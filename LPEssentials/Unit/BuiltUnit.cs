@@ -5,6 +5,14 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace LP.Unit;
 
+/*public class BuiltUnit<T> : BuiltUnit
+{
+    public BuiltUnit(UnitBuilderContext context)
+        : base(context)
+    {
+    }
+}*/
+
 public class BuiltUnit : IUnit
 {
     public BuiltUnit(UnitBuilderContext context)

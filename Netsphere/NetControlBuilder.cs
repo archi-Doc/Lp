@@ -3,11 +3,39 @@
 using LP.Unit;
 using LPEssentials.Radio;
 using Microsoft.Extensions.DependencyInjection;
+using static Netsphere.NetControlBuilder;
 using static SimpleCommandLine.SimpleParser;
 
 namespace Netsphere;
 
-public class NetControlBuilder : UnitBuilder
+public class NetControlUnit : BuiltUnit
+{
+    public record Param(bool EnableServer, Func<ServerContext> NewServerContext, Func<CallContext> NewCallContext, string NodeName, NetsphereOptions Options, bool AllowUnsafeConnection);
+
+    public NetControlUnit(UnitBuilderContext context)
+        : base(context)
+    {
+    }
+
+    public void RunStandalone(Param param)
+    {
+        var netBase = this.ServiceProvider.GetRequiredService<NetBase>();
+        netBase.Initialize(param.EnableServer, param.NodeName, param.Options);
+        netBase.AllowUnsafeConnection = param.AllowUnsafeConnection;
+
+        var netControl = this.ServiceProvider.GetRequiredService<NetControl>();
+        if (param.EnableServer)
+        {
+            netControl.SetupServer(param.NewServerContext, param.NewCallContext);
+        }
+
+        Logger.Configure(null);
+        Radio.Send(new Message.Configure());
+        Radio.SendAsync(new Message.StartAsync(ThreadCore.Root));
+    }
+}
+
+public class NetControlBuilder : UnitBuilder<NetControlUnit>
 {
     private static void ConfigureInternal(UnitBuilderContext context)
     {
@@ -49,7 +77,7 @@ public class NetControlBuilder : UnitBuilder
 
     public record Param(bool EnableServer, Func<ServerContext> NewServerContext, Func<CallContext> NewCallContext, string NodeName, NetsphereOptions Options, bool AllowUnsafeConnection);
 
-    public BuiltUnit BuildStandalone(Param param)
+    /*public BuiltUnit BuildStandalone(Param param)
     {
         var built = this.Build();
 
@@ -67,9 +95,23 @@ public class NetControlBuilder : UnitBuilder
         Radio.Send(new Message.Configure());
         Radio.SendAsync(new Message.StartAsync(ThreadCore.Root));
 
-        return built;
-    }
+        var action = () =>
+        {
+            var netBase = built.ServiceProvider.GetRequiredService<NetBase>();
+            netBase.Initialize(param.EnableServer, param.NodeName, param.Options);
+            netBase.AllowUnsafeConnection = param.AllowUnsafeConnection;
 
-    public override NetControlBuilder Configure(Action<UnitBuilderContext> configureDelegate)
-        => (NetControlBuilder)((UnitBuilder)this).Configure(configureDelegate);
+            var netControl = built.ServiceProvider.GetRequiredService<NetControl>();
+            if (param.EnableServer)
+            {
+                netControl.SetupServer(param.NewServerContext, param.NewCallContext);
+            }
+
+            Logger.Configure(null);
+            Radio.Send(new Message.Configure());
+            Radio.SendAsync(new Message.StartAsync(ThreadCore.Root));
+        }
+
+        return built;
+    }*/
 }

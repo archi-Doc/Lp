@@ -7,17 +7,33 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace LP.Unit;
 
-/// <summary>
-/// Builder class of unit, a unit of function and dependency.<br/>
-/// Unit: HostBuilder +Nested unit +Unit operation, -AppConfiguration -Container.
-/// </summary>
-public class UnitBuilder
+public class UnitBuilder<TUnit> : UnitBuilder
+    where TUnit : BuiltUnit
 {
     public UnitBuilder()
     {
     }
 
-    public BuiltUnit Build()
+    public override TUnit Build()
+    {
+        return (TUnit)base.Build();
+    }
+
+    public override UnitBuilder<TUnit> Configure(Action<UnitBuilderContext> configureDelegate)
+        => (UnitBuilder<TUnit>)((UnitBuilder)this).Configure(configureDelegate);
+}
+
+    /// <summary>
+    /// Builder class of unit, a unit of function and dependency.<br/>
+    /// Unit: HostBuilder +Nested unit +Unit operation, -AppConfiguration -Container.
+    /// </summary>
+    public class UnitBuilder
+{
+    public UnitBuilder()
+    {
+    }
+
+    public virtual BuiltUnit Build()
     {
         var context = new UnitBuilderContext();
         context.UnitName = Assembly.GetEntryAssembly()?.GetName().Name ?? string.Empty;
@@ -53,7 +69,7 @@ public class UnitBuilder
             context.ServiceCollection.TryAddSingleton(x.CommandType);
         }
 
-        // Register
+        // Register units.
         foreach (var x in context.ServiceCollection)
         {
         }

@@ -86,8 +86,10 @@ public class Program
         options.EnableTestFeatures = true;
         options.EnableLogger = false;
 
-        var param = new NetControlBuilder.Param(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);
-        var built = builder.BuildStandalone(param);
+        var param = new NetControlUnit.Param(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);
+        // var built = builder.BuildStandalone(param);
+        var built = builder.Build();
+        built.RunStandalone(param);
 
         // Logger
         if (options.EnableLogger)
