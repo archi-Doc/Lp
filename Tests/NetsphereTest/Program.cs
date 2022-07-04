@@ -22,13 +22,12 @@ public class Program
 
     public static async Task Main(string[] args)
     {
-        // Subcommands
-        var commandTypes = new List<Type>();
+        // 1st: DI Container
+        /*var commandTypes = new List<Type>();
         commandTypes.Add(typeof(BasicTestSubcommand));
         commandTypes.Add(typeof(NetbenchSubcommand));
 
-        // DI Container
-        /*NetControl.Register(Container, commandTypes);
+        NetControl.Register(Container, commandTypes);
         foreach (var x in commandTypes)
         {
             Container.Register(x, Reuse.Singleton);
@@ -41,8 +40,8 @@ public class Program
 
         Container.ValidateAndThrow();*/
 
-        // Alternative
-        var services = new ServiceCollection();
+        // 2nd: ServiceCollection
+        /*var services = new ServiceCollection();
         NetControl.Register(services, commandTypes);
         foreach (var x in commandTypes)
         {
@@ -54,7 +53,9 @@ public class Program
         services.AddSingleton<TestFilterB>();
 
         var serviceProvider = services.BuildServiceProvider();
-        NetControl.SetServiceProvider(serviceProvider);
+        NetControl.SetServiceProvider(serviceProvider);*/
+
+        // NetControl.QuickStart(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);
 
         AppDomain.CurrentDomain.ProcessExit += (s, e) =>
         {// Console window closing or process terminated.
@@ -68,26 +69,32 @@ public class Program
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
         };
 
-        var parserOptions = SimpleParserOptions.Standard with
-        {
-            ServiceProvider = serviceProvider,
-            RequireStrictCommandName = false,
-            RequireStrictOptionName = true,
-        };
+        // 3rd: Builder pattern
+        var builder = new NetControlBuilder()
+            .Configure(context =>
+            {
+                context.AddCommand(typeof(BasicTestSubcommand));
+                context.AddCommand(typeof(NetbenchSubcommand));
+
+                context.AddSingleton<ExternalServiceImpl>();
+
+                context.AddSingleton<TestFilterB>();
+            });
 
         var options = new LP.Options.NetsphereOptions();
         options.EnableAlternative = true;
         options.EnableTestFeatures = true;
         options.EnableLogger = false;
-        // NetControl.QuickStart(true, "test", options, true);
-        NetControl.QuickStart(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);
+
+        var param = new NetControlBuilder.Param(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);
+        var built = builder.BuildStandalone(param);
 
         // Logger
         if (options.EnableLogger)
         {
             var logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "logs");
             Directory.CreateDirectory(logDirectory);
-            var netControl = serviceProvider.GetRequiredService<NetControl>();
+            var netControl = built.ServiceProvider.GetRequiredService<NetControl>();
             netControl.Terminal.SetLogger(new SerilogLogger(new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.File(
@@ -104,8 +111,15 @@ public class Program
                 .CreateLogger()));
         }
 
+        var parserOptions = SimpleParserOptions.Standard with
+        {
+            ServiceProvider = built.ServiceProvider,
+            RequireStrictCommandName = false,
+            RequireStrictOptionName = true,
+        };
+
         // await SimpleParser.ParseAndRunAsync(commandTypes, "netbench -node alternative", parserOptions); // Main process
-        await SimpleParser.ParseAndRunAsync(commandTypes, args, parserOptions); // Main process
+        await SimpleParser.ParseAndRunAsync(built.CommandTypes, args, parserOptions); // Main process
 
         ThreadCore.Root.Terminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.

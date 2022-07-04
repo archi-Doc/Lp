@@ -7,9 +7,14 @@ namespace LP.Unit;
 
 public class BuiltUnit : IUnit
 {
-    public BuiltUnit(ServiceProvider serviceProvider)
+    public BuiltUnit(UnitBuilderContext context)
     {
-        this.serviceProvider = serviceProvider;
+        this.ServiceProvider = context.ServiceCollection.BuildServiceProvider();
+        this.commandTypes = context.CommandCollection.Select(a => a.CommandType).ToArray();
+    }
+
+    public void Run()
+    {
     }
 
     public void Configure()
@@ -32,5 +37,18 @@ public class BuiltUnit : IUnit
     {
     }
 
-    private ServiceProvider serviceProvider;
+    public ServiceProvider ServiceProvider { get; init; }
+
+    public IEnumerable<Type> CommandTypes
+    {
+        get
+        {
+            foreach (var x in this.commandTypes)
+            {
+                yield return x;
+            }
+        }
+    }
+
+    private Type[] commandTypes;
 }

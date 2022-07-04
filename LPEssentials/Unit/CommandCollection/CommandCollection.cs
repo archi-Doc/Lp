@@ -9,7 +9,7 @@ public class CommandCollection : ICommandCollection
 {
     private readonly List<CommandDescriptor> descriptors = new();
 
-    public void Add(Type commandType) => this.descriptors.Add(new(commandType));
+    public void AddCommand(Type commandType) => this.descriptors.Add(new(commandType));
 
     /// <inheritdoc />
     public int Count => this.descriptors.Count;

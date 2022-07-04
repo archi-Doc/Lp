@@ -1,26 +1,32 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace LP.Unit;
 
+/// <summary>
+/// Builder class of unit, a unit of function and dependency.<br/>
+/// Unit: HostBuilder +Nested unit +Unit operation, -AppConfiguration -Container.
+/// </summary>
 public class UnitBuilder
 {
     public UnitBuilder()
     {
     }
 
-    public IUnit Build()
+    public BuiltUnit Build()
     {
-        var name = Assembly.GetEntryAssembly()?.GetName().Name ?? string.Empty;
-        var directory = Directory.GetCurrentDirectory();
+        var context = new UnitBuilderContext();
+        context.UnitName = Assembly.GetEntryAssembly()?.GetName().Name ?? string.Empty;
+        context.RootDirectory = Directory.GetCurrentDirectory();
 
-        return this.Build(new(name, directory));
+        return this.Build(context);
     }
 
-    public IUnit Build(UnitBuilderContext builderContext)
+    public BuiltUnit Build(UnitBuilderContext context)
     {
         if (this.built)
         {
@@ -29,35 +35,39 @@ public class UnitBuilder
 
         this.built = true;
 
-        // Services
-        var services = new ServiceCollection();
+        // Unit builders
         foreach (var x in this.configureUnitBuilders)
         {
-            x.Build(builderContext);
+            var built = x.Build(context);
         }
 
-        foreach (var x in this.configureServicesActions)
+        // Configure actions
+        foreach (var x in this.configureActions)
         {
-            x(builderContext, services);
-        }
-
-        // Commands
-        var commands = new CommandCollection();
-        foreach (var x in this.configureCommandsActions)
-        {
-            x(builderContext, commands);
+            x(context);
         }
 
         // Register commands to the service collection.
-        foreach (var x in commands)
+        foreach (var x in context.CommandCollection)
         {
-            services.TryAddSingleton(x.CommandType);
+            context.ServiceCollection.TryAddSingleton(x.CommandType);
         }
 
-        var serviceProvider = services.BuildServiceProvider();
+        // Register
+        foreach (var x in context.ServiceCollection)
+        {
+        }
+
+        return new BuiltUnit(context);
     }
 
-    public UnitBuilder ConfigureServices(Action<UnitBuilderContext, IServiceCollection> configureDelegate)
+    public virtual UnitBuilder Configure(Action<UnitBuilderContext> configureDelegate)
+    {
+        this.configureActions.Add(configureDelegate);
+        return this;
+    }
+
+    /*public UnitBuilder ConfigureServices(Action<UnitBuilderContext, IServiceCollection> configureDelegate)
     {
         this.configureServicesActions.Add(configureDelegate);
         return this;
@@ -67,16 +77,23 @@ public class UnitBuilder
     {
         this.configureCommandsActions.Add(configureDelegate);
         return this;
-    }
+    }*/
 
-    public UnitBuilder ConfigureUnitBuilder(UnitBuilder unitBuilder)
+    public UnitBuilder ConfigureBuilder(UnitBuilder unitBuilder)
     {
         this.configureUnitBuilders.Add(unitBuilder);
         return this;
     }
 
+    /*public UnitBuilder ConfigurePostProcess(Action<UnitBuilderContext> configureDelegate)
+    {
+        this.configurePostProcessActions.Add(configureDelegate);
+        return this;
+    }*/
+
     private bool built = false;
-    private List<Action<UnitBuilderContext, IServiceCollection>> configureServicesActions = new();
-    private List<Action<UnitBuilderContext, ICommandCollection>> configureCommandsActions = new();
+    private List<Action<UnitBuilderContext>> configureActions = new();
+    // private List<Action<UnitBuilderContext>> configureCommandsActions = new();
+    // private List<Action<UnitBuilderContext>> configurePostProcessActions = new();
     private List<UnitBuilder> configureUnitBuilders = new();
 }

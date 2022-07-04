@@ -22,6 +22,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere.Responder;
 using SimpleCommandLine;
+using static Netsphere.NetControlBuilder;
+using static SimpleCommandLine.SimpleParser;
 
 namespace Netsphere;
 
@@ -31,41 +33,6 @@ public class NetControl
     public const int MaxDataSize = 4 * 1024 * 1024; // 4 MB
     public const int MinPort = 49152; // Ephemeral port 49152 - 60999
     public const int MaxPort = 60999;
-
-    public static UnitBuilder CreateDefaultBuilder()
-    {
-        var builder = new UnitBuilder();
-        builder.ConfigureServices(ConfigureServicesInternal);
-        builder.ConfigureCommands(ConfigureCommandsInternal);
-        builder.ConfigureUnit();
-
-        return builder;
-    }
-
-    private static void ConfigureServicesInternal(UnitBuilderContext context, IServiceCollection collection)
-    {
-        // Base
-        collection.TryAddSingleton<BigMachine<Identifier>>();
-
-        // Main services
-        collection.AddSingleton<NetControl>();
-        collection.AddSingleton<NetBase>();
-        collection.AddSingleton<Terminal>();
-        collection.AddSingleton<EssentialNode>();
-        collection.AddSingleton<NetStatus>();
-        collection.AddTransient<Server>();
-        collection.AddTransient<NetService>();
-        // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
-
-        // Machines
-        collection.AddTransient<LP.Machines.EssentialNetMachine>();
-    }
-
-    private static void ConfigureCommandsInternal(UnitBuilderContext context, ICommandCollection collection)
-    {
-        // Subcommands
-        collection.Add(typeof(LP.Subcommands.NetTestSubcommand));
-    }
 
     public static void Register(Container container, List<Type>? commandList = null)
     {
