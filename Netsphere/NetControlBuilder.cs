@@ -8,7 +8,7 @@ using static SimpleCommandLine.SimpleParser;
 
 namespace Netsphere;
 
-public class NetControlUnit : BuiltUnit
+public class NetControlUnit : ControlUnit
 {
     public record Param(bool EnableServer, Func<ServerContext> NewServerContext, Func<CallContext> NewCallContext, string NodeName, NetsphereOptions Options, bool AllowUnsafeConnection);
 

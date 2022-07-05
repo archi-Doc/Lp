@@ -9,12 +9,12 @@ namespace LP.Unit;
 /// </summary>
 public abstract class UnitBase
 {
-    public UnitBase(BuiltUnit controlUnit)
+    public UnitBase(ControlUnit? controlUnit)
     {
-        this.BuiltUnit = controlUnit;
+        this.ControlUnit = controlUnit;
     }
 
-    public BuiltUnit BuiltUnit { get; }
+    public ControlUnit? ControlUnit { get; }
 }
 
 public interface IUnitConfigurable
