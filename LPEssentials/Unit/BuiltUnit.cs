@@ -13,9 +13,10 @@ namespace LP.Unit;
     }
 }*/
 
-public class BuiltUnit : IUnit
+public class BuiltUnit : UnitBase
 {
     public BuiltUnit(UnitBuilderContext context)
+        : base(controlUnit)
     {
         this.ServiceProvider = context.ServiceCollection.BuildServiceProvider();
         this.commandTypes = context.CommandCollection.Select(a => a.CommandType).ToArray();

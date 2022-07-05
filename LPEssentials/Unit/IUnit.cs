@@ -7,23 +7,29 @@ namespace LP.Unit;
 /// <summary>
 /// Unit of function and dependency.
 /// </summary>
-public interface IUnit
+public abstract class UnitBase
 {
+    public UnitBase(BuiltUnit controlUnit)
+    {
+        this.BuiltUnit = controlUnit;
+    }
+
+    public BuiltUnit BuiltUnit { get; }
 }
 
-public interface IUnitConfigurable : IUnit
+public interface IUnitConfigurable
 {
     public void Configure();
 }
 
-public interface IUnitExecutable : IUnit
+public interface IUnitExecutable
 {
     public Task StartAsync(ThreadCoreBase parentCore);
 
     public Task TerminateAsync();
 }
 
-public interface IUnitSerializable : IUnit
+public interface IUnitSerializable
 {
     public Task LoadAsync();
 

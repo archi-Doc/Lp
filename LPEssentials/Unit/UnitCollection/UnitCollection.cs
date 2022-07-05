@@ -10,7 +10,7 @@ public class UnitCollection : IUnitCollection
     private readonly List<UnitDescriptor> descriptors = new();
 
     public void AddUnit<TUnit>(bool createInstance)
-        where TUnit : IUnit => this.descriptors.Add(new(typeof(TUnit), createInstance));
+        where TUnit : UnitBase => this.descriptors.Add(new(typeof(TUnit), createInstance));
 
     /// <inheritdoc />
     public int Count => this.descriptors.Count;

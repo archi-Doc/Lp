@@ -7,5 +7,5 @@ namespace LP.Unit;
 public interface IUnitCollection : IList<UnitDescriptor>, ICollection<UnitDescriptor>, IEnumerable<UnitDescriptor>
 {
     public void AddUnit<TUnit>(bool createInstance)
-        where TUnit : IUnit;
+        where TUnit : UnitBase;
 }

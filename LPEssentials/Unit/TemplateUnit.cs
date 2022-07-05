@@ -4,6 +4,10 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace LP.Unit;
 
+public class TestClass : IUnitConfigurable
+{
+}
+
 public class TestCode
 {
     public void Test()

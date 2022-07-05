@@ -24,7 +24,7 @@ public class UnitBuilderContext
     public void AddCommand(Type commandType) => this.CommandCollection.AddCommand(commandType);
 
     public void AddUnit<TUnit>(bool createInstance = true)
-        where TUnit : IUnit => this.UnitCollection.AddUnit<TUnit>(createInstance);
+        where TUnit : UnitBase => this.UnitCollection.AddUnit<TUnit>(createInstance);
 
     public void AddSingleton<TService>()
         where TService : class
