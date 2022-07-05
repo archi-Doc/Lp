@@ -3,7 +3,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace LP.Unit;
+namespace LP.Unit.Obsolete;
 
 public class UnitCollection : IUnitCollection
 {

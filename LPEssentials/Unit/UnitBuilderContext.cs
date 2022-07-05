@@ -15,13 +15,25 @@ public class UnitBuilderContext
 
     public string RootDirectory { get; set; } = string.Empty;
 
-    public CommandCollection CommandCollection { get; } = new();
+    public List<Type> CommandList { get; } = new();
 
     // public UnitCollection UnitCollection { get; } = new();
 
     public ServiceCollection ServiceCollection { get; } = new();
 
-    public void AddCommand(Type commandType) => this.CommandCollection.AddCommand(commandType);
+    public bool AddCommand(Type commandType)
+    {
+        if (this.commandSet.Contains(commandType))
+        {
+            return false;
+        }
+        else
+        {
+            this.commandSet.Add(commandType);
+            this.CommandList.Add(commandType);
+            return true;
+        }
+    }
 
     /*public void AddUnit<TUnit>(bool createInstance = true)
         where TUnit : UnitBase => this.UnitCollection.AddUnit<TUnit>(createInstance);*/
@@ -43,6 +55,8 @@ public class UnitBuilderContext
 
     public void TryAddTransient<TService>()
         where TService : class => this.ServiceCollection.TryAddTransient<TService>();
+
+    private HashSet<Type> commandSet = new();
 }
 
 // public record UnitBuilderContext(string UnitName, string RootDirectory, IServiceProvider ServiceProvider);

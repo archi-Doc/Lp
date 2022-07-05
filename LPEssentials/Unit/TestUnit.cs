@@ -4,23 +4,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace LP.Unit.Sample;
 
-public class TestClass : UnitBase
+public class TestClass
 {
-    public TestClass(BuiltUnit controlUnit)
-        : base(controlUnit)
-    {
-    }
-
-    public void Configure()
-    {
-    }
-}
-
-public class TestCode
-{
-    public void Test()
-    {
-        var builder = new TemplateClass.Builder()
+    public static void Test()
+    {// Sample code
+        var builder = new TestClass.Builder()
             .Configure(x => { });
 
         var unit = builder.Build();
@@ -29,17 +17,16 @@ public class TestCode
         var built = (BuiltUnit)unit;
         built.Run();
     }
-}
 
-public class TemplateClass
-{
     public class Builder : UnitBuilder<Unit>
     {
         public Builder()
             : base()
         {// Configuration
-            this.Configure(a => { });
-            // this.Configure(ConfigureInternal);
+            this.Configure(context =>
+            {
+                context.AddTransient<TestUnit>();
+            });
         }
     }
 
@@ -56,4 +43,23 @@ public class TemplateClass
         {
         }
     }
+
+    public class TestUnit : UnitBase
+    {
+        public TestUnit(BuiltUnit controlUnit)
+            : base(controlUnit)
+        {
+        }
+
+        public void Configure()
+        {
+        }
+    }
+
+    public TestClass(TestUnit testUnit)
+    {
+        this.Unit1 = testUnit;
+    }
+
+    public TestUnit Unit1 { get; }
 }

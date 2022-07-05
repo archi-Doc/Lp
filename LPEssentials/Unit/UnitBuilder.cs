@@ -64,9 +64,9 @@ public class UnitBuilder<TUnit> : UnitBuilder
         }
 
         // Register commands to the service collection.
-        foreach (var x in context.CommandCollection)
+        foreach (var x in context.CommandList)
         {
-            context.ServiceCollection.TryAddSingleton(x.CommandType);
+            context.ServiceCollection.TryAddSingleton(x);
         }
 
         // Register units.

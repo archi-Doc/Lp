@@ -21,7 +21,7 @@ public class BuiltUnit : UnitBase, IUnitExecutable, IUnitSerializable
         : base(null)
     {
         this.ServiceProvider = context.ServiceCollection.BuildServiceProvider();
-        this.commandTypes = context.CommandCollection.Select(a => a.CommandType).ToArray();
+        this.commandTypes = context.CommandList.ToArray(); // context.CommandTypes.Select(a => a.CommandType).ToArray();
     }
 
     public void Run()
