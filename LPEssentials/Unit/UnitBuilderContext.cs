@@ -58,5 +58,3 @@ public class UnitBuilderContext
 
     private HashSet<Type> commandSet = new();
 }
-
-// public record UnitBuilderContext(string UnitName, string RootDirectory, IServiceProvider ServiceProvider);

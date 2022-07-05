@@ -6,10 +6,10 @@ namespace LP.Unit.Sample;
 
 public class TestClass
 {
-    public static void Test()
-    {// Sample code
+    public static void SampleCode()
+    {
         var builder = new TestClass.Builder()
-            .Configure(x => { });
+            .Configure(x => { }); // Custom configuration
 
         var unit = builder.Build();
         unit.RunStandalone(new());
@@ -19,7 +19,7 @@ public class TestClass
     }
 
     public class Builder : UnitBuilder<Unit>
-    {
+    {// Builder class for customizing dependencies.
         public Builder()
             : base()
         {// Configuration
@@ -31,7 +31,7 @@ public class TestClass
     }
 
     public class Unit : BuiltUnit
-    {
+    {// Unit class for customizing process.
         public record Param();
 
         public Unit(UnitBuilderContext context)

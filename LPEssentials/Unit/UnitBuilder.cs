@@ -39,10 +39,10 @@ public class UnitBuilder<TUnit> : UnitBuilder
         context.UnitName = Assembly.GetEntryAssembly()?.GetName().Name ?? string.Empty;
         context.RootDirectory = Directory.GetCurrentDirectory();
 
-        return this.Build(context);
+        return this.Build(context, null);
     }
 
-    public BuiltUnit Build(UnitBuilderContext context)
+    internal BuiltUnit Build(UnitBuilderContext context, UnitBase? parent)
     {
         if (this.built)
         {
@@ -50,11 +50,12 @@ public class UnitBuilder<TUnit> : UnitBuilder
         }
 
         this.built = true;
+        // var unit = new BuiltUnit(context);
 
         // Unit builders
         foreach (var x in this.configureUnitBuilders)
         {
-            var built = x.Build(context);
+            var built = x.Build(context, unit);
         }
 
         // Configure actions
