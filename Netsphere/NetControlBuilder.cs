@@ -8,7 +8,7 @@ using static SimpleCommandLine.SimpleParser;
 
 namespace Netsphere;
 
-public class NetControlUnit : ControlUnit
+public class NetControlUnit : BuiltUnit
 {
     public record Param(bool EnableServer, Func<ServerContext> NewServerContext, Func<CallContext> NewCallContext, string NodeName, NetsphereOptions Options, bool AllowUnsafeConnection);
 
@@ -62,8 +62,13 @@ public class NetControlBuilder : UnitBuilder<NetControlUnit>
         context.AddTransient<TestUnit>();
     }
 
-    internal class TestUnit : IUnitConfigurable
+    internal class TestUnit : UnitBase
     {
+        public TestUnit(BuiltUnit? controlUnit)
+            : base(controlUnit)
+        {
+        }
+
         public void Configure()
         {
         }

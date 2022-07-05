@@ -2,11 +2,11 @@
 
 using Microsoft.Extensions.DependencyInjection;
 
-namespace LP.Unit;
+namespace LP.Unit.Sample;
 
-public class TestClass : UnitBase, IUnitConfigurable
+public class TestClass : UnitBase
 {
-    public TestClass(ControlUnit controlUnit)
+    public TestClass(BuiltUnit controlUnit)
         : base(controlUnit)
     {
     }
@@ -26,7 +26,7 @@ public class TestCode
         var unit = builder.Build();
         unit.RunStandalone(new());
 
-        var built = (ControlUnit)unit;
+        var built = (BuiltUnit)unit;
         built.Run();
     }
 }
@@ -43,7 +43,7 @@ public class TemplateClass
         }
     }
 
-    public class Unit : ControlUnit
+    public class Unit : BuiltUnit
     {
         public record Param();
 
@@ -55,9 +55,5 @@ public class TemplateClass
         public void RunStandalone(Param param)
         {
         }
-    }
-
-    internal static void ConfigureInternal(UnitBuilderContext context)
-    {
     }
 }

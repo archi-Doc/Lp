@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Arc.Threading;
+using CrossChannel;
+using LPEssentials.Radio;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace LP.Unit;
@@ -13,9 +15,9 @@ namespace LP.Unit;
     }
 }*/
 
-public class ControlUnit : UnitBase
+public class BuiltUnit : UnitBase, IUnitExecutable, IUnitSerializable
 {
-    public ControlUnit(UnitBuilderContext context)
+    public BuiltUnit(UnitBuilderContext context)
         : base(null)
     {
         this.ServiceProvider = context.ServiceCollection.BuildServiceProvider();
@@ -26,25 +28,20 @@ public class ControlUnit : UnitBase
     {
     }
 
-    public void Configure()
-    {
-    }
+    public override void Configure(UnitMessage.Configure message)
+        => this.radio.SendAsync(message).ConfigureAwait(false);
 
-    public async Task LoadAsync()
-    {
-    }
+    public async Task LoadAsync(UnitMessage.LoadAsync message)
+        => await this.radio.SendAsync(message).ConfigureAwait(false);
 
-    public async Task SaveAsync()
-    {
-    }
+    public async Task SaveAsync(UnitMessage.SaveAsync message)
+        => await this.radio.SendAsync(message).ConfigureAwait(false);
 
-    public async Task StartAsync(ThreadCoreBase parentCore)
-    {
-    }
+    public async Task RunAsync(UnitMessage.RunAsync message)
+        => await this.radio.SendAsync(message).ConfigureAwait(false);
 
-    public async Task TerminateAsync()
-    {
-    }
+    public async Task TerminateAsync(UnitMessage.TerminateAsync message)
+        => await this.radio.SendAsync(message).ConfigureAwait(false);
 
     public ServiceProvider ServiceProvider { get; init; }
 
@@ -59,5 +56,23 @@ public class ControlUnit : UnitBase
         }
     }
 
+    private RadioClass radio = new();
     private Type[] commandTypes;
+
+    internal void AddInternal(UnitBase unit)
+    {
+        this.radio.Open<UnitMessage.Configure>(x => unit.Configure(x), unit);
+
+        if (unit is IUnitExecutable executable)
+        {
+            this.radio.Open<UnitMessage.RunAsync>(x => executable.RunAsync(x), unit);
+            this.radio.Open<UnitMessage.TerminateAsync>(x => executable.TerminateAsync(x), unit);
+        }
+
+        if (unit is IUnitSerializable serializable)
+        {
+            this.radio.Open<UnitMessage.LoadAsync>(x => serializable.LoadAsync(x), unit);
+            this.radio.Open<UnitMessage.SaveAsync>(x => serializable.SaveAsync(x), unit);
+        }
+    }
 }

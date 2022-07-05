@@ -5,33 +5,39 @@ using Arc.Threading;
 namespace LP.Unit;
 
 /// <summary>
-/// Unit of function and dependency.
+/// Base class of Unit.<br/>
+/// Unit is an independent unit of function and dependency.
 /// </summary>
 public abstract class UnitBase
 {
-    public UnitBase(ControlUnit? controlUnit)
+    public UnitBase(BuiltUnit? builtUnit)
     {
-        this.ControlUnit = controlUnit;
+        this.BuiltUnit = builtUnit;
+        this.BuiltUnit?.AddInternal(this);
     }
 
-    public ControlUnit? ControlUnit { get; }
+    public virtual void Configure(UnitMessage.Configure message)
+    {
+    }
+
+    public BuiltUnit? BuiltUnit { get; }
 }
 
-public interface IUnitConfigurable
+/*public interface IUnitConfigurable
 {
     public void Configure();
-}
+}*/
 
 public interface IUnitExecutable
 {
-    public Task StartAsync(ThreadCoreBase parentCore);
+    public Task RunAsync(UnitMessage.RunAsync message);
 
-    public Task TerminateAsync();
+    public Task TerminateAsync(UnitMessage.TerminateAsync message);
 }
 
 public interface IUnitSerializable
 {
-    public Task LoadAsync();
+    public Task LoadAsync(UnitMessage.LoadAsync message);
 
-    public Task SaveAsync();
+    public Task SaveAsync(UnitMessage.SaveAsync message);
 }

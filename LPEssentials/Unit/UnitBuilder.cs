@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 namespace LP.Unit;
 
 public class UnitBuilder<TUnit> : UnitBuilder
-    where TUnit : ControlUnit
+    where TUnit : BuiltUnit
 {
     public UnitBuilder()
     {
@@ -33,7 +33,7 @@ public class UnitBuilder<TUnit> : UnitBuilder
     {
     }
 
-    public virtual ControlUnit Build()
+    public virtual BuiltUnit Build()
     {
         var context = new UnitBuilderContext();
         context.UnitName = Assembly.GetEntryAssembly()?.GetName().Name ?? string.Empty;
@@ -42,7 +42,7 @@ public class UnitBuilder<TUnit> : UnitBuilder
         return this.Build(context);
     }
 
-    public ControlUnit Build(UnitBuilderContext context)
+    public BuiltUnit Build(UnitBuilderContext context)
     {
         if (this.built)
         {
@@ -74,7 +74,7 @@ public class UnitBuilder<TUnit> : UnitBuilder
         {
         }
 
-        return new ControlUnit(context);
+        return new BuiltUnit(context);
     }
 
     public virtual UnitBuilder Configure(Action<UnitBuilderContext> configureDelegate)
