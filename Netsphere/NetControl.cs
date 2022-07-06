@@ -16,6 +16,7 @@ global using ValueLink;
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using DryIoc;
+using LP.Unit;
 using LPEssentials.Radio;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -31,13 +32,66 @@ public class NetControl
     public const int MinPort = 49152; // Ephemeral port 49152 - 60999
     public const int MaxPort = 60999;
 
-    public static NetControlBuilder CreateBuilder()
+    public class Builder : UnitBuilder<Unit>
     {
-        return new NetControlBuilder();
+        public Builder()
+            : base()
+        {
+            this.Configure(context =>
+            {
+                // Base
+                context.TryAddSingleton<BigMachine<Identifier>>();
+
+                // Main services
+                context.AddSingleton<NetControl>();
+                context.AddSingleton<NetBase>();
+                context.AddSingleton<Terminal>();
+                context.AddSingleton<EssentialNode>();
+                context.AddSingleton<NetStatus>();
+                context.AddTransient<Server>();
+                context.AddTransient<NetService>(); // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
+
+                // Machines
+                context.AddTransient<LP.Machines.EssentialNetMachine>();
+
+                // Subcommands
+                context.AddCommand(typeof(LP.Subcommands.NetTestSubcommand));
+
+                // Unit
+            });
+        }
+    }
+
+    public class Unit : BuiltUnit
+    {
+        public record Param(bool EnableServer, Func<ServerContext> NewServerContext, Func<CallContext> NewCallContext, string NodeName, NetsphereOptions Options, bool AllowUnsafeConnection);
+
+        public Unit(UnitParameter parameter)
+            : base(parameter)
+        {
+            NetControl.serviceProvider = parameter.ServiceProvider;
+        }
+
+        public void RunStandalone(Param param)
+        {
+            var netBase = this.ServiceProvider.GetRequiredService<NetBase>();
+            netBase.Initialize(param.EnableServer, param.NodeName, param.Options);
+            netBase.AllowUnsafeConnection = param.AllowUnsafeConnection;
+
+            var netControl = this.ServiceProvider.GetRequiredService<NetControl>();
+            if (param.EnableServer)
+            {
+                netControl.SetupServer(param.NewServerContext, param.NewCallContext);
+            }
+
+            Logger.Configure(null);
+            Radio.Send(new Message.Configure());
+            Radio.SendAsync(new Message.StartAsync(ThreadCore.Root));
+        }
     }
 
     public static void Register(Container container, List<Type>? commandList = null)
-    {
+    {// Obsolete
         // Container instance
         serviceProvider = container;
 
@@ -73,7 +127,7 @@ public class NetControl
     }
 
     public static void Register(IServiceCollection serviceCollection, List<Type>? commandList = null)
-    {
+    {// Obsolete
         // Base
         serviceCollection.TryAddSingleton<BigMachine<Identifier>>();
 
@@ -104,15 +158,12 @@ public class NetControl
     }
 
     public static void SetServiceProvider(IServiceProvider provider)
-    {
+    {// Obsolete
         serviceProvider = provider;
     }
 
-    /*public static void QuickStart(bool enableServer, string nodeName, NetsphereOptions options, bool allowUnsafeConnection)
-        => QuickStart<ServerContext>(enableServer, nodeName, options, allowUnsafeConnection, () => new CallContext());*/
-
     public static void QuickStart(bool enableServer, Func<ServerContext> newServerContext, Func<CallContext> newCallContext, string nodeName, NetsphereOptions options, bool allowUnsafeConnection)
-    {
+    {// Obsolete
         var netBase = serviceProvider.GetRequiredService<NetBase>();
         netBase.Initialize(enableServer, nodeName, options);
         netBase.AllowUnsafeConnection = allowUnsafeConnection;
@@ -125,13 +176,7 @@ public class NetControl
 
         Logger.Configure(null);
         Radio.Send(new Message.Configure());
-        var message = new Message.Start(ThreadCore.Root);
-        Radio.Send(message);
-        if (message.Abort)
-        {
-            Radio.Send(new Message.Stop());
-            return;
-        }
+        Radio.SendAsync(new Message.StartAsync(ThreadCore.Root));
     }
 
     public NetControl(NetBase netBase, BigMachine<Identifier> bigMachine, Terminal terminal, EssentialNode node, NetStatus netStatus)

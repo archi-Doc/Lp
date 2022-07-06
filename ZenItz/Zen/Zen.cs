@@ -108,6 +108,18 @@ public class Zen
         await HashHelper.GetFarmHashAndSaveAsync(byteArray, param.ZenDirectoryFile, param.ZenDirectoryBackup);
     }
 
+    public async Task AbortZen()
+    {
+        if (!this.Started)
+        {
+            return;
+        }
+
+        this.Started = false;
+
+        await this.IO.StopAsync();
+    }
+
     public void SetDelegate(ObjectToMemoryOwnerDelegate objectToMemoryOwner, MemoryOwnerToObjectDelegate memoryOwnerToObject)
     {
         this.ObjectToMemoryOwner = objectToMemoryOwner;

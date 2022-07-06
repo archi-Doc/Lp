@@ -5,13 +5,13 @@
 global using System;
 global using System.IO;
 global using System.Threading.Tasks;
+global using Arc.Crypto;
 global using Arc.Threading;
 global using BigMachines;
 global using CrossChannel;
 global using LP;
 global using Tinyhand;
 using DryIoc;
-using LP.Subcommands.Dump;
 using LP.Services;
 using LPEssentials.Radio;
 using Netsphere;
@@ -23,7 +23,7 @@ namespace LP;
 public class Control
 {
     public static void Register(Container container)
-    {
+    {// DI, NetServices/Filters, Machines, Subcommands
         // Container instance
         containerInstance = container;
 
@@ -33,7 +33,7 @@ public class Control
         // Main services
         container.Register<Control>(Reuse.Singleton);
         container.Register<LPBase>(Reuse.Singleton);
-        container.Register<IViewService, ConsoleViewService>(Reuse.Singleton);
+        container.Register<IUserInterfaceService, ConsoleUserInterfaceService>(Reuse.Singleton);
 
         // RPC / Services
         container.Register<Services.BenchmarkServiceImpl>(Reuse.Transient);
@@ -114,7 +114,7 @@ public class Control
         }
     }
 
-    public Control(IViewService viewService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl)
+    public Control(IUserInterfaceService viewService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl)
     {
         this.ViewService = viewService;
         this.LPBase = lpBase;
@@ -131,71 +131,78 @@ public class Control
 
     public void Configure()
     {
-        // Load strings
-        var asm = System.Reflection.Assembly.GetExecutingAssembly();
-        HashedString.LoadAssembly(null, asm, "Strings.strings-en.tinyhand");
-
         Logger.Configure(this.LPBase);
         Radio.Send(new Message.Configure());
     }
 
     public async Task LoadAsync()
     {
-        await this.LoadKeyVaultAsync().ConfigureAwait(false);
-        await Radio.SendAsync(new Message.LoadAsync()).ConfigureAwait(false);
+        // Load strings
+        var asm = System.Reflection.Assembly.GetExecutingAssembly();
+        HashedString.LoadAssembly(null, asm, "Strings.strings-en.tinyhand");
+
+        // Netsphere
         await this.NetControl.EssentialNode.LoadAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
         if (!await this.ZenControl.Itz.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile)).ConfigureAwait(false))
         {
             await this.ZenControl.Itz.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup)).ConfigureAwait(false);
         }
+
+        // ZenItz
+        var result = await this.ZenControl.Zen.TryStartZen(new(Zen.DefaultZenDirectory, Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenBackup), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryBackup), QueryDelegate: null));
+        if (result != ZenStartResult.Success)
+        {
+            throw new PanicException();
+        }
+
+        await this.LoadKeyVaultAsync().ConfigureAwait(false);
+        await Radio.SendAsync(new Message.LoadAsync()).ConfigureAwait(false);
+    }
+
+    public async Task AbortAsync()
+    {
+        await this.ZenControl.Zen.AbortZen();
     }
 
     public async Task SaveAsync()
     {
-        await Radio.SendAsync(new Message.SaveAsync()).ConfigureAwait(false);
-
         Directory.CreateDirectory(this.LPBase.DataDirectory);
+
         await this.NetControl.EssentialNode.SaveAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
-        await this.ZenControl.Zen.StopZen(new(Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenBackup), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryBackup)));
         await this.ZenControl.Itz.SaveAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile), Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup));
+
+        await Radio.SendAsync(new Message.SaveAsync()).ConfigureAwait(false);
     }
 
-    public bool TryStart()
+    public async Task StartAsync()
     {
-        var s = this.LPBase.IsConsole ? " (Console)" : string.Empty;
-        Logger.Default.Information("LP Start" + s);
-
+        Logger.Default.Information("LP Start");
         Logger.Default.Information($"Console: {this.LPBase.IsConsole}, Root directory: {this.LPBase.RootDirectory}");
         Logger.Default.Information(this.LPBase.ToString());
         Logger.Console.Information("Press Enter key to switch to console mode.");
         Logger.Console.Information("Press Ctrl+C to exit.");
 
-        var message = new Message.Start(this.Core);
-        Radio.Send(message);
-        if (message.Abort)
-        {
-            Radio.Send(new Message.Stop());
-            return false;
-        }
-
+        await Radio.SendAsync(new Message.StartAsync(this.Core)).ConfigureAwait(false);
         this.BigMachine.Start();
 
-        return true;
+        Logger.Default.Information("Running");
     }
 
-    public void Stop()
+    public async Task StopAsync()
     {
-        Logger.Default.Information("LP Termination process initiated");
+        Logger.Default.Information("Termination process initiated");
 
-        Radio.Send(new Message.Stop());
+        await this.ZenControl.Zen.StopZen(new(Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenBackup), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryBackup)));
+
+        await Radio.SendAsync(new Message.StopAsync()).ConfigureAwait(false);
     }
 
-    public void Terminate()
+    public void Terminate(bool abort)
     {
         this.Core.Terminate();
         this.Core.WaitForTermination(-1);
 
-        Logger.Default.Information("LP Teminated");
+        Logger.Default.Information(abort ? "Aborted" : "Terminated");
         Logger.CloseAndFlush();
     }
 
@@ -231,7 +238,7 @@ public class Control
 
     public ThreadCoreGroup Core { get; }
 
-    public IViewService ViewService { get; }
+    public IUserInterfaceService ViewService { get; }
 
     public LPBase LPBase { get; }
 
@@ -245,18 +252,21 @@ public class Control
 
     private static SimpleParser subcommandParser = default!;
 
-    private async Task LoadKeyVaultAsync()
+    private async Task<bool> LoadKeyVaultAsync()
     {
+        var st = await this.ViewService.RequestString("Enter");
+        Logger.Default.Information(st);
+
         var keyVault = await KeyVault.Load(this.ViewService, this.LPBase.ConsoleOptions.KeyVault);
         if (keyVault == null)
         {
-            await this.ViewService.RequestYesOrNo("New keyvault?");
+            var reply = await this.ViewService.RequestYesOrNo(Hashed.Services.KeyVault.AskNew);
+            if (!reply)
+            {// No
+                throw new PanicException();
+            }
         }
-    }
 
-    private void Dump()
-    {
-        Logger.Default.Information($"Dump:");
-        Logger.Default.Information($"MyStatus: {this.NetControl.MyStatus.Type}");
+        return true;
     }
 }

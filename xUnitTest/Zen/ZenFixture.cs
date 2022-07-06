@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using DryIoc;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using ZenItz;
 
@@ -16,12 +16,17 @@ public class ZenFixture : IDisposable
 {
     public ZenFixture()
     {
-        // DI Container
-        ZenControl.Register(this.container, null, false);
+        var builder = new ZenControl.Builder(false)
+            .Configure(context =>
+            {
+                // Services
+            });
 
-        this.container.ValidateAndThrow();
+        var unit = builder.Build();
+        var param = new ZenControl.Unit.Param();
+        unit.RunStandalone(param);
 
-        this.ZenControl = this.container.Resolve<ZenControl>();
+        this.ZenControl = unit.ServiceProvider.GetRequiredService<ZenControl>();
         this.ZenControl.Zen.StartZenForTest();
     }
 
@@ -30,6 +35,4 @@ public class ZenFixture : IDisposable
     }
 
     public ZenControl ZenControl { get; }
-
-    private Container container = new();
 }

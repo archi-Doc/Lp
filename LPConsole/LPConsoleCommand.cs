@@ -7,9 +7,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Arc.Crypto;
 using Arc.Threading;
+using CrossChannel;
 using DryIoc;
 using LP;
 using LP.Options;
+using LPEssentials.Radio;
 using Netsphere;
 using SimpleCommandLine;
 using Tinyhand;
@@ -52,55 +54,45 @@ public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
         this.netBase.Initialize(true, string.Empty, options.NetsphereOptions);
         this.netBase.AllowUnsafeConnection = true; // betacode
 
-        if (await this.LoadAsync() == AbortOrComplete.Abort)
-        {
-            goto Abort;
-        }
-
         var control = Program.Container.Resolve<Control>();
-        control.Configure();
-        await control.LoadAsync();
-        if (await this.TryStartZen(control.ZenControl) == AbortOrComplete.Abort)
+        try
+        {// Configure
+            control.Configure();
+        }
+        catch (PanicException)
         {
-            goto Abort;
+            control.Terminate(true);
+            return;
         }
 
-        if (!control.TryStart())
+        try
+        {// Load
+            await control.LoadAsync();
+        }
+        catch (PanicException)
         {
-            goto Abort;
+            await control.AbortAsync();
+            control.Terminate(true);
+            return;
         }
 
-        this.MainLoop(control);
+        try
+        {// Start, Main loop
+            await control.StartAsync();
 
-        control.Stop();
-        await control.SaveAsync();
-        control.Terminate();
+            this.MainLoop(control);
 
-Abort:
-        Logger.Default.Information("LP Aborted");
-        return;
-    }
-
-    private async Task<AbortOrComplete> TryStartZen(ZenControl zenControl)
-    {
-        var result = await zenControl.Zen.TryStartZen(new(Zen.DefaultZenDirectory, Path.Combine(this.lpBase.DataDirectory, Zen.DefaultZenFile), Path.Combine(this.lpBase.DataDirectory, Zen.DefaultZenBackup), Path.Combine(this.lpBase.DataDirectory, Zen.DefaultZenDirectoryFile), Path.Combine(this.lpBase.DataDirectory, Zen.DefaultZenDirectoryBackup), QueryDelegate: null));
-        if (result != ZenStartResult.Success)
-        {
-            return AbortOrComplete.Abort;
+            await control.StopAsync();
+            await control.SaveAsync();
+            control.Terminate(false);
         }
-
-        return AbortOrComplete.Complete;
-    }
-
-    private async Task<AbortOrComplete> LoadAsync()
-    {
-        // Load node key.
-        if (await this.LoadNodeKey() == AbortOrComplete.Abort)
+        catch (PanicException)
         {
-            return AbortOrComplete.Abort;
+            await control.StopAsync();
+            await control.SaveAsync();
+            control.Terminate(true);
+            return;
         }
-
-        return AbortOrComplete.Complete;
     }
 
     private string? GetPassword(string? text = null)

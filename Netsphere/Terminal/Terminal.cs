@@ -104,13 +104,13 @@ public class Terminal
         this.NetBase = netBase;
         this.NetStatus = netStatus;
 
-        Radio.Open<Message.Start>(this.Start);
-        Radio.Open<Message.Stop>(this.Stop);
+        Radio.OpenAsync<Message.StartAsync>(this.Start);
+        Radio.OpenAsync<Message.StopAsync>(this.Stop);
 
         this.NetSocket = new(this);
     }
 
-    public void Start(Message.Start message)
+    public async Task Start(Message.StartAsync message)
     {
         this.Core = new ThreadCoreGroup(message.ParentCore);
 
@@ -119,14 +119,10 @@ public class Terminal
             this.Port = this.NetBase.NetsphereOptions.Port;
         }
 
-        if (!this.NetSocket.TryStart(this.Core, this.Port))
-        {
-            message.Abort = true;
-            return;
-        }
+        this.NetSocket.Start(this.Core, this.Port);
     }
 
-    public void Stop(Message.Stop message)
+    public async Task Stop(Message.StopAsync message)
     {
         this.Core?.Dispose();
         this.Core = null;
