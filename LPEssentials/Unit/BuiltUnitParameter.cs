@@ -2,17 +2,25 @@
 
 using System;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace LP.Unit;
 
-public class BuiltUnitParameter
+public class UnitParameter
 {
-    public BuiltUnitParameter()
+    public UnitParameter()
     {
     }
 
-    public List<Type> CommandList { get; set; }
+    public void FromContext(RadioClass radio, UnitBuilderContext context)
+{
+        this.ServiceProvider = context.ServiceCollection.BuildServiceProvider();
+        this.Radio = radio;
+        this.CommandTypes = context.CommandList.ToArray();
+    }
 
-    public ServiceProvider ServiceProvider { get; set; }
+    public ServiceProvider ServiceProvider { get; private set; } = default!;
+
+    public RadioClass Radio { get; private set; } = default!;
+
+    public Type[] CommandTypes { get; private set; } = default!;
 }

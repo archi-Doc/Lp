@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Microsoft.Extensions.DependencyInjection;
-
 namespace LP.Unit.Sample;
 
 public class TestClass
@@ -13,16 +11,13 @@ public class TestClass
 
         var unit = builder.Build();
         unit.RunStandalone(new());
-
-        var built = (BuiltUnit)unit;
-        built.Run();
     }
 
     public class Builder : UnitBuilder<Unit>
     {// Builder class for customizing dependencies.
         public Builder()
             : base()
-        {// Configuration
+        {// Configuration for TestClass.
             this.Configure(context =>
             {
                 context.AddTransient<TestUnit>();
@@ -31,11 +26,11 @@ public class TestClass
     }
 
     public class Unit : BuiltUnit
-    {// Unit class for customizing process.
+    {// Unit class for customizing behavior.
         public record Param();
 
-        public Unit(UnitBuilderContext context)
-            : base(context)
+        public Unit(UnitParameter parameter)
+            : base(parameter)
         {
         }
 
@@ -46,8 +41,8 @@ public class TestClass
 
     public class TestUnit : UnitBase
     {
-        public TestUnit(BuiltUnit controlUnit)
-            : base(controlUnit)
+        public TestUnit(UnitParameter parameter)
+            : base(parameter)
         {
         }
 

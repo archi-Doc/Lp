@@ -22,7 +22,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere.Responder;
 using SimpleCommandLine;
-using static Netsphere.NetControlBuilder;
+using static LP.Unit.Sample.TestClass;
 using static SimpleCommandLine.SimpleParser;
 
 namespace Netsphere;
@@ -33,6 +33,65 @@ public class NetControl
     public const int MaxDataSize = 4 * 1024 * 1024; // 4 MB
     public const int MinPort = 49152; // Ephemeral port 49152 - 60999
     public const int MaxPort = 60999;
+
+    public class Builder : UnitBuilder<Unit>
+    {
+        public Builder()
+            : base()
+        {
+            this.Configure(context =>
+            {
+                // Base
+                context.TryAddSingleton<BigMachine<Identifier>>();
+
+                // Main services
+                context.AddSingleton<NetControl>();
+                context.AddSingleton<NetBase>();
+                context.AddSingleton<Terminal>();
+                context.AddSingleton<EssentialNode>();
+                context.AddSingleton<NetStatus>();
+                context.AddTransient<Server>();
+                context.AddTransient<NetService>();
+                // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
+
+                // Machines
+                context.AddTransient<LP.Machines.EssentialNetMachine>();
+
+                // Subcommands
+                context.AddCommand(typeof(LP.Subcommands.NetTestSubcommand));
+
+                // Unit
+                context.AddTransient<TestUnit>();
+            });
+        }
+    }
+
+    public class Unit : BuiltUnit
+    {
+        public record Param(bool EnableServer, Func<ServerContext> NewServerContext, Func<CallContext> NewCallContext, string NodeName, NetsphereOptions Options, bool AllowUnsafeConnection);
+
+        public Unit(UnitParameter parameter)
+            : base(parameter)
+        {
+        }
+
+        public void RunStandalone(Param param)
+        {
+            var netBase = this.ServiceProvider.GetRequiredService<NetBase>();
+            netBase.Initialize(param.EnableServer, param.NodeName, param.Options);
+            netBase.AllowUnsafeConnection = param.AllowUnsafeConnection;
+
+            var netControl = this.ServiceProvider.GetRequiredService<NetControl>();
+            if (param.EnableServer)
+            {
+                netControl.SetupServer(param.NewServerContext, param.NewCallContext);
+            }
+
+            Logger.Configure(null);
+            Radio.Send(new Message.Configure());
+            Radio.SendAsync(new Message.StartAsync(ThreadCore.Root));
+        }
+    }
 
     public static void Register(Container container, List<Type>? commandList = null)
     {

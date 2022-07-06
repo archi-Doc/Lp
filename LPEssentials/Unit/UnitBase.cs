@@ -10,10 +10,8 @@ namespace LP.Unit;
 /// </summary>
 public abstract class UnitBase
 {
-    public UnitBase(RadioClass radio)
+    public UnitBase(UnitParameter parameter)
     {
-        this.BuiltUnit = builtUnit;
-        this.BuiltUnit?.AddInternal(this);
     }
 
     /*public UnitBase(BuiltUnit? builtUnit)

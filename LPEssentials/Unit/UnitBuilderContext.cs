@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -9,11 +10,13 @@ public class UnitBuilderContext
 {
     public UnitBuilderContext()
     {
+        this.UnitName = Assembly.GetEntryAssembly()?.GetName().Name ?? string.Empty;
+        this.RootDirectory = Directory.GetCurrentDirectory();
     }
 
-    public string UnitName { get; set; } = string.Empty;
+    public string UnitName { get; set; }
 
-    public string RootDirectory { get; set; } = string.Empty;
+    public string RootDirectory { get; set; }
 
     public List<Type> CommandList { get; } = new();
 

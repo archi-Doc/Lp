@@ -7,26 +7,19 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace LP.Unit;
 
-/*public class BuiltUnit<T> : BuiltUnit
-{
-    public BuiltUnit(UnitBuilderContext context)
-        : base(context)
-    {
-    }
-}*/
-
 public class BuiltUnit : UnitBase, IUnitExecutable, IUnitSerializable
 {
-    public BuiltUnit(UnitBuilderContext context)
-        : base(null)
+    public BuiltUnit(UnitParameter parameter)
+        : base(parameter)
     {
-        this.ServiceProvider = context.ServiceCollection.BuildServiceProvider();
-        this.commandTypes = context.CommandList.ToArray(); // context.CommandTypes.Select(a => a.CommandType).ToArray();
+        this.ServiceProvider = parameter.ServiceProvider;
+        this.radio = parameter.Radio;
+        this.commandTypes = parameter.CommandTypes;
     }
 
-    public void Run()
+    /*public void Run()
     {
-    }
+    }*/
 
     public override void Configure(UnitMessage.Configure message)
         => this.radio.SendAsync(message).ConfigureAwait(false);
@@ -56,7 +49,7 @@ public class BuiltUnit : UnitBase, IUnitExecutable, IUnitSerializable
         }
     }
 
-    private RadioClass radio = new();
+    private RadioClass radio;
     private Type[] commandTypes;
 
     internal void AddInternal(UnitBase unit)

@@ -70,7 +70,7 @@ public class Program
         };
 
         // 3rd: Builder pattern
-        var builder = new NetControlBuilder()
+        var builder = new NetControl.Builder()
             .Configure(context =>
             {
                 context.AddCommand(typeof(BasicTestSubcommand));
@@ -86,17 +86,16 @@ public class Program
         options.EnableTestFeatures = true;
         options.EnableLogger = false;
 
-        var param = new NetControlUnit.Param(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);
-        // var built = builder.BuildStandalone(param);
-        var built = builder.Build();
-        built.RunStandalone(param);
+        var param = new NetControl.Unit.Param(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);
+        var unit = builder.Build();
+        unit.RunStandalone(param);
 
         // Logger
         if (options.EnableLogger)
         {
             var logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "logs");
             Directory.CreateDirectory(logDirectory);
-            var netControl = built.ServiceProvider.GetRequiredService<NetControl>();
+            var netControl = unit.ServiceProvider.GetRequiredService<NetControl>();
             netControl.Terminal.SetLogger(new SerilogLogger(new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.File(
@@ -115,13 +114,13 @@ public class Program
 
         var parserOptions = SimpleParserOptions.Standard with
         {
-            ServiceProvider = built.ServiceProvider,
+            ServiceProvider = unit.ServiceProvider,
             RequireStrictCommandName = false,
             RequireStrictOptionName = true,
         };
 
         // await SimpleParser.ParseAndRunAsync(commandTypes, "netbench -node alternative", parserOptions); // Main process
-        await SimpleParser.ParseAndRunAsync(built.CommandTypes, args, parserOptions); // Main process
+        await SimpleParser.ParseAndRunAsync(unit.CommandTypes, args, parserOptions); // Main process
 
         ThreadCore.Root.Terminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.

@@ -7,6 +7,11 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace LP.Unit;
 
+/// <summary>
+/// Builder class of unit<br/>
+/// Unit is an independent unit of function and dependency.<br/>
+/// </summary>
+/// <typeparam name="TUnit">The type of unit.</typeparam>
 public class UnitBuilder<TUnit> : UnitBuilder
     where TUnit : BuiltUnit
 {
@@ -17,11 +22,12 @@ public class UnitBuilder<TUnit> : UnitBuilder
     public override TUnit Build() => this.Build<TUnit>();
 
     public override UnitBuilder<TUnit> Configure(Action<UnitBuilderContext> configureDelegate)
-        => (UnitBuilder<TUnit>)((UnitBuilder)this).Configure(configureDelegate);
+        => (UnitBuilder<TUnit>)base.Configure(configureDelegate);
 }
 
 /// <summary>
-/// Builder class of unit, a unit of function and dependency.<br/>
+/// Builder class of unit<br/>
+/// Unit is an independent unit of function and dependency.<br/>
 /// Unit: HostBuilder +Nested unit +Unit operation, -AppConfiguration -Container.
 /// </summary>
 public class UnitBuilder
@@ -32,24 +38,34 @@ public class UnitBuilder
 
     public virtual BuiltUnit Build() => this.Build<BuiltUnit>();
 
-    public virtual TUnit Build<TUnit>()
+    public virtual UnitBuilder Configure(Action<UnitBuilderContext> configureDelegate)
+    {
+        this.configureActions.Add(configureDelegate);
+        return this;
+    }
+
+    public UnitBuilder ConfigureBuilder(UnitBuilder unitBuilder)
+    {
+        this.configureUnitBuilders.Add(unitBuilder);
+        return this;
+    }
+
+    internal virtual TUnit Build<TUnit>()
         where TUnit : BuiltUnit
     {
+        // Builder context.
         var context = new UnitBuilderContext();
-        context.UnitName = Assembly.GetEntryAssembly()?.GetName().Name ?? string.Empty;
-        context.RootDirectory = Directory.GetCurrentDirectory();
-
         this.Configure(context);
 
-        context.TryAddSingleton<BuiltUnitParameter>();
+        context.TryAddSingleton<UnitParameter>();
         context.TryAddSingleton<TUnit>();
         context.TryAddSingleton<RadioClass>(); // Unit radio
 
         var serviceProvider = context.ServiceCollection.BuildServiceProvider();
 
-        var param = serviceProvider.GetRequiredService<BuiltUnitParameter>();
-        param.ServiceProvider = serviceProvider;
-        param.CommandList = ;
+        // Context to parameter.
+        var param = serviceProvider.GetRequiredService<UnitParameter>();
+        param.FromContext(serviceProvider.GetRequiredService<RadioClass>(), context);
 
         return serviceProvider.GetRequiredService<TUnit>();
     }
@@ -82,39 +98,7 @@ public class UnitBuilder
         }
     }
 
-    public virtual UnitBuilder Configure(Action<UnitBuilderContext> configureDelegate)
-    {
-        this.configureActions.Add(configureDelegate);
-        return this;
-    }
-
-    /*public UnitBuilder ConfigureServices(Action<UnitBuilderContext, IServiceCollection> configureDelegate)
-    {
-        this.configureServicesActions.Add(configureDelegate);
-        return this;
-    }
-
-    public UnitBuilder ConfigureCommands(Action<UnitBuilderContext, ICommandCollection> configureDelegate)
-    {
-        this.configureCommandsActions.Add(configureDelegate);
-        return this;
-    }*/
-
-    public UnitBuilder ConfigureBuilder(UnitBuilder unitBuilder)
-    {
-        this.configureUnitBuilders.Add(unitBuilder);
-        return this;
-    }
-
-    /*public UnitBuilder ConfigurePostProcess(Action<UnitBuilderContext> configureDelegate)
-    {
-        this.configurePostProcessActions.Add(configureDelegate);
-        return this;
-    }*/
-
     private bool configured = false;
     private List<Action<UnitBuilderContext>> configureActions = new();
-    // private List<Action<UnitBuilderContext>> configureCommandsActions = new();
-    // private List<Action<UnitBuilderContext>> configurePostProcessActions = new();
     private List<UnitBuilder> configureUnitBuilders = new();
 }
