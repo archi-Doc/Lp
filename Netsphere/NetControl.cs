@@ -22,8 +22,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere.Responder;
 using SimpleCommandLine;
-using static LP.Unit.Sample.TestClass;
-using static SimpleCommandLine.SimpleParser;
 
 namespace Netsphere;
 
@@ -60,7 +58,6 @@ public class NetControl
                 context.AddCommand(typeof(LP.Subcommands.NetTestSubcommand));
 
                 // Unit
-                context.AddTransient<TestUnit>();
             });
         }
     }
@@ -94,7 +91,7 @@ public class NetControl
     }
 
     public static void Register(Container container, List<Type>? commandList = null)
-    {
+    {// Obsolete
         // Container instance
         serviceProvider = container;
 
@@ -130,7 +127,7 @@ public class NetControl
     }
 
     public static void Register(IServiceCollection serviceCollection, List<Type>? commandList = null)
-    {
+    {// Obsolete
         // Base
         serviceCollection.TryAddSingleton<BigMachine<Identifier>>();
 
@@ -161,15 +158,12 @@ public class NetControl
     }
 
     public static void SetServiceProvider(IServiceProvider provider)
-    {
+    {// Obsolete
         serviceProvider = provider;
     }
 
-    /*public static void QuickStart(bool enableServer, string nodeName, NetsphereOptions options, bool allowUnsafeConnection)
-        => QuickStart<ServerContext>(enableServer, nodeName, options, allowUnsafeConnection, () => new CallContext());*/
-
     public static void QuickStart(bool enableServer, Func<ServerContext> newServerContext, Func<CallContext> newCallContext, string nodeName, NetsphereOptions options, bool allowUnsafeConnection)
-    {
+    {// Obsolete
         var netBase = serviceProvider.GetRequiredService<NetBase>();
         netBase.Initialize(enableServer, nodeName, options);
         netBase.AllowUnsafeConnection = allowUnsafeConnection;

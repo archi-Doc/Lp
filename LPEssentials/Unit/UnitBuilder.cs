@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 namespace LP.Unit;
 
 /// <summary>
-/// Builder class of unit<br/>
+/// Builder class of unit, for customizing dependencies.<br/>
 /// Unit is an independent unit of function and dependency.<br/>
 /// </summary>
 /// <typeparam name="TUnit">The type of unit.</typeparam>
@@ -26,9 +26,8 @@ public class UnitBuilder<TUnit> : UnitBuilder
 }
 
 /// <summary>
-/// Builder class of unit<br/>
+/// Builder class of unit, for customizing behaviors.<br/>
 /// Unit is an independent unit of function and dependency.<br/>
-/// Unit: HostBuilder +Nested unit +Unit operation, -AppConfiguration -Container.
 /// </summary>
 public class UnitBuilder
 {

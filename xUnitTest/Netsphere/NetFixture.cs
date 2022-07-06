@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using DryIoc;
+using Microsoft.Extensions.DependencyInjection;
 using Netsphere;
 using Xunit;
 
@@ -16,23 +17,26 @@ public class NetFixture : IDisposable
 {
     public NetFixture()
     {
-        // DI Container
-        NetControl.Register(this.container);
+        var builder = new NetControl.Builder()
+            .Configure(context =>
+            {
+                // NetService
+                context.AddSingleton<BasicServiceImpl>();
 
-        // Services
-        this.container.Register<BasicServiceImpl>(Reuse.Singleton);
-
-        // Filters
-        this.container.Register<NullFilter>(Reuse.Singleton);
-
-        this.container.ValidateAndThrow();
+                // ServiceFilter
+                context.AddSingleton<NullFilter>();
+            });
 
         var options = new LP.Options.NetsphereOptions();
         options.EnableAlternative = true;
         options.EnableTestFeatures = true;
-        NetControl.QuickStart(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);
+        options.EnableLogger = false;
 
-        this.NetControl = this.container.Resolve<NetControl>();
+        var unit = builder.Build();
+        var param = new NetControl.Unit.Param(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);
+        unit.RunStandalone(param);
+
+        this.NetControl = unit.ServiceProvider.GetRequiredService<NetControl>();
     }
 
     public void Dispose()
@@ -40,8 +44,6 @@ public class NetFixture : IDisposable
     }
 
     public NetControl NetControl { get; }
-
-    private Container container = new();
 }
 
 public class TestServerContext : ServerContext
