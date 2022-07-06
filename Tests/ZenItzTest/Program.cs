@@ -7,10 +7,11 @@ global using Arc.Threading;
 global using CrossChannel;
 global using LP;
 global using ZenItz;
-using DryIoc;
+using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using SimpleCommandLine;
 using Tinyhand;
+using static SimpleCommandLine.SimpleParser;
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
 
@@ -18,26 +19,8 @@ namespace ZenItzTest;
 
 public class Program
 {
-    public static Container Container { get; } = new();
-
     public static async Task Main(string[] args)
     {
-        // Subcommands
-        var commandTypes = new List<Type>();
-        commandTypes.Add(typeof(ZenTestSubcommand));
-        commandTypes.Add(typeof(ItzTestSubcommand));
-
-        // DI Container
-        ZenControl.Register(Container, commandTypes);
-        foreach (var x in commandTypes)
-        {
-            Container.Register(x, Reuse.Singleton);
-        }
-
-        // Services
-
-        Container.ValidateAndThrow();
-
         AppDomain.CurrentDomain.ProcessExit += (s, e) =>
         {// Console window closing or process terminated.
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
@@ -50,9 +33,24 @@ public class Program
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
         };
 
+        var builder = new ZenControl.Builder()
+            .Configure(context =>
+            {
+                // Subcommand
+                context.AddCommand(typeof(ZenTestSubcommand));
+                context.AddCommand(typeof(ItzTestSubcommand));
+
+                // Services
+            });
+
+        var unit = builder.Build();
+        var param = new ZenControl.Unit.Param();
+        unit.RunStandalone(param);
+        unit.ServiceProvider.GetRequiredService<ZenControl>().Zen.SetDelegate(ObjectToMemoryOwner, MemoryOwnerToObject);
+
         var parserOptions = SimpleParserOptions.Standard with
         {
-            ServiceProvider = Container,
+            ServiceProvider = unit.ServiceProvider,
             RequireStrictCommandName = false,
             RequireStrictOptionName = true,
         };
@@ -79,9 +77,7 @@ public class Program
                 .CreateLogger()));
         }*/
 
-        Container.Resolve<ZenControl>().Zen.SetDelegate(ObjectToMemoryOwner, MemoryOwnerToObject);
-
-        await SimpleParser.ParseAndRunAsync(commandTypes, args, parserOptions); // Main process
+        await SimpleParser.ParseAndRunAsync(unit.CommandTypes, args, parserOptions); // Main process
 
         ThreadCore.Root.Terminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.

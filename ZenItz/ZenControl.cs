@@ -13,8 +13,12 @@ global using LP.Options;
 global using Tinyhand;
 global using ValueLink;
 using System.Collections.Concurrent;
+using System.ComponentModel;
+using System.Reflection.Metadata;
 using System.Security.Cryptography;
+using BigMachines;
 using DryIoc;
+using LP.Unit;
 using SimpleCommandLine;
 using ZenItz.Subcommand.Zen;
 
@@ -22,68 +26,85 @@ namespace ZenItz;
 
 public class ZenControl
 {
-    public static void Register(Container container, List<Type>? commandList = null, bool registerSubcommand = true)
+    private static Type[] commandTypes = new[]
     {
-        // Container instance
-        containerInstance = container;
+        typeof(ZenSubcommand),
+        typeof(LP.Subcommands.ZenDirSubcommand),
+    };
 
-        // Main services
-        container.Register<ZenControl>(Reuse.Singleton);
-        container.Register<Zen>(Reuse.Singleton);
-        container.Register<Itz>(Reuse.Singleton);
-
-        if (!registerSubcommand)
+    public class Builder : UnitBuilder<Unit>
+    {// Builder class for customizing dependencies.
+        public Builder(bool registerSubcommand = true)
+            : base()
         {
-            return;
+            this.Configure(context =>
+            {
+                // Main services
+                context.AddSingleton<ZenControl>();
+                context.AddSingleton<Zen>();
+                context.AddSingleton<Itz>();
+            });
+
+            if (!registerSubcommand)
+            {
+                return;
+            }
+
+            this.Configure(context =>
+            {
+                ZenSubcommand.Register(context);
+                LP.Subcommands.ZenDirSubcommand.Register(context);
+
+                // Subcommands
+                foreach (var x in commandTypes)
+                {
+                    context.AddCommand(x);
+                }
+            });
+        }
+    }
+
+    public class Unit : BuiltUnit
+    {// Unit class for customizing behaviors.
+        public record Param();
+
+        public Unit(UnitParameter parameter)
+            : base(parameter)
+        {
         }
 
-        // Subcommands
-        var commandTypes = new Type[]
+        public void RunStandalone(Param param)
         {
-            typeof(ZenSubcommand),
-            typeof(LP.Subcommands.ZenDirSubcommand),
-        };
-
-        ZenSubcommand.Register(container);
-        LP.Subcommands.ZenDirSubcommand.Register(container);
-
-        commandList?.AddRange(commandTypes);
-        foreach (var x in commandTypes)
-        {
-            container.Register(x, Reuse.Singleton);
         }
+    }
 
-        SubcommandParserOptions = SimpleParserOptions.Standard with
+    public ZenControl(IServiceProvider serviceProvider, Zen zen, Itz itz)
+    {
+        // this.ServiceProvider = serviceProvider;
+        this.Zen = zen;
+        this.Itz = itz;
+
+        this.SubcommandParserOptions = SimpleParserOptions.Standard with
         {
-            ServiceProvider = container,
+            ServiceProvider = serviceProvider,
             RequireStrictCommandName = true,
             RequireStrictOptionName = true,
             DoNotDisplayUsage = true,
             DisplayCommandListAsHelp = true,
         };
 
-        SubcommandParser = new(commandTypes, SubcommandParserOptions);
+        this.SubcommandParser = new(commandTypes, this.SubcommandParserOptions);
     }
 
-    public ZenControl(Zen zen, Itz itz)
-    {
-        this.ServiceProvider = (IServiceProvider)containerInstance;
+    public SimpleParser SubcommandParser { get; private set; } = default!;
 
-        this.Zen = zen;
-        this.Itz = itz;
-    }
+    public SimpleParserOptions SubcommandParserOptions { get; private set; } = default!;
 
-    public static SimpleParser SubcommandParser { get; private set; } = default!;
-
-    public static SimpleParserOptions SubcommandParserOptions { get; private set; } = default!;
-
-    public IServiceProvider ServiceProvider { get; }
+    // public IServiceProvider ServiceProvider { get; }
 
     public Zen Zen { get; }
 
     public Itz Itz { get; }
 
     public bool ExaltationOfIntegrality { get; } = true; // by Baxter.
-
-    private static Container containerInstance = default!;
 }

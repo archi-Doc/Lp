@@ -3,6 +3,8 @@
 using Arc.Crypto;
 using DryIoc;
 using LP;
+using LP.Unit;
+using Microsoft.Extensions.DependencyInjection;
 using SimpleCommandLine;
 using Tinyhand;
 using ZenItz;
@@ -12,17 +14,17 @@ namespace LP.Subcommands;
 [SimpleCommand("zendir", IsSubcommand = true, Description = "Zen directory subcommand")]
 public class ZenDirSubcommand : ISimpleCommandAsync
 {
-    public static void Register(Container container)
+    private static Type[] commandTypes = new[]
     {
-        commandTypes = new Type[]
-        {
-            typeof(ZenDirSubcommandLs),
-            typeof(ZenDirSubcommandAdd),
-        };
+        typeof(ZenDirSubcommandLs),
+        typeof(ZenDirSubcommandAdd),
+    };
 
+    public static void Register(UnitBuilderContext context)
+    {
         foreach (var x in commandTypes)
         {
-            container.Register(x, Reuse.Singleton);
+            context.ServiceCollection.AddSingleton(x);
         }
     }
 
@@ -33,20 +35,15 @@ public class ZenDirSubcommand : ISimpleCommandAsync
 
     public async Task Run(string[] args)
     {
-        if (commandTypes == null)
+        if (this.subcommandParser == null)
         {
-            return;
-        }
-        else if (subcommandParser == null)
-        {
-            subcommandParser ??= new(commandTypes, ZenControl.SubcommandParserOptions);
+            this.subcommandParser ??= new(commandTypes, this.Control.SubcommandParserOptions);
         }
 
-        await subcommandParser.ParseAndRunAsync(args);
+        await this.subcommandParser.ParseAndRunAsync(args);
     }
 
-    private static SimpleParser? subcommandParser;
-    private static Type[]? commandTypes;
+    private SimpleParser? subcommandParser;
 
     public ZenControl Control { get; set; }
 }

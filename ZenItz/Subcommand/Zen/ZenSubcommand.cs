@@ -2,6 +2,8 @@
 
 using Arc.Crypto;
 using DryIoc;
+using LP.Unit;
+using Microsoft.Extensions.DependencyInjection;
 using SimpleCommandLine;
 using Tinyhand;
 using ZenItz;
@@ -11,17 +13,17 @@ namespace ZenItz.Subcommand.Zen;
 [SimpleCommand("zen", IsSubcommand = true)]
 public class ZenSubcommand : ISimpleCommandAsync
 {
-    public static void Register(Container container)
+    private static Type[] commandTypes = new[]
     {
-        commandTypes = new Type[]
-        {
-            typeof(ZenSubcommandTemplate),
-            typeof(ZenSubcommandLs),
-        };
+        typeof(ZenSubcommandTemplate),
+        typeof(ZenSubcommandLs),
+    };
 
+    public static void Register(UnitBuilderContext context)
+    {
         foreach (var x in commandTypes)
         {
-            container.Register(x, Reuse.Singleton);
+            context.ServiceCollection.AddSingleton(x);
         }
     }
 
@@ -32,20 +34,15 @@ public class ZenSubcommand : ISimpleCommandAsync
 
     public async Task Run(string[] args)
     {
-        if (commandTypes == null)
+        if (this.subcommandParser == null)
         {
-            return;
-        }
-        else if (subcommandParser == null)
-        {
-            subcommandParser ??= new(commandTypes, ZenControl.SubcommandParserOptions);
+            this.subcommandParser ??= new(commandTypes, this.Control.SubcommandParserOptions);
         }
 
-        await subcommandParser.ParseAndRunAsync(args);
+        await this.subcommandParser.ParseAndRunAsync(args);
     }
 
-    private static Type[]? commandTypes;
-    private static SimpleParser? subcommandParser;
-
     public ZenControl Control { get; set; }
+
+    private SimpleParser? subcommandParser;
 }
