@@ -51,8 +51,7 @@ public class NetControl
                 context.AddSingleton<EssentialNode>();
                 context.AddSingleton<NetStatus>();
                 context.AddTransient<Server>();
-                context.AddTransient<NetService>();
-                // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
+                context.AddTransient<NetService>(); // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
 
                 // Machines
                 context.AddTransient<LP.Machines.EssentialNetMachine>();
@@ -73,6 +72,7 @@ public class NetControl
         public Unit(UnitParameter parameter)
             : base(parameter)
         {
+            NetControl.serviceProvider = parameter.ServiceProvider;
         }
 
         public void RunStandalone(Param param)

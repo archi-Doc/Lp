@@ -73,11 +73,14 @@ public class Program
         var builder = new NetControl.Builder()
             .Configure(context =>
             {
+                // Subcommand
                 context.AddCommand(typeof(BasicTestSubcommand));
                 context.AddCommand(typeof(NetbenchSubcommand));
 
+                // NetService
                 context.AddSingleton<ExternalServiceImpl>();
 
+                // ServiceFilter
                 context.AddSingleton<TestFilterB>();
             });
 
@@ -86,8 +89,8 @@ public class Program
         options.EnableTestFeatures = true;
         options.EnableLogger = false;
 
-        var param = new NetControl.Unit.Param(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);
         var unit = builder.Build();
+        var param = new NetControl.Unit.Param(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);
         unit.RunStandalone(param);
 
         // Logger
