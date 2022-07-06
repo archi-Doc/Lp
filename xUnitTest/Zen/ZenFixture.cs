@@ -22,7 +22,7 @@ public class ZenFixture : IDisposable
         this.container.ValidateAndThrow();
 
         this.ZenControl = this.container.Resolve<ZenControl>();
-        this.ZenControl.Zen.StartZenForTest();
+        // this.ZenControl.Zen.StartZenForTest();
     }
 
     public void Dispose()
