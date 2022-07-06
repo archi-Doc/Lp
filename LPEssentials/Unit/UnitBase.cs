@@ -10,17 +10,23 @@ namespace LP.Unit;
 /// </summary>
 public abstract class UnitBase
 {
-    public UnitBase(BuiltUnit? builtUnit)
+    public UnitBase(RadioClass radio)
     {
         this.BuiltUnit = builtUnit;
         this.BuiltUnit?.AddInternal(this);
     }
 
+    /*public UnitBase(BuiltUnit? builtUnit)
+    {
+        this.BuiltUnit = builtUnit;
+        this.BuiltUnit?.AddInternal(this);
+    }*/
+
     public virtual void Configure(UnitMessage.Configure message)
     {
     }
 
-    public BuiltUnit? BuiltUnit { get; }
+    // public BuiltUnit? BuiltUnit { get; }
 }
 
 /*public interface IUnitConfigurable

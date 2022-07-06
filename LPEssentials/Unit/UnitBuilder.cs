@@ -14,48 +14,59 @@ public class UnitBuilder<TUnit> : UnitBuilder
     {
     }
 
-    public override TUnit Build()
-    {
-        return (TUnit)base.Build();
-    }
+    public override TUnit Build() => this.Build<TUnit>();
 
     public override UnitBuilder<TUnit> Configure(Action<UnitBuilderContext> configureDelegate)
         => (UnitBuilder<TUnit>)((UnitBuilder)this).Configure(configureDelegate);
 }
 
-    /// <summary>
-    /// Builder class of unit, a unit of function and dependency.<br/>
-    /// Unit: HostBuilder +Nested unit +Unit operation, -AppConfiguration -Container.
-    /// </summary>
-    public class UnitBuilder
+/// <summary>
+/// Builder class of unit, a unit of function and dependency.<br/>
+/// Unit: HostBuilder +Nested unit +Unit operation, -AppConfiguration -Container.
+/// </summary>
+public class UnitBuilder
 {
     public UnitBuilder()
     {
     }
 
-    public virtual BuiltUnit Build()
+    public virtual BuiltUnit Build() => this.Build<BuiltUnit>();
+
+    public virtual TUnit Build<TUnit>()
+        where TUnit : BuiltUnit
     {
         var context = new UnitBuilderContext();
         context.UnitName = Assembly.GetEntryAssembly()?.GetName().Name ?? string.Empty;
         context.RootDirectory = Directory.GetCurrentDirectory();
 
-        return this.Build(context, null);
+        this.Configure(context);
+
+        context.TryAddSingleton<BuiltUnitParameter>();
+        context.TryAddSingleton<TUnit>();
+        context.TryAddSingleton<RadioClass>(); // Unit radio
+
+        var serviceProvider = context.ServiceCollection.BuildServiceProvider();
+
+        var param = serviceProvider.GetRequiredService<BuiltUnitParameter>();
+        param.ServiceProvider = serviceProvider;
+        param.CommandList = ;
+
+        return serviceProvider.GetRequiredService<TUnit>();
     }
 
-    internal BuiltUnit Build(UnitBuilderContext context, UnitBase? parent)
+    internal void Configure(UnitBuilderContext context)
     {
-        if (this.built)
+        if (this.configured)
         {
             throw new InvalidOperationException();
         }
 
-        this.built = true;
-        // var unit = new BuiltUnit(context);
+        this.configured = true;
 
         // Unit builders
         foreach (var x in this.configureUnitBuilders)
         {
-            var built = x.Build(context, unit);
+            x.Configure(context);
         }
 
         // Configure actions
@@ -69,13 +80,6 @@ public class UnitBuilder<TUnit> : UnitBuilder
         {
             context.ServiceCollection.TryAddSingleton(x);
         }
-
-        // Register units.
-        foreach (var x in context.ServiceCollection)
-        {
-        }
-
-        return new BuiltUnit(context);
     }
 
     public virtual UnitBuilder Configure(Action<UnitBuilderContext> configureDelegate)
@@ -108,7 +112,7 @@ public class UnitBuilder<TUnit> : UnitBuilder
         return this;
     }*/
 
-    private bool built = false;
+    private bool configured = false;
     private List<Action<UnitBuilderContext>> configureActions = new();
     // private List<Action<UnitBuilderContext>> configureCommandsActions = new();
     // private List<Action<UnitBuilderContext>> configurePostProcessActions = new();
