@@ -10,6 +10,18 @@ namespace ZenItz.Subcommands;
 [SimpleCommand("zendir", IsSubcommand = true, Description = "Zen directory subcommand")]
 public class ZenDirSubcommand : ISimpleCommandAsync
 {
+    public class Builder : UnitBuilder
+    {
+        public Builder()
+        {
+            this.Configure(context =>
+            {
+                context.AddSubcommand(typeof(ZenDirSubcommandLs));
+                context.AddSubcommand(typeof(ZenDirSubcommandAdd));
+            });
+        }
+    }
+
     private static Type[] commandTypes = new[]
     {
         typeof(ZenDirSubcommandLs),

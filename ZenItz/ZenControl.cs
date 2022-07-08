@@ -19,6 +19,7 @@ using System.Security.Cryptography;
 using BigMachines;
 using LP.Unit;
 using SimpleCommandLine;
+using ZenItz.Subcommands;
 
 namespace ZenItz;
 
@@ -47,6 +48,7 @@ public class ZenControl
                 return;
             }
 
+            this.ConfigureBuilder(new ZenDirSubcommand.Builder());
             this.Configure(context =>
             {
                 Subcommands.ZenDirSubcommand.Register(context);
