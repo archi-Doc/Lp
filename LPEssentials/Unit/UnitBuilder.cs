@@ -71,7 +71,7 @@ public class UnitBuilder
 
         // Context to parameter.
         var param = serviceProvider.GetRequiredService<UnitParameter>();
-        param.FromContext(serviceProvider.GetRequiredService<RadioClass>(), context);
+        param.FromContext(serviceProvider, context);
 
         return serviceProvider.GetRequiredService<TUnit>();
     }

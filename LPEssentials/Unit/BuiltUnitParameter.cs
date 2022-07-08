@@ -11,14 +11,14 @@ public class UnitParameter
     {
     }
 
-    public void FromContext(RadioClass radio, UnitBuilderContext context)
+    public void FromContext(IServiceProvider serviceProvider, UnitBuilderContext context)
 {
-        this.ServiceProvider = context.ServiceCollection.BuildServiceProvider();
-        this.Radio = radio;
+        this.ServiceProvider = serviceProvider;
+        this.Radio = serviceProvider.GetRequiredService<RadioClass>();
         this.CommandTypes = context.CommandList.ToArray();
     }
 
-    public ServiceProvider ServiceProvider { get; private set; } = default!;
+    public IServiceProvider ServiceProvider { get; private set; } = default!;
 
     public RadioClass Radio { get; private set; } = default!;
 

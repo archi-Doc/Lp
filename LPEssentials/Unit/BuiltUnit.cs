@@ -36,7 +36,7 @@ public class BuiltUnit : UnitBase, IUnitExecutable, IUnitSerializable
     public async Task TerminateAsync(UnitMessage.TerminateAsync message)
         => await this.radio.SendAsync(message).ConfigureAwait(false);
 
-    public ServiceProvider ServiceProvider { get; init; }
+    public IServiceProvider ServiceProvider { get; init; }
 
     public IEnumerable<Type> CommandTypes
     {

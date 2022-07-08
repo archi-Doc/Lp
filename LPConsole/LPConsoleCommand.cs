@@ -24,7 +24,7 @@ namespace LPConsole;
 [SimpleCommand("lp", Default = true)]
 public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
 {
-    public LPConsoleCommand(IServiceProvider serviceProvider)
+    public LPConsoleCommand(Control.Unit unit, IServiceProvider serviceProvider)
     {
         this.serviceProvider = serviceProvider;
     }
