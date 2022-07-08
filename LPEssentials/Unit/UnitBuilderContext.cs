@@ -18,11 +18,23 @@ public class UnitBuilderContext
 
     public string RootDirectory { get; set; }
 
+    public ServiceCollection ServiceCollection { get; } = new();
+
     public List<Type> CommandList { get; } = new();
 
-    // public UnitCollection UnitCollection { get; } = new();
+    public Dictionary<Type, CommandGroup> CommandGroups { get; } = new();
 
-    public ServiceCollection ServiceCollection { get; } = new();
+    public CommandGroup GetCommandGroup(Type type)
+    {
+        if (!this.CommandGroups.TryGetValue(type, out var commandGroup))
+        {
+            this.TryAddSingleton(type);
+            commandGroup = new(this);
+            this.CommandGroups.Add(type, commandGroup);
+        }
+
+        return commandGroup;
+    }
 
     public bool AddCommand(Type commandType)
     {
@@ -36,6 +48,15 @@ public class UnitBuilderContext
             this.CommandList.Add(commandType);
             return true;
         }
+    }
+
+    public bool AddSubcommand(Type commandType, Type? parentCommand = null)
+    {
+        parentCommand ??= typeof(object);
+
+        // Add a command type to the parent.
+        var group = this.GetCommandGroup(parentCommand);
+        return group.AddCommand(commandType);
     }
 
     /*public void AddUnit<TUnit>(bool createInstance = true)

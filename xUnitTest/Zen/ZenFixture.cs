@@ -16,7 +16,7 @@ public class ZenFixture : IDisposable
 {
     public ZenFixture()
     {
-        var builder = new ZenControl.Builder(false)
+        var builder = new ZenControl.Builder()
             .Configure(context =>
             {
                 // Services
@@ -24,7 +24,6 @@ public class ZenFixture : IDisposable
 
         var unit = builder.Build();
         var param = new ZenControl.Unit.Param();
-        unit.RunStandalone(param);
 
         this.ZenControl = unit.ServiceProvider.GetRequiredService<ZenControl>();
         this.ZenControl.Zen.StartZenForTest();

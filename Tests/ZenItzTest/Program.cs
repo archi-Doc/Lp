@@ -45,7 +45,6 @@ public class Program
 
         var unit = builder.Build();
         var param = new ZenControl.Unit.Param();
-        unit.RunStandalone(param);
         unit.ServiceProvider.GetRequiredService<ZenControl>().Zen.SetDelegate(ObjectToMemoryOwner, MemoryOwnerToObject);
 
         var parserOptions = SimpleParserOptions.Standard with

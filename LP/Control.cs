@@ -44,13 +44,11 @@ public class Control
                 // RPC / Filters
                 context.AddTransient<Services.TestOnlyFilter>();
 
-                var commandList = new List<Type>();
-
                 // Machines
                 context.AddTransient<Machines.SingleMachine>();
 
                 // Subcommands
-                RegisterSubcommands(context, commandList);
+                RegisterSubcommands(context);
             });
 
             this.ConfigureBuilder(new NetControl.Builder());
@@ -72,11 +70,11 @@ public class Control
                 DisplayCommandListAsHelp = true,
             };
 
-            subcommandParser = new SimpleParser(parameter.CommandTypes, SubcommandParserOptions);
+            subcommandParser = new SimpleParser(parameter.GetCommandTypes(typeof(object)), SubcommandParserOptions);
         }
     }
 
-    public static void RegisterSubcommands(UnitBuilderContext context, List<Type> commandList)
+    public static void RegisterSubcommands(UnitBuilderContext context)
     {
         // Subcommands
         var commandTypes = new Type[]
@@ -96,10 +94,8 @@ public class Control
 
         foreach (var x in commandTypes)
         {
-            context.AddCommand(x);
+            context.AddSubcommand(x);
         }
-
-        commandList.AddRange(commandTypes);
     }
 
     public static bool ObjectToMemoryOwner(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved)

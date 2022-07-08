@@ -25,14 +25,9 @@ namespace ZenItz;
 
 public class ZenControl
 {
-    private static Type[] commandTypes = new[]
-    {
-        typeof(Subcommands.ZenDirSubcommand),
-    };
-
     public class Builder : UnitBuilder<Unit>
     {// Builder class for customizing dependencies.
-        public Builder(bool registerSubcommand = true)
+        public Builder()
             : base()
         {
             this.Configure(context =>
@@ -41,23 +36,8 @@ public class ZenControl
                 context.AddSingleton<ZenControl>();
                 context.AddSingleton<Zen>();
                 context.AddSingleton<Itz>();
-            });
 
-            if (!registerSubcommand)
-            {
-                return;
-            }
-
-            this.ConfigureBuilder(new ZenDirSubcommand.Builder());
-            this.Configure(context =>
-            {
-                Subcommands.ZenDirSubcommand.Register(context);
-
-                // Subcommands
-                foreach (var x in commandTypes)
-                {
-                    context.AddCommand(x);
-                }
+                Subcommands.ZenDirSubcommand.Configure(context);
             });
         }
     }
@@ -70,10 +50,6 @@ public class ZenControl
             : base(parameter)
         {
         }
-
-        public void RunStandalone(Param param)
-        {
-        }
     }
 
     public ZenControl(IServiceProvider serviceProvider, Zen zen, Itz itz)
@@ -81,22 +57,7 @@ public class ZenControl
         // this.ServiceProvider = serviceProvider;
         this.Zen = zen;
         this.Itz = itz;
-
-        this.SubcommandParserOptions = SimpleParserOptions.Standard with
-        {
-            ServiceProvider = serviceProvider,
-            RequireStrictCommandName = true,
-            RequireStrictOptionName = true,
-            DoNotDisplayUsage = true,
-            DisplayCommandListAsHelp = true,
-        };
-
-        this.SubcommandParser = new(commandTypes, this.SubcommandParserOptions);
     }
-
-    public SimpleParser SubcommandParser { get; private set; } = default!;
-
-    public SimpleParserOptions SubcommandParserOptions { get; private set; } = default!;
 
     // public IServiceProvider ServiceProvider { get; }
 

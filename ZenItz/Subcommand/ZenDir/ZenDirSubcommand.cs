@@ -1,57 +1,23 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using LP.Unit;
-using Microsoft.Extensions.DependencyInjection;
 using SimpleCommandLine;
-using ZenItz;
 
 namespace ZenItz.Subcommands;
 
 [SimpleCommand("zendir", IsSubcommand = true, Description = "Zen directory subcommand")]
-public class ZenDirSubcommand : ISimpleCommandAsync
+public class ZenDirSubcommand : SimpleSubcommand<ZenDirSubcommand>
 {
-    public class Builder : UnitBuilder
+    public static void Configure(UnitBuilderContext context)
     {
-        public Builder()
-        {
-            this.Configure(context =>
-            {
-                context.AddSubcommand(typeof(ZenDirSubcommandLs));
-                context.AddSubcommand(typeof(ZenDirSubcommandAdd));
-            });
-        }
+        var group = ConfigureGroup(context);
+        group.AddCommand(typeof(ZenDirSubcommandLs));
+        group.AddCommand(typeof(ZenDirSubcommandAdd));
     }
 
-    private static Type[] commandTypes = new[]
+    public ZenDirSubcommand(UnitParameter parameter, ZenControl control)
+        : base(parameter)
     {
-        typeof(ZenDirSubcommandLs),
-        typeof(ZenDirSubcommandAdd),
-    };
-
-    public static void Register(UnitBuilderContext context)
-    {
-        foreach (var x in commandTypes)
-        {
-            context.ServiceCollection.AddSingleton(x);
-        }
     }
-
-    public ZenDirSubcommand(ZenControl control)
-    {
-        this.Control = control;
-    }
-
-    public async Task Run(string[] args)
-    {
-        if (this.subcommandParser == null)
-        {
-            this.subcommandParser ??= new(commandTypes, this.Control.SubcommandParserOptions);
-        }
-
-        await this.subcommandParser.ParseAndRunAsync(args);
-    }
-
-    private SimpleParser? subcommandParser;
-
-    public ZenControl Control { get; set; }
 }

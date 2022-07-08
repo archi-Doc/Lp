@@ -33,7 +33,7 @@ public class ZenDirSubcommandAdd : ISimpleCommandAsync<ZenDirOptionsAdd>
         {
             Logger.Subcommand.Information($"Directory added: {option.Path}");
             Console.WriteLine();
-            await this.ZenControl.SubcommandParser.ParseAndRunAsync("zendir ls");
+            // await this.ZenControl.SubcommandParser.ParseAndRunAsync("zendir ls");
         }
     }
 
