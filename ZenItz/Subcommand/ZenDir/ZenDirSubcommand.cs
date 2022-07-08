@@ -1,15 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Arc.Crypto;
-using DryIoc;
-using LP;
 using LP.Unit;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleCommandLine;
-using Tinyhand;
 using ZenItz;
 
-namespace LP.Subcommands;
+namespace ZenItz.Subcommands;
 
 [SimpleCommand("zendir", IsSubcommand = true, Description = "Zen directory subcommand")]
 public class ZenDirSubcommand : ISimpleCommandAsync

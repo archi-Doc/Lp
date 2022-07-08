@@ -50,6 +50,24 @@ public class UnitBuilderContext
     public void AddTransient<TService>()
         where TService : class => this.ServiceCollection.AddTransient<TService>();
 
+    public void AddSingleton(Type serviceType) => this.ServiceCollection.AddSingleton(serviceType);
+
+    public void AddScoped(Type serviceType) => this.ServiceCollection.AddSingleton(serviceType);
+
+    public void AddTransient(Type serviceType) => this.ServiceCollection.AddTransient(serviceType);
+
+    public void AddSingleton<TService, TImplementation>()
+        where TService : class
+        where TImplementation : class, TService => this.ServiceCollection.AddSingleton<TService, TImplementation>();
+
+    public void AddScoped<TService, TImplementation>()
+        where TService : class
+        where TImplementation : class, TService => this.ServiceCollection.AddScoped<TService, TImplementation>();
+
+    public void AddTransient<TService, TImplementation>()
+        where TService : class
+        where TImplementation : class, TService => this.ServiceCollection.AddTransient<TService, TImplementation>();
+
     public void TryAddSingleton<TService>()
         where TService : class => this.ServiceCollection.TryAddSingleton<TService>();
 
@@ -58,6 +76,24 @@ public class UnitBuilderContext
 
     public void TryAddTransient<TService>()
         where TService : class => this.ServiceCollection.TryAddTransient<TService>();
+
+    public void TryAddSingleton(Type serviceType) => this.ServiceCollection.AddSingleton(serviceType);
+
+    public void TryAddScoped(Type serviceType) => this.ServiceCollection.AddSingleton(serviceType);
+
+    public void TryAddTransient(Type serviceType) => this.ServiceCollection.AddTransient(serviceType);
+
+    public void TryAddSingleton<TService, TImplementation>()
+        where TService : class
+        where TImplementation : class, TService => this.ServiceCollection.TryAddSingleton<TService, TImplementation>();
+
+    public void TryAddScoped<TService, TImplementation>()
+        where TService : class
+        where TImplementation : class, TService => this.ServiceCollection.TryAddScoped<TService, TImplementation>();
+
+    public void TryAddTransient<TService, TImplementation>()
+        where TService : class
+        where TImplementation : class, TService => this.ServiceCollection.TryAddTransient<TService, TImplementation>();
 
     private HashSet<Type> commandSet = new();
 }

@@ -8,10 +8,10 @@ using System.Threading.Tasks;
 using Arc.Crypto;
 using Arc.Threading;
 using CrossChannel;
-using DryIoc;
 using LP;
 using LP.Options;
 using LPEssentials.Radio;
+using Microsoft.Extensions.DependencyInjection;
 using Netsphere;
 using SimpleCommandLine;
 using Tinyhand;
@@ -24,8 +24,9 @@ namespace LPConsole;
 [SimpleCommand("lp", Default = true)]
 public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
 {
-    public LPConsoleCommand()
+    public LPConsoleCommand(IServiceProvider serviceProvider)
     {
+        this.serviceProvider = serviceProvider;
     }
 
     public async Task Run(LPConsoleOptions options, string[] args)
@@ -47,14 +48,14 @@ public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
             }
         }
 
-        this.lpBase = Program.Container.Resolve<LPBase>();
+        this.lpBase = this.serviceProvider.GetRequiredService<LPBase>();
         this.lpBase.Initialize(options, true, "relay");
 
-        this.netBase = Program.Container.Resolve<NetBase>();
+        this.netBase = this.serviceProvider.GetRequiredService<NetBase>();
         this.netBase.Initialize(true, string.Empty, options.NetsphereOptions);
         this.netBase.AllowUnsafeConnection = true; // betacode
 
-        var control = Program.Container.Resolve<Control>();
+        var control = this.serviceProvider.GetRequiredService<Control>();
         try
         {// Configure
             control.Configure();
@@ -263,6 +264,8 @@ Deserialize:
             }
         }
     }
+
+    private IServiceProvider serviceProvider;
 
     private LPBase lpBase = default!;
 

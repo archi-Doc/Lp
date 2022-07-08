@@ -15,7 +15,6 @@ global using Tinyhand;
 global using ValueLink;
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
-using DryIoc;
 using LP.Unit;
 using LPEssentials.Radio;
 using Microsoft.Extensions.DependencyInjection;
@@ -87,42 +86,6 @@ public class NetControl
             Logger.Configure(null);
             Radio.Send(new Message.Configure());
             Radio.SendAsync(new Message.StartAsync(ThreadCore.Root));
-        }
-    }
-
-    public static void Register(Container container, List<Type>? commandList = null)
-    {// Obsolete
-        // Container instance
-        serviceProvider = container;
-
-        // Base
-        if (!container.IsRegistered<BigMachine<Identifier>>())
-        {
-            container.RegisterDelegate(x => new BigMachine<Identifier>(container), Reuse.Singleton);
-        }
-
-        // Main services
-        container.Register<NetControl>(Reuse.Singleton);
-        container.Register<NetBase>(Reuse.Singleton);
-        container.Register<Terminal>(Reuse.Singleton);
-        container.Register<EssentialNode>(Reuse.Singleton);
-        container.Register<NetStatus>(Reuse.Singleton);
-        container.Register<Server>(Reuse.Transient);
-        container.RegisterDelegate(x => new NetService(container), Reuse.Transient);
-
-        // Machines
-        container.Register<LP.Machines.EssentialNetMachine>();
-
-        // Subcommands
-        var commandTypes = new Type[]
-        {
-            typeof(LP.Subcommands.NetTestSubcommand),
-        };
-
-        commandList?.AddRange(commandTypes);
-        foreach (var x in commandTypes)
-        {
-            container.Register(x, Reuse.Singleton);
         }
     }
 

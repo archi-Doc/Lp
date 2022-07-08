@@ -23,7 +23,6 @@
     <PackageReference Include="Arc.Threading" Version="0.13.1" />
     <PackageReference Include="Arc.Crypto" Version="1.9.0" />
     <PackageReference Include="BigMachines" Version="0.21.0" />
-    <PackageReference Include="DryIoc.dll" Version="5.1.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
     <PackageReference Include="SimpleCommandLine" Version="0.10.3" />
     <PackageReference Include="Tinyhand" Version="0.31.3" />

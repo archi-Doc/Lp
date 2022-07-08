@@ -6,7 +6,7 @@ using SimpleCommandLine;
 using ZenItz;
 using ZenItz.Results;
 
-namespace LP.Subcommands;
+namespace ZenItz.Subcommands;
 
 [SimpleCommand("add", Description = "Add zen directory.")]
 public class ZenDirSubcommandAdd : ISimpleCommandAsync<ZenDirOptionsAdd>

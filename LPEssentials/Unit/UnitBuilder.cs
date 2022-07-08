@@ -7,6 +7,13 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace LP.Unit;
 
+public enum AddCommandTo
+{
+    Root,
+    Current,
+    None,
+}
+
 /// <summary>
 /// Builder class of unit, for customizing dependencies.<br/>
 /// Unit is an independent unit of function and dependency.<br/>

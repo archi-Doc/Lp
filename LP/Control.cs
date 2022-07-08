@@ -11,48 +11,72 @@ global using BigMachines;
 global using CrossChannel;
 global using LP;
 global using Tinyhand;
-using DryIoc;
 using LP.Services;
+using LP.Unit;
 using LPEssentials.Radio;
 using Netsphere;
 using SimpleCommandLine;
 using ZenItz;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace LP;
 
 public class Control
 {
-    public static void Register(Container container)
-    {// DI, NetServices/Filters, Machines, Subcommands
-        // Container instance
-        containerInstance = container;
+    public class Builder : UnitBuilder<Unit>
+    {
+        public Builder()
+            : base()
+        {
+            this.Configure(context =>
+            {
+                // Base
+                context.TryAddSingleton<BigMachine<Identifier>>();
 
-        // Base
-        container.RegisterDelegate(x => new BigMachine<Identifier>(container), Reuse.Singleton);
+                // Main services
+                context.AddSingleton<Control>();
+                context.AddSingleton<LPBase>();
+                context.ServiceCollection.TryAddSingleton<IUserInterfaceService, ConsoleUserInterfaceService>();
 
-        // Main services
-        container.Register<Control>(Reuse.Singleton);
-        container.Register<LPBase>(Reuse.Singleton);
-        container.Register<IUserInterfaceService, ConsoleUserInterfaceService>(Reuse.Singleton);
+                // RPC / Services
+                context.AddTransient<Services.BenchmarkServiceImpl>();
 
-        // RPC / Services
-        container.Register<Services.BenchmarkServiceImpl>(Reuse.Transient);
+                // RPC / Filters
+                context.AddTransient<Services.TestOnlyFilter>();
 
-        // RPC / Filters
-        container.Register<Services.TestOnlyFilter>(Reuse.Transient);
+                var commandList = new List<Type>();
 
-        var commandList = new List<Type>();
-        NetControl.Register(container, commandList);
-        ZenControl.Register(container, commandList);
+                // Machines
+                context.AddTransient<Machines.SingleMachine>();
 
-        // Machines
-        container.Register<Machines.SingleMachine>();
+                // Subcommands
+                RegisterSubcommands(context, commandList);
+            });
 
-        // Subcommands
-        RegisterSubcommands(container, commandList);
+            this.ConfigureBuilder(new NetControl.Builder());
+            this.ConfigureBuilder(new ZenControl.Builder());
+        }
     }
 
-    public static void RegisterSubcommands(Container container, List<Type> commandList)
+    public class Unit : BuiltUnit
+    {
+        public Unit(UnitParameter parameter)
+            : base(parameter)
+        {
+            SubcommandParserOptions = SimpleParserOptions.Standard with
+            {
+                ServiceProvider = parameter.ServiceProvider,
+                RequireStrictCommandName = true,
+                RequireStrictOptionName = true,
+                DoNotDisplayUsage = true,
+                DisplayCommandListAsHelp = true,
+            };
+
+            subcommandParser = new SimpleParser(parameter.CommandTypes, SubcommandParserOptions);
+        }
+    }
+
+    public static void RegisterSubcommands(UnitBuilderContext context, List<Type> commandList)
     {
         // Subcommands
         var commandTypes = new Type[]
@@ -67,25 +91,15 @@ public class Control
             typeof(LP.Subcommands.BenchmarkSubcommand),
         };
 
-        LP.Subcommands.DumpSubcommand.Register(container);
-        LP.Subcommands.KeyVaultSubcommand.Register(container);
+        LP.Subcommands.DumpSubcommand.Register(context);
+        LP.Subcommands.KeyVaultSubcommand.Register(context);
 
         foreach (var x in commandTypes)
         {
-            container.Register(x, Reuse.Singleton);
+            context.AddCommand(x);
         }
 
-        SubcommandParserOptions = SimpleParserOptions.Standard with
-        {
-            ServiceProvider = container,
-            RequireStrictCommandName = true,
-            RequireStrictOptionName = true,
-            DoNotDisplayUsage = true,
-            DisplayCommandListAsHelp = true,
-        };
-
         commandList.AddRange(commandTypes);
-        subcommandParser = new SimpleParser(commandList, SubcommandParserOptions);
     }
 
     public static bool ObjectToMemoryOwner(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved)
@@ -247,8 +261,6 @@ public class Control
     public NetControl NetControl { get; }
 
     public ZenControl ZenControl { get; }
-
-    private static Container containerInstance = default!;
 
     private static SimpleParser subcommandParser = default!;
 

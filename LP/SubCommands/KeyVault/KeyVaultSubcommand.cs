@@ -1,8 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Arc.Crypto;
-using DryIoc;
 using LP;
+using LP.Unit;
 using SimpleCommandLine;
 using Tinyhand;
 
@@ -11,7 +11,7 @@ namespace LP.Subcommands;
 [SimpleCommand("keyvault", IsSubcommand = true)]
 public class KeyVaultSubcommand : ISimpleCommandAsync
 {
-    public static void Register(Container container)
+    public static void Register(UnitBuilderContext context)
     {
         commandTypes = new Type[]
         {
@@ -20,7 +20,7 @@ public class KeyVaultSubcommand : ISimpleCommandAsync
 
         foreach (var x in commandTypes)
         {
-            container.Register(x, Reuse.Singleton);
+            context.AddSingleton(x);
         }
     }
 

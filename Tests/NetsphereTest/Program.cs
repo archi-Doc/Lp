@@ -7,7 +7,6 @@ global using Arc.Threading;
 global using CrossChannel;
 global using LP;
 global using Netsphere;
-using DryIoc;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using SimpleCommandLine;

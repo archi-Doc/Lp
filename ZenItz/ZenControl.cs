@@ -17,10 +17,8 @@ using System.ComponentModel;
 using System.Reflection.Metadata;
 using System.Security.Cryptography;
 using BigMachines;
-using DryIoc;
 using LP.Unit;
 using SimpleCommandLine;
-using ZenItz.Subcommand.Zen;
 
 namespace ZenItz;
 
@@ -28,8 +26,7 @@ public class ZenControl
 {
     private static Type[] commandTypes = new[]
     {
-        typeof(ZenSubcommand),
-        typeof(LP.Subcommands.ZenDirSubcommand),
+        typeof(Subcommands.ZenDirSubcommand),
     };
 
     public class Builder : UnitBuilder<Unit>
@@ -52,8 +49,7 @@ public class ZenControl
 
             this.Configure(context =>
             {
-                ZenSubcommand.Register(context);
-                LP.Subcommands.ZenDirSubcommand.Register(context);
+                Subcommands.ZenDirSubcommand.Register(context);
 
                 // Subcommands
                 foreach (var x in commandTypes)
