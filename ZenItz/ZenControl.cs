@@ -19,7 +19,6 @@ using System.Security.Cryptography;
 using BigMachines;
 using LP.Unit;
 using SimpleCommandLine;
-using ZenItz.Subcommands;
 
 namespace ZenItz;
 
@@ -37,7 +36,9 @@ public class ZenControl
                 context.AddSingleton<Zen>();
                 context.AddSingleton<Itz>();
 
+                // Subcommands
                 Subcommands.ZenDirSubcommand.Configure(context);
+                Subcommands.ZenTempSubcommand.Configure(context);
             });
         }
     }
@@ -52,14 +53,11 @@ public class ZenControl
         }
     }
 
-    public ZenControl(IServiceProvider serviceProvider, Zen zen, Itz itz)
+    public ZenControl(Zen zen, Itz itz)
     {
-        // this.ServiceProvider = serviceProvider;
         this.Zen = zen;
         this.Itz = itz;
     }
-
-    // public IServiceProvider ServiceProvider { get; }
 
     public Zen Zen { get; }
 

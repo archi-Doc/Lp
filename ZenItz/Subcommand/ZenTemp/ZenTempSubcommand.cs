@@ -7,17 +7,16 @@ using SimpleCommandLine;
 
 namespace ZenItz.Subcommands;
 
-[SimpleCommand("zendir", IsSubcommand = true, Description = "Zen directory subcommand")]
-public class ZenDirSubcommand : SimpleSubcommand<ZenDirSubcommand>
+[SimpleCommand("zentemp", IsSubcommand = true, Description = "Zen template subcommand")]
+public class ZenTempSubcommand : SimpleSubcommand<ZenTempSubcommand>
 {
     public static void Configure(UnitBuilderContext context)
     {
         var group = ConfigureGroup(context);
-        group.AddCommand(typeof(ZenDirSubcommandLs));
-        group.AddCommand(typeof(ZenDirSubcommandAdd));
+        group.AddCommand(typeof(ZenTempSubcommandLs));
     }
 
-    public ZenDirSubcommand(UnitParameter parameter, ZenControl control)
+    public ZenTempSubcommand(UnitParameter parameter, ZenControl control)
         : base(parameter)
     {
     }

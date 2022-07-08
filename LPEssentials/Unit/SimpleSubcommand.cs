@@ -1,24 +1,14 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System;
+using LP.Unit;
 using SimpleCommandLine;
 
-namespace LP.Unit;
+namespace LPEssentials.Unit;
 
 public abstract class SimpleSubcommand<TCommand> : ISimpleCommandAsync
-    where TCommand : SimpleSubcommand<TCommand>
+// where TCommand : SimpleSubcommand<TCommand>
 {
-    public class Builder : UnitBuilder
-    {
-        public Builder(Type? parentCommand)
-        {
-            this.Configure(context =>
-            {
-                var group = context.GetCommandGroup(typeof(TCommand));
-            });
-        }
-    }
-
     public static CommandGroup ConfigureGroup(UnitBuilderContext context, Type? parentCommand = null)
     {
         parentCommand ??= typeof(object);
@@ -35,8 +25,8 @@ public abstract class SimpleSubcommand<TCommand> : ISimpleCommandAsync
 
     public SimpleSubcommand(UnitParameter parameter)
     {
-        this.commandTypes = parameter.GetCommandTypes(typeof(TCommand));
-        this.SimpleParserOptions = SimpleParserOptions.Standard with
+        commandTypes = parameter.GetCommandTypes(typeof(TCommand));
+        SimpleParserOptions = SimpleParserOptions.Standard with
         {
             ServiceProvider = parameter.ServiceProvider,
             RequireStrictCommandName = true,
@@ -47,17 +37,19 @@ public abstract class SimpleSubcommand<TCommand> : ISimpleCommandAsync
     }
 
     public async Task Run(string[] args)
-    {
-        if (this.subcommandParser == null)
-        {
-            this.subcommandParser ??= new(this.commandTypes, this.SimpleParserOptions);
-        }
-
-        await this.subcommandParser.ParseAndRunAsync(args);
-    }
+        => await SimpleParser.ParseAndRunAsync(args).ConfigureAwait(false);
 
     public SimpleParserOptions SimpleParserOptions { get; }
 
+    public SimpleParser SimpleParser
+    {
+        get
+        {
+            simpleParser ??= new(commandTypes, SimpleParserOptions);
+            return simpleParser;
+        }
+    }
+
     private Type[] commandTypes;
-    private SimpleParser? subcommandParser;
+    private SimpleParser? simpleParser;
 }
