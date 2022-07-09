@@ -42,7 +42,7 @@ public class Program
                 // Unit
                 context.AddSingletonUnit<LP.Custom.CustomUnit>();
             });
-            // .ConfigureUnit(new LP.Custom.CustomUnit.Builder());
+            // .ConfigureBuilder(new LP.Custom.CustomUnit.Builder());
 
         var unit = builder.Build();
 

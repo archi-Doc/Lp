@@ -7,7 +7,7 @@ Success = {
 }
 
 Error = {
-    Load = "Could not load '{0}'";
+    Load = "Could not load '{0}'"
     Deserialize = "Could not deserialize '{0}'"
 }
 

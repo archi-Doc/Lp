@@ -77,6 +77,17 @@ public class Control
 
         public async Task Run(LPOptions options)
         {
+            // Load strings
+            var asm = System.Reflection.Assembly.GetExecutingAssembly();
+            try
+            {
+                HashedString.LoadAssembly(null, asm, "Strings.strings-en.tinyhand");
+                HashedString.LoadAssembly("ja", asm, "Strings.strings-en.tinyhand");
+            }
+            catch
+            {
+            }
+
             // Load options
             if (!string.IsNullOrEmpty(options.OptionsPath))
             {
@@ -87,10 +98,12 @@ public class Control
                     if (op != null)
                     {
                         options = op;
+                        Console.WriteLine(HashedString.Get(Hashed.Success.Loaded, options.OptionsPath));
                     }
                 }
                 catch
                 {
+                    Console.WriteLine(HashedString.Get(Hashed.Error.Load, options.OptionsPath));
                 }
             }
 
@@ -224,10 +237,6 @@ public class Control
 
     public async Task LoadAsync()
     {
-        // Load strings
-        var asm = System.Reflection.Assembly.GetExecutingAssembly();
-        HashedString.LoadAssembly(null, asm, "Strings.strings-en.tinyhand");
-
         // Netsphere
         await this.NetControl.EssentialNode.LoadAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
         if (!await this.ZenControl.Itz.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile)).ConfigureAwait(false))

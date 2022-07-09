@@ -16,7 +16,7 @@ public class KeyVault
         }
         catch
         {
-            Logger.Default.Error(HashedString.Get(Hashed.General.Error.Load, path));
+            Logger.Default.Error(HashedString.Get(Hashed.Error.Load, path));
             return null;
         }
 
@@ -31,7 +31,7 @@ public class KeyVault
 
         if (items == null)
         {
-            Logger.Default.Error(HashedString.Get(Hashed.General.Error.Deserialize, path));
+            Logger.Default.Error(HashedString.Get(Hashed.Error.Deserialize, path));
             return null;
         }
 
