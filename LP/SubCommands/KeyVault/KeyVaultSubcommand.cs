@@ -1,50 +1,22 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Arc.Crypto;
-using LP;
+using System;
 using LP.Unit;
 using SimpleCommandLine;
-using Tinyhand;
 
 namespace LP.Subcommands;
 
 [SimpleCommand("keyvault", IsSubcommand = true)]
-public class KeyVaultSubcommand : ISimpleCommandAsync
+public class KeyVaultSubcommand : SimpleSubcommand<KeyVaultSubcommand>
 {
-    public static void Register(UnitBuilderContext context)
+    public static void Configure(UnitBuilderContext context)
     {
-        commandTypes = new Type[]
-        {
-            typeof(KeyVaultSubcommandNew),
-        };
-
-        foreach (var x in commandTypes)
-        {
-            context.AddSingleton(x);
-        }
+        var group = ConfigureGroup(context);
+        group.AddCommand(typeof(KeyVaultSubcommandNew));
     }
 
-    public KeyVaultSubcommand(Control control)
+    public KeyVaultSubcommand(UnitParameter parameter)
+        : base(parameter)
     {
-        this.Control = control;
     }
-
-    public async Task Run(string[] args)
-    {
-        if (commandTypes == null)
-        {
-            return;
-        }
-        else if (keyVaultParser == null)
-        {
-            keyVaultParser ??= new(commandTypes, Control.SubcommandParserOptions);
-        }
-
-        await keyVaultParser.ParseAndRunAsync(args);
-    }
-
-    private static Type[]? commandTypes;
-    private static SimpleParser? keyVaultParser;
-
-    public Control Control { get; set; }
 }

@@ -24,7 +24,7 @@ using SimpleCommandLine;
 
 namespace Netsphere;
 
-public class NetControl
+public class NetControl : UnitBase, IUnitPreparable
 {
     public const int MaxPayload = 1432; // 1432 bytes
     public const int MaxDataSize = 4 * 1024 * 1024; // 4 MB
@@ -84,65 +84,13 @@ public class NetControl
             }
 
             Logger.Configure(null);
-            Radio.Send(new Message.Configure());
+            this.SendPrepare(new());
             Radio.SendAsync(new Message.StartAsync(ThreadCore.Root));
         }
     }
 
-    public static void Register(IServiceCollection serviceCollection, List<Type>? commandList = null)
-    {// Obsolete
-        // Base
-        serviceCollection.TryAddSingleton<BigMachine<Identifier>>();
-
-        // Main services
-        serviceCollection.AddSingleton<NetControl>();
-        serviceCollection.AddSingleton<NetBase>();
-        serviceCollection.AddSingleton<Terminal>();
-        serviceCollection.AddSingleton<EssentialNode>();
-        serviceCollection.AddSingleton<NetStatus>();
-        serviceCollection.AddTransient<Server>();
-        serviceCollection.AddTransient<NetService>();
-        // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
-
-        // Machines
-        serviceCollection.AddTransient<LP.Machines.EssentialNetMachine>();
-
-        // Subcommands
-        var commandTypes = new Type[]
-        {
-            typeof(LP.Subcommands.NetTestSubcommand),
-        };
-
-        commandList?.AddRange(commandTypes);
-        foreach (var x in commandTypes)
-        {
-            serviceCollection.AddSingleton(x);
-        }
-    }
-
-    public static void SetServiceProvider(IServiceProvider provider)
-    {// Obsolete
-        serviceProvider = provider;
-    }
-
-    public static void QuickStart(bool enableServer, Func<ServerContext> newServerContext, Func<CallContext> newCallContext, string nodeName, NetsphereOptions options, bool allowUnsafeConnection)
-    {// Obsolete
-        var netBase = serviceProvider.GetRequiredService<NetBase>();
-        netBase.Initialize(enableServer, nodeName, options);
-        netBase.AllowUnsafeConnection = allowUnsafeConnection;
-
-        var netControl = serviceProvider.GetRequiredService<NetControl>();
-        if (enableServer)
-        {
-            netControl.SetupServer(newServerContext, newCallContext);
-        }
-
-        Logger.Configure(null);
-        Radio.Send(new Message.Configure());
-        Radio.SendAsync(new Message.StartAsync(ThreadCore.Root));
-    }
-
-    public NetControl(NetBase netBase, BigMachine<Identifier> bigMachine, Terminal terminal, EssentialNode node, NetStatus netStatus)
+    public NetControl(UnitParameter parameter, NetBase netBase, BigMachine<Identifier> bigMachine, Terminal terminal, EssentialNode node, NetStatus netStatus)
+        : base(parameter)
     {
         this.ServiceProvider = (IServiceProvider)serviceProvider;
         this.NewServerContext = () => new ServerContext();
@@ -158,11 +106,9 @@ public class NetControl
 
         this.EssentialNode = node;
         this.NetStatus = netStatus;
-
-        Radio.Open<Message.Configure>(this.Configure);
     }
 
-    public void Configure(Message.Configure message)
+    public void Prepare(UnitMessage.Prepare message)
     {
         // Terminals
         this.Terminal.Initialize(false, this.NetBase.NodePrivateKey, this.NetBase.NodePrivateEcdh);

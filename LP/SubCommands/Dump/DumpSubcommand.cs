@@ -1,56 +1,24 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Arc.Crypto;
-using LP;
+using System;
+using LP.Subcommands.Dump;
 using LP.Unit;
 using SimpleCommandLine;
-using Tinyhand;
 
 namespace LP.Subcommands;
 
 [SimpleCommand("dump", IsSubcommand = true)]
-public class DumpSubcommand : ISimpleCommandAsync
+public class DumpSubcommand : SimpleSubcommand<DumpSubcommand>
 {
-    public static void Register(UnitBuilderContext context)
+    public static void Configure(UnitBuilderContext context)
     {
-        commandTypes = new Type[]
-        {
-            typeof(Dump.DumpSubcommandInfo),
-            typeof(Dump.DumpSubcommandOptions),
-        };
-
-        foreach (var x in commandTypes)
-        {
-            context.AddSingleton(x);
-        }
+        var group = ConfigureGroup(context);
+        group.AddCommand(typeof(DumpSubcommandInfo));
+        group.AddCommand(typeof(DumpSubcommandOptions));
     }
 
-    public DumpSubcommand(Control control)
+    public DumpSubcommand(UnitParameter parameter)
+        : base(parameter, "info")
     {
-        this.Control = control;
     }
-
-    public async Task Run(string[] args)
-    {
-        if (commandTypes == null)
-        {
-            return;
-        }
-        else if (commandParser == null)
-        {
-            commandParser ??= new(commandTypes, Control.SubcommandParserOptions);
-        }
-
-        if (args.Length == 0)
-        {// dump info
-            args = new string[] { "info", };
-        }
-
-        await commandParser.ParseAndRunAsync(args);
-    }
-
-    private static Type[]? commandTypes;
-    private static SimpleParser? commandParser;
-
-    public Control Control { get; set; }
 }

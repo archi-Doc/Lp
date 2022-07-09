@@ -1,13 +1,12 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System;
-using LP.Unit;
 using SimpleCommandLine;
 
-namespace LPEssentials.Unit;
+namespace LP.Unit;
 
 public abstract class SimpleSubcommand<TCommand> : ISimpleCommandAsync
-// where TCommand : SimpleSubcommand<TCommand>
+    where TCommand : SimpleSubcommand<TCommand>
 {
     public static CommandGroup ConfigureGroup(UnitBuilderContext context, Type? parentCommand = null)
     {
@@ -23,7 +22,7 @@ public abstract class SimpleSubcommand<TCommand> : ISimpleCommandAsync
         return group;
     }
 
-    public SimpleSubcommand(UnitParameter parameter)
+    public SimpleSubcommand(UnitParameter parameter, string? defaultArgument = null)
     {
         this.commandTypes = parameter.GetCommandTypes(typeof(TCommand));
         this.SimpleParserOptions = SimpleParserOptions.Standard with
@@ -34,10 +33,19 @@ public abstract class SimpleSubcommand<TCommand> : ISimpleCommandAsync
             DoNotDisplayUsage = true,
             DisplayCommandListAsHelp = true,
         };
+
+        this.defaultArgument = defaultArgument;
     }
 
     public async Task Run(string[] args)
-        => await this.SimpleParser.ParseAndRunAsync(args).ConfigureAwait(false);
+    {
+        if (args.Length == 0 && this.defaultArgument != null)
+        {// default argument
+            args = new string[] { this.defaultArgument, };
+        }
+
+        await this.SimpleParser.ParseAndRunAsync(args).ConfigureAwait(false);
+    }
 
     public SimpleParserOptions SimpleParserOptions { get; }
 
@@ -52,4 +60,5 @@ public abstract class SimpleSubcommand<TCommand> : ISimpleCommandAsync
 
     private Type[] commandTypes;
     private SimpleParser? simpleParser;
+    private string? defaultArgument;
 }

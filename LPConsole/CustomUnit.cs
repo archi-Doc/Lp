@@ -4,7 +4,7 @@ using LP.Unit;
 
 namespace LP.Custom;
 
-public class CustomUnit : UnitBase, IUnitConfigurable
+public class CustomUnit : UnitBase, IUnitPreparable
 {
     public static void SampleCode()
     {
@@ -42,8 +42,8 @@ public class CustomUnit : UnitBase, IUnitConfigurable
     {
     }
 
-    public void Configure(UnitMessage.Configure message)
+    public void Prepare(UnitMessage.Prepare message)
     {
-        Logger.Subcommand.Information("Custom unit configured.");
+        Logger.Subcommand.Information("Custom unit prepared.");
     }
 }

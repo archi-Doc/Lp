@@ -2,7 +2,6 @@
 
 using System;
 using LP.Unit;
-using LPEssentials.Unit;
 using SimpleCommandLine;
 
 namespace ZenItz.Subcommands;

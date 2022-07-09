@@ -15,9 +15,9 @@ public abstract class UnitBase
     {
         var radio = parameter.Radio;
 
-        if (this is IUnitConfigurable configurable)
+        if (this is IUnitPreparable configurable)
         {
-            radio.Open<UnitMessage.Configure>(x => configurable.Configure(x), this);
+            radio.Open<UnitMessage.Prepare>(x => configurable.Prepare(x), this);
         }
 
         if (this is IUnitExecutable executable)
@@ -42,9 +42,9 @@ public abstract class UnitBase
     // public BuiltUnit? BuiltUnit { get; }
 }
 
-public interface IUnitConfigurable
+public interface IUnitPreparable
 {
-    public void Configure(UnitMessage.Configure message);
+    public void Prepare(UnitMessage.Prepare message);
 }
 
 public interface IUnitExecutable

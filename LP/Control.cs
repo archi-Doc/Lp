@@ -50,7 +50,15 @@ public class Control
                 context.AddTransient<Machines.SingleMachine>();
 
                 // Subcommands
-                RegisterSubcommands(context);
+                context.AddSubcommand(typeof(LP.Subcommands.MicsSubcommand));
+                context.AddSubcommand(typeof(LP.Subcommands.GCSubcommand));
+                context.AddSubcommand(typeof(LP.Subcommands.PingSubcommand));
+                context.AddSubcommand(typeof(LP.Subcommands.NetBenchSubcommand));
+                context.AddSubcommand(typeof(LP.Subcommands.PunchSubcommand));
+                context.AddSubcommand(typeof(LP.Subcommands.BenchmarkSubcommand));
+
+                LP.Subcommands.DumpSubcommand.Configure(context);
+                LP.Subcommands.KeyVaultSubcommand.Configure(context);
             });
 
             this.ConfigureBuilder(new NetControl.Builder());
@@ -121,8 +129,8 @@ public class Control
                 this.CreateInstances();
 
                 // Configure
-                control.Configure();
-                this.SendConfigure(new());
+                Logger.Configure(control.LPBase);
+                this.SendPrepare(new());
             }
             catch (PanicException)
             {
@@ -164,30 +172,6 @@ public class Control
         private NetBase netBase = default!;
     }
 
-    public static void RegisterSubcommands(UnitBuilderContext context)
-    {
-        // Subcommands
-        var commandTypes = new Type[]
-        {
-            typeof(LP.Subcommands.MicsSubcommand),
-            typeof(LP.Subcommands.DumpSubcommand),
-            typeof(LP.Subcommands.GCSubcommand),
-            typeof(LP.Subcommands.PingSubcommand),
-            typeof(LP.Subcommands.NetBenchSubcommand),
-            typeof(LP.Subcommands.PunchSubcommand),
-            typeof(LP.Subcommands.KeyVaultSubcommand),
-            typeof(LP.Subcommands.BenchmarkSubcommand),
-        };
-
-        LP.Subcommands.DumpSubcommand.Register(context);
-        LP.Subcommands.KeyVaultSubcommand.Register(context);
-
-        foreach (var x in commandTypes)
-        {
-            context.AddSubcommand(x);
-        }
-    }
-
     public static bool ObjectToMemoryOwner(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved)
     {
         if (obj is LP.Fragments.FragmentBase flake &&
@@ -227,12 +211,6 @@ public class Control
 
         this.Core = new(ThreadCore.Root);
         this.BigMachine.Core.ChangeParent(this.Core);
-    }
-
-    public void Configure()
-    {
-        Logger.Configure(this.LPBase);
-        Radio.Send(new Message.Configure());
     }
 
     public async Task LoadAsync()

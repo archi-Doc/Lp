@@ -24,12 +24,6 @@ public class EssentialNode
     public EssentialNode(NetBase netBase)
     {
         this.NetBase = netBase;
-
-        Radio.Open<Message.Configure>(this.Configure);
-    }
-
-    public void Configure(Message.Configure message)
-    {
     }
 
     public async Task LoadAsync(string filename)

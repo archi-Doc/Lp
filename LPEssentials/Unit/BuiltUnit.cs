@@ -22,7 +22,7 @@ public class BuiltUnit : UnitBase
     {
     }*/
 
-    public void SendConfigure(UnitMessage.Configure message)
+    public void SendPrepare(UnitMessage.Prepare message)
         => this.radio.Send(message);
 
     public async Task SendLoadAsync(UnitMessage.LoadAsync message)
@@ -64,9 +64,9 @@ public class BuiltUnit : UnitBase
 
     internal void AddInternal(UnitBase unit)
     {
-        if (unit is IUnitConfigurable configurable)
+        if (unit is IUnitPreparable configurable)
         {
-            this.radio.Open<UnitMessage.Configure>(x => configurable.Configure(x), unit);
+            this.radio.Open<UnitMessage.Prepare>(x => configurable.Prepare(x), unit);
         }
 
         if (unit is IUnitExecutable executable)
