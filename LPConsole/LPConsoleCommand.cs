@@ -10,6 +10,7 @@ using Arc.Threading;
 using CrossChannel;
 using LP;
 using LP.Options;
+using LP.Unit;
 using LPEssentials.Radio;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere;
@@ -24,8 +25,10 @@ namespace LPConsole;
 [SimpleCommand("lp", Default = true)]
 public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
 {
-    public LPConsoleCommand(Control.Unit unit, IServiceProvider serviceProvider)
+    public LPConsoleCommand(UnitParameter parameter, Control.Unit unit, IServiceProvider serviceProvider)
     {
+        this.parameter = parameter;
+        this.unit = unit;
         this.serviceProvider = serviceProvider;
     }
 
@@ -57,8 +60,16 @@ public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
 
         var control = this.serviceProvider.GetRequiredService<Control>();
         try
-        {// Configure
+        {
+            // Create instances
+            foreach (var x in this.parameter.CreateInstanceTypes)
+            {
+                this.serviceProvider.GetRequiredService(x);
+            }
+
+            // Configure
             control.Configure();
+            this.unit.SendConfigure(new());
         }
         catch (PanicException)
         {
@@ -265,6 +276,8 @@ Deserialize:
         }
     }
 
+    private UnitParameter parameter;
+    private Control.Unit unit;
     private IServiceProvider serviceProvider;
 
     private LPBase lpBase = default!;

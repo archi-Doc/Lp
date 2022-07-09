@@ -25,8 +25,8 @@ public abstract class SimpleSubcommand<TCommand> : ISimpleCommandAsync
 
     public SimpleSubcommand(UnitParameter parameter)
     {
-        commandTypes = parameter.GetCommandTypes(typeof(TCommand));
-        SimpleParserOptions = SimpleParserOptions.Standard with
+        this.commandTypes = parameter.GetCommandTypes(typeof(TCommand));
+        this.SimpleParserOptions = SimpleParserOptions.Standard with
         {
             ServiceProvider = parameter.ServiceProvider,
             RequireStrictCommandName = true,
@@ -37,7 +37,7 @@ public abstract class SimpleSubcommand<TCommand> : ISimpleCommandAsync
     }
 
     public async Task Run(string[] args)
-        => await SimpleParser.ParseAndRunAsync(args).ConfigureAwait(false);
+        => await this.SimpleParser.ParseAndRunAsync(args).ConfigureAwait(false);
 
     public SimpleParserOptions SimpleParserOptions { get; }
 
@@ -45,8 +45,8 @@ public abstract class SimpleSubcommand<TCommand> : ISimpleCommandAsync
     {
         get
         {
-            simpleParser ??= new(commandTypes, SimpleParserOptions);
-            return simpleParser;
+            this.simpleParser ??= new(this.commandTypes, this.SimpleParserOptions);
+            return this.simpleParser;
         }
     }
 

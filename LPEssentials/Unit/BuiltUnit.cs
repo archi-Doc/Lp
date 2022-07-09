@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace LP.Unit;
 
-public class BuiltUnit : UnitBase, IUnitExecutable, IUnitSerializable
+public class BuiltUnit : UnitBase
 {
     public BuiltUnit(UnitParameter parameter)
         : base(parameter)
@@ -21,19 +21,19 @@ public class BuiltUnit : UnitBase, IUnitExecutable, IUnitSerializable
     {
     }*/
 
-    public override void Configure(UnitMessage.Configure message)
-        => this.radio.SendAsync(message).ConfigureAwait(false);
+    public void SendConfigure(UnitMessage.Configure message)
+        => this.radio.Send(message);
 
-    public async Task LoadAsync(UnitMessage.LoadAsync message)
+    public async Task SendLoadAsync(UnitMessage.LoadAsync message)
         => await this.radio.SendAsync(message).ConfigureAwait(false);
 
-    public async Task SaveAsync(UnitMessage.SaveAsync message)
+    public async Task SendSaveAsync(UnitMessage.SaveAsync message)
         => await this.radio.SendAsync(message).ConfigureAwait(false);
 
-    public async Task RunAsync(UnitMessage.RunAsync message)
+    public async Task SendRunAsync(UnitMessage.RunAsync message)
         => await this.radio.SendAsync(message).ConfigureAwait(false);
 
-    public async Task TerminateAsync(UnitMessage.TerminateAsync message)
+    public async Task SendTerminateAsync(UnitMessage.TerminateAsync message)
         => await this.radio.SendAsync(message).ConfigureAwait(false);
 
     public IServiceProvider ServiceProvider { get; init; }
@@ -54,7 +54,10 @@ public class BuiltUnit : UnitBase, IUnitExecutable, IUnitSerializable
 
     internal void AddInternal(UnitBase unit)
     {
-        this.radio.Open<UnitMessage.Configure>(x => unit.Configure(x), unit);
+        if (unit is IUnitConfigurable configurable)
+        {
+            this.radio.Open<UnitMessage.Configure>(x => configurable.Configure(x), unit);
+        }
 
         if (unit is IUnitExecutable executable)
         {

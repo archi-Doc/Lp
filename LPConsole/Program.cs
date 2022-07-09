@@ -38,7 +38,11 @@ public class Program
                 // NetService
 
                 // ServiceFilter
+
+                // Unit
+                context.AddSingletonUnit<LP.Custom.CustomUnit>();
             });
+            // .ConfigureUnit(new LP.Custom.CustomUnit.Builder());
 
         var unit = builder.Build();
 

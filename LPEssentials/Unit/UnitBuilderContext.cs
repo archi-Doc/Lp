@@ -3,6 +3,7 @@
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using static LP.Unit.Sample.TestClass;
 
 namespace LP.Unit;
 
@@ -20,9 +21,24 @@ public class UnitBuilderContext
 
     public ServiceCollection ServiceCollection { get; } = new();
 
+    public HashSet<Type> CreateInstanceSet { get; } = new();
+
     public List<Type> CommandList { get; } = new();
 
     public Dictionary<Type, CommandGroup> CommandGroups { get; } = new();
+
+    public void CreateInstance<T>()
+        => this.CreateInstanceSet.Add(typeof(T));
+
+    public void AddSingletonUnit<TUnit>(bool createInstance = true)
+        where TUnit : UnitBase
+    {
+        this.AddSingleton<TUnit>();
+        if (createInstance)
+        {
+            this.CreateInstance<TUnit>();
+        }
+    }
 
     public CommandGroup GetCommandGroup(Type type)
     {

@@ -15,6 +15,7 @@ public class UnitParameter
     {
         this.ServiceProvider = serviceProvider;
         this.Radio = serviceProvider.GetRequiredService<RadioClass>();
+        this.CreateInstanceTypes = context.CreateInstanceSet.ToArray();
         this.CommandTypes = context.CommandList.ToArray();
 
         foreach (var x in context.CommandGroups)
@@ -38,6 +39,8 @@ public class UnitParameter
     public IServiceProvider ServiceProvider { get; private set; } = default!;
 
     public RadioClass Radio { get; private set; } = default!;
+
+    public Type[] CreateInstanceTypes { get; private set; } = default!;
 
     public Type[] CommandTypes { get; private set; } = default!;
 
