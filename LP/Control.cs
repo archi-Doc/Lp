@@ -18,6 +18,8 @@ using Netsphere;
 using SimpleCommandLine;
 using ZenItz;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using LP.Options;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LP;
 
@@ -72,6 +74,81 @@ public class Control
 
             subcommandParser = new SimpleParser(parameter.GetCommandTypes(typeof(object)), SubcommandParserOptions);
         }
+
+        public async Task Run(LPOptions options)
+        {
+            // Load options
+            if (!string.IsNullOrEmpty(options.OptionsPath))
+            {
+                try
+                {
+                    var utf8 = File.ReadAllBytes(options.OptionsPath);
+                    var op = TinyhandSerializer.DeserializeFromUtf8<LPOptions>(utf8);
+                    if (op != null)
+                    {
+                        options = op;
+                    }
+                }
+                catch
+                {
+                }
+            }
+
+            this.lpBase = this.ServiceProvider.GetRequiredService<LPBase>();
+            this.lpBase.Initialize(options, true, "relay");
+
+            this.netBase = this.ServiceProvider.GetRequiredService<NetBase>();
+            this.netBase.Initialize(true, string.Empty, options.NetsphereOptions);
+            this.netBase.AllowUnsafeConnection = true; // betacode
+
+            var control = this.ServiceProvider.GetRequiredService<Control>();
+            try
+            {
+                // Create optional instances
+                this.CreateInstances();
+
+                // Configure
+                control.Configure();
+                this.SendConfigure(new());
+            }
+            catch (PanicException)
+            {
+                control.Terminate(true);
+                return;
+            }
+
+            try
+            {// Load
+                await control.LoadAsync();
+            }
+            catch (PanicException)
+            {
+                await control.AbortAsync();
+                control.Terminate(true);
+                return;
+            }
+
+            try
+            {// Start, Main loop
+                await control.StartAsync();
+
+                control.MainLoop();
+
+                await control.StopAsync();
+                await control.SaveAsync();
+                control.Terminate(false);
+            }
+            catch (PanicException)
+            {
+                await control.StopAsync();
+                await control.SaveAsync();
+                control.Terminate(true);
+                return;
+            }
+        }
+
+        private LPBase lpBase = default!;
+        private NetBase netBase = default!;
     }
 
     public static void RegisterSubcommands(UnitBuilderContext context)
@@ -244,6 +321,68 @@ public class Control
         return true;*/
     }
 
+    private void MainLoop()
+    {
+        while (!this.Core.IsTerminated)
+        {
+            if (Logger.ViewMode)
+            {// View mode
+                if (this.SafeKeyAvailable)
+                {
+                    var keyInfo = Console.ReadKey(true);
+                    if (keyInfo.Key == ConsoleKey.Enter || keyInfo.Key == ConsoleKey.Escape)
+                    { // To console mode
+                        Logger.ViewMode = false;
+                        Console.Write("> ");
+                    }
+                    else
+                    {
+                        while (this.SafeKeyAvailable)
+                        {
+                            Console.ReadKey(true);
+                        }
+                    }
+                }
+            }
+            else
+            {// Console mode
+                var command = Console.ReadLine();
+                if (!string.IsNullOrEmpty(command))
+                {
+                    if (string.Compare(command, "exit", true) == 0)
+                    {// Exit
+                        // To view mode
+                        Logger.ViewMode = true;
+                        return;
+                    }
+                    else
+                    {// Subcommand
+                        try
+                        {
+                            if (!this.Subcommand(command))
+                            {
+                                Console.Write("> ");
+                                continue;
+                            }
+                        }
+                        catch
+                        {
+                            break;
+                        }
+                    }
+                }
+
+                // To view mode
+                Logger.ViewMode = true;
+            }
+
+            this.Core.Sleep(100, 100);
+        }
+
+        // To view mode
+        Logger.ViewMode = true;
+    }
+
     public static SimpleParserOptions SubcommandParserOptions { get; private set; } = default!;
 
     public ThreadCoreGroup Core { get; }
@@ -260,12 +399,27 @@ public class Control
 
     private static SimpleParser subcommandParser = default!;
 
+    private bool SafeKeyAvailable
+    {
+        get
+        {
+            try
+            {
+                return Console.KeyAvailable;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+    }
+
     private async Task<bool> LoadKeyVaultAsync()
     {
         var st = await this.ViewService.RequestString("Enter");
         Logger.Default.Information(st);
 
-        var keyVault = await KeyVault.Load(this.ViewService, this.LPBase.ConsoleOptions.KeyVault);
+        var keyVault = await KeyVault.Load(this.ViewService, this.LPBase.LPOptions.KeyVault);
         if (keyVault == null)
         {
             var reply = await this.ViewService.RequestYesOrNo(Hashed.Services.KeyVault.AskNew);

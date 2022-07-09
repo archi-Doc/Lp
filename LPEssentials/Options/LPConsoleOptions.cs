@@ -7,7 +7,7 @@ using Tinyhand.IO;
 namespace LP.Options;
 
 [TinyhandObject(ImplicitKeyAsName = true)]
-public partial record LPConsoleOptions
+public partial record LPOptions
 {
     [SimpleOption("load", description: "Options path")]
     public string OptionsPath { get; init; } = string.Empty;

@@ -15,6 +15,7 @@ public class BuiltUnit : UnitBase
         this.ServiceProvider = parameter.ServiceProvider;
         this.radio = parameter.Radio;
         this.commandTypes = parameter.CommandTypes;
+        this.createInstanceTypes = parameter.CreateInstanceTypes;
     }
 
     /*public void Run()
@@ -36,6 +37,14 @@ public class BuiltUnit : UnitBase
     public async Task SendTerminateAsync(UnitMessage.TerminateAsync message)
         => await this.radio.SendAsync(message).ConfigureAwait(false);
 
+    public void CreateInstances()
+    {
+        foreach (var x in this.createInstanceTypes)
+        {
+            this.ServiceProvider.GetService(x);
+        }
+    }
+
     public IServiceProvider ServiceProvider { get; init; }
 
     public IEnumerable<Type> CommandTypes
@@ -51,6 +60,7 @@ public class BuiltUnit : UnitBase
 
     private RadioClass radio;
     private Type[] commandTypes;
+    private Type[] createInstanceTypes;
 
     internal void AddInternal(UnitBase unit)
     {

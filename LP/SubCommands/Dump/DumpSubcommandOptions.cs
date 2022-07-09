@@ -32,7 +32,7 @@ public class DumpSubcommandOptions : ISimpleCommandAsync<DumpSubcommandOptions2>
 
         try
         {
-            var utf = TinyhandSerializer.SerializeToUtf8(this.Control.LPBase.ConsoleOptions);
+            var utf = TinyhandSerializer.SerializeToUtf8(this.Control.LPBase.LPOptions);
             await File.WriteAllBytesAsync(path, utf);
         }
         catch
