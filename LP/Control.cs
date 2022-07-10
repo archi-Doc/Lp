@@ -117,9 +117,11 @@ public class Control
                 }
             }
 
+            // LPBase
             this.lpBase = this.ServiceProvider.GetRequiredService<LPBase>();
             this.lpBase.Initialize(options, true, "relay");
 
+            // NetBase
             this.netBase = this.ServiceProvider.GetRequiredService<NetBase>();
             this.netBase.Initialize(true, string.Empty, options.NetsphereOptions);
             this.netBase.AllowUnsafeConnection = true; // betacode
@@ -203,9 +205,9 @@ public class Control
         }
     }
 
-    public Control(IUserInterfaceService viewService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl)
+    public Control(IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl)
     {
-        this.ViewService = viewService;
+        this.UserInterfaceService = userInterfaceService;
         this.LPBase = lpBase;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.NetControl = netsphere;
@@ -216,6 +218,24 @@ public class Control
 
         this.Core = new(ThreadCore.Root);
         this.BigMachine.Core.ChangeParent(this.Core);
+    }
+
+    public async Task<bool> TryTerminate()
+    {
+        if (!this.LPBase.LPOptions.ConfirmExit)
+        {// No confirmation
+            this.Core.Terminate(); // this.Terminate(false);
+            return true;
+        }
+
+        var result = await this.UserInterfaceService.RequestYesOrNo(Hashed.Dialog.ConfirmExit);
+        if (result == true)
+        {
+            this.Core.Terminate(); // this.Terminate(false);
+            return true;
+        }
+
+        return false;
     }
 
     public async Task LoadAsync()
@@ -344,9 +364,16 @@ public class Control
                 {
                     if (string.Compare(command, "exit", true) == 0)
                     {// Exit
-                        // To view mode
-                        Logger.ViewMode = true;
-                        return;
+                        if (this.TryTerminate().Result == true)
+                        { // To view mode
+                            Logger.ViewMode = true;
+                            return;
+                        }
+                        else
+                        {
+                            Console.Write("> ");
+                            continue;
+                        }
                     }
                     else
                     {// Subcommand
@@ -364,6 +391,10 @@ public class Control
                         }
                     }
                 }
+                else
+                {
+                    Console.WriteLine();
+                }
 
                 // To view mode
                 Logger.ViewMode = true;
@@ -380,7 +411,7 @@ public class Control
 
     public ThreadCoreGroup Core { get; }
 
-    public IUserInterfaceService ViewService { get; }
+    public IUserInterfaceService UserInterfaceService { get; }
 
     public LPBase LPBase { get; }
 
@@ -409,14 +440,14 @@ public class Control
 
     private async Task<bool> LoadKeyVaultAsync()
     {
-        var st = await this.ViewService.RequestString("Enter");
-        Logger.Default.Information(st);
+        var st = await this.UserInterfaceService.RequestString("Enter");
+        Logger.Default.Information(st ?? string.Empty);
 
-        var keyVault = await KeyVault.Load(this.ViewService, this.LPBase.LPOptions.KeyVault);
+        var keyVault = await KeyVault.Load(this.UserInterfaceService, this.LPBase.LPOptions.KeyVault);
         if (keyVault == null)
         {
-            var reply = await this.ViewService.RequestYesOrNo(Hashed.Services.KeyVault.AskNew);
-            if (!reply)
+            var reply = await this.UserInterfaceService.RequestYesOrNo(Hashed.Services.KeyVault.AskNew);
+            if (reply == false)
             {// No
                 throw new PanicException();
             }

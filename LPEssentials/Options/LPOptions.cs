@@ -35,6 +35,9 @@ public partial record LPOptions
     [SimpleOption("zen", description: "ZenItz option")]
     public ZenItzOptions ZenItzOptions { get; init; } = default!;
 
+    [SimpleOption("confirmexit", description: "Confirms application exit")]
+    public bool ConfirmExit { get; init; } = false;
+
     public override string ToString()
     {
         return $"{this.NetsphereOptions.ToString()}";

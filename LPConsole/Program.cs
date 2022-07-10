@@ -25,7 +25,16 @@ public class Program
         Console.CancelKeyPress += (s, e) =>
         {// Ctrl+C pressed
             e.Cancel = true;
-            ThreadCore.Root.Terminate(); // Send a termination signal to the root.
+
+            var control = unit?.ServiceProvider.GetService<Control>();
+            if (control != null)
+            {
+                control.TryTerminate().Wait();
+            }
+            else
+            {
+                ThreadCore.Root.Terminate(); // Send a termination signal to the root.
+            }
         };
 
         var builder = new Control.Builder()
@@ -45,7 +54,7 @@ public class Program
             });
             // .ConfigureBuilder(new LP.Custom.CustomUnit.Builder());
 
-        var unit = builder.Build();
+        unit = builder.Build();
 
         var parserOptions = SimpleParserOptions.Standard with
         {
@@ -60,4 +69,6 @@ public class Program
 
         Logger.CloseAndFlush();
     }
+
+    private static Control.Unit? unit;
 }

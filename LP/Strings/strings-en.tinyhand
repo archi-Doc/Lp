@@ -1,5 +1,9 @@
 // identifier = "string" /* null: Use the default value. */
 
+Dialog = {
+    ConfirmExit = "Are you sure you want to exit?"
+}
+
 Success = {
     Output = "Output: {0}"
     Loaded = "Loaded: {0}"
