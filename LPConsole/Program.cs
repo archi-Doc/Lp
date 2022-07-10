@@ -40,7 +40,8 @@ public class Program
                 // ServiceFilter
 
                 // Unit
-                context.AddSingletonUnit<LP.Custom.CustomUnit>();
+                context.AddSingleton<LP.Custom.CustomUnit>();
+                context.CreateInstance<LP.Custom.CustomUnit>();
             });
             // .ConfigureBuilder(new LP.Custom.CustomUnit.Builder());
 

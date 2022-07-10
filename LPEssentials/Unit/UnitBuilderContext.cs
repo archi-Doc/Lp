@@ -30,16 +30,6 @@ public class UnitBuilderContext
     public void CreateInstance<T>()
         => this.CreateInstanceSet.Add(typeof(T));
 
-    public void AddSingletonUnit<TUnit>(bool createInstance = true)
-        where TUnit : UnitBase
-    {
-        this.AddSingleton<TUnit>();
-        if (createInstance)
-        {
-            this.CreateInstance<TUnit>();
-        }
-    }
-
     public CommandGroup GetCommandGroup(Type type)
     {
         if (!this.CommandGroups.TryGetValue(type, out var commandGroup))
