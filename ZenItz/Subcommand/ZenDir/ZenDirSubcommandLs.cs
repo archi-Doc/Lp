@@ -1,11 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Arc.Crypto;
-using LP;
 using SimpleCommandLine;
 using ZenItz;
 
-namespace LP.Subcommands;
+namespace ZenItz.Subcommands;
 
 [SimpleCommand("ls", Description = "List zen directory information.")]
 public class ZenDirSubcommandLs : ISimpleCommandAsync

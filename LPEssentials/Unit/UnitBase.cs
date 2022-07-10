@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Arc.Threading;
+using static LP.Unit.Sample.TestClass;
 
 namespace LP.Unit;
 
@@ -10,8 +11,26 @@ namespace LP.Unit;
 /// </summary>
 public abstract class UnitBase
 {
-    public UnitBase(UnitParameter parameter)
+    public UnitBase(UnitContext context)
     {
+        var radio = context.Radio;
+
+        if (this is IUnitPreparable configurable)
+        {
+            radio.Open<UnitMessage.Prepare>(x => configurable.Prepare(x), this);
+        }
+
+        if (this is IUnitExecutable executable)
+        {
+            radio.OpenAsync<UnitMessage.RunAsync>(x => executable.RunAsync(x), this);
+            radio.OpenAsync<UnitMessage.TerminateAsync>(x => executable.TerminateAsync(x), this);
+        }
+
+        if (this is IUnitSerializable serializable)
+        {
+            radio.OpenAsync<UnitMessage.LoadAsync>(x => serializable.LoadAsync(x), this);
+            radio.OpenAsync<UnitMessage.SaveAsync>(x => serializable.SaveAsync(x), this);
+        }
     }
 
     /*public UnitBase(BuiltUnit? builtUnit)
@@ -20,17 +39,13 @@ public abstract class UnitBase
         this.BuiltUnit?.AddInternal(this);
     }*/
 
-    public virtual void Configure(UnitMessage.Configure message)
-    {
-    }
-
     // public BuiltUnit? BuiltUnit { get; }
 }
 
-/*public interface IUnitConfigurable
+public interface IUnitPreparable
 {
-    public void Configure();
-}*/
+    public void Prepare(UnitMessage.Prepare message);
+}
 
 public interface IUnitExecutable
 {

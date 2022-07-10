@@ -24,8 +24,8 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
             return;
         }
 
-        Logger.Subcommand.Information($"SendData: {node.ToString()}");
-        Logger.Subcommand.Information($"{Stopwatch.Frequency}");
+        Logger.Default.Information($"SendData: {node.ToString()}");
+        Logger.Default.Information($"{Stopwatch.Frequency}");
 
         // var nodeInformation = NodeInformation.Alternative;
         using (var terminal = this.NetControl.Terminal.Create(node))

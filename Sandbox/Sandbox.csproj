@@ -10,8 +10,4 @@
     <ProjectReference Include="..\LP\LP.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="DryIoc.dll" Version="5.1.0" />
-  </ItemGroup>
-
 </Project>

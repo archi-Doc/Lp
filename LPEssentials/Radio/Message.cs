@@ -10,12 +10,6 @@ namespace LPEssentials.Radio;
 public static class Message
 {// Create instance -> Configure -> LoadAsync -> StartAsync -> StopAsync -> SaveAsync (multiple)
     /// <summary>
-    /// Configure objects.<br/>
-    /// Ready: <see cref="LPBase"/>.<br/>
-    /// </summary>
-    public record Configure();
-
-    /// <summary>
     /// Deserialize objects.<br/>
     /// Called once after Configure().<br/>
     /// Throw <see cref="PanicException"/> to abort the procedure.

@@ -1,16 +1,17 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace LP.Unit.Sample;
+using LP.Unit;
 
-public class TestClass
+namespace LP.Custom;
+
+public class CustomUnit : UnitBase, IUnitPreparable
 {
     public static void SampleCode()
     {
-        var builder = new TestClass.Builder()
+        var builder = new CustomUnit.Builder()
             .Configure(x => { }); // Custom configuration
 
         var unit = builder.Build();
-        unit.RunStandalone(new());
     }
 
     public class Builder : UnitBuilder<Unit>
@@ -20,7 +21,8 @@ public class TestClass
         {// Configuration for TestClass.
             this.Configure(context =>
             {
-                context.AddTransient<TestUnit>();
+                context.AddSingleton<CustomUnit>();
+                context.CreateInstance<CustomUnit>();
             });
         }
     }
@@ -33,28 +35,15 @@ public class TestClass
             : base(context)
         {
         }
-
-        public void RunStandalone(Param param)
-        {
-        }
     }
 
-    public class TestUnit : UnitBase
+    public CustomUnit(UnitContext context)
+        : base(context)
     {
-        public TestUnit(UnitContext context)
-            : base(context)
-        {
-        }
-
-        public void Configure()
-        {
-        }
     }
 
-    public TestClass(TestUnit testUnit)
+    public void Prepare(UnitMessage.Prepare message)
     {
-        this.Unit1 = testUnit;
+        Logger.Default.Information("Custom unit prepared.");
     }
-
-    public TestUnit Unit1 { get; }
 }

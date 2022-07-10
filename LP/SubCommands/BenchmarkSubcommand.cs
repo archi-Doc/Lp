@@ -45,7 +45,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
             options.Repetition = MaxRepetitions;
         }
 
-        Logger.Subcommand.Information($"Benchmark subcommand: {options.ToString()}");
+        Logger.Default.Information($"Benchmark subcommand: {options.ToString()}");
 
         await this.RunBenchmark(options);
     }
@@ -62,7 +62,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
     {
         if (this.testKey == null)
         {
-            Logger.Subcommand.Error("No ECDsa key.");
+            Logger.Default.Error("No ECDsa key.");
             return;
         }
 
@@ -84,7 +84,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
             Console.WriteLine(benchTimer.StopAndGetText());
         }
 
-        Logger.Subcommand.Information(benchTimer.GetResult("Sign & Verify"));
+        Logger.Default.Information(benchTimer.GetResult("Sign & Verify"));
     }
 
     private async Task RunSerializeBenchmark(BenchmarkOptions options)
@@ -106,7 +106,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
             Console.WriteLine(benchTimer.StopAndGetText());
         }
 
-        Logger.Subcommand.Information(benchTimer.GetResult("Serialize & Deserialize"));
+        Logger.Default.Information(benchTimer.GetResult("Serialize & Deserialize"));
     }
 
     private ECDsa? testKey;

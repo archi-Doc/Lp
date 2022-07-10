@@ -1,9 +1,5 @@
 // identifier = "string" /* null: Use the default value. */
 
-Dialog = {
-    ConfirmExit = "Are you sure you want to exit?"
-}
-
 Success = {
     Output = "Output: {0}"
     Loaded = "Loaded: {0}"
@@ -11,7 +7,7 @@ Success = {
 }
 
 Error = {
-    Load = "Could not load '{0}'";
+    Load = "Could not load '{0}'"
     Deserialize = "Could not deserialize '{0}'"
 }
 

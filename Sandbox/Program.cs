@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Arc.Crypto;
-using DryIoc;
 using LP;
 
 namespace Sandbox;
@@ -15,11 +14,6 @@ internal class Program
     public static async Task Main(string[] args)
     {
         Console.WriteLine("Sandbox");
-
-        var container = new Container();
-        Control.Register(container);
-
-        container.ValidateAndThrow();
 
         Test();
     }

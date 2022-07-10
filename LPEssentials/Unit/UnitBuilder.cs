@@ -7,6 +7,13 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace LP.Unit;
 
+public enum AddCommandTo
+{
+    Root,
+    Current,
+    None,
+}
+
 /// <summary>
 /// Builder class of unit, for customizing dependencies.<br/>
 /// Unit is an independent unit of function and dependency.<br/>
@@ -56,15 +63,15 @@ public class UnitBuilder
         var context = new UnitBuilderContext();
         this.Configure(context);
 
-        context.TryAddSingleton<UnitParameter>();
+        context.TryAddSingleton<UnitContext>();
         context.TryAddSingleton<TUnit>();
         context.TryAddSingleton<RadioClass>(); // Unit radio
 
         var serviceProvider = context.ServiceCollection.BuildServiceProvider();
 
         // Context to parameter.
-        var param = serviceProvider.GetRequiredService<UnitParameter>();
-        param.FromContext(serviceProvider.GetRequiredService<RadioClass>(), context);
+        var param = serviceProvider.GetRequiredService<UnitContext>();
+        param.FromBuilderContext(serviceProvider, context);
 
         return serviceProvider.GetRequiredService<TUnit>();
     }

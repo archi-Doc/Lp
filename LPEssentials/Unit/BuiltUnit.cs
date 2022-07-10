@@ -7,36 +7,45 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace LP.Unit;
 
-public class BuiltUnit : UnitBase, IUnitExecutable, IUnitSerializable
+public class BuiltUnit : UnitBase
 {
-    public BuiltUnit(UnitParameter parameter)
-        : base(parameter)
+    public BuiltUnit(UnitContext context)
+        : base(context)
     {
-        this.ServiceProvider = parameter.ServiceProvider;
-        this.radio = parameter.Radio;
-        this.commandTypes = parameter.CommandTypes;
+        this.ServiceProvider = context.ServiceProvider;
+        this.radio = context.Radio;
+        this.commandTypes = context.CommandTypes;
+        this.createInstanceTypes = context.CreateInstanceTypes;
     }
 
     /*public void Run()
     {
     }*/
 
-    public override void Configure(UnitMessage.Configure message)
-        => this.radio.SendAsync(message).ConfigureAwait(false);
+    public void SendPrepare(UnitMessage.Prepare message)
+        => this.radio.Send(message);
 
-    public async Task LoadAsync(UnitMessage.LoadAsync message)
+    public async Task SendLoadAsync(UnitMessage.LoadAsync message)
         => await this.radio.SendAsync(message).ConfigureAwait(false);
 
-    public async Task SaveAsync(UnitMessage.SaveAsync message)
+    public async Task SendSaveAsync(UnitMessage.SaveAsync message)
         => await this.radio.SendAsync(message).ConfigureAwait(false);
 
-    public async Task RunAsync(UnitMessage.RunAsync message)
+    public async Task SendRunAsync(UnitMessage.RunAsync message)
         => await this.radio.SendAsync(message).ConfigureAwait(false);
 
-    public async Task TerminateAsync(UnitMessage.TerminateAsync message)
+    public async Task SendTerminateAsync(UnitMessage.TerminateAsync message)
         => await this.radio.SendAsync(message).ConfigureAwait(false);
 
-    public ServiceProvider ServiceProvider { get; init; }
+    public void CreateInstances()
+    {
+        foreach (var x in this.createInstanceTypes)
+        {
+            this.ServiceProvider.GetService(x);
+        }
+    }
+
+    public IServiceProvider ServiceProvider { get; init; }
 
     public IEnumerable<Type> CommandTypes
     {
@@ -51,10 +60,14 @@ public class BuiltUnit : UnitBase, IUnitExecutable, IUnitSerializable
 
     private RadioClass radio;
     private Type[] commandTypes;
+    private Type[] createInstanceTypes;
 
     internal void AddInternal(UnitBase unit)
     {
-        this.radio.Open<UnitMessage.Configure>(x => unit.Configure(x), unit);
+        if (unit is IUnitPreparable configurable)
+        {
+            this.radio.Open<UnitMessage.Prepare>(x => configurable.Prepare(x), unit);
+        }
 
         if (unit is IUnitExecutable executable)
         {

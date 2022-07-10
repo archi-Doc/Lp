@@ -8,10 +8,11 @@ using System.Threading.Tasks;
 using Arc.Crypto;
 using Arc.Threading;
 using CrossChannel;
-using DryIoc;
 using LP;
 using LP.Options;
+using LP.Unit;
 using LPEssentials.Radio;
+using Microsoft.Extensions.DependencyInjection;
 using Netsphere;
 using SimpleCommandLine;
 using Tinyhand;
@@ -22,80 +23,19 @@ using ZenItz;
 namespace LPConsole;
 
 [SimpleCommand("lp", Default = true)]
-public class LPConsoleCommand : ISimpleCommandAsync<LPConsoleOptions>
+public class LPConsoleCommand : ISimpleCommandAsync<LPOptions>
 {
-    public LPConsoleCommand()
+    public LPConsoleCommand(Control.Unit unit)
     {
+        this.unit = unit;
     }
 
-    public async Task Run(LPConsoleOptions options, string[] args)
+    public async Task Run(LPOptions options, string[] args)
     {
-        // Load options
-        if (!string.IsNullOrEmpty(options.OptionsPath))
-        {
-            try
-            {
-                var utf8 = File.ReadAllBytes(options.OptionsPath);
-                var op = TinyhandSerializer.DeserializeFromUtf8<LPConsoleOptions>(utf8);
-                if (op != null)
-                {
-                    options = op;
-                }
-            }
-            catch
-            {
-            }
-        }
-
-        this.lpBase = Program.Container.Resolve<LPBase>();
-        this.lpBase.Initialize(options, true, "relay");
-
-        this.netBase = Program.Container.Resolve<NetBase>();
-        this.netBase.Initialize(true, string.Empty, options.NetsphereOptions);
-        this.netBase.AllowUnsafeConnection = true; // betacode
-
-        var control = Program.Container.Resolve<Control>();
-        try
-        {// Configure
-            control.Configure();
-        }
-        catch (PanicException)
-        {
-            control.Terminate(true);
-            return;
-        }
-
-        try
-        {// Load
-            await control.LoadAsync();
-        }
-        catch (PanicException)
-        {
-            await control.AbortAsync();
-            control.Terminate(true);
-            return;
-        }
-
-        try
-        {// Start, Main loop
-            await control.StartAsync();
-
-            this.MainLoop(control);
-
-            await control.StopAsync();
-            await control.SaveAsync();
-            control.Terminate(false);
-        }
-        catch (PanicException)
-        {
-            await control.StopAsync();
-            await control.SaveAsync();
-            control.Terminate(true);
-            return;
-        }
+        await this.unit.Run(options);
     }
 
-    private string? GetPassword(string? text = null)
+    /*private string? GetPassword(string? text = null)
     {
         if (text == null)
         {
@@ -185,86 +125,7 @@ Deserialize:
         }
 
         return AbortOrComplete.Complete;
-    }
+    }*/
 
-    private void MainLoop(Control control)
-    {
-        while (!control.Core.IsTerminated)
-        {
-            if (Logger.ViewMode)
-            {// View mode
-                if (this.SafeKeyAvailable)
-                {
-                    var keyInfo = Console.ReadKey(true);
-                    if (keyInfo.Key == ConsoleKey.Enter || keyInfo.Key == ConsoleKey.Escape)
-                    { // To console mode
-                        Logger.ViewMode = false;
-                        Console.Write("> ");
-                    }
-                    else
-                    {
-                        while (this.SafeKeyAvailable)
-                        {
-                            Console.ReadKey(true);
-                        }
-                    }
-                }
-            }
-            else
-            {// Console mode
-                var command = Console.ReadLine();
-                if (!string.IsNullOrEmpty(command))
-                {
-                    if (string.Compare(command, "exit", true) == 0)
-                    {// Exit
-                        // To view mode
-                        Logger.ViewMode = true;
-                        return;
-                    }
-                    else
-                    {// Subcommand
-                        try
-                        {
-                            if (!control.Subcommand(command))
-                            {
-                                Console.Write("> ");
-                                continue;
-                            }
-                        }
-                        catch
-                        {
-                            break;
-                        }
-                    }
-                }
-
-                // To view mode
-                Logger.ViewMode = true;
-            }
-
-            control.Core.Sleep(100, 100);
-        }
-
-        // To view mode
-        Logger.ViewMode = true;
-    }
-
-    private bool SafeKeyAvailable
-    {
-        get
-        {
-            try
-            {
-                return Console.KeyAvailable;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-    }
-
-    private LPBase lpBase = default!;
-
-    private NetBase netBase = default!;
+    private Control.Unit unit;
 }

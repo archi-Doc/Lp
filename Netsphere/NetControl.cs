@@ -15,7 +15,6 @@ global using Tinyhand;
 global using ValueLink;
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
-using DryIoc;
 using LP.Unit;
 using LPEssentials.Radio;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,7 +24,7 @@ using SimpleCommandLine;
 
 namespace Netsphere;
 
-public class NetControl
+public class NetControl : UnitBase, IUnitPreparable
 {
     public const int MaxPayload = 1432; // 1432 bytes
     public const int MaxDataSize = 4 * 1024 * 1024; // 4 MB
@@ -66,10 +65,9 @@ public class NetControl
     {
         public record Param(bool EnableServer, Func<ServerContext> NewServerContext, Func<CallContext> NewCallContext, string NodeName, NetsphereOptions Options, bool AllowUnsafeConnection);
 
-        public Unit(UnitParameter parameter)
-            : base(parameter)
+        public Unit(UnitContext context)
+            : base(context)
         {
-            NetControl.serviceProvider = parameter.ServiceProvider;
         }
 
         public void RunStandalone(Param param)
@@ -85,103 +83,15 @@ public class NetControl
             }
 
             Logger.Configure(null);
-            Radio.Send(new Message.Configure());
+            this.SendPrepare(new());
             Radio.SendAsync(new Message.StartAsync(ThreadCore.Root));
         }
     }
 
-    public static void Register(Container container, List<Type>? commandList = null)
-    {// Obsolete
-        // Container instance
-        serviceProvider = container;
-
-        // Base
-        if (!container.IsRegistered<BigMachine<Identifier>>())
-        {
-            container.RegisterDelegate(x => new BigMachine<Identifier>(container), Reuse.Singleton);
-        }
-
-        // Main services
-        container.Register<NetControl>(Reuse.Singleton);
-        container.Register<NetBase>(Reuse.Singleton);
-        container.Register<Terminal>(Reuse.Singleton);
-        container.Register<EssentialNode>(Reuse.Singleton);
-        container.Register<NetStatus>(Reuse.Singleton);
-        container.Register<Server>(Reuse.Transient);
-        container.RegisterDelegate(x => new NetService(container), Reuse.Transient);
-
-        // Machines
-        container.Register<LP.Machines.EssentialNetMachine>();
-
-        // Subcommands
-        var commandTypes = new Type[]
-        {
-            typeof(LP.Subcommands.NetTestSubcommand),
-        };
-
-        commandList?.AddRange(commandTypes);
-        foreach (var x in commandTypes)
-        {
-            container.Register(x, Reuse.Singleton);
-        }
-    }
-
-    public static void Register(IServiceCollection serviceCollection, List<Type>? commandList = null)
-    {// Obsolete
-        // Base
-        serviceCollection.TryAddSingleton<BigMachine<Identifier>>();
-
-        // Main services
-        serviceCollection.AddSingleton<NetControl>();
-        serviceCollection.AddSingleton<NetBase>();
-        serviceCollection.AddSingleton<Terminal>();
-        serviceCollection.AddSingleton<EssentialNode>();
-        serviceCollection.AddSingleton<NetStatus>();
-        serviceCollection.AddTransient<Server>();
-        serviceCollection.AddTransient<NetService>();
-        // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
-
-        // Machines
-        serviceCollection.AddTransient<LP.Machines.EssentialNetMachine>();
-
-        // Subcommands
-        var commandTypes = new Type[]
-        {
-            typeof(LP.Subcommands.NetTestSubcommand),
-        };
-
-        commandList?.AddRange(commandTypes);
-        foreach (var x in commandTypes)
-        {
-            serviceCollection.AddSingleton(x);
-        }
-    }
-
-    public static void SetServiceProvider(IServiceProvider provider)
-    {// Obsolete
-        serviceProvider = provider;
-    }
-
-    public static void QuickStart(bool enableServer, Func<ServerContext> newServerContext, Func<CallContext> newCallContext, string nodeName, NetsphereOptions options, bool allowUnsafeConnection)
-    {// Obsolete
-        var netBase = serviceProvider.GetRequiredService<NetBase>();
-        netBase.Initialize(enableServer, nodeName, options);
-        netBase.AllowUnsafeConnection = allowUnsafeConnection;
-
-        var netControl = serviceProvider.GetRequiredService<NetControl>();
-        if (enableServer)
-        {
-            netControl.SetupServer(newServerContext, newCallContext);
-        }
-
-        Logger.Configure(null);
-        Radio.Send(new Message.Configure());
-        Radio.SendAsync(new Message.StartAsync(ThreadCore.Root));
-    }
-
-    public NetControl(NetBase netBase, BigMachine<Identifier> bigMachine, Terminal terminal, EssentialNode node, NetStatus netStatus)
+    public NetControl(UnitContext context, NetBase netBase, BigMachine<Identifier> bigMachine, Terminal terminal, EssentialNode node, NetStatus netStatus)
+        : base(context)
     {
-        this.ServiceProvider = (IServiceProvider)serviceProvider;
+        this.ServiceProvider = context.ServiceProvider;
         this.NewServerContext = () => new ServerContext();
         this.NewCallContext = () => new CallContext();
         this.NetBase = netBase;
@@ -195,11 +105,9 @@ public class NetControl
 
         this.EssentialNode = node;
         this.NetStatus = netStatus;
-
-        Radio.Open<Message.Configure>(this.Configure);
     }
 
-    public void Configure(Message.Configure message)
+    public void Prepare(UnitMessage.Prepare message)
     {
         // Terminals
         this.Terminal.Initialize(false, this.NetBase.NodePrivateKey, this.NetBase.NodePrivateEcdh);
@@ -231,9 +139,9 @@ public class NetControl
         this.Terminal.SetInvokeServerDelegate(InvokeServer);
         this.Alternative?.SetInvokeServerDelegate(InvokeServer);
 
-        static async Task InvokeServer(ServerTerminal terminal)
+        async Task InvokeServer(ServerTerminal terminal)
         {
-            var server = serviceProvider.GetRequiredService<Server>();
+            var server = this.ServiceProvider.GetRequiredService<Server>();
             terminal.Terminal.MyStatus.IncrementServerCount();
             try
             {
@@ -250,8 +158,6 @@ public class NetControl
     {
         return this.Responders.TryAdd(responder.GetDataId(), responder);
     }
-
-    public IServiceProvider ServiceProvider { get; }
 
     public Func<ServerContext> NewServerContext { get; private set; }
 
@@ -273,7 +179,7 @@ public class NetControl
 
     internal ConcurrentDictionary<ulong, INetResponder> Responders { get; } = new();
 
-    private static IServiceProvider serviceProvider = default!;
+    internal IServiceProvider ServiceProvider { get; }
 
     private void Dump()
     {

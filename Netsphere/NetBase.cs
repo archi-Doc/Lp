@@ -1,18 +1,19 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Security.Cryptography;
+using LP.Unit;
 using LPEssentials.Radio;
 
 namespace Netsphere;
 
-public class NetBase
+public class NetBase : UnitBase, IUnitPreparable
 {
-    public NetBase()
+    public NetBase(UnitContext context)
+        : base(context)
     {
-        Radio.Open<Message.Configure>(this.Configure);
     }
 
-    public void Configure(Message.Configure message)
+    public void Prepare(UnitMessage.Prepare message)
     {
         // Set port number
         if (this.NetsphereOptions.Port < NetControl.MinPort ||

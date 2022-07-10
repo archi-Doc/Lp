@@ -2,18 +2,20 @@
 
 using Arc.Crypto;
 using LP;
+using LP.Unit;
 using SimpleCommandLine;
 using ZenItz;
 using ZenItz.Results;
 
-namespace LP.Subcommands;
+namespace ZenItz.Subcommands;
 
 [SimpleCommand("add", Description = "Add zen directory.")]
 public class ZenDirSubcommandAdd : ISimpleCommandAsync<ZenDirOptionsAdd>
 {
-    public ZenDirSubcommandAdd(ZenControl control)
+    public ZenDirSubcommandAdd(ZenControl control, ZenDirSubcommandLs zenDirSubcommandLs)
     {
         this.ZenControl = control;
+        this.ZenDirSubcommandLs = zenDirSubcommandLs;
     }
 
     public async Task Run(ZenDirOptionsAdd option, string[] args)
@@ -30,13 +32,16 @@ public class ZenDirSubcommandAdd : ISimpleCommandAsync<ZenDirOptionsAdd>
 
         if (result == AddDictionaryResult.Success)
         {
-            Logger.Subcommand.Information($"Directory added: {option.Path}");
+            Logger.Default.Information($"Directory added: {option.Path}");
             Console.WriteLine();
-            await this.ZenControl.SubcommandParser.ParseAndRunAsync("zendir ls");
+            await this.ZenDirSubcommandLs.Run(Array.Empty<string>());
+            // await this.ZenControl.SimpleParser.ParseAndRunAsync("zendir ls");
         }
     }
 
-    public ZenControl ZenControl { get; set; }
+    public ZenControl ZenControl { get; private set; }
+
+    public ZenDirSubcommandLs ZenDirSubcommandLs { get; private set; }
 }
 
 public record ZenDirOptionsAdd

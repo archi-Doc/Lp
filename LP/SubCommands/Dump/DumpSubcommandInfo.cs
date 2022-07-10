@@ -18,7 +18,7 @@ public class DumpSubcommandInfo : ISimpleCommand<DumpSubcommandInfoOptions>
 
     public void Run(DumpSubcommandInfoOptions options, string[] args)
     {
-        var logger = Logger.Subcommand;
+        var logger = Logger.Default;
         var target = args.Length > 0 ? args[0] : string.Empty;
 
         logger.Information($"Dump: {target}");

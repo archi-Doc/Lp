@@ -38,22 +38,22 @@ public class LPBase
 
     public string NodeName { get; private set; } = default!;
 
-    public LPConsoleOptions ConsoleOptions { get; private set; } = default!;
+    public LPOptions LPOptions { get; private set; } = default!;
 
-    public void Initialize(LPConsoleOptions options, bool isConsole, string defaultMode)
+    public void Initialize(LPOptions options, bool isConsole, string defaultMode)
     {
-        this.ConsoleOptions = options;
+        this.LPOptions = options;
         this.IsConsole = isConsole;
 
         // Root directory
-        if (Path.IsPathRooted(this.ConsoleOptions.Directory) &&
-            File.GetAttributes(this.ConsoleOptions.Directory).HasFlag(FileAttributes.Directory))
+        if (Path.IsPathRooted(this.LPOptions.Directory) &&
+            File.GetAttributes(this.LPOptions.Directory).HasFlag(FileAttributes.Directory))
         {
-            this.RootDirectory = this.ConsoleOptions.Directory;
+            this.RootDirectory = this.LPOptions.Directory;
         }
         else
         {
-            this.RootDirectory = Path.Combine(Directory.GetCurrentDirectory(), this.ConsoleOptions.Directory);
+            this.RootDirectory = Path.Combine(Directory.GetCurrentDirectory(), this.LPOptions.Directory);
         }
 
         Directory.CreateDirectory(this.RootDirectory);
@@ -61,7 +61,7 @@ public class LPBase
 
         // Mode
         LPMode mode;
-        if (!Enum.TryParse<LPMode>(this.ConsoleOptions.Mode, true, out mode))
+        if (!Enum.TryParse<LPMode>(this.LPOptions.Mode, true, out mode))
         {
             if (!Enum.TryParse<LPMode>(defaultMode, true, out mode))
             {
@@ -71,7 +71,7 @@ public class LPBase
 
         this.Mode = mode;
 
-        this.NodeName = this.ConsoleOptions.NodeName;
+        this.NodeName = this.LPOptions.NodeName;
         if (string.IsNullOrEmpty(this.NodeName))
         {
             this.NodeName = System.Environment.OSVersion.ToString();
@@ -80,6 +80,6 @@ public class LPBase
 
     public override string ToString()
     {
-        return $"Mode: {this.Mode}, {this.ConsoleOptions.ToString()}";
+        return $"Mode: {this.Mode}, {this.LPOptions.ToString()}";
     }
 }

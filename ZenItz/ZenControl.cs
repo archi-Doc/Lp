@@ -17,24 +17,16 @@ using System.ComponentModel;
 using System.Reflection.Metadata;
 using System.Security.Cryptography;
 using BigMachines;
-using DryIoc;
 using LP.Unit;
 using SimpleCommandLine;
-using ZenItz.Subcommand.Zen;
 
 namespace ZenItz;
 
 public class ZenControl
 {
-    private static Type[] commandTypes = new[]
-    {
-        typeof(ZenSubcommand),
-        typeof(LP.Subcommands.ZenDirSubcommand),
-    };
-
     public class Builder : UnitBuilder<Unit>
     {// Builder class for customizing dependencies.
-        public Builder(bool registerSubcommand = true)
+        public Builder()
             : base()
         {
             this.Configure(context =>
@@ -43,23 +35,10 @@ public class ZenControl
                 context.AddSingleton<ZenControl>();
                 context.AddSingleton<Zen>();
                 context.AddSingleton<Itz>();
-            });
-
-            if (!registerSubcommand)
-            {
-                return;
-            }
-
-            this.Configure(context =>
-            {
-                ZenSubcommand.Register(context);
-                LP.Subcommands.ZenDirSubcommand.Register(context);
 
                 // Subcommands
-                foreach (var x in commandTypes)
-                {
-                    context.AddCommand(x);
-                }
+                Subcommands.ZenDirSubcommand.Configure(context);
+                Subcommands.ZenTempSubcommand.Configure(context);
             });
         }
     }
@@ -68,39 +47,17 @@ public class ZenControl
     {// Unit class for customizing behaviors.
         public record Param();
 
-        public Unit(UnitParameter parameter)
-            : base(parameter)
-        {
-        }
-
-        public void RunStandalone(Param param)
+        public Unit(UnitContext context)
+            : base(context)
         {
         }
     }
 
-    public ZenControl(IServiceProvider serviceProvider, Zen zen, Itz itz)
+    public ZenControl(Zen zen, Itz itz)
     {
-        // this.ServiceProvider = serviceProvider;
         this.Zen = zen;
         this.Itz = itz;
-
-        this.SubcommandParserOptions = SimpleParserOptions.Standard with
-        {
-            ServiceProvider = serviceProvider,
-            RequireStrictCommandName = true,
-            RequireStrictOptionName = true,
-            DoNotDisplayUsage = true,
-            DisplayCommandListAsHelp = true,
-        };
-
-        this.SubcommandParser = new(commandTypes, this.SubcommandParserOptions);
     }
-
-    public SimpleParser SubcommandParser { get; private set; } = default!;
-
-    public SimpleParserOptions SubcommandParserOptions { get; private set; } = default!;
-
-    // public IServiceProvider ServiceProvider { get; }
 
     public Zen Zen { get; }
 

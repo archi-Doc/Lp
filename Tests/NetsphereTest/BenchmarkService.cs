@@ -21,6 +21,10 @@ public partial interface IBenchmarkService
 [NetServiceObject]
 public class BenchmarkServiceImpl : IBenchmarkService
 {
+    public BenchmarkServiceImpl()
+    {
+    }
+
     public async NetTask<byte[]?> Pingpong(byte[] data)
     {
         return data;

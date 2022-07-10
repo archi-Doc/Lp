@@ -4,8 +4,8 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Arc.Threading;
-using DryIoc;
 using LP;
+using Microsoft.Extensions.DependencyInjection;
 using SimpleCommandLine;
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
@@ -14,27 +14,8 @@ namespace LPConsole;
 
 public class Program
 {
-    public static Container Container { get; } = new();
-
     public static async Task Main(string[] args)
     {
-        // Simple Commands
-        var commandTypes = new Type[]
-        {
-                typeof(LPConsoleCommand),
-                typeof(CreateKeyCommand),
-            // typeof(TestCommand2),
-        };
-
-        // DI Container
-        Control.Register(Container);
-        foreach (var x in commandTypes)
-        {
-            Container.Register(x, Reuse.Singleton);
-        }
-
-        Container.ValidateAndThrow();
-
         AppDomain.CurrentDomain.ProcessExit += (s, e) =>
         {// Console window closing or process terminated.
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
@@ -44,20 +25,50 @@ public class Program
         Console.CancelKeyPress += (s, e) =>
         {// Ctrl+C pressed
             e.Cancel = true;
-            ThreadCore.Root.Terminate(); // Send a termination signal to the root.
+
+            var control = unit?.ServiceProvider.GetService<Control>();
+            if (control != null)
+            {
+                control.TryTerminate().Wait();
+            }
+            else
+            {
+                ThreadCore.Root.Terminate(); // Send a termination signal to the root.
+            }
         };
+
+        var builder = new Control.Builder()
+            .Configure(context =>
+            {
+                // Subcommand
+                context.AddCommand(typeof(LPConsoleCommand));
+                context.AddCommand(typeof(CreateKeyCommand));
+
+                // NetService
+
+                // ServiceFilter
+
+                // Unit
+                context.AddSingleton<LP.Custom.CustomUnit>();
+                context.CreateInstance<LP.Custom.CustomUnit>();
+            });
+            // .ConfigureBuilder(new LP.Custom.CustomUnit.Builder());
+
+        unit = builder.Build();
 
         var parserOptions = SimpleParserOptions.Standard with
         {
-            ServiceProvider = Container,
+            ServiceProvider = unit.ServiceProvider,
             RequireStrictCommandName = false,
             RequireStrictOptionName = true,
         };
 
-        await SimpleParser.ParseAndRunAsync(commandTypes, args, parserOptions); // Main process
+        await SimpleParser.ParseAndRunAsync(unit.CommandTypes, args, parserOptions); // Main process
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
         ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).
 
         Logger.CloseAndFlush();
     }
+
+    private static Control.Unit? unit;
 }

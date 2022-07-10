@@ -7,9 +7,11 @@ using Tinyhand.IO;
 namespace LP.Options;
 
 [TinyhandObject(ImplicitKeyAsName = true)]
-public partial record LPConsoleOptions
+public partial record LPOptions
 {
-    [SimpleOption("load", description: "Options path")]
+    public const string DefaultOptionsName = "Options.tinyhand";
+
+    [SimpleOption("loadoptions", description: "Options path")]
     public string OptionsPath { get; init; } = string.Empty;
 
     [SimpleOption("development", description: "Development")]
@@ -32,6 +34,9 @@ public partial record LPConsoleOptions
 
     [SimpleOption("zen", description: "ZenItz option")]
     public ZenItzOptions ZenItzOptions { get; init; } = default!;
+
+    [SimpleOption("confirmexit", description: "Confirms application exit")]
+    public bool ConfirmExit { get; init; } = false;
 
     public override string ToString()
     {

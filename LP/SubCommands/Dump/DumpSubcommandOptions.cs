@@ -3,6 +3,7 @@
 using System.Diagnostics;
 using Arc.Crypto;
 using LP;
+using LP.Options;
 using Netsphere;
 using SimpleCommandLine;
 using Tinyhand;
@@ -12,8 +13,6 @@ namespace LP.Subcommands.Dump;
 [SimpleCommand("options")]
 public class DumpSubcommandOptions : ISimpleCommandAsync<DumpSubcommandOptions2>
 {
-    public const string DefaultName = "options.tinyhand";
-
     public DumpSubcommandOptions(Control control)
     {
         this.Control = control;
@@ -24,15 +23,15 @@ public class DumpSubcommandOptions : ISimpleCommandAsync<DumpSubcommandOptions2>
         var output = options.Output;
         if (string.IsNullOrEmpty(output))
         {
-            output = DefaultName;
+            output = LPOptions.DefaultOptionsName;
         }
 
         var path = Path.Combine(this.Control.LPBase.RootDirectory, output);
-        Logger.Subcommand.Information(HashedString.Get(Hashed.General.Output, path));
+        Logger.Default.Information(HashedString.Get(Hashed.Success.Output, path));
 
         try
         {
-            var utf = TinyhandSerializer.SerializeToUtf8(this.Control.LPBase.ConsoleOptions);
+            var utf = TinyhandSerializer.SerializeToUtf8(this.Control.LPBase.LPOptions);
             await File.WriteAllBytesAsync(path, utf);
         }
         catch

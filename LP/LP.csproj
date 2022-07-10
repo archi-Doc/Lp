@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Strings\strings-en.tinyhand" />
+    <EmbeddedResource Include="Strings\strings-ja.tinyhand" />
   </ItemGroup>
 
   <ItemGroup>

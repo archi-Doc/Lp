@@ -1,15 +1,14 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Arc.Crypto;
 using SimpleCommandLine;
 using ZenItz;
 
-namespace ZenItz.Subcommand.Zen;
+namespace ZenItz.Subcommands;
 
-[SimpleCommand("ls")]
-public class ZenSubcommandLs : ISimpleCommandAsync
+[SimpleCommand("ls", Description = "List zen directory information.")]
+public class ZenTempSubcommandLs : ISimpleCommandAsync
 {
-    public ZenSubcommandLs(ZenControl control)
+    public ZenTempSubcommandLs(ZenControl control)
     {
         this.Control = control;
     }
@@ -18,9 +17,9 @@ public class ZenSubcommandLs : ISimpleCommandAsync
     {
         var info = this.Control.Zen.IO.GetDirectoryInformation();
 
-        foreach (var x in info)
+        foreach (var x in Enumerable.Range(0, 5))
         {
-            Console.WriteLine(x);
+            Console.WriteLine(x.ToString());
         }
     }
 

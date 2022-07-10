@@ -108,10 +108,10 @@ public static class Logger
 
     static Logger()
     {
-        Default = new DefaultLogger();
+        Default = new PriorityLogger(); // new DefaultLogger();
         Console = new EmptyLogger();
         File = new EmptyLogger();
-        Subcommand = new PriorityLogger();
+        // Subcommand = new PriorityLogger();
     }
 
     public static void Configure(LPBase? info)
@@ -148,7 +148,7 @@ public static class Logger
     }
 
     /// <summary>
-    /// Gets a logging instance which output logs to <b>console (except in subcommand console) and file</b>.
+    /// Gets a logging instance which output logs to <b>console and file</b>.
     /// </summary>
     public static ISimpleLogger Default { get; }
 
@@ -162,10 +162,10 @@ public static class Logger
     /// </summary>
     public static ISimpleLogger Console { get; private set; }
 
-    /// <summary>
+    /*/// <summary>
     /// Gets a logging instance which output logs to <b>console (includes subcommand console) and file</b>.
     /// </summary>
-    public static ISimpleLogger Subcommand { get; }
+    public static ISimpleLogger Subcommand { get; }*/
 
     private static bool viewMode = true;
 }
