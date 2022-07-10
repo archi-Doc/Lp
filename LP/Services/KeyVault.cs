@@ -7,7 +7,12 @@ namespace LP;
 
 public class KeyVault
 {
-    public static async Task<KeyVault?> Load(IUserInterfaceService viewService, string path)
+    public KeyVault(IUserInterfaceService userInterfaceService)
+    {
+        this.UserInterfaceService = userInterfaceService;
+    }
+
+    public async Task<bool> LoadAsync(string path)
     {
         byte[] data;
         try
@@ -17,7 +22,7 @@ public class KeyVault
         catch
         {
             Logger.Default.Error(HashedString.Get(Hashed.Error.Load, path));
-            return null;
+            return false;
         }
 
         KeyVaultItem?[]? items = null;
@@ -32,10 +37,9 @@ public class KeyVault
         if (items == null)
         {
             Logger.Default.Error(HashedString.Get(Hashed.Error.Deserialize, path));
-            return null;
+            return false;
         }
 
-        var keyVault = new KeyVault();
         string? password = null;
         for (var i = 0; i < items.Length; i++)
         {
@@ -53,7 +57,7 @@ public class KeyVault
             {// Password required.
                 if (password == null)
                 {// Enter password
-                    var results = await viewService.RequestString(Hashed.Services.KeyVault.EnterPassword);
+                    var results = await this.UserInterfaceService.RequestString(Hashed.Services.KeyVault.EnterPassword);
                     if (results != null)
                     {
                         password = results;
@@ -66,19 +70,17 @@ public class KeyVault
         {
         }
 
-        return keyVault;
+        return true;
     }
 
-    public KeyVault()
-    {
-    }
+    public IUserInterfaceService UserInterfaceService { get; }
+
+    public bool NewKeyVault { get; set; } = false;
 }
 
 [TinyhandObject]
 public partial class KeyVaultItem
 {
-    public const int HintLength = 2;
-
     public KeyVaultItem()
     {
     }

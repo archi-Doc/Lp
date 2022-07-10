@@ -73,7 +73,7 @@ public class NetControl : UnitBase, IUnitPreparable
         public void RunStandalone(Param param)
         {
             var netBase = this.ServiceProvider.GetRequiredService<NetBase>();
-            netBase.Initialize(param.EnableServer, param.NodeName, param.Options);
+            netBase.SetParameter(param.EnableServer, param.NodeName, param.Options);
             netBase.AllowUnsafeConnection = param.AllowUnsafeConnection;
 
             var netControl = this.ServiceProvider.GetRequiredService<NetControl>();

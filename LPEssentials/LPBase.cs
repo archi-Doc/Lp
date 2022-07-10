@@ -40,7 +40,7 @@ public class LPBase
 
     public LPOptions LPOptions { get; private set; } = default!;
 
-    public void Initialize(LPOptions options, bool isConsole, string defaultMode)
+    public void SetParameter(LPOptions options, bool isConsole, string defaultMode)
     {
         this.LPOptions = options;
         this.IsConsole = isConsole;
