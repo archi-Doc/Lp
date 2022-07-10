@@ -19,13 +19,13 @@ public static partial class SubcommandService
         {
             if (!NodeAddress.TryParse(node, out var address))
             {
-                Logger.Subcommand.Error($"Could not parse: {node.ToString()}");
+                Logger.Default.Error($"Could not parse: {node.ToString()}");
                 return false;
             }
 
             if (!address.IsValid())
             {
-                Logger.Subcommand.Error($"Invalid node address: {node.ToString()}");
+                Logger.Default.Error($"Invalid node address: {node.ToString()}");
                 return false;
             }
 

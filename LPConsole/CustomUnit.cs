@@ -44,6 +44,6 @@ public class CustomUnit : UnitBase, IUnitPreparable
 
     public void Prepare(UnitMessage.Prepare message)
     {
-        Logger.Subcommand.Information("Custom unit prepared.");
+        Logger.Default.Information("Custom unit prepared.");
     }
 }

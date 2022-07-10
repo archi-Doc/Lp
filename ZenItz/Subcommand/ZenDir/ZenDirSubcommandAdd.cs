@@ -32,7 +32,7 @@ public class ZenDirSubcommandAdd : ISimpleCommandAsync<ZenDirOptionsAdd>
 
         if (result == AddDictionaryResult.Success)
         {
-            Logger.Subcommand.Information($"Directory added: {option.Path}");
+            Logger.Default.Information($"Directory added: {option.Path}");
             Console.WriteLine();
             await this.ZenDirSubcommandLs.Run(Array.Empty<string>());
             // await this.ZenControl.SimpleParser.ParseAndRunAsync("zendir ls");

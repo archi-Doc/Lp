@@ -134,7 +134,7 @@ public class Control
                 // Create optional instances
                 this.CreateInstances();
 
-                // Configure
+                // Prepare
                 this.SendPrepare(new());
             }
             catch (PanicException)

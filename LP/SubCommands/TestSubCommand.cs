@@ -17,10 +17,10 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
     public async Task Run(TestOptions options, string[] args)
     {
-        Logger.Subcommand.Information($"Test subcommand: {options.ToString()}");
+        Logger.Default.Information($"Test subcommand: {options.ToString()}");
         // this.Control.Netsphere.NetStatus
 
-        // Logger.Subcommand.Information(System.Environment.OSVersion.ToString());
+        // Logger.Default.Information(System.Environment.OSVersion.ToString());
     }
 
     public Control Control { get; set; }
