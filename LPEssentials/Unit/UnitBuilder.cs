@@ -19,10 +19,16 @@ public class UnitBuilder<TUnit> : UnitBuilder
     {
     }
 
+    /// <inheritdoc/>
     public override TUnit Build() => this.Build<TUnit>();
 
+    /// <inheritdoc/>
     public override UnitBuilder<TUnit> Configure(Action<UnitBuilderContext> configureDelegate)
         => (UnitBuilder<TUnit>)base.Configure(configureDelegate);
+
+    /// <inheritdoc/>
+    public override UnitBuilder<TUnit> ConfigureBuilder(UnitBuilder unitBuilder)
+        => (UnitBuilder<TUnit>)base.ConfigureBuilder(unitBuilder);
 }
 
 /// <summary>
@@ -35,15 +41,31 @@ public class UnitBuilder
     {
     }
 
+    /// <summary>
+    /// Runs the given actions and build a unit.
+    /// </summary>
+    /// <returns><see cref="BuiltUnit"/>.</returns>
     public virtual BuiltUnit Build() => this.Build<BuiltUnit>();
 
+    /// <summary>
+    /// Adds a delegate to the builder for configuring the unit.<br/>
+    /// This can be called multiple times and the results will be additive.
+    /// </summary>
+    /// <param name="configureDelegate">The delegate for configuring the unit.</param>
+    /// <returns>The same instance of the <see cref="UnitBuilder"/> for chaining.</returns>
     public virtual UnitBuilder Configure(Action<UnitBuilderContext> configureDelegate)
     {
         this.configureActions.Add(configureDelegate);
         return this;
     }
 
-    public UnitBuilder ConfigureBuilder(UnitBuilder unitBuilder)
+    /// <summary>
+    /// Adds a <see cref="UnitBuilder"/> instance to the builder for configuring the unit.<br/>
+    /// This can be called multiple times and the results will be additive.
+    /// </summary>
+    /// <param name="unitBuilder"><see cref="UnitBuilder"/>.</param>
+    /// <returns>The same instance of the <see cref="UnitBuilder"/> for chaining.</returns>
+    public virtual UnitBuilder ConfigureBuilder(UnitBuilder unitBuilder)
     {
         this.configureUnitBuilders.Add(unitBuilder);
         return this;
