@@ -16,7 +16,6 @@ global using ValueLink;
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using LP.Unit;
-using LPEssentials.Radio;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere.Responder;
@@ -70,7 +69,7 @@ public class NetControl : UnitBase, IUnitPreparable
         {
         }
 
-        public void RunStandalone(Param param)
+        public async Task RunStandalone(Param param)
         {
             var netBase = this.ServiceProvider.GetRequiredService<NetBase>();
             netBase.SetParameter(param.EnableServer, param.NodeName, param.Options);
@@ -84,7 +83,7 @@ public class NetControl : UnitBase, IUnitPreparable
 
             Logger.Configure(null);
             this.SendPrepare(new());
-            Radio.SendAsync(new Message.StartAsync(ThreadCore.Root));
+            await this.SendRunAsync(new(ThreadCore.Root)).ConfigureAwait(false);
         }
     }
 
@@ -100,7 +99,7 @@ public class NetControl : UnitBase, IUnitPreparable
         this.Terminal = terminal;
         if (this.NetBase.NetsphereOptions.EnableAlternative)
         {
-            this.Alternative = new(netBase, netStatus); // For debug
+            this.Alternative = new(context, netBase, netStatus); // For debug
         }
 
         this.EssentialNode = node;

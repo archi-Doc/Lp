@@ -2,7 +2,6 @@
 
 using System.Security.Cryptography;
 using LP.Unit;
-using LPEssentials.Radio;
 
 namespace Netsphere;
 
@@ -80,6 +79,11 @@ public class NetBase : UnitBase, IUnitPreparable
         this.NodePublicEcdh = NodeKey.FromPublicKey(this.NodePublicKey.X, this.NodePublicKey.Y) ?? throw new InvalidDataException();
         this.NodePrivateKey = privateKey;
         this.NodePrivateEcdh = NodeKey.FromPrivateKey(this.NodePrivateKey) ?? throw new InvalidDataException();
+    }
+
+    public byte[] SerializeNodeKey()
+    {
+        return TinyhandSerializer.Serialize(this.NodePrivateKey);
     }
 
     public override string ToString() => $"NetBase: {this.NodeName}";

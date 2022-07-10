@@ -17,8 +17,8 @@ public abstract partial class FlakeBase
     {
         try
         {
-            var byteArray = TinyhandSerializer.Serialize(this);
-            var id = Identifier.FromReadOnlySpan(byteArray.AsSpan(0, 4)); // tempcode
+            var result = TinyhandSerializer.SerializeAndGetMarker(this);
+            var id = Identifier.FromReadOnlySpan(result.ByteArray.AsSpan(0, result.MarkerPosition));
             return id.Equals(identifier);
         }
         catch

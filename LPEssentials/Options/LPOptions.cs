@@ -38,11 +38,6 @@ public partial record LPOptions
     [SimpleOption("confirmexit", description: "Confirms application exit")]
     public bool ConfirmExit { get; init; } = false;
 
-    public override string ToString()
-    {
-        return $"{this.NetsphereOptions.ToString()}";
-    }
-
     /*public bool TryLoad()
     {
         if (!string.IsNullOrEmpty(this.Options))

@@ -26,8 +26,9 @@ public partial class NetsphereOptions
     [SimpleOption("logger", null, "Enable network logger")]
     public bool EnableLogger { get; set; } = false;
 
-    public override string ToString()
+    public void ShowInformation()
     {
-        return $"Address: {this.Address}, Port: {this.Port}";
+        Logger.Default.Information($"Address: {this.Address}, Port: {this.Port}");
+        Logger.Default.Information($"Alternative: {this.EnableAlternative}, Test features: {this.EnableTestFeatures}");
     }
 }

@@ -13,7 +13,6 @@ global using LP;
 global using Tinyhand;
 using LP.Services;
 using LP.Unit;
-using LPEssentials.Radio;
 using Netsphere;
 using SimpleCommandLine;
 using ZenItz;
@@ -151,7 +150,7 @@ public class Control
 
             try
             {// Load
-                await control.LoadAsync();
+                await control.LoadAsync(this);
             }
             catch (PanicException)
             {
@@ -162,18 +161,18 @@ public class Control
 
             try
             {// Start, Main loop
-                await control.StartAsync();
+                await control.RunAsync(this);
 
                 control.MainLoop();
 
-                await control.StopAsync();
-                await control.SaveAsync();
+                await control.TerminateAsync(this);
+                await control.SaveAsync(this);
                 control.Terminate(false);
             }
             catch (PanicException)
             {
-                await control.StopAsync();
-                await control.SaveAsync();
+                await control.TerminateAsync(this);
+                await control.SaveAsync(this);
                 control.Terminate(true);
                 return;
             }
@@ -243,24 +242,24 @@ public class Control
         return false;
     }
 
-    public async Task LoadAsync()
+    public async Task LoadAsync(Unit unit)
     {
         // Netsphere
         await this.NetControl.EssentialNode.LoadAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
+
+        // ZenItz
         if (!await this.ZenControl.Itz.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile)).ConfigureAwait(false))
         {
             await this.ZenControl.Itz.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup)).ConfigureAwait(false);
         }
 
-        // ZenItz
         var result = await this.ZenControl.Zen.TryStartZen(new(Zen.DefaultZenDirectory, Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenBackup), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryBackup), QueryDelegate: null));
         if (result != ZenStartResult.Success)
         {
             throw new PanicException();
         }
 
-        // tempcode await this.LoadKeyVaultAsync().ConfigureAwait(false);
-        await Radio.SendAsync(new Message.LoadAsync()).ConfigureAwait(false);
+        await unit.SendLoadAsync(new());
     }
 
     public async Task AbortAsync()
@@ -268,38 +267,43 @@ public class Control
         await this.ZenControl.Zen.AbortZen();
     }
 
-    public async Task SaveAsync()
+    public async Task SaveAsync(Unit unit)
     {
         Directory.CreateDirectory(this.LPBase.DataDirectory);
 
+        await this.SaveKeyVaultAsync();
         await this.NetControl.EssentialNode.SaveAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
         await this.ZenControl.Itz.SaveAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile), Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup));
 
-        await Radio.SendAsync(new Message.SaveAsync()).ConfigureAwait(false);
+        await unit.SendSaveAsync(new());
     }
 
-    public async Task StartAsync()
+    public async Task RunAsync(Unit unit)
     {
-        Logger.Default.Information($"Console: {this.LPBase.IsConsole}, Root directory: {this.LPBase.RootDirectory}");
-        Logger.Default.Information(this.LPBase.ToString());
-
-        await Radio.SendAsync(new Message.StartAsync(this.Core)).ConfigureAwait(false);
         this.BigMachine.Start();
+        await unit.SendRunAsync(new(this.Core));
 
-        Logger.Default.Information($"Test: {this.LPBase.LPOptions.NetsphereOptions.EnableTestFeatures}");
-        Logger.Default.Information($"Alternative: {this.LPBase.LPOptions.NetsphereOptions.EnableAlternative}");
+        this.ShowInformation();
+        this.LPBase.LPOptions.NetsphereOptions.ShowInformation();
+
+        Console.WriteLine();
         Logger.Console.Information("Press Enter key to switch to console mode.");
         Logger.Console.Information("Press Ctrl+C to exit.");
         Logger.Console.Information("Running");
     }
 
-    public async Task StopAsync()
+    public void ShowInformation()
+    {
+        Logger.Default.Information($"Console: {this.LPBase.IsConsole}, Root directory: {this.LPBase.RootDirectory}");
+        // Logger.Default.Information(this.LPBase.ToString());
+    }
+
+    public async Task TerminateAsync(Unit unit)
     {
         Logger.Default.Information("Termination process initiated");
 
         await this.ZenControl.Zen.StopZen(new(Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenBackup), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryBackup)));
-
-        await Radio.SendAsync(new Message.StopAsync()).ConfigureAwait(false);
+        await unit.SendTerminateAsync(new());
     }
 
     public void Terminate(bool abort)
@@ -450,14 +454,44 @@ public class Control
         var result = await this.KeyVault.LoadAsync(this.LPBase.LPOptions.KeyVault);
         if (!result)
         {
-            var reply = await this.UserInterfaceService.RequestYesOrNo(Hashed.Services.KeyVault.AskNew);
+            var reply = await this.UserInterfaceService.RequestYesOrNo(Hashed.KeyVault.AskNew);
             if (reply != true)
             {// No
                 throw new PanicException();
             }
 
             // New KeyVault
-            this.KeyVault.NewKeyVault = true;
+            var password = await this.UserInterfaceService.RequestPasswordAndConfirm(Hashed.KeyVault.EnterPassword, Hashed.Dialog.Password.Confirm);
+            if (password == null)
+            {
+                throw new PanicException();
+            }
+
+            this.KeyVault.Create(password);
         }
+
+        await this.LoadKeyVault_NodeKey();
+    }
+
+    private async Task LoadKeyVault_NodeKey()
+    {
+        if (!this.KeyVault.TryGetAndDeserialize<NodePrivateKey>(NodePrivateKey.Filename, out var key))
+        {// Failure
+            if (!this.KeyVault.Created)
+            {
+                await this.UserInterfaceService.Notify(UserInterfaceNotifyLevel.Error, Hashed.KeyVault.NoData, NodePrivateKey.Filename);
+            }
+
+            return;
+        }
+
+        this.NetControl.NetBase.SetNodeKey(key);
+    }
+
+    private async Task SaveKeyVaultAsync()
+    {
+        this.KeyVault.Add(NodePrivateKey.Filename, this.NetControl.NetBase.SerializeNodeKey());
+
+        await this.KeyVault.SaveAsync(this.LPBase.LPOptions.KeyVault);
     }
 }
