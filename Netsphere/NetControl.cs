@@ -68,7 +68,6 @@ public class NetControl : UnitBase, IUnitPreparable
         public Unit(UnitParameter parameter)
             : base(parameter)
         {
-            NetControl.serviceProvider = parameter.ServiceProvider;
         }
 
         public void RunStandalone(Param param)
@@ -92,7 +91,7 @@ public class NetControl : UnitBase, IUnitPreparable
     public NetControl(UnitParameter parameter, NetBase netBase, BigMachine<Identifier> bigMachine, Terminal terminal, EssentialNode node, NetStatus netStatus)
         : base(parameter)
     {
-        this.ServiceProvider = (IServiceProvider)serviceProvider;
+        this.ServiceProvider = parameter.ServiceProvider;
         this.NewServerContext = () => new ServerContext();
         this.NewCallContext = () => new CallContext();
         this.NetBase = netBase;
@@ -140,9 +139,9 @@ public class NetControl : UnitBase, IUnitPreparable
         this.Terminal.SetInvokeServerDelegate(InvokeServer);
         this.Alternative?.SetInvokeServerDelegate(InvokeServer);
 
-        static async Task InvokeServer(ServerTerminal terminal)
+        async Task InvokeServer(ServerTerminal terminal)
         {
-            var server = serviceProvider.GetRequiredService<Server>();
+            var server = this.ServiceProvider.GetRequiredService<Server>();
             terminal.Terminal.MyStatus.IncrementServerCount();
             try
             {
@@ -159,8 +158,6 @@ public class NetControl : UnitBase, IUnitPreparable
     {
         return this.Responders.TryAdd(responder.GetDataId(), responder);
     }
-
-    public IServiceProvider ServiceProvider { get; }
 
     public Func<ServerContext> NewServerContext { get; private set; }
 
@@ -182,7 +179,7 @@ public class NetControl : UnitBase, IUnitPreparable
 
     internal ConcurrentDictionary<ulong, INetResponder> Responders { get; } = new();
 
-    private static IServiceProvider serviceProvider = default!;
+    internal IServiceProvider ServiceProvider { get; }
 
     private void Dump()
     {

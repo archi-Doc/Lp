@@ -51,6 +51,7 @@ public class Control
 
                 // Subcommands
                 context.AddSubcommand(typeof(LP.Subcommands.MicsSubcommand));
+                context.AddSubcommand(typeof(LP.Subcommands.ExitSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.GCSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.PingSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.NetBenchSubcommand));
@@ -99,19 +100,20 @@ public class Control
             // Load options
             if (!string.IsNullOrEmpty(options.OptionsPath))
             {
+                var originalPath = options.OptionsPath;
                 try
                 {
-                    var utf8 = File.ReadAllBytes(options.OptionsPath);
+                    var utf8 = File.ReadAllBytes(originalPath);
                     var op = TinyhandSerializer.DeserializeFromUtf8<LPOptions>(utf8);
                     if (op != null)
                     {
                         options = op;
-                        Console.WriteLine(HashedString.Get(Hashed.Success.Loaded, options.OptionsPath));
+                        Console.WriteLine(HashedString.Get(Hashed.Success.Loaded, originalPath));
                     }
                 }
                 catch
                 {
-                    Console.WriteLine(HashedString.Get(Hashed.Error.Load, options.OptionsPath));
+                    Console.WriteLine(HashedString.Get(Hashed.Error.Load, originalPath));
                 }
             }
 
@@ -125,11 +127,14 @@ public class Control
             var control = this.ServiceProvider.GetRequiredService<Control>();
             try
             {
+                // Logger
+                Logger.Configure(control.LPBase);
+                Logger.Default.Information("LP Start");
+
                 // Create optional instances
                 this.CreateInstances();
 
                 // Configure
-                Logger.Configure(control.LPBase);
                 this.SendPrepare(new());
             }
             catch (PanicException)
@@ -229,7 +234,7 @@ public class Control
             throw new PanicException();
         }
 
-        await this.LoadKeyVaultAsync().ConfigureAwait(false);
+        // tempcode await this.LoadKeyVaultAsync().ConfigureAwait(false);
         await Radio.SendAsync(new Message.LoadAsync()).ConfigureAwait(false);
     }
 
@@ -250,16 +255,17 @@ public class Control
 
     public async Task StartAsync()
     {
-        Logger.Default.Information("LP Start");
         Logger.Default.Information($"Console: {this.LPBase.IsConsole}, Root directory: {this.LPBase.RootDirectory}");
         Logger.Default.Information(this.LPBase.ToString());
-        Logger.Console.Information("Press Enter key to switch to console mode.");
-        Logger.Console.Information("Press Ctrl+C to exit.");
 
         await Radio.SendAsync(new Message.StartAsync(this.Core)).ConfigureAwait(false);
         this.BigMachine.Start();
 
-        Logger.Default.Information("Running");
+        Logger.Default.Information($"Test: {this.LPBase.LPOptions.NetsphereOptions.EnableTestFeatures}");
+        Logger.Default.Information($"Alternative: {this.LPBase.LPOptions.NetsphereOptions.EnableAlternative}");
+        Logger.Console.Information("Press Enter key to switch to console mode.");
+        Logger.Console.Information("Press Ctrl+C to exit.");
+        Logger.Console.Information("Running");
     }
 
     public async Task StopAsync()

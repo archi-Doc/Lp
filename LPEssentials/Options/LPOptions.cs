@@ -9,7 +9,9 @@ namespace LP.Options;
 [TinyhandObject(ImplicitKeyAsName = true)]
 public partial record LPOptions
 {
-    [SimpleOption("load", description: "Options path")]
+    public const string DefaultOptionsName = "Options.tinyhand";
+
+    [SimpleOption("loadoptions", description: "Options path")]
     public string OptionsPath { get; init; } = string.Empty;
 
     [SimpleOption("development", description: "Development")]
