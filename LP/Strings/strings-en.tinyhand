@@ -17,7 +17,7 @@ Error = {
 
 Services = {
     KeyVault = {
-        AskNew = "Do you want to create a new keyvault?"
+        AskNew = "Do you want to create a new KeyVault?"
         EnterPassword = "Enter password"
     }
 }
