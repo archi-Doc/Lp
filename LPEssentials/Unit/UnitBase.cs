@@ -1,8 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Arc.Threading;
-
-namespace LP.Unit;
+namespace Arc.Unit;
 
 /// <summary>
 /// Base class of Unit.<br/>
@@ -31,14 +29,6 @@ public abstract class UnitBase
             radio.OpenAsync<UnitMessage.SaveAsync>(x => serializable.SaveAsync(x), this);
         }
     }
-
-    /*public UnitBase(BuiltUnit? builtUnit)
-    {
-        this.BuiltUnit = builtUnit;
-        this.BuiltUnit?.AddInternal(this);
-    }*/
-
-    // public BuiltUnit? BuiltUnit { get; }
 }
 
 public interface IUnitPreparable

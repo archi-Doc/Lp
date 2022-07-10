@@ -3,7 +3,7 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace LP.Unit;
+namespace Arc.Unit;
 
 public class UnitContext
 {

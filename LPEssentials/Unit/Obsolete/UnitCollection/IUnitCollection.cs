@@ -2,7 +2,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 
-namespace LP.Unit.Obsolete;
+namespace Arc.Unit.Obsolete;
 
 public interface IUnitCollection : IList<UnitDescriptor>, ICollection<UnitDescriptor>, IEnumerable<UnitDescriptor>
 {

@@ -5,14 +5,7 @@ using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
-namespace LP.Unit;
-
-public enum AddCommandTo
-{
-    Root,
-    Current,
-    None,
-}
+namespace Arc.Unit;
 
 /// <summary>
 /// Builder class of unit, for customizing dependencies.<br/>

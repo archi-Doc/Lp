@@ -3,7 +3,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace LP.Unit.Obsolete;
+namespace Arc.Unit.Obsolete;
 
 public class CommandCollection : ICommandCollection
 {

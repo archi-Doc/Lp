@@ -4,7 +4,7 @@ using Arc.Threading;
 using CrossChannel;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace LP.Unit;
+namespace Arc.Unit;
 
 public class BuiltUnit : UnitBase
 {

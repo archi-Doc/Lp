@@ -2,7 +2,6 @@
 
 using System;
 using LP.Subcommands.Dump;
-using LP.Unit;
 using SimpleCommandLine;
 
 namespace LP.Subcommands;

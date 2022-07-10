@@ -4,7 +4,7 @@ using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
-namespace LP.Unit;
+namespace Arc.Unit;
 
 public class UnitBuilderContext
 {
@@ -63,9 +63,6 @@ public class UnitBuilderContext
         var group = this.GetCommandGroup(parentCommand);
         return group.AddCommand(commandType);
     }
-
-    /*public void AddUnit<TUnit>(bool createInstance = true)
-        where TUnit : UnitBase => this.UnitCollection.AddUnit<TUnit>(createInstance);*/
 
     public void AddSingleton<TService>()
         where TService : class => this.ServiceCollection.AddSingleton<TService>();

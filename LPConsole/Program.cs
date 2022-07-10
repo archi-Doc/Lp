@@ -1,11 +1,15 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Arc.Threading;
-using LP;
+#pragma warning disable SA1210 // Using directives should be ordered alphabetically by namespace
+
+global using System;
+global using System.Threading.Tasks;
+global using Arc.Crypto;
+global using Arc.Threading;
+global using Arc.Unit;
+global using LP;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using SimpleCommandLine;
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously

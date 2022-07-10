@@ -6,6 +6,7 @@ global using System;
 global using System.Net;
 global using System.Threading.Tasks;
 global using Arc.Threading;
+global using Arc.Unit;
 global using CrossChannel;
 global using LP;
 global using LP.Block;
@@ -17,7 +18,6 @@ using System.ComponentModel;
 using System.Reflection.Metadata;
 using System.Security.Cryptography;
 using BigMachines;
-using LP.Unit;
 using SimpleCommandLine;
 
 namespace ZenItz;

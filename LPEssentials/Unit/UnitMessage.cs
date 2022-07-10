@@ -2,7 +2,7 @@
 
 using Arc.Threading;
 
-namespace LP.Unit;
+namespace Arc.Unit;
 
 public static class UnitMessage
 {// Create instance -> Prepare -> LoadAsync -> RunAsync -> TerminateAsync, SaveAsync (after Configure)

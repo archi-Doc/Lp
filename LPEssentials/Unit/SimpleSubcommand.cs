@@ -3,7 +3,7 @@
 using System;
 using SimpleCommandLine;
 
-namespace LP.Unit;
+namespace Arc.Unit;
 
 public abstract class SimpleSubcommand<TCommand> : ISimpleCommandAsync
     where TCommand : SimpleSubcommand<TCommand>
@@ -40,7 +40,7 @@ public abstract class SimpleSubcommand<TCommand> : ISimpleCommandAsync
     public async Task Run(string[] args)
     {
         if (args.Length == 0 && this.defaultArgument != null)
-        {// default argument
+        {// Default argument
             args = new string[] { this.defaultArgument, };
         }
 
