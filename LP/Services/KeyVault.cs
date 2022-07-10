@@ -1,11 +1,25 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
 using LP.Services;
 
 namespace LP;
 
 public class KeyVault
 {
+    private class Item
+    {
+        public Item(string name, byte[] decrypted)
+        {
+            this.Name = name;
+            this.Decrypted = decrypted;
+        }
+
+        public string Name { get; set; } = string.Empty;
+
+        public byte[] Decrypted { get; set; }
+    }
+
     public KeyVault(IUserInterfaceService userInterfaceService)
     {
         this.UserInterfaceService = userInterfaceService;
@@ -50,35 +64,82 @@ public class KeyVault
             if (PasswordEncrypt.TryDecrypt(items[i]!.Encrypted, string.Empty, out var decrypted))
             {// No password
                 // keyVault.AddInternal(x.Name, decrypted);
-                items[i] = null;
             }
             else
             {// Password required.
                 if (password == null)
                 {// Enter password
-                    var results = await this.UserInterfaceService.RequestString(Hashed.Dialog.Password.Enter);
-                    if (results != null)
+RetryPassword:
+                    var results = await this.UserInterfaceService.RequestPassword(Hashed.KeyVault.EnterPassword);
+                    if (results == null)
                     {
+                        throw new PanicException();
+                    }
+
+                    if (PasswordEncrypt.TryDecrypt(items[i]!.Encrypted, results, out decrypted))
+                    {// Success
                         password = results;
+                    }
+                    else
+                    {// Failure
+                        await this.UserInterfaceService.Notify(UserInterfaceNotifyLevel.Warning, Hashed.Dialog.Password.NotMatch);
+                        goto RetryPassword;
+                    }
+                }
+                else
+                {// Password already entered.
+                    if (PasswordEncrypt.TryDecrypt(items[i]!.Encrypted, password, out decrypted))
+                    {// Success
+                    }
+                    else
+                    {// Failure
+                        await this.UserInterfaceService.Notify(UserInterfaceNotifyLevel.Fatal, Hashed.Dialog.Password.NotMatch);
+                        throw new PanicException();
                     }
                 }
             }
-        }
 
-        if (items.Length > 0)
-        {
+            // item[i], decrypted
+            this.TryAdd(items[i]!.Name, decrypted.ToArray());
         }
-
-        this.Items.AddRange(items);
 
         return true;
+    }
+
+    public bool TryAdd(string name, byte[] decrypted)
+    {
+        lock (this.syncObject)
+        {
+            if (this.items.Find(x => x.Name == name) != null)
+            {// Already exists.
+                return false;
+            }
+
+            this.items.Add(new(name, decrypted));
+            return true;
+        }
+    }
+
+    public bool TryGet(string name, [MaybeNullWhen(false)] out byte[] decrypted)
+    {
+        lock (this.syncObject)
+        {
+            if (this.items.Find(x => x.Name == name) != null)
+            {// Already exists.
+                return false;
+            }
+
+            this.items.Add(new(name, decrypted));
+            return true;
+        }
     }
 
     public async Task SaveAsync(string path)
     {
         try
         {
-            var bytes = TinyhandSerializer.SerializeToUtf8(this.Items);
+            var items = this.GetEncrypted();
+            var bytes = TinyhandSerializer.SerializeToUtf8(items);
             await File.WriteAllBytesAsync(path, bytes);
         }
         catch
@@ -88,16 +149,38 @@ public class KeyVault
 
     public void Create(string password)
     {
-        this.password = password;
+        lock (this.syncObject)
+        {
+            this.Created = true;
+            this.password = password;
+            this.items.Clear();
+        }
     }
 
     public IUserInterfaceService UserInterfaceService { get; }
 
-    public bool NewKeyVault { get; set; } = false;
+    public bool Created { get; private set; } = false;
 
-    public List<KeyVaultItem> Items { get; private set; } = new();
+    private KeyVaultItem[] GetEncrypted()
+    {
+        KeyVaultItem[] array;
+        var hint = PasswordEncrypt.GetPasswordHint(this.password);
+        lock (this.syncObject)
+        {
+            array = new KeyVaultItem[this.items.Count];
+            for (var i = 0; i < this.items.Count; i++)
+            {
+                var encrypted = PasswordEncrypt.Encrypt(this.items[i].Decrypted, this.password);
+                array[i] = new(this.items[i].Name, hint, encrypted);
+            }
+        }
 
+        return array;
+    }
+
+    private object syncObject = new();
     private string password = string.Empty;
+    private List<Item> items = new();
 }
 
 [TinyhandObject]
@@ -110,9 +193,6 @@ public partial class KeyVaultItem
     public KeyVaultItem(string name, int hint, byte[] encrypted)
     {
         this.Name = name;
-        // Span<byte> span = stackalloc byte[4];
-        // BitConverter.TryWriteBytes(span, hint);
-        // this.Hint = span.Slice(0, HintLength).ToArray();
         this.Hint = (ushort)hint;
         this.Encrypted = encrypted;
     }

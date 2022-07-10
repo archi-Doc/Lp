@@ -6,6 +6,8 @@ Dialog = {
     Password = {
         Enter = "Enter password"
         Confirm = "Confirm password"
+        EmptyWarning = "Empty password should not be used."
+        EmptyConfirm = "Are you sure you want to continue without password?"
         NotMatch = "Password didn't match, try again."
     }
 }
@@ -23,7 +25,7 @@ Error = {
 
 KeyVault = {
     AskNew = "Do you want to create new KeyVault?"
-    EnterPassword = "Enter password for new KeyVault"
+    EnterPassword = "Enter password for KeyVault"
 }
 
 Subcommands = {

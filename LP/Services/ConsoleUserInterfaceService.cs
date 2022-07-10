@@ -4,6 +4,35 @@ namespace LP.Services;
 
 public class ConsoleUserInterfaceService : IUserInterfaceService
 {
+    public async Task Notify(UserInterfaceNotifyLevel level, string message)
+    {
+        switch (level)
+        {
+            case UserInterfaceNotifyLevel.Debug:
+                Logger.Default.Debug(message);
+                break;
+
+            case UserInterfaceNotifyLevel.Information:
+                Logger.Default.Information(message);
+                break;
+
+            case UserInterfaceNotifyLevel.Warning:
+                Logger.Default.Warning(message);
+                break;
+
+            case UserInterfaceNotifyLevel.Error:
+                Logger.Default.Error(message);
+                break;
+
+            case UserInterfaceNotifyLevel.Fatal:
+                Logger.Default.Fatal(message);
+                break;
+
+            default:
+                break;
+        }
+    }
+
     public async Task<string?> RequestPassword(string? description)
     {
         if (!string.IsNullOrEmpty(description))

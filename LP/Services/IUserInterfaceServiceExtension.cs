@@ -31,6 +31,15 @@ public static class IUserInterfaceServiceExtention
     public static Task<string?> RequestPassword(this IUserInterfaceService viewService, ulong hash, object obj1, object obj2)
         => viewService.RequestPassword(HashedString.Get(hash, obj1, obj2));
 
+    public static Task Notify(this IUserInterfaceService viewService, UserInterfaceNotifyLevel level, ulong hash)
+        => viewService.Notify(level, HashedString.Get(hash));
+
+    public static Task Notify(this IUserInterfaceService viewService, UserInterfaceNotifyLevel level, ulong hash, object obj1)
+        => viewService.Notify(level, HashedString.Get(hash, obj1));
+
+    public static Task Notify(this IUserInterfaceService viewService, UserInterfaceNotifyLevel level, ulong hash, object obj1, object obj2)
+        => viewService.Notify(level, HashedString.Get(hash, obj1, obj2));
+
     public static async Task<string?> RequestPasswordAndConfirm(this IUserInterfaceService viewService, ulong hash, ulong hash2)
     {
         string? password;
@@ -43,6 +52,15 @@ public static class IUserInterfaceServiceExtention
             {
                 return null;
             }
+            else if (password == string.Empty)
+            {
+                await viewService.Notify(UserInterfaceNotifyLevel.Warning, Hashed.Dialog.Password.EmptyWarning);
+                var reply = await viewService.RequestYesOrNo(Hashed.Dialog.Password.EmptyConfirm);
+                if (reply != false)
+                {// Empty password or abort
+                    return password;
+                }
+            }
         }
         while (password == string.Empty);
 
@@ -53,12 +71,9 @@ public static class IUserInterfaceServiceExtention
             {
                 return null;
             }
-            else if (confirm == string.Empty)
-            {
-            }
             else if (password != confirm)
             {
-                Logger.Default.Warning(Hashed.Dialog.Password.NotMatch);
+                await viewService.Notify(UserInterfaceNotifyLevel.Warning, Hashed.Dialog.Password.NotMatch);
             }
             else
             {
