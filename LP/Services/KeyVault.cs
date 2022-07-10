@@ -69,12 +69,28 @@ public class KeyVault
         {
         }
 
+        this.Items.AddRange(items);
+
         return true;
+    }
+
+    public async Task SaveAsync(string path)
+    {
+        try
+        {
+            var bytes = TinyhandSerializer.SerializeToUtf8(this.Items);
+            await File.WriteAllBytesAsync(path, bytes);
+        }
+        catch
+        {
+        }
     }
 
     public IUserInterfaceService UserInterfaceService { get; }
 
     public bool NewKeyVault { get; set; } = false;
+
+    public List<KeyVaultItem> Items { get; private set; } = new();
 }
 
 [TinyhandObject]

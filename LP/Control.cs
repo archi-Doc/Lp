@@ -271,8 +271,10 @@ public class Control
     {
         Directory.CreateDirectory(this.LPBase.DataDirectory);
 
+        await this.KeyVault.SaveAsync(this.LPBase.LPOptions.KeyVault);
         await this.NetControl.EssentialNode.SaveAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
         await this.ZenControl.Itz.SaveAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile), Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup));
+
         await unit.SendSaveAsync(new());
     }
 
