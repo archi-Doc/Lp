@@ -2,6 +2,12 @@
 
 Dialog = {
     ConfirmExit = "Are you sure you want to exit?"
+    
+    Password = {
+        Enter = "Enter password"
+        Confirm = "Confirm password"
+        NotMatch = "Password didn't match, try again."
+    }
 }
 
 Success = {
@@ -15,11 +21,9 @@ Error = {
     Deserialize = "Could not deserialize '{0}'"
 }
 
-Services = {
-    KeyVault = {
-        AskNew = "Do you want to create a new KeyVault?"
-        EnterPassword = "Enter password"
-    }
+KeyVault = {
+    AskNew = "Do you want to create new KeyVault?"
+    EnterPassword = "Enter password for new KeyVault"
 }
 
 Subcommands = {

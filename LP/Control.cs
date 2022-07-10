@@ -454,14 +454,20 @@ public class Control
         var result = await this.KeyVault.LoadAsync(this.LPBase.LPOptions.KeyVault);
         if (!result)
         {
-            var reply = await this.UserInterfaceService.RequestYesOrNo(Hashed.Services.KeyVault.AskNew);
+            var reply = await this.UserInterfaceService.RequestYesOrNo(Hashed.KeyVault.AskNew);
             if (reply != true)
             {// No
                 throw new PanicException();
             }
 
             // New KeyVault
-            this.KeyVault.NewKeyVault = true;
+            var password = await this.UserInterfaceService.RequestPasswordAndConfirm(Hashed.KeyVault.EnterPassword, Hashed.Dialog.Password.Confirm);
+            if (password == null)
+            {
+                throw new PanicException();
+            }
+
+            this.KeyVault.Create(password);
         }
     }
 }

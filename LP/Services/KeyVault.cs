@@ -56,7 +56,7 @@ public class KeyVault
             {// Password required.
                 if (password == null)
                 {// Enter password
-                    var results = await this.UserInterfaceService.RequestString(Hashed.Services.KeyVault.EnterPassword);
+                    var results = await this.UserInterfaceService.RequestString(Hashed.Dialog.Password.Enter);
                     if (results != null)
                     {
                         password = results;
@@ -86,11 +86,18 @@ public class KeyVault
         }
     }
 
+    public void Create(string password)
+    {
+        this.password = password;
+    }
+
     public IUserInterfaceService UserInterfaceService { get; }
 
     public bool NewKeyVault { get; set; } = false;
 
     public List<KeyVaultItem> Items { get; private set; } = new();
+
+    private string password = string.Empty;
 }
 
 [TinyhandObject]
