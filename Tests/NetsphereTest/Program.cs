@@ -90,7 +90,7 @@ public class Program
 
         var unit = builder.Build();
         var param = new NetControl.Unit.Param(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);
-        unit.RunStandalone(param);
+        await unit.RunStandalone(param);
 
         // Logger
         if (options.EnableLogger)

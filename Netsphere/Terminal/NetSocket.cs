@@ -7,7 +7,6 @@ using System.Net.Sockets;
 using System.Threading;
 using Arc.Threading;
 using LP.Unit;
-using LPEssentials.Radio;
 
 namespace Netsphere;
 
@@ -165,7 +164,7 @@ public class NetSocket
         return true;
     }
 
-    public void Stop(Message.StopAsync message)
+    public void Stop()
     {
         this.recvCore?.Dispose();
         this.sendCore?.Dispose();

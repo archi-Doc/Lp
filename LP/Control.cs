@@ -13,7 +13,6 @@ global using LP;
 global using Tinyhand;
 using LP.Services;
 using LP.Unit;
-using LPEssentials.Radio;
 using Netsphere;
 using SimpleCommandLine;
 using ZenItz;
@@ -152,6 +151,7 @@ public class Control
             try
             {// Load
                 await control.LoadAsync();
+                await this.SendLoadAsync(new());
             }
             catch (PanicException)
             {
@@ -162,21 +162,48 @@ public class Control
 
             try
             {// Start, Main loop
-                await control.StartAsync();
+                control.BigMachine.Start();
+                await this.RunAsync(control);
+                control.ShowInformation();
 
                 control.MainLoop();
 
                 await control.StopAsync();
+                await this.TerminateAsync(control);
                 await control.SaveAsync();
+                await this.SaveAsync(control);
                 control.Terminate(false);
             }
             catch (PanicException)
             {
                 await control.StopAsync();
+                await this.TerminateAsync(control);
                 await control.SaveAsync();
+                await this.SaveAsync(control);
                 control.Terminate(true);
                 return;
             }
+        }
+
+        private Task RunAsync(Control control)
+        {
+            return this.SendRunAsync(new(control.Core));
+        }
+
+        private Task TerminateAsync(Control control)
+        {
+            return this.SendTerminateAsync(new());
+        }
+
+        private Task LoadAsync(Control control)
+        {
+            return this.SendLoadAsync(new());
+        }
+
+        private Task SaveAsync(Control control)
+        {
+            Directory.CreateDirectory(control.LPBase.DataDirectory);
+            return this.SendSaveAsync(new());
         }
 
         private LPBase lpBase = default!;
@@ -258,9 +285,6 @@ public class Control
         {
             throw new PanicException();
         }
-
-        // tempcode await this.LoadKeyVaultAsync().ConfigureAwait(false);
-        await Radio.SendAsync(new Message.LoadAsync()).ConfigureAwait(false);
     }
 
     public async Task AbortAsync()
@@ -270,22 +294,14 @@ public class Control
 
     public async Task SaveAsync()
     {
-        Directory.CreateDirectory(this.LPBase.DataDirectory);
-
         await this.NetControl.EssentialNode.SaveAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
         await this.ZenControl.Itz.SaveAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile), Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup));
-
-        await Radio.SendAsync(new Message.SaveAsync()).ConfigureAwait(false);
     }
 
-    public async Task StartAsync()
+    public void ShowInformation()
     {
         Logger.Default.Information($"Console: {this.LPBase.IsConsole}, Root directory: {this.LPBase.RootDirectory}");
         Logger.Default.Information(this.LPBase.ToString());
-
-        await Radio.SendAsync(new Message.StartAsync(this.Core)).ConfigureAwait(false);
-        this.BigMachine.Start();
-
         Logger.Default.Information($"Test: {this.LPBase.LPOptions.NetsphereOptions.EnableTestFeatures}");
         Logger.Default.Information($"Alternative: {this.LPBase.LPOptions.NetsphereOptions.EnableAlternative}");
         Logger.Console.Information("Press Enter key to switch to console mode.");
@@ -298,8 +314,6 @@ public class Control
         Logger.Default.Information("Termination process initiated");
 
         await this.ZenControl.Zen.StopZen(new(Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenBackup), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryBackup)));
-
-        await Radio.SendAsync(new Message.StopAsync()).ConfigureAwait(false);
     }
 
     public void Terminate(bool abort)

@@ -3,7 +3,6 @@
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using static LP.Unit.Sample.TestClass;
 
 namespace LP.Unit;
 

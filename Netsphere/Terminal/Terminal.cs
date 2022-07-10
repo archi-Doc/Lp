@@ -8,12 +8,12 @@ using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
-using LPEssentials.Radio;
+using LP.Unit;
 using Serilog;
 
 namespace Netsphere;
 
-public class Terminal
+public class Terminal : UnitBase, IUnitExecutable
 {
     public delegate Task InvokeServerDelegate(ServerTerminal terminal);
 
@@ -99,18 +99,15 @@ public class Terminal
         }
     }
 
-    public Terminal(NetBase netBase, NetStatus netStatus)
+    public Terminal(UnitContext context, NetBase netBase, NetStatus netStatus)
+        : base(context)
     {
         this.NetBase = netBase;
         this.NetStatus = netStatus;
-
-        Radio.OpenAsync<Message.StartAsync>(this.Start);
-        Radio.OpenAsync<Message.StopAsync>(this.Stop);
-
         this.NetSocket = new(this);
     }
 
-    public async Task Start(Message.StartAsync message)
+    public async Task RunAsync(UnitMessage.RunAsync message)
     {
         this.Core = new ThreadCoreGroup(message.ParentCore);
 
@@ -122,8 +119,9 @@ public class Terminal
         this.NetSocket.Start(this.Core, this.Port);
     }
 
-    public async Task Stop(Message.StopAsync message)
+    public async Task TerminateAsync(UnitMessage.TerminateAsync message)
     {
+        this.NetSocket.Stop();
         this.Core?.Dispose();
         this.Core = null;
     }

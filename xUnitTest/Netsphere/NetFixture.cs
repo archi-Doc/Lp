@@ -33,7 +33,7 @@ public class NetFixture : IDisposable
 
         var unit = builder.Build();
         var param = new NetControl.Unit.Param(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);
-        unit.RunStandalone(param);
+        unit.RunStandalone(param).Wait();
 
         this.NetControl = unit.ServiceProvider.GetRequiredService<NetControl>();
     }
