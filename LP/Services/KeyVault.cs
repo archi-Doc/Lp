@@ -51,7 +51,7 @@ public partial class KeyVault
         {
         }
 
-        if (items == null)
+        if (items == null || items.Length == 0)
         {
             Logger.Default.Error(HashedString.Get(Hashed.Error.Deserialize, path));
             return false;
