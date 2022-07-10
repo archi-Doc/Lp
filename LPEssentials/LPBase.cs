@@ -23,8 +23,6 @@ public enum LPMode
 
 public class LPBase
 {
-    public const string KeyVaultFilename = "KeyVault.tinyhand";
-
     public LPBase()
     {
         TimeCorrection.Start();
@@ -42,7 +40,9 @@ public class LPBase
 
     public LPOptions LPOptions { get; private set; } = default!;
 
-    public string KeyVaultPath { get; private set; } = default!;
+    // public string GetRootPath(string path, string defaultFilename) => this.GetPath(this.RootDirectory, path, defaultFilename);
+
+    public string GetDataPath(string path, string defaultFilename) => this.GetPath(this.DataDirectory, path, defaultFilename);
 
     public void SetParameter(LPOptions options, bool isConsole, string defaultMode)
     {
@@ -80,20 +80,22 @@ public class LPBase
         {
             this.NodeName = System.Environment.OSVersion.ToString();
         }
-
-        // KeyVault path
-        if (Path.IsPathRooted(this.LPOptions.KeyVault))
-        {
-            this.KeyVaultPath = this.LPOptions.KeyVault;
-        }
-        else
-        {
-            this.KeyVaultPath = Path.Combine(this.DataDirectory, string.IsNullOrEmpty(this.LPOptions.KeyVault) ? KeyVaultFilename : this.LPOptions.KeyVault);
-        }
     }
 
     public override string ToString()
     {
         return $"Mode: {this.Mode}, {this.LPOptions.ToString()}";
+    }
+
+    private string GetPath(string directory, string path, string defaultFilename)
+    {
+        if (Path.IsPathRooted(path))
+        {
+            return path;
+        }
+        else
+        {
+            return Path.Combine(directory, string.IsNullOrEmpty(path) ? defaultFilename : path);
+        }
     }
 }
