@@ -13,82 +13,18 @@ using Tinyhand;
 
 namespace LPConsole;
 
-[SimpleCommand("createkey")]
-public class CreateKeyCommand : ISimpleCommandAsync<CreateKeyOptions>
+[SimpleCommand("temp", description: "Template command")]
+public class TempCommand : ISimpleCommandAsync<TempOptions>
 {
-    public async Task Run(CreateKeyOptions options, string[] args)
+    public async Task Run(TempOptions options, string[] args)
     {
-        Console.WriteLine($"Create Key: {options.Type}");
-
-        if (options.Type == KeyType.Node)
-        {
-            await this.CreateNodeKey(options, args);
-        }
-    }
-
-    public async Task CreateNodeKey(CreateKeyOptions options, string[] args)
-    {
-        if (string.IsNullOrEmpty(options.Filename))
-        {
-            options.Filename = NodePrivateKey.Filename;
-        }
-
-        Console.WriteLine($"Filename: {options.Filename}");
-
-        Console.WriteLine();
-
-        Console.Write("Enter key name: ");
-        var name = Console.ReadLine();
-        if (name == null)
-        {
-            goto Abort;
-        }
-
-        Console.Write("Enter password: ");
-        var password = Console.ReadLine();
-        if (password == null)
-        {
-            goto Abort;
-        }
-
-        var nodeKey = NodePrivateKey.Create(name);
-        var data = TinyhandSerializer.Serialize(nodeKey);
-        var encrypted = PasswordEncrypt.Encrypt(data, password);
-
-        try
-        {
-            await File.WriteAllBytesAsync(options.Filename, encrypted);
-        }
-        catch
-        {
-        }
-
-        Console.WriteLine();
-        Console.WriteLine($"{options.Filename} was successfully created.");
-
-        return;
-
-Abort:
-        Console.WriteLine();
-        Console.WriteLine("Aborted.");
+        Console.WriteLine("Template command:");
+        Console.WriteLine($"{options.ToString()}");
     }
 }
 
-public record CreateKeyOptions
+public record TempOptions
 {
-    [SimpleOption("type", description: "Key type (node)")]
-    public KeyType Type { get; init; } = KeyType.Node;
-
-    // [SimpleOption("password", description: "Password", Required = true)]
-    // public string Password { get; init; } = string.Empty;
-
-    [SimpleOption("file", description: "File name")]
-    public string Filename { get; internal set; } = string.Empty;
-
-    public override string ToString() => $"";
-}
-
-public enum KeyType
-{
-    Node,
+    [SimpleOption("name", description: "Name")]
+    public string Name { get; init; } = string.Empty;
 }

@@ -282,11 +282,11 @@ public class Control
     {
         this.BigMachine.Start();
         await unit.SendRunAsync(new(this.Core));
+        Console.WriteLine();
 
         this.ShowInformation();
         this.LPBase.LPOptions.NetsphereOptions.ShowInformation();
 
-        Console.WriteLine();
         Logger.Console.Information("Press Enter key to switch to console mode.");
         Logger.Console.Information("Press Ctrl+C to exit.");
         Logger.Console.Information("Running");

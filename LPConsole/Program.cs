@@ -42,7 +42,7 @@ public class Program
             {
                 // Subcommand
                 context.AddCommand(typeof(LPConsoleCommand));
-                context.AddCommand(typeof(CreateKeyCommand));
+                context.AddCommand(typeof(TempCommand));
 
                 // NetService
 
