@@ -62,7 +62,7 @@ public class NetBase : UnitBase, IUnitPreparable
 
     public LogFlag Log { get; } = new();
 
-    public void Initialize(bool enableServer, string nodeName, NetsphereOptions netsphereOptions)
+    public void SetParameter(bool enableServer, string nodeName, NetsphereOptions netsphereOptions)
     {
         this.EnableServer = enableServer;
         this.NodeName = nodeName;

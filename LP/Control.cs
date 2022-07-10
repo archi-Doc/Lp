@@ -39,6 +39,7 @@ public class Control
                 context.AddSingleton<Control>();
                 context.AddSingleton<LPBase>();
                 context.ServiceCollection.TryAddSingleton<IUserInterfaceService, ConsoleUserInterfaceService>();
+                context.AddSingleton<KeyVault>();
 
                 // RPC / Services
                 context.AddTransient<Services.BenchmarkServiceImpl>();
@@ -119,11 +120,11 @@ public class Control
 
             // LPBase
             this.lpBase = this.ServiceProvider.GetRequiredService<LPBase>();
-            this.lpBase.Initialize(options, true, "relay");
+            this.lpBase.SetParameter(options, true, "relay");
 
             // NetBase
             this.netBase = this.ServiceProvider.GetRequiredService<NetBase>();
-            this.netBase.Initialize(true, string.Empty, options.NetsphereOptions);
+            this.netBase.SetParameter(true, string.Empty, options.NetsphereOptions);
             this.netBase.AllowUnsafeConnection = true; // betacode
 
             var control = this.ServiceProvider.GetRequiredService<Control>();
@@ -132,6 +133,9 @@ public class Control
                 // Logger
                 Logger.Configure(control.LPBase);
                 Logger.Default.Information("LP Start");
+
+                // KeyVault
+                await control.LoadKeyVaultAsync();
 
                 // Create optional instances
                 this.CreateInstances();
@@ -205,7 +209,7 @@ public class Control
         }
     }
 
-    public Control(IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl)
+    public Control(IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl, KeyVault keyVault)
     {
         this.UserInterfaceService = userInterfaceService;
         this.LPBase = lpBase;
@@ -215,6 +219,7 @@ public class Control
         this.ZenControl = zenControl;
         this.ZenControl.Zen.IO.SetRootDirectory(this.LPBase.RootDirectory);
         this.ZenControl.Zen.SetDelegate(ObjectToMemoryOwner, MemoryOwnerToObject);
+        this.KeyVault = keyVault;
 
         this.Core = new(ThreadCore.Root);
         this.BigMachine.Core.ChangeParent(this.Core);
@@ -421,6 +426,8 @@ public class Control
 
     public ZenControl ZenControl { get; }
 
+    public KeyVault KeyVault { get; }
+
     private static SimpleParser subcommandParser = default!;
 
     private bool SafeKeyAvailable
@@ -438,21 +445,19 @@ public class Control
         }
     }
 
-    private async Task<bool> LoadKeyVaultAsync()
+    private async Task LoadKeyVaultAsync()
     {
-        var st = await this.UserInterfaceService.RequestString("Enter");
-        Logger.Default.Information(st ?? string.Empty);
-
-        var keyVault = await KeyVault.Load(this.UserInterfaceService, this.LPBase.LPOptions.KeyVault);
-        if (keyVault == null)
+        var result = await this.KeyVault.LoadAsync(this.LPBase.LPOptions.KeyVault);
+        if (!result)
         {
             var reply = await this.UserInterfaceService.RequestYesOrNo(Hashed.Services.KeyVault.AskNew);
-            if (reply == false)
+            if (reply != true)
             {// No
                 throw new PanicException();
             }
-        }
 
-        return true;
+            // New KeyVault
+            this.KeyVault.NewKeyVault = true;
+        }
     }
 }
