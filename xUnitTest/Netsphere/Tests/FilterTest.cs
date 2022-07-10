@@ -18,6 +18,8 @@ public class FilterTest
     {
         using (var terminal = this.NetControl.Terminal.Create(NodeInformation.Alternative))
         {
+            terminal.SetMaximumResponseTime(NetFixture.MaximumResponseTime);
+
             var service = terminal.GetService<IFilterTestService>();
             var task = await service.NoFilter(1).ResponseAsync;
             task.Result.Is(NetResult.Success);

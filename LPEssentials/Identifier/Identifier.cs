@@ -22,7 +22,7 @@ public readonly partial struct Identifier : IEquatable<Identifier>, IComparable<
     public static Identifier FromReadOnlySpan(ReadOnlySpan<byte> input)
     {
         var hash = Hash.ObjectPool.Get();
-        var identifier = hash.GetIdentifier(input);
+        var identifier = new Identifier(hash.GetHashUInt64(input)); // hash.GetIdentifier(input);
         Hash.ObjectPool.Return(hash);
         return identifier;
     }

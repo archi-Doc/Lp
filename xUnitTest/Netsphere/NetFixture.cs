@@ -14,6 +14,8 @@ public class NetFixtureCollection : ICollectionFixture<NetFixture>
 
 public class NetFixture : IDisposable
 {
+    public const int MaximumResponseTime = 2000;
+
     public NetFixture()
     {
         var builder = new NetControl.Builder()

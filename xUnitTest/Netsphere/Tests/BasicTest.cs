@@ -18,7 +18,8 @@ public class NodeTest
     {
         using (var terminal = this.NetControl.Terminal.Create(NodeInformation.Alternative))
         {
-            // terminal.SetMaximumResponseTime(3000);
+            terminal.SetMaximumResponseTime(NetFixture.MaximumResponseTime);
+
             var basicService = terminal.GetService<IBasicService>();
             var task = await basicService.SendInt(1).ResponseAsync;
             task.Result.Is(NetResult.Success);
