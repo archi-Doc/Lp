@@ -81,6 +81,11 @@ public class NetBase : UnitBase, IUnitPreparable
         this.NodePrivateEcdh = NodeKey.FromPrivateKey(this.NodePrivateKey) ?? throw new InvalidDataException();
     }
 
+    public byte[] SerializeNodeKey()
+    {
+        return TinyhandSerializer.Serialize(this.NodePrivateKey);
+    }
+
     public override string ToString() => $"NetBase: {this.NodeName}";
 
     internal NodePrivateKey NodePrivateKey { get; private set; } = default!;

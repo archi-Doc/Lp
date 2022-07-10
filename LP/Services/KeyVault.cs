@@ -83,6 +83,7 @@ RetryPassword:
                     if (PasswordEncrypt.TryDecrypt(items[i]!.Encrypted, results, out decrypted))
                     {// Success
                         password = results;
+                        this.password = password;
                     }
                     else
                     {// Failure
@@ -97,7 +98,7 @@ RetryPassword:
                     }
                     else
                     {// Failure
-                        await this.UserInterfaceService.Notify(UserInterfaceNotifyLevel.Fatal, Hashed.Dialog.Password.NotMatch);
+                        await this.UserInterfaceService.Notify(UserInterfaceNotifyLevel.Fatal, Hashed.KeyVault.NoRestore, items[i]!.Name);
                         throw new PanicException();
                     }
                 }
@@ -143,7 +144,7 @@ RetryPassword:
         lock (this.syncObject)
         {
             if (!this.items.SetChain.TryGetValue(name, out var item))
-            {// Already exists.
+            {// Not found
                 decrypted = null;
                 return false;
             }
@@ -151,6 +152,48 @@ RetryPassword:
             decrypted = item.Decrypted;
             return true;
         }
+    }
+
+    public bool TryGetAndDeserialize<T>(string name, [MaybeNullWhen(false)] out T obj)
+    {
+        if (!this.TryGet(name, out var decrypted))
+        {
+            obj = default;
+            return false;
+        }
+
+        obj = TinyhandSerializer.Deserialize<T>(decrypted);
+        return obj != null;
+    }
+
+    public string[] GetNames()
+    {
+        lock (this.syncObject)
+        {
+            return this.items.ListChain.Select(x => x.Name).ToArray();
+        }
+    }
+
+    public bool CheckPassword(string password)
+    {
+        lock (this.syncObject)
+        {
+            return this.password == password;
+        }
+    }
+
+    public bool ChangePassword(string currentPassword, string newPassword)
+    {
+        lock (this.syncObject)
+        {
+            if (this.password == currentPassword)
+            {
+                this.password = newPassword;
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public async Task SaveAsync(string path)
@@ -213,7 +256,7 @@ public partial class KeyVaultItem
     public KeyVaultItem(string name, int hint, byte[] encrypted)
     {
         this.Name = name;
-        this.Hint = (ushort)hint;
+        this.Hint = (byte)hint;
         this.Encrypted = encrypted;
     }
 
@@ -221,7 +264,7 @@ public partial class KeyVaultItem
     public string Name { get; protected set; } = string.Empty;
 
     [KeyAsName]
-    public ushort Hint { get; protected set; }
+    public byte Hint { get; protected set; }
 
     [KeyAsName]
     public byte[] Encrypted { get; protected set; } = Array.Empty<byte>();

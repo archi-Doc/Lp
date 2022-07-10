@@ -271,7 +271,7 @@ public class Control
     {
         Directory.CreateDirectory(this.LPBase.DataDirectory);
 
-        await this.KeyVault.SaveAsync(this.LPBase.LPOptions.KeyVault);
+        await this.SaveKeyVaultAsync();
         await this.NetControl.EssentialNode.SaveAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
         await this.ZenControl.Itz.SaveAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile), Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup));
 
@@ -469,5 +469,29 @@ public class Control
 
             this.KeyVault.Create(password);
         }
+
+        await this.LoadKeyVault_NodeKey();
+    }
+
+    private async Task LoadKeyVault_NodeKey()
+    {
+        if (!this.KeyVault.TryGetAndDeserialize<NodePrivateKey>(NodePrivateKey.Filename, out var key))
+        {// Failure
+            if (!this.KeyVault.Created)
+            {
+                await this.UserInterfaceService.Notify(UserInterfaceNotifyLevel.Error, Hashed.KeyVault.NoData, NodePrivateKey.Filename);
+            }
+
+            return;
+        }
+
+        this.NetControl.NetBase.SetNodeKey(key);
+    }
+
+    private async Task SaveKeyVaultAsync()
+    {
+        this.KeyVault.Add(NodePrivateKey.Filename, this.NetControl.NetBase.SerializeNodeKey());
+
+        await this.KeyVault.SaveAsync(this.LPBase.LPOptions.KeyVault);
     }
 }

@@ -5,10 +5,13 @@ Dialog = {
     
     Password = {
         Enter = "Enter password"
+        EnterCurrent = "Enter current password"
+        EnterNew = "Enter new password"
         Confirm = "Confirm password"
         EmptyWarning = "Empty password should not be used."
         EmptyConfirm = "Are you sure you want to continue without password?"
         NotMatch = "Password didn't match, try again."
+        Changed = "Password was successfully changed"
     }
 }
 
@@ -21,11 +24,15 @@ Success = {
 Error = {
     Load = "Could not load '{0}'";
     Deserialize = "Could not deserialize '{0}'"
+    KeyVault = "Could not deserialize '{0}'"
 }
 
 KeyVault = {
     AskNew = "Do you want to create new KeyVault?"
-    EnterPassword = "Enter password for KeyVault"
+    EnterPassword = "Enter KeyVault password"
+    ChangePassword = "Changing KeyVault password"
+    NoData = "KeyVault could not get '{0}'"
+    NoRestore = "KeyVault could not restore data '{0}'"
 }
 
 Subcommands = {

@@ -54,7 +54,7 @@ public static class NodeKey
 public partial class NodePrivateKey
 {
     public const string ECCurveName = "secp256r1";
-    public const string Filename = "Node.key";
+    public const string Filename = "NodePrivateKey";
 
     public static NodePrivateKey AlternativePrivateKey
     {

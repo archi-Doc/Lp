@@ -12,7 +12,8 @@ public class KeyVaultSubcommand : SimpleSubcommand<KeyVaultSubcommand>
     public static void Configure(UnitBuilderContext context)
     {
         var group = ConfigureGroup(context);
-        group.AddCommand(typeof(KeyVaultSubcommandNew));
+        group.AddCommand(typeof(KeyVaultSubcommandLs));
+        group.AddCommand(typeof(KeyVaultSubcommandChangePass));
     }
 
     public KeyVaultSubcommand(UnitContext context)
