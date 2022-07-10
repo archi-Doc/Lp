@@ -451,7 +451,7 @@ public class Control
 
     private async Task LoadKeyVaultAsync()
     {
-        var result = await this.KeyVault.LoadAsync(this.LPBase.LPOptions.KeyVault);
+        var result = await this.KeyVault.LoadAsync(this.LPBase.KeyVaultPath);
         if (!result)
         {
             var reply = await this.UserInterfaceService.RequestYesOrNo(Hashed.KeyVault.AskNew);
@@ -492,6 +492,6 @@ public class Control
     {
         this.KeyVault.Add(NodePrivateKey.Filename, this.NetControl.NetBase.SerializeNodeKey());
 
-        await this.KeyVault.SaveAsync(this.LPBase.LPOptions.KeyVault);
+        await this.KeyVault.SaveAsync(this.LPBase.KeyVaultPath);
     }
 }
