@@ -2,12 +2,14 @@
 
 using System.Diagnostics.CodeAnalysis;
 using LP.Services;
+using ValueLink;
 
 namespace LP;
 
-public class KeyVault
+public partial class KeyVault
 {
-    private class Item
+    [ValueLinkObject]
+    private partial class Item
     {
         public Item(string name, byte[] decrypted)
         {
@@ -15,6 +17,8 @@ public class KeyVault
             this.Decrypted = decrypted;
         }
 
+        [Link(Primary = true, Name = "List", Type = ChainType.LinkedList)]
+        [Link(Name = "Set", Type = ChainType.Unordered)]
         public string Name { get; set; } = string.Empty;
 
         public byte[] Decrypted { get; set; }
@@ -110,9 +114,23 @@ RetryPassword:
     {
         lock (this.syncObject)
         {
-            if (this.items.Find(x => x.Name == name) != null)
+            if (this.items.SetChain.ContainsKey(name))
             {// Already exists.
                 return false;
+            }
+
+            this.items.Add(new(name, decrypted));
+            return true;
+        }
+    }
+
+    public bool Add(string name, byte[] decrypted)
+    {
+        lock (this.syncObject)
+        {
+            if (this.items.SetChain.TryGetValue(name, out var item))
+            {
+                this.items.Remove(item);
             }
 
             this.items.Add(new(name, decrypted));
@@ -124,12 +142,13 @@ RetryPassword:
     {
         lock (this.syncObject)
         {
-            if (this.items.Find(x => x.Name == name) != null)
+            if (!this.items.SetChain.TryGetValue(name, out var item))
             {// Already exists.
+                decrypted = null;
                 return false;
             }
 
-            this.items.Add(new(name, decrypted));
+            decrypted = item.Decrypted;
             return true;
         }
     }
@@ -167,11 +186,12 @@ RetryPassword:
         var hint = PasswordEncrypt.GetPasswordHint(this.password);
         lock (this.syncObject)
         {
-            array = new KeyVaultItem[this.items.Count];
-            for (var i = 0; i < this.items.Count; i++)
+            array = new KeyVaultItem[this.items.ListChain.Count];
+            var i = 0;
+            foreach (var x in this.items.ListChain)
             {
-                var encrypted = PasswordEncrypt.Encrypt(this.items[i].Decrypted, this.password);
-                array[i] = new(this.items[i].Name, hint, encrypted);
+                var encrypted = PasswordEncrypt.Encrypt(x.Decrypted, this.password);
+                array[i++] = new(x.Name, hint, encrypted);
             }
         }
 
@@ -180,7 +200,7 @@ RetryPassword:
 
     private object syncObject = new();
     private string password = string.Empty;
-    private List<Item> items = new();
+    private Item.GoshujinClass items = new();
 }
 
 [TinyhandObject]
