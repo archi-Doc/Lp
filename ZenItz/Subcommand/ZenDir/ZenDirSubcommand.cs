@@ -16,8 +16,8 @@ public class ZenDirSubcommand : SimpleSubcommand<ZenDirSubcommand>
         group.AddCommand(typeof(ZenDirSubcommandAdd));
     }
 
-    public ZenDirSubcommand(UnitParameter parameter, ZenControl control)
-        : base(parameter)
+    public ZenDirSubcommand(UnitContext context, ZenControl control)
+        : base(context)
     {
     }
 }

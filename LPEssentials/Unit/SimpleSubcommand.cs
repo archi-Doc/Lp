@@ -22,12 +22,12 @@ public abstract class SimpleSubcommand<TCommand> : ISimpleCommandAsync
         return group;
     }
 
-    public SimpleSubcommand(UnitParameter parameter, string? defaultArgument = null)
+    public SimpleSubcommand(UnitContext context, string? defaultArgument = null)
     {
-        this.commandTypes = parameter.GetCommandTypes(typeof(TCommand));
+        this.commandTypes = context.GetCommandTypes(typeof(TCommand));
         this.SimpleParserOptions = SimpleParserOptions.Standard with
         {
-            ServiceProvider = parameter.ServiceProvider,
+            ServiceProvider = context.ServiceProvider,
             RequireStrictCommandName = true,
             RequireStrictOptionName = true,
             DoNotDisplayUsage = true,

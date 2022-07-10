@@ -47,8 +47,8 @@ public class ZenControl
     {// Unit class for customizing behaviors.
         public record Param();
 
-        public Unit(UnitParameter parameter)
-            : base(parameter)
+        public Unit(UnitContext context)
+            : base(context)
         {
         }
     }

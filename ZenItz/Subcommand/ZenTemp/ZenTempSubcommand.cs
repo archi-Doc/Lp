@@ -15,8 +15,8 @@ public class ZenTempSubcommand : SimpleSubcommand<ZenTempSubcommand>
         group.AddCommand(typeof(ZenTempSubcommandLs));
     }
 
-    public ZenTempSubcommand(UnitParameter parameter, ZenControl control)
-        : base(parameter)
+    public ZenTempSubcommand(UnitContext context, ZenControl control)
+        : base(context)
     {
     }
 }

@@ -15,8 +15,8 @@ public class KeyVaultSubcommand : SimpleSubcommand<KeyVaultSubcommand>
         group.AddCommand(typeof(KeyVaultSubcommandNew));
     }
 
-    public KeyVaultSubcommand(UnitParameter parameter)
-        : base(parameter)
+    public KeyVaultSubcommand(UnitContext context)
+        : base(context)
     {
     }
 }

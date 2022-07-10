@@ -65,8 +65,8 @@ public class NetControl : UnitBase, IUnitPreparable
     {
         public record Param(bool EnableServer, Func<ServerContext> NewServerContext, Func<CallContext> NewCallContext, string NodeName, NetsphereOptions Options, bool AllowUnsafeConnection);
 
-        public Unit(UnitParameter parameter)
-            : base(parameter)
+        public Unit(UnitContext context)
+            : base(context)
         {
         }
 
@@ -88,10 +88,10 @@ public class NetControl : UnitBase, IUnitPreparable
         }
     }
 
-    public NetControl(UnitParameter parameter, NetBase netBase, BigMachine<Identifier> bigMachine, Terminal terminal, EssentialNode node, NetStatus netStatus)
-        : base(parameter)
+    public NetControl(UnitContext context, NetBase netBase, BigMachine<Identifier> bigMachine, Terminal terminal, EssentialNode node, NetStatus netStatus)
+        : base(context)
     {
-        this.ServiceProvider = parameter.ServiceProvider;
+        this.ServiceProvider = context.ServiceProvider;
         this.NewServerContext = () => new ServerContext();
         this.NewCallContext = () => new CallContext();
         this.NetBase = netBase;

@@ -29,8 +29,8 @@ public class TestClass
     {// Unit class for customizing behaviors.
         public record Param();
 
-        public Unit(UnitParameter parameter)
-            : base(parameter)
+        public Unit(UnitContext context)
+            : base(context)
         {
         }
 
@@ -41,8 +41,8 @@ public class TestClass
 
     public class TestUnit : UnitBase
     {
-        public TestUnit(UnitParameter parameter)
-            : base(parameter)
+        public TestUnit(UnitContext context)
+            : base(context)
         {
         }
 

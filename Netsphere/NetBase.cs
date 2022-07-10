@@ -8,8 +8,8 @@ namespace Netsphere;
 
 public class NetBase : UnitBase, IUnitPreparable
 {
-    public NetBase(UnitParameter parameter)
-        : base(parameter)
+    public NetBase(UnitContext context)
+        : base(context)
     {
     }
 

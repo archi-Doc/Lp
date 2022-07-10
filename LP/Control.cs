@@ -69,19 +69,19 @@ public class Control
 
     public class Unit : BuiltUnit
     {
-        public Unit(UnitParameter parameter)
-            : base(parameter)
+        public Unit(UnitContext context)
+            : base(context)
         {
             SubcommandParserOptions = SimpleParserOptions.Standard with
             {
-                ServiceProvider = parameter.ServiceProvider,
+                ServiceProvider = context.ServiceProvider,
                 RequireStrictCommandName = true,
                 RequireStrictOptionName = true,
                 DoNotDisplayUsage = true,
                 DisplayCommandListAsHelp = true,
             };
 
-            subcommandParser = new SimpleParser(parameter.GetCommandTypes(typeof(object)), SubcommandParserOptions);
+            subcommandParser = new SimpleParser(context.GetCommandTypes(typeof(object)), SubcommandParserOptions);
         }
 
         public async Task Run(LPOptions options)

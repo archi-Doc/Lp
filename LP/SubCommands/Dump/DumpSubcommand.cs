@@ -17,8 +17,8 @@ public class DumpSubcommand : SimpleSubcommand<DumpSubcommand>
         group.AddCommand(typeof(DumpSubcommandOptions));
     }
 
-    public DumpSubcommand(UnitParameter parameter)
-        : base(parameter, "info")
+    public DumpSubcommand(UnitContext context)
+        : base(context, "info")
     {
     }
 }

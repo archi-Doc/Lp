@@ -5,20 +5,20 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace LP.Unit;
 
-public class UnitParameter
+public class UnitContext
 {
-    public UnitParameter()
+    public UnitContext()
     {
     }
 
-    public void FromContext(IServiceProvider serviceProvider, UnitBuilderContext context)
+    public void FromBuilderContext(IServiceProvider serviceProvider, UnitBuilderContext builderContext)
     {
         this.ServiceProvider = serviceProvider;
         this.Radio = serviceProvider.GetRequiredService<RadioClass>();
-        this.CreateInstanceTypes = context.CreateInstanceSet.ToArray();
-        this.CommandTypes = context.CommandList.ToArray();
+        this.CreateInstanceTypes = builderContext.CreateInstanceSet.ToArray();
+        this.CommandTypes = builderContext.CommandList.ToArray();
 
-        foreach (var x in context.CommandGroups)
+        foreach (var x in builderContext.CommandGroups)
         {
             this.Subcommands[x.Key] = x.Value.ToArray();
         }

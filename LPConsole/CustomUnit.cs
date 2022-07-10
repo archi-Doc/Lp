@@ -31,14 +31,14 @@ public class CustomUnit : UnitBase, IUnitPreparable
     {// Unit class for customizing behaviors.
         public record Param();
 
-        public Unit(UnitParameter parameter)
-            : base(parameter)
+        public Unit(UnitContext context)
+            : base(context)
         {
         }
     }
 
-    public CustomUnit(UnitParameter parameter)
-        : base(parameter)
+    public CustomUnit(UnitContext context)
+        : base(context)
     {
     }
 

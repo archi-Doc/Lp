@@ -63,15 +63,15 @@ public class UnitBuilder
         var context = new UnitBuilderContext();
         this.Configure(context);
 
-        context.TryAddSingleton<UnitParameter>();
+        context.TryAddSingleton<UnitContext>();
         context.TryAddSingleton<TUnit>();
         context.TryAddSingleton<RadioClass>(); // Unit radio
 
         var serviceProvider = context.ServiceCollection.BuildServiceProvider();
 
         // Context to parameter.
-        var param = serviceProvider.GetRequiredService<UnitParameter>();
-        param.FromContext(serviceProvider, context);
+        var param = serviceProvider.GetRequiredService<UnitContext>();
+        param.FromBuilderContext(serviceProvider, context);
 
         return serviceProvider.GetRequiredService<TUnit>();
     }

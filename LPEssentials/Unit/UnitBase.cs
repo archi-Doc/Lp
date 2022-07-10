@@ -11,9 +11,9 @@ namespace LP.Unit;
 /// </summary>
 public abstract class UnitBase
 {
-    public UnitBase(UnitParameter parameter)
+    public UnitBase(UnitContext context)
     {
-        var radio = parameter.Radio;
+        var radio = context.Radio;
 
         if (this is IUnitPreparable configurable)
         {

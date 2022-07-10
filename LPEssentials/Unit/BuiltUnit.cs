@@ -9,13 +9,13 @@ namespace LP.Unit;
 
 public class BuiltUnit : UnitBase
 {
-    public BuiltUnit(UnitParameter parameter)
-        : base(parameter)
+    public BuiltUnit(UnitContext context)
+        : base(context)
     {
-        this.ServiceProvider = parameter.ServiceProvider;
-        this.radio = parameter.Radio;
-        this.commandTypes = parameter.CommandTypes;
-        this.createInstanceTypes = parameter.CreateInstanceTypes;
+        this.ServiceProvider = context.ServiceProvider;
+        this.radio = context.Radio;
+        this.commandTypes = context.CommandTypes;
+        this.createInstanceTypes = context.CreateInstanceTypes;
     }
 
     /*public void Run()
