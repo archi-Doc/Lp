@@ -30,7 +30,7 @@ public class Program
         {// Ctrl+C pressed
             e.Cancel = true;
 
-            var control = unit?.ServiceProvider.GetService<Control>();
+            var control = unit?.Context.ServiceProvider.GetService<Control>();
             if (control != null)
             {
                 control.TryTerminate().Wait();
@@ -62,12 +62,12 @@ public class Program
 
         var parserOptions = SimpleParserOptions.Standard with
         {
-            ServiceProvider = unit.ServiceProvider,
+            ServiceProvider = unit.Context.ServiceProvider,
             RequireStrictCommandName = false,
             RequireStrictOptionName = true,
         };
 
-        await SimpleParser.ParseAndRunAsync(unit.CommandTypes, args, parserOptions); // Main process
+        await SimpleParser.ParseAndRunAsync(unit.Context.Commands, args, parserOptions); // Main process
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
         ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).
 

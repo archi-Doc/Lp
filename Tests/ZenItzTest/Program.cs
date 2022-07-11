@@ -35,7 +35,7 @@ public class Program
         var builder = new ZenControl.Builder()
             .Configure(context =>
             {
-                // Subcommand
+                // Command
                 context.AddCommand(typeof(ZenTestSubcommand));
                 context.AddCommand(typeof(ItzTestSubcommand));
 
@@ -44,11 +44,11 @@ public class Program
 
         var unit = builder.Build();
         var param = new ZenControl.Unit.Param();
-        unit.ServiceProvider.GetRequiredService<ZenControl>().Zen.SetDelegate(ObjectToMemoryOwner, MemoryOwnerToObject);
+        unit.Context.ServiceProvider.GetRequiredService<ZenControl>().Zen.SetDelegate(ObjectToMemoryOwner, MemoryOwnerToObject);
 
         var parserOptions = SimpleParserOptions.Standard with
         {
-            ServiceProvider = unit.ServiceProvider,
+            ServiceProvider = unit.Context.ServiceProvider,
             RequireStrictCommandName = false,
             RequireStrictOptionName = true,
         };
@@ -75,7 +75,7 @@ public class Program
                 .CreateLogger()));
         }*/
 
-        await SimpleParser.ParseAndRunAsync(unit.CommandTypes, args, parserOptions); // Main process
+        await SimpleParser.ParseAndRunAsync(unit.Context.Commands, args, parserOptions); // Main process
 
         ThreadCore.Root.Terminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.

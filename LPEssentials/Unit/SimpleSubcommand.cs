@@ -10,11 +10,19 @@ public abstract class SimpleSubcommand<TCommand> : ISimpleCommandAsync
 {
     public static CommandGroup ConfigureGroup(UnitBuilderContext context, Type? parentCommand = null)
     {
-        parentCommand ??= typeof(object);
         var commandType = typeof(TCommand);
 
         // Add a command type to the parent.
-        var group = context.GetCommandGroup(parentCommand);
+        CommandGroup group;
+        if (parentCommand != null)
+        {
+            group = context.GetCommandGroup(parentCommand);
+        }
+        else
+        {
+            group = context.GetSubcommandGroup();
+        }
+
         group.AddCommand(commandType);
 
         // Get the command group.
@@ -22,17 +30,25 @@ public abstract class SimpleSubcommand<TCommand> : ISimpleCommandAsync
         return group;
     }
 
-    public SimpleSubcommand(UnitContext context, string? defaultArgument = null)
+    public SimpleSubcommand(UnitContext context, string? defaultArgument = null, SimpleParserOptions? parserOptions = null)
     {
         this.commandTypes = context.GetCommandTypes(typeof(TCommand));
-        this.SimpleParserOptions = SimpleParserOptions.Standard with
+
+        if (parserOptions != null)
         {
-            ServiceProvider = context.ServiceProvider,
-            RequireStrictCommandName = true,
-            RequireStrictOptionName = true,
-            DoNotDisplayUsage = true,
-            DisplayCommandListAsHelp = true,
-        };
+            this.SimpleParserOptions = parserOptions with { ServiceProvider = context.ServiceProvider, };
+        }
+        else
+        {
+            this.SimpleParserOptions = SimpleParserOptions.Standard with
+            {
+                ServiceProvider = context.ServiceProvider,
+                RequireStrictCommandName = true,
+                RequireStrictOptionName = true,
+                DoNotDisplayUsage = true,
+                DisplayCommandListAsHelp = true,
+            };
+        }
 
         this.defaultArgument = defaultArgument;
     }

@@ -72,7 +72,7 @@ public class Program
         var builder = new NetControl.Builder()
             .Configure(context =>
             {
-                // Subcommand
+                // Command
                 context.AddCommand(typeof(BasicTestSubcommand));
                 context.AddCommand(typeof(NetbenchSubcommand));
 
@@ -97,7 +97,7 @@ public class Program
         {
             var logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "logs");
             Directory.CreateDirectory(logDirectory);
-            var netControl = unit.ServiceProvider.GetRequiredService<NetControl>();
+            var netControl = unit.Context.ServiceProvider.GetRequiredService<NetControl>();
             netControl.Terminal.SetLogger(new SerilogLogger(new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.File(
@@ -116,13 +116,13 @@ public class Program
 
         var parserOptions = SimpleParserOptions.Standard with
         {
-            ServiceProvider = unit.ServiceProvider,
+            ServiceProvider = unit.Context.ServiceProvider,
             RequireStrictCommandName = false,
             RequireStrictOptionName = true,
         };
 
         // await SimpleParser.ParseAndRunAsync(commandTypes, "netbench -node alternative", parserOptions); // Main process
-        await SimpleParser.ParseAndRunAsync(unit.CommandTypes, args, parserOptions); // Main process
+        await SimpleParser.ParseAndRunAsync(unit.Context.Commands, args, parserOptions); // Main process
 
         ThreadCore.Root.Terminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.

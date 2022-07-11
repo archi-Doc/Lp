@@ -15,6 +15,9 @@ namespace Arc.Unit;
 public class UnitBuilder<TUnit> : UnitBuilder
     where TUnit : BuiltUnit
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UnitBuilder{TUnit}"/> class.
+    /// </summary>
     public UnitBuilder()
     {
     }
@@ -37,6 +40,9 @@ public class UnitBuilder<TUnit> : UnitBuilder
 /// </summary>
 public class UnitBuilder
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UnitBuilder"/> class.
+    /// </summary>
     public UnitBuilder()
     {
     }
@@ -75,18 +81,18 @@ public class UnitBuilder
         where TUnit : BuiltUnit
     {
         // Builder context.
-        var context = new UnitBuilderContext();
-        this.Configure(context);
+        var builderContext = new UnitBuilderContext();
+        this.Configure(builderContext);
 
-        context.TryAddSingleton<UnitContext>();
-        context.TryAddSingleton<TUnit>();
-        context.TryAddSingleton<RadioClass>(); // Unit radio
+        builderContext.TryAddSingleton<UnitContext>();
+        builderContext.TryAddSingleton<TUnit>();
+        builderContext.TryAddSingleton<RadioClass>(); // Unit radio
 
-        var serviceProvider = context.ServiceCollection.BuildServiceProvider();
+        var serviceProvider = builderContext.ServiceCollection.BuildServiceProvider();
 
-        // Context to parameter.
-        var param = serviceProvider.GetRequiredService<UnitContext>();
-        param.FromBuilderContext(serviceProvider, context);
+        // BuilderContext to UnitContext.
+        var unitContext = serviceProvider.GetRequiredService<UnitContext>();
+        unitContext.FromBuilderContext(serviceProvider, builderContext);
 
         return serviceProvider.GetRequiredService<TUnit>();
     }
@@ -110,12 +116,6 @@ public class UnitBuilder
         foreach (var x in this.configureActions)
         {
             x(context);
-        }
-
-        // Register commands to the service collection.
-        foreach (var x in context.CommandList)
-        {
-            context.ServiceCollection.TryAddSingleton(x);
         }
     }
 

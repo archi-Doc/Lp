@@ -6,10 +6,10 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Arc.Unit;
 
 /// <summary>
-/// Contextual information provided to Unit.<br/>
-/// Objects managed by Unit should not make direct use of <see cref="UnitBuilderContext"/>.
+/// Contextual information provided to <see cref="UnitBase"/>.<br/>
+/// In terms of DI, you should avoid using <see cref="UnitContext"/> if possible.
 /// </summary>
-public class UnitContext
+public sealed class UnitContext
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="UnitContext"/> class.
@@ -28,11 +28,12 @@ public class UnitContext
         this.ServiceProvider = serviceProvider;
         this.Radio = serviceProvider.GetRequiredService<RadioClass>();
         this.CreateInstanceTypes = builderContext.CreateInstanceSet.ToArray();
-        this.CommandTypes = builderContext.CommandList.ToArray();
 
+        builderContext.GetCommandGroup(typeof(UnitBuilderContext.TopCommand));
+        builderContext.GetCommandGroup(typeof(UnitBuilderContext.SubCommand));
         foreach (var x in builderContext.CommandGroups)
         {
-            this.Subcommands[x.Key] = x.Value.ToArray();
+            this.CommandDictionary[x.Key] = x.Value.ToArray();
         }
     }
 
@@ -43,7 +44,7 @@ public class UnitContext
     /// <returns>An array of command type.</returns>
     public Type[] GetCommandTypes(Type commandType)
     {
-        if (this.Subcommands.TryGetValue(commandType, out var array))
+        if (this.CommandDictionary.TryGetValue(commandType, out var array))
         {
             return array;
         }
@@ -52,6 +53,32 @@ public class UnitContext
             return Array.Empty<Type>();
         }
     }
+
+    /// <summary>
+    /// Create instances registered by <see cref="UnitBuilderContext.CreateInstance{T}()"/>.
+    /// </summary>
+    public void CreateInstances()
+    {
+        foreach (var x in this.CreateInstanceTypes)
+        {
+            this.ServiceProvider.GetService(x);
+        }
+    }
+
+    public void SendPrepare(UnitMessage.Prepare message)
+        => this.Radio.Send(message);
+
+    public async Task SendRunAsync(UnitMessage.RunAsync message)
+        => await this.Radio.SendAsync(message).ConfigureAwait(false);
+
+    public async Task SendTerminateAsync(UnitMessage.TerminateAsync message)
+        => await this.Radio.SendAsync(message).ConfigureAwait(false);
+
+    public async Task SendLoadAsync(UnitMessage.LoadAsync message)
+        => await this.Radio.SendAsync(message).ConfigureAwait(false);
+
+    public async Task SendSaveAsync(UnitMessage.SaveAsync message)
+        => await this.Radio.SendAsync(message).ConfigureAwait(false);
 
     /// <summary>
     /// Gets an instance of <see cref="IServiceProvider"/>.
@@ -65,17 +92,42 @@ public class UnitContext
 
     /// <summary>
     /// Gets an array of <see cref="Type"/> which is registered in the creation list.<br/>
-    /// Note that instances are actually created by calling <see cref="BuiltUnit.CreateInstances()"/>.
+    /// Note that instances are actually created by calling <see cref="UnitContext.CreateInstances()"/>.
     /// </summary>
     public Type[] CreateInstanceTypes { get; private set; } = default!;
 
     /// <summary>
     /// Gets an array of command <see cref="Type"/>.
     /// </summary>
-    public Type[] CommandTypes { get; private set; } = default!;
+    public Type[] Commands => this.CommandDictionary[typeof(UnitBuilderContext.TopCommand)];
+
+    /// <summary>
+    /// Gets an array of subcommand <see cref="Type"/>.
+    /// </summary>
+    public Type[] Subcommands => this.CommandDictionary[typeof(UnitBuilderContext.SubCommand)];
 
     /// <summary>
     /// Gets a collection of command <see cref="Type"/> (keys) and subcommand <see cref="Type"/> (values).
     /// </summary>
-    public Dictionary<Type, Type[]> Subcommands { get; private set; } = new();
+    public Dictionary<Type, Type[]> CommandDictionary { get; private set; } = new();
+
+    internal void AddRadio(UnitBase unit)
+    {
+        if (unit is IUnitPreparable configurable)
+        {
+            this.Radio.Open<UnitMessage.Prepare>(x => configurable.Prepare(x), unit);
+        }
+
+        if (unit is IUnitExecutable executable)
+        {
+            this.Radio.OpenAsync<UnitMessage.RunAsync>(x => executable.RunAsync(x), unit);
+            this.Radio.OpenAsync<UnitMessage.TerminateAsync>(x => executable.TerminateAsync(x), unit);
+        }
+
+        if (unit is IUnitSerializable serializable)
+        {
+            this.Radio.OpenAsync<UnitMessage.LoadAsync>(x => serializable.LoadAsync(x), unit);
+            this.Radio.OpenAsync<UnitMessage.SaveAsync>(x => serializable.SaveAsync(x), unit);
+        }
+    }
 }

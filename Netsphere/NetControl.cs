@@ -52,7 +52,7 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddTransient<LP.Machines.EssentialNetMachine>();
 
                 // Subcommands
-                context.AddCommand(typeof(LP.Subcommands.NetTestSubcommand));
+                context.AddSubcommand(typeof(LP.Subcommands.NetTestSubcommand));
 
                 // Unit
             });
@@ -70,19 +70,19 @@ public class NetControl : UnitBase, IUnitPreparable
 
         public async Task RunStandalone(Param param)
         {
-            var netBase = this.ServiceProvider.GetRequiredService<NetBase>();
+            var netBase = this.Context.ServiceProvider.GetRequiredService<NetBase>();
             netBase.SetParameter(param.EnableServer, param.NodeName, param.Options);
             netBase.AllowUnsafeConnection = param.AllowUnsafeConnection;
 
-            var netControl = this.ServiceProvider.GetRequiredService<NetControl>();
+            var netControl = this.Context.ServiceProvider.GetRequiredService<NetControl>();
             if (param.EnableServer)
             {
                 netControl.SetupServer(param.NewServerContext, param.NewCallContext);
             }
 
             Logger.Configure(null);
-            this.SendPrepare(new());
-            await this.SendRunAsync(new(ThreadCore.Root)).ConfigureAwait(false);
+            this.Context.SendPrepare(new());
+            await this.Context.SendRunAsync(new(ThreadCore.Root)).ConfigureAwait(false);
         }
     }
 

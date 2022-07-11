@@ -4,30 +4,18 @@ namespace Arc.Unit;
 
 /// <summary>
 /// Base class of Unit.<br/>
-/// Unit is an independent unit of function and dependency.
+/// Unit is an independent unit of function and dependency.<br/>
+/// By implementing <see cref="IUnitPreparable"/> and other interfaces, methods can be called from <see cref="UnitContext"/>.
 /// </summary>
 public abstract class UnitBase
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UnitBase"/> class.
+    /// </summary>
+    /// <param name="context"><see cref="UnitContext"/>.</param>
     public UnitBase(UnitContext context)
     {
-        var radio = context.Radio;
-
-        if (this is IUnitPreparable configurable)
-        {
-            radio.Open<UnitMessage.Prepare>(x => configurable.Prepare(x), this);
-        }
-
-        if (this is IUnitExecutable executable)
-        {
-            radio.OpenAsync<UnitMessage.RunAsync>(x => executable.RunAsync(x), this);
-            radio.OpenAsync<UnitMessage.TerminateAsync>(x => executable.TerminateAsync(x), this);
-        }
-
-        if (this is IUnitSerializable serializable)
-        {
-            radio.OpenAsync<UnitMessage.LoadAsync>(x => serializable.LoadAsync(x), this);
-            radio.OpenAsync<UnitMessage.SaveAsync>(x => serializable.SaveAsync(x), this);
-        }
+        context.AddRadio(this);
     }
 }
 

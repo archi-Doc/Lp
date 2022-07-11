@@ -25,7 +25,7 @@ public class ZenFixture : IDisposable
         var unit = builder.Build();
         var param = new ZenControl.Unit.Param();
 
-        this.ZenControl = unit.ServiceProvider.GetRequiredService<ZenControl>();
+        this.ZenControl = unit.Context.ServiceProvider.GetRequiredService<ZenControl>();
         this.ZenControl.Zen.StartZenForTest();
     }
 
