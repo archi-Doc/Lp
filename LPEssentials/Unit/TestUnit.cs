@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace LP.Unit.Sample;
+namespace Arc.Unit.Sample;
 
 public class TestClass
 {
@@ -39,14 +39,14 @@ public class TestClass
         }
     }
 
-    public class TestUnit : UnitBase
+    public class TestUnit : UnitBase, IUnitPreparable
     {
         public TestUnit(UnitContext context)
             : base(context)
         {
         }
 
-        public void Configure()
+        public void Prepare(UnitMessage.Prepare message)
         {
         }
     }

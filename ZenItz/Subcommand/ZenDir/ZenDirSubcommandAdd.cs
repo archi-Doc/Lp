@@ -2,7 +2,6 @@
 
 using Arc.Crypto;
 using LP;
-using LP.Unit;
 using SimpleCommandLine;
 using ZenItz;
 using ZenItz.Results;

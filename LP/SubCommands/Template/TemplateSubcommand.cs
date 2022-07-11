@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Arc.Crypto;
-using LP.Unit;
 using SimpleCommandLine;
 using Tinyhand;
 

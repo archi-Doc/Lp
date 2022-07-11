@@ -1,8 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using LP.Unit;
+using Arc.Unit;
 
-namespace LP.Unit.Obsolete;
+namespace Arc.Unit.Obsolete;
 
 public interface IUnitBuilder
 {

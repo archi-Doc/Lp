@@ -40,6 +40,10 @@ public class LPBase
 
     public LPOptions LPOptions { get; private set; } = default!;
 
+    // public string GetRootPath(string path, string defaultFilename) => this.GetPath(this.RootDirectory, path, defaultFilename);
+
+    public string GetDataPath(string path, string defaultFilename) => this.GetPath(this.DataDirectory, path, defaultFilename);
+
     public void SetParameter(LPOptions options, bool isConsole, string defaultMode)
     {
         this.LPOptions = options;
@@ -81,5 +85,17 @@ public class LPBase
     public override string ToString()
     {
         return $"Mode: {this.Mode}, {this.LPOptions.ToString()}";
+    }
+
+    private string GetPath(string directory, string path, string defaultFilename)
+    {
+        if (Path.IsPathRooted(path))
+        {
+            return path;
+        }
+        else
+        {
+            return Path.Combine(directory, string.IsNullOrEmpty(path) ? defaultFilename : path);
+        }
     }
 }

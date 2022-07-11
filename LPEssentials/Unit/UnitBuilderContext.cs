@@ -4,9 +4,12 @@ using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
-namespace LP.Unit;
+namespace Arc.Unit;
 
-public class UnitBuilderContext
+/// <summary>
+/// Contextual information provided to <see cref="UnitBuilder"/>.<br/>
+/// </summary>
+public sealed class UnitBuilderContext
 {
     public UnitBuilderContext()
     {
@@ -14,18 +17,29 @@ public class UnitBuilderContext
         this.RootDirectory = Directory.GetCurrentDirectory();
     }
 
+    /// <summary>
+    /// Gets or sets a unit name.
+    /// </summary>
     public string UnitName { get; set; }
 
+    /// <summary>
+    /// Gets or sets a root directory.
+    /// </summary>
     public string RootDirectory { get; set; }
 
+    /// <summary>
+    /// Gets <see cref="ServiceCollection"/>.
+    /// </summary>
     public ServiceCollection ServiceCollection { get; } = new();
 
     public HashSet<Type> CreateInstanceSet { get; } = new();
 
-    public List<Type> CommandList { get; } = new();
-
     public Dictionary<Type, CommandGroup> CommandGroups { get; } = new();
 
+    /// <summary>
+    /// Adds the specified <see cref="Type"/> to the creation list.
+    /// </summary>
+    /// <typeparam name="T">The type to be instantiated.</typeparam>
     public void CreateInstance<T>()
         => this.CreateInstanceSet.Add(typeof(T));
 
@@ -41,31 +55,21 @@ public class UnitBuilderContext
         return commandGroup;
     }
 
+    public CommandGroup GetCommandGroup() => this.GetCommandGroup(typeof(TopCommand));
+
+    public CommandGroup GetSubcommandGroup() => this.GetCommandGroup(typeof(SubCommand));
+
     public bool AddCommand(Type commandType)
     {
-        if (this.commandSet.Contains(commandType))
-        {
-            return false;
-        }
-        else
-        {
-            this.commandSet.Add(commandType);
-            this.CommandList.Add(commandType);
-            return true;
-        }
-    }
-
-    public bool AddSubcommand(Type commandType, Type? parentCommand = null)
-    {
-        parentCommand ??= typeof(object);
-
-        // Add a command type to the parent.
-        var group = this.GetCommandGroup(parentCommand);
+        var group = this.GetCommandGroup();
         return group.AddCommand(commandType);
     }
 
-    /*public void AddUnit<TUnit>(bool createInstance = true)
-        where TUnit : UnitBase => this.UnitCollection.AddUnit<TUnit>(createInstance);*/
+    public bool AddSubcommand(Type commandType)
+    {
+        var group = this.GetSubcommandGroup();
+        return group.AddCommand(commandType);
+    }
 
     public void AddSingleton<TService>()
         where TService : class => this.ServiceCollection.AddSingleton<TService>();
@@ -121,5 +125,11 @@ public class UnitBuilderContext
         where TService : class
         where TImplementation : class, TService => this.ServiceCollection.TryAddTransient<TService, TImplementation>();
 
-    private HashSet<Type> commandSet = new();
+    internal class TopCommand
+    {
+    }
+
+    internal class SubCommand
+    {
+    }
 }

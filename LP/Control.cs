@@ -7,18 +7,18 @@ global using System.IO;
 global using System.Threading.Tasks;
 global using Arc.Crypto;
 global using Arc.Threading;
+global using Arc.Unit;
 global using BigMachines;
 global using CrossChannel;
 global using LP;
 global using Tinyhand;
 using LP.Services;
-using LP.Unit;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere;
 using SimpleCommandLine;
 using ZenItz;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using LP.Options;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace LP;
 
@@ -81,7 +81,7 @@ public class Control
                 DisplayCommandListAsHelp = true,
             };
 
-            subcommandParser = new SimpleParser(context.GetCommandTypes(typeof(object)), SubcommandParserOptions);
+            subcommandParser = new SimpleParser(context.Subcommands, SubcommandParserOptions);
         }
 
         public async Task Run(LPOptions options)
@@ -118,15 +118,15 @@ public class Control
             }
 
             // LPBase
-            this.lpBase = this.ServiceProvider.GetRequiredService<LPBase>();
+            this.lpBase = this.Context.ServiceProvider.GetRequiredService<LPBase>();
             this.lpBase.SetParameter(options, true, "relay");
 
             // NetBase
-            this.netBase = this.ServiceProvider.GetRequiredService<NetBase>();
+            this.netBase = this.Context.ServiceProvider.GetRequiredService<NetBase>();
             this.netBase.SetParameter(true, string.Empty, options.NetsphereOptions);
             this.netBase.AllowUnsafeConnection = true; // betacode
 
-            var control = this.ServiceProvider.GetRequiredService<Control>();
+            var control = this.Context.ServiceProvider.GetRequiredService<Control>();
             try
             {
                 // Logger
@@ -137,10 +137,10 @@ public class Control
                 await control.LoadKeyVaultAsync();
 
                 // Create optional instances
-                this.CreateInstances();
+                this.Context.CreateInstances();
 
                 // Prepare
-                this.SendPrepare(new());
+                this.Context.SendPrepare(new());
             }
             catch (PanicException)
             {
@@ -150,7 +150,7 @@ public class Control
 
             try
             {// Load
-                await control.LoadAsync(this);
+                await control.LoadAsync(this.Context);
             }
             catch (PanicException)
             {
@@ -161,18 +161,18 @@ public class Control
 
             try
             {// Start, Main loop
-                await control.RunAsync(this);
+                await control.RunAsync(this.Context);
 
                 control.MainLoop();
 
-                await control.TerminateAsync(this);
-                await control.SaveAsync(this);
+                await control.TerminateAsync(this.Context);
+                await control.SaveAsync(this.Context);
                 control.Terminate(false);
             }
             catch (PanicException)
             {
-                await control.TerminateAsync(this);
-                await control.SaveAsync(this);
+                await control.TerminateAsync(this.Context);
+                await control.SaveAsync(this.Context);
                 control.Terminate(true);
                 return;
             }
@@ -242,7 +242,7 @@ public class Control
         return false;
     }
 
-    public async Task LoadAsync(Unit unit)
+    public async Task LoadAsync(UnitContext context)
     {
         // Netsphere
         await this.NetControl.EssentialNode.LoadAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
@@ -259,7 +259,7 @@ public class Control
             throw new PanicException();
         }
 
-        await unit.SendLoadAsync(new());
+        await context.SendLoadAsync(new());
     }
 
     public async Task AbortAsync()
@@ -267,7 +267,7 @@ public class Control
         await this.ZenControl.Zen.AbortZen();
     }
 
-    public async Task SaveAsync(Unit unit)
+    public async Task SaveAsync(UnitContext context)
     {
         Directory.CreateDirectory(this.LPBase.DataDirectory);
 
@@ -275,18 +275,18 @@ public class Control
         await this.NetControl.EssentialNode.SaveAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
         await this.ZenControl.Itz.SaveAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile), Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup));
 
-        await unit.SendSaveAsync(new());
+        await context.SendSaveAsync(new());
     }
 
-    public async Task RunAsync(Unit unit)
+    public async Task RunAsync(UnitContext context)
     {
         this.BigMachine.Start();
-        await unit.SendRunAsync(new(this.Core));
+        await context.SendRunAsync(new(this.Core));
+        Console.WriteLine();
 
         this.ShowInformation();
         this.LPBase.LPOptions.NetsphereOptions.ShowInformation();
 
-        Console.WriteLine();
         Logger.Console.Information("Press Enter key to switch to console mode.");
         Logger.Console.Information("Press Ctrl+C to exit.");
         Logger.Console.Information("Running");
@@ -298,12 +298,12 @@ public class Control
         // Logger.Default.Information(this.LPBase.ToString());
     }
 
-    public async Task TerminateAsync(Unit unit)
+    public async Task TerminateAsync(UnitContext context)
     {
         Logger.Default.Information("Termination process initiated");
 
         await this.ZenControl.Zen.StopZen(new(Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenBackup), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryBackup)));
-        await unit.SendTerminateAsync(new());
+        await context.SendTerminateAsync(new());
     }
 
     public void Terminate(bool abort)
@@ -368,7 +368,7 @@ public class Control
             }
             else
             {// Console mode
-                var command = Console.ReadLine();
+                var command = Console.ReadLine()?.Trim();
                 if (!string.IsNullOrEmpty(command))
                 {
                     if (string.Compare(command, "exit", true) == 0)
@@ -451,7 +451,7 @@ public class Control
 
     private async Task LoadKeyVaultAsync()
     {
-        var result = await this.KeyVault.LoadAsync(this.LPBase.LPOptions.KeyVault);
+        var result = await this.KeyVault.LoadAsync(this.LPBase.GetDataPath(this.LPBase.LPOptions.KeyVault, KeyVault.Filename));
         if (!result)
         {
             var reply = await this.UserInterfaceService.RequestYesOrNo(Hashed.KeyVault.AskNew);
@@ -492,6 +492,6 @@ public class Control
     {
         this.KeyVault.Add(NodePrivateKey.Filename, this.NetControl.NetBase.SerializeNodeKey());
 
-        await this.KeyVault.SaveAsync(this.LPBase.LPOptions.KeyVault);
+        await this.KeyVault.SaveAsync(this.LPBase.GetDataPath(this.LPBase.LPOptions.KeyVault, KeyVault.Filename));
     }
 }

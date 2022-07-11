@@ -8,6 +8,8 @@ namespace LP;
 
 public partial class KeyVault
 {
+    public const string Filename = "KeyVault.tinyhand";
+
     [ValueLinkObject]
     private partial class Item
     {
