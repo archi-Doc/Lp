@@ -133,10 +133,12 @@ public class Control
             {
                 // Logger
                 Logger.Configure(control.LPBase);
-                Logger.Default.Information("LP Start");
 
                 // KeyVault
                 await control.LoadKeyVaultAsync();
+
+                // Start
+                Logger.Default.Information("LP Start");
 
                 // Create optional instances
                 this.Context.CreateInstances();
@@ -453,7 +455,7 @@ public class Control
 
     private async Task LoadKeyVaultAsync()
     {
-        var result = await this.KeyVault.LoadAsync(this.LPBase.GetDataPath(this.LPBase.LPOptions.KeyVault, KeyVault.Filename));
+        var result = await this.KeyVault.LoadAsync(this.LPBase.CombineDataPath(this.LPBase.LPOptions.KeyVault, KeyVault.Filename));
         if (!result)
         {
             var reply = await this.UserInterfaceService.RequestYesOrNo(Hashed.KeyVault.AskNew);
@@ -494,6 +496,6 @@ public class Control
     {
         this.KeyVault.Add(NodePrivateKey.Filename, this.NetControl.NetBase.SerializeNodeKey());
 
-        await this.KeyVault.SaveAsync(this.LPBase.GetDataPath(this.LPBase.LPOptions.KeyVault, KeyVault.Filename));
+        await this.KeyVault.SaveAsync(this.LPBase.CombineDataPath(this.LPBase.LPOptions.KeyVault, KeyVault.Filename));
     }
 }

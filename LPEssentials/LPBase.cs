@@ -42,7 +42,7 @@ public class LPBase
 
     // public string GetRootPath(string path, string defaultFilename) => this.GetPath(this.RootDirectory, path, defaultFilename);
 
-    public string GetDataPath(string path, string defaultFilename) => this.GetPath(this.DataDirectory, path, defaultFilename);
+    public string CombineDataPath(string path, string defaultFilename) => this.CombinePath(this.DataDirectory, path, defaultFilename);
 
     public void SetParameter(LPOptions options, bool isConsole, string defaultMode)
     {
@@ -87,7 +87,7 @@ public class LPBase
         return $"Mode: {this.Mode}, {this.LPOptions.ToString()}";
     }
 
-    private string GetPath(string directory, string path, string defaultFilename)
+    private string CombinePath(string directory, string path, string defaultFilename)
     {
         if (Path.IsPathRooted(path))
         {
