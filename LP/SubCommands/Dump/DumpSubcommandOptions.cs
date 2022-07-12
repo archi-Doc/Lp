@@ -32,7 +32,7 @@ public class DumpSubcommandOptions : ISimpleCommandAsync<DumpSubcommandOptionsOp
         {
             var utf = TinyhandSerializer.SerializeToUtf8(this.Control.LPBase.LPOptions with { OptionsPath = string.Empty, });
 
-            var path = this.Control.LPBase.CombineDataPath(options.Output, LPOptions.DefaultOptionsName);
+            var path = this.Control.LPBase.CombineDataPathAndPrepareDirectory(options.Output, LPOptions.DefaultOptionsName);
             await File.WriteAllBytesAsync(path, utf);
             Logger.Default.Information(HashedString.Get(Hashed.Success.Output, path));
         }
