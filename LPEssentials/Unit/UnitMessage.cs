@@ -5,9 +5,9 @@ using Arc.Threading;
 namespace Arc.Unit;
 
 public static class UnitMessage
-{// Create instance -> Prepare -> LoadAsync -> RunAsync -> TerminateAsync, SaveAsync (after Configure)
+{// Create instance -> Prepare -> LoadAsync -> RunAsync -> TerminateAsync, SaveAsync (after Prepare)
     /// <summary>
-    /// Prepare objects.<br/>
+    /// Prepare unit objects.<br/>
     /// </summary>
     public record Prepare();
 
@@ -32,7 +32,7 @@ public static class UnitMessage
     public record TerminateAsync();
 
     /// <summary>
-    ///  Serialize objects.<br/>
+    ///  Serialize unit objects.<br/>
     ///  Called multiple times after <see cref="Prepare()"/>.
     /// </summary>
     public record SaveAsync();
