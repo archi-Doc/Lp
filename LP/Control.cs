@@ -125,7 +125,6 @@ public class Control
             this.netBase = this.Context.ServiceProvider.GetRequiredService<NetBase>();
             this.netBase.SetParameter(true, string.Empty, options.NetsphereOptions);
             this.netBase.AllowUnsafeConnection = true; // betacode
-            this.netBase.NetsphereOptions.EnableAlternative = true; // betacode
             this.netBase.NetsphereOptions.EnableTestFeatures = true; // betacode
 
             var control = this.Context.ServiceProvider.GetRequiredService<Control>();
