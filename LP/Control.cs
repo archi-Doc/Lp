@@ -84,7 +84,7 @@ public class Control
             subcommandParser = new SimpleParser(context.Subcommands, SubcommandParserOptions);
         }
 
-        public async Task Run(LPOptions options)
+        public async Task RunAsync(LPOptions options)
         {
             // Load strings
             var asm = System.Reflection.Assembly.GetExecutingAssembly();

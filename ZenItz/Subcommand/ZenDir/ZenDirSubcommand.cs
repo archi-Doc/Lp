@@ -6,7 +6,7 @@ using SimpleCommandLine;
 namespace ZenItz.Subcommands;
 
 [SimpleCommand("zendir", IsSubcommand = true, Description = "Zen directory subcommand")]
-public class ZenDirSubcommand : SimpleSubcommand<ZenDirSubcommand>
+public class ZenDirSubcommand : SimpleCommandGroup<ZenDirSubcommand>
 {
     public static void Configure(UnitBuilderContext context)
     {

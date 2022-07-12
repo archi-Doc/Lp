@@ -27,7 +27,7 @@ public class TemplateSubcommand : ISimpleCommandAsync
         this.Control = control;
     }
 
-    public async Task Run(string[] args)
+    public async Task RunAsync(string[] args)
     {
         if (commandTypes == null)
         {

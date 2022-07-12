@@ -18,7 +18,7 @@ public class DumpSubcommandOptions : ISimpleCommandAsync<DumpSubcommandOptions2>
         this.Control = control;
     }
 
-    public async Task Run(DumpSubcommandOptions2 options, string[] args)
+    public async Task RunAsync(DumpSubcommandOptions2 options, string[] args)
     {
         var output = options.Output;
         if (string.IsNullOrEmpty(output))

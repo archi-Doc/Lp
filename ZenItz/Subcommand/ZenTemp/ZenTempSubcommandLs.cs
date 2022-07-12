@@ -13,7 +13,7 @@ public class ZenTempSubcommandLs : ISimpleCommandAsync
         this.Control = control;
     }
 
-    public async Task Run(string[] args)
+    public async Task RunAsync(string[] args)
     {
         var info = this.Control.Zen.IO.GetDirectoryInformation();
 

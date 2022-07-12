@@ -7,7 +7,7 @@ using SimpleCommandLine;
 namespace LP.Subcommands;
 
 [SimpleCommand("dump", IsSubcommand = true)]
-public class DumpSubcommand : SimpleSubcommand<DumpSubcommand>
+public class DumpSubcommand : SimpleCommandGroup<DumpSubcommand>
 {
     public static void Configure(UnitBuilderContext context)
     {

@@ -17,7 +17,7 @@ public class ZenDirSubcommandAdd : ISimpleCommandAsync<ZenDirOptionsAdd>
         this.ZenDirSubcommandLs = zenDirSubcommandLs;
     }
 
-    public async Task Run(ZenDirOptionsAdd option, string[] args)
+    public async Task RunAsync(ZenDirOptionsAdd option, string[] args)
     {
         long cap = Zen.DefaultDirectoryCapacity;
         if (option.Capacity != 0)
@@ -33,7 +33,7 @@ public class ZenDirSubcommandAdd : ISimpleCommandAsync<ZenDirOptionsAdd>
         {
             Logger.Default.Information($"Directory added: {option.Path}");
             Console.WriteLine();
-            await this.ZenDirSubcommandLs.Run(Array.Empty<string>());
+            await this.ZenDirSubcommandLs.RunAsync(Array.Empty<string>());
             // await this.ZenControl.SimpleParser.ParseAndRunAsync("zendir ls");
         }
     }

@@ -15,7 +15,7 @@ public class TemplateSubcommandNew : ISimpleCommandAsync<TemplateOptionsNew>
         this.Control = control;
     }
 
-    public async Task Run(TemplateOptionsNew option, string[] args)
+    public async Task RunAsync(TemplateOptionsNew option, string[] args)
     {
         Console.WriteLine($"Template New: {option.Name}");
     }

@@ -6,7 +6,7 @@ using SimpleCommandLine;
 namespace LP.Subcommands;
 
 [SimpleCommand("keyvault", IsSubcommand = true)]
-public class KeyVaultSubcommand : SimpleSubcommand<KeyVaultSubcommand>
+public class KeyVaultSubcommand : SimpleCommandGroup<KeyVaultSubcommand>
 {
     public static void Configure(UnitBuilderContext context)
     {

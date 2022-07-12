@@ -16,7 +16,7 @@ namespace LPConsole;
 [SimpleCommand("temp", description: "Template command")]
 public class TempCommand : ISimpleCommandAsync<TempOptions>
 {
-    public async Task Run(TempOptions options, string[] args)
+    public async Task RunAsync(TempOptions options, string[] args)
     {
         Console.WriteLine("Template command:");
         Console.WriteLine($"{options.ToString()}");

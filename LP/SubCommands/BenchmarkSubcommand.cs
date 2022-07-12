@@ -34,7 +34,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
         }
     }
 
-    public async Task Run(BenchmarkOptions options, string[] args)
+    public async Task RunAsync(BenchmarkOptions options, string[] args)
     {
         if (options.Repetition < 1)
         {
