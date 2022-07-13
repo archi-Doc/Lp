@@ -137,7 +137,7 @@ public class Control
                 await control.LoadKeyVaultAsync();
 
                 // Start
-                Logger.Default.Information("LP Start");
+                Logger.Default.Information($"LP Start ({Version.Get()})");
 
                 // Create optional instances
                 this.Context.CreateInstances();
