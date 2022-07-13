@@ -29,6 +29,7 @@ Error = {
 
 KeyVault = {
     AskNew = "Do you want to create new KeyVault?"
+    Create = "Creating new KeyVault"
     EnterPassword = "Enter KeyVault password"
     ChangePassword = "Changing KeyVault password"
     NoData = "KeyVault could not get '{0}'"

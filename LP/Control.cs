@@ -454,25 +454,38 @@ public class Control
 
     private async Task LoadKeyVaultAsync()
     {
-        var result = await this.KeyVault.LoadAsync(this.LPBase.CombineDataPath(this.LPBase.LPOptions.KeyVault, KeyVault.Filename));
-        if (!result)
+        if (this.LPBase.IsFirstRun)
+        {// First run
+        }
+        else
         {
+            var result = await this.KeyVault.LoadAsync(this.LPBase.CombineDataPath(this.LPBase.LPOptions.KeyVault, KeyVault.Filename));
+            if (result)
+            {
+                goto LoadKeyVaultObjects;
+            }
+
+            // Could not load KeyVault
             var reply = await this.UserInterfaceService.RequestYesOrNo(Hashed.KeyVault.AskNew);
             if (reply != true)
             {// No
                 throw new PanicException();
             }
-
-            // New KeyVault
-            var password = await this.UserInterfaceService.RequestPasswordAndConfirm(Hashed.KeyVault.EnterPassword, Hashed.Dialog.Password.Confirm);
-            if (password == null)
-            {
-                throw new PanicException();
-            }
-
-            this.KeyVault.Create(password);
         }
 
+        Console.WriteLine(HashedString.Get(Hashed.KeyVault.Create));
+        // await this.UserInterfaceService.Notify(UserInterfaceNotifyLevel.Information, Hashed.KeyVault.Create);
+
+        // New KeyVault
+        var password = await this.UserInterfaceService.RequestPasswordAndConfirm(Hashed.KeyVault.EnterPassword, Hashed.Dialog.Password.Confirm);
+        if (password == null)
+        {
+            throw new PanicException();
+        }
+
+        this.KeyVault.Create(password);
+
+LoadKeyVaultObjects:
         await this.LoadKeyVault_NodeKey();
     }
 

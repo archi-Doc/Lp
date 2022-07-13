@@ -30,6 +30,8 @@ public class LPBase
         TimeCorrection.Start();
     }
 
+    public bool IsFirstRun { get; private set; }
+
     public bool IsConsole { get; private set; }
 
     public string RootDirectory { get; private set; } = default!;
@@ -82,6 +84,7 @@ public class LPBase
 
         Directory.CreateDirectory(this.RootDirectory);
         this.DataDirectory = Path.Combine(this.RootDirectory, DataDirectoryName);
+        this.IsFirstRun = !Directory.Exists(this.DataDirectory);
 
         // Mode
         LPMode mode;

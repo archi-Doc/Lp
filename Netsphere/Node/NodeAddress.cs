@@ -156,6 +156,11 @@ public partial class NodeAddress : IEquatable<NodeAddress>
         }
     }
 
+    internal void SetPort(ushort port)
+    {
+        this.Port = port;
+    }
+
     private bool IsValidIPv4()
     {
         Span<byte> address = stackalloc byte[4];
