@@ -15,9 +15,9 @@ public class LPConsoleCommand : ISimpleCommandAsync<LPOptions>
         this.unit = unit;
     }
 
-    public async Task Run(LPOptions options, string[] args)
+    public async Task RunAsync(LPOptions options, string[] args)
     {
-        await this.unit.Run(options);
+        await this.unit.RunAsync(options);
     }
 
     private Control.Unit unit;

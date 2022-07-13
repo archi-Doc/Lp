@@ -17,7 +17,7 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
         this.Control = control;
     }
 
-    public async Task Run(PunchOptions options, string[] args)
+    public async Task RunAsync(PunchOptions options, string[] args)
     {
         if (!SubcommandService.TryParseNodeAddress(options.Node, out var node))
         {

@@ -17,7 +17,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
         this.Control = control;
     }
 
-    public async Task Run(PingOptions options, string[] args)
+    public async Task RunAsync(PingOptions options, string[] args)
     {
         if (!SubcommandService.TryParseNodeAddress(options.Node, out var node))
         {

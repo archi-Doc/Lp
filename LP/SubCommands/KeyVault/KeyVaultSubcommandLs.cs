@@ -15,7 +15,7 @@ public class KeyVaultSubcommandLs : ISimpleCommandAsync
         this.Control = control;
     }
 
-    public async Task Run(string[] args)
+    public async Task RunAsync(string[] args)
     {
         var names = this.Control.KeyVault.GetNames();
         Console.WriteLine(string.Join(' ', names));

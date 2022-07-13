@@ -6,7 +6,7 @@ using SimpleCommandLine;
 namespace ZenItz.Subcommands;
 
 [SimpleCommand("zentemp", IsSubcommand = true, Description = "Zen template subcommand")]
-public class ZenTempSubcommand : SimpleSubcommand<ZenTempSubcommand>
+public class ZenTempSubcommand : SimpleCommandGroup<ZenTempSubcommand>
 {
     public static void Configure(UnitBuilderContext context)
     {

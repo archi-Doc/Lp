@@ -53,7 +53,7 @@ public class ItzTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         this.ZenControl = zenControl;
     }
 
-    public async Task Run(BasicTestOptions options, string[] args)
+    public async Task RunAsync(BasicTestOptions options, string[] args)
     {
         var zen = this.ZenControl.Zen;
         var itz = this.ZenControl.Itz;

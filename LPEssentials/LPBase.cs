@@ -23,10 +23,14 @@ public enum LPMode
 
 public class LPBase
 {
+    public const string DataDirectoryName = "Data";
+
     public LPBase()
     {
         TimeCorrection.Start();
     }
+
+    public bool IsFirstRun { get; private set; }
 
     public bool IsConsole { get; private set; }
 
@@ -42,7 +46,25 @@ public class LPBase
 
     // public string GetRootPath(string path, string defaultFilename) => this.GetPath(this.RootDirectory, path, defaultFilename);
 
-    public string GetDataPath(string path, string defaultFilename) => this.GetPath(this.DataDirectory, path, defaultFilename);
+    public string CombineDataPath(string path, string defaultFilename) => this.CombinePath(this.DataDirectory, path, defaultFilename);
+
+    public string CombineDataPathAndPrepareDirectory(string path, string defaultFilename)
+    {
+        var file = this.CombineDataPath(path, defaultFilename);
+
+        try
+        {
+            if (Path.GetDirectoryName(file) is { } directory)
+            {
+                Directory.CreateDirectory(directory);
+            }
+        }
+        catch
+        {
+        }
+
+        return file;
+    }
 
     public void SetParameter(LPOptions options, bool isConsole, string defaultMode)
     {
@@ -61,7 +83,8 @@ public class LPBase
         }
 
         Directory.CreateDirectory(this.RootDirectory);
-        this.DataDirectory = Path.Combine(this.RootDirectory, "LP");
+        this.DataDirectory = Path.Combine(this.RootDirectory, DataDirectoryName);
+        this.IsFirstRun = !Directory.Exists(this.DataDirectory);
 
         // Mode
         LPMode mode;
@@ -87,7 +110,7 @@ public class LPBase
         return $"Mode: {this.Mode}, {this.LPOptions.ToString()}";
     }
 
-    private string GetPath(string directory, string path, string defaultFilename)
+    private string CombinePath(string directory, string path, string defaultFilename)
     {
         if (Path.IsPathRooted(path))
         {

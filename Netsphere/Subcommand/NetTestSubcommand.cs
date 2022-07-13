@@ -17,7 +17,7 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
         this.NetControl = netControl;
     }
 
-    public async Task Run(NetTestOptions options, string[] args)
+    public async Task RunAsync(NetTestOptions options, string[] args)
     {
         if (!SubcommandService.TryParseNodeAddress(options.Node, out var node))
         {

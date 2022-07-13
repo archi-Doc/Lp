@@ -15,7 +15,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         this.Control = control;
     }
 
-    public async Task Run(TestOptions options, string[] args)
+    public async Task RunAsync(TestOptions options, string[] args)
     {
         Logger.Default.Information($"Test subcommand: {options.ToString()}");
         // this.Control.Netsphere.NetStatus

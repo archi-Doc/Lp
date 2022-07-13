@@ -53,10 +53,9 @@ public class Program
                 // ServiceFilter
 
                 // Unit
-                context.AddSingleton<LP.Custom.CustomUnit>();
-                context.CreateInstance<LP.Custom.CustomUnit>();
+                LPConsole.Sample.SampleUnit.Configure(context);
             });
-            // .ConfigureBuilder(new LP.Custom.CustomUnit.Builder());
+            // .ConfigureBuilder(new LPConsole.Sample.SampleUnit.Builder()); // Alternative
 
         unit = builder.Build();
 

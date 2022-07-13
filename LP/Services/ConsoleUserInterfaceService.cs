@@ -71,12 +71,11 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
                     Console.WriteLine();
                     return null;
                 }
-
-                /*else if (key == ConsoleKey.Escape)
+                else if (key == ConsoleKey.Escape)
                 {
                     Console.WriteLine();
                     return null;
-                }*/
+                }
             }
             while (key != ConsoleKey.Enter);
         }

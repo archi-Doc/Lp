@@ -17,7 +17,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         this.NetControl = netControl;
     }
 
-    public async Task Run(NetbenchOptions options, string[] args)
+    public async Task RunAsync(NetbenchOptions options, string[] args)
     {
         if (!SubcommandService.TryParseNodeAddress(options.Node, out var node))
         {

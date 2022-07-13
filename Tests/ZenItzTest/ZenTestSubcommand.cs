@@ -15,7 +15,7 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
         this.ZenControl = zenControl;
     }
 
-    public async Task Run(ZenTestOptions options, string[] args)
+    public async Task RunAsync(ZenTestOptions options, string[] args)
     {
         var zen = this.ZenControl.Zen;
         var itz = this.ZenControl.Itz;

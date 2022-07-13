@@ -11,28 +11,30 @@ using Tinyhand;
 namespace LP.Subcommands.Dump;
 
 [SimpleCommand("options")]
-public class DumpSubcommandOptions : ISimpleCommandAsync<DumpSubcommandOptions2>
+public class DumpSubcommandOptions : ISimpleCommandAsync<DumpSubcommandOptionsOptions>
 {
     public DumpSubcommandOptions(Control control)
     {
         this.Control = control;
     }
 
-    public async Task Run(DumpSubcommandOptions2 options, string[] args)
+    public async Task RunAsync(DumpSubcommandOptionsOptions options, string[] args)
     {
-        var output = options.Output;
+        /*var output = options.Output;
         if (string.IsNullOrEmpty(output))
         {
             output = LPOptions.DefaultOptionsName;
         }
 
-        var path = Path.Combine(this.Control.LPBase.RootDirectory, output);
-        Logger.Default.Information(HashedString.Get(Hashed.Success.Output, path));
+        var path = Path.Combine(this.Control.LPBase.RootDirectory, output);*/
 
         try
         {
-            var utf = TinyhandSerializer.SerializeToUtf8(this.Control.LPBase.LPOptions);
+            var utf = TinyhandSerializer.SerializeToUtf8(this.Control.LPBase.LPOptions with { OptionsPath = string.Empty, });
+
+            var path = this.Control.LPBase.CombineDataPathAndPrepareDirectory(options.Output, LPOptions.DefaultOptionsName);
             await File.WriteAllBytesAsync(path, utf);
+            Logger.Default.Information(HashedString.Get(Hashed.Success.Output, path));
         }
         catch
         {
@@ -42,7 +44,7 @@ public class DumpSubcommandOptions : ISimpleCommandAsync<DumpSubcommandOptions2>
     public Control Control { get; set; }
 }
 
-public record DumpSubcommandOptions2
+public record DumpSubcommandOptionsOptions
 {
     [SimpleOption("output", description: "Output name")]
     public string Output { get; init; } = string.Empty;

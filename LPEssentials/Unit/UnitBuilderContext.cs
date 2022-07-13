@@ -38,11 +38,17 @@ public sealed class UnitBuilderContext
 
     /// <summary>
     /// Adds the specified <see cref="Type"/> to the creation list.
+    /// Note that instances are actually created by calling <see cref="UnitContext.CreateInstances()"/>.
     /// </summary>
     /// <typeparam name="T">The type to be instantiated.</typeparam>
     public void CreateInstance<T>()
         => this.CreateInstanceSet.Add(typeof(T));
 
+    /// <summary>
+    /// Gets <see cref="CommandGroup"/> of the specified command type.
+    /// </summary>
+    /// <param name="type">The command type.</param>
+    /// <returns><see cref="CommandGroup"/>.</returns>
     public CommandGroup GetCommandGroup(Type type)
     {
         if (!this.CommandGroups.TryGetValue(type, out var commandGroup))
@@ -55,16 +61,34 @@ public sealed class UnitBuilderContext
         return commandGroup;
     }
 
+    /// <summary>
+    /// Gets <see cref="CommandGroup"/> of command.
+    /// </summary>
+    /// <returns><see cref="CommandGroup"/>.</returns>
     public CommandGroup GetCommandGroup() => this.GetCommandGroup(typeof(TopCommand));
 
+    /// <summary>
+    /// Gets <see cref="CommandGroup"/> of subcommand.
+    /// </summary>
+    /// <returns><see cref="CommandGroup"/>.</returns>
     public CommandGroup GetSubcommandGroup() => this.GetCommandGroup(typeof(SubCommand));
 
+    /// <summary>
+    /// Adds command.
+    /// </summary>
+    /// <param name="commandType">The command type.</param>
+    /// <returns><see langword="true"/>: Successfully added.</returns>
     public bool AddCommand(Type commandType)
     {
         var group = this.GetCommandGroup();
         return group.AddCommand(commandType);
     }
 
+    /// <summary>
+    /// Adds subcommand.
+    /// </summary>
+    /// <param name="commandType">The command type.</param>
+    /// <returns><see langword="true"/>: Successfully added.</returns>
     public bool AddSubcommand(Type commandType)
     {
         var group = this.GetSubcommandGroup();

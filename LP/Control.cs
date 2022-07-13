@@ -84,7 +84,7 @@ public class Control
             subcommandParser = new SimpleParser(context.Subcommands, SubcommandParserOptions);
         }
 
-        public async Task Run(LPOptions options)
+        public async Task RunAsync(LPOptions options)
         {
             // Load strings
             var asm = System.Reflection.Assembly.GetExecutingAssembly();
@@ -125,16 +125,19 @@ public class Control
             this.netBase = this.Context.ServiceProvider.GetRequiredService<NetBase>();
             this.netBase.SetParameter(true, string.Empty, options.NetsphereOptions);
             this.netBase.AllowUnsafeConnection = true; // betacode
+            this.netBase.NetsphereOptions.EnableTestFeatures = true; // betacode
 
             var control = this.Context.ServiceProvider.GetRequiredService<Control>();
             try
             {
                 // Logger
                 Logger.Configure(control.LPBase);
-                Logger.Default.Information("LP Start");
 
                 // KeyVault
                 await control.LoadKeyVaultAsync();
+
+                // Start
+                Logger.Default.Information("LP Start");
 
                 // Create optional instances
                 this.Context.CreateInstances();
@@ -451,25 +454,38 @@ public class Control
 
     private async Task LoadKeyVaultAsync()
     {
-        var result = await this.KeyVault.LoadAsync(this.LPBase.GetDataPath(this.LPBase.LPOptions.KeyVault, KeyVault.Filename));
-        if (!result)
+        if (this.LPBase.IsFirstRun)
+        {// First run
+        }
+        else
         {
+            var result = await this.KeyVault.LoadAsync(this.LPBase.CombineDataPath(this.LPBase.LPOptions.KeyVault, KeyVault.Filename));
+            if (result)
+            {
+                goto LoadKeyVaultObjects;
+            }
+
+            // Could not load KeyVault
             var reply = await this.UserInterfaceService.RequestYesOrNo(Hashed.KeyVault.AskNew);
             if (reply != true)
             {// No
                 throw new PanicException();
             }
-
-            // New KeyVault
-            var password = await this.UserInterfaceService.RequestPasswordAndConfirm(Hashed.KeyVault.EnterPassword, Hashed.Dialog.Password.Confirm);
-            if (password == null)
-            {
-                throw new PanicException();
-            }
-
-            this.KeyVault.Create(password);
         }
 
+        Console.WriteLine(HashedString.Get(Hashed.KeyVault.Create));
+        // await this.UserInterfaceService.Notify(UserInterfaceNotifyLevel.Information, Hashed.KeyVault.Create);
+
+        // New KeyVault
+        var password = await this.UserInterfaceService.RequestPasswordAndConfirm(Hashed.KeyVault.EnterPassword, Hashed.Dialog.Password.Confirm);
+        if (password == null)
+        {
+            throw new PanicException();
+        }
+
+        this.KeyVault.Create(password);
+
+LoadKeyVaultObjects:
         await this.LoadKeyVault_NodeKey();
     }
 
@@ -492,6 +508,6 @@ public class Control
     {
         this.KeyVault.Add(NodePrivateKey.Filename, this.NetControl.NetBase.SerializeNodeKey());
 
-        await this.KeyVault.SaveAsync(this.LPBase.GetDataPath(this.LPBase.LPOptions.KeyVault, KeyVault.Filename));
+        await this.KeyVault.SaveAsync(this.LPBase.CombineDataPath(this.LPBase.LPOptions.KeyVault, KeyVault.Filename));
     }
 }

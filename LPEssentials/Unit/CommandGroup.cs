@@ -3,7 +3,7 @@
 namespace Arc.Unit;
 
 /// <summary>
-/// <see cref="CommandGroup"/>
+/// <see cref="CommandGroup"/> is a collection of command types.
 /// </summary>
 public class CommandGroup
 {

@@ -19,7 +19,7 @@ namespace Netsphere;
 [TinyhandObject]
 public partial class NodeAddress : IEquatable<NodeAddress>
 {
-    public const int AlternativePort = 49152;
+    public const int AlternativePort = 49151;
     public static readonly NodeAddress Alternative = new(IPAddress.Loopback, AlternativePort);
 
     public static bool TryParse(string text, [NotNullWhen(true)] out NodeAddress? node)
@@ -154,6 +154,11 @@ public partial class NodeAddress : IEquatable<NodeAddress>
         {
             return $"{this.Address}:{this.Port}({this.Engagement})";
         }
+    }
+
+    internal void SetPort(ushort port)
+    {
+        this.Port = port;
     }
 
     private bool IsValidIPv4()

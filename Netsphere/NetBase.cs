@@ -26,7 +26,7 @@ public class NetBase : UnitBase, IUnitPreparable
             this.NetsphereOptions.Port = LP.Random.Pseudo.NextInt32(NetControl.MinPort, NetControl.MaxPort + 1);
             if (showWarning)
             {
-                Logger.Default.Warning($"Port number must be between {NetControl.MinPort} and {NetControl.MaxPort}");
+                Logger.Default.Error($"Port number must be between {NetControl.MinPort} and {NetControl.MaxPort}");
                 Logger.Default.Information($"Port number is set to {this.NetsphereOptions.Port}");
             }
         }

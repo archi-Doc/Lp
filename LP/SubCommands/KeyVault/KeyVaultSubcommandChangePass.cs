@@ -16,7 +16,7 @@ public class KeyVaultSubcommandChangePass : ISimpleCommandAsync
         this.Control = control;
     }
 
-    public async Task Run(string[] args)
+    public async Task RunAsync(string[] args)
     {
         Logger.Default.Warning(Hashed.KeyVault.ChangePassword);
 
