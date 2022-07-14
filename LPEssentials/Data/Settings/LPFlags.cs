@@ -5,5 +5,6 @@ namespace LP.Data;
 [TinyhandObject(ImplicitKeyAsName = true)]
 public partial record LPFlags
 {
+    [ShortName("logm1")]
     public bool LogEssentialNetMachine { get; set; } // EssentialNetMachine
 }

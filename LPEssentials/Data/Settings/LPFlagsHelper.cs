@@ -11,9 +11,20 @@ public static class LPFlagsHelper
         public Item(MemberInfo memberInfo, MethodInfo? getMethod, MethodInfo? setMethod, FieldInfo? fieldInfo)
         {
             this.MemberInfo = memberInfo;
+            if (this.MemberInfo.GetCustomAttribute<ShortNameAttribute>() is { } attribute)
+            {
+                this.Name = attribute.Name;
+            }
+            else
+            {
+                this.Name = this.MemberInfo.Name;
+            }
+
             this.GetMethod = getMethod;
             this.SetMethod = setMethod;
         }
+
+        public string Name { get; private set; }
 
         public MemberInfo MemberInfo { get; private set; }
 
@@ -41,10 +52,9 @@ public static class LPFlagsHelper
 
             if (item != null)
             {
-                var name = x.Name.ToLower();
-                if (!nameToItem.ContainsKey(name))
+                if (!nameToItem.ContainsKey(item.Name))
                 {
-                    nameToItem[name] = item;
+                    nameToItem[item.Name] = item;
                 }
             }
         }
