@@ -15,10 +15,11 @@ public class FlagsSubcommand : SimpleCommandGroup<FlagsSubcommand>
         group.AddCommand(typeof(FlagsSubcommandOn));
         group.AddCommand(typeof(FlagsSubcommandOff));
         group.AddCommand(typeof(FlagsSubcommandLs));
+        group.AddCommand(typeof(FlagsSubcommandClear));
     }
 
     public FlagsSubcommand(UnitContext context)
-        : base(context)
+        : base(context, "ls")
     {
     }
 }

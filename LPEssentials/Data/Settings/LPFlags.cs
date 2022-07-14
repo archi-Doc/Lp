@@ -6,5 +6,5 @@ namespace LP.Data;
 public partial record LPFlags
 {
     [ShortName("logm1")]
-    public bool LogEssentialNetMachine { get; set; } // EssentialNetMachine
+    public bool LogEssentialNetMachine { get; set; }
 }

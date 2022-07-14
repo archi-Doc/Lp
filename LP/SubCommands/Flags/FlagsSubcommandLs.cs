@@ -3,6 +3,7 @@
 using System.Text;
 using Arc.Crypto;
 using LP.Block;
+using LP.Data;
 using SimpleCommandLine;
 using Tinyhand;
 
@@ -18,10 +19,38 @@ public class FlagsSubcommandLs : ISimpleCommand
 
     public void Run(string[] args)
     {
-        var names = LP.Data.LPFlagsHelper.GetNames();
-        if (names.Length > 0)
+        var ope = VisceralClass.TryGet(this.Control.LPBase.Settings.Flags);
+        if (ope == null)
         {
-            Logger.Default.Information($"Flags: {string.Join(' ', names)}");
+            return;
+        }
+
+        List<string> on = new();
+        List<string> off = new();
+        var names = ope.GetNames();
+        foreach (var x in names)
+        {
+            if (ope.TryGet<bool>(x, out var value))
+            {
+                if (value)
+                {
+                    on.Add(x);
+                }
+                else
+                {
+                    off.Add(x);
+                }
+            }
+        }
+
+        if (on.Count > 0)
+        {
+            Logger.Default.Information($"On: {string.Join(' ', on)}");
+        }
+
+        if (off.Count > 0)
+        {
+            Logger.Default.Information($"Off: {string.Join(' ', off)}");
         }
     }
 

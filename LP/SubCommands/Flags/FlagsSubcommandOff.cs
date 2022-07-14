@@ -3,6 +3,7 @@
 using System.Text;
 using Arc.Crypto;
 using LP.Block;
+using LP.Data;
 using SimpleCommandLine;
 using Tinyhand;
 
@@ -18,12 +19,17 @@ public class FlagsSubcommandOff : ISimpleCommand
 
     public void Run(string[] args)
     {
-        var flags = this.Control.LPBase.Settings.Flags;
+        var ope = VisceralClass.TryGet(this.Control.LPBase.Settings.Flags);
+        if (ope == null)
+        {
+            return;
+        }
+
         List<string> off = new();
         List<string> notfound = new();
         foreach (var x in args)
         {
-            if (LP.Data.LPFlagsHelper.TrySet(flags, x, false))
+            if (ope.TrySet(x, false))
             {
                 off.Add(x);
             }
