@@ -3,7 +3,7 @@
 using System;
 using SimpleCommandLine;
 
-namespace LP.Options;
+namespace LP.Data;
 
 [TinyhandObject(ImplicitKeyAsName = true)]
 public partial class ZenItzOptions

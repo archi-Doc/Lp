@@ -23,7 +23,7 @@ public class FlagsSubcommandOff : ISimpleCommand
         List<string> notfound = new();
         foreach (var x in args)
         {
-            if (LP.Options.LPFlagsHelper.TrySet(flags, x, false))
+            if (LP.Data.LPFlagsHelper.TrySet(flags, x, false))
             {
                 off.Add(x);
             }

@@ -18,7 +18,7 @@ public class FlagsSubcommandLs : ISimpleCommand
 
     public void Run(string[] args)
     {
-        var names = LP.Options.LPFlagsHelper.GetNames();
+        var names = LP.Data.LPFlagsHelper.GetNames();
         if (names.Length > 0)
         {
             Logger.Default.Information($"Flags: {string.Join(' ', names)}");

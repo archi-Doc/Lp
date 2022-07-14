@@ -28,7 +28,7 @@ public class NetFixture : IDisposable
                 context.AddSingleton<NullFilter>();
             });
 
-        var options = new LP.Options.NetsphereOptions();
+        var options = new LP.Data.NetsphereOptions();
         options.EnableAlternative = true;
         options.EnableTestFeatures = true;
         options.EnableLogger = false;

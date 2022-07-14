@@ -4,7 +4,7 @@ using System;
 using SimpleCommandLine;
 using Tinyhand.IO;
 
-namespace LP.Options;
+namespace LP.Data;
 
 [TinyhandObject(ImplicitKeyAsName = true)]
 public partial record LPOptions

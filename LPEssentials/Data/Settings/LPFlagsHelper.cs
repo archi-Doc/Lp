@@ -2,7 +2,7 @@
 
 using System.Reflection;
 
-namespace LP.Options;
+namespace LP.Data;
 
 public static class LPFlagsHelper
 {

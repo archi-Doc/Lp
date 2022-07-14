@@ -10,7 +10,7 @@ global using Arc.Unit;
 global using CrossChannel;
 global using LP;
 global using LP.Block;
-global using LP.Options;
+global using LP.Data;
 global using Tinyhand;
 global using ValueLink;
 using System.Collections.Concurrent;
