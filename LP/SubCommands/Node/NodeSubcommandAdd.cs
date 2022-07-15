@@ -34,8 +34,10 @@ public class NodeSubcommandAdd : ISimpleCommand
                 continue;
             }
 
-            // Success
-            this.Control.NetControl.EssentialNode.TryAdd(nodeAddress);
+            if (this.Control.NetControl.EssentialNode.TryAdd(nodeAddress))
+            {// Success
+                Logger.Default.Information(Hashed.Success.NodeAdded, x);
+            }
         }
     }
 

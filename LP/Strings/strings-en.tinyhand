@@ -19,6 +19,7 @@ Success = {
     Output = "Output: {0}"
     Loaded = "Loaded: {0}"
     Deserialized = "Deserialized: {0}"
+    NodeAdded = "Node added: {}"
 }
 
 Error = {
