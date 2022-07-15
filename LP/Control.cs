@@ -19,6 +19,7 @@ using Netsphere;
 using SimpleCommandLine;
 using ZenItz;
 using LP.Data;
+using System.Globalization;
 
 namespace LP;
 
@@ -291,19 +292,21 @@ public class Control
     {
         this.BigMachine.Start();
         await context.SendRunAsync(new(this.Core));
-        Console.WriteLine();
 
+        Console.WriteLine();
         this.ShowInformation();
         this.LPBase.Options.NetsphereOptions.ShowInformation();
 
         Logger.Console.Information("Press Enter key to switch to console mode.");
         Logger.Console.Information("Press Ctrl+C to exit.");
-        Logger.Console.Information($"Running {Mics.ToString(Mics.GetUtcNow())}");
+        Logger.Console.Information($"Running");
     }
 
     public void ShowInformation()
     {
-        Logger.Default.Information($"Console: {this.LPBase.IsConsole}, Root directory: {this.LPBase.RootDirectory}");
+        Logger.Console.Information($"system: {Mics.ToString(Mics.GetSystem())}");
+        Logger.Console.Information($"Utc: {Mics.ToString(Mics.GetUtcNow())}");
+        Logger.Default.Information($"Root directory: {this.LPBase.RootDirectory}");
         // Logger.Default.Information(this.LPBase.ToString());
     }
 

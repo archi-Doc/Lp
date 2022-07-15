@@ -265,5 +265,5 @@ internal partial class EssentialNodeAddress
     public int FailureCount { get; private set; }
 
     public override string ToString()
-        => $"{this.Address.ToString()}, Valid: {this.ValidMics}, Failed: {this.FailureCount}";
+        => $"{this.Address.ToString()}, Valid: {Mics.ToString(this.ValidMics)}, Failed: {this.FailureCount}";
 }
