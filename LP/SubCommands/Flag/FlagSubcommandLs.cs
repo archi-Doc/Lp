@@ -9,10 +9,10 @@ using Tinyhand;
 
 namespace LP.Subcommands.Dump;
 
-[SimpleCommand("clear")]
-public class FlagsSubcommandClear : ISimpleCommand
-{// flags on name
-    public FlagsSubcommandClear(Control control)
+[SimpleCommand("ls")]
+public class FlagSubcommandLs : ISimpleCommand
+{
+    public FlagSubcommandLs(Control control)
     {
         this.Control = control;
     }
@@ -25,7 +25,8 @@ public class FlagsSubcommandClear : ISimpleCommand
             return;
         }
 
-        List<string> cleared = new();
+        List<string> on = new();
+        List<string> off = new();
         var names = ope.GetNames();
         foreach (var x in names)
         {
@@ -33,15 +34,23 @@ public class FlagsSubcommandClear : ISimpleCommand
             {
                 if (value)
                 {
-                    ope.TrySet(x, false);
-                    cleared.Add(x);
+                    on.Add(x);
+                }
+                else
+                {
+                    off.Add(x);
                 }
             }
         }
 
-        if (cleared.Count > 0)
+        if (on.Count > 0)
         {
-            Logger.Default.Information($"Cleared: {string.Join(' ', cleared)}");
+            Logger.Default.Information($"On: {string.Join(' ', on)}");
+        }
+
+        if (off.Count > 0)
+        {
+            Logger.Default.Information($"Off: {string.Join(' ', off)}");
         }
     }
 

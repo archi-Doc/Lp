@@ -12,7 +12,7 @@ namespace LP.Subcommands.Dump;
 
 [SimpleCommand("add")]
 public class NodeSubcommandAdd : ISimpleCommand
-{// flags on name
+{
     public NodeSubcommandAdd(Control control)
     {
         this.Control = control;

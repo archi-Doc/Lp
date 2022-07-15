@@ -60,7 +60,7 @@ public class Control
 
                 LP.Subcommands.DumpSubcommand.Configure(context);
                 LP.Subcommands.KeyVaultSubcommand.Configure(context);
-                LP.Subcommands.FlagsSubcommand.Configure(context);
+                LP.Subcommands.FlagSubcommand.Configure(context);
                 LP.Subcommands.NodeSubcommand.Configure(context);
             });
 
