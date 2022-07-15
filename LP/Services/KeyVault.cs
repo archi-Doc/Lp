@@ -40,7 +40,7 @@ public partial class KeyVault
         }
         catch
         {
-            Logger.Default.Error(HashedString.Get(Hashed.Error.Load, path));
+            Logger.Default.Error(Hashed.Error.Load, path);
             return false;
         }
 
@@ -55,7 +55,7 @@ public partial class KeyVault
 
         if (items == null || items.Length == 0)
         {
-            Logger.Default.Error(HashedString.Get(Hashed.Error.Deserialize, path));
+            Logger.Default.Error(Hashed.Error.Deserialize, path);
             return false;
         }
 

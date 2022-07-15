@@ -95,6 +95,28 @@ public class EssentialNode
         }
     }
 
+    public bool TryAdd(NodeAddress nodeAddress)
+    {
+        if (!nodeAddress.IsValid())
+        {
+            return false;
+        }
+
+        lock (this.essentialNodes)
+        {
+            if (this.essentialNodes.AddressChain.ContainsKey(nodeAddress))
+            {// Already exists
+                return false;
+            }
+
+            var x = new EssentialNodeAddress(nodeAddress);
+            this.essentialNodes.Add(x);
+            this.essentialNodes.UncheckedChain.Enqueue(x);
+        }
+
+        return true;
+    }
+
     public bool GetUncheckedNode([NotNullWhen(true)] out NodeAddress? nodeAddress)
     {
         nodeAddress = null;

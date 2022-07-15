@@ -61,6 +61,7 @@ public class Control
                 LP.Subcommands.DumpSubcommand.Configure(context);
                 LP.Subcommands.KeyVaultSubcommand.Configure(context);
                 LP.Subcommands.FlagsSubcommand.Configure(context);
+                LP.Subcommands.NodeSubcommand.Configure(context);
             });
 
             this.ConfigureBuilder(new NetControl.Builder());
@@ -545,7 +546,7 @@ LoadKeyVaultObjects:
         }
         catch
         {
-            Logger.Default.Error(HashedString.Get(Hashed.Error.Deserialize, path));
+            Logger.Default.Error(Hashed.Error.Deserialize, path);
         }
     }
 

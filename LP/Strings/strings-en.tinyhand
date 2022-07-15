@@ -11,7 +11,7 @@ Dialog = {
         EmptyWarning = "Empty password should not be used."
         EmptyConfirm = "Are you sure you want to continue without password?"
         NotMatch = "Password didn't match, try again."
-        Changed = "Password was successfully changed"
+        Changed = "Password was successfully changed."
     }
 }
 
@@ -25,6 +25,8 @@ Error = {
     Load = "Could not load '{0}'";
     Deserialize = "Could not deserialize '{0}'"
     KeyVault = "Could not deserialize '{0}'"
+    Parse = "Could not parse '{0}'"
+    InvalidAddress = "{0} is not valid address."
 }
 
 KeyVault = {

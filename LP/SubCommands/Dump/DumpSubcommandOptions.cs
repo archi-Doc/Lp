@@ -34,7 +34,7 @@ public class DumpSubcommandOptions : ISimpleCommandAsync<DumpSubcommandOptionsOp
 
             var path = this.Control.LPBase.CombineDataPathAndPrepareDirectory(options.Output, LPOptions.DefaultOptionsName);
             await File.WriteAllBytesAsync(path, utf);
-            Logger.Default.Information(HashedString.Get(Hashed.Success.Output, path));
+            Logger.Default.Information(Hashed.Success.Output, path);
         }
         catch
         {
