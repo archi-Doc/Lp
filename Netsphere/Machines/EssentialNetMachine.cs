@@ -13,17 +13,22 @@ namespace LP.Machines;
 [MachineObject(0x4792ab0f, Group = typeof(SingleGroup<>))]
 public partial class EssentialNetMachine : Machine<Identifier>
 {
-    public EssentialNetMachine(BigMachine<Identifier> bigMachine, NetBase netBase, NetControl netControl)
+    public EssentialNetMachine(BigMachine<Identifier> bigMachine, LPBase lpBase, NetBase netBase, NetControl netControl)
         : base(bigMachine)
     {
         this.NetBase = netBase;
         this.NetControl = netControl;
+        this.LPBase = lpBase;
         this.DefaultTimeout = TimeSpan.FromSeconds(1);
     }
+
+    public LPBase LPBase { get; }
 
     public NetBase NetBase { get; }
 
     public NetControl NetControl { get; }
+
+    public bool EnableLogger => this.LPBase.Settings.Flags.LogEssentialNetMachine;
 
     [StateMethod(0)]
     protected async Task<StateResult> Initial(StateParameter parameter)
@@ -39,19 +44,26 @@ public partial class EssentialNetMachine : Machine<Identifier>
             using (var terminal = this.NetControl.Terminal.Create(nodeAddress))
             {
                 // await terminal.EncryptConnectionAsync();
-                /*terminal.SendRaw(new RawPacketPunch(null));
-                var data = terminal.ReceiveRaw<PacketPunchResponse>(1000);
-                if (data != null)
-                {
-                    Logger.Default.Information(Time.GetUtcNow().ToString());
-                    Logger.Default.Information($"{this.count} - {data.Endpoint} - {new DateTime(data.UtcTicks)}");
-                    this.Netsphere.EssentialNode.Report(nodeAddress, NodeConnectionResult.Success);
+                var result = await terminal.SendPacketAndReceiveAsync<PacketPunch, PacketPunchResponse>(new PacketPunch(null));
+                if (result.Result == NetResult.Success && result.Value is { } value)
+                {// Success
+                    if (this.EnableLogger)
+                    {
+                        Logger.Default.Information(Time.GetUtcNow().ToString());
+                        Logger.Default.Information($"{this.count} - {value.Endpoint} - {new DateTime(value.UtcMics)}");
+                    }
+
+                    this.NetControl.EssentialNode.Report(nodeAddress, NodeConnectionResult.Success);
                 }
                 else
                 {
-                    Logger.Default.Information($"Receive timeout: {nodeAddress}");
-                    this.Netsphere.EssentialNode.Report(nodeAddress, NodeConnectionResult.Failure);
-                }*/
+                    if (this.EnableLogger)
+                    {
+                        Logger.Default.Information($"Receive timeout: {nodeAddress}");
+                    }
+
+                    this.NetControl.EssentialNode.Report(nodeAddress, NodeConnectionResult.Failure);
+                }
 
                 // this.count <<= 1;
                 // this.SetTimeout(TimeSpan.FromSeconds(this.count));
