@@ -95,6 +95,28 @@ public class EssentialNode
         }
     }
 
+    public bool TryAdd(NodeAddress nodeAddress)
+    {
+        if (!nodeAddress.IsValid())
+        {
+            return false;
+        }
+
+        lock (this.essentialNodes)
+        {
+            if (this.essentialNodes.AddressChain.ContainsKey(nodeAddress))
+            {// Already exists
+                return false;
+            }
+
+            var x = new EssentialNodeAddress(nodeAddress);
+            this.essentialNodes.Add(x);
+            this.essentialNodes.UncheckedChain.Enqueue(x);
+        }
+
+        return true;
+    }
+
     public bool GetUncheckedNode([NotNullWhen(true)] out NodeAddress? nodeAddress)
     {
         nodeAddress = null;
@@ -162,6 +184,21 @@ public class EssentialNode
         }
     }
 
+    public List<string> Dump()
+    {
+        List<string> list = new();
+
+        lock (this.essentialNodes)
+        {
+            foreach (var x in this.essentialNodes)
+            {
+                list.Add(x.ToString()!);
+            }
+        }
+
+        return list;
+    }
+
     public NetBase NetBase { get; }
 
     private void Validate()
@@ -226,4 +263,7 @@ internal partial class EssentialNodeAddress
 
     [IgnoreMember]
     public int FailureCount { get; private set; }
+
+    public override string ToString()
+        => $"{this.Address.ToString()}, {Mics.}, Failed: {this.FailureCount}";
 }

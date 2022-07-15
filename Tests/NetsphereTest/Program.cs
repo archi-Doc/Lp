@@ -83,7 +83,7 @@ public class Program
                 context.AddSingleton<TestFilterB>();
             });
 
-        var options = new LP.Options.NetsphereOptions();
+        var options = new LP.Data.NetsphereOptions();
         options.EnableAlternative = true;
         options.EnableTestFeatures = true;
         options.EnableLogger = false;

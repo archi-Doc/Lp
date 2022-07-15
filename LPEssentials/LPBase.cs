@@ -9,8 +9,9 @@ global using Arc.Crypto;
 global using CrossChannel;
 global using Tinyhand;
 
-using LP.Options;
+using LP.Data;
 using System.Security.Cryptography;
+using System.Collections.Generic;
 
 namespace LP;
 
@@ -28,6 +29,7 @@ public class LPBase
     public LPBase()
     {
         TimeCorrection.Start();
+        this.Settings = TinyhandSerializer.Reconstruct<LPSettings>();
     }
 
     public bool IsFirstRun { get; private set; }
@@ -42,7 +44,9 @@ public class LPBase
 
     public string NodeName { get; private set; } = default!;
 
-    public LPOptions LPOptions { get; private set; } = default!;
+    public LPOptions Options { get; private set; } = default!;
+
+    public LPSettings Settings { get; set; }
 
     // public string GetRootPath(string path, string defaultFilename) => this.GetPath(this.RootDirectory, path, defaultFilename);
 
@@ -66,20 +70,20 @@ public class LPBase
         return file;
     }
 
-    public void SetParameter(LPOptions options, bool isConsole, string defaultMode)
+    public void Initialize(LPOptions options, bool isConsole, string defaultMode)
     {
-        this.LPOptions = options;
+        this.Options = options;
         this.IsConsole = isConsole;
 
         // Root directory
-        if (Path.IsPathRooted(this.LPOptions.Directory) &&
-            File.GetAttributes(this.LPOptions.Directory).HasFlag(FileAttributes.Directory))
+        if (Path.IsPathRooted(this.Options.Directory) &&
+            File.GetAttributes(this.Options.Directory).HasFlag(FileAttributes.Directory))
         {
-            this.RootDirectory = this.LPOptions.Directory;
+            this.RootDirectory = this.Options.Directory;
         }
         else
         {
-            this.RootDirectory = Path.Combine(Directory.GetCurrentDirectory(), this.LPOptions.Directory);
+            this.RootDirectory = Path.Combine(Directory.GetCurrentDirectory(), this.Options.Directory);
         }
 
         Directory.CreateDirectory(this.RootDirectory);
@@ -88,7 +92,7 @@ public class LPBase
 
         // Mode
         LPMode mode;
-        if (!Enum.TryParse<LPMode>(this.LPOptions.Mode, true, out mode))
+        if (!Enum.TryParse<LPMode>(this.Options.Mode, true, out mode))
         {
             if (!Enum.TryParse<LPMode>(defaultMode, true, out mode))
             {
@@ -98,7 +102,7 @@ public class LPBase
 
         this.Mode = mode;
 
-        this.NodeName = this.LPOptions.NodeName;
+        this.NodeName = this.Options.NodeName;
         if (string.IsNullOrEmpty(this.NodeName))
         {
             this.NodeName = System.Environment.OSVersion.ToString();
@@ -107,7 +111,7 @@ public class LPBase
 
     public override string ToString()
     {
-        return $"Mode: {this.Mode}, {this.LPOptions.ToString()}";
+        return $"Mode: {this.Mode}, {this.Options.ToString()}";
     }
 
     private string CombinePath(string directory, string path, string defaultFilename)

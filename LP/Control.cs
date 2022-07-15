@@ -18,7 +18,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere;
 using SimpleCommandLine;
 using ZenItz;
-using LP.Options;
+using LP.Data;
 
 namespace LP;
 
@@ -60,6 +60,8 @@ public class Control
 
                 LP.Subcommands.DumpSubcommand.Configure(context);
                 LP.Subcommands.KeyVaultSubcommand.Configure(context);
+                LP.Subcommands.FlagsSubcommand.Configure(context);
+                LP.Subcommands.NodeSubcommand.Configure(context);
             });
 
             this.ConfigureBuilder(new NetControl.Builder());
@@ -119,7 +121,7 @@ public class Control
 
             // LPBase
             this.lpBase = this.Context.ServiceProvider.GetRequiredService<LPBase>();
-            this.lpBase.SetParameter(options, true, "relay");
+            this.lpBase.Initialize(options, true, "relay");
 
             // NetBase
             this.netBase = this.Context.ServiceProvider.GetRequiredService<NetBase>();
@@ -133,11 +135,14 @@ public class Control
                 // Logger
                 Logger.Configure(control.LPBase);
 
+                // Settings
+                await control.LoadSettingsAsync();
+
                 // KeyVault
                 await control.LoadKeyVaultAsync();
 
                 // Start
-                Logger.Default.Information("LP Start");
+                Logger.Default.Information($"LP Start ({Version.Get()})");
 
                 // Create optional instances
                 this.Context.CreateInstances();
@@ -229,7 +234,7 @@ public class Control
 
     public async Task<bool> TryTerminate()
     {
-        if (!this.LPBase.LPOptions.ConfirmExit)
+        if (!this.LPBase.Options.ConfirmExit)
         {// No confirmation
             this.Core.Terminate(); // this.Terminate(false);
             return true;
@@ -274,6 +279,7 @@ public class Control
     {
         Directory.CreateDirectory(this.LPBase.DataDirectory);
 
+        await this.SaveSettingsAsync();
         await this.SaveKeyVaultAsync();
         await this.NetControl.EssentialNode.SaveAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
         await this.ZenControl.Itz.SaveAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile), Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup));
@@ -288,7 +294,7 @@ public class Control
         Console.WriteLine();
 
         this.ShowInformation();
-        this.LPBase.LPOptions.NetsphereOptions.ShowInformation();
+        this.LPBase.Options.NetsphereOptions.ShowInformation();
 
         Logger.Console.Information("Press Enter key to switch to console mode.");
         Logger.Console.Information("Press Ctrl+C to exit.");
@@ -459,7 +465,7 @@ public class Control
         }
         else
         {
-            var result = await this.KeyVault.LoadAsync(this.LPBase.CombineDataPath(this.LPBase.LPOptions.KeyVault, KeyVault.Filename));
+            var result = await this.KeyVault.LoadAsync(this.LPBase.CombineDataPath(this.LPBase.Options.KeyVault, KeyVault.Filename));
             if (result)
             {
                 goto LoadKeyVaultObjects;
@@ -508,6 +514,52 @@ LoadKeyVaultObjects:
     {
         this.KeyVault.Add(NodePrivateKey.Filename, this.NetControl.NetBase.SerializeNodeKey());
 
-        await this.KeyVault.SaveAsync(this.LPBase.CombineDataPath(this.LPBase.LPOptions.KeyVault, KeyVault.Filename));
+        await this.KeyVault.SaveAsync(this.LPBase.CombineDataPath(this.LPBase.Options.KeyVault, KeyVault.Filename));
+    }
+
+    private async Task LoadSettingsAsync()
+    {
+        if (this.LPBase.IsFirstRun)
+        {
+            return;
+        }
+
+        var path = Path.Combine(this.LPBase.DataDirectory, LPSettings.DefaultSettingsName);
+        byte[] data;
+        try
+        {
+            data = File.ReadAllBytes(path);
+        }
+        catch
+        {
+            return;
+        }
+
+        LPSettings? settings;
+        try
+        {
+            settings = TinyhandSerializer.DeserializeFromUtf8<LPSettings>(data);
+            if (settings != null)
+            {
+                this.LPBase.Settings = settings;
+            }
+        }
+        catch
+        {
+            Logger.Default.Error(Hashed.Error.Deserialize, path);
+        }
+    }
+
+    private async Task SaveSettingsAsync()
+    {
+        try
+        {
+            var path = Path.Combine(this.LPBase.DataDirectory, LPSettings.DefaultSettingsName);
+            var bytes = TinyhandSerializer.SerializeToUtf8(this.LPBase.Settings);
+            await File.WriteAllBytesAsync(path, bytes);
+        }
+        catch
+        {
+        }
     }
 }
