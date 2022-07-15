@@ -50,7 +50,7 @@ public partial class EssentialNetMachine : Machine<Identifier>
                     if (this.EnableLogger)
                     {
                         Logger.Default.Information(Time.GetUtcNow().ToString());
-                        Logger.Default.Information($"{this.count} - {value.Endpoint} - {new DateTime(value.UtcMics)}");
+                        Logger.Default.Information($"{nodeAddress.ToString()} - {value.Endpoint} - {Mics.ToString(value.UtcMics)}");
                     }
 
                     this.NetControl.EssentialNode.Report(nodeAddress, NodeConnectionResult.Success);

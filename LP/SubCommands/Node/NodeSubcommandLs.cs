@@ -20,7 +20,11 @@ public class NodeSubcommandLs : ISimpleCommand
 
     public void Run(string[] args)
     {
-        this.Control.NetControl.EssentialNode.Dump();
+        var list = this.Control.NetControl.EssentialNode.Dump();
+        foreach (var x in list)
+        {
+            Console.WriteLine(x);
+        }
     }
 
     public Control Control { get; set; }

@@ -67,4 +67,8 @@ public static class Mics
     public static long FromMicroseconds(double microseconds) => (long)microseconds;
 
     public static long FromNanoseconds(double nanoseconds) => (long)(nanoseconds * MicsPerNanosecond);
+
+    public static DateTime ToDateTime(long mics) => new DateTime((long)((double)mics * Time.MicsToTicks));
+
+    public static string ToString(long mics) => ToDateTime(mics).ToString();
 }

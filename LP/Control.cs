@@ -298,7 +298,7 @@ public class Control
 
         Logger.Console.Information("Press Enter key to switch to console mode.");
         Logger.Console.Information("Press Ctrl+C to exit.");
-        Logger.Console.Information("Running");
+        Logger.Console.Information($"Running {Mics.ToString(Mics.GetUtcNow())}");
     }
 
     public void ShowInformation()
@@ -403,8 +403,9 @@ public class Control
                                 continue;
                             }
                         }
-                        catch
+                        catch (Exception e)
                         {
+                            Console.WriteLine(e.ToString());
                             break;
                         }
                     }
