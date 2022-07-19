@@ -47,7 +47,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
         var sw = Stopwatch.StartNew();
         using (var terminal = this.Control.NetControl.Terminal.Create(node))
         {
-            var p = new PacketPing("test");
+            var p = new PacketPing("test56789012345678901234567890123456789");
             sw.Restart();
             var result = await terminal.SendPacketAndReceiveAsync<PacketPing, PacketPingResponse>(p);
             sw.Stop();

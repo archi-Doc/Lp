@@ -2,9 +2,14 @@
 
 namespace Netsphere;
 
+#pragma warning disable SA1202 // Elements should be ordered by access
+#pragma warning disable SA1300 // Element should begin with upper-case letter
+
 [TinyhandObject]
 public partial class PacketPing : IPacket
 {
+    public const int TextMaxLength = 32;
+
     public PacketId PacketId => PacketId.Ping;
 
     public bool AllowUnencrypted => true;
@@ -18,8 +23,9 @@ public partial class PacketPing : IPacket
         this.Text = text;
     }
 
-    [Key(0)]
-    public string Text { get; set; } = default!;
+    [Key(0, PropertyName = "Text", PropertyAccessibility = PropertyAccessibility.ProtectedSetter)]
+    [MaxLength(TextMaxLength)]
+    private string _text = string.Empty;
 
     public override string ToString() => $"{this.Text}";
 }
@@ -41,8 +47,9 @@ public partial class PacketPingResponse : IPacket
         this.Text = text;
     }
 
-    [Key(0)]
-    public string Text { get; set; } = default!;
+    [Key(0, PropertyName = "Text", PropertyAccessibility = PropertyAccessibility.ProtectedSetter)]
+    [MaxLength(PacketPing.TextMaxLength)]
+    private string _text = string.Empty;
 
     [Key(1)]
     public NodeAddress? NodeAddress { get; set; }
