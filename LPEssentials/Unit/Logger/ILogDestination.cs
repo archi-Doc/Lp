@@ -2,7 +2,7 @@
 
 namespace Arc.Unit;
 
-public interface IUnitLogger
+public interface ILogDestination
 {
     public void Debug(string message);
 

@@ -2,10 +2,18 @@
 
 namespace Arc.Unit;
 
-public class EmptyLogger : ILogDestination
+public class ConsoleLogger : ILogDestination
 {
-    public EmptyLogger()
+    public const string DefaultFormat = "";
+
+    public ConsoleLogger()
     {
+        this.format = DefaultFormat;
+    }
+
+    public ConsoleLogger(string format)
+    {
+        this.format = format;
     }
 
     public void Debug(string message)
@@ -27,4 +35,6 @@ public class EmptyLogger : ILogDestination
     public void Fatal(string message)
     {
     }
+
+    private string format;
 }

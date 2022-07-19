@@ -2,9 +2,9 @@
 
 using Arc.Unit;
 
-namespace LP.UnitLogger;
+namespace Arc.Unit;
 
-public class SerilogLogger : IUnitLogger
+public class SerilogLogger : ILogDestination
 {
     public SerilogLogger(Serilog.ILogger logger)
     {
