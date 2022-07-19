@@ -66,6 +66,18 @@ public class UnitBuilder
     }
 
     /// <summary>
+    /// Adds a delegate to the builder for configuring logging.<br/>
+    /// This can be called multiple times and the results will be additive.
+    /// </summary>
+    /// <param name="configureLogging">The delegate for configuring the unit.</param>
+    /// <returns>The same instance of the <see cref="UnitBuilder"/> for chaining.</returns>
+    public virtual UnitBuilder ConfigureLogging(Action<UnitBuilderContext> configureLogging)
+    {
+        this.configureLogging.Add(configureLogging);
+        return this;
+    }
+
+    /// <summary>
     /// Adds a <see cref="UnitBuilder"/> instance to the builder for configuring the unit.<br/>
     /// This can be called multiple times and the results will be additive.
     /// </summary>
@@ -112,6 +124,12 @@ public class UnitBuilder
             x.Configure(context);
         }
 
+        // Configure logging
+        foreach (var x in this.configureLogging)
+        {
+            x(context);
+        }
+
         // Configure actions
         foreach (var x in this.configureActions)
         {
@@ -121,5 +139,6 @@ public class UnitBuilder
 
     private bool configured = false;
     private List<Action<UnitBuilderContext>> configureActions = new();
+    private List<Action<UnitBuilderContext>> configureLogging = new();
     private List<UnitBuilder> configureUnitBuilders = new();
 }

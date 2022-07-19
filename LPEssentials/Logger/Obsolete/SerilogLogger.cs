@@ -1,10 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Arc.Unit;
+namespace LP;
 
-namespace LP.UnitLogger;
-
-public class SerilogLogger : IUnitLogger
+public class SerilogLogger : ISimpleLogger
 {
     public SerilogLogger(Serilog.ILogger logger)
     {
@@ -19,7 +17,13 @@ public class SerilogLogger : IUnitLogger
 
     public void Error(string message) => this.logger.Error(message);
 
-    public void Fatal(string message) => this.logger.Fatal(message);
+    public void Fatal(string message)
+    {
+        this.FatalFlag = true;
+        this.logger.Fatal(message);
+    }
+
+    public bool FatalFlag { get; private set; }
 
     private Serilog.ILogger logger;
 }
