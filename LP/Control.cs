@@ -19,7 +19,6 @@ using Netsphere;
 using SimpleCommandLine;
 using ZenItz;
 using LP.Data;
-using System.Globalization;
 
 namespace LP;
 
