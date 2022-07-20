@@ -36,6 +36,12 @@ public sealed class UnitBuilderContext
 
     public Dictionary<Type, CommandGroup> CommandGroups { get; } = new();
 
+    public List<LoggerResolverDelegate> LoggerResolvers { get; } = new();
+
+    public void ClearLoggerResolver() => this.LoggerResolvers.Clear();
+
+    public void AddLoggerResolver(LoggerResolverDelegate resolver) => this.LoggerResolvers.Add(resolver);
+
     /// <summary>
     /// Adds the specified <see cref="Type"/> to the creation list.
     /// Note that instances are actually created by calling <see cref="UnitContext.CreateInstances()"/>.

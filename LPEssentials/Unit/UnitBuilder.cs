@@ -94,6 +94,7 @@ public class UnitBuilder
     {
         // Builder context.
         var builderContext = new UnitBuilderContext();
+        UnitLogger.Configure(builderContext); // Logger
         this.Configure(builderContext);
 
         builderContext.TryAddSingleton<UnitContext>();

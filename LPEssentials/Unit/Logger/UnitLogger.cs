@@ -7,22 +7,35 @@ namespace Arc.Unit;
 
 public class UnitLogger
 {
-    public UnitLogger(IServiceProvider serviceProvider)
+    private delegate void FilterDelegate(string message);
+
+    public static void Configure(UnitBuilderContext context)
     {
-        this.serviceProvider = serviceProvider;
+        context.TryAddSingleton<UnitLogger>();
+
+        context.TryAddSingleton<EmptyLogger>();
+        context.TryAddSingleton<ConsoleLogger>();
+    }
+
+    public UnitLogger(UnitContext context)
+    {
+        this.serviceProvider = context.ServiceProvider;
+        this.loggerResolvers = (LoggerResolverDelegate[])context.LoggerResolvers.Clone();
     }
 
     public ILogger? TryGet<T>(LogLevel logLevel)
     {
-        return this.dictionary.GetOrAdd(new(typeof(T), logLevel), a =>
+        return this.sourceToLogDelegate.GetOrAdd(new(typeof(T), logLevel), a =>
         {
+            LoggerResolverContext context = new(a);
             for (var i = 0; i < this.loggerResolvers.Length; i++)
             {
-                if (this.loggerResolvers[i](a) is { } logDestinationType)
+                this.loggerResolvers[i](context);
+                if (context.LogDestinationType != null)
                 {
-                    if (this.serviceProvider.GetService(logDestinationType) is ILogDestination logDestination)
+                    if (this.serviceProvider.GetService(context.LogDestinationType) is ILogDestination logDestination)
                     {
-                        return logger;
+                        return new LoggerInstance(logDestination, logLevel);
                     }
                 }
             }
@@ -42,6 +55,6 @@ public class UnitLogger
     }
 
     private IServiceProvider serviceProvider;
-    private Func<LogSourceLevelPair, Type?>[] loggerResolvers;
-    private ConcurrentDictionary<LogSourceLevelPair, ILogger?> dictionary = new();
+    private LoggerResolverDelegate[] loggerResolvers;
+    private ConcurrentDictionary<LogSourceLevelPair, ILogger?> sourceToLogDelegate = new();
 }

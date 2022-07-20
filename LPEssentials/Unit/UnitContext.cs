@@ -35,6 +35,8 @@ public sealed class UnitContext
         {
             this.CommandDictionary[x.Key] = x.Value.ToArray();
         }
+
+        this.LoggerResolvers = builderContext.LoggerResolvers.ToArray();
     }
 
     /// <summary>
@@ -110,6 +112,8 @@ public sealed class UnitContext
     /// Gets a collection of command <see cref="Type"/> (keys) and subcommand <see cref="Type"/> (values).
     /// </summary>
     public Dictionary<Type, Type[]> CommandDictionary { get; private set; } = new();
+
+    public LoggerResolverDelegate[] LoggerResolvers { get; private set; } = Array.Empty<LoggerResolverDelegate>();
 
     internal void AddRadio(UnitBase unit)
     {
