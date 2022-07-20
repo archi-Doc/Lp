@@ -11,15 +11,10 @@ public class SerilogLogger : ILogOutput
         this.logger = logger;
     }
 
-    public void Debug(string message) => this.logger.Debug(message);
-
-    public void Information(string message) => this.logger.Information(message);
-
-    public void Warning(string message) => this.logger.Warning(message);
-
-    public void Error(string message) => this.logger.Error(message);
-
-    public void Fatal(string message) => this.logger.Fatal(message);
+    public void Output(Type logSourceType, LogLevel logLevel, string message)
+    {
+        this.logger.Information(message);
+    }
 
     private Serilog.ILogger logger;
 }

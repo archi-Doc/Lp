@@ -8,23 +8,7 @@ public class EmptyLogger : ILogOutput
     {
     }
 
-    public void Debug(string message)
-    {
-    }
-
-    public void Information(string message)
-    {
-    }
-
-    public void Warning(string message)
-    {
-    }
-
-    public void Error(string message)
-    {
-    }
-
-    public void Fatal(string message)
+    public void Output(Type logSourceType, LogLevel logLevel, string message)
     {
     }
 }

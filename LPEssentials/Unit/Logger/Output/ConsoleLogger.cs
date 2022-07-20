@@ -16,32 +16,10 @@ public class ConsoleLogger : ILogOutput
         this.format = format;
     }
 
-    public void Debug(string message)
+    public void Output(Type logSourceType, LogLevel logLevel, string message)
     {
-        this.Output(message);
+        Console.WriteLine(message);
     }
-
-    public void Information(string message)
-    {
-        this.Output(message);
-    }
-
-    public void Warning(string message)
-    {
-        this.Output(message);
-    }
-
-    public void Error(string message)
-    {
-        this.Output(message);
-    }
-
-    public void Fatal(string message)
-    {
-        this.Output(message);
-    }
-
-    private void Output(string message) => Console.WriteLine(message);
 
     private string format;
 }

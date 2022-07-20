@@ -6,7 +6,7 @@ namespace Arc.Unit;
 
 internal class LoggerInstance : ILogger
 {
-    private readonly struct ObjectMethodKey : IEquatable<ObjectMethodKey>
+    /*private readonly struct ObjectMethodKey : IEquatable<ObjectMethodKey>
     {
         public ObjectMethodKey(object obj, string method)
         {
@@ -24,14 +24,42 @@ internal class LoggerInstance : ILogger
 
         public override int GetHashCode()
             => HashCode.Combine(this.Object, this.Method);
-    }
+    }*/
 
     public LoggerInstance(Type logSourceType, LogLevel logLevel, ILogOutput logOutput, ILogFilter? logFilter)
     {
         this.logSourceType = logSourceType;
         this.logLevel = logLevel;
 
-        this.logDelegate = (ILogger.LogDelegate)delegateCache.GetOrAdd(new(logOutput, logLevel.ToString()), static x =>
+        this.logDelegate = (ILogOutput.OutputDelegate)delegateCache.GetOrAdd(logOutput, static x =>
+        {
+            Console.WriteLine("Logger instance");
+            var type = x.GetType();
+            var method = type.GetMethod(nameof(ILogOutput.Output));
+            if (method == null)
+            {
+                throw new ArgumentException();
+            }
+
+            return Delegate.CreateDelegate(typeof(ILogOutput.OutputDelegate), x, method);
+        });
+
+        if (logFilter != null)
+        {
+            this.filterDelegate = (ILogFilter.FilterDelegate)delegateCache.GetOrAdd(logFilter, static x =>
+            {
+                var type = x.GetType();
+                var method = type.GetMethod(nameof(ILogFilter.Filter));
+                if (method == null)
+                {
+                    throw new ArgumentException();
+                }
+
+                return Delegate.CreateDelegate(typeof(ILogFilter.FilterDelegate), x, method);
+            });
+        }
+
+        /*this.logDelegate = (ILogOutput.OutputDelegate)delegateCache.GetOrAdd(new(logOutput, logLevel.ToString()), static x =>
         {
             Console.WriteLine("Logger instance");
             var type = x.Object.GetType();
@@ -41,7 +69,7 @@ internal class LoggerInstance : ILogger
                 throw new ArgumentException();
             }
 
-            return Delegate.CreateDelegate(typeof(ILogger.LogDelegate), x.Object, method);
+            return Delegate.CreateDelegate(typeof(ILogOutput.OutputDelegate), x.Object, method);
         });
 
         if (logFilter != null)
@@ -57,7 +85,7 @@ internal class LoggerInstance : ILogger
 
                 return Delegate.CreateDelegate(typeof(ILogFilter.FilterDelegate), x.Object, method);
             });
-        }
+        }*/
     }
 
     public void Log(string message)
@@ -66,19 +94,19 @@ internal class LoggerInstance : ILogger
         {// Filter -> Log
             if (this.filterDelegate(new(this.logSourceType, this.logLevel, this)) is LoggerInstance loggerInstance)
             {
-                loggerInstance.logDelegate(message);
+                loggerInstance.logDelegate(this.logSourceType, this.logLevel, message);
             }
         }
         else
         {// Log
-            this.logDelegate(message);
+            this.logDelegate(this.logSourceType, this.logLevel, message);
         }
     }
 
-    private static ConcurrentDictionary<ObjectMethodKey, Delegate> delegateCache = new();
+    private static ConcurrentDictionary<object, Delegate> delegateCache = new();
 
     private Type logSourceType;
     private LogLevel logLevel;
-    private ILogger.LogDelegate logDelegate;
+    private ILogOutput.OutputDelegate logDelegate;
     private ILogFilter.FilterDelegate? filterDelegate;
 }

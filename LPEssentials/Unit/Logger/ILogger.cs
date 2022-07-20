@@ -4,7 +4,5 @@ namespace Arc.Unit;
 
 public interface ILogger
 {
-    internal delegate void LogDelegate(string message);
-
     public void Log(string message);
 }
