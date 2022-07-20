@@ -15,28 +15,61 @@ public class UnitLogger
 
         context.TryAddSingleton<EmptyLogger>();
         context.TryAddSingleton<ConsoleLogger>();
+
+        context.AddLoggerResolver(x =>
+        {
+            x.SetOutput<ConsoleLogger>();
+        });
+    }
+
+    private class FilterHelper : ILogFilterHelper
+    {
+        public FilterHelper(UnitLogger unitLogger)
+        {
+            this.unitLogger = unitLogger;
+        }
+
+        public ILogger? TryGet<TLogOutput>(LogLevel logLevel)
+        {
+            return this.unitLogger.sourceLevelToLogger.GetOrAdd(new(typeof(TLogOutput), logLevel), x =>
+            {
+                if (this.unitLogger.serviceProvider.GetService(x.LogSourceType) is ILogOutput logOutput)
+                {
+                    return new LoggerInstance(null!, x.LogLevel, logOutput, null);
+                }
+
+                return null;
+            });
+        }
+
+        private UnitLogger unitLogger;
     }
 
     public UnitLogger(UnitContext context)
     {
+        this.filterHelper = new(this);
         this.serviceProvider = context.ServiceProvider;
         this.loggerResolvers = (LoggerResolverDelegate[])context.LoggerResolvers.Clone();
     }
 
-    public ILogger? TryGet<T>(LogLevel logLevel)
+    public ILogger? TryGet<TLogSource>(LogLevel logLevel = LogLevel.Information)
+    // where TLogSource : ILogSource
     {
-        return this.sourceToLogDelegate.GetOrAdd(new(typeof(T), logLevel), a =>
+        return this.sourceLevelToLogger.GetOrAdd(new(typeof(TLogSource), logLevel), x =>
         {
-            LoggerResolverContext context = new(a);
+            Console.WriteLine("TryGet");
+            LoggerResolverContext context = new(x);
             for (var i = 0; i < this.loggerResolvers.Length; i++)
             {
                 this.loggerResolvers[i](context);
-                if (context.LogDestinationType != null)
+            }
+
+            if (context.LogOutputType != null)
+            {
+                if (this.serviceProvider.GetService(context.LogOutputType) is ILogOutput logOutput)
                 {
-                    if (this.serviceProvider.GetService(context.LogDestinationType) is ILogDestination logDestination)
-                    {
-                        return new LoggerInstance(logDestination, logLevel);
-                    }
+                    var logFilter = context.LogFilterType == null ? null : this.serviceProvider.GetService(context.LogFilterType) as ILogFilter;
+                    return new LoggerInstance(x.LogSourceType, x.LogLevel, logOutput, logFilter);
                 }
             }
 
@@ -44,17 +77,19 @@ public class UnitLogger
         });
     }
 
-    public ILogger Get<T>(LogLevel logLevel)
+    public ILogger Get<TLogSource>(LogLevel logLevel = LogLevel.Information)
+    // where TLogSource : ILogSource
     {
-        if (this.TryGet<T>(logLevel) is { } logger)
+        if (this.TryGet<TLogSource>(logLevel) is { } logger)
         {
             return logger;
         }
 
-        throw new LoggerNotFoundException();
+        throw new LoggerNotFoundException(typeof(TLogSource), logLevel);
     }
 
+    private FilterHelper filterHelper;
     private IServiceProvider serviceProvider;
     private LoggerResolverDelegate[] loggerResolvers;
-    private ConcurrentDictionary<LogSourceLevelPair, ILogger?> sourceToLogDelegate = new();
+    private ConcurrentDictionary<LogSourceLevelPair, ILogger?> sourceLevelToLogger = new();
 }

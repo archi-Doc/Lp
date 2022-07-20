@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace Arc.Unit;
+namespace Arc.Unit.Obsolete;
 
 public readonly partial struct LogDestinationLevelPair : IEquatable<LogDestinationLevelPair>
 {

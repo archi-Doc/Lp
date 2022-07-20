@@ -2,7 +2,7 @@
 
 namespace Arc.Unit;
 
-public class EmptyLogger : ILogDestination
+public class EmptyLogger : ILogOutput
 {
     public EmptyLogger()
     {

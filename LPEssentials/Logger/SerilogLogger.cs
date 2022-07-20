@@ -4,7 +4,7 @@ using Arc.Unit;
 
 namespace Arc.Unit;
 
-public class SerilogLogger : ILogDestination
+public class SerilogLogger : ILogOutput
 {
     public SerilogLogger(Serilog.ILogger logger)
     {

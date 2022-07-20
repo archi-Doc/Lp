@@ -2,7 +2,7 @@
 
 namespace Arc.Unit;
 
-public class ConsoleLogger : ILogDestination
+public class ConsoleLogger : ILogOutput
 {
     public const string DefaultFormat = "";
 
@@ -18,23 +18,30 @@ public class ConsoleLogger : ILogDestination
 
     public void Debug(string message)
     {
+        this.Output(message);
     }
 
     public void Information(string message)
     {
+        this.Output(message);
     }
 
     public void Warning(string message)
     {
+        this.Output(message);
     }
 
     public void Error(string message)
     {
+        this.Output(message);
     }
 
     public void Fatal(string message)
     {
+        this.Output(message);
     }
+
+    private void Output(string message) => Console.WriteLine(message);
 
     private string format;
 }

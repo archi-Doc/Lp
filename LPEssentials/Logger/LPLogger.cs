@@ -13,18 +13,16 @@ public class LPLogger
         {
             this.Configure(context =>
             {
-                // context.ClearLogger();
-
-                // context.AddConsoleLogger();
-
-                context.AddLoggerResolver(x =>
+                context.ClearLoggerResolver();
+                context.AddLoggerResolver(context =>
                 {
-                    if (x.LogSourceType == typeof(object))
+                    if (context.LogSourceType == typeof(object))
                     {
-                        return new();
+                        context.SetOutput<ConsoleLogger>();
+                        return;
                     }
 
-                    return default; // ILogDestination, ILogFilter
+                    context.SetOutput<ConsoleLogger>();
                 });
             });
         }

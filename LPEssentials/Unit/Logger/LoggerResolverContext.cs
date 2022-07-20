@@ -8,7 +8,6 @@ public sealed class LoggerResolverContext
     {
         this.LogSourceType = pair.LogSourceType;
         this.LogLevel = pair.LogLevel;
-
     }
 
     public LoggerResolverContext(Type logSourceType, LogLevel logLevel)
@@ -17,43 +16,51 @@ public sealed class LoggerResolverContext
         this.LogLevel = logLevel;
     }
 
-    public void SetLogDestination<TLogDestination>()
-        where TLogDestination : ILogDestination
+    public void SetOutput<TLogOutput>()
+        where TLogOutput : ILogOutput
     {
-        this.LogDestinationType = typeof(TLogDestination);
+        this.LogOutputType = typeof(TLogOutput);
     }
 
-    public void SetLogDestinationType(Type logDestinationType)
+    public void SetOutputType(Type logOutputType)
     {
-        if (logDestinationType.GetInterfaces().Contains(typeof(ILogDestination)))
+        if (!logOutputType.GetInterfaces().Contains(typeof(ILogOutput)))
         {
-            throw new InvalidOperationException();
+            throw new ArgumentException($"{nameof(logOutputType)} must implement {nameof(ILogOutput)} interface.");
         }
 
-        this.LogDestinationType = logDestinationType;
+        this.LogOutputType = logOutputType;
     }
 
-    public void SetLogFilter<TLogFilter>()
+    public void SetFilter<TLogFilter>()
         where TLogFilter : ILogFilter
     {
         this.LogFilterType = typeof(TLogFilter);
     }
 
-    public void SetLogFilterType(Type logFilterType)
+    public void SetFilterType(Type logFilterType)
     {
-        if (logFilterType.GetInterfaces().Contains(typeof(ILogFilter)))
+        if (!logFilterType.GetInterfaces().Contains(typeof(ILogFilter)))
         {
-            throw new InvalidOperationException();
+            throw new ArgumentException($"{nameof(logFilterType)} must implement {nameof(ILogFilter)} interface.");
         }
 
         this.LogFilterType = logFilterType;
+    }
+
+    public void SetOutputAndFilter<TLogOutput, TLogFilter>()
+        where TLogOutput : ILogOutput
+        where TLogFilter : ILogFilter
+    {
+        this.LogOutputType = typeof(TLogOutput);
+        this.LogFilterType = typeof(TLogFilter);
     }
 
     public Type LogSourceType { get; }
 
     public LogLevel LogLevel { get; }
 
-    public Type? LogDestinationType { get; private set; }
+    public Type? LogOutputType { get; private set; }
 
     public Type? LogFilterType { get; private set; }
 }

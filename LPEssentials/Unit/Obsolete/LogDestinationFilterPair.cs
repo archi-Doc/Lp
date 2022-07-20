@@ -1,8 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace Arc.Unit;
+namespace Arc.Unit.Obsolete;
 
-public class LogResolverResult<TLogDestination>
+/*public class LogResolverResult<TLogDestination>
     where TLogDestination : ILogDestination
 {
     public LogResolverResult(LogLevel logLevel)
@@ -14,7 +14,7 @@ public class LogResolverResult<TLogDestination>
     public readonly Type? LogDestinationType;
 
     public readonly LogLevel LogLevel;
-}
+}*/
 
 /*public readonly struct LogResolverResult : IEquatable<LogResolverResult>
 {

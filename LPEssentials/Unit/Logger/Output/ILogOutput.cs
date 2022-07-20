@@ -2,7 +2,7 @@
 
 namespace Arc.Unit;
 
-public interface ILogDestination
+public interface ILogOutput
 {
     public void Debug(string message);
 
