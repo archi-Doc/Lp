@@ -101,7 +101,7 @@ public class UnitBuilder
         builderContext.TryAddSingleton<TUnit>();
         builderContext.TryAddSingleton<RadioClass>(); // Unit radio
 
-        var serviceProvider = builderContext.ServiceCollection.BuildServiceProvider();
+        var serviceProvider = builderContext.Services.BuildServiceProvider();
 
         // BuilderContext to UnitContext.
         var unitContext = serviceProvider.GetRequiredService<UnitContext>();

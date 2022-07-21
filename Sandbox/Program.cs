@@ -46,6 +46,8 @@ internal class Program
                     // x.SetOutputType(typeof(object));
                     // x.SetFilter<TestLogFilter>();
                 });*/
+
+                context.Services.Add(ServiceDescriptor.Singleton(typeof(LoggerOption), new Object()));
             });
 
         var unit = builder.Build();

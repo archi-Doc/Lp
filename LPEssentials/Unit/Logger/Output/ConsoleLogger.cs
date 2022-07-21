@@ -1,5 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
+using System.IO;
+
 namespace Arc.Unit;
 
 public class ConsoleLogger : ILogOutput
@@ -18,8 +21,95 @@ public class ConsoleLogger : ILogOutput
 
     public void Output(Type logSourceType, LogLevel logLevel, string message)
     {
-        Console.WriteLine(message);
+        var logLevelColors = this.GetLogLevelConsoleColors(logLevel);
+        string logLevelString = GetLogLevelString(logLevel);
+
+        this.textWriter.Write('[');
+
+        string? timestamp = null;
+        string? timestampFormat = "HH:mm:ss.fff";
+        if (timestampFormat != null)
+        {
+            var dateTimeOffset = DateTimeOffset.Now;
+            timestamp = dateTimeOffset.ToString(timestampFormat);
+            this.textWriter.Write(timestamp);
+        }
+
+        this.textWriter.Write(' ');
+        WriteColoredMessage(this.textWriter, logLevelString, logLevelColors.Background, logLevelColors.Foreground);
+        this.textWriter.Write($"<{logSourceType.Name}>] ");
+
+        WriteColoredMessage(this.textWriter, message, null, ConsoleColor.White);
+
+        this.textWriter.Write(Environment.NewLine);
+
+        Console.WriteLine(this.textWriter.ToString());
     }
 
+    private static void WriteColoredMessage(TextWriter textWriter, string message, ConsoleColor? background, ConsoleColor? foreground)
+    {
+        // Order: backgroundcolor, foregroundcolor, Message, reset foregroundcolor, reset backgroundcolor
+        if (background.HasValue)
+        {
+            textWriter.Write(AnsiParser.GetBackgroundColorEscapeCode(background.Value));
+        }
+
+        if (foreground.HasValue)
+        {
+            textWriter.Write(AnsiParser.GetForegroundColorEscapeCode(foreground.Value));
+        }
+
+        textWriter.Write(message);
+        if (foreground.HasValue)
+        {
+            textWriter.Write(AnsiParser.DefaultForegroundColor); // reset to default foreground color
+        }
+
+        if (background.HasValue)
+        {
+            textWriter.Write(AnsiParser.DefaultBackgroundColor); // reset to the background color
+        }
+    }
+
+    private static string GetLogLevelString(LogLevel logLevel)
+    {
+        return logLevel switch
+        {
+            LogLevel.Debug => "DBG",
+            LogLevel.Information => "INF",
+            LogLevel.Warning => "WRN",
+            LogLevel.Error => "ERR",
+            LogLevel.Fatal => "FTL",
+            _ => string.Empty,
+        };
+    }
+
+    private ConsoleColors GetLogLevelConsoleColors(LogLevel logLevel)
+    {
+        return logLevel switch
+        {
+            LogLevel.Debug => new ConsoleColors(ConsoleColor.Gray, ConsoleColor.Black),
+            LogLevel.Information => new ConsoleColors(ConsoleColor.DarkGreen, ConsoleColor.Black),
+            LogLevel.Warning => new ConsoleColors(ConsoleColor.Yellow, ConsoleColor.Black),
+            LogLevel.Error => new ConsoleColors(ConsoleColor.Black, ConsoleColor.DarkRed),
+            LogLevel.Fatal => new ConsoleColors(ConsoleColor.White, ConsoleColor.DarkRed),
+            _ => new ConsoleColors(null, null),
+        };
+    }
+
+    private StringWriter textWriter = new();
     private string format;
+
+    private readonly struct ConsoleColors
+    {
+        public ConsoleColors(ConsoleColor? foreground, ConsoleColor? background)
+        {
+            this.Foreground = foreground;
+            this.Background = background;
+        }
+
+        public ConsoleColor? Foreground { get; }
+
+        public ConsoleColor? Background { get; }
+    }
 }

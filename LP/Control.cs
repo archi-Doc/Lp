@@ -37,7 +37,7 @@ public class Control
                 // Main services
                 context.AddSingleton<Control>();
                 context.AddSingleton<LPBase>();
-                context.ServiceCollection.TryAddSingleton<IUserInterfaceService, ConsoleUserInterfaceService>();
+                context.Services.TryAddSingleton<IUserInterfaceService, ConsoleUserInterfaceService>();
                 context.AddSingleton<KeyVault>();
 
                 // RPC / Services
@@ -300,6 +300,10 @@ public class Control
         Logger.Console.Information("Press Enter key to switch to console mode.");
         Logger.Console.Information("Press Ctrl+C to exit.");
         Logger.Console.Information($"Running");
+        Logger.Console.Debug($"1");
+        Logger.Console.Warning($"1");
+        Logger.Console.Error($"1");
+        Logger.Console.Fatal($"1");
     }
 
     public void ShowInformation()

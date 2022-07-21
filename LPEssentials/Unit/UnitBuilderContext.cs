@@ -28,9 +28,9 @@ public sealed class UnitBuilderContext
     public string RootDirectory { get; set; }
 
     /// <summary>
-    /// Gets <see cref="ServiceCollection"/>.
+    /// Gets <see cref="IServiceCollection"/>.
     /// </summary>
-    public ServiceCollection ServiceCollection { get; } = new();
+    public IServiceCollection Services { get; } = new ServiceCollection();
 
     public HashSet<Type> CreateInstanceSet { get; } = new();
 
@@ -102,58 +102,58 @@ public sealed class UnitBuilderContext
     }
 
     public void AddSingleton<TService>()
-        where TService : class => this.ServiceCollection.AddSingleton<TService>();
+        where TService : class => this.Services.AddSingleton<TService>();
 
     public void AddScoped<TService>()
-        where TService : class => this.ServiceCollection.AddScoped<TService>();
+        where TService : class => this.Services.AddScoped<TService>();
 
     public void AddTransient<TService>()
-        where TService : class => this.ServiceCollection.AddTransient<TService>();
+        where TService : class => this.Services.AddTransient<TService>();
 
-    public void AddSingleton(Type serviceType) => this.ServiceCollection.AddSingleton(serviceType);
+    public void AddSingleton(Type serviceType) => this.Services.AddSingleton(serviceType);
 
-    public void AddScoped(Type serviceType) => this.ServiceCollection.AddSingleton(serviceType);
+    public void AddScoped(Type serviceType) => this.Services.AddSingleton(serviceType);
 
-    public void AddTransient(Type serviceType) => this.ServiceCollection.AddTransient(serviceType);
+    public void AddTransient(Type serviceType) => this.Services.AddTransient(serviceType);
 
     public void AddSingleton<TService, TImplementation>()
         where TService : class
-        where TImplementation : class, TService => this.ServiceCollection.AddSingleton<TService, TImplementation>();
+        where TImplementation : class, TService => this.Services.AddSingleton<TService, TImplementation>();
 
     public void AddScoped<TService, TImplementation>()
         where TService : class
-        where TImplementation : class, TService => this.ServiceCollection.AddScoped<TService, TImplementation>();
+        where TImplementation : class, TService => this.Services.AddScoped<TService, TImplementation>();
 
     public void AddTransient<TService, TImplementation>()
         where TService : class
-        where TImplementation : class, TService => this.ServiceCollection.AddTransient<TService, TImplementation>();
+        where TImplementation : class, TService => this.Services.AddTransient<TService, TImplementation>();
 
     public void TryAddSingleton<TService>()
-        where TService : class => this.ServiceCollection.TryAddSingleton<TService>();
+        where TService : class => this.Services.TryAddSingleton<TService>();
 
     public void TryAddScoped<TService>()
-        where TService : class => this.ServiceCollection.TryAddScoped<TService>();
+        where TService : class => this.Services.TryAddScoped<TService>();
 
     public void TryAddTransient<TService>()
-        where TService : class => this.ServiceCollection.TryAddTransient<TService>();
+        where TService : class => this.Services.TryAddTransient<TService>();
 
-    public void TryAddSingleton(Type serviceType) => this.ServiceCollection.AddSingleton(serviceType);
+    public void TryAddSingleton(Type serviceType) => this.Services.AddSingleton(serviceType);
 
-    public void TryAddScoped(Type serviceType) => this.ServiceCollection.AddSingleton(serviceType);
+    public void TryAddScoped(Type serviceType) => this.Services.AddSingleton(serviceType);
 
-    public void TryAddTransient(Type serviceType) => this.ServiceCollection.AddTransient(serviceType);
+    public void TryAddTransient(Type serviceType) => this.Services.AddTransient(serviceType);
 
     public void TryAddSingleton<TService, TImplementation>()
         where TService : class
-        where TImplementation : class, TService => this.ServiceCollection.TryAddSingleton<TService, TImplementation>();
+        where TImplementation : class, TService => this.Services.TryAddSingleton<TService, TImplementation>();
 
     public void TryAddScoped<TService, TImplementation>()
         where TService : class
-        where TImplementation : class, TService => this.ServiceCollection.TryAddScoped<TService, TImplementation>();
+        where TImplementation : class, TService => this.Services.TryAddScoped<TService, TImplementation>();
 
     public void TryAddTransient<TService, TImplementation>()
         where TService : class
-        where TImplementation : class, TService => this.ServiceCollection.TryAddTransient<TService, TImplementation>();
+        where TImplementation : class, TService => this.Services.TryAddTransient<TService, TImplementation>();
 
     internal class TopCommand
     {

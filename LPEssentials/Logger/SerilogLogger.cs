@@ -13,7 +13,28 @@ public class SerilogLogger : ILogOutput
 
     public void Output(Type logSourceType, LogLevel logLevel, string message)
     {
-        this.logger.Information(message);
+        switch (logLevel)
+        {
+            case LogLevel.Debug:
+                this.logger.Debug(message);
+                break;
+
+            case LogLevel.Information:
+                this.logger.Information(message);
+                break;
+
+            case LogLevel.Warning:
+                this.logger.Warning(message);
+                break;
+
+            case LogLevel.Error:
+                this.logger.Error(message);
+                break;
+
+            case LogLevel.Fatal:
+                this.logger.Fatal(message);
+                break;
+        }
     }
 
     private Serilog.ILogger logger;
