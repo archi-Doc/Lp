@@ -8,20 +8,20 @@ public readonly struct LogFilterParameter : IEquatable<LogFilterParameter>
     {
         this.LogSourceType = logSourceType;
         this.LogLevel = logLevel;
-        this.Logger = logger;
+        this.OriginalLogger = logger;
     }
 
     public readonly Type LogSourceType;
 
     public readonly LogLevel LogLevel;
 
-    public readonly ILogger Logger;
+    public readonly ILogger OriginalLogger;
 
     public bool Equals(LogFilterParameter other)
         => this.LogSourceType == other.LogSourceType &&
         this.LogLevel == other.LogLevel &&
-        this.Logger == other.Logger;
+        this.OriginalLogger == other.OriginalLogger;
 
     public override int GetHashCode()
-        => HashCode.Combine(this.LogSourceType, this.LogLevel, this.Logger);
+        => HashCode.Combine(this.LogSourceType, this.LogLevel, this.OriginalLogger);
 }

@@ -21,7 +21,7 @@ internal class TestLogFilter : ILogFilter
             return null;
         }
 
-        return param.Logger;
+        return param.OriginalLogger;
     }
 }
 
@@ -41,13 +41,13 @@ internal class Program
             {
                 context.AddSingleton<TestLogFilter>();
                 // context.ClearLoggerResolver();
-                /*context.AddLoggerResolver(x =>
+                context.AddLoggerResolver(x =>
                 {
-                    // x.SetOutputType(typeof(object));
-                    // x.SetFilter<TestLogFilter>();
-                });*/
+                    // x.SetOutput<ConsoleLogger>();
+                    x.SetFilter<TestLogFilter>();
+                });
 
-                context.Services.Add(ServiceDescriptor.Singleton(typeof(LoggerOption), new Object()));
+                // context.Services.Add(ServiceDescriptor.Singleton(typeof(LoggerOption), new Object()));
             });
 
         var unit = builder.Build();

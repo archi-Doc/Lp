@@ -28,6 +28,7 @@ internal class LoggerInstance : ILogger
 
     public LoggerInstance(Type logSourceType, LogLevel logLevel, ILogOutput logOutput, ILogFilter? logFilter)
     {
+        this.OutputType = logOutput.GetType();
         this.logSourceType = logSourceType;
         this.logLevel = logLevel;
 
@@ -102,6 +103,8 @@ internal class LoggerInstance : ILogger
             this.logDelegate(this.logSourceType, this.logLevel, message);
         }
     }
+
+    public Type OutputType { get; }
 
     private static ConcurrentDictionary<object, Delegate> delegateCache = new();
 

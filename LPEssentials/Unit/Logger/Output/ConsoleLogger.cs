@@ -37,7 +37,7 @@ public class ConsoleLogger : ILogOutput
 
         this.textWriter.Write(' ');
         WriteColoredMessage(this.textWriter, logLevelString, logLevelColors.Background, logLevelColors.Foreground);
-        this.textWriter.Write($"<{logSourceType.Name}>] ");
+        this.textWriter.Write($" {logSourceType.Name}] ");
 
         WriteColoredMessage(this.textWriter, message, null, ConsoleColor.White);
 
