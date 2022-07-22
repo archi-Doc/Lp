@@ -1,8 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Arc.Unit;
-
-namespace LP;
+namespace LP.Logging;
 
 public class LPLogger
 {
@@ -13,16 +11,22 @@ public class LPLogger
         {
             this.Configure(context =>
             {
+                // Loggers (ConsoleAndFileLogger, BackgroundAndFileLogger, ConsoleLogger)
+                context.AddSingleton<BackgroundAndFileLogger>();
+                context.AddSingleton<ConsoleAndFileLogger>();
+                context.AddSingleton<SerilogLogger>();
+
+                // Resolver
                 context.ClearLoggerResolver();
                 context.AddLoggerResolver(context =>
                 {
-                    if (context.LogSourceType == typeof(object))
+                    if (context.LogLevel == LogLevel.Debug)
                     {
-                        context.SetOutput<ConsoleLogger>();
+                        context.SetOutput<EmptyLogger>();
                         return;
                     }
 
-                    context.SetOutput<ConsoleLogger>();
+                    context.SetOutput<ConsoleAndFileLogger>();
                 });
             });
         }

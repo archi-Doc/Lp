@@ -1,8 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Arc.Unit;
-
-namespace Arc.Unit;
+namespace LP.Logging;
 
 public class SerilogLogger : ILogOutput
 {
@@ -15,23 +13,23 @@ public class SerilogLogger : ILogOutput
     {
         switch (param.LogLevel)
         {
-            case LogLevel.Debug:
+            case Arc.Unit.LogLevel.Debug:
                 this.logger.Debug(param.Message);
                 break;
 
-            case LogLevel.Information:
+            case Arc.Unit.LogLevel.Information:
                 this.logger.Information(param.Message);
                 break;
 
-            case LogLevel.Warning:
+            case Arc.Unit.LogLevel.Warning:
                 this.logger.Warning(param.Message);
                 break;
 
-            case LogLevel.Error:
+            case Arc.Unit.LogLevel.Error:
                 this.logger.Error(param.Message);
                 break;
 
-            case LogLevel.Fatal:
+            case Arc.Unit.LogLevel.Fatal:
                 this.logger.Fatal(param.Message);
                 break;
         }

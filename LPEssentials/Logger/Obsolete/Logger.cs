@@ -109,8 +109,8 @@ public static class Logger
     static Logger()
     {
         Default = new PriorityLogger(); // new DefaultLogger();
-        Console = new EmptyLogger();
-        File = new EmptyLogger();
+        Console = new LP.Obsolete.EmptyLogger();
+        File = new LP.Obsolete.EmptyLogger();
         Background = new DefaultLogger();
     }
 

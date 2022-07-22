@@ -66,7 +66,7 @@ public class Control
 
             this.ConfigureBuilder(new NetControl.Builder());
             this.ConfigureBuilder(new ZenControl.Builder());
-            this.ConfigureBuilder(new LPLogger.Builder());
+            this.ConfigureBuilder(new LP.Logging.LPLogger.Builder());
         }
     }
 

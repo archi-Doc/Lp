@@ -154,7 +154,7 @@ public class NetSocket
         }
         catch
         {
-            Logger.Default.Error($"Could not create a UDP socket with port {port}.");
+            Logger.Default.Fatal($"Could not create a UDP socket with port {port}.");
             throw new PanicException();
         }
 

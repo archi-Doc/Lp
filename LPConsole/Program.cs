@@ -54,6 +54,11 @@ public class Program
 
                 // Unit
                 LPConsole.Sample.SampleUnit.Configure(context);
+
+                // Looger resolver
+                context.AddLoggerResolver(context =>
+                {
+                });
             });
             // .ConfigureBuilder(new LPConsole.Sample.SampleUnit.Builder()); // Alternative
 

@@ -45,7 +45,7 @@ public class SimpleLogFormatter
             sb.Append(' ');
         }
 
-        sb.Append('[');
+        this.WriteColoredMessage(sb, "[", DefaultColor, ConsoleColor.DarkGray); // sb.Append('[');
 
         // Source(EventId)
         // var position = sb.Length;
@@ -72,7 +72,7 @@ public class SimpleLogFormatter
         // Level
         this.WriteColoredMessage(sb, logLevelString, logLevelColors.Background, logLevelColors.Foreground);
 
-        sb.Append("] ");
+        this.WriteColoredMessage(sb, "] ", DefaultColor, ConsoleColor.DarkGray); // sb.Append("] ");
 
         // Message
         this.WriteColoredMessage(sb, param.Message, DefaultColor, ConsoleColor.White);
@@ -156,6 +156,7 @@ public class SimpleLogFormatter
         {
             ConsoleColor.Black => "\x1B[30m",
             ConsoleColor.DarkRed => "\x1B[31m",
+            ConsoleColor.DarkGray => "\x1B[90m",
             ConsoleColor.DarkGreen => "\x1B[32m",
             ConsoleColor.DarkYellow => "\x1B[33m",
             ConsoleColor.DarkBlue => "\x1B[34m",

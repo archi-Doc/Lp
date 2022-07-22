@@ -84,7 +84,7 @@ internal class Program
 
     public static async Task Test()
     {
-        var builder = new LPLogger.Builder()
+        var builder = new UnitBuilder() // new LP.Logging.LPLogger.Builder()
             .Configure(context =>
             {
                 // Loggers
