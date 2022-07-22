@@ -73,7 +73,6 @@ public class SimpleLogFormatter
         this.WriteColoredMessage(sb, logLevelString, logLevelColors.Background, logLevelColors.Foreground);
 
         sb.Append("] ");
-        // sb.Append(Environment.NewLine);
 
         // Message
         this.WriteColoredMessage(sb, param.Message, DefaultColor, ConsoleColor.White);

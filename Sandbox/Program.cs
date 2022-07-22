@@ -102,7 +102,7 @@ internal class Program
                 {
                     if (x.LogLevel <= LogLevel.Debug)
                     {
-                        x.SetOutput<Arc.Unit.EmptyLogger>();
+                        x.SetOutput<Arc.Unit.FileLogger<FileLoggerOptions>>();
                         return;
                     }
 
@@ -114,6 +114,10 @@ internal class Program
 
                 // context.Services.Add(ServiceDescriptor.Singleton(typeof(LoggerOption), new Object()));
             });
+            /*.ConfigureOptions<FileLoggerOptions2>(options =>
+            {
+                options.Path = "Log2.txt";
+            });*/
 
         var unit = builder.Build();
 
@@ -147,6 +151,9 @@ internal class Program
         l3.Log(-1, "GetRequiredService");
         l3.Log(0, "GetRequiredService");
         logger.Get<int>(LogLevel.Warning).Log("aaa");
+
+        unit.Context.ServiceProvider.GetService<FileLogger<FileLoggerOptions>>();
+        unit.Context.ServiceProvider.GetService<FileLogger<FileLoggerOptions>>();
 
         for (var i = 0; i < 100; i++)
         {

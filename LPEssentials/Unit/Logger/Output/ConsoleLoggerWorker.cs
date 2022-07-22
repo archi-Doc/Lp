@@ -21,9 +21,9 @@ internal class ConsoleLoggerWorker : TaskCore
     public static async Task Process(object? obj)
     {
         var worker = (ConsoleLoggerWorker)obj!;
-        while (worker.Sleep(30))
+        while (worker.Sleep(40))
         {
-            await worker.Flush();
+            await worker.Flush(false);
         }
     }
 
@@ -32,12 +32,18 @@ internal class ConsoleLoggerWorker : TaskCore
         this.queue.Enqueue(work);
     }
 
-    public async Task<int> Flush()
+    public async Task<int> Flush(bool terminate)
     {
         var count = 0;
-        while (count++ < MaxFlush && this.queue.TryDequeue(out var work))
+        while (count < MaxFlush && this.queue.TryDequeue(out var work))
         {
+            count++;
             Console.WriteLine(this.formatter.Format(work.Parameter));
+        }
+
+        if (terminate)
+        {
+            this.Terminate();
         }
 
         return count;

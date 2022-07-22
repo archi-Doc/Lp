@@ -25,7 +25,7 @@ internal class FileLoggerWorker : TaskCore
         var worker = (FileLoggerWorker)obj!;
         while (worker.Sleep(1000))
         {
-            await worker.Flush();
+            await worker.Flush(false);
         }
     }
 
@@ -34,20 +34,16 @@ internal class FileLoggerWorker : TaskCore
         this.queue.Enqueue(work);
     }
 
-    public async Task<int> Flush()
+    public async Task<int> Flush(bool terminate)
     {
-        if (this.Count == 0)
-        {
-            return 0;
-        }
-
         await this.semaphore.WaitAsync().ConfigureAwait(false);
         try
         {
             StringBuilder sb = new();
             var count = 0;
-            while (count++ < MaxFlush && this.queue.TryDequeue(out var work))
+            while (count < MaxFlush && this.queue.TryDequeue(out var work))
             {
+                count++;
                 this.formatter.Format(sb, work.Parameter);
                 sb.Append(Environment.NewLine);
             }
@@ -55,6 +51,11 @@ internal class FileLoggerWorker : TaskCore
             if (count != 0)
             {
                 await File.AppendAllTextAsync(this.path, sb.ToString());
+            }
+
+            if (terminate)
+            {
+                this.Terminate();
             }
 
             return count;

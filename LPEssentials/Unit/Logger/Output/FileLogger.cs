@@ -20,7 +20,7 @@ public class FileLogger<TOption> : BufferedLogOutput
         }
     }
 
-    public override Task<int> Flush() => this.worker.Flush();
+    public override Task<int> Flush(bool terminate) => this.worker.Flush(terminate);
 
     private FileLoggerWorker worker;
     private TOption options;

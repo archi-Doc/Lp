@@ -136,6 +136,8 @@ public class Control
                 // Logger
                 Logger.Configure(control.LPBase);
 
+                // this.PrepareLogger();
+
                 // Settings
                 await control.LoadSettingsAsync();
 
@@ -144,6 +146,10 @@ public class Control
 
                 // Start
                 Logger.Default.Information($"LP Start ({Version.Get()})");
+
+                var unitLogger = this.Context.ServiceProvider.GetRequiredService<UnitLogger>();
+                unitLogger.Get<DefaultLog>().Log("test");
+                unitLogger.Get<DefaultLog>().Log("test2");
 
                 // Create optional instances
                 this.Context.CreateInstances();
@@ -217,8 +223,9 @@ public class Control
         }
     }
 
-    public Control(IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl, KeyVault keyVault)
+    public Control(UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl, KeyVault keyVault)
     {
+        this.logger = logger;
         this.UserInterfaceService = userInterfaceService;
         this.LPBase = lpBase;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
@@ -329,6 +336,7 @@ public class Control
 
         Logger.Default.Information(abort ? "Aborted" : "Terminated");
         Logger.CloseAndFlush();
+        this.logger.Flush(true).Wait();
     }
 
     public bool Subcommand(string subcommand)
@@ -450,6 +458,8 @@ public class Control
     public KeyVault KeyVault { get; }
 
     private static SimpleParser subcommandParser = default!;
+
+    private UnitLogger logger;
 
     private bool SafeKeyAvailable
     {
