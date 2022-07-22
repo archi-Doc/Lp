@@ -79,10 +79,10 @@ internal class Program
     {
         Console.WriteLine("Sandbox");
 
-        Test();
+        await Test();
     }
 
-    public static void Test()
+    public static async Task Test()
     {
         var builder = new LPLogger.Builder()
             .Configure(context =>
@@ -153,7 +153,7 @@ internal class Program
             logger.Get<Program>(LogLevel.Debug).Log(i, $"test {i}");
         }
 
-        logger.Flush();
+        await logger.Flush();
 
         var pass = "pass";
         var encrypted = PasswordEncrypt.Encrypt(new byte[] { 1, 2, }, pass);
