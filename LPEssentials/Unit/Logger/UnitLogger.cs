@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Collections.Concurrent;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Arc.Unit;
 
@@ -22,9 +21,9 @@ public class UnitLogger
         });
     }
 
-    private class FilterHelper : ILogFilterHelper
+    private class LogContext : ILogContext
     {
-        public FilterHelper(UnitLogger unitLogger)
+        public LogContext(UnitLogger unitLogger)
         {
             this.unitLogger = unitLogger;
         }
@@ -88,7 +87,7 @@ public class UnitLogger
         throw new LoggerNotFoundException(typeof(TLogSource), logLevel);
     }
 
-    private FilterHelper filterHelper;
+    private LogContext filterHelper;
     private IServiceProvider serviceProvider;
     private LoggerResolverDelegate[] loggerResolvers;
     private ConcurrentDictionary<LogSourceLevelPair, ILogger?> sourceLevelToLogger = new();

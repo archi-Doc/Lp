@@ -56,6 +56,7 @@ internal class Program
         logger.Get<Program>().Log("Test");
         logger.Get<object>().Log("Test");
         logger.Get<Program>().Log("Test2");
+        logger.Get<Program>().Log(1, "test 1");
 
         var pass = "pass";
         var encrypted = PasswordEncrypt.Encrypt(new byte[] { 1, 2, }, pass);

@@ -11,28 +11,28 @@ public class SerilogLogger : ILogOutput
         this.logger = logger;
     }
 
-    public void Output(Type logSourceType, LogLevel logLevel, string message)
+    public void Output(LogOutputParameter param)
     {
-        switch (logLevel)
+        switch (param.LogLevel)
         {
             case LogLevel.Debug:
-                this.logger.Debug(message);
+                this.logger.Debug(param.Message);
                 break;
 
             case LogLevel.Information:
-                this.logger.Information(message);
+                this.logger.Information(param.Message);
                 break;
 
             case LogLevel.Warning:
-                this.logger.Warning(message);
+                this.logger.Warning(param.Message);
                 break;
 
             case LogLevel.Error:
-                this.logger.Error(message);
+                this.logger.Error(param.Message);
                 break;
 
             case LogLevel.Fatal:
-                this.logger.Fatal(message);
+                this.logger.Fatal(param.Message);
                 break;
         }
     }

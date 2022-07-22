@@ -89,18 +89,19 @@ internal class LoggerInstance : ILogger
         }*/
     }
 
-    public void Log(string message)
+    public void Log(int eventId, string message, Exception? exception)
     {
+        LogOutputParameter param = new(this.logSourceType, this.logLevel, eventId, message, exception);
         if (this.filterDelegate != null)
         {// Filter -> Log
-            if (this.filterDelegate(new(this.logSourceType, this.logLevel, this)) is LoggerInstance loggerInstance)
+            if (this.filterDelegate(new(this.logSourceType, this.logLevel, eventId, this)) is LoggerInstance loggerInstance)
             {
-                loggerInstance.logDelegate(this.logSourceType, this.logLevel, message);
+                loggerInstance.logDelegate(param);
             }
         }
         else
         {// Log
-            this.logDelegate(this.logSourceType, this.logLevel, message);
+            this.logDelegate(param);
         }
     }
 

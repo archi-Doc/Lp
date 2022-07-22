@@ -6,7 +6,8 @@ namespace LP;
 
 public static class IUnitLoggerExtentions
 {
-    public static void Log(this Arc.Unit.ILogger logger, ulong hash) => logger.Log(HashedString.Get(hash));
+    public static void Log(this Arc.Unit.ILogger logger, ulong hash)
+        => logger.Log(HashedString.Get(hash));
 
     public static void Log(this Arc.Unit.ILogger logger, ulong hash, object obj1)
         => logger.Log(HashedString.Get(hash, obj1));

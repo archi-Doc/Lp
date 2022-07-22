@@ -19,10 +19,10 @@ public class ConsoleLogger : ILogOutput
         this.format = format;
     }
 
-    public void Output(Type logSourceType, LogLevel logLevel, string message)
+    public void Output(LogOutputParameter param)
     {
-        var logLevelColors = this.GetLogLevelConsoleColors(logLevel);
-        string logLevelString = GetLogLevelString(logLevel);
+        var logLevelColors = this.GetLogLevelConsoleColors(param.LogLevel);
+        string logLevelString = GetLogLevelString(param.LogLevel);
 
         this.textWriter.Write('[');
 
@@ -37,9 +37,16 @@ public class ConsoleLogger : ILogOutput
 
         this.textWriter.Write(' ');
         WriteColoredMessage(this.textWriter, logLevelString, logLevelColors.Background, logLevelColors.Foreground);
-        this.textWriter.Write($" {logSourceType.Name}] ");
+        if (param.EventId == 0)
+        {
+            this.textWriter.Write($" {param.LogSourceType.Name}] ");
+        }
+        else
+        {
+            this.textWriter.Write($" {param.LogSourceType.Name}({param.EventId.ToString()})] ");
+        }
 
-        WriteColoredMessage(this.textWriter, message, null, ConsoleColor.White);
+        WriteColoredMessage(this.textWriter, param.Message, null, ConsoleColor.White);
 
         this.textWriter.Write(Environment.NewLine);
 

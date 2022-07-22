@@ -2,7 +2,7 @@
 
 namespace Arc.Unit;
 
-public interface ILogFilterHelper
+public interface ILogContext
 {
     ILogger? TryGet<TLogOutput>(LogLevel logLevel = LogLevel.Information);
 }

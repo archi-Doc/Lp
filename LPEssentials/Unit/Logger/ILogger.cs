@@ -4,7 +4,7 @@ namespace Arc.Unit;
 
 public interface ILogger
 {
-    public void Log(string message);
+    public void Log(int eventId, string message, Exception? exception = null);
 
     public Type OutputType { get; }
 }
