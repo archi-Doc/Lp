@@ -2,6 +2,6 @@
 
 namespace Arc.Unit;
 
-public sealed class GlobalLog
+public sealed class DefaultLog
 {
 }

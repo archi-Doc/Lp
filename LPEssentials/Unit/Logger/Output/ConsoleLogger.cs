@@ -48,9 +48,11 @@ public class ConsoleLogger : ILogOutput
 
         WriteColoredMessage(this.textWriter, param.Message, null, ConsoleColor.White);
 
-        this.textWriter.Write(Environment.NewLine);
+        // this.textWriter.Write(Environment.NewLine);
 
-        Console.WriteLine(this.textWriter.ToString());
+        var sb = this.textWriter.GetStringBuilder();
+        Console.WriteLine(sb.ToString());
+        sb.Clear();
     }
 
     private static void WriteColoredMessage(TextWriter textWriter, string message, ConsoleColor? background, ConsoleColor? foreground)

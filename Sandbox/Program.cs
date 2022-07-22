@@ -53,10 +53,14 @@ internal class Program
         var unit = builder.Build();
 
         var logger = unit.Context.ServiceProvider.GetRequiredService<UnitLogger>();
-        logger.Get<Program>().Log("Test");
+        /*logger.Get<Program>().Log("Test");
         logger.Get<object>().Log("Test");
         logger.Get<Program>().Log("Test2");
-        logger.Get<Program>().Log(1, "test 1");
+        logger.Get<Program>().Log(1, "test 1");*/
+
+        logger.Get<DefaultLog>().Log("default");
+        logger.Get<DefaultLog>().Log(2, "default2");
+        logger.Get<DefaultLog>(LogLevel.Warning).Log(2, "default2");
 
         var pass = "pass";
         var encrypted = PasswordEncrypt.Encrypt(new byte[] { 1, 2, }, pass);

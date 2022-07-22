@@ -26,8 +26,9 @@ internal class LoggerInstance : ILogger
             => HashCode.Combine(this.Object, this.Method);
     }*/
 
-    public LoggerInstance(Type logSourceType, LogLevel logLevel, ILogOutput logOutput, ILogFilter? logFilter)
+    public LoggerInstance(ILogContext context, Type logSourceType, LogLevel logLevel, ILogOutput logOutput, ILogFilter? logFilter)
     {
+        this.context = context;
         this.OutputType = logOutput.GetType();
         this.logSourceType = logSourceType;
         this.logLevel = logLevel;
@@ -94,7 +95,7 @@ internal class LoggerInstance : ILogger
         LogOutputParameter param = new(this.logSourceType, this.logLevel, eventId, message, exception);
         if (this.filterDelegate != null)
         {// Filter -> Log
-            if (this.filterDelegate(new(this.logSourceType, this.logLevel, eventId, this)) is LoggerInstance loggerInstance)
+            if (this.filterDelegate(new(this.context, this.logSourceType, this.logLevel, eventId, this)) is LoggerInstance loggerInstance)
             {
                 loggerInstance.logDelegate(param);
             }
@@ -105,10 +106,11 @@ internal class LoggerInstance : ILogger
         }
     }
 
-    public Type OutputType { get; }
-
     private static ConcurrentDictionary<object, Delegate> delegateCache = new();
 
+    public Type OutputType { get; }
+
+    private ILogContext context;
     private Type logSourceType;
     private LogLevel logLevel;
     private ILogOutput.OutputDelegate logDelegate;
