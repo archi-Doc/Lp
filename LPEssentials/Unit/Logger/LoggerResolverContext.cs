@@ -56,6 +56,39 @@ public sealed class LoggerResolverContext
         this.LogFilterType = typeof(TLogFilter);
     }
 
+    public void TrySetOutput<TLogOutput>()
+        where TLogOutput : ILogOutput
+    {
+        if (this.LogOutputType == null)
+        {
+            this.LogOutputType = typeof(TLogOutput);
+        }
+    }
+
+    public void TrySetFilter<TLogFilter>()
+        where TLogFilter : ILogFilter
+    {
+        if (this.LogFilterType == null)
+        {
+            this.LogFilterType = typeof(TLogFilter);
+        }
+    }
+
+    public void TrySetOutputAndFilter<TLogOutput, TLogFilter>()
+        where TLogOutput : ILogOutput
+        where TLogFilter : ILogFilter
+    {
+        if (this.LogOutputType == null)
+        {
+            this.LogOutputType = typeof(TLogOutput);
+        }
+
+        if (this.LogFilterType == null)
+        {
+            this.LogFilterType = typeof(TLogFilter);
+        }
+    }
+
     public Type LogSourceType { get; }
 
     public LogLevel LogLevel { get; }

@@ -2,6 +2,9 @@
 
 namespace Arc.Unit;
 
+/// <summary>
+/// Defines logging severity levels.
+/// </summary>
 public enum LogLevel
 {
     Debug,

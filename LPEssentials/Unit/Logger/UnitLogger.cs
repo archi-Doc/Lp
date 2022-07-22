@@ -8,29 +8,21 @@ namespace Arc.Unit;
 
 public class UnitLogger
 {
-    private delegate void FilterDelegate(string message);
-
     public static void Configure(UnitBuilderContext context)
     {
+        // Main
         context.TryAddSingleton<UnitLogger>();
         context.Services.Add(ServiceDescriptor.Transient<ILogger>(x => x.GetService<UnitLogger>()?.Get<DefaultLog>() ?? throw new LoggerNotFoundException(typeof(DefaultLog), LogLevel.Information)));
         context.Services.Add(ServiceDescriptor.Transient(typeof(ILogger<>), typeof(LoggerFactory<>)));
 
-        /*context.Services.Add(ServiceDescriptor.Transient(typeof(ILogger), x =>
-        {
-            if (x.GetService<UnitLogger>() is not { } unitLogger)
-            {
-                throw new LoggerNotFoundException(typeof(DefaultLog), LogLevel.Information);
-            }
-
-            return unitLogger.Get<DefaultLog>();
-        }));*/
-
+        // Empty
         context.TryAddSingleton<EmptyLogger>();
 
+        // Console
         context.TryAddSingleton<ConsoleLogger>();
         context.TryAddSingleton<ConsoleLoggerOptions>();
 
+        // Default resolver
         context.AddLoggerResolver(x =>
         {
             x.SetOutput<ConsoleLogger>();
@@ -72,7 +64,6 @@ public class UnitLogger
     {
         return this.sourceLevelToLogger.GetOrAdd(new(typeof(TLogSource), logLevel), x =>
         {
-            Console.WriteLine("TryGet");
             LoggerResolverContext context = new(x);
             for (var i = 0; i < this.loggerResolvers.Length; i++)
             {
@@ -83,7 +74,7 @@ public class UnitLogger
             {
                 if (this.serviceProvider.GetService(context.LogOutputType) is ILogOutput logOutput)
                 {
-                    var logFilter = context.LogFilterType == null ? null : this.serviceProvider.GetService(context.LogFilterType) as ILogFilter;
+                    var logFilter = context.LogFilterType == null ? null : (ILogFilter)this.serviceProvider.GetRequiredService(context.LogFilterType);
                     return new LoggerInstance(this.context, x.LogSourceType, x.LogLevel, logOutput, logFilter);
                 }
             }

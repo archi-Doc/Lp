@@ -35,6 +35,19 @@ internal class TestLogFilter : ILogFilter
     }
 }
 
+internal class AboveInformationFilter : ILogFilter
+{
+    public ILogger? Filter(LogFilterParameter param)
+    {
+        if (param.LogLevel >= LogLevel.Information)
+        {
+            return param.OriginalLogger;
+        }
+
+        return null;
+    }
+}
+
 internal class Program
 {
     public static async Task Main(string[] args)
@@ -50,11 +63,14 @@ internal class Program
             .Configure(context =>
             {
                 context.AddSingleton<TestLogFilter>();
+                context.AddSingleton<AboveInformationFilter>();
+
                 // context.ClearLoggerResolver();
                 context.AddLoggerResolver(x =>
                 {
                     // x.SetOutput<ConsoleLogger>();
-                    x.SetFilter<TestLogFilter>();
+                    // x.SetFilter<TestLogFilter>();
+                    x.SetFilter<AboveInformationFilter>();
                 });
 
                 // context.Services.Add(ServiceDescriptor.Singleton(typeof(LoggerOption), new Object()));
@@ -89,7 +105,7 @@ internal class Program
 
         for (var i = 0; i < 100; i++)
         {
-            logger.Get<Program>().Log(i, $"test {i}");
+            logger.Get<Program>(LogLevel.Debug).Log(i, $"test {i}");
         }
 
         var pass = "pass";

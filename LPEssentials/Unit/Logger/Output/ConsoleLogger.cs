@@ -6,7 +6,7 @@ using Arc.Threading;
 
 namespace Arc.Unit;
 
-public class ConsoleLogger : ILogOutput, IDisposable
+public class ConsoleLogger : ILogOutput
 {
     public ConsoleLogger(ConsoleLoggerOptions options)
     {
@@ -20,11 +20,6 @@ public class ConsoleLogger : ILogOutput, IDisposable
         {
             this.worker.Add(new(param));
         }
-    }
-
-    public void Dispose()
-    {
-        throw new NotImplementedException();
     }
 
     private ConsoleLoggerWorker worker;
