@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Collections.Concurrent;
+using Microsoft.Extensions.DependencyInjection;
+using Tinyhand;
 
 namespace Arc.Unit;
 
@@ -11,9 +13,23 @@ public class UnitLogger
     public static void Configure(UnitBuilderContext context)
     {
         context.TryAddSingleton<UnitLogger>();
+        context.Services.Add(ServiceDescriptor.Transient<ILogger>(x => x.GetService<UnitLogger>()?.Get<DefaultLog>() ?? throw new LoggerNotFoundException(typeof(DefaultLog), LogLevel.Information)));
+        context.Services.Add(ServiceDescriptor.Transient(typeof(ILogger<>), typeof(LoggerFactory<>)));
+
+        /*context.Services.Add(ServiceDescriptor.Transient(typeof(ILogger), x =>
+        {
+            if (x.GetService<UnitLogger>() is not { } unitLogger)
+            {
+                throw new LoggerNotFoundException(typeof(DefaultLog), LogLevel.Information);
+            }
+
+            return unitLogger.Get<DefaultLog>();
+        }));*/
 
         context.TryAddSingleton<EmptyLogger>();
+
         context.TryAddSingleton<ConsoleLogger>();
+        context.TryAddSingleton<ConsoleLoggerOptions>();
 
         context.AddLoggerResolver(x =>
         {
@@ -28,9 +44,9 @@ public class UnitLogger
             this.unitLogger = unitLogger;
         }
 
-        public ILogger? TryGet<TLogOutput>(LogLevel logLevel)
+        public ILogger? TryGet<TLogOutput>()
         {
-            return this.unitLogger.sourceLevelToLogger.GetOrAdd(new(typeof(TLogOutput), logLevel), x =>
+            return this.unitLogger.sourceLevelToLogger.GetOrAdd(new(typeof(TLogOutput), LogLevel.Information), x =>
             {
                 if (this.unitLogger.serviceProvider.GetService(x.LogSourceType) is ILogOutput logOutput)
                 {

@@ -17,73 +17,72 @@ public class SimpleLogFormatter
 
     public string Format(LogOutputParameter param)
     {// [Timestamp Source(EventId) Level] Message (Exception)
+        var sb = new StringBuilder();
         var logLevelColors = this.GetLogLevelConsoleColors(param.LogLevel);
         var logLevelString = this.GetLogLevelString(param.LogLevel);
 
-        this.textWriter.Append('[');
+        sb.Append('[');
 
         // Timestamp
         var timestampFormat = this.options.TimestampFormat;
         if (timestampFormat != null)
         {
             var dateTimeOffset = DateTimeOffset.Now;
-            this.textWriter.Append(dateTimeOffset.ToString(timestampFormat));
-            this.textWriter.Append(' ');
+            sb.Append(dateTimeOffset.ToString(timestampFormat));
+            sb.Append(' ');
         }
 
         // Source(EventId)
-        string source = param.LogSourceType == typeof(DefaultLog) ? string.Empty : param.LogSourceType.Name;
-        if (param.EventId == 0)
+        string source = param.LogSourceType == typeof(DefaultLog) ? "Default" : param.LogSourceType.Name;
+        /*if (param.EventId == 0)
         {
-            if (!string.IsNullOrEmpty(source))
-            {
-                this.textWriter.Append($"{source} ");
-            }
+            sb.Append($"{source} ");
         }
-        else
+        else*/
         {
-            this.textWriter.Append($"{source}({param.EventId.ToString()}) ");
+            sb.Append($"{source}({param.EventId.ToString()}) ");
         }
 
         // Level
-        this.WriteColoredMessage(logLevelString, logLevelColors.Background, logLevelColors.Foreground);
-        this.textWriter.Append("] ");
+        this.WriteColoredMessage(sb, logLevelString, logLevelColors.Background, logLevelColors.Foreground);
+        sb.Append("] ");
 
         // Message
-        this.WriteColoredMessage(param.Message, DefaultColor, ConsoleColor.White);
+        this.WriteColoredMessage(sb, param.Message, DefaultColor, ConsoleColor.White);
 
-        this.textWriter.Append(Environment.NewLine);
+        // sb.Append(Environment.NewLine);
 
-        return this.textWriter.ToString();
+        return sb.ToString();
     }
 
-    private void WriteColoredMessage(string message, ConsoleColor background, ConsoleColor foreground)
+    private void WriteColoredMessage(StringBuilder sb, string message, ConsoleColor background, ConsoleColor foreground)
     {
         if (!this.options.EnableColor)
         {
-            this.textWriter.Append(message);
+            sb.Append(message);
             return;
         }
 
         if (background != DefaultColor)
         {
-            this.textWriter.Append(AnsiParser.GetBackgroundColorEscapeCode(background));
+            sb.Append(AnsiParser.GetBackgroundColorEscapeCode(background));
         }
 
         if (foreground != DefaultColor)
         {
-            this.textWriter.Append(AnsiParser.GetForegroundColorEscapeCode(foreground));
+            sb.Append(AnsiParser.GetForegroundColorEscapeCode(foreground));
         }
 
-        this.textWriter.Append(message);
+        sb.Append(message);
+
         if (foreground != DefaultColor)
         {
-            this.textWriter.Append(AnsiParser.DefaultForegroundColor); // reset to default foreground color
+            sb.Append(AnsiParser.DefaultForegroundColor); // reset to default foreground color
         }
 
         if (background != DefaultColor)
         {
-            this.textWriter.Append(AnsiParser.DefaultBackgroundColor); // reset to the background color
+            sb.Append(AnsiParser.DefaultBackgroundColor); // reset to the background color
         }
     }
 
@@ -114,7 +113,6 @@ public class SimpleLogFormatter
     }
 
     private SimpleLogFormatterOptions options;
-    private StringBuilder textWriter = new();
 
     private readonly struct ConsoleColors
     {

@@ -8,3 +8,7 @@ public interface ILogger
 
     public Type OutputType { get; }
 }
+
+public interface ILogger<TLogSource> : ILogger
+{
+}
