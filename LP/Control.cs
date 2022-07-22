@@ -337,6 +337,7 @@ public class Control
         Logger.Default.Information(abort ? "Aborted" : "Terminated");
         Logger.CloseAndFlush();
         this.logger.Flush(true).Wait();
+        // ThreadCore.Root.Terminate();
     }
 
     public bool Subcommand(string subcommand)
