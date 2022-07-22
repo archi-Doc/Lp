@@ -65,24 +65,24 @@ public class SimpleLogFormatter
 
         if (background != DefaultColor)
         {
-            sb.Append(AnsiParser.GetBackgroundColorEscapeCode(background));
+            sb.Append(GetBackgroundColorEscapeCode(background));
         }
 
         if (foreground != DefaultColor)
         {
-            sb.Append(AnsiParser.GetForegroundColorEscapeCode(foreground));
+            sb.Append(GetForegroundColorEscapeCode(foreground));
         }
 
         sb.Append(message);
 
         if (foreground != DefaultColor)
         {
-            sb.Append(AnsiParser.DefaultForegroundColor); // reset to default foreground color
+            sb.Append(DefaultForegroundColor); // reset to default foreground color
         }
 
         if (background != DefaultColor)
         {
-            sb.Append(AnsiParser.DefaultBackgroundColor); // reset to the background color
+            sb.Append(DefaultBackgroundColor); // reset to the background color
         }
     }
 

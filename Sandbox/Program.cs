@@ -62,6 +62,11 @@ internal class Program
 
         var unit = builder.Build();
 
+        /*var options = unit.Context.ServiceProvider.GetRequiredService<ConsoleLoggerOptions>();
+        options.MaxQueue = 0;
+        options.Formatter.EnableColor = false;
+        options.Formatter.TimestampFormat = null;*/
+
         var logger = unit.Context.ServiceProvider.GetRequiredService<UnitLogger>();
         logger.Get<Program>().Log("Test");
         logger.Get<object>().Log("Test");
@@ -82,10 +87,10 @@ internal class Program
         l3.Log(0, "GetRequiredService");
         logger.Get<int>(LogLevel.Warning).Log("aaa");
 
-        /*for (var i = 0; i < 100; i++)
+        for (var i = 0; i < 100; i++)
         {
             logger.Get<Program>().Log(i, $"test {i}");
-        }*/
+        }
 
         var pass = "pass";
         var encrypted = PasswordEncrypt.Encrypt(new byte[] { 1, 2, }, pass);

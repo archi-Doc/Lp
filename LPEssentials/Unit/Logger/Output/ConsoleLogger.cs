@@ -8,8 +8,6 @@ namespace Arc.Unit;
 
 public class ConsoleLogger : ILogOutput, IDisposable
 {
-    public const int MaxQueue = 1000;
-
     public ConsoleLogger(ConsoleLoggerOptions options)
     {
         this.worker = new(options.Formatter);
@@ -18,7 +16,7 @@ public class ConsoleLogger : ILogOutput, IDisposable
 
     public void Output(LogOutputParameter param)
     {
-        if (this.worker.Count < MaxQueue)
+        if (this.options.MaxQueue <= 0 || this.worker.Count < this.options.MaxQueue)
         {
             this.worker.Add(new(param));
         }
