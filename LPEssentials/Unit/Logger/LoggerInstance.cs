@@ -13,7 +13,7 @@ internal class LoggerInstance : ILogger
         this.logSourceType = logSourceType;
         this.logLevel = logLevel;
 
-        this.logDelegate = (ILogOutput.OutputDelegate)delegateCache.GetOrAdd(logOutput, static x =>
+        this.logDelegate = (ILogOutput.OutputDelegate)delegateCache.GetOrAdd(logOutput, x =>
         {
             var type = x.GetType();
             var method = type.GetMethod(nameof(ILogOutput.Output));

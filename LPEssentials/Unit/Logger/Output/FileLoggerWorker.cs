@@ -11,7 +11,7 @@ namespace Arc.Unit;
 
 internal class FileLoggerWorker : TaskCore
 {
-    private const int MaxFlush = 1000;
+    private const int MaxFlush = 10_000;
 
     public FileLoggerWorker(string path, SimpleLogFormatterOptions options)
         : base(ThreadCore.Root, Process)
@@ -25,7 +25,7 @@ internal class FileLoggerWorker : TaskCore
         var worker = (FileLoggerWorker)obj!;
         while (worker.Sleep(1000))
         {
-            worker.Flush();
+            await worker.Flush();
         }
     }
 
@@ -34,24 +34,34 @@ internal class FileLoggerWorker : TaskCore
         this.queue.Enqueue(work);
     }
 
-    public void Flush()
+    public async Task<int> Flush()
     {
         if (this.Count == 0)
         {
-            return;
+            return 0;
         }
 
-        StringBuilder sb = new();
-        lock (this.flushSync)
+        await this.semaphore.WaitAsync().ConfigureAwait(false);
+        try
         {
-            var i = 0;
-            while (i++ < MaxFlush && this.queue.TryDequeue(out var work))
+            StringBuilder sb = new();
+            var count = 0;
+            while (count++ < MaxFlush && this.queue.TryDequeue(out var work))
             {
                 this.formatter.Format(sb, work.Parameter);
                 sb.Append(Environment.NewLine);
             }
 
-            File.AppendAllText(this.path, sb.ToString());
+            if (count != 0)
+            {
+                await File.AppendAllTextAsync(this.path, sb.ToString());
+            }
+
+            return count;
+        }
+        finally
+        {
+            this.semaphore.Release();
         }
     }
 
@@ -60,7 +70,7 @@ internal class FileLoggerWorker : TaskCore
     private string path;
     private SimpleLogFormatter formatter;
     private ConcurrentQueue<FileLoggerWork> queue = new();
-    private object flushSync = new();
+    private SemaphoreSlim semaphore = new(1, 1);
 }
 
 internal class FileLoggerWork

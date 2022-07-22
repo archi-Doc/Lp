@@ -29,8 +29,6 @@ public class SimpleLogFormatter
         var logLevelColors = this.GetLogLevelConsoleColors(param.LogLevel);
         var logLevelString = this.GetLogLevelString(param.LogLevel);
 
-        sb.Append('[');
-
         // Timestamp
         var timestampFormat = this.options.TimestampFormat;
         if (timestampFormat != null)
@@ -40,12 +38,17 @@ public class SimpleLogFormatter
             sb.Append(' ');
         }
 
+        sb.Append('[');
+
         // Source(EventId)
         // var position = sb.Length;
-        string source = param.LogSourceType == typeof(DefaultLog) ? DefaultLogText : param.LogSourceType.Name;
+        string source = param.LogSourceType == typeof(DefaultLog) ? string.Empty : param.LogSourceType.Name; // DefaultLogText
         if (param.EventId == 0)
         {
-            sb.Append($"{source} ");
+            if (!string.IsNullOrEmpty(source))
+            {
+                sb.Append($"{source} ");
+            }
         }
         else
         {
@@ -118,9 +121,9 @@ public class SimpleLogFormatter
         return logLevel switch
         {
             LogLevel.Debug => new ConsoleColors(ConsoleColor.Gray, ConsoleColor.Black),
-            LogLevel.Information => new ConsoleColors(ConsoleColor.DarkGreen, ConsoleColor.Black),
+            LogLevel.Information => new ConsoleColors(ConsoleColor.White, ConsoleColor.Black),
             LogLevel.Warning => new ConsoleColors(ConsoleColor.Yellow, ConsoleColor.Black),
-            LogLevel.Error => new ConsoleColors(ConsoleColor.Black, ConsoleColor.DarkRed),
+            LogLevel.Error => new ConsoleColors(ConsoleColor.White, ConsoleColor.DarkRed),
             LogLevel.Fatal => new ConsoleColors(ConsoleColor.White, ConsoleColor.DarkRed),
             _ => new ConsoleColors(DefaultColor, DefaultColor),
         };

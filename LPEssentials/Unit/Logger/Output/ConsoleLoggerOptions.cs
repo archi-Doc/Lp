@@ -4,7 +4,7 @@ namespace Arc.Unit;
 
 public record class ConsoleLoggerOptions
 {
-    public const int DefaultMaxQueue = 1000;
+    public const int DefaultMaxQueue = 1_000;
 
     public ConsoleLoggerOptions()
     {

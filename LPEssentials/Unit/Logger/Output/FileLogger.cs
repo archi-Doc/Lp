@@ -2,16 +2,17 @@
 
 namespace Arc.Unit;
 
-public class FileLogger : ILogOutput
+public class FileLogger<TOption> : BufferedLogOutput
+    where TOption : FileLoggerOptions
 {
-    public FileLogger(FileLoggerOptions options)
+    public FileLogger(UnitLogger unitLogger, TOption options)
+        : base(unitLogger)
     {
         this.worker = new(options.Path, options.Formatter);
         this.options = options;
-        this.options.PathFixed = true;
     }
 
-    public void Output(LogOutputParameter param)
+    public override void Output(LogOutputParameter param)
     {
         if (this.options.MaxQueue <= 0 || this.worker.Count < this.options.MaxQueue)
         {
@@ -19,11 +20,8 @@ public class FileLogger : ILogOutput
         }
     }
 
-    public void Flush()
-    {
-        this.worker.Flush();
-    }
+    public override Task<int> Flush() => this.worker.Flush();
 
     private FileLoggerWorker worker;
-    private FileLoggerOptions options;
+    private TOption options;
 }

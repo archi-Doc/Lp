@@ -13,6 +13,31 @@ using Netsphere;
 
 namespace Sandbox;
 
+internal class FileLoggerOptions2 : FileLoggerOptions
+{
+}
+
+internal class ConsoleAndFileLogger : ILogOutput
+{
+    public ConsoleAndFileLogger(ConsoleLogger consoleLogger, FileLogger<FileLoggerOptions> fileLogger, FileLogger<FileLoggerOptions2> fileLogger2)
+    {
+        this.consoleLogger = consoleLogger;
+        this.fileLogger = fileLogger;
+        this.fileLogger2 = fileLogger2;
+    }
+
+    public void Output(LogOutputParameter param)
+    {
+        this.consoleLogger.Output(param);
+        this.fileLogger.Output(param);
+        this.fileLogger2.Output(param);
+    }
+
+    private ConsoleLogger consoleLogger;
+    private FileLogger<FileLoggerOptions> fileLogger;
+    private FileLogger<FileLoggerOptions2> fileLogger2;
+}
+
 internal class TestLogFilter : ILogFilter
 {
     public ILogger? Filter(LogFilterParameter param)
@@ -62,6 +87,13 @@ internal class Program
         var builder = new LPLogger.Builder()
             .Configure(context =>
             {
+                // Loggers
+                context.AddSingleton<ConsoleAndFileLogger>();
+
+                // Options
+                context.AddSingleton<FileLoggerOptions2>();
+
+                // Filters
                 context.AddSingleton<TestLogFilter>();
                 context.AddSingleton<AboveInformationFilter>();
 
@@ -74,7 +106,7 @@ internal class Program
                         return;
                     }
 
-                    x.SetOutput<FileLogger>();
+                    x.SetOutput<ConsoleAndFileLogger>();
                     // x.SetOutput<ConsoleLogger>();
                     // x.SetFilter<TestLogFilter>();
                     // x.SetFilter<AboveInformationFilter>();
@@ -90,10 +122,13 @@ internal class Program
         options.Formatter.EnableColor = false;
         options.Formatter.TimestampFormat = null;*/
 
+        var options = unit.Context.ServiceProvider.GetRequiredService<FileLoggerOptions2>();
+        options.Path = "Log2.txt";
+
         var logger = unit.Context.ServiceProvider.GetRequiredService<UnitLogger>();
-        logger.Get<Program>().Log("Test");
-        logger.Get<object>().Log("Test");
-        logger.Get<Program>().Log("Test2");
+        logger.Get<Program>(LogLevel.Warning).Log("Test");
+        logger.Get<object>(LogLevel.Error).Log("Test");
+        logger.Get<Program>(LogLevel.Fatal).Log("Test2");
         logger.Get<Program>().Log(1, "test 1");
 
         logger.Get<DefaultLog>().Log("default");

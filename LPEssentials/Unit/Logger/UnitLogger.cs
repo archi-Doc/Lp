@@ -15,15 +15,15 @@ public class UnitLogger
         context.Services.Add(ServiceDescriptor.Transient<ILogger>(x => x.GetService<UnitLogger>()?.Get<DefaultLog>() ?? throw new LoggerNotFoundException(typeof(DefaultLog), LogLevel.Information)));
         context.Services.Add(ServiceDescriptor.Transient(typeof(ILogger<>), typeof(LoggerFactory<>)));
 
-        // Empty
+        // Empty logger
         context.TryAddSingleton<EmptyLogger>();
 
-        // Console
+        // Console logger
         context.TryAddSingleton<ConsoleLogger>();
         context.TryAddSingleton<ConsoleLoggerOptions>();
 
-        // Console
-        context.TryAddSingleton<FileLogger>();
+        // File logger
+        context.Services.Add(ServiceDescriptor.Transient(typeof(FileLogger<>), typeof(FileLoggerFactory<>)));
         context.TryAddSingleton<FileLoggerOptions>();
 
         // Default resolver
@@ -98,13 +98,15 @@ public class UnitLogger
         throw new LoggerNotFoundException(typeof(TLogSource), logLevel);
     }
 
-    public void Flush()
+    public bool TryRegisterFlush(BufferedLogOutput logFlush)
+        => this.logsToFlush.TryAdd(logFlush, logFlush);
+
+    public async Task Flush()
     {
-        var options = this.serviceProvider.GetService<FileLoggerOptions>();
-        if (options?.PathFixed == true)
+        var logs = this.logsToFlush.Keys.ToArray();
+        foreach (var x in logs)
         {
-            var logger = this.serviceProvider.GetService<FileLogger>();
-            logger?.Flush();
+            await x.Flush();
         }
     }
 
@@ -112,4 +114,5 @@ public class UnitLogger
     private IServiceProvider serviceProvider;
     private LoggerResolverDelegate[] loggerResolvers;
     private ConcurrentDictionary<LogSourceLevelPair, ILogger?> sourceLevelToLogger = new();
+    private ConcurrentDictionary<BufferedLogOutput, BufferedLogOutput> logsToFlush = new();
 }
