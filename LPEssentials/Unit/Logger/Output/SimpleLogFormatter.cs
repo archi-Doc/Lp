@@ -6,6 +6,8 @@ namespace Arc.Unit;
 
 public class SimpleLogFormatter
 {
+    internal const string DefaultLogText = "Default";
+    internal const int DefaultPadding = 10;
     internal const string DefaultForegroundColor = "\x1B[39m\x1B[22m"; // reset to default foreground color
     internal const string DefaultBackgroundColor = "\x1B[49m"; // reset to the background color
     internal const ConsoleColor DefaultColor = (ConsoleColor)(-1);
@@ -33,24 +35,32 @@ public class SimpleLogFormatter
         }
 
         // Source(EventId)
-        string source = param.LogSourceType == typeof(DefaultLog) ? "Default" : param.LogSourceType.Name;
-        /*if (param.EventId == 0)
+        // var position = sb.Length;
+        string source = param.LogSourceType == typeof(DefaultLog) ? DefaultLogText : param.LogSourceType.Name;
+        if (param.EventId == 0)
         {
             sb.Append($"{source} ");
         }
-        else*/
+        else
         {
             sb.Append($"{source}({param.EventId.ToString()}) ");
         }
 
+        // Padding
+        /*var length = sb.Length - position;
+        while (length++ < DefaultPadding)
+        {
+            sb.Append(' ');
+        }*/
+
         // Level
         this.WriteColoredMessage(sb, logLevelString, logLevelColors.Background, logLevelColors.Foreground);
+
         sb.Append("] ");
+        // sb.Append(Environment.NewLine);
 
         // Message
         this.WriteColoredMessage(sb, param.Message, DefaultColor, ConsoleColor.White);
-
-        // sb.Append(Environment.NewLine);
 
         return sb.ToString();
     }
