@@ -33,8 +33,15 @@ public class SimpleLogFormatter
         var timestampFormat = this.options.TimestampFormat;
         if (timestampFormat != null)
         {
-            var dateTimeOffset = DateTimeOffset.Now;
-            sb.Append(dateTimeOffset.ToString(timestampFormat));
+            if (this.options.TimestampLocal)
+            {// Local
+                sb.Append(param.DateTime.ToLocalTime().ToString(timestampFormat));
+            }
+            else
+            {// Utc
+                sb.Append(param.DateTime.ToString(timestampFormat));
+            }
+
             sb.Append(' ');
         }
 

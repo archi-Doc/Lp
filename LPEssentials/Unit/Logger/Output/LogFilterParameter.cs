@@ -11,6 +11,7 @@ public readonly struct LogOutputParameter : IEquatable<LogOutputParameter>
         this.EventId = eventId;
         this.Message = message;
         this.Exception = exception;
+        this.DateTime = DateTimeOffset.UtcNow;
     }
 
     public readonly Type LogSourceType;
@@ -22,6 +23,8 @@ public readonly struct LogOutputParameter : IEquatable<LogOutputParameter>
     public readonly string Message;
 
     public readonly Exception? Exception;
+
+    public readonly DateTimeOffset DateTime;
 
     public bool Equals(LogOutputParameter other)
         => this.LogSourceType == other.LogSourceType &&

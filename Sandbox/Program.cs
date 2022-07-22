@@ -120,10 +120,10 @@ internal class Program
         /*var options = unit.Context.ServiceProvider.GetRequiredService<ConsoleLoggerOptions>();
         options.MaxQueue = 0;
         options.Formatter.EnableColor = false;
-        options.Formatter.TimestampFormat = null;*/
+        options.Formatter.TimestampLocal = false;*/
 
-        var options = unit.Context.ServiceProvider.GetRequiredService<FileLoggerOptions2>();
-        options.Path = "Log2.txt";
+        var options2 = unit.Context.ServiceProvider.GetRequiredService<FileLoggerOptions2>();
+        options2.Path = "Log2.txt";
 
         var logger = unit.Context.ServiceProvider.GetRequiredService<UnitLogger>();
         logger.Get<Program>(LogLevel.Warning).Log("Test");
@@ -131,8 +131,11 @@ internal class Program
         logger.Get<Program>(LogLevel.Fatal).Log("Test2");
         logger.Get<Program>().Log(1, "test 1");
 
+        Thread.Sleep(10);
         logger.Get<DefaultLog>().Log("default");
+        Thread.Sleep(20);
         logger.Get<DefaultLog>().Log(2, "default2");
+        Thread.Sleep(30);
         logger.Get<DefaultLog>(LogLevel.Warning).Log(2, "default2");
 
         var l2 = unit.Context.ServiceProvider.GetRequiredService<ILogger>();

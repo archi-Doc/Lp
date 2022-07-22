@@ -6,21 +6,24 @@ using Arc.Threading;
 
 namespace Arc.Unit;
 
-public class ConsoleLogger : ILogOutput
+public class ConsoleLogger : BufferedLogOutput
 {
-    public ConsoleLogger(ConsoleLoggerOptions options)
+    public ConsoleLogger(UnitLogger unitLogger, ConsoleLoggerOptions options)
+        : base(unitLogger)
     {
         this.worker = new(options.Formatter);
         this.options = options;
     }
 
-    public void Output(LogOutputParameter param)
+    public override void Output(LogOutputParameter param)
     {
         if (this.options.MaxQueue <= 0 || this.worker.Count < this.options.MaxQueue)
         {
             this.worker.Add(new(param));
         }
     }
+
+    public override Task<int> Flush() => this.worker.Flush();
 
     private ConsoleLoggerWorker worker;
     private ConsoleLoggerOptions options;

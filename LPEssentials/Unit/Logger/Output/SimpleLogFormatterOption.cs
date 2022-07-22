@@ -15,4 +15,9 @@ public record class SimpleLogFormatterOptions
     /// Gets or sets the timestamp format (default is "HH:mm:ss.fff").
     /// </summary>
     public string? TimestampFormat { get; set; } = "HH:mm:ss.fff";
+
+    /// <summary>
+    /// Gets or sets a value indicating whether timestamps are displayed as local time or not.
+    /// </summary>
+    public bool TimestampLocal { get; set; } = true;
 }
