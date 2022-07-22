@@ -3,11 +3,10 @@
 using System;
 using System.IO;
 using Arc.Threading;
-using static Arc.Unit.ConsoleLoggerWorker;
 
 namespace Arc.Unit;
 
-public class ConsoleLoggerWorker : ThreadWorker<ConsoleLoggerWork>
+internal class ConsoleLoggerWorker : ThreadWorker<ConsoleLoggerWork>
 {
     public ConsoleLoggerWorker(SimpleLogFormatterOptions options)
         : base(ThreadCore.Root, Process)
@@ -26,7 +25,7 @@ public class ConsoleLoggerWorker : ThreadWorker<ConsoleLoggerWork>
     private SimpleLogFormatter formatter;
 }
 
-public class ConsoleLoggerWork : ThreadWork
+internal class ConsoleLoggerWork : ThreadWork
 {
     public ConsoleLoggerWork(LogOutputParameter parameter)
     {

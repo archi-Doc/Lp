@@ -18,8 +18,14 @@ public class SimpleLogFormatter
     }
 
     public string Format(LogOutputParameter param)
+    {
+        StringBuilder sb = new();
+        this.Format(sb, param);
+        return sb.ToString();
+    }
+
+    public void Format(StringBuilder sb, LogOutputParameter param)
     {// [Timestamp Source(EventId) Level] Message (Exception)
-        var sb = new StringBuilder();
         var logLevelColors = this.GetLogLevelConsoleColors(param.LogLevel);
         var logLevelString = this.GetLogLevelString(param.LogLevel);
 
@@ -61,8 +67,6 @@ public class SimpleLogFormatter
 
         // Message
         this.WriteColoredMessage(sb, param.Message, DefaultColor, ConsoleColor.White);
-
-        return sb.ToString();
     }
 
     private void WriteColoredMessage(StringBuilder sb, string message, ConsoleColor background, ConsoleColor foreground)

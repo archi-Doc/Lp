@@ -22,6 +22,10 @@ public class UnitLogger
         context.TryAddSingleton<ConsoleLogger>();
         context.TryAddSingleton<ConsoleLoggerOptions>();
 
+        // Console
+        context.TryAddSingleton<FileLogger>();
+        context.TryAddSingleton<FileLoggerOptions>();
+
         // Default resolver
         context.AddLoggerResolver(x =>
         {
@@ -92,6 +96,16 @@ public class UnitLogger
         }
 
         throw new LoggerNotFoundException(typeof(TLogSource), logLevel);
+    }
+
+    public void Flush()
+    {
+        var options = this.serviceProvider.GetService<FileLoggerOptions>();
+        if (options?.PathFixed == true)
+        {
+            var logger = this.serviceProvider.GetService<FileLogger>();
+            logger?.Flush();
+        }
     }
 
     private LogContext context;

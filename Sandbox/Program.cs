@@ -68,12 +68,13 @@ internal class Program
                 // context.ClearLoggerResolver();
                 context.AddLoggerResolver(x =>
                 {
-                    if (x.LogLevel <= LogLevel.Information)
+                    if (x.LogLevel <= LogLevel.Debug)
                     {
                         x.SetOutput<Arc.Unit.EmptyLogger>();
                         return;
                     }
 
+                    x.SetOutput<FileLogger>();
                     // x.SetOutput<ConsoleLogger>();
                     // x.SetFilter<TestLogFilter>();
                     // x.SetFilter<AboveInformationFilter>();
@@ -113,6 +114,8 @@ internal class Program
         {
             logger.Get<Program>(LogLevel.Debug).Log(i, $"test {i}");
         }
+
+        logger.Flush();
 
         var pass = "pass";
         var encrypted = PasswordEncrypt.Encrypt(new byte[] { 1, 2, }, pass);
