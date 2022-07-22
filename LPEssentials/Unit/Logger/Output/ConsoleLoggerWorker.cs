@@ -12,8 +12,8 @@ internal class ConsoleLoggerWorker : TaskCore
 {
     private const int MaxFlush = 1_000;
 
-    public ConsoleLoggerWorker(SimpleLogFormatterOptions options)
-        : base(ThreadCore.Root, Process)
+    public ConsoleLoggerWorker(UnitCore core, SimpleLogFormatterOptions options)
+        : base(core, Process)
     {
         this.formatter = new(options);
     }

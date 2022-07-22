@@ -2,6 +2,7 @@
 
 using System;
 using System.Reflection;
+using Arc.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -97,6 +98,7 @@ public class UnitBuilder
         UnitLogger.Configure(builderContext); // Logger
         this.Configure(builderContext);
 
+        builderContext.TryAddSingleton<UnitCore>();
         builderContext.TryAddSingleton<UnitContext>();
         builderContext.TryAddSingleton<TUnit>();
         builderContext.TryAddSingleton<RadioClass>(); // Unit radio

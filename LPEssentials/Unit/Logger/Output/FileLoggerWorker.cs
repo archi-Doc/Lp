@@ -13,8 +13,8 @@ internal class FileLoggerWorker : TaskCore
 {
     private const int MaxFlush = 10_000;
 
-    public FileLoggerWorker(string path, SimpleLogFormatterOptions options)
-        : base(ThreadCore.Root, Process)
+    public FileLoggerWorker(UnitCore core, string path, SimpleLogFormatterOptions options)
+        : base(core, Process)
     {
         this.path = path;
         this.formatter = new(options);

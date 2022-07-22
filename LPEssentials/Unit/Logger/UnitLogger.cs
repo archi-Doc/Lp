@@ -101,12 +101,21 @@ public class UnitLogger
     public bool TryRegisterFlush(BufferedLogOutput logFlush)
         => this.logsToFlush.TryAdd(logFlush, logFlush);
 
-    public async Task Flush(bool terminate = false)
+    public async Task Flush()
     {
         var logs = this.logsToFlush.Keys.ToArray();
         foreach (var x in logs)
         {
-            await x.Flush(terminate);
+            await x.Flush(false);
+        }
+    }
+
+    public async Task FlushAndTerminate()
+    {
+        var logs = this.logsToFlush.Keys.ToArray();
+        foreach (var x in logs)
+        {
+            await x.Flush(true);
         }
     }
 

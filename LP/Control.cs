@@ -223,7 +223,7 @@ public class Control
         }
     }
 
-    public Control(UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl, KeyVault keyVault)
+    public Control(UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl, KeyVault keyVault)
     {
         this.logger = logger;
         this.UserInterfaceService = userInterfaceService;
@@ -236,7 +236,7 @@ public class Control
         this.ZenControl.Zen.SetDelegate(ObjectToMemoryOwner, MemoryOwnerToObject);
         this.KeyVault = keyVault;
 
-        this.Core = new(ThreadCore.Root);
+        this.Core = core;
         this.BigMachine.Core.ChangeParent(this.Core);
     }
 
@@ -307,10 +307,10 @@ public class Control
         Logger.Console.Information("Press Enter key to switch to console mode.");
         Logger.Console.Information("Press Ctrl+C to exit.");
         Logger.Console.Information($"Running");
-        Logger.Console.Debug($"1");
-        Logger.Console.Warning($"1");
-        Logger.Console.Error($"1");
-        Logger.Console.Fatal($"1");
+        this.logger.Get<DefaultLog>(Arc.Unit.LogLevel.Debug).Log($"1");
+        this.logger.Get<DefaultLog>(Arc.Unit.LogLevel.Warning).Log($"1");
+        this.logger.Get<DefaultLog>(Arc.Unit.LogLevel.Error).Log($"1");
+        this.logger.Get<DefaultLog>(Arc.Unit.LogLevel.Fatal).Log($"1");
     }
 
     public void ShowInformation()
@@ -336,8 +336,7 @@ public class Control
 
         Logger.Default.Information(abort ? "Aborted" : "Terminated");
         Logger.CloseAndFlush();
-        this.logger.Flush(true).Wait();
-        // ThreadCore.Root.Terminate();
+        this.logger.FlushAndTerminate().Wait();
     }
 
     public bool Subcommand(string subcommand)
@@ -444,7 +443,7 @@ public class Control
 
     public static SimpleParserOptions SubcommandParserOptions { get; private set; } = default!;
 
-    public ThreadCoreGroup Core { get; }
+    public UnitCore Core { get; }
 
     public IUserInterfaceService UserInterfaceService { get; }
 

@@ -8,10 +8,10 @@ namespace Arc.Unit;
 
 public class ConsoleLogger : BufferedLogOutput
 {
-    public ConsoleLogger(UnitLogger unitLogger, ConsoleLoggerOptions options)
+    public ConsoleLogger(UnitCore core, UnitLogger unitLogger, ConsoleLoggerOptions options)
         : base(unitLogger)
     {
-        this.worker = new(options.Formatter);
+        this.worker = new(core, options.Formatter);
         this.options = options;
     }
 

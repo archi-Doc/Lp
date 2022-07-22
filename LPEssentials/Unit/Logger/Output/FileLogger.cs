@@ -1,14 +1,16 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Arc.Threading;
+
 namespace Arc.Unit;
 
 public class FileLogger<TOption> : BufferedLogOutput
     where TOption : FileLoggerOptions
 {
-    public FileLogger(UnitLogger unitLogger, TOption options)
+    public FileLogger(UnitCore core, UnitLogger unitLogger, TOption options)
         : base(unitLogger)
     {
-        this.worker = new(options.Path, options.Formatter);
+        this.worker = new(core, options.Path, options.Formatter);
         this.options = options;
     }
 
