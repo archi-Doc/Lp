@@ -40,6 +40,10 @@ public sealed class UnitBuilderContext
 
     public void ClearLoggerResolver() => this.LoggerResolvers.Clear();
 
+    /// <summary>
+    /// Adds a logger resolver which determines appropriate <see cref="ILogOutput"/> and <see cref="ILogFilter"/> from Log source and <see cref="LogLevel"/>.
+    /// </summary>
+    /// <param name="resolver"><see cref="LoggerResolverDelegate"/>.</param>
     public void AddLoggerResolver(LoggerResolverDelegate resolver) => this.LoggerResolvers.Add(resolver);
 
     /// <summary>

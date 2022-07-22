@@ -68,9 +68,15 @@ internal class Program
                 // context.ClearLoggerResolver();
                 context.AddLoggerResolver(x =>
                 {
+                    if (x.LogLevel <= LogLevel.Information)
+                    {
+                        x.SetOutput<Arc.Unit.EmptyLogger>();
+                        return;
+                    }
+
                     // x.SetOutput<ConsoleLogger>();
                     // x.SetFilter<TestLogFilter>();
-                    x.SetFilter<AboveInformationFilter>();
+                    // x.SetFilter<AboveInformationFilter>();
                 });
 
                 // context.Services.Add(ServiceDescriptor.Singleton(typeof(LoggerOption), new Object()));
