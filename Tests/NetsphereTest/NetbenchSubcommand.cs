@@ -13,7 +13,7 @@ namespace NetsphereTest;
 [SimpleCommand("netbench")]
 public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
 {
-    public NetbenchSubcommand(ILoggerSource<NetbenchSubcommand> logger, NetControl netControl)
+    public NetbenchSubcommand(ILogger<NetbenchSubcommand> logger, NetControl netControl)
     {
         this.logger = logger;
         this.NetControl = netControl;
@@ -183,7 +183,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         Console.WriteLine();
     }
 
-    private ILoggerSource<NetbenchSubcommand> logger;
+    private ILogger<NetbenchSubcommand> logger;
 }
 
 public record NetbenchOptions

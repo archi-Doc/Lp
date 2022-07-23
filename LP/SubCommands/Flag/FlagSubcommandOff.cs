@@ -12,7 +12,7 @@ namespace LP.Subcommands.Dump;
 [SimpleCommand("off")]
 public class FlagSubcommandOff : ISimpleCommand
 {
-    public FlagSubcommandOff(ILoggerSource<FlagSubcommandOff> logger, Control control)
+    public FlagSubcommandOff(ILogger<FlagSubcommandOff> logger, Control control)
     {
         this.logger = logger;
         this.Control = control;
@@ -53,5 +53,5 @@ public class FlagSubcommandOff : ISimpleCommand
 
     public Control Control { get; set; }
 
-    private ILoggerSource<FlagSubcommandOff> logger;
+    private ILogger<FlagSubcommandOff> logger;
 }

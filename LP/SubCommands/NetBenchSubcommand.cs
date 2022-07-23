@@ -13,7 +13,7 @@ namespace LP.Subcommands;
 [SimpleCommand("netbench")]
 public class NetBenchSubcommand : ISimpleCommandAsync<NetBenchOptions>
 {
-    public NetBenchSubcommand(ILoggerSource<NetBenchSubcommand> logger, Control control)
+    public NetBenchSubcommand(ILogger<NetBenchSubcommand> logger, Control control)
     {
         this.logger = logger;
         this.Control = control;
@@ -134,7 +134,7 @@ public class NetBenchSubcommand : ISimpleCommandAsync<NetBenchOptions>
         Console.WriteLine();
     }
 
-    private ILoggerSource<NetBenchSubcommand> logger;
+    private ILogger<NetBenchSubcommand> logger;
 }
 
 public record NetBenchOptions

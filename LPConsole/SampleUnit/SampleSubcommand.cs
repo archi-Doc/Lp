@@ -8,7 +8,7 @@ namespace LPConsole.Sample;
 [SimpleCommand("sample")]
 public class SampleSubcommand : ISimpleCommandAsync
 {
-    public SampleSubcommand(ILoggerSource<SampleSubcommand> logger, Control control)
+    public SampleSubcommand(ILogger<SampleSubcommand> logger, Control control)
     {
         this.logger = logger;
         this.Control = control;
@@ -21,5 +21,5 @@ public class SampleSubcommand : ISimpleCommandAsync
 
     public Control Control { get; set; }
 
-    private ILoggerSource<SampleSubcommand> logger;
+    private ILogger<SampleSubcommand> logger;
 }

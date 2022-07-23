@@ -16,7 +16,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
     public const string CurveName = "secp256r1";
     public const string TestKeyString = "{\"test\", b\"AMlTJh7A1Bn7ltdGW5MCM5IcdyyIFNcgHl3HMEGFGhs=\", b\"cMXxoQ5zknPMhpR+8XVkxPwBaGQX4NY7U25OhRg/gRs=\", b\"d2oC+4V2Rufl6xKhFBqD5gNlSARat3Nejt08LhEYt9c=\"}";
 
-    public BenchmarkSubcommand(ILoggerSource<BenchmarkSubcommand> logger, Control control)
+    public BenchmarkSubcommand(ILogger<BenchmarkSubcommand> logger, Control control)
     {
         this.logger = logger;
         this.Control = control;
@@ -110,7 +110,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
         this.logger.TryGet()?.Log(benchTimer.GetResult("Serialize & Deserialize"));
     }
 
-    private ILoggerSource<BenchmarkSubcommand> logger;
+    private ILogger<BenchmarkSubcommand> logger;
     private ECDsa? testKey;
 }
 

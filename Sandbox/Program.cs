@@ -146,10 +146,10 @@ internal class Program
         l2.Log(99, "GetRequiredService");
 
         var l3 = unit.Context.ServiceProvider.GetRequiredService<ILogger<int>>();
-        l3.Log(-1, "GetRequiredService");
+        l3.TryGet()?.Log(-1, "GetRequiredService");
         l3 = unit.Context.ServiceProvider.GetRequiredService<ILogger<int>>();
-        l3.Log(-1, "GetRequiredService");
-        l3.Log(0, "GetRequiredService");
+        l3.TryGet()?.Log(-1, "GetRequiredService");
+        l3.TryGet()?.Log(0, "GetRequiredService");
         logger.Get<int>(LogLevel.Warning).Log("aaa");
 
         unit.Context.ServiceProvider.GetService<FileLogger<FileLoggerOptions>>();

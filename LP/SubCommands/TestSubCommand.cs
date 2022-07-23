@@ -10,7 +10,7 @@ namespace LP.Subcommands;
 [SimpleCommand("test")]
 public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 {
-    public TestSubcommand(ILoggerSource<TestSubcommand> logger, Control control)
+    public TestSubcommand(ILogger<TestSubcommand> logger, Control control)
     {
         this.logger = logger;
         this.Control = control;
@@ -26,7 +26,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
     public Control Control { get; set; }
 
-    private ILoggerSource<TestSubcommand> logger;
+    private ILogger<TestSubcommand> logger;
 }
 
 public record TestOptions

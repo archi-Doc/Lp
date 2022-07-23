@@ -26,7 +26,7 @@ public partial class KeyVault
         public byte[] Decrypted { get; set; }
     }
 
-    public KeyVault(ILoggerSource<KeyVault> logger, IUserInterfaceService userInterfaceService)
+    public KeyVault(ILogger<KeyVault> logger, IUserInterfaceService userInterfaceService)
     {
         this.logger = logger;
         this.UserInterfaceService = userInterfaceService;
@@ -244,7 +244,7 @@ RetryPassword:
         return array;
     }
 
-    private ILoggerSource<KeyVault> logger;
+    private ILogger<KeyVault> logger;
     private object syncObject = new();
     private string password = string.Empty;
     private Item.GoshujinClass items = new();

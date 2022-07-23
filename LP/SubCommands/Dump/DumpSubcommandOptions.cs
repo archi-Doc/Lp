@@ -13,7 +13,7 @@ namespace LP.Subcommands.Dump;
 [SimpleCommand("options")]
 public class DumpSubcommandOptions : ISimpleCommandAsync<DumpSubcommandOptionsOptions>
 {
-    public DumpSubcommandOptions(ILoggerSource<DumpSubcommandOptions> logger, Control control)
+    public DumpSubcommandOptions(ILogger<DumpSubcommandOptions> logger, Control control)
     {
         this.logger = logger;
         this.Control = control;
@@ -44,7 +44,7 @@ public class DumpSubcommandOptions : ISimpleCommandAsync<DumpSubcommandOptionsOp
 
     public Control Control { get; set; }
 
-    private ILoggerSource<DumpSubcommandOptions> logger;
+    private ILogger<DumpSubcommandOptions> logger;
 }
 
 public record DumpSubcommandOptionsOptions

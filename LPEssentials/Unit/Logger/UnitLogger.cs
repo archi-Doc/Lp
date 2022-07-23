@@ -14,8 +14,6 @@ public class UnitLogger
         context.TryAddSingleton<UnitLogger>();
         context.Services.Add(ServiceDescriptor.Singleton<ILogger>(x => x.GetService<UnitLogger>()?.Get<DefaultLog>() ?? throw new LoggerNotFoundException(typeof(DefaultLog), LogLevel.Information)));
         context.Services.Add(ServiceDescriptor.Singleton(typeof(ILogger<>), typeof(LoggerFactory<>)));
-        context.Services.Add(ServiceDescriptor.Singleton(typeof(ILoggerSource), typeof(LoggerSourceFactory<DefaultLog>)));
-        context.Services.Add(ServiceDescriptor.Singleton(typeof(ILoggerSource<>), typeof(LoggerSourceFactory<>)));
 
         // Empty logger
         context.TryAddSingleton<EmptyLogger>();

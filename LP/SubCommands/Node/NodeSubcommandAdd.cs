@@ -13,7 +13,7 @@ namespace LP.Subcommands.Dump;
 [SimpleCommand("add")]
 public class NodeSubcommandAdd : ISimpleCommand
 {
-    public NodeSubcommandAdd(ILoggerSource<NodeSubcommandAdd> logger, Control control)
+    public NodeSubcommandAdd(ILogger<NodeSubcommandAdd> logger, Control control)
     {
         this.logger = logger;
         this.Control = control;
@@ -44,5 +44,5 @@ public class NodeSubcommandAdd : ISimpleCommand
 
     public Control Control { get; set; }
 
-    private ILoggerSource<NodeSubcommandAdd> logger;
+    private ILogger<NodeSubcommandAdd> logger;
 }

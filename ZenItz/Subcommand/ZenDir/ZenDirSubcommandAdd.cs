@@ -11,7 +11,7 @@ namespace ZenItz.Subcommands;
 [SimpleCommand("add", Description = "Add zen directory.")]
 public class ZenDirSubcommandAdd : ISimpleCommandAsync<ZenDirOptionsAdd>
 {
-    public ZenDirSubcommandAdd(ILoggerSource<ZenDirSubcommandAdd> logger, ZenControl control, ZenDirSubcommandLs zenDirSubcommandLs)
+    public ZenDirSubcommandAdd(ILogger<ZenDirSubcommandAdd> logger, ZenControl control, ZenDirSubcommandLs zenDirSubcommandLs)
     {
         this.logger = logger;
         this.ZenControl = control;
@@ -43,7 +43,7 @@ public class ZenDirSubcommandAdd : ISimpleCommandAsync<ZenDirOptionsAdd>
 
     public ZenDirSubcommandLs ZenDirSubcommandLs { get; private set; }
 
-    private ILoggerSource<ZenDirSubcommandAdd> logger;
+    private ILogger<ZenDirSubcommandAdd> logger;
 }
 
 public record ZenDirOptionsAdd

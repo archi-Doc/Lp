@@ -12,7 +12,7 @@ namespace LP.Subcommands;
 [SimpleCommand("nettest")]
 public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
 {
-    public NetTestSubcommand(ILoggerSource<NetTestSubcommand> logger, NetControl netControl)
+    public NetTestSubcommand(ILogger<NetTestSubcommand> logger, NetControl netControl)
     {
         this.logger = logger;
         this.NetControl = netControl;
@@ -83,7 +83,7 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
 
     public NetControl NetControl { get; set; }
 
-    private ILoggerSource<NetTestSubcommand> logger;
+    private ILogger<NetTestSubcommand> logger;
 }
 
 public record NetTestOptions

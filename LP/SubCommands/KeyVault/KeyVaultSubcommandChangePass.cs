@@ -11,7 +11,7 @@ namespace LP.Subcommands;
 [SimpleCommand("changepass")]
 public class KeyVaultSubcommandChangePass : ISimpleCommandAsync
 {
-    public KeyVaultSubcommandChangePass(ILoggerSource<KeyVaultSubcommandChangePass> logger, Control control)
+    public KeyVaultSubcommandChangePass(ILogger<KeyVaultSubcommandChangePass> logger, Control control)
     {
         this.logger = logger;
         this.Control = control;
@@ -49,5 +49,5 @@ public class KeyVaultSubcommandChangePass : ISimpleCommandAsync
 
     public Control Control { get; set; }
 
-    private ILoggerSource<KeyVaultSubcommandChangePass> logger;
+    private ILogger<KeyVaultSubcommandChangePass> logger;
 }

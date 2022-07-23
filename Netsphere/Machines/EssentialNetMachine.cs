@@ -13,7 +13,7 @@ namespace LP.Machines;
 [MachineObject(0x4792ab0f, Group = typeof(SingleGroup<>))]
 public partial class EssentialNetMachine : Machine<Identifier>
 {
-    public EssentialNetMachine(ILoggerSource<EssentialNetMachine> logger, BigMachine<Identifier> bigMachine, LPBase lpBase, NetBase netBase, NetControl netControl)
+    public EssentialNetMachine(ILogger<EssentialNetMachine> logger, BigMachine<Identifier> bigMachine, LPBase lpBase, NetBase netBase, NetControl netControl)
         : base(bigMachine)
     {
         this.logger = logger;
@@ -86,6 +86,6 @@ public partial class EssentialNetMachine : Machine<Identifier>
         return StateResult.Terminate;
     }
 
-    private ILoggerSource<EssentialNetMachine> logger;
+    private ILogger<EssentialNetMachine> logger;
     private int count = 1;
 }

@@ -7,7 +7,7 @@ namespace LP.Subcommands;
 
 public static partial class SubcommandService
 {
-    public static bool TryParseNodeAddress(ILoggerSource logger, string node, [MaybeNullWhen(false)] out NodeAddress nodeAddress)
+    public static bool TryParseNodeAddress<T>(ILogger<T> logger, string node, [MaybeNullWhen(false)] out NodeAddress nodeAddress)
     {
         nodeAddress = null;
         if (string.Compare(node, "alternative", true) == 0)

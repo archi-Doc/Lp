@@ -12,7 +12,7 @@ namespace LP.Subcommands;
 [SimpleCommand("punch")]
 public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
 {
-    public PunchSubcommand(ILoggerSource<PunchSubcommand> logger, Control control)
+    public PunchSubcommand(ILogger<PunchSubcommand> logger, Control control)
     {
         this.logger = logger;
         this.Control = control;
@@ -72,7 +72,7 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
 
     public Control Control { get; set; }
 
-    private ILoggerSource<PunchSubcommand> logger;
+    private ILogger<PunchSubcommand> logger;
 }
 
 public record PunchOptions

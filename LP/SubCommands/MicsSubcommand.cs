@@ -13,7 +13,7 @@ namespace LP.Subcommands;
 [SimpleCommand("mics")]
 public class MicsSubcommand : ISimpleCommand
 {
-    public MicsSubcommand(ILoggerSource<MicsSubcommand> logger, Control control)
+    public MicsSubcommand(ILogger<MicsSubcommand> logger, Control control)
     {
         this.logger = logger;
         this.Control = control;
@@ -43,5 +43,5 @@ public class MicsSubcommand : ISimpleCommand
 
     public Control Control { get; set; }
 
-    private ILoggerSource<MicsSubcommand> logger;
+    private ILogger<MicsSubcommand> logger;
 }

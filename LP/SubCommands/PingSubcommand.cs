@@ -12,7 +12,7 @@ namespace LP.Subcommands;
 [SimpleCommand("ping")]
 public class PingSubcommand : ISimpleCommandAsync<PingOptions>
 {
-    public PingSubcommand(ILoggerSource<PingSubcommand> logger, Control control)
+    public PingSubcommand(ILogger<PingSubcommand> logger, Control control)
     {
         this.Control = control;
         this.logger = logger;
@@ -68,7 +68,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
 
     public Control Control { get; set; }
 
-    private ILoggerSource<PingSubcommand> logger;
+    private ILogger<PingSubcommand> logger;
 }
 
 public record PingOptions

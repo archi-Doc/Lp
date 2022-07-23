@@ -41,7 +41,7 @@ public class SampleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         }
     }
 
-    public SampleUnit(UnitContext context, ILoggerSource<SampleUnit> logger)
+    public SampleUnit(UnitContext context, ILogger<SampleUnit> logger)
         : base(context)
     {
         this.logger = logger;
@@ -73,5 +73,5 @@ public class SampleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         this.logger.TryGet()?.Log("Sample unit terminated.");
     }
 
-    private ILoggerSource<SampleUnit> logger;
+    private ILogger<SampleUnit> logger;
 }

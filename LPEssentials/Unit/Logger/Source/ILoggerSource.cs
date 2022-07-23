@@ -2,11 +2,7 @@
 
 namespace Arc.Unit;
 
-public interface ILoggerSource
+public interface ILogger<TLogSource>
 {
     public ILogger? TryGet(LogLevel logLevel = LogLevel.Information);
-}
-
-public interface ILoggerSource<TLogSource> : ILoggerSource
-{
 }

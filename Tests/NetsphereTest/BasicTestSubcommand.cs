@@ -13,7 +13,7 @@ namespace NetsphereTest;
 [SimpleCommand("basic")]
 public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 {
-    public BasicTestSubcommand(ILoggerSource<BasicTestSubcommand> logger, NetControl netControl)
+    public BasicTestSubcommand(ILogger<BasicTestSubcommand> logger, NetControl netControl)
     {
         this.logger = logger;
         this.NetControl = netControl;
@@ -78,7 +78,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 
     public NetControl NetControl { get; set; }
 
-    private ILoggerSource<BasicTestSubcommand> logger;
+    private ILogger<BasicTestSubcommand> logger;
 }
 
 public record BasicTestOptions

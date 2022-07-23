@@ -2,9 +2,9 @@
 
 namespace Arc.Unit;
 
-internal class LoggerSourceFactory<TLogSource> : ILoggerSource<TLogSource>
+internal class LoggerFactory<TLogSource> : ILogger<TLogSource>
 {
-    public LoggerSourceFactory(UnitLogger logger)
+    public LoggerFactory(UnitLogger logger)
     {
         this.logger = logger;
     }

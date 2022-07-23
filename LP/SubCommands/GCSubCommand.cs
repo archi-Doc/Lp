@@ -10,7 +10,7 @@ namespace LP.Subcommands;
 [SimpleCommand("gc")]
 public class GCSubcommand : ISimpleCommand
 {
-    public GCSubcommand(ILoggerSource<GCSubcommand> logger, Control control)
+    public GCSubcommand(ILogger<GCSubcommand> logger, Control control)
     {
         this.logger = logger;
         this.Control = control;
@@ -24,5 +24,5 @@ public class GCSubcommand : ISimpleCommand
 
     public Control Control { get; set; }
 
-    private ILoggerSource<GCSubcommand> logger;
+    private ILogger<GCSubcommand> logger;
 }
