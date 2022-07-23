@@ -31,6 +31,9 @@ public class LPLogger
                 context.AddSingleton<BackgroundAndFileLogger>();
                 context.AddSingleton<ConsoleAndFileLogger>();
 
+                // Filters
+                context.AddSingleton<MachineLogFilter>();
+
                 // Resolver
                 context.ClearLoggerResolver();
                 context.AddLoggerResolver(context =>
@@ -49,12 +52,28 @@ public class LPLogger
                     else if (IsSubclassOfRawGeneric(typeof(BigMachines.Machine<>), context.LogSourceType))
                     {// Machines
                         context.SetOutput<BackgroundAndFileLogger>();
+                        context.SetFilter<MachineLogFilter>();
                         return;
                     }
 
                     context.SetOutput<ConsoleAndFileLogger>();
                 });
             });
+        }
+
+        private class MachineLogFilter : ILogFilter
+        {
+            public MachineLogFilter(LPBase lpBase)
+            {
+                this.lpBase = lpBase;
+            }
+
+            public ILogger? Filter(LogFilterParameter param)
+            {
+                return null;
+            }
+
+            private LPBase lpBase;
         }
     }
 }
