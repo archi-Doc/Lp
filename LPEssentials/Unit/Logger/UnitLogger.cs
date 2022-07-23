@@ -112,6 +112,15 @@ public class UnitLogger
         }
     }
 
+    public async Task FlushConsole()
+    {
+        var logs = this.logsToFlush.Keys.Where(x => x.GetType() == typeof(ConsoleLogger)).ToArray();
+        foreach (var x in logs)
+        {
+            await x.Flush(false);
+        }
+    }
+
     public async Task FlushAndTerminate()
     {
         var logs = this.logsToFlush.Keys.ToArray();

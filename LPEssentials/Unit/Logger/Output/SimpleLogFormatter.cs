@@ -47,6 +47,9 @@ public class SimpleLogFormatter
 
         this.WriteColoredMessage(sb, "[", DefaultColor, ConsoleColor.DarkGray); // sb.Append('[');
 
+        // Level
+        this.WriteColoredMessage(sb, logLevelString, logLevelColors.Background, logLevelColors.Foreground);
+
         // Source(EventId)
         // var position = sb.Length;
         string source = param.LogSourceType == typeof(DefaultLog) ? string.Empty : param.LogSourceType.Name; // DefaultLogText
@@ -54,12 +57,12 @@ public class SimpleLogFormatter
         {
             if (!string.IsNullOrEmpty(source))
             {
-                sb.Append($"{source} ");
+                sb.Append($" {source}");
             }
         }
         else
         {
-            sb.Append($"{source}({param.EventId.ToString()}) ");
+            sb.Append($" {source}({param.EventId.ToString()})");
         }
 
         // Padding
@@ -68,9 +71,6 @@ public class SimpleLogFormatter
         {
             sb.Append(' ');
         }*/
-
-        // Level
-        this.WriteColoredMessage(sb, logLevelString, logLevelColors.Background, logLevelColors.Foreground);
 
         this.WriteColoredMessage(sb, "] ", DefaultColor, ConsoleColor.DarkGray); // sb.Append("] ");
 

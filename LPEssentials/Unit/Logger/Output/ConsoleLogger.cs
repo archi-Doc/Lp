@@ -17,6 +17,12 @@ public class ConsoleLogger : BufferedLogOutput
 
     public override void Output(LogOutputParameter param)
     {
+        if (!this.options.EnableBuffer)
+        {
+            Console.WriteLine(this.worker.Formatter.Format(param));
+            return;
+        }
+
         if (this.options.MaxQueue <= 0 || this.worker.Count < this.options.MaxQueue)
         {
             this.worker.Add(new(param));

@@ -174,7 +174,7 @@ public class Control
             {// Start, Main loop
                 await control.RunAsync(this.Context);
 
-                control.MainLoop();
+                await control.MainAsync();
 
                 await control.TerminateAsync(this.Context);
                 await control.SaveAsync(this.Context);
@@ -362,7 +362,7 @@ public class Control
         return true;*/
     }
 
-    private void MainLoop()
+    private async Task MainAsync()
     {
         while (!this.Core.IsTerminated)
         {
@@ -390,6 +390,7 @@ public class Control
                         {
                             if (!this.Subcommand(command))
                             {
+                                await this.Logger.FlushConsole();
                                 Console.Write("> ");
                                 continue;
                             }
