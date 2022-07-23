@@ -13,9 +13,10 @@ namespace LP.Machines;
 [MachineObject(0x4792ab0f, Group = typeof(SingleGroup<>))]
 public partial class EssentialNetMachine : Machine<Identifier>
 {
-    public EssentialNetMachine(BigMachine<Identifier> bigMachine, LPBase lpBase, NetBase netBase, NetControl netControl)
+    public EssentialNetMachine(ILoggerSource<EssentialNetMachine> logger, BigMachine<Identifier> bigMachine, LPBase lpBase, NetBase netBase, NetControl netControl)
         : base(bigMachine)
     {
+        this.logger = logger;
         this.NetBase = netBase;
         this.NetControl = netControl;
         this.LPBase = lpBase;
@@ -33,6 +34,7 @@ public partial class EssentialNetMachine : Machine<Identifier>
     [StateMethod(0)]
     protected async Task<StateResult> Initial(StateParameter parameter)
     {
+        this.logger.TryGet(LogLevel.Information)?.Log($"Essential net madchine {this.count}");
         this.count++;
 
         if (this.NetControl.EssentialNode.GetUncheckedNode(out var nodeAddress))
@@ -49,8 +51,8 @@ public partial class EssentialNetMachine : Machine<Identifier>
                 {// Success
                     if (this.EnableLogger)
                     {
-                        Logger.Default.Information(Time.GetUtcNow().ToString());
-                        Logger.Default.Information($"{nodeAddress.ToString()} - {value.Endpoint} - {Mics.ToString(value.UtcMics)}");
+                        this.logger.TryGet()?.Log(Time.GetUtcNow().ToString());
+                        this.logger.TryGet()?.Log($"{nodeAddress.ToString()} - {value.Endpoint} - {Mics.ToString(value.UtcMics)}");
                     }
 
                     this.NetControl.EssentialNode.Report(nodeAddress, NodeConnectionResult.Success);
@@ -59,7 +61,7 @@ public partial class EssentialNetMachine : Machine<Identifier>
                 {
                     if (this.EnableLogger)
                     {
-                        Logger.Default.Information($"Receive timeout: {nodeAddress}");
+                        this.logger.TryGet()?.Log($"Receive timeout: {nodeAddress}");
                     }
 
                     this.NetControl.EssentialNode.Report(nodeAddress, NodeConnectionResult.Failure);
@@ -84,5 +86,6 @@ public partial class EssentialNetMachine : Machine<Identifier>
         return StateResult.Terminate;
     }
 
+    private ILoggerSource<EssentialNetMachine> logger;
     private int count = 1;
 }

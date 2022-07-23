@@ -16,8 +16,9 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
     public const string CurveName = "secp256r1";
     public const string TestKeyString = "{\"test\", b\"AMlTJh7A1Bn7ltdGW5MCM5IcdyyIFNcgHl3HMEGFGhs=\", b\"cMXxoQ5zknPMhpR+8XVkxPwBaGQX4NY7U25OhRg/gRs=\", b\"d2oC+4V2Rufl6xKhFBqD5gNlSARat3Nejt08LhEYt9c=\"}";
 
-    public BenchmarkSubcommand(Control control)
+    public BenchmarkSubcommand(ILoggerSource<BenchmarkSubcommand> logger, Control control)
     {
+        this.logger = logger;
         this.Control = control;
 
         try
@@ -45,7 +46,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
             options.Repetition = MaxRepetitions;
         }
 
-        Logger.Default.Information($"Benchmark subcommand: {options.ToString()}");
+        this.logger.TryGet()?.Log($"Benchmark subcommand: {options.ToString()}");
 
         await this.RunBenchmark(options);
     }
@@ -62,7 +63,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
     {
         if (this.testKey == null)
         {
-            Logger.Default.Error("No ECDsa key.");
+            this.logger.TryGet(LogLevel.Error)?.Log("No ECDsa key.");
             return;
         }
 
@@ -84,7 +85,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
             Console.WriteLine(benchTimer.StopAndGetText());
         }
 
-        Logger.Default.Information(benchTimer.GetResult("Sign & Verify"));
+        this.logger.TryGet()?.Log(benchTimer.GetResult("Sign & Verify"));
     }
 
     private async Task RunSerializeBenchmark(BenchmarkOptions options)
@@ -106,9 +107,10 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
             Console.WriteLine(benchTimer.StopAndGetText());
         }
 
-        Logger.Default.Information(benchTimer.GetResult("Serialize & Deserialize"));
+        this.logger.TryGet()?.Log(benchTimer.GetResult("Serialize & Deserialize"));
     }
 
+    private ILoggerSource<BenchmarkSubcommand> logger;
     private ECDsa? testKey;
 }
 

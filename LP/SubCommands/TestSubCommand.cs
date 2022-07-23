@@ -10,20 +10,23 @@ namespace LP.Subcommands;
 [SimpleCommand("test")]
 public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 {
-    public TestSubcommand(Control control)
+    public TestSubcommand(ILoggerSource<TestSubcommand> logger, Control control)
     {
+        this.logger = logger;
         this.Control = control;
     }
 
     public async Task RunAsync(TestOptions options, string[] args)
     {
-        Logger.Default.Information($"Test subcommand: {options.ToString()}");
+        this.logger.TryGet()?.Log($"Test subcommand: {options.ToString()}");
         // this.Control.Netsphere.NetStatus
 
-        // Logger.Default.Information(System.Environment.OSVersion.ToString());
+        // this.logger.TryGet()?.Log(System.Environment.OSVersion.ToString());
     }
 
     public Control Control { get; set; }
+
+    private ILoggerSource<TestSubcommand> logger;
 }
 
 public record TestOptions

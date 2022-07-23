@@ -11,14 +11,15 @@ namespace LP.Subcommands;
 [SimpleCommand("changepass")]
 public class KeyVaultSubcommandChangePass : ISimpleCommandAsync
 {
-    public KeyVaultSubcommandChangePass(Control control)
+    public KeyVaultSubcommandChangePass(ILoggerSource<KeyVaultSubcommandChangePass> logger, Control control)
     {
+        this.logger = logger;
         this.Control = control;
     }
 
     public async Task RunAsync(string[] args)
     {
-        Logger.Default.Warning(Hashed.KeyVault.ChangePassword);
+        this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.KeyVault.ChangePassword);
 
         string? currentPassword;
         while (true)
@@ -33,7 +34,7 @@ public class KeyVaultSubcommandChangePass : ISimpleCommandAsync
                 break;
             }
 
-            Logger.Default.Warning(Hashed.Dialog.Password.NotMatch);
+            this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Dialog.Password.NotMatch);
         }
 
         var newPassword = await this.Control.UserInterfaceService.RequestPasswordAndConfirm(Hashed.Dialog.Password.EnterNew, Hashed.Dialog.Password.Confirm);
@@ -43,8 +44,10 @@ public class KeyVaultSubcommandChangePass : ISimpleCommandAsync
         }
 
         this.Control.KeyVault.ChangePassword(currentPassword, newPassword);
-        Logger.Default.Warning(Hashed.Dialog.Password.Changed);
+        this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Dialog.Password.Changed);
     }
 
     public Control Control { get; set; }
+
+    private ILoggerSource<KeyVaultSubcommandChangePass> logger;
 }

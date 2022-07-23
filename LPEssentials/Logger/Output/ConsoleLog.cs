@@ -1,7 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace Arc.Unit;
+namespace LP.Logging;
 
-public interface ILogSource
+public sealed class ConsoleLog
 {
 }

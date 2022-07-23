@@ -12,14 +12,15 @@ namespace LP.Subcommands;
 [SimpleCommand("ping")]
 public class PingSubcommand : ISimpleCommandAsync<PingOptions>
 {
-    public PingSubcommand(Control control)
+    public PingSubcommand(ILoggerSource<PingSubcommand> logger, Control control)
     {
         this.Control = control;
+        this.logger = logger;
     }
 
     public async Task RunAsync(PingOptions options, string[] args)
     {
-        if (!SubcommandService.TryParseNodeAddress(options.Node, out var node))
+        if (!SubcommandService.TryParseNodeAddress(this.logger, options.Node, out var node))
         {
             return;
         }
@@ -42,7 +43,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
 
     public async Task Ping(NodeAddress node, PingOptions options)
     {
-        Logger.Default.Information($"Ping: {node.ToString()}");
+        this.logger.TryGet()?.Log($"Ping: {node.ToString()}");
 
         var sw = Stopwatch.StartNew();
         using (var terminal = this.Control.NetControl.Terminal.Create(node))
@@ -53,19 +54,21 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
             sw.Stop();
             if (result.Value != null)
             {
-                Logger.Default.Information($"Received: {result.ToString()} - {sw.ElapsedMilliseconds} ms");
+                this.logger.TryGet()?.Log($"Received: {result.ToString()} - {sw.ElapsedMilliseconds} ms");
             }
             else
             {
-                Logger.Default.Error($"{result}");
+                this.logger.TryGet(LogLevel.Error)?.Log($"{result}");
             }
         }
 
         // this.Control.Netsphere.NetStatus
-        // Logger.Default.Information(System.Environment.OSVersion.ToString());
+        // this.logger.TryGet()?.Log(System.Environment.OSVersion.ToString());
     }
 
     public Control Control { get; set; }
+
+    private ILoggerSource<PingSubcommand> logger;
 }
 
 public record PingOptions

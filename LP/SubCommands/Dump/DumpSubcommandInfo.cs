@@ -18,18 +18,21 @@ public class DumpSubcommandInfo : ISimpleCommand<DumpSubcommandInfoOptions>
 
     public void Run(DumpSubcommandInfoOptions options, string[] args)
     {
-        var logger = Logger.Default;
         var target = args.Length > 0 ? args[0] : string.Empty;
+        var logger = this.Control.Logger.TryGet<DumpSubcommandInfo>();
 
-        logger.Information($"Dump: {target}");
+        logger?.Log($"Dump: {target}");
 
         if (string.Compare("bytearraypool", target, true) == 0)
         {
-            BlockPool.Dump(logger);
+            if (logger != null)
+            {
+                BlockPool.Dump(logger);
+            }
         }
         else
         {
-            logger.Information(Environment.OSVersion.ToString());
+            logger?.Log(Environment.OSVersion.ToString());
             this.Control.NetControl.Terminal.Dump(logger);
         }
     }

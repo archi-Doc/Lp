@@ -80,15 +80,15 @@ public class NetControl : UnitBase, IUnitPreparable
                 netControl.SetupServer(param.NewServerContext, param.NewCallContext);
             }
 
-            Logger.Configure(null);
             this.Context.SendPrepare(new());
             await this.Context.SendRunAsync(new(ThreadCore.Root)).ConfigureAwait(false);
         }
     }
 
-    public NetControl(UnitContext context, NetBase netBase, BigMachine<Identifier> bigMachine, Terminal terminal, EssentialNode node, NetStatus netStatus)
+    public NetControl(UnitContext context, UnitLogger logger, NetBase netBase, BigMachine<Identifier> bigMachine, Terminal terminal, EssentialNode node, NetStatus netStatus)
         : base(context)
     {
+        this.logger = logger;
         this.ServiceProvider = context.ServiceProvider;
         this.NewServerContext = () => new ServerContext();
         this.NewCallContext = () => new CallContext();
@@ -98,7 +98,7 @@ public class NetControl : UnitBase, IUnitPreparable
         this.Terminal = terminal;
         if (this.NetBase.NetsphereOptions.EnableAlternative)
         {
-            this.Alternative = new(context, netBase, netStatus); // For debug
+            this.Alternative = new(context, logger, netBase, netStatus); // For debug
         }
 
         this.EssentialNode = node;
@@ -184,9 +184,11 @@ public class NetControl : UnitBase, IUnitPreparable
 
     internal IServiceProvider ServiceProvider { get; }
 
-    private void Dump()
+    private UnitLogger logger;
+
+    private void Dump(ILogger logger)
     {
-        Logger.Default.Information($"Dump:");
-        Logger.Default.Information($"MyStatus: {this.MyStatus.Type}");
+        logger.Log($"Dump:");
+        logger.Log($"MyStatus: {this.MyStatus.Type}");
     }
 }

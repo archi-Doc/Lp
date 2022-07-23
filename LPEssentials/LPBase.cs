@@ -49,6 +49,8 @@ public class LPBase
 
     public LPSettings Settings { get; set; }
 
+    public bool ConsoleMode { get; set; } = false;
+
     // public string GetRootPath(string path, string defaultFilename) => this.GetPath(this.RootDirectory, path, defaultFilename);
 
     public string CombineDataPath(string path, string defaultFilename) => this.CombinePath(this.DataDirectory, path, defaultFilename);

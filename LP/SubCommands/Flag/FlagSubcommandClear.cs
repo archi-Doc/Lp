@@ -12,8 +12,9 @@ namespace LP.Subcommands.Dump;
 [SimpleCommand("clear")]
 public class FlagSubcommandClear : ISimpleCommand
 {
-    public FlagSubcommandClear(Control control)
+    public FlagSubcommandClear(ILoggerSource<FlagSubcommandClear> logger, Control control)
     {
+        this.logger = logger;
         this.Control = control;
     }
 
@@ -41,9 +42,11 @@ public class FlagSubcommandClear : ISimpleCommand
 
         if (cleared.Count > 0)
         {
-            Logger.Default.Information($"Cleared: {string.Join(' ', cleared)}");
+            this.logger.TryGet()?.Log($"Cleared: {string.Join(' ', cleared)}");
         }
     }
 
     public Control Control { get; set; }
+
+    private ILoggerSource<FlagSubcommandClear> logger;
 }

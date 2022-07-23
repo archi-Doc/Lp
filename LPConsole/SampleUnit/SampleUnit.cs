@@ -41,9 +41,10 @@ public class SampleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         }
     }
 
-    public SampleUnit(UnitContext context)
+    public SampleUnit(UnitContext context, ILoggerSource<SampleUnit> logger)
         : base(context)
     {
+        this.logger = logger;
     }
 
     public void Prepare(UnitMessage.Prepare message)
@@ -59,16 +60,18 @@ public class SampleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         {
         }
 
-        Logger.Default.Information("Sample unit prepared.");
+        this.logger.TryGet()?.Log("Sample unit prepared.");
     }
 
     public async Task RunAsync(UnitMessage.RunAsync message)
     {
-        Logger.Default.Information("Sample unit running.");
+        this.logger.TryGet()?.Log("Sample unit running.");
     }
 
     public async Task TerminateAsync(UnitMessage.TerminateAsync message)
     {
-        Logger.Default.Information("Sample unit terminated.");
+        this.logger.TryGet()?.Log("Sample unit terminated.");
     }
+
+    private ILoggerSource<SampleUnit> logger;
 }

@@ -12,8 +12,9 @@ namespace LP.Subcommands.Dump;
 [SimpleCommand("ls")]
 public class FlagSubcommandLs : ISimpleCommand
 {
-    public FlagSubcommandLs(Control control)
+    public FlagSubcommandLs(ILoggerSource<FlagSubcommandLs> logger, Control control)
     {
+        this.logger = logger;
         this.Control = control;
     }
 
@@ -45,14 +46,16 @@ public class FlagSubcommandLs : ISimpleCommand
 
         if (on.Count > 0)
         {
-            Logger.Default.Information($"On: {string.Join(' ', on)}");
+            this.logger.TryGet()?.Log($"On: {string.Join(' ', on)}");
         }
 
         if (off.Count > 0)
         {
-            Logger.Default.Information($"Off: {string.Join(' ', off)}");
+            this.logger.TryGet()?.Log($"Off: {string.Join(' ', off)}");
         }
     }
 
     public Control Control { get; set; }
+
+    private ILoggerSource<FlagSubcommandLs> logger;
 }

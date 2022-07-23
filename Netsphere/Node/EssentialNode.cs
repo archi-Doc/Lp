@@ -20,8 +20,9 @@ public class EssentialNode
     public const string FileName = "EssentialNode.tinyhand";
     public const int ValidTimeInMinutes = 5;
 
-    public EssentialNode(NetBase netBase)
+    public EssentialNode(UnitLogger logger, NetBase netBase)
     {
+        this.logger = logger;
         this.NetBase = netBase;
     }
 
@@ -42,7 +43,7 @@ public class EssentialNode
         }
         catch
         {
-            Logger.Default.Error($"Load error: {FileName}");
+            this.logger.TryGet<EssentialNode>(LogLevel.Error)?.Log($"Load error: {FileName}");
         }
 
         // Load NetsphereOptions.Nodes
@@ -219,6 +220,7 @@ public class EssentialNode
         }
     }
 
+    private UnitLogger logger;
     private EssentialNodeAddress.GoshujinClass essentialNodes = new();
 }
 

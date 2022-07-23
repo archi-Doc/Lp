@@ -12,14 +12,15 @@ namespace LP.Subcommands;
 [SimpleCommand("punch")]
 public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
 {
-    public PunchSubcommand(Control control)
+    public PunchSubcommand(ILoggerSource<PunchSubcommand> logger, Control control)
     {
+        this.logger = logger;
         this.Control = control;
     }
 
     public async Task RunAsync(PunchOptions options, string[] args)
     {
-        if (!SubcommandService.TryParseNodeAddress(options.Node, out var node))
+        if (!SubcommandService.TryParseNodeAddress(this.logger, options.Node, out var node))
         {
             return;
         }
@@ -27,7 +28,7 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
         NodeAddress? nextNode = null;
         if (!string.IsNullOrEmpty(options.NextNode))
         {
-            SubcommandService.TryParseNodeAddress(options.NextNode, out nextNode);
+            SubcommandService.TryParseNodeAddress(this.logger, options.NextNode, out nextNode);
         }
 
         for (var n = 0; n < options.Count; n++)
@@ -48,7 +49,7 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
 
     public async Task Punch(NodeAddress node, NodeAddress? nextNode, PunchOptions options)
     {
-        Logger.Default.Information($"Punch: {node.ToString()}");
+        this.logger.TryGet()?.Log($"Punch: {node.ToString()}");
 
         var sw = Stopwatch.StartNew();
         using (var terminal = this.Control.NetControl.Terminal.Create(node))
@@ -60,16 +61,18 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
             sw.Stop();
             if (result.Value != null)
             {
-                Logger.Default.Information($"Received: {result.ToString()} - {sw.ElapsedMilliseconds} ms");
+                this.logger.TryGet()?.Log($"Received: {result.ToString()} - {sw.ElapsedMilliseconds} ms");
             }
             else
             {
-                Logger.Default.Error($"{result}");
+                this.logger.TryGet(LogLevel.Error)?.Log($"{result}");
             }
         }
     }
 
     public Control Control { get; set; }
+
+    private ILoggerSource<PunchSubcommand> logger;
 }
 
 public record PunchOptions

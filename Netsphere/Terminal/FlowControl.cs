@@ -270,7 +270,7 @@ public class FlowControl
 
         if (this.NetBase.Log.FlowControl && !this.NetTerminal.Terminal.IsAlternative)
         {
-            Logger.Console.Information($"RTT: {rtt.Mean / 1000d,0:F0} ({rtt.Count}), Resent: {resent} => {sendCapacityPerRound,0:F2}");
+            // Logger.Console.Information($"RTT: {rtt.Mean / 1000d,0:F0} ({rtt.Count}), Resent: {resent} => {sendCapacityPerRound,0:F2}");
         }
     }
 
@@ -293,7 +293,7 @@ public class FlowControl
         var sendCapacity = window.SendCapacityPerRound * window.DurationMics * MicsPerRoundRev;
         if (this.NetBase.Log.FlowControl && !this.NetTerminal.Terminal.IsAlternative)
         {
-            Logger.Console.Information($"SendPerWindow: {this.sendPerWindow}, Send: {window.SendCount}/{sendCapacity:F0}");
+            // Logger.Console.Information($"SendPerWindow: {this.sendPerWindow}, Send: {window.SendCount}/{sendCapacity:F0}");
         }
 
         var sendResend = window.SendCount + window.ResendCount;
@@ -316,7 +316,7 @@ public class FlowControl
                 this.State = ControlState.Go;
                 if (this.NetBase.Log.FlowControl && !this.NetTerminal.Terminal.IsAlternative)
                 {
-                    Logger.Console.Information($"ControlState.Go ARR:{arr:F2}, RTT:{rtt:F2}");
+                    // Logger.Console.Information($"ControlState.Go ARR:{arr:F2}, RTT:{rtt:F2}");
                 }
 
                 return this.currentWindow.SendCapacityPerRound / ProbeRatio / ProbeRatio;
@@ -327,7 +327,7 @@ public class FlowControl
         {
             if (this.NetBase.Log.FlowControl && !this.NetTerminal.Terminal.IsAlternative)
             {
-                Logger.Console.Information("Under");
+                // Logger.Console.Information("Under");
             }
 
             return this.currentWindow.SendCapacityPerRound;
@@ -342,8 +342,8 @@ public class FlowControl
 
         if (this.NetBase.Log.FlowControl && !this.NetTerminal.Terminal.IsAlternative)
         {
-            Logger.Console.Information($"Send: {this.twoPreviousWindow.SendCount}, Resend: {this.twoPreviousWindow.ResendCount}, Capacity: {sendCapacity:F0}");
-            Logger.Console.Information($"ARR:{arr:F2}, RTT:{rtt:F2}");
+            // Logger.Console.Information($"Send: {this.twoPreviousWindow.SendCount}, Resend: {this.twoPreviousWindow.ResendCount}, Capacity: {sendCapacity:F0}");
+            // Logger.Console.Information($"ARR:{arr:F2}, RTT:{rtt:F2}");
         }
 
         var next = this.currentWindow.SendCapacityPerRound;

@@ -6,9 +6,10 @@ namespace Netsphere;
 
 public class NetBase : UnitBase, IUnitPreparable
 {
-    public NetBase(UnitContext context)
+    public NetBase(UnitContext context, UnitLogger logger)
         : base(context)
     {
+        this.logger = logger;
     }
 
     public void Prepare(UnitMessage.Prepare message)
@@ -26,8 +27,8 @@ public class NetBase : UnitBase, IUnitPreparable
             this.NetsphereOptions.Port = LP.Random.Pseudo.NextInt32(NetControl.MinPort, NetControl.MaxPort + 1);
             if (showWarning)
             {
-                Logger.Default.Error($"Port number must be between {NetControl.MinPort} and {NetControl.MaxPort}");
-                Logger.Default.Information($"Port number is set to {this.NetsphereOptions.Port}");
+                this.logger.TryGet<NetBase>(LogLevel.Fatal)?.Log($"Port number must be between {NetControl.MinPort} and {NetControl.MaxPort}");
+                this.logger.TryGet<NetBase>(LogLevel.Fatal)?.Log($"Port number is set to {this.NetsphereOptions.Port}");
             }
         }
 
@@ -90,4 +91,6 @@ public class NetBase : UnitBase, IUnitPreparable
     internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
 
     internal ECDiffieHellman NodePrivateEcdh { get; private set; } = default!;
+
+    private UnitLogger logger;
 }

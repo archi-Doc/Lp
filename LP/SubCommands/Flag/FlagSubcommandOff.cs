@@ -12,8 +12,9 @@ namespace LP.Subcommands.Dump;
 [SimpleCommand("off")]
 public class FlagSubcommandOff : ISimpleCommand
 {
-    public FlagSubcommandOff(Control control)
+    public FlagSubcommandOff(ILoggerSource<FlagSubcommandOff> logger, Control control)
     {
+        this.logger = logger;
         this.Control = control;
     }
 
@@ -41,14 +42,16 @@ public class FlagSubcommandOff : ISimpleCommand
 
         if (off.Count > 0)
         {
-            Logger.Default.Information($"Off: {string.Join(' ', off)}");
+            this.logger.TryGet()?.Log($"Off: {string.Join(' ', off)}");
         }
 
         if (notfound.Count > 0)
         {
-            Logger.Default.Warning($"Not found: {string.Join(' ', notfound)}");
+            this.logger.TryGet(LogLevel.Warning)?.Log($"Not found: {string.Join(' ', notfound)}");
         }
     }
 
     public Control Control { get; set; }
+
+    private ILoggerSource<FlagSubcommandOff> logger;
 }

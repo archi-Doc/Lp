@@ -26,8 +26,9 @@ public partial class KeyVault
         public byte[] Decrypted { get; set; }
     }
 
-    public KeyVault(IUserInterfaceService userInterfaceService)
+    public KeyVault(ILoggerSource<KeyVault> logger, IUserInterfaceService userInterfaceService)
     {
+        this.logger = logger;
         this.UserInterfaceService = userInterfaceService;
     }
 
@@ -40,7 +41,7 @@ public partial class KeyVault
         }
         catch
         {
-            Logger.Default.Error(Hashed.Error.Load, path);
+            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.Load, path);
             return false;
         }
 
@@ -55,7 +56,7 @@ public partial class KeyVault
 
         if (items == null || items.Length == 0)
         {
-            Logger.Default.Error(Hashed.Error.Deserialize, path);
+            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.Deserialize, path);
             return false;
         }
 
@@ -243,6 +244,7 @@ RetryPassword:
         return array;
     }
 
+    private ILoggerSource<KeyVault> logger;
     private object syncObject = new();
     private string password = string.Empty;
     private Item.GoshujinClass items = new();

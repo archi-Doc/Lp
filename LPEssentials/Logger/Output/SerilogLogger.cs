@@ -2,7 +2,7 @@
 
 namespace LP.Logging;
 
-public class SerilogLogger : ILogOutput
+/*public class SerilogLogger : ILogOutput
 {
     public SerilogLogger(Serilog.ILogger logger)
     {
@@ -36,4 +36,4 @@ public class SerilogLogger : ILogOutput
     }
 
     private Serilog.ILogger logger;
-}
+}*/

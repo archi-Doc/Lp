@@ -1,8 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace LP;
+namespace LP.Obsolete;
 
-public class SerilogLogger : ISimpleLogger
+/*public class SerilogLogger : ISimpleLogger
 {
     public SerilogLogger(Serilog.ILogger logger)
     {
@@ -26,4 +26,4 @@ public class SerilogLogger : ISimpleLogger
     public bool FatalFlag { get; private set; }
 
     private Serilog.ILogger logger;
-}
+}*/
