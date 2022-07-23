@@ -7,8 +7,8 @@ global using Arc.Threading;
 global using CrossChannel;
 global using LP;
 global using Netsphere;
+using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
-using Serilog;
 using SimpleCommandLine;
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
@@ -95,7 +95,7 @@ public class Program
         // Logger
         if (options.EnableLogger)
         {
-            var logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "logs");
+            /*var logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "logs");
             Directory.CreateDirectory(logDirectory);
             var netControl = unit.Context.ServiceProvider.GetRequiredService<NetControl>();
             netControl.Terminal.SetLogger(new SerilogLogger(new LoggerConfiguration()
@@ -111,7 +111,7 @@ public class Program
                     Path.Combine(logDirectory, "terminal2.log.txt"),
                     buffered: true,
                     flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
-                .CreateLogger()));
+                .CreateLogger()));*/
         }
 
         var parserOptions = SimpleParserOptions.Standard with
@@ -126,8 +126,7 @@ public class Program
 
         ThreadCore.Root.Terminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
-        Logger.CloseAndFlush();
-        await Task.Delay(1000);
+        unit.Context.ServiceProvider.GetService<UnitLogger>()?.FlushAndTerminate();
         ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).
     }
 }

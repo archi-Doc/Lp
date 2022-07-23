@@ -12,20 +12,21 @@ namespace LP.Subcommands;
 [SimpleCommand("nettest")]
 public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
 {
-    public NetTestSubcommand(NetControl netControl)
+    public NetTestSubcommand(ILogger<NetTestSubcommand> logger, NetControl netControl)
     {
+        this.logger = logger;
         this.NetControl = netControl;
     }
 
     public async Task RunAsync(NetTestOptions options, string[] args)
     {
-        if (!SubcommandService.TryParseNodeAddress(options.Node, out var node))
+        if (!SubcommandService.TryParseNodeAddress(this.logger, options.Node, out var node))
         {
             return;
         }
 
-        Logger.Default.Information($"SendData: {node.ToString()}");
-        Logger.Default.Information($"{Stopwatch.Frequency}");
+        this.logger.TryGet()?.Log($"SendData: {node.ToString()}");
+        this.logger.TryGet()?.Log($"{Stopwatch.Frequency}");
 
         // var nodeInformation = NodeInformation.Alternative;
         using (var terminal = this.NetControl.Terminal.Create(node))
@@ -81,6 +82,8 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
     }
 
     public NetControl NetControl { get; set; }
+
+    private ILogger<NetTestSubcommand> logger;
 }
 
 public record NetTestOptions

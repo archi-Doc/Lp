@@ -208,7 +208,7 @@ public partial class NetTerminal : IDisposable
 
     internal GenePool GenePool { get; }
 
-    internal ISimpleLogger? TerminalLogger => this.Terminal.TerminalLogger;
+    // internal ILogger? TerminalLogger => this.Terminal.TerminalLogger;
 
     internal NetResult CreateEmbryo(ulong salt, ulong salt2)
     {
@@ -275,7 +275,7 @@ public partial class NetTerminal : IDisposable
             Hash.Sha3_384Pool.Return(sha);
 
             this.GenePool.SetEmbryo(this.embryo);
-            this.TerminalLogger?.Information($"First gene {this.GenePool.GetSequential().To4Hex()} ({salt.To4Hex()}/{salt2.To4Hex()})");
+            // this.TerminalLogger?.Information($"First gene {this.GenePool.GetSequential().To4Hex()} ({salt.To4Hex()}/{salt2.To4Hex()})");
 
             // Aes
             this.aes = Aes.Create();

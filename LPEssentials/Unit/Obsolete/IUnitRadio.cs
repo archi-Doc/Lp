@@ -2,7 +2,7 @@
 
 using Arc.Unit;
 
-namespace LPEssentials.Unit.Obsolete;
+namespace Arc.Unit.Obsolete;
 
 /// <summary>
 /// <see cref="IUnitRadio"/> provides intra-unit communication (Pub/Sub) services.

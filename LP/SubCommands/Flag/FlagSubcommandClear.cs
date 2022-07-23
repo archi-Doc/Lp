@@ -10,10 +10,11 @@ using Tinyhand;
 namespace LP.Subcommands.Dump;
 
 [SimpleCommand("clear")]
-public class FlagsSubcommandClear : ISimpleCommand
-{// flags on name
-    public FlagsSubcommandClear(Control control)
+public class FlagSubcommandClear : ISimpleCommand
+{
+    public FlagSubcommandClear(ILogger<FlagSubcommandClear> logger, Control control)
     {
+        this.logger = logger;
         this.Control = control;
     }
 
@@ -41,9 +42,11 @@ public class FlagsSubcommandClear : ISimpleCommand
 
         if (cleared.Count > 0)
         {
-            Logger.Default.Information($"Cleared: {string.Join(' ', cleared)}");
+            this.logger.TryGet()?.Log($"Cleared: {string.Join(' ', cleared)}");
         }
     }
 
     public Control Control { get; set; }
+
+    private ILogger<FlagSubcommandClear> logger;
 }

@@ -13,8 +13,9 @@ namespace LP.Subcommands.Dump;
 [SimpleCommand("options")]
 public class DumpSubcommandOptions : ISimpleCommandAsync<DumpSubcommandOptionsOptions>
 {
-    public DumpSubcommandOptions(Control control)
+    public DumpSubcommandOptions(ILogger<DumpSubcommandOptions> logger, Control control)
     {
+        this.logger = logger;
         this.Control = control;
     }
 
@@ -34,7 +35,7 @@ public class DumpSubcommandOptions : ISimpleCommandAsync<DumpSubcommandOptionsOp
 
             var path = this.Control.LPBase.CombineDataPathAndPrepareDirectory(options.Output, LPOptions.DefaultOptionsName);
             await File.WriteAllBytesAsync(path, utf);
-            Logger.Default.Information(Hashed.Success.Output, path);
+            this.logger.TryGet()?.Log(Hashed.Success.Output, path);
         }
         catch
         {
@@ -42,6 +43,8 @@ public class DumpSubcommandOptions : ISimpleCommandAsync<DumpSubcommandOptionsOp
     }
 
     public Control Control { get; set; }
+
+    private ILogger<DumpSubcommandOptions> logger;
 }
 
 public record DumpSubcommandOptionsOptions

@@ -185,13 +185,13 @@ internal class NetTerminalGene
             {
                 if (this.NetInterface.RecvGenes?.Length == 1)
                 {
-                    this.NetInterface.TerminalLogger?.Information($"SendAck {this.Gene.To4Hex()}");
+                    // this.NetInterface.TerminalLogger?.Information($"SendAck {this.Gene.To4Hex()}");
                     this.NetInterface.NetTerminal.SendAck(this.Gene);
                     this.State = NetTerminalGeneState.ReceiveComplete;
                 }
                 else
                 {
-                    this.NetInterface.TerminalLogger?.Information($"SendingAck {this.Gene.To4Hex()}");
+                    // this.NetInterface.TerminalLogger?.Information($"SendingAck {this.Gene.To4Hex()}");
                     this.State = NetTerminalGeneState.SendingAck;
                 }
             }

@@ -11,8 +11,9 @@ namespace ZenItz.Subcommands;
 [SimpleCommand("add", Description = "Add zen directory.")]
 public class ZenDirSubcommandAdd : ISimpleCommandAsync<ZenDirOptionsAdd>
 {
-    public ZenDirSubcommandAdd(ZenControl control, ZenDirSubcommandLs zenDirSubcommandLs)
+    public ZenDirSubcommandAdd(ILogger<ZenDirSubcommandAdd> logger, ZenControl control, ZenDirSubcommandLs zenDirSubcommandLs)
     {
+        this.logger = logger;
         this.ZenControl = control;
         this.ZenDirSubcommandLs = zenDirSubcommandLs;
     }
@@ -31,7 +32,7 @@ public class ZenDirSubcommandAdd : ISimpleCommandAsync<ZenDirOptionsAdd>
 
         if (result == AddDictionaryResult.Success)
         {
-            Logger.Default.Information($"Directory added: {option.Path}");
+            this.logger.TryGet()?.Log($"Directory added: {option.Path}");
             Console.WriteLine();
             await this.ZenDirSubcommandLs.RunAsync(Array.Empty<string>());
             // await this.ZenControl.SimpleParser.ParseAndRunAsync("zendir ls");
@@ -41,6 +42,8 @@ public class ZenDirSubcommandAdd : ISimpleCommandAsync<ZenDirOptionsAdd>
     public ZenControl ZenControl { get; private set; }
 
     public ZenDirSubcommandLs ZenDirSubcommandLs { get; private set; }
+
+    private ILogger<ZenDirSubcommandAdd> logger;
 }
 
 public record ZenDirOptionsAdd

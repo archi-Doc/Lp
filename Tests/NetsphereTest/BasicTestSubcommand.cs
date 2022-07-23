@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using Arc.Crypto;
+using Arc.Unit;
 using LP.Subcommands;
 using Netsphere;
 using SimpleCommandLine;
@@ -12,20 +13,21 @@ namespace NetsphereTest;
 [SimpleCommand("basic")]
 public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 {
-    public BasicTestSubcommand(NetControl netControl)
+    public BasicTestSubcommand(ILogger<BasicTestSubcommand> logger, NetControl netControl)
     {
+        this.logger = logger;
         this.NetControl = netControl;
     }
 
     public async Task RunAsync(BasicTestOptions options, string[] args)
     {
-        if (!SubcommandService.TryParseNodeAddress(options.Node, out var node))
+        if (!SubcommandService.TryParseNodeAddress(this.logger, options.Node, out var node))
         {
             return;
         }
 
-        Logger.Default.Information($"SendData: {node.ToString()}");
-        Logger.Default.Information($"{Stopwatch.Frequency}");
+        this.logger.TryGet()?.Log($"SendData: {node.ToString()}");
+        this.logger.TryGet()?.Log($"{Stopwatch.Frequency}");
 
         // var nodeInformation = NodeInformation.Alternative;
         using (var terminal = this.NetControl.Terminal.Create(node))
@@ -75,6 +77,8 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
     }
 
     public NetControl NetControl { get; set; }
+
+    private ILogger<BasicTestSubcommand> logger;
 }
 
 public record BasicTestOptions

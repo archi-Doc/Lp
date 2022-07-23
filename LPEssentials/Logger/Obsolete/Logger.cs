@@ -6,9 +6,8 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Serilog;
 
-namespace LP;
+namespace LP.Obsolete;
 
 public static class Logger
 {
@@ -109,15 +108,15 @@ public static class Logger
     static Logger()
     {
         Default = new PriorityLogger(); // new DefaultLogger();
-        Console = new EmptyLogger();
-        File = new EmptyLogger();
+        Console = new LP.Obsolete.EmptyLogger();
+        File = new LP.Obsolete.EmptyLogger();
         Background = new DefaultLogger();
     }
 
     public static void Configure(LPBase? info)
     {
         // Logger: Debug, Information, Warning, Error, Fatal
-        Console = new SerilogLogger(new LoggerConfiguration()
+        /*Console = new SerilogLogger(new LoggerConfiguration()
             .MinimumLevel.Information()
             .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss.fff} {Level:u3}] {Message:lj}{NewLine}{Exception}")
             .CreateLogger());
@@ -133,7 +132,7 @@ public static class Logger
                 buffered: true,
                 flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
             .CreateLogger());
-        }
+        }*/
     }
 
     public static bool ViewMode
@@ -144,7 +143,7 @@ public static class Logger
 
     public static void CloseAndFlush()
     {
-        Log.CloseAndFlush();
+        // Log.CloseAndFlush();
     }
 
     /// <summary>

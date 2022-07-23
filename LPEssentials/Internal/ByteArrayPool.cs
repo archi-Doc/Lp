@@ -562,7 +562,7 @@ public class ByteArrayPool
         }
     }
 
-    public void Dump(ISimpleLogger logger)
+    public void Dump(ILogger logger)
     {
         var sb = new StringBuilder();
         for (var i = 32; i >= 0; i--)
@@ -576,7 +576,7 @@ public class ByteArrayPool
             sb.Append($"{b.Queue.Count}({b.ArrayLength}) ");
         }
 
-        logger.Information(sb.ToString());
+        logger.Log(sb.ToString());
     }
 
     /// <summary>

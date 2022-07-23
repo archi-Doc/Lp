@@ -6,6 +6,7 @@ global using System;
 global using System.IO;
 global using Arc.Collections;
 global using Arc.Crypto;
+global using Arc.Unit;
 global using CrossChannel;
 global using Tinyhand;
 
@@ -47,6 +48,8 @@ public class LPBase
     public LPOptions Options { get; private set; } = default!;
 
     public LPSettings Settings { get; set; }
+
+    public bool ConsoleMode { get; set; } = false;
 
     // public string GetRootPath(string path, string defaultFilename) => this.GetPath(this.RootDirectory, path, defaultFilename);
 

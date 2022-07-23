@@ -10,16 +10,19 @@ namespace LP.Subcommands;
 [SimpleCommand("gc")]
 public class GCSubcommand : ISimpleCommand
 {
-    public GCSubcommand(Control control)
+    public GCSubcommand(ILogger<GCSubcommand> logger, Control control)
     {
+        this.logger = logger;
         this.Control = control;
     }
 
     public void Run(string[] args)
     {
-        Logger.Default.Information(Hashed.Subcommands.GC.Start);
+        this.logger.TryGet()?.Log(Hashed.Subcommands.GC.Start);
         GC.Collect();
     }
 
     public Control Control { get; set; }
+
+    private ILogger<GCSubcommand> logger;
 }

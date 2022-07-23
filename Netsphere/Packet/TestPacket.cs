@@ -2,14 +2,15 @@
 
 namespace Netsphere;
 
+#pragma warning disable SA1202 // Elements should be ordered by access
+#pragma warning disable SA1300 // Element should begin with upper-case letter
+
 [TinyhandObject]
 public partial class TestPacket : IPacket
 {
-    public const uint DataMax = 4_000_000;
-
-    public static TestPacket Create(uint size = DataMax)
+    public static TestPacket Create(int size)
     {
-        size = size < DataMax ? size : DataMax;
+        size = size < PacketService.SafeMaxPayloadSize ? size : PacketService.SafeMaxPayloadSize;
 
         var testBlock = new TestPacket();
         testBlock.N = 10;
@@ -29,8 +30,9 @@ public partial class TestPacket : IPacket
     [Key(1)]
     public string Message { get; set; } = string.Empty;
 
-    [Key(2)]
-    public byte[] Data { get; set; } = Array.Empty<byte>();
+    [Key(2, PropertyName = "Data", PropertyAccessibility = PropertyAccessibility.ProtectedSetter)]
+    [MaxLength(1000)]
+    private byte[] _data = Array.Empty<byte>();
 
     public uint BlockId => 0xd75af226;
 

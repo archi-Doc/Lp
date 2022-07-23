@@ -1,0 +1,15 @@
+﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+
+namespace LP;
+
+public static class IUnitLoggerExtentions
+{
+    public static void Log(this Arc.Unit.ILogger logger, ulong hash)
+        => logger.Log(HashedString.Get(hash));
+
+    public static void Log(this Arc.Unit.ILogger logger, ulong hash, object obj1)
+        => logger.Log(HashedString.Get(hash, obj1));
+
+    public static void Log(this Arc.Unit.ILogger logger, ulong hash, object obj1, object obj2)
+        => logger.Log(HashedString.Get(hash, obj1, obj2));
+}

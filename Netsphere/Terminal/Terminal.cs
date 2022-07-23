@@ -8,7 +8,6 @@ using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
-using Serilog;
 
 namespace Netsphere;
 
@@ -34,11 +33,14 @@ public class Terminal : UnitBase, IUnitExecutable
         public ByteArrayPool.MemoryOwner SendOwner { get; private set; }
     }
 
-    public void Dump(ISimpleLogger logger)
+    public void Dump(ILogger? logger)
     {
-        logger.Information($"Terminal: {this.terminals.QueueChain.Count}");
-        logger.Information($"Raw sends: {this.rawSends.Count}");
-        logger.Information($"Inbound genes: {this.inboundGenes.Count}");
+        if (logger != null)
+        {
+            logger.Log($"Terminal: {this.terminals.QueueChain.Count}");
+            logger.Log($"Raw sends: {this.rawSends.Count}");
+            logger.Log($"Inbound genes: {this.inboundGenes.Count}");
+        }
     }
 
     /// <summary>
@@ -98,12 +100,13 @@ public class Terminal : UnitBase, IUnitExecutable
         }
     }
 
-    public Terminal(UnitContext context, NetBase netBase, NetStatus netStatus)
+    public Terminal(UnitContext context, UnitLogger logger, NetBase netBase, NetStatus netStatus)
         : base(context)
     {
+        this.logger = logger;
         this.NetBase = netBase;
         this.NetStatus = netStatus;
-        this.NetSocket = new(this);
+        this.NetSocket = new(logger, this);
     }
 
     public async Task RunAsync(UnitMessage.RunAsync message)
@@ -130,9 +133,9 @@ public class Terminal : UnitBase, IUnitExecutable
         this.invokeServerDelegate = @delegate;
     }
 
-    public void SetLogger(ISimpleLogger logger)
+    public void SetLogger(ILogger logger)
     {
-        this.TerminalLogger = logger;
+        // this.TerminalLogger = logger;
     }
 
     public ThreadCoreBase? Core { get; private set; }
@@ -238,7 +241,7 @@ public class Terminal : UnitBase, IUnitExecutable
         {
             if (!PacketService.GetData(ref header, ref owner))
             {// Data packet to other packets (e.g Punch, Encrypt).
-                this.TerminalLogger?.Error($"GetData error: {header.Gene.To4Hex()}");
+                // this.TerminalLogger?.Error($"GetData error: {header.Gene.To4Hex()}");
                 return;
             }
         }
@@ -261,7 +264,7 @@ public class Terminal : UnitBase, IUnitExecutable
         }
         else
         {// Not supported
-            this.TerminalLogger?.Error($"Unhandled: {header.Gene.To4Hex()} - {header.Id}");
+            // this.TerminalLogger?.Error($"Unhandled: {header.Gene.To4Hex()} - {header.Id}");
         }
     }
 
@@ -283,7 +286,7 @@ public class Terminal : UnitBase, IUnitExecutable
                 punch.NextEndpoint = endpoint;
 
                 var secondGene = GenePool.NextGene(header.Gene);
-                this.TerminalLogger?.Information($"Punch Relay: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
+                // this.TerminalLogger?.Information($"Punch Relay: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
                 this.SendRawAck(endpoint, header.Gene);
                 PacketService.CreatePacket(ref header, punch, punch.PacketId, out var sendOwner);
@@ -295,7 +298,7 @@ public class Terminal : UnitBase, IUnitExecutable
             var response = new PacketPunchResponse();
             response.UtcMics = Mics.GetUtcNow();
             var secondGene = GenePool.NextGene(header.Gene);
-            this.TerminalLogger?.Information($"Punch Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
+            // this.TerminalLogger?.Information($"Punch Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
             if (punch.NextEndpoint == null)
             {
                 response.Endpoint = endpoint;
@@ -357,11 +360,11 @@ public class Terminal : UnitBase, IUnitExecutable
             return;
         }
 
-        Logger.Default.Information($"Ping From: {packet.ToString()}");
+        // this.logger.TryGet()?.Log($"Ping From: {packet.ToString()}");
 
         var response = new PacketPingResponse(new(endpoint.Address, (ushort)endpoint.Port, 0), this.NetBase.NodeName);
         var secondGene = GenePool.NextGene(header.Gene);
-        this.TerminalLogger?.Information($"Ping Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
+        // this.TerminalLogger?.Information($"Ping Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
         PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var packetOwner);
         this.AddRawSend(endpoint, packetOwner);
@@ -376,7 +379,7 @@ public class Terminal : UnitBase, IUnitExecutable
 
         var response = new PacketGetNodeInformationResponse(this.NetStatus.GetMyNodeInformation(this.IsAlternative));
         var secondGene = GenePool.NextGene(header.Gene);
-        this.TerminalLogger?.Information($"GetNodeInformation Response {response.Node.PublicKeyX[0]}: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
+        // this.TerminalLogger?.Information($"GetNodeInformation Response {response.Node.PublicKeyX[0]}: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
         PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var packetOwner);
         this.AddRawSend(endpoint, packetOwner);
@@ -467,7 +470,7 @@ public class Terminal : UnitBase, IUnitExecutable
         }
     }
 
-    internal ISimpleLogger? TerminalLogger { get; private set; }
+    // internal ILogger? TerminalLogger { get; private set; }
 
     internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
 
@@ -477,6 +480,7 @@ public class Terminal : UnitBase, IUnitExecutable
 
     internal UdpClient? UnsafeUdpClient => this.NetSocket.UnsafeUdpClient;
 
+    private UnitLogger logger;
     private InvokeServerDelegate? invokeServerDelegate;
     private NetTerminal.GoshujinClass terminals = new();
     private ConcurrentDictionary<ulong, NetTerminalGene> inboundGenes = new();

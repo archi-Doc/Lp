@@ -10,10 +10,11 @@ using Tinyhand;
 namespace LP.Subcommands.Dump;
 
 [SimpleCommand("off")]
-public class FlagsSubcommandOff : ISimpleCommand
-{// flags on name
-    public FlagsSubcommandOff(Control control)
+public class FlagSubcommandOff : ISimpleCommand
+{
+    public FlagSubcommandOff(ILogger<FlagSubcommandOff> logger, Control control)
     {
+        this.logger = logger;
         this.Control = control;
     }
 
@@ -41,14 +42,16 @@ public class FlagsSubcommandOff : ISimpleCommand
 
         if (off.Count > 0)
         {
-            Logger.Default.Information($"Off: {string.Join(' ', off)}");
+            this.logger.TryGet()?.Log($"Off: {string.Join(' ', off)}");
         }
 
         if (notfound.Count > 0)
         {
-            Logger.Default.Warning($"Not found: {string.Join(' ', notfound)}");
+            this.logger.TryGet(LogLevel.Warning)?.Log($"Not found: {string.Join(' ', notfound)}");
         }
     }
 
     public Control Control { get; set; }
+
+    private ILogger<FlagSubcommandOff> logger;
 }

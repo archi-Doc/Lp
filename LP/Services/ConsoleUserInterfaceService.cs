@@ -6,14 +6,14 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
 {
     public async Task Notify(UserInterfaceNotifyLevel level, string message)
     {
-        switch (level)
+        /*switch (level)
         {
             case UserInterfaceNotifyLevel.Debug:
                 Logger.Default.Debug(message);
                 break;
 
             case UserInterfaceNotifyLevel.Information:
-                Logger.Default.Information(message);
+                this.logger.TryGet()?.Log(message);
                 break;
 
             case UserInterfaceNotifyLevel.Warning:
@@ -30,7 +30,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
 
             default:
                 break;
-        }
+        }*/
     }
 
     public async Task<string?> RequestPassword(string? description)

@@ -90,7 +90,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
             ntg.SetSend(sendOwner);
             sendOwner.Return();
 
-            netTerminal.TerminalLogger?.Information($"RegisterSend2  : {sequentialGenes.First.To4Hex()}");
+            // netTerminal.TerminalLogger?.Information($"RegisterSend2  : {sequentialGenes.First.To4Hex()}");
         }
         else
         {
@@ -104,7 +104,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
             netInterface.RecvGenes = new NetTerminalGene[] { ntg, };
             ntg.SetReceive();
 
-            netTerminal.TerminalLogger?.Information($"RegisterReceive2:{sequentialGenes.Second.To4Hex()}");
+            // netTerminal.TerminalLogger?.Information($"RegisterReceive2:{sequentialGenes.Second.To4Hex()}");
         }
 
         netTerminal.Add(netInterface);
@@ -131,7 +131,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
             ntg.SetSend(sendOwner);
             sendOwner.Return();
 
-            netTerminal.TerminalLogger?.Information($"RegisterSend   : {sequentialGenes.First.To4Hex()}, {id}");
+            // netTerminal.TerminalLogger?.Information($"RegisterSend   : {sequentialGenes.First.To4Hex()}, {id}");
         }
         else
         {// Packet size limit exceeded.
@@ -147,7 +147,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
             netInterface.RecvGenes = new NetTerminalGene[] { ntg, };
             ntg.SetReceive();
 
-            netTerminal.TerminalLogger?.Information($"RegisterReceive: {sequentialGenes.Second.To4Hex()}");
+            // netTerminal.TerminalLogger?.Information($"RegisterReceive: {sequentialGenes.Second.To4Hex()}");
         }
 
         netTerminal.Add(netInterface);
@@ -172,7 +172,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         ntg.SetSend(sendOwner);
         sendOwner.Return();
 
-        netTerminal.TerminalLogger?.Information($"RegisterSend5  : {sequentialGenes.First.To4Hex()}, {response.PacketId}");
+        // netTerminal.TerminalLogger?.Information($"RegisterSend5  : {sequentialGenes.First.To4Hex()}, {response.PacketId}");
 
         // Receive gene
         Span<ulong> arraySpan = stackalloc ulong[reserve.NumberOfGenes];
@@ -205,7 +205,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         netInterface.SendGenes = new NetTerminalGene[] { sendGene, };
         sendGene.SetSend(sendOwner);
 
-        netInterface.NetTerminal.TerminalLogger?.Information($"ConnectTerminal: {gene.To4Hex()} -> {secondGene.To4Hex()}");
+        // netInterface.NetTerminal.TerminalLogger?.Information($"ConnectTerminal: {gene.To4Hex()} -> {secondGene.To4Hex()}");
 
         // netInterface.NetTerminal.Add(netInterface); // Delay
         return netInterface;
@@ -266,7 +266,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         netInterface.RecvGenes = new NetTerminalGene[] { gene, };
         gene.SetReceive();
 
-        netInterface.NetTerminal.TerminalLogger?.Information($"ReceiveInterface: {receiveGene.To4Hex()}");
+        // netInterface.NetTerminal.TerminalLogger?.Information($"ReceiveInterface: {receiveGene.To4Hex()}");
 
         netInterface.NetTerminal.Add(netInterface);
         return netInterface;
@@ -294,7 +294,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
             this.SendGenes = new NetTerminalGene[] { ntg, };
             ntg.SetSend(sendOwner);
 
-            this.TerminalLogger?.Information($"RegisterSend3  : {gene.To4Hex()}");
+            // this.TerminalLogger?.Information($"RegisterSend3  : {gene.To4Hex()}");
             return true;
         }
         else
@@ -320,7 +320,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
             ntg.SetSend(sendOwner);
             sendOwner.Return();
 
-            this.TerminalLogger?.Information($"RegisterSend4  : {gene.To4Hex()}");
+            // this.TerminalLogger?.Information($"RegisterSend4  : {gene.To4Hex()}");
             return true;
         }
         else
@@ -350,7 +350,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
             genes[i] = g;
         }
 
-        this.TerminalLogger?.Information($"SetReserve: {string.Join(", ", genes.Select(x => x.Gene.To4Hex()))}");
+        // this.TerminalLogger?.Information($"SetReserve: {string.Join(", ", genes.Select(x => x.Gene.To4Hex()))}");
 
         this.RecvGenes = genes;
     }
@@ -382,7 +382,7 @@ public class NetInterface : IDisposable
         {
             if (Mics.GetSystem() >= (this.NetTerminal.LastResponseMics + this.NetTerminal.MaximumResponseMics))
             {
-                this.TerminalLogger?.Information($"Send timeout.");
+                // this.TerminalLogger?.Information($"Send timeout.");
                 return NetResult.Timeout;
             }
 
@@ -441,7 +441,7 @@ WaitForSendCompletionWait:
 
             if (Mics.GetSystem() >= (this.NetTerminal.LastResponseMics + this.NetTerminal.MaximumResponseMics))
             {
-                if (this.TerminalLogger != null)
+                /*if (this.TerminalLogger != null)
                 {
                     string genes;
                     lock (this.NetTerminal.SyncObject)
@@ -450,7 +450,7 @@ WaitForSendCompletionWait:
                     }
 
                     this.TerminalLogger.Information($"Receive timeout ({genes}).");
-                }
+                }*/
 
                 return new NetReceivedData(NetResult.Timeout);
             }
@@ -472,7 +472,7 @@ WaitForSendCompletionWait:
         return new NetReceivedData(NetResult.Closed);
     }
 
-    internal ISimpleLogger? TerminalLogger => this.Terminal.TerminalLogger;
+    // internal ILogger? TerminalLogger => this.Terminal.TerminalLogger;
 
     protected bool IsReceiveComplete()
     {
@@ -621,7 +621,7 @@ WaitForSendCompletionWait:
                 {// Send
                     if (x.Send())
                     {
-                        this.TerminalLogger?.Information($"Udp Sent       : {x.ToString()}");
+                        // this.TerminalLogger?.Information($"Udp Sent       : {x.ToString()}");
 
                         sendCapacity--;
                         x.SentMics = currentMics;
@@ -634,7 +634,7 @@ WaitForSendCompletionWait:
                     {
                         if (x.Send())
                         {
-                            this.TerminalLogger?.Information($"Udp Resent     : {x.ToString()}");
+                            // this.TerminalLogger?.Information($"Udp Resent     : {x.ToString()}");
                             sendCapacity--;
                             x.SentMics = currentMics;
                             this.NetTerminal.FlowControl.ReportSend(currentMics);
@@ -672,7 +672,7 @@ WaitForSendCompletionWait:
                     PacketService.InsertDataSize(rentArray!.ByteArray, (ushort)(size - PacketService.HeaderSize));
                     this.Terminal.AddRawSend(this.NetTerminal.Endpoint, rentArray!.ToMemoryOwner(0, size));
                     rentArray!.Return();
-                    this.NetTerminal.TerminalLogger?.Information($"AACK {size}");
+                    // this.NetTerminal.TerminalLogger?.Information($"AACK {size}");
                     size = 0;
                 }
 
@@ -708,7 +708,7 @@ WaitForSendCompletionWait:
             PacketService.InsertDataSize(rentArray!.ByteArray, (ushort)(size - PacketService.HeaderSize));
             this.Terminal.AddRawSend(this.NetTerminal.Endpoint, rentArray!.ToMemoryOwner(0, size));
             rentArray!.Return();
-            this.NetTerminal.TerminalLogger?.Information($"AACK {size}");
+            // this.NetTerminal.TerminalLogger?.Information($"AACK {size}");
             size = 0;
         }
     }
@@ -719,13 +719,13 @@ WaitForSendCompletionWait:
         {
             if (this.NetTerminal.IsClosed)
             {
-                this.TerminalLogger?.Error("Closed(receive).");
+                // this.TerminalLogger?.Error("Closed(receive).");
                 return;
             }
 
             if (!this.NetTerminal.Endpoint.Equals(endPoint))
             {// Endpoint mismatch.
-                this.TerminalLogger?.Error("Endpoint mismatch.");
+                // this.TerminalLogger?.Error("Endpoint mismatch.");
                 return;
             }
 
@@ -734,7 +734,7 @@ WaitForSendCompletionWait:
             {// Ack (header.Gene + data(ulong[]))
                 gene.ReceiveAck(currentMics);
                 var g = MemoryMarshal.Cast<byte, ulong>(owner.Memory.Span);
-                this.TerminalLogger?.Information($"Recv Ack 1+{g.Length}, {header.Gene.To4Hex()}");
+                // this.TerminalLogger?.Information($"Recv Ack 1+{g.Length}, {header.Gene.To4Hex()}");
                 foreach (var x in g)
                 {
                     if (this.Terminal.TryGetInbound(x, out var gene2))
@@ -748,7 +748,7 @@ WaitForSendCompletionWait:
             }
             else if (header.Id == PacketId.Close)
             {
-                this.TerminalLogger?.Information($"Close, {header.Gene.To4Hex()}");
+                // this.TerminalLogger?.Information($"Close, {header.Gene.To4Hex()}");
                 this.NetTerminal.IsClosed = true;
             }
             else
@@ -760,7 +760,7 @@ WaitForSendCompletionWait:
                         this.NetTerminal.ReceiveEvent.Pulse();
                     }
 
-                    this.TerminalLogger?.Information($"Recv data: {header.Id} {gene.ToString()}");
+                    // this.TerminalLogger?.Information($"Recv data: {header.Id} {gene.ToString()}");
                 }
             }
         }

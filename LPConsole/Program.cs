@@ -54,6 +54,11 @@ public class Program
 
                 // Unit
                 LPConsole.Sample.SampleUnit.Configure(context);
+
+                // Looger resolver
+                context.AddLoggerResolver(context =>
+                {
+                });
             });
             // .ConfigureBuilder(new LPConsole.Sample.SampleUnit.Builder()); // Alternative
 
@@ -68,9 +73,8 @@ public class Program
 
         await SimpleParser.ParseAndRunAsync(unit.Context.Commands, args, parserOptions); // Main process
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
+        unit.Context.ServiceProvider.GetService<UnitLogger>()?.FlushAndTerminate();
         ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).
-
-        Logger.CloseAndFlush();
     }
 
     private static Control.Unit? unit;

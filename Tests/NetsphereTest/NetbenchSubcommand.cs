@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using Arc.Crypto;
+using Arc.Unit;
 using LP.Subcommands;
 using Netsphere;
 using SimpleCommandLine;
@@ -12,19 +13,20 @@ namespace NetsphereTest;
 [SimpleCommand("netbench")]
 public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
 {
-    public NetbenchSubcommand(NetControl netControl)
+    public NetbenchSubcommand(ILogger<NetbenchSubcommand> logger, NetControl netControl)
     {
+        this.logger = logger;
         this.NetControl = netControl;
     }
 
     public async Task RunAsync(NetbenchOptions options, string[] args)
     {
-        if (!SubcommandService.TryParseNodeAddress(options.Node, out var node))
+        if (!SubcommandService.TryParseNodeAddress(this.logger, options.Node, out var node))
         {
             return;
         }
 
-        Logger.Default.Information($"Netbench: {node.ToString()}");
+        this.logger.TryGet()?.Log($"Netbench: {node.ToString()}");
 
         // var nodeInformation = NodeInformation.Alternative;
         using (var terminal = this.NetControl.Terminal.Create(node))
@@ -180,6 +182,8 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         Console.WriteLine($"MassiveSmallData {count}/{N}, {sw.ElapsedMilliseconds.ToString()} ms");
         Console.WriteLine();
     }
+
+    private ILogger<NetbenchSubcommand> logger;
 }
 
 public record NetbenchOptions

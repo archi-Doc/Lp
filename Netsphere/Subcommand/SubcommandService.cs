@@ -7,7 +7,7 @@ namespace LP.Subcommands;
 
 public static partial class SubcommandService
 {
-    public static bool TryParseNodeAddress(string node, [MaybeNullWhen(false)] out NodeAddress nodeAddress)
+    public static bool TryParseNodeAddress<T>(ILogger<T> logger, string node, [MaybeNullWhen(false)] out NodeAddress nodeAddress)
     {
         nodeAddress = null;
         if (string.Compare(node, "alternative", true) == 0)
@@ -19,13 +19,13 @@ public static partial class SubcommandService
         {
             if (!NodeAddress.TryParse(node, out var address))
             {
-                Logger.Default.Error($"Could not parse: {node.ToString()}");
+                logger.TryGet(LogLevel.Error)?.Log($"Could not parse: {node.ToString()}");
                 return false;
             }
 
             if (!address.IsValid())
             {
-                Logger.Default.Error($"Invalid node address: {node.ToString()}");
+                logger.TryGet(LogLevel.Error)?.Log($"Invalid node address: {node.ToString()}");
                 return false;
             }
 

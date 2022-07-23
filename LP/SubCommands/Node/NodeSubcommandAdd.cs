@@ -12,9 +12,10 @@ namespace LP.Subcommands.Dump;
 
 [SimpleCommand("add")]
 public class NodeSubcommandAdd : ISimpleCommand
-{// flags on name
-    public NodeSubcommandAdd(Control control)
+{
+    public NodeSubcommandAdd(ILogger<NodeSubcommandAdd> logger, Control control)
     {
+        this.logger = logger;
         this.Control = control;
     }
 
@@ -24,22 +25,24 @@ public class NodeSubcommandAdd : ISimpleCommand
         {
             if (!NodeAddress.TryParse(x, out var nodeAddress))
             {// Could not parse
-                Logger.Default.Warning(Hashed.Error.Parse, x);
+                this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Error.Parse, x);
                 continue;
             }
 
             if (!nodeAddress.IsValid())
             {// Invalid
-                Logger.Default.Warning(Hashed.Error.InvalidAddress, x);
+                this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Error.InvalidAddress, x);
                 continue;
             }
 
             if (this.Control.NetControl.EssentialNode.TryAdd(nodeAddress))
             {// Success
-                Logger.Default.Information(Hashed.Success.NodeAdded, x);
+                this.logger.TryGet()?.Log(Hashed.Success.NodeAdded, x);
             }
         }
     }
 
     public Control Control { get; set; }
+
+    private ILogger<NodeSubcommandAdd> logger;
 }

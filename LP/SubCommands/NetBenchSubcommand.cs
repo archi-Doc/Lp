@@ -13,15 +13,16 @@ namespace LP.Subcommands;
 [SimpleCommand("netbench")]
 public class NetBenchSubcommand : ISimpleCommandAsync<NetBenchOptions>
 {
-    public NetBenchSubcommand(Control control)
+    public NetBenchSubcommand(ILogger<NetBenchSubcommand> logger, Control control)
     {
+        this.logger = logger;
         this.Control = control;
         this.NetControl = control.NetControl;
     }
 
     public async Task RunAsync(NetBenchOptions options, string[] args)
     {
-        if (!SubcommandService.TryParseNodeAddress(options.Node, out var node))
+        if (!SubcommandService.TryParseNodeAddress(this.logger, options.Node, out var node))
         {
             return;
         }
@@ -44,7 +45,7 @@ public class NetBenchSubcommand : ISimpleCommandAsync<NetBenchOptions>
 
     public async Task Process(NodeAddress node, NetBenchOptions options)
     {
-        Logger.Default.Information($"NetBench: {node.ToString()}");
+        this.logger.TryGet()?.Log($"NetBench: {node.ToString()}");
 
         var sw = Stopwatch.StartNew();
         using (var terminal = this.Control.NetControl.Terminal.Create(node))
@@ -132,6 +133,8 @@ public class NetBenchSubcommand : ISimpleCommandAsync<NetBenchOptions>
         Console.WriteLine($"MassiveSmallData {count}/{N}, {sw.ElapsedMilliseconds.ToString()} ms");
         Console.WriteLine();
     }
+
+    private ILogger<NetBenchSubcommand> logger;
 }
 
 public record NetBenchOptions

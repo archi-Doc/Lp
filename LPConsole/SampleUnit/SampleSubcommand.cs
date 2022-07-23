@@ -8,15 +8,18 @@ namespace LPConsole.Sample;
 [SimpleCommand("sample")]
 public class SampleSubcommand : ISimpleCommandAsync
 {
-    public SampleSubcommand(Control control)
+    public SampleSubcommand(ILogger<SampleSubcommand> logger, Control control)
     {
+        this.logger = logger;
         this.Control = control;
     }
 
     public async Task RunAsync(string[] args)
     {
-        Logger.Default.Information(SampleHashed.SampleUnit.Command);
+        this.logger.TryGet()?.Log(SampleHashed.SampleUnit.Command);
     }
 
     public Control Control { get; set; }
+
+    private ILogger<SampleSubcommand> logger;
 }
