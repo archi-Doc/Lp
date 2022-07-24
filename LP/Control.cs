@@ -141,7 +141,7 @@ public class Control
                 await control.LoadKeyVaultAsync();
 
                 // Start
-                control.Logger.Get<DefaultLog>().Log($"LP Start ({Version.Get()})");
+                control.Logger.Get<DefaultLog>().Log($"LP ({Version.Get()})");
 
                 // Create optional instances
                 this.Context.CreateInstances();
@@ -296,21 +296,16 @@ public class Control
         this.ShowInformation();
         this.LPBase.Options.NetsphereOptions.ShowInformation(this.Logger.Get<DefaultLog>());
 
-        this.Logger.Get<ConsoleLog>().Log("Press Enter key to switch to console mode.");
-        this.Logger.Get<ConsoleLog>().Log("Press Ctrl+C to exit.");
-        this.Logger.Get<ConsoleLog>().Log($"Running");
-        this.Logger.Get<DefaultLog>(Arc.Unit.LogLevel.Debug).Log($"1");
-        this.Logger.Get<DefaultLog>(Arc.Unit.LogLevel.Warning).Log($"1");
-        this.Logger.Get<DefaultLog>(Arc.Unit.LogLevel.Error).Log($"1");
-        this.Logger.Get<DefaultLog>(Arc.Unit.LogLevel.Fatal).Log($"1");
+        this.Logger.Get<DefaultLog>().Log("Press Enter key to switch to console mode.");
+        this.Logger.Get<DefaultLog>().Log("Press Ctrl+C to exit.");
+        this.Logger.Get<DefaultLog>().Log($"Running");
     }
 
     public void ShowInformation()
     {
-        this.Logger.Get<DefaultLog>().Log($"system: {Mics.ToString(Mics.GetSystem())}");
+        this.Logger.Get<DefaultLog>().Log($"System: {Mics.ToString(Mics.GetSystem())}");
         this.Logger.Get<DefaultLog>().Log($"Utc: {Mics.ToString(Mics.GetUtcNow())}");
         this.Logger.Get<DefaultLog>().Log($"Root directory: {this.LPBase.RootDirectory}");
-        // this.logger.TryGet()?.Log(this.LPBase.ToString());
     }
 
     public async Task TerminateAsync(UnitContext context)
@@ -325,10 +320,8 @@ public class Control
     {
         this.Core.Terminate();
         this.Core.WaitForTermination(-1);
-        Console.WriteLine("X"); // tempcode
 
         this.Logger.Get<DefaultLog>().Log(abort ? "Aborted" : "Terminated");
-        Console.WriteLine("flush"); // tempcode
         this.Logger.FlushAndTerminate().Wait();
     }
 
@@ -491,7 +484,7 @@ public class Control
         }
         else
         {
-            var result = await this.KeyVault.LoadAsync(this.LPBase.CombineDataPath(this.LPBase.Options.KeyVault, KeyVault.Filename));
+            var result = await this.KeyVault.LoadAsync(this.LPBase.CombineDataPath(this.LPBase.Options.KeyVault, KeyVault.Filename)).ConfigureAwait(false);
             if (result)
             {
                 goto LoadKeyVaultObjects;

@@ -65,7 +65,6 @@ public class UnitLogger
     }
 
     public ILog? TryGet<TLogSource>(LogLevel logLevel = LogLevel.Information)
-    // where TLogSource : ILogSource
     {
         return this.sourceLevelToLogger.GetOrAdd(new(typeof(TLogSource), logLevel), x =>
         {
@@ -89,7 +88,6 @@ public class UnitLogger
     }
 
     public ILog Get<TLogSource>(LogLevel logLevel = LogLevel.Information)
-    // where TLogSource : ILogSource
     {
         if (this.TryGet<TLogSource>(logLevel) is { } logger)
         {

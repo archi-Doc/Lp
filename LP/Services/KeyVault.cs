@@ -77,23 +77,6 @@ public partial class KeyVault
                 if (password == null)
                 {// Enter password
 RetryPassword:
-                    // ThreadCore.Root.Terminate();
-                    Task.Run(async () =>
-                    {
-                        await Task.Delay(1000);
-                        ThreadCore.Root.Terminate();
-                    });
-
-                    /*try
-                    {
-                        await Task.Delay(10000, ThreadCore.Root.CancellationToken).ConfigureAwait(false);
-                    }
-                    catch
-                    {
-                        Console.WriteLine("panic");
-                        throw new PanicException();
-                    }*/
-
                     var results = await this.UserInterfaceService.RequestPassword(Hashed.KeyVault.EnterPassword).ConfigureAwait(false);
                     if (results == null)
                     {

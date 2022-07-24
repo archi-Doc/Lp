@@ -18,7 +18,6 @@ internal class FileLoggerWorker : TaskCore
     {
         this.path = path;
         this.formatter = new(options);
-        Console.WriteLine("z"); // tempcode
     }
 
     public static async Task Process(object? obj)
@@ -29,8 +28,7 @@ internal class FileLoggerWorker : TaskCore
             await worker.Flush(false).ConfigureAwait(false);
         }
 
-        Console.WriteLine("Y"); // tempcode
-        // await worker.Flush(false);
+        await worker.Flush(false);
     }
 
     public void Add(FileLoggerWork work)
@@ -57,17 +55,9 @@ internal class FileLoggerWorker : TaskCore
                 await File.AppendAllTextAsync(this.path, sb.ToString()).ConfigureAwait(false);
             }
 
-            // if (terminate && !this.IsTerminated)
             if (terminate)
             {
-                Console.WriteLine("1");
-                // if (!this.IsTerminated)
-                {
-                    this.LockTreeSync();
-                    this.Terminate();
-                }
-
-                Console.WriteLine("2");
+                this.Terminate();
             }
 
             return count;

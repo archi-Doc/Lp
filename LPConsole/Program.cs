@@ -75,7 +75,6 @@ public class Program
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
         // unit.Context.ServiceProvider.GetService<UnitLogger>()?.FlushAndTerminate();
         ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).
-        Console.WriteLine("TerminationEvent.Set()");
     }
 
     private static Control.Unit? unit;
