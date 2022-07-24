@@ -10,7 +10,12 @@ public class FileLogger<TOption> : BufferedLogOutput
     public FileLogger(UnitCore core, UnitLogger unitLogger, TOption options)
         : base(unitLogger)
     {
-        this.worker = new(core, unitLogger, options.Path, options.Formatter);
+        if (string.IsNullOrEmpty(Path.GetDirectoryName(options.Path)))
+        {// tempcode
+            options.Path = Path.Combine(Directory.GetCurrentDirectory(), options.Path);
+        }
+
+        this.worker = new(core, unitLogger, options.Path, options.MaxLogCapacity, options.Formatter);
         this.options = options;
     }
 

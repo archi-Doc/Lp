@@ -5,7 +5,7 @@ namespace Arc.Unit;
 public class FileLoggerOptions
 {
     public const string DefaultPath = "Log.txt";
-    public const int DefaultMaxQueue = 10_000;
+    public const int DefaultMaxQueue = 1_000;
 
     public FileLoggerOptions()
     {
@@ -28,5 +28,5 @@ public class FileLoggerOptions
     /// <summary>
     /// Gets or sets the upper limit of log capacity in megabytes.
     /// </summary>
-    public int MaxLogCapacity { get; set; } = 100;
+    public int MaxLogCapacity { get; set; } = 10;
 }
