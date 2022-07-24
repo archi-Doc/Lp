@@ -4,5 +4,5 @@ namespace Arc.Unit;
 
 public interface ILogContext
 {
-    public ILogger? TryGet<TLogOutput>();
+    public ILog? TryGet<TLogOutput>();
 }

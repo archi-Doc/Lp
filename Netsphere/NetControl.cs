@@ -186,7 +186,7 @@ public class NetControl : UnitBase, IUnitPreparable
 
     private UnitLogger logger;
 
-    private void Dump(ILogger logger)
+    private void Dump(ILog logger)
     {
         logger.Log($"Dump:");
         logger.Log($"MyStatus: {this.MyStatus.Type}");

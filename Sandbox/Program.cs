@@ -40,7 +40,7 @@ internal class ConsoleAndFileLogger : ILogOutput
 
 internal class TestLogFilter : ILogFilter
 {
-    public ILogger? Filter(LogFilterParameter param)
+    public ILog? Filter(LogFilterParameter param)
     {
         if (param.LogSourceType == typeof(object))
         {
@@ -62,7 +62,7 @@ internal class TestLogFilter : ILogFilter
 
 internal class AboveInformationFilter : ILogFilter
 {
-    public ILogger? Filter(LogFilterParameter param)
+    public ILog? Filter(LogFilterParameter param)
     {
         if (param.LogLevel >= LogLevel.Information)
         {
@@ -142,7 +142,7 @@ internal class Program
         Thread.Sleep(30);
         logger.Get<DefaultLog>(LogLevel.Warning).Log(2, "default2");
 
-        var l2 = unit.Context.ServiceProvider.GetRequiredService<ILogger>();
+        var l2 = unit.Context.ServiceProvider.GetRequiredService<ILog>();
         l2.Log(99, "GetRequiredService");
 
         var l3 = unit.Context.ServiceProvider.GetRequiredService<ILogger<int>>();

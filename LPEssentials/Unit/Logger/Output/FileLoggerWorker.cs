@@ -57,7 +57,16 @@ internal class FileLoggerWorker : TaskCore
 
             if (terminate)
             {
-                this.Terminate();
+                Console.WriteLine("1");
+                try
+                {
+                    this.Terminate();
+                }
+                catch
+                {
+                }
+                Console.WriteLine("2");
+
             }
 
             return count;

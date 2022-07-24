@@ -12,7 +12,42 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
     public async Task Notify(LogLevel level, string message)
         => this.logger.TryGet(level)?.Log(message);
 
-    public async Task<string?> RequestPassword(string? description)
+    public Task<string?> RequestPassword(string? description)
+    {
+        // return this.RequestPasswordInternal(description);
+        return this.TaskRunAndWaitAsync(() => this.RequestPasswordInternal(description));
+
+        /*try
+        {
+            return await Task.Run(() => this.RequestPasswordInternal(description)).WaitAsync(ThreadCore.Root.CancellationToken);
+        }
+        catch
+        {
+            Console.WriteLine();
+            return null;
+        }*/
+    }
+
+    public Task<string?> RequestString(string? description)
+        => this.TaskRunAndWaitAsync(() => this.RequestStringInternal(description));
+
+    public Task<bool?> RequestYesOrNo(string? description)
+        => this.TaskRunAndWaitAsync(() => this.RequestYesOrNoInternal(description));
+
+    private async Task<T?> TaskRunAndWaitAsync<T>(Func<Task<T>> func)
+    {
+        try
+        {
+            return await Task.Run(func).WaitAsync(ThreadCore.Root.CancellationToken);
+        }
+        catch
+        {
+            Console.WriteLine();
+            return default;
+        }
+    }
+
+    private async Task<string?> RequestPasswordInternal(string? description)
     {
         if (!string.IsNullOrEmpty(description))
         {
@@ -67,7 +102,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
         return password;
     }
 
-    public async Task<string?> RequestString(string? description)
+    private async Task<string?> RequestStringInternal(string? description)
     {
         if (!string.IsNullOrEmpty(description))
         {
@@ -93,7 +128,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
         }
     }
 
-    public async Task<bool?> RequestYesOrNo(string? description)
+    private async Task<bool?> RequestYesOrNoInternal(string? description)
     {
         if (!string.IsNullOrEmpty(description))
         {
