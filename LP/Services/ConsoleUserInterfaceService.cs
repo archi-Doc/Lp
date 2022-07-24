@@ -4,34 +4,13 @@ namespace LP.Services;
 
 public class ConsoleUserInterfaceService : IUserInterfaceService
 {
-    public async Task Notify(UserInterfaceNotifyLevel level, string message)
+    public ConsoleUserInterfaceService(ILogger<DefaultLog> logger)
     {
-        /*switch (level)
-        {
-            case UserInterfaceNotifyLevel.Debug:
-                Logger.Default.Debug(message);
-                break;
-
-            case UserInterfaceNotifyLevel.Information:
-                this.logger.TryGet()?.Log(message);
-                break;
-
-            case UserInterfaceNotifyLevel.Warning:
-                Logger.Default.Warning(message);
-                break;
-
-            case UserInterfaceNotifyLevel.Error:
-                Logger.Default.Error(message);
-                break;
-
-            case UserInterfaceNotifyLevel.Fatal:
-                Logger.Default.Fatal(message);
-                break;
-
-            default:
-                break;
-        }*/
+        this.logger = logger;
     }
+
+    public async Task Notify(LogLevel level, string message)
+        => this.logger.TryGet(level)?.Log(message);
 
     public async Task<string?> RequestPassword(string? description)
     {
@@ -145,4 +124,6 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
             }
         }
     }
+
+    private ILogger<DefaultLog> logger;
 }

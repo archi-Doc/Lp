@@ -11,7 +11,7 @@ public record class ConsoleLoggerOptions
         this.Formatter = new(true);
     }
 
-    public bool EnableBuffer { get; set; } = true;
+    public bool EnableBuffering { get; set; } = false;
 
     /// <summary>
     /// Gets <see cref="SimpleLogFormatterOptions"/>.

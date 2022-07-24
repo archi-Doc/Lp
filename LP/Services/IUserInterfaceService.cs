@@ -2,15 +2,6 @@
 
 namespace LP.Services;
 
-public enum UserInterfaceNotifyLevel
-{
-    Debug,
-    Information,
-    Warning,
-    Error,
-    Fatal,
-}
-
 public interface IUserInterfaceService
 {
     public Task<bool?> RequestYesOrNo(string? description);
@@ -19,5 +10,5 @@ public interface IUserInterfaceService
 
     public Task<string?> RequestPassword(string? description);
 
-    public Task Notify(UserInterfaceNotifyLevel level, string message);
+    public Task Notify(LogLevel level, string message);
 }

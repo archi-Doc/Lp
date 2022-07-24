@@ -390,7 +390,7 @@ public class Control
                         {
                             if (!this.Subcommand(command))
                             {
-                                // await this.Logger.FlushConsole();
+                                // await this.Logger.FlushConsole(); // Log buffering is disabled.
                                 Console.Write("> ");
                                 continue;
                             }
@@ -515,7 +515,7 @@ LoadKeyVaultObjects:
         {// Failure
             if (!this.KeyVault.Created)
             {
-                await this.UserInterfaceService.Notify(UserInterfaceNotifyLevel.Error, Hashed.KeyVault.NoData, NodePrivateKey.Filename);
+                await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.KeyVault.NoData, NodePrivateKey.Filename);
             }
 
             return;

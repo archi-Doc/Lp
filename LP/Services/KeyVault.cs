@@ -90,7 +90,7 @@ RetryPassword:
                     }
                     else
                     {// Failure
-                        await this.UserInterfaceService.Notify(UserInterfaceNotifyLevel.Warning, Hashed.Dialog.Password.NotMatch);
+                        await this.UserInterfaceService.Notify(LogLevel.Warning, Hashed.Dialog.Password.NotMatch);
                         goto RetryPassword;
                     }
                 }
@@ -101,7 +101,7 @@ RetryPassword:
                     }
                     else
                     {// Failure
-                        await this.UserInterfaceService.Notify(UserInterfaceNotifyLevel.Fatal, Hashed.KeyVault.NoRestore, items[i]!.Name);
+                        await this.UserInterfaceService.Notify(LogLevel.Fatal, Hashed.KeyVault.NoRestore, items[i]!.Name);
                         throw new PanicException();
                     }
                 }

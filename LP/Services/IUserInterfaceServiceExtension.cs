@@ -31,13 +31,13 @@ public static class IUserInterfaceServiceExtention
     public static Task<string?> RequestPassword(this IUserInterfaceService viewService, ulong hash, object obj1, object obj2)
         => viewService.RequestPassword(HashedString.Get(hash, obj1, obj2));
 
-    public static Task Notify(this IUserInterfaceService viewService, UserInterfaceNotifyLevel level, ulong hash)
+    public static Task Notify(this IUserInterfaceService viewService, LogLevel level, ulong hash)
         => viewService.Notify(level, HashedString.Get(hash));
 
-    public static Task Notify(this IUserInterfaceService viewService, UserInterfaceNotifyLevel level, ulong hash, object obj1)
+    public static Task Notify(this IUserInterfaceService viewService, LogLevel level, ulong hash, object obj1)
         => viewService.Notify(level, HashedString.Get(hash, obj1));
 
-    public static Task Notify(this IUserInterfaceService viewService, UserInterfaceNotifyLevel level, ulong hash, object obj1, object obj2)
+    public static Task Notify(this IUserInterfaceService viewService, LogLevel level, ulong hash, object obj1, object obj2)
         => viewService.Notify(level, HashedString.Get(hash, obj1, obj2));
 
     public static async Task<string?> RequestPasswordAndConfirm(this IUserInterfaceService viewService, ulong hash, ulong hash2)
@@ -54,7 +54,7 @@ public static class IUserInterfaceServiceExtention
             }
             else if (password == string.Empty)
             {
-                await viewService.Notify(UserInterfaceNotifyLevel.Warning, Hashed.Dialog.Password.EmptyWarning);
+                await viewService.Notify(LogLevel.Warning, Hashed.Dialog.Password.EmptyWarning);
                 var reply = await viewService.RequestYesOrNo(Hashed.Dialog.Password.EmptyConfirm);
                 if (reply != false)
                 {// Empty password or abort
@@ -73,7 +73,7 @@ public static class IUserInterfaceServiceExtention
             }
             else if (password != confirm)
             {
-                await viewService.Notify(UserInterfaceNotifyLevel.Warning, Hashed.Dialog.Password.NotMatch);
+                await viewService.Notify(LogLevel.Warning, Hashed.Dialog.Password.NotMatch);
             }
             else
             {
