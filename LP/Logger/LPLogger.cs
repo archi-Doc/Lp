@@ -70,7 +70,12 @@ public class LPLogger
 
             public ILogger? Filter(LogFilterParameter param)
             {
-                return null;
+                if (param.LogSourceType == typeof(Machines.EssentialNetMachine))
+                {
+                    return this.lpBase.Settings.Flags.LogEssentialNetMachine ? param.OriginalLogger : null;
+                }
+
+                return param.OriginalLogger;
             }
 
             private LPBase lpBase;

@@ -390,7 +390,7 @@ public class Control
                         {
                             if (!this.Subcommand(command))
                             {
-                                await this.Logger.FlushConsole();
+                                // await this.Logger.FlushConsole();
                                 Console.Write("> ");
                                 continue;
                             }

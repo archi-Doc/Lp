@@ -27,6 +27,8 @@ internal class FileLoggerWorker : TaskCore
         {
             await worker.Flush(false);
         }
+
+        // await worker.Flush(true);
     }
 
     public void Add(FileLoggerWork work)
