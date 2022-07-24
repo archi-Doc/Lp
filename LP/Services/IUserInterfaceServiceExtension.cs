@@ -47,15 +47,15 @@ public static class IUserInterfaceServiceExtention
 
         do
         {
-            password = await viewService.RequestPassword(hash);
+            password = await viewService.RequestPassword(hash).ConfigureAwait(false);
             if (password == null)
             {
                 return null;
             }
             else if (password == string.Empty)
             {
-                await viewService.Notify(LogLevel.Warning, Hashed.Dialog.Password.EmptyWarning);
-                var reply = await viewService.RequestYesOrNo(Hashed.Dialog.Password.EmptyConfirm);
+                await viewService.Notify(LogLevel.Warning, Hashed.Dialog.Password.EmptyWarning).ConfigureAwait(false);
+                var reply = await viewService.RequestYesOrNo(Hashed.Dialog.Password.EmptyConfirm).ConfigureAwait(false);
                 if (reply != false)
                 {// Empty password or abort
                     return password;
@@ -66,14 +66,14 @@ public static class IUserInterfaceServiceExtention
 
         while (true)
         {
-            confirm = await viewService.RequestPassword(hash2);
+            confirm = await viewService.RequestPassword(hash2).ConfigureAwait(false);
             if (confirm == null)
             {
                 return null;
             }
             else if (password != confirm)
             {
-                await viewService.Notify(LogLevel.Warning, Hashed.Dialog.Password.NotMatch);
+                await viewService.Notify(LogLevel.Warning, Hashed.Dialog.Password.NotMatch).ConfigureAwait(false);
             }
             else
             {

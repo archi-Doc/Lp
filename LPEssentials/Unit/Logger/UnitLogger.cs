@@ -107,7 +107,7 @@ public class UnitLogger
         var logs = this.logsToFlush.Keys.ToArray();
         foreach (var x in logs)
         {
-            await x.Flush(false);
+            await x.Flush(false).ConfigureAwait(false);
         }
     }
 
@@ -116,7 +116,7 @@ public class UnitLogger
         var logs = this.logsToFlush.Keys.Where(x => x.GetType() == typeof(ConsoleLogger)).ToArray();
         foreach (var x in logs)
         {
-            await x.Flush(false);
+            await x.Flush(false).ConfigureAwait(false);
         }
     }
 
@@ -125,7 +125,7 @@ public class UnitLogger
         var logs = this.logsToFlush.Keys.ToArray();
         foreach (var x in logs)
         {
-            await x.Flush(true);
+            await x.Flush(true).ConfigureAwait(false);
         }
     }
 

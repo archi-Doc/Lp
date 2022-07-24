@@ -143,10 +143,6 @@ public class Control
                 // Start
                 control.Logger.Get<DefaultLog>().Log($"LP Start ({Version.Get()})");
 
-                var unitLogger = this.Context.ServiceProvider.GetRequiredService<UnitLogger>();
-                unitLogger.Get<DefaultLog>().Log("test");
-                unitLogger.Get<DefaultLog>().Log("test2");
-
                 // Create optional instances
                 this.Context.CreateInstances();
 
@@ -329,8 +325,10 @@ public class Control
     {
         this.Core.Terminate();
         this.Core.WaitForTermination(-1);
+        Console.WriteLine("X"); // tempcode
 
         this.Logger.Get<DefaultLog>().Log(abort ? "Aborted" : "Terminated");
+        Console.WriteLine("flush"); // tempcode
         this.Logger.FlushAndTerminate().Wait();
     }
 
@@ -368,7 +366,19 @@ public class Control
         {
             if (this.ConsoleMode)
             {// Console mode
-                var command = Console.ReadLine()?.Trim();
+                string? command = null;
+                try
+                {
+                    command = await Task.Run(() =>
+                    {
+                        return Console.ReadLine()?.Trim();
+                    }).WaitAsync(this.Core.CancellationToken).ConfigureAwait(false);
+                }
+                catch
+                {
+                }
+
+                // var command = Console.ReadLine()?.Trim();
                 if (!string.IsNullOrEmpty(command))
                 {
                     if (string.Compare(command, "exit", true) == 0)

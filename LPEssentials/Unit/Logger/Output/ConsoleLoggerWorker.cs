@@ -23,7 +23,7 @@ internal class ConsoleLoggerWorker : TaskCore
         var worker = (ConsoleLoggerWorker)obj!;
         while (worker.Sleep(40))
         {
-            await worker.Flush(false);
+            await worker.Flush(false).ConfigureAwait(false);
         }
     }
 

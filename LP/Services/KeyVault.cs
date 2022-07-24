@@ -37,7 +37,7 @@ public partial class KeyVault
         byte[] data;
         try
         {
-            data = await File.ReadAllBytesAsync(path);
+            data = await File.ReadAllBytesAsync(path).ConfigureAwait(false);
         }
         catch
         {
@@ -77,7 +77,24 @@ public partial class KeyVault
                 if (password == null)
                 {// Enter password
 RetryPassword:
-                    var results = await this.UserInterfaceService.RequestPassword(Hashed.KeyVault.EnterPassword);
+                    // ThreadCore.Root.Terminate();
+                    Task.Run(async () =>
+                    {
+                        await Task.Delay(1000);
+                        ThreadCore.Root.Terminate();
+                    });
+
+                    /*try
+                    {
+                        await Task.Delay(10000, ThreadCore.Root.CancellationToken).ConfigureAwait(false);
+                    }
+                    catch
+                    {
+                        Console.WriteLine("panic");
+                        throw new PanicException();
+                    }*/
+
+                    var results = await this.UserInterfaceService.RequestPassword(Hashed.KeyVault.EnterPassword).ConfigureAwait(false);
                     if (results == null)
                     {
                         throw new PanicException();
@@ -90,7 +107,7 @@ RetryPassword:
                     }
                     else
                     {// Failure
-                        await this.UserInterfaceService.Notify(LogLevel.Warning, Hashed.Dialog.Password.NotMatch);
+                        await this.UserInterfaceService.Notify(LogLevel.Warning, Hashed.Dialog.Password.NotMatch).ConfigureAwait(false);
                         goto RetryPassword;
                     }
                 }
@@ -101,7 +118,7 @@ RetryPassword:
                     }
                     else
                     {// Failure
-                        await this.UserInterfaceService.Notify(LogLevel.Fatal, Hashed.KeyVault.NoRestore, items[i]!.Name);
+                        await this.UserInterfaceService.Notify(LogLevel.Fatal, Hashed.KeyVault.NoRestore, items[i]!.Name).ConfigureAwait(false);
                         throw new PanicException();
                     }
                 }
@@ -205,7 +222,7 @@ RetryPassword:
         {
             var items = this.GetEncrypted();
             var bytes = TinyhandSerializer.SerializeToUtf8(items);
-            await File.WriteAllBytesAsync(path, bytes);
+            await File.WriteAllBytesAsync(path, bytes).ConfigureAwait(false);
         }
         catch
         {

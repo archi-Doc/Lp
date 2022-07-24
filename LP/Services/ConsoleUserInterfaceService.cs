@@ -4,8 +4,9 @@ namespace LP.Services;
 
 public class ConsoleUserInterfaceService : IUserInterfaceService
 {
-    public ConsoleUserInterfaceService(ILogger<DefaultLog> logger)
+    public ConsoleUserInterfaceService(UnitCore core, ILogger<DefaultLog> logger)
     {
+        this.core = core;
         this.logger = logger;
     }
 
@@ -19,7 +20,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
 
         /*try
         {
-            return await Task.Run(() => this.RequestPasswordInternal(description)).WaitAsync(ThreadCore.Root.CancellationToken);
+            return await Task.Run(() => this.RequestPasswordInternal(description)).WaitAsync(ThreadCore.Root.CancellationToken).ConfigureAwait(false);
         }
         catch
         {
@@ -34,11 +35,31 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
     public Task<bool?> RequestYesOrNo(string? description)
         => this.TaskRunAndWaitAsync(() => this.RequestYesOrNoInternal(description));
 
+    private static async Task<ConsoleKeyInfo> ReadKeyAsync(CancellationToken cancellationToken)
+    {
+        while (true)
+        {
+            try
+            {
+                if (Console.KeyAvailable)
+                {
+                    return Console.ReadKey(intercept: true);
+                }
+
+                await Task.Delay(1000, cancellationToken);
+            }
+            catch
+            {
+                return default;
+            }
+        }
+    }
+
     private async Task<T?> TaskRunAndWaitAsync<T>(Func<Task<T>> func)
     {
         try
         {
-            return await Task.Run(func).WaitAsync(ThreadCore.Root.CancellationToken);
+            return await Task.Run(func).WaitAsync(this.core.CancellationToken).ConfigureAwait(false);
         }
         catch
         {
@@ -63,12 +84,12 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
             do
             {
                 var keyInfo = Console.ReadKey(intercept: true);
-                key = keyInfo.Key;
-                if (ThreadCore.Root.IsTerminated)
+                if (keyInfo == default || ThreadCore.Root.IsTerminated)
                 {
                     return null;
                 }
 
+                key = keyInfo.Key;
                 if (key == ConsoleKey.Backspace && password.Length > 0)
                 {
                     Console.Write("\b \b");
@@ -160,5 +181,6 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
         }
     }
 
+    private UnitCore core;
     private ILogger<DefaultLog> logger;
 }
