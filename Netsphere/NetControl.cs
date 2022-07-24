@@ -36,8 +36,7 @@ public class NetControl : UnitBase, IUnitPreparable
         {
             this.Configure(context =>
             {
-                // Base
-                context.TryAddSingleton<BigMachine<Identifier>>();
+                LPBase.Configure(context);
 
                 // Main services
                 context.AddSingleton<NetControl>();

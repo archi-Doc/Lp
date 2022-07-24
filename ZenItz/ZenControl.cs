@@ -31,6 +31,8 @@ public class ZenControl
         {
             this.Configure(context =>
             {
+                LPBase.Configure(context);
+
                 // Main services
                 context.AddSingleton<ZenControl>();
                 context.AddSingleton<Zen>();

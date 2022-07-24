@@ -32,8 +32,7 @@ public class Control
         {
             this.Configure(context =>
             {
-                // Base
-                context.TryAddSingleton<BigMachine<Identifier>>();
+                LPBase.Configure(context);
 
                 // Main services
                 context.AddSingleton<Control>();
