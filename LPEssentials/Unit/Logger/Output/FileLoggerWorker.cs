@@ -12,12 +12,28 @@ namespace Arc.Unit;
 internal class FileLoggerWorker : TaskCore
 {
     private const int MaxFlush = 10_000;
+    private const int LimitLogThreshold = 10_000;
 
-    public FileLoggerWorker(UnitCore core, string path, SimpleLogFormatterOptions options)
+    public FileLoggerWorker(UnitCore core, UnitLogger unitLogger, string fullPath, int maxCapacity, SimpleLogFormatterOptions options)
         : base(core, Process)
     {
-        this.path = path;
+        this.logger = unitLogger.GetLogger<FileLoggerWorker>();
         this.formatter = new(options);
+
+        this.maxCapacity = maxCapacity * 1_000_000;
+        var idx = fullPath.LastIndexOf('.'); // "TestLog.txt" -> 7
+        if (idx >= 0)
+        {
+            this.basePath = fullPath.Substring(0, idx);
+            this.baseExtension = fullPath.Substring(idx);
+        }
+        else
+        {
+            this.basePath = fullPath;
+            this.baseExtension = string.Empty;
+        }
+
+        this.baseFile = Path.GetFileName(this.basePath);
     }
 
     public static async Task Process(object? obj)
@@ -25,8 +41,10 @@ internal class FileLoggerWorker : TaskCore
         var worker = (FileLoggerWorker)obj!;
         while (worker.Sleep(1000))
         {
-            await worker.Flush(false);
+            await worker.Flush(false).ConfigureAwait(false);
         }
+
+        await worker.Flush(false);
     }
 
     public void Add(FileLoggerWork work)
@@ -50,12 +68,25 @@ internal class FileLoggerWorker : TaskCore
 
             if (count != 0)
             {
-                await File.AppendAllTextAsync(this.path, sb.ToString());
+                await File.AppendAllTextAsync(this.GetCurrentPath(), sb.ToString()).ConfigureAwait(false);
             }
 
             if (terminate)
             {
                 this.Terminate();
+            }
+            else
+            {// Limit log capacity
+                this.limitLogCount += count;
+                var now = DateTime.UtcNow;
+                if (now - this.limitLogTime > TimeSpan.FromMinutes(10) ||
+                    this.limitLogCount >= LimitLogThreshold)
+                {
+                    this.limitLogTime = now;
+                    this.limitLogCount = 0;
+
+                    this.LimitLogs();
+                }
             }
 
             return count;
@@ -66,12 +97,77 @@ internal class FileLoggerWorker : TaskCore
         }
     }
 
+    private string GetCurrentPath()
+        => this.basePath + DateTime.Now.ToString("yyyyMMdd") + this.baseExtension;
+
+    private void LimitLogs()
+    {
+        var currentPath = this.GetCurrentPath();
+        var directory = Path.GetDirectoryName(currentPath);
+        var file = Path.GetFileName(currentPath);
+        if (directory == null || file == null)
+        {
+            return;
+        }
+
+        long capacity = 0;
+        SortedDictionary<string, long> pathToSize = new();
+        try
+        {
+            foreach (var x in Directory.EnumerateFiles(directory, this.baseFile + "*" + this.baseExtension, SearchOption.TopDirectoryOnly))
+            {
+                if (x.Length == currentPath.Length)
+                {
+                    try
+                    {
+                        var size = new FileInfo(x).Length;
+                        pathToSize.Add(x, size);
+                        capacity += size;
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
+        }
+        catch
+        {
+            return;
+        }
+
+        this.logger?.TryGet()?.Log($"Limit logs {capacity}/{this.maxCapacity} {directory}");
+        foreach (var x in pathToSize)
+        {
+            if (capacity < this.maxCapacity)
+            {
+                break;
+            }
+
+            try
+            {
+                File.Delete(x.Key);
+                this.logger?.TryGet()?.Log($"Deleted: {x.Key}");
+            }
+            catch
+            {
+            }
+
+            capacity -= x.Value;
+        }
+    }
+
     public int Count => this.queue.Count;
 
-    private string path;
+    private ILogger<FileLoggerWorker>? logger;
+    private string basePath;
+    private string baseFile;
+    private string baseExtension;
     private SimpleLogFormatter formatter;
     private ConcurrentQueue<FileLoggerWork> queue = new();
     private SemaphoreSlim semaphore = new(1, 1);
+    private DateTime limitLogTime;
+    private int limitLogCount = 0;
+    private long maxCapacity;
 }
 
 internal class FileLoggerWork

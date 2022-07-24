@@ -32,8 +32,7 @@ public class Control
         {
             this.Configure(context =>
             {
-                // Base
-                context.TryAddSingleton<BigMachine<Identifier>>();
+                LPBase.Configure(context);
 
                 // Main services
                 context.AddSingleton<Control>();
@@ -141,11 +140,7 @@ public class Control
                 await control.LoadKeyVaultAsync();
 
                 // Start
-                control.Logger.Get<DefaultLog>().Log($"LP Start ({Version.Get()})");
-
-                var unitLogger = this.Context.ServiceProvider.GetRequiredService<UnitLogger>();
-                unitLogger.Get<DefaultLog>().Log("test");
-                unitLogger.Get<DefaultLog>().Log("test2");
+                control.Logger.Get<DefaultLog>().Log($"LP ({Version.Get()})");
 
                 // Create optional instances
                 this.Context.CreateInstances();
@@ -300,21 +295,16 @@ public class Control
         this.ShowInformation();
         this.LPBase.Options.NetsphereOptions.ShowInformation(this.Logger.Get<DefaultLog>());
 
-        this.Logger.Get<ConsoleLog>().Log("Press Enter key to switch to console mode.");
-        this.Logger.Get<ConsoleLog>().Log("Press Ctrl+C to exit.");
-        this.Logger.Get<ConsoleLog>().Log($"Running");
-        this.Logger.Get<DefaultLog>(Arc.Unit.LogLevel.Debug).Log($"1");
-        this.Logger.Get<DefaultLog>(Arc.Unit.LogLevel.Warning).Log($"1");
-        this.Logger.Get<DefaultLog>(Arc.Unit.LogLevel.Error).Log($"1");
-        this.Logger.Get<DefaultLog>(Arc.Unit.LogLevel.Fatal).Log($"1");
+        this.Logger.Get<DefaultLog>().Log("Press Enter key to switch to console mode.");
+        this.Logger.Get<DefaultLog>().Log("Press Ctrl+C to exit.");
+        this.Logger.Get<DefaultLog>().Log($"Running");
     }
 
     public void ShowInformation()
     {
-        this.Logger.Get<DefaultLog>().Log($"system: {Mics.ToString(Mics.GetSystem())}");
+        this.Logger.Get<DefaultLog>().Log($"System: {Mics.ToString(Mics.GetSystem())}");
         this.Logger.Get<DefaultLog>().Log($"Utc: {Mics.ToString(Mics.GetUtcNow())}");
         this.Logger.Get<DefaultLog>().Log($"Root directory: {this.LPBase.RootDirectory}");
-        // this.logger.TryGet()?.Log(this.LPBase.ToString());
     }
 
     public async Task TerminateAsync(UnitContext context)
@@ -366,16 +356,28 @@ public class Control
     {
         while (!this.Core.IsTerminated)
         {
-            if (this.LPBase.ConsoleMode)
+            if (this.ConsoleMode)
             {// Console mode
-                var command = Console.ReadLine()?.Trim();
+                string? command = null;
+                try
+                {
+                    command = await Task.Run(() =>
+                    {
+                        return Console.ReadLine()?.Trim();
+                    }).WaitAsync(this.Core.CancellationToken).ConfigureAwait(false);
+                }
+                catch
+                {
+                }
+
+                // var command = Console.ReadLine()?.Trim();
                 if (!string.IsNullOrEmpty(command))
                 {
                     if (string.Compare(command, "exit", true) == 0)
                     {// Exit
                         if (this.TryTerminate().Result == true)
                         { // To view mode
-                            this.LPBase.ConsoleMode = false;
+                            this.ConsoleMode = false;
                             return;
                         }
                         else
@@ -390,7 +392,7 @@ public class Control
                         {
                             if (!this.Subcommand(command))
                             {
-                                await this.Logger.FlushConsole();
+                                // await this.Logger.FlushConsole(); // Log buffering is disabled.
                                 Console.Write("> ");
                                 continue;
                             }
@@ -408,7 +410,7 @@ public class Control
                 }
 
                 // To view mode
-                this.LPBase.ConsoleMode = false;
+                this.ConsoleMode = false;
             }
             else
             {// View mode
@@ -417,7 +419,7 @@ public class Control
                     var keyInfo = Console.ReadKey(true);
                     if (keyInfo.Key == ConsoleKey.Enter || keyInfo.Key == ConsoleKey.Escape)
                     { // To console mode
-                        this.LPBase.ConsoleMode = true;
+                        this.ConsoleMode = true;
                         Console.Write("> ");
                     }
                     else
@@ -434,7 +436,7 @@ public class Control
         }
 
         // To view mode
-        this.LPBase.ConsoleMode = false;
+        this.ConsoleMode = false;
     }
 
     public static SimpleParserOptions SubcommandParserOptions { get; private set; } = default!;
@@ -454,6 +456,8 @@ public class Control
     public ZenControl ZenControl { get; }
 
     public KeyVault KeyVault { get; }
+
+    public bool ConsoleMode { get; private set; } = false;
 
     private static SimpleParser subcommandParser = default!;
 
@@ -479,7 +483,7 @@ public class Control
         }
         else
         {
-            var result = await this.KeyVault.LoadAsync(this.LPBase.CombineDataPath(this.LPBase.Options.KeyVault, KeyVault.Filename));
+            var result = await this.KeyVault.LoadAsync(this.LPBase.CombineDataPath(this.LPBase.Options.KeyVault, KeyVault.Filename)).ConfigureAwait(false);
             if (result)
             {
                 goto LoadKeyVaultObjects;
@@ -515,7 +519,7 @@ LoadKeyVaultObjects:
         {// Failure
             if (!this.KeyVault.Created)
             {
-                await this.UserInterfaceService.Notify(UserInterfaceNotifyLevel.Error, Hashed.KeyVault.NoData, NodePrivateKey.Filename);
+                await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.KeyVault.NoData, NodePrivateKey.Filename);
             }
 
             return;

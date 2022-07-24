@@ -68,9 +68,14 @@ public class LPLogger
                 this.lpBase = lpBase;
             }
 
-            public ILogger? Filter(LogFilterParameter param)
+            public ILog? Filter(LogFilterParameter param)
             {
-                return null;
+                if (param.LogSourceType == typeof(Machines.EssentialNetMachine))
+                {
+                    return this.lpBase.Settings.Flags.LogEssentialNetMachine ? param.OriginalLogger : null;
+                }
+
+                return param.OriginalLogger;
             }
 
             private LPBase lpBase;

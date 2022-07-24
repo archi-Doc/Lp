@@ -33,7 +33,7 @@ public class Terminal : UnitBase, IUnitExecutable
         public ByteArrayPool.MemoryOwner SendOwner { get; private set; }
     }
 
-    public void Dump(ILogger? logger)
+    public void Dump(ILog? logger)
     {
         if (logger != null)
         {
@@ -133,7 +133,7 @@ public class Terminal : UnitBase, IUnitExecutable
         this.invokeServerDelegate = @delegate;
     }
 
-    public void SetLogger(ILogger logger)
+    public void SetLogger(ILog logger)
     {
         // this.TerminalLogger = logger;
     }

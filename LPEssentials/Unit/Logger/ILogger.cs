@@ -4,7 +4,9 @@ namespace Arc.Unit;
 
 public interface ILogger
 {
-    public void Log(int eventId, string message, Exception? exception = null);
+    public ILog? TryGet(LogLevel logLevel = LogLevel.Information);
+}
 
-    public Type OutputType { get; }
+public interface ILogger<TLogSource> : ILogger
+{
 }

@@ -27,6 +27,15 @@ public class LPBase
 {
     public const string DataDirectoryName = "Data";
 
+    public static void Configure(UnitBuilderContext context)
+    {
+        // Base
+        context.TryAddSingleton<BigMachines.BigMachine<Identifier>>();
+
+        // Main
+        context.AddSingleton<LPBase>();
+    }
+
     public LPBase()
     {
         TimeCorrection.Start();
@@ -48,8 +57,6 @@ public class LPBase
     public LPOptions Options { get; private set; } = default!;
 
     public LPSettings Settings { get; set; }
-
-    public bool ConsoleMode { get; set; } = false;
 
     // public string GetRootPath(string path, string defaultFilename) => this.GetPath(this.RootDirectory, path, defaultFilename);
 

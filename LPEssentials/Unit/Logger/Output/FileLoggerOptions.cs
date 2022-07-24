@@ -5,12 +5,12 @@ namespace Arc.Unit;
 public class FileLoggerOptions
 {
     public const string DefaultPath = "Log.txt";
-    public const int DefaultMaxQueue = 10_000;
+    public const int DefaultMaxQueue = 1_000;
 
     public FileLoggerOptions()
     {
         this.Formatter = new(false);
-        this.Formatter.TimestampFormat = "yy-MM-dd HH:mm:ss.fff K";
+        this.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.fff K";
     }
 
     public string Path { get; set; } = DefaultPath;
@@ -24,4 +24,9 @@ public class FileLoggerOptions
     /// Gets or sets the maximum number of queued log (0 for unlimited).
     /// </summary>
     public int MaxQueue { get; set; } = DefaultMaxQueue;
+
+    /// <summary>
+    /// Gets or sets the upper limit of log capacity in megabytes.
+    /// </summary>
+    public int MaxLogCapacity { get; set; } = 10;
 }

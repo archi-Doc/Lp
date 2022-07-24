@@ -36,8 +36,7 @@ public class NetControl : UnitBase, IUnitPreparable
         {
             this.Configure(context =>
             {
-                // Base
-                context.TryAddSingleton<BigMachine<Identifier>>();
+                LPBase.Configure(context);
 
                 // Main services
                 context.AddSingleton<NetControl>();
@@ -186,7 +185,7 @@ public class NetControl : UnitBase, IUnitPreparable
 
     private UnitLogger logger;
 
-    private void Dump(ILogger logger)
+    private void Dump(ILog logger)
     {
         logger.Log($"Dump:");
         logger.Log($"MyStatus: {this.MyStatus.Type}");

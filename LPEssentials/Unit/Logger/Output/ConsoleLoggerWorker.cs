@@ -12,10 +12,10 @@ internal class ConsoleLoggerWorker : TaskCore
 {
     private const int MaxFlush = 1_000;
 
-    public ConsoleLoggerWorker(UnitCore core, SimpleLogFormatterOptions options)
+    public ConsoleLoggerWorker(UnitCore core, ConsoleLogger consoleLogger)
         : base(core, Process)
     {
-        this.Formatter = new(options);
+        this.consoleLogger = consoleLogger;
     }
 
     public static async Task Process(object? obj)
@@ -23,7 +23,7 @@ internal class ConsoleLoggerWorker : TaskCore
         var worker = (ConsoleLoggerWorker)obj!;
         while (worker.Sleep(40))
         {
-            await worker.Flush(false);
+            await worker.Flush(false).ConfigureAwait(false);
         }
     }
 
@@ -38,7 +38,7 @@ internal class ConsoleLoggerWorker : TaskCore
         while (count < MaxFlush && this.queue.TryDequeue(out var work))
         {
             count++;
-            Console.WriteLine(this.Formatter.Format(work.Parameter));
+            Console.WriteLine(this.consoleLogger.Formatter.Format(work.Parameter));
         }
 
         if (terminate)
@@ -51,8 +51,7 @@ internal class ConsoleLoggerWorker : TaskCore
 
     public int Count => this.queue.Count;
 
-    internal SimpleLogFormatter Formatter { get; set; }
-
+    private ConsoleLogger consoleLogger;
     private ConcurrentQueue<ConsoleLoggerWork> queue = new();
 }
 

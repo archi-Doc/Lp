@@ -4,36 +4,71 @@ namespace LP.Services;
 
 public class ConsoleUserInterfaceService : IUserInterfaceService
 {
-    public async Task Notify(UserInterfaceNotifyLevel level, string message)
+    public ConsoleUserInterfaceService(UnitCore core, ILogger<DefaultLog> logger)
     {
-        /*switch (level)
+        this.core = core;
+        this.logger = logger;
+    }
+
+    public async Task Notify(LogLevel level, string message)
+        => this.logger.TryGet(level)?.Log(message);
+
+    public Task<string?> RequestPassword(string? description)
+    {
+        // return this.RequestPasswordInternal(description);
+        return this.TaskRunAndWaitAsync(() => this.RequestPasswordInternal(description));
+
+        /*try
         {
-            case UserInterfaceNotifyLevel.Debug:
-                Logger.Default.Debug(message);
-                break;
-
-            case UserInterfaceNotifyLevel.Information:
-                this.logger.TryGet()?.Log(message);
-                break;
-
-            case UserInterfaceNotifyLevel.Warning:
-                Logger.Default.Warning(message);
-                break;
-
-            case UserInterfaceNotifyLevel.Error:
-                Logger.Default.Error(message);
-                break;
-
-            case UserInterfaceNotifyLevel.Fatal:
-                Logger.Default.Fatal(message);
-                break;
-
-            default:
-                break;
+            return await Task.Run(() => this.RequestPasswordInternal(description)).WaitAsync(ThreadCore.Root.CancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            Console.WriteLine();
+            return null;
         }*/
     }
 
-    public async Task<string?> RequestPassword(string? description)
+    public Task<string?> RequestString(string? description)
+        => this.TaskRunAndWaitAsync(() => this.RequestStringInternal(description));
+
+    public Task<bool?> RequestYesOrNo(string? description)
+        => this.TaskRunAndWaitAsync(() => this.RequestYesOrNoInternal(description));
+
+    private static async Task<ConsoleKeyInfo> ReadKeyAsync(CancellationToken cancellationToken)
+    {
+        while (true)
+        {
+            try
+            {
+                if (Console.KeyAvailable)
+                {
+                    return Console.ReadKey(intercept: true);
+                }
+
+                await Task.Delay(1000, cancellationToken);
+            }
+            catch
+            {
+                return default;
+            }
+        }
+    }
+
+    private async Task<T?> TaskRunAndWaitAsync<T>(Func<Task<T>> func)
+    {
+        try
+        {
+            return await Task.Run(func).WaitAsync(this.core.CancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            Console.WriteLine();
+            return default;
+        }
+    }
+
+    private async Task<string?> RequestPasswordInternal(string? description)
     {
         if (!string.IsNullOrEmpty(description))
         {
@@ -49,12 +84,12 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
             do
             {
                 var keyInfo = Console.ReadKey(intercept: true);
-                key = keyInfo.Key;
-                if (ThreadCore.Root.IsTerminated)
+                if (keyInfo == default || ThreadCore.Root.IsTerminated)
                 {
                     return null;
                 }
 
+                key = keyInfo.Key;
                 if (key == ConsoleKey.Backspace && password.Length > 0)
                 {
                     Console.Write("\b \b");
@@ -88,7 +123,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
         return password;
     }
 
-    public async Task<string?> RequestString(string? description)
+    private async Task<string?> RequestStringInternal(string? description)
     {
         if (!string.IsNullOrEmpty(description))
         {
@@ -114,7 +149,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
         }
     }
 
-    public async Task<bool?> RequestYesOrNo(string? description)
+    private async Task<bool?> RequestYesOrNoInternal(string? description)
     {
         if (!string.IsNullOrEmpty(description))
         {
@@ -145,4 +180,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
             }
         }
     }
+
+    private UnitCore core;
+    private ILogger<DefaultLog> logger;
 }

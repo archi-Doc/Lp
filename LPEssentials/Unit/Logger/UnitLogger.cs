@@ -12,7 +12,8 @@ public class UnitLogger
     {
         // Main
         context.TryAddSingleton<UnitLogger>();
-        context.Services.Add(ServiceDescriptor.Singleton<ILogger>(x => x.GetService<UnitLogger>()?.Get<DefaultLog>() ?? throw new LoggerNotFoundException(typeof(DefaultLog), LogLevel.Information)));
+        context.Services.Add(ServiceDescriptor.Singleton<ILog>(x => x.GetService<UnitLogger>()?.Get<DefaultLog>() ?? throw new LoggerNotFoundException(typeof(DefaultLog), LogLevel.Information)));
+        context.Services.Add(ServiceDescriptor.Singleton(typeof(ILogger), typeof(LoggerFactory<DefaultLog>)));
         context.Services.Add(ServiceDescriptor.Singleton(typeof(ILogger<>), typeof(LoggerFactory<>)));
 
         // Empty logger
@@ -40,13 +41,13 @@ public class UnitLogger
             this.unitLogger = unitLogger;
         }
 
-        public ILogger? TryGet<TLogOutput>()
+        public ILog? TryGet<TLogOutput>()
         {
             return this.unitLogger.sourceLevelToLogger.GetOrAdd(new(typeof(TLogOutput), LogLevel.Information), x =>
             {
                 if (this.unitLogger.serviceProvider.GetService(x.LogSourceType) is ILogOutput logOutput)
                 {
-                    return new LoggerInstance(this, null!, x.LogLevel, logOutput, null);
+                    return new LogInstance(this, null!, x.LogLevel, logOutput, null);
                 }
 
                 return null;
@@ -63,8 +64,10 @@ public class UnitLogger
         this.loggerResolvers = (LoggerResolverDelegate[])context.LoggerResolvers.Clone();
     }
 
-    public ILogger? TryGet<TLogSource>(LogLevel logLevel = LogLevel.Information)
-    // where TLogSource : ILogSource
+    public ILogger<TLogSource> GetLogger<TLogSource>()
+        => this.serviceProvider.GetRequiredService<ILogger<TLogSource>>();
+
+    public ILog? TryGet<TLogSource>(LogLevel logLevel = LogLevel.Information)
     {
         return this.sourceLevelToLogger.GetOrAdd(new(typeof(TLogSource), logLevel), x =>
         {
@@ -79,7 +82,7 @@ public class UnitLogger
                 if (this.serviceProvider.GetService(context.LogOutputType) is ILogOutput logOutput)
                 {
                     var logFilter = context.LogFilterType == null ? null : (ILogFilter)this.serviceProvider.GetRequiredService(context.LogFilterType);
-                    return new LoggerInstance(this.context, x.LogSourceType, x.LogLevel, logOutput, logFilter);
+                    return new LogInstance(this.context, x.LogSourceType, x.LogLevel, logOutput, logFilter);
                 }
             }
 
@@ -87,8 +90,7 @@ public class UnitLogger
         });
     }
 
-    public ILogger Get<TLogSource>(LogLevel logLevel = LogLevel.Information)
-    // where TLogSource : ILogSource
+    public ILog Get<TLogSource>(LogLevel logLevel = LogLevel.Information)
     {
         if (this.TryGet<TLogSource>(logLevel) is { } logger)
         {
@@ -106,7 +108,7 @@ public class UnitLogger
         var logs = this.logsToFlush.Keys.ToArray();
         foreach (var x in logs)
         {
-            await x.Flush(false);
+            await x.Flush(false).ConfigureAwait(false);
         }
     }
 
@@ -115,7 +117,7 @@ public class UnitLogger
         var logs = this.logsToFlush.Keys.Where(x => x.GetType() == typeof(ConsoleLogger)).ToArray();
         foreach (var x in logs)
         {
-            await x.Flush(false);
+            await x.Flush(false).ConfigureAwait(false);
         }
     }
 
@@ -124,13 +126,13 @@ public class UnitLogger
         var logs = this.logsToFlush.Keys.ToArray();
         foreach (var x in logs)
         {
-            await x.Flush(true);
+            await x.Flush(true).ConfigureAwait(false);
         }
     }
 
     private LogContext context;
     private IServiceProvider serviceProvider;
     private LoggerResolverDelegate[] loggerResolvers;
-    private ConcurrentDictionary<LogSourceLevelPair, ILogger?> sourceLevelToLogger = new();
+    private ConcurrentDictionary<LogSourceLevelPair, ILog?> sourceLevelToLogger = new();
     private ConcurrentDictionary<BufferedLogOutput, BufferedLogOutput> logsToFlush = new();
 }

@@ -11,15 +11,20 @@ public class ConsoleLogger : BufferedLogOutput
     public ConsoleLogger(UnitCore core, UnitLogger unitLogger, ConsoleLoggerOptions options)
         : base(unitLogger)
     {
-        this.worker = new(core, options.Formatter);
+        this.Formatter = new(options.Formatter);
+        if (options.EnableBuffering)
+        {
+            this.worker = new(core, this);
+        }
+
         this.options = options;
     }
 
     public override void Output(LogOutputParameter param)
     {
-        if (!this.options.EnableBuffer)
+        if (this.worker == null)
         {
-            Console.WriteLine(this.worker.Formatter.Format(param));
+            Console.WriteLine(this.Formatter.Format(param));
             return;
         }
 
@@ -29,8 +34,10 @@ public class ConsoleLogger : BufferedLogOutput
         }
     }
 
-    public override Task<int> Flush(bool terminate) => this.worker.Flush(terminate);
+    public override Task<int> Flush(bool terminate) => this.worker?.Flush(terminate) ?? Task.FromResult(0);
 
-    private ConsoleLoggerWorker worker;
+    internal SimpleLogFormatter Formatter { get; init; }
+
+    private ConsoleLoggerWorker? worker;
     private ConsoleLoggerOptions options;
 }

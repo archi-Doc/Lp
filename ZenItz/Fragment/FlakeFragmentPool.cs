@@ -14,7 +14,7 @@ public static class FlakeFragmentPool
 
     public static ByteArrayPool.Owner Rent(int minimumLength) => pool.Rent(minimumLength);
 
-    public static void Dump(ILogger logger) => pool.Dump(logger);
+    public static void Dump(ILog logger) => pool.Dump(logger);
 
     private static ByteArrayPool pool;
 }
