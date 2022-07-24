@@ -8,3 +8,8 @@ public interface ILogger
 
     public Type OutputType { get; }
 }
+
+public interface ILogger<TLogSource>
+{
+    public ILogger? TryGet(LogLevel logLevel = LogLevel.Information);
+}

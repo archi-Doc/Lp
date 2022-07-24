@@ -366,7 +366,7 @@ public class Control
     {
         while (!this.Core.IsTerminated)
         {
-            if (this.LPBase.ConsoleMode)
+            if (this.ConsoleMode)
             {// Console mode
                 var command = Console.ReadLine()?.Trim();
                 if (!string.IsNullOrEmpty(command))
@@ -375,7 +375,7 @@ public class Control
                     {// Exit
                         if (this.TryTerminate().Result == true)
                         { // To view mode
-                            this.LPBase.ConsoleMode = false;
+                            this.ConsoleMode = false;
                             return;
                         }
                         else
@@ -408,7 +408,7 @@ public class Control
                 }
 
                 // To view mode
-                this.LPBase.ConsoleMode = false;
+                this.ConsoleMode = false;
             }
             else
             {// View mode
@@ -417,7 +417,7 @@ public class Control
                     var keyInfo = Console.ReadKey(true);
                     if (keyInfo.Key == ConsoleKey.Enter || keyInfo.Key == ConsoleKey.Escape)
                     { // To console mode
-                        this.LPBase.ConsoleMode = true;
+                        this.ConsoleMode = true;
                         Console.Write("> ");
                     }
                     else
@@ -434,7 +434,7 @@ public class Control
         }
 
         // To view mode
-        this.LPBase.ConsoleMode = false;
+        this.ConsoleMode = false;
     }
 
     public static SimpleParserOptions SubcommandParserOptions { get; private set; } = default!;
@@ -454,6 +454,8 @@ public class Control
     public ZenControl ZenControl { get; }
 
     public KeyVault KeyVault { get; }
+
+    public bool ConsoleMode { get; private set; } = false;
 
     private static SimpleParser subcommandParser = default!;
 
