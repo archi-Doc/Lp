@@ -231,24 +231,6 @@ public class Control
         this.BigMachine.Core.ChangeParent(this.Core);
     }
 
-    public async Task<bool> TryTerminate()
-    {
-        if (!this.LPBase.Options.ConfirmExit)
-        {// No confirmation
-            this.Core.Terminate(); // this.Terminate(false);
-            return true;
-        }
-
-        var result = await this.UserInterfaceService.RequestYesOrNo(Hashed.Dialog.ConfirmExit);
-        if (result == true)
-        {
-            this.Core.Terminate(); // this.Terminate(false);
-            return true;
-        }
-
-        return false;
-    }
-
     public async Task LoadAsync(UnitContext context)
     {
         // Netsphere
@@ -321,7 +303,25 @@ public class Control
         this.Core.WaitForTermination(-1);
 
         this.Logger.Get<DefaultLog>().Log(abort ? "Aborted" : "Terminated");
-        this.Logger.FlushAndTerminate().Wait();
+        this.Logger.FlushAndTerminate().Wait(); // Write logs added after Terminate().
+    }
+
+    public async Task<bool> TryTerminate()
+    {
+        if (!this.LPBase.Options.ConfirmExit)
+        {// No confirmation
+            this.Core.Terminate(); // this.Terminate(false);
+            return true;
+        }
+
+        var result = await this.UserInterfaceService.RequestYesOrNo(Hashed.Dialog.ConfirmExit);
+        if (result == true)
+        {
+            this.Core.Terminate(); // this.Terminate(false);
+            return true;
+        }
+
+        return false;
     }
 
     public bool Subcommand(string subcommand)
