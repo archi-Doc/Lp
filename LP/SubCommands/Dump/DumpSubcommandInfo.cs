@@ -19,7 +19,7 @@ public class DumpSubcommandInfo : ISimpleCommand<DumpSubcommandInfoOptions>
     public void Run(DumpSubcommandInfoOptions options, string[] args)
     {
         var target = args.Length > 0 ? args[0] : string.Empty;
-        var logger = this.Control.Logger.TryGet<DumpSubcommandInfo>();
+        var logger = this.Control.Logger.TryGet<DumpSubcommandInfo>(LogLevel.Information);
 
         logger?.Log($"Dump: {target}");
 

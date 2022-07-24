@@ -12,10 +12,12 @@ namespace Arc.Unit;
 internal class FileLoggerWorker : TaskCore
 {
     private const int MaxFlush = 10_000;
+    private const int LimitLogThreshold = 10;
 
-    public FileLoggerWorker(UnitCore core, string path, SimpleLogFormatterOptions options)
+    public FileLoggerWorker(UnitCore core, UnitLogger unitLogger, string path, SimpleLogFormatterOptions options)
         : base(core, Process)
     {
+        this.logger = unitLogger.GetLogger<FileLoggerWorker>();
         this.path = path;
         this.formatter = new(options);
     }
@@ -38,6 +40,7 @@ internal class FileLoggerWorker : TaskCore
 
     public async Task<int> Flush(bool terminate)
     {
+        this.logger?.TryGet(LogLevel.Information)?.Log("Flush");
         await this.semaphore.WaitAsync().ConfigureAwait(false);
         try
         {
@@ -59,6 +62,19 @@ internal class FileLoggerWorker : TaskCore
             {
                 this.Terminate();
             }
+            else
+            {// Limit log capacity
+                this.limitLogCount += count;
+                var now = DateTime.UtcNow;
+                if (now - this.limitLogTime > TimeSpan.FromMinutes(10) ||
+                    this.limitLogCount > LimitLogThreshold)
+                {
+                    this.limitLogTime = now;
+                    this.limitLogCount = 0;
+
+                    this.LimitLogs();
+                }
+            }
 
             return count;
         }
@@ -68,12 +84,19 @@ internal class FileLoggerWorker : TaskCore
         }
     }
 
+    public void LimitLogs()
+    {
+    }
+
     public int Count => this.queue.Count;
 
+    private ILogger<FileLoggerWorker> logger;
     private string path;
     private SimpleLogFormatter formatter;
     private ConcurrentQueue<FileLoggerWork> queue = new();
     private SemaphoreSlim semaphore = new(1, 1);
+    private DateTime limitLogTime;
+    private int limitLogCount = 0;
 }
 
 internal class FileLoggerWork

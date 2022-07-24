@@ -64,6 +64,9 @@ public class UnitLogger
         this.loggerResolvers = (LoggerResolverDelegate[])context.LoggerResolvers.Clone();
     }
 
+    public ILogger<TLogSource> GetLogger<TLogSource>()
+        => this.serviceProvider.GetRequiredService<ILogger<TLogSource>>();
+
     public ILog? TryGet<TLogSource>(LogLevel logLevel = LogLevel.Information)
     {
         return this.sourceLevelToLogger.GetOrAdd(new(typeof(TLogSource), logLevel), x =>

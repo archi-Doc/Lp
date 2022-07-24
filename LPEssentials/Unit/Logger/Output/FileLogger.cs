@@ -10,7 +10,7 @@ public class FileLogger<TOption> : BufferedLogOutput
     public FileLogger(UnitCore core, UnitLogger unitLogger, TOption options)
         : base(unitLogger)
     {
-        this.worker = new(core, options.Path, options.Formatter);
+        this.worker = new(core, unitLogger, options.Path, options.Formatter);
         this.options = options;
     }
 
