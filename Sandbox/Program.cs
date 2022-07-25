@@ -79,12 +79,16 @@ internal class Program
     {
         Console.WriteLine("Sandbox");
 
-        await Test();
+        await Test(args);
     }
 
-    public static async Task Test()
+    public static async Task Test(string[] args)
     {
         var builder = new UnitBuilder() // new LP.Logging.LPLogger.Builder()
+            .Preload(context =>
+            {
+                context.
+            })
             .Configure(context =>
             {
                 // Loggers
@@ -119,7 +123,7 @@ internal class Program
                 options.Path = "Log2.txt";
             });*/
 
-        var unit = builder.Build();
+        var unit = builder.Build(args);
 
         /*var options = unit.Context.ServiceProvider.GetRequiredService<ConsoleLoggerOptions>();
         options.MaxQueue = 0;

@@ -9,7 +9,7 @@ namespace Arc.Unit;
 /// <summary>
 /// Contextual information provided to <see cref="UnitBuilder"/>.<br/>
 /// </summary>
-public sealed class UnitBuilderContext
+public sealed class UnitBuilderContext : IUnitPreloadContext, IUnitSetupContext
 {
     public UnitBuilderContext()
     {
