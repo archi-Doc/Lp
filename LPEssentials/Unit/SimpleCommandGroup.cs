@@ -19,7 +19,7 @@ public abstract class SimpleCommandGroup<TCommand> : ISimpleCommandAsync
     /// <param name="parentCommand"><see cref="Type"/> of the parent command.<br/>
     /// <see langword="null"/>: No parent.</param>
     /// <returns><see cref="CommandGroup"/>.</returns>
-    public static CommandGroup ConfigureGroup(UnitBuilderContext context, Type? parentCommand = null)
+    public static CommandGroup ConfigureGroup(IUnitConfigurationContext context, Type? parentCommand = null)
     {
         var commandType = typeof(TCommand);
 

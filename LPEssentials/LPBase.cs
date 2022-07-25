@@ -27,7 +27,7 @@ public class LPBase
 {
     public const string DataDirectoryName = "Data";
 
-    public static void Configure(UnitBuilderContext context)
+    public static void Configure(IUnitConfigurationContext context)
     {
         // Base
         context.TryAddSingleton<BigMachines.BigMachine<Identifier>>();

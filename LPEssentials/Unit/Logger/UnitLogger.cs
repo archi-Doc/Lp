@@ -8,7 +8,7 @@ namespace Arc.Unit;
 
 public class UnitLogger
 {
-    public static void Configure(UnitBuilderContext context)
+    public static void Configure(IUnitConfigurationContext context)
     {
         // Main
         context.TryAddSingleton<UnitLogger>();

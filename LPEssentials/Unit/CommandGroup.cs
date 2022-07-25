@@ -11,7 +11,7 @@ public class CommandGroup
     /// Initializes a new instance of the <see cref="CommandGroup"/> class.
     /// </summary>
     /// <param name="context"><see cref="UnitBuilderContext"/>.</param>
-    public CommandGroup(UnitBuilderContext context)
+    public CommandGroup(IUnitConfigurationContext context)
     {
         this.context = context;
     }
@@ -42,7 +42,7 @@ public class CommandGroup
     /// <returns>An array of <see cref="Type"/>.</returns>
     public Type[] ToArray() => this.commandList.ToArray();
 
-    private UnitBuilderContext context;
+    private IUnitConfigurationContext context;
     private List<Type> commandList = new();
     private HashSet<Type> commandSet = new();
 }

@@ -9,7 +9,7 @@ namespace LP.Subcommands;
 [SimpleCommand("dump", IsSubcommand = true)]
 public class DumpSubcommand : SimpleCommandGroup<DumpSubcommand>
 {
-    public static void Configure(UnitBuilderContext context)
+    public static void Configure(IUnitConfigurationContext context)
     {
         var group = ConfigureGroup(context);
         group.AddCommand(typeof(DumpSubcommandInfo));

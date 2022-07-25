@@ -8,7 +8,7 @@ namespace ZenItz.Subcommands;
 [SimpleCommand("zentemp", IsSubcommand = true, Description = "Zen template subcommand")]
 public class ZenTempSubcommand : SimpleCommandGroup<ZenTempSubcommand>
 {
-    public static void Configure(UnitBuilderContext context)
+    public static void Configure(IUnitConfigurationContext context)
     {
         var group = ConfigureGroup(context);
         group.AddCommand(typeof(ZenTempSubcommandLs));

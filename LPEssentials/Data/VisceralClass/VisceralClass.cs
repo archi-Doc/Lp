@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Reflection;
-using static LP.Data.VisceralClass;
 
 namespace LP.Data;
 

@@ -19,27 +19,6 @@ public sealed class UnitContext
     }
 
     /// <summary>
-    /// Converts <see cref="UnitBuilderContext"/> to <see cref="UnitContext"/>.
-    /// </summary>
-    /// <param name="serviceProvider"><see cref="IServiceCollection"/>.</param>
-    /// <param name="builderContext"><see cref="UnitBuilderContext"/>.</param>
-    public void FromBuilderContext(IServiceProvider serviceProvider, UnitBuilderContext builderContext)
-    {
-        this.ServiceProvider = serviceProvider;
-        this.Radio = serviceProvider.GetRequiredService<RadioClass>();
-        this.CreateInstanceTypes = builderContext.CreateInstanceSet.ToArray();
-
-        builderContext.GetCommandGroup(typeof(UnitBuilderContext.TopCommand));
-        builderContext.GetCommandGroup(typeof(UnitBuilderContext.SubCommand));
-        foreach (var x in builderContext.CommandGroups)
-        {
-            this.CommandDictionary[x.Key] = x.Value.ToArray();
-        }
-
-        this.LoggerResolvers = builderContext.LoggerResolvers.ToArray();
-    }
-
-    /// <summary>
     /// Gets an array of command <see cref="Type"/> which belong to the specified command type.
     /// </summary>
     /// <param name="commandType">The command type.</param>
@@ -114,6 +93,27 @@ public sealed class UnitContext
     public Dictionary<Type, Type[]> CommandDictionary { get; private set; } = new();
 
     public LoggerResolverDelegate[] LoggerResolvers { get; private set; } = Array.Empty<LoggerResolverDelegate>();
+
+    /// <summary>
+    /// Converts <see cref="UnitBuilderContext"/> to <see cref="UnitContext"/>.
+    /// </summary>
+    /// <param name="serviceProvider"><see cref="IServiceCollection"/>.</param>
+    /// <param name="builderContext"><see cref="UnitBuilderContext"/>.</param>
+    internal void FromBuilderContext(IServiceProvider serviceProvider, UnitBuilderContext builderContext)
+    {
+        this.ServiceProvider = serviceProvider;
+        this.Radio = serviceProvider.GetRequiredService<RadioClass>();
+        this.CreateInstanceTypes = builderContext.CreateInstanceSet.ToArray();
+
+        builderContext.GetCommandGroup(typeof(UnitBuilderContext.TopCommand));
+        builderContext.GetCommandGroup(typeof(UnitBuilderContext.SubCommand));
+        foreach (var x in builderContext.CommandGroups)
+        {
+            this.CommandDictionary[x.Key] = x.Value.ToArray();
+        }
+
+        this.LoggerResolvers = builderContext.LoggerResolvers.ToArray();
+    }
 
     internal void AddRadio(UnitBase unit)
     {

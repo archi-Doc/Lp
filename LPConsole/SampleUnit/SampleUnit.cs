@@ -15,7 +15,7 @@ public class SampleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         var unit = builder.Build();
     }
 
-    public static void Configure(UnitBuilderContext context)
+    public static void Configure(IUnitConfigurationContext context)
     {
         context.AddSingleton<SampleUnit>();
         context.CreateInstance<SampleUnit>();

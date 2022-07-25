@@ -6,7 +6,6 @@ using Arc.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using SimpleCommandLine;
-using static Arc.Unit.UnitBuilder;
 
 namespace Arc.Unit;
 
@@ -32,16 +31,16 @@ public class UnitBuilder<TUnit> : UnitBuilder
     public override TUnit Build(string[] args) => this.Build<TUnit>(args);
 
     /// <inheritdoc/>
+    public override UnitBuilder<TUnit> AddBuilder(UnitBuilder unitBuilder)
+        => (UnitBuilder<TUnit>)base.AddBuilder(unitBuilder);
+
+    /// <inheritdoc/>
     public override UnitBuilder<TUnit> Preload(Action<IUnitPreloadContext> @delegate)
         => (UnitBuilder<TUnit>)base.Preload(@delegate);
 
     /// <inheritdoc/>
-    public override UnitBuilder<TUnit> Configure(Action<UnitBuilderContext> configureDelegate)
+    public override UnitBuilder<TUnit> Configure(Action<IUnitConfigurationContext> configureDelegate)
         => (UnitBuilder<TUnit>)base.Configure(configureDelegate);
-
-    /// <inheritdoc/>
-    public override UnitBuilder<TUnit> AddBuilder(UnitBuilder unitBuilder)
-        => (UnitBuilder<TUnit>)base.AddBuilder(unitBuilder);
 
     /// <inheritdoc/>
     public override UnitBuilder<TUnit> SetupOptions<TOptions>(Action<IUnitSetupContext, TOptions> @delegate)
@@ -130,18 +129,6 @@ public class UnitBuilder
         return this;
     }
 
-    /// <summary>
-    /// Adds a delegate to the builder for configuring the unit.<br/>
-    /// This can be called multiple times and the results will be additive.
-    /// </summary>
-    /// <param name="delegate">The delegate for configuring the unit.</param>
-    /// <returns>The same instance of the <see cref="UnitBuilder"/> for chaining.</returns>
-    public virtual UnitBuilder Configure(Action<UnitBuilderContext> @delegate)
-    {
-        this.configureActions.Add(@delegate);
-        return this;
-    }
-
     internal virtual TUnit Build<TUnit>(string[] args)
         where TUnit : BuiltUnit
     {
@@ -181,13 +168,14 @@ public class UnitBuilder
         }
 
         var serviceProvider = builderContext.Services.BuildServiceProvider();
+        builderContext.ServiceProvider = serviceProvider;
 
         // BuilderContext to UnitContext.
         var unitContext = serviceProvider.GetRequiredService<UnitContext>();
         unitContext.FromBuilderContext(serviceProvider, builderContext);
 
         // Setup
-        this.SetupInternal(builderContext, unitContext);
+        this.SetupInternal(builderContext);
 
         return serviceProvider.GetRequiredService<TUnit>();
     }
@@ -231,25 +219,25 @@ public class UnitBuilder
         }
     }
 
-    internal void SetupInternal(UnitBuilderContext builderContext, UnitContext unitContext)
+    internal void SetupInternal(UnitBuilderContext builderContext)
     {
         // Unit builders
         foreach (var x in this.unitBuilders)
         {
-            x.SetupInternal(builderContext, unitContext);
+            x.SetupInternal(builderContext);
         }
 
         // Actions
         foreach (var x in this.setupItems)
         {
-            var instance = unitContext.ServiceProvider.GetRequiredService(x.Type);
+            var instance = builderContext.ServiceProvider!.GetRequiredService(x.Type);
             x.Action(builderContext, instance);
         }
     }
 
     private bool built = false;
     private List<Action<IUnitPreloadContext>> preloadActions = new();
-    private List<Action<UnitBuilderContext>> configureActions = new();
+    private List<Action<IUnitConfigurationContext>> configureActions = new();
     private List<SetupItem> setupItems = new();
     private List<UnitBuilder> unitBuilders = new();
 }

@@ -9,7 +9,7 @@ namespace LP.Subcommands;
 [SimpleCommand("node", IsSubcommand = true)]
 public class NodeSubcommand : SimpleCommandGroup<NodeSubcommand>
 {
-    public static void Configure(UnitBuilderContext context)
+    public static void Configure(IUnitConfigurationContext context)
     {
         var group = ConfigureGroup(context);
         group.AddCommand(typeof(NodeSubcommandAdd));

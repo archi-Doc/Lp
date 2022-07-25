@@ -20,7 +20,6 @@ using Netsphere;
 using SimpleCommandLine;
 using ZenItz;
 using LP.Data;
-using static LP.Services.IUserInterfaceService;
 
 namespace LP;
 
@@ -358,7 +357,7 @@ public class Control
         while (!this.Core.IsTerminated)
         {
             var currentMode = this.UserInterfaceService.CurrentMode;
-            if (currentMode == Mode.Console)
+            if (currentMode == IUserInterfaceService.Mode.Console)
             {// Console mode
                 string? command = null;
                 try
@@ -379,7 +378,7 @@ public class Control
                     {// Exit
                         if (this.TryTerminate().Result == true)
                         { // To view mode
-                            this.UserInterfaceService.ChangeMode(Mode.View);
+                            this.UserInterfaceService.ChangeMode(IUserInterfaceService.Mode.View);
                             return;
                         }
                         else
@@ -412,16 +411,16 @@ public class Control
                 }
 
                 // To view mode
-                this.UserInterfaceService.ChangeMode(Mode.View);
+                this.UserInterfaceService.ChangeMode(IUserInterfaceService.Mode.View);
             }
-            else if (currentMode == Mode.View)
+            else if (currentMode == IUserInterfaceService.Mode.View)
             {// View mode
                 if (this.SafeKeyAvailable)
                 {
                     var keyInfo = Console.ReadKey(true);
                     if (keyInfo.Key == ConsoleKey.Enter || keyInfo.Key == ConsoleKey.Escape)
                     { // To console mode
-                        this.UserInterfaceService.ChangeMode(Mode.Console);
+                        this.UserInterfaceService.ChangeMode(IUserInterfaceService.Mode.Console);
                         Console.Write("> ");
                     }
                     else
@@ -438,7 +437,7 @@ public class Control
         }
 
         // To view mode
-        this.UserInterfaceService.ChangeMode(Mode.View);
+        this.UserInterfaceService.ChangeMode(IUserInterfaceService.Mode.View);
     }
 
     public static SimpleParserOptions SubcommandParserOptions { get; private set; } = default!;

@@ -8,7 +8,7 @@ namespace ZenItz.Subcommands;
 [SimpleCommand("zendir", IsSubcommand = true, Description = "Zen directory subcommand")]
 public class ZenDirSubcommand : SimpleCommandGroup<ZenDirSubcommand>
 {
-    public static void Configure(UnitBuilderContext context)
+    public static void Configure(IUnitConfigurationContext context)
     {
         var group = ConfigureGroup(context);
         group.AddCommand(typeof(ZenDirSubcommandLs));
