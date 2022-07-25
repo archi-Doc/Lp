@@ -11,10 +11,14 @@ namespace Arc.Unit;
 /// </summary>
 public sealed class UnitBuilderContext : IUnitPreloadContext, IUnitSetupContext
 {
+    private const string RootDirectoryOption = "root";
+    private const string DataDirectoryOption = "data";
+
     public UnitBuilderContext()
     {
         this.UnitName = Assembly.GetEntryAssembly()?.GetName().Name ?? string.Empty;
-        this.RootDirectory = Directory.GetCurrentDirectory();
+        this.RootDirectory = string.Empty;
+        this.DataDirectory = string.Empty;
     }
 
     /// <summary>
@@ -26,6 +30,16 @@ public sealed class UnitBuilderContext : IUnitPreloadContext, IUnitSetupContext
     /// Gets or sets a root directory.
     /// </summary>
     public string RootDirectory { get; set; }
+
+    /// <summary>
+    /// Gets or sets a data directory.
+    /// </summary>
+    public string DataDirectory { get; set; }
+
+    /// <summary>
+    /// Gets command-line arguments.
+    /// </summary>
+    public UnitArguments Arguments => this.arguments;
 
     /// <summary>
     /// Gets <see cref="IServiceCollection"/>.
@@ -166,4 +180,41 @@ public sealed class UnitBuilderContext : IUnitPreloadContext, IUnitSetupContext
     internal class SubCommand
     {
     }
+
+    internal void SetDirectory()
+    {
+        if (this.arguments.TryGetOption(RootDirectoryOption, out var value))
+        {// Root Directory
+            if (Path.IsPathRooted(value))
+            {
+                this.RootDirectory = value;
+            }
+            else
+            {
+                this.RootDirectory = Path.Combine(Directory.GetCurrentDirectory(), value);
+            }
+        }
+        else
+        {
+            this.RootDirectory = Directory.GetCurrentDirectory();
+        }
+
+        if (this.arguments.TryGetOption(DataDirectoryOption, out value))
+        {// Data Directory
+            if (Path.IsPathRooted(value))
+            {
+                this.DataDirectory = value;
+            }
+            else
+            {
+                this.DataDirectory = Path.Combine(Directory.GetCurrentDirectory(), value);
+            }
+        }
+    }
+
+#pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
+#pragma warning disable SA1401
+    internal UnitArguments arguments = new();
+#pragma warning restore SA1401
+#pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
 }

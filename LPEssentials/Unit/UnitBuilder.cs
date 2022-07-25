@@ -6,6 +6,7 @@ using Arc.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using SimpleCommandLine;
+using static Arc.Unit.UnitBuilder;
 
 namespace Arc.Unit;
 
@@ -28,7 +29,7 @@ public class UnitBuilder<TUnit> : UnitBuilder
     public override TUnit Build(string? args = null) => this.Build<TUnit>(args);
 
     /// <inheritdoc/>
-    public override TUnit Build(string[]? args = null) => this.Build<TUnit>(args);
+    public override TUnit Build(string[] args) => this.Build<TUnit>(args);
 
     /// <inheritdoc/>
     public override UnitBuilder<TUnit> Configure(Action<UnitBuilderContext> configureDelegate)
@@ -45,6 +46,8 @@ public class UnitBuilder<TUnit> : UnitBuilder
 /// </summary>
 public class UnitBuilder
 {
+    private record SetupItem(Type Type, Action<IUnitSetupContext, object> Action);
+
     /// <summary>
     /// Initializes a new instance of the <see cref="UnitBuilder"/> class.
     /// </summary>
@@ -57,7 +60,14 @@ public class UnitBuilder
     /// </summary>
     /// <param name="args">Command-line arguments.</param>
     /// <returns><see cref="BuiltUnit"/>.</returns>
-    public virtual BuiltUnit Build(string[]? args = null) => this.Build<BuiltUnit>(args);
+    public virtual BuiltUnit Build(string[] args) => this.Build<BuiltUnit>(args);
+
+    /// <summary>
+    /// Runs the given actions and build a unit.
+    /// </summary>
+    /// <param name="args">Command-line arguments.</param>
+    /// <returns><see cref="BuiltUnit"/>.</returns>
+    public virtual BuiltUnit Build(string? args = null) => this.Build<BuiltUnit>(args);
 
     /// <summary>
     /// Adds a delegate to the builder for preloading the unit.<br/>
@@ -77,21 +87,26 @@ public class UnitBuilder
     /// </summary>
     /// <param name="delegate">The delegate for configuring the unit.</param>
     /// <returns>The same instance of the <see cref="UnitBuilder"/> for chaining.</returns>
-    public virtual UnitBuilder Configure(Action<IUnitConfigurationContext> @delegate)
+    /*public virtual UnitBuilder Configure(Action<IUnitConfigurationContext> @delegate)
     {
         // this.configureActions.Add(@delegate);
         return this;
-    }
+    }*/
+
+    // public delegate void SetupDelegate<TOptions>(IUnitSetupContext context, in TOptions options);
 
     /// <summary>
-    /// Adds a delegate to the builder for setting up the unit.<br/>
+    /// Adds a delegate to the builder for setting up the option.<br/>
     /// This can be called multiple times and the results will be additive.
     /// </summary>
     /// <param name="delegate">The delegate for setting up the unit.</param>
     /// <returns>The same instance of the <see cref="UnitBuilder"/> for chaining.</returns>
-    public virtual UnitBuilder Setup(Action<IUnitSetupContext> @delegate)
+    public virtual UnitBuilder SetupOptions<TOption>(Action<IUnitSetupContext, TOption> @delegate)
+        where TOption : class
     {
-        this.setupActions.Add(@delegate);
+        var ac = new Action<IUnitSetupContext, object>((context, options) => @delegate(context, (TOption)options));
+        var item = new SetupItem(typeof(TOption), ac);
+        this.setupItems.Add(item);
         return this;
     }
 
@@ -131,7 +146,7 @@ public class UnitBuilder
         return this;
     }
 
-    internal virtual TUnit Build<TUnit>(string[]? args)
+    internal virtual TUnit Build<TUnit>(string[] args)
         where TUnit : BuiltUnit
     {
         var s = args == null ? null : string.Join(' ', args);
@@ -154,9 +169,6 @@ public class UnitBuilder
         // Preload
         this.PreloadInternal(builderContext, args);
 
-        // Setup
-        this.SetupInternal(builderContext);
-
         // Configure
         UnitLogger.Configure(builderContext); // Logger
         this.ConfigureInternal(builderContext);
@@ -166,11 +178,20 @@ public class UnitBuilder
         builderContext.TryAddSingleton<TUnit>();
         builderContext.TryAddSingleton<RadioClass>(); // Unit radio
 
+        // Setup classes
+        foreach (var x in this.setupItems)
+        {
+            builderContext.TryAddSingleton(x.Type);
+        }
+
         var serviceProvider = builderContext.Services.BuildServiceProvider();
 
         // BuilderContext to UnitContext.
         var unitContext = serviceProvider.GetRequiredService<UnitContext>();
         unitContext.FromBuilderContext(serviceProvider, builderContext);
+
+        // Setup
+        this.SetupInternal(builderContext, unitContext);
 
         return serviceProvider.GetRequiredService<TUnit>();
     }
@@ -178,7 +199,13 @@ public class UnitBuilder
     internal void PreloadInternal(UnitBuilderContext context, string? args)
     {
         // Arguments
-        this.PreloadArguments(context, args);
+        if (args != null)
+        {
+            context.arguments.Add(args);
+        }
+
+        // Directory
+        context.SetDirectory();
 
         // Unit builders
         foreach (var x in this.configureUnitBuilders)
@@ -193,30 +220,19 @@ public class UnitBuilder
         }
     }
 
-    internal void PreloadArguments(UnitBuilderContext context, string? args)
+    internal void SetupInternal(UnitBuilderContext builderContext, UnitContext unitContext)
     {
-        if (args != null)
+        // Unit builders
+        foreach (var x in this.configureUnitBuilders)
         {
-            var arguments = args.FormatArguments();
-            string optionString = null;
-            var options = new Dictionary<string, string>();
-            foreach (var x in arguments)
-            {
-                if (x.IsOptionString())
-                {// -option
-                    ClearOptionString(null);
-                    optionString = x.Trim('-');
-                }
-                else
-                {// value
-                    ClearOptionString(x);
-                }
-            }
+            x.SetupInternal(builderContext, unitContext);
+        }
 
-            void ClearOptionString(string? valueString)
-            {
-
-            }
+        // Actions
+        foreach (var x in this.setupItems)
+        {
+            var instance = unitContext.ServiceProvider.GetRequiredService(x.Type);
+            x.Action(builderContext, instance);
         }
     }
 
@@ -245,6 +261,6 @@ public class UnitBuilder
     private List<Action<IUnitPreloadContext>> preloadActions = new();
     private List<Action<UnitBuilderContext>> configureActions = new();
     private List<Action<UnitBuilderContext>> configureLogging = new();
-    private List<Action<IUnitSetupContext>> setupActions = new();
+    private List<SetupItem> setupItems = new();
     private List<UnitBuilder> configureUnitBuilders = new();
 }

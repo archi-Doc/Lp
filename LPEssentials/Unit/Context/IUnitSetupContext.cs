@@ -5,6 +5,6 @@ namespace Arc.Unit;
 /// <summary>
 /// Contextual information used by Setup delegate and provided to <see cref="UnitBuilder"/>.
 /// </summary>
-public interface IUnitSetupContext
+public interface IUnitSetupContext : IUnitPreloadContext
 {
 }

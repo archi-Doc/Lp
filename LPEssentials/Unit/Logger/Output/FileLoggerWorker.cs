@@ -68,7 +68,13 @@ internal class FileLoggerWorker : TaskCore
 
             if (count != 0)
             {
-                await File.AppendAllTextAsync(this.GetCurrentPath(), sb.ToString()).ConfigureAwait(false);
+                var path = this.GetCurrentPath();
+                if (Path.GetDirectoryName(path) is { } directory)
+                {
+                    Directory.CreateDirectory(directory);
+                }
+
+                await File.AppendAllTextAsync(path, sb.ToString()).ConfigureAwait(false);
             }
 
             if (terminate)

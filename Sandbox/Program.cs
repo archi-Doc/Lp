@@ -87,7 +87,8 @@ internal class Program
         var builder = new UnitBuilder() // new LP.Logging.LPLogger.Builder()
             .Preload(context =>
             {
-                context.
+                var b = context.Arguments.ContainsOption("help");
+                b = context.Arguments.TryGetOption("help", out var value);
             })
             .Configure(context =>
             {
@@ -117,13 +118,17 @@ internal class Program
                 });
 
                 // context.Services.Add(ServiceDescriptor.Singleton(typeof(LoggerOption), new Object()));
+            })
+            .SetupOptions<FileLoggerOptions>((context, options) =>
+            {
+                options.Path = Path.Combine(context.RootDirectory, "Logs/Logs.txt");
             });
             /*.ConfigureOptions<FileLoggerOptions2>(options =>
             {
                 options.Path = "Log2.txt";
             });*/
 
-        var unit = builder.Build(args);
+        var unit = builder.Build("helP me -heLP 234 -roOt \"test\"");
 
         /*var options = unit.Context.ServiceProvider.GetRequiredService<ConsoleLoggerOptions>();
         options.MaxQueue = 0;
@@ -131,7 +136,7 @@ internal class Program
         options.Formatter.TimestampLocal = false;*/
 
         var options2 = unit.Context.ServiceProvider.GetRequiredService<FileLoggerOptions2>();
-        options2.Path = "Log2.txt";
+        options2.Path = "LogLog.txt";
 
         var logger = unit.Context.ServiceProvider.GetRequiredService<UnitLogger>();
         logger.Get<Program>(LogLevel.Warning).Log("Test");

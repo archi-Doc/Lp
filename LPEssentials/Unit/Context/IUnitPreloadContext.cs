@@ -7,4 +7,11 @@ namespace Arc.Unit;
 /// </summary>
 public interface IUnitPreloadContext
 {
+    public string UnitName { get; set; }
+
+    public string RootDirectory { get; set; }
+
+    public string DataDirectory { get; set; }
+
+    public UnitArguments Arguments { get; }
 }

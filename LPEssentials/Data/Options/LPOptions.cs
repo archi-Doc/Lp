@@ -20,8 +20,8 @@ public partial record LPOptions
     [SimpleOption("mode", description: "LP mode (relay, merger, user)")]
     public string Mode { get; init; } = string.Empty;
 
-    [SimpleOption("directory", description: "Root directory")]
-    public string Directory { get; init; } = string.Empty;
+    [SimpleOption("root", description: "Root directory")]
+    public string RootDirectory { get; init; } = string.Empty;
 
     [SimpleOption("keyvault", description: "KeyVault path")]
     public string KeyVault { get; init; } = string.Empty;

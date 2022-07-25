@@ -7,7 +7,7 @@ public class TestClass
     public static void SampleCode()
     {
         var builder = new TestClass.Builder()
-            .Configure((IUnitConfigurationContext x) => { }); // Custom configuration
+            .Configure(x => { }); // Custom configuration
 
         var unit = builder.Build();
         unit.RunStandalone(new());
