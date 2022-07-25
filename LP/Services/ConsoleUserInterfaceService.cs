@@ -10,10 +10,10 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
         this.logger = logger;
     }
 
-    public async Task Notify(LogLevel level, string message)
+    public override async Task Notify(LogLevel level, string message)
         => this.logger.TryGet(level)?.Log(message);
 
-    public Task<string?> RequestPassword(string? description)
+    public override Task<string?> RequestPassword(string? description)
     {
         // return this.RequestPasswordInternal(description);
         return this.TaskRunAndWaitAsync(() => this.RequestPasswordInternal(description));
@@ -29,10 +29,10 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
         }*/
     }
 
-    public Task<string?> RequestString(string? description)
+    public override Task<string?> RequestString(string? description)
         => this.TaskRunAndWaitAsync(() => this.RequestStringInternal(description));
 
-    public Task<bool?> RequestYesOrNo(string? description)
+    public override Task<bool?> RequestYesOrNo(string? description)
         => this.TaskRunAndWaitAsync(() => this.RequestYesOrNoInternal(description));
 
     private static async Task<ConsoleKeyInfo> ReadKeyAsync(CancellationToken cancellationToken)
@@ -57,6 +57,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
 
     private async Task<T?> TaskRunAndWaitAsync<T>(Func<Task<T>> func)
     {
+        var previous = this.ChangeMode(Mode.Input);
         try
         {
             return await Task.Run(func).WaitAsync(this.core.CancellationToken).ConfigureAwait(false);
@@ -65,6 +66,10 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
         {
             Console.WriteLine();
             return default;
+        }
+        finally
+        {
+            this.ChangeMode(previous);
         }
     }
 
