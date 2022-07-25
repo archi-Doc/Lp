@@ -65,9 +65,9 @@ public class Control
                 LP.Subcommands.NodeSubcommand.Configure(context);
             });
 
-            this.ConfigureBuilder(new NetControl.Builder());
-            this.ConfigureBuilder(new ZenControl.Builder());
-            this.ConfigureBuilder(new LP.Logging.LPLogger.Builder());
+            this.AddBuilder(new NetControl.Builder());
+            this.AddBuilder(new ZenControl.Builder());
+            this.AddBuilder(new LP.Logging.LPLogger.Builder());
         }
     }
 

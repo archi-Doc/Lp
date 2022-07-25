@@ -32,12 +32,21 @@ public class UnitBuilder<TUnit> : UnitBuilder
     public override TUnit Build(string[] args) => this.Build<TUnit>(args);
 
     /// <inheritdoc/>
+    public override UnitBuilder<TUnit> Preload(Action<IUnitPreloadContext> @delegate)
+        => (UnitBuilder<TUnit>)base.Preload(@delegate);
+
+    /// <inheritdoc/>
     public override UnitBuilder<TUnit> Configure(Action<UnitBuilderContext> configureDelegate)
         => (UnitBuilder<TUnit>)base.Configure(configureDelegate);
 
     /// <inheritdoc/>
-    public override UnitBuilder<TUnit> ConfigureBuilder(UnitBuilder unitBuilder)
-        => (UnitBuilder<TUnit>)base.ConfigureBuilder(unitBuilder);
+    public override UnitBuilder<TUnit> AddBuilder(UnitBuilder unitBuilder)
+        => (UnitBuilder<TUnit>)base.AddBuilder(unitBuilder);
+
+    /// <inheritdoc/>
+    public override UnitBuilder<TUnit> SetupOptions<TOptions>(Action<IUnitSetupContext, TOptions> @delegate)
+        where TOptions : class
+        => (UnitBuilder<TUnit>)base.SetupOptions(@delegate);
 }
 
 /// <summary>
@@ -70,6 +79,18 @@ public class UnitBuilder
     public virtual BuiltUnit Build(string? args = null) => this.Build<BuiltUnit>(args);
 
     /// <summary>
+    /// Adds a <see cref="UnitBuilder"/> instance to the builder.<br/>
+    /// This can be called multiple times and the results will be additive.
+    /// </summary>
+    /// <param name="unitBuilder"><see cref="UnitBuilder"/>.</param>
+    /// <returns>The same instance of the <see cref="UnitBuilder"/> for chaining.</returns>
+    public virtual UnitBuilder AddBuilder(UnitBuilder unitBuilder)
+    {
+        this.unitBuilders.Add(unitBuilder);
+        return this;
+    }
+
+    /// <summary>
     /// Adds a delegate to the builder for preloading the unit.<br/>
     /// This can be called multiple times and the results will be additive.
     /// </summary>
@@ -87,25 +108,24 @@ public class UnitBuilder
     /// </summary>
     /// <param name="delegate">The delegate for configuring the unit.</param>
     /// <returns>The same instance of the <see cref="UnitBuilder"/> for chaining.</returns>
-    /*public virtual UnitBuilder Configure(Action<IUnitConfigurationContext> @delegate)
+    public virtual UnitBuilder Configure(Action<IUnitConfigurationContext> @delegate)
     {
-        // this.configureActions.Add(@delegate);
+        this.configureActions.Add(@delegate);
         return this;
-    }*/
-
-    // public delegate void SetupDelegate<TOptions>(IUnitSetupContext context, in TOptions options);
+    }
 
     /// <summary>
     /// Adds a delegate to the builder for setting up the option.<br/>
     /// This can be called multiple times and the results will be additive.
     /// </summary>
+    /// <typeparam name="TOptions">The type of options class.</typeparam>
     /// <param name="delegate">The delegate for setting up the unit.</param>
     /// <returns>The same instance of the <see cref="UnitBuilder"/> for chaining.</returns>
-    public virtual UnitBuilder SetupOptions<TOption>(Action<IUnitSetupContext, TOption> @delegate)
-        where TOption : class
+    public virtual UnitBuilder SetupOptions<TOptions>(Action<IUnitSetupContext, TOptions> @delegate)
+        where TOptions : class
     {
-        var ac = new Action<IUnitSetupContext, object>((context, options) => @delegate(context, (TOption)options));
-        var item = new SetupItem(typeof(TOption), ac);
+        var ac = new Action<IUnitSetupContext, object>((context, options) => @delegate(context, (TOptions)options));
+        var item = new SetupItem(typeof(TOptions), ac);
         this.setupItems.Add(item);
         return this;
     }
@@ -119,30 +139,6 @@ public class UnitBuilder
     public virtual UnitBuilder Configure(Action<UnitBuilderContext> @delegate)
     {
         this.configureActions.Add(@delegate);
-        return this;
-    }
-
-    /// <summary>
-    /// Adds a delegate to the builder for configuring logging.<br/>
-    /// This can be called multiple times and the results will be additive.
-    /// </summary>
-    /// <param name="delegate">The delegate for configuring the unit.</param>
-    /// <returns>The same instance of the <see cref="UnitBuilder"/> for chaining.</returns>
-    public virtual UnitBuilder ConfigureLogging(Action<UnitBuilderContext> @delegate)
-    {
-        this.configureLogging.Add(@delegate);
-        return this;
-    }
-
-    /// <summary>
-    /// Adds a <see cref="UnitBuilder"/> instance to the builder for configuring the unit.<br/>
-    /// This can be called multiple times and the results will be additive.
-    /// </summary>
-    /// <param name="unitBuilder"><see cref="UnitBuilder"/>.</param>
-    /// <returns>The same instance of the <see cref="UnitBuilder"/> for chaining.</returns>
-    public virtual UnitBuilder ConfigureBuilder(UnitBuilder unitBuilder)
-    {
-        this.configureUnitBuilders.Add(unitBuilder);
         return this;
     }
 
@@ -208,7 +204,7 @@ public class UnitBuilder
         context.SetDirectory();
 
         // Unit builders
-        foreach (var x in this.configureUnitBuilders)
+        foreach (var x in this.unitBuilders)
         {
             x.PreloadInternal(context, args);
         }
@@ -220,10 +216,25 @@ public class UnitBuilder
         }
     }
 
+    internal void ConfigureInternal(UnitBuilderContext context)
+    {
+        // Unit builders
+        foreach (var x in this.unitBuilders)
+        {
+            x.ConfigureInternal(context);
+        }
+
+        // Configure actions
+        foreach (var x in this.configureActions)
+        {
+            x(context);
+        }
+    }
+
     internal void SetupInternal(UnitBuilderContext builderContext, UnitContext unitContext)
     {
         // Unit builders
-        foreach (var x in this.configureUnitBuilders)
+        foreach (var x in this.unitBuilders)
         {
             x.SetupInternal(builderContext, unitContext);
         }
@@ -236,31 +247,9 @@ public class UnitBuilder
         }
     }
 
-    internal void ConfigureInternal(UnitBuilderContext context)
-    {
-        // Unit builders
-        foreach (var x in this.configureUnitBuilders)
-        {
-            x.ConfigureInternal(context);
-        }
-
-        // Configure logging
-        foreach (var x in this.configureLogging)
-        {
-            x(context);
-        }
-
-        // Configure actions
-        foreach (var x in this.configureActions)
-        {
-            x(context);
-        }
-    }
-
     private bool built = false;
     private List<Action<IUnitPreloadContext>> preloadActions = new();
     private List<Action<UnitBuilderContext>> configureActions = new();
-    private List<Action<UnitBuilderContext>> configureLogging = new();
     private List<SetupItem> setupItems = new();
-    private List<UnitBuilder> configureUnitBuilders = new();
+    private List<UnitBuilder> unitBuilders = new();
 }

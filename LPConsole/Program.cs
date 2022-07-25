@@ -67,13 +67,12 @@ public class Program
                 {
                 });
             })
-            .SetupOptions<LPOptions>(context =>
+            .SetupOptions<LPOptions>((context, options) =>
             {
-                return context.TryParseArguments<LPOptions>();
             })
-            .SetupOptions<FileLoggerOptions>(context =>
+            .SetupOptions<FileLoggerOptions>((context, options) =>
             {
-                return new FileLoggerOptions(context) with { Path = Path.Combine(context.RootDirectory, "Logs"), };
+                options.Path = Path.Combine(context.RootDirectory, "Logs");
             });
         // .ConfigureBuilder(new LPConsole.Sample.SampleUnit.Builder()); // Alternative
 
