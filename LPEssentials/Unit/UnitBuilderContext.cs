@@ -9,12 +9,16 @@ namespace Arc.Unit;
 /// <summary>
 /// Contextual information provided to <see cref="UnitBuilder"/>.<br/>
 /// </summary>
-public sealed class UnitBuilderContext
+internal class UnitBuilderContext : IUnitPreloadContext, IUnitConfigurationContext, IUnitSetupContext
 {
+    private const string RootDirectoryOption = "root";
+    private const string DataDirectoryOption = "data";
+
     public UnitBuilderContext()
     {
         this.UnitName = Assembly.GetEntryAssembly()?.GetName().Name ?? string.Empty;
-        this.RootDirectory = Directory.GetCurrentDirectory();
+        this.RootDirectory = string.Empty;
+        this.DataDirectory = string.Empty;
     }
 
     /// <summary>
@@ -28,37 +32,37 @@ public sealed class UnitBuilderContext
     public string RootDirectory { get; set; }
 
     /// <summary>
+    /// Gets or sets a data directory.
+    /// </summary>
+    public string DataDirectory { get; set; }
+
+    /// <summary>
+    /// Gets command-line arguments.
+    /// </summary>
+    public UnitArguments Arguments => this.arguments;
+
+    /// <summary>
     /// Gets <see cref="IServiceCollection"/>.
     /// </summary>
     public IServiceCollection Services { get; } = new ServiceCollection();
 
-    public HashSet<Type> CreateInstanceSet { get; } = new();
+#pragma warning disable CS8766
+    public IServiceProvider? ServiceProvider { get; internal set; }
+#pragma warning restore CS8766
 
-    public Dictionary<Type, CommandGroup> CommandGroups { get; } = new();
+    internal HashSet<Type> CreateInstanceSet { get; } = new();
 
-    public List<LoggerResolverDelegate> LoggerResolvers { get; } = new();
+    internal Dictionary<Type, CommandGroup> CommandGroups { get; } = new();
+
+    internal List<LoggerResolverDelegate> LoggerResolvers { get; } = new();
 
     public void ClearLoggerResolver() => this.LoggerResolvers.Clear();
 
-    /// <summary>
-    /// Adds a logger resolver which determines appropriate <see cref="ILogOutput"/> and <see cref="ILogFilter"/> from Log source and <see cref="LogLevel"/>.
-    /// </summary>
-    /// <param name="resolver"><see cref="LoggerResolverDelegate"/>.</param>
     public void AddLoggerResolver(LoggerResolverDelegate resolver) => this.LoggerResolvers.Add(resolver);
 
-    /// <summary>
-    /// Adds the specified <see cref="Type"/> to the creation list.
-    /// Note that instances are actually created by calling <see cref="UnitContext.CreateInstances()"/>.
-    /// </summary>
-    /// <typeparam name="T">The type to be instantiated.</typeparam>
     public void CreateInstance<T>()
         => this.CreateInstanceSet.Add(typeof(T));
 
-    /// <summary>
-    /// Gets <see cref="CommandGroup"/> of the specified command type.
-    /// </summary>
-    /// <param name="type">The command type.</param>
-    /// <returns><see cref="CommandGroup"/>.</returns>
     public CommandGroup GetCommandGroup(Type type)
     {
         if (!this.CommandGroups.TryGetValue(type, out var commandGroup))
@@ -71,93 +75,21 @@ public sealed class UnitBuilderContext
         return commandGroup;
     }
 
-    /// <summary>
-    /// Gets <see cref="CommandGroup"/> of command.
-    /// </summary>
-    /// <returns><see cref="CommandGroup"/>.</returns>
     public CommandGroup GetCommandGroup() => this.GetCommandGroup(typeof(TopCommand));
 
-    /// <summary>
-    /// Gets <see cref="CommandGroup"/> of subcommand.
-    /// </summary>
-    /// <returns><see cref="CommandGroup"/>.</returns>
     public CommandGroup GetSubcommandGroup() => this.GetCommandGroup(typeof(SubCommand));
 
-    /// <summary>
-    /// Adds command.
-    /// </summary>
-    /// <param name="commandType">The command type.</param>
-    /// <returns><see langword="true"/>: Successfully added.</returns>
     public bool AddCommand(Type commandType)
     {
         var group = this.GetCommandGroup();
         return group.AddCommand(commandType);
     }
 
-    /// <summary>
-    /// Adds subcommand.
-    /// </summary>
-    /// <param name="commandType">The command type.</param>
-    /// <returns><see langword="true"/>: Successfully added.</returns>
     public bool AddSubcommand(Type commandType)
     {
         var group = this.GetSubcommandGroup();
         return group.AddCommand(commandType);
     }
-
-    public void AddSingleton<TService>()
-        where TService : class => this.Services.AddSingleton<TService>();
-
-    public void AddScoped<TService>()
-        where TService : class => this.Services.AddScoped<TService>();
-
-    public void AddTransient<TService>()
-        where TService : class => this.Services.AddTransient<TService>();
-
-    public void AddSingleton(Type serviceType) => this.Services.AddSingleton(serviceType);
-
-    public void AddScoped(Type serviceType) => this.Services.AddSingleton(serviceType);
-
-    public void AddTransient(Type serviceType) => this.Services.AddTransient(serviceType);
-
-    public void AddSingleton<TService, TImplementation>()
-        where TService : class
-        where TImplementation : class, TService => this.Services.AddSingleton<TService, TImplementation>();
-
-    public void AddScoped<TService, TImplementation>()
-        where TService : class
-        where TImplementation : class, TService => this.Services.AddScoped<TService, TImplementation>();
-
-    public void AddTransient<TService, TImplementation>()
-        where TService : class
-        where TImplementation : class, TService => this.Services.AddTransient<TService, TImplementation>();
-
-    public void TryAddSingleton<TService>()
-        where TService : class => this.Services.TryAddSingleton<TService>();
-
-    public void TryAddScoped<TService>()
-        where TService : class => this.Services.TryAddScoped<TService>();
-
-    public void TryAddTransient<TService>()
-        where TService : class => this.Services.TryAddTransient<TService>();
-
-    public void TryAddSingleton(Type serviceType) => this.Services.AddSingleton(serviceType);
-
-    public void TryAddScoped(Type serviceType) => this.Services.AddSingleton(serviceType);
-
-    public void TryAddTransient(Type serviceType) => this.Services.AddTransient(serviceType);
-
-    public void TryAddSingleton<TService, TImplementation>()
-        where TService : class
-        where TImplementation : class, TService => this.Services.TryAddSingleton<TService, TImplementation>();
-
-    public void TryAddScoped<TService, TImplementation>()
-        where TService : class
-        where TImplementation : class, TService => this.Services.TryAddScoped<TService, TImplementation>();
-
-    public void TryAddTransient<TService, TImplementation>()
-        where TService : class
-        where TImplementation : class, TService => this.Services.TryAddTransient<TService, TImplementation>();
 
     internal class TopCommand
     {
@@ -166,4 +98,41 @@ public sealed class UnitBuilderContext
     internal class SubCommand
     {
     }
+
+    internal void SetDirectory()
+    {
+        if (this.arguments.TryGetOption(RootDirectoryOption, out var value))
+        {// Root Directory
+            if (Path.IsPathRooted(value))
+            {
+                this.RootDirectory = value;
+            }
+            else
+            {
+                this.RootDirectory = Path.Combine(Directory.GetCurrentDirectory(), value);
+            }
+        }
+        else
+        {
+            this.RootDirectory = Directory.GetCurrentDirectory();
+        }
+
+        if (this.arguments.TryGetOption(DataDirectoryOption, out value))
+        {// Data Directory
+            if (Path.IsPathRooted(value))
+            {
+                this.DataDirectory = value;
+            }
+            else
+            {
+                this.DataDirectory = Path.Combine(Directory.GetCurrentDirectory(), value);
+            }
+        }
+    }
+
+#pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
+#pragma warning disable SA1401
+    internal UnitArguments arguments = new();
+#pragma warning restore SA1401
+#pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
 }

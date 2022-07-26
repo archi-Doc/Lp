@@ -5,7 +5,6 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Text;
 using Arc.Threading;
-using static Arc.Unit.ConsoleLoggerWorker;
 
 namespace Arc.Unit;
 
@@ -21,9 +20,11 @@ internal class FileLoggerWorker : TaskCore
         this.formatter = new(options);
 
         this.maxCapacity = maxCapacity * 1_000_000;
-        var idx = fullPath.LastIndexOf('.'); // "TestLog.txt" -> 7
+        var fileName = Path.GetFileName(fullPath);
+        var idx = fileName.LastIndexOf('.'); // "TestLog.txt" -> 7
         if (idx >= 0)
         {
+            idx += fullPath.Length - fileName.Length;
             this.basePath = fullPath.Substring(0, idx);
             this.baseExtension = fullPath.Substring(idx);
         }
@@ -68,7 +69,13 @@ internal class FileLoggerWorker : TaskCore
 
             if (count != 0)
             {
-                await File.AppendAllTextAsync(this.GetCurrentPath(), sb.ToString()).ConfigureAwait(false);
+                var path = this.GetCurrentPath();
+                if (Path.GetDirectoryName(path) is { } directory)
+                {
+                    Directory.CreateDirectory(directory);
+                }
+
+                await File.AppendAllTextAsync(path, sb.ToString()).ConfigureAwait(false);
             }
 
             if (terminate)

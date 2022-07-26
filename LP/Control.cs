@@ -30,6 +30,12 @@ public class Control
         public Builder()
             : base()
         {
+            this.Preload(context =>
+            {
+                this.LoadStrings();
+                this.LoadLPOptions(context);
+            });
+
             this.Configure(context =>
             {
                 LPBase.Configure(context);
@@ -64,9 +70,57 @@ public class Control
                 LP.Subcommands.NodeSubcommand.Configure(context);
             });
 
-            this.ConfigureBuilder(new NetControl.Builder());
-            this.ConfigureBuilder(new ZenControl.Builder());
-            this.ConfigureBuilder(new LP.Logging.LPLogger.Builder());
+            this.AddBuilder(new NetControl.Builder());
+            this.AddBuilder(new ZenControl.Builder());
+            this.AddBuilder(new LP.Logging.LPLogger.Builder());
+        }
+
+        private void LoadStrings()
+        {// Load strings
+            var asm = System.Reflection.Assembly.GetExecutingAssembly();
+            try
+            {
+                HashedString.LoadAssembly(null, asm, "Strings.strings-en.tinyhand");
+                HashedString.LoadAssembly("ja", asm, "Strings.strings-en.tinyhand");
+            }
+            catch
+            {
+            }
+        }
+
+        private void LoadLPOptions(IUnitPreloadContext context)
+        {
+            var args = context.Arguments.RawArguments;
+            LPOptions? options = null;
+
+            if (context.Arguments.TryGetOption("loadoptions", out var optionFile))
+            {// First - Option file
+                if (!string.IsNullOrEmpty(optionFile))
+                {
+                    var originalPath = optionFile;
+                    try
+                    {
+                        var utf8 = File.ReadAllBytes(originalPath);
+                        var op = TinyhandSerializer.DeserializeFromUtf8<LPOptions>(utf8);
+                        if (op != null)
+                        {
+                            options = op;
+                            Console.WriteLine(HashedString.Get(Hashed.Success.Loaded, originalPath));
+                        }
+                    }
+                    catch
+                    {
+                        Console.WriteLine(HashedString.Get(Hashed.Error.Load, originalPath));
+                    }
+                }
+            }
+
+            // Second - Arguments
+            SimpleParser.TryParseOptions<LPOptions>(args, out options, options);
+            if (options != null)
+            {
+                context.SetOptions(options);
+            }
         }
     }
 
@@ -89,17 +143,6 @@ public class Control
 
         public async Task RunAsync(LPOptions options)
         {
-            // Load strings
-            var asm = System.Reflection.Assembly.GetExecutingAssembly();
-            try
-            {
-                HashedString.LoadAssembly(null, asm, "Strings.strings-en.tinyhand");
-                HashedString.LoadAssembly("ja", asm, "Strings.strings-en.tinyhand");
-            }
-            catch
-            {
-            }
-
             // Load options
             if (!string.IsNullOrEmpty(options.OptionsPath))
             {
@@ -231,24 +274,6 @@ public class Control
         this.BigMachine.Core.ChangeParent(this.Core);
     }
 
-    public async Task<bool> TryTerminate()
-    {
-        if (!this.LPBase.Options.ConfirmExit)
-        {// No confirmation
-            this.Core.Terminate(); // this.Terminate(false);
-            return true;
-        }
-
-        var result = await this.UserInterfaceService.RequestYesOrNo(Hashed.Dialog.ConfirmExit);
-        if (result == true)
-        {
-            this.Core.Terminate(); // this.Terminate(false);
-            return true;
-        }
-
-        return false;
-    }
-
     public async Task LoadAsync(UnitContext context)
     {
         // Netsphere
@@ -321,7 +346,25 @@ public class Control
         this.Core.WaitForTermination(-1);
 
         this.Logger.Get<DefaultLog>().Log(abort ? "Aborted" : "Terminated");
-        this.Logger.FlushAndTerminate().Wait();
+        this.Logger.FlushAndTerminate().Wait(); // Write logs added after Terminate().
+    }
+
+    public async Task<bool> TryTerminate()
+    {
+        if (!this.LPBase.Options.ConfirmExit)
+        {// No confirmation
+            this.Core.Terminate(); // this.Terminate(false);
+            return true;
+        }
+
+        var result = await this.UserInterfaceService.RequestYesOrNo(Hashed.Dialog.ConfirmExit);
+        if (result == true)
+        {
+            this.Core.Terminate(); // this.Terminate(false);
+            return true;
+        }
+
+        return false;
     }
 
     public bool Subcommand(string subcommand)
@@ -356,7 +399,8 @@ public class Control
     {
         while (!this.Core.IsTerminated)
         {
-            if (this.ConsoleMode)
+            var currentMode = this.UserInterfaceService.CurrentMode;
+            if (currentMode == IUserInterfaceService.Mode.Console)
             {// Console mode
                 string? command = null;
                 try
@@ -377,7 +421,7 @@ public class Control
                     {// Exit
                         if (this.TryTerminate().Result == true)
                         { // To view mode
-                            this.ConsoleMode = false;
+                            this.UserInterfaceService.ChangeMode(IUserInterfaceService.Mode.View);
                             return;
                         }
                         else
@@ -410,16 +454,16 @@ public class Control
                 }
 
                 // To view mode
-                this.ConsoleMode = false;
+                this.UserInterfaceService.ChangeMode(IUserInterfaceService.Mode.View);
             }
-            else
+            else if (currentMode == IUserInterfaceService.Mode.View)
             {// View mode
                 if (this.SafeKeyAvailable)
                 {
                     var keyInfo = Console.ReadKey(true);
                     if (keyInfo.Key == ConsoleKey.Enter || keyInfo.Key == ConsoleKey.Escape)
                     { // To console mode
-                        this.ConsoleMode = true;
+                        this.UserInterfaceService.ChangeMode(IUserInterfaceService.Mode.Console);
                         Console.Write("> ");
                     }
                     else
@@ -436,7 +480,7 @@ public class Control
         }
 
         // To view mode
-        this.ConsoleMode = false;
+        this.UserInterfaceService.ChangeMode(IUserInterfaceService.Mode.View);
     }
 
     public static SimpleParserOptions SubcommandParserOptions { get; private set; } = default!;
@@ -456,8 +500,6 @@ public class Control
     public ZenControl ZenControl { get; }
 
     public KeyVault KeyVault { get; }
-
-    public bool ConsoleMode { get; private set; } = false;
 
     private static SimpleParser subcommandParser = default!;
 

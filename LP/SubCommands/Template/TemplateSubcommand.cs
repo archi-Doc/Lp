@@ -9,7 +9,7 @@ namespace LP.Subcommands;
 [SimpleCommand("template", IsSubcommand = true)]
 public class TemplateSubcommand : ISimpleCommandAsync
 {
-    public static void Register(UnitBuilderContext context)
+    public static void Register(IUnitConfigurationContext context)
     {
         commandTypes = new Type[]
         {

@@ -8,6 +8,7 @@ global using Arc.Crypto;
 global using Arc.Threading;
 global using Arc.Unit;
 global using LP;
+using LP.Data;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using SimpleCommandLine;
@@ -42,6 +43,12 @@ public class Program
         };
 
         var builder = new Control.Builder()
+            .Preload(context =>
+            {
+                // context.TryParseArguments<LPOptions>();
+                // context.SetData<string>("test");
+                // context.TryGetData<string>(out var st);
+            })
             .Configure(context =>
             {
                 // Subcommand
@@ -59,10 +66,17 @@ public class Program
                 context.AddLoggerResolver(context =>
                 {
                 });
+            })
+            .SetupOptions<LPOptions>((context, options) =>
+            {
+            })
+            .SetupOptions<FileLoggerOptions>((context, options) =>
+            {
+                options.Path = Path.Combine(context.RootDirectory, "Logs/Log.txt");
             });
-            // .ConfigureBuilder(new LPConsole.Sample.SampleUnit.Builder()); // Alternative
+        // .ConfigureBuilder(new LPConsole.Sample.SampleUnit.Builder()); // Alternative
 
-        unit = builder.Build();
+        unit = builder.Build(args);
 
         var parserOptions = SimpleParserOptions.Standard with
         {

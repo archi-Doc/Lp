@@ -2,13 +2,35 @@
 
 namespace LP.Services;
 
-public interface IUserInterfaceService
+public abstract class IUserInterfaceService
 {
-    public Task<bool?> RequestYesOrNo(string? description);
+    public enum Mode
+    {
+        View,
+        Console,
+        Input,
+    }
 
-    public Task<string?> RequestString(string? description);
+    public abstract Task<bool?> RequestYesOrNo(string? description);
 
-    public Task<string?> RequestPassword(string? description);
+    public abstract Task<string?> RequestString(string? description);
 
-    public Task Notify(LogLevel level, string message);
+    public abstract Task<string?> RequestPassword(string? description);
+
+    public abstract Task Notify(LogLevel level, string message);
+
+    public Mode ChangeMode(Mode nextMode)
+    {
+        return (Mode)Interlocked.Exchange(ref this.currentMode, (int)nextMode);
+    }
+
+    public Mode CurrentMode => (Mode)this.currentMode;
+
+    public bool IsViewMode => this.currentMode == (int)Mode.View;
+
+    public bool IsConsoleMode => this.currentMode == (int)Mode.Console;
+
+    public bool IsInputMode => this.currentMode == (int)Mode.Input;
+
+    private int currentMode;
 }

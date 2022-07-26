@@ -9,7 +9,7 @@ namespace LP.Subcommands;
 [SimpleCommand("flag", IsSubcommand = true)]
 public class FlagSubcommand : SimpleCommandGroup<FlagSubcommand>
 {
-    public static void Configure(UnitBuilderContext context)
+    public static void Configure(IUnitConfigurationContext context)
     {
         var group = ConfigureGroup(context);
         group.AddCommand(typeof(FlagSubcommandOn));
