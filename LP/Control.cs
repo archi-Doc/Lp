@@ -20,6 +20,7 @@ using Netsphere;
 using SimpleCommandLine;
 using ZenItz;
 using LP.Data;
+using static SimpleCommandLine.SimpleParser;
 
 namespace LP;
 
@@ -72,11 +73,30 @@ public class Control
             });
 
             this.SetupOptions<FileLoggerOptions>((context, options) =>
-            {
-                options.Path = Path.Combine(context.RootDirectory, "Logs/Log.txt");
+            {// FileLoggerOptions
+                var logfile = "Logs2/Log.txt";
                 if (context.TryGetOptions<LPOptions>(out var lpOptions))
                 {
+                    options.Path = Path.Combine(lpOptions.RootDirectory, logfile);
                 }
+                else
+                {
+                    options.Path = Path.Combine(context.RootDirectory, logfile);
+                }
+            });
+
+            this.SetupOptions<LPBase>((context, lpBase) =>
+            {// LPBase
+                context.GetOptions<LPOptions>(out var options);
+                lpBase.Initialize(options, true, "relay");
+            });
+
+            this.SetupOptions<NetBase>((context, netBase) =>
+            {// NetBase
+                context.GetOptions<LPOptions>(out var options);
+                netBase.SetParameter(true, string.Empty, options.NetsphereOptions);
+                netBase.AllowUnsafeConnection = true; // betacode
+                netBase.NetsphereOptions.EnableTestFeatures = true; // betacode
             });
 
             this.AddBuilder(new NetControl.Builder());
@@ -152,16 +172,6 @@ public class Control
 
         public async Task RunAsync(LPOptions options)
         {
-            // LPBase
-            this.lpBase = this.Context.ServiceProvider.GetRequiredService<LPBase>();
-            this.lpBase.Initialize(options, true, "relay");
-
-            // NetBase
-            this.netBase = this.Context.ServiceProvider.GetRequiredService<NetBase>();
-            this.netBase.SetParameter(true, string.Empty, options.NetsphereOptions);
-            this.netBase.AllowUnsafeConnection = true; // betacode
-            this.netBase.NetsphereOptions.EnableTestFeatures = true; // betacode
-
             var control = this.Context.ServiceProvider.GetRequiredService<Control>();
             try
             {
@@ -215,9 +225,6 @@ public class Control
                 return;
             }
         }
-
-        private LPBase lpBase = default!;
-        private NetBase netBase = default!;
     }
 
     public static bool ObjectToMemoryOwner(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved)

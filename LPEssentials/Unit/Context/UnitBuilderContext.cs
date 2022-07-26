@@ -78,6 +78,12 @@ internal class UnitBuilderContext : IUnitPreloadContext, IUnitConfigurationConte
         return options != null;
     }
 
+    public void GetOptions<TOptions>(out TOptions options)
+        where TOptions : class
+    {
+        options = (TOptions)this.OptionTypeToInstance[typeof(TOptions)];
+    }
+
     public void ClearLoggerResolver() => this.LoggerResolvers.Clear();
 
     public void AddLoggerResolver(LoggerResolverDelegate resolver) => this.LoggerResolvers.Add(resolver);
