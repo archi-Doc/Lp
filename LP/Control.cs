@@ -143,26 +143,6 @@ public class Control
 
         public async Task RunAsync(LPOptions options)
         {
-            // Load options
-            if (!string.IsNullOrEmpty(options.OptionsPath))
-            {
-                var originalPath = options.OptionsPath;
-                try
-                {
-                    var utf8 = File.ReadAllBytes(originalPath);
-                    var op = TinyhandSerializer.DeserializeFromUtf8<LPOptions>(utf8);
-                    if (op != null)
-                    {
-                        options = op;
-                        Console.WriteLine(HashedString.Get(Hashed.Success.Loaded, originalPath));
-                    }
-                }
-                catch
-                {
-                    Console.WriteLine(HashedString.Get(Hashed.Error.Load, originalPath));
-                }
-            }
-
             // LPBase
             this.lpBase = this.Context.ServiceProvider.GetRequiredService<LPBase>();
             this.lpBase.Initialize(options, true, "relay");

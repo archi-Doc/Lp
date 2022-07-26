@@ -66,13 +66,6 @@ public class Program
                 context.AddLoggerResolver(context =>
                 {
                 });
-            })
-            .SetupOptions<LPOptions>((context, options) =>
-            {
-            })
-            .SetupOptions<FileLoggerOptions>((context, options) =>
-            {
-                options.Path = Path.Combine(context.RootDirectory, "Logs/Log.txt");
             });
         // .ConfigureBuilder(new LPConsole.Sample.SampleUnit.Builder()); // Alternative
 

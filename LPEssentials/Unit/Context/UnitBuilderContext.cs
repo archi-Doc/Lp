@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -55,6 +56,27 @@ internal class UnitBuilderContext : IUnitPreloadContext, IUnitConfigurationConte
     internal Dictionary<Type, CommandGroup> CommandGroups { get; } = new();
 
     internal List<LoggerResolverDelegate> LoggerResolvers { get; } = new();
+
+    internal Dictionary<Type, object> OptionTypeToInstance { get; } = new();
+
+    public void SetOptions<TOptions>(TOptions options)
+        where TOptions : class
+    {
+        this.OptionTypeToInstance[typeof(TOptions)] = options;
+    }
+
+    public bool TryGetOptions<TOptions>([MaybeNullWhen(false)] out TOptions options)
+        where TOptions : class
+    {
+        options = null;
+        if (!this.OptionTypeToInstance.TryGetValue(typeof(TOptions), out var instance))
+        {
+            return false;
+        }
+
+        options = instance as TOptions;
+        return options != null;
+    }
 
     public void ClearLoggerResolver() => this.LoggerResolvers.Clear();
 

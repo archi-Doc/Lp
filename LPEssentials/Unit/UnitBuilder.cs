@@ -167,6 +167,12 @@ public class UnitBuilder
             builderContext.TryAddSingleton(x.Type);
         }
 
+        // Options instances
+        foreach (var x in builderContext.OptionTypeToInstance)
+        {
+            builderContext.Services.Add(ServiceDescriptor.Singleton(x.Key, x.Value));
+        }
+
         var serviceProvider = builderContext.Services.BuildServiceProvider();
         builderContext.ServiceProvider = serviceProvider;
 
