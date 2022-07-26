@@ -15,6 +15,7 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
         : base(parent, Process, true)
     {
         this.ZenDirectory = zenDirectory;
+        this.logger = Zen.UnitLogger.GetLogger<ZenDirectoryWorker>();
     }
 
     public static async Task Process(TaskWorker<ZenDirectoryWork> w, ZenDirectoryWork work)
@@ -24,6 +25,7 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
 
         if (work.Type == ZenDirectoryWork.WorkType.Save)
         {// Save
+            worker.logger?.TryGet()?.Log("Save");
             var hash = new byte[ZenDirectory.HashSize];
             BitConverter.TryWriteBytes(hash, Arc.Crypto.FarmHash.Hash64(work.SaveData.Memory.Span));
 
@@ -49,6 +51,7 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
             }
             finally
             {
+                worker.logger?.TryGet()?.Log("Save return");
                 work.SaveData.Return();
             }
         }
@@ -56,6 +59,7 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
         {// Load
             try
             {
+                worker.logger?.TryGet()?.Log("Load");
                 var path = worker.ZenDirectory.GetSnowflakePath(work.SnowflakeId);
                 filePath = Path.Combine(worker.ZenDirectory.RootedPath, path.Directory, path.File);
                 using (var handle = File.OpenHandle(filePath, mode: FileMode.Open, access: FileAccess.Read))
@@ -88,6 +92,10 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
             }
             catch
             {
+            }
+            finally
+            {
+                worker.logger?.TryGet()?.Log("Load return");
             }
         }
         else if (work.Type == ZenDirectoryWork.WorkType.Remove)
@@ -130,6 +138,7 @@ DeleteAndExit:
     }
 
     private HashSet<string> createdDirectories = new();
+    private ILogger<ZenDirectoryWorker>? logger;
 }
 
 internal class ZenDirectoryWork : IEquatable<ZenDirectoryWork>
