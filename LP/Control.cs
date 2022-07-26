@@ -74,7 +74,7 @@ public class Control
 
             this.SetupOptions<FileLoggerOptions>((context, options) =>
             {// FileLoggerOptions
-                var logfile = "Logs2/Log.txt";
+                var logfile = "Logs/Log.txt";
                 if (context.TryGetOptions<LPOptions>(out var lpOptions))
                 {
                     options.Path = Path.Combine(lpOptions.RootDirectory, logfile);
@@ -158,16 +158,6 @@ public class Control
         public Unit(UnitContext context)
             : base(context)
         {
-            SubcommandParserOptions = SimpleParserOptions.Standard with
-            {
-                ServiceProvider = context.ServiceProvider,
-                RequireStrictCommandName = true,
-                RequireStrictOptionName = true,
-                DoNotDisplayUsage = true,
-                DisplayCommandListAsHelp = true,
-            };
-
-            subcommandParser = new SimpleParser(context.Subcommands, SubcommandParserOptions);
         }
 
         public async Task RunAsync(LPOptions options)
@@ -253,7 +243,7 @@ public class Control
         }
     }
 
-    public Control(UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl, KeyVault keyVault)
+    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl, KeyVault keyVault)
     {
         this.Logger = logger;
         this.UserInterfaceService = userInterfaceService;
@@ -268,6 +258,17 @@ public class Control
 
         this.Core = core;
         this.BigMachine.Core.ChangeParent(this.Core);
+
+        SubcommandParserOptions = SimpleParserOptions.Standard with
+        {
+            ServiceProvider = context.ServiceProvider,
+            RequireStrictCommandName = true,
+            RequireStrictOptionName = true,
+            DoNotDisplayUsage = true,
+            DisplayCommandListAsHelp = true,
+        };
+
+        this.subcommandParser = new SimpleParser(context.Subcommands, SubcommandParserOptions);
     }
 
     public async Task LoadAsync(UnitContext context)
@@ -365,11 +366,11 @@ public class Control
 
     public bool Subcommand(string subcommand)
     {
-        if (!subcommandParser.Parse(subcommand))
+        if (!this.subcommandParser.Parse(subcommand))
         {
-            if (subcommandParser.HelpCommand != string.Empty)
+            if (this.subcommandParser.HelpCommand != string.Empty)
             {
-                subcommandParser.ShowHelp();
+                this.subcommandParser.ShowHelp();
             }
             else
             {
@@ -379,7 +380,7 @@ public class Control
             return false;
         }
 
-        subcommandParser.Run();
+        this.subcommandParser.Run();
         return false;
 
         /*if (subcommandParser.HelpCommand != string.Empty)
@@ -497,7 +498,7 @@ public class Control
 
     public KeyVault KeyVault { get; }
 
-    private static SimpleParser subcommandParser = default!;
+    private SimpleParser subcommandParser;
 
     private bool SafeKeyAvailable
     {
