@@ -37,7 +37,6 @@ public class ZenControl
                 context.AddSingleton<ZenControl>();
                 context.AddSingleton<Zen>();
                 context.AddSingleton<ZenIO>();
-                context.AddSingleton<ZenDirectory>();
                 context.AddSingleton<Itz>();
 
                 // Subcommands
