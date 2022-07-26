@@ -49,8 +49,6 @@ public class Program
             .Configure(context =>
             {
                 // Subcommand
-                context.AddCommand(typeof(LPConsoleCommand));
-                context.AddCommand(typeof(TempCommand));
 
                 // NetService
 
@@ -70,16 +68,6 @@ public class Program
 
         var options = unit.Context.ServiceProvider.GetRequiredService<LPOptions>();
         await unit.RunAsync(options);
-
-        // Obsolete
-        /*var parserOptions = SimpleParserOptions.Standard with
-        {
-            ServiceProvider = unit.Context.ServiceProvider,
-            RequireStrictCommandName = false,
-            RequireStrictOptionName = true,
-        };
-
-        await SimpleParser.ParseAndRunAsync(unit.Context.Commands, args, parserOptions); // Main process */
 
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
         // unit.Context.ServiceProvider.GetService<UnitLogger>()?.FlushAndTerminate();
