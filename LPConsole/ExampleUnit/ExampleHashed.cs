@@ -2,9 +2,9 @@
 
 using Tinyhand;
 
-namespace LPConsole.Sample;
+namespace LPConsole.Example;
 
 [TinyhandGenerateHash("strings-en.tinyhand")]
-public static partial class SampleHashed
+public static partial class ExampleHashed
 {
 }

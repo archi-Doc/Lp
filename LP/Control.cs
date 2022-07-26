@@ -64,10 +64,19 @@ public class Control
                 context.AddSubcommand(typeof(LP.Subcommands.PunchSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.BenchmarkSubcommand));
 
+                LP.Subcommands.TemplateSubcommand.Configure(context);
                 LP.Subcommands.DumpSubcommand.Configure(context);
                 LP.Subcommands.KeyVaultSubcommand.Configure(context);
                 LP.Subcommands.FlagSubcommand.Configure(context);
                 LP.Subcommands.NodeSubcommand.Configure(context);
+            });
+
+            this.SetupOptions<FileLoggerOptions>((context, options) =>
+            {
+                options.Path = Path.Combine(context.RootDirectory, "Logs/Log.txt");
+                if (context.TryGetOptions<LPOptions>(out var lpOptions))
+                {
+                }
             });
 
             this.AddBuilder(new NetControl.Builder());

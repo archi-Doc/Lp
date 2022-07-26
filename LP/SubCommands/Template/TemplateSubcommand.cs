@@ -11,8 +11,7 @@ public class TemplateSubcommand : SimpleCommandGroup<TemplateSubcommand>
     public static void Configure(IUnitConfigurationContext context)
     {
         var group = ConfigureGroup(context);
-        group.AddCommand(typeof(KeyVaultSubcommandLs));
-        group.AddCommand(typeof(KeyVaultSubcommandChangePass));
+        group.AddCommand(typeof(TemplateSubcommandLs));
     }
 
     public TemplateSubcommand(UnitContext context)

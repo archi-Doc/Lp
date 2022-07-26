@@ -3,9 +3,9 @@
 using Arc.Threading;
 using Tinyhand;
 
-namespace LPConsole.Sample;
+namespace LPConsole.Example;
 
-public class SampleUnit : UnitBase, IUnitPreparable, IUnitExecutable
+public class ExampleUnit : UnitBase, IUnitPreparable, IUnitExecutable
 {
     public static void SampleCode()
     {
@@ -17,9 +17,9 @@ public class SampleUnit : UnitBase, IUnitPreparable, IUnitExecutable
 
     public static void Configure(IUnitConfigurationContext context)
     {
-        context.AddSingleton<SampleUnit>();
-        context.CreateInstance<SampleUnit>();
-        context.AddSubcommand(typeof(SampleSubcommand));
+        context.AddSingleton<ExampleUnit>();
+        context.CreateInstance<ExampleUnit>();
+        context.AddSubcommand(typeof(ExampleSubcommand));
     }
 
     public class Builder : UnitBuilder<Unit>
@@ -27,7 +27,7 @@ public class SampleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         public Builder()
             : base()
         {// Configuration for TestClass.
-            this.Configure(context => SampleUnit.Configure(context));
+            this.Configure(context => ExampleUnit.Configure(context));
         }
     }
 
@@ -41,7 +41,7 @@ public class SampleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         }
     }
 
-    public SampleUnit(UnitContext context, ILogger<SampleUnit> logger)
+    public ExampleUnit(UnitContext context, ILogger<ExampleUnit> logger)
         : base(context)
     {
         this.logger = logger;
@@ -53,25 +53,25 @@ public class SampleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         var asm = System.Reflection.Assembly.GetExecutingAssembly();
         try
         {
-            HashedString.LoadAssembly(null, asm, "SampleUnit.strings-en.tinyhand");
-            // HashedString.LoadAssembly("ja", asm, "SampleUnit.strings-en.tinyhand");
+            HashedString.LoadAssembly(null, asm, "ExampleUnit.strings-en.tinyhand");
+            // HashedString.LoadAssembly("ja", asm, "ExampleUnit.strings-ja.tinyhand");
         }
         catch
         {
         }
 
-        this.logger.TryGet()?.Log("Sample unit prepared.");
+        this.logger.TryGet()?.Log("Example unit prepared.");
     }
 
     public async Task RunAsync(UnitMessage.RunAsync message)
     {
-        this.logger.TryGet()?.Log("Sample unit running.");
+        this.logger.TryGet()?.Log("Example unit running.");
     }
 
     public async Task TerminateAsync(UnitMessage.TerminateAsync message)
     {
-        this.logger.TryGet()?.Log("Sample unit terminated.");
+        this.logger.TryGet()?.Log("Example unit terminated.");
     }
 
-    private ILogger<SampleUnit> logger;
+    private ILogger<ExampleUnit> logger;
 }

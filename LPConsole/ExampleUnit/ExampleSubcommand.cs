@@ -3,12 +3,12 @@
 using LP;
 using SimpleCommandLine;
 
-namespace LPConsole.Sample;
+namespace LPConsole.Example;
 
-[SimpleCommand("sample")]
-public class SampleSubcommand : ISimpleCommandAsync
+[SimpleCommand("example")]
+public class ExampleSubcommand : ISimpleCommandAsync
 {
-    public SampleSubcommand(ILogger<SampleSubcommand> logger, Control control)
+    public ExampleSubcommand(ILogger<ExampleSubcommand> logger, Control control)
     {
         this.logger = logger;
         this.Control = control;
@@ -16,10 +16,10 @@ public class SampleSubcommand : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        this.logger.TryGet()?.Log(SampleHashed.SampleUnit.Command);
+        this.logger.TryGet()?.Log(ExampleHashed.ExampleUnit.Command);
     }
 
     public Control Control { get; set; }
 
-    private ILogger<SampleSubcommand> logger;
+    private ILogger<ExampleSubcommand> logger;
 }
