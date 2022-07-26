@@ -15,7 +15,7 @@ public class UnitArguments
     {
     }
 
-    public IEnumerable<string> GetRawArguments() => this.arguments;
+    public string RawArguments => this.rawArguments;
 
     public bool ContainsValue(string value) => this.values.Contains(value);
 
@@ -51,11 +51,10 @@ public class UnitArguments
 
     internal void Add(string args)
     {
-        var arguments = args.FormatArguments();
-        this.arguments.AddRange(arguments);
+        this.rawArguments = args;
         string? previousOption = null;
 
-        foreach (var x in arguments)
+        foreach (var x in args.FormatArguments())
         {
             if (x.IsOptionString())
             {// -option
@@ -112,7 +111,7 @@ public class UnitArguments
         }
     }
 
-    private List<string> arguments = new();
+    private string rawArguments = string.Empty;
     private List<string> values = new();
     private List<KeyValuePair<string, string>> options = new();
 }

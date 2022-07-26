@@ -30,6 +30,12 @@ public class Control
         public Builder()
             : base()
         {
+            this.Preload(context =>
+            {
+                this.LoadStrings();
+                this.LoadLPOptions(context);
+            });
+
             this.Configure(context =>
             {
                 LPBase.Configure(context);
@@ -68,6 +74,54 @@ public class Control
             this.AddBuilder(new ZenControl.Builder());
             this.AddBuilder(new LP.Logging.LPLogger.Builder());
         }
+
+        private void LoadStrings()
+        {// Load strings
+            var asm = System.Reflection.Assembly.GetExecutingAssembly();
+            try
+            {
+                HashedString.LoadAssembly(null, asm, "Strings.strings-en.tinyhand");
+                HashedString.LoadAssembly("ja", asm, "Strings.strings-en.tinyhand");
+            }
+            catch
+            {
+            }
+        }
+
+        private void LoadLPOptions(IUnitPreloadContext context)
+        {
+            var args = context.Arguments.RawArguments;
+            LPOptions? options = null;
+
+            if (context.Arguments.TryGetOption("loadoptions", out var optionFile))
+            {// First - Option file
+                if (!string.IsNullOrEmpty(optionFile))
+                {
+                    var originalPath = optionFile;
+                    try
+                    {
+                        var utf8 = File.ReadAllBytes(originalPath);
+                        var op = TinyhandSerializer.DeserializeFromUtf8<LPOptions>(utf8);
+                        if (op != null)
+                        {
+                            options = op;
+                            Console.WriteLine(HashedString.Get(Hashed.Success.Loaded, originalPath));
+                        }
+                    }
+                    catch
+                    {
+                        Console.WriteLine(HashedString.Get(Hashed.Error.Load, originalPath));
+                    }
+                }
+            }
+
+            // Second - Arguments
+            SimpleParser.TryParseOptions<LPOptions>(args, out options, options);
+            if (options != null)
+            {
+                context.SetOptions(options);
+            }
+        }
     }
 
     public class Unit : BuiltUnit
@@ -89,17 +143,6 @@ public class Control
 
         public async Task RunAsync(LPOptions options)
         {
-            // Load strings
-            var asm = System.Reflection.Assembly.GetExecutingAssembly();
-            try
-            {
-                HashedString.LoadAssembly(null, asm, "Strings.strings-en.tinyhand");
-                HashedString.LoadAssembly("ja", asm, "Strings.strings-en.tinyhand");
-            }
-            catch
-            {
-            }
-
             // Load options
             if (!string.IsNullOrEmpty(options.OptionsPath))
             {

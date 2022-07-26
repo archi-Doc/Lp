@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace Arc.Unit;
 
 /// <summary>
@@ -14,4 +16,10 @@ public interface IUnitPreloadContext
     public string DataDirectory { get; set; }
 
     public UnitArguments Arguments { get; }
+
+    public void SetOptions<TOptions>(TOptions options)
+        where TOptions : class;
+
+    public bool TryGetOptions<TOptions>([MaybeNullWhen(false)] out TOptions options)
+        where TOptions : class;
 }

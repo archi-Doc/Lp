@@ -76,7 +76,7 @@ public class Program
             });
         // .ConfigureBuilder(new LPConsole.Sample.SampleUnit.Builder()); // Alternative
 
-        unit = builder.Build();
+        unit = builder.Build(args);
 
         var parserOptions = SimpleParserOptions.Standard with
         {
