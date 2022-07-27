@@ -314,19 +314,20 @@ public class Control
         await context.SendRunAsync(new(this.Core));
 
         Console.WriteLine();
-        this.ShowInformation();
-        this.LPBase.Options.NetsphereOptions.ShowInformation(this.Logger.Get<DefaultLog>());
+        var logger = this.Logger.Get<DefaultLog>(LogLevel.Information);
+        this.ShowInformation(logger);
+        this.LPBase.Options.NetsphereOptions.LogInformation(logger);
 
-        this.Logger.Get<DefaultLog>().Log("Press Enter key to switch to console mode.");
-        this.Logger.Get<DefaultLog>().Log("Press Ctrl+C to exit.");
-        this.Logger.Get<DefaultLog>().Log($"Running");
+        logger.Log("Press Enter key to switch to console mode.");
+        logger.Log("Press Ctrl+C to exit.");
+        logger.Log($"Running");
     }
 
-    public void ShowInformation()
+    public void ShowInformation(ILog logger)
     {
-        this.Logger.Get<DefaultLog>().Log($"System: {Mics.ToString(Mics.GetSystem())}");
-        this.Logger.Get<DefaultLog>().Log($"Utc: {Mics.ToString(Mics.GetUtcNow())}");
-        this.Logger.Get<DefaultLog>().Log($"Root directory: {this.LPBase.RootDirectory}");
+        logger.Log($"Utc: {Mics.ToString(Mics.GetUtcNow())}");
+        logger.Log($"Root directory: {this.LPBase.RootDirectory}");
+        logger.Log($"Data directory: {this.LPBase.DataDirectory}");
     }
 
     public async Task TerminateAsync(UnitContext context)
@@ -447,7 +448,7 @@ public class Control
                 }
                 else
                 {
-                    Console.WriteLine();
+                    // Console.WriteLine();
                 }
 
                 // To view mode

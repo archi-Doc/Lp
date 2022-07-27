@@ -7,7 +7,7 @@ using Tinyhand.IO;
 namespace LP.Data;
 
 [TinyhandObject(ImplicitKeyAsName = true)]
-public partial record LPOptions
+public partial record LPOptions : ILogInformation
 {
     public const string DefaultOptionsName = "Options.tinyhand";
 
@@ -40,6 +40,10 @@ public partial record LPOptions
 
     [SimpleOption("confirmexit", description: "Confirms application exit")]
     public bool ConfirmExit { get; init; } = false;
+
+    public void LogInformation(ILog log)
+    {
+    }
 
     /*public bool TryLoad()
     {

@@ -12,8 +12,8 @@ namespace Arc.Unit;
 /// </summary>
 internal class UnitBuilderContext : IUnitPreloadContext, IUnitConfigurationContext, IUnitSetupContext
 {
-    private const string RootDirectoryOption = "root";
-    private const string DataDirectoryOption = "data";
+    private const string RootDirectoryOption = "rootdir";
+    private const string DataDirectoryOption = "datadir";
 
     public UnitBuilderContext()
     {
