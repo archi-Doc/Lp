@@ -8,10 +8,10 @@ using Tinyhand;
 
 namespace LP.Subcommands.Dump;
 
-[SimpleCommand("info", Default = true)]
-public class DumpSubcommandInfo : ISimpleCommand<DumpSubcommandInfoOptions>
+[SimpleCommand("lp", Default = true)]
+public class InfoSubcommandLP : ISimpleCommand<DumpSubcommandInfoOptions>
 {
-    public DumpSubcommandInfo(Control control)
+    public InfoSubcommandLP(Control control)
     {
         this.Control = control;
     }
@@ -19,9 +19,9 @@ public class DumpSubcommandInfo : ISimpleCommand<DumpSubcommandInfoOptions>
     public void Run(DumpSubcommandInfoOptions options, string[] args)
     {
         var target = args.Length > 0 ? args[0] : string.Empty;
-        var logger = this.Control.Logger.TryGet<DumpSubcommandInfo>(LogLevel.Information);
+        var logger = this.Control.Logger.TryGet<InfoSubcommandLP>(LogLevel.Information);
 
-        logger?.Log($"Dump: {target}");
+        logger?.Log($"Info: {target}");
 
         if (string.Compare("bytearraypool", target, true) == 0)
         {

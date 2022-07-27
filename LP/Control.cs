@@ -66,7 +66,8 @@ public class Control : ILogInformation
                 context.AddSubcommand(typeof(LP.Subcommands.BenchmarkSubcommand));
 
                 LP.Subcommands.TemplateSubcommand.Configure(context);
-                LP.Subcommands.DumpSubcommand.Configure(context);
+                LP.Subcommands.InfoSubcommand.Configure(context);
+                LP.Subcommands.ExportSubcommand.Configure(context);
                 LP.Subcommands.KeyVaultSubcommand.Configure(context);
                 LP.Subcommands.FlagSubcommand.Configure(context);
                 LP.Subcommands.NodeSubcommand.Configure(context);
@@ -83,6 +84,8 @@ public class Control : ILogInformation
                 {
                     options.Path = Path.Combine(context.RootDirectory, logfile);
                 }
+
+                options.MaxLogCapacity = 20;
             });
 
             this.SetupOptions<LPBase>((context, lpBase) =>

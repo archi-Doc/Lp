@@ -6,18 +6,17 @@ using SimpleCommandLine;
 
 namespace LP.Subcommands;
 
-[SimpleCommand("dump", IsSubcommand = true)]
-public class DumpSubcommand : SimpleCommandGroup<DumpSubcommand>
+[SimpleCommand("export", IsSubcommand = true)]
+public class ExportSubcommand : SimpleCommandGroup<ExportSubcommand>
 {
     public static void Configure(IUnitConfigurationContext context)
     {
         var group = ConfigureGroup(context);
-        group.AddCommand(typeof(DumpSubcommandInfo));
-        group.AddCommand(typeof(DumpSubcommandOptions));
+        group.AddCommand(typeof(ExportSubcommandOptions));
     }
 
-    public DumpSubcommand(UnitContext context)
-        : base(context, "info")
+    public ExportSubcommand(UnitContext context)
+        : base(context, null)
     {
     }
 }

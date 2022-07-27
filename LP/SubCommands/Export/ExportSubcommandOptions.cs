@@ -1,39 +1,36 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics;
 using Arc.Crypto;
 using LP;
 using LP.Data;
-using Netsphere;
+using LP.Services;
 using SimpleCommandLine;
-using Tinyhand;
 
 namespace LP.Subcommands.Dump;
 
 [SimpleCommand("options")]
-public class DumpSubcommandOptions : ISimpleCommandAsync<DumpSubcommandOptionsOptions>
+public class ExportSubcommandOptions : ISimpleCommandAsync<ExportSubcommandOptionsOptions>
 {
-    public DumpSubcommandOptions(ILogger<DumpSubcommandOptions> logger, Control control)
+    public ExportSubcommandOptions(ILogger<ExportSubcommandOptions> logger, IUserInterfaceService userInterfaceService, Control control)
     {
         this.logger = logger;
+        this.userInterfaceService = userInterfaceService;
         this.Control = control;
     }
 
-    public async Task RunAsync(DumpSubcommandOptionsOptions options, string[] args)
+    public async Task RunAsync(ExportSubcommandOptionsOptions options, string[] args)
     {
-        /*var output = options.Output;
-        if (string.IsNullOrEmpty(output))
-        {
-            output = LPOptions.DefaultOptionsName;
-        }
-
-        var path = Path.Combine(this.Control.LPBase.RootDirectory, output);*/
-
         try
         {
             var utf = TinyhandSerializer.SerializeToUtf8(this.Control.LPBase.Options with { OptionsPath = string.Empty, });
 
             var path = this.Control.LPBase.CombineDataPathAndPrepareDirectory(options.Output, LPOptions.DefaultOptionsName);
+            if (File.Exists(path) &&
+                await this.userInterfaceService.RequestYesOrNo(Hashed.Dialog.ConfirmOverwrite, path) != true)
+            {
+                return;
+            }
+
             await File.WriteAllBytesAsync(path, utf);
             this.logger.TryGet()?.Log(Hashed.Success.Output, path);
         }
@@ -44,12 +41,13 @@ public class DumpSubcommandOptions : ISimpleCommandAsync<DumpSubcommandOptionsOp
 
     public Control Control { get; set; }
 
-    private ILogger<DumpSubcommandOptions> logger;
+    private ILogger<ExportSubcommandOptions> logger;
+    private IUserInterfaceService userInterfaceService;
 }
 
-public record DumpSubcommandOptionsOptions
+public record ExportSubcommandOptionsOptions
 {
-    [SimpleOption("output", description: "Output name")]
+    [SimpleOption("output", description: "Output path")]
     public string Output { get; init; } = string.Empty;
 
     public override string ToString() => $"{this.Output}";
