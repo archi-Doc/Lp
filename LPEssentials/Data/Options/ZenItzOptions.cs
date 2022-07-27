@@ -6,13 +6,12 @@ using SimpleCommandLine;
 namespace LP.Data;
 
 [TinyhandObject(ImplicitKeyAsName = true)]
-public partial class ZenItzOptions
+public partial class ZenItzOptions : ILogInformation
 {
     [SimpleOption("zenfile", null, ".")]
     public string ZenFile { get; set; } = string.Empty;
 
-    public override string ToString()
+    public void LogInformation(ILog logger)
     {
-        return $"ZenItz Options";
     }
 }

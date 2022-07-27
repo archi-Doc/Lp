@@ -24,7 +24,7 @@ using static SimpleCommandLine.SimpleParser;
 
 namespace LP;
 
-public class Control
+public class Control : ILogInformation
 {
     public class Builder : UnitBuilder<Unit>
     {
@@ -315,19 +315,17 @@ public class Control
 
         Console.WriteLine();
         var logger = this.Logger.Get<DefaultLog>(LogLevel.Information);
-        this.ShowInformation(logger);
-        this.LPBase.Options.NetsphereOptions.LogInformation(logger);
+        this.LogInformation(logger);
 
         logger.Log("Press Enter key to switch to console mode.");
         logger.Log("Press Ctrl+C to exit.");
         logger.Log($"Running");
     }
 
-    public void ShowInformation(ILog logger)
+    public void LogInformation(ILog logger)
     {
         logger.Log($"Utc: {Mics.ToString(Mics.GetUtcNow())}");
-        logger.Log($"Root directory: {this.LPBase.RootDirectory}");
-        logger.Log($"Data directory: {this.LPBase.DataDirectory}");
+        this.LPBase.LogInformation(logger);
     }
 
     public async Task TerminateAsync(UnitContext context)

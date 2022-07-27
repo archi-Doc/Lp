@@ -43,6 +43,8 @@ public partial record LPOptions : ILogInformation
 
     public void LogInformation(ILog log)
     {
+        this.NetsphereOptions.LogInformation(log);
+        this.ZenItzOptions.LogInformation(log);
     }
 
     /*public bool TryLoad()

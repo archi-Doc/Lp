@@ -53,28 +53,6 @@ public class Program
             RequireStrictOptionName = true,
         };
 
-        // Logger
-        /*if (options.EnableLogger)
-        {
-            var logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "logs");
-            Directory.CreateDirectory(logDirectory);
-            var netControl = Container.Resolve<NetControl>();
-            netControl.Terminal.SetLogger(new SerilogLogger(new LoggerConfiguration()
-                .MinimumLevel.Debug()
-                .WriteTo.File(
-                    Path.Combine(logDirectory, "terminal.log.txt"),
-                    buffered: true,
-                    flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
-                .CreateLogger()));
-            netControl.Alternative?.SetLogger(new SerilogLogger(new LoggerConfiguration()
-                .MinimumLevel.Debug()
-                .WriteTo.File(
-                    Path.Combine(logDirectory, "terminal2.log.txt"),
-                    buffered: true,
-                    flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
-                .CreateLogger()));
-        }*/
-
         await SimpleParser.ParseAndRunAsync(unit.Context.Commands, args, parserOptions); // Main process
 
         ThreadCore.Root.Terminate();
