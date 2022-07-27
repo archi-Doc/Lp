@@ -75,7 +75,8 @@ public class SimpleLogFormatter
         this.WriteColoredMessage(sb, "] ", DefaultColor, ConsoleColor.DarkGray); // sb.Append("] ");
 
         // Message
-        this.WriteColoredMessage(sb, param.Message, DefaultColor, ConsoleColor.White);
+        var messageColor = param.LogLevel > LogLevel.Debug ? ConsoleColor.White : ConsoleColor.Gray;
+        this.WriteColoredMessage(sb, param.Message, DefaultColor, messageColor);
     }
 
     private void WriteColoredMessage(StringBuilder sb, string message, ConsoleColor background, ConsoleColor foreground)

@@ -319,7 +319,7 @@ public class Control : ILogInformation
 
         logger.Log("Press Enter key to switch to console mode.");
         logger.Log("Press Ctrl+C to exit.");
-        logger.Log($"Running");
+        logger.Log("Running");
     }
 
     public void LogInformation(ILog logger)
