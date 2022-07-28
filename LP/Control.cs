@@ -55,6 +55,7 @@ public class Control : ILogInformation
 
                 // Machines
                 context.AddTransient<Machines.SingleMachine>();
+                context.AddTransient<Machines.LogTesterMachine>();
 
                 // Subcommands
                 context.AddSubcommand(typeof(LP.Subcommands.MicsSubcommand));
@@ -179,6 +180,9 @@ public class Control : ILogInformation
 
                 // Create optional instances
                 this.Context.CreateInstances();
+
+                // Machines
+                control.BigMachine.CreateNew<LP.Machines.LogTesterMachine.Interface>(Identifier.Zero);
 
                 // Prepare
                 this.Context.SendPrepare(new());
