@@ -11,7 +11,7 @@ public partial class LogTesterMachine : Machine<Identifier>
     {
         this.control = control;
         this.logger = logger;
-        this.DefaultTimeout = TimeSpan.FromSeconds(1);
+        this.DefaultTimeout = TimeSpan.FromSeconds(2);
     }
 
     public int Count { get; set; }
