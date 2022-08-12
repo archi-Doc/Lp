@@ -89,6 +89,11 @@ public class Control : ILogInformation
                 options.MaxLogCapacity = 20;
             });
 
+            this.SetupOptions<ConsoleLoggerOptions>((context, options) =>
+            {// FileLoggerOptions
+                options.Formatter.EnableColor = true;
+            });
+
             this.SetupOptions<LPBase>((context, lpBase) =>
             {// LPBase
                 context.GetOptions<LPOptions>(out var options);
