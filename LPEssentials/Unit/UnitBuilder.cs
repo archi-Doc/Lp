@@ -46,6 +46,9 @@ public class UnitBuilder<TUnit> : UnitBuilder
     public override UnitBuilder<TUnit> SetupOptions<TOptions>(Action<IUnitSetupContext, TOptions> @delegate)
         where TOptions : class
         => (UnitBuilder<TUnit>)base.SetupOptions(@delegate);
+
+    /// <inheritdoc/>
+    public override TUnit GetBuiltUnit() => (TUnit)base.GetBuiltUnit();
 }
 
 /// <summary>
@@ -129,6 +132,16 @@ public class UnitBuilder
         return this;
     }
 
+    public virtual BuiltUnit GetBuiltUnit()
+    {
+        if (this.builtUnit == null)
+        {
+            throw new InvalidOperationException();
+        }
+
+        return this.builtUnit;
+    }
+
     internal virtual TUnit Build<TUnit>(string[] args)
         where TUnit : BuiltUnit
     {
@@ -139,12 +152,10 @@ public class UnitBuilder
     internal virtual TUnit Build<TUnit>(string? args)
         where TUnit : BuiltUnit
     {
-        if (this.built)
+        if (this.builtUnit != null)
         {
             throw new InvalidOperationException();
         }
-
-        this.built = true;
 
         // Builder context.
         var builderContext = new UnitBuilderContext();
@@ -183,7 +194,9 @@ public class UnitBuilder
         // Setup
         this.SetupInternal(builderContext);
 
-        return serviceProvider.GetRequiredService<TUnit>();
+        var unit = serviceProvider.GetRequiredService<TUnit>();
+        this.builtUnit = unit;
+        return unit;
     }
 
     internal void PreloadInternal(UnitBuilderContext context, string? args)
@@ -241,7 +254,7 @@ public class UnitBuilder
         }
     }
 
-    private bool built = false;
+    private BuiltUnit? builtUnit;
     private List<Action<IUnitPreloadContext>> preloadActions = new();
     private List<Action<IUnitConfigurationContext>> configureActions = new();
     private List<SetupItem> setupItems = new();
