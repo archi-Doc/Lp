@@ -11,7 +11,7 @@ public class FileLogger<TOption> : BufferedLogOutput
         : base(unitLogger)
     {
         if (string.IsNullOrEmpty(Path.GetDirectoryName(options.Path)))
-        {// tempcode
+        {
             options.Path = Path.Combine(Directory.GetCurrentDirectory(), options.Path);
         }
 

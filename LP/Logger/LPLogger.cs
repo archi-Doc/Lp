@@ -44,12 +44,7 @@ public class LPLogger
                         return;
                     }
 
-                    if (context.LogSourceType == typeof(ConsoleLog))
-                    {// Console log
-                        context.SetOutput<ConsoleLogger>();
-                        return;
-                    }
-                    else if (IsSubclassOfRawGeneric(typeof(BigMachines.Machine<>), context.LogSourceType))
+                    if (IsSubclassOfRawGeneric(typeof(BigMachines.Machine<>), context.LogSourceType))
                     {// Machines
                         context.SetOutput<BackgroundAndFileLogger>();
                         context.SetFilter<MachineLogFilter>();

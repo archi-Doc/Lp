@@ -15,6 +15,7 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
         : base(parent, Process, true)
     {
         this.ZenDirectory = zenDirectory;
+        // this.logger = Zen.UnitLogger.GetLogger<ZenDirectoryWorker>();
     }
 
     public static async Task Process(TaskWorker<ZenDirectoryWork> w, ZenDirectoryWork work)
@@ -89,6 +90,9 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
             catch
             {
             }
+            finally
+            {
+            }
         }
         else if (work.Type == ZenDirectoryWork.WorkType.Remove)
         {
@@ -130,6 +134,7 @@ DeleteAndExit:
     }
 
     private HashSet<string> createdDirectories = new();
+    // private ILogger<ZenDirectoryWorker>? logger;
 }
 
 internal class ZenDirectoryWork : IEquatable<ZenDirectoryWork>

@@ -45,47 +45,30 @@ public class Program
         var builder = new Control.Builder()
             .Preload(context =>
             {
-                // context.TryParseArguments<LPOptions>();
-                // context.SetData<string>("test");
-                // context.TryGetData<string>(out var st);
             })
             .Configure(context =>
             {
                 // Subcommand
-                context.AddCommand(typeof(LPConsoleCommand));
-                context.AddCommand(typeof(TempCommand));
 
                 // NetService
 
                 // ServiceFilter
 
                 // Unit
-                LPConsole.Sample.SampleUnit.Configure(context);
+                LPConsole.Example.ExampleUnit.Configure(context);
 
                 // Looger resolver
                 context.AddLoggerResolver(context =>
                 {
                 });
-            })
-            .SetupOptions<LPOptions>((context, options) =>
-            {
-            })
-            .SetupOptions<FileLoggerOptions>((context, options) =>
-            {
-                options.Path = Path.Combine(context.RootDirectory, "Logs/Log.txt");
             });
-        // .ConfigureBuilder(new LPConsole.Sample.SampleUnit.Builder()); // Alternative
+        // .ConfigureBuilder(new LPConsole.Example.ExampleUnit.Builder()); // Alternative
 
         unit = builder.Build(args);
 
-        var parserOptions = SimpleParserOptions.Standard with
-        {
-            ServiceProvider = unit.Context.ServiceProvider,
-            RequireStrictCommandName = false,
-            RequireStrictOptionName = true,
-        };
+        var options = unit.Context.ServiceProvider.GetRequiredService<LPOptions>();
+        await unit.RunAsync(options);
 
-        await SimpleParser.ParseAndRunAsync(unit.Context.Commands, args, parserOptions); // Main process
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
         // unit.Context.ServiceProvider.GetService<UnitLogger>()?.FlushAndTerminate();
         ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).

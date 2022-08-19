@@ -2,6 +2,9 @@
 
 namespace Arc.Unit;
 
+/// <summary>
+/// Interface to receive and output logs.
+/// </summary>
 public interface ILogOutput
 {
     internal delegate void OutputDelegate(LogOutputParameter param);

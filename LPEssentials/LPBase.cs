@@ -23,7 +23,7 @@ public enum LPMode
     User,
 }
 
-public class LPBase
+public class LPBase : ILogInformation
 {
     public const string DataDirectoryName = "Data";
 
@@ -119,9 +119,12 @@ public class LPBase
         }
     }
 
-    public override string ToString()
+    public void LogInformation(ILog logger)
     {
-        return $"Mode: {this.Mode}, {this.Options.ToString()}";
+        logger.Log($"Root directory: {this.RootDirectory}");
+        logger.Log($"Data directory: {this.DataDirectory}");
+        logger.Log($"Node: {this.NodeName}, Mode: {this.Mode.ToString()}");
+        this.Options.LogInformation(logger);
     }
 
     private string CombinePath(string directory, string path, string defaultFilename)

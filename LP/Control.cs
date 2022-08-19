@@ -20,10 +20,11 @@ using Netsphere;
 using SimpleCommandLine;
 using ZenItz;
 using LP.Data;
+using static SimpleCommandLine.SimpleParser;
 
 namespace LP;
 
-public class Control
+public class Control : ILogInformation
 {
     public class Builder : UnitBuilder<Unit>
     {
@@ -54,6 +55,7 @@ public class Control
 
                 // Machines
                 context.AddTransient<Machines.SingleMachine>();
+                context.AddTransient<Machines.LogTesterMachine>();
 
                 // Subcommands
                 context.AddSubcommand(typeof(LP.Subcommands.MicsSubcommand));
@@ -64,10 +66,46 @@ public class Control
                 context.AddSubcommand(typeof(LP.Subcommands.PunchSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.BenchmarkSubcommand));
 
-                LP.Subcommands.DumpSubcommand.Configure(context);
+                LP.Subcommands.TemplateSubcommand.Configure(context);
+                LP.Subcommands.InfoSubcommand.Configure(context);
+                LP.Subcommands.ExportSubcommand.Configure(context);
                 LP.Subcommands.KeyVaultSubcommand.Configure(context);
                 LP.Subcommands.FlagSubcommand.Configure(context);
                 LP.Subcommands.NodeSubcommand.Configure(context);
+            });
+
+            this.SetupOptions<FileLoggerOptions>((context, options) =>
+            {// FileLoggerOptions
+                var logfile = "Logs/Log.txt";
+                if (context.TryGetOptions<LPOptions>(out var lpOptions))
+                {
+                    options.Path = Path.Combine(lpOptions.RootDirectory, logfile);
+                }
+                else
+                {
+                    options.Path = Path.Combine(context.RootDirectory, logfile);
+                }
+
+                options.MaxLogCapacity = 20;
+            });
+
+            this.SetupOptions<ConsoleLoggerOptions>((context, options) =>
+            {// FileLoggerOptions
+                options.Formatter.EnableColor = true;
+            });
+
+            this.SetupOptions<LPBase>((context, lpBase) =>
+            {// LPBase
+                context.GetOptions<LPOptions>(out var options);
+                lpBase.Initialize(options, true, "relay");
+            });
+
+            this.SetupOptions<NetBase>((context, netBase) =>
+            {// NetBase
+                context.GetOptions<LPOptions>(out var options);
+                netBase.SetParameter(true, string.Empty, options.NetsphereOptions);
+                netBase.AllowUnsafeConnection = true; // betacode
+                netBase.NetsphereOptions.EnableTestFeatures = true; // betacode
             });
 
             this.AddBuilder(new NetControl.Builder());
@@ -129,50 +167,10 @@ public class Control
         public Unit(UnitContext context)
             : base(context)
         {
-            SubcommandParserOptions = SimpleParserOptions.Standard with
-            {
-                ServiceProvider = context.ServiceProvider,
-                RequireStrictCommandName = true,
-                RequireStrictOptionName = true,
-                DoNotDisplayUsage = true,
-                DisplayCommandListAsHelp = true,
-            };
-
-            subcommandParser = new SimpleParser(context.Subcommands, SubcommandParserOptions);
         }
 
         public async Task RunAsync(LPOptions options)
         {
-            // Load options
-            if (!string.IsNullOrEmpty(options.OptionsPath))
-            {
-                var originalPath = options.OptionsPath;
-                try
-                {
-                    var utf8 = File.ReadAllBytes(originalPath);
-                    var op = TinyhandSerializer.DeserializeFromUtf8<LPOptions>(utf8);
-                    if (op != null)
-                    {
-                        options = op;
-                        Console.WriteLine(HashedString.Get(Hashed.Success.Loaded, originalPath));
-                    }
-                }
-                catch
-                {
-                    Console.WriteLine(HashedString.Get(Hashed.Error.Load, originalPath));
-                }
-            }
-
-            // LPBase
-            this.lpBase = this.Context.ServiceProvider.GetRequiredService<LPBase>();
-            this.lpBase.Initialize(options, true, "relay");
-
-            // NetBase
-            this.netBase = this.Context.ServiceProvider.GetRequiredService<NetBase>();
-            this.netBase.SetParameter(true, string.Empty, options.NetsphereOptions);
-            this.netBase.AllowUnsafeConnection = true; // betacode
-            this.netBase.NetsphereOptions.EnableTestFeatures = true; // betacode
-
             var control = this.Context.ServiceProvider.GetRequiredService<Control>();
             try
             {
@@ -187,6 +185,9 @@ public class Control
 
                 // Create optional instances
                 this.Context.CreateInstances();
+
+                // Machines
+                control.BigMachine.CreateNew<LP.Machines.LogTesterMachine.Interface>(Identifier.Zero);
 
                 // Prepare
                 this.Context.SendPrepare(new());
@@ -226,9 +227,6 @@ public class Control
                 return;
             }
         }
-
-        private LPBase lpBase = default!;
-        private NetBase netBase = default!;
     }
 
     public static bool ObjectToMemoryOwner(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved)
@@ -257,7 +255,7 @@ public class Control
         }
     }
 
-    public Control(UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl, KeyVault keyVault)
+    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl, KeyVault keyVault)
     {
         this.Logger = logger;
         this.UserInterfaceService = userInterfaceService;
@@ -272,6 +270,17 @@ public class Control
 
         this.Core = core;
         this.BigMachine.Core.ChangeParent(this.Core);
+
+        SubcommandParserOptions = SimpleParserOptions.Standard with
+        {
+            ServiceProvider = context.ServiceProvider,
+            RequireStrictCommandName = true,
+            RequireStrictOptionName = true,
+            DoNotDisplayUsage = true,
+            DisplayCommandListAsHelp = true,
+        };
+
+        this.subcommandParser = new SimpleParser(context.Subcommands, SubcommandParserOptions);
     }
 
     public async Task LoadAsync(UnitContext context)
@@ -317,19 +326,18 @@ public class Control
         await context.SendRunAsync(new(this.Core));
 
         Console.WriteLine();
-        this.ShowInformation();
-        this.LPBase.Options.NetsphereOptions.ShowInformation(this.Logger.Get<DefaultLog>());
+        var logger = this.Logger.Get<DefaultLog>(LogLevel.Information);
+        this.LogInformation(logger);
 
-        this.Logger.Get<DefaultLog>().Log("Press Enter key to switch to console mode.");
-        this.Logger.Get<DefaultLog>().Log("Press Ctrl+C to exit.");
-        this.Logger.Get<DefaultLog>().Log($"Running");
+        logger.Log("Press Enter key to switch to console mode.");
+        logger.Log("Press Ctrl+C to exit.");
+        logger.Log("Running");
     }
 
-    public void ShowInformation()
+    public void LogInformation(ILog logger)
     {
-        this.Logger.Get<DefaultLog>().Log($"System: {Mics.ToString(Mics.GetSystem())}");
-        this.Logger.Get<DefaultLog>().Log($"Utc: {Mics.ToString(Mics.GetUtcNow())}");
-        this.Logger.Get<DefaultLog>().Log($"Root directory: {this.LPBase.RootDirectory}");
+        logger.Log($"Utc: {Mics.ToString(Mics.GetUtcNow())}");
+        this.LPBase.LogInformation(logger);
     }
 
     public async Task TerminateAsync(UnitContext context)
@@ -369,11 +377,11 @@ public class Control
 
     public bool Subcommand(string subcommand)
     {
-        if (!subcommandParser.Parse(subcommand))
+        if (!this.subcommandParser.Parse(subcommand))
         {
-            if (subcommandParser.HelpCommand != string.Empty)
+            if (this.subcommandParser.HelpCommand != string.Empty)
             {
-                subcommandParser.ShowHelp();
+                this.subcommandParser.ShowHelp();
             }
             else
             {
@@ -383,7 +391,7 @@ public class Control
             return false;
         }
 
-        subcommandParser.Run();
+        this.subcommandParser.Run();
         return false;
 
         /*if (subcommandParser.HelpCommand != string.Empty)
@@ -450,7 +458,7 @@ public class Control
                 }
                 else
                 {
-                    Console.WriteLine();
+                    // Console.WriteLine();
                 }
 
                 // To view mode
@@ -501,7 +509,7 @@ public class Control
 
     public KeyVault KeyVault { get; }
 
-    private static SimpleParser subcommandParser = default!;
+    private SimpleParser subcommandParser;
 
     private bool SafeKeyAvailable
     {

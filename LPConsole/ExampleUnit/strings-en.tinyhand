@@ -1,5 +1,5 @@
 // identifier = "string" /* null: Use the default value. */
 
-SampleUnit = {
-    Command = "Sample command"
+ExampleUnit = {
+    Command = "Example command"
 }

@@ -36,6 +36,7 @@ public class ZenControl
                 // Main services
                 context.AddSingleton<ZenControl>();
                 context.AddSingleton<Zen>();
+                context.AddSingleton<ZenIO>();
                 context.AddSingleton<Itz>();
 
                 // Subcommands

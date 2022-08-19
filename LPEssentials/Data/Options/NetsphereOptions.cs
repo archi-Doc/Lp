@@ -6,7 +6,7 @@ using SimpleCommandLine;
 namespace LP.Data;
 
 [TinyhandObject(ImplicitKeyAsName = true)]
-public partial class NetsphereOptions
+public partial class NetsphereOptions : ILogInformation
 {
     [SimpleOption("address", null, "Global IP address")]
     public string Address { get; set; } = string.Empty;
@@ -26,7 +26,7 @@ public partial class NetsphereOptions
     [SimpleOption("logger", null, "Enable network logger")]
     public bool EnableLogger { get; set; } = false;
 
-    public void ShowInformation(ILog logger)
+    public void LogInformation(ILog logger)
     {
         logger.Log($"Address: {this.Address}, Port: {this.Port}");
         logger.Log($"Alternative: {this.EnableAlternative}, Test features: {this.EnableTestFeatures}");

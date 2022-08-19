@@ -20,6 +20,9 @@ public interface IUnitPreloadContext
     public void SetOptions<TOptions>(TOptions options)
         where TOptions : class;
 
+    public void GetOptions<TOptions>(out TOptions options)
+        where TOptions : class;
+
     public bool TryGetOptions<TOptions>([MaybeNullWhen(false)] out TOptions options)
         where TOptions : class;
 }

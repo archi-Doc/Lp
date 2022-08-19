@@ -7,24 +7,18 @@ using Tinyhand;
 
 namespace LP.Subcommands;
 
-[SimpleCommand("new")]
-public class TemplateSubcommandNew : ISimpleCommandAsync<TemplateOptionsNew>
+[SimpleCommand("ls")]
+public class TemplateSubcommandLs : ISimpleCommandAsync
 {
-    public TemplateSubcommandNew(Control control)
+    public TemplateSubcommandLs(Control control)
     {
         this.Control = control;
     }
 
-    public async Task RunAsync(TemplateOptionsNew option, string[] args)
+    public async Task RunAsync(string[] args)
     {
-        Console.WriteLine($"Template New: {option.Name}");
+        Console.WriteLine("Template");
     }
 
     public Control Control { get; set; }
-}
-
-public record TemplateOptionsNew
-{
-    [SimpleOption("name", Required = true)]
-    public string Name { get; init; } = string.Empty;
 }

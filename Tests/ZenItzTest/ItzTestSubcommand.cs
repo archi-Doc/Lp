@@ -45,7 +45,7 @@ public partial record struct IntPayload2(int Data2) : IItzPayload;
 [TinyhandObject(ImplicitKeyAsName = true)]
 public partial record class IntPayload3(int Data2) : IItzPayload;
 
-[SimpleCommand("itz")]
+[SimpleCommand("itztest")]
 public class ItzTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 {
     public ItzTestSubcommand(ZenControl zenControl)

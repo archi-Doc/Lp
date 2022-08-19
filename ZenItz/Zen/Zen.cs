@@ -35,9 +35,10 @@ public class Zen
         return null;
     }
 
-    public Zen()
+    public Zen(UnitLogger unitLogger, ZenIO io)
     {
-        this.IO = new();
+        Zen.UnitLogger = unitLogger;
+        this.IO = io;
         this.FlakeObjectGoshujin = new(this);
         this.FragmentObjectGoshujin = new(this);
     }
@@ -406,4 +407,6 @@ LoadBackup:
 
         await HashHelper.GetFarmHashAndSaveAsync(byteArray, path, backupPath);
     }
+
+    internal static UnitLogger UnitLogger { get; private set; } = default!;
 }
