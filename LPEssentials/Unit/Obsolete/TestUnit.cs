@@ -1,12 +1,12 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace Arc.Unit.Sample;
+namespace Arc.Unit.Obsolete;
 
 public class TestClass
 {
     public static void SampleCode()
     {
-        var builder = new TestClass.Builder()
+        var builder = new Builder()
             .Configure(x => { }); // Custom configuration
 
         var unit = builder.Build();
