@@ -142,7 +142,7 @@ internal class FileLoggerWorker : TaskCore
             return;
         }
 
-        this.logger?.TryGet()?.Log($"Limit logs {capacity}/{this.maxCapacity} {directory}");
+        // this.logger?.TryGet()?.Log($"Limit logs {capacity}/{this.maxCapacity} {directory}");
         foreach (var x in pathToSize)
         {
             if (capacity < this.maxCapacity)
