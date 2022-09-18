@@ -14,7 +14,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
 {
     public const int MaxRepetitions = 100;
     public const string CurveName = "secp256r1";
-    public const string TestKeyString = "{\"test\", b\"AMlTJh7A1Bn7ltdGW5MCM5IcdyyIFNcgHl3HMEGFGhs=\", b\"cMXxoQ5zknPMhpR+8XVkxPwBaGQX4NY7U25OhRg/gRs=\", b\"d2oC+4V2Rufl6xKhFBqD5gNlSARat3Nejt08LhEYt9c=\"}";
+    public const string TestKeyString = "\"test\", b\"AMlTJh7A1Bn7ltdGW5MCM5IcdyyIFNcgHl3HMEGFGhs=\", b\"cMXxoQ5zknPMhpR+8XVkxPwBaGQX4NY7U25OhRg/gRs=\", b\"d2oC+4V2Rufl6xKhFBqD5gNlSARat3Nejt08LhEYt9c=\"";
 
     public BenchmarkSubcommand(ILogger<BenchmarkSubcommand> logger, Control control)
     {
@@ -24,10 +24,10 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
         try
         {
             // var testKeyString = TinyhandSerializer.SerializeToString(AuthorityPrivateKey.Create("test"));
-            var privateKey = TinyhandSerializer.DeserializeFromString<AuthorityPrivateKey>(TestKeyString);
-            if (privateKey != null)
+            this.privateKey = TinyhandSerializer.DeserializeFromString<AuthorityPrivateKey>(TestKeyString);
+            if (this.privateKey != null)
             {
-                this.testKey = Authority.FromPrivateKey(privateKey);
+                this.testKey = Authority.ECDsaFromPrivateKey(this.privateKey);
             }
         }
         catch
@@ -61,11 +61,13 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
 
     private async Task RunCryptoBenchmark(BenchmarkOptions options)
     {
-        if (this.testKey == null)
+        if (this.testKey == null || this.privateKey == null)
         {
             this.logger.TryGet(LogLevel.Error)?.Log("No ECDsa key.");
             return;
         }
+
+        Console.WriteLine($"Key: {this.privateKey.ToString()}");
 
         var bytes = TinyhandSerializer.Serialize(TestKeyString);
 
@@ -111,6 +113,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
     }
 
     private ILogger<BenchmarkSubcommand> logger;
+    private AuthorityPrivateKey? privateKey;
     private ECDsa? testKey;
 }
 
