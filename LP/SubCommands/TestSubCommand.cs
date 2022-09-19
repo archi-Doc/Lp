@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using Arc.Crypto;
 using LP;
 using SimpleCommandLine;
@@ -19,9 +20,18 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
     public async Task RunAsync(TestOptions options, string[] args)
     {
         this.logger.TryGet()?.Log($"Test subcommand: {options.ToString()}");
-        // this.Control.Netsphere.NetStatus
 
-        // this.logger.TryGet()?.Log(System.Environment.OSVersion.ToString());
+        var privateKey = NodeKey.AlternativePrivateKey;
+        var publicKey = new NodePublicKey(privateKey);
+
+        Console.WriteLine($"Alternative(private): {privateKey.ToString()}");
+        Console.WriteLine($"Length: {TinyhandSerializer.Serialize(privateKey).Length.ToString()}");
+        Console.WriteLine(TinyhandSerializer.SerializeToString(privateKey));
+        Console.WriteLine();
+
+        Console.WriteLine($"Alternative(public): {publicKey.ToString()}");
+        Console.WriteLine($"Length: {TinyhandSerializer.Serialize(publicKey).Length.ToString()}");
+        Console.WriteLine(TinyhandSerializer.SerializeToString(publicKey));
     }
 
     public Control Control { get; set; }

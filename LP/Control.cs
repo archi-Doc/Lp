@@ -58,6 +58,7 @@ public class Control : ILogInformation
                 context.AddTransient<Machines.LogTesterMachine>();
 
                 // Subcommands
+                context.AddSubcommand(typeof(LP.Subcommands.TestSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.MicsSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.ExitSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.GCSubcommand));
