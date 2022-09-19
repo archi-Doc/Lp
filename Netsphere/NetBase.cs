@@ -36,9 +36,9 @@ public class NetBase : UnitBase, IUnitPreparable
         if (this.NodePrivateKey == null)
         {
             this.NodePrivateKey = NodePrivateKey.Create();
-            this.NodePrivateEcdh = NodeKey.FromPrivateKey(this.NodePrivateKey)!;
+            this.NodePrivateEcdh = this.NodePrivateKey.CreateECDH();
             this.NodePublicKey = new NodePublicKey(this.NodePrivateKey);
-            this.NodePublicEcdh = NodeKey.FromPublicKey(this.NodePublicKey.X, this.NodePublicKey.Y)!;
+            this.NodePublicEcdh = this.NodePublicKey.CreateECDH();
         }
     }
 
@@ -76,9 +76,9 @@ public class NetBase : UnitBase, IUnitPreparable
     public void SetNodeKey(NodePrivateKey privateKey)
     {
         this.NodePublicKey = new NodePublicKey(privateKey);
-        this.NodePublicEcdh = NodeKey.FromPublicKey(this.NodePublicKey.X, this.NodePublicKey.Y) ?? throw new InvalidDataException();
+        this.NodePublicEcdh = this.NodePublicKey.CreateECDH();
         this.NodePrivateKey = privateKey;
-        this.NodePrivateEcdh = NodeKey.FromPrivateKey(this.NodePrivateKey) ?? throw new InvalidDataException();
+        this.NodePrivateEcdh = this.NodePrivateKey.CreateECDH();
     }
 
     public byte[] SerializeNodeKey()

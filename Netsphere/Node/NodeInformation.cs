@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using System.Security.Cryptography;
 
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
 #pragma warning disable SA1401 // Fields should be private
@@ -22,8 +23,8 @@ public partial class NodeInformation : NodeAddress, IEquatable<NodeInformation>
             {
                 alternative = new NodeInformation(NodeAddress.Alternative);
                 alternative.UpdateTime = Mics.GetUtcNow();
-                alternative.PublicKeyX = NodePrivateKey.AlternativePrivateKey.X;
-                alternative.PublicKeyY = NodePrivateKey.AlternativePrivateKey.Y;
+                alternative.PublicKeyX = NodeKey.AlternativePrivateKey.X;
+                alternative.PublicKeyY = NodeKey.AlternativePrivateKey.Y;
             }
 
             return alternative;

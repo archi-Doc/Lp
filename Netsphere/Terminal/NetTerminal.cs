@@ -240,32 +240,24 @@ public partial class NetTerminal : IDisposable
 
             Cache.NodePublicPrivateKeyToMaterial.Cache(key, material);*/
 
-            // Cache public key
-            var key = new NodePublicKeyStruct(this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
-            var ecdh = Cache.NodePublicKeyToECDH.TryGet(key);
-            if (ecdh == null)
+            // KeyMaterial
+            var material = NodeKey.DeriveKeyMaterial(this.Terminal.NodePrivateECDH, this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
+            if (material == null)
             {
-                ecdh = NodeKey.FromPublicKey(this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
-                if (ecdh == null)
-                {
-                    return NetResult.NoNodeInformation;
-                }
+                return NetResult.NoNodeInformation;
             }
-
-            var material = this.Terminal.NodePrivateECDH.DeriveKeyMaterial(ecdh.PublicKey);
-            Cache.NodePublicKeyToECDH.Cache(key, ecdh);
 
             // this.TerminalLogger?.Information($"Material {material[0]} ({salt.To4Hex()}/{salt2.To4Hex()}), {this.NodeInformation.PublicKeyX[0]}, {this.Terminal.NodePrivateKey.X[0]}");
 
             // ulong Salt, Salt2, byte[] material, ulong Salt, Salt2
-            Span<byte> buffer = stackalloc byte[sizeof(ulong) + sizeof(ulong) + NodeKey.PrivateKeySize + sizeof(ulong) + sizeof(ulong)];
+            Span<byte> buffer = stackalloc byte[sizeof(ulong) + sizeof(ulong) + NodeKey.PrivateKeyLength + sizeof(ulong) + sizeof(ulong)];
             var span = buffer;
             BitConverter.TryWriteBytes(span, salt);
             span = span.Slice(sizeof(ulong));
             BitConverter.TryWriteBytes(span, salt2);
             span = span.Slice(sizeof(ulong));
             material.AsSpan().CopyTo(span);
-            span = span.Slice(NodeKey.PrivateKeySize);
+            span = span.Slice(NodeKey.PrivateKeyLength);
             BitConverter.TryWriteBytes(span, salt);
             span = span.Slice(sizeof(ulong));
             BitConverter.TryWriteBytes(span, salt2);

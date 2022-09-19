@@ -45,19 +45,19 @@ public sealed partial class AuthorityPrivateKey : IValidatable, IEquatable<Autho
 
     [Key(0, PropertyName = "Name")]
     [MaxLength(Authority.NameLength)]
-    private string name = default!;
+    private string name = string.Empty;
 
     [Key(1, PropertyName = "D")]
     [MaxLength(Authority.PrivateKeyLength)]
-    private byte[] d = default!;
+    private byte[] d = Array.Empty<byte>();
 
     [Key(2, PropertyName = "X")]
     [MaxLength(Authority.PublicKeyHalfLength)]
-    private byte[] x = default!;
+    private byte[] x = Array.Empty<byte>();
 
     [Key(3, PropertyName = "Y")]
     [MaxLength(Authority.PublicKeyHalfLength)]
-    private byte[] y = default!;
+    private byte[] y = Array.Empty<byte>();
 
     public bool Validate()
     {

@@ -37,15 +37,15 @@ public sealed partial class AuthorityPublicKey : IValidatable, IEquatable<Author
 
     [Key(0, PropertyName = "Name")]
     [MaxLength(Authority.NameLength)]
-    private string name = default!;
+    private string name = string.Empty;
 
     [Key(1, PropertyName = "X")]
     [MaxLength(Authority.PublicKeyHalfLength)]
-    private byte[] x = default!;
+    private byte[] x = Array.Empty<byte>();
 
     [Key(2, PropertyName = "Y")]
     [MaxLength(Authority.PublicKeyHalfLength)]
-    private byte[] y = default!;
+    private byte[] y = Array.Empty<byte>();
 
     public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> sign)
     {
@@ -158,8 +158,17 @@ internal readonly struct AuthorityPublicKeyStruct : IEquatable<AuthorityPublicKe
 
     public override int GetHashCode()
     {
-        var x = this.X == null ? Array.Empty<byte>() : this.X.AsSpan();
-        var y = this.Y == null ? Array.Empty<byte>() : this.Y.AsSpan();
-        return (int)(FarmHash.Hash64(x) ^ FarmHash.Hash64(y));
+        ulong hash = 0;
+        if (this.X.Length >= sizeof(ulong))
+        {
+            hash ^= BitConverter.ToUInt64(this.X, 0);
+        }
+
+        if (this.Y.Length >= sizeof(ulong))
+        {
+            hash ^= BitConverter.ToUInt64(this.Y, 0);
+        }
+
+        return (int)hash;
     }
 }
