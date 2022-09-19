@@ -122,6 +122,9 @@ public readonly partial struct Identifier : IEquatable<Identifier>, IComparable<
         return true;
     }
 
+    public bool IsDefault()
+        => this.Id0 == 0 && this.Id1 == 0 && this.Id2 == 0 && this.Id3 == 0;
+
     public bool Equals(Identifier other)
     {
         return this.Id0 == other.Id0 && this.Id1 == other.Id1 && this.Id2 == other.Id2 && this.Id3 == other.Id3;

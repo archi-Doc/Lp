@@ -17,6 +17,10 @@ public class DoubleDecimalBenchmark
     public decimal Y2 = 3;
     public decimal Y3 = 4;
 
+    public long Z1 = 2;
+    public long Z2 = 3;
+    public long Z3 = 4;
+
     public DoubleDecimalBenchmark()
     {
     }
@@ -44,6 +48,12 @@ public class DoubleDecimalBenchmark
     }
 
     [Benchmark]
+    public long Long()
+    {
+        return (this.Z1 * Math.Abs(this.Z2)) + this.Z3;
+    }
+
+    [Benchmark]
     public byte[] SerializeDouble()
     {
         return Tinyhand.TinyhandSerializer.Serialize((this.X1 * this.X2) + this.X3);
@@ -53,5 +63,11 @@ public class DoubleDecimalBenchmark
     public byte[] SerializeDecimal()
     {
         return Tinyhand.TinyhandSerializer.Serialize((this.Y1 * this.Y2) + this.Y3);
+    }
+
+    [Benchmark]
+    public byte[] SerializeLong()
+    {
+        return Tinyhand.TinyhandSerializer.Serialize((this.Z1 * this.Z2) + this.Z3);
     }
 }

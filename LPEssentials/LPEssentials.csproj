@@ -25,7 +25,7 @@
     <PackageReference Include="BigMachines" Version="0.21.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
     <PackageReference Include="SimpleCommandLine" Version="0.13.1" />
-    <PackageReference Include="Tinyhand" Version="0.33.4" />
+    <PackageReference Include="Tinyhand" Version="0.34.1" />
     <PackageReference Include="ValueLink" Version="0.28.0" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.354">
       <PrivateAssets>all</PrivateAssets>

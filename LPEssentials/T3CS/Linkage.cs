@@ -6,23 +6,14 @@ namespace LP;
 /// Immutable linkage object.
 /// </summary>
 [TinyhandObject]
-public partial class Linkage : IValidatable // , IEquatable<Linkage>, IComparable<Linkage>
+public sealed partial class Linkage : IValidatable // , IEquatable<Linkage>
 {
-    public const double MaxPoint = 1.0E15;
-    public const double MinPoint = -1.0E15;
+    public const long MaxPoint = 1_000_000_000_000_000_000; // k, m, g, t, p, e, z
+    public const long MinPoint = -MaxPoint;
     public const int MaxMergers = 4;
-
-    public enum Type
-    {
-        A,
-    }
 
     public Linkage()
     {
-        this.Point = 0;
-        this.Owner = default!;
-        this.Mergers = default!;
-        this.Signs = default!;
     }
 
     public bool Validate()
@@ -35,26 +26,26 @@ public partial class Linkage : IValidatable // , IEquatable<Linkage>, IComparabl
         {
             return false;
         }
-        else if (this.Mergers == null || this.Mergers.Length > MaxMergers)
+        else if (this.mergers == null || this.mergers.Length > MaxMergers)
         {
             return false;
         }
-        else if (this.Signs == null || this.Signs.Length != (1 + this.Mergers.Length))
+        else if (this.signs == null || this.signs.Length != (1 + this.mergers.Length))
         {
             return false;
         }
 
-        for (var i = 0; i < this.Mergers.Length; i++)
+        for (var i = 0; i < this.mergers.Length; i++)
         {
-            if (this.Mergers[i] == null || !this.Mergers[i].Validate())
+            if (this.mergers[i] == null || !this.mergers[i].Validate())
             {
                 return false;
             }
         }
 
-        for (var i = 0; i < this.Signs.Length; i++)
+        for (var i = 0; i < this.signs.Length; i++)
         {
-            if (this.Signs[i] == null || this.Signs[i].Length != Authority.PublicKeyLength)
+            if (this.signs[i] == null || this.signs[i].Length != Authority.PublicKeyLength)
             {
                 return false;
             }
@@ -64,17 +55,19 @@ public partial class Linkage : IValidatable // , IEquatable<Linkage>, IComparabl
     }
 
     [Key(0)]
-    public double Point { get; private set; }
+    public long Point { get; private set; }
 
     [Key(1)]
-    public Type LinkageType { get; private set; }
+    public AuthorityPublicKey Owner { get; private set; } = default!;
 
     [Key(2)]
-    public Authority Owner { get; private set; }
+    public AuthorityPublicKey Originator { get; private set; } = default!;
 
-    [Key(3)]
-    public Authority[] Mergers { get; private set; }
+    [Key(3, PropertyName = "Mergers")]
+    [MaxLength(MaxMergers)]
+    private AuthorityPublicKey[] mergers = default!;
 
-    [Key(4, Marker = true)]
-    public byte[][] Signs { get; private set; }
+    [Key(4, Marker = true, PropertyName = "Signs")]
+    [MaxLength(MaxMergers + 1, Authority.PublicKeyLength)]
+    private byte[][] signs = default!;
 }
