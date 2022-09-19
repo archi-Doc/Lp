@@ -28,6 +28,21 @@ public sealed partial class AuthorityPrivateKey : IValidatable, IEquatable<Autho
         this.Y = y;
     }
 
+    public ECDsa? TryCreateECDsa()
+    {
+        try
+        {
+            ECParameters p = default;
+            p.Curve = Authority.ECCurve;
+            p.D = this.d;
+            return ECDsa.Create(p);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     [Key(0, PropertyName = "Name")]
     [MaxLength(Authority.NameLength)]
     private string name = default!;

@@ -27,7 +27,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
             this.privateKey = TinyhandSerializer.DeserializeFromString<AuthorityPrivateKey>(TestKeyString);
             if (this.privateKey != null)
             {
-                this.testKey = Authority.ECDsaFromPrivateKey(this.privateKey);
+                this.testKey = this.privateKey.TryCreateECDsa();
             }
         }
         catch

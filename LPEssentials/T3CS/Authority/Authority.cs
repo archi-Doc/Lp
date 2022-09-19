@@ -21,35 +21,4 @@ public static class Authority
     {
         ECCurve = ECCurve.CreateFromFriendlyName(ECCurveName);
     }
-
-    public static ECDsa? ECDsaFromPrivateKey(AuthorityPrivateKey key)
-    {
-        try
-        {
-            ECParameters p = default;
-            p.Curve = ECCurve;
-            p.D = key.D;
-            return ECDsa.Create(p);
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    public static ECDsa? ECDsaFromPublicKey(byte[] x, byte[] y)
-    {
-        try
-        {
-            ECParameters p = default;
-            p.Curve = ECCurve;
-            p.Q.X = x;
-            p.Q.Y = y;
-            return ECDsa.Create(p);
-        }
-        catch
-        {
-            return null;
-        }
-    }
 }

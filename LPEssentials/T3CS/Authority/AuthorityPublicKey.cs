@@ -47,6 +47,22 @@ public sealed partial class AuthorityPublicKey : IValidatable, IEquatable<Author
     [MaxLength(Authority.PublicKeyHalfLength)]
     private byte[] y = default!;
 
+    public ECDsa? TryCreateECDsa()
+    {
+        try
+        {
+            ECParameters p = default;
+            p.Curve = Authority.ECCurve;
+            p.Q.X = this.x;
+            p.Q.Y = this.y;
+            return ECDsa.Create(p);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     public bool Validate()
     {
         if (this.name == null || this.name.Length > Authority.NameLength)
