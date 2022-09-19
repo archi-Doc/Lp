@@ -47,6 +47,25 @@ public sealed partial class AuthorityPublicKey : IValidatable, IEquatable<Author
     [MaxLength(Authority.PublicKeyHalfLength)]
     private byte[] y = default!;
 
+    public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> sign)
+    {
+        if (sign.Length != Authority.SignLength)
+        {
+            return false;
+        }
+
+        var key = new AuthorityPublicKeyStruct(this.x, this.y);
+        var ecdsa = Cache.AuthorityPublicKeyToECDsa.TryGet(key) ?? this.TryCreateECDsa();
+        if (ecdsa == null)
+        {
+            return false;
+        }
+
+        var result = ecdsa.VerifyData(data, sign, Authority.HashAlgorithmName);
+        Cache.AuthorityPublicKeyToECDsa.Cache(key, ecdsa);
+        return result;
+    }
+
     public ECDsa? TryCreateECDsa()
     {
         try
@@ -108,5 +127,39 @@ public sealed partial class AuthorityPublicKey : IValidatable, IEquatable<Author
         }
 
         return (int)hash;
+    }
+}
+
+internal readonly struct AuthorityPublicKeyStruct : IEquatable<AuthorityPublicKeyStruct>
+{
+    public readonly byte[] X;
+
+    public readonly byte[] Y;
+
+    public AuthorityPublicKeyStruct(byte[] x, byte[] y)
+    {
+        this.X = x;
+        this.Y = y;
+    }
+
+    public bool Equals(AuthorityPublicKeyStruct other)
+    {
+        var x1 = this.X == null ? Array.Empty<byte>() : this.X.AsSpan();
+        var x2 = other.X == null ? Array.Empty<byte>() : other.X.AsSpan();
+        if (!x1.SequenceEqual(x2))
+        {
+            return false;
+        }
+
+        var y1 = this.Y == null ? Array.Empty<byte>() : this.Y.AsSpan();
+        var y2 = other.Y == null ? Array.Empty<byte>() : other.Y.AsSpan();
+        return y1.SequenceEqual(y2);
+    }
+
+    public override int GetHashCode()
+    {
+        var x = this.X == null ? Array.Empty<byte>() : this.X.AsSpan();
+        var y = this.Y == null ? Array.Empty<byte>() : this.Y.AsSpan();
+        return (int)(FarmHash.Hash64(x) ^ FarmHash.Hash64(y));
     }
 }

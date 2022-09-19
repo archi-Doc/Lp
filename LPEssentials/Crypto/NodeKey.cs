@@ -140,11 +140,11 @@ public partial class NodePublicKey : IEquatable<NodePublicKey>
     }
 }
 
-public struct NodePublicKeyStruct : IEquatable<NodePublicKeyStruct>
+internal readonly struct NodePublicKeyStruct : IEquatable<NodePublicKeyStruct>
 {
-    public byte[] X;
+    public readonly byte[] X;
 
-    public byte[] Y;
+    public readonly byte[] Y;
 
     public NodePublicKeyStruct(byte[] x, byte[] y)
     {
