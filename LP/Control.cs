@@ -575,7 +575,11 @@ LoadKeyVaultObjects:
             return;
         }
 
-        this.NetControl.NetBase.SetNodeKey(key);
+        if (!this.NetControl.NetBase.SetNodeKey(key))
+        {
+            await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.KeyVault.NoRestore, NodePrivateKey.Filename);
+            return;
+        }
     }
 
     private async Task SaveKeyVaultAsync()

@@ -9,25 +9,25 @@ public sealed partial class NodePrivateKey : IEquatable<NodePrivateKey>
 {
     public const string Filename = "NodePrivateKey";
 
-    public static NodePrivateKey Create(string? name = null)
+    public static NodePrivateKey Create()
     {
         var curve = ECCurve.CreateFromFriendlyName(NodeKey.ECCurveName);
         var ecdh = ECDiffieHellman.Create(curve);
         var key = ecdh.ExportParameters(true);
 
-        return new NodePrivateKey(name, key.D!, key.Q.X!, key.Q.Y!);
+        return new NodePrivateKey(key.Q.X!, key.Q.Y!, key.D!);
     }
 
     public NodePrivateKey()
     {
     }
 
-    private NodePrivateKey(string? name, byte[] d, byte[] x, byte[] y)
+    private NodePrivateKey(byte[] x, byte[] y, byte[] d)
     {
-        this.Name = name ?? string.Empty;
-        this.D = d;
+        // this.Name = name ?? string.Empty;
         this.X = x;
         this.Y = y;
+        this.D = d;
     }
 
     public ECDiffieHellman CreateECDH()
@@ -38,33 +38,17 @@ public sealed partial class NodePrivateKey : IEquatable<NodePrivateKey>
         return ECDiffieHellman.Create(p);
     }
 
-    public ECDiffieHellman? TryCreateECDH()
-    {
-        try
-        {
-            return this.CreateECDH();
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    [Key(0, PropertyName = "Name")]
-    [MaxLength(Authority.NameLength)]
-    private string name = default!;
-
-    [Key(1, PropertyName = "D")]
-    [MaxLength(NodeKey.PrivateKeyLength)]
-    private byte[] d = default!;
-
-    [Key(2, PropertyName = "X")]
+    [Key(0, PropertyName = "X")]
     [MaxLength(NodeKey.PublicKeyHalfLength)]
     private byte[] x = default!;
 
-    [Key(3, PropertyName = "Y")]
+    [Key(1, PropertyName = "Y")]
     [MaxLength(NodeKey.PublicKeyHalfLength)]
     private byte[] y = default!;
+
+    [Key(2, PropertyName = "D")]
+    [MaxLength(NodeKey.PrivateKeyLength)]
+    private byte[] d = default!;
 
     public bool Equals(NodePrivateKey? other)
     {
@@ -73,15 +57,14 @@ public sealed partial class NodePrivateKey : IEquatable<NodePrivateKey>
             return false;
         }
 
-        return this.name.Equals(other.name) &&
-            this.x.AsSpan().SequenceEqual(other.x) &&
+        return this.x.AsSpan().SequenceEqual(other.x) &&
             this.y.AsSpan().SequenceEqual(other.y) &&
             this.d.AsSpan().SequenceEqual(other.d);
     }
 
     public override int GetHashCode()
     {
-        var hash = FarmHash.Hash64(this.name);
+        ulong hash = 0;
 
         if (this.x.Length >= sizeof(ulong))
         {
@@ -97,5 +80,5 @@ public sealed partial class NodePrivateKey : IEquatable<NodePrivateKey>
     }
 
     public override string ToString()
-        => $"{this.name}({this.GetHashCode():x8})";
+        => $"{this.GetHashCode():x8}";
 }

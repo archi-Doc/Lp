@@ -73,12 +73,24 @@ public class NetBase : UnitBase, IUnitPreparable
         this.NetsphereOptions = netsphereOptions;
     }
 
-    public void SetNodeKey(NodePrivateKey privateKey)
+    public bool SetNodeKey(NodePrivateKey privateKey)
     {
-        this.NodePublicKey = new NodePublicKey(privateKey);
-        this.NodePublicEcdh = this.NodePublicKey.CreateECDH();
-        this.NodePrivateKey = privateKey;
-        this.NodePrivateEcdh = this.NodePrivateKey.CreateECDH();
+        try
+        {
+            this.NodePublicKey = new NodePublicKey(privateKey);
+            this.NodePublicEcdh = this.NodePublicKey.CreateECDH();
+            this.NodePrivateKey = privateKey;
+            this.NodePrivateEcdh = this.NodePrivateKey.CreateECDH();
+            return true;
+        }
+        catch
+        {
+            this.NodePublicKey = default!;
+            this.NodePublicEcdh = default!;
+            this.NodePrivateKey = default!;
+            this.NodePrivateEcdh = default!;
+            return false;
+        }
     }
 
     public byte[] SerializeNodeKey()

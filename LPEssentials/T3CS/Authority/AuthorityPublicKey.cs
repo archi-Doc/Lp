@@ -22,6 +22,7 @@ public sealed partial class AuthorityPublicKey : IValidatable, IEquatable<Author
 
     public AuthorityPublicKey(AuthorityPrivateKey privateKey)
     {
+        this.Version = privateKey.Version;
         this.X = privateKey.X;
         this.Y = privateKey.Y;
     }

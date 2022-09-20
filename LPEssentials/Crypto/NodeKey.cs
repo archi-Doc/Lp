@@ -15,7 +15,7 @@ public static class NodeKey
     public static ECCurve ECCurve { get; }
 
     public static NodePrivateKey AlternativePrivateKey
-        => alternativePrivateKey ??= NodePrivateKey.Create("Alternative");
+        => alternativePrivateKey ??= NodePrivateKey.Create();
 
     static NodeKey()
     {

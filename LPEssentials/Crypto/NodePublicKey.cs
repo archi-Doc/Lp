@@ -5,7 +5,7 @@ using System.Security.Cryptography;
 namespace LP;
 
 [TinyhandObject]
-public partial class NodePublicKey : IEquatable<NodePublicKey>
+public partial class NodePublicKey : IValidatable, IEquatable<NodePublicKey>
 {
     public NodePublicKey()
     {
@@ -13,22 +13,36 @@ public partial class NodePublicKey : IEquatable<NodePublicKey>
 
     public NodePublicKey(NodePrivateKey privateKey)
     {
-        this.Name = privateKey.Name;
+        // this.Name = privateKey.Name;
         this.X = privateKey.X;
         this.Y = privateKey.Y;
     }
 
-    [Key(0, PropertyName = "Name")]
+    /*[Key(0, PropertyName = "Name")]
     [MaxLength(NodeKey.NameLength)]
-    private string name = string.Empty;
+    private string name = string.Empty;*/
 
-    [Key(2, PropertyName = "X")]
+    [Key(0, PropertyName = "X")]
     [MaxLength(NodeKey.PublicKeyHalfLength)]
     private byte[] x = Array.Empty<byte>();
 
-    [Key(3, PropertyName = "Y")]
+    [Key(1, PropertyName = "Y")]
     [MaxLength(NodeKey.PublicKeyHalfLength)]
     private byte[] y = Array.Empty<byte>();
+
+    public bool Validate()
+    {
+        if (this.x == null || this.x.Length != NodeKey.PublicKeyHalfLength)
+        {
+            return false;
+        }
+        else if (this.y == null || this.y.Length != NodeKey.PublicKeyHalfLength)
+        {
+            return false;
+        }
+
+        return true;
+    }
 
     public ECDiffieHellman CreateECDH()
     {
@@ -39,18 +53,6 @@ public partial class NodePublicKey : IEquatable<NodePublicKey>
         return ECDiffieHellman.Create(p);
     }
 
-    public ECDiffieHellman? TryCreateECDH()
-    {
-        try
-        {
-            return this.CreateECDH();
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
     public bool Equals(NodePublicKey? other)
     {
         if (other == null)
@@ -58,14 +60,13 @@ public partial class NodePublicKey : IEquatable<NodePublicKey>
             return false;
         }
 
-        return this.name.Equals(other.name) &&
-            this.X.AsSpan().SequenceEqual(other.X) &&
+        return this.X.AsSpan().SequenceEqual(other.X) &&
             this.Y.AsSpan().SequenceEqual(other.Y);
     }
 
     public override int GetHashCode()
     {
-        var hash = FarmHash.Hash64(this.name);
+        ulong hash = 0;
 
         if (this.x.Length >= sizeof(ulong))
         {
@@ -79,6 +80,9 @@ public partial class NodePublicKey : IEquatable<NodePublicKey>
 
         return (int)hash;
     }
+
+    public override string ToString()
+        => $"{this.GetHashCode():x8}";
 }
 
 internal readonly struct NodePublicKeyStruct : IEquatable<NodePublicKeyStruct>
