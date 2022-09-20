@@ -20,7 +20,6 @@ using Netsphere;
 using SimpleCommandLine;
 using ZenItz;
 using LP.Data;
-using static SimpleCommandLine.SimpleParser;
 
 namespace LP;
 
