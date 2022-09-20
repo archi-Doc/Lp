@@ -22,21 +22,19 @@ public sealed partial class AuthorityPublicKey : IValidatable, IEquatable<Author
 
     public AuthorityPublicKey(AuthorityPrivateKey privateKey)
     {
-        this.Name = privateKey.Name;
         this.X = privateKey.X;
         this.Y = privateKey.Y;
     }
 
-    private AuthorityPublicKey(string? name, byte[] x, byte[] y)
+    private AuthorityPublicKey(int version, byte[] x, byte[] y)
     {
-        this.Name = name ?? string.Empty;
+        this.Version = version;
         this.X = x;
         this.Y = y;
     }
 
-    [Key(0, PropertyName = "Name")]
-    [MaxLength(Authority.NameLength)]
-    private string name = string.Empty;
+    [Key(0)]
+    public int Version { get; private set; }
 
     [Key(1, PropertyName = "X")]
     [MaxLength(Authority.PublicKeyHalfLength)]
@@ -53,15 +51,14 @@ public sealed partial class AuthorityPublicKey : IValidatable, IEquatable<Author
             return false;
         }
 
-        var key = new AuthorityPublicKeyStruct(this.x, this.y);
-        var ecdsa = Cache.AuthorityPublicKeyToECDsa.TryGet(key) ?? this.TryCreateECDsa();
+        var ecdsa = Cache.AuthorityPublicKeyToECDsa.TryGet(this) ?? this.TryCreateECDsa();
         if (ecdsa == null)
         {
             return false;
         }
 
         var result = ecdsa.VerifyData(data, sign, Authority.HashAlgorithmName);
-        Cache.AuthorityPublicKeyToECDsa.Cache(key, ecdsa);
+        Cache.AuthorityPublicKeyToECDsa.Cache(this, ecdsa);
         return result;
     }
 
@@ -83,7 +80,7 @@ public sealed partial class AuthorityPublicKey : IValidatable, IEquatable<Author
 
     public bool Validate()
     {
-        if (this.name == null || this.name.Length > Authority.NameLength)
+        if (this.Version != 0)
         {
             return false;
         }
@@ -106,14 +103,14 @@ public sealed partial class AuthorityPublicKey : IValidatable, IEquatable<Author
             return false;
         }
 
-        return this.name.Equals(other.name) &&
+        return this.Version == other.Version &&
             this.x.AsSpan().SequenceEqual(other.x) &&
             this.y.AsSpan().SequenceEqual(other.y);
     }
 
     public override int GetHashCode()
     {
-        var hash = FarmHash.Hash64(this.name);
+        var hash = (ulong)this.Version;
 
         if (this.x.Length >= sizeof(ulong))
         {

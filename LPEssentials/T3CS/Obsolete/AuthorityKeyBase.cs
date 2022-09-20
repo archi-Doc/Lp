@@ -4,7 +4,7 @@ using System.Security.Cryptography;
 
 #pragma warning disable SA1401 // Fields should be private
 
-namespace LP;
+namespace LP.Obsolete;
 
 [TinyhandObject]
 internal partial class AuthorityKeyBase : IValidatable, IEquatable<AuthorityKeyBase>

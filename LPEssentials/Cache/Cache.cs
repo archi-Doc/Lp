@@ -10,5 +10,5 @@ public static class Cache
 
     // public static ObjectCache<NodePublicPrivateKeyStruct, byte[]> NodePublicPrivateKeyToMaterial { get; } = new(100);
 
-    internal static ObjectCache<AuthorityPublicKeyStruct, ECDsa> AuthorityPublicKeyToECDsa { get; } = new(100);
+    internal static ObjectCache<AuthorityPublicKey, ECDsa> AuthorityPublicKeyToECDsa { get; } = new(100);
 }
