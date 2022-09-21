@@ -40,6 +40,10 @@ public sealed partial class Linkage : IValidatable, IEquatable<Linkage>
     [MaxLength(MaxStringLength)]
     private string rightString = string.Empty;
 
+    [Key(7, PropertyName = "Signatures", Marker = true)]
+    [MaxLength((MaxOwners + 1 + Value.MaxMergers) * 2)]
+    private byte[] signatures = default!;
+
     public bool Equals(Linkage? other)
     {
         throw new NotImplementedException();
