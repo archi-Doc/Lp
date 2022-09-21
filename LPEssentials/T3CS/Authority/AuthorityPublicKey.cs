@@ -127,7 +127,7 @@ public sealed partial class AuthorityPublicKey : IValidatable, IEquatable<Author
     }
 }
 
-internal readonly struct AuthorityPublicKeyStruct : IEquatable<AuthorityPublicKeyStruct>
+/*internal readonly struct AuthorityPublicKeyStruct : IEquatable<AuthorityPublicKeyStruct>
 {
     public readonly byte[] X;
 
@@ -168,4 +168,4 @@ internal readonly struct AuthorityPublicKeyStruct : IEquatable<AuthorityPublicKe
 
         return (int)hash;
     }
-}
+}*/

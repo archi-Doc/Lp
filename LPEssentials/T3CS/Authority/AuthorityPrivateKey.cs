@@ -60,7 +60,11 @@ public sealed partial class AuthorityPrivateKey : IValidatable, IEquatable<Autho
 
     public bool Validate()
     {
-        if (this.x == null || this.x.Length != Authority.PublicKeyHalfLength)
+        if (this.Version != 0)
+        {
+            return false;
+        }
+        else if (this.x == null || this.x.Length != Authority.PublicKeyHalfLength)
         {
             return false;
         }

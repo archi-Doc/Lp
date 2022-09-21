@@ -1,18 +1,18 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace LP;
+namespace LP.Obsolete;
 
 /// <summary>
 /// Immutable linkage object.
 /// </summary>
 [TinyhandObject]
-public sealed partial class Linkage : IValidatable // , IEquatable<Linkage>
+public sealed partial class Linkage2 : IValidatable // , IEquatable<Linkage>
 {
     public const long MaxPoint = 1_000_000_000_000_000_000; // k, m, g, t, p, e, 1z
     public const long MinPoint = -MaxPoint;
     public const int MaxMergers = 4;
 
-    public Linkage()
+    public Linkage2()
     {
     }
 

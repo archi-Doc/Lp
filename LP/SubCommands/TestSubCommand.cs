@@ -32,6 +32,11 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         Console.WriteLine($"Alternative(public): {publicKey.ToString()}");
         Console.WriteLine($"Length: {TinyhandSerializer.Serialize(publicKey).Length.ToString()}");
         Console.WriteLine(TinyhandSerializer.SerializeToString(publicKey));
+
+        var originator = AuthorityPrivateKey.Create();
+        var pri = new AuthorityPublicKey(originator);
+        var value = new Value(1, pri, new[] { pri, });
+        Console.WriteLine(value.GetHashCode());
     }
 
     public Control Control { get; set; }
