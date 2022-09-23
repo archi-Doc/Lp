@@ -108,7 +108,7 @@ public class NetControl : UnitBase, IUnitPreparable
         this.Terminal.Initialize(false, this.NetBase.NodePrivateKey, this.NetBase.NodePrivateEcdh);
         if (this.Alternative != null)
         {
-            this.Alternative.Initialize(true, NodePrivateKey.AlternativePrivateKey, NodeKey.FromPrivateKey(NodePrivateKey.AlternativePrivateKey)!);
+            this.Alternative.Initialize(true, NodeKey.AlternativePrivateKey, NodeKey.AlternativePrivateKey.CreateECDH());
             if (this.NetBase.NetsphereOptions.Port == NodeAddress.Alternative.Port)
             {
                 NodeAddress.Alternative.SetPort((ushort)(this.Terminal.Port + 1));

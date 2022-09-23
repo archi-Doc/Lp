@@ -36,9 +36,9 @@ public class NetBase : UnitBase, IUnitPreparable
         if (this.NodePrivateKey == null)
         {
             this.NodePrivateKey = NodePrivateKey.Create();
-            this.NodePrivateEcdh = NodeKey.FromPrivateKey(this.NodePrivateKey)!;
+            this.NodePrivateEcdh = this.NodePrivateKey.CreateECDH();
             this.NodePublicKey = new NodePublicKey(this.NodePrivateKey);
-            this.NodePublicEcdh = NodeKey.FromPublicKey(this.NodePublicKey.X, this.NodePublicKey.Y)!;
+            this.NodePublicEcdh = this.NodePublicKey.CreateECDH();
         }
     }
 
@@ -73,12 +73,24 @@ public class NetBase : UnitBase, IUnitPreparable
         this.NetsphereOptions = netsphereOptions;
     }
 
-    public void SetNodeKey(NodePrivateKey privateKey)
+    public bool SetNodeKey(NodePrivateKey privateKey)
     {
-        this.NodePublicKey = new NodePublicKey(privateKey);
-        this.NodePublicEcdh = NodeKey.FromPublicKey(this.NodePublicKey.X, this.NodePublicKey.Y) ?? throw new InvalidDataException();
-        this.NodePrivateKey = privateKey;
-        this.NodePrivateEcdh = NodeKey.FromPrivateKey(this.NodePrivateKey) ?? throw new InvalidDataException();
+        try
+        {
+            this.NodePublicKey = new NodePublicKey(privateKey);
+            this.NodePublicEcdh = this.NodePublicKey.CreateECDH();
+            this.NodePrivateKey = privateKey;
+            this.NodePrivateEcdh = this.NodePrivateKey.CreateECDH();
+            return true;
+        }
+        catch
+        {
+            this.NodePublicKey = default!;
+            this.NodePublicEcdh = default!;
+            this.NodePrivateKey = default!;
+            this.NodePrivateEcdh = default!;
+            return false;
+        }
     }
 
     public byte[] SerializeNodeKey()

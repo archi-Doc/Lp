@@ -7,25 +7,25 @@ namespace LP;
 [TinyhandObject]
 public sealed partial class AuthorityPrivateKey : IValidatable, IEquatable<AuthorityPrivateKey>
 {
-    public static AuthorityPrivateKey Create(string? name = null)
+    public static AuthorityPrivateKey Create()
     {
         var curve = ECCurve.CreateFromFriendlyName(Authority.ECCurveName);
         var ecdsa = ECDsa.Create(curve);
         var key = ecdsa.ExportParameters(true);
 
-        return new AuthorityPrivateKey(name, key.D!, key.Q.X!, key.Q.Y!);
+        return new AuthorityPrivateKey(0, key.Q.X!, key.Q.Y!, key.D!);
     }
 
     public AuthorityPrivateKey()
     {
     }
 
-    private AuthorityPrivateKey(string? name, byte[] d, byte[] x, byte[] y)
+    private AuthorityPrivateKey(int version, byte[] x, byte[] y, byte[] d)
     {
-        this.Name = name ?? string.Empty;
-        this.D = d;
+        this.Version = version;
         this.X = x;
         this.Y = y;
+        this.D = d;
     }
 
     public ECDsa? TryCreateECDsa()
@@ -43,25 +43,24 @@ public sealed partial class AuthorityPrivateKey : IValidatable, IEquatable<Autho
         }
     }
 
-    [Key(0, PropertyName = "Name")]
-    [MaxLength(Authority.NameLength)]
-    private string name = default!;
+    [Key(0)]
+    public int Version { get; private set; }
 
-    [Key(1, PropertyName = "D")]
+    [Key(1, PropertyName = "X")]
+    [MaxLength(Authority.PublicKeyHalfLength)]
+    private byte[] x = Array.Empty<byte>();
+
+    [Key(2, PropertyName = "Y")]
+    [MaxLength(Authority.PublicKeyHalfLength)]
+    private byte[] y = Array.Empty<byte>();
+
+    [Key(3, PropertyName = "D")]
     [MaxLength(Authority.PrivateKeyLength)]
-    private byte[] d = default!;
-
-    [Key(2, PropertyName = "X")]
-    [MaxLength(Authority.PublicKeyHalfLength)]
-    private byte[] x = default!;
-
-    [Key(3, PropertyName = "Y")]
-    [MaxLength(Authority.PublicKeyHalfLength)]
-    private byte[] y = default!;
+    private byte[] d = Array.Empty<byte>();
 
     public bool Validate()
     {
-        if (this.name == null || this.name.Length > Authority.NameLength)
+        if (this.Version != 0)
         {
             return false;
         }
@@ -88,15 +87,14 @@ public sealed partial class AuthorityPrivateKey : IValidatable, IEquatable<Autho
             return false;
         }
 
-        return this.name.Equals(other.name) &&
+        return this.Version == other.Version &&
             this.x.AsSpan().SequenceEqual(other.x) &&
-            this.y.AsSpan().SequenceEqual(other.y) &&
-            this.d.AsSpan().SequenceEqual(other.d);
+            this.y.AsSpan().SequenceEqual(other.y);
     }
 
     public override int GetHashCode()
     {
-        var hash = FarmHash.Hash64(this.name);
+        var hash = (ulong)this.Version;
 
         if (this.x.Length >= sizeof(ulong))
         {
@@ -112,5 +110,5 @@ public sealed partial class AuthorityPrivateKey : IValidatable, IEquatable<Autho
     }
 
     public override string ToString()
-        => $"{this.name}"; // {this.GetHashCode():x8}
+        => $"{this.GetHashCode():x8}";
 }

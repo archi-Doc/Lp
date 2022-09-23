@@ -3,13 +3,13 @@
 namespace LP;
 
 /// <summary>
-/// Validate that object members are appropriate.
+/// Validate that object members and verify that the signature is appropriate.
 /// </summary>
-public interface IValidatable
+public interface IVerifiable
 {
     /// <summary>
-    /// Validate that object members are appropriate.
+    /// Validate that object members and verify that the signature is appropriate.
     /// </summary>
     /// <returns><see langword="true" />: Success.</returns>
-    bool Validate();
+    bool ValidateAndVerify();
 }

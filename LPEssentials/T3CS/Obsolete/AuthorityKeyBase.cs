@@ -2,66 +2,49 @@
 
 using System.Security.Cryptography;
 
-namespace LP;
+#pragma warning disable SA1401 // Fields should be private
+
+namespace LP.Obsolete;
 
 [TinyhandObject]
-public sealed partial class AuthorityPublicKey : IValidatable, IEquatable<AuthorityPublicKey>
+internal partial class AuthorityKeyBase : IValidatable, IEquatable<AuthorityKeyBase>
 {
-    /*public static AuthorityPublicKey Create(string? name = null)
-    {
-        var curve = ECCurve.CreateFromFriendlyName(Authority.ECCurveName);
-        var ecdsa = ECDsa.Create(curve);
-        var key = ecdsa.ExportParameters(true);
-
-        return new AuthorityPublicKey(name, key.Q.X!, key.Q.Y!);
-    }*/
-
-    public AuthorityPublicKey()
+    public AuthorityKeyBase()
     {
     }
 
-    public AuthorityPublicKey(AuthorityPrivateKey privateKey)
+    private AuthorityKeyBase(byte[] x, byte[] y)
     {
-        this.Version = privateKey.Version;
-        this.X = privateKey.X;
-        this.Y = privateKey.Y;
-    }
-
-    private AuthorityPublicKey(int version, byte[] x, byte[] y)
-    {
-        this.Version = version;
         this.X = x;
         this.Y = y;
     }
 
-    [Key(0)]
-    public int Version { get; private set; }
-
-    [Key(1, PropertyName = "X")]
+    [Key(0, PropertyName = "X")]
     [MaxLength(Authority.PublicKeyHalfLength)]
-    private byte[] x = Array.Empty<byte>();
+    protected byte[] x = Array.Empty<byte>();
 
-    [Key(2, PropertyName = "Y")]
+    [Key(1, PropertyName = "Y")]
     [MaxLength(Authority.PublicKeyHalfLength)]
-    private byte[] y = Array.Empty<byte>();
+    protected byte[] y = Array.Empty<byte>();
 
-    public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> sign)
+    /*public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> sign)
     {
         if (sign.Length != Authority.SignLength)
         {
             return false;
         }
 
-        var ecdsa = Cache.AuthorityPublicKeyToECDsa.TryGet(this) ?? this.TryCreateECDsa();
+        var key = new PublicKeyXY(this.x, this.y);
+        var ecdsa = Cache.AuthorityPublicKeyToECDsa.TryGet(key) ?? this.TryCreateECDsa();
         if (ecdsa == null)
         {
             return false;
         }
 
         var result = ecdsa.VerifyData(data, sign, Authority.HashAlgorithmName);
-        Cache.AuthorityPublicKeyToECDsa.Cache(this, ecdsa);
+        Cache.AuthorityPublicKeyToECDsa.Cache(key, ecdsa);
         return result;
-    }
+    }*/
 
     public ECDsa? TryCreateECDsa()
     {
@@ -81,11 +64,7 @@ public sealed partial class AuthorityPublicKey : IValidatable, IEquatable<Author
 
     public bool Validate()
     {
-        if (this.Version != 0)
-        {
-            return false;
-        }
-        else if (this.x == null || this.x.Length != Authority.PublicKeyHalfLength)
+        if (this.x == null || this.x.Length != Authority.PublicKeyHalfLength)
         {
             return false;
         }
@@ -97,22 +76,20 @@ public sealed partial class AuthorityPublicKey : IValidatable, IEquatable<Author
         return true;
     }
 
-    public bool Equals(AuthorityPublicKey? other)
+    public bool Equals(AuthorityKeyBase? other)
     {
         if (other == null)
         {
             return false;
         }
 
-        return this.Version == other.Version &&
-            this.x.AsSpan().SequenceEqual(other.x) &&
+        return this.x.AsSpan().SequenceEqual(other.x) &&
             this.y.AsSpan().SequenceEqual(other.y);
     }
 
     public override int GetHashCode()
     {
-        var hash = (ulong)this.Version;
-
+        ulong hash = 0;
         if (this.x.Length >= sizeof(ulong))
         {
             hash ^= BitConverter.ToUInt64(this.x, 0);
@@ -127,19 +104,19 @@ public sealed partial class AuthorityPublicKey : IValidatable, IEquatable<Author
     }
 }
 
-/*internal readonly struct AuthorityPublicKeyStruct : IEquatable<AuthorityPublicKeyStruct>
+internal readonly struct PublicKeyXY : IEquatable<PublicKeyXY>
 {
     public readonly byte[] X;
 
     public readonly byte[] Y;
 
-    public AuthorityPublicKeyStruct(byte[] x, byte[] y)
+    public PublicKeyXY(byte[] x, byte[] y)
     {
         this.X = x;
         this.Y = y;
     }
 
-    public bool Equals(AuthorityPublicKeyStruct other)
+    public bool Equals(PublicKeyXY other)
     {
         var x1 = this.X == null ? Array.Empty<byte>() : this.X.AsSpan();
         var x2 = other.X == null ? Array.Empty<byte>() : other.X.AsSpan();
@@ -168,4 +145,4 @@ public sealed partial class AuthorityPublicKey : IValidatable, IEquatable<Author
 
         return (int)hash;
     }
-}*/
+}

@@ -20,7 +20,6 @@ using Netsphere;
 using SimpleCommandLine;
 using ZenItz;
 using LP.Data;
-using static SimpleCommandLine.SimpleParser;
 
 namespace LP;
 
@@ -58,6 +57,7 @@ public class Control : ILogInformation
                 context.AddTransient<Machines.LogTesterMachine>();
 
                 // Subcommands
+                context.AddSubcommand(typeof(LP.Subcommands.TestSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.MicsSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.ExitSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.GCSubcommand));
@@ -575,7 +575,11 @@ LoadKeyVaultObjects:
             return;
         }
 
-        this.NetControl.NetBase.SetNodeKey(key);
+        if (!this.NetControl.NetBase.SetNodeKey(key))
+        {
+            await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.KeyVault.NoRestore, NodePrivateKey.Filename);
+            return;
+        }
     }
 
     private async Task SaveKeyVaultAsync()
