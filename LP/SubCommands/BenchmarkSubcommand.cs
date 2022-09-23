@@ -56,7 +56,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
     private async Task RunBenchmark(BenchmarkOptions options)
     {
         await this.RunCryptoBenchmark(options);
-        // await this.RunCrypto2Benchmark(options);
+        await this.RunCrypto2Benchmark(options);
         await this.RunSerializeBenchmark(options);
     }
 
