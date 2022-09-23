@@ -56,7 +56,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
     private async Task RunBenchmark(BenchmarkOptions options)
     {
         await this.RunCryptoBenchmark(options);
-        await this.RunCrypto2Benchmark(options);
+        // await this.RunCrypto2Benchmark(options);
         await this.RunSerializeBenchmark(options);
     }
 
@@ -91,7 +91,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
         this.logger.TryGet()?.Log(benchTimer.GetResult("Sign & Verify"));
     }
 
-    private async Task RunCrypto2Benchmark(BenchmarkOptions options)
+    /*private async Task RunCrypto2Benchmark(BenchmarkOptions options)
     {
         var bcGenerator = new Org.BouncyCastle.Crypto.Generators.ECKeyPairGenerator();
         var bcSecureRandom = new Org.BouncyCastle.Security.SecureRandom();
@@ -124,7 +124,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
         }
 
         this.logger.TryGet()?.Log(benchTimer.GetResult("Sign & Verify BC"));
-    }
+    }*/
 
     private async Task RunSerializeBenchmark(BenchmarkOptions options)
     {
