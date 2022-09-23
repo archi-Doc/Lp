@@ -56,6 +56,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
     private async Task RunBenchmark(BenchmarkOptions options)
     {
         await this.RunCryptoBenchmark(options);
+        await this.RunCrypto2Benchmark(options);
         await this.RunSerializeBenchmark(options);
     }
 
@@ -88,6 +89,41 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
         }
 
         this.logger.TryGet()?.Log(benchTimer.GetResult("Sign & Verify"));
+    }
+
+    private async Task RunCrypto2Benchmark(BenchmarkOptions options)
+    {
+        var bcGenerator = new Org.BouncyCastle.Crypto.Generators.ECKeyPairGenerator();
+        var bcSecureRandom = new Org.BouncyCastle.Security.SecureRandom();
+        var bcKeyGenParameters = new Org.BouncyCastle.Crypto.KeyGenerationParameters(bcSecureRandom, 256);
+        bcGenerator.Init(bcKeyGenParameters);
+        var bcSigner = Org.BouncyCastle.Security.SignerUtilities.GetSigner("SHA256/ECDSA");
+        var keyPair = bcGenerator.GenerateKeyPair();
+
+        var bytes = TinyhandSerializer.Serialize(TestKeyString);
+
+        var benchTimer = new BenchTimer();
+        for (var r = 0; r < options.Repetition; r++)
+        {
+            ThreadCore.Root.CancellationToken.ThrowIfCancellationRequested();
+
+            benchTimer.Start();
+
+            for (var i = 0; i < 1000; i++)
+            {
+                bcSigner.Init(true, keyPair.Private);
+                bcSigner.BlockUpdate(bytes, 0, bytes.Length);
+                var sign = bcSigner.GenerateSignature();
+
+                bcSigner.Init(false, keyPair.Public);
+                bcSigner.BlockUpdate(bytes, 0, bytes.Length);
+                var b = bcSigner.VerifySignature(sign);
+            }
+
+            Console.WriteLine(benchTimer.StopAndGetText());
+        }
+
+        this.logger.TryGet()?.Log(benchTimer.GetResult("Sign & Verify BC"));
     }
 
     private async Task RunSerializeBenchmark(BenchmarkOptions options)
