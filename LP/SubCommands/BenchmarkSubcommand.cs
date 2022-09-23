@@ -14,7 +14,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
 {
     public const int MaxRepetitions = 100;
     public const string CurveName = "secp256r1";
-    public const string TestKeyString = """0, b"9KfxBVYHXco5UZop78r+nv1BBuvb8TDozUgNPstvn7E=", b"I5dyWNPVlERjkHJ18u7AhVO2ElL2vExVYY8lILGnhWU=", b"HcvEcMJz+1SG59GNp3RWYAM4ejoEQ3bLWHA+rVIyfVQ=" """;
+    public const string TestKeyString = "\"0, b\"9KfxBVYHXco5UZop78r+nv1BBuvb8TDozUgNPstvn7E=\", b\"I5dyWNPVlERjkHJ18u7AhVO2ElL2vExVYY8lILGnhWU=\", b\"HcvEcMJz+1SG59GNp3RWYAM4ejoEQ3bLWHA+rVIyfVQ=\"";
 
     public BenchmarkSubcommand(ILogger<BenchmarkSubcommand> logger, Control control)
     {
