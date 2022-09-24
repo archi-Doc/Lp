@@ -17,7 +17,6 @@ public sealed partial class AuthorityPrivateKey : IValidatable, IEquatable<Autho
         var key = ecdsa.ExportParameters(true);
 
         return new AuthorityPrivateKey(name, 0, key.Q.X!, key.Q.Y!, key.D!);
-
     }
 
     public AuthorityPrivateKey()

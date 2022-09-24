@@ -14,7 +14,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
 {
     public const int MaxRepetitions = 100;
     public const string CurveName = "secp256r1";
-    public const string TestKeyString = "0, b\"9KfxBVYHXco5UZop78r+nv1BBuvb8TDozUgNPstvn7E=\", b\"I5dyWNPVlERjkHJ18u7AhVO2ElL2vExVYY8lILGnhWU=\", b\"HcvEcMJz+1SG59GNp3RWYAM4ejoEQ3bLWHA+rVIyfVQ=\"";
+    public const string TestKeyString = "\"test\", 0, b\"9KfxBVYHXco5UZop78r+nv1BBuvb8TDozUgNPstvn7E=\", b\"I5dyWNPVlERjkHJ18u7AhVO2ElL2vExVYY8lILGnhWU=\", b\"HcvEcMJz+1SG59GNp3RWYAM4ejoEQ3bLWHA+rVIyfVQ=\"";
 
     public BenchmarkSubcommand(ILogger<BenchmarkSubcommand> logger, Control control)
     {
@@ -57,6 +57,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
     {
         await this.RunCryptoBenchmark(options);
         await this.RunCrypto2Benchmark(options);
+        await this.RunCrypto3Benchmark(options);
         await this.RunSerializeBenchmark(options);
     }
 
@@ -92,6 +93,44 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
     }
 
     private async Task RunCrypto2Benchmark(BenchmarkOptions options)
+    {
+        if (this.testKey == null || this.privateKey == null)
+        {
+            this.logger.TryGet(LogLevel.Error)?.Log("No ECDsa key.");
+            return;
+        }
+
+        var y = Arc.Crypto.EC.P256R1Curve.Instance.CompressY(this.privateKey.Y);
+        var y2 = Arc.Crypto.EC.P256R1Curve.Instance.TryDecompressY(this.privateKey.X, y);
+        if (y2 == null || !y2.SequenceEqual(this.privateKey.Y))
+        {
+            return;
+        }
+
+        Console.WriteLine($"Public key compression success.");
+        var bytes = TinyhandSerializer.Serialize(TestKeyString);
+
+        var benchTimer = new BenchTimer();
+        for (var r = 0; r < options.Repetition; r++)
+        {
+            ThreadCore.Root.CancellationToken.ThrowIfCancellationRequested();
+
+            benchTimer.Start();
+
+            for (var i = 0; i < 1000; i++)
+            {
+                var sign = this.testKey.SignData(bytes, HashAlgorithmName.SHA256);
+                y2 = Arc.Crypto.EC.P256R1Curve.Instance.TryDecompressY(this.privateKey.X, y);
+                var valid = this.testKey.VerifyData(bytes, sign, HashAlgorithmName.SHA256);
+            }
+
+            Console.WriteLine(benchTimer.StopAndGetText());
+        }
+
+        this.logger.TryGet()?.Log(benchTimer.GetResult("Sign & Decompress & Verify"));
+    }
+
+    private async Task RunCrypto3Benchmark(BenchmarkOptions options)
     {
         var bcGenerator = new Org.BouncyCastle.Crypto.Generators.ECKeyPairGenerator();
         var bcSecureRandom = new Org.BouncyCastle.Security.SecureRandom();
