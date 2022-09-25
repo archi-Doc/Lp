@@ -2,7 +2,7 @@
 
 using System.Security.Cryptography;
 
-namespace LP;
+namespace LP.Obsolete;
 
 [TinyhandObject]
 public sealed partial class AuthorityPublicKey : IValidatable, IEquatable<AuthorityPublicKey>
@@ -52,7 +52,7 @@ public sealed partial class AuthorityPublicKey : IValidatable, IEquatable<Author
             return false;
         }
 
-        var ecdsa = Cache.AuthorityPublicKeyToECDsa.TryGet(this) ?? this.TryCreateECDsa();
+        /*var ecdsa = Cache.AuthorityPublicKeyToECDsa.TryGet(this) ?? this.TryCreateECDsa();
         if (ecdsa == null)
         {
             return false;
@@ -60,7 +60,9 @@ public sealed partial class AuthorityPublicKey : IValidatable, IEquatable<Author
 
         var result = ecdsa.VerifyData(data, sign, Authority.HashAlgorithmName);
         Cache.AuthorityPublicKeyToECDsa.Cache(this, ecdsa);
-        return result;
+        return result;*/
+
+        return false;
     }
 
     public ECDsa? TryCreateECDsa()

@@ -16,7 +16,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>
     {
     }
 
-    public Value(long point, AuthorityPublicKey originator, AuthorityPublicKey[] mergers)
+    public Value(long point, PublicKey originator, PublicKey[] mergers)
     {
         this.Point = point;
         this.Originator = originator;
@@ -32,11 +32,11 @@ public sealed partial class Value : IValidatable, IEquatable<Value>
     public long Point { get; private set; }
 
     [Key(1)]
-    public AuthorityPublicKey Originator { get; private set; } = default!;
+    public PublicKey Originator { get; private set; } = default!;
 
     [Key(2, PropertyName = "Mergers")]
     [MaxLength(MaxMergers)]
-    private AuthorityPublicKey[] mergers = default!;
+    private PublicKey[] mergers = default!;
 
     public bool Validate()
     {
@@ -55,10 +55,10 @@ public sealed partial class Value : IValidatable, IEquatable<Value>
             return false;
         }
 
-        var version = this.Originator.Version;
+        var keyType = this.Originator.KeyType;
         for (var i = 0; i < this.mergers.Length; i++)
         {
-            if (this.mergers[i] == null || this.mergers[i].Version != version || !this.mergers[i].Validate())
+            if (this.mergers[i].KeyType != keyType || !this.mergers[i].Validate())
             {
                 return false;
             }
