@@ -146,4 +146,23 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         this.x1 == other.x1 &&
         this.x2 == other.x2 &&
         this.x3 == other.x3;
+
+    public override string ToString()
+    {
+        scoped Span<byte> bytes = stackalloc byte[1 + (sizeof(ulong) * 4)];
+        var b = bytes;
+
+        b[0] = (byte)this.KeyType;
+        b = b.Slice(1);
+        BitConverter.TryWriteBytes(b, this.x0);
+        b = b.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(b, this.x1);
+        b = b.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(b, this.x2);
+        b = b.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(b, this.x3);
+        b = b.Slice(sizeof(ulong));
+
+        return $"({Base64.EncodeToBase64Utf16(bytes)})";
+    }
 }

@@ -199,7 +199,12 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
     }
 
     public override string ToString()
-        => $"{this.name}({Base64.EncodeToBase64Utf16(this.x)})";
+    {
+        scoped Span<byte> bytes = stackalloc byte[1 + PublicKey.PublicKeyHalfLength];
+        bytes[0] = (byte)this.KeyType;
+        this.x.CopyTo(bytes.Slice(1));
+        return $"{this.name}({Base64.EncodeToBase64Utf16(bytes)})";
+    }
 
     internal uint CompressY()
         => Arc.Crypto.EC.P256R1Curve.Instance.CompressY(this.y);

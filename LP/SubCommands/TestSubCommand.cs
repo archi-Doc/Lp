@@ -43,6 +43,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         var flag = pub.VerifyData(bin, sign);
 
         Console.WriteLine($"Originator: {originator.ToString()}, {flag.ToString()}");
+        Console.WriteLine($"{pub.ToString()}");
     }
 
     public Control Control { get; set; }
