@@ -72,6 +72,7 @@ public class Control : ILogInformation
                 LP.Subcommands.KeyVaultSubcommand.Configure(context);
                 LP.Subcommands.FlagSubcommand.Configure(context);
                 LP.Subcommands.NodeSubcommand.Configure(context);
+                LP.Subcommands.AuthoritySubcommand.Configure(context);
             });
 
             this.SetupOptions<FileLoggerOptions>((context, options) =>
