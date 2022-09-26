@@ -48,7 +48,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
     }
 
     [Key(0)]
-    private readonly byte rawType;
+    private readonly byte rawType; // 6bits: KeyType, 1bit:?, 1bit: YTilde
 
     [Key(1)]
     private readonly ulong x0;
@@ -62,7 +62,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
     [Key(4)]
     private readonly ulong x3;
 
-    public uint KeyType => (uint)(this.rawType & ~1);
+    public uint KeyType => (uint)(this.rawType >>> 2);
 
     public uint YTilde => (uint)(this.rawType & 1);
 

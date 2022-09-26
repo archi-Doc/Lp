@@ -75,7 +75,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         this.d = d;
 
         var yTilde = this.CompressY();
-        this.rawType = (byte)(keyType + (yTilde & 1));
+        this.rawType = (byte)(((keyType << 2) & ~3) + (yTilde & 1));
     }
 
     public byte[]? SignData(ReadOnlySpan<byte> data)
@@ -125,7 +125,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
     private string name = string.Empty;
 
     [Key(1)]
-    private readonly byte rawType;
+    private readonly byte rawType; // 6bits: KeyType, 1bit:?, 1bit: YTilde
 
     [Key(2)]
     private readonly byte[] x = Array.Empty<byte>();
@@ -136,7 +136,9 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
     [Key(4)]
     private readonly byte[] d = Array.Empty<byte>();
 
-    public uint KeyType => (uint)(this.rawType & ~1);
+    public uint KeyType => (uint)(this.rawType >>> 2);
+
+    public uint YTilde => (uint)(this.rawType & 1);
 
     public byte[] X => this.x;
 
