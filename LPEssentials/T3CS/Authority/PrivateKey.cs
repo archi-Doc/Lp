@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Globalization;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace LP;
 
@@ -13,10 +15,51 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
 
     private static ObjectCache<PrivateKey, ECDsa> PrivateKeyToECDsa { get; } = new(10);
 
-    public static PrivateKey Create(string? name = null)
+    public static PrivateKey Create(string name)
     {
-        var ecdsa = ECDsa.Create(PublicKey.ECCurve);
-        var key = ecdsa.ExportParameters(true);
+        using (var ecdsa = ECDsa.Create(PublicKey.ECCurve))
+        {
+            var key = ecdsa.ExportParameters(true);
+            return new PrivateKey(name, 0, key.Q.X!, key.Q.Y!, key.D!);
+        }
+    }
+
+    public static PrivateKey Create(string name, string passphrase)
+    {
+        ECParameters key = default;
+        key.Curve = PublicKey.ECCurve;
+
+        var passBytes = Encoding.UTF8.GetBytes(passphrase);
+        scoped Span<byte> span = stackalloc byte[(sizeof(ulong) + passBytes.Length) * 2]; // count, passBytes, count, passBytes
+        var countSpan = span.Slice(0, sizeof(ulong));
+        var countSpan2 = span.Slice(sizeof(ulong) + passBytes.Length, sizeof(ulong));
+        passBytes.CopyTo(span.Slice(sizeof(ulong)));
+        passBytes.CopyTo(span.Slice((sizeof(ulong) * 2) + passBytes.Length));
+
+        var hash = Hash.ObjectPool.Get();
+        ulong count = 0;
+        while (true)
+        {
+            BitConverter.TryWriteBytes(countSpan, count);
+            BitConverter.TryWriteBytes(countSpan2, count);
+            count++;
+
+            try
+            {
+                var d = hash.GetHash(span);
+                key.D = d;
+                using (var ecdsa = ECDsa.Create(key))
+                {
+                    key = ecdsa.ExportParameters(true); // !d.SequenceEqual(key.D)
+                    break;
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        Hash.ObjectPool.Return(hash);
         return new PrivateKey(name, 0, key.Q.X!, key.Q.Y!, key.D!);
     }
 
@@ -153,8 +196,8 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         return hash;
     }
 
-    /*public override string ToString()
-        => $"{this.name}({Base64.EncodeToBase64Utf16(this.identifier)})";*/
+    public override string ToString()
+        => $"{this.name}({Base64.EncodeToBase64Utf16(this.x)})";
 
     internal uint CompressY()
         => Arc.Crypto.EC.P256R1Curve.Instance.CompressY(this.y);

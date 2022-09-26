@@ -33,7 +33,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         Console.WriteLine($"Length: {TinyhandSerializer.Serialize(publicKey).Length.ToString()}");
         Console.WriteLine(TinyhandSerializer.SerializeToString(publicKey));
 
-        var originator = PrivateKey.Create();
+        var originator = PrivateKey.Create("originator");
         var pub = new PublicKey(originator);
         var value = new Value(1, pub, new[] { pub, });
         Console.WriteLine(value.GetHashCode());
@@ -41,6 +41,8 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         var bin = TinyhandSerializer.Serialize(value);
         var sign = originator.SignData(bin);
         var flag = pub.VerifyData(bin, sign);
+
+        Console.WriteLine($"Originator: {originator.ToString()}, {flag.ToString()}");
     }
 
     public Control Control { get; set; }
