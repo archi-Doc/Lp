@@ -3,7 +3,7 @@
 using System.Numerics;
 using System.Security.Cryptography;
 
-namespace LP;
+namespace LP.Obsolete;
 
 [TinyhandObject]
 public sealed partial class AuthorityPrivateKey : IValidatable, IEquatable<AuthorityPrivateKey>

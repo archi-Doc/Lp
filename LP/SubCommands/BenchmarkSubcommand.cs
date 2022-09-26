@@ -24,7 +24,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
         try
         {
             // var testKeyString = TinyhandSerializer.SerializeToString(AuthorityPrivateKey.Create());
-            this.privateKey = TinyhandSerializer.DeserializeFromString<AuthorityPrivateKey>(TestKeyString);
+            this.privateKey = TinyhandSerializer.DeserializeFromString<PrivateKey>(TestKeyString);
             if (this.privateKey != null)
             {
                 this.testKey = this.privateKey.TryCreateECDsa();
@@ -152,7 +152,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
     }
 
     private ILogger<BenchmarkSubcommand> logger;
-    private AuthorityPrivateKey? privateKey;
+    private PrivateKey? privateKey;
     private ECDsa? testKey;
 }
 

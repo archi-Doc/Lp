@@ -143,6 +143,8 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
 
     public byte[] X => this.x;
 
+    public byte[] Y => this.y;
+
     /*[IgnoreMember]
     private byte[] identifier;*/
 
