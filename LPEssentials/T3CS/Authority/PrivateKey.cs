@@ -70,15 +70,12 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
     private PrivateKey(string? name, byte keyType, byte[] x, byte[] y, byte[] d)
     {
         this.Name = name ?? string.Empty;
-        this.keyType = keyType;
         this.x = x;
         this.y = y;
         this.d = d;
 
-        /*var hash = Hash.ObjectPool.Get();
-        this.identifier = hash.GetHash(TinyhandSerializer.Serialize(this));
-        Hash.ObjectPool.Return(hash);*/
-        // Identifier.FromReadOnlySpan();
+        var yTilde = this.CompressY();
+        this.rawType = (byte)(keyType + (yTilde & 1));
     }
 
     public byte[]? SignData(ReadOnlySpan<byte> data)
@@ -128,7 +125,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
     private string name = string.Empty;
 
     [Key(1)]
-    private readonly byte keyType;
+    private readonly byte rawType;
 
     [Key(2)]
     private readonly byte[] x = Array.Empty<byte>();
@@ -139,7 +136,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
     [Key(4)]
     private readonly byte[] d = Array.Empty<byte>();
 
-    public uint KeyType => (uint)(this.keyType & ~1);
+    public uint KeyType => (uint)(this.rawType & ~1);
 
     public byte[] X => this.x;
 
@@ -154,7 +151,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         {
             return false;
         }
-        else if (this.keyType != 0)
+        else if (this.KeyType != 0)
         {
             return false;
         }
@@ -182,13 +179,13 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         }
 
         return this.name.Equals(other.name) &&
-            this.keyType == other.keyType &&
+            this.rawType == other.rawType &&
             this.x.AsSpan().SequenceEqual(other.x);
     }
 
     public override int GetHashCode()
     {
-        var hash = HashCode.Combine(this.name, this.keyType);
+        var hash = HashCode.Combine(this.name, this.rawType);
 
         if (this.x.Length >= sizeof(ulong))
         {
@@ -201,11 +198,13 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
     public override string ToString()
     {
         scoped Span<byte> bytes = stackalloc byte[1 + PublicKey.PublicKeyHalfLength];
-        bytes[0] = (byte)this.KeyType;
+        bytes[0] = this.rawType;
         this.x.CopyTo(bytes.Slice(1));
         return $"{this.name}({Base64.EncodeToBase64Utf16(bytes)})";
     }
 
     internal uint CompressY()
         => Arc.Crypto.EC.P256R1Curve.Instance.CompressY(this.y);
+
+    internal byte RawType => this.rawType;
 }

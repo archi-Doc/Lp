@@ -36,9 +36,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
             throw new ArgumentException();
         }
 
-        var yTilde = privateKey.CompressY();
-        this.keyType = (byte)(privateKey.KeyType + (yTilde & 1));
-
+        this.rawType = privateKey.RawType;
         var span = privateKey.X.AsSpan();
         this.x0 = BitConverter.ToUInt64(span);
         span = span.Slice(sizeof(ulong));
@@ -50,7 +48,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
     }
 
     [Key(0)]
-    private readonly byte keyType;
+    private readonly byte rawType;
 
     [Key(1)]
     private readonly ulong x0;
@@ -64,9 +62,9 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
     [Key(4)]
     private readonly ulong x3;
 
-    public uint KeyType => (uint)(this.keyType & ~1);
+    public uint KeyType => (uint)(this.rawType & ~1);
 
-    public uint YTilde => (uint)(this.keyType & 1);
+    public uint YTilde => (uint)(this.rawType & 1);
 
     public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> sign)
     {
@@ -141,7 +139,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         => (int)this.x0;
 
     public bool Equals(PublicKey other)
-        => this.keyType == other.keyType &&
+        => this.rawType == other.rawType &&
         this.x0 == other.x0 &&
         this.x1 == other.x1 &&
         this.x2 == other.x2 &&
@@ -152,7 +150,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         scoped Span<byte> bytes = stackalloc byte[1 + (sizeof(ulong) * 4)];
         var b = bytes;
 
-        b[0] = (byte)this.KeyType;
+        b[0] = this.rawType;
         b = b.Slice(1);
         BitConverter.TryWriteBytes(b, this.x0);
         b = b.Slice(sizeof(ulong));
