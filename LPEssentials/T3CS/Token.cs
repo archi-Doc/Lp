@@ -21,7 +21,7 @@ public sealed partial class Token : IValidatable // , IEquatable<Token>
         {
             return false;
         }
-        else if (this.sign.Length != LP.Authority.SignLength)
+        else if (this.sign.Length != PublicKey.SignLength)
         {
             return false;
         }
@@ -60,6 +60,6 @@ public sealed partial class Token : IValidatable // , IEquatable<Token>
     public Linkage? TargetLinkage { get; private set; }
 
     [Key(5, Marker = true, PropertyName = "Sign")]
-    [MaxLength(LP.Authority.SignLength)]
+    [MaxLength(PublicKey.SignLength)]
     private byte[] sign = Array.Empty<byte>();
 }
