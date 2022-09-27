@@ -49,18 +49,15 @@ public partial class KeyVault2
             public byte[] Encrypted { get; protected set; } = Array.Empty<byte>();
         }
 
-        public Vault(Vault? root)
+        public Vault()
         {
-            this.root = root ?? this;
         }
 
-        public bool IsRoot => this == this.root;
+        public bool IsRoot => this == this.keyVault?.Root;
 
-        public bool IsRemoved => true;
+        public bool IsRemoved => this.keyVault == null;
 
         private readonly object syncObject = new();
-
-        private readonly Vault root;
 
         [Key(0)]
         private readonly SortedDictionary<string, DecryptedItem> nameToDecrypted = new();
@@ -68,7 +65,7 @@ public partial class KeyVault2
         [Key(1)]
         private readonly List<Vault> children = new();
 
-        private bool isRemoved = false;
+        private KeyVault2? keyVault; // nulll: Removed
 
         public bool TryAdd(string name, byte[] decrypted)
         {
@@ -153,15 +150,26 @@ public partial class KeyVault2
                 return this.nameToDecrypted.Select(x => x.Key).ToArray();
             }
         }
+
+        internal void SetKeyVault(KeyVault2 keyVault)
+        {
+            this.keyVault = keyVault;
+            foreach (var x in this.children)
+            {
+                x.SetKeyVault(keyVault);
+            }
+        }
     }
 
     public KeyVault2(ILogger<KeyVault> logger, IUserInterfaceService userInterfaceService)
     {
         this.logger = logger;
         this.UserInterfaceService = userInterfaceService;
+        this.Root = new();
+        this.Root.SetKeyVault(this);
     }
 
-    public Vault Root { get; } = new(null);
+    public Vault Root { get; private set; }
 
     public async Task<bool> LoadAsync(string path)
     {
@@ -315,5 +323,4 @@ RetryPassword:
     private ILogger<KeyVault> logger;
     private object syncObject = new();
     private string password = string.Empty;
-    private Item.GoshujinClass items = new();
 }
