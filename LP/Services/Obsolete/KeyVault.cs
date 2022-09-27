@@ -4,172 +4,33 @@ using System.Diagnostics.CodeAnalysis;
 using LP.Services;
 using ValueLink;
 
-namespace LP;
+namespace LP.Obsolete;
 
-public partial class KeyVault2
+public partial class KeyVault
 {
     public const string Filename = "KeyVault.tinyhand";
 
-    [TinyhandObject]
-    public partial class Vault
+    [ValueLinkObject]
+    private partial class Item
     {
-        [TinyhandObject]
-        private partial struct DecryptedItem
+        public Item(string name, byte[] decrypted)
         {
-            public DecryptedItem()
-            {
-            }
-
-            public DecryptedItem(byte[] decrypted)
-            {
-                this.Decrypted = decrypted;
-            }
-
-            [KeyAsName]
-            internal byte[] Decrypted = Array.Empty<byte>();
+            this.Name = name;
+            this.Decrypted = decrypted;
         }
 
-        [TinyhandObject]
-        private partial class EncryptedItem
-        {
-            public EncryptedItem()
-            {
-            }
+        [Link(Primary = true, Name = "List", Type = ChainType.LinkedList)]
+        [Link(Name = "Set", Type = ChainType.Unordered)]
+        public string Name { get; set; } = string.Empty;
 
-            public EncryptedItem(int hint, byte[] encrypted)
-            {
-                this.Hint = (byte)hint;
-                this.Encrypted = encrypted;
-            }
-
-            [KeyAsName]
-            public byte Hint { get; protected set; }
-
-            [KeyAsName]
-            public byte[] Encrypted { get; protected set; } = Array.Empty<byte>();
-        }
-
-        public Vault()
-        {
-        }
-
-        public bool IsRoot => this == this.keyVault?.Root;
-
-        public bool IsRemoved => this.keyVault == null;
-
-        private readonly object syncObject = new();
-
-        [Key(0)]
-        private readonly SortedDictionary<string, DecryptedItem> nameToDecrypted = new();
-
-        [Key(1)]
-        private readonly List<Vault> children = new();
-
-        private KeyVault2? keyVault; // nulll: Removed
-
-        public bool TryAdd(string name, byte[] decrypted)
-        {
-            lock (this.syncObject)
-            {
-                if (this.IsRemoved)
-                {
-                    return false;
-                }
-
-                if (this.nameToDecrypted.ContainsKey(name))
-                {// Already exists.
-                    return false;
-                }
-
-                this.nameToDecrypted.Add(name, new(decrypted));
-                return true;
-            }
-        }
-
-        public bool Add(string name, byte[] decrypted)
-        {
-            lock (this.syncObject)
-            {
-                if (this.IsRemoved)
-                {
-                    return false;
-                }
-
-                if (this.nameToDecrypted.TryGetValue(name, out var item))
-                {
-                    this.nameToDecrypted.Remove(name);
-                }
-
-                this.nameToDecrypted.Add(name, new(decrypted));
-                return true;
-            }
-        }
-
-        public bool TryGet(string name, [MaybeNullWhen(false)] out byte[] decrypted)
-        {
-            lock (this.syncObject)
-            {
-                if (this.IsRemoved)
-                {
-                    decrypted = null;
-                    return false;
-                }
-
-                if (!this.nameToDecrypted.TryGetValue(name, out var item))
-                {// Not found
-                    decrypted = null;
-                    return false;
-                }
-
-                decrypted = item.Decrypted;
-                return true;
-            }
-        }
-
-        public bool TryGetAndDeserialize<T>(string name, [MaybeNullWhen(false)] out T obj)
-        {
-            if (!this.TryGet(name, out var decrypted))
-            {
-                obj = default;
-                return false;
-            }
-
-            obj = TinyhandSerializer.Deserialize<T>(decrypted);
-            return obj != null;
-        }
-
-        public string[] GetNames()
-        {
-            lock (this.syncObject)
-            {
-                if (this.IsRemoved)
-                {
-                    return Array.Empty<string>();
-                }
-
-                return this.nameToDecrypted.Select(x => x.Key).ToArray();
-            }
-        }
-
-        internal void SetKeyVault(KeyVault2 keyVault)
-        {
-            this.keyVault = keyVault;
-            foreach (var x in this.children)
-            {
-                x.SetKeyVault(keyVault);
-            }
-        }
+        public byte[] Decrypted { get; set; }
     }
 
-    public KeyVault2(ILogger<KeyVault> logger, IUserInterfaceService userInterfaceService)
+    public KeyVault(ILogger<KeyVault> logger, IUserInterfaceService userInterfaceService)
     {
         this.logger = logger;
         this.UserInterfaceService = userInterfaceService;
-        this.Root = new();
-        this.Root.SetKeyVault(this);
     }
-
-    public Vault Root { get; private set; }
 
     public async Task<bool> LoadAsync(string path)
     {
@@ -253,6 +114,69 @@ RetryPassword:
         return true;
     }
 
+    public bool TryAdd(string name, byte[] decrypted)
+    {
+        lock (this.syncObject)
+        {
+            if (this.items.SetChain.ContainsKey(name))
+            {// Already exists.
+                return false;
+            }
+
+            this.items.Add(new(name, decrypted));
+            return true;
+        }
+    }
+
+    public bool Add(string name, byte[] decrypted)
+    {
+        lock (this.syncObject)
+        {
+            if (this.items.SetChain.TryGetValue(name, out var item))
+            {
+                this.items.Remove(item);
+            }
+
+            this.items.Add(new(name, decrypted));
+            return true;
+        }
+    }
+
+    public bool TryGet(string name, [MaybeNullWhen(false)] out byte[] decrypted)
+    {
+        lock (this.syncObject)
+        {
+            if (!this.items.SetChain.TryGetValue(name, out var item))
+            {// Not found
+                decrypted = null;
+                return false;
+            }
+
+            decrypted = item.Decrypted;
+            return true;
+        }
+    }
+
+    public bool TryGetAndDeserialize<T>(string name, [MaybeNullWhen(false)] out T obj)
+    {
+        if (!this.TryGet(name, out var decrypted))
+        {
+            obj = default;
+            return false;
+        }
+
+        obj = TinyhandSerializer.Deserialize<T>(decrypted);
+        return obj != null;
+    }
+
+    public string[] GetNames()
+    {
+        lock (this.syncObject)
+        {
+            return this.items.ListChain.Select(x => x.Name).ToArray();
+        }
+    }
+
     public bool CheckPassword(string password)
     {
         lock (this.syncObject)
@@ -323,4 +247,29 @@ RetryPassword:
     private ILogger<KeyVault> logger;
     private object syncObject = new();
     private string password = string.Empty;
+    private Item.GoshujinClass items = new();
+}
+
+[TinyhandObject]
+public partial class KeyVaultItem
+{
+    public KeyVaultItem()
+    {
+    }
+
+    public KeyVaultItem(string name, int hint, byte[] encrypted)
+    {
+        this.Name = name;
+        this.Hint = (byte)hint;
+        this.Encrypted = encrypted;
+    }
+
+    [KeyAsName]
+    public string Name { get; protected set; } = string.Empty;
+
+    [KeyAsName]
+    public byte Hint { get; protected set; }
+
+    [KeyAsName]
+    public byte[] Encrypted { get; protected set; } = Array.Empty<byte>();
 }

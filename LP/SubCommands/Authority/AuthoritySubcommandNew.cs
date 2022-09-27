@@ -35,6 +35,9 @@ public class AuthoritySubcommandNew : ISimpleCommandAsync<AuthoritySubcommandNew
             pri = PrivateKey.Create(option.Name, option.Passphrase);
         }
 
+        var name = "Authority\\" + option.Name;
+        this.Control.KeyVault.SerializeAndTryAdd(name, pri);
+
         this.logger.TryGet()?.Log("Key created:");
         this.logger.TryGet()?.Log(pri.ToString());
     }

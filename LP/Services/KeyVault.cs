@@ -10,134 +10,78 @@ public partial class KeyVault
 {
     public const string Filename = "KeyVault.tinyhand";
 
-    [ValueLinkObject]
-    private partial class Item
-    {
-        public Item(string name, byte[] decrypted)
-        {
-            this.Name = name;
-            this.Decrypted = decrypted;
-        }
-
-        [Link(Primary = true, Name = "List", Type = ChainType.LinkedList)]
-        [Link(Name = "Set", Type = ChainType.Unordered)]
-        public string Name { get; set; } = string.Empty;
-
-        public byte[] Decrypted { get; set; }
-    }
-
     public KeyVault(ILogger<KeyVault> logger, IUserInterfaceService userInterfaceService)
     {
         this.logger = logger;
-        this.UserInterfaceService = userInterfaceService;
+        this.userInterfaceService = userInterfaceService;
     }
 
-    public async Task<bool> LoadAsync(string path)
+    [TinyhandObject]
+    private partial struct DecryptedItem
     {
-        byte[] data;
-        try
-        {
-            data = await File.ReadAllBytesAsync(path).ConfigureAwait(false);
-        }
-        catch
-        {
-            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.Load, path);
-            return false;
-        }
-
-        KeyVaultItem?[]? items = null;
-        try
-        {
-            items = TinyhandSerializer.DeserializeFromUtf8<KeyVaultItem[]>(data);
-        }
-        catch
+        public DecryptedItem()
         {
         }
 
-        if (items == null || items.Length == 0)
+        public DecryptedItem(byte[] decrypted)
         {
-            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.Deserialize, path);
-            return false;
+            this.Decrypted = decrypted;
         }
 
-        string? password = null;
-        for (var i = 0; i < items.Length; i++)
+        [KeyAsName]
+        internal byte[] Decrypted = Array.Empty<byte>();
+    }
+
+    [TinyhandObject]
+    private partial struct EncryptedItem
+    {
+        public EncryptedItem()
         {
-            if (items[i] == null)
-            {
-                continue;
-            }
-
-            if (PasswordEncrypt.TryDecrypt(items[i]!.Encrypted, string.Empty, out var decrypted))
-            {// No password
-                // keyVault.AddInternal(x.Name, decrypted);
-            }
-            else
-            {// Password required.
-                if (password == null)
-                {// Enter password
-RetryPassword:
-                    var results = await this.UserInterfaceService.RequestPassword(Hashed.KeyVault.EnterPassword).ConfigureAwait(false);
-                    if (results == null)
-                    {
-                        throw new PanicException();
-                    }
-
-                    if (PasswordEncrypt.TryDecrypt(items[i]!.Encrypted, results, out decrypted))
-                    {// Success
-                        password = results;
-                        this.password = password;
-                    }
-                    else
-                    {// Failure
-                        await this.UserInterfaceService.Notify(LogLevel.Warning, Hashed.Dialog.Password.NotMatch).ConfigureAwait(false);
-                        goto RetryPassword;
-                    }
-                }
-                else
-                {// Password already entered.
-                    if (PasswordEncrypt.TryDecrypt(items[i]!.Encrypted, password, out decrypted))
-                    {// Success
-                    }
-                    else
-                    {// Failure
-                        await this.UserInterfaceService.Notify(LogLevel.Fatal, Hashed.KeyVault.NoRestore, items[i]!.Name).ConfigureAwait(false);
-                        throw new PanicException();
-                    }
-                }
-            }
-
-            // item[i], decrypted
-            this.TryAdd(items[i]!.Name, decrypted.ToArray());
         }
 
-        return true;
+        public EncryptedItem(int hint, byte[] encrypted)
+        {
+            this.Hint = (byte)hint;
+            this.Encrypted = encrypted;
+        }
+
+        [KeyAsName]
+        internal byte Hint;
+
+        [KeyAsName]
+        internal byte[] Encrypted = Array.Empty<byte>();
     }
 
     public bool TryAdd(string name, byte[] decrypted)
     {
         lock (this.syncObject)
         {
-            if (this.items.SetChain.ContainsKey(name))
+            if (this.nameToDecrypted.ContainsKey(name))
             {// Already exists.
                 return false;
             }
 
-            this.items.Add(new(name, decrypted));
+            this.nameToDecrypted.Add(name, new(decrypted));
             return true;
         }
+    }
+
+    public bool SerializeAndTryAdd<T>(string name, T obj)
+    {
+        var bytes = TinyhandSerializer.Serialize<T>(obj);
+        return this.TryAdd(name, bytes);
     }
 
     public bool Add(string name, byte[] decrypted)
     {
         lock (this.syncObject)
         {
-            if (this.items.SetChain.TryGetValue(name, out var item))
+            if (this.nameToDecrypted.TryGetValue(name, out var item))
             {
-                this.items.Remove(item);
+                this.nameToDecrypted.Remove(name);
             }
 
-            this.items.Add(new(name, decrypted));
+            this.nameToDecrypted.Add(name, new(decrypted));
             return true;
         }
     }
@@ -146,7 +90,7 @@ RetryPassword:
     {
         lock (this.syncObject)
         {
-            if (!this.items.SetChain.TryGetValue(name, out var item))
+            if (!this.nameToDecrypted.TryGetValue(name, out var item))
             {// Not found
                 decrypted = null;
                 return false;
@@ -173,7 +117,114 @@ RetryPassword:
     {
         lock (this.syncObject)
         {
-            return this.items.ListChain.Select(x => x.Name).ToArray();
+            return this.nameToDecrypted.Select(x => x.Key).ToArray();
+        }
+    }
+
+    public string[] GetNames(string prefix)
+    {
+        lock (this.syncObject)
+        {
+            return this.nameToDecrypted.Where(x => x.Key.StartsWith(prefix)).Select(x => x.Key).ToArray();
+        }
+    }
+
+    public async Task<bool> LoadAsync(string path)
+    {
+        byte[] data;
+        try
+        {
+            data = await File.ReadAllBytesAsync(path).ConfigureAwait(false);
+        }
+        catch
+        {
+            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.Load, path);
+            return false;
+        }
+
+        SortedDictionary<string, EncryptedItem>? items = null;
+        try
+        {
+            items = TinyhandSerializer.DeserializeFromUtf8<SortedDictionary<string, EncryptedItem>>(data);
+        }
+        catch
+        {
+        }
+
+        if (items == null)
+        {
+            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.Deserialize, path);
+            return false;
+        }
+
+        string? password = null;
+        foreach (var x in items)
+        {
+            if (PasswordEncrypt.TryDecrypt(x.Value.Encrypted, string.Empty, out var decrypted))
+            {// No password
+            }
+            else
+            {// Password required.
+                if (password == null)
+                {// Enter password
+RetryPassword:
+                    var results = await this.userInterfaceService.RequestPassword(Hashed.KeyVault.EnterPassword).ConfigureAwait(false);
+                    if (results == null)
+                    {
+                        throw new PanicException();
+                    }
+
+                    if (PasswordEncrypt.TryDecrypt(x.Value.Encrypted, results, out decrypted))
+                    {// Success
+                        password = results;
+                        this.password = password;
+                    }
+                    else
+                    {// Failure
+                        await this.userInterfaceService.Notify(LogLevel.Warning, Hashed.Dialog.Password.NotMatch).ConfigureAwait(false);
+                        goto RetryPassword;
+                    }
+                }
+                else
+                {// Password already entered.
+                    if (PasswordEncrypt.TryDecrypt(x.Value.Encrypted, password, out decrypted))
+                    {// Success
+                    }
+                    else
+                    {// Failure
+                        await this.userInterfaceService.Notify(LogLevel.Fatal, Hashed.KeyVault.NoRestore, x.Key).ConfigureAwait(false);
+                        throw new PanicException();
+                    }
+                }
+            }
+
+            // item[i], decrypted
+            this.TryAdd(x.Key, decrypted.ToArray());
+        }
+
+        return true;
+    }
+
+    public async Task SaveAsync(string path)
+    {
+        try
+        {
+            var items = this.GetEncrypted();
+            var bytes = TinyhandSerializer.SerializeToUtf8(items);
+            await File.WriteAllBytesAsync(path, bytes).ConfigureAwait(false);
+        }
+        catch
+        {
+        }
+    }
+
+    public void Create(string password)
+    {
+        lock (this.syncObject)
+        {
+            this.Created = true;
+            this.password = password;
+            this.nameToDecrypted.Clear();
         }
     }
 
@@ -199,77 +250,27 @@ RetryPassword:
         return false;
     }
 
-    public async Task SaveAsync(string path)
-    {
-        try
-        {
-            var items = this.GetEncrypted();
-            var bytes = TinyhandSerializer.SerializeToUtf8(items);
-            await File.WriteAllBytesAsync(path, bytes).ConfigureAwait(false);
-        }
-        catch
-        {
-        }
-    }
-
-    public void Create(string password)
-    {
-        lock (this.syncObject)
-        {
-            this.Created = true;
-            this.password = password;
-            this.items.Clear();
-        }
-    }
-
-    public IUserInterfaceService UserInterfaceService { get; }
-
     public bool Created { get; private set; } = false;
 
-    private KeyVaultItem[] GetEncrypted()
+    private SortedDictionary<string, EncryptedItem> GetEncrypted()
     {
-        KeyVaultItem[] array;
         var hint = PasswordEncrypt.GetPasswordHint(this.password);
         lock (this.syncObject)
         {
-            array = new KeyVaultItem[this.items.ListChain.Count];
-            var i = 0;
-            foreach (var x in this.items.ListChain)
+            var nameToEncrypted = new SortedDictionary<string, EncryptedItem>();
+            foreach (var x in this.nameToDecrypted)
             {
-                var encrypted = PasswordEncrypt.Encrypt(x.Decrypted, this.password);
-                array[i++] = new(x.Name, hint, encrypted);
+                var encrypted = PasswordEncrypt.Encrypt(x.Value.Decrypted, this.password);
+                nameToEncrypted.TryAdd(x.Key, new(hint, encrypted));
             }
+
+            return nameToEncrypted;
         }
-
-        return array;
     }
 
-    private ILogger<KeyVault> logger;
-    private object syncObject = new();
+    private readonly object syncObject = new();
+    private readonly ILogger<KeyVault> logger;
+    private readonly IUserInterfaceService userInterfaceService;
+    private readonly SortedDictionary<string, DecryptedItem> nameToDecrypted = new();
     private string password = string.Empty;
-    private Item.GoshujinClass items = new();
-}
-
-[TinyhandObject]
-public partial class KeyVaultItem
-{
-    public KeyVaultItem()
-    {
-    }
-
-    public KeyVaultItem(string name, int hint, byte[] encrypted)
-    {
-        this.Name = name;
-        this.Hint = (byte)hint;
-        this.Encrypted = encrypted;
-    }
-
-    [KeyAsName]
-    public string Name { get; protected set; } = string.Empty;
-
-    [KeyAsName]
-    public byte Hint { get; protected set; }
-
-    [KeyAsName]
-    public byte[] Encrypted { get; protected set; } = Array.Empty<byte>();
 }

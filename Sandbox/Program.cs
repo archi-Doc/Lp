@@ -171,13 +171,6 @@ internal class Program
 
         await logger.Flush();
 
-        var pass = "pass";
-        var encrypted = PasswordEncrypt.Encrypt(new byte[] { 1, 2, }, pass);
-        var item = new KeyVaultItem("test.key", PasswordEncrypt.GetPasswordHint(pass), encrypted);
-        var array = new KeyVaultItem[] { item, item, };
-
-        var t = Tinyhand.TinyhandSerializer.SerializeToString(array);
-
         // ThreadCore.Root.Terminate();
     }
 }
