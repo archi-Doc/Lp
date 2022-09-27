@@ -6,11 +6,6 @@ using ValueLink;
 
 namespace LP;
 
-public class KeyValueList<TKey, TValue>
-{
-
-}
-
 public partial class KeyVault
 {
     public const string Filename = "KeyVault.tinyhand";
@@ -147,10 +142,10 @@ public partial class KeyVault
             return false;
         }
 
-        SortedDictionary<string, EncryptedItem>? items = null;
+        KeyValueList<string, EncryptedItem>? items = null;
         try
         {
-            items = TinyhandSerializer.DeserializeFromUtf8<SortedDictionary<string, EncryptedItem>>(data);
+            items = TinyhandSerializer.DeserializeFromUtf8<KeyValueList<string, EncryptedItem>>(data);
         }
         catch
         {
@@ -257,20 +252,19 @@ RetryPassword:
 
     public bool Created { get; private set; } = false;
 
-    private KeyValuePair<string, EncryptedItem>[] GetEncrypted()
+    private KeyValueList<string, EncryptedItem> GetEncrypted()
     {
         var hint = PasswordEncrypt.GetPasswordHint(this.password);
         lock (this.syncObject)
         {
-            var nameToEncrypted = new KeyValuePair<string, EncryptedItem>[this.nameToDecrypted.Count];
-            var i = 0;
+            var list = new KeyValueList<string, EncryptedItem>();
             foreach (var x in this.nameToDecrypted)
             {
                 var encrypted = PasswordEncrypt.Encrypt(x.Value.Decrypted, this.password);
-                nameToEncrypted[i++] = new(x.Key, new(hint, encrypted));
+                list.Add(new(x.Key, new(hint, encrypted)));
             }
 
-            return nameToEncrypted;
+            return list;
         }
     }
 
