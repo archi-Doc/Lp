@@ -109,8 +109,16 @@ public partial class KeyVault
             return false;
         }
 
-        obj = TinyhandSerializer.Deserialize<T>(decrypted);
-        return obj != null;
+        try
+        {
+            obj = TinyhandSerializer.Deserialize<T>(decrypted);
+            return obj != null;
+        }
+        catch
+        {
+            obj = default;
+            return false;
+        }
     }
 
     public string[] GetNames()
