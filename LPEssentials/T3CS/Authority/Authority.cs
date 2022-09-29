@@ -2,10 +2,11 @@
 
 using System.Security.Cryptography;
 
-namespace LP.Obsolete;
+namespace LP;
 
 public static class Authority
 {
+    public const string KeyVaultPrefix = "Authority\\";
     public const string ECCurveName = "secp256r1";
     public const int PublicKeyLength = 64;
     public const int PublicKeyHalfLength = PublicKeyLength / 2;

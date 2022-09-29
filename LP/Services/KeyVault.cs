@@ -1,8 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using Arc.Collections;
 using LP.Services;
-using ValueLink;
 
 namespace LP;
 
@@ -125,7 +125,27 @@ public partial class KeyVault
     {
         lock (this.syncObject)
         {
-            return this.nameToDecrypted.Where(x => x.Key.StartsWith(prefix)).Select(x => x.Key).ToArray();
+            var node = this.nameToDecrypted.GetLowerBound(prefix);
+            var upper = this.nameToDecrypted.GetUpperBound(prefix + "\uffff");
+
+            var list = new List<string>();
+            while (node != null)
+            {
+                // list.Add(node.Key.Substring(prefix.Length));
+                list.Add(node.Key);
+
+                if (node == upper)
+                {
+                    break;
+                }
+                else
+                {
+                    node = node.Next;
+                }
+            }
+
+            return list.ToArray();
+            // return this.nameToDecrypted.Where(x => x.Key.StartsWith(prefix)).Select(x => x.Key).ToArray();
         }
     }
 
@@ -271,6 +291,6 @@ RetryPassword:
     private readonly object syncObject = new();
     private readonly ILogger<KeyVault> logger;
     private readonly IUserInterfaceService userInterfaceService;
-    private readonly SortedDictionary<string, DecryptedItem> nameToDecrypted = new();
+    private readonly OrderedMap<string, DecryptedItem> nameToDecrypted = new();
     private string password = string.Empty;
 }

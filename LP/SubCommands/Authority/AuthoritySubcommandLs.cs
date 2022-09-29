@@ -17,8 +17,14 @@ public class AuthoritySubcommandLs : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        var names = this.Control.KeyVault.GetNames("Authority\\");
-        Console.WriteLine(string.Join(' ', names));
+        var names = this.Control.KeyVault.GetNames(Authority.KeyVaultPrefix);
+        foreach (var x in names)
+        {
+            if (this.Control.KeyVault.TryGetAndDeserialize<PrivateKey>(x, out var key))
+            {
+                Console.WriteLine($"{x}: {key.ToString()}");
+            }
+        }
     }
 
     public Control Control { get; set; }
