@@ -22,5 +22,4 @@ public static class Authority
         ECCurve = ECCurve.CreateFromFriendlyName(ECCurveName);
         HashAlgorithmName = HashAlgorithmName.SHA256;
     }
-
 }

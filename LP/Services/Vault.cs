@@ -6,11 +6,11 @@ using LP.Services;
 
 namespace LP;
 
-public partial class KeyVault
+public partial class Vault
 {
-    public const string Filename = "KeyVault.tinyhand";
+    public const string Filename = "Vault.tinyhand";
 
-    public KeyVault(ILogger<KeyVault> logger, IUserInterfaceService userInterfaceService)
+    public Vault(ILogger<Vault> logger, IUserInterfaceService userInterfaceService)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
@@ -297,7 +297,7 @@ RetryPassword:
     }
 
     private readonly object syncObject = new();
-    private readonly ILogger<KeyVault> logger;
+    private readonly ILogger<Vault> logger;
     private readonly IUserInterfaceService userInterfaceService;
     private readonly OrderedMap<string, DecryptedItem> nameToDecrypted = new();
     private string password = string.Empty;

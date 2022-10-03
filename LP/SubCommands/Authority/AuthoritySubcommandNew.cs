@@ -18,7 +18,7 @@ public class AuthoritySubcommandNew : ISimpleCommandAsync<AuthoritySubcommandNew
 
     public async Task RunAsync(string[] args)
     {
-        var names = this.Control.KeyVault.GetNames();
+        var names = this.Control.Vault.GetNames();
         Console.WriteLine(string.Join(' ', names));
     }
 
@@ -36,7 +36,7 @@ public class AuthoritySubcommandNew : ISimpleCommandAsync<AuthoritySubcommandNew
         }
 
         var name = "Authority\\" + option.Name;
-        this.Control.KeyVault.SerializeAndTryAdd(name, pri);
+        this.Control.Vault.SerializeAndTryAdd(name, pri);
 
         this.logger.TryGet()?.Log("Key created:");
         this.logger.TryGet()?.Log(pri.ToString());

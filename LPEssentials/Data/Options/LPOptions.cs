@@ -26,8 +26,8 @@ public partial record LPOptions : ILogInformation
     [SimpleOption("datadir", description: "Data directory")]
     public string DataDirectory { get; init; } = string.Empty;
 
-    [SimpleOption("keyvault", description: "KeyVault path")]
-    public string KeyVault { get; init; } = string.Empty;
+    [SimpleOption("vault", description: "Vault path")]
+    public string Vault { get; init; } = string.Empty;
 
     [SimpleOption("name", description: "Node name")]
     public string NodeName { get; init; } = string.Empty;

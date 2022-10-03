@@ -2,9 +2,16 @@
 
 namespace LP;
 
-public struct AuthorityKey : IDisposable
+public class VaultKey : IDisposable
 {
-    public AuthorityKey()
+    public enum Lifetime
+    {
+        Singleton,
+        Scoped,
+        PeriodOfTime,
+    }
+
+    public VaultKey()
     {
     }
 
