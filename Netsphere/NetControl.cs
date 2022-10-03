@@ -49,6 +49,7 @@ public class NetControl : UnitBase, IUnitPreparable
 
                 // Machines
                 context.AddTransient<LP.Machines.EssentialNetMachine>();
+                context.AddTransient<LP.Machines.NtpMachine>();
 
                 // Subcommands
                 context.AddSubcommand(typeof(LP.Subcommands.NetTestSubcommand));
@@ -122,6 +123,7 @@ public class NetControl : UnitBase, IUnitPreparable
 
         // Machines
         this.BigMachine.CreateNew<LP.Machines.EssentialNetMachine.Interface>(Identifier.Zero);
+        this.BigMachine.CreateNew<LP.Machines.NtpMachine.Interface>(Identifier.Zero);
     }
 
     public void SetupServer(Func<ServerContext>? newServerContext = null, Func<CallContext>? newCallContext = null)
