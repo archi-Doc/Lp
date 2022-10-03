@@ -29,7 +29,7 @@ public class NtpPacket
     public NtpPacket(byte[] packetData)
     {
         this.PacketData = packetData;
-        this.PacketCreatedTime = DateTime.Now;
+        this.PacketCreatedTime = DateTime.UtcNow;
     }
 
     private static DateTime GetCompensatingDatetime(uint seconds)
@@ -49,7 +49,7 @@ public class NtpPacket
     {
         var seconds = (uint)(ntpTimeStamp >> 32);
         var secondsFraction = (uint)(ntpTimeStamp & uint.MaxValue);
-        var milliseconds = ((long)seconds * 1000) + (secondsFraction * 1000 / CompensatingRate32);
+        var milliseconds = ((long)seconds * 1000) + ((long)secondsFraction * 1000 / CompensatingRate32);
         return GetCompensatingDatetime(seconds) + TimeSpan.FromMilliseconds(milliseconds);
     }
 
@@ -92,20 +92,22 @@ public class NtpPacket
     => SignedFixedPointToDouble(IPAddress.NetworkToHostOrder(BitConverter.ToInt32(this.PacketData, 8)));
 
     public DateTime ReferenceTimestamp
-        => NtpTimeStampToDateTime(IPAddress.NetworkToHostOrder(BitConverter.ToInt64(this.PacketData, 16))).ToLocalTime();
+        => NtpTimeStampToDateTime(IPAddress.NetworkToHostOrder(BitConverter.ToInt64(this.PacketData, 16)));
 
-    public DateTime OriginateTimestamp
-        => NtpTimeStampToDateTime(IPAddress.NetworkToHostOrder(BitConverter.ToInt64(this.PacketData, 24))).ToLocalTime();
+    public DateTime OriginateTimestamp // t0
+        => NtpTimeStampToDateTime(IPAddress.NetworkToHostOrder(BitConverter.ToInt64(this.PacketData, 24)));
 
-    public DateTime ReceiveTimestamp
-        => NtpTimeStampToDateTime(IPAddress.NetworkToHostOrder(BitConverter.ToInt64(this.PacketData, 32))).ToLocalTime();
+    public DateTime ReceiveTimestamp // t1
+        => NtpTimeStampToDateTime(IPAddress.NetworkToHostOrder(BitConverter.ToInt64(this.PacketData, 32)));
 
-    public DateTime TransmitTimestamp
-        => NtpTimeStampToDateTime(IPAddress.NetworkToHostOrder(BitConverter.ToInt64(this.PacketData, 40))).ToLocalTime();
+    public DateTime TransmitTimestamp // t2
+        => NtpTimeStampToDateTime(IPAddress.NetworkToHostOrder(BitConverter.ToInt64(this.PacketData, 40)));
 
-    public TimeSpan DifferentTimeSpan
+    public TimeSpan TimeOffset // ((t1 - t0) + (t2 - t3)) / 2
         => new TimeSpan((this.ReceiveTimestamp - this.OriginateTimestamp + (this.TransmitTimestamp - this.PacketCreatedTime)).Ticks / 2);
 
-    public TimeSpan NetworkDelay
-        => this.PacketCreatedTime - this.OriginateTimestamp + (this.TransmitTimestamp - this.ReceiveTimestamp);
+    public TimeSpan RoundtripTime // t3 - t0 - (t2 - t1)
+        => this.PacketCreatedTime - this.OriginateTimestamp - (this.TransmitTimestamp - this.ReceiveTimestamp);
+
+    public DateTime CorrectedUtcNow => DateTime.UtcNow + this.TimeOffset;
 }
