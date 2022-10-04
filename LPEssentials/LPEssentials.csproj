@@ -22,7 +22,7 @@
     <PackageReference Include="Arc.CrossChannel" Version="1.0.1" />
     <PackageReference Include="Arc.Threading" Version="0.15.2" />
     <PackageReference Include="Arc.Crypto" Version="1.10.1" />
-    <PackageReference Include="BigMachines" Version="0.21.0" />
+    <PackageReference Include="BigMachines" Version="0.21.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
     <PackageReference Include="SimpleCommandLine" Version="0.13.2" />
     <PackageReference Include="Tinyhand" Version="0.36.2" />

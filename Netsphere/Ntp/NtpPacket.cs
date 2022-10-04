@@ -3,7 +3,7 @@
 using System.Net.Sockets;
 using Netsphere;
 
-namespace Netsphere;
+namespace Netsphere.Ntp;
 
 public class NtpPacket
 {

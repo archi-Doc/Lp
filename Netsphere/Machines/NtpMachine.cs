@@ -1,23 +1,25 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Net.Sockets;
-using Netsphere;
+using Netsphere.Ntp;
 
-namespace LP.Machines;
+namespace Netsphere.Machines;
 
 [MachineObject(0x5e1f81ca, Group = typeof(SingleGroup<>))]
 public partial class NtpMachine : Machine<Identifier>
 {
     private const string TimestampFormat = "MM-dd HH:mm:ss.fff K";
 
-    public NtpMachine(ILogger<NtpMachine> logger, BigMachine<Identifier> bigMachine, LPBase lpBase, NetBase netBase, NetControl netControl)
+    public NtpMachine(ILogger<NtpMachine> logger, BigMachine<Identifier> bigMachine, LPBase lpBase, NetBase netBase, NetControl netControl, NtpCorrection ntpCorrection)
         : base(bigMachine)
     {
         this.logger = logger;
         this.NetBase = netBase;
         this.NetControl = netControl;
         this.LPBase = lpBase;
-        this.DefaultTimeout = TimeSpan.FromSeconds(1);
+        this.ntpCorrection = ntpCorrection;
+
+        this.DefaultTimeout = TimeSpan.FromSeconds(5);
     }
 
     public LPBase LPBase { get; }
@@ -29,9 +31,11 @@ public partial class NtpMachine : Machine<Identifier>
     [StateMethod(0)]
     protected async Task<StateResult> Initial(StateParameter parameter)
     {
-        var packet = await this.GetTime(parameter.CancellationToken);
-        this.logger.TryGet(LogLevel.Information)?.Log($"RoundtripTime: {packet.RoundtripTime.ToString()}, TimeOffset: {packet.TimeOffset.ToString()}");
-        this.logger.TryGet(LogLevel.Information)?.Log($"Server: {packet.TransmitTimestamp.ToString(TimestampFormat)}, Corrected: {packet.CorrectedUtcNow.ToString(TimestampFormat)}");
+        /*var packet = await this.GetTime(parameter.CancellationToken);
+        this.logger.TryGet(LogLevel.Information)?.Log($"RoundtripTime: {packet.RoundtripTime.Milliseconds.ToString()} ms, TimeOffset: {packet.TimeOffset.Milliseconds.ToString()} ms");
+        this.logger.TryGet(LogLevel.Information)?.Log($"Server: {packet.TransmitTimestamp.ToString(TimestampFormat)}, Corrected: {packet.CorrectedUtcNow.ToString(TimestampFormat)}");*/
+
+        await this.ntpCorrection.CorrectAsync(parameter.CancellationToken);
 
         return StateResult.Continue;
     }
@@ -54,4 +58,5 @@ public partial class NtpMachine : Machine<Identifier>
     }
 
     private ILogger<NtpMachine> logger;
+    private NtpCorrection ntpCorrection;
 }

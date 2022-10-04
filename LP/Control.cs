@@ -59,7 +59,6 @@ public class Control : ILogInformation
                 // Subcommands
                 context.AddSubcommand(typeof(LP.Subcommands.TestSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.MicsSubcommand));
-                context.AddSubcommand(typeof(LP.Subcommands.ExitSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.GCSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.PingSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.NetBenchSubcommand));
@@ -301,7 +300,7 @@ public class Control : ILogInformation
             throw new PanicException();
         }
 
-        await context.SendLoadAsync(new());
+        await context.SendLoadAsync(new(this.LPBase.DataDirectory));
     }
 
     public async Task AbortAsync()
@@ -318,7 +317,7 @@ public class Control : ILogInformation
         await this.NetControl.EssentialNode.SaveAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
         await this.ZenControl.Itz.SaveAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile), Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup));
 
-        await context.SendSaveAsync(new());
+        await context.SendSaveAsync(new(this.LPBase.DataDirectory));
     }
 
     public async Task RunAsync(UnitContext context)

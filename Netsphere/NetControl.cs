@@ -17,6 +17,8 @@ using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Netsphere.Machines;
+using Netsphere.Ntp;
 using Netsphere.Responder;
 using SimpleCommandLine;
 
@@ -43,13 +45,14 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddSingleton<NetBase>();
                 context.AddSingleton<Terminal>();
                 context.AddSingleton<EssentialNode>();
+                context.AddSingleton<NtpCorrection>();
                 context.AddSingleton<NetStatus>();
                 context.AddTransient<Server>();
                 context.AddTransient<NetService>(); // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
 
                 // Machines
-                context.AddTransient<LP.Machines.EssentialNetMachine>();
-                context.AddTransient<LP.Machines.NtpMachine>();
+                context.AddTransient<EssentialNetMachine>();
+                context.AddTransient<NtpMachine>();
 
                 // Subcommands
                 context.AddSubcommand(typeof(LP.Subcommands.NetTestSubcommand));
@@ -122,8 +125,8 @@ public class NetControl : UnitBase, IUnitPreparable
         DefaultResponder.Register(this);
 
         // Machines
-        this.BigMachine.CreateNew<LP.Machines.EssentialNetMachine.Interface>(Identifier.Zero);
-        this.BigMachine.CreateNew<LP.Machines.NtpMachine.Interface>(Identifier.Zero);
+        this.BigMachine.CreateNew<EssentialNetMachine.Interface>(Identifier.Zero);
+        this.BigMachine.CreateNew<NtpMachine.Interface>(Identifier.Zero);
     }
 
     public void SetupServer(Func<ServerContext>? newServerContext = null, Func<CallContext>? newCallContext = null)
