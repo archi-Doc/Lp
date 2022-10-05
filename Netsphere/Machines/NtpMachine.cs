@@ -31,11 +31,34 @@ public partial class NtpMachine : Machine<Identifier>
     [StateMethod(0)]
     protected async Task<StateResult> Initial(StateParameter parameter)
     {
-        /*var packet = await this.GetTime(parameter.CancellationToken);
-        this.logger.TryGet(LogLevel.Information)?.Log($"RoundtripTime: {packet.RoundtripTime.Milliseconds.ToString()} ms, TimeOffset: {packet.TimeOffset.Milliseconds.ToString()} ms");
-        this.logger.TryGet(LogLevel.Information)?.Log($"Server: {packet.TransmitTimestamp.ToString(TimestampFormat)}, Corrected: {packet.CorrectedUtcNow.ToString(TimestampFormat)}");*/
-
         await this.ntpCorrection.CorrectAsync(parameter.CancellationToken);
+
+        var timeoffset = this.ntpCorrection.GetTimeoffset();
+        if (timeoffset.TimeoffsetCount == 0)
+        {
+            this.ChangeState(State.SafeHoldMode, false);
+            return StateResult.Continue;
+        }
+
+        this.logger?.TryGet()?.Log($"Timeoffset {timeoffset.MeanTimeoffset} ms [{timeoffset.TimeoffsetCount}]");
+
+        var corrected = this.ntpCorrection.TryGetCorrectedUtcNow(out var utcNow);
+        this.logger?.TryGet()?.Log($"Corrected {corrected}, {utcNow.ToString()}]");
+
+        // this.SetTimeout(TimeSpan.FromHours(1));
+        return StateResult.Continue;
+    }
+
+    [StateMethod(1)]
+    protected async Task<StateResult> SafeHoldMode(StateParameter parameter)
+    {
+        this.logger?.TryGet(LogLevel.Warning)?.Log($"Safe-hold mode");
+        if (await this.ntpCorrection.CheckConnectionAsync(parameter.CancellationToken))
+        {
+            this.ntpCorrection.ResetHostnames();
+            this.ChangeState(State.Initial);
+            return StateResult.Continue;
+        }
 
         return StateResult.Continue;
     }
@@ -57,6 +80,6 @@ public partial class NtpMachine : Machine<Identifier>
         }
     }
 
-    private ILogger<NtpMachine> logger;
+    private ILogger<NtpMachine>? logger;
     private NtpCorrection ntpCorrection;
 }

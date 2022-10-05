@@ -59,8 +59,6 @@ public partial class NtpCorrection : UnitBase, IUnitSerializable
 
     public async Task CorrectAsync(CancellationToken cancellationToken)
     {
-        this.logger?.TryGet()?.Log($"Timeoffset {this.meanTimeoffset} ms [{this.timeoffsetCount}]");
-
 Retry:
         string[] hostnames;
         lock (this.syncObject)
@@ -78,6 +76,49 @@ Retry:
         {
             this.logger?.TryGet(LogLevel.Error)?.Log("Retry");
             goto Retry;
+        }
+    }
+
+    public async Task<bool> CheckConnectionAsync(CancellationToken cancellationToken)
+    {
+        if (this.hostNames.Length == 0)
+        {
+            return false;
+        }
+
+        var hostname = this.hostNames[LP.Random.Pseudo.NextInt32(this.hostNames.Length)];
+        using (var client = new UdpClient())
+        {
+            try
+            {
+                client.Connect(hostname, 123);
+                var packet = NtpPacket.CreateSendPacket();
+                await client.SendAsync(packet.PacketData, cancellationToken);
+                var result = await client.ReceiveAsync().WaitAsync(TimeSpan.FromSeconds(1), cancellationToken);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public (int MeanTimeoffset, int TimeoffsetCount) GetTimeoffset()
+        => (this.meanTimeoffset, this.timeoffsetCount);
+
+    public bool TryGetCorrectedUtcNow(out DateTime utcNow)
+    {
+        if (this.timeoffsetCount == 0)
+        {
+            utcNow = DateTime.UtcNow;
+            return false;
+        }
+        else
+        {
+            utcNow = DateTime.UtcNow + TimeSpan.FromMilliseconds(this.meanTimeoffset);
+            return true;
         }
     }
 
@@ -101,6 +142,11 @@ Retry:
             this.logger?.TryGet(LogLevel.Error)?.Log($"Could not load '{path}'");
         }
 
+        this.ResetHostnames();
+    }
+
+    public void ResetHostnames()
+    {
         lock (this.syncObject)
         {
             foreach (var x in this.hostNames)
