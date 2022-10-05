@@ -27,6 +27,11 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
     public PublicKey()
     {
+        this.rawType = 0;
+        this.x0 = 0;
+        this.x1 = 0;
+        this.x2 = 0;
+        this.x3 = 0;
     }
 
     public PublicKey(PrivateKey privateKey)
