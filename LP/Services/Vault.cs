@@ -37,6 +37,7 @@ public partial class Vault
     {
         public EncryptedItem()
         {
+            this.Hint = 0;
         }
 
         public EncryptedItem(int hint, byte[] encrypted)
