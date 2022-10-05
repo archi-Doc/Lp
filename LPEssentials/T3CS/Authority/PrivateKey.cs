@@ -30,7 +30,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         key.Curve = PublicKey.ECCurve;
 
         var passBytes = Encoding.UTF8.GetBytes(passphrase);
-        scoped Span<byte> span = stackalloc byte[(sizeof(ulong) + passBytes.Length) * 2]; // count, passBytes, count, passBytes
+        Span<byte> span = stackalloc byte[(sizeof(ulong) + passBytes.Length) * 2]; // count, passBytes, count, passBytes // scoped
         var countSpan = span.Slice(0, sizeof(ulong));
         var countSpan2 = span.Slice(sizeof(ulong) + passBytes.Length, sizeof(ulong));
         passBytes.CopyTo(span.Slice(sizeof(ulong)));
@@ -199,7 +199,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
 
     public override string ToString()
     {
-        scoped Span<byte> bytes = stackalloc byte[1 + PublicKey.PublicKeyHalfLength];
+        Span<byte> bytes = stackalloc byte[1 + PublicKey.PublicKeyHalfLength]; // scoped
         bytes[0] = this.rawType;
         this.x.CopyTo(bytes.Slice(1));
         return $"{this.name}({Base64.EncodeToBase64Utf16(bytes)})";

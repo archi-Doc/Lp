@@ -147,7 +147,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
     public override string ToString()
     {
-        scoped Span<byte> bytes = stackalloc byte[1 + (sizeof(ulong) * 4)];
+        Span<byte> bytes = stackalloc byte[1 + (sizeof(ulong) * 4)]; // scoped
         var b = bytes;
 
         b[0] = this.rawType;
