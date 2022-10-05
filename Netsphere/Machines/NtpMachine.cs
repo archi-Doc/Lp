@@ -45,7 +45,7 @@ public partial class NtpMachine : Machine<Identifier>
         var corrected = this.ntpCorrection.TryGetCorrectedUtcNow(out var utcNow);
         this.logger?.TryGet()?.Log($"Corrected {corrected}, {utcNow.ToString()}");
 
-        // this.SetTimeout(TimeSpan.FromHours(1));
+        this.SetTimeout(TimeSpan.FromHours(1));
         return StateResult.Continue;
     }
 
