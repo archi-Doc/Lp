@@ -166,6 +166,6 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         BitConverter.TryWriteBytes(b, this.x3);
         b = b.Slice(sizeof(ulong));
 
-        return $"({Base64.EncodeToBase64Utf16(bytes)})";
+        return $"({Base64.Default.FromByteArrayToUtf8(bytes)})";
     }
 }
