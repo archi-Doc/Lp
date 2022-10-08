@@ -30,7 +30,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         key.Curve = PublicKey.ECCurve;
 
         var passBytes = Encoding.UTF8.GetBytes(passphrase);
-        scoped Span<byte> span = stackalloc byte[(sizeof(ulong) + passBytes.Length) * 2]; // count, passBytes, count, passBytes
+        Span<byte> span = stackalloc byte[(sizeof(ulong) + passBytes.Length) * 2]; // count, passBytes, count, passBytes // scoped
         var countSpan = span.Slice(0, sizeof(ulong));
         var countSpan2 = span.Slice(sizeof(ulong) + passBytes.Length, sizeof(ulong));
         passBytes.CopyTo(span.Slice(sizeof(ulong)));
@@ -96,6 +96,34 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         return sign;
     }
 
+    public bool SignData(ReadOnlySpan<byte> data, Span<byte> signature)
+    {
+        if (signature.Length < PublicKey.SignLength)
+        {
+            return false;
+        }
+
+        var ecdsa = PrivateKeyToECDsa.TryGet(this) ?? this.TryCreateECDsa();
+        if (ecdsa == null)
+        {
+            return false;
+        }
+
+        if (!ecdsa.TrySignData(data, signature, PublicKey.HashAlgorithmName, out var written))
+        {
+            return false;
+        }
+
+        PrivateKeyToECDsa.Cache(this, ecdsa);
+        return true;
+    }
+
+    public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> sign)
+    {
+        var publicKey = new PublicKey(this);
+        return publicKey.VerifyData(data, sign);
+    }
+
     public ECDsa? TryCreateECDsa()
     {
         if (!this.Validate())
@@ -136,7 +164,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
     [Key(4)]
     private readonly byte[] d = Array.Empty<byte>();
 
-    public uint KeyType => (uint)(this.rawType >>> 2);
+    public uint KeyType => (uint)(this.rawType >> 2);
 
     public uint YTilde => (uint)(this.rawType & 1);
 
@@ -199,10 +227,10 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
 
     public override string ToString()
     {
-        scoped Span<byte> bytes = stackalloc byte[1 + PublicKey.PublicKeyHalfLength];
+        Span<byte> bytes = stackalloc byte[1 + PublicKey.PublicKeyHalfLength]; // scoped
         bytes[0] = this.rawType;
         this.x.CopyTo(bytes.Slice(1));
-        return $"{this.name}({Base64.EncodeToBase64Utf16(bytes)})";
+        return $"{this.name}({Base64.Url.FromByteArrayToString(bytes)})";
     }
 
     internal uint CompressY()

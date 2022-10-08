@@ -11,11 +11,15 @@ public static class Time
 {
     public static readonly double TimestampToTicks;
     public static readonly double MicsToTicks;
+    private static readonly long FixedTimestamp; // Fixed timestamp at application startup.
+    private static readonly DateTime FixedUtcNow; // Fixed DateTime at application startup.
 
     static Time()
     {
         TimestampToTicks = 10_000_000d / Stopwatch.Frequency;
         MicsToTicks = TimestampToTicks / Mics.TimestampToMics;
+        FixedTimestamp = Stopwatch.GetTimestamp();
+        FixedUtcNow = DateTime.UtcNow;
     }
 
     /// <summary>
@@ -36,6 +40,14 @@ public static class Time
     /// </summary>
     /// <returns><see cref="DateTime"/>.</returns>
     public static DateTime GetUtcNow() => DateTime.UtcNow;
+
+    /// <summary>
+    /// Gets a fixed <see cref="DateTime"/> expressed as UTC.
+    /// Not affected by manual date/time changes.
+    /// </summary>
+    /// <returns><see cref="DateTime"/>.</returns>
+    public static DateTime GetFixedUtcNow()
+        => FixedUtcNow + TimeSpan.FromTicks((long)((Stopwatch.GetTimestamp() - FixedTimestamp) * TimestampToTicks));
 
     /// <summary>
     /// Get a corrected <see cref="DateTime"/> expressed as UTC.

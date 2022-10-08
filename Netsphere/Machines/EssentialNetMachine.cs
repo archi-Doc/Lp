@@ -2,7 +2,7 @@
 
 using Netsphere;
 
-namespace LP.Machines;
+namespace Netsphere.Machines;
 
 /// <summary>
 /// Check essential nodes and determine MyStatus.ConnectionType.<br/>

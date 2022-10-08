@@ -132,5 +132,5 @@ public sealed partial class AuthorityPrivateKey : IValidatable, IEquatable<Autho
     }
 
     public override string ToString()
-        => $"{this.name}({Base64.EncodeToBase64Utf16(this.identifier)})";
+        => $"{this.name}({Base64.Default.FromByteArrayToString(this.identifier)})";
 }

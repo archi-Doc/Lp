@@ -29,7 +29,7 @@ public class KeyVaultSubcommandChangePass : ISimpleCommandAsync
             {
                 return;
             }
-            else if (this.Control.KeyVault.CheckPassword(currentPassword))
+            else if (this.Control.Vault.CheckPassword(currentPassword))
             {// Correct
                 break;
             }
@@ -43,7 +43,7 @@ public class KeyVaultSubcommandChangePass : ISimpleCommandAsync
             return;
         }
 
-        this.Control.KeyVault.ChangePassword(currentPassword, newPassword);
+        this.Control.Vault.ChangePassword(currentPassword, newPassword);
         this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Dialog.Password.Changed);
     }
 

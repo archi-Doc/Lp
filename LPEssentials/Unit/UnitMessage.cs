@@ -16,11 +16,12 @@ public static class UnitMessage
     /// Called once after <see cref="Prepare()"/>.<br/>
     /// Throw <see cref="PanicException"/> to abort the procedure.
     /// </summary>
-    public record LoadAsync();
+    /// <param name="DataPath">Path of data folder.</param>
+    public record LoadAsync(string DataPath);
 
     /// <summary>
     /// Start unit objects.<br/>
-    /// Called once after <see cref="LoadAsync()"/>.
+    /// Called once after <see cref="LoadAsync"/>().
     /// </summary>
     /// <param name="ParentCore">ParentCore.</param>
     public record RunAsync(ThreadCoreBase ParentCore);
@@ -35,5 +36,6 @@ public static class UnitMessage
     ///  Serialize unit objects.<br/>
     ///  Called multiple times after <see cref="Prepare()"/>.
     /// </summary>
-    public record SaveAsync();
+    /// <param name="DataPath">Path of data folder.</param>
+    public record SaveAsync(string DataPath);
 }

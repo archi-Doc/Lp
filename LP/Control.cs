@@ -44,7 +44,8 @@ public class Control : ILogInformation
                 context.AddSingleton<Control>();
                 context.AddSingleton<LPBase>();
                 context.Services.TryAddSingleton<IUserInterfaceService, ConsoleUserInterfaceService>();
-                context.AddSingleton<KeyVault>();
+                context.AddSingleton<Vault>();
+                context.AddSingleton<SeedPhrase>();
 
                 // RPC / Services
                 context.AddTransient<Services.BenchmarkServiceImpl>();
@@ -59,7 +60,6 @@ public class Control : ILogInformation
                 // Subcommands
                 context.AddSubcommand(typeof(LP.Subcommands.TestSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.MicsSubcommand));
-                context.AddSubcommand(typeof(LP.Subcommands.ExitSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.GCSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.PingSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.NetBenchSubcommand));
@@ -256,7 +256,7 @@ public class Control : ILogInformation
         }
     }
 
-    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl, KeyVault keyVault)
+    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl, Vault vault)
     {
         this.Logger = logger;
         this.UserInterfaceService = userInterfaceService;
@@ -267,7 +267,7 @@ public class Control : ILogInformation
         this.ZenControl = zenControl;
         this.ZenControl.Zen.IO.SetRootDirectory(this.LPBase.RootDirectory);
         this.ZenControl.Zen.SetDelegate(ObjectToMemoryOwner, MemoryOwnerToObject);
-        this.KeyVault = keyVault;
+        this.Vault = vault;
 
         this.Core = core;
         this.BigMachine.Core.ChangeParent(this.Core);
@@ -301,7 +301,7 @@ public class Control : ILogInformation
             throw new PanicException();
         }
 
-        await context.SendLoadAsync(new());
+        await context.SendLoadAsync(new(this.LPBase.DataDirectory));
     }
 
     public async Task AbortAsync()
@@ -318,7 +318,7 @@ public class Control : ILogInformation
         await this.NetControl.EssentialNode.SaveAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
         await this.ZenControl.Itz.SaveAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile), Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup));
 
-        await context.SendSaveAsync(new());
+        await context.SendSaveAsync(new(this.LPBase.DataDirectory));
     }
 
     public async Task RunAsync(UnitContext context)
@@ -508,7 +508,7 @@ public class Control : ILogInformation
 
     public ZenControl ZenControl { get; }
 
-    public KeyVault KeyVault { get; }
+    public Vault Vault { get; }
 
     private SimpleParser subcommandParser;
 
@@ -534,7 +534,7 @@ public class Control : ILogInformation
         }
         else
         {
-            var result = await this.KeyVault.LoadAsync(this.LPBase.CombineDataPath(this.LPBase.Options.KeyVault, KeyVault.Filename)).ConfigureAwait(false);
+            var result = await this.Vault.LoadAsync(this.LPBase.CombineDataPath(this.LPBase.Options.Vault, Vault.Filename)).ConfigureAwait(false);
             if (result)
             {
                 goto LoadKeyVaultObjects;
@@ -558,7 +558,7 @@ public class Control : ILogInformation
             throw new PanicException();
         }
 
-        this.KeyVault.Create(password);
+        this.Vault.Create(password);
 
 LoadKeyVaultObjects:
         await this.LoadKeyVault_NodeKey();
@@ -566,9 +566,9 @@ LoadKeyVaultObjects:
 
     private async Task LoadKeyVault_NodeKey()
     {
-        if (!this.KeyVault.TryGetAndDeserialize<NodePrivateKey>(NodePrivateKey.Filename, out var key))
+        if (!this.Vault.TryGetAndDeserialize<NodePrivateKey>(NodePrivateKey.Filename, out var key))
         {// Failure
-            if (!this.KeyVault.Created)
+            if (!this.Vault.Created)
             {
                 await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.KeyVault.NoData, NodePrivateKey.Filename);
             }
@@ -585,9 +585,9 @@ LoadKeyVaultObjects:
 
     private async Task SaveKeyVaultAsync()
     {
-        this.KeyVault.Add(NodePrivateKey.Filename, this.NetControl.NetBase.SerializeNodeKey());
+        this.Vault.Add(NodePrivateKey.Filename, this.NetControl.NetBase.SerializeNodeKey());
 
-        await this.KeyVault.SaveAsync(this.LPBase.CombineDataPath(this.LPBase.Options.KeyVault, KeyVault.Filename));
+        await this.Vault.SaveAsync(this.LPBase.CombineDataPath(this.LPBase.Options.Vault, Vault.Filename));
     }
 
     private async Task LoadSettingsAsync()

@@ -17,7 +17,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
     public static HashAlgorithmName HashAlgorithmName { get; }
 
-    private static ObjectCache<PublicKey, ECDsa> PublicKeyToECDsa { get; } = new(100);
+    internal static ObjectCache<PublicKey, ECDsa> PublicKeyToECDsa { get; } = new(100);
 
     static PublicKey()
     {
@@ -27,6 +27,11 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
     public PublicKey()
     {
+        this.rawType = 0;
+        this.x0 = 0;
+        this.x1 = 0;
+        this.x2 = 0;
+        this.x3 = 0;
     }
 
     public PublicKey(PrivateKey privateKey)
@@ -62,7 +67,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
     [Key(4)]
     private readonly ulong x3;
 
-    public uint KeyType => (uint)(this.rawType >>> 2);
+    public uint KeyType => (uint)(this.rawType >> 2);
 
     public uint YTilde => (uint)(this.rawType & 1);
 
@@ -147,7 +152,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
     public override string ToString()
     {
-        scoped Span<byte> bytes = stackalloc byte[1 + (sizeof(ulong) * 4)];
+        Span<byte> bytes = stackalloc byte[1 + (sizeof(ulong) * 4)]; // scoped
         var b = bytes;
 
         b[0] = this.rawType;
@@ -161,6 +166,6 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         BitConverter.TryWriteBytes(b, this.x3);
         b = b.Slice(sizeof(ulong));
 
-        return $"({Base64.EncodeToBase64Utf16(bytes)})";
+        return $"({Base64.Default.FromByteArrayToUtf8(bytes)})";
     }
 }
