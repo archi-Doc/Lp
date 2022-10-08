@@ -17,7 +17,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
     public static HashAlgorithmName HashAlgorithmName { get; }
 
-    private static ObjectCache<PublicKey, ECDsa> PublicKeyToECDsa { get; } = new(100);
+    internal static ObjectCache<PublicKey, ECDsa> PublicKeyToECDsa { get; } = new(100);
 
     static PublicKey()
     {

@@ -53,6 +53,11 @@ public partial class Vault
         internal byte[] Encrypted = Array.Empty<byte>();
     }
 
+    public VaultKeyResult TryGetKey(string name)
+    {
+
+    }
+
     public bool TryAdd(string name, byte[] decrypted)
     {
         lock (this.syncObject)

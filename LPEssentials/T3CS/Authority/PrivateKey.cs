@@ -96,6 +96,34 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         return sign;
     }
 
+    public bool SignData(ReadOnlySpan<byte> data, Span<byte> signature)
+    {
+        if (signature.Length < PublicKey.SignLength)
+        {
+            return false;
+        }
+
+        var ecdsa = PrivateKeyToECDsa.TryGet(this) ?? this.TryCreateECDsa();
+        if (ecdsa == null)
+        {
+            return false;
+        }
+
+        if (!ecdsa.TrySignData(data, signature, PublicKey.HashAlgorithmName, out var written))
+        {
+            return false;
+        }
+
+        PrivateKeyToECDsa.Cache(this, ecdsa);
+        return true;
+    }
+
+    public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> sign)
+    {
+        var publicKey = new PublicKey(this);
+        return publicKey.VerifyData(data, sign);
+    }
+
     public ECDsa? TryCreateECDsa()
     {
         if (!this.Validate())

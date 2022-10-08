@@ -4,15 +4,29 @@ namespace LP;
 
 public class VaultKey : IDisposable
 {
-    public enum Lifetime
+    public enum KeyLifetime
     {
-        Singleton,
-        Scoped,
+        Application,
         PeriodOfTime,
+        Session,
     }
 
-    public VaultKey()
+    public enum Result
     {
+        Success,
+    }
+
+    public VaultKey(Vault vault, KeyLifetime lifetime)
+    {
+        this.vault = vault;
+        // this.Name = name;
+        this.Lifetime = lifetime;
+    }
+
+    public Result TrySignData(ReadOnlySpan<byte> data, Span<byte> destination)
+    {
+        this.vault.
+        return Result.Success;
     }
 
     public void Dispose()
@@ -20,5 +34,19 @@ public class VaultKey : IDisposable
         this.privateKey = null;
     }
 
+    // public string Name { get; }
+
+    public KeyLifetime Lifetime { get; }
+
+    public long LifeMics { get; }
+
+    public long ExpireMics { get; }
+
+    private Result PreparePrivateKey()
+    {
+
+    }
+
+    private Vault? vault;
     private PrivateKey? privateKey;
 }
