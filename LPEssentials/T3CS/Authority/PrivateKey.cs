@@ -172,9 +172,6 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
 
     public byte[] Y => this.y;
 
-    /*[IgnoreMember]
-    private byte[] identifier;*/
-
     public bool Validate()
     {
         if (this.name == null || this.name.Length > MaxNameLength)

@@ -21,7 +21,7 @@ public sealed class AuthorityInterface
             return (result, Array.Empty<byte>());
         }
 
-        // this.authorityInfo!.SignData(credit, data);
+        this.authorityInfo!.SignData(credit, data);
 
         return (AuthorityResult.Success, Array.Empty<byte>());
     }

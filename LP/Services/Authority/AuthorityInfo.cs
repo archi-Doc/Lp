@@ -13,14 +13,14 @@ public sealed partial class AuthorityInfo
     {
         if (seedPhrase == null)
         {
-            this.Seed = new byte[SeedLength];
-            Random.Crypto.NextBytes(this.Seed);
+            this.seed = new byte[SeedLength];
+            Random.Crypto.NextBytes(this.seed);
         }
         else
         {
             var hash = Hash.ObjectPool.Get();
             var utf8 = System.Text.Encoding.UTF8.GetBytes(seedPhrase);
-            this.Seed = hash.GetHash(hash.GetHash(utf8));
+            this.seed = hash.GetHash(hash.GetHash(utf8));
             Hash.ObjectPool.Return(hash);
         }
 
@@ -32,8 +32,13 @@ public sealed partial class AuthorityInfo
     {
     }
 
+    public void SignData(Credit credit, byte[] data)
+    {
+        // Create private key.
+    }
+
     [Key(0)]
-    public byte[] Seed { private get; init; } = Array.Empty<byte>();
+    private byte[] seed = Array.Empty<byte>();
 
     [Key(1)]
     public AuthorityLifetime Lifetime { get; init; }

@@ -8,6 +8,9 @@ using static LP.AuthorityInterface;
 
 namespace LP;
 
+/// <summary>
+/// Class used to create/delete authority, and get AuthorityInterface using Vault.
+/// </summary>
 public class Authority
 {
     public const string VaultPrefix = "Authority\\";
