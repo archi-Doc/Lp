@@ -26,10 +26,10 @@ public sealed class AuthorityInterface
         return (AuthorityResult.Success, Array.Empty<byte>());
     }
 
-    public AuthorityInfo? TryGetInfo()
+    public async Task<(AuthorityResult Result, AuthorityInfo? AuthorityInfo)> TryGetInfo()
     {
-        var result = this.Prepare();
-        return this.authorityInfo;
+        var result = await this.Prepare().ConfigureAwait(false);
+        return (result, this.authorityInfo);
     }
 
     public async Task<AuthorityResult> Prepare()
@@ -79,6 +79,11 @@ public sealed class AuthorityInterface
 
         if (this.authorityInfo != null)
         {
+            if (this.authorityInfo.Lifetime == AuthorityLifetime.PeriodOfTime)
+            {
+                this.ExpirationMics = Mics.GetUtcNow() + this.authorityInfo.LifeMics;
+            }
+
             return AuthorityResult.Success;
         }
         else
@@ -89,7 +94,7 @@ public sealed class AuthorityInterface
 
     public string Name { get; private set; }
 
-    public long ExpirationMics { get; }
+    public long ExpirationMics { get; private set; }
 
     private Authority authority;
     private byte[] encrypted;

@@ -43,4 +43,7 @@ public sealed partial class AuthorityInfo
 
     [Key(3)]
     public Value[] Values { get; init; } = Array.Empty<Value>();
+
+    public override string ToString()
+        => $"Lifetime: {this.Lifetime}, LifeMics: {this.LifeMics}";
 }

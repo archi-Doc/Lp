@@ -8,7 +8,7 @@ using Tinyhand;
 namespace LP.Subcommands;
 
 [SimpleCommand("rm")]
-public class AuthoritySubcommandRemove : ISimpleCommandAsync<AuthoritySubcommandRemoveOptions>
+public class AuthoritySubcommandRemove : ISimpleCommandAsync<AuthoritySubcommandNameOptions>
 {
     public AuthoritySubcommandRemove(ILogger<AuthoritySubcommandRemove> logger, Control control)
     {
@@ -16,7 +16,7 @@ public class AuthoritySubcommandRemove : ISimpleCommandAsync<AuthoritySubcommand
         this.logger = logger;
     }
 
-    public async Task RunAsync(AuthoritySubcommandRemoveOptions option, string[] args)
+    public async Task RunAsync(AuthoritySubcommandNameOptions option, string[] args)
     {
         var result = this.Control.Authority.RemoveAuthority(option.Name);
 
@@ -35,7 +35,7 @@ public class AuthoritySubcommandRemove : ISimpleCommandAsync<AuthoritySubcommand
     private ILogger<AuthoritySubcommandRemove> logger;
 }
 
-public record AuthoritySubcommandRemoveOptions
+public record AuthoritySubcommandNameOptions
 {
     [SimpleOption("name", description: "Key name", Required = true)]
     public string Name { get; init; } = string.Empty;
