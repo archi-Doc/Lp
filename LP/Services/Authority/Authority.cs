@@ -21,11 +21,11 @@ public class Authority
     public string[] GetNames()
         => this.vault.GetNames(VaultPrefix);
 
-    public AuthorityResult TryGetInterface(string name, out AuthorityInterface @interface)
+    public AuthorityResult TryGetInterface(string name, out AuthorityInterface authorityInterface)
     {
         lock (this.syncObject)
         {
-            if (this.nameToAuthorityInterface.TryGetValue(name, out @interface!))
+            if (this.nameToAuthorityInterface.TryGetValue(name, out authorityInterface!))
             {
                 return AuthorityResult.Success;
             }
@@ -36,7 +36,8 @@ public class Authority
                 return AuthorityResult.NotFound;
             }
 
-            @interface = new AuthorityInterface(this, decrypted);
+            authorityInterface = new AuthorityInterface(this, name, decrypted);
+            this.nameToAuthorityInterface.Add(name, authorityInterface);
             return AuthorityResult.Success;
         }
     }

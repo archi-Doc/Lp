@@ -179,8 +179,8 @@ public class Control : ILogInformation
                 // Settings
                 await control.LoadSettingsAsync();
 
-                // KeyVault
-                await control.LoadKeyVaultAsync();
+                // Vault
+                await control.LoadVaultAsync();
 
                 // Start
                 control.Logger.Get<DefaultLog>().Log($"LP ({Version.Get()})");
@@ -531,7 +531,7 @@ public class Control : ILogInformation
         }
     }
 
-    private async Task LoadKeyVaultAsync()
+    private async Task LoadVaultAsync()
     {
         if (this.LPBase.IsFirstRun)
         {// First run
@@ -544,19 +544,19 @@ public class Control : ILogInformation
                 goto LoadKeyVaultObjects;
             }
 
-            // Could not load KeyVault
-            var reply = await this.UserInterfaceService.RequestYesOrNo(Hashed.KeyVault.AskNew);
+            // Could not load Vault
+            var reply = await this.UserInterfaceService.RequestYesOrNo(Hashed.Vault.AskNew);
             if (reply != true)
             {// No
                 throw new PanicException();
             }
         }
 
-        Console.WriteLine(HashedString.Get(Hashed.KeyVault.Create));
+        Console.WriteLine(HashedString.Get(Hashed.Vault.Create));
         // await this.UserInterfaceService.Notify(UserInterfaceNotifyLevel.Information, Hashed.KeyVault.Create);
 
-        // New KeyVault
-        var password = await this.UserInterfaceService.RequestPasswordAndConfirm(Hashed.KeyVault.EnterPassword, Hashed.Dialog.Password.Confirm);
+        // New Vault
+        var password = await this.UserInterfaceService.RequestPasswordAndConfirm(Hashed.Vault.EnterPassword, Hashed.Dialog.Password.Confirm);
         if (password == null)
         {
             throw new PanicException();
@@ -574,7 +574,7 @@ LoadKeyVaultObjects:
         {// Failure
             if (!this.Vault.Created)
             {
-                await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.KeyVault.NoData, NodePrivateKey.Filename);
+                await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoData, NodePrivateKey.Filename);
             }
 
             return;
@@ -582,7 +582,7 @@ LoadKeyVaultObjects:
 
         if (!this.NetControl.NetBase.SetNodeKey(key))
         {
-            await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.KeyVault.NoRestore, NodePrivateKey.Filename);
+            await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoRestore, NodePrivateKey.Filename);
             return;
         }
     }

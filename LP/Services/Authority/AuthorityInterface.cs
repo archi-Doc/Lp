@@ -1,12 +1,15 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using LP.Services;
+
 namespace LP;
 
 public sealed class AuthorityInterface
 {
-    public AuthorityInterface(Authority authority, byte[] encrypted)
+    public AuthorityInterface(Authority authority, string name, byte[] encrypted)
     {
         this.authority = authority;
+        this.Name = name;
         this.encrypted = encrypted;
     }
 
@@ -52,13 +55,13 @@ public sealed class AuthorityInterface
         {
             while (true)
             {
-                var passPhrase = await this.authority.UserInterfaceService.RequestPassword("Enter: ").ConfigureAwait(false);
+                var passPhrase = await this.authority.UserInterfaceService.RequestPassword(Hashed.Authority.EnterPassword, this.Name).ConfigureAwait(false);
                 if (passPhrase == null)
                 {
                     return AuthorityResult.Canceled;
                 }
 
-                if (!PasswordEncrypt.TryDecrypt(this.encrypted, passPhrase, out decrypted))
+                if (PasswordEncrypt.TryDecrypt(this.encrypted, passPhrase, out decrypted))
                 {
                     break;
                 }
@@ -83,6 +86,8 @@ public sealed class AuthorityInterface
             return AuthorityResult.InvalidData;
         }
     }
+
+    public string Name { get; private set; }
 
     public long ExpirationMics { get; }
 

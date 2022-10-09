@@ -217,7 +217,7 @@ public partial class Vault
                 if (password == null)
                 {// Enter password
 RetryPassword:
-                    var results = await this.userInterfaceService.RequestPassword(Hashed.KeyVault.EnterPassword).ConfigureAwait(false);
+                    var results = await this.userInterfaceService.RequestPassword(Hashed.Vault.EnterPassword).ConfigureAwait(false);
                     if (results == null)
                     {
                         throw new PanicException();
@@ -241,7 +241,7 @@ RetryPassword:
                     }
                     else
                     {// Failure
-                        await this.userInterfaceService.Notify(LogLevel.Fatal, Hashed.KeyVault.NoRestore, x.Key).ConfigureAwait(false);
+                        await this.userInterfaceService.Notify(LogLevel.Fatal, Hashed.Vault.NoRestore, x.Key).ConfigureAwait(false);
                         throw new PanicException();
                     }
                 }

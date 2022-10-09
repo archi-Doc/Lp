@@ -19,7 +19,7 @@ public class KeyVaultSubcommandChangePass : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.KeyVault.ChangePassword);
+        this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Vault.ChangePassword);
 
         string? currentPassword;
         while (true)

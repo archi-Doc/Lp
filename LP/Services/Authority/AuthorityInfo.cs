@@ -9,9 +9,9 @@ public sealed partial class AuthorityInfo
 {
     public static readonly uint SeedLength = Hash.HashBytes;
 
-    public AuthorityInfo(string? passPhrase, AuthorityLifetime lifetime, long lifeMics)
+    public AuthorityInfo(string? seedPhrase, AuthorityLifetime lifetime, long lifeMics)
     {
-        if (passPhrase == null)
+        if (seedPhrase == null)
         {
             this.Seed = new byte[SeedLength];
             Random.Crypto.NextBytes(this.Seed);
@@ -19,7 +19,7 @@ public sealed partial class AuthorityInfo
         else
         {
             var hash = Hash.ObjectPool.Get();
-            var utf8 = System.Text.Encoding.UTF8.GetBytes(passPhrase);
+            var utf8 = System.Text.Encoding.UTF8.GetBytes(seedPhrase);
             this.Seed = hash.GetHash(hash.GetHash(utf8));
             Hash.ObjectPool.Return(hash);
         }
