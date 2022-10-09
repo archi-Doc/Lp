@@ -2,8 +2,11 @@
 
 namespace LP;
 
-public enum AuthorityKeyResult
+public enum AuthorityResult
 {
     Success,
-    KeyNameNotFound,
+    NotFound,
+    AlreadyExists,
+    InvalidData,
+    Canceled,
 }

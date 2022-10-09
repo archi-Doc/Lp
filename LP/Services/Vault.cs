@@ -87,6 +87,14 @@ public partial class Vault
         }
     }
 
+    public bool Exists(string name)
+    {
+        lock (this.syncObject)
+        {
+            return this.nameToDecrypted.ContainsKey(name);
+        }
+    }
+
     public bool Remove(string name)
     {
         lock (this.syncObject)
