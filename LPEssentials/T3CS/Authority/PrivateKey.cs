@@ -15,16 +15,16 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
 
     private static ObjectCache<PrivateKey, ECDsa> PrivateKeyToECDsa { get; } = new(10);
 
-    public static PrivateKey Create(string name)
+    public static PrivateKey Create()
     {
         using (var ecdsa = ECDsa.Create(PublicKey.ECCurve))
         {
             var key = ecdsa.ExportParameters(true);
-            return new PrivateKey(name, 0, key.Q.X!, key.Q.Y!, key.D!);
+            return new PrivateKey(0, key.Q.X!, key.Q.Y!, key.D!);
         }
     }
 
-    public static PrivateKey Create(string name, string passphrase)
+    public static PrivateKey Create(string passphrase)
     {
         ECParameters key = default;
         key.Curve = PublicKey.ECCurve;
@@ -60,16 +60,15 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         }
 
         Hash.ObjectPool.Return(hash);
-        return new PrivateKey(name, 0, key.Q.X!, key.Q.Y!, key.D!);
+        return new PrivateKey(0, key.Q.X!, key.Q.Y!, key.D!);
     }
 
     public PrivateKey()
     {
     }
 
-    private PrivateKey(string? name, byte keyType, byte[] x, byte[] y, byte[] d)
+    private PrivateKey(byte keyType, byte[] x, byte[] y, byte[] d)
     {
-        this.Name = name ?? string.Empty;
         this.x = x;
         this.y = y;
         this.d = d;
@@ -148,20 +147,16 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         return null;
     }
 
-    [Key(0, PropertyName = "Name")]
-    [MaxLength(MaxNameLength)]
-    private string name = string.Empty;
-
-    [Key(1)]
+    [Key(0)]
     private readonly byte rawType; // 6bits: KeyType, 1bit:?, 1bit: YTilde
 
-    [Key(2)]
+    [Key(1)]
     private readonly byte[] x = Array.Empty<byte>();
 
-    [Key(3)]
+    [Key(2)]
     private readonly byte[] y = Array.Empty<byte>();
 
-    [Key(4)]
+    [Key(3)]
     private readonly byte[] d = Array.Empty<byte>();
 
     public uint KeyType => (uint)(this.rawType >> 2);
@@ -174,11 +169,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
 
     public bool Validate()
     {
-        if (this.name == null || this.name.Length > MaxNameLength)
-        {
-            return false;
-        }
-        else if (this.KeyType != 0)
+        if (this.KeyType != 0)
         {
             return false;
         }
@@ -205,14 +196,13 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
             return false;
         }
 
-        return this.name.Equals(other.name) &&
-            this.rawType == other.rawType &&
+        return this.rawType == other.rawType &&
             this.x.AsSpan().SequenceEqual(other.x);
     }
 
     public override int GetHashCode()
     {
-        var hash = HashCode.Combine(this.name, this.rawType);
+        var hash = HashCode.Combine(this.rawType);
 
         if (this.x.Length >= sizeof(ulong))
         {
@@ -227,7 +217,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         Span<byte> bytes = stackalloc byte[1 + PublicKey.PublicKeyHalfLength]; // scoped
         bytes[0] = this.rawType;
         this.x.CopyTo(bytes.Slice(1));
-        return $"{this.name}({Base64.Url.FromByteArrayToString(bytes)})";
+        return $"({Base64.Url.FromByteArrayToString(bytes)})";
     }
 
     internal uint CompressY()
