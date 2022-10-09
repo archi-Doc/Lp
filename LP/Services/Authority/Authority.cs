@@ -18,6 +18,9 @@ public class Authority
         this.vault = vault;
     }
 
+    public string[] GetNames()
+        => this.vault.GetNames(VaultPrefix);
+
     public AuthorityResult TryGetInterface(string name, out AuthorityInterface @interface)
     {
         lock (this.syncObject)

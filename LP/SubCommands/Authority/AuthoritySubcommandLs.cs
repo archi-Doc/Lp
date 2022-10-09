@@ -17,7 +17,7 @@ public class AuthoritySubcommandLs : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        var names = this.Control.Vault.GetNames("Authority\\");
+        var names = this.Control.Authority.GetNames();
         Console.WriteLine(string.Join(' ', names));
     }
 

@@ -152,6 +152,10 @@ public partial class Vault
         {
             var node = this.nameToDecrypted.GetLowerBound(prefix);
             var upper = this.nameToDecrypted.GetUpperBound(prefix + "\uffff");
+            if (node == null || upper == null)
+            {
+                return Array.Empty<string>();
+            }
 
             var list = new List<string>();
             while (node != null)

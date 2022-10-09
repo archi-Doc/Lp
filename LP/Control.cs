@@ -257,7 +257,7 @@ public class Control : ILogInformation
         }
     }
 
-    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl, Vault vault)
+    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl, Vault vault, Authority authority)
     {
         this.Logger = logger;
         this.UserInterfaceService = userInterfaceService;
@@ -269,6 +269,7 @@ public class Control : ILogInformation
         this.ZenControl.Zen.IO.SetRootDirectory(this.LPBase.RootDirectory);
         this.ZenControl.Zen.SetDelegate(ObjectToMemoryOwner, MemoryOwnerToObject);
         this.Vault = vault;
+        this.Authority = authority;
 
         this.Core = core;
         this.BigMachine.Core.ChangeParent(this.Core);
@@ -510,6 +511,8 @@ public class Control : ILogInformation
     public ZenControl ZenControl { get; }
 
     public Vault Vault { get; }
+
+    public Authority Authority { get; }
 
     private SimpleParser subcommandParser;
 
