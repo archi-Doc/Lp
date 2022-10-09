@@ -34,10 +34,27 @@ public class AuthorityKey : IDisposable
 
     public long LifeMics { get; }
 
-    public long ExpireMics { get; }
+    public long ExpirationMics { get; }
 
     private AuthorityKeyResult PreparePrivateKey()
     {
+        if (this.privateKey != null)
+        {
+            if (this.Lifetime == KeyLifetime.PeriodOfTime)
+            {// Periof of time
+                if (Mics.GetUtcNow() > this.ExpirationMics)
+                {// Expired
+                    this.privateKey = null;
+                }
+            }
+
+            if (this.privateKey != null)
+            {
+                return AuthorityKeyResult.Success;
+            }
+        }
+
+        // Try to get private key.
 
     }
 
