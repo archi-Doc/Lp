@@ -31,7 +31,7 @@ public partial class Linkage : IValidatable // , IEquatable<Linkage>, IComparabl
         {
             return false;
         }
-        else if (this.Owner == null || !this.Owner.Validate())
+        else if (!this.Owner.Validate())
         {
             return false;
         }
@@ -46,7 +46,7 @@ public partial class Linkage : IValidatable // , IEquatable<Linkage>, IComparabl
 
         for (var i = 0; i < this.Mergers.Length; i++)
         {
-            if (this.Mergers[i] == null || !this.Mergers[i].Validate())
+            if (!this.Mergers[i].Validate())
             {
                 return false;
             }
@@ -54,7 +54,7 @@ public partial class Linkage : IValidatable // , IEquatable<Linkage>, IComparabl
 
         for (var i = 0; i < this.Signs.Length; i++)
         {
-            if (this.Signs[i] == null || this.Signs[i].Length != Authority.PublicKeyLength)
+            if (this.Signs[i] == null || this.Signs[i].Length != PublicKey.PublicKeyLength)
             {
                 return false;
             }
@@ -70,10 +70,10 @@ public partial class Linkage : IValidatable // , IEquatable<Linkage>, IComparabl
     public Type LinkageType { get; private set; }
 
     [Key(2)]
-    public AuthorityPublicKey Owner { get; private set; }
+    public PublicKey Owner { get; private set; }
 
     [Key(3)]
-    public AuthorityPublicKey[] Mergers { get; private set; }
+    public PublicKey[] Mergers { get; private set; }
 
     [Key(4, Marker = true)]
     public byte[][] Signs { get; private set; }

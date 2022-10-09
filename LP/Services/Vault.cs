@@ -53,11 +53,6 @@ public partial class Vault
         internal byte[] Encrypted = Array.Empty<byte>();
     }
 
-    public VaultKeyResult TryGetKey(string name)
-    {
-
-    }
-
     public bool TryAdd(string name, byte[] decrypted)
     {
         lock (this.syncObject)
@@ -89,6 +84,14 @@ public partial class Vault
 
             this.nameToDecrypted.Add(name, new(decrypted));
             return true;
+        }
+    }
+
+    public bool Remove(string name)
+    {
+        lock (this.syncObject)
+        {
+            return this.nameToDecrypted.Remove(name);
         }
     }
 

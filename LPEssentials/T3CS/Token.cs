@@ -9,19 +9,23 @@ namespace LP;
 /// Immutable token object.
 /// </summary>
 [TinyhandObject]
-public sealed partial class Token : IValidatable // , IEquatable<Token>
+public sealed partial class Token : IValidatable, IVerifiable // , IEquatable<Token>
 {
+    public enum TokenType
+    {
+    }
+
     public Token()
     {
     }
 
     public bool Validate()
     {
-        if (this.Authority?.Validate() != true)
+        if (this.PublicKey.Validate() != true)
         {
             return false;
         }
-        else if (this.sign.Length != PublicKey.SignLength)
+        else if (this.signature.Length != PublicKey.SignLength)
         {
             return false;
         }
@@ -39,7 +43,7 @@ public sealed partial class Token : IValidatable // , IEquatable<Token>
         try
         {
             var result = TinyhandSerializer.SerializeAndGetMarker(this);
-            return this.Authority.VerifyData(result.ByteArray.AsSpan(0, result.MarkerPosition), this.sign);
+            return this.PublicKey.VerifyData(result.ByteArray.AsSpan(0, result.MarkerPosition), this.signature);
         }
         catch
         {
@@ -48,18 +52,21 @@ public sealed partial class Token : IValidatable // , IEquatable<Token>
     }
 
     [Key(0)]
-    public long ExpirationMics { get; private set; }
+    public TokenType Type { get; private set; }
 
     [Key(1)]
-    public AuthorityPublicKey Authority { get; private set; } = default!;
+    public long ExpirationMics { get; private set; }
 
     [Key(2)]
-    public Identifier TargetIdentifier { get; private set; }
+    public PublicKey PublicKey { get; private set; } = default!;
 
     [Key(3)]
+    public Identifier TargetIdentifier { get; private set; }
+
+    [Key(4)]
     public Linkage? TargetLinkage { get; private set; }
 
-    [Key(5, Marker = true, PropertyName = "Sign")]
+    [Key(6, Marker = true, PropertyName = "Signature")]
     [MaxLength(PublicKey.SignLength)]
-    private byte[] sign = Array.Empty<byte>();
+    private byte[] signature = Array.Empty<byte>();
 }

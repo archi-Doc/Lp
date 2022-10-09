@@ -47,7 +47,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
             try
             {
                 var d = hash.GetHash(span);
-                key.D = d;
+                key.D = hash.GetHash(d);
                 using (var ecdsa = ECDsa.Create(key))
                 {
                     key = ecdsa.ExportParameters(true); // !d.SequenceEqual(key.D)

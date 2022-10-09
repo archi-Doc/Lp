@@ -2,7 +2,7 @@
 
 namespace LP;
 
-public class VaultKey : IDisposable
+public class AuthorityKey : IDisposable
 {
     public enum KeyLifetime
     {
@@ -11,22 +11,16 @@ public class VaultKey : IDisposable
         Session,
     }
 
-    public enum Result
+    public AuthorityKey(Authority authority, KeyLifetime lifetime)
     {
-        Success,
-    }
-
-    public VaultKey(Vault vault, KeyLifetime lifetime)
-    {
-        this.vault = vault;
+        this.authority = authority;
         // this.Name = name;
         this.Lifetime = lifetime;
     }
 
-    public Result TrySignData(ReadOnlySpan<byte> data, Span<byte> destination)
+    public AuthorityKeyResult TrySignData(ReadOnlySpan<byte> data, Span<byte> destination)
     {
-        this.vault.
-        return Result.Success;
+        return AuthorityKeyResult.Success;
     }
 
     public void Dispose()
@@ -42,11 +36,11 @@ public class VaultKey : IDisposable
 
     public long ExpireMics { get; }
 
-    private Result PreparePrivateKey()
+    private AuthorityKeyResult PreparePrivateKey()
     {
 
     }
 
-    private Vault? vault;
+    private Authority? authority;
     private PrivateKey? privateKey;
 }

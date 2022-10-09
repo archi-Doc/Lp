@@ -45,6 +45,7 @@ public class Control : ILogInformation
                 context.AddSingleton<LPBase>();
                 context.Services.TryAddSingleton<IUserInterfaceService, ConsoleUserInterfaceService>();
                 context.AddSingleton<Vault>();
+                context.AddSingleton<Authority>();
                 context.AddSingleton<SeedPhrase>();
 
                 // RPC / Services

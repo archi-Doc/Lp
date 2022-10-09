@@ -2,7 +2,7 @@
 
 namespace LP;
 
-public enum VaultKeyResult
+public enum AuthorityKeyResult
 {
     Success,
     KeyNameNotFound,

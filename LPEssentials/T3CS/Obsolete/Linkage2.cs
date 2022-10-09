@@ -20,14 +20,14 @@ public sealed partial class Linkage2 : IValidatable // , IEquatable<Linkage>
     public long Point { get; private set; }
 
     [Key(1)]
-    public AuthorityPublicKey Owner { get; private set; } = default!;
+    public PublicKey Owner { get; private set; } = default!;
 
     [Key(2)]
-    public AuthorityPublicKey Originator { get; private set; } = default!;
+    public PublicKey Originator { get; private set; } = default!;
 
     [Key(3, PropertyName = "Mergers")]
     [MaxLength(MaxMergers)]
-    private AuthorityPublicKey[] mergers = default!;
+    private PublicKey[] mergers = default!;
 
     /*[Key(4, Marker = true, PropertyName = "Signs")]
     [MaxLength(MaxMergers + 1, Authority.PublicKeyLength)]
@@ -39,7 +39,7 @@ public sealed partial class Linkage2 : IValidatable // , IEquatable<Linkage>
         {
             return false;
         }
-        else if (this.Owner == null || !this.Owner.Validate())
+        else if (!this.Owner.Validate())
         {
             return false;
         }
@@ -55,7 +55,7 @@ public sealed partial class Linkage2 : IValidatable // , IEquatable<Linkage>
 
         for (var i = 0; i < this.mergers.Length; i++)
         {
-            if (this.mergers[i] == null || !this.mergers[i].Validate())
+            if (!this.mergers[i].Validate())
             {
                 return false;
             }
