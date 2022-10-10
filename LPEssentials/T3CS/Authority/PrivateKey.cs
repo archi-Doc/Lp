@@ -24,33 +24,30 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         }
     }
 
-    public static PrivateKey Create(string passphrase)
+    public static PrivateKey Create(ReadOnlySpan<byte> seed)
     {
         ECParameters key = default;
         key.Curve = PublicKey.ECCurve;
 
-        var passBytes = Encoding.UTF8.GetBytes(passphrase);
-        Span<byte> span = stackalloc byte[(sizeof(ulong) + passBytes.Length) * 2]; // count, passBytes, count, passBytes // scoped
-        var countSpan = span.Slice(0, sizeof(ulong));
-        var countSpan2 = span.Slice(sizeof(ulong) + passBytes.Length, sizeof(ulong));
-        passBytes.CopyTo(span.Slice(sizeof(ulong)));
-        passBytes.CopyTo(span.Slice((sizeof(ulong) * 2) + passBytes.Length));
-
+        byte[]? d = null;
         var hash = Hash.ObjectPool.Get();
-        ulong count = 0;
         while (true)
         {
-            BitConverter.TryWriteBytes(countSpan, count);
-            BitConverter.TryWriteBytes(countSpan2, count);
-            count++;
-
             try
             {
-                var d = hash.GetHash(span);
-                key.D = hash.GetHash(d);
+                if (d == null)
+                {
+                    d = hash.GetHash(seed);
+                }
+                else
+                {
+                    d = hash.GetHash(d);
+                }
+
+                key.D = d;
                 using (var ecdsa = ECDsa.Create(key))
                 {
-                    key = ecdsa.ExportParameters(true); // !d.SequenceEqual(key.D)
+                    key = ecdsa.ExportParameters(true);
                     break;
                 }
             }
@@ -63,7 +60,22 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         return new PrivateKey(0, key.Q.X!, key.Q.Y!, key.D!);
     }
 
-    public PrivateKey()
+    public static PrivateKey Create(string passphrase)
+    {
+        ECParameters key = default;
+        key.Curve = PublicKey.ECCurve;
+
+        var passBytes = Encoding.UTF8.GetBytes(passphrase);
+        Span<byte> span = stackalloc byte[(sizeof(ulong) + passBytes.Length) * 2]; // count, passBytes, count, passBytes // scoped
+        var countSpan = span.Slice(0, sizeof(ulong));
+        var countSpan2 = span.Slice(sizeof(ulong) + passBytes.Length, sizeof(ulong));
+        passBytes.CopyTo(span.Slice(sizeof(ulong)));
+        passBytes.CopyTo(span.Slice((sizeof(ulong) * 2) + passBytes.Length));
+
+        return Create(span);
+    }
+
+    internal PrivateKey()
     {
     }
 

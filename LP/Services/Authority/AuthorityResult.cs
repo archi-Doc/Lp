@@ -9,4 +9,5 @@ public enum AuthorityResult
     AlreadyExists,
     InvalidData,
     Canceled,
+    InvalidSignature,
 }

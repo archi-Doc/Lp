@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Collections.Concurrent;
+
 namespace LP;
 
 /// <summary>
@@ -30,7 +32,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>
 
     [Key(1, PropertyName = "Mergers")]
     [MaxLength(MaxMergers)]
-    private PublicKey[] mergers = default!;
+    private PublicKey[] mergers = Array.Empty<PublicKey>();
 
     public bool Validate()
     {

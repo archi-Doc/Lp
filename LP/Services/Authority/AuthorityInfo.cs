@@ -32,9 +32,20 @@ public sealed partial class AuthorityInfo
     {
     }
 
-    public void SignData(Credit credit, byte[] data)
+    public byte[]? SignData(Credit credit, byte[] data)
     {
-        // Create private key.
+        var privateKey = this.GetOrCreatePrivateKey(credit);
+        var signature = privateKey.SignData(data);
+        this.privateKeyCache.Cache(credit, privateKey);
+        return signature;
+    }
+
+    public bool VerifyData(Credit credit, byte[] data, byte[] signature)
+    {
+        var privateKey = this.GetOrCreatePrivateKey(credit);
+        var result = privateKey.VerifyData(data, signature);
+        this.privateKeyCache.Cache(credit, privateKey);
+        return result;
     }
 
     [Key(0)]
@@ -48,6 +59,28 @@ public sealed partial class AuthorityInfo
 
     [Key(3)]
     public Value[] Values { get; init; } = Array.Empty<Value>();
+
+    private PrivateKey GetOrCreatePrivateKey(Credit credit)
+    {
+        var privateKey = this.privateKeyCache.TryGet(credit);
+        if (privateKey == null)
+        {// Create private key.
+            var hash = Hash.ObjectPool.Get();
+            hash.HashUpdate(this.seed);
+            hash.HashUpdate(TinyhandSerializer.Serialize(credit));
+            var seed = hash.HashFinal();
+            Hash.ObjectPool.Return(hash);
+
+            privateKey = PrivateKey.Create(seed);
+        }
+
+        return privateKey;
+    }
+
+    private void CachePrivateKey(Credit credit, PrivateKey privateKey)
+        => this.privateKeyCache.Cache(credit, privateKey);
+
+    private ObjectCache<Credit, PrivateKey> privateKeyCache = new(10);
 
     public override string ToString()
         => $"Lifetime: {this.Lifetime}, LifeMics: {this.LifeMics}";

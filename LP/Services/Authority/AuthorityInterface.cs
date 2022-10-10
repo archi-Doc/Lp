@@ -13,7 +13,7 @@ public sealed class AuthorityInterface
         this.encrypted = encrypted;
     }
 
-    public async Task<(AuthorityResult Result, byte[] Destination)> TrySignData(Credit credit, byte[] data)
+    public async Task<(AuthorityResult Result, byte[] Signature)> TrySignData(Credit credit, byte[] data)
     {
         var result = await this.Prepare().ConfigureAwait(false);
         if (result != AuthorityResult.Success)
@@ -21,9 +21,32 @@ public sealed class AuthorityInterface
             return (result, Array.Empty<byte>());
         }
 
-        this.authorityInfo!.SignData(credit, data);
+        var signature = this.authorityInfo!.SignData(credit, data);
+        if (signature == null)
+        {
+            signature = Array.Empty<byte>();
+            result = AuthorityResult.InvalidData;
+        }
 
-        return (AuthorityResult.Success, Array.Empty<byte>());
+        return (result, signature);
+    }
+
+    public async Task<AuthorityResult> TryVerifyData(Credit credit, byte[] data, byte[] signature)
+    {
+        var result = await this.Prepare().ConfigureAwait(false);
+        if (result != AuthorityResult.Success)
+        {
+            return result;
+        }
+
+        if (this.authorityInfo!.VerifyData(credit, data, signature))
+        {
+            return AuthorityResult.Success;
+        }
+        else
+        {
+            return AuthorityResult.InvalidSignature;
+        }
     }
 
     public async Task<(AuthorityResult Result, AuthorityInfo? AuthorityInfo)> TryGetInfo()

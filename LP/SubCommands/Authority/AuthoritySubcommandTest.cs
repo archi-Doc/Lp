@@ -18,26 +18,11 @@ public class AuthoritySubcommandTest : ISimpleCommandAsync<AuthoritySubcommandTe
 
     public async Task RunAsync(AuthoritySubcommandTestOptions option, string[] args)
     {
-        PrivateKey pri;
-
-        if (option.Passphrase == null)
-        {
-            pri = PrivateKey.Create(option.Name);
-        }
-        else
-        {
-            pri = PrivateKey.Create(option.Name, option.Passphrase);
-        }
-
-        var name = "Authority\\" + option.Name;
-        this.Control.Vault.SerializeAndTryAdd(name, pri);
-
-        this.logger.TryGet()?.Log("Key created:");
-        this.logger.TryGet()?.Log(pri.ToString());
-
         if (this.Control.Authority.TryGetInterface(option.Name, out var authorityInterface) == AuthorityResult.Success)
         {
-            await authorityInterface.TrySignData(new Credit(), Array.Empty<byte>());
+            var result = await authorityInterface.TrySignData(new Credit(), Array.Empty<byte>());
+            Console.WriteLine(result.ToString());
+            Console.WriteLine(await authorityInterface.TryVerifyData(new Credit(), Array.Empty<byte>(), result.Signature));
         }
     }
 
