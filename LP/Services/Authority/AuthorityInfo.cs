@@ -80,7 +80,6 @@ public sealed partial class AuthorityInfo
     private void CachePrivateKey(Credit credit, PrivateKey privateKey)
         => this.privateKeyCache.Cache(credit, privateKey);
 
-    [IgnoreMember]
     private ObjectCache<Credit, PrivateKey> privateKeyCache = new(10);
 
     public override string ToString()
