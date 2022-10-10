@@ -17,6 +17,8 @@ public static class NodeKey
     public static NodePrivateKey AlternativePrivateKey
         => alternativePrivateKey ??= NodePrivateKey.Create();
 
+    internal static ObjectCache<NodePublicKeyStruct, ECDiffieHellman> NodePublicKeyToECDH { get; } = new(100);
+
     static NodeKey()
     {
         ECCurve = ECCurve.CreateFromFriendlyName(ECCurveName);
@@ -30,7 +32,7 @@ public static class NodeKey
         }
 
         var key = new NodePublicKeyStruct(x, y);
-        var publicEcdh = Cache.NodePublicKeyToECDH.TryGet(key);
+        var publicEcdh = NodePublicKeyToECDH.TryGet(key);
         if (publicEcdh == null)
         {
             try
@@ -57,7 +59,7 @@ public static class NodeKey
             return null;
         }
 
-        Cache.NodePublicKeyToECDH.Cache(key, publicEcdh);
+        NodePublicKeyToECDH.Cache(key, publicEcdh);
         return material;
     }
 
