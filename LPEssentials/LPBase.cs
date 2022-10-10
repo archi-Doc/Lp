@@ -34,6 +34,7 @@ public class LPBase : ILogInformation
 
         // Main
         context.AddSingleton<LPBase>();
+        context.AddSingleton<NtpCorrection>();
     }
 
     public LPBase()

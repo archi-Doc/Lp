@@ -7,7 +7,7 @@ using ValueLink;
 
 namespace LP;
 
-public partial class NtpCorrection : UnitBase, IUnitSerializable
+public partial class NtpCorrection : UnitBase, IUnitPreparable, IUnitSerializable
 {
     private const string FileName = "NtpNode.tinyhand";
     private const int ParallelNumber = 2;
@@ -55,6 +55,11 @@ public partial class NtpCorrection : UnitBase, IUnitSerializable
         : base(context)
     {
         this.logger = logger;
+    }
+
+    public void Prepare(UnitMessage.Prepare message)
+    {
+        Time.SetNtpCorrection(this);
     }
 
     public async Task CorrectAsync(CancellationToken cancellationToken)
