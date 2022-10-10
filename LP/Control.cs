@@ -20,6 +20,7 @@ using Netsphere;
 using SimpleCommandLine;
 using ZenItz;
 using LP.Data;
+using Netsphere.Machines;
 
 namespace LP;
 
@@ -327,6 +328,7 @@ public class Control : ILogInformation
     {
         this.BigMachine.Start();
         await context.SendRunAsync(new(this.Core));
+        this.BigMachine.TryGet<NtpMachine.Interface>(Identifier.Zero)?.RunAsync();
 
         Console.WriteLine();
         var logger = this.Logger.Get<DefaultLog>(LogLevel.Information);

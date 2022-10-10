@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace LP;
+namespace LP.Obsolete;
 
 public static class Seconds
 {

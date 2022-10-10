@@ -26,12 +26,6 @@ public partial class NtpCorrection : UnitBase, IUnitSerializable
     [ValueLinkObject]
     private partial class Item
     {
-        public enum State
-        {
-            Initial,
-            Retrieved,
-        }
-
         [Link(Type = ChainType.List, Name = "List", Primary = true)]
         public Item()
         {
@@ -43,7 +37,7 @@ public partial class NtpCorrection : UnitBase, IUnitSerializable
         }
 
         [IgnoreMember]
-        public State CurrentState { get; set; } = State.Initial;
+        public long RetrievedMics { get; set; }
 
         [IgnoreMember]
         public long TimeoffsetMilliseconds { get; set; }
@@ -69,7 +63,9 @@ Retry:
         string[] hostnames;
         lock (this.syncObject)
         {
-            hostnames = this.goshujin.RoundtripMillisecondsChain.Where(x => x.CurrentState == Item.State.Initial).Select(x => x.HostnameValue).Take(ParallelNumber).ToArray();
+            var current = Mics.GetFixedUtcNow();
+            var range = new MicsRange(current - Mics.FromHours(1), current);
+            hostnames = this.goshujin.RoundtripMillisecondsChain.Where(x => !range.IsIn(x.RetrievedMics)).Select(x => x.HostnameValue).Take(ParallelNumber).ToArray();
         }
 
         if (hostnames.Length == 0)
@@ -166,7 +162,7 @@ Retry:
             // Reset host
             foreach (var x in this.goshujin)
             {
-                x.CurrentState = Item.State.Initial;
+                x.RetrievedMics = 0;
             }
         }
     }
@@ -211,7 +207,7 @@ Retry:
                     var item = this.goshujin.HostnameChain.FindFirst(hostname);
                     if (item != null)
                     {
-                        item.CurrentState = Item.State.Retrieved;
+                        item.RetrievedMics = Mics.GetFixedUtcNow();
                         item.TimeoffsetMilliseconds = (long)packet.TimeOffset.TotalMilliseconds;
                         item.RoundtripMillisecondsValue = (int)packet.RoundtripTime.TotalMilliseconds;
                         this.UpdateTimeoffset();
@@ -239,7 +235,7 @@ Retry:
         int count = 0;
         long timeoffset = 0;
 
-        foreach (var x in this.goshujin.Where(x => x.CurrentState == Item.State.Retrieved))
+        foreach (var x in this.goshujin.Where(x => x.RetrievedMics != 0))
         {
             count++;
             timeoffset += x.TimeoffsetMilliseconds;

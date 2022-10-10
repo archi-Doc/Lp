@@ -55,7 +55,11 @@ public sealed class AuthorityInterface
         return (result, this.authorityInfo);
     }
 
-    public async Task<AuthorityResult> Prepare()
+    public string Name { get; private set; }
+
+    public long ExpirationMics { get; private set; }
+
+    private async Task<AuthorityResult> Prepare()
     {
         if (this.authorityInfo != null)
         {
@@ -114,10 +118,6 @@ public sealed class AuthorityInterface
             return AuthorityResult.InvalidData;
         }
     }
-
-    public string Name { get; private set; }
-
-    public long ExpirationMics { get; private set; }
 
     private Authority authority;
     private byte[] encrypted;
