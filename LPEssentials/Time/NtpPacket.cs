@@ -1,9 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Net;
 using System.Net.Sockets;
-using Netsphere;
 
-namespace Netsphere.Ntp;
+namespace LP;
 
 public class NtpPacket
 {

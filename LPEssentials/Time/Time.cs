@@ -52,12 +52,21 @@ public static class Time
     /// <summary>
     /// Get a corrected <see cref="DateTime"/> expressed as UTC.
     /// </summary>
-    /// <param name="correctedTime">The corrected time.</param>
-    /// <returns><see cref="CorrectedResult"/>.</returns>
-    public static CorrectedResult GetCorrected(out DateTime correctedTime)
+    /// <returns>The corrected <see cref="DateTime"/>.</returns>
+    public static DateTime GetCorrected()
     {
+        if (NtpCorrection is { } ntpCorrection)
+        {// Ntp correction
+            ntpCorrection.TryGetCorrectedUtcNow(out var utcNow);
+            return utcNow;
+        }
+
         var result = TimeCorrection.GetCorrectedMics(out var mics);
-        correctedTime = new DateTime((long)(mics * MicsToTicks));
-        return result;
+        return new DateTime((long)(mics * MicsToTicks));
     }
+
+    public static void SetNtpCorrection(NtpCorrection ntpCorrection)
+        => NtpCorrection = ntpCorrection;
+
+    public static NtpCorrection? NtpCorrection { get; private set; }
 }

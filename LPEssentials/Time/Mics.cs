@@ -60,9 +60,19 @@ public static class Mics
     /// <summary>
     /// Get the corrected <see cref="Mics"/> expressed as UTC.
     /// </summary>
-    /// <param name="correctedMics">The corrected <see cref="Mics"/>.</param>
-    /// <returns><see cref="CorrectedResult"/>.</returns>
-    public static CorrectedResult GetCorrected(out long correctedMics) => TimeCorrection.GetCorrectedMics(out correctedMics);
+    /// <returns>The corrected <see cref="Mics"/>.</returns>
+    public static long GetCorrected()
+    {
+        long mics;
+        if (Time.NtpCorrection is { } ntpCorrection)
+        {// Ntp correction
+            ntpCorrection.TryGetCorrectedMics(out mics);
+            return mics;
+        }
+
+        TimeCorrection.GetCorrectedMics(out mics);
+        return mics;
+    }
 
     public static long FromDays(double days) => (long)(days * MicsPerDay);
 

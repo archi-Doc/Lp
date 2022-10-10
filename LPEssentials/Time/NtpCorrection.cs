@@ -3,9 +3,9 @@
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
-using Netsphere;
+using ValueLink;
 
-namespace Netsphere.Ntp;
+namespace LP;
 
 public partial class NtpCorrection : UnitBase, IUnitSerializable
 {
@@ -120,6 +120,20 @@ Retry:
         else
         {
             utcNow = Time.GetFixedUtcNow() + TimeSpan.FromMilliseconds(this.meanTimeoffset);
+            return true;
+        }
+    }
+
+    public bool TryGetCorrectedMics(out long mics)
+    {
+        if (this.timeoffsetCount == 0)
+        {
+            mics = Mics.GetFixedUtcNow();
+            return false;
+        }
+        else
+        {
+            mics = Mics.GetFixedUtcNow() + Mics.FromMilliseconds(this.meanTimeoffset);
             return true;
         }
     }
