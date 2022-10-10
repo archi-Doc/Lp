@@ -22,6 +22,7 @@ public class Server
     {
         this.NetTerminal = terminal;
         this.NetTerminal.SetMaximumResponseTime(1000);
+        Console.WriteLine($"Salt: {terminal.Salt}"); // tempcode
 
         while (!this.NetTerminal.IsClosed)
         {

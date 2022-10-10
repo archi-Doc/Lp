@@ -331,6 +331,7 @@ public class Terminal : UnitBase, IUnitExecutable
 
             var response = new PacketEncryptResponse();
             response.Salt2 = LP.Random.Crypto.NextUInt64();
+            response.SaltA2 = LP.Random.Crypto.NextUInt64();
             var firstGene = header.Gene;
             var secondGene = GenePool.NextGene(header.Gene);
             PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var sendOwner);
@@ -342,6 +343,7 @@ public class Terminal : UnitBase, IUnitExecutable
             Task.Run(async () =>
             {
                 terminal.GenePool.GetSequential();
+                terminal.SetSalt(packet.SaltA, response.SaltA2);
                 terminal.CreateEmbryo(packet.Salt, response.Salt2);
                 terminal.SetReceiverNumber();
                 terminal.Add(netInterface); // Delay sending PacketEncryptResponse until the receiver is ready.

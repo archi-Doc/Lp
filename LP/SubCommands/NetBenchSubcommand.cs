@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using Arc.Crypto;
+using Arc.Unit;
 using LP;
 using LP.Services;
 using Netsphere;
@@ -50,6 +51,7 @@ public class NetBenchSubcommand : ISimpleCommandAsync<NetBenchOptions>
         var sw = Stopwatch.StartNew();
         using (var terminal = this.Control.NetControl.Terminal.Create(node))
         {
+            this.logger.TryGet()?.Log($"Salt: {terminal.Salt}"); // tempcode
             // await this.SendLargeData(terminal);
             await this.PingpongSmallData(terminal);
         }

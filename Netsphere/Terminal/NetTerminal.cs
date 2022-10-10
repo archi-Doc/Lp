@@ -98,6 +98,21 @@ public partial class NetTerminal : IDisposable
 
     public NodeInformation? NodeInformation { get; protected set; }
 
+    public ulong Salt { get; private set; }
+
+    internal void SetSalt(ulong saltA, ulong saltA2)
+    {
+        Span<byte> span = stackalloc byte[sizeof(ulong) * 2];
+        var b = span;
+        BitConverter.TryWriteBytes(b, saltA);
+        b = b.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(b, saltA2);
+
+        var hash = Hash.ObjectPool.Get();
+        (this.Salt, _, _, _) = hash.GetHashUInt64(span);
+        Hash.ObjectPool.Return(hash);
+    }
+
     internal void InternalClose()
     {
         this.IsClosed = true;
