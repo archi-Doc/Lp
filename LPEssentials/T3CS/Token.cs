@@ -13,6 +13,8 @@ public sealed partial class Token : IValidatable, IVerifiable // , IEquatable<To
 {
     public enum TokenType
     {
+        Identification,
+        RequestSummary,
     }
 
     public Token()

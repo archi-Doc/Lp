@@ -18,11 +18,11 @@ public class AuthoritySubcommandTest : ISimpleCommandAsync<AuthoritySubcommandTe
 
     public async Task RunAsync(AuthoritySubcommandTestOptions option, string[] args)
     {
-        if (this.Control.Authority.TryGetInterface(option.Name, out var authorityInterface) == AuthorityResult.Success)
+        if (this.Control.Authority.TryGetInterface(option.Name, 0, out var authorityInterface) == AuthorityResult.Success)
         {
-            var result = await authorityInterface.TrySignData(new Credit(), Array.Empty<byte>());
+            var result = await authorityInterface.SignData(new Credit(), Array.Empty<byte>());
             Console.WriteLine(result.ToString());
-            Console.WriteLine(await authorityInterface.TryVerifyData(new Credit(), Array.Empty<byte>(), result.Signature));
+            Console.WriteLine(await authorityInterface.VerifyData(new Credit(), Array.Empty<byte>(), result.Signature));
         }
     }
 

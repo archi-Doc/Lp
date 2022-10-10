@@ -4,7 +4,6 @@ using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using LP.Services;
-using static LP.AuthorityInterface;
 
 namespace LP;
 
@@ -24,12 +23,14 @@ public class Authority
     public string[] GetNames()
         => this.vault.GetNames(VaultPrefix);
 
-    public AuthorityResult TryGetInterface(string name, out AuthorityInterface authorityInterface)
+    public AuthorityResult TryGetInterface(string name, long salt, out AuthorityInterface authorityInterface)
     {
+        authorityInterface = default;
         lock (this.syncObject)
         {
-            if (this.nameToAuthorityInterface.TryGetValue(name, out authorityInterface!))
+            if (this.nameToAuthorityKey.TryGetValue(name, out var authorityKey))
             {
+                authorityInterface = new(authorityKey, salt);
                 return AuthorityResult.Success;
             }
 
@@ -39,8 +40,9 @@ public class Authority
                 return AuthorityResult.NotFound;
             }
 
-            authorityInterface = new AuthorityInterface(this, name, decrypted);
-            this.nameToAuthorityInterface.Add(name, authorityInterface);
+            authorityKey = new AuthorityKey(this, name, decrypted);
+            this.nameToAuthorityKey.Add(name, authorityKey);
+            authorityInterface = new(authorityKey, salt);
             return AuthorityResult.Success;
         }
     }
@@ -75,7 +77,7 @@ public class Authority
     {
         lock (this.syncObject)
         {
-            var authorityRemoved = this.nameToAuthorityInterface.Remove(name);
+            var authorityRemoved = this.nameToAuthorityKey.Remove(name);
             var vaultRemoved = this.vault.Remove(GetVaultName(name));
 
             if (vaultRemoved)
@@ -97,5 +99,5 @@ public class Authority
 #pragma warning restore SA1401
     private Vault vault;
     private object syncObject = new();
-    private Dictionary<string, AuthorityInterface> nameToAuthorityInterface = new();
+    private Dictionary<string, AuthorityKey> nameToAuthorityKey = new();
 }

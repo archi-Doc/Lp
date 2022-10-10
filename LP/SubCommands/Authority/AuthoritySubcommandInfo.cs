@@ -18,10 +18,10 @@ public class AuthoritySubcommandInfo : ISimpleCommandAsync<AuthoritySubcommandNa
 
     public async Task RunAsync(AuthoritySubcommandNameOptions option, string[] args)
     {
-        var result = this.Control.Authority.TryGetInterface(option.Name, out var authorityInterface);
+        var result = this.Control.Authority.TryGetInterface(option.Name, 0, out var authorityInterface);
         if (result == AuthorityResult.Success)
         {
-            (result, var info) = await authorityInterface.TryGetInfo();
+            (result, var info) = await authorityInterface.GetInfo();
             if (result == AuthorityResult.Success && info != null)
             {
                 this.logger.TryGet()?.Log(option.Name);
