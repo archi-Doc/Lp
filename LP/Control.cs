@@ -67,6 +67,7 @@ public class Control : ILogInformation
                 context.AddSubcommand(typeof(LP.Subcommands.NetBenchSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.PunchSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.BenchmarkSubcommand));
+                context.AddSubcommand(typeof(LP.Subcommands.SeedPhraseSubcommand));
 
                 LP.Subcommands.TemplateSubcommand.Configure(context);
                 LP.Subcommands.InfoSubcommand.Configure(context);
