@@ -20,10 +20,6 @@ internal class ConsoleAndFileLogger : ILogOutput
             !this.userInterfaceService.IsInputMode)
         {
             this.consoleLogger.Output(param);
-            /*if (this.userInterfaceService.IsConsoleMode)
-            {
-                Console.Write("> ");
-            }*/
         }
 
         this.fileLogger.Output(param);

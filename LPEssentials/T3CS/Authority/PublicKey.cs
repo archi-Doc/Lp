@@ -12,12 +12,13 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
     public const int PublicKeyHalfLength = PublicKeyLength / 2;
     public const int PrivateKeyLength = 32;
     public const int SignLength = 64;
+    private const int MaxPublicKeyCache = 100;
 
     public static ECCurve ECCurve { get; }
 
     public static HashAlgorithmName HashAlgorithmName { get; }
 
-    internal static ObjectCache<PublicKey, ECDsa> PublicKeyToECDsa { get; } = new(100);
+    internal static ObjectCache<PublicKey, ECDsa> PublicKeyToECDsa { get; } = new(MaxPublicKeyCache);
 
     static PublicKey()
     {

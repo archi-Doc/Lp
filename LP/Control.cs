@@ -93,7 +93,7 @@ public class Control : ILogInformation
             });
 
             this.SetupOptions<ConsoleLoggerOptions>((context, options) =>
-            {// FileLoggerOptions
+            {// ConsoleLoggerOptions
                 options.Formatter.EnableColor = true;
             });
 
@@ -463,7 +463,7 @@ public class Control : ILogInformation
                 }
                 else
                 {
-                    // Console.WriteLine();
+                    Console.WriteLine();
                 }
 
                 // To view mode

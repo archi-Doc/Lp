@@ -1,12 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Text.RegularExpressions;
-using System.Xml.Linq;
-
 namespace LP;
 
 public class SeedPhrase
 {
+    public const int SeedPhraseLength = 16;
     private const string TinyhandPath = "Strings.english.tinyhand";
 
     public SeedPhrase()

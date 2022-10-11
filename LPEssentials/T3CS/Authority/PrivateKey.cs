@@ -12,8 +12,9 @@ namespace LP;
 public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
 {
     public const int MaxNameLength = 16;
+    private const int MaxPrivateKeyCache = 10;
 
-    private static ObjectCache<PrivateKey, ECDsa> PrivateKeyToECDsa { get; } = new(10);
+    private static ObjectCache<PrivateKey, ECDsa> PrivateKeyToECDsa { get; } = new(MaxPrivateKeyCache);
 
     public static PrivateKey Create()
     {
