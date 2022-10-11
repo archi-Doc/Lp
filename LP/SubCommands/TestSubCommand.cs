@@ -53,10 +53,10 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
 public record TestOptions
 {
-    [SimpleOption("node", description: "Node address")]
+    [SimpleOption("node", Description = "Node address")]
     public string Node { get; init; } = string.Empty;
 
-    [SimpleOption("count", description: "Count")]
+    [SimpleOption("count", Description = "Count")]
     public int Count { get; init; }
 
     public override string ToString() => $"{this.Node}";

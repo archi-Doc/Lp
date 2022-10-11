@@ -42,7 +42,7 @@ public class InfoSubcommandLP : ISimpleCommand<DumpSubcommandInfoOptions>
 
 public record DumpSubcommandInfoOptions
 {
-    [SimpleOption("count", description: "Count")]
+    [SimpleOption("count", Description = "Count")]
     public int Count { get; init; }
 
     public override string ToString() => $"{this.Count}";

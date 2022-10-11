@@ -39,19 +39,19 @@ public class AuthoritySubcommandNew : ISimpleCommandAsync<AuthoritySubcommandNew
 
 public record AuthoritySubcommandNewOptions
 {
-    [SimpleOption("name", description: "Key name", Required = true)]
+    [SimpleOption("name", Description = "Key name", Required = true)]
     public string Name { get; init; } = string.Empty;
 
-    [SimpleOption("pass", description: "Passphrase")]
+    [SimpleOption("pass", Description = "Passphrase")]
     public string? Passphrase { get; init; }
 
-    [SimpleOption("seed", description: "Seedphrase")]
+    [SimpleOption("seed", Description = "Seedphrase")]
     public string? Seedphrase { get; init; }
 
-    [SimpleOption("lifetime", description: "Lifetime")]
+    [SimpleOption("lifetime", Description = "Lifetime")]
     public AuthorityLifetime Lifetime { get; init; }
 
-    [SimpleOption("seconds", description: "Lifetime in seconds")]
+    [SimpleOption("seconds", Description = "Lifetime in seconds")]
     public int Seconds { get; init; }
 
     public override string ToString() => $"{this.Name}";

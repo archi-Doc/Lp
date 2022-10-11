@@ -77,16 +77,16 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
 
 public record PunchOptions
 {
-    [SimpleOption("node", description: "Node address", Required = true)]
+    [SimpleOption("node", Description = "Node address", Required = true)]
     public string Node { get; init; } = string.Empty;
 
-    [SimpleOption("next", description: "Next node address")]
+    [SimpleOption("next", Description = "Next node address")]
     public string NextNode { get; init; } = string.Empty;
 
-    [SimpleOption("count", description: "Count")]
+    [SimpleOption("count", Description = "Count")]
     public int Count { get; init; } = 1;
 
-    [SimpleOption("interval", description: "Interval (seconds)")]
+    [SimpleOption("interval", Description = "Interval (seconds)")]
     public int Interval { get; init; } = 2;
 
     public override string ToString() => $"{this.Node}";

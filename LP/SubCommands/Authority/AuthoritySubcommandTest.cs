@@ -33,10 +33,10 @@ public class AuthoritySubcommandTest : ISimpleCommandAsync<AuthoritySubcommandTe
 
 public record AuthoritySubcommandTestOptions
 {
-    [SimpleOption("name", description: "Key name", Required = true)]
+    [SimpleOption("name", Description = "Key name", Required = true)]
     public string Name { get; init; } = string.Empty;
 
-    [SimpleOption("pass", description: "Passphrase")]
+    [SimpleOption("pass", Description = "Passphrase")]
     public string? Passphrase { get; init; }
 
     public override string ToString() => $"{this.Name}";

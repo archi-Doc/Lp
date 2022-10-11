@@ -37,6 +37,6 @@ public class AuthoritySubcommandRemove : ISimpleCommandAsync<AuthoritySubcommand
 
 public record AuthoritySubcommandNameOptions
 {
-    [SimpleOption("name", description: "Key name", Required = true)]
+    [SimpleOption("name", Description = "Key name", Required = true)]
     public string Name { get; init; } = string.Empty;
 }

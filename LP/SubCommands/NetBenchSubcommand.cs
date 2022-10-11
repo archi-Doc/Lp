@@ -143,13 +143,13 @@ public class NetBenchSubcommand : ISimpleCommandAsync<NetBenchOptions>
 
 public record NetBenchOptions
 {
-    [SimpleOption("node", description: "Node address", Required = true)]
+    [SimpleOption("node", Description = "Node address", Required = true)]
     public string Node { get; init; } = string.Empty;
 
-    [SimpleOption("count", description: "Count")]
+    [SimpleOption("count", Description = "Count")]
     public int Count { get; init; } = 1;
 
-    [SimpleOption("interval", description: "Interval (seconds)")]
+    [SimpleOption("interval", Description = "Interval (seconds)")]
     public int Interval { get; init; } = 2;
 
     public override string ToString() => $"{this.Node}";

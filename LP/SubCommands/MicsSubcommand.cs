@@ -10,7 +10,7 @@ using Tinyhand;
 
 namespace LP.Subcommands;
 
-[SimpleCommand("mics")]
+[SimpleCommand("mics", Description = "Shows mics(microseconds) status")]
 public class MicsSubcommand : ISimpleCommand
 {
     public MicsSubcommand(ILogger<MicsSubcommand> logger, Control control)

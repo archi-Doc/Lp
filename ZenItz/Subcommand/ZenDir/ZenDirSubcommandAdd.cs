@@ -51,6 +51,6 @@ public record ZenDirOptionsAdd
     [SimpleOption("path", Required = true, Description = "Directory path")]
     public string Path { get; init; } = string.Empty;
 
-    [SimpleOption("capacity", description: "Directory capacity in GB")]
+    [SimpleOption("capacity", Description = "Directory capacity in GB")]
     public int Capacity { get; init; } = 0;
 }
