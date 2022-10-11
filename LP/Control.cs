@@ -196,7 +196,7 @@ public class Control : ILogInformation
                 // Prepare
                 this.Context.SendPrepare(new());
             }
-            catch (PanicException)
+            catch
             {
                 control.Terminate(true);
                 return;
@@ -206,7 +206,7 @@ public class Control : ILogInformation
             {// Load
                 await control.LoadAsync(this.Context);
             }
-            catch (PanicException)
+            catch
             {
                 await control.AbortAsync();
                 control.Terminate(true);
@@ -223,7 +223,7 @@ public class Control : ILogInformation
                 await control.SaveAsync(this.Context);
                 control.Terminate(false);
             }
-            catch (PanicException)
+            catch
             {
                 await control.TerminateAsync(this.Context);
                 await control.SaveAsync(this.Context);
@@ -351,7 +351,14 @@ public class Control : ILogInformation
         this.Logger.Get<DefaultLog>().Log("Termination process initiated");
 
         await this.ZenControl.Zen.StopZen(new(Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenBackup), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryBackup)));
-        await context.SendTerminateAsync(new());
+
+        try
+        {
+            await context.SendTerminateAsync(new());
+        }
+        catch
+        {
+        }
     }
 
     public void Terminate(bool abort)
