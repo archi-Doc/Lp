@@ -239,22 +239,6 @@ public partial class NetTerminal : IDisposable
                 return NetResult.Success;
             }
 
-            // Cache material (about the same performance)
-            /*var key = new NodePublicPrivateKeyStruct(this.Terminal.NodePrivateKey.D, this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
-            var material = Cache.NodePublicPrivateKeyToMaterial.TryGet(key);
-            if (material == null)
-            {
-                var ecdh = NodeKey.FromPublicKey(this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
-                if (ecdh == null)
-                {
-                    return NetResult.NoNodeInformation;
-                }
-
-                material = this.Terminal.NodePrivateECDH.DeriveKeyMaterial(ecdh.PublicKey);
-            }
-
-            Cache.NodePublicPrivateKeyToMaterial.Cache(key, material);*/
-
             // KeyMaterial
             var material = this.Terminal.NodePrivateKey.DeriveKeyMaterial(this.NodeInformation.PublicKey);
             if (material == null)

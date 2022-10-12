@@ -26,7 +26,6 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
         }
 
         this.logger.TryGet()?.Log($"SendData: {node.ToString()}");
-        this.logger.TryGet()?.Log($"{Stopwatch.Frequency}");
 
         // var nodeInformation = NodeInformation.Alternative;
         using (var terminal = this.NetControl.Terminal.Create(node))
@@ -35,23 +34,25 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
 
             var p = new PacketPunch(null);
 
-            /*var result = await terminal.EncryptConnectionAsync();
+            var result = await terminal.EncryptConnectionAsync();
             if (result != NetResult.Success)
             {
                 return;
-            }*/
+            }
+
+            this.logger.TryGet()?.Log($"{result.ToString()}");
 
             var sw = Stopwatch.StartNew();
             /*var t = terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
             Logger.Priority.Information($"t: {t.Result}");
             Logger.Priority.Information($"{sw.ElapsedMilliseconds} ms, Resend: {terminal.ResendCount}");*/
 
-            /*sw.Restart();
+            sw.Restart();
             var t5 = terminal.SendPacketAndReceiveAsync<TestPacket, TestPacket>(TestPacket.Create(11));
-            Logger.Priority.Information($"t5: {t5.Result}");
-            Logger.Priority.Information($"{sw.ElapsedMilliseconds} ms, Resend: {terminal.ResendCount}");
+            this.logger.TryGet()?.Log($"t5: {t5.Result}");
+            this.logger.TryGet()?.Log($"{sw.ElapsedMilliseconds} ms, Resend: {terminal.ResendCount}");
 
-            var p2 = TestBlock.Create(4_000_00);
+            /*var p2 = TestBlock.Create(4_000_00);
             Logger.Priority.Information($"p2 send: {p2}");
             sw.Restart();
             var t2 = await terminal.SendAndReceiveAsync<TestBlock, TestBlock>(p2);

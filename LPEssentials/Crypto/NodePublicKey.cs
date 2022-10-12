@@ -1,12 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 
 namespace LP;
 
 [TinyhandObject]
-public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
+public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePublicKey>
 {
     public const string ECCurveName = "secp256r1";
     public const int PublicKeyLength = 64;
@@ -19,15 +18,15 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
     internal static ECCurve ECCurve { get; }
 
-    private static ObjectCache<PublicKey, ECDsa> PublicKeyToEcdsa { get; } = new(MaxPublicKeyCache);
+    private static ObjectCache<NodePublicKey, ECDiffieHellman> PublicKeyToEcdh { get; } = new(MaxPublicKeyCache);
 
-    static PublicKey()
+    static NodePublicKey()
     {
         ECCurve = ECCurve.CreateFromFriendlyName(ECCurveName);
         HashAlgorithmName = HashAlgorithmName.SHA256;
     }
 
-    public PublicKey()
+    public NodePublicKey()
     {
         this.keyValue = 0;
         this.x0 = 0;
@@ -36,7 +35,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         this.x3 = 0;
     }
 
-    internal PublicKey(PrivateKey privateKey)
+    internal NodePublicKey(NodePrivateKey privateKey)
     {
         this.keyValue = privateKey.KeyValue;
         var span = privateKey.X.AsSpan();
@@ -68,24 +67,6 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
     public uint YTilde => (uint)(this.keyValue & 1);
 
-    public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> sign)
-    {
-        if (sign.Length != PublicKey.SignLength)
-        {
-            return false;
-        }
-
-        var ecdsa = this.TryGetEcdsa();
-        if (ecdsa == null)
-        {
-            return false;
-        }
-
-        var result = ecdsa.VerifyData(data, sign, HashAlgorithmName);
-        this.CacheEcdsa(ecdsa);
-        return result;
-    }
-
     public bool Validate()
     {
         if (this.KeyVersion == 0)
@@ -99,7 +80,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
     public override int GetHashCode()
         => (int)this.x0;
 
-    public bool Equals(PublicKey other)
+    public bool Equals(NodePublicKey other)
         => this.keyValue == other.keyValue &&
         this.x0 == other.x0 &&
         this.x1 == other.x1 &&
@@ -125,11 +106,11 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         return $"({Base64.Default.FromByteArrayToUtf8(bytes)})";
     }
 
-    private ECDsa? TryGetEcdsa()
+    internal ECDiffieHellman? TryGetEcdh()
     {
-        if (PublicKeyToEcdsa.TryGet(this) is { } ecdsa)
+        if (PublicKeyToEcdh.TryGet(this) is { } ecdh)
         {
-            return ecdsa;
+            return ecdh;
         }
 
         if (!this.Validate())
@@ -161,7 +142,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
                 p.Curve = ECCurve;
                 p.Q.X = x;
                 p.Q.Y = y;
-                return ECDsa.Create(p);
+                return ECDiffieHellman.Create(p);
             }
             catch
             {
@@ -171,6 +152,6 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         return null;
     }
 
-    private void CacheEcdsa(ECDsa ecdsa)
-        => PublicKeyToEcdsa.Cache(this, ecdsa);
+    internal void CacheEcdh(ECDiffieHellman ecdh)
+        => PublicKeyToEcdh.Cache(this, ecdh);
 }

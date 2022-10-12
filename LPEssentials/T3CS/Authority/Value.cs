@@ -55,10 +55,10 @@ public sealed partial class Value : IValidatable, IEquatable<Value>
             return false;
         }
 
-        var keyType = this.Originator.KeyType;
+        var keyVersion = this.Originator.KeyVersion;
         for (var i = 0; i < this.mergers.Length; i++)
         {
-            if (this.mergers[i].KeyType != keyType || !this.mergers[i].Validate())
+            if (this.mergers[i].KeyVersion != keyVersion || !this.mergers[i].Validate())
             {
                 return false;
             }

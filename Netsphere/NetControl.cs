@@ -110,7 +110,7 @@ public class NetControl : UnitBase, IUnitPreparable
         this.Terminal.Initialize(false, this.NetBase.NodePrivateKey);
         if (this.Alternative != null)
         {
-            this.Alternative.Initialize(true, NodeKey.AlternativePrivateKey);
+            this.Alternative.Initialize(true, NodePrivateKey.AlternativePrivateKey);
             if (this.NetBase.NetsphereOptions.Port == NodeAddress.Alternative.Port)
             {
                 NodeAddress.Alternative.SetPort((ushort)(this.Terminal.Port + 1));

@@ -35,8 +35,8 @@ public class NetBase : UnitBase, IUnitPreparable
         // Node key
         if (this.NodePrivateKey == null)
         {
-            this.NodePrivateKey = PrivateKey.Create(KeyType.Node);
-            this.NodePublicKey = new PublicKey(this.NodePrivateKey);
+            this.NodePrivateKey = NodePrivateKey.Create();
+            this.NodePublicKey = this.NodePrivateKey.ToPublicKey();
         }
     }
 
@@ -48,7 +48,7 @@ public class NetBase : UnitBase, IUnitPreparable
 
     public bool AllowUnsafeConnection { get; set; } = false;
 
-    public PublicKey NodePublicKey { get; private set; } = default!;
+    public NodePublicKey NodePublicKey { get; private set; } = default!;
 
     public class LogFlag
     {
@@ -69,11 +69,11 @@ public class NetBase : UnitBase, IUnitPreparable
         this.NetsphereOptions = netsphereOptions;
     }
 
-    public bool SetNodeKey(PrivateKey privateKey)
+    public bool SetNodeKey(NodePrivateKey privateKey)
     {
         try
         {
-            this.NodePublicKey = new PublicKey(privateKey);
+            this.NodePublicKey = privateKey.ToPublicKey();
             this.NodePrivateKey = privateKey;
             return true;
         }
@@ -92,7 +92,7 @@ public class NetBase : UnitBase, IUnitPreparable
 
     public override string ToString() => $"NetBase: {this.NodeName}";
 
-    internal PrivateKey NodePrivateKey { get; private set; } = default!;
+    internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
 
     private UnitLogger logger;
 }

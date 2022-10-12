@@ -150,7 +150,7 @@ public class Terminal : UnitBase, IUnitExecutable
 
     public int Port { get; set; }
 
-    internal void Initialize(bool isAlternative, PrivateKey nodePrivateKey)
+    internal void Initialize(bool isAlternative, NodePrivateKey nodePrivateKey)
     {
         this.IsAlternative = isAlternative;
         this.NodePrivateKey = nodePrivateKey;
@@ -473,7 +473,7 @@ public class Terminal : UnitBase, IUnitExecutable
 
     // internal ILogger? TerminalLogger { get; private set; }
 
-    internal PrivateKey NodePrivateKey { get; private set; } = default!;
+    internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
 
     internal NetSocket NetSocket { get; private set; }
 

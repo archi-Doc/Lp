@@ -16,23 +16,19 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
 
     private static ObjectCache<PrivateKey, ECDsa> PrivateKeyToEcdsa { get; } = new(MaxPrivateKeyCache);
 
-    private static ObjectCache<PrivateKey, ECDiffieHellman> PrivateKeyToEcdh { get; } = new(MaxPrivateKeyCache);
-
-    public static PrivateKey Create(KeyType keyType)
+    public static PrivateKey Create()
     {
-        var curve = PublicKey.KeyTypeToCurve(keyType);
-
-        using (var ecdsa = ECDsa.Create(curve))
+        using (var ecdsa = ECDsa.Create(PublicKey.ECCurve))
         {
             var key = ecdsa.ExportParameters(true);
-            return new PrivateKey(keyType, key.Q.X!, key.Q.Y!, key.D!);
+            return new PrivateKey(0, key.Q.X!, key.Q.Y!, key.D!);
         }
     }
 
-    public static PrivateKey Create(KeyType keyType, ReadOnlySpan<byte> seed)
+    public static PrivateKey Create(ReadOnlySpan<byte> seed)
     {
         ECParameters key = default;
-        key.Curve = PublicKey.KeyTypeToCurve(keyType);
+        key.Curve = PublicKey.ECCurve;
 
         byte[]? d = null;
         var hash = Hash.ObjectPool.Get();
@@ -62,14 +58,11 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         }
 
         Hash.ObjectPool.Return(hash);
-        return new PrivateKey(keyType, key.Q.X!, key.Q.Y!, key.D!);
+        return new PrivateKey(0, key.Q.X!, key.Q.Y!, key.D!);
     }
 
-    public static PrivateKey Create(KeyType keyType, string passphrase)
+    public static PrivateKey Create(string passphrase)
     {
-        ECParameters key = default;
-        key.Curve = PublicKey.KeyTypeToCurve(keyType);
-
         var passBytes = Encoding.UTF8.GetBytes(passphrase);
         Span<byte> span = stackalloc byte[(sizeof(ulong) + passBytes.Length) * 2]; // count, passBytes, count, passBytes // scoped
         var countSpan = span.Slice(0, sizeof(ulong));
@@ -77,22 +70,25 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         passBytes.CopyTo(span.Slice(sizeof(ulong)));
         passBytes.CopyTo(span.Slice((sizeof(ulong) * 2) + passBytes.Length));
 
-        return Create(keyType, span);
+        return Create(span);
     }
 
     internal PrivateKey()
     {
     }
 
-    private PrivateKey(KeyType keyType, byte[] x, byte[] y, byte[] d)
+    private PrivateKey(uint keyVersion, byte[] x, byte[] y, byte[] d)
     {
         this.x = x;
         this.y = y;
         this.d = d;
 
         var yTilde = this.CompressY();
-        this.keyValue = (byte)((((uint)keyType << 2) & ~3) + (yTilde & 1));
+        this.keyValue = (byte)(((keyVersion << 2) & ~3) + (yTilde & 1));
     }
+
+    public PublicKey ToPublicKey()
+        => new(this);
 
     public byte[]? SignData(ReadOnlySpan<byte> data)
     {
@@ -135,46 +131,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
     }
 
     public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> sign)
-    {
-        var publicKey = new PublicKey(this);
-        return publicKey.VerifyData(data, sign);
-    }
-
-    public byte[]? DeriveKeyMaterial(PublicKey publicKey)
-    {
-        if (this.KeyType != publicKey.KeyType)
-        {// (uint)(this.rawType >> 2);
-            return null;
-        }
-
-        var publicEcdh = publicKey.TryGetEcdh();
-        if (publicEcdh == null)
-        {
-            return null;
-        }
-
-        var privateEcdh = this.TryGetEcdh();
-        if (privateEcdh == null)
-        {
-            publicKey.CacheEcdh(publicEcdh);
-            return null;
-        }
-
-        byte[]? material = null;
-        try
-        {
-            material = privateEcdh.DeriveKeyMaterial(publicEcdh.PublicKey);
-        }
-        catch
-        {
-            publicKey.CacheEcdh(publicEcdh);
-            return null;
-        }
-
-        this.CacheEcdh(privateEcdh);
-        publicKey.CacheEcdh(publicEcdh);
-        return material;
-    }
+        => this.ToPublicKey().VerifyData(data, sign);
 
     [Key(0)]
     private readonly byte keyValue; // 6bits: KeyType, 1bit:?, 1bit: YTilde
@@ -188,14 +145,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
     [Key(3)]
     private readonly byte[] d = Array.Empty<byte>();
 
-    public KeyType KeyType
-    {
-        get
-        {
-            var u = (uint)(this.keyValue >> 2);
-            return Unsafe.As<uint, KeyType>(ref u);
-        }
-    }
+    public uint KeyVersion => (uint)(this.keyValue >> 2);
 
     public uint YTilde => (uint)(this.keyValue & 1);
 
@@ -205,8 +155,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
 
     public bool Validate()
     {
-        if (this.KeyType != KeyType.Authority &&
-            this.KeyType != KeyType.Node)
+        if (this.KeyVersion != 0)
         {
             return false;
         }
@@ -259,14 +208,13 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
 
     internal uint CompressY()
     {
-        if (this.KeyType == KeyType.Authority ||
-            this.KeyType == KeyType.Node)
+        if (this.KeyVersion == 0)
         {
             return Arc.Crypto.EC.P256R1Curve.Instance.CompressY(this.y);
         }
         else
         {
-            throw new InvalidDataException();
+            return 0;
         }
     }
 
@@ -287,7 +235,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         try
         {
             ECParameters p = default;
-            p.Curve = PublicKey.KeyTypeToCurve(this.KeyType);
+            p.Curve = PublicKey.ECCurve;
             p.D = this.d;
             return ECDsa.Create(p);
         }
@@ -300,33 +248,4 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
 
     private void CacheEcdsa(ECDsa ecdsa)
         => PrivateKeyToEcdsa.Cache(this, ecdsa);
-
-    private ECDiffieHellman? TryGetEcdh()
-    {
-        if (PrivateKeyToEcdh.TryGet(this) is { } ecdh)
-        {
-            return ecdh;
-        }
-
-        if (!this.Validate())
-        {
-            return null;
-        }
-
-        try
-        {
-            ECParameters p = default;
-            p.Curve = PublicKey.KeyTypeToCurve(this.KeyType);
-            p.D = this.d;
-            return ECDiffieHellman.Create(p);
-        }
-        catch
-        {
-        }
-
-        return null;
-    }
-
-    private void CacheEcdh(ECDiffieHellman ecdh)
-        => PrivateKeyToEcdh.Cache(this, ecdh);
 }

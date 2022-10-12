@@ -21,8 +21,8 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
     {
         this.logger.TryGet()?.Log($"Test subcommand: {options.ToString()}");
 
-        var privateKey = NodeKey.AlternativePrivateKey;
-        var publicKey = new PublicKey(privateKey);
+        var privateKey = NodePrivateKey.AlternativePrivateKey;
+        var publicKey = privateKey.ToPublicKey();
 
         Console.WriteLine($"Alternative(private): {privateKey.ToString()}");
         Console.WriteLine($"Length: {TinyhandSerializer.Serialize(privateKey).Length.ToString()}");
@@ -33,8 +33,8 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         Console.WriteLine($"Length: {TinyhandSerializer.Serialize(publicKey).Length.ToString()}");
         Console.WriteLine(TinyhandSerializer.SerializeToString(publicKey));
 
-        var originator = PrivateKey.Create(KeyType.Authority, "originator");
-        var pub = new PublicKey(originator);
+        var originator = PrivateKey.Create("originator");
+        var pub = originator.ToPublicKey();
         var value = new Value(1, pub, new[] { pub, });
         Console.WriteLine(value.GetHashCode());
 

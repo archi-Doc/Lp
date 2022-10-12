@@ -71,7 +71,7 @@ public sealed partial class AuthorityInfo
             var seed = hash.HashFinal();
             Hash.ObjectPool.Return(hash);
 
-            privateKey = PrivateKey.Create(KeyType.Authority, seed);
+            privateKey = PrivateKey.Create(seed);
         }
 
         return privateKey;
