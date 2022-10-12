@@ -580,11 +580,11 @@ LoadKeyVaultObjects:
 
     private async Task LoadKeyVault_NodeKey()
     {
-        if (!this.Vault.TryGetAndDeserialize<NodePrivateKey>(NodePrivateKey.Filename, out var key))
+        if (!this.Vault.TryGetAndDeserialize<PrivateKey>(NodeKey.PrivateKeyPath, out var key))
         {// Failure
             if (!this.Vault.Created)
             {
-                await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoData, NodePrivateKey.Filename);
+                await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoData, NodeKey.PrivateKeyPath);
             }
 
             return;
@@ -592,14 +592,14 @@ LoadKeyVaultObjects:
 
         if (!this.NetControl.NetBase.SetNodeKey(key))
         {
-            await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoRestore, NodePrivateKey.Filename);
+            await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoRestore, NodeKey.PrivateKeyPath);
             return;
         }
     }
 
     private async Task SaveKeyVaultAsync()
     {
-        this.Vault.Add(NodePrivateKey.Filename, this.NetControl.NetBase.SerializeNodeKey());
+        this.Vault.Add(NodeKey.PrivateKeyPath, this.NetControl.NetBase.SerializeNodeKey());
 
         await this.Vault.SaveAsync(this.LPBase.CombineDataPath(this.LPBase.Options.Vault, Vault.Filename));
     }

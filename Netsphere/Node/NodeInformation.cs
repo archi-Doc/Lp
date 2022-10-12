@@ -23,8 +23,7 @@ public partial class NodeInformation : NodeAddress, IEquatable<NodeInformation>
             {
                 alternative = new NodeInformation(NodeAddress.Alternative);
                 alternative.UpdateTime = Mics.GetUtcNow();
-                alternative.PublicKeyX = NodeKey.AlternativePrivateKey.X;
-                alternative.PublicKeyY = NodeKey.AlternativePrivateKey.Y;
+                alternative.PublicKey = new PublicKey(NodeKey.AlternativePrivateKey);
             }
 
             return alternative;
@@ -57,10 +56,7 @@ public partial class NodeInformation : NodeAddress, IEquatable<NodeInformation>
     public ulong Differentiation { get; protected set; }
 
     [Key(6)]
-    public byte[] PublicKeyX { get; internal protected set; } = default!;
-
-    [Key(7)]
-    public byte[] PublicKeyY { get; internal protected set; } = default!;
+    public PublicKey PublicKey { get; internal protected set; } = default!;
 
     public bool Equals(NodeInformation? other)
     {

@@ -150,11 +150,10 @@ public class Terminal : UnitBase, IUnitExecutable
 
     public int Port { get; set; }
 
-    internal void Initialize(bool isAlternative, NodePrivateKey nodePrivateKey, ECDiffieHellman nodePrivateECDH)
+    internal void Initialize(bool isAlternative, PrivateKey nodePrivateKey)
     {
         this.IsAlternative = isAlternative;
         this.NodePrivateKey = nodePrivateKey;
-        this.NodePrivateECDH = nodePrivateECDH;
     }
 
     internal void ProcessSend(long currentMics)
@@ -474,9 +473,7 @@ public class Terminal : UnitBase, IUnitExecutable
 
     // internal ILogger? TerminalLogger { get; private set; }
 
-    internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
-
-    internal ECDiffieHellman NodePrivateECDH { get; private set; } = default!;
+    internal PrivateKey NodePrivateKey { get; private set; } = default!;
 
     internal NetSocket NetSocket { get; private set; }
 

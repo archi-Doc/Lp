@@ -20,8 +20,7 @@ public class NetStatus
             if (this.alternativeNodeInformation == null)
             {
                 this.alternativeNodeInformation = new(new NodeAddress(IPAddress.None, 0));
-                this.alternativeNodeInformation.PublicKeyX = NodeKey.AlternativePrivateKey.X;
-                this.alternativeNodeInformation.PublicKeyY = NodeKey.AlternativePrivateKey.Y;
+                this.alternativeNodeInformation.PublicKey = new PublicKey(NodeKey.AlternativePrivateKey);
             }
 
             nodeInformation = this.alternativeNodeInformation;
@@ -31,8 +30,7 @@ public class NetStatus
             if (this.myNodeInformation == null)
             {
                 this.myNodeInformation = new(new NodeAddress(IPAddress.None, 0));
-                this.myNodeInformation.PublicKeyX = this.NetBase.NodePublicKey.X;
-                this.myNodeInformation.PublicKeyY = this.NetBase.NodePublicKey.Y;
+                this.myNodeInformation.PublicKey = this.NetBase.NodePublicKey;
             }
 
             nodeInformation = this.myNodeInformation;

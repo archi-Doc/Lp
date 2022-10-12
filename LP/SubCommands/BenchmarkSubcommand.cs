@@ -25,10 +25,6 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
         {
             // var testKeyString = TinyhandSerializer.SerializeToString(AuthorityPrivateKey.Create());
             this.privateKey = TinyhandSerializer.DeserializeFromString<PrivateKey>(TestKeyString);
-            if (this.privateKey != null)
-            {
-                this.testKey = this.privateKey.TryCreateECDsa();
-            }
         }
         catch
         {
@@ -62,7 +58,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
 
     private async Task RunCryptoBenchmark(BenchmarkOptions options)
     {
-        if (this.testKey == null || this.privateKey == null)
+        if (this.privateKey == null)
         {
             this.logger.TryGet(LogLevel.Error)?.Log("No ECDsa key.");
             return;
@@ -81,8 +77,8 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
 
             for (var i = 0; i < 1000; i++)
             {
-                var sign = this.testKey.SignData(bytes, HashAlgorithmName.SHA256);
-                var valid = this.testKey.VerifyData(bytes, sign, HashAlgorithmName.SHA256);
+                var sign = this.privateKey.SignData(bytes);
+                var valid = this.privateKey.VerifyData(bytes, sign);
             }
 
             Console.WriteLine(benchTimer.StopAndGetText());
@@ -93,7 +89,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
 
     private async Task RunCrypto2Benchmark(BenchmarkOptions options)
     {
-        if (this.testKey == null || this.privateKey == null)
+        if (this.privateKey == null)
         {
             this.logger.TryGet(LogLevel.Error)?.Log("No ECDsa key.");
             return;
@@ -118,9 +114,9 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
 
             for (var i = 0; i < 1000; i++)
             {
-                var sign = this.testKey.SignData(bytes, HashAlgorithmName.SHA256);
+                var sign = this.privateKey.SignData(bytes);
                 y2 = Arc.Crypto.EC.P256R1Curve.Instance.TryDecompressY(this.privateKey.X, y);
-                var valid = this.testKey.VerifyData(bytes, sign, HashAlgorithmName.SHA256);
+                var valid = this.privateKey.VerifyData(bytes, sign);
             }
 
             Console.WriteLine(benchTimer.StopAndGetText());
@@ -153,7 +149,6 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
 
     private ILogger<BenchmarkSubcommand> logger;
     private PrivateKey? privateKey;
-    private ECDsa? testKey;
 }
 
 public record BenchmarkOptions

@@ -256,7 +256,7 @@ public partial class NetTerminal : IDisposable
             Cache.NodePublicPrivateKeyToMaterial.Cache(key, material);*/
 
             // KeyMaterial
-            var material = NodeKey.DeriveKeyMaterial(this.Terminal.NodePrivateECDH, this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
+            var material = this.Terminal.NodePrivateKey.DeriveKeyMaterial(this.NodeInformation.PublicKey);
             if (material == null)
             {
                 return NetResult.NoNodeInformation;
@@ -265,14 +265,14 @@ public partial class NetTerminal : IDisposable
             // this.TerminalLogger?.Information($"Material {material[0]} ({salt.To4Hex()}/{salt2.To4Hex()}), {this.NodeInformation.PublicKeyX[0]}, {this.Terminal.NodePrivateKey.X[0]}");
 
             // ulong Salt, Salt2, byte[] material, ulong Salt, Salt2
-            Span<byte> buffer = stackalloc byte[sizeof(ulong) + sizeof(ulong) + NodeKey.PrivateKeyLength + sizeof(ulong) + sizeof(ulong)];
+            Span<byte> buffer = stackalloc byte[sizeof(ulong) + sizeof(ulong) + PublicKey.PrivateKeyLength + sizeof(ulong) + sizeof(ulong)];
             var span = buffer;
             BitConverter.TryWriteBytes(span, salt);
             span = span.Slice(sizeof(ulong));
             BitConverter.TryWriteBytes(span, salt2);
             span = span.Slice(sizeof(ulong));
             material.AsSpan().CopyTo(span);
-            span = span.Slice(NodeKey.PrivateKeyLength);
+            span = span.Slice(PublicKey.PrivateKeyLength);
             BitConverter.TryWriteBytes(span, salt);
             span = span.Slice(sizeof(ulong));
             BitConverter.TryWriteBytes(span, salt2);
