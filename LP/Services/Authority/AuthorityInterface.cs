@@ -34,11 +34,11 @@ public readonly struct AuthorityInterface
         return this.authorityKey.VerifyData(credit, data, signature);
     }
 
-    public Task<(AuthorityResult Result, AuthorityInfo? AuthorityInfo)> GetInfo()
+    public Task<(AuthorityResult Result, AuthorityObject? AuthorityObject)> GetInfo()
     {
         if (this.authorityKey == null)
         {
-            return Task.FromResult((AuthorityResult.NotFound, (AuthorityInfo?)null));
+            return Task.FromResult((AuthorityResult.NotFound, (AuthorityObject?)null));
         }
 
         return this.authorityKey.GetInfo();

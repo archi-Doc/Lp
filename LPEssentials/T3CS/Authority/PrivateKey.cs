@@ -1,12 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace LP;
-
-#pragma warning disable SA1214
 
 [TinyhandObject]
 public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
@@ -108,8 +105,9 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         return sign;
     }
 
-    public bool SignData(ReadOnlySpan<byte> data, Span<byte> signature)
+    public bool SignData(ReadOnlySpan<byte> data, Span<byte> signature, out int written)
     {
+        written = 0;
         if (signature.Length < PublicKey.SignLength)
         {
             return false;
@@ -121,7 +119,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
             return false;
         }
 
-        if (!ecdsa.TrySignData(data, signature, PublicKey.HashAlgorithmName, out var written))
+        if (!ecdsa.TrySignData(data, signature, PublicKey.HashAlgorithmName, out written))
         {
             return false;
         }

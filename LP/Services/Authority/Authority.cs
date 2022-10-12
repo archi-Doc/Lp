@@ -47,7 +47,7 @@ public class Authority
         }
     }
 
-    public AuthorityResult NewAuthority(string name, string passPhrase, AuthorityInfo info)
+    public AuthorityResult NewAuthority(string name, string passPhrase, AuthorityObject authorityObject)
     {
         var vaultName = GetVaultName(name);
 
@@ -58,7 +58,7 @@ public class Authority
                 return AuthorityResult.AlreadyExists;
             }
 
-            var encrypted = PasswordEncrypt.Encrypt(TinyhandSerializer.Serialize(info), passPhrase);
+            var encrypted = PasswordEncrypt.Encrypt(TinyhandSerializer.Serialize(authorityObject), passPhrase);
             if (this.vault.TryAdd(vaultName, encrypted))
             {
                 return AuthorityResult.Success;

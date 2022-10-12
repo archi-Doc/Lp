@@ -21,7 +21,7 @@ internal sealed class AuthorityKey
             return (result, Array.Empty<byte>());
         }
 
-        var signature = this.authorityInfo!.SignData(credit, data);
+        var signature = this.authorityObject!.SignData(credit, data);
         if (signature == null)
         {
             signature = Array.Empty<byte>();
@@ -39,7 +39,7 @@ internal sealed class AuthorityKey
             return result;
         }
 
-        if (this.authorityInfo!.VerifyData(credit, data, signature))
+        if (this.authorityObject!.VerifyData(credit, data, signature))
         {
             return AuthorityResult.Success;
         }
@@ -49,10 +49,10 @@ internal sealed class AuthorityKey
         }
     }
 
-    public async Task<(AuthorityResult Result, AuthorityInfo? AuthorityInfo)> GetInfo()
+    public async Task<(AuthorityResult Result, AuthorityObject? AuthorityObject)> GetInfo()
     {
         var result = await this.Prepare().ConfigureAwait(false);
-        return (result, this.authorityInfo);
+        return (result, this.authorityObject);
     }
 
     public string Name { get; private set; }
@@ -61,23 +61,23 @@ internal sealed class AuthorityKey
 
     private async Task<AuthorityResult> Prepare()
     {
-        if (this.authorityInfo != null)
+        if (this.authorityObject != null)
         {
-            if (this.authorityInfo.Lifetime == AuthorityLifetime.PeriodOfTime)
+            if (this.authorityObject.Lifetime == AuthorityLifetime.PeriodOfTime)
             {// Periof of time
                 if (Mics.GetUtcNow() > this.ExpirationMics)
                 {// Expired
-                    this.authorityInfo = null;
+                    this.authorityObject = null;
                 }
             }
 
-            if (this.authorityInfo != null)
+            if (this.authorityObject != null)
             {
                 return AuthorityResult.Success;
             }
         }
 
-        // Try to get AuthorityInfo.
+        // Try to get AuthorityObject.
         if (!PasswordEncrypt.TryDecrypt(this.encrypted, string.Empty, out var decrypted))
         {
             while (true)
@@ -98,17 +98,17 @@ internal sealed class AuthorityKey
         // Deserialize
         try
         {
-            this.authorityInfo = TinyhandSerializer.Deserialize<AuthorityInfo>(decrypted);
+            this.authorityObject = TinyhandSerializer.Deserialize<AuthorityObject>(decrypted);
         }
         catch
         {
         }
 
-        if (this.authorityInfo != null)
+        if (this.authorityObject != null)
         {
-            if (this.authorityInfo.Lifetime == AuthorityLifetime.PeriodOfTime)
+            if (this.authorityObject.Lifetime == AuthorityLifetime.PeriodOfTime)
             {
-                this.ExpirationMics = Mics.GetUtcNow() + this.authorityInfo.LifeMics;
+                this.ExpirationMics = Mics.GetUtcNow() + this.authorityObject.LifeMics;
             }
 
             return AuthorityResult.Success;
@@ -121,5 +121,5 @@ internal sealed class AuthorityKey
 
     private Authority authority;
     private byte[] encrypted;
-    private AuthorityInfo? authorityInfo;
+    private AuthorityObject? authorityObject;
 }

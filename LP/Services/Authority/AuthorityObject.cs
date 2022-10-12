@@ -5,15 +5,13 @@ using Arc.Collections;
 namespace LP;
 
 [TinyhandObject]
-public sealed partial class AuthorityInfo
+public sealed partial class AuthorityObject
 {
-    public static readonly uint SeedLength = Hash.HashBytes;
-
-    public AuthorityInfo(string? seedPhrase, AuthorityLifetime lifetime, long lifeMics)
+    public AuthorityObject(string? seedPhrase, AuthorityLifetime lifetime, long lifeMics)
     {
         if (seedPhrase == null)
         {
-            this.seed = new byte[SeedLength];
+            this.seed = new byte[Hash.HashBytes];
             Random.Crypto.NextBytes(this.seed);
         }
         else
@@ -28,7 +26,7 @@ public sealed partial class AuthorityInfo
         this.LifeMics = lifeMics;
     }
 
-    internal AuthorityInfo()
+    internal AuthorityObject()
     {
     }
 
