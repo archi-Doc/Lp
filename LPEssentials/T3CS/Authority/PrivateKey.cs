@@ -22,7 +22,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
     {
         var curve = PublicKey.KeyTypeToCurve(keyType);
 
-        using (var ecdsa = ECDsa.Create())
+        using (var ecdsa = ECDsa.Create(curve))
         {
             var key = ecdsa.ExportParameters(true);
             return new PrivateKey(keyType, key.Q.X!, key.Q.Y!, key.D!);
