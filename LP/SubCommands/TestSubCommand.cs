@@ -1,7 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System;
+using System.Security.Cryptography;
 using Arc.Crypto;
+using Arc.Crypto.EC;
 using LP;
 using SimpleCommandLine;
 using Tinyhand;
@@ -20,6 +22,27 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
     public async Task RunAsync(TestOptions options, string[] args)
     {
         this.logger.TryGet()?.Log($"Test subcommand: {options.ToString()}");
+
+        ECParameters key = default;
+        key.Curve = ECCurve.CreateFromFriendlyName(PublicKey.ECCurveName);
+
+        byte[]? d = null;
+        var hash = Hash.ObjectPool.Get();
+        d = hash.GetHash(new byte[] { 0, });
+
+        key.D = d;
+        var ecdsa = ECDsa.Create(key);
+        key = ecdsa.ExportParameters(true);
+
+        Array.Fill<byte>(d, 255);
+        key.D = d;
+        ecdsa = ECDsa.Create(key);
+        key = ecdsa.ExportParameters(true); // 00000000ffffffff00000000000000004319055258e8617b0c46353d039cdaae
+
+        d = Arc.Crypto.Hex.FromStringToByteArray("00000000ffffffff00000000000000004319055258e8617b0c46353d039cdaae");
+        key.D = d;
+        ecdsa = ECDsa.Create(key);
+        key = ecdsa.ExportParameters(true);
 
         var privateKey = NodePrivateKey.AlternativePrivateKey;
         var publicKey = privateKey.ToPublicKey();
