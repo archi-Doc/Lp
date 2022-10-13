@@ -13,10 +13,11 @@ namespace LP.Subcommands;
 [SimpleCommand("test")]
 public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 {
-    public TestSubcommand(ILogger<TestSubcommand> logger, Control control)
+    public TestSubcommand(ILogger<TestSubcommand> logger, Control control, SeedPhrase seedPhrase)
     {
         this.logger = logger;
         this.Control = control;
+        this.seedPhrase = seedPhrase;
     }
 
     public async Task RunAsync(TestOptions options, string[] args)
@@ -26,23 +27,12 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         ECParameters key = default;
         key.Curve = ECCurve.CreateFromFriendlyName(PublicKey.ECCurveName);
 
-        byte[]? d = null;
-        var hash = Hash.ObjectPool.Get();
-        d = hash.GetHash(new byte[] { 0, });
-
-        key.D = d;
-        var ecdsa = ECDsa.Create(key);
-        key = ecdsa.ExportParameters(true);
-
-        Array.Fill<byte>(d, 255);
-        key.D = d;
-        ecdsa = ECDsa.Create(key);
-        key = ecdsa.ExportParameters(true); // 00000000ffffffff00000000000000004319055258e8617b0c46353d039cdaae
-
-        d = Arc.Crypto.Hex.FromStringToByteArray("00000000ffffffff00000000000000004319055258e8617b0c46353d039cdaae");
-        key.D = d;
-        ecdsa = ECDsa.Create(key);
-        key = ecdsa.ExportParameters(true);
+        var st = this.seedPhrase.Create();
+        var seed = this.seedPhrase.TryGetSeed(st);
+        if (seed != null)
+        {
+            var pk = PrivateKey.Create(seed);
+        }
 
         var privateKey = NodePrivateKey.AlternativePrivateKey;
         var publicKey = privateKey.ToPublicKey();
@@ -72,6 +62,8 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
     public Control Control { get; set; }
 
     private ILogger<TestSubcommand> logger;
+
+    private SeedPhrase seedPhrase;
 }
 
 public record TestOptions

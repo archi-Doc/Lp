@@ -42,6 +42,11 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
                     d = hash.GetHash(d);
                 }
 
+                if (!Arc.Crypto.EC.P256R1Curve.Instance.IsValidSeed(d))
+                {
+                    continue;
+                }
+
                 key.D = d;
                 using (var ecdsa = ECDsa.Create(key))
                 {

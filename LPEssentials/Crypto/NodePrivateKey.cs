@@ -48,6 +48,11 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
                     d = hash.GetHash(d);
                 }
 
+                if (!Arc.Crypto.EC.P256R1Curve.Instance.IsValidSeed(d))
+                {
+                    continue;
+                }
+
                 key.D = d;
                 using (var ecdh = ECDiffieHellman.Create(key))
                 {
