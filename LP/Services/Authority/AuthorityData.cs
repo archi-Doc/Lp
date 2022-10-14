@@ -50,14 +50,13 @@ public sealed partial class AuthorityData
     private byte[] seed = Array.Empty<byte>();
 
     [Key(1)]
-    public AuthorityLifetime Lifetime { get; init; }
+    public AuthorityLifetime Lifetime { get; private set; }
 
     [Key(2)]
-    public long LifeMics { get; init; }
+    public long LifeMics { get; private set; }
 
     [Key(3)]
-    // public Value[] Values { get; init; } = Array.Empty<Value>();
-    public Value Values { get; init; } = default!;
+    public Value[] Values { get; private set; } = Array.Empty<Value>(); // public Value Values { get; private set; } = default!;
 
     private PrivateKey GetOrCreatePrivateKey(Credit credit)
     {
