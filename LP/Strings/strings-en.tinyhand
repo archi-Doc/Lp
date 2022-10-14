@@ -3,7 +3,7 @@
 Dialog = {
     ConfirmExit = "Are you sure you want to exit?"
     ConfirmOverwrite = "Are you sure you want to overwrite '{0}' ?"
-    
+
     Password = {
         Enter = "Enter password"
         EnterCurrent = "Enter current password"
@@ -43,6 +43,7 @@ Vault = {
 Authority = {
     AlreadyExists = "Authority '{0}' already exists"
     Created = "Authority '{0}' is successfully created"
+    Removed = "Authority '{0}' is successfully removed"
     NotFound = "Authority '{0}' is not found"
     EnterPassword = "Enter Authority '{0}' password"
 }

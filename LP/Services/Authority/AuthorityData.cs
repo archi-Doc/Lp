@@ -5,9 +5,9 @@ using Arc.Collections;
 namespace LP;
 
 [TinyhandObject]
-public sealed partial class AuthorityObject
+public sealed partial class AuthorityData
 {
-    public AuthorityObject(string? seedPhrase, AuthorityLifetime lifetime, long lifeMics)
+    public AuthorityData(string? seedPhrase, AuthorityLifetime lifetime, long lifeMics)
     {
         if (seedPhrase == null)
         {
@@ -26,7 +26,7 @@ public sealed partial class AuthorityObject
         this.LifeMics = lifeMics;
     }
 
-    internal AuthorityObject()
+    internal AuthorityData()
     {
     }
 
@@ -34,7 +34,7 @@ public sealed partial class AuthorityObject
     {
         var privateKey = this.GetOrCreatePrivateKey(credit);
         var signature = privateKey.SignData(data);
-        this.privateKeyCache.Cache(credit, privateKey);
+        this.CachePrivateKey(credit, privateKey);
         return signature;
     }
 
@@ -42,7 +42,7 @@ public sealed partial class AuthorityObject
     {
         var privateKey = this.GetOrCreatePrivateKey(credit);
         var result = privateKey.VerifyData(data, signature);
-        this.privateKeyCache.Cache(credit, privateKey);
+        this.CachePrivateKey(credit, privateKey);
         return result;
     }
 

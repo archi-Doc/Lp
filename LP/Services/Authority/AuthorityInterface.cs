@@ -15,35 +15,14 @@ public readonly struct AuthorityInterface
     // public AuthorityInterface WithSalt(long salt) => new AuthorityInterface(this.authorityKey, salt);
 
     public Task<(AuthorityResult Result, byte[] Signature)> SignData(Credit credit, byte[] data)
-    {
-        if (this.authorityKey == null)
-        {
-            return Task.FromResult((AuthorityResult.NotFound, Array.Empty<byte>()));
-        }
-
-        return this.authorityKey.SignData(credit, data);
-    }
+        => this.authorityKey.SignData(credit, data);
 
     public Task<AuthorityResult> VerifyData(Credit credit, byte[] data, byte[] signature)
-    {
-        if (this.authorityKey == null)
-        {
-            return Task.FromResult(AuthorityResult.NotFound);
-        }
+        => this.authorityKey.VerifyData(credit, data, signature);
 
-        return this.authorityKey.VerifyData(credit, data, signature);
-    }
-
-    public Task<(AuthorityResult Result, AuthorityObject? AuthorityObject)> GetInfo()
-    {
-        if (this.authorityKey == null)
-        {
-            return Task.FromResult((AuthorityResult.NotFound, (AuthorityObject?)null));
-        }
-
-        return this.authorityKey.GetInfo();
-    }
+    public Task<(AuthorityResult Result, AuthorityData? AuthorityData)> GetInfo()
+        => this.authorityKey.GetInfo();
 
     public readonly long Salt;
-    private readonly AuthorityKey? authorityKey;
+    private readonly AuthorityKey authorityKey;
 }

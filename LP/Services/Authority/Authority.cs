@@ -21,7 +21,7 @@ public class Authority
     }
 
     public string[] GetNames()
-        => this.vault.GetNames(VaultPrefix);
+        => this.vault.GetNames(VaultPrefix).Select(x => x.Substring(VaultPrefix.Length)).ToArray();
 
     public AuthorityResult TryGetInterface(string name, long salt, out AuthorityInterface authorityInterface)
     {
@@ -47,7 +47,7 @@ public class Authority
         }
     }
 
-    public AuthorityResult NewAuthority(string name, string passPhrase, AuthorityObject authorityObject)
+    public AuthorityResult NewAuthority(string name, string passPhrase, AuthorityData authorityObject)
     {
         var vaultName = GetVaultName(name);
 

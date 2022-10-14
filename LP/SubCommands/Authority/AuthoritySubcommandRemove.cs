@@ -22,7 +22,7 @@ public class AuthoritySubcommandRemove : ISimpleCommandAsync<AuthoritySubcommand
 
         if (result == AuthorityResult.Success)
         {
-            this.logger.TryGet()?.Log(Hashed.Authority.Created, option.Name);
+            this.logger.TryGet()?.Log(Hashed.Authority.Removed, option.Name);
         }
         else if (result == AuthorityResult.NotFound)
         {
