@@ -11,13 +11,22 @@ namespace LP;
 [TinyhandObject]
 public sealed partial class Token : IVerifiable // , IEquatable<Token>
 {
-    public enum TokenType
+    public enum Type
     {
         Identification,
         RequestSummary,
     }
 
-    public Token()
+    public Token(Token.Type type, long expirationMics, PublicKey publicKey, Identifier targetIdentifier, Linkage? targetLinkage)
+    {
+        this.TokenType = type;
+        this.ExpirationMics = expirationMics;
+        this.PublicKey = publicKey;
+        this.TargetIdentifier = targetIdentifier;
+        this.TargetLinkage = targetLinkage;
+    }
+
+    internal Token()
     {
     }
 
@@ -35,6 +44,31 @@ public sealed partial class Token : IVerifiable // , IEquatable<Token>
         return true;
     }
 
+    public bool Sign(PrivateKey privateKey)
+    {
+        if (!this.PublicKey.IsSameKey(privateKey))
+        {
+            return false;
+        }
+
+        try
+        {
+            var bytes = TinyhandSerializer.Serialize(this, TinyhandSerializerOptions.Conditional);
+            var sign = privateKey.SignData(bytes);
+
+            if (sign != null)
+            {
+                this.signature = sign;
+                return true;
+            }
+        }
+        catch
+        {
+        }
+
+        return false;
+    }
+
     public bool ValidateAndVerify()
     {
         if (!this.Validate())
@@ -44,8 +78,8 @@ public sealed partial class Token : IVerifiable // , IEquatable<Token>
 
         try
         {
-            var result = TinyhandSerializer.SerializeAndGetMarker(this);
-            return this.PublicKey.VerifyData(result.ByteArray.AsSpan(0, result.MarkerPosition), this.signature);
+            var bytes = TinyhandSerializer.Serialize(this, TinyhandSerializerOptions.Conditional);
+            return this.PublicKey.VerifyData(bytes, this.signature);
         }
         catch
         {
@@ -54,7 +88,7 @@ public sealed partial class Token : IVerifiable // , IEquatable<Token>
     }
 
     [Key(0)]
-    public TokenType Type { get; private set; }
+    public Type TokenType { get; private set; }
 
     [Key(1)]
     public long ExpirationMics { get; private set; }
@@ -68,7 +102,7 @@ public sealed partial class Token : IVerifiable // , IEquatable<Token>
     [Key(4)]
     public Linkage? TargetLinkage { get; private set; }
 
-    [Key(6, Marker = true, PropertyName = "Signature")]
+    [Key(6, PropertyName = "Signature", Condition = false)]
     [MaxLength(PublicKey.SignLength)]
     private byte[] signature = Array.Empty<byte>();
 }

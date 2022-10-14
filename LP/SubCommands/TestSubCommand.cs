@@ -57,6 +57,10 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
         Console.WriteLine($"Originator: {originator.ToString()}, {flag.ToString()}");
         Console.WriteLine($"{pub.ToString()}");
+
+        var token = new Token(Token.Type.Identification, 0, pub, Identifier.Three, null);
+        var bb = token.Sign(originator);
+        bb = token.ValidateAndVerify();
     }
 
     public Control Control { get; set; }

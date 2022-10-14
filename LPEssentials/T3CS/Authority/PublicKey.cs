@@ -95,6 +95,45 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         return false;
     }
 
+    public bool IsSameKey(PrivateKey privateKey)
+    {
+        var span = privateKey.X.AsSpan();
+        if (span.Length != PublicKeyHalfLength)
+        {
+            return false;
+        }
+
+        if (this.x0 != BitConverter.ToUInt64(span))
+        {
+            return false;
+        }
+
+        span = span.Slice(sizeof(ulong));
+        if (this.x1 != BitConverter.ToUInt64(span))
+        {
+            return false;
+        }
+
+        span = span.Slice(sizeof(ulong));
+        if (this.x2 != BitConverter.ToUInt64(span))
+        {
+            return false;
+        }
+
+        span = span.Slice(sizeof(ulong));
+        if (this.x3 != BitConverter.ToUInt64(span))
+        {
+            return false;
+        }
+
+        if (this.YTilde != privateKey.YTilde)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
     public override int GetHashCode()
         => (int)this.x0;
 
@@ -121,7 +160,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         BitConverter.TryWriteBytes(b, this.x3);
         b = b.Slice(sizeof(ulong));
 
-        return $"({Base64.Default.FromByteArrayToUtf8(bytes)})";
+        return $"({Base64.Url.FromByteArrayToString(bytes)})";
     }
 
     private ECDsa? TryGetEcdsa()

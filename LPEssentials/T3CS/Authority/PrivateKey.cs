@@ -178,6 +178,9 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         return true;
     }
 
+    public bool IsSameKey(PublicKey publicKey)
+        => publicKey.IsSameKey(this);
+
     public bool Equals(PrivateKey? other)
     {
         if (other == null)

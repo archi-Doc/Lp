@@ -13,12 +13,12 @@ public interface IFragment : IFlake
 [TinyhandUnion(0, typeof(TestFragment))]
 public abstract partial class FlakeBase
 {
-    public bool Check(Identifier identifier)
+    public bool CheckIdentifier(Identifier identifier)
     {
         try
         {
-            var result = TinyhandSerializer.SerializeAndGetMarker(this);
-            var id = Identifier.FromReadOnlySpan(result.ByteArray.AsSpan(0, result.MarkerPosition));
+            var bytes = TinyhandSerializer.Serialize(this, TinyhandSerializerOptions.Conditional);
+            var id = Identifier.FromReadOnlySpan(bytes);
             return id.Equals(identifier);
         }
         catch
@@ -43,7 +43,7 @@ public readonly struct ZenItem<TFlake, TUnprotected>
 [TinyhandObject]
 public partial class TestFragment : FlakeBase
 {
-    [Key(0, Marker = true)]
+    [Key(0)]
     public string Name { get; private set; } = string.Empty;
 }
 

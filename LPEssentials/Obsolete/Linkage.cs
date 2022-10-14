@@ -75,6 +75,6 @@ public partial class Linkage : IValidatable // , IEquatable<Linkage>, IComparabl
     [Key(3)]
     public PublicKey[] Mergers { get; private set; }
 
-    [Key(4, Marker = true)]
+    [Key(4, Condition = false)]
     public byte[][] Signs { get; private set; }
 }
