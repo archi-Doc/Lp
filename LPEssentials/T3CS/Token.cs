@@ -9,7 +9,7 @@ namespace LP;
 /// Immutable token object.
 /// </summary>
 [TinyhandObject]
-public sealed partial class Token : IValidatable, IVerifiable // , IEquatable<Token>
+public sealed partial class Token : IVerifiable // , IEquatable<Token>
 {
     public enum TokenType
     {
