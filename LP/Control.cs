@@ -76,6 +76,7 @@ public class Control : ILogInformation
                 LP.Subcommands.FlagSubcommand.Configure(context);
                 LP.Subcommands.NodeSubcommand.Configure(context);
                 LP.Subcommands.AuthoritySubcommand.Configure(context);
+                LP.Subcommands.CustomSubcommand.Configure(context);
             });
 
             this.SetupOptions<FileLoggerOptions>((context, options) =>
@@ -395,17 +396,17 @@ public class Control : ILogInformation
             if (this.subcommandParser.HelpCommand != string.Empty)
             {
                 this.subcommandParser.ShowHelp();
+                return true;
             }
             else
             {
                 Console.WriteLine("Invalid subcommand.");
+                return false;
             }
-
-            return false;
         }
 
         this.subcommandParser.Run();
-        return false;
+        return true;
 
         /*if (subcommandParser.HelpCommand != string.Empty)
         {
@@ -455,12 +456,9 @@ public class Control : ILogInformation
                     {// Subcommand
                         try
                         {
-                            if (!this.Subcommand(command))
-                            {
-                                // await this.Logger.FlushConsole(); // Log buffering is disabled.
-                                Console.Write("> ");
-                                continue;
-                            }
+                            this.Subcommand(command);
+                            Console.Write("> ");
+                            continue;
                         }
                         catch (Exception e)
                         {
