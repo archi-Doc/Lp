@@ -5,125 +5,153 @@ using System.Security.Cryptography;
 namespace LP;
 
 [TinyhandObject]
-public partial class NodePublicKey : IValidatable, IEquatable<NodePublicKey>
+public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePublicKey>
 {
+    public const string ECCurveName = "secp256r1";
+    public const int PublicKeyLength = 64;
+    public const int PublicKeyHalfLength = PublicKeyLength / 2;
+    public const int PrivateKeyLength = 32;
+    public const int SignLength = 64;
+    private const int MaxPublicKeyCache = 100;
+
+    public static HashAlgorithmName HashAlgorithmName { get; }
+
+    internal static ECCurve ECCurve { get; }
+
+    private static ObjectCache<NodePublicKey, ECDiffieHellman> PublicKeyToEcdh { get; } = new(MaxPublicKeyCache);
+
+    static NodePublicKey()
+    {
+        ECCurve = ECCurve.CreateFromFriendlyName(ECCurveName);
+        HashAlgorithmName = HashAlgorithmName.SHA256;
+    }
+
     public NodePublicKey()
     {
+        this.keyValue = 0;
+        this.x0 = 0;
+        this.x1 = 0;
+        this.x2 = 0;
+        this.x3 = 0;
     }
 
-    public NodePublicKey(NodePrivateKey privateKey)
+    internal NodePublicKey(NodePrivateKey privateKey)
     {
-        // this.Name = privateKey.Name;
-        this.X = privateKey.X;
-        this.Y = privateKey.Y;
+        this.keyValue = privateKey.KeyValue;
+        var span = privateKey.X.AsSpan();
+        this.x0 = BitConverter.ToUInt64(span);
+        span = span.Slice(sizeof(ulong));
+        this.x1 = BitConverter.ToUInt64(span);
+        span = span.Slice(sizeof(ulong));
+        this.x2 = BitConverter.ToUInt64(span);
+        span = span.Slice(sizeof(ulong));
+        this.x3 = BitConverter.ToUInt64(span);
     }
 
-    /*[Key(0, PropertyName = "Name")]
-    [MaxLength(NodeKey.NameLength)]
-    private string name = string.Empty;*/
+    [Key(0)]
+    private readonly byte keyValue;
 
-    [Key(0, PropertyName = "X")]
-    [MaxLength(NodeKey.PublicKeyHalfLength)]
-    private byte[] x = Array.Empty<byte>();
+    [Key(1)]
+    private readonly ulong x0;
 
-    [Key(1, PropertyName = "Y")]
-    [MaxLength(NodeKey.PublicKeyHalfLength)]
-    private byte[] y = Array.Empty<byte>();
+    [Key(2)]
+    private readonly ulong x1;
+
+    [Key(3)]
+    private readonly ulong x2;
+
+    [Key(4)]
+    private readonly ulong x3;
+
+    public uint KeyVersion => (uint)(this.keyValue >> 2);
+
+    public uint YTilde => (uint)(this.keyValue & 1);
 
     public bool Validate()
     {
-        if (this.x == null || this.x.Length != NodeKey.PublicKeyHalfLength)
+        if (this.KeyVersion == 0)
         {
-            return false;
-        }
-        else if (this.y == null || this.y.Length != NodeKey.PublicKeyHalfLength)
-        {
-            return false;
+            return true;
         }
 
-        return true;
-    }
-
-    public ECDiffieHellman CreateECDH()
-    {
-        ECParameters p = default;
-        p.Curve = NodeKey.ECCurve;
-        p.Q.X = this.x;
-        p.Q.Y = this.y;
-        return ECDiffieHellman.Create(p);
-    }
-
-    public bool Equals(NodePublicKey? other)
-    {
-        if (other == null)
-        {
-            return false;
-        }
-
-        return this.X.AsSpan().SequenceEqual(other.X) &&
-            this.Y.AsSpan().SequenceEqual(other.Y);
+        return false;
     }
 
     public override int GetHashCode()
-    {
-        ulong hash = 0;
+        => (int)this.x0;
 
-        if (this.x.Length >= sizeof(ulong))
-        {
-            hash ^= BitConverter.ToUInt64(this.x, 0);
-        }
-
-        if (this.y.Length >= sizeof(ulong))
-        {
-            hash ^= BitConverter.ToUInt64(this.y, 0);
-        }
-
-        return (int)hash;
-    }
+    public bool Equals(NodePublicKey other)
+        => this.keyValue == other.keyValue &&
+        this.x0 == other.x0 &&
+        this.x1 == other.x1 &&
+        this.x2 == other.x2 &&
+        this.x3 == other.x3;
 
     public override string ToString()
-        => $"{this.GetHashCode():x8}";
-}
-
-internal readonly struct NodePublicKeyStruct : IEquatable<NodePublicKeyStruct>
-{
-    public readonly byte[] X;
-
-    public readonly byte[] Y;
-
-    public NodePublicKeyStruct(byte[] x, byte[] y)
     {
-        this.X = x;
-        this.Y = y;
+        Span<byte> bytes = stackalloc byte[1 + (sizeof(ulong) * 4)]; // scoped
+        var b = bytes;
+
+        b[0] = this.keyValue;
+        b = b.Slice(1);
+        BitConverter.TryWriteBytes(b, this.x0);
+        b = b.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(b, this.x1);
+        b = b.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(b, this.x2);
+        b = b.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(b, this.x3);
+        b = b.Slice(sizeof(ulong));
+
+        return $"({Base64.Url.FromByteArrayToString(bytes)})";
     }
 
-    public bool Equals(NodePublicKeyStruct other)
+    internal ECDiffieHellman? TryGetEcdh()
     {
-        var x1 = this.X == null ? Array.Empty<byte>() : this.X.AsSpan();
-        var x2 = other.X == null ? Array.Empty<byte>() : other.X.AsSpan();
-        if (!x1.SequenceEqual(x2))
+        if (PublicKeyToEcdh.TryGet(this) is { } ecdh)
         {
-            return false;
+            return ecdh;
         }
 
-        var y1 = this.Y == null ? Array.Empty<byte>() : this.Y.AsSpan();
-        var y2 = other.Y == null ? Array.Empty<byte>() : other.Y.AsSpan();
-        return y1.SequenceEqual(y2);
+        if (!this.Validate())
+        {
+            return null;
+        }
+
+        if (this.KeyVersion == 0)
+        {
+            var x = new byte[32];
+            var span = x.AsSpan();
+            BitConverter.TryWriteBytes(span, this.x0);
+            span = span.Slice(sizeof(ulong));
+            BitConverter.TryWriteBytes(span, this.x1);
+            span = span.Slice(sizeof(ulong));
+            BitConverter.TryWriteBytes(span, this.x2);
+            span = span.Slice(sizeof(ulong));
+            BitConverter.TryWriteBytes(span, this.x3);
+
+            var y = Arc.Crypto.EC.P256R1Curve.Instance.TryDecompressY(x, this.YTilde);
+            if (y == null)
+            {
+                return null;
+            }
+
+            try
+            {
+                ECParameters p = default;
+                p.Curve = ECCurve;
+                p.Q.X = x;
+                p.Q.Y = y;
+                return ECDiffieHellman.Create(p);
+            }
+            catch
+            {
+            }
+        }
+
+        return null;
     }
 
-    public override int GetHashCode()
-    {
-        ulong hash = 0;
-        if (this.X.Length >= sizeof(ulong))
-        {
-            hash ^= BitConverter.ToUInt64(this.X, 0);
-        }
-
-        if (this.Y.Length >= sizeof(ulong))
-        {
-            hash ^= BitConverter.ToUInt64(this.Y, 0);
-        }
-
-        return (int)hash;
-    }
+    internal void CacheEcdh(ECDiffieHellman ecdh)
+        => PublicKeyToEcdh.Cache(this, ecdh);
 }

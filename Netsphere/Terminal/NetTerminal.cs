@@ -98,6 +98,21 @@ public partial class NetTerminal : IDisposable
 
     public NodeInformation? NodeInformation { get; protected set; }
 
+    public ulong Salt { get; private set; }
+
+    internal void SetSalt(ulong saltA, ulong saltA2)
+    {
+        Span<byte> span = stackalloc byte[sizeof(ulong) * 2];
+        var b = span;
+        BitConverter.TryWriteBytes(b, saltA);
+        b = b.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(b, saltA2);
+
+        var hash = Hash.ObjectPool.Get();
+        (this.Salt, _, _, _) = hash.GetHashUInt64(span);
+        Hash.ObjectPool.Return(hash);
+    }
+
     internal void InternalClose()
     {
         this.IsClosed = true;
@@ -224,24 +239,8 @@ public partial class NetTerminal : IDisposable
                 return NetResult.Success;
             }
 
-            // Cache material (about the same performance)
-            /*var key = new NodePublicPrivateKeyStruct(this.Terminal.NodePrivateKey.D, this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
-            var material = Cache.NodePublicPrivateKeyToMaterial.TryGet(key);
-            if (material == null)
-            {
-                var ecdh = NodeKey.FromPublicKey(this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
-                if (ecdh == null)
-                {
-                    return NetResult.NoNodeInformation;
-                }
-
-                material = this.Terminal.NodePrivateECDH.DeriveKeyMaterial(ecdh.PublicKey);
-            }
-
-            Cache.NodePublicPrivateKeyToMaterial.Cache(key, material);*/
-
             // KeyMaterial
-            var material = NodeKey.DeriveKeyMaterial(this.Terminal.NodePrivateECDH, this.NodeInformation.PublicKeyX, this.NodeInformation.PublicKeyY);
+            var material = this.Terminal.NodePrivateKey.DeriveKeyMaterial(this.NodeInformation.PublicKey);
             if (material == null)
             {
                 return NetResult.NoNodeInformation;
@@ -250,14 +249,14 @@ public partial class NetTerminal : IDisposable
             // this.TerminalLogger?.Information($"Material {material[0]} ({salt.To4Hex()}/{salt2.To4Hex()}), {this.NodeInformation.PublicKeyX[0]}, {this.Terminal.NodePrivateKey.X[0]}");
 
             // ulong Salt, Salt2, byte[] material, ulong Salt, Salt2
-            Span<byte> buffer = stackalloc byte[sizeof(ulong) + sizeof(ulong) + NodeKey.PrivateKeyLength + sizeof(ulong) + sizeof(ulong)];
+            Span<byte> buffer = stackalloc byte[sizeof(ulong) + sizeof(ulong) + PublicKey.PrivateKeyLength + sizeof(ulong) + sizeof(ulong)];
             var span = buffer;
             BitConverter.TryWriteBytes(span, salt);
             span = span.Slice(sizeof(ulong));
             BitConverter.TryWriteBytes(span, salt2);
             span = span.Slice(sizeof(ulong));
             material.AsSpan().CopyTo(span);
-            span = span.Slice(NodeKey.PrivateKeyLength);
+            span = span.Slice(PublicKey.PrivateKeyLength);
             BitConverter.TryWriteBytes(span, salt);
             span = span.Slice(sizeof(ulong));
             BitConverter.TryWriteBytes(span, salt2);

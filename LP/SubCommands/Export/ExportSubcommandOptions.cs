@@ -47,7 +47,7 @@ public class ExportSubcommandOptions : ISimpleCommandAsync<ExportSubcommandOptio
 
 public record ExportSubcommandOptionsOptions
 {
-    [SimpleOption("output", description: "Output path")]
+    [SimpleOption("output", Description = "Output path")]
     public string Output { get; init; } = string.Empty;
 
     public override string ToString() => $"{this.Output}";

@@ -20,6 +20,7 @@ using Netsphere;
 using SimpleCommandLine;
 using ZenItz;
 using LP.Data;
+using Netsphere.Machines;
 
 namespace LP;
 
@@ -45,6 +46,7 @@ public class Control : ILogInformation
                 context.AddSingleton<LPBase>();
                 context.Services.TryAddSingleton<IUserInterfaceService, ConsoleUserInterfaceService>();
                 context.AddSingleton<Vault>();
+                context.AddSingleton<Authority>();
                 context.AddSingleton<SeedPhrase>();
 
                 // RPC / Services
@@ -65,6 +67,7 @@ public class Control : ILogInformation
                 context.AddSubcommand(typeof(LP.Subcommands.NetBenchSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.PunchSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.BenchmarkSubcommand));
+                context.AddSubcommand(typeof(LP.Subcommands.SeedPhraseSubcommand));
 
                 LP.Subcommands.TemplateSubcommand.Configure(context);
                 LP.Subcommands.InfoSubcommand.Configure(context);
@@ -91,7 +94,7 @@ public class Control : ILogInformation
             });
 
             this.SetupOptions<ConsoleLoggerOptions>((context, options) =>
-            {// FileLoggerOptions
+            {// ConsoleLoggerOptions
                 options.Formatter.EnableColor = true;
             });
 
@@ -178,8 +181,8 @@ public class Control : ILogInformation
                 // Settings
                 await control.LoadSettingsAsync();
 
-                // KeyVault
-                await control.LoadKeyVaultAsync();
+                // Vault
+                await control.LoadVaultAsync();
 
                 // Start
                 control.Logger.Get<DefaultLog>().Log($"LP ({Version.Get()})");
@@ -193,7 +196,7 @@ public class Control : ILogInformation
                 // Prepare
                 this.Context.SendPrepare(new());
             }
-            catch (PanicException)
+            catch
             {
                 control.Terminate(true);
                 return;
@@ -203,7 +206,7 @@ public class Control : ILogInformation
             {// Load
                 await control.LoadAsync(this.Context);
             }
-            catch (PanicException)
+            catch
             {
                 await control.AbortAsync();
                 control.Terminate(true);
@@ -220,7 +223,7 @@ public class Control : ILogInformation
                 await control.SaveAsync(this.Context);
                 control.Terminate(false);
             }
-            catch (PanicException)
+            catch
             {
                 await control.TerminateAsync(this.Context);
                 await control.SaveAsync(this.Context);
@@ -256,7 +259,7 @@ public class Control : ILogInformation
         }
     }
 
-    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl, Vault vault)
+    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl, Vault vault, Authority authority)
     {
         this.Logger = logger;
         this.UserInterfaceService = userInterfaceService;
@@ -268,6 +271,7 @@ public class Control : ILogInformation
         this.ZenControl.Zen.IO.SetRootDirectory(this.LPBase.RootDirectory);
         this.ZenControl.Zen.SetDelegate(ObjectToMemoryOwner, MemoryOwnerToObject);
         this.Vault = vault;
+        this.Authority = authority;
 
         this.Core = core;
         this.BigMachine.Core.ChangeParent(this.Core);
@@ -325,6 +329,7 @@ public class Control : ILogInformation
     {
         this.BigMachine.Start();
         await context.SendRunAsync(new(this.Core));
+        this.BigMachine.TryGet<NtpMachine.Interface>(Identifier.Zero)?.RunAsync();
 
         Console.WriteLine();
         var logger = this.Logger.Get<DefaultLog>(LogLevel.Information);
@@ -346,7 +351,14 @@ public class Control : ILogInformation
         this.Logger.Get<DefaultLog>().Log("Termination process initiated");
 
         await this.ZenControl.Zen.StopZen(new(Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenBackup), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryBackup)));
-        await context.SendTerminateAsync(new());
+
+        try
+        {
+            await context.SendTerminateAsync(new());
+        }
+        catch
+        {
+        }
     }
 
     public void Terminate(bool abort)
@@ -459,7 +471,7 @@ public class Control : ILogInformation
                 }
                 else
                 {
-                    // Console.WriteLine();
+                    Console.WriteLine();
                 }
 
                 // To view mode
@@ -510,6 +522,8 @@ public class Control : ILogInformation
 
     public Vault Vault { get; }
 
+    public Authority Authority { get; }
+
     private SimpleParser subcommandParser;
 
     private bool SafeKeyAvailable
@@ -527,7 +541,7 @@ public class Control : ILogInformation
         }
     }
 
-    private async Task LoadKeyVaultAsync()
+    private async Task LoadVaultAsync()
     {
         if (this.LPBase.IsFirstRun)
         {// First run
@@ -540,19 +554,19 @@ public class Control : ILogInformation
                 goto LoadKeyVaultObjects;
             }
 
-            // Could not load KeyVault
-            var reply = await this.UserInterfaceService.RequestYesOrNo(Hashed.KeyVault.AskNew);
+            // Could not load Vault
+            var reply = await this.UserInterfaceService.RequestYesOrNo(Hashed.Vault.AskNew);
             if (reply != true)
             {// No
                 throw new PanicException();
             }
         }
 
-        Console.WriteLine(HashedString.Get(Hashed.KeyVault.Create));
+        Console.WriteLine(HashedString.Get(Hashed.Vault.Create));
         // await this.UserInterfaceService.Notify(UserInterfaceNotifyLevel.Information, Hashed.KeyVault.Create);
 
-        // New KeyVault
-        var password = await this.UserInterfaceService.RequestPasswordAndConfirm(Hashed.KeyVault.EnterPassword, Hashed.Dialog.Password.Confirm);
+        // New Vault
+        var password = await this.UserInterfaceService.RequestPasswordAndConfirm(Hashed.Vault.EnterPassword, Hashed.Dialog.Password.Confirm);
         if (password == null)
         {
             throw new PanicException();
@@ -566,11 +580,11 @@ LoadKeyVaultObjects:
 
     private async Task LoadKeyVault_NodeKey()
     {
-        if (!this.Vault.TryGetAndDeserialize<NodePrivateKey>(NodePrivateKey.Filename, out var key))
+        if (!this.Vault.TryGetAndDeserialize<NodePrivateKey>(NodePrivateKey.PrivateKeyPath, out var key))
         {// Failure
             if (!this.Vault.Created)
             {
-                await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.KeyVault.NoData, NodePrivateKey.Filename);
+                await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoData, NodePrivateKey.PrivateKeyPath);
             }
 
             return;
@@ -578,14 +592,14 @@ LoadKeyVaultObjects:
 
         if (!this.NetControl.NetBase.SetNodeKey(key))
         {
-            await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.KeyVault.NoRestore, NodePrivateKey.Filename);
+            await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoRestore, NodePrivateKey.PrivateKeyPath);
             return;
         }
     }
 
     private async Task SaveKeyVaultAsync()
     {
-        this.Vault.Add(NodePrivateKey.Filename, this.NetControl.NetBase.SerializeNodeKey());
+        this.Vault.Add(NodePrivateKey.PrivateKeyPath, this.NetControl.NetBase.SerializeNodeKey());
 
         await this.Vault.SaveAsync(this.LPBase.CombineDataPath(this.LPBase.Options.Vault, Vault.Filename));
     }

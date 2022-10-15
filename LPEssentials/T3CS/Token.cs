@@ -9,24 +9,64 @@ namespace LP;
 /// Immutable token object.
 /// </summary>
 [TinyhandObject]
-public sealed partial class Token : IValidatable // , IEquatable<Token>
+public sealed partial class Token : IVerifiable // , IEquatable<Token>
 {
-    public Token()
+    public enum Type
+    {
+        Identification,
+        RequestSummary,
+    }
+
+    public Token(Token.Type type, long expirationMics, PublicKey publicKey, Identifier targetIdentifier, Linkage? targetLinkage)
+    {
+        this.TokenType = type;
+        this.ExpirationMics = expirationMics;
+        this.PublicKey = publicKey;
+        this.TargetIdentifier = targetIdentifier;
+        this.TargetLinkage = targetLinkage;
+    }
+
+    internal Token()
     {
     }
 
     public bool Validate()
     {
-        if (this.Authority?.Validate() != true)
+        if (this.PublicKey.Validate() != true)
         {
             return false;
         }
-        else if (this.sign.Length != PublicKey.SignLength)
+        else if (this.signature.Length != PublicKey.SignLength)
         {
             return false;
         }
 
         return true;
+    }
+
+    public bool Sign(PrivateKey privateKey)
+    {
+        if (!this.PublicKey.IsSameKey(privateKey))
+        {
+            return false;
+        }
+
+        try
+        {
+            var bytes = TinyhandSerializer.Serialize(this, TinyhandSerializerOptions.Conditional);
+            var sign = privateKey.SignData(bytes);
+
+            if (sign != null)
+            {
+                this.signature = sign;
+                return true;
+            }
+        }
+        catch
+        {
+        }
+
+        return false;
     }
 
     public bool ValidateAndVerify()
@@ -38,8 +78,8 @@ public sealed partial class Token : IValidatable // , IEquatable<Token>
 
         try
         {
-            var result = TinyhandSerializer.SerializeAndGetMarker(this);
-            return this.Authority.VerifyData(result.ByteArray.AsSpan(0, result.MarkerPosition), this.sign);
+            var bytes = TinyhandSerializer.Serialize(this, TinyhandSerializerOptions.Conditional);
+            return this.PublicKey.VerifyData(bytes, this.signature);
         }
         catch
         {
@@ -48,18 +88,21 @@ public sealed partial class Token : IValidatable // , IEquatable<Token>
     }
 
     [Key(0)]
-    public long ExpirationMics { get; private set; }
+    public Type TokenType { get; private set; }
 
     [Key(1)]
-    public AuthorityPublicKey Authority { get; private set; } = default!;
+    public long ExpirationMics { get; private set; }
 
     [Key(2)]
-    public Identifier TargetIdentifier { get; private set; }
+    public PublicKey PublicKey { get; private set; } = default!;
 
     [Key(3)]
+    public Identifier TargetIdentifier { get; private set; }
+
+    [Key(4)]
     public Linkage? TargetLinkage { get; private set; }
 
-    [Key(5, Marker = true, PropertyName = "Sign")]
+    [Key(6, PropertyName = "Signature", Condition = false)]
     [MaxLength(PublicKey.SignLength)]
-    private byte[] sign = Array.Empty<byte>();
+    private byte[] signature = Array.Empty<byte>();
 }

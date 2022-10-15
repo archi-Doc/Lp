@@ -18,7 +18,6 @@ using System.Security.Cryptography;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere.Machines;
-using Netsphere.Ntp;
 using Netsphere.Responder;
 using SimpleCommandLine;
 
@@ -45,7 +44,6 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddSingleton<NetBase>();
                 context.AddSingleton<Terminal>();
                 context.AddSingleton<EssentialNode>();
-                context.AddSingleton<NtpCorrection>();
                 context.AddSingleton<NetStatus>();
                 context.AddTransient<Server>();
                 context.AddTransient<NetService>(); // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
@@ -109,10 +107,10 @@ public class NetControl : UnitBase, IUnitPreparable
     public void Prepare(UnitMessage.Prepare message)
     {
         // Terminals
-        this.Terminal.Initialize(false, this.NetBase.NodePrivateKey, this.NetBase.NodePrivateEcdh);
+        this.Terminal.Initialize(false, this.NetBase.NodePrivateKey);
         if (this.Alternative != null)
         {
-            this.Alternative.Initialize(true, NodeKey.AlternativePrivateKey, NodeKey.AlternativePrivateKey.CreateECDH());
+            this.Alternative.Initialize(true, NodePrivateKey.AlternativePrivateKey);
             if (this.NetBase.NetsphereOptions.Port == NodeAddress.Alternative.Port)
             {
                 NodeAddress.Alternative.SetPort((ushort)(this.Terminal.Port + 1));

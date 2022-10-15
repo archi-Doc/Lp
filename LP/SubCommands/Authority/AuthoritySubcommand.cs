@@ -13,6 +13,9 @@ public class AuthoritySubcommand : SimpleCommandGroup<AuthoritySubcommand>
         var group = ConfigureGroup(context);
         group.AddCommand(typeof(AuthoritySubcommandLs));
         group.AddCommand(typeof(AuthoritySubcommandNew));
+        group.AddCommand(typeof(AuthoritySubcommandTest));
+        group.AddCommand(typeof(AuthoritySubcommandRemove));
+        group.AddCommand(typeof(AuthoritySubcommandInfo));
     }
 
     public AuthoritySubcommand(UnitContext context)

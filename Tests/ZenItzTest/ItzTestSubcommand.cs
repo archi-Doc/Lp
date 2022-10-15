@@ -87,7 +87,7 @@ public class ItzTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 
 public record BasicTestOptions
 {
-    // [SimpleOption("node", description: "Node address", Required = true)]
+    // [SimpleOption("node", Description = "Node address", Required = true)]
     // public string Node { get; init; } = string.Empty;
 
     public override string ToString() => $"";

@@ -10,7 +10,7 @@ using Tinyhand;
 
 namespace LP.Subcommands;
 
-[SimpleCommand("mics")]
+[SimpleCommand("mics", Description = "Shows mics(microseconds) status")]
 public class MicsSubcommand : ISimpleCommand
 {
     public MicsSubcommand(ILogger<MicsSubcommand> logger, Control control)
@@ -29,15 +29,13 @@ public class MicsSubcommand : ISimpleCommand
             logger.Log($"Mics.GetSystem(): {Mics.GetSystem()}");
             logger.Log($"Mics.GetApplication(): {Mics.GetApplication()}");
             logger.Log($"Mics.GetUtcNow(): {Mics.GetUtcNow()}");
-            Mics.GetCorrected(out var correctedMics);
-            logger.Log($"Mics.GetCorrected(): {correctedMics}");
+            logger.Log($"Mics.GetCorrected(): {Mics.GetCorrected()}");
+            logger.Log($"Mics.GetCorrected() : {Mics.ToDateTime(Mics.GetCorrected()).ToString()}");
             logger.Log($"Time.TimestampToTicks: {Time.TimestampToTicks}");
             logger.Log($"Time.GetSystem(): {Time.GetSystem()}");
             logger.Log($"Time.GetApplication(): {Time.GetApplication()}");
             logger.Log($"Time.GetUtcNow(): {Time.GetUtcNow()}");
-            Time.GetCorrected(out var correctedTime);
-            logger.Log($"Time.GetCorrected(): {correctedTime}");
-            logger.Log($"Time.GetCorrected().ToLocalTime(): {correctedTime.ToLocalTime()}");
+            logger.Log($"Time.GetCorrected(): {Time.GetCorrected()}");
         }
     }
 

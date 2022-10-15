@@ -3,7 +3,7 @@
 Dialog = {
     ConfirmExit = "Are you sure you want to exit?"
     ConfirmOverwrite = "Are you sure you want to overwrite '{0}' ?"
-    
+
     Password = {
         Enter = "Enter password"
         EnterCurrent = "Enter current password"
@@ -31,13 +31,21 @@ Error = {
     InvalidAddress = "{0} is not valid address."
 }
 
-KeyVault = {
-    AskNew = "Do you want to create new KeyVault?"
-    Create = "Creating new KeyVault"
-    EnterPassword = "Enter KeyVault password"
-    ChangePassword = "Changing KeyVault password"
-    NoData = "KeyVault could not get '{0}'"
-    NoRestore = "KeyVault could not restore data '{0}'"
+Vault = {
+    AskNew = "Do you want to create new Vault?"
+    Create = "Creating new Vault"
+    EnterPassword = "Enter Vault password"
+    ChangePassword = "Changing Vault password"
+    NoData = "Vault could not get '{0}'"
+    NoRestore = "Vault could not restore data '{0}'"
+}
+
+Authority = {
+    AlreadyExists = "Authority '{0}' already exists"
+    Created = "Authority '{0}' is successfully created"
+    Removed = "Authority '{0}' is successfully removed"
+    NotFound = "Authority '{0}' is not found"
+    EnterPassword = "Enter Authority '{0}' password"
 }
 
 Subcommands = {

@@ -8,22 +8,22 @@ namespace LP.Data;
 [TinyhandObject(ImplicitKeyAsName = true)]
 public partial class NetsphereOptions : ILogInformation
 {
-    [SimpleOption("address", null, "Global IP address")]
+    [SimpleOption("address", Description = "Global IP address")]
     public string Address { get; set; } = string.Empty;
 
-    [SimpleOption("port", null, "Port number associated with the address")]
+    [SimpleOption("port", Description = "Port number associated with the address")]
     public int Port { get; set; }
 
-    [SimpleOption("node", null, "Node addresses to connect")]
+    [SimpleOption("node", Description = "Node addresses to connect")]
     public string Nodes { get; set; } = string.Empty;
 
-    [SimpleOption("alternative", null, "Enable alternative (debug) terminal")]
+    [SimpleOption("alternative", Description = "Enable alternative (debug) terminal")]
     public bool EnableAlternative { get; set; } = false;
 
-    [SimpleOption("test", null, "Enable test features")]
+    [SimpleOption("test", Description = "Enable test features")]
     public bool EnableTestFeatures { get; set; } = false;
 
-    [SimpleOption("logger", null, "Enable network logger")]
+    [SimpleOption("logger", Description = "Enable network logger")]
     public bool EnableLogger { get; set; } = false;
 
     public void LogInformation(ILog logger)

@@ -1,56 +1,56 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace LP;
 
-#pragma warning disable SA1214
-
 [TinyhandObject]
 public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
 {
     public const int MaxNameLength = 16;
+    private const int MaxPrivateKeyCache = 10;
 
-    private static ObjectCache<PrivateKey, ECDsa> PrivateKeyToECDsa { get; } = new(10);
+    private static ObjectCache<PrivateKey, ECDsa> PrivateKeyToEcdsa { get; } = new(MaxPrivateKeyCache);
 
-    public static PrivateKey Create(string name)
+    public static PrivateKey Create()
     {
         using (var ecdsa = ECDsa.Create(PublicKey.ECCurve))
         {
             var key = ecdsa.ExportParameters(true);
-            return new PrivateKey(name, 0, key.Q.X!, key.Q.Y!, key.D!);
+            return new PrivateKey(0, key.Q.X!, key.Q.Y!, key.D!);
         }
     }
 
-    public static PrivateKey Create(string name, string passphrase)
+    public static PrivateKey Create(ReadOnlySpan<byte> seed)
     {
         ECParameters key = default;
         key.Curve = PublicKey.ECCurve;
 
-        var passBytes = Encoding.UTF8.GetBytes(passphrase);
-        Span<byte> span = stackalloc byte[(sizeof(ulong) + passBytes.Length) * 2]; // count, passBytes, count, passBytes // scoped
-        var countSpan = span.Slice(0, sizeof(ulong));
-        var countSpan2 = span.Slice(sizeof(ulong) + passBytes.Length, sizeof(ulong));
-        passBytes.CopyTo(span.Slice(sizeof(ulong)));
-        passBytes.CopyTo(span.Slice((sizeof(ulong) * 2) + passBytes.Length));
-
+        byte[]? d = null;
         var hash = Hash.ObjectPool.Get();
-        ulong count = 0;
         while (true)
         {
-            BitConverter.TryWriteBytes(countSpan, count);
-            BitConverter.TryWriteBytes(countSpan2, count);
-            count++;
-
             try
             {
-                var d = hash.GetHash(span);
+                if (d == null)
+                {
+                    d = hash.GetHash(seed);
+                }
+                else
+                {
+                    d = hash.GetHash(d);
+                }
+
+                if (!Arc.Crypto.EC.P256R1Curve.Instance.IsValidSeed(d))
+                {
+                    continue;
+                }
+
                 key.D = d;
                 using (var ecdsa = ECDsa.Create(key))
                 {
-                    key = ecdsa.ExportParameters(true); // !d.SequenceEqual(key.D)
+                    key = ecdsa.ExportParameters(true);
                     break;
                 }
             }
@@ -60,27 +60,41 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         }
 
         Hash.ObjectPool.Return(hash);
-        return new PrivateKey(name, 0, key.Q.X!, key.Q.Y!, key.D!);
+        return new PrivateKey(0, key.Q.X!, key.Q.Y!, key.D!);
     }
 
-    public PrivateKey()
+    public static PrivateKey Create(string passphrase)
+    {
+        var passBytes = Encoding.UTF8.GetBytes(passphrase);
+        Span<byte> span = stackalloc byte[(sizeof(ulong) + passBytes.Length) * 2]; // count, passBytes, count, passBytes // scoped
+        var countSpan = span.Slice(0, sizeof(ulong));
+        var countSpan2 = span.Slice(sizeof(ulong) + passBytes.Length, sizeof(ulong));
+        passBytes.CopyTo(span.Slice(sizeof(ulong)));
+        passBytes.CopyTo(span.Slice((sizeof(ulong) * 2) + passBytes.Length));
+
+        return Create(span);
+    }
+
+    internal PrivateKey()
     {
     }
 
-    private PrivateKey(string? name, byte keyType, byte[] x, byte[] y, byte[] d)
+    private PrivateKey(uint keyVersion, byte[] x, byte[] y, byte[] d)
     {
-        this.Name = name ?? string.Empty;
         this.x = x;
         this.y = y;
         this.d = d;
 
         var yTilde = this.CompressY();
-        this.rawType = (byte)(((keyType << 2) & ~3) + (yTilde & 1));
+        this.keyValue = (byte)(((keyVersion << 2) & ~3) + (yTilde & 1));
     }
+
+    public PublicKey ToPublicKey()
+        => new(this);
 
     public byte[]? SignData(ReadOnlySpan<byte> data)
     {
-        var ecdsa = PrivateKeyToECDsa.TryGet(this) ?? this.TryCreateECDsa();
+        var ecdsa = this.TryGetEcdsa();
         if (ecdsa == null)
         {
             return null;
@@ -92,96 +106,59 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
             return null;
         }
 
-        PrivateKeyToECDsa.Cache(this, ecdsa);
+        this.CacheEcdsa(ecdsa);
         return sign;
     }
 
-    public bool SignData(ReadOnlySpan<byte> data, Span<byte> signature)
+    public bool SignData(ReadOnlySpan<byte> data, Span<byte> signature, out int written)
     {
+        written = 0;
         if (signature.Length < PublicKey.SignLength)
         {
             return false;
         }
 
-        var ecdsa = PrivateKeyToECDsa.TryGet(this) ?? this.TryCreateECDsa();
+        var ecdsa = this.TryGetEcdsa();
         if (ecdsa == null)
         {
             return false;
         }
 
-        if (!ecdsa.TrySignData(data, signature, PublicKey.HashAlgorithmName, out var written))
+        if (!ecdsa.TrySignData(data, signature, PublicKey.HashAlgorithmName, out written))
         {
             return false;
         }
 
-        PrivateKeyToECDsa.Cache(this, ecdsa);
+        PrivateKeyToEcdsa.Cache(this, ecdsa);
         return true;
     }
 
     public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> sign)
-    {
-        var publicKey = new PublicKey(this);
-        return publicKey.VerifyData(data, sign);
-    }
+        => this.ToPublicKey().VerifyData(data, sign);
 
-    public ECDsa? TryCreateECDsa()
-    {
-        if (!this.Validate())
-        {
-            return null;
-        }
-
-        if (this.KeyType == 0)
-        {
-            try
-            {
-                ECParameters p = default;
-                p.Curve = PublicKey.ECCurve;
-                p.D = this.d;
-                return ECDsa.Create(p);
-            }
-            catch
-            {
-            }
-        }
-
-        return null;
-    }
-
-    [Key(0, PropertyName = "Name")]
-    [MaxLength(MaxNameLength)]
-    private string name = string.Empty;
+    [Key(0)]
+    private readonly byte keyValue; // 6bits: KeyType, 1bit:?, 1bit: YTilde
 
     [Key(1)]
-    private readonly byte rawType; // 6bits: KeyType, 1bit:?, 1bit: YTilde
-
-    [Key(2)]
     private readonly byte[] x = Array.Empty<byte>();
 
-    [Key(3)]
+    [Key(2)]
     private readonly byte[] y = Array.Empty<byte>();
 
-    [Key(4)]
+    [Key(3)]
     private readonly byte[] d = Array.Empty<byte>();
 
-    public uint KeyType => (uint)(this.rawType >> 2);
+    public uint KeyVersion => (uint)(this.keyValue >> 2);
 
-    public uint YTilde => (uint)(this.rawType & 1);
+    public uint YTilde => (uint)(this.keyValue & 1);
 
     public byte[] X => this.x;
 
     public byte[] Y => this.y;
 
-    /*[IgnoreMember]
-    private byte[] identifier;*/
-
     public bool Validate()
     {
-        if (this.name == null || this.name.Length > MaxNameLength)
-        {
-            return false;
-        }
-        else if (this.KeyType != 0)
+        if (this.KeyVersion != 0)
         {
             return false;
         }
@@ -201,6 +178,9 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         return true;
     }
 
+    public bool IsSameKey(PublicKey publicKey)
+        => publicKey.IsSameKey(this);
+
     public bool Equals(PrivateKey? other)
     {
         if (other == null)
@@ -208,14 +188,13 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
             return false;
         }
 
-        return this.name.Equals(other.name) &&
-            this.rawType == other.rawType &&
+        return this.keyValue == other.keyValue &&
             this.x.AsSpan().SequenceEqual(other.x);
     }
 
     public override int GetHashCode()
     {
-        var hash = HashCode.Combine(this.name, this.rawType);
+        var hash = HashCode.Combine(this.keyValue);
 
         if (this.x.Length >= sizeof(ulong))
         {
@@ -228,13 +207,51 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
     public override string ToString()
     {
         Span<byte> bytes = stackalloc byte[1 + PublicKey.PublicKeyHalfLength]; // scoped
-        bytes[0] = this.rawType;
+        bytes[0] = this.keyValue;
         this.x.CopyTo(bytes.Slice(1));
-        return $"{this.name}({Base64.Url.FromByteArrayToString(bytes)})";
+        return $"({Base64.Url.FromByteArrayToString(bytes)})";
     }
 
     internal uint CompressY()
-        => Arc.Crypto.EC.P256R1Curve.Instance.CompressY(this.y);
+    {
+        if (this.KeyVersion == 0)
+        {
+            return Arc.Crypto.EC.P256R1Curve.Instance.CompressY(this.y);
+        }
+        else
+        {
+            return 0;
+        }
+    }
 
-    internal byte RawType => this.rawType;
+    internal byte KeyValue => this.keyValue;
+
+    private ECDsa? TryGetEcdsa()
+    {
+        if (PrivateKeyToEcdsa.TryGet(this) is { } ecdsa)
+        {
+            return ecdsa;
+        }
+
+        if (!this.Validate())
+        {
+            return null;
+        }
+
+        try
+        {
+            ECParameters p = default;
+            p.Curve = PublicKey.ECCurve;
+            p.D = this.d;
+            return ECDsa.Create(p);
+        }
+        catch
+        {
+        }
+
+        return null;
+    }
+
+    private void CacheEcdsa(ECDsa ecdsa)
+        => PrivateKeyToEcdsa.Cache(this, ecdsa);
 }

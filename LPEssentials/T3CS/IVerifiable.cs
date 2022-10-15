@@ -5,7 +5,7 @@ namespace LP;
 /// <summary>
 /// Validate that object members and verify that the signature is appropriate.
 /// </summary>
-public interface IVerifiable
+public interface IVerifiable : IValidatable
 {
     /// <summary>
     /// Validate that object members and verify that the signature is appropriate.

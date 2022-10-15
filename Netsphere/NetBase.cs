@@ -36,9 +36,7 @@ public class NetBase : UnitBase, IUnitPreparable
         if (this.NodePrivateKey == null)
         {
             this.NodePrivateKey = NodePrivateKey.Create();
-            this.NodePrivateEcdh = this.NodePrivateKey.CreateECDH();
-            this.NodePublicKey = new NodePublicKey(this.NodePrivateKey);
-            this.NodePublicEcdh = this.NodePublicKey.CreateECDH();
+            this.NodePublicKey = this.NodePrivateKey.ToPublicKey();
         }
     }
 
@@ -51,8 +49,6 @@ public class NetBase : UnitBase, IUnitPreparable
     public bool AllowUnsafeConnection { get; set; } = false;
 
     public NodePublicKey NodePublicKey { get; private set; } = default!;
-
-    public ECDiffieHellman NodePublicEcdh { get; private set; } = default!;
 
     public class LogFlag
     {
@@ -77,18 +73,14 @@ public class NetBase : UnitBase, IUnitPreparable
     {
         try
         {
-            this.NodePublicKey = new NodePublicKey(privateKey);
-            this.NodePublicEcdh = this.NodePublicKey.CreateECDH();
+            this.NodePublicKey = privateKey.ToPublicKey();
             this.NodePrivateKey = privateKey;
-            this.NodePrivateEcdh = this.NodePrivateKey.CreateECDH();
             return true;
         }
         catch
         {
             this.NodePublicKey = default!;
-            this.NodePublicEcdh = default!;
             this.NodePrivateKey = default!;
-            this.NodePrivateEcdh = default!;
             return false;
         }
     }
@@ -101,8 +93,6 @@ public class NetBase : UnitBase, IUnitPreparable
     public override string ToString() => $"NetBase: {this.NodeName}";
 
     internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
-
-    internal ECDiffieHellman NodePrivateEcdh { get; private set; } = default!;
 
     private UnitLogger logger;
 }

@@ -12,12 +12,13 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
     public const int PublicKeyHalfLength = PublicKeyLength / 2;
     public const int PrivateKeyLength = 32;
     public const int SignLength = 64;
-
-    public static ECCurve ECCurve { get; }
+    private const int MaxPublicKeyCache = 100;
 
     public static HashAlgorithmName HashAlgorithmName { get; }
 
-    internal static ObjectCache<PublicKey, ECDsa> PublicKeyToECDsa { get; } = new(100);
+    internal static ECCurve ECCurve { get; }
+
+    private static ObjectCache<PublicKey, ECDsa> PublicKeyToEcdsa { get; } = new(MaxPublicKeyCache);
 
     static PublicKey()
     {
@@ -27,21 +28,16 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
     public PublicKey()
     {
-        this.rawType = 0;
+        this.keyValue = 0;
         this.x0 = 0;
         this.x1 = 0;
         this.x2 = 0;
         this.x3 = 0;
     }
 
-    public PublicKey(PrivateKey privateKey)
+    internal PublicKey(PrivateKey privateKey)
     {
-        if (!privateKey.Validate())
-        {
-            throw new ArgumentException();
-        }
-
-        this.rawType = privateKey.RawType;
+        this.keyValue = privateKey.KeyValue;
         var span = privateKey.X.AsSpan();
         this.x0 = BitConverter.ToUInt64(span);
         span = span.Slice(sizeof(ulong));
@@ -53,7 +49,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
     }
 
     [Key(0)]
-    private readonly byte rawType; // 6bits: KeyType, 1bit:?, 1bit: YTilde
+    private readonly byte keyValue;
 
     [Key(1)]
     private readonly ulong x0;
@@ -67,9 +63,9 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
     [Key(4)]
     private readonly ulong x3;
 
-    public uint KeyType => (uint)(this.rawType >> 2);
+    public uint KeyVersion => (uint)(this.keyValue >> 2);
 
-    public uint YTilde => (uint)(this.rawType & 1);
+    public uint YTilde => (uint)(this.keyValue & 1);
 
     public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> sign)
     {
@@ -78,25 +74,108 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
             return false;
         }
 
-        var ecdsa = PublicKeyToECDsa.TryGet(this) ?? this.TryCreateECDsa();
+        var ecdsa = this.TryGetEcdsa();
         if (ecdsa == null)
         {
             return false;
         }
 
         var result = ecdsa.VerifyData(data, sign, HashAlgorithmName);
-        PublicKeyToECDsa.Cache(this, ecdsa);
+        this.CacheEcdsa(ecdsa);
         return result;
     }
 
-    public ECDsa? TryCreateECDsa()
+    public bool Validate()
     {
+        if (this.KeyVersion == 0)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    public bool IsSameKey(PrivateKey privateKey)
+    {
+        var span = privateKey.X.AsSpan();
+        if (span.Length != PublicKeyHalfLength)
+        {
+            return false;
+        }
+
+        if (this.x0 != BitConverter.ToUInt64(span))
+        {
+            return false;
+        }
+
+        span = span.Slice(sizeof(ulong));
+        if (this.x1 != BitConverter.ToUInt64(span))
+        {
+            return false;
+        }
+
+        span = span.Slice(sizeof(ulong));
+        if (this.x2 != BitConverter.ToUInt64(span))
+        {
+            return false;
+        }
+
+        span = span.Slice(sizeof(ulong));
+        if (this.x3 != BitConverter.ToUInt64(span))
+        {
+            return false;
+        }
+
+        if (this.YTilde != privateKey.YTilde)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    public override int GetHashCode()
+        => (int)this.x0;
+
+    public bool Equals(PublicKey other)
+        => this.keyValue == other.keyValue &&
+        this.x0 == other.x0 &&
+        this.x1 == other.x1 &&
+        this.x2 == other.x2 &&
+        this.x3 == other.x3;
+
+    public override string ToString()
+    {
+        Span<byte> bytes = stackalloc byte[1 + (sizeof(ulong) * 4)]; // scoped
+        var b = bytes;
+
+        b[0] = this.keyValue;
+        b = b.Slice(1);
+        BitConverter.TryWriteBytes(b, this.x0);
+        b = b.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(b, this.x1);
+        b = b.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(b, this.x2);
+        b = b.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(b, this.x3);
+        b = b.Slice(sizeof(ulong));
+
+        return $"({Base64.Url.FromByteArrayToString(bytes)})";
+    }
+
+    private ECDsa? TryGetEcdsa()
+    {
+        if (PublicKeyToEcdsa.TryGet(this) is { } ecdsa)
+        {
+            return ecdsa;
+        }
+
         if (!this.Validate())
         {
             return null;
         }
 
-        if (this.KeyType == 0)
+        if (this.KeyVersion == 0)
         {
             var x = new byte[32];
             var span = x.AsSpan();
@@ -130,42 +209,6 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         return null;
     }
 
-    public bool Validate()
-    {
-        if (this.KeyType == 0)
-        {// secp256r1
-            return true;
-        }
-
-        return false;
-    }
-
-    public override int GetHashCode()
-        => (int)this.x0;
-
-    public bool Equals(PublicKey other)
-        => this.rawType == other.rawType &&
-        this.x0 == other.x0 &&
-        this.x1 == other.x1 &&
-        this.x2 == other.x2 &&
-        this.x3 == other.x3;
-
-    public override string ToString()
-    {
-        Span<byte> bytes = stackalloc byte[1 + (sizeof(ulong) * 4)]; // scoped
-        var b = bytes;
-
-        b[0] = this.rawType;
-        b = b.Slice(1);
-        BitConverter.TryWriteBytes(b, this.x0);
-        b = b.Slice(sizeof(ulong));
-        BitConverter.TryWriteBytes(b, this.x1);
-        b = b.Slice(sizeof(ulong));
-        BitConverter.TryWriteBytes(b, this.x2);
-        b = b.Slice(sizeof(ulong));
-        BitConverter.TryWriteBytes(b, this.x3);
-        b = b.Slice(sizeof(ulong));
-
-        return $"({Base64.Default.FromByteArrayToUtf8(bytes)})";
-    }
+    private void CacheEcdsa(ECDsa ecdsa)
+        => PublicKeyToEcdsa.Cache(this, ecdsa);
 }

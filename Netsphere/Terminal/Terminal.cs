@@ -150,11 +150,10 @@ public class Terminal : UnitBase, IUnitExecutable
 
     public int Port { get; set; }
 
-    internal void Initialize(bool isAlternative, NodePrivateKey nodePrivateKey, ECDiffieHellman nodePrivateECDH)
+    internal void Initialize(bool isAlternative, NodePrivateKey nodePrivateKey)
     {
         this.IsAlternative = isAlternative;
         this.NodePrivateKey = nodePrivateKey;
-        this.NodePrivateECDH = nodePrivateECDH;
     }
 
     internal void ProcessSend(long currentMics)
@@ -331,6 +330,7 @@ public class Terminal : UnitBase, IUnitExecutable
 
             var response = new PacketEncryptResponse();
             response.Salt2 = LP.Random.Crypto.NextUInt64();
+            response.SaltA2 = LP.Random.Crypto.NextUInt64();
             var firstGene = header.Gene;
             var secondGene = GenePool.NextGene(header.Gene);
             PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var sendOwner);
@@ -342,6 +342,7 @@ public class Terminal : UnitBase, IUnitExecutable
             Task.Run(async () =>
             {
                 terminal.GenePool.GetSequential();
+                terminal.SetSalt(packet.SaltA, response.SaltA2);
                 terminal.CreateEmbryo(packet.Salt, response.Salt2);
                 terminal.SetReceiverNumber();
                 terminal.Add(netInterface); // Delay sending PacketEncryptResponse until the receiver is ready.
@@ -473,8 +474,6 @@ public class Terminal : UnitBase, IUnitExecutable
     // internal ILogger? TerminalLogger { get; private set; }
 
     internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
-
-    internal ECDiffieHellman NodePrivateECDH { get; private set; } = default!;
 
     internal NetSocket NetSocket { get; private set; }
 

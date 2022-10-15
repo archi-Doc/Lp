@@ -5,12 +5,12 @@ namespace LP.Fragments;
 [TinyhandUnion(0, typeof(TestFragment))]
 public abstract partial class FragmentBase
 {
-    public bool Check(Identifier identifier)
+    public bool CheckIdentifier(Identifier identifier)
     {
         try
         {
-            var result = TinyhandSerializer.SerializeAndGetMarker(this);
-            var id = Identifier.FromReadOnlySpan(result.ByteArray.AsSpan(0, result.MarkerPosition));
+            var bytes = TinyhandSerializer.Serialize(this, TinyhandSerializerOptions.Conditional);
+            var id = Identifier.FromReadOnlySpan(bytes);
             return id.Equals(identifier);
         }
         catch

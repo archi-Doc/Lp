@@ -16,30 +16,20 @@ public class AuthoritySubcommandNew : ISimpleCommandAsync<AuthoritySubcommandNew
         this.logger = logger;
     }
 
-    public async Task RunAsync(string[] args)
-    {
-        var names = this.Control.Vault.GetNames();
-        Console.WriteLine(string.Join(' ', names));
-    }
-
     public async Task RunAsync(AuthoritySubcommandNewOptions option, string[] args)
     {
-        PrivateKey pri;
+        var seconds = option.Seconds < 0 ? 0 : option.Seconds;
+        var authorityInfo = new AuthorityData(option.Seedphrase, option.Lifetime, Mics.FromSeconds(seconds));
+        var result = this.Control.Authority.NewAuthority(option.Name, option.Passphrase ?? string.Empty, authorityInfo);
 
-        if (option.Passphrase == null)
+        if (result == AuthorityResult.Success)
         {
-            pri = PrivateKey.Create(option.Name);
+            this.logger.TryGet()?.Log(Hashed.Authority.Created, option.Name);
         }
-        else
+        else if (result == AuthorityResult.AlreadyExists)
         {
-            pri = PrivateKey.Create(option.Name, option.Passphrase);
+            this.logger.TryGet()?.Log(Hashed.Authority.AlreadyExists, option.Name);
         }
-
-        var name = "Authority\\" + option.Name;
-        this.Control.Vault.SerializeAndTryAdd(name, pri);
-
-        this.logger.TryGet()?.Log("Key created:");
-        this.logger.TryGet()?.Log(pri.ToString());
     }
 
     public Control Control { get; set; }
@@ -49,11 +39,20 @@ public class AuthoritySubcommandNew : ISimpleCommandAsync<AuthoritySubcommandNew
 
 public record AuthoritySubcommandNewOptions
 {
-    [SimpleOption("name", description: "Key name", Required = true)]
+    [SimpleOption("name", Description = "Key name", Required = true)]
     public string Name { get; init; } = string.Empty;
 
-    [SimpleOption("pass", description: "Passphrase")]
+    [SimpleOption("pass", Description = "Passphrase")]
     public string? Passphrase { get; init; }
+
+    [SimpleOption("seed", Description = "Seedphrase")]
+    public string? Seedphrase { get; init; }
+
+    [SimpleOption("lifetime", Description = "Lifetime")]
+    public AuthorityLifetime Lifetime { get; init; }
+
+    [SimpleOption("seconds", Description = "Lifetime in seconds")]
+    public int Seconds { get; init; }
 
     public override string ToString() => $"{this.Name}";
 }

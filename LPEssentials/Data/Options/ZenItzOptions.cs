@@ -8,7 +8,7 @@ namespace LP.Data;
 [TinyhandObject(ImplicitKeyAsName = true)]
 public partial class ZenItzOptions : ILogInformation
 {
-    [SimpleOption("zenfile", null, ".")]
+    [SimpleOption("zenfile")]
     public string ZenFile { get; set; } = string.Empty;
 
     public void LogInformation(ILog logger)

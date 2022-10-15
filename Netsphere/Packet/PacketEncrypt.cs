@@ -17,6 +17,7 @@ internal partial class PacketEncrypt : IPacket
     {
         this.NodeInformation = nodeInformation;
         this.Salt = LP.Random.Crypto.NextUInt64();
+        this.SaltA = LP.Random.Crypto.NextUInt64();
     }
 
     [Key(0)]
@@ -26,9 +27,12 @@ internal partial class PacketEncrypt : IPacket
     public ulong Salt { get; set; }
 
     [Key(2)]
-    public bool RequestRelay { get; set; }
+    public ulong SaltA { get; set; }
 
     [Key(3)]
+    public bool RequestRelay { get; set; }
+
+    [Key(4)]
     public ushort RequestReceiverNumber { get; set; }
 }
 
@@ -49,11 +53,14 @@ internal partial class PacketEncryptResponse : IPacket
     public ulong Salt2 { get; set; }
 
     [Key(1)]
-    public NodeAddress? Handover { get; set; }
+    public ulong SaltA2 { get; set; }
 
     [Key(2)]
-    public bool CanRelay { get; set; }
+    public NodeAddress? Handover { get; set; }
 
     [Key(3)]
+    public bool CanRelay { get; set; }
+
+    [Key(4)]
     public ushort EnsuredReceiverNumber { get; set; }
 }

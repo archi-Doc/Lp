@@ -53,11 +53,6 @@ public partial class Vault
         internal byte[] Encrypted = Array.Empty<byte>();
     }
 
-    public VaultKeyResult TryGetKey(string name)
-    {
-
-    }
-
     public bool TryAdd(string name, byte[] decrypted)
     {
         lock (this.syncObject)
@@ -89,6 +84,22 @@ public partial class Vault
 
             this.nameToDecrypted.Add(name, new(decrypted));
             return true;
+        }
+    }
+
+    public bool Exists(string name)
+    {
+        lock (this.syncObject)
+        {
+            return this.nameToDecrypted.ContainsKey(name);
+        }
+    }
+
+    public bool Remove(string name)
+    {
+        lock (this.syncObject)
+        {
+            return this.nameToDecrypted.Remove(name);
         }
     }
 
@@ -141,6 +152,10 @@ public partial class Vault
         {
             var node = this.nameToDecrypted.GetLowerBound(prefix);
             var upper = this.nameToDecrypted.GetUpperBound(prefix + "\uffff");
+            if (node == null || upper == null)
+            {
+                return Array.Empty<string>();
+            }
 
             var list = new List<string>();
             while (node != null)
@@ -202,7 +217,7 @@ public partial class Vault
                 if (password == null)
                 {// Enter password
 RetryPassword:
-                    var results = await this.userInterfaceService.RequestPassword(Hashed.KeyVault.EnterPassword).ConfigureAwait(false);
+                    var results = await this.userInterfaceService.RequestPassword(Hashed.Vault.EnterPassword).ConfigureAwait(false);
                     if (results == null)
                     {
                         throw new PanicException();
@@ -226,7 +241,7 @@ RetryPassword:
                     }
                     else
                     {// Failure
-                        await this.userInterfaceService.Notify(LogLevel.Fatal, Hashed.KeyVault.NoRestore, x.Key).ConfigureAwait(false);
+                        await this.userInterfaceService.Notify(LogLevel.Fatal, Hashed.Vault.NoRestore, x.Key).ConfigureAwait(false);
                         throw new PanicException();
                     }
                 }

@@ -9,7 +9,7 @@ using System.Diagnostics;
 
 namespace LP;
 
-public struct MicsRange
+public readonly struct MicsRange
 {
     public MicsRange(long mics)
     {
@@ -17,17 +17,23 @@ public struct MicsRange
         this.UpperBound = this.LowerBound + mics;
     }
 
-    public static MicsRange FromDays(double days) => new MicsRange((long)(days * Mics.MicsPerDay));
+    public MicsRange(long lowerBoundMics, long upperBoundMics)
+    {
+        this.LowerBound = lowerBoundMics;
+        this.UpperBound = upperBoundMics;
+    }
 
-    public static MicsRange FromHours(double hours) => new MicsRange((long)(hours * Mics.MicsPerHour));
+    public static MicsRange DaysFromNow(double days) => new MicsRange((long)(days * Mics.MicsPerDay));
 
-    public static MicsRange FromMinutes(double minutes) => new MicsRange((long)(minutes * Mics.MicsPerMinute));
+    public static MicsRange HoursFromNow(double hours) => new MicsRange((long)(hours * Mics.MicsPerHour));
 
-    public static MicsRange FromSeconds(double seconds) => new MicsRange((long)(seconds * Mics.MicsPerSecond));
+    public static MicsRange MinutesFromNow(double minutes) => new MicsRange((long)(minutes * Mics.MicsPerMinute));
 
-    public static MicsRange FromMilliseconds(double milliseconds) => new MicsRange((long)(milliseconds * Mics.MicsPerMillisecond));
+    public static MicsRange SecondsFromNow(double seconds) => new MicsRange((long)(seconds * Mics.MicsPerSecond));
 
-    public static MicsRange FromMicroseconds(double microseconds) => new MicsRange((long)microseconds);
+    public static MicsRange MillisecondsFromNow(double milliseconds) => new MicsRange((long)(milliseconds * Mics.MicsPerMillisecond));
+
+    public static MicsRange MicrosecondsFromNow(double microseconds) => new MicsRange((long)microseconds);
 
     public bool IsIn(long mics) => this.LowerBound <= mics && mics <= this.UpperBound;
 

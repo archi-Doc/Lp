@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using Arc.Crypto;
+using Arc.Unit;
 using LP;
 using LP.Services;
 using Netsphere;
@@ -50,6 +51,9 @@ public class NetBenchSubcommand : ISimpleCommandAsync<NetBenchOptions>
         var sw = Stopwatch.StartNew();
         using (var terminal = this.Control.NetControl.Terminal.Create(node))
         {
+            await terminal.EncryptConnectionAsync(); // tempcode
+            this.logger.TryGet()?.Log($"Salt: {terminal.Salt}"); // tempcode
+
             // await this.SendLargeData(terminal);
             await this.PingpongSmallData(terminal);
         }
@@ -139,13 +143,13 @@ public class NetBenchSubcommand : ISimpleCommandAsync<NetBenchOptions>
 
 public record NetBenchOptions
 {
-    [SimpleOption("node", description: "Node address", Required = true)]
+    [SimpleOption("node", Description = "Node address", Required = true)]
     public string Node { get; init; } = string.Empty;
 
-    [SimpleOption("count", description: "Count")]
+    [SimpleOption("count", Description = "Count")]
     public int Count { get; init; } = 1;
 
-    [SimpleOption("interval", description: "Interval (seconds)")]
+    [SimpleOption("interval", Description = "Interval (seconds)")]
     public int Interval { get; init; } = 2;
 
     public override string ToString() => $"{this.Node}";

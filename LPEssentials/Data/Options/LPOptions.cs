@@ -11,34 +11,34 @@ public partial record LPOptions : ILogInformation
 {
     public const string DefaultOptionsName = "Options.tinyhand";
 
-    [SimpleOption("loadoptions", description: "Options path")]
+    [SimpleOption("loadoptions", Description = "Options path")]
     public string OptionsPath { get; init; } = string.Empty;
 
-    [SimpleOption("development", description: "Development")]
+    [SimpleOption("development", Description = "Development")]
     public bool Development { get; init; } = false;
 
-    [SimpleOption("mode", description: "LP mode (relay, merger, user)")]
+    [SimpleOption("mode", Description = "LP mode (relay, merger, user)")]
     public string Mode { get; init; } = string.Empty;
 
-    [SimpleOption("rootdir", description: "Root directory")]
+    [SimpleOption("rootdir", Description = "Root directory")]
     public string RootDirectory { get; init; } = string.Empty;
 
-    [SimpleOption("datadir", description: "Data directory")]
+    [SimpleOption("datadir", Description = "Data directory")]
     public string DataDirectory { get; init; } = string.Empty;
 
-    [SimpleOption("vault", description: "Vault path")]
+    [SimpleOption("vault", Description = "Vault path")]
     public string Vault { get; init; } = string.Empty;
 
-    [SimpleOption("name", description: "Node name")]
+    [SimpleOption("name", Description = "Node name")]
     public string NodeName { get; init; } = string.Empty;
 
-    [SimpleOption("ns", description: "Netsphere option")]
+    [SimpleOption("ns", Description = "Netsphere option")]
     public NetsphereOptions NetsphereOptions { get; init; } = default!;
 
-    [SimpleOption("zen", description: "ZenItz option")]
+    [SimpleOption("zen", Description = "ZenItz option")]
     public ZenItzOptions ZenItzOptions { get; init; } = default!;
 
-    [SimpleOption("confirmexit", description: "Confirms application exit")]
+    [SimpleOption("confirmexit", Description = "Confirms application exit")]
     public bool ConfirmExit { get; init; } = false;
 
     public void LogInformation(ILog log)
