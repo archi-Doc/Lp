@@ -73,6 +73,12 @@ public partial class Vault
         return this.TryAdd(name, bytes);
     }
 
+    public bool SerializeAndAdd<T>(string name, T obj)
+    {
+        var bytes = TinyhandSerializer.Serialize<T>(obj);
+        return this.Add(name, bytes);
+    }
+
     public bool Add(string name, byte[] decrypted)
     {
         lock (this.syncObject)
