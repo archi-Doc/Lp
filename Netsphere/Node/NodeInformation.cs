@@ -86,6 +86,18 @@ public partial class NodeInformation : NodeAddress, IEquatable<NodeInformation>
         return this.Engagement == other.Engagement && this.Port == other.Port && this.Address.Equals(other.Address);
     }
 
+    public override string ToString()
+    {
+        if (this.Address.Equals(IPAddress.None))
+        {
+            return "None";
+        }
+        else
+        {
+            return $"{this.Address}:{this.Port}({this.PublicKey.ToString()})";
+        }
+    }
+
     public override int GetHashCode()
     {
         return HashCode.Combine(this.Engagement, this.Port, this.Address);

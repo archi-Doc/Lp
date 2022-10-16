@@ -65,14 +65,14 @@ public partial class NodeAddress : IEquatable<NodeAddress>
             port = span.Slice(0, index);
             span = span.Slice(index + 1);
             index = span.IndexOf(')');
-            /*if (index >= 0)
+            if (index >= 0)
             {
-                engagement = span.Slice(0, index);
+                publicKeySpan = span.Slice(0, index);
             }
             else
             {
-                engagement = span;
-            }*/
+                publicKeySpan = span;
+            }
         }
         else
         {
@@ -113,12 +113,6 @@ public partial class NodeAddress : IEquatable<NodeAddress>
 
     public IPEndPoint CreateEndpoint() => new IPEndPoint(this.Address, this.Port);
 
-    public void SetIPEndPoint(IPEndPoint endpoint)
-    {
-        this.Address = endpoint.Address;
-        this.Port = (ushort)endpoint.Port;
-    }
-
     public bool IsValid()
     {
         if (this.Port < NetControl.MinPort || this.Port > NetControl.MaxPort)
@@ -157,8 +151,19 @@ public partial class NodeAddress : IEquatable<NodeAddress>
         }
         else
         {
-            return $"{this.Address}:{this.Port}({this.Engagement})";
+            return $"{this.Address}:{this.Port}";
         }
+    }
+
+    internal void SetIPEndPoint(IPEndPoint endpoint)
+    {
+        this.Address = endpoint.Address;
+        this.Port = (ushort)endpoint.Port;
+    }
+
+    internal void SetAddress(IPAddress address)
+    {
+        this.Address = address;
     }
 
     internal void SetPort(ushort port)

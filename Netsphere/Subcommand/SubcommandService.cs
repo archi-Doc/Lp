@@ -33,4 +33,31 @@ public static partial class SubcommandService
             return true;
         }
     }
+
+    public static bool TryParseNodeInformation(ILogger? logger, string node, [MaybeNullWhen(false)] out NodeInformation nodeInformation)
+    {
+        nodeInformation = null;
+        if (string.Compare(node, "alternative", true) == 0)
+        {
+            nodeInformation = NodeInformation.Alternative;
+            return true;
+        }
+        else
+        {
+            if (!NodeInformation.TryParse(node, out var address))
+            {
+                logger?.TryGet(LogLevel.Error)?.Log($"Could not parse: {node.ToString()}");
+                return false;
+            }
+
+            if (!address.IsValid())
+            {
+                logger?.TryGet(LogLevel.Error)?.Log($"Invalid node address: {node.ToString()}");
+                return false;
+            }
+
+            nodeInformation = address;
+            return true;
+        }
+    }
 }

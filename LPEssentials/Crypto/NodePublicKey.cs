@@ -31,7 +31,7 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
     public static bool TryParse(ReadOnlySpan<char> chars, [MaybeNullWhen(false)] out NodePublicKey publicKey)
     {
         publicKey = default;
-        var bytes = Base64.Url.FromStringToByteArray(chars.ToString());
+        var bytes = Base64.Url.FromStringToByteArray(chars);
         if (bytes.Length != PublicKeyEncoded)
         {
             return false;
@@ -139,7 +139,7 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
         BitConverter.TryWriteBytes(b, this.x3);
         b = b.Slice(sizeof(ulong));
 
-        return $"({Base64.Url.FromByteArrayToString(bytes)})";
+        return $"{Base64.Url.FromByteArrayToString(bytes)}";
     }
 
     internal ECDiffieHellman? TryGetEcdh()

@@ -14,18 +14,26 @@ public class NetStatus
 
     public NodeInformation GetMyNodeInformation(bool isAlternative)
     {
-        NodeInformation? nodeInformation;
         if (isAlternative)
         {
-            if (this.alternativeNodeInformation == null)
-            {
-                this.alternativeNodeInformation = new(new NodeAddress(IPAddress.None, 0));
-                this.alternativeNodeInformation.PublicKey = NodePrivateKey.AlternativePrivateKey.ToPublicKey();
-            }
-
-            nodeInformation = this.alternativeNodeInformation;
+            return this.AlternativeNodeInformation;
         }
         else
+        {
+            return this.MyNodeInformation;
+        }
+    }
+
+    public void SetMyNodeAddress(NodeAddress nodeAddress)
+    {
+        this.MyNodeInformation.SetAddress(nodeAddress.Address);
+    }
+
+    public NetBase NetBase { get; }
+
+    public NodeInformation MyNodeInformation
+    {
+        get
         {
             if (this.myNodeInformation == null)
             {
@@ -33,13 +41,23 @@ public class NetStatus
                 this.myNodeInformation.PublicKey = this.NetBase.NodePublicKey;
             }
 
-            nodeInformation = this.myNodeInformation;
+            return this.myNodeInformation;
         }
-
-        return nodeInformation;
     }
 
-    public NetBase NetBase { get; }
+    public NodeInformation AlternativeNodeInformation
+    {
+        get
+        {
+            if (this.alternativeNodeInformation == null)
+            {
+                this.alternativeNodeInformation = new(new NodeAddress(IPAddress.None, 0));
+                this.alternativeNodeInformation.PublicKey = NodePrivateKey.AlternativePrivateKey.ToPublicKey();
+            }
+
+            return this.alternativeNodeInformation;
+        }
+    }
 
     private NodeInformation? myNodeInformation;
 

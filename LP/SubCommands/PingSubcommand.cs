@@ -55,6 +55,10 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
             if (result.Value != null)
             {
                 this.logger.TryGet()?.Log($"Received: {result.ToString()} - {sw.ElapsedMilliseconds} ms");
+                if (result.Value.NodeAddress is { } nodeAddress)
+                {// tempcode
+                    this.Control.NetControl.NetStatus.SetMyNodeAddress(nodeAddress);
+                }
             }
             else
             {
