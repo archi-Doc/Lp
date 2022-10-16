@@ -160,7 +160,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         BitConverter.TryWriteBytes(b, this.x3);
         b = b.Slice(sizeof(ulong));
 
-        return $"({Base64.Url.FromByteArrayToString(bytes)})";
+        return $"{Base64.Url.FromByteArrayToString(bytes)}";
     }
 
     private ECDsa? TryGetEcdsa()

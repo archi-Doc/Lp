@@ -30,6 +30,24 @@ public partial class NodeInformation : NodeAddress, IEquatable<NodeInformation>
         }
     }
 
+    public static bool TryParse(string text, [NotNullWhen(true)] out NodeInformation? nodeInformation)
+    {
+        nodeInformation = null;
+        if (!NodeAddress.TryParse(text, out var nodeAddress, out var publicKeySpan))
+        {
+            return false;
+        }
+
+        if (!NodePublicKey.TryParse(publicKeySpan, out var publicKey))
+        {
+            return false;
+        }
+
+        nodeInformation = new(nodeAddress);
+        nodeInformation.PublicKey = publicKey;
+        return true;
+    }
+
     public static NodeInformation Merge(NodeAddress nodeAddress, NodeInformation nodeInformation)
     {
         var x = TinyhandSerializer.Clone(nodeInformation);
@@ -66,6 +84,18 @@ public partial class NodeInformation : NodeAddress, IEquatable<NodeInformation>
         }
 
         return this.Engagement == other.Engagement && this.Port == other.Port && this.Address.Equals(other.Address);
+    }
+
+    public override string ToString()
+    {
+        if (this.Address.Equals(IPAddress.None))
+        {
+            return "None";
+        }
+        else
+        {
+            return $"{this.Address}:{this.Port}({this.PublicKey.ToString()})";
+        }
     }
 
     public override int GetHashCode()

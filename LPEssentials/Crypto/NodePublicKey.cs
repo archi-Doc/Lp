@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 
 namespace LP;
@@ -12,6 +13,7 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
     public const int PublicKeyHalfLength = PublicKeyLength / 2;
     public const int PrivateKeyLength = 32;
     public const int SignLength = 64;
+    public const int PublicKeyEncoded = 1 + (sizeof(ulong) * 4);
     private const int MaxPublicKeyCache = 100;
 
     public static HashAlgorithmName HashAlgorithmName { get; }
@@ -24,6 +26,31 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
     {
         ECCurve = ECCurve.CreateFromFriendlyName(ECCurveName);
         HashAlgorithmName = HashAlgorithmName.SHA256;
+    }
+
+    public static bool TryParse(ReadOnlySpan<char> chars, [MaybeNullWhen(false)] out NodePublicKey publicKey)
+    {
+        publicKey = default;
+        var bytes = Base64.Url.FromStringToByteArray(chars);
+        if (bytes.Length != PublicKeyEncoded)
+        {
+            return false;
+        }
+
+        var b = bytes.AsSpan();
+        var keyValue = b[0];
+        b = b.Slice(1);
+        var x0 = BitConverter.ToUInt64(b);
+        b = b.Slice(sizeof(ulong));
+        var x1 = BitConverter.ToUInt64(b);
+        b = b.Slice(sizeof(ulong));
+        var x2 = BitConverter.ToUInt64(b);
+        b = b.Slice(sizeof(ulong));
+        var x3 = BitConverter.ToUInt64(b);
+        b = b.Slice(sizeof(ulong));
+
+        publicKey = new(keyValue, x0, x1, x2, x3);
+        return true;
     }
 
     public NodePublicKey()
@@ -46,6 +73,15 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
         this.x2 = BitConverter.ToUInt64(span);
         span = span.Slice(sizeof(ulong));
         this.x3 = BitConverter.ToUInt64(span);
+    }
+
+    private NodePublicKey(byte keyValue, ulong x0, ulong x1, ulong x2, ulong x3)
+    {
+        this.keyValue = keyValue;
+        this.x0 = x0;
+        this.x1 = x1;
+        this.x2 = x2;
+        this.x3 = x3;
     }
 
     [Key(0)]
@@ -103,7 +139,7 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
         BitConverter.TryWriteBytes(b, this.x3);
         b = b.Slice(sizeof(ulong));
 
-        return $"({Base64.Url.FromByteArrayToString(bytes)})";
+        return $"{Base64.Url.FromByteArrayToString(bytes)}";
     }
 
     internal ECDiffieHellman? TryGetEcdh()

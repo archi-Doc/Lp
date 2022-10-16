@@ -48,6 +48,13 @@ Authority = {
     EnterPassword = "Enter Authority '{0}' password"
 }
 
+Custom = {
+    AlreadyExists = "Customized command '{0}' already exists"
+    Created = "Customized command '{0}' is successfully created"
+    Removed = "Customized command '{0}' is successfully removed"
+    NotFound = "Customized command '{0}' is not found"
+}
+
 Subcommands = {
     GC = {
         Start = "GC.Collect"

@@ -14,10 +14,11 @@ public class NodeSubcommand : SimpleCommandGroup<NodeSubcommand>
         var group = ConfigureGroup(context);
         group.AddCommand(typeof(NodeSubcommandAdd));
         group.AddCommand(typeof(NodeSubcommandLs));
+        group.AddCommand(typeof(NodeSubcommandInfo));
     }
 
     public NodeSubcommand(UnitContext context)
-        : base(context, "ls")
+        : base(context, "info")
     {
     }
 }

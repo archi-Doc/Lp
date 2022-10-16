@@ -23,10 +23,16 @@ public partial class NodeAddress : IEquatable<NodeAddress>
     public static readonly NodeAddress Alternative = new(IPAddress.Loopback, AlternativePort);
 
     public static bool TryParse(string text, [NotNullWhen(true)] out NodeAddress? node)
-    {// 127.0.0.1:100(1)
-        string address, port, engagement;
+        => TryParse(text, out node, out _);
+
+    internal static bool TryParse(string text, [NotNullWhen(true)] out NodeAddress? node, out ReadOnlySpan<char> publicKeySpan)
+    {// 127.0.0.1:100(public)
         int index;
+        ReadOnlySpan<char> address;
+        ReadOnlySpan<char> port;
+
         node = null;
+        publicKeySpan = default;
 
         text = text.Trim();
         var span = text.AsSpan();
@@ -38,7 +44,7 @@ public partial class NodeAddress : IEquatable<NodeAddress>
                 return false;
             }
 
-            address = span.Slice(1, index - 1).ToString();
+            address = span.Slice(1, index - 1);
             span = span.Slice(index + 2);
         }
         else
@@ -49,29 +55,28 @@ public partial class NodeAddress : IEquatable<NodeAddress>
                 return false;
             }
 
-            address = span.Slice(0, index).ToString();
+            address = span.Slice(0, index);
             span = span.Slice(index + 1);
         }
 
         index = span.IndexOf('(');
         if (index >= 0)
         {
-            port = span.Slice(0, index).ToString();
+            port = span.Slice(0, index);
             span = span.Slice(index + 1);
             index = span.IndexOf(')');
             if (index >= 0)
             {
-                engagement = span.Slice(0, index).ToString();
+                publicKeySpan = span.Slice(0, index);
             }
             else
             {
-                engagement = span.ToString();
+                publicKeySpan = span;
             }
         }
         else
         {
-            port = span.ToString();
-            engagement = string.Empty;
+            port = span;
         }
 
         if (!IPAddress.TryParse(address, out var ipAddress))
@@ -80,9 +85,9 @@ public partial class NodeAddress : IEquatable<NodeAddress>
         }
 
         ushort.TryParse(port, out var nodePort);
-        byte.TryParse(engagement, out var engage);
+        // byte.TryParse(engagement, out var engage);
 
-        node = new NodeAddress(ipAddress, nodePort, engage);
+        node = new NodeAddress(ipAddress, nodePort, 0);
         return true;
     }
 
@@ -107,12 +112,6 @@ public partial class NodeAddress : IEquatable<NodeAddress>
     public IPAddress Address { get; protected set; } = IPAddress.None;
 
     public IPEndPoint CreateEndpoint() => new IPEndPoint(this.Address, this.Port);
-
-    public void SetIPEndPoint(IPEndPoint endpoint)
-    {
-        this.Address = endpoint.Address;
-        this.Port = (ushort)endpoint.Port;
-    }
 
     public bool IsValid()
     {
@@ -152,8 +151,19 @@ public partial class NodeAddress : IEquatable<NodeAddress>
         }
         else
         {
-            return $"{this.Address}:{this.Port}({this.Engagement})";
+            return $"{this.Address}:{this.Port}";
         }
+    }
+
+    internal void SetIPEndPoint(IPEndPoint endpoint)
+    {
+        this.Address = endpoint.Address;
+        this.Port = (ushort)endpoint.Port;
+    }
+
+    internal void SetAddress(IPAddress address)
+    {
+        this.Address = address;
     }
 
     internal void SetPort(ushort port)
