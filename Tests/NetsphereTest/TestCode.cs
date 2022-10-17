@@ -8,6 +8,9 @@ namespace NetsphereTest;
 
 public class TestServerContext : ServerContext
 {
+    public TestServerContext()
+    {
+    }
 }
 
 public class TestCallContext : CallContext<TestServerContext>

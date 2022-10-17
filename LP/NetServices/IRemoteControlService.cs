@@ -2,7 +2,7 @@
 
 using Netsphere;
 
-namespace NetsphereTest;
+namespace LP.NetServices;
 
 [NetServiceInterface]
 public interface IRemoteControlService : INetService

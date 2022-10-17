@@ -14,9 +14,7 @@ global using LP.Data;
 global using Tinyhand;
 global using ValueLink;
 using System.Collections.Concurrent;
-using System.Security.Cryptography;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere.Machines;
 using Netsphere.Responder;
 using SimpleCommandLine;
@@ -46,7 +44,8 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddSingleton<EssentialNode>();
                 context.AddSingleton<NetStatus>();
                 context.AddTransient<Server>();
-                context.AddTransient<NetService>(); // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
+                // context.Services.Add(new ServiceDescriptor(typeof(NetService), x => new NetService(x), ServiceLifetime.Transient));
+                // context.AddTransient<NetService>(); // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
 
                 // Machines
                 context.AddTransient<EssentialNetMachine>();

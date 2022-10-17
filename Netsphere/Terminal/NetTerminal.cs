@@ -76,19 +76,11 @@ public partial class NetTerminal : IDisposable
     {
     }
 
-    public Terminal Terminal { get; }
-
-    public AsyncPulseEvent ReceiveEvent { get; } = new();
-
-    public FlowControl FlowControl { get; }
-
     public bool IsEncrypted => this.embryo != null;
 
     public bool IsSendComplete => false;
 
     public bool IsReceiveComplete => false;
-
-    public bool IsHighTraffic => false;
 
     public bool IsClosed { get; internal set; }
 
@@ -99,6 +91,12 @@ public partial class NetTerminal : IDisposable
     public NodeInformation? NodeInformation { get; protected set; }
 
     public ulong Salt { get; private set; }
+
+    internal Terminal Terminal { get; }
+
+    internal AsyncPulseEvent ReceiveEvent { get; } = new();
+
+    internal FlowControl FlowControl { get; }
 
     internal void SetSalt(ulong saltA, ulong saltA2)
     {

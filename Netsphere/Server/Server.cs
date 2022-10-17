@@ -6,11 +6,11 @@ namespace Netsphere;
 
 public class Server
 {
-    public Server(NetBase netBase, NetControl netControl, NetService netService)
-    {
+    public Server(NetBase netBase, NetControl netControl)
+    {// InvokeServer()
         this.NetBase = netBase;
         this.NetControl = netControl;
-        this.NetService = netService;
+        this.NetService = new NetService(this.NetControl.ServiceProvider);
 
         this.ServerContext = this.NetControl.NewServerContext();
         this.ServerContext.ServiceProvider = this.NetControl.ServiceProvider;
@@ -22,6 +22,7 @@ public class Server
     {
         this.NetTerminal = terminal;
         this.NetTerminal.SetMaximumResponseTime(1000);
+        this.ServerContext.Terminal = terminal;
         Console.WriteLine($"Salt: {terminal.Salt}"); // tempcode
 
         while (!this.NetTerminal.IsClosed)
@@ -86,7 +87,7 @@ public class Server
 
     public ServerTerminal NetTerminal { get; private set; } = default!;
 
-    public ServerContext ServerContext { get; }
+    public ServerContext ServerContext { get; private set; }
 
     private bool ProcessEssential(ServerOperation operation, NetReceivedData received)
     {

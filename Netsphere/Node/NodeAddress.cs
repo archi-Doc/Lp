@@ -128,6 +128,16 @@ public partial class NodeAddress : IEquatable<NodeAddress>
         };
     }
 
+    public bool IsLocalLoopbackAddress()
+    {
+        return this.Address.AddressFamily switch
+        {
+            System.Net.Sockets.AddressFamily.InterNetwork => this.IsLocalLoopbackAddressIPv4(),
+            System.Net.Sockets.AddressFamily.InterNetworkV6 => this.IsLocalLoopbackAddressIPv6(),
+            _ => false,
+        };
+    }
+
     public bool Equals(NodeAddress? other)
     {
         if (other == null)
@@ -169,6 +179,32 @@ public partial class NodeAddress : IEquatable<NodeAddress>
     internal void SetPort(ushort port)
     {
         this.Port = port;
+    }
+
+    private bool IsLocalLoopbackAddressIPv4()
+    {
+        Span<byte> address = stackalloc byte[4];
+        if (!this.Address.TryWriteBytes(address, out var written) || written < 4)
+        {
+            return false;
+        }
+
+        return address[0] == 127 && address[1] == 0 && address[2] == 0;
+    }
+
+    private unsafe bool IsLocalLoopbackAddressIPv6()
+    {
+        Span<byte> address = stackalloc byte[16];
+        if (!this.Address.TryWriteBytes(address, out var written) || written < 16)
+        {
+            return false;
+        }
+
+        fixed (byte* b = address)
+        {
+            ulong* u = (ulong*)b;
+            return u[0] == 0 && u[1] == 0x0100000000000000;
+        }
     }
 
     private bool IsValidIPv4()

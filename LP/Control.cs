@@ -9,9 +9,7 @@ global using Arc.Crypto;
 global using Arc.Threading;
 global using Arc.Unit;
 global using BigMachines;
-global using CrossChannel;
 global using LP;
-global using LP.Logging;
 global using Tinyhand;
 using LP.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -50,10 +48,11 @@ public class Control : ILogInformation
                 context.AddSingleton<SeedPhrase>();
 
                 // RPC / Services
-                context.AddTransient<Services.BenchmarkServiceImpl>();
+                context.AddTransient<NetServices.BenchmarkServiceImpl>();
+                context.AddTransient<NetServices.RemoteControlService>();
 
                 // RPC / Filters
-                context.AddTransient<Services.TestOnlyFilter>();
+                context.AddTransient<NetServices.TestOnlyFilter>();
 
                 // Machines
                 context.AddTransient<Machines.SingleMachine>();

@@ -4,7 +4,7 @@ using System.Diagnostics;
 using Arc.Crypto;
 using Arc.Unit;
 using LP;
-using LP.Services;
+using LP.NetServices;
 using Netsphere;
 using SimpleCommandLine;
 using Tinyhand;

@@ -61,7 +61,7 @@ public class NetService
         }
     }
 
-    public NetService(IServiceProvider? serviceProvider = null)
+    public NetService(IServiceProvider serviceProvider)
     {
         this.serviceProvider = serviceProvider;
     }
@@ -156,7 +156,7 @@ SendNoNetService:
     public Func<CallContext> NewCallContext { get; internal set; } = default!;
 
     private object syncObject = new();
-    private IServiceProvider? serviceProvider;
+    private IServiceProvider serviceProvider;
     private Dictionary<ulong, ServiceMethod> idToServiceMethod = new();
     private Dictionary<uint, object> idToInstance = new();
 }
