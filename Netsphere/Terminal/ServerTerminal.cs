@@ -14,7 +14,7 @@ public class ServerTerminal : NetTerminal
     {// NodeInformation: Managed
     }
 
-    public void SetReceiverNumber(ushort receiverNumber = DefaultReceiverNumber)
+    internal void SetReceiverNumber(ushort receiverNumber = DefaultReceiverNumber)
     {
         if (receiverNumber > MaxReceiverNumber)
         {
@@ -114,7 +114,7 @@ public class ServerTerminal : NetTerminal
         return result;
     }*/
 
-    public void EnsureReceiver()
+    internal void EnsureReceiver()
     {// Checked
         while (this.receiverQueue.Count < this.ReceiverNumber)
         {

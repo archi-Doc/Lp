@@ -2,7 +2,7 @@
 
 using Netsphere;
 
-namespace LP.Services;
+namespace LP.NetServices;
 
 public class TestOnlyFilter : IServiceFilter
 {

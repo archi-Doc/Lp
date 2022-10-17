@@ -22,6 +22,7 @@ public class Server
     {
         this.NetTerminal = terminal;
         this.NetTerminal.SetMaximumResponseTime(1000);
+        this.ServerContext.Terminal = terminal;
         Console.WriteLine($"Salt: {terminal.Salt}"); // tempcode
 
         while (!this.NetTerminal.IsClosed)
@@ -86,7 +87,7 @@ public class Server
 
     public ServerTerminal NetTerminal { get; private set; } = default!;
 
-    public ServerContext ServerContext { get; }
+    public ServerContext ServerContext { get; private set; }
 
     private bool ProcessEssential(ServerOperation operation, NetReceivedData received)
     {
