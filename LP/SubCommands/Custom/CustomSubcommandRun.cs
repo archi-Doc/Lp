@@ -28,16 +28,13 @@ public class CustomSubcommandRun : ISimpleCommandAsync<CustomSubcommandNameOptio
 
         if (!string.IsNullOrEmpty(command.Command))
         {
-            Console.WriteLine($">> {command.Command}");
-            this.control.Subcommand(command.Command);
-        }
-
-        if (command.CommandArray != null)
-        {
-            foreach (var x in command.CommandArray)
+            foreach (var x in CustomizedCommand.FromCommandToArray(command.Command))
             {
-                Console.WriteLine($">> {x}");
-                this.control.Subcommand(x);
+                if (!string.IsNullOrEmpty(x))
+                {
+                    Console.WriteLine($">> {x}");
+                    this.control.Subcommand(x);
+                }
             }
         }
     }

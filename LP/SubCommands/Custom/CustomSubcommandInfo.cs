@@ -26,14 +26,12 @@ public class CustomSubcommandInfo : ISimpleCommandAsync<CustomSubcommandNameOpti
         Console.WriteLine($"Command: {option.Name}");
         if (!string.IsNullOrEmpty(command.Command))
         {
-            Console.WriteLine(command.Command);
-        }
-
-        if (command.CommandArray != null)
-        {
-            foreach (var x in command.CommandArray)
+            foreach (var x in CustomizedCommand.FromCommandToArray(command.Command))
             {
-                Console.WriteLine(command.Command);
+                if (!string.IsNullOrEmpty(x))
+                {
+                    Console.WriteLine(x);
+                }
             }
         }
     }

@@ -33,6 +33,7 @@ public enum NetResult
     NoNetService,
     NoCallContext,
     UnknownException,
+    NotAuthorized,
 }
 
 /// <summary>

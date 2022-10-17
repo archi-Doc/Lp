@@ -50,9 +50,10 @@ Authority = {
 
 Custom = {
     AlreadyExists = "Customized command '{0}' already exists"
+    NotFound = "Customized command '{0}' is not found"
     Created = "Customized command '{0}' is successfully created"
     Removed = "Customized command '{0}' is successfully removed"
-    NotFound = "Customized command '{0}' is not found"
+    Set = "Customized command '{0}' is successfully set"
 }
 
 Subcommands = {

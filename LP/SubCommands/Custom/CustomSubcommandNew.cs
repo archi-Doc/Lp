@@ -25,7 +25,7 @@ public class CustomSubcommandNew : ISimpleCommandAsync<CustomSubcommandNewOption
             return;
         }
 
-        var custom = new CustomizedCommand(option.Command, /*option.CommandArray*/null);
+        var custom = new CustomizedCommand(option.Command);
         if (this.vault.SerializeAndTryAdd(name, custom))
         {
             this.logger.TryGet()?.Log(Hashed.Custom.Created, option.Name);
@@ -46,7 +46,7 @@ public record CustomSubcommandNewOptions
     public string Name { get; init; } = string.Empty;
 
     [SimpleOption("command", Description = "Command")]
-    public string? Command { get; init; }
+    public string Command { get; init; } = string.Empty;
 
     /*[SimpleOption("array", Description = "Command array")]
     public string[]? CommandArray { get; init; }*/

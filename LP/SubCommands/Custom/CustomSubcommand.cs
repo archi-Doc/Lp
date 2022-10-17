@@ -14,6 +14,7 @@ public class CustomSubcommand : SimpleCommandGroup<CustomSubcommand>
         group.AddCommand(typeof(CustomSubcommandLs));
         group.AddCommand(typeof(CustomSubcommandNew));
         group.AddCommand(typeof(CustomSubcommandRemove));
+        group.AddCommand(typeof(CustomSubcommandSet));
         group.AddCommand(typeof(CustomSubcommandInfo));
         group.AddCommand(typeof(CustomSubcommandRun));
     }

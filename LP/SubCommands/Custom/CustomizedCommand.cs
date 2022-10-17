@@ -12,19 +12,21 @@ public sealed partial class CustomizedCommand
 
     public static string GetName(string name) => Prefix + name;
 
+    public static string[] FromCommandToArray(string command)
+    {
+        // return command.Trim('\r').Split('\n');
+        return command.Split('\n');
+    }
+
     public CustomizedCommand()
     {
     }
 
-    public CustomizedCommand(string? command, string[]? commandArray)
+    public CustomizedCommand(string command)
     {
-        this.Command = command;
-        this.CommandArray = commandArray;
+        this.Command = command.Replace("\\r\\n", "\n").Replace("\\n", "\n");
     }
 
     [Key(0)]
     public string? Command { get; private set; } = default!;
-
-    [Key(1)]
-    public string[]? CommandArray { get; private set; } = default!;
 }

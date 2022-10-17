@@ -1,8 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Security.Cryptography;
-using LP.Obsolete;
-
 namespace LP;
 
 /// <summary>
@@ -13,6 +10,7 @@ public sealed partial class Token : IVerifiable // , IEquatable<Token>
 {
     public enum Type
     {
+        RequestAuthorization,
         Identification,
         RequestSummary,
     }
