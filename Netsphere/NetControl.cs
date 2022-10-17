@@ -44,7 +44,8 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddSingleton<EssentialNode>();
                 context.AddSingleton<NetStatus>();
                 context.AddTransient<Server>();
-                context.AddTransient<NetService>(); // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
+                // context.Services.Add(new ServiceDescriptor(typeof(NetService), x => new NetService(x), ServiceLifetime.Transient));
+                // context.AddTransient<NetService>(); // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
 
                 // Machines
                 context.AddTransient<EssentialNetMachine>();

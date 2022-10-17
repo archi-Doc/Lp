@@ -6,11 +6,11 @@ namespace Netsphere;
 
 public class Server
 {
-    public Server(NetBase netBase, NetControl netControl, NetService netService)
-    {
+    public Server(NetBase netBase, NetControl netControl)
+    {// InvokeServer()
         this.NetBase = netBase;
         this.NetControl = netControl;
-        this.NetService = netService;
+        this.NetService = new NetService(this.NetControl.ServiceProvider);
 
         this.ServerContext = this.NetControl.NewServerContext();
         this.ServerContext.ServiceProvider = this.NetControl.ServiceProvider;
