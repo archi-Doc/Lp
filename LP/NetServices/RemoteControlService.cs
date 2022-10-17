@@ -13,13 +13,24 @@ internal class RemoteControlService : IRemoteControlService
     }
 
     public async NetTask RequestAuthorization(Token token)
-    {
+    {// NetTask<NetResult> is recommended.
         var callContext = CallContext.Current;
         callContext.Result = NetResult.NotAuthorized;
     }
 
-    public async NetTask Restart()
-    {// NetTask<NetResult> is recommended.
+    public async NetTask<NetResult> Acknowledge()
+    {
+        var callContext = CallContext.Current;
+        if (callContext.ServerContext.Terminal.NodeAddress.IsLocalLoopbackAddress())
+        {
+            return NetResult.Success;
+        }
+
+        return NetResult.NotAuthorized;
+    }
+
+    public async NetTask<NetResult> Restart()
+    {
         var callContext = CallContext.Current;
         if (callContext.ServerContext.Terminal.NodeAddress.IsLocalLoopbackAddress())
         {// Restart
@@ -28,11 +39,11 @@ internal class RemoteControlService : IRemoteControlService
                 await Task.Delay(1000);
                 this.control.Terminate(false);
             });
+
+            return NetResult.Success;
         }
-        else
-        {
-            callContext.Result = NetResult.NotAuthorized;
-        }
+
+        return NetResult.NotAuthorized;
     }
 
     private Control control;
