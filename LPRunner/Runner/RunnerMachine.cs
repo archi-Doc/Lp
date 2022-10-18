@@ -2,6 +2,8 @@
 
 using Arc.Unit;
 using BigMachines;
+using Docker.DotNet;
+using Docker.DotNet.Models;
 using LP;
 using Netsphere;
 using Tinyhand;
@@ -11,7 +13,7 @@ namespace LPRunner;
 [MachineObject(0x0b5190d7, Group = typeof(SingleGroup<Identifier>))]
 public partial class RunnerMachine : Machine<Identifier>
 {
-    public enum Status
+    public enum LPStatus
     {
         NotRunning,
         Container,
@@ -62,6 +64,17 @@ public partial class RunnerMachine : Machine<Identifier>
         if (result == null)
         {
             return StateResult.Terminate;
+        }
+
+        var client = new DockerClientConfiguration().CreateClient();
+        try
+        {
+            var containers = await client.Containers.ListContainersAsync(new() { Limit = 10, });
+            this.logger.TryGet()?.Log($"Docker: {containers.Count}");
+        }
+        catch
+        {
+            this.logger.TryGet(LogLevel.Fatal)?.Log($"No docker");
         }
 
         this.logger.TryGet()?.Log($"Result: {result}");
