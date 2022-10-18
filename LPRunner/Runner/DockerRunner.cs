@@ -79,7 +79,7 @@ internal class DockerRunner
         }
 
         // Create container
-        var exposedPort = this.information.TargetPort.ToString();
+        var exposedPort = this.information.TargetPort.ToString() + "/udp";
         this.logger.TryGet()?.Log($"Start container: {this.information.Image}");
         // RunnerHelper.DispatchCommand(this.logger, "docker run -it --mount type=bind,source=$(pwd)/lp,destination=/lp --rm -p 49152:49152/udp archidoc422/lpconsole -rootdir \"/lp\" -ns [-port 49152 -test true -alternative false]"); // C:\\App\\docker
         try
@@ -98,8 +98,8 @@ internal class DockerRunner
                 {
                     Mounts = new Mount[]
                     {
-                        // new Mount() { Type = "bind", Source = "/home/ubuntu/lp", Target = "/lp", },
-                        new Mount() { Type = "bind", Source = "C:\\App\\docker", Target = "/lp", },
+                        new Mount() { Type = "bind", Source = "/home/ubuntu/lp", Target = "/lp", },
+                        // new Mount() { Type = "bind", Source = "C:\\App\\docker", Target = "/lp", },
                     },
 
                     PortBindings = new Dictionary<string, IList<PortBinding>>
