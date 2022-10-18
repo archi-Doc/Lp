@@ -20,7 +20,7 @@ internal static class RunnerHelper
             shellName = @"/bin/bash";
         }
 
-        logger.TryGet()?.Log($"Command: {command}");
+        logger.TryGet()?.Log($"Dispatch: {command}");
 
         var startInfo = new ProcessStartInfo
         {
