@@ -24,7 +24,20 @@ public class ConsoleCommand : ISimpleCommandAsync
         var runner = this.bigMachine.CreateOrGet<RunnerMachine.Interface>(Identifier.Zero);
 
         this.bigMachine.Start();
-        await this.bigMachine.Core.WaitForTerminationAsync(-1);
+
+        while (!this.bigMachine.Core.IsTerminated)
+        {
+            if (!this.bigMachine.IsActive())
+            {
+                break;
+            }
+            else
+            {
+                await this.bigMachine.Core.WaitForTerminationAsync(1000);
+            }
+        }
+
+        // await this.bigMachine.Core.WaitForTerminationAsync(-1);
         // await this.runner.Run();
     }
 

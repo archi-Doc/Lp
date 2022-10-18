@@ -30,7 +30,8 @@ public class LPBase : ILogInformation
     public static void Configure(IUnitConfigurationContext context)
     {
         // Base
-        context.TryAddSingleton<BigMachines.BigMachine<Identifier>>();
+        BigMachines.BigMachine<Identifier>.Configure(context);
+        // context.TryAddSingleton<BigMachines.BigMachine<Identifier>>();
 
         // Main
         context.AddSingleton<LPBase>();

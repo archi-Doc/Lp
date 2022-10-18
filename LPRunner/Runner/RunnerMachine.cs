@@ -11,6 +11,13 @@ namespace LPRunner;
 [MachineObject(0x0b5190d7, Group = typeof(SingleGroup<Identifier>))]
 public partial class RunnerMachine : Machine<Identifier>
 {
+    public enum Status
+    {
+        NotRunning,
+        Container,
+        Running,
+    }
+
     public RunnerMachine(ILogger<RunnerMachine> logger, BigMachine<Identifier> bigMachine, LPBase lPBase, NetControl netControl)
         : base(bigMachine)
     {
@@ -26,7 +33,7 @@ public partial class RunnerMachine : Machine<Identifier>
     {
         var information = await this.LoadInformation(Path.Combine(this.lpBase.RootDirectory, RunnerInformation.Path));
         if (information == null)
-        {
+        {// Could not load RunnerInformation.
             return StateResult.Terminate;
         }
 
@@ -42,14 +49,23 @@ public partial class RunnerMachine : Machine<Identifier>
         this.logger.TryGet()?.Log("Press Ctrl+C to exit.");
         await Console.Out.WriteLineAsync();
 
-        this.ChangeState(State.Check);
+        this.ChangeState(State.Check, true);
         return StateResult.Continue;
     }
 
     [StateMethod(1)]
     protected async Task<StateResult> Check(StateParameter parameter)
     {
-        // this.logger.TryGet()?.Log("Check");
+        this.logger.TryGet()?.Log("Check");
+
+        var result = await RunnerHelper.ExecuteCommand(this.logger, string.Empty);
+        if (result == null)
+        {
+            return StateResult.Terminate;
+        }
+
+        this.logger.TryGet()?.Log($"Result: {result}");
+        return StateResult.Terminate;
         return StateResult.Continue;
     }
 
