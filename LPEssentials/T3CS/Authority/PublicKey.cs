@@ -35,6 +35,32 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         this.x3 = 0;
     }
 
+    public PublicKey(string hex)
+    {
+        var bytes = Arc.Crypto.Hex.FromStringToByteArray(hex);
+        if (bytes.Length == (PublicKeyHalfLength + 1))
+        {
+            var span = bytes.AsSpan();
+            this.keyValue = span[0];
+            span = span.Slice(1);
+            this.x0 = BitConverter.ToUInt64(span);
+            span = span.Slice(sizeof(ulong));
+            this.x1 = BitConverter.ToUInt64(span);
+            span = span.Slice(sizeof(ulong));
+            this.x2 = BitConverter.ToUInt64(span);
+            span = span.Slice(sizeof(ulong));
+            this.x3 = BitConverter.ToUInt64(span);
+        }
+        else
+        {
+            this.keyValue = 0;
+            this.x0 = 0;
+            this.x1 = 0;
+            this.x2 = 0;
+            this.x3 = 0;
+        }
+    }
+
     internal PublicKey(PrivateKey privateKey)
     {
         this.keyValue = privateKey.KeyValue;

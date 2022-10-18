@@ -5,6 +5,7 @@ using BigMachines;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using LP;
+using LP.NetServices;
 using Netsphere;
 using Tinyhand;
 
@@ -45,6 +46,13 @@ public partial class RunnerMachine : Machine<Identifier>
         NodeAddress.TryParse(text, out var nodeAddress);
         this.NodeAddress = nodeAddress;
 
+        this.docker = DockerRunner.Create(this.logger, this.Information);
+        if (this.docker == null)
+        {
+            this.logger.TryGet(LogLevel.Fatal)?.Log($"No docker");
+            return StateResult.Terminate;
+        }
+
         this.logger.TryGet()?.Log($"Runner start");
         this.logger.TryGet()?.Log($"Root directory: {this.lpBase.RootDirectory}");
         this.logger.TryGet()?.Log($"{this.Information.ToString()}");
@@ -58,45 +66,99 @@ public partial class RunnerMachine : Machine<Identifier>
     [StateMethod(1)]
     protected async Task<StateResult> Check(StateParameter parameter)
     {
-        this.logger.TryGet()?.Log("Check");
-
-        var result = await RunnerHelper.ExecuteCommand(this.logger, string.Empty);
-        if (result == null)
+        if (this.docker == null || this.Information == null)
         {
             return StateResult.Terminate;
         }
 
-        var client = new DockerClientConfiguration().CreateClient();
-        try
+        if (this.checkRetry > 10)
         {
-            var containers = await client.Containers.ListContainersAsync(new() { Limit = 10, });
-            this.logger.TryGet()?.Log($"Docker: {containers.Count}");
+            return StateResult.Terminate;
+        }
 
-            var progress = new Progress<JSONMessage>();
-            await client.Images.CreateImageAsync(
-                new ImagesCreateParameters
-                {
-                    FromImage = "archidoc422/lpconsole",
-                    Tag = "latest",
-                }, null, progress);
-            var containerResponse = await client.Containers.CreateContainerAsync(new()
+        this.logger.TryGet()?.Log($"Check ({this.checkRetry++})");
+        var status = await this.GetLPStatus();
+        this.logger.TryGet()?.Log($"Check: {status}");
+
+        if (status == LPStatus.Running)
+        {// Running
+            this.checkRetry = 0;
+            this.ChangeState(State.Running);
+            return StateResult.Continue;
+        }
+        else if (status == LPStatus.NotRunning)
+        {// Run container
+            this.logger.TryGet()?.Log($"Start: {this.Information.Image}");
+            if (await this.docker.RunContainer() == false)
             {
-                Image = "archidoc422/lpconsole",
-            });
+                return StateResult.Terminate;
+            }
+
+            this.SetTimeout(TimeSpan.FromSeconds(10));
+            return StateResult.Continue;
         }
-        catch
+        else
+        {// Container
+            await this.docker.RestartContainer();
+            this.SetTimeout(TimeSpan.FromSeconds(10));
+            return StateResult.Continue;
+        }
+    }
+
+    [StateMethod(3)]
+    protected async Task<StateResult> Running(StateParameter parameter)
+    {
+        var result = await this.SendAcknowledge();
+        this.logger.TryGet()?.Log($"Running: {result}");
+        if (result != NetResult.Success)
         {
-            this.logger.TryGet(LogLevel.Fatal)?.Log($"No docker");
+            this.ChangeState(State.Check);
         }
 
-        this.logger.TryGet()?.Log($"Result: {result}");
-        return StateResult.Terminate;
+        this.SetTimeout(TimeSpan.FromSeconds(10));
         return StateResult.Continue;
     }
 
     public RunnerInformation? Information { get; private set; }
 
     public NodeAddress? NodeAddress { get; private set; }
+
+    private async Task<LPStatus> GetLPStatus()
+    {
+        if (await this.SendAcknowledge() == NetResult.Success)
+        {
+            return LPStatus.Running;
+        }
+
+        if (this.docker == null)
+        {
+            return LPStatus.NotRunning;
+        }
+
+        var containers = await this.docker.EnumerateContainersAsync();
+        if (containers.Count() > 0)
+        {
+            return LPStatus.Container;
+        }
+
+        return LPStatus.NotRunning;
+    }
+
+    private async Task<NetResult> SendAcknowledge()
+    {
+        if (this.NodeAddress == null)
+        {
+            return NetResult.NoNodeInformation;
+        }
+
+        using (var terminal = this.netControl.Terminal.Create(this.NodeAddress))
+        {
+            var remoteControl = terminal.GetService<IRemoteControlService>();
+            var result = await remoteControl.Acknowledge();
+            this.logger.TryGet()?.Log($"Acknowledge: {result}");
+            return result;
+        }
+    }
 
     private async Task<RunnerInformation?> LoadInformation(string path)
     {
@@ -105,7 +167,14 @@ public partial class RunnerMachine : Machine<Identifier>
             var utf8 = await File.ReadAllBytesAsync(path);
             var information = TinyhandSerializer.DeserializeFromUtf8<RunnerInformation>(utf8);
             if (information != null)
-            {
+            {// Success
+                // Update RunnerInformation
+                var update = TinyhandSerializer.SerializeToUtf8(information);
+                if (!update.SequenceEqual(utf8))
+                {
+                    await File.WriteAllBytesAsync(path, update);
+                }
+
                 return information;
             }
         }
@@ -124,4 +193,6 @@ public partial class RunnerMachine : Machine<Identifier>
     private ILogger<RunnerMachine> logger;
     private LPBase lpBase;
     private NetControl netControl;
+    private DockerRunner? docker;
+    private int checkRetry;
 }

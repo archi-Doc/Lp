@@ -8,9 +8,8 @@ namespace LP.NetServices;
 [NetServiceObject]
 internal class RemoteControlService : IRemoteControlService
 {// Remote -> LPRunner
-    public RemoteControlService(Runner runner)
+    public RemoteControlService()
     {
-        this.runner = runner;
     }
 
     public async NetTask RequestAuthorization(Token token)
@@ -39,6 +38,6 @@ internal class RemoteControlService : IRemoteControlService
 
     public bool IsAuthorized => this.token != null;
 
-    private Runner runner;
+    // private Runner runner;
     private Token? token;
 }
