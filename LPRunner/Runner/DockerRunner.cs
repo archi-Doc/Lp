@@ -93,7 +93,7 @@ internal class DockerRunner
                 {
                     Mounts = new Mount[]
                     {
-                        new Mount() { Type = "bind", Source = "c:\\app\\docker", Target = "/lp", },
+                        new Mount() { Type = "bind", Source = "$(pwd)/lp", Target = "/lp", },
                     },
 
                     PortBindings = new Dictionary<string, IList<PortBinding>>

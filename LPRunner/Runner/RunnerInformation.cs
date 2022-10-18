@@ -17,7 +17,7 @@ public partial record RunnerInformation
             Tag = "latest",
             Directory = "lp",
             TargetPort = 49152,
-            RunCommand = "docker run -it --mount type=bind,source=$(pwd)/lp,destination=/lp --rm -p 49152:49152/udp archidoc422/lpconsole -rootdir \"/lp\" -ns [-port 49152 -test true -alternative false]",
+            Arguments = "-rootdir \"/lp\" -ns [-port 49152 -test true -alternative false]",
             PublicKeyHex = PrivateKey.Create().ToPublicKey().ToString(),
         };
 
@@ -29,7 +29,7 @@ public partial record RunnerInformation
 
     public int TargetPort { get; set; }
 
-    public string RunCommand { get; set; } = string.Empty;
+    public string Arguments { get; set; } = string.Empty;
 
     public string PublicKeyHex { get; set; } = string.Empty;
 
