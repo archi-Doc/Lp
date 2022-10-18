@@ -98,7 +98,7 @@ internal class DockerRunner
 
                     PortBindings = new Dictionary<string, IList<PortBinding>>
                     {
-                        { exposedPort, new List<PortBinding> { new PortBinding { HostIP = "", HostPort = this.information.TargetPort.ToString() } } },
+                        { exposedPort, new List<PortBinding> { new PortBinding { HostIP = "localhost", HostPort = this.information.TargetPort.ToString() } } },
                     },
                 },
             });
