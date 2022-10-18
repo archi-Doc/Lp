@@ -9,5 +9,7 @@ public interface IRemoteControlService : INetService
 {
     public NetTask RequestAuthorization(Token token);
 
-    public NetTask Restart();
+    public NetTask<NetResult> Acknowledge();
+
+    public NetTask<NetResult> Restart();
 }
