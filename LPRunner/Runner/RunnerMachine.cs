@@ -71,6 +71,18 @@ public partial class RunnerMachine : Machine<Identifier>
         {
             var containers = await client.Containers.ListContainersAsync(new() { Limit = 10, });
             this.logger.TryGet()?.Log($"Docker: {containers.Count}");
+
+            var progress = new Progress<JSONMessage>();
+            await client.Images.CreateImageAsync(
+                new ImagesCreateParameters
+                {
+                    FromImage = "archidoc422/lpconsole",
+                    Tag = "latest",
+                }, null, progress);
+            var containerResponse = await client.Containers.CreateContainerAsync(new()
+            {
+                Image = "archidoc422/lpconsole",
+            });
         }
         catch
         {
