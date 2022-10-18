@@ -120,7 +120,10 @@ public class NetControl : UnitBase, IUnitPreparable
 
         // Responders
         DefaultResponder.Register(this);
+    }
 
+    public void CreateMachines()
+    {
         // Machines
         this.BigMachine.CreateNew<EssentialNetMachine.Interface>(Identifier.Zero);
         this.BigMachine.CreateNew<NtpMachine.Interface>(Identifier.Zero);

@@ -190,11 +190,12 @@ public class Control : ILogInformation
                 // Create optional instances
                 this.Context.CreateInstances();
 
-                // Machines
-                control.BigMachine.CreateNew<LP.Machines.LogTesterMachine.Interface>(Identifier.Zero);
-
                 // Prepare
                 this.Context.SendPrepare(new());
+
+                // Machines
+                control.BigMachine.CreateNew<LP.Machines.LogTesterMachine.Interface>(Identifier.Zero);
+                control.NetControl.CreateMachines();
             }
             catch
             {

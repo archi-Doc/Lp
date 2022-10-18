@@ -56,7 +56,8 @@ public sealed partial class AuthorityData
     public long LifeMics { get; private set; }
 
     [Key(3)]
-    public Value[] Values { get; private set; } = Array.Empty<Value>(); // public Value Values { get; private set; } = default!;
+    // public Value[] Values { get; private set; } = Array.Empty<Value>();
+    public Value Values { get; private set; } = default!;
 
     private PrivateKey GetOrCreatePrivateKey(Credit credit)
     {
