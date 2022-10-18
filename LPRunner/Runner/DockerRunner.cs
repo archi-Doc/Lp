@@ -81,7 +81,7 @@ internal class DockerRunner
         // Create container
         var exposedPort = this.information.TargetPort.ToString();
         this.logger.TryGet()?.Log($"Start container: {this.information.Image}");
-        RunnerHelper.DispatchCommand(this.logger, "docker run -it --mount type=bind,source=C:\\App\\docker,destination=/lp --rm -p 49152:49152/udp archidoc422/lpconsole -rootdir \"/lp\" -ns [-port 49152 -test true -alternative false]");
+        RunnerHelper.DispatchCommand(this.logger, "docker run -it --mount type=bind,source=$(pwd)/lp,destination=/lp --rm -p 49152:49152/udp archidoc422/lpconsole -rootdir \"/lp\" -ns [-port 49152 -test true -alternative false]"); // C:\\App\\docker
         /*try
         {
             var containerResponse = await this.client.Containers.CreateContainerAsync(new()
