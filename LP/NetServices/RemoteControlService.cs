@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using Netsphere;
 
 namespace LP.NetServices;
@@ -21,6 +22,7 @@ internal class RemoteControlService : IRemoteControlService
     public async NetTask<NetResult> Acknowledge()
     {
         var callContext = CallContext.Current;
+        await Console.Out.WriteLineAsync(callContext.ServerContext.Terminal.NodeAddress.ToString();
         if (callContext.ServerContext.Terminal.NodeAddress.IsLocalLoopbackAddress())
         {
             return NetResult.Success;

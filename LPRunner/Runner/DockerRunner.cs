@@ -81,24 +81,29 @@ internal class DockerRunner
         // Create container
         var exposedPort = this.information.TargetPort.ToString();
         this.logger.TryGet()?.Log($"Start container: {this.information.Image}");
-        try
+        RunnerHelper.DispatchCommand(this.logger, "docker run -it --mount type=bind,source=C:\\App\\docker,destination=/lp --rm -p 49152:49152/udp archidoc422/lpconsole -rootdir \"/lp\" -ns [-port 49152 -test true -alternative false]");
+        /*try
         {
             var containerResponse = await this.client.Containers.CreateContainerAsync(new()
             {// docker run -it --mount type=bind,source=$(pwd)/lp,destination=/lp --rm -p 49152:49152/udp
                 Image = this.information.Image,
                 // WorkingDir = "c:\\app\\docker", // this.information.Directory,
+                AttachStdin = false,
+                AttachStderr = false,
+                AttachStdout = false,
                 Cmd = new[] { "-rootdir \"/lp\" -ns [-port 49152 -test true -alternative false]" },
                 ExposedPorts = new Dictionary<string, EmptyStruct> { { exposedPort, default } },
                 HostConfig = new HostConfig
                 {
                     Mounts = new Mount[]
                     {
-                        new Mount() { Type = "bind", Source = "/home/ubuntu/lp", Target = "/lp", },
+                        // new Mount() { Type = "bind", Source = "/home/ubuntu/lp", Target = "/lp", },
+                        new Mount() { Type = "bind", Source = "C:\\App\\docker", Target = "/lp", },
                     },
 
                     PortBindings = new Dictionary<string, IList<PortBinding>>
                     {
-                        { exposedPort, new List<PortBinding> { new PortBinding { HostIP = "localhost", HostPort = this.information.TargetPort.ToString() } } },
+                        { exposedPort, new List<PortBinding> { new PortBinding { HostIP = "localhost", HostPort = this.information.TargetPort.ToString() + "/udp" } } },
                     },
                 },
             });
@@ -110,7 +115,7 @@ internal class DockerRunner
         {
             this.logger.TryGet()?.Log("Failure");
             return false;
-        }
+        }*/
 
         return true;
     }

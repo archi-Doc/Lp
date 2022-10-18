@@ -8,7 +8,40 @@ namespace LPRunner;
 
 internal static class RunnerHelper
 {
-    public static async Task<string?> ExecuteCommand(ILogger logger, string command)
+    public static void DispatchCommand(ILogger logger, string command)
+    {
+        string shellName;
+        if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+        {
+            shellName = "PowerShell.exe";
+        }
+        else
+        {
+            shellName = @"/bin/bash";
+        }
+
+        logger.TryGet()?.Log($"Command: {command}");
+
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = shellName,
+            Arguments = "-c \"" + command + "\"",
+            RedirectStandardOutput = true,
+            UseShellExecute = false,
+        };
+
+        try
+        {
+            var process = new Process { StartInfo = startInfo };
+            process.Start();
+        }
+        catch
+        {
+            logger.TryGet(LogLevel.Fatal)?.Log("A fatal error occurred during execution.");
+        }
+    }
+
+    /*public static async Task<string?> ExecuteCommand(ILogger logger, string command)
     {
         string shellName;
         if (Environment.OSVersion.Platform == PlatformID.Win32NT)
@@ -54,5 +87,5 @@ internal static class RunnerHelper
             logger.TryGet(LogLevel.Fatal)?.Log("A fatal error occurred during execution.");
             return null;
         }
-    }
+    }*/
 }
