@@ -130,7 +130,7 @@ public class Runner
 
     public async Task ProcessStart()
     {
-        await this.ExecuteCommand(this.Information.RunCommand);
+        // await this.ExecuteCommand(this.Information.RunCommand);
 
         await Task.Delay(5000, ThreadCore.Root.CancellationToken);
 
