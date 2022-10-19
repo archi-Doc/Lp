@@ -88,9 +88,9 @@ internal class DockerRunner
             {// docker run -it --mount type=bind,source=$(pwd)/lp,destination=/lp --rm -p 49152:49152/udp
                 Image = this.information.Image,
                 // WorkingDir = "c:\\app\\docker", // this.information.Directory,
-                AttachStdin = true,
-                AttachStderr = true,
-                AttachStdout = true,
+                // AttachStdin = false,
+                // AttachStderr = false,
+                // AttachStdout = false,
                 Tty = true,
                 Cmd = new[] { "-rootdir \"/lp\" -ns [-port 49152 -test true -alternative false]" },
                 ExposedPorts = new Dictionary<string, EmptyStruct> { { exposedPort, default } },
