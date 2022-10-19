@@ -21,12 +21,13 @@ public partial class RunnerMachine : Machine<Identifier>
         Running,
     }
 
-    public RunnerMachine(ILogger<RunnerMachine> logger, BigMachine<Identifier> bigMachine, LPBase lPBase, NetControl netControl)
+    public RunnerMachine(ILogger<RunnerMachine> logger, BigMachine<Identifier> bigMachine, LPBase lPBase, NetControl netControl, RunnerInformation information)
         : base(bigMachine)
     {
         this.logger = logger;
         this.lpBase = lPBase;
         this.netControl = netControl;
+        this.Information = information;
 
         this.DefaultTimeout = TimeSpan.FromSeconds(1);
     }
@@ -34,15 +35,7 @@ public partial class RunnerMachine : Machine<Identifier>
     [StateMethod(0)]
     protected async Task<StateResult> Initial(StateParameter parameter)
     {
-        var information = await this.LoadInformation(Path.Combine(this.lpBase.RootDirectory, RunnerInformation.Path));
-        if (information == null)
-        {// Could not load RunnerInformation.
-            return StateResult.Terminate;
-        }
-
-        this.Information = information;
-
-        var text = $"127.0.0.1:{this.Information.TargetPort}";
+        var text = $"127.0.0.1:{this.Information.DestinationPort}";
         NodeAddress.TryParse(text, out var nodeAddress);
         this.NodeAddress = nodeAddress;
 
@@ -121,7 +114,7 @@ public partial class RunnerMachine : Machine<Identifier>
         return StateResult.Continue;
     }
 
-    public RunnerInformation? Information { get; private set; }
+    public RunnerInformation Information { get; private set; }
 
     public NodeAddress? NodeAddress { get; private set; }
 
@@ -160,36 +153,6 @@ public partial class RunnerMachine : Machine<Identifier>
             this.logger.TryGet()?.Log($"Acknowledge: {result}");
             return result;
         }
-    }
-
-    private async Task<RunnerInformation?> LoadInformation(string path)
-    {
-        try
-        {
-            var utf8 = await File.ReadAllBytesAsync(path);
-            var information = TinyhandSerializer.DeserializeFromUtf8<RunnerInformation>(utf8);
-            if (information != null)
-            {// Success
-                // Update RunnerInformation
-                var update = TinyhandSerializer.SerializeToUtf8(information);
-                if (!update.SequenceEqual(utf8))
-                {
-                    await File.WriteAllBytesAsync(path, update);
-                }
-
-                return information;
-            }
-        }
-        catch
-        {
-        }
-
-        await File.WriteAllBytesAsync(path, TinyhandSerializer.SerializeToUtf8(RunnerInformation.Create()));
-
-        this.logger.TryGet(LogLevel.Error)?.Log($"'{path}' could not be found and was created.");
-        this.logger.TryGet(LogLevel.Error)?.Log($"Modify '{RunnerInformation.Path}', and restart LPRunner.");
-
-        return null;
     }
 
     private ILogger<RunnerMachine> logger;

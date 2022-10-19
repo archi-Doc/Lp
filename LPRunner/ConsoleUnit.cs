@@ -1,12 +1,14 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Arc.Unit;
+using BigMachines;
 using LP;
 using LP.Data;
 using LP.NetServices;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere;
 using SimpleCommandLine;
+using Tinyhand;
 
 namespace LPRunner;
 
@@ -21,8 +23,8 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             this.Configure(context =>
             {
                 context.AddSingleton<ConsoleUnit>();
+                context.AddSingleton<RunnerInformation>();
                 context.CreateInstance<ConsoleUnit>();
-                context.AddSingleton<Runner>();
 
                 // Command
                 context.AddCommand(typeof(ConsoleCommand));
@@ -77,7 +79,19 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             // Create optional instances
             this.Context.CreateInstances();
 
+            var lpBase = this.Context.ServiceProvider.GetRequiredService<LPBase>();
+            var logger = this.Context.ServiceProvider.GetRequiredService<ILogger<RunnerMachine>>();
+            var information = await this.LoadInformation(logger, Path.Combine(lpBase.RootDirectory, RunnerInformation.Path));
+            if (information == null)
+            {// Could not load RunnerInformation.
+                return;
+            }
+
+            var runnerInformation = this.Context.ServiceProvider.GetRequiredService<RunnerInformation>();
+            TinyhandSerializer.DeserializeWith(runnerInformation, TinyhandSerializer.Serialize(information)); // tempcode
+
             var options = new LP.Data.NetsphereOptions();
+            options.Port = information.RunnerPort;
             var param = new NetControl.Unit.Param(true, () => new ServerContext(), () => new CallContext(), "runner", options, true);
             await this.RunStandalone(param);
 
@@ -93,6 +107,38 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             await SimpleParser.ParseAndRunAsync(this.Context.Commands, args, parserOptions);
 
             await this.Context.SendTerminateAsync(new());
+        }
+
+        private async Task<RunnerInformation?> LoadInformation(ILogger logger, string path)
+        {
+            try
+            {
+                var utf8 = await File.ReadAllBytesAsync(path);
+                var information = TinyhandSerializer.DeserializeFromUtf8<RunnerInformation>(utf8);
+                if (information != null)
+                {// Success
+                 // Update RunnerInformation
+                    information.SetDefault();
+                    var update = TinyhandSerializer.SerializeToUtf8(information);
+                    if (!update.SequenceEqual(utf8))
+                    {
+                        await File.WriteAllBytesAsync(path, update);
+                    }
+
+                    return information;
+                }
+            }
+            catch
+            {
+            }
+
+            var newInformation = new RunnerInformation().SetDefault();
+            await File.WriteAllBytesAsync(path, TinyhandSerializer.SerializeToUtf8(newInformation));
+
+            logger.TryGet(LogLevel.Error)?.Log($"'{path}' could not be found and was created.");
+            logger.TryGet(LogLevel.Error)?.Log($"Modify '{RunnerInformation.Path}', and restart LPRunner.");
+
+            return null;
         }
     }
 

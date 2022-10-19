@@ -49,7 +49,7 @@ public class Control : ILogInformation
 
                 // RPC / Services
                 context.AddTransient<NetServices.BenchmarkServiceImpl>();
-                context.AddTransient<NetServices.RemoteControlService>();
+                // context.AddTransient<NetServices.RemoteControlService>(); // Disabled
 
                 // RPC / Filters
                 context.AddTransient<NetServices.TestOnlyFilter>();

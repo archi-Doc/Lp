@@ -11,10 +11,9 @@ namespace LPRunner;
 [SimpleCommand("run", Default = true)]
 public class ConsoleCommand : ISimpleCommandAsync
 {
-    public ConsoleCommand(ILogger<ConsoleCommand> logger, Runner runner, BigMachine<Identifier> bigMachine, NetControl netControl)
+    public ConsoleCommand(ILogger<ConsoleCommand> logger, BigMachine<Identifier> bigMachine, NetControl netControl)
     {
         this.logger = logger;
-        this.runner = runner;
         this.bigMachine = bigMachine;
         this.netControl = netControl;
     }
@@ -42,7 +41,6 @@ public class ConsoleCommand : ISimpleCommandAsync
     }
 
     private ILogger<ConsoleCommand> logger;
-    private Runner runner;
     private BigMachine<Identifier> bigMachine;
     private NetControl netControl;
 }

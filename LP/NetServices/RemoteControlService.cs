@@ -5,6 +5,7 @@ using Netsphere;
 
 namespace LP.NetServices;
 
+/*
 [NetServiceObject]
 internal class RemoteControlService : IRemoteControlService
 {// This class is unsafe and is limited to be accessed from loopback addresses.
@@ -50,3 +51,4 @@ internal class RemoteControlService : IRemoteControlService
 
     private Control control;
 }
+*/
