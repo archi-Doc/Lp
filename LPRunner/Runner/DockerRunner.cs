@@ -38,6 +38,24 @@ internal class DockerRunner
         return list.Where(x => x.Image.StartsWith(this.information.Image));
     }
 
+    public async Task RemoveContainer()
+    {// Remove containers
+        var array = (await this.EnumerateContainersAsync()).ToArray();
+        foreach (var x in array)
+        {
+            this.logger.TryGet()?.Log($"Delete container: {x.ID}");
+            try
+            {
+                await this.client.Containers.RemoveContainerAsync(x.ID, new());
+                // this.logger.TryGet()?.Log("Success");
+            }
+            catch
+            {
+                // this.logger.TryGet()?.Log("Failure");
+            }
+        }
+    }
+
     public async Task<bool> RunContainer()
     {
         // Create image
@@ -62,22 +80,6 @@ internal class DockerRunner
             return false;
         }
 
-        // Remove containers
-        var array = (await this.EnumerateContainersAsync()).ToArray();
-        foreach (var x in array)
-        {
-            this.logger.TryGet()?.Log($"Delete container: {x.ID}");
-            try
-            {
-                await this.client.Containers.RemoveContainerAsync(x.ID, new());
-                this.logger.TryGet()?.Log("Success");
-            }
-            catch
-            {
-                this.logger.TryGet()?.Log("Failure");
-            }
-        }
-
         // Create container
         var exposedPort = this.information.TargetPort.ToString() + "/udp";
         this.logger.TryGet()?.Log($"Start container: {this.information.Image}");
@@ -88,9 +90,9 @@ internal class DockerRunner
             {// docker run -it --mount type=bind,source=$(pwd)/lp,destination=/lp --rm -p 49152:49152/udp
                 Image = this.information.Image,
                 // WorkingDir = "c:\\app\\docker", // this.information.Directory,
-                // AttachStdin = false,
-                // AttachStderr = false,
-                // AttachStdout = false,
+                AttachStdin = true,
+                AttachStderr = true,
+                AttachStdout = true,
                 Tty = true,
                 Cmd = new[] { "-rootdir \"/lp\" -ns [-port 49152 -test true -alternative false]" },
                 ExposedPorts = new Dictionary<string, EmptyStruct> { { exposedPort, default } },
@@ -98,8 +100,8 @@ internal class DockerRunner
                 {
                     Mounts = new Mount[]
                     {
-                        // new Mount() { Type = "bind", Source = "/home/ubuntu/lp", Target = "/lp", },
-                        new Mount() { Type = "bind", Source = "C:\\App\\docker", Target = "/lp", },
+                        new Mount() { Type = "bind", Source = "/home/ubuntu/lp", Target = "/lp", },
+                        // new Mount() { Type = "bind", Source = "C:\\App\\docker", Target = "/lp", },
                     },
 
                     PortBindings = new Dictionary<string, IList<PortBinding>>

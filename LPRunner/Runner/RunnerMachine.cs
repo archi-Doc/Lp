@@ -59,6 +59,9 @@ public partial class RunnerMachine : Machine<Identifier>
         this.logger.TryGet()?.Log("Press Ctrl+C to exit.");
         await Console.Out.WriteLineAsync();
 
+        // Delete container
+        await this.docker.RemoveContainer();
+
         this.ChangeState(State.Check, true);
         return StateResult.Continue;
     }
