@@ -78,7 +78,7 @@ public partial class RunnerMachine : Machine<Identifier>
 
         this.logger.TryGet()?.Log($"Check ({this.checkRetry++})");
         var status = await this.GetLPStatus();
-        this.logger.TryGet()?.Log($"Check: {status}");
+        this.logger.TryGet()?.Log($"Status: {status}");
 
         if (status == LPStatus.Running)
         {// Running
@@ -88,7 +88,6 @@ public partial class RunnerMachine : Machine<Identifier>
         }
         else if (status == LPStatus.NotRunning)
         {// Run container
-            this.logger.TryGet()?.Log($"Start: {this.Information.Image}");
             if (await this.docker.RunContainer() == false)
             {
                 return StateResult.Terminate;
