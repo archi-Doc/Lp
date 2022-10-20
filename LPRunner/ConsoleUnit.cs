@@ -24,6 +24,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             {
                 context.AddSingleton<ConsoleUnit>();
                 context.AddSingleton<RunnerInformation>();
+                context.AddSingleton<RunnerBase>();
                 context.CreateInstance<ConsoleUnit>();
 
                 // Command
@@ -63,6 +64,10 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
                 options.Formatter.EnableColor = true;
             });
 
+            this.SetupOptions<RunnerBase>((context, runnerBase) =>
+            {// RunnerBase
+            });
+
             this.AddBuilder(new NetControl.Builder());
         }
     }
@@ -87,8 +92,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
                 return;
             }
 
-            var runnerInformation = this.Context.ServiceProvider.GetRequiredService<RunnerInformation>();
-            TinyhandSerializer.DeserializeWith(runnerInformation, TinyhandSerializer.Serialize(information)); // tempcode
+            this.Context.ServiceProvider.GetRequiredService<RunnerBase>().Information = information;
 
             var options = new LP.Data.NetsphereOptions();
             options.Port = information.RunnerPort;
