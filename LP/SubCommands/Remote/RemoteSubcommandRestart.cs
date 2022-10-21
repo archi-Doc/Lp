@@ -24,15 +24,10 @@ public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandResta
             return;
         }
 
-        var result = this.authority.TryGetInterface(options.Authority, 0, out var authorityInterface);
-        if (result != AuthorityResult.Success)
+        var authorityKey = await this.authority.GetKeyAsync(options.Authority);
+        if (authorityKey == null)
         {
             this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Authority.NotFound, options.Authority);
-            return;
-        }
-
-        if (await authorityInterface.Prepare() != AuthorityResult.Success)
-        {
             return;
         }
 

@@ -19,7 +19,7 @@ public class AuthoritySubcommandNew : ISimpleCommandAsync<AuthoritySubcommandNew
     public async Task RunAsync(AuthoritySubcommandNewOptions option, string[] args)
     {
         var seconds = option.Seconds < 0 ? 0 : option.Seconds;
-        var authorityInfo = new AuthorityData(option.Seedphrase, option.Lifetime, Mics.FromSeconds(seconds));
+        var authorityInfo = new AuthorityKey(option.Seedphrase, option.Lifetime, Mics.FromSeconds(seconds));
         var result = this.Control.Authority.NewAuthority(option.Name, option.Passphrase ?? string.Empty, authorityInfo);
 
         if (result == AuthorityResult.Success)

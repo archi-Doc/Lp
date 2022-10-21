@@ -45,6 +45,7 @@ Authority = {
     Created = "Authority '{0}' is successfully created"
     Removed = "Authority '{0}' is successfully removed"
     NotFound = "Authority '{0}' is not found"
+    NotAvailable = "Could not get Authority '{0}'"
     EnterPassword = "Enter Authority '{0}' password"
 }
 

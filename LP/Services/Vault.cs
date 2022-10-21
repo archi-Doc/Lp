@@ -156,26 +156,25 @@ public partial class Vault
     {
         lock (this.syncObject)
         {
-            var node = this.nameToDecrypted.GetLowerBound(prefix);
-            var upper = this.nameToDecrypted.GetUpperBound(prefix + "\uffff");
-            if (node == null || upper == null)
+            (var lower, var upper) = this.nameToDecrypted.GetRange(prefix, prefix + "\uffff");
+            if (lower == null || upper == null)
             {
                 return Array.Empty<string>();
             }
 
             var list = new List<string>();
-            while (node != null)
+            while (lower != null)
             {
                 // list.Add(node.Key.Substring(prefix.Length));
-                list.Add(node.Key);
+                list.Add(lower.Key);
 
-                if (node == upper)
+                if (lower == upper)
                 {
                     break;
                 }
                 else
                 {
-                    node = node.Next;
+                    lower = lower.Next;
                 }
             }
 

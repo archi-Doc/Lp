@@ -23,31 +23,28 @@ public class Authority
     public string[] GetNames()
         => this.vault.GetNames(VaultPrefix).Select(x => x.Substring(VaultPrefix.Length)).ToArray();
 
-    public AuthorityResult TryGetInterface(string name, long salt, out AuthorityInterface authorityInterface)
+    public async Task<AuthorityKey?> GetKeyAsync(string name)
     {
-        authorityInterface = default;
+        AuthorityInterface? authorityInterface;
         lock (this.syncObject)
         {
-            if (this.nameToAuthorityKey.TryGetValue(name, out var authorityKey))
-            {
-                authorityInterface = new(authorityKey, salt);
-                return AuthorityResult.Success;
-            }
+            if (!this.nameToInterface.TryGetValue(name, out authorityInterface))
+            {// New interface
+                var vaultName = GetVaultName(name);
+                if (!this.vault.TryGet(vaultName, out var decrypted))
+                {// Not found
+                    return null;
+                }
 
-            var vaultName = GetVaultName(name);
-            if (!this.vault.TryGet(vaultName, out var decrypted))
-            {
-                return AuthorityResult.NotFound;
+                authorityInterface = new AuthorityInterface(this, name, decrypted);
+                this.nameToInterface.Add(name, authorityInterface);
             }
-
-            authorityKey = new AuthorityKey(this, name, decrypted);
-            this.nameToAuthorityKey.Add(name, authorityKey);
-            authorityInterface = new(authorityKey, salt);
-            return AuthorityResult.Success;
         }
+
+        return await authorityInterface.Prepare().ConfigureAwait(false);
     }
 
-    public AuthorityResult NewAuthority(string name, string passPhrase, AuthorityData authorityObject)
+    public AuthorityResult NewAuthority(string name, string passPhrase, AuthorityKey authorityKey)
     {
         var vaultName = GetVaultName(name);
 
@@ -58,7 +55,7 @@ public class Authority
                 return AuthorityResult.AlreadyExists;
             }
 
-            var encrypted = PasswordEncrypt.Encrypt(TinyhandSerializer.Serialize(authorityObject), passPhrase);
+            var encrypted = PasswordEncrypt.Encrypt(TinyhandSerializer.Serialize(authorityKey), passPhrase);
             if (this.vault.TryAdd(vaultName, encrypted))
             {
                 return AuthorityResult.Success;
@@ -77,7 +74,7 @@ public class Authority
     {
         lock (this.syncObject)
         {
-            var authorityRemoved = this.nameToAuthorityKey.Remove(name);
+            var authorityRemoved = this.nameToInterface.Remove(name);
             var vaultRemoved = this.vault.Remove(GetVaultName(name));
 
             if (vaultRemoved)
@@ -99,5 +96,5 @@ public class Authority
 #pragma warning restore SA1401
     private Vault vault;
     private object syncObject = new();
-    private Dictionary<string, AuthorityKey> nameToAuthorityKey = new();
+    private Dictionary<string, AuthorityInterface> nameToInterface = new();
 }
