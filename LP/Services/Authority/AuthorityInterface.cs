@@ -16,6 +16,7 @@ public readonly struct AuthorityInterface
 
     public Task<(AuthorityResult Result, Token Token)> CreateToken(Credit credit, ulong salt)
         => this.authorityKey.CreateToken(credit, salt);
+
     public Task<(AuthorityResult Result, byte[] Signature)> SignData(Credit credit, byte[] data)
         => this.authorityKey.SignData(credit, data);
 

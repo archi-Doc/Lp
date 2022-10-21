@@ -56,7 +56,7 @@ public class LPBase : ILogInformation
 
     public string NodeName { get; private set; } = default!;
 
-    public PublicKey? RemotePublicKey { get; private set; }
+    public PublicKey RemotePublicKey { get; private set; }
 
     public LPOptions Options { get; private set; } = default!;
 

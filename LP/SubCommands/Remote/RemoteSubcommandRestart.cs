@@ -43,7 +43,7 @@ public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandResta
             Debug.Assert(token.Veri);
 
 
-            var token = new Token(Token.Type.RequestAuthorization, Mics.GetFixedUtcNow(), 
+            var token = new Token(Token.Type.RequestAuthorization, Mics.GetFixedUtcNow(),
             await authorityInterface.CreateToken(Credit.Default, CallContext.Current.ServerContext.Terminal.Salt, out var token);*/
 
             var service = terminal.GetService<IRemoteControlService>();

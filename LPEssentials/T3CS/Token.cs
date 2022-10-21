@@ -84,6 +84,20 @@ public sealed partial class Token : IVerifiable // , IEquatable<Token>
         }
     }
 
+    public bool ValidateAndVerify(PublicKey publicKey)
+    {
+        if (!publicKey.IsValid())
+        {
+            return false;
+        }
+        else if (!publicKey.Equals(this.PublicKey))
+        {
+            return false;
+        }
+
+        return this.ValidateAndVerify();
+    }
+
     [Key(0)]
     public Type TokenType { get; private set; }
 
