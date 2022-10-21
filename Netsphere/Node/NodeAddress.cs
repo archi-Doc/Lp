@@ -128,6 +128,9 @@ public partial class NodeAddress : IEquatable<NodeAddress>
         };
     }
 
+    public bool IsValidPort()
+        => this.Port >= NetControl.MinPort && this.Port <= NetControl.MaxPort;
+
     public bool IsLocalLoopbackAddress()
     {
         return this.Address.AddressFamily switch

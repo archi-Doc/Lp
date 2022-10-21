@@ -8,7 +8,7 @@ using Tinyhand;
 
 namespace LP.Subcommands.Dump;
 
-[SimpleCommand("lp", Default = true)]
+[SimpleCommand("lp")]
 public class InfoSubcommandLP : ISimpleCommand<DumpSubcommandInfoOptions>
 {
     public InfoSubcommandLP(Control control)

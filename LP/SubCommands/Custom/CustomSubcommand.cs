@@ -20,7 +20,7 @@ public class CustomSubcommand : SimpleCommandGroup<CustomSubcommand>
     }
 
     public CustomSubcommand(UnitContext context)
-        : base(context)
+        : base(context, "ls")
     {
     }
 }

@@ -20,6 +20,7 @@ public partial record RunnerInformation
 
     public RunnerInformation SetDefault()
     {
+        this.NodePublicKeyBase64 = string.IsNullOrEmpty(this.NodePublicKeyBase64) ? NodePrivateKey.Create().ToPublicKey().ToString() : this.NodePublicKeyBase64;
         this.Image = string.IsNullOrEmpty(this.Image) ? "archidoc422/lpconsole" : this.Image;
         this.Tag = string.IsNullOrEmpty(this.Tag) ? "latest" : this.Tag;
         this.RunnerPort = this.RunnerPort == 0 ? 49999 : this.RunnerPort;
@@ -30,6 +31,8 @@ public partial record RunnerInformation
         this.RemotePublicKeyBase64 = string.IsNullOrEmpty(this.RemotePublicKeyBase64) ? PrivateKey.Create().ToPublicKey().ToString() : this.RemotePublicKeyBase64;
         return this;
     }
+
+    public string NodePublicKeyBase64 { get; set; } = string.Empty;
 
     public string Image { get; set; } = string.Empty;
 

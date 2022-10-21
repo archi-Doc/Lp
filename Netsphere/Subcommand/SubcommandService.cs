@@ -50,9 +50,9 @@ public static partial class SubcommandService
                 return false;
             }
 
-            if (!address.IsValid())
+            if (!address.IsValidPort())
             {
-                logger?.TryGet(LogLevel.Error)?.Log($"Invalid node address: {node.ToString()}");
+                logger?.TryGet(LogLevel.Error)?.Log($"Invalid port: {node.ToString()}");
                 return false;
             }
 

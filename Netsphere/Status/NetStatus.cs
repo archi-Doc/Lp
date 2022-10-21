@@ -37,7 +37,7 @@ public class NetStatus
         {
             if (this.myNodeInformation == null)
             {
-                this.myNodeInformation = new(new NodeAddress(IPAddress.None, 0));
+                this.myNodeInformation = new(new NodeAddress(IPAddress.None, (ushort)this.NetBase.NetsphereOptions.Port));
                 this.myNodeInformation.PublicKey = this.NetBase.NodePublicKey;
             }
 

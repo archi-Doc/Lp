@@ -13,6 +13,16 @@ internal sealed class AuthorityKey
         this.encrypted = encrypted;
     }
 
+    public async Task<(AuthorityResult Result, Token? Token)> CreateToken(Credit credit, ulong salt)
+    {
+        var result = await this.Prepare().ConfigureAwait(false);
+        if (result != AuthorityResult.Success)
+        {
+            return (result, null);
+        }
+
+    }
+
     public async Task<(AuthorityResult Result, byte[] Signature)> SignData(Credit credit, byte[] data)
     {
         var result = await this.Prepare().ConfigureAwait(false);
@@ -59,7 +69,7 @@ internal sealed class AuthorityKey
 
     public long ExpirationMics { get; private set; }
 
-    private async Task<AuthorityResult> Prepare()
+    internal async Task<AuthorityResult> Prepare()
     {
         if (this.authorityData != null)
         {

@@ -76,6 +76,7 @@ public class Control : ILogInformation
                 LP.Subcommands.NodeSubcommand.Configure(context);
                 LP.Subcommands.AuthoritySubcommand.Configure(context);
                 LP.Subcommands.CustomSubcommand.Configure(context);
+                LP.Subcommands.RemoteSubcommand.Configure(context);
             });
 
             this.SetupOptions<FileLoggerOptions>((context, options) =>
