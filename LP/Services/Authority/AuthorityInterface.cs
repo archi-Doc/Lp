@@ -14,6 +14,8 @@ public readonly struct AuthorityInterface
 
     // public AuthorityInterface WithSalt(long salt) => new AuthorityInterface(this.authorityKey, salt);
 
+    public Task<(AuthorityResult Result, Token Token)> CreateToken(Credit credit, ulong salt)
+        => this.authorityKey.CreateToken(credit, salt);
     public Task<(AuthorityResult Result, byte[] Signature)> SignData(Credit credit, byte[] data)
         => this.authorityKey.SignData(credit, data);
 
@@ -22,6 +24,8 @@ public readonly struct AuthorityInterface
 
     public Task<(AuthorityResult Result, AuthorityData? AuthorityData)> GetInfo()
         => this.authorityKey.GetInfo();
+
+    internal Task<AuthorityResult> Prepare() => this.authorityKey.Prepare();
 
     public readonly long Salt;
     private readonly AuthorityKey authorityKey;

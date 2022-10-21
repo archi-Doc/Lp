@@ -8,6 +8,8 @@ namespace LP;
 [TinyhandObject]
 public sealed partial class Token : IVerifiable // , IEquatable<Token>
 {
+    public const long DefaultMics = Mics.MicsPerMinute * 1;
+
     public enum Type
     {
         RequestAuthorization,
@@ -15,11 +17,11 @@ public sealed partial class Token : IVerifiable // , IEquatable<Token>
         RequestSummary,
     }
 
-    public Token(Token.Type type, long expirationMics, PublicKey publicKey, Identifier targetIdentifier, Linkage? targetLinkage)
+    public Token(Token.Type type, ulong salt, long expirationMics, Identifier targetIdentifier, Linkage? targetLinkage)
     {
         this.TokenType = type;
+        this.Salt = salt;
         this.ExpirationMics = expirationMics;
-        this.PublicKey = publicKey;
         this.TargetIdentifier = targetIdentifier;
         this.TargetLinkage = targetLinkage;
     }
@@ -44,10 +46,7 @@ public sealed partial class Token : IVerifiable // , IEquatable<Token>
 
     public bool Sign(PrivateKey privateKey)
     {
-        if (!this.PublicKey.IsSameKey(privateKey))
-        {
-            return false;
-        }
+        this.PublicKey = privateKey.ToPublicKey();
 
         try
         {
@@ -89,15 +88,18 @@ public sealed partial class Token : IVerifiable // , IEquatable<Token>
     public Type TokenType { get; private set; }
 
     [Key(1)]
-    public long ExpirationMics { get; private set; }
+    public ulong Salt { get; private set; }
 
     [Key(2)]
-    public PublicKey PublicKey { get; private set; } = default!;
+    public long ExpirationMics { get; private set; }
 
     [Key(3)]
-    public Identifier TargetIdentifier { get; private set; }
+    public PublicKey PublicKey { get; private set; } = default!;
 
     [Key(4)]
+    public Identifier TargetIdentifier { get; private set; }
+
+    [Key(5)]
     public Linkage? TargetLinkage { get; private set; }
 
     [Key(6, PropertyName = "Signature", Condition = false)]

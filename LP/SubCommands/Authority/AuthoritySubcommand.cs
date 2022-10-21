@@ -19,7 +19,7 @@ public class AuthoritySubcommand : SimpleCommandGroup<AuthoritySubcommand>
     }
 
     public AuthoritySubcommand(UnitContext context)
-        : base(context)
+        : base(context, "ls")
     {
     }
 }

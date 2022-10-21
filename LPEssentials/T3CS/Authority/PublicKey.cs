@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
+using Arc.Crypto;
 
 namespace LP;
 
@@ -35,6 +37,32 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         this.x3 = 0;
     }
 
+    public PublicKey(string base64url)
+    {
+        var bytes = Arc.Crypto.Base64.Url.FromStringToByteArray(base64url);
+        if (bytes.Length == (PublicKeyHalfLength + 1))
+        {
+            var span = bytes.AsSpan();
+            this.keyValue = span[0];
+            span = span.Slice(1);
+            this.x0 = BitConverter.ToUInt64(span);
+            span = span.Slice(sizeof(ulong));
+            this.x1 = BitConverter.ToUInt64(span);
+            span = span.Slice(sizeof(ulong));
+            this.x2 = BitConverter.ToUInt64(span);
+            span = span.Slice(sizeof(ulong));
+            this.x3 = BitConverter.ToUInt64(span);
+        }
+        else
+        {
+            this.keyValue = 0;
+            this.x0 = 0;
+            this.x1 = 0;
+            this.x2 = 0;
+            this.x3 = 0;
+        }
+    }
+
     internal PublicKey(PrivateKey privateKey)
     {
         this.keyValue = privateKey.KeyValue;
@@ -66,6 +94,12 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
     public uint KeyVersion => (uint)(this.keyValue >> 2);
 
     public uint YTilde => (uint)(this.keyValue & 1);
+
+    public bool IsValid() =>
+        this.x0 != 0 &&
+        this.x1 != 0 &&
+        this.x2 != 0 &&
+        this.x3 != 0;
 
     public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> sign)
     {

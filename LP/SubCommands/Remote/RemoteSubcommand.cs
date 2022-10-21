@@ -5,17 +5,17 @@ using SimpleCommandLine;
 
 namespace LP.Subcommands;
 
-[SimpleCommand("info", IsSubcommand = true)]
-public class InfoSubcommand : SimpleCommandGroup<InfoSubcommand>
+[SimpleCommand("remote", IsSubcommand = true)]
+public class RemoteSubcommand : SimpleCommandGroup<RemoteSubcommand>
 {
     public static void Configure(IUnitConfigurationContext context)
     {
         var group = ConfigureGroup(context);
-        group.AddCommand(typeof(InfoSubcommandLP));
+        group.AddCommand(typeof(RemoteSubcommandRestart));
     }
 
-    public InfoSubcommand(UnitContext context)
-        : base(context, "lp")
+    public RemoteSubcommand(UnitContext context)
+        : base(context)
     {
     }
 }

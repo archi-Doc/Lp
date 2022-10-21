@@ -30,7 +30,8 @@ public class LPBase : ILogInformation
     public static void Configure(IUnitConfigurationContext context)
     {
         // Base
-        context.TryAddSingleton<BigMachines.BigMachine<Identifier>>();
+        BigMachines.BigMachine<Identifier>.Configure(context);
+        // context.TryAddSingleton<BigMachines.BigMachine<Identifier>>();
 
         // Main
         context.AddSingleton<LPBase>();
@@ -54,6 +55,8 @@ public class LPBase : ILogInformation
     public LPMode Mode { get; private set; }
 
     public string NodeName { get; private set; } = default!;
+
+    public PublicKey? RemotePublicKey { get; private set; }
 
     public LPOptions Options { get; private set; } = default!;
 
@@ -118,6 +121,9 @@ public class LPBase : ILogInformation
         {
             this.NodeName = System.Environment.OSVersion.ToString();
         }
+
+        // Remote public key
+        this.RemotePublicKey = new PublicKey(options.RemotePublicKeyBase64);
     }
 
     public void LogInformation(ILog logger)

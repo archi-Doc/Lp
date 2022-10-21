@@ -90,7 +90,7 @@ public partial class NodeInformation : NodeAddress, IEquatable<NodeInformation>
     {
         if (this.Address.Equals(IPAddress.None))
         {
-            return "None";
+            return $"None:{this.Port}({this.PublicKey.ToString()})";
         }
         else
         {

@@ -29,6 +29,9 @@ public partial record LPOptions : ILogInformation
     [SimpleOption("vault", Description = "Vault path")]
     public string Vault { get; init; } = string.Empty;
 
+    [SimpleOption("remotekey", Description = "Base64 representation of remote public key")]
+    public string RemotePublicKeyBase64 { get; init; } = string.Empty;
+
     [SimpleOption("name", Description = "Node name")]
     public string NodeName { get; init; } = string.Empty;
 

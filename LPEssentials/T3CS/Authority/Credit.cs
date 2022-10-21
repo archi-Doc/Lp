@@ -11,6 +11,7 @@ namespace LP;
 public sealed partial class Credit : IValidatable, IEquatable<Credit>
 {
     public const int MaxMergers = 4;
+    public static readonly Credit Default = new();
 
     public Credit()
     {
