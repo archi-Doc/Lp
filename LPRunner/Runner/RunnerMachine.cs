@@ -21,13 +21,13 @@ public partial class RunnerMachine : Machine<Identifier>
         Running,
     }
 
-    public RunnerMachine(ILogger<RunnerMachine> logger, BigMachine<Identifier> bigMachine, LPBase lPBase, NetControl netControl, RunnerBase runnerBase)
+    public RunnerMachine(ILogger<RunnerMachine> logger, BigMachine<Identifier> bigMachine, LPBase lPBase, NetControl netControl, RunnerInformation information)
         : base(bigMachine)
     {
         this.logger = logger;
         this.lpBase = lPBase;
         this.netControl = netControl;
-        this.RunnerBase = runnerBase;
+        this.Information = information;
 
         this.DefaultTimeout = TimeSpan.FromSeconds(1);
     }
@@ -35,11 +35,11 @@ public partial class RunnerMachine : Machine<Identifier>
     [StateMethod(0)]
     protected async Task<StateResult> Initial(StateParameter parameter)
     {
-        var text = $"127.0.0.1:{this.RunnerBase.Information.DestinationPort}";
+        var text = $"127.0.0.1:{this.Information.DestinationPort}";
         NodeAddress.TryParse(text, out var nodeAddress);
         this.NodeAddress = nodeAddress;
 
-        this.docker = DockerRunner.Create(this.logger, this.RunnerBase.Information);
+        this.docker = DockerRunner.Create(this.logger, this.Information);
         if (this.docker == null)
         {
             this.logger.TryGet(LogLevel.Fatal)?.Log($"No docker");
@@ -48,7 +48,7 @@ public partial class RunnerMachine : Machine<Identifier>
 
         this.logger.TryGet()?.Log($"Runner start");
         this.logger.TryGet()?.Log($"Root directory: {this.lpBase.RootDirectory}");
-        this.logger.TryGet()?.Log($"{this.RunnerBase.Information.ToString()}");
+        this.logger.TryGet()?.Log($"{this.Information.ToString()}");
         this.logger.TryGet()?.Log("Press Ctrl+C to exit.");
         await Console.Out.WriteLineAsync();
 
@@ -62,7 +62,7 @@ public partial class RunnerMachine : Machine<Identifier>
     [StateMethod(1)]
     protected async Task<StateResult> Check(StateParameter parameter)
     {
-        if (this.docker == null || this.RunnerBase.Information == null)
+        if (this.docker == null)
         {
             return StateResult.Terminate;
         }
@@ -114,7 +114,7 @@ public partial class RunnerMachine : Machine<Identifier>
         return StateResult.Continue;
     }
 
-    public RunnerBase RunnerBase { get; private set; }
+    public RunnerInformation Information { get; private set; }
 
     public NodeAddress? NodeAddress { get; private set; }
 

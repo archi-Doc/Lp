@@ -24,7 +24,6 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             {
                 context.AddSingleton<ConsoleUnit>();
                 context.AddSingleton<RunnerInformation>();
-                context.AddSingleton<RunnerBase>();
                 context.CreateInstance<ConsoleUnit>();
 
                 // Command
@@ -64,10 +63,6 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
                 options.Formatter.EnableColor = true;
             });
 
-            this.SetupOptions<RunnerBase>((context, runnerBase) =>
-            {// RunnerBase
-            });
-
             this.AddBuilder(new NetControl.Builder());
         }
     }
@@ -77,6 +72,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         public Unit(UnitContext context)
             : base(context)
         {
+            TinyhandSerializer.ServiceProvider = context.ServiceProvider;
         }
 
         public async Task RunAsync(string[] args)
@@ -84,7 +80,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             // Create optional instances
             this.Context.CreateInstances();
 
-            var lpBase = this.Context.ServiceProvider.GetRequiredService<LPBase>();
+            /*var lpBase = this.Context.ServiceProvider.GetRequiredService<LPBase>();
             var logger = this.Context.ServiceProvider.GetRequiredService<ILogger<RunnerMachine>>();
             var information = await this.LoadInformation(logger, Path.Combine(lpBase.RootDirectory, RunnerInformation.Path));
             if (information == null)
@@ -92,7 +88,14 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
                 return;
             }
 
-            this.Context.ServiceProvider.GetRequiredService<RunnerBase>().Information = information;
+            this.Context.ServiceProvider.GetRequiredService<RunnerBase>().Information = information;*/
+
+            var lpBase = this.Context.ServiceProvider.GetRequiredService<LPBase>();
+            var information = this.Context.ServiceProvider.GetRequiredService<RunnerInformation>();
+            if (!await information.Load(Path.Combine(lpBase.RootDirectory, RunnerInformation.Path)))
+            {
+                return;
+            }
 
             var options = new LP.Data.NetsphereOptions();
             options.Port = information.RunnerPort;
@@ -113,7 +116,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             await this.Context.SendTerminateAsync(new());
         }
 
-        private async Task<RunnerInformation?> LoadInformation(ILogger logger, string path)
+        /*private async Task<RunnerInformation?> LoadInformation(ILogger logger, string path)
         {
             try
             {
@@ -143,7 +146,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             logger.TryGet(LogLevel.Error)?.Log($"Modify '{RunnerInformation.Path}', and restart LPRunner.");
 
             return null;
-        }
+        }*/
     }
 
     private class ExampleLogFilter : ILogFilter

@@ -37,7 +37,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
     public PublicKey(string hex)
     {
-        var bytes = Arc.Crypto.Hex.FromStringToByteArray(hex);
+        var bytes = Arc.Crypto.Base64.Url.FromStringToByteArray(hex);
         if (bytes.Length == (PublicKeyHalfLength + 1))
         {
             var span = bytes.AsSpan();
