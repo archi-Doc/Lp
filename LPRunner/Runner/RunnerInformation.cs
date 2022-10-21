@@ -2,6 +2,7 @@
 
 using Arc.Unit;
 using LP;
+using Netsphere;
 using Tinyhand;
 
 namespace LPRunner;
@@ -26,7 +27,7 @@ public partial record RunnerInformation
         this.HostPort = this.HostPort == 0 ? 49152 : this.HostPort;
         this.DestinationDirectory = string.IsNullOrEmpty(this.DestinationDirectory) ? "/lp" : this.DestinationDirectory;
         this.DestinationPort = this.DestinationPort == 0 ? 49152 : this.DestinationPort;
-        this.PublicKeyHex = string.IsNullOrEmpty(this.PublicKeyHex) ? PrivateKey.Create().ToPublicKey().ToString() : this.PublicKeyHex;
+        this.RemotePublicKeyBase64 = string.IsNullOrEmpty(this.RemotePublicKeyBase64) ? PrivateKey.Create().ToPublicKey().ToString() : this.RemotePublicKeyBase64;
         return this;
     }
 
@@ -44,7 +45,7 @@ public partial record RunnerInformation
 
     public int DestinationPort { get; set; }
 
-    public string PublicKeyHex { get; set; } = string.Empty;
+    public string RemotePublicKeyBase64 { get; set; } = string.Empty;
 
     public async Task<bool> Load(string path)
     {
@@ -79,7 +80,14 @@ public partial record RunnerInformation
     }
 
     [IgnoreMember]
-    internal PublicKey PublicKey => new PublicKey(this.PublicKeyHex);
+    internal PublicKey RemotePublicKey => new PublicKey(this.RemotePublicKeyBase64);
+
+    internal NodeAddress? TryGetNodeAddress()
+    {
+        var text = $"127.0.0.1:{this.DestinationPort}";
+        NodeAddress.TryParse(text, out var nodeAddress);
+        return nodeAddress;
+    }
 
     private LPBase lpBase;
     private ILogger logger;

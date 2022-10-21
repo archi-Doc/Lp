@@ -171,6 +171,7 @@ public class Control : ILogInformation
         public Unit(UnitContext context)
             : base(context)
         {
+            TinyhandSerializer.ServiceProvider = context.ServiceProvider;
         }
 
         public async Task RunAsync(LPOptions options)

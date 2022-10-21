@@ -51,9 +51,6 @@ public class NetBenchSubcommand : ISimpleCommandAsync<NetBenchOptions>
         var sw = Stopwatch.StartNew();
         using (var terminal = this.Control.NetControl.Terminal.Create(node))
         {
-            await terminal.EncryptConnectionAsync(); // tempcode
-            this.logger.TryGet()?.Log($"Salt: {terminal.Salt}"); // tempcode
-
             // await this.SendLargeData(terminal);
             await this.PingpongSmallData(terminal);
         }

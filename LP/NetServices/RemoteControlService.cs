@@ -5,10 +5,10 @@ using Netsphere;
 
 namespace LP.NetServices;
 
-/*
 [NetServiceObject]
 internal class RemoteControlService : IRemoteControlService
-{// This class is unsafe and is limited to be accessed from loopback addresses.
+{// LPRunner -> Container
+    // This class is unsafe and is limited to be accessed from loopback addresses.
     public RemoteControlService(Control control)
     {
         this.control = control;
@@ -20,20 +20,13 @@ internal class RemoteControlService : IRemoteControlService
         callContext.Result = NetResult.NotAuthorized;
     }
 
-    public async NetTask<NetResult> Acknowledge()
-    {
-        var callContext = CallContext.Current;
-        await Console.Out.WriteLineAsync(callContext.ServerContext.Terminal.NodeAddress.ToString());
-        if (callContext.ServerContext.Terminal.NodeAddress.IsLocalLoopbackAddress())
-        {
-            return NetResult.Success;
-        }
-
-        return NetResult.NotAuthorized;
-    }
-
     public async NetTask<NetResult> Restart()
     {
+        if (this.token == null)
+        {
+            return NetResult.NotAuthorized;
+        }
+
         var callContext = CallContext.Current;
         if (callContext.ServerContext.Terminal.NodeAddress.IsLocalLoopbackAddress())
         {// Restart
@@ -50,5 +43,5 @@ internal class RemoteControlService : IRemoteControlService
     }
 
     private Control control;
+    private Token? token;
 }
-*/

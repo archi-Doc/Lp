@@ -16,7 +16,7 @@ public partial class RunnerMachine : Machine<Identifier>
 {
     public enum LPStatus
     {
-        NotRunning,
+        NoContainer,
         Container,
         Running,
     }
@@ -35,10 +35,6 @@ public partial class RunnerMachine : Machine<Identifier>
     [StateMethod(0)]
     protected async Task<StateResult> Initial(StateParameter parameter)
     {
-        var text = $"127.0.0.1:{this.Information.DestinationPort}";
-        NodeAddress.TryParse(text, out var nodeAddress);
-        this.NodeAddress = nodeAddress;
-
         this.docker = DockerRunner.Create(this.logger, this.Information);
         if (this.docker == null)
         {
@@ -52,7 +48,7 @@ public partial class RunnerMachine : Machine<Identifier>
         this.logger.TryGet()?.Log("Press Ctrl+C to exit.");
         await Console.Out.WriteLineAsync();
 
-        // Delete container
+        // Remove container
         await this.docker.RemoveContainer();
 
         this.ChangeState(State.Check, true);
@@ -82,18 +78,18 @@ public partial class RunnerMachine : Machine<Identifier>
             this.ChangeState(State.Running);
             return StateResult.Continue;
         }
-        else if (status == LPStatus.NotRunning)
-        {// Run container
+        else if (status == LPStatus.NoContainer)
+        {// No container -> Run
             if (await this.docker.RunContainer() == false)
             {
                 return StateResult.Terminate;
             }
 
-            this.SetTimeout(TimeSpan.FromSeconds(10));
+            this.SetTimeout(TimeSpan.FromSeconds(30));
             return StateResult.Continue;
         }
         else
-        {// Container
+        {// Container -> Try restart
             await this.docker.RestartContainer();
             this.SetTimeout(TimeSpan.FromSeconds(10));
             return StateResult.Continue;
@@ -114,9 +110,16 @@ public partial class RunnerMachine : Machine<Identifier>
         return StateResult.Continue;
     }
 
-    public RunnerInformation Information { get; private set; }
+    [CommandMethod(0)]
+    protected async Task Restart(CommandPost<Identifier>.Command command)
+    {
+        this.logger.TryGet()?.Log("RemoteControl -> Restart");
 
-    public NodeAddress? NodeAddress { get; private set; }
+        // Remove container
+        await this.docker.RemoveContainer();
+    }
+
+    public RunnerInformation Information { get; private set; }
 
     private async Task<LPStatus> GetLPStatus()
     {
@@ -127,7 +130,7 @@ public partial class RunnerMachine : Machine<Identifier>
 
         if (this.docker == null)
         {
-            return LPStatus.NotRunning;
+            return LPStatus.NoContainer;
         }
 
         var containers = await this.docker.EnumerateContainersAsync();
@@ -136,22 +139,22 @@ public partial class RunnerMachine : Machine<Identifier>
             return LPStatus.Container;
         }
 
-        return LPStatus.NotRunning;
+        return LPStatus.NoContainer;
     }
 
     private async Task<NetResult> SendAcknowledge()
     {
-        if (this.NodeAddress == null)
+        var nodeAddress = this.Information.TryGetNodeAddress();
+        if (nodeAddress == null)
         {
             return NetResult.NoNodeInformation;
         }
 
-        using (var terminal = this.netControl.Terminal.Create(this.NodeAddress))
+        using (var terminal = this.netControl.Terminal.Create(nodeAddress))
         {
-            var remoteControl = terminal.GetService<IRemoteControlService>();
-            var result = await remoteControl.Acknowledge();
-            this.logger.TryGet()?.Log($"Acknowledge: {result}");
-            return result;
+            var result = await terminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(new());
+            this.logger.TryGet()?.Log($"Ping: {result.Result}");
+            return result.Result;
         }
     }
 

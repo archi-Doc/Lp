@@ -59,6 +59,9 @@ public sealed partial class AuthorityData
     // public Value[] Values { get; private set; } = Array.Empty<Value>();
     public Value Values { get; private set; } = default!;
 
+    private PrivateKey GetOrCreatePrivateKey()
+        => this.GetOrCreatePrivateKey(Credit.Default);
+
     private PrivateKey GetOrCreatePrivateKey(Credit credit)
     {
         var privateKey = this.privateKeyCache.TryGet(credit);
@@ -82,5 +85,5 @@ public sealed partial class AuthorityData
     private ObjectCache<Credit, PrivateKey> privateKeyCache = new(10);
 
     public override string ToString()
-        => $"Lifetime: {this.Lifetime}, LifeMics: {this.LifeMics}";
+        => $"PublicKey: {this.GetOrCreatePrivateKey().ToPublicKey()}, Lifetime: {this.Lifetime}, LifeMics: {this.LifeMics}";
 }
