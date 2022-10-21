@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics;
 using LP.NetServices;
 using Netsphere;
 using SimpleCommandLine;
@@ -37,7 +38,13 @@ public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandResta
 
         using (var terminal = this.terminal.Create(nodeInformation))
         {
-            await authorityInterface.CreateToken(Credit.Default, CallContext.Current.ServerContext.Terminal.Salt, out var token);
+            var token = CallContext.Current.CreateToken(Token.Type.RequestAuthorization);
+            /*await authorityInterface.SignToken(token);
+            Debug.Assert(token.Veri);
+
+
+            var token = new Token(Token.Type.RequestAuthorization, Mics.GetFixedUtcNow(), 
+            await authorityInterface.CreateToken(Credit.Default, CallContext.Current.ServerContext.Terminal.Salt, out var token);*/
 
             var service = terminal.GetService<IRemoteControlService>();
             /*var netResult = await service.RequestAuthorization(new Token());

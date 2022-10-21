@@ -30,12 +30,10 @@ public sealed partial class AuthorityData
     {
     }
 
-    public Token CreateToken(Credit credit, byte[] data)
+    public void SignToken(Credit credit, Token token)
     {
         var privateKey = this.GetOrCreatePrivateKey(credit);
-        var signature = privateKey.SignData(data);
-        this.CachePrivateKey(credit, privateKey);
-        return signature;
+        token.Sign(privateKey);
     }
 
     public byte[]? SignData(Credit credit, byte[] data)

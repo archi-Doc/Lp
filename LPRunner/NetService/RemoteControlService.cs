@@ -46,7 +46,11 @@ internal class RemoteControlService : IRemoteControlService
         using (var terminal = this.terminal.Create(nodeAddress))
         {
             var remoteControl = terminal.GetService<RemoteControlService>();
-            await remoteControl.RequestAuthorization(this.token);
+            var response = await remoteControl.RequestAuthorization(this.token).ResponseAsync;
+            if (!response.IsSuccess)
+            {
+                return NetResult.NotAuthorized;
+            }
 
             var result = await remoteControl.Restart();
             if (result == NetResult.Success)

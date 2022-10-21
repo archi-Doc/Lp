@@ -21,6 +21,7 @@ internal sealed class AuthorityKey
             return (result, null);
         }
 
+        return (result, null);
     }
 
     public async Task<(AuthorityResult Result, byte[] Signature)> SignData(Credit credit, byte[] data)
