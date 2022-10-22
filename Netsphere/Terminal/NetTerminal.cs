@@ -92,6 +92,9 @@ public partial class NetTerminal : IDisposable
 
     public ulong Salt { get; private set; }
 
+    public Token CreateToken(Token.Type tokenType)
+        => new Token(tokenType, this.Salt, Mics.GetCorrected() + Token.DefaultMics, Identifier.Zero, null);
+
     internal Terminal Terminal { get; }
 
     internal AsyncPulseEvent ReceiveEvent { get; } = new();

@@ -33,10 +33,9 @@ public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandResta
 
         using (var terminal = this.terminal.Create(nodeInformation))
         {
-            var token = CallContext.Current.CreateToken(Token.Type.RequestAuthorization);
+            var token = terminal.CreateToken(Token.Type.RequestAuthorization);
             /*await authorityInterface.SignToken(token);
             Debug.Assert(token.Veri);
-
 
             var token = new Token(Token.Type.RequestAuthorization, Mics.GetFixedUtcNow(),
             await authorityInterface.CreateToken(Credit.Default, CallContext.Current.ServerContext.Terminal.Salt, out var token);*/
