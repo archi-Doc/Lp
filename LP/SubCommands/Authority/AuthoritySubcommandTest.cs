@@ -21,8 +21,11 @@ public class AuthoritySubcommandTest : ISimpleCommandAsync<AuthoritySubcommandTe
         if (await this.Control.Authority.GetKeyAsync(option.Name) is { } authorityKey)
         {
             var signature = authorityKey.SignData(new Credit(), Array.Empty<byte>());
-            Console.WriteLine(signature.ToString());
-            Console.WriteLine(authorityKey.VerifyData(new Credit(), Array.Empty<byte>(), signature));
+            if (signature != null)
+            {
+                Console.WriteLine(signature.ToString());
+                Console.WriteLine(authorityKey.VerifyData(new Credit(), Array.Empty<byte>(), signature));
+            }
         }
     }
 
