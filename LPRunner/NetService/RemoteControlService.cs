@@ -57,7 +57,7 @@ internal class RemoteControlService : IRemoteControlService
                 if (machine != null)
                 {
                     // await machine.ChangeStateAsync(RunnerMachine.State.Check);
-                    _ = machine.CommandAndReceiveAsync<object?, NetResult>(RunnerMachine.Command.Restart, null); // tempcode
+                    _ = machine.CommandAsync(RunnerMachine.Command.Restart);
                 }
             }
 

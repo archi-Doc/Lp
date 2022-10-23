@@ -111,12 +111,15 @@ public partial class RunnerMachine : Machine<Identifier>
     }
 
     [CommandMethod(0)]
-    protected async Task Restart(CommandPost<Identifier>.Command command)
+    protected async Task Restart()
     {
         this.logger.TryGet()?.Log("RemoteControl -> Restart");
 
         // Remove container
-        await this.docker.RemoveContainer();
+        if (this.docker != null)
+        {
+            await this.docker.RemoveContainer();
+        }
     }
 
     public RunnerInformation Information { get; private set; }
