@@ -92,8 +92,19 @@ public partial class NetTerminal : IDisposable
 
     public ulong Salt { get; private set; }
 
-    public Token CreateToken(Token.Type tokenType)
-        => new Token(tokenType, this.Salt, Mics.GetCorrected() + Token.DefaultMics, Identifier.Zero, null);
+    public async ValueTask<Token?> CreateToken(Token.Type tokenType)
+    {
+        if (!this.IsEncrypted)
+        {
+            var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
+            if (result != NetResult.Success)
+            {
+                return null;
+            }
+        }
+
+        return new Token(tokenType, this.Salt, Mics.GetCorrected() + Token.DefaultMics, Identifier.Zero, null);
+    }
 
     internal Terminal Terminal { get; }
 

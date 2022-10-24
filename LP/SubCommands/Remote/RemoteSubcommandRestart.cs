@@ -31,8 +31,13 @@ public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandResta
             return;
         }
 
-        using (var terminal = this.terminal.Create(nodeInformation))
+        using (var terminal = await this.terminal.CreateAsync(nodeInformation))
         {
+            if (terminal == null)
+            {
+                return;
+            }
+
             var token = terminal.CreateToken(Token.Type.RequestAuthorization);
             /*await authorityInterface.SignToken(token);
             Debug.Assert(token.Veri);
