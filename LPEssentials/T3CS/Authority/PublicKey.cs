@@ -65,7 +65,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
     internal PublicKey(PrivateKey privateKey)
     {
-        this.keyValue = privateKey.KeyValue;
+        this.keyValue = KeyHelper.CheckPublicKeyValue(privateKey.KeyValue);
         var span = privateKey.X.AsSpan();
         this.x0 = BitConverter.ToUInt64(span);
         span = span.Slice(sizeof(ulong));
@@ -91,9 +91,9 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
     [Key(4)]
     private readonly ulong x3;
 
-    public uint KeyVersion => (uint)(this.keyValue >> 2);
+    public uint KeyVersion => KeyHelper.ToKeyVersion(this.keyValue);
 
-    public uint YTilde => (uint)(this.keyValue & 1);
+    public uint YTilde => KeyHelper.ToYTilde(this.keyValue);
 
     public bool IsValid() =>
         this.x0 != 0 &&

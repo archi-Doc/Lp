@@ -10,7 +10,7 @@ using Tinyhand;
 
 namespace LP.Subcommands.Dump;
 
-[SimpleCommand("key")]
+[SimpleCommand("newkey")]
 public class NodeSubcommandKey : ISimpleCommand<NodeSubcommandKeyOptions>
 {
     public NodeSubcommandKey(ILogger<NodeSubcommandKey> logger, Seedphrase seedPhrase)
@@ -41,7 +41,7 @@ public class NodeSubcommandKey : ISimpleCommand<NodeSubcommandKeyOptions>
             nodeKey = NodePrivateKey.Create(seed);
         }
 
-        this.logger.TryGet()?.Log(nodeKey.ToString());
+        this.logger.TryGet()?.Log(nodeKey.ToUnsafeString());
     }
 
     private ILogger<NodeSubcommandKey> logger;

@@ -37,7 +37,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         var privateKey = NodePrivateKey.AlternativePrivateKey;
         var publicKey = privateKey.ToPublicKey();
 
-        Console.WriteLine($"Alternative(private): {privateKey.ToString()}");
+        Console.WriteLine($"Alternative(private): {privateKey.ToUnsafeString()}");
         Console.WriteLine($"Length: {TinyhandSerializer.Serialize(privateKey).Length.ToString()}");
         Console.WriteLine(TinyhandSerializer.SerializeToString(privateKey));
         Console.WriteLine();

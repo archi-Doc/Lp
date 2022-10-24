@@ -80,7 +80,7 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
         this.d = d;
 
         var yTilde = this.CompressY();
-        this.keyValue = (byte)(((keyVersion << 2) & ~3) + (yTilde & 1));
+        this.keyValue = KeyHelper.ToPrivateKeyValue(keyVersion, yTilde);
     }
 
     public NodePublicKey ToPublicKey()
@@ -123,7 +123,7 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
     }
 
     [Key(0)]
-    private readonly byte keyValue; // 6bits: KeyVersion, 1bit:?, 1bit: YTilde
+    private readonly byte keyValue;
 
     [Key(1)]
     private readonly byte[] x = Array.Empty<byte>();
@@ -134,9 +134,9 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
     [Key(3)]
     private readonly byte[] d = Array.Empty<byte>();
 
-    public uint KeyVersion => (uint)(this.keyValue >> 2);
+    public uint KeyVersion => KeyHelper.ToKeyVersion(this.keyValue);
 
-    public uint YTilde => (uint)(this.keyValue & 1);
+    public uint YTilde => KeyHelper.ToYTilde(this.keyValue);
 
     public byte[] X => this.x;
 
@@ -187,12 +187,12 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
         return hash;
     }
 
-    public override string ToString()
+    public string ToUnsafeString()
     {
         Span<byte> bytes = stackalloc byte[1 + NodePublicKey.PrivateKeyLength]; // scoped
-        bytes[0] = (byte)(this.keyValue | 128); // tempcode
+        bytes[0] = this.keyValue;
         this.d.CopyTo(bytes.Slice(1));
-        return $"{Base64.Url.FromByteArrayToString(bytes)}";
+        return $"!!!{Base64.Url.FromByteArrayToString(bytes)}!!!({this.ToPublicKey().ToString()})";
     }
 
     internal uint CompressY()

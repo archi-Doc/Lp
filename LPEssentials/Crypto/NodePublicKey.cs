@@ -64,7 +64,7 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
 
     internal NodePublicKey(NodePrivateKey privateKey)
     {
-        this.keyValue = privateKey.KeyValue;
+        this.keyValue = KeyHelper.CheckPublicKeyValue(privateKey.KeyValue);
         var span = privateKey.X.AsSpan();
         this.x0 = BitConverter.ToUInt64(span);
         span = span.Slice(sizeof(ulong));
@@ -77,7 +77,7 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
 
     private NodePublicKey(byte keyValue, ulong x0, ulong x1, ulong x2, ulong x3)
     {
-        this.keyValue = keyValue;
+        this.keyValue = KeyHelper.CheckPublicKeyValue(keyValue);
         this.x0 = x0;
         this.x1 = x1;
         this.x2 = x2;
@@ -99,9 +99,9 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
     [Key(4)]
     private readonly ulong x3;
 
-    public uint KeyVersion => (uint)(this.keyValue >> 2);
+    public uint KeyVersion => KeyHelper.ToKeyVersion(this.keyValue);
 
-    public uint YTilde => (uint)(this.keyValue & 1);
+    public uint YTilde => KeyHelper.ToYTilde(this.keyValue);
 
     public bool Validate()
     {
