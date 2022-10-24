@@ -19,6 +19,45 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
 
     private static ObjectCache<NodePrivateKey, ECDiffieHellman> PrivateKeyToEcdh { get; } = new(MaxPrivateKeyCache);
 
+    public static NodePrivateKey? TryParse(string base64url)
+    {
+        ReadOnlySpan<char> span = base64url.Trim().AsSpan();
+        if (!span.StartsWith(KeyHelper.PrivateKeyBrace))
+        {// !!!abc
+            return null;
+        }
+
+        span = span.Slice(KeyHelper.PrivateKeyBrace.Length);
+        var bracePosition = span.IndexOf(KeyHelper.PrivateKeyBrace);
+        if (bracePosition <= 0)
+        {// abc!!!
+            return null;
+        }
+
+        var privateBytes = Base64.Url.FromStringToByteArray(span.Slice(0, bracePosition));
+        if (privateBytes == null || privateBytes.Length != (PublicKey.PrivateKeyLength + 1))
+        {
+            return null;
+        }
+
+        ECParameters key = default;
+        key.Curve = NodePublicKey.ECCurve;
+        key.D = privateBytes[1..(PublicKey.PrivateKeyLength + 1)];
+        try
+        {
+            using (var ecdh = ECDiffieHellman.Create(key))
+            {
+                key = ecdh.ExportParameters(true);
+            }
+        }
+        catch
+        {
+            return null;
+        }
+
+        return new NodePrivateKey(0, key.Q.X!, key.Q.Y!, key.D!);
+    }
+
     public static NodePrivateKey Create()
     {
         using (var ecdh = ECDiffieHellman.Create(NodePublicKey.ECCurve))

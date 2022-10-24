@@ -97,6 +97,9 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
                 return;
             }
 
+            var netBase = this.Context.ServiceProvider.GetRequiredService<NetBase>();
+            netBase.SetNodeKey(information.NodeKey);
+
             var options = new LP.Data.NetsphereOptions();
             options.Port = information.RunnerPort;
             var param = new NetControl.Unit.Param(true, () => new ServerContext(), () => new CallContext(), "runner", options, true);

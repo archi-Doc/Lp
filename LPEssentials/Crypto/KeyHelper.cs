@@ -10,7 +10,9 @@ using System.Threading.Tasks;
 namespace LP;
 
 internal static class KeyHelper
-{// // 1bit: Private, 1bit: ?, 4bits: KeyVersion, 1bit: ?, 1bit: YTilde
+{// KeyValue 1bit: Private, 1bit: ?, 4bits: KeyVersion, 1bit: ?, 1bit: YTilde
+    public static ReadOnlySpan<char> PrivateKeyBrace => "!!!";
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static byte CheckPublicKeyValue(byte keyValue)
         => (byte)(keyValue & ~(1 << 7));

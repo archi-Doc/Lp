@@ -18,9 +18,19 @@ public partial record RunnerInformation
         this.logger = logger;
     }
 
-    public RunnerInformation SetDefault()
+    public RunnerInformation Restore()
     {
-        this.NodePublicKeyBase64 = string.IsNullOrEmpty(this.NodePublicKeyBase64) ? NodePrivateKey.Create().ToPublicKey().ToString() : this.NodePublicKeyBase64;
+        if (!string.IsNullOrEmpty(this.NodeKeyBase64) &&
+            NodePrivateKey.TryParse(this.NodeKeyBase64) is { } privateKey)
+        {
+            this.NodeKey = privateKey;
+        }
+        else
+        {
+            this.NodeKey = NodePrivateKey.Create();
+            this.NodeKeyBase64 = this.NodeKey.ToUnsafeString();
+        }
+
         this.Image = string.IsNullOrEmpty(this.Image) ? "archidoc422/lpconsole" : this.Image;
         this.Tag = string.IsNullOrEmpty(this.Tag) ? "latest" : this.Tag;
         this.RunnerPort = this.RunnerPort == 0 ? 49999 : this.RunnerPort;
@@ -32,7 +42,7 @@ public partial record RunnerInformation
         return this;
     }
 
-    public string NodePublicKeyBase64 { get; set; } = string.Empty;
+    public string NodeKeyBase64 { get; set; } = string.Empty;
 
     public string Image { get; set; } = string.Empty;
 
@@ -59,7 +69,7 @@ public partial record RunnerInformation
             if (information != null)
             {// Success
              // Update RunnerInformation
-                this.SetDefault();
+                this.Restore();
                 var update = TinyhandSerializer.SerializeToUtf8(this);
                 if (!update.SequenceEqual(utf8))
                 {
@@ -73,7 +83,7 @@ public partial record RunnerInformation
         {
         }
 
-        this.SetDefault();
+        this.Restore();
         await File.WriteAllBytesAsync(path, TinyhandSerializer.SerializeToUtf8(this));
 
         this.logger.TryGet(LogLevel.Error)?.Log($"'{path}' could not be found and was created.");
@@ -81,6 +91,9 @@ public partial record RunnerInformation
 
         return false;
     }
+
+    [IgnoreMember]
+    internal NodePrivateKey NodeKey { get; set; } = default!;
 
     [IgnoreMember]
     internal PublicKey RemotePublicKey => new PublicKey(this.RemotePublicKeyBase64);

@@ -44,6 +44,8 @@ public partial class RunnerMachine : Machine<Identifier>
 
         this.logger.TryGet()?.Log($"Runner start");
         this.logger.TryGet()?.Log($"Root directory: {this.lpBase.RootDirectory}");
+        var nodeInformation = this.netControl.NetStatus.GetMyNodeInformation(false);
+        this.logger.TryGet()?.Log($"Port: {nodeInformation.Port}, Public key: ({nodeInformation.PublicKey.ToString()})");
         this.logger.TryGet()?.Log($"{this.Information.ToString()}");
         this.logger.TryGet()?.Log("Press Ctrl+C to exit.");
         await Console.Out.WriteLineAsync();

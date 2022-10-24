@@ -22,11 +22,16 @@ public sealed partial class CustomizedCommand
     {
     }
 
-    public CustomizedCommand(string command)
+    public CustomizedCommand(string command, string[]? args = null)
     {
-        this.Command = command.Replace("\\r\\n", "\n").Replace("\\n", "\n");
+        if (args != null && args.Length > 0)
+        {
+            command += " " + string.Join(' ', args);
+        }
+
+        this.Command = command.Replace("\\\"", "\"").Replace("\\r\\n", "\n").Replace("\\n", "\n");
     }
 
     [Key(0)]
-    public string? Command { get; private set; } = default!;
+    public string Command { get; private set; } = string.Empty;
 }
