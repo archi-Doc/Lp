@@ -45,7 +45,7 @@ public class Control : ILogInformation
                 context.Services.TryAddSingleton<IUserInterfaceService, ConsoleUserInterfaceService>();
                 context.AddSingleton<Vault>();
                 context.AddSingleton<Authority>();
-                context.AddSingleton<SeedPhrase>();
+                context.AddSingleton<Seedphrase>();
 
                 // RPC / Services
                 context.AddTransient<NetServices.BenchmarkServiceImpl>();
@@ -66,7 +66,7 @@ public class Control : ILogInformation
                 context.AddSubcommand(typeof(LP.Subcommands.NetBenchSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.PunchSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.BenchmarkSubcommand));
-                context.AddSubcommand(typeof(LP.Subcommands.SeedPhraseSubcommand));
+                context.AddSubcommand(typeof(LP.Subcommands.SeedphraseSubcommand));
 
                 LP.Subcommands.TemplateSubcommand.Configure(context);
                 LP.Subcommands.InfoSubcommand.Configure(context);

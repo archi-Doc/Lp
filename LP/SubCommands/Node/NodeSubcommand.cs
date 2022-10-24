@@ -15,6 +15,7 @@ public class NodeSubcommand : SimpleCommandGroup<NodeSubcommand>
         group.AddCommand(typeof(NodeSubcommandAdd));
         group.AddCommand(typeof(NodeSubcommandLs));
         group.AddCommand(typeof(NodeSubcommandInfo));
+        group.AddCommand(typeof(NodeSubcommandKey));
     }
 
     public NodeSubcommand(UnitContext context)

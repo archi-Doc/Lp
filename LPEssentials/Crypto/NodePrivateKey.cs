@@ -189,9 +189,9 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
 
     public override string ToString()
     {
-        Span<byte> bytes = stackalloc byte[1 + NodePublicKey.PublicKeyHalfLength]; // scoped
-        bytes[0] = this.keyValue;
-        this.x.CopyTo(bytes.Slice(1));
+        Span<byte> bytes = stackalloc byte[1 + NodePublicKey.PrivateKeyLength]; // scoped
+        bytes[0] = (byte)(this.keyValue | 128); // tempcode
+        this.d.CopyTo(bytes.Slice(1));
         return $"{Base64.Url.FromByteArrayToString(bytes)}";
     }
 

@@ -49,6 +49,10 @@ Authority = {
     EnterPassword = "Enter Authority '{0}' password"
 }
 
+Seedphrase = {
+    Invalid = "Seedphrase '{0}' is invaid"
+}
+
 Custom = {
     AlreadyExists = "Customized command '{0}' already exists"
     NotFound = "Customized command '{0}' is not found"

@@ -9,9 +9,9 @@ using Tinyhand;
 namespace LP.Subcommands;
 
 [SimpleCommand("seedphrase")]
-public class SeedPhraseSubcommand : ISimpleCommandAsync
+public class SeedphraseSubcommand : ISimpleCommandAsync
 {
-    public SeedPhraseSubcommand(ILogger<SeedPhraseSubcommand> logger, Control control, SeedPhrase seedPhrase)
+    public SeedphraseSubcommand(ILogger<SeedphraseSubcommand> logger, Control control, Seedphrase seedPhrase)
     {
         this.logger = logger;
         this.Control = control;
@@ -20,7 +20,7 @@ public class SeedPhraseSubcommand : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        this.logger.TryGet()?.Log($"SeedPhrase subcommand: ");
+        this.logger.TryGet()?.Log($"Seedphrase subcommand: ");
 
         var phrase = this.seedPhrase.Create();
         this.logger.TryGet()?.Log($"{phrase}");
@@ -31,6 +31,6 @@ public class SeedPhraseSubcommand : ISimpleCommandAsync
 
     public Control Control { get; set; }
 
-    private ILogger<SeedPhraseSubcommand> logger;
-    private SeedPhrase seedPhrase;
+    private ILogger<SeedphraseSubcommand> logger;
+    private Seedphrase seedPhrase;
 }

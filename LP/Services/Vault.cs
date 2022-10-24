@@ -10,7 +10,7 @@ public partial class Vault
 {
     public const string Filename = "Vault.tinyhand";
 
-    public Vault(ILogger<Vault> logger, IUserInterfaceService userInterfaceService, SeedPhrase sp)
+    public Vault(ILogger<Vault> logger, IUserInterfaceService userInterfaceService, Seedphrase sp)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;

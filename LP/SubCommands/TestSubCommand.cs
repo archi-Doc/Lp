@@ -13,7 +13,7 @@ namespace LP.Subcommands;
 [SimpleCommand("test")]
 public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 {
-    public TestSubcommand(ILogger<TestSubcommand> logger, Control control, SeedPhrase seedPhrase)
+    public TestSubcommand(ILogger<TestSubcommand> logger, Control control, Seedphrase seedPhrase)
     {
         this.logger = logger;
         this.Control = control;
@@ -67,7 +67,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
     private ILogger<TestSubcommand> logger;
 
-    private SeedPhrase seedPhrase;
+    private Seedphrase seedPhrase;
 }
 
 public record TestOptions
