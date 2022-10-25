@@ -101,12 +101,12 @@ public partial class RunnerMachine : Machine<Identifier>
     [StateMethod(3)]
     protected async Task<StateResult> Running(StateParameter parameter)
     {
-        var result = await this.SendAcknowledge();
+        /*var result = await this.SendAcknowledge();
         this.logger.TryGet()?.Log($"Running: {result}");
         if (result != NetResult.Success)
         {
             this.ChangeState(State.Check);
-        }
+        }*/
 
         this.SetTimeout(TimeSpan.FromSeconds(10));
         return StateResult.Continue;
@@ -122,6 +122,8 @@ public partial class RunnerMachine : Machine<Identifier>
         {
             await this.docker.RemoveContainer();
         }
+
+        this.ChangeState(State.Check);
     }
 
     public RunnerInformation Information { get; private set; }

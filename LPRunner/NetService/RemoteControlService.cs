@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Arc.Unit;
 using BigMachines;
 using LPRunner;
 using Netsphere;
@@ -9,8 +10,9 @@ namespace LP.NetServices;
 [NetServiceObject]
 internal class RemoteControlService : IRemoteControlService
 {// Remote -> LPRunner
-    public RemoteControlService(BigMachine<Identifier> bigMachine, Terminal terminal, RunnerInformation information)
+    public RemoteControlService(ILogger<RemoteControlService> logger, BigMachine<Identifier> bigMachine, Terminal terminal, RunnerInformation information)
     {
+        this.logger = logger;
         this.bigMachine = bigMachine;
         this.terminal = terminal;
         this.information = information;
@@ -43,8 +45,10 @@ internal class RemoteControlService : IRemoteControlService
 
         using (var terminal = this.terminal.Create(nodeAddress))
         {
+            this.logger.TryGet()?.Log("Terminal created");
             var remoteControl = terminal.GetService<IRemoteControlService>();
             var response = await remoteControl.RequestAuthorization(this.token).ResponseAsync;
+            this.logger.TryGet()?.Log($"RequestAuthorization: {response.Result}");
             if (!response.IsSuccess)
             {
                 return NetResult.NotAuthorized;
@@ -56,8 +60,7 @@ internal class RemoteControlService : IRemoteControlService
                 var machine = this.bigMachine.TryGet<RunnerMachine.Interface>(Identifier.Zero);
                 if (machine != null)
                 {
-                    // await machine.ChangeStateAsync(RunnerMachine.State.Check);
-                    _ = machine.CommandAsync(RunnerMachine.Command.Restart);
+                    // _ = machine.CommandAsync(RunnerMachine.Command.Restart); // tempcode
                 }
             }
 
@@ -65,6 +68,7 @@ internal class RemoteControlService : IRemoteControlService
         }
     }
 
+    private ILogger<RemoteControlService> logger;
     private BigMachine<Identifier> bigMachine;
     private Terminal terminal;
     private RunnerInformation information;
