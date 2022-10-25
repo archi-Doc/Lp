@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using ValueLink;
@@ -130,6 +131,7 @@ Retry:
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryGetCorrectedMics(out long mics)
     {
         if (this.timeoffsetCount == 0)

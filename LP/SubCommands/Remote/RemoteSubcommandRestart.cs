@@ -31,26 +31,41 @@ public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandResta
             return;
         }
 
-        using (var terminal = await this.terminal.CreateAsync(nodeInformation))
+        // using (var terminal = await this.terminal.CreateAndEncrypt(nodeInformation))
+        using (var terminal = this.terminal.Create(nodeInformation))
         {
             if (terminal == null)
             {
                 return;
             }
 
-            var token = terminal.CreateToken(Token.Type.RequestAuthorization);
-            /*await authorityInterface.SignToken(token);
-            Debug.Assert(token.Veri);
+            var token = await terminal.CreateToken(Token.Type.RequestAuthorization);
+            if (token == null)
+            {
+                return;
+            }
 
-            var token = new Token(Token.Type.RequestAuthorization, Mics.GetFixedUtcNow(),
-            await authorityInterface.CreateToken(Credit.Default, CallContext.Current.ServerContext.Terminal.Salt, out var token);*/
+            authorityKey.SignToken(token);
+            if (!token.ValidateAndVerify())
+            {
+                return;
+            }
+
+            if (!token.ValidateAndVerify())
+            {
+                return;
+            }
 
             var service = terminal.GetService<IRemoteControlService>();
-            /*var netResult = await service.RequestAuthorization(new Token());
-            if (netResult != NetResult.Success)
+            var response = await service.RequestAuthorization(token).ResponseAsync;
+            var result = response.Result;
+            this.logger.TryGet()?.Log($"RequestAuthorization: {result}");
+
+            if (result == NetResult.Success)
             {
-                netResult = await service.Restart();
-            }*/
+                result = await service.Restart();
+                this.logger.TryGet()?.Log($"Restart: {result}");
+            }
         }
     }
 

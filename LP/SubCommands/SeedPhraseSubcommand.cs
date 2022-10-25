@@ -20,13 +20,13 @@ public class SeedphraseSubcommand : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        this.logger.TryGet()?.Log($"Seedphrase subcommand: ");
+        this.logger.TryGet()?.Log($"Create seedphrase: ");
 
         var phrase = this.seedPhrase.Create();
-        this.logger.TryGet()?.Log($"{phrase}");
+        // this.logger.TryGet()?.Log($"{phrase}");
+        await Console.Out.WriteLineAsync(phrase);
 
-        var seed = this.seedPhrase.TryGetSeed(phrase);
-        this.logger.TryGet()?.Log($"{seed}");
+        // var seed = this.seedPhrase.TryGetSeed(phrase);
     }
 
     public Control Control { get; set; }

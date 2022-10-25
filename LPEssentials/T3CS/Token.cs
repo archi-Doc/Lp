@@ -8,7 +8,9 @@ namespace LP;
 [TinyhandObject]
 public sealed partial class Token : IVerifiable // , IEquatable<Token>
 {
-    public const long DefaultMics = Mics.MicsPerMinute * 1;
+    public const long DefaultMics = Mics.MicsPerSecond * 3;
+    public const long MaximumMics = Mics.MicsPerMinute * 2;
+    public const long ErrorMics = Mics.MicsPerSecond * 3;
 
     public enum Type
     {
@@ -37,6 +39,12 @@ public sealed partial class Token : IVerifiable // , IEquatable<Token>
             return false;
         }
         else if (this.signature.Length != PublicKey.SignLength)
+        {
+            return false;
+        }
+
+        var range = MicsRange.FromCorrectedToMics(MaximumMics, ErrorMics);
+        if (!range.IsIn(this.ExpirationMics))
         {
             return false;
         }

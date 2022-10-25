@@ -33,7 +33,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
                 context.AddTransient<RunnerMachine>();
 
                 // Net Services
-                context.AddSingleton<IRemoteControlService, RemoteControlService>();
+                context.AddSingleton<RemoteControlService>();
 
                 // Log filter
                 // context.AddSingleton<ExampleLogFilter>();

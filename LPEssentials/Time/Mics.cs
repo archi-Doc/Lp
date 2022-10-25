@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
 #pragma warning disable SA1401 // Fields should be private
@@ -35,6 +36,7 @@ public static class Mics
     /// Gets the <see cref="Mics"/> (microseconds) since system startup (Stopwatch.GetTimestamp()).
     /// </summary>
     /// <returns><see cref="Mics"/> (microseconds).</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long GetSystem() => (long)(Stopwatch.GetTimestamp() * TimestampToMics);
 
     /// <summary>
@@ -55,6 +57,7 @@ public static class Mics
     /// Not affected by manual date/time changes.
     /// </summary>
     /// <returns><see cref="Mics"/> (microseconds).</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long GetFixedUtcNow() => FixedMics + GetSystem();
 
     /// <summary>

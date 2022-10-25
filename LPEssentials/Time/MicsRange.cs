@@ -11,6 +11,18 @@ namespace LP;
 
 public readonly struct MicsRange
 {
+    /// <summary>
+    /// Creates a <see cref="MicsRange"/> from the present mics (<see cref="Mics.GetCorrected"/>) to the present+specified mics.
+    /// </summary>
+    /// <param name="mics">Mics ahead from the present mics.</param>
+    /// <param name="error">Allowable error in mics.</param>
+    /// <returns><see cref="MicsRange"/>.</returns>
+    public static MicsRange FromCorrectedToMics(long mics, long error)
+    {
+        var current = Mics.GetCorrected();
+        return new MicsRange(current - error, current + mics + error);
+    }
+
     public MicsRange(long mics)
     {
         this.LowerBound = Mics.GetSystem();

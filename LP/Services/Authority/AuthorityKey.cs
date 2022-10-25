@@ -30,6 +30,12 @@ public sealed partial class AuthorityKey
     {
     }
 
+    public void SignToken(Token token)
+    {
+        var privateKey = this.GetOrCreatePrivateKey();
+        token.Sign(privateKey);
+    }
+
     public void SignToken(Credit credit, Token token)
     {
         var privateKey = this.GetOrCreatePrivateKey(credit);
@@ -91,5 +97,5 @@ public sealed partial class AuthorityKey
     private ObjectCache<Credit, PrivateKey> privateKeyCache = new(10);
 
     public override string ToString()
-        => $"PublicKey: {this.GetOrCreatePrivateKey().ToPublicKey()}, Lifetime: {this.Lifetime}, LifeMics: {this.LifeMics}";
+        => $"PublicKey: ({this.GetOrCreatePrivateKey().ToPublicKey()}), Lifetime: {this.Lifetime}, LifeMics: {this.LifeMics}";
 }

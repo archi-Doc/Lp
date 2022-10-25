@@ -80,7 +80,7 @@ public class Terminal : UnitBase, IUnitExecutable
     /// </summary>
     /// <param name="nodeInformation">NodeInformation.</param>
     /// <returns>NetTerminal.</returns>
-    public async Task<ClientTerminal?> CreateAsync(NodeInformation nodeInformation)
+    public async Task<ClientTerminal?> CreateAndEncrypt(NodeInformation nodeInformation)
     {
         var terminal = new ClientTerminal(this, nodeInformation);
         lock (this.terminals)
