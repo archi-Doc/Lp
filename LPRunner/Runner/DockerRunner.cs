@@ -92,7 +92,16 @@ internal class DockerRunner
         this.logger.TryGet()?.Log($"Start container: {this.information.Image}");
         // RunnerHelper.DispatchCommand(this.logger, "docker run -it --mount type=bind,source=$(pwd)/lp,destination=/lp --rm -p 49152:49152/udp archidoc422/lpconsole -rootdir \"/lp\" -ns [-port 49152 -test true -alternative false]"); // C:\\App\\docker
 
-        var directory = "C:\\App\\docker";
+        string directory;
+        if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+        {
+            directory = "C:\\App\\docker"; // tempcode
+        }
+        else
+        {
+            directory = $"$(pwd)/{this.information.HostDirectory}";
+        }
+
         var command = $"docker run -d -it --mount type=bind,source={directory},destination={this.information.DestinationDirectory} --rm -p {this.information.HostPort}:{this.information.DestinationPort}/udp {this.information.Image} -rootdir {this.information.DestinationDirectory} -ns [-port {this.information.DestinationPort} -test true -alternative false] -remotekey {this.information.RemotePublicKey}";
         RunnerHelper.DispatchCommand(this.logger, command);
 
