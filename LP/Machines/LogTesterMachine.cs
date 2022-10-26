@@ -19,7 +19,7 @@ public partial class LogTesterMachine : Machine<Identifier>
     [StateMethod(0)]
     protected StateResult Initial(StateParameter parameter)
     {
-        this.logger.TryGet(LogLevel.Information)?.Log($"Log test: {this.Count++}");
+        this.logger.TryGet(LogLevel.Information)?.Log($"Log test2: {this.Count++}");
         // this.logger.TryGet()?.Log($"{DateTime.Now.ToString()}, {Mics.ToDateTime(Mics.GetFixedUtcNow()).ToString()}");
 
         return StateResult.Continue;
