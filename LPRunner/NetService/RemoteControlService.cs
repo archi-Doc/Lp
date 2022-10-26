@@ -45,7 +45,6 @@ internal class RemoteControlService : IRemoteControlService
 
         using (var terminal = this.terminal.Create(nodeAddress))
         {
-            this.logger.TryGet()?.Log("Terminal created");
             var remoteControl = terminal.GetService<IRemoteControlService>();
             var response = await remoteControl.RequestAuthorization(this.token).ResponseAsync;
             this.logger.TryGet()?.Log($"RequestAuthorization: {response.Result}");
@@ -55,12 +54,13 @@ internal class RemoteControlService : IRemoteControlService
             }
 
             var result = await remoteControl.Restart();
+            this.logger.TryGet()?.Log($"Restart: {result}");
             if (result == NetResult.Success)
             {
                 var machine = this.bigMachine.TryGet<RunnerMachine.Interface>(Identifier.Zero);
                 if (machine != null)
                 {
-                    // _ = machine.CommandAsync(RunnerMachine.Command.Restart); // tempcode
+                    _ = machine.CommandAsync(RunnerMachine.Command.Restart);
                 }
             }
 

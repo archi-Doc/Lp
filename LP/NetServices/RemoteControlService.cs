@@ -9,8 +9,9 @@ namespace LP.NetServices;
 internal class RemoteControlService : IRemoteControlService
 {// LPRunner -> Container
     // This class is unsafe.
-    public RemoteControlService(Control control)
+    public RemoteControlService(ILogger<RemoteControlService> logger, Control control)
     {
+        this.logger = logger;
         this.control = control;
     }
 
@@ -36,10 +37,12 @@ internal class RemoteControlService : IRemoteControlService
         var callContext = CallContext.Current;
         if (callContext.ServerContext.Terminal.NodeAddress.IsPrivateOrLocalLoopbackAddress())
         {// Restart
+            this.logger.TryGet()?.Log("RemoteControlService.Restart()");
+
             _ = Task.Run(async () =>
             {
                 await Task.Delay(1000);
-                // this.control.Terminate(false); // tempcode
+                this.control.Terminate(false); // tempcode
             });
 
             return NetResult.Success;
@@ -48,6 +51,7 @@ internal class RemoteControlService : IRemoteControlService
         return NetResult.NotAuthorized;
     }
 
+    private ILogger<RemoteControlService> logger;
     private Control control;
     private Token? token;
 }

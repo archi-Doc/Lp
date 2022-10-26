@@ -26,7 +26,12 @@ public sealed partial class CustomizedCommand
     {
         if (args != null && args.Length > 0)
         {
-            command += " " + string.Join(' ', args);
+            if (!string.IsNullOrEmpty(command))
+            {
+                command += " ";
+            }
+
+            command += string.Join(' ', args);
         }
 
         this.Command = command.Replace("\\\"", "\"").Replace("\\r\\n", "\n").Replace("\\n", "\n");
