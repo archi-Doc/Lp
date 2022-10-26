@@ -23,7 +23,7 @@ public class NetBenchSubcommand : ISimpleCommandAsync<NetBenchOptions>
 
     public async Task RunAsync(NetBenchOptions options, string[] args)
     {
-        if (!SubcommandService.TryParseNodeAddress(this.logger, options.Node, out var node))
+        if (!NetHelper.TryParseNodeAddress(this.logger, options.Node, out var node))
         {
             return;
         }

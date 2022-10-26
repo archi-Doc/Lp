@@ -20,7 +20,7 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
 
     public async Task RunAsync(PunchOptions options, string[] args)
     {
-        if (!SubcommandService.TryParseNodeAddress(this.logger, options.Node, out var node))
+        if (!NetHelper.TryParseNodeAddress(this.logger, options.Node, out var node))
         {
             return;
         }
@@ -28,7 +28,7 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
         NodeAddress? nextNode = null;
         if (!string.IsNullOrEmpty(options.NextNode))
         {
-            SubcommandService.TryParseNodeAddress(this.logger, options.NextNode, out nextNode);
+            NetHelper.TryParseNodeAddress(this.logger, options.NextNode, out nextNode);
         }
 
         for (var n = 0; n < options.Count; n++)

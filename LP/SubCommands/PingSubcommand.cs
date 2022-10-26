@@ -20,7 +20,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
 
     public async Task RunAsync(PingOptions options, string[] args)
     {
-        if (!SubcommandService.TryParseNodeAddress(this.logger, options.Node, out var node))
+        if (!NetHelper.TryParseNodeAddress(this.logger, options.Node, out var node))
         {
             return;
         }

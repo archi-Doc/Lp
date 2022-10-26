@@ -24,6 +24,7 @@ public sealed partial class CustomizedCommand
 
     public CustomizedCommand(string command, string[]? args = null)
     {
+        // command = command.TrimQuotes();
         if (args != null && args.Length > 0)
         {
             if (!string.IsNullOrEmpty(command))
