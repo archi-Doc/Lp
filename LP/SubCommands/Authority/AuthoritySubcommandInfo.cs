@@ -21,8 +21,7 @@ public class AuthoritySubcommandInfo : ISimpleCommandAsync<AuthoritySubcommandNa
         var authorityKey = await this.Control.Authority.GetKeyAsync(option.Name);
         if (authorityKey != null)
         {
-            this.logger.TryGet()?.Log(option.Name);
-            this.logger.TryGet()?.Log(authorityKey.ToString());
+            this.logger.TryGet()?.Log($"{option.Name}: {authorityKey.ToString()}");
         }
         else
         {

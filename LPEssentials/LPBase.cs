@@ -123,7 +123,8 @@ public class LPBase : ILogInformation
         }
 
         // Remote public key
-        this.RemotePublicKey = new PublicKey(options.RemotePublicKeyBase64);
+        PublicKey.TryParse(options.RemotePublicKeyBase64, out var remoteKey);
+        this.RemotePublicKey = remoteKey;
     }
 
     public void LogInformation(ILog logger)

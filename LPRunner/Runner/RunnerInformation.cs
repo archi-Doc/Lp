@@ -21,7 +21,7 @@ public partial record RunnerInformation
     public RunnerInformation Restore()
     {
         if (!string.IsNullOrEmpty(this.NodeKeyBase64) &&
-            NodePrivateKey.TryParse(this.NodeKeyBase64) is { } privateKey)
+            NodePrivateKey.TryParse(this.NodeKeyBase64, out var privateKey))
         {
             this.NodeKey = privateKey;
         }
@@ -29,6 +29,17 @@ public partial record RunnerInformation
         {
             this.NodeKey = NodePrivateKey.Create();
             this.NodeKeyBase64 = this.NodeKey.ToUnsafeString();
+        }
+
+        if (!string.IsNullOrEmpty(this.RemotePublicKeyBase64) &&
+            PublicKey.TryParse(this.RemotePublicKeyBase64, out var publicKey))
+        {
+            this.RemotePublicKey = publicKey;
+        }
+        else
+        {
+            this.RemotePublicKey = PrivateKey.Create().ToPublicKey();
+            this.RemotePublicKeyBase64 = this.RemotePublicKey.ToString();
         }
 
         this.Image = string.IsNullOrEmpty(this.Image) ? "archidoc422/lpconsole" : this.Image;
@@ -96,7 +107,7 @@ public partial record RunnerInformation
     internal NodePrivateKey NodeKey { get; set; } = default!;
 
     [IgnoreMember]
-    internal PublicKey RemotePublicKey => new PublicKey(this.RemotePublicKeyBase64);
+    internal PublicKey RemotePublicKey { get; set; } = default!;
 
     internal NodeAddress? TryGetNodeAddress()
     {

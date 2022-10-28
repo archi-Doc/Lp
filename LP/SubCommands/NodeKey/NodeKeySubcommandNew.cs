@@ -1,30 +1,23 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Text;
-using Arc.Crypto;
-using LP.Block;
-using LP.Data;
-using Netsphere;
 using SimpleCommandLine;
-using Tinyhand;
 
-namespace LP.Subcommands.Dump;
+namespace LP.Subcommands;
 
-[SimpleCommand("newkey")]
-public class NodeSubcommandKey : ISimpleCommand<NodeSubcommandKeyOptions>
+[SimpleCommand("new")]
+public class NodeKeySubcommandNew : ISimpleCommand<NodeKeySubcommandNewOptions>
 {
-    public NodeSubcommandKey(ILogger<NodeSubcommandKey> logger, Seedphrase seedPhrase)
+    public NodeKeySubcommandNew(ILogger<NodeKeySubcommandNew> logger, Seedphrase seedPhrase)
     {
         this.logger = logger;
         this.seedPhrase = seedPhrase;
     }
 
-    public void Run(NodeSubcommandKeyOptions options, string[] args)
+    public void Run(NodeKeySubcommandNewOptions options, string[] args)
     {
         this.logger.TryGet()?.Log("New node key");
 
         NodePrivateKey nodeKey;
-
         if (string.IsNullOrEmpty(options.Seedphrase))
         {
             nodeKey = NodePrivateKey.Create();
@@ -41,14 +34,15 @@ public class NodeSubcommandKey : ISimpleCommand<NodeSubcommandKeyOptions>
             nodeKey = NodePrivateKey.Create(seed);
         }
 
-        this.logger.TryGet()?.Log(nodeKey.ToUnsafeString());
+        Console.WriteLine(nodeKey.ToUnsafeString());
+        this.logger.TryGet()?.Log(nodeKey.ToPublicKey().ToString());
     }
 
-    private ILogger<NodeSubcommandKey> logger;
+    private ILogger<NodeKeySubcommandNew> logger;
     private Seedphrase seedPhrase;
 }
 
-public record NodeSubcommandKeyOptions
+public record NodeKeySubcommandNewOptions
 {
     [SimpleOption("seed", Description = "Seedphrase")]
     public string? Seedphrase { get; init; }

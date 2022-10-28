@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -19,25 +20,27 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
 
     private static ObjectCache<NodePrivateKey, ECDiffieHellman> PrivateKeyToEcdh { get; } = new(MaxPrivateKeyCache);
 
-    public static NodePrivateKey? TryParse(string base64url)
+    public static bool TryParse(string base64url, [MaybeNullWhen(false)] out NodePrivateKey privateKey)
     {
+        privateKey = null;
+
         ReadOnlySpan<char> span = base64url.Trim().AsSpan();
         if (!span.StartsWith(KeyHelper.PrivateKeyBrace))
         {// !!!abc
-            return null;
+            return false;
         }
 
         span = span.Slice(KeyHelper.PrivateKeyBrace.Length);
         var bracePosition = span.IndexOf(KeyHelper.PrivateKeyBrace);
         if (bracePosition <= 0)
         {// abc!!!
-            return null;
+            return false;
         }
 
         var privateBytes = Base64.Url.FromStringToByteArray(span.Slice(0, bracePosition));
         if (privateBytes == null || privateBytes.Length != (PublicKey.PrivateKeyLength + 1))
         {
-            return null;
+            return false;
         }
 
         ECParameters key = default;
@@ -52,10 +55,11 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
         }
         catch
         {
-            return null;
+            return false;
         }
 
-        return new NodePrivateKey(1, key.Q.X!, key.Q.Y!, key.D!);
+        privateKey = new NodePrivateKey(1, key.Q.X!, key.Q.Y!, key.D!);
+        return true;
     }
 
     public static NodePrivateKey Create()
@@ -231,7 +235,7 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
         Span<byte> bytes = stackalloc byte[1 + NodePublicKey.PrivateKeyLength]; // scoped
         bytes[0] = this.keyValue;
         this.d.CopyTo(bytes.Slice(1));
-        return $"!!!{Base64.Url.FromByteArrayToString(bytes)}!!!({this.ToPublicKey().ToString()})";
+        return $"!!!{Base64.Url.FromByteArrayToString(bytes)}!!!{this.ToPublicKey().ToString()}";
     }
 
     internal uint CompressY()

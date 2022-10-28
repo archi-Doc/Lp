@@ -6,7 +6,7 @@ using LP.Block;
 using SimpleCommandLine;
 using Tinyhand;
 
-namespace LP.Subcommands.Dump;
+namespace LP.Subcommands;
 
 [SimpleCommand("lp")]
 public class InfoSubcommandLP : ISimpleCommand<DumpSubcommandInfoOptions>

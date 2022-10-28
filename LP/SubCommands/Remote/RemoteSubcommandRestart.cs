@@ -5,7 +5,7 @@ using LP.NetServices;
 using Netsphere;
 using SimpleCommandLine;
 
-namespace LP.Subcommands.Dump;
+namespace LP.Subcommands;
 
 [SimpleCommand("restart")]
 public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandRestartOptions>
@@ -32,11 +32,12 @@ public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandResta
         }
 
         // using (var terminal = await this.terminal.CreateAndEncrypt(nodeInformation))
-        this.logger.TryGet()?.Log($"");
-        using (var terminal = this.terminal.Create(nodeInformation))
+        this.logger.TryGet()?.Log($"Start");
+        using (var terminal = await this.terminal.CreateAndEncrypt(nodeInformation))
         {
             if (terminal == null)
             {
+                this.logger.TryGet()?.Log(Hashed.Error.Connect, nodeInformation.ToString());
                 return;
             }
 
@@ -47,11 +48,6 @@ public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandResta
             }
 
             authorityKey.SignToken(token);
-            if (!token.ValidateAndVerify())
-            {
-                return;
-            }
-
             if (!token.ValidateAndVerify())
             {
                 return;

@@ -7,7 +7,7 @@ using LP.Data;
 using SimpleCommandLine;
 using Tinyhand;
 
-namespace LP.Subcommands.Dump;
+namespace LP.Subcommands;
 
 [SimpleCommand("ls")]
 public class FlagSubcommandLs : ISimpleCommand

@@ -20,7 +20,7 @@ public class SeedphraseSubcommand : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        this.logger.TryGet()?.Log($"Create seedphrase: ");
+        this.logger.TryGet()?.Log($"Create seedphrase");
 
         var phrase = this.seedPhrase.Create();
         // this.logger.TryGet()?.Log($"{phrase}");

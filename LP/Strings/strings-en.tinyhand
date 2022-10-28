@@ -29,6 +29,7 @@ Error = {
     KeyVault = "Could not deserialize '{0}'"
     Parse = "Could not parse '{0}'"
     InvalidAddress = "{0} is not valid address."
+    Connect = "Could not connect '{0}'"
 }
 
 Vault = {
@@ -64,5 +65,10 @@ Custom = {
 Subcommands = {
     GC = {
         Start = "GC.Collect"
+    }
+    
+    NodeKey = {
+        Changed = "Node key changed: {0}"
+        InvalidKey = "'{0}' is invalid. Enter a valid private key or seedphrase"
     }
 }

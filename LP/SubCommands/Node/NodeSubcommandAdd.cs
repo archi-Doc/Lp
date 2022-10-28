@@ -8,7 +8,7 @@ using Netsphere;
 using SimpleCommandLine;
 using Tinyhand;
 
-namespace LP.Subcommands.Dump;
+namespace LP.Subcommands;
 
 [SimpleCommand("add")]
 public class NodeSubcommandAdd : ISimpleCommand

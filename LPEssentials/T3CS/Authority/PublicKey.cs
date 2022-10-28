@@ -14,6 +14,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
     public const int PublicKeyHalfLength = PublicKeyLength / 2;
     public const int PrivateKeyLength = 32;
     public const int SignLength = 64;
+    public const int PublicKeyEncodedLength = 1 + (sizeof(ulong) * 4);
     private const int MaxPublicKeyCache = 100;
 
     public static HashAlgorithmName HashAlgorithmName { get; }
@@ -28,6 +29,36 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         HashAlgorithmName = HashAlgorithmName.SHA256;
     }
 
+    public static bool TryParse(ReadOnlySpan<char> chars, [MaybeNullWhen(false)] out PublicKey publicKey)
+    {
+        if (chars.Length >= 2 && chars[0] == '(' && chars[chars.Length - 1] == ')')
+        {
+            chars = chars.Slice(1, chars.Length - 2);
+        }
+
+        publicKey = default;
+        var bytes = Base64.Url.FromStringToByteArray(chars);
+        if (bytes.Length != PublicKeyEncodedLength)
+        {
+            return false;
+        }
+
+        var b = bytes.AsSpan();
+        var keyValue = b[0];
+        b = b.Slice(1);
+        var x0 = BitConverter.ToUInt64(b);
+        b = b.Slice(sizeof(ulong));
+        var x1 = BitConverter.ToUInt64(b);
+        b = b.Slice(sizeof(ulong));
+        var x2 = BitConverter.ToUInt64(b);
+        b = b.Slice(sizeof(ulong));
+        var x3 = BitConverter.ToUInt64(b);
+        b = b.Slice(sizeof(ulong));
+
+        publicKey = new(keyValue, x0, x1, x2, x3);
+        return true;
+    }
+
     public PublicKey()
     {
         this.keyValue = 0;
@@ -37,7 +68,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         this.x3 = 0;
     }
 
-    public PublicKey(string base64url)
+    /*public PublicKey(string base64url)
     {
         var bytes = Arc.Crypto.Base64.Url.FromStringToByteArray(base64url);
         if (bytes.Length == (PublicKeyHalfLength + 1))
@@ -61,7 +92,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
             this.x2 = 0;
             this.x3 = 0;
         }
-    }
+    }*/
 
     internal PublicKey(PrivateKey privateKey)
     {
@@ -74,6 +105,15 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         this.x2 = BitConverter.ToUInt64(span);
         span = span.Slice(sizeof(ulong));
         this.x3 = BitConverter.ToUInt64(span);
+    }
+
+    private PublicKey(byte keyValue, ulong x0, ulong x1, ulong x2, ulong x3)
+    {
+        this.keyValue = KeyHelper.CheckPublicKeyValue(keyValue);
+        this.x0 = x0;
+        this.x1 = x1;
+        this.x2 = x2;
+        this.x3 = x3;
     }
 
     [Key(0)]
@@ -194,7 +234,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         BitConverter.TryWriteBytes(b, this.x3);
         b = b.Slice(sizeof(ulong));
 
-        return $"{Base64.Url.FromByteArrayToString(bytes)}";
+        return $"({Base64.Url.FromByteArrayToString(bytes)})";
     }
 
     private ECDsa? TryGetEcdsa()

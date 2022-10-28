@@ -74,6 +74,7 @@ public class Control : ILogInformation
                 LP.Subcommands.KeyVaultSubcommand.Configure(context);
                 LP.Subcommands.FlagSubcommand.Configure(context);
                 LP.Subcommands.NodeSubcommand.Configure(context);
+                LP.Subcommands.NodeKeySubcommand.Configure(context);
                 LP.Subcommands.AuthoritySubcommand.Configure(context);
                 LP.Subcommands.CustomSubcommand.Configure(context);
                 LP.Subcommands.RemoteSubcommand.Configure(context);

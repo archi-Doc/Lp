@@ -209,7 +209,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         Span<byte> bytes = stackalloc byte[1 + NodePublicKey.PrivateKeyLength]; // scoped
         bytes[0] = this.keyValue;
         this.d.CopyTo(bytes.Slice(1));
-        return $"!!!{Base64.Url.FromByteArrayToString(bytes)}!!!({this.ToPublicKey().ToString()})";
+        return $"!!!{Base64.Url.FromByteArrayToString(bytes)}!!!{this.ToPublicKey().ToString()}";
     }
 
     internal uint CompressY()
