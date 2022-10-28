@@ -102,7 +102,7 @@ internal class DockerRunner
             directory = $"$(pwd)/{this.information.HostDirectory}";
         }
 
-        var command = $"docker run -d -it --mount type=bind,source={directory},destination={this.information.DestinationDirectory} --rm -p {this.information.HostPort}:{this.information.DestinationPort}/udp {this.information.Image} -rootdir {this.information.DestinationDirectory} -ns [-port {this.information.DestinationPort} -test true -alternative false] -remotekey {this.information.RemotePublicKey}";
+        var command = $"docker run -d -it --mount type=bind,source={directory},destination={this.information.DestinationDirectory} --rm -p {this.information.HostPort}:{this.information.DestinationPort}/udp {this.information.Image} -rootdir {this.information.DestinationDirectory} -ns [-port {this.information.DestinationPort} -test true -alternative false] -remotekey {this.information.RemotePublicKey.ToBase64()}";
         RunnerHelper.DispatchCommand(this.logger, command);
 
         /*try

@@ -220,6 +220,11 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
     public override string ToString()
     {
+        return $"({this.ToBase64()})";
+    }
+
+    public string ToBase64()
+    {
         Span<byte> bytes = stackalloc byte[1 + (sizeof(ulong) * 4)]; // scoped
         var b = bytes;
 
@@ -234,7 +239,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         BitConverter.TryWriteBytes(b, this.x3);
         b = b.Slice(sizeof(ulong));
 
-        return $"({Base64.Url.FromByteArrayToString(bytes)})";
+        return $"{Base64.Url.FromByteArrayToString(bytes)}";
     }
 
     private ECDsa? TryGetEcdsa()
