@@ -53,6 +53,8 @@ public partial record RunnerInformation
         return this;
     }
 
+    public string NodeName { get; set; } = string.Empty;
+
     public string NodeKeyBase64 { get; set; } = string.Empty;
 
     public string Image { get; set; } = string.Empty;
@@ -70,6 +72,8 @@ public partial record RunnerInformation
     public int DestinationPort { get; set; }
 
     public string RemotePublicKeyBase64 { get; set; } = string.Empty;
+
+    public string AdditionalArgs { get; set; } = string.Empty;
 
     public async Task<bool> Load(string path)
     {
