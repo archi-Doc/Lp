@@ -105,7 +105,7 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
 
     public bool Validate()
     {
-        if (this.KeyVersion == 0)
+        if (this.KeyVersion == 1)
         {
             return true;
         }
@@ -154,7 +154,7 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
             return null;
         }
 
-        if (this.KeyVersion == 0)
+        if (this.KeyVersion == 1)
         {
             var x = new byte[32];
             var span = x.AsSpan();
