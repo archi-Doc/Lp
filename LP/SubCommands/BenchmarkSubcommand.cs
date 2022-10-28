@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using Arc.Crypto;
 using LP;
+using LP.Services;
 using SimpleCommandLine;
 using Tinyhand;
 
@@ -16,10 +17,10 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
     public const string CurveName = "secp256r1";
     public const string TestKeyString = "0, b\"9KfxBVYHXco5UZop78r+nv1BBuvb8TDozUgNPstvn7E=\", b\"I5dyWNPVlERjkHJ18u7AhVO2ElL2vExVYY8lILGnhWU=\", b\"HcvEcMJz+1SG59GNp3RWYAM4ejoEQ3bLWHA+rVIyfVQ=\"";
 
-    public BenchmarkSubcommand(ILogger<BenchmarkSubcommand> logger, Control control)
+    public BenchmarkSubcommand(ILogger<BenchmarkSubcommand> logger, IConsoleService consoleService)
     {
         this.logger = logger;
-        this.Control = control;
+        this.consoleService = consoleService;
 
         try
         {
@@ -46,8 +47,6 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
 
         await this.RunBenchmark(options);
     }
-
-    public Control Control { get; set; }
 
     private async Task RunBenchmark(BenchmarkOptions options)
     {
@@ -147,6 +146,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
         this.logger.TryGet()?.Log(benchTimer.GetResult("Serialize & Deserialize"));
     }
 
+    private IConsoleService consoleService;
     private ILogger<BenchmarkSubcommand> logger;
     private PrivateKey? privateKey;
 }

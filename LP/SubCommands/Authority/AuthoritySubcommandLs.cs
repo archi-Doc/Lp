@@ -2,6 +2,7 @@
 
 using Arc.Crypto;
 using LP;
+using LP.Services;
 using SimpleCommandLine;
 using Tinyhand;
 
@@ -10,16 +11,18 @@ namespace LP.Subcommands;
 [SimpleCommand("ls")]
 public class AuthoritySubcommandLs : ISimpleCommandAsync
 {
-    public AuthoritySubcommandLs(Control control)
+    public AuthoritySubcommandLs(IConsoleService consoleService, Authority authority)
     {
-        this.Control = control;
+        this.consoleService = consoleService;
+        this.authority = authority;
     }
 
     public async Task RunAsync(string[] args)
     {
-        var names = this.Control.Authority.GetNames();
-        Console.WriteLine(string.Join(' ', names));
+        var names = this.authority.GetNames();
+        this.consoleService.WriteLine(string.Join(' ', names));
     }
 
-    public Control Control { get; set; }
+    private Authority authority;
+    private IConsoleService consoleService;
 }

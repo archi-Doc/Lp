@@ -3,8 +3,6 @@
 #pragma warning disable SA1210 // Using directives should be ordered alphabetically by namespace
 
 global using System;
-global using System.IO;
-global using System.Threading.Tasks;
 global using Arc.Crypto;
 global using Arc.Threading;
 global using Arc.Unit;
@@ -263,9 +261,10 @@ public class Control : ILogInformation
         }
     }
 
-    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl, Vault vault, Authority authority)
+    public Control(UnitContext context, UnitCore core, UnitLogger logger, IConsoleService consoleService, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl, Vault vault, Authority authority)
     {
         this.Logger = logger;
+        this.ConsoleService = consoleService;
         this.UserInterfaceService = userInterfaceService;
         this.LPBase = lpBase;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
@@ -335,7 +334,7 @@ public class Control : ILogInformation
         await context.SendRunAsync(new(this.Core));
         this.BigMachine.TryGet<NtpMachine.Interface>(Identifier.Zero)?.RunAsync();
 
-        Console.WriteLine();
+        this.ConsoleService.WriteLine();
         var logger = this.Logger.Get<DefaultLog>(LogLevel.Information);
         this.LogInformation(logger);
 
@@ -403,7 +402,7 @@ public class Control : ILogInformation
             }
             else
             {
-                Console.WriteLine("Invalid subcommand.");
+                this.ConsoleService.WriteLine("Invalid subcommand.");
                 return false;
             }
         }
@@ -416,7 +415,7 @@ public class Control : ILogInformation
             return false;
         }
 
-        Console.WriteLine();
+        this.ConsoleService.WriteLine();
         return true;*/
     }
 
@@ -451,7 +450,7 @@ public class Control : ILogInformation
                         }
                         else
                         {
-                            Console.Write("> ");
+                            this.ConsoleService.Write("> ");
                             continue;
                         }
                     }
@@ -460,19 +459,19 @@ public class Control : ILogInformation
                         try
                         {
                             this.Subcommand(command);
-                            Console.Write("> ");
+                            this.ConsoleService.Write("> ");
                             continue;
                         }
                         catch (Exception e)
                         {
-                            Console.WriteLine(e.ToString());
+                            this.ConsoleService.WriteLine(e.ToString());
                             break;
                         }
                     }
                 }
                 else
                 {
-                    Console.WriteLine();
+                    this.ConsoleService.WriteLine();
                 }
 
                 // To view mode
@@ -486,7 +485,7 @@ public class Control : ILogInformation
                     if (keyInfo.Key == ConsoleKey.Enter || keyInfo.Key == ConsoleKey.Escape)
                     { // To console mode
                         this.UserInterfaceService.ChangeMode(IUserInterfaceService.Mode.Console);
-                        Console.Write("> ");
+                        this.ConsoleService.Write("> ");
                     }
                     else
                     {
@@ -510,6 +509,8 @@ public class Control : ILogInformation
     public UnitLogger Logger { get; }
 
     public UnitCore Core { get; }
+
+    public IConsoleService ConsoleService { get; }
 
     public IUserInterfaceService UserInterfaceService { get; }
 
@@ -563,7 +564,7 @@ public class Control : ILogInformation
             }
         }
 
-        Console.WriteLine(HashedString.Get(Hashed.Vault.Create));
+        this.ConsoleService.WriteLine(HashedString.Get(Hashed.Vault.Create));
         // await this.UserInterfaceService.Notify(UserInterfaceNotifyLevel.Information, Hashed.KeyVault.Create);
 
         // New Vault

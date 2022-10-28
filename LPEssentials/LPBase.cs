@@ -11,8 +11,8 @@ global using CrossChannel;
 global using Tinyhand;
 
 using LP.Data;
-using System.Security.Cryptography;
-using System.Collections.Generic;
+using LP.Services;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace LP;
 
@@ -35,6 +35,7 @@ public class LPBase : ILogInformation
 
         // Main
         context.AddSingleton<LPBase>();
+        context.Services.TryAddSingleton<IConsoleService, ConsoleService>();
         context.AddSingleton<NtpCorrection>();
     }
 

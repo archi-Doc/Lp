@@ -4,9 +4,10 @@ namespace LP.Services;
 
 public class ConsoleUserInterfaceService : IUserInterfaceService
 {
-    public ConsoleUserInterfaceService(UnitCore core, ILogger<DefaultLog> logger)
+    public ConsoleUserInterfaceService(UnitCore core, IConsoleService consoleService, ILogger<DefaultLog> logger)
     {
         this.core = core;
+        this.consoleService = consoleService;
         this.logger = logger;
     }
 
@@ -24,7 +25,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
         }
         catch
         {
-            Console.WriteLine();
+            this.consoleService.WriteLine();
             return null;
         }*/
     }
@@ -64,7 +65,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
         }
         catch
         {
-            Console.WriteLine();
+            this.consoleService.WriteLine();
             return default;
         }
         finally
@@ -77,7 +78,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
     {
         if (!string.IsNullOrEmpty(description))
         {
-            Console.Write(description + ": ");
+            this.consoleService.Write(description + ": ");
         }
 
         ConsoleKey key;
@@ -97,23 +98,23 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
                 key = keyInfo.Key;
                 if (key == ConsoleKey.Backspace && password.Length > 0)
                 {
-                    Console.Write("\b \b");
+                    this.consoleService.Write("\b \b");
                     password = password[0..^1];
                 }
                 else if (!char.IsControl(keyInfo.KeyChar))
                 {
-                    Console.Write("*");
+                    this.consoleService.Write("*");
                     password += keyInfo.KeyChar;
                 }
                 else if ((keyInfo.Modifiers & ConsoleModifiers.Control) != 0 &&
                     (keyInfo.Key & ConsoleKey.C) != 0)
                 {// Ctrl+C
-                    Console.WriteLine();
+                    this.consoleService.WriteLine();
                     return null;
                 }
                 else if (key == ConsoleKey.Escape)
                 {
-                    Console.WriteLine();
+                    this.consoleService.WriteLine();
                     return null;
                 }
             }
@@ -124,7 +125,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
             Console.TreatControlCAsInput = false;
         }
 
-        Console.WriteLine();
+        this.consoleService.WriteLine();
         return password;
     }
 
@@ -132,7 +133,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
     {
         if (!string.IsNullOrEmpty(description))
         {
-            Console.Write(description + ": ");
+            this.consoleService.Write(description + ": ");
         }
 
         while (true)
@@ -140,7 +141,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
             var input = Console.ReadLine();
             if (input == null)
             {// Ctrl+C
-                Console.WriteLine();
+                this.consoleService.WriteLine();
                 return null; // throw new PanicException();
             }
 
@@ -158,7 +159,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
     {
         if (!string.IsNullOrEmpty(description))
         {
-            Console.WriteLine(description + " [Y/n]");
+            this.consoleService.WriteLine(description + " [Y/n]");
         }
 
         while (true)
@@ -166,7 +167,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
             var input = Console.ReadLine();
             if (input == null)
             {// Ctrl+C
-                Console.WriteLine();
+                this.consoleService.WriteLine();
                 return null; // throw new PanicException();
             }
 
@@ -181,11 +182,12 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
             }
             else
             {
-                Console.WriteLine("[Y/n]");
+                this.consoleService.WriteLine("[Y/n]");
             }
         }
     }
 
     private UnitCore core;
+    private IConsoleService consoleService;
     private ILogger<DefaultLog> logger;
 }
