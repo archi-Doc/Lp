@@ -58,7 +58,7 @@ public sealed partial class Token : IVerifiable // , IEquatable<Token>
 
         try
         {
-            var bytes = TinyhandSerializer.Serialize(this, TinyhandSerializerOptions.Conditional);
+            var bytes = TinyhandSerializer.Serialize(this, TinyhandSerializerOptions.Signature);
             var sign = privateKey.SignData(bytes);
 
             if (sign != null)
@@ -83,7 +83,7 @@ public sealed partial class Token : IVerifiable // , IEquatable<Token>
 
         try
         {
-            var bytes = TinyhandSerializer.Serialize(this, TinyhandSerializerOptions.Conditional);
+            var bytes = TinyhandSerializer.Serialize(this, TinyhandSerializerOptions.Signature);
             return this.PublicKey.VerifyData(bytes, this.signature);
         }
         catch

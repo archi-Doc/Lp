@@ -62,23 +62,6 @@ public partial class NtpMachine : Machine<Identifier>
         return StateResult.Continue;
     }
 
-    private async Task<NtpPacket> GetTime(CancellationToken cancellationToken)
-    {
-        const string ntpServer = "time.google.com";
-
-        using (var client = new UdpClient())
-        {
-            client.Connect(ntpServer, 123);
-
-            var packet = NtpPacket.CreateSendPacket();
-            await client.SendAsync(packet.PacketData, cancellationToken);
-            var result = await client.ReceiveAsync(cancellationToken);
-            var packet2 = new NtpPacket(result.Buffer);
-
-            return packet2;
-        }
-    }
-
     private ILogger<NtpMachine>? logger;
     private NtpCorrection ntpCorrection;
 }

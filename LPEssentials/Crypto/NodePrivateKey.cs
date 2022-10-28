@@ -55,7 +55,7 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
             return null;
         }
 
-        return new NodePrivateKey(0, key.Q.X!, key.Q.Y!, key.D!);
+        return new NodePrivateKey(1, key.Q.X!, key.Q.Y!, key.D!);
     }
 
     public static NodePrivateKey Create()
@@ -63,7 +63,7 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
         using (var ecdh = ECDiffieHellman.Create(NodePublicKey.ECCurve))
         {
             var key = ecdh.ExportParameters(true);
-            return new NodePrivateKey(0, key.Q.X!, key.Q.Y!, key.D!);
+            return new NodePrivateKey(1, key.Q.X!, key.Q.Y!, key.D!);
         }
     }
 
@@ -105,7 +105,7 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
         }
 
         Hash.ObjectPool.Return(hash);
-        return new NodePrivateKey(0, key.Q.X!, key.Q.Y!, key.D!);
+        return new NodePrivateKey(1, key.Q.X!, key.Q.Y!, key.D!);
     }
 
     internal NodePrivateKey()
@@ -127,7 +127,7 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
 
     public byte[]? DeriveKeyMaterial(NodePublicKey publicKey)
     {
-        if (this.KeyVersion != 0)
+        if (this.KeyVersion != 1)
         {
             return null;
         }
@@ -183,7 +183,7 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
 
     public bool Validate()
     {
-        if (this.KeyVersion != 0)
+        if (this.KeyVersion != 1)
         {
             return false;
         }
@@ -236,7 +236,7 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
 
     internal uint CompressY()
     {
-        if (this.KeyVersion == 0)
+        if (this.KeyVersion == 1)
         {
             return Arc.Crypto.EC.P256R1Curve.Instance.CompressY(this.y);
         }
