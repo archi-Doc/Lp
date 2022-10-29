@@ -43,7 +43,7 @@ internal class RemoteControlService : IRemoteControlService
             _ = Task.Run(async () =>
             {
                 await Task.Delay(1000);
-                this.control.Terminate(false); // tempcode
+                this.control.Terminate(false);
             });
 
             return NetResult.Success;

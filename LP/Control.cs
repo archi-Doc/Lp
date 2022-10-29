@@ -196,7 +196,7 @@ public class Control : ILogInformation
                 this.Context.SendPrepare(new());
 
                 // Machines
-                control.BigMachine.CreateNew<LP.Machines.LogTesterMachine.Interface>(Identifier.Zero);
+                // control.BigMachine.CreateNew<LP.Machines.LogTesterMachine.Interface>(Identifier.Zero);
                 control.NetControl.CreateMachines();
             }
             catch

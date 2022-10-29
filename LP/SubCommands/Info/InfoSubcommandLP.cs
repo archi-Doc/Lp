@@ -33,6 +33,8 @@ public class InfoSubcommandLP : ISimpleCommand<DumpSubcommandInfoOptions>
         else
         {
             logger?.Log(Environment.OSVersion.ToString());
+            logger?.Log($"Time.GetApplication(): {Time.GetApplication()}");
+            logger?.Log($"Time.GetCorrected(): {Time.GetCorrected()}");
             this.Control.NetControl.Terminal.Dump(logger);
         }
     }
