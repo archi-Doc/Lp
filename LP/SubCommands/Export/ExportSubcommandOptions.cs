@@ -6,7 +6,7 @@ using LP.Data;
 using LP.Services;
 using SimpleCommandLine;
 
-namespace LP.Subcommands.Dump;
+namespace LP.Subcommands;
 
 [SimpleCommand("options")]
 public class ExportSubcommandOptions : ISimpleCommandAsync<ExportSubcommandOptionsOptions>

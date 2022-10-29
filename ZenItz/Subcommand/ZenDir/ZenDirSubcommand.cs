@@ -16,7 +16,7 @@ public class ZenDirSubcommand : SimpleCommandGroup<ZenDirSubcommand>
     }
 
     public ZenDirSubcommand(UnitContext context, ZenControl control)
-        : base(context)
+        : base(context, "ls")
     {
     }
 }

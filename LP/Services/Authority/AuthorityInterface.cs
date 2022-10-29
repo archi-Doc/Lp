@@ -4,29 +4,80 @@ using LP.Services;
 
 namespace LP;
 
-public readonly struct AuthorityInterface
+internal sealed class AuthorityInterface
 {
-    internal AuthorityInterface(AuthorityKey authorityKey, long salt)
+    public AuthorityInterface(Authority authority, string name, byte[] encrypted)
     {
-        this.authorityKey = authorityKey;
-        this.Salt = salt;
+        this.authority = authority;
+        this.Name = name;
+        this.encrypted = encrypted;
     }
 
-    // public AuthorityInterface WithSalt(long salt) => new AuthorityInterface(this.authorityKey, salt);
+    public string Name { get; private set; }
 
-    public Task<(AuthorityResult Result, Token Token)> CreateToken(Credit credit, ulong salt)
-        => this.authorityKey.CreateToken(credit, salt);
-    public Task<(AuthorityResult Result, byte[] Signature)> SignData(Credit credit, byte[] data)
-        => this.authorityKey.SignData(credit, data);
+    public long ExpirationMics { get; private set; }
 
-    public Task<AuthorityResult> VerifyData(Credit credit, byte[] data, byte[] signature)
-        => this.authorityKey.VerifyData(credit, data, signature);
+    internal async Task<AuthorityKey?> Prepare()
+    {
+        if (this.authorityKey != null)
+        {
+            if (this.authorityKey.Lifetime == AuthorityLifetime.PeriodOfTime)
+            {// Periof of time
+                if (Mics.GetUtcNow() > this.ExpirationMics)
+                {// Expired
+                    this.authorityKey = null;
+                }
+            }
 
-    public Task<(AuthorityResult Result, AuthorityData? AuthorityData)> GetInfo()
-        => this.authorityKey.GetInfo();
+            if (this.authorityKey != null)
+            {
+                return this.authorityKey;
+            }
+        }
 
-    internal Task<AuthorityResult> Prepare() => this.authorityKey.Prepare();
+        // Try to get AuthorityData.
+        if (!PasswordEncrypt.TryDecrypt(this.encrypted, string.Empty, out var decrypted))
+        {
+            while (true)
+            {
+                var passPhrase = await this.authority.UserInterfaceService.RequestPassword(Hashed.Authority.EnterPassword, this.Name).ConfigureAwait(false);
+                if (passPhrase == null)
+                {// Canceled
+                    return null;
+                }
 
-    public readonly long Salt;
-    private readonly AuthorityKey authorityKey;
+                if (PasswordEncrypt.TryDecrypt(this.encrypted, passPhrase, out decrypted))
+                {
+                    break;
+                }
+            }
+        }
+
+        // Deserialize
+        try
+        {
+            this.authorityKey = TinyhandSerializer.Deserialize<AuthorityKey>(decrypted);
+        }
+        catch
+        {
+        }
+
+        if (this.authorityKey != null)
+        {
+            if (this.authorityKey.Lifetime == AuthorityLifetime.PeriodOfTime)
+            {
+                this.ExpirationMics = Mics.GetUtcNow() + this.authorityKey.LifeMics;
+            }
+
+            return this.authorityKey;
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+    private Authority authority;
+    private byte[] encrypted;
+    private AuthorityKey? authorityKey;
 }

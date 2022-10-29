@@ -29,6 +29,7 @@ Error = {
     KeyVault = "Could not deserialize '{0}'"
     Parse = "Could not parse '{0}'"
     InvalidAddress = "{0} is not valid address."
+    Connect = "Could not connect '{0}'"
 }
 
 Vault = {
@@ -45,7 +46,12 @@ Authority = {
     Created = "Authority '{0}' is successfully created"
     Removed = "Authority '{0}' is successfully removed"
     NotFound = "Authority '{0}' is not found"
+    NotAvailable = "Could not get Authority '{0}'"
     EnterPassword = "Enter Authority '{0}' password"
+}
+
+Seedphrase = {
+    Invalid = "Seedphrase '{0}' is invaid"
 }
 
 Custom = {
@@ -59,5 +65,10 @@ Custom = {
 Subcommands = {
     GC = {
         Start = "GC.Collect"
+    }
+    
+    NodeKey = {
+        Changed = "Node key changed: {0}"
+        InvalidKey = "'{0}' is invalid. Enter a valid private key or seedphrase"
     }
 }

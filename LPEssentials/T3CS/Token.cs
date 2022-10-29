@@ -6,9 +6,11 @@ namespace LP;
 /// Immutable token object.
 /// </summary>
 [TinyhandObject]
-public sealed partial class Token : IVerifiable // , IEquatable<Token>
+public sealed partial class Token // : IVerifiable // , IEquatable<Token>
 {
-    public const long DefaultMics = Mics.MicsPerMinute * 1;
+    public const long DefaultMics = Mics.MicsPerSecond * 3;
+    public const long MaximumMics = Mics.MicsPerMinute * 2;
+    public const long ErrorMics = Mics.MicsPerSecond * 3;
 
     public enum Type
     {
@@ -41,6 +43,12 @@ public sealed partial class Token : IVerifiable // , IEquatable<Token>
             return false;
         }
 
+        var range = MicsRange.FromCorrectedToMics(MaximumMics, ErrorMics);
+        if (!range.IsIn(this.ExpirationMics))
+        {
+            return false;
+        }
+
         return true;
     }
 
@@ -50,7 +58,7 @@ public sealed partial class Token : IVerifiable // , IEquatable<Token>
 
         try
         {
-            var bytes = TinyhandSerializer.Serialize(this, TinyhandSerializerOptions.Conditional);
+            var bytes = TinyhandSerializer.Serialize(this, TinyhandSerializerOptions.Signature);
             var sign = privateKey.SignData(bytes);
 
             if (sign != null)
@@ -66,7 +74,7 @@ public sealed partial class Token : IVerifiable // , IEquatable<Token>
         return false;
     }
 
-    public bool ValidateAndVerify()
+    public bool ValidateAndVerifyWithoutPublicKey()
     {
         if (!this.Validate())
         {
@@ -75,13 +83,27 @@ public sealed partial class Token : IVerifiable // , IEquatable<Token>
 
         try
         {
-            var bytes = TinyhandSerializer.Serialize(this, TinyhandSerializerOptions.Conditional);
+            var bytes = TinyhandSerializer.Serialize(this, TinyhandSerializerOptions.Signature);
             return this.PublicKey.VerifyData(bytes, this.signature);
         }
         catch
         {
             return false;
         }
+    }
+
+    public bool ValidateAndVerifyWithoutSalt(PublicKey publicKey)
+    {
+        if (!publicKey.IsValid())
+        {
+            return false;
+        }
+        else if (!publicKey.Equals(this.PublicKey))
+        {
+            return false;
+        }
+
+        return this.ValidateAndVerifyWithoutPublicKey();
     }
 
     [Key(0)]

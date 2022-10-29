@@ -8,24 +8,26 @@ using Netsphere;
 using SimpleCommandLine;
 using Tinyhand;
 
-namespace LP.Subcommands.Dump;
+namespace LP.Subcommands;
 
 [SimpleCommand("ls")]
 public class NodeSubcommandLs : ISimpleCommand
 {
-    public NodeSubcommandLs(Control control)
+    public NodeSubcommandLs(Control control, IUserInterfaceService userInterfaceService)
     {
-        this.Control = control;
+        this.control = control;
+        this.userInterfaceService = userInterfaceService;
     }
 
     public void Run(string[] args)
     {
-        var list = this.Control.NetControl.EssentialNode.Dump();
+        var list = this.control.NetControl.EssentialNode.Dump();
         foreach (var x in list)
         {
-            Console.WriteLine(x);
+            this.userInterfaceService.WriteLine(x);
         }
     }
 
-    public Control Control { get; set; }
+    private Control control;
+    private IUserInterfaceService userInterfaceService;
 }

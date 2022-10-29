@@ -1,136 +1,101 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using LP.Services;
+using Arc.Collections;
 
 namespace LP;
 
-internal sealed class AuthorityKey
+[TinyhandObject]
+public sealed partial class AuthorityKey
 {
-    public AuthorityKey(Authority authority, string name, byte[] encrypted)
+    public AuthorityKey(string? seedPhrase, AuthorityLifetime lifetime, long lifeMics)
     {
-        this.authority = authority;
-        this.Name = name;
-        this.encrypted = encrypted;
-    }
-
-    public async Task<(AuthorityResult Result, Token? Token)> CreateToken(Credit credit, ulong salt)
-    {
-        var result = await this.Prepare().ConfigureAwait(false);
-        if (result != AuthorityResult.Success)
+        if (seedPhrase == null)
         {
-            return (result, null);
-        }
-
-        return (result, null);
-    }
-
-    public async Task<(AuthorityResult Result, byte[] Signature)> SignData(Credit credit, byte[] data)
-    {
-        var result = await this.Prepare().ConfigureAwait(false);
-        if (result != AuthorityResult.Success)
-        {
-            return (result, Array.Empty<byte>());
-        }
-
-        var signature = this.authorityData!.SignData(credit, data);
-        if (signature == null)
-        {
-            signature = Array.Empty<byte>();
-            result = AuthorityResult.InvalidData;
-        }
-
-        return (result, signature);
-    }
-
-    public async Task<AuthorityResult> VerifyData(Credit credit, byte[] data, byte[] signature)
-    {
-        var result = await this.Prepare().ConfigureAwait(false);
-        if (result != AuthorityResult.Success)
-        {
-            return result;
-        }
-
-        if (this.authorityData!.VerifyData(credit, data, signature))
-        {
-            return AuthorityResult.Success;
+            this.seed = new byte[Hash.HashBytes];
+            Random.Crypto.NextBytes(this.seed);
         }
         else
         {
-            return AuthorityResult.InvalidSignature;
+            var hash = Hash.ObjectPool.Get();
+            var utf8 = System.Text.Encoding.UTF8.GetBytes(seedPhrase);
+            this.seed = hash.GetHash(hash.GetHash(utf8));
+            Hash.ObjectPool.Return(hash);
         }
+
+        this.Lifetime = lifetime;
+        this.LifeMics = lifeMics;
     }
 
-    public async Task<(AuthorityResult Result, AuthorityData? AuthorityData)> GetInfo()
+    internal AuthorityKey()
     {
-        var result = await this.Prepare().ConfigureAwait(false);
-        return (result, this.authorityData);
     }
 
-    public string Name { get; private set; }
-
-    public long ExpirationMics { get; private set; }
-
-    internal async Task<AuthorityResult> Prepare()
+    public void SignToken(Token token)
     {
-        if (this.authorityData != null)
-        {
-            if (this.authorityData.Lifetime == AuthorityLifetime.PeriodOfTime)
-            {// Periof of time
-                if (Mics.GetUtcNow() > this.ExpirationMics)
-                {// Expired
-                    this.authorityData = null;
-                }
-            }
-
-            if (this.authorityData != null)
-            {
-                return AuthorityResult.Success;
-            }
-        }
-
-        // Try to get AuthorityData.
-        if (!PasswordEncrypt.TryDecrypt(this.encrypted, string.Empty, out var decrypted))
-        {
-            while (true)
-            {
-                var passPhrase = await this.authority.UserInterfaceService.RequestPassword(Hashed.Authority.EnterPassword, this.Name).ConfigureAwait(false);
-                if (passPhrase == null)
-                {
-                    return AuthorityResult.Canceled;
-                }
-
-                if (PasswordEncrypt.TryDecrypt(this.encrypted, passPhrase, out decrypted))
-                {
-                    break;
-                }
-            }
-        }
-
-        // Deserialize
-        try
-        {
-            this.authorityData = TinyhandSerializer.Deserialize<AuthorityData>(decrypted);
-        }
-        catch
-        {
-        }
-
-        if (this.authorityData != null)
-        {
-            if (this.authorityData.Lifetime == AuthorityLifetime.PeriodOfTime)
-            {
-                this.ExpirationMics = Mics.GetUtcNow() + this.authorityData.LifeMics;
-            }
-
-            return AuthorityResult.Success;
-        }
-        else
-        {
-            return AuthorityResult.InvalidData;
-        }
+        var privateKey = this.GetOrCreatePrivateKey();
+        token.Sign(privateKey);
     }
 
-    private Authority authority;
-    private byte[] encrypted;
-    private AuthorityData? authorityData;
+    public void SignToken(Credit credit, Token token)
+    {
+        var privateKey = this.GetOrCreatePrivateKey(credit);
+        token.Sign(privateKey);
+    }
+
+    public byte[]? SignData(Credit credit, byte[] data)
+    {
+        var privateKey = this.GetOrCreatePrivateKey(credit);
+        var signature = privateKey.SignData(data);
+        this.CachePrivateKey(credit, privateKey);
+        return signature;
+    }
+
+    public bool VerifyData(Credit credit, byte[] data, byte[] signature)
+    {
+        var privateKey = this.GetOrCreatePrivateKey(credit);
+        var result = privateKey.VerifyData(data, signature);
+        this.CachePrivateKey(credit, privateKey);
+        return result;
+    }
+
+    [Key(0)]
+    private byte[] seed = Array.Empty<byte>();
+
+    [Key(1)]
+    public AuthorityLifetime Lifetime { get; private set; }
+
+    [Key(2)]
+    public long LifeMics { get; private set; }
+
+    [Key(3)]
+    // public Value[] Values { get; private set; } = Array.Empty<Value>();
+    public Value Values { get; private set; } = default!;
+
+    private PrivateKey GetOrCreatePrivateKey()
+        => this.GetOrCreatePrivateKey(Credit.Default);
+
+    private PrivateKey GetOrCreatePrivateKey(Credit credit)
+    {
+        var privateKey = this.privateKeyCache.TryGet(credit);
+        if (privateKey == null)
+        {// Create private key.
+            var hash = Hash.ObjectPool.Get();
+            hash.HashUpdate(this.seed);
+            hash.HashUpdate(TinyhandSerializer.Serialize(credit));
+            var seed = hash.HashFinal();
+            Hash.ObjectPool.Return(hash);
+
+            privateKey = PrivateKey.Create(seed);
+        }
+
+        return privateKey;
+    }
+
+    private void CachePrivateKey(Credit credit, PrivateKey privateKey)
+        => this.privateKeyCache.Cache(credit, privateKey);
+
+    private ObjectCache<Credit, PrivateKey> privateKeyCache = new(10);
+
+    public override string ToString()
+        => $"PublicKey: {this.GetOrCreatePrivateKey().ToPublicKey()}, Lifetime: {this.Lifetime}, LifeMics: {this.LifeMics}";
 }

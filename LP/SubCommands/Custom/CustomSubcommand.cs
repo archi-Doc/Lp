@@ -20,7 +20,14 @@ public class CustomSubcommand : SimpleCommandGroup<CustomSubcommand>
     }
 
     public CustomSubcommand(UnitContext context)
-        : base(context, "ls")
+        : base(context, "ls", SimpleCommandLine.SimpleParserOptions.Standard with
+        {
+            ServiceProvider = context.ServiceProvider,
+            RequireStrictCommandName = true,
+            RequireStrictOptionName = false,
+            DoNotDisplayUsage = true,
+            DisplayCommandListAsHelp = true,
+        })
     {
     }
 }

@@ -44,6 +44,8 @@ public partial class RunnerMachine : Machine<Identifier>
 
         this.logger.TryGet()?.Log($"Runner start");
         this.logger.TryGet()?.Log($"Root directory: {this.lpBase.RootDirectory}");
+        var nodeInformation = this.netControl.NetStatus.GetMyNodeInformation(false);
+        this.logger.TryGet()?.Log($"Port: {nodeInformation.Port}, Public key: ({nodeInformation.PublicKey.ToString()})");
         this.logger.TryGet()?.Log($"{this.Information.ToString()}");
         this.logger.TryGet()?.Log("Press Ctrl+C to exit.");
         await Console.Out.WriteLineAsync();
@@ -99,24 +101,29 @@ public partial class RunnerMachine : Machine<Identifier>
     [StateMethod(3)]
     protected async Task<StateResult> Running(StateParameter parameter)
     {
-        var result = await this.SendAcknowledge();
+        /*var result = await this.SendAcknowledge();
         this.logger.TryGet()?.Log($"Running: {result}");
         if (result != NetResult.Success)
         {
             this.ChangeState(State.Check);
-        }
+        }*/
 
         this.SetTimeout(TimeSpan.FromSeconds(10));
         return StateResult.Continue;
     }
 
     [CommandMethod(0)]
-    protected async Task Restart(CommandPost<Identifier>.Command command)
+    protected async Task Restart()
     {
         this.logger.TryGet()?.Log("RemoteControl -> Restart");
 
         // Remove container
-        await this.docker.RemoveContainer();
+        if (this.docker != null)
+        {
+            await this.docker.RemoveContainer();
+        }
+
+        this.ChangeState(State.Check);
     }
 
     public RunnerInformation Information { get; private set; }

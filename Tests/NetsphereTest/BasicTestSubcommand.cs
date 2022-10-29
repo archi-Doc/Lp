@@ -21,7 +21,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 
     public async Task RunAsync(BasicTestOptions options, string[] args)
     {
-        if (!SubcommandService.TryParseNodeAddress(this.logger, options.Node, out var node))
+        if (!NetHelper.TryParseNodeAddress(this.logger, options.Node, out var node))
         {
             return;
         }

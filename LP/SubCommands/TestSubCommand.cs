@@ -13,10 +13,11 @@ namespace LP.Subcommands;
 [SimpleCommand("test")]
 public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 {
-    public TestSubcommand(ILogger<TestSubcommand> logger, Control control, SeedPhrase seedPhrase)
+    public TestSubcommand(ILogger<TestSubcommand> logger, IUserInterfaceService userInterfaceService, Control control, Seedphrase seedPhrase)
     {
         this.logger = logger;
-        this.Control = control;
+        this.userInterfaceService = userInterfaceService;
+        this.control = control;
         this.seedPhrase = seedPhrase;
     }
 
@@ -37,37 +38,36 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         var privateKey = NodePrivateKey.AlternativePrivateKey;
         var publicKey = privateKey.ToPublicKey();
 
-        Console.WriteLine($"Alternative(private): {privateKey.ToString()}");
-        Console.WriteLine($"Length: {TinyhandSerializer.Serialize(privateKey).Length.ToString()}");
-        Console.WriteLine(TinyhandSerializer.SerializeToString(privateKey));
-        Console.WriteLine();
+        this.userInterfaceService.WriteLine($"Alternative(private): {privateKey.ToUnsafeString()}");
+        this.userInterfaceService.WriteLine($"Length: {TinyhandSerializer.Serialize(privateKey).Length.ToString()}");
+        this.userInterfaceService.WriteLine(TinyhandSerializer.SerializeToString(privateKey));
+        this.userInterfaceService.WriteLine();
 
-        Console.WriteLine($"Alternative(public): {publicKey.ToString()}");
-        Console.WriteLine($"Length: {TinyhandSerializer.Serialize(publicKey).Length.ToString()}");
-        Console.WriteLine(TinyhandSerializer.SerializeToString(publicKey));
+        this.userInterfaceService.WriteLine($"Alternative(public): {publicKey.ToString()}");
+        this.userInterfaceService.WriteLine($"Length: {TinyhandSerializer.Serialize(publicKey).Length.ToString()}");
+        this.userInterfaceService.WriteLine(TinyhandSerializer.SerializeToString(publicKey));
 
         var originator = PrivateKey.Create("originator");
         var pub = originator.ToPublicKey();
         var value = new Value(1, pub, new[] { pub, });
-        Console.WriteLine(value.GetHashCode());
+        this.userInterfaceService.WriteLine(value.GetHashCode().ToString());
 
         var bin = TinyhandSerializer.Serialize(value);
         var sign = originator.SignData(bin);
         var flag = pub.VerifyData(bin, sign);
 
-        Console.WriteLine($"Originator: {originator.ToString()}, {flag.ToString()}");
-        Console.WriteLine($"{pub.ToString()}");
+        this.userInterfaceService.WriteLine($"Originator: {originator.ToString()}, {flag.ToString()}");
+        this.userInterfaceService.WriteLine($"{pub.ToString()}");
 
-        var token = new Token(Token.Type.Identification, 0, 0, pub, Identifier.Three, null);
+        var token = new Token(Token.Type.Identification, 0, 0, Identifier.Three, null);
         var bb = token.Sign(originator);
-        bb = token.ValidateAndVerify();
+        bb = token.ValidateAndVerifyWithoutPublicKey();
     }
 
-    public Control Control { get; set; }
-
     private ILogger<TestSubcommand> logger;
-
-    private SeedPhrase seedPhrase;
+    private Control control;
+    private IUserInterfaceService userInterfaceService;
+    private Seedphrase seedPhrase;
 }
 
 public record TestOptions

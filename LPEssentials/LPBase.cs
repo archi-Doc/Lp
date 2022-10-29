@@ -11,8 +11,7 @@ global using CrossChannel;
 global using Tinyhand;
 
 using LP.Data;
-using System.Security.Cryptography;
-using System.Collections.Generic;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace LP;
 
@@ -56,7 +55,7 @@ public class LPBase : ILogInformation
 
     public string NodeName { get; private set; } = default!;
 
-    public PublicKey? RemotePublicKey { get; private set; }
+    public PublicKey RemotePublicKey { get; private set; }
 
     public LPOptions Options { get; private set; } = default!;
 
@@ -123,7 +122,8 @@ public class LPBase : ILogInformation
         }
 
         // Remote public key
-        this.RemotePublicKey = new PublicKey(options.RemotePublicKeyBase64);
+        PublicKey.TryParse(options.RemotePublicKeyBase64, out var remoteKey);
+        this.RemotePublicKey = remoteKey;
     }
 
     public void LogInformation(ILog logger)

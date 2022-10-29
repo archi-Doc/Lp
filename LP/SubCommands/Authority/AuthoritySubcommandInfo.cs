@@ -18,19 +18,14 @@ public class AuthoritySubcommandInfo : ISimpleCommandAsync<AuthoritySubcommandNa
 
     public async Task RunAsync(AuthoritySubcommandNameOptions option, string[] args)
     {
-        var result = this.Control.Authority.TryGetInterface(option.Name, 0, out var authorityInterface);
-        if (result == AuthorityResult.Success)
+        var authorityKey = await this.Control.Authority.GetKeyAsync(option.Name);
+        if (authorityKey != null)
         {
-            (result, var info) = await authorityInterface.GetInfo();
-            if (result == AuthorityResult.Success && info != null)
-            {
-                this.logger.TryGet()?.Log(option.Name);
-                this.logger.TryGet()?.Log(info.ToString());
-            }
+            this.logger.TryGet()?.Log($"{option.Name}: {authorityKey.ToString()}");
         }
-        else if (result == AuthorityResult.NotFound)
+        else
         {
-            this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Authority.NotFound, option.Name);
+            this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Authority.NotAvailable, option.Name);
         }
     }
 

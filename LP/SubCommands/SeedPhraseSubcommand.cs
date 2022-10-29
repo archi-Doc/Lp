@@ -9,28 +9,29 @@ using Tinyhand;
 namespace LP.Subcommands;
 
 [SimpleCommand("seedphrase")]
-public class SeedPhraseSubcommand : ISimpleCommandAsync
+public class SeedphraseSubcommand : ISimpleCommandAsync
 {
-    public SeedPhraseSubcommand(ILogger<SeedPhraseSubcommand> logger, Control control, SeedPhrase seedPhrase)
+    public SeedphraseSubcommand(ILogger<SeedphraseSubcommand> logger, IUserInterfaceService userInterfaceService, Control control, Seedphrase seedPhrase)
     {
         this.logger = logger;
-        this.Control = control;
+        this.userInterfaceService = userInterfaceService;
+        this.control = control;
         this.seedPhrase = seedPhrase;
     }
 
     public async Task RunAsync(string[] args)
     {
-        this.logger.TryGet()?.Log($"SeedPhrase subcommand: ");
+        this.logger.TryGet()?.Log($"Create seedphrase");
 
         var phrase = this.seedPhrase.Create();
-        this.logger.TryGet()?.Log($"{phrase}");
+        // this.logger.TryGet()?.Log($"{phrase}");
+        this.userInterfaceService.WriteLine(phrase);
 
-        var seed = this.seedPhrase.TryGetSeed(phrase);
-        this.logger.TryGet()?.Log($"{seed}");
+        // var seed = this.seedPhrase.TryGetSeed(phrase);
     }
 
-    public Control Control { get; set; }
-
-    private ILogger<SeedPhraseSubcommand> logger;
-    private SeedPhrase seedPhrase;
+    private ILogger<SeedphraseSubcommand> logger;
+    private IUserInterfaceService userInterfaceService;
+    private Control control;
+    private Seedphrase seedPhrase;
 }

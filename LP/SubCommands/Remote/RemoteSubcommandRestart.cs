@@ -5,7 +5,7 @@ using LP.NetServices;
 using Netsphere;
 using SimpleCommandLine;
 
-namespace LP.Subcommands.Dump;
+namespace LP.Subcommands;
 
 [SimpleCommand("restart")]
 public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandRestartOptions>
@@ -19,39 +19,50 @@ public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandResta
 
     public async Task RunAsync(RemoteSubcommandRestartOptions options, string[] args)
     {
-        if (!SubcommandService.TryParseNodeInformation(this.logger, options.Node, out var nodeInformation))
+        if (!NetHelper.TryParseNodeInformation(this.logger, options.Node, out var nodeInformation))
         {
             return;
         }
 
-        var result = this.authority.TryGetInterface(options.Authority, 0, out var authorityInterface);
-        if (result != AuthorityResult.Success)
+        var authorityKey = await this.authority.GetKeyAsync(options.Authority);
+        if (authorityKey == null)
         {
             this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Authority.NotFound, options.Authority);
             return;
         }
 
-        if (await authorityInterface.Prepare() != AuthorityResult.Success)
+        // using (var terminal = await this.terminal.CreateAndEncrypt(nodeInformation))
+        this.logger.TryGet()?.Log($"Start");
+        using (var terminal = await this.terminal.CreateAndEncrypt(nodeInformation))
         {
-            return;
-        }
+            if (terminal == null)
+            {
+                this.logger.TryGet()?.Log(Hashed.Error.Connect, nodeInformation.ToString());
+                return;
+            }
 
-        using (var terminal = this.terminal.Create(nodeInformation))
-        {
-            var token = CallContext.Current.CreateToken(Token.Type.RequestAuthorization);
-            /*await authorityInterface.SignToken(token);
-            Debug.Assert(token.Veri);
+            var token = await terminal.CreateToken(Token.Type.RequestAuthorization);
+            if (token == null)
+            {
+                return;
+            }
 
-
-            var token = new Token(Token.Type.RequestAuthorization, Mics.GetFixedUtcNow(), 
-            await authorityInterface.CreateToken(Credit.Default, CallContext.Current.ServerContext.Terminal.Salt, out var token);*/
+            authorityKey.SignToken(token);
+            if (!token.ValidateAndVerifyWithoutPublicKey())
+            {
+                return;
+            }
 
             var service = terminal.GetService<IRemoteControlService>();
-            /*var netResult = await service.RequestAuthorization(new Token());
-            if (netResult != NetResult.Success)
+            var response = await service.RequestAuthorization(token).ResponseAsync;
+            var result = response.Result;
+            this.logger.TryGet()?.Log($"RequestAuthorization: {result}");
+
+            if (result == NetResult.Success)
             {
-                netResult = await service.Restart();
-            }*/
+                result = await service.Restart();
+                this.logger.TryGet()?.Log($"Restart: {result}");
+            }
         }
     }
 

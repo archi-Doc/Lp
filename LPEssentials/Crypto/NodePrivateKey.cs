@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -19,12 +20,54 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
 
     private static ObjectCache<NodePrivateKey, ECDiffieHellman> PrivateKeyToEcdh { get; } = new(MaxPrivateKeyCache);
 
+    public static bool TryParse(string base64url, [MaybeNullWhen(false)] out NodePrivateKey privateKey)
+    {
+        privateKey = null;
+
+        ReadOnlySpan<char> span = base64url.Trim().AsSpan();
+        if (!span.StartsWith(KeyHelper.PrivateKeyBrace))
+        {// !!!abc
+            return false;
+        }
+
+        span = span.Slice(KeyHelper.PrivateKeyBrace.Length);
+        var bracePosition = span.IndexOf(KeyHelper.PrivateKeyBrace);
+        if (bracePosition <= 0)
+        {// abc!!!
+            return false;
+        }
+
+        var privateBytes = Base64.Url.FromStringToByteArray(span.Slice(0, bracePosition));
+        if (privateBytes == null || privateBytes.Length != (PublicKey.PrivateKeyLength + 1))
+        {
+            return false;
+        }
+
+        ECParameters key = default;
+        key.Curve = NodePublicKey.ECCurve;
+        key.D = privateBytes[1..(PublicKey.PrivateKeyLength + 1)];
+        try
+        {
+            using (var ecdh = ECDiffieHellman.Create(key))
+            {
+                key = ecdh.ExportParameters(true);
+            }
+        }
+        catch
+        {
+            return false;
+        }
+
+        privateKey = new NodePrivateKey(1, key.Q.X!, key.Q.Y!, key.D!);
+        return true;
+    }
+
     public static NodePrivateKey Create()
     {
         using (var ecdh = ECDiffieHellman.Create(NodePublicKey.ECCurve))
         {
             var key = ecdh.ExportParameters(true);
-            return new NodePrivateKey(0, key.Q.X!, key.Q.Y!, key.D!);
+            return new NodePrivateKey(1, key.Q.X!, key.Q.Y!, key.D!);
         }
     }
 
@@ -66,7 +109,7 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
         }
 
         Hash.ObjectPool.Return(hash);
-        return new NodePrivateKey(0, key.Q.X!, key.Q.Y!, key.D!);
+        return new NodePrivateKey(1, key.Q.X!, key.Q.Y!, key.D!);
     }
 
     internal NodePrivateKey()
@@ -80,7 +123,7 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
         this.d = d;
 
         var yTilde = this.CompressY();
-        this.keyValue = (byte)(((keyVersion << 2) & ~3) + (yTilde & 1));
+        this.keyValue = KeyHelper.ToPrivateKeyValue(keyVersion, yTilde);
     }
 
     public NodePublicKey ToPublicKey()
@@ -88,7 +131,7 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
 
     public byte[]? DeriveKeyMaterial(NodePublicKey publicKey)
     {
-        if (this.KeyVersion != 0)
+        if (this.KeyVersion != 1)
         {
             return null;
         }
@@ -123,7 +166,7 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
     }
 
     [Key(0)]
-    private readonly byte keyValue; // 6bits: KeyVersion, 1bit:?, 1bit: YTilde
+    private readonly byte keyValue;
 
     [Key(1)]
     private readonly byte[] x = Array.Empty<byte>();
@@ -134,9 +177,9 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
     [Key(3)]
     private readonly byte[] d = Array.Empty<byte>();
 
-    public uint KeyVersion => (uint)(this.keyValue >> 2);
+    public uint KeyVersion => KeyHelper.ToKeyVersion(this.keyValue);
 
-    public uint YTilde => (uint)(this.keyValue & 1);
+    public uint YTilde => KeyHelper.ToYTilde(this.keyValue);
 
     public byte[] X => this.x;
 
@@ -144,7 +187,7 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
 
     public bool Validate()
     {
-        if (this.KeyVersion != 0)
+        if (this.KeyVersion != 1)
         {
             return false;
         }
@@ -187,17 +230,17 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
         return hash;
     }
 
-    public override string ToString()
+    public string ToUnsafeString()
     {
-        Span<byte> bytes = stackalloc byte[1 + NodePublicKey.PublicKeyHalfLength]; // scoped
+        Span<byte> bytes = stackalloc byte[1 + NodePublicKey.PrivateKeyLength]; // scoped
         bytes[0] = this.keyValue;
-        this.x.CopyTo(bytes.Slice(1));
-        return $"{Base64.Url.FromByteArrayToString(bytes)}";
+        this.d.CopyTo(bytes.Slice(1));
+        return $"!!!{Base64.Url.FromByteArrayToString(bytes)}!!!{this.ToPublicKey().ToString()}";
     }
 
     internal uint CompressY()
     {
-        if (this.KeyVersion == 0)
+        if (this.KeyVersion == 1)
         {
             return Arc.Crypto.EC.P256R1Curve.Instance.CompressY(this.y);
         }

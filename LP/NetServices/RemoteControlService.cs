@@ -8,16 +8,24 @@ namespace LP.NetServices;
 [NetServiceObject]
 internal class RemoteControlService : IRemoteControlService
 {// LPRunner -> Container
-    // This class is unsafe and is limited to be accessed from loopback addresses.
-    public RemoteControlService(Control control)
+    // This class is unsafe.
+    public RemoteControlService(ILogger<RemoteControlService> logger, Control control)
     {
+        this.logger = logger;
         this.control = control;
     }
 
     public async NetTask RequestAuthorization(Token token)
     {// NetTask<NetResult> is recommended.
-        var callContext = CallContext.Current;
-        callContext.Result = NetResult.NotAuthorized;
+        if (CallContext.Current.ServerContext.Terminal.NodeAddress.IsPrivateOrLocalLoopbackAddress() &&
+            token.ValidateAndVerifyWithoutSalt(this.control.LPBase.RemotePublicKey))
+        {
+            this.token = token;
+            CallContext.Current.Result = NetResult.Success;
+            return;
+        }
+
+        CallContext.Current.Result = NetResult.NotAuthorized;
     }
 
     public async NetTask<NetResult> Restart()
@@ -28,8 +36,10 @@ internal class RemoteControlService : IRemoteControlService
         }
 
         var callContext = CallContext.Current;
-        if (callContext.ServerContext.Terminal.NodeAddress.IsLocalLoopbackAddress())
+        if (callContext.ServerContext.Terminal.NodeAddress.IsPrivateOrLocalLoopbackAddress())
         {// Restart
+            this.logger.TryGet()?.Log("RemoteControlService.Restart()");
+
             _ = Task.Run(async () =>
             {
                 await Task.Delay(1000);
@@ -42,6 +52,7 @@ internal class RemoteControlService : IRemoteControlService
         return NetResult.NotAuthorized;
     }
 
+    private ILogger<RemoteControlService> logger;
     private Control control;
     private Token? token;
 }

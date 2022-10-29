@@ -5,12 +5,13 @@ using System.Text;
 
 namespace LP;
 
-public class SeedPhrase
+public class Seedphrase
 {
-    public const int SeedPhraseLength = 16;
+    public const int SeedphraseDefaultLength = 16;
+    public const int SeedphraseMinimumLength = 12;
     private const string TinyhandPath = "Strings.english.tinyhand";
 
-    public SeedPhrase()
+    public Seedphrase()
     {
         var assembly = System.Reflection.Assembly.GetExecutingAssembly();
         try
@@ -43,7 +44,7 @@ public class SeedPhrase
             throw new PanicException();
         }
 
-        var length = SeedPhraseLength;
+        var length = SeedphraseDefaultLength;
         var index = new uint[length - 1];
         for (var i = 0; i < index.Length; i++)
         {
@@ -74,8 +75,8 @@ public class SeedPhrase
         }
 
         var words = phrase.Split(' ');
-        if (words.Length == 0)
-        {
+        if (words.Length < SeedphraseMinimumLength)
+        {// Minimum length
             return null;
         }
 

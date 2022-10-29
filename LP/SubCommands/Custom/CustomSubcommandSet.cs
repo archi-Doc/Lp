@@ -25,7 +25,7 @@ public class CustomSubcommandSet : ISimpleCommandAsync<CustomSubcommandSetOption
             return;
         }
 
-        var custom = new CustomizedCommand(option.Command);
+        var custom = new CustomizedCommand(option.Command, args);
         this.vault.SerializeAndAdd(name, custom);
         this.logger.TryGet()?.Log(Hashed.Custom.Set, option.Name);
     }

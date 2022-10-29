@@ -14,16 +14,17 @@ namespace LP.Subcommands;
 [SimpleCommand("netbench")]
 public class NetBenchSubcommand : ISimpleCommandAsync<NetBenchOptions>
 {
-    public NetBenchSubcommand(ILogger<NetBenchSubcommand> logger, Control control)
+    public NetBenchSubcommand(ILogger<NetBenchSubcommand> logger, IUserInterfaceService userInterfaceService, Control control)
     {
         this.logger = logger;
+        this.userInterfaceService = userInterfaceService;
         this.Control = control;
         this.NetControl = control.NetControl;
     }
 
     public async Task RunAsync(NetBenchOptions options, string[] args)
     {
-        if (!SubcommandService.TryParseNodeAddress(this.logger, options.Node, out var node))
+        if (!NetHelper.TryParseNodeAddress(this.logger, options.Node, out var node))
         {
             return;
         }
@@ -70,8 +71,8 @@ public class NetBenchSubcommand : ISimpleCommandAsync<NetBenchOptions>
         var response = await service.Send(data).ResponseAsync;
         sw.Stop();
 
-        Console.WriteLine(response);
-        Console.WriteLine(sw.ElapsedMilliseconds.ToString());
+        this.userInterfaceService.WriteLine(response.ToString());
+        this.userInterfaceService.WriteLine(sw.ElapsedMilliseconds.ToString());
     }
 
     private async Task PingpongSmallData(ClientTerminal terminal)
@@ -94,8 +95,8 @@ public class NetBenchSubcommand : ISimpleCommandAsync<NetBenchOptions>
 
         sw.Stop();
 
-        Console.WriteLine($"PingpongSmallData {count}/{N}, {sw.ElapsedMilliseconds.ToString()} ms");
-        Console.WriteLine();
+        this.userInterfaceService.WriteLine($"PingpongSmallData {count}/{N}, {sw.ElapsedMilliseconds.ToString()} ms");
+        this.userInterfaceService.WriteLine();
     }
 
     private async Task MassiveSmallData(NodeAddress node)
@@ -122,7 +123,7 @@ public class NetBenchSubcommand : ISimpleCommandAsync<NetBenchOptions>
                     }
                     else
                     {
-                        Console.WriteLine(response.Result.Result.ToString());
+                        this.userInterfaceService.WriteLine(response.Result.Result.ToString());
                     }
                 }
             }
@@ -130,12 +131,13 @@ public class NetBenchSubcommand : ISimpleCommandAsync<NetBenchOptions>
 
         sw.Stop();
 
-        Console.WriteLine(this.NetControl.Alternative?.MyStatus.ServerCount.ToString());
-        Console.WriteLine($"MassiveSmallData {count}/{N}, {sw.ElapsedMilliseconds.ToString()} ms");
-        Console.WriteLine();
+        this.userInterfaceService.WriteLine(this.NetControl.Alternative?.MyStatus.ServerCount.ToString());
+        this.userInterfaceService.WriteLine($"MassiveSmallData {count}/{N}, {sw.ElapsedMilliseconds.ToString()} ms");
+        this.userInterfaceService.WriteLine();
     }
 
     private ILogger<NetBenchSubcommand> logger;
+    private IUserInterfaceService userInterfaceService;
 }
 
 public record NetBenchOptions

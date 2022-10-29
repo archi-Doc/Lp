@@ -20,7 +20,7 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
 
     public async Task RunAsync(NetTestOptions options, string[] args)
     {
-        if (!SubcommandService.TryParseNodeAddress(this.logger, options.Node, out var node))
+        if (!NetHelper.TryParseNodeAddress(this.logger, options.Node, out var node))
         {
             return;
         }

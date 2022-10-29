@@ -10,16 +10,18 @@ namespace LP.Subcommands;
 [SimpleCommand("ls")]
 public class KeyVaultSubcommandLs : ISimpleCommandAsync
 {
-    public KeyVaultSubcommandLs(Control control)
+    public KeyVaultSubcommandLs(IUserInterfaceService userInterfaceService, Vault vault)
     {
-        this.Control = control;
+        this.userInterfaceService = userInterfaceService;
+        this.vault = vault;
     }
 
     public async Task RunAsync(string[] args)
     {
-        var names = this.Control.Vault.GetNames();
-        Console.WriteLine(string.Join(' ', names));
+        var names = this.vault.GetNames();
+        this.userInterfaceService.WriteLine(string.Join(' ', names));
     }
 
-    public Control Control { get; set; }
+    private Vault vault;
+    private IUserInterfaceService userInterfaceService;
 }

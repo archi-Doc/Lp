@@ -33,7 +33,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
                 context.AddTransient<RunnerMachine>();
 
                 // Net Services
-                context.AddSingleton<IRemoteControlService, RemoteControlService>();
+                context.AddSingleton<RemoteControlService>();
 
                 // Log filter
                 // context.AddSingleton<ExampleLogFilter>();
@@ -96,6 +96,9 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             {
                 return;
             }
+
+            var netBase = this.Context.ServiceProvider.GetRequiredService<NetBase>();
+            netBase.SetNodeKey(information.NodeKey);
 
             var options = new LP.Data.NetsphereOptions();
             options.Port = information.RunnerPort;

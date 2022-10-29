@@ -10,15 +10,17 @@ namespace LP.Subcommands;
 [SimpleCommand("ls")]
 public class TemplateSubcommandLs : ISimpleCommandAsync
 {
-    public TemplateSubcommandLs(Control control)
+    public TemplateSubcommandLs(Control control, IUserInterfaceService userInterfaceService)
     {
-        this.Control = control;
+        this.control = control;
+        this.userInterfaceService = userInterfaceService;
     }
 
     public async Task RunAsync(string[] args)
     {
-        Console.WriteLine("Template");
+        this.userInterfaceService.WriteLine("Template");
     }
 
-    public Control Control { get; set; }
+    private Control control;
+    private IUserInterfaceService userInterfaceService;
 }

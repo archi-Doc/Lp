@@ -3,8 +3,6 @@
 #pragma warning disable SA1210 // Using directives should be ordered alphabetically by namespace
 
 global using System;
-global using System.IO;
-global using System.Threading.Tasks;
 global using Arc.Crypto;
 global using Arc.Threading;
 global using Arc.Unit;
@@ -42,14 +40,15 @@ public class Control : ILogInformation
                 // Main services
                 context.AddSingleton<Control>();
                 context.AddSingleton<LPBase>();
+                context.Services.TryAddSingleton<IConsoleService, ConsoleUserInterfaceService>();
                 context.Services.TryAddSingleton<IUserInterfaceService, ConsoleUserInterfaceService>();
                 context.AddSingleton<Vault>();
                 context.AddSingleton<Authority>();
-                context.AddSingleton<SeedPhrase>();
+                context.AddSingleton<Seedphrase>();
 
                 // RPC / Services
                 context.AddTransient<NetServices.BenchmarkServiceImpl>();
-                // context.AddTransient<NetServices.RemoteControlService>(); // Disabled
+                context.AddTransient<NetServices.RemoteControlService>();
 
                 // RPC / Filters
                 context.AddTransient<NetServices.TestOnlyFilter>();
@@ -66,7 +65,7 @@ public class Control : ILogInformation
                 context.AddSubcommand(typeof(LP.Subcommands.NetBenchSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.PunchSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.BenchmarkSubcommand));
-                context.AddSubcommand(typeof(LP.Subcommands.SeedPhraseSubcommand));
+                context.AddSubcommand(typeof(LP.Subcommands.SeedphraseSubcommand));
 
                 LP.Subcommands.TemplateSubcommand.Configure(context);
                 LP.Subcommands.InfoSubcommand.Configure(context);
@@ -74,6 +73,7 @@ public class Control : ILogInformation
                 LP.Subcommands.KeyVaultSubcommand.Configure(context);
                 LP.Subcommands.FlagSubcommand.Configure(context);
                 LP.Subcommands.NodeSubcommand.Configure(context);
+                LP.Subcommands.NodeKeySubcommand.Configure(context);
                 LP.Subcommands.AuthoritySubcommand.Configure(context);
                 LP.Subcommands.CustomSubcommand.Configure(context);
                 LP.Subcommands.RemoteSubcommand.Configure(context);
@@ -108,7 +108,7 @@ public class Control : ILogInformation
             this.SetupOptions<NetBase>((context, netBase) =>
             {// NetBase
                 context.GetOptions<LPOptions>(out var options);
-                netBase.SetParameter(true, string.Empty, options.NetsphereOptions);
+                netBase.SetParameter(true, options.NodeName, options.NetsphereOptions);
                 netBase.AllowUnsafeConnection = true; // betacode
                 netBase.NetsphereOptions.EnableTestFeatures = true; // betacode
             });
@@ -196,7 +196,7 @@ public class Control : ILogInformation
                 this.Context.SendPrepare(new());
 
                 // Machines
-                control.BigMachine.CreateNew<LP.Machines.LogTesterMachine.Interface>(Identifier.Zero);
+                // control.BigMachine.CreateNew<LP.Machines.LogTesterMachine.Interface>(Identifier.Zero);
                 control.NetControl.CreateMachines();
             }
             catch
@@ -334,7 +334,7 @@ public class Control : ILogInformation
         await context.SendRunAsync(new(this.Core));
         this.BigMachine.TryGet<NtpMachine.Interface>(Identifier.Zero)?.RunAsync();
 
-        Console.WriteLine();
+        this.UserInterfaceService.WriteLine();
         var logger = this.Logger.Get<DefaultLog>(LogLevel.Information);
         this.LogInformation(logger);
 
@@ -402,7 +402,7 @@ public class Control : ILogInformation
             }
             else
             {
-                Console.WriteLine("Invalid subcommand.");
+                this.UserInterfaceService.WriteLine("Invalid subcommand.");
                 return false;
             }
         }
@@ -415,7 +415,7 @@ public class Control : ILogInformation
             return false;
         }
 
-        Console.WriteLine();
+        this.ConsoleService.WriteLine();
         return true;*/
     }
 
@@ -431,14 +431,14 @@ public class Control : ILogInformation
                 {
                     command = await Task.Run(() =>
                     {
-                        return Console.ReadLine()?.Trim();
+                        return this.UserInterfaceService.ReadLine()?.Trim();
                     }).WaitAsync(this.Core.CancellationToken).ConfigureAwait(false);
                 }
                 catch
                 {
                 }
 
-                // var command = Console.ReadLine()?.Trim();
+                // var command = this.UserInterfaceService.ReadLine()?.Trim();
                 if (!string.IsNullOrEmpty(command))
                 {
                     if (string.Compare(command, "exit", true) == 0)
@@ -450,7 +450,7 @@ public class Control : ILogInformation
                         }
                         else
                         {
-                            Console.Write("> ");
+                            this.UserInterfaceService.Write("> ");
                             continue;
                         }
                     }
@@ -459,19 +459,19 @@ public class Control : ILogInformation
                         try
                         {
                             this.Subcommand(command);
-                            Console.Write("> ");
+                            this.UserInterfaceService.Write("> ");
                             continue;
                         }
                         catch (Exception e)
                         {
-                            Console.WriteLine(e.ToString());
+                            this.UserInterfaceService.WriteLine(e.ToString());
                             break;
                         }
                     }
                 }
                 else
                 {
-                    Console.WriteLine();
+                    this.UserInterfaceService.WriteLine();
                 }
 
                 // To view mode
@@ -479,19 +479,19 @@ public class Control : ILogInformation
             }
             else if (currentMode == IUserInterfaceService.Mode.View)
             {// View mode
-                if (this.SafeKeyAvailable)
+                if (this.UserInterfaceService.KeyAvailable)
                 {
-                    var keyInfo = Console.ReadKey(true);
+                    var keyInfo = this.UserInterfaceService.ReadKey(true);
                     if (keyInfo.Key == ConsoleKey.Enter || keyInfo.Key == ConsoleKey.Escape)
                     { // To console mode
                         this.UserInterfaceService.ChangeMode(IUserInterfaceService.Mode.Console);
-                        Console.Write("> ");
+                        this.UserInterfaceService.Write("> ");
                     }
                     else
                     {
-                        while (this.SafeKeyAvailable)
+                        while (this.UserInterfaceService.KeyAvailable)
                         {
-                            Console.ReadKey(true);
+                            this.UserInterfaceService.ReadKey(true);
                         }
                     }
                 }
@@ -526,21 +526,6 @@ public class Control : ILogInformation
 
     private SimpleParser subcommandParser;
 
-    private bool SafeKeyAvailable
-    {
-        get
-        {
-            try
-            {
-                return Console.KeyAvailable;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-    }
-
     private async Task LoadVaultAsync()
     {
         if (this.LPBase.IsFirstRun)
@@ -562,7 +547,7 @@ public class Control : ILogInformation
             }
         }
 
-        Console.WriteLine(HashedString.Get(Hashed.Vault.Create));
+        this.UserInterfaceService.WriteLine(HashedString.Get(Hashed.Vault.Create));
         // await this.UserInterfaceService.Notify(UserInterfaceNotifyLevel.Information, Hashed.KeyVault.Create);
 
         // New Vault

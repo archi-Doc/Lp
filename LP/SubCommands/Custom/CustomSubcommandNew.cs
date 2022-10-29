@@ -25,10 +25,11 @@ public class CustomSubcommandNew : ISimpleCommandAsync<CustomSubcommandNewOption
             return;
         }
 
-        var custom = new CustomizedCommand(option.Command);
+        var custom = new CustomizedCommand(option.Command, args);
         if (this.vault.SerializeAndTryAdd(name, custom))
         {
             this.logger.TryGet()?.Log(Hashed.Custom.Created, option.Name);
+            this.logger.TryGet()?.Log(custom.Command);
         }
         else
         {

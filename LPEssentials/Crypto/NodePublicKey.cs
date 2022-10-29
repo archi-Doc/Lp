@@ -13,7 +13,7 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
     public const int PublicKeyHalfLength = PublicKeyLength / 2;
     public const int PrivateKeyLength = 32;
     public const int SignLength = 64;
-    public const int PublicKeyEncoded = 1 + (sizeof(ulong) * 4);
+    public const int PublicKeyEncodedLength = 1 + (sizeof(ulong) * 4);
     private const int MaxPublicKeyCache = 100;
 
     public static HashAlgorithmName HashAlgorithmName { get; }
@@ -30,9 +30,14 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
 
     public static bool TryParse(ReadOnlySpan<char> chars, [MaybeNullWhen(false)] out NodePublicKey publicKey)
     {
+        if (chars.Length >= 2 && chars[0] == '(' && chars[chars.Length - 1] == ')')
+        {
+            chars = chars.Slice(1, chars.Length - 2);
+        }
+
         publicKey = default;
         var bytes = Base64.Url.FromStringToByteArray(chars);
-        if (bytes.Length != PublicKeyEncoded)
+        if (bytes.Length != PublicKeyEncodedLength)
         {
             return false;
         }
@@ -64,7 +69,7 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
 
     internal NodePublicKey(NodePrivateKey privateKey)
     {
-        this.keyValue = privateKey.KeyValue;
+        this.keyValue = KeyHelper.CheckPublicKeyValue(privateKey.KeyValue);
         var span = privateKey.X.AsSpan();
         this.x0 = BitConverter.ToUInt64(span);
         span = span.Slice(sizeof(ulong));
@@ -77,7 +82,7 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
 
     private NodePublicKey(byte keyValue, ulong x0, ulong x1, ulong x2, ulong x3)
     {
-        this.keyValue = keyValue;
+        this.keyValue = KeyHelper.CheckPublicKeyValue(keyValue);
         this.x0 = x0;
         this.x1 = x1;
         this.x2 = x2;
@@ -99,13 +104,13 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
     [Key(4)]
     private readonly ulong x3;
 
-    public uint KeyVersion => (uint)(this.keyValue >> 2);
+    public uint KeyVersion => KeyHelper.ToKeyVersion(this.keyValue);
 
-    public uint YTilde => (uint)(this.keyValue & 1);
+    public uint YTilde => KeyHelper.ToYTilde(this.keyValue);
 
     public bool Validate()
     {
-        if (this.KeyVersion == 0)
+        if (this.KeyVersion == 1)
         {
             return true;
         }
@@ -139,7 +144,7 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
         BitConverter.TryWriteBytes(b, this.x3);
         b = b.Slice(sizeof(ulong));
 
-        return $"{Base64.Url.FromByteArrayToString(bytes)}";
+        return $"({Base64.Url.FromByteArrayToString(bytes)})";
     }
 
     internal ECDiffieHellman? TryGetEcdh()
@@ -154,7 +159,7 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
             return null;
         }
 
-        if (this.KeyVersion == 0)
+        if (this.KeyVersion == 1)
         {
             var x = new byte[32];
             var span = x.AsSpan();

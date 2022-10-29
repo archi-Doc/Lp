@@ -1,8 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace LP.Services;
+namespace LP;
 
-public abstract class IUserInterfaceService
+public abstract class IUserInterfaceService : IConsoleService
 {
     public enum Mode
     {
@@ -10,6 +10,16 @@ public abstract class IUserInterfaceService
         Console,
         Input,
     }
+
+    public abstract void Write(string? message = null);
+
+    public abstract void WriteLine(string? message = null);
+
+    public abstract string? ReadLine();
+
+    public abstract ConsoleKeyInfo ReadKey(bool intercept);
+
+    public abstract bool KeyAvailable { get; }
 
     public abstract Task<bool?> RequestYesOrNo(string? description);
 

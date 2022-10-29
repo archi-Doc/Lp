@@ -9,7 +9,7 @@ public abstract partial class FragmentBase
     {
         try
         {
-            var bytes = TinyhandSerializer.Serialize(this, TinyhandSerializerOptions.Conditional);
+            var bytes = TinyhandSerializer.Serialize(this, TinyhandSerializerOptions.Signature);
             var id = Identifier.FromReadOnlySpan(bytes);
             return id.Equals(identifier);
         }

@@ -8,20 +8,22 @@ namespace ZenItz.Subcommands;
 [SimpleCommand("ls", Description = "List zen directory information.")]
 public class ZenDirSubcommandLs : ISimpleCommandAsync
 {
-    public ZenDirSubcommandLs(ZenControl control)
+    public ZenDirSubcommandLs(IConsoleService consoleService, ZenControl zenControl)
     {
-        this.Control = control;
+        this.consoleService = consoleService;
+        this.zenControl = zenControl;
     }
 
     public async Task RunAsync(string[] args)
     {
-        var info = this.Control.Zen.IO.GetDirectoryInformation();
+        var info = this.zenControl.Zen.IO.GetDirectoryInformation();
 
         foreach (var x in info)
         {
-            Console.WriteLine(x.ToString());
+            this.consoleService.WriteLine(x.ToString());
         }
     }
 
-    public ZenControl Control { get; set; }
+    private IConsoleService consoleService;
+    private ZenControl zenControl;
 }

@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using LP.Subcommands.Dump;
 using SimpleCommandLine;
 
 namespace LP.Subcommands;

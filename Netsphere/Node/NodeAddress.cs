@@ -141,6 +141,16 @@ public partial class NodeAddress : IEquatable<NodeAddress>
         };
     }
 
+    public bool IsPrivateOrLocalLoopbackAddress()
+    {
+        return this.Address.AddressFamily switch
+        {
+            System.Net.Sockets.AddressFamily.InterNetwork => this.IsPrivateOrLocalLoopbackAddressIPv4(),
+            System.Net.Sockets.AddressFamily.InterNetworkV6 => this.IsLocalLoopbackAddressIPv6(),
+            _ => false,
+        };
+    }
+
     public bool Equals(NodeAddress? other)
     {
         if (other == null)
@@ -208,6 +218,43 @@ public partial class NodeAddress : IEquatable<NodeAddress>
             ulong* u = (ulong*)b;
             return u[0] == 0 && u[1] == 0x0100000000000000;
         }
+    }
+
+    private bool IsPrivateOrLocalLoopbackAddressIPv4()
+    {
+        Span<byte> address = stackalloc byte[4];
+        if (!this.Address.TryWriteBytes(address, out var written) || written < 4)
+        {
+            return false;
+        }
+
+        if (address[0] == 10 || address[0] == 127)
+        {// Private network, loopback addresses.
+            return true;
+        }
+        else if (address[0] == 100)
+        {
+            if (address[1] >= 64 && address[1] <= 127)
+            {// Private network
+                return true;
+            }
+        }
+        else if (address[0] == 172)
+        {// Private network
+            if (address[1] >= 16 && address[1] <= 31)
+            {
+                return true;
+            }
+        }
+        else if (address[0] == 192)
+        {
+            if (address[1] == 168)
+            {// Private network
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private bool IsValidIPv4()

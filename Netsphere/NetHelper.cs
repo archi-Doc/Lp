@@ -1,11 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
-using Netsphere;
 
-namespace LP.Subcommands;
+namespace Netsphere;
 
-public static partial class SubcommandService
+public static partial class NetHelper
 {
     public static bool TryParseNodeAddress(ILogger? logger, string node, [MaybeNullWhen(false)] out NodeAddress nodeAddress)
     {
