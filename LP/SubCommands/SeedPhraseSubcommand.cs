@@ -11,10 +11,11 @@ namespace LP.Subcommands;
 [SimpleCommand("seedphrase")]
 public class SeedphraseSubcommand : ISimpleCommandAsync
 {
-    public SeedphraseSubcommand(ILogger<SeedphraseSubcommand> logger, Control control, Seedphrase seedPhrase)
+    public SeedphraseSubcommand(ILogger<SeedphraseSubcommand> logger, IUserInterfaceService userInterfaceService, Control control, Seedphrase seedPhrase)
     {
         this.logger = logger;
-        this.Control = control;
+        this.userInterfaceService = userInterfaceService;
+        this.control = control;
         this.seedPhrase = seedPhrase;
     }
 
@@ -24,13 +25,13 @@ public class SeedphraseSubcommand : ISimpleCommandAsync
 
         var phrase = this.seedPhrase.Create();
         // this.logger.TryGet()?.Log($"{phrase}");
-        await Console.Out.WriteLineAsync(phrase);
+        this.userInterfaceService.WriteLine(phrase);
 
         // var seed = this.seedPhrase.TryGetSeed(phrase);
     }
 
-    public Control Control { get; set; }
-
     private ILogger<SeedphraseSubcommand> logger;
+    private IUserInterfaceService userInterfaceService;
+    private Control control;
     private Seedphrase seedPhrase;
 }

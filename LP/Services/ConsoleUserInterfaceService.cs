@@ -2,13 +2,73 @@
 
 namespace LP.Services;
 
-public class ConsoleUserInterfaceService : IUserInterfaceService
+internal class ConsoleUserInterfaceService : IUserInterfaceService
 {
-    public ConsoleUserInterfaceService(UnitCore core, IConsoleService consoleService, ILogger<DefaultLog> logger)
+    public ConsoleUserInterfaceService(UnitCore core, ILogger<DefaultLog> logger)
     {
         this.core = core;
-        this.consoleService = consoleService;
         this.logger = logger;
+    }
+
+    public override void Write(string? message = null)
+    {
+        try
+        {
+            Console.Write(message);
+        }
+        catch
+        {
+        }
+    }
+
+    public override void WriteLine(string? message = null)
+    {
+        try
+        {
+            Console.WriteLine(message);
+        }
+        catch
+        {
+        }
+    }
+
+    public override string? ReadLine()
+    {
+        try
+        {
+            return Console.ReadLine();
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public override ConsoleKeyInfo ReadKey(bool intercept)
+    {
+        try
+        {
+            return Console.ReadKey();
+        }
+        catch
+        {
+            return default;
+        }
+    }
+
+    public override bool KeyAvailable
+    {
+        get
+        {
+            try
+            {
+                return Console.KeyAvailable;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 
     public override async Task Notify(LogLevel level, string message)
@@ -65,7 +125,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
         }
         catch
         {
-            this.consoleService.WriteLine();
+            this.WriteLine();
             return default;
         }
         finally
@@ -78,7 +138,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
     {
         if (!string.IsNullOrEmpty(description))
         {
-            this.consoleService.Write(description + ": ");
+            this.Write(description + ": ");
         }
 
         ConsoleKey key;
@@ -98,23 +158,23 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
                 key = keyInfo.Key;
                 if (key == ConsoleKey.Backspace && password.Length > 0)
                 {
-                    this.consoleService.Write("\b \b");
+                    this.Write("\b \b");
                     password = password[0..^1];
                 }
                 else if (!char.IsControl(keyInfo.KeyChar))
                 {
-                    this.consoleService.Write("*");
+                    this.Write("*");
                     password += keyInfo.KeyChar;
                 }
                 else if ((keyInfo.Modifiers & ConsoleModifiers.Control) != 0 &&
                     (keyInfo.Key & ConsoleKey.C) != 0)
                 {// Ctrl+C
-                    this.consoleService.WriteLine();
+                    this.WriteLine();
                     return null;
                 }
                 else if (key == ConsoleKey.Escape)
                 {
-                    this.consoleService.WriteLine();
+                    this.WriteLine();
                     return null;
                 }
             }
@@ -125,7 +185,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
             Console.TreatControlCAsInput = false;
         }
 
-        this.consoleService.WriteLine();
+        this.WriteLine();
         return password;
     }
 
@@ -133,7 +193,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
     {
         if (!string.IsNullOrEmpty(description))
         {
-            this.consoleService.Write(description + ": ");
+            this.Write(description + ": ");
         }
 
         while (true)
@@ -141,7 +201,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
             var input = Console.ReadLine();
             if (input == null)
             {// Ctrl+C
-                this.consoleService.WriteLine();
+                this.WriteLine();
                 return null; // throw new PanicException();
             }
 
@@ -159,7 +219,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
     {
         if (!string.IsNullOrEmpty(description))
         {
-            this.consoleService.WriteLine(description + " [Y/n]");
+            this.WriteLine(description + " [Y/n]");
         }
 
         while (true)
@@ -167,7 +227,7 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
             var input = Console.ReadLine();
             if (input == null)
             {// Ctrl+C
-                this.consoleService.WriteLine();
+                this.WriteLine();
                 return null; // throw new PanicException();
             }
 
@@ -182,12 +242,11 @@ public class ConsoleUserInterfaceService : IUserInterfaceService
             }
             else
             {
-                this.consoleService.WriteLine("[Y/n]");
+                this.WriteLine("[Y/n]");
             }
         }
     }
 
     private UnitCore core;
-    private IConsoleService consoleService;
     private ILogger<DefaultLog> logger;
 }

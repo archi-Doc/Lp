@@ -11,18 +11,18 @@ namespace LP.Subcommands;
 [SimpleCommand("ls")]
 public class AuthoritySubcommandLs : ISimpleCommandAsync
 {
-    public AuthoritySubcommandLs(IConsoleService consoleService, Authority authority)
+    public AuthoritySubcommandLs(IUserInterfaceService userInterfaceService, Authority authority)
     {
-        this.consoleService = consoleService;
+        this.userInterfaceService = userInterfaceService;
         this.authority = authority;
     }
 
     public async Task RunAsync(string[] args)
     {
         var names = this.authority.GetNames();
-        this.consoleService.WriteLine(string.Join(' ', names));
+        this.userInterfaceService.WriteLine(string.Join(' ', names));
     }
 
     private Authority authority;
-    private IConsoleService consoleService;
+    private IUserInterfaceService userInterfaceService;
 }

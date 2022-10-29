@@ -7,8 +7,9 @@ namespace LP.Subcommands;
 [SimpleCommand("run")]
 public class CustomSubcommandRun : ISimpleCommandAsync<CustomSubcommandNameOptions>
 {
-    public CustomSubcommandRun(ILogger<CustomSubcommandRun> logger, Control control, Vault vault)
+    public CustomSubcommandRun(ILogger<CustomSubcommandRun> logger, IUserInterfaceService userInterfaceService, Control control, Vault vault)
     {
+        this.userInterfaceService = userInterfaceService;
         this.control = control;
         this.vault = vault;
         this.logger = logger;
@@ -24,7 +25,7 @@ public class CustomSubcommandRun : ISimpleCommandAsync<CustomSubcommandNameOptio
             return;
         }
 
-        // Console.WriteLine($"Command: {option.Name}");
+        // this.userInterfaceService.WriteLine($"Command: {option.Name}");
 
         if (!string.IsNullOrEmpty(command.Command))
         {
@@ -32,13 +33,14 @@ public class CustomSubcommandRun : ISimpleCommandAsync<CustomSubcommandNameOptio
             {
                 if (!string.IsNullOrEmpty(x))
                 {
-                    Console.WriteLine($">> {x}");
+                    this.userInterfaceService.WriteLine($">> {x}");
                     this.control.Subcommand(x);
                 }
             }
         }
     }
 
+    private IUserInterfaceService userInterfaceService;
     private Control control;
     private Vault vault;
     private ILogger<CustomSubcommandRun> logger;

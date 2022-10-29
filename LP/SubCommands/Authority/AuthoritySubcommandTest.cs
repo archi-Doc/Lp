@@ -10,10 +10,11 @@ namespace LP.Subcommands;
 [SimpleCommand("test")]
 public class AuthoritySubcommandTest : ISimpleCommandAsync<AuthoritySubcommandTestOptions>
 {
-    public AuthoritySubcommandTest(ILogger<AuthoritySubcommandTest> logger, Control control)
+    public AuthoritySubcommandTest(ILogger<AuthoritySubcommandTest> logger, Control control, IUserInterfaceService userInterfaceService)
     {
         this.Control = control;
         this.logger = logger;
+        this.userInterfaceService = userInterfaceService;
     }
 
     public async Task RunAsync(AuthoritySubcommandTestOptions option, string[] args)
@@ -23,8 +24,8 @@ public class AuthoritySubcommandTest : ISimpleCommandAsync<AuthoritySubcommandTe
             var signature = authorityKey.SignData(new Credit(), Array.Empty<byte>());
             if (signature != null)
             {
-                Console.WriteLine(signature.ToString());
-                Console.WriteLine(authorityKey.VerifyData(new Credit(), Array.Empty<byte>(), signature));
+                this.userInterfaceService.WriteLine(signature.ToString());
+                this.userInterfaceService.WriteLine(authorityKey.VerifyData(new Credit(), Array.Empty<byte>(), signature).ToString());
             }
         }
     }
@@ -32,6 +33,7 @@ public class AuthoritySubcommandTest : ISimpleCommandAsync<AuthoritySubcommandTe
     public Control Control { get; set; }
 
     private ILogger<AuthoritySubcommandTest> logger;
+    private IUserInterfaceService userInterfaceService;
 }
 
 public record AuthoritySubcommandTestOptions

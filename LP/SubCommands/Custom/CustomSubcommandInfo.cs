@@ -7,9 +7,10 @@ namespace LP.Subcommands;
 [SimpleCommand("info")]
 public class CustomSubcommandInfo : ISimpleCommandAsync<CustomSubcommandNameOptions>
 {
-    public CustomSubcommandInfo(ILogger<CustomSubcommandInfo> logger, Vault vault)
+    public CustomSubcommandInfo(ILogger<CustomSubcommandInfo> logger, IUserInterfaceService userInterfaceService, Vault vault)
     {
         this.vault = vault;
+        this.userInterfaceService = userInterfaceService;
         this.logger = logger;
     }
 
@@ -23,14 +24,14 @@ public class CustomSubcommandInfo : ISimpleCommandAsync<CustomSubcommandNameOpti
             return;
         }
 
-        Console.WriteLine($"Command: {option.Name}");
+        this.userInterfaceService.WriteLine($"Command: {option.Name}");
         if (!string.IsNullOrEmpty(command.Command))
         {
             foreach (var x in CustomizedCommand.FromCommandToArray(command.Command))
             {
                 if (!string.IsNullOrEmpty(x))
                 {
-                    Console.WriteLine(x);
+                    this.userInterfaceService.WriteLine(x);
                 }
             }
         }
@@ -38,4 +39,5 @@ public class CustomSubcommandInfo : ISimpleCommandAsync<CustomSubcommandNameOpti
 
     private Vault vault;
     private ILogger<CustomSubcommandInfo> logger;
+    private IUserInterfaceService userInterfaceService;
 }

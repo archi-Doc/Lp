@@ -17,10 +17,10 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
     public const string CurveName = "secp256r1";
     public const string TestKeyString = "0, b\"9KfxBVYHXco5UZop78r+nv1BBuvb8TDozUgNPstvn7E=\", b\"I5dyWNPVlERjkHJ18u7AhVO2ElL2vExVYY8lILGnhWU=\", b\"HcvEcMJz+1SG59GNp3RWYAM4ejoEQ3bLWHA+rVIyfVQ=\"";
 
-    public BenchmarkSubcommand(ILogger<BenchmarkSubcommand> logger, IConsoleService consoleService)
+    public BenchmarkSubcommand(ILogger<BenchmarkSubcommand> logger, IUserInterfaceService userInterfaceService)
     {
         this.logger = logger;
-        this.consoleService = consoleService;
+        this.userInterfaceService = userInterfaceService;
 
         try
         {
@@ -63,7 +63,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
             return;
         }
 
-        Console.WriteLine($"Key: {this.privateKey.ToString()}");
+        this.userInterfaceService.WriteLine($"Key: {this.privateKey.ToString()}");
 
         var bytes = TinyhandSerializer.Serialize(TestKeyString);
 
@@ -80,7 +80,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
                 var valid = this.privateKey.VerifyData(bytes, sign);
             }
 
-            Console.WriteLine(benchTimer.StopAndGetText());
+            this.userInterfaceService.WriteLine(benchTimer.StopAndGetText());
         }
 
         this.logger.TryGet()?.Log(benchTimer.GetResult("Sign & Verify"));
@@ -101,7 +101,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
             return;
         }
 
-        Console.WriteLine($"Public key compression success.");
+        this.userInterfaceService.WriteLine($"Public key compression success.");
         var bytes = TinyhandSerializer.Serialize(TestKeyString);
 
         var benchTimer = new BenchTimer();
@@ -118,7 +118,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
                 var valid = this.privateKey.VerifyData(bytes, sign);
             }
 
-            Console.WriteLine(benchTimer.StopAndGetText());
+            this.userInterfaceService.WriteLine(benchTimer.StopAndGetText());
         }
 
         this.logger.TryGet()?.Log(benchTimer.GetResult("Sign & Decompress & Verify"));
@@ -140,13 +140,13 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
                 TinyhandSerializer.Deserialize<ObjectH2H>(TinyhandSerializer.Serialize(obj));
             }
 
-            Console.WriteLine(benchTimer.StopAndGetText());
+            this.userInterfaceService.WriteLine(benchTimer.StopAndGetText());
         }
 
         this.logger.TryGet()?.Log(benchTimer.GetResult("Serialize & Deserialize"));
     }
 
-    private IConsoleService consoleService;
+    private IUserInterfaceService userInterfaceService;
     private ILogger<BenchmarkSubcommand> logger;
     private PrivateKey? privateKey;
 }

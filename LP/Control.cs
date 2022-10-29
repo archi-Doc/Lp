@@ -40,6 +40,7 @@ public class Control : ILogInformation
                 // Main services
                 context.AddSingleton<Control>();
                 context.AddSingleton<LPBase>();
+                context.Services.TryAddSingleton<IConsoleService, ConsoleUserInterfaceService>();
                 context.Services.TryAddSingleton<IUserInterfaceService, ConsoleUserInterfaceService>();
                 context.AddSingleton<Vault>();
                 context.AddSingleton<Authority>();
@@ -261,10 +262,9 @@ public class Control : ILogInformation
         }
     }
 
-    public Control(UnitContext context, UnitCore core, UnitLogger logger, IConsoleService consoleService, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl, Vault vault, Authority authority)
+    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl, Vault vault, Authority authority)
     {
         this.Logger = logger;
-        this.ConsoleService = consoleService;
         this.UserInterfaceService = userInterfaceService;
         this.LPBase = lpBase;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
@@ -334,7 +334,7 @@ public class Control : ILogInformation
         await context.SendRunAsync(new(this.Core));
         this.BigMachine.TryGet<NtpMachine.Interface>(Identifier.Zero)?.RunAsync();
 
-        this.ConsoleService.WriteLine();
+        this.UserInterfaceService.WriteLine();
         var logger = this.Logger.Get<DefaultLog>(LogLevel.Information);
         this.LogInformation(logger);
 
@@ -402,7 +402,7 @@ public class Control : ILogInformation
             }
             else
             {
-                this.ConsoleService.WriteLine("Invalid subcommand.");
+                this.UserInterfaceService.WriteLine("Invalid subcommand.");
                 return false;
             }
         }
@@ -431,14 +431,14 @@ public class Control : ILogInformation
                 {
                     command = await Task.Run(() =>
                     {
-                        return Console.ReadLine()?.Trim();
+                        return this.UserInterfaceService.ReadLine()?.Trim();
                     }).WaitAsync(this.Core.CancellationToken).ConfigureAwait(false);
                 }
                 catch
                 {
                 }
 
-                // var command = Console.ReadLine()?.Trim();
+                // var command = this.UserInterfaceService.ReadLine()?.Trim();
                 if (!string.IsNullOrEmpty(command))
                 {
                     if (string.Compare(command, "exit", true) == 0)
@@ -450,7 +450,7 @@ public class Control : ILogInformation
                         }
                         else
                         {
-                            this.ConsoleService.Write("> ");
+                            this.UserInterfaceService.Write("> ");
                             continue;
                         }
                     }
@@ -459,19 +459,19 @@ public class Control : ILogInformation
                         try
                         {
                             this.Subcommand(command);
-                            this.ConsoleService.Write("> ");
+                            this.UserInterfaceService.Write("> ");
                             continue;
                         }
                         catch (Exception e)
                         {
-                            this.ConsoleService.WriteLine(e.ToString());
+                            this.UserInterfaceService.WriteLine(e.ToString());
                             break;
                         }
                     }
                 }
                 else
                 {
-                    this.ConsoleService.WriteLine();
+                    this.UserInterfaceService.WriteLine();
                 }
 
                 // To view mode
@@ -479,19 +479,19 @@ public class Control : ILogInformation
             }
             else if (currentMode == IUserInterfaceService.Mode.View)
             {// View mode
-                if (this.SafeKeyAvailable)
+                if (this.UserInterfaceService.KeyAvailable)
                 {
-                    var keyInfo = Console.ReadKey(true);
+                    var keyInfo = this.UserInterfaceService.ReadKey(true);
                     if (keyInfo.Key == ConsoleKey.Enter || keyInfo.Key == ConsoleKey.Escape)
                     { // To console mode
                         this.UserInterfaceService.ChangeMode(IUserInterfaceService.Mode.Console);
-                        this.ConsoleService.Write("> ");
+                        this.UserInterfaceService.Write("> ");
                     }
                     else
                     {
-                        while (this.SafeKeyAvailable)
+                        while (this.UserInterfaceService.KeyAvailable)
                         {
-                            Console.ReadKey(true);
+                            this.UserInterfaceService.ReadKey(true);
                         }
                     }
                 }
@@ -510,8 +510,6 @@ public class Control : ILogInformation
 
     public UnitCore Core { get; }
 
-    public IConsoleService ConsoleService { get; }
-
     public IUserInterfaceService UserInterfaceService { get; }
 
     public LPBase LPBase { get; }
@@ -527,21 +525,6 @@ public class Control : ILogInformation
     public Authority Authority { get; }
 
     private SimpleParser subcommandParser;
-
-    private bool SafeKeyAvailable
-    {
-        get
-        {
-            try
-            {
-                return Console.KeyAvailable;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-    }
 
     private async Task LoadVaultAsync()
     {
@@ -564,7 +547,7 @@ public class Control : ILogInformation
             }
         }
 
-        this.ConsoleService.WriteLine(HashedString.Get(Hashed.Vault.Create));
+        this.UserInterfaceService.WriteLine(HashedString.Get(Hashed.Vault.Create));
         // await this.UserInterfaceService.Notify(UserInterfaceNotifyLevel.Information, Hashed.KeyVault.Create);
 
         // New Vault

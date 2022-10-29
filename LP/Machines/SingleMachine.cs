@@ -8,10 +8,10 @@ namespace LP.Machines;
 // [TinyhandObject(UseServiceProvider = true)]
 public partial class SingleMachine : Machine<Identifier>
 {
-    public SingleMachine(BigMachine<Identifier> bigMachine, IConsoleService consoleService)
+    public SingleMachine(BigMachine<Identifier> bigMachine, IUserInterfaceService consoleSeuserInterfaceServicevice)
         : base(bigMachine)
     {
-        this.consoleService = consoleService;
+        this.userInterfaceService = consoleSeuserInterfaceServicevice;
         this.DefaultTimeout = TimeSpan.FromSeconds(1);
     }
 
@@ -20,10 +20,10 @@ public partial class SingleMachine : Machine<Identifier>
     [StateMethod(0)]
     protected StateResult Initial(StateParameter parameter)
     {
-        // this.consoleService.WriteLine($"Single: ({this.Identifier.ToString()}) - {this.Count++}");
+        // this.userInterfaceService.WriteLine($"Single: ({this.Identifier.ToString()}) - {this.Count++}");
 
         return StateResult.Continue;
     }
 
-    private IConsoleService consoleService;
+    private IUserInterfaceService userInterfaceService;
 }

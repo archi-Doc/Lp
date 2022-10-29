@@ -7,16 +7,18 @@ namespace LP.Subcommands;
 [SimpleCommand("ls")]
 public class CustomSubcommandLs : ISimpleCommandAsync
 {
-    public CustomSubcommandLs(Control control)
+    public CustomSubcommandLs(Vault vault, IUserInterfaceService userInterfaceService)
     {
-        this.Control = control;
+        this.vault = vault;
+        this.userInterfaceService = userInterfaceService;
     }
 
     public async Task RunAsync(string[] args)
     {
-        var names = this.Control.Vault.GetNames(CustomizedCommand.Prefix).Select(x => x.Substring(CustomizedCommand.Prefix.Length)).ToArray();
-        Console.WriteLine(string.Join(' ', names));
+        var names = this.vault.GetNames(CustomizedCommand.Prefix).Select(x => x.Substring(CustomizedCommand.Prefix.Length)).ToArray();
+        this.userInterfaceService.WriteLine(string.Join(' ', names));
     }
 
-    public Control Control { get; set; }
+    private Vault vault;
+    private IUserInterfaceService userInterfaceService;
 }

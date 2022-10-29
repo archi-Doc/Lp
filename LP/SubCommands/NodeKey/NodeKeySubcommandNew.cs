@@ -7,9 +7,10 @@ namespace LP.Subcommands;
 [SimpleCommand("new")]
 public class NodeKeySubcommandNew : ISimpleCommand<NodeKeySubcommandNewOptions>
 {
-    public NodeKeySubcommandNew(ILogger<NodeKeySubcommandNew> logger, Seedphrase seedPhrase)
+    public NodeKeySubcommandNew(ILogger<NodeKeySubcommandNew> logger, IUserInterfaceService userInterfaceService, Seedphrase seedPhrase)
     {
         this.logger = logger;
+        this.userInterfaceService = userInterfaceService;
         this.seedPhrase = seedPhrase;
     }
 
@@ -34,11 +35,12 @@ public class NodeKeySubcommandNew : ISimpleCommand<NodeKeySubcommandNewOptions>
             nodeKey = NodePrivateKey.Create(seed);
         }
 
-        Console.WriteLine(nodeKey.ToUnsafeString());
+        this.userInterfaceService.WriteLine(nodeKey.ToUnsafeString());
         this.logger.TryGet()?.Log(nodeKey.ToPublicKey().ToString());
     }
 
     private ILogger<NodeKeySubcommandNew> logger;
+    private IUserInterfaceService userInterfaceService;
     private Seedphrase seedPhrase;
 }
 
