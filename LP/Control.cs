@@ -17,6 +17,7 @@ using SimpleCommandLine;
 using ZenItz;
 using LP.Data;
 using Netsphere.Machines;
+using LP.Logging;
 
 namespace LP;
 
@@ -92,6 +93,21 @@ public class Control : ILogInformation
                 }
 
                 options.MaxLogCapacity = 20;
+            });
+
+            this.SetupOptions<TerminalLoggerOptions>((context, options) =>
+            {// TerminalLoggerOptions
+                var logfile = "Logs/Terminal.txt";
+                if (context.TryGetOptions<LPOptions>(out var lpOptions))
+                {
+                    options.Path = Path.Combine(lpOptions.RootDirectory, logfile);
+                }
+                else
+                {
+                    options.Path = Path.Combine(context.RootDirectory, logfile);
+                }
+
+                options.MaxLogCapacity = 1;
             });
 
             this.SetupOptions<ConsoleLoggerOptions>((context, options) =>

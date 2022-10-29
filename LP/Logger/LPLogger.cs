@@ -30,6 +30,7 @@ public class LPLogger
                 // Loggers (ConsoleAndFileLogger, BackgroundAndFileLogger, ConsoleLogger)
                 context.AddSingleton<BackgroundAndFileLogger>();
                 context.AddSingleton<ConsoleAndFileLogger>();
+                context.AddSingleton<TerminalLogger>();
 
                 // Filters
                 context.AddSingleton<MachineLogFilter>();
