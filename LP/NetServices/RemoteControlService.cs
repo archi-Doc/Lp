@@ -17,7 +17,8 @@ internal class RemoteControlService : IRemoteControlService
 
     public async NetTask RequestAuthorization(Token token)
     {// NetTask<NetResult> is recommended.
-        if (CallContext.Current.ServerContext.Terminal.NodeAddress.IsPrivateOrLocalLoopbackAddress() && token.ValidateAndVerify(this.control.LPBase.RemotePublicKey))
+        if (CallContext.Current.ServerContext.Terminal.NodeAddress.IsPrivateOrLocalLoopbackAddress() &&
+            token.ValidateAndVerifyWithoutSalt(this.control.LPBase.RemotePublicKey))
         {
             this.token = token;
             CallContext.Current.Result = NetResult.Success;

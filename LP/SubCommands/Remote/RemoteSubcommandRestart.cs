@@ -48,7 +48,7 @@ public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandResta
             }
 
             authorityKey.SignToken(token);
-            if (!token.ValidateAndVerify())
+            if (!token.ValidateAndVerifyWithoutPublicKey())
             {
                 return;
             }

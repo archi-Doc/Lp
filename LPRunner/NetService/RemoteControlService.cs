@@ -20,7 +20,7 @@ internal class RemoteControlService : IRemoteControlService
 
     public async NetTask RequestAuthorization(Token token)
     {
-        if (token.ValidateAndVerify(this.information.RemotePublicKey))
+        if (CallContext.Current.ServerContext.Terminal.ValidateAndVerifyToken(token, this.information.RemotePublicKey))
         {
             this.token = token;
             CallContext.Current.Result = NetResult.Success;

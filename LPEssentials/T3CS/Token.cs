@@ -6,7 +6,7 @@ namespace LP;
 /// Immutable token object.
 /// </summary>
 [TinyhandObject]
-public sealed partial class Token : IVerifiable // , IEquatable<Token>
+public sealed partial class Token // : IVerifiable // , IEquatable<Token>
 {
     public const long DefaultMics = Mics.MicsPerSecond * 3;
     public const long MaximumMics = Mics.MicsPerMinute * 2;
@@ -74,7 +74,7 @@ public sealed partial class Token : IVerifiable // , IEquatable<Token>
         return false;
     }
 
-    public bool ValidateAndVerify()
+    public bool ValidateAndVerifyWithoutPublicKey()
     {
         if (!this.Validate())
         {
@@ -92,7 +92,7 @@ public sealed partial class Token : IVerifiable // , IEquatable<Token>
         }
     }
 
-    public bool ValidateAndVerify(PublicKey publicKey)
+    public bool ValidateAndVerifyWithoutSalt(PublicKey publicKey)
     {
         if (!publicKey.IsValid())
         {
@@ -103,7 +103,7 @@ public sealed partial class Token : IVerifiable // , IEquatable<Token>
             return false;
         }
 
-        return this.ValidateAndVerify();
+        return this.ValidateAndVerifyWithoutPublicKey();
     }
 
     [Key(0)]

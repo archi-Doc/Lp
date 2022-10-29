@@ -106,6 +106,16 @@ public partial class NetTerminal : IDisposable
         return new Token(tokenType, this.Salt, Mics.GetCorrected() + Token.DefaultMics, Identifier.Zero, null);
     }
 
+    public bool ValidateAndVerifyToken(Token token, PublicKey publicKey)
+    {
+        if (token.Salt != this.Salt)
+        {
+            return false;
+        }
+
+        return token.ValidateAndVerifyWithoutSalt(publicKey);
+    }
+
     internal Terminal Terminal { get; }
 
     internal AsyncPulseEvent ReceiveEvent { get; } = new();
