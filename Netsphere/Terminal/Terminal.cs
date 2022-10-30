@@ -124,10 +124,10 @@ public class Terminal : UnitBase, IUnitExecutable
     public Terminal(UnitContext context, UnitLogger unitLogger, NetBase netBase, NetStatus netStatus)
         : base(context)
     {
-        this.logger = unitLogger.GetLogger<Terminal>();
+        this.UnitLogger = unitLogger;
         this.NetBase = netBase;
         this.NetStatus = netStatus;
-        this.NetSocket = new(unitLogger.GetLogger<NetSocket>(), this);
+        this.NetSocket = new(this);
     }
 
     public async Task RunAsync(UnitMessage.RunAsync message)
@@ -493,7 +493,8 @@ public class Terminal : UnitBase, IUnitExecutable
 
     internal UdpClient? UnsafeUdpClient => this.NetSocket.UnsafeUdpClient;
 
-    private ILogger<Terminal> logger;
+    internal UnitLogger UnitLogger { get; private set; }
+
     private InvokeServerDelegate? invokeServerDelegate;
     private NetTerminal.GoshujinClass terminals = new();
     private ConcurrentDictionary<ulong, NetTerminalGene> inboundGenes = new();

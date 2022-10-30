@@ -29,6 +29,7 @@ public partial class NetTerminal : IDisposable
     internal NetTerminal(Terminal terminal, NodeAddress nodeAddress)
     {// NodeAddress: Unmanaged
         this.Terminal = terminal;
+        this.logger = this.Terminal.UnitLogger.GetLogger(this.GetType());
         this.GenePool = new(LP.Random.Crypto.NextUInt64());
         this.NodeAddress = nodeAddress;
         this.Endpoint = this.NodeAddress.CreateEndpoint();
@@ -38,14 +39,10 @@ public partial class NetTerminal : IDisposable
         this.InitializeState();
     }
 
-    internal NetTerminal(Terminal terminal, NodeInformation nodeInformation)
-        : this(terminal, nodeInformation, LP.Random.Crypto.NextUInt64())
-    {// NodeInformation: Managed
-    }
-
     internal NetTerminal(Terminal terminal, NodeInformation nodeInformation, ulong gene)
     {// NodeInformation: Encrypted
         this.Terminal = terminal;
+        this.logger = this.Terminal.UnitLogger.GetLogger(this.GetType());
         this.GenePool = new(gene);
         this.NodeAddress = nodeInformation;
         this.NodeInformation = nodeInformation;
@@ -393,6 +390,9 @@ public partial class NetTerminal : IDisposable
 
     internal uint ResendCount => Volatile.Read(ref this.resendCount);
 
+    internal void Log(string message, LogLevel logLevel = LogLevel.Information)
+        => this.logger.TryGet(logLevel)?.Log((long)this.Salt & 0xFFFF, message);
+
     private void Clear()
     {// lock (this.SyncObject)
         foreach (var x in this.activeInterfaces)
@@ -421,6 +421,7 @@ public partial class NetTerminal : IDisposable
     protected List<NetInterface> disposedInterfaces = new();
     protected byte[]? embryo; // 48 bytes
     private Aes? aes;
+    private ILogger logger;
 
     private long maximumResponseMics;
     private double minimumBandwidth;

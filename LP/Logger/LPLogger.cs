@@ -1,5 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Microsoft.Extensions.DependencyInjection;
+using Netsphere;
+
 namespace LP.Logging;
 
 public class LPLogger
@@ -30,7 +33,10 @@ public class LPLogger
                 // Loggers (ConsoleAndFileLogger, BackgroundAndFileLogger, ConsoleLogger)
                 context.AddSingleton<BackgroundAndFileLogger>();
                 context.AddSingleton<ConsoleAndFileLogger>();
-                context.AddSingleton<TerminalLogger>();
+
+                // Stream logger
+                context.Services.Add(ServiceDescriptor.Singleton(typeof(StreamLogger<>), typeof(StreamLoggerFactory<>)));
+                context.TryAddSingleton<StreamLoggerOptions>();
 
                 // Filters
                 context.AddSingleton<MachineLogFilter>();
@@ -49,6 +55,17 @@ public class LPLogger
                     {// Machines
                         context.SetOutput<BackgroundAndFileLogger>();
                         context.SetFilter<MachineLogFilter>();
+                        return;
+                    }
+
+                    if (context.LogSourceType == typeof(ClientTerminal))
+                    {// ClientTerminal
+                        context.SetOutput<StreamLogger<ClientTerminalLoggerOptions>>();
+                        return;
+                    }
+                    else if (context.LogSourceType == typeof(ServerTerminal))
+                    {// ServerTerminal
+                        context.SetOutput<StreamLogger<ServerTerminalLoggerOptions>>();
                         return;
                     }
 

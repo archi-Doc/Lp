@@ -95,7 +95,7 @@ public class Control : ILogInformation
                 options.MaxLogCapacity = 20;
             });
 
-            this.SetupOptions<TerminalLoggerOptions>((context, options) =>
+            this.SetupOptions<ClientTerminalLoggerOptions>((context, options) =>
             {// TerminalLoggerOptions
                 var logfile = "Logs/Terminal.txt";
                 if (context.TryGetOptions<LPOptions>(out var lpOptions))

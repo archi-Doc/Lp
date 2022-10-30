@@ -138,9 +138,9 @@ public class NetSocket
         private long previousMics;
     }
 
-    public NetSocket(ILogger<NetSocket> logger, Terminal terminal)
+    public NetSocket(Terminal terminal)
     {
-        this.logger = logger;
+        this.logger = terminal.UnitLogger.GetLogger<NetSocket>();
         this.terminal = terminal;
     }
 
