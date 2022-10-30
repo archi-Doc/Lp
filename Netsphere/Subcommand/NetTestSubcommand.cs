@@ -35,12 +35,12 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
             var p = new PacketPunch(null);
 
             var result = await terminal.EncryptConnectionAsync();
+
+            this.logger.TryGet()?.Log($"{result.ToString()}");
             if (result != NetResult.Success)
             {
                 return;
             }
-
-            this.logger.TryGet()?.Log($"{result.ToString()}");
 
             var sw = Stopwatch.StartNew();
             /*var t = terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);

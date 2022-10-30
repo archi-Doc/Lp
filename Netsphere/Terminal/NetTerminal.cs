@@ -13,12 +13,16 @@ namespace Netsphere;
 
 #pragma warning disable SA1401 // Fields should be private
 
+public interface INetTerminalLog
+{
+}
+
 /// <summary>
 /// Initializes a new instance of the <see cref="NetTerminal"/> class.<br/>
 /// NOT thread-safe.
 /// </summary>
 [ValueLinkObject]
-public partial class NetTerminal : IDisposable
+public partial class NetTerminal : IDisposable, INetTerminalLog
 {
     /// <summary>
     /// The default interval time in milliseconds.
@@ -265,7 +269,7 @@ public partial class NetTerminal : IDisposable
                 return NetResult.NoNodeInformation;
             }
 
-            // this.TerminalLogger?.Information($"Material {material[0]} ({salt.To4Hex()}/{salt2.To4Hex()}), {this.NodeInformation.PublicKeyX[0]}, {this.Terminal.NodePrivateKey.X[0]}");
+            // this.Log($"Material {material[0]} ({salt.To4Hex()}/{salt2.To4Hex()}), {this.NodeInformation.PublicKeyX[0]}, {this.Terminal.NodePrivateKey.X[0]}");
 
             // ulong Salt, Salt2, byte[] material, ulong Salt, Salt2
             Span<byte> buffer = stackalloc byte[sizeof(ulong) + sizeof(ulong) + PublicKey.PrivateKeyLength + sizeof(ulong) + sizeof(ulong)];
@@ -285,7 +289,8 @@ public partial class NetTerminal : IDisposable
             Hash.Sha3_384Pool.Return(sha);
 
             this.GenePool.SetEmbryo(this.embryo);
-            // this.TerminalLogger?.Information($"First gene {this.GenePool.GetSequential().To4Hex()} ({salt.To4Hex()}/{salt2.To4Hex()})");
+            this.Log("Embryo created.");
+            // this.Log($"First gene {this.GenePool.GetSequential().To4Hex()} ({salt.To4Hex()}/{salt2.To4Hex()})");
 
             // Aes
             this.aes = Aes.Create();
@@ -478,7 +483,7 @@ public partial class NetTerminal : IDisposable
 
                 this.ConnectionSemaphore.Dispose();
 
-                // this.TerminalLogger?.Information("terminal disposed.");
+                this.Log("terminal disposed.");
             }
 
             // free native resources here if there are any.
