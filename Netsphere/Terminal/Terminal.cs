@@ -121,13 +121,13 @@ public class Terminal : UnitBase, IUnitExecutable
         }
     }
 
-    public Terminal(UnitContext context, UnitLogger logger, NetBase netBase, NetStatus netStatus)
+    public Terminal(UnitContext context, UnitLogger unitLogger, NetBase netBase, NetStatus netStatus)
         : base(context)
     {
-        this.logger = logger;
+        this.logger = unitLogger.GetLogger<Terminal>();
         this.NetBase = netBase;
         this.NetStatus = netStatus;
-        this.NetSocket = new(logger, this);
+        this.NetSocket = new(unitLogger.GetLogger<NetSocket>(), this);
     }
 
     public async Task RunAsync(UnitMessage.RunAsync message)
@@ -152,11 +152,6 @@ public class Terminal : UnitBase, IUnitExecutable
     public void SetInvokeServerDelegate(InvokeServerDelegate @delegate)
     {
         this.invokeServerDelegate = @delegate;
-    }
-
-    public void SetLogger(ILog logger)
-    {
-        // this.TerminalLogger = logger;
     }
 
     public ThreadCoreBase? Core { get; private set; }
@@ -492,15 +487,13 @@ public class Terminal : UnitBase, IUnitExecutable
         }
     }
 
-    // internal ILogger? TerminalLogger { get; private set; }
-
     internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
 
     internal NetSocket NetSocket { get; private set; }
 
     internal UdpClient? UnsafeUdpClient => this.NetSocket.UnsafeUdpClient;
 
-    private UnitLogger logger;
+    private ILogger<Terminal> logger;
     private InvokeServerDelegate? invokeServerDelegate;
     private NetTerminal.GoshujinClass terminals = new();
     private ConcurrentDictionary<ulong, NetTerminalGene> inboundGenes = new();
