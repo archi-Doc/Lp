@@ -69,7 +69,7 @@ public class Server
             }
             finally
             {
-                operation?.Dispose();
+                // operation?.Dispose(); // tempcode
                 received.Return();
                 // terminal.ClearSender();
             }

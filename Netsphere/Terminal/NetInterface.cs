@@ -280,56 +280,62 @@ internal class NetInterface<TSend, TReceive> : NetInterface
     internal bool SetSend<TValue>(TValue value)
         where TValue : IPacket
     {
-        if (this.SendGenes != null)
-        {
-            this.NetTerminal.Logger?.Log($"SetSend: Fatal");
-            return false;
-        }
+        lock (this.NetTerminal.SyncObject)
+        {// tempcode
+            if (this.SendGenes != null)
+            {
+                this.NetTerminal.Logger?.Log($"SetSend: Fatal");
+                return false;
+            }
 
-        var gene = this.StandbyGene;
-        this.NetTerminal.CreateHeader(out var header, gene);
-        PacketService.CreatePacket(ref header, value, value.PacketId, out var sendOwner);
-        if (sendOwner.Memory.Length <= PacketService.SafeMaxPayloadSize)
-        {// Single packet.
-            var ntg = new NetTerminalGene(gene, this);
-            this.SendGenes = new NetTerminalGene[] { ntg, };
-            ntg.SetSend(sendOwner);
+            var gene = this.StandbyGene;
+            this.NetTerminal.CreateHeader(out var header, gene);
+            PacketService.CreatePacket(ref header, value, value.PacketId, out var sendOwner);
+            if (sendOwner.Memory.Length <= PacketService.SafeMaxPayloadSize)
+            {// Single packet.
+                var ntg = new NetTerminalGene(gene, this);
+                this.SendGenes = new NetTerminalGene[] { ntg, };
+                ntg.SetSend(sendOwner);
 
-            this.NetTerminal.Logger?.Log($"RegisterSend3  : {gene.To4Hex()}");
-            return true;
-        }
-        else
-        {// Packet size limit exceeded.
-            return false;
+                this.NetTerminal.Logger?.Log($"RegisterSend3  : {gene.To4Hex()}");
+                return true;
+            }
+            else
+            {// Packet size limit exceeded.
+                return false;
+            }
         }
     }
 
     internal bool SetSend(NetOperation netOperation, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner)
     {
-        if (this.SendGenes != null)
-        {
-            this.NetTerminal.Logger?.Log($"SetSend: Fatal");
-            return false;
-        }
+        lock (this.NetTerminal.SyncObject)
+        {// tempcode
+            if (this.SendGenes != null)
+            {
+                this.NetTerminal.Logger?.Log($"SetSend: Fatal");
+                return false;
+            }
 
-        var gene = this.StandbyGene;
-        this.NetTerminal.CreateHeader(out var header, gene);
-        if (owner.Memory.Length <= PacketService.SafeMaxPayloadSize)
-        {// Single packet.
-            PacketService.CreateDataPacket(ref header, packetId, dataId, owner.Memory.Span, out var sendOwner);
-            var ntg = new NetTerminalGene(gene, this);
-            this.NetTerminal.Logger?.Log($"ntg {ntg.State}");
-            this.SendGenes = new NetTerminalGene[] { ntg, };
-            ntg.SetSend(sendOwner);
-            this.NetTerminal.Logger?.Log($"ntg2 {ntg.State}");
-            sendOwner.Return();
+            var gene = this.StandbyGene;
+            this.NetTerminal.CreateHeader(out var header, gene);
+            if (owner.Memory.Length <= PacketService.SafeMaxPayloadSize)
+            {// Single packet.
+                PacketService.CreateDataPacket(ref header, packetId, dataId, owner.Memory.Span, out var sendOwner);
+                var ntg = new NetTerminalGene(gene, this);
+                this.NetTerminal.Logger?.Log($"ntg {ntg.State} {this.SendGenes?.Length}");
+                this.SendGenes = new NetTerminalGene[] { ntg, };
+                ntg.SetSend(sendOwner);
+                this.NetTerminal.Logger?.Log($"ntg2 {ntg.State} {this.SendGenes?.Length}");
+                sendOwner.Return();
 
-            this.NetTerminal.Logger?.Log($"RegisterSend4  : {gene.To4Hex()}");
-            return true;
-        }
-        else
-        {
-            this.SendGenes = CreateSendGenes(netOperation, this, gene, owner, packetId, dataId);
+                this.NetTerminal.Logger?.Log($"RegisterSend4  : {gene.To4Hex()}");
+                return true;
+            }
+            else
+            {
+                this.SendGenes = CreateSendGenes(netOperation, this, gene, owner, packetId, dataId);
+            }
         }
 
         return false;
@@ -337,26 +343,29 @@ internal class NetInterface<TSend, TReceive> : NetInterface
 
     internal void SetReserve(NetOperation netOperation, PacketReserve reserve)
     {
-        if (this.RecvGenes == null || this.RecvGenes.Length < 1)
-        {
-            return;
+        lock (this.NetTerminal.SyncObject)
+        {// tempcode
+            if (this.RecvGenes == null || this.RecvGenes.Length < 1)
+            {
+                return;
+            }
+
+            this.Clear();
+            Span<ulong> arraySpan = stackalloc ulong[reserve.NumberOfGenes];
+            netOperation.GetGenes(arraySpan);
+
+            var genes = new NetTerminalGene[reserve.NumberOfGenes];
+            for (var i = 0; i < reserve.NumberOfGenes; i++)
+            {
+                var g = new NetTerminalGene(arraySpan[i], this);
+                g.SetReceive();
+                genes[i] = g;
+            }
+
+            // this.TerminalLogger?.Information($"SetReserve: {string.Join(", ", genes.Select(x => x.Gene.To4Hex()))}");
+
+            this.RecvGenes = genes;
         }
-
-        this.Clear();
-        Span<ulong> arraySpan = stackalloc ulong[reserve.NumberOfGenes];
-        netOperation.GetGenes(arraySpan);
-
-        var genes = new NetTerminalGene[reserve.NumberOfGenes];
-        for (var i = 0; i < reserve.NumberOfGenes; i++)
-        {
-            var g = new NetTerminalGene(arraySpan[i], this);
-            g.SetReceive();
-            genes[i] = g;
-        }
-
-        // this.TerminalLogger?.Information($"SetReserve: {string.Join(", ", genes.Select(x => x.Gene.To4Hex()))}");
-
-        this.RecvGenes = genes;
     }
 }
 
