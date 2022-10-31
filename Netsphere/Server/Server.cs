@@ -73,7 +73,7 @@ public class Server
             }
         }
 
-        this.NetTerminal.Log($"Server offline.");
+        this.NetTerminal.GetLogger()?.Log($"Server offline.");
     }
 
     public ThreadCoreBase? Core => this.NetControl.Terminal.Core;

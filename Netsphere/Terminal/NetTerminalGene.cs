@@ -117,7 +117,7 @@ internal class NetTerminalGene
             this.State = NetTerminalGeneState.WaitingForAck;
 
             var packetId = (PacketId)this.Owner.Memory.Span[1];
-            this.NetInterface.NetTerminal.Log($"Send: {packetId}, {this.NetInterface.NetTerminal.Endpoint}");
+            this.NetInterface.NetTerminal.GetLogger()?.Log($"Send: {packetId}, {this.NetInterface.NetTerminal.Endpoint}");
             return true;
         }
 

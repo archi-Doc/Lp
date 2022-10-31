@@ -4,6 +4,11 @@ namespace LP.Logging;
 
 public class StreamLoggerOptions : FileLoggerOptions
 {
+    public StreamLoggerOptions()
+    {
+        this.Formatter.EventIdFormat = "X4";
+    }
+
     /// <summary>
     /// Gets or sets a value indicating whether or not to clear logs at startup.
     /// </summary>

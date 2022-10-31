@@ -13,8 +13,25 @@ namespace Netsphere;
 
 #pragma warning disable SA1401 // Fields should be private
 
-public interface INetTerminalLog
+public readonly struct NetTerminalLog : ILog
 {
+    public NetTerminalLog(ILog log, LogLevel logLevel, long eventId)
+    {
+        this.log = log;
+        this.logLevel = logLevel;
+        this.eventId = eventId;
+    }
+
+    Type ILog.OutputType => throw new NotImplementedException();
+
+    void ILog.Log(long eventId, string message, Exception? exception)
+    {
+        this.log.Log(this.eventId, message, exception);
+    }
+
+    private readonly ILog log;
+    private readonly LogLevel logLevel;
+    private readonly long eventId;
 }
 
 /// <summary>
@@ -22,7 +39,7 @@ public interface INetTerminalLog
 /// NOT thread-safe.
 /// </summary>
 [ValueLinkObject]
-public partial class NetTerminal : IDisposable, INetTerminalLog
+public partial class NetTerminal : IDisposable
 {
     /// <summary>
     /// The default interval time in milliseconds.
@@ -289,7 +306,7 @@ public partial class NetTerminal : IDisposable, INetTerminalLog
             Hash.Sha3_384Pool.Return(sha);
 
             this.GenePool.SetEmbryo(this.embryo);
-            this.Log("Embryo created.");
+            this.GetLogger()?.Log("Embryo created.");
             // this.Log($"First gene {this.GenePool.GetSequential().To4Hex()} ({salt.To4Hex()}/{salt2.To4Hex()})");
 
             // Aes
@@ -395,8 +412,15 @@ public partial class NetTerminal : IDisposable, INetTerminalLog
 
     internal uint ResendCount => Volatile.Read(ref this.resendCount);
 
-    internal void Log(string message, LogLevel logLevel = LogLevel.Information)
-        => this.logger.TryGet(logLevel)?.Log((long)this.Salt & 0xFFFF, message);
+    internal ILog? GetLogger(LogLevel logLevel = LogLevel.Information)
+    {
+        if (this.logger.TryGet(logLevel) is { } log)
+        {
+            return new NetTerminalLog(log, logLevel, (long)this.Salt & 0xFFFF);
+        }
+
+        return null;
+    }
 
     private void Clear()
     {// lock (this.SyncObject)
@@ -483,12 +507,13 @@ public partial class NetTerminal : IDisposable, INetTerminalLog
 
                 this.ConnectionSemaphore.Dispose();
 
-                this.Log("terminal disposed.");
+                this.GetLogger()?.Log("terminal disposed.");
             }
 
             // free native resources here if there are any.
             this.disposed = true;
         }
     }
+
     #endregion
 }

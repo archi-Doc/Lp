@@ -7,13 +7,11 @@ public class ClientTerminal : NetTerminal
     internal ClientTerminal(Terminal terminal, NodeAddress nodeAddress)
         : base(terminal, nodeAddress)
     {// NodeAddress: Unmanaged
-        this.Log("Unmanaged"); // tempcode
     }
 
     internal ClientTerminal(Terminal terminal, NodeInformation nodeInformation)
         : base(terminal, nodeInformation, LP.Random.Crypto.NextUInt64())
     {// NodeInformation: Managed
-        this.Log("Managed"); // tempcode
     }
 
     public override async Task<NetResult> EncryptConnectionAsync()
