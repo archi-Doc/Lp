@@ -8,31 +8,11 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Threading;
+using Arc.Unit;
 
 namespace Netsphere;
 
 #pragma warning disable SA1401 // Fields should be private
-
-public readonly struct NetTerminalLog : ILog
-{
-    public NetTerminalLog(ILog log, LogLevel logLevel, long eventId)
-    {
-        this.log = log;
-        this.logLevel = logLevel;
-        this.eventId = eventId;
-    }
-
-    Type ILog.OutputType => throw new NotImplementedException();
-
-    void ILog.Log(long eventId, string message, Exception? exception)
-    {
-        this.log.Log(this.eventId, message, exception);
-    }
-
-    private readonly ILog log;
-    private readonly LogLevel logLevel;
-    private readonly long eventId;
-}
 
 /// <summary>
 /// Initializes a new instance of the <see cref="NetTerminal"/> class.<br/>
@@ -46,24 +26,43 @@ public partial class NetTerminal : IDisposable
     /// </summary>
     public const int DefaultInterval = 10;
 
+    private const long EventIdMask = 0xFFFF;
+
+    private class NetTerminalLogger : ILog
+    {
+        public NetTerminalLogger(ILog log, NetTerminal netTerminal)
+        {
+            this.log = log;
+            this.netTerminal = netTerminal;
+        }
+
+        Type ILog.OutputType => throw new NotImplementedException();
+
+        void ILog.Log(long eventId, string message, Exception? exception)
+        {
+            this.log.Log((long)this.netTerminal.Salt & EventIdMask, message, exception);
+        }
+
+        private readonly ILog log;
+        private readonly NetTerminal netTerminal;
+    }
+
     [Link(Type = ChainType.QueueList, Name = "Queue", Primary = true)]
     internal NetTerminal(Terminal terminal, NodeAddress nodeAddress)
     {// NodeAddress: Unmanaged
         this.Terminal = terminal;
-        this.logger = this.Terminal.UnitLogger.GetLogger(this.GetType());
         this.GenePool = new(LP.Random.Crypto.NextUInt64());
         this.NodeAddress = nodeAddress;
         this.Endpoint = this.NodeAddress.CreateEndpoint();
 
         this.FlowControl = new(this);
 
-        this.InitializeState();
+        this.Initialize();
     }
 
     internal NetTerminal(Terminal terminal, NodeInformation nodeInformation, ulong gene)
     {// NodeInformation: Encrypted
         this.Terminal = terminal;
-        this.logger = this.Terminal.UnitLogger.GetLogger(this.GetType());
         this.GenePool = new(gene);
         this.NodeAddress = nodeInformation;
         this.NodeInformation = nodeInformation;
@@ -71,7 +70,7 @@ public partial class NetTerminal : IDisposable
 
         this.FlowControl = new(this);
 
-        this.InitializeState();
+        this.Initialize();
     }
 
     public void SetMaximumResponseTime(int milliseconds = 500)
@@ -149,8 +148,11 @@ public partial class NetTerminal : IDisposable
         BitConverter.TryWriteBytes(b, saltA2);
 
         var hash = Hash.ObjectPool.Get();
-        (this.Salt, _, _, _) = hash.GetHashUInt64(span);
+        (var hash0, _, _, _) = hash.GetHashUInt64(span);
         Hash.ObjectPool.Return(hash);
+
+        this.Logger?.Log($"-> {hash0 & EventIdMask:X4}");
+        this.Salt = hash0;
     }
 
     internal void InternalClose()
@@ -263,8 +265,6 @@ public partial class NetTerminal : IDisposable
 
     internal GenePool GenePool { get; }
 
-    // internal ILogger? TerminalLogger => this.Terminal.TerminalLogger;
-
     internal NetResult CreateEmbryo(ulong salt, ulong salt2)
     {
         if (this.NodeInformation == null)
@@ -306,7 +306,7 @@ public partial class NetTerminal : IDisposable
             Hash.Sha3_384Pool.Return(sha);
 
             this.GenePool.SetEmbryo(this.embryo);
-            this.GetLogger()?.Log("Embryo created.");
+            this.Logger?.Log("Embryo created.");
             // this.Log($"First gene {this.GenePool.GetSequential().To4Hex()} ({salt.To4Hex()}/{salt2.To4Hex()})");
 
             // Aes
@@ -412,15 +412,7 @@ public partial class NetTerminal : IDisposable
 
     internal uint ResendCount => Volatile.Read(ref this.resendCount);
 
-    internal ILog? GetLogger(LogLevel logLevel = LogLevel.Information)
-    {
-        if (this.logger.TryGet(logLevel) is { } log)
-        {
-            return new NetTerminalLog(log, logLevel, (long)this.Salt & 0xFFFF);
-        }
-
-        return null;
-    }
+    internal ILog? Logger { get; private set; }
 
     private void Clear()
     {// lock (this.SyncObject)
@@ -439,8 +431,15 @@ public partial class NetTerminal : IDisposable
         this.disposedInterfaces.Clear();
     }
 
-    private void InitializeState()
+    private void Initialize()
     {
+        if (/*this.Terminal.NetBase.NetsphereOptions.EnableLogger &&*/
+            this.Terminal.UnitLogger.GetLogger(this.GetType()) is { } logger &&
+            logger.TryGet() is { } log)
+        {
+            this.Logger = new NetTerminalLogger(log, this);
+        }
+
         this.SetMaximumResponseTime();
         this.SetMinimumBandwidth();
         this.ResetLastResponseMics();
@@ -450,7 +449,6 @@ public partial class NetTerminal : IDisposable
     protected List<NetInterface> disposedInterfaces = new();
     protected byte[]? embryo; // 48 bytes
     private Aes? aes;
-    private ILogger logger;
 
     private long maximumResponseMics;
     private double minimumBandwidth;
@@ -507,7 +505,7 @@ public partial class NetTerminal : IDisposable
 
                 this.ConnectionSemaphore.Dispose();
 
-                this.GetLogger()?.Log("terminal disposed.");
+                // this.Logger?.Log("terminal disposed.");
             }
 
             // free native resources here if there are any.

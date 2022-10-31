@@ -57,11 +57,13 @@ public class Server
                 else if (received.Result == NetResult.Timeout ||
                     received.Result == NetResult.NoReceiver)
                 {
+                    this.NetTerminal.Logger?.Log($"{received.Result} -> SendClose()");
                     this.NetTerminal.SendClose();
                     break;
                 }
                 else if (received.Result == NetResult.Closed)
                 {
+                    this.NetTerminal.Logger?.Log($"{received.Result}");
                     break;
                 }
             }
@@ -73,7 +75,7 @@ public class Server
             }
         }
 
-        this.NetTerminal.GetLogger()?.Log($"Server offline.");
+        this.NetTerminal.Logger?.Log($"Server offline.");
     }
 
     public ThreadCoreBase? Core => this.NetControl.Terminal.Core;
@@ -113,6 +115,8 @@ public class Server
             return false;
         }
 
+        this.NetTerminal.Logger?.Log("Respond: PacketPunch");
+
         TimeCorrection.AddCorrection(punch.UtcMics);
 
         var response = new PacketPunchResponse();
@@ -130,6 +134,8 @@ public class Server
             var task2 = operation.SendEmpty();
             return false;
         }
+
+        this.NetTerminal.Logger?.Log("Respond: TestPacket");
 
         var response = TestPacket.Create(2000);
         var task = operation.SendAsync(response);

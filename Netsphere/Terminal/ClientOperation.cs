@@ -42,7 +42,6 @@ internal class ClientOperation : NetOperation
                     return r.Result;
                 }
 
-                // this.NetTerminal.TerminalLogger?.Information($"npk {r.Value!.Node.PublicKeyX[0]}");
                 this.NetTerminal.MergeNodeInformation(r.Value!.Node);
             }
 

@@ -9,6 +9,7 @@ using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using Tinyhand.Logging;
 
 namespace Netsphere;
 
@@ -91,7 +92,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
             ntg.SetSend(sendOwner);
             sendOwner.Return();
 
-            // netTerminal.TerminalLogger?.Information($"RegisterSend2  : {sequentialGenes.First.To4Hex()}");
+            // netTerminal.Logger?.Log($"RegisterSend2  : {sequentialGenes.First.To4Hex()}");
         }
         else
         {
@@ -132,7 +133,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
             ntg.SetSend(sendOwner);
             sendOwner.Return();
 
-            // netTerminal.TerminalLogger?.Information($"RegisterSend   : {sequentialGenes.First.To4Hex()}, {id}");
+            netTerminal.Logger?.Log($"RegisterSend   : {sequentialGenes.First.To4Hex()}, {id}");
         }
         else
         {// Packet size limit exceeded.
@@ -148,7 +149,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
             netInterface.RecvGenes = new NetTerminalGene[] { ntg, };
             ntg.SetReceive();
 
-            // netTerminal.TerminalLogger?.Information($"RegisterReceive: {sequentialGenes.Second.To4Hex()}");
+            netTerminal.Logger?.Log($"RegisterReceive: {sequentialGenes.Second.To4Hex()}");
         }
 
         netTerminal.Add(netInterface);
@@ -205,8 +206,6 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         var sendGene = new NetTerminalGene(secondGene, netInterface);
         netInterface.SendGenes = new NetTerminalGene[] { sendGene, };
         sendGene.SetSend(sendOwner);
-
-        // netInterface.NetTerminal.TerminalLogger?.Information($"ConnectTerminal: {gene.To4Hex()} -> {secondGene.To4Hex()}");
 
         // netInterface.NetTerminal.Add(netInterface); // Delay
         return netInterface;
@@ -283,6 +282,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
     {
         if (this.SendGenes != null)
         {
+            this.NetTerminal.Logger?.Log($"SetSend: Fatal");
             return false;
         }
 
@@ -295,7 +295,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
             this.SendGenes = new NetTerminalGene[] { ntg, };
             ntg.SetSend(sendOwner);
 
-            // this.TerminalLogger?.Information($"RegisterSend3  : {gene.To4Hex()}");
+            this.NetTerminal.Logger?.Log($"RegisterSend3  : {gene.To4Hex()}");
             return true;
         }
         else
@@ -308,6 +308,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
     {
         if (this.SendGenes != null)
         {
+            this.NetTerminal.Logger?.Log($"SetSend: Fatal");
             return false;
         }
 
@@ -317,11 +318,13 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         {// Single packet.
             PacketService.CreateDataPacket(ref header, packetId, dataId, owner.Memory.Span, out var sendOwner);
             var ntg = new NetTerminalGene(gene, this);
+            this.NetTerminal.Logger?.Log($"ntg {ntg.State}");
             this.SendGenes = new NetTerminalGene[] { ntg, };
             ntg.SetSend(sendOwner);
+            this.NetTerminal.Logger?.Log($"ntg2 {ntg.State}");
             sendOwner.Return();
 
-            // this.TerminalLogger?.Information($"RegisterSend4  : {gene.To4Hex()}");
+            this.NetTerminal.Logger?.Log($"RegisterSend4  : {gene.To4Hex()}");
             return true;
         }
         else
@@ -383,7 +386,7 @@ public class NetInterface : IDisposable
         {
             if (Mics.GetSystem() >= (this.NetTerminal.LastResponseMics + this.NetTerminal.MaximumResponseMics))
             {
-                // this.TerminalLogger?.Information($"Send timeout.");
+                this.NetTerminal.Logger?.Log($"SendAsync: Timeout");
                 return NetResult.Timeout;
             }
 
@@ -391,6 +394,7 @@ public class NetInterface : IDisposable
             {
                 if (this.SendGenes == null)
                 {
+                    this.NetTerminal.Logger?.Log($"SendAsync: NoData");
                     return NetResult.NoDataToSend;
                 }
 
@@ -402,6 +406,7 @@ public class NetInterface : IDisposable
                     }
                 }
 
+                this.NetTerminal.Logger?.Log($"SendAsync: Success");
                 return NetResult.Success;
             }
 
@@ -414,10 +419,12 @@ WaitForSendCompletionWait:
             }
             catch
             {
+                this.NetTerminal.Logger?.Log($"SendAsync: Closed2");
                 return NetResult.Closed;
             }
         }
 
+        this.NetTerminal.Logger?.Log($"SendAsync: Closed {this.Terminal.Core?.IsTerminated}, {this.NetTerminal.IsClosed}");
         return NetResult.Closed;
     }
 
@@ -442,7 +449,7 @@ WaitForSendCompletionWait:
 
             if (Mics.GetSystem() >= (this.NetTerminal.LastResponseMics + this.NetTerminal.MaximumResponseMics))
             {
-                /*if (this.TerminalLogger != null)
+                if (this.NetTerminal.Logger is { } logger)
                 {
                     string genes;
                     lock (this.NetTerminal.SyncObject)
@@ -450,8 +457,8 @@ WaitForSendCompletionWait:
                         genes = this.RecvGenes == null ? string.Empty : string.Join(", ", this.RecvGenes.Select(x => x.Gene.To4Hex()));
                     }
 
-                    this.TerminalLogger.Information($"Receive timeout ({genes}).");
-                }*/
+                    logger.Log($"Receive timeout ({genes}).");
+                }
 
                 return new NetReceivedData(NetResult.Timeout);
             }
@@ -466,10 +473,12 @@ WaitForSendCompletionWait:
             }
             catch
             {
+                this.NetTerminal.Logger?.Log($"ReceiveAsync: Closed2");
                 return new NetReceivedData(NetResult.Closed);
             }
         }
 
+        this.NetTerminal.Logger?.Log($"ReceiveAsync: Closed");
         return new NetReceivedData(NetResult.Closed);
     }
 
@@ -597,59 +606,71 @@ WaitForSendCompletionWait:
 
     internal void ProcessSend(long currentMics, ref int sendCapacity)
     {// lock (this.NetTerminal.SyncObject)
-        if (this.SendGenes != null)
+        if (this.SendGenes == null)
         {
-            if (this.SendRemaining == -1)
+            // this.NetTerminal.Logger?.Log($"ProcessSend No SendGenes");
+            return;
+        }
+
+        if (this.SendRemaining == -1)
+        {
+            this.SendRemaining = this.SendGenes.Length;
+        }
+
+        this.NetTerminal.Logger?.Log($"ProcessSend Capacity: {sendCapacity}, Index: {this.SendIndex}, Length: {this.SendGenes.Length}, Remaining: {this.SendRemaining}");
+        var remaining = this.SendRemaining;
+        for (var i = 0; i < remaining; i++)
+        {// remaining > 0
+            var x = this.SendGenes[this.SendIndex];
+            if (sendCapacity == 0)
             {
-                this.SendRemaining = this.SendGenes.Length;
+                return;
             }
 
-            var remaining = this.SendRemaining;
-            for (var i = 0; i < remaining; i++)
+            this.NetTerminal.Logger?.Log($"ProcessSend() {x.Gene.To4Hex()} {x.State}");
+            if (x.State == NetTerminalGeneState.SendComplete)
             {
-                var x = this.SendGenes[this.SendIndex];
-                if (sendCapacity == 0)
+                this.SendRemaining--;
+                (this.SendGenes[this.SendIndex], this.SendGenes[this.SendRemaining]) = (this.SendGenes[this.SendRemaining], this.SendGenes[this.SendIndex]);
+            }
+            else if (x.State == NetTerminalGeneState.WaitingToSend)
+            {// Send
+                if (x.Send())
                 {
-                    return;
-                }
+                    this.NetTerminal.Logger?.Log($"Udp Sent: {x.ToString()}");
 
-                if (x.State == NetTerminalGeneState.SendComplete)
-                {
-                    this.SendRemaining--;
-                    (this.SendGenes[this.SendIndex], this.SendGenes[this.SendRemaining]) = (this.SendGenes[this.SendRemaining], this.SendGenes[this.SendIndex]);
+                    sendCapacity--;
+                    x.SentMics = currentMics;
+                    this.NetTerminal.FlowControl.ReportSend(currentMics);
                 }
-                else if (x.State == NetTerminalGeneState.WaitingToSend)
-                {// Send
+            }
+            else if (x.State == NetTerminalGeneState.WaitingForAck)
+            {// Resend
+                if (this.NetTerminal.FlowControl.CheckResend(x.SentMics, currentMics))
+                {
                     if (x.Send())
                     {
-                        // this.TerminalLogger?.Information($"Udp Sent       : {x.ToString()}");
-
+                        this.NetTerminal.Logger?.Log($"Udp Resent: {x.ToString()}");
                         sendCapacity--;
                         x.SentMics = currentMics;
                         this.NetTerminal.FlowControl.ReportSend(currentMics);
+                        this.NetTerminal.IncrementResendCount();
                     }
-                }
-                else if (x.State == NetTerminalGeneState.WaitingForAck)
-                {// Resend
-                    if (this.NetTerminal.FlowControl.CheckResend(x.SentMics, currentMics))
-                    {
-                        if (x.Send())
-                        {
-                            // this.TerminalLogger?.Information($"Udp Resent     : {x.ToString()}");
-                            sendCapacity--;
-                            x.SentMics = currentMics;
-                            this.NetTerminal.FlowControl.ReportSend(currentMics);
-                            this.NetTerminal.IncrementResendCount();
-                        }
-                    }
-                }
-
-                this.SendIndex++;
-                if (this.SendIndex >= this.SendRemaining)
-                {
-                    this.SendIndex = 0;
                 }
             }
+
+            this.SendIndex++;
+            if (this.SendIndex >= this.SendRemaining)
+            {
+                this.SendIndex = 0;
+            }
+        }
+
+        if (this.SendRemaining == 0)
+        {
+            this.NetTerminal.Logger?.Log($"ProcessSend() SendGenes -> null");
+            this.SendGenes = null;
+            this.SendRemaining = -1;
         }
     }
 
