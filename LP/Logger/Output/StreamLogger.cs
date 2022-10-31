@@ -2,22 +2,6 @@
 
 namespace LP.Logging;
 
-public class ClientTerminalLoggerOptions : StreamLoggerOptions
-{
-}
-
-public class ServerTerminalLoggerOptions : StreamLoggerOptions
-{
-}
-
-public class StreamLoggerOptions : FileLoggerOptions
-{
-    /// <summary>
-    /// Gets or sets the upper limit of log stream.
-    /// </summary>
-    public int MaxStreamCapacity { get; set; } = 10;
-}
-
 internal class StreamLogger<TOption> : BufferedLogOutput
     where TOption : StreamLoggerOptions
 {

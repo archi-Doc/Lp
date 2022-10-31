@@ -5,6 +5,14 @@ using Netsphere;
 
 namespace LP.Logging;
 
+public class ClientTerminalLoggerOptions : StreamLoggerOptions
+{
+}
+
+public class ServerTerminalLoggerOptions : StreamLoggerOptions
+{
+}
+
 public class LPLogger
 {
     public class Builder : UnitBuilder

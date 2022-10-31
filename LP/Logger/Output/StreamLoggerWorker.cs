@@ -150,7 +150,8 @@ internal partial class StreamLoggerWorker : TaskCore
                 }
             }
 
-            this.LimitStream();
+            var capacity = this.options.ClearLogsOnStartup ? 0 : this.options.MaxStreamCapacity;
+            this.LimitStream(capacity);
         }
         catch
         {
@@ -183,7 +184,7 @@ internal partial class StreamLoggerWorker : TaskCore
             }
 
             // Limit stream
-            this.LimitStream();
+            this.LimitStream(this.options.MaxStreamCapacity);
 
             // Flush
             foreach (var x in this.goshujin)
@@ -217,9 +218,9 @@ internal partial class StreamLoggerWorker : TaskCore
         }
     }
 
-    private void LimitStream()
+    private void LimitStream(int capacity)
     {
-        while (this.goshujin.LimitQueueChain.Count > this.options.MaxStreamCapacity)
+        while (this.goshujin.LimitQueueChain.Count > capacity)
         {
             var stream = this.goshujin.LimitQueueChain.Peek();
             stream.DeleteFile();

@@ -48,7 +48,7 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
     {
         try
         {
-            return Console.ReadKey();
+            return Console.ReadKey(intercept);
         }
         catch
         {
