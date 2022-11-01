@@ -73,7 +73,7 @@ public partial class NetTerminal : IDisposable
         this.Initialize();
     }
 
-    public void SetMaximumResponseTime(int milliseconds = 500)
+    public void SetMaximumResponseTime(int milliseconds = 800)
     {
         this.maximumResponseMics = Mics.FromMilliseconds(milliseconds);
     }
