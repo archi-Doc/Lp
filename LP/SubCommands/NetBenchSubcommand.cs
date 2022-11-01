@@ -52,6 +52,7 @@ public class NetBenchSubcommand : ISimpleCommandAsync<NetBenchOptions>
         var sw = Stopwatch.StartNew();
         using (var terminal = this.Control.NetControl.Terminal.Create(node))
         {
+            terminal.SetMaximumResponseTime(800);
             // await this.SendLargeData(terminal);
             await this.PingpongSmallData(terminal);
         }
@@ -90,6 +91,10 @@ public class NetBenchSubcommand : ISimpleCommandAsync<NetBenchOptions>
             if (response.IsSuccess)
             {
                 count++;
+            }
+            else
+            {
+                this.userInterfaceService.WriteLine(response.ToString());
             }
         }
 

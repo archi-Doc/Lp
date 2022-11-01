@@ -122,7 +122,7 @@ internal class NetTerminalGene
                 if (span.Length > 4)
                 {
                     var packetId = (PacketId)span[3];
-                    logger.Log($"Send Id: {packetId}, Size: {span.Length}, To: {this.NetInterface.NetTerminal.Endpoint}");
+                    logger.Log($"Udp Send({this.Gene.To4Hex()}) Id: {packetId}, Size: {span.Length}, To: {this.NetInterface.NetTerminal.Endpoint}");
                 }
             }
 
@@ -140,7 +140,7 @@ internal class NetTerminalGene
             return false;
         }*/
 
-        this.NetInterface.NetTerminal.Logger?.Log($"ReceiveAck: {this.Gene.To4Hex()}");
+        this.NetInterface.NetTerminal.Logger?.Log($"ReceiveAck({this.Gene.To4Hex()})");
 
         if (this.State == NetTerminalGeneState.WaitingForAck)
         {
@@ -174,7 +174,7 @@ internal class NetTerminalGene
                 if (span.Length > 4)
                 {
                     var packetId = (PacketId)span[3];
-                    logger.Log($"Receive Id: {this.ReceivedId}, Size: {span.Length}, To: {this.NetInterface.NetTerminal.Endpoint}");
+                    logger.Log($"Receive({this.Gene.To4Hex()}) Id: {this.ReceivedId}, Size: {span.Length}, To: {this.NetInterface.NetTerminal.Endpoint}");
                 }
             }
 

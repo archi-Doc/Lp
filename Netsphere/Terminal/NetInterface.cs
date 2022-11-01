@@ -340,10 +340,10 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         {// Single packet.
             PacketService.CreateDataPacket(ref header, packetId, dataId, owner.Memory.Span, out var sendOwner);
             var ntg = new NetTerminalGene(gene, this);
-            this.NetTerminal.Logger?.Log($"ntg {ntg.State} {this.SendGenes?.Length}");
+            // this.NetTerminal.Logger?.Log($"ntg {ntg.State} {this.SendGenes?.Length}");
             this.SendGenes = new NetTerminalGene[] { ntg, };
             ntg.SetSend(sendOwner);
-            this.NetTerminal.Logger?.Log($"ntg2 {ntg.State} {this.SendGenes?.Length}");
+            // this.NetTerminal.Logger?.Log($"ntg2 {ntg.State} {this.SendGenes?.Length}");
             sendOwner.Return();
 
             this.NetTerminal.Logger?.Log($"RegisterSend4  : {gene.To4Hex()}");
@@ -639,7 +639,7 @@ WaitForSendCompletionWait:
             {// Send
                 if (x.Send())
                 {
-                    this.NetTerminal.Logger?.Log($"Udp Sent: {x.ToString()}");
+                    // this.NetTerminal.Logger?.Log($"Udp Sent: {x.ToString()}");
 
                     sendCapacity--;
                     x.SentMics = currentMics;
@@ -652,7 +652,7 @@ WaitForSendCompletionWait:
                 {
                     if (x.Send())
                     {
-                        this.NetTerminal.Logger?.Log($"Udp Resent: {x.ToString()}");
+                        // this.NetTerminal.Logger?.Log($"Udp Resent: {x.ToString()}");
                         sendCapacity--;
                         x.SentMics = currentMics;
                         this.NetTerminal.FlowControl.ReportSend(currentMics);
