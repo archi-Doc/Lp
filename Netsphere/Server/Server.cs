@@ -31,7 +31,8 @@ public class Server
             {
                 if (received.Result == NetResult.Success)
                 {// Success
-                    if (received.PacketId == PacketId.Data &&
+                    if (this.NetBase.NetsphereOptions.EnableTestFeatures &&
+                        received.PacketId == PacketId.Data &&
                         this.NetControl.Responders.TryGetValue(received.DataId, out var responder) &&
                         responder.Respond(operation!, received))
                     {// Responder

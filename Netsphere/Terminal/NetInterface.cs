@@ -266,8 +266,6 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         netInterface.RecvGenes = new NetTerminalGene[] { gene, };
         gene.SetReceive();
 
-        // netInterface.NetTerminal.TerminalLogger?.Information($"ReceiveInterface: {receiveGene.To4Hex()}");
-
         netInterface.NetTerminal.Add(netInterface);
         return netInterface;
     }
@@ -343,29 +341,28 @@ internal class NetInterface<TSend, TReceive> : NetInterface
 
     internal void SetReserve(NetOperation netOperation, PacketReserve reserve)
     {
-        lock (this.NetTerminal.SyncObject)
-        {// tempcode
-            if (this.RecvGenes == null || this.RecvGenes.Length < 1)
-            {
-                return;
-            }
+        // lock (this.NetTerminal.SyncObject) // Register to NetTerminal later
 
-            this.Clear();
-            Span<ulong> arraySpan = stackalloc ulong[reserve.NumberOfGenes];
-            netOperation.GetGenes(arraySpan);
-
-            var genes = new NetTerminalGene[reserve.NumberOfGenes];
-            for (var i = 0; i < reserve.NumberOfGenes; i++)
-            {
-                var g = new NetTerminalGene(arraySpan[i], this);
-                g.SetReceive();
-                genes[i] = g;
-            }
-
-            // this.TerminalLogger?.Information($"SetReserve: {string.Join(", ", genes.Select(x => x.Gene.To4Hex()))}");
-
-            this.RecvGenes = genes;
+        if (this.RecvGenes == null || this.RecvGenes.Length < 1)
+        {
+            return;
         }
+
+        this.Clear();
+        Span<ulong> arraySpan = stackalloc ulong[reserve.NumberOfGenes];
+        netOperation.GetGenes(arraySpan);
+
+        var genes = new NetTerminalGene[reserve.NumberOfGenes];
+        for (var i = 0; i < reserve.NumberOfGenes; i++)
+        {
+            var g = new NetTerminalGene(arraySpan[i], this);
+            g.SetReceive();
+            genes[i] = g;
+        }
+
+        // this.TerminalLogger?.Information($"SetReserve: {string.Join(", ", genes.Select(x => x.Gene.To4Hex()))}");
+
+        this.RecvGenes = genes;
     }
 }
 
@@ -404,7 +401,7 @@ public class NetInterface : IDisposable
                 if (this.SendGenes == null)
                 {
                     this.NetTerminal.Logger?.Log($"SendAsync: NoData");
-                    return NetResult.NoDataToSend;
+                    return NetResult.Success; // NetResult.NoDataToSend;
                 }
 
                 foreach (var x in this.SendGenes)

@@ -52,12 +52,13 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
             this.logger.TryGet()?.Log($"t5: {t5.Result}");
             this.logger.TryGet()?.Log($"{sw.ElapsedMilliseconds} ms, Resend: {terminal.ResendCount}");
 
-            /*var p2 = TestBlock.Create(4_000_00);
-            Logger.Priority.Information($"p2 send: {p2}");
+            var p2 = TestBlock.Create(400_000);
             sw.Restart();
             var t2 = await terminal.SendAndReceiveAsync<TestBlock, TestBlock>(p2);
+            this.logger.TryGet()?.Log($"tt: {t2.Result}");
+            this.logger.TryGet()?.Log($"{sw.ElapsedMilliseconds} ms, Resend: {terminal.ResendCount}");
 
-            p2 = TestBlock.Create(2000);
+            /*p2 = TestBlock.Create(2000);
             Logger.Priority.Information($"p2b send: {p2}");
             var t3 = await terminal.SendAndReceiveAsync<TestBlock, TestBlock>(p2);
             Logger.Priority.Information($"t2 received: {t2.Value}");
