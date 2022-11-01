@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
@@ -125,6 +126,7 @@ public class Terminal : UnitBase, IUnitExecutable
         : base(context)
     {
         this.UnitLogger = unitLogger;
+        this.logger = unitLogger.GetLogger<Terminal>();
         this.NetBase = netBase;
         this.NetStatus = netStatus;
         this.NetSocket = new(this);
@@ -174,12 +176,6 @@ public class Terminal : UnitBase, IUnitExecutable
 
     internal void ProcessSend(long currentMics)
     {
-        if ((currentMics - this.lastCleanedMics) > Mics.FromSeconds(1))
-        {
-            this.lastCleanedMics = currentMics;
-            this.CleanNetTerminal(currentMics);
-        }
-
         while (this.rawSends.TryDequeue(out var rawSend))
         {
             try
@@ -202,6 +198,12 @@ public class Terminal : UnitBase, IUnitExecutable
         foreach (var x in array)
         {
             x.ProcessSend(currentMics);
+        }
+
+        if ((currentMics - this.lastCleanedMics) > Mics.FromSeconds(1))
+        {
+            this.lastCleanedMics = currentMics;
+            this.CleanNetshpere(currentMics);
         }
     }
 
@@ -417,11 +419,13 @@ public class Terminal : UnitBase, IUnitExecutable
         this.AddRawSend(endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void AddRawSend(IPEndPoint endpoint, ByteArrayPool.MemoryOwner owner)
     {
         this.rawSends.Enqueue(new RawSend(endpoint, owner));
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void AddInbound(NetTerminalGene[] genes)
     {
         foreach (var x in genes)
@@ -435,6 +439,7 @@ public class Terminal : UnitBase, IUnitExecutable
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void AddInbound(NetTerminalGene x)
     {
         if (x.State == NetTerminalGeneState.WaitingToReceive ||
@@ -445,6 +450,7 @@ public class Terminal : UnitBase, IUnitExecutable
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void RemoveInbound(NetTerminalGene[] genes)
     {
         foreach (var x in genes)
@@ -453,6 +459,7 @@ public class Terminal : UnitBase, IUnitExecutable
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void RemoveInbound(NetTerminalGene x)
     {
         this.inboundGenes.TryRemove(x.Gene, out _);
@@ -460,7 +467,7 @@ public class Terminal : UnitBase, IUnitExecutable
 
     internal bool TryGetInbound(ulong gene, [MaybeNullWhen(false)] out NetTerminalGene netTerminalGene) => this.inboundGenes.TryGetValue(gene, out netTerminalGene);
 
-    private void CleanNetTerminal(long currentMics)
+    private void CleanNetshpere(long currentMics)
     {
         NetTerminal[] array;
         lock (this.terminals)
@@ -468,23 +475,33 @@ public class Terminal : UnitBase, IUnitExecutable
             array = this.terminals.QueueChain.ToArray();
         }
 
-        List<NetTerminal>? list = null;
-        foreach (var x in array)
+        if (array.Length == 0)
         {
-            if (x.TryClean(currentMics))
-            {
-                list ??= new();
-                list.Add(x);
-            }
+            return;
         }
 
-        if (list != null)
+        _ = Task.Run(() =>
         {
-            foreach (var x in list)
+            this.logger.TryGet()?.Log("Clean netsphere");
+
+            List<NetTerminal>? list = null;
+            foreach (var x in array)
             {
-                x.Dispose();
+                if (x.TryClean(currentMics))
+                {
+                    list ??= new();
+                    list.Add(x);
+                }
             }
-        }
+
+            if (list != null)
+            {
+                foreach (var x in list)
+                {
+                    x.Dispose();
+                }
+            }
+        });
     }
 
     internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
@@ -495,6 +512,7 @@ public class Terminal : UnitBase, IUnitExecutable
 
     internal UnitLogger UnitLogger { get; private set; }
 
+    private ILogger<Terminal> logger;
     private InvokeServerDelegate? invokeServerDelegate;
     private NetTerminal.GoshujinClass terminals = new();
     private ConcurrentDictionary<ulong, NetTerminalGene> inboundGenes = new();
