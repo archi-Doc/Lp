@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
+using System.Net.WebSockets;
 using Arc.Crypto;
 using LP.Subcommands;
 using Netsphere;
@@ -27,7 +28,6 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
 
         this.logger.TryGet()?.Log($"SendData: {node.ToString()}");
 
-        // var nodeInformation = NodeInformation.Alternative;
         using (var terminal = this.NetControl.Terminal.Create(node))
         {
             // await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(new PacketPunch());

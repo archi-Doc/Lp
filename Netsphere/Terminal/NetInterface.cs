@@ -614,7 +614,7 @@ WaitForSendCompletionWait:
         {
             this.SendRemaining = this.SendGenes.Length;
         }
-        else if (this.SendRemaining == -1)
+        else if (this.SendRemaining == 0)
         {
             return;
         }

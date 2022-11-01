@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using LP.Data;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere;
 
@@ -68,12 +69,22 @@ public class LPLogger
 
                     if (context.LogSourceType == typeof(ClientTerminal))
                     {// ClientTerminal
-                        context.SetOutput<StreamLogger<ClientTerminalLoggerOptions>>();
+                        if (context.TryGetOptions<LPOptions>(out var options) &&
+                        options.NetsphereOptions.EnableLogger)
+                        {
+                            context.SetOutput<StreamLogger<ClientTerminalLoggerOptions>>();
+                        }
+
                         return;
                     }
                     else if (context.LogSourceType == typeof(ServerTerminal))
                     {// ServerTerminal
-                        context.SetOutput<StreamLogger<ServerTerminalLoggerOptions>>();
+                        if (context.TryGetOptions<LPOptions>(out var options) &&
+                        options.NetsphereOptions.EnableLogger)
+                        {
+                            context.SetOutput<StreamLogger<ServerTerminalLoggerOptions>>();
+                        }
+
                         return;
                     }
 

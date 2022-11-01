@@ -56,6 +56,7 @@ public class ClientTerminal : NetTerminal
             }
 
             this.Terminal.AddRawSend(this.Endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
+            this.Logger?.Log("Send close (client)");
         }
     }
 

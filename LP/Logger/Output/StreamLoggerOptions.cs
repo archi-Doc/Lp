@@ -7,6 +7,7 @@ public class StreamLoggerOptions : FileLoggerOptions
     public StreamLoggerOptions()
     {
         this.Formatter.EventIdFormat = "X4";
+        this.MaxQueue = 10_000;
     }
 
     /// <summary>

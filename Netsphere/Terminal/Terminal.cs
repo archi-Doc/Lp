@@ -203,7 +203,7 @@ public class Terminal : UnitBase, IUnitExecutable
         if ((currentMics - this.lastCleanedMics) > Mics.FromSeconds(1))
         {
             this.lastCleanedMics = currentMics;
-            this.CleanNetshpere(currentMics);
+            this.CleanNetsphere(currentMics);
         }
     }
 
@@ -467,7 +467,10 @@ public class Terminal : UnitBase, IUnitExecutable
 
     internal bool TryGetInbound(ulong gene, [MaybeNullWhen(false)] out NetTerminalGene netTerminalGene) => this.inboundGenes.TryGetValue(gene, out netTerminalGene);
 
-    private void CleanNetshpere(long currentMics)
+    internal void CleanNetsphere()
+        => this.CleanNetsphere(Mics.GetSystem());
+
+    private void CleanNetsphere(long currentMics)
     {
         NetTerminal[] array;
         lock (this.terminals)

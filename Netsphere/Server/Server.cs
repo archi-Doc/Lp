@@ -70,9 +70,8 @@ public class Server
             }
             finally
             {
-                // operation?.Dispose(); // tempcode
+                // operation?.Dispose(); // Don't dispose (net operation holds data waiting to be sent)
                 received.Return();
-                // terminal.ClearSender();
             }
         }
 

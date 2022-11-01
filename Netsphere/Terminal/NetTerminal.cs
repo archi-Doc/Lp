@@ -330,6 +330,7 @@ public partial class NetTerminal : IDisposable
 
         lock (this.SyncObject)
         {
+            // Disposed interfaces
             foreach (var x in this.disposedInterfaces)
             {
                 if (x.DisposedMics < mics)
@@ -339,12 +340,20 @@ public partial class NetTerminal : IDisposable
                 }
             }
 
+            // Remove interfaces
             if (list != null)
             {
                 foreach (var x in list)
                 {
                     x.DisposeActual();
                 }
+            }
+
+            if (currentMics > (this.LastResponseMics + this.MaximumResponseMics) &&
+                this.activeInterfaces.Count == 0 &&
+                this.disposedInterfaces.Count == 0)
+            {// No net interface
+                return true;
             }
         }
 
@@ -491,6 +500,7 @@ public partial class NetTerminal : IDisposable
             if (disposing)
             {
                 // free managed resources.
+                this.Logger?.Log("Dispose");
                 if (this.IsEncrypted && !this.IsClosed)
                 {// Close connection.
                     this.SendClose();
