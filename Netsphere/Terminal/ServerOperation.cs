@@ -94,8 +94,7 @@ public class ServerOperation : NetOperation
         }
 
         received.Return();
-        this.receiverInterface2 = NetInterface<object, byte[]>.CreateReceive(this);
-        this.receiverInterface2.SetReserve(this, reserve);
+        this.receiverInterface2 = NetInterface<object, byte[]>.CreateReserve2(this, reserve);
 
         this.receiverInterface.SetSend(new PacketReserveResponse());
 

@@ -156,6 +156,31 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         return netInterface;
     }
 
+    internal static NetInterface<TSend, TReceive> CreateReserve2(NetOperation netOperation, PacketReserve reserve)
+    {
+        var netInterface = new NetInterface<TSend, TReceive>(netOperation.NetTerminal);
+
+        (var receiveGene, netInterface.StandbyGene) = netOperation.Get2Genes();
+        // var gene = new NetTerminalGene(receiveGene, netInterface);
+        // netInterface.RecvGenes = new NetTerminalGene[] { gene, };
+        // gene.SetReceive();
+
+        Span<ulong> arraySpan = stackalloc ulong[reserve.NumberOfGenes];
+        netOperation.GetGenes(arraySpan);
+
+        var genes = new NetTerminalGene[reserve.NumberOfGenes];
+        for (var i = 0; i < reserve.NumberOfGenes; i++)
+        {
+            var g = new NetTerminalGene(arraySpan[i], netInterface);
+            g.SetReceive();
+            genes[i] = g;
+        }
+
+        netInterface.RecvGenes = genes;
+        netInterface.NetTerminal.Add(netInterface);
+        return netInterface;
+    }
+
     internal static NetInterface<TSend, TReceive>? CreateReserve(NetOperation netOperation, PacketReserve reserve)
     {// Send and Receive(optional) NetTerminalGene.
         NetInterface<TSend, TReceive>? netInterface;
@@ -337,32 +362,6 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         }
 
         return false;
-    }
-
-    internal void SetReserve(NetOperation netOperation, PacketReserve reserve)
-    {
-        // lock (this.NetTerminal.SyncObject) // Register to NetTerminal later
-
-        if (this.RecvGenes == null || this.RecvGenes.Length < 1)
-        {
-            return;
-        }
-
-        this.Clear();
-        Span<ulong> arraySpan = stackalloc ulong[reserve.NumberOfGenes];
-        netOperation.GetGenes(arraySpan);
-
-        var genes = new NetTerminalGene[reserve.NumberOfGenes];
-        for (var i = 0; i < reserve.NumberOfGenes; i++)
-        {
-            var g = new NetTerminalGene(arraySpan[i], this);
-            g.SetReceive();
-            genes[i] = g;
-        }
-
-        // this.TerminalLogger?.Information($"SetReserve: {string.Join(", ", genes.Select(x => x.Gene.To4Hex()))}");
-
-        this.RecvGenes = genes;
     }
 }
 
