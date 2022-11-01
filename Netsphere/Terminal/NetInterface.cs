@@ -614,6 +614,10 @@ WaitForSendCompletionWait:
         {
             this.SendRemaining = this.SendGenes.Length;
         }
+        else if (this.SendRemaining == -1)
+        {
+            return;
+        }
 
         this.NetTerminal.Logger?.Log($"ProcessSend Capacity: {sendCapacity}, Index: {this.SendIndex}, Length: {this.SendGenes.Length}, Remaining: {this.SendRemaining}");
         var remaining = this.SendRemaining;
@@ -666,9 +670,7 @@ WaitForSendCompletionWait:
 
         if (this.SendRemaining == 0)
         {
-            this.NetTerminal.Logger?.Log($"ProcessSend() SendGenes -> null");
-            this.SendGenes = null;
-            this.SendRemaining = -1;
+            this.NetTerminal.Logger?.Log($"ProcessSend() SendGenes done");
         }
     }
 

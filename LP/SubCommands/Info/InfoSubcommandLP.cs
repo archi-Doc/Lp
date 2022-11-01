@@ -35,7 +35,16 @@ public class InfoSubcommandLP : ISimpleCommand<DumpSubcommandInfoOptions>
             logger?.Log(Environment.OSVersion.ToString());
             logger?.Log($"Time.GetApplication(): {Time.GetApplication()}");
             logger?.Log($"Time.GetCorrected(): {Time.GetCorrected()}");
+
+            logger?.Log($"Terminal:");
             this.Control.NetControl.Terminal.Dump(logger);
+
+            logger?.Log($"Alternative:");
+            if (this.Control.NetControl.Alternative is { } terminal)
+            {
+                terminal.Dump(logger);
+
+            }
         }
     }
 

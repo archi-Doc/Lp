@@ -482,8 +482,6 @@ public class Terminal : UnitBase, IUnitExecutable
 
         _ = Task.Run(() =>
         {
-            this.logger.TryGet()?.Log("Clean netsphere");
-
             List<NetTerminal>? list = null;
             foreach (var x in array)
             {
@@ -500,6 +498,8 @@ public class Terminal : UnitBase, IUnitExecutable
                 {
                     x.Dispose();
                 }
+
+                this.logger.TryGet()?.Log($"Clean netsphere {list.Count}");
             }
         });
     }
