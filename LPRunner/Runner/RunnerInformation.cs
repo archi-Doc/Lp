@@ -50,6 +50,8 @@ public partial record RunnerInformation
         this.DestinationDirectory = string.IsNullOrEmpty(this.DestinationDirectory) ? "/lp" : this.DestinationDirectory;
         this.DestinationPort = this.DestinationPort == 0 ? 49152 : this.DestinationPort;
         this.RemotePublicKeyBase64 = string.IsNullOrEmpty(this.RemotePublicKeyBase64) ? PrivateKey.Create().ToPublicKey().ToString() : this.RemotePublicKeyBase64;
+        this.NetsphereOptions = string.IsNullOrEmpty(this.NetsphereOptions) ? "-test false -alternative false -logger false" : this.NetsphereOptions;
+
         return this;
     }
 
@@ -72,6 +74,8 @@ public partial record RunnerInformation
     public int DestinationPort { get; set; }
 
     public string RemotePublicKeyBase64 { get; set; } = string.Empty;
+
+    public string NetsphereOptions { get; set; } = string.Empty;
 
     public string AdditionalArgs { get; set; } = string.Empty;
 

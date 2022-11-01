@@ -619,7 +619,7 @@ WaitForSendCompletionWait:
             return;
         }
 
-        this.NetTerminal.Logger?.Log($"ProcessSend Capacity: {sendCapacity}, Index: {this.SendIndex}, Length: {this.SendGenes.Length}, Remaining: {this.SendRemaining}");
+        // this.NetTerminal.Logger?.Log($"ProcessSend Capacity: {sendCapacity}, Index: {this.SendIndex}, Length: {this.SendGenes.Length}, Remaining: {this.SendRemaining}");
         var remaining = this.SendRemaining;
         for (var i = 0; i < remaining; i++)
         {// remaining > 0
@@ -629,7 +629,7 @@ WaitForSendCompletionWait:
                 return;
             }
 
-            this.NetTerminal.Logger?.Log($"ProcessSend() {x.Gene.To4Hex()} {x.State}");
+            // this.NetTerminal.Logger?.Log($"ProcessSend() {x.Gene.To4Hex()} {x.State}");
             if (x.State == NetTerminalGeneState.SendComplete)
             {
                 this.SendRemaining--;

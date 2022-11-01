@@ -43,7 +43,6 @@ public class InfoSubcommandLP : ISimpleCommand<DumpSubcommandInfoOptions>
             if (this.Control.NetControl.Alternative is { } terminal)
             {
                 terminal.Dump(logger);
-
             }
         }
     }
