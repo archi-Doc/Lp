@@ -17,6 +17,7 @@ public readonly partial struct Signature
     {
         this.SignatureType = signatureType;
         this.SignedMics = signedMics;
+        this.sign = null;
     }
 
     public Signature(Type signatureType, long signedMics, byte[] sign)
@@ -27,6 +28,10 @@ public readonly partial struct Signature
         if (sign.Length == PublicKey.PublicKeyLength)
         {
             this.sign = sign;
+        }
+        else
+        {
+            this.sign = null;
         }
     }
 
