@@ -6,7 +6,7 @@ namespace Netsphere;
 
 public partial class NetStatus
 {
-    private const int MyNodeItemMax = 10;
+    private const int QueueNodeAddressLimit = 20;
 
     [ValueLinkObject]
     private partial class QueueNodeAddress
@@ -17,7 +17,7 @@ public partial class NetStatus
             this.NodeAddress = nodeAddress;
         }
 
-        [Link(Type = ChainType.Unordered)]
+        // [Link(Type = ChainType.Unordered)]
         public NodeAddress NodeAddress { get; private set; }
     }
 
@@ -75,8 +75,8 @@ public partial class NetStatus
             QueueNodeAddress? queue;
             CountNodeAddress? count;
 
-            while (this.queueGoshujin.QueueChain.Count >= MyNodeItemMax)
-            {
+            while (this.queueGoshujin.Count >= QueueNodeAddressLimit)
+            {// Remove
                 queue = this.queueGoshujin.QueueChain.Peek();
                 queue.Goshujin = null;
 
@@ -95,12 +95,15 @@ public partial class NetStatus
             else
             {
                 count = new(nodeAddress);
+                count.Goshujin = this.countGoshujin;
             }
 
-            var maxNodeAddress = this.countGoshujin.CountChain.Last?.NodeAddress;
+            if (this.countGoshujin.CountChain.Last is { } last)
+            {
+                var myNodeAddress = last.NodeAddress;
+                this.MyNodeInformation.SetAddress(myNodeAddress.Address);
+            }
         }
-
-        this.MyNodeInformation.SetAddress(nodeAddress.Address);
     }
 
     public NetBase NetBase { get; }
