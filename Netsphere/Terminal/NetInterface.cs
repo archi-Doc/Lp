@@ -670,6 +670,7 @@ WaitForSendCompletionWait:
 
         if (this.SendRemaining == 0)
         {
+            // this.SendGenes = null; // Causes net terminal gene leakage.
             this.NetTerminal.Logger?.Log($"ProcessSend() SendGenes done");
         }
     }
@@ -810,6 +811,8 @@ WaitForSendCompletionWait:
             this.RecvGenes = null;
         }
     }
+
+    internal bool Disposed => this.disposed;
 
 #pragma warning disable SA1124 // Do not use regions
     #region IDisposable Support

@@ -320,11 +320,6 @@ public partial class NetTerminal : IDisposable
 
     internal bool TryClean(long currentMics)
     {
-        if (this.IsClosed)
-        {
-            return true;
-        }
-
         var mics = currentMics - Mics.FromSeconds(2);
         List<NetInterface>? list = null;
 
@@ -422,6 +417,8 @@ public partial class NetTerminal : IDisposable
     internal uint ResendCount => Volatile.Read(ref this.resendCount);
 
     internal ILog? Logger { get; private set; }
+
+    internal bool Disposed => this.disposed;
 
     private void Clear()
     {// lock (this.SyncObject)

@@ -472,19 +472,14 @@ public class Terminal : UnitBase, IUnitExecutable
 
     private void CleanNetsphere(long currentMics)
     {
-        NetTerminal[] array;
-        lock (this.terminals)
-        {
-            array = this.terminals.QueueChain.ToArray();
-        }
-
-        if (array.Length == 0)
-        {
-            return;
-        }
-
         _ = Task.Run(() =>
         {
+            NetTerminal[] array;
+            lock (this.terminals)
+            {
+                array = this.terminals.QueueChain.ToArray();
+            }
+
             List<NetTerminal>? list = null;
             foreach (var x in array)
             {
@@ -502,7 +497,25 @@ public class Terminal : UnitBase, IUnitExecutable
                     x.Dispose();
                 }
 
-                this.logger.TryGet()?.Log($"Clean netsphere {list.Count}");
+                this.logger.TryGet()?.Log($"Clean netsphere {list.Count} terminals");
+            }
+
+            // Clean NetTerminalGene
+            var cleanedGenes = 0;
+            var genes = this.inboundGenes.Values;
+            foreach (var x in genes)
+            {
+                if (x.NetInterface.Disposed ||
+                x.NetInterface.NetTerminal.Disposed)
+                {
+                    x.Clear();
+                    cleanedGenes++;
+                }
+            }
+
+            if (cleanedGenes > 0)
+            {
+                this.logger.TryGet()?.Log($"Clean netsphere {cleanedGenes} net terminal genes");
             }
         });
     }
