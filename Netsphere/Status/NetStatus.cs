@@ -1,12 +1,56 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
-using Arc.Threading;
+using ValueLink;
 
 namespace Netsphere;
 
-public class NetStatus
+public partial class NetStatus
 {
+    private const int MyNodeItemMax = 10;
+
+    [ValueLinkObject]
+    private partial class QueueNodeAddress
+    {
+        [Link(Type = ChainType.QueueList, Name = "Queue", Primary = true)]
+        public QueueNodeAddress(NodeAddress nodeAddress)
+        {
+            this.NodeAddress = nodeAddress;
+        }
+
+        [Link(Type = ChainType.Unordered)]
+        public NodeAddress NodeAddress { get; private set; }
+    }
+
+    [ValueLinkObject]
+    private partial class CountNodeAddress
+    {
+        public CountNodeAddress(NodeAddress nodeAddress)
+        {
+            this.Count = 1;
+            this.NodeAddress = nodeAddress;
+        }
+
+        public void Increment()
+        {
+            this.CountValue++;
+        }
+
+        public void Decrement()
+        {
+            this.CountValue--;
+            if (this.CountValue == 0)
+            {
+                this.Goshujin = null;
+            }
+        }
+
+        [Link(Type = ChainType.Ordered)]
+        public int Count { get; private set; }
+
+        [Link(Type = ChainType.Unordered)]
+        public NodeAddress NodeAddress { get; private set; }
+    }
+
     public NetStatus(NetBase netBase)
     {
         this.NetBase = netBase;
@@ -24,8 +68,38 @@ public class NetStatus
         }
     }
 
-    public void SetMyNodeAddress(NodeAddress nodeAddress)
+    public void ReportMyNodeAddress(NodeAddress nodeAddress)
     {
+        lock (this.queueGoshujin)
+        {
+            QueueNodeAddress? queue;
+            CountNodeAddress? count;
+
+            while (this.queueGoshujin.QueueChain.Count >= MyNodeItemMax)
+            {
+                queue = this.queueGoshujin.QueueChain.Peek();
+                queue.Goshujin = null;
+
+                if (this.countGoshujin.NodeAddressChain.TryGetValue(queue.NodeAddress, out count))
+                {
+                    count.Decrement();
+                }
+            }
+
+            queue = new QueueNodeAddress(nodeAddress);
+            queue.Goshujin = this.queueGoshujin;
+            if (this.countGoshujin.NodeAddressChain.TryGetValue(queue.NodeAddress, out count))
+            {
+                count.Increment();
+            }
+            else
+            {
+                count = new(nodeAddress);
+            }
+
+            var maxNodeAddress = this.countGoshujin.CountChain.Last?.NodeAddress;
+        }
+
         this.MyNodeInformation.SetAddress(nodeAddress.Address);
     }
 
@@ -60,6 +134,7 @@ public class NetStatus
     }
 
     private NodeInformation? myNodeInformation;
-
     private NodeInformation? alternativeNodeInformation;
+    private QueueNodeAddress.GoshujinClass queueGoshujin = new();
+    private CountNodeAddress.GoshujinClass countGoshujin = new();
 }
