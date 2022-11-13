@@ -9,7 +9,7 @@ public class MultiplyIntFilter : IServiceFilter
 {
     public async Task Invoke(CallContext context, Func<CallContext, Task> invoker)
     {
-        if (TinyhandSerializer.TryDeserialize<int>(context.RentData.Memory, out var value))
+        if (TinyhandSerializer.TryDeserialize<int>(context.RentData.Memory.Span, out var value))
         {
             if (LP.Block.BlockService.TrySerialize(value * this.multiplier, out var owner))
             {

@@ -196,7 +196,7 @@ internal partial class FragmentObject : FlakeObjectBase
             {
                 if (x.TryGetSpan(out var span))
                 {
-                    x.Identifier.Serialize(ref writer, options);
+                    TinyhandSerializer.SerializeObject(ref writer, x.Identifier, options); // x.Identifier.Serialize(ref writer, options);
                     writer.Write(span);
                 }
             }
@@ -226,7 +226,7 @@ internal partial class FragmentObject : FlakeObjectBase
             while (!reader.End)
             {
                 var identifier = default(Identifier);
-                identifier.Deserialize(ref reader, options);
+                TinyhandSerializer.DeserializeObject(ref reader, ref identifier, options); // identifier.Deserialize(ref reader, options);
                 var byteArray = reader.ReadBytesToArray();
 
                 var fragment = new FragmentData(this.Flake.Zen, identifier);
