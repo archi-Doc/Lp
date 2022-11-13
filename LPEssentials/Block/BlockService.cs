@@ -57,7 +57,7 @@ public static class BlockService
     }
 
     public static bool TryDeserialize<T>(ByteArrayPool.MemoryOwner owner, [MaybeNullWhen(false)] out T value)
-        => TinyhandSerializer.TryDeserialize<T>(owner.Memory, out value, SerializerOptions);
+        => TinyhandSerializer.TryDeserialize<T>(owner.Memory.Span, out value, SerializerOptions);
 
     private static class IdCache<T>
     {

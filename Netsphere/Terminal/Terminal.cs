@@ -287,7 +287,7 @@ public class Terminal : UnitBase, IUnitExecutable
 
     internal void ProcessUnmanagedRecv_Punch(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
     {
-        if (!TinyhandSerializer.TryDeserialize<PacketPunch>(owner.Memory, out var punch))
+        if (!TinyhandSerializer.TryDeserialize<PacketPunch>(owner.Memory.Span, out var punch))
         {
             return;
         }
@@ -337,7 +337,7 @@ public class Terminal : UnitBase, IUnitExecutable
 
     internal void ProcessUnmanagedRecv_Encrypt(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
     {
-        if (!TinyhandSerializer.TryDeserialize<PacketEncrypt>(owner.Memory, out var packet))
+        if (!TinyhandSerializer.TryDeserialize<PacketEncrypt>(owner.Memory.Span, out var packet))
         {
             return;
         }
@@ -374,7 +374,7 @@ public class Terminal : UnitBase, IUnitExecutable
 
     internal void ProcessUnmanagedRecv_Ping(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
     {
-        if (!TinyhandSerializer.TryDeserialize<PacketPing>(owner.Memory, out var packet))
+        if (!TinyhandSerializer.TryDeserialize<PacketPing>(owner.Memory.Span, out var packet))
         {
             return;
         }
@@ -391,7 +391,7 @@ public class Terminal : UnitBase, IUnitExecutable
 
     internal void ProcessUnmanagedRecv_GetNodeInformation(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
     {// Checked
-        if (!TinyhandSerializer.TryDeserialize<PacketGetNodeInformation>(owner.Memory, out var packet))
+        if (!TinyhandSerializer.TryDeserialize<PacketGetNodeInformation>(owner.Memory.Span, out var packet))
         {
             return;
         }

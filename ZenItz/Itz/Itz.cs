@@ -65,10 +65,10 @@ public class Itz
         }
     }
 
-    public bool Deserialize<TPayload>(ReadOnlyMemory<byte> memory)
+    public bool Deserialize<TPayload>(ReadOnlySpan<byte> span)
         where TPayload : IItzPayload
     {
-        return this.GetShip<TPayload>().Deserialize(memory, out _);
+        return this.GetShip<TPayload>().Deserialize(span, out _);
     }
 
     public async Task<bool> LoadAsync(string path)

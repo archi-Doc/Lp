@@ -110,7 +110,7 @@ public class Server
 
     private bool ProcessEssential_Punch(ServerOperation operation, NetReceivedData received)
     {
-        if (!TinyhandSerializer.TryDeserialize<PacketPunch>(received.Received.Memory, out var punch))
+        if (!TinyhandSerializer.TryDeserialize<PacketPunch>(received.Received.Memory.Span, out var punch))
         {
             return false;
         }
@@ -129,7 +129,7 @@ public class Server
 
     private bool ProcessEssential_Test(ServerOperation operation, NetReceivedData received)
     {
-        if (!TinyhandSerializer.TryDeserialize<TestPacket>(received.Received.Memory, out var r))
+        if (!TinyhandSerializer.TryDeserialize<TestPacket>(received.Received.Memory.Span, out var r))
         {
             var task2 = operation.SendEmpty();
             return false;

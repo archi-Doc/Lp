@@ -6,5 +6,5 @@ public interface ILPSerializable
 {
     void Serialize(ref Tinyhand.IO.TinyhandWriter writer);
 
-    bool Deserialize(ReadOnlyMemory<byte> memory, out int bytesRead);
+    bool Deserialize(ReadOnlySpan<byte> span, out int bytesRead);
 }

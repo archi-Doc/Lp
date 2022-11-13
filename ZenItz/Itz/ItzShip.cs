@@ -89,11 +89,11 @@ public partial class ItzShip<T> : IItzShip<T>
         }
     }
 
-    public bool Deserialize(ReadOnlyMemory<byte> memory, out int bytesRead)
+    public bool Deserialize(ReadOnlySpan<byte> span, out int bytesRead)
     {
         lock (this.goshujin)
         {
-            if (!TinyhandSerializer.TryDeserialize<Item.GoshujinClass>(memory, out var newGoshujin, out bytesRead))
+            if (!TinyhandSerializer.TryDeserialize<Item.GoshujinClass>(span, out var newGoshujin, out bytesRead))
             {
                 return false;
             }

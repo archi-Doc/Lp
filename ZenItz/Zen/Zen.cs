@@ -377,7 +377,7 @@ LoadBackup:
 
     private bool DeserializeZen(ReadOnlyMemory<byte> data)
     {
-        if (!TinyhandSerializer.TryDeserialize<Flake.GoshujinClass>(data, out var g))
+        if (!TinyhandSerializer.TryDeserialize<Flake.GoshujinClass>(data.Span, out var g))
         {
             return false;
         }

@@ -219,7 +219,7 @@ internal partial class FragmentObject : FlakeObjectBase
         }
 
         this.fragments = new();
-        var reader = new Tinyhand.IO.TinyhandReader(memoryOwner.Memory);
+        var reader = new Tinyhand.IO.TinyhandReader(memoryOwner.Memory.Span);
         var options = TinyhandSerializerOptions.Standard;
         try
         {
