@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
@@ -121,13 +122,14 @@ public class Terminal : UnitBase, IUnitExecutable
         }
     }
 
-    public Terminal(UnitContext context, UnitLogger logger, NetBase netBase, NetStatus netStatus)
+    public Terminal(UnitContext context, UnitLogger unitLogger, NetBase netBase, NetStatus netStatus)
         : base(context)
     {
-        this.logger = logger;
+        this.UnitLogger = unitLogger;
+        this.logger = unitLogger.GetLogger<Terminal>();
         this.NetBase = netBase;
         this.NetStatus = netStatus;
-        this.NetSocket = new(logger, this);
+        this.NetSocket = new(this);
     }
 
     public async Task RunAsync(UnitMessage.RunAsync message)
@@ -154,11 +156,6 @@ public class Terminal : UnitBase, IUnitExecutable
         this.invokeServerDelegate = @delegate;
     }
 
-    public void SetLogger(ILog logger)
-    {
-        // this.TerminalLogger = logger;
-    }
-
     public ThreadCoreBase? Core { get; private set; }
 
     public NetBase NetBase { get; }
@@ -179,12 +176,6 @@ public class Terminal : UnitBase, IUnitExecutable
 
     internal void ProcessSend(long currentMics)
     {
-        if ((currentMics - this.lastCleanedMics) > Mics.FromSeconds(1))
-        {
-            this.lastCleanedMics = currentMics;
-            this.CleanNetTerminal(currentMics);
-        }
-
         while (this.rawSends.TryDequeue(out var rawSend))
         {
             try
@@ -207,6 +198,12 @@ public class Terminal : UnitBase, IUnitExecutable
         foreach (var x in array)
         {
             x.ProcessSend(currentMics);
+        }
+
+        if ((currentMics - this.lastCleanedMics) > Mics.FromSeconds(1))
+        {
+            this.lastCleanedMics = currentMics;
+            this.CleanNetsphere(currentMics);
         }
     }
 
@@ -290,7 +287,7 @@ public class Terminal : UnitBase, IUnitExecutable
 
     internal void ProcessUnmanagedRecv_Punch(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
     {
-        if (!TinyhandSerializer.TryDeserialize<PacketPunch>(owner.Memory, out var punch))
+        if (!TinyhandSerializer.TryDeserialize<PacketPunch>(owner.Memory.Span, out var punch))
         {
             return;
         }
@@ -340,7 +337,7 @@ public class Terminal : UnitBase, IUnitExecutable
 
     internal void ProcessUnmanagedRecv_Encrypt(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
     {
-        if (!TinyhandSerializer.TryDeserialize<PacketEncrypt>(owner.Memory, out var packet))
+        if (!TinyhandSerializer.TryDeserialize<PacketEncrypt>(owner.Memory.Span, out var packet))
         {
             return;
         }
@@ -377,7 +374,7 @@ public class Terminal : UnitBase, IUnitExecutable
 
     internal void ProcessUnmanagedRecv_Ping(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
     {
-        if (!TinyhandSerializer.TryDeserialize<PacketPing>(owner.Memory, out var packet))
+        if (!TinyhandSerializer.TryDeserialize<PacketPing>(owner.Memory.Span, out var packet))
         {
             return;
         }
@@ -394,7 +391,7 @@ public class Terminal : UnitBase, IUnitExecutable
 
     internal void ProcessUnmanagedRecv_GetNodeInformation(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
     {// Checked
-        if (!TinyhandSerializer.TryDeserialize<PacketGetNodeInformation>(owner.Memory, out var packet))
+        if (!TinyhandSerializer.TryDeserialize<PacketGetNodeInformation>(owner.Memory.Span, out var packet))
         {
             return;
         }
@@ -422,11 +419,13 @@ public class Terminal : UnitBase, IUnitExecutable
         this.AddRawSend(endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void AddRawSend(IPEndPoint endpoint, ByteArrayPool.MemoryOwner owner)
     {
         this.rawSends.Enqueue(new RawSend(endpoint, owner));
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void AddInbound(NetTerminalGene[] genes)
     {
         foreach (var x in genes)
@@ -440,6 +439,7 @@ public class Terminal : UnitBase, IUnitExecutable
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void AddInbound(NetTerminalGene x)
     {
         if (x.State == NetTerminalGeneState.WaitingToReceive ||
@@ -450,6 +450,7 @@ public class Terminal : UnitBase, IUnitExecutable
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void RemoveInbound(NetTerminalGene[] genes)
     {
         foreach (var x in genes)
@@ -458,6 +459,7 @@ public class Terminal : UnitBase, IUnitExecutable
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void RemoveInbound(NetTerminalGene x)
     {
         this.inboundGenes.TryRemove(x.Gene, out _);
@@ -465,34 +467,58 @@ public class Terminal : UnitBase, IUnitExecutable
 
     internal bool TryGetInbound(ulong gene, [MaybeNullWhen(false)] out NetTerminalGene netTerminalGene) => this.inboundGenes.TryGetValue(gene, out netTerminalGene);
 
-    private void CleanNetTerminal(long currentMics)
+    internal void CleanNetsphere()
+        => this.CleanNetsphere(Mics.GetSystem());
+
+    private void CleanNetsphere(long currentMics)
     {
-        NetTerminal[] array;
-        lock (this.terminals)
+        _ = Task.Run(() =>
         {
-            array = this.terminals.QueueChain.ToArray();
-        }
-
-        List<NetTerminal>? list = null;
-        foreach (var x in array)
-        {
-            if (x.TryClean(currentMics))
+            NetTerminal[] array;
+            lock (this.terminals)
             {
-                list ??= new();
-                list.Add(x);
+                array = this.terminals.QueueChain.ToArray();
             }
-        }
 
-        if (list != null)
-        {
-            foreach (var x in list)
+            List<NetTerminal>? list = null;
+            foreach (var x in array)
             {
-                x.Dispose();
+                if (x.TryClean(currentMics))
+                {
+                    list ??= new();
+                    list.Add(x);
+                }
             }
-        }
+
+            if (list != null)
+            {
+                foreach (var x in list)
+                {
+                    x.Dispose();
+                }
+
+                this.logger.TryGet()?.Log($"Clean netsphere {list.Count} terminals");
+            }
+
+            // Clean NetTerminalGene
+            var cleanedGenes = 0;
+            var genes = this.inboundGenes.Values;
+            foreach (var x in genes)
+            {
+                if (x.NetInterface.Disposed ||
+                x.NetInterface.NetTerminal.Disposed)
+                {
+                    x.Clear();
+                    cleanedGenes++;
+                }
+            }
+
+            if (cleanedGenes > 0)
+            {
+                this.logger.TryGet()?.Log($"Clean netsphere {cleanedGenes} net terminal genes");
+            }
+        });
     }
-
-    // internal ILogger? TerminalLogger { get; private set; }
 
     internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
 
@@ -500,7 +526,9 @@ public class Terminal : UnitBase, IUnitExecutable
 
     internal UdpClient? UnsafeUdpClient => this.NetSocket.UnsafeUdpClient;
 
-    private UnitLogger logger;
+    internal UnitLogger UnitLogger { get; private set; }
+
+    private ILogger<Terminal> logger;
     private InvokeServerDelegate? invokeServerDelegate;
     private NetTerminal.GoshujinClass terminals = new();
     private ConcurrentDictionary<ulong, NetTerminalGene> inboundGenes = new();

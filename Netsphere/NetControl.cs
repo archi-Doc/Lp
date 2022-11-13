@@ -53,6 +53,7 @@ public class NetControl : UnitBase, IUnitPreparable
 
                 // Subcommands
                 context.AddSubcommand(typeof(LP.Subcommands.NetTestSubcommand));
+                context.AddSubcommand(typeof(LP.Subcommands.NetCleanSubcommand));
             });
         }
     }

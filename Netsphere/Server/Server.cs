@@ -31,7 +31,8 @@ public class Server
             {
                 if (received.Result == NetResult.Success)
                 {// Success
-                    if (received.PacketId == PacketId.Data &&
+                    if (this.NetBase.NetsphereOptions.EnableTestFeatures &&
+                        received.PacketId == PacketId.Data &&
                         this.NetControl.Responders.TryGetValue(received.DataId, out var responder) &&
                         responder.Respond(operation!, received))
                     {// Responder
@@ -57,23 +58,24 @@ public class Server
                 else if (received.Result == NetResult.Timeout ||
                     received.Result == NetResult.NoReceiver)
                 {
+                    this.NetTerminal.Logger?.Log($"{received.Result} -> SendClose()");
                     this.NetTerminal.SendClose();
                     break;
                 }
                 else if (received.Result == NetResult.Closed)
                 {
+                    this.NetTerminal.Logger?.Log($"{received.Result}");
                     break;
                 }
             }
             finally
             {
-                operation?.Dispose();
+                // operation?.Dispose(); // Don't dispose (net operation holds data waiting to be sent)
                 received.Return();
-                // terminal.ClearSender();
             }
         }
 
-        // terminal.TerminalLogger?.Information($"Server offline.");
+        this.NetTerminal.Logger?.Log($"Server offline.");
     }
 
     public ThreadCoreBase? Core => this.NetControl.Terminal.Core;
@@ -108,10 +110,12 @@ public class Server
 
     private bool ProcessEssential_Punch(ServerOperation operation, NetReceivedData received)
     {
-        if (!TinyhandSerializer.TryDeserialize<PacketPunch>(received.Received.Memory, out var punch))
+        if (!TinyhandSerializer.TryDeserialize<PacketPunch>(received.Received.Memory.Span, out var punch))
         {
             return false;
         }
+
+        this.NetTerminal.Logger?.Log("Respond: PacketPunch");
 
         TimeCorrection.AddCorrection(punch.UtcMics);
 
@@ -125,11 +129,13 @@ public class Server
 
     private bool ProcessEssential_Test(ServerOperation operation, NetReceivedData received)
     {
-        if (!TinyhandSerializer.TryDeserialize<TestPacket>(received.Received.Memory, out var r))
+        if (!TinyhandSerializer.TryDeserialize<TestPacket>(received.Received.Memory.Span, out var r))
         {
             var task2 = operation.SendEmpty();
             return false;
         }
+
+        this.NetTerminal.Logger?.Log("Respond: TestPacket");
 
         var response = TestPacket.Create(2000);
         var task = operation.SendAsync(response);

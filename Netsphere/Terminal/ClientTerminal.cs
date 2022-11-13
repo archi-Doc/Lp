@@ -44,7 +44,7 @@ public class ClientTerminal : NetTerminal
             return;
         }
 
-        using (var operation = new ClientOperation(this))
+        using (var operation = this.CreateOperation())
         {
             this.CreateHeader(out var header, operation.GetGene());
             header.Id = PacketId.Close;
@@ -56,6 +56,7 @@ public class ClientTerminal : NetTerminal
             }
 
             this.Terminal.AddRawSend(this.Endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
+            this.Logger?.Log("Send close (client)");
         }
     }
 

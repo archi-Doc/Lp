@@ -42,7 +42,6 @@ internal class ClientOperation : NetOperation
                     return r.Result;
                 }
 
-                // this.NetTerminal.TerminalLogger?.Information($"npk {r.Value!.Node.PublicKeyX[0]}");
                 this.NetTerminal.MergeNodeInformation(r.Value!.Node);
             }
 
@@ -116,7 +115,7 @@ internal class ClientOperation : NetOperation
             if (response.PacketId == PacketId.Reserve)
             {
                 // PacketId.Reserve
-                TinyhandSerializer.TryDeserialize<PacketReserve>(response.Received.Memory, out var reserve);
+                TinyhandSerializer.TryDeserialize<PacketReserve>(response.Received.Memory.Span, out var reserve);
                 response.Return();
                 if (reserve == null)
                 {
@@ -144,7 +143,7 @@ internal class ClientOperation : NetOperation
                 return (response.Result, default);
             }
 
-            TinyhandSerializer.TryDeserialize<TReceive>(response.Received.Memory, out var r);
+            TinyhandSerializer.TryDeserialize<TReceive>(response.Received.Memory.Span, out var r);
             response.Return();
             if (r == null)
             {
@@ -209,7 +208,7 @@ internal class ClientOperation : NetOperation
             return (response.Result, default);
         }
 
-        if (!TinyhandSerializer.TryDeserialize<TReceive>(response.Received.Memory, out var received))
+        if (!TinyhandSerializer.TryDeserialize<TReceive>(response.Received.Memory.Span, out var received))
         {
             response.Return();
             return (NetResult.DeserializationError, default);
@@ -304,7 +303,7 @@ internal class ClientOperation : NetOperation
             if (response.PacketId == PacketId.Reserve)
             {
                 // PacketId.Reserve
-                TinyhandSerializer.TryDeserialize<PacketReserve>(response.Received.Memory, out var reserve);
+                TinyhandSerializer.TryDeserialize<PacketReserve>(response.Received.Memory.Span, out var reserve);
                 response.Return();
                 if (reserve == null)
                 {

@@ -33,23 +33,23 @@ public static class SerializeHelper
         return byteArray;
     }
 
-    public static bool Deserialize(Dictionary<ulong, ILPSerializable> dictionary, ReadOnlyMemory<byte> memory)
+    public static bool Deserialize(Dictionary<ulong, ILPSerializable> dictionary, ReadOnlySpan<byte> span)
     {
         try
         {
-            while (memory.Length >= 12)
+            while (span.Length >= 12)
             {
-                var id = BitConverter.ToUInt64(memory.Span); // Id
-                memory = memory.Slice(8);
-                var length = BitConverter.ToInt32(memory.Span); // Length
-                memory = memory.Slice(4);
+                var id = BitConverter.ToUInt64(span); // Id
+                span = span.Slice(8);
+                var length = BitConverter.ToInt32(span); // Length
+                span = span.Slice(4);
 
                 if (dictionary.TryGetValue(id, out var x))
                 {
-                    x.Deserialize(memory, out _);
+                    x.Deserialize(span, out _);
                 }
 
-                memory = memory.Slice(length);
+                span = span.Slice(length);
             }
         }
         catch

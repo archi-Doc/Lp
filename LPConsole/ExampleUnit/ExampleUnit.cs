@@ -60,17 +60,17 @@ public class ExampleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         {
         }
 
-        this.logger.TryGet()?.Log("Example unit prepared.");
+        this.logger.TryGet()?.Log("Example unit prepared");
     }
 
     public async Task RunAsync(UnitMessage.RunAsync message)
     {
-        this.logger.TryGet()?.Log("Example unit running.");
+        this.logger.TryGet()?.Log("Example unit running");
     }
 
     public async Task TerminateAsync(UnitMessage.TerminateAsync message)
     {
-        this.logger.TryGet()?.Log("Example unit terminated.");
+        this.logger.TryGet()?.Log("Example unit terminated");
     }
 
     private ILogger<ExampleUnit> logger;

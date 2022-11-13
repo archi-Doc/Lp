@@ -116,8 +116,16 @@ internal class NetTerminalGene
 
             this.State = NetTerminalGeneState.WaitingForAck;
 
-            // var packetId = (PacketId)packetToSend[1];
-            // Logger.Default.Debug($"Send: {packetId}, {this.NetTerminal.Endpoint}");
+            if (this.NetInterface.NetTerminal.Logger is { } logger)
+            {
+                var span = this.Owner.Memory.Span;
+                if (span.Length > 4)
+                {
+                    var packetId = (PacketId)span[3];
+                    logger.Log($"Udp Send({this.Gene.To4Hex()}) Id: {packetId}, Size: {span.Length}, To: {this.NetInterface.NetTerminal.Endpoint}");
+                }
+            }
+
             return true;
         }
 
@@ -128,9 +136,11 @@ internal class NetTerminalGene
     {// lock (this.NetTerminal.SyncObject)
         /*if (LP.Random.Pseudo.NextDouble() < 0.5)
         {
-            this.NetInterface.TerminalLogger?.Error($"Ack cancel: {this.Gene.To4Hex()}");
+            this.NetInterface.NetTerminal.Logger?.Log($"Ack cancel: {this.Gene.To4Hex()}");
             return false;
         }*/
+
+        this.NetInterface.NetTerminal.Logger?.Log($"ReceiveAck({this.Gene.To4Hex()})");
 
         if (this.State == NetTerminalGeneState.WaitingForAck)
         {
@@ -158,9 +168,18 @@ internal class NetTerminalGene
                 this.Owner = owner.IncrementAndShare();
             }
 
+            if (this.NetInterface.NetTerminal.Logger is { } logger)
+            {
+                var span = this.Owner.Memory.Span;
+                if (span.Length > 4)
+                {
+                    var packetId = (PacketId)span[3];
+                    logger.Log($"Receive({this.Gene.To4Hex()}) Id: {this.ReceivedId}, Size: {span.Length}, To: {this.NetInterface.NetTerminal.Endpoint}");
+                }
+            }
+
             SendAck();
 
-            // Logger.Default.Debug($"Receive: {this.PacketId}, {this.NetTerminal.Endpoint}");
             return true;
         }
         else if (this.State == NetTerminalGeneState.SendingAck)
@@ -185,13 +204,13 @@ internal class NetTerminalGene
             {
                 if (this.NetInterface.RecvGenes?.Length == 1)
                 {
-                    // this.NetInterface.TerminalLogger?.Information($"SendAck {this.Gene.To4Hex()}");
+                    // this.NetInterface.NetTerminal.Logger?.Log($"SendAck {this.Gene.To4Hex()}");
                     this.NetInterface.NetTerminal.SendAck(this.Gene);
                     this.State = NetTerminalGeneState.ReceiveComplete;
                 }
                 else
                 {
-                    // this.NetInterface.TerminalLogger?.Information($"SendingAck {this.Gene.To4Hex()}");
+                    // this.NetInterface.NetTerminal.Logger?.Log($"SendingAck {this.Gene.To4Hex()}");
                     this.State = NetTerminalGeneState.SendingAck;
                 }
             }
@@ -224,8 +243,6 @@ internal class NetTerminalGene
 
     internal void Clear()
     {// lock (this.NetTerminal.SyncObject)
-        // this.NetInterface.TerminalLogger?.Information($"Clear: {this.State} - {this.Gene.To4Hex()}");
-
         /*if (this.State == NetTerminalGeneState.SendingAck || this.State == NetTerminalGeneState.ReceiveComplete)
         {// (this.State == NetTerminalGeneState.WaitingForAck)
         }*/

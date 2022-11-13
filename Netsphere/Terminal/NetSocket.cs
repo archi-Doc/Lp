@@ -138,9 +138,9 @@ public class NetSocket
         private long previousMics;
     }
 
-    public NetSocket(UnitLogger logger, Terminal terminal)
+    public NetSocket(Terminal terminal)
     {
-        this.logger = logger;
+        this.logger = terminal.UnitLogger.GetLogger<NetSocket>();
         this.terminal = terminal;
     }
 
@@ -155,7 +155,7 @@ public class NetSocket
         }
         catch
         {
-            this.logger.TryGet<NetSocket>(LogLevel.Fatal)?.Log($"Could not create a UDP socket with port {port}.");
+            this.logger.TryGet(LogLevel.Fatal)?.Log($"Could not create a UDP socket with port {port}.");
             throw new PanicException();
         }
 
@@ -216,7 +216,7 @@ public class NetSocket
     internal UdpClient? UnsafeUdpClient;
 #pragma warning restore SA1401 // Fields should be private
 
-    private UnitLogger logger;
+    private ILogger<NetSocket> logger;
     private Terminal terminal;
     private NetSocketRecvCore? recvCore;
     private NetSocketSendCore? sendCore;

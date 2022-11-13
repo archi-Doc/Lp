@@ -2,6 +2,7 @@
 
 using Arc.Unit;
 using LP;
+using Microsoft.VisualBasic;
 using Netsphere;
 using Tinyhand;
 
@@ -50,6 +51,8 @@ public partial record RunnerInformation
         this.DestinationDirectory = string.IsNullOrEmpty(this.DestinationDirectory) ? "/lp" : this.DestinationDirectory;
         this.DestinationPort = this.DestinationPort == 0 ? 49152 : this.DestinationPort;
         this.RemotePublicKeyBase64 = string.IsNullOrEmpty(this.RemotePublicKeyBase64) ? PrivateKey.Create().ToPublicKey().ToString() : this.RemotePublicKeyBase64;
+        this.NetsphereOptions = string.IsNullOrEmpty(this.NetsphereOptions) ? "-test false -alternative false -logger false" : this.NetsphereOptions;
+
         return this;
     }
 
@@ -73,6 +76,8 @@ public partial record RunnerInformation
 
     public string RemotePublicKeyBase64 { get; set; } = string.Empty;
 
+    public string NetsphereOptions { get; set; } = string.Empty;
+
     public string AdditionalArgs { get; set; } = string.Empty;
 
     public async Task<bool> Load(string path)
@@ -80,19 +85,18 @@ public partial record RunnerInformation
         try
         {
             var utf8 = await File.ReadAllBytesAsync(path);
-            var information = TinyhandSerializer.DeserializeWithFromUtf8<RunnerInformation>(this, utf8);
-            if (information != null)
-            {// Success
-             // Update RunnerInformation
-                this.Restore();
-                var update = TinyhandSerializer.SerializeToUtf8(this);
-                if (!update.SequenceEqual(utf8))
-                {
-                    await File.WriteAllBytesAsync(path, update);
-                }
+            var information = this;
+            TinyhandSerializer.DeserializeObjectFromUtf8(utf8, ref information);
 
-                return true;
+            // Update RunnerInformation
+            this.Restore();
+            var update = TinyhandSerializer.SerializeToUtf8(this);
+            if (!update.SequenceEqual(utf8))
+            {
+                await File.WriteAllBytesAsync(path, update);
             }
+
+            return true;
         }
         catch
         {

@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Threading;
+using Arc.Unit;
 
 namespace Netsphere;
 
@@ -25,6 +26,27 @@ public partial class NetTerminal : IDisposable
     /// </summary>
     public const int DefaultInterval = 10;
 
+    private const long EventIdMask = 0xFFFF;
+
+    private class NetTerminalLogger : ILog
+    {
+        public NetTerminalLogger(ILog log, NetTerminal netTerminal)
+        {
+            this.log = log;
+            this.netTerminal = netTerminal;
+        }
+
+        Type ILog.OutputType => throw new NotImplementedException();
+
+        void ILog.Log(long eventId, string message, Exception? exception)
+        {
+            this.log.Log((long)this.netTerminal.Salt & EventIdMask, message, exception);
+        }
+
+        private readonly ILog log;
+        private readonly NetTerminal netTerminal;
+    }
+
     [Link(Type = ChainType.QueueList, Name = "Queue", Primary = true)]
     internal NetTerminal(Terminal terminal, NodeAddress nodeAddress)
     {// NodeAddress: Unmanaged
@@ -35,12 +57,7 @@ public partial class NetTerminal : IDisposable
 
         this.FlowControl = new(this);
 
-        this.InitializeState();
-    }
-
-    internal NetTerminal(Terminal terminal, NodeInformation nodeInformation)
-        : this(terminal, nodeInformation, LP.Random.Crypto.NextUInt64())
-    {// NodeInformation: Managed
+        this.Initialize();
     }
 
     internal NetTerminal(Terminal terminal, NodeInformation nodeInformation, ulong gene)
@@ -53,10 +70,10 @@ public partial class NetTerminal : IDisposable
 
         this.FlowControl = new(this);
 
-        this.InitializeState();
+        this.Initialize();
     }
 
-    public void SetMaximumResponseTime(int milliseconds = 500)
+    public void SetMaximumResponseTime(int milliseconds = 800)
     {
         this.maximumResponseMics = Mics.FromMilliseconds(milliseconds);
     }
@@ -131,8 +148,11 @@ public partial class NetTerminal : IDisposable
         BitConverter.TryWriteBytes(b, saltA2);
 
         var hash = Hash.ObjectPool.Get();
-        (this.Salt, _, _, _) = hash.GetHashUInt64(span);
+        (var hash0, _, _, _) = hash.GetHashUInt64(span);
         Hash.ObjectPool.Return(hash);
+
+        this.Logger?.Log($"-> {hash0 & EventIdMask:X4}");
+        this.Salt = hash0;
     }
 
     internal void InternalClose()
@@ -245,8 +265,6 @@ public partial class NetTerminal : IDisposable
 
     internal GenePool GenePool { get; }
 
-    // internal ILogger? TerminalLogger => this.Terminal.TerminalLogger;
-
     internal NetResult CreateEmbryo(ulong salt, ulong salt2)
     {
         if (this.NodeInformation == null)
@@ -268,7 +286,7 @@ public partial class NetTerminal : IDisposable
                 return NetResult.NoNodeInformation;
             }
 
-            // this.TerminalLogger?.Information($"Material {material[0]} ({salt.To4Hex()}/{salt2.To4Hex()}), {this.NodeInformation.PublicKeyX[0]}, {this.Terminal.NodePrivateKey.X[0]}");
+            // this.Log($"Material {material[0]} ({salt.To4Hex()}/{salt2.To4Hex()}), {this.NodeInformation.PublicKeyX[0]}, {this.Terminal.NodePrivateKey.X[0]}");
 
             // ulong Salt, Salt2, byte[] material, ulong Salt, Salt2
             Span<byte> buffer = stackalloc byte[sizeof(ulong) + sizeof(ulong) + PublicKey.PrivateKeyLength + sizeof(ulong) + sizeof(ulong)];
@@ -288,7 +306,8 @@ public partial class NetTerminal : IDisposable
             Hash.Sha3_384Pool.Return(sha);
 
             this.GenePool.SetEmbryo(this.embryo);
-            // this.TerminalLogger?.Information($"First gene {this.GenePool.GetSequential().To4Hex()} ({salt.To4Hex()}/{salt2.To4Hex()})");
+            this.Logger?.Log("Embryo created.");
+            // this.Log($"First gene {this.GenePool.GetSequential().To4Hex()} ({salt.To4Hex()}/{salt2.To4Hex()})");
 
             // Aes
             this.aes = Aes.Create();
@@ -301,16 +320,12 @@ public partial class NetTerminal : IDisposable
 
     internal bool TryClean(long currentMics)
     {
-        if (this.IsClosed)
-        {
-            return true;
-        }
-
         var mics = currentMics - Mics.FromSeconds(2);
         List<NetInterface>? list = null;
 
         lock (this.SyncObject)
         {
+            // Disposed interfaces
             foreach (var x in this.disposedInterfaces)
             {
                 if (x.DisposedMics < mics)
@@ -320,12 +335,20 @@ public partial class NetTerminal : IDisposable
                 }
             }
 
+            // Remove interfaces
             if (list != null)
             {
                 foreach (var x in list)
                 {
                     x.DisposeActual();
                 }
+            }
+
+            if (currentMics > (this.LastResponseMics + this.MaximumResponseMics) &&
+                this.activeInterfaces.Count == 0 &&
+                this.disposedInterfaces.Count == 0)
+            {// No net interface
+                return true;
             }
         }
 
@@ -393,6 +416,10 @@ public partial class NetTerminal : IDisposable
 
     internal uint ResendCount => Volatile.Read(ref this.resendCount);
 
+    internal ILog? Logger { get; private set; }
+
+    internal bool Disposed => this.disposed;
+
     private void Clear()
     {// lock (this.SyncObject)
         foreach (var x in this.activeInterfaces)
@@ -410,8 +437,15 @@ public partial class NetTerminal : IDisposable
         this.disposedInterfaces.Clear();
     }
 
-    private void InitializeState()
+    private void Initialize()
     {
+        if (/*this.Terminal.NetBase.NetsphereOptions.EnableLogger &&*/
+            this.Terminal.UnitLogger.GetLogger(this.GetType()) is { } logger &&
+            logger.TryGet() is { } log)
+        {
+            this.Logger = new NetTerminalLogger(log, this);
+        }
+
         this.SetMaximumResponseTime();
         this.SetMinimumBandwidth();
         this.ResetLastResponseMics();
@@ -463,6 +497,7 @@ public partial class NetTerminal : IDisposable
             if (disposing)
             {
                 // free managed resources.
+                this.Logger?.Log("Dispose");
                 if (this.IsEncrypted && !this.IsClosed)
                 {// Close connection.
                     this.SendClose();
@@ -477,12 +512,13 @@ public partial class NetTerminal : IDisposable
 
                 this.ConnectionSemaphore.Dispose();
 
-                // this.TerminalLogger?.Information("terminal disposed.");
+                // this.Logger?.Log("terminal disposed.");
             }
 
             // free native resources here if there are any.
             this.disposed = true;
         }
     }
+
     #endregion
 }

@@ -87,15 +87,14 @@ public class ServerOperation : NetOperation
         }
 
         // PacketId.Reserve
-        if (!TinyhandSerializer.TryDeserialize<PacketReserve>(received.Received.Memory, out var reserve))
+        if (!TinyhandSerializer.TryDeserialize<PacketReserve>(received.Received.Memory.Span, out var reserve))
         {
             received.Return();
             return new(NetResult.DeserializationError);
         }
 
         received.Return();
-        this.receiverInterface2 = NetInterface<object, byte[]>.CreateReceive(this);
-        this.receiverInterface2.SetReserve(this, reserve);
+        this.receiverInterface2 = NetInterface<object, byte[]>.CreateReserve2(this, reserve);
 
         this.receiverInterface.SetSend(new PacketReserveResponse());
 

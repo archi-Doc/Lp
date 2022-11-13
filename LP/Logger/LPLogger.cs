@@ -1,6 +1,18 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using LP.Data;
+using Microsoft.Extensions.DependencyInjection;
+using Netsphere;
+
 namespace LP.Logging;
+
+public class ClientTerminalLoggerOptions : StreamLoggerOptions
+{
+}
+
+public class ServerTerminalLoggerOptions : StreamLoggerOptions
+{
+}
 
 public class LPLogger
 {
@@ -31,6 +43,10 @@ public class LPLogger
                 context.AddSingleton<BackgroundAndFileLogger>();
                 context.AddSingleton<ConsoleAndFileLogger>();
 
+                // Stream logger
+                context.Services.Add(ServiceDescriptor.Singleton(typeof(StreamLogger<>), typeof(StreamLoggerFactory<>)));
+                context.TryAddSingleton<StreamLoggerOptions>();
+
                 // Filters
                 context.AddSingleton<MachineLogFilter>();
 
@@ -48,6 +64,27 @@ public class LPLogger
                     {// Machines
                         context.SetOutput<BackgroundAndFileLogger>();
                         context.SetFilter<MachineLogFilter>();
+                        return;
+                    }
+
+                    if (context.LogSourceType == typeof(ClientTerminal))
+                    {// ClientTerminal
+                        if (context.TryGetOptions<LPOptions>(out var options) &&
+                        options.NetsphereOptions.EnableLogger)
+                        {
+                            context.SetOutput<StreamLogger<ClientTerminalLoggerOptions>>();
+                        }
+
+                        return;
+                    }
+                    else if (context.LogSourceType == typeof(ServerTerminal))
+                    {// ServerTerminal
+                        if (context.TryGetOptions<LPOptions>(out var options) &&
+                        options.NetsphereOptions.EnableLogger)
+                        {
+                            context.SetOutput<StreamLogger<ServerTerminalLoggerOptions>>();
+                        }
+
                         return;
                     }
 

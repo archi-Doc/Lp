@@ -17,6 +17,7 @@ using SimpleCommandLine;
 using ZenItz;
 using LP.Data;
 using Netsphere.Machines;
+using LP.Logging;
 
 namespace LP;
 
@@ -92,6 +93,36 @@ public class Control : ILogInformation
                 }
 
                 options.MaxLogCapacity = 20;
+            });
+
+            this.SetupOptions<ClientTerminalLoggerOptions>((context, options) =>
+            {// ClientTerminalLoggerOptions
+                var logfile = "Logs/Client/.txt";
+                if (context.TryGetOptions<LPOptions>(out var lpOptions))
+                {
+                    options.Path = Path.Combine(lpOptions.RootDirectory, logfile);
+                }
+                else
+                {
+                    options.Path = Path.Combine(context.RootDirectory, logfile);
+                }
+
+                options.MaxLogCapacity = 1;
+            });
+
+            this.SetupOptions<ServerTerminalLoggerOptions>((context, options) =>
+            {// ServerTerminalLoggerOptions
+                var logfile = "Logs/Server/.txt";
+                if (context.TryGetOptions<LPOptions>(out var lpOptions))
+                {
+                    options.Path = Path.Combine(lpOptions.RootDirectory, logfile);
+                }
+                else
+                {
+                    options.Path = Path.Combine(context.RootDirectory, logfile);
+                }
+
+                options.MaxLogCapacity = 1;
             });
 
             this.SetupOptions<ConsoleLoggerOptions>((context, options) =>
@@ -252,7 +283,7 @@ public class Control : ILogInformation
 
     public static object? MemoryOwnerToObject(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
     {
-        if (TinyhandSerializer.TryDeserialize<LP.Fragments.FragmentBase>(memoryOwner.Memory, out var value))
+        if (TinyhandSerializer.TryDeserialize<LP.Fragments.FragmentBase>(memoryOwner.Memory.Span, out var value))
         {
             return value;
         }

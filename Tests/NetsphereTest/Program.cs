@@ -91,28 +91,6 @@ public class Program
         var param = new NetControl.Unit.Param(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);
         await unit.RunStandalone(param);
 
-        // Logger
-        if (options.EnableLogger)
-        {
-            /*var logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "logs");
-            Directory.CreateDirectory(logDirectory);
-            var netControl = unit.Context.ServiceProvider.GetRequiredService<NetControl>();
-            netControl.Terminal.SetLogger(new SerilogLogger(new LoggerConfiguration()
-                .MinimumLevel.Debug()
-                .WriteTo.File(
-                    Path.Combine(logDirectory, "terminal.log.txt"),
-                    buffered: true,
-                    flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
-                .CreateLogger()));
-            netControl.Alternative?.SetLogger(new SerilogLogger(new LoggerConfiguration()
-                .MinimumLevel.Debug()
-                .WriteTo.File(
-                    Path.Combine(logDirectory, "terminal2.log.txt"),
-                    buffered: true,
-                    flushToDiskInterval: TimeSpan.FromMilliseconds(1000))
-                .CreateLogger()));*/
-        }
-
         var parserOptions = SimpleParserOptions.Standard with
         {
             ServiceProvider = unit.Context.ServiceProvider,

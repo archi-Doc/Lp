@@ -8,6 +8,6 @@ internal class TestBlockResponder : NetResponder<TestBlock, TestBlock>
 
     public override TestBlock? Respond(TestBlock value)
     {
-        return null; // value;
+        return value;
     }
 }

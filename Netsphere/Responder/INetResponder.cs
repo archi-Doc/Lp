@@ -16,7 +16,7 @@ public abstract class NetResponder<TSend, TReceive> : INetResponder
 
     public bool Respond(ServerOperation operation, NetReceivedData received)
     {
-        if (!TinyhandSerializer.TryDeserialize<TSend>(received.Received.Memory, out var t))
+        if (!TinyhandSerializer.TryDeserialize<TSend>(received.Received.Memory.Span, out var t))
         {
             var emptyTask = operation.SendEmpty();
             return false;
