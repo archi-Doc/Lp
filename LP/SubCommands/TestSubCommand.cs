@@ -62,6 +62,8 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         var token = new Token(Token.Type.Identification, 0, 0, Identifier.Three, null);
         var bb = token.Sign(originator);
         bb = token.ValidateAndVerifyWithoutPublicKey();
+
+        originator.CreateSignature(value, out var signature);
     }
 
     private ILogger<TestSubcommand> logger;
