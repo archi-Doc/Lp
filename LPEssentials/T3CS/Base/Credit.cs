@@ -1,8 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Collections.Concurrent;
-
-namespace LP;
+namespace LP.T3CS;
 
 /// <summary>
 /// Immutable credit object.

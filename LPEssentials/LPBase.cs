@@ -11,6 +11,7 @@ global using CrossChannel;
 global using Tinyhand;
 
 using LP.Data;
+using LP.T3CS;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace LP;

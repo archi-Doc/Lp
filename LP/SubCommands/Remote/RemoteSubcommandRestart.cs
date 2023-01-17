@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using LP.NetServices;
+using LP.T3CS;
 using Netsphere;
 using SimpleCommandLine;
 

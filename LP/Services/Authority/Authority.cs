@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using LP.Services;
 
-namespace LP;
+namespace LP.T3CS;
 
 /// <summary>
 /// Class used to create/delete authority, and get AuthorityInterface using Vault.

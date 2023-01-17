@@ -2,7 +2,7 @@
 
 using LP.Services;
 
-namespace LP;
+namespace LP.T3CS;
 
 internal sealed class AuthorityInterface
 {
