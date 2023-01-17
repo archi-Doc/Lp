@@ -54,6 +54,7 @@ public class Control : ILogInformation
 
                 // RPC / Filters
                 context.AddTransient<NetServices.TestOnlyFilter>();
+                context.AddTransient<NetServices.MergerOrTestFilter>();
 
                 // Machines
                 context.AddTransient<Machines.SingleMachine>();
