@@ -2,6 +2,7 @@
 
 using System.Security.Cryptography;
 using System.Text;
+using LP.T3CS;
 
 namespace LP;
 
@@ -91,6 +92,30 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
 
     public PublicKey ToPublicKey()
         => new(this);
+
+    public bool CreateSignature<T>(T data, out Signature signature)
+        where T : ITinyhandSerialize<T>
+    {// tempcode
+        var ecdsa = this.TryGetEcdsa();
+        if (ecdsa == null)
+        {
+            signature = default;
+            return false;
+        }
+
+        var target = TinyhandSerializer.SerializeObject(data, TinyhandSerializerOptions.Signature);
+
+        var sign = new byte[PublicKey.SignLength];
+        if (!ecdsa.TrySignData(target, sign.AsSpan(), PublicKey.HashAlgorithmName, out var written))
+        {
+            signature = default;
+            return false;
+        }
+
+        var mics = Mics.GetCorrected();
+        signature = new Signature(Signature.Type.Affirmative, mics, sign);
+        return true;
+    }
 
     public byte[]? SignData(ReadOnlySpan<byte> data)
     {

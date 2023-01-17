@@ -16,6 +16,7 @@ public partial class NtpCorrection : UnitBase, IUnitPreparable, IUnitSerializabl
     private readonly string[] hostNames =
     {
         "pool.ntp.org",
+        "time.aws.com",
         "time.google.com",
         "time.facebook.com",
         "time.windows.com",
