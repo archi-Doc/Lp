@@ -2,9 +2,7 @@
 
 namespace LP.T3CS;
 
-public enum AuthorityLifetime
+public enum MergerResult
 {
-    Application,
-    PeriodOfTime,
-    Session,
+    Success,
 }

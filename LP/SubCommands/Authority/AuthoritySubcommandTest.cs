@@ -2,6 +2,7 @@
 
 using Arc.Crypto;
 using LP;
+using LP.T3CS;
 using SimpleCommandLine;
 using Tinyhand;
 

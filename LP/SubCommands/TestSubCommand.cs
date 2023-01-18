@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using Arc.Crypto;
 using Arc.Crypto.EC;
 using LP;
+using LP.T3CS;
 using SimpleCommandLine;
 using Tinyhand;
 

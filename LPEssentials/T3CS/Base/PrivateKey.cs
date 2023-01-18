@@ -2,9 +2,8 @@
 
 using System.Security.Cryptography;
 using System.Text;
-using LP.T3CS;
 
-namespace LP;
+namespace LP.T3CS;
 
 [TinyhandObject]
 public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>

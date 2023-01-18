@@ -1,11 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Collections.Concurrent;
-
-namespace LP;
+namespace LP.T3CS;
 
 /// <summary>
-/// Immutable credit object.
+/// Credit (Originator/Merger:Standard).
 /// </summary>
 [TinyhandObject]
 public sealed partial class Credit : IValidatable, IEquatable<Credit>
@@ -35,6 +33,9 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>
     [MaxLength(MaxMergers)]
     private PublicKey[] mergers = Array.Empty<PublicKey>();
 
+    [Key(2)]
+    public PublicKey Standard { get; private set; } = default!;
+
     public bool Validate()
     {
         if (!this.Originator.Validate())
@@ -44,6 +45,10 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>
         else if (this.mergers == null ||
             this.mergers.Length == 0 ||
             this.mergers.Length > MaxMergers)
+        {
+            return false;
+        }
+        else if (!this.Standard.Validate())
         {
             return false;
         }
@@ -83,6 +88,11 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>
             }
         }
 
+        if (!this.Standard.Equals(other.Standard))
+        {
+            return false;
+        }
+
         return true;
     }
 
@@ -96,6 +106,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>
             hash.Add(x);
         }
 
+        hash.Add(this.Standard);
         return hash.ToHashCode();
     }
 }

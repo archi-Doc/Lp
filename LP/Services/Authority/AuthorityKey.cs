@@ -2,7 +2,7 @@
 
 using Arc.Collections;
 
-namespace LP;
+namespace LP.T3CS;
 
 [TinyhandObject]
 public sealed partial class AuthorityKey
