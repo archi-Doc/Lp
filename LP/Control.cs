@@ -69,6 +69,7 @@ public class Control : ILogInformation
                 context.AddSubcommand(typeof(LP.Subcommands.PunchSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.BenchmarkSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.SeedphraseSubcommand));
+                context.AddSubcommand(typeof(LP.Subcommands.MergerSubcommand));
 
                 LP.Subcommands.TemplateSubcommand.Configure(context);
                 LP.Subcommands.InfoSubcommand.Configure(context);
@@ -80,6 +81,7 @@ public class Control : ILogInformation
                 LP.Subcommands.AuthoritySubcommand.Configure(context);
                 LP.Subcommands.CustomSubcommand.Configure(context);
                 LP.Subcommands.RemoteSubcommand.Configure(context);
+                LP.Subcommands.MergerNestedcommand.Configure(context);
             });
 
             this.SetupOptions<FileLoggerOptions>((context, options) =>
