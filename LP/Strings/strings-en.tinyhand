@@ -29,7 +29,7 @@ Error = {
     KeyVault = "Could not deserialize '{0}'"
     Parse = "Could not parse '{0}'"
     InvalidAddress = "{0} is not valid address."
-    Connect = "Could not connect '{0}'"
+    Connect = "Could not connect to '{0}'"
 }
 
 Vault = {

@@ -35,7 +35,7 @@ public class MergerNestedcommandInfo : ISimpleCommandAsync
                 return;
             }
 
-            var service = terminal.GetService<MergerService>();
+            var service = terminal.GetService<IMergerService>();
 
             var response = await service.Information().ResponseAsync;
             if (response.IsSuccess)
