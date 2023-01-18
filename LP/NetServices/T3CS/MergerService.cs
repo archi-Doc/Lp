@@ -6,12 +6,23 @@ using Netsphere;
 namespace LP.T3CS;
 
 [NetServiceInterface]
-public interface IMergerService : INetService
+public interface MergerService : INetService
 {
+    NetTask<string?> Information();
+
+    NetTask<NetResult> CreateCredit();
 }
 
 [NetServiceFilter(typeof(MergerOrTestFilter))]
 [NetServiceObject]
-public class MergerServiceImpl : IMergerService
+public class MergerServiceImpl : MergerService
 {
+    public MergerServiceImpl()
+    {
+    }
+
+    public async NetTask<string?> Information()
+    {
+        return "Merger1";
+    }
 }
