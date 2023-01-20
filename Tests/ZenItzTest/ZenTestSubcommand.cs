@@ -63,6 +63,15 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
             }
         }
 
+        await Console.Out.WriteLineAsync("1M flakes");
+
+        for (var i = 0; i < 1_000_000; i++)
+        {
+            flake = zen.TryCreateOrGet(new(i));
+        }
+
+        await Task.Delay(10000);
+
         await zen.StopZen(new());
     }
 
