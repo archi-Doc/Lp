@@ -180,6 +180,18 @@ public class Zen
         return false;
     }
 
+    public bool TryGetBlock(out Block block)
+    {
+        if (!this.Started)
+        {
+            block = default;
+            return false;
+        }
+
+        block = new(this, this.flakeGoshujin);
+        return true;
+    }
+
     public bool Started { get; private set; }
 
     public ZenIO IO { get; }

@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace ZenItz;
@@ -447,6 +448,28 @@ public partial class Flake
         }
     }
 
+    public bool TryGetOrAddBlock(out Block block)
+    {
+        if (!this.Zen.Started)
+        {
+            block = default;
+            return false;
+        }
+
+        lock (this.syncObject)
+        {
+            if (this.IsRemoved)
+            {
+                block = default;
+                return false;
+            }
+
+            this.nesteGoshujin ??= new();
+            block = new(this.Zen, this.nesteGoshujin);
+            return true;
+        }
+    }
+
     public Zen Zen { get; internal set; } = default!;
 
     public Identifier Identifier => this.identifier;
@@ -545,7 +568,7 @@ public partial class Flake
     internal ulong fragmentFile;
 
     [Key(3)]
-    internal Flake.GoshujinClass NestedFlake; // tempcode
+    internal Flake.GoshujinClass? nesteGoshujin;
 
     private object syncObject = new();
     private FlakeObject? flakeObject;
