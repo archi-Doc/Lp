@@ -8,9 +8,8 @@ public sealed class ZenIO
 {
     public const int DirectoryRotationThreshold = 1024 * 1024 * 1; // 100 MB
 
-    public ZenIO(UnitLogger unitLogger)
+    public ZenIO()
     {
-        this.unitLogger = unitLogger;
         this.RootDirectory = Directory.GetCurrentDirectory();
     }
 
@@ -284,7 +283,6 @@ public sealed class ZenIO
         return array.MinBy(a => a.UsageRatio);
     }
 
-    private UnitLogger unitLogger;
     private ZenDirectory.GoshujinClass directoryGoshujin = new();
     private ZenDirectory? currentDirectory;
     private int directoryRotationCount;

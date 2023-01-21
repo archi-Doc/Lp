@@ -6,6 +6,23 @@ namespace ZenItz;
 
 public class Zen
 {
+    public static ZenResult TryOpen(ZenOptions options, out Zen? zen)
+    {
+        zen = default;
+
+        try
+        {
+            Directory.CreateDirectory(options.ZenPath);
+        }
+        catch
+        {
+            return ZenResult.NoDirectory;
+        }
+
+        zen = new(options);
+        return ZenResult.Success;
+    }
+
     public const int MaxFlakeSize = 1024 * 1024 * 4; // 4MB
     public const int MaxFragmentSize = 1024 * 4; // 4KB
     public const int MaxFragmentCount = 1000;
@@ -35,10 +52,10 @@ public class Zen
         return null;
     }
 
-    public Zen(UnitLogger unitLogger, ZenIO io)
+    private Zen(ZenOptions options)
     {
-        Zen.UnitLogger = unitLogger;
-        this.IO = io;
+        this.Options = options;
+        this.IO = new();
         this.FlakeObjectGoshujin = new(this);
         this.FragmentObjectGoshujin = new(this);
     }
@@ -191,6 +208,8 @@ public class Zen
         block = new(this, this.flakeGoshujin);
         return true;
     }
+
+    public ZenOptions Options { get; }
 
     public bool Started { get; private set; }
 
@@ -419,6 +438,4 @@ LoadBackup:
 
         await HashHelper.GetFarmHashAndSaveAsync(byteArray, path, backupPath);
     }
-
-    internal static UnitLogger UnitLogger { get; private set; } = default!;
 }
