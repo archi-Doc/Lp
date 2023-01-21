@@ -361,7 +361,7 @@ public class Control : ILogInformation
 
     public async Task AbortAsync()
     {
-        await this.ZenControl.Zen.AbortZen();
+        await this.ZenControl.Zen.Abort();
     }
 
     public async Task SaveAsync(UnitContext context)

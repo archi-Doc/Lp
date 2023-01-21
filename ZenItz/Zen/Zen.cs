@@ -126,7 +126,7 @@ public class Zen
         await HashHelper.GetFarmHashAndSaveAsync(byteArray, param.ZenDirectoryFile, param.ZenDirectoryBackup);
     }
 
-    public async Task AbortZen()
+    public async Task Abort()
     {
         if (!this.Started)
         {
