@@ -544,6 +544,9 @@ public partial class Flake
     [Key(2)]
     internal ulong fragmentFile;
 
+    [Key(3)]
+    internal Flake.GoshujinClass NestedFlake; // tempcode
+
     private object syncObject = new();
     private FlakeObject? flakeObject;
     private FragmentObject? fragmentObject;
