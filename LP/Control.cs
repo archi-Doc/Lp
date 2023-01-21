@@ -148,6 +148,19 @@ public class Control : ILogInformation
                 netBase.NetsphereOptions.EnableTestFeatures = true; // betacode
             });
 
+            this.SetupOptions<ZenOptions>((context, previous) =>
+            {// ZenOptions
+                context.GetOptions<LPOptions>(out var lpOptions);
+
+                var options = previous with
+                {
+                    ZenPath = lpOptions.RootDirectory,
+                    SnowflakePath = Path.Combine(lpOptions.RootDirectory, ZenOptions.DefaultZenDirectory),
+                };
+
+                context.SetOptions(options);
+            });
+
             this.AddBuilder(new NetControl.Builder());
             this.AddBuilder(new ZenControl.Builder());
             this.AddBuilder(new LP.Logging.LPLogger.Builder());
@@ -337,7 +350,7 @@ public class Control : ILogInformation
             await this.ZenControl.Itz.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup)).ConfigureAwait(false);
         }
 
-        var result = await this.ZenControl.Zen.TryStartZen(new(Zen.DefaultZenDirectory, Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenBackup), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryBackup), QueryDelegate: null));
+        var result = await this.ZenControl.Zen.Start(new(Zen.DefaultZenDirectory, Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenBackup), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryBackup), QueryDelegate: null));
         if (result != ZenStartResult.Success)
         {
             throw new PanicException();
@@ -388,7 +401,7 @@ public class Control : ILogInformation
     {
         this.Logger.Get<DefaultLog>().Log("Termination process initiated");
 
-        await this.ZenControl.Zen.StopZen(new(Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenBackup), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryBackup)));
+        await this.ZenControl.Zen.Stop(new(Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenBackup), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryBackup)));
 
         try
         {

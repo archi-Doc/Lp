@@ -13,7 +13,6 @@ public record ZenStopParam(string ZenFile = Zen.DefaultZenFile, string ZenBackup
 public enum ZenStartResult
 {
     Success,
-    AlreadyStarted,
     ZenFileNotFound,
     ZenFileError,
     ZenDirectoryNotFound,

@@ -6,7 +6,7 @@ namespace ZenItz;
 
 public class Zen
 {
-    public static ZenResult TryOpen(ZenOptions options, out Zen? zen)
+    /*public static ZenResult TryOpen(ZenOptions options, out Zen? zen)
     {
         zen = default;
 
@@ -21,7 +21,7 @@ public class Zen
 
         zen = new(options);
         return ZenResult.Success;
-    }
+    }*/
 
     public const int MaxFlakeSize = 1024 * 1024 * 4; // 4MB
     public const int MaxFragmentSize = 1024 * 4; // 4KB
@@ -52,31 +52,31 @@ public class Zen
         return null;
     }
 
-    private Zen(ZenOptions options)
+    internal Zen()
     {
-        this.Options = options;
+        this.Options = ZenOptions.Standard;
         this.IO = new();
         this.FlakeObjectGoshujin = new(this);
         this.FragmentObjectGoshujin = new(this);
     }
 
-    public ZenStartResult StartZenForTest()
+    public ZenStartResult StartForTest()
     {
         if (this.Started)
         {
-            return ZenStartResult.AlreadyStarted;
+            return ZenStartResult.Success;
         }
 
         this.Started = true;
         return ZenStartResult.Success;
     }
 
-    public async Task<ZenStartResult> TryStartZen(ZenStartParam param)
+    public async Task<ZenStartResult> Start(ZenStartParam param)
     {
         var result = ZenStartResult.Success;
         if (this.Started)
         {
-            return ZenStartResult.AlreadyStarted;
+            return ZenStartResult.Success;
         }
 
         // Load ZenDirectory
@@ -97,7 +97,7 @@ public class Zen
         return result;
     }
 
-    public async Task StopZen(ZenStopParam param)
+    public async Task Stop(ZenStopParam param)
     {
         if (!this.Started)
         {
@@ -209,7 +209,7 @@ public class Zen
         return true;
     }
 
-    public ZenOptions Options { get; }
+    public ZenOptions Options { get; set; }
 
     public bool Started { get; private set; }
 

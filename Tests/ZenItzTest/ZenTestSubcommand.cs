@@ -20,7 +20,7 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
         var zen = this.ZenControl.Zen;
         var itz = this.ZenControl.Itz;
 
-        await zen.TryStartZen(new(Zen.DefaultZenDirectory));
+        await zen.Start(new(Zen.DefaultZenDirectory));
 
         var flake = zen.TryCreateOrGet(Identifier.Zero);
         if (flake != null)
@@ -72,7 +72,7 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
 
         await Task.Delay(10000);
 
-        await zen.StopZen(new());
+        await zen.Stop(new());
     }
 
     public ZenControl ZenControl { get; set; }
