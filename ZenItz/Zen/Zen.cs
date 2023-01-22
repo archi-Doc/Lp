@@ -4,7 +4,8 @@ namespace ZenItz;
 
 #pragma warning disable SA1401 // Fields should be private
 
-public class Zen
+public class Zen<TIdentifier>
+    where TIdentifier : ITinyhandSerialize<TIdentifier>
 {
     /*public static ZenResult TryOpen(ZenOptions options, out Zen? zen)
     {
@@ -144,19 +145,19 @@ public class Zen
         this.MemoryOwnerToObject = memoryOwnerToObject;
     }
 
-    public Flake? TryCreateOrGet(Identifier id)
+    public Flake<TIdentifier>? TryCreateOrGet(TIdentifier id)
     {
         if (!this.Started)
         {
             return null;
         }
 
-        Flake? flake;
+        Flake<TIdentifier>? flake;
         lock (this.flakeGoshujin)
         {
             if (!this.flakeGoshujin.IdChain.TryGetValue(id, out flake))
             {
-                flake = new Flake(this, id);
+                flake = new Flake<TIdentifier>(this, id);
                 this.flakeGoshujin.Add(flake);
             }
         }
@@ -164,14 +165,14 @@ public class Zen
         return flake;
     }
 
-    public Flake? TryGet(Identifier id)
+    public Flake<TIdentifier>? TryGet(TIdentifier id)
     {
         if (!this.Started)
         {
             return null;
         }
 
-        Flake? flake;
+        Flake<TIdentifier>? flake;
         lock (this.flakeGoshujin)
         {
             this.flakeGoshujin.IdChain.TryGetValue(id, out flake);
@@ -179,7 +180,7 @@ public class Zen
         }
     }
 
-    public bool Remove(Identifier id)
+    public bool Remove(TIdentifier id)
     {
         if (!this.Started)
         {
@@ -197,7 +198,7 @@ public class Zen
         return false;
     }
 
-    public bool TryGetBlock(out Block block)
+    public bool TryGetBlock(out Block<TIdentifier> block)
     {
         if (!this.Started)
         {
@@ -253,9 +254,9 @@ public class Zen
         await this.IO.StopAsync();
     }
 
-    internal FlakeObjectGoshujin FlakeObjectGoshujin;
-    internal FlakeObjectGoshujin FragmentObjectGoshujin;
-    private Flake.GoshujinClass flakeGoshujin = new();
+    internal FlakeObjectGoshujin<TIdentifier> FlakeObjectGoshujin;
+    internal FlakeObjectGoshujin<TIdentifier> FragmentObjectGoshujin;
+    private Flake<TIdentifier>.GoshujinClass flakeGoshujin = new();
 
     private async Task<ZenStartResult> LoadZenDirectory(ZenStartParam param)
     {
@@ -408,7 +409,7 @@ LoadBackup:
 
     private bool DeserializeZen(ReadOnlyMemory<byte> data)
     {
-        if (!TinyhandSerializer.TryDeserialize<Flake.GoshujinClass>(data.Span, out var g))
+        if (!TinyhandSerializer.TryDeserialize<Flake<TIdentifier>.GoshujinClass>(data.Span, out var g))
         {
             return false;
         }

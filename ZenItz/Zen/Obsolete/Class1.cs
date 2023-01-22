@@ -13,12 +13,12 @@ public interface IFragment : IFlake
 [TinyhandUnion(0, typeof(TestFragment))]
 public abstract partial class FlakeBase
 {
-    public bool CheckIdentifier(Identifier identifier)
+    public bool CheckIdentifier(TIdentifier identifier)
     {
         try
         {
             var bytes = TinyhandSerializer.Serialize(this, TinyhandSerializerOptions.Signature);
-            var id = Identifier.FromReadOnlySpan(bytes);
+            var id = TIdentifier.FromReadOnlySpan(bytes);
             return id.Equals(identifier);
         }
         catch

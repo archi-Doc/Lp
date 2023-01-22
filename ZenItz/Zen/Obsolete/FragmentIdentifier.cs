@@ -5,7 +5,7 @@ namespace ZenItz.Obsolete;
 [TinyhandObject]
 public readonly partial struct FragmentIdentifier : IEquatable<FragmentIdentifier>, IComparable<FragmentIdentifier>
 {
-    public FragmentIdentifier(Identifier id, bool isPrimary)
+    public FragmentIdentifier(TIdentifier id, bool isPrimary)
     {
         this.Id = id;
         this.IsPrimary = isPrimary;
@@ -13,12 +13,12 @@ public readonly partial struct FragmentIdentifier : IEquatable<FragmentIdentifie
 
     public FragmentIdentifier()
     {
-        this.Id = default; // Identifier.Zero; ! Must be default since TinyhandSerializer might modify Identifier.Zero.
+        this.Id = default; // TIdentifier.Zero; ! Must be default since TinyhandSerializer might modify TIdentifier.Zero.
         this.IsPrimary = true;
     }
 
     [Key(0)]
-    public readonly Identifier Id;
+    public readonly TIdentifier Id;
 
     [Key(1)]
     public readonly bool IsPrimary;

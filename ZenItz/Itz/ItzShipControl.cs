@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.CompilerServices;
+using ZenItz.Obsolete;
 
 namespace ZenItz;
 
@@ -18,7 +19,7 @@ internal class ItzShipControl
         return ShipCache<TPayload>.Ship;
     }
 
-    public void Register<TPayload>(IItzShip<TPayload> ship)
+    public void Register<TIdentifier, TPayload>(IItzShip<TIdentifier, TPayload> ship)
         where TPayload : IItzPayload
     {
         if (TypeToShip.TryAdd(typeof(TPayload), ship))

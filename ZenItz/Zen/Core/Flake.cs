@@ -11,14 +11,14 @@ namespace ZenItz;
 
 [TinyhandObject(ExplicitKeyOnly = true)]
 [ValueLinkObject]
-public partial class Flake
+public partial class Flake<TIdentifier>
 {
     [Link(Primary = true, Name = "RecentGet", Type = ChainType.LinkedList)]
     internal Flake()
     {
     }
 
-    internal Flake(Zen zen, Identifier identifier)
+    internal Flake(Zen<TIdentifier> zen, TIdentifier identifier)
     {
         this.Zen = zen;
         this.identifier = identifier;
@@ -30,7 +30,7 @@ public partial class Flake
         {
             return ZenResult.NotStarted;
         }
-        else if (data.Length > Zen.MaxFlakeSize)
+        else if (data.Length > this.Zen.Options.MaxDataSize)
         {
             return ZenResult.OverSizeLimit;
         }
@@ -95,13 +95,13 @@ public partial class Flake
         return ZenResult.Success;
     }
 
-    public ZenResult SetFragment(Identifier fragmentId, ReadOnlySpan<byte> data)
+    public ZenResult SetFragment(TIdentifier fragmentId, ReadOnlySpan<byte> data)
     {
         if (!this.Zen.Started)
         {
             return ZenResult.NotStarted;
         }
-        else if (data.Length > Zen.MaxFragmentSize)
+        else if (data.Length > this.Zen.Options.MaxFragmentSize)
         {
             return ZenResult.OverSizeLimit;
         }
@@ -118,7 +118,7 @@ public partial class Flake
         }
     }
 
-    /*internal ZenResult Set(Identifier fragmentId, ByteArrayPool.MemoryOwner data)
+    /*internal ZenResult Set(TIdentifier fragmentId, ByteArrayPool.MemoryOwner data)
     {
         if (!this.Zen.Started)
         {
@@ -141,7 +141,7 @@ public partial class Flake
         }
     }*/
 
-    public ZenResult SetFragmentObject(Identifier fragmentId, object obj)
+    public ZenResult SetFragmentObject(TIdentifier fragmentId, object obj)
     {
         if (!this.Zen.Started)
         {
@@ -275,7 +275,7 @@ public partial class Flake
         return new(ZenResult.NoData);
     }
 
-    public async Task<ZenDataResult> GetFragment(Identifier fragmentId)
+    public async Task<ZenDataResult> GetFragment(TIdentifier fragmentId)
     {
         if (!this.Zen.Started)
         {
@@ -337,7 +337,7 @@ public partial class Flake
         return new(ZenResult.NoData);
     }
 
-    public async Task<ZenObjectResult<T>> GetFragmentObject<T>(Identifier fragmentId)
+    public async Task<ZenObjectResult<T>> GetFragmentObject<T>(TIdentifier fragmentId)
     {
         if (!this.Zen.Started)
         {
@@ -427,9 +427,9 @@ public partial class Flake
         }
     }
 
-    public bool Remove() => this.Zen.Remove(this.Identifier);
+    public bool Remove() => this.Zen.Remove(this.TIdentifier);
 
-    public bool Remove(Identifier fragmentId)
+    public bool Remove(TIdentifier fragmentId)
     {
         if (!this.Zen.Started)
         {
@@ -470,9 +470,9 @@ public partial class Flake
         }
     }
 
-    public Zen Zen { get; internal set; } = default!;
+    public Zen<TIdentifier> Zen { get; internal set; } = default!;
 
-    public Identifier Identifier => this.identifier;
+    public TIdentifier TIdentifier => this.identifier;
 
     public bool IsRemoved => this.Goshujin == null;
 
@@ -504,7 +504,7 @@ public partial class Flake
         return ZenResult.Success;
     }
 
-    internal ZenResult SetInternal(Identifier fragmentId, ReadOnlySpan<byte> data, bool loading)
+    internal ZenResult SetInternal(TIdentifier fragmentId, ReadOnlySpan<byte> data, bool loading)
     {
         if (data.Length > Zen.MaxFragmentSize)
         {
@@ -530,7 +530,7 @@ public partial class Flake
         }
     }*/
 
-    internal void CreateInternal(Flake.GoshujinClass goshujin)
+    internal void CreateInternal(Flake<TIdentifier>.GoshujinClass goshujin)
     {// lock (flakeGoshujin)
         lock (this.syncObject)
         {
@@ -559,7 +559,7 @@ public partial class Flake
     [Key(0)]
     [Link(Name = "Id", NoValue = true, Type = ChainType.Unordered)]
     [Link(Name = "OrderedId", Type = ChainType.Ordered)]
-    internal Identifier identifier;
+    internal TIdentifier identifier;
 
     [Key(1)]
     internal ulong flakeFile;
@@ -568,11 +568,11 @@ public partial class Flake
     internal ulong fragmentFile;
 
     [Key(3)]
-    internal Flake.GoshujinClass? nesteGoshujin;
+    internal Flake<TIdentifier>.GoshujinClass? nesteGoshujin;
 
     private object syncObject = new();
-    private FlakeObject? flakeObject;
-    private FragmentObject? fragmentObject;
+    private FlakeObject<TIdentifier>? flakeObject;
+    private FragmentObject<TIdentifier>? fragmentObject;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void UpdateGetRecentLink()

@@ -13,7 +13,7 @@ public partial class FlakeHeader
     public int Identification { get; set; }
 
     [Key(1)]
-    public Identifier PrimaryId { get; set; }
+    public TIdentifier PrimaryId { get; set; }
 
     [Key(2)]
     public int NumberOfItems { get; set; }

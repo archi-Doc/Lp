@@ -6,9 +6,9 @@ namespace ZenItz;
 
 #pragma warning disable SA1401 // Fields should be private
 
-internal class FlakeObject : FlakeObjectBase
+internal class FlakeObject<TIdentifier> : FlakeObjectBase<TIdentifier>
 {
-    public FlakeObject(Flake flake, FlakeObjectGoshujin goshujin)
+    public FlakeObject(Flake<TIdentifier> flake, FlakeObjectGoshujin goshujin)
         : base(flake, goshujin)
     {
         this.fragment = new(flake.Zen);
@@ -73,5 +73,5 @@ internal class FlakeObject : FlakeObjectBase
         }
     }
 
-    private FlakeData fragment;
+    private FlakeData<TIdentifier> fragment;
 }

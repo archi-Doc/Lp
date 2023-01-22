@@ -5,15 +5,15 @@ namespace ZenItz;
 #pragma warning disable SA1401 // Fields should be private
 
 [ValueLinkObject]
-internal partial class FragmentData : FlakeData
+internal partial class FragmentData<TIdentifier> : FlakeData<TIdentifier>
 {
-    public FragmentData(Zen zen, Identifier identifier)
+    public FragmentData(Zen<TIdentifier> zen, TIdentifier identifier)
         : base(zen)
     {
-        this.Identifier = identifier;
+        this.TIdentifier = identifier;
     }
 
     [Link(Primary = true, NoValue = true, Name = "Id", Type = ChainType.Unordered)]
     [Link(Name = "OrderedId", Type = ChainType.Ordered)]
-    public Identifier Identifier { get; private set; }
+    public TIdentifier TIdentifier { get; private set; }
 }

@@ -6,9 +6,9 @@ namespace ZenItz;
 
 #pragma warning disable SA1401 // Fields should be private
 
-internal partial class FlakeData
+internal partial class FlakeData<TIdentifier>
 {
-    public FlakeData(Zen zen)
+    public FlakeData(Zen<TIdentifier> zen)
     {
         this.Zen = zen;
     }
@@ -140,7 +140,7 @@ internal partial class FlakeData
         return memoryDifference;
     }
 
-    public Zen Zen { get; }
+    public Zen<TIdentifier> Zen { get; }
 
     public object? Object { get; private set; }
 

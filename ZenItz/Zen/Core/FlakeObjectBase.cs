@@ -5,7 +5,7 @@ namespace ZenItz;
 #pragma warning disable SA1401 // Fields should be private
 
 [ValueLinkObject]
-internal partial class FlakeObjectBase
+internal partial class FlakeObjectBase<TIdentifier>
 {
     public enum FlakeObjectOperation
     {
@@ -16,7 +16,7 @@ internal partial class FlakeObjectBase
 
     [Link(Name = "UnloadQueue", Type = ChainType.QueueList)]
     [Link(Name = "SaveQueue", Type = ChainType.QueueList)]
-    public FlakeObjectBase(Flake flake, FlakeObjectGoshujin goshujin)
+    public FlakeObjectBase(Flake<TIdentifier> flake, FlakeObjectGoshujin<TIdentifier> goshujin)
     {
         this.Flake = flake;
         this.FlakeObjectGoshujin = goshujin;
@@ -63,7 +63,7 @@ internal partial class FlakeObjectBase
             }
 
             this.FlakeObjectGoshujin.TotalSize += t.MemoryDifference;
-            while (this.FlakeObjectGoshujin.TotalSize > Zen.DefaultMemorySizeLimit)
+            while (this.FlakeObjectGoshujin.TotalSize > this.Flake.Zen.Options.MemorySizeLimit)
             {// Unload
                 var h = this.FlakeObjectGoshujin.Goshujin.UnloadQueueChain.Peek();
                 h.Save(true);
@@ -80,9 +80,9 @@ internal partial class FlakeObjectBase
         }
     }
 
-    public Flake Flake { get; }
+    public Flake<TIdentifier> Flake { get; }
 
-    public FlakeObjectGoshujin FlakeObjectGoshujin { get; }
+    public FlakeObjectGoshujin<TIdentifier> FlakeObjectGoshujin { get; }
 
     public bool IsSaved { get; protected set; }
 }

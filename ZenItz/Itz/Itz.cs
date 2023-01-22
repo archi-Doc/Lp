@@ -4,7 +4,8 @@ using System.Runtime.CompilerServices;
 
 namespace ZenItz;
 
-public class Itz
+public class Itz<TIdentifier>
+    where TIdentifier : IEquatable<TIdentifier>
 {
     public const string DefaultItzFile = "Itz.main";
     public const string DefaultItzBackup = "Itz.back";
@@ -13,22 +14,22 @@ public class Itz
     {
     }
 
-    public void Register<TPayload>(IItzShip<TPayload> ship)
+    public void Register<TPayload>(IItzShip<TIdentifier, TPayload> ship)
         where TPayload : IItzPayload
     {
-        ItzShipControl.Instance.Register<TPayload>(ship);
+        ItzShipControl.Instance.Register<TIdentifier, TPayload>(ship);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public IItzShip<TPayload> GetShip<TPayload>()
+    public IItzShip<TIdentifier, TPayload> GetShip<TPayload>()
         where TPayload : IItzPayload
-        => ItzShipControl.Instance.GetShip<TPayload>();
+        => ItzShipControl.Instance.GetShip<TIdentifier, TPayload>();
 
-    public void Set<TPayload>(in Identifier id, in TPayload value)
+    public void Set<TPayload>(in TIdentifier id, in TPayload value)
         where TPayload : IItzPayload
         => this.GetShip<TPayload>().Set(in id, in value);
 
-    public ItzResult Get<TPayload>(in Identifier id, out TPayload value)
+    public ItzResult Get<TPayload>(in TIdentifier id, out TPayload value)
         where TPayload : IItzPayload
         => this.GetShip<TPayload>().Get(id, out value);
 

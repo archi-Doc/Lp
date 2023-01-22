@@ -4,15 +4,16 @@
 
 namespace ZenItz;
 
-public partial class ItzShip<T> : IItzShip<T>
-    where T : IItzPayload
+public partial class ItzShip<TIdentifier, TPayload> : IItzShip<TIdentifier, TPayload>
+    where TIdentifier : IEquatable<TIdentifier>
+    where TPayload : IItzPayload
 {
     [TinyhandObject]
     [ValueLinkObject]
     private sealed partial class Item
     {
         [Link(Primary = true, Name = "Queue", Type = ChainType.QueueList)]
-        public Item(Identifier key, T value)
+        public Item(TIdentifier key, TPayload value)
         {
             this.Key = key;
             this.Value = value;
@@ -24,10 +25,10 @@ public partial class ItzShip<T> : IItzShip<T>
 
         [Key(0)]
         [Link(Type = ChainType.Unordered)]
-        internal Identifier Key;
+        internal TIdentifier Key = default!;
 
         [Key(1)]
-        internal T Value = default!;
+        internal TPayload Value = default!;
     }
 
     public ItzShip(int maxCapacity)
@@ -35,7 +36,7 @@ public partial class ItzShip<T> : IItzShip<T>
         this.MaxCapacity = maxCapacity;
     }
 
-    public void Set(in Identifier id, in T value)
+    public void Set(in TIdentifier id, in TPayload value)
     {
         lock (this.goshujin)
         {
@@ -58,7 +59,7 @@ public partial class ItzShip<T> : IItzShip<T>
         }
     }
 
-    public ItzResult Get(in Identifier id, out T value)
+    public ItzResult Get(in TIdentifier id, out TPayload value)
     {
         lock (this.goshujin)
         {

@@ -4,19 +4,19 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace ZenItz;
 
-public readonly struct Block
+public readonly struct Block<TIdentifier>
 {
-    internal Block(Zen zen, Flake.GoshujinClass goshujin)
+    internal Block(Zen<TIdentifier> zen, Flake<TIdentifier>.GoshujinClass goshujin)
     {
         this.Zen = zen;
         this.Goshujin = goshujin;
     }
 
-    public readonly Zen Zen;
+    public readonly Zen<TIdentifier> Zen;
 
-    internal readonly Flake.GoshujinClass Goshujin;
+    internal readonly Flake<TIdentifier>.GoshujinClass Goshujin;
 
-    public bool TryGetOrAddFlake(Identifier id, [MaybeNullWhen(false)] out Flake? flake)
+    public bool TryGetOrAddFlake(TIdentifier id, [MaybeNullWhen(false)] out Flake<TIdentifier>? flake)
     {
         if (!this.Zen.Started)
         {
@@ -28,7 +28,7 @@ public readonly struct Block
         {
             if (!this.Goshujin.IdChain.TryGetValue(id, out flake))
             {
-                flake = new Flake(this.Zen, id);
+                flake = new Flake<TIdentifier>(this.Zen, id);
                 this.Goshujin.Add(flake);
             }
         }
@@ -36,7 +36,7 @@ public readonly struct Block
         return true;
     }
 
-    public bool TryGetFlake(Identifier id, [MaybeNullWhen(false)] out Flake? flake)
+    public bool TryGetFlake(TIdentifier id, [MaybeNullWhen(false)] out Flake<TIdentifier>? flake)
     {
         if (!this.Zen.Started)
         {

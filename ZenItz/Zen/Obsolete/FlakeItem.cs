@@ -10,7 +10,7 @@ public partial class FlakeItem
     }
 
     [Key(0)]
-    public Identifier SecondaryId { get; set; }
+    public TIdentifier SecondaryId { get; set; }
 
     [Key(1)]
     public int FlakeId { get; set; }

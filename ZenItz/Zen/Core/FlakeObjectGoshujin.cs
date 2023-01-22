@@ -4,18 +4,18 @@ namespace ZenItz;
 
 #pragma warning disable SA1401 // Fields should be private
 
-internal class FlakeObjectGoshujin
+internal class FlakeObjectGoshujin<TIdentifier>
 {
-    public FlakeObjectGoshujin(Zen zen)
+    public FlakeObjectGoshujin(Zen<TIdentifier> zen)
     {
         this.Zen = zen;
     }
 
-    public Zen Zen { get; }
+    public Zen<TIdentifier> Zen { get; }
 
-    public FlakeObjectBase.GoshujinClass Goshujin => this.goshujin;
+    public FlakeObjectBase<TIdentifier>.GoshujinClass Goshujin => this.goshujin;
 
     internal long TotalSize;
 
-    private FlakeObjectBase.GoshujinClass goshujin = new();
+    private FlakeObjectBase<TIdentifier>.GoshujinClass goshujin = new();
 }
