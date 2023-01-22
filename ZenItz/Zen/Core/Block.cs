@@ -4,49 +4,52 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace ZenItz;
 
-public readonly struct Block<TIdentifier>
+public partial class Zen<TIdentifier>
 {
-    internal Block(Zen<TIdentifier> zen, Flake<TIdentifier>.GoshujinClass goshujin)
+    public readonly struct Block
     {
-        this.Zen = zen;
-        this.Goshujin = goshujin;
-    }
-
-    public readonly Zen<TIdentifier> Zen;
-
-    internal readonly Flake<TIdentifier>.GoshujinClass Goshujin;
-
-    public bool TryGetOrAddFlake(TIdentifier id, [MaybeNullWhen(false)] out Flake<TIdentifier>? flake)
-    {
-        if (!this.Zen.Started)
+        internal Block(Zen<TIdentifier> zen, Flake.GoshujinClass goshujin)
         {
-            flake = null;
-            return false;
+            this.Zen = zen;
+            this.Goshujin = goshujin;
         }
 
-        lock (this.Goshujin)
+        public readonly Zen<TIdentifier> Zen;
+
+        internal readonly Flake.GoshujinClass Goshujin;
+
+        public bool TryGetOrAddFlake(TIdentifier id, [MaybeNullWhen(false)] out Flake? flake)
         {
-            if (!this.Goshujin.IdChain.TryGetValue(id, out flake))
+            if (!this.Zen.Started)
             {
-                flake = new Flake<TIdentifier>(this.Zen, id);
-                this.Goshujin.Add(flake);
+                flake = null;
+                return false;
             }
+
+            lock (this.Goshujin)
+            {
+                if (!this.Goshujin.IdChain.TryGetValue(id, out flake))
+                {
+                    flake = new Flake(this.Zen, id);
+                    this.Goshujin.Add(flake);
+                }
+            }
+
+            return true;
         }
 
-        return true;
-    }
-
-    public bool TryGetFlake(TIdentifier id, [MaybeNullWhen(false)] out Flake<TIdentifier>? flake)
-    {
-        if (!this.Zen.Started)
+        public bool TryGetFlake(TIdentifier id, [MaybeNullWhen(false)] out Flake? flake)
         {
-            flake = null;
-            return false;
-        }
+            if (!this.Zen.Started)
+            {
+                flake = null;
+                return false;
+            }
 
-        lock (this.Goshujin)
-        {
-            return this.Goshujin.IdChain.TryGetValue(id, out flake);
+            lock (this.Goshujin)
+            {
+                return this.Goshujin.IdChain.TryGetValue(id, out flake);
+            }
         }
     }
 }

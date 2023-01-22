@@ -4,85 +4,88 @@ namespace ZenItz;
 
 #pragma warning disable SA1401 // Fields should be private
 
-[ValueLinkObject]
-internal partial class FlakeObjectBase<TIdentifier>
+public partial class Zen<TIdentifier>
 {
-    public enum FlakeObjectOperation
+    [ValueLinkObject]
+    internal partial class FlakeObjectBase
     {
-        Set, // Set value
-        Get, // Get value
-        Remove,
-    }
-
-    [Link(Name = "UnloadQueue", Type = ChainType.QueueList)]
-    [Link(Name = "SaveQueue", Type = ChainType.QueueList)]
-    public FlakeObjectBase(Flake<TIdentifier> flake, FlakeObjectGoshujin<TIdentifier> goshujin)
-    {
-        this.Flake = flake;
-        this.FlakeObjectGoshujin = goshujin;
-    }
-
-    internal virtual void Save(bool unload)
-    {
-    }
-
-    internal void UpdateQueue(FlakeObjectOperation operation, (bool Changed, int MemoryDifference) t)
-    {// Update queue link.
-        if (t.Changed)
+        public enum FlakeObjectOperation
         {
-            this.IsSaved = false;
+            Set, // Set value
+            Get, // Get value
+            Remove,
         }
 
-        lock (this.FlakeObjectGoshujin.Goshujin)
+        [Link(Name = "UnloadQueue", Type = ChainType.QueueList)]
+        [Link(Name = "SaveQueue", Type = ChainType.QueueList)]
+        public FlakeObjectBase(Flake flake, FlakeObjectGoshujinClass goshujin)
         {
-            if (operation == FlakeObjectOperation.Remove)
-            {// Remove
-                this.Goshujin = null;
+            this.Flake = flake;
+            this.FlakeObjectGoshujin = goshujin;
+        }
+
+        internal virtual void Save(bool unload)
+        {
+        }
+
+        internal void UpdateQueue(FlakeObjectOperation operation, (bool Changed, int MemoryDifference) t)
+        {// Update queue link.
+            if (t.Changed)
+            {
+                this.IsSaved = false;
             }
-            else
-            {// Get or Set
-                if (this.Goshujin == null)
-                {// New
-                    this.Goshujin = this.FlakeObjectGoshujin.Goshujin;
+
+            lock (this.FlakeObjectGoshujin.Goshujin)
+            {
+                if (operation == FlakeObjectOperation.Remove)
+                {// Remove
+                    this.Goshujin = null;
                 }
                 else
-                {// Update
-                    if (operation == FlakeObjectOperation.Get)
-                    {// Get
-                        this.Goshujin.UnloadQueueChain.Remove(this);
-                        this.Goshujin.UnloadQueueChain.Enqueue(this);
+                {// Get or Set
+                    if (this.Goshujin == null)
+                    {// New
+                        this.Goshujin = this.FlakeObjectGoshujin.Goshujin;
                     }
                     else
-                    {// Set
-                        this.Goshujin.UnloadQueueChain.Remove(this);
-                        this.Goshujin.UnloadQueueChain.Enqueue(this);
-                        this.Goshujin.SaveQueueChain.Remove(this);
-                        this.Goshujin.SaveQueueChain.Enqueue(this);
+                    {// Update
+                        if (operation == FlakeObjectOperation.Get)
+                        {// Get
+                            this.Goshujin.UnloadQueueChain.Remove(this);
+                            this.Goshujin.UnloadQueueChain.Enqueue(this);
+                        }
+                        else
+                        {// Set
+                            this.Goshujin.UnloadQueueChain.Remove(this);
+                            this.Goshujin.UnloadQueueChain.Enqueue(this);
+                            this.Goshujin.SaveQueueChain.Remove(this);
+                            this.Goshujin.SaveQueueChain.Enqueue(this);
+                        }
                     }
                 }
-            }
 
-            this.FlakeObjectGoshujin.TotalSize += t.MemoryDifference;
-            while (this.FlakeObjectGoshujin.TotalSize > this.Flake.Zen.Options.MemorySizeLimit)
-            {// Unload
-                var h = this.FlakeObjectGoshujin.Goshujin.UnloadQueueChain.Peek();
-                h.Save(true);
+                this.FlakeObjectGoshujin.TotalSize += t.MemoryDifference;
+                while (this.FlakeObjectGoshujin.TotalSize > this.Flake.Zen.Options.MemorySizeLimit)
+                {// Unload
+                    var h = this.FlakeObjectGoshujin.Goshujin.UnloadQueueChain.Peek();
+                    h.Save(true);
+                }
             }
         }
-    }
 
-    internal void RemoveQueue(int memoryDifference)
-    {// Remove link
-        lock (this.FlakeObjectGoshujin.Goshujin)
-        {
-            this.FlakeObjectGoshujin.TotalSize += memoryDifference;
-            this.Goshujin = null;
+        internal void RemoveQueue(int memoryDifference)
+        {// Remove link
+            lock (this.FlakeObjectGoshujin.Goshujin)
+            {
+                this.FlakeObjectGoshujin.TotalSize += memoryDifference;
+                this.Goshujin = null;
+            }
         }
+
+        public Flake Flake { get; }
+
+        public FlakeObjectGoshujinClass FlakeObjectGoshujin { get; }
+
+        public bool IsSaved { get; protected set; }
     }
-
-    public Flake<TIdentifier> Flake { get; }
-
-    public FlakeObjectGoshujin<TIdentifier> FlakeObjectGoshujin { get; }
-
-    public bool IsSaved { get; protected set; }
 }

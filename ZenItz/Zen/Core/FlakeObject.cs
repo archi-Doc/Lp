@@ -4,74 +4,75 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace ZenItz;
 
-#pragma warning disable SA1401 // Fields should be private
-
-internal class FlakeObject<TIdentifier> : FlakeObjectBase<TIdentifier>
+public partial class Zen<TIdentifier>
 {
-    public FlakeObject(Flake<TIdentifier> flake, FlakeObjectGoshujin goshujin)
-        : base(flake, goshujin)
+    internal class FlakeObject : FlakeObjectBase
     {
-        this.fragment = new(flake.Zen);
-    }
+        public FlakeObject(Flake flake, FlakeObjectGoshujinClass goshujin)
+            : base(flake, goshujin)
+        {
+            this.fragment = new(flake.Zen);
+        }
 
-    public void SetSpan(ReadOnlySpan<byte> data)
-    {// lock (Flake.syncObject)
-        this.UpdateQueue(FlakeObjectOperation.Set, this.fragment.SetSpan(data));
-    }
+        public void SetSpan(ReadOnlySpan<byte> data)
+        {// lock (Flake.syncObject)
+            this.UpdateQueue(FlakeObjectOperation.Set, this.fragment.SetSpan(data));
+        }
 
-    public void SetObject(object obj)
-    {// lock (Flake.syncObject)
-        this.UpdateQueue(FlakeObjectOperation.Set, this.fragment.SetObject(obj));
-    }
+        public void SetObject(object obj)
+        {// lock (Flake.syncObject)
+            this.UpdateQueue(FlakeObjectOperation.Set, this.fragment.SetObject(obj));
+        }
 
-    public void SetMemoryOwner(ByteArrayPool.MemoryOwner dataToBeMoved)
-    {// lock (Flake.syncObject)
-        this.UpdateQueue(FlakeObjectOperation.Set, this.fragment.SetMemoryOwner(dataToBeMoved));
-    }
+        public void SetMemoryOwner(ByteArrayPool.MemoryOwner dataToBeMoved)
+        {// lock (Flake.syncObject)
+            this.UpdateQueue(FlakeObjectOperation.Set, this.fragment.SetMemoryOwner(dataToBeMoved));
+        }
 
-    public void SetMemoryOwner(ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved)
-    {// lock (Flake.syncObject)
-        this.UpdateQueue(FlakeObjectOperation.Set, this.fragment.SetMemoryOwner(dataToBeMoved));
-    }
+        public void SetMemoryOwner(ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved)
+        {// lock (Flake.syncObject)
+            this.UpdateQueue(FlakeObjectOperation.Set, this.fragment.SetMemoryOwner(dataToBeMoved));
+        }
 
-    public bool TryGetSpan(out ReadOnlySpan<byte> data)
-    {// lock (Flake.syncObject)
-        return this.fragment.TryGetSpan(out data);
-    }
+        public bool TryGetSpan(out ReadOnlySpan<byte> data)
+        {// lock (Flake.syncObject)
+            return this.fragment.TryGetSpan(out data);
+        }
 
-    public bool TryGetMemoryOwner(out ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
-    {// lock (Flake.syncObject)
-        return this.fragment.TryGetMemoryOwner(out memoryOwner);
-    }
+        public bool TryGetMemoryOwner(out ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
+        {// lock (Flake.syncObject)
+            return this.fragment.TryGetMemoryOwner(out memoryOwner);
+        }
 
-    public bool TryGetObject([MaybeNullWhen(false)] out object? obj)
-    {// lock (Flake.syncObject)
-        return this.fragment.TryGetObject(out obj);
-    }
+        public bool TryGetObject([MaybeNullWhen(false)] out object? obj)
+        {// lock (Flake.syncObject)
+            return this.fragment.TryGetObject(out obj);
+        }
 
-    public void Unload()
-    {// lock (Flake.syncObject)
-        this.RemoveQueue(this.fragment.Clear());
-    }
+        public void Unload()
+        {// lock (Flake.syncObject)
+            this.RemoveQueue(this.fragment.Clear());
+        }
 
-    internal override void Save(bool unload)
-    {// lock (this.FlakeObjectGoshujin.Goshujin)
-        if (!this.IsSaved)
-        {// Not saved.
-            if (this.fragment.TryGetMemoryOwner(out var memoryOwner))
-            {
-                this.Flake.Zen.IO.Save(ref this.Flake.flakeFile, memoryOwner);
-                memoryOwner.Return();
+        internal override void Save(bool unload)
+        {// lock (this.FlakeObjectGoshujin.Goshujin)
+            if (!this.IsSaved)
+            {// Not saved.
+                if (this.fragment.TryGetMemoryOwner(out var memoryOwner))
+                {
+                    this.Flake.Zen.IO.Save(ref this.Flake.flakeFile, memoryOwner);
+                    memoryOwner.Return();
+                }
+
+                this.IsSaved = true;
             }
 
-            this.IsSaved = true;
+            if (unload)
+            {// Unload
+                this.Unload();
+            }
         }
 
-        if (unload)
-        {// Unload
-            this.Unload();
-        }
+        private FlakeData fragment;
     }
-
-    private FlakeData<TIdentifier> fragment;
 }

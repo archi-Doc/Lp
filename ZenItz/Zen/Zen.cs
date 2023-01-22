@@ -4,8 +4,13 @@ namespace ZenItz;
 
 #pragma warning disable SA1401 // Fields should be private
 
-public class Zen<TIdentifier>
-    where TIdentifier : ITinyhandSerialize<TIdentifier>
+public class Zen : Zen<Identifier>
+{
+    public const long DefaultDirectoryCapacity = 1024L * 1024 * 1024 * 10; // 10GB
+}
+
+public partial class Zen<TIdentifier>
+    where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
 {
     /*public static ZenResult TryOpen(ZenOptions options, out Zen? zen)
     {
@@ -28,7 +33,7 @@ public class Zen<TIdentifier>
     public const int MaxFragmentSize = 1024 * 4; // 4KB
     public const int MaxFragmentCount = 1000;
     public const long DefaultMemorySizeLimit = 1024 * 1024 * 100; // 100MB
-    public const long DefaultDirectoryCapacity = 1024L * 1024 * 1024 * 10; // 10GB
+    
 
     public const string DefaultZenDirectory = "Zen";
     public const string DefaultZenFile = "Zen.main";
@@ -145,19 +150,19 @@ public class Zen<TIdentifier>
         this.MemoryOwnerToObject = memoryOwnerToObject;
     }
 
-    public Flake<TIdentifier>? TryCreateOrGet(TIdentifier id)
+    public Flake? TryCreateOrGet(TIdentifier id)
     {
         if (!this.Started)
         {
             return null;
         }
 
-        Flake<TIdentifier>? flake;
+        Flake? flake;
         lock (this.flakeGoshujin)
         {
             if (!this.flakeGoshujin.IdChain.TryGetValue(id, out flake))
             {
-                flake = new Flake<TIdentifier>(this, id);
+                flake = new Flake(this, id);
                 this.flakeGoshujin.Add(flake);
             }
         }
@@ -165,14 +170,14 @@ public class Zen<TIdentifier>
         return flake;
     }
 
-    public Flake<TIdentifier>? TryGet(TIdentifier id)
+    public Flake? TryGet(TIdentifier id)
     {
         if (!this.Started)
         {
             return null;
         }
 
-        Flake<TIdentifier>? flake;
+        Flake? flake;
         lock (this.flakeGoshujin)
         {
             this.flakeGoshujin.IdChain.TryGetValue(id, out flake);
@@ -198,7 +203,7 @@ public class Zen<TIdentifier>
         return false;
     }
 
-    public bool TryGetBlock(out Block<TIdentifier> block)
+    public bool TryGetBlock(out Block block)
     {
         if (!this.Started)
         {
@@ -254,9 +259,9 @@ public class Zen<TIdentifier>
         await this.IO.StopAsync();
     }
 
-    internal FlakeObjectGoshujin<TIdentifier> FlakeObjectGoshujin;
-    internal FlakeObjectGoshujin<TIdentifier> FragmentObjectGoshujin;
-    private Flake<TIdentifier>.GoshujinClass flakeGoshujin = new();
+    internal FlakeObjectGoshujinClass FlakeObjectGoshujin;
+    internal FlakeObjectGoshujinClass FragmentObjectGoshujin;
+    private Flake.GoshujinClass flakeGoshujin = new();
 
     private async Task<ZenStartResult> LoadZenDirectory(ZenStartParam param)
     {
@@ -409,7 +414,7 @@ LoadBackup:
 
     private bool DeserializeZen(ReadOnlyMemory<byte> data)
     {
-        if (!TinyhandSerializer.TryDeserialize<Flake<TIdentifier>.GoshujinClass>(data.Span, out var g))
+        if (!TinyhandSerializer.TryDeserialize<Flake.GoshujinClass>(data.Span, out var g))
         {
             return false;
         }

@@ -14,7 +14,6 @@ public enum ZenDirectoryType
 [ValueLinkObject]
 internal partial class ZenDirectory
 {
-    public const int DefaultMaxSnowflakeSize = 1024 * 1024 * 1024; // 1GB = 4MB x 256
     public const int HashSize = 8;
 
     [Link(Primary = true, Name = "List", Type = ChainType.List)]
