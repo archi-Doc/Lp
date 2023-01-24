@@ -11,7 +11,7 @@ public class Itz : Itz<Identifier>
 }
 
 public partial class Itz<TIdentifier>
-    where TIdentifier : IEquatable<TIdentifier>
+    where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
 {
     public Itz()
     {

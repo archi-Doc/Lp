@@ -21,7 +21,7 @@ public class ZenDirSubcommandAdd : ISimpleCommandAsync<ZenDirOptionsAdd>
 
     public async Task RunAsync(ZenDirOptionsAdd option, string[] args)
     {
-        long cap = Zen.DefaultDirectoryCapacity;
+        long cap = ZenOptions.DefaultDirectoryCapacity;
         if (option.Capacity != 0)
         {
             cap = (long)option.Capacity * 1024 * 1024 * 1024;

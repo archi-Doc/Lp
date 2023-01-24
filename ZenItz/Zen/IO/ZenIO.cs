@@ -23,7 +23,7 @@ public sealed class ZenIO
         return this.directoryGoshujin.Select(a => a.GetInformation()).ToArray();
     }
 
-    public AddDictionaryResult AddDirectory(string path, uint id = 0, long capacity = Zen.DefaultDirectoryCapacity)
+    public AddDictionaryResult AddDirectory(string path, uint id = 0, long capacity = ZenOptions.DefaultDirectoryCapacity)
     {
         if (this.Started)
         {
@@ -31,7 +31,7 @@ public sealed class ZenIO
         }
         else if (capacity < 0)
         {
-            capacity = Zen.DefaultDirectoryCapacity;
+            capacity = ZenOptions.DefaultDirectoryCapacity;
         }
 
         if (path.EndsWith('\\'))

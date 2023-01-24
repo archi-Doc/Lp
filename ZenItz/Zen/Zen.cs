@@ -6,42 +6,11 @@ namespace ZenItz;
 
 public class Zen : Zen<Identifier>
 {
-    public const long DefaultDirectoryCapacity = 1024L * 1024 * 1024 * 10; // 10GB
 }
 
 public partial class Zen<TIdentifier>
     where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
 {
-    /*public static ZenResult TryOpen(ZenOptions options, out Zen? zen)
-    {
-        zen = default;
-
-        try
-        {
-            Directory.CreateDirectory(options.ZenPath);
-        }
-        catch
-        {
-            return ZenResult.NoDirectory;
-        }
-
-        zen = new(options);
-        return ZenResult.Success;
-    }*/
-
-    public const int MaxFlakeSize = 1024 * 1024 * 4; // 4MB
-    public const int MaxFragmentSize = 1024 * 4; // 4KB
-    public const int MaxFragmentCount = 1000;
-    public const long DefaultMemorySizeLimit = 1024 * 1024 * 100; // 100MB
-
-    public const string DefaultZenDirectory = "Zen";
-    public const string DefaultZenFile = "Zen.main";
-    public const string DefaultZenBackup = "Zen.back";
-    public const string DefaultZenDirectoryFile = "ZenDirectory.main";
-    public const string DefaultZenDirectoryBackup = "ZenDirectory.back";
-    public const string DefaultDirectoryFile = "Snowflake.main";
-    public const string DefaultDirectoryBackup = "Snowflake.back";
-
     public delegate bool ObjectToMemoryOwnerDelegate(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved);
 
     public delegate object? MemoryOwnerToObjectDelegate(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner);

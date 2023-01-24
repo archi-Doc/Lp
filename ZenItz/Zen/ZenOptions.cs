@@ -5,6 +5,11 @@ namespace ZenItz;
 public record ZenOptions
 {
     public const string DefaultZenDirectory = "Zen";
+    public const long DefaultDirectoryCapacity = 1024L * 1024 * 1024 * 10; // 10GB
+    public const int DefaultMaxDataSize = 1024 * 1024 * 4; // 4MB
+    public const int DefaultMaxFragmentSize = 1024 * 4; // 4KB
+    public const int DefaultMaxFragmentCount = 1000;
+    public const int DefaultMemorySizeLimit = 1024 * 1024 * 100; // 100MB
 
     public static ZenOptions Standard { get; } = new ZenOptions();
 
@@ -27,13 +32,13 @@ public record ZenOptions
     /// </summary>
     public string SnowflakePath { get; init; }
 
-    public int MaxDataSize { get; init; } = 1024 * 1024 * 4; // 4MB
+    public int MaxDataSize { get; init; } = DefaultMaxDataSize;
 
-    public int MaxFragmentSize { get; init; } = 1024 * 4; // 4KB
+    public int MaxFragmentSize { get; init; } = DefaultMaxFragmentSize;
 
-    public int MaxFragmentCount { get; init; } = 1000;
+    public int MaxFragmentCount { get; init; } = DefaultMaxFragmentCount;
 
-    public long MemorySizeLimit { get; init; } = 1024 * 1024 * 100; // 100MB
+    public long MemorySizeLimit { get; init; } = DefaultMemorySizeLimit;
 
     public long DirectoryCapacity { get; init; } = 1024L * 1024 * 1024 * 10; // 10GB
 
