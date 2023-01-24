@@ -2,9 +2,6 @@
 
 namespace ZenItz;
 
-public partial class Itz<TIdentifier>
+public interface IPayload
 {
-    public interface IPayload
-    {
-    }
 }
