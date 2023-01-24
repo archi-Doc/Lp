@@ -7,7 +7,7 @@ using Tinyhand;
 namespace ZenItzTest;
 
 [TinyhandObject]
-public partial struct IntPayload : Itz.IPayload
+public partial struct IntPayload : IPayload
 {
     public IntPayload()
     {
@@ -33,17 +33,17 @@ public partial struct IntPayload : Itz.IPayload
     public string Data3;
 }
 
-public record struct IntPayloadTest : Itz<Identifier>.IPayload
+public record struct IntPayloadTest : IPayload
 {
     [Key(0)]
     public int Data;
 }
 
 [TinyhandObject(ImplicitKeyAsName = true)]
-public partial record struct IntPayload2(int Data2) : Itz.IPayload;
+public partial record struct IntPayload2(int Data2) : IPayload;
 
 [TinyhandObject(ImplicitKeyAsName = true)]
-public partial record class IntPayload3(int Data2) : Itz.IPayload;
+public partial record class IntPayload3(int Data2) : IPayload;
 
 [SimpleCommand("itztest")]
 public class ItzTestSubcommand : ISimpleCommandAsync<BasicTestOptions>

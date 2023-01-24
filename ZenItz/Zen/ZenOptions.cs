@@ -11,7 +11,7 @@ public record ZenOptions
     /// <summary>
     /// Initializes a new instance of the <see cref="ZenOptions"/> class.
     /// </summary>
-    protected internal ZenOptions()
+    public ZenOptions()
     {
         this.ZenPath = Directory.GetCurrentDirectory();
         this.SnowflakePath = System.IO.Path.Combine(this.ZenPath, DefaultZenDirectory);

@@ -35,6 +35,7 @@ public class ZenControl
 
                 // Main services
                 context.AddSingleton<ZenControl>();
+                context.AddSingleton<ZenOptions>();
                 context.AddSingleton<Zen>();
                 context.AddSingleton<Itz>();
 

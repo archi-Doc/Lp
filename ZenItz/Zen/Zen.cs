@@ -33,7 +33,6 @@ public partial class Zen<TIdentifier>
     public const int MaxFragmentSize = 1024 * 4; // 4KB
     public const int MaxFragmentCount = 1000;
     public const long DefaultMemorySizeLimit = 1024 * 1024 * 100; // 100MB
-    
 
     public const string DefaultZenDirectory = "Zen";
     public const string DefaultZenFile = "Zen.main";
@@ -58,9 +57,9 @@ public partial class Zen<TIdentifier>
         return null;
     }
 
-    internal Zen()
+    public Zen(ZenOptions? options = null)
     {
-        this.Options = ZenOptions.Standard;
+        this.Options = options ?? ZenOptions.Standard;
         this.IO = new();
         this.FlakeObjectGoshujin = new(this);
         this.FragmentObjectGoshujin = new(this);
