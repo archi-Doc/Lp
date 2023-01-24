@@ -59,7 +59,7 @@ public class BasicTest
         f.IsNotNull();
 
         // Set fragments
-        for (var i = 0; i < Zen.MaxFragmentCount; i++)
+        for (var i = 0; i < ZenOptions.DefaultMaxFragmentCount; i++)
         {
             identifier = new Identifier(i);
             identifier.TryWriteBytes(buffer);
@@ -67,7 +67,7 @@ public class BasicTest
             f!.SetFragment(identifier, buffer).Is(ZenResult.Success);
         }
 
-        identifier = new Identifier(Zen.MaxFragmentCount);
+        identifier = new Identifier(1);
         identifier.TryWriteBytes(buffer);
 
         f!.SetFragment(identifier, buffer).Is(ZenResult.OverNumberLimit);

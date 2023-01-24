@@ -7,7 +7,7 @@ public static class FlakeFragmentPool
     static FlakeFragmentPool()
     {
         pool = new ByteArrayPool(ZenOptions.DefaultMaxDataSize, (int)(ZenOptions.DefaultMemorySizeLimit / ZenOptions.DefaultMaxDataSize));
-        pool.SetMaxPoolBelow(Zen.MaxFragmentSize, 0);
+        pool.SetMaxPoolBelow(ZenOptions.DefaultMaxFragmentSize, 0);
     }
 
     public static ByteArrayPool Pool => pool;

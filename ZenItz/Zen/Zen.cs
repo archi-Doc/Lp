@@ -93,11 +93,11 @@ public partial class Zen<TIdentifier>
         await this.IO.StopAsync();
 
         // Save Zen
-        await this.SerializeZen(param.ZenFile, param.ZenBackup);
+        await this.SerializeZen(this.Options.ZenFile, this.Options.ZenBackup);
 
         // Save directory information
         var byteArray = this.IO.Serialize();
-        await HashHelper.GetFarmHashAndSaveAsync(byteArray, param.ZenDirectoryFile, param.ZenDirectoryBackup);
+        await HashHelper.GetFarmHashAndSaveAsync(byteArray, this.Options.ZenDirectoryFile, this.Options.ZenDirectoryBackup);
     }
 
     public async Task Abort()
@@ -238,7 +238,7 @@ public partial class Zen<TIdentifier>
         byte[]? data;
         try
         {
-            data = await File.ReadAllBytesAsync(param.ZenDirectoryFile);
+            data = await File.ReadAllBytesAsync(this.Options.ZenDirectoryFile);
         }
         catch
         {
@@ -251,7 +251,7 @@ public partial class Zen<TIdentifier>
             goto LoadBackup;
         }
 
-        result = await this.IO.TryStart(param, memory);
+        result = await this.IO.TryStart(this.Options, param, memory);
         if (result == ZenStartResult.Success || param.ForceStart)
         {
             return ZenStartResult.Success;
@@ -262,13 +262,13 @@ public partial class Zen<TIdentifier>
 LoadBackup:
         try
         {
-            data = await File.ReadAllBytesAsync(param.ZenDirectoryBackup);
+            data = await File.ReadAllBytesAsync(this.Options.ZenDirectoryBackup);
         }
         catch
         {
             if (await param.Query(ZenStartResult.ZenDirectoryNotFound))
             {
-                result = await this.IO.TryStart(param, null);
+                result = await this.IO.TryStart(this.Options, param, null);
                 if (result == ZenStartResult.Success || param.ForceStart)
                 {
                     return ZenStartResult.Success;
@@ -287,7 +287,7 @@ LoadBackup:
         {
             if (await param.Query(ZenStartResult.ZenDirectoryError))
             {
-                result = await this.IO.TryStart(param, null);
+                result = await this.IO.TryStart(this.Options, param, null);
                 if (result == ZenStartResult.Success || param.ForceStart)
                 {
                     return ZenStartResult.Success;
@@ -301,7 +301,7 @@ LoadBackup:
             }
         }
 
-        result = await this.IO.TryStart(param, memory);
+        result = await this.IO.TryStart(this.Options, param, memory);
         if (result == ZenStartResult.Success || param.ForceStart)
         {
             return ZenStartResult.Success;
@@ -316,7 +316,7 @@ LoadBackup:
         byte[]? data;
         try
         {
-            data = await File.ReadAllBytesAsync(param.ZenFile);
+            data = await File.ReadAllBytesAsync(this.Options.ZenFile);
         }
         catch
         {
@@ -337,7 +337,7 @@ LoadBackup:
 LoadBackup:
         try
         {
-            data = await File.ReadAllBytesAsync(param.ZenBackup);
+            data = await File.ReadAllBytesAsync(this.Options.ZenBackup);
         }
         catch
         {

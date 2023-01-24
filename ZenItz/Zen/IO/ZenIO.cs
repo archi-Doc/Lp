@@ -158,7 +158,7 @@ public sealed class ZenIO
         this.Started = true;
     }
 
-    internal async Task<ZenStartResult> TryStart(ZenStartParam param, ReadOnlyMemory<byte>? data)
+    internal async Task<ZenStartResult> TryStart(ZenOptions options, ZenStartParam param, ReadOnlyMemory<byte>? data)
     {
         if (this.Started)
         {
@@ -198,11 +198,11 @@ public sealed class ZenIO
             return ZenStartResult.ZenFileError;
         }
 
-        if (param.DefaultFolder != null && goshujin.DirectoryIdChain.Count == 0)
+        if (goshujin.DirectoryIdChain.Count == 0)
         {
             try
             {
-                var defaultDirectory = new ZenDirectory(this.GetFreeDirectoryId(goshujin), param.DefaultFolder);
+                var defaultDirectory = new ZenDirectory(this.GetFreeDirectoryId(goshujin), options.SnowflakePath);
                 defaultDirectory.PrepareAndCheck(this.RootDirectory);
                 goshujin.Add(defaultDirectory);
             }

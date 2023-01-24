@@ -235,7 +235,7 @@ internal partial class ZenDirectory
     [IgnoreMember]
     public string RootedPath { get; private set; } = string.Empty;
 
-    public string DirectoryFile => Path.Combine(this.RootedPath, Zen.DefaultDirectoryFile);
+    public string DirectoryFile => Path.Combine(this.RootedPath, ZenOptions.DefaultDirectoryFile);
 
     public string DirectoryBackup => Path.Combine(this.RootedPath, Zen.DefaultDirectoryBackup);
 

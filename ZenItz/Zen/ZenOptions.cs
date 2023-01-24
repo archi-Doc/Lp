@@ -4,7 +4,7 @@ namespace ZenItz;
 
 public record ZenOptions
 {
-    public const string DefaultZenDirectory = "Zen";
+    public const string DefaultSnowflakeDirectory = "Zen";
     public const long DefaultDirectoryCapacity = 1024L * 1024 * 1024 * 10; // 10GB
     public const int DefaultMaxDataSize = 1024 * 1024 * 4; // 4MB
     public const int DefaultMaxFragmentSize = 1024 * 4; // 4KB
@@ -19,7 +19,7 @@ public record ZenOptions
     public ZenOptions()
     {
         this.ZenPath = Directory.GetCurrentDirectory();
-        this.SnowflakePath = System.IO.Path.Combine(this.ZenPath, DefaultZenDirectory);
+        this.SnowflakePath = System.IO.Path.Combine(this.ZenPath, DefaultSnowflakeDirectory);
     }
 
     /// <summary>
