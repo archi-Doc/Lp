@@ -7,7 +7,7 @@ using Tinyhand;
 namespace ZenItzTest;
 
 [TinyhandObject]
-public partial struct IntPayload : IItzPayload
+public partial struct IntPayload : IPayload
 {
     public IntPayload()
     {
@@ -33,17 +33,17 @@ public partial struct IntPayload : IItzPayload
     public string Data3;
 }
 
-public record struct IntPayloadTest : IItzPayload
+public record struct IntPayloadTest : IPayload
 {
     [Key(0)]
     public int Data;
 }
 
 [TinyhandObject(ImplicitKeyAsName = true)]
-public partial record struct IntPayload2(int Data2) : IItzPayload;
+public partial record struct IntPayload2(int Data2) : IPayload;
 
 [TinyhandObject(ImplicitKeyAsName = true)]
-public partial record class IntPayload3(int Data2) : IItzPayload;
+public partial record class IntPayload3(int Data2) : IPayload;
 
 [SimpleCommand("itztest")]
 public class ItzTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
@@ -58,8 +58,8 @@ public class ItzTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         var zen = this.ZenControl.Zen;
         var itz = this.ZenControl.Itz;
 
-        itz.Register(new ItzShip<IntPayload>(1_000_000));
-        itz.Register(new ItzShip<IntPayload2>(3));
+        itz.Register(new Itz.DefaultShip<IntPayload>(1_000_000));
+        itz.Register(new Itz.DefaultShip<IntPayload2>(3));
 
         var sw = Stopwatch.StartNew();
         Console.WriteLine($"Loaded: {await itz.LoadAsync("itz.test")}, {itz.TotalCount()}");

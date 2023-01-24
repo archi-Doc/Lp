@@ -35,8 +35,8 @@ public class ZenControl
 
                 // Main services
                 context.AddSingleton<ZenControl>();
+                context.AddSingleton<ZenOptions>();
                 context.AddSingleton<Zen>();
-                context.AddSingleton<ZenIO>();
                 context.AddSingleton<Itz>();
 
                 // Subcommands
@@ -56,15 +56,23 @@ public class ZenControl
         }
     }
 
-    public ZenControl(Zen zen, Itz itz)
+    public ZenControl(Zen zen, ZenOptions options, Itz itz)
     {
         this.Zen = zen;
+        this.Zen.Options = options;
         this.Itz = itz;
+    }
+
+    public Zen GetOrAdd(string name)
+    {
+        return this.dictionary.GetOrAdd(name, x => new Zen());
     }
 
     public Zen Zen { get; }
 
     public Itz Itz { get; }
+
+    private ConcurrentDictionary<string, Zen> dictionary = new();
 
     public bool ExaltationOfIntegrality { get; } = true; // by Baxter.
 }

@@ -8,9 +8,8 @@ public sealed class ZenIO
 {
     public const int DirectoryRotationThreshold = 1024 * 1024 * 1; // 100 MB
 
-    public ZenIO(UnitLogger unitLogger)
+    public ZenIO()
     {
-        this.unitLogger = unitLogger;
         this.RootDirectory = Directory.GetCurrentDirectory();
     }
 
@@ -24,7 +23,7 @@ public sealed class ZenIO
         return this.directoryGoshujin.Select(a => a.GetInformation()).ToArray();
     }
 
-    public AddDictionaryResult AddDirectory(string path, uint id = 0, long capacity = Zen.DefaultDirectoryCapacity)
+    public AddDictionaryResult AddDirectory(string path, uint id = 0, long capacity = ZenOptions.DefaultDirectoryCapacity)
     {
         if (this.Started)
         {
@@ -32,7 +31,7 @@ public sealed class ZenIO
         }
         else if (capacity < 0)
         {
-            capacity = Zen.DefaultDirectoryCapacity;
+            capacity = ZenOptions.DefaultDirectoryCapacity;
         }
 
         if (path.EndsWith('\\'))
@@ -159,7 +158,7 @@ public sealed class ZenIO
         this.Started = true;
     }
 
-    internal async Task<ZenStartResult> TryStart(ZenStartParam param, ReadOnlyMemory<byte>? data)
+    internal async Task<ZenStartResult> TryStart(ZenOptions options, ZenStartParam param, ReadOnlyMemory<byte>? data)
     {
         if (this.Started)
         {
@@ -199,11 +198,11 @@ public sealed class ZenIO
             return ZenStartResult.ZenFileError;
         }
 
-        if (param.DefaultFolder != null && goshujin.DirectoryIdChain.Count == 0)
+        if (goshujin.DirectoryIdChain.Count == 0)
         {
             try
             {
-                var defaultDirectory = new ZenDirectory(this.GetFreeDirectoryId(goshujin), param.DefaultFolder);
+                var defaultDirectory = new ZenDirectory(this.GetFreeDirectoryId(goshujin), options.SnowflakePath);
                 defaultDirectory.PrepareAndCheck(this.RootDirectory);
                 goshujin.Add(defaultDirectory);
             }
@@ -284,7 +283,6 @@ public sealed class ZenIO
         return array.MinBy(a => a.UsageRatio);
     }
 
-    private UnitLogger unitLogger;
     private ZenDirectory.GoshujinClass directoryGoshujin = new();
     private ZenDirectory? currentDirectory;
     private int directoryRotationCount;

@@ -6,19 +6,17 @@ using ZenItz;
 
 namespace xUnitTest.ZenTest;
 
-// [Collection(ZenFixtureCollection.Name)]
 public class BasicTest
 {
     public BasicTest()
     {
-        // this.ZenFixture = zenFixture;
     }
 
     [Fact]
     public async Task Test1()
     {
         var identifier = default(Identifier);
-        var zen = new ZenFixture().ZenControl.Zen;
+        var zen = TestHelper.CreateZen<Identifier>();
 
         var f = zen.TryGet(Identifier.Zero);
         f.IsNull();
@@ -61,7 +59,7 @@ public class BasicTest
         f.IsNotNull();
 
         // Set fragments
-        for (var i = 0; i < Zen.MaxFragmentCount; i++)
+        for (var i = 0; i < ZenOptions.DefaultMaxFragmentCount; i++)
         {
             identifier = new Identifier(i);
             identifier.TryWriteBytes(buffer);
@@ -69,7 +67,7 @@ public class BasicTest
             f!.SetFragment(identifier, buffer).Is(ZenResult.Success);
         }
 
-        identifier = new Identifier(Zen.MaxFragmentCount);
+        identifier = new Identifier(1);
         identifier.TryWriteBytes(buffer);
 
         f!.SetFragment(identifier, buffer).Is(ZenResult.OverNumberLimit);
@@ -78,7 +76,7 @@ public class BasicTest
     [Fact]
     public async Task Test2()
     {
-        var zen = new ZenFixture().ZenControl.Zen;
+        var zen = TestHelper.CreateZen<Identifier>();
 
         var f = zen.TryGet(Identifier.Zero);
         f.IsNull();

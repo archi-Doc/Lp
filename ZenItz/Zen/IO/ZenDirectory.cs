@@ -14,7 +14,6 @@ public enum ZenDirectoryType
 [ValueLinkObject]
 internal partial class ZenDirectory
 {
-    public const int DefaultMaxSnowflakeSize = 1024 * 1024 * 1024; // 1GB = 4MB x 256
     public const int HashSize = 8;
 
     [Link(Primary = true, Name = "List", Type = ChainType.List)]
@@ -236,7 +235,7 @@ internal partial class ZenDirectory
     [IgnoreMember]
     public string RootedPath { get; private set; } = string.Empty;
 
-    public string DirectoryFile => Path.Combine(this.RootedPath, Zen.DefaultDirectoryFile);
+    public string DirectoryFile => Path.Combine(this.RootedPath, ZenOptions.DefaultDirectoryFile);
 
     public string DirectoryBackup => Path.Combine(this.RootedPath, Zen.DefaultDirectoryBackup);
 

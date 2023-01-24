@@ -18,7 +18,7 @@ public static class FlakeFragmentService
             if (array != arrayOwner.ByteArray)
             {
                 arrayOwner.Return();
-                if (arrayLength > Zen.MaxFlakeSize)
+                if (arrayLength > ZenOptions.DefaultMaxDataSize)
                 {
                     owner = default;
                     return false;

@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Netsphere;
 using SimpleCommandLine;
 
 namespace LP.Subcommands;
@@ -9,13 +10,20 @@ public class MergerNestedcommand : Nestedcommand<MergerNestedcommand>
 {
     public static void Configure(IUnitConfigurationContext context)
     {
-        context.TryAddSingleton(typeof(MergerNestedcommand));
+        var t = typeof(MergerNestedcommand);
+        context.TryAddSingleton(t);
+
+        var group = context.GetCommandGroup(t);
         // var group = ConfigureGroup(context);
-        // group.AddCommand(typeof(RemoteSubcommandRestart));
+        group.AddCommand(typeof(MergerNestedcommandInfo));
     }
 
     public MergerNestedcommand(UnitContext context, UnitCore core, IUserInterfaceService userInterfaceService)
         : base(context, core, userInterfaceService)
     {
     }
+
+    public override string Prefix => "merger >> "; // $"{this.Node.ToShortString()} >> ";
+
+    public NodeInformation Node { get; set; } = NodeInformation.Alternative;
 }

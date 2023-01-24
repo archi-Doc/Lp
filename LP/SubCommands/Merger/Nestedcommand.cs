@@ -8,15 +8,41 @@ public class Nestedcommand<TCommand>
     where TCommand : Nestedcommand<TCommand>
 {
     public Nestedcommand(UnitContext context, UnitCore core, IUserInterfaceService userInterfaceService)
-        : base(context)
     {
         this.Core = core;
         this.userInterfaceService = userInterfaceService;
+
+        this.commandTypes = context.GetCommandTypes(typeof(TCommand));
+        this.SimpleParserOptions = SimpleParserOptions.Standard with
+        {
+            ServiceProvider = context.ServiceProvider,
+            RequireStrictCommandName = true,
+            RequireStrictOptionName = true,
+            DoNotDisplayUsage = true,
+            DisplayCommandListAsHelp = true,
+        };
     }
 
     public UnitCore Core { get; }
 
-    public string Prefix { get; set; } = ">> ";
+    /// <summary>
+    /// Gets <see cref="SimpleParserOptions"/>.
+    /// </summary>
+    public SimpleParserOptions SimpleParserOptions { get; }
+
+    /// <summary>
+    /// Gets <see cref="SimpleParser"/> instance.
+    /// </summary>
+    public SimpleParser SimpleParser
+    {
+        get
+        {
+            this.simpleParser ??= new(this.commandTypes, this.SimpleParserOptions);
+            return this.simpleParser;
+        }
+    }
+
+    public virtual string Prefix { get; set; } = ">> ";
 
     public async Task MainAsync()
     {
@@ -58,10 +84,11 @@ public class Nestedcommand<TCommand>
             }
             else
             {
-                this.userInterfaceService.WriteLine();
-            }
+                return;
 
-            this.Core.Sleep(100, 100);
+                // this.userInterfaceService.WriteLine();
+                // this.Core.Sleep(100, 100);
+            }
         }
     }
 
@@ -94,4 +121,6 @@ public class Nestedcommand<TCommand>
     }
 
     private IUserInterfaceService userInterfaceService;
+    private Type[] commandTypes;
+    private SimpleParser? simpleParser;
 }

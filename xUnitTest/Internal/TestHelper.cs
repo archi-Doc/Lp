@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using LP;
+using Tinyhand;
 using Xunit;
 using ZenItz;
 
@@ -13,6 +14,14 @@ namespace xUnitTest;
 
 public static class TestHelper
 {
+    public static Zen<TIdentifier> CreateZen<TIdentifier>()
+        where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
+    {
+        var zen = new Zen<TIdentifier>();
+        zen.StartForTest();
+        return zen;
+    }
+
     public static bool DataEquals(this ZenDataResult dataResult, Span<byte> span)
     {
         return dataResult.Data.Memory.Span.SequenceEqual(span);

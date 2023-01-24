@@ -4,22 +4,13 @@ namespace ZenItz;
 
 #pragma warning disable SA1401 // Fields should be private
 
-public class Zen
+public class Zen : Zen<Identifier>
 {
-    public const int MaxFlakeSize = 1024 * 1024 * 4; // 4MB
-    public const int MaxFragmentSize = 1024 * 4; // 4KB
-    public const int MaxFragmentCount = 1000;
-    public const long DefaultMemorySizeLimit = 1024 * 1024 * 100; // 100MB
-    public const long DefaultDirectoryCapacity = 1024L * 1024 * 1024 * 10; // 10GB
+}
 
-    public const string DefaultZenDirectory = "Zen";
-    public const string DefaultZenFile = "Zen.main";
-    public const string DefaultZenBackup = "Zen.back";
-    public const string DefaultZenDirectoryFile = "ZenDirectory.main";
-    public const string DefaultZenDirectoryBackup = "ZenDirectory.back";
-    public const string DefaultDirectoryFile = "Snowflake.main";
-    public const string DefaultDirectoryBackup = "Snowflake.back";
-
+public partial class Zen<TIdentifier>
+    where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
+{
     public delegate bool ObjectToMemoryOwnerDelegate(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved);
 
     public delegate object? MemoryOwnerToObjectDelegate(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner);
@@ -35,31 +26,31 @@ public class Zen
         return null;
     }
 
-    public Zen(UnitLogger unitLogger, ZenIO io)
+    public Zen(ZenOptions? options = null)
     {
-        Zen.UnitLogger = unitLogger;
-        this.IO = io;
+        this.Options = options ?? ZenOptions.Standard;
+        this.IO = new();
         this.FlakeObjectGoshujin = new(this);
         this.FragmentObjectGoshujin = new(this);
     }
 
-    public ZenStartResult StartZenForTest()
+    public ZenStartResult StartForTest()
     {
         if (this.Started)
         {
-            return ZenStartResult.AlreadyStarted;
+            return ZenStartResult.Success;
         }
 
         this.Started = true;
         return ZenStartResult.Success;
     }
 
-    public async Task<ZenStartResult> TryStartZen(ZenStartParam param)
+    public async Task<ZenStartResult> Start(ZenStartParam param)
     {
         var result = ZenStartResult.Success;
         if (this.Started)
         {
-            return ZenStartResult.AlreadyStarted;
+            return ZenStartResult.Success;
         }
 
         // Load ZenDirectory
@@ -80,7 +71,7 @@ public class Zen
         return result;
     }
 
-    public async Task StopZen(ZenStopParam param)
+    public async Task Stop(ZenStopParam param)
     {
         if (!this.Started)
         {
@@ -102,14 +93,14 @@ public class Zen
         await this.IO.StopAsync();
 
         // Save Zen
-        await this.SerializeZen(param.ZenFile, param.ZenBackup);
+        await this.SerializeZen(this.Options.ZenFile, this.Options.ZenBackup);
 
         // Save directory information
         var byteArray = this.IO.Serialize();
-        await HashHelper.GetFarmHashAndSaveAsync(byteArray, param.ZenDirectoryFile, param.ZenDirectoryBackup);
+        await HashHelper.GetFarmHashAndSaveAsync(byteArray, this.Options.ZenDirectoryFile, this.Options.ZenDirectoryBackup);
     }
 
-    public async Task AbortZen()
+    public async Task Abort()
     {
         if (!this.Started)
         {
@@ -127,7 +118,7 @@ public class Zen
         this.MemoryOwnerToObject = memoryOwnerToObject;
     }
 
-    public Flake? TryCreateOrGet(Identifier id)
+    public Flake? TryCreateOrGet(TIdentifier id)
     {
         if (!this.Started)
         {
@@ -147,7 +138,7 @@ public class Zen
         return flake;
     }
 
-    public Flake? TryGet(Identifier id)
+    public Flake? TryGet(TIdentifier id)
     {
         if (!this.Started)
         {
@@ -162,7 +153,7 @@ public class Zen
         }
     }
 
-    public bool Remove(Identifier id)
+    public bool Remove(TIdentifier id)
     {
         if (!this.Started)
         {
@@ -179,6 +170,20 @@ public class Zen
 
         return false;
     }
+
+    public bool TryGetBlock(out Block block)
+    {
+        if (!this.Started)
+        {
+            block = default;
+            return false;
+        }
+
+        block = new(this, this.flakeGoshujin);
+        return true;
+    }
+
+    public ZenOptions Options { get; set; }
 
     public bool Started { get; private set; }
 
@@ -222,8 +227,8 @@ public class Zen
         await this.IO.StopAsync();
     }
 
-    internal FlakeObjectGoshujin FlakeObjectGoshujin;
-    internal FlakeObjectGoshujin FragmentObjectGoshujin;
+    internal FlakeObjectGoshujinClass FlakeObjectGoshujin;
+    internal FlakeObjectGoshujinClass FragmentObjectGoshujin;
     private Flake.GoshujinClass flakeGoshujin = new();
 
     private async Task<ZenStartResult> LoadZenDirectory(ZenStartParam param)
@@ -233,7 +238,7 @@ public class Zen
         byte[]? data;
         try
         {
-            data = await File.ReadAllBytesAsync(param.ZenDirectoryFile);
+            data = await File.ReadAllBytesAsync(this.Options.ZenDirectoryFile);
         }
         catch
         {
@@ -246,7 +251,7 @@ public class Zen
             goto LoadBackup;
         }
 
-        result = await this.IO.TryStart(param, memory);
+        result = await this.IO.TryStart(this.Options, param, memory);
         if (result == ZenStartResult.Success || param.ForceStart)
         {
             return ZenStartResult.Success;
@@ -257,13 +262,13 @@ public class Zen
 LoadBackup:
         try
         {
-            data = await File.ReadAllBytesAsync(param.ZenDirectoryBackup);
+            data = await File.ReadAllBytesAsync(this.Options.ZenDirectoryBackup);
         }
         catch
         {
             if (await param.Query(ZenStartResult.ZenDirectoryNotFound))
             {
-                result = await this.IO.TryStart(param, null);
+                result = await this.IO.TryStart(this.Options, param, null);
                 if (result == ZenStartResult.Success || param.ForceStart)
                 {
                     return ZenStartResult.Success;
@@ -282,7 +287,7 @@ LoadBackup:
         {
             if (await param.Query(ZenStartResult.ZenDirectoryError))
             {
-                result = await this.IO.TryStart(param, null);
+                result = await this.IO.TryStart(this.Options, param, null);
                 if (result == ZenStartResult.Success || param.ForceStart)
                 {
                     return ZenStartResult.Success;
@@ -296,7 +301,7 @@ LoadBackup:
             }
         }
 
-        result = await this.IO.TryStart(param, memory);
+        result = await this.IO.TryStart(this.Options, param, memory);
         if (result == ZenStartResult.Success || param.ForceStart)
         {
             return ZenStartResult.Success;
@@ -311,7 +316,7 @@ LoadBackup:
         byte[]? data;
         try
         {
-            data = await File.ReadAllBytesAsync(param.ZenFile);
+            data = await File.ReadAllBytesAsync(this.Options.ZenFile);
         }
         catch
         {
@@ -332,7 +337,7 @@ LoadBackup:
 LoadBackup:
         try
         {
-            data = await File.ReadAllBytesAsync(param.ZenBackup);
+            data = await File.ReadAllBytesAsync(this.Options.ZenBackup);
         }
         catch
         {
@@ -407,6 +412,4 @@ LoadBackup:
 
         await HashHelper.GetFarmHashAndSaveAsync(byteArray, path, backupPath);
     }
-
-    internal static UnitLogger UnitLogger { get; private set; } = default!;
 }

@@ -4,44 +4,59 @@ using System.Runtime.CompilerServices;
 
 namespace ZenItz;
 
-public class Itz
+public class Itz : Itz<Identifier>
 {
     public const string DefaultItzFile = "Itz.main";
     public const string DefaultItzBackup = "Itz.back";
+}
 
+public partial class Itz<TIdentifier>
+    where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
+{
     public Itz()
     {
     }
 
-    public void Register<TPayload>(IItzShip<TPayload> ship)
-        where TPayload : IItzPayload
+    public void Register<TPayload>(IShip<TPayload> ship)
+        where TPayload : IPayload
     {
-        ItzShipControl.Instance.Register<TPayload>(ship);
+        if (this.typeToShip.TryAdd(typeof(TPayload), ship))
+        {
+            var id = Arc.Crypto.FarmHash.Hash64(typeof(TPayload).FullName ?? string.Empty);
+            this.idToShip.Add(id, ship);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public IItzShip<TPayload> GetShip<TPayload>()
-        where TPayload : IItzPayload
-        => ItzShipControl.Instance.GetShip<TPayload>();
+    public IShip<TPayload> GetShip<TPayload>()
+        where TPayload : IPayload
+    {
+        if (this.typeToShip.TryGetValue(typeof(TPayload), out var ship))
+        {
+            return (IShip<TPayload>)ship;
+        }
 
-    public void Set<TPayload>(in Identifier id, in TPayload value)
-        where TPayload : IItzPayload
+        throw new InvalidOperationException(typeof(TPayload).FullName + " is not registered");
+    }
+
+    public void Set<TPayload>(in TIdentifier id, in TPayload value)
+        where TPayload : IPayload
         => this.GetShip<TPayload>().Set(in id, in value);
 
-    public ItzResult Get<TPayload>(in Identifier id, out TPayload value)
-        where TPayload : IItzPayload
+    public ItzResult Get<TPayload>(in TIdentifier id, out TPayload value)
+        where TPayload : IPayload
         => this.GetShip<TPayload>().Get(id, out value);
 
     public int Count<TPayload>()
-        where TPayload : IItzPayload
+        where TPayload : IPayload
         => this.GetShip<TPayload>().Count();
 
     public int TotalCount()
     {
         int count = 0;
-        foreach (var x in ItzShipControl.IdToShip.Values)
+        foreach (var x in this.idToShip.Values)
         {
-            if (x is IItzShip ship)
+            if (x is IShip ship)
             {
                 count += ship.Count();
             }
@@ -51,7 +66,7 @@ public class Itz
     }
 
     public byte[] Serialize<TPayload>()
-        where TPayload : IItzPayload
+        where TPayload : IPayload
     {
         var writer = default(Tinyhand.IO.TinyhandWriter);
         try
@@ -66,7 +81,7 @@ public class Itz
     }
 
     public bool Deserialize<TPayload>(ReadOnlySpan<byte> span)
-        where TPayload : IItzPayload
+        where TPayload : IPayload
     {
         return this.GetShip<TPayload>().Deserialize(span, out _);
     }
@@ -100,7 +115,7 @@ public class Itz
                 }
             }
 
-            return LP.SerializeHelper.Deserialize(ItzShipControl.IdToShip, byteArray);
+            return LP.SerializeHelper.Deserialize(this.idToShip, byteArray);
         }
         catch
         {
@@ -110,7 +125,7 @@ public class Itz
 
     public async Task<bool> SaveAsync(string path, string? backupPath = null)
     {
-        var byteArray = LP.SerializeHelper.Serialize(ItzShipControl.IdToShip);
+        var byteArray = LP.SerializeHelper.Serialize(this.idToShip);
         var hash = new byte[8];
         var result = false;
         BitConverter.TryWriteBytes(hash, Arc.Crypto.FarmHash.Hash64(byteArray));
@@ -145,4 +160,7 @@ public class Itz
 
         return result;
     }
+
+    private readonly Dictionary<ulong, ILPSerializable> idToShip = new();
+    private readonly ThreadsafeTypeKeyHashTable<IShip> typeToShip = new();
 }

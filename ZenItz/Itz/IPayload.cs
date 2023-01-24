@@ -2,6 +2,6 @@
 
 namespace ZenItz;
 
-public interface IItzPayload
+public interface IPayload
 {
 }

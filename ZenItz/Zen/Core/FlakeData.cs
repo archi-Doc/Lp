@@ -1,0 +1,153 @@
+﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+
+using System.Diagnostics.CodeAnalysis;
+
+namespace ZenItz;
+
+#pragma warning disable SA1401 // Fields should be private
+
+public partial class Zen<TIdentifier>
+{
+    internal partial class FlakeData
+    {
+        public FlakeData(Zen<TIdentifier> zen)
+        {
+            this.Zen = zen;
+        }
+
+        public (bool Changed, int MemoryDifference) SetSpan(ReadOnlySpan<byte> span)
+        {
+            if (this.MemoryOwnerAvailable &&
+                span.SequenceEqual(this.MemoryOwner.Memory.Span))
+            {// Identical
+                return (false, 0);
+            }
+
+            var memoryDifference = -this.MemoryOwner.Memory.Length;
+            this.MemoryOwner = this.MemoryOwner.Return();
+
+            memoryDifference += span.Length;
+            this.Object = null;
+            var owner = FlakeFragmentPool.Rent(span.Length);
+            this.MemoryOwner = owner.ToReadOnlyMemoryOwner(0, span.Length);
+            this.MemoryOwnerAvailable = true;
+            span.CopyTo(owner.ByteArray.AsSpan());
+            return (true, memoryDifference);
+        }
+
+        public (bool Changed, int MemoryDifference) SetMemoryOwner(ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved)
+        {
+            if (this.MemoryOwnerAvailable &&
+                dataToBeMoved.Memory.Span.SequenceEqual(this.MemoryOwner.Memory.Span))
+            {// Identical
+                return (false, 0);
+            }
+
+            var memoryDifference = -this.MemoryOwner.Memory.Length;
+            this.MemoryOwner = this.MemoryOwner.Return();
+
+            memoryDifference += dataToBeMoved.Memory.Length;
+            this.Object = null;
+            this.MemoryOwner = dataToBeMoved;
+            this.MemoryOwnerAvailable = true;
+            return (true, memoryDifference);
+        }
+
+        public (bool Changed, int MemoryDifference) SetMemoryOwner(ByteArrayPool.MemoryOwner dataToBeMoved)
+            => this.SetMemoryOwner(dataToBeMoved.AsReadOnly());
+
+        public (bool Changed, int MemoryDifference) SetObject(object? obj)
+        {
+            /* Skip (may be an updated object of the same instance)
+            if (obj == this.Object)
+            {// Identical
+                return 0;
+            }*/
+
+            var memoryDifference = -this.MemoryOwner.Memory.Length;
+            this.MemoryOwner = this.MemoryOwner.Return();
+            this.MemoryOwnerAvailable = false;
+
+            this.Object = obj;
+            return (true, memoryDifference);
+        }
+
+        public bool TryGetSpan(out ReadOnlySpan<byte> data)
+        {
+            if (this.MemoryOwnerAvailable)
+            {
+                data = this.MemoryOwner.Memory.Span;
+                return true;
+            }
+            else if (this.Object != null && this.Zen.ObjectToMemoryOwner(this.Object, out var m))
+            {
+                this.MemoryOwner = m.AsReadOnly();
+                this.MemoryOwnerAvailable = true;
+                data = this.MemoryOwner.Memory.Span;
+                return true;
+            }
+            else
+            {
+                data = default;
+                return false;
+            }
+        }
+
+        public bool TryGetMemoryOwner(out ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
+        {
+            if (this.MemoryOwnerAvailable)
+            {
+                memoryOwner = this.MemoryOwner.IncrementAndShare();
+                return true;
+            }
+            else if (this.Object != null && this.Zen.ObjectToMemoryOwner(this.Object, out var m))
+            {
+                this.MemoryOwner = m.AsReadOnly();
+                this.MemoryOwnerAvailable = true;
+                memoryOwner = this.MemoryOwner.IncrementAndShare();
+                return true;
+            }
+            else
+            {
+                memoryOwner = default;
+                return false;
+            }
+        }
+
+        public bool TryGetObject([MaybeNullWhen(false)] out object? obj)
+        {
+            if (this.Object != null)
+            {
+                obj = this.Object;
+                return true;
+            }
+            else if (this.MemoryOwnerAvailable)
+            {
+                obj = this.Zen.MemoryOwnerToObject(this.MemoryOwner);
+                return obj != null;
+            }
+            else
+            {
+                obj = default;
+                return false;
+            }
+        }
+
+        public int Clear()
+        {
+            this.Object = null;
+            var memoryDifference = -this.MemoryOwner.Memory.Length;
+            this.MemoryOwner = this.MemoryOwner.Return();
+            this.MemoryOwnerAvailable = false;
+            return memoryDifference;
+        }
+
+        public Zen<TIdentifier> Zen { get; }
+
+        public object? Object { get; private set; }
+
+        public bool MemoryOwnerAvailable { get; private set; }
+
+        internal ByteArrayPool.ReadOnlyMemoryOwner MemoryOwner;
+    }
+}
