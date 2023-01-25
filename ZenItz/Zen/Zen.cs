@@ -238,7 +238,7 @@ public partial class Zen<TIdentifier>
         byte[]? data;
         try
         {
-            data = await File.ReadAllBytesAsync(this.Options.ZenDirectoryFile);
+            data = await File.ReadAllBytesAsync(this.Options.ZenDirectoryFilePath);
         }
         catch
         {
@@ -262,7 +262,7 @@ public partial class Zen<TIdentifier>
 LoadBackup:
         try
         {
-            data = await File.ReadAllBytesAsync(this.Options.ZenDirectoryBackup);
+            data = await File.ReadAllBytesAsync(this.Options.ZenDirectoryBackupPath);
         }
         catch
         {

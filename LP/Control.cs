@@ -154,7 +154,7 @@ public class Control : ILogInformation
 
                 var options = previous with
                 {
-                    RootPath = lpOptions.RootDirectory,
+                    ZenPath = lpOptions.RootDirectory,
                     SnowflakePath = Path.Combine(lpOptions.RootDirectory, ZenOptions.DefaultSnowflakeDirectory),
                 };
 

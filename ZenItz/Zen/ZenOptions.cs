@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using LPEssentials;
+
 namespace ZenItz;
 
 public record ZenOptions
@@ -18,19 +20,17 @@ public record ZenOptions
     /// </summary>
     public ZenOptions()
     {
-        this.RootPath = Directory.GetCurrentDirectory();
-        this.SnowflakePath = System.IO.Path.Combine(this.RootPath, DefaultSnowflakeDirectory);
     }
 
     /// <summary>
     /// Gets a path of the directory where <see cref="Zen"/> files are stored.
     /// </summary>
-    public string RootPath { get; init; }
+    public string ZenPath { get; init; } = string.Empty;
 
     /// <summary>
     /// Gets a path of the default directory where <see cref="Snowflake"/> files are stored.
     /// </summary>
-    public string SnowflakePath { get; init; }
+    public string SnowflakePath { get; init; } = DefaultSnowflakeDirectory;
 
     public int MaxDataSize { get; init; } = DefaultMaxDataSize;
 
@@ -53,4 +53,16 @@ public record ZenOptions
     public string SnowflakeFile { get; init; } = "Snowflake.main";
 
     public string SnowflakeBackup { get; init; } = "Snowflake.back";
+
+    public string RootPath => this.rootPath ??= PathHelper.GetRootedDirectory(this.ZenPath);
+
+    public string ZenFilePath => PathHelper.GetRootedFile(this.RootPath, this.ZenFile);
+
+    public string ZenBackupPath => PathHelper.GetRootedFile(this.RootPath, this.ZenBackup);
+
+    public string ZenDirectoryFilePath => PathHelper.GetRootedFile(this.RootPath, this.ZenDirectoryFile);
+
+    public string ZenDirectoryBackupPath => PathHelper.GetRootedFile(this.RootPath, this.ZenDirectoryBackup);
+
+    private string? rootPath;
 }

@@ -38,7 +38,7 @@ public sealed class ZenIO
             return AddDictionaryResult.FileExists;
         }
 
-        var relative = Path.GetRelativePath(this.Options.RootPath, path);
+        var relative = Path.GetRelativePath(this.Options.ZenPath, path);
         if (!relative.StartsWith("..\\"))
         {
             path = relative;
