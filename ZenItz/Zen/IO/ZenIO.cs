@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using LPEssentials;
 using ZenItz.Results;
 
 namespace ZenItz;
@@ -67,6 +68,20 @@ public sealed class ZenIO
         }
 
         return AddDictionaryResult.Success;
+    }
+
+    public void RemoveAll()
+    {
+        string[] directories;
+        lock (this.directoryGoshujin)
+        {
+            directories = this.directoryGoshujin.Select(x => x.RootedPath).ToArray();
+        }
+
+        foreach (var x in directories)
+        {
+            PathHelper.TryDeleteDirectory(x);
+        }
     }
 
     public ZenOptions Options { get; private set; } = ZenOptions.Default;
@@ -159,6 +174,8 @@ public sealed class ZenIO
             return ZenStartResult.Success;
         }
 
+        this.Options = options;
+
         ZenDirectory.GoshujinClass? goshujin = null;
         if (data != null)
         {
@@ -196,7 +213,7 @@ public sealed class ZenIO
         {
             try
             {
-                var defaultDirectory = new ZenDirectory(this.GetFreeDirectoryId(goshujin), options.SnowflakePath);
+                var defaultDirectory = new ZenDirectory(this.GetFreeDirectoryId(goshujin), PathHelper.GetRootedDirectory(this.Options.RootPath, this.Options.DefaultZenDirectory));
                 defaultDirectory.PrepareAndCheck(this);
                 goshujin.Add(defaultDirectory);
             }

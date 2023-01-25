@@ -14,12 +14,30 @@ namespace xUnitTest;
 
 public static class TestHelper
 {
-    public static Zen<TIdentifier> CreateZen<TIdentifier>()
+    public static async Task<Zen<TIdentifier>> CreateAndStartZen<TIdentifier>()
         where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
     {
-        var zen = new Zen<TIdentifier>();
-        zen.Start(new()).Wait();
+        var options = new ZenOptions() with {
+            ZenPath = $"Zen[{LP.Random.Pseudo.NextUInt32():x4}]",
+            DefaultZenDirectory = "Snowflake",
+        };
+
+        var zen = new Zen<TIdentifier>(options);
+        await zen.Start(new(FromScratch: true));
         return zen;
+    }
+
+    public static async Task StopZen<TIdentifier>(Zen<TIdentifier> zen, bool removeAll = true)
+        where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
+    {
+        await zen.Stop(new(RemoveAll: removeAll));
+    }
+
+    public static async Task StopAndStartZen<TIdentifier>(Zen<TIdentifier> zen)
+        where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
+    {
+        await zen.Stop(new());
+        await zen.Start(new());
     }
 
     public static bool DataEquals(this ZenDataResult dataResult, Span<byte> span)

@@ -1,9 +1,36 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 namespace LPEssentials;
+
 public static class PathHelper
 {
-    public static string GetRootedDirectory(string directory)
+    public static bool TryDeleteFile(string file)
+    {
+        try
+        {
+            File.Delete(file);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public static bool TryDeleteDirectory(string directory)
+    {
+        try
+        {
+            Directory.Delete(directory, true);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public static string GetRootedDirectory(string root, string directory)
     {
         if (Path.IsPathRooted(directory) &&
             File.GetAttributes(directory).HasFlag(FileAttributes.Directory))
@@ -12,7 +39,7 @@ public static class PathHelper
         }
         else
         {
-            return Path.Combine(Directory.GetCurrentDirectory(), directory);
+            return Path.Combine(root, directory);
         }
     }
 

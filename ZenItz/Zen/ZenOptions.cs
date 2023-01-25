@@ -6,7 +6,6 @@ namespace ZenItz;
 
 public record ZenOptions
 {
-    public const string DefaultSnowflakeDirectory = "Zen";
     public const long DefaultDirectoryCapacity = 1024L * 1024 * 1024 * 10; // 10GB
     public const int DefaultMaxDataSize = 1024 * 1024 * 4; // 4MB
     public const int DefaultMaxFragmentSize = 1024 * 4; // 4KB
@@ -27,11 +26,6 @@ public record ZenOptions
     /// </summary>
     public string ZenPath { get; init; } = string.Empty;
 
-    /// <summary>
-    /// Gets a path of the default directory where <see cref="Snowflake"/> files are stored.
-    /// </summary>
-    public string SnowflakePath { get; init; } = DefaultSnowflakeDirectory;
-
     public int MaxDataSize { get; init; } = DefaultMaxDataSize;
 
     public int MaxFragmentSize { get; init; } = DefaultMaxFragmentSize;
@@ -50,11 +44,13 @@ public record ZenOptions
 
     public string ZenDirectoryBackup { get; init; } = "ZenDirectory.back";
 
+    public string DefaultZenDirectory { get; init; } = "Zen";
+
     public string SnowflakeFile { get; init; } = "Snowflake.main";
 
     public string SnowflakeBackup { get; init; } = "Snowflake.back";
 
-    public string RootPath => this.rootPath ??= PathHelper.GetRootedDirectory(this.ZenPath);
+    public string RootPath => this.rootPath ??= PathHelper.GetRootedDirectory(Directory.GetCurrentDirectory(), this.ZenPath);
 
     public string ZenFilePath => PathHelper.GetRootedFile(this.RootPath, this.ZenFile);
 

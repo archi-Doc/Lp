@@ -2,13 +2,13 @@
 
 namespace ZenItz;
 
-public record ZenStartParam(bool ForceStart = false, ZenStartQueryDelegate? QueryDelegate = null)
+public record ZenStartParam(bool ForceStart = false, ZenStartQueryDelegate? QueryDelegate = null, bool FromScratch = false)
 {
     public Task<bool> Query(ZenStartResult query, string[]? list = null)
         => (this.QueryDelegate == null || this.ForceStart) ? Task.FromResult(true) : this.QueryDelegate(query, list);
 }
 
-public record ZenStopParam();
+public record ZenStopParam(bool RemoveAll = false);
 
 public enum ZenStartResult
 {

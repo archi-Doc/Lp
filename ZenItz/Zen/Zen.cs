@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using LPEssentials;
+
 namespace ZenItz;
 
 #pragma warning disable SA1401 // Fields should be private
@@ -34,22 +36,19 @@ public partial class Zen<TIdentifier>
         this.FragmentObjectGoshujin = new(this);
     }
 
-    public ZenStartResult StartForTest()
-    {
-        if (this.Started)
-        {
-            return ZenStartResult.Success;
-        }
-
-        this.Started = true;
-        return ZenStartResult.Success;
-    }
-
     public async Task<ZenStartResult> Start(ZenStartParam param)
     {
         var result = ZenStartResult.Success;
         if (this.Started)
         {
+            return ZenStartResult.Success;
+        }
+
+        if (param.FromScratch)
+        {
+            this.RemoveAll();
+            await this.IO.TryStart(this.Options, param, null);
+            this.Started = true;
             return ZenStartResult.Success;
         }
 
@@ -80,6 +79,15 @@ public partial class Zen<TIdentifier>
 
         this.Started = false;
 
+        if (param.RemoveAll)
+        {
+            // Stop IO(ZenDirectory)
+            await this.IO.StopAsync();
+
+            this.RemoveAll();
+            return;
+        }
+
         // Save & Unload flakes
         lock (this.flakeGoshujin)
         {
@@ -93,11 +101,11 @@ public partial class Zen<TIdentifier>
         await this.IO.StopAsync();
 
         // Save Zen
-        await this.SerializeZen(this.Options.ZenFile, this.Options.ZenBackup);
+        await this.SerializeZen(this.Options.ZenFilePath, this.Options.ZenBackupPath);
 
         // Save directory information
         var byteArray = this.IO.Serialize();
-        await HashHelper.GetFarmHashAndSaveAsync(byteArray, this.Options.ZenDirectoryFile, this.Options.ZenDirectoryBackup);
+        await HashHelper.GetFarmHashAndSaveAsync(byteArray, this.Options.ZenDirectoryFilePath, this.Options.ZenDirectoryBackupPath);
     }
 
     public async Task Abort()
@@ -192,6 +200,30 @@ public partial class Zen<TIdentifier>
     public ObjectToMemoryOwnerDelegate ObjectToMemoryOwner { get; private set; } = DefaultObjectToMemoryOwner;
 
     public MemoryOwnerToObjectDelegate MemoryOwnerToObject { get; private set; } = DefaultMemoryOwnerToObject;
+
+    internal void RemoveAll()
+    {
+        lock (this.flakeGoshujin)
+        {
+            this.FlakeObjectGoshujin.Goshujin.Clear();
+            this.FragmentObjectGoshujin.Goshujin.Clear();
+            this.flakeGoshujin.Clear();
+        }
+
+        PathHelper.TryDeleteFile(this.Options.ZenFilePath);
+        PathHelper.TryDeleteFile(this.Options.ZenBackupPath);
+        PathHelper.TryDeleteFile(this.Options.ZenDirectoryFilePath);
+        PathHelper.TryDeleteFile(this.Options.ZenDirectoryBackupPath);
+        this.IO.RemoveAll();
+
+        try
+        {
+            Directory.Delete(this.Options.RootPath);
+        }
+        catch
+        {
+        }
+    }
 
     internal void Restart()
     {
@@ -316,7 +348,7 @@ LoadBackup:
         byte[]? data;
         try
         {
-            data = await File.ReadAllBytesAsync(this.Options.ZenFile);
+            data = await File.ReadAllBytesAsync(this.Options.ZenFilePath);
         }
         catch
         {
@@ -337,7 +369,7 @@ LoadBackup:
 LoadBackup:
         try
         {
-            data = await File.ReadAllBytesAsync(this.Options.ZenBackup);
+            data = await File.ReadAllBytesAsync(this.Options.ZenBackupPath);
         }
         catch
         {

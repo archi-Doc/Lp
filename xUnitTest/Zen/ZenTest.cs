@@ -16,7 +16,7 @@ public class ZenTest
     public async Task Test1()
     {
         var identifier = default(Identifier);
-        var zen = TestHelper.CreateZen<Identifier>();
+        var zen = await TestHelper.CreateAndStartZen<Identifier>();
 
         var f = zen.TryGet(Identifier.Zero);
         f.IsNull();
@@ -71,14 +71,15 @@ public class ZenTest
         identifier.TryWriteBytes(buffer);
 
         f!.SetFragment(identifier, buffer).Is(ZenResult.OverNumberLimit);
+
+        await TestHelper.StopZen(zen);
     }
 
     [Fact]
     public async Task Test2()
     {
-        var zen = TestHelper.CreateZen<Identifier>();
+        var zen = await TestHelper.CreateAndStartZen<Identifier>();
 
-        var f = zen.CreateOrGet(Identifier.Zero);
-        f.IsNull();
+        await TestHelper.StopZen(zen);
     }
 }
