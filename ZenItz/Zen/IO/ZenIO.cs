@@ -10,12 +10,6 @@ public sealed class ZenIO
 
     public ZenIO()
     {
-        this.RootDirectory = Directory.GetCurrentDirectory();
-    }
-
-    public void SetRootDirectory(string rootDirectory)
-    {
-        this.RootDirectory = rootDirectory;
     }
 
     public ZenDirectoryInformation[] GetDirectoryInformation()
@@ -44,7 +38,7 @@ public sealed class ZenIO
             return AddDictionaryResult.FileExists;
         }
 
-        var relative = Path.GetRelativePath(this.RootDirectory, path);
+        var relative = Path.GetRelativePath(this.Options.RootPath, path);
         if (!relative.StartsWith("..\\"))
         {
             path = relative;
@@ -76,8 +70,6 @@ public sealed class ZenIO
     }
 
     public ZenOptions Options { get; private set; } = ZenOptions.Default;
-
-    public string RootDirectory { get; private set; } = string.Empty;
 
     public bool Started { get; private set; }
 

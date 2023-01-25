@@ -10,6 +10,8 @@ public partial class Itz<TIdentifier>
         void Set(in TIdentifier id, in TPayload value);
 
         bool TryGet(in TIdentifier id, out TPayload value);
+
+        bool Remove(in TIdentifier id);
     }
 
     public interface IShip : ILPSerializable

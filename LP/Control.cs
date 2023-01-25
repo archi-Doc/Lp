@@ -154,7 +154,7 @@ public class Control : ILogInformation
 
                 var options = previous with
                 {
-                    ZenPath = lpOptions.RootDirectory,
+                    RootPath = lpOptions.RootDirectory,
                     SnowflakePath = Path.Combine(lpOptions.RootDirectory, ZenOptions.DefaultSnowflakeDirectory),
                 };
 
@@ -319,7 +319,6 @@ public class Control : ILogInformation
         this.NetControl = netsphere;
         this.NetControl.SetupServer();
         this.ZenControl = zenControl;
-        this.ZenControl.Zen.IO.SetRootDirectory(this.LPBase.RootDirectory);
         this.ZenControl.Zen.SetDelegate(ObjectToMemoryOwner, MemoryOwnerToObject);
         this.Vault = vault;
         this.Authority = authority;

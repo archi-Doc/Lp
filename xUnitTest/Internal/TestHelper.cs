@@ -18,7 +18,7 @@ public static class TestHelper
         where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
     {
         var zen = new Zen<TIdentifier>();
-        zen.StartForTest();
+        zen.Start(new()).Wait();
         return zen;
     }
 

@@ -75,11 +75,19 @@ public partial class Itz<TIdentifier>
             return false;
         }
 
-        public void Serialize(ref Tinyhand.IO.TinyhandWriter writer)
+        public bool Remove(in TIdentifier id)
         {
             lock (this.goshujin)
             {
-                TinyhandSerializer.Serialize(ref writer, this.goshujin);
+                if (this.goshujin.KeyChain.TryGetValue(id, out var item))
+                {
+                    item.Goshujin = null;
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
             }
         }
 
@@ -93,6 +101,14 @@ public partial class Itz<TIdentifier>
             lock (this.goshujin)
             {
                 return this.goshujin.QueueChain.Count;
+            }
+        }
+
+        public void Serialize(ref Tinyhand.IO.TinyhandWriter writer)
+        {
+            lock (this.goshujin)
+            {
+                TinyhandSerializer.Serialize(ref writer, this.goshujin);
             }
         }
 

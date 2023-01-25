@@ -47,9 +47,9 @@ public partial class Itz<TIdentifier>
         where TPayload : IPayload
         => this.GetShip<TPayload>().TryGet(id, out value);
 
-    public int Count<TPayload>()
+    public bool Remove<TPayload>(in TIdentifier id)
         where TPayload : IPayload
-        => this.GetShip<TPayload>().Count();
+        => this.GetShip<TPayload>().Remove(id);
 
     public int TotalCount()
     {

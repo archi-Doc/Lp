@@ -134,7 +134,7 @@ internal partial class ZenDirectory
 
     internal bool PrepareAndCheck(ZenIO io)
     {
-        var rootDirectory = io.RootDirectory;
+        var rootDirectory = io.Options.RootPath;
         this.Options = io.Options;
         try
         {

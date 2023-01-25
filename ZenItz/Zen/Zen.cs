@@ -118,11 +118,11 @@ public partial class Zen<TIdentifier>
         this.MemoryOwnerToObject = memoryOwnerToObject;
     }
 
-    public Flake? TryCreateOrGet(TIdentifier id)
+    public Flake CreateOrGet(TIdentifier id)
     {
         if (!this.Started)
         {
-            return null;
+            throw new InvalidOperationException();
         }
 
         Flake? flake;

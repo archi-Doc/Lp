@@ -18,14 +18,14 @@ public record ZenOptions
     /// </summary>
     public ZenOptions()
     {
-        this.ZenPath = Directory.GetCurrentDirectory();
-        this.SnowflakePath = System.IO.Path.Combine(this.ZenPath, DefaultSnowflakeDirectory);
+        this.RootPath = Directory.GetCurrentDirectory();
+        this.SnowflakePath = System.IO.Path.Combine(this.RootPath, DefaultSnowflakeDirectory);
     }
 
     /// <summary>
     /// Gets a path of the directory where <see cref="Zen"/> files are stored.
     /// </summary>
-    public string ZenPath { get; init; }
+    public string RootPath { get; init; }
 
     /// <summary>
     /// Gets a path of the default directory where <see cref="Snowflake"/> files are stored.

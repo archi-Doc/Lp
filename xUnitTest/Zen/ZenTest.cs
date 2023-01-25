@@ -20,7 +20,7 @@ public class ZenTest
 
         var f = zen.TryGet(Identifier.Zero);
         f.IsNull();
-        f = zen.TryCreateOrGet(Identifier.Zero);
+        f = zen.CreateOrGet(Identifier.Zero);
         f.IsNotNull();
 
         var buffer = new byte[Identifier.Length];
@@ -35,7 +35,7 @@ public class ZenTest
         {
             identifier = new Identifier(i);
 
-            f = zen.TryCreateOrGet(identifier);
+            f = zen.CreateOrGet(identifier);
             f.IsNotNull();
 
             identifier.TryWriteBytes(buffer);
@@ -55,7 +55,7 @@ public class ZenTest
             result.DataEquals(buffer).IsTrue();
         }
 
-        f = zen.TryCreateOrGet(Identifier.Zero);
+        f = zen.CreateOrGet(Identifier.Zero);
         f.IsNotNull();
 
         // Set fragments
@@ -78,9 +78,7 @@ public class ZenTest
     {
         var zen = TestHelper.CreateZen<Identifier>();
 
-        var f = zen.TryGet(Identifier.Zero);
+        var f = zen.CreateOrGet(Identifier.Zero);
         f.IsNull();
     }
-
-    // public ZenFixture ZenFixture { get; }
 }
