@@ -17,7 +17,7 @@ public partial class Itz<TIdentifier>
     {
     }
 
-    public void Register<TPayload>(IShip<TPayload> ship)
+    public void RegisterShip<TPayload>(IShip<TPayload> ship)
         where TPayload : IPayload
     {
         if (this.typeToShip.TryAdd(typeof(TPayload), ship))
@@ -43,9 +43,9 @@ public partial class Itz<TIdentifier>
         where TPayload : IPayload
         => this.GetShip<TPayload>().Set(in id, in value);
 
-    public ItzResult Get<TPayload>(in TIdentifier id, out TPayload value)
+    public bool TryGet<TPayload>(in TIdentifier id, out TPayload value)
         where TPayload : IPayload
-        => this.GetShip<TPayload>().Get(id, out value);
+        => this.GetShip<TPayload>().TryGet(id, out value);
 
     public int Count<TPayload>()
         where TPayload : IPayload

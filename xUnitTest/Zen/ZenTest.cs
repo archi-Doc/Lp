@@ -6,9 +6,9 @@ using ZenItz;
 
 namespace xUnitTest.ZenTest;
 
-public class BasicTest
+public class ZenTest
 {
-    public BasicTest()
+    public ZenTest()
     {
     }
 
