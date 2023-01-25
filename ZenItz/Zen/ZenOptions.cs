@@ -11,7 +11,7 @@ public record ZenOptions
     public const int DefaultMaxFragmentCount = 1000;
     public const int DefaultMemorySizeLimit = 1024 * 1024 * 100; // 100MB
 
-    public static ZenOptions Standard { get; } = new ZenOptions();
+    public static ZenOptions Default { get; } = new ZenOptions();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ZenOptions"/> class.

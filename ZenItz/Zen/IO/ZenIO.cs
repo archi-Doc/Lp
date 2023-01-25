@@ -75,6 +75,8 @@ public sealed class ZenIO
         return AddDictionaryResult.Success;
     }
 
+    public ZenOptions Options { get; private set; } = ZenOptions.Default;
+
     public string RootDirectory { get; private set; } = string.Empty;
 
     public bool Started { get; private set; }
@@ -150,7 +152,7 @@ public sealed class ZenIO
         {
             foreach (var x in this.directoryGoshujin)
             {
-                x.PrepareAndCheck(this.RootDirectory);
+                x.PrepareAndCheck(this);
                 x.Start();
             }
         }
@@ -185,7 +187,7 @@ public sealed class ZenIO
         List<string>? errorDirectories = null;
         foreach (var x in goshujin)
         {
-            if (!x.PrepareAndCheck(this.RootDirectory))
+            if (!x.PrepareAndCheck(this))
             {
                 errorDirectories ??= new();
                 errorDirectories.Add(x.DirectoryPath);
@@ -203,7 +205,7 @@ public sealed class ZenIO
             try
             {
                 var defaultDirectory = new ZenDirectory(this.GetFreeDirectoryId(goshujin), options.SnowflakePath);
-                defaultDirectory.PrepareAndCheck(this.RootDirectory);
+                defaultDirectory.PrepareAndCheck(this);
                 goshujin.Add(defaultDirectory);
             }
             catch

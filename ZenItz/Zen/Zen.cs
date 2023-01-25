@@ -28,7 +28,7 @@ public partial class Zen<TIdentifier>
 
     public Zen(ZenOptions? options = null)
     {
-        this.Options = options ?? ZenOptions.Standard;
+        this.Options = options ?? ZenOptions.Default;
         this.IO = new();
         this.FlakeObjectGoshujin = new(this);
         this.FragmentObjectGoshujin = new(this);

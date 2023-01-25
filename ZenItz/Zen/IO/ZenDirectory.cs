@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.IO;
 using System.Runtime.CompilerServices;
 
 namespace ZenItz;
@@ -133,8 +132,10 @@ internal partial class ZenDirectory
         }
     }
 
-    internal bool PrepareAndCheck(string rootDirectory)
+    internal bool PrepareAndCheck(ZenIO io)
     {
+        var rootDirectory = io.RootDirectory;
+        this.Options = io.Options;
         try
         {
             if (Path.IsPathRooted(this.DirectoryPath))
@@ -233,11 +234,14 @@ internal partial class ZenDirectory
     public long DirectorySize { get; private set; }
 
     [IgnoreMember]
+    public ZenOptions Options { get; private set; } = ZenOptions.Default;
+
+    [IgnoreMember]
     public string RootedPath { get; private set; } = string.Empty;
 
-    public string DirectoryFile => Path.Combine(this.RootedPath, ZenOptions.DefaultDirectoryFile);
+    public string DirectoryFile => Path.Combine(this.RootedPath, this.Options.ZenDirectoryFile);
 
-    public string DirectoryBackup => Path.Combine(this.RootedPath, Zen.DefaultDirectoryBackup);
+    public string DirectoryBackup => Path.Combine(this.RootedPath, this.Options.ZenDirectoryBackup);
 
     [IgnoreMember]
     internal double UsageRatio { get; private set; }
