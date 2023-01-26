@@ -6,9 +6,9 @@ namespace ZenItz;
 
 public partial class Zen<TIdentifier>
 {
-    public readonly struct Block
+    public readonly struct Crystal
     {
-        internal Block(Zen<TIdentifier> zen, Flake.GoshujinClass goshujin)
+        internal Crystal(Zen<TIdentifier> zen, Flake.GoshujinClass goshujin)
         {
             this.Zen = zen;
             this.Goshujin = goshujin;

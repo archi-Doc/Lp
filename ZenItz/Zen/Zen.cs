@@ -179,7 +179,7 @@ public partial class Zen<TIdentifier>
         return false;
     }
 
-    public bool TryGetBlock(out Block block)
+    public bool TryGetBlock(out Crystal block)
     {
         if (!this.Started)
         {

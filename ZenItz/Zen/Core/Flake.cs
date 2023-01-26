@@ -450,7 +450,7 @@ public partial class Zen<TIdentifier>
             }
         }
 
-        public bool TryGetOrAddBlock(out Block block)
+        public bool TryGetOrAddBlock(out Crystal block)
         {
             if (!this.Zen.Started)
             {
