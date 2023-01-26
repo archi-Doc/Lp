@@ -6,9 +6,9 @@ using ZenItz;
 
 namespace xUnitTest.ZenTest;
 
-public class BasicTest
+public class ZenTest
 {
-    public BasicTest()
+    public ZenTest()
     {
     }
 
@@ -16,11 +16,11 @@ public class BasicTest
     public async Task Test1()
     {
         var identifier = default(Identifier);
-        var zen = TestHelper.CreateZen<Identifier>();
+        var zen = await TestHelper.CreateAndStartZen<Identifier>();
 
         var f = zen.TryGet(Identifier.Zero);
         f.IsNull();
-        f = zen.TryCreateOrGet(Identifier.Zero);
+        f = zen.CreateOrGet(Identifier.Zero);
         f.IsNotNull();
 
         var buffer = new byte[Identifier.Length];
@@ -35,7 +35,7 @@ public class BasicTest
         {
             identifier = new Identifier(i);
 
-            f = zen.TryCreateOrGet(identifier);
+            f = zen.CreateOrGet(identifier);
             f.IsNotNull();
 
             identifier.TryWriteBytes(buffer);
@@ -55,7 +55,7 @@ public class BasicTest
             result.DataEquals(buffer).IsTrue();
         }
 
-        f = zen.TryCreateOrGet(Identifier.Zero);
+        f = zen.CreateOrGet(Identifier.Zero);
         f.IsNotNull();
 
         // Set fragments
@@ -71,16 +71,15 @@ public class BasicTest
         identifier.TryWriteBytes(buffer);
 
         f!.SetFragment(identifier, buffer).Is(ZenResult.OverNumberLimit);
+
+        await TestHelper.StopZen(zen);
     }
 
     [Fact]
     public async Task Test2()
     {
-        var zen = TestHelper.CreateZen<Identifier>();
+        var zen = await TestHelper.CreateAndStartZen<Identifier>();
 
-        var f = zen.TryGet(Identifier.Zero);
-        f.IsNull();
+        await TestHelper.StopZen(zen);
     }
-
-    // public ZenFixture ZenFixture { get; }
 }

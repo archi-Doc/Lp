@@ -58,15 +58,15 @@ public class ItzTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         var zen = this.ZenControl.Zen;
         var itz = this.ZenControl.Itz;
 
-        itz.Register(new Itz.DefaultShip<IntPayload>(1_000_000));
-        itz.Register(new Itz.DefaultShip<IntPayload2>(3));
+        itz.RegisterShip(new Itz.DefaultShip<IntPayload>(1_000_000));
+        itz.RegisterShip(new Itz.DefaultShip<IntPayload2>(3));
 
         var sw = Stopwatch.StartNew();
         Console.WriteLine($"Loaded: {await itz.LoadAsync("itz.test")}, {itz.TotalCount()}");
 
         var x = new IntPayload(1);
         itz.Set(in Identifier.One, in x);
-        var result = itz.Get<IntPayload>(in Identifier.One, out var x2);
+        var result = itz.TryGet<IntPayload>(in Identifier.One, out var x2);
 
         for (var i = 2; i <= 1_000_000; i++)
         {

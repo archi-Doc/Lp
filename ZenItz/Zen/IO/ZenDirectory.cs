@@ -1,7 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.IO;
 using System.Runtime.CompilerServices;
+using LPEssentials;
 
 namespace ZenItz;
 
@@ -133,8 +133,9 @@ internal partial class ZenDirectory
         }
     }
 
-    internal bool PrepareAndCheck(string rootDirectory)
+    internal bool PrepareAndCheck(ZenIO io)
     {
+        this.Options = io.Options;
         try
         {
             if (Path.IsPathRooted(this.DirectoryPath))
@@ -143,7 +144,7 @@ internal partial class ZenDirectory
             }
             else
             {
-                this.RootedPath = Path.Combine(rootDirectory, this.DirectoryPath);
+                this.RootedPath = Path.Combine(this.Options.RootPath, this.DirectoryPath);
             }
 
             Directory.CreateDirectory(this.RootedPath);
@@ -166,7 +167,7 @@ internal partial class ZenDirectory
             }*/
 
             // Check directory file
-            using (var handle = File.OpenHandle(this.DirectoryFile, mode: FileMode.Open, access: FileAccess.ReadWrite))
+            using (var handle = File.OpenHandle(this.Options.ZenDirectoryFile, mode: FileMode.Open, access: FileAccess.ReadWrite))
             {
             }
         }
@@ -187,9 +188,9 @@ internal partial class ZenDirectory
 
         // Directory.CreateDirectory(this.DirectoryPath);
 
-        if (!this.TryLoadDirectory(this.DirectoryFile))
+        if (!this.TryLoadDirectory(this.Options.ZenDirectoryFile))
         {
-            this.TryLoadDirectory(this.DirectoryBackup);
+            this.TryLoadDirectory(this.Options.ZenDirectoryBackup);
         }
 
         this.worker = new ZenDirectoryWorker(ThreadCore.Root, this);
@@ -233,11 +234,14 @@ internal partial class ZenDirectory
     public long DirectorySize { get; private set; }
 
     [IgnoreMember]
+    public ZenOptions Options { get; private set; } = ZenOptions.Default;
+
+    [IgnoreMember]
     public string RootedPath { get; private set; } = string.Empty;
 
-    public string DirectoryFile => Path.Combine(this.RootedPath, ZenOptions.DefaultDirectoryFile);
+    public string DirectoryFile => Path.Combine(this.RootedPath, this.Options.SnowflakeFile);
 
-    public string DirectoryBackup => Path.Combine(this.RootedPath, Zen.DefaultDirectoryBackup);
+    public string DirectoryBackup => Path.Combine(this.RootedPath, this.Options.SnowflakeBackup);
 
     [IgnoreMember]
     internal double UsageRatio { get; private set; }

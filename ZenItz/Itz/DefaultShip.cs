@@ -32,9 +32,9 @@ public partial class Itz<TIdentifier>
             internal TPayload Value = default!;
         }
 
-        public DefaultShip(int maxCapacity)
+        public DefaultShip(int capacity)
         {
-            this.MaxCapacity = maxCapacity;
+            this.Capacity = capacity;
         }
 
         public void Set(in TIdentifier id, in TPayload value)
@@ -52,7 +52,7 @@ public partial class Itz<TIdentifier>
                     item = new Item(id, value);
                     this.goshujin.Add(item);
 
-                    if (this.goshujin.QueueChain.Count > this.MaxCapacity)
+                    if (this.goshujin.QueueChain.Count > this.Capacity)
                     {// Remove the oldest item;
                         this.goshujin.QueueChain.Dequeue().Goshujin = null;
                     }
@@ -60,27 +60,40 @@ public partial class Itz<TIdentifier>
             }
         }
 
-        public ItzResult Get(in TIdentifier id, out TPayload value)
+        public bool TryGet(in TIdentifier id, out TPayload value)
         {
             lock (this.goshujin)
             {
                 if (this.goshujin.KeyChain.TryGetValue(id, out var item))
                 {// Get
                     value = item.Value;
-                    return ItzResult.Success;
+                    return true;
                 }
             }
 
             value = default!;
-            return ItzResult.NoData;
+            return false;
         }
 
-        public void Serialize(ref Tinyhand.IO.TinyhandWriter writer)
+        public bool Remove(in TIdentifier id)
         {
             lock (this.goshujin)
             {
-                TinyhandSerializer.Serialize(ref writer, this.goshujin);
+                if (this.goshujin.KeyChain.TryGetValue(id, out var item))
+                {
+                    item.Goshujin = null;
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
             }
+        }
+
+        public void SetCapacity(int capacity)
+        {
+            this.Capacity = capacity;
         }
 
         public int Count()
@@ -88,6 +101,14 @@ public partial class Itz<TIdentifier>
             lock (this.goshujin)
             {
                 return this.goshujin.QueueChain.Count;
+            }
+        }
+
+        public void Serialize(ref Tinyhand.IO.TinyhandWriter writer)
+        {
+            lock (this.goshujin)
+            {
+                TinyhandSerializer.Serialize(ref writer, this.goshujin);
             }
         }
 
@@ -105,7 +126,7 @@ public partial class Itz<TIdentifier>
             }
         }
 
-        public int MaxCapacity { get; }
+        public int Capacity { get; private set; }
 
         private Item.GoshujinClass goshujin = new();
     }

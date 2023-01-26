@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using LPEssentials;
 using ZenItz.Results;
 
 namespace ZenItz;
@@ -10,12 +11,6 @@ public sealed class ZenIO
 
     public ZenIO()
     {
-        this.RootDirectory = Directory.GetCurrentDirectory();
-    }
-
-    public void SetRootDirectory(string rootDirectory)
-    {
-        this.RootDirectory = rootDirectory;
     }
 
     public ZenDirectoryInformation[] GetDirectoryInformation()
@@ -44,7 +39,7 @@ public sealed class ZenIO
             return AddDictionaryResult.FileExists;
         }
 
-        var relative = Path.GetRelativePath(this.RootDirectory, path);
+        var relative = Path.GetRelativePath(this.Options.ZenPath, path);
         if (!relative.StartsWith("..\\"))
         {
             path = relative;
@@ -75,7 +70,21 @@ public sealed class ZenIO
         return AddDictionaryResult.Success;
     }
 
-    public string RootDirectory { get; private set; } = string.Empty;
+    public void RemoveAll()
+    {
+        string[] directories;
+        lock (this.directoryGoshujin)
+        {
+            directories = this.directoryGoshujin.Select(x => x.RootedPath).ToArray();
+        }
+
+        foreach (var x in directories)
+        {
+            PathHelper.TryDeleteDirectory(x);
+        }
+    }
+
+    public ZenOptions Options { get; private set; } = ZenOptions.Default;
 
     public bool Started { get; private set; }
 
@@ -150,7 +159,7 @@ public sealed class ZenIO
         {
             foreach (var x in this.directoryGoshujin)
             {
-                x.PrepareAndCheck(this.RootDirectory);
+                x.PrepareAndCheck(this);
                 x.Start();
             }
         }
@@ -164,6 +173,8 @@ public sealed class ZenIO
         {
             return ZenStartResult.Success;
         }
+
+        this.Options = options;
 
         ZenDirectory.GoshujinClass? goshujin = null;
         if (data != null)
@@ -185,7 +196,7 @@ public sealed class ZenIO
         List<string>? errorDirectories = null;
         foreach (var x in goshujin)
         {
-            if (!x.PrepareAndCheck(this.RootDirectory))
+            if (!x.PrepareAndCheck(this))
             {
                 errorDirectories ??= new();
                 errorDirectories.Add(x.DirectoryPath);
@@ -202,8 +213,8 @@ public sealed class ZenIO
         {
             try
             {
-                var defaultDirectory = new ZenDirectory(this.GetFreeDirectoryId(goshujin), options.SnowflakePath);
-                defaultDirectory.PrepareAndCheck(this.RootDirectory);
+                var defaultDirectory = new ZenDirectory(this.GetFreeDirectoryId(goshujin), PathHelper.GetRootedDirectory(this.Options.RootPath, this.Options.DefaultZenDirectory));
+                defaultDirectory.PrepareAndCheck(this);
                 goshujin.Add(defaultDirectory);
             }
             catch

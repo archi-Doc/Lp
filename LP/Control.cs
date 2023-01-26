@@ -155,7 +155,6 @@ public class Control : ILogInformation
                 var options = previous with
                 {
                     ZenPath = lpOptions.RootDirectory,
-                    SnowflakePath = Path.Combine(lpOptions.RootDirectory, ZenOptions.DefaultSnowflakeDirectory),
                 };
 
                 context.SetOptions(options);
@@ -319,7 +318,6 @@ public class Control : ILogInformation
         this.NetControl = netsphere;
         this.NetControl.SetupServer();
         this.ZenControl = zenControl;
-        this.ZenControl.Zen.IO.SetRootDirectory(this.LPBase.RootDirectory);
         this.ZenControl.Zen.SetDelegate(ObjectToMemoryOwner, MemoryOwnerToObject);
         this.Vault = vault;
         this.Authority = authority;
@@ -350,7 +348,7 @@ public class Control : ILogInformation
             await this.ZenControl.Itz.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup)).ConfigureAwait(false);
         }
 
-        var result = await this.ZenControl.Zen.Start(new(Zen.DefaultZenDirectory, Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenBackup), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryBackup), QueryDelegate: null));
+        var result = await this.ZenControl.Zen.Start(new());
         if (result != ZenStartResult.Success)
         {
             throw new PanicException();
@@ -401,7 +399,7 @@ public class Control : ILogInformation
     {
         this.Logger.Get<DefaultLog>().Log("Termination process initiated");
 
-        await this.ZenControl.Zen.Stop(new(Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenBackup), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryFile), Path.Combine(this.LPBase.DataDirectory, Zen.DefaultZenDirectoryBackup)));
+        await this.ZenControl.Zen.Stop(new());
 
         try
         {
