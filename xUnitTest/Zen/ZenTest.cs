@@ -27,7 +27,7 @@ public class ZenTest
         var buffer2 = new byte[Identifier.Length];
         Identifier.Zero.TryWriteBytes(buffer);
         f!.SetData(buffer);
-        var result = await f!.Get();
+        var result = await f!.GetData();
         result.DataEquals(buffer).IsTrue();
 
         // Set flakes
@@ -51,7 +51,7 @@ public class ZenTest
             f.IsNotNull();
 
             identifier.TryWriteBytes(buffer);
-            result = await f!.Get();
+            result = await f!.GetData();
             result.DataEquals(buffer).IsTrue();
         }
 

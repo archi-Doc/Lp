@@ -141,6 +141,8 @@ public partial class Zen<TIdentifier>
 
         #endregion
 
+        #region Data
+
         public ZenResult SetData(ReadOnlySpan<byte> data)
         {
             if (!this.Zen.Started)
@@ -166,32 +168,7 @@ public partial class Zen<TIdentifier>
             return ZenResult.Success;
         }
 
-        /*internal ZenResult Set(ByteArrayPool.MemoryOwner dataToBeMoved)
-        {
-            if (!this.Zen.Started)
-            {
-                return ZenResult.NotStarted;
-            }
-            else if (dataToBeMoved.Memory.Length > Zen.MaxFlakeSize)
-            {
-                return ZenResult.OverSizeLimit;
-            }
-
-            lock (this.syncObject)
-            {
-                if (this.IsRemoved)
-                {
-                    return ZenResult.Removed;
-                }
-
-                this.flakeObject ??= new(this, this.Zen.FlakeObjectGoshujin);
-                this.flakeObject.SetMemoryOwner(dataToBeMoved);
-            }
-
-            return ZenResult.Success;
-        }*/
-
-        public ZenResult SetObject(object obj)
+        public ZenResult SetDataObject(object obj)
         {
             if (!this.Zen.Started)
             {
@@ -212,72 +189,7 @@ public partial class Zen<TIdentifier>
             return ZenResult.Success;
         }
 
-        public ZenResult SetFragment(TIdentifier fragmentId, ReadOnlySpan<byte> data)
-        {
-            if (!this.Zen.Started)
-            {
-                return ZenResult.NotStarted;
-            }
-            else if (data.Length > this.Zen.Options.MaxFragmentSize)
-            {
-                return ZenResult.OverSizeLimit;
-            }
-
-            lock (this.syncObject)
-            {
-                if (this.IsRemoved)
-                {
-                    return ZenResult.Removed;
-                }
-
-                this.fragmentObject ??= new(this, this.Zen.FragmentObjectGoshujin);
-                return this.fragmentObject.SetSpan(fragmentId, data);
-            }
-        }
-
-        /*internal ZenResult Set(TIdentifier fragmentId, ByteArrayPool.MemoryOwner data)
-        {
-            if (!this.Zen.Started)
-            {
-                return ZenResult.NotStarted;
-            }
-            else if (data.Memory.Length > Zen.MaxFragmentSize)
-            {
-                return ZenResult.OverSizeLimit;
-            }
-
-            lock (this.syncObject)
-            {
-                if (this.IsRemoved)
-                {
-                    return ZenResult.Removed;
-                }
-
-                this.fragmentObject ??= new(this, this.Zen.FragmentObjectGoshujin);
-                return this.fragmentObject.SetMemoryOwner(fragmentId, data);
-            }
-        }*/
-
-        public ZenResult SetFragmentObject(TIdentifier fragmentId, object obj)
-        {
-            if (!this.Zen.Started)
-            {
-                return ZenResult.NotStarted;
-            }
-
-            lock (this.syncObject)
-            {
-                if (this.IsRemoved)
-                {
-                    return ZenResult.Removed;
-                }
-
-                this.fragmentObject ??= new(this, this.Zen.FragmentObjectGoshujin);
-                return this.fragmentObject.SetObject(fragmentId, obj);
-            }
-        }
-
-        public async Task<ZenDataResult> Get()
+        public async Task<ZenDataResult> GetData()
         {
             if (!this.Zen.Started)
             {
@@ -325,7 +237,7 @@ public partial class Zen<TIdentifier>
             return new(ZenResult.NoData);
         }
 
-        public async Task<ZenObjectResult<T>> GetObject<T>()
+        public async Task<ZenObjectResult<T>> GetDataObject<T>()
         {
             if (!this.Zen.Started)
             {
@@ -390,6 +302,52 @@ public partial class Zen<TIdentifier>
             }
 
             return new(ZenResult.NoData);
+        }
+
+        #endregion
+
+        #region Fragment
+
+        public ZenResult SetFragment(TIdentifier fragmentId, ReadOnlySpan<byte> data)
+        {
+            if (!this.Zen.Started)
+            {
+                return ZenResult.NotStarted;
+            }
+            else if (data.Length > this.Zen.Options.MaxFragmentSize)
+            {
+                return ZenResult.OverSizeLimit;
+            }
+
+            lock (this.syncObject)
+            {
+                if (this.IsRemoved)
+                {
+                    return ZenResult.Removed;
+                }
+
+                this.fragmentObject ??= new(this, this.Zen.FragmentObjectGoshujin);
+                return this.fragmentObject.SetSpan(fragmentId, data);
+            }
+        }
+
+        public ZenResult SetFragmentObject(TIdentifier fragmentId, object obj)
+        {
+            if (!this.Zen.Started)
+            {
+                return ZenResult.NotStarted;
+            }
+
+            lock (this.syncObject)
+            {
+                if (this.IsRemoved)
+                {
+                    return ZenResult.Removed;
+                }
+
+                this.fragmentObject ??= new(this, this.Zen.FragmentObjectGoshujin);
+                return this.fragmentObject.SetObject(fragmentId, obj);
+            }
         }
 
         public async Task<ZenDataResult> GetFragment(TIdentifier fragmentId)
@@ -543,6 +501,8 @@ public partial class Zen<TIdentifier>
                 return this.fragmentObject.Remove(fragmentId);
             }
         }
+
+        #endregion
 
         public Zen<TIdentifier> Zen { get; private set; } = default!;
 
