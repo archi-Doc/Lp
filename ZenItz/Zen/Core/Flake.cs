@@ -47,8 +47,8 @@ public partial class Zen<TIdentifier>
                     }
                 }
 
-                this.flakeObject?.Save(unload);
-                this.fragmentObject?.Save(unload);
+                this.flakeHimo?.Save(unload);
+                this.fragmentHimo?.Save(unload);
             }
         }
 
@@ -144,8 +144,8 @@ public partial class Zen<TIdentifier>
                     return ZenResult.Removed;
                 }
 
-                this.flakeObject ??= new(this, this.Zen.FlakeObjectGoshujin);
-                this.flakeObject.SetSpan(data);
+                this.flakeHimo ??= new(this, this.Zen.FlakeObjectGoshujin);
+                this.flakeHimo.SetSpan(data);
             }
 
             return ZenResult.Success;
@@ -165,8 +165,8 @@ public partial class Zen<TIdentifier>
                     return ZenResult.Removed;
                 }
 
-                this.flakeObject ??= new(this, this.Zen.FlakeObjectGoshujin);
-                this.flakeObject.SetObject(obj);
+                this.flakeHimo ??= new(this, this.Zen.FlakeObjectGoshujin);
+                this.flakeHimo.SetObject(obj);
             }
 
             return ZenResult.Success;
@@ -187,7 +187,7 @@ public partial class Zen<TIdentifier>
                     return new(ZenResult.Removed);
                 }
 
-                if (this.flakeObject != null && this.flakeObject.TryGetMemoryOwner(out var memoryOwner))
+                if (this.flakeHimo != null && this.flakeHimo.TryGetMemoryOwner(out var memoryOwner))
                 {// Memory
                     this.UpdateGetRecentLink();
                     return new(ZenResult.Success, memoryOwner);
@@ -211,7 +211,7 @@ public partial class Zen<TIdentifier>
                         return new(ZenResult.Removed);
                     }
 
-                    this.flakeObject?.SetMemoryOwner(result.Data);
+                    this.flakeHimo?.SetMemoryOwner(result.Data);
                     this.UpdateGetRecentLink();
                     return result;
                 }
@@ -235,7 +235,7 @@ public partial class Zen<TIdentifier>
                     return new(ZenResult.Removed);
                 }
 
-                if (this.flakeObject != null && this.flakeObject.TryGetObject(out var obj))
+                if (this.flakeHimo != null && this.flakeHimo.TryGetObject(out var obj))
                 {// Object
                     if (obj is T t)
                     {
@@ -266,8 +266,8 @@ public partial class Zen<TIdentifier>
                         return new(ZenResult.Removed);
                     }
 
-                    this.flakeObject?.SetMemoryOwner(result.Data);
-                    if (this.flakeObject != null && this.flakeObject.TryGetObject(out var obj))
+                    this.flakeHimo?.SetMemoryOwner(result.Data);
+                    if (this.flakeHimo != null && this.flakeHimo.TryGetObject(out var obj))
                     {// Object
                         if (obj is T t)
                         {
@@ -309,8 +309,8 @@ public partial class Zen<TIdentifier>
                     return ZenResult.Removed;
                 }
 
-                this.fragmentObject ??= new(this, this.Zen.FragmentObjectGoshujin);
-                return this.fragmentObject.SetSpan(fragmentId, data);
+                this.fragmentHimo ??= new(this, this.Zen.FragmentObjectGoshujin);
+                return this.fragmentHimo.SetSpan(fragmentId, data);
             }
         }
 
@@ -328,8 +328,8 @@ public partial class Zen<TIdentifier>
                     return ZenResult.Removed;
                 }
 
-                this.fragmentObject ??= new(this, this.Zen.FragmentObjectGoshujin);
-                return this.fragmentObject.SetObject(fragmentId, obj);
+                this.fragmentHimo ??= new(this, this.Zen.FragmentObjectGoshujin);
+                return this.fragmentHimo.SetObject(fragmentId, obj);
             }
         }
 
@@ -348,9 +348,9 @@ public partial class Zen<TIdentifier>
                     return new(ZenResult.Removed);
                 }
 
-                if (this.fragmentObject != null)
+                if (this.fragmentHimo != null)
                 {// Memory
-                    var fragmentResult = this.fragmentObject.TryGetMemoryOwner(fragmentId, out var memoryOwner);
+                    var fragmentResult = this.fragmentHimo.TryGetMemoryOwner(fragmentId, out var memoryOwner);
                     if (fragmentResult == FragmentHimo.Result.Success)
                     {
                         // this.UpdateGetRecentLink();
@@ -380,10 +380,10 @@ public partial class Zen<TIdentifier>
                         return new(ZenResult.Removed);
                     }
 
-                    this.fragmentObject ??= new(this, this.Zen.FragmentObjectGoshujin);
-                    this.fragmentObject.Load(result.Data);
+                    this.fragmentHimo ??= new(this, this.Zen.FragmentObjectGoshujin);
+                    this.fragmentHimo.Load(result.Data);
 
-                    var fragmentResult = this.fragmentObject.TryGetMemoryOwner(fragmentId, out var memoryOwner);
+                    var fragmentResult = this.fragmentHimo.TryGetMemoryOwner(fragmentId, out var memoryOwner);
                     if (fragmentResult == FragmentHimo.Result.Success)
                     {
                         // this.UpdateGetRecentLink();
@@ -410,9 +410,9 @@ public partial class Zen<TIdentifier>
                     return new(ZenResult.Removed);
                 }
 
-                if (this.fragmentObject != null)
+                if (this.fragmentHimo != null)
                 {// Memory
-                    var fragmentResult = this.fragmentObject.TryGetObject(fragmentId, out var obj);
+                    var fragmentResult = this.fragmentHimo.TryGetObject(fragmentId, out var obj);
                     if (fragmentResult == FragmentHimo.Result.Success)
                     {
                         if (obj is T t)
@@ -449,10 +449,10 @@ public partial class Zen<TIdentifier>
                         return new(ZenResult.Removed);
                     }
 
-                    this.fragmentObject ??= new(this, this.Zen.FragmentObjectGoshujin);
-                    this.fragmentObject.Load(result.Data);
+                    this.fragmentHimo ??= new(this, this.Zen.FragmentObjectGoshujin);
+                    this.fragmentHimo.Load(result.Data);
 
-                    var fragmentResult = this.fragmentObject.TryGetObject(fragmentId, out var obj);
+                    var fragmentResult = this.fragmentHimo.TryGetObject(fragmentId, out var obj);
                     if (fragmentResult == FragmentHimo.Result.Success)
                     {
                         if (obj is T t)
@@ -480,8 +480,8 @@ public partial class Zen<TIdentifier>
                     return false;
                 }
 
-                this.fragmentObject ??= new(this, this.Zen.FragmentObjectGoshujin);
-                return this.fragmentObject.Remove(fragmentId);
+                this.fragmentHimo ??= new(this, this.Zen.FragmentObjectGoshujin);
+                return this.fragmentHimo.Remove(fragmentId);
             }
         }
 
@@ -523,8 +523,8 @@ public partial class Zen<TIdentifier>
                     this.childFlakes = null;
                 }
 
-                this.flakeObject?.Unload();
-                this.fragmentObject?.Unload();
+                this.flakeHimo?.Unload();
+                this.fragmentHimo?.Unload();
                 this.Parent = null;
                 this.Goshujin = null;
 
@@ -550,8 +550,8 @@ public partial class Zen<TIdentifier>
         internal Flake.GoshujinClass? childFlakes;
 
         internal object syncObject = new();
-        private FlakeHimo? flakeObject;
-        private FragmentHimo? fragmentObject;
+        private FlakeHimo? flakeHimo;
+        private FragmentHimo? fragmentHimo;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateGetRecentLink()
