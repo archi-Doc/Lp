@@ -30,20 +30,6 @@ public partial class Zen<TIdentifier>
 
         #region Main
 
-        public void DeserializePostProcess(Zen<TIdentifier> zen, Flake? parent = null)
-        {
-            this.Zen = zen;
-            this.Parent = parent;
-
-            if (this.childFlakes != null)
-            {
-                foreach (var x in this.childFlakes)
-                {
-                    x.DeserializePostProcess(zen, this);
-                }
-            }
-        }
-
         public void Save(bool unload = false)
         {// Skip checking Zen.Started
             lock (this.syncObject)
@@ -72,15 +58,12 @@ public partial class Zen<TIdentifier>
         /// <returns><see langword="true"/>; this <see cref="Flake"/> is successfully removed.</returns>
         public bool Remove()
         {
-            var syncObject = this.Parent?.syncObject;
-            if (syncObject != null)
-            {
-                lock (syncObject)
-                {
-                    return this.RemoveInternal();
-                }
+            if (this.Parent == null)
+            {// The root flake cannot be removed directly.
+                return false;
             }
-            else
+
+            lock (this.Parent.syncObject)
             {
                 return this.RemoveInternal();
             }
@@ -368,12 +351,12 @@ public partial class Zen<TIdentifier>
                 if (this.fragmentObject != null)
                 {// Memory
                     var fragmentResult = this.fragmentObject.TryGetMemoryOwner(fragmentId, out var memoryOwner);
-                    if (fragmentResult == FragmentObject.Result.Success)
+                    if (fragmentResult == FragmentHimo.Result.Success)
                     {
                         // this.UpdateGetRecentLink();
                         return new(ZenResult.Success, memoryOwner);
                     }
-                    else if (fragmentResult == FragmentObject.Result.NotFound)
+                    else if (fragmentResult == FragmentHimo.Result.NotFound)
                     {
                         return new(ZenResult.NoData);
                     }
@@ -401,7 +384,7 @@ public partial class Zen<TIdentifier>
                     this.fragmentObject.Load(result.Data);
 
                     var fragmentResult = this.fragmentObject.TryGetMemoryOwner(fragmentId, out var memoryOwner);
-                    if (fragmentResult == FragmentObject.Result.Success)
+                    if (fragmentResult == FragmentHimo.Result.Success)
                     {
                         // this.UpdateGetRecentLink();
                         return new(ZenResult.Success, memoryOwner);
@@ -430,7 +413,7 @@ public partial class Zen<TIdentifier>
                 if (this.fragmentObject != null)
                 {// Memory
                     var fragmentResult = this.fragmentObject.TryGetObject(fragmentId, out var obj);
-                    if (fragmentResult == FragmentObject.Result.Success)
+                    if (fragmentResult == FragmentHimo.Result.Success)
                     {
                         if (obj is T t)
                         {
@@ -442,7 +425,7 @@ public partial class Zen<TIdentifier>
                             return new(ZenResult.InvalidCast);
                         }
                     }
-                    else if (fragmentResult == FragmentObject.Result.NotFound)
+                    else if (fragmentResult == FragmentHimo.Result.NotFound)
                     {
                         return new(ZenResult.NoData);
                     }
@@ -470,7 +453,7 @@ public partial class Zen<TIdentifier>
                     this.fragmentObject.Load(result.Data);
 
                     var fragmentResult = this.fragmentObject.TryGetObject(fragmentId, out var obj);
-                    if (fragmentResult == FragmentObject.Result.Success)
+                    if (fragmentResult == FragmentHimo.Result.Success)
                     {
                         if (obj is T t)
                         {
@@ -512,59 +495,19 @@ public partial class Zen<TIdentifier>
 
         public bool IsRemoved => this.Goshujin == null && this.Parent != null;
 
-        /*internal ZenResult SetInternal(ReadOnlySpan<byte> data, bool loading)
+        internal void DeserializePostProcess(Zen<TIdentifier> zen, Flake? parent = null)
         {
-            if (!this.Zen.Started)
-            {
-                return ZenResult.NotStarted;
-            }
-            else if (data.Length > Zen.MaxFlakeSize)
-            {
-                return ZenResult.OverSizeLimit;
-            }
+            this.Zen = zen;
+            this.Parent = parent;
 
-            lock (this.syncObject)
+            if (this.childFlakes != null)
             {
-                if (this.IsRemoved)
+                foreach (var x in this.childFlakes)
                 {
-                    return ZenResult.Removed;
-                }
-
-                if (!loading || this.flakeObject == null)
-                {// Not loading or Loading & empty (Skip if loading and not empty)
-                    this.flakeObject ??= new(this, this.Zen.FlakeObjectGoshujin);
-                    this.flakeObject.SetSpan(data);
+                    x.DeserializePostProcess(zen, this);
                 }
             }
-
-            return ZenResult.Success;
         }
-
-        internal ZenResult SetInternal(TIdentifier fragmentId, ReadOnlySpan<byte> data, bool loading)
-        {
-            if (data.Length > Zen.MaxFragmentSize)
-            {
-                return ZenResult.OverSizeLimit;
-            }
-
-            lock (this.syncObject)
-            {
-                if (this.IsRemoved)
-                {
-                    return ZenResult.Removed;
-                }
-
-                if (!loading || this.fragmentObject == null)
-                {// Not loading or Loading & empty
-                    this.fragmentObject ??= new(this, this.Zen.FragmentObjectGoshujin);
-                    return this.fragmentObject.SetSpan(fragmentId, data);
-                }
-                else
-                {// Loading & not empty
-                    return this.fragmentObject.SetSpan(fragmentId, data);
-                }
-            }
-        }*/
 
         internal bool RemoveInternal()
         {// lock (Parent.syncObject)
@@ -607,8 +550,8 @@ public partial class Zen<TIdentifier>
         internal Flake.GoshujinClass? childFlakes;
 
         internal object syncObject = new();
-        private FlakeObject? flakeObject;
-        private FragmentObject? fragmentObject;
+        private FlakeHimo? flakeObject;
+        private FragmentHimo? fragmentObject;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateGetRecentLink()

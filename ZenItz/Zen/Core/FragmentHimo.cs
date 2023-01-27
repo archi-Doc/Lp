@@ -8,7 +8,7 @@ namespace ZenItz;
 
 public partial class Zen<TIdentifier>
 {
-    internal partial class FragmentObject : FlakeObjectBase
+    internal partial class FragmentHimo : Himo
     {
         public enum Result
         {
@@ -17,7 +17,7 @@ public partial class Zen<TIdentifier>
             NotLoaded,
         }
 
-        public FragmentObject(Flake flake, FlakeObjectGoshujinClass goshujin)
+        public FragmentHimo(Flake flake, HimoGoshujinClass goshujin)
             : base(flake, goshujin)
         {
         }
@@ -40,7 +40,7 @@ public partial class Zen<TIdentifier>
                 this.fragments.Add(fragmentData);
             }
 
-            this.UpdateQueue(FlakeObjectOperation.Set, fragmentData.SetSpan(data));
+            this.UpdateQueue(HimoOperation.Set, fragmentData.SetSpan(data));
             return ZenResult.Success;
         }
 
@@ -62,7 +62,7 @@ public partial class Zen<TIdentifier>
                 this.fragments.Add(fragmentData);
             }
 
-            this.UpdateQueue(FlakeObjectOperation.Set, fragmentData.SetObject(obj));
+            this.UpdateQueue(HimoOperation.Set, fragmentData.SetObject(obj));
             return ZenResult.Success;
         }
 
@@ -84,7 +84,7 @@ public partial class Zen<TIdentifier>
                 this.fragments.Add(fragmentData);
             }
 
-            this.UpdateQueue(FlakeObjectOperation.Set, fragmentData.SetMemoryOwner(dataToBeMoved));
+            this.UpdateQueue(HimoOperation.Set, fragmentData.SetMemoryOwner(dataToBeMoved));
             return ZenResult.Success;
         }
 
@@ -184,7 +184,7 @@ public partial class Zen<TIdentifier>
             }
 
             this.fragments.Remove(fragmentData);
-            this.UpdateQueue(FlakeObjectOperation.Remove, (true, fragmentData.Clear()));
+            this.UpdateQueue(HimoOperation.Remove, (true, fragmentData.Clear()));
             return true;
         }
 

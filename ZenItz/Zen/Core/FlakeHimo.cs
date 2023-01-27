@@ -6,9 +6,9 @@ namespace ZenItz;
 
 public partial class Zen<TIdentifier>
 {
-    internal class FlakeObject : FlakeObjectBase
+    internal class FlakeHimo : Himo
     {
-        public FlakeObject(Flake flake, FlakeObjectGoshujinClass goshujin)
+        public FlakeHimo(Flake flake, HimoGoshujinClass goshujin)
             : base(flake, goshujin)
         {
             this.fragment = new(flake.Zen);
@@ -16,22 +16,22 @@ public partial class Zen<TIdentifier>
 
         public void SetSpan(ReadOnlySpan<byte> data)
         {// lock (Flake.syncObject)
-            this.UpdateQueue(FlakeObjectOperation.Set, this.fragment.SetSpan(data));
+            this.UpdateQueue(HimoOperation.Set, this.fragment.SetSpan(data));
         }
 
         public void SetObject(object obj)
         {// lock (Flake.syncObject)
-            this.UpdateQueue(FlakeObjectOperation.Set, this.fragment.SetObject(obj));
+            this.UpdateQueue(HimoOperation.Set, this.fragment.SetObject(obj));
         }
 
         public void SetMemoryOwner(ByteArrayPool.MemoryOwner dataToBeMoved)
         {// lock (Flake.syncObject)
-            this.UpdateQueue(FlakeObjectOperation.Set, this.fragment.SetMemoryOwner(dataToBeMoved));
+            this.UpdateQueue(HimoOperation.Set, this.fragment.SetMemoryOwner(dataToBeMoved));
         }
 
         public void SetMemoryOwner(ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved)
         {// lock (Flake.syncObject)
-            this.UpdateQueue(FlakeObjectOperation.Set, this.fragment.SetMemoryOwner(dataToBeMoved));
+            this.UpdateQueue(HimoOperation.Set, this.fragment.SetMemoryOwner(dataToBeMoved));
         }
 
         public bool TryGetSpan(out ReadOnlySpan<byte> data)

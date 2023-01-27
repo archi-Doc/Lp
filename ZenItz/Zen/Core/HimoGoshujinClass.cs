@@ -6,19 +6,19 @@ namespace ZenItz;
 
 public partial class Zen<TIdentifier>
 {
-    internal class FlakeObjectGoshujinClass
+    internal class HimoGoshujinClass
     {
-        public FlakeObjectGoshujinClass(Zen<TIdentifier> zen)
+        public HimoGoshujinClass(Zen<TIdentifier> zen)
         {
             this.Zen = zen;
         }
 
         public Zen<TIdentifier> Zen { get; }
 
-        public FlakeObjectBase.GoshujinClass Goshujin => this.goshujin;
+        public Himo.GoshujinClass Goshujin => this.goshujin;
 
         internal long TotalSize;
 
-        private FlakeObjectBase.GoshujinClass goshujin = new();
+        private Himo.GoshujinClass goshujin = new();
     }
 }

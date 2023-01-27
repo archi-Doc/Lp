@@ -135,7 +135,7 @@ public partial class Zen<TIdentifier>
 
     internal void RemoveAll()
     {
-        this.Root.Remove();
+        this.Root.RemoveInternal();
 
         lock (this.FlakeObjectGoshujin.Goshujin)
         {
@@ -190,8 +190,8 @@ public partial class Zen<TIdentifier>
         await this.IO.StopAsync();
     }
 
-    internal FlakeObjectGoshujinClass FlakeObjectGoshujin;
-    internal FlakeObjectGoshujinClass FragmentObjectGoshujin;
+    internal HimoGoshujinClass FlakeObjectGoshujin;
+    internal HimoGoshujinClass FragmentObjectGoshujin;
 
     private async Task<ZenStartResult> LoadZenDirectory(ZenStartParam param)
     {

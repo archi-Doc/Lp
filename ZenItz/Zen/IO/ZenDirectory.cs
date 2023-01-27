@@ -167,8 +167,17 @@ internal partial class ZenDirectory
             }*/
 
             // Check directory file
-            using (var handle = File.OpenHandle(this.Options.ZenDirectoryFile, mode: FileMode.Open, access: FileAccess.ReadWrite))
+            try
             {
+                using (var handle = File.OpenHandle(this.SnowflakeFilePath, mode: FileMode.Open, access: FileAccess.ReadWrite))
+                {
+                }
+            }
+            catch
+            {
+                using (var handle = File.OpenHandle(this.SnowflakeBackupPath, mode: FileMode.Open, access: FileAccess.ReadWrite))
+                {
+                }
             }
         }
         catch
@@ -186,11 +195,9 @@ internal partial class ZenDirectory
             return;
         }
 
-        // Directory.CreateDirectory(this.DirectoryPath);
-
-        if (!this.TryLoadDirectory(this.Options.ZenDirectoryFile))
+        if (!this.TryLoadDirectory(this.SnowflakeFilePath))
         {
-            this.TryLoadDirectory(this.Options.ZenDirectoryBackup);
+            this.TryLoadDirectory(this.SnowflakeBackupPath);
         }
 
         this.worker = new ZenDirectoryWorker(ThreadCore.Root, this);
@@ -213,7 +220,7 @@ internal partial class ZenDirectory
             this.worker = null;
         }
 
-        await this.SaveDirectoryAsync(this.DirectoryFile, this.DirectoryBackup);
+        await this.SaveDirectoryAsync(this.SnowflakeFilePath, this.SnowflakeBackupPath);
     }
 
     [Key(0)]
@@ -239,9 +246,9 @@ internal partial class ZenDirectory
     [IgnoreMember]
     public string RootedPath { get; private set; } = string.Empty;
 
-    public string DirectoryFile => Path.Combine(this.RootedPath, this.Options.SnowflakeFile);
+    public string SnowflakeFilePath => Path.Combine(this.RootedPath, this.Options.SnowflakeFile);
 
-    public string DirectoryBackup => Path.Combine(this.RootedPath, this.Options.SnowflakeBackup);
+    public string SnowflakeBackupPath => Path.Combine(this.RootedPath, this.Options.SnowflakeBackup);
 
     [IgnoreMember]
     internal double UsageRatio { get; private set; }
