@@ -18,15 +18,15 @@ public class ZenTest
         var identifier = default(Identifier);
         var zen = await TestHelper.CreateAndStartZen<Identifier>();
 
-        var f = zen.TryGet(Identifier.Zero);
+        var f = zen.Root.TryGetChild(Identifier.Zero);
         f.IsNull();
-        f = zen.CreateOrGet(Identifier.Zero);
+        f = zen.Root.GetOrCreateChild(Identifier.Zero);
         f.IsNotNull();
 
         var buffer = new byte[Identifier.Length];
         var buffer2 = new byte[Identifier.Length];
         Identifier.Zero.TryWriteBytes(buffer);
-        f!.Set(buffer);
+        f!.SetData(buffer);
         var result = await f!.Get();
         result.DataEquals(buffer).IsTrue();
 
@@ -35,11 +35,11 @@ public class ZenTest
         {
             identifier = new Identifier(i);
 
-            f = zen.CreateOrGet(identifier);
+            f = zen.Root.GetOrCreateChild(identifier);
             f.IsNotNull();
 
             identifier.TryWriteBytes(buffer);
-            f!.Set(buffer).Is(ZenResult.Success);
+            f!.SetData(buffer).Is(ZenResult.Success);
         }
 
         // Get flakes and check
@@ -47,7 +47,7 @@ public class ZenTest
         {
             identifier = new Identifier(i);
 
-            f = zen.TryGet(identifier);
+            f = zen.Root.TryGetChild(identifier);
             f.IsNotNull();
 
             identifier.TryWriteBytes(buffer);
@@ -55,7 +55,7 @@ public class ZenTest
             result.DataEquals(buffer).IsTrue();
         }
 
-        f = zen.CreateOrGet(Identifier.Zero);
+        f = zen.Root.GetOrCreateChild(Identifier.Zero);
         f.IsNotNull();
 
         // Set fragments

@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace ZenItz;
 
-public partial class Zen<TIdentifier>
+/*public partial class Zen<TIdentifier>
 {
     public readonly struct Crystal
     {
@@ -30,7 +30,7 @@ public partial class Zen<TIdentifier>
             {
                 if (!this.Goshujin.IdChain.TryGetValue(id, out flake))
                 {
-                    flake = new Flake(this.Zen, id);
+                    flake = new Flake(this.Zen, null, id);
                     this.Goshujin.Add(flake);
                 }
             }
@@ -52,4 +52,4 @@ public partial class Zen<TIdentifier>
             }
         }
     }
-}
+}*/

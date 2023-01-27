@@ -8,6 +8,7 @@ namespace ZenItz;
 #pragma warning disable SA1202 // Elements should be ordered by access
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
 #pragma warning disable SA1401 // Fields should be private
+#pragma warning disable SA1124 // Do not use regions
 
 public partial class Zen<TIdentifier>
 {
@@ -15,18 +16,132 @@ public partial class Zen<TIdentifier>
     [ValueLinkObject]
     public partial class Flake
     {
-        [Link(Primary = true, Name = "RecentGet", Type = ChainType.LinkedList)]
+        // [Link(Primary = true, Name = "RecentGet", Type = ChainType.LinkedList)]
         internal Flake()
         {
         }
 
-        internal Flake(Zen<TIdentifier> zen, TIdentifier identifier)
+        internal Flake(Zen<TIdentifier> zen, Flake? parent, TIdentifier identifier)
         {
             this.Zen = zen;
+            this.Parent = parent;
             this.identifier = identifier;
         }
 
-        public ZenResult Set(ReadOnlySpan<byte> data)
+        #region Main
+
+        public void DeserializePostProcess(Zen<TIdentifier> zen, Flake? parent = null)
+        {
+            this.Zen = zen;
+            this.Parent = parent;
+
+            if (this.childFlakes != null)
+            {
+                foreach (var x in this.childFlakes)
+                {
+                    x.DeserializePostProcess(zen, this);
+                }
+            }
+        }
+
+        public void Save(bool unload = false)
+        {// Skip checking Zen.Started
+            lock (this.syncObject)
+            {
+                if (this.IsRemoved)
+                {
+                    return;
+                }
+
+                if (this.childFlakes != null)
+                {
+                    foreach (var x in this.childFlakes)
+                    {
+                        x.Save(unload);
+                    }
+                }
+
+                this.flakeObject?.Save(unload);
+                this.fragmentObject?.Save(unload);
+            }
+        }
+
+        /// <summary>
+        /// Removes this <see cref="Flake"/> from the parent and erase the data.
+        /// </summary>
+        /// <returns><see langword="true"/>; this <see cref="Flake"/> is successfully removed.</returns>
+        public bool Remove()
+        {
+            var syncObject = this.Parent?.syncObject;
+            if (syncObject != null)
+            {
+                lock (syncObject)
+                {
+                    return this.RemoveInternal();
+                }
+            }
+            else
+            {
+                return this.RemoveInternal();
+            }
+        }
+
+        #endregion
+
+        #region Child
+
+        public Flake GetOrCreateChild(TIdentifier id)
+        {
+            Flake? flake;
+            lock (this.syncObject)
+            {
+                this.childFlakes ??= new();
+                if (!this.childFlakes.IdChain.TryGetValue(id, out flake))
+                {
+                    flake = new Flake(this.Zen, this, id);
+                    this.childFlakes.Add(flake);
+                }
+            }
+
+            return flake;
+        }
+
+        public Flake? TryGetChild(TIdentifier id)
+        {
+            Flake? flake;
+            lock (this.syncObject)
+            {
+                if (this.childFlakes == null)
+                {
+                    return null;
+                }
+
+                this.childFlakes.IdChain.TryGetValue(id, out flake);
+                return flake;
+            }
+        }
+
+        public bool RemoveChild(TIdentifier id)
+        {
+            lock (this.syncObject)
+            {
+                if (this.childFlakes == null)
+                {
+                    return false;
+                }
+
+                if (this.childFlakes.IdChain.TryGetValue(id, out var flake))
+                {
+                    return flake.RemoveInternal();
+                }
+            }
+
+            return false;
+        }
+
+        #endregion
+
+        public ZenResult SetData(ReadOnlySpan<byte> data)
         {
             if (!this.Zen.Started)
             {
@@ -415,29 +530,8 @@ public partial class Zen<TIdentifier>
             return new(ZenResult.NoData);
         }
 
-        public void Save(bool unload = false)
-        {// Skip checking Zen.Started
-            lock (this.syncObject)
-            {
-                if (this.IsRemoved)
-                {
-                    return;
-                }
-
-                this.flakeObject?.Save(unload);
-                this.fragmentObject?.Save(unload);
-            }
-        }
-
-        public bool Remove() => this.Zen.Remove(this.TIdentifier);
-
-        public bool Remove(TIdentifier fragmentId)
+        public bool RemoveFragment(TIdentifier fragmentId)
         {
-            if (!this.Zen.Started)
-            {
-                return false;
-            }
-
             lock (this.syncObject)
             {
                 if (this.IsRemoved)
@@ -450,33 +544,13 @@ public partial class Zen<TIdentifier>
             }
         }
 
-        public bool TryGetOrAddBlock(out Crystal block)
-        {
-            if (!this.Zen.Started)
-            {
-                block = default;
-                return false;
-            }
+        public Zen<TIdentifier> Zen { get; private set; } = default!;
 
-            lock (this.syncObject)
-            {
-                if (this.IsRemoved)
-                {
-                    block = default;
-                    return false;
-                }
-
-                this.nesteGoshujin ??= new();
-                block = new(this.Zen, this.nesteGoshujin);
-                return true;
-            }
-        }
-
-        public Zen<TIdentifier> Zen { get; internal set; } = default!;
+        public Flake? Parent { get; private set; }
 
         public TIdentifier TIdentifier => this.identifier;
 
-        public bool IsRemoved => this.Goshujin == null;
+        public bool IsRemoved => this.Goshujin == null && this.Parent != null;
 
         /*internal ZenResult SetInternal(ReadOnlySpan<byte> data, bool loading)
         {
@@ -532,23 +606,23 @@ public partial class Zen<TIdentifier>
             }
         }*/
 
-        internal void CreateInternal(Flake.GoshujinClass goshujin)
-        {// lock (flakeGoshujin)
-            lock (this.syncObject)
-            {
-                if (this.Goshujin == null)
-                {
-                    this.Goshujin = goshujin;
-                }
-            }
-        }
-
         internal bool RemoveInternal()
-        {// lock (flakeGoshujin)
+        {// lock (Parent.syncObject)
             lock (this.syncObject)
             {
+                if (this.childFlakes != null)
+                {
+                    foreach (var x in this.childFlakes.ToArray())
+                    {
+                        x.RemoveInternal();
+                    }
+
+                    this.childFlakes = null;
+                }
+
                 this.flakeObject?.Unload();
                 this.fragmentObject?.Unload();
+                this.Parent = null;
                 this.Goshujin = null;
 
                 this.Zen.IO.Remove(this.flakeFile);
@@ -559,7 +633,7 @@ public partial class Zen<TIdentifier>
         }
 
         [Key(0)]
-        [Link(Name = "Id", NoValue = true, Type = ChainType.Unordered)]
+        [Link(Primary = true, Name = "Id", NoValue = true, Type = ChainType.Unordered)]
         [Link(Name = "OrderedId", Type = ChainType.Ordered)]
         internal TIdentifier identifier = default!;
 
@@ -570,9 +644,9 @@ public partial class Zen<TIdentifier>
         internal ulong fragmentFile;
 
         [Key(3)]
-        internal Flake.GoshujinClass? nesteGoshujin;
+        internal Flake.GoshujinClass? childFlakes;
 
-        private object syncObject = new();
+        internal object syncObject = new();
         private FlakeObject? flakeObject;
         private FragmentObject? fragmentObject;
 
@@ -581,8 +655,8 @@ public partial class Zen<TIdentifier>
         {// lock (this.syncObject)
             if (this.Goshujin != null)
             {
-                this.Goshujin.RecentGetChain.Remove(this);
-                this.Goshujin.RecentGetChain.AddFirst(this);
+                // this.Goshujin.RecentGetChain.Remove(this);
+                // this.Goshujin.RecentGetChain.AddFirst(this);
             }
         }
     }

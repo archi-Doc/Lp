@@ -34,6 +34,7 @@ public partial class Zen<TIdentifier>
         this.IO = new();
         this.FlakeObjectGoshujin = new(this);
         this.FragmentObjectGoshujin = new(this);
+        this.Root = new(this, null, default!);
     }
 
     public async Task<ZenStartResult> Start(ZenStartParam param)
@@ -89,13 +90,7 @@ public partial class Zen<TIdentifier>
         }
 
         // Save & Unload flakes
-        lock (this.flakeGoshujin)
-        {
-            foreach (var x in this.flakeGoshujin)
-            {
-                x.Save(true);
-            }
-        }
+        this.Root.Save(true);
 
         // Stop IO(ZenDirectory)
         await this.IO.StopAsync();
@@ -126,74 +121,11 @@ public partial class Zen<TIdentifier>
         this.MemoryOwnerToObject = memoryOwnerToObject;
     }
 
-    public Flake CreateOrGet(TIdentifier id)
-    {
-        if (!this.Started)
-        {
-            throw new InvalidOperationException();
-        }
-
-        Flake? flake;
-        lock (this.flakeGoshujin)
-        {
-            if (!this.flakeGoshujin.IdChain.TryGetValue(id, out flake))
-            {
-                flake = new Flake(this, id);
-                this.flakeGoshujin.Add(flake);
-            }
-        }
-
-        return flake;
-    }
-
-    public Flake? TryGet(TIdentifier id)
-    {
-        if (!this.Started)
-        {
-            return null;
-        }
-
-        Flake? flake;
-        lock (this.flakeGoshujin)
-        {
-            this.flakeGoshujin.IdChain.TryGetValue(id, out flake);
-            return flake;
-        }
-    }
-
-    public bool Remove(TIdentifier id)
-    {
-        if (!this.Started)
-        {
-            return false;
-        }
-
-        lock (this.flakeGoshujin)
-        {
-            if (this.flakeGoshujin.IdChain.TryGetValue(id, out var flake))
-            {
-                return flake.RemoveInternal();
-            }
-        }
-
-        return false;
-    }
-
-    public bool TryGetBlock(out Crystal block)
-    {
-        if (!this.Started)
-        {
-            block = default;
-            return false;
-        }
-
-        block = new(this, this.flakeGoshujin);
-        return true;
-    }
-
     public ZenOptions Options { get; set; }
 
     public bool Started { get; private set; }
+
+    public Flake Root { get; private set; }
 
     public ZenIO IO { get; }
 
@@ -203,11 +135,16 @@ public partial class Zen<TIdentifier>
 
     internal void RemoveAll()
     {
-        lock (this.flakeGoshujin)
+        this.Root.Remove();
+
+        lock (this.FlakeObjectGoshujin.Goshujin)
         {
             this.FlakeObjectGoshujin.Goshujin.Clear();
+        }
+
+        lock (this.FragmentObjectGoshujin.Goshujin)
+        {
             this.FragmentObjectGoshujin.Goshujin.Clear();
-            this.flakeGoshujin.Clear();
         }
 
         PathHelper.TryDeleteFile(this.Options.ZenFilePath);
@@ -247,13 +184,7 @@ public partial class Zen<TIdentifier>
         this.Started = false;
 
         // Save & Unload flakes
-        lock (this.flakeGoshujin)
-        {
-            foreach (var x in this.flakeGoshujin)
-            {
-                x.Save(true);
-            }
-        }
+        this.Root.Save();
 
         // Stop IO(ZenDirectory)
         await this.IO.StopAsync();
@@ -261,7 +192,6 @@ public partial class Zen<TIdentifier>
 
     internal FlakeObjectGoshujinClass FlakeObjectGoshujin;
     internal FlakeObjectGoshujinClass FragmentObjectGoshujin;
-    private Flake.GoshujinClass flakeGoshujin = new();
 
     private async Task<ZenStartResult> LoadZenDirectory(ZenStartParam param)
     {
@@ -414,22 +344,15 @@ LoadBackup:
 
     private bool DeserializeZen(ReadOnlyMemory<byte> data)
     {
-        if (!TinyhandSerializer.TryDeserialize<Flake.GoshujinClass>(data.Span, out var g))
+        if (!TinyhandSerializer.TryDeserialize<Flake>(data.Span, out var flake))
         {
             return false;
         }
 
-        foreach (var x in g)
-        {
-            x.Zen = this;
-        }
+        flake.DeserializePostProcess(this);
 
-        lock (this.flakeGoshujin)
-        {
-            this.FlakeObjectGoshujin.Goshujin.Clear();
-            this.FragmentObjectGoshujin.Goshujin.Clear();
-            this.flakeGoshujin = g;
-        }
+        this.FlakeObjectGoshujin.Goshujin.Clear();
+        this.FragmentObjectGoshujin.Goshujin.Clear();
 
         return true;
     }
@@ -437,9 +360,9 @@ LoadBackup:
     private async Task SerializeZen(string path, string? backupPath)
     {
         byte[]? byteArray;
-        lock (this.flakeGoshujin)
+        lock (this.Root.syncObject)
         {
-            byteArray = TinyhandSerializer.Serialize(this.flakeGoshujin);
+            byteArray = TinyhandSerializer.Serialize(this.Root);
         }
 
         await HashHelper.GetFarmHashAndSaveAsync(byteArray, path, backupPath);

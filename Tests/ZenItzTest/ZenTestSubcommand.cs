@@ -22,16 +22,16 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
 
         await zen.Start(new());
 
-        var flake = zen.CreateOrGet(Identifier.Zero);
+        var flake = zen.Root.GetOrCreateChild(Identifier.Zero);
         if (flake != null)
         {
-            flake.Set(new byte[] { 0, 1, });
+            flake.SetData(new byte[] { 0, 1, });
             flake.Save(true);
             var result = await flake.Get();
             flake.Remove();
         }
 
-        flake = zen.CreateOrGet(Identifier.One);
+        flake = zen.Root.GetOrCreateChild(Identifier.One);
         if (flake != null)
         {
             flake.SetObject(new TestFragment());
@@ -44,7 +44,7 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
             var result = await flake.GetFragment(Identifier.One);
             flake.Save(true);
             result = await flake.GetFragment(Identifier.One);
-            flake.Remove(Identifier.One);
+            flake.RemoveFragment(Identifier.One);
             flake.Save(true);
             result = await flake.GetFragment(Identifier.One);
             flake.Save(true);
@@ -55,11 +55,11 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
         var data = new byte[ZenOptions.DefaultMaxDataSize];
         for (var i = 0; i < 10; i++)
         {
-            flake = zen.CreateOrGet(new(i));
+            flake = zen.Root.GetOrCreateChild(new(i));
             if (flake != null)
             {
                 var dt = await flake.Get();
-                flake.Set(data);
+                flake.SetData(data);
             }
         }
 
@@ -67,7 +67,7 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
 
         for (var i = 0; i < 1_000_000; i++)
         {
-            flake = zen.CreateOrGet(new(i));
+            flake = zen.Root.GetOrCreateChild(new(i));
         }
 
         await Task.Delay(10000);
