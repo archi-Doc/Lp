@@ -10,12 +10,10 @@ public partial class Zen<TIdentifier>
         public enum HimoOperation
         {
             Set, // Set value
-            Get, // Get value
             Remove,
         }
 
         [Link(Name = "UnloadQueue", Type = ChainType.QueueList)]
-        // [Link(Name = "SaveQueue", Type = ChainType.QueueList)]
         public Himo(Flake flake, HimoGoshujinClass goshujin)
         {
             this.Flake = flake;
@@ -40,7 +38,7 @@ public partial class Zen<TIdentifier>
                     this.Goshujin = null;
                 }
                 else
-                {// Get or Set
+                {// Set
                     if (this.Goshujin == null)
                     {// New
                         this.Goshujin = this.HimoGoshujin.Goshujin;
@@ -49,19 +47,6 @@ public partial class Zen<TIdentifier>
                     {// Update
                         this.Goshujin.UnloadQueueChain.Remove(this);
                         this.Goshujin.UnloadQueueChain.Enqueue(this);
-
-                        /* if (operation == HimoOperation.Get)
-                         {// Get
-                             this.Goshujin.UnloadQueueChain.Remove(this);
-                             this.Goshujin.UnloadQueueChain.Enqueue(this);
-                         }
-                         else
-                         {// Set
-                             this.Goshujin.UnloadQueueChain.Remove(this);
-                             this.Goshujin.UnloadQueueChain.Enqueue(this);
-                             this.Goshujin.SaveQueueChain.Remove(this);
-                             this.Goshujin.SaveQueueChain.Enqueue(this);
-                         }*/
                     }
                 }
 
