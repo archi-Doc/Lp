@@ -32,8 +32,7 @@ public partial class Zen<TIdentifier>
     {
         this.Options = options ?? ZenOptions.Default;
         this.IO = new();
-        this.FlakeObjectGoshujin = new(this);
-        this.FragmentObjectGoshujin = new(this);
+        this.HimoGoshujin = new(this);
         this.Root = new(this, null, default!);
     }
 
@@ -136,16 +135,7 @@ public partial class Zen<TIdentifier>
     internal void RemoveAll()
     {
         this.Root.RemoveInternal();
-
-        lock (this.FlakeObjectGoshujin.Goshujin)
-        {
-            this.FlakeObjectGoshujin.Goshujin.Clear();
-        }
-
-        lock (this.FragmentObjectGoshujin.Goshujin)
-        {
-            this.FragmentObjectGoshujin.Goshujin.Clear();
-        }
+        this.HimoGoshujin.ClearInternal();
 
         PathHelper.TryDeleteFile(this.Options.ZenFilePath);
         PathHelper.TryDeleteFile(this.Options.ZenBackupPath);
@@ -190,8 +180,7 @@ public partial class Zen<TIdentifier>
         await this.IO.StopAsync();
     }
 
-    internal HimoGoshujinClass FlakeObjectGoshujin;
-    internal HimoGoshujinClass FragmentObjectGoshujin;
+    internal HimoGoshujinClass HimoGoshujin;
 
     private async Task<ZenStartResult> LoadZenDirectory(ZenStartParam param)
     {
@@ -351,8 +340,7 @@ LoadBackup:
 
         flake.DeserializePostProcess(this);
 
-        this.FlakeObjectGoshujin.Goshujin.Clear();
-        this.FragmentObjectGoshujin.Goshujin.Clear();
+        this.HimoGoshujin.ClearInternal();
 
         return true;
     }

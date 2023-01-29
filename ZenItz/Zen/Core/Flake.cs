@@ -1,10 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Runtime.CompilerServices;
-
 namespace ZenItz;
 
-#pragma warning disable SA1202 // Elements should be ordered by access
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
 #pragma warning disable SA1401 // Fields should be private
 #pragma warning disable SA1124 // Do not use regions
@@ -16,7 +13,7 @@ public partial class Zen<TIdentifier>
     /// </summary>
     [TinyhandObject(ExplicitKeyOnly = true)]
     [ValueLinkObject]
-    public partial class Flake
+    public partial class Flake : ITinyhandSerializationCallback
     {
         // [Link(Primary = true, Name = "RecentGet", Type = ChainType.LinkedList)]
         internal Flake()
@@ -31,6 +28,16 @@ public partial class Zen<TIdentifier>
         }
 
         #region Main
+
+        public void OnBeforeSerialize()
+        {
+            Monitor.Enter(this.syncObject);
+        }
+
+        public void OnAfterDeserialize()
+        {
+            Monitor.Exit(this.syncObject);
+        }
 
         public void Save(bool unload = false)
         {// Skip checking Zen.Started
@@ -49,12 +56,11 @@ public partial class Zen<TIdentifier>
                     }
                 }
 
-                this.flakeHimo?.Save(unload);
-                this.fragmentHimo?.Save(unload);
+                this.flakeHimo?.SaveInternal();
+                this.fragmentHimo?.SaveInternal();
                 if (unload)
                 {
-                    this.flakeHimo = null;
-                    this.fragmentHimo = null;
+                    this.UnloadInternal();
                 }
             }
         }
@@ -151,8 +157,8 @@ public partial class Zen<TIdentifier>
                     return ZenResult.Removed;
                 }
 
-                this.flakeHimo ??= new(this, this.Zen.FlakeObjectGoshujin);
-                this.flakeHimo.SetSpan(data);
+                this.flakeHimo ??= new(this);
+                this.flakeHimo.SetSpan(data, true);
             }
 
             return ZenResult.Success;
@@ -172,7 +178,7 @@ public partial class Zen<TIdentifier>
                     return ZenResult.Removed;
                 }
 
-                this.flakeHimo ??= new(this, this.Zen.FlakeObjectGoshujin);
+                this.flakeHimo ??= new(this, this.Zen.HimoGoshujin);
                 this.flakeHimo.SetObject(obj);
             }
 
@@ -196,7 +202,6 @@ public partial class Zen<TIdentifier>
 
                 if (this.flakeHimo != null && this.flakeHimo.TryGetMemoryOwner(out var memoryOwner))
                 {// Memory
-                    this.UpdateGetRecentLink();
                     return new(ZenResult.Success, memoryOwner);
                 }
 
@@ -219,7 +224,6 @@ public partial class Zen<TIdentifier>
                     }
 
                     this.flakeHimo?.SetMemoryOwner(result.Data);
-                    this.UpdateGetRecentLink();
                     return result;
                 }
             }
@@ -246,7 +250,6 @@ public partial class Zen<TIdentifier>
                 {// Object
                     if (obj is T t)
                     {
-                        this.UpdateGetRecentLink();
                         return new(ZenResult.Success, t);
                     }
                     else
@@ -278,7 +281,6 @@ public partial class Zen<TIdentifier>
                     {// Object
                         if (obj is T t)
                         {
-                            this.UpdateGetRecentLink();
                             return new(ZenResult.Success, t);
                         }
                         else
@@ -360,7 +362,6 @@ public partial class Zen<TIdentifier>
                     var fragmentResult = this.fragmentHimo.TryGetMemoryOwner(fragmentId, out var memoryOwner);
                     if (fragmentResult == FragmentHimo.Result.Success)
                     {
-                        // this.UpdateGetRecentLink();
                         return new(ZenResult.Success, memoryOwner);
                     }
                     else if (fragmentResult == FragmentHimo.Result.NotFound)
@@ -393,7 +394,6 @@ public partial class Zen<TIdentifier>
                     var fragmentResult = this.fragmentHimo.TryGetMemoryOwner(fragmentId, out var memoryOwner);
                     if (fragmentResult == FragmentHimo.Result.Success)
                     {
-                        // this.UpdateGetRecentLink();
                         return new(ZenResult.Success, memoryOwner);
                     }
                 }
@@ -424,7 +424,6 @@ public partial class Zen<TIdentifier>
                     {
                         if (obj is T t)
                         {
-                            // this.UpdateGetRecentLink();
                             return new(ZenResult.Success, t);
                         }
                         else
@@ -464,7 +463,6 @@ public partial class Zen<TIdentifier>
                     {
                         if (obj is T t)
                         {
-                            // this.UpdateGetRecentLink();
                             return new(ZenResult.Success, t);
                         }
                         else
@@ -542,6 +540,35 @@ public partial class Zen<TIdentifier>
             return true;
         }
 
+        internal void Unload()
+        {
+            lock (this.syncObject)
+            {
+                this.flakeHimo?.SaveInternal();
+                this.fragmentHimo?.SaveInternal();
+
+                this.UnloadInternal();
+            }
+        }
+
+        internal void UnloadInternal()
+        {
+            int memoryDifference = 0;
+            if (this.flakeHimo != null)
+            {
+                memoryDifference += this.flakeHimo.UnloadInternal();
+                this.flakeHimo = null;
+            }
+
+            if (this.fragmentHimo != null)
+            {
+                memoryDifference += this.fragmentHimo.UnloadInternal();
+                this.fragmentHimo = null;
+            }
+
+            this.RemoveHimo(memoryDifference);
+        }
+
         [Key(0)]
         [Link(Primary = true, Name = "Id", NoValue = true, Type = ChainType.Unordered)]
         [Link(Name = "OrderedId", Type = ChainType.Ordered)]
@@ -556,18 +583,21 @@ public partial class Zen<TIdentifier>
         [Key(3)]
         internal Flake.GoshujinClass? childFlakes;
 
-        internal object syncObject = new();
+        #region Himo
+
+        internal HimoGoshujinClass.Himo Himo => this.himo ??= new(this.Zen.HimoGoshujin, this);
+
+        internal void RemoveHimo(int memoryDifference)
+        {
+            this.Himo.Remove(memoryDifference);
+            this.himo = null;
+        }
+
+        #endregion
+
+        private object syncObject = new();
+        private HimoGoshujinClass.Himo? himo;
         private FlakeHimo? flakeHimo;
         private FragmentHimo? fragmentHimo;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateGetRecentLink()
-        {// lock (this.syncObject)
-            if (this.Goshujin != null)
-            {
-                // this.Goshujin.RecentGetChain.Remove(this);
-                // this.Goshujin.RecentGetChain.AddFirst(this);
-            }
-        }
     }
 }

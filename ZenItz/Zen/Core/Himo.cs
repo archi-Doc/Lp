@@ -4,79 +4,113 @@ namespace ZenItz;
 
 public partial class Zen<TIdentifier>
 {
-    [ValueLinkObject]
-    internal partial class Himo
+    internal partial class HimoGoshujinClass
     {
-        public enum HimoOperation
-        {
-            Set, // Set value
-            Remove,
-        }
+        public const int UnloadInterval = 100; // 100 ms
+        public const int UnloadNumber = 10;
+        public const long MemoryMargin = 1024 * 1024 * 100; // 100 MB
 
-        [Link(Name = "UnloadQueue", Type = ChainType.QueueList)]
-        public Himo(Flake flake, HimoGoshujinClass goshujin)
+        [ValueLinkObject]
+        internal partial class Himo
         {
-            this.Flake = flake;
-            this.HimoGoshujin = goshujin;
-        }
-
-        internal virtual void Save(bool unload)
-        {
-        }
-
-        internal void UpdateQueue(HimoOperation operation, (bool Changed, int MemoryDifference) t)
-        {// Update queue link.
-            if (t.Changed)
+            [Link(Name = "UnloadQueue", Type = ChainType.QueueList)]
+            public Himo(HimoGoshujinClass goshujin, Flake flake)
             {
-                this.IsSaved = false;
+                this.himoGoshujin = goshujin;
+                this.flake = flake;
             }
 
-            var unloadFlag = false;
-            lock (this.HimoGoshujin.Goshujin)
+            internal void Update(int memoryDifference)
             {
-                if (operation == HimoOperation.Remove)
-                {// Remove
-                    this.Goshujin = null;
-                }
-                else
-                {// Set
+                var unloadFlag = false;
+
+                lock (this.himoGoshujin.syncObject)
+                {
                     if (this.Goshujin == null)
                     {// New
-                        this.Goshujin = this.HimoGoshujin.Goshujin;
+                        this.Goshujin = this.himoGoshujin.goshujin;
                     }
                     else
                     {// Update
                         this.Goshujin.UnloadQueueChain.Remove(this);
                         this.Goshujin.UnloadQueueChain.Enqueue(this);
                     }
+
+                    this.himoGoshujin.totalSize += memoryDifference;
+                    if (this.himoGoshujin.totalSize > this.himoGoshujin.Zen.Options.MemorySizeLimit)
+                    {
+                        unloadFlag = true;
+                    }
                 }
 
-                this.HimoGoshujin.TotalSize += t.MemoryDifference;
-                if (this.HimoGoshujin.TotalSize > this.Flake.Zen.Options.MemorySizeLimit)
+                if (unloadFlag)
                 {
-                    unloadFlag = true;
+                    this.himoGoshujin.Unload();
                 }
             }
 
-            if (unloadFlag)
+            internal void Remove(int memoryDifference)
             {
-                this.HimoGoshujin.Unload();
+                lock (this.himoGoshujin.syncObject)
+                {
+                    this.Goshujin = null;
+                    this.himoGoshujin.totalSize += memoryDifference;
+                }
+            }
+
+            internal Flake Flake => this.flake;
+
+            private HimoGoshujinClass himoGoshujin;
+            private Flake flake;
+        }
+
+        public HimoGoshujinClass(Zen<TIdentifier> zen)
+        {
+            this.Zen = zen;
+            this.taskCore = new(ThreadCore.Root, this);
+        }
+
+        public Zen<TIdentifier> Zen { get; }
+
+        internal void Unload()
+        {
+            var limit = this.Zen.Options.MemorySizeLimit > MemoryMargin ? (this.Zen.Options.MemorySizeLimit - MemoryMargin) : this.Zen.Options.MemorySizeLimit;
+            while (Volatile.Read(ref this.totalSize) > limit)
+            {
+                var count = 0;
+                var flakes = new Flake[UnloadNumber];
+
+                lock (this.syncObject)
+                {// Get flake array.
+                    this.goshujin.UnloadQueueChain.TryPeek(out var himo);
+                    for (count = 0; himo != null && count < UnloadNumber; count++)
+                    {
+                        flakes[count] = himo.Flake;
+                        himo = himo.UnloadQueueLink.Next;
+                    }
+                }
+
+                foreach (var x in flakes)
+                {
+                    x.Unload();
+                }
             }
         }
 
-        internal void RemoveQueue(int memoryDifference)
-        {// Remove link
-            lock (this.HimoGoshujin.Goshujin)
+        internal void ClearInternal()
+        {
+            lock (this.syncObject)
             {
-                this.HimoGoshujin.TotalSize += memoryDifference;
-                this.Goshujin = null;
+                this.goshujin.Clear();
             }
         }
 
-        public Flake Flake { get; }
+        private object syncObject = new();
 
-        public HimoGoshujinClass HimoGoshujin { get; }
+        private long totalSize; // lock(this.syncObject)
 
-        public bool IsSaved { get; protected set; }
+        private Himo.GoshujinClass goshujin = new(); // lock(this.syncObject)
+
+        private HimoTaskCore taskCore;
     }
 }
