@@ -41,7 +41,10 @@ public partial class Zen<TIdentifier>
                     }
                 }
 
-                this.Zen.Root.
+                foreach (var x in flakes)
+                {
+                    x.Save(true);
+                }
 
                 while (count < UnloadNumber && this.Goshujin.UnloadQueueChain.TryDequeue(out var himo))
                 {

@@ -11,6 +11,9 @@ namespace ZenItz;
 
 public partial class Zen<TIdentifier>
 {
+    /// <summary>
+    /// <see cref="Flake"/> is an independent class that holds data at a single point in the hierarchical structure.
+    /// </summary>
     [TinyhandObject(ExplicitKeyOnly = true)]
     [ValueLinkObject]
     public partial class Flake
@@ -48,6 +51,11 @@ public partial class Zen<TIdentifier>
 
                 this.flakeHimo?.Save(unload);
                 this.fragmentHimo?.Save(unload);
+                if (unload)
+                {
+                    this.flakeHimo = null;
+                    this.fragmentHimo = null;
+                }
             }
         }
 

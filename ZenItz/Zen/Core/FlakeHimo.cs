@@ -11,54 +11,54 @@ public partial class Zen<TIdentifier>
         public FlakeHimo(Flake flake, HimoGoshujinClass goshujin)
             : base(flake, goshujin)
         {
-            this.fragment = new(flake.Zen);
+            this.flakeData = new(flake.Zen);
         }
 
         public void SetSpan(ReadOnlySpan<byte> data)
         {// lock (Flake.syncObject)
-            this.UpdateQueue(HimoOperation.Set, this.fragment.SetSpan(data));
+            this.UpdateQueue(HimoOperation.Set, this.flakeData.SetSpan(data));
         }
 
         public void SetObject(object obj)
         {// lock (Flake.syncObject)
-            this.UpdateQueue(HimoOperation.Set, this.fragment.SetObject(obj));
+            this.UpdateQueue(HimoOperation.Set, this.flakeData.SetObject(obj));
         }
 
         public void SetMemoryOwner(ByteArrayPool.MemoryOwner dataToBeMoved)
         {// lock (Flake.syncObject)
-            this.UpdateQueue(HimoOperation.Set, this.fragment.SetMemoryOwner(dataToBeMoved));
+            this.UpdateQueue(HimoOperation.Set, this.flakeData.SetMemoryOwner(dataToBeMoved));
         }
 
         public void SetMemoryOwner(ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved)
         {// lock (Flake.syncObject)
-            this.UpdateQueue(HimoOperation.Set, this.fragment.SetMemoryOwner(dataToBeMoved));
+            this.UpdateQueue(HimoOperation.Set, this.flakeData.SetMemoryOwner(dataToBeMoved));
         }
 
         public bool TryGetSpan(out ReadOnlySpan<byte> data)
         {// lock (Flake.syncObject)
-            return this.fragment.TryGetSpan(out data);
+            return this.flakeData.TryGetSpan(out data);
         }
 
         public bool TryGetMemoryOwner(out ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
         {// lock (Flake.syncObject)
-            return this.fragment.TryGetMemoryOwner(out memoryOwner);
+            return this.flakeData.TryGetMemoryOwner(out memoryOwner);
         }
 
         public bool TryGetObject([MaybeNullWhen(false)] out object? obj)
         {// lock (Flake.syncObject)
-            return this.fragment.TryGetObject(out obj);
+            return this.flakeData.TryGetObject(out obj);
         }
 
         public void Unload()
         {// lock (Flake.syncObject)
-            this.RemoveQueue(this.fragment.Clear());
+            this.RemoveQueue(this.flakeData.Clear());
         }
 
         internal override void Save(bool unload)
         {// lock (this.FlakeObjectGoshujin.Goshujin)
             if (!this.IsSaved)
             {// Not saved.
-                if (this.fragment.TryGetMemoryOwner(out var memoryOwner))
+                if (this.flakeData.TryGetMemoryOwner(out var memoryOwner))
                 {
                     this.Flake.Zen.IO.Save(ref this.Flake.flakeFile, memoryOwner);
                     memoryOwner.Return();
@@ -73,6 +73,6 @@ public partial class Zen<TIdentifier>
             }
         }
 
-        private FlakeData fragment;
+        private FlakeData flakeData;
     }
 }
