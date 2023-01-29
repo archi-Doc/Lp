@@ -10,7 +10,7 @@ public record ZenOptions
     public const int DefaultMaxDataSize = 1024 * 1024 * 4; // 4MB
     public const int DefaultMaxFragmentSize = 1024 * 4; // 4KB
     public const int DefaultMaxFragmentCount = 1000;
-    public const int DefaultMemorySizeLimit = 1024 * 1024 * 100; // 100MB
+    public const int DefaultMemorySizeLimit = 1024 * 1024 * 500; // 500MB
 
     public static ZenOptions Default { get; } = new ZenOptions();
 

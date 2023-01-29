@@ -31,6 +31,7 @@ public partial class Zen<TIdentifier>
                 this.IsSaved = false;
             }
 
+            var unloadFlag = false;
             lock (this.HimoGoshujin.Goshujin)
             {
                 if (operation == HimoOperation.Remove)
@@ -51,11 +52,15 @@ public partial class Zen<TIdentifier>
                 }
 
                 this.HimoGoshujin.TotalSize += t.MemoryDifference;
-                while (this.HimoGoshujin.TotalSize > this.Flake.Zen.Options.MemorySizeLimit)
-                {// Unload
-                    var h = this.HimoGoshujin.Goshujin.UnloadQueueChain.Peek();
-                    h.Save(true);
+                if (this.HimoGoshujin.TotalSize > this.Flake.Zen.Options.MemorySizeLimit)
+                {
+                    unloadFlag = true;
                 }
+            }
+
+            if (unloadFlag)
+            {
+                this.HimoGoshujin.Unload();
             }
         }
 

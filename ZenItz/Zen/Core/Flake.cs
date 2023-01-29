@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace ZenItz;
@@ -491,7 +490,7 @@ public partial class Zen<TIdentifier>
 
         public Flake? Parent { get; private set; }
 
-        public TIdentifier TIdentifier => this.identifier;
+        public TIdentifier Identifier => this.identifier;
 
         public bool IsRemoved => this.Goshujin == null && this.Parent != null;
 
