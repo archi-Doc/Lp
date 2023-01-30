@@ -92,7 +92,20 @@ public partial class Zen<TIdentifier>
         public HimoGoshujinClass(Zen<TIdentifier> zen)
         {
             this.Zen = zen;
-            this.taskCore = new(ThreadCore.Root, this);
+        }
+
+        internal void Start()
+        {
+            this.taskCore ??= new(ThreadCore.Root, this);
+        }
+
+        internal void Stop()
+        {
+            if (this.taskCore is { } taskCore)
+            {
+                this.taskCore = null;
+                taskCore.Terminate();
+            }
         }
 
         public Zen<TIdentifier> Zen { get; }
@@ -134,6 +147,6 @@ public partial class Zen<TIdentifier>
         private object syncObject = new();
         private long totalSize; // lock(this.syncObject)
         private Himo.GoshujinClass goshujin = new(); // lock(this.syncObject)
-        private HimoTaskCore taskCore;
+        private HimoTaskCore? taskCore;
     }
 }

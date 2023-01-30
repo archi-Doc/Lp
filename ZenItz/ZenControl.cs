@@ -1,24 +1,14 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-#pragma warning disable SA1208 // System using directives should be placed before other using directives
-#pragma warning disable SA1210 // Using directives should be ordered alphabetically by namespace
 global using System;
 global using System.Net;
 global using System.Threading.Tasks;
 global using Arc.Threading;
 global using Arc.Unit;
-global using CrossChannel;
 global using LP;
 global using LP.Block;
-global using LP.Data;
 global using Tinyhand;
 global using ValueLink;
-using System.Collections.Concurrent;
-using System.ComponentModel;
-using System.Reflection.Metadata;
-using System.Security.Cryptography;
-using BigMachines;
-using SimpleCommandLine;
 
 namespace ZenItz;
 
@@ -63,16 +53,9 @@ public class ZenControl
         this.Itz = itz;
     }
 
-    public Zen GetOrAdd(string name)
-    {
-        return this.dictionary.GetOrAdd(name, x => new Zen());
-    }
-
     public Zen Zen { get; }
 
     public Itz Itz { get; }
-
-    private ConcurrentDictionary<string, Zen> dictionary = new();
 
     public bool ExaltationOfIntegrality { get; } = true; // by Baxter.
 }

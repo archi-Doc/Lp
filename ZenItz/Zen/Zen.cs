@@ -66,6 +66,9 @@ public partial class Zen<TIdentifier>
             return result;
         }
 
+        // HimoGoshujin
+        this.HimoGoshujin.Start();
+
         this.Started = true;
         return result;
     }
@@ -78,6 +81,9 @@ public partial class Zen<TIdentifier>
         }
 
         this.Started = false;
+
+        // HimoGoshujin
+        this.HimoGoshujin.Stop();
 
         if (param.RemoveAll)
         {
