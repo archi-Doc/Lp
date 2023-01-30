@@ -13,7 +13,7 @@ public partial class Zen<TIdentifier>
     /// </summary>
     [TinyhandObject(ExplicitKeyOnly = true, LockObject = nameof(syncObject))]
     [ValueLinkObject]
-    public partial class Flake : FlakeBase
+    public partial class Flake // : FlakeBase
     {
         // [Link(Primary = true, Name = "RemoveQueue", Type = ChainType.LinkedList)]
         internal Flake()
