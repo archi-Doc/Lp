@@ -1,18 +1,17 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ZenItz;
 
 public partial class Zen<TIdentifier>
 {
-    internal class FlakeHimo
+    internal class FlakeHimo : HimoGoshujinClass.Himo
     {
-        public FlakeHimo(Flake flake)
+        public FlakeHimo(Zen<TIdentifier> zen, Flake flake)
+            : base(zen.HimoGoshujin, flake)
         {
-            this.flake = flake;
+            this.HimoType = Type.FlakeHimo;
         }
 
         public void SetSpan(ReadOnlySpan<byte> data, bool clearSavedFlag)
@@ -50,9 +49,10 @@ public partial class Zen<TIdentifier>
             return this.TryGetObjectInternal(out obj);
         }
 
-        internal int UnloadInternal()
+        internal void UnloadInternal()
         {// lock (Flake.syncObject)
-            return this.Clear();
+            var memoryDifference = this.Clear();
+            this.Remove(memoryDifference);
         }
 
         internal void SaveInternal()
@@ -61,23 +61,12 @@ public partial class Zen<TIdentifier>
             {// Not saved.
                 if (this.TryGetMemoryOwnerInternal(out var memoryOwner))
                 {
-                    this.flake.Zen.IO.Save(ref this.flake.flakeFile, memoryOwner);
+                    this.Flake.Zen.IO.Save(ref this.Flake.flakeFile, memoryOwner);
                     memoryOwner.Return();
                 }
 
                 this.isSaved = true;
             }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Update((bool Changed, int MemoryDifference) result, bool clearSavedFlag)
-        {
-            if (clearSavedFlag && result.Changed)
-            {
-                this.isSaved = false;
-            }
-
-            this.flake.Himo.Update(result.MemoryDifference);
         }
 
         private (bool Changed, int MemoryDifference) SetSpanInternal(ReadOnlySpan<byte> span)
@@ -144,7 +133,7 @@ public partial class Zen<TIdentifier>
                 data = this.memoryOwner.Memory.Span;
                 return true;
             }
-            else if (this.@object != null && this.flake.Zen.ObjectToMemoryOwner(this.@object, out var m))
+            else if (this.@object != null && this.Flake.Zen.ObjectToMemoryOwner(this.@object, out var m))
             {
                 this.memoryOwner = m.AsReadOnly();
                 this.memoryOwnerAvailable = true;
@@ -165,7 +154,7 @@ public partial class Zen<TIdentifier>
                 memoryOwner = this.memoryOwner.IncrementAndShare();
                 return true;
             }
-            else if (this.@object != null && this.flake.Zen.ObjectToMemoryOwner(this.@object, out var m))
+            else if (this.@object != null && this.Flake.Zen.ObjectToMemoryOwner(this.@object, out var m))
             {
                 this.memoryOwner = m.AsReadOnly();
                 this.memoryOwnerAvailable = true;
@@ -188,7 +177,7 @@ public partial class Zen<TIdentifier>
             }
             else if (this.memoryOwnerAvailable)
             {
-                obj = this.flake.Zen.MemoryOwnerToObject(this.memoryOwner);
+                obj = this.Flake.Zen.MemoryOwnerToObject(this.memoryOwner);
                 return obj != null;
             }
             else
@@ -207,12 +196,8 @@ public partial class Zen<TIdentifier>
             return memoryDifference;
         }
 
-        private Flake flake;
-        private bool isSaved = true;
-
         private object? @object;
         private bool memoryOwnerAvailable;
         private ByteArrayPool.ReadOnlyMemoryOwner memoryOwner;
     }
 }
-q

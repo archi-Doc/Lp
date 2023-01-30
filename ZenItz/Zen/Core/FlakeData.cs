@@ -15,8 +15,6 @@ public partial class Zen<TIdentifier>
             this.Zen = zen;
         }
 
-        
-
         public Zen<TIdentifier> Zen { get; }
 
         public object? Object { get; private set; }

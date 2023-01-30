@@ -11,9 +11,9 @@ public partial class Zen<TIdentifier>
     /// <summary>
     /// <see cref="Flake"/> is an independent class that holds data at a single point in the hierarchical structure.
     /// </summary>
-    [TinyhandObject(ExplicitKeyOnly = true)]
+    [TinyhandObject(ExplicitKeyOnly = true, LockObject = nameof(syncObject))]
     [ValueLinkObject]
-    public partial class Flake : ITinyhandSerializationCallback
+    public partial class Flake
     {
         // [Link(Primary = true, Name = "RecentGet", Type = ChainType.LinkedList)]
         internal Flake()
@@ -28,16 +28,6 @@ public partial class Zen<TIdentifier>
         }
 
         #region Main
-
-        public void OnBeforeSerialize()
-        {
-            Monitor.Enter(this.syncObject);
-        }
-
-        public void OnAfterDeserialize()
-        {
-            Monitor.Exit(this.syncObject);
-        }
 
         public void Save(bool unload = false)
         {// Skip checking Zen.Started
@@ -60,7 +50,10 @@ public partial class Zen<TIdentifier>
                 this.fragmentHimo?.SaveInternal();
                 if (unload)
                 {
-                    this.UnloadInternal();
+                    this.flakeHimo?.UnloadInternal();
+                    this.flakeHimo = null;
+                    this.fragmentHimo?.UnloadInternal();
+                    this.fragmentHimo = null;
                 }
             }
         }
@@ -528,8 +521,8 @@ public partial class Zen<TIdentifier>
                     this.childFlakes = null;
                 }
 
-                this.flakeHimo?.Unload();
-                this.fragmentHimo?.Unload();
+                this.flakeHimo?.UnloadInternal();
+                this.fragmentHimo?.UnloadInternal();
                 this.Parent = null;
                 this.Goshujin = null;
 
@@ -540,33 +533,30 @@ public partial class Zen<TIdentifier>
             return true;
         }
 
-        internal void Unload()
+        /// <summary>
+        /// Save Flake data and unload it from memory.
+        /// </summary>
+        /// <param name="himoType">Himo type (UchuHimo = All).</param>
+        internal void Unload(HimoGoshujinClass.Himo.Type himoType = HimoGoshujinClass.Himo.Type.UchuHimo)
         {
             lock (this.syncObject)
             {
-                this.flakeHimo?.SaveInternal();
-                this.fragmentHimo?.SaveInternal();
+                if (himoType == HimoGoshujinClass.Himo.Type.UchuHimo ||
+                    himoType == HimoGoshujinClass.Himo.Type.FlakeHimo)
+                {
+                    this.flakeHimo?.SaveInternal();
+                    this.flakeHimo?.UnloadInternal();
+                    this.flakeHimo = null;
+                }
 
-                this.UnloadInternal();
+                if (himoType == HimoGoshujinClass.Himo.Type.UchuHimo ||
+                    himoType == HimoGoshujinClass.Himo.Type.FragmentHimo)
+                {
+                    this.fragmentHimo?.SaveInternal();
+                    this.fragmentHimo?.UnloadInternal();
+                    this.fragmentHimo = null;
+                }
             }
-        }
-
-        internal void UnloadInternal()
-        {
-            int memoryDifference = 0;
-            if (this.flakeHimo != null)
-            {
-                memoryDifference += this.flakeHimo.UnloadInternal();
-                this.flakeHimo = null;
-            }
-
-            if (this.fragmentHimo != null)
-            {
-                memoryDifference += this.fragmentHimo.UnloadInternal();
-                this.fragmentHimo = null;
-            }
-
-            this.RemoveHimo(memoryDifference);
         }
 
         [Key(0)]
@@ -583,20 +573,12 @@ public partial class Zen<TIdentifier>
         [Key(3)]
         internal Flake.GoshujinClass? childFlakes;
 
-        #region Himo
-
-        internal HimoGoshujinClass.Himo Himo => this.himo ??= new(this.Zen.HimoGoshujin, this);
-
-        internal void RemoveHimo(int memoryDifference)
+        private void Update()
         {
-            this.Himo.Remove(memoryDifference);
-            this.himo = null;
+
         }
 
-        #endregion
-
         private object syncObject = new();
-        private HimoGoshujinClass.Himo? himo;
         private FlakeHimo? flakeHimo;
         private FragmentHimo? fragmentHimo;
     }

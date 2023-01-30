@@ -1,5 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+#pragma warning disable SA1401 // Fields should be private
+
+using System.Runtime.CompilerServices;
+
 namespace ZenItz;
 
 public partial class Zen<TIdentifier>
@@ -13,15 +17,35 @@ public partial class Zen<TIdentifier>
         [ValueLinkObject]
         internal partial class Himo
         {
-            [Link(Name = "UnloadQueue", Type = ChainType.QueueList)]
+            public enum Type
+            {
+                UchuHimo,
+                FlakeHimo,
+                FragmentHimo,
+            }
+
+            [Link(Name = "UnloadQueue", Type = ChainType.QueueList)] // Manages the order of unloading from memory
             public Himo(HimoGoshujinClass goshujin, Flake flake)
             {
                 this.himoGoshujin = goshujin;
                 this.flake = flake;
             }
 
-            internal void Update(int memoryDifference)
+            public Type HimoType { get; protected set; }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            protected void Update((bool Changed, int MemoryDifference) result, bool clearSavedFlag)
             {
+                if (clearSavedFlag && result.Changed)
+                {
+                    this.isSaved = false;
+                }
+
+                this.Update(result.MemoryDifference);
+            }
+
+            protected void Update(int memoryDifference)
+            {// lock (Flake.syncObject)
                 var unloadFlag = false;
 
                 lock (this.himoGoshujin.syncObject)
@@ -49,8 +73,8 @@ public partial class Zen<TIdentifier>
                 }
             }
 
-            internal void Remove(int memoryDifference)
-            {
+            protected void Remove(int memoryDifference)
+            {// lock (Flake.syncObject)
                 lock (this.himoGoshujin.syncObject)
                 {
                     this.Goshujin = null;
@@ -60,8 +84,9 @@ public partial class Zen<TIdentifier>
 
             internal Flake Flake => this.flake;
 
-            private HimoGoshujinClass himoGoshujin;
+            protected bool isSaved = true;
             private Flake flake;
+            private HimoGoshujinClass himoGoshujin;
         }
 
         public HimoGoshujinClass(Zen<TIdentifier> zen)
@@ -78,21 +103,22 @@ public partial class Zen<TIdentifier>
             while (Volatile.Read(ref this.totalSize) > limit)
             {
                 var count = 0;
-                var flakes = new Flake[UnloadNumber];
+                var array = new (Flake Flake, Himo.Type HimoType)[UnloadNumber];
 
                 lock (this.syncObject)
-                {// Get flake array.
+                {// Get flake/himo type array.
                     this.goshujin.UnloadQueueChain.TryPeek(out var himo);
                     for (count = 0; himo != null && count < UnloadNumber; count++)
                     {
-                        flakes[count] = himo.Flake;
+                        array[count].Flake = himo.Flake;
+                        array[count].HimoType = himo.HimoType;
                         himo = himo.UnloadQueueLink.Next;
                     }
                 }
 
-                foreach (var x in flakes)
+                foreach (var x in array)
                 {
-                    x.Unload();
+                    x.Flake.Unload(x.HimoType);
                 }
             }
         }
@@ -106,11 +132,8 @@ public partial class Zen<TIdentifier>
         }
 
         private object syncObject = new();
-
         private long totalSize; // lock(this.syncObject)
-
         private Himo.GoshujinClass goshujin = new(); // lock(this.syncObject)
-
         private HimoTaskCore taskCore;
     }
 }
