@@ -15,7 +15,7 @@ public partial class Zen<TIdentifier>
     [ValueLinkObject]
     public partial class Flake
     {
-        // [Link(Primary = true, Name = "RecentGet", Type = ChainType.LinkedList)]
+        // [Link(Primary = true, Name = "RemoveQueue", Type = ChainType.LinkedList)]
         internal Flake()
         {
         }
@@ -150,7 +150,7 @@ public partial class Zen<TIdentifier>
                     return ZenResult.Removed;
                 }
 
-                this.flakeHimo ??= new(this);
+                this.flakeHimo ??= new(this.Zen, this);
                 this.flakeHimo.SetSpan(data, true);
             }
 
@@ -171,8 +171,8 @@ public partial class Zen<TIdentifier>
                     return ZenResult.Removed;
                 }
 
-                this.flakeHimo ??= new(this, this.Zen.HimoGoshujin);
-                this.flakeHimo.SetObject(obj);
+                this.flakeHimo ??= new(this.Zen, this);
+                this.flakeHimo.SetObject(obj, true);
             }
 
             return ZenResult.Success;
@@ -216,7 +216,7 @@ public partial class Zen<TIdentifier>
                         return new(ZenResult.Removed);
                     }
 
-                    this.flakeHimo?.SetMemoryOwner(result.Data);
+                    this.flakeHimo?.SetMemoryOwner(result.Data, false);
                     return result;
                 }
             }
@@ -269,7 +269,7 @@ public partial class Zen<TIdentifier>
                         return new(ZenResult.Removed);
                     }
 
-                    this.flakeHimo?.SetMemoryOwner(result.Data);
+                    this.flakeHimo?.SetMemoryOwner(result.Data, false);
                     if (this.flakeHimo != null && this.flakeHimo.TryGetObject(out var obj))
                     {// Object
                         if (obj is T t)
@@ -311,8 +311,8 @@ public partial class Zen<TIdentifier>
                     return ZenResult.Removed;
                 }
 
-                this.fragmentHimo ??= new(this, this.Zen.FragmentObjectGoshujin);
-                return this.fragmentHimo.SetSpan(fragmentId, data);
+                this.fragmentHimo ??= new(this.Zen, this);
+                return this.fragmentHimo.SetSpan(fragmentId, data, true);
             }
         }
 
@@ -330,8 +330,8 @@ public partial class Zen<TIdentifier>
                     return ZenResult.Removed;
                 }
 
-                this.fragmentHimo ??= new(this, this.Zen.FragmentObjectGoshujin);
-                return this.fragmentHimo.SetObject(fragmentId, obj);
+                this.fragmentHimo ??= new(this.Zen, this);
+                return this.fragmentHimo.SetObject(fragmentId, obj, true);
             }
         }
 
@@ -381,7 +381,7 @@ public partial class Zen<TIdentifier>
                         return new(ZenResult.Removed);
                     }
 
-                    this.fragmentHimo ??= new(this, this.Zen.FragmentObjectGoshujin);
+                    this.fragmentHimo ??= new(this.Zen, this);
                     this.fragmentHimo.Load(result.Data);
 
                     var fragmentResult = this.fragmentHimo.TryGetMemoryOwner(fragmentId, out var memoryOwner);
@@ -448,7 +448,7 @@ public partial class Zen<TIdentifier>
                         return new(ZenResult.Removed);
                     }
 
-                    this.fragmentHimo ??= new(this, this.Zen.FragmentObjectGoshujin);
+                    this.fragmentHimo ??= new(this.Zen, this);
                     this.fragmentHimo.Load(result.Data);
 
                     var fragmentResult = this.fragmentHimo.TryGetObject(fragmentId, out var obj);
@@ -478,8 +478,8 @@ public partial class Zen<TIdentifier>
                     return false;
                 }
 
-                this.fragmentHimo ??= new(this, this.Zen.FragmentObjectGoshujin);
-                return this.fragmentHimo.Remove(fragmentId);
+                this.fragmentHimo ??= new(this.Zen, this);
+                return this.fragmentHimo.RemoveInternal(fragmentId);
             }
         }
 
@@ -572,11 +572,6 @@ public partial class Zen<TIdentifier>
 
         [Key(3)]
         internal Flake.GoshujinClass? childFlakes;
-
-        private void Update()
-        {
-
-        }
 
         private object syncObject = new();
         private FlakeHimo? flakeHimo;

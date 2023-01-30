@@ -4,11 +4,9 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace ZenItz;
 
-#pragma warning disable SA1401 // Fields should be private
-
 public partial class Zen<TIdentifier>
 {
-    internal partial class FragmentHimo : Himo
+    internal partial class FragmentHimo : HimoGoshujinClass.Himo
     {
         public enum Result
         {
@@ -17,12 +15,13 @@ public partial class Zen<TIdentifier>
             NotLoaded,
         }
 
-        public FragmentHimo(Flake flake, HimoGoshujinClass goshujin)
-            : base(flake, goshujin)
+        public FragmentHimo(Zen<TIdentifier> zen, Flake flake)
+            : base(zen.HimoGoshujin, flake)
         {
+            this.HimoType = Type.FragmentHimo;
         }
 
-        public ZenResult SetSpan(TIdentifier fragmentId, ReadOnlySpan<byte> data)
+        public ZenResult SetSpan(TIdentifier fragmentId, ReadOnlySpan<byte> data, bool clearSavedFlag)
         {// lock (Flake.syncObject)
             if (this.fragments == null)
             {
@@ -40,11 +39,11 @@ public partial class Zen<TIdentifier>
                 this.fragments.Add(fragmentData);
             }
 
-            this.UpdateQueue(HimoOperation.Set, fragmentData.SetSpan(data));
+            this.Update(fragmentData.SetSpan(data), clearSavedFlag);
             return ZenResult.Success;
         }
 
-        public ZenResult SetObject(TIdentifier fragmentId, object obj)
+        public ZenResult SetObject(TIdentifier fragmentId, object obj, bool clearSavedFlag)
         {// lock (Flake.syncObject)
             if (this.fragments == null)
             {
@@ -62,11 +61,11 @@ public partial class Zen<TIdentifier>
                 this.fragments.Add(fragmentData);
             }
 
-            this.UpdateQueue(HimoOperation.Set, fragmentData.SetObject(obj));
+            this.Update(fragmentData.SetObject(obj), clearSavedFlag);
             return ZenResult.Success;
         }
 
-        public ZenResult SetMemoryOwner(TIdentifier fragmentId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved)
+        public ZenResult SetMemoryOwner(TIdentifier fragmentId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved, bool clearSavedFlag)
         {// lock (Flake.syncObject)
             if (this.fragments == null)
             {
@@ -84,7 +83,7 @@ public partial class Zen<TIdentifier>
                 this.fragments.Add(fragmentData);
             }
 
-            this.UpdateQueue(HimoOperation.Set, fragmentData.SetMemoryOwner(dataToBeMoved));
+            this.Update(fragmentData.SetMemoryOwner(dataToBeMoved), clearSavedFlag);
             return ZenResult.Success;
         }
 
@@ -154,7 +153,7 @@ public partial class Zen<TIdentifier>
             return Result.NotFound;
         }
 
-        public void Unload()
+        internal void UnloadInternal()
         {// lock (Flake.syncObject)
             int memoryDifference = 0;
             if (this.fragments != null)
@@ -168,10 +167,10 @@ public partial class Zen<TIdentifier>
                 this.fragments = null;
             }
 
-            this.RemoveQueue(memoryDifference);
+            this.Remove(memoryDifference);
         }
 
-        public bool Remove(TIdentifier fragmentId)
+        internal bool RemoveInternal(TIdentifier fragmentId)
         {// lock (Flake.syncObject)
             if (this.fragments == null)
             {
@@ -184,12 +183,12 @@ public partial class Zen<TIdentifier>
             }
 
             this.fragments.Remove(fragmentData);
-            this.UpdateQueue(HimoOperation.Remove, (true, fragmentData.Clear()));
+            this.Remove(fragmentData.Clear());
             return true;
         }
 
-        internal override void Save(bool unload)
-        {// lock (Flake.syncObject) -> lock (this.FlakeObjectGoshujin.Goshujin)
+        internal void SaveInternal()
+        {// lock (Flake.syncObject)
             if (this.fragments != null)
             {
                 var writer = default(Tinyhand.IO.TinyhandWriter);
@@ -205,11 +204,6 @@ public partial class Zen<TIdentifier>
 
                 var memoryOwner = new ByteArrayPool.ReadOnlyMemoryOwner(writer.FlushAndGetArray());
                 this.Flake.Zen.IO.Save(ref this.Flake.fragmentFile, memoryOwner);
-            }
-
-            if (unload)
-            {// Unload
-                this.Unload();
             }
         }
 

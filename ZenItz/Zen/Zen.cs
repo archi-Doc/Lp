@@ -347,12 +347,7 @@ LoadBackup:
 
     private async Task SerializeZen(string path, string? backupPath)
     {
-        byte[]? byteArray;
-        lock (this.Root.syncObject)
-        {
-            byteArray = TinyhandSerializer.Serialize(this.Root);
-        }
-
+        var byteArray = TinyhandSerializer.Serialize(this.Root);
         await HashHelper.GetFarmHashAndSaveAsync(byteArray, path, backupPath);
     }
 }
