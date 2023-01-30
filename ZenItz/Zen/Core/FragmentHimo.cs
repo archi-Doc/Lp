@@ -39,7 +39,7 @@ public partial class Zen<TIdentifier>
                 this.fragments.Add(fragmentData);
             }
 
-            this.Update(fragmentData.SetSpan(data), clearSavedFlag);
+            this.Update(fragmentData.SetSpanInternal(data), clearSavedFlag);
             return ZenResult.Success;
         }
 
@@ -61,7 +61,7 @@ public partial class Zen<TIdentifier>
                 this.fragments.Add(fragmentData);
             }
 
-            this.Update(fragmentData.SetObject(obj), clearSavedFlag);
+            this.Update(fragmentData.SetObjectInternal(obj), clearSavedFlag);
             return ZenResult.Success;
         }
 
@@ -83,7 +83,7 @@ public partial class Zen<TIdentifier>
                 this.fragments.Add(fragmentData);
             }
 
-            this.Update(fragmentData.SetMemoryOwner(dataToBeMoved), clearSavedFlag);
+            this.Update(fragmentData.SetMemoryOwnerInternal(dataToBeMoved), clearSavedFlag);
             return ZenResult.Success;
         }
 
@@ -96,7 +96,7 @@ public partial class Zen<TIdentifier>
 
             if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragment))
             {// Fount
-                return fragment.TryGetSpan(out data);
+                return fragment.TryGetSpanInternal(out data);
             }
             else
             {
@@ -115,7 +115,7 @@ public partial class Zen<TIdentifier>
 
             if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragmentData))
             {// Fount
-                if (fragmentData.TryGetMemoryOwner(out memoryOwner))
+                if (fragmentData.TryGetMemoryOwnerInternal(out memoryOwner))
                 {
                     return Result.Success;
                 }
@@ -139,7 +139,7 @@ public partial class Zen<TIdentifier>
 
             if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragmentData))
             {// Fount
-                if (fragmentData.TryGetObject(out obj))
+                if (fragmentData.TryGetObjectInternal(out obj))
                 {
                     return Result.Success;
                 }
@@ -195,7 +195,7 @@ public partial class Zen<TIdentifier>
                 var options = TinyhandSerializerOptions.Standard;
                 foreach (var x in this.fragments.IdChain)
                 {
-                    if (x.TryGetSpan(out var span))
+                    if (x.TryGetSpanInternal(out var span))
                     {
                         TinyhandSerializer.SerializeObject(ref writer, x.TIdentifier, options); // x.TIdentifier.Serialize(ref writer, options);
                         writer.Write(span);
@@ -226,7 +226,7 @@ public partial class Zen<TIdentifier>
                     var byteArray = reader.ReadBytesToArray();
 
                     var fragment = new FragmentData(this.Flake.Zen, identifier!);
-                    fragment.SetSpan(byteArray);
+                    fragment.SetSpanInternal(byteArray);
                     this.fragments.Add(fragment);
                 }
             }
