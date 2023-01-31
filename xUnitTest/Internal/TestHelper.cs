@@ -26,8 +26,8 @@ public static class TestHelper
         };
 
         var unit = new ZenControl.Builder().Build();
-        var factory = unit.Context.ServiceProvider.GetRequiredService<ZenFactory>();
-        var zen = factory.Create<TIdentifier>(options);
+        var zenControl = unit.Context.ServiceProvider.GetRequiredService<ZenControl>();
+        var zen = zenControl.CreateZen<TIdentifier>(options);
         await zen.Start(new(FromScratch: true));
         return zen;
     }
@@ -36,12 +36,14 @@ public static class TestHelper
         where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
     {
         await zen.Stop(new(RemoveAll: removeAll));
+        zen.MemoryUsage.Is(0);
     }
 
     public static async Task StopAndStartZen<TIdentifier>(Zen<TIdentifier> zen)
         where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
     {
         await zen.Stop(new());
+        zen.MemoryUsage.Is(0);
         await zen.Start(new());
     }
 

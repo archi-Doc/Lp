@@ -30,7 +30,6 @@ public class ZenControl
                 context.AddSingleton<ZenControl>();
                 context.AddSingleton<ZenOptions>();
                 context.AddSingleton<Zen>();
-                context.AddSingleton<ZenFactory>();
                 context.Services.Add(ServiceDescriptor.Singleton(typeof(Zen<>), typeof(Zen<>.Factory)));
                 context.AddSingleton<Itz>();
 
@@ -51,11 +50,18 @@ public class ZenControl
         }
     }
 
-    public ZenControl(Zen zen, ZenOptions options, Itz itz)
+    public ZenControl(UnitContext unitContext, Zen zen, ZenOptions options, Itz itz)
     {
+        this.unitContext = unitContext;
         this.Zen = zen;
         this.Zen.Options = options;
         this.Itz = itz;
+    }
+
+    public Zen<TIdentifier> CreateZen<TIdentifier>(ZenOptions options)
+        where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
+    {
+        return new Zen<TIdentifier>(options, this.unitContext.ServiceProvider.GetRequiredService<ILogger<Zen<TIdentifier>>>());
     }
 
     public Zen Zen { get; }
@@ -63,4 +69,6 @@ public class ZenControl
     public Itz Itz { get; }
 
     public bool ExaltationOfIntegrality { get; } = true; // by Baxter.
+
+    private readonly UnitContext unitContext;
 }

@@ -137,6 +137,8 @@ public partial class Zen<TIdentifier>
 
     public ZenIO IO { get; }
 
+    public long MemoryUsage => this.HimoGoshujin.MemoryUsage;
+
     internal void RemoveAll()
     {
         this.Root.RemoveInternal();
