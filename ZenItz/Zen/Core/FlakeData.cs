@@ -8,12 +8,11 @@ public partial class Zen<TIdentifier>
 {
     internal partial class FlakeData
     {
-        public FlakeData(Zen<TIdentifier> zen)
+        public FlakeData()
         {
-            this.Zen = zen;
         }
 
-        protected (bool Changed, int MemoryDifference) SetSpanInternal(ReadOnlySpan<byte> span)
+        internal (bool Changed, int MemoryDifference) SetSpanInternal(ReadOnlySpan<byte> span)
         {
             if (this.memoryOwnerAvailable &&
                 span.SequenceEqual(this.memoryOwner.Memory.Span))
@@ -33,7 +32,7 @@ public partial class Zen<TIdentifier>
             return (true, memoryDifference);
         }
 
-        protected (bool Changed, int MemoryDifference) SetMemoryOwnerInternal(ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved)
+        internal (bool Changed, int MemoryDifference) SetMemoryOwnerInternal(ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved)
         {
             if (this.memoryOwnerAvailable &&
                 dataToBeMoved.Memory.Span.SequenceEqual(this.memoryOwner.Memory.Span))
@@ -51,10 +50,10 @@ public partial class Zen<TIdentifier>
             return (true, memoryDifference);
         }
 
-        protected (bool Changed, int MemoryDifference) SetMemoryOwnerInternal(ByteArrayPool.MemoryOwner dataToBeMoved)
+        internal (bool Changed, int MemoryDifference) SetMemoryOwnerInternal(ByteArrayPool.MemoryOwner dataToBeMoved)
             => this.SetMemoryOwnerInternal(dataToBeMoved.AsReadOnly());
 
-        protected (bool Changed, int MemoryDifference) SetObjectInternal(object? obj)
+        internal (bool Changed, int MemoryDifference) SetObjectInternal(ITinyhandSerialize obj)
         {
             /* Skip (may be an updated object of the same instance)
             if (obj == this.Object)
@@ -70,68 +69,83 @@ public partial class Zen<TIdentifier>
             return (true, memoryDifference);
         }
 
-        protected bool TryGetSpanInternal(out ReadOnlySpan<byte> data)
+        internal (bool Result, int MemoryDifference) TryGetSpanInternal(out ReadOnlySpan<byte> data)
         {
             if (this.memoryOwnerAvailable)
             {
                 data = this.memoryOwner.Memory.Span;
-                return true;
+                return (true, 0);
             }
-            else if (this.@object != null && this.Zen.ObjectToMemoryOwner(this.@object, out var m))
+            else if (this.@object != null)
             {
-                this.memoryOwner = m.AsReadOnly();
-                this.memoryOwnerAvailable = true;
-                data = this.memoryOwner.Memory.Span;
-                return true;
+                if (this.@object.TrySerialize(out var m))
+                {
+                    this.memoryOwner = m.AsReadOnly();
+                    this.memoryOwnerAvailable = true;
+                    data = this.memoryOwner.Memory.Span;
+                    return (true, this.memoryOwner.Memory.Length);
+                }
             }
-            else
-            {
-                data = default;
-                return false;
-            }
+
+            data = default;
+            return (false, 0);
         }
 
-        protected bool TryGetMemoryOwnerInternal(out ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
+        internal (bool Result, int MemoryDifference) TryGetMemoryOwnerInternal(out ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
         {
             if (this.memoryOwnerAvailable)
             {
                 memoryOwner = this.memoryOwner.IncrementAndShare();
-                return true;
+                return (true, 0);
             }
-            else if (this.@object != null && this.Zen.ObjectToMemoryOwner(this.@object, out var m))
+            else if (this.@object != null)
             {
-                this.memoryOwner = m.AsReadOnly();
-                this.memoryOwnerAvailable = true;
-                memoryOwner = this.memoryOwner.IncrementAndShare();
-                return true;
+                if (this.@object.TrySerialize(out var m))
+                {
+                    this.memoryOwner = m.AsReadOnly();
+                    this.memoryOwnerAvailable = true;
+                    memoryOwner = this.memoryOwner.IncrementAndShare();
+                    return (true, this.memoryOwner.Memory.Length);
+                }
             }
-            else
-            {
-                memoryOwner = default;
-                return false;
-            }
+
+            memoryOwner = default;
+            return (false, 0);
         }
 
-        protected bool TryGetObjectInternal([MaybeNullWhen(false)] out object? obj)
+        internal (ZenResult Result, int MemoryDifference) TryGetObjectInternal<T>(out T? obj)
+            where T : ITinyhandSerialize<T>
         {
-            if (this.@object != null)
+            if (this.@object is T t)
             {
-                obj = this.@object;
-                return true;
+                obj = t;
+                return (ZenResult.Success, 0);
             }
             else if (this.memoryOwnerAvailable)
             {
-                obj = this.Zen.MemoryOwnerToObject(this.memoryOwner);
-                return obj != null;
+                try
+                {
+                    obj = TinyhandSerializer.DeserializeObject<T>(this.memoryOwner.Memory.Span);
+                    if (obj != null)
+                    {
+                        return (ZenResult.Success, 0);
+                    }
+                }
+                catch
+                {
+                }
+
+                obj = default;
+                return (ZenResult.DeserializeError, 0);
             }
             else
             {
                 obj = default;
-                return false;
+                return (ZenResult.NoData, 0);
             }
         }
 
-        protected int Clear()
+        internal int Clear()
         {
             this.@object = null;
             var memoryDifference = -this.memoryOwner.Memory.Length;
@@ -140,9 +154,7 @@ public partial class Zen<TIdentifier>
             return memoryDifference;
         }
 
-        public Zen<TIdentifier> Zen { get; }
-
-        private object? @object;
+        private ITinyhandSerialize? @object;
         private bool memoryOwnerAvailable;
         private ByteArrayPool.ReadOnlyMemoryOwner memoryOwner;
     }

@@ -13,21 +13,6 @@ public class Zen : Zen<Identifier>
 public partial class Zen<TIdentifier>
     where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
 {
-    public delegate bool ObjectToMemoryOwnerDelegate(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved);
-
-    public delegate object? MemoryOwnerToObjectDelegate(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner);
-
-    public static bool DefaultObjectToMemoryOwner(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved)
-    {
-        dataToBeMoved = ByteArrayPool.MemoryOwner.Empty;
-        return false;
-    }
-
-    public static object? DefaultMemoryOwnerToObject(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
-    {
-        return null;
-    }
-
     public Zen(ZenOptions? options = null)
     {
         this.Options = options ?? ZenOptions.Default;
@@ -120,12 +105,6 @@ public partial class Zen<TIdentifier>
         await this.IO.StopAsync();
     }
 
-    public void SetDelegate(ObjectToMemoryOwnerDelegate objectToMemoryOwner, MemoryOwnerToObjectDelegate memoryOwnerToObject)
-    {
-        this.ObjectToMemoryOwner = objectToMemoryOwner;
-        this.MemoryOwnerToObject = memoryOwnerToObject;
-    }
-
     public ZenOptions Options { get; set; }
 
     public bool Started { get; private set; }
@@ -134,14 +113,10 @@ public partial class Zen<TIdentifier>
 
     public ZenIO IO { get; }
 
-    public ObjectToMemoryOwnerDelegate ObjectToMemoryOwner { get; private set; } = DefaultObjectToMemoryOwner;
-
-    public MemoryOwnerToObjectDelegate MemoryOwnerToObject { get; private set; } = DefaultMemoryOwnerToObject;
-
     internal void RemoveAll()
     {
         this.Root.RemoveInternal();
-        this.HimoGoshujin.ClearInternal();
+        this.HimoGoshujin.Clear();
 
         PathHelper.TryDeleteFile(this.Options.ZenFilePath);
         PathHelper.TryDeleteFile(this.Options.ZenBackupPath);
@@ -346,7 +321,7 @@ LoadBackup:
 
         flake.DeserializePostProcess(this);
 
-        this.HimoGoshujin.ClearInternal();
+        this.HimoGoshujin.Clear();
 
         return true;
     }

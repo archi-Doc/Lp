@@ -162,17 +162,16 @@ public partial class Zen<TIdentifier>
                     return ZenResult.Removed;
                 }
 
-                this.FlakeId = this.TryGetFlakeId(data);
+                // this.FlakeId = this.TryGetFlakeId(data);
 
-                this.flakeHimo ??= new(this.Zen, this);
+                this.flakeHimo ??= new(this);
                 this.flakeHimo.SetSpan(data, true);
             }
 
             return ZenResult.Success;
         }
 
-        public ZenResult SetDataObject<T>(T obj)
-            where T : ITinyhandSerialize<T>
+        public ZenResult SetDataObject(ITinyhandSerialize obj)
         {
             if (!this.Zen.Started)
             {
@@ -191,7 +190,7 @@ public partial class Zen<TIdentifier>
                     this.FlakeId = iflake.FlakeId;
                 }
 
-                this.flakeHimo ??= new(this.Zen, this);
+                this.flakeHimo ??= new(this);
                 this.flakeHimo.SetObject(obj, true);
             }
 
@@ -217,8 +216,10 @@ public partial class Zen<TIdentifier>
                 {// Memory
                     return new(ZenResult.Success, memoryOwner);
                 }
-
-                file = this.flakeFile;
+                else
+                {// Load
+                    file = this.flakeFile;
+                }
             }
 
             if (ZenFile.IsValidFile(file))
@@ -236,7 +237,8 @@ public partial class Zen<TIdentifier>
                         return new(ZenResult.Removed);
                     }
 
-                    this.flakeHimo?.SetMemoryOwner(result.Data, false);
+                    this.flakeHimo ??= new(this);
+                    this.flakeHimo.SetMemoryOwner(result.Data, false);
                     return result;
                 }
             }
@@ -260,19 +262,15 @@ public partial class Zen<TIdentifier>
                     return new(ZenResult.Removed);
                 }
 
-                if (this.flakeHimo != null && this.flakeHimo.TryGetObject(out var obj))
-                {// Object
-                    if (obj is T t)
-                    {
-                        return new(ZenResult.Success, t);
-                    }
-                    else
-                    {
-                        return new(ZenResult.InvalidCast);
-                    }
+                if (this.flakeHimo != null)
+                {// Memory
+                    var result = this.flakeHimo.TryGetObject(out T? obj);
+                    return new(result, obj);
                 }
-
-                file = this.flakeFile;
+                else
+                {// Load
+                    file = this.flakeFile;
+                }
             }
 
             if (ZenFile.IsValidFile(file))
@@ -290,21 +288,11 @@ public partial class Zen<TIdentifier>
                         return new(ZenResult.Removed);
                     }
 
-                    this.flakeHimo?.SetMemoryOwner(result.Data, false);
-                    if (this.flakeHimo != null && this.flakeHimo.TryGetObject(out var obj))
-                    {// Object
-                        if (obj is T t)
-                        {
-                            return new(ZenResult.Success, t);
-                        }
-                        else
-                        {
-                            return new(ZenResult.InvalidCast);
-                        }
-                    }
+                    this.flakeHimo ??= new(this);
+                    this.flakeHimo.SetMemoryOwner(result.Data, false);
+                    var flakeResult = this.flakeHimo.TryGetObject(out T? obj);
+                    return new(flakeResult, obj);
                 }
-
-                return new(result.Result);
             }
 
             return new(ZenResult.NoData);
@@ -332,12 +320,12 @@ public partial class Zen<TIdentifier>
                     return ZenResult.Removed;
                 }
 
-                this.fragmentHimo ??= new(this.Zen, this);
+                this.fragmentHimo ??= new(this);
                 return this.fragmentHimo.SetSpan(fragmentId, data, true);
             }
         }
 
-        public ZenResult SetFragmentObject(TIdentifier fragmentId, object obj)
+        public ZenResult SetFragmentObject(TIdentifier fragmentId, ITinyhandSerialize obj)
         {
             if (!this.Zen.Started)
             {
@@ -351,7 +339,7 @@ public partial class Zen<TIdentifier>
                     return ZenResult.Removed;
                 }
 
-                this.fragmentHimo ??= new(this.Zen, this);
+                this.fragmentHimo ??= new(this);
                 return this.fragmentHimo.SetObject(fragmentId, obj, true);
             }
         }
@@ -383,8 +371,10 @@ public partial class Zen<TIdentifier>
                         return new(ZenResult.NoData);
                     }
                 }
-
-                file = this.fragmentFile;
+                else
+                {// Load
+                    file = this.fragmentFile;
+                }
             }
 
             if (ZenFile.IsValidFile(file))
@@ -402,8 +392,8 @@ public partial class Zen<TIdentifier>
                         return new(ZenResult.Removed);
                     }
 
-                    this.fragmentHimo ??= new(this.Zen, this);
-                    this.fragmentHimo.Load(result.Data);
+                    this.fragmentHimo ??= new(this);
+                    this.fragmentHimo.LoadInternal(result.Data);
 
                     var fragmentResult = this.fragmentHimo.TryGetMemoryOwner(fragmentId, out var memoryOwner);
                     if (fragmentResult == FragmentHimo.Result.Success)
@@ -417,6 +407,7 @@ public partial class Zen<TIdentifier>
         }
 
         public async Task<ZenObjectResult<T>> GetFragmentObject<T>(TIdentifier fragmentId)
+            where T : ITinyhandSerialize<T>
         {
             if (!this.Zen.Started)
             {
@@ -433,25 +424,13 @@ public partial class Zen<TIdentifier>
 
                 if (this.fragmentHimo != null)
                 {// Memory
-                    var fragmentResult = this.fragmentHimo.TryGetObject(fragmentId, out var obj);
-                    if (fragmentResult == FragmentHimo.Result.Success)
-                    {
-                        if (obj is T t)
-                        {
-                            return new(ZenResult.Success, t);
-                        }
-                        else
-                        {
-                            return new(ZenResult.InvalidCast);
-                        }
-                    }
-                    else if (fragmentResult == FragmentHimo.Result.NotFound)
-                    {
-                        return new(ZenResult.NoData);
-                    }
+                    var fragmentResult = this.fragmentHimo.TryGetObject(fragmentId, out T? obj);
+                    return new(fragmentResult, obj);
                 }
-
-                file = this.fragmentFile;
+                else
+                {// Load
+                    file = this.fragmentFile;
+                }
             }
 
             if (ZenFile.IsValidFile(file))
@@ -469,21 +448,11 @@ public partial class Zen<TIdentifier>
                         return new(ZenResult.Removed);
                     }
 
-                    this.fragmentHimo ??= new(this.Zen, this);
-                    this.fragmentHimo.Load(result.Data);
+                    this.fragmentHimo ??= new(this);
+                    this.fragmentHimo.LoadInternal(result.Data);
 
-                    var fragmentResult = this.fragmentHimo.TryGetObject(fragmentId, out var obj);
-                    if (fragmentResult == FragmentHimo.Result.Success)
-                    {
-                        if (obj is T t)
-                        {
-                            return new(ZenResult.Success, t);
-                        }
-                        else
-                        {
-                            return new(ZenResult.InvalidCast);
-                        }
-                    }
+                    var fragmentResult = this.fragmentHimo.TryGetObject(fragmentId, out T? obj);
+                    return new(fragmentResult, obj);
                 }
             }
 
@@ -499,7 +468,7 @@ public partial class Zen<TIdentifier>
                     return false;
                 }
 
-                this.fragmentHimo ??= new(this.Zen, this);
+                this.fragmentHimo ??= new(this);
                 return this.fragmentHimo.RemoveInternal(fragmentId);
             }
         }

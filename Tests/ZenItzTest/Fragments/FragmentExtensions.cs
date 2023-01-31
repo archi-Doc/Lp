@@ -2,7 +2,7 @@
 
 namespace LP.Fragments;
 
-public static class FragmentExtensions
+/*public static class FragmentExtensions
 {
     public static ZenResult Set<TFragment>(this Zen<Identifier>.Flake flake, TFragment fragment)
         where TFragment : FragmentBase
@@ -29,4 +29,4 @@ public static class FragmentExtensions
         var result = await flake.GetFragmentObject<TFragment>(fragmentId);
         return result.Object as TFragment;
     }
-}
+}*/

@@ -2,6 +2,7 @@
 
 #pragma warning disable SA1401 // Fields should be private
 
+using System.Diagnostics.Metrics;
 using System.Runtime.CompilerServices;
 
 namespace ZenItz;
@@ -24,27 +25,16 @@ public partial class Zen<TIdentifier>
                 FragmentHimo,
             }
 
-            [Link(Name = "UnloadQueue", Type = ChainType.QueueList)] // Manages the order of unloading from memory
-            public Himo(HimoGoshujinClass goshujin, Flake flake)
+            [Link(Name = "UnloadQueue", Type = ChainType.QueueList)] // Manages the order of unloading data from memory
+            public Himo(Flake flake)
             {
-                this.himoGoshujin = goshujin;
+                this.himoGoshujin = flake.Zen.HimoGoshujin;
                 this.flake = flake;
             }
 
             public Type HimoType { get; protected set; }
 
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            protected void Update((bool Changed, int MemoryDifference) result, bool clearSavedFlag)
-            {
-                if (clearSavedFlag && result.Changed)
-                {
-                    this.isSaved = false;
-                }
-
-                this.Update(result.MemoryDifference);
-            }
-
-            protected void Update(int memoryDifference)
+            internal void Update(int memoryDifference)
             {// lock (Flake.syncObject)
                 var unloadFlag = false;
 
@@ -61,7 +51,7 @@ public partial class Zen<TIdentifier>
                     }
 
                     this.himoGoshujin.totalSize += memoryDifference;
-                    if (this.himoGoshujin.totalSize > this.himoGoshujin.Zen.Options.MemorySizeLimit)
+                    if (this.himoGoshujin.totalSize > this.flake.Zen.Options.MemorySizeLimit)
                     {
                         unloadFlag = true;
                     }
@@ -73,7 +63,7 @@ public partial class Zen<TIdentifier>
                 }
             }
 
-            protected void Remove(int memoryDifference)
+            internal void Remove(int memoryDifference)
             {// lock (Flake.syncObject)
                 lock (this.himoGoshujin.syncObject)
                 {
@@ -84,7 +74,6 @@ public partial class Zen<TIdentifier>
 
             internal Flake Flake => this.flake;
 
-            protected bool isSaved = true;
             private Flake flake;
             private HimoGoshujinClass himoGoshujin;
         }
@@ -112,12 +101,16 @@ public partial class Zen<TIdentifier>
 
         internal void Unload()
         {
-            var limit = this.Zen.Options.MemorySizeLimit > MemoryMargin ? (this.Zen.Options.MemorySizeLimit - MemoryMargin) : this.Zen.Options.MemorySizeLimit;
-            while (Volatile.Read(ref this.totalSize) > limit)
+            var limit = Math.Max(MemoryMargin, this.Zen.Options.MemorySizeLimit - MemoryMargin);
+            if (Volatile.Read(ref this.totalSize) <= limit)
             {
-                var count = 0;
-                var array = new (Flake Flake, Himo.Type HimoType)[UnloadNumber];
+                return;
+            }
 
+            var array = new (Flake Flake, Himo.Type HimoType)[UnloadNumber];
+            do
+            {
+                int count;
                 lock (this.syncObject)
                 {// Get flake/himo type array.
                     this.goshujin.UnloadQueueChain.TryPeek(out var himo);
@@ -129,14 +122,15 @@ public partial class Zen<TIdentifier>
                     }
                 }
 
-                foreach (var x in array)
+                for (var i = 0; i < count; i++)
                 {
-                    x.Flake.Unload(x.HimoType);
+                    array[i].Flake.Unload(array[i].HimoType);
                 }
             }
+            while (Volatile.Read(ref this.totalSize) > limit);
         }
 
-        internal void ClearInternal()
+        internal void Clear()
         {
             lock (this.syncObject)
             {
