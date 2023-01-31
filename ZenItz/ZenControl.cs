@@ -30,7 +30,7 @@ public class ZenControl
                 context.AddSingleton<ZenControl>();
                 context.AddSingleton<ZenOptions>();
                 context.AddSingleton<Zen>();
-                context.Services.Add(ServiceDescriptor.Singleton(typeof(Zen<>), typeof(Zen<>.Factory)));
+                context.Services.Add(ServiceDescriptor.Transient(typeof(Zen.Flake), x => x.GetRequiredService<ZenControl>().Root));
                 context.AddSingleton<Itz>();
 
                 // Subcommands
@@ -55,6 +55,7 @@ public class ZenControl
         this.unitContext = unitContext;
         this.Zen = zen;
         this.Zen.Options = options;
+        this.Root = this.Zen.Root;
         this.Itz = itz;
     }
 
@@ -65,6 +66,8 @@ public class ZenControl
     }
 
     public Zen Zen { get; }
+
+    public Zen.Flake Root { get; set; }
 
     public Itz Itz { get; }
 

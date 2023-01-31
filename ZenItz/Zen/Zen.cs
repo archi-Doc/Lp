@@ -17,21 +17,6 @@ public class Zen : Zen<Identifier>
 public partial class Zen<TIdentifier>
     where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
 {
-    public class Factory
-    {
-        internal Factory(ILogger<Zen<TIdentifier>> logger)
-        {
-            this.logger = logger;
-        }
-
-        public Zen<TIdentifier> Create(ZenOptions options)
-        {
-            return new Zen<TIdentifier>(options, this.logger);
-        }
-
-        private readonly ILogger<Zen<TIdentifier>> logger;
-    }
-
     internal Zen(ZenOptions options, ILogger<Zen<TIdentifier>> logger)
     {
         this.logger = logger;
