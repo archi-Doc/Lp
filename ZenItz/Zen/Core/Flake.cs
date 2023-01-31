@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Tinyhand.IO;
+
 namespace ZenItz;
 
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
@@ -15,7 +17,7 @@ public partial class Zen<TIdentifier>
     [ValueLinkObject]
     public partial class Flake // : FlakeBase
     {
-        // [Link(Primary = true, Name = "RemoveQueue", Type = ChainType.LinkedList)]
+        [Link(Primary = true, Name = "GetQueue", Type = ChainType.QueueList)]
         internal Flake()
         {
         }
@@ -90,6 +92,11 @@ public partial class Zen<TIdentifier>
                     flake = new Flake(this.Zen, this, id);
                     this.childFlakes.Add(flake);
                 }
+                else
+                {// Update GetQueue chain
+                    this.childFlakes.GetQueueChain.Remove(flake);
+                    this.childFlakes.GetQueueChain.Enqueue(flake);
+                }
             }
 
             return flake;
@@ -105,7 +112,12 @@ public partial class Zen<TIdentifier>
                     return null;
                 }
 
-                this.childFlakes.IdChain.TryGetValue(id, out flake);
+                if (this.childFlakes.IdChain.TryGetValue(id, out flake))
+                {// Update GetQueue chain
+                    this.childFlakes.GetQueueChain.Remove(flake);
+                    this.childFlakes.GetQueueChain.Enqueue(flake);
+                }
+
                 return flake;
             }
         }
@@ -150,6 +162,8 @@ public partial class Zen<TIdentifier>
                     return ZenResult.Removed;
                 }
 
+                this.FlakeId = this.TryGetFlakeId(data);
+
                 this.flakeHimo ??= new(this.Zen, this);
                 this.flakeHimo.SetSpan(data, true);
             }
@@ -169,6 +183,11 @@ public partial class Zen<TIdentifier>
                 if (this.IsRemoved)
                 {
                     return ZenResult.Removed;
+                }
+
+                if (obj is IFlake iflake)
+                {
+                    this.FlakeId = iflake.FlakeId;
                 }
 
                 this.flakeHimo ??= new(this.Zen, this);
@@ -560,7 +579,7 @@ public partial class Zen<TIdentifier>
         }
 
         [Key(0)]
-        [Link(Primary = true, Name = "Id", NoValue = true, Type = ChainType.Unordered)]
+        [Link(Name = "Id", NoValue = true, Type = ChainType.Unordered)]
         [Link(Name = "OrderedId", Type = ChainType.Ordered)]
         internal TIdentifier identifier = default!;
 
@@ -572,6 +591,26 @@ public partial class Zen<TIdentifier>
 
         [Key(3)]
         internal Flake.GoshujinClass? childFlakes;
+
+        [Key(4)]
+        public int FlakeId { get; private set; }
+
+        private int TryGetFlakeId(ReadOnlySpan<byte> data)
+        {
+            try
+            {
+                var reader = new TinyhandReader(data);
+                if (reader.TryReadArrayHeader(out var count) && count == 2)
+                {
+                    return reader.ReadInt32();
+                }
+            }
+            catch
+            {
+            }
+
+            return 0;
+        }
 
         private object syncObject = new();
         private FlakeHimo? flakeHimo;
