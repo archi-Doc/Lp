@@ -8,14 +8,34 @@ namespace ZenItz;
 
 public class Zen : Zen<Identifier>
 {
+    public Zen(ZenOptions options, ILogger<Zen<Identifier>> logger)
+        : base(options, logger)
+    {
+    }
 }
 
 public partial class Zen<TIdentifier>
     where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
 {
-    public Zen(ZenOptions? options = null)
+    public class Factory
     {
-        this.Options = options ?? ZenOptions.Default;
+        internal Factory(ILogger<Zen<TIdentifier>> logger)
+        {
+            this.logger = logger;
+        }
+
+        public Zen<TIdentifier> Create(ZenOptions options)
+        {
+            return new Zen<TIdentifier>(options, this.logger);
+        }
+
+        private readonly ILogger<Zen<TIdentifier>> logger;
+    }
+
+    internal Zen(ZenOptions options, ILogger<Zen<TIdentifier>> logger)
+    {
+        this.logger = logger;
+        this.Options = options;
         this.IO = new();
         this.HimoGoshujin = new(this);
         this.Root = new(this, null, default!);
@@ -28,6 +48,8 @@ public partial class Zen<TIdentifier>
         {
             return ZenStartResult.Success;
         }
+
+        this.logger.TryGet()?.Log("Zen start");
 
         if (param.FromScratch)
         {
@@ -91,6 +113,8 @@ public partial class Zen<TIdentifier>
         // Save directory information
         var byteArray = this.IO.Serialize();
         await HashHelper.GetFarmHashAndSaveAsync(byteArray, this.Options.ZenDirectoryFilePath, this.Options.ZenDirectoryBackupPath);
+
+        this.logger.TryGet()?.Log($"Zen stop - {this.HimoGoshujin.MemoryUsage}");
     }
 
     public async Task Abort()
@@ -105,7 +129,7 @@ public partial class Zen<TIdentifier>
         await this.IO.StopAsync();
     }
 
-    public ZenOptions Options { get; set; }
+    public ZenOptions Options { get; set; } = ZenOptions.Default;
 
     public bool Started { get; private set; }
 
@@ -331,4 +355,6 @@ LoadBackup:
         var byteArray = TinyhandSerializer.Serialize(this.Root);
         await HashHelper.GetFarmHashAndSaveAsync(byteArray, path, backupPath);
     }
+
+    private ILogger logger;
 }

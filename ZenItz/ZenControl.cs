@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+#pragma warning disable SA1210 // Using directives should be ordered alphabetically by namespace
+
 global using System;
 global using System.Net;
 global using System.Threading.Tasks;
@@ -9,6 +11,7 @@ global using LP;
 global using LP.Block;
 global using Tinyhand;
 global using ValueLink;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ZenItz;
 
@@ -27,6 +30,8 @@ public class ZenControl
                 context.AddSingleton<ZenControl>();
                 context.AddSingleton<ZenOptions>();
                 context.AddSingleton<Zen>();
+                context.AddSingleton<ZenFactory>();
+                context.Services.Add(ServiceDescriptor.Singleton(typeof(Zen<>), typeof(Zen<>.Factory)));
                 context.AddSingleton<Itz>();
 
                 // Subcommands

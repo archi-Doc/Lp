@@ -50,8 +50,8 @@ public partial class Zen<TIdentifier>
                         this.Goshujin.UnloadQueueChain.Enqueue(this);
                     }
 
-                    this.himoGoshujin.totalSize += memoryDifference;
-                    if (this.himoGoshujin.totalSize > this.flake.Zen.Options.MemorySizeLimit)
+                    this.himoGoshujin.memoryUsage += memoryDifference;
+                    if (this.himoGoshujin.memoryUsage > this.flake.Zen.Options.MemorySizeLimit)
                     {
                         unloadFlag = true;
                     }
@@ -68,7 +68,7 @@ public partial class Zen<TIdentifier>
                 lock (this.himoGoshujin.syncObject)
                 {
                     this.Goshujin = null;
-                    this.himoGoshujin.totalSize += memoryDifference;
+                    this.himoGoshujin.memoryUsage += memoryDifference;
                 }
             }
 
@@ -102,7 +102,7 @@ public partial class Zen<TIdentifier>
         internal void Unload()
         {
             var limit = Math.Max(MemoryMargin, this.Zen.Options.MemorySizeLimit - MemoryMargin);
-            if (Volatile.Read(ref this.totalSize) <= limit)
+            if (Volatile.Read(ref this.memoryUsage) <= limit)
             {
                 return;
             }
@@ -127,7 +127,7 @@ public partial class Zen<TIdentifier>
                     array[i].Flake.Unload(array[i].HimoType);
                 }
             }
-            while (Volatile.Read(ref this.totalSize) > limit);
+            while (Volatile.Read(ref this.memoryUsage) > limit);
         }
 
         internal void Clear()
@@ -138,8 +138,10 @@ public partial class Zen<TIdentifier>
             }
         }
 
+        internal long MemoryUsage => this.memoryUsage;
+
         private object syncObject = new();
-        private long totalSize; // lock(this.syncObject)
+        private long memoryUsage; // lock(this.syncObject)
         private Himo.GoshujinClass goshujin = new(); // lock(this.syncObject)
         private HimoTaskCore? taskCore;
     }

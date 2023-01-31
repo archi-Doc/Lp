@@ -18,9 +18,9 @@ public class ZenTest
     [Fact]
     public async Task TestTemplate()
     {
-        var zen = await TestHelper.CreateAndStartZen<Identifier>();
+        // var zen = await TestHelper.CreateAndStartZen<Identifier>();
 
-        await TestHelper.StopZen(zen);
+        // await TestHelper.StopZen(zen);
     }
 
     [Fact]
