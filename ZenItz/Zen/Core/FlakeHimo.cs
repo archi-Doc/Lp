@@ -49,6 +49,12 @@ public partial class Zen<TIdentifier>
             return this.TryGetObjectInternal(out obj);
         }
 
+        public bool TryGetObject<T>([MaybeNullWhen(false)] out T? obj)
+            where T : ITinyhandSerialize<T>
+        {// lock (Flake.syncObject)
+            return this.TryGetObjectInternal(out obj);
+        }
+
         internal void UnloadInternal()
         {// lock (Flake.syncObject)
             var memoryDifference = this.Clear();
@@ -178,6 +184,26 @@ public partial class Zen<TIdentifier>
             else if (this.memoryOwnerAvailable)
             {
                 obj = this.Flake.Zen.MemoryOwnerToObject(this.memoryOwner);
+                return obj != null;
+            }
+            else
+            {
+                obj = default;
+                return false;
+            }
+        }
+
+        private bool TryGetObjectInternal<T>([MaybeNullWhen(false)] out T? obj)
+            where T : ITinyhandSerialize<T>
+        {
+            if (this.@object is T t)
+            {
+                obj = t;
+                return true;
+            }
+            else if (this.memoryOwnerAvailable)
+            {
+                obj = TinyhandSerializer.DeserializeObject<T>(this.memoryOwner.Memory.Span);
                 return obj != null;
             }
             else

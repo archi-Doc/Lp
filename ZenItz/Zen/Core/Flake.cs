@@ -171,7 +171,8 @@ public partial class Zen<TIdentifier>
             return ZenResult.Success;
         }
 
-        public ZenResult SetDataObject(object obj)
+        public ZenResult SetDataObject<T>(T obj)
+            where T : ITinyhandSerialize<T>
         {
             if (!this.Zen.Started)
             {
@@ -244,6 +245,7 @@ public partial class Zen<TIdentifier>
         }
 
         public async Task<ZenObjectResult<T>> GetDataObject<T>()
+            where T : ITinyhandSerialize<T>
         {
             if (!this.Zen.Started)
             {
