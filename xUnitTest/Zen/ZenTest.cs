@@ -80,7 +80,7 @@ public partial class ZenTest
             f!.SetFragment(identifier, buffer).Is(ZenResult.Success);
         }
 
-        identifier = new Identifier(1);
+        identifier = new Identifier(1999);
         identifier.TryWriteBytes(buffer);
 
         f!.SetFragment(identifier, buffer).Is(ZenResult.OverNumberLimit);
@@ -144,15 +144,18 @@ public partial class ZenTest
         var t2 = new TestObject(2, "2");
         var t3 = new TestObject(3, "3");
 
+        // Set 1
         var flake = root.GetOrCreateChild(new(1));
         flake.SetDataObject(t1);
         var result = await flake.GetDataObject<TestObject>();
         result.Object.IsStructuralEqual(t1);
 
+        // Set 2
         flake.SetFragmentObject(new(2), t2);
         result = await flake.GetFragmentObject<TestObject>(new(2));
         result.Object.IsStructuralEqual(t2);
 
+        // Set and remove 3
         flake.RemoveFragment(new(3)).IsFalse();
         flake.SetFragmentObject(new(3), t3);
         flake.SetFragment(new(3), TinyhandSerializer.SerializeObject(t3));
@@ -160,10 +163,26 @@ public partial class ZenTest
         result.Object.IsStructuralEqual(t3);
         flake.RemoveFragment(new(3)).IsTrue();
 
+        // Nested
+        var nested = flake.TryGetChild(new(1));
+        nested.IsNull();
+        nested = flake.GetOrCreateChild(new(1));
+        nested.IsNotNull();
+
+        nested.SetDataObject(t2);
+        nested.SetFragment(new(2), TinyhandSerializer.SerializeObject(t2));
+
         await TestHelper.StopAndStartZen(zen);
 
         result = await flake.GetDataObject<TestObject>();
         result.Object.IsStructuralEqual(t1);
+        result = await flake.GetFragmentObject<TestObject>(new(2));
+        result.Object.IsStructuralEqual(t2);
+
+        nested = flake.TryGetChild(new(1))!;
+        nested.IsNotNull();
+        result = await nested.GetDataObject<TestObject>();
+        result.Object.IsStructuralEqual(t2);
         result = await flake.GetFragmentObject<TestObject>(new(2));
         result.Object.IsStructuralEqual(t2);
 

@@ -30,12 +30,13 @@ public partial class Zen<TIdentifier>
             }
 
             FragmentData? fragmentData;
-            if (this.fragments.Count >= this.Flake.Zen.Options.MaxFragmentCount)
-            {
-                return ZenResult.OverNumberLimit;
-            }
-            else if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragmentData))
-            {
+            if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragmentData))
+            {// New
+                if (this.fragments.Count >= this.Flake.Zen.Options.MaxFragmentCount)
+                {
+                    return ZenResult.OverNumberLimit;
+                }
+
                 fragmentData = new(fragmentId);
                 fragmentData.Goshujin = this.fragments;
             }
@@ -52,12 +53,13 @@ public partial class Zen<TIdentifier>
             }
 
             FragmentData? fragmentData;
-            if (this.fragments.IdChain.Count >= this.Flake.Zen.Options.MaxFragmentCount)
-            {
-                return ZenResult.OverNumberLimit;
-            }
-            else if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragmentData))
-            {
+            if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragmentData))
+            {// New
+                if (this.fragments.IdChain.Count >= this.Flake.Zen.Options.MaxFragmentCount)
+                {
+                    return ZenResult.OverNumberLimit;
+                }
+
                 fragmentData = new(fragmentId);
                 fragmentData.Goshujin = this.fragments;
             }
@@ -74,12 +76,13 @@ public partial class Zen<TIdentifier>
             }
 
             FragmentData? fragmentData;
-            if (this.fragments.IdChain.Count >= this.Flake.Zen.Options.MaxFragmentCount)
-            {
-                return ZenResult.OverNumberLimit;
-            }
-            else if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragmentData))
-            {
+            if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragmentData))
+            {// New
+                if (this.fragments.IdChain.Count >= this.Flake.Zen.Options.MaxFragmentCount)
+                {
+                    return ZenResult.OverNumberLimit;
+                }
+
                 fragmentData = new(fragmentId);
                 this.fragments.Add(fragmentData);
             }
