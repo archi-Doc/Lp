@@ -15,7 +15,7 @@ public partial class Zen<TIdentifier>
     /// </summary>
     [TinyhandObject(ExplicitKeyOnly = true, LockObject = nameof(syncObject))]
     [ValueLinkObject]
-    public partial class Flake // : FlakeBase
+    public partial class Flake
     {
         [Link(Primary = true, Name = "GetQueue", Type = ChainType.QueueList)]
         internal Flake()
@@ -61,7 +61,7 @@ public partial class Zen<TIdentifier>
         }
 
         /// <summary>
-        /// Removes this <see cref="Flake"/> from the parent and erase the data.
+        /// Removes this <see cref="Flake"/> from the parent and delete the data.
         /// </summary>
         /// <returns><see langword="true"/>; this <see cref="Flake"/> is successfully removed.</returns>
         public bool Remove()
@@ -512,7 +512,9 @@ public partial class Zen<TIdentifier>
                 }
 
                 this.flakeHimo?.UnloadInternal();
+                this.flakeHimo = null;
                 this.fragmentHimo?.UnloadInternal();
+                this.fragmentHimo = null;
                 this.Parent = null;
                 this.Goshujin = null;
 

@@ -30,7 +30,7 @@ public partial class Zen<TIdentifier>
             }
 
             FragmentData? fragmentData;
-            if (this.fragments.IdChain.Count >= this.Flake.Zen.Options.MaxFragmentCount)
+            if (this.fragments.Count >= this.Flake.Zen.Options.MaxFragmentCount)
             {
                 return ZenResult.OverNumberLimit;
             }
@@ -196,9 +196,11 @@ public partial class Zen<TIdentifier>
                 {
                     var writer = default(Tinyhand.IO.TinyhandWriter);
                     var options = TinyhandSerializerOptions.Standard;
+                    var memoryDifference = 0;
                     foreach (var x in this.fragments)
                     {
                         var result = x.TryGetSpanInternal(out var span);
+                        memoryDifference += result.MemoryDifference;
                         if (result.Result)
                         {
                             TinyhandSerializer.SerializeObject(ref writer, x.TIdentifier, options); // x.TIdentifier.Serialize(ref writer, options);
@@ -206,6 +208,7 @@ public partial class Zen<TIdentifier>
                         }
                     }
 
+                    this.Change(memoryDifference);
                     var memoryOwner = new ByteArrayPool.ReadOnlyMemoryOwner(writer.FlushAndGetArray());
                     this.Flake.Zen.IO.Save(ref this.Flake.fragmentFile, memoryOwner);
                 }
@@ -222,8 +225,10 @@ public partial class Zen<TIdentifier>
             }
 
             this.fragments = new();
+            var max = this.Flake.Zen.Options.MaxFragmentCount;
             var reader = new Tinyhand.IO.TinyhandReader(memoryOwner.Memory.Span);
             var options = TinyhandSerializerOptions.Standard;
+            var memoryDifference = 0;
             try
             {
                 while (!reader.End)
@@ -232,13 +237,18 @@ public partial class Zen<TIdentifier>
                     TinyhandSerializer.DeserializeObject(ref reader, ref identifier, options); // identifier.Deserialize(ref reader, options);
                     var byteArray = reader.ReadBytesToArray();
 
-                    var fragment = new FragmentData(identifier!);
-                    fragment.SetSpanInternal(byteArray);
-                    this.fragments.Add(fragment);
+                    if (this.fragments.Count < max)
+                    {
+                        var fragment = new FragmentData(identifier!);
+                        var result = fragment.SetSpanInternal(byteArray);
+                        memoryDifference += result.MemoryDifference;
+                        this.fragments.Add(fragment);
+                    }
                 }
             }
             finally
             {
+                this.Change(memoryDifference);
             }
 
             return true;

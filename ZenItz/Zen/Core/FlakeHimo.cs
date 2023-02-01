@@ -67,6 +67,7 @@ public partial class Zen<TIdentifier>
             if (!this.isSaved)
             {// Not saved.
                 var result = this.flakeData.TryGetMemoryOwnerInternal(out var memoryOwner);
+                this.Change(result.MemoryDifference);
                 if (result.Result)
                 {
                     this.Flake.Zen.IO.Save(ref this.Flake.flakeFile, memoryOwner);

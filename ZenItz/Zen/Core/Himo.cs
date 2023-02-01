@@ -72,6 +72,18 @@ public partial class Zen<TIdentifier>
                 }
             }
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            internal void Change(int memoryDifference)
+            {
+                if (memoryDifference != 0)
+                {
+                    lock (this.himoGoshujin.syncObject)
+                    {
+                        this.himoGoshujin.memoryUsage += memoryDifference;
+                    }
+                }
+            }
+
             internal Flake Flake => this.flake;
 
             private Flake flake;

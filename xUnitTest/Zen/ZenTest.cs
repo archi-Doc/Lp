@@ -2,12 +2,14 @@
 
 using System;
 using LP;
+using Tinyhand;
 using Xunit;
+using Xunit.Sdk;
 using ZenItz;
 
 namespace xUnitTest.ZenTest;
 
-public class ZenTest
+public partial class ZenTest
 {
     public const int N = 100;
 
@@ -125,6 +127,45 @@ public class ZenTest
             var result = await flake!.GetData();
             result.DataEquals(bin.AsSpan(0, i)).IsTrue();
         }
+
+        await TestHelper.StopZen(zen);
+    }
+
+    [TinyhandObject(ImplicitKeyAsName = true)]
+    internal partial record TestObject(int Id, string Name);
+
+    [Fact]
+    public async Task Test3()
+    {
+        var zen = await TestHelper.CreateAndStartZen<Identifier>();
+        var root = zen.Root;
+
+        var t1 = new TestObject(1, "1");
+        var t2 = new TestObject(2, "2");
+        var t3 = new TestObject(3, "3");
+
+        var flake = root.GetOrCreateChild(new(1));
+        flake.SetDataObject(t1);
+        var result = await flake.GetDataObject<TestObject>();
+        result.Object.IsStructuralEqual(t1);
+
+        flake.SetFragmentObject(new(2), t2);
+        result = await flake.GetFragmentObject<TestObject>(new(2));
+        result.Object.IsStructuralEqual(t2);
+
+        flake.RemoveFragment(new(3)).IsFalse();
+        flake.SetFragmentObject(new(3), t3);
+        flake.SetFragment(new(3), TinyhandSerializer.SerializeObject(t3));
+        result = await flake.GetFragmentObject<TestObject>(new(3));
+        result.Object.IsStructuralEqual(t3);
+        flake.RemoveFragment(new(3)).IsTrue();
+
+        await TestHelper.StopAndStartZen(zen);
+
+        result = await flake.GetDataObject<TestObject>();
+        result.Object.IsStructuralEqual(t1);
+        result = await flake.GetFragmentObject<TestObject>(new(2));
+        result.Object.IsStructuralEqual(t2);
 
         await TestHelper.StopZen(zen);
     }
