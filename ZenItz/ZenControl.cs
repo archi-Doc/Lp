@@ -3,7 +3,6 @@
 #pragma warning disable SA1210 // Using directives should be ordered alphabetically by namespace
 
 global using System;
-global using System.Net;
 global using System.Threading.Tasks;
 global using Arc.Threading;
 global using Arc.Unit;
@@ -30,7 +29,7 @@ public class ZenControl
                 context.AddSingleton<ZenControl>();
                 context.AddSingleton<ZenOptions>();
                 context.AddSingleton<Zen>();
-                context.Services.Add(ServiceDescriptor.Transient(typeof(Zen.Flake), x => x.GetRequiredService<ZenControl>().Root));
+                context.Services.Add(ServiceDescriptor.Transient(typeof(Zen.RootFlake), x => x.GetRequiredService<ZenControl>().Root));
                 context.AddSingleton<Itz>();
 
                 // Subcommands

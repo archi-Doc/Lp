@@ -8,6 +8,10 @@ namespace ZenItz;
 
 public class Zen : Zen<Identifier>
 {
+    public class RootFlake : Flake
+    {
+    }
+
     public Zen(ZenOptions options, ILogger<Zen<Identifier>> logger)
         : base(options, logger)
     {
