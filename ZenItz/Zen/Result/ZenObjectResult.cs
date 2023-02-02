@@ -4,7 +4,7 @@ namespace ZenItz;
 
 public readonly struct ZenObjectResult<T>
 {
-    public ZenObjectResult(ZenResult result, T obj)
+    public ZenObjectResult(ZenResult result, T? obj)
     {
         this.Result = result;
         this.Object = obj;

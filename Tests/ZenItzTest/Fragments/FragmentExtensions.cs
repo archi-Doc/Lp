@@ -2,18 +2,18 @@
 
 namespace LP.Fragments;
 
-public static class FragmentExtensions
+/*public static class FragmentExtensions
 {
     public static ZenResult Set<TFragment>(this Zen<Identifier>.Flake flake, TFragment fragment)
         where TFragment : FragmentBase
     {
-        return flake.SetObject(fragment);
+        return flake.SetDataObject(fragment);
     }
 
     public static async Task<TFragment?> Get<TFragment>(this Zen<Identifier>.Flake flake)
         where TFragment : FragmentBase
     {
-        var result = await flake.GetObject<TFragment>();
+        var result = await flake.GetDataObject<TFragment>();
         return result.Object as TFragment;
     }
 
@@ -29,4 +29,4 @@ public static class FragmentExtensions
         var result = await flake.GetFragmentObject<TFragment>(fragmentId);
         return result.Object as TFragment;
     }
-}
+}*/

@@ -9,16 +9,16 @@ global using Arc.Unit;
 global using BigMachines;
 global using LP;
 global using Tinyhand;
+using LP.Data;
+using LP.Logging;
 using LP.Services;
+using LP.T3CS;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere;
+using Netsphere.Machines;
 using SimpleCommandLine;
 using ZenItz;
-using LP.Data;
-using Netsphere.Machines;
-using LP.Logging;
-using LP.T3CS;
 
 namespace LP;
 
@@ -283,32 +283,6 @@ public class Control : ILogInformation
         }
     }
 
-    public static bool ObjectToMemoryOwner(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved)
-    {
-        if (obj is LP.Fragments.FragmentBase flake &&
-            FlakeFragmentService.TrySerialize<LP.Fragments.FragmentBase>(flake, out dataToBeMoved))
-        {
-            return true;
-        }
-        else
-        {
-            dataToBeMoved = default;
-            return false;
-        }
-    }
-
-    public static object? MemoryOwnerToObject(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
-    {
-        if (TinyhandSerializer.TryDeserialize<LP.Fragments.FragmentBase>(memoryOwner.Memory.Span, out var value))
-        {
-            return value;
-        }
-        else
-        {
-            return null;
-        }
-    }
-
     public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl, Vault vault, Authority authority)
     {
         this.Logger = logger;
@@ -318,7 +292,6 @@ public class Control : ILogInformation
         this.NetControl = netsphere;
         this.NetControl.SetupServer();
         this.ZenControl = zenControl;
-        this.ZenControl.Zen.SetDelegate(ObjectToMemoryOwner, MemoryOwnerToObject);
         this.Vault = vault;
         this.Authority = authority;
 

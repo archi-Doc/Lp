@@ -13,4 +13,5 @@ public enum ZenResult
     NoDirectory,
     NoFile,
     InvalidCast,
+    DeserializeError,
 }

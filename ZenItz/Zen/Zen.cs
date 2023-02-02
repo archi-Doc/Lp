@@ -8,32 +8,26 @@ namespace ZenItz;
 
 public class Zen : Zen<Identifier>
 {
+    public class RootFlake : Flake
+    {
+    }
+
+    public Zen(ZenOptions options, ILogger<Zen<Identifier>> logger)
+        : base(options, logger)
+    {
+    }
 }
 
 public partial class Zen<TIdentifier>
     where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
 {
-    public delegate bool ObjectToMemoryOwnerDelegate(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved);
-
-    public delegate object? MemoryOwnerToObjectDelegate(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner);
-
-    public static bool DefaultObjectToMemoryOwner(object? obj, out ByteArrayPool.MemoryOwner dataToBeMoved)
+    internal Zen(ZenOptions options, ILogger<Zen<TIdentifier>> logger)
     {
-        dataToBeMoved = ByteArrayPool.MemoryOwner.Empty;
-        return false;
-    }
-
-    public static object? DefaultMemoryOwnerToObject(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
-    {
-        return null;
-    }
-
-    public Zen(ZenOptions? options = null)
-    {
-        this.Options = options ?? ZenOptions.Default;
+        this.logger = logger;
+        this.Options = options;
         this.IO = new();
-        this.FlakeObjectGoshujin = new(this);
-        this.FragmentObjectGoshujin = new(this);
+        this.HimoGoshujin = new(this);
+        this.Root = new(this, null, default!);
     }
 
     public async Task<ZenStartResult> Start(ZenStartParam param)
@@ -43,6 +37,8 @@ public partial class Zen<TIdentifier>
         {
             return ZenStartResult.Success;
         }
+
+        this.logger.TryGet()?.Log("Zen start");
 
         if (param.FromScratch)
         {
@@ -66,6 +62,9 @@ public partial class Zen<TIdentifier>
             return result;
         }
 
+        // HimoGoshujin
+        this.HimoGoshujin.Start();
+
         this.Started = true;
         return result;
     }
@@ -79,6 +78,9 @@ public partial class Zen<TIdentifier>
 
         this.Started = false;
 
+        // HimoGoshujin
+        this.HimoGoshujin.Stop();
+
         if (param.RemoveAll)
         {
             // Stop IO(ZenDirectory)
@@ -89,13 +91,7 @@ public partial class Zen<TIdentifier>
         }
 
         // Save & Unload flakes
-        lock (this.flakeGoshujin)
-        {
-            foreach (var x in this.flakeGoshujin)
-            {
-                x.Save(true);
-            }
-        }
+        this.Root.Save(true);
 
         // Stop IO(ZenDirectory)
         await this.IO.StopAsync();
@@ -106,6 +102,8 @@ public partial class Zen<TIdentifier>
         // Save directory information
         var byteArray = this.IO.Serialize();
         await HashHelper.GetFarmHashAndSaveAsync(byteArray, this.Options.ZenDirectoryFilePath, this.Options.ZenDirectoryBackupPath);
+
+        this.logger.TryGet()?.Log($"Zen stop - {this.HimoGoshujin.MemoryUsage}");
     }
 
     public async Task Abort()
@@ -120,95 +118,20 @@ public partial class Zen<TIdentifier>
         await this.IO.StopAsync();
     }
 
-    public void SetDelegate(ObjectToMemoryOwnerDelegate objectToMemoryOwner, MemoryOwnerToObjectDelegate memoryOwnerToObject)
-    {
-        this.ObjectToMemoryOwner = objectToMemoryOwner;
-        this.MemoryOwnerToObject = memoryOwnerToObject;
-    }
-
-    public Flake CreateOrGet(TIdentifier id)
-    {
-        if (!this.Started)
-        {
-            throw new InvalidOperationException();
-        }
-
-        Flake? flake;
-        lock (this.flakeGoshujin)
-        {
-            if (!this.flakeGoshujin.IdChain.TryGetValue(id, out flake))
-            {
-                flake = new Flake(this, id);
-                this.flakeGoshujin.Add(flake);
-            }
-        }
-
-        return flake;
-    }
-
-    public Flake? TryGet(TIdentifier id)
-    {
-        if (!this.Started)
-        {
-            return null;
-        }
-
-        Flake? flake;
-        lock (this.flakeGoshujin)
-        {
-            this.flakeGoshujin.IdChain.TryGetValue(id, out flake);
-            return flake;
-        }
-    }
-
-    public bool Remove(TIdentifier id)
-    {
-        if (!this.Started)
-        {
-            return false;
-        }
-
-        lock (this.flakeGoshujin)
-        {
-            if (this.flakeGoshujin.IdChain.TryGetValue(id, out var flake))
-            {
-                return flake.RemoveInternal();
-            }
-        }
-
-        return false;
-    }
-
-    public bool TryGetBlock(out Crystal block)
-    {
-        if (!this.Started)
-        {
-            block = default;
-            return false;
-        }
-
-        block = new(this, this.flakeGoshujin);
-        return true;
-    }
-
-    public ZenOptions Options { get; set; }
+    public ZenOptions Options { get; set; } = ZenOptions.Default;
 
     public bool Started { get; private set; }
 
+    public Flake Root { get; private set; }
+
     public ZenIO IO { get; }
 
-    public ObjectToMemoryOwnerDelegate ObjectToMemoryOwner { get; private set; } = DefaultObjectToMemoryOwner;
-
-    public MemoryOwnerToObjectDelegate MemoryOwnerToObject { get; private set; } = DefaultMemoryOwnerToObject;
+    public long MemoryUsage => this.HimoGoshujin.MemoryUsage;
 
     internal void RemoveAll()
     {
-        lock (this.flakeGoshujin)
-        {
-            this.FlakeObjectGoshujin.Goshujin.Clear();
-            this.FragmentObjectGoshujin.Goshujin.Clear();
-            this.flakeGoshujin.Clear();
-        }
+        this.Root.RemoveInternal();
+        this.HimoGoshujin.Clear();
 
         PathHelper.TryDeleteFile(this.Options.ZenFilePath);
         PathHelper.TryDeleteFile(this.Options.ZenBackupPath);
@@ -247,21 +170,13 @@ public partial class Zen<TIdentifier>
         this.Started = false;
 
         // Save & Unload flakes
-        lock (this.flakeGoshujin)
-        {
-            foreach (var x in this.flakeGoshujin)
-            {
-                x.Save(true);
-            }
-        }
+        this.Root.Save();
 
         // Stop IO(ZenDirectory)
         await this.IO.StopAsync();
     }
 
-    internal FlakeObjectGoshujinClass FlakeObjectGoshujin;
-    internal FlakeObjectGoshujinClass FragmentObjectGoshujin;
-    private Flake.GoshujinClass flakeGoshujin = new();
+    internal HimoGoshujinClass HimoGoshujin;
 
     private async Task<ZenStartResult> LoadZenDirectory(ZenStartParam param)
     {
@@ -414,34 +329,23 @@ LoadBackup:
 
     private bool DeserializeZen(ReadOnlyMemory<byte> data)
     {
-        if (!TinyhandSerializer.TryDeserialize<Flake.GoshujinClass>(data.Span, out var g))
+        if (!TinyhandSerializer.TryDeserialize<Flake>(data.Span, out var flake))
         {
             return false;
         }
 
-        foreach (var x in g)
-        {
-            x.Zen = this;
-        }
+        flake.DeserializePostProcess(this);
 
-        lock (this.flakeGoshujin)
-        {
-            this.FlakeObjectGoshujin.Goshujin.Clear();
-            this.FragmentObjectGoshujin.Goshujin.Clear();
-            this.flakeGoshujin = g;
-        }
+        this.HimoGoshujin.Clear();
 
         return true;
     }
 
     private async Task SerializeZen(string path, string? backupPath)
     {
-        byte[]? byteArray;
-        lock (this.flakeGoshujin)
-        {
-            byteArray = TinyhandSerializer.Serialize(this.flakeGoshujin);
-        }
-
+        var byteArray = TinyhandSerializer.Serialize(this.Root);
         await HashHelper.GetFarmHashAndSaveAsync(byteArray, path, backupPath);
     }
+
+    private ILogger logger;
 }

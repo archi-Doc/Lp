@@ -5,7 +5,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Arc.Unit;
 using LP;
+using Microsoft.Extensions.DependencyInjection;
 using Tinyhand;
 using Xunit;
 using ZenItz;
@@ -17,12 +19,15 @@ public static class TestHelper
     public static async Task<Zen<TIdentifier>> CreateAndStartZen<TIdentifier>()
         where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
     {
-        var options = new ZenOptions() with {
+        var options = new ZenOptions() with
+        {
             ZenPath = $"Zen[{LP.Random.Pseudo.NextUInt32():x4}]",
             DefaultZenDirectory = "Snowflake",
         };
 
-        var zen = new Zen<TIdentifier>(options);
+        var unit = new ZenControl.Builder().Build();
+        var zenControl = unit.Context.ServiceProvider.GetRequiredService<ZenControl>();
+        var zen = zenControl.CreateZen<TIdentifier>(options);
         await zen.Start(new(FromScratch: true));
         return zen;
     }
@@ -31,12 +36,14 @@ public static class TestHelper
         where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
     {
         await zen.Stop(new(RemoveAll: removeAll));
+        zen.MemoryUsage.Is(0);
     }
 
     public static async Task StopAndStartZen<TIdentifier>(Zen<TIdentifier> zen)
         where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
     {
         await zen.Stop(new());
+        zen.MemoryUsage.Is(0);
         await zen.Start(new());
     }
 

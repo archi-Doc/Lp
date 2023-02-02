@@ -1,24 +1,16 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-#pragma warning disable SA1208 // System using directives should be placed before other using directives
 #pragma warning disable SA1210 // Using directives should be ordered alphabetically by namespace
+
 global using System;
-global using System.Net;
 global using System.Threading.Tasks;
 global using Arc.Threading;
 global using Arc.Unit;
-global using CrossChannel;
 global using LP;
 global using LP.Block;
-global using LP.Data;
 global using Tinyhand;
 global using ValueLink;
-using System.Collections.Concurrent;
-using System.ComponentModel;
-using System.Reflection.Metadata;
-using System.Security.Cryptography;
-using BigMachines;
-using SimpleCommandLine;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ZenItz;
 
@@ -37,6 +29,7 @@ public class ZenControl
                 context.AddSingleton<ZenControl>();
                 context.AddSingleton<ZenOptions>();
                 context.AddSingleton<Zen>();
+                context.Services.Add(ServiceDescriptor.Transient(typeof(Zen.RootFlake), x => x.GetRequiredService<ZenControl>().Root));
                 context.AddSingleton<Itz>();
 
                 // Subcommands
@@ -56,23 +49,28 @@ public class ZenControl
         }
     }
 
-    public ZenControl(Zen zen, ZenOptions options, Itz itz)
+    public ZenControl(UnitContext unitContext, Zen zen, ZenOptions options, Itz itz)
     {
+        this.unitContext = unitContext;
         this.Zen = zen;
         this.Zen.Options = options;
+        this.Root = this.Zen.Root;
         this.Itz = itz;
     }
 
-    public Zen GetOrAdd(string name)
+    public Zen<TIdentifier> CreateZen<TIdentifier>(ZenOptions options)
+        where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
     {
-        return this.dictionary.GetOrAdd(name, x => new Zen());
+        return new Zen<TIdentifier>(options, this.unitContext.ServiceProvider.GetRequiredService<ILogger<Zen<TIdentifier>>>());
     }
 
     public Zen Zen { get; }
 
+    public Zen.Flake Root { get; set; }
+
     public Itz Itz { get; }
 
-    private ConcurrentDictionary<string, Zen> dictionary = new();
-
     public bool ExaltationOfIntegrality { get; } = true; // by Baxter.
+
+    private readonly UnitContext unitContext;
 }

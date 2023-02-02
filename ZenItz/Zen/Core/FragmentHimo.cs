@@ -1,14 +1,13 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace ZenItz;
 
-#pragma warning disable SA1401 // Fields should be private
-
 public partial class Zen<TIdentifier>
 {
-    internal partial class FragmentObject : FlakeObjectBase
+    internal partial class FragmentHimo : HimoGoshujinClass.Himo
     {
         public enum Result
         {
@@ -17,12 +16,13 @@ public partial class Zen<TIdentifier>
             NotLoaded,
         }
 
-        public FragmentObject(Flake flake, FlakeObjectGoshujinClass goshujin)
-            : base(flake, goshujin)
+        public FragmentHimo(Flake flake)
+            : base(flake)
         {
+            this.HimoType = Type.FragmentHimo;
         }
 
-        public ZenResult SetSpan(TIdentifier fragmentId, ReadOnlySpan<byte> data)
+        public ZenResult SetSpan(TIdentifier fragmentId, ReadOnlySpan<byte> data, bool clearSavedFlag)
         {// lock (Flake.syncObject)
             if (this.fragments == null)
             {
@@ -30,21 +30,22 @@ public partial class Zen<TIdentifier>
             }
 
             FragmentData? fragmentData;
-            if (this.fragments.IdChain.Count >= this.Flake.Zen.Options.MaxFragmentCount)
-            {
-                return ZenResult.OverNumberLimit;
-            }
-            else if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragmentData))
-            {
-                fragmentData = new(this.Flake.Zen, fragmentId);
-                this.fragments.Add(fragmentData);
+            if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragmentData))
+            {// New
+                if (this.fragments.Count >= this.Flake.Zen.Options.MaxFragmentCount)
+                {
+                    return ZenResult.OverNumberLimit;
+                }
+
+                fragmentData = new(fragmentId);
+                fragmentData.Goshujin = this.fragments;
             }
 
-            this.UpdateQueue(FlakeObjectOperation.Set, fragmentData.SetSpan(data));
+            this.Update(fragmentData.SetSpanInternal(data), clearSavedFlag);
             return ZenResult.Success;
         }
 
-        public ZenResult SetObject(TIdentifier fragmentId, object obj)
+        public ZenResult SetMemoryOwner(TIdentifier fragmentId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved, bool clearSavedFlag)
         {// lock (Flake.syncObject)
             if (this.fragments == null)
             {
@@ -52,21 +53,22 @@ public partial class Zen<TIdentifier>
             }
 
             FragmentData? fragmentData;
-            if (this.fragments.IdChain.Count >= this.Flake.Zen.Options.MaxFragmentCount)
-            {
-                return ZenResult.OverNumberLimit;
-            }
-            else if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragmentData))
-            {
-                fragmentData = new(this.Flake.Zen, fragmentId);
-                this.fragments.Add(fragmentData);
+            if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragmentData))
+            {// New
+                if (this.fragments.IdChain.Count >= this.Flake.Zen.Options.MaxFragmentCount)
+                {
+                    return ZenResult.OverNumberLimit;
+                }
+
+                fragmentData = new(fragmentId);
+                fragmentData.Goshujin = this.fragments;
             }
 
-            this.UpdateQueue(FlakeObjectOperation.Set, fragmentData.SetObject(obj));
+            this.Update(fragmentData.SetMemoryOwnerInternal(dataToBeMoved), clearSavedFlag);
             return ZenResult.Success;
         }
 
-        public ZenResult SetMemoryOwner(TIdentifier fragmentId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved)
+        public ZenResult SetObject(TIdentifier fragmentId, ITinyhandSerialize obj, bool clearSavedFlag)
         {// lock (Flake.syncObject)
             if (this.fragments == null)
             {
@@ -74,17 +76,18 @@ public partial class Zen<TIdentifier>
             }
 
             FragmentData? fragmentData;
-            if (this.fragments.IdChain.Count >= this.Flake.Zen.Options.MaxFragmentCount)
-            {
-                return ZenResult.OverNumberLimit;
-            }
-            else if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragmentData))
-            {
-                fragmentData = new(this.Flake.Zen, fragmentId);
+            if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragmentData))
+            {// New
+                if (this.fragments.IdChain.Count >= this.Flake.Zen.Options.MaxFragmentCount)
+                {
+                    return ZenResult.OverNumberLimit;
+                }
+
+                fragmentData = new(fragmentId);
                 this.fragments.Add(fragmentData);
             }
 
-            this.UpdateQueue(FlakeObjectOperation.Set, fragmentData.SetMemoryOwner(dataToBeMoved));
+            this.Update(fragmentData.SetObjectInternal(obj), clearSavedFlag);
             return ZenResult.Success;
         }
 
@@ -96,8 +99,10 @@ public partial class Zen<TIdentifier>
             }
 
             if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragment))
-            {// Fount
-                return fragment.TryGetSpan(out data);
+            {// Found
+                var result = fragment.TryGetSpanInternal(out data);
+                this.Update(result.MemoryDifference);
+                return result.Result;
             }
             else
             {
@@ -115,8 +120,10 @@ public partial class Zen<TIdentifier>
             }
 
             if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragmentData))
-            {// Fount
-                if (fragmentData.TryGetMemoryOwner(out memoryOwner))
+            {// Found
+                var result = fragmentData.TryGetMemoryOwnerInternal(out memoryOwner);
+                this.Update(result.MemoryDifference);
+                if (result.Result)
                 {
                     return Result.Success;
                 }
@@ -130,31 +137,27 @@ public partial class Zen<TIdentifier>
             return Result.NotFound;
         }
 
-        public Result TryGetObject(TIdentifier fragmentId, [MaybeNullWhen(false)] out object? obj)
+        public ZenResult TryGetObject<T>(TIdentifier fragmentId, out T? obj)
+            where T : ITinyhandSerialize<T>
         {// lock (Flake.syncObject)
             if (this.fragments == null)
             {
                 obj = default;
-                return Result.NotLoaded;
+                return ZenResult.NoData;
             }
 
             if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragmentData))
-            {// Fount
-                if (fragmentData.TryGetObject(out obj))
-                {
-                    return Result.Success;
-                }
-                else
-                {
-                    return Result.NotFound;
-                }
+            {// Found
+                var result = fragmentData.TryGetObjectInternal(out obj);
+                this.Update(result.MemoryDifference);
+                return result.Result;
             }
 
             obj = default;
-            return Result.NotFound;
+            return ZenResult.NoData;
         }
 
-        public void Unload()
+        internal void UnloadInternal()
         {// lock (Flake.syncObject)
             int memoryDifference = 0;
             if (this.fragments != null)
@@ -168,10 +171,10 @@ public partial class Zen<TIdentifier>
                 this.fragments = null;
             }
 
-            this.RemoveQueue(memoryDifference);
+            this.Remove(memoryDifference);
         }
 
-        public bool Remove(TIdentifier fragmentId)
+        internal bool RemoveInternal(TIdentifier fragmentId)
         {// lock (Flake.syncObject)
             if (this.fragments == null)
             {
@@ -183,37 +186,41 @@ public partial class Zen<TIdentifier>
                 return false;
             }
 
-            this.fragments.Remove(fragmentData);
-            this.UpdateQueue(FlakeObjectOperation.Remove, (true, fragmentData.Clear()));
+            fragmentData.Goshujin = null;
+            this.Remove(fragmentData.Clear());
             return true;
         }
 
-        internal override void Save(bool unload)
-        {// lock (Flake.syncObject) -> lock (this.FlakeObjectGoshujin.Goshujin)
-            if (this.fragments != null)
+        internal void SaveInternal()
+        {// lock (Flake.syncObject)
+            if (!this.isSaved)
             {
-                var writer = default(Tinyhand.IO.TinyhandWriter);
-                var options = TinyhandSerializerOptions.Standard;
-                foreach (var x in this.fragments.IdChain)
+                if (this.fragments != null)
                 {
-                    if (x.TryGetSpan(out var span))
+                    var writer = default(Tinyhand.IO.TinyhandWriter);
+                    var options = TinyhandSerializerOptions.Standard;
+                    var memoryDifference = 0;
+                    foreach (var x in this.fragments)
                     {
-                        TinyhandSerializer.SerializeObject(ref writer, x.TIdentifier, options); // x.TIdentifier.Serialize(ref writer, options);
-                        writer.Write(span);
+                        var result = x.TryGetSpanInternal(out var span);
+                        memoryDifference += result.MemoryDifference;
+                        if (result.Result)
+                        {
+                            TinyhandSerializer.SerializeObject(ref writer, x.TIdentifier, options); // x.TIdentifier.Serialize(ref writer, options);
+                            writer.Write(span);
+                        }
                     }
+
+                    this.Change(memoryDifference);
+                    var memoryOwner = new ByteArrayPool.ReadOnlyMemoryOwner(writer.FlushAndGetArray());
+                    this.Flake.Zen.IO.Save(ref this.Flake.fragmentFile, memoryOwner);
                 }
 
-                var memoryOwner = new ByteArrayPool.ReadOnlyMemoryOwner(writer.FlushAndGetArray());
-                this.Flake.Zen.IO.Save(ref this.Flake.fragmentFile, memoryOwner);
-            }
-
-            if (unload)
-            {// Unload
-                this.Unload();
+                this.isSaved = true;
             }
         }
 
-        internal bool Load(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
+        internal bool LoadInternal(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
         {
             if (this.fragments != null)
             {// Already loaded
@@ -221,8 +228,10 @@ public partial class Zen<TIdentifier>
             }
 
             this.fragments = new();
+            var max = this.Flake.Zen.Options.MaxFragmentCount;
             var reader = new Tinyhand.IO.TinyhandReader(memoryOwner.Memory.Span);
             var options = TinyhandSerializerOptions.Standard;
+            var memoryDifference = 0;
             try
             {
                 while (!reader.End)
@@ -231,13 +240,18 @@ public partial class Zen<TIdentifier>
                     TinyhandSerializer.DeserializeObject(ref reader, ref identifier, options); // identifier.Deserialize(ref reader, options);
                     var byteArray = reader.ReadBytesToArray();
 
-                    var fragment = new FragmentData(this.Flake.Zen, identifier!);
-                    fragment.SetSpan(byteArray);
-                    this.fragments.Add(fragment);
+                    if (this.fragments.Count < max)
+                    {
+                        var fragment = new FragmentData(identifier!);
+                        var result = fragment.SetSpanInternal(byteArray);
+                        memoryDifference += result.MemoryDifference;
+                        this.fragments.Add(fragment);
+                    }
                 }
             }
             finally
             {
+                this.Change(memoryDifference);
             }
 
             return true;
@@ -254,7 +268,7 @@ public partial class Zen<TIdentifier>
                 var result = this.Flake.Zen.IO.Load(this.Flake.fragmentFile).Result;
                 if (result.IsSuccess)
                 {
-                    if (this.Load(result.Data))
+                    if (this.LoadInternal(result.Data))
                     {
                         return this.fragments!;
                     }
@@ -275,7 +289,7 @@ public partial class Zen<TIdentifier>
                 var result = await this.Flake.Zen.IO.Load(this.Flake.fragmentFile).ConfigureAwait(false);
                 if (result.IsSuccess)
                 {
-                    if (this.Load(result.Data))
+                    if (this.LoadInternal(result.Data))
                     {
                         return this.fragments!;
                     }
@@ -285,6 +299,18 @@ public partial class Zen<TIdentifier>
             return new();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void Update((bool Changed, int MemoryDifference) result, bool clearSavedFlag)
+        {
+            if (clearSavedFlag && result.Changed)
+            {
+                this.isSaved = false;
+            }
+
+            this.Update(result.MemoryDifference);
+        }
+
+        private bool isSaved = true;
         private FragmentData.GoshujinClass? fragments; // by Yamamoto.
     }
 }

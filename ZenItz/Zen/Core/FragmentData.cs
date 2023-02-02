@@ -2,15 +2,13 @@
 
 namespace ZenItz;
 
-#pragma warning disable SA1401 // Fields should be private
-
 public partial class Zen<TIdentifier>
 {
     [ValueLinkObject]
     internal partial class FragmentData : FlakeData
     {
-        public FragmentData(Zen<TIdentifier> zen, TIdentifier identifier)
-            : base(zen)
+        public FragmentData(TIdentifier identifier)
+            : base()
         {
             this.TIdentifier = identifier;
         }
