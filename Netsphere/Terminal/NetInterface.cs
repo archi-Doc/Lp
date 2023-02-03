@@ -11,6 +11,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Tinyhand.Logging;
 
+#pragma warning disable SA1202 // Elements should be ordered by access
+
 namespace Netsphere;
 
 /// <summary>

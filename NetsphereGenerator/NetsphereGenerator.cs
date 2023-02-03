@@ -83,9 +83,9 @@ public class NetsphereGeneratorV2 : IIncrementalGenerator, IGeneratorInformation
         return null;
     }
 
-    private void Emit(SourceProductionContext context, (Compilation compilation, ImmutableArray<TypeDeclarationSyntax?> types) source)
+    private void Emit(SourceProductionContext context, (Compilation Compilation, ImmutableArray<TypeDeclarationSyntax?> Types) source)
     {
-        var compilation = source.compilation;
+        var compilation = source.Compilation;
 
         var netServiceObjectAttributeSymbol = compilation.GetTypeByMetadataName(NetServiceObjectAttributeMock.FullName);
         if (netServiceObjectAttributeSymbol == null)
@@ -121,7 +121,7 @@ public class NetsphereGeneratorV2 : IIncrementalGenerator, IGeneratorInformation
 #pragma warning restore RS1024 // Symbols should be compared for equality
 
         var generatorOptionSet = false;
-        foreach (var x in source.types)
+        foreach (var x in source.Types)
         {
             if (x == null)
             {

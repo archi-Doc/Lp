@@ -10,27 +10,6 @@ using Arc.Crypto;
 
 namespace LP;
 
-public class Hash : Sha3_256
-{
-    public static readonly new string HashName = "SHA3-256";
-    public static readonly new uint HashBits = 256;
-    public static readonly new uint HashBytes = HashBits / 8;
-
-    public static ObjectPool<Hash> ObjectPool { get; } = new(static () => new Hash());
-
-    public static ObjectPool<Sha3_384> Sha3_384Pool { get; } = new(static () => new Sha3_384());
-
-    public Identifier GetIdentifier(ReadOnlySpan<byte> input)
-    {
-        return new Identifier(this.GetHashUInt64(input));
-    }
-
-    public Identifier IdentifierFinal()
-    {
-        return new Identifier(this.HashFinalUInt64());
-    }
-}
-
 public static class HashHelper
 {
     public static bool CheckFarmHashAndGetData(ReadOnlyMemory<byte> source, out ReadOnlyMemory<byte> data)
@@ -104,5 +83,26 @@ public static class HashHelper
         }
 
         return result;
+    }
+}
+
+public class Hash : Sha3_256
+{
+    public static readonly new string HashName = "SHA3-256";
+    public static readonly new uint HashBits = 256;
+    public static readonly new uint HashBytes = HashBits / 8;
+
+    public static ObjectPool<Hash> ObjectPool { get; } = new(static () => new Hash());
+
+    public static ObjectPool<Sha3_384> Sha3_384Pool { get; } = new(static () => new Sha3_384());
+
+    public Identifier GetIdentifier(ReadOnlySpan<byte> input)
+    {
+        return new Identifier(this.GetHashUInt64(input));
+    }
+
+    public Identifier IdentifierFinal()
+    {
+        return new Identifier(this.HashFinalUInt64());
     }
 }
