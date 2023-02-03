@@ -32,7 +32,7 @@ public partial class Zen<TIdentifier>
         #region Main
 
         public void Save(bool unload = false)
-        {// Skip checking Zen.Started
+        {
             lock (this.syncObject)
             {
                 if (this.IsRemoved)
@@ -146,11 +146,7 @@ public partial class Zen<TIdentifier>
 
         public ZenResult SetData(ReadOnlySpan<byte> data)
         {
-            if (!this.Zen.Started)
-            {
-                return ZenResult.NotStarted;
-            }
-            else if (data.Length > this.Zen.Options.MaxDataSize)
+            if (data.Length > this.Zen.Options.MaxDataSize)
             {
                 return ZenResult.OverSizeLimit;
             }
@@ -173,11 +169,6 @@ public partial class Zen<TIdentifier>
 
         public ZenResult SetDataObject(ITinyhandSerialize obj)
         {
-            if (!this.Zen.Started)
-            {
-                return ZenResult.NotStarted;
-            }
-
             lock (this.syncObject)
             {
                 if (this.IsRemoved)
@@ -199,11 +190,6 @@ public partial class Zen<TIdentifier>
 
         public async Task<ZenDataResult> GetData()
         {
-            if (!this.Zen.Started)
-            {
-                return new(ZenResult.NotStarted);
-            }
-
             ulong file = 0;
             lock (this.syncObject)
             {
@@ -249,11 +235,6 @@ public partial class Zen<TIdentifier>
         public async Task<ZenObjectResult<T>> GetDataObject<T>()
             where T : ITinyhandSerialize<T>
         {
-            if (!this.Zen.Started)
-            {
-                return new(ZenResult.NotStarted);
-            }
-
             ulong file = 0;
             lock (this.syncObject)
             {
@@ -304,11 +285,7 @@ public partial class Zen<TIdentifier>
 
         public ZenResult SetFragment(TIdentifier fragmentId, ReadOnlySpan<byte> data)
         {
-            if (!this.Zen.Started)
-            {
-                return ZenResult.NotStarted;
-            }
-            else if (data.Length > this.Zen.Options.MaxFragmentSize)
+            if (data.Length > this.Zen.Options.MaxFragmentSize)
             {
                 return ZenResult.OverSizeLimit;
             }
@@ -327,11 +304,6 @@ public partial class Zen<TIdentifier>
 
         public ZenResult SetFragmentObject(TIdentifier fragmentId, ITinyhandSerialize obj)
         {
-            if (!this.Zen.Started)
-            {
-                return ZenResult.NotStarted;
-            }
-
             lock (this.syncObject)
             {
                 if (this.IsRemoved)
@@ -346,11 +318,6 @@ public partial class Zen<TIdentifier>
 
         public async Task<ZenDataResult> GetFragment(TIdentifier fragmentId)
         {
-            if (!this.Zen.Started)
-            {
-                return new(ZenResult.NotStarted);
-            }
-
             ulong file = 0;
             lock (this.syncObject)
             {
@@ -409,11 +376,6 @@ public partial class Zen<TIdentifier>
         public async Task<ZenObjectResult<T>> GetFragmentObject<T>(TIdentifier fragmentId)
             where T : ITinyhandSerialize<T>
         {
-            if (!this.Zen.Started)
-            {
-                return new(ZenResult.NotStarted);
-            }
-
             ulong file = 0;
             lock (this.syncObject)
             {

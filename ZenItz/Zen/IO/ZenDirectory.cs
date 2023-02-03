@@ -74,7 +74,7 @@ internal partial class ZenDirectory
             }
         }
 
-        return new(ZenResult.NotStarted);
+        return new(ZenResult.NoDirectory);
     }
 
     internal void Save(ref ulong file, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
