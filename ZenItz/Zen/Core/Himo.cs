@@ -63,6 +63,22 @@ public partial class Zen<TIdentifier>
                 }
             }
 
+            internal void Update()
+            {// lock (Flake.syncObject)
+                lock (this.himoGoshujin.syncObject)
+                {
+                    if (this.Goshujin == null)
+                    {// New
+                        this.Goshujin = this.himoGoshujin.goshujin;
+                    }
+                    else
+                    {// Update
+                        this.Goshujin.UnloadQueueChain.Remove(this);
+                        this.Goshujin.UnloadQueueChain.Enqueue(this);
+                    }
+                }
+            }
+
             internal void Remove(int memoryDifference)
             {// lock (Flake.syncObject)
                 lock (this.himoGoshujin.syncObject)

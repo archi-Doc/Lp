@@ -19,41 +19,35 @@ public partial class Zen<TIdentifier>
             this.Update(this.flakeData.SetSpanInternal(data), clearSavedFlag);
         }
 
-        public void SetMemoryOwner(ByteArrayPool.MemoryOwner dataToBeMoved, bool clearSavedFlag)
+        public void SetMemoryOwner(ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved, object? obj, bool clearSavedFlag)
         {// lock (Flake.syncObject)
-            this.Update(this.flakeData.SetMemoryOwnerInternal(dataToBeMoved), clearSavedFlag);
+            this.Update(this.flakeData.SetMemoryOwnerInternal(dataToBeMoved, obj), clearSavedFlag);
         }
 
-        public void SetMemoryOwner(ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved, bool clearSavedFlag)
-        {// lock (Flake.syncObject)
-            this.Update(this.flakeData.SetMemoryOwnerInternal(dataToBeMoved), clearSavedFlag);
-        }
-
-        public void SetObject(ITinyhandSerialize obj, bool clearSavedFlag)
+        /*public void SetObject(ITinyhandSerialize obj, bool clearSavedFlag)
         {// lock (Flake.syncObject)
             this.Update(this.flakeData.SetObjectInternal(obj), clearSavedFlag);
-        }
+        }*/
 
-        public bool TryGetSpan(out ReadOnlySpan<byte> data)
+        /*public bool TryGetSpan(out ReadOnlySpan<byte> data)
         {// lock (Flake.syncObject)
             var result = this.flakeData.TryGetSpanInternal(out data);
             this.Update(result.MemoryDifference);
             return result.Result;
-        }
+        }*/
 
-        public bool TryGetMemoryOwner(out ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
+        public void GetMemoryOwner(out ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
         {// lock (Flake.syncObject)
-            var result = this.flakeData.TryGetMemoryOwnerInternal(out memoryOwner);
-            this.Update(result.MemoryDifference);
-            return result.Result;
+            memoryOwner = this.flakeData.MemoryOwner.IncrementAndShare();
+            this.Update();
         }
 
         public ZenResult TryGetObject<T>(out T? obj)
             where T : ITinyhandSerialize<T>
         {// lock (Flake.syncObject)
             var result = this.flakeData.TryGetObjectInternal(out obj);
-            this.Update(result.MemoryDifference);
-            return result.Result;
+            this.Update();
+            return result;
         }
 
         internal void UnloadInternal()
@@ -66,13 +60,9 @@ public partial class Zen<TIdentifier>
         {// lock (this.flake.syncObject)
             if (!this.isSaved)
             {// Not saved.
-                var result = this.flakeData.TryGetMemoryOwnerInternal(out var memoryOwner);
-                this.Change(result.MemoryDifference);
-                if (result.Result)
-                {
-                    this.Flake.Zen.IO.Save(ref this.Flake.flakeFile, memoryOwner);
-                    memoryOwner.Return();
-                }
+                var memoryOwner = this.flakeData.MemoryOwner.IncrementAndShare();
+                this.Flake.Zen.IO.Save(ref this.Flake.flakeFile, memoryOwner);
+                memoryOwner.Return();
 
                 this.isSaved = true;
             }

@@ -167,8 +167,18 @@ public partial class Zen<TIdentifier>
             return ZenResult.Success;
         }
 
-        public ZenResult SetDataObject(ITinyhandSerialize obj)
+        public ZenResult SetDataObject<T>(T obj)
+            where T : ITinyhandSerialize<T>
         {
+            if (!FlakeFragmentService.TrySerialize(obj, out var memoryOwner))
+            {
+                return ZenResult.SerializeError;
+            }
+            else if (memoryOwner.Memory.Length > this.Zen.Options.MaxDataSize)
+            {
+                return ZenResult.OverSizeLimit;
+            }
+
             lock (this.syncObject)
             {
                 if (this.IsRemoved)
@@ -182,7 +192,7 @@ public partial class Zen<TIdentifier>
                 }
 
                 this.flakeHimo ??= new(this);
-                this.flakeHimo.SetObject(obj, true);
+                this.flakeHimo.SetMemoryOwner(memoryOwner.AsReadOnly(), obj, true);
             }
 
             return ZenResult.Success;
@@ -198,8 +208,9 @@ public partial class Zen<TIdentifier>
                     return new(ZenResult.Removed);
                 }
 
-                if (this.flakeHimo != null && this.flakeHimo.TryGetMemoryOwner(out var memoryOwner))
+                if (this.flakeHimo != null)
                 {// Memory
+                    this.flakeHimo.GetMemoryOwner(out var memoryOwner);
                     return new(ZenResult.Success, memoryOwner.Memory); // Skip MemoryOwner.Return()
                 }
                 else
@@ -224,7 +235,7 @@ public partial class Zen<TIdentifier>
                     }
 
                     this.flakeHimo ??= new(this);
-                    this.flakeHimo.SetMemoryOwner(result.Data, false);
+                    this.flakeHimo.SetMemoryOwner(result.Data, null, false);
                     return new(result.Result, result.Data.IncrementAndShare().Memory); // Skip MemoryOwner.Return()
                 }
             }
@@ -270,7 +281,7 @@ public partial class Zen<TIdentifier>
                     }
 
                     this.flakeHimo ??= new(this);
-                    this.flakeHimo.SetMemoryOwner(result.Data, false);
+                    this.flakeHimo.SetMemoryOwner(result.Data, null, false);
                     var flakeResult = this.flakeHimo.TryGetObject(out T? obj);
                     return new(flakeResult, obj);
                 }
@@ -283,9 +294,9 @@ public partial class Zen<TIdentifier>
 
         #region Fragment
 
-        public ZenResult SetFragment(TIdentifier fragmentId, ReadOnlySpan<byte> data)
+        public ZenResult SetFragment(TIdentifier fragmentId, ReadOnlySpan<byte> span)
         {
-            if (data.Length > this.Zen.Options.MaxFragmentSize)
+            if (span.Length > this.Zen.Options.MaxFragmentSize)
             {
                 return ZenResult.OverSizeLimit;
             }
@@ -298,12 +309,22 @@ public partial class Zen<TIdentifier>
                 }
 
                 this.fragmentHimo ??= new(this);
-                return this.fragmentHimo.SetSpan(fragmentId, data, true);
+                return this.fragmentHimo.SetSpan(fragmentId, span, true);
             }
         }
 
-        public ZenResult SetFragmentObject(TIdentifier fragmentId, ITinyhandSerialize obj)
+        public ZenResult SetFragmentObject<T>(TIdentifier fragmentId, T obj)
+            where T : ITinyhandSerialize<T>
         {
+            if (!FlakeFragmentService.TrySerialize(obj, out var memoryOwner))
+            {
+                return ZenResult.SerializeError;
+            }
+            else if (memoryOwner.Memory.Length > this.Zen.Options.MaxFragmentSize)
+            {
+                return ZenResult.OverSizeLimit;
+            }
+
             lock (this.syncObject)
             {
                 if (this.IsRemoved)
@@ -312,7 +333,7 @@ public partial class Zen<TIdentifier>
                 }
 
                 this.fragmentHimo ??= new(this);
-                return this.fragmentHimo.SetObject(fragmentId, obj, true);
+                return this.fragmentHimo.SetMemoryOwner(fragmentId, memoryOwner.AsReadOnly(), obj, true);
             }
         }
 
