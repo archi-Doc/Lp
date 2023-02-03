@@ -188,7 +188,7 @@ public partial class Zen<TIdentifier>
             return ZenResult.Success;
         }
 
-        public async Task<ZenDataResult> GetData()
+        public async Task<ZenMemoryResult> GetData()
         {
             ulong file = 0;
             lock (this.syncObject)
@@ -200,7 +200,7 @@ public partial class Zen<TIdentifier>
 
                 if (this.flakeHimo != null && this.flakeHimo.TryGetMemoryOwner(out var memoryOwner))
                 {// Memory
-                    return new(ZenResult.Success, memoryOwner);
+                    return new(ZenResult.Success, memoryOwner.Memory); // Skip MemoryOwner.Return()
                 }
                 else
                 {// Load
@@ -213,7 +213,7 @@ public partial class Zen<TIdentifier>
                 var result = await this.Zen.IO.Load(file);
                 if (!result.IsSuccess)
                 {
-                    return result;
+                    return new(result.Result);
                 }
 
                 lock (this.syncObject)
@@ -225,7 +225,7 @@ public partial class Zen<TIdentifier>
 
                     this.flakeHimo ??= new(this);
                     this.flakeHimo.SetMemoryOwner(result.Data, false);
-                    return result;
+                    return new(result.Result, result.Data.IncrementAndShare().Memory); // Skip MemoryOwner.Return()
                 }
             }
 
@@ -316,7 +316,7 @@ public partial class Zen<TIdentifier>
             }
         }
 
-        public async Task<ZenDataResult> GetFragment(TIdentifier fragmentId)
+        public async Task<ZenMemoryResult> GetFragment(TIdentifier fragmentId)
         {
             ulong file = 0;
             lock (this.syncObject)
@@ -331,7 +331,7 @@ public partial class Zen<TIdentifier>
                     var fragmentResult = this.fragmentHimo.TryGetMemoryOwner(fragmentId, out var memoryOwner);
                     if (fragmentResult == FragmentHimo.Result.Success)
                     {
-                        return new(ZenResult.Success, memoryOwner);
+                        return new(ZenResult.Success, memoryOwner.Memory); // Skip MemoryOwner.Return()
                     }
                     else if (fragmentResult == FragmentHimo.Result.NotFound)
                     {
@@ -349,7 +349,7 @@ public partial class Zen<TIdentifier>
                 var result = await this.Zen.IO.Load(file);
                 if (!result.IsSuccess)
                 {
-                    return result;
+                    return new(result.Result);
                 }
 
                 lock (this.syncObject)
@@ -365,7 +365,7 @@ public partial class Zen<TIdentifier>
                     var fragmentResult = this.fragmentHimo.TryGetMemoryOwner(fragmentId, out var memoryOwner);
                     if (fragmentResult == FragmentHimo.Result.Success)
                     {
-                        return new(ZenResult.Success, memoryOwner);
+                        return new(ZenResult.Success, memoryOwner.IncrementAndShare().Memory); // Skip MemoryOwner.Return()
                     }
                 }
             }

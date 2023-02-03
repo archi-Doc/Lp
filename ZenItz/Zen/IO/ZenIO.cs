@@ -118,7 +118,7 @@ public sealed class ZenIO
         directory.Save(ref file, memoryOwner);
     }
 
-    internal async Task<ZenDataResult> Load(ulong file)
+    internal async Task<ZenMemoryOwnerResult> Load(ulong file)
     {
         ZenDirectory? directory;
         if (!ZenFile.IsValidFile(file))

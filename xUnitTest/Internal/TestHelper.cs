@@ -47,9 +47,9 @@ public static class TestHelper
         await zen.Start(new());
     }
 
-    public static bool DataEquals(this ZenDataResult dataResult, Span<byte> span)
+    public static bool DataEquals(this ZenMemoryResult dataResult, Span<byte> span)
     {
-        return dataResult.Data.Memory.Span.SequenceEqual(span);
+        return dataResult.Data.Span.SequenceEqual(span);
     }
 
     public static bool ByteArrayEquals(byte[]? array1, byte[]? array2, int length)

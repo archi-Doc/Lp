@@ -2,15 +2,15 @@
 
 namespace ZenItz;
 
-public readonly struct ZenDataResult
+internal readonly struct ZenMemoryOwnerResult
 {
-    public ZenDataResult(ZenResult result, ByteArrayPool.ReadOnlyMemoryOwner data)
+    public ZenMemoryOwnerResult(ZenResult result, ByteArrayPool.ReadOnlyMemoryOwner data)
     {
         this.Result = result;
         this.Data = data;
     }
 
-    public ZenDataResult(ZenResult result)
+    public ZenMemoryOwnerResult(ZenResult result)
     {
         this.Result = result;
         this.Data = default;

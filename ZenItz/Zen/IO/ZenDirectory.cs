@@ -33,7 +33,7 @@ internal partial class ZenDirectory
         return new(this.DirectoryId, this.Type, this.DirectoryPath, this.DirectoryCapacity, this.DirectorySize, this.UsageRatio);
     }
 
-    internal async Task<ZenDataResult> Load(ulong file)
+    internal async Task<ZenMemoryOwnerResult> Load(ulong file)
     {
         Snowflake? snowflake;
         var snowflakeId = ZenFile.ToSnowflakeId(file);
