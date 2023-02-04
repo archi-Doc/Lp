@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.CompilerServices;
-using LPEssentials;
 
 namespace ZenItz;
 
@@ -21,7 +20,7 @@ internal partial class ZenDirectory
     {
     }
 
-    public ZenDirectory(uint directoryId, string path)
+    internal ZenDirectory(uint directoryId, string path)
     {
         this.DirectoryId = directoryId;
         this.DirectoryPath = path;

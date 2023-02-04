@@ -1,19 +1,15 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace ZenItz;
 
 internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
 {
+    public const int DefaultConcurrentTasks = 4;
+
     public ZenDirectoryWorker(ThreadCoreBase parent, ZenDirectory zenDirectory)
         : base(parent, Process, true)
     {
+        this.NumberOfConcurrentTasks = DefaultConcurrentTasks;
         this.ZenDirectory = zenDirectory;
         // this.logger = Zen.UnitLogger.GetLogger<ZenDirectoryWorker>();
     }

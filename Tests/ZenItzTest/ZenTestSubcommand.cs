@@ -2,7 +2,6 @@
 
 using System.Diagnostics;
 using SimpleCommandLine;
-using Tinyhand;
 using LP.Fragments;
 
 namespace ZenItzTest;
@@ -64,15 +63,19 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
         }
 
         await Console.Out.WriteLineAsync("1M flakes");
+        var sw = Stopwatch.StartNew();
 
         for (var i = 0; i < 1_000_000; i++)
         {
             flake = zen.Root.GetOrCreateChild(new(i));
+            // flake.SetData(new byte[] { 2, 3, });
         }
 
-        await Task.Delay(10000);
+        // await Task.Delay(10000);
 
         await zen.Stop(new());
+        Console.WriteLine($"{sw.ElapsedMilliseconds} ms");
+
     }
 
     public ZenControl ZenControl { get; set; }
