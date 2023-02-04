@@ -74,6 +74,7 @@ public partial class Zen<TIdentifier>
                 obj = TinyhandSerializer.DeserializeObject<T>(this.memoryOwner.Memory.Span);
                 if (obj != null)
                 {
+                    this.@object = obj;
                     return ZenResult.Success;
                 }
             }
