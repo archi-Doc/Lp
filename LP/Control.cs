@@ -321,7 +321,7 @@ public class Control : ILogInformation
             await this.ZenControl.Itz.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup)).ConfigureAwait(false);
         }
 
-        var result = await this.ZenControl.Zen.Start(new());
+        var result = await this.ZenControl.Zen.StartAsync(new());
         if (result != ZenStartResult.Success)
         {
             throw new PanicException();
@@ -372,7 +372,7 @@ public class Control : ILogInformation
     {
         this.Logger.Get<DefaultLog>().Log("Termination process initiated");
 
-        await this.ZenControl.Zen.Stop(new());
+        await this.ZenControl.Zen.StopAsync(new());
 
         try
         {

@@ -19,7 +19,7 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
         var zen = this.ZenControl.Zen;
         var itz = this.ZenControl.Itz;
 
-        await zen.Start(new());
+        await zen.StartAsync(new());
 
         var flake = zen.Root.GetOrCreateChild(Identifier.Zero);
         if (flake != null)
@@ -73,7 +73,7 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
 
         // await Task.Delay(10000);
 
-        await zen.Stop(new());
+        await zen.StopAsync(new());
         Console.WriteLine($"{sw.ElapsedMilliseconds} ms");
 
     }

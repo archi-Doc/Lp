@@ -89,28 +89,31 @@ public sealed class ZenIO
     internal void Save(ref ulong file, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
     {
         ZenDirectory? directory;
-        if (this.directoryGoshujin.DirectoryIdChain.Count == 0)
-        {// No directory available.
-            return;
-        }
-        else if (!ZenHelper.IsValidFile(file) || !this.directoryGoshujin.DirectoryIdChain.TryGetValue(ZenHelper.ToDirectoryId(file), out directory))
-        {// Get valid directory.
-            if (this.directoryRotationCount >= DirectoryRotationThreshold ||
-                this.currentDirectory == null)
-            {
-                this.currentDirectory = this.GetDirectory();
-                Volatile.Write(ref this.directoryRotationCount, memoryOwner.Memory.Length);
-                if (this.currentDirectory == null)
+        lock (this.syncObject)
+        {
+            if (this.directoryGoshujin.DirectoryIdChain.Count == 0)
+            {// No directory available.
+                return;
+            }
+            else if (!ZenHelper.IsValidFile(file) || !this.directoryGoshujin.DirectoryIdChain.TryGetValue(ZenHelper.ToDirectoryId(file), out directory))
+            {// Get valid directory.
+                if (this.directoryRotationCount >= DirectoryRotationThreshold ||
+                    this.currentDirectory == null)
                 {
-                    return;
+                    this.currentDirectory = this.GetValidDirectory();
+                    this.directoryRotationCount = memoryOwner.Memory.Length;
+                    if (this.currentDirectory == null)
+                    {
+                        return;
+                    }
                 }
-            }
-            else
-            {
-                Interlocked.Add(ref this.directoryRotationCount, memoryOwner.Memory.Length);
-            }
+                else
+                {
+                    this.directoryRotationCount += memoryOwner.Memory.Length;
+                }
 
-            directory = this.currentDirectory;
+                directory = this.currentDirectory;
+            }
         }
 
         directory.Save(ref file, memoryOwner);
@@ -118,14 +121,18 @@ public sealed class ZenIO
 
     internal async Task<ZenMemoryOwnerResult> Load(ulong file)
     {
-        ZenDirectory? directory;
         if (!ZenHelper.IsValidFile(file))
         {// Invalid file.
             return new(ZenResult.NoData);
         }
-        else if (!this.directoryGoshujin.DirectoryIdChain.TryGetValue(ZenHelper.ToDirectoryId(file), out directory))
-        {// No directory
-            return new(ZenResult.NoDirectory);
+
+        ZenDirectory? directory;
+        lock (this.syncObject)
+        {
+            if (!this.directoryGoshujin.DirectoryIdChain.TryGetValue(ZenHelper.ToDirectoryId(file), out directory))
+            {// No directory
+                return new(ZenResult.NoDirectory);
+            }
         }
 
         return await directory.Load(file);
@@ -133,12 +140,12 @@ public sealed class ZenIO
 
     internal void Remove(ulong file)
     {
-        ZenDirectory? directory;
         if (!ZenHelper.IsValidFile(file))
         {// Invalid file.
             return;
         }
 
+        ZenDirectory? directory;
         lock (this.syncObject)
         {
             if (!this.directoryGoshujin.DirectoryIdChain.TryGetValue(ZenHelper.ToDirectoryId(file), out directory))
@@ -170,7 +177,7 @@ public sealed class ZenIO
     }*/
 
     internal async Task<ZenStartResult> TryStart(ZenOptions options, ZenStartParam param, ReadOnlyMemory<byte>? data)
-    {
+    {// Zen.semaphore
         if (this.Started)
         {
             return ZenStartResult.Success;
@@ -244,7 +251,7 @@ public sealed class ZenIO
     }
 
     internal async Task StopAsync()
-    {
+    {// Zen.semaphore
         Task[] tasks;
         lock (this.syncObject)
         {
@@ -291,8 +298,8 @@ public sealed class ZenIO
         }
     }
 
-    private ZenDirectory? GetDirectory()
-    {
+    private ZenDirectory? GetValidDirectory()
+    {// lock(syncObject)
         var array = this.directoryGoshujin.ListChain.ToArray();
         if (array == null)
         {
@@ -309,6 +316,6 @@ public sealed class ZenIO
 
     private object syncObject = new();
     private ZenDirectory.GoshujinClass directoryGoshujin = new(); // lock(syncObject)
-    private ZenDirectory? currentDirectory;
-    private int directoryRotationCount;
+    private ZenDirectory? currentDirectory; // lock(syncObject)
+    private int directoryRotationCount; // lock(syncObject)
 }

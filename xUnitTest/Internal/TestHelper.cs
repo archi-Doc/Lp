@@ -28,23 +28,23 @@ public static class TestHelper
         var unit = new ZenControl.Builder().Build();
         var zenControl = unit.Context.ServiceProvider.GetRequiredService<ZenControl>();
         var zen = zenControl.CreateZen<TIdentifier>(options);
-        await zen.Start(new(FromScratch: true));
+        await zen.StartAsync(new(FromScratch: true));
         return zen;
     }
 
     public static async Task StopZen<TIdentifier>(Zen<TIdentifier> zen, bool removeAll = true)
         where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
     {
-        await zen.Stop(new(RemoveAll: removeAll));
+        await zen.StopAsync(new(RemoveAll: removeAll));
         zen.MemoryUsage.Is(0);
     }
 
     public static async Task StopAndStartZen<TIdentifier>(Zen<TIdentifier> zen)
         where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
     {
-        await zen.Stop(new());
+        await zen.StopAsync(new());
         zen.MemoryUsage.Is(0);
-        await zen.Start(new());
+        await zen.StartAsync(new());
     }
 
     public static bool DataEquals(this ZenMemoryResult dataResult, Span<byte> span)
