@@ -250,7 +250,7 @@ public partial class Zen<TIdentifier>
             {
                 return this.fragments;
             }
-            else if (ZenFile.IsValidFile(this.Flake.fragmentFile))
+            else if (ZenHelper.IsValidFile(this.Flake.fragmentFile))
             {
                 var result = this.Flake.Zen.IO.Load(this.Flake.fragmentFile).Result;
                 if (result.IsSuccess)
@@ -271,7 +271,7 @@ public partial class Zen<TIdentifier>
             {
                 return this.fragments;
             }
-            else if (ZenFile.IsValidFile(this.Flake.fragmentFile))
+            else if (ZenHelper.IsValidFile(this.Flake.fragmentFile))
             {
                 var result = await this.Flake.Zen.IO.Load(this.Flake.fragmentFile).ConfigureAwait(false);
                 if (result.IsSuccess)

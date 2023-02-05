@@ -2,7 +2,7 @@
 
 namespace ZenItz;
 
-public static class ZenFile
+public static class ZenHelper
 {
     public static bool IsValidFile(ulong file) => file != 0;
 

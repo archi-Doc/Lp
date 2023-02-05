@@ -35,7 +35,7 @@ internal partial class ZenDirectory
     internal async Task<ZenMemoryOwnerResult> Load(ulong file)
     {
         Snowflake? snowflake;
-        var snowflakeId = ZenFile.ToSnowflakeId(file);
+        var snowflakeId = ZenHelper.ToSnowflakeId(file);
         int size = 0;
 
         lock (this.snowflakeGoshujin)
@@ -79,7 +79,7 @@ internal partial class ZenDirectory
     internal void Save(ref ulong file, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
     {// DirectoryId: valid, SnowflakeId: ?
         Snowflake? snowflake;
-        var snowflakeId = ZenFile.ToSnowflakeId(file);
+        var snowflakeId = ZenHelper.ToSnowflakeId(file);
         var dataSize = memoryOwner.Memory.Length;
 
         lock (this.snowflakeGoshujin)
@@ -101,7 +101,7 @@ internal partial class ZenDirectory
                 snowflake.Size = dataSize;
             }
 
-            file = ZenFile.ToFile(this.DirectoryId, snowflake.SnowflakeId);
+            file = ZenHelper.ToFile(this.DirectoryId, snowflake.SnowflakeId);
         }
 
         this.worker?.AddLast(new(snowflake.SnowflakeId, memoryOwner.IncrementAndShare()));
@@ -110,7 +110,7 @@ internal partial class ZenDirectory
     internal void Remove(ulong file)
     {
         Snowflake? snowflake;
-        var snowflakeId = ZenFile.ToSnowflakeId(file);
+        var snowflakeId = ZenHelper.ToSnowflakeId(file);
 
         lock (this.snowflakeGoshujin)
         {
@@ -260,7 +260,7 @@ internal partial class ZenDirectory
             return;
         }
 
-        var ratio = (double)this.DirectorySize / (double)this.DirectoryCapacity;
+        var ratio = (double)this.DirectorySize / this.DirectoryCapacity;
         if (ratio < 0)
         {
             ratio = 0;

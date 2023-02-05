@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using LPEssentials;
-
 namespace ZenItz;
 
 #pragma warning disable SA1401 // Fields should be private
@@ -148,7 +146,7 @@ public partial class Zen<TIdentifier>
         }
     }
 
-    internal void Restart()
+    /*internal void Restart()
     {
         if (this.Started)
         {
@@ -174,7 +172,7 @@ public partial class Zen<TIdentifier>
 
         // Stop IO(ZenDirectory)
         await this.IO.StopAsync();
-    }
+    }*/
 
     internal HimoGoshujinClass HimoGoshujin;
 

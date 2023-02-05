@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using LPEssentials;
 using ZenItz.Results;
 
 namespace ZenItz;
@@ -46,11 +45,6 @@ public sealed class ZenIO
 
         lock (this.syncObject)
         {
-            if (this.Started)
-            {
-                return AddDictionaryResult.ZenRunning;
-            }
-
             if (id == 0)
             {
                 id = this.GetFreeDirectoryId(this.directoryGoshujin);
@@ -99,7 +93,7 @@ public sealed class ZenIO
         {// No directory available.
             return;
         }
-        else if (!ZenFile.IsValidFile(file) || !this.directoryGoshujin.DirectoryIdChain.TryGetValue(ZenFile.ToDirectoryId(file), out directory))
+        else if (!ZenHelper.IsValidFile(file) || !this.directoryGoshujin.DirectoryIdChain.TryGetValue(ZenHelper.ToDirectoryId(file), out directory))
         {// Get valid directory.
             if (this.directoryRotationCount >= DirectoryRotationThreshold ||
                 this.currentDirectory == null)
@@ -125,11 +119,11 @@ public sealed class ZenIO
     internal async Task<ZenMemoryOwnerResult> Load(ulong file)
     {
         ZenDirectory? directory;
-        if (!ZenFile.IsValidFile(file))
+        if (!ZenHelper.IsValidFile(file))
         {// Invalid file.
             return new(ZenResult.NoData);
         }
-        else if (!this.directoryGoshujin.DirectoryIdChain.TryGetValue(ZenFile.ToDirectoryId(file), out directory))
+        else if (!this.directoryGoshujin.DirectoryIdChain.TryGetValue(ZenHelper.ToDirectoryId(file), out directory))
         {// No directory
             return new(ZenResult.NoDirectory);
         }
@@ -140,14 +134,14 @@ public sealed class ZenIO
     internal void Remove(ulong file)
     {
         ZenDirectory? directory;
-        if (!ZenFile.IsValidFile(file))
+        if (!ZenHelper.IsValidFile(file))
         {// Invalid file.
             return;
         }
 
         lock (this.syncObject)
         {
-            if (!this.directoryGoshujin.DirectoryIdChain.TryGetValue(ZenFile.ToDirectoryId(file), out directory))
+            if (!this.directoryGoshujin.DirectoryIdChain.TryGetValue(ZenHelper.ToDirectoryId(file), out directory))
             {// No directory
                 return;
             }
@@ -156,7 +150,7 @@ public sealed class ZenIO
         directory.Remove(file);
     }
 
-    internal void Restart()
+    /*internal void Restart()
     {
         lock (this.syncObject)
         {
@@ -173,7 +167,7 @@ public sealed class ZenIO
         }
 
         this.Started = true;
-    }
+    }*/
 
     internal async Task<ZenStartResult> TryStart(ZenOptions options, ZenStartParam param, ReadOnlyMemory<byte>? data)
     {
@@ -249,17 +243,6 @@ public sealed class ZenIO
         return ZenStartResult.Success;
     }
 
-    internal async Task WaitForCompletionAsync()
-    {
-        Task[] tasks;
-        lock (this.syncObject)
-        {
-            tasks = this.directoryGoshujin.Select(x => x.WaitForCompletionAsync()).ToArray();
-        }
-
-        await Task.WhenAll(tasks).ConfigureAwait(false);
-    }
-
     internal async Task StopAsync()
     {
         Task[] tasks;
@@ -277,9 +260,23 @@ public sealed class ZenIO
         this.Started = false;
     }
 
+    internal async Task WaitForCompletionAsync()
+    {
+        Task[] tasks;
+        lock (this.syncObject)
+        {
+            tasks = this.directoryGoshujin.Select(x => x.WaitForCompletionAsync()).ToArray();
+        }
+
+        await Task.WhenAll(tasks).ConfigureAwait(false);
+    }
+
     internal byte[] Serialize()
     {
-        return TinyhandSerializer.Serialize(this.directoryGoshujin);
+        lock (this.syncObject)
+        {
+            return TinyhandSerializer.Serialize(this.directoryGoshujin);
+        }
     }
 
     private uint GetFreeDirectoryId(ZenDirectory.GoshujinClass goshujin)

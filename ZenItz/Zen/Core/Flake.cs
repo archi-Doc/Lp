@@ -219,7 +219,7 @@ public partial class Zen<TIdentifier>
                 }
             }
 
-            if (ZenFile.IsValidFile(file))
+            if (ZenHelper.IsValidFile(file))
             {
                 var result = await this.Zen.IO.Load(file);
                 if (!result.IsSuccess)
@@ -265,7 +265,7 @@ public partial class Zen<TIdentifier>
                 }
             }
 
-            if (ZenFile.IsValidFile(file))
+            if (ZenHelper.IsValidFile(file))
             {
                 var result = await this.Zen.IO.Load(file);
                 if (!result.IsSuccess)
@@ -365,7 +365,7 @@ public partial class Zen<TIdentifier>
                 }
             }
 
-            if (ZenFile.IsValidFile(file))
+            if (ZenHelper.IsValidFile(file))
             {
                 var result = await this.Zen.IO.Load(file);
                 if (!result.IsSuccess)
@@ -416,7 +416,7 @@ public partial class Zen<TIdentifier>
                 }
             }
 
-            if (ZenFile.IsValidFile(file))
+            if (ZenHelper.IsValidFile(file))
             {
                 var result = await this.Zen.IO.Load(file);
                 if (!result.IsSuccess)
