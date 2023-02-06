@@ -66,7 +66,7 @@ public class ZenControl
 
     public Zen Zen { get; }
 
-    public Zen.Flake Root { get; set; }
+    public Zen.RootFlake Root { get; set; }
 
     public Itz Itz { get; }
 

@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace ZenItz;
@@ -199,13 +197,7 @@ internal partial class ZenDirectory
 
     internal async Task StopAsync()
     {
-        if (this.worker != null)
-        {
-            await this.worker.WaitForCompletionAsync();
-            // tempcode this.worker.Dispose();
-            // this.worker = null;
-        }
-
+        await this.worker.WaitForCompletionAsync();
         await this.SaveDirectoryAsync(this.SnowflakeFilePath, this.SnowflakeBackupPath);
     }
 

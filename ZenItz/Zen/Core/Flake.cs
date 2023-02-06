@@ -10,6 +10,16 @@ namespace ZenItz;
 
 public partial class Zen<TIdentifier>
 {
+    public class RootFlake : Flake
+    {
+        internal RootFlake(Zen<TIdentifier> zen)
+            : base(zen, null, default!)
+        {
+        }
+
+        public override bool IsRemoved => false;
+    }
+
     /// <summary>
     /// <see cref="Flake"/> is an independent class that holds data at a single point in the hierarchical structure.
     /// </summary>
@@ -464,7 +474,7 @@ public partial class Zen<TIdentifier>
 
         public TIdentifier Identifier => this.identifier;
 
-        public bool IsRemoved => this.Goshujin == null && this.Parent != null;
+        public virtual bool IsRemoved => this.Goshujin == null;
 
         internal void DeserializePostProcess(Zen<TIdentifier> zen, Flake? parent = null)
         {

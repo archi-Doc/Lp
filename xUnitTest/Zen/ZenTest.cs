@@ -196,6 +196,12 @@ public partial class ZenTest
             fd.Result.Is(ZenResult.Success);
         }
 
+        // Remove test
+        flake = zen.Root.GetOrCreateChild(Identifier.Zero);
+        flake.Remove().IsTrue();
+        flake.SetData(new byte[] { 0, 1, }).Is(ZenResult.Removed);
+        (await flake.GetData()).Result.Is(ZenResult.Removed);
+
         await TestHelper.StopZen(zen);
     }
 }

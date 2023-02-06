@@ -6,10 +6,6 @@ namespace ZenItz;
 
 public class Zen : Zen<Identifier>
 {
-    public class RootFlake : Flake
-    {
-    }
-
     public Zen(ZenOptions options, ILogger<Zen<Identifier>> logger)
         : base(options, logger)
     {
@@ -25,7 +21,7 @@ public partial class Zen<TIdentifier>
         this.Options = options;
         this.IO = new();
         this.HimoGoshujin = new(this);
-        this.Root = new(this, null, default!);
+        this.Root = new(this);
     }
 
     public async Task<ZenStartResult> StartAsync(ZenStartParam param)
@@ -144,7 +140,7 @@ public partial class Zen<TIdentifier>
 
     public bool Started { get; private set; }
 
-    public Flake Root { get; private set; }
+    public RootFlake Root { get; private set; }
 
     public ZenIO IO { get; }
 
@@ -365,7 +361,7 @@ LoadBackup:
 
     private async Task SerializeZen(string path, string? backupPath)
     {
-        var byteArray = TinyhandSerializer.Serialize(this.Root);
+        var byteArray = TinyhandSerializer.SerializeObject((Flake)this.Root);
         await HashHelper.GetFarmHashAndSaveAsync(byteArray, path, backupPath);
     }
 
