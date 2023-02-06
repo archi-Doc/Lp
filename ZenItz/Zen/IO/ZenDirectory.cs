@@ -45,7 +45,7 @@ internal partial class ZenDirectory
         lock (this.syncObject)
         {
             if (snowflakeId != 0 &&
-                this.dictionary.TryGetValue(snowflakeId, out snowflake) &&
+                this.snowflakeGoshujin.SnowflakeIdChain.TryGetValue(snowflakeId, out snowflake) &&
                 snowflake.IsAlive)
             {// Found
                 size = snowflake.Size;
@@ -85,7 +85,7 @@ internal partial class ZenDirectory
         lock (this.syncObject)
         {
             if (snowflakeId != 0 &&
-                this.dictionary.TryGetValue(snowflakeId, out snowflake) &&
+                this.snowflakeGoshujin.SnowflakeIdChain.TryGetValue(snowflakeId, out snowflake) &&
                 snowflake.IsAlive)
             {// Found
                 if (dataSize > snowflake.Size)
@@ -114,7 +114,7 @@ internal partial class ZenDirectory
         lock (this.syncObject)
         {
             if (snowflakeId != 0 &&
-                this.dictionary.TryGetValue(snowflakeId, out var snowflake))
+                this.snowflakeGoshujin.SnowflakeIdChain.TryGetValue(snowflakeId, out var snowflake))
             {// Found
                 snowflake.MarkForDeletion();
             }
@@ -263,7 +263,10 @@ internal partial class ZenDirectory
     {
         lock (this.syncObject)
         {
-            this.dictionary.Remove(snowflakeId);
+            if (this.snowflakeGoshujin.SnowflakeIdChain.TryGetValue(snowflakeId, out var snowflake))
+            {
+                snowflake.Goshujin = null;
+            }
         }
     }
 
@@ -299,22 +302,6 @@ internal partial class ZenDirectory
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool FindSnowflake(uint snowflakeId, [MaybeNullWhen(false)] out Snowflake snowflake)
-    {// lock (this.syncObject)
-        if (snowflakeId != 0 &&
-            this.dictionary.TryGetValue(snowflakeId, out snowflake) &&
-            snowflake.IsAlive)
-        {
-            return true;
-        }
-        else
-        {
-            snowflake = default;
-            return false;
-        }
-    }
-
     private bool TryLoadDirectory(string path)
     {
         byte[] file;
@@ -334,10 +321,10 @@ internal partial class ZenDirectory
 
         try
         {
-            var g = TinyhandSerializer.Deserialize<Dictionary<uint, Snowflake>>(data);
+            var g = TinyhandSerializer.Deserialize<Snowflake.GoshujinClass>(data);
             if (g != null)
             {
-                this.dictionary = g;
+                this.snowflakeGoshujin = g;
             }
         }
         catch
@@ -353,7 +340,7 @@ internal partial class ZenDirectory
         byte[] data;
         lock (this.syncObject)
         {
-            data = TinyhandSerializer.Serialize(this.dictionary);
+            data = TinyhandSerializer.Serialize(this.snowflakeGoshujin);
         }
 
         return HashHelper.GetFarmHashAndSaveAsync(data, path, backupPath);
@@ -364,19 +351,17 @@ internal partial class ZenDirectory
         while (true)
         {
             var id = LP.Random.Pseudo.NextUInt32();
-            if (id != 0)
+            if (id != 0 && !this.snowflakeGoshujin.SnowflakeIdChain.ContainsKey(id))
             {
                 var snowflake = new Snowflake(id);
-                if (this.dictionary.TryAdd(id, snowflake))
-                {
-                    return snowflake;
-                }
+                snowflake.Goshujin = this.snowflakeGoshujin;
+                return snowflake;
             }
         }
     }
 
-    // private Snowflake.GoshujinClass snowflakeGoshujin = new();
     private object syncObject = new();
-    private Dictionary<uint, Snowflake> dictionary = new(); // lock (this.syncObject)
+    private Snowflake.GoshujinClass snowflakeGoshujin = new(); // lock (this.syncObject)
+    // private Dictionary<uint, Snowflake> dictionary = new(); // lock (this.syncObject)
     private ZenDirectoryWorker worker;
 }

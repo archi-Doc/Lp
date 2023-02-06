@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Runtime.CompilerServices;
-
 namespace ZenItz;
 
 internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
