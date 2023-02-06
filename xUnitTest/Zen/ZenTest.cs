@@ -186,6 +186,16 @@ public partial class ZenTest
         result = await flake.GetFragmentObject<TestObject>(new(2));
         result.Object.IsStructuralEqual(t2);
 
+        // Lock IO order test
+        for (var i = 0; i < 100; i++)
+        {
+            flake = zen.Root.GetOrCreateChild(Identifier.Zero);
+            flake.SetData(new byte[] { 0, 1, });
+            flake.Save(true);
+            var fd = await flake.GetData();
+            fd.Result.Is(ZenResult.Success);
+        }
+
         await TestHelper.StopZen(zen);
     }
 }

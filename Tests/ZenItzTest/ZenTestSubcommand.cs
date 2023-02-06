@@ -48,6 +48,9 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
             result = await flake.GetFragment(Identifier.One);
             flake.Save(true);
 
+            var tf = new TestFragment();
+            tf.Name = "A";
+            flake.SetFragmentObject(Identifier.One, tf);
             var tc = await flake.GetFragmentObject<TestFragment>(Identifier.One);
         }
 
@@ -75,7 +78,6 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
 
         await zen.StopAsync(new());
         Console.WriteLine($"{sw.ElapsedMilliseconds} ms");
-
     }
 
     public ZenControl ZenControl { get; set; }

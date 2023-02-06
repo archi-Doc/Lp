@@ -10,6 +10,20 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
         : base(parent, Process, true)
     {
         this.NumberOfConcurrentTasks = DefaultConcurrentTasks;
+        this.SetCanStartConcurrentlyDelegate((workInterface, workingList) =>
+        {// Lock IO order
+            var id = workInterface.Work.SnowflakeId;
+            foreach (var x in workingList)
+            {
+                if (x.Work.SnowflakeId == id)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+
         this.ZenDirectory = zenDirectory;
         // this.logger = Zen.UnitLogger.GetLogger<ZenDirectoryWorker>();
     }

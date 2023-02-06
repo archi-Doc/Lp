@@ -244,6 +244,7 @@ public sealed class ZenIO
         lock (this.syncObject)
         {
             this.directoryGoshujin = goshujin;
+            this.currentDirectory = null;
             this.Started = true;
         }
 

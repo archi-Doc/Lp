@@ -21,4 +21,7 @@ public readonly struct ZenMemoryResult
     public readonly ZenResult Result;
 
     public readonly ReadOnlyMemory<byte> Data;
+
+    public override string ToString()
+        => $"{this.Result} ReadOnlyMemory:{this.Data.Length}";
 }

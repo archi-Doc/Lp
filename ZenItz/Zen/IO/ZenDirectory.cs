@@ -24,6 +24,7 @@ internal partial class ZenDirectory
     }
 
     internal ZenDirectory(uint directoryId, string path)
+        : base()
     {
         this.worker = new ZenDirectoryWorker(ThreadCore.Root, this);
         this.DirectoryId = directoryId;
