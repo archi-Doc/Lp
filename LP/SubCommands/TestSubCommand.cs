@@ -8,6 +8,7 @@ using LP;
 using LP.T3CS;
 using SimpleCommandLine;
 using Tinyhand;
+using ZenItz;
 
 namespace LP.Subcommands;
 
@@ -65,6 +66,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         bb = token.ValidateAndVerifyWithoutPublicKey();
 
         originator.CreateSignature(value, out var signature);
+        this.userInterfaceService.WriteLine(Hashed.FromEnum(ZenResult.NoDirectory));
     }
 
     private ILogger<TestSubcommand> logger;

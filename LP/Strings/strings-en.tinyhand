@@ -72,3 +72,7 @@ Subcommands = {
         InvalidKey = "'{0}' is invalid. Enter a valid private key or seedphrase"
     }
 }
+
+ZenResult = {
+    NoDirectory = "Directory not found"
+}
