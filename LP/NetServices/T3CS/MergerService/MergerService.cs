@@ -1,16 +1,16 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Netsphere;
-using static LP.NetServices.T3CS.MergerService;
 
 namespace LP.NetServices.T3CS;
 
 [NetServiceInterface]
-public interface MergerService : INetService
+public partial interface MergerService : INetService
 {
-    NetTask<InformationResult?> Information();
+    NetTask<InformationResult?> GetInformation();
 
-    public record InformationResult(string Name);
+    [TinyhandObject]
+    public partial record InformationResult([property: Key(0)] string Name);
 
     // NetTask<NetResult> CreateCredit();
 }
@@ -19,14 +19,15 @@ public interface MergerService : INetService
 [NetServiceObject]
 public class MergerServiceImpl : MergerService
 {// LPCallContext.Current
-    public MergerServiceImpl()
+    public MergerServiceImpl(Merger merger)
     {
+        this.merger = merger;
     }
 
-    public async NetTask<InformationResult?> Information()
+    public async NetTask<MergerService.InformationResult?> GetInformation()
     {
-        var callContext = LPCallContext.Current;
-
-        return new("Merger1");
+        return this.merger.GetInformation();
     }
+
+    private Merger merger;
 }

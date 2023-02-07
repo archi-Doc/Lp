@@ -47,6 +47,8 @@ public class Control : ILogInformation
                 context.AddSingleton<Vault>();
                 context.AddSingleton<Authority>();
                 context.AddSingleton<Seedphrase>();
+                context.AddSingleton<Merger>();
+                context.CreateInstance<Merger>();
 
                 // RPC / Services
                 context.AddTransient<NetServices.BenchmarkServiceImpl>();
