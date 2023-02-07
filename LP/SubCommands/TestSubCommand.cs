@@ -66,7 +66,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         bb = token.ValidateAndVerifyWithoutPublicKey();
 
         originator.CreateSignature(value, out var signature);
-        this.userInterfaceService.WriteLine(Hashed.FromEnum(ZenResult.NoDirectory));
+        this.userInterfaceService.WriteLine(HashedString.FromEnum(ZenResult.NoDirectory));
     }
 
     private ILogger<TestSubcommand> logger;
