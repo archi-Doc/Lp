@@ -50,7 +50,8 @@ public class Control : ILogInformation
 
                 // RPC / Services
                 context.AddTransient<NetServices.BenchmarkServiceImpl>();
-                context.AddTransient<NetServices.RemoteControlService>();
+                context.AddTransient<NetServices.RemoteControlServiceImpl>();
+                context.AddTransient<NetServices.T3CS.MergerServiceImpl>();
 
                 // RPC / Filters
                 context.AddTransient<NetServices.TestOnlyFilter>();
@@ -290,7 +291,7 @@ public class Control : ILogInformation
         this.LPBase = lpBase;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.NetControl = netsphere;
-        this.NetControl.SetupServer();
+        this.NetControl.SetupServer(() => new NetServices.LPServerContext(), () => new NetServices.LPCallContext());
         this.ZenControl = zenControl;
         this.Vault = vault;
         this.Authority = authority;

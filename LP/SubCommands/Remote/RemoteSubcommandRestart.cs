@@ -54,7 +54,7 @@ public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandResta
                 return;
             }
 
-            var service = terminal.GetService<IRemoteControlService>();
+            var service = terminal.GetService<RemoteControlService>();
             var response = await service.RequestAuthorization(token).ResponseAsync;
             var result = response.Result;
             this.logger.TryGet()?.Log($"RequestAuthorization: {result}");
