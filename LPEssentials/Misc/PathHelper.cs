@@ -1,9 +1,49 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using LP.Data;
+
 namespace LP;
 
 public static class PathHelper
 {
+    public static T? TryReadAndDeserialize<T>(string path)
+        where T : ITinyhandSerialize<T>
+    {
+        byte[] data;
+        try
+        {
+            data = File.ReadAllBytes(path);
+        }
+        catch
+        {
+            return default;
+        }
+
+        try
+        {
+            return TinyhandSerializer.DeserializeObjectFromUtf8<T>(data);
+        }
+        catch
+        {
+            return default;
+        }
+    }
+
+    public static async Task<bool> TrySerializeAndWrite<T>(T obj, string path)
+        where T : ITinyhandSerialize<T>
+    {
+        try
+        {
+            var bytes = TinyhandSerializer.SerializeToUtf8(obj);
+            await File.WriteAllBytesAsync(path, bytes);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     public static bool TryDeleteFile(string file)
     {
         try

@@ -9,8 +9,20 @@ public partial interface MergerService : INetService
 {
     NetTask<InformationResult?> GetInformation();
 
+    // [TinyhandObject]
+    // public partial record InformationResult([property: Key(0)] string Name);
+
     [TinyhandObject]
-    public partial record InformationResult([property: Key(0)] string Name);
+    public partial record InformationResult
+    {
+        public InformationResult()
+        {
+        }
+
+        [Key(0, PropertyName = "Name")]
+        [MaxLength(16)]
+        private string name = default!;
+    }
 
     // NetTask<NetResult> CreateCredit();
 }
@@ -26,7 +38,7 @@ public class MergerServiceImpl : MergerService
 
     public async NetTask<MergerService.InformationResult?> GetInformation()
     {
-        return this.merger.GetInformation();
+        return this.merger.Information.ToInformationResult();
     }
 
     private Merger merger;
