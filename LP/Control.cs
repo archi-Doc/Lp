@@ -347,6 +347,8 @@ public class Control : ILogInformation
         await this.NetControl.EssentialNode.SaveAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
         await this.ZenControl.Itz.SaveAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile), Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup));
 
+        await this.ZenControl.Zen.StopAsync(new());
+
         await context.SendSaveAsync(new(this.LPBase.DataDirectory));
     }
 
@@ -374,8 +376,6 @@ public class Control : ILogInformation
     public async Task TerminateAsync(UnitContext context)
     {
         this.Logger.Get<DefaultLog>().Log("Termination process initiated");
-
-        await this.ZenControl.Zen.StopAsync(new());
 
         try
         {

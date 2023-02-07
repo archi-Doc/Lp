@@ -2,7 +2,7 @@
 
 namespace LP;
 
-public class Merger : UnitBase, IUnitPreparable, IUnitExecutable
+public class Merger : UnitBase, IUnitPreparable, IUnitExecutable, IUnitSerializable
 {
     public Merger(UnitContext context, ILogger<Merger> logger, LPBase lpBase)
         : base(context)
@@ -15,11 +15,6 @@ public class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
     public void Prepare(UnitMessage.Prepare message)
     {
-        if (PathHelper.TryReadAndDeserialize<MergerInformation>(Path.Combine(this.lpBase.DataDirectory, MergerInformation.TinyhandName)) is { } information)
-        {
-            this.Information = information;
-        }
-
         this.logger.TryGet()?.Log("Merger prepared");
     }
 
@@ -30,8 +25,21 @@ public class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
     public async Task TerminateAsync(UnitMessage.TerminateAsync message)
     {
-        await PathHelper.TrySerializeAndWrite(this.Information, Path.Combine(this.lpBase.DataDirectory, MergerInformation.TinyhandName));
+
         this.logger.TryGet()?.Log("Merger terminated");
+    }
+
+    public async Task LoadAsync(UnitMessage.LoadAsync message)
+    {
+        if (PathHelper.TryReadAndDeserialize<MergerInformation>(Path.Combine(this.lpBase.DataDirectory, MergerInformation.TinyhandName)) is { } information)
+        {
+            this.Information = information;
+        }
+    }
+
+    public async Task SaveAsync(UnitMessage.SaveAsync message)
+    {
+        await PathHelper.TrySerializeAndWrite(this.Information, Path.Combine(this.lpBase.DataDirectory, MergerInformation.TinyhandName));
     }
 
     public MergerInformation Information { get; private set; }
