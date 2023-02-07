@@ -40,9 +40,9 @@ public partial class Zen<TIdentifier>
 
             if (param.FromScratch)
             {
-                this.RemoveAll();
-
                 await this.IO.TryStart(this.Options, param, null);
+
+                this.RemoveAll();
 
                 this.Started = true;
                 return ZenStartResult.Success;
@@ -95,6 +95,7 @@ public partial class Zen<TIdentifier>
 
                 // Stop IO(ZenDirectory)
                 await this.IO.StopAsync();
+                this.IO.Terminate();
 
                 return;
             }
@@ -111,6 +112,8 @@ public partial class Zen<TIdentifier>
             // Save directory information
             var byteArray = this.IO.Serialize();
             await HashHelper.GetFarmHashAndSaveAsync(byteArray, this.Options.ZenDirectoryFilePath, this.Options.ZenDirectoryBackupPath);
+
+            this.IO.Terminate();
 
             this.logger.TryGet()?.Log($"Zen stop - {this.HimoGoshujin.MemoryUsage}");
         }
@@ -133,6 +136,7 @@ public partial class Zen<TIdentifier>
             this.Started = false;
 
             await this.IO.StopAsync();
+            this.IO.Terminate();
         }
         finally
         {

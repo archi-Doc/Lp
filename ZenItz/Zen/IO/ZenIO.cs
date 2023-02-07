@@ -255,7 +255,6 @@ public sealed class ZenIO
     internal async Task StopAsync()
     {// Zen.semaphore
         Task[] tasks;
-        ZenDirectory[] directories;
         lock (this.syncObject)
         {
             if (!this.Started)
@@ -264,17 +263,19 @@ public sealed class ZenIO
             }
 
             tasks = this.directoryGoshujin.Select(x => x.StopAsync()).ToArray();
-            directories = this.directoryGoshujin.ToArray();
         }
 
         await Task.WhenAll(tasks).ConfigureAwait(false);
 
+        this.Started = false;
+    }
+
+    internal void Terminate()
+    {
         lock (this.syncObject)
         {
             this.ClearGoshujin();
         }
-
-        this.Started = false;
     }
 
     internal async Task WaitForCompletionAsync()
