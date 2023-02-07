@@ -243,6 +243,7 @@ public sealed class ZenIO
 
         lock (this.syncObject)
         {
+            this.ClearGoshujin();
             this.directoryGoshujin = goshujin;
             this.currentDirectory = null;
             this.Started = true;
@@ -267,9 +268,10 @@ public sealed class ZenIO
         }
 
         await Task.WhenAll(tasks).ConfigureAwait(false);
-        foreach (var x in directories)
+
+        lock (this.syncObject)
         {
-            x.Dispose();
+            this.ClearGoshujin();
         }
 
         this.Started = false;
@@ -320,6 +322,16 @@ public sealed class ZenIO
         }
 
         return array.MinBy(a => a.UsageRatio);
+    }
+
+    private void ClearGoshujin()
+    {// lock(syncObject)
+        foreach (var x in this.directoryGoshujin)
+        {
+            x.Dispose();
+        }
+
+        this.directoryGoshujin.Clear();
     }
 
     private object syncObject = new();

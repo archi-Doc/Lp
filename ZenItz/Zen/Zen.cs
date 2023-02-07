@@ -41,7 +41,9 @@ public partial class Zen<TIdentifier>
             if (param.FromScratch)
             {
                 this.RemoveAll();
+
                 await this.IO.TryStart(this.Options, param, null);
+
                 this.Started = true;
                 return ZenStartResult.Success;
             }
@@ -89,10 +91,11 @@ public partial class Zen<TIdentifier>
 
             if (param.RemoveAll)
             {
+                this.RemoveAll();
+
                 // Stop IO(ZenDirectory)
                 await this.IO.StopAsync();
 
-                this.RemoveAll();
                 return;
             }
 
