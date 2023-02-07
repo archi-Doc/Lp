@@ -6,8 +6,8 @@ namespace ZenItz;
 
 public class Zen : Zen<Identifier>
 {
-    public Zen(ZenOptions options, ILogger<Zen<Identifier>> logger)
-        : base(options, logger)
+    public Zen(UnitCore core, ZenOptions options, ILogger<Zen<Identifier>> logger)
+        : base(core, options, logger)
     {
     }
 }
@@ -15,9 +15,10 @@ public class Zen : Zen<Identifier>
 public partial class Zen<TIdentifier>
     where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
 {
-    internal Zen(ZenOptions options, ILogger<Zen<TIdentifier>> logger)
+    internal Zen(UnitCore core, ZenOptions options, ILogger<Zen<TIdentifier>> logger)
     {
         this.logger = logger;
+        this.Core = core;
         this.Options = options;
         this.IO = new();
         this.HimoGoshujin = new(this);
@@ -135,6 +136,8 @@ public partial class Zen<TIdentifier>
             this.semaphore.Release();
         }
     }
+
+    public UnitCore Core { get; init; }
 
     public ZenOptions Options { get; set; } = ZenOptions.Default;
 

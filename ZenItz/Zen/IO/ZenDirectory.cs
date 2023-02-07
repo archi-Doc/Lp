@@ -11,7 +11,7 @@ public enum ZenDirectoryType
 
 [TinyhandObject]
 [ValueLinkObject]
-internal partial class ZenDirectory
+internal partial class ZenDirectory : IDisposable
 {
     public const int HashSize = 8;
 
@@ -357,4 +357,45 @@ internal partial class ZenDirectory
     private Snowflake.GoshujinClass snowflakeGoshujin = new(); // lock (this.syncObject)
     // private Dictionary<uint, Snowflake> dictionary = new(); // lock (this.syncObject)
     private ZenDirectoryWorker worker;
+
+#pragma warning disable SA1124 // Do not use regions
+    #region IDisposable Support
+#pragma warning restore SA1124 // Do not use regions
+
+    private bool disposed = false; // To detect redundant calls.
+
+    /// <summary>
+    /// Finalizes an instance of the <see cref="ZenDirectory"/> class.
+    /// </summary>
+    ~ZenDirectory()
+    {
+        this.Dispose(false);
+    }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        this.Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// free managed/native resources.
+    /// </summary>
+    /// <param name="disposing">true: free managed resources.</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!this.disposed)
+        {
+            if (disposing)
+            {
+                // free managed resources.
+                this.worker.Dispose();
+            }
+
+            // free native resources here if there are any.
+            this.disposed = true;
+        }
+    }
+    #endregion
 }
