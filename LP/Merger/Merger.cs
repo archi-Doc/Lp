@@ -25,7 +25,6 @@ public class Merger : UnitBase, IUnitPreparable, IUnitExecutable, IUnitSerializa
 
     public async Task TerminateAsync(UnitMessage.TerminateAsync message)
     {
-
         this.logger.TryGet()?.Log("Merger terminated");
     }
 
