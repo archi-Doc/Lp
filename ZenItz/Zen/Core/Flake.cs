@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
 using Tinyhand.IO;
 
 namespace ZenItz;
@@ -10,19 +11,23 @@ namespace ZenItz;
 
 public interface IData
 {
+    static abstract IData StaticNew();
+
+    static abstract int StaticId();
+
+    int Id { get; }
+
 }
 
-public class Data2 : IData
+public interface FlakeData : IData
 {
-    public void SetSpan(ReadOnlySpan<byte> data, bool clearSavedFlag)
-    {// lock (Flake.syncObject)
-        this.Update(this.flakeData.SetSpanInternal(data), clearSavedFlag);
-    }
+    static IData StaticNew() => (IData)new object();
 
-    public void SetMemoryOwner(ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved, object? obj, bool clearSavedFlag)
-    {// lock (Flake.syncObject)
-        this.Update(this.flakeData.SetMemoryOwnerInternal(dataToBeMoved, obj), clearSavedFlag);
-    }
+    static int StaticId() => 1;
+
+    void SetSpan(ReadOnlySpan<byte> data, bool clearSavedFlag);
+
+    void SetMemoryOwner(ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved, object? obj, bool clearSavedFlag);
 }
 
 public partial class Zen<TIdentifier>
@@ -44,17 +49,19 @@ public partial class Zen<TIdentifier>
     [ValueLinkObject]
     public partial class Flake
     {
-        public readonly struct DataOperation<TData> : IDisposable
+        public readonly struct SingleOperation<TData> : IDisposable
             where TData : IData
         {
-            public DataOperation(Flake flake)
+            public SingleOperation(Flake flake)
             {
                 this.flake = flake;
                 Monitor.Enter(flake.syncObject, ref this.lockTaken);
-                // this.data = data;
+                this.data = this.flake.GetOrCreateData<TData>();
             }
 
-            public TData Interface => this.data;
+            public bool IsValid => this.data != null;
+
+            public TData? Data => this.data;
 
             public void Dispose()
             {
@@ -66,17 +73,36 @@ public partial class Zen<TIdentifier>
 
             private readonly bool lockTaken;
             private readonly Flake flake;
-            private readonly TData data;
+            private readonly TData? data;
         }
 
-        public DataOperation<TData> Lock<TData>()
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private TData GetOrCreateData<TData>()
+            where TData : IData
+        {// lock (this.syncObject)
+            var id = TData.StaticId();
+            var db = this.dataBase;
+
+            while (db != null)
+            {
+                if (db.Id == id)
+                {
+                    return (TData)(IData)db;
+                }
+                else
+                {
+                    db = db.Next;
+                }
+            }
+
+            return (TData)TData.StaticNew();
+        }
+
+        public SingleOperation<TData> Lock<TData>()
            where TData : IData
-        {
-            var dataOperation = new DataOperation<TData>(this);
-            return dataOperation;
-        }
+            => new SingleOperation<TData>(this);
 
-        public DataOperation<TData> LockChild<TData>(TIdentifier id)
+        public SingleOperation<TData> LockChild<TData>(TIdentifier id)
             where TData : IData
         {
             Flake? flake;
@@ -99,11 +125,6 @@ public partial class Zen<TIdentifier>
             }
 
             return flake.Lock<TData>();
-        }
-
-        internal TData GetOrCreateData<TData>()
-        {
-
         }
 
         [Link(Primary = true, Name = "GetQueue", Type = ChainType.QueueList)]
@@ -660,5 +681,11 @@ public partial class Zen<TIdentifier>
         private object syncObject = new();
         private FlakeHimo? flakeHimo;
         private FragmentHimo? fragmentHimo;
+        private IData? data1;
+        private IData? data2;
+        private IData? data3;
+
+        [Key(5)]
+        private DataBase? dataBase;
     }
 }

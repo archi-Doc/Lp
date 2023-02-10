@@ -29,9 +29,9 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
             var result = await flake.GetData();
             flake.Remove();
 
-            using (var credit = flake.Lock<Data2>())
+            using (var credit = flake.Lock<FlakeData>())
             {
-                credit.Interface.Set();
+                credit.Data?.GetType();
             }
         }
 
