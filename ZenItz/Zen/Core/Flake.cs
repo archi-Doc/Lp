@@ -8,6 +8,23 @@ namespace ZenItz;
 #pragma warning disable SA1401 // Fields should be private
 #pragma warning disable SA1124 // Do not use regions
 
+public interface IData
+{
+}
+
+public class Data2 : IData
+{
+    public void SetSpan(ReadOnlySpan<byte> data, bool clearSavedFlag)
+    {// lock (Flake.syncObject)
+        this.Update(this.flakeData.SetSpanInternal(data), clearSavedFlag);
+    }
+
+    public void SetMemoryOwner(ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved, object? obj, bool clearSavedFlag)
+    {// lock (Flake.syncObject)
+        this.Update(this.flakeData.SetMemoryOwnerInternal(dataToBeMoved, obj), clearSavedFlag);
+    }
+}
+
 public partial class Zen<TIdentifier>
 {
     public class RootFlake : Flake
@@ -27,6 +44,68 @@ public partial class Zen<TIdentifier>
     [ValueLinkObject]
     public partial class Flake
     {
+        public readonly struct DataOperation<TData> : IDisposable
+            where TData : IData
+        {
+            public DataOperation(Flake flake)
+            {
+                this.flake = flake;
+                Monitor.Enter(flake.syncObject, ref this.lockTaken);
+                // this.data = data;
+            }
+
+            public TData Interface => this.data;
+
+            public void Dispose()
+            {
+                if (this.lockTaken)
+                {
+                    Monitor.Exit(this.flake.syncObject);
+                }
+            }
+
+            private readonly bool lockTaken;
+            private readonly Flake flake;
+            private readonly TData data;
+        }
+
+        public DataOperation<TData> Lock<TData>()
+           where TData : IData
+        {
+            var dataOperation = new DataOperation<TData>(this);
+            return dataOperation;
+        }
+
+        public DataOperation<TData> LockChild<TData>(TIdentifier id)
+            where TData : IData
+        {
+            Flake? flake;
+            lock (this.syncObject)
+            {
+                if (this.childFlakes == null)
+                {
+                    return default;
+                }
+
+                if (this.childFlakes.IdChain.TryGetValue(id, out flake))
+                {// Update GetQueue chain
+                    this.childFlakes.GetQueueChain.Remove(flake);
+                    this.childFlakes.GetQueueChain.Enqueue(flake);
+                }
+                else
+                {
+                    return default;
+                }
+            }
+
+            return flake.Lock<TData>();
+        }
+
+        internal TData GetOrCreateData<TData>()
+        {
+
+        }
+
         [Link(Primary = true, Name = "GetQueue", Type = ChainType.QueueList)]
         internal Flake()
         {

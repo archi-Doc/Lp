@@ -28,6 +28,11 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
             flake.Save(true);
             var result = await flake.GetData();
             flake.Remove();
+
+            using (var credit = flake.Lock<Data2>())
+            {
+                credit.Interface.Set();
+            }
         }
 
         flake = zen.Root.GetOrCreateChild(Identifier.One);
