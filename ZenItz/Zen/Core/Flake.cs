@@ -2,6 +2,7 @@
 
 using System.Runtime.CompilerServices;
 using Tinyhand.IO;
+using static ZenItz.Zen<TIdentifier>;
 
 namespace ZenItz;
 
@@ -9,25 +10,9 @@ namespace ZenItz;
 #pragma warning disable SA1401 // Fields should be private
 #pragma warning disable SA1124 // Do not use regions
 
-public interface IData
+internal interface IFIleRef
 {
-    static abstract IData StaticNew();
-
-    static abstract int StaticId();
-
-    int Id { get; }
-
-}
-
-public interface FlakeData : IData
-{
-    static IData StaticNew() => (IData)new object();
-
-    static int StaticId() => 1;
-
-    void SetSpan(ReadOnlySpan<byte> data, bool clearSavedFlag);
-
-    void SetMemoryOwner(ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved, object? obj, bool clearSavedFlag);
+    ref ulong GetFileRef(int index);
 }
 
 public partial class Zen<TIdentifier>
@@ -47,16 +32,14 @@ public partial class Zen<TIdentifier>
     /// </summary>
     [TinyhandObject(ExplicitKeyOnly = true, LockObject = nameof(syncObject))]
     [ValueLinkObject]
-    public partial class Flake
+    public partial class Flake : IFIleRef
     {
-        public readonly struct SingleOperation<TData> : IDisposable
+        public struct DataOperation<TData> : IDisposable
             where TData : IData
         {
-            public SingleOperation(Flake flake)
+            public DataOperation(Flake flake)
             {
                 this.flake = flake;
-                Monitor.Enter(flake.syncObject, ref this.lockTaken);
-                this.data = this.flake.GetOrCreateData<TData>();
             }
 
             public bool IsValid => this.data != null;
@@ -65,44 +48,90 @@ public partial class Zen<TIdentifier>
 
             public void Dispose()
             {
+                this.Unlock();
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            internal void Lock()
+            {
+                if (!this.lockTaken)
+                {
+                    Monitor.Enter(this.flake.syncObject, ref this.lockTaken);
+                }
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            internal void Unlock()
+            {
                 if (this.lockTaken)
                 {
                     Monitor.Exit(this.flake.syncObject);
+                    this.lockTaken = false;
                 }
             }
 
-            private readonly bool lockTaken;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            internal void SetData(TData data)
+                => this.data = data;
+
             private readonly Flake flake;
-            private readonly TData? data;
+            private TData? data;
+            private bool lockTaken;
         }
+
+        ref ulong IFIleRef.GetFileRef(int index) => ref this.dataObject[index].File;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private TData GetOrCreateData<TData>()
+        private (DataObject DataObject, bool Created) GetOrCreateDataObject<TData>()
             where TData : IData
         {// lock (this.syncObject)
-            var id = TData.StaticId();
-            var db = this.dataBase;
-
-            while (db != null)
+            var id = TData.StaticId;
+            foreach (var x in this.dataObject)
             {
-                if (db.Id == id)
+                if (x.Id == id)
                 {
-                    return (TData)(IData)db;
-                }
-                else
-                {
-                    db = db.Next;
+                    return (x, x.GetOrCreateObject(this.Zen.Options).Created);
                 }
             }
 
-            return (TData)TData.StaticNew();
+            var newObject = new DataObject();
+            var result = newObject.GetOrCreateObject(this.Zen.Options);
+            if (result.Data != null)
+            {
+                var n = this.dataObject.Length;
+                Array.Resize(ref this.dataObject, n + 1);
+                this.dataObject[n] = newObject;
+            }
+
+            return (newObject, true);
         }
 
-        public SingleOperation<TData> Lock<TData>()
+        public async Task<DataOperation<TData>> Lock<TData>()
            where TData : IData
-            => new SingleOperation<TData>(this);
+        {
+            var operation = new DataOperation<TData>(this);
+            try
+            {
+                operation.Lock();
+                var result = this.GetOrCreateDataObject<TData>();
+                if (result.DataObject.IsValid == null)
+                {// No data
+                    operation.Unlock();
+                    return operation;
+                }
 
-        public SingleOperation<TData> LockChild<TData>(TIdentifier id)
+                if (result.Created && )
+                {
+
+                }
+            }
+            finally
+            {
+                operation.Unlock();
+            }
+        }
+
+        public DataOperation<TData> LockChild<TData>(TIdentifier id)
             where TData : IData
         {
             Flake? flake;
@@ -661,6 +690,9 @@ public partial class Zen<TIdentifier>
         [Key(4)]
         public int FlakeId { get; private set; }
 
+        [Key(5)]
+        private DataObject[] dataObject = Array.Empty<DataObject>();
+
         private int TryGetFlakeId(ReadOnlySpan<byte> data)
         {
             try
@@ -681,11 +713,5 @@ public partial class Zen<TIdentifier>
         private object syncObject = new();
         private FlakeHimo? flakeHimo;
         private FragmentHimo? fragmentHimo;
-        private IData? data1;
-        private IData? data2;
-        private IData? data3;
-
-        [Key(5)]
-        private DataBase? dataBase;
     }
 }
