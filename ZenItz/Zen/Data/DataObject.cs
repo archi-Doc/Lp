@@ -12,26 +12,6 @@ internal partial struct DataObject : ITinyhandSerialize<DataObject>
     {
     }
 
-    [Key(0)]
-    internal int Id;
-
-    [Key(1)]
-    internal ulong File;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal (BaseData? Data, bool Created) GetOrCreateObject(ZenOptions options)
-    {
-        if (this.@object == null)
-        {
-            this.@object = ZenData.TryCreateInstance(this.Id, options);
-            return (this.@object, this.@object != null);
-        }
-
-        return (this.@object, false);
-    }
-
-    private BaseData? @object;
-
     public static void Serialize(ref TinyhandWriter writer, scoped ref DataObject value, TinyhandSerializerOptions options)
     {
         writer.Write(value.Id);
@@ -42,5 +22,27 @@ internal partial struct DataObject : ITinyhandSerialize<DataObject>
     {
         value.Id = reader.ReadInt32();
         value.File = reader.ReadUInt64();
+    }
+
+    [Key(0)]
+    internal int Id;
+
+    [Key(1)]
+    internal ulong File;
+
+    internal bool IsValid => this.Id != 0;
+
+    internal BaseData? Data;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal (BaseData? Data, bool Created) GetOrCreateObject(ZenOptions options)
+    {
+        if (this.Data == null)
+        {
+            this.Data = ZenData.TryCreateInstance(this.Id, options);
+            return (this.Data, this.Data != null);
+        }
+
+        return (this.Data, false);
     }
 }

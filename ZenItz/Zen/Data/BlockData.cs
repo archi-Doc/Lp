@@ -6,6 +6,8 @@ namespace ZenItz;
 
 public interface BlockData : IData
 {
+    static int IData.StaticId => 1;
+
     void SetSpan(ReadOnlySpan<byte> data, bool clearSavedFlag);
 
     void SetMemoryOwner(ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved, object? obj, bool clearSavedFlag);

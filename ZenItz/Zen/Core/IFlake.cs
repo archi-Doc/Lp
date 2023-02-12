@@ -2,16 +2,14 @@
 
 namespace ZenItz;
 
-/// <summary>
-/// Flake object requirements.<br/>
-/// 1. Inherit IFlake interface.<br/>
-/// 2. Has TinyhandObjectAttribute (Tinyhand serializable).<br/>
-/// 3. Unique flake id is prefered.<br/>
-/// </summary>
-public interface IFlake
+public interface IFromDataToIO
 {
-    /// <summary>
-    /// Gets the identifier of the flake.
-    /// </summary>
-    public int FlakeId { get; }
+    void SaveInternal<TData>(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
+        where TData : IData;
+
+    Task<ZenMemoryOwnerResult> LoadInternal<TData>()
+        where TData : IData;
+
+    void RemoveInternal<TData>()
+        where TData : IData;
 }

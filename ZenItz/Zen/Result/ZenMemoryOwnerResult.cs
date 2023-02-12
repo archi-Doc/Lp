@@ -2,7 +2,7 @@
 
 namespace ZenItz;
 
-internal readonly struct ZenMemoryOwnerResult
+public readonly struct ZenMemoryOwnerResult
 {
     public ZenMemoryOwnerResult(ZenResult result, ByteArrayPool.ReadOnlyMemoryOwner data)
     {

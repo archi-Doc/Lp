@@ -18,7 +18,7 @@ public class BaseData : IBaseData
     {
     }
 
-    public void SaveInternal(long file, bool unload)
+    public void SaveInternal(ulong file, bool unload)
     {
     }
 }

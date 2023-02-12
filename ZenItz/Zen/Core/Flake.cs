@@ -2,18 +2,12 @@
 
 using System.Runtime.CompilerServices;
 using Tinyhand.IO;
-using static ZenItz.Zen<TIdentifier>;
 
 namespace ZenItz;
 
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
 #pragma warning disable SA1401 // Fields should be private
 #pragma warning disable SA1124 // Do not use regions
-
-internal interface IFIleRef
-{
-    ref ulong GetFileRef(int index);
-}
 
 public partial class Zen<TIdentifier>
 {
@@ -32,7 +26,7 @@ public partial class Zen<TIdentifier>
     /// </summary>
     [TinyhandObject(ExplicitKeyOnly = true, LockObject = nameof(syncObject))]
     [ValueLinkObject]
-    public partial class Flake : IFIleRef
+    public partial class Flake : IFromDataToIO
     {
         public struct DataOperation<TData> : IDisposable
             where TData : IData
@@ -79,8 +73,6 @@ public partial class Zen<TIdentifier>
             private bool lockTaken;
         }
 
-        ref ulong IFIleRef.GetFileRef(int index) => ref this.dataObject[index].File;
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private (DataObject DataObject, bool Created) GetOrCreateDataObject<TData>()
             where TData : IData
@@ -94,40 +86,64 @@ public partial class Zen<TIdentifier>
                 }
             }
 
-            var newObject = new DataObject();
+            var newObject = default(DataObject);
             var result = newObject.GetOrCreateObject(this.Zen.Options);
-            if (result.Data != null)
+            if (result.Data == null)
             {
-                var n = this.dataObject.Length;
-                Array.Resize(ref this.dataObject, n + 1);
-                this.dataObject[n] = newObject;
+                return default;
             }
 
+            var n = this.dataObject.Length;
+            Array.Resize(ref this.dataObject, n + 1);
+            this.dataObject[n] = newObject;
             return (newObject, true);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private DataObject TryGetDataObject<TData>()
+            where TData : IData
+        {// lock (this.syncObject)
+            var id = TData.StaticId;
+            for (var i = 0; i < this.dataObject.Length; i++)
+            {
+                if (this.dataObject[i].Id == id)
+                {
+                    return this.dataObject[i];
+                }
+            }
+
+            return default;
         }
 
         public async Task<DataOperation<TData>> Lock<TData>()
            where TData : IData
         {
             var operation = new DataOperation<TData>(this);
-            try
-            {
-                operation.Lock();
-                var result = this.GetOrCreateDataObject<TData>();
-                if (result.DataObject.IsValid == null)
-                {// No data
-                    operation.Unlock();
-                    return operation;
-                }
+            operation.Lock();
 
-                if (result.Created && )
-                {
-
-                }
-            }
-            finally
-            {
+            var result = this.GetOrCreateDataObject<TData>();
+            if (result.DataObject.Data == null)
+            {// No data
                 operation.Unlock();
+                return operation;
+            }
+
+            if (!result.Created)
+            {
+                return operation;
+            }
+
+            // Load
+            operation.Unlock();
+            var file = this.flakeFile;
+
+            if (ZenHelper.IsValidFile(file))
+            {
+                var result = await this.Zen.IO.Load(file);
+                if (!result.IsSuccess)
+                {
+                    return new(result.Result);
+                }
             }
         }
 
@@ -167,6 +183,74 @@ public partial class Zen<TIdentifier>
             this.Parent = parent;
             this.identifier = identifier;
         }
+
+        #region IFromDataToIO
+
+        void IFromDataToIO.SaveInternal<TData>(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
+        {// lock (this.syncObject)
+            var id = TData.StaticId;
+            for (var i = 0; i < this.dataObject.Length; i++)
+            {
+                if (this.dataObject[i].Id == id)
+                {
+                    this.Zen.IO.Save(ref this.dataObject[i].File, memoryOwner);
+                    return;
+                }
+            }
+        }
+
+        async Task<ZenMemoryOwnerResult> IFromDataToIO.LoadInternal<TData>()
+        {// lock (this.syncObject)
+            var dataObject = this.TryGetDataObject<TData>();
+            if (!dataObject.IsValid)
+            {
+                return new(ZenResult.NoData);
+            }
+
+            var file = dataObject.File;
+            if (!ZenHelper.IsValidFile(file))
+            {
+                return new(ZenResult.NoData);
+            }
+
+            lock(this.syncObject)
+            {
+                Monitor.Exit(this.syncObject);
+                await Task.Delay(100);
+
+            }
+
+            var result = default(ZenMemoryOwnerResult);
+            try
+            {
+                Monitor.Exit(this.syncObject); // Unlock
+
+                result = await this.Zen.IO.Load(file);
+            }
+            finally
+            {
+                Monitor.Enter(this.syncObject); // Lock
+            }
+
+            if (this.IsRemoved)
+            {
+                return new(ZenResult.Removed);
+            }
+
+            return result;
+        }
+
+        void IFromDataToIO.RemoveInternal<TData>()
+        {// lock (this.syncObject)
+            var dataObject = this.TryGetDataObject<TData>();
+            if (dataObject.IsValid)
+            {
+                this.Zen.IO.Remove(dataObject.File);
+                return;
+            }
+        }
+
+        #endregion
 
         #region Main
 
@@ -323,11 +407,6 @@ public partial class Zen<TIdentifier>
                 if (this.IsRemoved)
                 {
                     return ZenResult.Removed;
-                }
-
-                if (obj is IFlake iflake)
-                {
-                    this.FlakeId = iflake.FlakeId;
                 }
 
                 this.flakeHimo ??= new(this);
@@ -647,7 +726,7 @@ public partial class Zen<TIdentifier>
             return true;
         }
 
-        /// <summary>
+        /// <summary>ww
         /// Save Flake data and unload it from memory.
         /// </summary>
         /// <param name="himoType">Himo type (UchuHimo = All).</param>
