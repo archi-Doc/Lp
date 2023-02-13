@@ -11,16 +11,6 @@ namespace ZenItz;
 
 public partial class Zen<TIdentifier>
 {
-    public class RootFlake : Flake
-    {
-        internal RootFlake(Zen<TIdentifier> zen)
-            : base(zen, null, default!)
-        {
-        }
-
-        public override bool IsRemoved => false;
-    }
-
     /// <summary>
     /// <see cref="Flake"/> is an independent class that holds data at a single point in the hierarchical structure.
     /// </summary>
@@ -789,7 +779,7 @@ public partial class Zen<TIdentifier>
             return 0;
         }
 
-        private object syncObject = new();
+        private readonly SemaphoreLock semaphore = new();
         private FlakeHimo? flakeHimo;
         private FragmentHimo? fragmentHimo;
     }
