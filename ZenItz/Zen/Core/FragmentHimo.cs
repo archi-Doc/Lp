@@ -23,7 +23,7 @@ public partial class Zen<TIdentifier>
         }
 
         public ZenResult SetSpan(TIdentifier fragmentId, ReadOnlySpan<byte> data, bool clearSavedFlag)
-        {// lock (Flake.syncObject)
+        {// using (Flake.semaphore)
             if (this.fragments == null)
             {
                 this.fragments = this.PrepareFragments();
@@ -45,8 +45,8 @@ public partial class Zen<TIdentifier>
             return ZenResult.Success;
         }
 
-        public ZenResult SetMemoryOwner(TIdentifier fragmentId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved, bool clearSavedFlag)
-        {// lock (Flake.syncObject)
+        public ZenResult SetMemoryOwner(TIdentifier fragmentId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved, object? obj, bool clearSavedFlag)
+        {// using (Flake.semaphore)
             if (this.fragments == null)
             {
                 this.fragments = this.PrepareFragments();
@@ -64,12 +64,12 @@ public partial class Zen<TIdentifier>
                 fragmentData.Goshujin = this.fragments;
             }
 
-            this.Update(fragmentData.SetMemoryOwnerInternal(dataToBeMoved), clearSavedFlag);
+            this.Update(fragmentData.SetMemoryOwnerInternal(dataToBeMoved, obj), clearSavedFlag);
             return ZenResult.Success;
         }
 
-        public ZenResult SetObject(TIdentifier fragmentId, ITinyhandSerialize obj, bool clearSavedFlag)
-        {// lock (Flake.syncObject)
+        /*public ZenResult SetObject(TIdentifier fragmentId, ITinyhandSerialize obj, bool clearSavedFlag)
+        {// using (Flake.semaphore)
             if (this.fragments == null)
             {
                 this.fragments = this.PrepareFragments();
@@ -89,10 +89,10 @@ public partial class Zen<TIdentifier>
 
             this.Update(fragmentData.SetObjectInternal(obj), clearSavedFlag);
             return ZenResult.Success;
-        }
+        }*/
 
-        public bool TryGetSpan(TIdentifier fragmentId, out ReadOnlySpan<byte> data)
-        {// lock (Flake.syncObject)
+        /*public bool TryGetSpan(TIdentifier fragmentId, out ReadOnlySpan<byte> data)
+        {// using (Flake.semaphore)
             if (this.fragments == null)
             {
                 this.fragments = this.PrepareFragments();
@@ -109,10 +109,10 @@ public partial class Zen<TIdentifier>
                 data = default;
                 return false;
             }
-        }
+        }*/
 
         public Result TryGetMemoryOwner(TIdentifier fragmentId, out ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
-        {// lock (Flake.syncObject)
+        {// using (Flake.semaphore)
             if (this.fragments == null)
             {
                 memoryOwner = default;
@@ -121,16 +121,8 @@ public partial class Zen<TIdentifier>
 
             if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragmentData))
             {// Found
-                var result = fragmentData.TryGetMemoryOwnerInternal(out memoryOwner);
-                this.Update(result.MemoryDifference);
-                if (result.Result)
-                {
-                    return Result.Success;
-                }
-                else
-                {
-                    return Result.NotFound;
-                }
+                memoryOwner = fragmentData.MemoryOwner.IncrementAndShare();
+                return Result.Success;
             }
 
             memoryOwner = default;
@@ -139,7 +131,7 @@ public partial class Zen<TIdentifier>
 
         public ZenResult TryGetObject<T>(TIdentifier fragmentId, out T? obj)
             where T : ITinyhandSerialize<T>
-        {// lock (Flake.syncObject)
+        {// using (Flake.semaphore)
             if (this.fragments == null)
             {
                 obj = default;
@@ -149,8 +141,8 @@ public partial class Zen<TIdentifier>
             if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragmentData))
             {// Found
                 var result = fragmentData.TryGetObjectInternal(out obj);
-                this.Update(result.MemoryDifference);
-                return result.Result;
+                this.Update();
+                return result;
             }
 
             obj = default;
@@ -158,7 +150,7 @@ public partial class Zen<TIdentifier>
         }
 
         internal void UnloadInternal()
-        {// lock (Flake.syncObject)
+        {// using (Flake.semaphore)
             int memoryDifference = 0;
             if (this.fragments != null)
             {
@@ -175,7 +167,7 @@ public partial class Zen<TIdentifier>
         }
 
         internal bool RemoveInternal(TIdentifier fragmentId)
-        {// lock (Flake.syncObject)
+        {// using (Flake.semaphore)
             if (this.fragments == null)
             {
                 this.fragments = this.PrepareFragments();
@@ -192,7 +184,7 @@ public partial class Zen<TIdentifier>
         }
 
         internal void SaveInternal()
-        {// lock (Flake.syncObject)
+        {// using (Flake.semaphore)
             if (!this.isSaved)
             {
                 if (this.fragments != null)
@@ -202,13 +194,8 @@ public partial class Zen<TIdentifier>
                     var memoryDifference = 0;
                     foreach (var x in this.fragments)
                     {
-                        var result = x.TryGetSpanInternal(out var span);
-                        memoryDifference += result.MemoryDifference;
-                        if (result.Result)
-                        {
-                            TinyhandSerializer.SerializeObject(ref writer, x.TIdentifier, options); // x.TIdentifier.Serialize(ref writer, options);
-                            writer.Write(span);
-                        }
+                        TinyhandSerializer.SerializeObject(ref writer, x.TIdentifier, options); // x.TIdentifier.Serialize(ref writer, options);
+                        writer.Write(x.Span);
                     }
 
                     this.Change(memoryDifference);
@@ -258,12 +245,12 @@ public partial class Zen<TIdentifier>
         }
 
         private FragmentData.GoshujinClass PrepareFragments()
-        {// lock (Flake.syncObject)
+        {// using (Flake.semaphore)
             if (this.fragments != null)
             {
                 return this.fragments;
             }
-            else if (ZenFile.IsValidFile(this.Flake.fragmentFile))
+            else if (ZenHelper.IsValidFile(this.Flake.fragmentFile))
             {
                 var result = this.Flake.Zen.IO.Load(this.Flake.fragmentFile).Result;
                 if (result.IsSuccess)
@@ -279,12 +266,12 @@ public partial class Zen<TIdentifier>
         }
 
         private async Task<FragmentData.GoshujinClass> PrepareFragmentsAsync()
-        {// lock (Flake.syncObject)
+        {// using (Flake.semaphore)
             if (this.fragments != null)
             {
                 return this.fragments;
             }
-            else if (ZenFile.IsValidFile(this.Flake.fragmentFile))
+            else if (ZenHelper.IsValidFile(this.Flake.fragmentFile))
             {
                 var result = await this.Flake.Zen.IO.Load(this.Flake.fragmentFile).ConfigureAwait(false);
                 if (result.IsSuccess)

@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.CompilerServices;
-using LPEssentials;
 
 namespace ZenItz;
 
@@ -12,17 +11,20 @@ public enum ZenDirectoryType
 
 [TinyhandObject]
 [ValueLinkObject]
-internal partial class ZenDirectory
+internal partial class ZenDirectory : IDisposable
 {
     public const int HashSize = 8;
 
     [Link(Primary = true, Name = "List", Type = ChainType.List)]
     public ZenDirectory()
     {
+        this.worker = new ZenDirectoryWorker(ThreadCore.Root, this);
     }
 
-    public ZenDirectory(uint directoryId, string path)
+    internal ZenDirectory(uint directoryId, string path)
+        : base()
     {
+        this.worker = new ZenDirectoryWorker(ThreadCore.Root, this);
         this.DirectoryId = directoryId;
         this.DirectoryPath = path;
     }
@@ -33,16 +35,17 @@ internal partial class ZenDirectory
         return new(this.DirectoryId, this.Type, this.DirectoryPath, this.DirectoryCapacity, this.DirectorySize, this.UsageRatio);
     }
 
-    internal async Task<ZenDataResult> Load(ulong file)
+    internal async Task<ZenMemoryOwnerResult> Load(ulong file)
     {
         Snowflake? snowflake;
-        var snowflakeId = ZenFile.ToSnowflakeId(file);
+        var snowflakeId = ZenHelper.ToSnowflakeId(file);
         int size = 0;
 
-        lock (this.snowflakeGoshujin)
+        lock (this.syncObject)
         {
             if (snowflakeId != 0 &&
-                this.snowflakeGoshujin.SnowflakeIdChain.TryGetValue(snowflakeId, out snowflake))
+                this.snowflakeGoshujin.SnowflakeIdChain.TryGetValue(snowflakeId, out snowflake) &&
+                snowflake.IsAlive)
             {// Found
                 size = snowflake.Size;
             }
@@ -53,40 +56,36 @@ internal partial class ZenDirectory
         }
 
         // Load (snowflakeId, size)
-        if (this.worker != null)
-        {
-            var workInterface = this.worker.AddLast(new(snowflake.SnowflakeId, size));
-            if (await workInterface.WaitForCompletionAsync().ConfigureAwait(false) == true)
-            {// Complete
-                var data = workInterface.Work.LoadData;
-                if (data.IsRent)
-                {// Success
-                    return new(ZenResult.Success, data.AsReadOnly());
-                }
-                else
-                {// Failure
-                    return new(ZenResult.NoFile);
-                }
+        var workInterface = this.worker.AddLast(new(snowflake.SnowflakeId, size));
+        if (await workInterface.WaitForCompletionAsync().ConfigureAwait(false) == true)
+        {// Complete
+            var data = workInterface.Work.LoadData;
+            if (data.IsRent)
+            {// Success
+                return new(ZenResult.Success, data.AsReadOnly());
             }
             else
-            {// Abort
+            {// Failure
                 return new(ZenResult.NoFile);
             }
         }
-
-        return new(ZenResult.NotStarted);
+        else
+        {// Abort
+            return new(ZenResult.NoFile);
+        }
     }
 
     internal void Save(ref ulong file, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
     {// DirectoryId: valid, SnowflakeId: ?
         Snowflake? snowflake;
-        var snowflakeId = ZenFile.ToSnowflakeId(file);
+        var snowflakeId = ZenHelper.ToSnowflakeId(file);
         var dataSize = memoryOwner.Memory.Length;
 
-        lock (this.snowflakeGoshujin)
+        lock (this.syncObject)
         {
             if (snowflakeId != 0 &&
-                this.snowflakeGoshujin.SnowflakeIdChain.TryGetValue(snowflakeId, out snowflake))
+                this.snowflakeGoshujin.SnowflakeIdChain.TryGetValue(snowflakeId, out snowflake) &&
+                snowflake.IsAlive)
             {// Found
                 if (dataSize > snowflake.Size)
                 {
@@ -98,27 +97,25 @@ internal partial class ZenDirectory
             else
             {// Not found
                 snowflake = this.GetNewSnowflake();
-                this.DirectorySize += dataSize; // Forget about hash size.
+                this.DirectorySize += dataSize; // Forget about the hash size.
                 snowflake.Size = dataSize;
             }
 
-            file = ZenFile.ToFile(this.DirectoryId, snowflake.SnowflakeId);
+            file = ZenHelper.ToFile(this.DirectoryId, snowflake.SnowflakeId);
         }
 
-        this.worker?.AddLast(new(snowflake.SnowflakeId, memoryOwner.IncrementAndShare()));
+        this.worker.AddLast(new(snowflake.SnowflakeId, memoryOwner.IncrementAndShare()));
     }
 
     internal void Remove(ulong file)
     {
-        Snowflake? snowflake;
-        var snowflakeId = ZenFile.ToSnowflakeId(file);
-
-        lock (this.snowflakeGoshujin)
+        var snowflakeId = ZenHelper.ToSnowflakeId(file);
+        lock (this.syncObject)
         {
             if (snowflakeId != 0 &&
-                this.snowflakeGoshujin.SnowflakeIdChain.TryGetValue(snowflakeId, out snowflake))
+                this.snowflakeGoshujin.SnowflakeIdChain.TryGetValue(snowflakeId, out var snowflake))
             {// Found
-                snowflake.Goshujin = null;
+                snowflake.MarkForDeletion();
             }
             else
             {// Not found
@@ -126,11 +123,8 @@ internal partial class ZenDirectory
             }
         }
 
-        // Load (snowflakeId, size)
-        if (this.worker != null)
-        {
-            this.worker.AddLast(new(snowflake.SnowflakeId));
-        }
+        // Remove (snowflakeId)
+        this.worker.AddLast(new(snowflakeId));
     }
 
     internal bool PrepareAndCheck(ZenIO io)
@@ -190,36 +184,20 @@ internal partial class ZenDirectory
 
     internal void Start()
     {
-        if (this.worker != null)
-        {
-            return;
-        }
-
         if (!this.TryLoadDirectory(this.SnowflakeFilePath))
         {
             this.TryLoadDirectory(this.SnowflakeBackupPath);
         }
-
-        this.worker = new ZenDirectoryWorker(ThreadCore.Root, this);
     }
 
     internal async Task WaitForCompletionAsync()
     {
-        if (this.worker != null)
-        {
-            await this.worker.WaitForCompletionAsync();
-        }
+        await this.worker.WaitForCompletionAsync();
     }
 
     internal async Task StopAsync()
     {
-        if (this.worker != null)
-        {
-            await this.worker.WaitForCompletionAsync();
-            this.worker.Dispose();
-            this.worker = null;
-        }
-
+        await this.worker.WaitForCompletionAsync();
         await this.SaveDirectoryAsync(this.SnowflakeFilePath, this.SnowflakeBackupPath);
     }
 
@@ -238,7 +216,7 @@ internal partial class ZenDirectory
     public long DirectoryCapacity { get; internal set; }
 
     [Key(4)]
-    public long DirectorySize { get; private set; }
+    public long DirectorySize { get; private set; } // lock (this.syncObject)
 
     [IgnoreMember]
     public ZenOptions Options { get; private set; } = ZenOptions.Default;
@@ -261,7 +239,7 @@ internal partial class ZenDirectory
             return;
         }
 
-        var ratio = (double)this.DirectorySize / (double)this.DirectoryCapacity;
+        var ratio = (double)this.DirectorySize / this.DirectoryCapacity;
         if (ratio < 0)
         {
             ratio = 0;
@@ -272,6 +250,17 @@ internal partial class ZenDirectory
         }
 
         this.UsageRatio = ratio;
+    }
+
+    internal void RemoveSnowflake(uint snowflakeId)
+    {
+        lock (this.syncObject)
+        {
+            if (this.snowflakeGoshujin.SnowflakeIdChain.TryGetValue(snowflakeId, out var snowflake))
+            {
+                snowflake.Goshujin = null;
+            }
+        }
     }
 
     internal (string Directory, string File) GetSnowflakePath(uint snowflakeId)
@@ -342,7 +331,7 @@ internal partial class ZenDirectory
     private Task<bool> SaveDirectoryAsync(string path, string? backupPath = null)
     {
         byte[] data;
-        lock (this.snowflakeGoshujin)
+        lock (this.syncObject)
         {
             data = TinyhandSerializer.Serialize(this.snowflakeGoshujin);
         }
@@ -351,19 +340,62 @@ internal partial class ZenDirectory
     }
 
     private Snowflake GetNewSnowflake()
-    {// lock (this.snoflakeGoshujin)
+    {// lock (this.syncObject)
         while (true)
         {
             var id = LP.Random.Pseudo.NextUInt32();
             if (id != 0 && !this.snowflakeGoshujin.SnowflakeIdChain.ContainsKey(id))
             {
                 var snowflake = new Snowflake(id);
-                this.snowflakeGoshujin.Add(snowflake);
+                snowflake.Goshujin = this.snowflakeGoshujin;
                 return snowflake;
             }
         }
     }
 
-    private Snowflake.GoshujinClass snowflakeGoshujin = new();
-    private ZenDirectoryWorker? worker;
+    private object syncObject = new();
+    private Snowflake.GoshujinClass snowflakeGoshujin = new(); // lock (this.syncObject)
+    // private Dictionary<uint, Snowflake> dictionary = new(); // lock (this.syncObject)
+    private ZenDirectoryWorker worker;
+
+#pragma warning disable SA1124 // Do not use regions
+    #region IDisposable Support
+#pragma warning restore SA1124 // Do not use regions
+
+    private bool disposed = false; // To detect redundant calls.
+
+    /// <summary>
+    /// Finalizes an instance of the <see cref="ZenDirectory"/> class.
+    /// </summary>
+    ~ZenDirectory()
+    {
+        this.Dispose(false);
+    }
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        this.Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// free managed/native resources.
+    /// </summary>
+    /// <param name="disposing">true: free managed resources.</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!this.disposed)
+        {
+            if (disposing)
+            {
+                // free managed resources.
+                this.worker.Dispose();
+            }
+
+            // free native resources here if there are any.
+            this.disposed = true;
+        }
+    }
+    #endregion
 }

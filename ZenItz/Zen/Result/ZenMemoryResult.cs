@@ -2,25 +2,26 @@
 
 namespace ZenItz;
 
-public readonly struct ZenDataResult
+public readonly struct ZenMemoryResult
 {
-    public ZenDataResult(ZenResult result, ByteArrayPool.ReadOnlyMemoryOwner data)
+    public ZenMemoryResult(ZenResult result, ReadOnlyMemory<byte> data)
     {
         this.Result = result;
         this.Data = data;
     }
 
-    public ZenDataResult(ZenResult result)
+    public ZenMemoryResult(ZenResult result)
     {
         this.Result = result;
         this.Data = default;
     }
 
-    public void Return() => this.Data.Return();
-
     public bool IsSuccess => this.Result == ZenResult.Success;
 
     public readonly ZenResult Result;
 
-    public readonly ByteArrayPool.ReadOnlyMemoryOwner Data;
+    public readonly ReadOnlyMemory<byte> Data;
+
+    public override string ToString()
+        => $"{this.Result} ReadOnlyMemory:{this.Data.Length}";
 }

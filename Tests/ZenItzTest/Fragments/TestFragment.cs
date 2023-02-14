@@ -9,5 +9,5 @@ public partial class TestFragment : FragmentBase
 {
     [Key(0)]
     // [Key(0, MarkPosition = true)]
-    public string Name { get; private set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
 }

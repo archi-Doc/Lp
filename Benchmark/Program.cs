@@ -6,6 +6,7 @@
 
 using System.Linq;
 using System.Reflection;
+using Benchmark.Flake;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 
@@ -17,11 +18,12 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        DebugRun<CreditBenchmark>();
+        DebugRun<FlakeBenchmark>();
 
         // var summary = BenchmarkRunner.Run<TestBenchmark>();
         var switcher = new BenchmarkSwitcher(new[]
         {
+            typeof(FlakeBenchmark),
             typeof(CreditBenchmark),
             typeof(DoubleDecimalBenchmark),
             typeof(ZenIOBenchmark),

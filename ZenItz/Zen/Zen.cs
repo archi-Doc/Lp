@@ -1,137 +1,167 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using LPEssentials;
-
 namespace ZenItz;
 
 #pragma warning disable SA1401 // Fields should be private
 
 public class Zen : Zen<Identifier>
 {
-    public class RootFlake : Flake
-    {
-    }
-
-    public Zen(ZenOptions options, ILogger<Zen<Identifier>> logger)
-        : base(options, logger)
+    public Zen(UnitCore core, ZenOptions options, ILogger<Zen<Identifier>> logger)
+        : base(core, options, logger)
     {
     }
 }
 
-public partial class Zen<TIdentifier>
+public partial class Zen<TIdentifier> : IZenInternal
     where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
 {
-    internal Zen(ZenOptions options, ILogger<Zen<TIdentifier>> logger)
+    internal Zen(UnitCore core, ZenOptions options, ILogger<Zen<TIdentifier>> logger)
     {
         this.logger = logger;
+        this.Core = core;
         this.Options = options;
         this.IO = new();
-        this.HimoGoshujin = new(this);
-        this.Root = new(this, null, default!);
+        this.himoGoshujin = new(this);
+        this.Root = new(this);
     }
 
-    public async Task<ZenStartResult> Start(ZenStartParam param)
+    public async Task<ZenStartResult> StartAsync(ZenStartParam param)
     {
-        var result = ZenStartResult.Success;
-        if (this.Started)
+        await this.semaphore.WaitAsync().ConfigureAwait(false);
+        try
         {
-            return ZenStartResult.Success;
-        }
+            var result = ZenStartResult.Success;
+            if (this.Started)
+            {
+                return ZenStartResult.Success;
+            }
 
-        this.logger.TryGet()?.Log("Zen start");
+            this.logger.TryGet()?.Log("Zen start");
 
-        if (param.FromScratch)
-        {
-            this.RemoveAll();
-            await this.IO.TryStart(this.Options, param, null);
+            if (param.FromScratch)
+            {
+                await this.IO.TryStart(this.Options, param, null);
+
+                this.RemoveAll();
+
+                this.Started = true;
+                return ZenStartResult.Success;
+            }
+
+            // Load ZenDirectory
+            result = await this.LoadZenDirectory(param);
+            if (result != ZenStartResult.Success)
+            {
+                return result;
+            }
+
+            // Load Zen
+            result = await this.LoadZen(param);
+            if (result != ZenStartResult.Success)
+            {
+                return result;
+            }
+
+            // HimoGoshujin
+            this.himoGoshujin.Start();
+
             this.Started = true;
-            return ZenStartResult.Success;
-        }
-
-        // Load ZenDirectory
-        result = await this.LoadZenDirectory(param);
-        if (result != ZenStartResult.Success)
-        {
             return result;
         }
-
-        // Load Zen
-        result = await this.LoadZen(param);
-        if (result != ZenStartResult.Success)
+        finally
         {
-            return result;
+            this.semaphore.Release();
         }
-
-        // HimoGoshujin
-        this.HimoGoshujin.Start();
-
-        this.Started = true;
-        return result;
     }
 
-    public async Task Stop(ZenStopParam param)
+    public async Task StopAsync(ZenStopParam param)
     {
-        if (!this.Started)
+        await this.semaphore.WaitAsync().ConfigureAwait(false);
+        try
         {
-            return;
-        }
+            if (!this.Started)
+            {
+                return;
+            }
 
-        this.Started = false;
+            this.Started = false;
 
-        // HimoGoshujin
-        this.HimoGoshujin.Stop();
+            // HimoGoshujin
+            this.himoGoshujin.Stop();
 
-        if (param.RemoveAll)
-        {
+            if (param.RemoveAll)
+            {
+                this.RemoveAll();
+
+                // Stop IO(ZenDirectory)
+                await this.IO.StopAsync();
+                this.IO.Terminate();
+
+                return;
+            }
+
+            // Save & Unload flakes
+            this.Root.Save(true);
+
             // Stop IO(ZenDirectory)
             await this.IO.StopAsync();
 
-            this.RemoveAll();
-            return;
+            // Save Zen
+            await this.SerializeZen(this.Options.ZenFilePath, this.Options.ZenBackupPath);
+
+            // Save directory information
+            var byteArray = this.IO.Serialize();
+            await HashHelper.GetFarmHashAndSaveAsync(byteArray, this.Options.ZenDirectoryFilePath, this.Options.ZenDirectoryBackupPath);
+
+            this.IO.Terminate();
+
+            this.logger.TryGet()?.Log($"Zen stop - {this.himoGoshujin.MemoryUsage}");
         }
-
-        // Save & Unload flakes
-        this.Root.Save(true);
-
-        // Stop IO(ZenDirectory)
-        await this.IO.StopAsync();
-
-        // Save Zen
-        await this.SerializeZen(this.Options.ZenFilePath, this.Options.ZenBackupPath);
-
-        // Save directory information
-        var byteArray = this.IO.Serialize();
-        await HashHelper.GetFarmHashAndSaveAsync(byteArray, this.Options.ZenDirectoryFilePath, this.Options.ZenDirectoryBackupPath);
-
-        this.logger.TryGet()?.Log($"Zen stop - {this.HimoGoshujin.MemoryUsage}");
+        finally
+        {
+            this.semaphore.Release();
+        }
     }
 
     public async Task Abort()
     {
-        if (!this.Started)
+        await this.semaphore.WaitAsync().ConfigureAwait(false);
+        try
         {
-            return;
+            if (!this.Started)
+            {
+                return;
+            }
+
+            this.Started = false;
+
+            await this.IO.StopAsync();
+            this.IO.Terminate();
         }
-
-        this.Started = false;
-
-        await this.IO.StopAsync();
+        finally
+        {
+            this.semaphore.Release();
+        }
     }
+
+    HimoGoshujinClass IZenInternal.HimoGoshujin => this.himoGoshujin;
+
+    public UnitCore Core { get; init; }
 
     public ZenOptions Options { get; set; } = ZenOptions.Default;
 
     public bool Started { get; private set; }
 
-    public Flake Root { get; private set; }
+    public RootFlake Root { get; private set; }
 
     public ZenIO IO { get; }
 
-    public long MemoryUsage => this.HimoGoshujin.MemoryUsage;
+    public long MemoryUsage => this.himoGoshujin.MemoryUsage;
 
     internal void RemoveAll()
     {
         this.Root.RemoveInternal();
-        this.HimoGoshujin.Clear();
+        this.himoGoshujin.Clear();
 
         PathHelper.TryDeleteFile(this.Options.ZenFilePath);
         PathHelper.TryDeleteFile(this.Options.ZenBackupPath);
@@ -148,7 +178,7 @@ public partial class Zen<TIdentifier>
         }
     }
 
-    internal void Restart()
+    /*internal void Restart()
     {
         if (this.Started)
         {
@@ -174,12 +204,12 @@ public partial class Zen<TIdentifier>
 
         // Stop IO(ZenDirectory)
         await this.IO.StopAsync();
-    }
+    }*/
 
-    internal HimoGoshujinClass HimoGoshujin;
+    private HimoGoshujinClass himoGoshujin;
 
     private async Task<ZenStartResult> LoadZenDirectory(ZenStartParam param)
-    {
+    {// await this.semaphore.WaitAsync()
         // Load
         ZenStartResult result;
         byte[]? data;
@@ -258,7 +288,7 @@ LoadBackup:
     }
 
     private async Task<ZenStartResult> LoadZen(ZenStartParam param)
-    {
+    {// await this.semaphore.WaitAsync()
         // Load
         byte[]? data;
         try
@@ -336,16 +366,17 @@ LoadBackup:
 
         flake.DeserializePostProcess(this);
 
-        this.HimoGoshujin.Clear();
+        this.himoGoshujin.Clear();
 
         return true;
     }
 
     private async Task SerializeZen(string path, string? backupPath)
     {
-        var byteArray = TinyhandSerializer.Serialize(this.Root);
+        var byteArray = TinyhandSerializer.SerializeObject((Flake)this.Root);
         await HashHelper.GetFarmHashAndSaveAsync(byteArray, path, backupPath);
     }
 
+    private SemaphoreSlim semaphore = new(1, 1);
     private ILogger logger;
 }

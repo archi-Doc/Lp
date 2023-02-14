@@ -47,10 +47,13 @@ public class Control : ILogInformation
                 context.AddSingleton<Vault>();
                 context.AddSingleton<Authority>();
                 context.AddSingleton<Seedphrase>();
+                context.AddSingleton<Merger>();
+                context.CreateInstance<Merger>();
 
                 // RPC / Services
                 context.AddTransient<NetServices.BenchmarkServiceImpl>();
-                context.AddTransient<NetServices.RemoteControlService>();
+                context.AddTransient<NetServices.RemoteControlServiceImpl>();
+                context.AddTransient<NetServices.T3CS.MergerServiceImpl>();
 
                 // RPC / Filters
                 context.AddTransient<NetServices.TestOnlyFilter>();
@@ -290,7 +293,7 @@ public class Control : ILogInformation
         this.LPBase = lpBase;
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.NetControl = netsphere;
-        this.NetControl.SetupServer();
+        this.NetControl.SetupServer(() => new NetServices.LPServerContext(), () => new NetServices.LPCallContext());
         this.ZenControl = zenControl;
         this.Vault = vault;
         this.Authority = authority;
@@ -321,7 +324,7 @@ public class Control : ILogInformation
             await this.ZenControl.Itz.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup)).ConfigureAwait(false);
         }
 
-        var result = await this.ZenControl.Zen.Start(new());
+        var result = await this.ZenControl.Zen.StartAsync(new());
         if (result != ZenStartResult.Success)
         {
             throw new PanicException();
@@ -343,6 +346,8 @@ public class Control : ILogInformation
         await this.SaveKeyVaultAsync();
         await this.NetControl.EssentialNode.SaveAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
         await this.ZenControl.Itz.SaveAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile), Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup));
+
+        await this.ZenControl.Zen.StopAsync(new());
 
         await context.SendSaveAsync(new(this.LPBase.DataDirectory));
     }
@@ -371,8 +376,6 @@ public class Control : ILogInformation
     public async Task TerminateAsync(UnitContext context)
     {
         this.Logger.Get<DefaultLog>().Log("Termination process initiated");
-
-        await this.ZenControl.Zen.Stop(new());
 
         try
         {

@@ -1,9 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Netsphere;
+namespace ZenItz;
 
-namespace LP.NetServices;
-
-public class LPServiceContext : ServerContext
+public interface IData
 {
+    static virtual int StaticId => 0;
 }

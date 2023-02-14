@@ -211,6 +211,8 @@ public class VisceralAttribute : IComparable<VisceralAttribute>
         }
     }
 
+    public SyntaxReference? SyntaxReference => this.attributeData?.ApplicationSyntaxReference;
+
     protected AttributeData? attributeData;
 }
 
@@ -713,17 +715,22 @@ public abstract class VisceralObjectBase<T> : IComparable<T>
 
     public string[] GetSafeGenericNameList()
     {
-        var list = new string[this.Generics_Arguments.Length];
-        for (var i = 0; i < this.Generics_Arguments.Length; i++)
+        var length = this.CountGenericsArguments();
+        var list = new string[length];
+        var n = 0;
+        for (var i = 0; i < this.ContainingObjectArray.Length; i++)
         {
-            list[i] = GetSafeGenericName(this.Generics_Arguments[i]);
+            for (var j = 0; j < this.ContainingObjectArray[i].Generics_Arguments.Length; j++)
+            {
+                list[n++] = GetSafeGenericName(this.ContainingObjectArray[i].Generics_Arguments[j].symbol);
+            }
         }
 
         return list;
 
-        string GetSafeGenericName(T typeArgument)
+        string GetSafeGenericName(ISymbol? symbol)
         {
-            if (typeArgument.symbol is ITypeParameterSymbol tps)
+            if (symbol is ITypeParameterSymbol tps)
             {
                 if (tps.HasValueTypeConstraint)
                 {
@@ -732,7 +739,37 @@ public abstract class VisceralObjectBase<T> : IComparable<T>
                 else if (tps.ConstraintTypes.Length > 0 &&
                     this.Body.Add(tps.ConstraintTypes[0]) is { } typeObject)
                 {// Temporary fix...
-                    return typeObject.FullName;
+                    if (typeObject.Generics_IsGeneric && typeObject.symbol is INamedTypeSymbol nts)
+                    {
+                        return "string";
+
+                        /*var sb = new StringBuilder();
+                        sb.Append(typeObject.SimpleName);
+                        sb.Append("<");
+                        for (var i = 0; i < nts.TypeArguments.Length; i++)
+                        {
+                            if (i > 0)
+                            {
+                                sb.Append(", ");
+                            }
+
+                            if (SymbolEqualityComparer.Default.Equals(symbol, nts.TypeArguments[i]))
+                            {
+                                sb.Append("object");
+                            }
+                            else
+                            {
+                                sb.Append(GetSafeGenericName(nts.TypeArguments[i]));
+                            }
+                            sb.Append(">");
+                        }
+
+                        return sb.ToString();*/
+                    }
+                    else
+                    {
+                        return typeObject.FullName;
+                    }
                 }
             }
 
@@ -740,51 +777,34 @@ public abstract class VisceralObjectBase<T> : IComparable<T>
         }
     }
 
-    public (string name, int count) GetClosedGenericName(string[]? argumentName)
+    public (string Name, int Count) GetClosedGenericName(string[]? argumentName)
     {// Namespace.Class<T, U>.Nested<X> -> Namespace.Class<argumentName, argumentName>.Nested<argumentName>
-     // Count
-        var n = 0;
-        var c = this;
-        while (c != null)
-        {
-            n++;
-            c = c.ContainingObject;
-        }
-
-        // Array
-        var array = new T[n];
-        c = this;
-        while (c != null)
-        {
-            array[--n] = (T)c;
-            c = c.ContainingObject;
-        }
-
+        var pos = 0;
         var genericCount = 0;
-        var sb = new StringBuilder(array[0].Namespace);
-        for (var i = 0; i < array.Length; i++)
+        var sb = new StringBuilder(this.ContainingObjectArray[0].Namespace);
+        for (var i = 0; i < this.ContainingObjectArray.Length; i++)
         {
             sb.Append(".");
-            sb.Append(array[i].SimpleName);
-            if (array[i].Generics_Arguments.Length > 0)
+            sb.Append(this.ContainingObjectArray[i].SimpleName);
+            if (this.ContainingObjectArray[i].Generics_Arguments.Length > 0)
             {
-                var length = array[i].Generics_Arguments.Length;
+                var length = this.ContainingObjectArray[i].Generics_Arguments.Length;
                 sb.Append("<");
                 if (argumentName != null)
                 {
-                    for (n = 0; n < length; n++)
+                    for (var n = 0; n < length; n++)
                     {
                         if (n != 0)
                         {
                             sb.Append(", ");
                         }
 
-                        sb.Append(argumentName[n]);
+                        sb.Append(argumentName[pos++]);
                     }
                 }
                 else
                 {
-                    for (n = 1; n < length; n++)
+                    for (var n = 1; n < length; n++)
                     {
                         sb.Append(",");
                     }
@@ -1189,6 +1209,70 @@ public abstract class VisceralObjectBase<T> : IComparable<T>
         }
     }
 
+    private ImmutableArray<T> interfaces;
+
+    public ImmutableArray<T> Interfaces
+    {
+        get
+        {
+            if (this.interfaces.IsDefault)
+            {
+                if (this.IsSystem)
+                {
+                    this.interfaces = ImmutableArray<T>.Empty;
+                }
+                else
+                if (this.symbol is ITypeSymbol typeSymbol)
+                {
+                    var builder = ImmutableArray.CreateBuilder<T>();
+                    if (typeSymbol.BaseType is INamedTypeSymbol baseType &&
+                        baseType.TypeKind == TypeKind.Error &&
+                        baseType.ToString() == "INotifyPropertyChanged")
+                    {
+                        if (this.Body.Add(baseType) is { } obj)
+                        {
+                            builder.Add(obj);
+                        }
+                    }
+
+                    foreach (var x in typeSymbol.Interfaces)
+                    {
+                        if (this.Body.Add(x) is { } obj)
+                        {
+                            builder.Add(obj);
+                        }
+                    }
+
+                    this.interfaces = builder.ToImmutable();
+                }
+                else if (this.type != null)
+                {
+                    var builder = ImmutableArray.CreateBuilder<T>();
+                    foreach (var x in this.type.GetInterfaces())
+                    {
+                        if (this.Body.Add(x) is { } obj)
+                        {
+                            builder.Add(obj);
+                        }
+                    }
+
+                    this.interfaces = builder.ToImmutable();
+                }
+                else
+                {
+                    this.interfaces = ImmutableArray<T>.Empty;
+                }
+            }
+
+            return this.interfaces;
+        }
+
+        protected set
+        {
+            this.interfaces = value;
+        }
+    }
+
     private ImmutableArray<T> allInterfaceObjects;
 
     public ImmutableArray<T> AllInterfaceObjects
@@ -1250,61 +1334,6 @@ public abstract class VisceralObjectBase<T> : IComparable<T>
         protected set
         {
             this.allInterfaceObjects = value;
-        }
-    }
-
-    private ImmutableArray<string> interfaces;
-
-    public ImmutableArray<string> Interfaces
-    {
-        get
-        {
-            if (this.interfaces.IsDefault)
-            {
-                if (this.IsSystem)
-                {
-                    this.interfaces = ImmutableArray<string>.Empty;
-                }
-                else
-                if (this.symbol is ITypeSymbol typeSymbol)
-                {
-                    var builder = ImmutableArray.CreateBuilder<string>();
-                    if (typeSymbol.BaseType is INamedTypeSymbol baseType &&
-                        baseType.TypeKind == TypeKind.Error &&
-                        baseType.ToString() == "INotifyPropertyChanged")
-                    {
-                        builder.Add("System.ComponentModel.INotifyPropertyChanged");
-                    }
-
-                    foreach (var x in typeSymbol.Interfaces)
-                    {
-                        builder.Add(this.Body.SymbolToFullName(x));
-                    }
-
-                    this.interfaces = builder.ToImmutable();
-                }
-                else if (this.type != null)
-                {
-                    var builder = ImmutableArray.CreateBuilder<string>();
-                    foreach (var x in this.type.GetInterfaces())
-                    {
-                        builder.Add(VisceralHelper.TypeToFullName(x));
-                    }
-
-                    this.interfaces = builder.ToImmutable();
-                }
-                else
-                {
-                    this.interfaces = ImmutableArray<string>.Empty;
-                }
-            }
-
-            return this.interfaces;
-        }
-
-        protected set
-        {
-            this.interfaces = value;
         }
     }
 
@@ -1386,6 +1415,37 @@ public abstract class VisceralObjectBase<T> : IComparable<T>
         {
             this.containingObjectFlag = true;
             this.containingObject = value;
+        }
+    }
+
+    private T[]? containingObjectArray;
+
+    public T[] ContainingObjectArray
+    {
+        get
+        {
+            if (this.containingObjectArray == null)
+            {
+                var n = 0;
+                var c = this;
+                while (c != null)
+                {
+                    n++;
+                    c = c.ContainingObject;
+                }
+
+                var array = new T[n];
+                c = this;
+                while (c != null)
+                {
+                    array[--n] = (T)c;
+                    c = c.ContainingObject;
+                }
+
+                this.containingObjectArray = array;
+            }
+
+            return this.containingObjectArray;
         }
     }
 
@@ -2033,6 +2093,19 @@ public abstract class VisceralObjectBase<T> : IComparable<T>
         }
     }
 
+    public bool IsUnmanagedType
+    {
+        get
+        {
+            if (this.symbol is ITypeSymbol typeSymbol)
+            {
+                return typeSymbol.IsUnmanagedType;
+            }
+
+            return false;
+        }
+    }
+
     private bool? isWritable;
 
     public bool IsWritable
@@ -2676,7 +2749,7 @@ public abstract class VisceralObjectBase<T> : IComparable<T>
         }
     }
 
-    public (Accessibility getter, Accessibility setter) Property_Accessibility
+    public (Accessibility Getter, Accessibility Setter) Property_Accessibility
     {
         get
         {
@@ -2777,6 +2850,47 @@ public abstract class VisceralObjectBase<T> : IComparable<T>
 
             return false;
         }
+    }
+
+    public bool ContainsNonPublicObject()
+    {
+        var x = this;
+        while (x != null)
+        {
+            if (!x.IsPublic)
+            {
+                return true;
+            }
+
+            x = x.ContainingObject;
+        }
+
+        return false;
+    }
+
+    public string GetGenericsName()
+    {
+        var sb = new StringBuilder();
+        sb.Append(this.ContainingObjectArray[0].Namespace);
+        sb.Append(".");
+
+        for (var n = 0; n < this.ContainingObjectArray.Length; n++)
+        {
+            if (n > 0)
+            {
+                sb.Append("+");
+            }
+
+            var length = this.ContainingObjectArray[n].Generics_Arguments.Length;
+            sb.Append(this.ContainingObjectArray[n].SimpleName);
+            if (length != 0)
+            {
+                sb.Append("`");
+                sb.Append(length.ToString());
+            }
+        }
+
+        return sb.ToString();
     }
 
     private ImmutableArray<VisceralAttribute> SymbolToAttribute(ISymbol symbol)

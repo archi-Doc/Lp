@@ -1,19 +1,32 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
 
 namespace ZenItz;
 
 internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
 {
+    public const int DefaultConcurrentTasks = 4;
+    public const int RetryInterval = 10; // 10 ms
+
     public ZenDirectoryWorker(ThreadCoreBase parent, ZenDirectory zenDirectory)
         : base(parent, Process, true)
     {
+        this.NumberOfConcurrentTasks = DefaultConcurrentTasks;
+        this.SetCanStartConcurrentlyDelegate((workInterface, workingList) =>
+        {// Lock IO order
+            var id = workInterface.Work.SnowflakeId;
+            foreach (var x in workingList)
+            {
+                if (x.Work.SnowflakeId == id)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+
         this.ZenDirectory = zenDirectory;
         // this.logger = Zen.UnitLogger.GetLogger<ZenDirectoryWorker>();
     }
@@ -22,18 +35,25 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
     {
         var worker = (ZenDirectoryWorker)w;
         string? filePath = null;
+        var tryCount = 0;
 
         if (work.Type == ZenDirectoryWork.WorkType.Save)
         {// Save
             var hash = new byte[ZenDirectory.HashSize];
             BitConverter.TryWriteBytes(hash, Arc.Crypto.FarmHash.Hash64(work.SaveData.Memory.Span));
 
+            var path = worker.ZenDirectory.GetSnowflakePath(work.SnowflakeId);
+            var directoryPath = Path.Combine(worker.ZenDirectory.RootedPath, path.Directory);
+
+TrySave:
+            tryCount++;
+            if (tryCount > 2)
+            {
+                return;
+            }
+
             try
             {
-                var path = worker.ZenDirectory.GetSnowflakePath(work.SnowflakeId);
-                var directoryPath = Path.Combine(worker.ZenDirectory.RootedPath, path.Directory);
-                worker.CachedCreateDirectory(directoryPath);
-
                 filePath = Path.Combine(directoryPath, path.File);
                 using (var handle = File.OpenHandle(filePath, mode: FileMode.OpenOrCreate, access: FileAccess.Write))
                 {
@@ -41,12 +61,18 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
                     await RandomAccess.WriteAsync(handle, work.SaveData.Memory, ZenDirectory.HashSize, worker.CancellationToken);
                 }
             }
+            catch (DirectoryNotFoundException)
+            {
+                Directory.CreateDirectory(directoryPath);
+                goto TrySave;
+            }
             catch (OperationCanceledException)
             {
                 return;
             }
             catch
             {
+                goto TrySave;
             }
             finally
             {
@@ -105,6 +131,10 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
             catch
             {
             }
+            finally
+            {
+                worker.ZenDirectory.RemoveSnowflake(work.SnowflakeId);
+            }
         }
 
         return;
@@ -120,7 +150,7 @@ DeleteAndExit:
 
     public ZenDirectory ZenDirectory { get; }
 
-    private bool CachedCreateDirectory(string path)
+    /*private bool CachedCreateDirectory(string path)
     {
         if (this.createdDirectories.Add(path))
         {// Create
@@ -133,7 +163,8 @@ DeleteAndExit:
         }
     }
 
-    private HashSet<string> createdDirectories = new();
+    private HashSet<string> createdDirectories = new();*/
+
     // private ILogger<ZenDirectoryWorker>? logger;
 }
 

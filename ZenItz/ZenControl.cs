@@ -35,6 +35,9 @@ public class ZenControl
                 // Subcommands
                 Subcommands.ZenDirSubcommand.Configure(context);
                 Subcommands.ZenTempSubcommand.Configure(context);
+
+                // Zen data
+                ZenData.Register<BlockData>((options, dataToIO) => new BlockDataImpl(options, dataToIO));
             });
         }
     }
@@ -61,12 +64,15 @@ public class ZenControl
     public Zen<TIdentifier> CreateZen<TIdentifier>(ZenOptions options)
         where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
     {
-        return new Zen<TIdentifier>(options, this.unitContext.ServiceProvider.GetRequiredService<ILogger<Zen<TIdentifier>>>());
+        return new Zen<TIdentifier>(
+            this.unitContext.ServiceProvider.GetRequiredService<UnitCore>(),
+            options,
+            this.unitContext.ServiceProvider.GetRequiredService<ILogger<Zen<TIdentifier>>>());
     }
 
     public Zen Zen { get; }
 
-    public Zen.Flake Root { get; set; }
+    public Zen.RootFlake Root { get; set; }
 
     public Itz Itz { get; }
 

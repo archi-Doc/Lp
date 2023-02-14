@@ -5,7 +5,6 @@ namespace ZenItz;
 public enum ZenResult
 {
     Success,
-    NotStarted,
     OverSizeLimit,
     OverNumberLimit,
     Removed,
@@ -13,5 +12,6 @@ public enum ZenResult
     NoDirectory,
     NoFile,
     InvalidCast,
+    SerializeError,
     DeserializeError,
 }

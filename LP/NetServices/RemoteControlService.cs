@@ -1,16 +1,23 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
 using LP.T3CS;
 using Netsphere;
 
 namespace LP.NetServices;
 
+[NetServiceInterface]
+public interface RemoteControlService : INetService
+{
+    public NetTask RequestAuthorization(Token token);
+
+    public NetTask<NetResult> Restart();
+}
+
 [NetServiceObject]
-internal class RemoteControlService : IRemoteControlService
+internal class RemoteControlServiceImpl : RemoteControlService
 {// LPRunner -> Container
     // This class is unsafe.
-    public RemoteControlService(ILogger<RemoteControlService> logger, Control control)
+    public RemoteControlServiceImpl(ILogger<RemoteControlServiceImpl> logger, Control control)
     {
         this.logger = logger;
         this.control = control;
@@ -53,7 +60,7 @@ internal class RemoteControlService : IRemoteControlService
         return NetResult.NotAuthorized;
     }
 
-    private ILogger<RemoteControlService> logger;
+    private ILogger<RemoteControlServiceImpl> logger;
     private Control control;
     private Token? token;
 }

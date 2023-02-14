@@ -2,7 +2,6 @@
 
 using System.Diagnostics;
 using SimpleCommandLine;
-using Tinyhand;
 using LP.Fragments;
 
 namespace ZenItzTest;
@@ -20,7 +19,7 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
         var zen = this.ZenControl.Zen;
         var itz = this.ZenControl.Itz;
 
-        await zen.Start(new());
+        await zen.StartAsync(new());
 
         var flake = zen.Root.GetOrCreateChild(Identifier.Zero);
         if (flake != null)
@@ -29,6 +28,14 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
             flake.Save(true);
             var result = await flake.GetData();
             flake.Remove();
+
+            using (var block = flake.Lock<BlockData>())
+            {// lock(flake.syncObject)
+                if (block.Data is { } blockData)
+                {
+                    // blockData.SetMemoryOwner();
+                }
+            }
         }
 
         flake = zen.Root.GetOrCreateChild(Identifier.One);
@@ -49,6 +56,9 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
             result = await flake.GetFragment(Identifier.One);
             flake.Save(true);
 
+            var tf = new TestFragment();
+            tf.Name = "A";
+            flake.SetFragmentObject(Identifier.One, tf);
             var tc = await flake.GetFragmentObject<TestFragment>(Identifier.One);
         }
 
@@ -64,15 +74,18 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
         }
 
         await Console.Out.WriteLineAsync("1M flakes");
+        var sw = Stopwatch.StartNew();
 
         for (var i = 0; i < 1_000_000; i++)
         {
             flake = zen.Root.GetOrCreateChild(new(i));
+            // flake.SetData(new byte[] { 2, 3, });
         }
 
-        await Task.Delay(10000);
+        // await Task.Delay(10000);
 
-        await zen.Stop(new());
+        await zen.StopAsync(new());
+        Console.WriteLine($"{sw.ElapsedMilliseconds} ms");
     }
 
     public ZenControl ZenControl { get; set; }
