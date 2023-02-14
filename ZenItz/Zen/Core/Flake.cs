@@ -49,10 +49,10 @@ public partial class Zen<TIdentifier>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             internal void Exit()
             {
+                this.data = default;
                 if (this.lockTaken)
                 {
                     this.flake.semaphore.Exit();
-                    this.data = default;
                     this.lockTaken = false;
                 }
             }
@@ -735,6 +735,7 @@ public partial class Zen<TIdentifier>
             }
 
             var newObject = default(DataObject);
+            newObject.Id = id;
             var result = newObject.GetOrCreateObject(this.Zen.Options, this);
             if (result.Data == null)
             {

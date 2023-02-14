@@ -6,5 +6,7 @@ public interface IData
 {
     static abstract int StaticId { get; }
 
+    static abstract object StaticNew();
+
     int Id { get; }
 }

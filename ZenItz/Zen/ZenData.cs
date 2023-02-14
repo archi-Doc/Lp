@@ -6,15 +6,17 @@ public record ZenDataInformation(int Id, Func<BaseData> CreateInstance);
 
 public static class ZenData
 {
-    public static bool Register(ZenDataInformation information)
+    public static bool Register<TData>()
+        where TData : BaseData
     {
-        if (information.Id == 0 || array.Any(x => x.Id == information.Id))
+        var id = TData.StaticId;
+        if (id == 0 || array.Any(x => x.Id == id))
         {
             return false;
         }
 
         Array.Resize(ref array, array.Length + 1);
-        array[array.Length - 1] = information;
+        array[array.Length - 1] = new(id, () => (BaseData)TData.StaticNew());
         return true;
     }
 
