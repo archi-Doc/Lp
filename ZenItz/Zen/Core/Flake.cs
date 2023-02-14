@@ -625,7 +625,6 @@ public partial class Zen<TIdentifier>
 
         #endregion
 
-        [IgnoreMember]
         public Zen<TIdentifier> Zen { get; private set; } = default!;
 
         public Flake? Parent { get; private set; }
