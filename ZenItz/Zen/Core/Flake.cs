@@ -16,7 +16,7 @@ public partial class Zen<TIdentifier>
     /// </summary>
     [TinyhandObject(ExplicitKeyOnly = true, LockObject = "semaphore")]
     [ValueLinkObject]
-    public partial class Flake : IFromDataToIO
+    public partial class Flake : IFlakeInternal
     {
         public struct DataOperation<TData> : IDisposable
             where TData : IData
@@ -72,15 +72,20 @@ public partial class Zen<TIdentifier>
             var operation = new DataOperation<TData>(this);
 
             operation.Enter();
+            if (this.IsRemoved)
+            {// Removed
+                operation.Exit();
+                return operation;
+            }
 
             var result = this.GetOrCreateDataObject<TData>();
-            if (result.DataObject.Data == null)
+            if (result.DataObject.Data is not TData data)
             {// No data
                 operation.Exit();
                 return operation;
             }
 
-            operation.SetData((TData)(IData)result.DataObject.Data);
+            operation.SetData(data);
             return operation;
 
             /*if (!result.Created)
@@ -141,9 +146,13 @@ public partial class Zen<TIdentifier>
             this.identifier = identifier;
         }
 
-        #region IFromDataToIO
+        #region IFlakeInternal
 
-        void IFromDataToIO.SaveInternal<TData>(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
+        IZenInternal IFlakeInternal.ZenInternal => this.Zen;
+
+        ZenOptions IFlakeInternal.Options => this.Zen.Options;
+
+        void IFlakeInternal.SaveInternal<TData>(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
         {// using (this.semaphore.Lock())
             var id = TData.StaticId;
             for (var i = 0; i < this.dataObject.Length; i++)
@@ -156,7 +165,7 @@ public partial class Zen<TIdentifier>
             }
         }
 
-        async Task<ZenMemoryOwnerResult> IFromDataToIO.LoadInternal<TData>()
+        async Task<ZenMemoryOwnerResult> IFlakeInternal.LoadInternal<TData>()
         {// using (this.semaphore.Lock())
             var dataObject = this.TryGetDataObject<TData>();
             if (!dataObject.IsValid)
@@ -170,7 +179,9 @@ public partial class Zen<TIdentifier>
                 return new(ZenResult.NoData);
             }
 
-            var result = default(ZenMemoryOwnerResult);
+            return await this.Zen.IO.Load(file);
+
+            /*var result = default(ZenMemoryOwnerResult);
             try
             {
                 this.semaphore.Exit();
@@ -186,16 +197,31 @@ public partial class Zen<TIdentifier>
                 return new(ZenResult.Removed);
             }
 
-            return result;
+            return result;*/
         }
 
-        void IFromDataToIO.RemoveInternal<TData>()
+        void IFlakeInternal.RemoveInternal<TData>()
         {// using (this.semaphore.Lock())
             var dataObject = this.TryGetDataObject<TData>();
             if (dataObject.IsValid)
             {
                 this.Zen.IO.Remove(dataObject.File);
                 return;
+            }
+        }
+
+        void IFlakeInternal.Unload(int id)
+        {
+            using (this.semaphore.Lock())
+            {
+                for (var i = 0; i < this.dataObject.Length; i++)
+                {
+                    if (this.dataObject[i].Id == id)
+                    {
+                        this.dataObject[i].SaveInternal(true);
+                        return;
+                    }
+                }
             }
         }
 
@@ -675,32 +701,6 @@ public partial class Zen<TIdentifier>
             return true;
         }
 
-        /// <summary>ww
-        /// Save Flake data and unload it from memory.
-        /// </summary>
-        /// <param name="himoType">Himo type (UchuHimo = All).</param>
-        internal void Unload(HimoGoshujinClass.Himo.Type himoType = HimoGoshujinClass.Himo.Type.UchuHimo)
-        {
-            using (this.semaphore.Lock())
-            {
-                if (himoType == HimoGoshujinClass.Himo.Type.UchuHimo ||
-                    himoType == HimoGoshujinClass.Himo.Type.FlakeHimo)
-                {
-                    this.flakeHimo?.SaveInternal();
-                    this.flakeHimo?.UnloadInternal();
-                    this.flakeHimo = null;
-                }
-
-                if (himoType == HimoGoshujinClass.Himo.Type.UchuHimo ||
-                    himoType == HimoGoshujinClass.Himo.Type.FragmentHimo)
-                {
-                    this.fragmentHimo?.SaveInternal();
-                    this.fragmentHimo?.UnloadInternal();
-                    this.fragmentHimo = null;
-                }
-            }
-        }
-
         [Key(0)]
         [Link(Name = "Id", NoValue = true, Type = ChainType.Unordered)]
         [Link(Name = "OrderedId", Type = ChainType.Ordered)]
@@ -753,6 +753,20 @@ public partial class Zen<TIdentifier>
             where TData : IData
         {// using (this.semaphore.Lock())
             var id = TData.StaticId;
+            for (var i = 0; i < this.dataObject.Length; i++)
+            {
+                if (this.dataObject[i].Id == id)
+                {
+                    return this.dataObject[i];
+                }
+            }
+
+            return default;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private DataObject TryGetDataObject(int id)
+        {// using (this.semaphore.Lock())
             for (var i = 0; i < this.dataObject.Length; i++)
             {
                 if (this.dataObject[i].Id == id)

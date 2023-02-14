@@ -12,7 +12,7 @@ public class Zen : Zen<Identifier>
     }
 }
 
-public partial class Zen<TIdentifier>
+public partial class Zen<TIdentifier> : IZenInternal
     where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
 {
     internal Zen(UnitCore core, ZenOptions options, ILogger<Zen<TIdentifier>> logger)
@@ -21,7 +21,7 @@ public partial class Zen<TIdentifier>
         this.Core = core;
         this.Options = options;
         this.IO = new();
-        this.HimoGoshujin = new(this);
+        this.himoGoshujin = new(this);
         this.Root = new(this);
     }
 
@@ -63,7 +63,7 @@ public partial class Zen<TIdentifier>
             }
 
             // HimoGoshujin
-            this.HimoGoshujin.Start();
+            this.himoGoshujin.Start();
 
             this.Started = true;
             return result;
@@ -87,7 +87,7 @@ public partial class Zen<TIdentifier>
             this.Started = false;
 
             // HimoGoshujin
-            this.HimoGoshujin.Stop();
+            this.himoGoshujin.Stop();
 
             if (param.RemoveAll)
             {
@@ -115,7 +115,7 @@ public partial class Zen<TIdentifier>
 
             this.IO.Terminate();
 
-            this.logger.TryGet()?.Log($"Zen stop - {this.HimoGoshujin.MemoryUsage}");
+            this.logger.TryGet()?.Log($"Zen stop - {this.himoGoshujin.MemoryUsage}");
         }
         finally
         {
@@ -144,6 +144,8 @@ public partial class Zen<TIdentifier>
         }
     }
 
+    HimoGoshujinClass IZenInternal.HimoGoshujin => this.himoGoshujin;
+
     public UnitCore Core { get; init; }
 
     public ZenOptions Options { get; set; } = ZenOptions.Default;
@@ -154,12 +156,12 @@ public partial class Zen<TIdentifier>
 
     public ZenIO IO { get; }
 
-    public long MemoryUsage => this.HimoGoshujin.MemoryUsage;
+    public long MemoryUsage => this.himoGoshujin.MemoryUsage;
 
     internal void RemoveAll()
     {
         this.Root.RemoveInternal();
-        this.HimoGoshujin.Clear();
+        this.himoGoshujin.Clear();
 
         PathHelper.TryDeleteFile(this.Options.ZenFilePath);
         PathHelper.TryDeleteFile(this.Options.ZenBackupPath);
@@ -204,7 +206,7 @@ public partial class Zen<TIdentifier>
         await this.IO.StopAsync();
     }*/
 
-    internal HimoGoshujinClass HimoGoshujin;
+    private HimoGoshujinClass himoGoshujin;
 
     private async Task<ZenStartResult> LoadZenDirectory(ZenStartParam param)
     {// await this.semaphore.WaitAsync()
@@ -364,7 +366,7 @@ LoadBackup:
 
         flake.DeserializePostProcess(this);
 
-        this.HimoGoshujin.Clear();
+        this.himoGoshujin.Clear();
 
         return true;
     }

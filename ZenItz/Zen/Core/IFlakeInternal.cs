@@ -2,8 +2,12 @@
 
 namespace ZenItz;
 
-public interface IFromDataToIO
+public interface IFlakeInternal
 {
+    IZenInternal ZenInternal { get; }
+
+    ZenOptions Options { get; }
+
     void SaveInternal<TData>(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
         where TData : IData;
 
@@ -12,4 +16,6 @@ public interface IFromDataToIO
 
     void RemoveInternal<TData>()
         where TData : IData;
+
+    void Unload(int id);
 }

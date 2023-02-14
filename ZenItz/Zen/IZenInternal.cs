@@ -2,7 +2,9 @@
 
 namespace ZenItz;
 
-public interface IData
+public interface IZenInternal
 {
-    static virtual int StaticId => 0;
+    ZenOptions Options { get; }
+
+    HimoGoshujinClass HimoGoshujin { get; }
 }

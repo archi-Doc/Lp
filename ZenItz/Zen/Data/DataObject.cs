@@ -32,22 +32,31 @@ internal partial struct DataObject : ITinyhandSerialize<DataObject>
 
     internal bool IsValid => this.Id != 0;
 
-    internal object? Data;
+    internal BaseData? Data;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal (object? Data, bool Created) GetOrCreateObject(ZenOptions options, IFromDataToIO fromDataToIO)
+    internal (object? Data, bool Created) GetOrCreateObject(ZenOptions options, IFlakeInternal flakeInternal)
     {
         if (this.Data == null)
         {
             var construtor = ZenData.TryGetConstructor(this.Id);
             if (construtor != null)
             {
-                this.Data = construtor(options, fromDataToIO);
+                this.Data = construtor(options, flakeInternal);
             }
 
             return (this.Data, this.Data != null);
         }
 
         return (this.Data, false);
+    }
+
+    internal void SaveInternal(bool unload)
+    {
+        this.Data?.SaveInternal(true);
+        if (unload)
+        {
+            this.Data = null;
+        }
     }
 }

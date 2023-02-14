@@ -15,43 +15,43 @@ public partial class Zen<TIdentifier>
         }
 
         public void SetSpan(ReadOnlySpan<byte> data, bool clearSavedFlag)
-        {// lock (Flake.syncObject)
+        {// using (Flake.semaphore)
             this.Update(this.flakeData.SetSpanInternal(data), clearSavedFlag);
         }
 
         public void SetMemoryOwner(ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved, object? obj, bool clearSavedFlag)
-        {// lock (Flake.syncObject)
+        {// using (Flake.semaphore)
             this.Update(this.flakeData.SetMemoryOwnerInternal(dataToBeMoved, obj), clearSavedFlag);
         }
 
         /*public void SetObject(ITinyhandSerialize obj, bool clearSavedFlag)
-        {// lock (Flake.syncObject)
+        {// using (Flake.semaphore)
             this.Update(this.flakeData.SetObjectInternal(obj), clearSavedFlag);
         }*/
 
         /*public bool TryGetSpan(out ReadOnlySpan<byte> data)
-        {// lock (Flake.syncObject)
+        {// using (Flake.semaphore)
             var result = this.flakeData.TryGetSpanInternal(out data);
             this.Update(result.MemoryDifference);
             return result.Result;
         }*/
 
         public void GetMemoryOwner(out ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
-        {// lock (Flake.syncObject)
+        {// using (Flake.semaphore)
             memoryOwner = this.flakeData.MemoryOwner.IncrementAndShare();
             this.Update();
         }
 
         public ZenResult TryGetObject<T>(out T? obj)
             where T : ITinyhandSerialize<T>
-        {// lock (Flake.syncObject)
+        {// using (Flake.semaphore)
             var result = this.flakeData.TryGetObjectInternal(out obj);
             this.Update();
             return result;
         }
 
         internal void UnloadInternal()
-        {// lock (Flake.syncObject)
+        {// using (Flake.semaphore)
             var memoryDifference = this.flakeData.Clear();
             this.Remove(memoryDifference);
         }

@@ -4,13 +4,11 @@ using System.Runtime.CompilerServices;
 
 namespace ZenItz;
 
-public record ZenDataInformation(int Id, Func<BaseData> CreateInstance);
-
 public static class ZenData
 {
     public const int MaxId = 10;
 
-    public delegate object ConstrutorDelegate(ZenOptions options, IFromDataToIO fromDataToIO);
+    public delegate BaseData ConstrutorDelegate(ZenOptions options, IFlakeInternal fromDataToIO);
 
     public static bool Register<TData>(ConstrutorDelegate construtor)
         where TData : IData
