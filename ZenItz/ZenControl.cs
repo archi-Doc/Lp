@@ -37,7 +37,7 @@ public class ZenControl
                 Subcommands.ZenTempSubcommand.Configure(context);
 
                 // Zen data
-                ZenData.Register<BlockDataImpl>();
+                ZenData.Register<BlockData>((options, dataToIO) => new BlockDataImpl(options, dataToIO));
             });
         }
     }

@@ -6,8 +6,6 @@ public interface BlockData : IData
 {
     static int IData.StaticId => 1;
 
-    static object IData.StaticNew() => new object();
-
     void SetSpan(ReadOnlySpan<byte> data, bool clearSavedFlag);
 
     void SetMemoryOwner(ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved, object? obj, bool clearSavedFlag);
@@ -15,14 +13,10 @@ public interface BlockData : IData
 
 internal class BlockDataImpl : BlockData, BaseData
 {
-    static int IData.StaticId => 1;
-
-    // static object IData.StaticNew() => new BlockDataImpl();
-
-    public int Id => 1;
-
-    public void SaveInternal(bool unload)
+    public BlockDataImpl(ZenOptions options, IFromDataToIO fromDataToIO)
     {
+        this.options = options;
+        this.fromDataToIO = fromDataToIO;
     }
 
     public void SetMemoryOwner(ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved, object? obj, bool clearSavedFlag)
@@ -32,4 +26,7 @@ internal class BlockDataImpl : BlockData, BaseData
     public void SetSpan(ReadOnlySpan<byte> data, bool clearSavedFlag)
     {
     }
+
+    private ZenOptions options;
+    private IFromDataToIO fromDataToIO;
 }

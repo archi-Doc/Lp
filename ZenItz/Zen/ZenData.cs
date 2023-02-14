@@ -1,37 +1,40 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
+
 namespace ZenItz;
 
 public record ZenDataInformation(int Id, Func<BaseData> CreateInstance);
 
 public static class ZenData
 {
-    public static bool Register<TData>()
-        where TData : BaseData
+    public const int MaxId = 10;
+
+    public delegate object ConstrutorDelegate(ZenOptions options, IFromDataToIO fromDataToIO);
+
+    public static bool Register<TData>(ConstrutorDelegate construtor)
+        where TData : IData
     {
         var id = TData.StaticId;
-        if (id == 0 || array.Any(x => x.Id == id))
+        if (id < 0 || id >= MaxId)
         {
             return false;
         }
 
-        Array.Resize(ref array, array.Length + 1);
-        array[array.Length - 1] = new(id, () => (BaseData)TData.StaticNew());
+        constructors[id] = construtor;
         return true;
     }
 
-    internal static BaseData? TryCreateInstance(int id)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static ConstrutorDelegate? TryGetConstructor(int id)
     {
-        foreach (var x in array)
+        if (id < 0 || id >= MaxId)
         {
-            if (x.Id == id)
-            {
-                return x.CreateInstance();
-            }
+            return null;
         }
 
-        return null;
+        return constructors[id];
     }
 
-    private static ZenDataInformation[] array = Array.Empty<ZenDataInformation>();
+    private static ConstrutorDelegate[] constructors = new ConstrutorDelegate[MaxId];
 }

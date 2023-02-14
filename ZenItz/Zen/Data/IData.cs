@@ -4,9 +4,7 @@ namespace ZenItz;
 
 public interface IData
 {
-    static abstract int StaticId { get; }
+    static virtual int StaticId => 0;
 
-    static abstract object StaticNew();
-
-    int Id { get; }
+    // static abstract object StaticNew();
 }

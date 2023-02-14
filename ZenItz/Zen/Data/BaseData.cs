@@ -2,23 +2,6 @@
 
 namespace ZenItz;
 
-public interface BaseData : IData
+public interface BaseData
 {
-    static int IData.StaticId => 0;
-
-    static object IData.StaticNew() => new object();
-
-    // public int Id => IData.StaticId;
-
-    public void Initialize(ZenOptions options, IFromDataToIO fromDataToIo)
-    {
-    }
-
-    public void LoadInternal()
-    {
-    }
-
-    public void SaveInternal(ulong file, bool unload)
-    {
-    }
 }

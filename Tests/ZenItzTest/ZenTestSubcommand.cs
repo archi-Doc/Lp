@@ -34,7 +34,6 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
                 if (block.Data is { } blockData)
                 {
                     // blockData.SetMemoryOwner();
-                    var id = blockData.Id;
                 }
             }
         }
