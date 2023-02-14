@@ -13,8 +13,10 @@ public interface BlockData : IData
     void SetMemoryOwner(ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved, object? obj, bool clearSavedFlag);
 }
 
-internal class BlockDataImpl : BlockData, IBaseData
+internal class BlockDataImpl : BlockData, BaseData
 {
+    static int IData.StaticId => 1;
+
     public int Id => 1;
 
     public void SaveInternal(bool unload)

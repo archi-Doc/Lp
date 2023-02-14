@@ -2,15 +2,13 @@
 
 namespace ZenItz;
 
-public class BaseData : IBaseData
+public interface BaseData : IData
 {
-    public static int StaticId => 0;
+    static int IData.StaticId => 0;
 
-    public static bool PreloadData => true;
+    // public int Id => IData.StaticId;
 
-    public int Id => StaticId;
-
-    public void Initialize()
+    public void Initialize(ZenOptions options, IFromDataToIO fromDataToIo)
     {
     }
 

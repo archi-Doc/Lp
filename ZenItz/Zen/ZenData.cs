@@ -18,7 +18,7 @@ public static class ZenData
         return true;
     }
 
-    internal static BaseData? TryCreateInstance(int id, ZenOptions options)
+    internal static BaseData? TryCreateInstance(int id)
     {
         foreach (var x in array)
         {

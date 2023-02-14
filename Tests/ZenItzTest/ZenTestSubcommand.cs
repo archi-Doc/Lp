@@ -29,16 +29,13 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
             var result = await flake.GetData();
             flake.Remove();
 
-            using (var block = await flake.Lock<BlockData>())
+            using (var block = flake.Lock<BlockData>())
             {// lock(flake.syncObject)
-                await Task.Delay(1000);
                 if (block.Data is { } blockData)
                 {
-                    blockData.SetMemoryOwner();
+                    // blockData.SetMemoryOwner();
+                    var id = blockData.Id;
                 }
-
-                block.Data?.SetSpan();
-                block.Data?.
             }
         }
 

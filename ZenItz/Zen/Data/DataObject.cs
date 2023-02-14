@@ -35,11 +35,12 @@ internal partial struct DataObject : ITinyhandSerialize<DataObject>
     internal BaseData? Data;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal (BaseData? Data, bool Created) GetOrCreateObject(ZenOptions options)
+    internal (BaseData? Data, bool Created) GetOrCreateObject(ZenOptions options, IFromDataToIO fromDataToIO)
     {
         if (this.Data == null)
         {
-            this.Data = ZenData.TryCreateInstance(this.Id, options);
+            this.Data = ZenData.TryCreateInstance(this.Id);
+            this.Data?.Initialize(options, fromDataToIO);
             return (this.Data, this.Data != null);
         }
 

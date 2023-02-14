@@ -10,6 +10,7 @@ using ValueLink;
 #pragma warning disable SA1401 // Fields should be private
 #pragma warning disable SA1600 // Elements should be documented
 #pragma warning disable CS0169
+#pragma warning disable CS0649
 
 namespace Benchmark.Flake;
 
