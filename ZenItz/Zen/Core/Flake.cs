@@ -730,13 +730,13 @@ public partial class Zen<TIdentifier>
             {
                 if (x.Id == id)
                 {
-                    return (x, x.GetOrCreateObject(this.Zen.Options, this).Created);
+                    return (x, x.GetOrCreateObject(this).Created);
                 }
             }
 
             var newObject = default(DataObject);
             newObject.Id = id;
-            var result = newObject.GetOrCreateObject(this.Zen.Options, this);
+            var result = newObject.GetOrCreateObject(this);
             if (result.Data == null)
             {
                 return default;

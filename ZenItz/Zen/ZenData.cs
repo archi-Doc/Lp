@@ -8,7 +8,7 @@ public static class ZenData
 {
     public const int MaxId = 10;
 
-    public delegate BaseData ConstrutorDelegate(ZenOptions options, IFlakeInternal fromDataToIO);
+    public delegate BaseData ConstrutorDelegate(IFlakeInternal fromDataToIO);
 
     public static bool Register<TData>(ConstrutorDelegate construtor)
         where TData : IData

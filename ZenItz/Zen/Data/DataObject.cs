@@ -35,14 +35,14 @@ internal partial struct DataObject : ITinyhandSerialize<DataObject>
     internal BaseData? Data;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal (object? Data, bool Created) GetOrCreateObject(ZenOptions options, IFlakeInternal flakeInternal)
+    internal (object? Data, bool Created) GetOrCreateObject(IFlakeInternal flakeInternal)
     {
         if (this.Data == null)
         {
             var construtor = ZenData.TryGetConstructor(this.Id);
             if (construtor != null)
             {
-                this.Data = construtor(options, flakeInternal);
+                this.Data = construtor(flakeInternal);
             }
 
             return (this.Data, this.Data != null);
@@ -51,6 +51,7 @@ internal partial struct DataObject : ITinyhandSerialize<DataObject>
         return (this.Data, false);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void SaveInternal(bool unload)
     {
         this.Data?.SaveInternal(true);

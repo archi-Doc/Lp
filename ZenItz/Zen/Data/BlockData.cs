@@ -105,12 +105,6 @@ internal class BlockDataImpl : HimoGoshujinClass.Himo, BlockData, BaseData
         return result;
     }
 
-    internal void UnloadInternal()
-    {// using (Flake.semaphore)
-        var memoryDifference = this.dualData.Clear();
-        this.Remove(memoryDifference);
-    }
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void Update((bool Changed, int MemoryDifference) result, bool clearSavedFlag)
     {
