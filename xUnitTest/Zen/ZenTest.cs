@@ -39,8 +39,8 @@ public partial class ZenTest
         var buffer = new byte[Identifier.Length];
         var buffer2 = new byte[Identifier.Length];
         Identifier.Zero.TryWriteBytes(buffer);
-        f!.SetData(buffer);
-        var result = await f!.GetData();
+        f!.BlockData.Set(buffer);
+        var result = await f!.BlockData.GetData();
         result.DataEquals(buffer).IsTrue();
 
         // Set flakes
@@ -52,7 +52,7 @@ public partial class ZenTest
             f.IsNotNull();
 
             identifier.TryWriteBytes(buffer);
-            f!.SetData(buffer).Is(ZenResult.Success);
+            f!.BlockData.Set(buffer).Is(ZenResult.Success);
         }
 
         // Get flakes and check
@@ -64,7 +64,7 @@ public partial class ZenTest
             f.IsNotNull();
 
             identifier.TryWriteBytes(buffer);
-            result = await f!.GetData();
+            result = await f!.BlockData.GetData();
             result.DataEquals(buffer).IsTrue();
         }
 
@@ -124,7 +124,7 @@ public partial class ZenTest
             flake = zen.Root.TryGetChild(new(i));
             flake.IsNotNull();
 
-            var result = await flake!.GetData();
+            var result = await flake!.BlockData.GetData();
             result.DataEquals(bin.AsSpan(0, i)).IsTrue();
         }
 
@@ -146,8 +146,8 @@ public partial class ZenTest
 
         // Set 1
         var flake = root.GetOrCreateChild(new(1));
-        flake.SetDataObject(t1);
-        var result = await flake.GetDataObject<TestObject>();
+        flake.BlockData.SetDataObject(t1);
+        var result = await flake.BlockData.GetDataObject<TestObject>();
         result.Object.IsStructuralEqual(t1);
 
         // Set 2

@@ -10,14 +10,14 @@ public interface BlockData : IData
 
     static int IData.StaticId => Id;
 
-    ZenResult SetData(ReadOnlySpan<byte> data);
+    ZenResult Set(ReadOnlySpan<byte> data);
 
-    ZenResult SetDataObject<T>(T obj)
+    ZenResult SetObject<T>(T obj)
             where T : ITinyhandSerialize<T>;
 
-    Task<ZenMemoryResult> GetData();
+    Task<ZenMemoryResult> Get();
 
-    Task<ZenObjectResult<T>> GetDataObject<T>()
+    Task<ZenObjectResult<T>> GetObject<T>()
             where T : ITinyhandSerialize<T>;
 }
 
@@ -30,7 +30,7 @@ internal class BlockDataImpl : HimoGoshujinClass.Himo, BlockData, BaseData
 
     public override int Id => BlockData.Id;
 
-    ZenResult BlockData.SetData(ReadOnlySpan<byte> data)
+    ZenResult BlockData.Set(ReadOnlySpan<byte> data)
     {
         if (data.Length > this.flakeInternal.Options.MaxDataSize)
         {
@@ -41,7 +41,7 @@ internal class BlockDataImpl : HimoGoshujinClass.Himo, BlockData, BaseData
         return ZenResult.Success;
     }
 
-    ZenResult BlockData.SetDataObject<T>(T obj)
+    ZenResult BlockData.SetObject<T>(T obj)
     {
         if (!FlakeFragmentService.TrySerialize(obj, out var memoryOwner))
         {
@@ -56,7 +56,7 @@ internal class BlockDataImpl : HimoGoshujinClass.Himo, BlockData, BaseData
         return ZenResult.Success;
     }
 
-    async Task<ZenMemoryResult> BlockData.GetData()
+    async Task<ZenMemoryResult> BlockData.Get()
     {
         if (this.dualData.MemoryOwnerIsValid)
         {
@@ -77,7 +77,7 @@ internal class BlockDataImpl : HimoGoshujinClass.Himo, BlockData, BaseData
         }
     }
 
-    async Task<ZenObjectResult<T>> BlockData.GetDataObject<T>()
+    async Task<ZenObjectResult<T>> BlockData.GetObject<T>()
     {
         if (this.dualData.TryGetObjectInternal(out T? obj) == ZenResult.Success)
         {
@@ -119,7 +119,7 @@ internal class BlockDataImpl : HimoGoshujinClass.Himo, BlockData, BaseData
     private bool isSaved = true;
     private DualData dualData = new();
 
-    public void SaveInternal(bool unload)
+    public void Save()
     {
         if (!this.isSaved)
         {// Not saved.
@@ -129,11 +129,11 @@ internal class BlockDataImpl : HimoGoshujinClass.Himo, BlockData, BaseData
 
             this.isSaved = true;
         }
+    }
 
-        if (unload)
-        {
-            var memoryDifference = this.dualData.Clear();
-            this.Remove(memoryDifference);
-        }
+    public void Unload()
+    {
+        var memoryDifference = this.dualData.Clear();
+        this.Remove(memoryDifference);
     }
 }

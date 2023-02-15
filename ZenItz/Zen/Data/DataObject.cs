@@ -52,12 +52,24 @@ internal partial struct DataObject : ITinyhandSerialize<DataObject>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void SaveInternal(bool unload)
+    internal void Save()
     {
-        this.Data?.SaveInternal(true);
-        if (unload)
-        {
-            this.Data = null;
-        }
+        this.Data?.Save();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void Unload()
+    {
+        this.Data?.Unload();
+        this.Data = null;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void Remove(ZenIO io)
+    {
+        this.Data?.Unload();
+        this.Data = null;
+        io.Remove(this.File);
+        this.File = 0;
     }
 }

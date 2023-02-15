@@ -17,5 +17,5 @@ public interface IFlakeInternal
     void RemoveInternal<TData>()
         where TData : IData;
 
-    void Unload(int id);
+    void Save(int id, bool unload);
 }

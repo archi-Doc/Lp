@@ -4,5 +4,7 @@ namespace ZenItz;
 
 public interface BaseData
 {
-    void SaveInternal(bool unload);
+    void Save();
+
+    void Unload();
 }

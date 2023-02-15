@@ -24,16 +24,16 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
         var flake = zen.Root.GetOrCreateChild(Identifier.Zero);
         if (flake != null)
         {
-            flake.SetData(new byte[] { 0, 1, });
+            flake.BlockData.Set(new byte[] { 0, 1, });
             flake.Save(true);
-            var result = await flake.GetData();
+            var result = await flake.BlockData.Get();
             flake.Remove();
 
             using (var block = flake.Lock<BlockData>())
             {// lock(flake.syncObject)
                 if (block.Data is { } blockData)
                 {
-                    // blockData.SetMemoryOwner();
+                    blockData.Set(new byte[] { 0, });
                 }
             }
         }
@@ -41,13 +41,13 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
         flake = zen.Root.GetOrCreateChild(Identifier.One);
         if (flake != null)
         {
-            flake.SetDataObject(new TestFragment());
-            var t = await flake.GetDataObject<TestFragment>();
+            flake.BlockData.SetObject(new TestFragment());
+            var t = await flake.BlockData.GetObject<TestFragment>();
 
             flake.Save(true);
-            t = await flake.GetDataObject<TestFragment>();
+            t = await flake.BlockData.GetObject<TestFragment>();
 
-            flake.SetFragment(Identifier.One, new byte[] { 2, 3, });
+            /*flake.SetFragment(Identifier.One, new byte[] { 2, 3, });
             var result = await flake.GetFragment(Identifier.One);
             flake.Save(true);
             result = await flake.GetFragment(Identifier.One);
@@ -59,7 +59,7 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
             var tf = new TestFragment();
             tf.Name = "A";
             flake.SetFragmentObject(Identifier.One, tf);
-            var tc = await flake.GetFragmentObject<TestFragment>(Identifier.One);
+            var tc = await flake.GetFragmentObject<TestFragment>(Identifier.One);*/
         }
 
         var data = new byte[ZenOptions.DefaultMaxDataSize];
@@ -68,8 +68,8 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
             flake = zen.Root.GetOrCreateChild(new(i));
             if (flake != null)
             {
-                var dt = await flake.GetData();
-                flake.SetData(data);
+                var dt = await flake.BlockData.Get();
+                flake.BlockData.Set(data);
             }
         }
 

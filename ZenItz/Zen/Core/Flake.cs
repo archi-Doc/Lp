@@ -87,26 +87,6 @@ public partial class Zen<TIdentifier>
 
             operation.SetData(data);
             return operation;
-
-            /*if (!result.Created)
-            {
-                return operation;
-            }
-
-            var file = result.DataObject.File;
-            if (!ZenHelper.IsValidFile(file))
-            {// Invalid file
-                return operation;
-            }
-
-            operation.Exit();
-
-            // Load
-            var ioResult = await this.Zen.IO.Load(file);
-            if (!ioResult.IsSuccess)
-            {
-                return new(ioResult.Result);
-            }*/
         }
 
         public DataOperation<TData> LockChild<TData>(TIdentifier id)
@@ -210,7 +190,12 @@ public partial class Zen<TIdentifier>
             }
         }
 
-        void IFlakeInternal.Unload(int id)
+        /// <summary>
+        /// Called from outside Flake, unloads DataObjects with matching id.
+        /// </summary>
+        /// <param name="id">The specified id.</param>
+        /// <param name="unload"><see langword="true"/>; unload data.</param>
+        void IFlakeInternal.Save(int id, bool unload)
         {
             using (this.semaphore.Lock())
             {
@@ -218,7 +203,8 @@ public partial class Zen<TIdentifier>
                 {
                     if (this.dataObject[i].Id == id)
                     {
-                        this.dataObject[i].SaveInternal(true);
+                        this.dataObject[i].Save();
+                        this.dataObject[i].Unload();
                         return;
                     }
                 }
@@ -246,14 +232,13 @@ public partial class Zen<TIdentifier>
                     }
                 }
 
-                this.flakeHimo?.SaveInternal();
-                this.fragmentHimo?.SaveInternal();
-                if (unload)
+                foreach (var x in this.dataObject)
                 {
-                    this.flakeHimo?.UnloadInternal();
-                    this.flakeHimo = null;
-                    this.fragmentHimo?.UnloadInternal();
-                    this.fragmentHimo = null;
+                    x.Save();
+                    if (unload)
+                    {
+                        x.Unload();
+                    }
                 }
             }
         }
@@ -340,317 +325,6 @@ public partial class Zen<TIdentifier>
 
         #endregion
 
-        #region Data
-
-        public ZenResult SetData(ReadOnlySpan<byte> data)
-        {
-            if (data.Length > this.Zen.Options.MaxDataSize)
-            {
-                return ZenResult.OverSizeLimit;
-            }
-
-            using (this.semaphore.Lock())
-            {
-                if (this.IsRemoved)
-                {
-                    return ZenResult.Removed;
-                }
-
-                // this.FlakeId = this.TryGetFlakeId(data);
-
-                this.flakeHimo ??= new(this);
-                this.flakeHimo.SetSpan(data, true);
-            }
-
-            return ZenResult.Success;
-        }
-
-        public ZenResult SetDataObject<T>(T obj)
-            where T : ITinyhandSerialize<T>
-        {
-            if (!FlakeFragmentService.TrySerialize(obj, out var memoryOwner))
-            {
-                return ZenResult.SerializeError;
-            }
-            else if (memoryOwner.Memory.Length > this.Zen.Options.MaxDataSize)
-            {
-                return ZenResult.OverSizeLimit;
-            }
-
-            using (this.semaphore.Lock())
-            {
-                if (this.IsRemoved)
-                {
-                    return ZenResult.Removed;
-                }
-
-                this.flakeHimo ??= new(this);
-                this.flakeHimo.SetMemoryOwner(memoryOwner.AsReadOnly(), obj, true);
-            }
-
-            return ZenResult.Success;
-        }
-
-        public async Task<ZenMemoryResult> GetData()
-        {
-            ulong file = 0;
-            using (this.semaphore.Lock())
-            {
-                if (this.IsRemoved)
-                {
-                    return new(ZenResult.Removed);
-                }
-
-                if (this.flakeHimo != null)
-                {// Memory
-                    this.flakeHimo.GetMemoryOwner(out var memoryOwner);
-                    return new(ZenResult.Success, memoryOwner.Memory); // Skip MemoryOwner.Return()
-                }
-                else
-                {// Load
-                    file = this.flakeFile;
-                }
-            }
-
-            if (ZenHelper.IsValidFile(file))
-            {
-                var result = await this.Zen.IO.Load(file);
-                if (!result.IsSuccess)
-                {
-                    return new(result.Result);
-                }
-
-                using (this.semaphore.Lock())
-                {
-                    if (this.IsRemoved)
-                    {
-                        return new(ZenResult.Removed);
-                    }
-
-                    this.flakeHimo ??= new(this);
-                    this.flakeHimo.SetMemoryOwner(result.Data, null, false);
-                    return new(result.Result, result.Data.IncrementAndShare().Memory); // Skip MemoryOwner.Return()
-                }
-            }
-
-            return new(ZenResult.NoData);
-        }
-
-        public async Task<ZenObjectResult<T>> GetDataObject<T>()
-            where T : ITinyhandSerialize<T>
-        {
-            ulong file = 0;
-            using (this.semaphore.Lock())
-            {
-                if (this.IsRemoved)
-                {
-                    return new(ZenResult.Removed);
-                }
-
-                if (this.flakeHimo != null)
-                {// Memory
-                    var result = this.flakeHimo.TryGetObject(out T? obj);
-                    return new(result, obj);
-                }
-                else
-                {// Load
-                    file = this.flakeFile;
-                }
-            }
-
-            if (ZenHelper.IsValidFile(file))
-            {
-                var result = await this.Zen.IO.Load(file);
-                if (!result.IsSuccess)
-                {
-                    return new(result.Result);
-                }
-
-                using (this.semaphore.Lock())
-                {
-                    if (this.IsRemoved)
-                    {
-                        return new(ZenResult.Removed);
-                    }
-
-                    this.flakeHimo ??= new(this);
-                    this.flakeHimo.SetMemoryOwner(result.Data, null, false);
-                    var flakeResult = this.flakeHimo.TryGetObject(out T? obj);
-                    return new(flakeResult, obj);
-                }
-            }
-
-            return new(ZenResult.NoData);
-        }
-
-        #endregion
-
-        #region Fragment
-
-        public ZenResult SetFragment(TIdentifier fragmentId, ReadOnlySpan<byte> span)
-        {
-            if (span.Length > this.Zen.Options.MaxFragmentSize)
-            {
-                return ZenResult.OverSizeLimit;
-            }
-
-            using (this.semaphore.Lock())
-            {
-                if (this.IsRemoved)
-                {
-                    return ZenResult.Removed;
-                }
-
-                this.fragmentHimo ??= new(this);
-                return this.fragmentHimo.SetSpan(fragmentId, span, true);
-            }
-        }
-
-        public ZenResult SetFragmentObject<T>(TIdentifier fragmentId, T obj)
-            where T : ITinyhandSerialize<T>
-        {
-            if (!FlakeFragmentService.TrySerialize(obj, out var memoryOwner))
-            {
-                return ZenResult.SerializeError;
-            }
-            else if (memoryOwner.Memory.Length > this.Zen.Options.MaxFragmentSize)
-            {
-                return ZenResult.OverSizeLimit;
-            }
-
-            using (this.semaphore.Lock())
-            {
-                if (this.IsRemoved)
-                {
-                    return ZenResult.Removed;
-                }
-
-                this.fragmentHimo ??= new(this);
-                return this.fragmentHimo.SetMemoryOwner(fragmentId, memoryOwner.AsReadOnly(), obj, true);
-            }
-        }
-
-        public async Task<ZenMemoryResult> GetFragment(TIdentifier fragmentId)
-        {
-            ulong file = 0;
-            using (this.semaphore.Lock())
-            {
-                if (this.IsRemoved)
-                {
-                    return new(ZenResult.Removed);
-                }
-
-                if (this.fragmentHimo != null)
-                {// Memory
-                    var fragmentResult = this.fragmentHimo.TryGetMemoryOwner(fragmentId, out var memoryOwner);
-                    if (fragmentResult == FragmentHimo.Result.Success)
-                    {
-                        return new(ZenResult.Success, memoryOwner.Memory); // Skip MemoryOwner.Return()
-                    }
-                    else if (fragmentResult == FragmentHimo.Result.NotFound)
-                    {
-                        return new(ZenResult.NoData);
-                    }
-                }
-                else
-                {// Load
-                    file = this.fragmentFile;
-                }
-            }
-
-            if (ZenHelper.IsValidFile(file))
-            {
-                var result = await this.Zen.IO.Load(file);
-                if (!result.IsSuccess)
-                {
-                    return new(result.Result);
-                }
-
-                using (this.semaphore.Lock())
-                {
-                    if (this.IsRemoved)
-                    {
-                        return new(ZenResult.Removed);
-                    }
-
-                    this.fragmentHimo ??= new(this);
-                    this.fragmentHimo.LoadInternal(result.Data);
-
-                    var fragmentResult = this.fragmentHimo.TryGetMemoryOwner(fragmentId, out var memoryOwner);
-                    if (fragmentResult == FragmentHimo.Result.Success)
-                    {
-                        return new(ZenResult.Success, memoryOwner.IncrementAndShare().Memory); // Skip MemoryOwner.Return()
-                    }
-                }
-            }
-
-            return new(ZenResult.NoData);
-        }
-
-        public async Task<ZenObjectResult<T>> GetFragmentObject<T>(TIdentifier fragmentId)
-            where T : ITinyhandSerialize<T>
-        {
-            ulong file = 0;
-            using (this.semaphore.Lock())
-            {
-                if (this.IsRemoved)
-                {
-                    return new(ZenResult.Removed);
-                }
-
-                if (this.fragmentHimo != null)
-                {// Memory
-                    var fragmentResult = this.fragmentHimo.TryGetObject(fragmentId, out T? obj);
-                    return new(fragmentResult, obj);
-                }
-                else
-                {// Load
-                    file = this.fragmentFile;
-                }
-            }
-
-            if (ZenHelper.IsValidFile(file))
-            {
-                var result = await this.Zen.IO.Load(file);
-                if (!result.IsSuccess)
-                {
-                    return new(result.Result);
-                }
-
-                using (this.semaphore.Lock())
-                {
-                    if (this.IsRemoved)
-                    {
-                        return new(ZenResult.Removed);
-                    }
-
-                    this.fragmentHimo ??= new(this);
-                    this.fragmentHimo.LoadInternal(result.Data);
-
-                    var fragmentResult = this.fragmentHimo.TryGetObject(fragmentId, out T? obj);
-                    return new(fragmentResult, obj);
-                }
-            }
-
-            return new(ZenResult.NoData);
-        }
-
-        public bool RemoveFragment(TIdentifier fragmentId)
-        {
-            using (this.semaphore.Lock())
-            {
-                if (this.IsRemoved)
-                {
-                    return false;
-                }
-
-                this.fragmentHimo ??= new(this);
-                return this.fragmentHimo.RemoveInternal(fragmentId);
-            }
-        }
-
-        #endregion
-
         public Zen<TIdentifier> Zen { get; private set; } = default!;
 
         public Flake? Parent { get; private set; }
@@ -687,15 +361,14 @@ public partial class Zen<TIdentifier>
                     this.childFlakes = null;
                 }
 
-                this.flakeHimo?.UnloadInternal();
-                this.flakeHimo = null;
-                this.fragmentHimo?.UnloadInternal();
-                this.fragmentHimo = null;
+                foreach (var x in this.dataObject)
+                {
+                    x.Remove(this.Zen.IO);
+                }
+
+                this.dataObject = Array.Empty<DataObject>();
                 this.Parent = null;
                 this.Goshujin = null;
-
-                this.Zen.IO.Remove(this.flakeFile);
-                this.Zen.IO.Remove(this.fragmentFile);
             }
 
             return true;
@@ -796,7 +469,5 @@ public partial class Zen<TIdentifier>
         }
 
         private readonly SemaphoreLock semaphore = new();
-        private FlakeHimo? flakeHimo;
-        private FragmentHimo? fragmentHimo;
     }
 }
