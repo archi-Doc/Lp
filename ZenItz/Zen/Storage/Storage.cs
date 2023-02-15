@@ -86,7 +86,7 @@ public sealed class Storage
 
     public bool Started { get; private set; }
 
-    internal void Save(ref ulong file, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
+    internal void Save(ref ulong file, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
     {
         ZenDirectory? directory;
         lock (this.syncObject)
@@ -101,7 +101,7 @@ public sealed class Storage
                     this.currentDirectory == null)
                 {
                     this.currentDirectory = this.GetValidDirectory();
-                    this.directoryRotationCount = memoryOwner.Memory.Length;
+                    this.directoryRotationCount = memoryToBeShared.Memory.Length;
                     if (this.currentDirectory == null)
                     {
                         return;
@@ -109,14 +109,14 @@ public sealed class Storage
                 }
                 else
                 {
-                    this.directoryRotationCount += memoryOwner.Memory.Length;
+                    this.directoryRotationCount += memoryToBeShared.Memory.Length;
                 }
 
                 directory = this.currentDirectory;
             }
         }
 
-        directory.Save(ref file, memoryOwner);
+        directory.Save(ref file, memoryToBeShared);
     }
 
     internal async Task<ZenMemoryOwnerResult> Load(ulong file)

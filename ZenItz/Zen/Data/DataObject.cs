@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Runtime.CompilerServices;
 using Tinyhand.IO;
 
 namespace ZenItz;
@@ -33,42 +32,4 @@ internal partial struct DataObject : ITinyhandSerialize<DataObject>
     internal bool IsValid => this.Id != 0;
 
     internal IBaseData? Data;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal (object? Data, bool Created) GetOrCreateObject(IFlakeInternal flakeInternal)
-    {
-        if (this.Data == null)
-        {
-            var construtor = flakeInternal.Data.TryGetConstructor(this.Id);
-            if (construtor != null)
-            {
-                this.Data = construtor(flakeInternal);
-            }
-
-            return (this.Data, this.Data != null);
-        }
-
-        return (this.Data, false);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void Save()
-    {
-        this.Data?.Save();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void Unload()
-    {
-        this.Data?.Unload();
-        this.Data = null;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void Delete()
-    {
-        this.Data?.Unload();
-        this.Data = null;
-        this.File = 0;
-    }
 }

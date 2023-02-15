@@ -79,7 +79,8 @@ internal class BlockDataImpl : HimoGoshujinClass.Himo, BlockData, IBaseData
 
     async Task<ZenObjectResult<T>> BlockData.GetObject<T>()
     {
-        if (this.memoryObject.TryGetObjectInternal(out T? obj) == ZenResult.Success)
+        if (this.memoryObject.MemoryOwnerIsValid &&
+            this.memoryObject.TryGetObjectInternal(out T? obj) == ZenResult.Success)
         {
             return new(ZenResult.Success, obj);
         }

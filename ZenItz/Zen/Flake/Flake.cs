@@ -38,14 +38,14 @@ public partial class Zen<TIdentifier>
 
         ZenOptions IFlakeInternal.Options => this.Zen.Options;
 
-        void IFlakeInternal.DataToStorage<TData>(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
+        void IFlakeInternal.DataToStorage<TData>(ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
         {// using (this.semaphore.Lock())
             var id = TData.StaticId;
             for (var i = 0; i < this.dataObject.Length; i++)
             {
                 if (this.dataObject[i].Id == id)
                 {
-                    this.Zen.Storage.Save(ref this.dataObject[i].File, memoryOwner);
+                    this.Zen.Storage.Save(ref this.dataObject[i].File, memoryToBeShared);
                     return;
                 }
             }
@@ -91,10 +91,11 @@ public partial class Zen<TIdentifier>
                 {
                     if (this.dataObject[i].Id == id)
                     {
-                        this.dataObject[i].Save();
+                        this.dataObject[i].Data?.Save();
                         if (unload)
                         {
-                            this.dataObject[i].Unload();
+                            this.dataObject[i].Data?.Unload();
+                            this.dataObject[i].Data = null;
                         }
 
                         return;
@@ -119,8 +120,8 @@ public partial class Zen<TIdentifier>
                 return operation;
             }
 
-            var result = this.GetOrCreateDataObject<TData>();
-            if (result.DataObject.Data is not TData data)
+            var dataObject = this.GetOrCreateDataObject<TData>();
+            if (dataObject.Data is not TData data)
             {// No data
                 operation.Exit();
                 return operation;
@@ -172,12 +173,13 @@ public partial class Zen<TIdentifier>
                     }
                 }
 
-                foreach (var x in this.dataObject)
+                for (var i = 0; i < this.dataObject.Length; i++)
                 {
-                    x.Save();
+                    this.dataObject[i].Data?.Save();
                     if (unload)
                     {
-                        x.Unload();
+                        this.dataObject[i].Data?.Unload();
+                        this.dataObject[i].Data = null;
                     }
                 }
             }
@@ -196,7 +198,7 @@ public partial class Zen<TIdentifier>
 
             using (this.Parent.semaphore.Lock())
             {
-                return this.RemoveInternal();
+                return this.DeleteInternal();
             }
         }
 
@@ -256,7 +258,7 @@ public partial class Zen<TIdentifier>
 
                 if (this.childFlakes.IdChain.TryGetValue(id, out var flake))
                 {
-                    return flake.RemoveInternal();
+                    return flake.DeleteInternal();
                 }
             }
 
@@ -287,7 +289,7 @@ public partial class Zen<TIdentifier>
             }
         }
 
-        internal bool RemoveInternal()
+        internal bool DeleteInternal()
         {// lock (Parent.syncObject)
             using (this.semaphore.Lock())
             {
@@ -295,16 +297,18 @@ public partial class Zen<TIdentifier>
                 {
                     foreach (var x in this.childFlakes.ToArray())
                     {
-                        x.RemoveInternal();
+                        x.DeleteInternal();
                     }
 
                     this.childFlakes = null;
                 }
 
-                foreach (var x in this.dataObject)
+                for (var i = 0; i < this.dataObject.Length; i++)
                 {
-                    this.Zen.Storage.Delete(x.File);
-                    x.Delete();
+                    this.Zen.Storage.Delete(this.dataObject[i].File);
+                    this.dataObject[i].Data?.Unload();
+                    this.dataObject[i].Data = null;
+                    this.dataObject[i].File = 0;
                 }
 
                 this.dataObject = Array.Empty<DataObject>();
@@ -330,22 +334,34 @@ public partial class Zen<TIdentifier>
         public int FlakeId { get; private set; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private (DataObject DataObject, bool Created) GetOrCreateDataObject<TData>()
+        private DataObject GetOrCreateDataObject<TData>()
             where TData : IData
         {// using (this.semaphore.Lock())
             var id = TData.StaticId;
-            foreach (var x in this.dataObject)
+            for (var i = 0; i < this.dataObject.Length; i++)
             {
-                if (x.Id == id)
+                if (this.dataObject[i].Id == id)
                 {
-                    return (x, x.GetOrCreateObject(this).Created);
+                    if (this.dataObject[i].Data == null)
+                    {
+                        if (this.Zen.Data.TryGetConstructor(id) is { } ctr1)
+                        {
+                            this.dataObject[i].Data = ctr1(this);
+                        }
+                    }
+
+                    return this.dataObject[i];
                 }
             }
 
             var newObject = default(DataObject);
             newObject.Id = id;
-            var result = newObject.GetOrCreateObject(this);
-            if (result.Data == null)
+            if (this.Zen.Data.TryGetConstructor(id) is { } ctr2)
+            {
+                newObject.Data = ctr2(this);
+            }
+
+            if (newObject.Data == null)
             {
                 return default;
             }
@@ -353,7 +369,7 @@ public partial class Zen<TIdentifier>
             var n = this.dataObject.Length;
             Array.Resize(ref this.dataObject, n + 1);
             this.dataObject[n] = newObject;
-            return (newObject, true);
+            return newObject;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

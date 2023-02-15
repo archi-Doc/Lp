@@ -166,7 +166,7 @@ public partial class Zen<TIdentifier> : IZenInternal
 
     internal void DeleteAll()
     {
-        this.Root.RemoveInternal();
+        this.Root.DeleteInternal();
         this.himoGoshujin.Clear();
 
         PathHelper.TryDeleteFile(this.Options.ZenFilePath);

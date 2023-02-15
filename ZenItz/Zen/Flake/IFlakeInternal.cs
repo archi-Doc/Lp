@@ -10,7 +10,7 @@ public interface IFlakeInternal
 
     ZenOptions Options { get; }
 
-    void DataToStorage<TData>(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
+    void DataToStorage<TData>(ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
         where TData : IData;
 
     Task<ZenMemoryOwnerResult> StorageToData<TData>()

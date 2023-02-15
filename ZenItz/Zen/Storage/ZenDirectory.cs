@@ -77,11 +77,11 @@ internal partial class ZenDirectory : IDisposable
         }
     }
 
-    internal void Save(ref ulong file, ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
+    internal void Save(ref ulong file, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
     {// DirectoryId: valid, SnowflakeId: ?
         Snowflake? snowflake;
         var snowflakeId = ZenHelper.ToSnowflakeId(file);
-        var dataSize = memoryOwner.Memory.Length;
+        var dataSize = memoryToBeShared.Memory.Length;
 
         lock (this.syncObject)
         {
@@ -106,7 +106,7 @@ internal partial class ZenDirectory : IDisposable
             file = ZenHelper.ToFile(this.DirectoryId, snowflake.SnowflakeId);
         }
 
-        this.worker.AddLast(new(snowflake.SnowflakeId, memoryOwner.IncrementAndShare()));
+        this.worker.AddLast(new(snowflake.SnowflakeId, memoryToBeShared.IncrementAndShare()));
     }
 
     internal void Delete(ulong file)
