@@ -120,7 +120,7 @@ TrySave:
             {
             }
         }
-        else if (work.Type == ZenDirectoryWork.WorkType.Remove)
+        else if (work.Type == ZenDirectoryWork.WorkType.Delete)
         {
             try
             {
@@ -174,7 +174,7 @@ internal class ZenDirectoryWork : IEquatable<ZenDirectoryWork>
     {
         Save,
         Load,
-        Remove,
+        Delete,
     }
 
     public WorkType Type { get; }
@@ -203,7 +203,7 @@ internal class ZenDirectoryWork : IEquatable<ZenDirectoryWork>
 
     public ZenDirectoryWork(uint snowflakeId)
     {// Remove
-        this.Type = WorkType.Remove;
+        this.Type = WorkType.Delete;
         this.SnowflakeId = snowflakeId;
     }
 

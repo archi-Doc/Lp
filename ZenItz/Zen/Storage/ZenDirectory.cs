@@ -2,6 +2,8 @@
 
 using System.Runtime.CompilerServices;
 
+#pragma warning disable SA1124 // Do not use regions
+
 namespace ZenItz;
 
 public enum ZenDirectoryType
@@ -107,7 +109,7 @@ internal partial class ZenDirectory : IDisposable
         this.worker.AddLast(new(snowflake.SnowflakeId, memoryOwner.IncrementAndShare()));
     }
 
-    internal void Remove(ulong file)
+    internal void Delete(ulong file)
     {
         var snowflakeId = ZenHelper.ToSnowflakeId(file);
         lock (this.syncObject)
@@ -127,7 +129,7 @@ internal partial class ZenDirectory : IDisposable
         this.worker.AddLast(new(snowflakeId));
     }
 
-    internal bool PrepareAndCheck(ZenIO io)
+    internal bool PrepareAndCheck(Storage io)
     {
         this.Options = io.Options;
         try
@@ -142,23 +144,6 @@ internal partial class ZenDirectory : IDisposable
             }
 
             Directory.CreateDirectory(this.RootedPath);
-            /*var directoryInfo = new DirectoryInfo(this.DirectoryPath);
-            if (createDirectory)
-            {
-                directoryInfo.Create();
-            }
-            else
-            {
-                if (!directoryInfo.Exists)
-                {// No directory
-
-                }
-            }*/
-
-            /*var testFile = Path.Combine(this.DirectoryPath, Path.GetRandomFileName());
-            using (var fs = File.Create(testFile, 1, FileOptions.DeleteOnClose))
-            {
-            }*/
 
             // Check directory file
             try
@@ -358,7 +343,6 @@ internal partial class ZenDirectory : IDisposable
     // private Dictionary<uint, Snowflake> dictionary = new(); // lock (this.syncObject)
     private ZenDirectoryWorker worker;
 
-#pragma warning disable SA1124 // Do not use regions
     #region IDisposable Support
 #pragma warning restore SA1124 // Do not use regions
 

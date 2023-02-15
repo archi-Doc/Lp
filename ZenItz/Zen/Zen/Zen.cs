@@ -20,14 +20,13 @@ public partial class Zen<TIdentifier> : IZenInternal
         this.logger = logger;
         this.Core = core;
         this.Options = options;
-        this.IO = new();
+        this.Storage = new();
         this.himoGoshujin = new(this);
         this.Root = new(this);
 
-        // Default data
         this.Data = new();
         this.Data.Register<BlockData>(x => new BlockDataImpl(x));
-        this.Data.Register<Zen<TIdentifier>.FragmentData>(x => new Zen<TIdentifier>.FragmentDataImpl(x));
+        this.Data.Register<FragmentData>(x => new FragmentDataImpl(x));
     }
 
     public async Task<ZenStartResult> StartAsync(ZenStartParam param)
@@ -45,9 +44,9 @@ public partial class Zen<TIdentifier> : IZenInternal
 
             if (param.FromScratch)
             {
-                await this.IO.TryStart(this.Options, param, null);
+                await this.Storage.TryStart(this.Options, param, null);
 
-                this.RemoveAll();
+                this.DeleteAll();
 
                 this.Started = true;
                 return ZenStartResult.Success;
@@ -96,11 +95,11 @@ public partial class Zen<TIdentifier> : IZenInternal
 
             if (param.RemoveAll)
             {
-                this.RemoveAll();
+                this.DeleteAll();
 
                 // Stop IO(ZenDirectory)
-                await this.IO.StopAsync();
-                this.IO.Terminate();
+                await this.Storage.StopAsync();
+                this.Storage.Terminate();
 
                 return;
             }
@@ -109,16 +108,16 @@ public partial class Zen<TIdentifier> : IZenInternal
             this.Root.Save(true);
 
             // Stop IO(ZenDirectory)
-            await this.IO.StopAsync();
+            await this.Storage.StopAsync();
 
             // Save Zen
             await this.SerializeZen(this.Options.ZenFilePath, this.Options.ZenBackupPath);
 
             // Save directory information
-            var byteArray = this.IO.Serialize();
+            var byteArray = this.Storage.Serialize();
             await HashHelper.GetFarmHashAndSaveAsync(byteArray, this.Options.ZenDirectoryFilePath, this.Options.ZenDirectoryBackupPath);
 
-            this.IO.Terminate();
+            this.Storage.Terminate();
 
             this.logger.TryGet()?.Log($"Zen stop - {this.himoGoshujin.MemoryUsage}");
         }
@@ -140,8 +139,8 @@ public partial class Zen<TIdentifier> : IZenInternal
 
             this.Started = false;
 
-            await this.IO.StopAsync();
-            this.IO.Terminate();
+            await this.Storage.StopAsync();
+            this.Storage.Terminate();
         }
         finally
         {
@@ -161,11 +160,11 @@ public partial class Zen<TIdentifier> : IZenInternal
 
     public RootFlake Root { get; private set; }
 
-    public ZenIO IO { get; }
+    public Storage Storage { get; }
 
     public long MemoryUsage => this.himoGoshujin.MemoryUsage;
 
-    internal void RemoveAll()
+    internal void DeleteAll()
     {
         this.Root.RemoveInternal();
         this.himoGoshujin.Clear();
@@ -174,7 +173,7 @@ public partial class Zen<TIdentifier> : IZenInternal
         PathHelper.TryDeleteFile(this.Options.ZenBackupPath);
         PathHelper.TryDeleteFile(this.Options.ZenDirectoryFilePath);
         PathHelper.TryDeleteFile(this.Options.ZenDirectoryBackupPath);
-        this.IO.RemoveAll();
+        this.Storage.DeleteAll();
 
         try
         {
@@ -235,7 +234,7 @@ public partial class Zen<TIdentifier> : IZenInternal
             goto LoadBackup;
         }
 
-        result = await this.IO.TryStart(this.Options, param, memory);
+        result = await this.Storage.TryStart(this.Options, param, memory);
         if (result == ZenStartResult.Success || param.ForceStart)
         {
             return ZenStartResult.Success;
@@ -252,7 +251,7 @@ LoadBackup:
         {
             if (await param.Query(ZenStartResult.ZenDirectoryNotFound))
             {
-                result = await this.IO.TryStart(this.Options, param, null);
+                result = await this.Storage.TryStart(this.Options, param, null);
                 if (result == ZenStartResult.Success || param.ForceStart)
                 {
                     return ZenStartResult.Success;
@@ -271,7 +270,7 @@ LoadBackup:
         {
             if (await param.Query(ZenStartResult.ZenDirectoryError))
             {
-                result = await this.IO.TryStart(this.Options, param, null);
+                result = await this.Storage.TryStart(this.Options, param, null);
                 if (result == ZenStartResult.Success || param.ForceStart)
                 {
                     return ZenStartResult.Success;
@@ -285,7 +284,7 @@ LoadBackup:
             }
         }
 
-        result = await this.IO.TryStart(this.Options, param, memory);
+        result = await this.Storage.TryStart(this.Options, param, memory);
         if (result == ZenStartResult.Success || param.ForceStart)
         {
             return ZenStartResult.Success;

@@ -37,7 +37,7 @@ internal class BlockDataImpl : HimoGoshujinClass.Himo, BlockData, IBaseData
             return ZenResult.OverSizeLimit;
         }
 
-        this.Update(this.dualData.SetSpanInternal(data), true);
+        this.Update(this.memoryObject.SetSpanInternal(data), true);
         return ZenResult.Success;
     }
 
@@ -52,23 +52,23 @@ internal class BlockDataImpl : HimoGoshujinClass.Himo, BlockData, IBaseData
             return ZenResult.OverSizeLimit;
         }
 
-        this.Update(this.dualData.SetMemoryOwnerInternal(memoryOwner.AsReadOnly(), obj), true);
+        this.Update(this.memoryObject.SetMemoryOwnerInternal(memoryOwner.AsReadOnly(), obj), true);
         return ZenResult.Success;
     }
 
     async Task<ZenMemoryResult> BlockData.Get()
     {
-        if (this.dualData.MemoryOwnerIsValid)
+        if (this.memoryObject.MemoryOwnerIsValid)
         {
-            var memoryOwner = this.dualData.MemoryOwner.IncrementAndShare();
+            var memoryOwner = this.memoryObject.MemoryOwner.IncrementAndShare();
             this.Update();
             return new(ZenResult.Success, memoryOwner.Memory);
         }
 
-        var result = await this.flakeInternal.LoadInternal<BlockData>();
+        var result = await this.flakeInternal.StorageToData<BlockData>();
         if (result.IsSuccess)
         {
-            this.Update(this.dualData.SetMemoryOwnerInternal(result.Data, null), false);
+            this.Update(this.memoryObject.SetMemoryOwnerInternal(result.Data, null), false);
             return new(result.Result, result.Data.IncrementAndShare().Memory);
         }
         else
@@ -79,30 +79,22 @@ internal class BlockDataImpl : HimoGoshujinClass.Himo, BlockData, IBaseData
 
     async Task<ZenObjectResult<T>> BlockData.GetObject<T>()
     {
-        if (this.dualData.TryGetObjectInternal(out T? obj) == ZenResult.Success)
+        if (this.memoryObject.TryGetObjectInternal(out T? obj) == ZenResult.Success)
         {
             return new(ZenResult.Success, obj);
         }
 
-        var result = await this.flakeInternal.LoadInternal<BlockData>();
+        var result = await this.flakeInternal.StorageToData<BlockData>();
         if (result.IsSuccess)
         {
-            this.Update(this.dualData.SetMemoryOwnerInternal(result.Data, null), false);
-            var objectResult = this.dualData.TryGetObjectInternal(out obj);
+            this.Update(this.memoryObject.SetMemoryOwnerInternal(result.Data, null), false);
+            var objectResult = this.memoryObject.TryGetObjectInternal(out obj);
             return new(objectResult, obj);
         }
         else
         {
             return new(result.Result);
         }
-    }
-
-    public ZenResult TryGetObject<T>(out T? obj)
-        where T : ITinyhandSerialize<T>
-    {// using (Flake.semaphore)
-        var result = this.dualData.TryGetObjectInternal(out obj);
-        this.Update();
-        return result;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -117,23 +109,20 @@ internal class BlockDataImpl : HimoGoshujinClass.Himo, BlockData, IBaseData
     }
 
     private bool isSaved = true;
-    private MemoryOwnerAndObject dualData = new();
+    private MemoryObject memoryObject = new();
 
-    public void Save()
+    void IBaseData.Save()
     {
         if (!this.isSaved)
         {// Not saved.
-            var memoryOwner = this.dualData.MemoryOwner.IncrementAndShare();
-            this.flakeInternal.SaveInternal<BlockData>(memoryOwner);
-            memoryOwner.Return();
-
+            this.flakeInternal.DataToStorage<BlockData>(this.memoryObject.MemoryOwner);
             this.isSaved = true;
         }
     }
 
-    public void Unload()
+    void IBaseData.Unload()
     {
-        var memoryDifference = this.dualData.Clear();
+        var memoryDifference = this.memoryObject.Clear();
         this.Remove(memoryDifference);
     }
 }

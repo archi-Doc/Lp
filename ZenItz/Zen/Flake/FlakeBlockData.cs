@@ -6,66 +6,66 @@ public partial class Zen<TIdentifier>
 {
     public partial class Flake
     {
-        public FragmentDataMethods FragmentData => new(this);
+        public BlockDataMethods BlockData => new(this);
 
-        public readonly struct FragmentDataMethods
+        public readonly struct BlockDataMethods
         {
-            public FragmentDataMethods(Flake flake)
+            public BlockDataMethods(Flake flake)
             {
                 this.flake = flake;
             }
 
-            public ZenResult Set(TIdentifier fragmentId, ReadOnlySpan<byte> span)
+            public ZenResult Set(ReadOnlySpan<byte> span)
             {
-                using (var obj = this.flake.Lock<FragmentData>())
+                using (var obj = this.flake.Lock<BlockData>())
                 {
                     if (obj.Data is null)
                     {
                         return ZenResult.NoData;
                     }
 
-                    return obj.Data.Set(fragmentId, span);
+                    return obj.Data.Set(span);
                 }
             }
 
-            public ZenResult SetObject<T>(TIdentifier fragmentId, T @object)
+            public ZenResult SetObject<T>(T @object)
                 where T : ITinyhandSerialize<T>
             {
-                using (var obj = this.flake.Lock<FragmentData>())
+                using (var obj = this.flake.Lock<BlockData>())
                 {
                     if (obj.Data is null)
                     {
                         return ZenResult.NoData;
                     }
 
-                    return obj.Data.SetObject(fragmentId, @object);
+                    return obj.Data.SetObject(@object);
                 }
             }
 
-            public Task<ZenMemoryResult> Get(TIdentifier fragmentId)
+            public Task<ZenMemoryResult> Get()
             {
-                using (var obj = this.flake.Lock<FragmentData>())
+                using (var obj = this.flake.Lock<BlockData>())
                 {
                     if (obj.Data is null)
                     {
                         return Task.FromResult(new ZenMemoryResult(ZenResult.NoData));
                     }
 
-                    return obj.Data.Get(fragmentId);
+                    return obj.Data.Get();
                 }
             }
 
-            public Task<ZenObjectResult<T>> GetObject<T>(TIdentifier fragmentId)
+            public Task<ZenObjectResult<T>> GetObject<T>()
                 where T : ITinyhandSerialize<T>
             {
-                using (var obj = this.flake.Lock<FragmentData>())
+                using (var obj = this.flake.Lock<BlockData>())
                 {
                     if (obj.Data is null)
                     {
                         return Task.FromResult(new ZenObjectResult<T>(ZenResult.NoData));
                     }
 
-                    return obj.Data.GetObject<T>(fragmentId);
+                    return obj.Data.GetObject<T>();
                 }
             }
 

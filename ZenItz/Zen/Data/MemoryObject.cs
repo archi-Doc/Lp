@@ -2,9 +2,9 @@
 
 namespace ZenItz;
 
-internal partial class MemoryOwnerAndObject
+internal partial class MemoryObject
 {
-    public MemoryOwnerAndObject()
+    public MemoryObject()
     {
     }
 

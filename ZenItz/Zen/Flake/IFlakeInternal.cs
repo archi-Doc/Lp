@@ -6,16 +6,18 @@ public interface IFlakeInternal
 {
     IZenInternal ZenInternal { get; }
 
+    ZenData Data { get; }
+
     ZenOptions Options { get; }
 
-    void SaveInternal<TData>(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
+    void DataToStorage<TData>(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
         where TData : IData;
 
-    Task<ZenMemoryOwnerResult> LoadInternal<TData>()
+    Task<ZenMemoryOwnerResult> StorageToData<TData>()
         where TData : IData;
 
-    void RemoveInternal<TData>()
+    void DeleteStorage<TData>()
         where TData : IData;
 
-    void Save(int id, bool unload);
+    void SaveData(int id, bool unload);
 }

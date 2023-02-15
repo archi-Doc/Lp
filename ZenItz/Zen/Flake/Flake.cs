@@ -18,58 +18,99 @@ public partial class Zen<TIdentifier>
     [ValueLinkObject]
     public partial class Flake : IFlakeInternal
     {
-        public struct DataOperation<TData> : IDisposable
-            where TData : IData
+        [Link(Primary = true, Name = "GetQueue", Type = ChainType.QueueList)]
+        internal Flake()
         {
-            public DataOperation(Flake flake)
-            {
-                this.flake = flake;
-            }
-
-            public bool IsValid => this.data != null;
-
-            public TData? Data => this.data;
-
-            public void Dispose()
-            {
-                this.Exit();
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            internal bool Enter()
-            {
-                if (!this.lockTaken)
-                {
-                    this.lockTaken = this.flake.semaphore.Enter();
-                }
-
-                return this.lockTaken;
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            internal void Exit()
-            {
-                this.data = default;
-                if (this.lockTaken)
-                {
-                    this.flake.semaphore.Exit();
-                    this.lockTaken = false;
-                }
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            internal void SetData(TData data)
-                => this.data = data;
-
-            private readonly Flake flake;
-            private TData? data;
-            private bool lockTaken;
         }
 
-        public DataOperation<TData> Lock<TData>()
+        internal Flake(Zen<TIdentifier> zen, Flake? parent, TIdentifier identifier)
+        {
+            this.Zen = zen;
+            this.Parent = parent;
+            this.identifier = identifier;
+        }
+
+        #region IFlakeInternal
+
+        IZenInternal IFlakeInternal.ZenInternal => this.Zen;
+
+        ZenData IFlakeInternal.Data => this.Zen.Data;
+
+        ZenOptions IFlakeInternal.Options => this.Zen.Options;
+
+        void IFlakeInternal.DataToStorage<TData>(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
+        {// using (this.semaphore.Lock())
+            var id = TData.StaticId;
+            for (var i = 0; i < this.dataObject.Length; i++)
+            {
+                if (this.dataObject[i].Id == id)
+                {
+                    this.Zen.Storage.Save(ref this.dataObject[i].File, memoryOwner);
+                    return;
+                }
+            }
+        }
+
+        async Task<ZenMemoryOwnerResult> IFlakeInternal.StorageToData<TData>()
+        {// using (this.semaphore.Lock())
+            var dataObject = this.TryGetDataObject<TData>();
+            if (!dataObject.IsValid)
+            {
+                return new(ZenResult.NoData);
+            }
+
+            var file = dataObject.File;
+            if (!ZenHelper.IsValidFile(file))
+            {
+                return new(ZenResult.NoData);
+            }
+
+            return await this.Zen.Storage.Load(file);
+        }
+
+        void IFlakeInternal.DeleteStorage<TData>()
+        {// using (this.semaphore.Lock())
+            var dataObject = this.TryGetDataObject<TData>();
+            if (dataObject.IsValid)
+            {
+                this.Zen.Storage.Delete(dataObject.File);
+                return;
+            }
+        }
+
+        /// <summary>
+        /// Called from outside Flake, unloads DataObjects with matching id.
+        /// </summary>
+        /// <param name="id">The specified id.</param>
+        /// <param name="unload"><see langword="true"/>; unload data.</param>
+        void IFlakeInternal.SaveData(int id, bool unload)
+        {
+            using (this.semaphore.Lock())
+            {
+                for (var i = 0; i < this.dataObject.Length; i++)
+                {
+                    if (this.dataObject[i].Id == id)
+                    {
+                        this.dataObject[i].Save();
+                        if (unload)
+                        {
+                            this.dataObject[i].Unload();
+                        }
+
+                        return;
+                    }
+                }
+            }
+        }
+
+        #endregion
+
+        #region Main
+
+        public LockOperation<TData> Lock<TData>()
            where TData : IData
         {
-            var operation = new DataOperation<TData>(this);
+            var operation = new LockOperation<TData>(this);
 
             operation.Enter();
             if (this.IsRemoved)
@@ -89,7 +130,7 @@ public partial class Zen<TIdentifier>
             return operation;
         }
 
-        public DataOperation<TData> LockChild<TData>(TIdentifier id)
+        public LockOperation<TData> LockChild<TData>(TIdentifier id)
             where TData : IData
         {
             Flake? flake;
@@ -113,107 +154,6 @@ public partial class Zen<TIdentifier>
 
             return flake.Lock<TData>();
         }
-
-        [Link(Primary = true, Name = "GetQueue", Type = ChainType.QueueList)]
-        internal Flake()
-        {
-        }
-
-        internal Flake(Zen<TIdentifier> zen, Flake? parent, TIdentifier identifier)
-        {
-            this.Zen = zen;
-            this.Parent = parent;
-            this.identifier = identifier;
-        }
-
-        #region IFlakeInternal
-
-        IZenInternal IFlakeInternal.ZenInternal => this.Zen;
-
-        ZenOptions IFlakeInternal.Options => this.Zen.Options;
-
-        void IFlakeInternal.SaveInternal<TData>(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
-        {// using (this.semaphore.Lock())
-            var id = TData.StaticId;
-            for (var i = 0; i < this.dataObject.Length; i++)
-            {
-                if (this.dataObject[i].Id == id)
-                {
-                    this.Zen.IO.Save(ref this.dataObject[i].File, memoryOwner);
-                    return;
-                }
-            }
-        }
-
-        async Task<ZenMemoryOwnerResult> IFlakeInternal.LoadInternal<TData>()
-        {// using (this.semaphore.Lock())
-            var dataObject = this.TryGetDataObject<TData>();
-            if (!dataObject.IsValid)
-            {
-                return new(ZenResult.NoData);
-            }
-
-            var file = dataObject.File;
-            if (!ZenHelper.IsValidFile(file))
-            {
-                return new(ZenResult.NoData);
-            }
-
-            return await this.Zen.IO.Load(file);
-
-            /*var result = default(ZenMemoryOwnerResult);
-            try
-            {
-                this.semaphore.Exit();
-                result = await this.Zen.IO.Load(file);
-            }
-            finally
-            {
-                this.semaphore.Enter();
-            }
-
-            if (this.IsRemoved)
-            {
-                return new(ZenResult.Removed);
-            }
-
-            return result;*/
-        }
-
-        void IFlakeInternal.RemoveInternal<TData>()
-        {// using (this.semaphore.Lock())
-            var dataObject = this.TryGetDataObject<TData>();
-            if (dataObject.IsValid)
-            {
-                this.Zen.IO.Remove(dataObject.File);
-                return;
-            }
-        }
-
-        /// <summary>
-        /// Called from outside Flake, unloads DataObjects with matching id.
-        /// </summary>
-        /// <param name="id">The specified id.</param>
-        /// <param name="unload"><see langword="true"/>; unload data.</param>
-        void IFlakeInternal.Save(int id, bool unload)
-        {
-            using (this.semaphore.Lock())
-            {
-                for (var i = 0; i < this.dataObject.Length; i++)
-                {
-                    if (this.dataObject[i].Id == id)
-                    {
-                        this.dataObject[i].Save();
-                        this.dataObject[i].Unload();
-                        return;
-                    }
-                }
-            }
-        }
-
-        #endregion
-
-        #region Main
 
         public void Save(bool unload = false)
         {
@@ -363,7 +303,8 @@ public partial class Zen<TIdentifier>
 
                 foreach (var x in this.dataObject)
                 {
-                    x.Remove(this.Zen.IO);
+                    this.Zen.Storage.Delete(x.File);
+                    x.Delete();
                 }
 
                 this.dataObject = Array.Empty<DataObject>();
@@ -380,19 +321,13 @@ public partial class Zen<TIdentifier>
         internal TIdentifier identifier = default!;
 
         [Key(1)]
-        internal ulong flakeFile;
-
-        [Key(2)]
-        internal ulong fragmentFile;
-
-        [Key(3)]
         internal Flake.GoshujinClass? childFlakes;
 
-        [Key(4)]
-        public int FlakeId { get; private set; }
-
-        [Key(5)]
+        [Key(2)]
         private DataObject[] dataObject = Array.Empty<DataObject>();
+
+        [Key(3)]
+        public int FlakeId { get; private set; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private (DataObject DataObject, bool Created) GetOrCreateDataObject<TData>()
@@ -435,37 +370,6 @@ public partial class Zen<TIdentifier>
             }
 
             return default;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private DataObject TryGetDataObject(int id)
-        {// using (this.semaphore.Lock())
-            for (var i = 0; i < this.dataObject.Length; i++)
-            {
-                if (this.dataObject[i].Id == id)
-                {
-                    return this.dataObject[i];
-                }
-            }
-
-            return default;
-        }
-
-        private int TryGetFlakeId(ReadOnlySpan<byte> data)
-        {
-            try
-            {
-                var reader = new TinyhandReader(data);
-                if (reader.TryReadArrayHeader(out var count) && count == 2)
-                {
-                    return reader.ReadInt32();
-                }
-            }
-            catch
-            {
-            }
-
-            return 0;
         }
 
         private readonly SemaphoreLock semaphore = new();

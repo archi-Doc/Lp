@@ -140,7 +140,7 @@ public partial class HimoGoshujinClass
 
             for (var i = 0; i < count; i++)
             {
-                array[i].FlakeInternal.Save(array[i].Id, true);
+                array[i].FlakeInternal.SaveData(array[i].Id, true);
             }
         }
         while (Volatile.Read(ref this.memoryUsage) > limit);

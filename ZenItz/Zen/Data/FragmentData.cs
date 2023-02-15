@@ -6,20 +6,6 @@ namespace ZenItz;
 
 public partial class Zen<TIdentifier>
 {
-    [ValueLinkObject]
-    internal partial class FragmentObject : MemoryOwnerAndObject
-    {
-        public FragmentObject(TIdentifier identifier)
-            : base()
-        {
-            this.TIdentifier = identifier;
-        }
-
-        [Link(Primary = true, NoValue = true, Name = "Id", Type = ChainType.Unordered)]
-        [Link(Name = "OrderedId", Type = ChainType.Ordered)]
-        public TIdentifier TIdentifier { get; private set; }
-    }
-
     public interface FragmentData : IData
     {
         const int Id = 2;
@@ -36,6 +22,7 @@ public partial class Zen<TIdentifier>
         Task<ZenObjectResult<T>> GetObject<T>(TIdentifier fragmentId)
             where T : ITinyhandSerialize<T>;
 
+        bool Remove(TIdentifier fragmentId);
     }
 
     internal class FragmentDataImpl : HimoGoshujinClass.Himo, FragmentData, IBaseData
@@ -47,18 +34,17 @@ public partial class Zen<TIdentifier>
 
         public override int Id => FragmentData.Id;
 
-        public ZenResult Set(TIdentifier fragmentId, ReadOnlySpan<byte> span)
+        ZenResult FragmentData.Set(TIdentifier fragmentId, ReadOnlySpan<byte> span)
         {
             if (span.Length > this.flakeInternal.Options.MaxFragmentSize)
             {
                 return ZenResult.OverSizeLimit;
             }
 
-            return this.fragmentHimo.SetSpan(fragmentId, span, true);
+            return this.SetSpan(fragmentId, span, true);
         }
 
-        public ZenResult SetObject<T>(TIdentifier fragmentId, T obj)
-            where T : ITinyhandSerialize<T>
+        ZenResult FragmentData.SetObject<T>(TIdentifier fragmentId, T obj)
         {
             if (!FlakeFragmentService.TrySerialize(obj, out var memoryOwner))
             {
@@ -69,110 +55,57 @@ public partial class Zen<TIdentifier>
                 return ZenResult.OverSizeLimit;
             }
 
-            return this.fragmentHimo.SetMemoryOwner(fragmentId, memoryOwner.AsReadOnly(), obj, true);
+            return this.SetMemoryOwner(fragmentId, memoryOwner.AsReadOnly(), obj, true);
         }
 
-        public async Task<ZenMemoryResult> Get(TIdentifier fragmentId)
+        async Task<ZenMemoryResult> FragmentData.Get(TIdentifier fragmentId)
         {
-            ulong file = 0;
-
-            if (this.fragmentHimo != null)
-            {// Memory
-                var fragmentResult = this.fragmentHimo.TryGetMemoryOwner(fragmentId, out var memoryOwner);
-                if (fragmentResult == FragmentHimo.Result.Success)
-                {
-                    return new(ZenResult.Success, memoryOwner.Memory); // Skip MemoryOwner.Return()
-                }
-                else if (fragmentResult == FragmentHimo.Result.NotFound)
-                {
-                    return new(ZenResult.NoData);
-                }
-            }
-            else
-            {// Load
-                file = this.fragmentFile;
-            }
-
-            if (ZenHelper.IsValidFile(file))
+            if (this.fragments == null)
             {
-                var result = await this.Zen.IO.Load(file);
-                if (!result.IsSuccess)
-                {
-                    return new(result.Result);
-                }
+                this.fragments = await this.PrepareFragmentsAsync().ConfigureAwait(false);
+            }
 
-                using (this.semaphore.Lock())
-                {
-                    if (this.IsRemoved)
-                    {
-                        return new(ZenResult.Removed);
-                    }
-
-                    this.fragmentHimo ??= new(this);
-                    this.fragmentHimo.LoadInternal(result.Data);
-
-                    var fragmentResult = this.fragmentHimo.TryGetMemoryOwner(fragmentId, out var memoryOwner);
-                    if (fragmentResult == FragmentHimo.Result.Success)
-                    {
-                        return new(ZenResult.Success, memoryOwner.IncrementAndShare().Memory); // Skip MemoryOwner.Return()
-                    }
-                }
+            if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragmentData))
+            {// Found
+                this.Update();
+                return new(ZenResult.Success, fragmentData.MemoryOwner.IncrementAndShare().Memory);
             }
 
             return new(ZenResult.NoData);
         }
 
-        public async Task<ZenObjectResult<T>> GetObject<T>(TIdentifier fragmentId)
-            where T : ITinyhandSerialize<T>
+        async Task<ZenObjectResult<T>> FragmentData.GetObject<T>(TIdentifier fragmentId)
         {
-            ulong file = 0;
-            using (this.semaphore.Lock())
+            if (this.fragments == null)
             {
-                if (this.IsRemoved)
-                {
-                    return new(ZenResult.Removed);
-                }
-
-                if (this.fragmentHimo != null)
-                {// Memory
-                    var fragmentResult = this.fragmentHimo.TryGetObject(fragmentId, out T? obj);
-                    return new(fragmentResult, obj);
-                }
-                else
-                {// Load
-                    file = this.fragmentFile;
-                }
+                this.fragments = await this.PrepareFragmentsAsync().ConfigureAwait(false);
             }
 
-            if (ZenHelper.IsValidFile(file))
-            {
-                var result = await this.Zen.IO.Load(file);
-                if (!result.IsSuccess)
-                {
-                    return new(result.Result);
-                }
-
-                using (this.semaphore.Lock())
-                {
-                    if (this.IsRemoved)
-                    {
-                        return new(ZenResult.Removed);
-                    }
-
-                    this.fragmentHimo ??= new(this);
-                    this.fragmentHimo.LoadInternal(result.Data);
-
-                    var fragmentResult = this.fragmentHimo.TryGetObject(fragmentId, out T? obj);
-                    return new(fragmentResult, obj);
-                }
+            if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragmentData))
+            {// Found
+                var result = fragmentData.TryGetObjectInternal<T>(out var obj);
+                this.Update();
+                return new(result, obj);
             }
 
             return new(ZenResult.NoData);
         }
 
-        public bool RemoveFragment(TIdentifier fragmentId)
+        bool FragmentData.Remove(TIdentifier fragmentId)
         {
-            return this.RemoveInternal(fragmentId);
+            if (this.fragments == null)
+            {
+                this.fragments = this.PrepareFragments();
+            }
+
+            if (!this.fragments.IdChain.TryGetValue(fragmentId, out var fragmentData))
+            {// Not found
+                return false;
+            }
+
+            fragmentData.Goshujin = null;
+            this.Remove(fragmentData.Clear());
+            return true;
         }
 
         public void Save()
@@ -192,7 +125,7 @@ public partial class Zen<TIdentifier>
 
                     this.Change(memoryDifference);
                     var memoryOwner = new ByteArrayPool.ReadOnlyMemoryOwner(writer.FlushAndGetArray());
-                    this.flakeInternal.SaveInternal<FragmentData>(memoryOwner);
+                    this.flakeInternal.DataToStorage<FragmentData>(memoryOwner);
                 }
 
                 this.isSaved = true;
@@ -201,23 +134,6 @@ public partial class Zen<TIdentifier>
 
         public void Unload()
         {
-        }
-
-        private bool RemoveInternal(TIdentifier fragmentId)
-        {// using (Flake.semaphore)
-            if (this.fragments == null)
-            {
-                this.fragments = this.PrepareFragments();
-            }
-
-            if (!this.fragments.IdChain.TryGetValue(fragmentId, out var fragmentData))
-            {// Not found
-                return false;
-            }
-
-            fragmentData.Goshujin = null;
-            this.Remove(fragmentData.Clear());
-            return true;
         }
 
         private bool LoadInternal(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
@@ -264,7 +180,7 @@ public partial class Zen<TIdentifier>
                 return this.fragments;
             }
 
-            var result = this.flakeInternal.LoadInternal<FragmentData>().Result;
+            var result = this.flakeInternal.StorageToData<FragmentData>().Result;
             if (result.IsSuccess)
             {
                 if (this.LoadInternal(result.Data))
@@ -283,7 +199,7 @@ public partial class Zen<TIdentifier>
                 return this.fragments;
             }
 
-            var result = await this.flakeInternal.LoadInternal<FragmentData>().ConfigureAwait(false);
+            var result = await this.flakeInternal.StorageToData<FragmentData>().ConfigureAwait(false);
             if (result.IsSuccess)
             {
                 if (this.LoadInternal(result.Data))
@@ -309,8 +225,8 @@ public partial class Zen<TIdentifier>
         private bool isSaved = true;
         private FragmentObject.GoshujinClass? fragments; // by Yamamoto.
 
-        public ZenResult SetSpan(TIdentifier fragmentId, ReadOnlySpan<byte> data, bool clearSavedFlag)
-        {// using (Flake.semaphore)
+        private ZenResult SetSpan(TIdentifier fragmentId, ReadOnlySpan<byte> data, bool clearSavedFlag)
+        {
             if (this.fragments == null)
             {
                 this.fragments = this.PrepareFragments();
@@ -332,7 +248,7 @@ public partial class Zen<TIdentifier>
             return ZenResult.Success;
         }
 
-        public ZenResult SetMemoryOwner(TIdentifier fragmentId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved, object? obj, bool clearSavedFlag)
+        private ZenResult SetMemoryOwner(TIdentifier fragmentId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved, object? obj, bool clearSavedFlag)
         {// using (Flake.semaphore)
             if (this.fragments == null)
             {
@@ -342,7 +258,7 @@ public partial class Zen<TIdentifier>
             FragmentObject? fragmentObject;
             if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragmentObject))
             {// New
-                if (this.fragments.IdChain.Count >= this.Flake.Zen.Options.MaxFragmentCount)
+                if (this.fragments.IdChain.Count >= this.flakeInternal.Options.MaxFragmentCount)
                 {
                     return ZenResult.OverNumberLimit;
                 }
@@ -353,44 +269,6 @@ public partial class Zen<TIdentifier>
 
             this.Update(fragmentObject.SetMemoryOwnerInternal(dataToBeMoved, obj), clearSavedFlag);
             return ZenResult.Success;
-        }
-
-        public Result TryGetMemoryOwner(TIdentifier fragmentId, out ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
-        {// using (Flake.semaphore)
-            if (this.fragments == null)
-            {
-                memoryOwner = default;
-                return Result.NotLoaded;
-            }
-
-            if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragmentData))
-            {// Found
-                memoryOwner = fragmentData.MemoryOwner.IncrementAndShare();
-                return Result.Success;
-            }
-
-            memoryOwner = default;
-            return Result.NotFound;
-        }
-
-        public ZenResult TryGetObject<T>(TIdentifier fragmentId, out T? obj)
-            where T : ITinyhandSerialize<T>
-        {// using (Flake.semaphore)
-            if (this.fragments == null)
-            {
-                obj = default;
-                return ZenResult.NoData;
-            }
-
-            if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragmentData))
-            {// Found
-                var result = fragmentData.TryGetObjectInternal(out obj);
-                this.Update();
-                return result;
-            }
-
-            obj = default;
-            return ZenResult.NoData;
         }
     }
 }

@@ -39,7 +39,7 @@ internal partial struct DataObject : ITinyhandSerialize<DataObject>
     {
         if (this.Data == null)
         {
-            var construtor = ZenData.TryGetConstructor(this.Id);
+            var construtor = flakeInternal.Data.TryGetConstructor(this.Id);
             if (construtor != null)
             {
                 this.Data = construtor(flakeInternal);
@@ -65,11 +65,10 @@ internal partial struct DataObject : ITinyhandSerialize<DataObject>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void Remove(ZenIO io)
+    internal void Delete()
     {
         this.Data?.Unload();
         this.Data = null;
-        io.Remove(this.File);
         this.File = 0;
     }
 }

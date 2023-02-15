@@ -4,11 +4,11 @@ using ZenItz.Results;
 
 namespace ZenItz;
 
-public sealed class ZenIO
+public sealed class Storage
 {
     public const int DirectoryRotationThreshold = 1024 * 1024 * 100; // 100 MB
 
-    internal ZenIO()
+    internal Storage()
     {
     }
 
@@ -68,7 +68,7 @@ public sealed class ZenIO
         return AddDictionaryResult.Success;
     }
 
-    public void RemoveAll()
+    public void DeleteAll()
     {
         string[] directories;
         lock (this.syncObject)
@@ -138,7 +138,7 @@ public sealed class ZenIO
         return await directory.Load(file);
     }
 
-    internal void Remove(ulong file)
+    internal void Delete(ulong file)
     {
         if (!ZenHelper.IsValidFile(file))
         {// Invalid file.
@@ -154,7 +154,7 @@ public sealed class ZenIO
             }
         }
 
-        directory.Remove(file);
+        directory.Delete(file);
     }
 
     /*internal void Restart()

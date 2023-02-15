@@ -28,7 +28,7 @@ public class ZenDirSubcommandAdd : ISimpleCommandAsync<ZenDirOptionsAdd>
         }
 
         // await this.zenControl.Zen.Pause();
-        var result = this.zenControl.Zen.IO.AddDirectory(option.Path, capacity: cap);
+        var result = this.zenControl.Zen.Storage.AddDirectory(option.Path, capacity: cap);
         // this.zenControl.Zen.Restart();
 
         if (result == AddDictionaryResult.Success)

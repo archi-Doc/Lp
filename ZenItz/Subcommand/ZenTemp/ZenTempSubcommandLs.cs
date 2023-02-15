@@ -16,7 +16,7 @@ public class ZenTempSubcommandLs : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        var info = this.zenControl.Zen.IO.GetDirectoryInformation();
+        var info = this.zenControl.Zen.Storage.GetDirectoryInformation();
 
         foreach (var x in Enumerable.Range(0, 5))
         {

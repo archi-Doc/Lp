@@ -10,10 +10,10 @@ public class ZenData
 
     public delegate IBaseData ConstrutorDelegate(IFlakeInternal fromDataToIO);
 
-    public ZenData(int maxId = DefaultMaxId)
+    public ZenData()
     {
-        this.MaxId = maxId;
-        this.constructors = new ConstrutorDelegate[maxId];
+        this.MaxId = DefaultMaxId;
+        this.constructors = new ConstrutorDelegate[this.MaxId];
     }
 
     public bool Register<TData>(ConstrutorDelegate construtor)
@@ -27,6 +27,11 @@ public class ZenData
 
         this.constructors[id] = construtor;
         return true;
+    }
+
+    public void Resize(int max)
+    {
+        Array.Resize(ref this.constructors, max);
     }
 
     public int MaxId { get; private set; }

@@ -40,7 +40,7 @@ public partial class ZenTest
         var buffer2 = new byte[Identifier.Length];
         Identifier.Zero.TryWriteBytes(buffer);
         f!.BlockData.Set(buffer);
-        var result = await f!.BlockData.GetData();
+        var result = await f!.BlockData.Get();
         result.DataEquals(buffer).IsTrue();
 
         // Set flakes
@@ -64,7 +64,7 @@ public partial class ZenTest
             f.IsNotNull();
 
             identifier.TryWriteBytes(buffer);
-            result = await f!.BlockData.GetData();
+            result = await f!.BlockData.Get();
             result.DataEquals(buffer).IsTrue();
         }
 
@@ -77,13 +77,13 @@ public partial class ZenTest
             identifier = new Identifier(i);
             identifier.TryWriteBytes(buffer);
 
-            f!.SetFragment(identifier, buffer).Is(ZenResult.Success);
+            f!.FragmentData.Set(identifier, buffer).Is(ZenResult.Success);
         }
 
         identifier = new Identifier(1999);
         identifier.TryWriteBytes(buffer);
 
-        f!.SetFragment(identifier, buffer).Is(ZenResult.OverNumberLimit);
+        f!.FragmentData.Set(identifier, buffer).Is(ZenResult.OverNumberLimit);
 
         await TestHelper.StopZen(zen);
     }
@@ -103,7 +103,7 @@ public partial class ZenTest
         for (var i = 0; i < N; i++)
         {
             flake = root.GetOrCreateChild(new(i));
-            flake.SetData(bin.AsSpan(0, i));
+            flake.BlockData.Set(bin.AsSpan(0, i));
         }
 
         // Get flakes and check
@@ -112,7 +112,7 @@ public partial class ZenTest
             flake = zen.Root.TryGetChild(new(i));
             flake.IsNotNull();
 
-            var result = await flake!.GetData();
+            var result = await flake!.BlockData.Get();
             result.DataEquals(bin.AsSpan(0, i)).IsTrue();
         }
 
@@ -124,7 +124,7 @@ public partial class ZenTest
             flake = zen.Root.TryGetChild(new(i));
             flake.IsNotNull();
 
-            var result = await flake!.BlockData.GetData();
+            var result = await flake!.BlockData.Get();
             result.DataEquals(bin.AsSpan(0, i)).IsTrue();
         }
 
@@ -146,22 +146,22 @@ public partial class ZenTest
 
         // Set 1
         var flake = root.GetOrCreateChild(new(1));
-        flake.BlockData.SetDataObject(t1);
-        var result = await flake.BlockData.GetDataObject<TestObject>();
+        flake.BlockData.SetObject(t1);
+        var result = await flake.BlockData.GetObject<TestObject>();
         result.Object.IsStructuralEqual(t1);
 
         // Set 2
-        flake.SetFragmentObject(new(2), t2);
-        result = await flake.GetFragmentObject<TestObject>(new(2));
+        flake.FragmentData.SetObject(new(2), t2);
+        result = await flake.FragmentData.GetObject<TestObject>(new(2));
         result.Object.IsStructuralEqual(t2);
 
         // Set and remove 3
-        flake.RemoveFragment(new(3)).IsFalse();
-        flake.SetFragmentObject(new(3), t3);
-        flake.SetFragment(new(3), TinyhandSerializer.SerializeObject(t3));
-        result = await flake.GetFragmentObject<TestObject>(new(3));
+        flake.FragmentData.Remove(new(3)).IsFalse();
+        flake.FragmentData.SetObject(new(3), t3);
+        flake.FragmentData.Set(new(3), TinyhandSerializer.SerializeObject(t3));
+        result = await flake.FragmentData.GetObject<TestObject>(new(3));
         result.Object.IsStructuralEqual(t3);
-        flake.RemoveFragment(new(3)).IsTrue();
+        flake.FragmentData.Remove(new(3)).IsTrue();
 
         // Nested
         var nested = flake.TryGetChild(new(1));
@@ -169,38 +169,38 @@ public partial class ZenTest
         nested = flake.GetOrCreateChild(new(1));
         nested.IsNotNull();
 
-        nested.SetDataObject(t2);
-        nested.SetFragment(new(2), TinyhandSerializer.SerializeObject(t2));
+        nested.BlockData.SetObject(t2);
+        nested.FragmentData.Set(new(2), TinyhandSerializer.SerializeObject(t2));
 
         await TestHelper.StopAndStartZen(zen);
 
-        result = await flake.GetDataObject<TestObject>();
+        result = await flake.BlockData.GetObject<TestObject>();
         result.Object.IsStructuralEqual(t1);
-        result = await flake.GetFragmentObject<TestObject>(new(2));
+        result = await flake.FragmentData.GetObject<TestObject>(new(2));
         result.Object.IsStructuralEqual(t2);
 
         nested = flake.TryGetChild(new(1))!;
         nested.IsNotNull();
-        result = await nested.GetDataObject<TestObject>();
+        result = await nested.BlockData.GetObject<TestObject>();
         result.Object.IsStructuralEqual(t2);
-        result = await flake.GetFragmentObject<TestObject>(new(2));
+        result = await flake.FragmentData.GetObject<TestObject>(new(2));
         result.Object.IsStructuralEqual(t2);
 
         // Lock IO order test
         for (var i = 0; i < 100; i++)
         {
             flake = zen.Root.GetOrCreateChild(Identifier.Zero);
-            flake.SetData(new byte[] { 0, 1, });
+            flake.BlockData.Set(new byte[] { 0, 1, });
             flake.Save(true);
-            var fd = await flake.GetData();
+            var fd = await flake.BlockData.Get();
             fd.Result.Is(ZenResult.Success);
         }
 
         // Remove test
         flake = zen.Root.GetOrCreateChild(Identifier.Zero);
         flake.Remove().IsTrue();
-        flake.SetData(new byte[] { 0, 1, }).Is(ZenResult.Removed);
-        (await flake.GetData()).Result.Is(ZenResult.Removed);
+        flake.BlockData.Set(new byte[] { 0, 1, }).Is(ZenResult.Removed);
+        (await flake.BlockData.Get()).Result.Is(ZenResult.Removed);
 
         await TestHelper.StopZen(zen);
     }

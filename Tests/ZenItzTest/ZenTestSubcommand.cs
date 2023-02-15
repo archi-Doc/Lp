@@ -47,19 +47,19 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
             flake.Save(true);
             t = await flake.BlockData.GetObject<TestFragment>();
 
-            /*flake.SetFragment(Identifier.One, new byte[] { 2, 3, });
-            var result = await flake.GetFragment(Identifier.One);
+            flake.FragmentData.Set(Identifier.One, new byte[] { 2, 3, });
+            var result = await flake.FragmentData.Get(Identifier.One);
             flake.Save(true);
-            result = await flake.GetFragment(Identifier.One);
-            flake.RemoveFragment(Identifier.One);
+            result = await flake.FragmentData.Get(Identifier.One);
+            flake.FragmentData.Remove(Identifier.One);
             flake.Save(true);
-            result = await flake.GetFragment(Identifier.One);
+            result = await flake.FragmentData.Get(Identifier.One);
             flake.Save(true);
 
             var tf = new TestFragment();
             tf.Name = "A";
-            flake.SetFragmentObject(Identifier.One, tf);
-            var tc = await flake.GetFragmentObject<TestFragment>(Identifier.One);*/
+            flake.FragmentData.SetObject(Identifier.One, tf);
+            var tc = await flake.FragmentData.GetObject<TestFragment>(Identifier.One);
         }
 
         var data = new byte[ZenOptions.DefaultMaxDataSize];
