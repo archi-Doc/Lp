@@ -4,35 +4,43 @@ using System.Runtime.CompilerServices;
 
 namespace ZenItz;
 
-public static class ZenData
+public class ZenData
 {
-    public const int MaxId = 10;
+    public const int DefaultMaxId = 10;
 
-    public delegate BaseData ConstrutorDelegate(IFlakeInternal fromDataToIO);
+    public delegate IBaseData ConstrutorDelegate(IFlakeInternal fromDataToIO);
 
-    public static bool Register<TData>(ConstrutorDelegate construtor)
+    public ZenData(int maxId = DefaultMaxId)
+    {
+        this.MaxId = maxId;
+        this.constructors = new ConstrutorDelegate[maxId];
+    }
+
+    public bool Register<TData>(ConstrutorDelegate construtor)
         where TData : IData
     {
         var id = TData.StaticId;
-        if (id < 0 || id >= MaxId)
+        if (id < 0 || id >= this.constructors.Length)
         {
             return false;
         }
 
-        constructors[id] = construtor;
+        this.constructors[id] = construtor;
         return true;
     }
 
+    public int MaxId { get; private set; }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static ConstrutorDelegate? TryGetConstructor(int id)
+    internal ConstrutorDelegate? TryGetConstructor(int id)
     {
-        if (id < 0 || id >= MaxId)
+        if (id < 0 || id >= this.constructors.Length)
         {
             return null;
         }
 
-        return constructors[id];
+        return this.constructors[id];
     }
 
-    private static ConstrutorDelegate[] constructors = new ConstrutorDelegate[MaxId];
+    private ConstrutorDelegate[] constructors;
 }

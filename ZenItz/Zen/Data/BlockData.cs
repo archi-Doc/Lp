@@ -21,7 +21,7 @@ public interface BlockData : IData
             where T : ITinyhandSerialize<T>;
 }
 
-internal class BlockDataImpl : HimoGoshujinClass.Himo, BlockData, BaseData
+internal class BlockDataImpl : HimoGoshujinClass.Himo, BlockData, IBaseData
 {
     public BlockDataImpl(IFlakeInternal flakeInternal)
         : base(flakeInternal)
@@ -117,7 +117,7 @@ internal class BlockDataImpl : HimoGoshujinClass.Himo, BlockData, BaseData
     }
 
     private bool isSaved = true;
-    private DualData dualData = new();
+    private MemoryOwnerAndObject dualData = new();
 
     public void Save()
     {

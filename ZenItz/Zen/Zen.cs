@@ -23,6 +23,11 @@ public partial class Zen<TIdentifier> : IZenInternal
         this.IO = new();
         this.himoGoshujin = new(this);
         this.Root = new(this);
+
+        // Default data
+        this.Data = new();
+        this.Data.Register<BlockData>(x => new BlockDataImpl(x));
+        this.Data.Register<Zen<TIdentifier>.FragmentData>(x => new Zen<TIdentifier>.FragmentDataImpl(x));
     }
 
     public async Task<ZenStartResult> StartAsync(ZenStartParam param)
@@ -147,6 +152,8 @@ public partial class Zen<TIdentifier> : IZenInternal
     HimoGoshujinClass IZenInternal.HimoGoshujin => this.himoGoshujin;
 
     public UnitCore Core { get; init; }
+
+    public ZenData Data { get; private set; }
 
     public ZenOptions Options { get; set; } = ZenOptions.Default;
 

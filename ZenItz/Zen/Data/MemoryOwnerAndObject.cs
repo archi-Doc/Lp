@@ -2,9 +2,9 @@
 
 namespace ZenItz;
 
-internal partial class DualData
+internal partial class MemoryOwnerAndObject
 {
-    public DualData()
+    public MemoryOwnerAndObject()
     {
     }
 

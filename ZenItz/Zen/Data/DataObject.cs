@@ -32,7 +32,7 @@ internal partial struct DataObject : ITinyhandSerialize<DataObject>
 
     internal bool IsValid => this.Id != 0;
 
-    internal BaseData? Data;
+    internal IBaseData? Data;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal (object? Data, bool Created) GetOrCreateObject(IFlakeInternal flakeInternal)

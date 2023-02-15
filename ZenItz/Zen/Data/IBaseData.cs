@@ -2,7 +2,7 @@
 
 namespace ZenItz;
 
-public interface BaseData
+public interface IBaseData
 {
     void Save();
 

@@ -35,9 +35,6 @@ public class ZenControl
                 // Subcommands
                 Subcommands.ZenDirSubcommand.Configure(context);
                 Subcommands.ZenTempSubcommand.Configure(context);
-
-                // Zen data
-                ZenData.Register<BlockData>(x => new BlockDataImpl(x));
             });
         }
     }
