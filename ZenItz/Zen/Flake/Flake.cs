@@ -44,7 +44,7 @@ public partial class Zen<TIdentifier>
             {
                 if (this.dataObject[i].Id == id)
                 {
-                    this.Zen.Storage.Save(ref this.dataObject[i].File, memoryToBeShared);
+                    this.Zen.Storage.Save(ref this.dataObject[i].File, memoryToBeShared, id);
                     return;
                 }
             }

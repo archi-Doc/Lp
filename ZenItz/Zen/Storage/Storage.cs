@@ -10,13 +10,14 @@ public sealed class Storage
 
     internal Storage()
     {
+        this.data = TinyhandSerializer.Reconstruct<StorageData>();
     }
 
     public ZenDirectoryInformation[] GetDirectoryInformation()
     {
         lock (this.syncObject)
         {
-            return this.directoryGoshujin.Select(a => a.GetInformation()).ToArray();
+            return this.data.Directories.Select(a => a.GetInformation()).ToArray();
         }
     }
 
@@ -47,22 +48,22 @@ public sealed class Storage
         {
             if (id == 0)
             {
-                id = this.GetFreeDirectoryId(this.directoryGoshujin);
+                id = this.GetFreeDirectoryId(this.data.Directories);
             }
 
             var directory = new ZenDirectory(id, path);
             directory.DirectoryCapacity = capacity;
 
-            if (this.directoryGoshujin.DirectoryIdChain.ContainsKey(id))
+            if (this.data.Directories.DirectoryIdChain.ContainsKey(id))
             {
                 return AddDictionaryResult.DuplicateId;
             }
-            else if (this.directoryGoshujin.DirectoryPathChain.ContainsKey(path))
+            else if (this.data.Directories.DirectoryPathChain.ContainsKey(path))
             {
                 return AddDictionaryResult.DuplicatePath;
             }
 
-            this.directoryGoshujin.Add(directory);
+            this.data.Directories.Add(directory);
         }
 
         return AddDictionaryResult.Success;
@@ -73,7 +74,7 @@ public sealed class Storage
         string[] directories;
         lock (this.syncObject)
         {
-            directories = this.directoryGoshujin.Select(x => x.RootedPath).ToArray();
+            directories = this.data.Directories.Select(x => x.RootedPath).ToArray();
         }
 
         foreach (var x in directories)
@@ -86,16 +87,16 @@ public sealed class Storage
 
     public bool Started { get; private set; }
 
-    internal void Save(ref ulong file, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
+    internal void Save(ref ulong file, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared, int id)
     {
         ZenDirectory? directory;
         lock (this.syncObject)
         {
-            if (this.directoryGoshujin.DirectoryIdChain.Count == 0)
+            if (this.data.Directories.DirectoryIdChain.Count == 0)
             {// No directory available.
                 return;
             }
-            else if (!ZenHelper.IsValidFile(file) || !this.directoryGoshujin.DirectoryIdChain.TryGetValue(ZenHelper.ToDirectoryId(file), out directory))
+            else if (!ZenHelper.IsValidFile(file) || !this.data.Directories.DirectoryIdChain.TryGetValue(ZenHelper.ToDirectoryId(file), out directory))
             {// Get valid directory.
                 if (this.directoryRotationCount >= DirectoryRotationThreshold ||
                     this.currentDirectory == null)
@@ -114,6 +115,8 @@ public sealed class Storage
 
                 directory = this.currentDirectory;
             }
+
+            this.AddMemoryStat(id, memoryToBeShared.Memory.Length);
         }
 
         directory.Save(ref file, memoryToBeShared);
@@ -129,7 +132,7 @@ public sealed class Storage
         ZenDirectory? directory;
         lock (this.syncObject)
         {
-            if (!this.directoryGoshujin.DirectoryIdChain.TryGetValue(ZenHelper.ToDirectoryId(file), out directory))
+            if (!this.data.Directories.DirectoryIdChain.TryGetValue(ZenHelper.ToDirectoryId(file), out directory))
             {// No directory
                 return new(ZenResult.NoDirectory);
             }
@@ -148,7 +151,7 @@ public sealed class Storage
         ZenDirectory? directory;
         lock (this.syncObject)
         {
-            if (!this.directoryGoshujin.DirectoryIdChain.TryGetValue(ZenHelper.ToDirectoryId(file), out directory))
+            if (!this.data.Directories.DirectoryIdChain.TryGetValue(ZenHelper.ToDirectoryId(file), out directory))
             {// No directory
                 return;
             }
@@ -185,12 +188,12 @@ public sealed class Storage
 
         this.Options = options;
 
-        ZenDirectory.GoshujinClass? goshujin = null;
+        StorageData? storageData = null;
         if (data != null)
         {
             try
             {
-                goshujin = TinyhandSerializer.Deserialize<ZenDirectory.GoshujinClass>(data.Value);
+                storageData = TinyhandSerializer.Deserialize<StorageData>(data.Value);
             }
             catch
             {
@@ -201,9 +204,9 @@ public sealed class Storage
             }
         }
 
-        goshujin ??= new();
+        storageData ??= TinyhandSerializer.Reconstruct<StorageData>();
         List<string>? errorDirectories = null;
-        foreach (var x in goshujin)
+        foreach (var x in storageData.Directories)
         {
             if (!x.PrepareAndCheck(this))
             {
@@ -218,25 +221,25 @@ public sealed class Storage
             return ZenStartResult.ZenFileError;
         }
 
-        if (goshujin.DirectoryIdChain.Count == 0)
+        if (storageData.Directories.DirectoryIdChain.Count == 0)
         {
             try
             {
-                var defaultDirectory = new ZenDirectory(this.GetFreeDirectoryId(goshujin), PathHelper.GetRootedDirectory(this.Options.RootPath, this.Options.DefaultZenDirectory));
+                var defaultDirectory = new ZenDirectory(this.GetFreeDirectoryId(storageData.Directories), PathHelper.GetRootedDirectory(this.Options.RootPath, this.Options.DefaultZenDirectory));
                 defaultDirectory.PrepareAndCheck(this);
-                goshujin.Add(defaultDirectory);
+                storageData.Directories.Add(defaultDirectory);
             }
             catch
             {
             }
         }
 
-        foreach (var x in goshujin)
+        foreach (var x in storageData.Directories)
         {
             x.Start();
         }
 
-        if (goshujin.DirectoryIdChain.Count == 0)
+        if (storageData.Directories.DirectoryIdChain.Count == 0)
         {
             return ZenStartResult.NoDirectoryAvailable;
         }
@@ -244,7 +247,7 @@ public sealed class Storage
         lock (this.syncObject)
         {
             this.ClearGoshujin();
-            this.directoryGoshujin = goshujin;
+            this.data = storageData;
             this.currentDirectory = null;
             this.Started = true;
         }
@@ -262,7 +265,7 @@ public sealed class Storage
                 return;
             }
 
-            tasks = this.directoryGoshujin.Select(x => x.StopAsync()).ToArray();
+            tasks = this.data.Directories.Select(x => x.StopAsync()).ToArray();
         }
 
         await Task.WhenAll(tasks).ConfigureAwait(false);
@@ -283,7 +286,7 @@ public sealed class Storage
         Task[] tasks;
         lock (this.syncObject)
         {
-            tasks = this.directoryGoshujin.Select(x => x.WaitForCompletionAsync()).ToArray();
+            tasks = this.data.Directories.Select(x => x.WaitForCompletionAsync()).ToArray();
         }
 
         await Task.WhenAll(tasks).ConfigureAwait(false);
@@ -293,7 +296,7 @@ public sealed class Storage
     {
         lock (this.syncObject)
         {
-            return TinyhandSerializer.Serialize(this.directoryGoshujin);
+            return TinyhandSerializer.Serialize(this.data);
         }
     }
 
@@ -311,7 +314,7 @@ public sealed class Storage
 
     private ZenDirectory? GetValidDirectory()
     {// lock(syncObject)
-        var array = this.directoryGoshujin.ListChain.ToArray();
+        var array = this.data.Directories.ListChain.ToArray();
         if (array == null)
         {
             return null;
@@ -327,16 +330,30 @@ public sealed class Storage
 
     private void ClearGoshujin()
     {// lock(syncObject)
-        foreach (var x in this.directoryGoshujin)
+        foreach (var x in this.data.Directories)
         {
             x.Dispose();
         }
 
-        this.directoryGoshujin.Clear();
+        this.data.Directories.Clear();
+    }
+
+    private void AddMemoryStat(int id, int size)
+    {
+        if (size != 0)
+        {
+            if (!this.data.MemoryStats.TryGetValue(id, out var memoryStat))
+            {
+                memoryStat = TinyhandSerializer.Reconstruct<MemoryStat>();
+                this.data.MemoryStats.Add(id, memoryStat);
+            }
+
+            memoryStat.Add(size);
+        }
     }
 
     private object syncObject = new();
-    private ZenDirectory.GoshujinClass directoryGoshujin = new(); // lock(syncObject)
+    private StorageData data; // lock(syncObject)
     private ZenDirectory? currentDirectory; // lock(syncObject)
     private int directoryRotationCount; // lock(syncObject)
 }
