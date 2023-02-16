@@ -67,7 +67,7 @@ public partial class Zen<TIdentifier>
 
             if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragmentData))
             {// Found
-                this.Update();
+                this.UpdateHimo();
                 return new(ZenResult.Success, fragmentData.MemoryOwner.IncrementAndShare().Memory);
             }
 
@@ -84,7 +84,7 @@ public partial class Zen<TIdentifier>
             if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragmentData))
             {// Found
                 var result = fragmentData.TryGetObjectInternal<T>(out var obj);
-                this.Update();
+                this.UpdateHimo();
                 return new(result, obj);
             }
 
@@ -104,7 +104,8 @@ public partial class Zen<TIdentifier>
             }
 
             fragmentData.Goshujin = null;
-            this.Remove(fragmentData.Clear());
+            fragmentData.Clear();
+            this.RemoveHimo();
             return true;
         }
 
@@ -116,14 +117,12 @@ public partial class Zen<TIdentifier>
                 {
                     var writer = default(Tinyhand.IO.TinyhandWriter);
                     var options = TinyhandSerializerOptions.Standard;
-                    var memoryDifference = 0;
                     foreach (var x in this.fragments)
                     {
                         TinyhandSerializer.SerializeObject(ref writer, x.TIdentifier, options); // x.TIdentifier.Serialize(ref writer, options);
                         writer.Write(x.Span);
                     }
 
-                    this.Change(memoryDifference);
                     var memoryOwner = new ByteArrayPool.ReadOnlyMemoryOwner(writer.FlushAndGetArray());
                     this.flakeInternal.DataToStorage<FragmentData>(memoryOwner);
                 }
@@ -160,14 +159,14 @@ public partial class Zen<TIdentifier>
                     {
                         var fragment = new FragmentObject(identifier!);
                         var result = fragment.SetSpanInternal(byteArray);
-                        memoryDifference += result.MemoryDifference;
+                        memoryDifference += result.NewSize;
                         this.fragments.Add(fragment);
                     }
                 }
             }
             finally
             {
-                this.Change(memoryDifference);
+                this.AddCurrentSize(memoryDifference);
             }
 
             return true;
@@ -219,7 +218,7 @@ public partial class Zen<TIdentifier>
                 this.isSaved = false;
             }
 
-            this.Update(result.MemoryDifference);
+            this.UpdateHimo(result.MemoryDifference);
         }
 
         private bool isSaved = true;

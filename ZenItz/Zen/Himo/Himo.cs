@@ -24,7 +24,7 @@ public partial class HimoGoshujinClass
 
         public virtual int Id { get; }
 
-        internal void Update(int memoryDifference)
+        internal void UpdateHimo(int newSize)
         {// using (Flake.semaphore)
             var unloadFlag = false;
 
@@ -40,7 +40,8 @@ public partial class HimoGoshujinClass
                     this.Goshujin.UnloadQueueChain.Enqueue(this);
                 }
 
-                this.himoGoshujin.memoryUsage += memoryDifference;
+                this.himoGoshujin.memoryUsage += newSize - this.currentSize;
+                this.currentSize = newSize;
                 if (this.himoGoshujin.memoryUsage > this.flakeInternal.Options.MemorySizeLimit)
                 {
                     unloadFlag = true;
@@ -53,7 +54,7 @@ public partial class HimoGoshujinClass
             }
         }
 
-        internal void Update()
+        internal void UpdateHimo()
         {// using (Flake.semaphore)
             lock (this.himoGoshujin.syncObject)
             {
@@ -69,23 +70,25 @@ public partial class HimoGoshujinClass
             }
         }
 
-        internal void Remove(int memoryDifference)
+        internal void RemoveHimo()
         {// using (Flake.semaphore)
             lock (this.himoGoshujin.syncObject)
             {
                 this.Goshujin = null;
-                this.himoGoshujin.memoryUsage += memoryDifference;
+                this.himoGoshujin.memoryUsage -= this.currentSize;
+                this.currentSize = 0;
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void Change(int memoryDifference)
+        internal void AddCurrentSize(int difference)
         {
-            if (memoryDifference != 0)
+            if (difference != 0)
             {
                 lock (this.himoGoshujin.syncObject)
                 {
-                    this.himoGoshujin.memoryUsage += memoryDifference;
+                    this.currentSize += difference;
+                    this.himoGoshujin.memoryUsage += difference;
                 }
             }
         }
@@ -94,6 +97,7 @@ public partial class HimoGoshujinClass
         protected internal IFlakeInternal flakeInternal;
 #pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
         private HimoGoshujinClass himoGoshujin;
+        private int currentSize; // Current memory usage
     }
 
     public HimoGoshujinClass(IZenInternal zenInternal)

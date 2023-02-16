@@ -61,7 +61,7 @@ internal class BlockDataImpl : HimoGoshujinClass.Himo, BlockData, IBaseData
         if (this.memoryObject.MemoryOwnerIsValid)
         {
             var memoryOwner = this.memoryObject.MemoryOwner.IncrementAndShare();
-            this.Update();
+            this.UpdateHimo();
             return new(ZenResult.Success, memoryOwner.Memory);
         }
 
@@ -99,14 +99,14 @@ internal class BlockDataImpl : HimoGoshujinClass.Himo, BlockData, IBaseData
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void Update((bool Changed, int MemoryDifference) result, bool clearSavedFlag)
+    private void Update((bool Changed, int NewSize) result, bool clearSavedFlag)
     {
         if (clearSavedFlag && result.Changed)
         {
             this.isSaved = false;
         }
 
-        this.Update(result.MemoryDifference);
+        this.UpdateHimo(result.NewSize);
     }
 
     private bool isSaved = true;
@@ -123,7 +123,7 @@ internal class BlockDataImpl : HimoGoshujinClass.Himo, BlockData, IBaseData
 
     void IBaseData.Unload()
     {
-        var memoryDifference = this.memoryObject.Clear();
-        this.Remove(memoryDifference);
+        this.memoryObject.Clear();
+        this.RemoveHimo();
     }
 }

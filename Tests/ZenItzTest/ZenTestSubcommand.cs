@@ -19,7 +19,9 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
         var zen = this.ZenControl.Zen;
         var itz = this.ZenControl.Itz;
 
+        var sw = Stopwatch.StartNew();
         await zen.StartAsync(new());
+        Console.WriteLine($"Start: {sw.ElapsedMilliseconds} ms");
 
         var flake = zen.Root.GetOrCreateChild(Identifier.Zero);
         if (flake != null)
@@ -74,7 +76,7 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
         }
 
         await Console.Out.WriteLineAsync("1M flakes");
-        var sw = Stopwatch.StartNew();
+        
 
         for (var i = 0; i < 1_000_000; i++)
         {

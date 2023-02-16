@@ -8,40 +8,36 @@ internal partial class MemoryObject
     {
     }
 
-    internal (bool Changed, int MemoryDifference) SetSpanInternal(ReadOnlySpan<byte> span)
+    internal (bool Changed, int NewSize) SetSpanInternal(ReadOnlySpan<byte> span)
     {
         if (this.memoryOwnerIsValid && span.SequenceEqual(this.memoryOwner.Memory.Span))
         {// Identical
             return (false, 0);
         }
 
-        var memoryDifference = -this.memoryOwner.Memory.Length;
         this.memoryOwner = this.memoryOwner.Return();
 
-        memoryDifference += span.Length;
         this.@object = null;
         var owner = FlakeFragmentPool.Rent(span.Length);
         this.memoryOwner = owner.ToReadOnlyMemoryOwner(0, span.Length);
         this.memoryOwnerIsValid = true;
         span.CopyTo(owner.ByteArray.AsSpan());
-        return (true, memoryDifference);
+        return (true, this.memoryOwner.Memory.Length);
     }
 
-    internal (bool Changed, int MemoryDifference) SetMemoryOwnerInternal(ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved, object? obj)
+    internal (bool Changed, int NewSize) SetMemoryOwnerInternal(ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved, object? obj)
     {
         if (this.memoryOwnerIsValid && dataToBeMoved.Memory.Span.SequenceEqual(this.memoryOwner.Memory.Span))
         {// Identical
             return (false, 0);
         }
 
-        var memoryDifference = -this.memoryOwner.Memory.Length;
         this.memoryOwner = this.memoryOwner.Return();
 
-        memoryDifference += dataToBeMoved.Memory.Length;
         this.@object = obj;
         this.memoryOwner = dataToBeMoved;
         this.memoryOwnerIsValid = true;
-        return (true, memoryDifference);
+        return (true, this.memoryOwner.Memory.Length);
     }
 
     internal ZenResult TryGetObjectInternal<T>(out T? obj)
@@ -70,13 +66,11 @@ internal partial class MemoryObject
         return ZenResult.DeserializeError;
     }
 
-    internal int Clear()
+    internal void Clear()
     {
         this.@object = null;
-        var memoryDifference = -this.memoryOwner.Memory.Length;
         this.memoryOwnerIsValid = false;
         this.memoryOwner = this.memoryOwner.Return();
-        return memoryDifference;
     }
 
     internal ReadOnlySpan<byte> Span => this.memoryOwner.Memory.Span;
