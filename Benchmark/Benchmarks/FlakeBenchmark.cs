@@ -1,15 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Reflection;
 using BenchmarkDotNet.Attributes;
 using LP;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Tinyhand;
 using Tinyhand.IO;
 using ValueLink;
 using ZenItz;
-using static System.Net.Mime.MediaTypeNames;
 
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
 #pragma warning disable SA1401 // Fields should be private
@@ -178,7 +174,7 @@ public class FlakeBenchmark
         this.goshujin2Binary = TinyhandSerializer.SerializeObject(this.goshujin2);
 
         this.rootFlake = (Zen<Identifier>.Flake)Activator.CreateInstance(typeof(Zen<Identifier>.Flake), true)!;
-        for (var i = 0; i < 100_000; i++)
+        for (var i = 0; i < 1_000_000; i++)
         {
             this.rootFlake.GetOrCreateChild(new(i));
         }

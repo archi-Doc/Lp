@@ -133,6 +133,15 @@ public partial class Zen<TIdentifier>
 
         public void Unload()
         {
+            if (this.fragments is not null)
+            {
+                foreach (var x in this.fragments)
+                {
+                    x.Clear();
+                }
+            }
+
+            this.RemoveHimo();
         }
 
         private bool LoadInternal(ByteArrayPool.ReadOnlyMemoryOwner memoryOwner)
