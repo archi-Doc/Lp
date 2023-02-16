@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\LPEssentials\LPEssentials.csproj" />
+    <ProjectReference Include="..\ZenItz\ZenItz.csproj" />
   </ItemGroup>
 
 </Project>

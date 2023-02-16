@@ -76,7 +76,7 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
         }
 
         await Console.Out.WriteLineAsync("1M flakes");
-        
+        sw.Restart();
 
         for (var i = 0; i < 1_000_000; i++)
         {
