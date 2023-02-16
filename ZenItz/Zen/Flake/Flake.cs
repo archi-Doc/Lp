@@ -130,31 +130,6 @@ public partial class Zen<TIdentifier>
             return operation;
         }
 
-        public LockOperation<TData> LockChild<TData>(TIdentifier id)
-            where TData : IData
-        {
-            Flake? flake;
-            using (this.semaphore.Lock())
-            {
-                if (this.childFlakes == null)
-                {
-                    return default;
-                }
-
-                if (this.childFlakes.IdChain.TryGetValue(id, out flake))
-                {// Update GetQueue chain
-                    this.childFlakes.GetQueueChain.Remove(flake);
-                    this.childFlakes.GetQueueChain.Enqueue(flake);
-                }
-                else
-                {
-                    return default;
-                }
-            }
-
-            return flake.Lock<TData>();
-        }
-
         public void Save(bool unload = false)
         {
             using (this.semaphore.Lock())
@@ -204,6 +179,31 @@ public partial class Zen<TIdentifier>
         #endregion
 
         #region Child
+
+        public LockOperation<TData> LockChild<TData>(TIdentifier id)
+            where TData : IData
+        {
+            Flake? flake;
+            using (this.semaphore.Lock())
+            {
+                if (this.childFlakes == null)
+                {
+                    return default;
+                }
+
+                if (this.childFlakes.IdChain.TryGetValue(id, out flake))
+                {// Update GetQueue chain
+                    this.childFlakes.GetQueueChain.Remove(flake);
+                    this.childFlakes.GetQueueChain.Enqueue(flake);
+                }
+                else
+                {
+                    return default;
+                }
+            }
+
+            return flake.Lock<TData>();
+        }
 
         public Flake GetOrCreateChild(TIdentifier id)
         {

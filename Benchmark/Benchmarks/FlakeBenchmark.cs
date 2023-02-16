@@ -178,7 +178,7 @@ public class FlakeBenchmark
         this.goshujin2Binary = TinyhandSerializer.SerializeObject(this.goshujin2);
 
         this.rootFlake = (Zen<Identifier>.Flake)Activator.CreateInstance(typeof(Zen<Identifier>.Flake), true)!;
-        for (var i = 0; i < 1000_000; i++)
+        for (var i = 0; i < 100_000; i++)
         {
             this.rootFlake.GetOrCreateChild(new(i));
         }
