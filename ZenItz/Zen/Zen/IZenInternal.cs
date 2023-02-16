@@ -4,7 +4,11 @@ namespace ZenItz;
 
 public interface IZenInternal
 {
+    ZenData Data { get; }
+
     ZenOptions Options { get; }
+
+    Storage Storage { get; }
 
     HimoGoshujinClass HimoGoshujin { get; }
 }

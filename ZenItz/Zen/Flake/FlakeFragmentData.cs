@@ -17,7 +17,7 @@ public partial class Zen<TIdentifier>
 
             public ZenResult Set(TIdentifier fragmentId, ReadOnlySpan<byte> span)
             {
-                using (var obj = this.flake.Lock<FragmentData>())
+                using (var obj = this.flake.Lock<FragmentData<TIdentifier>>())
                 {
                     if (obj.Data is null)
                     {
@@ -31,7 +31,7 @@ public partial class Zen<TIdentifier>
             public ZenResult SetObject<T>(TIdentifier fragmentId, T @object)
                 where T : ITinyhandSerialize<T>
             {
-                using (var obj = this.flake.Lock<FragmentData>())
+                using (var obj = this.flake.Lock<FragmentData<TIdentifier>>())
                 {
                     if (obj.Data is null)
                     {
@@ -44,7 +44,7 @@ public partial class Zen<TIdentifier>
 
             public Task<ZenMemoryResult> Get(TIdentifier fragmentId)
             {
-                using (var obj = this.flake.Lock<FragmentData>())
+                using (var obj = this.flake.Lock<FragmentData<TIdentifier>>())
                 {
                     if (obj.Data is null)
                     {
@@ -58,7 +58,7 @@ public partial class Zen<TIdentifier>
             public Task<ZenObjectResult<T>> GetObject<T>(TIdentifier fragmentId)
                 where T : ITinyhandSerialize<T>
             {
-                using (var obj = this.flake.Lock<FragmentData>())
+                using (var obj = this.flake.Lock<FragmentData<TIdentifier>>())
                 {
                     if (obj.Data is null)
                     {
@@ -71,7 +71,7 @@ public partial class Zen<TIdentifier>
 
             public bool Remove(TIdentifier fragmentId)
             {
-                using (var obj = this.flake.Lock<FragmentData>())
+                using (var obj = this.flake.Lock<FragmentData<TIdentifier>>())
                 {
                     if (obj.Data is null)
                     {

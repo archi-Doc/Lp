@@ -2,8 +2,6 @@
 
 namespace ZenItz;
 
-#pragma warning disable SA1401 // Fields should be private
-
 public class Zen : Zen<Identifier>
 {
     public Zen(UnitCore core, ZenOptions options, ILogger<Zen<Identifier>> logger)
@@ -13,7 +11,7 @@ public class Zen : Zen<Identifier>
 }
 
 public partial class Zen<TIdentifier> : IZenInternal
-    where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
+    where TIdentifier : IEquatable<TIdentifier>, IComparable<TIdentifier>, ITinyhandSerialize<TIdentifier>
 {
     internal Zen(UnitCore core, ZenOptions options, ILogger<Zen<TIdentifier>> logger)
     {
@@ -26,7 +24,7 @@ public partial class Zen<TIdentifier> : IZenInternal
 
         this.Data = new();
         this.Data.Register<BlockData>(x => new BlockDataImpl(x));
-        this.Data.Register<FragmentData>(x => new FragmentDataImpl(x));
+        this.Data.Register<FragmentData<TIdentifier>>(x => new FragmentDataImpl<TIdentifier>(x));
     }
 
     public async Task<ZenStartResult> StartAsync(ZenStartParam param)

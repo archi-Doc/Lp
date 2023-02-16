@@ -2,19 +2,17 @@
 
 namespace ZenItz;
 
-public partial class Zen<TIdentifier>
+[ValueLinkObject]
+internal partial class FragmentObject<TIdentifier> : MemoryObject
+    where TIdentifier : IEquatable<TIdentifier>, IComparable<TIdentifier>, ITinyhandSerialize<TIdentifier>
 {
-    [ValueLinkObject]
-    internal partial class FragmentObject : MemoryObject
+    public FragmentObject(TIdentifier identifier)
+        : base()
     {
-        public FragmentObject(TIdentifier identifier)
-            : base()
-        {
-            this.TIdentifier = identifier;
-        }
-
-        [Link(Primary = true, NoValue = true, Name = "Id", Type = ChainType.Unordered)]
-        [Link(Name = "OrderedId", Type = ChainType.Ordered)]
-        public TIdentifier TIdentifier { get; private set; }
+        this.Identifier = identifier;
     }
+
+    [Link(Primary = true, NoValue = true, Name = "Id", Type = ChainType.Unordered)]
+    [Link(Name = "OrderedId", Type = ChainType.Ordered)]
+    public TIdentifier Identifier { get; private set; }
 }

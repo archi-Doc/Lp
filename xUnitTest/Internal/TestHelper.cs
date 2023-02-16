@@ -17,7 +17,7 @@ namespace xUnitTest;
 public static class TestHelper
 {
     public static async Task<Zen<TIdentifier>> CreateAndStartZen<TIdentifier>()
-        where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
+        where TIdentifier : IEquatable<TIdentifier>, IComparable<TIdentifier>, ITinyhandSerialize<TIdentifier>
     {
         var options = new ZenOptions() with
         {
@@ -33,14 +33,14 @@ public static class TestHelper
     }
 
     public static async Task StopZen<TIdentifier>(Zen<TIdentifier> zen, bool removeAll = true)
-        where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
+        where TIdentifier : IEquatable<TIdentifier>, IComparable<TIdentifier>, ITinyhandSerialize<TIdentifier>
     {
         await zen.StopAsync(new(RemoveAll: removeAll));
         zen.MemoryUsage.Is(0);
     }
 
     public static async Task StopAndStartZen<TIdentifier>(Zen<TIdentifier> zen)
-        where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
+        where TIdentifier : IEquatable<TIdentifier>, IComparable<TIdentifier>, ITinyhandSerialize<TIdentifier>
     {
         await zen.StopAsync(new());
         zen.MemoryUsage.Is(0);

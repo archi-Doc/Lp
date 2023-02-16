@@ -59,7 +59,7 @@ public class ZenControl
     }
 
     public Zen<TIdentifier> CreateZen<TIdentifier>(ZenOptions options)
-        where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
+        where TIdentifier : IEquatable<TIdentifier>, IComparable<TIdentifier>, ITinyhandSerialize<TIdentifier>
     {
         return new Zen<TIdentifier>(
             this.unitContext.ServiceProvider.GetRequiredService<UnitCore>(),
