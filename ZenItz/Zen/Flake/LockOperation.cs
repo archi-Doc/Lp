@@ -8,6 +8,8 @@ public partial class Zen<TIdentifier>
 {
     public partial class Flake
     {
+        internal const ZenResult NullDataResult = ZenResult.Removed;
+
         public struct LockOperation<TData> : IDisposable
             where TData : IData
         {

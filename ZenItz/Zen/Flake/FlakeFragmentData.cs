@@ -21,7 +21,7 @@ public partial class Zen<TIdentifier>
                 {
                     if (obj.Data is null)
                     {
-                        return ZenResult.NoData;
+                        return Flake.NullDataResult;
                     }
 
                     return obj.Data.Set(fragmentId, span);
@@ -35,7 +35,7 @@ public partial class Zen<TIdentifier>
                 {
                     if (obj.Data is null)
                     {
-                        return ZenResult.NoData;
+                        return Flake.NullDataResult;
                     }
 
                     return obj.Data.SetObject(fragmentId, @object);
@@ -48,7 +48,7 @@ public partial class Zen<TIdentifier>
                 {
                     if (obj.Data is null)
                     {
-                        return Task.FromResult(new ZenMemoryResult(ZenResult.NoData));
+                        return Task.FromResult(new ZenMemoryResult(Flake.NullDataResult));
                     }
 
                     return obj.Data.Get(fragmentId);
@@ -62,7 +62,7 @@ public partial class Zen<TIdentifier>
                 {
                     if (obj.Data is null)
                     {
-                        return Task.FromResult(new ZenObjectResult<T>(ZenResult.NoData));
+                        return Task.FromResult(new ZenObjectResult<T>(Flake.NullDataResult));
                     }
 
                     return obj.Data.GetObject<T>(fragmentId);
