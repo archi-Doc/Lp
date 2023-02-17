@@ -1,24 +1,25 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.CompilerServices;
+using ZenItz;
 
-namespace ZenItz.Datum;
+namespace CrystalData;
 
-public partial class DatumBase<T>
+public partial class BaseData<T>
 {
     internal const ZenResult NullDataResult = ZenResult.Removed;
 
-    public struct LockOperation<TData> : IDisposable
-        where TData : IData
+    public struct LockOperation<TDatum> : IDisposable
+        where TDatum : IData
     {
-        public LockOperation(DatumBase<T> datum)
+        public LockOperation(BaseData<T> datum)
         {
-            this.datum = datum;
+            this.data = datum;
         }
 
-        public bool IsValid => this.data != null;
+        public bool IsValid => this.datum != null;
 
-        public TData? Data => this.data;
+        public TDatum? Datum => this.datum;
 
         public void Dispose()
         {
@@ -30,7 +31,7 @@ public partial class DatumBase<T>
         {
             if (!this.lockTaken)
             {
-                this.lockTaken = this.datum.semaphore.Enter();
+                this.lockTaken = this.data.semaphore.Enter();
             }
 
             return this.lockTaken;
@@ -39,20 +40,20 @@ public partial class DatumBase<T>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void Exit()
         {
-            this.data = default;
+            this.datum = default;
             if (this.lockTaken)
             {
-                this.datum.semaphore.Exit();
+                this.data.semaphore.Exit();
                 this.lockTaken = false;
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SetData(TData data)
-            => this.data = data;
+        internal void SetData(TDatum data)
+            => this.datum = data;
 
-        private readonly DatumBase<T> datum;
-        private TData? data;
+        private readonly BaseData<T> data;
+        private TDatum? datum;
         private bool lockTaken;
     }
 }

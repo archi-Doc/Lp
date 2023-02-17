@@ -1,26 +1,27 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.CompilerServices;
+using ZenItz;
 
-namespace ZenItz.Datum;
+namespace CrystalData;
 
 #pragma warning disable SA1124 // Do not use regions
 #pragma warning disable SA1401
 
 /// <summary>
-/// <see cref="DatumBase{T}"/> is an independent class that holds data at a single point in the hierarchical structure.
+/// <see cref="BaseData{T}"/> is an independent class that holds data at a single point in the hierarchical structure.
 /// </summary>
 /// <typeparam name="T">.</typeparam>
 [TinyhandObject(ExplicitKeyOnly = true, LockObject = "semaphore", ReservedKeys = 2)]
-public abstract partial class DatumBase<T> : IFlakeInternal
-    where T : DatumBase<T>
+public abstract partial class BaseData<T> : IFlakeInternal
+    where T : BaseData<T>
 {
     [Link(Primary = true, Name = "GetQueue", Type = ChainType.QueueList)]
-    internal DatumBase()
+    internal BaseData()
     {
     }
 
-    internal DatumBase(IZenInternal zen)
+    internal BaseData(IZenInternal zen)
     {
         this.Zen = zen;
     }
@@ -29,13 +30,17 @@ public abstract partial class DatumBase<T> : IFlakeInternal
 
     public T? Parent { get; private set; }
 
-    public bool IsDeleted => this.DatumId == -1;
+    public bool IsDeleted => this.DataId == -1;
 
     [Key(0)]
-    public int DatumId { get; private set; } // -1: Removed
+    public int DataId { get; private set; } // -1: Removed
 
     [Key(1)]
     private protected DataObject[] dataObject = Array.Empty<DataObject>();
+
+#pragma warning disable SA1202 // Elements should be ordered by access
+    protected readonly SemaphoreLock semaphore = new();
+#pragma warning restore SA1202 // Elements should be ordered by access
 
     #region IFlakeInternal
 
@@ -162,9 +167,9 @@ public abstract partial class DatumBase<T> : IFlakeInternal
     }
 
     /// <summary>
-    /// Removes this <see cref="DatumBase{T}"/> from the parent and delete the data.
+    /// Removes this <see cref="BaseData{T}"/> from the parent and delete the data.
     /// </summary>
-    /// <returns><see langword="true"/>; this <see cref="DatumBase{T}"/> is successfully removed.</returns>
+    /// <returns><see langword="true"/>; this <see cref="BaseData{T}"/> is successfully removed.</returns>
     public bool Remove()
     {
         if (this.Parent == null)
@@ -180,7 +185,7 @@ public abstract partial class DatumBase<T> : IFlakeInternal
 
     #endregion
 
-    internal bool DeleteInternal()
+    protected bool DeleteInternal()
     {// lock (Parent.syncObject)
         using (this.semaphore.Lock())
         {
@@ -194,7 +199,7 @@ public abstract partial class DatumBase<T> : IFlakeInternal
 
             this.dataObject = Array.Empty<DataObject>();
             this.Parent = null;
-            this.DatumId = -1;
+            this.DataId = -1;
         }
 
         return true;
@@ -204,7 +209,6 @@ public abstract partial class DatumBase<T> : IFlakeInternal
 
     protected abstract void DeleteChildren();
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private DataObject GetOrCreateDataObject<TData>()
         where TData : IData
     {// using (this.semaphore.Lock())
@@ -258,6 +262,4 @@ public abstract partial class DatumBase<T> : IFlakeInternal
 
         return default;
     }
-
-    private readonly SemaphoreLock semaphore = new();
 }

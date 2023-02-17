@@ -1,13 +1,13 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace ZenItz.Datum;
+namespace CrystalData;
 
 [TinyhandObject]
 [ValueLinkObject]
-public partial class Datum : DatumBase<Datum>
-{
+public partial class StandardData : BaseData<StandardData>
+{// LPData
     [Link(Primary = true, Name = "GetQueue", Type = ChainType.QueueList)]
-    internal Datum()
+    internal StandardData()
     {
     }
 
@@ -19,7 +19,7 @@ public partial class Datum : DatumBase<Datum>
     private Identifier identifier = default!;
 
     [Key(4)]
-    private Datum.GoshujinClass? childFlakes;
+    private GoshujinClass? childFlakes;
 
     protected override void DeleteChildren()
     {
