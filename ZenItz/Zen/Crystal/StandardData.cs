@@ -1,10 +1,12 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Collections.Generic;
+
 namespace CrystalData;
 
 [TinyhandObject]
 [ValueLinkObject]
-public partial class StandardData : BaseData<StandardData>
+public partial class StandardData : BaseData<StandardData.GoshujinClass>
 {// LPData
     [Link(Primary = true, Name = "GetQueue", Type = ChainType.QueueList)]
     internal StandardData()
@@ -38,6 +40,12 @@ public partial class StandardData : BaseData<StandardData>
     {
         if (this.childFlakes != null)
         {
+            var e = ((IEnumerable<StandardData>)this.childFlakes).GetEnumerator();
+            var e2 = (IEnumerable<StandardData>)this.childFlakes;
+            foreach (var x in e2)
+            {
+
+            }
             foreach (var x in this.childFlakes)
             {
                 x.Save(unload);

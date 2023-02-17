@@ -11,10 +11,9 @@ namespace CrystalData;
 /// <summary>
 /// <see cref="BaseData{T}"/> is an independent class that holds data at a single point in the hierarchical structure.
 /// </summary>
-/// <typeparam name="T">.</typeparam>
+/// <typeparam name="TParent">.</typeparam>
 [TinyhandObject(ExplicitKeyOnly = true, LockObject = "semaphore", ReservedKeys = 2)]
-public abstract partial class BaseData<T> : IFlakeInternal
-    where T : BaseData<T>
+public abstract partial class BaseData : IFlakeInternal
 {
     [Link(Primary = true, Name = "GetQueue", Type = ChainType.QueueList)]
     internal BaseData()
@@ -28,7 +27,7 @@ public abstract partial class BaseData<T> : IFlakeInternal
 
     public IZenInternal Zen { get; private set; } = default!;
 
-    public T? Parent { get; private set; }
+    public BaseData? Parent { get; private set; }
 
     public bool IsDeleted => this.DataId == -1;
 
@@ -199,6 +198,7 @@ public abstract partial class BaseData<T> : IFlakeInternal
 
             this.dataObject = Array.Empty<DataObject>();
             this.Parent = null;
+            this.Goshujin = null;
             this.DataId = -1;
         }
 

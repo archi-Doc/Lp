@@ -5,16 +5,16 @@ using ZenItz;
 
 namespace CrystalData;
 
-public partial class BaseData<T>
+public partial class BaseData<TParent>
 {
     internal const ZenResult NullDataResult = ZenResult.Removed;
 
     public struct LockOperation<TDatum> : IDisposable
         where TDatum : IData
     {
-        public LockOperation(BaseData<T> datum)
+        public LockOperation(BaseData<TParent> data)
         {
-            this.data = datum;
+            this.data = data;
         }
 
         public bool IsValid => this.datum != null;
@@ -52,7 +52,7 @@ public partial class BaseData<T>
         internal void SetData(TDatum data)
             => this.datum = data;
 
-        private readonly BaseData<T> data;
+        private readonly BaseData<TParent> data;
         private TDatum? datum;
         private bool lockTaken;
     }
