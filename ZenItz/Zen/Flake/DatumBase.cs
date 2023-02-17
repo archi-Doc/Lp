@@ -2,76 +2,40 @@
 
 using System.Runtime.CompilerServices;
 
-namespace ZenItz;
+namespace ZenItz.Datum;
 
 #pragma warning disable SA1124 // Do not use regions
-/*
+#pragma warning disable SA1401
+
 /// <summary>
-/// <see cref="FlakeBase"/> is an independent class that holds data at a single point in the hierarchical structure.
+/// <see cref="DatumBase{T}"/> is an independent class that holds data at a single point in the hierarchical structure.
 /// </summary>
-[TinyhandObject(ExplicitKeyOnly = true, LockObject = "semaphore")]
-[ValueLinkObject]
-public abstract partial class FlakeBase : IFlakeInternal
+/// <typeparam name="T">.</typeparam>
+[TinyhandObject(ExplicitKeyOnly = true, LockObject = "semaphore", ReservedKeys = 2)]
+public abstract partial class DatumBase<T> : IFlakeInternal
+    where T : DatumBase<T>
 {
-    internal const ZenResult NullDataResult = ZenResult.Removed;
-
-    public struct LockOperation<TData> : IDisposable
-        where TData : IData
-    {
-        public LockOperation(FlakeBase flake)
-        {
-            this.flake = flake;
-        }
-
-        public bool IsValid => this.data != null;
-
-        public TData? Data => this.data;
-
-        public void Dispose()
-        {
-            this.Exit();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal bool Enter()
-        {
-            if (!this.lockTaken)
-            {
-                this.lockTaken = this.flake.semaphore.Enter();
-            }
-
-            return this.lockTaken;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void Exit()
-        {
-            this.data = default;
-            if (this.lockTaken)
-            {
-                this.flake.semaphore.Exit();
-                this.lockTaken = false;
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SetData(TData data)
-            => this.data = data;
-
-        private readonly FlakeBase flake;
-        private TData? data;
-        private bool lockTaken;
-    }
-
     [Link(Primary = true, Name = "GetQueue", Type = ChainType.QueueList)]
-    internal FlakeBase()
+    internal DatumBase()
     {
     }
 
-    internal FlakeBase(IZenInternal zen)
+    internal DatumBase(IZenInternal zen)
     {
         this.Zen = zen;
     }
+
+    public IZenInternal Zen { get; private set; } = default!;
+
+    public T? Parent { get; private set; }
+
+    public bool IsDeleted => this.DatumId == -1;
+
+    [Key(0)]
+    public int DatumId { get; private set; } // -1: Removed
+
+    [Key(1)]
+    private protected DataObject[] dataObject = Array.Empty<DataObject>();
 
     #region IFlakeInternal
 
@@ -157,7 +121,7 @@ public abstract partial class FlakeBase : IFlakeInternal
         var operation = new LockOperation<TData>(this);
 
         operation.Enter();
-        if (this.IsRemoved)
+        if (this.IsDeleted)
         {// Removed
             operation.Exit();
             return operation;
@@ -178,18 +142,12 @@ public abstract partial class FlakeBase : IFlakeInternal
     {
         using (this.semaphore.Lock())
         {
-            if (this.IsRemoved)
+            if (this.IsDeleted)
             {
                 return;
             }
 
-            if (this.childFlakes != null)
-            {
-                foreach (var x in this.childFlakes)
-                {
-                    x.Save(unload);
-                }
-            }
+            this.SaveChildren(unload);
 
             for (var i = 0; i < this.dataObject.Length; i++)
             {
@@ -204,9 +162,9 @@ public abstract partial class FlakeBase : IFlakeInternal
     }
 
     /// <summary>
-    /// Removes this <see cref="Flake"/> from the parent and delete the data.
+    /// Removes this <see cref="DatumBase{T}"/> from the parent and delete the data.
     /// </summary>
-    /// <returns><see langword="true"/>; this <see cref="Flake"/> is successfully removed.</returns>
+    /// <returns><see langword="true"/>; this <see cref="DatumBase{T}"/> is successfully removed.</returns>
     public bool Remove()
     {
         if (this.Parent == null)
@@ -222,24 +180,10 @@ public abstract partial class FlakeBase : IFlakeInternal
 
     #endregion
 
-    public IZenInternal Zen { get; private set; } = default!;
-
-    public virtual bool IsRemoved => this.Goshujin == null;
-
     internal bool DeleteInternal()
     {// lock (Parent.syncObject)
         using (this.semaphore.Lock())
         {
-            if (this.childFlakes != null)
-            {
-                foreach (var x in this.childFlakes.ToArray())
-                {
-                    x.DeleteInternal();
-                }
-
-                this.childFlakes = null;
-            }
-
             for (var i = 0; i < this.dataObject.Length; i++)
             {
                 this.Zen.Storage.Delete(this.dataObject[i].File);
@@ -250,17 +194,15 @@ public abstract partial class FlakeBase : IFlakeInternal
 
             this.dataObject = Array.Empty<DataObject>();
             this.Parent = null;
-            this.Goshujin = null;
+            this.DatumId = -1;
         }
 
         return true;
     }
 
-    [Key(0)]
-    public int FlakeId { get; private set; }
+    protected abstract void SaveChildren(bool unload);
 
-    [Key(1)]
-    private DataObject[] dataObject = Array.Empty<DataObject>();
+    protected abstract void DeleteChildren();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private DataObject GetOrCreateDataObject<TData>()
@@ -319,4 +261,3 @@ public abstract partial class FlakeBase : IFlakeInternal
 
     private readonly SemaphoreLock semaphore = new();
 }
-*/
