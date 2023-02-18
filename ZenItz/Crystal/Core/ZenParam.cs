@@ -5,7 +5,7 @@ namespace ZenItz.Crystal.Core;
 public record ZenStartParam(bool ForceStart = false, ZenStartQueryDelegate? QueryDelegate = null, bool FromScratch = false)
 {
     public Task<bool> Query(ZenStartResult query, string[]? list = null)
-        => QueryDelegate == null || ForceStart ? Task.FromResult(true) : QueryDelegate(query, list);
+        => this.QueryDelegate == null || this.ForceStart ? Task.FromResult(true) : this.QueryDelegate(query, list);
 }
 
 public record ZenStopParam(bool RemoveAll = false);

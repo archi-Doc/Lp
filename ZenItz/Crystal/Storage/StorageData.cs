@@ -10,7 +10,7 @@ internal partial class StorageData
     }
 
     [Key(0)]
-    public ZenDirectory.GoshujinClass Directories { get; set; } = default!;
+    public CrystalDirectory.GoshujinClass Directories { get; set; } = default!;
 
     [Key(1)]
     public Dictionary<int, MemoryStat> MemoryStats { get; set; } = default!;

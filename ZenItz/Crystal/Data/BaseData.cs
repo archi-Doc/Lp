@@ -92,7 +92,7 @@ public abstract partial class BaseData : IFlakeInternal
         }
 
         var file = dataObject.File;
-        if (!ZenHelper.IsValidFile(file))
+        if (!CrystalHelper.IsValidFile(file))
         {
             return new(CrystalResult.NoData);
         }

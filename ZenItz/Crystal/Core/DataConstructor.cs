@@ -13,26 +13,26 @@ public class DataConstructor
 
     public DataConstructor()
     {
-        MaxId = DefaultMaxId;
-        constructors = new ConstrutorDelegate[MaxId];
+        this.MaxId = DefaultMaxId;
+        this.constructors = new ConstrutorDelegate[this.MaxId];
     }
 
     public bool Register<TData>(ConstrutorDelegate construtor)
         where TData : IDatum
     {
         var id = TData.StaticId;
-        if (id < 0 || id >= constructors.Length)
+        if (id < 0 || id >= this.constructors.Length)
         {
             return false;
         }
 
-        constructors[id] = construtor;
+        this.constructors[id] = construtor;
         return true;
     }
 
     public void Resize(int max)
     {
-        Array.Resize(ref constructors, max);
+        Array.Resize(ref this.constructors, max);
     }
 
     public int MaxId { get; private set; }
@@ -40,12 +40,12 @@ public class DataConstructor
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal ConstrutorDelegate? TryGetConstructor(int id)
     {
-        if (id < 0 || id >= constructors.Length)
+        if (id < 0 || id >= this.constructors.Length)
         {
             return null;
         }
 
-        return constructors[id];
+        return this.constructors[id];
     }
 
     private ConstrutorDelegate[] constructors;

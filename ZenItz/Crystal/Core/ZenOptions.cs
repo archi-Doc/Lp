@@ -38,9 +38,9 @@ public record CrystalOptions
 
     public string ZenBackup { get; init; } = "Zen.back";
 
-    public string ZenDirectoryFile { get; init; } = "ZenDirectory.main";
+    public string ZenDirectoryFile { get; init; } = "CrystalDirectory.main";
 
-    public string ZenDirectoryBackup { get; init; } = "ZenDirectory.back";
+    public string ZenDirectoryBackup { get; init; } = "CrystalDirectory.back";
 
     public string DefaultZenDirectory { get; init; } = "Zen";
 
@@ -48,15 +48,15 @@ public record CrystalOptions
 
     public string SnowflakeBackup { get; init; } = "Snowflake.back";
 
-    public string RootPath => rootPath ??= PathHelper.GetRootedDirectory(Directory.GetCurrentDirectory(), ZenPath);
+    public string RootPath => this.rootPath ??= PathHelper.GetRootedDirectory(Directory.GetCurrentDirectory(), this.ZenPath);
 
-    public string ZenFilePath => PathHelper.GetRootedFile(RootPath, ZenFile);
+    public string ZenFilePath => PathHelper.GetRootedFile(this.RootPath, this.ZenFile);
 
-    public string ZenBackupPath => PathHelper.GetRootedFile(RootPath, ZenBackup);
+    public string ZenBackupPath => PathHelper.GetRootedFile(this.RootPath, this.ZenBackup);
 
-    public string ZenDirectoryFilePath => PathHelper.GetRootedFile(RootPath, ZenDirectoryFile);
+    public string ZenDirectoryFilePath => PathHelper.GetRootedFile(this.RootPath, this.ZenDirectoryFile);
 
-    public string ZenDirectoryBackupPath => PathHelper.GetRootedFile(RootPath, ZenDirectoryBackup);
+    public string ZenDirectoryBackupPath => PathHelper.GetRootedFile(this.RootPath, this.ZenDirectoryBackup);
 
     private string? rootPath;
 }

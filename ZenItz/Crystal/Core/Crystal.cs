@@ -10,137 +10,137 @@ public partial class Crystal<TData> : IZenInternal
     internal Crystal(UnitCore core, CrystalOptions options, ILogger<Crystal<TData>> logger)
     {
         this.logger = logger;
-        Core = core;
-        Options = options;
-        Storage = new();
-        himoGoshujin = new(this);
-        Data = TinyhandSerializer.Reconstruct<TData>();
+        this.Core = core;
+        this.Options = options;
+        this.Storage = new();
+        this.himoGoshujin = new(this);
+        this.Data = TinyhandSerializer.Reconstruct<TData>();
 
-        Constructor = new();
-        Constructor.Register<BlockDatum>(x => new BlockDatumImpl(x));
-        Constructor.Register<FragmentData<Identifier>>(x => new FragmentDataImpl<Identifier>(x));
+        this.Constructor = new();
+        this.Constructor.Register<BlockDatum>(x => new BlockDatumImpl(x));
+        this.Constructor.Register<FragmentData<Identifier>>(x => new FragmentDataImpl<Identifier>(x));
     }
 
     public async Task<ZenStartResult> StartAsync(ZenStartParam param)
     {
-        await semaphore.WaitAsync().ConfigureAwait(false);
+        await this.semaphore.WaitAsync().ConfigureAwait(false);
         try
         {
             var result = ZenStartResult.Success;
-            if (Started)
+            if (this.Started)
             {
                 return ZenStartResult.Success;
             }
 
-            logger.TryGet()?.Log("Zen start");
+            this.logger.TryGet()?.Log("Zen start");
 
             if (param.FromScratch)
             {
-                await Storage.TryStart(Options, param, null);
+                await this.Storage.TryStart(this.Options, param, null);
 
-                DeleteAll();
+                this.DeleteAll();
 
-                Started = true;
+                this.Started = true;
                 return ZenStartResult.Success;
             }
 
-            // Load ZenDirectory
-            result = await LoadZenDirectory(param);
+            // Load CrystalDirectory
+            result = await this.LoadZenDirectory(param);
             if (result != ZenStartResult.Success)
             {
                 return result;
             }
 
             // Load Zen
-            result = await LoadZen(param);
+            result = await this.LoadZen(param);
             if (result != ZenStartResult.Success)
             {
                 return result;
             }
 
             // HimoGoshujin
-            himoGoshujin.Start();
+            this.himoGoshujin.Start();
 
-            Started = true;
+            this.Started = true;
             return result;
         }
         finally
         {
-            semaphore.Release();
+            this.semaphore.Release();
         }
     }
 
     public async Task StopAsync(ZenStopParam param)
     {
-        await semaphore.WaitAsync().ConfigureAwait(false);
+        await this.semaphore.WaitAsync().ConfigureAwait(false);
         try
         {
-            if (!Started)
+            if (!this.Started)
             {
                 return;
             }
 
-            Started = false;
+            this.Started = false;
 
             // HimoGoshujin
-            himoGoshujin.Stop();
+            this.himoGoshujin.Stop();
 
             if (param.RemoveAll)
             {
-                DeleteAll();
+                this.DeleteAll();
 
-                // Stop IO(ZenDirectory)
-                await Storage.StopAsync();
-                Storage.Terminate();
+                // Stop IO(CrystalDirectory)
+                await this.Storage.StopAsync();
+                this.Storage.Terminate();
 
                 return;
             }
 
             // Save & Unload flakes
-            Data.Save(true);
+            this.Data.Save(true);
 
-            // Stop IO(ZenDirectory)
-            await Storage.StopAsync();
+            // Stop IO(CrystalDirectory)
+            await this.Storage.StopAsync();
 
             // Save Zen
-            await SerializeZen(Options.ZenFilePath, Options.ZenBackupPath);
+            await this.SerializeZen(this.Options.ZenFilePath, this.Options.ZenBackupPath);
 
             // Save directory information
-            var byteArray = Storage.Serialize();
-            await HashHelper.GetFarmHashAndSaveAsync(byteArray, Options.ZenDirectoryFilePath, Options.ZenDirectoryBackupPath);
+            var byteArray = this.Storage.Serialize();
+            await HashHelper.GetFarmHashAndSaveAsync(byteArray, this.Options.ZenDirectoryFilePath, this.Options.ZenDirectoryBackupPath);
 
-            Storage.Terminate();
+            this.Storage.Terminate();
 
-            logger.TryGet()?.Log($"Zen stop - {himoGoshujin.MemoryUsage}");
+            this.logger.TryGet()?.Log($"Zen stop - {this.himoGoshujin.MemoryUsage}");
         }
         finally
         {
-            semaphore.Release();
+            this.semaphore.Release();
         }
     }
 
     public async Task Abort()
     {
-        await semaphore.WaitAsync().ConfigureAwait(false);
+        await this.semaphore.WaitAsync().ConfigureAwait(false);
         try
         {
-            if (!Started)
+            if (!this.Started)
             {
                 return;
             }
 
-            Started = false;
+            this.Started = false;
 
-            await Storage.StopAsync();
-            Storage.Terminate();
+            await this.Storage.StopAsync();
+            this.Storage.Terminate();
         }
         finally
         {
-            semaphore.Release();
+            this.semaphore.Release();
         }
     }
 
-    HimoGoshujinClass IZenInternal.HimoGoshujin => himoGoshujin;
+    HimoGoshujinClass IZenInternal.HimoGoshujin => this.himoGoshujin;
 
     public UnitCore Core { get; init; }
 
@@ -154,22 +154,22 @@ public partial class Crystal<TData> : IZenInternal
 
     public Storage Storage { get; }
 
-    public long MemoryUsage => himoGoshujin.MemoryUsage;
+    public long MemoryUsage => this.himoGoshujin.MemoryUsage;
 
     internal void DeleteAll()
     {
-        Data.Delete();
-        himoGoshujin.Clear();
+        this.Data.Delete();
+        this.himoGoshujin.Clear();
 
-        PathHelper.TryDeleteFile(Options.ZenFilePath);
-        PathHelper.TryDeleteFile(Options.ZenBackupPath);
-        PathHelper.TryDeleteFile(Options.ZenDirectoryFilePath);
-        PathHelper.TryDeleteFile(Options.ZenDirectoryBackupPath);
-        Storage.DeleteAll();
+        PathHelper.TryDeleteFile(this.Options.ZenFilePath);
+        PathHelper.TryDeleteFile(this.Options.ZenBackupPath);
+        PathHelper.TryDeleteFile(this.Options.ZenDirectoryFilePath);
+        PathHelper.TryDeleteFile(this.Options.ZenDirectoryBackupPath);
+        this.Storage.DeleteAll();
 
         try
         {
-            Directory.Delete(Options.RootPath);
+            Directory.Delete(this.Options.RootPath);
         }
         catch
         {
@@ -200,7 +200,7 @@ public partial class Crystal<TData> : IZenInternal
         // Save & Unload flakes
         this.Root.Save();
 
-        // Stop IO(ZenDirectory)
+        // Stop IO(CrystalDirectory)
         await this.IO.StopAsync();
     }*/
 
@@ -213,7 +213,7 @@ public partial class Crystal<TData> : IZenInternal
         byte[]? data;
         try
         {
-            data = await File.ReadAllBytesAsync(Options.ZenDirectoryFilePath);
+            data = await File.ReadAllBytesAsync(this.Options.ZenDirectoryFilePath);
         }
         catch
         {
@@ -226,7 +226,7 @@ public partial class Crystal<TData> : IZenInternal
             goto LoadBackup;
         }
 
-        result = await Storage.TryStart(Options, param, memory);
+        result = await this.Storage.TryStart(this.Options, param, memory);
         if (result == ZenStartResult.Success || param.ForceStart)
         {
             return ZenStartResult.Success;
@@ -237,13 +237,13 @@ public partial class Crystal<TData> : IZenInternal
 LoadBackup:
         try
         {
-            data = await File.ReadAllBytesAsync(Options.ZenDirectoryBackupPath);
+            data = await File.ReadAllBytesAsync(this.Options.ZenDirectoryBackupPath);
         }
         catch
         {
             if (await param.Query(ZenStartResult.ZenDirectoryNotFound))
             {
-                result = await Storage.TryStart(Options, param, null);
+                result = await this.Storage.TryStart(this.Options, param, null);
                 if (result == ZenStartResult.Success || param.ForceStart)
                 {
                     return ZenStartResult.Success;
@@ -262,7 +262,7 @@ LoadBackup:
         {
             if (await param.Query(ZenStartResult.ZenDirectoryError))
             {
-                result = await Storage.TryStart(Options, param, null);
+                result = await this.Storage.TryStart(this.Options, param, null);
                 if (result == ZenStartResult.Success || param.ForceStart)
                 {
                     return ZenStartResult.Success;
@@ -276,7 +276,7 @@ LoadBackup:
             }
         }
 
-        result = await Storage.TryStart(Options, param, memory);
+        result = await this.Storage.TryStart(this.Options, param, memory);
         if (result == ZenStartResult.Success || param.ForceStart)
         {
             return ZenStartResult.Success;
@@ -291,7 +291,7 @@ LoadBackup:
         byte[]? data;
         try
         {
-            data = await File.ReadAllBytesAsync(Options.ZenFilePath);
+            data = await File.ReadAllBytesAsync(this.Options.ZenFilePath);
         }
         catch
         {
@@ -304,7 +304,7 @@ LoadBackup:
             goto LoadBackup;
         }
 
-        if (DeserializeZen(memory))
+        if (this.DeserializeZen(memory))
         {
             return ZenStartResult.Success;
         }
@@ -312,7 +312,7 @@ LoadBackup:
 LoadBackup:
         try
         {
-            data = await File.ReadAllBytesAsync(Options.ZenBackupPath);
+            data = await File.ReadAllBytesAsync(this.Options.ZenBackupPath);
         }
         catch
         {
@@ -340,7 +340,7 @@ LoadBackup:
         }
 
         // Deserialize
-        if (!DeserializeZen(memory))
+        if (!this.DeserializeZen(memory))
         {
             if (await param.Query(ZenStartResult.ZenFileError))
             {
@@ -364,14 +364,14 @@ LoadBackup:
 
         baseData.DeserializePostProcess(this);
 
-        himoGoshujin.Clear();
+        this.himoGoshujin.Clear();
 
         return true;
     }
 
     private async Task SerializeZen(string path, string? backupPath)
     {
-        var byteArray = TinyhandSerializer.Serialize(Data);
+        var byteArray = TinyhandSerializer.Serialize(this.Data);
         await HashHelper.GetFarmHashAndSaveAsync(byteArray, path, backupPath);
     }
 

@@ -7,32 +7,32 @@ using ZenItz.Crystal.Core;
 
 namespace CrystalData;
 
-public enum ZenDirectoryType
+public enum CrystalDirectoryType
 {
     Standard,
 }
 
 [TinyhandObject]
 [ValueLinkObject]
-internal partial class ZenDirectory : IDisposable
+internal partial class CrystalDirectory : IDisposable
 {
     public const int HashSize = 8;
 
     [Link(Primary = true, Name = "List", Type = ChainType.List)]
-    public ZenDirectory()
+    public CrystalDirectory()
     {
-        this.worker = new ZenDirectoryWorker(ThreadCore.Root, this);
+        this.worker = new CrystalDirectoryWorker(ThreadCore.Root, this);
     }
 
-    internal ZenDirectory(uint directoryId, string path)
+    internal CrystalDirectory(uint directoryId, string path)
         : base()
     {
-        this.worker = new ZenDirectoryWorker(ThreadCore.Root, this);
+        this.worker = new CrystalDirectoryWorker(ThreadCore.Root, this);
         this.DirectoryId = directoryId;
         this.DirectoryPath = path;
     }
 
-    public ZenDirectoryInformation GetInformation()
+    public CrystalDirectoryInformation GetInformation()
     {
         this.CalculateUsageRatio();
         return new(this.DirectoryId, this.Type, this.DirectoryPath, this.DirectoryCapacity, this.DirectorySize, this.UsageRatio);
@@ -41,7 +41,7 @@ internal partial class ZenDirectory : IDisposable
     internal async Task<ZenMemoryOwnerResult> Load(ulong file)
     {
         Snowflake? snowflake;
-        var snowflakeId = ZenHelper.ToSnowflakeId(file);
+        var snowflakeId = CrystalHelper.ToSnowflakeId(file);
         int size = 0;
 
         lock (this.syncObject)
@@ -81,7 +81,7 @@ internal partial class ZenDirectory : IDisposable
     internal void Save(ref ulong file, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
     {// DirectoryId: valid, SnowflakeId: ?
         Snowflake? snowflake;
-        var snowflakeId = ZenHelper.ToSnowflakeId(file);
+        var snowflakeId = CrystalHelper.ToSnowflakeId(file);
         var dataSize = memoryToBeShared.Memory.Length;
 
         lock (this.syncObject)
@@ -104,7 +104,7 @@ internal partial class ZenDirectory : IDisposable
                 snowflake.Size = dataSize;
             }
 
-            file = ZenHelper.ToFile(this.DirectoryId, snowflake.SnowflakeId);
+            file = CrystalHelper.ToFile(this.DirectoryId, snowflake.SnowflakeId);
         }
 
         this.worker.AddLast(new(snowflake.SnowflakeId, memoryToBeShared.IncrementAndShare()));
@@ -112,7 +112,7 @@ internal partial class ZenDirectory : IDisposable
 
     internal void Delete(ulong file)
     {
-        var snowflakeId = ZenHelper.ToSnowflakeId(file);
+        var snowflakeId = CrystalHelper.ToSnowflakeId(file);
         lock (this.syncObject)
         {
             if (snowflakeId != 0 &&
@@ -192,7 +192,7 @@ internal partial class ZenDirectory : IDisposable
     public uint DirectoryId { get; private set; }
 
     [Key(1)]
-    public ZenDirectoryType Type { get; private set; }
+    public CrystalDirectoryType Type { get; private set; }
 
     [Key(2)]
     [Link(Type = ChainType.Unordered)]
@@ -342,7 +342,7 @@ internal partial class ZenDirectory : IDisposable
     private object syncObject = new();
     private Snowflake.GoshujinClass snowflakeGoshujin = new(); // lock (this.syncObject)
     // private Dictionary<uint, Snowflake> dictionary = new(); // lock (this.syncObject)
-    private ZenDirectoryWorker worker;
+    private CrystalDirectoryWorker worker;
 
     #region IDisposable Support
 #pragma warning restore SA1124 // Do not use regions
@@ -350,9 +350,9 @@ internal partial class ZenDirectory : IDisposable
     private bool disposed = false; // To detect redundant calls.
 
     /// <summary>
-    /// Finalizes an instance of the <see cref="ZenDirectory"/> class.
+    /// Finalizes an instance of the <see cref="CrystalDirectory"/> class.
     /// </summary>
-    ~ZenDirectory()
+    ~CrystalDirectory()
     {
         this.Dispose(false);
     }

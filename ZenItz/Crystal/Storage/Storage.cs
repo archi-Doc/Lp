@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using CrystalData.Results;
-using ZenItz.Crystal.Core;
 
 namespace CrystalData;
 
@@ -14,7 +13,7 @@ public sealed class Storage
         this.data = TinyhandSerializer.Reconstruct<StorageData>();
     }
 
-    public ZenDirectoryInformation[] GetDirectoryInformation()
+    public CrystalDirectoryInformation[] GetDirectoryInformation()
     {
         lock (this.syncObject)
         {
@@ -52,7 +51,7 @@ public sealed class Storage
                 id = this.GetFreeDirectoryId(this.data.Directories);
             }
 
-            var directory = new ZenDirectory(id, path);
+            var directory = new CrystalDirectory(id, path);
             directory.DirectoryCapacity = capacity;
 
             if (this.data.Directories.DirectoryIdChain.ContainsKey(id))
@@ -90,14 +89,14 @@ public sealed class Storage
 
     internal void Save(ref ulong file, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared, int id)
     {
-        ZenDirectory? directory;
+        CrystalDirectory? directory;
         lock (this.syncObject)
         {
             if (this.data.Directories.DirectoryIdChain.Count == 0)
             {// No directory available.
                 return;
             }
-            else if (!ZenHelper.IsValidFile(file) || !this.data.Directories.DirectoryIdChain.TryGetValue(ZenHelper.ToDirectoryId(file), out directory))
+            else if (!CrystalHelper.IsValidFile(file) || !this.data.Directories.DirectoryIdChain.TryGetValue(CrystalHelper.ToDirectoryId(file), out directory))
             {// Get valid directory.
                 if (this.directoryRotationCount >= DirectoryRotationThreshold ||
                     this.currentDirectory == null)
@@ -125,15 +124,15 @@ public sealed class Storage
 
     internal async Task<ZenMemoryOwnerResult> Load(ulong file)
     {
-        if (!ZenHelper.IsValidFile(file))
+        if (!CrystalHelper.IsValidFile(file))
         {// Invalid file.
             return new(CrystalResult.NoData);
         }
 
-        ZenDirectory? directory;
+        CrystalDirectory? directory;
         lock (this.syncObject)
         {
-            if (!this.data.Directories.DirectoryIdChain.TryGetValue(ZenHelper.ToDirectoryId(file), out directory))
+            if (!this.data.Directories.DirectoryIdChain.TryGetValue(CrystalHelper.ToDirectoryId(file), out directory))
             {// No directory
                 return new(CrystalResult.NoDirectory);
             }
@@ -144,15 +143,15 @@ public sealed class Storage
 
     internal void Delete(ulong file)
     {
-        if (!ZenHelper.IsValidFile(file))
+        if (!CrystalHelper.IsValidFile(file))
         {// Invalid file.
             return;
         }
 
-        ZenDirectory? directory;
+        CrystalDirectory? directory;
         lock (this.syncObject)
         {
-            if (!this.data.Directories.DirectoryIdChain.TryGetValue(ZenHelper.ToDirectoryId(file), out directory))
+            if (!this.data.Directories.DirectoryIdChain.TryGetValue(CrystalHelper.ToDirectoryId(file), out directory))
             {// No directory
                 return;
             }
@@ -226,7 +225,7 @@ public sealed class Storage
         {
             try
             {
-                var defaultDirectory = new ZenDirectory(this.GetFreeDirectoryId(storageData.Directories), PathHelper.GetRootedDirectory(this.Options.RootPath, this.Options.DefaultZenDirectory));
+                var defaultDirectory = new CrystalDirectory(this.GetFreeDirectoryId(storageData.Directories), PathHelper.GetRootedDirectory(this.Options.RootPath, this.Options.DefaultZenDirectory));
                 defaultDirectory.PrepareAndCheck(this);
                 storageData.Directories.Add(defaultDirectory);
             }
@@ -301,7 +300,7 @@ public sealed class Storage
         }
     }
 
-    private uint GetFreeDirectoryId(ZenDirectory.GoshujinClass goshujin)
+    private uint GetFreeDirectoryId(CrystalDirectory.GoshujinClass goshujin)
     {// lock(syncObject)
         while (true)
         {
@@ -313,7 +312,7 @@ public sealed class Storage
         }
     }
 
-    private ZenDirectory? GetValidDirectory()
+    private CrystalDirectory? GetValidDirectory()
     {// lock(syncObject)
         var array = this.data.Directories.ListChain.ToArray();
         if (array == null)
@@ -355,6 +354,6 @@ public sealed class Storage
 
     private object syncObject = new();
     private StorageData data; // lock(syncObject)
-    private ZenDirectory? currentDirectory; // lock(syncObject)
+    private CrystalDirectory? currentDirectory; // lock(syncObject)
     private int directoryRotationCount; // lock(syncObject)
 }

@@ -1,15 +1,13 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.IO;
-
 namespace CrystalData;
 
-internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
+internal class CrystalDirectoryWorker : TaskWorker<ZenDirectoryWork>
 {
     public const int DefaultConcurrentTasks = 4;
     public const int RetryInterval = 10; // 10 ms
 
-    public ZenDirectoryWorker(ThreadCoreBase parent, ZenDirectory zenDirectory)
+    public CrystalDirectoryWorker(ThreadCoreBase parent, CrystalDirectory zenDirectory)
         : base(parent, Process, true)
     {
         this.NumberOfConcurrentTasks = DefaultConcurrentTasks;
@@ -27,23 +25,23 @@ internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
             return true;
         });
 
-        this.ZenDirectory = zenDirectory;
+        this.CrystalDirectory = zenDirectory;
         // this.logger = Zen.UnitLogger.GetLogger<ZenDirectoryWorker>();
     }
 
     public static async Task Process(TaskWorker<ZenDirectoryWork> w, ZenDirectoryWork work)
     {
-        var worker = (ZenDirectoryWorker)w;
+        var worker = (CrystalDirectoryWorker)w;
         string? filePath = null;
         var tryCount = 0;
 
         if (work.Type == ZenDirectoryWork.WorkType.Save)
         {// Save
-            var hash = new byte[ZenDirectory.HashSize];
+            var hash = new byte[CrystalDirectory.HashSize];
             BitConverter.TryWriteBytes(hash, Arc.Crypto.FarmHash.Hash64(work.SaveData.Memory.Span));
 
-            var path = worker.ZenDirectory.GetSnowflakePath(work.SnowflakeId);
-            var directoryPath = Path.Combine(worker.ZenDirectory.RootedPath, path.Directory);
+            var path = worker.CrystalDirectory.GetSnowflakePath(work.SnowflakeId);
+            var directoryPath = Path.Combine(worker.CrystalDirectory.RootedPath, path.Directory);
 
 TrySave:
             tryCount++;
@@ -58,7 +56,7 @@ TrySave:
                 using (var handle = File.OpenHandle(filePath, mode: FileMode.OpenOrCreate, access: FileAccess.Write))
                 {
                     await RandomAccess.WriteAsync(handle, hash, 0, worker.CancellationToken);
-                    await RandomAccess.WriteAsync(handle, work.SaveData.Memory, ZenDirectory.HashSize, worker.CancellationToken);
+                    await RandomAccess.WriteAsync(handle, work.SaveData.Memory, CrystalDirectory.HashSize, worker.CancellationToken);
                 }
             }
             catch (DirectoryNotFoundException)
@@ -83,19 +81,19 @@ TrySave:
         {// Load
             try
             {
-                var path = worker.ZenDirectory.GetSnowflakePath(work.SnowflakeId);
-                filePath = Path.Combine(worker.ZenDirectory.RootedPath, path.Directory, path.File);
+                var path = worker.CrystalDirectory.GetSnowflakePath(work.SnowflakeId);
+                filePath = Path.Combine(worker.CrystalDirectory.RootedPath, path.Directory, path.File);
                 using (var handle = File.OpenHandle(filePath, mode: FileMode.Open, access: FileAccess.Read))
                 {
-                    var hash = new byte[ZenDirectory.HashSize];
+                    var hash = new byte[CrystalDirectory.HashSize];
                     var read = await RandomAccess.ReadAsync(handle, hash, 0, worker.CancellationToken);
-                    if (read != ZenDirectory.HashSize)
+                    if (read != CrystalDirectory.HashSize)
                     {
                         goto DeleteAndExit;
                     }
 
                     var memoryOwner = FlakeFragmentPool.Rent(work.LoadSize).ToMemoryOwner(0, work.LoadSize);
-                    read = await RandomAccess.ReadAsync(handle, memoryOwner.Memory, ZenDirectory.HashSize, worker.CancellationToken);
+                    read = await RandomAccess.ReadAsync(handle, memoryOwner.Memory, CrystalDirectory.HashSize, worker.CancellationToken);
                     if (read != work.LoadSize)
                     {
                         goto DeleteAndExit;
@@ -124,8 +122,8 @@ TrySave:
         {
             try
             {
-                var path = worker.ZenDirectory.GetSnowflakePath(work.SnowflakeId);
-                filePath = Path.Combine(worker.ZenDirectory.RootedPath, path.Directory, path.File);
+                var path = worker.CrystalDirectory.GetSnowflakePath(work.SnowflakeId);
+                filePath = Path.Combine(worker.CrystalDirectory.RootedPath, path.Directory, path.File);
                 File.Delete(filePath);
             }
             catch
@@ -133,7 +131,7 @@ TrySave:
             }
             finally
             {
-                worker.ZenDirectory.RemoveSnowflake(work.SnowflakeId);
+                worker.CrystalDirectory.RemoveSnowflake(work.SnowflakeId);
             }
         }
 
@@ -148,7 +146,7 @@ DeleteAndExit:
         return;
     }
 
-    public ZenDirectory ZenDirectory { get; }
+    public CrystalDirectory CrystalDirectory { get; }
 
     /*private bool CachedCreateDirectory(string path)
     {

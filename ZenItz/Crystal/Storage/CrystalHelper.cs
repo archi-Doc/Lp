@@ -2,7 +2,7 @@
 
 namespace CrystalData;
 
-public static class ZenHelper
+public static class CrystalHelper
 {
     public static bool IsValidFile(ulong file) => file != 0;
 
