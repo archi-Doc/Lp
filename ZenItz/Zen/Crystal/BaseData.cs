@@ -39,6 +39,8 @@ public abstract partial class BaseData : IFlakeInternal
 
     protected readonly SemaphoreLock semaphore = new();
 
+    #region Enumerable
+
     private readonly struct Enumerator : IEnumerable<BaseData>
     {
         public Enumerator(BaseData baseData)
@@ -56,6 +58,8 @@ public abstract partial class BaseData : IFlakeInternal
     }
 
     protected IEnumerable<BaseData> ChildrenInternal => new Enumerator(this);
+
+#endregion
 
     #region IFlakeInternal
 
@@ -190,14 +194,16 @@ public abstract partial class BaseData : IFlakeInternal
     /// <returns><see langword="true"/>; this <see cref="BaseData"/> is successfully deleted.</returns>
     public bool Delete()
     {
-        /*if (this.Parent == null)
-        {// The root flake cannot be removed directly.
-            return false;
-        }*/
-
-        using (this.Parents.semaphore.Lock())
+        if (this.Parent == null)
         {
             this.DeleteData();
+        }
+        else
+        {
+            using (this.Parent.semaphore.Lock())
+            {
+                this.DeleteData();
+            }
         }
 
         return true;
