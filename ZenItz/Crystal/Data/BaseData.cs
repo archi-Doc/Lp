@@ -13,7 +13,7 @@ namespace CrystalData;
 /// <see cref="BaseData"/> is an independent class that holds data at a single point in the hierarchical structure.
 /// </summary>
 [TinyhandObject(ExplicitKeyOnly = true, LockObject = "semaphore", ReservedKeys = 2)]
-public abstract partial class BaseData : IFlakeInternal
+public abstract partial class BaseData : IDataInternal
 {
     internal BaseData()
     {
@@ -62,13 +62,13 @@ public abstract partial class BaseData : IFlakeInternal
 
     #region IFlakeInternal
 
-    ICrystalInternal IFlakeInternal.ZenInternal => this.Zen;
+    ICrystalInternal IDataInternal.ZenInternal => this.Zen;
 
-    DataConstructor IFlakeInternal.Data => this.Zen.Constructor;
+    DataConstructor IDataInternal.Data => this.Zen.Constructor;
 
-    CrystalOptions IFlakeInternal.Options => this.Zen.Options;
+    CrystalOptions IDataInternal.Options => this.Zen.Options;
 
-    void IFlakeInternal.DataToStorage<TData>(ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
+    void IDataInternal.DataToStorage<TData>(ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
     {// using (this.semaphore.Lock())
         var id = TData.StaticId;
         for (var i = 0; i < this.dataObject.Length; i++)
@@ -81,7 +81,7 @@ public abstract partial class BaseData : IFlakeInternal
         }
     }
 
-    async Task<CrystalMemoryOwnerResult> IFlakeInternal.StorageToData<TData>()
+    async Task<CrystalMemoryOwnerResult> IDataInternal.StorageToData<TData>()
     {// using (this.semaphore.Lock())
         var dataObject = this.TryGetDataObject<TData>();
         if (!dataObject.IsValid)
@@ -98,7 +98,7 @@ public abstract partial class BaseData : IFlakeInternal
         return await this.Zen.Storage.Load(file);
     }
 
-    void IFlakeInternal.DeleteStorage<TData>()
+    void IDataInternal.DeleteStorage<TData>()
     {// using (this.semaphore.Lock())
         var dataObject = this.TryGetDataObject<TData>();
         if (dataObject.IsValid)
@@ -113,7 +113,7 @@ public abstract partial class BaseData : IFlakeInternal
     /// </summary>
     /// <param name="id">The specified id.</param>
     /// <param name="unload"><see langword="true"/>; unload data.</param>
-    void IFlakeInternal.SaveData(int id, bool unload)
+    void IDataInternal.SaveData(int id, bool unload)
     {
         using (this.semaphore.Lock())
         {

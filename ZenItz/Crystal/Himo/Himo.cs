@@ -3,7 +3,6 @@
 #pragma warning disable SA1401 // Fields should be private
 
 using System.Runtime.CompilerServices;
-using ZenItz.Crystal.Core;
 
 namespace CrystalData;
 
@@ -17,7 +16,7 @@ public partial class HimoGoshujinClass
     internal partial class Himo
     {
         [Link(Name = "UnloadQueue", Type = ChainType.QueueList)] // Manages the order of unloading data from memory
-        public Himo(IFlakeInternal flakeInternal)
+        public Himo(IDataInternal flakeInternal)
         {
             this.flakeInternal = flakeInternal;
             this.himoGoshujin = flakeInternal.ZenInternal.HimoGoshujin;
@@ -95,7 +94,7 @@ public partial class HimoGoshujinClass
         }
 
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
-        protected internal IFlakeInternal flakeInternal;
+        protected internal IDataInternal flakeInternal;
 #pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
         private HimoGoshujinClass himoGoshujin;
         private int currentSize; // Current memory usage
@@ -128,7 +127,7 @@ public partial class HimoGoshujinClass
             return;
         }
 
-        var array = new (IFlakeInternal FlakeInternal, int Id)[UnloadNumber];
+        var array = new (IDataInternal FlakeInternal, int Id)[UnloadNumber];
         do
         {
             int count;

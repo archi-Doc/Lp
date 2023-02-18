@@ -47,7 +47,7 @@ public static class TestHelper
         await zen.StartAsync(new());
     }
 
-    public static bool DataEquals(this ZenMemoryResult dataResult, Span<byte> span)
+    public static bool DataEquals(this CrystalMemoryResult dataResult, Span<byte> span)
     {
         return dataResult.Data.Span.SequenceEqual(span);
     }

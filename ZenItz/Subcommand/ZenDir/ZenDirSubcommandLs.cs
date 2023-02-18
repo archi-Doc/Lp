@@ -1,7 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using SimpleCommandLine;
 using CrystalData;
+using SimpleCommandLine;
 
 namespace CrystalData.Subcommands;
 

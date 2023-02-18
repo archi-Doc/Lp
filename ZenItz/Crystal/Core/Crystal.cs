@@ -18,7 +18,7 @@ public partial class Crystal<TData> : ICrystalInternal
 
         this.Constructor = new();
         this.Constructor.Register<BlockDatum>(x => new BlockDatumImpl(x));
-        this.Constructor.Register<FragmentData<Identifier>>(x => new FragmentDataImpl<Identifier>(x));
+        this.Constructor.Register<FragmentDatum<Identifier>>(x => new FragmentDatumImpl<Identifier>(x));
     }
 
     public async Task<CrystalStartResult> StartAsync(CrystalStartParam param)

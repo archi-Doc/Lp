@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace CrystalData;
 
-public interface FragmentData<TIdentifier> : IDatum
+public interface FragmentDatum<TIdentifier> : IDatum
     where TIdentifier : IEquatable<TIdentifier>, IComparable<TIdentifier>, ITinyhandSerialize<TIdentifier>
 {
     const int Id = 2;
@@ -24,17 +24,17 @@ public interface FragmentData<TIdentifier> : IDatum
     bool Remove(TIdentifier fragmentId);
 }
 
-internal class FragmentDataImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentData<TIdentifier>, IBaseData
+internal class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDatum<TIdentifier>, IBaseData
     where TIdentifier : IEquatable<TIdentifier>, IComparable<TIdentifier>, ITinyhandSerialize<TIdentifier>
 {
-    public FragmentDataImpl(IFlakeInternal flakeInternal)
+    public FragmentDatumImpl(IDataInternal flakeInternal)
         : base(flakeInternal)
     {
     }
 
-    public override int Id => FragmentData<TIdentifier>.Id;
+    public override int Id => FragmentDatum<TIdentifier>.Id;
 
-    CrystalResult FragmentData<TIdentifier>.Set(TIdentifier fragmentId, ReadOnlySpan<byte> span)
+    CrystalResult FragmentDatum<TIdentifier>.Set(TIdentifier fragmentId, ReadOnlySpan<byte> span)
     {
         if (span.Length > this.flakeInternal.Options.MaxFragmentSize)
         {
@@ -44,7 +44,7 @@ internal class FragmentDataImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentD
         return this.SetSpan(fragmentId, span, true);
     }
 
-    CrystalResult FragmentData<TIdentifier>.SetObject<T>(TIdentifier fragmentId, T obj)
+    CrystalResult FragmentDatum<TIdentifier>.SetObject<T>(TIdentifier fragmentId, T obj)
     {
         if (!FlakeFragmentService.TrySerialize(obj, out var memoryOwner))
         {
@@ -58,7 +58,7 @@ internal class FragmentDataImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentD
         return this.SetMemoryOwner(fragmentId, memoryOwner.AsReadOnly(), obj, true);
     }
 
-    async Task<CrystalMemoryResult> FragmentData<TIdentifier>.Get(TIdentifier fragmentId)
+    async Task<CrystalMemoryResult> FragmentDatum<TIdentifier>.Get(TIdentifier fragmentId)
     {
         if (this.fragments == null)
         {
@@ -74,7 +74,7 @@ internal class FragmentDataImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentD
         return new(CrystalResult.NoData);
     }
 
-    async Task<CrystalObjectResult<T>> FragmentData<TIdentifier>.GetObject<T>(TIdentifier fragmentId)
+    async Task<CrystalObjectResult<T>> FragmentDatum<TIdentifier>.GetObject<T>(TIdentifier fragmentId)
     {
         if (this.fragments == null)
         {
@@ -91,7 +91,7 @@ internal class FragmentDataImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentD
         return new(CrystalResult.NoData);
     }
 
-    bool FragmentData<TIdentifier>.Remove(TIdentifier fragmentId)
+    bool FragmentDatum<TIdentifier>.Remove(TIdentifier fragmentId)
     {
         if (this.fragments == null)
         {
@@ -124,7 +124,7 @@ internal class FragmentDataImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentD
                 }
 
                 var memoryOwner = new ByteArrayPool.ReadOnlyMemoryOwner(writer.FlushAndGetArray());
-                this.flakeInternal.DataToStorage<FragmentData<TIdentifier>>(memoryOwner);
+                this.flakeInternal.DataToStorage<FragmentDatum<TIdentifier>>(memoryOwner);
             }
 
             this.isSaved = true;
@@ -188,7 +188,7 @@ internal class FragmentDataImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentD
             return this.fragments;
         }
 
-        var result = this.flakeInternal.StorageToData<FragmentData<TIdentifier>>().Result;
+        var result = this.flakeInternal.StorageToData<FragmentDatum<TIdentifier>>().Result;
         if (result.IsSuccess)
         {
             if (this.LoadInternal(result.Data))
@@ -207,7 +207,7 @@ internal class FragmentDataImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentD
             return this.fragments;
         }
 
-        var result = await this.flakeInternal.StorageToData<FragmentData<TIdentifier>>().ConfigureAwait(false);
+        var result = await this.flakeInternal.StorageToData<FragmentDatum<TIdentifier>>().ConfigureAwait(false);
         if (result.IsSuccess)
         {
             if (this.LoadInternal(result.Data))

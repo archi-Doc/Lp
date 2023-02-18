@@ -23,7 +23,7 @@ public interface BlockDatum : IDatum
 
 internal class BlockDatumImpl : HimoGoshujinClass.Himo, BlockDatum, IBaseData
 {
-    public BlockDatumImpl(IFlakeInternal flakeInternal)
+    public BlockDatumImpl(IDataInternal flakeInternal)
         : base(flakeInternal)
     {
     }
