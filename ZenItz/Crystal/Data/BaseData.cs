@@ -2,8 +2,6 @@
 
 using System.Collections;
 using System.Runtime.CompilerServices;
-using ZenItz;
-using ZenItz.Crystal.Core;
 
 namespace CrystalData;
 
@@ -21,12 +19,12 @@ public abstract partial class BaseData : IFlakeInternal
     {
     }
 
-    internal BaseData(IZenInternal zen)
+    internal BaseData(ICrystalInternal zen)
     {
         this.Zen = zen;
     }
 
-    public IZenInternal Zen { get; private set; } = default!;
+    public ICrystalInternal Zen { get; private set; } = default!;
 
     public BaseData? Parent { get; private set; }
 
@@ -64,7 +62,7 @@ public abstract partial class BaseData : IFlakeInternal
 
     #region IFlakeInternal
 
-    IZenInternal IFlakeInternal.ZenInternal => this.Zen;
+    ICrystalInternal IFlakeInternal.ZenInternal => this.Zen;
 
     DataConstructor IFlakeInternal.Data => this.Zen.Constructor;
 

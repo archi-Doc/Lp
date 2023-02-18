@@ -32,7 +32,7 @@ public partial class Zen<TIdentifier>
 
         #region IFlakeInternal
 
-        IZenInternal IFlakeInternal.ZenInternal => this.Zen;
+        ICrystalInternal IFlakeInternal.ZenInternal => this.Zen;
 
         DataConstructor IFlakeInternal.Data => this.Zen.Constructor;
 
@@ -51,7 +51,7 @@ public partial class Zen<TIdentifier>
             }
         }
 
-        async Task<ZenMemoryOwnerResult> IFlakeInternal.StorageToData<TData>()
+        async Task<CrystalMemoryOwnerResult> IFlakeInternal.StorageToData<TData>()
         {// using (this.semaphore.Lock())
             var dataObject = this.TryGetDataObject<TData>();
             if (!dataObject.IsValid)

@@ -101,7 +101,7 @@ public partial class HimoGoshujinClass
         private int currentSize; // Current memory usage
     }
 
-    public HimoGoshujinClass(IZenInternal zenInternal)
+    public HimoGoshujinClass(ICrystalInternal zenInternal)
     {
         this.zenInternal = zenInternal;
     }
@@ -161,7 +161,7 @@ public partial class HimoGoshujinClass
 
     internal long MemoryUsage => this.memoryUsage;
 
-    private IZenInternal zenInternal;
+    private ICrystalInternal zenInternal;
 
     private object syncObject = new();
     private long memoryUsage; // lock(this.syncObject)

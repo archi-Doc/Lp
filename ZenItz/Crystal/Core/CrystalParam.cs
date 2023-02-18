@@ -1,16 +1,16 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace ZenItz.Crystal.Core;
+namespace Crystal;
 
-public record ZenStartParam(bool ForceStart = false, ZenStartQueryDelegate? QueryDelegate = null, bool FromScratch = false)
+public record CrystalStartParam(bool ForceStart = false, ZenStartQueryDelegate? QueryDelegate = null, bool FromScratch = false)
 {
-    public Task<bool> Query(ZenStartResult query, string[]? list = null)
+    public Task<bool> Query(CrystalStartResult query, string[]? list = null)
         => this.QueryDelegate == null || this.ForceStart ? Task.FromResult(true) : this.QueryDelegate(query, list);
 }
 
 public record ZenStopParam(bool RemoveAll = false);
 
-public enum ZenStartResult
+public enum CrystalStartResult
 {
     Success,
     ZenFileNotFound,
@@ -20,4 +20,4 @@ public enum ZenStartResult
     NoDirectoryAvailable,
 }
 
-public delegate Task<bool> ZenStartQueryDelegate(ZenStartResult query, string[]? list);
+public delegate Task<bool> ZenStartQueryDelegate(CrystalStartResult query, string[]? list);

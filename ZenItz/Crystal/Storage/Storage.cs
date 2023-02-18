@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Crystal;
 using CrystalData.Results;
 
 namespace CrystalData;
@@ -122,7 +123,7 @@ public sealed class Storage
         directory.Save(ref file, memoryToBeShared);
     }
 
-    internal async Task<ZenMemoryOwnerResult> Load(ulong file)
+    internal async Task<CrystalMemoryOwnerResult> Load(ulong file)
     {
         if (!CrystalHelper.IsValidFile(file))
         {// Invalid file.
@@ -179,11 +180,11 @@ public sealed class Storage
         this.Started = true;
     }*/
 
-    internal async Task<ZenStartResult> TryStart(CrystalOptions options, ZenStartParam param, ReadOnlyMemory<byte>? data)
+    internal async Task<CrystalStartResult> TryStart(CrystalOptions options, CrystalStartParam param, ReadOnlyMemory<byte>? data)
     {// Zen.semaphore
         if (this.Started)
         {
-            return ZenStartResult.Success;
+            return CrystalStartResult.Success;
         }
 
         this.Options = options;
@@ -197,9 +198,9 @@ public sealed class Storage
             }
             catch
             {
-                if (!await param.Query(ZenStartResult.ZenFileError))
+                if (!await param.Query(CrystalStartResult.ZenFileError))
                 {
-                    return ZenStartResult.ZenFileError;
+                    return CrystalStartResult.ZenFileError;
                 }
             }
         }
@@ -216,9 +217,9 @@ public sealed class Storage
         }
 
         if (errorDirectories != null &&
-            !await param.Query(ZenStartResult.ZenDirectoryError, errorDirectories.ToArray()))
+            !await param.Query(CrystalStartResult.ZenDirectoryError, errorDirectories.ToArray()))
         {
-            return ZenStartResult.ZenFileError;
+            return CrystalStartResult.ZenFileError;
         }
 
         if (storageData.Directories.DirectoryIdChain.Count == 0)
@@ -241,7 +242,7 @@ public sealed class Storage
 
         if (storageData.Directories.DirectoryIdChain.Count == 0)
         {
-            return ZenStartResult.NoDirectoryAvailable;
+            return CrystalStartResult.NoDirectoryAvailable;
         }
 
         lock (this.syncObject)
@@ -252,7 +253,7 @@ public sealed class Storage
             this.Started = true;
         }
 
-        return ZenStartResult.Success;
+        return CrystalStartResult.Success;
     }
 
     internal async Task StopAsync()

@@ -3,7 +3,7 @@
 using System.Runtime.CompilerServices;
 using CrystalData;
 
-namespace ZenItz.Crystal.Core;
+namespace CrystalData;
 
 public class DataConstructor
 {

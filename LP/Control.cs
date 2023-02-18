@@ -325,7 +325,7 @@ public class Control : ILogInformation
         }
 
         var result = await this.ZenControl.Zen.StartAsync(new());
-        if (result != ZenStartResult.Success)
+        if (result != CrystalStartResult.Success)
         {
             throw new PanicException();
         }

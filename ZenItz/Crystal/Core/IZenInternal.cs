@@ -1,10 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using CrystalData;
+namespace CrystalData;
 
-namespace ZenItz.Crystal.Core;
-
-public interface IZenInternal
+public interface ICrystalInternal
 {
     DataConstructor Constructor { get; }
 

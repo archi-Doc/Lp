@@ -2,9 +2,9 @@
 
 using CrystalData;
 
-namespace ZenItz.Crystal.Core;
+namespace Crystal;
 
-public partial class Crystal<TData> : IZenInternal
+public partial class Crystal<TData> : ICrystalInternal
     where TData : BaseData
 {
     internal Crystal(UnitCore core, CrystalOptions options, ILogger<Crystal<TData>> logger)
@@ -21,15 +21,15 @@ public partial class Crystal<TData> : IZenInternal
         this.Constructor.Register<FragmentData<Identifier>>(x => new FragmentDataImpl<Identifier>(x));
     }
 
-    public async Task<ZenStartResult> StartAsync(ZenStartParam param)
+    public async Task<CrystalStartResult> StartAsync(CrystalStartParam param)
     {
         await this.semaphore.WaitAsync().ConfigureAwait(false);
         try
         {
-            var result = ZenStartResult.Success;
+            var result = CrystalStartResult.Success;
             if (this.Started)
             {
-                return ZenStartResult.Success;
+                return CrystalStartResult.Success;
             }
 
             this.logger.TryGet()?.Log("Zen start");
@@ -41,19 +41,19 @@ public partial class Crystal<TData> : IZenInternal
                 this.DeleteAll();
 
                 this.Started = true;
-                return ZenStartResult.Success;
+                return CrystalStartResult.Success;
             }
 
             // Load CrystalDirectory
             result = await this.LoadZenDirectory(param);
-            if (result != ZenStartResult.Success)
+            if (result != CrystalStartResult.Success)
             {
                 return result;
             }
 
             // Load Zen
             result = await this.LoadZen(param);
-            if (result != ZenStartResult.Success)
+            if (result != CrystalStartResult.Success)
             {
                 return result;
             }
@@ -140,7 +140,7 @@ public partial class Crystal<TData> : IZenInternal
         }
     }
 
-    HimoGoshujinClass IZenInternal.HimoGoshujin => this.himoGoshujin;
+    HimoGoshujinClass ICrystalInternal.HimoGoshujin => this.himoGoshujin;
 
     public UnitCore Core { get; init; }
 
@@ -206,10 +206,10 @@ public partial class Crystal<TData> : IZenInternal
 
     private HimoGoshujinClass himoGoshujin;
 
-    private async Task<ZenStartResult> LoadZenDirectory(ZenStartParam param)
+    private async Task<CrystalStartResult> LoadZenDirectory(CrystalStartParam param)
     {// await this.semaphore.WaitAsync()
         // Load
-        ZenStartResult result;
+        CrystalStartResult result;
         byte[]? data;
         try
         {
@@ -227,9 +227,9 @@ public partial class Crystal<TData> : IZenInternal
         }
 
         result = await this.Storage.TryStart(this.Options, param, memory);
-        if (result == ZenStartResult.Success || param.ForceStart)
+        if (result == CrystalStartResult.Success || param.ForceStart)
         {
-            return ZenStartResult.Success;
+            return CrystalStartResult.Success;
         }
 
         return result;
@@ -241,51 +241,51 @@ LoadBackup:
         }
         catch
         {
-            if (await param.Query(ZenStartResult.ZenDirectoryNotFound))
+            if (await param.Query(CrystalStartResult.ZenDirectoryNotFound))
             {
                 result = await this.Storage.TryStart(this.Options, param, null);
-                if (result == ZenStartResult.Success || param.ForceStart)
+                if (result == CrystalStartResult.Success || param.ForceStart)
                 {
-                    return ZenStartResult.Success;
+                    return CrystalStartResult.Success;
                 }
 
                 return result;
             }
             else
             {
-                return ZenStartResult.ZenDirectoryNotFound;
+                return CrystalStartResult.ZenDirectoryNotFound;
             }
         }
 
         // Checksum Zen
         if (!HashHelper.CheckFarmHashAndGetData(data.AsMemory(), out memory))
         {
-            if (await param.Query(ZenStartResult.ZenDirectoryError))
+            if (await param.Query(CrystalStartResult.ZenDirectoryError))
             {
                 result = await this.Storage.TryStart(this.Options, param, null);
-                if (result == ZenStartResult.Success || param.ForceStart)
+                if (result == CrystalStartResult.Success || param.ForceStart)
                 {
-                    return ZenStartResult.Success;
+                    return CrystalStartResult.Success;
                 }
 
                 return result;
             }
             else
             {
-                return ZenStartResult.ZenDirectoryError;
+                return CrystalStartResult.ZenDirectoryError;
             }
         }
 
         result = await this.Storage.TryStart(this.Options, param, memory);
-        if (result == ZenStartResult.Success || param.ForceStart)
+        if (result == CrystalStartResult.Success || param.ForceStart)
         {
-            return ZenStartResult.Success;
+            return CrystalStartResult.Success;
         }
 
         return result;
     }
 
-    private async Task<ZenStartResult> LoadZen(ZenStartParam param)
+    private async Task<CrystalStartResult> LoadZen(CrystalStartParam param)
     {// await this.semaphore.WaitAsync()
         // Load
         byte[]? data;
@@ -306,7 +306,7 @@ LoadBackup:
 
         if (this.DeserializeZen(memory))
         {
-            return ZenStartResult.Success;
+            return CrystalStartResult.Success;
         }
 
 LoadBackup:
@@ -316,43 +316,43 @@ LoadBackup:
         }
         catch
         {
-            if (await param.Query(ZenStartResult.ZenFileNotFound))
+            if (await param.Query(CrystalStartResult.ZenFileNotFound))
             {
-                return ZenStartResult.Success;
+                return CrystalStartResult.Success;
             }
             else
             {
-                return ZenStartResult.ZenFileNotFound;
+                return CrystalStartResult.ZenFileNotFound;
             }
         }
 
         // Checksum Zen
         if (!HashHelper.CheckFarmHashAndGetData(data.AsMemory(), out memory))
         {
-            if (await param.Query(ZenStartResult.ZenFileError))
+            if (await param.Query(CrystalStartResult.ZenFileError))
             {
-                return ZenStartResult.Success;
+                return CrystalStartResult.Success;
             }
             else
             {
-                return ZenStartResult.ZenFileError;
+                return CrystalStartResult.ZenFileError;
             }
         }
 
         // Deserialize
         if (!this.DeserializeZen(memory))
         {
-            if (await param.Query(ZenStartResult.ZenFileError))
+            if (await param.Query(CrystalStartResult.ZenFileError))
             {
-                return ZenStartResult.Success;
+                return CrystalStartResult.Success;
             }
             else
             {
-                return ZenStartResult.ZenFileError;
+                return CrystalStartResult.ZenFileError;
             }
         }
 
-        return ZenStartResult.Success;
+        return CrystalStartResult.Success;
     }
 
     private bool DeserializeZen(ReadOnlyMemory<byte> data)

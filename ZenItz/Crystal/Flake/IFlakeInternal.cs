@@ -6,7 +6,7 @@ namespace CrystalData;
 
 public interface IFlakeInternal
 {
-    IZenInternal ZenInternal { get; }
+    ICrystalInternal ZenInternal { get; }
 
     DataConstructor Data { get; }
 

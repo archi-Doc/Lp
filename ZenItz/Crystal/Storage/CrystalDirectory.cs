@@ -38,7 +38,7 @@ internal partial class CrystalDirectory : IDisposable
         return new(this.DirectoryId, this.Type, this.DirectoryPath, this.DirectoryCapacity, this.DirectorySize, this.UsageRatio);
     }
 
-    internal async Task<ZenMemoryOwnerResult> Load(ulong file)
+    internal async Task<CrystalMemoryOwnerResult> Load(ulong file)
     {
         Snowflake? snowflake;
         var snowflakeId = CrystalHelper.ToSnowflakeId(file);
