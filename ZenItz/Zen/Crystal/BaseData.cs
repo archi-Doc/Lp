@@ -82,18 +82,18 @@ public abstract partial class BaseData : IFlakeInternal
         }
     }
 
-    async Task<ZenMemoryOwnerResult> IFlakeInternal.StorageToData<TData>()
+    async Task<CrystalMemoryOwnerResult> IFlakeInternal.StorageToData<TData>()
     {// using (this.semaphore.Lock())
         var dataObject = this.TryGetDataObject<TData>();
         if (!dataObject.IsValid)
         {
-            return new(ZenResult.NoData);
+            return new(CrystalResult.NoData);
         }
 
         var file = dataObject.File;
         if (!ZenHelper.IsValidFile(file))
         {
-            return new(ZenResult.NoData);
+            return new(CrystalResult.NoData);
         }
 
         return await this.Zen.Storage.Load(file);
@@ -140,7 +140,7 @@ public abstract partial class BaseData : IFlakeInternal
     #region Main
 
     public LockOperation<TData> Lock<TData>()
-       where TData : IData
+       where TData : IDatum
     {
         var operation = new LockOperation<TData>(this);
 
@@ -260,7 +260,7 @@ public abstract partial class BaseData : IFlakeInternal
     }
 
     private DataObject GetOrCreateDataObject<TData>()
-        where TData : IData
+        where TData : IDatum
     {// using (this.semaphore.Lock())
         var id = TData.StaticId;
         for (var i = 0; i < this.dataObject.Length; i++)
@@ -299,7 +299,7 @@ public abstract partial class BaseData : IFlakeInternal
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private DataObject TryGetDataObject<TData>()
-        where TData : IData
+        where TData : IDatum
     {// using (this.semaphore.Lock())
         var id = TData.StaticId;
         for (var i = 0; i < this.dataObject.Length; i++)

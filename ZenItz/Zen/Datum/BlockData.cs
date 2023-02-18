@@ -2,22 +2,22 @@
 
 using System.Runtime.CompilerServices;
 
-namespace ZenItz;
+namespace CrystalData;
 
-public interface BlockData : IData
+public interface BlockData : IDatum
 {
     const int Id = 1;
 
-    static int IData.StaticId => Id;
+    static int IDatum.StaticId => Id;
 
-    ZenResult Set(ReadOnlySpan<byte> data);
+    CrystalResult Set(ReadOnlySpan<byte> data);
 
-    ZenResult SetObject<T>(T obj)
+    CrystalResult SetObject<T>(T obj)
             where T : ITinyhandSerialize<T>;
 
-    Task<ZenMemoryResult> Get();
+    Task<CrystalMemoryResult> Get();
 
-    Task<ZenObjectResult<T>> GetObject<T>()
+    Task<CrystalObjectResult<T>> GetObject<T>()
             where T : ITinyhandSerialize<T>;
 }
 
@@ -30,39 +30,39 @@ internal class BlockDataImpl : HimoGoshujinClass.Himo, BlockData, IBaseData
 
     public override int Id => BlockData.Id;
 
-    ZenResult BlockData.Set(ReadOnlySpan<byte> data)
+    CrystalResult BlockData.Set(ReadOnlySpan<byte> data)
     {
         if (data.Length > this.flakeInternal.Options.MaxDataSize)
         {
-            return ZenResult.OverSizeLimit;
+            return CrystalResult.OverSizeLimit;
         }
 
         this.Update(this.memoryObject.SetSpanInternal(data), true);
-        return ZenResult.Success;
+        return CrystalResult.Success;
     }
 
-    ZenResult BlockData.SetObject<T>(T obj)
+    CrystalResult BlockData.SetObject<T>(T obj)
     {
         if (!FlakeFragmentService.TrySerialize(obj, out var memoryOwner))
         {
-            return ZenResult.SerializeError;
+            return CrystalResult.SerializeError;
         }
         else if (memoryOwner.Memory.Length > this.flakeInternal.Options.MaxDataSize)
         {
-            return ZenResult.OverSizeLimit;
+            return CrystalResult.OverSizeLimit;
         }
 
         this.Update(this.memoryObject.SetMemoryOwnerInternal(memoryOwner.AsReadOnly(), obj), true);
-        return ZenResult.Success;
+        return CrystalResult.Success;
     }
 
-    async Task<ZenMemoryResult> BlockData.Get()
+    async Task<CrystalMemoryResult> BlockData.Get()
     {
         if (this.memoryObject.MemoryOwnerIsValid)
         {
             var memoryOwner = this.memoryObject.MemoryOwner.IncrementAndShare();
             this.UpdateHimo();
-            return new(ZenResult.Success, memoryOwner.Memory);
+            return new(CrystalResult.Success, memoryOwner.Memory);
         }
 
         var result = await this.flakeInternal.StorageToData<BlockData>();
@@ -77,12 +77,12 @@ internal class BlockDataImpl : HimoGoshujinClass.Himo, BlockData, IBaseData
         }
     }
 
-    async Task<ZenObjectResult<T>> BlockData.GetObject<T>()
+    async Task<CrystalObjectResult<T>> BlockData.GetObject<T>()
     {
         if (this.memoryObject.MemoryOwnerIsValid &&
-            this.memoryObject.TryGetObjectInternal(out T? obj) == ZenResult.Success)
+            this.memoryObject.TryGetObjectInternal(out T? obj) == CrystalResult.Success)
         {
-            return new(ZenResult.Success, obj);
+            return new(CrystalResult.Success, obj);
         }
 
         var result = await this.flakeInternal.StorageToData<BlockData>();

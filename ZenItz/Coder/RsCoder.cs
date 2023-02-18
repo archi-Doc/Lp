@@ -7,7 +7,7 @@ using System.Linq;
 
 #pragma warning disable SA1519 // Braces should not be omitted from multi-line child statement
 
-namespace ZenItz;
+namespace CrystalData;
 
 public class RsCoder : IDisposable
 {

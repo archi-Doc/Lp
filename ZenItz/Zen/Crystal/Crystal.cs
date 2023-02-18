@@ -2,7 +2,7 @@
 
 using CrystalData;
 
-namespace ZenItz;
+namespace CrystalData;
 
 public partial class Crystal<TData> : IZenInternal
     where TData : CrystalData.BaseData

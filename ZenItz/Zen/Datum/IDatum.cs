@@ -1,8 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace ZenItz;
+namespace CrystalData;
 
-public interface IData
+public interface IDatum
 {
     static virtual int StaticId => 0;
 }

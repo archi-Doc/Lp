@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace ZenItz;
+namespace CrystalData;
 
 [TinyhandObject]
 internal partial class StorageData

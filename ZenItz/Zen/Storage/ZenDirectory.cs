@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 #pragma warning disable SA1124 // Do not use regions
 
-namespace ZenItz;
+namespace CrystalData;
 
 public enum ZenDirectoryType
 {
@@ -53,7 +53,7 @@ internal partial class ZenDirectory : IDisposable
             }
             else
             {// Not found
-                return new(ZenResult.NoFile);
+                return new(CrystalResult.NoFile);
             }
         }
 
@@ -64,16 +64,16 @@ internal partial class ZenDirectory : IDisposable
             var data = workInterface.Work.LoadData;
             if (data.IsRent)
             {// Success
-                return new(ZenResult.Success, data.AsReadOnly());
+                return new(CrystalResult.Success, data.AsReadOnly());
             }
             else
             {// Failure
-                return new(ZenResult.NoFile);
+                return new(CrystalResult.NoFile);
             }
         }
         else
         {// Abort
-            return new(ZenResult.NoFile);
+            return new(CrystalResult.NoFile);
         }
     }
 

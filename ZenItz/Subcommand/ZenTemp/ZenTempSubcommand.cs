@@ -3,7 +3,7 @@
 using System;
 using SimpleCommandLine;
 
-namespace ZenItz.Subcommands;
+namespace CrystalData.Subcommands;
 
 [SimpleCommand("zentemp", IsSubcommand = true, Description = "Zen template subcommand")]
 public class ZenTempSubcommand : SimpleCommandGroup<ZenTempSubcommand>

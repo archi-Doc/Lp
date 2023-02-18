@@ -2,16 +2,16 @@
 
 using System.Runtime.CompilerServices;
 
-namespace ZenItz;
+namespace CrystalData;
 
 public partial class Zen<TIdentifier>
 {
     public partial class Flake
     {
-        internal const ZenResult NullDataResult = ZenResult.Removed;
+        internal const CrystalResult NullDataResult = CrystalResult.Removed;
 
         public struct LockOperation<TData> : IDisposable
-            where TData : IData
+            where TData : IDatum
         {
             public LockOperation(Flake flake)
             {

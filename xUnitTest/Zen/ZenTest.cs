@@ -52,7 +52,7 @@ public partial class ZenTest
             f.IsNotNull();
 
             identifier.TryWriteBytes(buffer);
-            f!.BlockData.Set(buffer).Is(ZenResult.Success);
+            f!.BlockData.Set(buffer).Is(CrystalResult.Success);
         }
 
         // Get flakes and check
@@ -77,13 +77,13 @@ public partial class ZenTest
             identifier = new Identifier(i);
             identifier.TryWriteBytes(buffer);
 
-            f!.FragmentData.Set(identifier, buffer).Is(ZenResult.Success);
+            f!.FragmentData.Set(identifier, buffer).Is(CrystalResult.Success);
         }
 
         identifier = new Identifier(1999);
         identifier.TryWriteBytes(buffer);
 
-        f!.FragmentData.Set(identifier, buffer).Is(ZenResult.OverNumberLimit);
+        f!.FragmentData.Set(identifier, buffer).Is(CrystalResult.OverNumberLimit);
 
         await TestHelper.StopZen(zen);
     }
@@ -193,14 +193,14 @@ public partial class ZenTest
             flake.BlockData.Set(new byte[] { 0, 1, });
             flake.Save(true);
             var fd = await flake.BlockData.Get();
-            fd.Result.Is(ZenResult.Success);
+            fd.Result.Is(CrystalResult.Success);
         }
 
         // Remove test
         flake = zen.Root.GetOrCreateChild(Identifier.Zero);
         flake.Remove().IsTrue();
-        flake.BlockData.Set(new byte[] { 0, 1, }).Is(ZenResult.Removed);
-        (await flake.BlockData.Get()).Result.Is(ZenResult.Removed);
+        flake.BlockData.Set(new byte[] { 0, 1, }).Is(CrystalResult.Removed);
+        (await flake.BlockData.Get()).Result.Is(CrystalResult.Removed);
 
         await TestHelper.StopZen(zen);
     }

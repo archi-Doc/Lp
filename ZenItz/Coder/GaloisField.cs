@@ -2,7 +2,7 @@
 
 using System.Collections.Generic;
 
-namespace ZenItz;
+namespace CrystalData;
 
 public class GaloisField
 {

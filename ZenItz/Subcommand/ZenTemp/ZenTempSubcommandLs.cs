@@ -3,7 +3,7 @@
 using SimpleCommandLine;
 using ZenItz;
 
-namespace ZenItz.Subcommands;
+namespace CrystalData.Subcommands;
 
 [SimpleCommand("ls", Description = "List zen directory information.")]
 public class ZenTempSubcommandLs : ISimpleCommandAsync

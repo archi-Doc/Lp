@@ -1,11 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace ZenItz.Results;
+namespace CrystalData.Results;
 
 public enum AddDictionaryResult
 {
     Success,
-    ZenRunning,
+    Running,
     DuplicateId,
     DuplicatePath,
     FileExists,

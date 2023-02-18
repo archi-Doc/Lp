@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace ZenItz;
+namespace CrystalData;
 
 public partial class Zen<TIdentifier>
 {
@@ -15,7 +15,7 @@ public partial class Zen<TIdentifier>
                 this.flake = flake;
             }
 
-            public ZenResult Set(ReadOnlySpan<byte> span)
+            public CrystalResult Set(ReadOnlySpan<byte> span)
             {
                 using (var obj = this.flake.Lock<BlockData>())
                 {
@@ -28,7 +28,7 @@ public partial class Zen<TIdentifier>
                 }
             }
 
-            public ZenResult SetObject<T>(T @object)
+            public CrystalResult SetObject<T>(T @object)
                 where T : ITinyhandSerialize<T>
             {
                 using (var obj = this.flake.Lock<BlockData>())

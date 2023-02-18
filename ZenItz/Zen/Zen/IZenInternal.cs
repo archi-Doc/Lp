@@ -2,7 +2,7 @@
 
 using CrystalData;
 
-namespace ZenItz;
+namespace CrystalData;
 
 public interface IZenInternal
 {

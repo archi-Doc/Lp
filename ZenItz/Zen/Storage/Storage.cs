@@ -1,8 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using ZenItz.Results;
+using CrystalData.Results;
 
-namespace ZenItz;
+namespace CrystalData;
 
 public sealed class Storage
 {
@@ -126,7 +126,7 @@ public sealed class Storage
     {
         if (!ZenHelper.IsValidFile(file))
         {// Invalid file.
-            return new(ZenResult.NoData);
+            return new(CrystalResult.NoData);
         }
 
         ZenDirectory? directory;
@@ -134,7 +134,7 @@ public sealed class Storage
         {
             if (!this.data.Directories.DirectoryIdChain.TryGetValue(ZenHelper.ToDirectoryId(file), out directory))
             {// No directory
-                return new(ZenResult.NoDirectory);
+                return new(CrystalResult.NoDirectory);
             }
         }
 

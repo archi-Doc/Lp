@@ -2,18 +2,18 @@
 
 using System.Runtime.CompilerServices;
 
-namespace ZenItz;
+namespace CrystalData;
 
-public interface FragmentData<TIdentifier> : IData
+public interface FragmentData<TIdentifier> : IDatum
     where TIdentifier : IEquatable<TIdentifier>, IComparable<TIdentifier>, ITinyhandSerialize<TIdentifier>
 {
     const int Id = 2;
 
-    static int IData.StaticId => Id;
+    static int IDatum.StaticId => Id;
 
-    ZenResult Set(TIdentifier fragmentId, ReadOnlySpan<byte> span);
+    CrystalResult Set(TIdentifier fragmentId, ReadOnlySpan<byte> span);
 
-    ZenResult SetObject<T>(TIdentifier fragmentId, T obj)
+    CrystalResult SetObject<T>(TIdentifier fragmentId, T obj)
         where T : ITinyhandSerialize<T>;
 
     Task<ZenMemoryResult> Get(TIdentifier fragmentId);
@@ -34,25 +34,25 @@ internal class FragmentDataImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentD
 
     public override int Id => FragmentData<TIdentifier>.Id;
 
-    ZenResult FragmentData<TIdentifier>.Set(TIdentifier fragmentId, ReadOnlySpan<byte> span)
+    CrystalResult FragmentData<TIdentifier>.Set(TIdentifier fragmentId, ReadOnlySpan<byte> span)
     {
         if (span.Length > this.flakeInternal.Options.MaxFragmentSize)
         {
-            return ZenResult.OverSizeLimit;
+            return CrystalResult.OverSizeLimit;
         }
 
         return this.SetSpan(fragmentId, span, true);
     }
 
-    ZenResult FragmentData<TIdentifier>.SetObject<T>(TIdentifier fragmentId, T obj)
+    CrystalResult FragmentData<TIdentifier>.SetObject<T>(TIdentifier fragmentId, T obj)
     {
         if (!FlakeFragmentService.TrySerialize(obj, out var memoryOwner))
         {
-            return ZenResult.SerializeError;
+            return CrystalResult.SerializeError;
         }
         else if (memoryOwner.Memory.Length > this.flakeInternal.Options.MaxFragmentSize)
         {
-            return ZenResult.OverSizeLimit;
+            return CrystalResult.OverSizeLimit;
         }
 
         return this.SetMemoryOwner(fragmentId, memoryOwner.AsReadOnly(), obj, true);
@@ -68,10 +68,10 @@ internal class FragmentDataImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentD
         if (this.fragments.IdChain.TryGetValue(fragmentId, out var fragmentData))
         {// Found
             this.UpdateHimo();
-            return new(ZenResult.Success, fragmentData.MemoryOwner.IncrementAndShare().Memory);
+            return new(CrystalResult.Success, fragmentData.MemoryOwner.IncrementAndShare().Memory);
         }
 
-        return new(ZenResult.NoData);
+        return new(CrystalResult.NoData);
     }
 
     async Task<ZenObjectResult<T>> FragmentData<TIdentifier>.GetObject<T>(TIdentifier fragmentId)
@@ -88,7 +88,7 @@ internal class FragmentDataImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentD
             return new(result, obj);
         }
 
-        return new(ZenResult.NoData);
+        return new(CrystalResult.NoData);
     }
 
     bool FragmentData<TIdentifier>.Remove(TIdentifier fragmentId)
@@ -233,7 +233,7 @@ internal class FragmentDataImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentD
     private bool isSaved = true;
     private FragmentObject<TIdentifier>.GoshujinClass? fragments; // by Yamamoto.
 
-    private ZenResult SetSpan(TIdentifier fragmentId, ReadOnlySpan<byte> data, bool clearSavedFlag)
+    private CrystalResult SetSpan(TIdentifier fragmentId, ReadOnlySpan<byte> data, bool clearSavedFlag)
     {
         if (this.fragments == null)
         {
@@ -245,7 +245,7 @@ internal class FragmentDataImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentD
         {// New
             if (this.fragments.Count >= this.flakeInternal.Options.MaxFragmentCount)
             {
-                return ZenResult.OverNumberLimit;
+                return CrystalResult.OverNumberLimit;
             }
 
             fragmentData = new(fragmentId);
@@ -253,10 +253,10 @@ internal class FragmentDataImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentD
         }
 
         this.Update(fragmentData.SetSpanInternal(data), clearSavedFlag);
-        return ZenResult.Success;
+        return CrystalResult.Success;
     }
 
-    private ZenResult SetMemoryOwner(TIdentifier fragmentId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved, object? obj, bool clearSavedFlag)
+    private CrystalResult SetMemoryOwner(TIdentifier fragmentId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved, object? obj, bool clearSavedFlag)
     {// using (Flake.semaphore)
         if (this.fragments == null)
         {
@@ -268,7 +268,7 @@ internal class FragmentDataImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentD
         {// New
             if (this.fragments.IdChain.Count >= this.flakeInternal.Options.MaxFragmentCount)
             {
-                return ZenResult.OverNumberLimit;
+                return CrystalResult.OverNumberLimit;
             }
 
             fragmentObject = new(fragmentId);
@@ -276,6 +276,6 @@ internal class FragmentDataImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentD
         }
 
         this.Update(fragmentObject.SetMemoryOwnerInternal(dataToBeMoved, obj), clearSavedFlag);
-        return ZenResult.Success;
+        return CrystalResult.Success;
     }
 }

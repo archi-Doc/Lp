@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace ZenItz;
+namespace CrystalData;
 
 public interface IFlakeInternal
 {
@@ -11,13 +11,13 @@ public interface IFlakeInternal
     ZenOptions Options { get; }
 
     void DataToStorage<TData>(ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
-        where TData : IData;
+        where TData : IDatum;
 
-    Task<ZenMemoryOwnerResult> StorageToData<TData>()
-        where TData : IData;
+    Task<CrystalMemoryOwnerResult> StorageToData<TData>()
+        where TData : IDatum;
 
     void DeleteStorage<TData>()
-        where TData : IData;
+        where TData : IDatum;
 
     void SaveData(int id, bool unload);
 }

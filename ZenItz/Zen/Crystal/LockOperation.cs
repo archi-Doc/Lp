@@ -7,10 +7,10 @@ namespace CrystalData;
 
 public partial class BaseData
 {
-    internal const ZenResult NullDataResult = ZenResult.Removed;
+    internal const CrystalResult NullDataResult = CrystalResult.Removed;
 
     public struct LockOperation<TDatum> : IDisposable
-        where TDatum : IData
+        where TDatum : IDatum
     {
         public LockOperation(BaseData data)
         {

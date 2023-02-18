@@ -1,16 +1,16 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace ZenItz;
+namespace CrystalData;
 
-public readonly struct ZenMemoryOwnerResult
+public readonly struct CrystalMemoryOwnerResult
 {
-    public ZenMemoryOwnerResult(ZenResult result, ByteArrayPool.ReadOnlyMemoryOwner data)
+    public CrystalMemoryOwnerResult(CrystalResult result, ByteArrayPool.ReadOnlyMemoryOwner data)
     {
         this.Result = result;
         this.Data = data;
     }
 
-    public ZenMemoryOwnerResult(ZenResult result)
+    public CrystalMemoryOwnerResult(CrystalResult result)
     {
         this.Result = result;
         this.Data = default;
@@ -18,9 +18,9 @@ public readonly struct ZenMemoryOwnerResult
 
     public void Return() => this.Data.Return();
 
-    public bool IsSuccess => this.Result == ZenResult.Success;
+    public bool IsSuccess => this.Result == CrystalResult.Success;
 
-    public readonly ZenResult Result;
+    public readonly CrystalResult Result;
 
     public readonly ByteArrayPool.ReadOnlyMemoryOwner Data;
 }

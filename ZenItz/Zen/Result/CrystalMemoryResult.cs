@@ -1,24 +1,24 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace ZenItz;
+namespace CrystalData;
 
-public readonly struct ZenMemoryResult
+public readonly struct CrystalMemoryResult
 {
-    public ZenMemoryResult(ZenResult result, ReadOnlyMemory<byte> data)
+    public CrystalMemoryResult(CrystalResult result, ReadOnlyMemory<byte> data)
     {
         this.Result = result;
         this.Data = data;
     }
 
-    public ZenMemoryResult(ZenResult result)
+    public CrystalMemoryResult(CrystalResult result)
     {
         this.Result = result;
         this.Data = default;
     }
 
-    public bool IsSuccess => this.Result == ZenResult.Success;
+    public bool IsSuccess => this.Result == CrystalResult.Success;
 
-    public readonly ZenResult Result;
+    public readonly CrystalResult Result;
 
     public readonly ReadOnlyMemory<byte> Data;
 

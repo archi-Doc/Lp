@@ -2,7 +2,7 @@
 
 using System.Runtime.CompilerServices;
 
-namespace ZenItz;
+namespace CrystalData;
 
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
 #pragma warning disable SA1401 // Fields should be private
@@ -55,13 +55,13 @@ public partial class Zen<TIdentifier>
             var dataObject = this.TryGetDataObject<TData>();
             if (!dataObject.IsValid)
             {
-                return new(ZenResult.NoData);
+                return new(CrystalResult.NoData);
             }
 
             var file = dataObject.File;
             if (!ZenHelper.IsValidFile(file))
             {
-                return new(ZenResult.NoData);
+                return new(CrystalResult.NoData);
             }
 
             return await this.Zen.Storage.Load(file);
@@ -108,7 +108,7 @@ public partial class Zen<TIdentifier>
         #region Main
 
         public LockOperation<TData> Lock<TData>()
-           where TData : IData
+           where TData : IDatum
         {
             var operation = new LockOperation<TData>(this);
 
@@ -181,7 +181,7 @@ public partial class Zen<TIdentifier>
         #region Child
 
         public LockOperation<TData> LockChild<TData>(TIdentifier id)
-            where TData : IData
+            where TData : IDatum
         {
             Flake? flake;
             using (this.semaphore.Lock())
@@ -334,7 +334,7 @@ public partial class Zen<TIdentifier>
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private DataObject GetOrCreateDataObject<TData>()
-            where TData : IData
+            where TData : IDatum
         {// using (this.semaphore.Lock())
             var id = TData.StaticId;
             for (var i = 0; i < this.dataObject.Length; i++)
@@ -373,7 +373,7 @@ public partial class Zen<TIdentifier>
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private DataObject TryGetDataObject<TData>()
-            where TData : IData
+            where TData : IDatum
         {// using (this.semaphore.Lock())
             var id = TData.StaticId;
             for (var i = 0; i < this.dataObject.Length; i++)

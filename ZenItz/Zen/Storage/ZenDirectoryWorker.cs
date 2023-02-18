@@ -2,7 +2,7 @@
 
 using System.IO;
 
-namespace ZenItz;
+namespace CrystalData;
 
 internal class ZenDirectoryWorker : TaskWorker<ZenDirectoryWork>
 {

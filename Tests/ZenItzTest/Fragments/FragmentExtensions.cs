@@ -4,7 +4,7 @@ namespace LP.Fragments;
 
 /*public static class FragmentExtensions
 {
-    public static ZenResult Set<TFragment>(this Zen<Identifier>.Flake flake, TFragment fragment)
+    public static CrystalResult Set<TFragment>(this Zen<Identifier>.Flake flake, TFragment fragment)
         where TFragment : FragmentBase
     {
         return flake.SetDataObject(fragment);
@@ -17,7 +17,7 @@ namespace LP.Fragments;
         return result.Object as TFragment;
     }
 
-    public static ZenResult SetFragment<TFragment>(this Zen<Identifier>.Flake flake, Identifier fragmentId, TFragment fragment)
+    public static CrystalResult SetFragment<TFragment>(this Zen<Identifier>.Flake flake, Identifier fragmentId, TFragment fragment)
         where TFragment : FragmentBase
     {
         return flake.SetFragmentObject(fragmentId, fragment);

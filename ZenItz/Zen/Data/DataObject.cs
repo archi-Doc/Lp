@@ -2,7 +2,7 @@
 
 using Tinyhand.IO;
 
-namespace ZenItz;
+namespace CrystalData;
 
 /// <summary>
 /// <see cref="DataObject"/> holds a datum id, file, and an instance of the datum.

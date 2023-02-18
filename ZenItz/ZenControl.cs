@@ -12,7 +12,7 @@ global using Tinyhand;
 global using ValueLink;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace ZenItz;
+namespace CrystalData;
 
 public class ZenControl
 {

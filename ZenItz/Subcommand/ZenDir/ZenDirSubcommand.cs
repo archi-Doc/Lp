@@ -3,7 +3,7 @@
 using System;
 using SimpleCommandLine;
 
-namespace ZenItz.Subcommands;
+namespace CrystalData.Subcommands;
 
 [SimpleCommand("zendir", IsSubcommand = true, Description = "Zen directory subcommand")]
 public class ZenDirSubcommand : SimpleCommandGroup<ZenDirSubcommand>

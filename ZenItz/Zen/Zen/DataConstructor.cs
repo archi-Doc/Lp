@@ -2,7 +2,7 @@
 
 using System.Runtime.CompilerServices;
 
-namespace ZenItz;
+namespace CrystalData;
 
 public class DataConstructor
 {
@@ -17,7 +17,7 @@ public class DataConstructor
     }
 
     public bool Register<TData>(ConstrutorDelegate construtor)
-        where TData : IData
+        where TData : IDatum
     {
         var id = TData.StaticId;
         if (id < 0 || id >= this.constructors.Length)

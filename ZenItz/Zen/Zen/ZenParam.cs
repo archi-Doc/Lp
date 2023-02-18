@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace ZenItz;
+namespace CrystalData;
 
 public record ZenStartParam(bool ForceStart = false, ZenStartQueryDelegate? QueryDelegate = null, bool FromScratch = false)
 {

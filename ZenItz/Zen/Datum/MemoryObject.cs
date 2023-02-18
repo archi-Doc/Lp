@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace ZenItz;
+namespace CrystalData;
 
 internal partial class MemoryObject
 {
@@ -40,13 +40,13 @@ internal partial class MemoryObject
         return (true, this.memoryOwner.Memory.Length);
     }
 
-    internal ZenResult TryGetObjectInternal<T>(out T? obj)
+    internal CrystalResult TryGetObjectInternal<T>(out T? obj)
         where T : ITinyhandSerialize<T>
     {
         if (this.@object is T t)
         {
             obj = t;
-            return ZenResult.Success;
+            return CrystalResult.Success;
         }
 
         try
@@ -55,7 +55,7 @@ internal partial class MemoryObject
             if (obj != null)
             {
                 this.@object = obj;
-                return ZenResult.Success;
+                return CrystalResult.Success;
             }
         }
         catch
@@ -63,7 +63,7 @@ internal partial class MemoryObject
         }
 
         obj = default;
-        return ZenResult.DeserializeError;
+        return CrystalResult.DeserializeError;
     }
 
     internal void Clear()
