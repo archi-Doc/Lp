@@ -17,7 +17,7 @@ public partial class Zen<TIdentifier>
 
             public CrystalResult Set(ReadOnlySpan<byte> span)
             {
-                using (var obj = this.flake.Lock<BlockData>())
+                using (var obj = this.flake.Lock<BlockDatum>())
                 {
                     if (obj.Data is null)
                     {
@@ -31,7 +31,7 @@ public partial class Zen<TIdentifier>
             public CrystalResult SetObject<T>(T @object)
                 where T : ITinyhandSerialize<T>
             {
-                using (var obj = this.flake.Lock<BlockData>())
+                using (var obj = this.flake.Lock<BlockDatum>())
                 {
                     if (obj.Data is null)
                     {
@@ -44,7 +44,7 @@ public partial class Zen<TIdentifier>
 
             public Task<ZenMemoryResult> Get()
             {
-                using (var obj = this.flake.Lock<BlockData>())
+                using (var obj = this.flake.Lock<BlockDatum>())
                 {
                     if (obj.Data is null)
                     {
@@ -58,7 +58,7 @@ public partial class Zen<TIdentifier>
             public Task<ZenObjectResult<T>> GetObject<T>()
                 where T : ITinyhandSerialize<T>
             {
-                using (var obj = this.flake.Lock<BlockData>())
+                using (var obj = this.flake.Lock<BlockDatum>())
                 {
                     if (obj.Data is null)
                     {

@@ -6,7 +6,7 @@ using SimpleCommandLine;
 namespace CrystalData.Subcommands;
 
 [SimpleCommand("zendir", IsSubcommand = true, Description = "Zen directory subcommand")]
-public class ZenDirSubcommand : SimpleCommandGroup<ZenDirSubcommand>
+public class CrystalDirSubcommand : SimpleCommandGroup<CrystalDirSubcommand>
 {
     public static void Configure(IUnitConfigurationContext context)
     {
@@ -15,7 +15,7 @@ public class ZenDirSubcommand : SimpleCommandGroup<ZenDirSubcommand>
         group.AddCommand(typeof(ZenDirSubcommandAdd));
     }
 
-    public ZenDirSubcommand(UnitContext context, ZenControl control)
+    public CrystalDirSubcommand(UnitContext context, CrystalControl control)
         : base(context, "ls")
     {
     }

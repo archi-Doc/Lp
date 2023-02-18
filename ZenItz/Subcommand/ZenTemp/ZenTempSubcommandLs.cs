@@ -1,14 +1,14 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using SimpleCommandLine;
-using ZenItz;
+using CrystalData;
 
 namespace CrystalData.Subcommands;
 
 [SimpleCommand("ls", Description = "List zen directory information.")]
 public class ZenTempSubcommandLs : ISimpleCommandAsync
 {
-    public ZenTempSubcommandLs(IConsoleService consoleService, ZenControl zenControl)
+    public ZenTempSubcommandLs(IConsoleService consoleService, CrystalControl zenControl)
     {
         this.consoleService = consoleService;
         this.zenControl = zenControl;
@@ -25,5 +25,5 @@ public class ZenTempSubcommandLs : ISimpleCommandAsync
     }
 
     private IConsoleService consoleService;
-    private ZenControl zenControl;
+    private CrystalControl zenControl;
 }

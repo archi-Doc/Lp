@@ -11,10 +11,11 @@ global using LP.Block;
 global using Tinyhand;
 global using ValueLink;
 using Microsoft.Extensions.DependencyInjection;
+using ZenItz.Crystal.Core;
 
 namespace CrystalData;
 
-public class ZenControl
+public class CrystalControl
 {
     public class Builder : UnitBuilder<Unit>
     {// Builder class for customizing dependencies.
@@ -26,15 +27,15 @@ public class ZenControl
                 LPBase.Configure(context);
 
                 // Main services
-                context.AddSingleton<ZenControl>();
-                context.AddSingleton<ZenOptions>();
-                context.AddSingleton<Zen>();
-                context.Services.Add(ServiceDescriptor.Transient(typeof(Zen.RootFlake), x => x.GetRequiredService<ZenControl>().Root));
+                context.AddSingleton<CrystalControl>();
+                context.AddSingleton<CrystalOptions>();
+                context.AddSingleton<Crystal>();
+                context.Services.Add(ServiceDescriptor.Transient(typeof(Crystal.RootFlake), x => x.GetRequiredService<CrystalControl>().Root));
                 context.AddSingleton<Itz>();
 
                 // Subcommands
-                Subcommands.ZenDirSubcommand.Configure(context);
-                Subcommands.ZenTempSubcommand.Configure(context);
+                Subcommands.CrystalDirSubcommand.Configure(context);
+                Subcommands.CrystalTempSubcommand.Configure(context);
             });
         }
     }
@@ -49,7 +50,7 @@ public class ZenControl
         }
     }
 
-    public ZenControl(UnitContext unitContext, Zen zen, ZenOptions options, Itz itz)
+    public CrystalControl(UnitContext unitContext, Crystal zen, CrystalOptions options, Itz itz)
     {
         this.unitContext = unitContext;
         this.Zen = zen;
@@ -58,18 +59,18 @@ public class ZenControl
         this.Itz = itz;
     }
 
-    public Zen<TIdentifier> CreateZen<TIdentifier>(ZenOptions options)
+    public Zen<TIdentifier> CreateZen<TIdentifier>(CrystalOptions options)
         where TIdentifier : IEquatable<TIdentifier>, IComparable<TIdentifier>, ITinyhandSerialize<TIdentifier>
     {
-        return new Zen<TIdentifier>(
+        return new Crystal<TIdentifier>(
             this.unitContext.ServiceProvider.GetRequiredService<UnitCore>(),
             options,
             this.unitContext.ServiceProvider.GetRequiredService<ILogger<Zen<TIdentifier>>>());
     }
 
-    public Zen Zen { get; }
+    public Crystal Zen { get; }
 
-    public Zen.RootFlake Root { get; set; }
+    public Crystal.RootFlake Root { get; set; }
 
     public Itz Itz { get; }
 

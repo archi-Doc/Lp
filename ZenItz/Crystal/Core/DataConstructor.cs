@@ -1,8 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.CompilerServices;
+using CrystalData;
 
-namespace CrystalData;
+namespace ZenItz.Crystal.Core;
 
 public class DataConstructor
 {
@@ -12,26 +13,26 @@ public class DataConstructor
 
     public DataConstructor()
     {
-        this.MaxId = DefaultMaxId;
-        this.constructors = new ConstrutorDelegate[this.MaxId];
+        MaxId = DefaultMaxId;
+        constructors = new ConstrutorDelegate[MaxId];
     }
 
     public bool Register<TData>(ConstrutorDelegate construtor)
         where TData : IDatum
     {
         var id = TData.StaticId;
-        if (id < 0 || id >= this.constructors.Length)
+        if (id < 0 || id >= constructors.Length)
         {
             return false;
         }
 
-        this.constructors[id] = construtor;
+        constructors[id] = construtor;
         return true;
     }
 
     public void Resize(int max)
     {
-        Array.Resize(ref this.constructors, max);
+        Array.Resize(ref constructors, max);
     }
 
     public int MaxId { get; private set; }
@@ -39,12 +40,12 @@ public class DataConstructor
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal ConstrutorDelegate? TryGetConstructor(int id)
     {
-        if (id < 0 || id >= this.constructors.Length)
+        if (id < 0 || id >= constructors.Length)
         {
             return null;
         }
 
-        return this.constructors[id];
+        return constructors[id];
     }
 
     private ConstrutorDelegate[] constructors;

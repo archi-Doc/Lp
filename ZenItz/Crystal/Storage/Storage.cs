@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using CrystalData.Results;
+using ZenItz.Crystal.Core;
 
 namespace CrystalData;
 
@@ -21,11 +22,11 @@ public sealed class Storage
         }
     }
 
-    public AddDictionaryResult AddDirectory(string path, uint id = 0, long capacity = ZenOptions.DefaultDirectoryCapacity)
+    public AddDictionaryResult AddDirectory(string path, uint id = 0, long capacity = CrystalOptions.DefaultDirectoryCapacity)
     {
         if (capacity < 0)
         {
-            capacity = ZenOptions.DefaultDirectoryCapacity;
+            capacity = CrystalOptions.DefaultDirectoryCapacity;
         }
 
         if (path.EndsWith('\\'))
@@ -83,7 +84,7 @@ public sealed class Storage
         }
     }
 
-    public ZenOptions Options { get; private set; } = ZenOptions.Default;
+    public CrystalOptions Options { get; private set; } = CrystalOptions.Default;
 
     public bool Started { get; private set; }
 
@@ -179,7 +180,7 @@ public sealed class Storage
         this.Started = true;
     }*/
 
-    internal async Task<ZenStartResult> TryStart(ZenOptions options, ZenStartParam param, ReadOnlyMemory<byte>? data)
+    internal async Task<ZenStartResult> TryStart(CrystalOptions options, ZenStartParam param, ReadOnlyMemory<byte>? data)
     {// Zen.semaphore
         if (this.Started)
         {

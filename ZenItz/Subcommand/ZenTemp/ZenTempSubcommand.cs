@@ -6,7 +6,7 @@ using SimpleCommandLine;
 namespace CrystalData.Subcommands;
 
 [SimpleCommand("zentemp", IsSubcommand = true, Description = "Zen template subcommand")]
-public class ZenTempSubcommand : SimpleCommandGroup<ZenTempSubcommand>
+public class CrystalTempSubcommand : SimpleCommandGroup<CrystalTempSubcommand>
 {
     public static void Configure(IUnitConfigurationContext context)
     {
@@ -14,7 +14,7 @@ public class ZenTempSubcommand : SimpleCommandGroup<ZenTempSubcommand>
         group.AddCommand(typeof(ZenTempSubcommandLs));
     }
 
-    public ZenTempSubcommand(UnitContext context, ZenControl control)
+    public CrystalTempSubcommand(UnitContext context, CrystalControl control)
         : base(context)
     {
     }

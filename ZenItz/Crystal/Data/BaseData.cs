@@ -3,6 +3,7 @@
 using System.Collections;
 using System.Runtime.CompilerServices;
 using ZenItz;
+using ZenItz.Crystal.Core;
 
 namespace CrystalData;
 
@@ -67,7 +68,7 @@ public abstract partial class BaseData : IFlakeInternal
 
     DataConstructor IFlakeInternal.Data => this.Zen.Constructor;
 
-    ZenOptions IFlakeInternal.Options => this.Zen.Options;
+    CrystalOptions IFlakeInternal.Options => this.Zen.Options;
 
     void IFlakeInternal.DataToStorage<TData>(ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
     {// using (this.semaphore.Lock())

@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace CrystalData;
 
-public interface BlockData : IDatum
+public interface BlockDatum : IDatum
 {
     const int Id = 1;
 
@@ -21,16 +21,16 @@ public interface BlockData : IDatum
             where T : ITinyhandSerialize<T>;
 }
 
-internal class BlockDataImpl : HimoGoshujinClass.Himo, BlockData, IBaseData
+internal class BlockDatumImpl : HimoGoshujinClass.Himo, BlockDatum, IBaseData
 {
-    public BlockDataImpl(IFlakeInternal flakeInternal)
+    public BlockDatumImpl(IFlakeInternal flakeInternal)
         : base(flakeInternal)
     {
     }
 
-    public override int Id => BlockData.Id;
+    public override int Id => BlockDatum.Id;
 
-    CrystalResult BlockData.Set(ReadOnlySpan<byte> data)
+    CrystalResult BlockDatum.Set(ReadOnlySpan<byte> data)
     {
         if (data.Length > this.flakeInternal.Options.MaxDataSize)
         {
@@ -41,7 +41,7 @@ internal class BlockDataImpl : HimoGoshujinClass.Himo, BlockData, IBaseData
         return CrystalResult.Success;
     }
 
-    CrystalResult BlockData.SetObject<T>(T obj)
+    CrystalResult BlockDatum.SetObject<T>(T obj)
     {
         if (!FlakeFragmentService.TrySerialize(obj, out var memoryOwner))
         {
@@ -56,7 +56,7 @@ internal class BlockDataImpl : HimoGoshujinClass.Himo, BlockData, IBaseData
         return CrystalResult.Success;
     }
 
-    async Task<CrystalMemoryResult> BlockData.Get()
+    async Task<CrystalMemoryResult> BlockDatum.Get()
     {
         if (this.memoryObject.MemoryOwnerIsValid)
         {
@@ -65,7 +65,7 @@ internal class BlockDataImpl : HimoGoshujinClass.Himo, BlockData, IBaseData
             return new(CrystalResult.Success, memoryOwner.Memory);
         }
 
-        var result = await this.flakeInternal.StorageToData<BlockData>();
+        var result = await this.flakeInternal.StorageToData<BlockDatum>();
         if (result.IsSuccess)
         {
             this.Update(this.memoryObject.SetMemoryOwnerInternal(result.Data, null), false);
@@ -77,7 +77,7 @@ internal class BlockDataImpl : HimoGoshujinClass.Himo, BlockData, IBaseData
         }
     }
 
-    async Task<CrystalObjectResult<T>> BlockData.GetObject<T>()
+    async Task<CrystalObjectResult<T>> BlockDatum.GetObject<T>()
     {
         if (this.memoryObject.MemoryOwnerIsValid &&
             this.memoryObject.TryGetObjectInternal(out T? obj) == CrystalResult.Success)
@@ -85,7 +85,7 @@ internal class BlockDataImpl : HimoGoshujinClass.Himo, BlockData, IBaseData
             return new(CrystalResult.Success, obj);
         }
 
-        var result = await this.flakeInternal.StorageToData<BlockData>();
+        var result = await this.flakeInternal.StorageToData<BlockDatum>();
         if (result.IsSuccess)
         {
             this.Update(this.memoryObject.SetMemoryOwnerInternal(result.Data, null), false);
@@ -116,7 +116,7 @@ internal class BlockDataImpl : HimoGoshujinClass.Himo, BlockData, IBaseData
     {
         if (!this.isSaved)
         {// Not saved.
-            this.flakeInternal.DataToStorage<BlockData>(this.memoryObject.MemoryOwner);
+            this.flakeInternal.DataToStorage<BlockDatum>(this.memoryObject.MemoryOwner);
             this.isSaved = true;
         }
     }

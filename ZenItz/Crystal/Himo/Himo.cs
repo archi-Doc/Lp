@@ -3,6 +3,7 @@
 #pragma warning disable SA1401 // Fields should be private
 
 using System.Runtime.CompilerServices;
+using ZenItz.Crystal.Core;
 
 namespace CrystalData;
 

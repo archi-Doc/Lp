@@ -16,9 +16,9 @@ public interface FragmentData<TIdentifier> : IDatum
     CrystalResult SetObject<T>(TIdentifier fragmentId, T obj)
         where T : ITinyhandSerialize<T>;
 
-    Task<ZenMemoryResult> Get(TIdentifier fragmentId);
+    Task<CrystalMemoryResult> Get(TIdentifier fragmentId);
 
-    Task<ZenObjectResult<T>> GetObject<T>(TIdentifier fragmentId)
+    Task<CrystalObjectResult<T>> GetObject<T>(TIdentifier fragmentId)
         where T : ITinyhandSerialize<T>;
 
     bool Remove(TIdentifier fragmentId);
@@ -58,7 +58,7 @@ internal class FragmentDataImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentD
         return this.SetMemoryOwner(fragmentId, memoryOwner.AsReadOnly(), obj, true);
     }
 
-    async Task<ZenMemoryResult> FragmentData<TIdentifier>.Get(TIdentifier fragmentId)
+    async Task<CrystalMemoryResult> FragmentData<TIdentifier>.Get(TIdentifier fragmentId)
     {
         if (this.fragments == null)
         {
@@ -74,7 +74,7 @@ internal class FragmentDataImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentD
         return new(CrystalResult.NoData);
     }
 
-    async Task<ZenObjectResult<T>> FragmentData<TIdentifier>.GetObject<T>(TIdentifier fragmentId)
+    async Task<CrystalObjectResult<T>> FragmentData<TIdentifier>.GetObject<T>(TIdentifier fragmentId)
     {
         if (this.fragments == null)
         {

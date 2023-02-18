@@ -3,15 +3,15 @@
 using Arc.Crypto;
 using LP;
 using SimpleCommandLine;
-using ZenItz;
-using ZenItz.Results;
+using CrystalData.Results;
+using ZenItz.Crystal.Core;
 
 namespace CrystalData.Subcommands;
 
 [SimpleCommand("add", Description = "Add zen directory.")]
 public class ZenDirSubcommandAdd : ISimpleCommandAsync<ZenDirOptionsAdd>
 {
-    public ZenDirSubcommandAdd(ILogger<ZenDirSubcommandAdd> logger, IConsoleService consoleService, ZenControl zenControl, ZenDirSubcommandLs zenDirSubcommandLs)
+    public ZenDirSubcommandAdd(ILogger<ZenDirSubcommandAdd> logger, IConsoleService consoleService, CrystalControl zenControl, ZenDirSubcommandLs zenDirSubcommandLs)
     {
         this.logger = logger;
         this.consoleService = consoleService;
@@ -21,7 +21,7 @@ public class ZenDirSubcommandAdd : ISimpleCommandAsync<ZenDirOptionsAdd>
 
     public async Task RunAsync(ZenDirOptionsAdd option, string[] args)
     {
-        long cap = ZenOptions.DefaultDirectoryCapacity;
+        long cap = CrystalOptions.DefaultDirectoryCapacity;
         if (option.Capacity != 0)
         {
             cap = (long)option.Capacity * 1024 * 1024 * 1024;
@@ -44,7 +44,7 @@ public class ZenDirSubcommandAdd : ISimpleCommandAsync<ZenDirOptionsAdd>
 
     private ILogger<ZenDirSubcommandAdd> logger;
     private IConsoleService consoleService;
-    private ZenControl zenControl;
+    private CrystalControl zenControl;
 }
 
 public record ZenDirOptionsAdd

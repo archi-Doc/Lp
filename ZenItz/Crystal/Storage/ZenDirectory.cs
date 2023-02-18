@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.CompilerServices;
+using ZenItz.Crystal.Core;
 
 #pragma warning disable SA1124 // Do not use regions
 
@@ -204,7 +205,7 @@ internal partial class ZenDirectory : IDisposable
     public long DirectorySize { get; private set; } // lock (this.syncObject)
 
     [IgnoreMember]
-    public ZenOptions Options { get; private set; } = ZenOptions.Default;
+    public CrystalOptions Options { get; private set; } = CrystalOptions.Default;
 
     [IgnoreMember]
     public string RootedPath { get; private set; } = string.Empty;

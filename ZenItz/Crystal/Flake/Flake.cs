@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.CompilerServices;
+using ZenItz.Crystal.Core;
 
 namespace CrystalData;
 
@@ -35,7 +36,7 @@ public partial class Zen<TIdentifier>
 
         DataConstructor IFlakeInternal.Data => this.Zen.Constructor;
 
-        ZenOptions IFlakeInternal.Options => this.Zen.Options;
+        CrystalOptions IFlakeInternal.Options => this.Zen.Options;
 
         void IFlakeInternal.DataToStorage<TData>(ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
         {// using (this.semaphore.Lock())

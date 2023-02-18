@@ -2,13 +2,13 @@
 
 using CrystalData;
 
-namespace CrystalData;
+namespace ZenItz.Crystal.Core;
 
 public interface IZenInternal
 {
     DataConstructor Constructor { get; }
 
-    ZenOptions Options { get; }
+    CrystalOptions Options { get; }
 
     Storage Storage { get; }
 

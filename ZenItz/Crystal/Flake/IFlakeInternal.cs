@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using ZenItz.Crystal.Core;
+
 namespace CrystalData;
 
 public interface IFlakeInternal
@@ -8,7 +10,7 @@ public interface IFlakeInternal
 
     DataConstructor Data { get; }
 
-    ZenOptions Options { get; }
+    CrystalOptions Options { get; }
 
     void DataToStorage<TData>(ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
         where TData : IDatum;
