@@ -1,10 +1,14 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using BigMachines;
+
 namespace CrystalData;
 
 [TinyhandObject]
+[ValueLinkObject]
 public partial class GroupData : BaseData
 {
+    [Link(Primary = true, Name = "List", Type = ChainType.LinkedList)]
     internal GroupData()
     {
     }
@@ -12,11 +16,12 @@ public partial class GroupData : BaseData
     public void Add(BaseData data)
     {
         this.children ??= new();
+        this.children.Add();
         this.children.Add(data);
     }
 
     [Key(3)]
-    private List<BaseData>? children;
+    private GoshujinClass? children;
 
     protected override IEnumerator<BaseData> EnumerateInternal()
     {
