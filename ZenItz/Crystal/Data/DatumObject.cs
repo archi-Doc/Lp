@@ -5,22 +5,22 @@ using Tinyhand.IO;
 namespace CrystalData;
 
 /// <summary>
-/// <see cref="DataObject"/> holds a datum id, file, and an instance of the datum.
+/// <see cref="DatumObject"/> holds a datum id, file, and an instance of the datum.
 /// </summary>
 [TinyhandObject]
-internal partial struct DataObject : ITinyhandSerialize<DataObject>
+internal partial struct DatumObject : ITinyhandSerialize<DatumObject>
 {
-    public DataObject()
+    public DatumObject()
     {
     }
 
-    public static void Serialize(ref TinyhandWriter writer, scoped ref DataObject value, TinyhandSerializerOptions options)
+    public static void Serialize(ref TinyhandWriter writer, scoped ref DatumObject value, TinyhandSerializerOptions options)
     {
         writer.Write(value.Id);
         writer.Write(value.File);
     }
 
-    public static void Deserialize(ref TinyhandReader reader, scoped ref DataObject value, TinyhandSerializerOptions options)
+    public static void Deserialize(ref TinyhandReader reader, scoped ref DatumObject value, TinyhandSerializerOptions options)
     {
         value.Id = reader.ReadInt32();
         value.File = reader.ReadUInt64();
@@ -34,5 +34,5 @@ internal partial struct DataObject : ITinyhandSerialize<DataObject>
 
     internal bool IsValid => this.Id != 0;
 
-    internal IBaseData? Data;
+    internal IBaseDatum? Data;
 }

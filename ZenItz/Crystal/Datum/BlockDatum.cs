@@ -21,7 +21,7 @@ public interface BlockDatum : IDatum
             where T : ITinyhandSerialize<T>;
 }
 
-internal class BlockDatumImpl : HimoGoshujinClass.Himo, BlockDatum, IBaseData
+internal class BlockDatumImpl : HimoGoshujinClass.Himo, BlockDatum, IBaseDatum
 {
     public BlockDatumImpl(IDataInternal flakeInternal)
         : base(flakeInternal)
@@ -112,7 +112,7 @@ internal class BlockDatumImpl : HimoGoshujinClass.Himo, BlockDatum, IBaseData
     private bool isSaved = true;
     private MemoryObject memoryObject = new();
 
-    void IBaseData.Save()
+    void IBaseDatum.Save()
     {
         if (!this.isSaved)
         {// Not saved.
@@ -121,7 +121,7 @@ internal class BlockDatumImpl : HimoGoshujinClass.Himo, BlockDatum, IBaseData
         }
     }
 
-    void IBaseData.Unload()
+    void IBaseDatum.Unload()
     {
         this.memoryObject.Clear();
         this.RemoveHimo();

@@ -34,7 +34,7 @@ public abstract partial class BaseData : IDataInternal
     public int DataId { get; private set; } // -1: Removed
 
     [Key(1)]
-    private protected DataObject[] dataObject = Array.Empty<DataObject>();
+    private protected DatumObject[] datumObject = Array.Empty<DatumObject>();
 
     protected readonly SemaphoreLock semaphore = new();
 
@@ -71,11 +71,11 @@ public abstract partial class BaseData : IDataInternal
     void IDataInternal.DataToStorage<TData>(ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
     {// using (this.semaphore.Lock())
         var id = TData.StaticId;
-        for (var i = 0; i < this.dataObject.Length; i++)
+        for (var i = 0; i < this.datumObject.Length; i++)
         {
-            if (this.dataObject[i].Id == id)
+            if (this.datumObject[i].Id == id)
             {
-                this.Zen.Storage.Save(ref this.dataObject[i].File, memoryToBeShared, id);
+                this.Zen.Storage.Save(ref this.datumObject[i].File, memoryToBeShared, id);
                 return;
             }
         }
@@ -117,15 +117,15 @@ public abstract partial class BaseData : IDataInternal
     {
         using (this.semaphore.Lock())
         {
-            for (var i = 0; i < this.dataObject.Length; i++)
+            for (var i = 0; i < this.datumObject.Length; i++)
             {
-                if (this.dataObject[i].Id == id)
+                if (this.datumObject[i].Id == id)
                 {
-                    this.dataObject[i].Data?.Save();
+                    this.datumObject[i].Data?.Save();
                     if (unload)
                     {
-                        this.dataObject[i].Data?.Unload();
-                        this.dataObject[i].Data = null;
+                        this.datumObject[i].Data?.Unload();
+                        this.datumObject[i].Data = null;
                     }
 
                     return;
@@ -175,13 +175,13 @@ public abstract partial class BaseData : IDataInternal
                 x.Save(unload);
             }
 
-            for (var i = 0; i < this.dataObject.Length; i++)
+            for (var i = 0; i < this.datumObject.Length; i++)
             {
-                this.dataObject[i].Data?.Save();
+                this.datumObject[i].Data?.Save();
                 if (unload)
                 {
-                    this.dataObject[i].Data?.Unload();
-                    this.dataObject[i].Data = null;
+                    this.datumObject[i].Data?.Unload();
+                    this.datumObject[i].Data = null;
                 }
             }
         }
@@ -209,7 +209,7 @@ public abstract partial class BaseData : IDataInternal
     }
 
     protected void DeleteData()
-    {
+    {// using (this.Parent.semaphore.Lock())
         using (this.semaphore.Lock())
         {
             var array = this.ChildrenInternal.ToArray();
@@ -220,15 +220,15 @@ public abstract partial class BaseData : IDataInternal
 
             this.DeleteInternal();
 
-            for (var i = 0; i < this.dataObject.Length; i++)
+            for (var i = 0; i < this.datumObject.Length; i++)
             {
-                this.Zen.Storage.Delete(this.dataObject[i].File);
-                this.dataObject[i].Data?.Unload();
-                this.dataObject[i].Data = null;
-                this.dataObject[i].File = 0;
+                this.Zen.Storage.Delete(this.datumObject[i].File);
+                this.datumObject[i].Data?.Unload();
+                this.datumObject[i].Data = null;
+                this.datumObject[i].File = 0;
             }
 
-            this.dataObject = Array.Empty<DataObject>();
+            this.datumObject = Array.Empty<DatumObject>();
             this.Parent = null;
             this.DataId = -1;
         }
@@ -247,7 +247,7 @@ public abstract partial class BaseData : IDataInternal
     #endregion
 
     internal void DeserializePostProcess<TData>(Crystal<TData> crystal, BaseData? parent = null)
-        where TData : CrystalData.BaseData
+        where TData : BaseData
     {
         this.Zen = crystal;
         this.Parent = parent;
@@ -258,27 +258,27 @@ public abstract partial class BaseData : IDataInternal
         }
     }
 
-    private DataObject GetOrCreateDataObject<TData>()
+    private DatumObject GetOrCreateDataObject<TData>()
         where TData : IDatum
     {// using (this.semaphore.Lock())
         var id = TData.StaticId;
-        for (var i = 0; i < this.dataObject.Length; i++)
+        for (var i = 0; i < this.datumObject.Length; i++)
         {
-            if (this.dataObject[i].Id == id)
+            if (this.datumObject[i].Id == id)
             {
-                if (this.dataObject[i].Data == null)
+                if (this.datumObject[i].Data == null)
                 {
                     if (this.Zen.Constructor.TryGetConstructor(id) is { } ctr1)
                     {
-                        this.dataObject[i].Data = ctr1(this);
+                        this.datumObject[i].Data = ctr1(this);
                     }
                 }
 
-                return this.dataObject[i];
+                return this.datumObject[i];
             }
         }
 
-        var newObject = default(DataObject);
+        var newObject = default(DatumObject);
         newObject.Id = id;
         if (this.Zen.Constructor.TryGetConstructor(id) is { } ctr2)
         {
@@ -290,22 +290,22 @@ public abstract partial class BaseData : IDataInternal
             return default;
         }
 
-        var n = this.dataObject.Length;
-        Array.Resize(ref this.dataObject, n + 1);
-        this.dataObject[n] = newObject;
+        var n = this.datumObject.Length;
+        Array.Resize(ref this.datumObject, n + 1);
+        this.datumObject[n] = newObject;
         return newObject;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private DataObject TryGetDataObject<TData>()
+    private DatumObject TryGetDataObject<TData>()
         where TData : IDatum
     {// using (this.semaphore.Lock())
         var id = TData.StaticId;
-        for (var i = 0; i < this.dataObject.Length; i++)
+        for (var i = 0; i < this.datumObject.Length; i++)
         {
-            if (this.dataObject[i].Id == id)
+            if (this.datumObject[i].Id == id)
             {
-                return this.dataObject[i];
+                return this.datumObject[i];
             }
         }
 

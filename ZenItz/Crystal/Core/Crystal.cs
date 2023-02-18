@@ -2,7 +2,7 @@
 
 using CrystalData;
 
-namespace Crystal;
+namespace CrystalData;
 
 public partial class Crystal<TData> : ICrystalInternal
     where TData : BaseData
@@ -362,7 +362,7 @@ LoadBackup:
             return false;
         }
 
-        baseData.DeserializePostProcess(this);
+        baseData.DeserializePostProcess<TData>(this);
 
         this.himoGoshujin.Clear();
 

@@ -4,12 +4,12 @@ namespace CrystalData;
 
 public partial class BaseData
 {
-    public FragmentDataMethods<Identifier> FragmentData => new(this);
+    public FragmentDatumMethods<Identifier> FragmentData => new(this);
 
-    public readonly struct FragmentDataMethods<TIdentifier>
+    public readonly struct FragmentDatumMethods<TIdentifier>
         where TIdentifier : IEquatable<TIdentifier>, IComparable<TIdentifier>, ITinyhandSerialize<TIdentifier>
     {
-        public FragmentDataMethods(BaseData baseData)
+        public FragmentDatumMethods(BaseData baseData)
         {
             this.baseData = baseData;
         }

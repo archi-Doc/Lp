@@ -9,7 +9,7 @@ public class DataConstructor
 {
     public const int DefaultMaxId = 10;
 
-    public delegate IBaseData ConstrutorDelegate(IDataInternal fromDataToIO);
+    public delegate IBaseDatum ConstrutorDelegate(IDataInternal fromDataToIO);
 
     public DataConstructor()
     {

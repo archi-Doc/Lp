@@ -28,7 +28,6 @@ public class CrystalControl
                 // Main services
                 context.AddSingleton<CrystalControl>();
                 context.AddSingleton<CrystalOptions>();
-                context.AddSingleton<Crystal>();
                 context.Services.Add(ServiceDescriptor.Transient(typeof(Crystal.RootFlake), x => x.GetRequiredService<CrystalControl>().Root));
                 context.AddSingleton<Itz>();
 
@@ -49,7 +48,7 @@ public class CrystalControl
         }
     }
 
-    public CrystalControl(UnitContext unitContext, Crystal zen, CrystalOptions options, Itz itz)
+    public CrystalControl(UnitContext unitContext, Crystal<TData> zen, CrystalOptions options, Itz itz)
     {
         this.unitContext = unitContext;
         this.Zen = zen;
@@ -58,18 +57,14 @@ public class CrystalControl
         this.Itz = itz;
     }
 
-    public Zen<TIdentifier> CreateZen<TIdentifier>(CrystalOptions options)
-        where TIdentifier : IEquatable<TIdentifier>, IComparable<TIdentifier>, ITinyhandSerialize<TIdentifier>
+    public Crystal<TData> CreateCrystal<TData>(CrystalOptions options)
+        where TData : BaseData
     {
-        return new Crystal<TIdentifier>(
+        return new Crystal<TData>(
             this.unitContext.ServiceProvider.GetRequiredService<UnitCore>(),
             options,
-            this.unitContext.ServiceProvider.GetRequiredService<ILogger<Zen<TIdentifier>>>());
+            this.unitContext.ServiceProvider.GetRequiredService<ILogger<Zen<TData>>>());
     }
-
-    public Crystal Zen { get; }
-
-    public Crystal.RootFlake Root { get; set; }
 
     public Itz Itz { get; }
 

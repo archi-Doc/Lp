@@ -4,11 +4,11 @@ namespace CrystalData;
 
 public partial class BaseData
 {
-    public BlockDataMethods BlockData => new(this);
+    public BlockDatumMethods BlockDatum => new(this);
 
-    public readonly struct BlockDataMethods
+    public readonly struct BlockDatumMethods
     {
-        public BlockDataMethods(BaseData baseData)
+        public BlockDatumMethods(BaseData baseData)
         {
             this.baseData = baseData;
         }

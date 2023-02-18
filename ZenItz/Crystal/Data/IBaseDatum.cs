@@ -2,7 +2,7 @@
 
 namespace CrystalData;
 
-public interface IBaseData
+public interface IBaseDatum
 {
     void Save();
 
