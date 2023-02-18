@@ -4,7 +4,7 @@ namespace ZenItz;
 
 public interface IZenInternal
 {
-    ZenData Data { get; }
+    DataConstructor Constructor { get; }
 
     ZenOptions Options { get; }
 

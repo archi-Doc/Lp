@@ -4,6 +4,9 @@ using Tinyhand.IO;
 
 namespace ZenItz;
 
+/// <summary>
+/// <see cref="DataObject"/> holds a datum id, file, and an instance of the datum.
+/// </summary>
 [TinyhandObject]
 internal partial struct DataObject : ITinyhandSerialize<DataObject>
 {

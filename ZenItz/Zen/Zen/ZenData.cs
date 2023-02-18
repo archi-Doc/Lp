@@ -4,13 +4,13 @@ using System.Runtime.CompilerServices;
 
 namespace ZenItz;
 
-public class ZenData
+public class DataConstructor
 {
     public const int DefaultMaxId = 10;
 
     public delegate IBaseData ConstrutorDelegate(IFlakeInternal fromDataToIO);
 
-    public ZenData()
+    public DataConstructor()
     {
         this.MaxId = DefaultMaxId;
         this.constructors = new ConstrutorDelegate[this.MaxId];

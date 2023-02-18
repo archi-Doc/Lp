@@ -1,30 +1,24 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using CrystalData;
+
 namespace ZenItz;
 
-public class Zen : Zen<Identifier>
+public partial class Crystal<TData> : IZenInternal
+    where TData : CrystalData.BaseData
 {
-    public Zen(UnitCore core, ZenOptions options, ILogger<Zen<Identifier>> logger)
-        : base(core, options, logger)
-    {
-    }
-}
-
-public partial class Zen<TIdentifier> : IZenInternal
-    where TIdentifier : IEquatable<TIdentifier>, IComparable<TIdentifier>, ITinyhandSerialize<TIdentifier>
-{
-    internal Zen(UnitCore core, ZenOptions options, ILogger<Zen<TIdentifier>> logger)
+    internal Crystal(UnitCore core, ZenOptions options, ILogger<Crystal<TData>> logger)
     {
         this.logger = logger;
         this.Core = core;
         this.Options = options;
         this.Storage = new();
         this.himoGoshujin = new(this);
-        this.Root = new(this);
+        this.Data = TinyhandSerializer.Reconstruct<TData>();
 
         this.Constructor = new();
         this.Constructor.Register<BlockData>(x => new BlockDataImpl(x));
-        this.Constructor.Register<FragmentData<TIdentifier>>(x => new FragmentDataImpl<TIdentifier>(x));
+        this.Constructor.Register<FragmentData<Identifier>>(x => new FragmentDataImpl<Identifier>(x));
     }
 
     public async Task<ZenStartResult> StartAsync(ZenStartParam param)
@@ -103,7 +97,7 @@ public partial class Zen<TIdentifier> : IZenInternal
             }
 
             // Save & Unload flakes
-            this.Root.Save(true);
+            this.Data.Save(true);
 
             // Stop IO(ZenDirectory)
             await this.Storage.StopAsync();
@@ -150,13 +144,13 @@ public partial class Zen<TIdentifier> : IZenInternal
 
     public UnitCore Core { get; init; }
 
+    public BaseData Data { get; private set; }
+
     public DataConstructor Constructor { get; private set; }
 
     public ZenOptions Options { get; set; } = ZenOptions.Default;
 
     public bool Started { get; private set; }
-
-    public RootFlake Root { get; private set; }
 
     public Storage Storage { get; }
 
@@ -164,7 +158,7 @@ public partial class Zen<TIdentifier> : IZenInternal
 
     internal void DeleteAll()
     {
-        this.Root.DeleteInternal();
+        this.Data.Delete();
         this.himoGoshujin.Clear();
 
         PathHelper.TryDeleteFile(this.Options.ZenFilePath);
@@ -363,12 +357,12 @@ LoadBackup:
 
     private bool DeserializeZen(ReadOnlyMemory<byte> data)
     {
-        if (!TinyhandSerializer.TryDeserialize<Flake>(data.Span, out var flake))
+        if (!TinyhandSerializer.TryDeserialize<BaseData>(data.Span, out var baseData))
         {
             return false;
         }
 
-        flake.DeserializePostProcess(this);
+        baseData.DeserializePostProcess(this);
 
         this.himoGoshujin.Clear();
 
@@ -377,7 +371,7 @@ LoadBackup:
 
     private async Task SerializeZen(string path, string? backupPath)
     {
-        var byteArray = TinyhandSerializer.SerializeObject((Flake)this.Root);
+        var byteArray = TinyhandSerializer.Serialize(this.Data);
         await HashHelper.GetFarmHashAndSaveAsync(byteArray, path, backupPath);
     }
 

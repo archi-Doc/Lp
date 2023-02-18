@@ -1,21 +1,21 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Collections;
 using System.Runtime.CompilerServices;
 using ZenItz;
 
 namespace CrystalData;
 
 #pragma warning disable SA1124 // Do not use regions
+#pragma warning disable SA1202 // Elements should be ordered by access
 #pragma warning disable SA1401
 
 /// <summary>
-/// <see cref="BaseData{T}"/> is an independent class that holds data at a single point in the hierarchical structure.
+/// <see cref="BaseData"/> is an independent class that holds data at a single point in the hierarchical structure.
 /// </summary>
-/// <typeparam name="TParent">.</typeparam>
 [TinyhandObject(ExplicitKeyOnly = true, LockObject = "semaphore", ReservedKeys = 2)]
 public abstract partial class BaseData : IFlakeInternal
 {
-    [Link(Primary = true, Name = "GetQueue", Type = ChainType.QueueList)]
     internal BaseData()
     {
     }
@@ -37,15 +37,31 @@ public abstract partial class BaseData : IFlakeInternal
     [Key(1)]
     private protected DataObject[] dataObject = Array.Empty<DataObject>();
 
-#pragma warning disable SA1202 // Elements should be ordered by access
     protected readonly SemaphoreLock semaphore = new();
-#pragma warning restore SA1202 // Elements should be ordered by access
+
+    private readonly struct Enumerator : IEnumerable<BaseData>
+    {
+        public Enumerator(BaseData baseData)
+        {
+            this.baseData = baseData;
+        }
+
+        public IEnumerator<BaseData> GetEnumerator()
+            => this.baseData.EnumerateInternal();
+
+        IEnumerator IEnumerable.GetEnumerator()
+            => this.GetEnumerator();
+
+        private readonly BaseData baseData;
+    }
+
+    protected IEnumerable<BaseData> ChildrenInternal => new Enumerator(this);
 
     #region IFlakeInternal
 
     IZenInternal IFlakeInternal.ZenInternal => this.Zen;
 
-    ZenData IFlakeInternal.Data => this.Zen.Data;
+    DataConstructor IFlakeInternal.Data => this.Zen.Constructor;
 
     ZenOptions IFlakeInternal.Options => this.Zen.Options;
 
@@ -151,7 +167,10 @@ public abstract partial class BaseData : IFlakeInternal
                 return;
             }
 
-            this.SaveChildren(unload);
+            foreach (var x in this.ChildrenInternal)
+            {
+                x.Save(unload);
+            }
 
             for (var i = 0; i < this.dataObject.Length; i++)
             {
@@ -166,28 +185,36 @@ public abstract partial class BaseData : IFlakeInternal
     }
 
     /// <summary>
-    /// Removes this <see cref="BaseData{T}"/> from the parent and delete the data.
+    /// Delete this <see cref="BaseData"/> from the parent and delete the data.
     /// </summary>
-    /// <returns><see langword="true"/>; this <see cref="BaseData{T}"/> is successfully removed.</returns>
-    public bool Remove()
+    /// <returns><see langword="true"/>; this <see cref="BaseData"/> is successfully deleted.</returns>
+    public bool Delete()
     {
-        if (this.Parent == null)
+        /*if (this.Parent == null)
         {// The root flake cannot be removed directly.
             return false;
+        }*/
+
+        using (this.Parents.semaphore.Lock())
+        {
+            this.DeleteData();
         }
 
-        using (this.Parent.semaphore.Lock())
-        {
-            return this.DeleteInternal();
-        }
+        return true;
     }
 
-    #endregion
-
-    protected bool DeleteInternal()
-    {// lock (Parent.syncObject)
+    protected void DeleteData()
+    {
         using (this.semaphore.Lock())
         {
+            var array = this.ChildrenInternal.ToArray();
+            foreach (var x in array)
+            {
+                x.DeleteData();
+            }
+
+            this.DeleteInternal();
+
             for (var i = 0; i < this.dataObject.Length; i++)
             {
                 this.Zen.Storage.Delete(this.dataObject[i].File);
@@ -198,16 +225,33 @@ public abstract partial class BaseData : IFlakeInternal
 
             this.dataObject = Array.Empty<DataObject>();
             this.Parent = null;
-            this.Goshujin = null;
             this.DataId = -1;
         }
-
-        return true;
     }
 
-    protected abstract void SaveChildren(bool unload);
+    #endregion
 
-    protected abstract void DeleteChildren();
+    #region Abstract
+
+    protected abstract IEnumerator<BaseData> EnumerateInternal();
+
+    // protected abstract void SaveInternal(bool unload);
+
+    protected abstract void DeleteInternal();
+
+    #endregion
+
+    internal void DeserializePostProcess<TData>(Crystal<TData> crystal, BaseData? parent = null)
+        where TData : CrystalData.BaseData
+    {
+        this.Zen = crystal;
+        this.Parent = parent;
+
+        foreach (var x in this.ChildrenInternal)
+        {
+            x.DeserializePostProcess(crystal, this);
+        }
+    }
 
     private DataObject GetOrCreateDataObject<TData>()
         where TData : IData
@@ -219,7 +263,7 @@ public abstract partial class BaseData : IFlakeInternal
             {
                 if (this.dataObject[i].Data == null)
                 {
-                    if (this.Zen.Data.TryGetConstructor(id) is { } ctr1)
+                    if (this.Zen.Constructor.TryGetConstructor(id) is { } ctr1)
                     {
                         this.dataObject[i].Data = ctr1(this);
                     }
@@ -231,7 +275,7 @@ public abstract partial class BaseData : IFlakeInternal
 
         var newObject = default(DataObject);
         newObject.Id = id;
-        if (this.Zen.Data.TryGetConstructor(id) is { } ctr2)
+        if (this.Zen.Constructor.TryGetConstructor(id) is { } ctr2)
         {
             newObject.Data = ctr2(this);
         }

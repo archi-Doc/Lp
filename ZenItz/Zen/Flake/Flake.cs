@@ -33,7 +33,7 @@ public partial class Zen<TIdentifier>
 
         IZenInternal IFlakeInternal.ZenInternal => this.Zen;
 
-        ZenData IFlakeInternal.Data => this.Zen.Data;
+        DataConstructor IFlakeInternal.Data => this.Zen.Constructor;
 
         ZenOptions IFlakeInternal.Options => this.Zen.Options;
 
@@ -343,7 +343,7 @@ public partial class Zen<TIdentifier>
                 {
                     if (this.dataObject[i].Data == null)
                     {
-                        if (this.Zen.Data.TryGetConstructor(id) is { } ctr1)
+                        if (this.Zen.Constructor.TryGetConstructor(id) is { } ctr1)
                         {
                             this.dataObject[i].Data = ctr1(this);
                         }
@@ -355,7 +355,7 @@ public partial class Zen<TIdentifier>
 
             var newObject = default(DataObject);
             newObject.Id = id;
-            if (this.Zen.Data.TryGetConstructor(id) is { } ctr2)
+            if (this.Zen.Constructor.TryGetConstructor(id) is { } ctr2)
             {
                 newObject.Data = ctr2(this);
             }

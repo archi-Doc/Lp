@@ -1,13 +1,14 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace CrystalData;
 
 [TinyhandObject]
 [ValueLinkObject]
-public partial class StandardData : BaseData<StandardData.GoshujinClass>
-{// LPData
+public partial class StandardData : BaseData
+{
     [Link(Primary = true, Name = "GetQueue", Type = ChainType.QueueList)]
     internal StandardData()
     {
@@ -23,33 +24,33 @@ public partial class StandardData : BaseData<StandardData.GoshujinClass>
     [Key(4)]
     private GoshujinClass? childFlakes;
 
-    protected override void DeleteChildren()
+    protected override IEnumerator<BaseData> EnumerateInternal()
     {
-        if (this.childFlakes != null)
+        if (this.childFlakes == null)
         {
-            foreach (var x in this.childFlakes.ToArray())
-            {
-                x.DeleteInternal();
-            }
+            yield break;
+        }
 
-            this.childFlakes = null;
+        foreach (var x in this.childFlakes)
+        {
+            yield return x;
         }
     }
 
-    protected override void SaveChildren(bool unload)
+    protected override void DeleteInternal()
+    {
+        this.childFlakes = null;
+        this.Goshujin = null;
+    }
+
+    /*protected override void SaveInternal(bool unload)
     {
         if (this.childFlakes != null)
         {
-            var e = ((IEnumerable<StandardData>)this.childFlakes).GetEnumerator();
-            var e2 = (IEnumerable<StandardData>)this.childFlakes;
-            foreach (var x in e2)
-            {
-
-            }
             foreach (var x in this.childFlakes)
             {
                 x.Save(unload);
             }
         }
-    }
+    }*/
 }

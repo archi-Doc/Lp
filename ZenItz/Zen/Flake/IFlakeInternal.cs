@@ -6,7 +6,7 @@ public interface IFlakeInternal
 {
     IZenInternal ZenInternal { get; }
 
-    ZenData Data { get; }
+    DataConstructor Data { get; }
 
     ZenOptions Options { get; }
 
