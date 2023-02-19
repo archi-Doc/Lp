@@ -1,13 +1,20 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+#pragma warning disable SA1124 // Do not use regions
+
 namespace CrystalData;
 
 [TinyhandObject]
 [ValueLinkObject]
-public partial class StandardData : BaseData
+public partial class LpData : BaseData
 {
+    public LpData(ICrystalInternal crystal, BaseData? parent)
+    {
+        this.Initialize(crystal, parent, false);
+    }
+
     [Link(Primary = true, Name = "GetQueue", Type = ChainType.QueueList)]
-    public StandardData()
+    internal LpData()
     {
     }
 
@@ -19,16 +26,105 @@ public partial class StandardData : BaseData
     private Identifier identifier = default!;
 
     [Key(4)]
-    private GoshujinClass? childFlakes;
+    private GoshujinClass? children;
 
+    #region Child
+
+    public LockOperation<TData> LockChild<TData>(Identifier id)
+        where TData : IDatum
+    {
+        LpData? data;
+        using (this.semaphore.Lock())
+        {
+            if (this.children == null)
+            {
+                return default;
+            }
+
+            if (this.children.IdChain.TryGetValue(id, out data))
+            {// Update GetQueue chain
+                this.children.GetQueueChain.Remove(data);
+                this.children.GetQueueChain.Enqueue(data);
+            }
+            else
+            {
+                return default;
+            }
+        }
+
+        return data.Lock<TData>();
+    }
+
+    public LpData GetOrCreateChild(Identifier id)
+    {
+        LpData? data;
+        using (this.semaphore.Lock())
+        {
+            this.children ??= new();
+            if (!this.children.IdChain.TryGetValue(id, out data))
+            {
+                data = new LpData();
+                data.Initialize(this.Crystal, this, false);
+                this.children.Add(data);
+            }
+            else
+            {// Update GetQueue chain
+                this.children.GetQueueChain.Remove(data);
+                this.children.GetQueueChain.Enqueue(data);
+            }
+        }
+
+        return data;
+    }
+
+    public LpData? TryGetChild(Identifier id)
+    {
+        LpData? data;
+        using (this.semaphore.Lock())
+        {
+            if (this.children == null)
+            {
+                return null;
+            }
+
+            if (this.children.IdChain.TryGetValue(id, out data))
+            {// Update GetQueue chain
+                this.children.GetQueueChain.Remove(data);
+                this.children.GetQueueChain.Enqueue(data);
+            }
+
+            return data;
+        }
+    }
+
+    public bool DeleteChild(Identifier id)
+    {
+        using (this.semaphore.Lock())
+        {
+            if (this.children == null)
+            {
+                return false;
+            }
+
+            if (this.children.IdChain.TryGetValue(id, out var data))
+            {
+                data.DeleteActual();
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    #endregion
     protected override IEnumerator<BaseData> EnumerateInternal()
     {
-        if (this.childFlakes == null)
+        if (this.children == null)
         {
             yield break;
         }
 
-        foreach (var x in this.childFlakes)
+        foreach (var x in this.children)
         {
             yield return x;
         }
@@ -36,18 +132,7 @@ public partial class StandardData : BaseData
 
     protected override void DeleteInternal()
     {
-        this.childFlakes = null;
+        this.children = null;
         this.Goshujin = null;
     }
-
-    /*protected override void SaveInternal(bool unload)
-    {
-        if (this.childFlakes != null)
-        {
-            foreach (var x in this.childFlakes)
-            {
-                x.Save(unload);
-            }
-        }
-    }*/
 }

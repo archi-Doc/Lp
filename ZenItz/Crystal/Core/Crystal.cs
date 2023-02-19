@@ -1,8 +1,18 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using CrystalData;
-
 namespace CrystalData;
+
+public class LpCrystal : Crystal<GroupData>
+{
+    internal LpCrystal(UnitCore core, CrystalOptions options, ILogger<LpCrystal> logger)
+        : base(core, options, (ILogger<Crystal<GroupData>>)logger)
+    {
+        this.Data = new(this, this.Root);
+        this.Root.AddChild(this.Data);
+    }
+
+    public LpData Data { get; private set; }
+}
 
 public partial class Crystal<TData> : ICrystalInternal
     where TData : BaseData
@@ -14,7 +24,7 @@ public partial class Crystal<TData> : ICrystalInternal
         this.Options = options;
         this.Storage = new();
         this.himoGoshujin = new(this);
-        this.Data = TinyhandSerializer.Reconstruct<TData>();
+        this.Root = TinyhandSerializer.Reconstruct<TData>();
 
         this.Constructor = new();
         this.Constructor.Register<BlockDatum>(x => new BlockDatumImpl(x));
@@ -97,7 +107,7 @@ public partial class Crystal<TData> : ICrystalInternal
             }
 
             // Save & Unload flakes
-            this.Data.Save(true);
+            this.Root.Save(true);
 
             // Stop IO(CrystalDirectory)
             await this.Storage.StopAsync();
@@ -144,7 +154,7 @@ public partial class Crystal<TData> : ICrystalInternal
 
     public UnitCore Core { get; init; }
 
-    public TData Data { get; private set; }
+    public TData Root { get; private set; }
 
     public DataConstructor Constructor { get; private set; }
 
@@ -158,7 +168,7 @@ public partial class Crystal<TData> : ICrystalInternal
 
     internal void DeleteAll()
     {
-        this.Data.Delete();
+        this.Root.Delete();
         this.himoGoshujin.Clear();
 
         PathHelper.TryDeleteFile(this.Options.ZenFilePath);
@@ -208,7 +218,7 @@ public partial class Crystal<TData> : ICrystalInternal
 
     private async Task<CrystalStartResult> LoadZenDirectory(CrystalStartParam param)
     {// await this.semaphore.WaitAsync()
-        // Load
+     // Load
         CrystalStartResult result;
         byte[]? data;
         try
@@ -287,7 +297,7 @@ LoadBackup:
 
     private async Task<CrystalStartResult> LoadZen(CrystalStartParam param)
     {// await this.semaphore.WaitAsync()
-        // Load
+     // Load
         byte[]? data;
         try
         {
@@ -371,7 +381,7 @@ LoadBackup:
 
     private async Task SerializeZen(string path, string? backupPath)
     {
-        var byteArray = TinyhandSerializer.Serialize(this.Data);
+        var byteArray = TinyhandSerializer.Serialize(this.Root);
         await HashHelper.GetFarmHashAndSaveAsync(byteArray, path, backupPath);
     }
 

@@ -1,11 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using BenchmarkDotNet.Attributes;
+using CrystalData;
 using LP;
 using Tinyhand;
 using Tinyhand.IO;
 using ValueLink;
-using CrystalData;
 
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
 #pragma warning disable SA1401 // Fields should be private
@@ -136,7 +136,7 @@ public class FlakeBenchmark
 {
     public const int N = 1000;
 
-    private Zen<Identifier>.Flake rootFlake;
+    private LpData rootFlake;
     private byte[] rootFlakeBinary;
 
     private Flake<Identifier> flake;
@@ -173,14 +173,14 @@ public class FlakeBenchmark
 
         this.goshujin2Binary = TinyhandSerializer.SerializeObject(this.goshujin2);
 
-        this.rootFlake = (Zen<Identifier>.Flake)Activator.CreateInstance(typeof(Zen<Identifier>.Flake), true)!;
+        this.rootFlake = (LpData)Activator.CreateInstance(typeof(LpData), true)!;
         for (var i = 0; i < 1_000_000; i++)
         {
             this.rootFlake.GetOrCreateChild(new(i));
         }
 
         this.rootFlakeBinary = TinyhandSerializer.SerializeObject(this.rootFlake);
-        var f = TinyhandSerializer.DeserializeObject<Zen<Identifier>.Flake>(this.rootFlakeBinary);
+        var f = TinyhandSerializer.DeserializeObject<LpData>(this.rootFlakeBinary);
     }
 
     [GlobalSetup]
@@ -227,7 +227,7 @@ public class FlakeBenchmark
     [Benchmark]
     public object? DeserializeZen()
     {// Zen<Identifier>.Flake
-        return TinyhandSerializer.DeserializeObject<Zen<Identifier>.Flake>(this.rootFlakeBinary);
+        return TinyhandSerializer.DeserializeObject<LpData>(this.rootFlakeBinary);
     }
 
     /*[Benchmark]

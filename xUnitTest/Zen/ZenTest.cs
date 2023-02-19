@@ -1,11 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System;
+using CrystalData;
 using LP;
 using Tinyhand;
 using Xunit;
 using Xunit.Sdk;
-using ZenItz;
 
 namespace xUnitTest.ZenTest;
 
@@ -29,18 +29,18 @@ public partial class ZenTest
     public async Task Test1()
     {
         var identifier = default(Identifier);
-        var zen = await TestHelper.CreateAndStartZen<Identifier>();
+        var crystal = await TestHelper.CreateAndStartZen();
 
-        var f = zen.Root.TryGetChild(Identifier.Zero);
+        var f = crystal.Data.TryGetChild(Identifier.Zero);
         f.IsNull();
-        f = zen.Root.GetOrCreateChild(Identifier.Zero);
+        f = crystal.Data.GetOrCreateChild(Identifier.Zero);
         f.IsNotNull();
 
         var buffer = new byte[Identifier.Length];
         var buffer2 = new byte[Identifier.Length];
         Identifier.Zero.TryWriteBytes(buffer);
-        f!.BlockData.Set(buffer);
-        var result = await f!.BlockData.Get();
+        f!.BlockDatum.Set(buffer);
+        var result = await f!.BlockDatum.Get();
         result.DataEquals(buffer).IsTrue();
 
         // Set flakes
@@ -48,11 +48,11 @@ public partial class ZenTest
         {
             identifier = new Identifier(i);
 
-            f = zen.Root.GetOrCreateChild(identifier);
+            f = crystal.Data.GetOrCreateChild(identifier);
             f.IsNotNull();
 
             identifier.TryWriteBytes(buffer);
-            f!.BlockData.Set(buffer).Is(CrystalResult.Success);
+            f!.BlockDatum.Set(buffer).Is(CrystalResult.Success);
         }
 
         // Get flakes and check
@@ -60,19 +60,19 @@ public partial class ZenTest
         {
             identifier = new Identifier(i);
 
-            f = zen.Root.TryGetChild(identifier);
+            f = crystal.Data.TryGetChild(identifier);
             f.IsNotNull();
 
             identifier.TryWriteBytes(buffer);
-            result = await f!.BlockData.Get();
+            result = await f!.BlockDatum.Get();
             result.DataEquals(buffer).IsTrue();
         }
 
-        f = zen.Root.GetOrCreateChild(Identifier.Zero);
+        f = crystal.Data.GetOrCreateChild(Identifier.Zero);
         f.IsNotNull();
 
         // Set fragments
-        for (var i = 0; i < ZenOptions.DefaultMaxFragmentCount; i++)
+        for (var i = 0; i < CrystalOptions.DefaultMaxFragmentCount; i++)
         {
             identifier = new Identifier(i);
             identifier.TryWriteBytes(buffer);
@@ -85,16 +85,16 @@ public partial class ZenTest
 
         f!.FragmentData.Set(identifier, buffer).Is(CrystalResult.OverNumberLimit);
 
-        await TestHelper.StopZen(zen);
+        await TestHelper.StopZen(crystal);
     }
 
     [Fact]
     public async Task Test2()
     {
-        var zen = await TestHelper.CreateAndStartZen<Identifier>();
-        var root = zen.Root;
-        Zen.Flake? flake;
-        root.Remove().IsFalse();
+        var crystal = await TestHelper.CreateAndStartZen();
+        var data = crystal.Data;
+        LpData? flake;
+        data.Delete().IsFalse();
 
         var bin = new byte[N];
         LP.Random.Pseudo.NextBytes(bin);
@@ -102,33 +102,33 @@ public partial class ZenTest
         // Set flakes
         for (var i = 0; i < N; i++)
         {
-            flake = root.GetOrCreateChild(new(i));
-            flake.BlockData.Set(bin.AsSpan(0, i));
+            flake = data.GetOrCreateChild(new(i));
+            flake.BlockDatum.Set(bin.AsSpan(0, i));
         }
 
         // Get flakes and check
         for (var i = 0; i < N; i++)
         {
-            flake = zen.Root.TryGetChild(new(i));
+            flake = crystal.Data.TryGetChild(new(i));
             flake.IsNotNull();
 
-            var result = await flake!.BlockData.Get();
+            var result = await flake!.BlockDatum.Get();
             result.DataEquals(bin.AsSpan(0, i)).IsTrue();
         }
 
-        await TestHelper.StopAndStartZen(zen);
+        await TestHelper.StopAndStartZen(crystal);
 
         // Get flakes and check
         for (var i = 0; i < N; i++)
         {
-            flake = zen.Root.TryGetChild(new(i));
+            flake = crystal.Data.TryGetChild(new(i));
             flake.IsNotNull();
 
-            var result = await flake!.BlockData.Get();
+            var result = await flake!.BlockDatum.Get();
             result.DataEquals(bin.AsSpan(0, i)).IsTrue();
         }
 
-        await TestHelper.StopZen(zen);
+        await TestHelper.StopZen(crystal);
     }
 
     [TinyhandObject(ImplicitKeyAsName = true)]
@@ -137,17 +137,17 @@ public partial class ZenTest
     [Fact]
     public async Task Test3()
     {
-        var zen = await TestHelper.CreateAndStartZen<Identifier>();
-        var root = zen.Root;
+        var crystal = await TestHelper.CreateAndStartZen();
+        var data = crystal.Data;
 
         var t1 = new TestObject(1, "1");
         var t2 = new TestObject(2, "2");
         var t3 = new TestObject(3, "3");
 
         // Set 1
-        var flake = root.GetOrCreateChild(new(1));
-        flake.BlockData.SetObject(t1);
-        var result = await flake.BlockData.GetObject<TestObject>();
+        var flake = data.GetOrCreateChild(new(1));
+        flake.BlockDatum.SetObject(t1);
+        var result = await flake.BlockDatum.GetObject<TestObject>();
         result.Object.IsStructuralEqual(t1);
 
         // Set 2
@@ -169,19 +169,19 @@ public partial class ZenTest
         nested = flake.GetOrCreateChild(new(1));
         nested.IsNotNull();
 
-        nested.BlockData.SetObject(t2);
+        nested.BlockDatum.SetObject(t2);
         nested.FragmentData.Set(new(2), TinyhandSerializer.SerializeObject(t2));
 
-        await TestHelper.StopAndStartZen(zen);
+        await TestHelper.StopAndStartZen(crystal);
 
-        result = await flake.BlockData.GetObject<TestObject>();
+        result = await flake.BlockDatum.GetObject<TestObject>();
         result.Object.IsStructuralEqual(t1);
         result = await flake.FragmentData.GetObject<TestObject>(new(2));
         result.Object.IsStructuralEqual(t2);
 
         nested = flake.TryGetChild(new(1))!;
         nested.IsNotNull();
-        result = await nested.BlockData.GetObject<TestObject>();
+        result = await nested.BlockDatum.GetObject<TestObject>();
         result.Object.IsStructuralEqual(t2);
         result = await flake.FragmentData.GetObject<TestObject>(new(2));
         result.Object.IsStructuralEqual(t2);
@@ -189,19 +189,19 @@ public partial class ZenTest
         // Lock IO order test
         for (var i = 0; i < 100; i++)
         {
-            flake = zen.Root.GetOrCreateChild(Identifier.Zero);
-            flake.BlockData.Set(new byte[] { 0, 1, });
+            flake = crystal.Data.GetOrCreateChild(Identifier.Zero);
+            flake.BlockDatum.Set(new byte[] { 0, 1, });
             flake.Save(true);
-            var fd = await flake.BlockData.Get();
+            var fd = await flake.BlockDatum.Get();
             fd.Result.Is(CrystalResult.Success);
         }
 
         // Remove test
-        flake = zen.Root.GetOrCreateChild(Identifier.Zero);
-        flake.Remove().IsTrue();
-        flake.BlockData.Set(new byte[] { 0, 1, }).Is(CrystalResult.Removed);
-        (await flake.BlockData.Get()).Result.Is(CrystalResult.Removed);
+        flake = crystal.Data.GetOrCreateChild(Identifier.Zero);
+        flake.Delete().IsTrue();
+        flake.BlockDatum.Set(new byte[] { 0, 1, }).Is(CrystalResult.Removed);
+        (await flake.BlockDatum.Get()).Result.Is(CrystalResult.Removed);
 
-        await TestHelper.StopZen(zen);
+        await TestHelper.StopZen(crystal);
     }
 }

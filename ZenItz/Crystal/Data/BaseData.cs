@@ -195,27 +195,27 @@ public partial class BaseData : IDataInternal
     {
         if (this.Parent == null)
         {
-            this.DeleteData();
+            this.DeleteActual();
         }
         else
         {
             using (this.Parent.semaphore.Lock())
             {
-                this.DeleteData();
+                this.DeleteActual();
             }
         }
 
         return true;
     }
 
-    protected void DeleteData()
+    protected void DeleteActual()
     {// using (this.Parent.semaphore.Lock())
         using (this.semaphore.Lock())
         {
             var array = this.ChildrenInternal.ToArray();
             foreach (var x in array)
             {
-                x.DeleteData();
+                x.DeleteActual();
             }
 
             this.DeleteInternal();
