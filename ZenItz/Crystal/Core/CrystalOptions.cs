@@ -20,9 +20,9 @@ public record CrystalOptions
     }
 
     /// <summary>
-    /// Gets a path of the directory where <see cref="Zen"/> files are stored.
+    /// Gets a path of the directory where <see cref="Crystal{TData}"/> files are stored.
     /// </summary>
-    public string ZenPath { get; init; } = string.Empty;
+    public string CrystalPath { get; init; } = string.Empty;
 
     public int MaxDataSize { get; init; } = DefaultMaxDataSize;
 
@@ -48,7 +48,7 @@ public record CrystalOptions
 
     public string SnowflakeBackup { get; init; } = "Snowflake.back";
 
-    public string RootPath => this.rootPath ??= PathHelper.GetRootedDirectory(Directory.GetCurrentDirectory(), this.ZenPath);
+    public string RootPath => this.rootPath ??= PathHelper.GetRootedDirectory(Directory.GetCurrentDirectory(), this.CrystalPath);
 
     public string ZenFilePath => PathHelper.GetRootedFile(this.RootPath, this.ZenFile);
 

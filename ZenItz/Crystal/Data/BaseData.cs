@@ -13,7 +13,7 @@ namespace CrystalData;
 /// <see cref="BaseData"/> is an independent class that holds data at a single point in the hierarchical structure.
 /// </summary>
 [TinyhandObject(ExplicitKeyOnly = true, LockObject = "semaphore", ReservedKeys = 2)]
-public abstract partial class BaseData : IDataInternal
+public partial class BaseData : IDataInternal
 {
     internal BaseData()
     {
@@ -238,11 +238,16 @@ public abstract partial class BaseData : IDataInternal
 
     #region Abstract
 
-    protected abstract IEnumerator<BaseData> EnumerateInternal();
+    protected virtual IEnumerator<BaseData> EnumerateInternal()
+    {
+        yield break;
+    }
 
     // protected abstract void SaveInternal(bool unload);
 
-    protected abstract void DeleteInternal();
+    protected virtual void DeleteInternal()
+    {
+    }
 
     #endregion
 
