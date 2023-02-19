@@ -29,7 +29,7 @@ public class CrystalControl
                 context.AddSingleton<CrystalControl>();
                 context.AddSingleton<CrystalOptions>();
                 context.AddSingleton<LpCrystal>();
-                context.Services.Add(ServiceDescriptor.Transient(typeof(LpData), x => x.GetRequiredService<LpCrystal>().Data));
+                context.Services.Add(ServiceDescriptor.Transient(typeof(LpData), x => x.GetRequiredService<LpCrystal>().Root.Data));
                 context.AddSingleton<Itz>();
 
                 // Subcommands

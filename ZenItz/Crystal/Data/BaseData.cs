@@ -15,11 +15,11 @@ namespace CrystalData;
 [TinyhandObject(ExplicitKeyOnly = true, LockObject = "semaphore", ReservedKeys = 2)]
 public partial class BaseData : IDataInternal
 {
-    internal BaseData()
+    protected BaseData()
     {
     }
 
-    internal BaseData(ICrystalInternal crystal, BaseData? parent)
+    protected BaseData(ICrystalInternal crystal, BaseData? parent)
     {
         this.Crystal = crystal;
         this.Parent = parent;

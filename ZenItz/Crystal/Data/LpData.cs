@@ -14,7 +14,7 @@ public partial class LpData : BaseData
     }
 
     [Link(Primary = true, Name = "GetQueue", Type = ChainType.QueueList)]
-    internal LpData()
+    public LpData()
     {
     }
 

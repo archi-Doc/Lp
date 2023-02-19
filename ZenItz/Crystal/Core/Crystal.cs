@@ -2,18 +2,6 @@
 
 namespace CrystalData;
 
-public class LpCrystal : Crystal<GroupData>
-{
-    public LpCrystal(UnitCore core, CrystalOptions options, ILogger<LpCrystal> logger)
-        : base(core, options, logger)
-    {
-        this.Data = new(this, this.Root);
-        this.Root.AddChild(this.Data);
-    }
-
-    public LpData Data { get; private set; }
-}
-
 public partial class Crystal<TData> : ICrystalInternal
     where TData : BaseData
 {
@@ -25,7 +13,7 @@ public partial class Crystal<TData> : ICrystalInternal
         this.Storage = new();
         this.himoGoshujin = new(this);
         this.Root = TinyhandSerializer.Reconstruct<TData>();
-        this.Root.Initialize(this, null, false);
+        this.Root.Initialize(this, null, true);
 
         this.Constructor = new();
         this.Constructor.Register<BlockDatum>(x => new BlockDatumImpl(x));
@@ -373,12 +361,12 @@ LoadBackup:
 
     private bool DeserializeZen(ReadOnlyMemory<byte> data)
     {
-        if (!TinyhandSerializer.TryDeserialize<BaseData>(data.Span, out var baseData))
+        if (!TinyhandSerializer.TryDeserialize<TData>(data.Span, out var tdata))
         {
             return false;
         }
 
-        baseData.Initialize(this, null, true);
+        tdata.Initialize(this, null, true);
 
         this.himoGoshujin.Clear();
 
