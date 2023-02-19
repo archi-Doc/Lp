@@ -18,7 +18,7 @@ public partial class LpCrystalData : BaseData
     public LpCrystalData(ICrystalInternal crystal, BaseData? parent)
         : base(crystal, parent)
     {
-        this.Data = new(crystal, parent);
+        this.Data = new(crystal, parent, default);
     }
 
     internal LpCrystalData()

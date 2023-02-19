@@ -53,6 +53,11 @@ public partial class ZenTest
 
             identifier.TryWriteBytes(buffer);
             f!.BlockDatum.Set(buffer).Is(CrystalResult.Success);
+
+            f = crystal.Data.TryGetChild(identifier);
+            f.IsNotNull();
+            result = await f.BlockDatum.Get();
+            result.DataEquals(buffer).IsTrue();
         }
 
         // Get flakes and check
