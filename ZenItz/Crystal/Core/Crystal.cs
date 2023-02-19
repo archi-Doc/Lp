@@ -4,8 +4,8 @@ namespace CrystalData;
 
 public class LpCrystal : Crystal<GroupData>
 {
-    internal LpCrystal(UnitCore core, CrystalOptions options, ILogger<LpCrystal> logger)
-        : base(core, options, (ILogger<Crystal<GroupData>>)logger)
+    public LpCrystal(UnitCore core, CrystalOptions options, ILogger<LpCrystal> logger)
+        : base(core, options, logger)
     {
         this.Data = new(this, this.Root);
         this.Root.AddChild(this.Data);
@@ -17,7 +17,7 @@ public class LpCrystal : Crystal<GroupData>
 public partial class Crystal<TData> : ICrystalInternal
     where TData : BaseData
 {
-    internal Crystal(UnitCore core, CrystalOptions options, ILogger<Crystal<TData>> logger)
+    internal Crystal(UnitCore core, CrystalOptions options, ILogger logger)
     {
         this.logger = logger;
         this.Core = core;
@@ -25,10 +25,16 @@ public partial class Crystal<TData> : ICrystalInternal
         this.Storage = new();
         this.himoGoshujin = new(this);
         this.Root = TinyhandSerializer.Reconstruct<TData>();
+        this.Root.Initialize(this, null, false);
 
         this.Constructor = new();
         this.Constructor.Register<BlockDatum>(x => new BlockDatumImpl(x));
         this.Constructor.Register<FragmentDatum<Identifier>>(x => new FragmentDatumImpl<Identifier>(x));
+    }
+
+    internal Crystal(UnitCore core, CrystalOptions options, ILogger<Crystal<TData>> logger)
+        : this(core, options, (ILogger)logger)
+    {
     }
 
     public async Task<CrystalStartResult> StartAsync(CrystalStartParam param)

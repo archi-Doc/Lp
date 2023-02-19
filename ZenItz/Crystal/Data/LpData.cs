@@ -9,8 +9,8 @@ namespace CrystalData;
 public partial class LpData : BaseData
 {
     public LpData(ICrystalInternal crystal, BaseData? parent)
+        : base(crystal, parent)
     {
-        this.Initialize(crystal, parent, false);
     }
 
     [Link(Primary = true, Name = "GetQueue", Type = ChainType.QueueList)]
@@ -63,8 +63,7 @@ public partial class LpData : BaseData
             this.children ??= new();
             if (!this.children.IdChain.TryGetValue(id, out data))
             {
-                data = new LpData();
-                data.Initialize(this.Crystal, this, false);
+                data = new LpData(this.Crystal, this);
                 this.children.Add(data);
             }
             else

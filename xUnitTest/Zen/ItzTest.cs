@@ -1,9 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using CrystalData;
 using LP;
 using Tinyhand;
 using Xunit;
-using CrystalData;
 
 namespace xUnitTest.ZenTest;
 

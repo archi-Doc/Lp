@@ -27,6 +27,7 @@ public class CrystalControl
 
                 // Main services
                 context.AddSingleton<CrystalControl>();
+                context.AddSingleton<CrystalOptions>();
                 context.AddSingleton<LpCrystal>();
                 context.Services.Add(ServiceDescriptor.Transient(typeof(LpData), x => x.GetRequiredService<LpCrystal>().Data));
                 context.AddSingleton<Itz>();

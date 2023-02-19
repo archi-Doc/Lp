@@ -19,9 +19,10 @@ public partial class BaseData : IDataInternal
     {
     }
 
-    internal BaseData(ICrystalInternal zen)
+    internal BaseData(ICrystalInternal crystal, BaseData? parent)
     {
-        this.Crystal = zen;
+        this.Crystal = crystal;
+        this.Parent = parent;
     }
 
     public ICrystalInternal Crystal { get; private set; } = default!;
