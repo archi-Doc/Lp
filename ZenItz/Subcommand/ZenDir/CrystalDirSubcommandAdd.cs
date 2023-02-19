@@ -8,14 +8,14 @@ using SimpleCommandLine;
 namespace CrystalData.Subcommands;
 
 [SimpleCommand("add", Description = "Add zen directory.")]
-public class ZenDirSubcommandAdd : ISimpleCommandAsync<ZenDirOptionsAdd>
+public class CrystalDirSubcommandAdd : ISimpleCommandAsync<ZenDirOptionsAdd>
 {
-    public ZenDirSubcommandAdd(ILogger<ZenDirSubcommandAdd> logger, IConsoleService consoleService, CrystalControl zenControl, ZenDirSubcommandLs zenDirSubcommandLs)
+    public CrystalDirSubcommandAdd(ILogger<CrystalDirSubcommandAdd> logger, IConsoleService consoleService, CrystalControl zenControl, CrystalDirSubcommandLs zenDirSubcommandLs)
     {
         this.logger = logger;
         this.consoleService = consoleService;
         this.zenControl = zenControl;
-        this.ZenDirSubcommandLs = zenDirSubcommandLs;
+        this.CrystalDirSubcommandLs = zenDirSubcommandLs;
     }
 
     public async Task RunAsync(ZenDirOptionsAdd option, string[] args)
@@ -27,21 +27,21 @@ public class ZenDirSubcommandAdd : ISimpleCommandAsync<ZenDirOptionsAdd>
         }
 
         // await this.zenControl.Zen.Pause();
-        var result = this.zenControl.Zen.Storage.AddDirectory(option.Path, capacity: cap);
+        var result = this.zenControl.Crystal.Storage.AddDirectory(option.Path, capacity: cap);
         // this.zenControl.Zen.Restart();
 
         if (result == AddDictionaryResult.Success)
         {
             this.logger.TryGet()?.Log($"Directory added: {option.Path}");
             this.consoleService.WriteLine();
-            await this.ZenDirSubcommandLs.RunAsync(Array.Empty<string>());
+            await this.CrystalDirSubcommandLs.RunAsync(Array.Empty<string>());
             // await this.ZenControl.SimpleParser.ParseAndRunAsync("zendir ls");
         }
     }
 
-    public ZenDirSubcommandLs ZenDirSubcommandLs { get; private set; }
+    public CrystalDirSubcommandLs CrystalDirSubcommandLs { get; private set; }
 
-    private ILogger<ZenDirSubcommandAdd> logger;
+    private ILogger<CrystalDirSubcommandAdd> logger;
     private IConsoleService consoleService;
     private CrystalControl zenControl;
 }

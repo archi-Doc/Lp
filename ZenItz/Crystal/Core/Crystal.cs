@@ -144,7 +144,7 @@ public partial class Crystal<TData> : ICrystalInternal
 
     public UnitCore Core { get; init; }
 
-    public BaseData Data { get; private set; }
+    public TData Data { get; private set; }
 
     public DataConstructor Constructor { get; private set; }
 
@@ -362,7 +362,7 @@ LoadBackup:
             return false;
         }
 
-        baseData.DeserializePostProcess<TData>(this);
+        baseData.Initialize(this, null, true);
 
         this.himoGoshujin.Clear();
 

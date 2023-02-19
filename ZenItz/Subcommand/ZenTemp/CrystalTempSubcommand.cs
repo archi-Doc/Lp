@@ -4,13 +4,13 @@ using SimpleCommandLine;
 
 namespace CrystalData.Subcommands;
 
-[SimpleCommand("zentemp", IsSubcommand = true, Description = "Zen template subcommand")]
+[SimpleCommand("ctemp", IsSubcommand = true, Description = "Crystal template subcommand")]
 public class CrystalTempSubcommand : SimpleCommandGroup<CrystalTempSubcommand>
 {
     public static void Configure(IUnitConfigurationContext context)
     {
         var group = ConfigureGroup(context);
-        group.AddCommand(typeof(ZenTempSubcommandLs));
+        group.AddCommand(typeof(CrystalTempSubcommandLs));
     }
 
     public CrystalTempSubcommand(UnitContext context, CrystalControl control)

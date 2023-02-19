@@ -4,14 +4,14 @@ using SimpleCommandLine;
 
 namespace CrystalData.Subcommands;
 
-[SimpleCommand("zendir", IsSubcommand = true, Description = "Zen directory subcommand")]
+[SimpleCommand("cdir", IsSubcommand = true, Description = "Crystal directory subcommand")]
 public class CrystalDirSubcommand : SimpleCommandGroup<CrystalDirSubcommand>
 {
     public static void Configure(IUnitConfigurationContext context)
     {
         var group = ConfigureGroup(context);
-        group.AddCommand(typeof(ZenDirSubcommandLs));
-        group.AddCommand(typeof(ZenDirSubcommandAdd));
+        group.AddCommand(typeof(CrystalDirSubcommandLs));
+        group.AddCommand(typeof(CrystalDirSubcommandAdd));
     }
 
     public CrystalDirSubcommand(UnitContext context, CrystalControl control)

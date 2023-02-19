@@ -4,10 +4,10 @@ using SimpleCommandLine;
 
 namespace CrystalData.Subcommands;
 
-[SimpleCommand("ls", Description = "List zen directory information.")]
-public class ZenTempSubcommandLs : ISimpleCommandAsync
+[SimpleCommand("ls", Description = "List crystal directory information.")]
+public class CrystalTempSubcommandLs : ISimpleCommandAsync
 {
-    public ZenTempSubcommandLs(IConsoleService consoleService, CrystalControl zenControl)
+    public CrystalTempSubcommandLs(IConsoleService consoleService, CrystalControl zenControl)
     {
         this.consoleService = consoleService;
         this.zenControl = zenControl;
@@ -15,7 +15,7 @@ public class ZenTempSubcommandLs : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        var info = this.zenControl.Zen.Storage.GetDirectoryInformation();
+        var info = this.zenControl.Crystal.Storage.GetDirectoryInformation();
 
         foreach (var x in Enumerable.Range(0, 5))
         {

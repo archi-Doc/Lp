@@ -21,10 +21,10 @@ public abstract partial class BaseData : IDataInternal
 
     internal BaseData(ICrystalInternal zen)
     {
-        this.Zen = zen;
+        this.Crystal = zen;
     }
 
-    public ICrystalInternal Zen { get; private set; } = default!;
+    public ICrystalInternal Crystal { get; private set; } = default!;
 
     public BaseData? Parent { get; private set; }
 
@@ -62,11 +62,11 @@ public abstract partial class BaseData : IDataInternal
 
     #region IFlakeInternal
 
-    ICrystalInternal IDataInternal.ZenInternal => this.Zen;
+    ICrystalInternal IDataInternal.ZenInternal => this.Crystal;
 
-    DataConstructor IDataInternal.Data => this.Zen.Constructor;
+    DataConstructor IDataInternal.Data => this.Crystal.Constructor;
 
-    CrystalOptions IDataInternal.Options => this.Zen.Options;
+    CrystalOptions IDataInternal.Options => this.Crystal.Options;
 
     void IDataInternal.DataToStorage<TData>(ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
     {// using (this.semaphore.Lock())
@@ -75,7 +75,7 @@ public abstract partial class BaseData : IDataInternal
         {
             if (this.datumObject[i].Id == id)
             {
-                this.Zen.Storage.Save(ref this.datumObject[i].File, memoryToBeShared, id);
+                this.Crystal.Storage.Save(ref this.datumObject[i].File, memoryToBeShared, id);
                 return;
             }
         }
@@ -95,7 +95,7 @@ public abstract partial class BaseData : IDataInternal
             return new(CrystalResult.NoData);
         }
 
-        return await this.Zen.Storage.Load(file);
+        return await this.Crystal.Storage.Load(file);
     }
 
     void IDataInternal.DeleteStorage<TData>()
@@ -103,7 +103,7 @@ public abstract partial class BaseData : IDataInternal
         var dataObject = this.TryGetDataObject<TData>();
         if (dataObject.IsValid)
         {
-            this.Zen.Storage.Delete(dataObject.File);
+            this.Crystal.Storage.Delete(dataObject.File);
             return;
         }
     }
@@ -222,7 +222,7 @@ public abstract partial class BaseData : IDataInternal
 
             for (var i = 0; i < this.datumObject.Length; i++)
             {
-                this.Zen.Storage.Delete(this.datumObject[i].File);
+                this.Crystal.Storage.Delete(this.datumObject[i].File);
                 this.datumObject[i].Data?.Unload();
                 this.datumObject[i].Data = null;
                 this.datumObject[i].File = 0;
@@ -246,15 +246,17 @@ public abstract partial class BaseData : IDataInternal
 
     #endregion
 
-    internal void DeserializePostProcess<TData>(Crystal<TData> crystal, BaseData? parent = null)
-        where TData : BaseData
+    protected internal void Initialize(ICrystalInternal crystal, BaseData? parent, bool initializeChildren)
     {
-        this.Zen = crystal;
+        this.Crystal = crystal;
         this.Parent = parent;
 
-        foreach (var x in this.ChildrenInternal)
+        if (initializeChildren)
         {
-            x.DeserializePostProcess(crystal, this);
+            foreach (var x in this.ChildrenInternal)
+            {
+                x.Initialize(crystal, this, initializeChildren);
+            }
         }
     }
 
@@ -268,7 +270,7 @@ public abstract partial class BaseData : IDataInternal
             {
                 if (this.datumObject[i].Data == null)
                 {
-                    if (this.Zen.Constructor.TryGetConstructor(id) is { } ctr1)
+                    if (this.Crystal.Constructor.TryGetConstructor(id) is { } ctr1)
                     {
                         this.datumObject[i].Data = ctr1(this);
                     }
@@ -280,7 +282,7 @@ public abstract partial class BaseData : IDataInternal
 
         var newObject = default(DatumObject);
         newObject.Id = id;
-        if (this.Zen.Constructor.TryGetConstructor(id) is { } ctr2)
+        if (this.Crystal.Constructor.TryGetConstructor(id) is { } ctr2)
         {
             newObject.Data = ctr2(this);
         }

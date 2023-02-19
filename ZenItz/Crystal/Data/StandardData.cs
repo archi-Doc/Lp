@@ -7,7 +7,7 @@ namespace CrystalData;
 public partial class StandardData : BaseData
 {
     [Link(Primary = true, Name = "GetQueue", Type = ChainType.QueueList)]
-    internal StandardData()
+    public StandardData()
     {
     }
 

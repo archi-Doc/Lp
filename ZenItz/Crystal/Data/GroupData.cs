@@ -5,43 +5,38 @@ using BigMachines;
 namespace CrystalData;
 
 [TinyhandObject]
-[ValueLinkObject]
 public partial class GroupData : BaseData
 {
-    [Link(Primary = true, Name = "List", Type = ChainType.LinkedList)]
     internal GroupData()
     {
     }
 
-    public void Add(BaseData data)
+    public void AddChild(BaseData data)
     {
-        this.children ??= new();
-        this.children.Add();
-        this.children.Add(data);
+        using (this.semaphore.Lock())
+        {
+            data.Initialize(this.Crystal, this, false);
+            this.children.Add(data);
+        }
+    }
+
+    public void DeleteChild(BaseData data)
+    {
+        using (this.semaphore.Lock())
+        {
+            this.children.Remove(data);
+            data.Delete();
+        }
     }
 
     [Key(3)]
-    private GoshujinClass? children;
+    private List<BaseData> children = new();
 
     protected override IEnumerator<BaseData> EnumerateInternal()
-    {
-        if (this.children == null)
-        {
-            yield break;
-        }
-
-        foreach (var x in this.children)
-        {
-            yield return x;
-        }
-    }
+        => this.children.GetEnumerator();
 
     protected override void DeleteInternal()
     {
-        if (this.Parent != null)
-        {
-            this.Parent
-        }
-        this.children = null;
+        this.children.Clear();
     }
 }
