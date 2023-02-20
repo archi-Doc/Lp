@@ -16,12 +16,12 @@ namespace xUnitTest;
 
 public static class TestHelper
 {
-    public static async Task<LpCrystal> CreateAndStartZen()
+    public static async Task<LpCrystal> CreateAndStartCrystal()
     {
         var options = new CrystalOptions() with
         {
-            CrystalPath = $"Zen[{LP.Random.Pseudo.NextUInt32():x4}]",
-            DefaultZenDirectory = "Snowflake",
+            CrystalPath = $"rystal[{LP.Random.Pseudo.NextUInt32():x4}]",
+            DefaultCrystalDirectory = "Snowflake",
         };
 
         var unit = new CrystalControl.Builder().Build();
@@ -30,17 +30,17 @@ public static class TestHelper
         return crystal;
     }
 
-    public static async Task StopZen(LpCrystal zen, bool removeAll = true)
+    public static async Task StopCrystal(LpCrystal crystal, bool removeAll = true)
     {
-        await zen.StopAsync(new(RemoveAll: removeAll));
-        zen.MemoryUsage.Is(0);
+        await crystal.StopAsync(new(RemoveAll: removeAll));
+        crystal.MemoryUsage.Is(0);
     }
 
-    public static async Task StopAndStartZen(LpCrystal zen)
+    public static async Task StopAndStartCrystal(LpCrystal crystal)
     {
-        await zen.StopAsync(new());
-        zen.MemoryUsage.Is(0);
-        await zen.StartAsync(new());
+        await crystal.StopAsync(new());
+        crystal.MemoryUsage.Is(0);
+        await crystal.StartAsync(new());
     }
 
     public static bool DataEquals(this CrystalMemoryResult dataResult, Span<byte> span)

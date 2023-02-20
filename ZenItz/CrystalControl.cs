@@ -52,9 +52,6 @@ public class CrystalControl
     public CrystalControl(UnitContext unitContext, LpCrystal crystal, CrystalOptions options, Itz itz)
     {
         this.unitContext = unitContext;
-        this.Crystal = crystal;
-        this.Crystal.Options = options;
-        this.Itz = itz;
     }
 
     public Crystal<TData> CreateCrystal<TData>(CrystalOptions options)
@@ -65,8 +62,6 @@ public class CrystalControl
             options,
             this.unitContext.ServiceProvider.GetRequiredService<ILogger<Crystal<TData>>>());
     }
-
-    public Itz Itz { get; }
 
     public bool ExaltationOfIntegrality { get; } = true; // ZenItz by Baxter.
 

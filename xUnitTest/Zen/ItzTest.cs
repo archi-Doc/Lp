@@ -5,7 +5,7 @@ using LP;
 using Tinyhand;
 using Xunit;
 
-namespace xUnitTest.ZenTest;
+namespace xUnitTest.CrystalTest;
 
 [TinyhandObject]
 public partial class TestPayload : IPayload

@@ -5,31 +5,30 @@ using CrystalData;
 using LP;
 using Tinyhand;
 using Xunit;
-using Xunit.Sdk;
 
-namespace xUnitTest.ZenTest;
+namespace xUnitTest.CrystalTest;
 
-public partial class ZenTest
+public partial class CrystalTest
 {
     public const int N = 100;
 
-    public ZenTest()
+    public CrystalTest()
     {
     }
 
     [Fact]
     public async Task TestTemplate()
     {
-        // var zen = await TestHelper.CreateAndStartZen<Identifier>();
+        // var crystal = await TestHelper.CreateAndStartCrystal<Identifier>();
 
-        // await TestHelper.StopZen(zen);
+        // await TestHelper.StopCrystal(crystal);
     }
 
     [Fact]
     public async Task Test1()
     {
         var identifier = default(Identifier);
-        var crystal = await TestHelper.CreateAndStartZen();
+        var crystal = await TestHelper.CreateAndStartCrystal();
 
         var f = crystal.Data.TryGetChild(Identifier.Zero);
         f.IsNull();
@@ -90,13 +89,13 @@ public partial class ZenTest
 
         f!.FragmentData.Set(identifier, buffer).Is(CrystalResult.OverNumberLimit);
 
-        await TestHelper.StopZen(crystal);
+        await TestHelper.StopCrystal(crystal);
     }
 
     [Fact]
     public async Task Test2()
     {
-        var crystal = await TestHelper.CreateAndStartZen();
+        var crystal = await TestHelper.CreateAndStartCrystal();
         var data = crystal.Data;
         LpData? flake;
         // data.Delete().IsTrue();
@@ -121,7 +120,7 @@ public partial class ZenTest
             result.DataEquals(bin.AsSpan(0, i)).IsTrue();
         }
 
-        await TestHelper.StopAndStartZen(crystal);
+        await TestHelper.StopAndStartCrystal(crystal);
 
         // Get flakes and check
         for (var i = 0; i < N; i++)
@@ -133,7 +132,7 @@ public partial class ZenTest
             result.DataEquals(bin.AsSpan(0, i)).IsTrue();
         }
 
-        await TestHelper.StopZen(crystal);
+        await TestHelper.StopCrystal(crystal);
     }
 
     [TinyhandObject(ImplicitKeyAsName = true)]
@@ -142,7 +141,7 @@ public partial class ZenTest
     [Fact]
     public async Task Test3()
     {
-        var crystal = await TestHelper.CreateAndStartZen();
+        var crystal = await TestHelper.CreateAndStartCrystal();
         var data = crystal.Data;
 
         var t1 = new TestObject(1, "1");
@@ -177,7 +176,7 @@ public partial class ZenTest
         nested.BlockDatum.SetObject(t2);
         nested.FragmentData.Set(new(2), TinyhandSerializer.SerializeObject(t2));
 
-        await TestHelper.StopAndStartZen(crystal);
+        await TestHelper.StopAndStartCrystal(crystal);
 
         result = await flake.BlockDatum.GetObject<TestObject>();
         result.Object.IsStructuralEqual(t1);
@@ -207,6 +206,6 @@ public partial class ZenTest
         flake.BlockDatum.Set(new byte[] { 0, 1, }).Is(CrystalResult.Removed);
         (await flake.BlockDatum.Get()).Result.Is(CrystalResult.Removed);
 
-        await TestHelper.StopZen(crystal);
+        await TestHelper.StopCrystal(crystal);
     }
 }

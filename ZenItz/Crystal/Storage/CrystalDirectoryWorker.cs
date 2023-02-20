@@ -2,12 +2,12 @@
 
 namespace CrystalData;
 
-internal class CrystalDirectoryWorker : TaskWorker<ZenDirectoryWork>
+internal class CrystalDirectoryWorker : TaskWorker<CrystalDirectoryWork>
 {
     public const int DefaultConcurrentTasks = 4;
     public const int RetryInterval = 10; // 10 ms
 
-    public CrystalDirectoryWorker(ThreadCoreBase parent, CrystalDirectory zenDirectory)
+    public CrystalDirectoryWorker(ThreadCoreBase parent, CrystalDirectory crystalDirectory)
         : base(parent, Process, true)
     {
         this.NumberOfConcurrentTasks = DefaultConcurrentTasks;
@@ -25,17 +25,17 @@ internal class CrystalDirectoryWorker : TaskWorker<ZenDirectoryWork>
             return true;
         });
 
-        this.CrystalDirectory = zenDirectory;
-        // this.logger = Zen.UnitLogger.GetLogger<ZenDirectoryWorker>();
+        this.CrystalDirectory = crystalDirectory;
+        // this.logger = Crystal.UnitLogger.GetLogger<CrystalDirectoryWorker>();
     }
 
-    public static async Task Process(TaskWorker<ZenDirectoryWork> w, ZenDirectoryWork work)
+    public static async Task Process(TaskWorker<CrystalDirectoryWork> w, CrystalDirectoryWork work)
     {
         var worker = (CrystalDirectoryWorker)w;
         string? filePath = null;
         var tryCount = 0;
 
-        if (work.Type == ZenDirectoryWork.WorkType.Save)
+        if (work.Type == CrystalDirectoryWork.WorkType.Save)
         {// Save
             var hash = new byte[CrystalDirectory.HashSize];
             BitConverter.TryWriteBytes(hash, Arc.Crypto.FarmHash.Hash64(work.SaveData.Memory.Span));
@@ -77,7 +77,7 @@ TrySave:
                 work.SaveData.Return();
             }
         }
-        else if (work.Type == ZenDirectoryWork.WorkType.Load)
+        else if (work.Type == CrystalDirectoryWork.WorkType.Load)
         {// Load
             try
             {
@@ -118,7 +118,7 @@ TrySave:
             {
             }
         }
-        else if (work.Type == ZenDirectoryWork.WorkType.Delete)
+        else if (work.Type == CrystalDirectoryWork.WorkType.Delete)
         {
             try
             {
@@ -163,10 +163,10 @@ DeleteAndExit:
 
     private HashSet<string> createdDirectories = new();*/
 
-    // private ILogger<ZenDirectoryWorker>? logger;
+    // private ILogger<CrystalDirectoryWorker>? logger;
 }
 
-internal class ZenDirectoryWork : IEquatable<ZenDirectoryWork>
+internal class CrystalDirectoryWork : IEquatable<CrystalDirectoryWork>
 {
     public enum WorkType
     {
@@ -185,21 +185,21 @@ internal class ZenDirectoryWork : IEquatable<ZenDirectoryWork>
 
     public ByteArrayPool.MemoryOwner LoadData { get; internal set; }
 
-    public ZenDirectoryWork(uint snowflakeId, ByteArrayPool.ReadOnlyMemoryOwner saveData)
+    public CrystalDirectoryWork(uint snowflakeId, ByteArrayPool.ReadOnlyMemoryOwner saveData)
     {// Save
         this.Type = WorkType.Save;
         this.SnowflakeId = snowflakeId;
         this.SaveData = saveData;
     }
 
-    public ZenDirectoryWork(uint snowflakeId, int loadSize)
+    public CrystalDirectoryWork(uint snowflakeId, int loadSize)
     {// Load
         this.Type = WorkType.Load;
         this.SnowflakeId = snowflakeId;
         this.LoadSize = loadSize;
     }
 
-    public ZenDirectoryWork(uint snowflakeId)
+    public CrystalDirectoryWork(uint snowflakeId)
     {// Remove
         this.Type = WorkType.Delete;
         this.SnowflakeId = snowflakeId;
@@ -208,7 +208,7 @@ internal class ZenDirectoryWork : IEquatable<ZenDirectoryWork>
     public override int GetHashCode()
         => HashCode.Combine(this.Type, this.SnowflakeId, this.SaveData.Memory.Length, this.LoadSize);
 
-    public bool Equals(ZenDirectoryWork? other)
+    public bool Equals(CrystalDirectoryWork? other)
     {
         if (other == null)
         {

@@ -8,15 +8,15 @@ namespace CrystalData.Subcommands;
 [SimpleCommand("ls", Description = "List crystal directory information.")]
 public class CrystalDirSubcommandLs : ISimpleCommandAsync
 {
-    public CrystalDirSubcommandLs(IConsoleService consoleService, CrystalControl zenControl)
+    public CrystalDirSubcommandLs(IConsoleService consoleService, LpCrystal crystal)
     {
         this.consoleService = consoleService;
-        this.zenControl = zenControl;
+        this.crystal = crystal;
     }
 
     public async Task RunAsync(string[] args)
     {
-        var info = this.zenControl.Crystal.Storage.GetDirectoryInformation();
+        var info = this.crystal.Storage.GetDirectoryInformation();
 
         foreach (var x in info)
         {
@@ -25,5 +25,5 @@ public class CrystalDirSubcommandLs : ISimpleCommandAsync
     }
 
     private IConsoleService consoleService;
-    private CrystalControl zenControl;
+    private LpCrystal crystal;
 }

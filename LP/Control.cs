@@ -152,7 +152,7 @@ public class Control : ILogInformation
             });
 
             this.SetupOptions<CrystalOptions>((context, previous) =>
-            {// ZenOptions
+            {// CrystalOptions
                 context.GetOptions<LPOptions>(out var lpOptions);
 
                 var options = previous with
@@ -286,7 +286,7 @@ public class Control : ILogInformation
         }
     }
 
-    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, CrystalControl crystalControl, Vault vault, Authority authority)
+    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, LpCrystal crystal, Itz itz, Vault vault, Authority authority)
     {
         this.Logger = logger;
         this.UserInterfaceService = userInterfaceService;
@@ -294,7 +294,8 @@ public class Control : ILogInformation
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.NetControl = netsphere;
         this.NetControl.SetupServer(() => new NetServices.LPServerContext(), () => new NetServices.LPCallContext());
-        this.CrystalControl = crystalControl;
+        this.Crystal = crystal;
+        this.Itz = itz;
         this.Vault = vault;
         this.Authority = authority;
 
@@ -318,13 +319,13 @@ public class Control : ILogInformation
         // Netsphere
         await this.NetControl.EssentialNode.LoadAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
 
-        // ZenItz
-        if (!await this.CrystalControl.Itz.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile)).ConfigureAwait(false))
+        // CrystalData
+        if (!await this.Itz.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile)).ConfigureAwait(false))
         {
-            await this.CrystalControl.Itz.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup)).ConfigureAwait(false);
+            await this.Itz.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup)).ConfigureAwait(false);
         }
 
-        var result = await this.CrystalControl.Crystal.StartAsync(new());
+        var result = await this.Crystal.StartAsync(new());
         if (result != CrystalStartResult.Success)
         {
             throw new PanicException();
@@ -335,7 +336,7 @@ public class Control : ILogInformation
 
     public async Task AbortAsync()
     {
-        await this.CrystalControl.Crystal.Abort();
+        await this.Crystal.Abort();
     }
 
     public async Task SaveAsync(UnitContext context)
@@ -345,9 +346,9 @@ public class Control : ILogInformation
         await this.SaveSettingsAsync();
         await this.SaveKeyVaultAsync();
         await this.NetControl.EssentialNode.SaveAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
-        await this.CrystalControl.Itz.SaveAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile), Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup));
+        await this.Itz.SaveAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile), Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup));
 
-        await this.CrystalControl.Crystal.StopAsync(new());
+        await this.Crystal.StopAsync(new());
 
         await context.SendSaveAsync(new(this.LPBase.DataDirectory));
     }
@@ -540,7 +541,9 @@ public class Control : ILogInformation
 
     public NetControl NetControl { get; }
 
-    public CrystalControl CrystalControl { get; }
+    public LpCrystal Crystal { get; }
+
+    public Itz Itz { get; }
 
     public Vault Vault { get; }
 

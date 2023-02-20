@@ -19,7 +19,7 @@ public partial class HimoGoshujinClass
         public Himo(IDataInternal flakeInternal)
         {
             this.flakeInternal = flakeInternal;
-            this.himoGoshujin = flakeInternal.ZenInternal.HimoGoshujin;
+            this.himoGoshujin = flakeInternal.CrystalInternal.HimoGoshujin;
         }
 
         public virtual int Id { get; }
@@ -100,9 +100,9 @@ public partial class HimoGoshujinClass
         private int currentSize; // Current memory usage
     }
 
-    public HimoGoshujinClass(ICrystalInternal zenInternal)
+    public HimoGoshujinClass(ICrystalInternal crystalInternal)
     {
-        this.zenInternal = zenInternal;
+        this.crystalInternal = crystalInternal;
     }
 
     internal void Start()
@@ -121,7 +121,7 @@ public partial class HimoGoshujinClass
 
     internal void Unload()
     {
-        var limit = Math.Max(MemoryMargin, this.zenInternal.Options.MemorySizeLimit - MemoryMargin);
+        var limit = Math.Max(MemoryMargin, this.crystalInternal.Options.MemorySizeLimit - MemoryMargin);
         if (Volatile.Read(ref this.memoryUsage) <= limit)
         {
             return;
@@ -160,7 +160,7 @@ public partial class HimoGoshujinClass
 
     internal long MemoryUsage => this.memoryUsage;
 
-    private ICrystalInternal zenInternal;
+    private ICrystalInternal crystalInternal;
 
     private object syncObject = new();
     private long memoryUsage; // lock(this.syncObject)

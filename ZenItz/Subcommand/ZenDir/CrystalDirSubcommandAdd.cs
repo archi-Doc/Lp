@@ -7,18 +7,19 @@ using SimpleCommandLine;
 
 namespace CrystalData.Subcommands;
 
-[SimpleCommand("add", Description = "Add zen directory.")]
-public class CrystalDirSubcommandAdd : ISimpleCommandAsync<ZenDirOptionsAdd>
+[SimpleCommand("add", Description = "Add Crystal directory.")]
+public class CrystalDirSubcommandAdd : ISimpleCommandAsync<CrystalDirOptionsAdd>
 {
-    public CrystalDirSubcommandAdd(ILogger<CrystalDirSubcommandAdd> logger, IConsoleService consoleService, CrystalControl zenControl, CrystalDirSubcommandLs zenDirSubcommandLs)
+    public CrystalDirSubcommandAdd(ILogger<CrystalDirSubcommandAdd> logger, IConsoleService consoleService, CrystalControl crystalControl, LpCrystal crystal, CrystalDirSubcommandLs crystalDirSubcommandLs)
     {
         this.logger = logger;
         this.consoleService = consoleService;
-        this.zenControl = zenControl;
-        this.CrystalDirSubcommandLs = zenDirSubcommandLs;
+        this.crystalControl = crystalControl;
+        this.crystal = crystal;
+        this.CrystalDirSubcommandLs = crystalDirSubcommandLs;
     }
 
-    public async Task RunAsync(ZenDirOptionsAdd option, string[] args)
+    public async Task RunAsync(CrystalDirOptionsAdd option, string[] args)
     {
         long cap = CrystalOptions.DefaultDirectoryCapacity;
         if (option.Capacity != 0)
@@ -26,16 +27,16 @@ public class CrystalDirSubcommandAdd : ISimpleCommandAsync<ZenDirOptionsAdd>
             cap = (long)option.Capacity * 1024 * 1024 * 1024;
         }
 
-        // await this.zenControl.Zen.Pause();
-        var result = this.zenControl.Crystal.Storage.AddDirectory(option.Path, capacity: cap);
-        // this.zenControl.Zen.Restart();
+        // await this.crystal.Pause();
+        var result = this.crystal.Storage.AddDirectory(option.Path, capacity: cap);
+        // this.crystal.Restart();
 
         if (result == AddDictionaryResult.Success)
         {
             this.logger.TryGet()?.Log($"Directory added: {option.Path}");
             this.consoleService.WriteLine();
             await this.CrystalDirSubcommandLs.RunAsync(Array.Empty<string>());
-            // await this.ZenControl.SimpleParser.ParseAndRunAsync("zendir ls");
+            // await this.crystal.SimpleParser.ParseAndRunAsync("cdir ls");
         }
     }
 
@@ -43,10 +44,11 @@ public class CrystalDirSubcommandAdd : ISimpleCommandAsync<ZenDirOptionsAdd>
 
     private ILogger<CrystalDirSubcommandAdd> logger;
     private IConsoleService consoleService;
-    private CrystalControl zenControl;
+    private CrystalControl crystalControl;
+    private LpCrystal crystal;
 }
 
-public record ZenDirOptionsAdd
+public record CrystalDirOptionsAdd
 {
     [SimpleOption("path", Required = true, Description = "Directory path")]
     public string Path { get; init; } = string.Empty;

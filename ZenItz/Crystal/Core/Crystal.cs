@@ -37,7 +37,7 @@ public partial class Crystal<TData> : ICrystalInternal
                 return CrystalStartResult.Success;
             }
 
-            this.logger.TryGet()?.Log("Zen start");
+            this.logger.TryGet()?.Log("Crystal start");
 
             if (param.FromScratch)
             {
@@ -51,14 +51,14 @@ public partial class Crystal<TData> : ICrystalInternal
             }
 
             // Load CrystalDirectory
-            result = await this.LoadZenDirectory(param);
+            result = await this.LoadCrystalDirectory(param);
             if (result != CrystalStartResult.Success)
             {
                 return result;
             }
 
-            // Load Zen
-            result = await this.LoadZen(param);
+            // Load Crystal
+            result = await this.LoadCrystal(param);
             if (result != CrystalStartResult.Success)
             {
                 return result;
@@ -76,7 +76,7 @@ public partial class Crystal<TData> : ICrystalInternal
         }
     }
 
-    public async Task StopAsync(ZenStopParam param)
+    public async Task StopAsync(CrystalStopParam param)
     {
         await this.semaphore.WaitAsync().ConfigureAwait(false);
         try
@@ -108,16 +108,16 @@ public partial class Crystal<TData> : ICrystalInternal
             // Stop IO(CrystalDirectory)
             await this.Storage.StopAsync();
 
-            // Save Zen
-            await this.SerializeZen(this.Options.ZenFilePath, this.Options.ZenBackupPath);
+            // Save Crystal
+            await this.SerializeCrystal(this.Options.CrystalFilePath, this.Options.CrystalBackupPath);
 
             // Save directory information
             var byteArray = this.Storage.Serialize();
-            await HashHelper.GetFarmHashAndSaveAsync(byteArray, this.Options.ZenDirectoryFilePath, this.Options.ZenDirectoryBackupPath);
+            await HashHelper.GetFarmHashAndSaveAsync(byteArray, this.Options.CrystalDirectoryFilePath, this.Options.CrystalDirectoryBackupPath);
 
             this.Storage.Terminate();
 
-            this.logger.TryGet()?.Log($"Zen stop - {this.himoGoshujin.MemoryUsage}");
+            this.logger.TryGet()?.Log($"Crystal stop - {this.himoGoshujin.MemoryUsage}");
         }
         finally
         {
@@ -167,10 +167,10 @@ public partial class Crystal<TData> : ICrystalInternal
         this.Root.Delete();
         this.himoGoshujin.Clear();
 
-        PathHelper.TryDeleteFile(this.Options.ZenFilePath);
-        PathHelper.TryDeleteFile(this.Options.ZenBackupPath);
-        PathHelper.TryDeleteFile(this.Options.ZenDirectoryFilePath);
-        PathHelper.TryDeleteFile(this.Options.ZenDirectoryBackupPath);
+        PathHelper.TryDeleteFile(this.Options.CrystalFilePath);
+        PathHelper.TryDeleteFile(this.Options.CrystalBackupPath);
+        PathHelper.TryDeleteFile(this.Options.CrystalDirectoryFilePath);
+        PathHelper.TryDeleteFile(this.Options.CrystalDirectoryBackupPath);
         this.Storage.DeleteAll();
 
         try
@@ -221,14 +221,14 @@ public partial class Crystal<TData> : ICrystalInternal
         this.Root.Initialize(this, null, true);
     }
 
-    private async Task<CrystalStartResult> LoadZenDirectory(CrystalStartParam param)
+    private async Task<CrystalStartResult> LoadCrystalDirectory(CrystalStartParam param)
     {// await this.semaphore.WaitAsync()
      // Load
         CrystalStartResult result;
         byte[]? data;
         try
         {
-            data = await File.ReadAllBytesAsync(this.Options.ZenDirectoryFilePath);
+            data = await File.ReadAllBytesAsync(this.Options.CrystalDirectoryFilePath);
         }
         catch
         {
@@ -252,11 +252,11 @@ public partial class Crystal<TData> : ICrystalInternal
 LoadBackup:
         try
         {
-            data = await File.ReadAllBytesAsync(this.Options.ZenDirectoryBackupPath);
+            data = await File.ReadAllBytesAsync(this.Options.CrystalDirectoryBackupPath);
         }
         catch
         {
-            if (await param.Query(CrystalStartResult.ZenDirectoryNotFound))
+            if (await param.Query(CrystalStartResult.DirectoryNotFound))
             {
                 result = await this.Storage.TryStart(this.Options, param, null);
                 if (result == CrystalStartResult.Success || param.ForceStart)
@@ -268,14 +268,14 @@ LoadBackup:
             }
             else
             {
-                return CrystalStartResult.ZenDirectoryNotFound;
+                return CrystalStartResult.DirectoryNotFound;
             }
         }
 
-        // Checksum Zen
+        // Checksum Crystal
         if (!HashHelper.CheckFarmHashAndGetData(data.AsMemory(), out memory))
         {
-            if (await param.Query(CrystalStartResult.ZenDirectoryError))
+            if (await param.Query(CrystalStartResult.DirectoryError))
             {
                 result = await this.Storage.TryStart(this.Options, param, null);
                 if (result == CrystalStartResult.Success || param.ForceStart)
@@ -287,7 +287,7 @@ LoadBackup:
             }
             else
             {
-                return CrystalStartResult.ZenDirectoryError;
+                return CrystalStartResult.DirectoryError;
             }
         }
 
@@ -300,13 +300,13 @@ LoadBackup:
         return result;
     }
 
-    private async Task<CrystalStartResult> LoadZen(CrystalStartParam param)
+    private async Task<CrystalStartResult> LoadCrystal(CrystalStartParam param)
     {// await this.semaphore.WaitAsync()
      // Load
         byte[]? data;
         try
         {
-            data = await File.ReadAllBytesAsync(this.Options.ZenFilePath);
+            data = await File.ReadAllBytesAsync(this.Options.CrystalFilePath);
         }
         catch
         {
@@ -319,7 +319,7 @@ LoadBackup:
             goto LoadBackup;
         }
 
-        if (this.DeserializeZen(memory))
+        if (this.DeserializeCrystal(memory))
         {
             return CrystalStartResult.Success;
         }
@@ -327,50 +327,50 @@ LoadBackup:
 LoadBackup:
         try
         {
-            data = await File.ReadAllBytesAsync(this.Options.ZenBackupPath);
+            data = await File.ReadAllBytesAsync(this.Options.CrystalBackupPath);
         }
         catch
         {
-            if (await param.Query(CrystalStartResult.ZenFileNotFound))
+            if (await param.Query(CrystalStartResult.FileNotFound))
             {
                 return CrystalStartResult.Success;
             }
             else
             {
-                return CrystalStartResult.ZenFileNotFound;
+                return CrystalStartResult.FileNotFound;
             }
         }
 
-        // Checksum Zen
+        // Checksum
         if (!HashHelper.CheckFarmHashAndGetData(data.AsMemory(), out memory))
         {
-            if (await param.Query(CrystalStartResult.ZenFileError))
+            if (await param.Query(CrystalStartResult.FileError))
             {
                 return CrystalStartResult.Success;
             }
             else
             {
-                return CrystalStartResult.ZenFileError;
+                return CrystalStartResult.FileError;
             }
         }
 
         // Deserialize
-        if (!this.DeserializeZen(memory))
+        if (!this.DeserializeCrystal(memory))
         {
-            if (await param.Query(CrystalStartResult.ZenFileError))
+            if (await param.Query(CrystalStartResult.FileError))
             {
                 return CrystalStartResult.Success;
             }
             else
             {
-                return CrystalStartResult.ZenFileError;
+                return CrystalStartResult.FileError;
             }
         }
 
         return CrystalStartResult.Success;
     }
 
-    private bool DeserializeZen(ReadOnlyMemory<byte> data)
+    private bool DeserializeCrystal(ReadOnlyMemory<byte> data)
     {
         if (!TinyhandSerializer.TryDeserialize<TData>(data.Span, out var tdata))
         {
@@ -384,7 +384,7 @@ LoadBackup:
         return true;
     }
 
-    private async Task SerializeZen(string path, string? backupPath)
+    private async Task SerializeCrystal(string path, string? backupPath)
     {
         var byteArray = TinyhandSerializer.Serialize(this.Root);
         await HashHelper.GetFarmHashAndSaveAsync(byteArray, path, backupPath);

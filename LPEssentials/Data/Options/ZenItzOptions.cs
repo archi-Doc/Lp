@@ -6,10 +6,10 @@ using SimpleCommandLine;
 namespace LP.Data;
 
 [TinyhandObject(ImplicitKeyAsName = true)]
-public partial class ZenItzOptions : ILogInformation
+public partial class CrystalDataOptions : ILogInformation
 {
-    [SimpleOption("zenfile")]
-    public string ZenFile { get; set; } = string.Empty;
+    [SimpleOption("crystalfile")]
+    public string CrystalFile { get; set; } = string.Empty;
 
     public void LogInformation(ILog logger)
     {

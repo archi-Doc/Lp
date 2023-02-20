@@ -180,7 +180,7 @@ public sealed class Storage
     }*/
 
     internal async Task<CrystalStartResult> TryStart(CrystalOptions options, CrystalStartParam param, ReadOnlyMemory<byte>? data)
-    {// Zen.semaphore
+    {// semaphore
         if (this.Started)
         {
             return CrystalStartResult.Success;
@@ -197,9 +197,9 @@ public sealed class Storage
             }
             catch
             {
-                if (!await param.Query(CrystalStartResult.ZenFileError))
+                if (!await param.Query(CrystalStartResult.FileError))
                 {
-                    return CrystalStartResult.ZenFileError;
+                    return CrystalStartResult.FileError;
                 }
             }
         }
@@ -216,16 +216,16 @@ public sealed class Storage
         }
 
         if (errorDirectories != null &&
-            !await param.Query(CrystalStartResult.ZenDirectoryError, errorDirectories.ToArray()))
+            !await param.Query(CrystalStartResult.DirectoryError, errorDirectories.ToArray()))
         {
-            return CrystalStartResult.ZenFileError;
+            return CrystalStartResult.FileError;
         }
 
         if (storageData.Directories.DirectoryIdChain.Count == 0)
         {
             try
             {
-                var defaultDirectory = new CrystalDirectory(this.GetFreeDirectoryId(storageData.Directories), PathHelper.GetRootedDirectory(this.Options.RootPath, this.Options.DefaultZenDirectory));
+                var defaultDirectory = new CrystalDirectory(this.GetFreeDirectoryId(storageData.Directories), PathHelper.GetRootedDirectory(this.Options.RootPath, this.Options.DefaultCrystalDirectory));
                 defaultDirectory.PrepareAndCheck(this);
                 storageData.Directories.Add(defaultDirectory);
             }
@@ -256,7 +256,7 @@ public sealed class Storage
     }
 
     internal async Task StopAsync()
-    {// Zen.semaphore
+    {// Data.semaphore
         Task[] tasks;
         lock (this.syncObject)
         {
