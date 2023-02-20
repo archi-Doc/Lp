@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace CrystalData;
 
 public partial class Crystal<TData> : ICrystalInternal
@@ -12,8 +14,7 @@ public partial class Crystal<TData> : ICrystalInternal
         this.Options = options;
         this.Storage = new();
         this.himoGoshujin = new(this);
-        this.Root = TinyhandSerializer.Reconstruct<TData>();
-        this.Root.Initialize(this, null, true);
+        this.InitializeRoot();
 
         this.Constructor = new();
         this.Constructor.Register<BlockDatum>(x => new BlockDatumImpl(x));
@@ -43,6 +44,7 @@ public partial class Crystal<TData> : ICrystalInternal
                 await this.Storage.TryStart(this.Options, param, null);
 
                 this.DeleteAll();
+                this.InitializeRoot();
 
                 this.Started = true;
                 return CrystalStartResult.Success;
@@ -178,6 +180,8 @@ public partial class Crystal<TData> : ICrystalInternal
         catch
         {
         }
+
+        this.InitializeRoot();
     }
 
     /*internal void Restart()
@@ -209,6 +213,13 @@ public partial class Crystal<TData> : ICrystalInternal
     }*/
 
     private HimoGoshujinClass himoGoshujin;
+
+    [MemberNotNull(nameof(Root))]
+    private void InitializeRoot()
+    {
+        this.Root = TinyhandSerializer.Reconstruct<TData>();
+        this.Root.Initialize(this, null, true);
+    }
 
     private async Task<CrystalStartResult> LoadZenDirectory(CrystalStartParam param)
     {// await this.semaphore.WaitAsync()

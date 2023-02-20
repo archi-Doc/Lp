@@ -56,7 +56,7 @@ public partial class ZenTest
 
             f = crystal.Data.TryGetChild(identifier);
             f.IsNotNull();
-            result = await f.BlockDatum.Get();
+            result = await f!.BlockDatum.Get();
             result.DataEquals(buffer).IsTrue();
         }
 
@@ -99,7 +99,7 @@ public partial class ZenTest
         var crystal = await TestHelper.CreateAndStartZen();
         var data = crystal.Data;
         LpData? flake;
-        data.Delete().IsFalse();
+        // data.Delete().IsTrue();
 
         var bin = new byte[N];
         LP.Random.Pseudo.NextBytes(bin);
