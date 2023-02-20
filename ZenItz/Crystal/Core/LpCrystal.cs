@@ -2,7 +2,7 @@
 
 namespace CrystalData;
 
-public class LpCrystal : Crystal<LpCrystalData>
+public class LpCrystal : Crystal<LpRootData>
 {
     public LpCrystal(UnitCore core, CrystalOptions options, ILogger<LpCrystal> logger)
         : base(core, options, logger)
@@ -13,15 +13,15 @@ public class LpCrystal : Crystal<LpCrystalData>
 }
 
 [TinyhandObject]
-public partial class LpCrystalData : BaseData
+public partial class LpRootData : BaseData
 {
-    public LpCrystalData(ICrystalInternal crystal, BaseData? parent)
+    public LpRootData(ICrystalInternal crystal, BaseData? parent)
         : base(crystal, parent)
     {
         this.Data = new(crystal, parent, default);
     }
 
-    internal LpCrystalData()
+    internal LpRootData()
     {
         this.Data = new();
     }

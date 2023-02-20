@@ -66,11 +66,9 @@ public class CrystalControl
             this.unitContext.ServiceProvider.GetRequiredService<ILogger<Crystal<TData>>>());
     }
 
-    public LpCrystal Crystal { get; }
-
     public Itz Itz { get; }
 
-    public bool ExaltationOfIntegrality { get; } = true; // by Baxter.
+    public bool ExaltationOfIntegrality { get; } = true; // ZenItz by Baxter.
 
     private readonly UnitContext unitContext;
 }
