@@ -34,15 +34,15 @@ public record CrystalOptions
 
     public long DirectoryCapacity { get; init; } = 1024L * 1024 * 1024 * 10; // 10GB
 
-    public string ZenFile { get; init; } = "Zen.main";
+    public string CrystalFile { get; init; } = "Crystal.main";
 
-    public string ZenBackup { get; init; } = "Zen.back";
+    public string CrystalBackup { get; init; } = "Crystal.back";
 
-    public string ZenDirectoryFile { get; init; } = "CrystalDirectory.main";
+    public string CrystalDirectoryFile { get; init; } = "CrystalDirectory.main";
 
-    public string ZenDirectoryBackup { get; init; } = "CrystalDirectory.back";
+    public string CrystalDirectoryBackup { get; init; } = "CrystalDirectory.back";
 
-    public string DefaultZenDirectory { get; init; } = "Zen";
+    public string DefaultCrystalDirectory { get; init; } = "Crystal";
 
     public string SnowflakeFile { get; init; } = "Snowflake.main";
 
@@ -50,13 +50,13 @@ public record CrystalOptions
 
     public string RootPath => this.rootPath ??= PathHelper.GetRootedDirectory(Directory.GetCurrentDirectory(), this.CrystalPath);
 
-    public string ZenFilePath => PathHelper.GetRootedFile(this.RootPath, this.ZenFile);
+    public string CrystalFilePath => PathHelper.GetRootedFile(this.RootPath, this.CrystalFile);
 
-    public string ZenBackupPath => PathHelper.GetRootedFile(this.RootPath, this.ZenBackup);
+    public string CrystalBackupPath => PathHelper.GetRootedFile(this.RootPath, this.CrystalBackup);
 
-    public string ZenDirectoryFilePath => PathHelper.GetRootedFile(this.RootPath, this.ZenDirectoryFile);
+    public string CrystalDirectoryFilePath => PathHelper.GetRootedFile(this.RootPath, this.CrystalDirectoryFile);
 
-    public string ZenDirectoryBackupPath => PathHelper.GetRootedFile(this.RootPath, this.ZenDirectoryBackup);
+    public string CrystalDirectoryBackupPath => PathHelper.GetRootedFile(this.RootPath, this.CrystalDirectoryBackup);
 
     private string? rootPath;
 }

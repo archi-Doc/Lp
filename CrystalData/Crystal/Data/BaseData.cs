@@ -63,7 +63,7 @@ public partial class BaseData : IDataInternal
 
     #region IFlakeInternal
 
-    ICrystalInternal IDataInternal.ZenInternal => this.Crystal;
+    ICrystalInternal IDataInternal.CrystalInternal => this.Crystal;
 
     DataConstructor IDataInternal.Data => this.Crystal.Constructor;
 

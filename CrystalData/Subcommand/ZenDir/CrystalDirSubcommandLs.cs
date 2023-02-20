@@ -1,28 +1,29 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using CrystalData;
 using SimpleCommandLine;
 
 namespace CrystalData.Subcommands;
 
 [SimpleCommand("ls", Description = "List crystal directory information.")]
-public class CrystalTempSubcommandLs : ISimpleCommandAsync
+public class CrystalDirSubcommandLs : ISimpleCommandAsync
 {
-    public CrystalTempSubcommandLs(IConsoleService consoleService, CrystalControl zenControl)
+    public CrystalDirSubcommandLs(IConsoleService consoleService, LpCrystal crystal)
     {
         this.consoleService = consoleService;
-        this.zenControl = zenControl;
+        this.crystal = crystal;
     }
 
     public async Task RunAsync(string[] args)
     {
-        var info = this.zenControl.Crystal.Storage.GetDirectoryInformation();
+        var info = this.crystal.Storage.GetDirectoryInformation();
 
-        foreach (var x in Enumerable.Range(0, 5))
+        foreach (var x in info)
         {
             this.consoleService.WriteLine(x.ToString());
         }
     }
 
     private IConsoleService consoleService;
-    private CrystalControl zenControl;
+    private LpCrystal crystal;
 }

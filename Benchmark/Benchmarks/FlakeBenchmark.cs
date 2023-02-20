@@ -191,7 +191,7 @@ public class FlakeBenchmark
     [GlobalCleanup]
     public void Cleanup()
     {
-        // this.zen.StopAsync(new(RemoveAll: true)).Wait();
+        // this.crystal.StopAsync(new(RemoveAll: true)).Wait();
     }
 
     // [Benchmark]

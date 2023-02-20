@@ -14,7 +14,7 @@ using Tinyhand;
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
 
-namespace ZenItzTest;
+namespace CrystalDataTest;
 
 public class Program
 {
@@ -36,7 +36,7 @@ public class Program
             .Configure(context =>
             {
                 // Command
-                context.AddCommand(typeof(ZenTestSubcommand));
+                context.AddCommand(typeof(CrystalTestSubcommand));
                 context.AddCommand(typeof(ItzTestSubcommand));
 
                 // Services

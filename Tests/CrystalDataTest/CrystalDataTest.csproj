@@ -8,11 +8,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\ZenItz\ZenItz.csproj" />
+    <Compile Remove="Generated\*" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="Generated\*" />
+    <ProjectReference Include="..\..\CrystalData\CrystalData.csproj" />
   </ItemGroup>
   
 </Project>

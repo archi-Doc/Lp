@@ -4,7 +4,7 @@ using System.Diagnostics;
 using SimpleCommandLine;
 using Tinyhand;
 
-namespace ZenItzTest;
+namespace CrystalDataTest;
 
 [TinyhandObject]
 public partial struct IntPayload : IPayload
@@ -48,15 +48,14 @@ public partial record class IntPayload3(int Data2) : IPayload;
 [SimpleCommand("itztest")]
 public class ItzTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 {
-    public ItzTestSubcommand(CrystalControl zenControl)
+    public ItzTestSubcommand(CrystalControl crystalControl)
     {
-        this.CrystalControl = zenControl;
+        this.CrystalControl = crystalControl;
     }
 
     public async Task RunAsync(BasicTestOptions options, string[] args)
     {
-        var crystal = this.CrystalControl.Crystal;
-        var itz = this.CrystalControl.Itz;
+        var itz = new Itz();
 
         itz.RegisterShip(new Itz.DefaultShip<IntPayload>(1_000_000));
         itz.RegisterShip(new Itz.DefaultShip<IntPayload2>(3));

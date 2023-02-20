@@ -4,7 +4,7 @@ namespace CrystalData;
 
 public interface IDataInternal
 {
-    ICrystalInternal ZenInternal { get; }
+    ICrystalInternal CrystalInternal { get; }
 
     DataConstructor Data { get; }
 

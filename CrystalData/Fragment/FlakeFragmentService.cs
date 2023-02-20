@@ -46,7 +46,7 @@ public static class FlakeFragmentService
             if (array != arrayOwner.ByteArray)
             {
                 arrayOwner.Return();
-                if (arrayLength > ZenOptions.DefaultMaxDataSize)
+                if (arrayLength > CrystalOptions.DefaultMaxDataSize)
                 {
                     owner = default;
                     return false;
@@ -81,7 +81,7 @@ public static class FlakeFragmentService
             if (array != arrayOwner.ByteArray)
             {
                 arrayOwner.Return();
-                if (arrayLength > ZenOptions.DefaultMaxDataSize)
+                if (arrayLength > CrystalOptions.DefaultMaxDataSize)
                 {
                     owner = default;
                     return false;

@@ -4,26 +4,26 @@ using System.Diagnostics;
 using SimpleCommandLine;
 using LP.Fragments;
 
-namespace ZenItzTest;
+namespace CrystalDataTest;
 
-[SimpleCommand("zentest")]
-public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
+[SimpleCommand("crystaltest")]
+public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
 {
-    public ZenTestSubcommand(CrystalControl crystalControl)
+    public CrystalTestSubcommand(CrystalControl crystalControl, LpCrystal crystal)
     {
         this.CrystalControl = crystalControl;
+        this.crystal = crystal;
     }
 
-    public async Task RunAsync(ZenTestOptions options, string[] args)
+    public async Task RunAsync(CrystalTestOptions options, string[] args)
     {
-        var crystal = this.CrystalControl.Crystal;
-        var itz = this.CrystalControl.Itz;
+        var itz = new Itz();
 
         var sw = Stopwatch.StartNew();
-        await crystal.StartAsync(new());
+        await this.crystal.StartAsync(new());
         Console.WriteLine($"Start: {sw.ElapsedMilliseconds} ms");
 
-        var data = crystal.Data.GetOrCreateChild(Identifier.Zero);
+        var data = this.crystal.Data.GetOrCreateChild(Identifier.Zero);
         if (data != null)
         {
             data.BlockDatum.Set(new byte[] { 0, 1, });
@@ -40,7 +40,7 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
             }
         }
 
-        data = crystal.Data.GetOrCreateChild(Identifier.One);
+        data = this.crystal.Data.GetOrCreateChild(Identifier.One);
         if (data != null)
         {
             data.BlockDatum.SetObject(new TestFragment());
@@ -67,7 +67,7 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
         var byteArray = new byte[CrystalOptions.DefaultMaxDataSize];
         for (var i = 0; i < 10; i++)
         {
-            data = crystal.Data.GetOrCreateChild(new(i));
+            data = this.crystal.Data.GetOrCreateChild(new(i));
             if (data != null)
             {
                 var dt = await data.BlockDatum.Get();
@@ -80,20 +80,22 @@ public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
 
         for (var i = 0; i < 1_000_000; i++)
         {
-            data = crystal.Data.GetOrCreateChild(new(i));
+            data = this.crystal.Data.GetOrCreateChild(new(i));
             // flake.SetData(new byte[] { 2, 3, });
         }
 
         // await Task.Delay(10000);
 
-        await crystal.StopAsync(new());
+        await this.crystal.StopAsync(new());
         Console.WriteLine($"{sw.ElapsedMilliseconds} ms");
     }
 
     public CrystalControl CrystalControl { get; set; }
+
+    private LpCrystal crystal;
 }
 
-public record ZenTestOptions
+public record CrystalTestOptions
 {
     // [SimpleOption("node", Description = "Node address", Required = true)]
     // public string Node { get; init; } = string.Empty;

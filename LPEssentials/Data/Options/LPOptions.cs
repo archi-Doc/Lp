@@ -38,8 +38,8 @@ public partial record LPOptions : ILogInformation
     [SimpleOption("ns", Description = "Netsphere option")]
     public NetsphereOptions NetsphereOptions { get; init; } = default!;
 
-    [SimpleOption("zen", Description = "ZenItz option")]
-    public ZenItzOptions ZenItzOptions { get; init; } = default!;
+    [SimpleOption("crystal", Description = "Crystal option")]
+    public CrystalDataOptions CrystalOptions { get; init; } = default!;
 
     [SimpleOption("confirmexit", Description = "Confirms application exit")]
     public bool ConfirmExit { get; init; } = false;
@@ -47,7 +47,7 @@ public partial record LPOptions : ILogInformation
     public void LogInformation(ILog log)
     {
         this.NetsphereOptions.LogInformation(log);
-        this.ZenItzOptions.LogInformation(log);
+        this.CrystalOptions.LogInformation(log);
     }
 
     /*public bool TryLoad()
