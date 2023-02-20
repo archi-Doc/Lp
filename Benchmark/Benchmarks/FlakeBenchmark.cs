@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using BenchmarkDotNet.Attributes;
+using CrystalData;
 using LP;
 using Tinyhand;
 using Tinyhand.IO;
@@ -135,6 +136,9 @@ public class FlakeBenchmark
 {
     public const int N = 1000;
 
+    private LpData rootFlake;
+    private byte[] rootFlakeBinary;
+
     private Flake<Identifier> flake;
     private byte[] flakeBinary;
     private Flake<Identifier>.GoshujinClass goshujin;
@@ -168,6 +172,15 @@ public class FlakeBenchmark
         }
 
         this.goshujin2Binary = TinyhandSerializer.SerializeObject(this.goshujin2);
+
+        this.rootFlake = (LpData)Activator.CreateInstance(typeof(LpData), true)!;
+        for (var i = 0; i < 1_000_000; i++)
+        {
+            this.rootFlake.GetOrCreateChild(new(i));
+        }
+
+        this.rootFlakeBinary = TinyhandSerializer.SerializeObject(this.rootFlake);
+        var f = TinyhandSerializer.DeserializeObject<LpData>(this.rootFlakeBinary);
     }
 
     [GlobalSetup]
@@ -178,33 +191,46 @@ public class FlakeBenchmark
     [GlobalCleanup]
     public void Cleanup()
     {
+        // this.zen.StopAsync(new(RemoveAll: true)).Wait();
     }
 
-    [Benchmark]
+    // [Benchmark]
     public byte[] Serialize()
     {
         return TinyhandSerializer.SerializeObject(this.flake);
     }
 
-    [Benchmark]
+    // [Benchmark]
     public byte[] Serialize2()
     {
         return TinyhandSerializer.SerializeObject(this.flake2);
     }
 
     [Benchmark]
+    public byte[] SerializeZen()
+    {
+        return TinyhandSerializer.SerializeObject(this.rootFlake);
+    }
+
+    // [Benchmark]
     public Flake<Identifier>? Deserialize()
     {
         return TinyhandSerializer.DeserializeObject<Flake<Identifier>>(this.flakeBinary);
     }
 
-    [Benchmark]
+    // [Benchmark]
     public Flake2<Identifier>? Deserialize2()
     {
         return TinyhandSerializer.DeserializeObject<Flake2<Identifier>>(this.flake2Binary);
     }
 
     [Benchmark]
+    public object? DeserializeZen()
+    {// Zen<Identifier>.Flake
+        return TinyhandSerializer.DeserializeObject<LpData>(this.rootFlakeBinary);
+    }
+
+    /*[Benchmark]
     public byte[] SerializeGoshujin()
     {
         return TinyhandSerializer.SerializeObject(this.goshujin);
@@ -226,5 +252,5 @@ public class FlakeBenchmark
     public object? DeserializeGoshujin2()
     {// Flake2<Identifier>.GoshujinClass
         return TinyhandSerializer.DeserializeObject<Flake2<Identifier>.GoshujinClass>(this.goshujin2Binary);
-    }
+    }*/
 }

@@ -7,6 +7,7 @@ global using Arc.Crypto;
 global using Arc.Threading;
 global using Arc.Unit;
 global using BigMachines;
+global using CrystalData;
 global using LP;
 global using Tinyhand;
 using LP.Data;
@@ -18,7 +19,6 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere;
 using Netsphere.Machines;
 using SimpleCommandLine;
-using ZenItz;
 
 namespace LP;
 
@@ -151,20 +151,20 @@ public class Control : ILogInformation
                 netBase.NetsphereOptions.EnableTestFeatures = true; // betacode
             });
 
-            this.SetupOptions<ZenOptions>((context, previous) =>
+            this.SetupOptions<CrystalOptions>((context, previous) =>
             {// ZenOptions
                 context.GetOptions<LPOptions>(out var lpOptions);
 
                 var options = previous with
                 {
-                    ZenPath = lpOptions.RootDirectory,
+                    CrystalPath = lpOptions.RootDirectory,
                 };
 
                 context.SetOptions(options);
             });
 
             this.AddBuilder(new NetControl.Builder());
-            this.AddBuilder(new ZenControl.Builder());
+            this.AddBuilder(new CrystalControl.Builder());
             this.AddBuilder(new LP.Logging.LPLogger.Builder());
         }
 
@@ -286,7 +286,7 @@ public class Control : ILogInformation
         }
     }
 
-    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, ZenControl zenControl, Vault vault, Authority authority)
+    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, CrystalControl crystalControl, Vault vault, Authority authority)
     {
         this.Logger = logger;
         this.UserInterfaceService = userInterfaceService;
@@ -294,7 +294,7 @@ public class Control : ILogInformation
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.NetControl = netsphere;
         this.NetControl.SetupServer(() => new NetServices.LPServerContext(), () => new NetServices.LPCallContext());
-        this.ZenControl = zenControl;
+        this.CrystalControl = crystalControl;
         this.Vault = vault;
         this.Authority = authority;
 
@@ -319,13 +319,13 @@ public class Control : ILogInformation
         await this.NetControl.EssentialNode.LoadAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
 
         // ZenItz
-        if (!await this.ZenControl.Itz.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile)).ConfigureAwait(false))
+        if (!await this.CrystalControl.Itz.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile)).ConfigureAwait(false))
         {
-            await this.ZenControl.Itz.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup)).ConfigureAwait(false);
+            await this.CrystalControl.Itz.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup)).ConfigureAwait(false);
         }
 
-        var result = await this.ZenControl.Zen.StartAsync(new());
-        if (result != ZenStartResult.Success)
+        var result = await this.CrystalControl.Crystal.StartAsync(new());
+        if (result != CrystalStartResult.Success)
         {
             throw new PanicException();
         }
@@ -335,7 +335,7 @@ public class Control : ILogInformation
 
     public async Task AbortAsync()
     {
-        await this.ZenControl.Zen.Abort();
+        await this.CrystalControl.Crystal.Abort();
     }
 
     public async Task SaveAsync(UnitContext context)
@@ -345,9 +345,9 @@ public class Control : ILogInformation
         await this.SaveSettingsAsync();
         await this.SaveKeyVaultAsync();
         await this.NetControl.EssentialNode.SaveAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
-        await this.ZenControl.Itz.SaveAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile), Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup));
+        await this.CrystalControl.Itz.SaveAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile), Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup));
 
-        await this.ZenControl.Zen.StopAsync(new());
+        await this.CrystalControl.Crystal.StopAsync(new());
 
         await context.SendSaveAsync(new(this.LPBase.DataDirectory));
     }
@@ -540,7 +540,7 @@ public class Control : ILogInformation
 
     public NetControl NetControl { get; }
 
-    public ZenControl ZenControl { get; }
+    public CrystalControl CrystalControl { get; }
 
     public Vault Vault { get; }
 

@@ -48,15 +48,15 @@ public partial record class IntPayload3(int Data2) : IPayload;
 [SimpleCommand("itztest")]
 public class ItzTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 {
-    public ItzTestSubcommand(ZenControl zenControl)
+    public ItzTestSubcommand(CrystalControl zenControl)
     {
-        this.ZenControl = zenControl;
+        this.CrystalControl = zenControl;
     }
 
     public async Task RunAsync(BasicTestOptions options, string[] args)
     {
-        var zen = this.ZenControl.Zen;
-        var itz = this.ZenControl.Itz;
+        var crystal = this.CrystalControl.Crystal;
+        var itz = this.CrystalControl.Itz;
 
         itz.RegisterShip(new Itz.DefaultShip<IntPayload>(1_000_000));
         itz.RegisterShip(new Itz.DefaultShip<IntPayload2>(3));
@@ -82,7 +82,7 @@ public class ItzTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         Console.WriteLine($"{sw.ElapsedMilliseconds} ms"); // 2300ms -> 1800ms -> 
     }
 
-    public ZenControl ZenControl { get; set; }
+    public CrystalControl CrystalControl { get; set; }
 }
 
 public record BasicTestOptions

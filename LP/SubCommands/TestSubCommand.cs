@@ -2,13 +2,8 @@
 
 using System;
 using System.Security.Cryptography;
-using Arc.Crypto;
-using Arc.Crypto.EC;
-using LP;
 using LP.T3CS;
 using SimpleCommandLine;
-using Tinyhand;
-using ZenItz;
 
 namespace LP.Subcommands;
 
@@ -66,7 +61,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         bb = token.ValidateAndVerifyWithoutPublicKey();
 
         originator.CreateSignature(value, out var signature);
-        this.userInterfaceService.WriteLine(HashedString.FromEnum(ZenResult.NoDirectory));
+        this.userInterfaceService.WriteLine(HashedString.FromEnum(CrystalResult.NoDirectory));
     }
 
     private ILogger<TestSubcommand> logger;

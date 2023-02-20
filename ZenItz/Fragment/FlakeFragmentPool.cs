@@ -1,13 +1,13 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace ZenItz;
+namespace CrystalData;
 
 public static class FlakeFragmentPool
 {
     static FlakeFragmentPool()
     {
-        pool = new ByteArrayPool(ZenOptions.DefaultMaxDataSize, (int)(ZenOptions.DefaultMemorySizeLimit / ZenOptions.DefaultMaxDataSize));
-        pool.SetMaxPoolBelow(ZenOptions.DefaultMaxFragmentSize, 0);
+        pool = new ByteArrayPool(CrystalOptions.DefaultMaxDataSize, (int)(CrystalOptions.DefaultMemorySizeLimit / CrystalOptions.DefaultMaxDataSize));
+        pool.SetMaxPoolBelow(CrystalOptions.DefaultMaxFragmentSize, 0);
     }
 
     public static ByteArrayPool Pool => pool;

@@ -2,7 +2,7 @@
 
 #pragma warning disable SA1401 // Fields should be private
 
-namespace ZenItz;
+namespace CrystalData;
 
 public partial class Itz<TIdentifier>
 {

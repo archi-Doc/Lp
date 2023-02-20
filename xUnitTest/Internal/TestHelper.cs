@@ -6,48 +6,44 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Arc.Unit;
+using CrystalData;
 using LP;
 using Microsoft.Extensions.DependencyInjection;
 using Tinyhand;
 using Xunit;
-using ZenItz;
 
 namespace xUnitTest;
 
 public static class TestHelper
 {
-    public static async Task<Zen<TIdentifier>> CreateAndStartZen<TIdentifier>()
-        where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
+    public static async Task<LpCrystal> CreateAndStartZen()
     {
-        var options = new ZenOptions() with
+        var options = new CrystalOptions() with
         {
-            ZenPath = $"Zen[{LP.Random.Pseudo.NextUInt32():x4}]",
+            CrystalPath = $"Zen[{LP.Random.Pseudo.NextUInt32():x4}]",
             DefaultZenDirectory = "Snowflake",
         };
 
-        var unit = new ZenControl.Builder().Build();
-        var zenControl = unit.Context.ServiceProvider.GetRequiredService<ZenControl>();
-        var zen = zenControl.CreateZen<TIdentifier>(options);
-        await zen.StartAsync(new(FromScratch: true));
-        return zen;
+        var unit = new CrystalControl.Builder().Build();
+        var crystal = unit.Context.ServiceProvider.GetRequiredService<LpCrystal>();
+        await crystal.StartAsync(new(FromScratch: true));
+        return crystal;
     }
 
-    public static async Task StopZen<TIdentifier>(Zen<TIdentifier> zen, bool removeAll = true)
-        where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
+    public static async Task StopZen(LpCrystal zen, bool removeAll = true)
     {
         await zen.StopAsync(new(RemoveAll: removeAll));
         zen.MemoryUsage.Is(0);
     }
 
-    public static async Task StopAndStartZen<TIdentifier>(Zen<TIdentifier> zen)
-        where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
+    public static async Task StopAndStartZen(LpCrystal zen)
     {
         await zen.StopAsync(new());
         zen.MemoryUsage.Is(0);
         await zen.StartAsync(new());
     }
 
-    public static bool DataEquals(this ZenMemoryResult dataResult, Span<byte> span)
+    public static bool DataEquals(this CrystalMemoryResult dataResult, Span<byte> span)
     {
         return dataResult.Data.Span.SequenceEqual(span);
     }

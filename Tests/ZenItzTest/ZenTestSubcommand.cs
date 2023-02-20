@@ -9,86 +9,88 @@ namespace ZenItzTest;
 [SimpleCommand("zentest")]
 public class ZenTestSubcommand : ISimpleCommandAsync<ZenTestOptions>
 {
-    public ZenTestSubcommand(ZenControl zenControl)
+    public ZenTestSubcommand(CrystalControl crystalControl)
     {
-        this.ZenControl = zenControl;
+        this.CrystalControl = crystalControl;
     }
 
     public async Task RunAsync(ZenTestOptions options, string[] args)
     {
-        var zen = this.ZenControl.Zen;
-        var itz = this.ZenControl.Itz;
+        var crystal = this.CrystalControl.Crystal;
+        var itz = this.CrystalControl.Itz;
 
-        await zen.StartAsync(new());
+        var sw = Stopwatch.StartNew();
+        await crystal.StartAsync(new());
+        Console.WriteLine($"Start: {sw.ElapsedMilliseconds} ms");
 
-        var flake = zen.Root.GetOrCreateChild(Identifier.Zero);
-        if (flake != null)
+        var data = crystal.Data.GetOrCreateChild(Identifier.Zero);
+        if (data != null)
         {
-            flake.SetData(new byte[] { 0, 1, });
-            flake.Save(true);
-            var result = await flake.GetData();
-            flake.Remove();
+            data.BlockDatum.Set(new byte[] { 0, 1, });
+            data.Save(true);
+            var result = await data.BlockDatum.Get();
+            data.Delete();
 
-            using (var block = flake.Lock<BlockData>())
+            using (var block = data.Lock<BlockDatum>())
             {// lock(flake.syncObject)
-                if (block.Data is { } blockData)
+                if (block.Datum is { } blockData)
                 {
-                    // blockData.SetMemoryOwner();
+                    blockData.Set(new byte[] { 0, });
                 }
             }
         }
 
-        flake = zen.Root.GetOrCreateChild(Identifier.One);
-        if (flake != null)
+        data = crystal.Data.GetOrCreateChild(Identifier.One);
+        if (data != null)
         {
-            flake.SetDataObject(new TestFragment());
-            var t = await flake.GetDataObject<TestFragment>();
+            data.BlockDatum.SetObject(new TestFragment());
+            var t = await data.BlockDatum.GetObject<TestFragment>();
 
-            flake.Save(true);
-            t = await flake.GetDataObject<TestFragment>();
+            data.Save(true);
+            t = await data.BlockDatum.GetObject<TestFragment>();
 
-            flake.SetFragment(Identifier.One, new byte[] { 2, 3, });
-            var result = await flake.GetFragment(Identifier.One);
-            flake.Save(true);
-            result = await flake.GetFragment(Identifier.One);
-            flake.RemoveFragment(Identifier.One);
-            flake.Save(true);
-            result = await flake.GetFragment(Identifier.One);
-            flake.Save(true);
+            data.FragmentData.Set(Identifier.One, new byte[] { 2, 3, });
+            var result = await data.FragmentData.Get(Identifier.One);
+            data.Save(true);
+            result = await data.FragmentData.Get(Identifier.One);
+            data.FragmentData.Remove(Identifier.One);
+            data.Save(true);
+            result = await data.FragmentData.Get(Identifier.One);
+            data.Save(true);
 
             var tf = new TestFragment();
             tf.Name = "A";
-            flake.SetFragmentObject(Identifier.One, tf);
-            var tc = await flake.GetFragmentObject<TestFragment>(Identifier.One);
+            data.FragmentData.SetObject(Identifier.One, tf);
+            var tc = await data.FragmentData.GetObject<TestFragment>(Identifier.One);
         }
 
-        var data = new byte[ZenOptions.DefaultMaxDataSize];
+        var byteArray = new byte[CrystalOptions.DefaultMaxDataSize];
         for (var i = 0; i < 10; i++)
         {
-            flake = zen.Root.GetOrCreateChild(new(i));
-            if (flake != null)
+            data = crystal.Data.GetOrCreateChild(new(i));
+            if (data != null)
             {
-                var dt = await flake.GetData();
-                flake.SetData(data);
+                var dt = await data.BlockDatum.Get();
+                data.BlockDatum.Set(byteArray);
             }
         }
 
         await Console.Out.WriteLineAsync("1M flakes");
-        var sw = Stopwatch.StartNew();
+        sw.Restart();
 
         for (var i = 0; i < 1_000_000; i++)
         {
-            flake = zen.Root.GetOrCreateChild(new(i));
+            data = crystal.Data.GetOrCreateChild(new(i));
             // flake.SetData(new byte[] { 2, 3, });
         }
 
         // await Task.Delay(10000);
 
-        await zen.StopAsync(new());
+        await crystal.StopAsync(new());
         Console.WriteLine($"{sw.ElapsedMilliseconds} ms");
     }
 
-    public ZenControl ZenControl { get; set; }
+    public CrystalControl CrystalControl { get; set; }
 }
 
 public record ZenTestOptions

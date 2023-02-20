@@ -2,7 +2,7 @@
 
 using System.Runtime.CompilerServices;
 
-namespace ZenItz;
+namespace CrystalData;
 
 public class Itz : Itz<Identifier>
 {

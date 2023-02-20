@@ -5,8 +5,8 @@ global using System.Threading;
 global using System.Threading.Tasks;
 global using Arc.Threading;
 global using CrossChannel;
+global using CrystalData;
 global using LP;
-global using ZenItz;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleCommandLine;
@@ -32,7 +32,7 @@ public class Program
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
         };
 
-        var builder = new ZenControl.Builder()
+        var builder = new CrystalControl.Builder()
             .Configure(context =>
             {
                 // Command
@@ -43,7 +43,7 @@ public class Program
             });
 
         var unit = builder.Build();
-        var param = new ZenControl.Unit.Param();
+        var param = new CrystalControl.Unit.Param();
 
         var parserOptions = SimpleParserOptions.Standard with
         {

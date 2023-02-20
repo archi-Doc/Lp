@@ -73,6 +73,6 @@ Subcommands = {
     }
 }
 
-ZenResult = {
+CrystalResult = {
     NoDirectory = "Directory not found"
 }
