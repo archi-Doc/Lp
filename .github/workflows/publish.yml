@@ -24,7 +24,7 @@ jobs:
     - name: Package2
       run: dotnet pack -c Release -o bin Netsphere/Netsphere.csproj
     - name: Package3
-      run: dotnet pack -c Release -o bin ZenItz/ZenItz.csproj
+      run: dotnet pack -c Release -o bin CrystalData/CrystalData.csproj
     - name: Package4
       run: dotnet pack -c Release -o bin LP/LP.csproj
       
