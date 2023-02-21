@@ -58,6 +58,8 @@ public sealed partial class AuthorityKey
         return result;
     }
 
+    public PublicKey PublicKey => this.GetOrCreatePrivateKey().ToPublicKey();
+
     [Key(0)]
     private byte[] seed = Array.Empty<byte>();
 

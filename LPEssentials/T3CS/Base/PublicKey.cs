@@ -242,6 +242,11 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         return $"{Base64.Url.FromByteArrayToString(bytes)}";
     }
 
+    public Identifier ToIdentifier()
+    {
+        return new(this.x0, this.x1, this.x2, this.x3);
+    }
+
     private ECDsa? TryGetEcdsa()
     {
         if (PublicKeyToEcdsa.TryGet(this) is { } ecdsa)

@@ -6,10 +6,16 @@ using ValueLink;
 
 namespace LP.Crystal;
 
-[TinyhandObject]
+[TinyhandObject(ExplicitKeyOnly = true)]
 [ValueLinkObject]
 public partial class LpData : BaseData
 {
+    public enum LpDataId
+    {
+        Deleted = -1,
+        Credit = 0,
+    }
+
     public LpData(ICrystalInternal crystal, BaseData? parent, Identifier identifier)
         : base(crystal, parent)
     {
@@ -21,6 +27,13 @@ public partial class LpData : BaseData
     {
     }
 
+    [IgnoreMember]
+    public new LpDataId DataId2 // tempcode
+    {
+        get => (LpDataId)this.DataId;
+        set => this.DataId = (int)value;
+    }
+
     public Identifier Identifier => this.identifier;
 
     [Key(3)]
@@ -30,6 +43,24 @@ public partial class LpData : BaseData
 
     [Key(4)]
     private GoshujinClass? children;
+
+    public int Count(LpDataId id)
+    {
+        var intId = (int)id;
+        var count = 0;
+        using (this.semaphore.Lock())
+        {
+            foreach (var x in this.ChildrenInternal)
+            {
+                if (x.DataId == intId)
+                {
+                    count++;
+                }
+            }
+        }
+
+        return count;
+    }
 
     #region Child
 
@@ -119,6 +150,7 @@ public partial class LpData : BaseData
     }
 
     #endregion
+
     protected override IEnumerator<BaseData> EnumerateInternal()
     {
         if (this.children == null)

@@ -11,4 +11,10 @@ public interface ICrystal
     public bool Started { get; }
 
     Storage Storage { get; }
+
+    Task<CrystalStartResult> StartAsync(CrystalStartParam param);
+
+    Task StopAsync(CrystalStopParam param);
+
+    Task Abort();
 }

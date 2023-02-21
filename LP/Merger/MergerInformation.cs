@@ -25,8 +25,11 @@ public partial record MergerInformation
         return new MergerService.InformationResult() with { Name = this.Name, };
     }
 
-    [DefaultValue("MergerName")]
+    [DefaultValue("Test merger")]
     public string Name { get; set; } = default!;
 
     public Type MergerType { get; set; }
+
+    public override string ToString()
+        => $"{this.Name}: {this.MergerType}";
 }

@@ -35,9 +35,11 @@ public partial class BaseData : IDataInternal
     public int DataId { get; protected set; } // -1: Removed
 
     [Key(1)]
-    private protected DatumObject[] datumObject = Array.Empty<DatumObject>();
+    protected DatumObject[] datumObject = Array.Empty<DatumObject>();
 
+#pragma warning disable SA1214 // Readonly fields should appear before non-readonly fields
     protected readonly SemaphoreLock semaphore = new();
+#pragma warning restore SA1214 // Readonly fields should appear before non-readonly fields
 
     #region Enumerable
 

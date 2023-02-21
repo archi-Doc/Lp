@@ -8,7 +8,7 @@ namespace CrystalData;
 /// <see cref="DatumObject"/> holds a datum id, file, and an instance of the datum.
 /// </summary>
 [TinyhandObject]
-internal partial struct DatumObject : ITinyhandSerialize<DatumObject>
+public partial struct DatumObject : ITinyhandSerialize<DatumObject>
 {
     public DatumObject()
     {

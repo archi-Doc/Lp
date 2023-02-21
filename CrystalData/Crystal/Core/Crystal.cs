@@ -137,6 +137,9 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
 
             this.Started = false;
 
+            // HimoGoshujin
+            this.himoGoshujin.Stop();
+
             await this.Storage.StopAsync();
             this.Storage.Terminate();
         }
@@ -378,6 +381,7 @@ LoadBackup:
         }
 
         tdata.Initialize(this, null, true);
+        this.Root = tdata;
 
         this.himoGoshujin.Clear();
 

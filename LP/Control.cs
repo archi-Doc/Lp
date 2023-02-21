@@ -48,8 +48,8 @@ public class Control : ILogInformation
                 context.AddSingleton<Vault>();
                 context.AddSingleton<Authority>();
                 context.AddSingleton<Seedphrase>();
-                context.AddSingleton<Merger>();
-                context.CreateInstance<Merger>();
+                // context.AddSingleton<Merger>();
+                context.Services.TryAddSingleton<Merger.Provider>(x => x.GetRequiredService<Control>().MergerProvider);
 
                 // Crystal
                 context.AddSingleton<LpCrystal>();
@@ -305,11 +305,13 @@ public class Control : ILogInformation
         this.Vault = vault;
         this.Authority = authority;
 
+        this.MergerProvider = new();
         if (this.LPBase.Mode == LPMode.Merger)
-        {
+        {// Merger
             var mergerCrystal = context.ServiceProvider.GetRequiredService<MergerCrystal>();
             this.Crystal = mergerCrystal;
             this.Root = mergerCrystal.Root;
+            this.MergerProvider.Create(context);
         }
         else
         {
@@ -559,6 +561,8 @@ public class Control : ILogInformation
     public BigMachine<Identifier> BigMachine { get; }
 
     public NetControl NetControl { get; }
+
+    public Merger.Provider MergerProvider { get; }
 
     public ICrystal Crystal { get; }
 
