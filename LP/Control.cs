@@ -53,7 +53,9 @@ public class Control : ILogInformation
 
                 // Crystal
                 context.AddSingleton<LpCrystal>();
-                context.Services.Add(ServiceDescriptor.Transient(typeof(LpData), x => x.GetRequiredService<LpCrystal>().Root.Data));
+                context.AddSingleton<MergerCrystal>();
+                context.Services.TryAddSingleton<ICrystal>(x => x.GetRequiredService<Control>().Crystal);
+                context.Services.TryAddSingleton<LpData>(x => x.GetRequiredService<Control>().Root);
 
                 // RPC / Services
                 context.AddTransient<NetServices.BenchmarkServiceImpl>();
@@ -291,7 +293,7 @@ public class Control : ILogInformation
         }
     }
 
-    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, LpCrystal crystal, Itz itz, Vault vault, Authority authority)
+    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, Itz itz, Vault vault, Authority authority)
     {
         this.Logger = logger;
         this.UserInterfaceService = userInterfaceService;
@@ -299,10 +301,22 @@ public class Control : ILogInformation
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.NetControl = netsphere;
         this.NetControl.SetupServer(() => new NetServices.LPServerContext(), () => new NetServices.LPCallContext());
-        this.Crystal = crystal;
         this.Itz = itz;
         this.Vault = vault;
         this.Authority = authority;
+
+        if (this.LPBase.Mode == LPMode.Merger)
+        {
+            var mergerCrystal = context.ServiceProvider.GetRequiredService<MergerCrystal>();
+            this.Crystal = mergerCrystal;
+            this.Root = mergerCrystal.Root;
+        }
+        else
+        {
+            var lpCrystal = context.ServiceProvider.GetRequiredService<LpCrystal>();
+            this.Crystal = lpCrystal;
+            this.Root = lpCrystal.Root.Data;
+        }
 
         this.Core = core;
         this.BigMachine.Core.ChangeParent(this.Core);
@@ -546,7 +560,9 @@ public class Control : ILogInformation
 
     public NetControl NetControl { get; }
 
-    public LpCrystal Crystal { get; }
+    public ICrystal Crystal { get; }
+
+    public LpData Root { get; }
 
     public Itz Itz { get; }
 

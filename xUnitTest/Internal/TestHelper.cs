@@ -24,7 +24,14 @@ public static class TestHelper
             DefaultCrystalDirectory = "Snowflake",
         };
 
-        var unit = new CrystalControl.Builder().Build();
+        var builder = new CrystalControl.Builder();
+        builder.Configure(context =>
+        {
+            context.AddSingleton<LpCrystal>();
+            context.Services.Add(ServiceDescriptor.Transient(typeof(LpData), x => x.GetRequiredService<LpCrystal>().Root.Data));
+        });
+
+        var unit = builder.Build();
         var crystal = unit.Context.ServiceProvider.GetRequiredService<LpCrystal>();
         await crystal.StartAsync(new(FromScratch: true));
         return crystal;

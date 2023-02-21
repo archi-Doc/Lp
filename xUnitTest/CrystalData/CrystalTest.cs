@@ -3,6 +3,7 @@
 using System;
 using CrystalData;
 using LP;
+using LP.Crystal;
 using Tinyhand;
 using Xunit;
 
