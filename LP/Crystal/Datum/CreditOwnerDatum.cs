@@ -1,8 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using CrystalData;
-
-namespace LP.T3CS;
+namespace LP.Crystal;
 
 public interface CreditOwnerDatum : IDatum
 {

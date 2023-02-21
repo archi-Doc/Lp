@@ -2,7 +2,7 @@
 
 using Tinyhand;
 
-namespace LP.Fragments;
+namespace CrystalDataTest;
 
 [TinyhandObject]
 public partial class TestFragment : FragmentBase

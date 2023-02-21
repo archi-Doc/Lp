@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace CrystalData;
+namespace LP.Crystal;
 
 public class LpCrystal : Crystal<LpRootData>
 {

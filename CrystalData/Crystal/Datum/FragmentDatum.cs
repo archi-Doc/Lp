@@ -24,7 +24,7 @@ public interface FragmentDatum<TIdentifier> : IDatum
     bool Remove(TIdentifier fragmentId);
 }
 
-internal class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDatum<TIdentifier>, IBaseDatum
+public class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDatum<TIdentifier>, IBaseDatum
     where TIdentifier : IEquatable<TIdentifier>, IComparable<TIdentifier>, ITinyhandSerialize<TIdentifier>
 {
     public FragmentDatumImpl(IDataInternal flakeInternal)

@@ -7,7 +7,7 @@ namespace CrystalData.Subcommands;
 [SimpleCommand("ls", Description = "List crystal directory information.")]
 public class CrystalTempSubcommandLs : ISimpleCommandAsync
 {
-    public CrystalTempSubcommandLs(IConsoleService consoleService, LpCrystal crystal)
+    public CrystalTempSubcommandLs(IConsoleService consoleService, ICrystal crystal)
     {
         this.consoleService = consoleService;
         this.crystal = crystal;
@@ -24,5 +24,5 @@ public class CrystalTempSubcommandLs : ISimpleCommandAsync
     }
 
     private IConsoleService consoleService;
-    private LpCrystal crystal;
+    private ICrystal crystal;
 }

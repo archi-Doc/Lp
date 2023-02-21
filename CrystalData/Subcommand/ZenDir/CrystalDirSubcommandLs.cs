@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using CrystalData;
 using SimpleCommandLine;
 
 namespace CrystalData.Subcommands;
@@ -8,7 +7,7 @@ namespace CrystalData.Subcommands;
 [SimpleCommand("ls", Description = "List crystal directory information.")]
 public class CrystalDirSubcommandLs : ISimpleCommandAsync
 {
-    public CrystalDirSubcommandLs(IConsoleService consoleService, LpCrystal crystal)
+    public CrystalDirSubcommandLs(IConsoleService consoleService, ICrystal crystal)
     {
         this.consoleService = consoleService;
         this.crystal = crystal;
@@ -25,5 +24,5 @@ public class CrystalDirSubcommandLs : ISimpleCommandAsync
     }
 
     private IConsoleService consoleService;
-    private LpCrystal crystal;
+    private ICrystal crystal;
 }

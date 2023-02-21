@@ -32,7 +32,7 @@ public partial class BaseData : IDataInternal
     public bool IsDeleted => this.DataId == -1;
 
     [Key(0)]
-    public int DataId { get; private set; } // -1: Removed
+    public int DataId { get; protected set; } // -1: Removed
 
     [Key(1)]
     private protected DatumObject[] datumObject = Array.Empty<DatumObject>();

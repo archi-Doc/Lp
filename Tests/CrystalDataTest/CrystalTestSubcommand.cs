@@ -3,16 +3,17 @@
 using System.Diagnostics;
 using SimpleCommandLine;
 using LP.Fragments;
+using LP.Crystal;
 
 namespace CrystalDataTest;
 
 [SimpleCommand("crystaltest")]
 public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
 {
-    public CrystalTestSubcommand(CrystalControl crystalControl, LpCrystal crystal)
+    public CrystalTestSubcommand(CrystalControl crystalControl)
     {
         this.CrystalControl = crystalControl;
-        this.crystal = crystal;
+        this.crystal = this.CrystalControl.CreateCrystal<LpData>(CrystalOptions.Default);
     }
 
     public async Task RunAsync(CrystalTestOptions options, string[] args)
@@ -23,7 +24,7 @@ public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
         await this.crystal.StartAsync(new());
         Console.WriteLine($"Start: {sw.ElapsedMilliseconds} ms");
 
-        var data = this.crystal.Data.GetOrCreateChild(Identifier.Zero);
+        var data = this.crystal.Root.GetOrCreateChild(Identifier.Zero);
         if (data != null)
         {
             data.BlockDatum.Set(new byte[] { 0, 1, });
@@ -40,7 +41,7 @@ public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
             }
         }
 
-        data = this.crystal.Data.GetOrCreateChild(Identifier.One);
+        data = this.crystal.Root.GetOrCreateChild(Identifier.One);
         if (data != null)
         {
             data.BlockDatum.SetObject(new TestFragment());
@@ -67,7 +68,7 @@ public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
         var byteArray = new byte[CrystalOptions.DefaultMaxDataSize];
         for (var i = 0; i < 10; i++)
         {
-            data = this.crystal.Data.GetOrCreateChild(new(i));
+            data = this.crystal.Root.GetOrCreateChild(new(i));
             if (data != null)
             {
                 var dt = await data.BlockDatum.Get();
@@ -80,7 +81,7 @@ public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
 
         for (var i = 0; i < 1_000_000; i++)
         {
-            data = this.crystal.Data.GetOrCreateChild(new(i));
+            data = this.crystal.Root.GetOrCreateChild(new(i));
             // flake.SetData(new byte[] { 2, 3, });
         }
 
@@ -92,7 +93,7 @@ public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
 
     public CrystalControl CrystalControl { get; set; }
 
-    private LpCrystal crystal;
+    private Crystal<LpData> crystal;
 }
 
 public record CrystalTestOptions
