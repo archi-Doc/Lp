@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\CrystalData\CrystalData.csproj" />
+    <ProjectReference Include="..\..\LP\LP.csproj" />
   </ItemGroup>
   
 </Project>

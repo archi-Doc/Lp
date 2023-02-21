@@ -3,6 +3,7 @@
 using BenchmarkDotNet.Attributes;
 using CrystalData;
 using LP;
+using LP.Crystal;
 using Tinyhand;
 using Tinyhand.IO;
 using ValueLink;

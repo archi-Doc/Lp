@@ -2,7 +2,7 @@
 
 using Tinyhand;
 
-namespace LP.Fragments;
+namespace CrystalDataTest;
 
 [TinyhandUnion(0, typeof(TestFragment))]
 public abstract partial class FragmentBase

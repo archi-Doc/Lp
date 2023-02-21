@@ -10,7 +10,7 @@ namespace CrystalData.Subcommands;
 [SimpleCommand("add", Description = "Add Crystal directory.")]
 public class CrystalDirSubcommandAdd : ISimpleCommandAsync<CrystalDirOptionsAdd>
 {
-    public CrystalDirSubcommandAdd(ILogger<CrystalDirSubcommandAdd> logger, IConsoleService consoleService, CrystalControl crystalControl, LpCrystal crystal, CrystalDirSubcommandLs crystalDirSubcommandLs)
+    public CrystalDirSubcommandAdd(ILogger<CrystalDirSubcommandAdd> logger, IConsoleService consoleService, CrystalControl crystalControl, ICrystal crystal, CrystalDirSubcommandLs crystalDirSubcommandLs)
     {
         this.logger = logger;
         this.consoleService = consoleService;
@@ -45,7 +45,7 @@ public class CrystalDirSubcommandAdd : ISimpleCommandAsync<CrystalDirOptionsAdd>
     private ILogger<CrystalDirSubcommandAdd> logger;
     private IConsoleService consoleService;
     private CrystalControl crystalControl;
-    private LpCrystal crystal;
+    private ICrystal crystal;
 }
 
 public record CrystalDirOptionsAdd

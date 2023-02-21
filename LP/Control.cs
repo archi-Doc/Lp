@@ -10,6 +10,7 @@ global using BigMachines;
 global using CrystalData;
 global using LP;
 global using Tinyhand;
+using LP.Crystal;
 using LP.Data;
 using LP.Logging;
 using LP.Services;
@@ -49,6 +50,10 @@ public class Control : ILogInformation
                 context.AddSingleton<Seedphrase>();
                 context.AddSingleton<Merger>();
                 context.CreateInstance<Merger>();
+
+                // Crystal
+                context.AddSingleton<LpCrystal>();
+                context.Services.Add(ServiceDescriptor.Transient(typeof(LpData), x => x.GetRequiredService<LpCrystal>().Root.Data));
 
                 // RPC / Services
                 context.AddTransient<NetServices.BenchmarkServiceImpl>();

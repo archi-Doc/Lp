@@ -21,7 +21,7 @@ public interface BlockDatum : IDatum
             where T : ITinyhandSerialize<T>;
 }
 
-internal class BlockDatumImpl : HimoGoshujinClass.Himo, BlockDatum, IBaseDatum
+public class BlockDatumImpl : HimoGoshujinClass.Himo, BlockDatum, IBaseDatum
 {
     public BlockDatumImpl(IDataInternal flakeInternal)
         : base(flakeInternal)

@@ -4,10 +4,15 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace CrystalData;
 
-public partial class Crystal<TData> : ICrystalInternal
+public partial class Crystal<TData> : ICrystal, ICrystalInternal
     where TData : BaseData
 {
-    internal Crystal(UnitCore core, CrystalOptions options, ILogger logger)
+    internal Crystal(UnitCore core, CrystalOptions options, ILogger<Crystal<TData>> logger)
+        : this(core, options, (ILogger)logger)
+    {
+    }
+
+    protected Crystal(UnitCore core, CrystalOptions options, ILogger logger)
     {
         this.logger = logger;
         this.Core = core;
@@ -19,11 +24,6 @@ public partial class Crystal<TData> : ICrystalInternal
         this.Constructor = new();
         this.Constructor.Register<BlockDatum>(x => new BlockDatumImpl(x));
         this.Constructor.Register<FragmentDatum<Identifier>>(x => new FragmentDatumImpl<Identifier>(x));
-    }
-
-    internal Crystal(UnitCore core, CrystalOptions options, ILogger<Crystal<TData>> logger)
-        : this(core, options, (ILogger)logger)
-    {
     }
 
     public async Task<CrystalStartResult> StartAsync(CrystalStartParam param)

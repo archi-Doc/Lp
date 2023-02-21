@@ -93,13 +93,13 @@ public class CreditBenchmark
 
     public PublicKey PublicKey { get; private set; }
 
-    public Credit Credit1 { get; private set; }
+    public Benchmark.Credit Credit1 { get; private set; }
 
-    public Credit Credit3 { get; private set; }
+    public Benchmark.Credit Credit3 { get; private set; }
 
-    public CreditB CreditB1 { get; private set; }
+    public Benchmark.CreditB CreditB1 { get; private set; }
 
-    public CreditB CreditB3 { get; private set; }
+    public Benchmark.CreditB CreditB3 { get; private set; }
 
     public byte[] Byte1 { get; private set; }
 
@@ -160,26 +160,26 @@ public class CreditBenchmark
     }
 
     [Benchmark]
-    public Credit? Deserialize_Credit1()
+    public Benchmark.Credit? Deserialize_Credit1()
     {
-        return TinyhandSerializer.DeserializeObject<Credit>(this.Byte1);
+        return TinyhandSerializer.DeserializeObject<Benchmark.Credit>(this.Byte1);
     }
 
     [Benchmark]
-    public CreditB? Deserialize_CreditB1()
+    public Benchmark.CreditB? Deserialize_CreditB1()
     {
-        return TinyhandSerializer.DeserializeObject<CreditB>(this.ByteB1);
+        return TinyhandSerializer.DeserializeObject<Benchmark.CreditB>(this.ByteB1);
     }
 
     [Benchmark]
-    public Credit? Deserialize_Credit3()
+    public Benchmark.Credit? Deserialize_Credit3()
     {
-        return TinyhandSerializer.DeserializeObject<Credit>(this.Byte3);
+        return TinyhandSerializer.DeserializeObject<Benchmark.Credit>(this.Byte3);
     }
 
     [Benchmark]
-    public CreditB? Deserialize_CreditB3()
+    public Benchmark.CreditB? Deserialize_CreditB3()
     {
-        return TinyhandSerializer.DeserializeObject<CreditB>(this.ByteB3);
+        return TinyhandSerializer.DeserializeObject<Benchmark.CreditB>(this.ByteB3);
     }
 }

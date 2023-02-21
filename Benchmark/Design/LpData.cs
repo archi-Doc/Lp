@@ -2,7 +2,11 @@
 
 #pragma warning disable SA1124 // Do not use regions
 
-namespace CrystalData;
+using CrystalData;
+using Tinyhand;
+using ValueLink;
+
+namespace LP.Crystal;
 
 [TinyhandObject]
 [ValueLinkObject]

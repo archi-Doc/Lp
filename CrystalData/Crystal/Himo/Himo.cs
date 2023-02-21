@@ -13,7 +13,7 @@ public partial class HimoGoshujinClass
     public const long MemoryMargin = 1024 * 1024 * 100; // 100 MB
 
     [ValueLinkObject]
-    internal partial class Himo
+    public partial class Himo
     {
         [Link(Name = "UnloadQueue", Type = ChainType.QueueList)] // Manages the order of unloading data from memory
         public Himo(IDataInternal flakeInternal)
@@ -24,7 +24,7 @@ public partial class HimoGoshujinClass
 
         public virtual int Id { get; }
 
-        internal void UpdateHimo(int newSize)
+        public void UpdateHimo(int newSize)
         {// using (Flake.semaphore)
             var unloadFlag = false;
 
@@ -54,7 +54,7 @@ public partial class HimoGoshujinClass
             }
         }
 
-        internal void UpdateHimo()
+        public void UpdateHimo()
         {// using (Flake.semaphore)
             lock (this.himoGoshujin.syncObject)
             {
@@ -70,7 +70,7 @@ public partial class HimoGoshujinClass
             }
         }
 
-        internal void RemoveHimo()
+        public void RemoveHimo()
         {// using (Flake.semaphore)
             lock (this.himoGoshujin.syncObject)
             {
@@ -81,7 +81,7 @@ public partial class HimoGoshujinClass
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void AddCurrentSize(int difference)
+        public void AddCurrentSize(int difference)
         {
             if (difference != 0)
             {

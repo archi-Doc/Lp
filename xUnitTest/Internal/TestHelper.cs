@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Arc.Unit;
 using CrystalData;
-using LP;
+using LP.Crystal;
 using Microsoft.Extensions.DependencyInjection;
 using Tinyhand;
 using Xunit;
