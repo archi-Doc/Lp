@@ -31,11 +31,11 @@ public partial class LpData : BaseData
 
     // public void SetDataId(LpDataId dataId) => this.DataId = (int)dataId;
 
-    /*public new LpDataId DataId
+    public new LpDataId DataId
     {
         get => (LpDataId)base.DataId;
         set => base.DataId = (int)value;
-    }*/
+    }
 
     public Identifier Identifier => this.identifier;
 

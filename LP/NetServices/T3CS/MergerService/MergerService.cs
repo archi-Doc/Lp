@@ -44,7 +44,7 @@ public class MergerServiceImpl : MergerService
 
     public async NetTask<MergerResult> CreateCredit(Merger.CreateCreditParams param)
     {
-        return this.merger.CreateCredit(param);
+        return this.merger.CreateCredit(LPCallContext.Current.ServerContext, param);
     }
 
     private Merger merger;

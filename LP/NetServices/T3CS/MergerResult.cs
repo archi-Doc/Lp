@@ -6,5 +6,6 @@ public enum MergerResult
 {
     Success,
     InvalidToken,
+    NoData,
     AlreadyExists,
 }

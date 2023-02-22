@@ -77,9 +77,10 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable, IUnitS
     public partial record CreateCreditParams(
         [property: Key(0)] Token token);
 
-    public MergerResult CreateCredit(CreateCreditParams param)
+    public MergerResult CreateCredit(LPServerContext context, CreateCreditParams param)
     {
-        if (!LPCallContext.Current.ServerContext.Terminal.ValidateAndVerifyToken(param.token))
+        if (param.token.TokenType != Token.Type.CreateCredit ||
+            !context.Terminal.ValidateAndVerifyToken(param.token))
         {
             return MergerResult.InvalidToken;
         }
@@ -97,10 +98,11 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable, IUnitS
         {
             if (op.Datum == null)
             {
-                return MergerResult.Success;
+                return MergerResult.NoData;
             }
 
-            op.Datum.SetObject(new CreditBlock());
+            credit.DataId = LpData.LpDataId.Credit;
+            op.Datum.SetObject(new CreditBlock(param.token.PublicKey));
         }
 
         return MergerResult.Success;

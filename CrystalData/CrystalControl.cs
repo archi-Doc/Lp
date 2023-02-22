@@ -32,6 +32,7 @@ public class CrystalControl
 
                 // Subcommands
                 Subcommands.CrystalDirSubcommand.Configure(context);
+                Subcommands.CrystalDataSubcommand.Configure(context);
                 Subcommands.CrystalTempSubcommand.Configure(context);
             });
         }
