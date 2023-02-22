@@ -27,12 +27,15 @@ public partial class LpData : BaseData
     {
     }
 
-    [IgnoreMember]
-    public new LpDataId DataId2 // tempcode
+    // public LpDataId GetDataId() => (LpDataId)this.DataId;
+
+    // public void SetDataId(LpDataId dataId) => this.DataId = (int)dataId;
+
+    /*public new LpDataId DataId
     {
-        get => (LpDataId)this.DataId;
-        set => this.DataId = (int)value;
-    }
+        get => (LpDataId)base.DataId;
+        set => base.DataId = (int)value;
+    }*/
 
     public Identifier Identifier => this.identifier;
 

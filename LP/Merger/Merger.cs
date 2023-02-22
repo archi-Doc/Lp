@@ -1,14 +1,14 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using CrystalData;
 using LP.Crystal;
+using LP.NetServices;
 using LP.NetServices.T3CS;
 using LP.T3CS;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace LP;
 
-public class Merger : UnitBase, IUnitPreparable, IUnitExecutable, IUnitSerializable
+public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable, IUnitSerializable
 {
     public class Provider
     {
@@ -73,10 +73,19 @@ public class Merger : UnitBase, IUnitPreparable, IUnitExecutable, IUnitSerializa
         await PathHelper.TrySerializeAndWrite(this.Information, Path.Combine(this.lpBase.DataDirectory, MergerInformation.TinyhandName));
     }
 
-    public MergerResult CreateCredit(MergerService.CreateCreditParams param)
+    [TinyhandObject]
+    public partial record CreateCreditParams(
+        [property: Key(0)] Token token);
+
+    public MergerResult CreateCredit(CreateCreditParams param)
     {
+        if (!LPCallContext.Current.ServerContext.Terminal.ValidateAndVerifyToken(param.token))
+        {
+            return MergerResult.InvalidToken;
+        }
+
         var root = this.crystal.Root;
-        var identifier = param.publicKey.ToIdentifier();
+        var identifier = param.token.PublicKey.ToIdentifier();
         var credit = root.TryGetChild(identifier);
         if (credit != null)
         {
@@ -113,5 +122,4 @@ public class Merger : UnitBase, IUnitPreparable, IUnitExecutable, IUnitSerializa
     private ILogger logger;
     private LPBase lpBase;
     private MergerCrystal crystal;
-    // private LpData root;
 }

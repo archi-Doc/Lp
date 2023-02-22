@@ -17,6 +17,7 @@ public sealed partial class Token // : IVerifiable // , IEquatable<Token>
         RequestAuthorization,
         Identification,
         RequestSummary,
+        CreateCredit,
     }
 
     public Token(Token.Type type, ulong salt, long expirationMics, Identifier targetIdentifier, Linkage? targetLinkage)

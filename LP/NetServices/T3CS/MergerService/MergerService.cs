@@ -25,12 +25,7 @@ public partial interface MergerService : INetService
         private string name = default!;
     }
 
-    NetTask<MergerResult> CreateCredit(MergerService.CreateCreditParams param);
-
-    [TinyhandObject]
-    public partial record CreateCreditParams([property: Key(0)] PublicKey publicKey);
-
-    // NetTask<NetResult> CreateCredit();
+    NetTask<MergerResult> CreateCredit(Merger.CreateCreditParams param);
 }
 
 [NetServiceFilter(typeof(MergerOrTestFilter))]
@@ -47,7 +42,7 @@ public class MergerServiceImpl : MergerService
         return this.merger.Information.ToInformationResult();
     }
 
-    public async NetTask<MergerResult> CreateCredit(MergerService.CreateCreditParams param)
+    public async NetTask<MergerResult> CreateCredit(Merger.CreateCreditParams param)
     {
         return this.merger.CreateCredit(param);
     }

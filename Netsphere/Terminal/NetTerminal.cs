@@ -134,6 +134,16 @@ public partial class NetTerminal : IDisposable
         return token.ValidateAndVerifyWithoutSalt(publicKey);
     }
 
+    public bool ValidateAndVerifyToken(Token token)
+    {
+        if (token.Salt != this.Salt)
+        {
+            return false;
+        }
+
+        return token.ValidateAndVerifyWithoutPublicKey();
+    }
+
     internal Terminal Terminal { get; }
 
     internal AsyncPulseEvent ReceiveEvent { get; } = new();

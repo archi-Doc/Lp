@@ -5,5 +5,6 @@ namespace LP.NetServices.T3CS;
 public enum MergerResult
 {
     Success,
+    InvalidToken,
     AlreadyExists,
 }
