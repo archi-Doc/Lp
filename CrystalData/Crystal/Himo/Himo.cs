@@ -155,6 +155,7 @@ public partial class HimoGoshujinClass
         lock (this.syncObject)
         {
             this.goshujin.Clear();
+            this.memoryUsage = 0;
         }
     }
 
