@@ -58,6 +58,7 @@ public class Control : ILogInformation
                 context.Services.TryAddSingleton<LpData>(x => x.GetRequiredService<Control>().Root);
 
                 // RPC / Services
+                context.AddSingleton<NetServices.AuthorizedTerminalFactory>();
                 context.AddTransient<NetServices.BenchmarkServiceImpl>();
                 context.AddTransient<NetServices.RemoteControlServiceImpl>();
                 context.AddTransient<NetServices.T3CS.MergerServiceImpl>();
@@ -155,7 +156,6 @@ public class Control : ILogInformation
                 context.GetOptions<LPOptions>(out var options);
                 netBase.SetParameter(true, options.NodeName, options.NetsphereOptions);
                 netBase.AllowUnsafeConnection = true; // betacode
-                netBase.NetsphereOptions.EnableTestFeatures = true; // betacode
             });
 
             this.SetupOptions<CrystalOptions>((context, previous) =>

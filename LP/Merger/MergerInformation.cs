@@ -20,9 +20,9 @@ public partial record MergerInformation
     {
     }
 
-    public MergerService.InformationResult ToInformationResult()
+    public IMergerService.InformationResult ToInformationResult()
     {
-        return new MergerService.InformationResult() with { Name = this.Name, };
+        return new IMergerService.InformationResult() with { Name = this.Name, };
     }
 
     [DefaultValue("Test merger")]

@@ -54,6 +54,8 @@ public class LPBase : ILogInformation
 
     public LPMode Mode { get; private set; }
 
+    public bool TestFeatures { get; private set; }
+
     public string NodeName { get; private set; } = default!;
 
     public PublicKey RemotePublicKey { get; private set; }
@@ -115,6 +117,7 @@ public class LPBase : ILogInformation
         }
 
         this.Mode = mode;
+        this.TestFeatures = options.TestFeatures;
 
         this.NodeName = this.Options.NodeName;
         if (string.IsNullOrEmpty(this.NodeName))

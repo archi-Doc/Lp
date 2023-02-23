@@ -6,8 +6,9 @@ namespace Netsphere;
 
 public class Server
 {
-    public Server(NetBase netBase, NetControl netControl)
+    public Server(LPBase lpBase, NetBase netBase, NetControl netControl)
     {// InvokeServer()
+        this.LpBase = lpBase;
         this.NetBase = netBase;
         this.NetControl = netControl;
         this.NetService = new NetService(this.NetControl.ServiceProvider);
@@ -31,8 +32,7 @@ public class Server
             {
                 if (received.Result == NetResult.Success)
                 {// Success
-                    if (this.NetBase.NetsphereOptions.EnableTestFeatures &&
-                        received.PacketId == PacketId.Data &&
+                    if (received.PacketId == PacketId.Data &&
                         this.NetControl.Responders.TryGetValue(received.DataId, out var responder) &&
                         responder.Respond(operation!, received))
                     {// Responder
@@ -80,6 +80,8 @@ public class Server
 
     public ThreadCoreBase? Core => this.NetControl.Terminal.Core;
 
+    public LPBase LpBase { get; }
+
     public NetBase NetBase { get; }
 
     public NetControl NetControl { get; }
@@ -97,7 +99,7 @@ public class Server
             return this.ProcessEssential_Punch(operation, received);
         }
 
-        if (this.NetBase.NetsphereOptions.EnableTestFeatures)
+        if (this.LpBase.TestFeatures)
         {
             if (received.PacketId == PacketId.Test)
             {

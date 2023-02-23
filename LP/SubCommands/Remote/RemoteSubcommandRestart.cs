@@ -25,7 +25,7 @@ public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandResta
             return;
         }
 
-        var authorityKey = await this.authority.GetKeyAsync(options.Authority);
+        var authorityKey = await this.authority.GetKey(options.Authority);
         if (authorityKey == null)
         {
             this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Authority.NotFound, options.Authority);
@@ -42,7 +42,7 @@ public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandResta
                 return;
             }
 
-            var token = await terminal.CreateToken(Token.Type.RequestAuthorization);
+            var token = await terminal.CreateToken(Token.Type.Authorize);
             if (token == null)
             {
                 return;

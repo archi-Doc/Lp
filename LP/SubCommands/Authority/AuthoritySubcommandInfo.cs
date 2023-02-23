@@ -18,7 +18,7 @@ public class AuthoritySubcommandInfo : ISimpleCommandAsync<AuthoritySubcommandNa
 
     public async Task RunAsync(AuthoritySubcommandNameOptions option, string[] args)
     {
-        var authorityKey = await this.Control.Authority.GetKeyAsync(option.Name);
+        var authorityKey = await this.Control.Authority.GetKey(option.Name);
         if (authorityKey != null)
         {
             this.logger.TryGet()?.Log($"{option.Name}: {authorityKey.ToString()}");

@@ -12,9 +12,12 @@ public sealed partial class Token // : IVerifiable // , IEquatable<Token>
     public const long MaximumMics = Mics.MicsPerMinute * 2;
     public const long ErrorMics = Mics.MicsPerSecond * 3;
 
+    public static Token Invalid { get; } = new Token(Token.Type.Invalid);
+
     public enum Type
     {
-        RequestAuthorization,
+        Invalid,
+        Authorize,
         Identification,
         RequestSummary,
         CreateCredit,
@@ -27,6 +30,11 @@ public sealed partial class Token // : IVerifiable // , IEquatable<Token>
         this.ExpirationMics = expirationMics;
         this.TargetIdentifier = targetIdentifier;
         this.TargetLinkage = targetLinkage;
+    }
+
+    internal Token(Token.Type type)
+    {
+        this.TokenType = type;
     }
 
     internal Token()

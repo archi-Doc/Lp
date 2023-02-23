@@ -20,15 +20,12 @@ public partial class NetsphereOptions : ILogInformation
     [SimpleOption("alternative", Description = "Enable alternative (debug) terminal")]
     public bool EnableAlternative { get; set; } = false;
 
-    [SimpleOption("test", Description = "Enable test features")]
-    public bool EnableTestFeatures { get; set; } = false;
-
     [SimpleOption("logger", Description = "Enable network logger")]
     public bool EnableLogger { get; set; } = false;
 
     public void LogInformation(ILog logger)
     {
         logger.Log($"Address: {this.Address}, Port: {this.Port}");
-        logger.Log($"Alternative: {this.EnableAlternative}, Test features: {this.EnableTestFeatures}");
+        logger.Log($"Alternative: {this.EnableAlternative}");
     }
 }

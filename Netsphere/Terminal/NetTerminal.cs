@@ -110,14 +110,14 @@ public partial class NetTerminal : IDisposable
 
     public ulong Salt { get; private set; }
 
-    public async ValueTask<Token?> CreateToken(Token.Type tokenType)
+    public async ValueTask<Token> CreateToken(Token.Type tokenType)
     {
         if (!this.IsEncrypted)
         {
             var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
             if (result != NetResult.Success)
             {
-                return null;
+                return Token.Invalid;
             }
         }
 

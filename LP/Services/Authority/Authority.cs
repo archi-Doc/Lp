@@ -23,7 +23,7 @@ public class Authority
     public string[] GetNames()
         => this.vault.GetNames(VaultPrefix).Select(x => x.Substring(VaultPrefix.Length)).ToArray();
 
-    public async Task<AuthorityKey?> GetKeyAsync(string name)
+    public async Task<AuthorityKey?> GetKey(string name)
     {
         AuthorityInterface? authorityInterface;
         lock (this.syncObject)

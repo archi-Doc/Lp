@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Arc.Unit;
+using LP.NetServices;
 using LP.NetServices.T3CS;
 using LP.T3CS;
 using Netsphere;
@@ -11,7 +12,7 @@ namespace LP.Subcommands;
 [SimpleCommand("createcredit")]
 public class MergerNestedcommandCreateCredit : ISimpleCommandAsync<CreateCreditOptions>
 {
-    public MergerNestedcommandCreateCredit(ILogger<MergerNestedcommandCreateCredit> logger, Terminal terminal, MergerNestedcommand nestedcommand, Authority authority)
+    public MergerNestedcommandCreateCredit(ILogger<MergerNestedcommandCreateCredit> logger, Terminal terminal, MergerNestedcommand nestedcommand, Authority authority, AuthorizedTerminalFactory authorizedTerminalFactory)
     {
         this.logger = logger;
         this.terminal = terminal;
@@ -21,7 +22,20 @@ public class MergerNestedcommandCreateCredit : ISimpleCommandAsync<CreateCreditO
 
     public async Task RunAsync(CreateCreditOptions options, string[] args)
     {
-        var authorityKey = await this.authority.GetKeyAsync(options.Authority);
+        using (var authorized = await this.authorizedTerminalFactory.Create<IMergerService>(this.terminal, this.nestedcommand.Node, options.Authority, this.logger))
+        {
+            var token = await authorized.Terminal.CreateToken(Token.Type.CreateCredit);
+            authorized.Key.SignToken(token);
+            var param = new Merger.CreateCreditParams(
+                token);
+            var response2 = await authorized.Service.CreateCredit(param).ResponseAsync;
+            if (response2.IsSuccess && response2.Value is { } result2)
+            {
+                this.logger.TryGet()?.Log(result2.ToString());
+            }
+        }
+
+        /*var authorityKey = await this.authority.GetKey(options.Authority);
         if (authorityKey == null)
         {
             this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Authority.NotFound, options.Authority);
@@ -38,44 +52,42 @@ public class MergerNestedcommandCreateCredit : ISimpleCommandAsync<CreateCreditO
 
             var service = terminal.GetService<MergerService>();
 
-            var token = await terminal.CreateToken(Token.Type.CreateCredit);
-            if (token == null)
-            {
-                return;
-            }
-
+            var token = await terminal.CreateToken(Token.Type.Authorize);
             authorityKey.SignToken(token);
-            var param = new Merger.CreateCreditParams(
-                token);
-            var response = await service.CreateCredit(param).ResponseAsync;
-            if (response.IsSuccess && response.Value is { } result)
+            var response = await service.Authorize(token).ResponseAsync;
+            if (response.IsSuccess && response.Value is { } result && result == NetResult.Success)
             {
-                this.logger.TryGet()?.Log(result.ToString());
+                this.logger.TryGet()?.Log("Authorized");
             }
-
-            /*var token = await terminal.CreateToken(Token.Type.RequestAuthorization);
-            if (token == null)
+            else
             {
+                this.logger.TryGet()?.Log("Not authorized");
                 return;
             }
 
-            var service = terminal.GetService<IRemoteControlService>();
-            var response = await service.RequestAuthorization(token).ResponseAsync;
-            var result = response.Result;
-            this.logger.TryGet()?.Log($"RequestAuthorization: {result}");
-
-            if (result == NetResult.Success)
-            {
-                result = await service.Restart();
-                this.logger.TryGet()?.Log($"Restart: {result}");
-            }*/
+        /*var token = await terminal.CreateToken(Token.Type.RequestAuthorization);
+        if (token == null)
+        {
+            return;
         }
+
+        var service = terminal.GetService<IRemoteControlService>();
+        var response = await service.RequestAuthorization(token).ResponseAsync;
+        var result = response.Result;
+        this.logger.TryGet()?.Log($"RequestAuthorization: {result}");
+
+        if (result == NetResult.Success)
+        {
+            result = await service.Restart();
+            this.logger.TryGet()?.Log($"Restart: {result}");
+        }*/
     }
 
     private ILogger logger;
     private Terminal terminal;
     private MergerNestedcommand nestedcommand;
     private Authority authority;
+    private AuthorizedTerminalFactory authorizedTerminalFactory;
 }
 
 public record CreateCreditOptions

@@ -85,7 +85,6 @@ public class Program
 
         var options = new LP.Data.NetsphereOptions();
         options.EnableAlternative = true;
-        options.EnableTestFeatures = true;
 
         var unit = builder.Build();
         var param = new NetControl.Unit.Param(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);
