@@ -12,7 +12,7 @@ public class AuthorizedTerminalFactory
         this.authority = authority;
     }
 
-    public async Task<AuthorizedTerminal<TService>> Create<TService>(Terminal terminal, NodeInformation nodeInformation, string authorityName, ILogger? logger)
+    public async Task<AuthorizedTerminal<TService>?> Create<TService>(Terminal terminal, NodeInformation nodeInformation, string authorityName, ILogger? logger)
         where TService : IAuthorizedService
     {
         // Authority key
@@ -20,7 +20,7 @@ public class AuthorizedTerminalFactory
         if (authorityKey == null)
         {
             logger?.TryGet(LogLevel.Error)?.Log(Hashed.Authority.NotFound, authorityName);
-            return AuthorizedTerminal<TService>.Invalid;
+            return null; // AuthorizedTerminal<TService>.Invalid;
         }
 
         // Terminal
@@ -28,7 +28,7 @@ public class AuthorizedTerminalFactory
         if (clientTerminal == null)
         {
             logger?.TryGet(LogLevel.Error)?.Log(Hashed.Error.Connect, nodeInformation.ToString());
-            return AuthorizedTerminal<TService>.Invalid;
+            return null; // AuthorizedTerminal<TService>.Invalid;
         }
 
         // Service & authorize
@@ -38,7 +38,8 @@ public class AuthorizedTerminalFactory
         var response = await service.Authorize(token).ResponseAsync;
         if (!response.IsSuccess || response.Value != NetResult.Success)
         {
-            logger?.TryGet()?.Log("Authorized");
+            logger?.TryGet(LogLevel.Error)?.Log(Hashed.Error.Authorization);
+            return null; // AuthorizedTerminal<TService>.Invalid;
         }
 
         return new(clientTerminal, authorityKey, service, logger);

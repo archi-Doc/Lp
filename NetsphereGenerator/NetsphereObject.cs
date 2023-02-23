@@ -414,24 +414,36 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
 
             foreach (var x in this.GetMembers(VisceralTarget.Method))
             {
-                var serviceMethod = ServiceMethod.Create(this, x);
-                if (serviceMethod != null)
-                {// Add
-                    if (this.ServiceMethods == null)
-                    {
-                        this.ServiceMethods = new();
-                    }
+                AddMethod(this, x);
+            }
 
-                    if (this.ServiceMethods.TryGetValue(serviceMethod.MethodId, out var s))
-                    {// Duplicated
-                        this.Body.AddDiagnostic(NetsphereBody.Error_DuplicateServiceMethod, s.Location, serviceMethod.MethodId);
-                        this.Body.AddDiagnostic(NetsphereBody.Error_DuplicateServiceMethod, serviceMethod.Location, serviceMethod.MethodId);
-                    }
-                    else
-                    {
-                        this.ServiceMethods.Add(serviceMethod.MethodId, serviceMethod);
-                    }
+            foreach (var @interface in this.AllInterfaceObjects)
+            {
+                foreach (var x in @interface.GetMembers(VisceralTarget.Method).Where(y => y.ContainingObject == @interface))
+                {
+                    AddMethod(this, x);
                 }
+            }
+        }
+
+        static void AddMethod(NetsphereObject obj, NetsphereObject method)
+        {
+            var serviceMethod = ServiceMethod.Create(obj, method);
+            if (serviceMethod == null)
+            {
+                return;
+            }
+
+            // Add
+            obj.ServiceMethods ??= new();
+            if (obj.ServiceMethods.TryGetValue(serviceMethod.MethodId, out var s))
+            {// Duplicated
+                obj.Body.AddDiagnostic(NetsphereBody.Error_DuplicateServiceMethod, s.Location, serviceMethod.MethodId);
+                obj.Body.AddDiagnostic(NetsphereBody.Error_DuplicateServiceMethod, serviceMethod.Location, serviceMethod.MethodId);
+            }
+            else
+            {
+                obj.ServiceMethods.Add(serviceMethod.MethodId, serviceMethod);
             }
         }
     }

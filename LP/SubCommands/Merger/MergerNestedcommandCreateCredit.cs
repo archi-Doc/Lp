@@ -18,12 +18,18 @@ public class MergerNestedcommandCreateCredit : ISimpleCommandAsync<CreateCreditO
         this.terminal = terminal;
         this.nestedcommand = nestedcommand;
         this.authority = authority;
+        this.authorizedTerminalFactory = authorizedTerminalFactory;
     }
 
     public async Task RunAsync(CreateCreditOptions options, string[] args)
     {
         using (var authorized = await this.authorizedTerminalFactory.Create<IMergerService>(this.terminal, this.nestedcommand.Node, options.Authority, this.logger))
         {
+            if (authorized == null)
+            {
+                return;
+            }
+
             var token = await authorized.Terminal.CreateToken(Token.Type.CreateCredit);
             authorized.Key.SignToken(token);
             var param = new Merger.CreateCreditParams(
