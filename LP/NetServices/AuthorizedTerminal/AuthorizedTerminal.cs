@@ -51,22 +51,12 @@ public class AuthorizedTerminalFactory
 public class AuthorizedTerminal<TService> : IDisposable
     where TService : IAuthorizedService
 {
-    public static AuthorizedTerminal<TService> Invalid { get; } = new();
-
     internal AuthorizedTerminal(ClientTerminal terminal, AuthorityKey authorityKey, TService service, ILogger? logger)
     {
         this.Terminal = terminal;
         this.Key = authorityKey;
         this.Service = service;
         this.logger = logger;
-    }
-
-    private AuthorizedTerminal()
-    {// Invalid
-        this.Terminal = default!;
-        this.Service = default!;
-        this.Key = default!;
-        this.disposed = true;
     }
 
     public ClientTerminal Terminal { get; private set; }
