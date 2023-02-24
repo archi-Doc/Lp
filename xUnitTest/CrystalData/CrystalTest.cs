@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
+using Arc.Crypto;
 using CrystalData;
 using LP;
 using LP.Crystal;
@@ -102,7 +102,7 @@ public partial class CrystalTest
         // data.Delete().IsTrue();
 
         var bin = new byte[N];
-        LP.Random.Pseudo.NextBytes(bin);
+        RandomVault.Pseudo.NextBytes(bin);
 
         // Set flakes
         for (var i = 0; i < N; i++)

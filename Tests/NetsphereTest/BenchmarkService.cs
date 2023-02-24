@@ -1,6 +1,4 @@
-﻿using Netsphere;
-
-namespace NetsphereTest;
+﻿namespace NetsphereTest;
 
 [NetServiceInterface]
 public partial interface IBenchmarkService : INetService

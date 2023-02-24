@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Security.Cryptography;
+using Arc.Crypto;
 
 namespace Netsphere;
 
@@ -24,7 +24,7 @@ public class NetBase : UnitBase, IUnitPreparable
                 showWarning = true;
             }
 
-            this.NetsphereOptions.Port = LP.Random.Pseudo.NextInt32(NetControl.MinPort, NetControl.MaxPort + 1);
+            this.NetsphereOptions.Port = RandomVault.Pseudo.NextInt32(NetControl.MinPort, NetControl.MaxPort + 1);
             if (showWarning)
             {
                 this.logger.TryGet<NetBase>(LogLevel.Fatal)?.Log($"Port number must be between {NetControl.MinPort} and {NetControl.MaxPort}");

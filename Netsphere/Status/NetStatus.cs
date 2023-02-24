@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using ValueLink;
-
 namespace Netsphere;
 
 public partial class NetStatus

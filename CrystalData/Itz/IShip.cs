@@ -14,7 +14,7 @@ public partial class Itz<TIdentifier>
         bool Remove(in TIdentifier id);
     }
 
-    public interface IShip : ILPSerializable
+    public interface IShip : ISimpleSerializable
     {
         void SetCapacity(int capacity);
 

@@ -46,7 +46,7 @@ public class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDa
 
     CrystalResult FragmentDatum<TIdentifier>.SetObject<T>(TIdentifier fragmentId, T obj)
     {
-        if (!FlakeFragmentService.TrySerialize(obj, out var memoryOwner))
+        if (!SerializeHelper.TrySerialize(obj, out var memoryOwner))
         {
             return CrystalResult.SerializeError;
         }

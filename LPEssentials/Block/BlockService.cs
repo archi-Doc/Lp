@@ -1,11 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 namespace LP.Block;
 
@@ -23,7 +18,7 @@ public static class BlockService
 
     public static bool TrySerialize<T>(T value, out ByteArrayPool.MemoryOwner owner)
     {// checked
-        var arrayOwner = BlockPool.Rent(StandardBlockSize);
+        var arrayOwner = ByteArrayPool.Default.Rent(StandardBlockSize);
         try
         {
             var writer = new Tinyhand.IO.TinyhandWriter(arrayOwner.ByteArray);

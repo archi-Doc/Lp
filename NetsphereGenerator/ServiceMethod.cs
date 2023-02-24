@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
-using System.Collections.Generic;
 using System.Text;
 using Arc.Visceral;
 using Microsoft.CodeAnalysis;
@@ -10,8 +8,8 @@ namespace Netsphere.Generator;
 
 public class ServiceMethod
 {
-    private const string ByteArrayName = "byte[]";
-    private const string MemoryOwnerName = "LP.ByteArrayPool.MemoryOwner";
+    public const string ByteArrayName = "byte[]";
+    public const string MemoryOwnerName = "Arc.Unit.ByteArrayPool.MemoryOwner";
 
     public enum Type
     {

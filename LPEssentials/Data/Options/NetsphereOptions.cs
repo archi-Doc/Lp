@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
 using SimpleCommandLine;
 
 namespace LP.Data;
@@ -25,7 +24,6 @@ public partial class NetsphereOptions : ILogInformation
 
     public void LogInformation(ILog logger)
     {
-        logger.Log($"Address: {this.Address}, Port: {this.Port}");
-        logger.Log($"Alternative: {this.EnableAlternative}");
+        logger.Log($"Address: {this.Address}, Port: {this.Port}, Alternative: {this.EnableAlternative}");
     }
 }

@@ -1,10 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Arc.Crypto;
 using Benchmark.Design;
 using BenchmarkDotNet.Attributes;
@@ -48,7 +43,7 @@ public class IdentifierBenchmark
     public Identifier_ClassULong New_ClassULong()
     {
         var r = this.Instance.GetHashUInt64(this.ByteArray);
-        return new Identifier_ClassULong(r.hash0, r.hash1, r.hash2, r.hash3);
+        return new Identifier_ClassULong(r.Hash0, r.Hash1, r.Hash2, r.Hash3);
     }
 
     [Benchmark]

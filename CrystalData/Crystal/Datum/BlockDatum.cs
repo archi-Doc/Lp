@@ -43,7 +43,7 @@ public class BlockDatumImpl : HimoGoshujinClass.Himo, BlockDatum, IBaseDatum
 
     CrystalResult BlockDatum.SetObject<T>(T obj)
     {
-        if (!FlakeFragmentService.TrySerialize(obj, out var memoryOwner))
+        if (!SerializeHelper.TrySerialize(obj, out var memoryOwner))
         {
             return CrystalResult.SerializeError;
         }

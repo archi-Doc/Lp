@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Arc.Crypto;
+
 namespace Netsphere;
 
 [TinyhandObject]
@@ -16,8 +18,8 @@ internal partial class PacketEncrypt : IPacket
     public PacketEncrypt(NodeInformation nodeInformation)
     {
         this.NodeInformation = nodeInformation;
-        this.Salt = LP.Random.Crypto.NextUInt64();
-        this.SaltA = LP.Random.Crypto.NextUInt64();
+        this.Salt = RandomVault.Crypto.NextUInt64();
+        this.SaltA = RandomVault.Crypto.NextUInt64();
     }
 
     [Key(0)]

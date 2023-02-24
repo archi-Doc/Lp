@@ -4,8 +4,6 @@ global using System;
 global using System.Threading;
 global using System.Threading.Tasks;
 global using Arc.Threading;
-global using CrossChannel;
-global using LP;
 global using Netsphere;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;

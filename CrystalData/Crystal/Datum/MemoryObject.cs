@@ -18,7 +18,7 @@ internal partial class MemoryObject
         this.memoryOwner = this.memoryOwner.Return();
 
         this.@object = null;
-        var owner = FlakeFragmentPool.Rent(span.Length);
+        var owner = ByteArrayPool.Default.Rent(span.Length);
         this.memoryOwner = owner.ToReadOnlyMemoryOwner(0, span.Length);
         this.memoryOwnerIsValid = true;
         span.CopyTo(owner.ByteArray.AsSpan());

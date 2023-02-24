@@ -7,12 +7,10 @@ global using System.IO;
 global using Arc.Collections;
 global using Arc.Crypto;
 global using Arc.Unit;
-global using CrossChannel;
 global using Tinyhand;
 
 using LP.Data;
 using LP.T3CS;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace LP;
 

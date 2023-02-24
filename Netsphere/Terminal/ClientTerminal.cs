@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Arc.Crypto;
+
 namespace Netsphere;
 
 public class ClientTerminal : NetTerminal
@@ -10,7 +12,7 @@ public class ClientTerminal : NetTerminal
     }
 
     internal ClientTerminal(Terminal terminal, NodeInformation nodeInformation)
-        : base(terminal, nodeInformation, LP.Random.Crypto.NextUInt64())
+        : base(terminal, nodeInformation, RandomVault.Crypto.NextUInt64())
     {// NodeInformation: Managed
     }
 

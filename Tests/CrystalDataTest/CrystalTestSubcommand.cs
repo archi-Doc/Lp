@@ -2,7 +2,6 @@
 
 using System.Diagnostics;
 using SimpleCommandLine;
-using LP.Fragments;
 using LP.Crystal;
 
 namespace CrystalDataTest;

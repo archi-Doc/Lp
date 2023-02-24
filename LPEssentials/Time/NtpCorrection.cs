@@ -2,8 +2,6 @@
 
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography.X509Certificates;
-using System.Threading;
 using ValueLink;
 
 namespace LP;
@@ -96,7 +94,7 @@ Retry:
             return false;
         }
 
-        var hostname = this.hostNames[LP.Random.Pseudo.NextInt32(this.hostNames.Length)];
+        var hostname = this.hostNames[RandomVault.Pseudo.NextInt32(this.hostNames.Length)];
         using (var client = new UdpClient())
         {
             try

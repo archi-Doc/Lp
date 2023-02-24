@@ -328,7 +328,7 @@ internal partial class CrystalDirectory : IDisposable
     {// lock (this.syncObject)
         while (true)
         {
-            var id = Random.Pseudo.NextUInt32();
+            var id = RandomVault.Pseudo.NextUInt32();
             if (id != 0 && !this.snowflakeGoshujin.SnowflakeIdChain.ContainsKey(id))
             {
                 var snowflake = new Snowflake(id);

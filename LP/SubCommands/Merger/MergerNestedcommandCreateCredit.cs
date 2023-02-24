@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Arc.Unit;
 using LP.NetServices;
 using LP.NetServices.T3CS;
 using LP.T3CS;
@@ -9,7 +8,7 @@ using SimpleCommandLine;
 
 namespace LP.Subcommands;
 
-[SimpleCommand("createcredit")]
+[SimpleCommand("create-credit")]
 public class MergerNestedcommandCreateCredit : ISimpleCommandAsync<CreateCreditOptions>
 {
     public MergerNestedcommandCreateCredit(ILogger<MergerNestedcommandCreateCredit> logger, Terminal terminal, MergerNestedcommand nestedcommand, Authority authority, AuthorizedTerminalFactory authorizedTerminalFactory)

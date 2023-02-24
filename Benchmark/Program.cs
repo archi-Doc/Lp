@@ -4,7 +4,6 @@
  *  PM> Install-Package BenchmarkDotNet
  */
 
-using System.Linq;
 using System.Reflection;
 using Benchmark.Flake;
 using BenchmarkDotNet.Attributes;

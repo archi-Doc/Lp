@@ -12,7 +12,7 @@ public sealed partial class AuthorityKey
         if (seedPhrase == null)
         {
             this.seed = new byte[Hash.HashBytes];
-            Random.Crypto.NextBytes(this.seed);
+            RandomVault.Crypto.NextBytes(this.seed);
         }
         else
         {

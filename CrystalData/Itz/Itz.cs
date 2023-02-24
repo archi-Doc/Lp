@@ -155,6 +155,6 @@ public partial class Itz<TIdentifier>
         return result;
     }
 
-    private readonly Dictionary<ulong, ILPSerializable> idToShip = new();
+    private readonly Dictionary<ulong, ISimpleSerializable> idToShip = new();
     private readonly ThreadsafeTypeKeyHashTable<IShip> typeToShip = new();
 }

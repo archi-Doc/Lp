@@ -2,7 +2,7 @@
 
 namespace CrystalData;
 
-public static class HashHelper
+internal static class HashHelper
 {
     public static bool CheckFarmHashAndGetData(ReadOnlyMemory<byte> source, out ReadOnlyMemory<byte> data)
     {

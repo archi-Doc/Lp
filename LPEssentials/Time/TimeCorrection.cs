@@ -1,9 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using Arc.Collections;
 using ValueLink;
 
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter

@@ -3,12 +3,9 @@
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using System.Text;
+using Arc.Crypto;
 
 namespace Netsphere;
 
@@ -348,8 +345,8 @@ public class Terminal : UnitBase, IUnitExecutable
             packet.NodeInformation.SetIPEndPoint(endpoint);
 
             var response = new PacketEncryptResponse();
-            response.Salt2 = LP.Random.Crypto.NextUInt64();
-            response.SaltA2 = LP.Random.Crypto.NextUInt64();
+            response.Salt2 = RandomVault.Crypto.NextUInt64();
+            response.SaltA2 = RandomVault.Crypto.NextUInt64();
             var firstGene = header.Gene;
             var secondGene = GenePool.NextGene(header.Gene);
             PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var sendOwner);
