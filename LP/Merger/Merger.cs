@@ -85,6 +85,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable, IUnitS
             return MergerResult.InvalidToken;
         }
 
+        // Get LpData
         var root = this.crystal.Root;
         var identifier = param.token.PublicKey.ToIdentifier();
         var credit = root.TryGetChild(identifier);
@@ -93,6 +94,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable, IUnitS
             return MergerResult.AlreadyExists;
         }
 
+        // Set CreditBlock
         credit = root.GetOrCreateChild(identifier);
         using (var op = credit.Lock<BlockDatum>())
         {

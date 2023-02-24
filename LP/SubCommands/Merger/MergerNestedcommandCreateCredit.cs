@@ -40,53 +40,6 @@ public class MergerNestedcommandCreateCredit : ISimpleCommandAsync<CreateCreditO
                 this.logger.TryGet()?.Log(result2.ToString());
             }
         }
-
-        /*var authorityKey = await this.authority.GetKey(options.Authority);
-        if (authorityKey == null)
-        {
-            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Authority.NotFound, options.Authority);
-            return;
-        }
-
-        using (var terminal = await this.terminal.CreateAndEncrypt(this.nestedcommand.Node))
-        {
-            if (terminal == null)
-            {
-                this.logger.TryGet()?.Log(Hashed.Error.Connect, this.nestedcommand.Node.ToString());
-                return;
-            }
-
-            var service = terminal.GetService<MergerService>();
-
-            var token = await terminal.CreateToken(Token.Type.Authorize);
-            authorityKey.SignToken(token);
-            var response = await service.Authorize(token).ResponseAsync;
-            if (response.IsSuccess && response.Value is { } result && result == NetResult.Success)
-            {
-                this.logger.TryGet()?.Log("Authorized");
-            }
-            else
-            {
-                this.logger.TryGet()?.Log("Not authorized");
-                return;
-            }
-
-        /*var token = await terminal.CreateToken(Token.Type.RequestAuthorization);
-        if (token == null)
-        {
-            return;
-        }
-
-        var service = terminal.GetService<IRemoteControlService>();
-        var response = await service.RequestAuthorization(token).ResponseAsync;
-        var result = response.Result;
-        this.logger.TryGet()?.Log($"RequestAuthorization: {result}");
-
-        if (result == NetResult.Success)
-        {
-            result = await service.Restart();
-            this.logger.TryGet()?.Log($"Restart: {result}");
-        }*/
     }
 
     private ILogger logger;
