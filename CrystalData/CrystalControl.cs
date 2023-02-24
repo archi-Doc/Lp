@@ -29,11 +29,6 @@ public class CrystalControl
                 context.AddSingleton<CrystalControl>();
                 context.AddSingleton<CrystalOptions>();
                 context.AddSingleton<Itz>();
-
-                // Subcommands
-                Subcommands.CrystalDirSubcommand.Configure(context);
-                Subcommands.CrystalDataSubcommand.Configure(context);
-                Subcommands.CrystalTempSubcommand.Configure(context);
             });
         }
     }

@@ -82,6 +82,9 @@ public class Control : ILogInformation
                 context.AddSubcommand(typeof(LP.Subcommands.SeedphraseSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.MergerSubcommand));
 
+                LP.Subcommands.CrystalData.CrystalDirSubcommand.Configure(context);
+                LP.Subcommands.CrystalData.CrystalDataSubcommand.Configure(context);
+
                 LP.Subcommands.TemplateSubcommand.Configure(context);
                 LP.Subcommands.InfoSubcommand.Configure(context);
                 LP.Subcommands.ExportSubcommand.Configure(context);

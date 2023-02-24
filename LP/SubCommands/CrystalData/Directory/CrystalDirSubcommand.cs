@@ -2,7 +2,7 @@
 
 using SimpleCommandLine;
 
-namespace CrystalData.Subcommands;
+namespace LP.Subcommands.CrystalData;
 
 [SimpleCommand("cdir", IsSubcommand = true, Description = "Crystal directory subcommand")]
 public class CrystalDirSubcommand : SimpleCommandGroup<CrystalDirSubcommand>

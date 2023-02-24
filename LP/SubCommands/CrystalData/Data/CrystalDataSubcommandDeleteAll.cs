@@ -2,9 +2,9 @@
 
 using SimpleCommandLine;
 
-namespace CrystalData.Subcommands;
+namespace LP.Subcommands.CrystalData;
 
-[SimpleCommand("deleteall", Description = "Delete all crystal data.")]
+[SimpleCommand("delete-all", Description = "Delete all crystal data.")]
 public class CrystalDataSubcommandDeleteAll : ISimpleCommandAsync
 {
     public CrystalDataSubcommandDeleteAll(IConsoleService consoleService, ICrystal crystal)

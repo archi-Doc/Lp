@@ -1,11 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Arc.Crypto;
 using CrystalData.Results;
-using LP;
 using SimpleCommandLine;
 
-namespace CrystalData.Subcommands;
+namespace LP.Subcommands.CrystalData;
 
 [SimpleCommand("add", Description = "Add Crystal directory.")]
 public class CrystalDirSubcommandAdd : ISimpleCommandAsync<CrystalDirOptionsAdd>

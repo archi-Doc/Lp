@@ -2,12 +2,12 @@
 
 using SimpleCommandLine;
 
-namespace CrystalData.Subcommands;
+namespace LP.Subcommands.CrystalData;
 
 [SimpleCommand("ls", Description = "List crystal directory information.")]
-public class CrystalTempSubcommandLs : ISimpleCommandAsync
+public class CrystalDirSubcommandLs : ISimpleCommandAsync
 {
-    public CrystalTempSubcommandLs(IConsoleService consoleService, ICrystal crystal)
+    public CrystalDirSubcommandLs(IConsoleService consoleService, ICrystal crystal)
     {
         this.consoleService = consoleService;
         this.crystal = crystal;
@@ -17,7 +17,7 @@ public class CrystalTempSubcommandLs : ISimpleCommandAsync
     {
         var info = this.crystal.Storage.GetDirectoryInformation();
 
-        foreach (var x in Enumerable.Range(0, 5))
+        foreach (var x in info)
         {
             this.consoleService.WriteLine(x.ToString());
         }

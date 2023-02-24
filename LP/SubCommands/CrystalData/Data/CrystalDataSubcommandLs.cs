@@ -2,7 +2,7 @@
 
 using SimpleCommandLine;
 
-namespace CrystalData.Subcommands;
+namespace LP.Subcommands.CrystalData;
 
 [SimpleCommand("ls", Description = "List crystal data information.")]
 public class CrystalDataSubcommandLs : ISimpleCommandAsync
