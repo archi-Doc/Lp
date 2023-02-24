@@ -39,8 +39,8 @@ public partial class CrystalTest
         var buffer = new byte[Identifier.Length];
         var buffer2 = new byte[Identifier.Length];
         Identifier.Zero.TryWriteBytes(buffer);
-        f!.BlockDatum.Set(buffer);
-        var result = await f!.BlockDatum.Get();
+        f!.BlockDatum().Set(buffer);
+        var result = await f!.BlockDatum().Get();
         result.DataEquals(buffer).IsTrue();
 
         // Set flakes
@@ -52,11 +52,11 @@ public partial class CrystalTest
             f.IsNotNull();
 
             identifier.TryWriteBytes(buffer);
-            f!.BlockDatum.Set(buffer).Is(CrystalResult.Success);
+            f!.BlockDatum().Set(buffer).Is(CrystalResult.Success);
 
             f = crystal.Data.TryGetChild(identifier);
             f.IsNotNull();
-            result = await f!.BlockDatum.Get();
+            result = await f!.BlockDatum().Get();
             result.DataEquals(buffer).IsTrue();
         }
 
@@ -69,7 +69,7 @@ public partial class CrystalTest
             f.IsNotNull();
 
             identifier.TryWriteBytes(buffer);
-            result = await f!.BlockDatum.Get();
+            result = await f!.BlockDatum().Get();
             result.DataEquals(buffer).IsTrue();
         }
 
@@ -82,13 +82,13 @@ public partial class CrystalTest
             identifier = new Identifier(i);
             identifier.TryWriteBytes(buffer);
 
-            f!.FragmentData.Set(identifier, buffer).Is(CrystalResult.Success);
+            f!.FragmentDatum().Set(identifier, buffer).Is(CrystalResult.Success);
         }
 
         identifier = new Identifier(1999);
         identifier.TryWriteBytes(buffer);
 
-        f!.FragmentData.Set(identifier, buffer).Is(CrystalResult.OverNumberLimit);
+        f!.FragmentDatum().Set(identifier, buffer).Is(CrystalResult.OverNumberLimit);
 
         await TestHelper.StopCrystal(crystal);
     }
@@ -108,7 +108,7 @@ public partial class CrystalTest
         for (var i = 0; i < N; i++)
         {
             flake = data.GetOrCreateChild(new(i));
-            flake.BlockDatum.Set(bin.AsSpan(0, i));
+            flake.BlockDatum().Set(bin.AsSpan(0, i));
         }
 
         // Get flakes and check
@@ -117,7 +117,7 @@ public partial class CrystalTest
             flake = crystal.Data.TryGetChild(new(i));
             flake.IsNotNull();
 
-            var result = await flake!.BlockDatum.Get();
+            var result = await flake!.BlockDatum().Get();
             result.DataEquals(bin.AsSpan(0, i)).IsTrue();
         }
 
@@ -129,7 +129,7 @@ public partial class CrystalTest
             flake = crystal.Data.TryGetChild(new(i));
             flake.IsNotNull();
 
-            var result = await flake!.BlockDatum.Get();
+            var result = await flake!.BlockDatum().Get();
             result.DataEquals(bin.AsSpan(0, i)).IsTrue();
         }
 
@@ -151,22 +151,22 @@ public partial class CrystalTest
 
         // Set 1
         var flake = data.GetOrCreateChild(new(1));
-        flake.BlockDatum.SetObject(t1);
-        var result = await flake.BlockDatum.GetObject<TestObject>();
+        flake.BlockDatum().SetObject(t1);
+        var result = await flake.BlockDatum().GetObject<TestObject>();
         result.Object.IsStructuralEqual(t1);
 
         // Set 2
-        flake.FragmentData.SetObject(new(2), t2);
-        result = await flake.FragmentData.GetObject<TestObject>(new(2));
+        flake.FragmentDatum().SetObject(new(2), t2);
+        result = await flake.FragmentDatum().GetObject<TestObject>(new(2));
         result.Object.IsStructuralEqual(t2);
 
         // Set and remove 3
-        flake.FragmentData.Remove(new(3)).IsFalse();
-        flake.FragmentData.SetObject(new(3), t3);
-        flake.FragmentData.Set(new(3), TinyhandSerializer.SerializeObject(t3));
-        result = await flake.FragmentData.GetObject<TestObject>(new(3));
+        flake.FragmentDatum().Remove(new(3)).IsFalse();
+        flake.FragmentDatum().SetObject(new(3), t3);
+        flake.FragmentDatum().Set(new(3), TinyhandSerializer.SerializeObject(t3));
+        result = await flake.FragmentDatum().GetObject<TestObject>(new(3));
         result.Object.IsStructuralEqual(t3);
-        flake.FragmentData.Remove(new(3)).IsTrue();
+        flake.FragmentDatum().Remove(new(3)).IsTrue();
 
         // Nested
         var nested = flake.TryGetChild(new(1));
@@ -174,38 +174,38 @@ public partial class CrystalTest
         nested = flake.GetOrCreateChild(new(1));
         nested.IsNotNull();
 
-        nested.BlockDatum.SetObject(t2);
-        nested.FragmentData.Set(new(2), TinyhandSerializer.SerializeObject(t2));
+        nested.BlockDatum().SetObject(t2);
+        nested.FragmentDatum().Set(new(2), TinyhandSerializer.SerializeObject(t2));
 
         await TestHelper.StopAndStartCrystal(crystal);
 
-        result = await flake.BlockDatum.GetObject<TestObject>();
+        result = await flake.BlockDatum().GetObject<TestObject>();
         result.Object.IsStructuralEqual(t1);
-        result = await flake.FragmentData.GetObject<TestObject>(new(2));
+        result = await flake.FragmentDatum().GetObject<TestObject>(new(2));
         result.Object.IsStructuralEqual(t2);
 
         nested = flake.TryGetChild(new(1))!;
         nested.IsNotNull();
-        result = await nested.BlockDatum.GetObject<TestObject>();
+        result = await nested.BlockDatum().GetObject<TestObject>();
         result.Object.IsStructuralEqual(t2);
-        result = await flake.FragmentData.GetObject<TestObject>(new(2));
+        result = await flake.FragmentDatum().GetObject<TestObject>(new(2));
         result.Object.IsStructuralEqual(t2);
 
         // Lock IO order test
         for (var i = 0; i < 100; i++)
         {
             flake = crystal.Data.GetOrCreateChild(Identifier.Zero);
-            flake.BlockDatum.Set(new byte[] { 0, 1, });
+            flake.BlockDatum().Set(new byte[] { 0, 1, });
             flake.Save(true);
-            var fd = await flake.BlockDatum.Get();
+            var fd = await flake.BlockDatum().Get();
             fd.Result.Is(CrystalResult.Success);
         }
 
         // Remove test
         flake = crystal.Data.GetOrCreateChild(Identifier.Zero);
         flake.Delete().IsTrue();
-        flake.BlockDatum.Set(new byte[] { 0, 1, }).Is(CrystalResult.Removed);
-        (await flake.BlockDatum.Get()).Result.Is(CrystalResult.Removed);
+        flake.BlockDatum().Set(new byte[] { 0, 1, }).Is(CrystalResult.Removed);
+        (await flake.BlockDatum().Get()).Result.Is(CrystalResult.Removed);
 
         await TestHelper.StopCrystal(crystal);
     }

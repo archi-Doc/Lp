@@ -16,6 +16,6 @@ public class MergerCrystal : Crystal<LpData>
             DefaultCrystalDirectory = "Merger",
         };
 
-        this.Constructor.Register<BlockDatum>(x => new BlockDatumImpl(x));
+        this.Datum.Register<BlockDatum>(x => new BlockDatumImpl(x));
     }
 }

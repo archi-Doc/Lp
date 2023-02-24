@@ -27,7 +27,7 @@ public class InfoSubcommandLP : ISimpleCommand<DumpSubcommandInfoOptions>
         {
             if (logger != null)
             {
-                BlockPool.Dump(logger);
+                LP.Block.BlockPool.Dump(logger);
             }
         }
         else

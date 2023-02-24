@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Arc.Unit;
 using CrystalData;
+using LP;
 using LP.Crystal;
 using Microsoft.Extensions.DependencyInjection;
 using Tinyhand;
@@ -20,7 +21,7 @@ public static class TestHelper
     {
         var options = new CrystalOptions() with
         {
-            CrystalPath = $"rystal[{LP.Random.Pseudo.NextUInt32():x4}]",
+            CrystalPath = $"Crystal[{LP.Random.Pseudo.NextUInt32():x4}]",
             DefaultCrystalDirectory = "Snowflake",
         };
 
@@ -33,6 +34,7 @@ public static class TestHelper
 
         var unit = builder.Build();
         var crystal = unit.Context.ServiceProvider.GetRequiredService<LpCrystal>();
+        crystal.Datum.Register<FragmentDatum<Identifier>>(x => new FragmentDatumImpl<Identifier>(x));
         await crystal.StartAsync(new(FromScratch: true));
         return crystal;
     }

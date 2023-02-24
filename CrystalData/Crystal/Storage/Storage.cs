@@ -304,7 +304,7 @@ public sealed class Storage
     {// lock(syncObject)
         while (true)
         {
-            var id = LP.Random.Pseudo.NextUInt32();
+            var id = Random.Pseudo.NextUInt32();
             if (id != 0 && !goshujin.DirectoryIdChain.ContainsKey(id))
             {
                 return id;

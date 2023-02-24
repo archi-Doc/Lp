@@ -4,7 +4,7 @@ namespace CrystalData;
 
 public partial class BaseData
 {
-    public BlockDatumMethods BlockDatum => new(this);
+    // public BlockDatumMethods BlockDatum => new(this);
 
     public readonly struct BlockDatumMethods
     {

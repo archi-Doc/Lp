@@ -1,17 +1,16 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.CompilerServices;
-using CrystalData;
 
 namespace CrystalData;
 
-public class DataConstructor
+public class DatumConstructor
 {
     public const int DefaultMaxId = 10;
 
     public delegate IBaseDatum ConstrutorDelegate(IDataInternal fromDataToIO);
 
-    public DataConstructor()
+    public DatumConstructor()
     {
         this.MaxId = DefaultMaxId;
         this.constructors = new ConstrutorDelegate[this.MaxId];

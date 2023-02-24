@@ -67,7 +67,7 @@ public partial class BaseData : IDataInternal
 
     ICrystalInternal IDataInternal.CrystalInternal => this.Crystal;
 
-    DataConstructor IDataInternal.Data => this.Crystal.Constructor;
+    DatumConstructor IDataInternal.Data => this.Crystal.Datum;
 
     CrystalOptions IDataInternal.Options => this.Crystal.Options;
 
@@ -278,7 +278,7 @@ public partial class BaseData : IDataInternal
             {
                 if (this.datumObject[i].Data == null)
                 {
-                    if (this.Crystal.Constructor.TryGetConstructor(id) is { } ctr1)
+                    if (this.Crystal.Datum.TryGetConstructor(id) is { } ctr1)
                     {
                         this.datumObject[i].Data = ctr1(this);
                     }
@@ -290,7 +290,7 @@ public partial class BaseData : IDataInternal
 
         var newObject = default(DatumObject);
         newObject.Id = id;
-        if (this.Crystal.Constructor.TryGetConstructor(id) is { } ctr2)
+        if (this.Crystal.Datum.TryGetConstructor(id) is { } ctr2)
         {
             newObject.Data = ctr2(this);
         }

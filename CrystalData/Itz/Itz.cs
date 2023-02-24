@@ -4,12 +4,6 @@ using System.Runtime.CompilerServices;
 
 namespace CrystalData;
 
-public class Itz : Itz<Identifier>
-{
-    public const string DefaultItzFile = "Itz.main";
-    public const string DefaultItzBackup = "Itz.back";
-}
-
 public partial class Itz<TIdentifier>
     where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
 {
@@ -115,7 +109,7 @@ public partial class Itz<TIdentifier>
                 }
             }
 
-            return LP.SerializeHelper.Deserialize(this.idToShip, byteArray);
+            return SerializeHelper.Deserialize(this.idToShip, byteArray);
         }
         catch
         {
@@ -125,7 +119,7 @@ public partial class Itz<TIdentifier>
 
     public async Task<bool> SaveAsync(string path, string? backupPath = null)
     {
-        var byteArray = LP.SerializeHelper.Serialize(this.idToShip);
+        var byteArray = SerializeHelper.Serialize(this.idToShip);
         var hash = new byte[8];
         var result = false;
         BitConverter.TryWriteBytes(hash, Arc.Crypto.FarmHash.Hash64(byteArray));

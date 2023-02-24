@@ -52,6 +52,7 @@ public class Control : ILogInformation
                 context.Services.TryAddSingleton<Merger.Provider>(x => x.GetRequiredService<Control>().MergerProvider);
 
                 // Crystal
+                context.AddSingleton<Itz>();
                 context.AddSingleton<LpCrystal>();
                 context.AddSingleton<MergerCrystal>();
                 context.Services.TryAddSingleton<ICrystal>(x => x.GetRequiredService<Control>().Crystal);

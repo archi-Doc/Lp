@@ -27,9 +27,9 @@ public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
         var data = this.crystal.Root.GetOrCreateChild(Identifier.Zero);
         if (data != null)
         {
-            data.BlockDatum.Set(new byte[] { 0, 1, });
+            data.BlockDatum().Set(new byte[] { 0, 1, });
             data.Save(true);
-            var result = await data.BlockDatum.Get();
+            var result = await data.BlockDatum().Get();
             data.Delete();
 
             using (var block = data.Lock<BlockDatum>())
@@ -44,25 +44,25 @@ public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
         data = this.crystal.Root.GetOrCreateChild(Identifier.One);
         if (data != null)
         {
-            data.BlockDatum.SetObject(new TestFragment());
-            var t = await data.BlockDatum.GetObject<TestFragment>();
+            data.BlockDatum().SetObject(new TestFragment());
+            var t = await data.BlockDatum().GetObject<TestFragment>();
 
             data.Save(true);
-            t = await data.BlockDatum.GetObject<TestFragment>();
+            t = await data.BlockDatum().GetObject<TestFragment>();
 
-            data.FragmentData.Set(Identifier.One, new byte[] { 2, 3, });
-            var result = await data.FragmentData.Get(Identifier.One);
+            data.FragmentDatum().Set(Identifier.One, new byte[] { 2, 3, });
+            var result = await data.FragmentDatum().Get(Identifier.One);
             data.Save(true);
-            result = await data.FragmentData.Get(Identifier.One);
-            data.FragmentData.Remove(Identifier.One);
+            result = await data.FragmentDatum().Get(Identifier.One);
+            data.FragmentDatum().Remove(Identifier.One);
             data.Save(true);
-            result = await data.FragmentData.Get(Identifier.One);
+            result = await data.FragmentDatum().Get(Identifier.One);
             data.Save(true);
 
             var tf = new TestFragment();
             tf.Name = "A";
-            data.FragmentData.SetObject(Identifier.One, tf);
-            var tc = await data.FragmentData.GetObject<TestFragment>(Identifier.One);
+            data.FragmentDatum().SetObject(Identifier.One, tf);
+            var tc = await data.FragmentDatum().GetObject<TestFragment>(Identifier.One);
         }
 
         var byteArray = new byte[CrystalOptions.DefaultMaxDataSize];
@@ -71,8 +71,8 @@ public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
             data = this.crystal.Root.GetOrCreateChild(new(i));
             if (data != null)
             {
-                var dt = await data.BlockDatum.Get();
-                data.BlockDatum.Set(byteArray);
+                var dt = await data.BlockDatum().Get();
+                data.BlockDatum().Set(byteArray);
             }
         }
 
