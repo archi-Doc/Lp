@@ -36,6 +36,30 @@ public partial class CrystalTest
         f = crystal.Data.GetOrCreateChild(Identifier.Zero);
         f.IsNotNull();
 
+        f.IsDeleted.IsFalse();
+
+        using (var op = f.Lock<BlockDatum>())
+        {
+            op.Datum.IsNotNull();
+            op.Result.Is(CrystalResult.Success);
+        }
+
+        using (var op = f.Lock<InvalidDatum>())
+        {
+            op.Datum.IsNull();
+            op.Result.Is(CrystalResult.DatumNotRegistered);
+        }
+
+        f.Delete();
+        f.IsDeleted.IsTrue();
+
+        using (var op = f.Lock<InvalidDatum>())
+        {
+            op.Datum.IsNull();
+            op.Result.Is(CrystalResult.Deleted);
+        }
+
+        f = crystal.Data.GetOrCreateChild(Identifier.Zero);
         var buffer = new byte[Identifier.Length];
         var buffer2 = new byte[Identifier.Length];
         Identifier.Zero.TryWriteBytes(buffer);
@@ -204,8 +228,8 @@ public partial class CrystalTest
         // Remove test
         flake = crystal.Data.GetOrCreateChild(Identifier.Zero);
         flake.Delete().IsTrue();
-        flake.BlockDatum().Set(new byte[] { 0, 1, }).Is(CrystalResult.Removed);
-        (await flake.BlockDatum().Get()).Result.Is(CrystalResult.Removed);
+        flake.BlockDatum().Set(new byte[] { 0, 1, }).Is(CrystalResult.Deleted);
+        (await flake.BlockDatum().Get()).Result.Is(CrystalResult.Deleted);
 
         await TestHelper.StopCrystal(crystal);
     }

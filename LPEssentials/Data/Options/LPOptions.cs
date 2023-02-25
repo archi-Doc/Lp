@@ -15,7 +15,7 @@ public partial record LPOptions : ILogInformation
     [SimpleOption("development", Description = "Development")]
     public bool Development { get; init; } = false;
 
-    [SimpleOption("mode", Description = "LP mode (relay, merger, user)")]
+    [SimpleOption("mode", Description = "LP mode (merger, relay, automaton, replicator, karate)")]
     public string Mode { get; init; } = string.Empty;
 
     [SimpleOption("test", Description = "Enable test features")]
@@ -39,7 +39,7 @@ public partial record LPOptions : ILogInformation
     [SimpleOption("ns", Description = "Netsphere option")]
     public NetsphereOptions NetsphereOptions { get; init; } = default!;
 
-    [SimpleOption("cd", Description = "Crystal option")]
+    [SimpleOption("cd", Description = "CrystalData option")]
     public CrystalDataOptions CrystalOptions { get; init; } = default!;
 
     [SimpleOption("confirmexit", Description = "Confirms application exit")]

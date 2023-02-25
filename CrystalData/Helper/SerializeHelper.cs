@@ -9,11 +9,49 @@ public interface ISimpleSerializable
     bool Deserialize(ReadOnlySpan<byte> span, out int bytesRead);
 }
 
-internal static class SerializeHelper
+public static class SerializeHelper
 {
     public const int StandardFragmentSize = 1024 * 2; // 2KB
 
     public static TinyhandSerializerOptions SerializerOptions { get; } = TinyhandSerializerOptions.Standard;
+
+    public static T? TryReadAndDeserialize<T>(string path)
+        where T : ITinyhandSerialize<T>
+    {
+        byte[] data;
+        try
+        {
+            data = File.ReadAllBytes(path);
+        }
+        catch
+        {
+            return default;
+        }
+
+        try
+        {
+            return TinyhandSerializer.DeserializeObjectFromUtf8<T>(data);
+        }
+        catch
+        {
+            return default;
+        }
+    }
+
+    public static async Task<bool> TrySerializeAndWrite<T>(T obj, string path)
+        where T : ITinyhandSerialize<T>
+    {
+        try
+        {
+            var bytes = TinyhandSerializer.SerializeToUtf8(obj);
+            await File.WriteAllBytesAsync(path, bytes);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
 
     public static bool TrySerialize<T>(T obj, out ByteArrayPool.MemoryOwner owner)
         where T : ITinyhandSerialize<T>

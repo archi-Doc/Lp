@@ -6,9 +6,11 @@ using LP.NetServices.T3CS;
 namespace LP;
 
 [TinyhandObject(ImplicitKeyAsName = true, EnumAsString = true)]
-public partial record MergerInformation
+public partial record MergerInformation : ITinyhandSerializationCallback
 {
     public const string TinyhandName = "Merger.tinyhand";
+    public const string DefaultName = "Test merger";
+    public const int DefaultMaxCredit = 10_000;
 
     public enum Type
     {
@@ -25,11 +27,30 @@ public partial record MergerInformation
         return new IMergerService.InformationResult() with { Name = this.Name, };
     }
 
-    [DefaultValue("Test merger")]
+    [DefaultValue(DefaultName)]
     public string Name { get; set; } = default!;
 
     public Type MergerType { get; set; }
 
+    [DefaultValue(DefaultMaxCredit)]
+    public int MaxCredits { get; set; }
+
     public override string ToString()
-        => $"{this.Name}: {this.MergerType}";
+        => $"{this.Name}: {this.MergerType}({this.MaxCredits})";
+
+    public void OnBeforeSerialize()
+    {
+    }
+
+    public void OnAfterDeserialize()
+    {
+        if (this.MergerType == Type.Single)
+        {
+            this.MaxCredits = 1;
+        }
+        else if (this.MaxCredits < 0)
+        {
+            this.MaxCredits = DefaultMaxCredit;
+        }
+    }
 }

@@ -16,9 +16,11 @@ namespace LP;
 
 public enum LPMode
 {
-    Relay,
     Merger,
-    User,
+    Relay,
+    Automaton,
+    Replicator,
+    Karate,
 }
 
 public class LPBase : ILogInformation

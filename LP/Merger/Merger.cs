@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using CrystalData;
 using LP.Crystal;
 using LP.NetServices;
 using LP.NetServices.T3CS;
@@ -60,7 +61,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable, IUnitS
 
     public async Task LoadAsync(UnitMessage.LoadAsync message)
     {
-        if (PathHelper.TryReadAndDeserialize<MergerInformation>(Path.Combine(this.lpBase.DataDirectory, MergerInformation.TinyhandName)) is { } information)
+        if (SerializeHelper.TryReadAndDeserialize<MergerInformation>(Path.Combine(this.lpBase.DataDirectory, MergerInformation.TinyhandName)) is { } information)
         {
             this.Information = information;
         }
@@ -70,7 +71,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable, IUnitS
 
     public async Task SaveAsync(UnitMessage.SaveAsync message)
     {
-        await PathHelper.TrySerializeAndWrite(this.Information, Path.Combine(this.lpBase.DataDirectory, MergerInformation.TinyhandName));
+        await SerializeHelper.TrySerializeAndWrite(this.Information, Path.Combine(this.lpBase.DataDirectory, MergerInformation.TinyhandName));
     }
 
     [TinyhandObject]
