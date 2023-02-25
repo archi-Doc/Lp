@@ -32,7 +32,7 @@ public partial class BaseData : IDataInternal
     public bool IsDeleted => this.DataId == -1;
 
     [Key(0)]
-    public int DataId { get; set; } // -1: Removed
+    public int DataId { get; set; } // -1: Deleted
 
     [Key(1)]
     protected DatumObject[] datumObject = Array.Empty<DatumObject>();
@@ -61,9 +61,9 @@ public partial class BaseData : IDataInternal
 
     protected IEnumerable<BaseData> ChildrenInternal => new Enumerator(this);
 
-#endregion
+    #endregion
 
-    #region IFlakeInternal
+    #region IDataInternal
 
     ICrystalInternal IDataInternal.CrystalInternal => this.Crystal;
 
