@@ -4,6 +4,12 @@ namespace CrystalData;
 
 internal static class HashHelper
 {
+    /// <summary>
+    /// Checks the hash value (first 8 bytes) and returns the data (9-) if the hash value is correct.
+    /// </summary>
+    /// <param name="source">Source.</param>
+    /// <param name="data">Extracted data.</param>
+    /// <returns><see langword="true"/>; Success.</returns>
     public static bool CheckFarmHashAndGetData(ReadOnlyMemory<byte> source, out ReadOnlyMemory<byte> data)
     {
         data = default;
@@ -22,6 +28,12 @@ internal static class HashHelper
         return true;
     }
 
+    /// <summary>
+    /// Checks the hash value (first 8 bytes) and returns the data (9-) if the hash value is correct.
+    /// </summary>
+    /// <param name="source">Source.</param>
+    /// <param name="data">Extracted data.</param>
+    /// <returns><see langword="true"/>; Success.</returns>
     public static bool CheckFarmHashAndGetData(ReadOnlySpan<byte> source, out ReadOnlySpan<byte> data)
     {
         data = default;
@@ -40,6 +52,13 @@ internal static class HashHelper
         return true;
     }
 
+    /// <summary>
+    /// Calculates a hash value of the data and save the 8-byte hash value and data to a file.
+    /// </summary>
+    /// <param name="data">Data.</param>
+    /// <param name="path">Output path.</param>
+    /// <param name="backupPath">Backup path.</param>
+    /// <returns><see langword="true"/>; Success.</returns>
     public static async Task<bool> GetFarmHashAndSaveAsync(ReadOnlyMemory<byte> data, string path, string? backupPath)
     {
         var hash = new byte[8];
