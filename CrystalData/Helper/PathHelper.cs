@@ -4,6 +4,11 @@ namespace CrystalData;
 
 internal static class PathHelper
 {
+    /// <summary>
+    /// Deletes the specified file (no exception will be thrown).
+    /// </summary>
+    /// <param name="file">File path.</param>
+    /// <returns><see langword="true"/>; File is successfully deleted.</returns>
     public static bool TryDeleteFile(string file)
     {
         try
@@ -17,6 +22,11 @@ internal static class PathHelper
         }
     }
 
+    /// <summary>
+    /// Deletes the specified directory recursively (no exception will be thrown).
+    /// </summary>
+    /// <param name="directory">Directory path</param>
+    /// <returns><see langword="true"/>; Directory is successfully deleted.</returns>
     public static bool TryDeleteDirectory(string directory)
     {
         try
@@ -30,6 +40,13 @@ internal static class PathHelper
         }
     }
 
+    /// <summary>
+    /// Gets the rooted directory path.<br/>
+    /// If the directory is rooted, it is returned as is; if it is not the root path, root and directory path are combined.
+    /// </summary>
+    /// <param name="root">Root path.</param>
+    /// <param name="directory">Directory path.</param>
+    /// <returns>Rooted directory path</returns>
     public static string GetRootedDirectory(string root, string directory)
     {
         if (Path.IsPathRooted(directory) &&
