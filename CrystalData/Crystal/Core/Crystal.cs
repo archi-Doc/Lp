@@ -37,7 +37,7 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
                 return CrystalStartResult.Success;
             }
 
-            this.logger.TryGet()?.Log("Crystal start");
+            // this.logger.TryGet()?.Log("Crystal start");
 
             if (param.FromScratch)
             {
@@ -55,6 +55,12 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
             if (result != CrystalStartResult.Success)
             {
                 return result;
+            }
+
+            var info = this.Storage.GetDirectoryInformation();
+            foreach (var x in info)
+            {
+                this.logger.TryGet()?.Log($"{(ushort)x.DirectoryId:x4}: {x.DirectoryPath}");
             }
 
             // Load Crystal

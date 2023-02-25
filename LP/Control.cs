@@ -152,7 +152,7 @@ public class Control : ILogInformation
             this.SetupOptions<LPBase>((context, lpBase) =>
             {// LPBase
                 context.GetOptions<LPOptions>(out var options);
-                lpBase.Initialize(options, true, "relay");
+                lpBase.Initialize(options, true, "merger");
             });
 
             this.SetupOptions<NetBase>((context, netBase) =>
@@ -162,16 +162,10 @@ public class Control : ILogInformation
                 netBase.AllowUnsafeConnection = true; // betacode
             });
 
-            this.SetupOptions<CrystalOptions>((context, previous) =>
+            this.SetupOptions<CrystalOptions>((context, crystalOptions) =>
             {// CrystalOptions
                 context.GetOptions<LPOptions>(out var lpOptions);
-
-                var options = previous with
-                {
-                    CrystalPath = lpOptions.RootDirectory,
-                };
-
-                context.SetOptions(options);
+                crystalOptions.CrystalPath = lpOptions.RootDirectory;
             });
 
             this.AddBuilder(new NetControl.Builder());

@@ -92,9 +92,8 @@ public class LPBase : ILogInformation
         this.IsConsole = isConsole;
 
         // Root directory
-        if (Path.IsPathRooted(this.Options.RootDirectory) &&
-            File.GetAttributes(this.Options.RootDirectory).HasFlag(FileAttributes.Directory))
-        {
+        if (Path.IsPathRooted(this.Options.RootDirectory))
+        {// File.GetAttributes(this.Options.RootDirectory).HasFlag(FileAttributes.Directory)
             this.RootDirectory = this.Options.RootDirectory;
         }
         else

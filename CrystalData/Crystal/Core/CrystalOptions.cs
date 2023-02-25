@@ -20,9 +20,9 @@ public record CrystalOptions
     }
 
     /// <summary>
-    /// Gets a path of the directory where <see cref="Crystal{TData}"/> files are stored.
+    /// Gets or sets a path of the directory where <see cref="Crystal{TData}"/> files are stored.
     /// </summary>
-    public string CrystalPath { get; init; } = string.Empty;
+    public string CrystalPath { get; set; } = string.Empty;
 
     public int MaxDataSize { get; init; } = DefaultMaxDataSize;
 

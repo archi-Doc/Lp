@@ -49,12 +49,18 @@ public static class PathHelper
     /// <returns>Rooted directory path.</returns>
     public static string GetRootedDirectory(string root, string directory)
     {
-        if (Path.IsPathRooted(directory) &&
-            File.GetAttributes(directory).HasFlag(FileAttributes.Directory))
+        try
         {
-            return directory;
+            if (Path.IsPathRooted(directory))
+            {// File.GetAttributes(directory).HasFlag(FileAttributes.Directory)
+                return directory;
+            }
+            else
+            {
+                return Path.Combine(root, directory);
+            }
         }
-        else
+        catch
         {
             return Path.Combine(root, directory);
         }
