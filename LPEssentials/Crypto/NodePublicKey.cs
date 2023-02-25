@@ -144,7 +144,7 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
         BitConverter.TryWriteBytes(b, this.x3);
         b = b.Slice(sizeof(ulong));
 
-        return $"({Base64.Url.FromByteArrayToString(bytes)})";
+        return Base64.Url.FromByteArrayToString(bytes);
     }
 
     internal ECDiffieHellman? TryGetEcdh()

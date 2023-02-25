@@ -25,6 +25,7 @@ public class MergerNestedcommandInfo : ISimpleCommandAsync
             return;
         }*/
 
+        this.logger.TryGet()?.Log(string.Empty);
         using (var terminal = await this.terminal.CreateAndEncrypt(this.nestedcommand.Node))
         {
             if (terminal == null)
