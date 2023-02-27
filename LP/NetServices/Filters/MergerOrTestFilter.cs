@@ -15,7 +15,7 @@ public class MergerOrTestFilter : IServiceFilter
     public async Task Invoke(CallContext context, Func<CallContext, Task> invoker)
     {
         if (this.LPBase.Mode == LPMode.Merger ||
-            this.NetBase.NetsphereOptions.EnableTestFeatures)
+            this.LPBase.TestFeatures)
         {
             await invoker(context);
         }

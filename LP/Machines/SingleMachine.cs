@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using LP.Services;
-
 namespace LP.Machines;
 
 [MachineObject(0x0f0d509d, Group = typeof(SingleGroup<>))]

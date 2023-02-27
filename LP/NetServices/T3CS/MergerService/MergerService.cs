@@ -1,11 +1,12 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using LP.T3CS;
 using Netsphere;
 
 namespace LP.NetServices.T3CS;
 
 [NetServiceInterface]
-public partial interface MergerService : INetService
+public partial interface IMergerService : IAuthorizedService
 {
     NetTask<InformationResult?> GetInformation();
 
@@ -24,22 +25,35 @@ public partial interface MergerService : INetService
         private string name = default!;
     }
 
-    // NetTask<NetResult> CreateCredit();
+    NetTask<MergerResult> CreateCredit(Merger.CreateCreditParams param);
 }
 
 [NetServiceFilter(typeof(MergerOrTestFilter))]
 [NetServiceObject]
-public class MergerServiceImpl : MergerService
+public class MergerServiceImpl : AuthorizedService, IMergerService
 {// LPCallContext.Current
-    public MergerServiceImpl(Merger merger)
+    public MergerServiceImpl(Merger.Provider mergerProvider)
     {
-        this.merger = merger;
+        this.merger = mergerProvider.GetOrException();
     }
 
-    public async NetTask<MergerService.InformationResult?> GetInformation()
+    public async NetTask<IMergerService.InformationResult?> GetInformation()
     {
         return this.merger.Information.ToInformationResult();
     }
+
+    public async NetTask<MergerResult> CreateCredit(Merger.CreateCreditParams param)
+    {
+        if (!this.AuthorizedKey.IsValid())
+        {
+            return MergerResult.NotAuthorized;
+        }
+
+        return this.merger.CreateCredit(LPCallContext.Current.ServerContext, param);
+    }
+
+    public new NetTask<NetResult> Authorize(Token token)
+        => base.Authorize(token);
 
     private Merger merger;
 }

@@ -1,13 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics;
-using System.Security.Cryptography;
-using Arc.Crypto;
-using LP;
-using LP.Services;
 using LP.T3CS;
 using SimpleCommandLine;
-using Tinyhand;
 
 namespace LP.Subcommands;
 

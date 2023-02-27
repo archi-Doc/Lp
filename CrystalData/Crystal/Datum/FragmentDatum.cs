@@ -36,7 +36,7 @@ public class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDa
 
     CrystalResult FragmentDatum<TIdentifier>.Set(TIdentifier fragmentId, ReadOnlySpan<byte> span)
     {
-        if (span.Length > this.flakeInternal.Options.MaxFragmentSize)
+        if (span.Length > this.dataInternal.Options.MaxFragmentSize)
         {
             return CrystalResult.OverSizeLimit;
         }
@@ -46,11 +46,11 @@ public class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDa
 
     CrystalResult FragmentDatum<TIdentifier>.SetObject<T>(TIdentifier fragmentId, T obj)
     {
-        if (!FlakeFragmentService.TrySerialize(obj, out var memoryOwner))
+        if (!SerializeHelper.TrySerialize(obj, out var memoryOwner))
         {
             return CrystalResult.SerializeError;
         }
-        else if (memoryOwner.Memory.Length > this.flakeInternal.Options.MaxFragmentSize)
+        else if (memoryOwner.Memory.Length > this.dataInternal.Options.MaxFragmentSize)
         {
             return CrystalResult.OverSizeLimit;
         }
@@ -124,7 +124,7 @@ public class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDa
                 }
 
                 var memoryOwner = new ByteArrayPool.ReadOnlyMemoryOwner(writer.FlushAndGetArray());
-                this.flakeInternal.DataToStorage<FragmentDatum<TIdentifier>>(memoryOwner);
+                this.dataInternal.DataToStorage<FragmentDatum<TIdentifier>>(memoryOwner);
             }
 
             this.isSaved = true;
@@ -152,7 +152,7 @@ public class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDa
         }
 
         this.fragments = new();
-        var max = this.flakeInternal.Options.MaxFragmentCount;
+        var max = this.dataInternal.Options.MaxFragmentCount;
         var reader = new Tinyhand.IO.TinyhandReader(memoryOwner.Memory.Span);
         var options = TinyhandSerializerOptions.Standard;
         var memoryDifference = 0;
@@ -188,7 +188,7 @@ public class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDa
             return this.fragments;
         }
 
-        var result = this.flakeInternal.StorageToData<FragmentDatum<TIdentifier>>().Result;
+        var result = this.dataInternal.StorageToData<FragmentDatum<TIdentifier>>().Result;
         if (result.IsSuccess)
         {
             if (this.LoadInternal(result.Data))
@@ -207,7 +207,7 @@ public class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDa
             return this.fragments;
         }
 
-        var result = await this.flakeInternal.StorageToData<FragmentDatum<TIdentifier>>().ConfigureAwait(false);
+        var result = await this.dataInternal.StorageToData<FragmentDatum<TIdentifier>>().ConfigureAwait(false);
         if (result.IsSuccess)
         {
             if (this.LoadInternal(result.Data))
@@ -243,7 +243,7 @@ public class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDa
         FragmentObject<TIdentifier>? fragmentData;
         if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragmentData))
         {// New
-            if (this.fragments.Count >= this.flakeInternal.Options.MaxFragmentCount)
+            if (this.fragments.Count >= this.dataInternal.Options.MaxFragmentCount)
             {
                 return CrystalResult.OverNumberLimit;
             }
@@ -266,7 +266,7 @@ public class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDa
         FragmentObject<TIdentifier>? fragmentObject;
         if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragmentObject))
         {// New
-            if (this.fragments.IdChain.Count >= this.flakeInternal.Options.MaxFragmentCount)
+            if (this.fragments.IdChain.Count >= this.dataInternal.Options.MaxFragmentCount)
             {
                 return CrystalResult.OverNumberLimit;
             }

@@ -1,8 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
 using SimpleCommandLine;
-using Tinyhand.IO;
 
 namespace LP.Data;
 
@@ -17,8 +15,11 @@ public partial record LPOptions : ILogInformation
     [SimpleOption("development", Description = "Development")]
     public bool Development { get; init; } = false;
 
-    [SimpleOption("mode", Description = "LP mode (relay, merger, user)")]
+    [SimpleOption("mode", Description = "LP mode (merger, relay, automaton, replicator, karate)")]
     public string Mode { get; init; } = string.Empty;
+
+    [SimpleOption("test", Description = "Enable test features")]
+    public bool TestFeatures { get; set; } = false;
 
     [SimpleOption("rootdir", Description = "Root directory")]
     public string RootDirectory { get; init; } = string.Empty;
@@ -38,7 +39,7 @@ public partial record LPOptions : ILogInformation
     [SimpleOption("ns", Description = "Netsphere option")]
     public NetsphereOptions NetsphereOptions { get; init; } = default!;
 
-    [SimpleOption("crystal", Description = "Crystal option")]
+    [SimpleOption("cd", Description = "CrystalData option")]
     public CrystalDataOptions CrystalOptions { get; init; } = default!;
 
     [SimpleOption("confirmexit", Description = "Confirms application exit")]

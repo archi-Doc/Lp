@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Arc.Unit;
-using BigMachines;
 using LP;
 using LP.Data;
 using LP.NetServices;
@@ -48,7 +47,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
 
             this.SetupOptions<LPBase>((context, lpBase) =>
             {// LPBase
-                lpBase.Initialize(new LPOptions(), true, "relay");
+                lpBase.Initialize(new LPOptions(), true, "karate");
             });
 
             this.SetupOptions<FileLoggerOptions>((context, options) =>

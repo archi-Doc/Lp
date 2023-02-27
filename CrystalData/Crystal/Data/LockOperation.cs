@@ -6,8 +6,6 @@ namespace CrystalData;
 
 public partial class BaseData
 {
-    internal const CrystalResult NullDataResult = CrystalResult.Removed;
-
     public struct LockOperation<TDatum> : IDisposable
         where TDatum : IDatum
     {
@@ -19,6 +17,8 @@ public partial class BaseData
         public bool IsValid => this.datum != null;
 
         public TDatum? Datum => this.datum;
+
+        public CrystalResult Result => this.result;
 
         public void Dispose()
         {
@@ -51,8 +51,13 @@ public partial class BaseData
         internal void SetData(TDatum data)
             => this.datum = data;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void SetResult(CrystalResult result)
+            => this.result = result;
+
         private readonly BaseData data;
-        private TDatum? datum;
         private bool lockTaken;
+        private TDatum? datum;
+        private CrystalResult result;
     }
 }

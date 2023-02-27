@@ -4,8 +4,6 @@ namespace CrystalData;
 
 public partial class BaseData
 {
-    public FragmentDatumMethods<Identifier> FragmentData => new(this);
-
     public readonly struct FragmentDatumMethods<TIdentifier>
         where TIdentifier : IEquatable<TIdentifier>, IComparable<TIdentifier>, ITinyhandSerialize<TIdentifier>
     {
@@ -20,7 +18,7 @@ public partial class BaseData
             {
                 if (obj.Datum is null)
                 {
-                    return NullDataResult;
+                    return obj.Result;
                 }
 
                 return obj.Datum.Set(fragmentId, span);
@@ -34,7 +32,7 @@ public partial class BaseData
             {
                 if (obj.Datum is null)
                 {
-                    return NullDataResult;
+                    return obj.Result;
                 }
 
                 return obj.Datum.SetObject(fragmentId, @object);
@@ -47,7 +45,7 @@ public partial class BaseData
             {
                 if (obj.Datum is null)
                 {
-                    return Task.FromResult(new CrystalMemoryResult(NullDataResult));
+                    return Task.FromResult(new CrystalMemoryResult(obj.Result));
                 }
 
                 return obj.Datum.Get(fragmentId);
@@ -61,7 +59,7 @@ public partial class BaseData
             {
                 if (obj.Datum is null)
                 {
-                    return Task.FromResult(new CrystalObjectResult<T>(NullDataResult));
+                    return Task.FromResult(new CrystalObjectResult<T>(obj.Result));
                 }
 
                 return obj.Datum.GetObject<T>(fragmentId);

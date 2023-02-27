@@ -1,14 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Buffers;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Net.Sockets;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Security.Cryptography;
-using System.Threading;
-using Arc.Unit;
+using Arc.Crypto;
 using LP.T3CS;
 
 namespace Netsphere;
@@ -52,7 +45,7 @@ public partial class NetTerminal : IDisposable
     internal NetTerminal(Terminal terminal, NodeAddress nodeAddress)
     {// NodeAddress: Unmanaged
         this.Terminal = terminal;
-        this.GenePool = new(LP.Random.Crypto.NextUInt64());
+        this.GenePool = new(RandomVault.Crypto.NextUInt64());
         this.NodeAddress = nodeAddress;
         this.Endpoint = this.NodeAddress.CreateEndpoint();
 
@@ -110,14 +103,14 @@ public partial class NetTerminal : IDisposable
 
     public ulong Salt { get; private set; }
 
-    public async ValueTask<Token?> CreateToken(Token.Type tokenType)
+    public async ValueTask<Token> CreateToken(Token.Type tokenType)
     {
         if (!this.IsEncrypted)
         {
             var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
             if (result != NetResult.Success)
             {
-                return null;
+                return Token.Invalid;
             }
         }
 
@@ -132,6 +125,16 @@ public partial class NetTerminal : IDisposable
         }
 
         return token.ValidateAndVerifyWithoutSalt(publicKey);
+    }
+
+    public bool ValidateAndVerifyToken(Token token)
+    {
+        if (token.Salt != this.Salt)
+        {
+            return false;
+        }
+
+        return token.ValidateAndVerifyWithoutPublicKey();
     }
 
     internal Terminal Terminal { get; }

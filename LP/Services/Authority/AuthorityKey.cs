@@ -12,7 +12,7 @@ public sealed partial class AuthorityKey
         if (seedPhrase == null)
         {
             this.seed = new byte[Hash.HashBytes];
-            Random.Crypto.NextBytes(this.seed);
+            RandomVault.Crypto.NextBytes(this.seed);
         }
         else
         {
@@ -57,6 +57,8 @@ public sealed partial class AuthorityKey
         this.CachePrivateKey(credit, privateKey);
         return result;
     }
+
+    public PublicKey PublicKey => this.GetOrCreatePrivateKey().ToPublicKey();
 
     [Key(0)]
     private byte[] seed = Array.Empty<byte>();

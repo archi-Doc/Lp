@@ -30,6 +30,7 @@ Error = {
     Parse = "Could not parse '{0}'"
     InvalidAddress = "{0} is not valid address."
     Connect = "Could not connect to '{0}'"
+    Authorization = "Authorization error"
 }
 
 Vault = {

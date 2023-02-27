@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Net.Sockets;
-
 namespace Netsphere.Machines;
 
 [MachineObject(0x5e1f81ca, Group = typeof(SingleGroup<>))]

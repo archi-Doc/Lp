@@ -4,8 +4,6 @@ global using System;
 global using System.Threading;
 global using System.Threading.Tasks;
 global using Arc.Threading;
-global using CrossChannel;
-global using LP;
 global using Netsphere;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
@@ -85,7 +83,6 @@ public class Program
 
         var options = new LP.Data.NetsphereOptions();
         options.EnableAlternative = true;
-        options.EnableTestFeatures = true;
 
         var unit = builder.Build();
         var param = new NetControl.Unit.Param(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);

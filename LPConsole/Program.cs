@@ -4,16 +4,11 @@
 
 global using System;
 global using System.Threading.Tasks;
-global using Arc.Crypto;
 global using Arc.Threading;
 global using Arc.Unit;
 global using LP;
 using LP.Data;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using SimpleCommandLine;
-
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
 
 namespace LPConsole;
 

@@ -6,14 +6,14 @@ namespace LP.NetServices;
 
 public class TestOnlyFilter : IServiceFilter
 {
-    public TestOnlyFilter(NetBase netBase)
+    public TestOnlyFilter(LPBase lpBase)
     {
-        this.NetBase = netBase;
+        this.LpBase = lpBase;
     }
 
     public async Task Invoke(CallContext context, Func<CallContext, Task> invoker)
     {
-        if (this.NetBase.NetsphereOptions.EnableTestFeatures)
+        if (this.LpBase.TestFeatures)
         {
             await invoker(context);
         }
@@ -23,5 +23,5 @@ public class TestOnlyFilter : IServiceFilter
         }
     }
 
-    public NetBase NetBase { get; }
+    public LPBase LpBase { get; }
 }

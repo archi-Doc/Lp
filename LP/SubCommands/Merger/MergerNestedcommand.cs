@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Netsphere;
-using SimpleCommandLine;
 
 namespace LP.Subcommands;
 
@@ -16,6 +15,7 @@ public class MergerNestedcommand : Nestedcommand<MergerNestedcommand>
         var group = context.GetCommandGroup(t);
         // var group = ConfigureGroup(context);
         group.AddCommand(typeof(MergerNestedcommandInfo));
+        group.AddCommand(typeof(MergerNestedcommandCreateCredit));
     }
 
     public MergerNestedcommand(UnitContext context, UnitCore core, IUserInterfaceService userInterfaceService)

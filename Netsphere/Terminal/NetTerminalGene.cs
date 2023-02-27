@@ -1,11 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
-using System.Net;
-using System.Net.Sockets;
-using System.Runtime.CompilerServices;
-using Arc.Threading;
-
 #pragma warning disable SA1401
 
 namespace Netsphere;
@@ -100,7 +94,7 @@ internal class NetTerminalGene
         if (this.State == NetTerminalGeneState.WaitingToSend ||
             this.State == NetTerminalGeneState.WaitingForAck)
         {
-            /*if (LP.Random.Pseudo.NextDouble() < 0.1)
+            /*if (RandomVault.Pseudo.NextDouble() < 0.1)
             {
                 this.State = NetTerminalGeneState.WaitingForAck;
                 return true;
@@ -134,7 +128,7 @@ internal class NetTerminalGene
 
     public bool ReceiveAck(long currentMics)
     {// lock (this.NetTerminal.SyncObject)
-        /*if (LP.Random.Pseudo.NextDouble() < 0.5)
+        /*if (RandomVault.Pseudo.NextDouble() < 0.5)
         {
             this.NetInterface.NetTerminal.Logger?.Log($"Ack cancel: {this.Gene.To4Hex()}");
             return false;

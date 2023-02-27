@@ -31,7 +31,6 @@ public class NetFixture : IDisposable
 
         var options = new LP.Data.NetsphereOptions();
         options.EnableAlternative = true;
-        options.EnableTestFeatures = true;
         options.EnableLogger = false;
 
         var unit = builder.Build();

@@ -2,7 +2,6 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
-using Arc.Crypto;
 
 namespace LP.T3CS;
 
@@ -240,6 +239,11 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         b = b.Slice(sizeof(ulong));
 
         return $"{Base64.Url.FromByteArrayToString(bytes)}";
+    }
+
+    public Identifier ToIdentifier()
+    {
+        return new(this.x0, this.x1, this.x2, this.x3);
     }
 
     private ECDsa? TryGetEcdsa()

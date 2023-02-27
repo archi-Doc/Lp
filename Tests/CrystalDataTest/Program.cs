@@ -1,16 +1,13 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 global using System;
-global using System.Threading;
 global using System.Threading.Tasks;
 global using Arc.Threading;
-global using CrossChannel;
 global using CrystalData;
 global using LP;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleCommandLine;
-using Tinyhand;
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
 
@@ -37,7 +34,7 @@ public class Program
             {
                 // Command
                 context.AddCommand(typeof(CrystalTestSubcommand));
-                context.AddCommand(typeof(ItzTestSubcommand));
+                context.AddCommand(typeof(MonoTestSubcommand));
 
                 // Services
             });

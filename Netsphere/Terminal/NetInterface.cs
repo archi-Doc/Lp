@@ -1,15 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
-using System.Buffers;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Net.Sockets;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using Tinyhand.Logging;
 
 #pragma warning disable SA1202 // Elements should be ordered by access
 
@@ -570,7 +562,7 @@ WaitForSendCompletionWait:
             return false;
         }
 
-        dataMemory = BlockPool.Rent(totalSize).ToMemoryOwner(0, totalSize);
+        dataMemory = ByteArrayPool.Default.Rent(totalSize).ToMemoryOwner(0, totalSize);
         var memory = dataMemory.Memory;
         packetId = this.RecvGenes[0].ReceivedId;
         for (var i = 0; i < this.RecvGenes.Length; i++)

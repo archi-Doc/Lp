@@ -1,9 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
-using LP.Services;
 
 namespace LP.T3CS;
 
@@ -23,7 +20,7 @@ public class Authority
     public string[] GetNames()
         => this.vault.GetNames(VaultPrefix).Select(x => x.Substring(VaultPrefix.Length)).ToArray();
 
-    public async Task<AuthorityKey?> GetKeyAsync(string name)
+    public async Task<AuthorityKey?> GetKey(string name)
     {
         AuthorityInterface? authorityInterface;
         lock (this.syncObject)

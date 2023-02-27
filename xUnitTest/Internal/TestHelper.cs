@@ -1,15 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Arc.Crypto;
 using Arc.Unit;
 using CrystalData;
+using LP;
 using LP.Crystal;
 using Microsoft.Extensions.DependencyInjection;
-using Tinyhand;
 using Xunit;
 
 namespace xUnitTest;
@@ -20,12 +16,20 @@ public static class TestHelper
     {
         var options = new CrystalOptions() with
         {
-            CrystalPath = $"rystal[{LP.Random.Pseudo.NextUInt32():x4}]",
+            CrystalPath = $"Crystal[{RandomVault.Pseudo.NextUInt32():x4}]",
             DefaultCrystalDirectory = "Snowflake",
         };
 
-        var unit = new CrystalControl.Builder().Build();
+        var builder = new CrystalControl.Builder();
+        builder.Configure(context =>
+        {
+            context.AddSingleton<LpCrystal>();
+            context.Services.Add(ServiceDescriptor.Transient(typeof(LpData), x => x.GetRequiredService<LpCrystal>().Root.Data));
+        });
+
+        var unit = builder.Build();
         var crystal = unit.Context.ServiceProvider.GetRequiredService<LpCrystal>();
+        crystal.Datum.Register<FragmentDatum<Identifier>>(x => new FragmentDatumImpl<Identifier>(x));
         await crystal.StartAsync(new(FromScratch: true));
         return crystal;
     }

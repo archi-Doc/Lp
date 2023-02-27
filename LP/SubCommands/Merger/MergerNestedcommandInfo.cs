@@ -1,8 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Arc.Unit;
 using LP.NetServices.T3CS;
-using LP.T3CS;
 using Netsphere;
 using SimpleCommandLine;
 
@@ -27,6 +25,7 @@ public class MergerNestedcommandInfo : ISimpleCommandAsync
             return;
         }*/
 
+        this.logger.TryGet()?.Log(string.Empty);
         using (var terminal = await this.terminal.CreateAndEncrypt(this.nestedcommand.Node))
         {
             if (terminal == null)
@@ -35,7 +34,7 @@ public class MergerNestedcommandInfo : ISimpleCommandAsync
                 return;
             }
 
-            var service = terminal.GetService<MergerService>();
+            var service = terminal.GetService<IMergerService>();
 
             var response = await service.GetInformation().ResponseAsync;
             if (response.IsSuccess && response.Value is { } informationResult)

@@ -1,11 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading;
 using Arc.Visceral;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
@@ -332,6 +327,7 @@ public class NetsphereBody : VisceralBody<NetsphereObject>
         ssb.AddUsing("System.Collections.Generic");
         ssb.AddUsing("System.Diagnostics.CodeAnalysis");
         ssb.AddUsing("System.Runtime.CompilerServices");
+        ssb.AddUsing("Arc.Unit");
         ssb.AddUsing("Netsphere");
 
         ssb.AppendLine("#nullable enable", false);

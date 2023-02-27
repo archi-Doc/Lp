@@ -1,10 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Text;
-using Arc.Crypto;
-using LP.Block;
 using SimpleCommandLine;
-using Tinyhand;
 
 namespace LP.Subcommands;
 
@@ -27,7 +23,7 @@ public class InfoSubcommandLP : ISimpleCommand<DumpSubcommandInfoOptions>
         {
             if (logger != null)
             {
-                BlockPool.Dump(logger);
+                ByteArrayPool.Default.Dump(logger);
             }
         }
         else

@@ -92,7 +92,7 @@ TrySave:
                         goto DeleteAndExit;
                     }
 
-                    var memoryOwner = FlakeFragmentPool.Rent(work.LoadSize).ToMemoryOwner(0, work.LoadSize);
+                    var memoryOwner = ByteArrayPool.Default.Rent(work.LoadSize).ToMemoryOwner(0, work.LoadSize);
                     read = await RandomAccess.ReadAsync(handle, memoryOwner.Memory, CrystalDirectory.HashSize, worker.CancellationToken);
                     if (read != work.LoadSize)
                     {

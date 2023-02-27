@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using BenchmarkDotNet.Attributes;
-using CrystalData;
 using LP;
 using LP.Crystal;
 using Tinyhand;

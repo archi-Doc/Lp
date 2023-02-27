@@ -7,20 +7,20 @@ global using System.IO;
 global using Arc.Collections;
 global using Arc.Crypto;
 global using Arc.Unit;
-global using CrossChannel;
 global using Tinyhand;
 
 using LP.Data;
 using LP.T3CS;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace LP;
 
 public enum LPMode
 {
-    Relay,
     Merger,
-    User,
+    Relay,
+    Automaton,
+    Replicator,
+    Karate,
 }
 
 public class LPBase : ILogInformation
@@ -53,6 +53,8 @@ public class LPBase : ILogInformation
     public string DataDirectory { get; private set; } = default!;
 
     public LPMode Mode { get; private set; }
+
+    public bool TestFeatures { get; private set; }
 
     public string NodeName { get; private set; } = default!;
 
@@ -90,9 +92,8 @@ public class LPBase : ILogInformation
         this.IsConsole = isConsole;
 
         // Root directory
-        if (Path.IsPathRooted(this.Options.RootDirectory) &&
-            File.GetAttributes(this.Options.RootDirectory).HasFlag(FileAttributes.Directory))
-        {
+        if (Path.IsPathRooted(this.Options.RootDirectory))
+        {// File.GetAttributes(this.Options.RootDirectory).HasFlag(FileAttributes.Directory)
             this.RootDirectory = this.Options.RootDirectory;
         }
         else
@@ -115,6 +116,7 @@ public class LPBase : ILogInformation
         }
 
         this.Mode = mode;
+        this.TestFeatures = options.TestFeatures;
 
         this.NodeName = this.Options.NodeName;
         if (string.IsNullOrEmpty(this.NodeName))
@@ -131,7 +133,7 @@ public class LPBase : ILogInformation
     {
         logger.Log($"Root directory: {this.RootDirectory}");
         logger.Log($"Data directory: {this.DataDirectory}");
-        logger.Log($"Node: {this.NodeName}, Mode: {this.Mode.ToString()}");
+        logger.Log($"Node: {this.NodeName}, Mode: {this.Mode.ToString()}, Test: {this.TestFeatures}");
         this.Options.LogInformation(logger);
     }
 

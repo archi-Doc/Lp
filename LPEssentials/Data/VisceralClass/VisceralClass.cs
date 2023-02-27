@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Reflection;
-
 namespace LP.Data;
 
 public sealed class VisceralClass

@@ -1,10 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Arc.Crypto;
-using LP;
 using LP.T3CS;
 using SimpleCommandLine;
-using Tinyhand;
 
 namespace LP.Subcommands;
 
@@ -20,7 +17,7 @@ public class AuthoritySubcommandTest : ISimpleCommandAsync<AuthoritySubcommandTe
 
     public async Task RunAsync(AuthoritySubcommandTestOptions option, string[] args)
     {
-        if (await this.Control.Authority.GetKeyAsync(option.Name) is { } authorityKey)
+        if (await this.Control.Authority.GetKey(option.Name) is { } authorityKey)
         {
             var signature = authorityKey.SignData(new Credit(), Array.Empty<byte>());
             if (signature != null)

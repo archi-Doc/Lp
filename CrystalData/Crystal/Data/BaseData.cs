@@ -32,12 +32,14 @@ public partial class BaseData : IDataInternal
     public bool IsDeleted => this.DataId == -1;
 
     [Key(0)]
-    public int DataId { get; protected set; } // -1: Removed
+    public int DataId { get; set; } // -1: Deleted
 
     [Key(1)]
-    private protected DatumObject[] datumObject = Array.Empty<DatumObject>();
+    protected DatumObject[] datumObject = Array.Empty<DatumObject>();
 
+#pragma warning disable SA1214 // Readonly fields should appear before non-readonly fields
     protected readonly SemaphoreLock semaphore = new();
+#pragma warning restore SA1214 // Readonly fields should appear before non-readonly fields
 
     #region Enumerable
 
@@ -59,13 +61,13 @@ public partial class BaseData : IDataInternal
 
     protected IEnumerable<BaseData> ChildrenInternal => new Enumerator(this);
 
-#endregion
+    #endregion
 
-    #region IFlakeInternal
+    #region IDataInternal
 
     ICrystalInternal IDataInternal.CrystalInternal => this.Crystal;
 
-    DataConstructor IDataInternal.Data => this.Crystal.Constructor;
+    DatumConstructor IDataInternal.Data => this.Crystal.Datum;
 
     CrystalOptions IDataInternal.Options => this.Crystal.Options;
 
@@ -84,7 +86,7 @@ public partial class BaseData : IDataInternal
 
     async Task<CrystalMemoryOwnerResult> IDataInternal.StorageToData<TData>()
     {// using (this.semaphore.Lock())
-        var dataObject = this.TryGetDataObject<TData>();
+        var dataObject = this.TryGetDatumObject<TData>();
         if (!dataObject.IsValid)
         {
             return new(CrystalResult.NoData);
@@ -101,7 +103,7 @@ public partial class BaseData : IDataInternal
 
     void IDataInternal.DeleteStorage<TData>()
     {// using (this.semaphore.Lock())
-        var dataObject = this.TryGetDataObject<TData>();
+        var dataObject = this.TryGetDatumObject<TData>();
         if (dataObject.IsValid)
         {
             this.Crystal.Storage.Delete(dataObject.File);
@@ -139,21 +141,23 @@ public partial class BaseData : IDataInternal
 
     #region Main
 
-    public LockOperation<TData> Lock<TData>()
-       where TData : IDatum
+    public LockOperation<TDatum> Lock<TDatum>()
+       where TDatum : IDatum
     {
-        var operation = new LockOperation<TData>(this);
+        var operation = new LockOperation<TDatum>(this);
 
         operation.Enter();
         if (this.IsDeleted)
         {// Removed
+            operation.SetResult(CrystalResult.Deleted);
             operation.Exit();
             return operation;
         }
 
-        var dataObject = this.GetOrCreateDataObject<TData>();
-        if (dataObject.Data is not TData data)
+        var dataObject = this.GetOrCreateDatumObject<TDatum>();
+        if (dataObject.Data is not TDatum data)
         {// No data
+            operation.SetResult(CrystalResult.DatumNotRegistered);
             operation.Exit();
             return operation;
         }
@@ -266,17 +270,17 @@ public partial class BaseData : IDataInternal
         }
     }
 
-    private DatumObject GetOrCreateDataObject<TData>()
-        where TData : IDatum
+    private DatumObject GetOrCreateDatumObject<TDatum>()
+        where TDatum : IDatum
     {// using (this.semaphore.Lock())
-        var id = TData.StaticId;
+        var id = TDatum.StaticId;
         for (var i = 0; i < this.datumObject.Length; i++)
         {
             if (this.datumObject[i].Id == id)
             {
                 if (this.datumObject[i].Data == null)
                 {
-                    if (this.Crystal.Constructor.TryGetConstructor(id) is { } ctr1)
+                    if (this.Crystal.Datum.TryGetConstructor(id) is { } ctr1)
                     {
                         this.datumObject[i].Data = ctr1(this);
                     }
@@ -288,7 +292,7 @@ public partial class BaseData : IDataInternal
 
         var newObject = default(DatumObject);
         newObject.Id = id;
-        if (this.Crystal.Constructor.TryGetConstructor(id) is { } ctr2)
+        if (this.Crystal.Datum.TryGetConstructor(id) is { } ctr2)
         {
             newObject.Data = ctr2(this);
         }
@@ -305,10 +309,10 @@ public partial class BaseData : IDataInternal
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private DatumObject TryGetDataObject<TData>()
-        where TData : IDatum
+    private DatumObject TryGetDatumObject<TDatum>()
+        where TDatum : IDatum
     {// using (this.semaphore.Lock())
-        var id = TData.StaticId;
+        var id = TDatum.StaticId;
         for (var i = 0; i < this.datumObject.Length; i++)
         {
             if (this.datumObject[i].Id == id)

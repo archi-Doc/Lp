@@ -4,10 +4,9 @@
 
 global using System;
 global using System.Threading.Tasks;
+global using Arc.Crypto;
 global using Arc.Threading;
 global using Arc.Unit;
-global using LP;
-global using LP.Block;
 global using Tinyhand;
 global using ValueLink;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,16 +22,9 @@ public class CrystalControl
         {
             this.Configure(context =>
             {
-                LPBase.Configure(context);
-
                 // Main services
                 context.AddSingleton<CrystalControl>();
                 context.AddSingleton<CrystalOptions>();
-                context.AddSingleton<Itz>();
-
-                // Subcommands
-                Subcommands.CrystalDirSubcommand.Configure(context);
-                Subcommands.CrystalTempSubcommand.Configure(context);
             });
         }
     }
