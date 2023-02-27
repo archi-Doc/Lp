@@ -56,7 +56,8 @@ public class Control : ILogInformation
                 context.AddSingleton<LpCrystal>();
                 context.AddSingleton<MergerCrystal>();
                 context.Services.TryAddSingleton<ICrystal>(x => x.GetRequiredService<Control>().Crystal);
-                context.Services.TryAddSingleton<LpData>(x => x.GetRequiredService<Control>().Root);
+                // context.Services.TryAddSingleton<LpData>(x => x.GetRequiredService<Control>().LpRoot);
+                // context.Services.TryAddSingleton<MergerData>(x => x.GetRequiredService<Control>().MergerRoot);
 
                 // RPC / Services
                 context.AddSingleton<NetServices.AuthorizedTerminalFactory>();
@@ -308,14 +309,16 @@ public class Control : ILogInformation
         {// Merger
             var mergerCrystal = context.ServiceProvider.GetRequiredService<MergerCrystal>();
             this.Crystal = mergerCrystal;
-            this.Root = mergerCrystal.Root;
+            this.LpRoot = default!;
+            this.MergerRoot = mergerCrystal.Root;
             this.MergerProvider.Create(context);
         }
         else
         {
             var lpCrystal = context.ServiceProvider.GetRequiredService<LpCrystal>();
             this.Crystal = lpCrystal;
-            this.Root = lpCrystal.Root.Data;
+            this.LpRoot = lpCrystal.Root.Data;
+            this.MergerRoot = default!;
         }
 
         this.Core = core;
@@ -564,7 +567,9 @@ public class Control : ILogInformation
 
     public ICrystal Crystal { get; }
 
-    public LpData Root { get; }
+    public LpData LpRoot { get; }
+
+    public MergerData MergerRoot { get; }
 
     public Mono Mono { get; }
 

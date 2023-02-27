@@ -7,30 +7,24 @@ using ValueLink;
 
 namespace LP.Crystal;
 
-/*[TinyhandObject(ExplicitKeyOnly = true)]
+[TinyhandObject(ExplicitKeyOnly = true)]
 [ValueLinkObject]
-public partial class LpData : BaseData
+public partial class MergerData : BaseData
 {
-    public enum LpDataId
-    {
-        Deleted = -1,
-        Credit = 0,
-    }
-
-    public LpData(ICrystalInternal crystal, BaseData? parent, Identifier identifier)
+    public MergerData(ICrystalInternal crystal, BaseData? parent, Identifier identifier)
         : base(crystal, parent)
     {
         this.identifier = identifier;
     }
 
     [Link(Primary = true, Name = "GetQueue", Type = ChainType.QueueList)]
-    public LpData()
+    public MergerData()
     {
     }
 
-    public new LpDataId DataId
+    public new LpData.LpDataId DataId
     {
-        get => (LpDataId)base.DataId;
+        get => (LpData.LpDataId)base.DataId;
         set => base.DataId = (int)value;
     }
 
@@ -47,7 +41,7 @@ public partial class LpData : BaseData
     private GoshujinClass? children;
     private bool childrenSaved = true;
 
-    public int Count(LpDataId id)
+    public int Count(LpData.LpDataId id)
     {
         var intId = (int)id;
         var count = 0;
@@ -70,7 +64,7 @@ public partial class LpData : BaseData
     public LockOperation<TData> LockChild<TData>(Identifier id)
         where TData : IDatum
     {
-        LpData? data;
+        MergerData? data;
         using (this.semaphore.Lock())
         {
             this.children = this.PrepareChildren();
@@ -88,15 +82,15 @@ public partial class LpData : BaseData
         return data.Lock<TData>();
     }
 
-    public LpData GetOrCreateChild(Identifier id)
+    public MergerData GetOrCreateChild(Identifier id)
     {
-        LpData? data;
+        MergerData? data;
         using (this.semaphore.Lock())
         {
             this.children = this.PrepareChildren();
             if (!this.children.IdChain.TryGetValue(id, out data))
             {
-                data = new LpData(this.Crystal, this, id);
+                data = new MergerData(this.Crystal, this, id);
                 this.children.Add(data);
                 this.childrenSaved = false;
             }
@@ -110,9 +104,9 @@ public partial class LpData : BaseData
         return data;
     }
 
-    public LpData? TryGetChild(Identifier id)
+    public MergerData? TryGetChild(Identifier id)
     {
-        LpData? data;
+        MergerData? data;
         using (this.semaphore.Lock())
         {
             this.children = this.PrepareChildren();
@@ -184,6 +178,12 @@ public partial class LpData : BaseData
                 {
                 }
             }
+
+            if (unload)
+            {
+                this.children.Clear();
+                this.children = null;
+            }
         }
     }
 
@@ -228,4 +228,4 @@ public partial class LpData : BaseData
             return new GoshujinClass();
         }
     }
-}*/
+}

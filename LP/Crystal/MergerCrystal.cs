@@ -2,7 +2,7 @@
 
 namespace LP.Crystal;
 
-public class MergerCrystal : Crystal<LpData>
+public class MergerCrystal : Crystal<MergerData>
 {
     public MergerCrystal(UnitCore core, CrystalOptions options, ILogger<MergerCrystal> logger)
         : base(core, options, logger)
