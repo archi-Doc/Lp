@@ -4,6 +4,10 @@ using System.Runtime.CompilerServices;
 
 namespace CrystalData;
 
+/// <summary>
+/// Monolithic data store.
+/// </summary>
+/// <typeparam name="TIdentifier">The type of an identifier.</typeparam>
 public partial class Mono<TIdentifier>
     where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
 {
