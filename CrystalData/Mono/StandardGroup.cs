@@ -4,17 +4,17 @@
 
 namespace CrystalData;
 
-public partial class Itz<TIdentifier>
+public partial class Mono<TIdentifier>
 {
-    public partial class DefaultShip<TPayload> : IShip<TPayload>
-        where TPayload : IPayload, ITinyhandSerialize<TPayload>
+    public partial class StandardGroup<TMonoData> : IMonoGroup<TMonoData>
+        where TMonoData : IMonoData, ITinyhandSerialize<TMonoData>
     {
         [TinyhandObject]
         [ValueLinkObject]
         private sealed partial class Item
         {
             [Link(Primary = true, Name = "Queue", Type = ChainType.QueueList)]
-            public Item(TIdentifier key, TPayload value)
+            public Item(TIdentifier key, TMonoData value)
             {
                 this.Key = key;
                 this.Value = value;
@@ -29,15 +29,15 @@ public partial class Itz<TIdentifier>
             internal TIdentifier Key = default!;
 
             [Key(1)]
-            internal TPayload Value = default!;
+            internal TMonoData Value = default!;
         }
 
-        public DefaultShip(int capacity)
+        public StandardGroup(int capacity)
         {
             this.Capacity = capacity;
         }
 
-        public void Set(in TIdentifier id, in TPayload value)
+        public void Set(in TIdentifier id, in TMonoData value)
         {
             lock (this.goshujin)
             {
@@ -60,7 +60,7 @@ public partial class Itz<TIdentifier>
             }
         }
 
-        public bool TryGet(in TIdentifier id, out TPayload value)
+        public bool TryGet(in TIdentifier id, out TMonoData value)
         {
             lock (this.goshujin)
             {

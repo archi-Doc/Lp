@@ -34,7 +34,7 @@ public class Program
             {
                 // Command
                 context.AddCommand(typeof(CrystalTestSubcommand));
-                context.AddCommand(typeof(ItzTestSubcommand));
+                context.AddCommand(typeof(MonoTestSubcommand));
 
                 // Services
             });

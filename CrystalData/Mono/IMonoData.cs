@@ -2,6 +2,6 @@
 
 namespace CrystalData;
 
-public interface IPayload
+public interface IMonoData
 {
 }

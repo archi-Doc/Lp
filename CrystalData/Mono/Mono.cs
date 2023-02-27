@@ -4,68 +4,68 @@ using System.Runtime.CompilerServices;
 
 namespace CrystalData;
 
-public partial class Itz<TIdentifier>
+public partial class Mono<TIdentifier>
     where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
 {
-    public Itz()
+    public Mono()
     {
     }
 
-    public void RegisterShip<TPayload>(IShip<TPayload> ship)
-        where TPayload : IPayload
+    public void Register<TMonoData>(IMonoGroup<TMonoData> group)
+        where TMonoData : IMonoData
     {
-        if (this.typeToShip.TryAdd(typeof(TPayload), ship))
+        if (this.typeToGroup.TryAdd(typeof(TMonoData), group))
         {
-            var id = Arc.Crypto.FarmHash.Hash64(typeof(TPayload).FullName ?? string.Empty);
-            this.idToShip.Add(id, ship);
+            var id = Arc.Crypto.FarmHash.Hash64(typeof(TMonoData).FullName ?? string.Empty);
+            this.idToGroup.Add(id, group);
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public IShip<TPayload> GetShip<TPayload>()
-        where TPayload : IPayload
+    public IMonoGroup<TMonoData> GetGroup<TMonoData>()
+        where TMonoData : IMonoData
     {
-        if (this.typeToShip.TryGetValue(typeof(TPayload), out var ship))
+        if (this.typeToGroup.TryGetValue(typeof(TMonoData), out var group))
         {
-            return (IShip<TPayload>)ship;
+            return (IMonoGroup<TMonoData>)group;
         }
 
-        throw new InvalidOperationException(typeof(TPayload).FullName + " is not registered");
+        throw new InvalidOperationException(typeof(TMonoData).FullName + " is not registered");
     }
 
-    public void Set<TPayload>(in TIdentifier id, in TPayload value)
-        where TPayload : IPayload
-        => this.GetShip<TPayload>().Set(in id, in value);
+    public void Set<TMonoData>(in TIdentifier id, in TMonoData value)
+        where TMonoData : IMonoData
+        => this.GetGroup<TMonoData>().Set(in id, in value);
 
-    public bool TryGet<TPayload>(in TIdentifier id, out TPayload value)
-        where TPayload : IPayload
-        => this.GetShip<TPayload>().TryGet(id, out value);
+    public bool TryGet<TMonoData>(in TIdentifier id, out TMonoData value)
+        where TMonoData : IMonoData
+        => this.GetGroup<TMonoData>().TryGet(id, out value);
 
-    public bool Remove<TPayload>(in TIdentifier id)
-        where TPayload : IPayload
-        => this.GetShip<TPayload>().Remove(id);
+    public bool Remove<TMonoData>(in TIdentifier id)
+        where TMonoData : IMonoData
+        => this.GetGroup<TMonoData>().Remove(id);
 
     public int TotalCount()
     {
         int count = 0;
-        foreach (var x in this.idToShip.Values)
+        foreach (var x in this.idToGroup.Values)
         {
-            if (x is IShip ship)
+            if (x is IMonoGroup group)
             {
-                count += ship.Count();
+                count += group.Count();
             }
         }
 
         return count;
     }
 
-    public byte[] Serialize<TPayload>()
-        where TPayload : IPayload
+    public byte[] Serialize<TMonoData>()
+        where TMonoData : IMonoData
     {
         var writer = default(Tinyhand.IO.TinyhandWriter);
         try
         {
-            this.GetShip<TPayload>().Serialize(ref writer);
+            this.GetGroup<TMonoData>().Serialize(ref writer);
             return writer.FlushAndGetArray();
         }
         finally
@@ -74,10 +74,10 @@ public partial class Itz<TIdentifier>
         }
     }
 
-    public bool Deserialize<TPayload>(ReadOnlySpan<byte> span)
-        where TPayload : IPayload
+    public bool Deserialize<TMonoData>(ReadOnlySpan<byte> span)
+        where TMonoData : IMonoData
     {
-        return this.GetShip<TPayload>().Deserialize(span, out _);
+        return this.GetGroup<TMonoData>().Deserialize(span, out _);
     }
 
     public async Task<bool> LoadAsync(string path)
@@ -109,7 +109,7 @@ public partial class Itz<TIdentifier>
                 }
             }
 
-            return SerializeHelper.Deserialize(this.idToShip, byteArray);
+            return SerializeHelper.Deserialize(this.idToGroup, byteArray);
         }
         catch
         {
@@ -119,7 +119,7 @@ public partial class Itz<TIdentifier>
 
     public async Task<bool> SaveAsync(string path, string? backupPath = null)
     {
-        var byteArray = SerializeHelper.Serialize(this.idToShip);
+        var byteArray = SerializeHelper.Serialize(this.idToGroup);
         var hash = new byte[8];
         var result = false;
         BitConverter.TryWriteBytes(hash, Arc.Crypto.FarmHash.Hash64(byteArray));
@@ -155,6 +155,6 @@ public partial class Itz<TIdentifier>
         return result;
     }
 
-    private readonly Dictionary<ulong, ISimpleSerializable> idToShip = new();
-    private readonly ThreadsafeTypeKeyHashTable<IShip> typeToShip = new();
+    private readonly Dictionary<ulong, ISimpleSerializable> idToGroup = new();
+    private readonly ThreadsafeTypeKeyHashTable<IMonoGroup> typeToGroup = new();
 }

@@ -17,7 +17,7 @@ public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
 
     public async Task RunAsync(CrystalTestOptions options, string[] args)
     {
-        var itz = new Itz();
+        var mono = new Mono();
 
         var sw = Stopwatch.StartNew();
         await this.crystal.StartAsync(new());

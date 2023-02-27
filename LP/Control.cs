@@ -52,7 +52,7 @@ public class Control : ILogInformation
                 context.Services.TryAddSingleton<Merger.Provider>(x => x.GetRequiredService<Control>().MergerProvider);
 
                 // Crystal
-                context.AddSingleton<Itz>();
+                context.AddSingleton<Mono>();
                 context.AddSingleton<LpCrystal>();
                 context.AddSingleton<MergerCrystal>();
                 context.Services.TryAddSingleton<ICrystal>(x => x.GetRequiredService<Control>().Crystal);
@@ -291,7 +291,7 @@ public class Control : ILogInformation
         }
     }
 
-    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, Itz itz, Vault vault, Authority authority)
+    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, Mono mono, Vault vault, Authority authority)
     {
         this.Logger = logger;
         this.UserInterfaceService = userInterfaceService;
@@ -299,7 +299,7 @@ public class Control : ILogInformation
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.NetControl = netsphere;
         this.NetControl.SetupServer(() => new NetServices.LPServerContext(), () => new NetServices.LPCallContext());
-        this.Itz = itz;
+        this.Mono = mono;
         this.Vault = vault;
         this.Authority = authority;
 
@@ -339,9 +339,9 @@ public class Control : ILogInformation
         await this.NetControl.EssentialNode.LoadAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
 
         // CrystalData
-        if (!await this.Itz.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile)).ConfigureAwait(false))
+        if (!await this.Mono.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Mono.DefaultMonoFile)).ConfigureAwait(false))
         {
-            await this.Itz.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup)).ConfigureAwait(false);
+            await this.Mono.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Mono.DefaultMonoBackup)).ConfigureAwait(false);
         }
 
         var result = await this.Crystal.StartAsync(new());
@@ -365,7 +365,7 @@ public class Control : ILogInformation
         await this.SaveSettingsAsync();
         await this.SaveKeyVaultAsync();
         await this.NetControl.EssentialNode.SaveAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
-        await this.Itz.SaveAsync(Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzFile), Path.Combine(this.LPBase.DataDirectory, Itz.DefaultItzBackup));
+        await this.Mono.SaveAsync(Path.Combine(this.LPBase.DataDirectory, Mono.DefaultMonoFile), Path.Combine(this.LPBase.DataDirectory, Mono.DefaultMonoBackup));
 
         await this.Crystal.StopAsync(new());
 
@@ -566,7 +566,7 @@ public class Control : ILogInformation
 
     public LpData Root { get; }
 
-    public Itz Itz { get; }
+    public Mono Mono { get; }
 
     public Vault Vault { get; }
 
