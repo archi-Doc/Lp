@@ -13,7 +13,7 @@ public class AuthorizedTerminalFactory
     }
 
     public async Task<AuthorizedTerminal<TService>?> Create<TService>(Terminal terminal, NodeInformation nodeInformation, string authorityName, ILogger? logger)
-        where TService : IAuthorizedService
+        where TService : IAuthorizedService, IEquatable<TService>
     {
         // Authority key
         var authorityKey = await this.authority.GetKey(authorityName);
@@ -22,6 +22,8 @@ public class AuthorizedTerminalFactory
             logger?.TryGet(LogLevel.Error)?.Log(Hashed.Authority.NotFound, authorityName);
             return null; // AuthorizedTerminal<TService>.Invalid;
         }
+
+        // Try to get a cached terminal
 
         // Terminal
         var clientTerminal = await terminal.CreateAndEncrypt(nodeInformation);
@@ -48,8 +50,8 @@ public class AuthorizedTerminalFactory
     private Authority authority;
 }
 
-public class AuthorizedTerminal<TService> : IDisposable
-    where TService : IAuthorizedService
+public class AuthorizedTerminal<TService> : IDisposable, IEquatable<AuthorizedTerminal<TService>>
+    where TService : IAuthorizedService, IEquatable<TService>
 {
     internal AuthorizedTerminal(ClientTerminal terminal, AuthorityKey authorityKey, TService service, ILogger? logger)
     {
@@ -57,6 +59,23 @@ public class AuthorizedTerminal<TService> : IDisposable
         this.Key = authorityKey;
         this.Service = service;
         this.logger = logger;
+    }
+
+    public bool Equals(AuthorizedTerminal<TService>? other)
+    {
+        if (other == null)
+        {
+            return false;
+        }
+
+        return this.Terminal == other.Terminal &&
+            typeof(TService) == other.Service.GetType() &&
+            this.Key == other.Key;
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(this.Terminal, typeof(TService), this.Key);
     }
 
     public ClientTerminal Terminal { get; private set; }
@@ -110,5 +129,6 @@ public class AuthorizedTerminal<TService> : IDisposable
             this.disposed = true;
         }
     }
+
     #endregion
 }

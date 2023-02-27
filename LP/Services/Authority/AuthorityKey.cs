@@ -30,6 +30,9 @@ public sealed partial class AuthorityKey
     {
     }
 
+    public override int GetHashCode()
+        => this.seed.GetHash Code();
+
     public void SignToken(Token token)
     {
         var privateKey = this.GetOrCreatePrivateKey();
