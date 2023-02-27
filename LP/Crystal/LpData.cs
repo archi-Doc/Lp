@@ -27,10 +27,6 @@ public partial class LpData : BaseData
     {
     }
 
-    // public LpDataId GetDataId() => (LpDataId)this.DataId;
-
-    // public void SetDataId(LpDataId dataId) => this.DataId = (int)dataId;
-
     public new LpDataId DataId
     {
         get => (LpDataId)base.DataId;

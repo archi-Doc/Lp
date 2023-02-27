@@ -180,6 +180,8 @@ public partial class BaseData : IDataInternal
                 x.Save(unload);
             }
 
+            this.SaveInternal(unload);
+
             for (var i = 0; i < this.datumObject.Length; i++)
             {
                 this.datumObject[i].Data?.Save();
@@ -248,9 +250,11 @@ public partial class BaseData : IDataInternal
         yield break;
     }
 
-    // protected abstract void SaveInternal(bool unload);
-
     protected virtual void DeleteInternal()
+    {
+    }
+
+    protected virtual void SaveInternal(bool unload)
     {
     }
 

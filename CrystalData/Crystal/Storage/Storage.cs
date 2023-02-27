@@ -340,7 +340,7 @@ public sealed class Storage
 
     private void AddMemoryStat(int id, int size)
     {
-        if (size != 0)
+        if (id != 0 && size != 0)
         {
             if (!this.data.MemoryStats.TryGetValue(id, out var memoryStat))
             {

@@ -7,34 +7,30 @@ using ValueLink;
 
 namespace LP.Crystal;
 
-[TinyhandObject(ExplicitKeyOnly = true)]
+/*[TinyhandObject(ExplicitKeyOnly = true)]
 [ValueLinkObject]
-public partial class LpData2 : BaseData
+public partial class LpData : BaseData
 {
-    public enum LpData2Id
+    public enum LpDataId
     {
         Deleted = -1,
         Credit = 0,
     }
 
-    public LpData2(ICrystalInternal crystal, BaseData? parent, Identifier identifier)
+    public LpData(ICrystalInternal crystal, BaseData? parent, Identifier identifier)
         : base(crystal, parent)
     {
         this.identifier = identifier;
     }
 
     [Link(Primary = true, Name = "GetQueue", Type = ChainType.QueueList)]
-    public LpData2()
+    public LpData()
     {
     }
 
-    // public LpDataId GetDataId() => (LpDataId)this.DataId;
-
-    // public void SetDataId(LpDataId dataId) => this.DataId = (int)dataId;
-
-    public new LpData2Id DataId
+    public new LpDataId DataId
     {
-        get => (LpData2Id)base.DataId;
+        get => (LpDataId)base.DataId;
         set => base.DataId = (int)value;
     }
 
@@ -49,8 +45,9 @@ public partial class LpData2 : BaseData
     private ulong childrenFile;
 
     private GoshujinClass? children;
+    private bool childrenSaved = true;
 
-    public int Count(LpData2Id id)
+    public int Count(LpDataId id)
     {
         var intId = (int)id;
         var count = 0;
@@ -73,7 +70,7 @@ public partial class LpData2 : BaseData
     public LockOperation<TData> LockChild<TData>(Identifier id)
         where TData : IDatum
     {
-        LpData2? data;
+        LpData? data;
         using (this.semaphore.Lock())
         {
             this.children = this.PrepareChildren();
@@ -91,16 +88,17 @@ public partial class LpData2 : BaseData
         return data.Lock<TData>();
     }
 
-    public LpData2 GetOrCreateChild(Identifier id)
+    public LpData GetOrCreateChild(Identifier id)
     {
-        LpData2? data;
+        LpData? data;
         using (this.semaphore.Lock())
         {
             this.children = this.PrepareChildren();
             if (!this.children.IdChain.TryGetValue(id, out data))
             {
-                data = new LpData2(this.Crystal, this, id);
+                data = new LpData(this.Crystal, this, id);
                 this.children.Add(data);
+                this.childrenSaved = false;
             }
             else
             {// Update GetQueue chain
@@ -112,9 +110,9 @@ public partial class LpData2 : BaseData
         return data;
     }
 
-    public LpData2? TryGetChild(Identifier id)
+    public LpData? TryGetChild(Identifier id)
     {
-        LpData2? data;
+        LpData? data;
         using (this.semaphore.Lock())
         {
             this.children = this.PrepareChildren();
@@ -136,6 +134,7 @@ public partial class LpData2 : BaseData
             if (this.children.IdChain.TryGetValue(id, out var data))
             {
                 data.DeleteActual();
+                this.childrenSaved = false;
                 return true;
             }
         }
@@ -164,6 +163,30 @@ public partial class LpData2 : BaseData
         this.Goshujin = null;
     }
 
+    protected override void SaveInternal(bool unload)
+    {
+        if (this.children != null)
+        {
+            foreach (var x in this.children)
+            {
+                x.SaveInternal(unload);
+            }
+
+            if (!this.childrenSaved)
+            {
+                try
+                {
+                    var b = TinyhandSerializer.SerializeObject(this.children);
+                    this.Crystal.Storage.Save(ref this.childrenFile, new ByteArrayPool.ReadOnlyMemoryOwner(b), 0);
+                    this.childrenSaved = true;
+                }
+                catch
+                {
+                }
+            }
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private GoshujinClass PrepareChildren()
     {
@@ -173,12 +196,36 @@ public partial class LpData2 : BaseData
         }
         else if (CrystalHelper.IsValidFile(this.childrenFile))
         {// Load
-            // this.Crystal.Storage.Save(ref this.childrenFile, memoryToBeShared, id);
             var result = this.Crystal.Storage.Load(this.childrenFile).Result;
+            if (result.IsSuccess)
+            {
+                GoshujinClass? goshujin = null;
+                try
+                {
+                    goshujin = TinyhandSerializer.DeserializeObject<GoshujinClass>(result.Data.Memory.Span);
+                    if (goshujin is not null)
+                    {
+                        foreach (var x in goshujin)
+                        {
+                            x.Initialize(this.Crystal, this, true);
+                        }
+                    }
+                }
+                catch
+                {
+                }
+
+                return goshujin ?? new GoshujinClass();
+            }
+            else
+            {
+                this.Crystal.Storage.Delete(this.childrenFile);
+                return new GoshujinClass();
+            }
         }
         else
         {// New
             return new GoshujinClass();
         }
     }
-}
+}*/
