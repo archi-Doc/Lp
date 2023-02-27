@@ -98,7 +98,7 @@ public partial class BaseData : IDataInternal
             return new(CrystalResult.NoData);
         }
 
-        return await this.Crystal.Storage.Load(file);
+        return await this.Crystal.Storage.Load(file).ConfigureAwait(false);
     }
 
     void IDataInternal.DeleteStorage<TData>()

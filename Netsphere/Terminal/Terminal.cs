@@ -86,7 +86,7 @@ public class Terminal : UnitBase, IUnitExecutable
             this.terminals.Add(terminal);
         }
 
-        if (await terminal.EncryptConnectionAsync() != NetResult.Success)
+        if (await terminal.EncryptConnectionAsync().ConfigureAwait(false) != NetResult.Success)
         {
             terminal.Dispose();
             return null;

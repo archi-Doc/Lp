@@ -177,13 +177,13 @@ internal partial class CrystalDirectory : IDisposable
 
     internal async Task WaitForCompletionAsync()
     {
-        await this.worker.WaitForCompletionAsync();
+        await this.worker.WaitForCompletionAsync().ConfigureAwait(false);
     }
 
     internal async Task StopAsync()
     {
-        await this.worker.WaitForCompletionAsync();
-        await this.SaveDirectoryAsync(this.SnowflakeFilePath, this.SnowflakeBackupPath);
+        await this.worker.WaitForCompletionAsync().ConfigureAwait(false);
+        await this.SaveDirectoryAsync(this.SnowflakeFilePath, this.SnowflakeBackupPath).ConfigureAwait(false);
     }
 
     [Key(0)]

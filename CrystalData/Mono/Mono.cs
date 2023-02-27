@@ -98,7 +98,7 @@ public partial class Mono<TIdentifier>
                 }
 
                 var hash = new byte[8];
-                var read = await RandomAccess.ReadAsync(handle, hash, 0);
+                var read = await RandomAccess.ReadAsync(handle, hash, 0).ConfigureAwait(false);
                 if (read != hash.Length)
                 {
                     return false;
@@ -106,7 +106,7 @@ public partial class Mono<TIdentifier>
 
                 length -= hash.Length;
                 byteArray = new byte[length];
-                await RandomAccess.ReadAsync(handle, byteArray, hash.Length);
+                await RandomAccess.ReadAsync(handle, byteArray, hash.Length).ConfigureAwait(false);
                 if (Arc.Crypto.FarmHash.Hash64(byteArray) != BitConverter.ToUInt64(hash))
                 {
                     return false;
@@ -131,8 +131,8 @@ public partial class Mono<TIdentifier>
         {
             using (var handle = File.OpenHandle(path, mode: FileMode.Create, access: FileAccess.ReadWrite))
             {
-                await RandomAccess.WriteAsync(handle, hash, 0);
-                await RandomAccess.WriteAsync(handle, byteArray, hash.Length);
+                await RandomAccess.WriteAsync(handle, hash, 0).ConfigureAwait(false);
+                await RandomAccess.WriteAsync(handle, byteArray, hash.Length).ConfigureAwait(false);
                 result = true;
             }
         }
@@ -147,8 +147,8 @@ public partial class Mono<TIdentifier>
             {
                 using (var handle = File.OpenHandle(backupPath, mode: FileMode.Create, access: FileAccess.ReadWrite))
                 {
-                    await RandomAccess.WriteAsync(handle, hash, 0);
-                    await RandomAccess.WriteAsync(handle, byteArray, hash.Length);
+                    await RandomAccess.WriteAsync(handle, hash, 0).ConfigureAwait(false);
+                    await RandomAccess.WriteAsync(handle, byteArray, hash.Length).ConfigureAwait(false);
                 }
             }
             catch

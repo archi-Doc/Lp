@@ -41,7 +41,7 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
 
             if (param.FromScratch)
             {
-                await this.Storage.TryStart(this.Options, param, null);
+                await this.Storage.TryStart(this.Options, param, null).ConfigureAwait(false);
 
                 this.DeleteAll();
                 this.InitializeRoot();
@@ -51,7 +51,7 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
             }
 
             // Load CrystalDirectory
-            result = await this.LoadCrystalDirectory(param);
+            result = await this.LoadCrystalDirectory(param).ConfigureAwait(false);
             if (result != CrystalStartResult.Success)
             {
                 return result;
@@ -64,7 +64,7 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
             }
 
             // Load Crystal
-            result = await this.LoadCrystal(param);
+            result = await this.LoadCrystal(param).ConfigureAwait(false);
             if (result != CrystalStartResult.Success)
             {
                 return result;
@@ -102,7 +102,7 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
                 this.DeleteAll();
 
                 // Stop IO(CrystalDirectory)
-                await this.Storage.StopAsync();
+                await this.Storage.StopAsync().ConfigureAwait(false);
                 this.Storage.Terminate();
 
                 return;
@@ -112,14 +112,14 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
             this.Root.Save(true);
 
             // Stop IO(CrystalDirectory)
-            await this.Storage.StopAsync();
+            await this.Storage.StopAsync().ConfigureAwait(false);
 
             // Save Crystal
-            await this.SerializeCrystal(this.Options.CrystalFilePath, this.Options.CrystalBackupPath);
+            await this.SerializeCrystal(this.Options.CrystalFilePath, this.Options.CrystalBackupPath).ConfigureAwait(false);
 
             // Save directory information
             var byteArray = this.Storage.Serialize();
-            await HashHelper.GetFarmHashAndSaveAsync(byteArray, this.Options.CrystalDirectoryFilePath, this.Options.CrystalDirectoryBackupPath);
+            await HashHelper.GetFarmHashAndSaveAsync(byteArray, this.Options.CrystalDirectoryFilePath, this.Options.CrystalDirectoryBackupPath).ConfigureAwait(false);
 
             this.Storage.Terminate();
 
@@ -146,7 +146,7 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
             // HimoGoshujin
             this.himoGoshujin.Stop();
 
-            await this.Storage.StopAsync();
+            await this.Storage.StopAsync().ConfigureAwait(false);
             this.Storage.Terminate();
         }
         finally
@@ -218,7 +218,7 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
         this.Root.Save();
 
         // Stop IO(CrystalDirectory)
-        await this.IO.StopAsync();
+        await this.IO.StopAsync().ConfigureAwait(false);
     }*/
 
     private HimoGoshujinClass himoGoshujin;
@@ -231,13 +231,13 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
     }
 
     private async Task<CrystalStartResult> LoadCrystalDirectory(CrystalStartParam param)
-    {// await this.semaphore.WaitAsync()
+    {// await this.semaphore.WaitAsync().ConfigureAwait(false)
      // Load
         CrystalStartResult result;
         byte[]? data;
         try
         {
-            data = await File.ReadAllBytesAsync(this.Options.CrystalDirectoryFilePath);
+            data = await File.ReadAllBytesAsync(this.Options.CrystalDirectoryFilePath).ConfigureAwait(false);
         }
         catch
         {
@@ -250,7 +250,7 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
             goto LoadBackup;
         }
 
-        result = await this.Storage.TryStart(this.Options, param, memory);
+        result = await this.Storage.TryStart(this.Options, param, memory).ConfigureAwait(false);
         if (result == CrystalStartResult.Success || param.ForceStart)
         {
             return CrystalStartResult.Success;
@@ -261,13 +261,13 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
 LoadBackup:
         try
         {
-            data = await File.ReadAllBytesAsync(this.Options.CrystalDirectoryBackupPath);
+            data = await File.ReadAllBytesAsync(this.Options.CrystalDirectoryBackupPath).ConfigureAwait(false);
         }
         catch
         {
-            if (await param.Query(CrystalStartResult.DirectoryNotFound))
+            if (await param.Query(CrystalStartResult.DirectoryNotFound).ConfigureAwait(false))
             {
-                result = await this.Storage.TryStart(this.Options, param, null);
+                result = await this.Storage.TryStart(this.Options, param, null).ConfigureAwait(false);
                 if (result == CrystalStartResult.Success || param.ForceStart)
                 {
                     return CrystalStartResult.Success;
@@ -284,9 +284,9 @@ LoadBackup:
         // Checksum Crystal
         if (!HashHelper.CheckFarmHashAndGetData(data.AsMemory(), out memory))
         {
-            if (await param.Query(CrystalStartResult.DirectoryError))
+            if (await param.Query(CrystalStartResult.DirectoryError).ConfigureAwait(false))
             {
-                result = await this.Storage.TryStart(this.Options, param, null);
+                result = await this.Storage.TryStart(this.Options, param, null).ConfigureAwait(false);
                 if (result == CrystalStartResult.Success || param.ForceStart)
                 {
                     return CrystalStartResult.Success;
@@ -300,7 +300,7 @@ LoadBackup:
             }
         }
 
-        result = await this.Storage.TryStart(this.Options, param, memory);
+        result = await this.Storage.TryStart(this.Options, param, memory).ConfigureAwait(false);
         if (result == CrystalStartResult.Success || param.ForceStart)
         {
             return CrystalStartResult.Success;
@@ -310,12 +310,12 @@ LoadBackup:
     }
 
     private async Task<CrystalStartResult> LoadCrystal(CrystalStartParam param)
-    {// await this.semaphore.WaitAsync()
+    {// await this.semaphore.WaitAsync().ConfigureAwait(false)
      // Load
         byte[]? data;
         try
         {
-            data = await File.ReadAllBytesAsync(this.Options.CrystalFilePath);
+            data = await File.ReadAllBytesAsync(this.Options.CrystalFilePath).ConfigureAwait(false);
         }
         catch
         {
@@ -336,11 +336,11 @@ LoadBackup:
 LoadBackup:
         try
         {
-            data = await File.ReadAllBytesAsync(this.Options.CrystalBackupPath);
+            data = await File.ReadAllBytesAsync(this.Options.CrystalBackupPath).ConfigureAwait(false);
         }
         catch
         {
-            if (await param.Query(CrystalStartResult.FileNotFound))
+            if (await param.Query(CrystalStartResult.FileNotFound).ConfigureAwait(false))
             {
                 return CrystalStartResult.Success;
             }
@@ -353,7 +353,7 @@ LoadBackup:
         // Checksum
         if (!HashHelper.CheckFarmHashAndGetData(data.AsMemory(), out memory))
         {
-            if (await param.Query(CrystalStartResult.FileError))
+            if (await param.Query(CrystalStartResult.FileError).ConfigureAwait(false))
             {
                 return CrystalStartResult.Success;
             }
@@ -366,7 +366,7 @@ LoadBackup:
         // Deserialize
         if (!this.DeserializeCrystal(memory))
         {
-            if (await param.Query(CrystalStartResult.FileError))
+            if (await param.Query(CrystalStartResult.FileError).ConfigureAwait(false))
             {
                 return CrystalStartResult.Success;
             }
@@ -397,7 +397,7 @@ LoadBackup:
     private async Task SerializeCrystal(string path, string? backupPath)
     {
         var byteArray = TinyhandSerializer.Serialize(this.Root);
-        await HashHelper.GetFarmHashAndSaveAsync(byteArray, path, backupPath);
+        await HashHelper.GetFarmHashAndSaveAsync(byteArray, path, backupPath).ConfigureAwait(false);
     }
 
     private SemaphoreSlim semaphore = new(1, 1);

@@ -138,7 +138,7 @@ public sealed class Storage
             }
         }
 
-        return await directory.Load(file);
+        return await directory.Load(file).ConfigureAwait(false);
     }
 
     public void Delete(ulong file)
@@ -197,7 +197,7 @@ public sealed class Storage
             }
             catch
             {
-                if (!await param.Query(CrystalStartResult.FileError))
+                if (!await param.Query(CrystalStartResult.FileError).ConfigureAwait(false))
                 {
                     return CrystalStartResult.FileError;
                 }
@@ -216,7 +216,7 @@ public sealed class Storage
         }
 
         if (errorDirectories != null &&
-            !await param.Query(CrystalStartResult.DirectoryError, errorDirectories.ToArray()))
+            !await param.Query(CrystalStartResult.DirectoryError, errorDirectories.ToArray()).ConfigureAwait(false))
         {
             return CrystalStartResult.FileError;
         }

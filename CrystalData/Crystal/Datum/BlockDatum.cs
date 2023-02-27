@@ -65,7 +65,7 @@ public class BlockDatumImpl : HimoGoshujinClass.Himo, BlockDatum, IBaseDatum
             return new(CrystalResult.Success, memoryOwner.Memory);
         }
 
-        var result = await this.dataInternal.StorageToData<BlockDatum>();
+        var result = await this.dataInternal.StorageToData<BlockDatum>().ConfigureAwait(false);
         if (result.IsSuccess)
         {
             this.Update(this.memoryObject.SetMemoryOwnerInternal(result.Data, null), false);
@@ -85,7 +85,7 @@ public class BlockDatumImpl : HimoGoshujinClass.Himo, BlockDatum, IBaseDatum
             return new(CrystalResult.Success, obj);
         }
 
-        var result = await this.dataInternal.StorageToData<BlockDatum>();
+        var result = await this.dataInternal.StorageToData<BlockDatum>().ConfigureAwait(false);
         if (result.IsSuccess)
         {
             this.Update(this.memoryObject.SetMemoryOwnerInternal(result.Data, null), false);

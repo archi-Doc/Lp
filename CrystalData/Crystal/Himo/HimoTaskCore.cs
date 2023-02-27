@@ -16,7 +16,7 @@ internal class HimoTaskCore : TaskCore
         while (!core.IsTerminated)
         {
             core.himoGoshujin.Unload();
-            await core.Delay(HimoGoshujinClass.UnloadInterval);
+            await core.Delay(HimoGoshujinClass.UnloadInterval).ConfigureAwait(false);
         }
     }
 

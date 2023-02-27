@@ -55,8 +55,8 @@ TrySave:
                 filePath = Path.Combine(directoryPath, path.File);
                 using (var handle = File.OpenHandle(filePath, mode: FileMode.OpenOrCreate, access: FileAccess.Write))
                 {
-                    await RandomAccess.WriteAsync(handle, hash, 0, worker.CancellationToken);
-                    await RandomAccess.WriteAsync(handle, work.SaveData.Memory, CrystalDirectory.HashSize, worker.CancellationToken);
+                    await RandomAccess.WriteAsync(handle, hash, 0, worker.CancellationToken).ConfigureAwait(false);
+                    await RandomAccess.WriteAsync(handle, work.SaveData.Memory, CrystalDirectory.HashSize, worker.CancellationToken).ConfigureAwait(false);
                 }
             }
             catch (DirectoryNotFoundException)
@@ -86,14 +86,14 @@ TrySave:
                 using (var handle = File.OpenHandle(filePath, mode: FileMode.Open, access: FileAccess.Read))
                 {
                     var hash = new byte[CrystalDirectory.HashSize];
-                    var read = await RandomAccess.ReadAsync(handle, hash, 0, worker.CancellationToken);
+                    var read = await RandomAccess.ReadAsync(handle, hash, 0, worker.CancellationToken).ConfigureAwait(false);
                     if (read != CrystalDirectory.HashSize)
                     {
                         goto DeleteAndExit;
                     }
 
                     var memoryOwner = ByteArrayPool.Default.Rent(work.LoadSize).ToMemoryOwner(0, work.LoadSize);
-                    read = await RandomAccess.ReadAsync(handle, memoryOwner.Memory, CrystalDirectory.HashSize, worker.CancellationToken);
+                    read = await RandomAccess.ReadAsync(handle, memoryOwner.Memory, CrystalDirectory.HashSize, worker.CancellationToken).ConfigureAwait(false);
                     if (read != work.LoadSize)
                     {
                         goto DeleteAndExit;

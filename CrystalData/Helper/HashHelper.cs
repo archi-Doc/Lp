@@ -68,8 +68,8 @@ internal static class HashHelper
         {
             using (var handle = File.OpenHandle(path, mode: FileMode.Create, access: FileAccess.ReadWrite))
             {
-                await RandomAccess.WriteAsync(handle, hash, 0);
-                await RandomAccess.WriteAsync(handle, data, hash.Length);
+                await RandomAccess.WriteAsync(handle, hash, 0).ConfigureAwait(false);
+                await RandomAccess.WriteAsync(handle, data, hash.Length).ConfigureAwait(false);
                 result = true;
             }
         }
