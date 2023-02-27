@@ -16,10 +16,10 @@ public partial class HimoGoshujinClass
     public partial class Himo
     {
         [Link(Name = "UnloadQueue", Type = ChainType.QueueList)] // Manages the order of unloading data from memory
-        public Himo(IDataInternal flakeInternal)
+        public Himo(IDataInternal dataInternal)
         {
-            this.dataInternal = flakeInternal;
-            this.himoGoshujin = flakeInternal.CrystalInternal.HimoGoshujin;
+            this.dataInternal = dataInternal;
+            this.himoGoshujin = dataInternal.CrystalInternal.HimoGoshujin;
         }
 
         public virtual int Id { get; }
