@@ -87,7 +87,7 @@ public sealed class Storage
 
     public bool Started { get; private set; }
 
-    internal void Save(ref ulong file, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared, int id)
+    public void Save(ref ulong file, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared, int id)
     {
         CrystalDirectory? directory;
         lock (this.syncObject)
@@ -122,7 +122,7 @@ public sealed class Storage
         directory.Save(ref file, memoryToBeShared);
     }
 
-    internal async Task<CrystalMemoryOwnerResult> Load(ulong file)
+    public async Task<CrystalMemoryOwnerResult> Load(ulong file)
     {
         if (!CrystalHelper.IsValidFile(file))
         {// Invalid file.
@@ -141,7 +141,7 @@ public sealed class Storage
         return await directory.Load(file);
     }
 
-    internal void Delete(ulong file)
+    public void Delete(ulong file)
     {
         if (!CrystalHelper.IsValidFile(file))
         {// Invalid file.

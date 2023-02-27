@@ -18,7 +18,7 @@ public partial class HimoGoshujinClass
         [Link(Name = "UnloadQueue", Type = ChainType.QueueList)] // Manages the order of unloading data from memory
         public Himo(IDataInternal flakeInternal)
         {
-            this.flakeInternal = flakeInternal;
+            this.dataInternal = flakeInternal;
             this.himoGoshujin = flakeInternal.CrystalInternal.HimoGoshujin;
         }
 
@@ -42,7 +42,7 @@ public partial class HimoGoshujinClass
 
                 this.himoGoshujin.memoryUsage += newSize - this.currentSize;
                 this.currentSize = newSize;
-                if (this.himoGoshujin.memoryUsage > this.flakeInternal.Options.MemorySizeLimit)
+                if (this.himoGoshujin.memoryUsage > this.dataInternal.Options.MemorySizeLimit)
                 {
                     unloadFlag = true;
                 }
@@ -94,7 +94,7 @@ public partial class HimoGoshujinClass
         }
 
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
-        protected internal IDataInternal flakeInternal;
+        protected internal IDataInternal dataInternal;
 #pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
         private HimoGoshujinClass himoGoshujin;
         private int currentSize; // Current memory usage
@@ -136,7 +136,7 @@ public partial class HimoGoshujinClass
                 this.goshujin.UnloadQueueChain.TryPeek(out var himo);
                 for (count = 0; himo != null && count < UnloadNumber; count++)
                 {
-                    array[count].FlakeInternal = himo.flakeInternal;
+                    array[count].FlakeInternal = himo.dataInternal;
                     array[count].Id = himo.Id;
                     himo = himo.UnloadQueueLink.Next;
                 }

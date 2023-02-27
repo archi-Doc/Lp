@@ -2,6 +2,7 @@
 
 #pragma warning disable SA1124 // Do not use regions
 
+using System.Runtime.CompilerServices;
 using ValueLink;
 
 namespace LP.Crystal;
@@ -45,6 +46,8 @@ public partial class LpData2 : BaseData
     private Identifier identifier = default!;
 
     [Key(4)]
+    private ulong childrenFile;
+
     private GoshujinClass? children;
 
     public int Count(LpData2Id id)
@@ -73,11 +76,7 @@ public partial class LpData2 : BaseData
         LpData2? data;
         using (this.semaphore.Lock())
         {
-            if (this.children == null)
-            {
-                return default;
-            }
-
+            this.children = this.PrepareChildren();
             if (this.children.IdChain.TryGetValue(id, out data))
             {// Update GetQueue chain
                 this.children.GetQueueChain.Remove(data);
@@ -97,7 +96,7 @@ public partial class LpData2 : BaseData
         LpData2? data;
         using (this.semaphore.Lock())
         {
-            this.children ??= new();
+            this.children = this.PrepareChildren();
             if (!this.children.IdChain.TryGetValue(id, out data))
             {
                 data = new LpData2(this.Crystal, this, id);
@@ -118,11 +117,7 @@ public partial class LpData2 : BaseData
         LpData2? data;
         using (this.semaphore.Lock())
         {
-            if (this.children == null)
-            {
-                return null;
-            }
-
+            this.children = this.PrepareChildren();
             if (this.children.IdChain.TryGetValue(id, out data))
             {// Update GetQueue chain
                 this.children.GetQueueChain.Remove(data);
@@ -137,11 +132,7 @@ public partial class LpData2 : BaseData
     {
         using (this.semaphore.Lock())
         {
-            if (this.children == null)
-            {
-                return false;
-            }
-
+            this.children = this.PrepareChildren();
             if (this.children.IdChain.TryGetValue(id, out var data))
             {
                 data.DeleteActual();
@@ -171,5 +162,23 @@ public partial class LpData2 : BaseData
     {
         this.children = null;
         this.Goshujin = null;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private GoshujinClass PrepareChildren()
+    {
+        if (this.children != null)
+        {// Existing
+            return this.children;
+        }
+        else if (CrystalHelper.IsValidFile(this.childrenFile))
+        {// Load
+            // this.Crystal.Storage.Save(ref this.childrenFile, memoryToBeShared, id);
+            var result = this.Crystal.Storage.Load(this.childrenFile).Result;
+        }
+        else
+        {// New
+            return new GoshujinClass();
+        }
     }
 }

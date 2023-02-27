@@ -32,7 +32,7 @@ public class BlockDatumImpl : HimoGoshujinClass.Himo, BlockDatum, IBaseDatum
 
     CrystalResult BlockDatum.Set(ReadOnlySpan<byte> data)
     {
-        if (data.Length > this.flakeInternal.Options.MaxDataSize)
+        if (data.Length > this.dataInternal.Options.MaxDataSize)
         {
             return CrystalResult.OverSizeLimit;
         }
@@ -47,7 +47,7 @@ public class BlockDatumImpl : HimoGoshujinClass.Himo, BlockDatum, IBaseDatum
         {
             return CrystalResult.SerializeError;
         }
-        else if (memoryOwner.Memory.Length > this.flakeInternal.Options.MaxDataSize)
+        else if (memoryOwner.Memory.Length > this.dataInternal.Options.MaxDataSize)
         {
             return CrystalResult.OverSizeLimit;
         }
@@ -65,7 +65,7 @@ public class BlockDatumImpl : HimoGoshujinClass.Himo, BlockDatum, IBaseDatum
             return new(CrystalResult.Success, memoryOwner.Memory);
         }
 
-        var result = await this.flakeInternal.StorageToData<BlockDatum>();
+        var result = await this.dataInternal.StorageToData<BlockDatum>();
         if (result.IsSuccess)
         {
             this.Update(this.memoryObject.SetMemoryOwnerInternal(result.Data, null), false);
@@ -85,7 +85,7 @@ public class BlockDatumImpl : HimoGoshujinClass.Himo, BlockDatum, IBaseDatum
             return new(CrystalResult.Success, obj);
         }
 
-        var result = await this.flakeInternal.StorageToData<BlockDatum>();
+        var result = await this.dataInternal.StorageToData<BlockDatum>();
         if (result.IsSuccess)
         {
             this.Update(this.memoryObject.SetMemoryOwnerInternal(result.Data, null), false);
@@ -116,7 +116,7 @@ public class BlockDatumImpl : HimoGoshujinClass.Himo, BlockDatum, IBaseDatum
     {
         if (!this.isSaved)
         {// Not saved.
-            this.flakeInternal.DataToStorage<BlockDatum>(this.memoryObject.MemoryOwner);
+            this.dataInternal.DataToStorage<BlockDatum>(this.memoryObject.MemoryOwner);
             this.isSaved = true;
         }
     }
