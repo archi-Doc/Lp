@@ -6,6 +6,7 @@ global using System.Threading.Tasks;
 global using Arc.Threading;
 global using Netsphere;
 using Arc.Unit;
+using LP.Data;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleCommandLine;
 
@@ -80,10 +81,14 @@ public class Program
 
                 // ServiceFilter
                 context.AddSingleton<TestFilterB>();
+            })
+            .SetupOptions<NetsphereOptions>((context, options) =>
+            {
             });
 
         var options = new LP.Data.NetsphereOptions();
         options.EnableAlternative = true;
+        options.EnableLogger = false;
 
         var unit = builder.Build();
         var param = new NetControl.Unit.Param(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);

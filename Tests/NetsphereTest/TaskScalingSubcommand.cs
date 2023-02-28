@@ -8,7 +8,7 @@ using ValueLink;
 
 namespace NetsphereTest;
 
-/*public partial class TaskParent
+public partial class TaskParent
 {
     [ValueLinkObject]
     public partial class Item
@@ -22,8 +22,17 @@ namespace NetsphereTest;
             {
                 while (true)
                 {
-                    var ct = ThreadCore.Root.CancellationToken;
-                    await Task.WhenAny(this.pulseEvent.WaitAsync(ct), Task.Delay(10)).ConfigureAwait(false);
+                    try
+                    {
+                        var ct = ThreadCore.Root.CancellationToken;
+                        // await Task.WhenAny(this.pulseEvent.WaitAsync(ct), Task.Delay(100)).ConfigureAwait(false);
+
+                        // await this.pulseEvent.WaitAsync(TimeSpan.FromMilliseconds(1000), ct).ConfigureAwait(false);
+                        await this.pulseEvent.WaitAsync(ct).ConfigureAwait(false);
+                    }
+                    catch
+                    {
+                    }
 
                     if (this.close)
                     {
@@ -37,6 +46,7 @@ namespace NetsphereTest;
         public void Close()
         {
             this.close = true;
+            this.mics = Mics.GetSystem();
             this.pulseEvent.Pulse();
         }
 
@@ -47,6 +57,7 @@ namespace NetsphereTest;
 
         private AsyncPulseEvent pulseEvent = new();
         private bool close = false;
+        internal long mics;
     }
 
     public void Add(int id)
@@ -66,6 +77,7 @@ namespace NetsphereTest;
         {
             if (this.goshujin.IdChain.TryGetValue(id, out var item))
             {
+                this.latency += (Mics.GetSystem() - item.mics);
                 item.Goshujin = null;
             }
         }
@@ -91,6 +103,7 @@ namespace NetsphereTest;
         }
 
         // Close
+        this.count = array.Length;
         foreach (var x in array)
         {
             lock (this.syncObject)
@@ -109,6 +122,7 @@ namespace NetsphereTest;
             {
                 if (this.goshujin.IdChain.Count == 0)
                 {
+
                     return;
                 }
             }
@@ -117,12 +131,16 @@ namespace NetsphereTest;
         }
     }
 
+    public long AverageLatency => this.latency / this.count;
+
     private object syncObject = new();
     private SemaphoreLock semaphore = new();
     private Item.GoshujinClass goshujin = new();
-}*/
+    private long latency;
+    private int count = 1;
+}
 
-public partial class TaskParent
+/*public partial class TaskParent
 {
     [ValueLinkObject]
     public partial class Item
@@ -214,7 +232,7 @@ public partial class TaskParent
     private object syncObject = new();
     private List<Item> list = new();
     private int count;
-}
+}*/
 
 [SimpleCommand("task")]
 public class TaskScalingSubcommand : ISimpleCommandAsync<TaskScalingOptions>
@@ -236,8 +254,12 @@ public class TaskScalingSubcommand : ISimpleCommandAsync<TaskScalingOptions>
         await this.Test(100);
         await this.Test(1_000);
         await this.Test(10_000);
+
         await this.Test(100_000);
-        await this.Test(300_000);
+        await this.Test(100_000);
+        await this.Test(100_000);
+
+        //await this.Test(300_000);
 
         // ThreadPool.SetMaxThreads(workerThreads, completionPortThreads);
     }
@@ -261,6 +283,7 @@ public class TaskScalingSubcommand : ISimpleCommandAsync<TaskScalingOptions>
         bt.Restart();
         await tp.Run();
         await Console.Out.WriteLineAsync(bt.StopAndGetText("Run"));
+        await Console.Out.WriteLineAsync($"Latency {tp.AverageLatency / 1000d}");
 
         await Console.Out.WriteLineAsync();
     }

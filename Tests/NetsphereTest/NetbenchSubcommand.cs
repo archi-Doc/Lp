@@ -6,7 +6,7 @@ using SimpleCommandLine;
 
 namespace NetsphereTest;
 
-[SimpleCommand("netbench")]
+[SimpleCommand("bench")]
 public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
 {
     public NetbenchSubcommand(ILogger<NetbenchSubcommand> logger, NetControl netControl)
@@ -17,9 +17,13 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
 
     public async Task RunAsync(NetbenchOptions options, string[] args)
     {
-        if (!NetHelper.TryParseNodeAddress(this.logger, options.Node, out var node))
+        NodeAddress? node = NodeAddress.Alternative;
+        if (!string.IsNullOrEmpty(options.Node))
         {
-            return;
+            if (!NetHelper.TryParseNodeAddress(this.logger, options.Node, out node))
+            {
+                return;
+            }
         }
 
         this.logger.TryGet()?.Log($"Netbench: {node.ToString()}");
@@ -43,7 +47,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
             Logger.Priority.Information($"{sw.ElapsedMilliseconds} ms");*/
 
             // await this.BenchLargeData(terminal); // 1060 ms
-            await this.PingpongSmallData(terminal); // 350 ms
+            // await this.PingpongSmallData(terminal); // 350 ms
 
             // var service = terminal.GetService<IBenchmarkService>();
 
@@ -63,7 +67,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         }
 
         // await this.PingpongSmallData2(node);
-        // await this.MassiveSmallData(node); // 1000 ms
+        await this.MassiveSmallData(node); // 1000 ms
     }
 
     public NetControl NetControl { get; set; }
@@ -144,17 +148,18 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
 
     private async Task MassiveSmallData(NodeAddress node)
     {// 1200ms (release)
-        const int N = 50; //50;
+        const int Total = 1000;
+        const int Concurrent = 50; //50;
         var data = new byte[100];
 
         ThreadPool.GetMinThreads(out var workMin, out var ioMin);
-        ThreadPool.SetMinThreads(50, ioMin);
+        ThreadPool.SetMinThreads(Concurrent, ioMin);
 
         var sw = Stopwatch.StartNew();
         var count = 0;
-        Parallel.For(0, N, i =>
+        Parallel.For(0, Concurrent, i =>
         {
-            for (var j = 0; j < 20; j++)
+            for (var j = 0; j < (Total / Concurrent); j++)
             {
                 using (var terminal = this.NetControl.Terminal.Create(node))
                 {
@@ -172,10 +177,12 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
             }
         });
 
+        ThreadPool.SetMinThreads(workMin, ioMin);
+
         sw.Stop();
 
         Console.WriteLine(this.NetControl.Alternative?.MyStatus.ServerCount.ToString());
-        Console.WriteLine($"MassiveSmallData {count}/{N}, {sw.ElapsedMilliseconds.ToString()} ms");
+        Console.WriteLine($"MassiveSmallData {count}/{Concurrent}, {sw.ElapsedMilliseconds.ToString()} ms");
         Console.WriteLine();
     }
 
@@ -184,7 +191,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
 
 public record NetbenchOptions
 {
-    [SimpleOption("node", Description = "Node address", Required = true)]
+    [SimpleOption("node", Description = "Node address")]
     public string Node { get; init; } = string.Empty;
 
     public override string ToString() => $"{this.Node}";

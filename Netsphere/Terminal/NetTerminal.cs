@@ -446,7 +446,7 @@ public partial class NetTerminal : IDisposable
 
     private void Initialize()
     {
-        if (/*this.Terminal.NetBase.NetsphereOptions.EnableLogger &&*/
+        if (this.Terminal.NetBase.NetsphereOptions.EnableLogger &&
             this.Terminal.UnitLogger.GetLogger(this.GetType()) is { } logger &&
             logger.TryGet() is { } log)
         {

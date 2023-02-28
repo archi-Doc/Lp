@@ -130,6 +130,8 @@ public class NetBenchSubcommand : ISimpleCommandAsync<NetBenchOptions>
             }
         });
 
+        ThreadPool.SetMinThreads(workMin, ioMin);
+
         sw.Stop();
 
         this.userInterfaceService.WriteLine(this.NetControl.Alternative?.MyStatus.ServerCount.ToString());
