@@ -46,7 +46,7 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
         ThreadPool.SetMinThreads(options.Concurrent, ioMin);
 
         var sw = Stopwatch.StartNew();
-        Parallel.For(0, options.Concurrent, i =>
+        /*Parallel.For(0, options.Concurrent, i =>
         {
             for (var j = 0; j < (options.Total / options.Concurrent); j++)
             {
@@ -70,7 +70,39 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
                     Interlocked.Add(ref totalLatency, sw2.ElapsedMilliseconds);
                 }
             }
-        });
+        });*/
+
+        var array = new Task[options.Concurrent];
+        for (int i = 0; i < options.Concurrent; i++)
+        {
+            array[i] = Task.Run(async () =>
+            {
+                for (var j = 0; j < (options.Total / options.Concurrent); j++)
+                {
+                    var sw2 = new Stopwatch();
+                    using (var terminal = this.NetControl.Terminal.Create(node))
+                    {
+                        var service = terminal.GetService<IBenchmarkService>();
+                        sw2.Restart();
+                        var response = service.Pingpong(data).ResponseAsync;
+
+                        if (response.Result.IsSuccess)
+                        {
+                            Interlocked.Increment(ref successCount);
+                        }
+                        else
+                        {
+                            Interlocked.Increment(ref failureCount);
+                        }
+
+                        sw2.Stop();
+                        Interlocked.Add(ref totalLatency, sw2.ElapsedMilliseconds);
+                    }
+                }
+            });
+        }
+
+        await Task.WhenAll(array);
 
         ThreadPool.SetMinThreads(workMin, ioMin);
 

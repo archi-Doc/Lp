@@ -83,40 +83,11 @@ public class Program
 
                 // ServiceFilter
                 context.AddSingleton<TestFilterB>();
-            })
-            .SetupOptions<ClientTerminalLoggerOptions>((context, options) =>
-            {// ClientTerminalLoggerOptions
-                var logfile = "Logs/Client/.txt";
-                if (context.TryGetOptions<LPOptions>(out var lpOptions))
-                {
-                    options.Path = Path.Combine(lpOptions.RootDirectory, logfile);
-                }
-                else
-                {
-                    options.Path = Path.Combine(context.RootDirectory, logfile);
-                }
-
-                options.MaxLogCapacity = 1;
             });
-
-        .SetupOptions<ServerTerminalLoggerOptions>((context, options) =>
-        {// ServerTerminalLoggerOptions
-            var logfile = "Logs/Server/.txt";
-            if (context.TryGetOptions<LPOptions>(out var lpOptions))
-            {
-                options.Path = Path.Combine(lpOptions.RootDirectory, logfile);
-            }
-            else
-            {
-                options.Path = Path.Combine(context.RootDirectory, logfile);
-            }
-
-            options.MaxLogCapacity = 1;
-        });
 
         var options = new LP.Data.NetsphereOptions();
         options.EnableAlternative = true;
-        options.EnableLogger = true;
+        options.EnableLogger = false;
 
         var unit = builder.Build();
         var param = new NetControl.Unit.Param(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);
