@@ -1,4 +1,7 @@
-﻿namespace NetsphereTest;
+﻿using NetsphereTest;
+using Tinyhand;
+
+namespace LP.NetServices;
 
 [NetServiceInterface]
 public partial interface IBenchmarkService : INetService
@@ -7,11 +10,23 @@ public partial interface IBenchmarkService : INetService
 
     public NetTask<byte[]?> Pingpong(byte[] data);
 
-    public NetTask Wait(int millisecondsToWait);
-}
+    [TinyhandObject(ImplicitKeyAsName = true)]
+    public partial record ReportRecord
+    {
+        public int SuccessCount { get; init; }
 
-public partial interface IBenchmarkService
-{
+        public int FailureCount { get; init; }
+
+        public int Concurrent { get; init; }
+
+        public long ElapsedMilliseconds { get; init; }
+
+        public int CountPerSecond { get; init; }
+
+        public int AverageLatency { get; init; }
+    }
+
+    public NetTask Report(ReportRecord record);
 }
 
 [NetServiceFilter(typeof(TestFilter), Order = 1)]
@@ -21,6 +36,11 @@ public class BenchmarkServiceImpl : IBenchmarkService
 {
     public BenchmarkServiceImpl()
     {
+    }
+
+    public async NetTask Report(IBenchmarkService.ReportRecord record)
+    {
+        await Console.Out.WriteLineAsync(record.ToString());
     }
 
     public async NetTask<byte[]?> Pingpong(byte[] data)

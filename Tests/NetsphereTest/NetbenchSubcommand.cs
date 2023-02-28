@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using Arc.Unit;
+using LP.NetServices;
 using SimpleCommandLine;
 
 namespace NetsphereTest;
@@ -152,8 +153,8 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         const int Concurrent = 50; //50;
         var data = new byte[100];
 
-        ThreadPool.GetMinThreads(out var workMin, out var ioMin);
-        ThreadPool.SetMinThreads(Concurrent, ioMin);
+        // ThreadPool.GetMinThreads(out var workMin, out var ioMin);
+        // ThreadPool.SetMinThreads(Concurrent, ioMin);
 
         var sw = Stopwatch.StartNew();
         var count = 0;
@@ -177,7 +178,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
             }
         });
 
-        ThreadPool.SetMinThreads(workMin, ioMin);
+        // ThreadPool.SetMinThreads(workMin, ioMin);
 
         sw.Stop();
 

@@ -5,17 +5,45 @@ using Netsphere;
 namespace LP.NetServices;
 
 [NetServiceInterface]
-public interface IBenchmarkService : INetService
+public partial interface IBenchmarkService : INetService
 {
     public NetTask Send(byte[] data);
 
     public NetTask<byte[]?> Pingpong(byte[] data);
+
+    [TinyhandObject(ImplicitKeyAsName = true)]
+    public partial record ReportRecord
+    {
+        public int SuccessCount { get; init; }
+
+        public int FailureCount { get; init; }
+
+        public int Concurrent { get; init; }
+
+        public long ElapsedMilliseconds { get; init; }
+
+        public int CountPerSecond { get; init; }
+
+        public int AverageLatency { get; init; }
+    }
+
+    public NetTask Report(ReportRecord record);
 }
 
 [NetServiceObject]
 [NetServiceFilter(typeof(TestOnlyFilter))]
 public class BenchmarkServiceImpl : IBenchmarkService
 {
+    public BenchmarkServiceImpl(ILogger<IBenchmarkService> logger)
+    {
+        this.logger = logger;
+    }
+
+    public async NetTask Report(IBenchmarkService.ReportRecord record)
+    {
+        this.logger.TryGet()?.Log(record.ToString());
+    }
+
     public async NetTask<byte[]?> Pingpong(byte[] data)
     {
         return data;
@@ -24,4 +52,6 @@ public class BenchmarkServiceImpl : IBenchmarkService
     public async NetTask Send(byte[] data)
     {
     }
+
+    private ILogger logger;
 }

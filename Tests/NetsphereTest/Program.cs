@@ -7,6 +7,7 @@ global using Arc.Threading;
 global using Netsphere;
 using Arc.Unit;
 using LP.Data;
+using LP.NetServices;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleCommandLine;
 
@@ -75,6 +76,7 @@ public class Program
                 context.AddCommand(typeof(BasicTestSubcommand));
                 context.AddCommand(typeof(NetbenchSubcommand));
                 context.AddCommand(typeof(TaskScalingSubcommand));
+                context.AddCommand(typeof(StressSubcommand));
 
                 // NetService
                 context.AddSingleton<ExternalServiceImpl>();
@@ -102,6 +104,7 @@ public class Program
         };
 
         // await SimpleParser.ParseAndRunAsync(commandTypes, "netbench -node alternative", parserOptions); // Main process
+        SimpleParserHelper.AddEnvironmentVariable(ref args, "lpargs");
         await SimpleParser.ParseAndRunAsync(unit.Context.Commands, args, parserOptions); // Main process
 
         ThreadCore.Root.Terminate();

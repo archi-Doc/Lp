@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Security.Cryptography;
+using LP.NetServices;
 using LP.T3CS;
 using SimpleCommandLine;
 
@@ -61,6 +62,12 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
         originator.CreateSignature(value, out var signature);
         this.userInterfaceService.WriteLine(HashedString.FromEnum(CrystalResult.NoDirectory));
+
+        using (var terminal = this.control.NetControl.Terminal.Create(Netsphere.NodeAddress.Alternative))
+        {
+            var service = terminal.GetService<IBenchmarkService>();
+            await service.Report(new());
+        }
     }
 
     private ILogger<TestSubcommand> logger;
