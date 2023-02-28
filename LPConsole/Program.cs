@@ -59,6 +59,21 @@ public class Program
             });
         // .ConfigureBuilder(new LPConsole.Example.ExampleUnit.Builder()); // Alternative
 
+        string? lpArgs = null;
+        try
+        {
+            lpArgs = Environment.GetEnvironmentVariable("lpargs");
+            if (lpArgs != null)
+            {
+                await Console.Out.WriteLineAsync($"LP args: {lpArgs}");
+                Array.Resize(ref args, args.Length + 1);
+                args[args.Length - 1] = lpArgs;
+            }
+        }
+        catch
+        {
+        }
+
         unit = builder.Build(args);
 
         var options = unit.Context.ServiceProvider.GetRequiredService<LPOptions>();
