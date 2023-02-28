@@ -31,7 +31,7 @@ public sealed partial class AuthorityKey
     }
 
     public override int GetHashCode()
-        => this.seed.GetHash Code();
+        => this.hash != 0 ? this.hash : (this.hash = (int)FarmHash.Hash64(this.seed));
 
     public void SignToken(Token token)
     {
@@ -75,6 +75,8 @@ public sealed partial class AuthorityKey
     [Key(3)]
     // public Value[] Values { get; private set; } = Array.Empty<Value>();
     public Value Values { get; private set; } = default!;
+
+    private int hash;
 
     private PrivateKey GetOrCreatePrivateKey()
         => this.GetOrCreatePrivateKey(Credit.Default);

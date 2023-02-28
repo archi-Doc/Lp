@@ -73,6 +73,7 @@ public class Program
                 // Command
                 context.AddCommand(typeof(BasicTestSubcommand));
                 context.AddCommand(typeof(NetbenchSubcommand));
+                context.AddCommand(typeof(TaskScalingSubcommand));
 
                 // NetService
                 context.AddSingleton<ExternalServiceImpl>();
