@@ -42,8 +42,8 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
         int failureCount = 0;
         long totalLatency = 0;
 
-        // ThreadPool.GetMinThreads(out var workMin, out var ioMin);
-        // ThreadPool.SetMinThreads(Concurrent, ioMin);
+        ThreadPool.GetMinThreads(out var workMin, out var ioMin);
+        ThreadPool.SetMinThreads(options.Concurrent, ioMin);
 
         var sw = Stopwatch.StartNew();
         Parallel.For(0, options.Concurrent, i =>
@@ -72,6 +72,8 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
             }
         });
 
+        ThreadPool.SetMinThreads(workMin, ioMin);
+
         sw.Stop();
 
         var record = new IBenchmarkService.ReportRecord()
@@ -89,6 +91,8 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
             var service = terminal.GetService<IBenchmarkService>();
             await service.Report(record);
         }
+
+        await Console.Out.WriteLineAsync(record.ToString());
     }
 
     private ILogger logger;
