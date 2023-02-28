@@ -68,6 +68,13 @@ public class Program
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
         };
 
+        Console.Write("Arguments: ");
+        var arguments = Console.ReadLine();
+        if (arguments != null)
+        {
+            args = new string[1] { arguments, };
+        }
+
         // 3rd: Builder pattern
         var builder = new NetControl.Builder()
             .Configure(context =>
@@ -101,7 +108,7 @@ public class Program
         };
 
         // await SimpleParser.ParseAndRunAsync(commandTypes, "netbench -node alternative", parserOptions); // Main process
-        SimpleParserHelper.AddEnvironmentVariable(ref args, "lpargs");
+        // SimpleParserHelper.AddEnvironmentVariable(ref args, "lpargs");
         await SimpleParser.ParseAndRunAsync(unit.Context.Commands, args, parserOptions); // Main process
 
         ThreadCore.Root.Terminate();

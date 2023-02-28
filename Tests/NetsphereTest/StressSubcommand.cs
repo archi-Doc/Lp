@@ -19,10 +19,10 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
 
     public async Task RunAsync(StressOptions options, string[] args)
     {
-        NodeAddress? node = NodeAddress.Alternative;
+        NodeInformation? node = NodeInformation.Alternative;
         if (!string.IsNullOrEmpty(options.Node))
         {
-            if (!NetHelper.TryParseNodeAddress(this.logger, options.Node, out node))
+            if (!NetHelper.TryParseNodeInformation(this.logger, options.Node, out node))
             {
                 return;
             }
@@ -35,15 +35,15 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
 
     public NetControl NetControl { get; set; }
 
-    private async Task Stress1(NodeAddress node, StressOptions options)
+    private async Task Stress1(NodeInformation node, StressOptions options)
     {
         var data = new byte[100];
         int successCount = 0;
         int failureCount = 0;
         long totalLatency = 0;
 
-        ThreadPool.GetMinThreads(out var workMin, out var ioMin);
-        ThreadPool.SetMinThreads(options.Concurrent, ioMin);
+        // ThreadPool.GetMinThreads(out var workMin, out var ioMin);
+        // ThreadPool.SetMinThreads(options.Concurrent, ioMin);
 
         var sw = Stopwatch.StartNew();
         /*Parallel.For(0, options.Concurrent, i =>
@@ -82,6 +82,18 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
                     var sw2 = new Stopwatch();
                     using (var terminal = this.NetControl.Terminal.Create(node))
                     {
+                        /*var p = new PacketPing("test56789012345678901234567890123456789");
+                        sw2.Restart();
+                        var result = await terminal.SendPacketAndReceiveAsync<PacketPing, PacketPingResponse>(p);
+                        if (result.Result == NetResult.Success)
+                        {
+                            Interlocked.Increment(ref successCount);
+                        }
+                        else
+                        {
+                            Interlocked.Increment(ref failureCount);
+                        }*/
+
                         var service = terminal.GetService<IBenchmarkService>();
                         sw2.Restart();
                         var response = service.Pingpong(data).ResponseAsync;
@@ -104,7 +116,7 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
 
         await Task.WhenAll(array);
 
-        ThreadPool.SetMinThreads(workMin, ioMin);
+        // ThreadPool.SetMinThreads(workMin, ioMin);
 
         sw.Stop();
 
