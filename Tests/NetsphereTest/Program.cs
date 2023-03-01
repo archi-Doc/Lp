@@ -130,7 +130,7 @@ public class Program
 
         var options = new LP.Data.NetsphereOptions();
         options.EnableAlternative = true;
-        options.EnableLogger = true;
+        options.EnableLogger = false;
 
         var unit = builder.Build();
         var param = new NetControl.Unit.Param(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);

@@ -151,7 +151,7 @@ public record StressOptions
     public int Total { get; init; } = 1_000; // 1_000;
 
     [SimpleOption("concurrent", Description = "")]
-    public int Concurrent { get; init; } = 100; // 25;
+    public int Concurrent { get; init; } = 1_000; // 25;
 
     public override string ToString() => $"{this.Node}";
 }
