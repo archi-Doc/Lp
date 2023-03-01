@@ -42,8 +42,8 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
         int failureCount = 0;
         long totalLatency = 0;
 
-        // ThreadPool.GetMinThreads(out var workMin, out var ioMin);
-        // ThreadPool.SetMinThreads(300, ioMin);
+        ThreadPool.GetMinThreads(out var workMin, out var ioMin);
+        // ThreadPool.SetMinThreads(3000, ioMin);
 
         var sw = Stopwatch.StartNew();
         /*Parallel.For(0, options.Concurrent, i =>
@@ -75,7 +75,7 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
         var array = new Task[options.Concurrent];
         for (int i = 0; i < options.Concurrent; i++)
         {
-            array[i] = Task.Factory.StartNew(async () =>
+            array[i] = Task.Run(async () =>
             {
                 for (var j = 0; j < (options.Total / options.Concurrent); j++)
                 {
@@ -96,9 +96,9 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
 
                         var service = terminal.GetService<IBenchmarkService>();
                         sw2.Restart();
-                        var response = service.Pingpong(data).ResponseAsync;
 
-                        if (response.Result.IsSuccess)
+                        var response = await service.Pingpong(data).ResponseAsync; // response.Result.IsSuccess is EVIL
+                        if (response.IsSuccess)
                         {
                             Interlocked.Increment(ref successCount);
                         }
@@ -116,7 +116,7 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
 
         await Task.WhenAll(array);
 
-        // ThreadPool.SetMinThreads(workMin, ioMin);
+        ThreadPool.SetMinThreads(workMin, ioMin);
 
         sw.Stop();
 
@@ -148,7 +148,7 @@ public record StressOptions
     public string Node { get; init; } = string.Empty;
 
     [SimpleOption("total", Description = "")]
-    public int Total { get; init; } = 100; // 1_000;
+    public int Total { get; init; } = 1_000; // 1_000;
 
     [SimpleOption("concurrent", Description = "")]
     public int Concurrent { get; init; } = 100; // 25;

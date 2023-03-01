@@ -105,8 +105,8 @@ public class NetBenchSubcommand : ISimpleCommandAsync<NetBenchOptions>
         const int N = 50;
         var data = new byte[100];
 
-        ThreadPool.GetMinThreads(out var workMin, out var ioMin);
-        ThreadPool.SetMinThreads(50, ioMin);
+        // ThreadPool.GetMinThreads(out var workMin, out var ioMin);
+        // ThreadPool.SetMinThreads(50, ioMin);
 
         var sw = Stopwatch.StartNew();
         var count = 0;
@@ -130,7 +130,7 @@ public class NetBenchSubcommand : ISimpleCommandAsync<NetBenchOptions>
             }
         });
 
-        ThreadPool.SetMinThreads(workMin, ioMin);
+        // ThreadPool.SetMinThreads(workMin, ioMin);
 
         sw.Stop();
 

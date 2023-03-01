@@ -368,7 +368,7 @@ public class Terminal : UnitBase, IUnitExecutable
                 });
             }*/
 
-            Task.Run(async () =>
+            _ = Task.Run(async () =>
             {
                 terminal.GenePool.GetSequential();
                 terminal.SetSalt(packet.SaltA, response.SaltA2);

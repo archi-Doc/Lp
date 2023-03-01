@@ -405,15 +405,18 @@ public class NetInterface : IDisposable
 WaitForSendCompletionWait:
             try
             {
-                await this.NetTerminal.ReceiveEvent.WaitAsync(TimeSpan.FromMilliseconds(1000), this.Terminal.Core.CancellationToken).ConfigureAwait(false); // tempcode
+                await this.NetTerminal.ReceiveEvent.WaitAsync(TimeSpan.FromMilliseconds(100), this.Terminal.Core.CancellationToken).ConfigureAwait(false); // tempcode
 
                 // var ct = this.Terminal.Core?.CancellationToken ?? CancellationToken.None;
                 // await Task.WhenAny(this.NetTerminal.ReceiveEvent.WaitAsync(ct), Task.Delay(NetInterface.IntervalInMilliseconds, ct)).ConfigureAwait(false);
             }
-            catch
+            catch(OperationCanceledException)
             {
                 this.NetTerminal.Logger?.Log($"SendAsync: Closed2");
                 return NetResult.Closed;
+            }
+            catch
+            {
             }
         }
 
@@ -458,15 +461,18 @@ WaitForSendCompletionWait:
 
             try
             {
-                await this.NetTerminal.ReceiveEvent.WaitAsync(TimeSpan.FromMilliseconds(1000), this.Terminal.Core.CancellationToken).ConfigureAwait(false); // tempcode
+                await this.NetTerminal.ReceiveEvent.WaitAsync(TimeSpan.FromMilliseconds(100), this.Terminal.Core.CancellationToken).ConfigureAwait(false); // tempcode
 
                 // var ct = this.Terminal.Core?.CancellationToken ?? CancellationToken.None;
                 // await Task.WhenAny(this.NetTerminal.ReceiveEvent.WaitAsync(ct), Task.Delay(NetInterface.IntervalInMilliseconds, ct)).ConfigureAwait(false);
             }
-            catch
+            catch(OperationCanceledException)
             {
                 this.NetTerminal.Logger?.Log($"ReceiveAsync: Closed2");
                 return new NetReceivedData(NetResult.Closed);
+            }
+            catch
+            {
             }
         }
 
