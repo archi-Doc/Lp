@@ -405,9 +405,10 @@ public class NetInterface : IDisposable
 WaitForSendCompletionWait:
             try
             {
-                var ct = this.Terminal.Core?.CancellationToken ?? CancellationToken.None;
-                await Task.WhenAny(this.NetTerminal.ReceiveEvent.WaitAsync(ct), Task.Delay(NetInterface.IntervalInMilliseconds, ct)).ConfigureAwait(false);
-                // await this.NetTerminal.ReceiveEvent.WaitAsync(TimeSpan.FromMilliseconds(NetInterface.IntervalInMilliseconds), ct).ConfigureAwait(false);
+                await this.NetTerminal.ReceiveEvent.WaitAsync(TimeSpan.FromMilliseconds(1000), this.Terminal.Core.CancellationToken).ConfigureAwait(false); // tempcode
+
+                // var ct = this.Terminal.Core?.CancellationToken ?? CancellationToken.None;
+                // await Task.WhenAny(this.NetTerminal.ReceiveEvent.WaitAsync(ct), Task.Delay(NetInterface.IntervalInMilliseconds, ct)).ConfigureAwait(false);
             }
             catch
             {
@@ -457,11 +458,10 @@ WaitForSendCompletionWait:
 
             try
             {
-                var ct = this.Terminal.Core?.CancellationToken ?? CancellationToken.None;
-                await Task.WhenAny(this.NetTerminal.ReceiveEvent.WaitAsync(ct), Task.Delay(NetInterface.IntervalInMilliseconds, ct)).ConfigureAwait(false);
-                // await this.NetTerminal.ReceiveEvent.WaitAsync(TimeSpan.FromMilliseconds(NetInterface.IntervalInMilliseconds), ct).ConfigureAwait(false);
-                // await this.NetTerminal.ReceiveEvent.Task.WaitAsync(TimeSpan.FromMilliseconds(NetInterface.IntervalInMilliseconds), ct).ConfigureAwait(false);
-                // await Task.Delay(NetInterface.IntervalInMilliseconds, ct).ConfigureAwait(false);
+                await this.NetTerminal.ReceiveEvent.WaitAsync(TimeSpan.FromMilliseconds(1000), this.Terminal.Core.CancellationToken).ConfigureAwait(false); // tempcode
+
+                // var ct = this.Terminal.Core?.CancellationToken ?? CancellationToken.None;
+                // await Task.WhenAny(this.NetTerminal.ReceiveEvent.WaitAsync(ct), Task.Delay(NetInterface.IntervalInMilliseconds, ct)).ConfigureAwait(false);
             }
             catch
             {
