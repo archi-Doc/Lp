@@ -75,7 +75,7 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
         var array = new Task[options.Concurrent];
         for (int i = 0; i < options.Concurrent; i++)
         {
-            array[i] = Task.Run(async () =>
+            array[i] = Task.Factory.StartNew(async () =>
             {
                 for (var j = 0; j < (options.Total / options.Concurrent); j++)
                 {
