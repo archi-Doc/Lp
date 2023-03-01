@@ -43,7 +43,7 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
         long totalLatency = 0;
 
         // ThreadPool.GetMinThreads(out var workMin, out var ioMin);
-        // ThreadPool.SetMinThreads(options.Concurrent, ioMin);
+        // ThreadPool.SetMinThreads(300, ioMin);
 
         var sw = Stopwatch.StartNew();
         /*Parallel.For(0, options.Concurrent, i =>
@@ -148,10 +148,10 @@ public record StressOptions
     public string Node { get; init; } = string.Empty;
 
     [SimpleOption("total", Description = "")]
-    public int Total { get; init; } = 1_000;
+    public int Total { get; init; } = 100; // 1_000;
 
     [SimpleOption("concurrent", Description = "")]
-    public int Concurrent { get; init; } = 25;
+    public int Concurrent { get; init; } = 100; // 25;
 
     public override string ToString() => $"{this.Node}";
 }

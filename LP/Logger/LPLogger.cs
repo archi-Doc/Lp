@@ -3,16 +3,9 @@
 using LP.Data;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere;
+using Netsphere.Logging;
 
 namespace LP.Logging;
-
-public class ClientTerminalLoggerOptions : StreamLoggerOptions
-{
-}
-
-public class ServerTerminalLoggerOptions : StreamLoggerOptions
-{
-}
 
 public class LPLogger
 {
@@ -42,10 +35,6 @@ public class LPLogger
                 // Loggers (ConsoleAndFileLogger, BackgroundAndFileLogger, ConsoleLogger)
                 context.AddSingleton<BackgroundAndFileLogger>();
                 context.AddSingleton<ConsoleAndFileLogger>();
-
-                // Stream logger
-                context.Services.Add(ServiceDescriptor.Singleton(typeof(StreamLogger<>), typeof(StreamLoggerFactory<>)));
-                context.TryAddSingleton<StreamLoggerOptions>();
 
                 // Filters
                 context.AddSingleton<MachineLogFilter>();

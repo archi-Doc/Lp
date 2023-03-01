@@ -18,6 +18,7 @@ using LP.T3CS;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere;
+using Netsphere.Logging;
 using Netsphere.Machines;
 using SimpleCommandLine;
 

@@ -1,8 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace LP.Logging;
+namespace Netsphere.Logging;
 
-internal class StreamLogger<TOption> : BufferedLogOutput
+public class StreamLogger<TOption> : BufferedLogOutput
     where TOption : StreamLoggerOptions
 {
     public StreamLogger(UnitCore core, UnitLogger unitLogger, TOption options)

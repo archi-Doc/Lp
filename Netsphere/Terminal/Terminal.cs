@@ -355,6 +355,19 @@ public class Terminal : UnitBase, IUnitExecutable
             var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(terminal, firstGene, owner, secondGene, sendOwner);
             sendOwner.Return();
 
+            /*terminal.GenePool.GetSequential();
+            terminal.SetSalt(packet.SaltA, response.SaltA2);
+            terminal.CreateEmbryo(packet.Salt, response.Salt2);
+            terminal.SetReceiverNumber();
+            terminal.Add(netInterface); // Delay sending PacketEncryptResponse until the receiver is ready.
+            if (this.invokeServerDelegate != null)
+            {
+                new ThreadCore(ThreadCore.Root, x =>
+                {
+                    this.invokeServerDelegate(terminal);
+                });
+            }*/
+
             Task.Run(async () =>
             {
                 terminal.GenePool.GetSequential();

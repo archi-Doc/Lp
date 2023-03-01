@@ -7,8 +7,8 @@ global using Arc.Threading;
 global using Netsphere;
 using Arc.Unit;
 using LP.Data;
-using LP.NetServices;
 using Microsoft.Extensions.DependencyInjection;
+using Netsphere.Logging;
 using SimpleCommandLine;
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
@@ -89,12 +89,48 @@ public class Program
                 context.AddSingleton<ExternalServiceImpl>();
 
                 // ServiceFilter
-                context.AddSingleton<TestFilterB>();
+                context.AddSingleton<LP.NetServices.TestFilterB>();
+
+                // Resolver
+                context.ClearLoggerResolver();
+                context.AddLoggerResolver(context =>
+                {
+                    if (context.LogLevel == LogLevel.Debug)
+                    {// Debug -> no output
+                        context.SetOutput<EmptyLogger>();
+                        return;
+                    }
+
+                    if (context.LogSourceType == typeof(ClientTerminal))
+                    {// ClientTerminal
+                        context.SetOutput<StreamLogger<ClientTerminalLoggerOptions>>();
+                        return;
+                    }
+                    else if (context.LogSourceType == typeof(ServerTerminal))
+                    {// ServerTerminal
+                        context.SetOutput<StreamLogger<ServerTerminalLoggerOptions>>();
+                        return;
+                    }
+                });
+            })
+            .SetupOptions<ClientTerminalLoggerOptions>((context, options) =>
+            {// ClientTerminalLoggerOptions
+                var logfile = "Logs/Client/.txt";
+                options.Path = Path.Combine(context.RootDirectory, logfile);
+                options.MaxLogCapacity = 1;
+                options.MaxStreamCapacity = 1_000;
+            })
+            .SetupOptions<ServerTerminalLoggerOptions>((context, options) =>
+            {// ServerTerminalLoggerOptions
+                var logfile = "Logs/Server/.txt";
+                options.Path = Path.Combine(context.RootDirectory, logfile);
+                options.MaxLogCapacity = 1;
+                options.MaxStreamCapacity = 1_000;
             });
 
         var options = new LP.Data.NetsphereOptions();
         options.EnableAlternative = true;
-        options.EnableLogger = false;
+        options.EnableLogger = true;
 
         var unit = builder.Build();
         var param = new NetControl.Unit.Param(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);

@@ -13,6 +13,7 @@ global using Tinyhand;
 global using ValueLink;
 using System.Collections.Concurrent;
 using Microsoft.Extensions.DependencyInjection;
+using Netsphere.Logging;
 using Netsphere.Machines;
 using Netsphere.Responder;
 
@@ -43,6 +44,10 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddTransient<Server>();
                 // context.Services.Add(new ServiceDescriptor(typeof(NetService), x => new NetService(x), ServiceLifetime.Transient));
                 // context.AddTransient<NetService>(); // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
+
+                // Stream logger
+                context.Services.Add(ServiceDescriptor.Singleton(typeof(StreamLogger<>), typeof(StreamLoggerFactory<>)));
+                context.TryAddSingleton<StreamLoggerOptions>();
 
                 // Machines
                 context.AddTransient<EssentialNetMachine>();
