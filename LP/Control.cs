@@ -217,8 +217,25 @@ public class Control : ILogInformation
 
             // Second - Arguments
             SimpleParser.TryParseOptions<LPOptions>(args, out options, options);
+
             if (options != null)
             {
+                // Passphrase
+                if (options.Pass == null)
+                {
+                    try
+                    {
+                        var lppass = Environment.GetEnvironmentVariable("lppass");
+                        if (lppass != null)
+                        {
+                            options.Pass = lppass;
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+
                 context.SetOptions(options);
             }
         }
@@ -587,7 +604,7 @@ public class Control : ILogInformation
         }
         else
         {
-            var result = await this.Vault.LoadAsync(this.LPBase.CombineDataPath(this.LPBase.Options.Vault, Vault.Filename)).ConfigureAwait(false);
+            var result = await this.Vault.LoadAsync(this.LPBase.CombineDataPath(this.LPBase.Options.Vault, Vault.Filename), this.LPBase.Options.Pass).ConfigureAwait(false);
             if (result)
             {
                 goto LoadKeyVaultObjects;
@@ -605,7 +622,12 @@ public class Control : ILogInformation
         // await this.UserInterfaceService.Notify(UserInterfaceNotifyLevel.Information, Hashed.KeyVault.Create);
 
         // New Vault
-        var password = await this.UserInterfaceService.RequestPasswordAndConfirm(Hashed.Vault.EnterPassword, Hashed.Dialog.Password.Confirm);
+        var password = this.LPBase.Options.Pass;
+        if (string.IsNullOrEmpty(password))
+        {
+            password = await this.UserInterfaceService.RequestPasswordAndConfirm(Hashed.Vault.EnterPassword, Hashed.Dialog.Password.Confirm);
+        }
+
         if (password == null)
         {
             throw new PanicException();
