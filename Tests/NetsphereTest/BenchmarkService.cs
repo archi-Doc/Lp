@@ -1,32 +1,110 @@
-﻿using NetsphereTest;
-using Tinyhand;
+﻿using System.Diagnostics;
+using NetsphereTest;
 
 namespace LP.NetServices;
 
-[NetServiceInterface]
-public partial interface IBenchmarkService : INetService
+public class RemoteBenchBroker
 {
-    public NetTask Send(byte[] data);
-
-    public NetTask<byte[]?> Pingpong(byte[] data);
-
-    [TinyhandObject(ImplicitKeyAsName = true)]
-    public partial record ReportRecord
+    public RemoteBenchBroker()
     {
-        public int SuccessCount { get; init; }
-
-        public int FailureCount { get; init; }
-
-        public int Concurrent { get; init; }
-
-        public long ElapsedMilliseconds { get; init; }
-
-        public int CountPerSecond { get; init; }
-
-        public int AverageLatency { get; init; }
     }
 
-    public NetTask Report(ReportRecord record);
+    public void Start(int total, int concurrent)
+    {
+        Volatile.Write(ref this.total, total);
+        Volatile.Write(ref this.concurrent, concurrent);
+        this.pulseEvent.Pulse();
+    }
+
+    public async Task<bool> Wait()
+    {
+        try
+        {
+            await this.pulseEvent.WaitAsync(TimeSpan.FromHours(1), ThreadCore.Root.CancellationToken);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public async Task Process(Terminal terminal, NodeInformation node)
+    {
+        var data = new byte[100];
+        int successCount = 0;
+        int failureCount = 0;
+        long totalLatency = 0;
+
+        var total = this.total;
+        var concurrent = this.concurrent;
+
+        // ThreadPool.GetMinThreads(out var workMin, out var ioMin);
+        // ThreadPool.SetMinThreads(3000, ioMin);
+
+        var sw = Stopwatch.StartNew();
+        var array = new Task[this.concurrent];
+        for (int i = 0; i < this.concurrent; i++)
+        {
+            array[i] = Task.Run(async () =>
+            {
+                for (var j = 0; j < (total / concurrent); j++)
+                {
+                    var sw2 = new Stopwatch();
+                    using (var t = terminal.Create(node))
+                    {
+                        var service = t.GetService<IBenchmarkService>();
+                        sw2.Restart();
+
+                        var response = await service.Pingpong(data).ResponseAsync; // response.Result.IsSuccess is EVIL
+                        if (response.IsSuccess)
+                        {
+                            Interlocked.Increment(ref successCount);
+                        }
+                        else
+                        {
+                            Interlocked.Increment(ref failureCount);
+                        }
+
+                        sw2.Stop();
+                        Interlocked.Add(ref totalLatency, sw2.ElapsedMilliseconds);
+                    }
+                }
+            });
+        }
+
+        await Task.WhenAll(array);
+
+        // ThreadPool.SetMinThreads(workMin, ioMin);
+
+        sw.Stop();
+
+        var record = new IBenchmarkService.ReportRecord()
+        {
+            SuccessCount = successCount,
+            FailureCount = failureCount,
+            Concurrent = concurrent,
+            ElapsedMilliseconds = sw.ElapsedMilliseconds,
+            CountPerSecond = (int)((successCount + failureCount) * 1000 / sw.ElapsedMilliseconds),
+            AverageLatency = (int)(totalLatency / (successCount + failureCount)),
+        };
+
+        using (var t = terminal.Create(node))
+        {
+            var service = t.GetService<IBenchmarkService>();
+            await service.Report(record);
+        }
+
+        await Console.Out.WriteLineAsync(record.ToString());
+    }
+
+    public int Total => this.total;
+
+    public int Concurrent => this.concurrent;
+
+    private AsyncPulseEvent pulseEvent = new();
+    private int total;
+    private int concurrent;
 }
 
 [NetServiceFilter(typeof(TestFilter), Order = 1)]
@@ -34,13 +112,25 @@ public partial interface IBenchmarkService : INetService
 [NetServiceObject]
 public class BenchmarkServiceImpl : IBenchmarkService
 {
-    public BenchmarkServiceImpl()
+    public BenchmarkServiceImpl(RemoteBenchBroker remoteBenchBroker)
     {
+        this.remoteBenchBroker = remoteBenchBroker;
+    }
+
+    public async NetTask<NetResult> Register()
+    {
+        return NetResult.NoNetService;
+    }
+
+    public async NetTask<NetResult> Start(int total, int concurrent)
+    {
+        this.remoteBenchBroker.Start(total, concurrent);
+        return NetResult.Success;
     }
 
     public async NetTask Report(IBenchmarkService.ReportRecord record)
     {
-        await Console.Out.WriteLineAsync(record.ToString());
+        // await Console.Out.WriteLineAsync(record.ToString());
     }
 
     public async NetTask<byte[]?> Pingpong(byte[] data)
@@ -66,6 +156,8 @@ public class BenchmarkServiceImpl : IBenchmarkService
 
         context.Result = NetResult.NoEncryptedConnection;
     }
+
+    private RemoteBenchBroker remoteBenchBroker;
 }
 
 public class TestFilterB : TestFilter

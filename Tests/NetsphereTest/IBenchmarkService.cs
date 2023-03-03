@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace Netsphere.NetServices;
+using Tinyhand;
+
+namespace LP.NetServices;
 
 [NetServiceInterface]
 public partial interface IBenchmarkService : INetService
@@ -8,6 +10,10 @@ public partial interface IBenchmarkService : INetService
     public NetTask Send(byte[] data);
 
     public NetTask<byte[]?> Pingpong(byte[] data);
+
+    public NetTask<NetResult> Register();
+
+    public NetTask<NetResult> Start(int total, int concurrent);
 
     [TinyhandObject(ImplicitKeyAsName = true)]
     public partial record ReportRecord

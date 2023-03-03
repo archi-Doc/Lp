@@ -9,6 +9,7 @@ using Arc.Unit;
 using LP.Data;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Logging;
+using LP.NetServices;
 using SimpleCommandLine;
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
@@ -68,11 +69,14 @@ public class Program
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
         };
 
-        Console.Write("Arguments: ");
-        var arguments = Console.ReadLine();
-        if (arguments != null)
+        if (args.Length == 0)
         {
-            args = new string[1] { arguments, };
+            Console.Write("Arguments: ");
+            var arguments = Console.ReadLine();
+            if (arguments != null)
+            {
+                args = new string[1] { arguments, };
+            }
         }
 
         // 3rd: Builder pattern
@@ -84,12 +88,17 @@ public class Program
                 context.AddCommand(typeof(NetbenchSubcommand));
                 context.AddCommand(typeof(TaskScalingSubcommand));
                 context.AddCommand(typeof(StressSubcommand));
+                context.AddCommand(typeof(RemoteBenchSubcommand));
 
                 // NetService
+                context.AddSingleton<BenchmarkServiceImpl>();
                 context.AddSingleton<ExternalServiceImpl>();
 
                 // ServiceFilter
                 context.AddSingleton<LP.NetServices.TestFilterB>();
+
+                // Other
+                context.AddSingleton<RemoteBenchBroker>();
 
                 // Resolver
                 context.ClearLoggerResolver();
@@ -129,7 +138,7 @@ public class Program
             });
 
         var options = new LP.Data.NetsphereOptions();
-        options.EnableAlternative = true;
+        options.EnableAlternative = false;
         options.EnableLogger = false;
 
         var unit = builder.Build();

@@ -63,6 +63,7 @@ public class Control : ILogInformation
                 // RPC / Services
                 context.AddSingleton<NetServices.AuthorizedTerminalFactory>();
                 context.AddTransient<NetServices.BenchmarkServiceImpl>();
+                context.AddSingleton<NetServices.RemoteBenchBroker>();
                 context.AddTransient<NetServices.RemoteControlServiceImpl>();
                 context.AddTransient<NetServices.T3CS.MergerServiceImpl>();
 
@@ -79,7 +80,7 @@ public class Control : ILogInformation
                 context.AddSubcommand(typeof(LP.Subcommands.MicsSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.GCSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.PingSubcommand));
-                context.AddSubcommand(typeof(LP.Subcommands.NetBenchSubcommand));
+                context.AddSubcommand(typeof(LP.Subcommands.RemoteBenchSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.PunchSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.BenchmarkSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.SeedphraseSubcommand));
