@@ -48,6 +48,9 @@ public partial record LPOptions : ILogInformation
     [SimpleOption("confirmexit", Description = "Confirms application exit")]
     public bool ConfirmExit { get; init; } = false;
 
+    [SimpleOption("colorconsole", Description = "Enable color console")]
+    public bool ColorConsole { get; init; } = true; 
+
     public void LogInformation(ILog log)
     {
         this.NetsphereOptions.LogInformation(log);

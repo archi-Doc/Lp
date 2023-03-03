@@ -148,7 +148,14 @@ public class Control : ILogInformation
 
             this.SetupOptions<ConsoleLoggerOptions>((context, options) =>
             {// ConsoleLoggerOptions
-                options.Formatter.EnableColor = true;
+                if (context.TryGetOptions<LPOptions>(out var lpOptions))
+                {
+                    options.Formatter.EnableColor = lpOptions.ColorConsole;
+                }
+                else
+                {
+                    options.Formatter.EnableColor = true;
+                }
             });
 
             this.SetupOptions<LPBase>((context, lpBase) =>
