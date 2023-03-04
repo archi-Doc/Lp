@@ -81,6 +81,21 @@ public class Program
 
         // 3rd: Builder pattern
         var builder = new NetControl.Builder()
+            .Preload(context =>
+            {
+                var options = context.GetOrCreateOptions<NetsphereOptions>();
+                if (context.Arguments.TryGetOption("port", out var portString))
+                {
+                    if (int.TryParse(portString, out var port))
+                    {
+                        options.Port = port;
+                    }
+                }
+
+                options.EnableAlternative = false;
+                options.EnableLogger = false;
+                context.SetOptions(options);
+            })
             .Configure(context =>
             {
                 // Command
@@ -137,11 +152,9 @@ public class Program
                 options.MaxStreamCapacity = 1_000;
             });
 
-        var options = new LP.Data.NetsphereOptions();
-        options.EnableAlternative = false;
-        options.EnableLogger = false;
-
-        var unit = builder.Build();
+        var unit = builder.Build(args);
+        var options = unit.Context.ServiceProvider.GetRequiredService<NetsphereOptions>();
+        await Console.Out.WriteLineAsync($"Port: {options.Port.ToString()}");
         var param = new NetControl.Unit.Param(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);
         await unit.RunStandalone(param);
 
@@ -149,7 +162,7 @@ public class Program
         {
             ServiceProvider = unit.Context.ServiceProvider,
             RequireStrictCommandName = false,
-            RequireStrictOptionName = true,
+            RequireStrictOptionName = false,
         };
 
         // await SimpleParser.ParseAndRunAsync(commandTypes, "netbench -node alternative", parserOptions); // Main process
