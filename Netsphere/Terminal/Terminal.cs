@@ -193,6 +193,7 @@ public class Terminal : UnitBase, IUnitExecutable
             array = this.terminals.QueueChain.ToArray();
         }
 
+        this.MaxCapacityPerRound = 10; // tempcode
         foreach (var x in array)
         {
             x.ProcessSend(currentMics);
@@ -538,6 +539,10 @@ public class Terminal : UnitBase, IUnitExecutable
     internal UdpClient? UnsafeUdpClient => this.NetSocket.UnsafeUdpClient;
 
     internal UnitLogger UnitLogger { get; private set; }
+
+#pragma warning disable SA1401 // Fields should be private
+    internal int MaxCapacityPerRound;
+#pragma warning restore SA1401 // Fields should be private
 
     private ILogger<Terminal> logger;
     private InvokeServerDelegate? invokeServerDelegate;

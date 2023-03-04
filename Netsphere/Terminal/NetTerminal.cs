@@ -70,7 +70,7 @@ public partial class NetTerminal : IDisposable
     public override int GetHashCode()
         => HashCode.Combine(this.Endpoint);
 
-    public void SetMaximumResponseTime(int milliseconds = 800)
+    public void SetMaximumResponseTime(int milliseconds = 1000)
     {
         this.maximumResponseMics = Mics.FromMilliseconds(milliseconds);
     }

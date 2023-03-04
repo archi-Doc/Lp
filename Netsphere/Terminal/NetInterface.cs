@@ -624,8 +624,8 @@ WaitForSendCompletionWait:
         for (var i = 0; i < remaining; i++)
         {// remaining > 0
             var x = this.SendGenes[this.SendIndex];
-            if (sendCapacity == 0)
-            {
+            if (sendCapacity == 0 || this.Terminal.MaxCapacityPerRound <= 0)
+            {// tempcode
                 return;
             }
 
@@ -642,6 +642,7 @@ WaitForSendCompletionWait:
                     // this.NetTerminal.Logger?.Log($"Udp Sent: {x.ToString()}");
 
                     sendCapacity--;
+                    Interlocked.Decrement(ref this.Terminal.MaxCapacityPerRound);
                     x.SentMics = currentMics;
                     this.NetTerminal.FlowControl.ReportSend(currentMics);
                 }
@@ -652,8 +653,9 @@ WaitForSendCompletionWait:
                 {
                     if (x.Send())
                     {
-                        // this.NetTerminal.Logger?.Log($"Udp Resent: {x.ToString()}");
+                        this.NetTerminal.Logger?.Log($"Udp Resent: {x.ToString()}");
                         sendCapacity--;
+                        Interlocked.Decrement(ref this.Terminal.MaxCapacityPerRound);
                         x.SentMics = currentMics;
                         this.NetTerminal.FlowControl.ReportSend(currentMics);
                         this.NetTerminal.IncrementResendCount();
