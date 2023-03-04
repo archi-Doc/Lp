@@ -20,7 +20,7 @@ public class RemoteBenchBroker
     {
         try
         {
-            await this.pulseEvent.WaitAsync(TimeSpan.FromHours(1), ThreadCore.Root.CancellationToken);
+            await this.pulseEvent.WaitAsync(TimeSpan.FromMinutes(10), ThreadCore.Root.CancellationToken);
             return true;
         }
         catch

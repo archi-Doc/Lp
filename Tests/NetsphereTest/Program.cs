@@ -12,8 +12,6 @@ using Netsphere.Logging;
 using LP.NetServices;
 using SimpleCommandLine;
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-
 namespace NetsphereTest;
 
 public class Program
@@ -69,7 +67,7 @@ public class Program
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
         };
 
-        SimpleCommandLine.SimpleParserHelper.AddEnvironmentVariable(ref args, "lpargs");
+        SimpleParserHelper.AddEnvironmentVariable(ref args, "lpargs");
         if (args.Length == 0)
         {
             Console.Write("Arguments: ");
@@ -84,17 +82,17 @@ public class Program
         var builder = new NetControl.Builder()
             .Preload(context =>
             {
-                var options = context.GetOrCreateOptions<NetsphereOptions>();
-                if (context.Arguments.TryGetOption("port", out var portString))
+                var original = context.GetOrCreateOptions<NetsphereOptions>();
+                original.EnableAlternative = false;
+                original.EnableLogger = false;
+
+                NetsphereOptions? options = default;
+                if (context.Arguments.TryGetOption("ns", out var nsArg))
                 {
-                    if (int.TryParse(portString, out var port))
-                    {
-                        options.Port = port;
-                    }
+                    SimpleParser.TryParseOptions(nsArg.UnwrapBracket(), out options, original);
                 }
 
-                options.EnableAlternative = false;
-                options.EnableLogger = false;
+                options ??= original;
                 context.SetOptions(options);
             })
             .Configure(context =>
