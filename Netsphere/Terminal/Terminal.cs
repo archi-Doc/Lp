@@ -193,7 +193,7 @@ public class Terminal : UnitBase, IUnitExecutable
             array = this.terminals.QueueChain.ToArray();
         }
 
-        this.MaxCapacityPerRound = 10; // tempcode
+        this.MaxCapacityPerRound = 25; // tempcode
         foreach (var x in array)
         {
             x.ProcessSend(currentMics);
