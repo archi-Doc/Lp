@@ -69,7 +69,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
 
     public Control Control { get; set; }
 
-    private ILogger<PingSubcommand> logger;
+    private ILogger logger;
 }
 
 public record PingOptions
