@@ -11,8 +11,6 @@ namespace Netsphere;
 public class NetSocket
 {
     private const int ReceiveTimeout = 100;
-    private const int SendIntervalMilliseconds = 2;
-    private const int SendIntervalNanoseconds = 2_000_000;
 
     internal class NetSocketRecvCore : ThreadCore
     {
@@ -93,7 +91,7 @@ public class NetSocket
                 core.ProcessSend();
 
                 // core.Sleep(SendIntervalMilliseconds);
-                core.TryNanoSleep(SendIntervalNanoseconds); // Performs better than core.Sleep() on Linux.
+                core.TryNanoSleep(NetConstants.SendIntervalNanoseconds); // Performs better than core.Sleep() on Linux.
             }
         }
 
@@ -101,7 +99,7 @@ public class NetSocket
                 : base(parent, Process, false)
         {
             this.socket = socket;
-            this.timer = MultimediaTimer.TryCreate(SendIntervalMilliseconds, this.ProcessSend); // Use multimedia timer if available.
+            this.timer = MultimediaTimer.TryCreate(NetConstants.SendIntervalMilliseconds, this.ProcessSend); // Use multimedia timer if available.
         }
 
         public void ProcessSend()
@@ -109,7 +107,7 @@ public class NetSocket
             // Check interval.
             var currentMics = Mics.GetSystem();
             var previous = Volatile.Read(ref this.previousMics);
-            var interval = Mics.FromNanoseconds((double)SendIntervalNanoseconds / 2); // Half for margin.
+            var interval = Mics.FromNanoseconds((double)NetConstants.SendIntervalNanoseconds / 2); // Half for margin.
             if (currentMics < (previous + interval))
             {
                 return;

@@ -6,8 +6,6 @@ namespace Netsphere;
 
 public class FlowControl
 {
-    public static readonly long MicsPerRound = Mics.FromMilliseconds(2);
-    public static readonly double MicsPerRoundRev = 1d / Mics.FromMilliseconds(2);
     public static readonly double InitialSendCapacityPerRound = 1; // 1 = 5 MBits/sec.
     public static readonly long InitialWindowMics = Mics.FromMilliseconds(300);
     public static readonly long MinimumWindowMics = Mics.FromMilliseconds(50);
@@ -135,14 +133,14 @@ public class FlowControl
         }
         else if (this.lastMics == 0)
         {
-            this.lastMics = currentMics - MicsPerRound;
+            this.lastMics = currentMics - NetConstants.MicsPerRound;
         }
 
         // Window
         this.UpdateWindow(currentMics);
 
         // Send Capacity
-        var roundElapsed = (currentMics - this.lastMics) * MicsPerRoundRev;
+        var roundElapsed = (currentMics - this.lastMics) * NetConstants.MicsPerRoundRev;
         this.sendCapacityAccumulated += this.currentWindow.SendCapacityPerRound * roundElapsed;
         var ceiling = Math.Ceiling(this.currentWindow.SendCapacityPerRound);
         if (this.sendCapacityAccumulated > ceiling)
@@ -290,7 +288,7 @@ public class FlowControl
         }
 
         var window = this.twoPreviousWindow;
-        var sendCapacity = window.SendCapacityPerRound * window.DurationMics * MicsPerRoundRev;
+        var sendCapacity = window.SendCapacityPerRound * window.DurationMics * NetConstants.MicsPerRoundRev;
         if (this.NetBase.Log.FlowControl && !this.NetTerminal.Terminal.IsAlternative)
         {
             // Logger.Console.Information($"SendPerWindow: {this.sendPerWindow}, Send: {window.SendCount}/{sendCapacity:F0}");
