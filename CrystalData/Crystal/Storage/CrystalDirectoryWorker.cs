@@ -36,6 +36,7 @@ internal class CrystalDirectoryWorker : TaskWorker<CrystalDirectoryWork>
         string? filePath = null;
         var tryCount = 0;
 
+        worker.CrystalDirectory.Logger?.TryGet()?.Log($"{work.Type}: {filePath}");
         if (work.Type == CrystalDirectoryWork.WorkType.Save)
         {// Save
             var hash = new byte[CrystalDirectory.HashSize];
