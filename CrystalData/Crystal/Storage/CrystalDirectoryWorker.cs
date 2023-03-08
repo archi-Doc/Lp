@@ -94,6 +94,7 @@ TrySave:
                     var read = await RandomAccess.ReadAsync(handle, hash, 0, worker.CancellationToken).ConfigureAwait(false);
                     if (read != CrystalDirectory.HashSize)
                     {
+                        worker.CrystalDirectory.Logger?.TryGet()?.Log($"DeleteAndExit1 {filePath}");
                         goto DeleteAndExit;
                     }
 
@@ -101,11 +102,13 @@ TrySave:
                     read = await RandomAccess.ReadAsync(handle, memoryOwner.Memory, CrystalDirectory.HashSize, worker.CancellationToken).ConfigureAwait(false);
                     if (read != work.LoadSize)
                     {
+                        worker.CrystalDirectory.Logger?.TryGet()?.Log($"DeleteAndExit2 {filePath}");
                         goto DeleteAndExit;
                     }
 
                     if (BitConverter.ToUInt64(hash) != Arc.Crypto.FarmHash.Hash64(memoryOwner.Memory.Span))
                     {
+                        worker.CrystalDirectory.Logger?.TryGet()?.Log($"DeleteAndExit3 {filePath}");
                         goto DeleteAndExit;
                     }
 
