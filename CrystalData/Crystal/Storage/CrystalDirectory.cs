@@ -85,6 +85,9 @@ internal partial class CrystalDirectory : IDisposable
 
         lock (this.syncObject)
         {
+            this.snowflakeGoshujin.SnowflakeIdChain.TryGetValue(snowflakeId, out snowflake);
+            Console.WriteLine($"Save3: {snowflakeId} {snowflake != null} {snowflake?.SnowflakeId} {snowflake?.Size}"); // tempcode
+
             if (snowflakeId != 0 &&
                 this.snowflakeGoshujin.SnowflakeIdChain.TryGetValue(snowflakeId, out snowflake) &&
                 snowflake.IsAlive)
@@ -106,7 +109,7 @@ internal partial class CrystalDirectory : IDisposable
             file = CrystalHelper.ToFile(this.DirectoryId, snowflake.SnowflakeId);
         }
 
-        Console.WriteLine($"Save2: {file}");
+        Console.WriteLine($"Save2: {file}"); // tempcode
         this.worker.AddLast(new(snowflake.SnowflakeId, memoryToBeShared.IncrementAndShare()));
     }
 
