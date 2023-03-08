@@ -114,6 +114,7 @@ public class BlockDatumImpl : HimoGoshujinClass.Himo, BlockDatum, IBaseDatum
 
     void IBaseDatum.Save()
     {
+        Console.WriteLine($"Datum Save {!this.isSaved}"); // tempcode
         if (!this.isSaved)
         {// Not saved.
             this.dataInternal.DataToStorage<BlockDatum>(this.memoryObject.MemoryOwner);
