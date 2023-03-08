@@ -4,8 +4,8 @@ namespace LP.Crystal;
 
 public class LpCrystal : Crystal<LpRootData>
 {
-    public LpCrystal(UnitCore core, CrystalOptions options, ILogger<LpCrystal> logger)
-        : base(core, options, logger)
+    public LpCrystal(UnitCore core, CrystalOptions options, ILogger<LpCrystal> logger, UnitLogger unitLogger)
+        : base(core, options, logger, unitLogger)
     {
         this.Datum.Register<BlockDatum>(x => new BlockDatumImpl(x));
     }

@@ -7,17 +7,17 @@ namespace CrystalData;
 public partial class Crystal<TData> : ICrystal, ICrystalInternal
     where TData : BaseData
 {
-    internal Crystal(UnitCore core, CrystalOptions options, ILogger<Crystal<TData>> logger)
-        : this(core, options, (ILogger)logger)
+    internal Crystal(UnitCore core, CrystalOptions options, ILogger<Crystal<TData>> logger, UnitLogger unitLogger)
+        : this(core, options, (ILogger)logger, unitLogger)
     {
     }
 
-    protected Crystal(UnitCore core, CrystalOptions options, ILogger logger)
+    protected Crystal(UnitCore core, CrystalOptions options, ILogger logger, UnitLogger unitLogger)
     {
         this.logger = logger;
         this.Core = core;
         this.Options = options;
-        this.Storage = new();
+        this.Storage = new(unitLogger);
         this.himoGoshujin = new(this);
         this.InitializeRoot();
 

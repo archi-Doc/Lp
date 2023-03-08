@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using static Arc.Unit.ByteArrayPool;
+
 namespace CrystalData;
 
 internal class CrystalDirectoryWorker : TaskWorker<CrystalDirectoryWork>
@@ -26,7 +28,6 @@ internal class CrystalDirectoryWorker : TaskWorker<CrystalDirectoryWork>
         });
 
         this.CrystalDirectory = crystalDirectory;
-        // this.logger = Crystal.UnitLogger.GetLogger<CrystalDirectoryWorker>();
     }
 
     public static async Task Process(TaskWorker<CrystalDirectoryWork> w, CrystalDirectoryWork work)
@@ -57,11 +58,13 @@ TrySave:
                 {
                     await RandomAccess.WriteAsync(handle, hash, 0, worker.CancellationToken).ConfigureAwait(false);
                     await RandomAccess.WriteAsync(handle, work.SaveData.Memory, CrystalDirectory.HashSize, worker.CancellationToken).ConfigureAwait(false);
+                    worker.CrystalDirectory.Logger?.TryGet()?.Log($"Written {filePath}, {work.SaveData.Memory.Length}");
                 }
             }
             catch (DirectoryNotFoundException)
             {
                 Directory.CreateDirectory(directoryPath);
+                worker.CrystalDirectory.Logger?.TryGet()?.Log($"CreateDirectory {directoryPath}");
                 goto TrySave;
             }
             catch (OperationCanceledException)
@@ -70,6 +73,7 @@ TrySave:
             }
             catch
             {
+                worker.CrystalDirectory.Logger?.TryGet()?.Log($"Retry {filePath}");
                 goto TrySave;
             }
             finally
@@ -105,6 +109,7 @@ TrySave:
                     }
 
                     work.LoadData = memoryOwner;
+                    worker.CrystalDirectory.Logger?.TryGet()?.Log($"Read {filePath}, {memoryOwner.Memory.Length}");
                 }
             }
             catch (OperationCanceledException)
@@ -113,6 +118,7 @@ TrySave:
             }
             catch
             {
+                worker.CrystalDirectory.Logger?.TryGet()?.Log($"Read exception {filePath}");
             }
             finally
             {
@@ -141,6 +147,7 @@ DeleteAndExit:
         if (filePath != null)
         {
             File.Delete(filePath);
+            worker.CrystalDirectory.Logger?.TryGet()?.Log($"DeleteAndExit {filePath}");
         }
 
         return;
@@ -162,8 +169,6 @@ DeleteAndExit:
     }
 
     private HashSet<string> createdDirectories = new();*/
-
-    // private ILogger<CrystalDirectoryWorker>? logger;
 }
 
 internal class CrystalDirectoryWork : IEquatable<CrystalDirectoryWork>

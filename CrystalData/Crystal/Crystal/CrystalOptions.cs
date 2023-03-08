@@ -48,6 +48,8 @@ public record CrystalOptions
 
     public string SnowflakeBackup { get; init; } = "Snowflake.back";
 
+    public bool EnableLogger { get; init; } = true;
+
     public string RootPath => this.rootPath ??= PathHelper.GetRootedDirectory(Directory.GetCurrentDirectory(), this.CrystalPath);
 
     public string CrystalFilePath => PathHelper.GetRootedFile(this.RootPath, this.CrystalFile);

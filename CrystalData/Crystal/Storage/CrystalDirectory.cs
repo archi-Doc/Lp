@@ -129,9 +129,9 @@ internal partial class CrystalDirectory : IDisposable
         this.worker.AddLast(new(snowflakeId));
     }
 
-    internal bool PrepareAndCheck(Storage io)
+    internal bool PrepareAndCheck(Storage storage)
     {
-        this.Options = io.Options;
+        this.Options = storage.Options;
         try
         {
             if (Path.IsPathRooted(this.DirectoryPath))
@@ -162,6 +162,11 @@ internal partial class CrystalDirectory : IDisposable
         catch
         {// No directory file
             return false;
+        }
+
+        if (this.Options.EnableLogger)
+        {
+            this.Logger = storage.UnitLogger.GetLogger<CrystalDirectory>();
         }
 
         return true;
@@ -215,6 +220,9 @@ internal partial class CrystalDirectory : IDisposable
 
     [IgnoreMember]
     internal double UsageRatio { get; private set; }
+
+    [IgnoreMember]
+    internal ILogger? Logger { get; private set; }
 
     internal void CalculateUsageRatio()
     {

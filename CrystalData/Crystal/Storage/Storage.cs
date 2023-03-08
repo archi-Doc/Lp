@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Arc.Unit;
 using CrystalData.Results;
 
 namespace CrystalData;
@@ -8,8 +9,9 @@ public sealed class Storage
 {
     public const int DirectoryRotationThreshold = 1024 * 1024 * 100; // 100 MB
 
-    internal Storage()
+    internal Storage(UnitLogger unitLogger)
     {
+        this.UnitLogger = unitLogger;
         this.data = TinyhandSerializer.Reconstruct<StorageData>();
     }
 
@@ -351,6 +353,8 @@ public sealed class Storage
             memoryStat.Add(size);
         }
     }
+
+    internal UnitLogger UnitLogger { get; }
 
     private object syncObject = new();
     private StorageData data; // lock(syncObject)
