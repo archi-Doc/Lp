@@ -1,21 +1,20 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics;
 using Netsphere;
 using SimpleCommandLine;
 
 namespace LP.Subcommands;
 
-[SimpleCommand("getnode")]
-public class GetNodeInformationSubcommand : ISimpleCommandAsync<PingOptions>
+[SimpleCommand("get")]
+public class NodeSubcommandGet : ISimpleCommandAsync<NodeSubcommandGetOptions>
 {
-    public GetNodeInformationSubcommand(ILogger<GetNodeInformationSubcommand> logger, Control control)
+    public NodeSubcommandGet(ILogger<NodeSubcommandGet> logger, Control control)
     {
         this.Control = control;
         this.logger = logger;
     }
 
-    public async Task RunAsync(PingOptions options, string[] args)
+    public async Task RunAsync(NodeSubcommandGetOptions options, string[] args)
     {
         if (!NetHelper.TryParseNodeAddress(this.logger, options.Node, out var node))
         {
@@ -29,7 +28,7 @@ public class GetNodeInformationSubcommand : ISimpleCommandAsync<PingOptions>
             if (result.Value != null)
             {
                 var n = NodeInformation.Merge(node, result.Value.Node);
-                this.logger.TryGet()?.Log($"NodeInformation: {n.ToString()}");
+                this.logger.TryGet()?.Log($"{n.ToString()}");
             }
         }
     }
@@ -39,7 +38,7 @@ public class GetNodeInformationSubcommand : ISimpleCommandAsync<PingOptions>
     private ILogger logger;
 }
 
-public record GetNodeInformationSubcommandOptions
+public record NodeSubcommandGetOptions
 {
     [SimpleOption("node", Description = "Node address", Required = true)]
     public string Node { get; init; } = string.Empty;
