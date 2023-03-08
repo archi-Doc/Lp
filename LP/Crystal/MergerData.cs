@@ -142,7 +142,11 @@ public partial class MergerData : BaseData
     {
         if (this.children == null)
         {
-            yield break;
+            this.TryLoadChildren();
+            if (this.children == null)
+            {
+                yield break;
+            }
         }
 
         foreach (var x in this.children)
@@ -226,6 +230,39 @@ public partial class MergerData : BaseData
         else
         {// New
             return new GoshujinClass();
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void TryLoadChildren()
+    {
+        if (this.children == null && CrystalHelper.IsValidFile(this.childrenFile))
+        {// Load
+            var result = this.Crystal.Storage.Load(this.childrenFile).Result;
+            if (result.IsSuccess)
+            {
+                GoshujinClass? goshujin = null;
+                try
+                {
+                    goshujin = TinyhandSerializer.DeserializeObject<GoshujinClass>(result.Data.Memory.Span);
+                    if (goshujin is not null)
+                    {
+                        foreach (var x in goshujin)
+                        {
+                            x.Initialize(this.Crystal, this, true);
+                        }
+
+                        this.children = goshujin;
+                    }
+                }
+                catch
+                {
+                }
+            }
+            else
+            {
+                this.Crystal.Storage.Delete(this.childrenFile);
+            }
         }
     }
 }
