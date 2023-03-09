@@ -1,8 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.IO;
-using static Arc.Unit.ByteArrayPool;
-
 namespace CrystalData;
 
 internal class CrystalDirectoryWorker : TaskWorker<CrystalDirectoryWork>
@@ -14,7 +11,7 @@ internal class CrystalDirectoryWorker : TaskWorker<CrystalDirectoryWork>
         : base(parent, Process, true)
     {
         this.NumberOfConcurrentTasks = DefaultConcurrentTasks;
-        /*this.SetCanStartConcurrentlyDelegate((workInterface, workingList) =>
+        this.SetCanStartConcurrentlyDelegate((workInterface, workingList) =>
         {// Lock IO order
             var id = workInterface.Work.SnowflakeId;
             foreach (var x in workingList)
@@ -26,7 +23,7 @@ internal class CrystalDirectoryWorker : TaskWorker<CrystalDirectoryWork>
             }
 
             return true;
-        });*/
+        });
 
         this.CrystalDirectory = crystalDirectory;
     }

@@ -20,13 +20,11 @@ internal partial class CrystalDirectory : IDisposable
     [Link(Primary = true, Name = "List", Type = ChainType.List)]
     public CrystalDirectory()
     {
-        this.worker = new CrystalDirectoryWorker(ThreadCore.Root, this);
     }
 
     internal CrystalDirectory(uint directoryId, string path)
         : base()
     {
-        this.worker = new CrystalDirectoryWorker(ThreadCore.Root, this);
         this.DirectoryId = directoryId;
         this.DirectoryPath = path;
     }
@@ -135,6 +133,7 @@ internal partial class CrystalDirectory : IDisposable
 
     internal bool PrepareAndCheck(Storage storage)
     {
+        this.worker ??= new CrystalDirectoryWorker(storage.Core, this);
         this.Options = storage.Options;
         try
         {
@@ -353,7 +352,7 @@ internal partial class CrystalDirectory : IDisposable
     private object syncObject = new();
     private Snowflake.GoshujinClass snowflakeGoshujin = new(); // lock (this.syncObject)
     // private Dictionary<uint, Snowflake> dictionary = new(); // lock (this.syncObject)
-    private CrystalDirectoryWorker worker;
+    private CrystalDirectoryWorker worker = default!;
 
     #region IDisposable Support
 #pragma warning restore SA1124 // Do not use regions

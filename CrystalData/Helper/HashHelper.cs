@@ -92,7 +92,6 @@ internal static class HashHelper
                 }
 
                 Console.WriteLine($"GetFarmHashAndSaveAsync: {backupPath}"); // tempcode
-
             }
             catch
             {
