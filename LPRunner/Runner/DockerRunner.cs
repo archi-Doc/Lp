@@ -95,7 +95,7 @@ internal class DockerRunner
         string directory;
         if (Environment.OSVersion.Platform == PlatformID.Win32NT)
         {
-            directory = "C:\\App\\docker"; // tempcode
+            directory = "C:\\App\\docker";
         }
         else
         {

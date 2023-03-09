@@ -170,23 +170,18 @@ public partial class BaseData : IDataInternal
     {
         using (this.semaphore.Lock())
         {
-            Console.WriteLine("3"); // tempcode
             if (this.IsDeleted)
             {
                 return;
             }
 
-            Console.WriteLine("4"); // tempcode
             foreach (var x in this.ChildrenInternal)
             {
-                Console.WriteLine("5"); // tempcode
                 x.Save(unload);
             }
 
-            Console.WriteLine("6"); // tempcode
             this.SaveInternal(unload);
 
-            Console.WriteLine("7"); // tempcode
             for (var i = 0; i < this.datumObject.Length; i++)
             {
                 this.datumObject[i].Data?.Save();

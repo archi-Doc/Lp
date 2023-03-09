@@ -87,7 +87,6 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
         await this.semaphore.WaitAsync().ConfigureAwait(false);
         try
         {
-            Console.WriteLine("1"); // tempcode
             if (!this.Started)
             {
                 return;
@@ -110,22 +109,18 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
             }
 
             // Save & Unload flakes
-            Console.WriteLine("2"); // tempcode
             this.Root.Save(true);
 
             // Stop IO(CrystalDirectory)
-            Console.WriteLine("8"); // tempcode
             await this.Storage.StopAsync().ConfigureAwait(false);
 
             // Save Crystal
-            Console.WriteLine("9"); // tempcode
             await this.SerializeCrystal(this.Options.CrystalFilePath, this.Options.CrystalBackupPath).ConfigureAwait(false);
 
             // Save directory information
             var byteArray = this.Storage.Serialize();
             await HashHelper.GetFarmHashAndSaveAsync(byteArray, this.Options.CrystalDirectoryFilePath, this.Options.CrystalDirectoryBackupPath).ConfigureAwait(false);
 
-            Console.WriteLine("10"); // tempcode
             this.Storage.Terminate();
 
             this.logger.TryGet()?.Log($"Crystal stop - {this.himoGoshujin.MemoryUsage}");

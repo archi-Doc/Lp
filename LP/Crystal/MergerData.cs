@@ -163,24 +163,19 @@ public partial class MergerData : BaseData
 
     protected override void SaveInternal(bool unload)
     {
-        Console.WriteLine($"21"); // tempcode
         if (this.children != null)
         {
             foreach (var x in this.children)
             {
-                Console.WriteLine($"22"); // tempcode
                 x.SaveInternal(unload);
             }
 
-            Console.WriteLine($"23"); // tempcode
             if (!this.childrenSaved)
             {
                 try
                 {
-                    Console.WriteLine($"24"); // tempcode
                     var b = TinyhandSerializer.SerializeObject(this.children);
                     this.Crystal.Storage.Save(ref this.childrenFile, new ByteArrayPool.ReadOnlyMemoryOwner(b), 0);
-                    Console.WriteLine($"25"); // tempcode
                     this.childrenSaved = true;
                 }
                 catch

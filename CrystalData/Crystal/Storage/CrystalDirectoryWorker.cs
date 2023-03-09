@@ -7,8 +7,8 @@ internal class CrystalDirectoryWorker : TaskWorker<CrystalDirectoryWork>
     public const int DefaultConcurrentTasks = 4;
     public const int RetryInterval = 10; // 10 ms
 
-    public CrystalDirectoryWorker(ThreadCoreBase parent, CrystalDirectory crystalDirectory)
-        : base(parent, Process, true)
+    public CrystalDirectoryWorker(CrystalDirectory crystalDirectory)
+        : base(null, Process, true)
     {
         this.NumberOfConcurrentTasks = DefaultConcurrentTasks;
         this.SetCanStartConcurrentlyDelegate((workInterface, workingList) =>
@@ -34,8 +34,6 @@ internal class CrystalDirectoryWorker : TaskWorker<CrystalDirectoryWork>
         string? filePath = null;
         var tryCount = 0;
 
-        Console.WriteLine($"TaskWorker: {work.Type}"); // tempcode
-        worker.CrystalDirectory.Logger?.TryGet()?.Log($"{work.Type}: {filePath}"); // tempcode
         if (work.Type == CrystalDirectoryWork.WorkType.Save)
         {// Save
             var hash = new byte[CrystalDirectory.HashSize];
@@ -78,7 +76,6 @@ TrySave:
             }
             finally
             {
-                Console.WriteLine($"TaskWorker: {work.Type} fin"); // tempcode
                 work.SaveData.Return();
             }
         }
@@ -126,7 +123,6 @@ TrySave:
             }
             finally
             {
-                Console.WriteLine($"TaskWorker: {work.Type} fin2"); // tempcode
             }
         }
         else if (work.Type == CrystalDirectoryWork.WorkType.Delete)
@@ -143,7 +139,6 @@ TrySave:
             finally
             {
                 worker.CrystalDirectory.RemoveSnowflake(work.SnowflakeId);
-                Console.WriteLine($"TaskWorker: {work.Type} fin3"); // tempcode
             }
         }
 

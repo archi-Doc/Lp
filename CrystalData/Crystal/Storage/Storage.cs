@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Arc.Unit;
 using CrystalData.Results;
 
 namespace CrystalData;
@@ -12,7 +11,7 @@ public sealed class Storage
     internal Storage(UnitLogger unitLogger)
     {
         this.UnitLogger = unitLogger;
-        this.Core = new(ThreadCore.Root);
+        // this.Core = new(ThreadCore.Root);
         this.data = TinyhandSerializer.Reconstruct<StorageData>();
     }
 
@@ -358,7 +357,7 @@ public sealed class Storage
 
     internal UnitLogger UnitLogger { get; }
 
-    internal ThreadCoreGroup Core { get; }
+    // internal ThreadCoreGroup Core { get; }
 
     private object syncObject = new();
     private StorageData data; // lock(syncObject)

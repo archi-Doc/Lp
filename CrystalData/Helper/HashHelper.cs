@@ -72,12 +72,9 @@ internal static class HashHelper
                 await RandomAccess.WriteAsync(handle, data, hash.Length).ConfigureAwait(false);
                 result = true;
             }
-
-            Console.WriteLine($"GetFarmHashAndSaveAsync : {path}"); // tempcode
         }
         catch
         {
-            Console.WriteLine($"GetFarmHashAndSaveAsync exp: {path}"); // tempcode
             return false;
         }
 
@@ -90,12 +87,9 @@ internal static class HashHelper
                     await RandomAccess.WriteAsync(handle, hash, 0).ConfigureAwait(false);
                     await RandomAccess.WriteAsync(handle, data, hash.Length).ConfigureAwait(false);
                 }
-
-                Console.WriteLine($"GetFarmHashAndSaveAsync: {backupPath}"); // tempcode
             }
             catch
             {
-                Console.WriteLine($"GetFarmHashAndSaveAsync exp: {backupPath}"); // tempcode
             }
         }
 
