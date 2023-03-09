@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.IO;
 using static Arc.Unit.ByteArrayPool;
 
 namespace CrystalData;
@@ -36,7 +37,8 @@ internal class CrystalDirectoryWorker : TaskWorker<CrystalDirectoryWork>
         string? filePath = null;
         var tryCount = 0;
 
-        worker.CrystalDirectory.Logger?.TryGet()?.Log($"{work.Type}: {filePath}");
+        Console.WriteLine($"TaskWorker: {work.Type}"); // tempcode
+        worker.CrystalDirectory.Logger?.TryGet()?.Log($"{work.Type}: {filePath}"); // tempcode
         if (work.Type == CrystalDirectoryWork.WorkType.Save)
         {// Save
             var hash = new byte[CrystalDirectory.HashSize];
@@ -79,6 +81,7 @@ TrySave:
             }
             finally
             {
+                Console.WriteLine($"TaskWorker: {work.Type} fin"); // tempcode
                 work.SaveData.Return();
             }
         }
@@ -126,6 +129,7 @@ TrySave:
             }
             finally
             {
+                Console.WriteLine($"TaskWorker: {work.Type} fin2"); // tempcode
             }
         }
         else if (work.Type == CrystalDirectoryWork.WorkType.Delete)
@@ -142,6 +146,7 @@ TrySave:
             finally
             {
                 worker.CrystalDirectory.RemoveSnowflake(work.SnowflakeId);
+                Console.WriteLine($"TaskWorker: {work.Type} fin3"); // tempcode
             }
         }
 

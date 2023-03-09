@@ -75,6 +75,7 @@ internal static class HashHelper
         }
         catch
         {
+            Console.WriteLine($"GetFarmHashAndSaveAsync exp: {path}"); // tempcode
             return false;
         }
 
@@ -90,6 +91,7 @@ internal static class HashHelper
             }
             catch
             {
+                Console.WriteLine($"GetFarmHashAndSaveAsync exp: {backupPath}"); // tempcode
             }
         }
 
