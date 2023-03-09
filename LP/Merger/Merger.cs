@@ -108,10 +108,6 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable, IUnitS
             op.Datum.SetObject(new CreditBlock(param.token.PublicKey));
         }
 
-        // tempcode
-        this.logger.TryGet()?.Log($"Credit created: {param.token}");
-        credit.Save(false);
-
         return MergerResult.Success;
     }
 

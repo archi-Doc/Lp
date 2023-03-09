@@ -91,7 +91,6 @@ public sealed class Storage
 
     public void Save(ref ulong file, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared, int id)
     {
-        Console.WriteLine($"Save: {file}");
         CrystalDirectory? directory;
         lock (this.syncObject)
         {
