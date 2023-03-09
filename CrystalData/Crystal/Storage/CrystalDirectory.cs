@@ -109,7 +109,7 @@ internal partial class CrystalDirectory : IDisposable
             file = CrystalHelper.ToFile(this.DirectoryId, snowflake.SnowflakeId);
         }
 
-        Console.WriteLine($"Save2: {file}"); // tempcode
+        Console.WriteLine($"Save2: {file} {this.worker.IsTerminated.ToString()}"); // tempcode
         this.worker.AddLast(new(snowflake.SnowflakeId, memoryToBeShared.IncrementAndShare()));
     }
 

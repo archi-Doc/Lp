@@ -14,7 +14,7 @@ internal class CrystalDirectoryWorker : TaskWorker<CrystalDirectoryWork>
         : base(parent, Process, true)
     {
         this.NumberOfConcurrentTasks = DefaultConcurrentTasks;
-        this.SetCanStartConcurrentlyDelegate((workInterface, workingList) =>
+        /*this.SetCanStartConcurrentlyDelegate((workInterface, workingList) =>
         {// Lock IO order
             var id = workInterface.Work.SnowflakeId;
             foreach (var x in workingList)
@@ -26,7 +26,7 @@ internal class CrystalDirectoryWorker : TaskWorker<CrystalDirectoryWork>
             }
 
             return true;
-        });
+        });*/
 
         this.CrystalDirectory = crystalDirectory;
     }
