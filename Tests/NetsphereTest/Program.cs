@@ -151,6 +151,8 @@ public class Program
                 options.MaxStreamCapacity = 1_000;
             });
 
+        Console.WriteLine(string.Join(' ', args));
+
         var unit = builder.Build(args);
         var options = unit.Context.ServiceProvider.GetRequiredService<NetsphereOptions>();
         await Console.Out.WriteLineAsync($"Port: {options.Port.ToString()}");
