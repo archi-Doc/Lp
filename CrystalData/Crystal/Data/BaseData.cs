@@ -67,7 +67,7 @@ public partial class BaseData : IDataInternal
 
     ICrystalInternal IDataInternal.CrystalInternal => this.Crystal;
 
-    DatumConstructor IDataInternal.Data => this.Crystal.Datum;
+    DatumConstructor IDataInternal.Data => this.Crystal.Constructor;
 
     CrystalOptions IDataInternal.Options => this.Crystal.Options;
 
@@ -84,9 +84,9 @@ public partial class BaseData : IDataInternal
         }
     }
 
-    async Task<CrystalMemoryOwnerResult> IDataInternal.StorageToData<TData>()
+    async Task<CrystalMemoryOwnerResult> IDataInternal.StorageToDatum<TDatum>()
     {// using (this.semaphore.Lock())
-        var dataObject = this.TryGetDatumObject<TData>();
+        var dataObject = this.TryGetDatumObject<TDatum>();
         if (!dataObject.IsValid)
         {
             return new(CrystalResult.NoData);
@@ -101,12 +101,12 @@ public partial class BaseData : IDataInternal
         return await this.Crystal.Storage.Load(file).ConfigureAwait(false);
     }
 
-    void IDataInternal.DeleteStorage<TData>()
+    void IDataInternal.DeleteStorage<TDatum>()
     {// using (this.semaphore.Lock())
-        var dataObject = this.TryGetDatumObject<TData>();
-        if (dataObject.IsValid)
+        var datumObject = this.TryGetDatumObject<TDatum>();
+        if (datumObject.IsValid)
         {
-            this.Crystal.Storage.Delete(dataObject.File);
+            this.Crystal.Storage.Delete(datumObject.File);
             return;
         }
     }
@@ -116,7 +116,7 @@ public partial class BaseData : IDataInternal
     /// </summary>
     /// <param name="id">The specified id.</param>
     /// <param name="unload"><see langword="true"/>; unload data.</param>
-    void IDataInternal.SaveData(int id, bool unload)
+    void IDataInternal.SaveDatum(int id, bool unload)
     {
         using (this.semaphore.Lock())
         {
@@ -124,11 +124,11 @@ public partial class BaseData : IDataInternal
             {
                 if (this.datumObject[i].Id == id)
                 {
-                    this.datumObject[i].Data?.Save();
+                    this.datumObject[i].Datum?.Save();
                     if (unload)
                     {
-                        this.datumObject[i].Data?.Unload();
-                        this.datumObject[i].Data = null;
+                        this.datumObject[i].Datum?.Unload();
+                        this.datumObject[i].Datum = null;
                     }
 
                     return;
@@ -155,7 +155,7 @@ public partial class BaseData : IDataInternal
         }
 
         var dataObject = this.GetOrCreateDatumObject<TDatum>();
-        if (dataObject.Data is not TDatum data)
+        if (dataObject.Datum is not TDatum data)
         {// No data
             operation.SetResult(CrystalResult.DatumNotRegistered);
             operation.Exit();
@@ -184,11 +184,11 @@ public partial class BaseData : IDataInternal
 
             for (var i = 0; i < this.datumObject.Length; i++)
             {
-                this.datumObject[i].Data?.Save();
+                this.datumObject[i].Datum?.Save();
                 if (unload)
                 {
-                    this.datumObject[i].Data?.Unload();
-                    this.datumObject[i].Data = null;
+                    this.datumObject[i].Datum?.Unload();
+                    this.datumObject[i].Datum = null;
                 }
             }
         }
@@ -230,8 +230,8 @@ public partial class BaseData : IDataInternal
             for (var i = 0; i < this.datumObject.Length; i++)
             {
                 this.Crystal.Storage.Delete(this.datumObject[i].File);
-                this.datumObject[i].Data?.Unload();
-                this.datumObject[i].Data = null;
+                this.datumObject[i].Datum?.Unload();
+                this.datumObject[i].Datum = null;
                 this.datumObject[i].File = 0;
             }
 
@@ -255,6 +255,10 @@ public partial class BaseData : IDataInternal
     }
 
     protected virtual void SaveInternal(bool unload)
+    {
+    }
+
+    protected internal virtual void UnloadInternal()
     {
     }
 
@@ -282,11 +286,11 @@ public partial class BaseData : IDataInternal
         {
             if (this.datumObject[i].Id == id)
             {
-                if (this.datumObject[i].Data == null)
+                if (this.datumObject[i].Datum == null)
                 {
-                    if (this.Crystal.Datum.TryGetConstructor(id) is { } ctr1)
+                    if (this.Crystal.Constructor.TryGetConstructor(id) is { } ctr1)
                     {
-                        this.datumObject[i].Data = ctr1(this);
+                        this.datumObject[i].Datum = ctr1(this);
                     }
                 }
 
@@ -296,12 +300,12 @@ public partial class BaseData : IDataInternal
 
         var newObject = default(DatumObject);
         newObject.Id = id;
-        if (this.Crystal.Datum.TryGetConstructor(id) is { } ctr2)
+        if (this.Crystal.Constructor.TryGetConstructor(id) is { } ctr2)
         {
-            newObject.Data = ctr2(this);
+            newObject.Datum = ctr2(this);
         }
 
-        if (newObject.Data == null)
+        if (newObject.Datum == null)
         {
             return default;
         }

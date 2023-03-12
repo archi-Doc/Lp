@@ -10,14 +10,14 @@ public interface IDataInternal
 
     CrystalOptions Options { get; }
 
-    void DataToStorage<TData>(ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
-        where TData : IDatum;
+    void DataToStorage<TDatum>(ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
+        where TDatum : IDatum;
 
-    Task<CrystalMemoryOwnerResult> StorageToData<TData>()
-        where TData : IDatum;
+    Task<CrystalMemoryOwnerResult> StorageToDatum<TDatum>()
+        where TDatum : IDatum;
 
-    void DeleteStorage<TData>()
-        where TData : IDatum;
+    void DeleteStorage<TDatum>()
+        where TDatum : IDatum;
 
-    void SaveData(int id, bool unload);
+    void SaveDatum(int id, bool unload);
 }

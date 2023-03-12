@@ -21,8 +21,8 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
         this.himoGoshujin = new(this);
         this.InitializeRoot();
 
-        this.Datum = new();
-        this.Datum.Register<BlockDatum>(x => new BlockDatumImpl(x));
+        this.Constructor = new();
+        this.Constructor.Register<BlockDatum>(x => new BlockDatumImpl(x));
         // this.Constructor.Register<FragmentDatum<Identifier>>(x => new FragmentDatumImpl<Identifier>(x));
     }
 
@@ -161,7 +161,7 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
 
     public TData Root { get; private set; }
 
-    public DatumConstructor Datum { get; private set; }
+    public DatumConstructor Constructor { get; private set; }
 
     public CrystalOptions Options { get; set; } = CrystalOptions.Default;
 

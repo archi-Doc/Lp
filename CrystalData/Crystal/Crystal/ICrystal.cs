@@ -4,7 +4,7 @@ namespace CrystalData;
 
 public interface ICrystal
 {
-    DatumConstructor Datum { get; }
+    DatumConstructor Constructor { get; }
 
     CrystalOptions Options { get; set; }
 

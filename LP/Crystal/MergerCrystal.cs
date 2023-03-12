@@ -16,6 +16,9 @@ public class MergerCrystal : Crystal<MergerData>
             DefaultCrystalDirectory = "Merger",
         };
 
-        this.Datum.Register<BlockDatum>(x => new BlockDatumImpl(x));
+        this.himo = new(10);
+        this.Constructor.Register<BlockDatum>(x => new BlockDatumImpl(x));
     }
+
+    private DataHimo himo;
 }

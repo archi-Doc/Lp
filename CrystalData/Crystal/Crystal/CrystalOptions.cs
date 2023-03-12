@@ -9,6 +9,7 @@ public record CrystalOptions
     public const int DefaultMaxFragmentSize = 1024 * 4; // 4KB
     public const int DefaultMaxFragmentCount = 1000;
     public const int DefaultMemorySizeLimit = 1024 * 1024 * 500; // 500MB
+    public const int DefaultMaxParentInMemory = 10;
 
     public static CrystalOptions Default { get; } = new CrystalOptions();
 
@@ -33,6 +34,8 @@ public record CrystalOptions
     public long MemorySizeLimit { get; init; } = DefaultMemorySizeLimit;
 
     public long DirectoryCapacity { get; init; } = 1024L * 1024 * 1024 * 10; // 10GB
+
+    public int MaxParentInMemory { get; init; } = DefaultMaxParentInMemory;
 
     public string CrystalFile { get; init; } = "Crystal.main";
 

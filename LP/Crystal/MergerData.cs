@@ -3,6 +3,7 @@
 #pragma warning disable SA1124 // Do not use regions
 
 using System.Runtime.CompilerServices;
+using Arc.Collections;
 using ValueLink;
 
 namespace LP.Crystal;
@@ -17,7 +18,7 @@ public partial class MergerData : BaseData
         this.identifier = identifier;
     }
 
-    [Link(Primary = true, Name = "GetQueue", Type = ChainType.QueueList)]
+    // [Link(Primary = true, Name = "GetQueue", Type = ChainType.QueueList)]
     public MergerData()
     {
     }
@@ -31,7 +32,7 @@ public partial class MergerData : BaseData
     public Identifier Identifier => this.identifier;
 
     [Key(3)]
-    [Link(Name = "Id", NoValue = true, Type = ChainType.Unordered)]
+    [Link(Primary = true, Name = "Id", NoValue = true, Type = ChainType.Unordered)]
     [Link(Name = "OrderedId", Type = ChainType.Ordered)]
     private Identifier identifier = default!;
 
@@ -40,6 +41,7 @@ public partial class MergerData : BaseData
 
     private GoshujinClass? children;
     private bool childrenSaved = true;
+    private UnorderedLinkedList<BaseData>.Node? node;
 
     public int Count(LpData.LpDataId id)
     {
@@ -70,8 +72,8 @@ public partial class MergerData : BaseData
             this.children = this.PrepareChildren();
             if (this.children.IdChain.TryGetValue(id, out data))
             {// Update GetQueue chain
-                this.children.GetQueueChain.Remove(data);
-                this.children.GetQueueChain.Enqueue(data);
+                // this.children.GetQueueChain.Remove(data);
+                // this.children.GetQueueChain.Enqueue(data);
             }
             else
             {
@@ -96,8 +98,8 @@ public partial class MergerData : BaseData
             }
             else
             {// Update GetQueue chain
-                this.children.GetQueueChain.Remove(data);
-                this.children.GetQueueChain.Enqueue(data);
+                // this.children.GetQueueChain.Remove(data);
+                // this.children.GetQueueChain.Enqueue(data);
             }
         }
 
@@ -112,8 +114,8 @@ public partial class MergerData : BaseData
             this.children = this.PrepareChildren();
             if (this.children.IdChain.TryGetValue(id, out data))
             {// Update GetQueue chain
-                this.children.GetQueueChain.Remove(data);
-                this.children.GetQueueChain.Enqueue(data);
+                // this.children.GetQueueChain.Remove(data);
+                // this.children.GetQueueChain.Enqueue(data);
             }
 
             return data;
@@ -191,6 +193,10 @@ public partial class MergerData : BaseData
         }
     }
 
+    protected override void UnloadInternal()
+    {
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private GoshujinClass PrepareChildren()
     {
@@ -219,16 +225,19 @@ public partial class MergerData : BaseData
                 {
                 }
 
+                this.node ??= this.Crystal.HimoGoshujin.AddParent(this);
                 return goshujin ?? new GoshujinClass();
             }
             else
             {
                 this.Crystal.Storage.Delete(this.childrenFile);
+                this.node ??= this.Crystal.HimoGoshujin.AddParent(this);
                 return new GoshujinClass();
             }
         }
         else
         {// New
+            this.node ??= this.Crystal.HimoGoshujin.AddParent(this);
             return new GoshujinClass();
         }
     }

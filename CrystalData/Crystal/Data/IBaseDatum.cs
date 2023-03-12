@@ -4,7 +4,13 @@ namespace CrystalData;
 
 public interface IBaseDatum
 {
+    /// <summary>
+    /// Serialize a datum and store it in a storage.
+    /// </summary>
     void Save();
 
+    /// <summary>
+    /// Free resources (e.g. memory).
+    /// </summary>
     void Unload();
 }

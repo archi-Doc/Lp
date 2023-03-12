@@ -2,7 +2,9 @@
 
 #pragma warning disable SA1401 // Fields should be private
 
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Arc.Collections;
 
 namespace CrystalData;
 
@@ -50,7 +52,7 @@ public partial class HimoGoshujinClass
 
             if (unloadFlag)
             {
-                this.himoGoshujin.Unload();
+                this.himoGoshujin.UnloadData();
             }
         }
 
@@ -105,6 +107,28 @@ public partial class HimoGoshujinClass
         this.crystalInternal = crystalInternal;
     }
 
+    public UnorderedLinkedList<BaseData>.Node AddParent(BaseData data)
+    {// data.semaphore.Lock()
+        UnorderedLinkedList<BaseData>.Node node;
+        var unloadFlag = false;
+
+        lock (this.syncParent)
+        {
+            node = this.parentList.AddLast(data);
+            if (this.parentList.Count > this.crystalInternal.Options.MaxParentInMemory)
+            {
+                unloadFlag = true;
+            }
+        }
+
+        if (unloadFlag)
+        {
+            this.UnloadParent();
+        }
+
+        return node;
+    }
+
     internal void Start()
     {
         this.taskCore ??= new(ThreadCore.Root, this);
@@ -120,6 +144,23 @@ public partial class HimoGoshujinClass
     }
 
     internal void Unload()
+    {
+        this.UnloadData();
+        this.UnloadParent();
+    }
+
+    internal void Clear()
+    {
+        lock (this.syncObject)
+        {
+            this.goshujin.Clear();
+            this.memoryUsage = 0;
+        }
+    }
+
+    internal long MemoryUsage => this.memoryUsage;
+
+    private void UnloadData()
     {
         var limit = Math.Max(MemoryMargin, this.crystalInternal.Options.MemorySizeLimit - MemoryMargin);
         if (Volatile.Read(ref this.memoryUsage) <= limit)
@@ -144,22 +185,45 @@ public partial class HimoGoshujinClass
 
             for (var i = 0; i < count; i++)
             {
-                array[i].FlakeInternal.SaveData(array[i].Id, true);
+                array[i].FlakeInternal.SaveDatum(array[i].Id, true);
             }
         }
         while (Volatile.Read(ref this.memoryUsage) > limit);
     }
 
-    internal void Clear()
+    private void UnloadParent()
     {
-        lock (this.syncObject)
+        if (this.parentList.Count <= this.crystalInternal.Options.MaxParentInMemory)
         {
-            this.goshujin.Clear();
-            this.memoryUsage = 0;
+            return;
         }
-    }
 
-    internal long MemoryUsage => this.memoryUsage;
+        var array = new BaseData[UnloadNumber];
+        do
+        {
+            int count;
+            lock (this.syncParent)
+            {
+                for (count = 0; count < UnloadNumber; count++)
+                {
+                    var node = this.parentList.First;
+                    if (node == null)
+                    {
+                        break;
+                    }
+
+                    array[count] = node.Value;
+                    this.parentList.Remove(node);
+                }
+            }
+
+            for (var i = 0; i < count; i++)
+            {
+                array[i].Save(true);
+            }
+        }
+        while (this.parentList.Count > this.crystalInternal.Options.MaxParentInMemory);
+    }
 
     private ICrystalInternal crystalInternal;
 
@@ -167,4 +231,7 @@ public partial class HimoGoshujinClass
     private long memoryUsage; // lock(this.syncObject)
     private Himo.GoshujinClass goshujin = new(); // lock(this.syncObject)
     private HimoTaskCore? taskCore;
+
+    private object syncParent = new();
+    private UnorderedLinkedList<BaseData> parentList = new();
 }
