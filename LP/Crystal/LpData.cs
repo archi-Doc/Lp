@@ -35,12 +35,12 @@ public partial class LpData : BaseData
 
     public Identifier Identifier => this.identifier;
 
-    [Key(3)]
+    [Key(4)]
     [Link(Name = "Id", NoValue = true, Type = ChainType.Unordered)]
     [Link(Name = "OrderedId", Type = ChainType.Ordered)]
     private Identifier identifier = default!;
 
-    [Key(4)]
+    [Key(5)]
     private GoshujinClass? children;
 
     public int Count(LpDataId id)

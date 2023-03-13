@@ -12,7 +12,7 @@ namespace CrystalData;
 /// <summary>
 /// <see cref="BaseData"/> is an independent class that holds data at a single point in the hierarchical structure.
 /// </summary>
-[TinyhandObject(ExplicitKeyOnly = true, LockObject = "semaphore", ReservedKeys = 2)]
+[TinyhandObject(ExplicitKeyOnly = true, LockObject = "semaphore", ReservedKeys = 3)]
 public partial class BaseData : IDataInternal
 {
     protected BaseData()
@@ -258,9 +258,9 @@ public partial class BaseData : IDataInternal
     {
     }
 
-    protected internal virtual void UnloadInternal()
+    /*protected internal virtual void UnloadInternal()
     {
-    }
+    }*/
 
     #endregion
 

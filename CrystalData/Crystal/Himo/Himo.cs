@@ -107,15 +107,15 @@ public partial class HimoGoshujinClass
         this.crystalInternal = crystalInternal;
     }
 
-    public UnorderedLinkedList<BaseData>.Node AddParent(BaseData data)
+    public UnorderedLinkedList<BaseData>.Node AddParentData(BaseData data)
     {// data.semaphore.Lock()
         UnorderedLinkedList<BaseData>.Node node;
         var unloadFlag = false;
 
-        lock (this.syncParent)
+        lock (this.syncParentData)
         {
-            node = this.parentList.AddLast(data);
-            if (this.parentList.Count > this.crystalInternal.Options.MaxParentInMemory)
+            node = this.parentDataList.AddLast(data);
+            if (this.parentDataList.Count > this.crystalInternal.Options.MaxParentInMemory)
             {
                 unloadFlag = true;
             }
@@ -123,10 +123,23 @@ public partial class HimoGoshujinClass
 
         if (unloadFlag)
         {
-            this.UnloadParent();
+            Task.Run(() => this.UnloadParentData());
         }
 
         return node;
+    }
+
+    public void RemoveParentData(UnorderedLinkedList<BaseData>.Node node)
+    {// data.semaphore.Lock()
+        lock (this.syncParentData)
+        {
+            this.parentDataList.Remove(node);
+        }
+    }
+
+    public void TryUnload()
+    {
+        this.Unload();
     }
 
     internal void Start()
@@ -146,7 +159,7 @@ public partial class HimoGoshujinClass
     internal void Unload()
     {
         this.UnloadData();
-        this.UnloadParent();
+        this.UnloadParentData();
     }
 
     internal void Clear()
@@ -168,7 +181,7 @@ public partial class HimoGoshujinClass
             return;
         }
 
-        var array = new (IDataInternal FlakeInternal, int Id)[UnloadNumber];
+        var array = new (IDataInternal? FlakeInternal, int Id)[UnloadNumber];
         do
         {
             int count;
@@ -185,44 +198,49 @@ public partial class HimoGoshujinClass
 
             for (var i = 0; i < count; i++)
             {
-                array[i].FlakeInternal.SaveDatum(array[i].Id, true);
+                array[i].FlakeInternal?.SaveDatum(array[i].Id, true);
             }
         }
         while (Volatile.Read(ref this.memoryUsage) > limit);
     }
 
-    private void UnloadParent()
+    private void UnloadParentData()
     {
-        if (this.parentList.Count <= this.crystalInternal.Options.MaxParentInMemory)
+        if (this.parentDataList.Count <= this.crystalInternal.Options.MaxParentInMemory)
         {
             return;
         }
 
-        var array = new BaseData[UnloadNumber];
+        var array = new BaseData?[UnloadNumber];
         do
         {
             int count;
-            lock (this.syncParent)
+            lock (this.syncParentData)
             {
+                var node = this.parentDataList.First;
                 for (count = 0; count < UnloadNumber; count++)
                 {
-                    var node = this.parentList.First;
                     if (node == null)
                     {
                         break;
                     }
 
                     array[count] = node.Value;
-                    this.parentList.Remove(node);
+                    node = node.Next;
+                    // this.parentDataList.Remove(node);
                 }
             }
 
             for (var i = 0; i < count; i++)
             {
-                array[i].Save(true);
+                if (array[i] != null)
+                {
+                    array[i]!.Save(true);
+                    array[i] = null;
+                }
             }
         }
-        while (this.parentList.Count > this.crystalInternal.Options.MaxParentInMemory);
+        while (this.parentDataList.Count > this.crystalInternal.Options.MaxParentInMemory);
     }
 
     private ICrystalInternal crystalInternal;
@@ -232,6 +250,6 @@ public partial class HimoGoshujinClass
     private Himo.GoshujinClass goshujin = new(); // lock(this.syncObject)
     private HimoTaskCore? taskCore;
 
-    private object syncParent = new();
-    private UnorderedLinkedList<BaseData> parentList = new();
+    private object syncParentData = new();
+    private UnorderedLinkedList<BaseData> parentDataList = new();
 }

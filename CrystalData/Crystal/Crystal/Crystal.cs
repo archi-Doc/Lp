@@ -169,6 +169,8 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
 
     public Storage Storage { get; }
 
+    public HimoGoshujinClass Himo => this.himoGoshujin;
+
     public long MemoryUsage => this.himoGoshujin.MemoryUsage;
 
     internal void DeleteAll()

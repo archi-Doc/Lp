@@ -22,14 +22,14 @@ internal partial class ExampleData : BaseData
     {
     }
 
-    [Key(3)]
+    [Key(4)]
     [Link(Primary = true, Type = ChainType.Unordered)]
     private string name = string.Empty;
 
-    [Key(4)]
+    [Key(5)]
     private GoshujinClass? children;
 
-    [Key(5)]
+    [Key(6)]
     [Link(Type = ChainType.Ordered)]
     private int age;
 

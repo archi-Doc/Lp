@@ -31,12 +31,12 @@ public partial class MergerData : BaseData
 
     public Identifier Identifier => this.identifier;
 
-    [Key(3)]
+    [Key(4)]
     [Link(Primary = true, Name = "Id", NoValue = true, Type = ChainType.Unordered)]
     [Link(Name = "OrderedId", Type = ChainType.Ordered)]
     private Identifier identifier = default!;
 
-    [Key(4)]
+    [Key(5)]
     private ulong childrenFile;
 
     private GoshujinClass? children;
@@ -60,6 +60,8 @@ public partial class MergerData : BaseData
 
         return count;
     }
+
+    public bool IsInMemory => this.node != null;
 
     #region Child
 
@@ -161,16 +163,22 @@ public partial class MergerData : BaseData
     {
         this.children = null;
         this.Goshujin = null;
+
+        if (this.node != null)
+        {
+            this.Crystal.HimoGoshujin.RemoveParentData(this.node);
+            this.node = null;
+        }
     }
 
     protected override void SaveInternal(bool unload)
     {
         if (this.children != null)
         {
-            foreach (var x in this.children)
+            /*foreach (var x in this.children)
             {
                 x.SaveInternal(unload);
-            }
+            }*/
 
             if (!this.childrenSaved)
             {
@@ -191,15 +199,26 @@ public partial class MergerData : BaseData
                 this.children = null;
             }
         }
+
+        if (this.node != null && unload)
+        {
+            this.Crystal.HimoGoshujin.RemoveParentData(this.node);
+            this.node = null;
+        }
     }
 
-    protected override void UnloadInternal()
+    /*protected override void UnloadInternal()
     {
-    }
+    }*/
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private GoshujinClass PrepareChildren()
     {
+        if (this.node == null && this.Parent != null)
+        {
+            this.node = this.Crystal.HimoGoshujin.AddParentData(this);
+        }
+
         if (this.children != null)
         {// Existing
             return this.children;
@@ -225,19 +244,16 @@ public partial class MergerData : BaseData
                 {
                 }
 
-                this.node ??= this.Crystal.HimoGoshujin.AddParent(this);
                 return goshujin ?? new GoshujinClass();
             }
             else
             {
                 this.Crystal.Storage.Delete(this.childrenFile);
-                this.node ??= this.Crystal.HimoGoshujin.AddParent(this);
                 return new GoshujinClass();
             }
         }
         else
         {// New
-            this.node ??= this.Crystal.HimoGoshujin.AddParent(this);
             return new GoshujinClass();
         }
     }

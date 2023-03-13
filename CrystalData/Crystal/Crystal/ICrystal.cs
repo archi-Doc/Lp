@@ -12,6 +12,10 @@ public interface ICrystal
 
     Storage Storage { get; }
 
+    HimoGoshujinClass Himo { get; }
+
+    long MemoryUsage { get; }
+
     Task<CrystalStartResult> StartAsync(CrystalStartParam param);
 
     Task StopAsync(CrystalStopParam param);
