@@ -52,7 +52,7 @@ public partial class HimoGoshujinClass
 
             if (unloadFlag)
             {
-                this.himoGoshujin.UnloadData();
+                _ = this.himoGoshujin.unloadData.Run();
             }
         }
 
@@ -105,6 +105,9 @@ public partial class HimoGoshujinClass
     public HimoGoshujinClass(ICrystalInternal crystalInternal)
     {
         this.crystalInternal = crystalInternal;
+
+        this.unloadData = new(() => this.UnloadData());
+        this.unloadParent = new(() => this.UnloadParent());
     }
 
     public UnorderedLinkedList<BaseData>.Node AddParentData(BaseData data)
@@ -123,7 +126,7 @@ public partial class HimoGoshujinClass
 
         if (unloadFlag)
         {
-            Task.Run(() => this.UnloadParentData());
+            _ = this.unloadParent.Run();
         }
 
         return node;
@@ -137,29 +140,24 @@ public partial class HimoGoshujinClass
         }
     }
 
-    public void TryUnload()
+    public void Unload()
     {
-        this.Unload();
+        this.UnloadData();
+        this.UnloadParent();
     }
 
     internal void Start()
     {
-        this.taskCore ??= new(ThreadCore.Root, this);
+        // this.taskCore ??= new(ThreadCore.Root, this);
     }
 
     internal void Stop()
     {
-        if (this.taskCore is { } taskCore)
+        /*if (this.taskCore is { } taskCore)
         {
             this.taskCore = null;
             taskCore.Terminate();
-        }
-    }
-
-    internal void Unload()
-    {
-        this.UnloadData();
-        this.UnloadParentData();
+        }*/
     }
 
     internal void Clear()
@@ -204,7 +202,7 @@ public partial class HimoGoshujinClass
         while (Volatile.Read(ref this.memoryUsage) > limit);
     }
 
-    private void UnloadParentData()
+    private void UnloadParent()
     {
         if (this.parentDataList.Count <= this.crystalInternal.Options.MaxParentInMemory)
         {
@@ -248,7 +246,10 @@ public partial class HimoGoshujinClass
     private object syncObject = new();
     private long memoryUsage; // lock(this.syncObject)
     private Himo.GoshujinClass goshujin = new(); // lock(this.syncObject)
-    private HimoTaskCore? taskCore;
+
+    // private HimoTaskCore? taskCore;
+    private UniqueWork unloadData;
+    private UniqueWork unloadParent;
 
     private object syncParentData = new();
     private UnorderedLinkedList<BaseData> parentDataList = new();

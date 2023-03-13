@@ -30,7 +30,7 @@ public partial class MergerTest
             d.BlockDatum().Set(byteArray);
         }
 
-        crystal.Himo.TryUnload();
+        crystal.Himo.Unload();
 
         var count = 0;
         for (var i = 0; i < N; i++)

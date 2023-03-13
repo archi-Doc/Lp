@@ -22,7 +22,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Arc.Threading" Version="0.19.0" />
+    <PackageReference Include="Arc.Threading" Version="0.20.0" />
     <PackageReference Include="Arc.Crypto" Version="1.13.0" />
     <PackageReference Include="Arc.Unit" Version="0.5.4" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
