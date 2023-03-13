@@ -166,7 +166,7 @@ internal partial class CrystalDirectory : IDisposable
 
         if (this.Options.EnableLogger)
         {
-            this.Logger = storage.UnitLogger.GetLogger<CrystalDirectory>();
+            // this.Logger = storage.UnitLogger.GetLogger<CrystalDirectory>();
         }
 
         return true;

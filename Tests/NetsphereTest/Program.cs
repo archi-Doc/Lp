@@ -85,6 +85,7 @@ public class Program
                 var original = context.GetOrCreateOptions<NetsphereOptions>();
                 original.EnableAlternative = false;
                 original.EnableLogger = false;
+                original.Port = 49152;
 
                 NetsphereOptions? options = default;
                 if (context.Arguments.TryGetOption("ns", out var nsArg))
