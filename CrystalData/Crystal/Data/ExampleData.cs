@@ -10,15 +10,15 @@ namespace CrystalData;
 /// </summary>
 [TinyhandObject(ExplicitKeyOnly = true)]
 [ValueLinkObject]
-internal partial class SampleData : BaseData
+internal partial class ExampleData : BaseData
 {
-    public SampleData(ICrystalInternal crystal, BaseData? parent, string name)
+    public ExampleData(ICrystalInternal crystal, BaseData? parent, string name)
         : base(crystal, parent)
     {
         this.name = name;
     }
 
-    public SampleData()
+    public ExampleData()
     {
     }
 
@@ -35,15 +35,15 @@ internal partial class SampleData : BaseData
 
     #region Child
 
-    public SampleData GetOrCreateChild(string name)
+    public ExampleData GetOrCreateChild(string name)
     {
-        SampleData? data;
+        ExampleData? data;
         using (this.semaphore.Lock())
         {
             this.children ??= new();
             if (!this.children.NameChain.TryGetValue(name, out data))
             {
-                data = new SampleData(this.Crystal, this, name);
+                data = new ExampleData(this.Crystal, this, name);
                 this.children.Add(data);
             }
 
@@ -53,9 +53,9 @@ internal partial class SampleData : BaseData
         return data;
     }
 
-    public SampleData? TryGetChild(string name)
+    public ExampleData? TryGetChild(string name)
     {
-        SampleData? data;
+        ExampleData? data;
         using (this.semaphore.Lock())
         {
             if (this.children == null)
