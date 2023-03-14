@@ -42,7 +42,7 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
         long totalLatency = 0;
 
         ThreadPool.GetMinThreads(out var workMin, out var ioMin);
-        // ThreadPool.SetMinThreads(3000, ioMin);
+        ThreadPool.SetMinThreads(100, ioMin);
 
         var sw = Stopwatch.StartNew();
         /*Parallel.For(0, options.Concurrent, i =>

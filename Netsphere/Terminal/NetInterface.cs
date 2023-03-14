@@ -410,7 +410,7 @@ WaitForSendCompletionWait:
                 // var ct = this.Terminal.Core?.CancellationToken ?? CancellationToken.None;
                 // await Task.WhenAny(this.NetTerminal.ReceiveEvent.WaitAsync(ct), Task.Delay(NetInterface.IntervalInMilliseconds, ct)).ConfigureAwait(false);
             }
-            catch(OperationCanceledException)
+            catch (OperationCanceledException)
             {
                 this.NetTerminal.Logger?.Log($"SendAsync: Closed2");
                 return NetResult.Closed;
@@ -466,7 +466,7 @@ WaitForSendCompletionWait:
                 // var ct = this.Terminal.Core?.CancellationToken ?? CancellationToken.None;
                 // await Task.WhenAny(this.NetTerminal.ReceiveEvent.WaitAsync(ct), Task.Delay(NetInterface.IntervalInMilliseconds, ct)).ConfigureAwait(false);
             }
-            catch(OperationCanceledException)
+            catch (OperationCanceledException)
             {
                 this.NetTerminal.Logger?.Log($"ReceiveAsync: Closed2");
                 return new NetReceivedData(NetResult.Closed);
@@ -639,10 +639,9 @@ WaitForSendCompletionWait:
             {// Send
                 if (x.Send())
                 {
-                    // this.NetTerminal.Logger?.Log($"Udp Sent: {x.ToString()}");
+                    // this.NetTerminal.Logger?.Log($"Udp Sent({this.Terminal.MaxCapacityPerRound}): {x.ToString()}");
 
                     sendCapacity--;
-                    Interlocked.Decrement(ref this.Terminal.MaxCapacityPerRound);
                     x.SentMics = currentMics;
                     this.NetTerminal.FlowControl.ReportSend(currentMics);
                 }
@@ -655,7 +654,6 @@ WaitForSendCompletionWait:
                     {
                         this.NetTerminal.Logger?.Log($"Udp Resent: {x.ToString()}");
                         sendCapacity--;
-                        Interlocked.Decrement(ref this.Terminal.MaxCapacityPerRound);
                         x.SentMics = currentMics;
                         this.NetTerminal.FlowControl.ReportSend(currentMics);
                         this.NetTerminal.IncrementResendCount();

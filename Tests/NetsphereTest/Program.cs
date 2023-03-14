@@ -143,6 +143,7 @@ public class Program
                 options.Path = Path.Combine(context.RootDirectory, logfile);
                 options.MaxLogCapacity = 1;
                 options.MaxStreamCapacity = 1_000;
+                options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffff K";
             })
             .SetupOptions<ServerTerminalLoggerOptions>((context, options) =>
             {// ServerTerminalLoggerOptions
@@ -150,6 +151,7 @@ public class Program
                 options.Path = Path.Combine(context.RootDirectory, logfile);
                 options.MaxLogCapacity = 1;
                 options.MaxStreamCapacity = 1_000;
+                options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffff K";
             });
 
         Console.WriteLine(string.Join(' ', args));

@@ -104,21 +104,23 @@ public class NetSocket
 
         public void ProcessSend()
         {// Invoked by multiple threads.
-            // Check interval.
-            var currentMics = Mics.GetSystem();
-            var previous = Volatile.Read(ref this.previousMics);
-            var interval = Mics.FromNanoseconds((double)NetConstants.SendIntervalNanoseconds / 2); // Half for margin.
-            if (currentMics < (previous + interval))
-            {
-                return;
+            long currentMics;
+            lock (this.syncObject)
+            {// Check interval.
+                currentMics = Mics.GetSystem();
+                var interval = Mics.FromNanoseconds((double)NetConstants.SendIntervalNanoseconds / 2); // Half for margin.
+                if (currentMics < (this.previousMics + interval))
+                {
+                    return;
+                }
+
+                this.previousMics = currentMics;
             }
 
             if (this.socket.UnsafeUdpClient != null)
             {
                 this.socket.terminal.ProcessSend(currentMics);
             }
-
-            Volatile.Write(ref this.previousMics, currentMics);
         }
 
         protected override void Dispose(bool disposing)
@@ -129,6 +131,8 @@ public class NetSocket
 
         private NetSocket socket;
         private MultimediaTimer? timer;
+
+        private object syncObject = new();
         private long previousMics;
     }
 
