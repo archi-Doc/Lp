@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 using Arc.Crypto;
 using Arc.Unit;
 using SimpleCommandLine;
@@ -38,8 +39,8 @@ public class UdpSendSubcommand : ISimpleCommandAsync<UdpSendOptions>
         }
 
         udp.Client.ReceiveTimeout = 100;
-        udp.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendBuffer, 128 * 1024);
-        udp.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveBuffer, 128 * 1024);
+        // udp.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendBuffer, 128 * 1024);
+        // udp.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveBuffer, 128 * 1024);
 
         this.options = options;
         if (this.options.Size > 1400)
@@ -105,6 +106,12 @@ public class UdpSendSubcommand : ISimpleCommandAsync<UdpSendOptions>
             var remoteEP = (EndPoint)anyEP;
             try
             {
+                var spinner = new SpinWait();
+                while (spinner.Count < 140)
+                {
+                    spinner.SpinOnce(sleep1Threshold: -1);
+                }
+
                 var received = udp.Client.ReceiveFrom(buffer, 0, buffer.Length, SocketFlags.None, ref remoteEP);
                 count++;
 
