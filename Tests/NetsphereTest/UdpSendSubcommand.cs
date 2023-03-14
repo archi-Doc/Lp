@@ -93,6 +93,17 @@ public class UdpSendSubcommand : ISimpleCommandAsync<UdpSendOptions>
         // Send
         for (var n = 0; n < number; n++)
         {
+            /*var spinner = new SpinWait();
+            while (spinner.Count < 14000)
+            {
+                spinner.SpinOnce(sleep1Threshold: -1);
+            }*/
+
+            /*if (n % 20 == 0)
+            {
+                await Task.Delay(1);
+            }*/
+
             udp.Send(data, this.endpoint);
         }
 
@@ -106,12 +117,6 @@ public class UdpSendSubcommand : ISimpleCommandAsync<UdpSendOptions>
             var remoteEP = (EndPoint)anyEP;
             try
             {
-                var spinner = new SpinWait();
-                while (spinner.Count < 140)
-                {
-                    spinner.SpinOnce(sleep1Threshold: -1);
-                }
-
                 var received = udp.Client.ReceiveFrom(buffer, 0, buffer.Length, SocketFlags.None, ref remoteEP);
                 count++;
 
