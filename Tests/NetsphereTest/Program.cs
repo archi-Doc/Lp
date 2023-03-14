@@ -104,6 +104,8 @@ public class Program
                 context.AddCommand(typeof(TaskScalingSubcommand));
                 context.AddCommand(typeof(StressSubcommand));
                 context.AddCommand(typeof(RemoteBenchSubcommand));
+                context.AddCommand(typeof(UdpRecvSubcommand));
+                context.AddCommand(typeof(UdpSendSubcommand));
 
                 // NetService
                 context.AddSingleton<BenchmarkServiceImpl>();
@@ -157,11 +159,17 @@ public class Program
         Console.WriteLine(string.Join(' ', args));
 
         var unit = builder.Build(args);
+        if (args[0] == "udpsend" || args[0] == "udprecv")
+        {
+            goto RunAsync;
+        }
+
         var options = unit.Context.ServiceProvider.GetRequiredService<NetsphereOptions>();
         await Console.Out.WriteLineAsync($"Port: {options.Port.ToString()}");
         var param = new NetControl.Unit.Param(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);
         await unit.RunStandalone(param);
 
+RunAsync:
         var parserOptions = SimpleParserOptions.Standard with
         {
             ServiceProvider = unit.Context.ServiceProvider,
@@ -169,8 +177,6 @@ public class Program
             RequireStrictOptionName = false,
         };
 
-        // await SimpleParser.ParseAndRunAsync(commandTypes, "netbench -node alternative", parserOptions); // Main process
-        // SimpleParserHelper.AddEnvironmentVariable(ref args, "lpargs");
         await SimpleParser.ParseAndRunAsync(unit.Context.Commands, args, parserOptions); // Main process
 
         ThreadCore.Root.Terminate();
