@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 
 namespace Netsphere;
 
@@ -69,11 +70,9 @@ public class NetSocket
                 : base(parent, Process, false)
         {
             this.socket = socket;
-            this.terminal = socket.terminal;
         }
 
         private NetSocket socket;
-        private Terminal terminal;
     }
 
     internal class NetSocketSendCore : ThreadCore
@@ -94,6 +93,7 @@ public class NetSocket
                 var nano = NetConstants.SendIntervalNanoseconds - ((Mics.GetSystem() - prev) * 1000);
                 if (nano > 0)
                 {
+                    core.socket.Logger?.TryGet()?.Log($"Nanosleep: {nano}");
                     core.TryNanoSleep(nano); // Performs better than core.Sleep() on Linux.
                 }
             }
@@ -108,9 +108,6 @@ public class NetSocket
 
         public void ProcessSend()
         {// Invoked by multiple threads.
-            this.socket.terminal.ProcessSend(Mics.GetSystem());
-            return;
-
             long currentMics;
             var taken = false;
             try
@@ -118,6 +115,7 @@ public class NetSocket
                 Monitor.TryEnter(this.syncObject, ref taken);
                 if (!taken)
                 {
+                    this.socket.Logger?.TryGet()?.Log($"ProcessSend: Cancelled");
                     return;
                 }
 
@@ -131,6 +129,7 @@ public class NetSocket
 
                 if (this.socket.UnsafeUdpClient != null)
                 {
+                    this.socket.Logger?.TryGet()?.Log($"ProcessSend");
                     this.socket.terminal.ProcessSend(currentMics);
                 }
 
@@ -160,8 +159,8 @@ public class NetSocket
 
     public NetSocket(Terminal terminal)
     {
-        this.logger = terminal.UnitLogger.GetLogger<NetSocket>();
         this.terminal = terminal;
+        this.logger = terminal.UnitLogger.GetLogger<NetSocket>();
     }
 
     public bool Start(ThreadCoreBase parent, int port)
@@ -175,7 +174,7 @@ public class NetSocket
         }
         catch
         {
-            this.logger.TryGet(LogLevel.Fatal)?.Log($"Could not create a UDP socket with port {port}.");
+            this.Logger?.TryGet(LogLevel.Fatal)?.Log($"Could not create a UDP socket with port {port}.");
             throw new PanicException();
         }
 
@@ -232,12 +231,14 @@ public class NetSocket
         this.UnsafeUdpClient = udp;
     }
 
+    internal ILogger? Logger => this.terminal.IsAlternative ? null : this.logger;
+
 #pragma warning disable SA1401 // Fields should be private
     internal UdpClient? UnsafeUdpClient;
 #pragma warning restore SA1401 // Fields should be private
 
-    private ILogger<NetSocket> logger;
     private Terminal terminal;
+    private ILogger logger;
     private NetSocketRecvCore? recvCore;
     private NetSocketSendCore? sendCore;
 

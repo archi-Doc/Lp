@@ -76,6 +76,19 @@ public class LPLogger
 
                         return;
                     }
+                    else if (context.LogSourceType == typeof(NetSocket))
+                    {
+                        context.SetOutput<EmptyLogger>();
+                        return;
+
+                        /*if (context.TryGetOptions<LPOptions>(out var options) &&
+                        options.NetsphereOptions.EnableLogger)
+                        {
+                            context.SetOutput<StreamLogger<ServerTerminalLoggerOptions>>();
+                        }
+
+                        return;*/
+                    }
 
                     context.SetOutput<ConsoleAndFileLogger>();
                 });

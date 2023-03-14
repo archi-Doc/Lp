@@ -137,6 +137,16 @@ public class Program
                         context.SetOutput<StreamLogger<ServerTerminalLoggerOptions>>();
                         return;
                     }
+                    else if (context.LogSourceType == typeof(NetSocket))
+                    {
+                        /*if (context.TryGetOptions<NetsphereOptions>(out var options) &&
+                        options.EnableLogger)
+                        {
+                            context.SetOutput<FileLogger<NetSocketLoggerOptions>>();
+                        }*/
+
+                        return;
+                    }
                 });
             })
             .SetupOptions<ClientTerminalLoggerOptions>((context, options) =>
@@ -153,6 +163,13 @@ public class Program
                 options.Path = Path.Combine(context.RootDirectory, logfile);
                 options.MaxLogCapacity = 1;
                 options.MaxStreamCapacity = 1_000;
+                options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffff K";
+            })
+            .SetupOptions<NetSocketLoggerOptions>((context, options) =>
+            {// FileLoggerOptions
+                var logfile = "Logs/Socket.txt";
+                options.Path = Path.Combine(context.RootDirectory, logfile);
+                options.MaxLogCapacity = 1;
                 options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffff K";
             });
 

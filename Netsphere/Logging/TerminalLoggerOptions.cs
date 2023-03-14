@@ -9,3 +9,7 @@ public class ClientTerminalLoggerOptions : StreamLoggerOptions
 public class ServerTerminalLoggerOptions : StreamLoggerOptions
 {
 }
+
+public class NetSocketLoggerOptions : FileLoggerOptions
+{
+}
