@@ -38,8 +38,8 @@ public class UdpSendSubcommand : ISimpleCommandAsync<UdpSendOptions>
         }
 
         udp.Client.ReceiveTimeout = 100;
-        // udp.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendBuffer, 128 * 1024);
-        // udp.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveBuffer, 128 * 1024);
+        udp.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendBuffer, 128 * 1024);
+        udp.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveBuffer, 128 * 1024);
 
         this.options = options;
         if (this.options.Size > 1400)
