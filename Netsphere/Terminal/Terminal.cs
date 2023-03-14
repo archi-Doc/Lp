@@ -174,6 +174,7 @@ public class Terminal : UnitBase, IUnitExecutable
 
     internal void ProcessSend(long currentMics)
     {
+        var rawCapacity = NetConstants.SendCapacityPerRound / 2;
         while (this.rawSends.TryDequeue(out var rawSend))
         {
             try
@@ -185,6 +186,11 @@ public class Terminal : UnitBase, IUnitExecutable
             }
 
             rawSend.Clear();
+
+            if (--rawCapacity <= 0)
+            {
+                break;
+            }
         }
 
         NetTerminal[] array;
@@ -193,7 +199,7 @@ public class Terminal : UnitBase, IUnitExecutable
             array = this.terminals.QueueChain.ToArray();
         }
 
-        this.MaxCapacityPerRound = NetConstants.MaxCapacityPerRound;
+        this.SendCapacityPerRound = NetConstants.SendCapacityPerRound / 2 + rawCapacity;
         foreach (var x in array)
         {
             x.ProcessSend(currentMics);
@@ -541,7 +547,7 @@ public class Terminal : UnitBase, IUnitExecutable
     internal UnitLogger UnitLogger { get; private set; }
 
 #pragma warning disable SA1401 // Fields should be private
-    internal int MaxCapacityPerRound;
+    internal int SendCapacityPerRound;
 #pragma warning restore SA1401 // Fields should be private
 
     private ILogger<Terminal> logger;

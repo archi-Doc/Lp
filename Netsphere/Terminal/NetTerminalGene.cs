@@ -94,7 +94,7 @@ internal class NetTerminalGene
         if (this.State == NetTerminalGeneState.WaitingToSend ||
             this.State == NetTerminalGeneState.WaitingForAck)
         {
-            var currentCapacity = Interlocked.Decrement(ref this.NetInterface.Terminal.MaxCapacityPerRound);
+            var currentCapacity = Interlocked.Decrement(ref this.NetInterface.Terminal.SendCapacityPerRound);
             if (currentCapacity < 0)
             {
                 return false;

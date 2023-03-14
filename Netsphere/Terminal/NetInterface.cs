@@ -624,7 +624,7 @@ WaitForSendCompletionWait:
         for (var i = 0; i < remaining; i++)
         {// remaining > 0
             var x = this.SendGenes[this.SendIndex];
-            if (sendCapacity == 0 || this.Terminal.MaxCapacityPerRound <= 0)
+            if (sendCapacity == 0 || this.Terminal.SendCapacityPerRound <= 0)
             {// tempcode
                 return;
             }

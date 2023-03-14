@@ -6,7 +6,7 @@ internal static class NetConstants
 {
     public const int SendIntervalMilliseconds = 1;
     public const int SendIntervalNanoseconds = SendIntervalMilliseconds * 1_000_000;
-    public const int MaxCapacityPerRound = 25; // 25 tempcode
+    public const int SendCapacityPerRound = 50;
     public const int SendingAckIntervalInMilliseconds = 10;
     public const double ResendWaitMilliseconds = 500;
 
