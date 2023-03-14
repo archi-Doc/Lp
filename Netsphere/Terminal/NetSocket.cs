@@ -88,10 +88,14 @@ public class NetSocket
                     break;
                 }
 
+                var prev = Mics.GetSystem();
                 core.ProcessSend();
 
-                // core.Sleep(SendIntervalMilliseconds);
-                core.TryNanoSleep(NetConstants.SendIntervalNanoseconds); // Performs better than core.Sleep() on Linux.
+                var nano = NetConstants.SendIntervalNanoseconds - ((Mics.GetSystem() - prev) * 1000);
+                if (nano > 0)
+                {
+                    core.TryNanoSleep(nano); // Performs better than core.Sleep() on Linux.
+                }
             }
         }
 
@@ -104,9 +108,20 @@ public class NetSocket
 
         public void ProcessSend()
         {// Invoked by multiple threads.
+            this.socket.terminal.ProcessSend(Mics.GetSystem());
+            return;
+
             long currentMics;
-            lock (this.syncObject)
-            {// Check interval.
+            var taken = false;
+            try
+            {
+                Monitor.TryEnter(this.syncObject, ref taken);
+                if (!taken)
+                {
+                    return;
+                }
+
+                // Check interval.
                 currentMics = Mics.GetSystem();
                 var interval = Mics.FromNanoseconds((double)NetConstants.SendIntervalNanoseconds / 2); // Half for margin.
                 if (currentMics < (this.previousMics + interval))
@@ -114,12 +129,19 @@ public class NetSocket
                     return;
                 }
 
+                if (this.socket.UnsafeUdpClient != null)
+                {
+                    this.socket.terminal.ProcessSend(currentMics);
+                }
+
                 this.previousMics = currentMics;
             }
-
-            if (this.socket.UnsafeUdpClient != null)
+            finally
             {
-                this.socket.terminal.ProcessSend(currentMics);
+                if (taken)
+                {
+                    Monitor.Exit(this.syncObject);
+                }
             }
         }
 
