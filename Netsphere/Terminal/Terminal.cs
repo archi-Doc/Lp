@@ -199,7 +199,7 @@ public class Terminal : UnitBase, IUnitExecutable
             array = this.terminals.QueueChain.ToArray();
         }
 
-        this.SendCapacityPerRound = NetConstants.SendCapacityPerRound / 2 + rawCapacity;
+        this.SendCapacityPerRound = (NetConstants.SendCapacityPerRound / 2) + rawCapacity;
         foreach (var x in array)
         {
             x.ProcessSend(currentMics);

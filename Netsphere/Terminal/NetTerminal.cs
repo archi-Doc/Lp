@@ -287,7 +287,9 @@ public partial class NetTerminal : IDisposable
             }
 
             // KeyMaterial
-            var material = this.Terminal.NodePrivateKey.DeriveKeyMaterial(this.NodeInformation.PublicKey);
+            var pair = new NodeKeyPair(this.Terminal.NodePrivateKey, this.NodeInformation.PublicKey);
+            var material = pair.DeriveKeyMaterial();
+            // var material = this.Terminal.NodePrivateKey.DeriveKeyMaterial(this.NodeInformation.PublicKey);
             if (material == null)
             {
                 return NetResult.NoNodeInformation;
