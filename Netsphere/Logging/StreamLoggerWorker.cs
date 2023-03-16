@@ -2,10 +2,8 @@
 
 using System.Collections.Concurrent;
 using System.Text;
-using LP.Logging;
-using ValueLink;
 
-namespace Arc.Unit;
+namespace Netsphere.Logging;
 
 internal partial class StreamLoggerWorker : TaskCore
 {

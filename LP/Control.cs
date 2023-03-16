@@ -18,6 +18,7 @@ using LP.T3CS;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere;
+using Netsphere.Logging;
 using Netsphere.Machines;
 using SimpleCommandLine;
 
@@ -56,11 +57,13 @@ public class Control : ILogInformation
                 context.AddSingleton<LpCrystal>();
                 context.AddSingleton<MergerCrystal>();
                 context.Services.TryAddSingleton<ICrystal>(x => x.GetRequiredService<Control>().Crystal);
-                context.Services.TryAddSingleton<LpData>(x => x.GetRequiredService<Control>().Root);
+                // context.Services.TryAddSingleton<LpData>(x => x.GetRequiredService<Control>().LpRoot);
+                // context.Services.TryAddSingleton<MergerData>(x => x.GetRequiredService<Control>().MergerRoot);
 
                 // RPC / Services
                 context.AddSingleton<NetServices.AuthorizedTerminalFactory>();
                 context.AddTransient<NetServices.BenchmarkServiceImpl>();
+                context.AddSingleton<NetServices.RemoteBenchBroker>();
                 context.AddTransient<NetServices.RemoteControlServiceImpl>();
                 context.AddTransient<NetServices.T3CS.MergerServiceImpl>();
 
@@ -77,7 +80,7 @@ public class Control : ILogInformation
                 context.AddSubcommand(typeof(LP.Subcommands.MicsSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.GCSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.PingSubcommand));
-                context.AddSubcommand(typeof(LP.Subcommands.NetBenchSubcommand));
+                context.AddSubcommand(typeof(LP.Subcommands.RemoteBenchSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.PunchSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.BenchmarkSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.SeedphraseSubcommand));
@@ -146,7 +149,14 @@ public class Control : ILogInformation
 
             this.SetupOptions<ConsoleLoggerOptions>((context, options) =>
             {// ConsoleLoggerOptions
-                options.Formatter.EnableColor = true;
+                if (context.TryGetOptions<LPOptions>(out var lpOptions))
+                {
+                    options.Formatter.EnableColor = lpOptions.ColorConsole;
+                }
+                else
+                {
+                    options.Formatter.EnableColor = true;
+                }
             });
 
             this.SetupOptions<LPBase>((context, lpBase) =>
@@ -215,8 +225,25 @@ public class Control : ILogInformation
 
             // Second - Arguments
             SimpleParser.TryParseOptions<LPOptions>(args, out options, options);
+
             if (options != null)
             {
+                // Passphrase
+                if (options.Pass == null)
+                {
+                    try
+                    {
+                        var lppass = Environment.GetEnvironmentVariable("lppass");
+                        if (lppass != null)
+                        {
+                            options.Pass = lppass;
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+
                 context.SetOptions(options);
             }
         }
@@ -308,14 +335,16 @@ public class Control : ILogInformation
         {// Merger
             var mergerCrystal = context.ServiceProvider.GetRequiredService<MergerCrystal>();
             this.Crystal = mergerCrystal;
-            this.Root = mergerCrystal.Root;
+            this.LpRoot = default!;
+            this.MergerRoot = mergerCrystal.Root;
             this.MergerProvider.Create(context);
         }
         else
         {
             var lpCrystal = context.ServiceProvider.GetRequiredService<LpCrystal>();
             this.Crystal = lpCrystal;
-            this.Root = lpCrystal.Root.Data;
+            this.LpRoot = lpCrystal.Root.Data;
+            this.MergerRoot = default!;
         }
 
         this.Core = core;
@@ -564,7 +593,9 @@ public class Control : ILogInformation
 
     public ICrystal Crystal { get; }
 
-    public LpData Root { get; }
+    public LpData LpRoot { get; }
+
+    public MergerData MergerRoot { get; }
 
     public Mono Mono { get; }
 
@@ -581,7 +612,7 @@ public class Control : ILogInformation
         }
         else
         {
-            var result = await this.Vault.LoadAsync(this.LPBase.CombineDataPath(this.LPBase.Options.Vault, Vault.Filename)).ConfigureAwait(false);
+            var result = await this.Vault.LoadAsync(this.LPBase.CombineDataPath(this.LPBase.Options.Vault, Vault.Filename), this.LPBase.Options.Pass).ConfigureAwait(false);
             if (result)
             {
                 goto LoadKeyVaultObjects;
@@ -599,7 +630,12 @@ public class Control : ILogInformation
         // await this.UserInterfaceService.Notify(UserInterfaceNotifyLevel.Information, Hashed.KeyVault.Create);
 
         // New Vault
-        var password = await this.UserInterfaceService.RequestPasswordAndConfirm(Hashed.Vault.EnterPassword, Hashed.Dialog.Password.Confirm);
+        var password = this.LPBase.Options.Pass;
+        if (string.IsNullOrEmpty(password))
+        {
+            password = await this.UserInterfaceService.RequestPasswordAndConfirm(Hashed.Vault.EnterPassword, Hashed.Dialog.Password.Confirm);
+        }
+
         if (password == null)
         {
             throw new PanicException();

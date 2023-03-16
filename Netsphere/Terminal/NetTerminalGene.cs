@@ -94,6 +94,12 @@ internal class NetTerminalGene
         if (this.State == NetTerminalGeneState.WaitingToSend ||
             this.State == NetTerminalGeneState.WaitingForAck)
         {
+            var currentCapacity = Interlocked.Decrement(ref this.NetInterface.Terminal.SendCapacityPerRound);
+            if (currentCapacity < 0)
+            {
+                return false;
+            }
+
             /*if (RandomVault.Pseudo.NextDouble() < 0.1)
             {
                 this.State = NetTerminalGeneState.WaitingForAck;
@@ -116,7 +122,7 @@ internal class NetTerminalGene
                 if (span.Length > 4)
                 {
                     var packetId = (PacketId)span[3];
-                    logger.Log($"Udp Send({this.Gene.To4Hex()}) Id: {packetId}, Size: {span.Length}, To: {this.NetInterface.NetTerminal.Endpoint}");
+                    logger.Log($"Udp Send({currentCapacity}, {this.Gene.To4Hex()}) Id: {packetId}, Size: {span.Length}, To: {this.NetInterface.NetTerminal.Endpoint}");
                 }
             }
 

@@ -182,7 +182,7 @@ public partial class Vault
         }
     }
 
-    public async Task<bool> LoadAsync(string path)
+    public async Task<bool> LoadAsync(string path, string? lppass)
     {
         byte[] data;
         try
@@ -210,7 +210,7 @@ public partial class Vault
             return false;
         }
 
-        string? password = null;
+        string? password = lppass;
         foreach (var x in items)
         {
             if (PasswordEncrypt.TryDecrypt(x.Value.Encrypted, string.Empty, out var decrypted))
@@ -218,27 +218,28 @@ public partial class Vault
             }
             else
             {// Password required.
+RetryPassword:
                 if (password == null)
                 {// Enter password
-RetryPassword:
-                    var results = await this.userInterfaceService.RequestPassword(Hashed.Vault.EnterPassword).ConfigureAwait(false);
-                    if (results == null)
+                    password = await this.userInterfaceService.RequestPassword(Hashed.Vault.EnterPassword).ConfigureAwait(false);
+                    if (password == null)
                     {
                         throw new PanicException();
                     }
+                }
 
-                    if (PasswordEncrypt.TryDecrypt(x.Value.Encrypted, results, out decrypted))
-                    {// Success
-                        password = results;
-                        this.password = password;
-                    }
-                    else
-                    {// Failure
-                        await this.userInterfaceService.Notify(LogLevel.Warning, Hashed.Dialog.Password.NotMatch).ConfigureAwait(false);
-                        goto RetryPassword;
-                    }
+                if (PasswordEncrypt.TryDecrypt(x.Value.Encrypted, password, out decrypted))
+                {// Success
+                    this.password = password;
                 }
                 else
+                {// Failure
+                    password = null;
+                    await this.userInterfaceService.Notify(LogLevel.Warning, Hashed.Dialog.Password.NotMatch).ConfigureAwait(false);
+                    goto RetryPassword;
+                }
+
+                /*else
                 {// Password already entered.
                     if (PasswordEncrypt.TryDecrypt(x.Value.Encrypted, password, out decrypted))
                     {// Success
@@ -248,7 +249,7 @@ RetryPassword:
                         await this.userInterfaceService.Notify(LogLevel.Fatal, Hashed.Vault.NoRestore, x.Key).ConfigureAwait(false);
                         throw new PanicException();
                     }
-                }
+                }*/
             }
 
             // item[i], decrypted

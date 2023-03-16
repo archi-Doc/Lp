@@ -34,5 +34,5 @@ public partial struct DatumObject : ITinyhandSerialize<DatumObject>
 
     internal bool IsValid => this.Id != 0;
 
-    internal IBaseDatum? Data;
+    internal IBaseDatum? Datum;
 }

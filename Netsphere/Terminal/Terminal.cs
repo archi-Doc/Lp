@@ -86,7 +86,7 @@ public class Terminal : UnitBase, IUnitExecutable
             this.terminals.Add(terminal);
         }
 
-        if (await terminal.EncryptConnectionAsync() != NetResult.Success)
+        if (await terminal.EncryptConnectionAsync().ConfigureAwait(false) != NetResult.Success)
         {
             terminal.Dispose();
             return null;
@@ -174,6 +174,7 @@ public class Terminal : UnitBase, IUnitExecutable
 
     internal void ProcessSend(long currentMics)
     {
+        var rawCapacity = NetConstants.SendCapacityPerRound / 2;
         while (this.rawSends.TryDequeue(out var rawSend))
         {
             try
@@ -185,6 +186,11 @@ public class Terminal : UnitBase, IUnitExecutable
             }
 
             rawSend.Clear();
+
+            if (--rawCapacity <= 0)
+            {
+                break;
+            }
         }
 
         NetTerminal[] array;
@@ -193,6 +199,7 @@ public class Terminal : UnitBase, IUnitExecutable
             array = this.terminals.QueueChain.ToArray();
         }
 
+        this.SendCapacityPerRound = (NetConstants.SendCapacityPerRound / 2) + rawCapacity;
         foreach (var x in array)
         {
             x.ProcessSend(currentMics);
@@ -355,7 +362,20 @@ public class Terminal : UnitBase, IUnitExecutable
             var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(terminal, firstGene, owner, secondGene, sendOwner);
             sendOwner.Return();
 
-            Task.Run(async () =>
+            /*terminal.GenePool.GetSequential();
+            terminal.SetSalt(packet.SaltA, response.SaltA2);
+            terminal.CreateEmbryo(packet.Salt, response.Salt2);
+            terminal.SetReceiverNumber();
+            terminal.Add(netInterface); // Delay sending PacketEncryptResponse until the receiver is ready.
+            if (this.invokeServerDelegate != null)
+            {
+                new ThreadCore(ThreadCore.Root, x =>
+                {
+                    this.invokeServerDelegate(terminal);
+                });
+            }*/
+
+            _ = Task.Run(async () =>
             {
                 terminal.GenePool.GetSequential();
                 terminal.SetSalt(packet.SaltA, response.SaltA2);
@@ -525,6 +545,10 @@ public class Terminal : UnitBase, IUnitExecutable
     internal UdpClient? UnsafeUdpClient => this.NetSocket.UnsafeUdpClient;
 
     internal UnitLogger UnitLogger { get; private set; }
+
+#pragma warning disable SA1401 // Fields should be private
+    internal int SendCapacityPerRound;
+#pragma warning restore SA1401 // Fields should be private
 
     private ILogger<Terminal> logger;
     private InvokeServerDelegate? invokeServerDelegate;

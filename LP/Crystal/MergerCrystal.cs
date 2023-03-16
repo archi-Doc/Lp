@@ -2,10 +2,10 @@
 
 namespace LP.Crystal;
 
-public class MergerCrystal : Crystal<LpData>
+public class MergerCrystal : Crystal<MergerData>
 {
-    public MergerCrystal(UnitCore core, CrystalOptions options, ILogger<MergerCrystal> logger)
-        : base(core, options, logger)
+    public MergerCrystal(UnitCore core, CrystalOptions options, ILogger<MergerCrystal> logger, UnitLogger unitLogger)
+        : base(core, options, logger, unitLogger)
     {
         this.Options = options with
         {
@@ -16,6 +16,9 @@ public class MergerCrystal : Crystal<LpData>
             DefaultCrystalDirectory = "Merger",
         };
 
-        this.Datum.Register<BlockDatum>(x => new BlockDatumImpl(x));
+        this.himo = new(10);
+        this.Constructor.Register<BlockDatum>(x => new BlockDatumImpl(x));
     }
+
+    private DataHimo himo;
 }

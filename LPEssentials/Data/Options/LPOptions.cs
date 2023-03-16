@@ -12,6 +12,9 @@ public partial record LPOptions : ILogInformation
     [SimpleOption("loadoptions", Description = "Options path")]
     public string OptionsPath { get; init; } = string.Empty;
 
+    [SimpleOption("pass", Description = "Passphrase for keyvault")]
+    public string? Pass { get; set; } = null;
+
     [SimpleOption("development", Description = "Development")]
     public bool Development { get; init; } = false;
 
@@ -44,6 +47,9 @@ public partial record LPOptions : ILogInformation
 
     [SimpleOption("confirmexit", Description = "Confirms application exit")]
     public bool ConfirmExit { get; init; } = false;
+
+    [SimpleOption("colorconsole", Description = "Enable color console")]
+    public bool ColorConsole { get; init; } = true;
 
     public void LogInformation(ILog log)
     {

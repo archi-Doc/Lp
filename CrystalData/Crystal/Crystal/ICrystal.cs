@@ -4,13 +4,17 @@ namespace CrystalData;
 
 public interface ICrystal
 {
-    DatumConstructor Datum { get; }
+    DatumConstructor Constructor { get; }
 
     CrystalOptions Options { get; set; }
 
     public bool Started { get; }
 
     Storage Storage { get; }
+
+    HimoGoshujinClass Himo { get; }
+
+    long MemoryUsage { get; }
 
     Task<CrystalStartResult> StartAsync(CrystalStartParam param);
 

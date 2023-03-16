@@ -50,7 +50,8 @@ public class CrystalControl
         return new Crystal<TData>(
             this.unitContext.ServiceProvider.GetRequiredService<UnitCore>(),
             options,
-            this.unitContext.ServiceProvider.GetRequiredService<ILogger<Crystal<TData>>>());
+            this.unitContext.ServiceProvider.GetRequiredService<ILogger<Crystal<TData>>>(),
+            this.unitContext.ServiceProvider.GetRequiredService<UnitLogger>());
     }
 
     public bool ExaltationOfIntegrality { get; } = true; // ZenItz by Baxter.

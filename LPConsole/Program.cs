@@ -1,9 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-#pragma warning disable SA1210 // Using directives should be ordered alphabetically by namespace
-
-global using System;
-global using System.Threading.Tasks;
 global using Arc.Threading;
 global using Arc.Unit;
 global using LP;
@@ -58,6 +54,8 @@ public class Program
                 });
             });
         // .ConfigureBuilder(new LPConsole.Example.ExampleUnit.Builder()); // Alternative
+
+        SimpleCommandLine.SimpleParserHelper.AddEnvironmentVariable(ref args, "lpargs");
 
         unit = builder.Build(args);
 

@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 
 namespace Netsphere;
 
@@ -11,8 +12,6 @@ namespace Netsphere;
 public class NetSocket
 {
     private const int ReceiveTimeout = 100;
-    private const int SendIntervalMilliseconds = 2;
-    private const int SendIntervalNanoseconds = 2_000_000;
 
     internal class NetSocketRecvCore : ThreadCore
     {
@@ -71,11 +70,9 @@ public class NetSocket
                 : base(parent, Process, false)
         {
             this.socket = socket;
-            this.terminal = socket.terminal;
         }
 
         private NetSocket socket;
-        private Terminal terminal;
     }
 
     internal class NetSocketSendCore : ThreadCore
@@ -90,10 +87,15 @@ public class NetSocket
                     break;
                 }
 
+                var prev = Mics.GetSystem();
                 core.ProcessSend();
 
-                // core.Sleep(SendIntervalMilliseconds);
-                core.TryNanoSleep(SendIntervalNanoseconds); // Performs better than core.Sleep() on Linux.
+                var nano = NetConstants.SendIntervalNanoseconds - ((Mics.GetSystem() - prev) * 1000);
+                if (nano > 0)
+                {
+                    core.socket.Logger?.TryGet()?.Log($"Nanosleep: {nano}");
+                    core.TryNanoSleep(nano); // Performs better than core.Sleep() on Linux.
+                }
             }
         }
 
@@ -101,26 +103,45 @@ public class NetSocket
                 : base(parent, Process, false)
         {
             this.socket = socket;
-            this.timer = MultimediaTimer.TryCreate(SendIntervalMilliseconds, this.ProcessSend); // Use multimedia timer if available.
+            this.timer = MultimediaTimer.TryCreate(NetConstants.SendIntervalMilliseconds, this.ProcessSend); // Use multimedia timer if available.
         }
 
         public void ProcessSend()
         {// Invoked by multiple threads.
-            // Check interval.
-            var currentMics = Mics.GetSystem();
-            var previous = Volatile.Read(ref this.previousMics);
-            var interval = Mics.FromNanoseconds((double)SendIntervalNanoseconds / 2); // Half for margin.
-            if (currentMics < (previous + interval))
+            long currentMics;
+            var taken = false;
+            try
             {
-                return;
-            }
+                Monitor.TryEnter(this.syncObject, ref taken);
+                if (!taken)
+                {
+                    this.socket.Logger?.TryGet()?.Log($"ProcessSend: Cancelled");
+                    return;
+                }
 
-            if (this.socket.UnsafeUdpClient != null)
+                // Check interval.
+                currentMics = Mics.GetSystem();
+                var interval = Mics.FromNanoseconds((double)NetConstants.SendIntervalNanoseconds / 2); // Half for margin.
+                if (currentMics < (this.previousMics + interval))
+                {
+                    return;
+                }
+
+                if (this.socket.UnsafeUdpClient != null)
+                {
+                    this.socket.Logger?.TryGet()?.Log($"ProcessSend");
+                    this.socket.terminal.ProcessSend(currentMics);
+                }
+
+                this.previousMics = currentMics;
+            }
+            finally
             {
-                this.socket.terminal.ProcessSend(currentMics);
+                if (taken)
+                {
+                    Monitor.Exit(this.syncObject);
+                }
             }
-
-            Volatile.Write(ref this.previousMics, currentMics);
         }
 
         protected override void Dispose(bool disposing)
@@ -131,13 +152,15 @@ public class NetSocket
 
         private NetSocket socket;
         private MultimediaTimer? timer;
+
+        private object syncObject = new();
         private long previousMics;
     }
 
     public NetSocket(Terminal terminal)
     {
-        this.logger = terminal.UnitLogger.GetLogger<NetSocket>();
         this.terminal = terminal;
+        this.logger = terminal.UnitLogger.GetLogger<NetSocket>();
     }
 
     public bool Start(ThreadCoreBase parent, int port)
@@ -151,7 +174,7 @@ public class NetSocket
         }
         catch
         {
-            this.logger.TryGet(LogLevel.Fatal)?.Log($"Could not create a UDP socket with port {port}.");
+            this.Logger?.TryGet(LogLevel.Fatal)?.Log($"Could not create a UDP socket with port {port}.");
             throw new PanicException();
         }
 
@@ -208,12 +231,14 @@ public class NetSocket
         this.UnsafeUdpClient = udp;
     }
 
+    internal ILogger? Logger => this.terminal.IsAlternative ? null : this.logger;
+
 #pragma warning disable SA1401 // Fields should be private
     internal UdpClient? UnsafeUdpClient;
 #pragma warning restore SA1401 // Fields should be private
 
-    private ILogger<NetSocket> logger;
     private Terminal terminal;
+    private ILogger logger;
     private NetSocketRecvCore? recvCore;
     private NetSocketSendCore? sendCore;
 

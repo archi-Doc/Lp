@@ -7,8 +7,8 @@ internal class CrystalDirectoryWorker : TaskWorker<CrystalDirectoryWork>
     public const int DefaultConcurrentTasks = 4;
     public const int RetryInterval = 10; // 10 ms
 
-    public CrystalDirectoryWorker(ThreadCoreBase parent, CrystalDirectory crystalDirectory)
-        : base(parent, Process, true)
+    public CrystalDirectoryWorker(CrystalDirectory crystalDirectory)
+        : base(null, Process, true)
     {
         this.NumberOfConcurrentTasks = DefaultConcurrentTasks;
         this.SetCanStartConcurrentlyDelegate((workInterface, workingList) =>
@@ -26,7 +26,6 @@ internal class CrystalDirectoryWorker : TaskWorker<CrystalDirectoryWork>
         });
 
         this.CrystalDirectory = crystalDirectory;
-        // this.logger = Crystal.UnitLogger.GetLogger<CrystalDirectoryWorker>();
     }
 
     public static async Task Process(TaskWorker<CrystalDirectoryWork> w, CrystalDirectoryWork work)
@@ -55,13 +54,15 @@ TrySave:
                 filePath = Path.Combine(directoryPath, path.File);
                 using (var handle = File.OpenHandle(filePath, mode: FileMode.OpenOrCreate, access: FileAccess.Write))
                 {
-                    await RandomAccess.WriteAsync(handle, hash, 0, worker.CancellationToken);
-                    await RandomAccess.WriteAsync(handle, work.SaveData.Memory, CrystalDirectory.HashSize, worker.CancellationToken);
+                    await RandomAccess.WriteAsync(handle, hash, 0, worker.CancellationToken).ConfigureAwait(false);
+                    await RandomAccess.WriteAsync(handle, work.SaveData.Memory, CrystalDirectory.HashSize, worker.CancellationToken).ConfigureAwait(false);
+                    worker.CrystalDirectory.Logger?.TryGet()?.Log($"Written {filePath}, {work.SaveData.Memory.Length}");
                 }
             }
             catch (DirectoryNotFoundException)
             {
                 Directory.CreateDirectory(directoryPath);
+                worker.CrystalDirectory.Logger?.TryGet()?.Log($"CreateDirectory {directoryPath}");
                 goto TrySave;
             }
             catch (OperationCanceledException)
@@ -70,6 +71,7 @@ TrySave:
             }
             catch
             {
+                worker.CrystalDirectory.Logger?.TryGet()?.Log($"Retry {filePath}");
                 goto TrySave;
             }
             finally
@@ -86,25 +88,29 @@ TrySave:
                 using (var handle = File.OpenHandle(filePath, mode: FileMode.Open, access: FileAccess.Read))
                 {
                     var hash = new byte[CrystalDirectory.HashSize];
-                    var read = await RandomAccess.ReadAsync(handle, hash, 0, worker.CancellationToken);
+                    var read = await RandomAccess.ReadAsync(handle, hash, 0, worker.CancellationToken).ConfigureAwait(false);
                     if (read != CrystalDirectory.HashSize)
                     {
+                        worker.CrystalDirectory.Logger?.TryGet()?.Log($"DeleteAndExit1 {filePath}");
                         goto DeleteAndExit;
                     }
 
                     var memoryOwner = ByteArrayPool.Default.Rent(work.LoadSize).ToMemoryOwner(0, work.LoadSize);
-                    read = await RandomAccess.ReadAsync(handle, memoryOwner.Memory, CrystalDirectory.HashSize, worker.CancellationToken);
+                    read = await RandomAccess.ReadAsync(handle, memoryOwner.Memory, CrystalDirectory.HashSize, worker.CancellationToken).ConfigureAwait(false);
                     if (read != work.LoadSize)
                     {
+                        worker.CrystalDirectory.Logger?.TryGet()?.Log($"DeleteAndExit2 {filePath}");
                         goto DeleteAndExit;
                     }
 
                     if (BitConverter.ToUInt64(hash) != Arc.Crypto.FarmHash.Hash64(memoryOwner.Memory.Span))
                     {
+                        worker.CrystalDirectory.Logger?.TryGet()?.Log($"DeleteAndExit3 {filePath}");
                         goto DeleteAndExit;
                     }
 
                     work.LoadData = memoryOwner;
+                    worker.CrystalDirectory.Logger?.TryGet()?.Log($"Read {filePath}, {memoryOwner.Memory.Length}");
                 }
             }
             catch (OperationCanceledException)
@@ -113,6 +119,7 @@ TrySave:
             }
             catch
             {
+                worker.CrystalDirectory.Logger?.TryGet()?.Log($"Read exception {filePath}");
             }
             finally
             {
@@ -141,6 +148,7 @@ DeleteAndExit:
         if (filePath != null)
         {
             File.Delete(filePath);
+            worker.CrystalDirectory.Logger?.TryGet()?.Log($"DeleteAndExit {filePath}");
         }
 
         return;
@@ -162,8 +170,6 @@ DeleteAndExit:
     }
 
     private HashSet<string> createdDirectories = new();*/
-
-    // private ILogger<CrystalDirectoryWorker>? logger;
 }
 
 internal class CrystalDirectoryWork : IEquatable<CrystalDirectoryWork>

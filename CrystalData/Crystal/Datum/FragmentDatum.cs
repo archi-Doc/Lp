@@ -188,7 +188,7 @@ public class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDa
             return this.fragments;
         }
 
-        var result = this.dataInternal.StorageToData<FragmentDatum<TIdentifier>>().Result;
+        var result = this.dataInternal.StorageToDatum<FragmentDatum<TIdentifier>>().Result;
         if (result.IsSuccess)
         {
             if (this.LoadInternal(result.Data))
@@ -207,7 +207,7 @@ public class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDa
             return this.fragments;
         }
 
-        var result = await this.dataInternal.StorageToData<FragmentDatum<TIdentifier>>().ConfigureAwait(false);
+        var result = await this.dataInternal.StorageToDatum<FragmentDatum<TIdentifier>>().ConfigureAwait(false);
         if (result.IsSuccess)
         {
             if (this.LoadInternal(result.Data))

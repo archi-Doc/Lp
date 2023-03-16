@@ -9,6 +9,7 @@ public record CrystalOptions
     public const int DefaultMaxFragmentSize = 1024 * 4; // 4KB
     public const int DefaultMaxFragmentCount = 1000;
     public const int DefaultMemorySizeLimit = 1024 * 1024 * 500; // 500MB
+    public const int DefaultMaxParentInMemory = 10_000;
 
     public static CrystalOptions Default { get; } = new CrystalOptions();
 
@@ -34,6 +35,8 @@ public record CrystalOptions
 
     public long DirectoryCapacity { get; init; } = 1024L * 1024 * 1024 * 10; // 10GB
 
+    public int MaxParentInMemory { get; set; } = DefaultMaxParentInMemory;
+
     public string CrystalFile { get; init; } = "Crystal.main";
 
     public string CrystalBackup { get; init; } = "Crystal.back";
@@ -47,6 +50,8 @@ public record CrystalOptions
     public string SnowflakeFile { get; init; } = "Snowflake.main";
 
     public string SnowflakeBackup { get; init; } = "Snowflake.back";
+
+    public bool EnableLogger { get; init; } = true;
 
     public string RootPath => this.rootPath ??= PathHelper.GetRootedDirectory(Directory.GetCurrentDirectory(), this.CrystalPath);
 

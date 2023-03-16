@@ -23,6 +23,8 @@ public class AuthorizedTerminalFactory
             return null; // AuthorizedTerminal<TService>.Invalid;
         }
 
+        // Try to get a cached terminal
+
         // Terminal
         var clientTerminal = await terminal.CreateAndEncrypt(nodeInformation);
         if (clientTerminal == null)
@@ -48,7 +50,7 @@ public class AuthorizedTerminalFactory
     private Authority authority;
 }
 
-public class AuthorizedTerminal<TService> : IDisposable
+public class AuthorizedTerminal<TService> : IDisposable, IEquatable<AuthorizedTerminal<TService>>
     where TService : IAuthorizedService
 {
     internal AuthorizedTerminal(ClientTerminal terminal, AuthorityKey authorityKey, TService service, ILogger? logger)
@@ -57,6 +59,23 @@ public class AuthorizedTerminal<TService> : IDisposable
         this.Key = authorityKey;
         this.Service = service;
         this.logger = logger;
+    }
+
+    public bool Equals(AuthorizedTerminal<TService>? other)
+    {
+        if (other == null)
+        {
+            return false;
+        }
+
+        return this.Terminal == other.Terminal &&
+            typeof(TService) == other.Service.GetType() &&
+            this.Key == other.Key;
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(this.Terminal, typeof(TService), this.Key);
     }
 
     public ClientTerminal Terminal { get; private set; }
@@ -110,5 +129,6 @@ public class AuthorizedTerminal<TService> : IDisposable
             this.disposed = true;
         }
     }
+
     #endregion
 }

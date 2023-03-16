@@ -67,7 +67,10 @@ public partial class NetTerminal : IDisposable
         this.Initialize();
     }
 
-    public void SetMaximumResponseTime(int milliseconds = 800)
+    public override int GetHashCode()
+        => HashCode.Combine(this.Endpoint);
+
+    public void SetMaximumResponseTime(int milliseconds = 1000)
     {
         this.maximumResponseMics = Mics.FromMilliseconds(milliseconds);
     }
@@ -284,7 +287,9 @@ public partial class NetTerminal : IDisposable
             }
 
             // KeyMaterial
-            var material = this.Terminal.NodePrivateKey.DeriveKeyMaterial(this.NodeInformation.PublicKey);
+            var pair = new NodeKeyPair(this.Terminal.NodePrivateKey, this.NodeInformation.PublicKey);
+            var material = pair.DeriveKeyMaterial();
+            // var material = this.Terminal.NodePrivateKey.DeriveKeyMaterial(this.NodeInformation.PublicKey);
             if (material == null)
             {
                 return NetResult.NoNodeInformation;
@@ -443,7 +448,7 @@ public partial class NetTerminal : IDisposable
 
     private void Initialize()
     {
-        if (/*this.Terminal.NetBase.NetsphereOptions.EnableLogger &&*/
+        if (this.Terminal.NetBase.NetsphereOptions.EnableLogger &&
             this.Terminal.UnitLogger.GetLogger(this.GetType()) is { } logger &&
             logger.TryGet() is { } log)
         {

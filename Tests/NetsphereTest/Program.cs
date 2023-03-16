@@ -6,10 +6,11 @@ global using System.Threading.Tasks;
 global using Arc.Threading;
 global using Netsphere;
 using Arc.Unit;
+using LP.Data;
 using Microsoft.Extensions.DependencyInjection;
+using Netsphere.Logging;
+using LP.NetServices;
 using SimpleCommandLine;
-
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
 
 namespace NetsphereTest;
 
@@ -66,36 +67,133 @@ public class Program
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
         };
 
+        SimpleParserHelper.AddEnvironmentVariable(ref args, "lpargs");
+        if (args.Length == 0)
+        {
+            Console.Write("Arguments: ");
+            var arguments = Console.ReadLine();
+            if (arguments != null)
+            {
+                args = new string[1] { arguments, };
+            }
+        }
+
         // 3rd: Builder pattern
         var builder = new NetControl.Builder()
+            .Preload(context =>
+            {
+                var original = context.GetOrCreateOptions<NetsphereOptions>();
+                original.EnableAlternative = false;
+                original.EnableLogger = false;
+                original.Port = 49152;
+
+                NetsphereOptions? options = default;
+                if (context.Arguments.TryGetOption("ns", out var nsArg))
+                {
+                    SimpleParser.TryParseOptions(nsArg.UnwrapBracket(), out options, original);
+                }
+
+                options ??= original;
+                context.SetOptions(options);
+            })
             .Configure(context =>
             {
                 // Command
                 context.AddCommand(typeof(BasicTestSubcommand));
                 context.AddCommand(typeof(NetbenchSubcommand));
+                context.AddCommand(typeof(TaskScalingSubcommand));
+                context.AddCommand(typeof(StressSubcommand));
+                context.AddCommand(typeof(RemoteBenchSubcommand));
+                context.AddCommand(typeof(UdpRecvSubcommand));
+                context.AddCommand(typeof(UdpSendSubcommand));
 
                 // NetService
+                context.AddSingleton<BenchmarkServiceImpl>();
                 context.AddSingleton<ExternalServiceImpl>();
 
                 // ServiceFilter
-                context.AddSingleton<TestFilterB>();
+                context.AddSingleton<LP.NetServices.TestFilterB>();
+
+                // Other
+                context.AddSingleton<RemoteBenchBroker>();
+
+                // Resolver
+                context.ClearLoggerResolver();
+                context.AddLoggerResolver(context =>
+                {
+                    if (context.LogLevel == LogLevel.Debug)
+                    {// Debug -> no output
+                        context.SetOutput<EmptyLogger>();
+                        return;
+                    }
+
+                    if (context.LogSourceType == typeof(ClientTerminal))
+                    {// ClientTerminal
+                        context.SetOutput<StreamLogger<ClientTerminalLoggerOptions>>();
+                        return;
+                    }
+                    else if (context.LogSourceType == typeof(ServerTerminal))
+                    {// ServerTerminal
+                        context.SetOutput<StreamLogger<ServerTerminalLoggerOptions>>();
+                        return;
+                    }
+                    else if (context.LogSourceType == typeof(NetSocket))
+                    {
+                        /*if (context.TryGetOptions<NetsphereOptions>(out var options) &&
+                        options.EnableLogger)
+                        {
+                            context.SetOutput<FileLogger<NetSocketLoggerOptions>>();
+                        }*/
+
+                        return;
+                    }
+                });
+            })
+            .SetupOptions<ClientTerminalLoggerOptions>((context, options) =>
+            {// ClientTerminalLoggerOptions
+                var logfile = "Logs/Client/.txt";
+                options.Path = Path.Combine(context.RootDirectory, logfile);
+                options.MaxLogCapacity = 1;
+                options.MaxStreamCapacity = 1_000;
+                options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffff K";
+            })
+            .SetupOptions<ServerTerminalLoggerOptions>((context, options) =>
+            {// ServerTerminalLoggerOptions
+                var logfile = "Logs/Server/.txt";
+                options.Path = Path.Combine(context.RootDirectory, logfile);
+                options.MaxLogCapacity = 1;
+                options.MaxStreamCapacity = 1_000;
+                options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffff K";
+            })
+            .SetupOptions<NetSocketLoggerOptions>((context, options) =>
+            {// FileLoggerOptions
+                var logfile = "Logs/Socket.txt";
+                options.Path = Path.Combine(context.RootDirectory, logfile);
+                options.MaxLogCapacity = 1;
+                options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffff K";
             });
 
-        var options = new LP.Data.NetsphereOptions();
-        options.EnableAlternative = true;
+        Console.WriteLine(string.Join(' ', args));
 
-        var unit = builder.Build();
+        var unit = builder.Build(args);
+        if (args[0] == "udpsend" || args[0] == "udprecv")
+        {
+            goto RunAsync;
+        }
+
+        var options = unit.Context.ServiceProvider.GetRequiredService<NetsphereOptions>();
+        await Console.Out.WriteLineAsync($"Port: {options.Port.ToString()}");
         var param = new NetControl.Unit.Param(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);
         await unit.RunStandalone(param);
 
+RunAsync:
         var parserOptions = SimpleParserOptions.Standard with
         {
             ServiceProvider = unit.Context.ServiceProvider,
             RequireStrictCommandName = false,
-            RequireStrictOptionName = true,
+            RequireStrictOptionName = false,
         };
 
-        // await SimpleParser.ParseAndRunAsync(commandTypes, "netbench -node alternative", parserOptions); // Main process
         await SimpleParser.ParseAndRunAsync(unit.Context.Commands, args, parserOptions); // Main process
 
         ThreadCore.Root.Terminate();

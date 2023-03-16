@@ -8,8 +8,10 @@ public sealed class Storage
 {
     public const int DirectoryRotationThreshold = 1024 * 1024 * 100; // 100 MB
 
-    internal Storage()
+    internal Storage(UnitLogger unitLogger)
     {
+        this.UnitLogger = unitLogger;
+        // this.Core = new(ThreadCore.Root);
         this.data = TinyhandSerializer.Reconstruct<StorageData>();
     }
 
@@ -138,7 +140,7 @@ public sealed class Storage
             }
         }
 
-        return await directory.Load(file);
+        return await directory.Load(file).ConfigureAwait(false);
     }
 
     public void Delete(ulong file)
@@ -197,7 +199,7 @@ public sealed class Storage
             }
             catch
             {
-                if (!await param.Query(CrystalStartResult.FileError))
+                if (!await param.Query(CrystalStartResult.FileError).ConfigureAwait(false))
                 {
                     return CrystalStartResult.FileError;
                 }
@@ -216,7 +218,7 @@ public sealed class Storage
         }
 
         if (errorDirectories != null &&
-            !await param.Query(CrystalStartResult.DirectoryError, errorDirectories.ToArray()))
+            !await param.Query(CrystalStartResult.DirectoryError, errorDirectories.ToArray()).ConfigureAwait(false))
         {
             return CrystalStartResult.FileError;
         }
@@ -340,7 +342,7 @@ public sealed class Storage
 
     private void AddMemoryStat(int id, int size)
     {
-        if (size != 0)
+        if (id != 0 && size != 0)
         {
             if (!this.data.MemoryStats.TryGetValue(id, out var memoryStat))
             {
@@ -351,6 +353,10 @@ public sealed class Storage
             memoryStat.Add(size);
         }
     }
+
+    internal UnitLogger UnitLogger { get; }
+
+    // internal ThreadCoreGroup Core { get; }
 
     private object syncObject = new();
     private StorageData data; // lock(syncObject)

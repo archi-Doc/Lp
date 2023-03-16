@@ -23,6 +23,10 @@ public sealed partial class Token // : IVerifiable // , IEquatable<Token>
         CreateCredit,
     }
 
+    public Token()
+    {
+    }
+
     public Token(Token.Type type, ulong salt, long expirationMics, Identifier targetIdentifier, Linkage? targetLinkage)
     {
         this.TokenType = type;
@@ -35,10 +39,6 @@ public sealed partial class Token // : IVerifiable // , IEquatable<Token>
     internal Token(Token.Type type)
     {
         this.TokenType = type;
-    }
-
-    internal Token()
-    {
     }
 
     public bool Validate()

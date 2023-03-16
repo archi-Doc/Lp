@@ -20,13 +20,13 @@ internal partial class CrystalDirectory : IDisposable
     [Link(Primary = true, Name = "List", Type = ChainType.List)]
     public CrystalDirectory()
     {
-        this.worker = new CrystalDirectoryWorker(ThreadCore.Root, this);
+        this.worker = new CrystalDirectoryWorker(this);
     }
 
     internal CrystalDirectory(uint directoryId, string path)
         : base()
     {
-        this.worker = new CrystalDirectoryWorker(ThreadCore.Root, this);
+        this.worker = new CrystalDirectoryWorker(this);
         this.DirectoryId = directoryId;
         this.DirectoryPath = path;
     }
@@ -129,9 +129,9 @@ internal partial class CrystalDirectory : IDisposable
         this.worker.AddLast(new(snowflakeId));
     }
 
-    internal bool PrepareAndCheck(Storage io)
+    internal bool PrepareAndCheck(Storage storage)
     {
-        this.Options = io.Options;
+        this.Options = storage.Options;
         try
         {
             if (Path.IsPathRooted(this.DirectoryPath))
@@ -164,6 +164,11 @@ internal partial class CrystalDirectory : IDisposable
             return false;
         }
 
+        if (this.Options.EnableLogger)
+        {
+            // this.Logger = storage.UnitLogger.GetLogger<CrystalDirectory>();
+        }
+
         return true;
     }
 
@@ -177,13 +182,13 @@ internal partial class CrystalDirectory : IDisposable
 
     internal async Task WaitForCompletionAsync()
     {
-        await this.worker.WaitForCompletionAsync();
+        await this.worker.WaitForCompletionAsync().ConfigureAwait(false);
     }
 
     internal async Task StopAsync()
     {
-        await this.worker.WaitForCompletionAsync();
-        await this.SaveDirectoryAsync(this.SnowflakeFilePath, this.SnowflakeBackupPath);
+        await this.worker.WaitForCompletionAsync().ConfigureAwait(false);
+        await this.SaveDirectoryAsync(this.SnowflakeFilePath, this.SnowflakeBackupPath).ConfigureAwait(false);
     }
 
     [Key(0)]
@@ -215,6 +220,9 @@ internal partial class CrystalDirectory : IDisposable
 
     [IgnoreMember]
     internal double UsageRatio { get; private set; }
+
+    [IgnoreMember]
+    internal ILogger? Logger { get; private set; }
 
     internal void CalculateUsageRatio()
     {

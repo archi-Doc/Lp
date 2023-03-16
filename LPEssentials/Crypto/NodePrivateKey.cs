@@ -252,7 +252,7 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
 
     internal byte KeyValue => this.keyValue;
 
-    private ECDiffieHellman? TryGetEcdh()
+    internal ECDiffieHellman? TryGetEcdh()
     {
         if (PrivateKeyToEcdh.TryGet(this) is { } ecdh)
         {
@@ -278,6 +278,6 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
         return null;
     }
 
-    private void CacheEcdh(ECDiffieHellman ecdh)
+    internal void CacheEcdh(ECDiffieHellman ecdh)
         => PrivateKeyToEcdh.Cache(this, ecdh);
 }

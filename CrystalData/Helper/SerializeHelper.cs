@@ -44,7 +44,7 @@ public static class SerializeHelper
         try
         {
             var bytes = TinyhandSerializer.SerializeToUtf8(obj);
-            await File.WriteAllBytesAsync(path, bytes);
+            await File.WriteAllBytesAsync(path, bytes).ConfigureAwait(false);
             return true;
         }
         catch

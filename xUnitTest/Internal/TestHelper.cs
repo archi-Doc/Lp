@@ -21,30 +21,56 @@ public static class TestHelper
         };
 
         var builder = new CrystalControl.Builder();
-        builder.Configure(context =>
-        {
-            context.AddSingleton<LpCrystal>();
-            context.Services.Add(ServiceDescriptor.Transient(typeof(LpData), x => x.GetRequiredService<LpCrystal>().Root.Data));
-        });
+        builder
+            .Configure(context =>
+            {
+                context.AddSingleton<LpCrystal>();
+                context.Services.Add(ServiceDescriptor.Transient(typeof(LpData), x => x.GetRequiredService<LpCrystal>().Root.Data));
+            })
+            .SetupOptions<CrystalOptions>((context, options) =>
+            {
+                options.CrystalPath = $"Crystal[{RandomVault.Pseudo.NextUInt32():x4}]";
+            });
 
         var unit = builder.Build();
         var crystal = unit.Context.ServiceProvider.GetRequiredService<LpCrystal>();
-        crystal.Datum.Register<FragmentDatum<Identifier>>(x => new FragmentDatumImpl<Identifier>(x));
+        crystal.Constructor.Register<FragmentDatum<Identifier>>(x => new FragmentDatumImpl<Identifier>(x));
         await crystal.StartAsync(new(FromScratch: true));
         return crystal;
     }
 
-    public static async Task StopCrystal(LpCrystal crystal, bool removeAll = true)
+    public static async Task StopCrystal(ICrystal crystal, bool removeAll = true)
     {
         await crystal.StopAsync(new(RemoveAll: removeAll));
         crystal.MemoryUsage.Is(0);
     }
 
-    public static async Task StopAndStartCrystal(LpCrystal crystal)
+    public static async Task StopAndStartCrystal(ICrystal crystal)
     {
         await crystal.StopAsync(new());
         crystal.MemoryUsage.Is(0);
         await crystal.StartAsync(new());
+    }
+
+    public static async Task<MergerCrystal> CreateAndStartMerger(int maxParent)
+    {
+        var builder = new CrystalControl.Builder();
+        builder
+            .Configure(context =>
+            {
+                context.AddSingleton<MergerCrystal>();
+                context.Services.Add(ServiceDescriptor.Transient(typeof(LpData), x => x.GetRequiredService<MergerCrystal>().Root));
+            })
+            .SetupOptions<CrystalOptions>((context, options) =>
+            {
+                options.CrystalPath = $"Crystal[{RandomVault.Pseudo.NextUInt32():x4}]";
+                options.MaxParentInMemory = maxParent;
+            });
+
+        var unit = builder.Build();
+        var crystal = unit.Context.ServiceProvider.GetRequiredService<MergerCrystal>();
+        await crystal.StartAsync(new(FromScratch: true));
+        return crystal;
     }
 
     public static bool DataEquals(this CrystalMemoryResult dataResult, Span<byte> span)

@@ -12,7 +12,7 @@ internal partial class MemoryObject
     {
         if (this.memoryOwnerIsValid && span.SequenceEqual(this.memoryOwner.Memory.Span))
         {// Identical
-            return (false, 0);
+            return (false, span.Length);
         }
 
         this.memoryOwner = this.memoryOwner.Return();
@@ -29,7 +29,7 @@ internal partial class MemoryObject
     {
         if (this.memoryOwnerIsValid && dataToBeMoved.Memory.Span.SequenceEqual(this.memoryOwner.Memory.Span))
         {// Identical
-            return (false, 0);
+            return (false, dataToBeMoved.Memory.Span.Length);
         }
 
         this.memoryOwner = this.memoryOwner.Return();
