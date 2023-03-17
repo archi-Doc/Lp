@@ -2,7 +2,7 @@
 
 using System.Runtime.CompilerServices;
 
-namespace CrystalData;
+namespace CrystalData.Datum;
 
 public interface FragmentDatum<TIdentifier> : IDatum
     where TIdentifier : IEquatable<TIdentifier>, IComparable<TIdentifier>, ITinyhandSerialize<TIdentifier>

@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.CompilerServices;
+using CrystalData.Datum;
 
 namespace CrystalData;
 
@@ -16,10 +17,10 @@ public class DatumConstructor
         this.constructors = new ConstrutorDelegate[this.MaxId];
     }
 
-    public bool Register<TData>(ConstrutorDelegate construtor)
-        where TData : IDatum
+    public bool Register<TDatum>(ConstrutorDelegate construtor)
+        where TDatum : IDatum
     {
-        var id = TData.StaticId;
+        var id = TDatum.StaticId;
         if (id < 0 || id >= this.constructors.Length)
         {
             return false;

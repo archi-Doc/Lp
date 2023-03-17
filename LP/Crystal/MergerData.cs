@@ -4,6 +4,7 @@
 
 using System.Runtime.CompilerServices;
 using Arc.Collections;
+using CrystalData.Datum;
 using ValueLink;
 
 namespace LP.Crystal;

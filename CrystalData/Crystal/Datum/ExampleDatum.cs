@@ -1,9 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
 using System.Runtime.CompilerServices;
 
-namespace CrystalData;
+namespace CrystalData.Datum;
 
 public interface ExampleDatum : IDatum
 {

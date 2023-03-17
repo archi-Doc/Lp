@@ -2,6 +2,7 @@
 
 using System.Collections;
 using System.Runtime.CompilerServices;
+using CrystalData.Datum;
 
 namespace CrystalData;
 

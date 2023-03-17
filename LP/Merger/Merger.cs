@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using CrystalData;
+using CrystalData.Datum;
 using LP.Crystal;
 using LP.NetServices;
 using LP.NetServices.T3CS;

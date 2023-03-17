@@ -2,6 +2,7 @@
 
 using Arc.Crypto;
 using CrystalData;
+using CrystalData.Datum;
 using LP;
 using LP.Crystal;
 using Tinyhand;

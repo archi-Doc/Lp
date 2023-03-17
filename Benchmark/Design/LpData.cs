@@ -3,6 +3,7 @@
 #pragma warning disable SA1124 // Do not use regions
 
 using CrystalData;
+using CrystalData.Datum;
 using Tinyhand;
 using ValueLink;
 
