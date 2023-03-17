@@ -89,7 +89,7 @@ public sealed class Storage
 
     public bool Started { get; private set; }
 
-    public void Save(ref ushort storageId, ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared, int id)
+    public void Save(ref ushort storageId, ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared, ushort datumId)
     {
         CrystalDirectory? directory;
         lock (this.syncObject)
@@ -119,7 +119,7 @@ public sealed class Storage
                 storageId = directory.DirectoryId;
             }
 
-            this.AddMemoryStat(id, memoryToBeShared.Memory.Length);
+            this.AddMemoryStat(datumId, memoryToBeShared.Memory.Length);
         }
 
         directory.Save(ref fileId, memoryToBeShared);
@@ -341,7 +341,7 @@ public sealed class Storage
         this.data.Directories.Clear();
     }
 
-    private void AddMemoryStat(int id, int size)
+    private void AddMemoryStat(ushort id, int size)
     {
         if (id != 0 && size != 0)
         {

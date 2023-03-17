@@ -46,49 +46,24 @@ public class DatumRegistry
         {
             throw new ArgumentOutOfRangeException(nameof(datumId), "Datum id must be above 0");
         }
-
-        var type = typeof(TDatum);
-        var result = this.typeToDatumInfo.TryAdd(type, x => new DatumInfo(datumId, construtor));
-
-        if (!result)
+        else if (this.datumIdToDatumInfo.TryGetValue(datumId, out var datumInfo))
         {
+            /*if (datumInfo.DatumId == datumId)
+            {// Identical
+                return;
+            }*/
+
             throw new ArgumentOutOfRangeException(nameof(datumId), "The same datum id is already registered");
         }
 
-        /*if (this.typeToDatumInfo.TryGetValue(type, out _))
-        {// Already registered.
-            //  ||            this.datumIdToDatumInfo.ContainsKey(datumId)
-            return false;
-        }
-
         var info = new DatumInfo(datumId, construtor);
-        this.typeToDatumInfo.TryAdd(type, info);
-        // this.datumIdToDatumInfo.TryAdd(datumId, info);
-        return true;*/
-    }
-
-    /*[MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal ConstructorDelegate? TryGetConstructor(ushort datumId)
-    {
-        if (this.datumIdToDatumInfo.TryGetValue(datumId, out var info))
+        if (!this.typeToDatumInfo.TryAdd(typeof(TDatum), info))
         {
-            return info.Constructor;
+            throw new ArgumentOutOfRangeException(nameof(TDatum), "The same datum type is already registered");
         }
 
-        return null;
+        this.datumIdToDatumInfo.TryAdd(datumId, info);
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal ConstructorDelegate? TryGetConstructor<TDatum>()
-        where TDatum : IDatum
-    {
-        if (this.typeToDatumInfo.TryGetValue(typeof(TDatum), out var info))
-        {
-            return info.Constructor;
-        }
-
-        return null;
-    }*/
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool TryGetDatumInfo<TDatum>(out DatumInfo info)
@@ -104,5 +79,5 @@ public class DatumRegistry
     }
 
     private ThreadsafeTypeKeyHashTable<DatumInfo> typeToDatumInfo = new();
-    // private ConcurrentDictionary<ushort, DatumInfo> datumIdToDatumInfo = new();
+    private UInt16Hashtable<DatumInfo> datumIdToDatumInfo = new();
 }

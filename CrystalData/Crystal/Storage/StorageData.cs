@@ -13,5 +13,5 @@ internal partial class StorageData
     public CrystalDirectory.GoshujinClass Directories { get; set; } = default!;
 
     [Key(1)]
-    public Dictionary<int, MemoryStat> MemoryStats { get; set; } = default!;
+    public Dictionary<ushort, MemoryStat> MemoryStats { get; set; } = default!;
 }
