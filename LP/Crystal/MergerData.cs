@@ -37,6 +37,9 @@ public partial class MergerData : BaseData
     private Identifier identifier = default!;
 
     [Key(5)]
+    private ushort childrenStorage;
+
+    [Key(6)]
     private ulong childrenFile;
 
     private GoshujinClass? children;
@@ -185,7 +188,7 @@ public partial class MergerData : BaseData
                 try
                 {
                     var b = TinyhandSerializer.SerializeObject(this.children);
-                    this.Crystal.Storage.Save(ref this.childrenFile, new ByteArrayPool.ReadOnlyMemoryOwner(b), 0);
+                    this.Crystal.Storage.Save(ref this.childrenStorage, ref this.childrenFile, new ByteArrayPool.ReadOnlyMemoryOwner(b), 0);
                     this.childrenSaved = true;
                 }
                 catch
@@ -223,9 +226,9 @@ public partial class MergerData : BaseData
         {// Existing
             return this.children;
         }
-        else if (CrystalHelper.IsValidFile(this.childrenFile))
+        else if (this.childrenStorage != 0)
         {// Load
-            var result = this.Crystal.Storage.Load(this.childrenFile).Result;
+            var result = this.Crystal.Storage.Load(this.childrenStorage, this.childrenFile).Result;
             if (result.IsSuccess)
             {
                 GoshujinClass? goshujin = null;
@@ -248,7 +251,7 @@ public partial class MergerData : BaseData
             }
             else
             {
-                this.Crystal.Storage.Delete(this.childrenFile);
+                this.Crystal.Storage.Delete(this.childrenStorage, this.childrenFile);
                 return new GoshujinClass();
             }
         }
@@ -261,9 +264,9 @@ public partial class MergerData : BaseData
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void TryLoadChildren()
     {
-        if (this.children == null && CrystalHelper.IsValidFile(this.childrenFile))
+        if (this.children == null && this.childrenStorage != 0)
         {// Load
-            var result = this.Crystal.Storage.Load(this.childrenFile).Result;
+            var result = this.Crystal.Storage.Load(this.childrenStorage, this.childrenFile).Result;
             if (result.IsSuccess)
             {
                 GoshujinClass? goshujin = null;
@@ -286,7 +289,7 @@ public partial class MergerData : BaseData
             }
             else
             {
-                this.Crystal.Storage.Delete(this.childrenFile);
+                this.Crystal.Storage.Delete(this.childrenStorage, this.childrenFile);
             }
         }
     }

@@ -4,5 +4,5 @@ namespace CrystalData;
 
 public interface IDatum
 {
-    static virtual int StaticId => 0;
+    static virtual ushort StaticId => 0;
 }

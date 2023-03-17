@@ -23,7 +23,7 @@ public sealed class Storage
         }
     }
 
-    public AddDictionaryResult AddDirectory(string path, uint id = 0, long capacity = CrystalOptions.DefaultDirectoryCapacity)
+    public AddDictionaryResult AddDirectory(string path, ushort id = 0, long capacity = CrystalOptions.DefaultDirectoryCapacity)
     {
         if (capacity < 0)
         {
@@ -89,7 +89,7 @@ public sealed class Storage
 
     public bool Started { get; private set; }
 
-    public void Save(ref ulong file, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared, int id)
+    public void Save(ref ushort storageId, ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared, int id)
     {
         CrystalDirectory? directory;
         lock (this.syncObject)
@@ -98,7 +98,7 @@ public sealed class Storage
             {// No directory available.
                 return;
             }
-            else if (!CrystalHelper.IsValidFile(file) || !this.data.Directories.DirectoryIdChain.TryGetValue(CrystalHelper.ToDirectoryId(file), out directory))
+            else if (storageId == 0 || !this.data.Directories.DirectoryIdChain.TryGetValue(storageId, out directory))
             {// Get valid directory.
                 if (this.directoryRotationCount >= DirectoryRotationThreshold ||
                     this.currentDirectory == null)
@@ -116,17 +116,18 @@ public sealed class Storage
                 }
 
                 directory = this.currentDirectory;
+                storageId = directory.DirectoryId;
             }
 
             this.AddMemoryStat(id, memoryToBeShared.Memory.Length);
         }
 
-        directory.Save(ref file, memoryToBeShared);
+        directory.Save(ref fileId, memoryToBeShared);
     }
 
-    public async Task<CrystalMemoryOwnerResult> Load(ulong file)
+    public async Task<CrystalMemoryOwnerResult> Load(ushort storageId, ulong fileId)
     {
-        if (!CrystalHelper.IsValidFile(file))
+        if (storageId == 0)
         {// Invalid file.
             return new(CrystalResult.NoData);
         }
@@ -134,32 +135,32 @@ public sealed class Storage
         CrystalDirectory? directory;
         lock (this.syncObject)
         {
-            if (!this.data.Directories.DirectoryIdChain.TryGetValue(CrystalHelper.ToDirectoryId(file), out directory))
+            if (!this.data.Directories.DirectoryIdChain.TryGetValue(storageId, out directory))
             {// No directory
                 return new(CrystalResult.NoDirectory);
             }
         }
 
-        return await directory.Load(file).ConfigureAwait(false);
+        return await directory.Load(fileId).ConfigureAwait(false);
     }
 
-    public void Delete(ulong file)
+    public void Delete(ushort storageId, ulong fileId)
     {
-        if (!CrystalHelper.IsValidFile(file))
-        {// Invalid file.
+        if (storageId == 0)
+        {
             return;
         }
 
         CrystalDirectory? directory;
         lock (this.syncObject)
         {
-            if (!this.data.Directories.DirectoryIdChain.TryGetValue(CrystalHelper.ToDirectoryId(file), out directory))
+            if (!this.data.Directories.DirectoryIdChain.TryGetValue(storageId, out directory))
             {// No directory
                 return;
             }
         }
 
-        directory.Delete(file);
+        directory.Delete(fileId);
     }
 
     /*internal void Restart()
@@ -302,11 +303,11 @@ public sealed class Storage
         }
     }
 
-    private uint GetFreeDirectoryId(CrystalDirectory.GoshujinClass goshujin)
+    private ushort GetFreeDirectoryId(CrystalDirectory.GoshujinClass goshujin)
     {// lock(syncObject)
         while (true)
         {
-            var id = RandomVault.Pseudo.NextUInt32();
+            var id = (ushort)RandomVault.Pseudo.NextUInt32();
             if (id != 0 && !goshujin.DirectoryIdChain.ContainsKey(id))
             {
                 return id;

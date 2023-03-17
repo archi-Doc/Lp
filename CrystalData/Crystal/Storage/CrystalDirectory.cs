@@ -23,7 +23,7 @@ internal partial class CrystalDirectory : IDisposable
         this.worker = new CrystalDirectoryWorker(this);
     }
 
-    internal CrystalDirectory(uint directoryId, string path)
+    internal CrystalDirectory(ushort directoryId, string path)
         : base()
     {
         this.worker = new CrystalDirectoryWorker(this);
@@ -37,10 +37,10 @@ internal partial class CrystalDirectory : IDisposable
         return new(this.DirectoryId, this.Type, this.DirectoryPath, this.DirectoryCapacity, this.DirectorySize, this.UsageRatio);
     }
 
-    internal async Task<CrystalMemoryOwnerResult> Load(ulong file)
+    internal async Task<CrystalMemoryOwnerResult> Load(ulong fileId)
     {
         Snowflake? snowflake;
-        var snowflakeId = CrystalHelper.ToSnowflakeId(file);
+        var snowflakeId = (uint)fileId;
         int size = 0;
 
         lock (this.syncObject)
@@ -77,10 +77,10 @@ internal partial class CrystalDirectory : IDisposable
         }
     }
 
-    internal void Save(ref ulong file, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
+    internal void Save(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
     {// DirectoryId: valid, SnowflakeId: ?
         Snowflake? snowflake;
-        var snowflakeId = CrystalHelper.ToSnowflakeId(file);
+        var snowflakeId = (uint)fileId;
         var dataSize = memoryToBeShared.Memory.Length;
 
         lock (this.syncObject)
@@ -103,7 +103,7 @@ internal partial class CrystalDirectory : IDisposable
                 snowflake.Size = dataSize;
             }
 
-            file = CrystalHelper.ToFile(this.DirectoryId, snowflake.SnowflakeId);
+            fileId = snowflake.SnowflakeId;
         }
 
         this.worker.AddLast(new(snowflake.SnowflakeId, memoryToBeShared.IncrementAndShare()));
@@ -111,7 +111,7 @@ internal partial class CrystalDirectory : IDisposable
 
     internal void Delete(ulong file)
     {
-        var snowflakeId = CrystalHelper.ToSnowflakeId(file);
+        var snowflakeId = (uint)file;
         lock (this.syncObject)
         {
             if (snowflakeId != 0 &&
@@ -193,7 +193,7 @@ internal partial class CrystalDirectory : IDisposable
 
     [Key(0)]
     [Link(Type = ChainType.Unordered)]
-    public uint DirectoryId { get; private set; }
+    public ushort DirectoryId { get; private set; }
 
     [Key(1)]
     public CrystalDirectoryType Type { get; private set; }

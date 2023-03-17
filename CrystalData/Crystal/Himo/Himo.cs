@@ -24,7 +24,7 @@ public partial class HimoGoshujinClass
             this.himoGoshujin = dataInternal.CrystalInternal.HimoGoshujin;
         }
 
-        public virtual int Id { get; }
+        public virtual ushort Id { get; }
 
         public void UpdateHimo(int newSize)
         {// using (Flake.semaphore)
@@ -179,7 +179,7 @@ public partial class HimoGoshujinClass
             return;
         }
 
-        var array = new (IDataInternal? FlakeInternal, int Id)[UnloadNumber];
+        var array = new (IDataInternal? FlakeInternal, ushort Id)[UnloadNumber];
         do
         {
             int count;

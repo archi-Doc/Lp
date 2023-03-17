@@ -76,9 +76,9 @@ public partial class BaseData : IDataInternal
         var id = TData.StaticId;
         for (var i = 0; i < this.datumObject.Length; i++)
         {
-            if (this.datumObject[i].Id == id)
+            if (this.datumObject[i].DatumId == id)
             {
-                this.Crystal.Storage.Save(ref this.datumObject[i].File, memoryToBeShared, id);
+                this.Crystal.Storage.Save(ref this.datumObject[i].StorageId, ref this.datumObject[i].FileId, memoryToBeShared, id);
                 return;
             }
         }
@@ -86,19 +86,18 @@ public partial class BaseData : IDataInternal
 
     async Task<CrystalMemoryOwnerResult> IDataInternal.StorageToDatum<TDatum>()
     {// using (this.semaphore.Lock())
-        var dataObject = this.TryGetDatumObject<TDatum>();
-        if (!dataObject.IsValid)
+        var datumObject = this.TryGetDatumObject<TDatum>();
+        if (!datumObject.IsValid)
         {
             return new(CrystalResult.NoData);
         }
 
-        var file = dataObject.File;
-        if (!CrystalHelper.IsValidFile(file))
+        if (!datumObject.IsValidStorage)
         {
             return new(CrystalResult.NoData);
         }
 
-        return await this.Crystal.Storage.Load(file).ConfigureAwait(false);
+        return await this.Crystal.Storage.Load(datumObject.StorageId, datumObject.FileId).ConfigureAwait(false);
     }
 
     void IDataInternal.DeleteStorage<TDatum>()
@@ -106,7 +105,7 @@ public partial class BaseData : IDataInternal
         var datumObject = this.TryGetDatumObject<TDatum>();
         if (datumObject.IsValid)
         {
-            this.Crystal.Storage.Delete(datumObject.File);
+            this.Crystal.Storage.Delete(datumObject.StorageId, datumObject.FileId);
             return;
         }
     }
@@ -116,13 +115,13 @@ public partial class BaseData : IDataInternal
     /// </summary>
     /// <param name="id">The specified id.</param>
     /// <param name="unload"><see langword="true"/>; unload data.</param>
-    void IDataInternal.SaveDatum(int id, bool unload)
+    void IDataInternal.SaveDatum(ushort id, bool unload)
     {
         using (this.semaphore.Lock())
         {
             for (var i = 0; i < this.datumObject.Length; i++)
             {
-                if (this.datumObject[i].Id == id)
+                if (this.datumObject[i].DatumId == id)
                 {
                     this.datumObject[i].Datum?.Save();
                     if (unload)
@@ -229,10 +228,10 @@ public partial class BaseData : IDataInternal
 
             for (var i = 0; i < this.datumObject.Length; i++)
             {
-                this.Crystal.Storage.Delete(this.datumObject[i].File);
+                this.Crystal.Storage.Delete(this.datumObject[i].StorageId, this.datumObject[i].FileId);
                 this.datumObject[i].Datum?.Unload();
                 this.datumObject[i].Datum = null;
-                this.datumObject[i].File = 0;
+                this.datumObject[i].FileId = 0;
             }
 
             this.datumObject = Array.Empty<DatumObject>();
@@ -284,7 +283,7 @@ public partial class BaseData : IDataInternal
         var id = TDatum.StaticId;
         for (var i = 0; i < this.datumObject.Length; i++)
         {
-            if (this.datumObject[i].Id == id)
+            if (this.datumObject[i].DatumId == id)
             {
                 if (this.datumObject[i].Datum == null)
                 {
@@ -299,7 +298,7 @@ public partial class BaseData : IDataInternal
         }
 
         var newObject = default(DatumObject);
-        newObject.Id = id;
+        newObject.DatumId = id;
         if (this.Crystal.Constructor.TryGetConstructor(id) is { } ctr2)
         {
             newObject.Datum = ctr2(this);
@@ -323,7 +322,7 @@ public partial class BaseData : IDataInternal
         var id = TDatum.StaticId;
         for (var i = 0; i < this.datumObject.Length; i++)
         {
-            if (this.datumObject[i].Id == id)
+            if (this.datumObject[i].DatumId == id)
             {
                 return this.datumObject[i];
             }

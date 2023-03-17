@@ -16,23 +16,30 @@ public partial struct DatumObject : ITinyhandSerialize<DatumObject>
 
     public static void Serialize(ref TinyhandWriter writer, scoped ref DatumObject value, TinyhandSerializerOptions options)
     {
-        writer.Write(value.Id);
-        writer.Write(value.File);
+        writer.Write(value.DatumId);
+        writer.Write(value.StorageId);
+        writer.Write(value.FileId);
     }
 
     public static void Deserialize(ref TinyhandReader reader, scoped ref DatumObject value, TinyhandSerializerOptions options)
     {
-        value.Id = reader.ReadInt32();
-        value.File = reader.ReadUInt64();
+        value.DatumId = reader.ReadUInt16();
+        value.StorageId = reader.ReadUInt16();
+        value.FileId = reader.ReadUInt64();
     }
 
     [Key(0)]
-    internal int Id;
+    internal ushort DatumId;
 
     [Key(1)]
-    internal ulong File;
+    internal ushort StorageId;
 
-    internal bool IsValid => this.Id != 0;
+    [Key(2)]
+    internal ulong FileId;
+
+    internal bool IsValid => this.DatumId != 0;
+
+    internal bool IsValidStorage => this.StorageId != 0;
 
     internal IBaseDatum? Datum;
 }

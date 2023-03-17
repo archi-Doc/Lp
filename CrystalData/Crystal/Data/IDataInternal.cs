@@ -19,5 +19,5 @@ public interface IDataInternal
     void DeleteStorage<TDatum>()
         where TDatum : IDatum;
 
-    void SaveDatum(int id, bool unload);
+    void SaveDatum(ushort id, bool unload);
 }

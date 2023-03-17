@@ -1,14 +1,12 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Runtime.CompilerServices;
-
 namespace CrystalData;
 
 public interface InvalidDatum : IDatum
 {
-    const int Id = 0;
+    const ushort Id = 0;
 
-    static int IDatum.StaticId => Id;
+    static ushort IDatum.StaticId => Id;
 
     void Test();
 }

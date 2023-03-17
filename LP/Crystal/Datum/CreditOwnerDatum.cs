@@ -4,9 +4,9 @@ namespace LP.Crystal;
 
 public interface CreditOwnerDatum : IDatum
 {
-    const int Id = 2;
+    const ushort Id = 2;
 
-    static int IDatum.StaticId => Id;
+    static ushort IDatum.StaticId => Id;
 }
 
 internal class CreditOwnerDatumImpl : HimoGoshujinClass.Himo, CreditOwnerDatum, IBaseDatum
@@ -16,7 +16,7 @@ internal class CreditOwnerDatumImpl : HimoGoshujinClass.Himo, CreditOwnerDatum, 
     {
     }
 
-    public override int Id => BlockDatum.Id;
+    public override ushort Id => BlockDatum.Id;
 
     private bool isSaved = true;
 

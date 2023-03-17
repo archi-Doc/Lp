@@ -5,9 +5,9 @@ namespace CrystalData;
 public interface ObjectDatum<TObject> : IDatum
     where TObject : ITinyhandSerialize<TObject>
 {
-    const int Id = 3;
+    const ushort Id = 3;
 
-    static int IDatum.StaticId => Id;
+    static ushort IDatum.StaticId => Id;
 
     CrystalResult Put(TObject obj);
 
@@ -22,7 +22,7 @@ public class ObjectDatumImpl<TObject> : HimoGoshujinClass.Himo, ObjectDatum<TObj
     {
     }
 
-    public override int Id => ObjectDatum<TObject>.Id;
+    public override ushort Id => ObjectDatum<TObject>.Id;
 
     public CrystalResult Put(TObject obj)
     {
