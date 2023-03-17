@@ -19,7 +19,7 @@ public class MergerCrystal : Crystal<MergerData>
         };
 
         this.himo = new(10);
-        this.Constructor.Register<BlockDatum>(x => new BlockDatumImpl(x));
+        // this.Datum.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
     }
 
     private DataHimo himo;

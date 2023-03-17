@@ -9,7 +9,7 @@ public class LpCrystal : Crystal<LpRootData>
     public LpCrystal(UnitCore core, CrystalOptions options, ILogger<LpCrystal> logger, UnitLogger unitLogger)
         : base(core, options, logger, unitLogger)
     {
-        this.Constructor.Register<BlockDatum>(x => new BlockDatumImpl(x));
+        // this.Datum.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
     }
 
     public LpData Data => this.Root.Data;

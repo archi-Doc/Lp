@@ -8,7 +8,7 @@ public interface IDataInternal
 {
     ICrystalInternal CrystalInternal { get; }
 
-    DatumConstructor Data { get; }
+    DatumRegistry Data { get; }
 
     CrystalOptions Options { get; }
 

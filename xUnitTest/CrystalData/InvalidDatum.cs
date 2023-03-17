@@ -6,10 +6,6 @@ namespace CrystalData;
 
 public interface InvalidDatum : IDatum
 {
-    const ushort Id = 0;
-
-    static ushort IDatum.StaticId => Id;
-
     void Test();
 }
 
@@ -18,8 +14,6 @@ public class InvalidDatumImpl : InvalidDatum, IBaseDatum
     public InvalidDatumImpl()
     {
     }
-
-    public int Id => BlockDatum.Id;
 
     public void Save()
     {

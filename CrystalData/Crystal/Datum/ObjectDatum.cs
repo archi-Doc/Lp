@@ -5,11 +5,7 @@ namespace CrystalData.Datum;
 public interface ObjectDatum<TObject> : IDatum
     where TObject : ITinyhandSerialize<TObject>
 {
-    const ushort Id = 3;
-
-    static ushort IDatum.StaticId => Id;
-
-    CrystalResult Put(TObject obj);
+    CrystalResult Set(TObject obj);
 
     Task<CrystalObjectResult<TObject>> Get();
 }
@@ -22,9 +18,7 @@ public class ObjectDatumImpl<TObject> : HimoGoshujinClass.Himo, ObjectDatum<TObj
     {
     }
 
-    public override ushort Id => ObjectDatum<TObject>.Id;
-
-    public CrystalResult Put(TObject obj)
+    public CrystalResult Set(TObject obj)
     {
         /*if (this.obj?.Equals(obj) == true)
         {// Identical

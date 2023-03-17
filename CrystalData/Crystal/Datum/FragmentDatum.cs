@@ -7,10 +7,6 @@ namespace CrystalData.Datum;
 public interface FragmentDatum<TIdentifier> : IDatum
     where TIdentifier : IEquatable<TIdentifier>, IComparable<TIdentifier>, ITinyhandSerialize<TIdentifier>
 {
-    const ushort Id = 2;
-
-    static ushort IDatum.StaticId => Id;
-
     CrystalResult Set(TIdentifier fragmentId, ReadOnlySpan<byte> span);
 
     CrystalResult SetObject<T>(TIdentifier fragmentId, T obj)
@@ -31,8 +27,6 @@ public class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDa
         : base(flakeInternal)
     {
     }
-
-    public override ushort Id => FragmentDatum<TIdentifier>.Id;
 
     CrystalResult FragmentDatum<TIdentifier>.Set(TIdentifier fragmentId, ReadOnlySpan<byte> span)
     {

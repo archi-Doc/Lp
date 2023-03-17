@@ -6,9 +6,6 @@ namespace LP.Crystal;
 
 public interface CreditOwnerDatum : IDatum
 {
-    const ushort Id = 2;
-
-    static ushort IDatum.StaticId => Id;
 }
 
 internal class CreditOwnerDatumImpl : HimoGoshujinClass.Himo, CreditOwnerDatum, IBaseDatum
@@ -17,8 +14,6 @@ internal class CreditOwnerDatumImpl : HimoGoshujinClass.Himo, CreditOwnerDatum, 
         : base(flakeInternal)
     {
     }
-
-    public override ushort Id => BlockDatum.Id;
 
     private bool isSaved = true;
 

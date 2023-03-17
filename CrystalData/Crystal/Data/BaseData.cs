@@ -68,18 +68,22 @@ public partial class BaseData : IDataInternal
 
     ICrystalInternal IDataInternal.CrystalInternal => this.Crystal;
 
-    DatumConstructor IDataInternal.Data => this.Crystal.Constructor;
+    DatumRegistry IDataInternal.Data => this.Crystal.Datum;
 
     CrystalOptions IDataInternal.Options => this.Crystal.Options;
 
     void IDataInternal.DatumToStorage<TDatum>(ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
     {// using (this.semaphore.Lock())
-        var id = TDatum.StaticId;
+        if (!this.Crystal.Datum.TryGetDatumInfo<TDatum>(out var info))
+        {
+            return;
+        }
+
         for (var i = 0; i < this.datumObject.Length; i++)
         {
-            if (this.datumObject[i].DatumId == id)
+            if (this.datumObject[i].DatumId == info.DatumId)
             {
-                this.Crystal.Storage.Save(ref this.datumObject[i].StorageId, ref this.datumObject[i].FileId, memoryToBeShared, id);
+                this.Crystal.Storage.Save(ref this.datumObject[i].StorageId, ref this.datumObject[i].FileId, memoryToBeShared, info.DatumId);
                 return;
             }
         }
@@ -281,17 +285,18 @@ public partial class BaseData : IDataInternal
     private DatumObject GetOrCreateDatumObject<TDatum>()
         where TDatum : IDatum
     {// using (this.semaphore.Lock())
-        var id = TDatum.StaticId;
+        if (!this.Crystal.Datum.TryGetDatumInfo<TDatum>(out var info))
+        {
+            return default;
+        }
+
         for (var i = 0; i < this.datumObject.Length; i++)
         {
-            if (this.datumObject[i].DatumId == id)
+            if (this.datumObject[i].DatumId == info.DatumId)
             {
                 if (this.datumObject[i].Datum == null)
                 {
-                    if (this.Crystal.Constructor.TryGetConstructor(id) is { } ctr1)
-                    {
-                        this.datumObject[i].Datum = ctr1(this);
-                    }
+                    this.datumObject[i].Datum = info.Constructor(this);
                 }
 
                 return this.datumObject[i];
@@ -299,12 +304,8 @@ public partial class BaseData : IDataInternal
         }
 
         var newObject = default(DatumObject);
-        newObject.DatumId = id;
-        if (this.Crystal.Constructor.TryGetConstructor(id) is { } ctr2)
-        {
-            newObject.Datum = ctr2(this);
-        }
-
+        newObject.DatumId = info.DatumId;
+        newObject.Datum = info.Constructor(this);
         if (newObject.Datum == null)
         {
             return default;
@@ -320,10 +321,14 @@ public partial class BaseData : IDataInternal
     private DatumObject TryGetDatumObject<TDatum>()
         where TDatum : IDatum
     {// using (this.semaphore.Lock())
-        var id = TDatum.StaticId;
+        if (!this.Crystal.Datum.TryGetDatumInfo<TDatum>(out var info))
+        {
+            return default;
+        }
+
         for (var i = 0; i < this.datumObject.Length; i++)
         {
-            if (this.datumObject[i].DatumId == id)
+            if (this.datumObject[i].DatumId == info.DatumId)
             {
                 return this.datumObject[i];
             }

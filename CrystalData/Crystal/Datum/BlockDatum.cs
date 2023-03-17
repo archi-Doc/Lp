@@ -6,10 +6,6 @@ namespace CrystalData.Datum;
 
 public interface BlockDatum : IDatum
 {
-    const ushort Id = 1;
-
-    static ushort IDatum.StaticId => Id;
-
     CrystalResult Set(ReadOnlySpan<byte> data);
 
     CrystalResult SetObject<T>(T obj)
@@ -27,8 +23,6 @@ public class BlockDatumImpl : HimoGoshujinClass.Himo, BlockDatum, IBaseDatum
         : base(flakeInternal)
     {
     }
-
-    public override ushort Id => BlockDatum.Id;
 
     CrystalResult BlockDatum.Set(ReadOnlySpan<byte> data)
     {
