@@ -72,9 +72,9 @@ public partial class BaseData : IDataInternal
 
     CrystalOptions IDataInternal.Options => this.Crystal.Options;
 
-    void IDataInternal.DataToStorage<TData>(ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
+    void IDataInternal.DatumToStorage<TDatum>(ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
     {// using (this.semaphore.Lock())
-        var id = TData.StaticId;
+        var id = TDatum.StaticId;
         for (var i = 0; i < this.datumObject.Length; i++)
         {
             if (this.datumObject[i].DatumId == id)

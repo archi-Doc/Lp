@@ -12,7 +12,7 @@ public interface IDataInternal
 
     CrystalOptions Options { get; }
 
-    void DataToStorage<TDatum>(ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
+    void DatumToStorage<TDatum>(ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
         where TDatum : IDatum;
 
     Task<CrystalMemoryOwnerResult> StorageToDatum<TDatum>()

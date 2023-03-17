@@ -78,7 +78,7 @@ public class ExampleDatumImpl : HimoGoshujinClass.Himo, ExampleDatum, IBaseDatum
         {// Not saved.
             if (this.byteArray != null)
             {
-                this.dataInternal.DataToStorage<ExampleDatum>(new(this.byteArray));
+                this.dataInternal.DatumToStorage<ExampleDatum>(new(this.byteArray));
             }
 
             this.isSaved = true;

@@ -6,7 +6,7 @@ using Tinyhand.IO;
 namespace CrystalData;
 
 /// <summary>
-/// <see cref="DatumObject"/> holds a datum id, file, and an instance of the datum.
+/// <see cref="DatumObject"/> holds a datum id, storage/file ids, and an instance of the datum.
 /// </summary>
 [TinyhandObject]
 public partial struct DatumObject : ITinyhandSerialize<DatumObject>

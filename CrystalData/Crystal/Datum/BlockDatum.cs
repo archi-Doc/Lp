@@ -116,7 +116,7 @@ public class BlockDatumImpl : HimoGoshujinClass.Himo, BlockDatum, IBaseDatum
     {
         if (!this.isSaved)
         {// Not saved.
-            this.dataInternal.DataToStorage<BlockDatum>(this.memoryObject.MemoryOwner);
+            this.dataInternal.DatumToStorage<BlockDatum>(this.memoryObject.MemoryOwner);
             this.isSaved = true;
         }
     }

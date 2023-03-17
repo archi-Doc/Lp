@@ -69,8 +69,8 @@ public partial class MergerData : BaseData
 
     #region Child
 
-    public LockOperation<TData> LockChild<TData>(Identifier id)
-        where TData : IDatum
+    public LockOperation<TDatum> LockChild<TDatum>(Identifier id)
+        where TDatum : IDatum
     {
         MergerData? data;
         using (this.semaphore.Lock())
@@ -87,7 +87,7 @@ public partial class MergerData : BaseData
             }
         }
 
-        return data.Lock<TData>();
+        return data.Lock<TDatum>();
     }
 
     public MergerData GetOrCreateChild(Identifier id)

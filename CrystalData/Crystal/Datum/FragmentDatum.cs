@@ -124,7 +124,7 @@ public class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDa
                 }
 
                 var memoryOwner = new ByteArrayPool.ReadOnlyMemoryOwner(writer.FlushAndGetArray());
-                this.dataInternal.DataToStorage<FragmentDatum<TIdentifier>>(memoryOwner);
+                this.dataInternal.DatumToStorage<FragmentDatum<TIdentifier>>(memoryOwner);
             }
 
             this.isSaved = true;
