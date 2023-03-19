@@ -1,69 +1,20 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.CompilerServices;
-using Arc.Threading;
 using CrystalData.Filer;
 
 #pragma warning disable SA1124 // Do not use regions
 
 namespace CrystalData.Storager;
 
-internal static class SimpleStorageHelper
-{
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static uint FileIdToFile(ulong fileId) => (uint)(fileId >> 32);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int FileIdToSize(ulong fileId) => (int)fileId;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ulong FileAndIdToFileId(uint file, int size) => ;
-
-    public static string FileToPath(uint file)
-    {
-        Span<char> c = stackalloc char[9];
-        var n = 0;
-
-        c[n++] = UInt32ToChar(file >> 28);
-        c[n++] = UInt32ToChar(file >> 24);
-
-        c[n++] = '/';
-
-        c[n++] = UInt32ToChar(file >> 20);
-        c[n++] = UInt32ToChar(file >> 16);
-        c[n++] = UInt32ToChar(file >> 12);
-        c[n++] = UInt32ToChar(file >> 8);
-        c[n++] = UInt32ToChar(file >> 4);
-        c[n++] = UInt32ToChar(file);
-
-        return c.ToString();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static char UInt32ToChar(uint x)
-    {
-        var a = x & 0xF;
-        if (a < 10)
-        {
-            return (char)('0' + a);
-        }
-        else
-        {
-            return (char)('W' + a);
-        }
-    }
-}
-
 [TinyhandObject]
-internal partial class SimpleStorager : IDisposable, IStorager
+internal partial class SimpleStorage : IDisposable, IStorage
 {
-    public const int HashSize = 8;
-
-    public SimpleStorager()
+    public SimpleStorage()
     {
     }
 
-    internal SimpleStorager(ushort directoryId, string path)
+    internal SimpleStorage(ushort directoryId, string path)
         : base()
     {
         this.DirectoryId = directoryId;
@@ -76,40 +27,24 @@ internal partial class SimpleStorager : IDisposable, IStorager
         return new(this.DirectoryId, this.Type, this.DirectoryPath, this.DirectoryCapacity, this.DirectorySize, this.UsageRatio);
     }
 
-    internal async Task<CrystalMemoryOwnerResult> Get(ulong fileId)
+    IAbortOrCompleteTask? IStorage.Get(ulong fileId)
     {
-        var file = SimpleStorageHelper.FileIdToFile(fileId);
-        var size = SimpleStorageHelper.FileIdToSize(fileId);
+        var file = FileIdToFile(fileId);
+        var size = FileIdToSize(fileId);
         if (file == 0 || this.filer == null)
         {
-            return new(CrystalResult.NoFile);
+            return null;
         }
 
         // Load (snowflakeId, size)
-        var workInterface = this.filer.Get(SimpleStorageHelper.FileToPath(file), size);
-        if (await workInterface.WaitForCompletionAsync().ConfigureAwait(false) == true)
-        {// Complete
-            var data = workInterface.Work.GotData;
-            if (data.IsRent)
-            {// Success
-                return new(CrystalResult.Success, data.AsReadOnly());
-            }
-            else
-            {// Failure
-                return new(CrystalResult.NoFile);
-            }
-        }
-        else
-        {// Abort
-            return new(CrystalResult.NoFile);
-        }
+        return this.filer.Get(FileToPath(file), size);
     }
 
-    public TaskWorkInterface<FilerWork>? Put(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
+    IAbortOrCompleteTask? IStorage.Put(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
     {
         var dataSize = dataToBeShared.Memory.Length;
-        var file = SimpleStorageHelper.FileIdToFile(fileId);
-        var size = SimpleStorageHelper.FileIdToSize(fileId);
+        var file = FileIdToFile(fileId);
+        var size = FileIdToSize(fileId);
         if (this.filer == null)
         {
             return null;
@@ -121,40 +56,30 @@ internal partial class SimpleStorager : IDisposable, IStorager
             {
                 this.DirectorySize += dataSize - size;
             }
-
-            size = dataSize;
         }
         else
         {// Not found
             file = this.GetNewSnowflake();
             this.DirectorySize += dataSize; // Forget about the hash size.
-            size = dataSize;
         }
 
-        fileId = SimpleStorageHelper.FileAndIdToFileId(file, size);
-        return this.filer.Put(SimpleStorageHelper.FileToPath(file), dataToBeShared);
+        fileId = FileAndSizeToFileId(file, dataSize);
+        return this.filer.Put(FileToPath(file), dataToBeShared);
     }
 
-    internal void Save(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
-    {// DirectoryId: valid, SnowflakeId: ?
-
-
-        this.worker.AddLast(new(snowflake.SnowflakeId, memoryToBeShared.IncrementAndShare()));
-    }
-
-    public TaskWorkInterface<FilerWork>? Delete(ref ulong fileId)
+    IAbortOrCompleteTask? IStorage.Delete(ref ulong fileId)
     {
-        var file = SimpleStorageHelper.FileIdToFile(fileId);
+        var file = FileIdToFile(fileId);
         if (file == 0 || this.filer == null)
         {
             return null;
         }
 
         fileId = 0;
-        return this.filer.Delete(SimpleStorageHelper.FileToPath(file));
+        return this.filer.Delete(FileToPath(file));
     }
 
-    internal bool PrepareAndCheck(Storage storage)
+    bool IStorage.PrepareAndCheck(StorageClass storage)
     {
         this.Options = storage.Options;
         try
@@ -270,49 +195,6 @@ internal partial class SimpleStorager : IDisposable, IStorager
         this.UsageRatio = ratio;
     }
 
-    internal void RemoveSnowflake(uint snowflakeId)
-    {
-        lock (this.syncObject)
-        {
-            if (this.snowflakeGoshujin.SnowflakeIdChain.TryGetValue(snowflakeId, out var snowflake))
-            {
-                snowflake.Goshujin = null;
-            }
-        }
-    }
-
-    internal (string Directory, string File) GetSnowflakePath(uint snowflakeId)
-    {
-        Span<char> c = stackalloc char[2];
-        Span<char> d = stackalloc char[6];
-
-        c[0] = this.UInt32ToChar(snowflakeId >> 28);
-        c[1] = this.UInt32ToChar(snowflakeId >> 24);
-
-        d[0] = this.UInt32ToChar(snowflakeId >> 20);
-        d[1] = this.UInt32ToChar(snowflakeId >> 16);
-        d[2] = this.UInt32ToChar(snowflakeId >> 12);
-        d[3] = this.UInt32ToChar(snowflakeId >> 8);
-        d[4] = this.UInt32ToChar(snowflakeId >> 4);
-        d[5] = this.UInt32ToChar(snowflakeId);
-
-        return (c.ToString(), d.ToString());
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private char UInt32ToChar(uint x)
-    {
-        var a = x & 0xF;
-        if (a < 10)
-        {
-            return (char)('0' + a);
-        }
-        else
-        {
-            return (char)('W' + a);
-        }
-    }
-
     private bool TryLoadDirectory(string path)
     {
         byte[] file;
@@ -376,15 +258,61 @@ internal partial class SimpleStorager : IDisposable, IStorager
     // private Dictionary<uint, Snowflake> dictionary = new(); // lock (this.syncObject)
     private IFiler? filer;
 
+    #region Helper
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static uint FileIdToFile(ulong fileId) => (uint)(fileId >> 32);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int FileIdToSize(ulong fileId) => (int)fileId;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ulong FileAndSizeToFileId(uint file, int size) => (file << 32) | (uint)size;
+
+    public static string FileToPath(uint file)
+    {
+        Span<char> c = stackalloc char[9];
+        var n = 0;
+
+        c[n++] = UInt32ToChar(file >> 28);
+        c[n++] = UInt32ToChar(file >> 24);
+
+        c[n++] = '/';
+
+        c[n++] = UInt32ToChar(file >> 20);
+        c[n++] = UInt32ToChar(file >> 16);
+        c[n++] = UInt32ToChar(file >> 12);
+        c[n++] = UInt32ToChar(file >> 8);
+        c[n++] = UInt32ToChar(file >> 4);
+        c[n++] = UInt32ToChar(file);
+
+        return c.ToString();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static char UInt32ToChar(uint x)
+    {
+        var a = x & 0xF;
+        if (a < 10)
+        {
+            return (char)('0' + a);
+        }
+        else
+        {
+            return (char)('W' + a);
+        }
+    }
+
+    #endregion
+
     #region IDisposable Support
-#pragma warning restore SA1124 // Do not use regions
 
     private bool disposed = false; // To detect redundant calls.
 
     /// <summary>
-    /// Finalizes an instance of the <see cref="SimpleStorager"/> class.
+    /// Finalizes an instance of the <see cref="SimpleStorage"/> class.
     /// </summary>
-    ~SimpleStorager()
+    ~SimpleStorage()
     {
         this.Dispose(false);
     }

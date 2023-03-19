@@ -4,9 +4,9 @@ namespace CrystalData.Filer;
 
 internal interface IFiler
 {
-    TaskWorkInterface<FilerWork> Get(string path, int sizeToGet);
+    IAbortOrCompleteTask? Get(string path, int sizeToGet);
 
-    TaskWorkInterface<FilerWork> Put(string path, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared);
+    IAbortOrCompleteTask? Put(string path, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared);
 
-    TaskWorkInterface<FilerWork> Delete(string path);
+    IAbortOrCompleteTask? Delete(string path);
 }

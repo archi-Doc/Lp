@@ -129,7 +129,7 @@ internal partial class CrystalDirectory : IDisposable
         this.worker.AddLast(new(snowflakeId));
     }
 
-    internal bool PrepareAndCheck(Storage storage)
+    internal bool PrepareAndCheck(StorageClass storage)
     {
         this.Options = storage.Options;
         try

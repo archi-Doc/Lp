@@ -1,14 +1,15 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using CrystalData.Results;
+using CrystalData.Storager;
 
 namespace CrystalData;
 
-public sealed class Storage
+public sealed class StorageClass
 {
     public const int DirectoryRotationThreshold = 1024 * 1024 * 100; // 100 MB
 
-    internal Storage(UnitLogger unitLogger)
+    internal StorageClass(UnitLogger unitLogger)
     {
         this.UnitLogger = unitLogger;
         // this.Core = new(ThreadCore.Root);
@@ -159,6 +160,11 @@ public sealed class Storage
                 return;
             }
         }
+
+        // tempcode
+        IStorage storage = default!;
+        var id = fileId;
+        storage.Delete(ref id);
 
         directory.Delete(fileId);
     }
