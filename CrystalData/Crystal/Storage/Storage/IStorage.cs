@@ -4,13 +4,17 @@ namespace CrystalData.Storage;
 
 internal interface IStorage
 {
+    Task<StorageResult> Start();
+
+    Task Stop();
+
     bool PrepareAndCheck(StorageControl storage);
 
     StorageResult Put(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared);
 
     StorageResult Delete(ref ulong fileId);
 
-    Task<StorageMemoryOwnerResult> GetAsync(ulong fileId, TimeSpan timeToWait);
+    Task<StorageMemoryOwnerResult> GetAsync(ref ulong fileId, TimeSpan timeToWait);
 
     Task<StorageResult> PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared, TimeSpan timeToWait);
 

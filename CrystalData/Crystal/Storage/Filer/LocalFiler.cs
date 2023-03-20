@@ -1,6 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.CompilerServices;
+using CrystalData.Storage;
+
+#pragma warning disable SA1124 // Do not use regions
 
 namespace CrystalData.Filer;
 
@@ -162,6 +165,17 @@ DeleteAndExit:
         return;
     }
 
+    internal async Task WaitForCompletionAsync()
+    {
+        await this.worker.WaitForCompletionAsync().ConfigureAwait(false);
+    }
+
+    internal async Task StopAsync()
+    {
+        await this.worker.WaitForCompletionAsync().ConfigureAwait(false);
+        await this.SaveDirectoryAsync(this.SnowflakeFilePath, this.SnowflakeBackupPath).ConfigureAwait(false);
+    }
+
     StorageResult IFiler.Write(string path, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
     {
         this.AddLast(new(path, dataToBeShared));
@@ -204,4 +218,34 @@ DeleteAndExit:
     }
 
     private string rootedPath;
+
+    #region IDisposable Support
+
+    /// <summary>
+    /// Finalizes an instance of the <see cref="LocalFiler"/> class.
+    /// </summary>
+    ~LocalFiler()
+    {
+        this.Dispose(false);
+    }
+
+    /// <summary>
+    /// free managed/native resources.
+    /// </summary>
+    /// <param name="disposing">true: free managed resources.</param>
+    protected override void Dispose(bool disposing)
+    {
+        if (!this.disposed)
+        {
+            if (disposing)
+            {
+                // free managed resources.
+                this.worker.Dispose();
+            }
+
+            // free native resources here if there are any.
+            this.disposed = true;
+        }
+    }
+    #endregion
 }

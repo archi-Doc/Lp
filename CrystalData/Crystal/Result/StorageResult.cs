@@ -10,4 +10,5 @@ public enum StorageResult
     Success,
     NoFiler,
     NoFile,
+    Corrupted,
 }

@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.IO;
 using System.Runtime.CompilerServices;
 using CrystalData.Filer;
 
@@ -8,23 +9,23 @@ using CrystalData.Filer;
 namespace CrystalData.Storage;
 
 [TinyhandObject]
-internal partial class SimpleStorage : IDisposable, IStorage
+internal partial class SimpleStorage : IStorage
 {
+    private const string SimpleStorageMain = "Simple.main";
+    private const string SimpleStorageBack = "Simple.back";
+
+    [TinyhandObject]
+    private partial class Data
+    {
+        [Key(0)]
+        public uint[] Files { get; set; } = Array.Empty<uint>();
+
+        [Key(1)]
+        public ulong Size { get; set; }
+    }
+
     public SimpleStorage()
     {
-    }
-
-    internal SimpleStorage(ushort directoryId, string path)
-        : base()
-    {
-        this.DirectoryId = directoryId;
-        this.DirectoryPath = path;
-    }
-
-    public CrystalDirectoryInformation GetInformation()
-    {
-        this.CalculateUsageRatio();
-        return new(this.DirectoryId, this.Type, this.DirectoryPath, this.DirectoryCapacity, this.DirectorySize, this.UsageRatio);
     }
 
     #region IStorage
@@ -53,25 +54,39 @@ internal partial class SimpleStorage : IDisposable, IStorage
             return StorageResult.NoFile;
         }
 
+        lock (this.syncObject)
+        {
+            this.dictionary.Remove(file);
+        }
+
         fileId = 0;
         return this.filer.Delete(FileToPath(file));
     }
 
-    async Task<StorageMemoryOwnerResult> IStorage.GetAsync(ulong fileId, TimeSpan timeToWait)
+    Task<StorageMemoryOwnerResult> IStorage.GetAsync(ref ulong fileId, TimeSpan timeToWait)
     {
         if (this.filer == null)
         {
-            return new(StorageResult.NoFiler);
+            return Task.FromResult(new StorageMemoryOwnerResult(StorageResult.NoFiler));
         }
 
         var file = FileIdToFile(fileId);
         var size = FileIdToSize(fileId);
         if (file == 0)
         {
-            return new(StorageResult.NoFile);
+            return Task.FromResult(new StorageMemoryOwnerResult(StorageResult.NoFile));
         }
 
-        return await this.filer.ReadAsync(FileToPath(file), size, timeToWait).ConfigureAwait(false);
+        lock (this.syncObject)
+        {
+            if (!this.dictionary.ContainsKey(file))
+            {
+                fileId = 0;
+                return Task.FromResult(new StorageMemoryOwnerResult(StorageResult.NoFile));
+            }
+        }
+
+        return this.filer.ReadAsync(FileToPath(file), size, timeToWait);
     }
 
     Task<StorageResult> IStorage.PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait)
@@ -96,6 +111,11 @@ internal partial class SimpleStorage : IDisposable, IStorage
         if (file == 0)
         {
             return Task.FromResult(StorageResult.NoFile);
+        }
+
+        lock (this.syncObject)
+        {
+            this.dictionary.Remove(file);
         }
 
         fileId = 0;
@@ -147,35 +167,33 @@ internal partial class SimpleStorage : IDisposable, IStorage
 
     #endregion
 
-    internal void Start()
+    async Task<StorageResult> IStorage.Start()
     {
-        if (!this.TryLoadDirectory(this.SnowflakeFilePath))
+        var result = await this.TryLoad(SimpleStorageMain).ConfigureAwait(false);
+        if (result != StorageResult.Success)
         {
-            this.TryLoadDirectory(this.SnowflakeBackupPath);
+            result = await this.TryLoad(SimpleStorageBack).ConfigureAwait(false);
+        }
+
+        return result;
+    }
+
+    async Task IStorage.Stop()
+    {
+        byte[] byteArray;
+        lock (this.syncObject)
+        {
+            var data = new Data();
+            data.Files = this.dictionary.Keys.ToArray();
+            byteArray = TinyhandSerializer.Serialize(data);
+        }
+
+        if (this.filer != null)
+        {
+            await this.filer.WriteAsync(SimpleStorageMain, new(byteArray), TimeSpan.MinValue);
+            await this.filer.WriteAsync(SimpleStorageBack, new(byteArray), TimeSpan.MinValue);
         }
     }
-
-    internal async Task WaitForCompletionAsync()
-    {
-        await this.worker.WaitForCompletionAsync().ConfigureAwait(false);
-    }
-
-    internal async Task StopAsync()
-    {
-        await this.worker.WaitForCompletionAsync().ConfigureAwait(false);
-        await this.SaveDirectoryAsync(this.SnowflakeFilePath, this.SnowflakeBackupPath).ConfigureAwait(false);
-    }
-
-    [Key(0)]
-    [Link(Type = ChainType.Unordered)]
-    public ushort DirectoryId { get; private set; }
-
-    [Key(1)]
-    public CrystalDirectoryType Type { get; private set; }
-
-    [Key(2)]
-    [Link(Type = ChainType.Unordered)]
-    public string DirectoryPath { get; private set; } = string.Empty;
 
     [Key(3)]
     public long DirectoryCapacity { get; internal set; }
@@ -220,67 +238,46 @@ internal partial class SimpleStorage : IDisposable, IStorage
         this.UsageRatio = ratio;
     }
 
-    private bool TryLoadDirectory(string path)
+    private async Task<StorageResult> TryLoad(string path)
     {
-        byte[] file;
-        try
+        if (this.filer == null)
         {
-            file = File.ReadAllBytes(path);
-        }
-        catch
-        {
-            return false;
+            return StorageResult.NoFiler;
         }
 
-        if (!HashHelper.CheckFarmHashAndGetData(file.AsMemory(), out var data))
+        var result = await this.filer.ReadAsync(path, -1, TimeSpan.MinValue);
+        if (!result.IsSuccess)
         {
-            return false;
+            return result.Result;
+        }
+
+        if (!HashHelper.CheckFarmHashAndGetData(result.Data.Memory, out var data))
+        {
+            return StorageResult.Corrupted;
         }
 
         try
         {
-            var g = TinyhandSerializer.Deserialize<Snowflake.GoshujinClass>(data);
+            var g = TinyhandSerializer.Deserialize<Data>(data);
             if (g != null)
             {
-                this.snowflakeGoshujin = g;
+                this.dictionary = new();
+                foreach (var x in g.Files)
+                {
+                    this.dictionary.TryAdd(x, 0);
+                }
             }
         }
         catch
         {
-            return false;
+            return StorageResult.Corrupted;
         }
 
-        return true;
-    }
-
-    private Task<bool> SaveDirectoryAsync(string path, string? backupPath = null)
-    {
-        byte[] data;
-        lock (this.syncObject)
-        {
-            data = TinyhandSerializer.Serialize(this.snowflakeGoshujin);
-        }
-
-        return HashHelper.GetFarmHashAndSaveAsync(data, path, backupPath);
-    }
-
-    private Snowflake GetNewSnowflake()
-    {// lock (this.syncObject)
-        while (true)
-        {
-            var id = RandomVault.Pseudo.NextUInt32();
-            if (id != 0 && !this.snowflakeGoshujin.SnowflakeIdChain.ContainsKey(id))
-            {
-                var snowflake = new Snowflake(id);
-                snowflake.Goshujin = this.snowflakeGoshujin;
-                return snowflake;
-            }
-        }
+        return StorageResult.Success;
     }
 
     private object syncObject = new();
-    private Snowflake.GoshujinClass snowflakeGoshujin = new(); // lock (this.syncObject)
-    // private Dictionary<uint, Snowflake> dictionary = new(); // lock (this.syncObject)
+    private Dictionary<uint, uint> dictionary = new();
     private IFiler? filer;
 
     #region Helper
@@ -336,60 +333,38 @@ internal partial class SimpleStorage : IDisposable, IStorage
     {
         var file = FileIdToFile(fileId);
         var size = FileIdToSize(fileId);
-        if (file != 0)
-        {// Found
-            if (dataSize > size)
-            {
-                this.DirectorySize += dataSize - size;
+
+        lock (this.syncObject)
+        {
+            if (file != 0)
+            {// Found
+                if (dataSize > size)
+                {
+                    this.DirectorySize += dataSize - size;
+                }
             }
-        }
-        else
-        {// Not found
-            file = this.GetNewSnowflake();
-            this.DirectorySize += dataSize; // Forget about the hash size.
+            else
+            {// Not found
+                file = this.NewFile();
+                this.DirectorySize += dataSize; // Forget about the hash size.
+            }
         }
 
         fileId = FileAndSizeToFileId(file, dataSize);
     }
 
-    #endregion
-
-    #region IDisposable Support
-
-    private bool disposed = false; // To detect redundant calls.
-
-    /// <summary>
-    /// Finalizes an instance of the <see cref="SimpleStorage"/> class.
-    /// </summary>
-    ~SimpleStorage()
-    {
-        this.Dispose(false);
-    }
-
-    /// <inheritdoc/>
-    public void Dispose()
-    {
-        this.Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    /// <summary>
-    /// free managed/native resources.
-    /// </summary>
-    /// <param name="disposing">true: free managed resources.</param>
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!this.disposed)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private uint NewFile()
+    {// lock (this.syncObject)
+        while (true)
         {
-            if (disposing)
+            var file = RandomVault.Pseudo.NextUInt32();
+            if (!this.dictionary.TryAdd(file, 0))
             {
-                // free managed resources.
-                this.worker.Dispose();
+                return file;
             }
-
-            // free native resources here if there are any.
-            this.disposed = true;
         }
     }
+
     #endregion
 }
