@@ -4,6 +4,8 @@ namespace CrystalData.Filer;
 
 internal interface IFiler
 {
+    bool PrepareAndCheck(StorageControl storage);
+
     StorageResult Write(string path, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared);
 
     StorageResult Delete(string path);

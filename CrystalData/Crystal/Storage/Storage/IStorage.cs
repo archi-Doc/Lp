@@ -1,14 +1,14 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using CrystalData.Filer;
+
 namespace CrystalData.Storage;
 
 internal interface IStorage
 {
-    Task<StorageResult> Start();
+    Task<StorageResult> Prepare(StorageControl storage, IFiler filer);
 
-    Task Stop();
-
-    bool PrepareAndCheck(StorageControl storage);
+    Task Save();
 
     StorageResult Put(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared);
 

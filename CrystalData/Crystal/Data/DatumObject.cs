@@ -20,6 +20,7 @@ public partial struct DatumObject : ITinyhandSerialize<DatumObject>
         writer.Write(value.DatumId);
         writer.Write(value.StorageId);
         writer.Write(value.FileId);
+        writer.Write(value.FileChecksum);
     }
 
     public static void Deserialize(ref TinyhandReader reader, scoped ref DatumObject value, TinyhandSerializerOptions options)
@@ -27,6 +28,7 @@ public partial struct DatumObject : ITinyhandSerialize<DatumObject>
         value.DatumId = reader.ReadUInt16();
         value.StorageId = reader.ReadUInt16();
         value.FileId = reader.ReadUInt64();
+        value.FileChecksum = reader.ReadUInt64();
     }
 
     [Key(0)]
@@ -37,6 +39,9 @@ public partial struct DatumObject : ITinyhandSerialize<DatumObject>
 
     [Key(2)]
     internal ulong FileId;
+
+    [Key(3)]
+    internal ulong FileChecksum;
 
     internal bool IsValid => this.DatumId != 0;
 

@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.IO;
 using System.Runtime.CompilerServices;
 using CrystalData.Filer;
 
@@ -122,53 +121,13 @@ internal partial class SimpleStorage : IStorage
         return this.filer.DeleteAsync(FileToPath(file), timeToWait);
     }
 
-    bool IStorage.PrepareAndCheck(StorageControl storage)
-    {
-        this.Options = storage.Options;
-        try
-        {
-            if (Path.IsPathRooted(this.DirectoryPath))
-            {
-                this.RootedPath = this.DirectoryPath;
-            }
-            else
-            {
-                this.RootedPath = Path.Combine(this.Options.RootPath, this.DirectoryPath);
-            }
-
-            Directory.CreateDirectory(this.RootedPath);
-
-            // Check directory file
-            try
-            {
-                using (var handle = File.OpenHandle(this.SnowflakeFilePath, mode: FileMode.Open, access: FileAccess.ReadWrite))
-                {
-                }
-            }
-            catch
-            {
-                using (var handle = File.OpenHandle(this.SnowflakeBackupPath, mode: FileMode.Open, access: FileAccess.ReadWrite))
-                {
-                }
-            }
-        }
-        catch
-        {// No directory file
-            return false;
-        }
-
-        if (this.Options.EnableLogger)
-        {
-            // this.Logger = storage.UnitLogger.GetLogger<CrystalDirectory>();
-        }
-
-        return true;
-    }
-
     #endregion
 
-    async Task<StorageResult> IStorage.Start()
+    async Task<StorageResult> IStorage.Prepare(StorageControl storage, IFiler filer)
     {
+        this.storage = storage;
+        this.filer = filer;
+
         var result = await this.TryLoad(SimpleStorageMain).ConfigureAwait(false);
         if (result != StorageResult.Success)
         {
@@ -178,7 +137,7 @@ internal partial class SimpleStorage : IStorage
         return result;
     }
 
-    async Task IStorage.Stop()
+    async Task IStorage.Save()
     {
         byte[] byteArray;
         lock (this.syncObject)
@@ -202,20 +161,7 @@ internal partial class SimpleStorage : IStorage
     public long DirectorySize { get; private set; } // lock (this.syncObject)
 
     [IgnoreMember]
-    public CrystalOptions Options { get; private set; } = CrystalOptions.Default;
-
-    [IgnoreMember]
-    public string RootedPath { get; private set; } = string.Empty;
-
-    public string SnowflakeFilePath => Path.Combine(this.RootedPath, this.Options.SnowflakeFile);
-
-    public string SnowflakeBackupPath => Path.Combine(this.RootedPath, this.Options.SnowflakeBackup);
-
-    [IgnoreMember]
     internal double UsageRatio { get; private set; }
-
-    [IgnoreMember]
-    internal ILogger? Logger { get; private set; }
 
     internal void CalculateUsageRatio()
     {
@@ -253,7 +199,7 @@ internal partial class SimpleStorage : IStorage
 
         if (!HashHelper.CheckFarmHashAndGetData(result.Data.Memory, out var data))
         {
-            return StorageResult.Corrupted;
+            return StorageResult.CorruptedData;
         }
 
         try
@@ -270,15 +216,18 @@ internal partial class SimpleStorage : IStorage
         }
         catch
         {
-            return StorageResult.Corrupted;
+            return StorageResult.CorruptedData;
         }
 
         return StorageResult.Success;
     }
 
-    private object syncObject = new();
-    private Dictionary<uint, uint> dictionary = new();
+    private StorageControl? storage;
     private IFiler? filer;
+    private object syncObject = new();
+
+    [Key(0)]
+    private Dictionary<uint, int> dictionary = new();
 
     #region Helper
 
