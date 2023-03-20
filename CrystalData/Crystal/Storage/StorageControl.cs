@@ -1,15 +1,15 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using CrystalData.Results;
-using CrystalData.Storager;
+using CrystalData.Storage;
 
 namespace CrystalData;
 
-public sealed class StorageClass
+public sealed class StorageControl
 {
     public const int DirectoryRotationThreshold = 1024 * 1024 * 100; // 100 MB
 
-    internal StorageClass(UnitLogger unitLogger)
+    internal StorageControl(UnitLogger unitLogger)
     {
         this.UnitLogger = unitLogger;
         // this.Core = new(ThreadCore.Root);

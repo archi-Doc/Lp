@@ -10,7 +10,7 @@ public interface ICrystal
 
     public bool Started { get; }
 
-    StorageClass Storage { get; }
+    StorageControl Storage { get; }
 
     HimoGoshujinClass Himo { get; }
 

@@ -1,16 +1,27 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using CrystalData.Filer;
-
-namespace CrystalData.Storager;
+namespace CrystalData.Storage;
 
 internal interface IStorage
 {
-    bool PrepareAndCheck(StorageClass storage);
+    bool PrepareAndCheck(StorageControl storage);
 
-    IAbortOrCompleteTask? Get(ulong fileId);
+    StorageResult Put(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared);
 
-    IAbortOrCompleteTask? Put(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared);
+    StorageResult Delete(ref ulong fileId);
 
-    IAbortOrCompleteTask? Delete(ref ulong fileId);
+    Task<StorageMemoryOwnerResult> GetAsync(ulong fileId, TimeSpan timeToWait);
+
+    Task<StorageResult> PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared, TimeSpan timeToWait);
+
+    Task<StorageResult> DeleteAsync(ref ulong fileId, TimeSpan timeToWait);
+
+    /*Task<StorageMemoryOwnerResult> GetAsync(ulong fileId)
+        => this.GetAsync(fileId, TimeSpan.MinValue);
+
+    Task<StorageResult> PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
+        => this.PutAsync(ref fileId, memoryToBeShared, TimeSpan.MinValue);
+
+    Task<StorageResult> DeleteAsync(ref ulong fileId)
+        => this.DeleteAsync(ref fileId, TimeSpan.MinValue);*/
 }

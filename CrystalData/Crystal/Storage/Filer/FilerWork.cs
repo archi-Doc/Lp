@@ -6,33 +6,35 @@ internal class FilerWork : IEquatable<FilerWork>
 {
     public enum WorkType
     {
-        Put,
-        Get,
+        Write,
+        Read,
         Delete,
     }
 
     public WorkType Type { get; }
 
+    public StorageResult Result { get; internal set; }
+
     public string Path { get; }
 
-    public ByteArrayPool.ReadOnlyMemoryOwner DataToBePut { get; }
+    public ByteArrayPool.ReadOnlyMemoryOwner WriteData { get; }
 
-    public int SizeToGet { get; }
+    public int SizeToRead { get; }
 
-    public ByteArrayPool.MemoryOwner GotData { get; internal set; }
+    public ByteArrayPool.MemoryOwner ReadData { get; internal set; }
 
     public FilerWork(string path, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
-    {// Put
-        this.Type = WorkType.Put;
+    {// Write
+        this.Type = WorkType.Write;
         this.Path = path;
-        this.DataToBePut = dataToBeShared.IncrementAndShare();
+        this.WriteData = dataToBeShared.IncrementAndShare();
     }
 
-    public FilerWork(string path, int sizeToGet)
-    {// Get
-        this.Type = WorkType.Get;
+    public FilerWork(string path, int sizeToRead)
+    {// Read
+        this.Type = WorkType.Read;
         this.Path = path;
-        this.SizeToGet = sizeToGet;
+        this.SizeToRead = sizeToRead;
     }
 
     public FilerWork(string path)
@@ -42,7 +44,7 @@ internal class FilerWork : IEquatable<FilerWork>
     }
 
     public override int GetHashCode()
-        => HashCode.Combine(this.Type, this.Path, this.DataToBePut.Memory.Length, this.SizeToGet);
+        => HashCode.Combine(this.Type, this.Path, this.WriteData.Memory.Length, this.SizeToRead);
 
     public bool Equals(FilerWork? other)
     {
@@ -53,7 +55,7 @@ internal class FilerWork : IEquatable<FilerWork>
 
         return this.Type == other.Type &&
             this.Path == other.Path &&
-            this.DataToBePut.Memory.Span.SequenceEqual(other.DataToBePut.Memory.Span) &&
-            this.SizeToGet == other.SizeToGet;
+            this.WriteData.Memory.Span.SequenceEqual(other.WriteData.Memory.Span) &&
+            this.SizeToRead == other.SizeToRead;
     }
 }

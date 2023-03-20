@@ -5,7 +5,7 @@ using CrystalData.Filer;
 
 #pragma warning disable SA1124 // Do not use regions
 
-namespace CrystalData.Storager;
+namespace CrystalData.Storage;
 
 [TinyhandObject]
 internal partial class SimpleStorage : IDisposable, IStorage
@@ -27,59 +27,82 @@ internal partial class SimpleStorage : IDisposable, IStorage
         return new(this.DirectoryId, this.Type, this.DirectoryPath, this.DirectoryCapacity, this.DirectorySize, this.UsageRatio);
     }
 
-    IAbortOrCompleteTask? IStorage.Get(ulong fileId)
-    {
-        var file = FileIdToFile(fileId);
-        var size = FileIdToSize(fileId);
-        if (file == 0 || this.filer == null)
-        {
-            return null;
-        }
+    #region IStorage
 
-        // Load (snowflakeId, size)
-        return this.filer.Get(FileToPath(file), size);
-    }
-
-    IAbortOrCompleteTask? IStorage.Put(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
+    StorageResult IStorage.Put(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
     {
-        var dataSize = dataToBeShared.Memory.Length;
-        var file = FileIdToFile(fileId);
-        var size = FileIdToSize(fileId);
         if (this.filer == null)
         {
-            return null;
+            return StorageResult.NoFiler;
         }
 
-        if (file != 0)
-        {// Found
-            if (dataSize > size)
-            {
-                this.DirectorySize += dataSize - size;
-            }
-        }
-        else
-        {// Not found
-            file = this.GetNewSnowflake();
-            this.DirectorySize += dataSize; // Forget about the hash size.
-        }
-
-        fileId = FileAndSizeToFileId(file, dataSize);
-        return this.filer.Put(FileToPath(file), dataToBeShared);
+        this.PutInternal(ref fileId, dataToBeShared.Memory.Length);
+        return this.filer.Write(FileToPath(FileIdToFile(fileId)), dataToBeShared);
     }
 
-    IAbortOrCompleteTask? IStorage.Delete(ref ulong fileId)
+    StorageResult IStorage.Delete(ref ulong fileId)
     {
-        var file = FileIdToFile(fileId);
-        if (file == 0 || this.filer == null)
+        if (this.filer == null)
         {
-            return null;
+            return StorageResult.NoFiler;
+        }
+
+        var file = FileIdToFile(fileId);
+        if (file == 0)
+        {
+            return StorageResult.NoFile;
         }
 
         fileId = 0;
         return this.filer.Delete(FileToPath(file));
     }
 
-    bool IStorage.PrepareAndCheck(StorageClass storage)
+    async Task<StorageMemoryOwnerResult> IStorage.GetAsync(ulong fileId, TimeSpan timeToWait)
+    {
+        if (this.filer == null)
+        {
+            return new(StorageResult.NoFiler);
+        }
+
+        var file = FileIdToFile(fileId);
+        var size = FileIdToSize(fileId);
+        if (file == 0)
+        {
+            return new(StorageResult.NoFile);
+        }
+
+        return await this.filer.ReadAsync(FileToPath(file), size, timeToWait).ConfigureAwait(false);
+    }
+
+    Task<StorageResult> IStorage.PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait)
+    {
+        if (this.filer == null)
+        {
+            return Task.FromResult(StorageResult.NoFiler);
+        }
+
+        this.PutInternal(ref fileId, dataToBeShared.Memory.Length);
+        return this.filer.WriteAsync(FileToPath(FileIdToFile(fileId)), dataToBeShared, timeToWait);
+    }
+
+    Task<StorageResult> IStorage.DeleteAsync(ref ulong fileId, TimeSpan timeToWait)
+    {
+        if (this.filer == null)
+        {
+            return Task.FromResult(StorageResult.NoFiler);
+        }
+
+        var file = FileIdToFile(fileId);
+        if (file == 0)
+        {
+            return Task.FromResult(StorageResult.NoFile);
+        }
+
+        fileId = 0;
+        return this.filer.DeleteAsync(FileToPath(file), timeToWait);
+    }
+
+    bool IStorage.PrepareAndCheck(StorageControl storage)
     {
         this.Options = storage.Options;
         try
@@ -121,6 +144,8 @@ internal partial class SimpleStorage : IDisposable, IStorage
 
         return true;
     }
+
+    #endregion
 
     internal void Start()
     {
@@ -301,6 +326,30 @@ internal partial class SimpleStorage : IDisposable, IStorage
         {
             return (char)('W' + a);
         }
+    }
+
+    #endregion
+
+    #region Internal
+
+    private void PutInternal(ref ulong fileId, int dataSize)
+    {
+        var file = FileIdToFile(fileId);
+        var size = FileIdToSize(fileId);
+        if (file != 0)
+        {// Found
+            if (dataSize > size)
+            {
+                this.DirectorySize += dataSize - size;
+            }
+        }
+        else
+        {// Not found
+            file = this.GetNewSnowflake();
+            this.DirectorySize += dataSize; // Forget about the hash size.
+        }
+
+        fileId = FileAndSizeToFileId(file, dataSize);
     }
 
     #endregion

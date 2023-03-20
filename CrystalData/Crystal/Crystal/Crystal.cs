@@ -168,7 +168,7 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
 
     public bool Started { get; private set; }
 
-    public StorageClass Storage { get; }
+    public StorageControl Storage { get; }
 
     public HimoGoshujinClass Himo => this.himoGoshujin;
 
