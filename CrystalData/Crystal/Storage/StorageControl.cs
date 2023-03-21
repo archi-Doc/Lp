@@ -12,15 +12,14 @@ public sealed class StorageControl
     internal StorageControl(UnitLogger unitLogger)
     {
         this.UnitLogger = unitLogger;
-        // this.Core = new(ThreadCore.Root);
-        this.data = TinyhandSerializer.Reconstruct<StorageData>();
     }
 
     public CrystalDirectoryInformation[] GetDirectoryInformation()
     {
         lock (this.syncObject)
         {
-            return this.data.Directories.Select(a => a.GetInformation()).ToArray();
+            return Array.Empty<CrystalDirectoryInformation>();
+            // return this.data.Directories.Select(a => a.GetInformation()).ToArray();
         }
     }
 
@@ -92,57 +91,53 @@ public sealed class StorageControl
 
     public void Save(ref ushort storageId, ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared, ushort datumId)
     {
-        CrystalDirectory? directory;
+        StorageObject? storage;
         lock (this.syncObject)
         {
-            if (this.data.Directories.DirectoryIdChain.Count == 0)
-            {// No directory available.
+            if (this.storageObjects.StorageIdChain.Count == 0)
+            {// No storage available.
                 return;
             }
-            else if (storageId == 0 || !this.data.Directories.DirectoryIdChain.TryGetValue(storageId, out directory))
+            else if (storageId == 0 || !this.storageObjects.StorageIdChain.TryGetValue(storageId, out storage))
             {// Get valid directory.
-                if (this.directoryRotationCount >= DirectoryRotationThreshold ||
-                    this.currentDirectory == null)
+                if (this.storageRotationCount >= DirectoryRotationThreshold ||
+                    this.currentStorage == null)
                 {
-                    this.currentDirectory = this.GetValidDirectory();
-                    this.directoryRotationCount = memoryToBeShared.Memory.Length;
-                    if (this.currentDirectory == null)
+                    this.currentStorage = this.GetValidStorage();
+                    this.storageRotationCount = memoryToBeShared.Memory.Length;
+                    if (this.currentStorage == null)
                     {
                         return;
                     }
                 }
                 else
                 {
-                    this.directoryRotationCount += memoryToBeShared.Memory.Length;
+                    this.storageRotationCount += memoryToBeShared.Memory.Length;
                 }
 
-                directory = this.currentDirectory;
-                storageId = directory.DirectoryId;
+                storage = this.currentStorage;
+                storageId = storage.Sto;
             }
 
             this.AddMemoryStat(datumId, memoryToBeShared.Memory.Length);
         }
 
-        directory.Save(ref fileId, memoryToBeShared);
+        storage.Storage?.Put(ref fileId, memoryToBeShared);
     }
 
-    public async Task<CrystalMemoryOwnerResult> Load(ushort storageId, ulong fileId)
+    public Task<CrystalMemoryOwnerResult> Load(ushort storageId, ulong fileId)
     {
-        if (storageId == 0)
-        {// Invalid file.
-            return new(CrystalResult.NoData);
-        }
-
-        CrystalDirectory? directory;
+        StorageObject? storageObject;
         lock (this.syncObject)
         {
-            if (!this.data.Directories.DirectoryIdChain.TryGetValue(storageId, out directory))
-            {// No directory
-                return new(CrystalResult.NoDirectory);
+            storageObject = this.GetStorageFromId(storageId);
+            if (storageObject == null)
+            {
+                return Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.NoDirectory));
             }
         }
 
-        return await directory.Load(fileId).ConfigureAwait(false);
+        return storageObject.Storage.GetAsync(ref fileId, TimeSpan.MinValue);
     }
 
     public void Delete(ushort storageId, ulong fileId)
@@ -309,6 +304,17 @@ public sealed class StorageControl
         }
     }
 
+    private StorageObject? GetStorageFromId(ushort storageId)
+    {// lock (this.syncObject)
+        if (storageId == 0)
+        {
+            return null;
+        }
+
+        this.storageObjects.StorageIdChain.TryGetValue(storageId, out var storageObject);
+        return storageObject;
+    }
+
     private ushort GetFreeDirectoryId(CrystalDirectory.GoshujinClass goshujin)
     {// lock(syncObject)
         while (true)
@@ -321,9 +327,9 @@ public sealed class StorageControl
         }
     }
 
-    private CrystalDirectory? GetValidDirectory()
+    private StorageObject? GetValidStorage()
     {// lock(syncObject)
-        var array = this.data.Directories.ListChain.ToArray();
+        var array = this.storageObjects.StorageIdChain.ToArray();
         if (array == null)
         {
             return null;
@@ -363,10 +369,8 @@ public sealed class StorageControl
 
     internal UnitLogger UnitLogger { get; }
 
-    // internal ThreadCoreGroup Core { get; }
-
     private object syncObject = new();
-    private StorageData data; // lock(syncObject)
-    private CrystalDirectory? currentDirectory; // lock(syncObject)
-    private int directoryRotationCount; // lock(syncObject)
+    private StorageObject.GoshujinClass storageObjects = new();  // lock(syncObject)
+    private StorageObject? currentStorage; // lock(syncObject)
+    private int storageRotationCount; // lock(syncObject)
 }

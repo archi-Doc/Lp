@@ -13,16 +13,6 @@ internal partial class SimpleStorage : IStorage
     private const string SimpleStorageMain = "Simple.main";
     private const string SimpleStorageBack = "Simple.back";
 
-    [TinyhandObject]
-    private partial class Data
-    {
-        [Key(0)]
-        public uint[] Files { get; set; } = Array.Empty<uint>();
-
-        [Key(1)]
-        public ulong Size { get; set; }
-    }
-
     public SimpleStorage()
     {
     }
@@ -55,7 +45,13 @@ internal partial class SimpleStorage : IStorage
 
         lock (this.syncObject)
         {
-            this.dictionary.Remove(file);
+            if (!this.dictionary.Remove(file))
+            {// Not found
+                fileId = 0;
+                return StorageResult.NoFile;
+            }
+
+            this.dictionary.Add(file, -1); // tempcode
         }
 
         fileId = 0;
@@ -70,16 +66,11 @@ internal partial class SimpleStorage : IStorage
         }
 
         var file = FileIdToFile(fileId);
-        var size = FileIdToSize(fileId);
-        if (file == 0)
-        {
-            return Task.FromResult(new StorageMemoryOwnerResult(StorageResult.NoFile));
-        }
-
+        int size;
         lock (this.syncObject)
         {
-            if (!this.dictionary.ContainsKey(file))
-            {
+            if (!this.dictionary.TryGetValue(file, out size))
+            {// Not found
                 fileId = 0;
                 return Task.FromResult(new StorageMemoryOwnerResult(StorageResult.NoFile));
             }
@@ -142,9 +133,7 @@ internal partial class SimpleStorage : IStorage
         byte[] byteArray;
         lock (this.syncObject)
         {
-            var data = new Data();
-            data.Files = this.dictionary.Keys.ToArray();
-            byteArray = TinyhandSerializer.Serialize(data);
+            byteArray = TinyhandSerializer.Serialize(this.dictionary);
         }
 
         if (this.filer != null)
@@ -204,15 +193,7 @@ internal partial class SimpleStorage : IStorage
 
         try
         {
-            var g = TinyhandSerializer.Deserialize<Data>(data);
-            if (g != null)
-            {
-                this.dictionary = new();
-                foreach (var x in g.Files)
-                {
-                    this.dictionary.TryAdd(x, 0);
-                }
-            }
+            this.dictionary ??= TinyhandSerializer.Deserialize<Dictionary<uint, int>>(data);
         }
         catch
         {
@@ -235,10 +216,7 @@ internal partial class SimpleStorage : IStorage
     public static uint FileIdToFile(ulong fileId) => (uint)(fileId >> 32);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int FileIdToSize(ulong fileId) => (int)fileId;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ulong FileAndSizeToFileId(uint file, int size) => (file << 32) | (uint)size;
+    public static ulong FileToFileId(uint file) => file << 32;
 
     public static string FileToPath(uint file)
     {
@@ -281,12 +259,10 @@ internal partial class SimpleStorage : IStorage
     private void PutInternal(ref ulong fileId, int dataSize)
     {
         var file = FileIdToFile(fileId);
-        var size = FileIdToSize(fileId);
-
         lock (this.syncObject)
         {
-            if (file != 0)
-            {// Found
+            if (file != 0 && this.dictionary.TryGetValue(file, out var size))
+            {
                 if (dataSize > size)
                 {
                     this.DirectorySize += dataSize - size;
@@ -299,7 +275,7 @@ internal partial class SimpleStorage : IStorage
             }
         }
 
-        fileId = FileAndSizeToFileId(file, dataSize);
+        fileId = FileToFileId(file);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -8,6 +8,11 @@ internal interface IFiler
 
     StorageResult Write(string path, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared);
 
+    /// <summary>
+    /// Delete the file matching the path.
+    /// </summary>
+    /// <param name="path">The file path.</param>
+    /// <returns><see cref="StorageResult"/>.</returns>
     StorageResult Delete(string path);
 
     Task<StorageMemoryOwnerResult> ReadAsync(string path, int sizeToRead, TimeSpan timeToWait);
