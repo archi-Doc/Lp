@@ -6,6 +6,8 @@ internal interface IFiler
 {
     bool PrepareAndCheck(StorageControl storage);
 
+    void DeleteAll();
+
     StorageResult Write(string path, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared);
 
     /// <summary>

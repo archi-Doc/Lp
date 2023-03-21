@@ -73,15 +73,12 @@ public sealed class StorageControl
 
     public void DeleteAll()
     {
-        string[] directories;
         lock (this.syncObject)
         {
-            directories = this.data.Directories.Select(x => x.RootedPath).ToArray();
-        }
-
-        foreach (var x in directories)
-        {
-            PathHelper.TryDeleteDirectory(x);
+            foreach (var x in this.storageObjects)
+            {
+                x.Filer?.DeleteAll();
+            }
         }
     }
 
@@ -116,10 +113,10 @@ public sealed class StorageControl
                 }
 
                 storage = this.currentStorage;
-                storageId = storage.Sto;
+                storageId = storage.StorageId;
             }
 
-            this.AddMemoryStat(datumId, memoryToBeShared.Memory.Length);
+            storage.MemoryStat.Add(memoryToBeShared.Memory.Length);
         }
 
         storage.Storage?.Put(ref fileId, memoryToBeShared);
@@ -137,51 +134,24 @@ public sealed class StorageControl
             }
         }
 
-        return storageObject.Storage.GetAsync(ref fileId, TimeSpan.MinValue);
+        var task = storageObject.Storage?.GetAsync(ref fileId, TimeSpan.MinValue);
+        return .ContinueWith()
     }
 
-    public void Delete(ushort storageId, ulong fileId)
+    public void Delete(ushort storageId, ref ulong fileId)
     {
-        if (storageId == 0)
-        {
-            return;
-        }
-
-        CrystalDirectory? directory;
+        StorageObject? storageObject;
         lock (this.syncObject)
         {
-            if (!this.data.Directories.DirectoryIdChain.TryGetValue(storageId, out directory))
-            {// No directory
-                return;
-            }
-        }
-
-        // tempcode
-        IStorage storage = default!;
-        var id = fileId;
-        storage.Delete(ref id);
-
-        directory.Delete(fileId);
-    }
-
-    /*internal void Restart()
-    {
-        lock (this.syncObject)
-        {
-            if (this.Started)
+            storageObject = this.GetStorageFromId(storageId);
+            if (storageObject == null)
             {
                 return;
             }
-
-            foreach (var x in this.directoryGoshujin)
-            {
-                x.PrepareAndCheck(this);
-                x.Start();
-            }
         }
 
-        this.Started = true;
-    }*/
+        storageObject.Storage?.Delete(ref fileId);
+    }
 
     internal async Task<CrystalStartResult> TryStart(CrystalOptions options, CrystalStartParam param, ReadOnlyMemory<byte>? data)
     {// semaphore
@@ -192,12 +162,12 @@ public sealed class StorageControl
 
         this.Options = options;
 
-        StorageData? storageData = null;
+        StorageObject.GoshujinClass? goshujin = null;
         if (data != null)
         {
             try
             {
-                storageData = TinyhandSerializer.Deserialize<StorageData>(data.Value);
+                goshujin = TinyhandSerializer.Deserialize<StorageObject.GoshujinClass>(data.Value);
             }
             catch
             {
@@ -208,11 +178,11 @@ public sealed class StorageControl
             }
         }
 
-        storageData ??= TinyhandSerializer.Reconstruct<StorageData>();
+        goshujin ??= TinyhandSerializer.Reconstruct<StorageObject.GoshujinClass>();
         List<string>? errorDirectories = null;
-        foreach (var x in storageData.Directories)
+        foreach (var x in goshujin.StorageIdChain)
         {
-            if (!x.PrepareAndCheck(this))
+            if (!x.Storage?.PrepareAndCheck(this))
             {
                 errorDirectories ??= new();
                 errorDirectories.Add(x.DirectoryPath);
@@ -225,25 +195,25 @@ public sealed class StorageControl
             return CrystalStartResult.FileError;
         }
 
-        if (storageData.Directories.DirectoryIdChain.Count == 0)
+        if (goshujin.Directories.DirectoryIdChain.Count == 0)
         {
             try
             {
-                var defaultDirectory = new CrystalDirectory(this.GetFreeDirectoryId(storageData.Directories), PathHelper.GetRootedDirectory(this.Options.RootPath, this.Options.DefaultCrystalDirectory));
+                var defaultDirectory = new CrystalDirectory(this.GetFreeDirectoryId(goshujin.Directories), PathHelper.GetRootedDirectory(this.Options.RootPath, this.Options.DefaultCrystalDirectory));
                 defaultDirectory.PrepareAndCheck(this);
-                storageData.Directories.Add(defaultDirectory);
+                goshujin.Directories.Add(defaultDirectory);
             }
             catch
             {
             }
         }
 
-        foreach (var x in storageData.Directories)
+        foreach (var x in goshujin.Directories)
         {
             x.Start();
         }
 
-        if (storageData.Directories.DirectoryIdChain.Count == 0)
+        if (goshujin.Directories.DirectoryIdChain.Count == 0)
         {
             return CrystalStartResult.NoDirectoryAvailable;
         }
@@ -251,7 +221,7 @@ public sealed class StorageControl
         lock (this.syncObject)
         {
             this.ClearGoshujin();
-            this.data = storageData;
+            this.data = goshujin;
             this.currentDirectory = null;
             this.Started = true;
         }
@@ -345,26 +315,12 @@ public sealed class StorageControl
 
     private void ClearGoshujin()
     {// lock(syncObject)
-        foreach (var x in this.data.Directories)
+        foreach (var x in this.storageObjects)
         {
             x.Dispose();
         }
 
-        this.data.Directories.Clear();
-    }
-
-    private void AddMemoryStat(ushort id, int size)
-    {
-        if (id != 0 && size != 0)
-        {
-            if (!this.data.MemoryStats.TryGetValue(id, out var memoryStat))
-            {
-                memoryStat = TinyhandSerializer.Reconstruct<MemoryStat>();
-                this.data.MemoryStats.Add(id, memoryStat);
-            }
-
-            memoryStat.Add(size);
-        }
+        this.storageObjects.Clear();
     }
 
     internal UnitLogger UnitLogger { get; }

@@ -252,7 +252,7 @@ public partial class MergerData : BaseData
             }
             else
             {
-                this.Crystal.Storage.Delete(this.childrenStorage, this.childrenFile);
+                this.Crystal.Storage.Delete(this.childrenStorage, ref this.childrenFile);
                 return new GoshujinClass();
             }
         }
@@ -290,7 +290,7 @@ public partial class MergerData : BaseData
             }
             else
             {
-                this.Crystal.Storage.Delete(this.childrenStorage, this.childrenFile);
+                this.Crystal.Storage.Delete(this.childrenStorage, ref this.childrenFile);
             }
         }
     }
