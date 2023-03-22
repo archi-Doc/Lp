@@ -41,15 +41,11 @@ public record CrystalOptions
 
     public string CrystalBackup { get; init; } = "Crystal.back";
 
-    public string CrystalDirectoryFile { get; init; } = "CrystalDirectory.main";
+    public string StorageFile { get; init; } = "Storage.main";
 
-    public string CrystalDirectoryBackup { get; init; } = "CrystalDirectory.back";
+    public string StorageBackup { get; init; } = "Storage.back";
 
     public string DefaultCrystalDirectory { get; init; } = "Crystal";
-
-    public string SnowflakeFile { get; init; } = "Snowflake.main";
-
-    public string SnowflakeBackup { get; init; } = "Snowflake.back";
 
     public bool EnableLogger { get; init; } = true;
 
@@ -59,9 +55,9 @@ public record CrystalOptions
 
     public string CrystalBackupPath => PathHelper.GetRootedFile(this.RootPath, this.CrystalBackup);
 
-    public string CrystalDirectoryFilePath => PathHelper.GetRootedFile(this.RootPath, this.CrystalDirectoryFile);
+    public string StorageFilePath => PathHelper.GetRootedFile(this.RootPath, this.StorageFile);
 
-    public string CrystalDirectoryBackupPath => PathHelper.GetRootedFile(this.RootPath, this.CrystalDirectoryBackup);
+    public string StorageBackupPath => PathHelper.GetRootedFile(this.RootPath, this.StorageBackup);
 
     private string? rootPath;
 }

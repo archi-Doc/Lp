@@ -1,11 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 #pragma warning disable SA1124 // Do not use regions
-#pragma warning disable SA1202
 
 namespace CrystalData.Filer;
 
-[TinyhandObject]
+[TinyhandObject(ExplicitKeyOnly = true)]
 internal partial class LocalFiler : TaskWorker<FilerWork>, IFiler
 {
     public const int DefaultConcurrentTasks = 4;
@@ -40,6 +39,8 @@ internal partial class LocalFiler : TaskWorker<FilerWork>, IFiler
 
     #region FieldAndProperty
 
+    public string FilerPath => this.rootedPath;
+
     private ILogger? logger;
 
     [Key(0)]
@@ -55,6 +56,7 @@ internal partial class LocalFiler : TaskWorker<FilerWork>, IFiler
         string? filePath = null;
         var tryCount = 0;
 
+        work.Result = CrystalResult.Started;
         if (work.Type == FilerWork.WorkType.Write)
         {// Write
             filePath = worker.GetRootedPath(work);
@@ -63,7 +65,7 @@ TryWrite:
             tryCount++;
             if (tryCount > 2)
             {
-                work.Result = StorageResult.WriteError;
+                work.Result = CrystalResult.WriteError;
                 work.WriteData.Return();
                 return;
             }
@@ -86,7 +88,7 @@ TryWrite:
                     {
                     }
 
-                    work.Result = StorageResult.Success;
+                    work.Result = CrystalResult.Success;
                 }
             }
             catch (DirectoryNotFoundException)
@@ -98,6 +100,7 @@ TryWrite:
                 }
                 else
                 {
+                    work.Result = CrystalResult.WriteError;
                     return;
                 }
 
@@ -105,7 +108,7 @@ TryWrite:
             }
             catch (OperationCanceledException)
             {
-                work.Result = StorageResult.Aborted;
+                work.Result = CrystalResult.Aborted;
                 return;
             }
             catch
@@ -133,7 +136,7 @@ TryWrite:
                     }
                     catch
                     {
-                        work.Result = StorageResult.ReadError;
+                        work.Result = CrystalResult.ReadError;
                         return;
                     }
                 }
@@ -144,19 +147,23 @@ TryWrite:
                     var read = await RandomAccess.ReadAsync(handle, memoryOwner.Memory, 0, worker.CancellationToken).ConfigureAwait(false);
                     if (read != sizeToRead)
                     {
+                        work.Result = CrystalResult.ReadError;
                         goto DeleteAndExit;
                     }
 
+                    work.Result = CrystalResult.Success;
                     work.ReadData = memoryOwner;
                     worker.logger?.TryGet()?.Log($"Read {filePath}, {memoryOwner.Memory.Length}");
                 }
             }
             catch (OperationCanceledException)
             {
+                work.Result = CrystalResult.Aborted;
                 return;
             }
             catch
             {
+                work.Result = CrystalResult.ReadError;
                 worker.logger?.TryGet()?.Log($"Read exception {filePath}");
             }
             finally
@@ -168,9 +175,11 @@ TryWrite:
             try
             {
                 File.Delete(work.Path);
+                work.Result = CrystalResult.Success;
             }
             catch
             {
+                work.Result = CrystalResult.DeleteError;
             }
             finally
             {
@@ -191,7 +200,7 @@ DeleteAndExit:
 
     #region IFiler
 
-    async Task<StorageResult> IFiler.PrepareAndCheck(StorageControl storage)
+    async Task<CrystalResult> IFiler.PrepareAndCheck(StorageControl storage)
     {
         try
         {
@@ -208,7 +217,7 @@ DeleteAndExit:
         }
         catch
         {
-            return StorageResult.WriteError;
+            return CrystalResult.WriteError;
         }
 
         if (storage.Options.EnableLogger)
@@ -216,7 +225,16 @@ DeleteAndExit:
             this.logger = storage.UnitLogger.GetLogger<LocalFiler>();
         }
 
-        return StorageResult.Success;
+        return CrystalResult.Success;
+    }
+
+    async Task IFiler.Save(bool stop)
+    {
+        await this.WaitForCompletionAsync().ConfigureAwait(false);
+        if (stop)
+        {
+            this.Dispose();
+        }
     }
 
     void IFiler.DeleteAll()
@@ -224,27 +242,27 @@ DeleteAndExit:
         PathHelper.TryDeleteDirectory(this.rootedPath);
     }
 
-    StorageResult IFiler.Write(string path, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
+    CrystalResult IFiler.Write(string path, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
     {
         this.AddLast(new(path, dataToBeShared));
-        return StorageResult.Started;
+        return CrystalResult.Started;
     }
 
-    StorageResult IFiler.Delete(string path)
+    CrystalResult IFiler.Delete(string path)
     {
         this.AddLast(new(path));
-        return StorageResult.Started;
+        return CrystalResult.Started;
     }
 
-    async Task<StorageMemoryOwnerResult> IFiler.ReadAsync(string path, int sizeToRead, TimeSpan timeToWait)
+    async Task<CrystalMemoryOwnerResult> IFiler.ReadAsync(string path, int sizeToRead, TimeSpan timeToWait)
     {
         var work = new FilerWork(path, sizeToRead);
         var workInterface = this.AddLast(work);
         await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
-        return new(work.Result, work.ReadData);
+        return new(work.Result, work.ReadData.AsReadOnly());
     }
 
-    async Task<StorageResult> IFiler.WriteAsync(string path, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait)
+    async Task<CrystalResult> IFiler.WriteAsync(string path, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait)
     {
         var work = new FilerWork(path, dataToBeShared);
         var workInterface = this.AddLast(work);
@@ -252,7 +270,7 @@ DeleteAndExit:
         return work.Result;
     }
 
-    async Task<StorageResult> IFiler.DeleteAsync(string path, TimeSpan timeToWait)
+    async Task<CrystalResult> IFiler.DeleteAsync(string path, TimeSpan timeToWait)
     {
         var work = new FilerWork(path);
         var workInterface = this.AddLast(work);

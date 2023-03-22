@@ -5,31 +5,35 @@ namespace CrystalData.Filer;
 [TinyhandUnion(0, typeof(LocalFiler))]
 internal partial interface IFiler
 {
-    Task<StorageResult> PrepareAndCheck(StorageControl storage);
+    string FilerPath { get; }
+
+    Task<CrystalResult> PrepareAndCheck(StorageControl storage);
+
+    Task Save(bool stop);
 
     void DeleteAll();
 
-    StorageResult Write(string path, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared);
+    CrystalResult Write(string path, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared);
 
     /// <summary>
     /// Delete the file matching the path.
     /// </summary>
     /// <param name="path">The file path.</param>
-    /// <returns><see cref="StorageResult"/>.</returns>
-    StorageResult Delete(string path);
+    /// <returns><see cref="CrystalResult"/>.</returns>
+    CrystalResult Delete(string path);
 
-    Task<StorageMemoryOwnerResult> ReadAsync(string path, int sizeToRead, TimeSpan timeToWait);
+    Task<CrystalMemoryOwnerResult> ReadAsync(string path, int sizeToRead, TimeSpan timeToWait);
 
-    Task<StorageResult> WriteAsync(string path, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait);
+    Task<CrystalResult> WriteAsync(string path, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait);
 
-    Task<StorageResult> DeleteAsync(string path, TimeSpan timeToWait);
+    Task<CrystalResult> DeleteAsync(string path, TimeSpan timeToWait);
 
-    /*Task<StorageMemoryOwnerResult> ReadAsync(string path, int sizeToRead)
+    /*Task<CrystalMemoryOwnerResult> ReadAsync(string path, int sizeToRead)
         => this.ReadAsync(path, sizeToRead, TimeSpan.MinValue);
 
-    Task<StorageResult> WriteAsync(string path, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
+    Task<CrystalResult> WriteAsync(string path, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
         => this.WriteAsync(path, dataToBeShared, TimeSpan.MinValue);
 
-    Task<StorageResult> DeleteAsync(string path)
+    Task<CrystalResult> DeleteAsync(string path)
         => this.DeleteAsync(path, TimeSpan.MinValue);*/
 }

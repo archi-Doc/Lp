@@ -3,6 +3,8 @@
 using CrystalData.Filer;
 using CrystalData.Storage;
 
+#pragma warning disable SA1124 // Do not use regions
+
 namespace CrystalData;
 
 [TinyhandObject]
@@ -15,6 +17,8 @@ internal partial class StorageAndFiler
 
     public override string ToString()
         => $"Id: {this.StorageId} {this.Storage?.ToString()} {this.Filer?.ToString()}";
+
+    #region FieldAndProperty
 
     [IgnoreMember]
     public IStorage? Storage { get; set; }
@@ -34,6 +38,75 @@ internal partial class StorageAndFiler
 
     [Key(3)]
     public MemoryStat MemoryStat { get; private set; } = default!;
+
+    #endregion
+
+    public async Task<CrystalResult> PrepareAndCheck(StorageControl storageControl)
+    {
+        if (this.Filer == null)
+        {
+            if (!TinyhandSerializer.TryDeserialize<IFiler>(this.FilerData, out var filer))
+            {
+                return CrystalResult.DeserializeError;
+            }
+
+            this.Filer = filer;
+            var result = await this.Filer.PrepareAndCheck(storageControl).ConfigureAwait(false);
+            if (result != CrystalResult.Success)
+            {
+                return result;
+            }
+        }
+
+        if (this.Storage == null)
+        {
+            if (!TinyhandSerializer.TryDeserialize<IStorage>(this.StorageData, out var storage))
+            {
+                return CrystalResult.DeserializeError;
+            }
+
+            this.Storage = storage;
+            var result = await this.Storage.PrepareAndCheck(storageControl, this.Filer).ConfigureAwait(false);
+            if (result != CrystalResult.Success)
+            {
+                return result;
+            }
+        }
+
+        return CrystalResult.Success;
+    }
+
+    public void Start()
+    {
+    }
+
+    public async Task Save(bool stop)
+    {
+        if (this.Filer != null)
+        {
+            await this.Filer.Save(stop);
+        }
+
+        if (this.Storage != null)
+        {
+            await this.Storage.Save(stop);
+        }
+
+        if (stop)
+        {
+            if (this.Filer != null)
+            {
+                this.FilerData = TinyhandSerializer.Serialize(this.Filer);
+                this.Filer = null;
+            }
+
+            if (this.Storage != null)
+            {
+                this.StorageData = TinyhandSerializer.Serialize(this.Storage);
+                this.Storage = null;
+            }
+        }
+    }
 
     public double GetUsageRatio()
     {

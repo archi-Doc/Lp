@@ -13,26 +13,26 @@ internal partial interface IStorage
     [IgnoreMember]
     long StorageUsage { get; }
 
-    Task<StorageResult> PrepareAndCheck(StorageControl storage, IFiler filer);
+    Task<CrystalResult> PrepareAndCheck(StorageControl storage, IFiler filer);
 
-    Task Save();
+    Task Save(bool stop);
 
-    StorageResult Put(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared);
+    CrystalResult Put(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared);
 
-    StorageResult Delete(ref ulong fileId);
+    CrystalResult Delete(ref ulong fileId);
 
-    Task<StorageMemoryOwnerResult> GetAsync(ref ulong fileId, TimeSpan timeToWait);
+    Task<CrystalMemoryOwnerResult> GetAsync(ref ulong fileId, TimeSpan timeToWait);
 
-    Task<StorageResult> PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared, TimeSpan timeToWait);
+    Task<CrystalResult> PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared, TimeSpan timeToWait);
 
-    Task<StorageResult> DeleteAsync(ref ulong fileId, TimeSpan timeToWait);
+    Task<CrystalResult> DeleteAsync(ref ulong fileId, TimeSpan timeToWait);
 
-    /*Task<StorageMemoryOwnerResult> GetAsync(ulong fileId)
+    /*Task<CrystalMemoryOwnerResult> GetAsync(ulong fileId)
         => this.GetAsync(fileId, TimeSpan.MinValue);
 
-    Task<StorageResult> PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
+    Task<CrystalResult> PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
         => this.PutAsync(ref fileId, memoryToBeShared, TimeSpan.MinValue);
 
-    Task<StorageResult> DeleteAsync(ref ulong fileId)
+    Task<CrystalResult> DeleteAsync(ref ulong fileId)
         => this.DeleteAsync(ref fileId, TimeSpan.MinValue);*/
 }

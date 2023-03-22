@@ -13,8 +13,8 @@ public class MergerCrystal : Crystal<MergerData>
         {
             CrystalFile = "Merger.main",
             CrystalBackup = "Merger.back",
-            CrystalDirectoryFile = "MergerDirectory.main",
-            CrystalDirectoryBackup = "MergerDirectory.back",
+            StorageFile = "MergerDirectory.main",
+            StorageBackup = "MergerDirectory.back",
             DefaultCrystalDirectory = "Merger",
         };
 

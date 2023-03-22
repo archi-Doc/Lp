@@ -58,10 +58,10 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
                 return result;
             }
 
-            var info = this.Storage.GetDirectoryInformation();
+            var info = this.Storage.GetInformation();
             foreach (var x in info)
             {
-                this.logger.TryGet()?.Log($"{(ushort)x.DirectoryId:x4}: {x.DirectoryPath}");
+                this.logger.TryGet()?.Log(x);
             }
 
             // Load Crystal
@@ -102,27 +102,26 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
             {
                 this.DeleteAll();
 
-                // Stop IO(CrystalDirectory)
-                await this.Storage.StopAsync().ConfigureAwait(false);
-                this.Storage.Terminate();
+                // Stop storage
+                await this.Storage.Save(true).ConfigureAwait(false);
+                this.Storage.Clear();
 
                 return;
             }
 
-            // Save & Unload flakes
+            // Save & Unload datum and metadaba.
             this.Root.Save(true);
 
-            // Stop IO(CrystalDirectory)
-            await this.Storage.StopAsync().ConfigureAwait(false);
+            // Stop storage
+            await this.Storage.Save(true).ConfigureAwait(false);
 
-            // Save Crystal
-            await this.SerializeCrystal(this.Options.CrystalFilePath, this.Options.CrystalBackupPath).ConfigureAwait(false);
+            // Save data
+            await this.Save(this.Options.CrystalFilePath, this.Options.CrystalBackupPath).ConfigureAwait(false);
 
-            // Save directory information
-            var byteArray = this.Storage.Serialize();
-            await HashHelper.GetFarmHashAndSaveAsync(byteArray, this.Options.CrystalDirectoryFilePath, this.Options.CrystalDirectoryBackupPath).ConfigureAwait(false);
+            // Save storage
+            await this.Storage.Save(this.Options.StorageFilePath, this.Options.StorageBackupPath).ConfigureAwait(false);
 
-            this.Storage.Terminate();
+            this.Storage.Clear();
 
             this.logger.TryGet()?.Log($"Crystal stop - {this.himoGoshujin.MemoryUsage}");
         }
@@ -147,8 +146,8 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
             // HimoGoshujin
             this.himoGoshujin.Stop();
 
-            await this.Storage.StopAsync().ConfigureAwait(false);
-            this.Storage.Terminate();
+            await this.Storage.Save(true).ConfigureAwait(false);
+            this.Storage.Clear();
         }
         finally
         {
@@ -181,8 +180,8 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
 
         PathHelper.TryDeleteFile(this.Options.CrystalFilePath);
         PathHelper.TryDeleteFile(this.Options.CrystalBackupPath);
-        PathHelper.TryDeleteFile(this.Options.CrystalDirectoryFilePath);
-        PathHelper.TryDeleteFile(this.Options.CrystalDirectoryBackupPath);
+        PathHelper.TryDeleteFile(this.Options.StorageFilePath);
+        PathHelper.TryDeleteFile(this.Options.StorageBackupPath);
         this.Storage.DeleteAll();
 
         try
@@ -240,7 +239,7 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
         byte[]? data;
         try
         {
-            data = await File.ReadAllBytesAsync(this.Options.CrystalDirectoryFilePath).ConfigureAwait(false);
+            data = await File.ReadAllBytesAsync(this.Options.StorageFilePath).ConfigureAwait(false);
         }
         catch
         {
@@ -264,7 +263,7 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
 LoadBackup:
         try
         {
-            data = await File.ReadAllBytesAsync(this.Options.CrystalDirectoryBackupPath).ConfigureAwait(false);
+            data = await File.ReadAllBytesAsync(this.Options.StorageBackupPath).ConfigureAwait(false);
         }
         catch
         {
@@ -397,7 +396,7 @@ LoadBackup:
         return true;
     }
 
-    private async Task SerializeCrystal(string path, string? backupPath)
+    private async Task Save(string path, string? backupPath)
     {
         var byteArray = TinyhandSerializer.Serialize(this.Root);
         await HashHelper.GetFarmHashAndSaveAsync(byteArray, path, backupPath).ConfigureAwait(false);

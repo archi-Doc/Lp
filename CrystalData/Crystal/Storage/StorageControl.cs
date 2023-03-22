@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.IO;
 using CrystalData.Filer;
 using CrystalData.Results;
 using CrystalData.Storage;
@@ -146,10 +147,7 @@ public sealed class StorageControl
             return Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.NoStorage));
         }
 
-        return task.ContinueWith<CrystalMemoryOwnerResult>(x =>
-        {
-            return new CrystalMemoryOwnerResult(CrystalResult.NoStorage)
-        });
+        return task;
     }
 
     public void Delete(ref ushort storageId, ref ulong fileId)
@@ -198,10 +196,14 @@ public sealed class StorageControl
         List<string>? errorDirectories = null;
         foreach (var x in goshujin.StorageIdChain)
         {
-            if (await x.Storage?.PrepareAndCheck(this, ) != StorageResult.Success)
+            if (x.Storage != null && x.Filer != null)
             {
-                errorDirectories ??= new();
-                errorDirectories.Add(x.DirectoryPath);
+                if (await x.Storage.PrepareAndCheck(this, x.Filer).ConfigureAwait(false) != CrystalResult.Success ||
+                    await x.Filer.PrepareAndCheck(this).ConfigureAwait(false) != CrystalResult.Success)
+                {
+                    errorDirectories ??= new();
+                    errorDirectories.Add(x.Filer.FilerPath);
+                }
             }
         }
 
@@ -211,42 +213,50 @@ public sealed class StorageControl
             return CrystalStartResult.FileError;
         }
 
-        if (goshujin.Directories.DirectoryIdChain.Count == 0)
+        if (goshujin.StorageIdChain.Count == 0)
         {
             try
             {
-                var defaultDirectory = new CrystalDirectory(this.GetFreeDirectoryId(goshujin.Directories), PathHelper.GetRootedDirectory(this.Options.RootPath, this.Options.DefaultCrystalDirectory));
-                defaultDirectory.PrepareAndCheck(this);
-                goshujin.Directories.Add(defaultDirectory);
+                var storage = new SimpleStorage();
+                storage.StorageCapacity = CrystalOptions.DefaultDirectoryCapacity;
+                var filer = new LocalFiler(PathHelper.GetRootedDirectory(this.Options.RootPath, this.Options.DefaultCrystalDirectory));
+
+                var storageAndFiler = TinyhandSerializer.Reconstruct<StorageAndFiler>();
+                storageAndFiler.StorageId = this.GetFreeStorageId();
+                storageAndFiler.Storage = storage;
+                storageAndFiler.Filer = filer;
+                await storageAndFiler.PrepareAndCheck(this).ConfigureAwait(false);
+
+                storageAndFiler.Goshujin = this.storageAndFilers;
             }
             catch
             {
             }
         }
 
-        foreach (var x in goshujin.Directories)
+        foreach (var x in goshujin)
         {
             x.Start();
         }
 
-        if (goshujin.Directories.DirectoryIdChain.Count == 0)
+        if (goshujin.StorageIdChain.Count == 0)
         {
             return CrystalStartResult.NoDirectoryAvailable;
         }
 
         lock (this.syncObject)
         {
-            this.ClearGoshujin();
-            this.data = goshujin;
-            this.currentDirectory = null;
+            this.storageAndFilers.Clear();
+            this.storageAndFilers = goshujin;
+            this.currentStorageAndFiler = null;
             this.Started = true;
         }
 
         return CrystalStartResult.Success;
     }
 
-    internal async Task StopAsync()
-    {// Data.semaphore
+    internal async Task Save(bool stop)
+    {// Save storage
         Task[] tasks;
         lock (this.syncObject)
         {
@@ -255,7 +265,7 @@ public sealed class StorageControl
                 return;
             }
 
-            tasks = this.data.Directories.Select(x => x.StopAsync()).ToArray();
+            tasks = this.storageAndFilers.Select(x => x.Save(stop)).ToArray();
         }
 
         await Task.WhenAll(tasks).ConfigureAwait(false);
@@ -263,30 +273,22 @@ public sealed class StorageControl
         this.Started = false;
     }
 
-    internal void Terminate()
-    {
+    internal async Task Save(string path, string? backupPath)
+    {// Save storage information
+        byte[] byteArray;
         lock (this.syncObject)
         {
-            this.ClearGoshujin();
-        }
-    }
-
-    internal async Task WaitForCompletionAsync()
-    {
-        Task[] tasks;
-        lock (this.syncObject)
-        {
-            tasks = this.data.Directories.Select(x => x.WaitForCompletionAsync()).ToArray();
+            byteArray = TinyhandSerializer.Serialize(this.storageAndFilers);
         }
 
-        await Task.WhenAll(tasks).ConfigureAwait(false);
+        await HashHelper.GetFarmHashAndSaveAsync(byteArray, path, backupPath).ConfigureAwait(false);
     }
 
-    internal byte[] Serialize()
+    internal void Clear()
     {
         lock (this.syncObject)
         {
-            return TinyhandSerializer.Serialize(this.data);
+            this.storageAndFilers.Clear();
         }
     }
 
@@ -322,16 +324,6 @@ public sealed class StorageControl
         }
 
         return array.MinBy(a => a.GetUsageRatio());
-    }
-
-    private void ClearGoshujin()
-    {// lock(syncObject)
-        foreach (var x in this.storageAndFilers)
-        {
-            x.Dispose();
-        }
-
-        this.storageAndFilers.Clear();
     }
 
     internal UnitLogger UnitLogger { get; }

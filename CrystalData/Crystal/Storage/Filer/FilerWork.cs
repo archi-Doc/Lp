@@ -13,7 +13,7 @@ internal class FilerWork : IEquatable<FilerWork>
 
     public WorkType Type { get; }
 
-    public StorageResult Result { get; internal set; }
+    public CrystalResult Result { get; internal set; } = CrystalResult.NotStarted;
 
     public string Path { get; }
 

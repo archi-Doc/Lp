@@ -32,114 +32,19 @@ internal partial class SimpleStorage : IStorage
     private StorageControl? storage;
     private IFiler? filer;
     private object syncObject = new();
-    private Dictionary<uint, int> dictionary = new();
+    private Dictionary<uint, int> fileToSize = new();
 
     #endregion
 
     #region IStorage
 
-    StorageResult IStorage.Put(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
-    {
-        if (this.filer == null)
-        {
-            return StorageResult.NoFiler;
-        }
-
-        this.PutInternal(ref fileId, dataToBeShared.Memory.Length);
-        return this.filer.Write(FileToPath(FileIdToFile(fileId)), dataToBeShared);
-    }
-
-    StorageResult IStorage.Delete(ref ulong fileId)
-    {
-        if (this.filer == null)
-        {
-            return StorageResult.NoFiler;
-        }
-
-        var file = FileIdToFile(fileId);
-        if (file == 0)
-        {
-            return StorageResult.NoFile;
-        }
-
-        lock (this.syncObject)
-        {
-            if (!this.dictionary.Remove(file))
-            {// Not found
-                fileId = 0;
-                return StorageResult.NoFile;
-            }
-
-            // this.dictionary.Add(file, -1);
-        }
-
-        fileId = 0;
-        return this.filer.Delete(FileToPath(file));
-    }
-
-    Task<StorageMemoryOwnerResult> IStorage.GetAsync(ref ulong fileId, TimeSpan timeToWait)
-    {
-        if (this.filer == null)
-        {
-            return Task.FromResult(new StorageMemoryOwnerResult(StorageResult.NoFiler));
-        }
-
-        var file = FileIdToFile(fileId);
-        int size;
-        lock (this.syncObject)
-        {
-            if (!this.dictionary.TryGetValue(file, out size))
-            {// Not found
-                fileId = 0;
-                return Task.FromResult(new StorageMemoryOwnerResult(StorageResult.NoFile));
-            }
-        }
-
-        return this.filer.ReadAsync(FileToPath(file), size, timeToWait);
-    }
-
-    Task<StorageResult> IStorage.PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait)
-    {
-        if (this.filer == null)
-        {
-            return Task.FromResult(StorageResult.NoFiler);
-        }
-
-        this.PutInternal(ref fileId, dataToBeShared.Memory.Length);
-        return this.filer.WriteAsync(FileToPath(FileIdToFile(fileId)), dataToBeShared, timeToWait);
-    }
-
-    Task<StorageResult> IStorage.DeleteAsync(ref ulong fileId, TimeSpan timeToWait)
-    {
-        if (this.filer == null)
-        {
-            return Task.FromResult(StorageResult.NoFiler);
-        }
-
-        var file = FileIdToFile(fileId);
-        if (file == 0)
-        {
-            return Task.FromResult(StorageResult.NoFile);
-        }
-
-        lock (this.syncObject)
-        {
-            this.dictionary.Remove(file);
-        }
-
-        fileId = 0;
-        return this.filer.DeleteAsync(FileToPath(file), timeToWait);
-    }
-
-    #endregion
-
-    async Task<StorageResult> IStorage.PrepareAndCheck(StorageControl storage, IFiler filer)
+    async Task<CrystalResult> IStorage.PrepareAndCheck(StorageControl storage, IFiler filer)
     {
         this.storage = storage;
         this.filer = filer;
 
         var result = await this.TryLoad(SimpleStorageMain).ConfigureAwait(false);
-        if (result != StorageResult.Success)
+        if (result != CrystalResult.Success)
         {
             result = await this.TryLoad(SimpleStorageBack).ConfigureAwait(false);
         }
@@ -147,12 +52,12 @@ internal partial class SimpleStorage : IStorage
         return result;
     }
 
-    async Task IStorage.Save()
+    async Task IStorage.Save(bool stop)
     {
         byte[] byteArray;
         lock (this.syncObject)
         {
-            byteArray = TinyhandSerializer.Serialize(this.dictionary);
+            byteArray = TinyhandSerializer.Serialize(this.fileToSize);
         }
 
         if (this.filer != null)
@@ -162,11 +67,106 @@ internal partial class SimpleStorage : IStorage
         }
     }
 
-    private async Task<StorageResult> TryLoad(string path)
+    CrystalResult IStorage.Put(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
     {
         if (this.filer == null)
         {
-            return StorageResult.NoFiler;
+            return CrystalResult.NoFiler;
+        }
+
+        this.PutInternal(ref fileId, dataToBeShared.Memory.Length);
+        return this.filer.Write(FileToPath(FileIdToFile(fileId)), dataToBeShared);
+    }
+
+    CrystalResult IStorage.Delete(ref ulong fileId)
+    {
+        if (this.filer == null)
+        {
+            return CrystalResult.NoFiler;
+        }
+
+        var file = FileIdToFile(fileId);
+        if (file == 0)
+        {
+            return CrystalResult.NoFile;
+        }
+
+        lock (this.syncObject)
+        {
+            if (!this.fileToSize.Remove(file))
+            {// Not found
+                fileId = 0;
+                return CrystalResult.NoFile;
+            }
+
+            // this.dictionary.Add(file, -1);
+        }
+
+        fileId = 0;
+        return this.filer.Delete(FileToPath(file));
+    }
+
+    Task<CrystalMemoryOwnerResult> IStorage.GetAsync(ref ulong fileId, TimeSpan timeToWait)
+    {
+        if (this.filer == null)
+        {
+            return Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.NoFiler));
+        }
+
+        var file = FileIdToFile(fileId);
+        int size;
+        lock (this.syncObject)
+        {
+            if (!this.fileToSize.TryGetValue(file, out size))
+            {// Not found
+                fileId = 0;
+                return Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.NoFile));
+            }
+        }
+
+        return this.filer.ReadAsync(FileToPath(file), size, timeToWait);
+    }
+
+    Task<CrystalResult> IStorage.PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait)
+    {
+        if (this.filer == null)
+        {
+            return Task.FromResult(CrystalResult.NoFiler);
+        }
+
+        this.PutInternal(ref fileId, dataToBeShared.Memory.Length);
+        return this.filer.WriteAsync(FileToPath(FileIdToFile(fileId)), dataToBeShared, timeToWait);
+    }
+
+    Task<CrystalResult> IStorage.DeleteAsync(ref ulong fileId, TimeSpan timeToWait)
+    {
+        if (this.filer == null)
+        {
+            return Task.FromResult(CrystalResult.NoFiler);
+        }
+
+        var file = FileIdToFile(fileId);
+        if (file == 0)
+        {
+            return Task.FromResult(CrystalResult.NoFile);
+        }
+
+        lock (this.syncObject)
+        {
+            this.fileToSize.Remove(file);
+        }
+
+        fileId = 0;
+        return this.filer.DeleteAsync(FileToPath(file), timeToWait);
+    }
+
+    #endregion
+
+    private async Task<CrystalResult> TryLoad(string path)
+    {
+        if (this.filer == null)
+        {
+            return CrystalResult.NoFiler;
         }
 
         var result = await this.filer.ReadAsync(path, -1, TimeSpan.MinValue);
@@ -177,22 +177,22 @@ internal partial class SimpleStorage : IStorage
 
         if (!HashHelper.CheckFarmHashAndGetData(result.Data.Memory, out var data))
         {
-            return StorageResult.CorruptedData;
+            return CrystalResult.CorruptedData;
         }
 
         try
         {
             if (TinyhandSerializer.Deserialize<Dictionary<uint, int>>(data) is { } dictionary)
             {
-                this.dictionary = dictionary;
+                this.fileToSize = dictionary;
             }
         }
         catch
         {
-            return StorageResult.CorruptedData;
+            return CrystalResult.CorruptedData;
         }
 
-        return StorageResult.Success;
+        return CrystalResult.Success;
     }
 
     #region Helper
@@ -246,7 +246,7 @@ internal partial class SimpleStorage : IStorage
         var file = FileIdToFile(fileId);
         lock (this.syncObject)
         {
-            if (file != 0 && this.dictionary.TryGetValue(file, out var size))
+            if (file != 0 && this.fileToSize.TryGetValue(file, out var size))
             {
                 // if (dataSize > size)
                 {
@@ -269,7 +269,7 @@ internal partial class SimpleStorage : IStorage
         while (true)
         {
             var file = RandomVault.Pseudo.NextUInt32();
-            if (!this.dictionary.TryAdd(file, 0))
+            if (!this.fileToSize.TryAdd(file, 0))
             {
                 return file;
             }
