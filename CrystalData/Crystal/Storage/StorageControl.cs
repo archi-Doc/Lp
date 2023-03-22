@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using CrystalData.Filer;
 using CrystalData.Results;
 using CrystalData.Storage;
 
@@ -7,19 +8,18 @@ namespace CrystalData;
 
 public sealed class StorageControl
 {
-    public const int DirectoryRotationThreshold = 1024 * 1024 * 100; // 100 MB
+    public const int DirectoryRotationThreshold = (int)StorageHelper.Megabytes * 100; // 100 MB
 
     internal StorageControl(UnitLogger unitLogger)
     {
         this.UnitLogger = unitLogger;
     }
 
-    public CrystalDirectoryInformation[] GetDirectoryInformation()
+    public string[] GetInformation()
     {
         lock (this.syncObject)
         {
-            return Array.Empty<CrystalDirectoryInformation>();
-            // return this.data.Directories.Select(a => a.GetInformation()).ToArray();
+            return this.storageAndFilers.Select(x => x.ToString()).ToArray();
         }
     }
 
@@ -50,22 +50,28 @@ public sealed class StorageControl
         {
             if (id == 0)
             {
-                id = this.GetFreeDirectoryId(this.data.Directories);
+                id = this.GetFreeStorageId();
             }
 
-            var directory = new CrystalDirectory(id, path);
-            directory.DirectoryCapacity = capacity;
+            var storage = new SimpleStorage();
+            storage.StorageCapacity = capacity;
 
-            if (this.data.Directories.DirectoryIdChain.ContainsKey(id))
+            if (this.storageAndFilers.StorageIdChain.ContainsKey(id))
             {
                 return AddDictionaryResult.DuplicateId;
             }
-            else if (this.data.Directories.DirectoryPathChain.ContainsKey(path))
+
+            var filer = new LocalFiler(path);
+            /*if (this.storageAndFilers.Select(x => x.Storage)?.Pa)
             {
                 return AddDictionaryResult.DuplicatePath;
-            }
+            }*/
 
-            this.data.Directories.Add(directory);
+            var storageAndFiler = TinyhandSerializer.Reconstruct<StorageAndFiler>();
+            storageAndFiler.StorageId = id;
+            storageAndFiler.Storage = storage;
+            storageAndFiler.Filer = filer;
+            storageAndFiler.Goshujin = this.storageAndFilers;
         }
 
         return AddDictionaryResult.Success;
@@ -75,7 +81,7 @@ public sealed class StorageControl
     {
         lock (this.syncObject)
         {
-            foreach (var x in this.storageObjects)
+            foreach (var x in this.storageAndFilers)
             {
                 x.Filer?.DeleteAll();
             }
@@ -91,18 +97,18 @@ public sealed class StorageControl
         StorageAndFiler? storage;
         lock (this.syncObject)
         {
-            if (this.storageObjects.StorageIdChain.Count == 0)
+            if (this.storageAndFilers.StorageIdChain.Count == 0)
             {// No storage available.
                 return;
             }
-            else if (storageId == 0 || !this.storageObjects.StorageIdChain.TryGetValue(storageId, out storage))
+            else if (storageId == 0 || !this.storageAndFilers.StorageIdChain.TryGetValue(storageId, out storage))
             {// Get valid directory.
                 if (this.storageRotationCount >= DirectoryRotationThreshold ||
-                    this.currentStorage == null)
+                    this.currentStorageAndFiler == null)
                 {
-                    this.currentStorage = this.GetValidStorage();
+                    this.currentStorageAndFiler = this.GetValidStorage();
                     this.storageRotationCount = memoryToBeShared.Memory.Length;
-                    if (this.currentStorage == null)
+                    if (this.currentStorageAndFiler == null)
                     {
                         return;
                     }
@@ -112,7 +118,7 @@ public sealed class StorageControl
                     this.storageRotationCount += memoryToBeShared.Memory.Length;
                 }
 
-                storage = this.currentStorage;
+                storage = this.currentStorageAndFiler;
                 storageId = storage.StorageId;
             }
 
@@ -130,12 +136,20 @@ public sealed class StorageControl
             storageObject = this.GetStorageFromId(storageId);
             if (storageObject == null)
             {
-                return Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.NoDirectory));
+                return Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.NoStorage));
             }
         }
 
         var task = storageObject.Storage?.GetAsync(ref fileId, TimeSpan.MinValue);
-        return .ContinueWith()
+        if (task == null)
+        {
+            return Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.NoStorage));
+        }
+
+        return task.ContinueWith<CrystalMemoryOwnerResult>(x =>
+        {
+            return new CrystalMemoryOwnerResult(CrystalResult.NoStorage)
+        });
     }
 
     public void Delete(ref ushort storageId, ref ulong fileId)
@@ -283,16 +297,16 @@ public sealed class StorageControl
             return null;
         }
 
-        this.storageObjects.StorageIdChain.TryGetValue(storageId, out var storageObject);
+        this.storageAndFilers.StorageIdChain.TryGetValue(storageId, out var storageObject);
         return storageObject;
     }
 
-    private ushort GetFreeDirectoryId(CrystalDirectory.GoshujinClass goshujin)
+    private ushort GetFreeStorageId()
     {// lock(syncObject)
         while (true)
         {
             var id = (ushort)RandomVault.Pseudo.NextUInt32();
-            if (id != 0 && !goshujin.DirectoryIdChain.ContainsKey(id))
+            if (id != 0 && !this.storageAndFilers.StorageIdChain.ContainsKey(id))
             {
                 return id;
             }
@@ -301,7 +315,7 @@ public sealed class StorageControl
 
     private StorageAndFiler? GetValidStorage()
     {// lock(syncObject)
-        var array = this.storageObjects.StorageIdChain.ToArray();
+        var array = this.storageAndFilers.StorageIdChain.ToArray();
         if (array == null)
         {
             return null;
@@ -312,18 +326,18 @@ public sealed class StorageControl
 
     private void ClearGoshujin()
     {// lock(syncObject)
-        foreach (var x in this.storageObjects)
+        foreach (var x in this.storageAndFilers)
         {
             x.Dispose();
         }
 
-        this.storageObjects.Clear();
+        this.storageAndFilers.Clear();
     }
 
     internal UnitLogger UnitLogger { get; }
 
     private object syncObject = new();
-    private StorageAndFiler.GoshujinClass storageObjects = new();  // lock(syncObject)
-    private StorageAndFiler? currentStorage; // lock(syncObject)
+    private StorageAndFiler.GoshujinClass storageAndFilers = new();  // lock(syncObject)
+    private StorageAndFiler? currentStorageAndFiler; // lock(syncObject)
     private int storageRotationCount; // lock(syncObject)
 }

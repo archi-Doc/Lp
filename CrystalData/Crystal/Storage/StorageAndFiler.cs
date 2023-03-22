@@ -13,6 +13,9 @@ internal partial class StorageAndFiler
     {
     }
 
+    public override string ToString()
+        => $"Id: {this.StorageId} {this.Storage?.ToString()} {this.Filer?.ToString()}";
+
     [IgnoreMember]
     public IStorage? Storage { get; set; }
 

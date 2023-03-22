@@ -35,6 +35,9 @@ internal partial class LocalFiler : TaskWorker<FilerWork>, IFiler
         this.path = path;
     }
 
+    public override string ToString()
+        => $"LocalFiler Path: {this.rootedPath}";
+
     #region FieldAndProperty
 
     private ILogger? logger;
@@ -71,6 +74,17 @@ TryWrite:
                 {
                     await RandomAccess.WriteAsync(handle, work.WriteData.Memory, 0, worker.CancellationToken).ConfigureAwait(false);
                     worker.logger?.TryGet()?.Log($"Written {filePath}, {work.WriteData.Memory.Length}");
+
+                    try
+                    {
+                        if (RandomAccess.GetLength(handle) > work.WriteData.Memory.Length)
+                        {
+                            RandomAccess.SetLength(handle, work.WriteData.Memory.Length);
+                        }
+                    }
+                    catch
+                    {
+                    }
 
                     work.Result = StorageResult.Success;
                 }
@@ -177,10 +191,6 @@ DeleteAndExit:
 
     #region IFiler
 
-    void IFiler.DeleteAll()
-    {
-    }
-
     async Task<StorageResult> IFiler.PrepareAndCheck(StorageControl storage)
     {
         try
@@ -207,6 +217,11 @@ DeleteAndExit:
         }
 
         return StorageResult.Success;
+    }
+
+    void IFiler.DeleteAll()
+    {
+        PathHelper.TryDeleteDirectory(this.rootedPath);
     }
 
     StorageResult IFiler.Write(string path, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)

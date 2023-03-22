@@ -18,6 +18,9 @@ internal partial class SimpleStorage : IStorage
     {
     }
 
+    public override string ToString()
+        => $"SimpleStorage {StorageHelper.ByteToString(this.StorageUsage)}/{StorageHelper.ByteToString(this.StorageCapacity)}";
+
     #region FieldAndProperty
 
     [Key(0)]
@@ -67,7 +70,7 @@ internal partial class SimpleStorage : IStorage
                 return StorageResult.NoFile;
             }
 
-            this.dictionary.Add(file, -1); // tempcode
+            // this.dictionary.Add(file, -1);
         }
 
         fileId = 0;
@@ -245,7 +248,7 @@ internal partial class SimpleStorage : IStorage
         {
             if (file != 0 && this.dictionary.TryGetValue(file, out var size))
             {
-                if (dataSize > size)
+                // if (dataSize > size)
                 {
                     this.StorageUsage += dataSize - size;
                 }

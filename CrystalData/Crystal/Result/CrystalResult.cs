@@ -9,10 +9,10 @@ public enum CrystalResult
     OverNumberLimit,
     Deleted,
     DatumNotRegistered,
+    NoDatum,
     NoData,
-    NoDirectory,
-    NoFile,
-    InvalidCast,
+    NoStorage,
+    NoFiler,
     SerializeError,
     DeserializeError,
 }

@@ -65,7 +65,7 @@ public class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDa
             return new(CrystalResult.Success, fragmentData.MemoryOwner.IncrementAndShare().Memory);
         }
 
-        return new(CrystalResult.NoData);
+        return new(CrystalResult.NoDatum);
     }
 
     async Task<CrystalObjectResult<T>> FragmentDatum<TIdentifier>.GetObject<T>(TIdentifier fragmentId)
@@ -82,7 +82,7 @@ public class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDa
             return new(result, obj);
         }
 
-        return new(CrystalResult.NoData);
+        return new(CrystalResult.NoDatum);
     }
 
     bool FragmentDatum<TIdentifier>.Remove(TIdentifier fragmentId)

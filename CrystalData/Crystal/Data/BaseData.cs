@@ -94,12 +94,12 @@ public partial class BaseData : IDataInternal
         var datumObject = this.TryGetDatumObject<TDatum>();
         if (!datumObject.IsValid)
         {
-            return new(CrystalResult.NoData);
+            return new(CrystalResult.NoDatum);
         }
 
         if (!datumObject.IsValidStorage)
         {
-            return new(CrystalResult.NoData);
+            return new(CrystalResult.NoStorage);
         }
 
         return await this.Crystal.Storage.Load(datumObject.StorageId, datumObject.FileId).ConfigureAwait(false);
