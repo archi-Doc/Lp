@@ -1,10 +1,12 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 #pragma warning disable SA1124 // Do not use regions
+#pragma warning disable SA1202
 
 namespace CrystalData.Filer;
 
-internal class LocalFiler : TaskWorker<FilerWork>, IFiler
+[TinyhandObject]
+internal partial class LocalFiler : TaskWorker<FilerWork>, IFiler
 {
     public const int DefaultConcurrentTasks = 4;
 
@@ -25,9 +27,24 @@ internal class LocalFiler : TaskWorker<FilerWork>, IFiler
 
             return true;
         });
-
-        this.rootedPath = string.Empty;
     }
+
+    public LocalFiler(string path)
+        : this()
+    {
+        this.path = path;
+    }
+
+    #region FieldAndProperty
+
+    private ILogger? logger;
+
+    [Key(0)]
+    private string path = string.Empty;
+
+    private string rootedPath = string.Empty;
+
+    #endregion
 
     public static async Task Process(TaskWorker<FilerWork> w, FilerWork work)
     {
@@ -158,38 +175,30 @@ DeleteAndExit:
         return;
     }
 
-    bool IFiler.PrepareAndCheck(StorageControl storage)
+    #region IFiler
+
+    void IFiler.DeleteAll()
+    {
+    }
+
+    async Task<StorageResult> IFiler.PrepareAndCheck(StorageControl storage)
     {
         try
         {
-            if (Path.IsPathRooted(this.DirectoryPath))
+            if (Path.IsPathRooted(this.path))
             {
-                this.RootedPath = this.DirectoryPath;
+                this.rootedPath = this.path;
             }
             else
             {
-                this.RootedPath = Path.Combine(this.Options.RootPath, this.DirectoryPath);
+                this.rootedPath = Path.Combine(storage.Options.RootPath, this.path);
             }
 
-            Directory.CreateDirectory(this.RootedPath);
-
-            // Check directory file
-            try
-            {
-                using (var handle = File.OpenHandle(this.SnowflakeFilePath, mode: FileMode.Open, access: FileAccess.ReadWrite))
-                {
-                }
-            }
-            catch
-            {
-                using (var handle = File.OpenHandle(this.SnowflakeBackupPath, mode: FileMode.Open, access: FileAccess.ReadWrite))
-                {
-                }
-            }
+            Directory.CreateDirectory(this.rootedPath);
         }
         catch
-        {// No directory file
-            return false;
+        {
+            return StorageResult.WriteError;
         }
 
         if (storage.Options.EnableLogger)
@@ -197,18 +206,7 @@ DeleteAndExit:
             this.logger = storage.UnitLogger.GetLogger<LocalFiler>();
         }
 
-        return true;
-    }
-
-    internal async Task WaitForCompletionAsync()
-    {
-        await this.worker.WaitForCompletionAsync().ConfigureAwait(false);
-    }
-
-    internal async Task StopAsync()
-    {
-        await this.worker.WaitForCompletionAsync().ConfigureAwait(false);
-        await this.SaveDirectoryAsync(this.SnowflakeFilePath, this.SnowflakeBackupPath).ConfigureAwait(false);
+        return StorageResult.Success;
     }
 
     StorageResult IFiler.Write(string path, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
@@ -247,17 +245,16 @@ DeleteAndExit:
         return work.Result;
     }
 
+    #endregion
+
     private string GetRootedPath(FilerWork work)
     {
         return Path.Combine(this.rootedPath, work.Path);
     }
 
-    private ILogger? logger;
-    private string rootedPath;
-
     #region IDisposable Support
 
-    /// <summary>
+    /*/// <summary>
     /// Finalizes an instance of the <see cref="LocalFiler"/> class.
     /// </summary>
     ~LocalFiler()
@@ -276,12 +273,12 @@ DeleteAndExit:
             if (disposing)
             {
                 // free managed resources.
-                this.worker.Dispose();
+                this.Dispose();
             }
 
             // free native resources here if there are any.
             this.disposed = true;
         }
-    }
+    }*/
     #endregion
 }

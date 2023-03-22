@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using CrystalData.Filer;
 
 #pragma warning disable SA1124 // Do not use regions
+#pragma warning disable SA1204
 
 namespace CrystalData.Storage;
 
@@ -16,6 +17,21 @@ internal partial class SimpleStorage : IStorage
     public SimpleStorage()
     {
     }
+
+    #region FieldAndProperty
+
+    [Key(0)]
+    public long StorageCapacity { get; set; }
+
+    [Key(1)]
+    public long StorageUsage { get; private set; } // lock (this.syncObject)
+
+    private StorageControl? storage;
+    private IFiler? filer;
+    private object syncObject = new();
+    private Dictionary<uint, int> dictionary = new();
+
+    #endregion
 
     #region IStorage
 
@@ -114,7 +130,7 @@ internal partial class SimpleStorage : IStorage
 
     #endregion
 
-    async Task<StorageResult> IStorage.Prepare(StorageControl storage, IFiler filer)
+    async Task<StorageResult> IStorage.PrepareAndCheck(StorageControl storage, IFiler filer)
     {
         this.storage = storage;
         this.filer = filer;
@@ -143,36 +159,6 @@ internal partial class SimpleStorage : IStorage
         }
     }
 
-    [Key(3)]
-    public long DirectoryCapacity { get; internal set; }
-
-    [Key(4)]
-    public long DirectorySize { get; private set; } // lock (this.syncObject)
-
-    [IgnoreMember]
-    internal double UsageRatio { get; private set; }
-
-    internal void CalculateUsageRatio()
-    {
-        if (this.DirectoryCapacity == 0)
-        {
-            this.UsageRatio = 0;
-            return;
-        }
-
-        var ratio = (double)this.DirectorySize / this.DirectoryCapacity;
-        if (ratio < 0)
-        {
-            ratio = 0;
-        }
-        else if (ratio > 1)
-        {
-            ratio = 1;
-        }
-
-        this.UsageRatio = ratio;
-    }
-
     private async Task<StorageResult> TryLoad(string path)
     {
         if (this.filer == null)
@@ -193,7 +179,10 @@ internal partial class SimpleStorage : IStorage
 
         try
         {
-            this.dictionary ??= TinyhandSerializer.Deserialize<Dictionary<uint, int>>(data);
+            if (TinyhandSerializer.Deserialize<Dictionary<uint, int>>(data) is { } dictionary)
+            {
+                this.dictionary = dictionary;
+            }
         }
         catch
         {
@@ -203,22 +192,15 @@ internal partial class SimpleStorage : IStorage
         return StorageResult.Success;
     }
 
-    private StorageControl? storage;
-    private IFiler? filer;
-    private object syncObject = new();
-
-    [Key(0)]
-    private Dictionary<uint, int> dictionary = new();
-
     #region Helper
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static uint FileIdToFile(ulong fileId) => (uint)(fileId >> 32);
+    private static uint FileIdToFile(ulong fileId) => (uint)(fileId >> 32);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ulong FileToFileId(uint file) => file << 32;
+    private static ulong FileToFileId(uint file) => file << 32;
 
-    public static string FileToPath(uint file)
+    private static string FileToPath(uint file)
     {
         Span<char> c = stackalloc char[9];
         var n = 0;
@@ -239,7 +221,7 @@ internal partial class SimpleStorage : IStorage
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static char UInt32ToChar(uint x)
+    private static char UInt32ToChar(uint x)
     {
         var a = x & 0xF;
         if (a < 10)
@@ -265,13 +247,13 @@ internal partial class SimpleStorage : IStorage
             {
                 if (dataSize > size)
                 {
-                    this.DirectorySize += dataSize - size;
+                    this.StorageUsage += dataSize - size;
                 }
             }
             else
             {// Not found
                 file = this.NewFile();
-                this.DirectorySize += dataSize; // Forget about the hash size.
+                this.StorageUsage += dataSize;
             }
         }
 

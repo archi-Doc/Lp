@@ -110,7 +110,7 @@ public partial class BaseData : IDataInternal
         var datumObject = this.TryGetDatumObject<TDatum>();
         if (datumObject.IsValid)
         {
-            this.Crystal.Storage.Delete(datumObject.StorageId, ref datumObject.FileId);
+            this.Crystal.Storage.Delete(ref datumObject.StorageId, ref datumObject.FileId);
             return;
         }
     }
@@ -233,7 +233,7 @@ public partial class BaseData : IDataInternal
 
             for (var i = 0; i < this.datumObject.Length; i++)
             {
-                this.Crystal.Storage.Delete(this.datumObject[i].StorageId, ref this.datumObject[i].FileId);
+                this.Crystal.Storage.Delete(ref this.datumObject[i].StorageId, ref this.datumObject[i].FileId);
                 this.datumObject[i].Datum?.Unload();
                 this.datumObject[i].Datum = null;
                 this.datumObject[i].FileId = 0;

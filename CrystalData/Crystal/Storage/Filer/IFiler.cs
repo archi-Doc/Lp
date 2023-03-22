@@ -2,9 +2,10 @@
 
 namespace CrystalData.Filer;
 
-internal interface IFiler
+[TinyhandUnion(0, typeof(LocalFiler))]
+internal partial interface IFiler
 {
-    bool PrepareAndCheck(StorageControl storage);
+    Task<StorageResult> PrepareAndCheck(StorageControl storage);
 
     void DeleteAll();
 

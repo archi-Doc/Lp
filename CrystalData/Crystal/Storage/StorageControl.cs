@@ -88,7 +88,7 @@ public sealed class StorageControl
 
     public void Save(ref ushort storageId, ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared, ushort datumId)
     {
-        StorageObject? storage;
+        StorageAndFiler? storage;
         lock (this.syncObject)
         {
             if (this.storageObjects.StorageIdChain.Count == 0)
@@ -124,7 +124,7 @@ public sealed class StorageControl
 
     public Task<CrystalMemoryOwnerResult> Load(ushort storageId, ulong fileId)
     {
-        StorageObject? storageObject;
+        StorageAndFiler? storageObject;
         lock (this.syncObject)
         {
             storageObject = this.GetStorageFromId(storageId);
@@ -138,14 +138,16 @@ public sealed class StorageControl
         return .ContinueWith()
     }
 
-    public void Delete(ushort storageId, ref ulong fileId)
+    public void Delete(ref ushort storageId, ref ulong fileId)
     {
-        StorageObject? storageObject;
+        StorageAndFiler? storageObject;
         lock (this.syncObject)
         {
             storageObject = this.GetStorageFromId(storageId);
             if (storageObject == null)
-            {
+            {// No storage
+                storageId = 0;
+                fileId = 0;
                 return;
             }
         }
@@ -162,12 +164,12 @@ public sealed class StorageControl
 
         this.Options = options;
 
-        StorageObject.GoshujinClass? goshujin = null;
+        StorageAndFiler.GoshujinClass? goshujin = null;
         if (data != null)
         {
             try
             {
-                goshujin = TinyhandSerializer.Deserialize<StorageObject.GoshujinClass>(data.Value);
+                goshujin = TinyhandSerializer.Deserialize<StorageAndFiler.GoshujinClass>(data.Value);
             }
             catch
             {
@@ -178,11 +180,11 @@ public sealed class StorageControl
             }
         }
 
-        goshujin ??= TinyhandSerializer.Reconstruct<StorageObject.GoshujinClass>();
+        goshujin ??= TinyhandSerializer.Reconstruct<StorageAndFiler.GoshujinClass>();
         List<string>? errorDirectories = null;
         foreach (var x in goshujin.StorageIdChain)
         {
-            if (!x.Storage?.PrepareAndCheck(this))
+            if (await x.Storage?.PrepareAndCheck(this, ) != StorageResult.Success)
             {
                 errorDirectories ??= new();
                 errorDirectories.Add(x.DirectoryPath);
@@ -274,7 +276,7 @@ public sealed class StorageControl
         }
     }
 
-    private StorageObject? GetStorageFromId(ushort storageId)
+    private StorageAndFiler? GetStorageFromId(ushort storageId)
     {// lock (this.syncObject)
         if (storageId == 0)
         {
@@ -297,7 +299,7 @@ public sealed class StorageControl
         }
     }
 
-    private StorageObject? GetValidStorage()
+    private StorageAndFiler? GetValidStorage()
     {// lock(syncObject)
         var array = this.storageObjects.StorageIdChain.ToArray();
         if (array == null)
@@ -305,12 +307,7 @@ public sealed class StorageControl
             return null;
         }
 
-        foreach (var x in array)
-        {
-            x.CalculateUsageRatio();
-        }
-
-        return array.MinBy(a => a.UsageRatio);
+        return array.MinBy(a => a.GetUsageRatio());
     }
 
     private void ClearGoshujin()
@@ -326,7 +323,7 @@ public sealed class StorageControl
     internal UnitLogger UnitLogger { get; }
 
     private object syncObject = new();
-    private StorageObject.GoshujinClass storageObjects = new();  // lock(syncObject)
-    private StorageObject? currentStorage; // lock(syncObject)
+    private StorageAndFiler.GoshujinClass storageObjects = new();  // lock(syncObject)
+    private StorageAndFiler? currentStorage; // lock(syncObject)
     private int storageRotationCount; // lock(syncObject)
 }

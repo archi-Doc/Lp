@@ -4,9 +4,16 @@ using CrystalData.Filer;
 
 namespace CrystalData.Storage;
 
-internal interface IStorage
+[TinyhandUnion(0, typeof(SimpleStorage))]
+internal partial interface IStorage
 {
-    Task<StorageResult> Prepare(StorageControl storage, IFiler filer);
+    [IgnoreMember]
+    long StorageCapacity { get; set; }
+
+    [IgnoreMember]
+    long StorageUsage { get; }
+
+    Task<StorageResult> PrepareAndCheck(StorageControl storage, IFiler filer);
 
     Task Save();
 
