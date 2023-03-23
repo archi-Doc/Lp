@@ -195,9 +195,9 @@ public sealed class StorageControl
         List<string>? errorDirectories = null;
         foreach (var x in goshujin.StorageIdChain)
         {
-            if (x.Storage != null && x.Filer != null)
+            if (await x.PrepareAndCheck(this) != CrystalResult.Success)
             {
-                if (await x.PrepareAndCheck(this) != CrystalResult.Success)
+                if (x.Filer is not null)
                 {
                     errorDirectories ??= new();
                     errorDirectories.Add(x.Filer.FilerPath);
@@ -217,7 +217,7 @@ public sealed class StorageControl
             {
                 var storage = new SimpleStorage();
                 storage.StorageCapacity = CrystalOptions.DefaultDirectoryCapacity;
-                var filer = new LocalFiler(PathHelper.GetRootedDirectory(this.Options.RootPath, this.Options.DefaultCrystalDirectory));
+                var filer = new LocalFiler(this.Options.DefaultCrystalDirectory); // PathHelper.GetRootedDirectory(this.Options.RootPath, this.Options.DefaultCrystalDirectory)
 
                 var storageAndFiler = TinyhandSerializer.Reconstruct<StorageAndFiler>();
                 storageAndFiler.StorageId = this.GetFreeStorageId();

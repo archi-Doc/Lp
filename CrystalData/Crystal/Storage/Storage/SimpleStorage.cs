@@ -175,10 +175,12 @@ internal partial class SimpleStorage : IStorage
             return result.Result;
         }
 
-        if (!HashHelper.CheckFarmHashAndGetData(result.Data.Memory, out var data))
+        /*if (!HashHelper.CheckFarmHashAndGetData(result.Data.Memory, out var data))
         {
             return CrystalResult.CorruptedData;
-        }
+        }*/
+
+        var data = result.Data.Memory; // tempcode
 
         try
         {

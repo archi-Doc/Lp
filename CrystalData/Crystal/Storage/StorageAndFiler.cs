@@ -84,14 +84,14 @@ internal partial class StorageAndFiler
 
     public async Task Save(bool stop)
     {
-        if (this.Filer != null)
-        {
-            await this.Filer.Save(stop);
-        }
-
         if (this.Storage != null)
         {
             await this.Storage.Save(stop);
+        }
+
+        if (this.Filer != null)
+        {
+            await this.Filer.Save(stop);
         }
 
         if (stop)
