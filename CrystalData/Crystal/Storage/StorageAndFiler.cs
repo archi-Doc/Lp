@@ -16,7 +16,7 @@ internal partial class StorageAndFiler
     }
 
     public override string ToString()
-        => $"Id: {this.StorageId} {this.Storage?.ToString()} {this.Filer?.ToString()}";
+        => $"Id: {this.StorageId:x4} {this.Storage?.ToString()} {this.Filer?.ToString()}";
 
     #region FieldAndProperty
 
@@ -51,11 +51,12 @@ internal partial class StorageAndFiler
             }
 
             this.Filer = filer;
-            var result = await this.Filer.PrepareAndCheck(storageControl).ConfigureAwait(false);
-            if (result != CrystalResult.Success)
-            {
-                return result;
-            }
+        }
+
+        var result = await this.Filer.PrepareAndCheck(storageControl).ConfigureAwait(false);
+        if (result != CrystalResult.Success)
+        {
+            return result;
         }
 
         if (this.Storage == null)
@@ -66,11 +67,12 @@ internal partial class StorageAndFiler
             }
 
             this.Storage = storage;
-            var result = await this.Storage.PrepareAndCheck(storageControl, this.Filer).ConfigureAwait(false);
-            if (result != CrystalResult.Success)
-            {
-                return result;
-            }
+        }
+
+        result = await this.Storage.PrepareAndCheck(storageControl, this.Filer).ConfigureAwait(false);
+        if (result != CrystalResult.Success)
+        {
+            return result;
         }
 
         return CrystalResult.Success;

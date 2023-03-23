@@ -29,7 +29,7 @@ internal partial class SimpleStorage : IStorage
     [Key(1)]
     public long StorageUsage { get; private set; } // lock (this.syncObject)
 
-    private StorageControl? storage;
+    private StorageControl? storageControl;
     private IFiler? filer;
     private object syncObject = new();
     private Dictionary<uint, int> fileToSize = new();
@@ -40,7 +40,7 @@ internal partial class SimpleStorage : IStorage
 
     async Task<CrystalResult> IStorage.PrepareAndCheck(StorageControl storage, IFiler filer)
     {
-        this.storage = storage;
+        this.storageControl = storage;
         this.filer = filer;
 
         var result = await this.TryLoad(SimpleStorageMain).ConfigureAwait(false);
@@ -201,7 +201,7 @@ internal partial class SimpleStorage : IStorage
     private static uint FileIdToFile(ulong fileId) => (uint)(fileId >> 32);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static ulong FileToFileId(uint file) => file << 32;
+    private static ulong FileToFileId(uint file) => (ulong)file << 32;
 
     private static string FileToPath(uint file)
     {
@@ -252,10 +252,12 @@ internal partial class SimpleStorage : IStorage
                 {
                     this.StorageUsage += dataSize - size;
                 }
+
+                this.fileToSize[file] = size;
             }
             else
             {// Not found
-                file = this.NewFile();
+                file = this.NewFile(dataSize);
                 this.StorageUsage += dataSize;
             }
         }
@@ -264,12 +266,12 @@ internal partial class SimpleStorage : IStorage
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private uint NewFile()
+    private uint NewFile(int size)
     {// lock (this.syncObject)
         while (true)
         {
             var file = RandomVault.Pseudo.NextUInt32();
-            if (!this.fileToSize.TryAdd(file, 0))
+            if (this.fileToSize.TryAdd(file, size))
             {
                 return file;
             }

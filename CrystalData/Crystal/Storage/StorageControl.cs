@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.IO;
 using CrystalData.Filer;
 using CrystalData.Results;
 using CrystalData.Storage;
@@ -24,7 +23,7 @@ public sealed class StorageControl
         }
     }
 
-    public AddDictionaryResult AddDirectory(string path, ushort id = 0, long capacity = CrystalOptions.DefaultDirectoryCapacity)
+    public AddStorageResult AddStorage(string path, ushort id = 0, long capacity = CrystalOptions.DefaultDirectoryCapacity)
     {
         if (capacity < 0)
         {
@@ -38,7 +37,7 @@ public sealed class StorageControl
 
         if (File.Exists(path))
         {
-            return AddDictionaryResult.FileExists;
+            return AddStorageResult.FileExists;
         }
 
         var relative = Path.GetRelativePath(this.Options.RootPath, path);
@@ -59,7 +58,7 @@ public sealed class StorageControl
 
             if (this.storageAndFilers.StorageIdChain.ContainsKey(id))
             {
-                return AddDictionaryResult.DuplicateId;
+                return AddStorageResult.DuplicateId;
             }
 
             var filer = new LocalFiler(path);
@@ -75,7 +74,7 @@ public sealed class StorageControl
             storageAndFiler.Goshujin = this.storageAndFilers;
         }
 
-        return AddDictionaryResult.Success;
+        return AddStorageResult.Success;
     }
 
     public void DeleteAll()
@@ -198,8 +197,7 @@ public sealed class StorageControl
         {
             if (x.Storage != null && x.Filer != null)
             {
-                if (await x.Storage.PrepareAndCheck(this, x.Filer).ConfigureAwait(false) != CrystalResult.Success ||
-                    await x.Filer.PrepareAndCheck(this).ConfigureAwait(false) != CrystalResult.Success)
+                if (await x.PrepareAndCheck(this) != CrystalResult.Success)
                 {
                     errorDirectories ??= new();
                     errorDirectories.Add(x.Filer.FilerPath);
@@ -227,7 +225,7 @@ public sealed class StorageControl
                 storageAndFiler.Filer = filer;
                 await storageAndFiler.PrepareAndCheck(this).ConfigureAwait(false);
 
-                storageAndFiler.Goshujin = this.storageAndFilers;
+                storageAndFiler.Goshujin = goshujin;
             }
             catch
             {

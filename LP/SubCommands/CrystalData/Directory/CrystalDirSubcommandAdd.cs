@@ -26,10 +26,10 @@ public class CrystalDirSubcommandAdd : ISimpleCommandAsync<CrystalDirOptionsAdd>
         }
 
         // await this.crystal.Pause();
-        var result = this.crystal.Storage.AddDirectory(option.Path, capacity: cap);
+        var result = this.crystal.Storage.AddStorage(option.Path, capacity: cap);
         // this.crystal.Restart();
 
-        if (result == AddDictionaryResult.Success)
+        if (result == AddStorageResult.Success)
         {
             this.logger.TryGet()?.Log($"Directory added: {option.Path}");
             this.consoleService.WriteLine();

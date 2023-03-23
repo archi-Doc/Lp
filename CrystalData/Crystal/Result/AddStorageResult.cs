@@ -2,7 +2,7 @@
 
 namespace CrystalData.Results;
 
-public enum AddDictionaryResult
+public enum AddStorageResult
 {
     Success,
     Running,
