@@ -7,10 +7,8 @@ namespace CrystalData.Storage;
 [TinyhandUnion(0, typeof(SimpleStorage))]
 internal partial interface IStorage
 {
-    [IgnoreMember]
     long StorageCapacity { get; set; }
 
-    [IgnoreMember]
     long StorageUsage { get; }
 
     Task<CrystalResult> PrepareAndCheck(StorageControl storage, IFiler filer);
