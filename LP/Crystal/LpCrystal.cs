@@ -27,7 +27,7 @@ public partial class LpRootData : BaseData
         this.Data = new();
     }
 
-    [Key(3)]
+    [Key(4)]
     public LpData Data { get; private set; }
 
     protected override IEnumerator<BaseData> EnumerateInternal()

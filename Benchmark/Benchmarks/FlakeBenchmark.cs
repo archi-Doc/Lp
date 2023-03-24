@@ -136,7 +136,7 @@ public class FlakeBenchmark
 {
     public const int N = 1000;
 
-    private LpData rootFlake;
+    private LP.Crystal.LpData rootFlake;
     private byte[] rootFlakeBinary;
 
     private Flake<Identifier> flake;
@@ -180,7 +180,7 @@ public class FlakeBenchmark
         }
 
         this.rootFlakeBinary = TinyhandSerializer.SerializeObject(this.rootFlake);
-        var f = TinyhandSerializer.DeserializeObject<LpData>(this.rootFlakeBinary);
+        var f = TinyhandSerializer.DeserializeObject<LP.Crystal.LpData>(this.rootFlakeBinary);
     }
 
     [GlobalSetup]
