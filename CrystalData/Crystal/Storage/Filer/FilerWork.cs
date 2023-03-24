@@ -17,24 +17,28 @@ internal class FilerWork : IEquatable<FilerWork>
 
     public string Path { get; }
 
-    public ByteArrayPool.ReadOnlyMemoryOwner WriteData { get; }
+    public long Offset { get; }
 
-    public int SizeToRead { get; }
+    public int Length { get; }
+
+    public ByteArrayPool.ReadOnlyMemoryOwner WriteData { get; }
 
     public ByteArrayPool.MemoryOwner ReadData { get; internal set; }
 
-    public FilerWork(string path, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
+    public FilerWork(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
     {// Write
         this.Type = WorkType.Write;
         this.Path = path;
+        this.Offset = offset;
         this.WriteData = dataToBeShared.IncrementAndShare();
     }
 
-    public FilerWork(string path, int sizeToRead)
+    public FilerWork(string path, long offset, int length)
     {// Read
         this.Type = WorkType.Read;
         this.Path = path;
-        this.SizeToRead = sizeToRead;
+        this.Offset = offset;
+        this.Length = length;
     }
 
     public FilerWork(string path)
@@ -44,7 +48,7 @@ internal class FilerWork : IEquatable<FilerWork>
     }
 
     public override int GetHashCode()
-        => HashCode.Combine(this.Type, this.Path, this.WriteData.Memory.Length, this.SizeToRead);
+        => HashCode.Combine(this.Type, this.Path, this.WriteData.Memory.Length, this.Length);
 
     public bool Equals(FilerWork? other)
     {
@@ -56,6 +60,6 @@ internal class FilerWork : IEquatable<FilerWork>
         return this.Type == other.Type &&
             this.Path == other.Path &&
             this.WriteData.Memory.Span.SequenceEqual(other.WriteData.Memory.Span) &&
-            this.SizeToRead == other.SizeToRead;
+            this.Length == other.Length;
     }
 }

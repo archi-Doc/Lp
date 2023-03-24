@@ -13,7 +13,7 @@ internal partial interface IFiler
 
     void DeleteAll();
 
-    CrystalResult Write(string path, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared);
+    CrystalResult Write(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared);
 
     /// <summary>
     /// Delete the file matching the path.
@@ -22,9 +22,9 @@ internal partial interface IFiler
     /// <returns><see cref="CrystalResult"/>.</returns>
     CrystalResult Delete(string path);
 
-    Task<CrystalMemoryOwnerResult> ReadAsync(string path, int sizeToRead, TimeSpan timeToWait);
+    Task<CrystalMemoryOwnerResult> ReadAsync(string path, long offset, int length, TimeSpan timeToWait);
 
-    Task<CrystalResult> WriteAsync(string path, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait);
+    Task<CrystalResult> WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait);
 
     Task<CrystalResult> DeleteAsync(string path, TimeSpan timeToWait);
 

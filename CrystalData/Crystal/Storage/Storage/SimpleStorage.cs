@@ -13,6 +13,7 @@ internal partial class SimpleStorage : IStorage
 {
     private const string SimpleStorageMain = "Simple.main";
     private const string SimpleStorageBack = "Simple.back";
+    private const string SimpleStorageHash = "Simple.hash";
 
     public SimpleStorage()
     {
@@ -43,10 +44,12 @@ internal partial class SimpleStorage : IStorage
         this.storageControl = storage;
         this.filer = filer;
 
-        var result = await this.TryLoad(SimpleStorageMain).ConfigureAwait(false);
+        var hash = await HashHelper.TryLoadFarmHash(this.filer, SimpleStorageHash).ConfigureAwait(false);
+
+        var result = await this.TryLoad(SimpleStorageMain, hash).ConfigureAwait(false);
         if (result != CrystalResult.Success)
         {
-            result = await this.TryLoad(SimpleStorageBack).ConfigureAwait(false);
+            result = await this.TryLoad(SimpleStorageBack, hash).ConfigureAwait(false);
         }
 
         return result;
@@ -60,10 +63,13 @@ internal partial class SimpleStorage : IStorage
             byteArray = TinyhandSerializer.Serialize(this.fileToSize);
         }
 
+        var hash = HashHelper.GetFarmHash(byteArray);
+
         if (this.filer != null)
         {
-            await this.filer.WriteAsync(SimpleStorageMain, new(byteArray), TimeSpan.MinValue);
-            await this.filer.WriteAsync(SimpleStorageBack, new(byteArray), TimeSpan.MinValue);
+            await this.filer.WriteAsync(SimpleStorageMain, 0, new(byteArray), TimeSpan.MinValue);
+            await this.filer.WriteAsync(SimpleStorageBack, 0, new(byteArray), TimeSpan.MinValue);
+            await this.filer.WriteAsync(SimpleStorageHash, 0, new(hash), TimeSpan.MinValue);
         }
     }
 
@@ -75,7 +81,7 @@ internal partial class SimpleStorage : IStorage
         }
 
         this.PutInternal(ref fileId, dataToBeShared.Memory.Length);
-        return this.filer.Write(FileToPath(FileIdToFile(fileId)), dataToBeShared);
+        return this.filer.Write(FileToPath(FileIdToFile(fileId)), 0, dataToBeShared);
     }
 
     CrystalResult IStorage.Delete(ref ulong fileId)
@@ -124,7 +130,7 @@ internal partial class SimpleStorage : IStorage
             }
         }
 
-        return this.filer.ReadAsync(FileToPath(file), size, timeToWait);
+        return this.filer.ReadAsync(FileToPath(file), 0, size, timeToWait);
     }
 
     Task<CrystalResult> IStorage.PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait)
@@ -135,7 +141,7 @@ internal partial class SimpleStorage : IStorage
         }
 
         this.PutInternal(ref fileId, dataToBeShared.Memory.Length);
-        return this.filer.WriteAsync(FileToPath(FileIdToFile(fileId)), dataToBeShared, timeToWait);
+        return this.filer.WriteAsync(FileToPath(FileIdToFile(fileId)), 0, dataToBeShared, timeToWait);
     }
 
     Task<CrystalResult> IStorage.DeleteAsync(ref ulong fileId, TimeSpan timeToWait)
@@ -162,36 +168,35 @@ internal partial class SimpleStorage : IStorage
 
     #endregion
 
-    private async Task<CrystalResult> TryLoad(string path)
+    private async Task<CrystalResult> TryLoad(string path, ulong hash)
     {
         if (this.filer == null)
         {
             return CrystalResult.NoFiler;
         }
 
-        var result = await this.filer.ReadAsync(path, -1, TimeSpan.MinValue);
+        var result = await this.filer.ReadAsync(path, 0, -1, TimeSpan.MinValue);
         if (!result.IsSuccess)
         {
             return result.Result;
         }
 
-        /*if (!HashHelper.CheckFarmHashAndGetData(result.Data.Memory, out var data))
+        var memory = result.Data.Memory;
+        if (!HashHelper.CheckFarmHash(memory.Span, hash))
         {
             return CrystalResult.CorruptedData;
-        }*/
-
-        var data = result.Data.Memory; // tempcode
+        }
 
         try
         {
-            if (TinyhandSerializer.Deserialize<Dictionary<uint, int>>(data) is { } dictionary)
+            if (TinyhandSerializer.Deserialize<Dictionary<uint, int>>(memory.Span) is { } dictionary)
             {
                 this.fileToSize = dictionary;
             }
         }
         catch
         {
-            return CrystalResult.CorruptedData;
+            return CrystalResult.DeserializeError;
         }
 
         return CrystalResult.Success;

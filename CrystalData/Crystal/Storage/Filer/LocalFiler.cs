@@ -74,7 +74,7 @@ TryWrite:
             {
                 using (var handle = File.OpenHandle(filePath, mode: FileMode.OpenOrCreate, access: FileAccess.Write))
                 {
-                    await RandomAccess.WriteAsync(handle, work.WriteData.Memory, 0, worker.CancellationToken).ConfigureAwait(false);
+                    await RandomAccess.WriteAsync(handle, work.WriteData.Memory, work.Offset, worker.CancellationToken).ConfigureAwait(false);
                     worker.logger?.TryGet()?.Log($"Written {filePath}, {work.WriteData.Memory.Length}");
 
                     try
@@ -126,13 +126,15 @@ TryWrite:
             try
             {
                 filePath = worker.GetRootedPath(work);
-                var sizeToRead = work.SizeToRead;
-                if (sizeToRead < 0)
+                var offset = work.Offset;
+                var lengthToRead = work.Length;
+                if (lengthToRead < 0)
                 {
                     try
                     {
                         var fileInfo = new FileInfo(filePath);
-                        sizeToRead = (int)fileInfo.Length;
+                        lengthToRead = (int)fileInfo.Length;
+                        offset = 0;
                     }
                     catch
                     {
@@ -143,9 +145,9 @@ TryWrite:
 
                 using (var handle = File.OpenHandle(filePath, mode: FileMode.Open, access: FileAccess.Read))
                 {
-                    var memoryOwner = ByteArrayPool.Default.Rent(sizeToRead).ToMemoryOwner(0, sizeToRead);
-                    var read = await RandomAccess.ReadAsync(handle, memoryOwner.Memory, 0, worker.CancellationToken).ConfigureAwait(false);
-                    if (read != sizeToRead)
+                    var memoryOwner = ByteArrayPool.Default.Rent(lengthToRead).ToMemoryOwner(0, lengthToRead);
+                    var read = await RandomAccess.ReadAsync(handle, memoryOwner.Memory, offset, worker.CancellationToken).ConfigureAwait(false);
+                    if (read != lengthToRead)
                     {
                         work.Result = CrystalResult.ReadError;
                         goto DeleteAndExit;
@@ -242,9 +244,9 @@ DeleteAndExit:
         PathHelper.TryDeleteDirectory(this.rootedPath);
     }
 
-    CrystalResult IFiler.Write(string path, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
+    CrystalResult IFiler.Write(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
     {
-        this.AddLast(new(path, dataToBeShared));
+        this.AddLast(new(path, offset, dataToBeShared));
         return CrystalResult.Started;
     }
 
@@ -254,17 +256,17 @@ DeleteAndExit:
         return CrystalResult.Started;
     }
 
-    async Task<CrystalMemoryOwnerResult> IFiler.ReadAsync(string path, int sizeToRead, TimeSpan timeToWait)
+    async Task<CrystalMemoryOwnerResult> IFiler.ReadAsync(string path, long offset, int length, TimeSpan timeToWait)
     {
-        var work = new FilerWork(path, sizeToRead);
+        var work = new FilerWork(path, offset, length);
         var workInterface = this.AddLast(work);
         await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
         return new(work.Result, work.ReadData.AsReadOnly());
     }
 
-    async Task<CrystalResult> IFiler.WriteAsync(string path, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait)
+    async Task<CrystalResult> IFiler.WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait)
     {
-        var work = new FilerWork(path, dataToBeShared);
+        var work = new FilerWork(path, offset, dataToBeShared);
         var workInterface = this.AddLast(work);
         await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
         return work.Result;
