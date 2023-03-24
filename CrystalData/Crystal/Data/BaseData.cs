@@ -26,6 +26,8 @@ public partial class BaseData : IDataInternal
         this.Parent = parent;
     }
 
+    #region FieldAndProperty
+
     public ICrystalInternal Crystal { get; private set; } = default!;
 
     public BaseData? Parent { get; private set; }
@@ -41,6 +43,8 @@ public partial class BaseData : IDataInternal
 #pragma warning disable SA1214 // Readonly fields should appear before non-readonly fields
     protected readonly SemaphoreLock semaphore = new();
 #pragma warning restore SA1214 // Readonly fields should appear before non-readonly fields
+
+    #endregion
 
     #region Enumerable
 
