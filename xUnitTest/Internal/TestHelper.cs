@@ -3,6 +3,7 @@
 using Arc.Crypto;
 using Arc.Unit;
 using CrystalData;
+using CrystalData.Datum;
 using LP;
 using LP.Crystal;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,7 +35,7 @@ public static class TestHelper
 
         var unit = builder.Build();
         var crystal = unit.Context.ServiceProvider.GetRequiredService<LpCrystal>();
-        crystal.Constructor.Register<FragmentDatum<Identifier>>(x => new FragmentDatumImpl<Identifier>(x));
+        crystal.Datum.Register<FragmentDatum<Identifier>>(2, x => new FragmentDatumImpl<Identifier>(x));
         await crystal.StartAsync(new(FromScratch: true));
         return crystal;
     }

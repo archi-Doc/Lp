@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using CrystalData;
+using CrystalData.Datum;
 using LP.Crystal;
 using LP.NetServices;
 using LP.NetServices.T3CS;
@@ -50,7 +50,6 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable, IUnitS
 
     public async Task RunAsync(UnitMessage.RunAsync message)
     {
-        this.logger.TryGet()?.Log("Merger running");
         this.logger.TryGet()?.Log(this.Information.ToString());
     }
 
@@ -115,7 +114,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable, IUnitS
 
     private async Task Check()
     {
-        this.logger.TryGet()?.Log("Merger checking");
+        this.logger.TryGet()?.Log("Merger started");
 
         var numberOfCredits = this.crystal.Root.Count(LpData.LpDataId.Credit);
         this.logger.TryGet()?.Log($"Credits: {numberOfCredits}");

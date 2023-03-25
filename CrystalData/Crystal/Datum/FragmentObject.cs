@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace CrystalData;
+namespace CrystalData.Datum;
 
 [ValueLinkObject]
 internal partial class FragmentObject<TIdentifier> : MemoryObject

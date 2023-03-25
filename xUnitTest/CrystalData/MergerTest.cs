@@ -22,6 +22,7 @@ public partial class MergerTest
         var root = crystal.Root;
         var byteArray = new byte[] { 0, 1, 2, };
         await TestHelper.StopAndStartCrystal(crystal);
+        root = crystal.Root;
 
         for (var i = 0; i < N; i++)
         {

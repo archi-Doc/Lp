@@ -5,14 +5,25 @@ namespace CrystalData;
 public enum CrystalResult
 {
     Success,
+    NotStarted,
+    Started,
+    Aborted,
+
     OverSizeLimit,
     OverNumberLimit,
-    Deleted,
     DatumNotRegistered,
+    Deleted,
+    NoDatum,
     NoData,
-    NoDirectory,
+    NoStorage,
+    NoFiler,
     NoFile,
-    InvalidCast,
+    CorruptedData,
     SerializeError,
     DeserializeError,
+    ReadError,
+    WriteError,
+    DeleteError,
+    NoOffsetSupport,
+    NoStorageKey,
 }

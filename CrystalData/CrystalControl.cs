@@ -9,6 +9,7 @@ global using Arc.Threading;
 global using Arc.Unit;
 global using Tinyhand;
 global using ValueLink;
+using CrystalData.Storage;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace CrystalData;
@@ -25,6 +26,7 @@ public class CrystalControl
                 // Main services
                 context.AddSingleton<CrystalControl>();
                 context.AddSingleton<CrystalOptions>();
+                context.AddSingleton<IStorageKey, StorageKey>();
             });
         }
     }
@@ -51,7 +53,8 @@ public class CrystalControl
             this.unitContext.ServiceProvider.GetRequiredService<UnitCore>(),
             options,
             this.unitContext.ServiceProvider.GetRequiredService<ILogger<Crystal<TData>>>(),
-            this.unitContext.ServiceProvider.GetRequiredService<UnitLogger>());
+            this.unitContext.ServiceProvider.GetRequiredService<UnitLogger>(),
+            this.unitContext.ServiceProvider.GetRequiredService<IStorageKey>());
     }
 
     public bool ExaltationOfIntegrality { get; } = true; // ZenItz by Baxter.

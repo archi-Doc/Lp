@@ -32,7 +32,7 @@ public sealed partial class Credit
 
     [Key(1, PropertyName = "Mergers")]
     [MaxLength(MaxMergers)]
-    private PublicKey[] mergers = Array.Empty<PublicKey>();
+    private LP.T3CS.PublicKey[] mergers = Array.Empty<PublicKey>();
 
     [Key(2)]
     public PublicKey Standard { get; private set; } = default!;
@@ -55,12 +55,12 @@ public sealed partial class CreditB
 
         if (--mergers > 0)
         {
-            this.Merger2 = key;
+            // this.Merger2 = key;
         }
 
         if (--mergers > 0)
         {
-            this.Merger3 = key;
+            // this.Merger3 = key;
         }
     }
 
@@ -73,11 +73,11 @@ public sealed partial class CreditB
     [Key(2)]
     public PublicKey Merger1 { get; private set; } = default!;
 
-    [Key(3)]
-    public PublicKey? Merger2 { get; private set; } = default!;
+    /*[Key(3)]
+    public LP.T3CS.PublicKey? Merger2 { get; private set; } = default!;
 
     [Key(4)]
-    public PublicKey? Merger3 { get; private set; } = default!;
+    public LP.T3CS.PublicKey? Merger3 { get; private set; } = default!;*/
 }
 
 [Config(typeof(BenchmarkConfig))]

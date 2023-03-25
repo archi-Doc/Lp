@@ -1,12 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using CrystalData.Datum;
+
 namespace LP.Crystal;
 
 public interface CreditOwnerDatum : IDatum
 {
-    const int Id = 2;
-
-    static int IDatum.StaticId => Id;
 }
 
 internal class CreditOwnerDatumImpl : HimoGoshujinClass.Himo, CreditOwnerDatum, IBaseDatum
@@ -15,8 +14,6 @@ internal class CreditOwnerDatumImpl : HimoGoshujinClass.Himo, CreditOwnerDatum, 
         : base(flakeInternal)
     {
     }
-
-    public override int Id => BlockDatum.Id;
 
     private bool isSaved = true;
 

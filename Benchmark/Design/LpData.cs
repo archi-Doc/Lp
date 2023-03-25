@@ -3,6 +3,7 @@
 #pragma warning disable SA1124 // Do not use regions
 
 using CrystalData;
+using CrystalData.Datum;
 using Tinyhand;
 using ValueLink;
 
@@ -25,18 +26,18 @@ public partial class LpData : BaseData
 
     public Identifier Identifier => this.identifier;
 
-    [Key(3)]
+    [Key(4)]
     [Link(Name = "Id", NoValue = true, Type = ChainType.Unordered)]
     [Link(Name = "OrderedId", Type = ChainType.Ordered)]
     private Identifier identifier = default!;
 
-    [Key(4)]
+    [Key(5)]
     private GoshujinClass? children;
 
     #region Child
 
-    public LockOperation<TData> LockChild<TData>(Identifier id)
-        where TData : IDatum
+    public LockOperation<TDatum> LockChild<TDatum>(Identifier id)
+        where TDatum : IDatum
     {
         LpData? data;
         using (this.semaphore.Lock())
@@ -57,7 +58,7 @@ public partial class LpData : BaseData
             }
         }
 
-        return data.Lock<TData>();
+        return data.Lock<TDatum>();
     }
 
     public LpData GetOrCreateChild(Identifier id)

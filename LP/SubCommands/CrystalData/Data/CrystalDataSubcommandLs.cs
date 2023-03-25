@@ -15,11 +15,11 @@ public class CrystalDataSubcommandLs : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        var info = this.crystal.Storage.GetDirectoryInformation();
+        var info = this.crystal.Storage.GetInformation();
 
         foreach (var x in info)
         {
-            this.consoleService.WriteLine(x.ToString());
+            this.consoleService.WriteLine(x);
         }
     }
 

@@ -4,10 +4,10 @@ namespace LP.Crystal;
 
 public class LpCrystal : Crystal<LpRootData>
 {
-    public LpCrystal(UnitCore core, CrystalOptions options, ILogger<LpCrystal> logger, UnitLogger unitLogger)
-        : base(core, options, logger, unitLogger)
+    public LpCrystal(UnitCore core, CrystalOptions options, ILogger<LpCrystal> logger, UnitLogger unitLogger, IStorageKey storageKey)
+        : base(core, options, logger, unitLogger, storageKey)
     {
-        this.Constructor.Register<BlockDatum>(x => new BlockDatumImpl(x));
+        // this.Datum.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
     }
 
     public LpData Data => this.Root.Data;
@@ -27,7 +27,7 @@ public partial class LpRootData : BaseData
         this.Data = new();
     }
 
-    [Key(3)]
+    [Key(4)]
     public LpData Data { get; private set; }
 
     protected override IEnumerator<BaseData> EnumerateInternal()

@@ -2,6 +2,7 @@
 
 using System.Collections;
 using System.Runtime.CompilerServices;
+using CrystalData.Datum;
 
 namespace CrystalData;
 
@@ -25,6 +26,8 @@ public partial class BaseData : IDataInternal
         this.Parent = parent;
     }
 
+    #region FieldAndProperty
+
     public ICrystalInternal Crystal { get; private set; } = default!;
 
     public BaseData? Parent { get; private set; }
@@ -40,6 +43,8 @@ public partial class BaseData : IDataInternal
 #pragma warning disable SA1214 // Readonly fields should appear before non-readonly fields
     protected readonly SemaphoreLock semaphore = new();
 #pragma warning restore SA1214 // Readonly fields should appear before non-readonly fields
+
+    #endregion
 
     #region Enumerable
 
@@ -67,18 +72,22 @@ public partial class BaseData : IDataInternal
 
     ICrystalInternal IDataInternal.CrystalInternal => this.Crystal;
 
-    DatumConstructor IDataInternal.Data => this.Crystal.Constructor;
+    DatumRegistry IDataInternal.Data => this.Crystal.Datum;
 
     CrystalOptions IDataInternal.Options => this.Crystal.Options;
 
-    void IDataInternal.DataToStorage<TData>(ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
+    void IDataInternal.DatumToStorage<TDatum>(ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
     {// using (this.semaphore.Lock())
-        var id = TData.StaticId;
+        if (!this.Crystal.Datum.TryGetDatumInfo<TDatum>(out var info))
+        {
+            return;
+        }
+
         for (var i = 0; i < this.datumObject.Length; i++)
         {
-            if (this.datumObject[i].Id == id)
+            if (this.datumObject[i].DatumId == info.DatumId)
             {
-                this.Crystal.Storage.Save(ref this.datumObject[i].File, memoryToBeShared, id);
+                this.Crystal.Storage.Save(ref this.datumObject[i].StorageId, ref this.datumObject[i].FileId, memoryToBeShared, info.DatumId);
                 return;
             }
         }
@@ -86,19 +95,18 @@ public partial class BaseData : IDataInternal
 
     async Task<CrystalMemoryOwnerResult> IDataInternal.StorageToDatum<TDatum>()
     {// using (this.semaphore.Lock())
-        var dataObject = this.TryGetDatumObject<TDatum>();
-        if (!dataObject.IsValid)
+        var datumObject = this.TryGetDatumObject<TDatum>();
+        if (!datumObject.IsValid)
         {
-            return new(CrystalResult.NoData);
+            return new(CrystalResult.NoDatum);
         }
 
-        var file = dataObject.File;
-        if (!CrystalHelper.IsValidFile(file))
+        if (!datumObject.IsValidStorage)
         {
-            return new(CrystalResult.NoData);
+            return new(CrystalResult.NoStorage);
         }
 
-        return await this.Crystal.Storage.Load(file).ConfigureAwait(false);
+        return await this.Crystal.Storage.Load(datumObject.StorageId, datumObject.FileId).ConfigureAwait(false);
     }
 
     void IDataInternal.DeleteStorage<TDatum>()
@@ -106,7 +114,7 @@ public partial class BaseData : IDataInternal
         var datumObject = this.TryGetDatumObject<TDatum>();
         if (datumObject.IsValid)
         {
-            this.Crystal.Storage.Delete(datumObject.File);
+            this.Crystal.Storage.Delete(ref datumObject.StorageId, ref datumObject.FileId);
             return;
         }
     }
@@ -116,13 +124,13 @@ public partial class BaseData : IDataInternal
     /// </summary>
     /// <param name="id">The specified id.</param>
     /// <param name="unload"><see langword="true"/>; unload data.</param>
-    void IDataInternal.SaveDatum(int id, bool unload)
+    void IDataInternal.SaveDatum(ushort id, bool unload)
     {
         using (this.semaphore.Lock())
         {
             for (var i = 0; i < this.datumObject.Length; i++)
             {
-                if (this.datumObject[i].Id == id)
+                if (this.datumObject[i].DatumId == id)
                 {
                     this.datumObject[i].Datum?.Save();
                     if (unload)
@@ -229,10 +237,10 @@ public partial class BaseData : IDataInternal
 
             for (var i = 0; i < this.datumObject.Length; i++)
             {
-                this.Crystal.Storage.Delete(this.datumObject[i].File);
+                this.Crystal.Storage.Delete(ref this.datumObject[i].StorageId, ref this.datumObject[i].FileId);
                 this.datumObject[i].Datum?.Unload();
                 this.datumObject[i].Datum = null;
-                this.datumObject[i].File = 0;
+                this.datumObject[i].FileId = 0;
             }
 
             this.datumObject = Array.Empty<DatumObject>();
@@ -281,17 +289,18 @@ public partial class BaseData : IDataInternal
     private DatumObject GetOrCreateDatumObject<TDatum>()
         where TDatum : IDatum
     {// using (this.semaphore.Lock())
-        var id = TDatum.StaticId;
+        if (!this.Crystal.Datum.TryGetDatumInfo<TDatum>(out var info))
+        {
+            return default;
+        }
+
         for (var i = 0; i < this.datumObject.Length; i++)
         {
-            if (this.datumObject[i].Id == id)
+            if (this.datumObject[i].DatumId == info.DatumId)
             {
                 if (this.datumObject[i].Datum == null)
                 {
-                    if (this.Crystal.Constructor.TryGetConstructor(id) is { } ctr1)
-                    {
-                        this.datumObject[i].Datum = ctr1(this);
-                    }
+                    this.datumObject[i].Datum = info.Constructor(this);
                 }
 
                 return this.datumObject[i];
@@ -299,12 +308,8 @@ public partial class BaseData : IDataInternal
         }
 
         var newObject = default(DatumObject);
-        newObject.Id = id;
-        if (this.Crystal.Constructor.TryGetConstructor(id) is { } ctr2)
-        {
-            newObject.Datum = ctr2(this);
-        }
-
+        newObject.DatumId = info.DatumId;
+        newObject.Datum = info.Constructor(this);
         if (newObject.Datum == null)
         {
             return default;
@@ -320,10 +325,14 @@ public partial class BaseData : IDataInternal
     private DatumObject TryGetDatumObject<TDatum>()
         where TDatum : IDatum
     {// using (this.semaphore.Lock())
-        var id = TDatum.StaticId;
+        if (!this.Crystal.Datum.TryGetDatumInfo<TDatum>(out var info))
+        {
+            return default;
+        }
+
         for (var i = 0; i < this.datumObject.Length; i++)
         {
-            if (this.datumObject[i].Id == id)
+            if (this.datumObject[i].DatumId == info.DatumId)
             {
                 return this.datumObject[i];
             }

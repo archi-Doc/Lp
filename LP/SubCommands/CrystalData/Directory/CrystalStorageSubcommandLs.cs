@@ -4,10 +4,10 @@ using SimpleCommandLine;
 
 namespace LP.Subcommands.CrystalData;
 
-[SimpleCommand("ls", Description = "List crystal directory information.")]
-public class CrystalDirSubcommandLs : ISimpleCommandAsync
+[SimpleCommand("ls", Description = "List storages.")]
+public class CrystalStorageSubcommandLs : ISimpleCommandAsync
 {
-    public CrystalDirSubcommandLs(IConsoleService consoleService, ICrystal crystal)
+    public CrystalStorageSubcommandLs(IConsoleService consoleService, ICrystal crystal)
     {
         this.consoleService = consoleService;
         this.crystal = crystal;
@@ -15,11 +15,11 @@ public class CrystalDirSubcommandLs : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        var info = this.crystal.Storage.GetDirectoryInformation();
+        var info = this.crystal.Storage.GetInformation();
 
         foreach (var x in info)
         {
-            this.consoleService.WriteLine(x.ToString());
+            this.consoleService.WriteLine(x);
         }
     }
 

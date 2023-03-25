@@ -47,6 +47,7 @@ public class Control : ILogInformation
                 context.Services.TryAddSingleton<IConsoleService, ConsoleUserInterfaceService>();
                 context.Services.TryAddSingleton<IUserInterfaceService, ConsoleUserInterfaceService>();
                 context.AddSingleton<Vault>();
+                context.AddSingleton<IStorageKey, StorageKeyVault>();
                 context.AddSingleton<Authority>();
                 context.AddSingleton<Seedphrase>();
                 // context.AddSingleton<Merger>();
@@ -86,13 +87,13 @@ public class Control : ILogInformation
                 context.AddSubcommand(typeof(LP.Subcommands.SeedphraseSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.MergerSubcommand));
 
-                LP.Subcommands.CrystalData.CrystalDirSubcommand.Configure(context);
+                LP.Subcommands.CrystalData.CrystalStorageSubcommand.Configure(context);
                 LP.Subcommands.CrystalData.CrystalDataSubcommand.Configure(context);
 
                 LP.Subcommands.TemplateSubcommand.Configure(context);
                 LP.Subcommands.InfoSubcommand.Configure(context);
                 LP.Subcommands.ExportSubcommand.Configure(context);
-                LP.Subcommands.KeyVaultSubcommand.Configure(context);
+                LP.Subcommands.VaultSubcommand.Configure(context);
                 LP.Subcommands.FlagSubcommand.Configure(context);
                 LP.Subcommands.NodeSubcommand.Configure(context);
                 LP.Subcommands.NodeKeySubcommand.Configure(context);
@@ -278,8 +279,7 @@ public class Control : ILogInformation
                 this.Context.SendPrepare(new());
 
                 // Machines
-                // control.BigMachine.CreateNew<LP.Machines.LogTesterMachine.Interface>(Identifier.Zero);
-                control.NetControl.CreateMachines();
+                // control.NetControl.CreateMachines();
             }
             catch
             {
@@ -404,8 +404,12 @@ public class Control : ILogInformation
     public async Task RunAsync(UnitContext context)
     {
         this.BigMachine.Start();
+
+        // this.BigMachine.CreateOrGet<EssentialNetMachine.Interface>(Identifier.Zero)?.RunAsync();
+        this.BigMachine.CreateOrGet<NtpMachine.Interface>(Identifier.Zero)?.RunAsync();
+        this.BigMachine.CreateOrGet<PublicIPMachine.Interface>(Identifier.Zero)?.RunAsync();
+
         await context.SendRunAsync(new(this.Core));
-        this.BigMachine.TryGet<NtpMachine.Interface>(Identifier.Zero)?.RunAsync();
 
         this.UserInterfaceService.WriteLine();
         var logger = this.Logger.Get<DefaultLog>(LogLevel.Information);

@@ -4,11 +4,11 @@ namespace CrystalData;
 
 public interface ICrystalInternal
 {
-    DatumConstructor Constructor { get; }
+    DatumRegistry Datum { get; }
 
     CrystalOptions Options { get; }
 
-    Storage Storage { get; }
+    StorageControl Storage { get; }
 
     HimoGoshujinClass HimoGoshujin { get; }
 }

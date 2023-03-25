@@ -1,16 +1,18 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using CrystalData.Datum;
+
 namespace CrystalData;
 
 public interface IDataInternal
 {
     ICrystalInternal CrystalInternal { get; }
 
-    DatumConstructor Data { get; }
+    DatumRegistry Data { get; }
 
     CrystalOptions Options { get; }
 
-    void DataToStorage<TDatum>(ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
+    void DatumToStorage<TDatum>(ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
         where TDatum : IDatum;
 
     Task<CrystalMemoryOwnerResult> StorageToDatum<TDatum>()
@@ -19,5 +21,5 @@ public interface IDataInternal
     void DeleteStorage<TDatum>()
         where TDatum : IDatum;
 
-    void SaveDatum(int id, bool unload);
+    void SaveDatum(ushort id, bool unload);
 }

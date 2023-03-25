@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
+using CrystalData.Datum;
 using SimpleCommandLine;
 using LP.Crystal;
 

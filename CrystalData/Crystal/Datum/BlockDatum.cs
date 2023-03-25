@@ -2,14 +2,10 @@
 
 using System.Runtime.CompilerServices;
 
-namespace CrystalData;
+namespace CrystalData.Datum;
 
 public interface BlockDatum : IDatum
 {
-    const int Id = 1;
-
-    static int IDatum.StaticId => Id;
-
     CrystalResult Set(ReadOnlySpan<byte> data);
 
     CrystalResult SetObject<T>(T obj)
@@ -27,8 +23,6 @@ public class BlockDatumImpl : HimoGoshujinClass.Himo, BlockDatum, IBaseDatum
         : base(flakeInternal)
     {
     }
-
-    public override int Id => BlockDatum.Id;
 
     CrystalResult BlockDatum.Set(ReadOnlySpan<byte> data)
     {
@@ -116,7 +110,7 @@ public class BlockDatumImpl : HimoGoshujinClass.Himo, BlockDatum, IBaseDatum
     {
         if (!this.isSaved)
         {// Not saved.
-            this.dataInternal.DataToStorage<BlockDatum>(this.memoryObject.MemoryOwner);
+            this.dataInternal.DatumToStorage<BlockDatum>(this.memoryObject.MemoryOwner);
             this.isSaved = true;
         }
     }

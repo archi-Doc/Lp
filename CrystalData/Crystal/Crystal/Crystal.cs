@@ -1,28 +1,30 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using CrystalData.Datum;
+using CrystalData.Storage;
 
 namespace CrystalData;
 
 public partial class Crystal<TData> : ICrystal, ICrystalInternal
     where TData : BaseData
 {
-    internal Crystal(UnitCore core, CrystalOptions options, ILogger<Crystal<TData>> logger, UnitLogger unitLogger)
-        : this(core, options, (ILogger)logger, unitLogger)
+    internal Crystal(UnitCore core, CrystalOptions options, ILogger<Crystal<TData>> logger, UnitLogger unitLogger, IStorageKey storageKey)
+        : this(core, options, (ILogger)logger, unitLogger, storageKey)
     {
     }
 
-    protected Crystal(UnitCore core, CrystalOptions options, ILogger logger, UnitLogger unitLogger)
+    protected Crystal(UnitCore core, CrystalOptions options, ILogger logger, UnitLogger unitLogger, IStorageKey storageKey)
     {
         this.logger = logger;
         this.Core = core;
         this.Options = options;
-        this.Storage = new(unitLogger);
+        this.Storage = new(unitLogger, storageKey);
         this.himoGoshujin = new(this);
         this.InitializeRoot();
 
-        this.Constructor = new();
-        this.Constructor.Register<BlockDatum>(x => new BlockDatumImpl(x));
+        this.Datum = new();
+        this.Datum.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
         // this.Constructor.Register<FragmentDatum<Identifier>>(x => new FragmentDatumImpl<Identifier>(x));
     }
 
@@ -43,7 +45,7 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
             {
                 await this.Storage.TryStart(this.Options, param, null).ConfigureAwait(false);
 
-                this.DeleteAll();
+                await this.DeleteAllAsync();
                 this.InitializeRoot();
 
                 this.Started = true;
@@ -57,10 +59,10 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
                 return result;
             }
 
-            var info = this.Storage.GetDirectoryInformation();
+            var info = this.Storage.GetInformation();
             foreach (var x in info)
             {
-                this.logger.TryGet()?.Log($"{(ushort)x.DirectoryId:x4}: {x.DirectoryPath}");
+                this.logger.TryGet()?.Log(x);
             }
 
             // Load Crystal
@@ -99,29 +101,29 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
 
             if (param.RemoveAll)
             {
-                this.DeleteAll();
+                await this.DeleteAllAsync();
 
-                // Stop IO(CrystalDirectory)
-                await this.Storage.StopAsync().ConfigureAwait(false);
-                this.Storage.Terminate();
+                // Stop storage
+                await this.Storage.Terminate().ConfigureAwait(false);
+                this.Storage.Clear();
 
                 return;
             }
 
-            // Save & Unload flakes
+            // Save & Unload datum and metadaba.
             this.Root.Save(true);
 
-            // Stop IO(CrystalDirectory)
-            await this.Storage.StopAsync().ConfigureAwait(false);
+            // Stop storage
+            await this.Storage.Save().ConfigureAwait(false);
+            await this.Storage.Terminate().ConfigureAwait(false);
 
-            // Save Crystal
-            await this.SerializeCrystal(this.Options.CrystalFilePath, this.Options.CrystalBackupPath).ConfigureAwait(false);
+            // Save data
+            await this.Save(this.Options.CrystalFilePath, this.Options.CrystalBackupPath).ConfigureAwait(false);
 
-            // Save directory information
-            var byteArray = this.Storage.Serialize();
-            await HashHelper.GetFarmHashAndSaveAsync(byteArray, this.Options.CrystalDirectoryFilePath, this.Options.CrystalDirectoryBackupPath).ConfigureAwait(false);
+            // Save storage
+            await this.Storage.Save(this.Options.StorageFilePath, this.Options.StorageBackupPath).ConfigureAwait(false);
 
-            this.Storage.Terminate();
+            this.Storage.Clear();
 
             this.logger.TryGet()?.Log($"Crystal stop - {this.himoGoshujin.MemoryUsage}");
         }
@@ -146,8 +148,9 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
             // HimoGoshujin
             this.himoGoshujin.Stop();
 
-            await this.Storage.StopAsync().ConfigureAwait(false);
-            this.Storage.Terminate();
+            await this.Storage.Save().ConfigureAwait(false);
+            await this.Storage.Terminate().ConfigureAwait(false);
+            this.Storage.Clear();
         }
         finally
         {
@@ -161,28 +164,28 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
 
     public TData Root { get; private set; }
 
-    public DatumConstructor Constructor { get; private set; }
+    public DatumRegistry Datum { get; private set; }
 
     public CrystalOptions Options { get; set; } = CrystalOptions.Default;
 
     public bool Started { get; private set; }
 
-    public Storage Storage { get; }
+    public StorageControl Storage { get; }
 
     public HimoGoshujinClass Himo => this.himoGoshujin;
 
     public long MemoryUsage => this.himoGoshujin.MemoryUsage;
 
-    internal void DeleteAll()
+    internal async Task DeleteAllAsync()
     {
         this.Root.Delete();
         this.himoGoshujin.Clear();
 
         PathHelper.TryDeleteFile(this.Options.CrystalFilePath);
         PathHelper.TryDeleteFile(this.Options.CrystalBackupPath);
-        PathHelper.TryDeleteFile(this.Options.CrystalDirectoryFilePath);
-        PathHelper.TryDeleteFile(this.Options.CrystalDirectoryBackupPath);
-        this.Storage.DeleteAll();
+        PathHelper.TryDeleteFile(this.Options.StorageFilePath);
+        PathHelper.TryDeleteFile(this.Options.StorageBackupPath);
+        await this.Storage.DeleteAllAsync();
 
         try
         {
@@ -239,7 +242,7 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
         byte[]? data;
         try
         {
-            data = await File.ReadAllBytesAsync(this.Options.CrystalDirectoryFilePath).ConfigureAwait(false);
+            data = await File.ReadAllBytesAsync(this.Options.StorageFilePath).ConfigureAwait(false);
         }
         catch
         {
@@ -263,7 +266,7 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
 LoadBackup:
         try
         {
-            data = await File.ReadAllBytesAsync(this.Options.CrystalDirectoryBackupPath).ConfigureAwait(false);
+            data = await File.ReadAllBytesAsync(this.Options.StorageBackupPath).ConfigureAwait(false);
         }
         catch
         {
@@ -396,7 +399,7 @@ LoadBackup:
         return true;
     }
 
-    private async Task SerializeCrystal(string path, string? backupPath)
+    private async Task Save(string path, string? backupPath)
     {
         var byteArray = TinyhandSerializer.Serialize(this.Root);
         await HashHelper.GetFarmHashAndSaveAsync(byteArray, path, backupPath).ConfigureAwait(false);

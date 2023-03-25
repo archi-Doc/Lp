@@ -1,9 +1,48 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using CrystalData.Filer;
+
 namespace CrystalData;
 
 internal static class HashHelper
 {
+    public static bool CheckFarmHash(ReadOnlySpan<byte> data, ulong hash)
+    {
+        if (hash == 0)
+        {
+            return true;
+        }
+
+        return Arc.Crypto.FarmHash.Hash64(data) == hash;
+    }
+
+    public static async Task<ulong> TryLoadFarmHash(IFiler filer, string path)
+    {
+        ulong hash = 0;
+        var result = await filer.ReadAsync(path, 0, -1, TimeSpan.MinValue).ConfigureAwait(false);
+        if (!result.IsSuccess)
+        {
+            return hash;
+        }
+
+        try
+        {
+            hash = BitConverter.ToUInt64(result.Data.Memory.Span);
+        }
+        catch
+        {
+            return hash;
+        }
+
+        return hash;
+    }
+
+    public static byte[] GetFarmHash(ReadOnlySpan<byte> data)
+    {
+        var hash = Arc.Crypto.FarmHash.Hash64(data);
+        return BitConverter.GetBytes(hash);
+    }
+
     /// <summary>
     /// Checks the hash value (first 8 bytes) and returns the data (9-) if the hash value is correct.
     /// </summary>

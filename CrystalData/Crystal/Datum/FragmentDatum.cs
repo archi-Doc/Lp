@@ -2,15 +2,11 @@
 
 using System.Runtime.CompilerServices;
 
-namespace CrystalData;
+namespace CrystalData.Datum;
 
 public interface FragmentDatum<TIdentifier> : IDatum
     where TIdentifier : IEquatable<TIdentifier>, IComparable<TIdentifier>, ITinyhandSerialize<TIdentifier>
 {
-    const int Id = 2;
-
-    static int IDatum.StaticId => Id;
-
     CrystalResult Set(TIdentifier fragmentId, ReadOnlySpan<byte> span);
 
     CrystalResult SetObject<T>(TIdentifier fragmentId, T obj)
@@ -31,8 +27,6 @@ public class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDa
         : base(flakeInternal)
     {
     }
-
-    public override int Id => FragmentDatum<TIdentifier>.Id;
 
     CrystalResult FragmentDatum<TIdentifier>.Set(TIdentifier fragmentId, ReadOnlySpan<byte> span)
     {
@@ -71,7 +65,7 @@ public class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDa
             return new(CrystalResult.Success, fragmentData.MemoryOwner.IncrementAndShare().Memory);
         }
 
-        return new(CrystalResult.NoData);
+        return new(CrystalResult.NoDatum);
     }
 
     async Task<CrystalObjectResult<T>> FragmentDatum<TIdentifier>.GetObject<T>(TIdentifier fragmentId)
@@ -88,7 +82,7 @@ public class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDa
             return new(result, obj);
         }
 
-        return new(CrystalResult.NoData);
+        return new(CrystalResult.NoDatum);
     }
 
     bool FragmentDatum<TIdentifier>.Remove(TIdentifier fragmentId)
@@ -124,7 +118,7 @@ public class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDa
                 }
 
                 var memoryOwner = new ByteArrayPool.ReadOnlyMemoryOwner(writer.FlushAndGetArray());
-                this.dataInternal.DataToStorage<FragmentDatum<TIdentifier>>(memoryOwner);
+                this.dataInternal.DatumToStorage<FragmentDatum<TIdentifier>>(memoryOwner);
             }
 
             this.isSaved = true;

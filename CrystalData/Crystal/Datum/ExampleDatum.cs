@@ -1,16 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
 using System.Runtime.CompilerServices;
 
-namespace CrystalData;
+namespace CrystalData.Datum;
 
 public interface ExampleDatum : IDatum
 {
-    const int Id = 0;
-
-    static int IDatum.StaticId => Id;
-
     CrystalResult Set(ReadOnlySpan<byte> data);
 
     Task<CrystalMemoryResult> Get();
@@ -22,8 +17,6 @@ public class ExampleDatumImpl : HimoGoshujinClass.Himo, ExampleDatum, IBaseDatum
         : base(flakeInternal)
     {
     }
-
-    public override int Id => BlockDatum.Id;
 
     CrystalResult ExampleDatum.Set(ReadOnlySpan<byte> data)
     {
@@ -79,7 +72,7 @@ public class ExampleDatumImpl : HimoGoshujinClass.Himo, ExampleDatum, IBaseDatum
         {// Not saved.
             if (this.byteArray != null)
             {
-                this.dataInternal.DataToStorage<ExampleDatum>(new(this.byteArray));
+                this.dataInternal.DatumToStorage<ExampleDatum>(new(this.byteArray));
             }
 
             this.isSaved = true;

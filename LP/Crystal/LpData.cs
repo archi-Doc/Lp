@@ -2,6 +2,7 @@
 
 #pragma warning disable SA1124 // Do not use regions
 
+using CrystalData.Datum;
 using ValueLink;
 
 namespace LP.Crystal;
@@ -63,8 +64,8 @@ public partial class LpData : BaseData
 
     #region Child
 
-    public LockOperation<TData> LockChild<TData>(Identifier id)
-        where TData : IDatum
+    public LockOperation<TDatum> LockChild<TDatum>(Identifier id)
+        where TDatum : IDatum
     {
         LpData? data;
         using (this.semaphore.Lock())
@@ -85,7 +86,7 @@ public partial class LpData : BaseData
             }
         }
 
-        return data.Lock<TData>();
+        return data.Lock<TDatum>();
     }
 
     public LpData GetOrCreateChild(Identifier id)
