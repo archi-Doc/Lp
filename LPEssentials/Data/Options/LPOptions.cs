@@ -12,7 +12,7 @@ public partial record LPOptions : ILogInformation
     [SimpleOption("loadoptions", Description = "Options path")]
     public string OptionsPath { get; init; } = string.Empty;
 
-    [SimpleOption("pass", Description = "Passphrase for keyvault")]
+    [SimpleOption("pass", Description = "Passphrase for vault")]
     public string? Pass { get; set; } = null;
 
     [SimpleOption("development", Description = "Development")]

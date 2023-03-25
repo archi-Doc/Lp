@@ -4,7 +4,7 @@ using SimpleCommandLine;
 
 namespace LP.Subcommands;
 
-[SimpleCommand("keyvault", IsSubcommand = true)]
+[SimpleCommand("vault", IsSubcommand = true)]
 public class KeyVaultSubcommand : SimpleCommandGroup<KeyVaultSubcommand>
 {
     public static void Configure(IUnitConfigurationContext context)
@@ -12,10 +12,13 @@ public class KeyVaultSubcommand : SimpleCommandGroup<KeyVaultSubcommand>
         var group = ConfigureGroup(context);
         group.AddCommand(typeof(KeyVaultSubcommandLs));
         group.AddCommand(typeof(KeyVaultSubcommandChangePass));
+        group.AddCommand(typeof(KeyVaultSubcommandAdd));
+        group.AddCommand(typeof(KeyVaultSubcommandGet));
+        group.AddCommand(typeof(KeyVaultSubcommandDelete));
     }
 
     public KeyVaultSubcommand(UnitContext context)
-        : base(context)
+        : base(context, "ls")
     {
     }
 }
