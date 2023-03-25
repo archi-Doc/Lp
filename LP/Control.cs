@@ -279,8 +279,7 @@ public class Control : ILogInformation
                 this.Context.SendPrepare(new());
 
                 // Machines
-                // control.BigMachine.CreateNew<LP.Machines.LogTesterMachine.Interface>(Identifier.Zero);
-                control.NetControl.CreateMachines();
+                // control.NetControl.CreateMachines();
             }
             catch
             {
@@ -405,8 +404,12 @@ public class Control : ILogInformation
     public async Task RunAsync(UnitContext context)
     {
         this.BigMachine.Start();
+
+        // this.BigMachine.CreateOrGet<EssentialNetMachine.Interface>(Identifier.Zero)?.RunAsync();
+        this.BigMachine.CreateOrGet<NtpMachine.Interface>(Identifier.Zero)?.RunAsync();
+        this.BigMachine.CreateOrGet<PublicIPMachine.Interface>(Identifier.Zero)?.RunAsync();
+
         await context.SendRunAsync(new(this.Core));
-        this.BigMachine.TryGet<NtpMachine.Interface>(Identifier.Zero)?.RunAsync();
 
         this.UserInterfaceService.WriteLine();
         var logger = this.Logger.Get<DefaultLog>(LogLevel.Information);

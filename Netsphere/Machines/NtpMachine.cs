@@ -28,7 +28,7 @@ public partial class NtpMachine : Machine<Identifier>
     [StateMethod(0)]
     protected async Task<StateResult> Initial(StateParameter parameter)
     {
-        await this.ntpCorrection.CorrectAsync(parameter.CancellationToken);
+        await this.ntpCorrection.CorrectAsync(this.CancellationToken);
 
         var timeoffset = this.ntpCorrection.GetTimeoffset();
         if (timeoffset.TimeoffsetCount == 0)
@@ -50,7 +50,7 @@ public partial class NtpMachine : Machine<Identifier>
     protected async Task<StateResult> SafeHoldMode(StateParameter parameter)
     {
         this.logger?.TryGet(LogLevel.Warning)?.Log($"Safe-hold mode");
-        if (await this.ntpCorrection.CheckConnectionAsync(parameter.CancellationToken))
+        if (await this.ntpCorrection.CheckConnectionAsync(this.CancellationToken))
         {
             this.ntpCorrection.ResetHostnames();
             this.ChangeState(State.Initial);

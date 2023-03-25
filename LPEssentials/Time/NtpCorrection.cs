@@ -54,7 +54,7 @@ public partial class NtpCorrection : UnitBase, IUnitPreparable, IUnitSerializabl
     public NtpCorrection(UnitContext context, ILogger<NtpCorrection> logger)
         : base(context)
     {
-        this.logger = logger;
+        this.logger = null; // logger;
         this.ResetHostnames();
     }
 
