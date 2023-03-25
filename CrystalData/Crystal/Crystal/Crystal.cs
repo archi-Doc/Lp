@@ -2,23 +2,24 @@
 
 using System.Diagnostics.CodeAnalysis;
 using CrystalData.Datum;
+using CrystalData.Storage;
 
 namespace CrystalData;
 
 public partial class Crystal<TData> : ICrystal, ICrystalInternal
     where TData : BaseData
 {
-    internal Crystal(UnitCore core, CrystalOptions options, ILogger<Crystal<TData>> logger, UnitLogger unitLogger)
-        : this(core, options, (ILogger)logger, unitLogger)
+    internal Crystal(UnitCore core, CrystalOptions options, ILogger<Crystal<TData>> logger, UnitLogger unitLogger, IStorageKey storageKey)
+        : this(core, options, (ILogger)logger, unitLogger, storageKey)
     {
     }
 
-    protected Crystal(UnitCore core, CrystalOptions options, ILogger logger, UnitLogger unitLogger)
+    protected Crystal(UnitCore core, CrystalOptions options, ILogger logger, UnitLogger unitLogger, IStorageKey storageKey)
     {
         this.logger = logger;
         this.Core = core;
         this.Options = options;
-        this.Storage = new(unitLogger);
+        this.Storage = new(unitLogger, storageKey);
         this.himoGoshujin = new(this);
         this.InitializeRoot();
 
@@ -44,7 +45,7 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
             {
                 await this.Storage.TryStart(this.Options, param, null).ConfigureAwait(false);
 
-                this.DeleteAll();
+                await this.DeleteAllAsync();
                 this.InitializeRoot();
 
                 this.Started = true;
@@ -100,10 +101,10 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
 
             if (param.RemoveAll)
             {
-                this.DeleteAll();
+                await this.DeleteAllAsync();
 
                 // Stop storage
-                await this.Storage.Save(true).ConfigureAwait(false);
+                await this.Storage.Terminate().ConfigureAwait(false);
                 this.Storage.Clear();
 
                 return;
@@ -113,7 +114,8 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
             this.Root.Save(true);
 
             // Stop storage
-            await this.Storage.Save(true).ConfigureAwait(false);
+            await this.Storage.Save().ConfigureAwait(false);
+            await this.Storage.Terminate().ConfigureAwait(false);
 
             // Save data
             await this.Save(this.Options.CrystalFilePath, this.Options.CrystalBackupPath).ConfigureAwait(false);
@@ -146,7 +148,8 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
             // HimoGoshujin
             this.himoGoshujin.Stop();
 
-            await this.Storage.Save(true).ConfigureAwait(false);
+            await this.Storage.Save().ConfigureAwait(false);
+            await this.Storage.Terminate().ConfigureAwait(false);
             this.Storage.Clear();
         }
         finally
@@ -173,7 +176,7 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
 
     public long MemoryUsage => this.himoGoshujin.MemoryUsage;
 
-    internal void DeleteAll()
+    internal async Task DeleteAllAsync()
     {
         this.Root.Delete();
         this.himoGoshujin.Clear();
@@ -182,7 +185,7 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
         PathHelper.TryDeleteFile(this.Options.CrystalBackupPath);
         PathHelper.TryDeleteFile(this.Options.StorageFilePath);
         PathHelper.TryDeleteFile(this.Options.StorageBackupPath);
-        this.Storage.DeleteAll();
+        await this.Storage.DeleteAllAsync();
 
         try
         {

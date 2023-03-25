@@ -3,15 +3,14 @@
 namespace CrystalData.Filer;
 
 [TinyhandUnion(0, typeof(LocalFiler))]
+[TinyhandUnion(1, typeof(S3Filer))]
 internal partial interface IFiler
 {
     string FilerPath { get; }
 
     Task<CrystalResult> PrepareAndCheck(StorageControl storage);
 
-    Task Save(bool stop);
-
-    void DeleteAll();
+    Task Terminate();
 
     CrystalResult Write(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared);
 
@@ -27,6 +26,8 @@ internal partial interface IFiler
     Task<CrystalResult> WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait);
 
     Task<CrystalResult> DeleteAsync(string path, TimeSpan timeToWait);
+
+    Task<CrystalResult> DeleteAllAsync();
 
     /*Task<CrystalMemoryOwnerResult> ReadAsync(string path, int sizeToRead)
         => this.ReadAsync(path, sizeToRead, TimeSpan.MinValue);

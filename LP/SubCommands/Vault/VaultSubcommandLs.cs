@@ -5,9 +5,9 @@ using SimpleCommandLine;
 namespace LP.Subcommands;
 
 [SimpleCommand("ls")]
-public class KeyVaultSubcommandLs : ISimpleCommandAsync
+public class VaultSubcommandLs : ISimpleCommandAsync
 {
-    public KeyVaultSubcommandLs(IUserInterfaceService userInterfaceService, Vault vault)
+    public VaultSubcommandLs(IUserInterfaceService userInterfaceService, Vault vault)
     {
         this.userInterfaceService = userInterfaceService;
         this.vault = vault;

@@ -55,7 +55,7 @@ internal partial class SimpleStorage : IStorage
         return result;
     }
 
-    async Task IStorage.Save(bool stop)
+    async Task IStorage.Save()
     {
         byte[] byteArray;
         lock (this.syncObject)
@@ -184,6 +184,7 @@ internal partial class SimpleStorage : IStorage
         var memory = result.Data.Memory;
         if (!HashHelper.CheckFarmHash(memory.Span, hash))
         {
+            result.Return();
             return CrystalResult.CorruptedData;
         }
 
@@ -197,6 +198,10 @@ internal partial class SimpleStorage : IStorage
         catch
         {
             return CrystalResult.DeserializeError;
+        }
+        finally
+        {
+            result.Return();
         }
 
         return CrystalResult.Success;

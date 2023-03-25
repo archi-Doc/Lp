@@ -5,9 +5,9 @@ using SimpleCommandLine;
 namespace LP.Subcommands;
 
 [SimpleCommand("changepass")]
-public class KeyVaultSubcommandChangePass : ISimpleCommandAsync
+public class VaultSubcommandChangePass : ISimpleCommandAsync
 {
-    public KeyVaultSubcommandChangePass(ILogger<KeyVaultSubcommandChangePass> logger, Control control)
+    public VaultSubcommandChangePass(ILogger<VaultSubcommandChangePass> logger, Control control)
     {
         this.logger = logger;
         this.Control = control;
@@ -45,5 +45,5 @@ public class KeyVaultSubcommandChangePass : ISimpleCommandAsync
 
     public Control Control { get; set; }
 
-    private ILogger<KeyVaultSubcommandChangePass> logger;
+    private ILogger<VaultSubcommandChangePass> logger;
 }

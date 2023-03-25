@@ -1,11 +1,13 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using CrystalData.Storage;
+
 namespace LP.Crystal;
 
 public class LpCrystal : Crystal<LpRootData>
 {
-    public LpCrystal(UnitCore core, CrystalOptions options, ILogger<LpCrystal> logger, UnitLogger unitLogger)
-        : base(core, options, logger, unitLogger)
+    public LpCrystal(UnitCore core, CrystalOptions options, ILogger<LpCrystal> logger, UnitLogger unitLogger, IStorageKey storageKey)
+        : base(core, options, logger, unitLogger, storageKey)
     {
         // this.Datum.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
     }

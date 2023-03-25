@@ -82,31 +82,31 @@ internal partial class StorageAndFiler
     {
     }
 
-    public async Task Save(bool stop)
+    public async Task Save()
     {
         if (this.Storage != null)
         {
-            await this.Storage.Save(stop);
+            await this.Storage.Save();
+        }
+    }
+
+    public async Task Terminate()
+    {
+        if (this.Filer != null)
+        {
+            await this.Filer.Terminate();
         }
 
         if (this.Filer != null)
         {
-            await this.Filer.Save(stop);
+            this.FilerData = TinyhandSerializer.Serialize(this.Filer);
+            this.Filer = null;
         }
 
-        if (stop)
+        if (this.Storage != null)
         {
-            if (this.Filer != null)
-            {
-                this.FilerData = TinyhandSerializer.Serialize(this.Filer);
-                this.Filer = null;
-            }
-
-            if (this.Storage != null)
-            {
-                this.StorageData = TinyhandSerializer.Serialize(this.Storage);
-                this.Storage = null;
-            }
+            this.StorageData = TinyhandSerializer.Serialize(this.Storage);
+            this.Storage = null;
         }
     }
 

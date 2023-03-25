@@ -230,18 +230,15 @@ DeleteAndExit:
         return CrystalResult.Success;
     }
 
-    async Task IFiler.Save(bool stop)
+    async Task IFiler.Terminate()
     {
         await this.WaitForCompletionAsync().ConfigureAwait(false);
-        if (stop)
-        {
-            this.Dispose();
-        }
+        this.Dispose();
     }
 
-    void IFiler.DeleteAll()
+    async Task<CrystalResult> IFiler.DeleteAllAsync()
     {
-        PathHelper.TryDeleteDirectory(this.rootedPath);
+        return PathHelper.TryDeleteDirectory(this.rootedPath) ? CrystalResult.Success : CrystalResult.DeleteError;
     }
 
     CrystalResult IFiler.Write(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)

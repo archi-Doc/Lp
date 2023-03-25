@@ -47,6 +47,7 @@ public class Control : ILogInformation
                 context.Services.TryAddSingleton<IConsoleService, ConsoleUserInterfaceService>();
                 context.Services.TryAddSingleton<IUserInterfaceService, ConsoleUserInterfaceService>();
                 context.AddSingleton<Vault>();
+                context.AddSingleton<IStorageKey, StorageKeyVault>();
                 context.AddSingleton<Authority>();
                 context.AddSingleton<Seedphrase>();
                 // context.AddSingleton<Merger>();
@@ -92,7 +93,7 @@ public class Control : ILogInformation
                 LP.Subcommands.TemplateSubcommand.Configure(context);
                 LP.Subcommands.InfoSubcommand.Configure(context);
                 LP.Subcommands.ExportSubcommand.Configure(context);
-                LP.Subcommands.KeyVaultSubcommand.Configure(context);
+                LP.Subcommands.VaultSubcommand.Configure(context);
                 LP.Subcommands.FlagSubcommand.Configure(context);
                 LP.Subcommands.NodeSubcommand.Configure(context);
                 LP.Subcommands.NodeKeySubcommand.Configure(context);

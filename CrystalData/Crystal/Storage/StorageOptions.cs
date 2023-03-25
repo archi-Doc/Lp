@@ -2,7 +2,7 @@
 
 using SimpleCommandLine;
 
-namespace LP.Data;
+namespace CrystalData;
 
 [TinyhandObject(ImplicitKeyAsName = true)]
 public partial class StorageOptions

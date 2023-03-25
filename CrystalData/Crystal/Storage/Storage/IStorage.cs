@@ -13,7 +13,7 @@ internal partial interface IStorage
 
     Task<CrystalResult> PrepareAndCheck(StorageControl storage, IFiler filer);
 
-    Task Save(bool stop);
+    Task Save();
 
     CrystalResult Put(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared);
 

@@ -6,8 +6,8 @@ namespace LP.Crystal;
 
 public class MergerCrystal : Crystal<MergerData>
 {
-    public MergerCrystal(UnitCore core, CrystalOptions options, ILogger<MergerCrystal> logger, UnitLogger unitLogger)
-        : base(core, options, logger, unitLogger)
+    public MergerCrystal(UnitCore core, CrystalOptions options, ILogger<MergerCrystal> logger, UnitLogger unitLogger, IStorageKey storageKey)
+        : base(core, options, logger, unitLogger, storageKey)
     {
         this.Options = options with
         {

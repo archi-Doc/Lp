@@ -10,9 +10,10 @@ public sealed class StorageControl
 {
     public const int DirectoryRotationThreshold = (int)StorageHelper.Megabytes * 100; // 100 MB
 
-    internal StorageControl(UnitLogger unitLogger)
+    internal StorageControl(UnitLogger unitLogger, IStorageKey key)
     {
         this.UnitLogger = unitLogger;
+        this.Key = key;
     }
 
     public string[] GetInformation()
@@ -77,18 +78,27 @@ public sealed class StorageControl
         return AddStorageResult.Success;
     }
 
-    public void DeleteAll()
+    public async Task DeleteAllAsync()
     {
+        var list = new List<Task>();
         lock (this.syncObject)
         {
             foreach (var x in this.storageAndFilers)
             {
-                x.Filer?.DeleteAll();
+                var task = x.Filer?.DeleteAllAsync();
+                if (task != null)
+                {
+                    list.Add(task);
+                }
             }
         }
+
+        await Task.WhenAll(list).ConfigureAwait(false);
     }
 
     public CrystalOptions Options { get; private set; } = CrystalOptions.Default;
+
+    public IStorageKey Key { get; }
 
     public bool Started { get; private set; }
 
@@ -217,7 +227,8 @@ public sealed class StorageControl
             {
                 var storage = new SimpleStorage();
                 storage.StorageCapacity = CrystalOptions.DefaultDirectoryCapacity;
-                var filer = new LocalFiler(this.Options.DefaultCrystalDirectory); // PathHelper.GetRootedDirectory(this.Options.RootPath, this.Options.DefaultCrystalDirectory)
+                // var filer = new LocalFiler(this.Options.DefaultCrystalDirectory); // PathHelper.GetRootedDirectory(this.Options.RootPath, this.Options.DefaultCrystalDirectory)
+                var filer = new S3Filer("kiokubako", "lp");
 
                 var storageAndFiler = TinyhandSerializer.Reconstruct<StorageAndFiler>();
                 storageAndFiler.StorageId = this.GetFreeStorageId();
@@ -253,7 +264,23 @@ public sealed class StorageControl
         return CrystalStartResult.Success;
     }
 
-    internal async Task Save(bool stop)
+    internal async Task Save()
+    {// Save
+        Task[] tasks;
+        lock (this.syncObject)
+        {
+            if (!this.Started)
+            {
+                return;
+            }
+
+            tasks = this.storageAndFilers.Select(x => x.Save()).ToArray();
+        }
+
+        await Task.WhenAll(tasks).ConfigureAwait(false);
+    }
+
+    internal async Task Terminate()
     {// Save storage
         Task[] tasks;
         lock (this.syncObject)
@@ -263,11 +290,10 @@ public sealed class StorageControl
                 return;
             }
 
-            tasks = this.storageAndFilers.Select(x => x.Save(stop)).ToArray();
+            tasks = this.storageAndFilers.Select(x => x.Terminate()).ToArray();
         }
 
         await Task.WhenAll(tasks).ConfigureAwait(false);
-
         this.Started = false;
     }
 
