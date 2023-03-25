@@ -75,7 +75,7 @@ TryWrite:
                 using (var handle = File.OpenHandle(filePath, mode: FileMode.OpenOrCreate, access: FileAccess.Write))
                 {
                     await RandomAccess.WriteAsync(handle, work.WriteData.Memory, work.Offset, worker.CancellationToken).ConfigureAwait(false);
-                    worker.logger?.TryGet()?.Log($"Written {filePath}, {work.WriteData.Memory.Length}");
+                    worker.logger?.TryGet()?.Log($"Written[{work.WriteData.Memory.Length}] {work.Path}");
 
                     try
                     {
@@ -113,7 +113,7 @@ TryWrite:
             }
             catch
             {
-                worker.logger?.TryGet()?.Log($"Retry {filePath}");
+                worker.logger?.TryGet()?.Log($"Retry {work.Path}");
                 goto TryWrite;
             }
             finally
@@ -155,7 +155,7 @@ TryWrite:
 
                     work.Result = CrystalResult.Success;
                     work.ReadData = memoryOwner;
-                    worker.logger?.TryGet()?.Log($"Read {filePath}, {memoryOwner.Memory.Length}");
+                    worker.logger?.TryGet()?.Log($"Read[{memoryOwner.Memory.Length}] {work.Path}");
                 }
             }
             catch (OperationCanceledException)
@@ -166,7 +166,7 @@ TryWrite:
             catch
             {
                 work.Result = CrystalResult.ReadError;
-                worker.logger?.TryGet()?.Log($"Read exception {filePath}");
+                worker.logger?.TryGet()?.Log($"Read exception {work.Path}");
             }
             finally
             {
@@ -194,7 +194,7 @@ DeleteAndExit:
         if (filePath != null)
         {
             File.Delete(filePath);
-            worker.logger?.TryGet()?.Log($"DeleteAndExit {filePath}");
+            worker.logger?.TryGet()?.Log($"DeleteAndExit {work.Path}");
         }
 
         return;

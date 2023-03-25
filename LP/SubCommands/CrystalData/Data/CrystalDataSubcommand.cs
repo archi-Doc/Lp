@@ -4,7 +4,7 @@ using SimpleCommandLine;
 
 namespace LP.Subcommands.CrystalData;
 
-[SimpleCommand("cdata", IsSubcommand = true, Description = "Crystal data subcommand")]
+[SimpleCommand("data", IsSubcommand = true, Description = "Crystal data subcommand")]
 public class CrystalDataSubcommand : SimpleCommandGroup<CrystalDataSubcommand>
 {
     public static void Configure(IUnitConfigurationContext context)

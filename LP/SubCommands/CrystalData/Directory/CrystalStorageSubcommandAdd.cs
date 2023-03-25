@@ -5,10 +5,10 @@ using SimpleCommandLine;
 
 namespace LP.Subcommands.CrystalData;
 
-[SimpleCommand("add", Description = "Add Crystal directory.")]
-public class CrystalDirSubcommandAdd : ISimpleCommandAsync<CrystalDirOptionsAdd>
+[SimpleCommand("add", Description = "Add storage.")]
+public class CrystalStorageSubcommandAdd : ISimpleCommandAsync<CrystalDirOptionsAdd>
 {
-    public CrystalDirSubcommandAdd(ILogger<CrystalDirSubcommandAdd> logger, IConsoleService consoleService, CrystalControl crystalControl, ICrystal crystal, CrystalDirSubcommandLs crystalDirSubcommandLs)
+    public CrystalStorageSubcommandAdd(ILogger<CrystalStorageSubcommandAdd> logger, IConsoleService consoleService, CrystalControl crystalControl, ICrystal crystal, CrystalStorageSubcommandLs crystalDirSubcommandLs)
     {
         this.logger = logger;
         this.consoleService = consoleService;
@@ -38,9 +38,9 @@ public class CrystalDirSubcommandAdd : ISimpleCommandAsync<CrystalDirOptionsAdd>
         }
     }
 
-    public CrystalDirSubcommandLs CrystalDirSubcommandLs { get; private set; }
+    public CrystalStorageSubcommandLs CrystalDirSubcommandLs { get; private set; }
 
-    private ILogger<CrystalDirSubcommandAdd> logger;
+    private ILogger<CrystalStorageSubcommandAdd> logger;
     private IConsoleService consoleService;
     private CrystalControl crystalControl;
     private ICrystal crystal;
