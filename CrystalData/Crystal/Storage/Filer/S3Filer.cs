@@ -1,7 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Amazon.S3;
-using Amazon.S3.Model;
+// using Amazon.S3;
+// using Amazon.S3.Model;
 
 #pragma warning disable SA1124 // Do not use regions
 
