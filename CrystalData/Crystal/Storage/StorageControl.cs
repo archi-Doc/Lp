@@ -202,23 +202,28 @@ public sealed class StorageControl
         }
 
         goshujin ??= TinyhandSerializer.Reconstruct<StorageAndFiler.GoshujinClass>();
-        List<string>? errorDirectories = null;
+        List<StorageAndFiler>? errorList = null;
         foreach (var x in goshujin.StorageIdChain)
         {
             if (await x.PrepareAndCheck(this) != CrystalResult.Success)
             {
-                if (x.Filer is not null)
-                {
-                    errorDirectories ??= new();
-                    errorDirectories.Add(x.Filer.FilerPath);
-                }
+                errorList ??= new();
+                errorList.Add(x);
             }
         }
 
-        if (errorDirectories != null &&
-            !await param.Query(CrystalStartResult.DirectoryError, errorDirectories.ToArray()).ConfigureAwait(false))
+        if (errorList != null &&
+            !await param.Query(CrystalStartResult.DirectoryError, errorList.Select(x => x.ToString()).ToArray()).ConfigureAwait(false))
         {
             return CrystalStartResult.FileError;
+        }
+
+        if (errorList != null)
+        {
+            foreach (var x in errorList)
+            {
+                x.Goshujin = null;
+            }
         }
 
         if (goshujin.StorageIdChain.Count == 0)
@@ -227,8 +232,8 @@ public sealed class StorageControl
             {
                 var storage = new SimpleStorage();
                 storage.StorageCapacity = CrystalOptions.DefaultDirectoryCapacity;
-                // var filer = new LocalFiler(this.Options.DefaultCrystalDirectory); // PathHelper.GetRootedDirectory(this.Options.RootPath, this.Options.DefaultCrystalDirectory)
-                var filer = new S3Filer("kiokubako", "lp");
+                var filer = new LocalFiler(this.Options.DefaultCrystalDirectory); // PathHelper.GetRootedDirectory(this.Options.RootPath, this.Options.DefaultCrystalDirectory)
+                // var filer = new S3Filer("kiokubako", "lp");
 
                 var storageAndFiler = TinyhandSerializer.Reconstruct<StorageAndFiler>();
                 storageAndFiler.StorageId = this.GetFreeStorageId();

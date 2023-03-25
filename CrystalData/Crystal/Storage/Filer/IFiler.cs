@@ -3,7 +3,7 @@
 namespace CrystalData.Filer;
 
 [TinyhandUnion(0, typeof(LocalFiler))]
-[TinyhandUnion(1, typeof(S3Filer))]
+// [TinyhandUnion(1, typeof(S3Filer))]
 internal partial interface IFiler
 {
     string FilerPath { get; }

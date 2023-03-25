@@ -7,7 +7,7 @@ using Amazon.S3.Model;
 
 namespace CrystalData.Filer;
 
-[TinyhandObject(ExplicitKeyOnly = true)]
+/*[TinyhandObject(ExplicitKeyOnly = true)]
 internal partial class S3Filer : TaskWorker<FilerWork>, IFiler
 {
     private const int DefaultConcurrentTasks = 4;
@@ -88,8 +88,8 @@ TryWrite:
 
             try
             {
-                using (var ms = new MemoryStream(work.WriteData.Memory.ToArray()))
-                {// tempcode
+                using (var ms = new ReadOnlyMemoryStream(work.WriteData.Memory))
+                {
                     var request = new Amazon.S3.Model.PutObjectRequest() { BucketName = worker.bucket, Key = filePath, InputStream = ms, };
                     var response = await worker.client.PutObjectAsync(request, worker.CancellationToken).ConfigureAwait(false);
                     if (response.HttpStatusCode == System.Net.HttpStatusCode.OK)
@@ -311,4 +311,4 @@ TryWrite:
             return $"{this.path}/{file}";
         }
     }
-}
+}*/

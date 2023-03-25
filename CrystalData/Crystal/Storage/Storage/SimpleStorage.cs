@@ -260,12 +260,12 @@ internal partial class SimpleStorage : IStorage
         {
             if (file != 0 && this.fileToSize.TryGetValue(file, out var size))
             {
-                // if (dataSize > size)
+                if (dataSize > size)
                 {
                     this.StorageUsage += dataSize - size;
                 }
 
-                this.fileToSize[file] = size;
+                this.fileToSize[file] = dataSize;
             }
             else
             {// Not found

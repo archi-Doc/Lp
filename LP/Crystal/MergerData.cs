@@ -265,7 +265,7 @@ public partial class MergerData : BaseData
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void TryLoadChildren()
     {
-        if (this.children == null && this.childrenStorage != 0)
+        if (this.children == null && this.childrenStorage != 0 && this.childrenFile != 0)
         {// Load
             var result = this.Crystal.Storage.Load(this.childrenStorage, this.childrenFile).Result;
             if (result.IsSuccess)
@@ -286,6 +286,7 @@ public partial class MergerData : BaseData
                 }
                 catch
                 {
+                    this.Crystal.Storage.Delete(ref this.childrenStorage, ref this.childrenFile);
                 }
             }
             else
