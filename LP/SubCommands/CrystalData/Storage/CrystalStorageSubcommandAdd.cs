@@ -108,10 +108,10 @@ EnterBucket:
 
 public record CrystalStorageOptionsAdd
 {
-    [SimpleOption("storage", Description = "Storage type (simple)")]
-    public string Storage { get; init; } = string.Empty;
+    // [SimpleOption("storage", Description = "Storage type (simple)")]
+    // public string Storage { get; init; } = string.Empty;
 
-    [SimpleOption("filer", Description = "Filer type (local, s3)")]
+    [SimpleOption("filer", Description = "Filer type (local, s3)", Required = true)]
     public string Filer { get; init; } = string.Empty;
 
     [SimpleOption("capacity", Description = "Directory capacity in GB")]
