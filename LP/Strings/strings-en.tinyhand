@@ -68,6 +68,7 @@ Custom = {
 }
 
 Subcommands = {
+    DevStage = "This feature is in the dev stage"
     GC = {
         Start = "GC.Collect"
     }
@@ -76,6 +77,17 @@ Subcommands = {
         Changed = "Node key changed: {0}"
         InvalidKey = "'{0}' is invalid. Enter a valid private key or seedphrase"
     }
+}
+
+Storage =
+{
+    CreateLocal = "Creating storage with local filer"
+    CreateS3 = "Creating storage with s3 filer"
+    EnterPath = "Enter storage path"
+    InvalidFiler = "Filer type '{0}' is invalid"
+    InvalidId = "Storage with specified Id '{0}' is not found"
+    DeleteConfirm = "Are you sure you want to delete the storage"
+    Deleted = "Storage deleted: {0}"
 }
 
 CrystalResult = {

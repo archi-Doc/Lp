@@ -114,12 +114,9 @@ public class LPBase : ILogInformation
                 Directory.CreateDirectory(directory);
             }
 
-            using (var file = File.Open(path, FileMode.Create))
-            {
-                var bytes = TinyhandSerializer.SerializeToUtf8(obj);
-                await file.WriteAsync(bytes);
-                return true;
-            }
+            var bytes = TinyhandSerializer.SerializeToUtf8(obj);
+            await File.WriteAllBytesAsync(path, bytes);
+            return true;
         }
         catch
         {

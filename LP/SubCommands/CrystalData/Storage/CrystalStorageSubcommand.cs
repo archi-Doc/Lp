@@ -12,6 +12,7 @@ public class CrystalStorageSubcommand : SimpleCommandGroup<CrystalStorageSubcomm
         var group = ConfigureGroup(context);
         group.AddCommand(typeof(CrystalStorageSubcommandLs));
         group.AddCommand(typeof(CrystalStorageSubcommandAdd));
+        group.AddCommand(typeof(CrystalStorageSubcommandDelete));
     }
 
     public CrystalStorageSubcommand(UnitContext context, CrystalControl control)

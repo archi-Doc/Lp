@@ -61,7 +61,6 @@ public partial class PublicIPMachine : Machine<Identifier>
         this.data ??= new();
         this.data.Mics = Mics.GetUtcNow();
         this.data.IPAddress = ipAddress;
-
         await this.lpBase.SaveUtf8Async(Filename, this.data);
     }
 

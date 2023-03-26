@@ -17,6 +17,12 @@ public class CrystalDataSubcommandLs : ISimpleCommandAsync
     {
         var info = this.crystal.Storage.GetInformation();
 
+        if (info.Length == 0)
+        {
+            this.consoleService.WriteLine("No storage");
+            return;
+        }
+
         foreach (var x in info)
         {
             this.consoleService.WriteLine(x);

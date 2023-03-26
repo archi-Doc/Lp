@@ -24,6 +24,78 @@ public sealed class StorageControl
         }
     }
 
+    public bool CheckStorageId(ushort id) => this.storageAndFilers.StorageIdChain.ContainsKey(id);
+
+    public bool DeleteStorage(ushort id)
+    {// Dev stage
+        lock (this.syncObject)
+        {
+            if (!this.storageAndFilers.StorageIdChain.TryGetValue(id, out var storageAndFiler))
+            {// Not found
+                return false;
+            }
+
+            // Move files to other storage...
+
+            // Deletion
+            storageAndFiler.Filer?.DeleteAllAsync().Wait();
+            storageAndFiler.Terminate().Wait();
+            storageAndFiler.Goshujin = null;
+
+            return true;
+        }
+    }
+
+    public (AddStorageResult Result, ushort Id) AddStorage_SimpleLocal(string path, long capacity)
+    {
+        if (capacity < 0)
+        {
+            capacity = CrystalOptions.DefaultDirectoryCapacity;
+        }
+
+        if (path.EndsWith('\\'))
+        {
+            path = path.Substring(0, path.Length - 1);
+        }
+
+        if (File.Exists(path))
+        {
+            return (AddStorageResult.FileExists, 0);
+        }
+
+        var relative = Path.GetRelativePath(this.Options.RootPath, path);
+        if (!relative.StartsWith("..\\"))
+        {
+            path = relative;
+        }
+
+        ushort id;
+        lock (this.syncObject)
+        {
+            id = this.GetFreeStorageId();
+
+            var storage = new SimpleStorage();
+            storage.StorageCapacity = capacity;
+
+            var filer = new LocalFiler(path);
+
+            var storageAndFiler = TinyhandSerializer.Reconstruct<StorageAndFiler>();
+            storageAndFiler.StorageId = id;
+            storageAndFiler.Storage = storage;
+            storageAndFiler.Filer = filer;
+
+            if (storageAndFiler.PrepareAndCheck(this).Result != CrystalResult.Success)
+            {
+                // storageAndFiler.Terminate().Wait();
+                // return (AddStorageResult.DuplicatePath, 0);
+            }
+
+            storageAndFiler.Goshujin = this.storageAndFilers;
+        }
+
+        return (AddStorageResult.Success, id);
+    }
+
     public AddStorageResult AddStorage(string path, ushort id = 0, long capacity = CrystalOptions.DefaultDirectoryCapacity)
     {
         if (capacity < 0)
