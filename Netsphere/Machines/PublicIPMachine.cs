@@ -1,29 +1,45 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Net;
-
 namespace Netsphere.Machines;
 
 [MachineObject(0xc701fc35, Group = typeof(SingleGroup<>))]
 public partial class PublicIPMachine : Machine<Identifier>
 {
+    private const string Filename = "PublicIP.tinyhand";
     private const string IcanhazipUri = "http://ipv4.icanhazip.com"; // "http://icanhazip.com"
     private const string DynDnsUri = "http://checkip.dyndns.org";
 
-    public PublicIPMachine(ILogger<PublicIPMachine> logger, BigMachine<Identifier> bigMachine, LPBase lpBase, NetBase netBase, NetControl netControl)
+    [TinyhandObject(ImplicitKeyAsName = true)]
+    private partial class Data
+    {
+        public long Mics { get; set; }
+
+        public IPAddress? IPAddress { get; set; }
+    }
+
+    public PublicIPMachine(ILogger<PublicIPMachine> logger, BigMachine<Identifier> bigMachine, LPBase lpBase, NetControl netControl)
         : base(bigMachine)
     {
         this.logger = logger;
-        this.NetControl = netControl;
+        this.lpBase = lpBase;
+        this.netControl = netControl;
 
         // this.DefaultTimeout = TimeSpan.FromSeconds(5);
     }
 
-    public NetControl NetControl { get; }
-
     [StateMethod(0)]
     protected async Task<StateResult> Initial(StateParameter parameter)
     {
+        this.data = await this.lpBase.TryLoadUtf8Async<Data>(Filename) ?? new();
+        if (this.data.IPAddress is not null &&
+            Mics.IsInPeriodToUtcNow(this.data.Mics, Mics.FromMinutes(5)))
+        {
+            var nodeAddress = new NodeAddress(this.data.IPAddress, (ushort)this.netControl.NetBase.NetsphereOptions.Port);
+            this.netControl.NetStatus.ReportMyNodeAddress(nodeAddress);
+            this.logger?.TryGet()?.Log($"{nodeAddress.ToString()} from file");
+            return StateResult.Terminate;
+        }
+
         if (await this.GetIcanhazip().ConfigureAwait(false) == true)
         {
             return StateResult.Terminate;
@@ -36,11 +52,17 @@ public partial class PublicIPMachine : Machine<Identifier>
         return StateResult.Terminate;
     }
 
-    private void ReportIpAddress(IPAddress ipAddress, string uri)
+    private async Task ReportIpAddress(IPAddress ipAddress, string uri)
     {
-        var nodeAddress = new NodeAddress(ipAddress, (ushort)this.NetControl.NetBase.NetsphereOptions.Port);
-        this.NetControl.NetStatus.ReportMyNodeAddress(nodeAddress);
+        var nodeAddress = new NodeAddress(ipAddress, (ushort)this.netControl.NetBase.NetsphereOptions.Port);
+        this.netControl.NetStatus.ReportMyNodeAddress(nodeAddress);
         this.logger?.TryGet()?.Log($"{nodeAddress.ToString()} from {uri}");
+
+        this.data ??= new();
+        this.data.Mics = Mics.GetUtcNow();
+        this.data.IPAddress = ipAddress;
+
+        await this.lpBase.SaveUtf8Async(Filename, this.data);
     }
 
     private async Task<bool> GetIcanhazip()
@@ -56,7 +78,7 @@ public partial class PublicIPMachine : Machine<Identifier>
                     return false;
                 }
 
-                this.ReportIpAddress(ipAddress, IcanhazipUri);
+                await this.ReportIpAddress(ipAddress, IcanhazipUri);
                 return true;
             }
         }
@@ -92,7 +114,7 @@ public partial class PublicIPMachine : Machine<Identifier>
                     return false;
                 }
 
-                this.ReportIpAddress(ipAddress, DynDnsUri);
+                await this.ReportIpAddress(ipAddress, DynDnsUri);
                 return true;
             }
         }
@@ -103,4 +125,7 @@ public partial class PublicIPMachine : Machine<Identifier>
     }
 
     private ILogger? logger;
+    private Data? data;
+    private NetControl netControl;
+    private LPBase lpBase;
 }

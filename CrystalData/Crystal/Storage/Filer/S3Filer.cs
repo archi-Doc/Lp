@@ -1,15 +1,15 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-// using Amazon.S3;
-// using Amazon.S3.Model;
+using Amazon.S3;
+using Amazon.S3.Model;
 
 #pragma warning disable SA1124 // Do not use regions
 
 namespace CrystalData.Filer;
 
-/*[TinyhandObject(ExplicitKeyOnly = true)]
+[TinyhandObject(ExplicitKeyOnly = true)]
 internal partial class S3Filer : TaskWorker<FilerWork>, IFiler
-{
+{// Vault: S3Bucket/BucketName "AccessKeyId=SecretAccessKey"
     private const int DefaultConcurrentTasks = 4;
     private const string WriteTestFile = "Write.test";
 
@@ -311,4 +311,4 @@ TryWrite:
             return $"{this.path}/{file}";
         }
     }
-}*/
+}
