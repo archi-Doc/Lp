@@ -3,12 +3,12 @@
 namespace CrystalData.Filer;
 
 [TinyhandUnion(0, typeof(LocalFiler))]
-// [TinyhandUnion(1, typeof(S3Filer))]
+[TinyhandUnion(1, typeof(S3Filer))]
 internal partial interface IFiler
 {
     string FilerPath { get; }
 
-    Task<CrystalResult> PrepareAndCheck(StorageControl storage);
+    Task<CrystalResult> PrepareAndCheck(StorageControl storage, bool newStorage);
 
     Task Terminate();
 
@@ -23,18 +23,18 @@ internal partial interface IFiler
 
     Task<CrystalMemoryOwnerResult> ReadAsync(string path, long offset, int length, TimeSpan timeToWait);
 
+    Task<CrystalMemoryOwnerResult> ReadAsync(string path, long offset, int length)
+        => this.ReadAsync(path, offset, length, TimeSpan.MinValue);
+
     Task<CrystalResult> WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait);
+
+    Task<CrystalResult> WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
+        => this.WriteAsync(path, offset, dataToBeShared, TimeSpan.MinValue);
 
     Task<CrystalResult> DeleteAsync(string path, TimeSpan timeToWait);
 
-    Task<CrystalResult> DeleteAllAsync();
-
-    /*Task<CrystalMemoryOwnerResult> ReadAsync(string path, int sizeToRead)
-        => this.ReadAsync(path, sizeToRead, TimeSpan.MinValue);
-
-    Task<CrystalResult> WriteAsync(string path, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
-        => this.WriteAsync(path, dataToBeShared, TimeSpan.MinValue);
-
     Task<CrystalResult> DeleteAsync(string path)
-        => this.DeleteAsync(path, TimeSpan.MinValue);*/
+        => this.DeleteAsync(path);
+
+    Task<CrystalResult> DeleteAllAsync();
 }

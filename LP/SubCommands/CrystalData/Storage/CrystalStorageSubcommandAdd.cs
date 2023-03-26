@@ -1,8 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using CrystalData.Filer;
 using CrystalData.Results;
 using SimpleCommandLine;
-using static SimpleCommandLine.SimpleParser;
 
 namespace LP.Subcommands.CrystalData;
 
@@ -30,7 +30,7 @@ public class CrystalStorageSubcommandAdd : ISimpleCommandAsync<CrystalStorageOpt
         }
         else if (options.Filer == "s3")
         {
-            await this.AddLocal(options, args);
+            await this.AddS3(options, args);
         }
         else
         {
@@ -42,16 +42,58 @@ public class CrystalStorageSubcommandAdd : ISimpleCommandAsync<CrystalStorageOpt
     {
         this.userInterfaceService.WriteLine(HashedString.Get(Hashed.Storage.CreateLocal));
 
+EnterPath:
         var path = await this.userInterfaceService.RequestString(true, Hashed.Storage.EnterPath);
         if (string.IsNullOrEmpty(path))
         {
             return;
         }
 
-        var result = this.crystal.Storage.AddStorage_SimpleLocal(path, options.capacityInBytes);
-        if (result.Result == AddStorageResult.Success)
+        var resultCheck = LocalFiler.Check(this.crystal.Storage, path);
+        if (resultCheck != AddStorageResult.Success)
         {
-            this.logger.TryGet()?.Log($"Storage added: {result.Id:x4}");
+            this.userInterfaceService.WriteLine(HashedString.FromEnum(resultCheck));
+            goto EnterPath;
+        }
+
+        var resultAdd = this.crystal.Storage.AddStorage_SimpleLocal(path, options.capacityInBytes);
+        if (resultAdd.Result == AddStorageResult.Success)
+        {
+            this.logger.TryGet()?.Log($"Storage added: {resultAdd.Id:x4}");
+            this.userInterfaceService.WriteLine();
+            await this.CrystalDirSubcommandLs.RunAsync(Array.Empty<string>());
+        }
+    }
+
+    private async Task AddS3(CrystalStorageOptionsAdd options, string[] args)
+    {
+        this.userInterfaceService.WriteLine(HashedString.Get(Hashed.Storage.CreateS3));
+
+EnterBucket:
+        var bucket = await this.userInterfaceService.RequestString(true, Hashed.Storage.EnterBucket);
+        if (string.IsNullOrEmpty(bucket))
+        {
+            return;
+        }
+
+        var resultCheck = S3Filer.Check(this.crystal.Storage, bucket, string.Empty);
+        if (resultCheck != AddStorageResult.Success)
+        {
+            this.userInterfaceService.WriteLine(HashedString.FromEnum(resultCheck));
+            goto EnterBucket;
+        }
+
+// EnterPath:
+        var path = await this.userInterfaceService.RequestString(true, Hashed.Storage.EnterPath);
+        if (string.IsNullOrEmpty(path))
+        {
+            return;
+        }
+
+        var resultAdd = this.crystal.Storage.AddStorage_SimpleS3(bucket, path, options.capacityInBytes);
+        if (resultAdd.Result == AddStorageResult.Success)
+        {
+            this.logger.TryGet()?.Log($"Storage added: {resultAdd.Id:x4}");
             this.userInterfaceService.WriteLine();
             await this.CrystalDirSubcommandLs.RunAsync(Array.Empty<string>());
         }

@@ -53,20 +53,22 @@ public sealed class StorageControl
             capacity = CrystalOptions.DefaultDirectoryCapacity;
         }
 
-        if (path.EndsWith('\\'))
-        {
-            path = path.Substring(0, path.Length - 1);
-        }
-
+        path = path.TrimEnd('\\');
         if (File.Exists(path))
         {
-            return (AddStorageResult.FileExists, 0);
+            return (AddStorageResult.WriteError, 0);
         }
 
         var relative = Path.GetRelativePath(this.Options.RootPath, path);
         if (!relative.StartsWith("..\\"))
         {
             path = relative;
+        }
+
+        var result = LocalFiler.Check(this, path);
+        if (result != AddStorageResult.Success)
+        {
+            return (result, 0);
         }
 
         ushort id;
@@ -84,10 +86,10 @@ public sealed class StorageControl
             storageAndFiler.Storage = storage;
             storageAndFiler.Filer = filer;
 
-            if (storageAndFiler.PrepareAndCheck(this).Result != CrystalResult.Success)
+            if (storageAndFiler.PrepareAndCheck(this, true).Result != CrystalResult.Success)
             {
-                // storageAndFiler.Terminate().Wait();
-                // return (AddStorageResult.DuplicatePath, 0);
+                storageAndFiler.Terminate().Wait();
+                return (AddStorageResult.DuplicatePath, 0);
             }
 
             storageAndFiler.Goshujin = this.storageAndFilers;
@@ -96,58 +98,45 @@ public sealed class StorageControl
         return (AddStorageResult.Success, id);
     }
 
-    public AddStorageResult AddStorage(string path, ushort id = 0, long capacity = CrystalOptions.DefaultDirectoryCapacity)
+    public (AddStorageResult Result, ushort Id) AddStorage_SimpleS3(string bucket, string path, long capacity)
     {
         if (capacity < 0)
         {
             capacity = CrystalOptions.DefaultDirectoryCapacity;
         }
 
-        if (path.EndsWith('\\'))
+        path = path.TrimEnd('\\');
+        var result = S3Filer.Check(this, bucket, path);
+        if (result != AddStorageResult.Success)
         {
-            path = path.Substring(0, path.Length - 1);
+            return (result, 0);
         }
 
-        if (File.Exists(path))
-        {
-            return AddStorageResult.FileExists;
-        }
-
-        var relative = Path.GetRelativePath(this.Options.RootPath, path);
-        if (!relative.StartsWith("..\\"))
-        {
-            path = relative;
-        }
-
+        ushort id;
         lock (this.syncObject)
         {
-            if (id == 0)
-            {
-                id = this.GetFreeStorageId();
-            }
+            id = this.GetFreeStorageId();
 
             var storage = new SimpleStorage();
             storage.StorageCapacity = capacity;
 
-            if (this.storageAndFilers.StorageIdChain.ContainsKey(id))
-            {
-                return AddStorageResult.DuplicateId;
-            }
-
-            var filer = new LocalFiler(path);
-            /*if (this.storageAndFilers.Select(x => x.Storage)?.Pa)
-            {
-                return AddDictionaryResult.DuplicatePath;
-            }*/
+            var filer = new S3Filer(bucket, path);
 
             var storageAndFiler = TinyhandSerializer.Reconstruct<StorageAndFiler>();
             storageAndFiler.StorageId = id;
             storageAndFiler.Storage = storage;
             storageAndFiler.Filer = filer;
+
+            if (storageAndFiler.PrepareAndCheck(this, true).Result != CrystalResult.Success)
+            {
+                storageAndFiler.Terminate().Wait();
+                return (AddStorageResult.DuplicatePath, 0);
+            }
+
             storageAndFiler.Goshujin = this.storageAndFilers;
         }
 
-        return AddStorageResult.Success;
+        return (AddStorageResult.Success, id);
     }
 
     public async Task DeleteAllAsync()
@@ -277,7 +266,7 @@ public sealed class StorageControl
         List<StorageAndFiler>? errorList = null;
         foreach (var x in goshujin.StorageIdChain)
         {
-            if (await x.PrepareAndCheck(this) != CrystalResult.Success)
+            if (await x.PrepareAndCheck(this, false) != CrystalResult.Success)
             {
                 errorList ??= new();
                 errorList.Add(x);
@@ -311,7 +300,7 @@ public sealed class StorageControl
                 storageAndFiler.StorageId = this.GetFreeStorageId();
                 storageAndFiler.Storage = storage;
                 storageAndFiler.Filer = filer;
-                await storageAndFiler.PrepareAndCheck(this).ConfigureAwait(false);
+                await storageAndFiler.PrepareAndCheck(this, true).ConfigureAwait(false);
 
                 storageAndFiler.Goshujin = goshujin;
             }

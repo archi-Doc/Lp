@@ -2,7 +2,7 @@
 
 namespace CrystalData.Filer;
 
-internal class FilerWork : IEquatable<FilerWork>
+public class FilerWork : IEquatable<FilerWork>
 {
     public enum WorkType
     {

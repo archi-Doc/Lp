@@ -2,10 +2,12 @@
 
 #pragma warning disable SA1124 // Do not use regions
 
+using CrystalData.Results;
+
 namespace CrystalData.Filer;
 
 [TinyhandObject(ExplicitKeyOnly = true)]
-internal partial class LocalFiler : TaskWorker<FilerWork>, IFiler
+public partial class LocalFiler : TaskWorker<FilerWork>, IFiler
 {
     public const int DefaultConcurrentTasks = 4;
 
@@ -32,6 +34,17 @@ internal partial class LocalFiler : TaskWorker<FilerWork>, IFiler
         : this()
     {
         this.path = path;
+    }
+
+    public static AddStorageResult Check(StorageControl storageControl, string path)
+    {
+        var result = CheckPath(storageControl, path);
+        if (!result.Success)
+        {
+            return AddStorageResult.WriteError;
+        }
+
+        return AddStorageResult.Success;
     }
 
     public override string ToString()
@@ -202,25 +215,15 @@ DeleteAndExit:
 
     #region IFiler
 
-    async Task<CrystalResult> IFiler.PrepareAndCheck(StorageControl storage)
+    async Task<CrystalResult> IFiler.PrepareAndCheck(StorageControl storage, bool newStorage)
     {
-        try
-        {
-            if (Path.IsPathRooted(this.path))
-            {
-                this.rootedPath = this.path;
-            }
-            else
-            {
-                this.rootedPath = Path.Combine(storage.Options.RootPath, this.path);
-            }
-
-            Directory.CreateDirectory(this.rootedPath);
-        }
-        catch
+        var result = CheckPath(storage, this.path);
+        if (!result.Success)
         {
             return CrystalResult.WriteError;
         }
+
+        this.rootedPath = result.RootedPath;
 
         if (storage.Options.EnableLogger)
         {
@@ -278,6 +281,30 @@ DeleteAndExit:
     }
 
     #endregion
+
+    private static (bool Success, string RootedPath) CheckPath(StorageControl storageControl, string path)
+    {
+        string rootedPath = string.Empty;
+        try
+        {
+            if (Path.IsPathRooted(path))
+            {
+                rootedPath = path;
+            }
+            else
+            {
+                rootedPath = Path.Combine(storageControl.Options.RootPath, path);
+            }
+
+            Directory.CreateDirectory(rootedPath);
+            return (true, rootedPath);
+        }
+        catch
+        {
+        }
+
+        return (false, rootedPath);
+    }
 
     private string GetRootedPath(FilerWork work)
     {

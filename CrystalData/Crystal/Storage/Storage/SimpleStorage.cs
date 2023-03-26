@@ -39,10 +39,15 @@ internal partial class SimpleStorage : IStorage
 
     #region IStorage
 
-    async Task<CrystalResult> IStorage.PrepareAndCheck(StorageControl storage, IFiler filer)
+    async Task<CrystalResult> IStorage.PrepareAndCheck(StorageControl storage, IFiler filer, bool newStorage)
     {
         this.storageControl = storage;
         this.filer = filer;
+
+        if (newStorage)
+        {
+            return CrystalResult.Success;
+        }
 
         var hash = await HashHelper.TryLoadFarmHash(this.filer, SimpleStorageHash).ConfigureAwait(false);
 

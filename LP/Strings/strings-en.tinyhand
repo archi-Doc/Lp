@@ -82,8 +82,9 @@ Subcommands = {
 Storage =
 {
     CreateLocal = "Creating storage with local filer"
-    CreateS3 = "Creating storage with s3 filer"
+    CreateS3 = "Creating storage with S3 filer"
     EnterPath = "Enter storage path"
+    EnterBucket = "Enter S3 bucket name"
     InvalidFiler = "Filer type '{0}' is invalid"
     InvalidId = "Storage with specified Id '{0}' is not found"
     DeleteConfirm = "Are you sure you want to delete the storage"
@@ -92,4 +93,12 @@ Storage =
 
 CrystalResult = {
     NoDirectory = "Directory not found"
+}
+
+AddStorageResult = {
+    Success = "Success"
+    Running = ""
+    DuplicateId = "Duplicate id is found"
+    DuplicatePath = "Duplicate path is found"
+    WriteError = "Could not write to the path"
 }
