@@ -32,6 +32,10 @@ public class Program
             {
                 context.AddSingleton<TestClass>();
                 context.Services.Add(ServiceDescriptor.Singleton(typeof(ManualClass), provider => provider.GetRequiredService<ICrystal<ManualClass>>().Object));
+            })
+            .Crystalize(context =>
+            {
+                context.TryAdd<ManualClass>(Crystalization.None);
             });
 
         var unit = builder.Build();

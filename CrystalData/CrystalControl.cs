@@ -14,6 +14,35 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CrystalData;
 
+internal class UnitCrystalizeContext : IUnitCrystalizeContext
+{
+    void IUnitCrystalizeContext.TryAdd<T>(CrystalPolicy crystalPolicy)
+        => this.typeToCrystalPolicy.TryAdd(typeof(T), crystalPolicy);
+
+    void IUnitCrystalizeContext.TryAdd<T>(Crystalization crystalization)
+        => this.typeToCrystalPolicy.TryAdd(typeof(T), new CrystalPolicy() with { Crystalization = crystalization, });
+
+    internal void Configure(IUnitConfigurationContext contextj)
+    {
+        this.typeToCrystalPolicy.
+        foreach (var x in this.typeToCrystalPolicy)
+        {
+            context.Services.Add(ServiceDescriptor.Singleton(typeof(ManualClass), provider => provider.GetRequiredService<ICrystal<ManualClass>>().Object));
+        }
+    }
+
+    private ThreadsafeTypeKeyHashTable<CrystalPolicy> typeToCrystalPolicy = new();
+}
+
+public interface IUnitCrystalizeContext
+{
+    void TryAdd<T>(CrystalPolicy crystalPolicy)
+        where T : ITinyhandSerialize<T>, ITinyhandReconstruct<T>;
+
+    void TryAdd<T>(Crystalization crystalization)
+        where T : ITinyhandSerialize<T>, ITinyhandReconstruct<T>;
+}
+
 public class CrystalControl
 {
     public class Builder : UnitBuilder<Unit>
@@ -30,13 +59,31 @@ public class CrystalControl
                 context.AddSingleton<CrystalControl>();
                 context.AddSingleton<CrystalOptions>();
                 context.AddSingleton<IStorageKey, StorageKey>();
+
+                // Crystalize
+                var crystalizeContext = new UnitCrystalizeContext();
+                foreach (var x in this.crystalizeActions)
+                {
+                    x(crystalizeContext);
+                }
+
+                crystalizeContext.Configure(context);
             });
         }
 
-        public void Crystalize()
+        public new Builder Configure(Action<IUnitConfigurationContext> configureDelegate)
         {
-            this.
+            base.Configure(configureDelegate);
+            return this;
         }
+
+        public Builder Crystalize(Action<IUnitCrystalizeContext> @delegate)
+        {
+            this.crystalizeActions.Add(@delegate);
+            return this;
+        }
+
+        private List<Action<IUnitCrystalizeContext>> crystalizeActions = new();
     }
 
     public class Unit : BuiltUnit
