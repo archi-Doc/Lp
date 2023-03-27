@@ -1,169 +1,55 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+global using Arc.Threading;
+global using CrystalData;
+global using LP;
 using Arc.Unit;
-using LP;
 using Microsoft.Extensions.DependencyInjection;
+using SimpleCommandLine;
 
 namespace Sandbox;
 
-internal class FileLoggerOptions2 : FileLoggerOptions
-{
-}
-
-internal class ConsoleAndFileLogger : ILogOutput
-{
-    public ConsoleAndFileLogger(ConsoleLogger consoleLogger, FileLogger<FileLoggerOptions> fileLogger, FileLogger<FileLoggerOptions2> fileLogger2)
-    {
-        this.consoleLogger = consoleLogger;
-        this.fileLogger = fileLogger;
-        this.fileLogger2 = fileLogger2;
-    }
-
-    public void Output(LogOutputParameter param)
-    {
-        this.consoleLogger.Output(param);
-        this.fileLogger.Output(param);
-        this.fileLogger2.Output(param);
-    }
-
-    private ConsoleLogger consoleLogger;
-    private FileLogger<FileLoggerOptions> fileLogger;
-    private FileLogger<FileLoggerOptions2> fileLogger2;
-}
-
-internal class TestLogFilter : ILogFilter
-{
-    public ILog? Filter(LogFilterParameter param)
-    {
-        if (param.LogSourceType == typeof(object))
-        {
-            return null;
-        }
-        else if (param.LogSourceType == typeof(int))
-        {
-            if (param.EventId != 0)
-            {
-                return null;
-            }
-
-            return param.Context.TryGet<Arc.Unit.EmptyLogger>();
-        }
-
-        return param.OriginalLogger;
-    }
-}
-
-internal class AboveInformationFilter : ILogFilter
-{
-    public ILog? Filter(LogFilterParameter param)
-    {
-        if (param.LogLevel >= LogLevel.Information)
-        {
-            return param.OriginalLogger;
-        }
-
-        return null;
-    }
-}
-
-internal class Program
+public class Program
 {
     public static async Task Main(string[] args)
     {
-        Console.WriteLine("Sandbox");
+        AppDomain.CurrentDomain.ProcessExit += (s, e) =>
+        {// Console window closing or process terminated.
+            ThreadCore.Root.Terminate(); // Send a termination signal to the root.
+            ThreadCore.Root.TerminationEvent.WaitOne(2000); // Wait until the termination process is complete (#1).
+        };
 
-        await Test(args);
-    }
+        Console.CancelKeyPress += (s, e) =>
+        {// Ctrl+C pressed
+            e.Cancel = true;
+            ThreadCore.Root.Terminate(); // Send a termination signal to the root.
+        };
 
-    public static async Task Test(string[] args)
-    {
-        var builder = new UnitBuilder() // new LP.Logging.LPLogger.Builder()
-            .Preload(context =>
-            {
-                var b = context.Arguments.ContainsOption("help");
-                b = context.Arguments.TryGetOption("help", out var value);
-            })
+        var builder = new CrystalControl.Builder()
             .Configure(context =>
             {
-                // Loggers
-                context.AddSingleton<ConsoleAndFileLogger>();
-
-                // Options
-                context.AddSingleton<FileLoggerOptions2>();
-
-                // Filters
-                context.AddSingleton<TestLogFilter>();
-                context.AddSingleton<AboveInformationFilter>();
-
-                // context.ClearLoggerResolver();
-                context.AddLoggerResolver(x =>
-                {
-                    if (x.LogLevel <= LogLevel.Debug)
-                    {
-                        x.SetOutput<Arc.Unit.FileLogger<FileLoggerOptions>>();
-                        return;
-                    }
-
-                    x.SetOutput<ConsoleAndFileLogger>();
-                    // x.SetOutput<ConsoleLogger>();
-                    // x.SetFilter<TestLogFilter>();
-                    // x.SetFilter<AboveInformationFilter>();
-                });
-
-                // context.Services.Add(ServiceDescriptor.Singleton(typeof(LoggerOption), new Object()));
-            })
-            .SetupOptions<FileLoggerOptions>((context, options) =>
-            {
-                options.Path = Path.Combine(context.RootDirectory, "Logs/Logs.txt");
+                context.AddSingleton<TestClass>();
             });
-            /*.ConfigureOptions<FileLoggerOptions2>(options =>
-            {
-                options.Path = "Log2.txt";
-            });*/
 
-        var unit = builder.Build("helP me -heLP 234 -roOt \"test\"");
+        var unit = builder.Build();
 
-        /*var options = unit.Context.ServiceProvider.GetRequiredService<ConsoleLoggerOptions>();
-        options.MaxQueue = 0;
-        options.Formatter.EnableColor = false;
-        options.Formatter.TimestampLocal = false;*/
+        var tc = unit.Context.ServiceProvider.GetRequiredService<TestClass>();
+        tc.Test1();
 
-        var options2 = unit.Context.ServiceProvider.GetRequiredService<FileLoggerOptions2>();
-        options2.Path = "LogLog.txt";
+        /*var param = new CrystalControl.Unit.Param();
 
-        var logger = unit.Context.ServiceProvider.GetRequiredService<UnitLogger>();
-        logger.Get<Program>(LogLevel.Warning).Log("Test");
-        logger.Get<object>(LogLevel.Error).Log("Test");
-        logger.Get<Program>(LogLevel.Fatal).Log("Test2");
-        logger.Get<Program>().Log(1, "test 1");
-
-        Thread.Sleep(10);
-        logger.Get<DefaultLog>().Log("default");
-        Thread.Sleep(20);
-        logger.Get<DefaultLog>().Log(2, "default2");
-        Thread.Sleep(30);
-        logger.Get<DefaultLog>(LogLevel.Warning).Log(2, "default2");
-
-        var l2 = unit.Context.ServiceProvider.GetRequiredService<ILog>();
-        l2.Log(99, "GetRequiredService");
-
-        var l3 = unit.Context.ServiceProvider.GetRequiredService<ILogger<int>>();
-        l3.TryGet()?.Log(-1, "GetRequiredService");
-        l3 = unit.Context.ServiceProvider.GetRequiredService<ILogger<int>>();
-        l3.TryGet()?.Log(-1, "GetRequiredService");
-        l3.TryGet()?.Log(0, "GetRequiredService");
-        logger.Get<int>(LogLevel.Warning).Log("aaa");
-
-        unit.Context.ServiceProvider.GetService<FileLogger<FileLoggerOptions>>();
-        unit.Context.ServiceProvider.GetService<FileLogger<FileLoggerOptions>>();
-
-        for (var i = 0; i < 100; i++)
+        var parserOptions = SimpleParserOptions.Standard with
         {
-            logger.Get<Program>(LogLevel.Debug).Log(i, $"test {i}");
-        }
+            ServiceProvider = unit.Context.ServiceProvider,
+            RequireStrictCommandName = false,
+            RequireStrictOptionName = true,
+        };
 
-        await logger.Flush();
+        await SimpleParser.ParseAndRunAsync(unit.Context.Commands, args, parserOptions); // Main process*/
 
-        // ThreadCore.Root.Terminate();
+        ThreadCore.Root.Terminate();
+        await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
+        unit.Context.ServiceProvider.GetService<UnitLogger>()?.FlushAndTerminate();
+        ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).
     }
 }

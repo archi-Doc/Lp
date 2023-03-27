@@ -1,15 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-global using System;
-global using System.Threading.Tasks;
 global using Arc.Threading;
 global using CrystalData;
 global using LP;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleCommandLine;
-
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
 
 namespace CrystalDataTest;
 
