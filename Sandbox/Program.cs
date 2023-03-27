@@ -2,10 +2,12 @@
 
 global using Arc.Threading;
 global using CrystalData;
+global using Tinyhand;
 global using LP;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleCommandLine;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Sandbox;
 
@@ -29,12 +31,13 @@ public class Program
             .Configure(context =>
             {
                 context.AddSingleton<TestClass>();
+                context.Services.Add(ServiceDescriptor.Singleton(typeof(ManualClass), provider => provider.GetRequiredService<ICrystal<ManualClass>>().Object));
             });
 
         var unit = builder.Build();
 
         var tc = unit.Context.ServiceProvider.GetRequiredService<TestClass>();
-        tc.Test1();
+        await tc.Test1();
 
         /*var param = new CrystalControl.Unit.Param();
 
