@@ -11,7 +11,7 @@ internal partial interface IStorage
 
     long StorageUsage { get; }
 
-    Task<CrystalResult> PrepareAndCheck(StorageControl storage, IFiler filer);
+    Task<CrystalResult> PrepareAndCheck(StorageControl storage, IFiler filer, bool newStorage);
 
     Task Save();
 
@@ -21,16 +21,16 @@ internal partial interface IStorage
 
     Task<CrystalMemoryOwnerResult> GetAsync(ref ulong fileId, TimeSpan timeToWait);
 
+    Task<CrystalMemoryOwnerResult> GetAsync(ref ulong fileId)
+        => this.GetAsync(ref fileId, TimeSpan.MinValue);
+
     Task<CrystalResult> PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared, TimeSpan timeToWait);
-
-    Task<CrystalResult> DeleteAsync(ref ulong fileId, TimeSpan timeToWait);
-
-    /*Task<CrystalMemoryOwnerResult> GetAsync(ulong fileId)
-        => this.GetAsync(fileId, TimeSpan.MinValue);
 
     Task<CrystalResult> PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
         => this.PutAsync(ref fileId, memoryToBeShared, TimeSpan.MinValue);
 
+    Task<CrystalResult> DeleteAsync(ref ulong fileId, TimeSpan timeToWait);
+
     Task<CrystalResult> DeleteAsync(ref ulong fileId)
-        => this.DeleteAsync(ref fileId, TimeSpan.MinValue);*/
+        => this.DeleteAsync(ref fileId, TimeSpan.MinValue);
 }

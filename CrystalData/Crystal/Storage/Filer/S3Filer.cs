@@ -1,15 +1,16 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-// using Amazon.S3;
-// using Amazon.S3.Model;
+using Amazon.S3;
+using Amazon.S3.Model;
+using CrystalData.Results;
 
 #pragma warning disable SA1124 // Do not use regions
 
 namespace CrystalData.Filer;
 
-/*[TinyhandObject(ExplicitKeyOnly = true)]
-internal partial class S3Filer : TaskWorker<FilerWork>, IFiler
-{
+[TinyhandObject(ExplicitKeyOnly = true)]
+public partial class S3Filer : TaskWorker<FilerWork>, IFiler
+{// Vault: S3Bucket/BucketName "AccessKeyId=SecretAccessKey"
     private const int DefaultConcurrentTasks = 4;
     private const string WriteTestFile = "Write.test";
 
@@ -36,12 +37,17 @@ internal partial class S3Filer : TaskWorker<FilerWork>, IFiler
         : this()
     {
         this.bucket = bucket;
-        this.path = path;
+        this.path = path.TrimEnd('/');
+    }
 
-        if (this.path.EndsWith('/'))
+    public static AddStorageResult Check(StorageControl storageControl, string bucket, string path)
+    {
+        if (!storageControl.Key.TryGetKey(bucket, out var accessKeyPair))
         {
-            this.path += "/";
+            return AddStorageResult.NoStorageKey;
         }
+
+        return AddStorageResult.Success;
     }
 
     public override string ToString()
@@ -179,7 +185,7 @@ TryWrite:
 
     #region IFiler
 
-    async Task<CrystalResult> IFiler.PrepareAndCheck(StorageControl storage)
+    async Task<CrystalResult> IFiler.PrepareAndCheck(StorageControl storage, bool newStorage)
     {
         this.client?.Dispose();
         if (!storage.Key.TryGetKey(this.bucket, out var accessKeyPair))
@@ -203,7 +209,7 @@ TryWrite:
             var response = await this.client.PutObjectAsync(request).ConfigureAwait(false);
             if (response.HttpStatusCode != System.Net.HttpStatusCode.OK)
             {
-                return CrystalResult.NoFiler;
+                return CrystalResult.WriteError;
             }
         }
 
@@ -311,4 +317,4 @@ TryWrite:
             return $"{this.path}/{file}";
         }
     }
-}*/
+}

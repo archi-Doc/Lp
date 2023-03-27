@@ -41,7 +41,7 @@ internal partial class StorageAndFiler
 
     #endregion
 
-    public async Task<CrystalResult> PrepareAndCheck(StorageControl storageControl)
+    public async Task<CrystalResult> PrepareAndCheck(StorageControl storageControl, bool newStorage)
     {
         if (this.Filer == null)
         {
@@ -53,7 +53,7 @@ internal partial class StorageAndFiler
             this.Filer = filer;
         }
 
-        var result = await this.Filer.PrepareAndCheck(storageControl).ConfigureAwait(false);
+        var result = await this.Filer.PrepareAndCheck(storageControl, newStorage).ConfigureAwait(false);
         if (result != CrystalResult.Success)
         {
             return result;
@@ -69,7 +69,7 @@ internal partial class StorageAndFiler
             this.Storage = storage;
         }
 
-        result = await this.Storage.PrepareAndCheck(storageControl, this.Filer).ConfigureAwait(false);
+        result = await this.Storage.PrepareAndCheck(storageControl, this.Filer, newStorage).ConfigureAwait(false);
         if (result != CrystalResult.Success)
         {
             return result;

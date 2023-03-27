@@ -86,6 +86,45 @@ public class LPBase : ILogInformation
         return file;
     }
 
+    public async Task<T?> TryLoadUtf8Async<T>(string filename)
+    {
+        var path = Path.Combine(this.DataDirectory, filename);
+        try
+        {
+            if (File.Exists(path))
+            {
+                var bytes = await File.ReadAllBytesAsync(path).ConfigureAwait(false);
+                return TinyhandSerializer.DeserializeFromUtf8<T>(bytes);
+            }
+        }
+        catch
+        {
+        }
+
+        return default;
+    }
+
+    public async Task<bool> SaveUtf8Async<T>(string filename, T obj)
+    {
+        var path = Path.Combine(this.DataDirectory, filename);
+        try
+        {
+            if (Path.GetDirectoryName(path) is { } directory)
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            var bytes = TinyhandSerializer.SerializeToUtf8(obj);
+            await File.WriteAllBytesAsync(path, bytes);
+            return true;
+        }
+        catch
+        {
+        }
+
+        return false;
+    }
+
     public void Initialize(LPOptions options, bool isConsole, string defaultMode)
     {
         this.Options = options;

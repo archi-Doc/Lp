@@ -19,7 +19,7 @@ internal static class HashHelper
     public static async Task<ulong> TryLoadFarmHash(IFiler filer, string path)
     {
         ulong hash = 0;
-        var result = await filer.ReadAsync(path, 0, -1, TimeSpan.MinValue).ConfigureAwait(false);
+        var result = await filer.ReadAsync(path, 0, -1).ConfigureAwait(false);
         if (!result.IsSuccess)
         {
             return hash;

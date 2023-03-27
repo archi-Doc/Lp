@@ -23,7 +23,7 @@ public abstract class IUserInterfaceService : IConsoleService
 
     public abstract Task<bool?> RequestYesOrNo(string? description);
 
-    public abstract Task<string?> RequestString(string? description);
+    public abstract Task<string?> RequestString(bool enterToExit, string? description);
 
     public abstract Task<string?> RequestPassword(string? description);
 

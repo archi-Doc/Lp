@@ -8,5 +8,6 @@ public enum AddStorageResult
     Running,
     DuplicateId,
     DuplicatePath,
-    FileExists,
+    WriteError,
+    NoStorageKey,
 }

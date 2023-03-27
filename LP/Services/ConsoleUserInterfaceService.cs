@@ -90,8 +90,8 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
         }*/
     }
 
-    public override Task<string?> RequestString(string? description)
-        => this.TaskRunAndWaitAsync(() => this.RequestStringInternal(description));
+    public override Task<string?> RequestString(bool enterToExit, string? description)
+        => this.TaskRunAndWaitAsync(() => this.RequestStringInternal(enterToExit, description));
 
     public override Task<bool?> RequestYesOrNo(string? description)
         => this.TaskRunAndWaitAsync(() => this.RequestYesOrNoInternal(description));
@@ -189,7 +189,7 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
         return password;
     }
 
-    private async Task<string?> RequestStringInternal(string? description)
+    private async Task<string?> RequestStringInternal(bool enterToExit, string? description)
     {
         if (!string.IsNullOrEmpty(description))
         {
@@ -206,7 +206,7 @@ internal class ConsoleUserInterfaceService : IUserInterfaceService
             }
 
             input = input.CleanupInput();
-            if (input == string.Empty)
+            if (input == string.Empty && !enterToExit)
             {
                 continue;
             }

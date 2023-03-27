@@ -75,6 +75,32 @@ public static class Mics
         return mics;
     }
 
+    /// <summary>
+    /// Determines whether the target mics is in range.<br/>
+    /// GetUtcNow() - period &lt; mics &lt;= GetUtcNow().
+    /// </summary>
+    /// <param name="mics">The target mics.</param>
+    /// <param name="period">The period of time in mics.</param>
+    /// <returns><see langword="true"/>; The target mics is in range.</returns>
+    public static bool IsInPeriodToUtcNow(long mics, long period)
+    {
+        var current = GetUtcNow();
+        return (current - period) < mics && mics < current;
+    }
+
+    /// <summary>
+    /// Determines whether the target mics is in range.<br/>
+    /// GetUtcNow() &lt;= mics &lt; GetUtcNow() + period.
+    /// </summary>
+    /// <param name="mics">The target mics.</param>
+    /// <param name="period">The period of time in mics.</param>
+    /// <returns><see langword="true"/>; The target mics is in range.</returns>
+    public static bool IsInPeriodFromUtcNow(long mics, long period)
+    {
+        var current = GetUtcNow();
+        return current <= mics && mics < current + period;
+    }
+
     public static long FromDays(double days) => (long)(days * MicsPerDay);
 
     public static long FromHours(double hours) => (long)(hours * MicsPerHour);
