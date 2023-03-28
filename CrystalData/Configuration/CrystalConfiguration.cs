@@ -12,8 +12,11 @@ public enum Crystalization
 
 public record CrystalConfiguration
 {
+    public static readonly CrystalConfiguration Default = new();
+
     public CrystalConfiguration()
     {
+        this.Crystalization = Crystalization.None;
     }
 
     public CrystalConfiguration(Crystalization crystalization, FilerConfiguration fileConfiguration)
@@ -23,6 +26,7 @@ public record CrystalConfiguration
 
     public CrystalConfiguration(TimeSpan interval, FilerConfiguration fileConfiguration)
     {
+        this.Crystalization = Crystalization.Periodic;
         this.Interval = interval;
     }
 

@@ -27,8 +27,5 @@ public class CrystalNotRegistered<T> : ICrystal<T>
 
     object ICrystalBase.Object => throw new NotImplementedException();
 
-    void ICrystal<T>.Configure(CrystalConfiguration configuration)
-    {
-        throw new NotImplementedException();
-    }
+    void ICrystal<T>.Configure(CrystalConfiguration configuration) => throw new NotImplementedException();
 }

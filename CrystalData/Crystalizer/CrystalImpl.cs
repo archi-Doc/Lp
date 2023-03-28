@@ -9,12 +9,20 @@ internal class CrystalImpl<T> : ICrystal<T>
 {
     internal CrystalImpl(Crystalizer crystalizer)
     {
-        this.crystalizer = crystalizer;
+        this.Crystalizer = crystalizer;
+        this.Configuration = CrystalConfiguration.Default;
     }
 
-    public void Setup()
-    {
-    }
+    #region FieldAndProperty
+
+    public Crystalizer Crystalizer { get; }
+
+    public CrystalConfiguration Configuration { get; }
+
+    private object syncObject = new();
+    private T? obj;
+
+    #endregion
 
     object ICrystalBase.Object => ((ICrystal<T>)this).Object;
 
@@ -22,11 +30,12 @@ internal class CrystalImpl<T> : ICrystal<T>
     {
         get
         {
-            if (this.obj == null)
+            if (this.obj != null)
             {
-                this.PrepareObject();
+                return this.obj;
             }
 
+            this.PrepareObject();
             return this.obj;
         }
     }
@@ -38,15 +47,14 @@ internal class CrystalImpl<T> : ICrystal<T>
     [MemberNotNull(nameof(obj))]
     private void PrepareObject()
     {
-        if (this.obj != null)
+        lock (this.syncObject)
         {
-            return;
+            if (this.obj != null)
+            {
+                return;
+            }
+
+            TinyhandSerializer.ReconstructObject<T>(ref this.obj);
         }
-
-        TinyhandSerializer.ReconstructObject<T>(ref this.obj);
     }
-
-    private Crystalizer crystalizer;
-    private object syncObject = new();
-    private T? obj;
 }
