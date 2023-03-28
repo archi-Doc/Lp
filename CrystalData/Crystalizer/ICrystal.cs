@@ -7,6 +7,10 @@ public interface ICrystal
     object Object { get; }
 
     public void Configure(CrystalConfiguration configuration);
+
+    Task<CrystalStartResult> PrepareAndLoad(CrystalStartParam? param = null);
+
+    Task Save();
 }
 
 public interface ICrystal<T> : ICrystal
@@ -28,4 +32,6 @@ public class CrystalNotRegistered<T> : ICrystal<T>
     object ICrystal.Object => throw new NotImplementedException();
 
     void ICrystal.Configure(CrystalConfiguration configuration) => throw new NotImplementedException();
+
+    Task<CrystalStartResult> ICrystal.PrepareAndLoad(CrystalStartParam? param) => throw new NotImplementedException();
 }

@@ -47,6 +47,15 @@ internal class CrystalImpl<T> : ICrystal<T>
         this.Configuration = configuration;
     }
 
+    async Task<CrystalStartResult> ICrystal.PrepareAndLoad(CrystalStartParam? param)
+    {
+        return CrystalStartResult.Success;
+    }
+
+    async Task ICrystal.Save()
+    {
+    }
+
     #endregion
 
     [MemberNotNull(nameof(obj))]

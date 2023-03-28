@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Collections.Concurrent;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
@@ -17,17 +18,43 @@ public class Crystalizer
             crystal.Configure(x.Value);
 
             this.typeToCrystal.TryAdd(x.Key, crystal);
+            this.crystals.TryAdd(crystal, 0);
         }
     }
 
     #region FieldAndProperty
 
-    private ThreadsafeTypeKeyHashTable<object> typeToCrystal = new();
+    private ThreadsafeTypeKeyHashTable<ICrystal> typeToCrystal = new();
+    private ConcurrentDictionary<ICrystal, int> crystals = new();
 
     #endregion
 
-    public async Task PrepareAndLoad()
+    public async Task<CrystalStartResult> PrepareAndLoad(CrystalStartParam? param = null)
     {
+        param ??= CrystalStartParam.Default;
+
+        var crystals = this.crystals.Keys.ToArray();
+        foreach (var x in crystals)
+        {
+            var result = await x.PrepareAndLoad(param).ConfigureAwait(false);
+            if (result != CrystalStartResult.Success)
+            {
+                return result;
+            }
+        }
+
+        return CrystalStartResult.Success;
+    }
+
+    public async Task SaveAndTerminate(CrystalStopParam? param = null)
+    {
+        param ??= CrystalStopParam.Default;
+
+        var crystals = this.crystals.Keys.ToArray();
+        foreach (var x in crystals)
+        {
+            await x.Save().ConfigureAwait(false);
+        }
     }
 
     public ICrystal<T> Create<T>()
@@ -38,7 +65,9 @@ public class Crystalizer
             ThrowTypeNotRegistered(typeof(T));
         }
 
-        return new CrystalImpl<T>(this);
+        var crystal = new CrystalImpl<T>(this);
+        this.crystals.TryAdd(crystal, 0);
+        return crystal;
     }
 
     public ICrystal<T> Get<T>()
