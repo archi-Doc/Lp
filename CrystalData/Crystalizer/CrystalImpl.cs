@@ -16,7 +16,9 @@ internal class CrystalImpl<T> : ICrystal<T>
     {
     }
 
-    public T Object
+    object ICrystalBase.Object => ((ICrystal<T>)this).Object;
+
+    T ICrystal<T>.Object
     {
         get
         {
@@ -27,6 +29,10 @@ internal class CrystalImpl<T> : ICrystal<T>
 
             return this.obj;
         }
+    }
+
+    void ICrystal<T>.Configure(CrystalConfiguration configuration)
+    {
     }
 
     [MemberNotNull(nameof(obj))]

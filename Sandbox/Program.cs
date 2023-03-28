@@ -6,8 +6,6 @@ global using Tinyhand;
 global using LP;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
-using SimpleCommandLine;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Sandbox;
 
@@ -34,7 +32,8 @@ public class Program
             })
             .ConfigureCrystal(context =>
             {
-                context.TryAdd<ManualClass>(new(Crystalization.Manual));
+                context.TryAdd<ManualClass>(new(Crystalization.Manual, new LocalFilerConfiguration(string.Empty, "manual.data")));
+                context.TryAdd<CombinedClass>(new(Crystalization.Periodic, new LocalFilerConfiguration(string.Empty, "combined.data")));
             });
 
         var unit = builder.Build();

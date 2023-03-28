@@ -16,9 +16,14 @@ public record CrystalConfiguration
     {
     }
 
-    public CrystalConfiguration(Crystalization crystalization)
+    public CrystalConfiguration(Crystalization crystalization, FilerConfiguration fileConfiguration)
     {
         this.Crystalization = crystalization;
+    }
+
+    public CrystalConfiguration(TimeSpan interval, FilerConfiguration fileConfiguration)
+    {
+        this.Interval = interval;
     }
 
     public Crystalization Crystalization { get; init; }

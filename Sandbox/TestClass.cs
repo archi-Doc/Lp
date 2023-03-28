@@ -39,6 +39,8 @@ internal class TestClass
     {
         Console.WriteLine("Sandbox test1");
 
+        this.manualCrystal.Configure(new(Crystalization.Manual, new LocalFilerConfiguration(string.Empty, "test")));
+
         var manualClass = this.manualCrystal.Object;
         manualClass.Id = 1;
         Console.WriteLine(manualClass.ToString());

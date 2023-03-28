@@ -6,8 +6,10 @@ public class CrystalizerOptions
 {
     internal CrystalizerOptions(Dictionary<Type, CrystalConfiguration> typeToCrystalConfiguration)
     {
-        this.typeToCrystalConfiguration = typeToCrystalConfiguration;
+        this.TypeToCrystalConfiguration = typeToCrystalConfiguration;
     }
 
-    private Dictionary<Type, CrystalConfiguration> typeToCrystalConfiguration;
+#pragma warning disable SA1401
+    internal Dictionary<Type, CrystalConfiguration> TypeToCrystalConfiguration;
+#pragma warning restore SA1401
 }

@@ -14,13 +14,15 @@ internal class UnitCrystalContext : IUnitCrystalContext
         context.Services.Add(ServiceDescriptor.Singleton(typeof(ICrystal<>), typeof(CrystalImpl<>)));
 
         foreach (var x in this.typeToCrystalConfiguration)
-        {
+        {// This is slow, but it is Singleton anyway.
             // ICrystal<T> => Crystalizer.Get<T>()
-            context.Services.Add(ServiceDescriptor.Singleton(typeof(ICrystal<>).MakeGenericType(x.Key), provider => provider.GetRequiredService<Crystalizer>().GetInternal(x.Key)));
+            context.Services.Add(ServiceDescriptor.Singleton(typeof(ICrystal<>).MakeGenericType(x.Key), provider => provider.GetRequiredService<Crystalizer>().GetCrystal(x.Key)));
 
             // T => Crystalizer.Get<T>().Object
-            // context.Services.Add(ServiceDescriptor.Singleton(x.Key, provider => provider.GetRequiredService(typeof(ICrystal<>).MakeGenericType(x.Key)).Object));
+            context.Services.Add(ServiceDescriptor.Singleton(x.Key, provider => provider.GetRequiredService<Crystalizer>().GetObject(x.Key)));
         }
+
+        context.Services.Add(ServiceDescriptor.Singleton(typeof(ICrystal<>), typeof(CrystalNotRegistered<>)));
 
         var crystalOptions = new CrystalizerOptions(this.typeToCrystalConfiguration);
         context.SetOptions(crystalOptions);
