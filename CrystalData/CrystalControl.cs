@@ -14,35 +14,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CrystalData;
 
-internal class UnitCrystalizeContext : IUnitCrystalizeContext
-{
-    void IUnitCrystalizeContext.TryAdd<T>(CrystalPolicy crystalPolicy)
-        => this.typeToCrystalPolicy.TryAdd(typeof(T), crystalPolicy);
-
-    void IUnitCrystalizeContext.TryAdd<T>(Crystalization crystalization)
-        => this.typeToCrystalPolicy.TryAdd(typeof(T), new CrystalPolicy() with { Crystalization = crystalization, });
-
-    internal void Configure(IUnitConfigurationContext contextj)
-    {
-        this.typeToCrystalPolicy.
-        foreach (var x in this.typeToCrystalPolicy)
-        {
-            context.Services.Add(ServiceDescriptor.Singleton(typeof(ManualClass), provider => provider.GetRequiredService<ICrystal<ManualClass>>().Object));
-        }
-    }
-
-    private ThreadsafeTypeKeyHashTable<CrystalPolicy> typeToCrystalPolicy = new();
-}
-
-public interface IUnitCrystalizeContext
-{
-    void TryAdd<T>(CrystalPolicy crystalPolicy)
-        where T : ITinyhandSerialize<T>, ITinyhandReconstruct<T>;
-
-    void TryAdd<T>(Crystalization crystalization)
-        where T : ITinyhandSerialize<T>, ITinyhandReconstruct<T>;
-}
-
 public class CrystalControl
 {
     public class Builder : UnitBuilder<Unit>
@@ -53,15 +24,13 @@ public class CrystalControl
             this.Configure(context =>
             {
                 // Main services
-                context.AddSingleton<CrystalizerClass>();
-                context.Services.Add(ServiceDescriptor.Singleton(typeof(ICrystal<>), typeof(CrystalImpl<>)));
-
+                context.AddSingleton<Crystalizer>();
                 context.AddSingleton<CrystalControl>();
                 context.AddSingleton<CrystalOptions>();
                 context.AddSingleton<IStorageKey, StorageKey>();
 
                 // Crystalize
-                var crystalizeContext = new UnitCrystalizeContext();
+                var crystalizeContext = new UnitCrystalContext();
                 foreach (var x in this.crystalizeActions)
                 {
                     x(crystalizeContext);
@@ -77,13 +46,13 @@ public class CrystalControl
             return this;
         }
 
-        public Builder Crystalize(Action<IUnitCrystalizeContext> @delegate)
+        public Builder ConfigureCrystal(Action<IUnitCrystalContext> @delegate)
         {
             this.crystalizeActions.Add(@delegate);
             return this;
         }
 
-        private List<Action<IUnitCrystalizeContext>> crystalizeActions = new();
+        private List<Action<IUnitCrystalContext>> crystalizeActions = new();
     }
 
     public class Unit : BuiltUnit

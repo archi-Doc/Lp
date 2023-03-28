@@ -1,24 +1,55 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace CrystalData;
 
-public class CrystalizerClass
-{// tempcode
-    public CrystalizerClass()
+public class Crystalizer
+{
+    public Crystalizer(CrystalizerOptions options)
     {
+        this.options = options;
     }
+
+    private ThreadsafeTypeKeyHashTable<object> typeToCrystal = new();
 
     public ICrystal<T> Create<T>()
         where T : ITinyhandSerialize<T>, ITinyhandReconstruct<T>
-        => new CrystalImpl<T>(this);
+    {
+        if (!this.typeToCrystal.TryGetValue(typeof(T), out _))
+        {
+            ThrowTypeNotRegistered();
+        }
 
-    public bool TryGetPolicy<T>([MaybeNullWhen(false)] out CrystalPolicy policy)
-        => this.typeToCrystalPolicy.TryGetValue(typeof(T), out policy);
+        return new CrystalImpl<T>(this);
+    }
 
-    public void AddPolicy<T>(CrystalPolicy policy)
-        => this.typeToCrystalPolicy.TryAdd(typeof(T), policy);
+    public ICrystal<T> Get<T>()
+        where T : ITinyhandSerialize<T>, ITinyhandReconstruct<T>
+    {
+        if (!this.typeToCrystal.TryGetValue(typeof(T), out var crystal))
+        {
+            ThrowTypeNotRegistered();
+        }
 
-    private ThreadsafeTypeKeyHashTable<CrystalPolicy> typeToCrystalPolicy = new();
+        return (ICrystal<T>)crystal!;
+    }
+
+    internal object GetInternal(Type type)
+    {
+        if (!this.typeToCrystal.TryGetValue(type, out var crystal))
+        {
+            ThrowTypeNotRegistered();
+        }
+
+        return crystal!;
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void ThrowTypeNotRegistered()
+    {
+        throw new InvalidOperationException("The specified data type is not registered. Call ConfigureCrystal() to register.");
+    }
+
+    private CrystalizerOptions options;
 }

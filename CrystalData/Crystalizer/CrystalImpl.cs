@@ -7,7 +7,7 @@ namespace CrystalData;
 internal class CrystalImpl<T> : ICrystal<T>
     where T : ITinyhandSerialize<T>, ITinyhandReconstruct<T>
 {
-    public CrystalImpl(CrystalizerClass crystalizer)
+    internal CrystalImpl(Crystalizer crystalizer)
     {
         this.crystalizer = crystalizer;
     }
@@ -40,7 +40,7 @@ internal class CrystalImpl<T> : ICrystal<T>
         TinyhandSerializer.ReconstructObject<T>(ref this.obj);
     }
 
-    private CrystalizerClass crystalizer;
+    private Crystalizer crystalizer;
     private object syncObject = new();
     private T? obj;
 }

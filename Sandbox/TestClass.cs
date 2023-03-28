@@ -25,7 +25,7 @@ internal partial class CombinedClass
 
 internal class TestClass
 {
-    public TestClass(CrystalizerClass crystalizer, ICrystal<ManualClass> manualCrystal, ICrystal<CombinedClass> combinedCrystal, ManualClass manualClass)
+    public TestClass(Crystalizer crystalizer, ICrystal<ManualClass> manualCrystal, ICrystal<CombinedClass> combinedCrystal, ManualClass manualClass)
     {
         this.crystalizer = crystalizer;
 
@@ -56,7 +56,7 @@ internal class TestClass
         Console.WriteLine(this.manualClass0.ToString());
     }
 
-    private CrystalizerClass crystalizer;
+    private Crystalizer crystalizer;
     private ManualClass manualClass0;
     private ICrystal<ManualClass> manualCrystal;
     private ICrystal<CombinedClass> combinedCrystal;

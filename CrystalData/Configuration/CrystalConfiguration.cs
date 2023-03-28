@@ -10,7 +10,18 @@ public enum Crystalization
     Instant,
 }
 
-public record CrystalPolicy
+public record CrystalConfiguration
 {
+    public CrystalConfiguration()
+    {
+    }
+
+    public CrystalConfiguration(Crystalization crystalization)
+    {
+        this.Crystalization = crystalization;
+    }
+
     public Crystalization Crystalization { get; init; }
+
+    public TimeSpan Interval { get; init; }
 }

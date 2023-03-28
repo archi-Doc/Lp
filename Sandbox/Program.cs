@@ -31,11 +31,10 @@ public class Program
             .Configure(context =>
             {
                 context.AddSingleton<TestClass>();
-                context.Services.Add(ServiceDescriptor.Singleton(typeof(ManualClass), provider => provider.GetRequiredService<ICrystal<ManualClass>>().Object));
             })
-            .Crystalize(context =>
+            .ConfigureCrystal(context =>
             {
-                context.TryAdd<ManualClass>(Crystalization.None);
+                context.TryAdd<ManualClass>(new(Crystalization.Manual));
             });
 
         var unit = builder.Build();
