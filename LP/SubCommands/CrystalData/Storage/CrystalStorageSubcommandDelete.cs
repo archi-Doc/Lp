@@ -7,7 +7,7 @@ namespace LP.Subcommands.CrystalData;
 [SimpleCommand("delete", Description = "Delete storage.")]
 public class CrystalStorageSubcommandDelete : ISimpleCommandAsync<CrystalStorageOptionsDelete>
 {
-    public CrystalStorageSubcommandDelete(ILogger<CrystalStorageSubcommandAdd> logger, IUserInterfaceService userInterfaceService, CrystalControl crystalControl, ICrystal crystal, CrystalStorageSubcommandLs crystalDirSubcommandLs)
+    public CrystalStorageSubcommandDelete(ILogger<CrystalStorageSubcommandAdd> logger, IUserInterfaceService userInterfaceService, CrystalControl crystalControl, ICrystalData crystal, CrystalStorageSubcommandLs crystalDirSubcommandLs)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
@@ -44,7 +44,7 @@ public class CrystalStorageSubcommandDelete : ISimpleCommandAsync<CrystalStorage
     private ILogger<CrystalStorageSubcommandAdd> logger;
     private IUserInterfaceService userInterfaceService;
     private CrystalControl crystalControl;
-    private ICrystal crystal;
+    private ICrystalData crystal;
 }
 
 public record CrystalStorageOptionsDelete

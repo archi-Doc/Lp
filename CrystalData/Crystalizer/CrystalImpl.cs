@@ -17,14 +17,16 @@ internal class CrystalImpl<T> : ICrystal<T>
 
     public Crystalizer Crystalizer { get; }
 
-    public CrystalConfiguration Configuration { get; }
+    public CrystalConfiguration Configuration { get; private set; }
 
     private object syncObject = new();
     private T? obj;
 
     #endregion
 
-    object ICrystalBase.Object => ((ICrystal<T>)this).Object;
+    #region Implementation
+
+    object ICrystal.Object => ((ICrystal<T>)this).Object;
 
     T ICrystal<T>.Object
     {
@@ -40,9 +42,12 @@ internal class CrystalImpl<T> : ICrystal<T>
         }
     }
 
-    void ICrystal<T>.Configure(CrystalConfiguration configuration)
+    void ICrystal.Configure(CrystalConfiguration configuration)
     {
+        this.Configuration = configuration;
     }
+
+    #endregion
 
     [MemberNotNull(nameof(obj))]
     private void PrepareObject()

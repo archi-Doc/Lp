@@ -6,7 +6,7 @@ using CrystalData.Storage;
 
 namespace CrystalData;
 
-public partial class Crystal<TData> : ICrystal, ICrystalInternal
+public partial class Crystal<TData> : ICrystalData, ICrystalInternal
     where TData : BaseData
 {
     internal Crystal(UnitCore core, CrystalOptions options, ILogger<Crystal<TData>> logger, UnitLogger unitLogger, IStorageKey storageKey)

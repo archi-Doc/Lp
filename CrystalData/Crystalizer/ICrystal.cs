@@ -2,17 +2,17 @@
 
 namespace CrystalData;
 
-public interface ICrystal<T> : ICrystalBase
-    where T : ITinyhandSerialize<T>, ITinyhandReconstruct<T>
+public interface ICrystal
 {
-    public new T Object { get; }
+    object Object { get; }
 
     public void Configure(CrystalConfiguration configuration);
 }
 
-public interface ICrystalBase
+public interface ICrystal<T> : ICrystal
+    where T : ITinyhandSerialize<T>, ITinyhandReconstruct<T>
 {
-    object Object { get; }
+    public new T Object { get; }
 }
 
 public class CrystalNotRegistered<T> : ICrystal<T>
@@ -25,7 +25,7 @@ public class CrystalNotRegistered<T> : ICrystal<T>
 
     T ICrystal<T>.Object => throw new NotImplementedException();
 
-    object ICrystalBase.Object => throw new NotImplementedException();
+    object ICrystal.Object => throw new NotImplementedException();
 
-    void ICrystal<T>.Configure(CrystalConfiguration configuration) => throw new NotImplementedException();
+    void ICrystal.Configure(CrystalConfiguration configuration) => throw new NotImplementedException();
 }

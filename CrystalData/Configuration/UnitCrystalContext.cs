@@ -11,8 +11,6 @@ internal class UnitCrystalContext : IUnitCrystalContext
 
     internal void Configure(IUnitConfigurationContext context)
     {
-        context.Services.Add(ServiceDescriptor.Singleton(typeof(ICrystal<>), typeof(CrystalImpl<>)));
-
         foreach (var x in this.typeToCrystalConfiguration)
         {// This is slow, but it is Singleton anyway.
             // ICrystal<T> => Crystalizer.Get<T>()

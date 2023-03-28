@@ -39,6 +39,8 @@ internal class TestClass
     {
         Console.WriteLine("Sandbox test1");
 
+        this.crystalizer.PrepareAndLoad();
+
         this.manualCrystal.Configure(new(Crystalization.Manual, new LocalFilerConfiguration(string.Empty, "test")));
 
         var manualClass = this.manualCrystal.Object;
@@ -56,6 +58,8 @@ internal class TestClass
         Console.WriteLine(combinedClass.ToString());
 
         Console.WriteLine(this.manualClass0.ToString());
+
+        // this.crystalizer.Save();
     }
 
     private Crystalizer crystalizer;

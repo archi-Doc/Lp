@@ -13,13 +13,22 @@ public class Crystalizer
 
         foreach (var x in this.options.TypeToCrystalConfiguration)
         {
-            this.typeToCrystal.TryAdd(
-                x.Key,
-                Activator.CreateInstance(typeof(CrystalImpl<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!);
+            var crystal = (ICrystal)Activator.CreateInstance(typeof(CrystalImpl<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
+            crystal.Configure(x.Value);
+
+            this.typeToCrystal.TryAdd(x.Key, crystal);
         }
     }
 
+    #region FieldAndProperty
+
     private ThreadsafeTypeKeyHashTable<object> typeToCrystal = new();
+
+    #endregion
+
+    public async Task PrepareAndLoad()
+    {
+    }
 
     public ICrystal<T> Create<T>()
         where T : ITinyhandSerialize<T>, ITinyhandReconstruct<T>
@@ -66,7 +75,7 @@ public class Crystalizer
             ThrowTypeNotRegistered(type);
         }
 
-        return ((ICrystalBase)crystal!).Object;
+        return ((ICrystal)crystal!).Object;
     }
 
     private CrystalizerOptions options;

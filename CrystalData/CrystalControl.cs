@@ -2,8 +2,6 @@
 
 #pragma warning disable SA1210 // Using directives should be ordered alphabetically by namespace
 
-global using System;
-global using System.Threading.Tasks;
 global using Arc.Crypto;
 global using Arc.Threading;
 global using Arc.Unit;
@@ -24,19 +22,19 @@ public class CrystalControl
             this.Configure(context =>
             {
                 // Main services
-                context.AddSingleton<Crystalizer>();
                 context.AddSingleton<CrystalControl>();
+                context.AddSingleton<Crystalizer>();
                 context.AddSingleton<CrystalOptions>();
                 context.AddSingleton<IStorageKey, StorageKey>();
 
-                // Crystalize
-                var crystalizeContext = new UnitCrystalContext();
-                foreach (var x in this.crystalizeActions)
+                // Crystalizer
+                var crystalContext = new UnitCrystalContext();
+                foreach (var x in this.crystalActions)
                 {
-                    x(crystalizeContext);
+                    x(crystalContext);
                 }
 
-                crystalizeContext.Configure(context);
+                crystalContext.Configure(context);
             });
         }
 
@@ -48,11 +46,11 @@ public class CrystalControl
 
         public Builder ConfigureCrystal(Action<IUnitCrystalContext> @delegate)
         {
-            this.crystalizeActions.Add(@delegate);
+            this.crystalActions.Add(@delegate);
             return this;
         }
 
-        private List<Action<IUnitCrystalContext>> crystalizeActions = new();
+        private List<Action<IUnitCrystalContext>> crystalActions = new();
     }
 
     public class Unit : BuiltUnit

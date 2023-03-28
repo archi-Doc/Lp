@@ -2,7 +2,7 @@
 
 namespace CrystalData;
 
-public interface ICrystal
+public interface ICrystalData
 {
     DatumRegistry Datum { get; }
 
