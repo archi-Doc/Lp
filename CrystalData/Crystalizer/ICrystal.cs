@@ -11,6 +11,8 @@ public interface ICrystal
     Task<CrystalStartResult> PrepareAndLoad(CrystalStartParam? param = null);
 
     Task Save();
+
+    Task Delete();
 }
 
 public interface ICrystal<T> : ICrystal
@@ -34,4 +36,8 @@ public class CrystalNotRegistered<T> : ICrystal<T>
     void ICrystal.Configure(CrystalConfiguration configuration) => throw new NotImplementedException();
 
     Task<CrystalStartResult> ICrystal.PrepareAndLoad(CrystalStartParam? param) => throw new NotImplementedException();
+
+    Task ICrystal.Save() => throw new NotImplementedException();
+
+    Task ICrystal.Delete() => throw new NotImplementedException();
 }

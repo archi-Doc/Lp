@@ -3,6 +3,7 @@
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using CrystalData.Filer;
 
 namespace CrystalData;
 
@@ -85,6 +86,10 @@ public class Crystalizer
     internal static void ThrowTypeNotRegistered(Type type)
     {
         throw new InvalidOperationException($"The specified data type '{type.Name}' is not registered. Register data type within ConfigureCrystal().");
+    }
+
+    internal IFiler GetFiler(FilerConfiguration filerConfiguration)
+    {
     }
 
     internal object GetCrystal(Type type)

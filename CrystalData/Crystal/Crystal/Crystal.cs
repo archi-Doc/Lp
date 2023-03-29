@@ -52,8 +52,8 @@ public partial class Crystal<TData> : ICrystalData, ICrystalInternal
                 return CrystalStartResult.Success;
             }
 
-            // Load CrystalDirectory
-            result = await this.LoadCrystalDirectory(param).ConfigureAwait(false);
+            // Load CrystalStorage
+            result = await this.LoadCrystalStorage(param).ConfigureAwait(false);
             if (result != CrystalStartResult.Success)
             {
                 return result;
@@ -235,7 +235,7 @@ public partial class Crystal<TData> : ICrystalData, ICrystalInternal
         this.Root.Initialize(this, null, true);
     }
 
-    private async Task<CrystalStartResult> LoadCrystalDirectory(CrystalStartParam param)
+    private async Task<CrystalStartResult> LoadCrystalStorage(CrystalStartParam param)
     {// await this.semaphore.WaitAsync().ConfigureAwait(false)
      // Load
         CrystalStartResult result;
