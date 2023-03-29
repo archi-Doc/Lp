@@ -25,6 +25,7 @@ public enum CrystalStartResult
     DirectoryNotFound,
     DirectoryError,
     NoDirectoryAvailable,
+    DeserializeError,
 }
 
 public delegate Task<bool> CrystalStartQueryDelegate(CrystalStartResult query, string[]? list);

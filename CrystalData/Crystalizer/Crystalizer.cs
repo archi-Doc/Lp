@@ -88,7 +88,12 @@ public class Crystalizer
         throw new InvalidOperationException($"The specified data type '{type.Name}' is not registered. Register data type within ConfigureCrystal().");
     }
 
-    internal IFiler GetFiler(FilerConfiguration filerConfiguration)
+    internal bool DeleteInternal(ICrystal crystal)
+    {
+        return this.crystals.TryRemove(crystal, out _);
+    }
+
+    internal IFilerToCrystal GetFilerToCrystal(ICrystal crystal, FilerConfiguration filerConfiguration)
     {
     }
 

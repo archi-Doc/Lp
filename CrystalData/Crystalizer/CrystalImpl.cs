@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace CrystalData;
@@ -8,13 +7,6 @@ namespace CrystalData;
 internal class CrystalImpl<T> : ICrystal<T>
     where T : ITinyhandSerialize<T>, ITinyhandReconstruct<T>
 {
-    public enum State
-    {
-        Initial,
-        Prepared,
-        Deleted,
-    }
-
     internal CrystalImpl(Crystalizer crystalizer)
     {
         this.Crystalizer = crystalizer;
@@ -27,9 +19,9 @@ internal class CrystalImpl<T> : ICrystal<T>
 
     public CrystalConfiguration Configuration { get; private set; }
 
-    private bool deleted = false;
-    private object syncObject = new();
+    private SemaphoreLock semaphore = new();
     private T? obj;
+    private IFilerToCrystal? filerToCrystal;
 
     #endregion
 
@@ -41,73 +33,117 @@ internal class CrystalImpl<T> : ICrystal<T>
     {
         get
         {
-            this.ThrowIfDeleted();
             if (this.obj != null)
             {
                 return this.obj;
             }
 
-            this.PrepareObject();
-            return this.obj;
+            using (this.semaphore.Lock())
+            {
+                if (this.obj != null)
+                {
+                    return this.obj;
+                }
+
+                // Load
+                this.PrepareAndLoadInternal(null).Wait();
+                if (this.obj != null)
+                {
+                    return this.obj;
+                }
+
+                // Finally, reconstruct
+                TinyhandSerializer.ReconstructObject<T>(ref this.obj);
+                return this.obj;
+            }
         }
     }
 
     void ICrystal.Configure(CrystalConfiguration configuration)
     {
-        this.ThrowIfDeleted();
+        using (this.semaphore.Lock())
+        {
+            // Release filerToCrystal
+            this.ReleaseFilerToCrystalInternal();
 
-        this.Configuration = configuration;
+            this.Configuration = configuration;
+        }
     }
 
     async Task<CrystalStartResult> ICrystal.PrepareAndLoad(CrystalStartParam? param)
     {
-        this.ThrowIfDeleted();
-
-        var filerConfiguration = this.Configuration.FilerConfiguration;
-        var filer = this.Crystalizer.GetFiler(filerConfiguration);
-        var result = await filer.ReadAsync(filerConfiguration.Path, 0, -1).ConfigureAwait(false);
-        if (!result.IsSuccess)
+        using (this.semaphore.Lock())
         {
-            return CrystalStartResult.FileNotFound;
+            return await this.PrepareAndLoadInternal(param).ConfigureAwait(false);
         }
-
-        TinyhandSerializer.DeserializeObject<T>(result.Data.Memory.Span, ref this.obj);
-        result.Return();
-
-        return CrystalStartResult.Success;
     }
 
     async Task ICrystal.Save()
     {
-        this.ThrowIfDeleted();
     }
 
     async Task ICrystal.Delete()
     {
+        using (this.semaphore.Lock())
+        {
+            // Clear
+            this.Configuration = CrystalConfiguration.Default;
+            TinyhandSerializer.ReconstructObject<T>(ref this.obj);
+
+            // Release
+            this.ReleaseFilerToCrystalInternal();
+
+            // Delete file
+        }
     }
 
     #endregion
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    /*[MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ThrowIfDeleted()
     {
         if (this.deleted)
         {
             throw new InvalidOperationException("This object has already been deleted.");
         }
+    }*/
+
+    private async Task<CrystalStartResult> PrepareAndLoadInternal(CrystalStartParam? param)
+    {// this.semaphore.Lock()
+        var filerConfiguration = this.Configuration.FilerConfiguration;
+        if (this.filerToCrystal == null)
+        {
+            this.filerToCrystal = this.Crystalizer.GetFilerToCrystal(this, filerConfiguration);
+        }
+
+        // Load
+        var result = await this.filerToCrystal.Filer.ReadAsync(filerConfiguration.Path, 0, -1).ConfigureAwait(false);
+        if (!result.IsSuccess)
+        {
+            return CrystalStartResult.FileNotFound;
+        }
+
+        // Deserialize
+        try
+        {
+            TinyhandSerializer.DeserializeObject<T>(result.Data.Memory.Span, ref this.obj);
+        }
+        catch
+        {
+            return CrystalStartResult.DeserializeError;
+        }
+        finally
+        {
+            result.Return();
+        }
+
+        return CrystalStartResult.Success;
     }
 
-    [MemberNotNull(nameof(obj))]
-    private void PrepareObject()
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ReleaseFilerToCrystalInternal()
     {
-        lock (this.syncObject)
-        {
-            if (this.obj != null)
-            {
-                return;
-            }
-
-            TinyhandSerializer.ReconstructObject<T>(ref this.obj);
-        }
+        this.filerToCrystal?.Dispose();
+        this.filerToCrystal = null;
     }
 }
