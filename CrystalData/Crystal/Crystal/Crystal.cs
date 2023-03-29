@@ -6,7 +6,7 @@ using CrystalData.Storage;
 
 namespace CrystalData;
 
-public partial class Crystal<TData> : ICrystal, ICrystalInternal
+public partial class Crystal<TData> : ICrystalData, ICrystalInternal
     where TData : BaseData
 {
     internal Crystal(UnitCore core, CrystalOptions options, ILogger<Crystal<TData>> logger, UnitLogger unitLogger, IStorageKey storageKey)
@@ -52,8 +52,8 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
                 return CrystalStartResult.Success;
             }
 
-            // Load CrystalDirectory
-            result = await this.LoadCrystalDirectory(param).ConfigureAwait(false);
+            // Load CrystalStorage
+            result = await this.LoadCrystalStorage(param).ConfigureAwait(false);
             if (result != CrystalStartResult.Success)
             {
                 return result;
@@ -235,7 +235,7 @@ public partial class Crystal<TData> : ICrystal, ICrystalInternal
         this.Root.Initialize(this, null, true);
     }
 
-    private async Task<CrystalStartResult> LoadCrystalDirectory(CrystalStartParam param)
+    private async Task<CrystalStartResult> LoadCrystalStorage(CrystalStartParam param)
     {// await this.semaphore.WaitAsync().ConfigureAwait(false)
      // Load
         CrystalStartResult result;

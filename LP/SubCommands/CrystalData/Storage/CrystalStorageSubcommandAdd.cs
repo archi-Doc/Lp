@@ -9,7 +9,7 @@ namespace LP.Subcommands.CrystalData;
 [SimpleCommand("add", Description = "Add storage.")]
 public class CrystalStorageSubcommandAdd : ISimpleCommandAsync<CrystalStorageOptionsAdd>
 {
-    public CrystalStorageSubcommandAdd(ILogger<CrystalStorageSubcommandAdd> logger, IUserInterfaceService userInterfaceService, ICrystal crystal, CrystalStorageSubcommandLs crystalDirSubcommandLs)
+    public CrystalStorageSubcommandAdd(ILogger<CrystalStorageSubcommandAdd> logger, IUserInterfaceService userInterfaceService, ICrystalData crystal, CrystalStorageSubcommandLs crystalDirSubcommandLs)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
@@ -103,7 +103,7 @@ EnterBucket:
 
     private ILogger<CrystalStorageSubcommandAdd> logger;
     private IUserInterfaceService userInterfaceService;
-    private ICrystal crystal;
+    private ICrystalData crystal;
 }
 
 public record CrystalStorageOptionsAdd

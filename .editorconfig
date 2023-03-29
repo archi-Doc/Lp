@@ -190,6 +190,7 @@ dotnet_diagnostic.SA1602.severity = suggestion
 dotnet_diagnostic.SA1405.severity = suggestion
 dotnet_diagnostic.SA1300.severity = suggestion
 dotnet_diagnostic.SA1302.severity = suggestion
+dotnet_diagnostic.SA1124.severity = suggestion
 
 
 [*.{cs,vb}]

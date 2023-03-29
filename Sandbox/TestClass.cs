@@ -25,7 +25,7 @@ internal partial class CombinedClass
 
 internal class TestClass
 {
-    public TestClass(CrystalizerClass crystalizer, ICrystal<ManualClass> manualCrystal, ICrystal<CombinedClass> combinedCrystal, ManualClass manualClass)
+    public TestClass(Crystalizer crystalizer, ICrystal<ManualClass> manualCrystal, ICrystal<CombinedClass> combinedCrystal, ManualClass manualClass)
     {
         this.crystalizer = crystalizer;
 
@@ -38,6 +38,10 @@ internal class TestClass
     public async Task Test1()
     {
         Console.WriteLine("Sandbox test1");
+
+        await this.crystalizer.PrepareAndLoad();
+
+        this.manualCrystal.Configure(new(Crystalization.Manual, new LocalFilerConfiguration(string.Empty, "test")));
 
         var manualClass = this.manualCrystal.Object;
         manualClass.Id = 1;
@@ -54,9 +58,11 @@ internal class TestClass
         Console.WriteLine(combinedClass.ToString());
 
         Console.WriteLine(this.manualClass0.ToString());
+
+        await this.crystalizer.SaveAndTerminate();
     }
 
-    private CrystalizerClass crystalizer;
+    private Crystalizer crystalizer;
     private ManualClass manualClass0;
     private ICrystal<ManualClass> manualCrystal;
     private ICrystal<CombinedClass> combinedCrystal;
