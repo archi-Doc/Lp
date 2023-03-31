@@ -86,14 +86,15 @@ internal class CrystalImpl<T> : ICrystal<T>
     {
         using (this.semaphore.Lock())
         {
-            // Clear
-            this.Configuration = CrystalConfiguration.Default;
-            TinyhandSerializer.ReconstructObject<T>(ref this.obj);
+            // Delete file
+            this.filerToCrystal?.Filer.Delete(this.Configuration.FilerConfiguration.Path);
 
             // Release
             this.ReleaseFilerToCrystalInternal();
 
-            // Delete file
+            // Clear
+            this.Configuration = CrystalConfiguration.Default;
+            TinyhandSerializer.ReconstructObject<T>(ref this.obj);
         }
     }
 
