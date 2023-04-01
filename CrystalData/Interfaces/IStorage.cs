@@ -2,11 +2,11 @@
 
 namespace CrystalData;
 
-public interface IJournal
+public interface IStorage
 {
 }
 
-public interface IJournal<TData> : IJournal
+public interface IStorage<TData> : IStorage
     where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
 }

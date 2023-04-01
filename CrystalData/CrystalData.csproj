@@ -41,9 +41,4 @@
     <Compile Remove="Generated\*" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Configuration\Journal\" />
-    <Folder Include="Configuration\Storage\" />
-  </ItemGroup>
-
 </Project>

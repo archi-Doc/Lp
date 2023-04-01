@@ -2,7 +2,9 @@
 
 namespace CrystalData;
 
-public interface IStorage<TData>
-    where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+public abstract record JournalConfiguration
 {
+    public JournalConfiguration()
+    {
+    }
 }

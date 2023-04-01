@@ -15,11 +15,14 @@ public class Crystalizer
 
         foreach (var x in this.options.TypeToCrystalConfiguration)
         {
+            // (ICrystal) new CrystalImpl<TData>
             var crystal = (ICrystal)Activator.CreateInstance(typeof(CrystalImpl<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
             crystal.Configure(x.Value);
 
             this.typeToCrystal.TryAdd(x.Key, crystal);
             this.crystals.TryAdd(crystal, 0);
+
+            // IFiler<TData>, IStorage<TData>, IJournal<TData>
         }
     }
 
@@ -27,6 +30,9 @@ public class Crystalizer
 
     private ThreadsafeTypeKeyHashTable<ICrystal> typeToCrystal = new();
     private ConcurrentDictionary<ICrystal, int> crystals = new();
+    private ConcurrentDictionary<IFiler, int> filers = new();
+    private ConcurrentDictionary<IStorage, int> storages = new();
+    private ConcurrentDictionary<IJournal, int> journals = new();
 
     #endregion
 

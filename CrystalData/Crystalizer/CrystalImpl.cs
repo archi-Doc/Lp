@@ -4,8 +4,8 @@ using System.Runtime.CompilerServices;
 
 namespace CrystalData;
 
-internal class CrystalImpl<T> : ICrystal<T>
-    where T : ITinyhandSerialize<T>, ITinyhandReconstruct<T>
+internal class CrystalImpl<TData> : ICrystal<TData>
+    where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
     internal CrystalImpl(Crystalizer crystalizer)
     {
@@ -20,16 +20,16 @@ internal class CrystalImpl<T> : ICrystal<T>
     public CrystalConfiguration Configuration { get; private set; }
 
     private SemaphoreLock semaphore = new();
-    private T? obj;
+    private TData? obj;
     private IFilerToCrystal? filerToCrystal;
 
     #endregion
 
     #region ICrystal
 
-    object ICrystal.Object => ((ICrystal<T>)this).Object;
+    object ICrystal.Object => ((ICrystal<TData>)this).Object;
 
-    T ICrystal<T>.Object
+    TData ICrystal<TData>.Object
     {
         get
         {
@@ -53,7 +53,7 @@ internal class CrystalImpl<T> : ICrystal<T>
                 }
 
                 // Finally, reconstruct
-                TinyhandSerializer.ReconstructObject<T>(ref this.obj);
+                TinyhandSerializer.ReconstructObject<TData>(ref this.obj);
                 return this.obj;
             }
         }
@@ -88,7 +88,7 @@ internal class CrystalImpl<T> : ICrystal<T>
         {
             // Clear
             this.Configuration = CrystalConfiguration.Default;
-            TinyhandSerializer.ReconstructObject<T>(ref this.obj);
+            TinyhandSerializer.ReconstructObject<TData>(ref this.obj);
 
             // Release
             this.ReleaseFilerToCrystalInternal();
@@ -126,7 +126,7 @@ internal class CrystalImpl<T> : ICrystal<T>
         // Deserialize
         try
         {
-            TinyhandSerializer.DeserializeObject<T>(result.Data.Memory.Span, ref this.obj);
+            TinyhandSerializer.DeserializeObject<TData>(result.Data.Memory.Span, ref this.obj);
         }
         catch
         {
