@@ -7,7 +7,7 @@ using CrystalData.Results;
 namespace CrystalData.Filer;
 
 [TinyhandObject(ExplicitKeyOnly = true)]
-public partial class LocalFiler : TaskWorker<FilerWork>, IFiler
+public partial class LocalFiler : TaskWorker<FilerWork>, IRawFiler
 {
     public const int DefaultConcurrentTasks = 4;
 
@@ -215,7 +215,7 @@ DeleteAndExit:
 
     #region IFiler
 
-    async Task<CrystalResult> IFiler.PrepareAndCheck(StorageControl storage, bool newStorage)
+    async Task<CrystalResult> IRawFiler.PrepareAndCheck(StorageControl storage, bool newStorage)
     {
         var result = CheckPath(storage, this.path);
         if (!result.Success)
@@ -233,30 +233,30 @@ DeleteAndExit:
         return CrystalResult.Success;
     }
 
-    async Task IFiler.Terminate()
+    async Task IRawFiler.Terminate()
     {
         await this.WaitForCompletionAsync().ConfigureAwait(false);
         this.Dispose();
     }
 
-    async Task<CrystalResult> IFiler.DeleteAllAsync()
+    async Task<CrystalResult> IRawFiler.DeleteAllAsync()
     {
         return PathHelper.TryDeleteDirectory(this.rootedPath) ? CrystalResult.Success : CrystalResult.DeleteError;
     }
 
-    CrystalResult IFiler.Write(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
+    CrystalResult IRawFiler.Write(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
     {
         this.AddLast(new(path, offset, dataToBeShared));
         return CrystalResult.Started;
     }
 
-    CrystalResult IFiler.Delete(string path)
+    CrystalResult IRawFiler.Delete(string path)
     {
         this.AddLast(new(path));
         return CrystalResult.Started;
     }
 
-    async Task<CrystalMemoryOwnerResult> IFiler.ReadAsync(string path, long offset, int length, TimeSpan timeToWait)
+    async Task<CrystalMemoryOwnerResult> IRawFiler.ReadAsync(string path, long offset, int length, TimeSpan timeToWait)
     {
         var work = new FilerWork(path, offset, length);
         var workInterface = this.AddLast(work);
@@ -264,7 +264,7 @@ DeleteAndExit:
         return new(work.Result, work.ReadData.AsReadOnly());
     }
 
-    async Task<CrystalResult> IFiler.WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait)
+    async Task<CrystalResult> IRawFiler.WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait)
     {
         var work = new FilerWork(path, offset, dataToBeShared);
         var workInterface = this.AddLast(work);
@@ -272,7 +272,7 @@ DeleteAndExit:
         return work.Result;
     }
 
-    async Task<CrystalResult> IFiler.DeleteAsync(string path, TimeSpan timeToWait)
+    async Task<CrystalResult> IRawFiler.DeleteAsync(string path, TimeSpan timeToWait)
     {
         var work = new FilerWork(path);
         var workInterface = this.AddLast(work);

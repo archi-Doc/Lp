@@ -24,7 +24,7 @@ internal partial class StorageAndFiler
     public IStorage? Storage { get; set; }
 
     [IgnoreMember]
-    public IFiler? Filer { get; set; }
+    public IRawFiler? Filer { get; set; }
 
     [Key(0)]
     [Link(Type = ChainType.Unordered, Primary = true, NoValue = true)]
@@ -45,7 +45,7 @@ internal partial class StorageAndFiler
     {
         if (this.Filer == null)
         {
-            if (!TinyhandSerializer.TryDeserialize<IFiler>(this.FilerData, out var filer))
+            if (!TinyhandSerializer.TryDeserialize<IRawFiler>(this.FilerData, out var filer))
             {
                 return CrystalResult.DeserializeError;
             }

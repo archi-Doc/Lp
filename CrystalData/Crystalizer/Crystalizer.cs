@@ -88,6 +88,15 @@ public class Crystalizer
         return (ICrystal<T>)crystal!;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void ThrowIfNotRegistered<TData>()
+    {
+        if (!this.typeToCrystal.TryGetValue(typeof(TData), out _))
+        {
+            ThrowTypeNotRegistered(typeof(TData));
+        }
+    }
+
     [MethodImpl(MethodImplOptions.NoInlining)]
     internal static void ThrowTypeNotRegistered(Type type)
     {

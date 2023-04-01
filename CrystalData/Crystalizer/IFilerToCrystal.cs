@@ -6,5 +6,5 @@ namespace CrystalData;
 
 internal interface IFilerToCrystal : IDisposable
 {
-    public IFiler Filer { get; }
+    public IRawFiler Filer { get; }
 }

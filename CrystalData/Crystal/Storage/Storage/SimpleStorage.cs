@@ -31,7 +31,7 @@ internal partial class SimpleStorage : IStorage
     public long StorageUsage { get; private set; } // lock (this.syncObject)
 
     private StorageControl? storageControl;
-    private IFiler? filer;
+    private IRawFiler? filer;
     private object syncObject = new();
     private Dictionary<uint, int> fileToSize = new();
 
@@ -39,7 +39,7 @@ internal partial class SimpleStorage : IStorage
 
     #region IStorage
 
-    async Task<CrystalResult> IStorage.PrepareAndCheck(StorageControl storage, IFiler filer, bool newStorage)
+    async Task<CrystalResult> IStorage.PrepareAndCheck(StorageControl storage, IRawFiler filer, bool newStorage)
     {
         this.storageControl = storage;
         this.filer = filer;

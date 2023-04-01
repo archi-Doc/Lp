@@ -19,8 +19,8 @@ internal class UnitCrystalContext : IUnitCrystalContext
             // T => Crystalizer.Get<T>().Object
             context.Services.Add(ServiceDescriptor.Singleton(x.Key, provider => provider.GetRequiredService<Crystalizer>().GetObject(x.Key)));
 
-            // IFiler<TData> => Crystalizer.ResolveFiler<TData>()
-            context.Services.Add(ServiceDescriptor.Singleton(typeof(IFiler<>).MakeGenericType(x.Key), provider => provider.GetRequiredService<Crystalizer>().ResolveFiler(x.Key)));
+            // Singleton: IFiler<TData> => FilerFactory<TData>
+            context.Services.Add(ServiceDescriptor.Singleton(typeof(IFiler<>), typeof(FilerFactory<>)));
         }
 
         context.Services.Add(ServiceDescriptor.Singleton(typeof(ICrystal<>), typeof(CrystalNotRegistered<>)));

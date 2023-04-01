@@ -9,7 +9,7 @@ using CrystalData.Results;
 namespace CrystalData.Filer;
 
 [TinyhandObject(ExplicitKeyOnly = true)]
-public partial class S3Filer : TaskWorker<FilerWork>, IFiler
+public partial class S3Filer : TaskWorker<FilerWork>, IRawFiler
 {// Vault: S3Bucket/BucketName "AccessKeyId=SecretAccessKey"
     private const int DefaultConcurrentTasks = 4;
     private const string WriteTestFile = "Write.test";
@@ -185,7 +185,7 @@ TryWrite:
 
     #region IFiler
 
-    async Task<CrystalResult> IFiler.PrepareAndCheck(StorageControl storage, bool newStorage)
+    async Task<CrystalResult> IRawFiler.PrepareAndCheck(StorageControl storage, bool newStorage)
     {
         this.client?.Dispose();
         if (!storage.Key.TryGetKey(this.bucket, out var accessKeyPair))
@@ -221,14 +221,14 @@ TryWrite:
         return CrystalResult.Success;
     }
 
-    async Task IFiler.Terminate()
+    async Task IRawFiler.Terminate()
     {
         await this.WaitForCompletionAsync().ConfigureAwait(false);
         this.client?.Dispose();
         this.Dispose();
     }
 
-    async Task<CrystalResult> IFiler.DeleteAllAsync()
+    async Task<CrystalResult> IRawFiler.DeleteAllAsync()
     {
         if (this.client == null)
         {
@@ -263,19 +263,19 @@ TryWrite:
         }
     }
 
-    CrystalResult IFiler.Write(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
+    CrystalResult IRawFiler.Write(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
     {
         this.AddLast(new(path, offset, dataToBeShared));
         return CrystalResult.Started;
     }
 
-    CrystalResult IFiler.Delete(string path)
+    CrystalResult IRawFiler.Delete(string path)
     {
         this.AddLast(new(path));
         return CrystalResult.Started;
     }
 
-    async Task<CrystalMemoryOwnerResult> IFiler.ReadAsync(string path, long offset, int length, TimeSpan timeToWait)
+    async Task<CrystalMemoryOwnerResult> IRawFiler.ReadAsync(string path, long offset, int length, TimeSpan timeToWait)
     {
         var work = new FilerWork(path, offset, length);
         var workInterface = this.AddLast(work);
@@ -283,7 +283,7 @@ TryWrite:
         return new(work.Result, work.ReadData.AsReadOnly());
     }
 
-    async Task<CrystalResult> IFiler.WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait)
+    async Task<CrystalResult> IRawFiler.WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait)
     {
         if (offset != 0)
         {// Not supported
@@ -296,7 +296,7 @@ TryWrite:
         return work.Result;
     }
 
-    async Task<CrystalResult> IFiler.DeleteAsync(string path, TimeSpan timeToWait)
+    async Task<CrystalResult> IRawFiler.DeleteAsync(string path, TimeSpan timeToWait)
     {
         var work = new FilerWork(path);
         var workInterface = this.AddLast(work);
