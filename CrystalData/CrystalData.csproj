@@ -7,7 +7,7 @@
     <PackageId>CrystalData</PackageId>
     <Authors>archi-Doc</Authors>
     <Product>CrystalData</Product>
-    <Description>CrystalData is a storage engine for LP.</Description>
+    <Description>CrystalData is a C# storage engine integrated with Tinyhand.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/archi-Doc/LP</PackageProjectUrl>
     <RepositoryUrl>https://github.com/archi-Doc/LP</RepositoryUrl>
@@ -39,6 +39,11 @@
 
   <ItemGroup>
     <Compile Remove="Generated\*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Configuration\Journal\" />
+    <Folder Include="Configuration\Storage\" />
   </ItemGroup>
 
 </Project>

@@ -15,21 +15,21 @@ public interface ICrystal
     Task Delete();
 }
 
-public interface ICrystal<T> : ICrystal
-    where T : ITinyhandSerialize<T>, ITinyhandReconstruct<T>
+public interface ICrystal<TData> : ICrystal
+    where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
-    public new T Object { get; }
+    public new TData Object { get; }
 }
 
-public class CrystalNotRegistered<T> : ICrystal<T>
-    where T : ITinyhandSerialize<T>, ITinyhandReconstruct<T>
+public class CrystalNotRegistered<TData> : ICrystal<TData>
+    where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
     public CrystalNotRegistered()
     {
-        Crystalizer.ThrowTypeNotRegistered(typeof(T));
+        Crystalizer.ThrowTypeNotRegistered(typeof(TData));
     }
 
-    T ICrystal<T>.Object => throw new NotImplementedException();
+    TData ICrystal<TData>.Object => throw new NotImplementedException();
 
     object ICrystal.Object => throw new NotImplementedException();
 
