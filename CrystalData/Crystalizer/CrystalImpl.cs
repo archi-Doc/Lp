@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace CrystalData;
@@ -75,7 +76,7 @@ internal class CrystalImpl<TData> : ICrystal<TData>
                     return this.filer;
                 }
 
-                this.filer = this.Crystalizer.ResolveFiler(this.Configuration.FilerConfiguration);
+                this.ResolveFiler();
                 return this.filer;
             }
         }
@@ -107,16 +108,24 @@ internal class CrystalImpl<TData> : ICrystal<TData>
         }
     }
 
-    async Task ICrystal.Save()
+    async Task<CrystalResult> ICrystal.Save()
     {
+        using (this.semaphore.Lock())
+        {
+            var byteArray = TinyhandSerializer.SerializeObject<TData>(this.obj);
+
+            this.ResolveFiler();
+            return await this.filer.WriteAsync(0, new(byteArray)).ConfigureAwait(false);
+        }
     }
 
-    async Task ICrystal.Delete()
+    void ICrystal.Delete()
     {
         using (this.semaphore.Lock())
         {
             // Delete file
-            this.Filer.Delete();
+            this.ResolveFiler();
+            this.filer.Delete();
 
             // Clear
             this.Configuration = CrystalConfiguration.Default;
@@ -129,7 +138,7 @@ internal class CrystalImpl<TData> : ICrystal<TData>
 
     private async Task<CrystalStartResult> PrepareAndLoadInternal(CrystalStartParam? param)
     {// this.semaphore.Lock()
-        this.filer ??= this.Crystalizer.ResolveFiler(this.Configuration.FilerConfiguration);
+        this.ResolveFiler();
         if (this.Configuration.FilerConfiguration is EmptyFilerConfiguration)
         {
             return CrystalStartResult.Success;
@@ -163,5 +172,12 @@ internal class CrystalImpl<TData> : ICrystal<TData>
         }
 
         return CrystalStartResult.Success;
+    }
+
+    [MemberNotNull(nameof(filer))]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ResolveFiler()
+    {
+        this.filer ??= this.Crystalizer.ResolveFiler(this.Configuration.FilerConfiguration);
     }
 }

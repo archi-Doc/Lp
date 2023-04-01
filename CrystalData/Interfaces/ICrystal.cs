@@ -14,9 +14,9 @@ public interface ICrystal
 
     Task<CrystalStartResult> PrepareAndLoad(CrystalStartParam? param = null);
 
-    Task Save();
+    Task<CrystalResult> Save();
 
-    Task Delete();
+    void Delete();
 }
 
 public interface ICrystal<TData> : ICrystal
