@@ -6,6 +6,8 @@ public interface ICrystal
 {
     object Object { get; }
 
+    IFiler Filer { get; }
+
     public void Configure(CrystalConfiguration configuration);
 
     Task<CrystalStartResult> PrepareAndLoad(CrystalStartParam? param = null);
@@ -30,6 +32,8 @@ public class CrystalNotRegistered<TData> : ICrystal<TData>
     }
 
     TData ICrystal<TData>.Object => throw new NotImplementedException();
+
+    IFiler ICrystal.Filer => throw new NotImplementedException();
 
     object ICrystal.Object => throw new NotImplementedException();
 

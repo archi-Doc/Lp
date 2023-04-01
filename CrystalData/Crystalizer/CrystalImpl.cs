@@ -7,10 +7,11 @@ namespace CrystalData;
 internal class CrystalImpl<TData> : ICrystal<TData>
     where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
-    internal CrystalImpl(Crystalizer crystalizer)
+    internal CrystalImpl(Crystalizer crystalizer, IFiler<TData> filer)
     {
         this.Crystalizer = crystalizer;
         this.Configuration = CrystalConfiguration.Default;
+        this.Filer = filer;
     }
 
     #region FieldAndProperty
@@ -28,6 +29,8 @@ internal class CrystalImpl<TData> : ICrystal<TData>
     #region ICrystal
 
     object ICrystal.Object => ((ICrystal<TData>)this).Object;
+
+    public IFiler Filer { get; }
 
     TData ICrystal<TData>.Object
     {
