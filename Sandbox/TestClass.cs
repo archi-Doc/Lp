@@ -43,7 +43,7 @@ internal class TestClass
 
         await this.crystalizer.PrepareAndLoad();
 
-        this.manualCrystal.Configure(new(Crystalization.Manual, new LocalFilerConfiguration(string.Empty, "test")));
+        this.manualCrystal.Configure(new(Crystalization.Manual, new LocalFilerConfiguration("test")));
 
         var manualClass = this.manualCrystal.Object;
         manualClass.Id = 1;

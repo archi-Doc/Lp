@@ -46,7 +46,11 @@ public class Crystalizer
     {
         lock (this.syncFiler)
         {
-            if (filerConfiguration is LocalFilerConfiguration localFilerConfiguration)
+            if (filerConfiguration is EmptyFilerConfiguration emptyFilerConfiguration)
+            {
+                return new RawFilerToFiler(this, EmptyFiler.Default, string.Empty);
+            }
+            else if (filerConfiguration is LocalFilerConfiguration localFilerConfiguration)
             {// Local filer
                 if (this.localFiler == null)
                 {

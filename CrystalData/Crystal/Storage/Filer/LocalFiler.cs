@@ -215,7 +215,7 @@ DeleteAndExit:
 
     #region IFiler
 
-    async Task<CrystalResult> IRawFiler.PrepareAndCheck(StorageControl storage, bool newStorage)
+    async Task<CrystalResult> IRawFiler.PrepareAndCheck(StorageControl storage)
     {
         var result = CheckPath(storage, this.path);
         if (!result.Success)

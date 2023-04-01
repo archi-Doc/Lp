@@ -185,7 +185,7 @@ TryWrite:
 
     #region IFiler
 
-    async Task<CrystalResult> IRawFiler.PrepareAndCheck(StorageControl storage, bool newStorage)
+    async Task<CrystalResult> IRawFiler.PrepareAndCheck(StorageControl storage)
     {
         this.client?.Dispose();
         if (!storage.Key.TryGetKey(this.bucket, out var accessKeyPair))

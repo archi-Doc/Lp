@@ -53,7 +53,7 @@ internal partial class StorageAndFiler
             this.Filer = filer;
         }
 
-        var result = await this.Filer.PrepareAndCheck(storageControl, newStorage).ConfigureAwait(false);
+        var result = await this.Filer.PrepareAndCheck(storageControl).ConfigureAwait(false);
         if (result != CrystalResult.Success)
         {
             return result;

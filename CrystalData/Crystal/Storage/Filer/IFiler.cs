@@ -8,7 +8,7 @@ internal partial interface IRawFiler
 {
     string FilerPath { get; }
 
-    Task<CrystalResult> PrepareAndCheck(StorageControl storage, bool newStorage);
+    Task<CrystalResult> PrepareAndCheck(StorageControl storage);
 
     Task Terminate();
 

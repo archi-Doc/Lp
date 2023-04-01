@@ -21,7 +21,6 @@ internal class CrystalImpl<TData> : ICrystal<TData>
 
     private SemaphoreLock semaphore = new();
     private TData? obj;
-    private IFilerToCrystal? filerToCrystal;
     private IFiler? filer;
 
     #endregion
@@ -30,9 +29,7 @@ internal class CrystalImpl<TData> : ICrystal<TData>
 
     object ICrystal.Object => ((ICrystal<TData>)this).Object;
 
-    public IFiler Filer => this.filer ?? (this.filer = this.Crystalizer.ResolveFiler(this.Configuration.FilerConfiguration));
-
-    TData ICrystal<TData>.Object
+    public TData Object
     {
         get
         {
@@ -62,13 +59,32 @@ internal class CrystalImpl<TData> : ICrystal<TData>
         }
     }
 
+    public IFiler Filer
+    {
+        get
+        {
+            if (this.filer != null)
+            {
+                return this.filer;
+            }
+
+            using (this.semaphore.Lock())
+            {
+                if (this.filer != null)
+                {
+                    return this.filer;
+                }
+
+                this.filer = this.Crystalizer.ResolveFiler(this.Configuration.FilerConfiguration);
+                return this.filer;
+            }
+        }
+    }
+
     void ICrystal.Configure(CrystalConfiguration configuration)
     {
         using (this.semaphore.Lock())
         {
-            // Release filerToCrystal
-            this.ReleaseFilerToCrystalInternal();
-
             this.Configuration = configuration;
             this.filer = null;
         }
@@ -78,10 +94,8 @@ internal class CrystalImpl<TData> : ICrystal<TData>
     {
         using (this.semaphore.Lock())
         {
-            // Release filerToCrystal
-            this.ReleaseFilerToCrystalInternal();
-
             this.Configuration = this.Configuration with { FilerConfiguration = configuration, };
+            this.filer = null;
         }
     }
 
@@ -104,37 +118,32 @@ internal class CrystalImpl<TData> : ICrystal<TData>
             // Delete file
             this.Filer.Delete();
 
-            // Release
-            this.ReleaseFilerToCrystalInternal();
-
             // Clear
             this.Configuration = CrystalConfiguration.Default;
             TinyhandSerializer.ReconstructObject<TData>(ref this.obj);
+            this.filer = null;
         }
     }
 
     #endregion
 
-    /*[MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ThrowIfDeleted()
-    {
-        if (this.deleted)
-        {
-            throw new InvalidOperationException("This object has already been deleted.");
-        }
-    }*/
-
     private async Task<CrystalStartResult> PrepareAndLoadInternal(CrystalStartParam? param)
     {// this.semaphore.Lock()
-        var filerConfiguration = this.Configuration.FilerConfiguration;
-        if (this.filerToCrystal == null)
+        this.filer ??= this.Crystalizer.ResolveFiler(this.Configuration.FilerConfiguration);
+        if (this.Configuration.FilerConfiguration is EmptyFilerConfiguration)
         {
-            this.filerToCrystal = this.Crystalizer.GetFilerToCrystal(this, filerConfiguration);
+            return CrystalStartResult.Success;
+        }
+
+        var result = await this.filer.PrepareAndCheck(this.Crystalizer).ConfigureAwait(false);
+        if (result != CrystalResult.Success)
+        {
+            return CrystalStartResult.DirectoryError;
         }
 
         // Load
-        var result = await this.filerToCrystal.Filer.ReadAsync(filerConfiguration.Path, 0, -1).ConfigureAwait(false);
-        if (!result.IsSuccess)
+        var memoryResult = await this.filer.ReadAsync(0, -1).ConfigureAwait(false);
+        if (!memoryResult.IsSuccess)
         {
             return CrystalStartResult.FileNotFound;
         }
@@ -142,7 +151,7 @@ internal class CrystalImpl<TData> : ICrystal<TData>
         // Deserialize
         try
         {
-            TinyhandSerializer.DeserializeObject<TData>(result.Data.Memory.Span, ref this.obj);
+            TinyhandSerializer.DeserializeObject<TData>(memoryResult.Data.Memory.Span, ref this.obj);
         }
         catch
         {
@@ -150,16 +159,9 @@ internal class CrystalImpl<TData> : ICrystal<TData>
         }
         finally
         {
-            result.Return();
+            memoryResult.Return();
         }
 
         return CrystalStartResult.Success;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ReleaseFilerToCrystalInternal()
-    {
-        this.filerToCrystal?.Dispose();
-        this.filerToCrystal = null;
     }
 }

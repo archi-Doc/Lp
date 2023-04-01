@@ -8,7 +8,7 @@ public interface IFiler
 {
     string FilerPath { get; }
 
-    Task<CrystalResult> PrepareAndCheck(Crystalizer crystalizer, bool newStorage);
+    Task<CrystalResult> PrepareAndCheck(Crystalizer crystalizer);
 
     CrystalResult Write(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared);
 
@@ -59,8 +59,8 @@ internal class RawFilerToFiler : IFiler
     Task<CrystalResult> IFiler.DeleteAsync(TimeSpan timeToWait)
         => this.RawFiler.DeleteAsync(this.File, timeToWait);
 
-    Task<CrystalResult> IFiler.PrepareAndCheck(Crystalizer crystalizer, bool newStorage)
-         => this.RawFiler.PrepareAndCheck(crystalizer, newStorage);
+    Task<CrystalResult> IFiler.PrepareAndCheck(Crystalizer crystalizer)
+         => this.RawFiler.PrepareAndCheck(default!);
 
     Task<CrystalMemoryOwnerResult> IFiler.ReadAsync(long offset, int length, TimeSpan timeToWait)
         => this.RawFiler.ReadAsync(this.File, offset, length, timeToWait);
