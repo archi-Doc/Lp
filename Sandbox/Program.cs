@@ -32,8 +32,8 @@ public class Program
             })
             .ConfigureCrystal(context =>
             {
-                context.TryAdd<ManualClass>(new(Crystalization.Manual, new LocalFilerConfiguration(string.Empty, "manual.data")));
-                context.TryAdd<CombinedClass>(new(Crystalization.Periodic, new LocalFilerConfiguration(string.Empty, "combined.data")));
+                context.TryAdd<ManualClass>(new(Crystalization.Manual, new LocalFilerConfiguration("manual.data")));
+                context.TryAdd<CombinedClass>(new(Crystalization.Periodic, new LocalFilerConfiguration("combined.data")));
             });
 
         var unit = builder.Build();

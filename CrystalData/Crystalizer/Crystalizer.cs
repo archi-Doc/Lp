@@ -30,9 +30,48 @@ public class Crystalizer
 
     private ThreadsafeTypeKeyHashTable<ICrystal> typeToCrystal = new();
     private ConcurrentDictionary<ICrystal, int> crystals = new();
-    private ConcurrentDictionary<IFiler, int> filers = new();
+    /*private ConcurrentDictionary<IFiler, int> filers = new();
     private ConcurrentDictionary<IStorage, int> storages = new();
-    private ConcurrentDictionary<IJournal, int> journals = new();
+    private ConcurrentDictionary<IJournal, int> journals = new();*/
+
+    private object syncFiler = new();
+    private LocalFiler? localFiler;
+    private Dictionary<string, S3Filer> bucketToS3Filer = new();
+
+    #endregion
+
+    #region Resolvers
+
+    public IFiler ResolveFiler(FilerConfiguration filerConfiguration)
+    {
+        lock (this.syncFiler)
+        {
+            if (filerConfiguration is LocalFilerConfiguration localFilerConfiguration)
+            {// Local filer
+                if (this.localFiler == null)
+                {
+                    this.localFiler ??= new LocalFiler(string.Empty);
+                }
+
+                return new RawFilerToFiler(this, this.localFiler, localFilerConfiguration.File);
+            }
+            else if (filerConfiguration is S3FilerConfiguration s3FilerConfiguration)
+            {// S3 filer
+                if (!this.bucketToS3Filer.TryGetValue(s3FilerConfiguration.Bucket, out var filer))
+                {
+                    filer = new S3Filer(s3FilerConfiguration.Bucket, string.Empty);
+                    this.bucketToS3Filer.TryAdd(s3FilerConfiguration.Bucket, filer);
+                }
+
+                return new RawFilerToFiler(this, filer, s3FilerConfiguration.File);
+            }
+            else
+            {
+                ThrowConfigurationNotRegistered(filerConfiguration.GetType());
+                return default!;
+            }
+        }
+    }
 
     #endregion
 
@@ -103,16 +142,19 @@ public class Crystalizer
         throw new InvalidOperationException($"The specified data type '{type.Name}' is not registered. Register the data type within ConfigureCrystal().");
     }
 
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    internal static void ThrowConfigurationNotRegistered(Type type)
+    {
+        throw new InvalidOperationException($"The specified configuration type '{type.Name}' is not registered.");
+    }
+
     internal bool DeleteInternal(ICrystal crystal)
     {
         return this.crystals.TryRemove(crystal, out _);
     }
 
-    internal IFilerToCrystal GetFilerToCrystal(ICrystal crystal, FilerConfiguration filerConfiguration)
-    {
-    }
-
-    internal IFiler ResolveFiler(Type type)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal ICrystal GetCrystal(Type type)
     {
         if (!this.typeToCrystal.TryGetValue(type, out var crystal))
         {
@@ -122,16 +164,7 @@ public class Crystalizer
         return crystal!;
     }
 
-    internal object GetCrystal(Type type)
-    {
-        if (!this.typeToCrystal.TryGetValue(type, out var crystal))
-        {
-            ThrowTypeNotRegistered(type);
-        }
-
-        return crystal!;
-    }
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal object GetObject(Type type)
     {
         if (!this.typeToCrystal.TryGetValue(type, out var crystal))
@@ -140,6 +173,17 @@ public class Crystalizer
         }
 
         return ((ICrystal)crystal!).Object;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal CrystalConfiguration GetConfiguration(Type type)
+    {
+        if (!this.options.TypeToCrystalConfiguration.TryGetValue(type, out var configuration))
+        {
+            ThrowTypeNotRegistered(type);
+        }
+
+        return configuration!;
     }
 
     private CrystalizerOptions options;

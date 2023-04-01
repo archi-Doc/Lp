@@ -13,17 +13,18 @@ internal class UnitCrystalContext : IUnitCrystalContext
     {
         foreach (var x in this.typeToCrystalConfiguration)
         {// This is slow, but it is Singleton anyway.
-            // ICrystal<T> => Crystalizer.Get<T>()
+            // Singleton: ICrystal<T> => Crystalizer.GetCrystal<T>()
             context.Services.Add(ServiceDescriptor.Singleton(typeof(ICrystal<>).MakeGenericType(x.Key), provider => provider.GetRequiredService<Crystalizer>().GetCrystal(x.Key)));
 
-            // T => Crystalizer.Get<T>().Object
+            // Singleton: T => Crystalizer.GetObject<T>()
             context.Services.Add(ServiceDescriptor.Singleton(x.Key, provider => provider.GetRequiredService<Crystalizer>().GetObject(x.Key)));
 
-            // Singleton: IFiler<TData> => FilerFactory<TData>
-            context.Services.Add(ServiceDescriptor.Singleton(typeof(IFiler<>), typeof(FilerFactory<>)));
-        }
+            // Transient: IFiler<TData> => Crystalizer.GetCrystal<T>().Filer
+            context.Services.Add(ServiceDescriptor.Transient(typeof(IFiler<>).MakeGenericType(x.Key), provider => provider.GetRequiredService<Crystalizer>().GetCrystal(x.Key).Filer));
 
-        context.Services.Add(ServiceDescriptor.Singleton(typeof(ICrystal<>), typeof(CrystalNotRegistered<>)));
+            // Singleton: IFiler<TData> => FilerFactory<TData>
+            // context.Services.Add(ServiceDescriptor.Singleton(typeof(IFiler<>), typeof(FilerFactory<>)));
+        }
 
         var crystalOptions = new CrystalizerOptions(this.typeToCrystalConfiguration);
         context.SetOptions(crystalOptions);

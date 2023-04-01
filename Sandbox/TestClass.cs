@@ -30,6 +30,8 @@ internal class TestClass
         this.crystalizer = crystalizer;
 
         this.manualCrystal = manualCrystal;
+        this.manualCrystal.ConfigureFiler(new LocalFilerConfiguration("Manual2.data"));
+
         // this.manualCrystal.Setup();
         this.combinedCrystal = combinedCrystal;
         this.manualClass0 = manualClass;

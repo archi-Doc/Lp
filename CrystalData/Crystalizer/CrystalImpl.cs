@@ -7,11 +7,10 @@ namespace CrystalData;
 internal class CrystalImpl<TData> : ICrystal<TData>
     where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
-    internal CrystalImpl(Crystalizer crystalizer, IFiler<TData> filer)
+    internal CrystalImpl(Crystalizer crystalizer)
     {
         this.Crystalizer = crystalizer;
         this.Configuration = CrystalConfiguration.Default;
-        this.Filer = filer;
     }
 
     #region FieldAndProperty
@@ -23,6 +22,7 @@ internal class CrystalImpl<TData> : ICrystal<TData>
     private SemaphoreLock semaphore = new();
     private TData? obj;
     private IFilerToCrystal? filerToCrystal;
+    private IFiler? filer;
 
     #endregion
 
@@ -30,7 +30,7 @@ internal class CrystalImpl<TData> : ICrystal<TData>
 
     object ICrystal.Object => ((ICrystal<TData>)this).Object;
 
-    public IFiler Filer { get; }
+    public IFiler Filer => this.filer ?? (this.filer = this.Crystalizer.ResolveFiler(this.Configuration.FilerConfiguration));
 
     TData ICrystal<TData>.Object
     {
@@ -70,6 +70,18 @@ internal class CrystalImpl<TData> : ICrystal<TData>
             this.ReleaseFilerToCrystalInternal();
 
             this.Configuration = configuration;
+            this.filer = null;
+        }
+    }
+
+    void ICrystal.ConfigureFiler(FilerConfiguration configuration)
+    {
+        using (this.semaphore.Lock())
+        {
+            // Release filerToCrystal
+            this.ReleaseFilerToCrystalInternal();
+
+            this.Configuration = this.Configuration with { FilerConfiguration = configuration, };
         }
     }
 
@@ -90,14 +102,14 @@ internal class CrystalImpl<TData> : ICrystal<TData>
         using (this.semaphore.Lock())
         {
             // Delete file
-            this.filerToCrystal?.Filer.Delete(this.Configuration.FilerConfiguration.Path);
+            this.Filer.Delete();
 
             // Release
             this.ReleaseFilerToCrystalInternal();
 
             // Clear
             this.Configuration = CrystalConfiguration.Default;
-            TinyhandSerializer.ReconstructObject<T>(ref this.obj);
+            TinyhandSerializer.ReconstructObject<TData>(ref this.obj);
         }
     }
 

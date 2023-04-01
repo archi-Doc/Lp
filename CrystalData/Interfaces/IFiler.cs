@@ -35,40 +35,39 @@ public interface IFiler<TData> : IFiler
 {
 }
 
-internal class FilerFactory<TData> : IFiler<TData>
-    where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+internal class RawFilerToFiler : IFiler
 {
-    public FilerFactory(Crystalizer crystalizer)
+    public RawFilerToFiler(Crystalizer crystalizer, IRawFiler rawFiler, string file)
     {
-        crystalizer.ThrowIfNotRegistered<TData>();
-
         this.Crystalizer = crystalizer;
+        this.RawFiler = rawFiler;
+        this.File = file;
     }
 
     public Crystalizer Crystalizer { get; }
 
     public IRawFiler RawFiler { get; }
 
-    public string Path { get; }
+    public string File { get; }
 
     string IFiler.FilerPath
         => this.RawFiler.FilerPath;
 
     CrystalResult IFiler.Delete()
-        => this.RawFiler.Delete(this.Path);
+        => this.RawFiler.Delete(this.File);
 
     Task<CrystalResult> IFiler.DeleteAsync(TimeSpan timeToWait)
-        => this.RawFiler.DeleteAsync(this.Path, timeToWait);
+        => this.RawFiler.DeleteAsync(this.File, timeToWait);
 
     Task<CrystalResult> IFiler.PrepareAndCheck(Crystalizer crystalizer, bool newStorage)
          => this.RawFiler.PrepareAndCheck(crystalizer, newStorage);
 
     Task<CrystalMemoryOwnerResult> IFiler.ReadAsync(long offset, int length, TimeSpan timeToWait)
-        => this.RawFiler.ReadAsync(this.Path, offset, length, timeToWait);
+        => this.RawFiler.ReadAsync(this.File, offset, length, timeToWait);
 
     CrystalResult IFiler.Write(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
-        => this.RawFiler.Write(this.Path, offset, dataToBeShared);
+        => this.RawFiler.Write(this.File, offset, dataToBeShared);
 
     Task<CrystalResult> IFiler.WriteAsync(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait)
-        => this.RawFiler.WriteAsync(this.Path, offset, dataToBeShared, timeToWait);
+        => this.RawFiler.WriteAsync(this.File, offset, dataToBeShared, timeToWait);
 }
