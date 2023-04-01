@@ -2,7 +2,8 @@
 
 namespace CrystalData.Filer;
 
-public class EmptyFiler : IRawFiler
+[TinyhandObject]
+public partial class EmptyFiler : IRawFiler
 {
     public static readonly EmptyFiler Default = new();
 

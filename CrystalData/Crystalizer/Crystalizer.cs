@@ -21,8 +21,6 @@ public class Crystalizer
 
             this.typeToCrystal.TryAdd(x.Key, crystal);
             this.crystals.TryAdd(crystal, 0);
-
-            // IFiler<TData>, IStorage<TData>, IJournal<TData>
         }
     }
 
@@ -30,9 +28,6 @@ public class Crystalizer
 
     private ThreadsafeTypeKeyHashTable<ICrystal> typeToCrystal = new();
     private ConcurrentDictionary<ICrystal, int> crystals = new();
-    /*private ConcurrentDictionary<IFiler, int> filers = new();
-    private ConcurrentDictionary<IStorage, int> storages = new();
-    private ConcurrentDictionary<IJournal, int> journals = new();*/
 
     private object syncFiler = new();
     private LocalFiler? localFiler;
@@ -47,7 +42,7 @@ public class Crystalizer
         lock (this.syncFiler)
         {
             if (filerConfiguration is EmptyFilerConfiguration emptyFilerConfiguration)
-            {
+            {// Empty filer
                 return new RawFilerToFiler(this, EmptyFiler.Default, string.Empty);
             }
             else if (filerConfiguration is LocalFilerConfiguration localFilerConfiguration)
@@ -107,28 +102,28 @@ public class Crystalizer
         }
     }
 
-    public ICrystal<T> Create<T>()
-        where T : ITinyhandSerialize<T>, ITinyhandReconstruct<T>
+    public ICrystal<TData> Create<TData>()
+        where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
-        if (!this.typeToCrystal.TryGetValue(typeof(T), out _))
+        if (!this.typeToCrystal.TryGetValue(typeof(TData), out _))
         {
-            ThrowTypeNotRegistered(typeof(T));
+            ThrowTypeNotRegistered(typeof(TData));
         }
 
-        var crystal = new CrystalImpl<T>(this);
+        var crystal = new CrystalImpl<TData>(this);
         this.crystals.TryAdd(crystal, 0);
         return crystal;
     }
 
-    public ICrystal<T> Get<T>()
-        where T : ITinyhandSerialize<T>, ITinyhandReconstruct<T>
+    public ICrystal<TData> Get<TData>()
+        where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
-        if (!this.typeToCrystal.TryGetValue(typeof(T), out var crystal))
+        if (!this.typeToCrystal.TryGetValue(typeof(TData), out var crystal))
         {
-            ThrowTypeNotRegistered(typeof(T));
+            ThrowTypeNotRegistered(typeof(TData));
         }
 
-        return (ICrystal<T>)crystal!;
+        return (ICrystal<TData>)crystal!;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -176,18 +171,7 @@ public class Crystalizer
             ThrowTypeNotRegistered(type);
         }
 
-        return ((ICrystal)crystal!).Object;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal CrystalConfiguration GetConfiguration(Type type)
-    {
-        if (!this.options.TypeToCrystalConfiguration.TryGetValue(type, out var configuration))
-        {
-            ThrowTypeNotRegistered(type);
-        }
-
-        return configuration!;
+        return crystal!.Object;
     }
 
     private CrystalizerOptions options;
