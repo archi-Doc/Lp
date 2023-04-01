@@ -103,6 +103,16 @@ public class Crystalizer
     {
     }
 
+    internal IFiler ResolveFiler(Type type)
+    {
+        if (!this.typeToCrystal.TryGetValue(type, out var crystal))
+        {
+            ThrowTypeNotRegistered(type);
+        }
+
+        return crystal!;
+    }
+
     internal object GetCrystal(Type type)
     {
         if (!this.typeToCrystal.TryGetValue(type, out var crystal))
