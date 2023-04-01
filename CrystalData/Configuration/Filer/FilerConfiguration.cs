@@ -4,13 +4,13 @@ namespace CrystalData;
 
 public abstract record FilerConfiguration
 {
-    public FilerConfiguration(string file)
+    public FilerConfiguration(string directory, string file)
     {
-        // this.Path = path;
+        this.Directory = directory;
         this.File = file;
     }
 
-    // public string Path { get; init; }
+    public string Directory { get; init; }
 
     public string File { get; init; }
 }

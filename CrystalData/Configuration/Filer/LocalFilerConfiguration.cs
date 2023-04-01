@@ -4,10 +4,13 @@ namespace CrystalData;
 
 public record LocalFilerConfiguration : FilerConfiguration
 {
-    public LocalFilerConfiguration(string file)
-        : base(file)
+    public LocalFilerConfiguration(string directory, string file)
+        : base(directory, file)
     {
     }
 
-    public int ConcurrentTasks { get; init; }
+    public LocalFilerConfiguration(string file)
+        : base(string.Empty, file)
+    {
+    }
 }

@@ -7,7 +7,7 @@ public record EmptyFilerConfiguration : FilerConfiguration
     public static readonly EmptyFilerConfiguration Default = new();
 
     public EmptyFilerConfiguration()
-        : base(string.Empty)
+        : base(string.Empty, string.Empty)
     {
     }
 }

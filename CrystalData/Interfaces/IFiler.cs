@@ -37,16 +37,19 @@ public interface IFiler<TData> : IFiler
 
 internal class RawFilerToFiler : IFiler
 {
-    public RawFilerToFiler(Crystalizer crystalizer, IRawFiler rawFiler, string file)
+    public RawFilerToFiler(Crystalizer crystalizer, IRawFiler rawFiler, FilerConfiguration filerConfiguration)
     {
         this.Crystalizer = crystalizer;
         this.RawFiler = rawFiler;
-        this.File = file;
+        this.Directory = filerConfiguration.Directory;
+        this.File = filerConfiguration.File;
     }
 
     public Crystalizer Crystalizer { get; }
 
     public IRawFiler RawFiler { get; }
+
+    public string Directory { get; }
 
     public string File { get; }
 

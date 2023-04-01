@@ -43,7 +43,7 @@ public class Crystalizer
         {
             if (filerConfiguration is EmptyFilerConfiguration emptyFilerConfiguration)
             {// Empty filer
-                return new RawFilerToFiler(this, EmptyFiler.Default, string.Empty);
+                return new RawFilerToFiler(this, EmptyFiler.Default, filerConfiguration);
             }
             else if (filerConfiguration is LocalFilerConfiguration localFilerConfiguration)
             {// Local filer
@@ -52,7 +52,7 @@ public class Crystalizer
                     this.localFiler ??= new LocalFiler(string.Empty);
                 }
 
-                return new RawFilerToFiler(this, this.localFiler, localFilerConfiguration.File);
+                return new RawFilerToFiler(this, this.localFiler, filerConfiguration);
             }
             else if (filerConfiguration is S3FilerConfiguration s3FilerConfiguration)
             {// S3 filer
@@ -62,7 +62,7 @@ public class Crystalizer
                     this.bucketToS3Filer.TryAdd(s3FilerConfiguration.Bucket, filer);
                 }
 
-                return new RawFilerToFiler(this, filer, s3FilerConfiguration.File);
+                return new RawFilerToFiler(this, filer, filerConfiguration);
             }
             else
             {
