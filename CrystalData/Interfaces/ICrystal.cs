@@ -8,6 +8,8 @@ public interface ICrystal
 
     IFiler Filer { get; }
 
+    public CrystalConfiguration Configuration { get; }
+
     public void Configure(CrystalConfiguration configuration);
 
     public void ConfigureFiler(FilerConfiguration configuration);

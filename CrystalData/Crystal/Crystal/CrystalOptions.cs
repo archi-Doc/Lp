@@ -13,17 +13,23 @@ public record CrystalOptions
 
     public static CrystalOptions Default { get; } = new CrystalOptions();
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="CrystalOptions"/> class.
-    /// </summary>
     public CrystalOptions()
+        : this(new Dictionary<Type, CrystalConfiguration>(), string.Empty)
     {
     }
 
+    internal CrystalOptions(Dictionary<Type, CrystalConfiguration> configurations, string crystalDirectory)
+    {
+        this.Configurations = configurations;
+        this.CrystalDirectory = crystalDirectory;
+    }
+
+    public Dictionary<Type, CrystalConfiguration> Configurations { get; }
+
     /// <summary>
-    /// Gets or sets a path of the directory where <see cref="Crystal{TData}"/> files are stored.
+    /// Gets or sets a path of the directory where data files are stored.
     /// </summary>
-    public string CrystalPath { get; set; } = string.Empty;
+    public string CrystalDirectory { get; set; }
 
     public int MaxDataSize { get; init; } = DefaultMaxDataSize;
 
@@ -49,7 +55,7 @@ public record CrystalOptions
 
     public bool EnableLogger { get; init; } = true;
 
-    public string RootPath => this.rootPath ??= PathHelper.GetRootedDirectory(Directory.GetCurrentDirectory(), this.CrystalPath);
+    public string RootPath => this.rootPath ??= PathHelper.GetRootedDirectory(Directory.GetCurrentDirectory(), this.CrystalDirectory);
 
     public string CrystalFilePath => PathHelper.GetRootedFile(this.RootPath, this.CrystalFile);
 

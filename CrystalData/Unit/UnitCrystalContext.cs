@@ -26,7 +26,7 @@ internal class UnitCrystalContext : IUnitCrystalContext
             // context.Services.Add(ServiceDescriptor.Singleton(typeof(IFiler<>), typeof(FilerFactory<>)));
         }
 
-        var crystalOptions = new CrystalizerOptions(this.typeToCrystalConfiguration);
+        var crystalOptions = new CrystalOptions(this.typeToCrystalConfiguration, context.DataDirectory);
         context.SetOptions(crystalOptions);
     }
 

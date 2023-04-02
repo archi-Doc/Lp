@@ -176,7 +176,7 @@ public class Control : ILogInformation
             this.SetupOptions<CrystalOptions>((context, crystalOptions) =>
             {// CrystalOptions
                 context.GetOptions<LPOptions>(out var lpOptions);
-                crystalOptions.CrystalPath = lpOptions.RootDirectory;
+                crystalOptions.CrystalDirectory = lpOptions.RootDirectory;
             });
 
             this.AddBuilder(new NetControl.Builder());

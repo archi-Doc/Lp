@@ -17,7 +17,7 @@ public static class TestHelper
     {
         var options = new CrystalOptions() with
         {
-            CrystalPath = $"Crystal[{RandomVault.Pseudo.NextUInt32():x4}]",
+            CrystalDirectory = $"Crystal[{RandomVault.Pseudo.NextUInt32():x4}]",
             DefaultCrystalDirectory = "Snowflake",
         };
 
@@ -30,7 +30,7 @@ public static class TestHelper
             })
             .SetupOptions<CrystalOptions>((context, options) =>
             {
-                options.CrystalPath = $"Crystal[{RandomVault.Pseudo.NextUInt32():x4}]";
+                options.CrystalDirectory = $"Crystal[{RandomVault.Pseudo.NextUInt32():x4}]";
             });
 
         var unit = builder.Build();
@@ -64,7 +64,7 @@ public static class TestHelper
             })
             .SetupOptions<CrystalOptions>((context, options) =>
             {
-                options.CrystalPath = $"Crystal[{RandomVault.Pseudo.NextUInt32():x4}]";
+                options.CrystalDirectory = $"Crystal[{RandomVault.Pseudo.NextUInt32():x4}]";
                 options.MaxParentInMemory = maxParent;
             });
 

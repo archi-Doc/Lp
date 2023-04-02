@@ -9,11 +9,15 @@ namespace CrystalData;
 
 public class Crystalizer
 {
-    public Crystalizer(CrystalizerOptions options)
+    public Crystalizer(UnitCore core, CrystalOptions options, ILogger logger, UnitLogger unitLogger, IStorageKey storageKey)
     {
-        this.options = options;
+        this.Core = core;
+        this.Options = options;
+        this.logger = logger;
+        this.unitLogger = unitLogger;
+        this.storageKey = storageKey;
 
-        foreach (var x in this.options.TypeToCrystalConfiguration)
+        foreach (var x in this.Options.Configurations)
         {
             // (ICrystal) new CrystalImpl<TData>
             var crystal = (ICrystal)Activator.CreateInstance(typeof(CrystalImpl<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
@@ -26,6 +30,13 @@ public class Crystalizer
 
     #region FieldAndProperty
 
+    public UnitCore Core { get; }
+
+    public CrystalOptions Options { get; }
+
+    private ILogger logger;
+    private UnitLogger unitLogger;
+    private IStorageKey storageKey;
     private ThreadsafeTypeKeyHashTable<ICrystal> typeToCrystal = new();
     private ConcurrentDictionary<ICrystal, int> crystals = new();
 
@@ -73,6 +84,8 @@ public class Crystalizer
     }
 
     #endregion
+
+    #region Main
 
     public async Task<CrystalStartResult> PrepareAndLoad(CrystalStartParam? param = null)
     {
@@ -126,6 +139,15 @@ public class Crystalizer
         return (ICrystal<TData>)crystal!;
     }
 
+    public ICrystal[] GetArray()
+    {
+        return this.crystals.Keys.ToArray();
+    }
+
+    #endregion
+
+    #region Misc
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void ThrowIfNotRegistered<TData>()
     {
@@ -174,5 +196,5 @@ public class Crystalizer
         return crystal!.Object;
     }
 
-    private CrystalizerOptions options;
+    #endregion
 }
