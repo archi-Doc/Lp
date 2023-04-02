@@ -17,7 +17,7 @@ public class Crystalizer
         this.UnitLogger = unitLogger;
         this.StorageKey = storageKey;
 
-        foreach (var x in this.Options.Configurations)
+        foreach (var x in this.Options.DataConfigurations)
         {
             // (ICrystal) new CrystalImpl<TData>
             var crystal = (ICrystal)Activator.CreateInstance(typeof(CrystalImpl<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
@@ -25,6 +25,15 @@ public class Crystalizer
 
             this.typeToCrystal.TryAdd(x.Key, crystal);
             this.crystals.TryAdd(crystal, 0);
+        }
+
+        foreach (var x in this.Options.CrystalConfigurations)
+        {
+            // (ICrystalData) new CrystalDataImpl<TData>
+            var crystalData = (ICrystalData)Activator.CreateInstance(typeof(CrystalDataImpl<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
+
+            this.typeToCrystalData.TryAdd(x.Key, crystalData);
+            // this.crystals.TryAdd(crystal, 0);}
         }
     }
 
@@ -41,6 +50,8 @@ public class Crystalizer
     private ILogger logger;
     private ThreadsafeTypeKeyHashTable<ICrystal> typeToCrystal = new();
     private ConcurrentDictionary<ICrystal, int> crystals = new();
+    private ThreadsafeTypeKeyHashTable<ICrystalData> typeToCrystalData = new();
+    private ConcurrentDictionary<ICrystalData, int> crystalData = new();
 
     private object syncFiler = new();
     private LocalFiler? localFiler;
@@ -188,6 +199,17 @@ public class Crystalizer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal ICrystalData GetCrystalData(Type type)
+    {
+        if (!this.typeToCrystalData.TryGetValue(type, out var crystal))
+        {
+            ThrowTypeNotRegistered(type);
+        }
+
+        return crystal!;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal object GetObject(Type type)
     {
         if (!this.typeToCrystal.TryGetValue(type, out var crystal))
@@ -196,6 +218,16 @@ public class Crystalizer
         }
 
         return crystal!.Object;
+    }
+
+    internal CrystalConfiguration GetCrystalConfiguration(Type type)
+    {
+        if (!this.Options.CrystalConfigurations.TryGetValue(type, out var crystalConfiguration))
+        {
+            ThrowTypeNotRegistered(type);
+        }
+
+        return crystalConfiguration!;
     }
 
     #endregion

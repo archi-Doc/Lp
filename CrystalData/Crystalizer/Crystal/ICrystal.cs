@@ -8,9 +8,9 @@ public interface ICrystal
 
     IFiler Filer { get; }
 
-    public CrystalConfiguration Configuration { get; }
+    public DataConfiguration Configuration { get; }
 
-    public void Configure(CrystalConfiguration configuration);
+    public void Configure(DataConfiguration configuration);
 
     public void ConfigureFiler(FilerConfiguration configuration);
 

@@ -57,7 +57,7 @@ public class Control : ILogInformation
                 context.AddSingleton<Mono>();
                 context.AddSingleton<LpCrystal>();
                 context.AddSingleton<MergerCrystal>();
-                context.Services.TryAddSingleton<ICrystalData>(x => x.GetRequiredService<Control>().Crystal);
+                context.Services.TryAddSingleton<ICrystalDataObsolete>(x => x.GetRequiredService<Control>().Crystal);
                 // context.Services.TryAddSingleton<LpData>(x => x.GetRequiredService<Control>().LpRoot);
                 // context.Services.TryAddSingleton<MergerData>(x => x.GetRequiredService<Control>().MergerRoot);
 
@@ -595,7 +595,7 @@ public class Control : ILogInformation
 
     public Merger.Provider MergerProvider { get; }
 
-    public ICrystalData Crystal { get; }
+    public ICrystalDataObsolete Crystal { get; }
 
     public LpData LpRoot { get; }
 

@@ -40,13 +40,13 @@ public static class TestHelper
         return crystal;
     }
 
-    public static async Task StopCrystal(ICrystalData crystal, bool removeAll = true)
+    public static async Task StopCrystal(ICrystalDataObsolete crystal, bool removeAll = true)
     {
         await crystal.StopAsync(new(RemoveAll: removeAll));
         crystal.MemoryUsage.Is(0);
     }
 
-    public static async Task StopAndStartCrystal(ICrystalData crystal)
+    public static async Task StopAndStartCrystal(ICrystalDataObsolete crystal)
     {
         await crystal.StopAsync(new());
         crystal.MemoryUsage.Is(0);

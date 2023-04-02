@@ -1,6 +1,16 @@
 ﻿namespace Sandbox;
 
 [TinyhandObject]
+internal partial class CrystalClass
+{
+    [Key(0)]
+    public int Id { get; set; }
+
+    public override string ToString()
+        => $"Crystal class {this.Id}";
+}
+
+[TinyhandObject]
 internal partial class ManualClass
 {
     [Key(0)]
@@ -25,7 +35,7 @@ internal partial class CombinedClass
 
 internal class TestClass
 {
-    public TestClass(Crystalizer crystalizer, ICrystal<ManualClass> manualCrystal, ICrystal<CombinedClass> combinedCrystal, ManualClass manualClass)
+    public TestClass(Crystalizer crystalizer, ICrystal<ManualClass> manualCrystal, ICrystal<CombinedClass> combinedCrystal, ManualClass manualClass, ICrystalData<CrystalClass> crystalData)
     {
         this.crystalizer = crystalizer;
 

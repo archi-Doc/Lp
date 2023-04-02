@@ -6,6 +6,7 @@ global using Tinyhand;
 global using LP;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
+using CrystalData.Datum;
 
 namespace Sandbox;
 
@@ -32,8 +33,14 @@ public class Program
             })
             .ConfigureCrystal(context =>
             {
-                context.TryAdd<ManualClass>(new(Crystalization.Manual, new LocalFilerConfiguration("manual.data")));
-                context.TryAdd<CombinedClass>(new(Crystalization.Periodic, new LocalFilerConfiguration("combined.data")));
+                context.AddData<ManualClass>(new(Crystalization.Manual, new LocalFilerConfiguration("manual.data")));
+                context.AddData<CombinedClass>(new(Crystalization.Periodic, new LocalFilerConfiguration("combined.data")));
+                context.AddCrystalData<CrystalClass>(
+                    new(datumRegistry =>
+                    {
+                        datumRegistry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
+                    }),
+                    new(Crystalization.Manual, new LocalFilerConfiguration("crystal.data")));
             });
 
         var unit = builder.Build();

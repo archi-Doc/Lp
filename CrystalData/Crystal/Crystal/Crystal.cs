@@ -5,7 +5,7 @@ using CrystalData.Datum;
 
 namespace CrystalData;
 
-public partial class Crystal<TData> : ICrystalData, ICrystalInternal
+public partial class Crystal<TData> : ICrystalDataObsolete, ICrystalInternal
     where TData : BaseData
 {
     internal Crystal(UnitCore core, CrystalOptions options, ILogger<Crystal<TData>> logger, UnitLogger unitLogger, IStorageKey storageKey)

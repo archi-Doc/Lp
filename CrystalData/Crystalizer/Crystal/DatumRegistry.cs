@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using CrystalData.Datum;
 
@@ -20,6 +18,8 @@ public class DatumRegistry
         public readonly ushort DatumId;
         public readonly ConstructorDelegate Constructor;
     }
+
+    public delegate void RegisterDelegate(DatumRegistry datumRegistry);
 
     public delegate IBaseDatum ConstructorDelegate(IDataInternal dataInternal);
 

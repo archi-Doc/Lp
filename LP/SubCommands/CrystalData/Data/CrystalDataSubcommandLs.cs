@@ -7,7 +7,7 @@ namespace LP.Subcommands.CrystalData;
 [SimpleCommand("ls", Description = "List crystal data information.")]
 public class CrystalDataSubcommandLs : ISimpleCommandAsync
 {
-    public CrystalDataSubcommandLs(IConsoleService consoleService, ICrystalData crystal)
+    public CrystalDataSubcommandLs(IConsoleService consoleService, ICrystalDataObsolete crystal)
     {
         this.consoleService = consoleService;
         this.crystal = crystal;
@@ -30,5 +30,5 @@ public class CrystalDataSubcommandLs : ISimpleCommandAsync
     }
 
     private IConsoleService consoleService;
-    private ICrystalData crystal;
+    private ICrystalDataObsolete crystal;
 }

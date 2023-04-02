@@ -7,7 +7,7 @@ namespace LP.Subcommands.CrystalData;
 [SimpleCommand("delete-all", Description = "Delete all crystal data.")]
 public class CrystalDataSubcommandDeleteAll : ISimpleCommandAsync
 {
-    public CrystalDataSubcommandDeleteAll(IConsoleService consoleService, ICrystalData crystal)
+    public CrystalDataSubcommandDeleteAll(IConsoleService consoleService, ICrystalDataObsolete crystal)
     {
         this.consoleService = consoleService;
         this.crystal = crystal;
@@ -22,5 +22,5 @@ public class CrystalDataSubcommandDeleteAll : ISimpleCommandAsync
     }
 
     private IConsoleService consoleService;
-    private ICrystalData crystal;
+    private ICrystalDataObsolete crystal;
 }
