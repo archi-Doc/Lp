@@ -55,8 +55,6 @@ public partial class S3Filer : TaskWorker<FilerWork>, IRawFiler
 
     #region FieldAndProperty
 
-    public string FilerPath => $"{this.bucket}/{this.path}";
-
     private ILogger? logger;
 
     [Key(0)]
@@ -185,10 +183,10 @@ TryWrite:
 
     #region IFiler
 
-    async Task<CrystalResult> IRawFiler.PrepareAndCheck(StorageControl storage)
+    async Task<CrystalResult> IRawFiler.PrepareAndCheck(Crystalizer crystalizer, FilerConfiguration configuration)
     {
         this.client?.Dispose();
-        if (!storage.Key.TryGetKey(this.bucket, out var accessKeyPair))
+        if (!crystalizer.StorageKey.TryGetKey(this.bucket, out var accessKeyPair))
         {
             return CrystalResult.NoStorageKey;
         }
@@ -213,9 +211,9 @@ TryWrite:
             }
         }
 
-        if (storage.Options.EnableLogger)
+        if (crystalizer.Options.EnableLogger)
         {
-            this.logger = storage.UnitLogger.GetLogger<S3Filer>();
+            this.logger = crystalizer.UnitLogger.GetLogger<S3Filer>();
         }
 
         return CrystalResult.Success;
@@ -228,7 +226,7 @@ TryWrite:
         this.Dispose();
     }
 
-    async Task<CrystalResult> IRawFiler.DeleteAllAsync()
+    /*async Task<CrystalResult> IRawFiler.DeleteAllAsync()
     {
         if (this.client == null)
         {
@@ -261,7 +259,7 @@ TryWrite:
                 return CrystalResult.DeleteError;
             }
         }
-    }
+    }*/
 
     CrystalResult IRawFiler.Write(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
     {

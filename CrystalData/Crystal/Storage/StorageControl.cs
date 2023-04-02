@@ -38,7 +38,7 @@ public sealed class StorageControl
             // Move files to other storage...
 
             // Deletion
-            storageAndFiler.Filer?.DeleteAllAsync().Wait();
+            // storageAndFiler.Filer?.DeleteAllAsync().Wait();
             storageAndFiler.Terminate().Wait();
             storageAndFiler.Goshujin = null;
 
@@ -65,7 +65,7 @@ public sealed class StorageControl
             path = relative;
         }
 
-        var result = LocalFiler.Check(this, path);
+        var result = LocalFiler.Check(default!, path);
         if (result != AddStorageResult.Success)
         {
             return (result, 0);
@@ -79,7 +79,7 @@ public sealed class StorageControl
             var storage = new SimpleStorage();
             storage.StorageCapacity = capacity;
 
-            var filer = new LocalFiler(path);
+            var filer = new LocalFiler();
 
             var storageAndFiler = TinyhandSerializer.Reconstruct<StorageAndFiler>();
             storageAndFiler.StorageId = id;
@@ -145,12 +145,12 @@ public sealed class StorageControl
         lock (this.syncObject)
         {
             foreach (var x in this.storageAndFilers)
-            {
-                var task = x.Filer?.DeleteAllAsync();
+            {// tempcode
+                /*var task = x.Filer?.DeleteAllAsync();
                 if (task != null)
                 {
                     list.Add(task);
-                }
+                }*/
             }
         }
 
@@ -255,7 +255,7 @@ public sealed class StorageControl
             }
             catch
             {
-                if (!await param.Query(CrystalStartResult.FileError).ConfigureAwait(false))
+                if (await param.Query(CrystalStartResult.FileError).ConfigureAwait(false) == AbortOrComplete.Abort)
                 {
                     return CrystalStartResult.FileError;
                 }
@@ -274,7 +274,7 @@ public sealed class StorageControl
         }
 
         if (errorList != null &&
-            !await param.Query(CrystalStartResult.DirectoryError, errorList.Select(x => x.ToString()).ToArray()).ConfigureAwait(false))
+            await param.Query(CrystalStartResult.DirectoryError, errorList.Select(x => x.ToString()).ToArray()).ConfigureAwait(false) == AbortOrComplete.Abort)
         {
             return CrystalStartResult.FileError;
         }
@@ -293,7 +293,7 @@ public sealed class StorageControl
             {
                 var storage = new SimpleStorage();
                 storage.StorageCapacity = CrystalOptions.DefaultDirectoryCapacity;
-                var filer = new LocalFiler(this.Options.DefaultCrystalDirectory); // PathHelper.GetRootedDirectory(this.Options.RootPath, this.Options.DefaultCrystalDirectory)
+                var filer = new LocalFiler(); // PathHelper.GetRootedDirectory(this.Options.RootPath, this.Options.DefaultCrystalDirectory)
                 // var filer = new S3Filer("kiokubako", "lp");
 
                 var storageAndFiler = TinyhandSerializer.Reconstruct<StorageAndFiler>();

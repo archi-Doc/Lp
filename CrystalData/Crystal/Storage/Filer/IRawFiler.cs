@@ -7,9 +7,9 @@ namespace CrystalData.Filer;
 [TinyhandUnion(2, typeof(S3Filer))]
 internal partial interface IRawFiler
 {
-    string FilerPath { get; }
+    // string FilerPath { get; }
 
-    Task<CrystalResult> PrepareAndCheck(StorageControl storage);
+    Task<CrystalResult> PrepareAndCheck(Crystalizer crystalizer, FilerConfiguration configuration);
 
     Task Terminate();
 
@@ -36,6 +36,4 @@ internal partial interface IRawFiler
 
     Task<CrystalResult> DeleteAsync(string path)
         => this.DeleteAsync(path);
-
-    Task<CrystalResult> DeleteAllAsync();
 }

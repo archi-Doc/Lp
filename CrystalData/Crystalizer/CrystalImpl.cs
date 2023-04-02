@@ -41,11 +41,6 @@ internal class CrystalImpl<TData> : ICrystal<TData>
 
             using (this.semaphore.Lock())
             {
-                if (this.obj != null)
-                {
-                    return this.obj;
-                }
-
                 // Load
                 this.PrepareAndLoadInternal(null).Wait();
                 if (this.obj != null)
@@ -102,6 +97,11 @@ internal class CrystalImpl<TData> : ICrystal<TData>
 
     async Task<CrystalStartResult> ICrystal.PrepareAndLoad(CrystalStartParam? param)
     {
+        if (this.obj != null)
+        {// Prepared
+            return CrystalStartResult.Success;
+        }
+
         using (this.semaphore.Lock())
         {
             return await this.PrepareAndLoadInternal(param).ConfigureAwait(false);
@@ -138,13 +138,20 @@ internal class CrystalImpl<TData> : ICrystal<TData>
 
     private async Task<CrystalStartResult> PrepareAndLoadInternal(CrystalStartParam? param)
     {// this.semaphore.Lock()
+        if (this.obj != null)
+        {
+            return CrystalStartResult.Success;
+        }
+
+        param ??= CrystalStartParam.Default;
+
         this.ResolveFiler();
         if (this.Configuration.FilerConfiguration is EmptyFilerConfiguration)
         {
             return CrystalStartResult.Success;
         }
 
-        var result = await this.filer.PrepareAndCheck(this.Crystalizer).ConfigureAwait(false);
+        var result = await this.filer.PrepareAndCheck(this.Crystalizer, this.Configuration.FilerConfiguration).ConfigureAwait(false);
         if (result != CrystalResult.Success)
         {
             return CrystalStartResult.DirectoryError;
@@ -154,6 +161,11 @@ internal class CrystalImpl<TData> : ICrystal<TData>
         var memoryResult = await this.filer.ReadAsync(0, -1).ConfigureAwait(false);
         if (!memoryResult.IsSuccess)
         {
+            if (await param.Query(CrystalStartResult.FileNotFound).ConfigureAwait(false) == AbortOrComplete.Complete)
+            {
+                goto Reconstruct;
+            }
+
             return CrystalStartResult.FileNotFound;
         }
 
@@ -164,6 +176,11 @@ internal class CrystalImpl<TData> : ICrystal<TData>
         }
         catch
         {
+            if (await param.Query(CrystalStartResult.FileNotFound).ConfigureAwait(false) == AbortOrComplete.Complete)
+            {
+                goto Reconstruct;
+            }
+
             return CrystalStartResult.DeserializeError;
         }
         finally
@@ -171,6 +188,11 @@ internal class CrystalImpl<TData> : ICrystal<TData>
             memoryResult.Return();
         }
 
+        return CrystalStartResult.Success;
+
+Reconstruct:
+// Reconstruct
+        TinyhandSerializer.ReconstructObject<TData>(ref this.obj);
         return CrystalStartResult.Success;
     }
 

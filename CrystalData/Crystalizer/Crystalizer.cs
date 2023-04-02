@@ -14,8 +14,8 @@ public class Crystalizer
         this.Core = core;
         this.Options = options;
         this.logger = logger;
-        this.unitLogger = unitLogger;
-        this.storageKey = storageKey;
+        this.UnitLogger = unitLogger;
+        this.StorageKey = storageKey;
 
         foreach (var x in this.Options.Configurations)
         {
@@ -34,9 +34,11 @@ public class Crystalizer
 
     public CrystalOptions Options { get; }
 
+    public IStorageKey StorageKey { get; }
+
+    internal UnitLogger UnitLogger { get; }
+
     private ILogger logger;
-    private UnitLogger unitLogger;
-    private IStorageKey storageKey;
     private ThreadsafeTypeKeyHashTable<ICrystal> typeToCrystal = new();
     private ConcurrentDictionary<ICrystal, int> crystals = new();
 
@@ -60,7 +62,7 @@ public class Crystalizer
             {// Local filer
                 if (this.localFiler == null)
                 {
-                    this.localFiler ??= new LocalFiler(string.Empty);
+                    this.localFiler ??= new LocalFiler();
                 }
 
                 return new RawFilerToFiler(this, this.localFiler, filerConfiguration);

@@ -4,13 +4,8 @@ namespace CrystalData;
 
 public record LocalFilerConfiguration : FilerConfiguration
 {
-    public LocalFilerConfiguration(string directory, string file)
-        : base(directory, file)
-    {
-    }
-
     public LocalFilerConfiguration(string file)
-        : base(string.Empty, file)
+        : base(file)
     {
     }
 }

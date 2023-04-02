@@ -269,7 +269,7 @@ LoadBackup:
         }
         catch
         {
-            if (await param.Query(CrystalStartResult.DirectoryNotFound).ConfigureAwait(false))
+            if (await param.Query(CrystalStartResult.DirectoryNotFound).ConfigureAwait(false) == AbortOrComplete.Complete)
             {
                 result = await this.Storage.TryStart(this.Options, param, null).ConfigureAwait(false);
                 if (result == CrystalStartResult.Success || param.ForceStart)
@@ -288,7 +288,7 @@ LoadBackup:
         // Checksum Crystal
         if (!HashHelper.CheckFarmHashAndGetData(data.AsMemory(), out memory))
         {
-            if (await param.Query(CrystalStartResult.DirectoryError).ConfigureAwait(false))
+            if (await param.Query(CrystalStartResult.DirectoryError).ConfigureAwait(false) == AbortOrComplete.Complete)
             {
                 result = await this.Storage.TryStart(this.Options, param, null).ConfigureAwait(false);
                 if (result == CrystalStartResult.Success || param.ForceStart)
@@ -344,7 +344,7 @@ LoadBackup:
         }
         catch
         {
-            if (await param.Query(CrystalStartResult.FileNotFound).ConfigureAwait(false))
+            if (await param.Query(CrystalStartResult.FileNotFound).ConfigureAwait(false) == AbortOrComplete.Complete)
             {
                 return CrystalStartResult.Success;
             }
@@ -357,7 +357,7 @@ LoadBackup:
         // Checksum
         if (!HashHelper.CheckFarmHashAndGetData(data.AsMemory(), out memory))
         {
-            if (await param.Query(CrystalStartResult.FileError).ConfigureAwait(false))
+            if (await param.Query(CrystalStartResult.FileError).ConfigureAwait(false) == AbortOrComplete.Complete)
             {
                 return CrystalStartResult.Success;
             }
@@ -370,7 +370,7 @@ LoadBackup:
         // Deserialize
         if (!this.DeserializeCrystal(memory))
         {
-            if (await param.Query(CrystalStartResult.FileError).ConfigureAwait(false))
+            if (await param.Query(CrystalStartResult.FileError).ConfigureAwait(false) == AbortOrComplete.Complete)
             {
                 return CrystalStartResult.Success;
             }

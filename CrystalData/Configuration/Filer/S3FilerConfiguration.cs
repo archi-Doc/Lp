@@ -4,8 +4,8 @@ namespace CrystalData;
 
 public record S3FilerConfiguration : FilerConfiguration
 {
-    public S3FilerConfiguration(string bucket, string directory, string file)
-        : base(directory, file)
+    public S3FilerConfiguration(string bucket, string file)
+        : base(file)
     {
         this.Bucket = bucket;
     }

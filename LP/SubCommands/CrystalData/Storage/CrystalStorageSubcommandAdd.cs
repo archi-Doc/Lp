@@ -49,7 +49,7 @@ EnterPath:
             return;
         }
 
-        var resultCheck = LocalFiler.Check(this.crystal.Storage, path);
+        var resultCheck = LocalFiler.Check(default!, path);
         if (resultCheck != AddStorageResult.Success)
         {
             this.userInterfaceService.WriteLine(HashedString.FromEnum(resultCheck));

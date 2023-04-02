@@ -8,8 +8,8 @@ public record CrystalStartParam(bool ForceStart = false, CrystalStartQueryDelega
 {
     public static readonly CrystalStartParam Default = new(true);
 
-    public Task<bool> Query(CrystalStartResult query, string[]? list = null)
-        => this.QueryDelegate == null || this.ForceStart ? Task.FromResult(true) : this.QueryDelegate(query, list);
+    public Task<AbortOrComplete> Query(CrystalStartResult query, string[]? list = null)
+        => this.QueryDelegate == null || this.ForceStart ? Task.FromResult(AbortOrComplete.Complete) : this.QueryDelegate(query, list);
 }
 
 public record CrystalStopParam(bool RemoveAll = false)
@@ -28,4 +28,4 @@ public enum CrystalStartResult
     DeserializeError,
 }
 
-public delegate Task<bool> CrystalStartQueryDelegate(CrystalStartResult query, string[]? list);
+public delegate Task<AbortOrComplete> CrystalStartQueryDelegate(CrystalStartResult query, string[]? list);

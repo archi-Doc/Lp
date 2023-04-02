@@ -30,15 +30,9 @@ public partial class LocalFiler : TaskWorker<FilerWork>, IRawFiler
         });
     }
 
-    public LocalFiler(string path)
-        : this()
+    public static AddStorageResult Check(Crystalizer crystalizer, string directory)
     {
-        this.path = path;
-    }
-
-    public static AddStorageResult Check(StorageControl storageControl, string path)
-    {
-        var result = CheckPath(storageControl, path);
+        var result = CheckPath(crystalizer, directory);
         if (!result.Success)
         {
             return AddStorageResult.WriteError;
@@ -48,31 +42,24 @@ public partial class LocalFiler : TaskWorker<FilerWork>, IRawFiler
     }
 
     public override string ToString()
-        => $"LocalFiler Path: {this.rootedPath}";
+        => $"LocalFiler";
 
     #region FieldAndProperty
 
-    public string FilerPath => this.rootedPath;
-
     private ILogger? logger;
-
-    [Key(0)]
-    private string path = string.Empty;
-
-    private string rootedPath = string.Empty;
 
     #endregion
 
     public static async Task Process(TaskWorker<FilerWork> w, FilerWork work)
     {
         var worker = (LocalFiler)w;
-        string? filePath = null;
         var tryCount = 0;
 
+        var filePath = work.Path;
         work.Result = CrystalResult.Started;
         if (work.Type == FilerWork.WorkType.Write)
         {// Write
-            filePath = worker.GetRootedPath(work);
+            filePath = work.Path;
 
 TryWrite:
             tryCount++;
@@ -138,7 +125,6 @@ TryWrite:
         {// Read
             try
             {
-                filePath = worker.GetRootedPath(work);
                 var offset = work.Offset;
                 var lengthToRead = work.Length;
                 if (lengthToRead < 0)
@@ -215,19 +201,26 @@ DeleteAndExit:
 
     #region IFiler
 
-    async Task<CrystalResult> IRawFiler.PrepareAndCheck(StorageControl storage)
+    async Task<CrystalResult> IRawFiler.PrepareAndCheck(Crystalizer crystalizer, FilerConfiguration configuration)
     {
-        var result = CheckPath(storage, this.path);
+        string? directory = null;
+        try
+        {
+            directory = Path.GetDirectoryName(configuration.File);
+        }
+        catch
+        {
+        }
+
+        var result = CheckPath(crystalizer, directory ?? string.Empty);
         if (!result.Success)
         {
             return CrystalResult.WriteError;
         }
 
-        this.rootedPath = result.RootedPath;
-
-        if (storage.Options.EnableLogger)
+        if (crystalizer.Options.EnableLogger)
         {
-            this.logger = storage.UnitLogger.GetLogger<LocalFiler>();
+            this.logger = crystalizer.UnitLogger.GetLogger<LocalFiler>();
         }
 
         return CrystalResult.Success;
@@ -237,11 +230,6 @@ DeleteAndExit:
     {
         await this.WaitForCompletionAsync().ConfigureAwait(false);
         this.Dispose();
-    }
-
-    async Task<CrystalResult> IRawFiler.DeleteAllAsync()
-    {
-        return PathHelper.TryDeleteDirectory(this.rootedPath) ? CrystalResult.Success : CrystalResult.DeleteError;
     }
 
     CrystalResult IRawFiler.Write(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
@@ -282,18 +270,18 @@ DeleteAndExit:
 
     #endregion
 
-    private static (bool Success, string RootedPath) CheckPath(StorageControl storageControl, string path)
+    private static (bool Success, string RootedPath) CheckPath(Crystalizer crystalizer, string file)
     {
         string rootedPath = string.Empty;
         try
         {
-            if (Path.IsPathRooted(path))
+            if (Path.IsPathRooted(file))
             {
-                rootedPath = path;
+                rootedPath = file;
             }
             else
             {
-                rootedPath = Path.Combine(storageControl.Options.RootPath, path);
+                rootedPath = Path.Combine(crystalizer.Options.RootPath, file);
             }
 
             Directory.CreateDirectory(rootedPath);
@@ -304,11 +292,6 @@ DeleteAndExit:
         }
 
         return (false, rootedPath);
-    }
-
-    private string GetRootedPath(FilerWork work)
-    {
-        return Path.Combine(this.rootedPath, work.Path);
     }
 
     #region IDisposable Support

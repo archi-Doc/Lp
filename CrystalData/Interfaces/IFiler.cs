@@ -6,9 +6,7 @@ namespace CrystalData;
 
 public interface IFiler
 {
-    string FilerPath { get; }
-
-    Task<CrystalResult> PrepareAndCheck(Crystalizer crystalizer);
+    Task<CrystalResult> PrepareAndCheck(Crystalizer crystalizer, FilerConfiguration configuration);
 
     CrystalResult Write(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared);
 
@@ -41,7 +39,6 @@ internal class RawFilerToFiler : IFiler
     {
         this.Crystalizer = crystalizer;
         this.RawFiler = rawFiler;
-        this.Directory = filerConfiguration.Directory;
         this.File = filerConfiguration.File;
     }
 
@@ -49,12 +46,7 @@ internal class RawFilerToFiler : IFiler
 
     public IRawFiler RawFiler { get; }
 
-    public string Directory { get; }
-
     public string File { get; }
-
-    string IFiler.FilerPath
-        => this.RawFiler.FilerPath;
 
     CrystalResult IFiler.Delete()
         => this.RawFiler.Delete(this.File);
@@ -62,8 +54,8 @@ internal class RawFilerToFiler : IFiler
     Task<CrystalResult> IFiler.DeleteAsync(TimeSpan timeToWait)
         => this.RawFiler.DeleteAsync(this.File, timeToWait);
 
-    Task<CrystalResult> IFiler.PrepareAndCheck(Crystalizer crystalizer)
-         => this.RawFiler.PrepareAndCheck(default!);
+    Task<CrystalResult> IFiler.PrepareAndCheck(Crystalizer crystalizer, FilerConfiguration configuration)
+         => this.RawFiler.PrepareAndCheck(crystalizer, configuration);
 
     Task<CrystalMemoryOwnerResult> IFiler.ReadAsync(long offset, int length, TimeSpan timeToWait)
         => this.RawFiler.ReadAsync(this.File, offset, length, timeToWait);
