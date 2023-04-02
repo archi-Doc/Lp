@@ -30,7 +30,7 @@ internal class TestClass
         this.crystalizer = crystalizer;
 
         this.manualCrystal = manualCrystal;
-        this.manualCrystal.ConfigureFiler(new LocalFilerConfiguration("Manual2.data"));
+        // this.manualCrystal.ConfigureFiler(new LocalFilerConfiguration("Manual2.data"));
 
         // this.manualCrystal.Setup();
         this.combinedCrystal = combinedCrystal;
@@ -43,7 +43,7 @@ internal class TestClass
 
         await this.crystalizer.PrepareAndLoad();
 
-        this.manualCrystal.Configure(new(Crystalization.Manual, new LocalFilerConfiguration("test")));
+        // this.manualCrystal.Configure(new(Crystalization.Manual, new LocalFilerConfiguration("test")));
 
         var manualClass = this.manualCrystal.Object;
         manualClass.Id = 1;
@@ -60,6 +60,8 @@ internal class TestClass
         Console.WriteLine(combinedClass.ToString());
 
         Console.WriteLine(this.manualClass0.ToString());
+
+        await combinedCrystal.Save();
 
         await this.crystalizer.SaveAndTerminate();
     }

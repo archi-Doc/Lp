@@ -23,6 +23,7 @@ internal class CrystalImpl<TData> : ICrystal<TData>
     private SemaphoreLock semaphore = new();
     private TData? obj;
     private IFiler? filer;
+    private ulong savedHash;
 
     #endregion
 
@@ -113,6 +114,15 @@ internal class CrystalImpl<TData> : ICrystal<TData>
         using (this.semaphore.Lock())
         {
             var byteArray = TinyhandSerializer.SerializeObject<TData>(this.obj);
+            var hash = FarmHash.Hash64(byteArray.AsSpan());
+            if (this.savedHash == hash)
+            {// Identical
+                return CrystalResult.Success;
+            }
+            else
+            {
+                this.savedHash = hash;
+            }
 
             this.ResolveFiler();
             return await this.filer.WriteAsync(0, new(byteArray)).ConfigureAwait(false);
@@ -173,6 +183,7 @@ internal class CrystalImpl<TData> : ICrystal<TData>
         try
         {
             TinyhandSerializer.DeserializeObject<TData>(memoryResult.Data.Memory.Span, ref this.obj);
+            this.savedHash = FarmHash.Hash64(memoryResult.Data.Memory.Span);
         }
         catch
         {
@@ -193,6 +204,7 @@ internal class CrystalImpl<TData> : ICrystal<TData>
 Reconstruct:
 // Reconstruct
         TinyhandSerializer.ReconstructObject<TData>(ref this.obj);
+        this.savedHash = FarmHash.Hash64(TinyhandSerializer.SerializeObject<TData>(this.obj));
         return CrystalStartResult.Success;
     }
 
