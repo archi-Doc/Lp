@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using CrystalData.Filer;
+using CrystalData.Storage;
 
 namespace CrystalData;
 
@@ -61,24 +62,24 @@ public class Crystalizer
 
     #region Resolvers
 
-    public IFiler ResolveFiler(FilerConfiguration filerConfiguration)
+    public IFiler ResolveFiler(FilerConfiguration configuration)
     {
         lock (this.syncFiler)
         {
-            if (filerConfiguration is EmptyFilerConfiguration emptyFilerConfiguration)
+            if (configuration is EmptyFilerConfiguration emptyFilerConfiguration)
             {// Empty filer
-                return new RawFilerToFiler(this, EmptyFiler.Default, filerConfiguration);
+                return new RawFilerToFiler(this, EmptyFiler.Default, configuration);
             }
-            else if (filerConfiguration is LocalFilerConfiguration localFilerConfiguration)
+            else if (configuration is LocalFilerConfiguration localFilerConfiguration)
             {// Local filer
                 if (this.localFiler == null)
                 {
                     this.localFiler ??= new LocalFiler();
                 }
 
-                return new RawFilerToFiler(this, this.localFiler, filerConfiguration);
+                return new RawFilerToFiler(this, this.localFiler, configuration);
             }
-            else if (filerConfiguration is S3FilerConfiguration s3FilerConfiguration)
+            else if (configuration is S3FilerConfiguration s3FilerConfiguration)
             {// S3 filer
                 if (!this.bucketToS3Filer.TryGetValue(s3FilerConfiguration.Bucket, out var filer))
                 {
@@ -86,13 +87,25 @@ public class Crystalizer
                     this.bucketToS3Filer.TryAdd(s3FilerConfiguration.Bucket, filer);
                 }
 
-                return new RawFilerToFiler(this, filer, filerConfiguration);
+                return new RawFilerToFiler(this, filer, configuration);
             }
             else
             {
-                ThrowConfigurationNotRegistered(filerConfiguration.GetType());
+                ThrowConfigurationNotRegistered(configuration.GetType());
                 return default!;
             }
+        }
+    }
+
+    public IStorage ResolveStorage(StorageConfiguration configuration)
+    {
+        lock (this.syncFiler)
+        {
+            if (configuration is EmptyStorageConfiguration emptyStorageonfiguration)
+            {// Empty filer
+            }
+
+            return EmptyStorage.Default;
         }
     }
 

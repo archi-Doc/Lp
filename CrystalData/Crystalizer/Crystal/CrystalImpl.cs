@@ -2,6 +2,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using CrystalData.Storage;
 
 namespace CrystalData;
 
@@ -11,7 +12,7 @@ internal class CrystalImpl<TData> : ICrystal<TData>
     internal CrystalImpl(Crystalizer crystalizer)
     {
         this.Crystalizer = crystalizer;
-        this.DataConfiguration = CrystalConfiguration.Default;
+        this.CrystalConfiguration = CrystalConfiguration.Default;
     }
 
     #region FieldAndProperty
@@ -19,6 +20,7 @@ internal class CrystalImpl<TData> : ICrystal<TData>
     private SemaphoreLock semaphore = new();
     private TData? obj;
     private IFiler? filer;
+    private IStorage? storage;
     private ulong savedHash;
 
     #endregion
@@ -27,7 +29,7 @@ internal class CrystalImpl<TData> : ICrystal<TData>
 
     public Crystalizer Crystalizer { get; }
 
-    public CrystalConfiguration DataConfiguration { get; private set; }
+    public CrystalConfiguration CrystalConfiguration { get; private set; }
 
     object ICrystal.Object => ((ICrystal<TData>)this).Object;
 
@@ -78,11 +80,33 @@ internal class CrystalImpl<TData> : ICrystal<TData>
         }
     }
 
+    public IStorage Storage
+    {
+        get
+        {
+            if (this.storage != null)
+            {
+                return this.storage;
+            }
+
+            using (this.semaphore.Lock())
+            {
+                if (this.storage != null)
+                {
+                    return this.storage;
+                }
+
+                this.ResolveStorage();
+                return this.storage;
+            }
+        }
+    }
+
     void ICrystal.Configure(CrystalConfiguration configuration)
     {
         using (this.semaphore.Lock())
         {
-            this.DataConfiguration = configuration;
+            this.CrystalConfiguration = configuration;
             this.filer = null;
         }
     }
@@ -91,7 +115,7 @@ internal class CrystalImpl<TData> : ICrystal<TData>
     {
         using (this.semaphore.Lock())
         {
-            this.DataConfiguration = this.DataConfiguration with { FilerConfiguration = configuration, };
+            this.CrystalConfiguration = this.CrystalConfiguration with { FilerConfiguration = configuration, };
             this.filer = null;
         }
     }
@@ -138,7 +162,7 @@ internal class CrystalImpl<TData> : ICrystal<TData>
             this.filer.Delete();
 
             // Clear
-            this.DataConfiguration = CrystalConfiguration.Default;
+            this.CrystalConfiguration = CrystalConfiguration.Default;
             TinyhandSerializer.ReconstructObject<TData>(ref this.obj);
             this.filer = null;
         }
@@ -156,12 +180,12 @@ internal class CrystalImpl<TData> : ICrystal<TData>
         param ??= CrystalStartParam.Default;
 
         this.ResolveFiler();
-        if (this.DataConfiguration.FilerConfiguration is EmptyFilerConfiguration)
+        if (this.CrystalConfiguration.FilerConfiguration is EmptyFilerConfiguration)
         {
             return CrystalStartResult.Success;
         }
 
-        var result = await this.filer.PrepareAndCheck(this.Crystalizer, this.DataConfiguration.FilerConfiguration).ConfigureAwait(false);
+        var result = await this.filer.PrepareAndCheck(this.Crystalizer, this.CrystalConfiguration.FilerConfiguration).ConfigureAwait(false);
         if (result != CrystalResult.Success)
         {
             return CrystalStartResult.DirectoryError;
@@ -212,6 +236,13 @@ Reconstruct:
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ResolveFiler()
     {
-        this.filer ??= this.Crystalizer.ResolveFiler(this.DataConfiguration.FilerConfiguration);
+        this.filer ??= this.Crystalizer.ResolveFiler(this.CrystalConfiguration.FilerConfiguration);
+    }
+
+    [MemberNotNull(nameof(storage))]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ResolveStorage()
+    {
+        this.storage ??= this.Crystalizer.ResolveStorage(this.CrystalConfiguration.StorageConfiguration);
     }
 }

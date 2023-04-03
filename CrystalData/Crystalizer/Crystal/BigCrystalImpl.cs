@@ -8,12 +8,12 @@ internal class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>
     public BigCrystalImpl(Crystalizer crystalizer)
         : base(crystalizer)
     {
-        this.CrystalConfiguration = crystalizer.GetCrystalConfiguration(typeof(TData));
-        this.CrystalConfiguration.RegisterDatum(this.DatumRegistry);
+        this.BigCrystalConfiguration = crystalizer.GetCrystalConfiguration(typeof(TData));
+        this.BigCrystalConfiguration.RegisterDatum(this.DatumRegistry);
         this.himoGoshujin = new(this);
     }
 
-    public BigCrystalConfiguration CrystalConfiguration { get; }
+    public BigCrystalConfiguration BigCrystalConfiguration { get; }
 
     public DatumRegistry DatumRegistry { get; } = new();
 

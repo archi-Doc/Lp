@@ -41,4 +41,6 @@ public record CrystalConfiguration
     public TimeSpan Interval { get; init; }
 
     public FilerConfiguration FilerConfiguration { get; init; }
+
+    public StorageConfiguration StorageConfiguration { get; init; } = EmptyStorageConfiguration.Default;
 }

@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using CrystalData;
+
 namespace CrystalData;
 
 public interface ICrystal
@@ -8,11 +10,13 @@ public interface ICrystal
 
     CrystalOptions Options => this.Crystalizer.Options;
 
-    CrystalConfiguration DataConfiguration { get; }
+    CrystalConfiguration CrystalConfiguration { get; }
 
     object Object { get; }
 
     IFiler Filer { get; }
+
+    IStorage Storage { get; }
 
     public void Configure(CrystalConfiguration configuration);
 

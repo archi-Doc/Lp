@@ -30,8 +30,8 @@ internal class UnitCrystalContext : IUnitCrystalContext
             // Transient: IFiler<TData> => Crystalizer.GetCrystal<T>().Filer
             context.Services.Add(ServiceDescriptor.Transient(typeof(IFiler<>).MakeGenericType(x.Key), provider => provider.GetRequiredService<Crystalizer>().GetCrystal(x.Key).Filer));
 
-            // Singleton: IFiler<TData> => FilerFactory<TData>
-            // context.Services.Add(ServiceDescriptor.Singleton(typeof(IFiler<>), typeof(FilerFactory<>)));
+            // Transient: IStorage<TData> => Crystalizer.GetCrystal<T>().Storage
+            context.Services.Add(ServiceDescriptor.Transient(typeof(IStorage<>).MakeGenericType(x.Key), provider => provider.GetRequiredService<Crystalizer>().GetCrystal(x.Key).Storage));
 
             // Singleton: ICrystalData<T> => Crystalizer.GetCrystalData<T>()
             context.Services.Add(ServiceDescriptor.Singleton(typeof(IBigCrystal<>).MakeGenericType(x.Key), provider => provider.GetRequiredService<Crystalizer>().GetCrystalData(x.Key)));
