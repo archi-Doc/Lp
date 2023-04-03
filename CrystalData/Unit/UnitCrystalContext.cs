@@ -8,18 +8,18 @@ internal class UnitCrystalContext : IUnitCrystalContext
 {
     void IUnitCrystalContext.AddCrystal<TData>(CrystalConfiguration dataConfiguration)
     {
-        this.typeToDataConfiguration[typeof(TData)] = dataConfiguration;
+        this.typeToCrystalConfiguration[typeof(TData)] = dataConfiguration;
     }
 
     void IUnitCrystalContext.AddBigCrystal<TData>(BigCrystalConfiguration crystalConfiguration, CrystalConfiguration dataConfiguration)
     {
-        this.typeToDataConfiguration[typeof(TData)] = dataConfiguration;
-        this.typeToCrystalConfiguration[typeof(TData)] = crystalConfiguration;
+        this.typeToCrystalConfiguration[typeof(TData)] = dataConfiguration;
+        this.typeToBigCrystalConfiguration[typeof(TData)] = crystalConfiguration;
     }
 
     internal void Configure(IUnitConfigurationContext context)
     {
-        foreach (var x in this.typeToDataConfiguration)
+        foreach (var x in this.typeToCrystalConfiguration)
         {// This is slow, but it is Singleton anyway.
             // Singleton: ICrystal<T> => Crystalizer.GetCrystal<T>()
             context.Services.Add(ServiceDescriptor.Singleton(typeof(ICrystal<>).MakeGenericType(x.Key), provider => provider.GetRequiredService<Crystalizer>().GetCrystal(x.Key)));
@@ -32,15 +32,18 @@ internal class UnitCrystalContext : IUnitCrystalContext
 
             // Transient: IStorage<TData> => Crystalizer.GetCrystal<T>().Storage
             context.Services.Add(ServiceDescriptor.Transient(typeof(IStorage<>).MakeGenericType(x.Key), provider => provider.GetRequiredService<Crystalizer>().GetCrystal(x.Key).Storage));
-
-            // Singleton: ICrystalData<T> => Crystalizer.GetCrystalData<T>()
-            context.Services.Add(ServiceDescriptor.Singleton(typeof(IBigCrystal<>).MakeGenericType(x.Key), provider => provider.GetRequiredService<Crystalizer>().GetCrystalData(x.Key)));
         }
 
-        var crystalOptions = new CrystalOptions(this.typeToCrystalConfiguration, this.typeToDataConfiguration, context.DataDirectory);
+        foreach (var x in this.typeToBigCrystalConfiguration)
+        {
+            // Singleton: ICrystalData<T> => Crystalizer.GetCrystalData<T>()
+            context.Services.Add(ServiceDescriptor.Singleton(typeof(IBigCrystal<>).MakeGenericType(x.Key), provider => provider.GetRequiredService<Crystalizer>().GetBigCrystal(x.Key)));
+        }
+
+        var crystalOptions = new CrystalOptions(this.typeToCrystalConfiguration, this.typeToBigCrystalConfiguration, context.DataDirectory);
         context.SetOptions(crystalOptions);
     }
 
-    private Dictionary<Type, CrystalConfiguration> typeToDataConfiguration = new();
-    private Dictionary<Type, BigCrystalConfiguration> typeToCrystalConfiguration = new();
+    private Dictionary<Type, CrystalConfiguration> typeToCrystalConfiguration = new();
+    private Dictionary<Type, BigCrystalConfiguration> typeToBigCrystalConfiguration = new();
 }
