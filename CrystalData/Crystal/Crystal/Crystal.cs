@@ -18,7 +18,7 @@ public partial class Crystal<TData> : ICrystalDataObsolete, ICrystalInternalObso
         this.logger = logger;
         this.Core = core;
         this.Options = options;
-        this.Storage = new(unitLogger, storageKey);
+        this.Storage = new();
         this.himoGoshujin = new(default!);
         this.InitializeRoot();
 
@@ -169,7 +169,7 @@ public partial class Crystal<TData> : ICrystalDataObsolete, ICrystalInternalObso
 
     public bool Started { get; private set; }
 
-    public StorageControl Storage { get; }
+    public StorageGroup Storage { get; }
 
     public HimoGoshujinClass Himo => this.himoGoshujin;
 
@@ -196,34 +196,6 @@ public partial class Crystal<TData> : ICrystalDataObsolete, ICrystalInternalObso
 
         this.InitializeRoot();
     }
-
-    /*internal void Restart()
-    {
-        if (this.Started)
-        {
-            return;
-        }
-
-        this.IO.Restart();
-
-        this.Started = true;
-    }
-
-    internal async Task Pause()
-    {
-        if (!this.Started)
-        {
-            return;
-        }
-
-        this.Started = false;
-
-        // Save & Unload flakes
-        this.Root.Save();
-
-        // Stop IO(CrystalDirectory)
-        await this.IO.StopAsync().ConfigureAwait(false);
-    }*/
 
     private HimoGoshujinClass himoGoshujin;
 

@@ -8,6 +8,8 @@ public interface IBigCrystal : ICrystal
 
     DatumRegistry DatumRegistry { get; }
 
+    StorageGroup StorageGroup { get; }
+
     HimoGoshujinClass Himo { get; }
 
     long MemoryUsage { get; }

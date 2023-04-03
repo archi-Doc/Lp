@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using CrystalData.Filer;
-using CrystalData.Storage;
 
 #pragma warning disable SA1124 // Do not use regions
 
@@ -41,7 +40,7 @@ internal partial class StorageAndFiler
 
     #endregion
 
-    public async Task<CrystalResult> PrepareAndCheck(StorageControl storageControl, bool newStorage)
+    public async Task<CrystalResult> PrepareAndCheck(StorageGroup storageGroup, bool newStorage)
     {
         if (this.Filer == null)
         {
@@ -69,7 +68,7 @@ internal partial class StorageAndFiler
             this.Storage = storage;
         }
 
-        result = await this.Storage.PrepareAndCheck(storageControl, this.Filer, newStorage).ConfigureAwait(false);
+        result = await this.Storage.PrepareAndCheck(this.Filer, newStorage).ConfigureAwait(false);
         if (result != CrystalResult.Success)
         {
             return result;

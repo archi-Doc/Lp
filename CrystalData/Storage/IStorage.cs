@@ -13,7 +13,7 @@ public partial interface IStorage
 
     long StorageUsage { get; }
 
-    Task<CrystalResult> PrepareAndCheck(StorageControl storage, IRawFiler filer, bool newStorage);
+    Task<CrystalResult> PrepareAndCheck(IRawFiler filer, bool newStorage);
 
     Task Save();
 

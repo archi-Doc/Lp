@@ -8,7 +8,7 @@ public interface ICrystalInternalObsolete
 
     CrystalOptions Options { get; }
 
-    StorageControl Storage { get; }
+    StorageGroup Storage { get; }
 
     HimoGoshujinClass HimoGoshujin { get; }
 }

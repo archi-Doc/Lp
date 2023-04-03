@@ -6,14 +6,14 @@ using CrystalData.Storage;
 
 namespace CrystalData;
 
-public sealed class StorageControl
+public sealed class StorageGroup
 {
     public const int DirectoryRotationThreshold = (int)StorageHelper.Megabytes * 100; // 100 MB
 
-    internal StorageControl(UnitLogger unitLogger, IStorageKey key)
+    internal StorageGroup(Crystalizer crystalizer)
     {
-        this.UnitLogger = unitLogger;
-        this.Key = key;
+        this.UnitLogger = crystalizer.UnitLogger;
+        this.StorageKey = crystalizer.StorageKey;
     }
 
     public string[] GetInformation()
@@ -159,7 +159,7 @@ public sealed class StorageControl
 
     public CrystalOptions Options { get; private set; } = CrystalOptions.Default;
 
-    public IStorageKey Key { get; }
+    public IStorageKey StorageKey { get; }
 
     public bool Started { get; private set; }
 

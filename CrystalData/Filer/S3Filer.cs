@@ -40,9 +40,9 @@ public partial class S3Filer : TaskWorker<FilerWork>, IRawFiler
         this.path = path.TrimEnd('/');
     }
 
-    public static AddStorageResult Check(StorageControl storageControl, string bucket, string path)
+    public static AddStorageResult Check(StorageGroup storageGroup, string bucket, string path)
     {
-        if (!storageControl.Key.TryGetKey(bucket, out var accessKeyPair))
+        if (!storageGroup.StorageKey.TryGetKey(bucket, out var accessKeyPair))
         {
             return AddStorageResult.NoStorageKey;
         }

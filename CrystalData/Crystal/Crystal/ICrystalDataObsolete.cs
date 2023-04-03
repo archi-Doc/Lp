@@ -14,7 +14,7 @@ public interface ICrystalDataObsolete
     public bool Started { get; }
 
     // -> Crystalizer
-    StorageControl Storage { get; }
+    StorageGroup Storage { get; }
 
     HimoGoshujinClass Himo { get; }
 
