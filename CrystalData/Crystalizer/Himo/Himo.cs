@@ -2,7 +2,6 @@
 
 #pragma warning disable SA1401 // Fields should be private
 
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Arc.Collections;
 
@@ -102,9 +101,9 @@ public partial class HimoGoshujinClass
         private int currentSize; // Current memory usage
     }
 
-    public HimoGoshujinClass(ICrystalInternal crystalInternal)
+    public HimoGoshujinClass(IBigCrystal bigCrystal)
     {
-        this.crystalInternal = crystalInternal;
+        this.bigCrystal = bigCrystal;
 
         this.unloadData = new(() => this.UnloadData());
         this.unloadParent = new(() => this.UnloadParent());
@@ -118,7 +117,7 @@ public partial class HimoGoshujinClass
         lock (this.syncParentData)
         {
             node = this.parentDataList.AddLast(data);
-            if (this.parentDataList.Count > this.crystalInternal.Options.MaxParentInMemory)
+            if (this.parentDataList.Count > this.bigCrystal.Options.MaxParentInMemory)
             {
                 unloadFlag = true;
             }
@@ -173,7 +172,7 @@ public partial class HimoGoshujinClass
 
     private void UnloadData()
     {
-        var limit = Math.Max(MemoryMargin, this.crystalInternal.Options.MemorySizeLimit - MemoryMargin);
+        var limit = Math.Max(MemoryMargin, this.bigCrystal.Options.MemorySizeLimit - MemoryMargin);
         if (Volatile.Read(ref this.memoryUsage) <= limit)
         {
             return;
@@ -204,7 +203,7 @@ public partial class HimoGoshujinClass
 
     private void UnloadParent()
     {
-        if (this.parentDataList.Count <= this.crystalInternal.Options.MaxParentInMemory)
+        if (this.parentDataList.Count <= this.bigCrystal.Options.MaxParentInMemory)
         {
             return;
         }
@@ -238,10 +237,10 @@ public partial class HimoGoshujinClass
                 }
             }
         }
-        while (this.parentDataList.Count > this.crystalInternal.Options.MaxParentInMemory);
+        while (this.parentDataList.Count > this.bigCrystal.Options.MaxParentInMemory);
     }
 
-    private ICrystalInternal crystalInternal;
+    private IBigCrystal bigCrystal;
 
     private object syncObject = new();
     private long memoryUsage; // lock(this.syncObject)

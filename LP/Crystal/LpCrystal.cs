@@ -16,7 +16,7 @@ public class LpCrystal : Crystal<LpRootData>
 [TinyhandObject]
 public partial class LpRootData : BaseData
 {
-    public LpRootData(ICrystalInternal crystal, BaseData? parent)
+    public LpRootData(ICrystalInternalObsolete crystal, BaseData? parent)
         : base(crystal, parent)
     {
         this.Data = new(crystal, parent, default);

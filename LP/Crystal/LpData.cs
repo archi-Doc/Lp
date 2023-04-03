@@ -17,7 +17,7 @@ public partial class LpData : BaseData
         Credit = 0,
     }
 
-    public LpData(ICrystalInternal crystal, BaseData? parent, Identifier identifier)
+    public LpData(ICrystalInternalObsolete crystal, BaseData? parent, Identifier identifier)
         : base(crystal, parent)
     {
         this.identifier = identifier;

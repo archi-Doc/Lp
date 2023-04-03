@@ -30,7 +30,7 @@ public class Crystalizer
         foreach (var x in this.Options.CrystalConfigurations)
         {
             // (ICrystalData) new CrystalDataImpl<TData>
-            var crystalData = (ICrystalData)Activator.CreateInstance(typeof(CrystalDataImpl<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
+            var crystalData = (IBigCrystal)Activator.CreateInstance(typeof(CrystalDataImpl<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
 
             this.typeToCrystalData.TryAdd(x.Key, crystalData);
             // this.crystals.TryAdd(crystal, 0);}
@@ -50,8 +50,8 @@ public class Crystalizer
     private ILogger logger;
     private ThreadsafeTypeKeyHashTable<ICrystal> typeToCrystal = new();
     private ConcurrentDictionary<ICrystal, int> crystals = new();
-    private ThreadsafeTypeKeyHashTable<ICrystalData> typeToCrystalData = new();
-    private ConcurrentDictionary<ICrystalData, int> crystalData = new();
+    private ThreadsafeTypeKeyHashTable<IBigCrystal> typeToCrystalData = new();
+    private ConcurrentDictionary<IBigCrystal, int> crystalData = new();
 
     private object syncFiler = new();
     private LocalFiler? localFiler;
@@ -199,7 +199,7 @@ public class Crystalizer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal ICrystalData GetCrystalData(Type type)
+    internal IBigCrystal GetCrystalData(Type type)
     {
         if (!this.typeToCrystalData.TryGetValue(type, out var crystal))
         {

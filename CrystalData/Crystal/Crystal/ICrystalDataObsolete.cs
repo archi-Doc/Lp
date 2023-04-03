@@ -4,21 +4,28 @@ namespace CrystalData;
 
 public interface ICrystalDataObsolete
 {
+    // ok
     DatumRegistry Datum { get; }
 
+    // get only
     CrystalOptions Options { get; set; }
 
+    // skip
     public bool Started { get; }
 
+    // -> Crystalizer
     StorageControl Storage { get; }
 
     HimoGoshujinClass Himo { get; }
 
     long MemoryUsage { get; }
 
+    // -> Crystalizer
     Task<CrystalStartResult> StartAsync(CrystalStartParam param);
 
+    // -> Crystalizer
     Task StopAsync(CrystalStopParam param);
 
+    // -> Crystalizer
     Task Abort();
 }

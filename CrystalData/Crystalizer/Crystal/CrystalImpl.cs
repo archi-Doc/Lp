@@ -11,14 +11,10 @@ internal class CrystalImpl<TData> : ICrystal<TData>
     internal CrystalImpl(Crystalizer crystalizer)
     {
         this.Crystalizer = crystalizer;
-        this.Configuration = DataConfiguration.Default;
+        this.DataConfiguration = DataConfiguration.Default;
     }
 
     #region FieldAndProperty
-
-    public Crystalizer Crystalizer { get; }
-
-    public DataConfiguration Configuration { get; private set; }
 
     private SemaphoreLock semaphore = new();
     private TData? obj;
@@ -28,6 +24,10 @@ internal class CrystalImpl<TData> : ICrystal<TData>
     #endregion
 
     #region ICrystal
+
+    public Crystalizer Crystalizer { get; }
+
+    public DataConfiguration DataConfiguration { get; private set; }
 
     object ICrystal.Object => ((ICrystal<TData>)this).Object;
 
@@ -82,7 +82,7 @@ internal class CrystalImpl<TData> : ICrystal<TData>
     {
         using (this.semaphore.Lock())
         {
-            this.Configuration = configuration;
+            this.DataConfiguration = configuration;
             this.filer = null;
         }
     }
@@ -91,7 +91,7 @@ internal class CrystalImpl<TData> : ICrystal<TData>
     {
         using (this.semaphore.Lock())
         {
-            this.Configuration = this.Configuration with { FilerConfiguration = configuration, };
+            this.DataConfiguration = this.DataConfiguration with { FilerConfiguration = configuration, };
             this.filer = null;
         }
     }
@@ -138,7 +138,7 @@ internal class CrystalImpl<TData> : ICrystal<TData>
             this.filer.Delete();
 
             // Clear
-            this.Configuration = DataConfiguration.Default;
+            this.DataConfiguration = DataConfiguration.Default;
             TinyhandSerializer.ReconstructObject<TData>(ref this.obj);
             this.filer = null;
         }
@@ -156,12 +156,12 @@ internal class CrystalImpl<TData> : ICrystal<TData>
         param ??= CrystalStartParam.Default;
 
         this.ResolveFiler();
-        if (this.Configuration.FilerConfiguration is EmptyFilerConfiguration)
+        if (this.DataConfiguration.FilerConfiguration is EmptyFilerConfiguration)
         {
             return CrystalStartResult.Success;
         }
 
-        var result = await this.filer.PrepareAndCheck(this.Crystalizer, this.Configuration.FilerConfiguration).ConfigureAwait(false);
+        var result = await this.filer.PrepareAndCheck(this.Crystalizer, this.DataConfiguration.FilerConfiguration).ConfigureAwait(false);
         if (result != CrystalResult.Success)
         {
             return CrystalStartResult.DirectoryError;
@@ -212,6 +212,6 @@ Reconstruct:
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ResolveFiler()
     {
-        this.filer ??= this.Crystalizer.ResolveFiler(this.Configuration.FilerConfiguration);
+        this.filer ??= this.Crystalizer.ResolveFiler(this.DataConfiguration.FilerConfiguration);
     }
 }

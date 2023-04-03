@@ -5,7 +5,7 @@ using CrystalData.Datum;
 
 namespace CrystalData;
 
-public partial class Crystal<TData> : ICrystalDataObsolete, ICrystalInternal
+public partial class Crystal<TData> : ICrystalDataObsolete, ICrystalInternalObsolete
     where TData : BaseData
 {
     internal Crystal(UnitCore core, CrystalOptions options, ILogger<Crystal<TData>> logger, UnitLogger unitLogger, IStorageKey storageKey)
@@ -19,7 +19,7 @@ public partial class Crystal<TData> : ICrystalDataObsolete, ICrystalInternal
         this.Core = core;
         this.Options = options;
         this.Storage = new(unitLogger, storageKey);
-        this.himoGoshujin = new(this);
+        this.himoGoshujin = new(default!);
         this.InitializeRoot();
 
         this.Datum = new();
@@ -157,7 +157,7 @@ public partial class Crystal<TData> : ICrystalDataObsolete, ICrystalInternal
         }
     }
 
-    HimoGoshujinClass ICrystalInternal.HimoGoshujin => this.himoGoshujin;
+    HimoGoshujinClass ICrystalInternalObsolete.HimoGoshujin => this.himoGoshujin;
 
     public UnitCore Core { get; init; }
 

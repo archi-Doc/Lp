@@ -20,7 +20,7 @@ public partial class BaseData : IDataInternal
     {
     }
 
-    protected BaseData(ICrystalInternal crystal, BaseData? parent)
+    protected BaseData(ICrystalInternalObsolete crystal, BaseData? parent)
     {
         this.Crystal = crystal;
         this.Parent = parent;
@@ -28,7 +28,7 @@ public partial class BaseData : IDataInternal
 
     #region FieldAndProperty
 
-    public ICrystalInternal Crystal { get; private set; } = default!;
+    public ICrystalInternalObsolete Crystal { get; private set; } = default!;
 
     public BaseData? Parent { get; private set; }
 
@@ -70,7 +70,7 @@ public partial class BaseData : IDataInternal
 
     #region IDataInternal
 
-    ICrystalInternal IDataInternal.CrystalInternal => this.Crystal;
+    ICrystalInternalObsolete IDataInternal.CrystalInternal => this.Crystal;
 
     DatumRegistry IDataInternal.Data => this.Crystal.Datum;
 
@@ -272,7 +272,7 @@ public partial class BaseData : IDataInternal
 
     #endregion
 
-    protected internal void Initialize(ICrystalInternal crystal, BaseData? parent, bool initializeChildren)
+    protected internal void Initialize(ICrystalInternalObsolete crystal, BaseData? parent, bool initializeChildren)
     {
         this.Crystal = crystal;
         this.Parent = parent;

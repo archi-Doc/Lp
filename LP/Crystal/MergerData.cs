@@ -13,7 +13,7 @@ namespace LP.Crystal;
 [ValueLinkObject]
 public partial class MergerData : BaseData
 {
-    public MergerData(ICrystalInternal crystal, BaseData? parent, Identifier identifier)
+    public MergerData(ICrystalInternalObsolete crystal, BaseData? parent, Identifier identifier)
         : base(crystal, parent)
     {
         this.identifier = identifier;

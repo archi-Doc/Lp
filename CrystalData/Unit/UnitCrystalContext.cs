@@ -34,7 +34,7 @@ internal class UnitCrystalContext : IUnitCrystalContext
             // context.Services.Add(ServiceDescriptor.Singleton(typeof(IFiler<>), typeof(FilerFactory<>)));
 
             // Singleton: ICrystalData<T> => Crystalizer.GetCrystalData<T>()
-            context.Services.Add(ServiceDescriptor.Singleton(typeof(ICrystalData<>).MakeGenericType(x.Key), provider => provider.GetRequiredService<Crystalizer>().GetCrystalData(x.Key)));
+            context.Services.Add(ServiceDescriptor.Singleton(typeof(IBigCrystal<>).MakeGenericType(x.Key), provider => provider.GetRequiredService<Crystalizer>().GetCrystalData(x.Key)));
         }
 
         var crystalOptions = new CrystalOptions(this.typeToCrystalConfiguration, this.typeToDataConfiguration, context.DataDirectory);

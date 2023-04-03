@@ -4,11 +4,15 @@ namespace CrystalData;
 
 public interface ICrystal
 {
+    Crystalizer Crystalizer { get; }
+
+    CrystalOptions Options => this.Crystalizer.Options;
+
+    DataConfiguration DataConfiguration { get; }
+
     object Object { get; }
 
     IFiler Filer { get; }
-
-    public DataConfiguration Configuration { get; }
 
     public void Configure(DataConfiguration configuration);
 
