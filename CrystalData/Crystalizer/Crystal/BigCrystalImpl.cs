@@ -2,10 +2,10 @@
 
 namespace CrystalData;
 
-internal class CrystalDataImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>
+internal class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>
     where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
-    public CrystalDataImpl(Crystalizer crystalizer)
+    public BigCrystalImpl(Crystalizer crystalizer)
         : base(crystalizer)
     {
         this.CrystalConfiguration = crystalizer.GetCrystalConfiguration(typeof(TData));
@@ -13,7 +13,7 @@ internal class CrystalDataImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>
         this.himoGoshujin = new(this);
     }
 
-    public CrystalConfiguration CrystalConfiguration { get; }
+    public BigCrystalConfiguration CrystalConfiguration { get; }
 
     public DatumRegistry DatumRegistry { get; } = new();
 

@@ -6,12 +6,12 @@ namespace CrystalData;
 
 internal class UnitCrystalContext : IUnitCrystalContext
 {
-    void IUnitCrystalContext.AddData<TData>(DataConfiguration dataConfiguration)
+    void IUnitCrystalContext.AddCrystal<TData>(CrystalConfiguration dataConfiguration)
     {
         this.typeToDataConfiguration[typeof(TData)] = dataConfiguration;
     }
 
-    void IUnitCrystalContext.AddCrystalData<TData>(CrystalConfiguration crystalConfiguration, DataConfiguration dataConfiguration)
+    void IUnitCrystalContext.AddBigCrystal<TData>(BigCrystalConfiguration crystalConfiguration, CrystalConfiguration dataConfiguration)
     {
         this.typeToDataConfiguration[typeof(TData)] = dataConfiguration;
         this.typeToCrystalConfiguration[typeof(TData)] = crystalConfiguration;
@@ -41,6 +41,6 @@ internal class UnitCrystalContext : IUnitCrystalContext
         context.SetOptions(crystalOptions);
     }
 
-    private Dictionary<Type, DataConfiguration> typeToDataConfiguration = new();
-    private Dictionary<Type, CrystalConfiguration> typeToCrystalConfiguration = new();
+    private Dictionary<Type, CrystalConfiguration> typeToDataConfiguration = new();
+    private Dictionary<Type, BigCrystalConfiguration> typeToCrystalConfiguration = new();
 }

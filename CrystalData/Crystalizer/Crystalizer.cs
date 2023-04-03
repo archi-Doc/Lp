@@ -30,7 +30,7 @@ public class Crystalizer
         foreach (var x in this.Options.CrystalConfigurations)
         {
             // (ICrystalData) new CrystalDataImpl<TData>
-            var crystalData = (IBigCrystal)Activator.CreateInstance(typeof(CrystalDataImpl<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
+            var crystalData = (IBigCrystal)Activator.CreateInstance(typeof(BigCrystalImpl<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
 
             this.typeToCrystalData.TryAdd(x.Key, crystalData);
             // this.crystals.TryAdd(crystal, 0);}
@@ -220,7 +220,7 @@ public class Crystalizer
         return crystal!.Object;
     }
 
-    internal CrystalConfiguration GetCrystalConfiguration(Type type)
+    internal BigCrystalConfiguration GetCrystalConfiguration(Type type)
     {
         if (!this.Options.CrystalConfigurations.TryGetValue(type, out var crystalConfiguration))
         {

@@ -14,20 +14,20 @@ public record CrystalOptions
     public static CrystalOptions Default { get; } = new CrystalOptions();
 
     public CrystalOptions()
-        : this(new Dictionary<Type, CrystalConfiguration>(), new Dictionary<Type, DataConfiguration>(), string.Empty)
+        : this(new Dictionary<Type, BigCrystalConfiguration>(), new Dictionary<Type, CrystalConfiguration>(), string.Empty)
     {
     }
 
-    internal CrystalOptions(Dictionary<Type, CrystalConfiguration> crystalConfigurations, Dictionary<Type, DataConfiguration> dataConfigurations, string crystalDirectory)
+    internal CrystalOptions(Dictionary<Type, BigCrystalConfiguration> crystalConfigurations, Dictionary<Type, CrystalConfiguration> dataConfigurations, string crystalDirectory)
     {
         this.CrystalConfigurations = crystalConfigurations;
         this.DataConfigurations = dataConfigurations;
         this.CrystalDirectory = crystalDirectory;
     }
 
-    public Dictionary<Type, CrystalConfiguration> CrystalConfigurations { get; }
+    public Dictionary<Type, BigCrystalConfiguration> CrystalConfigurations { get; }
 
-    public Dictionary<Type, DataConfiguration> DataConfigurations { get; }
+    public Dictionary<Type, CrystalConfiguration> DataConfigurations { get; }
 
     /// <summary>
     /// Gets or sets a path of the directory where data files are stored.

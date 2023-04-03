@@ -11,7 +11,7 @@ internal class CrystalImpl<TData> : ICrystal<TData>
     internal CrystalImpl(Crystalizer crystalizer)
     {
         this.Crystalizer = crystalizer;
-        this.DataConfiguration = DataConfiguration.Default;
+        this.DataConfiguration = CrystalConfiguration.Default;
     }
 
     #region FieldAndProperty
@@ -27,7 +27,7 @@ internal class CrystalImpl<TData> : ICrystal<TData>
 
     public Crystalizer Crystalizer { get; }
 
-    public DataConfiguration DataConfiguration { get; private set; }
+    public CrystalConfiguration DataConfiguration { get; private set; }
 
     object ICrystal.Object => ((ICrystal<TData>)this).Object;
 
@@ -78,7 +78,7 @@ internal class CrystalImpl<TData> : ICrystal<TData>
         }
     }
 
-    void ICrystal.Configure(DataConfiguration configuration)
+    void ICrystal.Configure(CrystalConfiguration configuration)
     {
         using (this.semaphore.Lock())
         {
@@ -138,7 +138,7 @@ internal class CrystalImpl<TData> : ICrystal<TData>
             this.filer.Delete();
 
             // Clear
-            this.DataConfiguration = DataConfiguration.Default;
+            this.DataConfiguration = CrystalConfiguration.Default;
             TinyhandSerializer.ReconstructObject<TData>(ref this.obj);
             this.filer = null;
         }

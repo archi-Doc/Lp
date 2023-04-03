@@ -8,13 +8,13 @@ public interface ICrystal
 
     CrystalOptions Options => this.Crystalizer.Options;
 
-    DataConfiguration DataConfiguration { get; }
+    CrystalConfiguration DataConfiguration { get; }
 
     object Object { get; }
 
     IFiler Filer { get; }
 
-    public void Configure(DataConfiguration configuration);
+    public void Configure(CrystalConfiguration configuration);
 
     public void ConfigureFiler(FilerConfiguration configuration);
 

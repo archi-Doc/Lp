@@ -4,7 +4,7 @@ namespace CrystalData;
 
 public interface IBigCrystal : ICrystal
 {
-    CrystalConfiguration CrystalConfiguration { get; }
+    BigCrystalConfiguration CrystalConfiguration { get; }
 
     DatumRegistry DatumRegistry { get; }
 
