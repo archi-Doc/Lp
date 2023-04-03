@@ -68,17 +68,6 @@ public class CrystalControl
         this.unitContext = unitContext;
     }
 
-    public Crystal<TData> CreateCrystal<TData>(CrystalOptions options)
-        where TData : BaseData
-    {
-        return new Crystal<TData>(
-            this.unitContext.ServiceProvider.GetRequiredService<UnitCore>(),
-            options,
-            this.unitContext.ServiceProvider.GetRequiredService<ILogger<Crystal<TData>>>(),
-            this.unitContext.ServiceProvider.GetRequiredService<UnitLogger>(),
-            this.unitContext.ServiceProvider.GetRequiredService<IStorageKey>());
-    }
-
     public bool ExaltationOfIntegrality { get; } = true; // ZenItz by Baxter.
 
     private readonly UnitContext unitContext;

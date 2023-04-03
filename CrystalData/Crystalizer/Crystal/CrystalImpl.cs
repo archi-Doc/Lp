@@ -2,7 +2,8 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using CrystalData.Storage;
+
+#pragma warning disable SA1401
 
 namespace CrystalData;
 
@@ -17,17 +18,19 @@ internal class CrystalImpl<TData> : ICrystal<TData>
 
     #region FieldAndProperty
 
-    private SemaphoreLock semaphore = new();
-    private TData? obj;
-    private IFiler? filer;
-    private IStorage? storage;
-    private ulong savedHash;
+    protected SemaphoreLock semaphore = new();
+    protected TData? obj;
+    protected IFiler? filer;
+    protected IStorage? storage;
+    protected ulong savedHash;
 
     #endregion
 
     #region ICrystal
 
     public Crystalizer Crystalizer { get; }
+
+    public CrystalOptions Options => this.Crystalizer.Options;
 
     public CrystalConfiguration CrystalConfiguration { get; private set; }
 

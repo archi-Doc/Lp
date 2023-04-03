@@ -1,14 +1,12 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using CrystalData;
-
 namespace CrystalData;
 
 public interface ICrystal
 {
     Crystalizer Crystalizer { get; }
 
-    CrystalOptions Options => this.Crystalizer.Options;
+    CrystalOptions Options { get; }
 
     CrystalConfiguration CrystalConfiguration { get; }
 
@@ -18,9 +16,9 @@ public interface ICrystal
 
     IStorage Storage { get; }
 
-    public void Configure(CrystalConfiguration configuration);
+    void Configure(CrystalConfiguration configuration);
 
-    public void ConfigureFiler(FilerConfiguration configuration);
+    void ConfigureFiler(FilerConfiguration configuration);
 
     Task<CrystalStartResult> PrepareAndLoad(CrystalStartParam? param = null);
 

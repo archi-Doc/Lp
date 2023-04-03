@@ -7,7 +7,7 @@ namespace LP.Subcommands.CrystalData;
 [SimpleCommand("ls", Description = "List storages.")]
 public class CrystalStorageSubcommandLs : ISimpleCommandAsync
 {
-    public CrystalStorageSubcommandLs(IConsoleService consoleService, ICrystalDataObsolete crystal)
+    public CrystalStorageSubcommandLs(IConsoleService consoleService, ICrystalData crystal)
     {
         this.consoleService = consoleService;
         this.crystal = crystal;
@@ -15,7 +15,7 @@ public class CrystalStorageSubcommandLs : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        var info = this.crystal.Storage.GetInformation();
+        var info = this.crystal.StorageGroup.GetInformation();
 
         foreach (var x in info)
         {
@@ -24,5 +24,5 @@ public class CrystalStorageSubcommandLs : ISimpleCommandAsync
     }
 
     private IConsoleService consoleService;
-    private ICrystalDataObsolete crystal;
+    private ICrystalData crystal;
 }

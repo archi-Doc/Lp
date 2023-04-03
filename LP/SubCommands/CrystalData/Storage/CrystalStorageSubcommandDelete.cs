@@ -7,7 +7,7 @@ namespace LP.Subcommands.CrystalData;
 [SimpleCommand("delete", Description = "Delete storage.")]
 public class CrystalStorageSubcommandDelete : ISimpleCommandAsync<CrystalStorageOptionsDelete>
 {
-    public CrystalStorageSubcommandDelete(ILogger<CrystalStorageSubcommandAdd> logger, IUserInterfaceService userInterfaceService, CrystalControl crystalControl, ICrystalDataObsolete crystal, CrystalStorageSubcommandLs crystalDirSubcommandLs)
+    public CrystalStorageSubcommandDelete(ILogger<CrystalStorageSubcommandAdd> logger, IUserInterfaceService userInterfaceService, CrystalControl crystalControl, ICrystalData crystal, CrystalStorageSubcommandLs crystalDirSubcommandLs)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
@@ -21,7 +21,7 @@ public class CrystalStorageSubcommandDelete : ISimpleCommandAsync<CrystalStorage
         this.userInterfaceService.WriteLine(HashedString.Get(Hashed.Subcommands.DevStage));
 
         ushort.TryParse(options.Id, System.Globalization.NumberStyles.HexNumber, null, out var id);
-        if (!this.crystal.Storage.CheckStorageId(id))
+        if (!this.crystal.StorageGroup.CheckStorageId(id))
         {
             await this.userInterfaceService.Notify(LogLevel.Warning, Hashed.Storage.InvalidId, options.Id);
             return;
@@ -32,7 +32,7 @@ public class CrystalStorageSubcommandDelete : ISimpleCommandAsync<CrystalStorage
             return;
         }
 
-        if (this.crystal.Storage.DeleteStorage(id))
+        if (this.crystal.StorageGroup.DeleteStorage(id))
         {
             await this.userInterfaceService.Notify(LogLevel.Warning, Hashed.Storage.Deleted, options.Id);
             await this.CrystalDirSubcommandLs.RunAsync(Array.Empty<string>());
@@ -44,7 +44,7 @@ public class CrystalStorageSubcommandDelete : ISimpleCommandAsync<CrystalStorage
     private ILogger<CrystalStorageSubcommandAdd> logger;
     private IUserInterfaceService userInterfaceService;
     private CrystalControl crystalControl;
-    private ICrystalDataObsolete crystal;
+    private ICrystalData crystal;
 }
 
 public record CrystalStorageOptionsDelete

@@ -20,7 +20,7 @@ public partial class HimoGoshujinClass
         public Himo(IDataInternal dataInternal)
         {
             this.dataInternal = dataInternal;
-            this.himoGoshujin = dataInternal.CrystalInternal.HimoGoshujin;
+            this.himoGoshujin = dataInternal.CrystalInternal.Himo;
         }
 
         public virtual ushort Id { get; }

@@ -9,7 +9,7 @@ namespace LP.Subcommands.CrystalData;
 [SimpleCommand("add", Description = "Add storage.")]
 public class CrystalStorageSubcommandAdd : ISimpleCommandAsync<CrystalStorageOptionsAdd>
 {
-    public CrystalStorageSubcommandAdd(ILogger<CrystalStorageSubcommandAdd> logger, IUserInterfaceService userInterfaceService, ICrystalDataObsolete crystal, CrystalStorageSubcommandLs crystalDirSubcommandLs)
+    public CrystalStorageSubcommandAdd(ILogger<CrystalStorageSubcommandAdd> logger, IUserInterfaceService userInterfaceService, ICrystalData crystal, CrystalStorageSubcommandLs crystalDirSubcommandLs)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
@@ -56,7 +56,7 @@ EnterPath:
             goto EnterPath;
         }
 
-        var resultAdd = this.crystal.Storage.AddStorage_SimpleLocal(path, options.capacityInBytes);
+        var resultAdd = this.crystal.StorageGroup.AddStorage_SimpleLocal(path, options.capacityInBytes);
         if (resultAdd.Result == AddStorageResult.Success)
         {
             this.logger.TryGet()?.Log($"Storage added: {resultAdd.Id:x4}");
@@ -76,7 +76,7 @@ EnterBucket:
             return;
         }
 
-        var resultCheck = S3Filer.Check(this.crystal.Storage, bucket, string.Empty);
+        var resultCheck = S3Filer.Check(this.crystal.StorageGroup, bucket, string.Empty);
         if (resultCheck != AddStorageResult.Success)
         {
             this.userInterfaceService.WriteLine(HashedString.FromEnum(resultCheck));
@@ -90,7 +90,7 @@ EnterBucket:
             return;
         }
 
-        var resultAdd = this.crystal.Storage.AddStorage_SimpleS3(bucket, path, options.capacityInBytes);
+        var resultAdd = this.crystal.StorageGroup.AddStorage_SimpleS3(bucket, path, options.capacityInBytes);
         if (resultAdd.Result == AddStorageResult.Success)
         {
             this.logger.TryGet()?.Log($"Storage added: {resultAdd.Id:x4}");
@@ -103,7 +103,7 @@ EnterBucket:
 
     private ILogger<CrystalStorageSubcommandAdd> logger;
     private IUserInterfaceService userInterfaceService;
-    private ICrystalDataObsolete crystal;
+    private ICrystalData crystal;
 }
 
 public record CrystalStorageOptionsAdd

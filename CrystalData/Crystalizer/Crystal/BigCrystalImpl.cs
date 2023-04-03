@@ -1,9 +1,12 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
+using CrystalData.Datum;
+
 namespace CrystalData;
 
 internal class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>
-    where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+    where TData : BaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
     public BigCrystalImpl(Crystalizer crystalizer)
         : base(crystalizer)
@@ -12,7 +15,14 @@ internal class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>
         this.BigCrystalConfiguration.RegisterDatum(this.DatumRegistry);
         this.storageGroup = new(crystalizer);
         this.himoGoshujin = new(this);
+        this.logger = crystalizer.UnitLogger.GetLogger<IBigCrystal<TData>>();
+
+        this.InitializeRoot();
+
+        this.DatumRegistry.Register<BlockDatum>(1, x => new BlockDatumImpl(x)); // tempcode
     }
+
+    #region FieldAndProperty
 
     public BigCrystalConfiguration BigCrystalConfiguration { get; }
 
@@ -27,4 +37,323 @@ internal class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>
     private StorageGroup storageGroup;
 
     private HimoGoshujinClass himoGoshujin;
+
+    public bool Started { get; private set; }
+
+    private ILogger logger;
+
+    #endregion
+
+    public async Task<CrystalStartResult> StartAsync(CrystalStartParam param)
+    {
+        using (this.semaphore.Lock())
+        {
+            var result = CrystalStartResult.Success;
+            if (this.Started)
+            {
+                return CrystalStartResult.Success;
+            }
+
+            // this.logger.TryGet()?.Log("Crystal start");
+
+            if (param.FromScratch)
+            {
+                await this.StorageGroup.TryStart(this.Options, param, null).ConfigureAwait(false);
+
+                await this.DeleteAllAsync();
+                this.InitializeRoot();
+
+                this.Started = true;
+                return CrystalStartResult.Success;
+            }
+
+            // Load CrystalStorage
+            result = await this.LoadCrystalStorage(param).ConfigureAwait(false);
+            if (result != CrystalStartResult.Success)
+            {
+                return result;
+            }
+
+            var info = this.StorageGroup.GetInformation();
+            foreach (var x in info)
+            {
+                this.logger.TryGet()?.Log(x);
+            }
+
+            // Load Crystal
+            result = await this.LoadCrystal(param).ConfigureAwait(false);
+            if (result != CrystalStartResult.Success)
+            {
+                return result;
+            }
+
+            // HimoGoshujin
+            this.himoGoshujin.Start();
+
+            this.Started = true;
+            return result;
+        }
+    }
+
+    public async Task StopAsync(CrystalStopParam param)
+    {
+        using (this.semaphore.Lock())
+        {
+            if (!this.Started)
+            {
+                return;
+            }
+
+            this.Started = false;
+
+            // HimoGoshujin
+            this.himoGoshujin.Stop();
+
+            if (param.RemoveAll)
+            {
+                await this.DeleteAllAsync();
+
+                // Stop storage
+                await this.StorageGroup.Terminate().ConfigureAwait(false);
+                this.StorageGroup.Clear();
+
+                return;
+            }
+
+            // Save & Unload datum and metadaba.
+            this.obj.Save(true);
+
+            // Stop storage
+            await this.StorageGroup.Save().ConfigureAwait(false);
+            await this.StorageGroup.Terminate().ConfigureAwait(false);
+
+            // Save data
+            await this.Save(this.Options.CrystalFilePath, this.Options.CrystalBackupPath).ConfigureAwait(false);
+
+            // Save storage
+            await this.StorageGroup.Save(this.Options.StorageFilePath, this.Options.StorageBackupPath).ConfigureAwait(false);
+
+            this.StorageGroup.Clear();
+
+            this.logger.TryGet()?.Log($"Crystal stop - {this.himoGoshujin.MemoryUsage}");
+        }
+    }
+
+    public async Task Abort()
+    {
+        using (this.semaphore.Lock())
+        {
+            if (!this.Started)
+            {
+                return;
+            }
+
+            this.Started = false;
+
+            // HimoGoshujin
+            this.himoGoshujin.Stop();
+
+            await this.StorageGroup.Save().ConfigureAwait(false);
+            await this.StorageGroup.Terminate().ConfigureAwait(false);
+            this.StorageGroup.Clear();
+        }
+    }
+
+    internal async Task DeleteAllAsync()
+    {
+        this.obj.Delete();
+        this.himoGoshujin.Clear();
+
+        PathHelper.TryDeleteFile(this.Options.CrystalFilePath);
+        PathHelper.TryDeleteFile(this.Options.CrystalBackupPath);
+        PathHelper.TryDeleteFile(this.Options.StorageFilePath);
+        PathHelper.TryDeleteFile(this.Options.StorageBackupPath);
+        await this.StorageGroup.DeleteAllAsync();
+
+        try
+        {
+            Directory.Delete(this.Options.RootPath);
+        }
+        catch
+        {
+        }
+
+        this.InitializeRoot();
+    }
+
+    private void InitializeRoot()
+    {
+        this.obj = TinyhandSerializer.Reconstruct<TData>();
+        this.obj.Initialize(this, null, true);
+    }
+
+    private async Task<CrystalStartResult> LoadCrystalStorage(CrystalStartParam param)
+    {// await this.semaphore.WaitAsync().ConfigureAwait(false)
+     // Load
+        CrystalStartResult result;
+        byte[]? data;
+        try
+        {
+            data = await File.ReadAllBytesAsync(this.Options.StorageFilePath).ConfigureAwait(false);
+        }
+        catch
+        {
+            goto LoadBackup;
+        }
+
+        // Checksum
+        if (!HashHelper.CheckFarmHashAndGetData(data.AsMemory(), out var memory))
+        {
+            goto LoadBackup;
+        }
+
+        result = await this.StorageGroup.TryStart(this.Options, param, memory).ConfigureAwait(false);
+        if (result == CrystalStartResult.Success || param.ForceStart)
+        {
+            return CrystalStartResult.Success;
+        }
+
+        return result;
+
+LoadBackup:
+        try
+        {
+            data = await File.ReadAllBytesAsync(this.Options.StorageBackupPath).ConfigureAwait(false);
+        }
+        catch
+        {
+            if (await param.Query(CrystalStartResult.DirectoryNotFound).ConfigureAwait(false) == AbortOrComplete.Complete)
+            {
+                result = await this.StorageGroup.TryStart(this.Options, param, null).ConfigureAwait(false);
+                if (result == CrystalStartResult.Success || param.ForceStart)
+                {
+                    return CrystalStartResult.Success;
+                }
+
+                return result;
+            }
+            else
+            {
+                return CrystalStartResult.DirectoryNotFound;
+            }
+        }
+
+        // Checksum Crystal
+        if (!HashHelper.CheckFarmHashAndGetData(data.AsMemory(), out memory))
+        {
+            if (await param.Query(CrystalStartResult.DirectoryError).ConfigureAwait(false) == AbortOrComplete.Complete)
+            {
+                result = await this.StorageGroup.TryStart(this.Options, param, null).ConfigureAwait(false);
+                if (result == CrystalStartResult.Success || param.ForceStart)
+                {
+                    return CrystalStartResult.Success;
+                }
+
+                return result;
+            }
+            else
+            {
+                return CrystalStartResult.DirectoryError;
+            }
+        }
+
+        result = await this.StorageGroup.TryStart(this.Options, param, memory).ConfigureAwait(false);
+        if (result == CrystalStartResult.Success || param.ForceStart)
+        {
+            return CrystalStartResult.Success;
+        }
+
+        return result;
+    }
+
+    private async Task<CrystalStartResult> LoadCrystal(CrystalStartParam param)
+    {// await this.semaphore.WaitAsync().ConfigureAwait(false)
+     // Load
+        byte[]? data;
+        try
+        {
+            data = await File.ReadAllBytesAsync(this.Options.CrystalFilePath).ConfigureAwait(false);
+        }
+        catch
+        {
+            goto LoadBackup;
+        }
+
+        // Checksum
+        if (!HashHelper.CheckFarmHashAndGetData(data.AsMemory(), out var memory))
+        {
+            goto LoadBackup;
+        }
+
+        if (this.DeserializeCrystal(memory))
+        {
+            return CrystalStartResult.Success;
+        }
+
+LoadBackup:
+        try
+        {
+            data = await File.ReadAllBytesAsync(this.Options.CrystalBackupPath).ConfigureAwait(false);
+        }
+        catch
+        {
+            if (await param.Query(CrystalStartResult.FileNotFound).ConfigureAwait(false) == AbortOrComplete.Complete)
+            {
+                return CrystalStartResult.Success;
+            }
+            else
+            {
+                return CrystalStartResult.FileNotFound;
+            }
+        }
+
+        // Checksum
+        if (!HashHelper.CheckFarmHashAndGetData(data.AsMemory(), out memory))
+        {
+            if (await param.Query(CrystalStartResult.FileError).ConfigureAwait(false) == AbortOrComplete.Complete)
+            {
+                return CrystalStartResult.Success;
+            }
+            else
+            {
+                return CrystalStartResult.FileError;
+            }
+        }
+
+        // Deserialize
+        if (!this.DeserializeCrystal(memory))
+        {
+            if (await param.Query(CrystalStartResult.FileError).ConfigureAwait(false) == AbortOrComplete.Complete)
+            {
+                return CrystalStartResult.Success;
+            }
+            else
+            {
+                return CrystalStartResult.FileError;
+            }
+        }
+
+        return CrystalStartResult.Success;
+    }
+
+    private bool DeserializeCrystal(ReadOnlyMemory<byte> data)
+    {
+        if (!TinyhandSerializer.TryDeserialize<TData>(data.Span, out var tdata))
+        {
+            return false;
+        }
+
+        tdata.Initialize(this, null, true);
+        this.obj = tdata;
+
+        this.himoGoshujin.Clear();
+
+        return true;
+    }
+
+    private async Task Save(string path, string? backupPath)
+    {
+        var byteArray = TinyhandSerializer.Serialize(this.obj);
+        await HashHelper.GetFarmHashAndSaveAsync(byteArray, path, backupPath).ConfigureAwait(false);
+    }
 }

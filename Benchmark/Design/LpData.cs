@@ -13,7 +13,7 @@ namespace LP.Crystal;
 [ValueLinkObject]
 public partial class LpData : BaseData
 {
-    public LpData(ICrystalInternalObsolete crystal, BaseData? parent, Identifier identifier)
+    public LpData(IBigCrystal crystal, BaseData? parent, Identifier identifier)
         : base(crystal, parent)
     {
         this.identifier = identifier;

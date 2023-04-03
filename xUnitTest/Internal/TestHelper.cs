@@ -35,18 +35,18 @@ public static class TestHelper
 
         var unit = builder.Build();
         var crystal = unit.Context.ServiceProvider.GetRequiredService<LpCrystal>();
-        crystal.Datum.Register<FragmentDatum<Identifier>>(2, x => new FragmentDatumImpl<Identifier>(x));
+        crystal.DatumRegistry.Register<FragmentDatum<Identifier>>(2, x => new FragmentDatumImpl<Identifier>(x));
         await crystal.StartAsync(new(FromScratch: true));
         return crystal;
     }
 
-    public static async Task StopCrystal(ICrystalDataObsolete crystal, bool removeAll = true)
+    public static async Task StopCrystal(ICrystalData crystal, bool removeAll = true)
     {
         await crystal.StopAsync(new(RemoveAll: removeAll));
         crystal.MemoryUsage.Is(0);
     }
 
-    public static async Task StopAndStartCrystal(ICrystalDataObsolete crystal)
+    public static async Task StopAndStartCrystal(ICrystalData crystal)
     {
         await crystal.StopAsync(new());
         crystal.MemoryUsage.Is(0);

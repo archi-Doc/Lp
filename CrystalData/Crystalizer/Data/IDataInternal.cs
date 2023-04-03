@@ -6,7 +6,7 @@ namespace CrystalData;
 
 public interface IDataInternal
 {
-    ICrystalInternalObsolete CrystalInternal { get; }
+    IBigCrystal CrystalInternal { get; }
 
     DatumRegistry Data { get; }
 

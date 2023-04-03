@@ -12,7 +12,7 @@ namespace CrystalData;
 [ValueLinkObject]
 internal partial class ExampleData : BaseData
 {
-    public ExampleData(ICrystalInternalObsolete crystal, BaseData? parent, string name)
+    public ExampleData(IBigCrystal crystal, BaseData? parent, string name)
         : base(crystal, parent)
     {
         this.name = name;
