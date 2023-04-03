@@ -11,7 +11,7 @@ public record CrystalOptions
     public const int DefaultMemorySizeLimit = 1024 * 1024 * 500; // 500MB
     public const int DefaultMaxParentInMemory = 10_000;
 
-    public static CrystalOptions Default { get; } = new CrystalOptions();
+    public static readonly CrystalOptions Default = new CrystalOptions();
 
     public CrystalOptions()
         : this(new Dictionary<Type, CrystalConfiguration>(), new Dictionary<Type, BigCrystalConfiguration>(), string.Empty)

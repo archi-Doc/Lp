@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 
 namespace CrystalData;
 
-internal class CrystalImpl<TData> : ICrystal<TData>
+public class CrystalImpl<TData> : ICrystal<TData>
     where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
     internal CrystalImpl(Crystalizer crystalizer)

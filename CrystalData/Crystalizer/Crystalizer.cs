@@ -20,7 +20,7 @@ public class Crystalizer
 
         foreach (var x in this.Options.BigCrystalConfigurations)
         {
-            // (ICrystalData) new CrystalDataImpl<TData>
+            // (IBigCrystal) new CrystalDataImpl<TData>
             var bigCrystal = (IBigCrystal)Activator.CreateInstance(typeof(BigCrystalImpl<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
 
             this.typeToBigCrystal.TryAdd(x.Key, bigCrystal);

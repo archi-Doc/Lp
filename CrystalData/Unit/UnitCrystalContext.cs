@@ -36,7 +36,7 @@ internal class UnitCrystalContext : IUnitCrystalContext
 
         foreach (var x in this.typeToBigCrystalConfiguration)
         {
-            // Singleton: ICrystalData<T> => Crystalizer.GetCrystalData<T>()
+            // Singleton: IBigCrystal<T> => Crystalizer.GetCrystalData<T>()
             context.Services.Add(ServiceDescriptor.Singleton(typeof(IBigCrystal<>).MakeGenericType(x.Key), provider => provider.GetRequiredService<Crystalizer>().GetBigCrystal(x.Key)));
         }
 

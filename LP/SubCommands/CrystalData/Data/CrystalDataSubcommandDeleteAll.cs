@@ -7,20 +7,20 @@ namespace LP.Subcommands.CrystalData;
 [SimpleCommand("delete-all", Description = "Delete all crystal data.")]
 public class CrystalDataSubcommandDeleteAll : ISimpleCommandAsync
 {
-    public CrystalDataSubcommandDeleteAll(IConsoleService consoleService, ICrystalData crystal)
+    public CrystalDataSubcommandDeleteAll(IConsoleService consoleService, Crystalizer crystal)
     {
         this.consoleService = consoleService;
-        this.crystal = crystal;
+        this.crystalizer = crystal;
     }
 
     public async Task RunAsync(string[] args)
-    {
-        await this.crystal.StopAsync(new(RemoveAll: true));
-        await this.crystal.StartAsync(new());
+    {// tempcode
+        await this.crystalizer.SaveAndTerminate(new(RemoveAll: true));
+        await this.crystalizer.PrepareAndLoad(new());
 
         this.consoleService.WriteLine("Deleted");
     }
 
     private IConsoleService consoleService;
-    private ICrystalData crystal;
+    private Crystalizer crystalizer;
 }

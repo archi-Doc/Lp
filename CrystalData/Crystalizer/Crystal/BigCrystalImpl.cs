@@ -1,11 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
 using CrystalData.Datum;
 
 namespace CrystalData;
 
-internal class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>
+public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>
     where TData : BaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
     public BigCrystalImpl(Crystalizer crystalizer)
