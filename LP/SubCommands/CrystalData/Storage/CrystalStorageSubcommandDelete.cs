@@ -21,7 +21,7 @@ public class CrystalStorageSubcommandDelete : ISimpleCommandAsync<CrystalStorage
         this.userInterfaceService.WriteLine(HashedString.Get(Hashed.Subcommands.DevStage));
 
         ushort.TryParse(options.Id, System.Globalization.NumberStyles.HexNumber, null, out var id);
-        if (!this.crystal.Storage.CheckStorageId(id))
+        if (!this.crystal.StorageGroup.CheckStorageId(id))
         {
             await this.userInterfaceService.Notify(LogLevel.Warning, Hashed.Storage.InvalidId, options.Id);
             return;
@@ -32,7 +32,7 @@ public class CrystalStorageSubcommandDelete : ISimpleCommandAsync<CrystalStorage
             return;
         }
 
-        if (this.crystal.Storage.DeleteStorage(id))
+        if (this.crystal.StorageGroup.DeleteStorage(id))
         {
             await this.userInterfaceService.Notify(LogLevel.Warning, Hashed.Storage.Deleted, options.Id);
             await this.CrystalDirSubcommandLs.RunAsync(Array.Empty<string>());

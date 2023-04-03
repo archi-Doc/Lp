@@ -15,7 +15,7 @@ public class CrystalDataSubcommandLs : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        var info = this.crystal.Storage.GetInformation();
+        var info = this.crystal.StorageGroup.GetInformation();
 
         if (info.Length == 0)
         {

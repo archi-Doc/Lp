@@ -1,6 +1,16 @@
 ﻿namespace Sandbox;
 
 [TinyhandObject]
+internal partial class CrystalClass
+{
+    [Key(0)]
+    public int Id { get; set; }
+
+    public override string ToString()
+        => $"Crystal class {this.Id}";
+}
+
+[TinyhandObject]
 internal partial class ManualClass
 {
     [Key(0)]
@@ -25,11 +35,13 @@ internal partial class CombinedClass
 
 internal class TestClass
 {
-    public TestClass(Crystalizer crystalizer, ICrystal<ManualClass> manualCrystal, ICrystal<CombinedClass> combinedCrystal, ManualClass manualClass)
+    public TestClass(Crystalizer crystalizer, ICrystal<ManualClass> manualCrystal, ICrystal<CombinedClass> combinedCrystal, ManualClass manualClass, IBigCrystal<CrystalClass> crystalData)
     {
         this.crystalizer = crystalizer;
 
         this.manualCrystal = manualCrystal;
+        // this.manualCrystal.ConfigureFiler(new LocalFilerConfiguration("Manual2.data"));
+
         // this.manualCrystal.Setup();
         this.combinedCrystal = combinedCrystal;
         this.manualClass0 = manualClass;
@@ -41,7 +53,7 @@ internal class TestClass
 
         await this.crystalizer.PrepareAndLoad();
 
-        this.manualCrystal.Configure(new(Crystalization.Manual, new LocalFilerConfiguration(string.Empty, "test")));
+        // this.manualCrystal.Configure(new(Crystalization.Manual, new LocalFilerConfiguration("test")));
 
         var manualClass = this.manualCrystal.Object;
         manualClass.Id = 1;
@@ -58,6 +70,8 @@ internal class TestClass
         Console.WriteLine(combinedClass.ToString());
 
         Console.WriteLine(this.manualClass0.ToString());
+
+        await combinedCrystal.Save();
 
         await this.crystalizer.SaveAndTerminate();
     }

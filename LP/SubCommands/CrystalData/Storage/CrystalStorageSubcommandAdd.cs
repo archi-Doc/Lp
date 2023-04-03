@@ -49,14 +49,14 @@ EnterPath:
             return;
         }
 
-        var resultCheck = LocalFiler.Check(this.crystal.Storage, path);
+        var resultCheck = LocalFiler.Check(default!, path);
         if (resultCheck != AddStorageResult.Success)
         {
             this.userInterfaceService.WriteLine(HashedString.FromEnum(resultCheck));
             goto EnterPath;
         }
 
-        var resultAdd = this.crystal.Storage.AddStorage_SimpleLocal(path, options.capacityInBytes);
+        var resultAdd = this.crystal.StorageGroup.AddStorage_SimpleLocal(path, options.capacityInBytes);
         if (resultAdd.Result == AddStorageResult.Success)
         {
             this.logger.TryGet()?.Log($"Storage added: {resultAdd.Id:x4}");
@@ -76,7 +76,7 @@ EnterBucket:
             return;
         }
 
-        var resultCheck = S3Filer.Check(this.crystal.Storage, bucket, string.Empty);
+        var resultCheck = S3Filer.Check(this.crystal.StorageGroup, bucket, string.Empty);
         if (resultCheck != AddStorageResult.Success)
         {
             this.userInterfaceService.WriteLine(HashedString.FromEnum(resultCheck));
@@ -90,7 +90,7 @@ EnterBucket:
             return;
         }
 
-        var resultAdd = this.crystal.Storage.AddStorage_SimpleS3(bucket, path, options.capacityInBytes);
+        var resultAdd = this.crystal.StorageGroup.AddStorage_SimpleS3(bucket, path, options.capacityInBytes);
         if (resultAdd.Result == AddStorageResult.Success)
         {
             this.logger.TryGet()?.Log($"Storage added: {resultAdd.Id:x4}");

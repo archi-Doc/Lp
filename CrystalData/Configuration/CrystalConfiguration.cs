@@ -12,7 +12,7 @@ public enum Crystalization
 
 public record CrystalConfiguration
 {
-    public static readonly TimeSpan DefaultInterval = TimeSpan.FromMinutes(1);
+    public static readonly TimeSpan DefaultInterval = TimeSpan.FromHours(1);
 
     public static readonly CrystalConfiguration Default = new();
 
@@ -41,4 +41,6 @@ public record CrystalConfiguration
     public TimeSpan Interval { get; init; }
 
     public FilerConfiguration FilerConfiguration { get; init; }
+
+    public StorageConfiguration StorageConfiguration { get; init; } = EmptyStorageConfiguration.Default;
 }

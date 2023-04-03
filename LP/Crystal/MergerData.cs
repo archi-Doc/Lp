@@ -13,7 +13,7 @@ namespace LP.Crystal;
 [ValueLinkObject]
 public partial class MergerData : BaseData
 {
-    public MergerData(ICrystalInternal crystal, BaseData? parent, Identifier identifier)
+    public MergerData(IBigCrystal crystal, BaseData? parent, Identifier identifier)
         : base(crystal, parent)
     {
         this.identifier = identifier;
@@ -170,7 +170,7 @@ public partial class MergerData : BaseData
 
         if (this.node != null)
         {
-            this.Crystal.HimoGoshujin.RemoveParentData(this.node);
+            this.Crystal.Himo.RemoveParentData(this.node);
             this.node = null;
         }
     }
@@ -189,7 +189,7 @@ public partial class MergerData : BaseData
                 try
                 {
                     var b = TinyhandSerializer.SerializeObject(this.children);
-                    this.Crystal.Storage.Save(ref this.childrenStorage, ref this.childrenFile, new ByteArrayPool.ReadOnlyMemoryOwner(b), 0);
+                    this.Crystal.StorageGroup.Save(ref this.childrenStorage, ref this.childrenFile, new ByteArrayPool.ReadOnlyMemoryOwner(b), 0);
                     this.childrenSaved = true;
                 }
                 catch
@@ -206,7 +206,7 @@ public partial class MergerData : BaseData
 
         if (this.node != null && unload)
         {
-            this.Crystal.HimoGoshujin.RemoveParentData(this.node);
+            this.Crystal.Himo.RemoveParentData(this.node);
             this.node = null;
         }
     }
@@ -220,7 +220,7 @@ public partial class MergerData : BaseData
     {
         if (this.node == null && this.Parent != null)
         {
-            this.node = this.Crystal.HimoGoshujin.AddParentData(this);
+            this.node = this.Crystal.Himo.AddParentData(this);
         }
 
         if (this.children != null)
@@ -229,7 +229,7 @@ public partial class MergerData : BaseData
         }
         else if (this.childrenStorage != 0)
         {// Load
-            var result = this.Crystal.Storage.Load(this.childrenStorage, this.childrenFile).Result;
+            var result = this.Crystal.StorageGroup.Load(this.childrenStorage, this.childrenFile).Result;
             if (result.IsSuccess)
             {
                 GoshujinClass? goshujin = null;
@@ -252,7 +252,7 @@ public partial class MergerData : BaseData
             }
             else
             {
-                this.Crystal.Storage.Delete(ref this.childrenStorage, ref this.childrenFile);
+                this.Crystal.StorageGroup.Delete(ref this.childrenStorage, ref this.childrenFile);
                 return new GoshujinClass();
             }
         }
@@ -267,7 +267,7 @@ public partial class MergerData : BaseData
     {
         if (this.children == null && this.childrenStorage != 0 && this.childrenFile != 0)
         {// Load
-            var result = this.Crystal.Storage.Load(this.childrenStorage, this.childrenFile).Result;
+            var result = this.Crystal.StorageGroup.Load(this.childrenStorage, this.childrenFile).Result;
             if (result.IsSuccess)
             {
                 GoshujinClass? goshujin = null;
@@ -286,12 +286,12 @@ public partial class MergerData : BaseData
                 }
                 catch
                 {
-                    this.Crystal.Storage.Delete(ref this.childrenStorage, ref this.childrenFile);
+                    this.Crystal.StorageGroup.Delete(ref this.childrenStorage, ref this.childrenFile);
                 }
             }
             else
             {
-                this.Crystal.Storage.Delete(ref this.childrenStorage, ref this.childrenFile);
+                this.Crystal.StorageGroup.Delete(ref this.childrenStorage, ref this.childrenFile);
             }
         }
     }

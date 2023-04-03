@@ -15,7 +15,7 @@ public class CrystalStorageSubcommandLs : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        var info = this.crystal.Storage.GetInformation();
+        var info = this.crystal.StorageGroup.GetInformation();
 
         foreach (var x in info)
         {
