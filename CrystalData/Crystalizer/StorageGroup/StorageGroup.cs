@@ -8,11 +8,11 @@ namespace CrystalData;
 
 public sealed class StorageGroup
 {
-    public const int DirectoryRotationThreshold = (int)StorageHelper.Megabytes * 100; // 100 MB
+    public const int StorageRotationThreshold = (int)StorageHelper.Megabytes * 100; // 100 MB
 
     internal StorageGroup(Crystalizer crystalizer)
     {
-        this.UnitLogger = crystalizer.UnitLogger;
+        this.crystalizer = crystalizer;
         this.StorageKey = crystalizer.StorageKey;
     }
 
@@ -38,7 +38,6 @@ public sealed class StorageGroup
             // Move files to other storage...
 
             // Deletion
-            // storageAndFiler.Filer?.DeleteAllAsync().Wait();
             storageAndFiler.Terminate().Wait();
             storageAndFiler.Goshujin = null;
 
@@ -50,7 +49,7 @@ public sealed class StorageGroup
     {
         if (capacity < 0)
         {
-            capacity = CrystalOptions.DefaultDirectoryCapacity;
+            capacity = BigCrystalOptions.DefaultDirectoryCapacity;
         }
 
         path = path.TrimEnd('\\');
@@ -59,7 +58,7 @@ public sealed class StorageGroup
             return (AddStorageResult.WriteError, 0);
         }
 
-        var relative = Path.GetRelativePath(this.Options.RootPath, path);
+        var relative = Path.GetRelativePath(this.crystalizer.Options.RootPath, path);
         if (!relative.StartsWith("..\\"))
         {
             path = relative;
@@ -102,7 +101,7 @@ public sealed class StorageGroup
     {
         if (capacity < 0)
         {
-            capacity = CrystalOptions.DefaultDirectoryCapacity;
+            capacity = BigCrystalOptions.DefaultDirectoryCapacity;
         }
 
         path = path.TrimEnd('\\');
@@ -157,8 +156,6 @@ public sealed class StorageGroup
         await Task.WhenAll(list).ConfigureAwait(false);
     }
 
-    public CrystalOptions Options { get; private set; } = CrystalOptions.Default;
-
     public IStorageKey StorageKey { get; }
 
     public bool Started { get; private set; }
@@ -174,7 +171,7 @@ public sealed class StorageGroup
             }
             else if (storageId == 0 || !this.storageAndFilers.StorageIdChain.TryGetValue(storageId, out storage))
             {// Get valid directory.
-                if (this.storageRotationCount >= DirectoryRotationThreshold ||
+                if (this.storageRotationCount >= StorageRotationThreshold ||
                     this.currentStorageAndFiler == null)
                 {
                     this.currentStorageAndFiler = this.GetValidStorage();
@@ -237,14 +234,12 @@ public sealed class StorageGroup
         storageObject.Storage?.Delete(ref fileId);
     }
 
-    internal async Task<CrystalStartResult> TryStart(CrystalOptions options, CrystalStartParam param, ReadOnlyMemory<byte>? data)
+    internal async Task<CrystalStartResult> TryStart(CrystalStartParam param, ReadOnlyMemory<byte>? data)
     {// semaphore
         if (this.Started)
         {
             return CrystalStartResult.Success;
         }
-
-        this.Options = options;
 
         StorageAndFiler.GoshujinClass? goshujin = null;
         if (data != null)
@@ -292,7 +287,7 @@ public sealed class StorageGroup
             try
             {
                 var storage = new SimpleStorage();
-                storage.StorageCapacity = CrystalOptions.DefaultDirectoryCapacity;
+                storage.StorageCapacity = BigCrystalOptions.DefaultDirectoryCapacity;
                 var filer = new LocalFiler(); // PathHelper.GetRootedDirectory(this.Options.RootPath, this.Options.DefaultCrystalDirectory)
                 // var filer = new S3Filer("kiokubako", "lp");
 
@@ -416,7 +411,7 @@ public sealed class StorageGroup
         return array.MinBy(a => a.GetUsageRatio());
     }
 
-    internal UnitLogger UnitLogger { get; }
+    private Crystalizer crystalizer;
 
     private object syncObject = new();
     private StorageAndFiler.GoshujinClass storageAndFilers = new();  // lock(syncObject)

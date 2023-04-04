@@ -43,7 +43,7 @@ internal partial class ExampleData : BaseData
             this.children ??= new();
             if (!this.children.NameChain.TryGetValue(name, out data))
             {
-                data = new ExampleData(this.Crystal, this, name);
+                data = new ExampleData(this.BigCrystal, this, name);
                 this.children.Add(data);
             }
 

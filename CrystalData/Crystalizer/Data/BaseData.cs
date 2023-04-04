@@ -22,13 +22,13 @@ public partial class BaseData : IDataInternal
 
     protected BaseData(IBigCrystal crystal, BaseData? parent)
     {
-        this.Crystal = crystal;
+        this.BigCrystal = crystal;
         this.Parent = parent;
     }
 
     #region FieldAndProperty
 
-    public IBigCrystal Crystal { get; private set; } = default!;
+    public IBigCrystal BigCrystal { get; private set; } = default!;
 
     public BaseData? Parent { get; private set; }
 
@@ -70,15 +70,9 @@ public partial class BaseData : IDataInternal
 
     #region IDataInternal
 
-    IBigCrystal IDataInternal.BigCrystal => this.Crystal;
-
-    DatumRegistry IDataInternal.DatumRegistry => this.Crystal.DatumRegistry;
-
-    CrystalOptions IDataInternal.Options => this.Crystal.Options;
-
     void IDataInternal.DatumToStorage<TDatum>(ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
     {// using (this.semaphore.Lock())
-        if (!this.Crystal.DatumRegistry.TryGetDatumInfo<TDatum>(out var info))
+        if (!this.BigCrystal.DatumRegistry.TryGetDatumInfo<TDatum>(out var info))
         {
             return;
         }
@@ -87,7 +81,7 @@ public partial class BaseData : IDataInternal
         {
             if (this.datumObject[i].DatumId == info.DatumId)
             {
-                this.Crystal.StorageGroup.Save(ref this.datumObject[i].StorageId, ref this.datumObject[i].FileId, memoryToBeShared, info.DatumId);
+                this.BigCrystal.StorageGroup.Save(ref this.datumObject[i].StorageId, ref this.datumObject[i].FileId, memoryToBeShared, info.DatumId);
                 return;
             }
         }
@@ -106,7 +100,7 @@ public partial class BaseData : IDataInternal
             return new(CrystalResult.NoStorage);
         }
 
-        return await this.Crystal.StorageGroup.Load(datumObject.StorageId, datumObject.FileId).ConfigureAwait(false);
+        return await this.BigCrystal.StorageGroup.Load(datumObject.StorageId, datumObject.FileId).ConfigureAwait(false);
     }
 
     void IDataInternal.DeleteStorage<TDatum>()
@@ -114,7 +108,7 @@ public partial class BaseData : IDataInternal
         var datumObject = this.TryGetDatumObject<TDatum>();
         if (datumObject.IsValid)
         {
-            this.Crystal.StorageGroup.Delete(ref datumObject.StorageId, ref datumObject.FileId);
+            this.BigCrystal.StorageGroup.Delete(ref datumObject.StorageId, ref datumObject.FileId);
             return;
         }
     }
@@ -237,7 +231,7 @@ public partial class BaseData : IDataInternal
 
             for (var i = 0; i < this.datumObject.Length; i++)
             {
-                this.Crystal.StorageGroup.Delete(ref this.datumObject[i].StorageId, ref this.datumObject[i].FileId);
+                this.BigCrystal.StorageGroup.Delete(ref this.datumObject[i].StorageId, ref this.datumObject[i].FileId);
                 this.datumObject[i].Datum?.Unload();
                 this.datumObject[i].Datum = null;
                 this.datumObject[i].FileId = 0;
@@ -274,7 +268,7 @@ public partial class BaseData : IDataInternal
 
     protected internal void Initialize(IBigCrystal crystal, BaseData? parent, bool initializeChildren)
     {
-        this.Crystal = crystal;
+        this.BigCrystal = crystal;
         this.Parent = parent;
 
         if (initializeChildren)
@@ -289,7 +283,7 @@ public partial class BaseData : IDataInternal
     private DatumObject GetOrCreateDatumObject<TDatum>()
         where TDatum : IDatum
     {// using (this.semaphore.Lock())
-        if (!this.Crystal.DatumRegistry.TryGetDatumInfo<TDatum>(out var info))
+        if (!this.BigCrystal.DatumRegistry.TryGetDatumInfo<TDatum>(out var info))
         {
             return default;
         }
@@ -325,7 +319,7 @@ public partial class BaseData : IDataInternal
     private DatumObject TryGetDatumObject<TDatum>()
         where TDatum : IDatum
     {// using (this.semaphore.Lock())
-        if (!this.Crystal.DatumRegistry.TryGetDatumInfo<TDatum>(out var info))
+        if (!this.BigCrystal.DatumRegistry.TryGetDatumInfo<TDatum>(out var info))
         {
             return default;
         }

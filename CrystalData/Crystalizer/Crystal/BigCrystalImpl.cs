@@ -63,7 +63,7 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
 
             if (param.FromScratch)
             {
-                await this.StorageGroup.TryStart(this.Options, param, null).ConfigureAwait(false);
+                await this.StorageGroup.TryStart(this.CrystalOptions, param, null).ConfigureAwait(false);
 
                 await this.DeleteAllAsync();
                 this.InitializeRoot();
@@ -189,7 +189,7 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
             goto LoadBackup;
         }
 
-        result = await this.StorageGroup.TryStart(this.Options, param, memory).ConfigureAwait(false);
+        result = await this.StorageGroup.TryStart(this.CrystalOptions, param, memory).ConfigureAwait(false);
         if (result == CrystalStartResult.Success || param.ForceStart)
         {
             return CrystalStartResult.Success;
@@ -206,7 +206,7 @@ LoadBackup:
         {
             if (await param.Query(CrystalStartResult.DirectoryNotFound).ConfigureAwait(false) == AbortOrComplete.Complete)
             {
-                result = await this.StorageGroup.TryStart(this.Options, param, null).ConfigureAwait(false);
+                result = await this.StorageGroup.TryStart(this.CrystalOptions, param, null).ConfigureAwait(false);
                 if (result == CrystalStartResult.Success || param.ForceStart)
                 {
                     return CrystalStartResult.Success;
@@ -225,7 +225,7 @@ LoadBackup:
         {
             if (await param.Query(CrystalStartResult.DirectoryError).ConfigureAwait(false) == AbortOrComplete.Complete)
             {
-                result = await this.StorageGroup.TryStart(this.Options, param, null).ConfigureAwait(false);
+                result = await this.StorageGroup.TryStart(this.CrystalOptions, param, null).ConfigureAwait(false);
                 if (result == CrystalStartResult.Success || param.ForceStart)
                 {
                     return CrystalStartResult.Success;
@@ -239,7 +239,7 @@ LoadBackup:
             }
         }
 
-        result = await this.StorageGroup.TryStart(this.Options, param, memory).ConfigureAwait(false);
+        result = await this.StorageGroup.TryStart(this.CrystalOptions, param, memory).ConfigureAwait(false);
         if (result == CrystalStartResult.Success || param.ForceStart)
         {
             return CrystalStartResult.Success;

@@ -98,7 +98,7 @@ public partial class MergerData : BaseData
             this.children = this.PrepareChildren();
             if (!this.children.IdChain.TryGetValue(id, out data))
             {
-                data = new MergerData(this.Crystal, this, id);
+                data = new MergerData(this.BigCrystal, this, id);
                 this.children.Add(data);
                 this.childrenSaved = false;
             }
@@ -170,7 +170,7 @@ public partial class MergerData : BaseData
 
         if (this.node != null)
         {
-            this.Crystal.Himo.RemoveParentData(this.node);
+            this.BigCrystal.Himo.RemoveParentData(this.node);
             this.node = null;
         }
     }
@@ -189,7 +189,7 @@ public partial class MergerData : BaseData
                 try
                 {
                     var b = TinyhandSerializer.SerializeObject(this.children);
-                    this.Crystal.StorageGroup.Save(ref this.childrenStorage, ref this.childrenFile, new ByteArrayPool.ReadOnlyMemoryOwner(b), 0);
+                    this.BigCrystal.StorageGroup.Save(ref this.childrenStorage, ref this.childrenFile, new ByteArrayPool.ReadOnlyMemoryOwner(b), 0);
                     this.childrenSaved = true;
                 }
                 catch
@@ -206,7 +206,7 @@ public partial class MergerData : BaseData
 
         if (this.node != null && unload)
         {
-            this.Crystal.Himo.RemoveParentData(this.node);
+            this.BigCrystal.Himo.RemoveParentData(this.node);
             this.node = null;
         }
     }
@@ -220,7 +220,7 @@ public partial class MergerData : BaseData
     {
         if (this.node == null && this.Parent != null)
         {
-            this.node = this.Crystal.Himo.AddParentData(this);
+            this.node = this.BigCrystal.Himo.AddParentData(this);
         }
 
         if (this.children != null)
@@ -229,7 +229,7 @@ public partial class MergerData : BaseData
         }
         else if (this.childrenStorage != 0)
         {// Load
-            var result = this.Crystal.StorageGroup.Load(this.childrenStorage, this.childrenFile).Result;
+            var result = this.BigCrystal.StorageGroup.Load(this.childrenStorage, this.childrenFile).Result;
             if (result.IsSuccess)
             {
                 GoshujinClass? goshujin = null;
@@ -240,7 +240,7 @@ public partial class MergerData : BaseData
                     {
                         foreach (var x in goshujin)
                         {
-                            x.Initialize(this.Crystal, this, true);
+                            x.Initialize(this.BigCrystal, this, true);
                         }
                     }
                 }
@@ -252,7 +252,7 @@ public partial class MergerData : BaseData
             }
             else
             {
-                this.Crystal.StorageGroup.Delete(ref this.childrenStorage, ref this.childrenFile);
+                this.BigCrystal.StorageGroup.Delete(ref this.childrenStorage, ref this.childrenFile);
                 return new GoshujinClass();
             }
         }
@@ -267,7 +267,7 @@ public partial class MergerData : BaseData
     {
         if (this.children == null && this.childrenStorage != 0 && this.childrenFile != 0)
         {// Load
-            var result = this.Crystal.StorageGroup.Load(this.childrenStorage, this.childrenFile).Result;
+            var result = this.BigCrystal.StorageGroup.Load(this.childrenStorage, this.childrenFile).Result;
             if (result.IsSuccess)
             {
                 GoshujinClass? goshujin = null;
@@ -278,7 +278,7 @@ public partial class MergerData : BaseData
                     {
                         foreach (var x in goshujin)
                         {
-                            x.Initialize(this.Crystal, this, true);
+                            x.Initialize(this.BigCrystal, this, true);
                         }
 
                         this.children = goshujin;
@@ -286,12 +286,12 @@ public partial class MergerData : BaseData
                 }
                 catch
                 {
-                    this.Crystal.StorageGroup.Delete(ref this.childrenStorage, ref this.childrenFile);
+                    this.BigCrystal.StorageGroup.Delete(ref this.childrenStorage, ref this.childrenFile);
                 }
             }
             else
             {
-                this.Crystal.StorageGroup.Delete(ref this.childrenStorage, ref this.childrenFile);
+                this.BigCrystal.StorageGroup.Delete(ref this.childrenStorage, ref this.childrenFile);
             }
         }
     }

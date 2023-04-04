@@ -37,7 +37,7 @@ public partial interface IStorage
         => this.DeleteAsync(ref fileId, TimeSpan.MinValue);
 }
 
-public interface IStorage<TData> : IStorage
+/*public interface IStorage<TData> : IStorage
     where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
-}
+}*/

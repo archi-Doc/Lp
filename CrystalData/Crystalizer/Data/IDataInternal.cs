@@ -8,9 +8,9 @@ public interface IDataInternal
 {
     IBigCrystal BigCrystal { get; }
 
-    DatumRegistry DatumRegistry { get; }
+    DatumRegistry DatumRegistry => this.BigCrystal.DatumRegistry;
 
-    CrystalOptions Options { get; }
+    CrystalOptions CrystalOptions => this.BigCrystal.CrystalOptions;
 
     BigCrystalOptions BigCrystalOptions => this.BigCrystal.BigCrystalOptions;
 
