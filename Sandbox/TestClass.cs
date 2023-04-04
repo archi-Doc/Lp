@@ -35,7 +35,7 @@ internal partial class CombinedClass
 
 internal class TestClass
 {
-    public TestClass(Crystalizer crystalizer, ICrystal<ManualClass> manualCrystal, ICrystal<CombinedClass> combinedCrystal, ManualClass manualClass, IBigCrystal<CrystalClass> crystalData)
+    public TestClass(Crystalizer crystalizer, ICrystal<ManualClass> manualCrystal, ICrystal<CombinedClass> combinedCrystal, ManualClass manualClass, IBigCrystal<BaseData> crystalData)
     {
         this.crystalizer = crystalizer;
 

@@ -30,7 +30,7 @@ public class CrystalImpl<TData> : ICrystal<TData>
 
     public Crystalizer Crystalizer { get; }
 
-    public CrystalOptions CrystalOptions => this.Crystalizer.Options;
+    public CrystalizerConfiguration CrystalOptions => this.Crystalizer.Configuration;
 
     public CrystalConfiguration CrystalConfiguration { get; private set; }
 

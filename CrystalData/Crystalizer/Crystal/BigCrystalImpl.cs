@@ -43,7 +43,7 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
 
     #endregion
 
-    async Task<CrystalStartResult> ICrystal.PrepareAndLoad(CrystalStartParam? param)
+    public async Task<CrystalStartResult> PrepareAndLoad(CrystalStartParam? param)
     {
         param ??= CrystalStartParam.Default;
         using (this.semaphore.Lock())

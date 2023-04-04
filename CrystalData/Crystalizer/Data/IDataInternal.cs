@@ -10,7 +10,7 @@ public interface IDataInternal
 
     DatumRegistry DatumRegistry => this.BigCrystal.DatumRegistry;
 
-    CrystalOptions CrystalOptions => this.BigCrystal.CrystalOptions;
+    CrystalizerConfiguration CrystalOptions => this.BigCrystal.CrystalOptions;
 
     BigCrystalOptions BigCrystalOptions => this.BigCrystal.BigCrystalOptions;
 

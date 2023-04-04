@@ -2,16 +2,16 @@
 
 namespace CrystalData;
 
-public record CrystalOptions
+public record CrystalizerConfiguration
 {
-    public static readonly CrystalOptions Default = new CrystalOptions();
+    public static readonly CrystalizerConfiguration Default = new CrystalizerConfiguration();
 
-    public CrystalOptions()
+    public CrystalizerConfiguration()
         : this(new Dictionary<Type, CrystalConfiguration>(), new Dictionary<Type, BigCrystalConfiguration>(), Directory.GetCurrentDirectory())
     {
     }
 
-    internal CrystalOptions(Dictionary<Type, CrystalConfiguration> crystalConfigurations, Dictionary<Type, BigCrystalConfiguration> bigCrystalConfigurations, string rootPath)
+    internal CrystalizerConfiguration(Dictionary<Type, CrystalConfiguration> crystalConfigurations, Dictionary<Type, BigCrystalConfiguration> bigCrystalConfigurations, string rootPath)
     {
         this.CrystalConfigurations = crystalConfigurations;
         this.BigCrystalConfigurations = bigCrystalConfigurations;
@@ -26,3 +26,15 @@ public record CrystalOptions
 
     public Dictionary<Type, BigCrystalConfiguration> BigCrystalConfigurations { get; }
 }
+
+/*public record CrystalizerOptions
+{
+    public CrystalizerOptions(string rootPath)
+    {
+        this.RootPath = rootPath;
+    }
+
+    public bool EnableLogger { get; init; }
+
+    public string RootPath { get; init; }
+}*/

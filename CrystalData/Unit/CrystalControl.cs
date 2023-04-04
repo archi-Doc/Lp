@@ -23,7 +23,7 @@ public class CrystalControl
             {
                 // Main services
                 context.AddSingleton<CrystalControl>();
-                context.AddSingleton<CrystalOptions>();
+                context.AddSingleton<CrystalizerConfiguration>();
                 context.AddSingleton<Crystalizer>();
                 context.AddSingleton<IStorageKey, StorageKey>();
 

@@ -31,10 +31,11 @@ public partial class CrystalTest
     {
         var identifier = default(Identifier);
         var crystal = await TestHelper.CreateAndStartCrystal();
+        var data = crystal.Object.Data;
 
-        var f = crystal.Data.TryGetChild(Identifier.Zero);
+        var f = data.TryGetChild(Identifier.Zero);
         f.IsNull();
-        f = crystal.Data.GetOrCreateChild(Identifier.Zero);
+        f = data.GetOrCreateChild(Identifier.Zero);
         f.IsNotNull();
 
         f.IsDeleted.IsFalse();
@@ -60,7 +61,7 @@ public partial class CrystalTest
             op.Result.Is(CrystalResult.Deleted);
         }
 
-        f = crystal.Data.GetOrCreateChild(Identifier.Zero);
+        f = data.GetOrCreateChild(Identifier.Zero);
         var buffer = new byte[Identifier.Length];
         var buffer2 = new byte[Identifier.Length];
         Identifier.Zero.TryWriteBytes(buffer);
@@ -73,13 +74,13 @@ public partial class CrystalTest
         {
             identifier = new Identifier(i);
 
-            f = crystal.Data.GetOrCreateChild(identifier);
+            f = data.GetOrCreateChild(identifier);
             f.IsNotNull();
 
             identifier.TryWriteBytes(buffer);
             f!.BlockDatum().Set(buffer).Is(CrystalResult.Success);
 
-            f = crystal.Data.TryGetChild(identifier);
+            f = data.TryGetChild(identifier);
             f.IsNotNull();
             result = await f!.BlockDatum().Get();
             result.DataEquals(buffer).IsTrue();
@@ -90,7 +91,7 @@ public partial class CrystalTest
         {
             identifier = new Identifier(i);
 
-            f = crystal.Data.TryGetChild(identifier);
+            f = data.TryGetChild(identifier);
             f.IsNotNull();
 
             identifier.TryWriteBytes(buffer);
@@ -98,11 +99,11 @@ public partial class CrystalTest
             result.DataEquals(buffer).IsTrue();
         }
 
-        f = crystal.Data.GetOrCreateChild(Identifier.Zero);
+        f = data.GetOrCreateChild(Identifier.Zero);
         f.IsNotNull();
 
         // Set fragments
-        for (var i = 0; i < CrystalOptions.DefaultMaxFragmentCount; i++)
+        for (var i = 0; i < BigCrystalOptions.DefaultMaxFragmentCount; i++)
         {
             identifier = new Identifier(i);
             identifier.TryWriteBytes(buffer);
@@ -122,7 +123,7 @@ public partial class CrystalTest
     public async Task Test2()
     {
         var crystal = await TestHelper.CreateAndStartCrystal();
-        var data = crystal.Data;
+        var data = crystal.Object.Data;
         LpData? flake;
         // data.Delete().IsTrue();
 
@@ -139,7 +140,7 @@ public partial class CrystalTest
         // Get flakes and check
         for (var i = 0; i < N; i++)
         {
-            flake = crystal.Data.TryGetChild(new(i));
+            flake = data.TryGetChild(new(i));
             flake.IsNotNull();
 
             var result = await flake!.BlockDatum().Get();
@@ -168,7 +169,7 @@ public partial class CrystalTest
     public async Task Test3()
     {
         var crystal = await TestHelper.CreateAndStartCrystal();
-        var data = crystal.Data;
+        var data = crystal.Object.Data;
 
         var t1 = new TestObject(1, "1");
         var t2 = new TestObject(2, "2");
@@ -219,7 +220,7 @@ public partial class CrystalTest
         // Lock IO order test
         for (var i = 0; i < 100; i++)
         {
-            flake = crystal.Data.GetOrCreateChild(Identifier.Zero);
+            flake = data.GetOrCreateChild(Identifier.Zero);
             flake.BlockDatum().Set(new byte[] { 0, 1, });
             flake.Save(true);
             var fd = await flake.BlockDatum().Get();
@@ -227,7 +228,7 @@ public partial class CrystalTest
         }
 
         // Remove test
-        flake = crystal.Data.GetOrCreateChild(Identifier.Zero);
+        flake = data.GetOrCreateChild(Identifier.Zero);
         flake.Delete().IsTrue();
         flake.BlockDatum().Set(new byte[] { 0, 1, }).Is(CrystalResult.Deleted);
         (await flake.BlockDatum().Get()).Result.Is(CrystalResult.Deleted);

@@ -35,7 +35,7 @@ public static class TestHelper
         var unit = builder.Build();
         var crystal = unit.Context.ServiceProvider.GetRequiredService<LpCrystal>();
         crystal.DatumRegistry.Register<FragmentDatum<Identifier>>(2, x => new FragmentDatumImpl<Identifier>(x));
-        await crystal.StartAsync(new(FromScratch: true));
+        await crystal.PrepareAndLoad(new(FromScratch: true));
         return crystal;
     }
 
@@ -69,7 +69,7 @@ public static class TestHelper
 
         var unit = builder.Build();
         var crystal = unit.Context.ServiceProvider.GetRequiredService<MergerCrystal>();
-        await crystal.StartAsync(new(FromScratch: true));
+        await crystal.PrepareAndLoad(new(FromScratch: true));
         return crystal;
     }
 

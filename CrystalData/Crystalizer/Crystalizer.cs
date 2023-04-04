@@ -10,15 +10,14 @@ namespace CrystalData;
 
 public class Crystalizer
 {
-    public Crystalizer(UnitCore core, CrystalOptions options, ILogger logger, UnitLogger unitLogger, IStorageKey storageKey)
+    public Crystalizer(CrystalizerConfiguration configuration, ILogger logger, UnitLogger unitLogger, IStorageKey storageKey)
     {
-        this.Core = core;
-        this.Options = options;
+        this.Configuration = configuration;
         this.logger = logger;
         this.UnitLogger = unitLogger;
         this.StorageKey = storageKey;
 
-        foreach (var x in this.Options.BigCrystalConfigurations)
+        foreach (var x in this.Configuration.BigCrystalConfigurations)
         {
             // (IBigCrystal) new CrystalDataImpl<TData>
             var bigCrystal = (IBigCrystal)Activator.CreateInstance(typeof(BigCrystalImpl<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
@@ -26,7 +25,7 @@ public class Crystalizer
             this.typeToBigCrystal.TryAdd(x.Key, bigCrystal);
         }
 
-        foreach (var x in this.Options.CrystalConfigurations)
+        foreach (var x in this.Configuration.CrystalConfigurations)
         {
             ICrystal? crystal;
             if (!this.typeToBigCrystal.TryGetValue(x.Key, out var bigCrystal))
@@ -48,9 +47,7 @@ public class Crystalizer
 
     #region FieldAndProperty
 
-    public UnitCore Core { get; }
-
-    public CrystalOptions Options { get; }
+    public CrystalizerConfiguration Configuration { get; }
 
     public IStorageKey StorageKey { get; }
 
@@ -254,7 +251,7 @@ public class Crystalizer
 
     internal BigCrystalConfiguration GetCrystalConfiguration(Type type)
     {
-        if (!this.Options.BigCrystalConfigurations.TryGetValue(type, out var crystalConfiguration))
+        if (!this.Configuration.BigCrystalConfigurations.TryGetValue(type, out var crystalConfiguration))
         {
             ThrowTypeNotRegistered(type);
         }

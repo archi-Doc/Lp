@@ -117,5 +117,5 @@ public record CrystalStorageOptionsAdd
     [SimpleOption("capacity", Description = "Directory capacity in GB")]
     public int Capacity { get; set; } = 0;
 
-    internal long capacityInBytes { get; set; } = CrystalOptions.DefaultDirectoryCapacity;
+    internal long capacityInBytes { get; set; } = StorageGroup.DefaultStorageCapacity;
 }
