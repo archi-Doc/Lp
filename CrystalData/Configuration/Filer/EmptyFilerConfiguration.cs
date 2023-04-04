@@ -2,7 +2,8 @@
 
 namespace CrystalData;
 
-public record EmptyFilerConfiguration : FilerConfiguration
+[TinyhandObject]
+public partial record EmptyFilerConfiguration : FilerConfiguration
 {
     public static readonly EmptyFilerConfiguration Default = new();
 

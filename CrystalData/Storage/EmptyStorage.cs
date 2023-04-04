@@ -4,7 +4,6 @@ using CrystalData.Filer;
 
 namespace CrystalData.Storage;
 
-[TinyhandObject]
 public partial class EmptyStorage : IStorage
 {
     public static readonly EmptyStorage Default = new();

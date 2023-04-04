@@ -8,7 +8,6 @@ using CrystalData.Filer;
 
 namespace CrystalData.Storage;
 
-[TinyhandObject]
 internal partial class SimpleStorage : IStorage
 {
     private const string SimpleStorageMain = "Simple.main";
@@ -24,10 +23,8 @@ internal partial class SimpleStorage : IStorage
 
     #region FieldAndProperty
 
-    [Key(0)]
     public long StorageCapacity { get; set; }
 
-    [Key(1)]
     public long StorageUsage { get; private set; } // lock (this.syncObject)
 
     private IRawFiler? filer;

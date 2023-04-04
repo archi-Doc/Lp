@@ -30,10 +30,10 @@ internal partial class StorageAndFiler
     public ushort StorageId { get; set; }
 
     [Key(1)]
-    public byte[] StorageData { get; set; } = default!;
+    public StorageConfiguration StorageConfiguration { get; set; } = default!;
 
     [Key(2)]
-    public byte[] FilerData { get; set; } = default!;
+    public FilerConfiguration FilerConfiguration { get; set; } = default!;
 
     [Key(3)]
     public MemoryStat MemoryStat { get; private set; } = default!;
@@ -42,17 +42,14 @@ internal partial class StorageAndFiler
 
     public async Task<CrystalResult> PrepareAndCheck(StorageGroup storageGroup, bool newStorage)
     {
+        var crystalizer = storageGroup.Crystalizer;
+
         if (this.Filer == null)
         {
-            if (!TinyhandSerializer.TryDeserialize<IRawFiler>(this.FilerData, out var filer))
-            {
-                return CrystalResult.DeserializeError;
-            }
-
-            this.Filer = filer;
+            this.Filer = crystalizer.ResolveRawFiler(this.FilerConfiguration);
         }
 
-        var result = await this.Filer.PrepareAndCheck(default!, default!).ConfigureAwait(false);
+        var result = await this.Filer.PrepareAndCheck(crystalizer, this.FilerConfiguration).ConfigureAwait(false);
         if (result != CrystalResult.Success)
         {
             return result;
@@ -60,12 +57,7 @@ internal partial class StorageAndFiler
 
         if (this.Storage == null)
         {
-            if (!TinyhandSerializer.TryDeserialize<IStorage>(this.StorageData, out var storage))
-            {
-                return CrystalResult.DeserializeError;
-            }
-
-            this.Storage = storage;
+            this.Storage = storageGroup.Crystalizer.ResolveStorage(this.StorageConfiguration);
         }
 
         result = await this.Storage.PrepareAndCheck(this.Filer, newStorage).ConfigureAwait(false);
@@ -77,35 +69,11 @@ internal partial class StorageAndFiler
         return CrystalResult.Success;
     }
 
-    public void Start()
-    {
-    }
-
     public async Task Save()
     {
         if (this.Storage != null)
         {
             await this.Storage.Save();
-        }
-    }
-
-    public async Task Terminate()
-    {
-        if (this.Filer != null)
-        {
-            await this.Filer.Terminate();
-        }
-
-        if (this.Filer != null)
-        {
-            this.FilerData = TinyhandSerializer.Serialize(this.Filer);
-            this.Filer = null;
-        }
-
-        if (this.Storage != null)
-        {
-            this.StorageData = TinyhandSerializer.Serialize(this.Storage);
-            this.Storage = null;
         }
     }
 

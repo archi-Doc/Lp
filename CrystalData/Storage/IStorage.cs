@@ -1,12 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using CrystalData.Filer;
-using CrystalData.Storage;
 
 namespace CrystalData;
 
-[TinyhandUnion(0, typeof(EmptyStorage))]
-[TinyhandUnion(1, typeof(SimpleStorage))]
 public partial interface IStorage
 {
     long StorageCapacity { get; set; }

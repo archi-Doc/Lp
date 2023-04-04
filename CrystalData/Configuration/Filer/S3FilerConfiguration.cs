@@ -2,7 +2,8 @@
 
 namespace CrystalData;
 
-public record S3FilerConfiguration : FilerConfiguration
+[TinyhandObject]
+public partial record S3FilerConfiguration : FilerConfiguration
 {
     public S3FilerConfiguration(string bucket, string file)
         : base(file)
@@ -10,5 +11,6 @@ public record S3FilerConfiguration : FilerConfiguration
         this.Bucket = bucket;
     }
 
+    [Key(1)]
     public string Bucket { get; init; }
 }

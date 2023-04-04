@@ -71,12 +71,15 @@ public class Crystalizer
     #region Resolvers
 
     public IFiler ResolveFiler(FilerConfiguration configuration)
+        => new RawFilerToFiler(this, this.ResolveRawFiler(configuration), configuration);
+
+    public IRawFiler ResolveRawFiler(FilerConfiguration configuration)
     {
         lock (this.syncFiler)
         {
             if (configuration is EmptyFilerConfiguration emptyFilerConfiguration)
             {// Empty filer
-                return new RawFilerToFiler(this, EmptyFiler.Default, configuration);
+                return EmptyFiler.Default;
             }
             else if (configuration is LocalFilerConfiguration localFilerConfiguration)
             {// Local filer
@@ -85,7 +88,7 @@ public class Crystalizer
                     this.localFiler ??= new LocalFiler();
                 }
 
-                return new RawFilerToFiler(this, this.localFiler, configuration);
+                return this.localFiler;
             }
             else if (configuration is S3FilerConfiguration s3FilerConfiguration)
             {// S3 filer
@@ -95,7 +98,7 @@ public class Crystalizer
                     this.bucketToS3Filer.TryAdd(s3FilerConfiguration.Bucket, filer);
                 }
 
-                return new RawFilerToFiler(this, filer, configuration);
+                return filer;
             }
             else
             {

@@ -2,9 +2,14 @@
 
 namespace CrystalData;
 
-public abstract record StorageConfiguration
+[TinyhandUnion(0, typeof(EmptyStorageConfiguration))]
+public abstract partial record StorageConfiguration
 {
-    public StorageConfiguration()
+    public StorageConfiguration(FilerConfiguration filerConfiguration)
     {
+        this.FilerConfiguration = filerConfiguration;
     }
+
+    [Key(0)]
+    public FilerConfiguration FilerConfiguration { get; }
 }

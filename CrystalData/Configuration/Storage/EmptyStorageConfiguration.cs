@@ -2,7 +2,8 @@
 
 namespace CrystalData;
 
-public record EmptyStorageConfiguration : StorageConfiguration
+[TinyhandObject]
+public partial record EmptyStorageConfiguration : StorageConfiguration
 {
     public static readonly EmptyStorageConfiguration Default = new();
 

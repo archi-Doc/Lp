@@ -45,22 +45,9 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
 
     async Task<CrystalStartResult> ICrystal.PrepareAndLoad(CrystalStartParam? param)
     {
-        return CrystalStartResult.Success;
-    }
-
-    public async Task<CrystalStartResult> StartAsync(CrystalStartParam param)
-    {
-        ((ICrystal)this).PrepareAndLoad(null);
+        param ??= CrystalStartParam.Default;
         using (this.semaphore.Lock())
         {
-            var result = CrystalStartResult.Success;
-            if (this.Started)
-            {
-                return CrystalStartResult.Success;
-            }
-
-            // this.logger.TryGet()?.Log("Crystal start");
-
             if (param.FromScratch)
             {
                 await this.StorageGroup.TryStart(this.CrystalOptions, param, null).ConfigureAwait(false);
@@ -68,12 +55,11 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
                 await this.DeleteAllAsync();
                 this.InitializeRoot();
 
-                this.Started = true;
                 return CrystalStartResult.Success;
             }
 
             // Load CrystalStorage
-            result = await this.LoadCrystalStorage(param).ConfigureAwait(false);
+            var result = await this.LoadCrystalStorage(param).ConfigureAwait(false);
             if (result != CrystalStartResult.Success)
             {
                 return result;
@@ -92,7 +78,6 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
                 return result;
             }
 
-            this.Started = true;
             return result;
         }
     }
@@ -106,7 +91,6 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
                 await this.DeleteAllAsync();
 
                 // Stop storage
-                await this.StorageGroup.Terminate().ConfigureAwait(false);
                 this.StorageGroup.Clear();
 
                 return;
@@ -117,7 +101,6 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
 
             // Stop storage
             await this.StorageGroup.Save().ConfigureAwait(false);
-            await this.StorageGroup.Terminate().ConfigureAwait(false);
 
             // Save data
             await this.Save(this.BigCrystalOptions.CrystalFilePath, this.BigCrystalOptions.CrystalBackupPath).ConfigureAwait(false);
@@ -136,7 +119,6 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
         using (this.semaphore.Lock())
         {
             await this.StorageGroup.Save().ConfigureAwait(false);
-            await this.StorageGroup.Terminate().ConfigureAwait(false);
             this.StorageGroup.Clear();
         }
     }

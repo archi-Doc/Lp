@@ -12,9 +12,22 @@ public sealed class StorageGroup
 
     internal StorageGroup(Crystalizer crystalizer)
     {
-        this.crystalizer = crystalizer;
+        this.Crystalizer = crystalizer;
         this.StorageKey = crystalizer.StorageKey;
     }
+
+    #region PropertyAndField
+
+    public Crystalizer Crystalizer { get; }
+
+    public IStorageKey StorageKey { get; }
+
+    private object syncObject = new();
+    private StorageAndFiler.GoshujinClass storageAndFilers = new();  // lock(syncObject)
+    private StorageAndFiler? currentStorageAndFiler; // lock(syncObject)
+    private int storageRotationCount; // lock(syncObject)
+
+    #endregion
 
     public string[] GetInformation()
     {
@@ -38,7 +51,6 @@ public sealed class StorageGroup
             // Move files to other storage...
 
             // Deletion
-            storageAndFiler.Terminate().Wait();
             storageAndFiler.Goshujin = null;
 
             return true;
@@ -58,7 +70,7 @@ public sealed class StorageGroup
             return (AddStorageResult.WriteError, 0);
         }
 
-        var relative = Path.GetRelativePath(this.crystalizer.Options.RootPath, path);
+        var relative = Path.GetRelativePath(this.Crystalizer.Options.RootPath, path);
         if (!relative.StartsWith("..\\"))
         {
             path = relative;
@@ -87,7 +99,6 @@ public sealed class StorageGroup
 
             if (storageAndFiler.PrepareAndCheck(this, true).Result != CrystalResult.Success)
             {
-                storageAndFiler.Terminate().Wait();
                 return (AddStorageResult.DuplicatePath, 0);
             }
 
@@ -128,7 +139,6 @@ public sealed class StorageGroup
 
             if (storageAndFiler.PrepareAndCheck(this, true).Result != CrystalResult.Success)
             {
-                storageAndFiler.Terminate().Wait();
                 return (AddStorageResult.DuplicatePath, 0);
             }
 
@@ -155,10 +165,6 @@ public sealed class StorageGroup
 
         await Task.WhenAll(list).ConfigureAwait(false);
     }
-
-    public IStorageKey StorageKey { get; }
-
-    public bool Started { get; private set; }
 
     public void Save(ref ushort storageId, ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared, ushort datumId)
     {
@@ -304,11 +310,6 @@ public sealed class StorageGroup
             }
         }
 
-        foreach (var x in goshujin)
-        {
-            x.Start();
-        }
-
         if (goshujin.StorageIdChain.Count == 0)
         {
             return CrystalStartResult.NoDirectoryAvailable;
@@ -319,7 +320,6 @@ public sealed class StorageGroup
             this.storageAndFilers.Clear();
             this.storageAndFilers = goshujin;
             this.currentStorageAndFiler = null;
-            this.Started = true;
         }
 
         return CrystalStartResult.Success;
@@ -330,32 +330,10 @@ public sealed class StorageGroup
         Task[] tasks;
         lock (this.syncObject)
         {
-            if (!this.Started)
-            {
-                return;
-            }
-
             tasks = this.storageAndFilers.Select(x => x.Save()).ToArray();
         }
 
         await Task.WhenAll(tasks).ConfigureAwait(false);
-    }
-
-    internal async Task Terminate()
-    {// Save storage
-        Task[] tasks;
-        lock (this.syncObject)
-        {
-            if (!this.Started)
-            {
-                return;
-            }
-
-            tasks = this.storageAndFilers.Select(x => x.Terminate()).ToArray();
-        }
-
-        await Task.WhenAll(tasks).ConfigureAwait(false);
-        this.Started = false;
     }
 
     internal async Task Save(string path, string? backupPath)
@@ -410,11 +388,4 @@ public sealed class StorageGroup
 
         return array.MinBy(a => a.GetUsageRatio());
     }
-
-    private Crystalizer crystalizer;
-
-    private object syncObject = new();
-    private StorageAndFiler.GoshujinClass storageAndFilers = new();  // lock(syncObject)
-    private StorageAndFiler? currentStorageAndFiler; // lock(syncObject)
-    private int storageRotationCount; // lock(syncObject)
 }

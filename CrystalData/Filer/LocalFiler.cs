@@ -6,8 +6,7 @@ using CrystalData.Results;
 
 namespace CrystalData.Filer;
 
-[TinyhandObject(ExplicitKeyOnly = true)]
-public partial class LocalFiler : TaskWorker<FilerWork>, IRawFiler
+public class LocalFiler : TaskWorker<FilerWork>, IRawFiler
 {
     public const int DefaultConcurrentTasks = 4;
 
