@@ -4,10 +4,13 @@ namespace CrystalData;
 
 public record BigCrystalConfiguration
 {
-    public BigCrystalConfiguration(Action<DatumRegistry> registerDatum)
+    public BigCrystalConfiguration(Action<DatumRegistry> registerDatum, BigCrystalOptions bigCrystalOptions)
     {
         this.RegisterDatum = registerDatum;
+        this.BigCrystalOptions = bigCrystalOptions;
     }
 
     internal Action<DatumRegistry> RegisterDatum { get; }
+
+    public BigCrystalOptions BigCrystalOptions { get; init; }
 }

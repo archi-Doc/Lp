@@ -25,6 +25,8 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>
 
     public BigCrystalConfiguration BigCrystalConfiguration { get; }
 
+    public BigCrystalOptions BigCrystalOptions => this.BigCrystalConfiguration.BigCrystalOptions;
+
     public DatumRegistry DatumRegistry { get; } = new();
 
     public StorageGroup StorageGroup => this.storageGroup;
@@ -36,8 +38,6 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>
     private StorageGroup storageGroup;
 
     private HimoGoshujinClass himoGoshujin;
-
-    public bool Started { get; private set; }
 
     private ILogger logger;
 
@@ -86,9 +86,6 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>
                 return result;
             }
 
-            // HimoGoshujin
-            this.himoGoshujin.Start();
-
             this.Started = true;
             return result;
         }
@@ -98,16 +95,6 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>
     {
         using (this.semaphore.Lock())
         {
-            if (!this.Started)
-            {
-                return;
-            }
-
-            this.Started = false;
-
-            // HimoGoshujin
-            this.himoGoshujin.Stop();
-
             if (param.RemoveAll)
             {
                 await this.DeleteAllAsync();
@@ -127,10 +114,10 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>
             await this.StorageGroup.Terminate().ConfigureAwait(false);
 
             // Save data
-            await this.Save(this.Options.CrystalFilePath, this.Options.CrystalBackupPath).ConfigureAwait(false);
+            await this.Save(this.BigCrystalOptions.CrystalFilePath, this.BigCrystalOptions.CrystalBackupPath).ConfigureAwait(false);
 
             // Save storage
-            await this.StorageGroup.Save(this.Options.StorageFilePath, this.Options.StorageBackupPath).ConfigureAwait(false);
+            await this.StorageGroup.Save(this.BigCrystalOptions.StorageFilePath, this.BigCrystalOptions.StorageBackupPath).ConfigureAwait(false);
 
             this.StorageGroup.Clear();
 
@@ -142,16 +129,6 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>
     {
         using (this.semaphore.Lock())
         {
-            if (!this.Started)
-            {
-                return;
-            }
-
-            this.Started = false;
-
-            // HimoGoshujin
-            this.himoGoshujin.Stop();
-
             await this.StorageGroup.Save().ConfigureAwait(false);
             await this.StorageGroup.Terminate().ConfigureAwait(false);
             this.StorageGroup.Clear();
@@ -163,15 +140,15 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>
         this.obj.Delete();
         this.himoGoshujin.Clear();
 
-        PathHelper.TryDeleteFile(this.Options.CrystalFilePath);
-        PathHelper.TryDeleteFile(this.Options.CrystalBackupPath);
-        PathHelper.TryDeleteFile(this.Options.StorageFilePath);
-        PathHelper.TryDeleteFile(this.Options.StorageBackupPath);
+        PathHelper.TryDeleteFile(this.BigCrystalOptions.CrystalFilePath);
+        PathHelper.TryDeleteFile(this.BigCrystalOptions.CrystalBackupPath);
+        PathHelper.TryDeleteFile(this.BigCrystalOptions.StorageFilePath);
+        PathHelper.TryDeleteFile(this.BigCrystalOptions.StorageBackupPath);
         await this.StorageGroup.DeleteAllAsync();
 
         try
         {
-            Directory.Delete(this.Options.RootPath);
+            Directory.Delete(this.BigCrystalOptions.RootPath);
         }
         catch
         {
@@ -193,7 +170,7 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>
         byte[]? data;
         try
         {
-            data = await File.ReadAllBytesAsync(this.Options.StorageFilePath).ConfigureAwait(false);
+            data = await File.ReadAllBytesAsync(this.BigCrystalOptions.StorageFilePath).ConfigureAwait(false);
         }
         catch
         {
@@ -217,7 +194,7 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>
 LoadBackup:
         try
         {
-            data = await File.ReadAllBytesAsync(this.Options.StorageBackupPath).ConfigureAwait(false);
+            data = await File.ReadAllBytesAsync(this.BigCrystalOptions.StorageBackupPath).ConfigureAwait(false);
         }
         catch
         {
@@ -271,7 +248,7 @@ LoadBackup:
         byte[]? data;
         try
         {
-            data = await File.ReadAllBytesAsync(this.Options.CrystalFilePath).ConfigureAwait(false);
+            data = await File.ReadAllBytesAsync(this.BigCrystalOptions.CrystalFilePath).ConfigureAwait(false);
         }
         catch
         {
@@ -292,7 +269,7 @@ LoadBackup:
 LoadBackup:
         try
         {
-            data = await File.ReadAllBytesAsync(this.Options.CrystalBackupPath).ConfigureAwait(false);
+            data = await File.ReadAllBytesAsync(this.BigCrystalOptions.CrystalBackupPath).ConfigureAwait(false);
         }
         catch
         {

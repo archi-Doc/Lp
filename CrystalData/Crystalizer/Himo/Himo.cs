@@ -43,7 +43,7 @@ public partial class HimoGoshujinClass
 
                 this.himoGoshujin.memoryUsage += newSize - this.currentSize;
                 this.currentSize = newSize;
-                if (this.himoGoshujin.memoryUsage > this.dataInternal.Options.MemorySizeLimit)
+                if (this.himoGoshujin.memoryUsage > this.dataInternal.BigCrystal.BigCrystalOptions.MemorySizeLimit)
                 {
                     unloadFlag = true;
                 }
@@ -117,7 +117,7 @@ public partial class HimoGoshujinClass
         lock (this.syncParentData)
         {
             node = this.parentDataList.AddLast(data);
-            if (this.parentDataList.Count > this.bigCrystal.Options.MaxParentInMemory)
+            if (this.parentDataList.Count > this.bigCrystal.BigCrystalOptions.MaxParentInMemory)
             {
                 unloadFlag = true;
             }
@@ -145,20 +145,6 @@ public partial class HimoGoshujinClass
         this.UnloadParent();
     }
 
-    internal void Start()
-    {
-        // this.taskCore ??= new(ThreadCore.Root, this);
-    }
-
-    internal void Stop()
-    {
-        /*if (this.taskCore is { } taskCore)
-        {
-            this.taskCore = null;
-            taskCore.Terminate();
-        }*/
-    }
-
     internal void Clear()
     {
         lock (this.syncObject)
@@ -172,7 +158,7 @@ public partial class HimoGoshujinClass
 
     private void UnloadData()
     {
-        var limit = Math.Max(MemoryMargin, this.bigCrystal.Options.MemorySizeLimit - MemoryMargin);
+        var limit = Math.Max(MemoryMargin, this.bigCrystal.BigCrystalOptions.MemorySizeLimit - MemoryMargin);
         if (Volatile.Read(ref this.memoryUsage) <= limit)
         {
             return;
@@ -203,7 +189,7 @@ public partial class HimoGoshujinClass
 
     private void UnloadParent()
     {
-        if (this.parentDataList.Count <= this.bigCrystal.Options.MaxParentInMemory)
+        if (this.parentDataList.Count <= this.bigCrystal.BigCrystalOptions.MaxParentInMemory)
         {
             return;
         }
@@ -237,7 +223,7 @@ public partial class HimoGoshujinClass
                 }
             }
         }
-        while (this.parentDataList.Count > this.bigCrystal.Options.MaxParentInMemory);
+        while (this.parentDataList.Count > this.bigCrystal.BigCrystalOptions.MaxParentInMemory);
     }
 
     private IBigCrystal bigCrystal;

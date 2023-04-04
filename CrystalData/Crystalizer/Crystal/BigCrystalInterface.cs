@@ -6,6 +6,8 @@ public interface IBigCrystal : ICrystal
 {
     BigCrystalConfiguration BigCrystalConfiguration { get; }
 
+    BigCrystalOptions BigCrystalOptions { get; };
+
     DatumRegistry DatumRegistry { get; }
 
     StorageGroup StorageGroup { get; }

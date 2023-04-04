@@ -2,9 +2,9 @@
 
 namespace CrystalData;
 
-internal class HimoTaskCore : TaskCore
+internal class HimoTaskCoreObsolete : TaskCore
 {
-    public HimoTaskCore(ThreadCoreBase parent, HimoGoshujinClass himoGoshujin)
+    public HimoTaskCoreObsolete(ThreadCoreBase parent, HimoGoshujinClass himoGoshujin)
         : base(parent, Method, true)
     {
         this.himoGoshujin = himoGoshujin;
@@ -12,7 +12,7 @@ internal class HimoTaskCore : TaskCore
 
     private static async Task Method(object? taskCore)
     {
-        var core = (HimoTaskCore)taskCore!;
+        var core = (HimoTaskCoreObsolete)taskCore!;
         while (!core.IsTerminated)
         {
             core.himoGoshujin.Unload();
