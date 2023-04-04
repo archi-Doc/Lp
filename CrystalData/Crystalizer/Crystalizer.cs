@@ -62,7 +62,7 @@ public class Crystalizer
     private ThreadsafeTypeKeyHashTable<IBigCrystal> typeToBigCrystal = new();
     // private ConcurrentDictionary<IBigCrystal, int> bigCrystals = new();
 
-    private object syncFiler = new();
+    private object syncObject = new();
     private LocalFiler? localFiler;
     private Dictionary<string, S3Filer> bucketToS3Filer = new();
 
@@ -75,7 +75,7 @@ public class Crystalizer
 
     public IRawFiler ResolveRawFiler(FilerConfiguration configuration)
     {
-        lock (this.syncFiler)
+        lock (this.syncObject)
         {
             if (configuration is EmptyFilerConfiguration emptyFilerConfiguration)
             {// Empty filer
@@ -110,13 +110,21 @@ public class Crystalizer
 
     public IStorage ResolveStorage(StorageConfiguration configuration)
     {
-        lock (this.syncFiler)
+        lock (this.syncObject)
         {
-            if (configuration is EmptyStorageConfiguration emptyStorageonfiguration)
-            {// Empty filer
+            if (configuration is EmptyStorageConfiguration emptyStorageConfiguration)
+            {// Empty storage
+                return EmptyStorage.Default;
             }
-
-            return EmptyStorage.Default;
+            else if (configuration is SimpleStorageConfiguration simpleStorageConfiguration)
+            {
+                return new SimpleStorage();
+            }
+            else
+            {
+                ThrowConfigurationNotRegistered(configuration.GetType());
+                return default!;
+            }
         }
     }
 

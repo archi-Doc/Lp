@@ -12,5 +12,5 @@ public partial record S3FilerConfiguration : FilerConfiguration
     }
 
     [Key(1)]
-    public string Bucket { get; init; }
+    public string Bucket { get; private set; }
 }

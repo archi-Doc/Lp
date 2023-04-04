@@ -16,5 +16,5 @@ public abstract partial record FilerConfiguration
     // public string Directory { get; init; }
 
     [Key(0)]
-    public string File { get; init; }
+    public string File { get; private set; }
 }

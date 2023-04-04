@@ -48,8 +48,6 @@ public record BigCrystalOptions
 
     public string StorageBackup { get; init; } = "Storage.back";
 
-    public bool EnableLogger { get; init; } = true; // tempcode
-
     public string RootPath => this.rootPath ??= PathHelper.GetRootedDirectory(Directory.GetCurrentDirectory(), this.CrystalDirectory);
 
     public string CrystalFilePath => PathHelper.GetRootedFile(this.RootPath, this.CrystalFile);

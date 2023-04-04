@@ -18,6 +18,8 @@ public record CrystalOptions
         this.RootPath = rootPath;
     }
 
+    public bool EnableLogger { get; init; } = true; // tempcode
+
     public string RootPath { get; }
 
     public Dictionary<Type, CrystalConfiguration> CrystalConfigurations { get; }

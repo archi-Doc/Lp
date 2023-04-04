@@ -34,7 +34,13 @@ public class Program
             .ConfigureCrystal(context =>
             {
                 context.AddCrystal<ManualClass>(new(Crystalization.Manual, new LocalFilerConfiguration("manual.data")));
-                context.AddCrystal<CombinedClass>(new(Crystalization.Periodic, new LocalFilerConfiguration("combined.data")));
+
+                context.AddCrystal<CombinedClass>(
+                    new(
+                        Crystalization.Periodic,
+                        new LocalFilerConfiguration("combined.data"),
+                        new SimpleStorageConfiguration(new LocalFilerConfiguration("simple"))));
+
                 context.AddBigCrystal<BaseData>(
                     new(datumRegistry =>
                     {
