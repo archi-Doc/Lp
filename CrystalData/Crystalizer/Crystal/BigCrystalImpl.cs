@@ -4,7 +4,7 @@ using CrystalData.Datum;
 
 namespace CrystalData;
 
-public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>
+public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICrystal
     where TData : BaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
     public BigCrystalImpl(Crystalizer crystalizer)
@@ -43,8 +43,14 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>
 
     #endregion
 
+    async Task<CrystalStartResult> ICrystal.PrepareAndLoad(CrystalStartParam? param)
+    {
+        return CrystalStartResult.Success;
+    }
+
     public async Task<CrystalStartResult> StartAsync(CrystalStartParam param)
     {
+        ((ICrystal)this).PrepareAndLoad(null);
         using (this.semaphore.Lock())
         {
             var result = CrystalStartResult.Success;

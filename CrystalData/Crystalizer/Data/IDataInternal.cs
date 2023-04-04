@@ -12,6 +12,8 @@ public interface IDataInternal
 
     CrystalOptions Options { get; }
 
+    BigCrystalOptions BigCrystalOptions => this.BigCrystal.BigCrystalOptions;
+
     void DatumToStorage<TDatum>(ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
         where TDatum : IDatum;
 

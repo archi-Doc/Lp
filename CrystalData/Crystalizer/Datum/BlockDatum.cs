@@ -26,7 +26,7 @@ public class BlockDatumImpl : HimoGoshujinClass.Himo, BlockDatum, IBaseDatum
 
     CrystalResult BlockDatum.Set(ReadOnlySpan<byte> data)
     {
-        if (data.Length > this.dataInternal.Options.MaxDataSize)
+        if (data.Length > this.dataInternal.BigCrystal.BigCrystalOptions.MaxDataSize)
         {
             return CrystalResult.OverSizeLimit;
         }

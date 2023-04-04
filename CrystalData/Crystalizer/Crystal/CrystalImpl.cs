@@ -171,6 +171,10 @@ public class CrystalImpl<TData> : ICrystal<TData>
         }
     }
 
+    void ICrystal.Terminate()
+    {
+    }
+
     #endregion
 
     private async Task<CrystalStartResult> PrepareAndLoadInternal(CrystalStartParam? param)

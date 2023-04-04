@@ -25,6 +25,8 @@ public interface ICrystal
     Task<CrystalResult> Save();
 
     void Delete();
+
+    void Terminate();
 }
 
 public interface ICrystal<TData> : ICrystal

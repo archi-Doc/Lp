@@ -39,7 +39,7 @@ public class Program
                     new(datumRegistry =>
                     {
                         datumRegistry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
-                    }),
+                    }, BigCrystalOptions.Default),
                     new(Crystalization.Manual, new LocalFilerConfiguration("crystal.data")));
             });
 
