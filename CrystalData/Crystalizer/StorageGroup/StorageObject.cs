@@ -6,10 +6,17 @@ namespace CrystalData;
 
 [TinyhandObject]
 [ValueLinkObject]
-internal partial class StorageAndFiler
+internal partial class StorageObject
 {
-    public StorageAndFiler()
+    public StorageObject()
     {
+    }
+
+    public StorageObject(ushort storageId, StorageConfiguration storageConfiguration)
+    {
+        this.StorageId = storageId;
+        this.StorageConfiguration = storageConfiguration;
+        this.MemoryStat = new();
     }
 
     public override string ToString()
@@ -29,6 +36,9 @@ internal partial class StorageAndFiler
 
     [Key(2)]
     public MemoryStat MemoryStat { get; private set; } = default!;
+
+    [Key(3)]
+    public long StorageCapacity { get; set; } = StorageGroup.DefaultStorageCapacity;
 
     #endregion
 
@@ -56,5 +66,30 @@ internal partial class StorageAndFiler
         {
             await this.Storage.Save();
         }
+    }
+
+    internal double GetUsageRatio()
+    {
+        if (this.Storage is not { } storage)
+        {
+            return 0d;
+        }
+
+        if (this.StorageCapacity == 0)
+        {
+            return 0d;
+        }
+
+        var ratio = (double)storage.StorageUsage / this.StorageCapacity;
+        if (ratio < 0)
+        {
+            ratio = 0;
+        }
+        else if (ratio > 1)
+        {
+            ratio = 1;
+        }
+
+        return ratio;
     }
 }

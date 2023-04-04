@@ -8,8 +8,6 @@ public partial class EmptyStorage : IStorage
 {
     public static readonly EmptyStorage Default = new();
 
-    long IStorage.StorageCapacity { get; set; }
-
     long IStorage.StorageUsage => 0;
 
     CrystalResult IStorage.Delete(ref ulong fileId)

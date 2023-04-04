@@ -7,6 +7,11 @@ namespace CrystalData;
 [TinyhandUnion(2, typeof(S3FilerConfiguration))]
 public abstract partial record FilerConfiguration
 {
+    public FilerConfiguration()
+        : this(string.Empty)
+    {
+    }
+
     public FilerConfiguration(string file)
     {
         // this.Directory = directory;

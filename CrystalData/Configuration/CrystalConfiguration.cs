@@ -20,6 +20,7 @@ public record CrystalConfiguration
     {
         this.Crystalization = Crystalization.None;
         this.FilerConfiguration = EmptyFilerConfiguration.Default;
+        this.StorageConfiguration = EmptyStorageConfiguration.Default;
     }
 
     public CrystalConfiguration(Crystalization crystalization, FilerConfiguration filerConfiguration, StorageConfiguration? storageConfiguration = null)

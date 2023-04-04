@@ -19,11 +19,9 @@ internal partial class SimpleStorage : IStorage
     }
 
     public override string ToString()
-        => $"SimpleStorage {StorageHelper.ByteToString(this.StorageUsage)}/{StorageHelper.ByteToString(this.StorageCapacity)}";
+        => $"SimpleStorage {StorageHelper.ByteToString(this.StorageUsage)}";
 
     #region FieldAndProperty
-
-    public long StorageCapacity { get; set; }
 
     public long StorageUsage { get; private set; } // lock (this.syncObject)
 

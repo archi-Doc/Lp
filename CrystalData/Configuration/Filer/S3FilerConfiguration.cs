@@ -5,6 +5,11 @@ namespace CrystalData;
 [TinyhandObject]
 public partial record S3FilerConfiguration : FilerConfiguration
 {
+    public S3FilerConfiguration()
+        : this(string.Empty, string.Empty)
+    {
+    }
+
     public S3FilerConfiguration(string bucket, string file)
         : base(file)
     {

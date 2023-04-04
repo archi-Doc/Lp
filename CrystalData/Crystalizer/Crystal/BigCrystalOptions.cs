@@ -5,7 +5,6 @@ namespace CrystalData;
 public record BigCrystalOptions
 {
     public const string DefaultCrystalDirectory = "Crystal";
-    public const long DefaultDirectoryCapacity = 1024L * 1024 * 1024 * 10; // 10GB
     public const int DefaultMaxDataSize = 1024 * 1024 * 4; // 4MB
     public const int DefaultMaxFragmentSize = 1024 * 4; // 4KB
     public const int DefaultMaxFragmentCount = 1000;
