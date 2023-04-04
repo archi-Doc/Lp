@@ -70,9 +70,9 @@ public partial class BaseData : IDataInternal
 
     #region IDataInternal
 
-    IBigCrystal IDataInternal.CrystalInternal => this.Crystal;
+    IBigCrystal IDataInternal.BigCrystal => this.Crystal;
 
-    DatumRegistry IDataInternal.Data => this.Crystal.DatumRegistry;
+    DatumRegistry IDataInternal.DatumRegistry => this.Crystal.DatumRegistry;
 
     CrystalOptions IDataInternal.Options => this.Crystal.Options;
 

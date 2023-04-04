@@ -16,6 +16,6 @@ public interface IBigCrystal : ICrystal
 }
 
 public interface IBigCrystal<TData> : IBigCrystal, ICrystal<TData>
-    where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+    where TData : BaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
 }

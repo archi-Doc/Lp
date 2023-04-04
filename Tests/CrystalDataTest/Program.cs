@@ -36,7 +36,6 @@ public class Program
             });
 
         var unit = builder.Build();
-        var param = new CrystalControl.Unit.Param();
 
         var parserOptions = SimpleParserOptions.Standard with
         {

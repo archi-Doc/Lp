@@ -6,9 +6,9 @@ namespace CrystalData;
 
 public interface IDataInternal
 {
-    IBigCrystal CrystalInternal { get; }
+    IBigCrystal BigCrystal { get; }
 
-    DatumRegistry Data { get; }
+    DatumRegistry DatumRegistry { get; }
 
     CrystalOptions Options { get; }
 

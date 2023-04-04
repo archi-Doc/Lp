@@ -35,7 +35,7 @@ public class Program
             {
                 context.AddCrystal<ManualClass>(new(Crystalization.Manual, new LocalFilerConfiguration("manual.data")));
                 context.AddCrystal<CombinedClass>(new(Crystalization.Periodic, new LocalFilerConfiguration("combined.data")));
-                context.AddBigCrystal<CrystalClass>(
+                context.AddBigCrystal<BaseData>(
                     new(datumRegistry =>
                     {
                         datumRegistry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));

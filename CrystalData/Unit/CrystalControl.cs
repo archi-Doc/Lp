@@ -55,8 +55,6 @@ public class CrystalControl
 
     public class Unit : BuiltUnit
     {// Unit class for customizing behaviors.
-        public record Param();
-
         public Unit(UnitContext context)
             : base(context)
         {
