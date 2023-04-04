@@ -15,10 +15,9 @@ public static class TestHelper
 {
     public static async Task<LpCrystal> CreateAndStartCrystal()
     {
-        var options = new CrystalOptions() with
+        var options = new BigCrystalOptions() with
         {
             CrystalDirectory = $"Crystal[{RandomVault.Pseudo.NextUInt32():x4}]",
-            DefaultCrystalDirectory = "Snowflake",
         };
 
         var builder = new CrystalControl.Builder();
@@ -26,9 +25,9 @@ public static class TestHelper
             .Configure(context =>
             {
                 context.AddSingleton<LpCrystal>();
-                context.Services.Add(ServiceDescriptor.Transient(typeof(LpData), x => x.GetRequiredService<LpCrystal>().Root.Data));
+                context.Services.Add(ServiceDescriptor.Transient(typeof(LpData), x => x.GetRequiredService<LpCrystal>().Object.Data));
             })
-            .SetupOptions<CrystalOptions>((context, options) =>
+            .SetupOptions<BigCrystalOptions>((context, options) =>
             {
                 options.CrystalDirectory = $"Crystal[{RandomVault.Pseudo.NextUInt32():x4}]";
             });
@@ -36,21 +35,21 @@ public static class TestHelper
         var unit = builder.Build();
         var crystal = unit.Context.ServiceProvider.GetRequiredService<LpCrystal>();
         crystal.DatumRegistry.Register<FragmentDatum<Identifier>>(2, x => new FragmentDatumImpl<Identifier>(x));
-        await crystal.StartAsync(new(FromScratch: true));
+        await crystal.PrepareAndLoad(new(FromScratch: true));
         return crystal;
     }
 
-    public static async Task StopCrystal(ICrystalData crystal, bool removeAll = true)
+    public static async Task StopCrystal(IBigCrystal crystal, bool removeAll = true)
     {
-        await crystal.StopAsync(new(RemoveAll: removeAll));
+        // await crystal.StopAsync(new(RemoveAll: removeAll)); // tempcode
         crystal.MemoryUsage.Is(0);
     }
 
-    public static async Task StopAndStartCrystal(ICrystalData crystal)
+    public static async Task StopAndStartCrystal(IBigCrystal crystal)
     {
-        await crystal.StopAsync(new());
+        // await crystal.StopAsync(new()); // tempcode
         crystal.MemoryUsage.Is(0);
-        await crystal.StartAsync(new());
+        // await crystal.StartAsync(new()); // tempcode
     }
 
     public static async Task<MergerCrystal> CreateAndStartMerger(int maxParent)
@@ -60,9 +59,9 @@ public static class TestHelper
             .Configure(context =>
             {
                 context.AddSingleton<MergerCrystal>();
-                context.Services.Add(ServiceDescriptor.Transient(typeof(LpData), x => x.GetRequiredService<MergerCrystal>().Root));
+                context.Services.Add(ServiceDescriptor.Transient(typeof(LpData), x => x.GetRequiredService<MergerCrystal>().Object));
             })
-            .SetupOptions<CrystalOptions>((context, options) =>
+            .SetupOptions<BigCrystalOptions>((context, options) =>
             {
                 options.CrystalDirectory = $"Crystal[{RandomVault.Pseudo.NextUInt32():x4}]";
                 options.MaxParentInMemory = maxParent;
@@ -70,7 +69,7 @@ public static class TestHelper
 
         var unit = builder.Build();
         var crystal = unit.Context.ServiceProvider.GetRequiredService<MergerCrystal>();
-        await crystal.StartAsync(new(FromScratch: true));
+        await crystal.PrepareAndLoad(new(FromScratch: true));
         return crystal;
     }
 

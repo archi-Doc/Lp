@@ -2,8 +2,14 @@
 
 namespace CrystalData;
 
-public record LocalFilerConfiguration : FilerConfiguration
+[TinyhandObject]
+public partial record LocalFilerConfiguration : FilerConfiguration
 {
+    public LocalFilerConfiguration()
+    : this(string.Empty)
+    {
+    }
+
     public LocalFilerConfiguration(string file)
         : base(file)
     {

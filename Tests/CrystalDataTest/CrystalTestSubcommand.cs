@@ -10,10 +10,10 @@ namespace CrystalDataTest;
 [SimpleCommand("crystaltest")]
 public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
 {
-    public CrystalTestSubcommand(CrystalControl crystalControl)
+    public CrystalTestSubcommand(CrystalControl crystalControl, IBigCrystal<LpData> crystal)
     {
         this.CrystalControl = crystalControl;
-        this.crystal = this.CrystalControl.CreateCrystal<LpData>(CrystalOptions.Default);
+        this.crystal = crystal;
     }
 
     public async Task RunAsync(CrystalTestOptions options, string[] args)
@@ -21,10 +21,10 @@ public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
         var mono = new Mono();
 
         var sw = Stopwatch.StartNew();
-        await this.crystal.StartAsync(new());
+        // await this.crystal.StartAsync(new()); // tempcode
         Console.WriteLine($"Start: {sw.ElapsedMilliseconds} ms");
 
-        var data = this.crystal.Root.GetOrCreateChild(Identifier.Zero);
+        var data = this.crystal.Object.GetOrCreateChild(Identifier.Zero);
         if (data != null)
         {
             data.BlockDatum().Set(new byte[] { 0, 1, });
@@ -41,7 +41,7 @@ public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
             }
         }
 
-        data = this.crystal.Root.GetOrCreateChild(Identifier.One);
+        data = this.crystal.Object.GetOrCreateChild(Identifier.One);
         if (data != null)
         {
             data.BlockDatum().SetObject(new TestFragment());
@@ -65,10 +65,10 @@ public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
             var tc = await data.FragmentDatum().GetObject<TestFragment>(Identifier.One);
         }
 
-        var byteArray = new byte[CrystalOptions.DefaultMaxDataSize];
+        var byteArray = new byte[BigCrystalOptions.DefaultMaxDataSize];
         for (var i = 0; i < 10; i++)
         {
-            data = this.crystal.Root.GetOrCreateChild(new(i));
+            data = this.crystal.Object.GetOrCreateChild(new(i));
             if (data != null)
             {
                 var dt = await data.BlockDatum().Get();
@@ -81,19 +81,19 @@ public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
 
         for (var i = 0; i < 1_000_000; i++)
         {
-            data = this.crystal.Root.GetOrCreateChild(new(i));
+            data = this.crystal.Object.GetOrCreateChild(new(i));
             // flake.SetData(new byte[] { 2, 3, });
         }
 
         // await Task.Delay(10000);
 
-        await this.crystal.StopAsync(new());
+        // await this.crystal.StopAsync(new()); // tempcode
         Console.WriteLine($"{sw.ElapsedMilliseconds} ms");
     }
 
     public CrystalControl CrystalControl { get; set; }
 
-    private Crystal<LpData> crystal;
+    private IBigCrystal<LpData> crystal;
 }
 
 public record CrystalTestOptions

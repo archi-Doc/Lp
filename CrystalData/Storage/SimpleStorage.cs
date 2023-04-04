@@ -8,7 +8,6 @@ using CrystalData.Filer;
 
 namespace CrystalData.Storage;
 
-[TinyhandObject]
 internal partial class SimpleStorage : IStorage
 {
     private const string SimpleStorageMain = "Simple.main";
@@ -20,17 +19,15 @@ internal partial class SimpleStorage : IStorage
     }
 
     public override string ToString()
-        => $"SimpleStorage {StorageHelper.ByteToString(this.StorageUsage)}/{StorageHelper.ByteToString(this.StorageCapacity)}";
+        => $"SimpleStorage {StorageHelper.ByteToString(this.StorageUsage)}";
 
     #region FieldAndProperty
 
-    [Key(0)]
-    public long StorageCapacity { get; set; }
-
-    [Key(1)]
     public long StorageUsage { get; private set; } // lock (this.syncObject)
 
+    private string directoryPath = string.Empty;
     private IRawFiler? filer;
+
     private object syncObject = new();
     private Dictionary<uint, int> fileToSize = new();
 
@@ -38,11 +35,21 @@ internal partial class SimpleStorage : IStorage
 
     #region IStorage
 
-    async Task<CrystalResult> IStorage.PrepareAndCheck(IRawFiler filer, bool newStorage)
+    async Task<CrystalResult> IStorage.PrepareAndCheck(Crystalizer crystalizer, StorageConfiguration storageConfiguration, bool createNew)
     {
-        this.filer = filer;
+        if (!string.IsNullOrEmpty(storageConfiguration.FilerConfiguration.File))
+        {
+            this.directoryPath = storageConfiguration.FilerConfiguration.File;
+        }
 
-        if (newStorage)
+        if (string.IsNullOrEmpty(this.directoryPath))
+        {
+            this.directoryPath = crystalizer.Configuration.RootPath;
+        }
+
+        this.filer = crystalizer.ResolveRawFiler(storageConfiguration.FilerConfiguration);
+
+        if (createNew)
         {
             return CrystalResult.Success;
         }

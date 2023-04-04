@@ -4,12 +4,9 @@ using CrystalData.Filer;
 
 namespace CrystalData.Storage;
 
-[TinyhandObject]
 public partial class EmptyStorage : IStorage
 {
     public static readonly EmptyStorage Default = new();
-
-    long IStorage.StorageCapacity { get; set; }
 
     long IStorage.StorageUsage => 0;
 
@@ -22,7 +19,7 @@ public partial class EmptyStorage : IStorage
     Task<CrystalMemoryOwnerResult> IStorage.GetAsync(ref ulong fileId, TimeSpan timeToWait)
         => Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.Success));
 
-    Task<CrystalResult> IStorage.PrepareAndCheck(IRawFiler filer, bool newStorage)
+    Task<CrystalResult> IStorage.PrepareAndCheck(Crystalizer crystalizer, StorageConfiguration storageConfiguration, bool createNew)
         => Task.FromResult(CrystalResult.Success);
 
     CrystalResult IStorage.Put(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)

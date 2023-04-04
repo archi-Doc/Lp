@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 
 namespace CrystalData;
 
-internal class CrystalImpl<TData> : ICrystal<TData>
+public class CrystalImpl<TData> : ICrystal<TData>
     where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
     internal CrystalImpl(Crystalizer crystalizer)
@@ -30,7 +30,7 @@ internal class CrystalImpl<TData> : ICrystal<TData>
 
     public Crystalizer Crystalizer { get; }
 
-    public CrystalOptions Options => this.Crystalizer.Options;
+    public CrystalizerConfiguration CrystalOptions => this.Crystalizer.Configuration;
 
     public CrystalConfiguration CrystalConfiguration { get; private set; }
 
@@ -169,6 +169,10 @@ internal class CrystalImpl<TData> : ICrystal<TData>
             TinyhandSerializer.ReconstructObject<TData>(ref this.obj);
             this.filer = null;
         }
+    }
+
+    void ICrystal.Terminate()
+    {
     }
 
     #endregion

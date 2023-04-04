@@ -6,11 +6,13 @@ namespace CrystalData;
 
 public interface IDataInternal
 {
-    IBigCrystal CrystalInternal { get; }
+    IBigCrystal BigCrystal { get; }
 
-    DatumRegistry Data { get; }
+    DatumRegistry DatumRegistry => this.BigCrystal.DatumRegistry;
 
-    CrystalOptions Options { get; }
+    CrystalizerConfiguration CrystalOptions => this.BigCrystal.CrystalOptions;
+
+    BigCrystalOptions BigCrystalOptions => this.BigCrystal.BigCrystalOptions;
 
     void DatumToStorage<TDatum>(ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
         where TDatum : IDatum;

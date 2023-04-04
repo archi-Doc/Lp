@@ -2,8 +2,16 @@
 
 namespace CrystalData;
 
-public abstract record FilerConfiguration
+[TinyhandUnion(0, typeof(EmptyFilerConfiguration))]
+[TinyhandUnion(1, typeof(LocalFilerConfiguration))]
+[TinyhandUnion(2, typeof(S3FilerConfiguration))]
+public abstract partial record FilerConfiguration
 {
+    public FilerConfiguration()
+        : this(string.Empty)
+    {
+    }
+
     public FilerConfiguration(string file)
     {
         // this.Directory = directory;
@@ -12,5 +20,6 @@ public abstract record FilerConfiguration
 
     // public string Directory { get; init; }
 
-    public string File { get; init; }
+    [Key(0)]
+    public string File { get; private set; }
 }

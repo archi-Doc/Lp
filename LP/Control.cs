@@ -57,7 +57,7 @@ public class Control : ILogInformation
                 context.AddSingleton<Mono>();
                 context.AddSingleton<LpCrystal>();
                 context.AddSingleton<MergerCrystal>();
-                context.Services.TryAddSingleton<ICrystalData>(x => x.GetRequiredService<Control>().Crystal);
+                context.Services.TryAddSingleton<IBigCrystal>(x => x.GetRequiredService<Control>().Crystal);
                 // context.Services.TryAddSingleton<LpData>(x => x.GetRequiredService<Control>().LpRoot);
                 // context.Services.TryAddSingleton<MergerData>(x => x.GetRequiredService<Control>().MergerRoot);
 
@@ -173,10 +173,11 @@ public class Control : ILogInformation
                 netBase.AllowUnsafeConnection = true; // betacode
             });
 
-            this.SetupOptions<CrystalOptions>((context, crystalOptions) =>
+            this.SetupOptions<CrystalizerConfiguration>((context, configuration) =>
             {// CrystalOptions
                 context.GetOptions<LPOptions>(out var lpOptions);
-                crystalOptions.CrystalDirectory = lpOptions.RootDirectory;
+                var newConfiguration = configuration with { EnableLogger = true, RootPath = lpOptions.RootDirectory }; // betacode
+                // context.SetOptions(newConfiguration);
             });
 
             this.AddBuilder(new NetControl.Builder());
@@ -336,14 +337,14 @@ public class Control : ILogInformation
             var mergerCrystal = context.ServiceProvider.GetRequiredService<MergerCrystal>();
             this.Crystal = mergerCrystal;
             this.LpRoot = default!;
-            this.MergerRoot = mergerCrystal.Root;
+            this.MergerRoot = mergerCrystal.Object;
             this.MergerProvider.Create(context);
         }
         else
         {
             var lpCrystal = context.ServiceProvider.GetRequiredService<LpCrystal>();
             this.Crystal = lpCrystal;
-            this.LpRoot = lpCrystal.Root.Data;
+            this.LpRoot = lpCrystal.Object.Data;
             this.MergerRoot = default!;
         }
 
@@ -373,7 +374,7 @@ public class Control : ILogInformation
             await this.Mono.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Mono.DefaultMonoBackup)).ConfigureAwait(false);
         }
 
-        var result = await this.Crystal.StartAsync(new());
+        var result = await this.Crystal.PrepareAndLoad(new());
         if (result != CrystalStartResult.Success)
         {
             throw new PanicException();
@@ -384,7 +385,7 @@ public class Control : ILogInformation
 
     public async Task AbortAsync()
     {
-        await this.Crystal.Abort();
+        // await this.Crystal.Abort(); // tempcode
     }
 
     public async Task SaveAsync(UnitContext context)
@@ -396,7 +397,8 @@ public class Control : ILogInformation
         await this.NetControl.EssentialNode.SaveAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
         await this.Mono.SaveAsync(Path.Combine(this.LPBase.DataDirectory, Mono.DefaultMonoFile), Path.Combine(this.LPBase.DataDirectory, Mono.DefaultMonoBackup));
 
-        await this.Crystal.StopAsync(new());
+        // await this.Crystal.StopAsync(new()); // tempcode
+        await this.Crystal.Save();
 
         await context.SendSaveAsync(new(this.LPBase.DataDirectory));
     }
@@ -595,7 +597,7 @@ public class Control : ILogInformation
 
     public Merger.Provider MergerProvider { get; }
 
-    public ICrystalData Crystal { get; }
+    public IBigCrystal Crystal { get; }
 
     public LpData LpRoot { get; }
 

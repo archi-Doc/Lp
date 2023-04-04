@@ -8,5 +8,5 @@ public interface IUnitCrystalContext
         where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>;
 
     void AddBigCrystal<TData>(BigCrystalConfiguration crystalConfiguration, CrystalConfiguration dataConfiguration)
-        where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>;
+        where TData : BaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>;
 }

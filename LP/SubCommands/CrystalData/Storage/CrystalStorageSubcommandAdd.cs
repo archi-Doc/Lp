@@ -9,7 +9,7 @@ namespace LP.Subcommands.CrystalData;
 [SimpleCommand("add", Description = "Add storage.")]
 public class CrystalStorageSubcommandAdd : ISimpleCommandAsync<CrystalStorageOptionsAdd>
 {
-    public CrystalStorageSubcommandAdd(ILogger<CrystalStorageSubcommandAdd> logger, IUserInterfaceService userInterfaceService, ICrystalData crystal, CrystalStorageSubcommandLs crystalDirSubcommandLs)
+    public CrystalStorageSubcommandAdd(ILogger<CrystalStorageSubcommandAdd> logger, IUserInterfaceService userInterfaceService, IBigCrystal crystal, CrystalStorageSubcommandLs crystalDirSubcommandLs)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
@@ -103,7 +103,7 @@ EnterBucket:
 
     private ILogger<CrystalStorageSubcommandAdd> logger;
     private IUserInterfaceService userInterfaceService;
-    private ICrystalData crystal;
+    private IBigCrystal crystal;
 }
 
 public record CrystalStorageOptionsAdd
@@ -117,5 +117,5 @@ public record CrystalStorageOptionsAdd
     [SimpleOption("capacity", Description = "Directory capacity in GB")]
     public int Capacity { get; set; } = 0;
 
-    internal long capacityInBytes { get; set; } = CrystalOptions.DefaultDirectoryCapacity;
+    internal long capacityInBytes { get; set; } = StorageGroup.DefaultStorageCapacity;
 }

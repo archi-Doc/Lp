@@ -34,12 +34,18 @@ public class Program
             .ConfigureCrystal(context =>
             {
                 context.AddCrystal<ManualClass>(new(Crystalization.Manual, new LocalFilerConfiguration("manual.data")));
-                context.AddCrystal<CombinedClass>(new(Crystalization.Periodic, new LocalFilerConfiguration("combined.data")));
-                context.AddBigCrystal<CrystalClass>(
+
+                context.AddCrystal<CombinedClass>(
+                    new(
+                        Crystalization.Periodic,
+                        new LocalFilerConfiguration("combined.data"),
+                        new SimpleStorageConfiguration(new LocalFilerConfiguration("simple"))));
+
+                context.AddBigCrystal<BaseData>(
                     new(datumRegistry =>
                     {
                         datumRegistry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
-                    }),
+                    }, BigCrystalOptions.Default),
                     new(Crystalization.Manual, new LocalFilerConfiguration("crystal.data")));
             });
 

@@ -4,19 +4,20 @@ using CrystalData.Datum;
 
 namespace LP.Crystal;
 
-public class MergerCrystal : Crystal<MergerData>
+public class MergerCrystal : BigCrystalImpl<MergerData>
 {
-    public MergerCrystal(UnitCore core, CrystalOptions options, ILogger<MergerCrystal> logger, UnitLogger unitLogger, IStorageKey storageKey)
-        : base(core, options, logger, unitLogger, storageKey)
+    public MergerCrystal(Crystalizer crystalizer)
+        : base(crystalizer)
     {
-        this.Options = options with
+        // tempcode
+        /*this.Options = options with
         {
             CrystalFile = "Merger.main",
             CrystalBackup = "Merger.back",
             StorageFile = "MergerDirectory.main",
             StorageBackup = "MergerDirectory.back",
             DefaultCrystalDirectory = "Merger",
-        };
+        };*/
 
         // this.Datum.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
     }

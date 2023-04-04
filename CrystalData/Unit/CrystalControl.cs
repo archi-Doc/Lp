@@ -23,7 +23,7 @@ public class CrystalControl
             {
                 // Main services
                 context.AddSingleton<CrystalControl>();
-                context.AddSingleton<CrystalOptions>();
+                context.AddSingleton<CrystalizerConfiguration>();
                 context.AddSingleton<Crystalizer>();
                 context.AddSingleton<IStorageKey, StorageKey>();
 
@@ -55,8 +55,6 @@ public class CrystalControl
 
     public class Unit : BuiltUnit
     {// Unit class for customizing behaviors.
-        public record Param();
-
         public Unit(UnitContext context)
             : base(context)
         {

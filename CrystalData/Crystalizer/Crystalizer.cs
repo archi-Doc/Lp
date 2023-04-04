@@ -10,23 +10,22 @@ namespace CrystalData;
 
 public class Crystalizer
 {
-    public Crystalizer(UnitCore core, CrystalOptions options, ILogger logger, UnitLogger unitLogger, IStorageKey storageKey)
+    public Crystalizer(CrystalizerConfiguration configuration, ILogger logger, UnitLogger unitLogger, IStorageKey storageKey)
     {
-        this.Core = core;
-        this.Options = options;
+        this.Configuration = configuration;
         this.logger = logger;
         this.UnitLogger = unitLogger;
         this.StorageKey = storageKey;
 
-        foreach (var x in this.Options.BigCrystalConfigurations)
+        foreach (var x in this.Configuration.BigCrystalConfigurations)
         {
-            // (ICrystalData) new CrystalDataImpl<TData>
+            // (IBigCrystal) new CrystalDataImpl<TData>
             var bigCrystal = (IBigCrystal)Activator.CreateInstance(typeof(BigCrystalImpl<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
 
             this.typeToBigCrystal.TryAdd(x.Key, bigCrystal);
         }
 
-        foreach (var x in this.Options.CrystalConfigurations)
+        foreach (var x in this.Configuration.CrystalConfigurations)
         {
             ICrystal? crystal;
             if (!this.typeToBigCrystal.TryGetValue(x.Key, out var bigCrystal))
@@ -48,9 +47,7 @@ public class Crystalizer
 
     #region FieldAndProperty
 
-    public UnitCore Core { get; }
-
-    public CrystalOptions Options { get; }
+    public CrystalizerConfiguration Configuration { get; }
 
     public IStorageKey StorageKey { get; }
 
@@ -62,7 +59,7 @@ public class Crystalizer
     private ThreadsafeTypeKeyHashTable<IBigCrystal> typeToBigCrystal = new();
     // private ConcurrentDictionary<IBigCrystal, int> bigCrystals = new();
 
-    private object syncFiler = new();
+    private object syncObject = new();
     private LocalFiler? localFiler;
     private Dictionary<string, S3Filer> bucketToS3Filer = new();
 
@@ -71,12 +68,15 @@ public class Crystalizer
     #region Resolvers
 
     public IFiler ResolveFiler(FilerConfiguration configuration)
+        => new RawFilerToFiler(this, this.ResolveRawFiler(configuration), configuration);
+
+    public IRawFiler ResolveRawFiler(FilerConfiguration configuration)
     {
-        lock (this.syncFiler)
+        lock (this.syncObject)
         {
             if (configuration is EmptyFilerConfiguration emptyFilerConfiguration)
             {// Empty filer
-                return new RawFilerToFiler(this, EmptyFiler.Default, configuration);
+                return EmptyFiler.Default;
             }
             else if (configuration is LocalFilerConfiguration localFilerConfiguration)
             {// Local filer
@@ -85,7 +85,7 @@ public class Crystalizer
                     this.localFiler ??= new LocalFiler();
                 }
 
-                return new RawFilerToFiler(this, this.localFiler, configuration);
+                return this.localFiler;
             }
             else if (configuration is S3FilerConfiguration s3FilerConfiguration)
             {// S3 filer
@@ -95,7 +95,7 @@ public class Crystalizer
                     this.bucketToS3Filer.TryAdd(s3FilerConfiguration.Bucket, filer);
                 }
 
-                return new RawFilerToFiler(this, filer, configuration);
+                return filer;
             }
             else
             {
@@ -107,13 +107,21 @@ public class Crystalizer
 
     public IStorage ResolveStorage(StorageConfiguration configuration)
     {
-        lock (this.syncFiler)
+        lock (this.syncObject)
         {
-            if (configuration is EmptyStorageConfiguration emptyStorageonfiguration)
-            {// Empty filer
+            if (configuration is EmptyStorageConfiguration emptyStorageConfiguration)
+            {// Empty storage
+                return EmptyStorage.Default;
             }
-
-            return EmptyStorage.Default;
+            else if (configuration is SimpleStorageConfiguration simpleStorageConfiguration)
+            {
+                return new SimpleStorage();
+            }
+            else
+            {
+                ThrowConfigurationNotRegistered(configuration.GetType());
+                return default!;
+            }
         }
     }
 
@@ -243,7 +251,7 @@ public class Crystalizer
 
     internal BigCrystalConfiguration GetCrystalConfiguration(Type type)
     {
-        if (!this.Options.BigCrystalConfigurations.TryGetValue(type, out var crystalConfiguration))
+        if (!this.Configuration.BigCrystalConfigurations.TryGetValue(type, out var crystalConfiguration))
         {
             ThrowTypeNotRegistered(type);
         }

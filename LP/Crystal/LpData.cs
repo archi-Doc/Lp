@@ -97,7 +97,7 @@ public partial class LpData : BaseData
             this.children ??= new();
             if (!this.children.IdChain.TryGetValue(id, out data))
             {
-                data = new LpData(this.Crystal, this, id);
+                data = new LpData(this.BigCrystal, this, id);
                 this.children.Add(data);
             }
             else

@@ -6,7 +6,7 @@ public interface ICrystal
 {
     Crystalizer Crystalizer { get; }
 
-    CrystalOptions Options { get; }
+    CrystalizerConfiguration CrystalOptions { get; }
 
     CrystalConfiguration CrystalConfiguration { get; }
 
@@ -25,6 +25,8 @@ public interface ICrystal
     Task<CrystalResult> Save();
 
     void Delete();
+
+    void Terminate();
 }
 
 public interface ICrystal<TData> : ICrystal

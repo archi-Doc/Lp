@@ -6,7 +6,7 @@ public interface IJournal
 {
 }
 
-public interface IJournal<TData> : IJournal
+/*public interface IJournal<TData> : IJournal
     where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
-}
+}*/

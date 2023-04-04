@@ -2,15 +2,15 @@
 
 namespace LP.Crystal;
 
-public class LpCrystal : Crystal<LpRootData>
+public class LpCrystal : BigCrystalImpl<LpRootData>
 {
-    public LpCrystal(UnitCore core, CrystalOptions options, ILogger<LpCrystal> logger, UnitLogger unitLogger, IStorageKey storageKey)
-        : base(core, options, logger, unitLogger, storageKey)
+    public LpCrystal(Crystalizer crystalizer)
+        : base(crystalizer)
     {
         // this.Datum.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
     }
 
-    public LpData Data => this.Root.Data;
+    public LpData Data => this.Object.Data;
 }
 
 [TinyhandObject]
