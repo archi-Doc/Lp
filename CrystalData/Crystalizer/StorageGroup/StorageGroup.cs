@@ -72,7 +72,7 @@ public sealed class StorageGroup
             return (AddStorageResult.WriteError, 0);
         }
 
-        var relative = Path.GetRelativePath(this.Crystalizer.Configuration.RootPath, path);
+        var relative = Path.GetRelativePath(this.Crystalizer.RootDirectory, path);
         if (!relative.StartsWith("..\\"))
         {
             path = relative;

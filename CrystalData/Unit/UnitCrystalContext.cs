@@ -40,8 +40,11 @@ internal class UnitCrystalContext : IUnitCrystalContext
             context.Services.Add(ServiceDescriptor.Singleton(typeof(IBigCrystal<>).MakeGenericType(x.Key), provider => provider.GetRequiredService<Crystalizer>().GetBigCrystal(x.Key)));
         }
 
-        var crystalOptions = new CrystalizerConfiguration(this.typeToCrystalConfiguration, this.typeToBigCrystalConfiguration, context.DataDirectory);
-        context.SetOptions(crystalOptions);
+        var configuration = new CrystalizerConfiguration(this.typeToCrystalConfiguration, this.typeToBigCrystalConfiguration);
+        context.SetOptions(configuration);
+
+        var options = new CrystalizerOptions();
+        options.RootPath = context.DataDirectory;
     }
 
     private Dictionary<Type, CrystalConfiguration> typeToCrystalConfiguration = new();

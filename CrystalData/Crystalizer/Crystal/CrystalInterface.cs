@@ -6,8 +6,6 @@ public interface ICrystal
 {
     Crystalizer Crystalizer { get; }
 
-    CrystalizerConfiguration CrystalOptions { get; }
-
     CrystalConfiguration CrystalConfiguration { get; }
 
     object Object { get; }

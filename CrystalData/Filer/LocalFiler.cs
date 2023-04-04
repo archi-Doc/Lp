@@ -217,7 +217,7 @@ DeleteAndExit:
             return CrystalResult.WriteError;
         }
 
-        if (crystalizer.Configuration.EnableLogger)
+        if (crystalizer.EnableLogger)
         {
             this.logger = crystalizer.UnitLogger.GetLogger<LocalFiler>();
         }
@@ -280,7 +280,7 @@ DeleteAndExit:
             }
             else
             {
-                rootedPath = Path.Combine(crystalizer.Configuration.RootPath, file);
+                rootedPath = Path.Combine(crystalizer.RootDirectory, file);
             }
 
             Directory.CreateDirectory(rootedPath);

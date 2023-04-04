@@ -209,7 +209,7 @@ TryWrite:
             }
         }
 
-        if (crystalizer.Configuration.EnableLogger)
+        if (crystalizer.EnableLogger)
         {
             this.logger = crystalizer.UnitLogger.GetLogger<S3Filer>();
         }

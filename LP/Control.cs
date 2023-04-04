@@ -173,11 +173,10 @@ public class Control : ILogInformation
                 netBase.AllowUnsafeConnection = true; // betacode
             });
 
-            this.SetupOptions<CrystalizerConfiguration>((context, configuration) =>
-            {// CrystalOptions
+            this.SetupOptions<CrystalizerOptions>((context, options) =>
+            {// CrystalizerOptions
                 context.GetOptions<LPOptions>(out var lpOptions);
-                var newConfiguration = configuration with { EnableLogger = true, RootPath = lpOptions.RootDirectory }; // betacode
-                // context.SetOptions(newConfiguration);
+                options.RootPath = lpOptions.RootDirectory;
             });
 
             this.AddBuilder(new NetControl.Builder());

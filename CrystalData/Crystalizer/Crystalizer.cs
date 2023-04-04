@@ -10,14 +10,21 @@ namespace CrystalData;
 
 public class Crystalizer
 {
-    public Crystalizer(CrystalizerConfiguration configuration, ILogger logger, UnitLogger unitLogger, IStorageKey storageKey)
+    public Crystalizer(CrystalizerConfiguration configuration, CrystalizerOptions options, ILogger logger, UnitLogger unitLogger, IStorageKey storageKey)
     {
-        this.Configuration = configuration;
+        this.configuration = configuration;
+        this.EnableLogger = options.EnableLogger;
+        this.RootDirectory = options.RootPath;
+        if (string.IsNullOrEmpty(this.RootDirectory))
+        {
+            this.RootDirectory = Directory.GetCurrentDirectory();
+        }
+
         this.logger = logger;
         this.UnitLogger = unitLogger;
         this.StorageKey = storageKey;
 
-        foreach (var x in this.Configuration.BigCrystalConfigurations)
+        foreach (var x in this.configuration.BigCrystalConfigurations)
         {
             // (IBigCrystal) new CrystalDataImpl<TData>
             var bigCrystal = (IBigCrystal)Activator.CreateInstance(typeof(BigCrystalImpl<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
@@ -25,7 +32,7 @@ public class Crystalizer
             this.typeToBigCrystal.TryAdd(x.Key, bigCrystal);
         }
 
-        foreach (var x in this.Configuration.CrystalConfigurations)
+        foreach (var x in this.configuration.CrystalConfigurations)
         {
             ICrystal? crystal;
             if (!this.typeToBigCrystal.TryGetValue(x.Key, out var bigCrystal))
@@ -47,12 +54,15 @@ public class Crystalizer
 
     #region FieldAndProperty
 
-    public CrystalizerConfiguration Configuration { get; }
+    public bool EnableLogger { get; }
+
+    public string RootDirectory { get; }
 
     public IStorageKey StorageKey { get; }
 
     internal UnitLogger UnitLogger { get; }
 
+    private CrystalizerConfiguration configuration;
     private ILogger logger;
     private ThreadsafeTypeKeyHashTable<ICrystal> typeToCrystal = new();
     private ConcurrentDictionary<ICrystal, int> crystals = new();
@@ -251,11 +261,12 @@ public class Crystalizer
 
     internal BigCrystalConfiguration GetCrystalConfiguration(Type type)
     {
-        if (!this.Configuration.BigCrystalConfigurations.TryGetValue(type, out var crystalConfiguration))
+        if (!this.configuration.BigCrystalConfigurations.TryGetValue(type, out var crystalConfiguration))
         {
             ThrowTypeNotRegistered(type);
         }
 
+        crystalConfiguration!.BigCrystalOptions.SetRootPath(this.RootDirectory);
         return crystalConfiguration!;
     }
 

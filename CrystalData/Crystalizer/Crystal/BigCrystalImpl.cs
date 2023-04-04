@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using CrystalData.Datum;
-
 namespace CrystalData;
 
 public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICrystal
@@ -15,10 +13,9 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
         this.storageGroup = new(crystalizer);
         this.himoGoshujin = new(this);
         this.logger = crystalizer.UnitLogger.GetLogger<IBigCrystal<TData>>();
+        this.storageFileConfiguration = this.CrystalConfiguration.FilerConfiguration with { File = this.BigCrystalOptions.CrystalFilePath, };
 
         this.InitializeRoot();
-
-        this.DatumRegistry.Register<BlockDatum>(1, x => new BlockDatumImpl(x)); // tempcode
     }
 
     #region FieldAndProperty
@@ -36,10 +33,10 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
     public long MemoryUsage => this.himoGoshujin.MemoryUsage;
 
     private StorageGroup storageGroup;
-
     private HimoGoshujinClass himoGoshujin;
-
     private ILogger logger;
+    private FilerConfiguration storageFileConfiguration;
+    private IFiler? storageFiler;
 
     #endregion
 
@@ -97,7 +94,7 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
             }
 
             // Save & Unload datum and metadaba.
-            this.obj.Save(true);
+            this.obj?.Save(true);
 
             // Stop storage
             await this.StorageGroup.SaveStorage().ConfigureAwait(false);
@@ -125,7 +122,7 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
 
     internal async Task DeleteAllAsync()
     {
-        this.obj.Delete();
+        this.obj?.Delete();
         this.himoGoshujin.Clear();
 
         PathHelper.TryDeleteFile(this.BigCrystalOptions.CrystalFilePath);
@@ -154,6 +151,9 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
     private async Task<CrystalStartResult> LoadCrystalStorage(CrystalStartParam param)
     {// await this.semaphore.WaitAsync().ConfigureAwait(false)
      // Load
+        this.storageFiler ??= this.Crystalizer.ResolveFiler(this.storageFileConfiguration);
+        await this.storageFiler.ReadAsync(0, -1).ConfigureAwait(false);
+
         CrystalStartResult result;
         byte[]? data;
         try

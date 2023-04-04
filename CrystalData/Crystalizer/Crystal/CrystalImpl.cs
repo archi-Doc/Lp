@@ -30,8 +30,6 @@ public class CrystalImpl<TData> : ICrystal<TData>
 
     public Crystalizer Crystalizer { get; }
 
-    public CrystalizerConfiguration CrystalOptions => this.Crystalizer.Configuration;
-
     public CrystalConfiguration CrystalConfiguration { get; private set; }
 
     object ICrystal.Object => ((ICrystal<TData>)this).Object;
@@ -177,7 +175,7 @@ public class CrystalImpl<TData> : ICrystal<TData>
 
     #endregion
 
-    private async Task<CrystalStartResult> PrepareAndLoadInternal(CrystalStartParam? param)
+    protected async Task<CrystalStartResult> PrepareAndLoadInternal(CrystalStartParam? param)
     {// this.semaphore.Lock()
         if (this.obj != null)
         {
@@ -241,14 +239,14 @@ Reconstruct:
 
     [MemberNotNull(nameof(filer))]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ResolveFiler()
+    protected void ResolveFiler()
     {
         this.filer ??= this.Crystalizer.ResolveFiler(this.CrystalConfiguration.FilerConfiguration);
     }
 
     [MemberNotNull(nameof(storage))]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ResolveStorage()
+    protected void ResolveStorage()
     {
         this.storage ??= this.Crystalizer.ResolveStorage(this.CrystalConfiguration.StorageConfiguration);
     }

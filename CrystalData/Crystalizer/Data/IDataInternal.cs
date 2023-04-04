@@ -10,8 +10,6 @@ public interface IDataInternal
 
     DatumRegistry DatumRegistry => this.BigCrystal.DatumRegistry;
 
-    CrystalizerConfiguration CrystalOptions => this.BigCrystal.CrystalOptions;
-
     BigCrystalOptions BigCrystalOptions => this.BigCrystal.BigCrystalOptions;
 
     void DatumToStorage<TDatum>(ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)

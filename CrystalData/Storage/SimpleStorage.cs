@@ -44,7 +44,7 @@ internal partial class SimpleStorage : IStorage
 
         if (string.IsNullOrEmpty(this.directoryPath))
         {
-            this.directoryPath = crystalizer.Configuration.RootPath;
+            this.directoryPath = crystalizer.RootDirectory;
         }
 
         this.filer = crystalizer.ResolveRawFiler(storageConfiguration.FilerConfiguration);

@@ -46,7 +46,12 @@ public class Program
                     {
                         datumRegistry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
                     }, BigCrystalOptions.Default),
-                    new(Crystalization.Manual, new LocalFilerConfiguration("crystal.data")));
+                    new(Crystalization.Manual, new LocalFilerConfiguration()));
+            })
+            .SetupOptions<CrystalizerOptions>((context, options) =>
+            {// CrystalizerOptions
+                options.EnableLogger = true;
+                options.RootPath = Directory.GetCurrentDirectory();
             });
 
         var unit = builder.Build();

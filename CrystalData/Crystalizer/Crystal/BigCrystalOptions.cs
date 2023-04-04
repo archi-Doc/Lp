@@ -57,5 +57,10 @@ public record BigCrystalOptions
 
     public string StorageBackupPath => PathHelper.GetRootedFile(this.RootPath, this.StorageBackup);
 
+    internal void SetRootPath(string directory)
+    {
+        this.rootPath = PathHelper.GetRootedDirectory(directory, this.CrystalDirectory);
+    }
+
     private string? rootPath;
 }
