@@ -4,7 +4,7 @@ namespace CrystalData.Filer;
 
 public interface IRawFiler
 {
-    // string FilerPath { get; }
+    bool SupportPartialWrite { get; }
 
     Task<CrystalResult> PrepareAndCheck(Crystalizer crystalizer, FilerConfiguration configuration);
 

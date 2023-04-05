@@ -259,15 +259,25 @@ public class Crystalizer
         return crystal!.Object;
     }
 
-    internal BigCrystalConfiguration GetCrystalConfiguration(Type type)
+    internal CrystalConfiguration GetCrystalConfiguration(Type type)
     {
-        if (!this.configuration.BigCrystalConfigurations.TryGetValue(type, out var crystalConfiguration))
+        if (!this.configuration.CrystalConfigurations.TryGetValue(type, out var configuration))
         {
             ThrowTypeNotRegistered(type);
         }
 
-        crystalConfiguration!.BigCrystalOptions.SetRootPath(this.RootDirectory);
-        return crystalConfiguration!;
+        return configuration!;
+    }
+
+    internal BigCrystalConfiguration GetBigCrystalConfiguration(Type type)
+    {
+        if (!this.configuration.BigCrystalConfigurations.TryGetValue(type, out var configuration))
+        {
+            ThrowTypeNotRegistered(type);
+        }
+
+        configuration!.BigCrystalOptions.SetRootPath(this.RootDirectory);
+        return configuration!;
     }
 
     #endregion

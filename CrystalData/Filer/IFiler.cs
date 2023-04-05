@@ -6,6 +6,8 @@ namespace CrystalData;
 
 public interface IFiler
 {
+    bool SupportPartialWrite { get; }
+
     Task<CrystalResult> PrepareAndCheck(Crystalizer crystalizer, FilerConfiguration configuration);
 
     CrystalResult Write(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared);
@@ -47,6 +49,8 @@ internal class RawFilerToFiler : IFiler
     public IRawFiler RawFiler { get; }
 
     public string File { get; }
+
+    bool IFiler.SupportPartialWrite => this.RawFiler.SupportPartialWrite;
 
     CrystalResult IFiler.Delete()
         => this.RawFiler.Delete(this.File);

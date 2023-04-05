@@ -181,6 +181,8 @@ TryWrite:
 
     #region IFiler
 
+    bool IRawFiler.SupportPartialWrite => false;
+
     async Task<CrystalResult> IRawFiler.PrepareAndCheck(Crystalizer crystalizer, FilerConfiguration configuration)
     {
         this.client?.Dispose();

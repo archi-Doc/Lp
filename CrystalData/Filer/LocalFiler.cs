@@ -200,6 +200,8 @@ DeleteAndExit:
 
     #region IFiler
 
+    bool IRawFiler.SupportPartialWrite => true;
+
     async Task<CrystalResult> IRawFiler.PrepareAndCheck(Crystalizer crystalizer, FilerConfiguration configuration)
     {
         string? directory = null;

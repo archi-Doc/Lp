@@ -6,6 +6,8 @@ public partial class EmptyFiler : IRawFiler
 {
     public static readonly EmptyFiler Default = new();
 
+    bool IRawFiler.SupportPartialWrite => true;
+
     CrystalResult IRawFiler.Delete(string path)
         => CrystalResult.Success;
 

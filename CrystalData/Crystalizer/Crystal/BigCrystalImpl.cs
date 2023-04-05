@@ -8,12 +8,14 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
     public BigCrystalImpl(Crystalizer crystalizer)
         : base(crystalizer)
     {
-        this.BigCrystalConfiguration = crystalizer.GetCrystalConfiguration(typeof(TData));
+        this.BigCrystalConfiguration = crystalizer.GetBigCrystalConfiguration(typeof(TData));
         this.BigCrystalConfiguration.RegisterDatum(this.DatumRegistry);
         this.storageGroup = new(crystalizer);
         this.himoGoshujin = new(this);
         this.logger = crystalizer.UnitLogger.GetLogger<IBigCrystal<TData>>();
-        this.storageFileConfiguration = this.CrystalConfiguration.FilerConfiguration with { File = this.BigCrystalOptions.CrystalFilePath, };
+
+        this.storageFileConfiguration = this.CrystalConfiguration.FilerConfiguration with { File = this.BigCrystalOptions.StorageFilePath, };
+        this.crystalFileConfiguration = this.CrystalConfiguration.FilerConfiguration with { File = this.BigCrystalOptions.CrystalFilePath, };
 
         this.InitializeRoot();
     }
@@ -37,6 +39,8 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
     private ILogger logger;
     private FilerConfiguration storageFileConfiguration;
     private IFiler? storageFiler;
+    private FilerConfiguration crystalFileConfiguration;
+    private IFiler? crystalFiler;
 
     #endregion
 
@@ -45,6 +49,9 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
         param ??= CrystalStartParam.Default;
         using (this.semaphore.Lock())
         {
+            this.storageFiler ??= this.Crystalizer.ResolveFiler(this.storageFileConfiguration);
+            this.crystalFiler ??= this.Crystalizer.ResolveFiler(this.crystalFileConfiguration);
+
             if (param.FromScratch)
             {
                 await this.StorageGroup.PrepareAndCheck(this.BigCrystalOptions, param, null).ConfigureAwait(false);
@@ -150,41 +157,11 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
 
     private async Task<CrystalStartResult> LoadCrystalStorage(CrystalStartParam param)
     {// await this.semaphore.WaitAsync().ConfigureAwait(false)
-     // Load
-        this.storageFiler ??= this.Crystalizer.ResolveFiler(this.storageFileConfiguration);
-        await this.storageFiler.ReadAsync(0, -1).ConfigureAwait(false);
-
         CrystalStartResult result;
-        byte[]? data;
-        try
-        {
-            data = await File.ReadAllBytesAsync(this.BigCrystalOptions.StorageFilePath).ConfigureAwait(false);
-        }
-        catch
-        {
-            goto LoadBackup;
-        }
 
-        // Checksum
-        if (!HashHelper.CheckFarmHashAndGetData(data.AsMemory(), out var memory))
-        {
-            goto LoadBackup;
-        }
-
-        result = await this.StorageGroup.PrepareAndCheck(this.BigCrystalOptions, param, memory).ConfigureAwait(false);
-        if (result == CrystalStartResult.Success || param.ForceStart)
-        {
-            return CrystalStartResult.Success;
-        }
-
-        return result;
-
-LoadBackup:
-        try
-        {
-            data = await File.ReadAllBytesAsync(this.BigCrystalOptions.StorageBackupPath).ConfigureAwait(false);
-        }
-        catch
+        var filerResult = await this.storageFiler!.ReadAsync(0, -1).ConfigureAwait(false);
+        if (filerResult.IsFailure ||
+            !HashHelper.CheckFarmHashAndGetData(filerResult.Data.Memory, out var memory))
         {
             if (await param.Query(CrystalStartResult.DirectoryNotFound).ConfigureAwait(false) == AbortOrComplete.Complete)
             {
@@ -199,25 +176,6 @@ LoadBackup:
             else
             {
                 return CrystalStartResult.DirectoryNotFound;
-            }
-        }
-
-        // Checksum Crystal
-        if (!HashHelper.CheckFarmHashAndGetData(data.AsMemory(), out memory))
-        {
-            if (await param.Query(CrystalStartResult.DirectoryError).ConfigureAwait(false) == AbortOrComplete.Complete)
-            {
-                result = await this.StorageGroup.PrepareAndCheck(this.BigCrystalOptions, param, null).ConfigureAwait(false);
-                if (result == CrystalStartResult.Success || param.ForceStart)
-                {
-                    return CrystalStartResult.Success;
-                }
-
-                return result;
-            }
-            else
-            {
-                return CrystalStartResult.DirectoryError;
             }
         }
 

@@ -13,7 +13,7 @@ public class CrystalImpl<TData> : ICrystal<TData>
     internal CrystalImpl(Crystalizer crystalizer)
     {
         this.Crystalizer = crystalizer;
-        this.CrystalConfiguration = CrystalConfiguration.Default;
+        this.CrystalConfiguration = crystalizer.GetCrystalConfiguration(typeof(TData));
     }
 
     #region FieldAndProperty
