@@ -103,7 +103,7 @@ public partial class CrystalTest
         f.IsNotNull();
 
         // Set fragments
-        for (var i = 0; i < BigCrystalOptions.DefaultMaxFragmentCount; i++)
+        for (var i = 0; i < BigCrystalConfiguration.DefaultMaxFragmentCount; i++)
         {
             identifier = new Identifier(i);
             identifier.TryWriteBytes(buffer);

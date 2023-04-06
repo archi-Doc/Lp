@@ -45,6 +45,7 @@ public class LocalFiler : TaskWorker<FilerWork>, IRawFiler
 
     #region FieldAndProperty
 
+    private Crystalizer? crystalizer;
     private ILogger? logger;
 
     #endregion
@@ -54,12 +55,10 @@ public class LocalFiler : TaskWorker<FilerWork>, IRawFiler
         var worker = (LocalFiler)w;
         var tryCount = 0;
 
-        var filePath = work.Path;
+        var filePath = Crystalizer.GetRootedFile(worker.crystalizer, work.Path);
         work.Result = CrystalResult.Started;
         if (work.Type == FilerWork.WorkType.Write)
         {// Write
-            filePath = work.Path;
-
 TryWrite:
             tryCount++;
             if (tryCount > 2)
@@ -76,7 +75,7 @@ TryWrite:
                     await RandomAccess.WriteAsync(handle, work.WriteData.Memory, work.Offset, worker.CancellationToken).ConfigureAwait(false);
                     worker.logger?.TryGet()?.Log($"Written[{work.WriteData.Memory.Length}] {work.Path}");
 
-                    try
+                    /*try
                     {
                         if (RandomAccess.GetLength(handle) > work.WriteData.Memory.Length)
                         {
@@ -85,7 +84,7 @@ TryWrite:
                     }
                     catch
                     {
-                    }
+                    }*/
 
                     work.Result = CrystalResult.Success;
                 }
@@ -174,7 +173,7 @@ TryWrite:
         {
             try
             {
-                File.Delete(work.Path);
+                File.Delete(filePath);
                 work.Result = CrystalResult.Success;
             }
             catch
@@ -202,12 +201,14 @@ DeleteAndExit:
 
     bool IRawFiler.SupportPartialWrite => true;
 
-    async Task<CrystalResult> IRawFiler.PrepareAndCheck(Crystalizer crystalizer, FilerConfiguration configuration)
+    async Task<CrystalResult> IRawFiler.PrepareAndCheck(Crystalizer crystalizer, PathConfiguration configuration)
     {
-        string? directory = null;
+        this.crystalizer = crystalizer;
+
+        /*string? directory = null;
         try
         {
-            directory = Path.GetDirectoryName(configuration.File);
+            directory = Path.GetDirectoryName(this.crystalizer.GetRootedFile(configuration.Path));
         }
         catch
         {
@@ -217,7 +218,7 @@ DeleteAndExit:
         if (!result.Success)
         {
             return CrystalResult.WriteError;
-        }
+        }*/
 
         if (crystalizer.EnableLogger)
         {

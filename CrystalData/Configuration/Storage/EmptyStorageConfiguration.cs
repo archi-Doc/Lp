@@ -8,7 +8,7 @@ public partial record EmptyStorageConfiguration : StorageConfiguration
     public static readonly EmptyStorageConfiguration Default = new();
 
     public EmptyStorageConfiguration()
-        : base(EmptyFilerConfiguration.Default)
+        : base(EmptyDirectoryConfiguration.Default)
     {
     }
 }

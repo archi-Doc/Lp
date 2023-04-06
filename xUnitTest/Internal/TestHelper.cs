@@ -31,11 +31,9 @@ public static class TestHelper
                         {
                             datumRegistry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
                         },
-                        BigCrystalOptions.Default),
-                    new(
-                        Crystalization.Manual,
-                        new LocalFilerConfiguration(directory),
-                        new SimpleStorageConfiguration(new LocalFilerConfiguration(directory))));
+                        Crystalization.None,
+                        new LocalDirectoryConfiguration(directory),
+                        new SimpleStorageConfiguration(new LocalDirectoryConfiguration(directory))));
             });
 
         var unit = builder.Build();
@@ -70,21 +68,16 @@ public static class TestHelper
             .ConfigureCrystal(context =>
             {
                 var directory = $"Crystal[{RandomVault.Pseudo.NextUInt32():x4}]";
-                context.AddBigCrystal<MergerData>(
-                    new(
-                        datumRegistry =>
-                        {
-                            datumRegistry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
-                        },
-                        BigCrystalOptions.Default),
-                    new(
-                        Crystalization.Manual,
-                        new LocalFilerConfiguration(directory),
-                        new SimpleStorageConfiguration(new LocalFilerConfiguration(directory))));
-            })
-            .SetupOptions<BigCrystalOptions>((context, options) =>
-            {
-                options.MaxParentInMemory = maxParent;
+                context.AddBigCrystal<MergerData>(new BigCrystalConfiguration() with
+                {
+                    RegisterDatum = registry =>
+                    {
+                        registry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
+                    },
+                    DirectoryConfiguration = new LocalDirectoryConfiguration(directory),
+                    StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration(directory)),
+                    MaxParentInMemory = maxParent,
+                });
             });
 
         var unit = builder.Build();

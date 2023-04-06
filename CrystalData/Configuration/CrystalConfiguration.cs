@@ -19,23 +19,23 @@ public record CrystalConfiguration
     public CrystalConfiguration()
     {
         this.Crystalization = Crystalization.None;
-        this.FilerConfiguration = EmptyFilerConfiguration.Default;
+        this.FileConfiguration = EmptyFileConfiguration.Default;
         this.StorageConfiguration = EmptyStorageConfiguration.Default;
     }
 
-    public CrystalConfiguration(Crystalization crystalization, FilerConfiguration filerConfiguration, StorageConfiguration? storageConfiguration = null)
+    public CrystalConfiguration(Crystalization crystalization, FileConfiguration filerConfiguration, StorageConfiguration? storageConfiguration = null)
     {
         this.Crystalization = crystalization;
         this.Interval = DefaultInterval;
-        this.FilerConfiguration = filerConfiguration;
+        this.FileConfiguration = filerConfiguration;
         this.StorageConfiguration = storageConfiguration ?? EmptyStorageConfiguration.Default;
     }
 
-    public CrystalConfiguration(TimeSpan interval, FilerConfiguration filerConfiguration, StorageConfiguration? storageConfiguration = null)
+    public CrystalConfiguration(TimeSpan interval, FileConfiguration fileConfiguration, StorageConfiguration? storageConfiguration = null)
     {
         this.Crystalization = Crystalization.Periodic;
         this.Interval = interval;
-        this.FilerConfiguration = filerConfiguration;
+        this.FileConfiguration = fileConfiguration;
         this.StorageConfiguration = storageConfiguration ?? EmptyStorageConfiguration.Default;
     }
 
@@ -43,7 +43,7 @@ public record CrystalConfiguration
 
     public TimeSpan Interval { get; init; }
 
-    public FilerConfiguration FilerConfiguration { get; init; }
+    public FileConfiguration FileConfiguration { get; init; }
 
     public StorageConfiguration StorageConfiguration { get; init; }
 }

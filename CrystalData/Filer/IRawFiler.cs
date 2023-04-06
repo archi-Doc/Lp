@@ -6,13 +6,7 @@ public interface IRawFiler
 {
     bool SupportPartialWrite { get; }
 
-    /// <summary>
-    /// This function may be called multiple times.
-    /// </summary>
-    /// <param name="crystalizer"><see cref="Crystalizer"/>.</param>
-    /// <param name="configuration"><see cref="FilerConfiguration"/>.</param>
-    /// <returns><see cref="CrystalResult"/>.</returns>
-    Task<CrystalResult> PrepareAndCheck(Crystalizer crystalizer, FilerConfiguration configuration);
+    Task<CrystalResult> PrepareAndCheck(Crystalizer crystalizer, PathConfiguration configuration);
 
     Task Terminate();
 

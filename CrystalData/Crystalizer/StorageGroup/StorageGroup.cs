@@ -88,7 +88,7 @@ public sealed class StorageGroup
         lock (this.syncObject)
         {
             id = this.GetFreeStorageId();
-            var configuration = new SimpleStorageConfiguration(new LocalFilerConfiguration(path));
+            var configuration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration(path));
 
             var storageObject = new StorageObject(id, configuration);
             storageObject.StorageCapacity = capacity;
@@ -122,7 +122,7 @@ public sealed class StorageGroup
         {
             id = this.GetFreeStorageId();
 
-            var configuration = new SimpleStorageConfiguration(new S3FilerConfiguration(bucket, path));
+            var configuration = new SimpleStorageConfiguration(new S3DirectoryConfiguration(bucket, path));
 
             var storageObject = new StorageObject(id, configuration);
             storageObject.StorageCapacity = capacity;

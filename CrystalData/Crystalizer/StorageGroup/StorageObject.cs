@@ -16,7 +16,7 @@ internal partial class StorageObject
     {
         this.StorageId = storageId;
         this.StorageConfiguration = storageConfiguration;
-        this.MemoryStat = new();
+        this.MemoryStat = TinyhandSerializer.Reconstruct<MemoryStat>();
     }
 
     public override string ToString()

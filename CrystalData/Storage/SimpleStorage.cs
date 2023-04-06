@@ -37,9 +37,9 @@ internal partial class SimpleStorage : IStorage
 
     async Task<CrystalResult> IStorage.PrepareAndCheck(Crystalizer crystalizer, StorageConfiguration storageConfiguration, bool createNew)
     {
-        if (!string.IsNullOrEmpty(storageConfiguration.FilerConfiguration.File))
+        if (!string.IsNullOrEmpty(storageConfiguration.DirectoryConfiguration.Path))
         {
-            this.directoryPath = storageConfiguration.FilerConfiguration.File;
+            this.directoryPath = storageConfiguration.DirectoryConfiguration.Path;
         }
 
         if (string.IsNullOrEmpty(this.directoryPath))
@@ -47,7 +47,7 @@ internal partial class SimpleStorage : IStorage
             this.directoryPath = crystalizer.RootDirectory;
         }
 
-        this.filer = crystalizer.ResolveRawFiler(storageConfiguration.FilerConfiguration);
+        this.filer = crystalizer.ResolveRawFiler(storageConfiguration.DirectoryConfiguration);
 
         if (createNew)
         {

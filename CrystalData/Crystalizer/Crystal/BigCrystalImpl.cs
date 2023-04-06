@@ -14,8 +14,8 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
         this.himoGoshujin = new(this);
         this.logger = crystalizer.UnitLogger.GetLogger<IBigCrystal<TData>>();
 
-        this.storageFileConfiguration = this.CrystalConfiguration.FilerConfiguration.CombinePath(this.BigCrystalOptions.StorageFile);
-        this.crystalFileConfiguration = this.CrystalConfiguration.FilerConfiguration.CombinePath(this.BigCrystalOptions.CrystalFile);
+        this.storageFileConfiguration = this.BigCrystalConfiguration.DirectoryConfiguration.CombinePath(this.BigCrystalConfiguration.StorageFile);
+        this.crystalFileConfiguration = this.BigCrystalConfiguration.DirectoryConfiguration.CombinePath(this.BigCrystalConfiguration.CrystalFile);
 
         this.InitializeRoot();
     }
@@ -23,8 +23,6 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
     #region FieldAndProperty
 
     public BigCrystalConfiguration BigCrystalConfiguration { get; }
-
-    public BigCrystalOptions BigCrystalOptions => this.BigCrystalConfiguration.BigCrystalOptions;
 
     public DatumRegistry DatumRegistry { get; } = new();
 
@@ -37,9 +35,9 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
     private StorageGroup storageGroup;
     private HimoGoshujinClass himoGoshujin;
     private ILogger logger;
-    private FilerConfiguration storageFileConfiguration;
+    private PathConfiguration storageFileConfiguration;
     private IFiler? storageFiler;
-    private FilerConfiguration crystalFileConfiguration;
+    private PathConfiguration crystalFileConfiguration;
     private IFiler? crystalFiler;
 
     #endregion
@@ -50,9 +48,7 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
         using (this.semaphore.Lock())
         {
             this.storageFiler ??= this.Crystalizer.ResolveFiler(this.storageFileConfiguration);
-            await this.storageFiler.PrepareAndCheck(this.Crystalizer, this.storageFileConfiguration);
             this.crystalFiler ??= this.Crystalizer.ResolveFiler(this.crystalFileConfiguration);
-            await this.crystalFiler.PrepareAndCheck(this.Crystalizer, this.crystalFileConfiguration);
 
             if (param.FromScratch)
             {
@@ -111,7 +107,7 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
             // Save data
             if (this.crystalFiler != null)
             {
-                await this.Save(this.crystalFiler).ConfigureAwait(false);
+                await this.SaveCrystal(this.crystalFiler).ConfigureAwait(false);
             }
 
             // Save storage
@@ -234,7 +230,7 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
         return true;
     }
 
-    private async Task Save(IFiler filer)
+    private async Task SaveCrystal(IFiler filer)
     {
         var byteArray = TinyhandSerializer.Serialize(this.obj);
         await HashHelper.GetFarmHashAndSaveAsync(byteArray, filer).ConfigureAwait(false);

@@ -16,7 +16,7 @@ public interface ICrystal
 
     void Configure(CrystalConfiguration configuration);
 
-    void ConfigureFiler(FilerConfiguration configuration);
+    void ConfigureFile(FileConfiguration configuration);
 
     Task<CrystalStartResult> PrepareAndLoad(CrystalStartParam? param = null);
 

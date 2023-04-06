@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
+
 namespace CrystalData;
 
 public static class PathHelper
@@ -66,6 +68,7 @@ public static class PathHelper
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static string GetRootedFile(string rootDirectory, string file)
     {
         if (Path.IsPathRooted(file))

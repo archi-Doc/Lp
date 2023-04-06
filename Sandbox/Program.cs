@@ -39,23 +39,23 @@ public class Program
             })
             .ConfigureCrystal(context =>
             {
-                context.AddCrystal<ManualClass>(new(Crystalization.Manual, new LocalFilerConfiguration("manual.data")));
+                context.AddCrystal<ManualClass>(new(Crystalization.Manual, new LocalFileConfiguration("manual.data")));
 
                 context.AddCrystal<CombinedClass>(
                     new(
                         Crystalization.Periodic,
-                        new LocalFilerConfiguration("combined.data"),
-                        new SimpleStorageConfiguration(new LocalFilerConfiguration("simple"))));
+                        new LocalFileConfiguration("combined.data"),
+                        new SimpleStorageConfiguration(new LocalDirectoryConfiguration("simple"))));
 
-                context.AddBigCrystal<BaseData>(
-                    new(datumRegistry =>
+                context.AddBigCrystal<BaseData>(new BigCrystalConfiguration() with
+                {
+                    RegisterDatum = registry =>
                     {
-                        datumRegistry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
-                    }, BigCrystalOptions.Default),
-                    new(
-                        Crystalization.Manual,
-                        new LocalFilerConfiguration("Crystal"),
-                        new SimpleStorageConfiguration(new LocalFilerConfiguration("Storage"))));
+                        registry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
+                    },
+                    DirectoryConfiguration = new LocalDirectoryConfiguration("Crystal"),
+                    StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Storage")),
+                });
             })
             .SetupOptions<CrystalizerOptions>((context, options) =>
             {// CrystalizerOptions

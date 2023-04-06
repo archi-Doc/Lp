@@ -4,13 +4,13 @@ namespace CrystalData;
 
 public class CrystalizerConfiguration
 {
-    internal CrystalizerConfiguration(Dictionary<Type, CrystalConfiguration> crystalConfigurations, Dictionary<Type, BigCrystalConfiguration> bigCrystalConfigurations)
+    internal CrystalizerConfiguration(Dictionary<Type, CrystalConfiguration> crystalConfigurations/*, Dictionary<Type, BigCrystalConfiguration> bigCrystalConfigurations*/)
     {
         this.CrystalConfigurations = crystalConfigurations;
-        this.BigCrystalConfigurations = bigCrystalConfigurations;
+        // this.BigCrystalConfigurations = bigCrystalConfigurations;
     }
 
     public Dictionary<Type, CrystalConfiguration> CrystalConfigurations { get; }
 
-    public Dictionary<Type, BigCrystalConfiguration> BigCrystalConfigurations { get; }
+    // public Dictionary<Type, BigCrystalConfiguration> BigCrystalConfigurations { get; }
 }
