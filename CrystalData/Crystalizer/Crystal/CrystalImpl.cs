@@ -75,7 +75,7 @@ public class CrystalImpl<TData> : ICrystal<TData>
                     return this.filer;
                 }
 
-                this.ResolveFiler();
+                this.filer ??= this.Crystalizer.ResolveFiler(this.CrystalConfiguration.FilerConfiguration);
                 return this.filer;
             }
         }
@@ -97,7 +97,7 @@ public class CrystalImpl<TData> : ICrystal<TData>
                     return this.storage;
                 }
 
-                this.ResolveStorage();
+                this.storage ??= this.Crystalizer.ResolveStorage(this.CrystalConfiguration.StorageConfiguration);
                 return this.storage;
             }
         }
@@ -149,8 +149,7 @@ public class CrystalImpl<TData> : ICrystal<TData>
                 this.savedHash = hash;
             }
 
-            this.ResolveFiler();
-            return await this.filer.WriteAsync(0, new(byteArray)).ConfigureAwait(false);
+            return await this.Filer.WriteAsync(0, new(byteArray)).ConfigureAwait(false);
         }
     }
 
@@ -159,8 +158,7 @@ public class CrystalImpl<TData> : ICrystal<TData>
         using (this.semaphore.Lock())
         {
             // Delete file
-            this.ResolveFiler();
-            this.filer.Delete();
+            this.Filer.Delete();
 
             // Clear
             this.CrystalConfiguration = CrystalConfiguration.Default;
@@ -183,21 +181,37 @@ public class CrystalImpl<TData> : ICrystal<TData>
         }
 
         param ??= CrystalStartParam.Default;
-
-        this.ResolveFiler();
-        if (this.CrystalConfiguration.FilerConfiguration is EmptyFilerConfiguration)
+        if (this.CrystalConfiguration.FilerConfiguration is not EmptyFilerConfiguration)
         {
-            return CrystalStartResult.Success;
+            var result = await this.PrepareAndLoadInternalFiler(param).ConfigureAwait(false);
+            if (result != CrystalStartResult.Success)
+            {
+                return result;
+            }
         }
 
-        var result = await this.filer.PrepareAndCheck(this.Crystalizer, this.CrystalConfiguration.FilerConfiguration).ConfigureAwait(false);
+        if (this.CrystalConfiguration.FilerConfiguration is not EmptyFilerConfiguration)
+        {
+            var result = await this.PrepareAndLoadInternalStorage(param).ConfigureAwait(false);
+            if (result != CrystalStartResult.Success)
+            {
+                return result;
+            }
+        }
+
+        return CrystalStartResult.Success;
+    }
+
+    private async Task<CrystalStartResult> PrepareAndLoadInternalFiler(CrystalStartParam param)
+    {
+        var result = await this.Filer.PrepareAndCheck(this.Crystalizer, this.CrystalConfiguration.FilerConfiguration).ConfigureAwait(false);
         if (result != CrystalResult.Success)
         {
             return CrystalStartResult.DirectoryError;
         }
 
         // Load
-        var memoryResult = await this.filer.ReadAsync(0, -1).ConfigureAwait(false);
+        var memoryResult = await this.Filer.ReadAsync(0, -1).ConfigureAwait(false);
         if (!memoryResult.IsSuccess)
         {
             if (await param.Query(CrystalStartResult.FileNotFound).ConfigureAwait(false) == AbortOrComplete.Complete)
@@ -228,26 +242,21 @@ public class CrystalImpl<TData> : ICrystal<TData>
             memoryResult.Return();
         }
 
-        return CrystalStartResult.Success;
-
 Reconstruct:
-// Reconstruct
+        // Reconstruct
         TinyhandSerializer.ReconstructObject<TData>(ref this.obj);
         this.savedHash = FarmHash.Hash64(TinyhandSerializer.SerializeObject<TData>(this.obj));
         return CrystalStartResult.Success;
     }
 
-    [MemberNotNull(nameof(filer))]
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected void ResolveFiler()
+    private async Task<CrystalStartResult> PrepareAndLoadInternalStorage(CrystalStartParam param)
     {
-        this.filer ??= this.Crystalizer.ResolveFiler(this.CrystalConfiguration.FilerConfiguration);
-    }
+        var result = await this.Storage.PrepareAndCheck(this.Crystalizer, this.CrystalConfiguration.StorageConfiguration, false).ConfigureAwait(false);
+        if (result != CrystalResult.Success)
+        {
+            return CrystalStartResult.DirectoryError;
+        }
 
-    [MemberNotNull(nameof(storage))]
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected void ResolveStorage()
-    {
-        this.storage ??= this.Crystalizer.ResolveStorage(this.CrystalConfiguration.StorageConfiguration);
+        return CrystalStartResult.Success;
     }
 }
