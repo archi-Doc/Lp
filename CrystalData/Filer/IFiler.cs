@@ -10,7 +10,7 @@ public interface IFiler
 
     Task<CrystalResult> PrepareAndCheck(Crystalizer crystalizer, PathConfiguration configuration);
 
-    CrystalResult Write(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared);
+    CrystalResult Write(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate);
 
     CrystalResult Delete();
 
@@ -19,10 +19,10 @@ public interface IFiler
     Task<CrystalMemoryOwnerResult> ReadAsync(long offset, int length)
         => this.ReadAsync(offset, length, TimeSpan.MinValue);
 
-    Task<CrystalResult> WriteAsync(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait);
+    Task<CrystalResult> WriteAsync(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait, bool truncate = true);
 
-    Task<CrystalResult> WriteAsync(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
-        => this.WriteAsync(offset, dataToBeShared, TimeSpan.MinValue);
+    Task<CrystalResult> WriteAsync(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate = true)
+        => this.WriteAsync(offset, dataToBeShared, TimeSpan.MinValue, truncate);
 
     Task<CrystalResult> DeleteAsync(TimeSpan timeToWait);
 

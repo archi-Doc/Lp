@@ -261,9 +261,14 @@ TryWrite:
         }
     }*/
 
-    CrystalResult IRawFiler.Write(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
+    CrystalResult IRawFiler.Write(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate)
     {
-        this.AddLast(new(path, offset, dataToBeShared));
+        if (offset != 0 || !truncate)
+        {// Not supported
+            return CrystalResult.NoPartialWriteSupport;
+        }
+
+        this.AddLast(new(path, offset, dataToBeShared, truncate));
         return CrystalResult.Started;
     }
 
@@ -281,14 +286,14 @@ TryWrite:
         return new(work.Result, work.ReadData.AsReadOnly());
     }
 
-    async Task<CrystalResult> IRawFiler.WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait)
+    async Task<CrystalResult> IRawFiler.WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait, bool truncate)
     {
-        if (offset != 0)
+        if (offset != 0 || !truncate)
         {// Not supported
-            return CrystalResult.NoOffsetSupport;
+            return CrystalResult.NoPartialWriteSupport;
         }
 
-        var work = new FilerWork(path, offset, dataToBeShared);
+        var work = new FilerWork(path, offset, dataToBeShared, truncate);
         var workInterface = this.AddLast(work);
         await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
         return work.Result;

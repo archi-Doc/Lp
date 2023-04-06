@@ -75,16 +75,20 @@ TryWrite:
                     await RandomAccess.WriteAsync(handle, work.WriteData.Memory, work.Offset, worker.CancellationToken).ConfigureAwait(false);
                     worker.logger?.TryGet()?.Log($"Written[{work.WriteData.Memory.Length}] {work.Path}");
 
-                    /*try
+                    if (work.Truncate)
                     {
-                        if (RandomAccess.GetLength(handle) > work.WriteData.Memory.Length)
+                        try
                         {
-                            RandomAccess.SetLength(handle, work.WriteData.Memory.Length);
+                            var newSize = work.Offset + work.WriteData.Memory.Length;
+                            if (RandomAccess.GetLength(handle) > newSize)
+                            {
+                                RandomAccess.SetLength(handle, newSize);
+                            }
+                        }
+                        catch
+                        {
                         }
                     }
-                    catch
-                    {
-                    }*/
 
                     work.Result = CrystalResult.Success;
                 }
@@ -234,9 +238,9 @@ DeleteAndExit:
         this.Dispose();
     }
 
-    CrystalResult IRawFiler.Write(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
+    CrystalResult IRawFiler.Write(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate)
     {
-        this.AddLast(new(path, offset, dataToBeShared));
+        this.AddLast(new(path, offset, dataToBeShared, truncate));
         return CrystalResult.Started;
     }
 
@@ -254,9 +258,9 @@ DeleteAndExit:
         return new(work.Result, work.ReadData.AsReadOnly());
     }
 
-    async Task<CrystalResult> IRawFiler.WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait)
+    async Task<CrystalResult> IRawFiler.WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait, bool truncate)
     {
-        var work = new FilerWork(path, offset, dataToBeShared);
+        var work = new FilerWork(path, offset, dataToBeShared, truncate);
         var workInterface = this.AddLast(work);
         await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
         return work.Result;

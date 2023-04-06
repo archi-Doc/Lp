@@ -32,11 +32,11 @@ internal class RawFilerToFiler : IFiler
     Task<CrystalMemoryOwnerResult> IFiler.ReadAsync(long offset, int length, TimeSpan timeToWait)
         => this.RawFiler.ReadAsync(this.Path, offset, length, timeToWait);
 
-    CrystalResult IFiler.Write(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
-        => this.RawFiler.Write(this.Path, offset, dataToBeShared);
+    CrystalResult IFiler.Write(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate)
+        => this.RawFiler.Write(this.Path, offset, dataToBeShared, truncate);
 
-    Task<CrystalResult> IFiler.WriteAsync(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait)
-        => this.RawFiler.WriteAsync(this.Path, offset, dataToBeShared, timeToWait);
+    Task<CrystalResult> IFiler.WriteAsync(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait, bool truncate)
+        => this.RawFiler.WriteAsync(this.Path, offset, dataToBeShared, timeToWait, truncate);
 
     public override string ToString()
         => $"RawFilerToFile({this.RawFiler.ToString()}) Path:{this.Path}";

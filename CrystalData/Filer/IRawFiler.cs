@@ -10,7 +10,7 @@ public interface IRawFiler
 
     Task Terminate();
 
-    CrystalResult Write(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared);
+    CrystalResult Write(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate = true);
 
     /// <summary>
     /// Delete the file matching the path.
@@ -24,10 +24,10 @@ public interface IRawFiler
     Task<CrystalMemoryOwnerResult> ReadAsync(string path, long offset, int length)
         => this.ReadAsync(path, offset, length, TimeSpan.MinValue);
 
-    Task<CrystalResult> WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait);
+    Task<CrystalResult> WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait, bool truncate = true);
 
-    Task<CrystalResult> WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
-        => this.WriteAsync(path, offset, dataToBeShared, TimeSpan.MinValue);
+    Task<CrystalResult> WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate = true)
+        => this.WriteAsync(path, offset, dataToBeShared, TimeSpan.MinValue, truncate);
 
     Task<CrystalResult> DeleteAsync(string path, TimeSpan timeToWait);
 
