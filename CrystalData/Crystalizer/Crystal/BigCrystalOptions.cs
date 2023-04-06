@@ -17,7 +17,7 @@ public record BigCrystalOptions
     {
     }
 
-    internal BigCrystalOptions(string crystalDirectory)
+    /*public BigCrystalOptions(string crystalDirectory)
     {
         this.CrystalDirectory = crystalDirectory;
     }
@@ -25,7 +25,7 @@ public record BigCrystalOptions
     /// <summary>
     /// Gets or sets a path of the directory where data files are stored.
     /// </summary>
-    public string CrystalDirectory { get; set; } = DefaultCrystalDirectory;
+    public string CrystalDirectory { get; set; } = DefaultCrystalDirectory;*/
 
     public int MaxDataSize { get; init; } = DefaultMaxDataSize;
 
@@ -34,8 +34,6 @@ public record BigCrystalOptions
     public int MaxFragmentCount { get; init; } = DefaultMaxFragmentCount;
 
     public long MemorySizeLimit { get; init; } = DefaultMemorySizeLimit;
-
-    public long DirectoryCapacity { get; init; } = 1024L * 1024 * 1024 * 10; // 10GB
 
     public int MaxParentInMemory { get; set; } = DefaultMaxParentInMemory;
 
@@ -46,21 +44,4 @@ public record BigCrystalOptions
     public string StorageFile { get; init; } = "Storage.main";
 
     public string StorageBackup { get; init; } = "Storage.back";
-
-    public string RootPath => this.rootPath ??= PathHelper.GetRootedDirectory(Directory.GetCurrentDirectory(), this.CrystalDirectory);
-
-    public string CrystalFilePath => PathHelper.GetRootedFile(this.RootPath, this.CrystalFile);
-
-    public string CrystalBackupPath => PathHelper.GetRootedFile(this.RootPath, this.CrystalBackup);
-
-    public string StorageFilePath => PathHelper.GetRootedFile(this.RootPath, this.StorageFile);
-
-    public string StorageBackupPath => PathHelper.GetRootedFile(this.RootPath, this.StorageBackup);
-
-    internal void SetRootPath(string directory)
-    {
-        this.rootPath = PathHelper.GetRootedDirectory(directory, this.CrystalDirectory);
-    }
-
-    private string? rootPath;
 }

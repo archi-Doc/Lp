@@ -45,6 +45,7 @@ internal class UnitCrystalContext : IUnitCrystalContext
 
         var options = new CrystalizerOptions();
         options.RootPath = context.DataDirectory;
+        context.SetOptions(options);
     }
 
     private Dictionary<Type, CrystalConfiguration> typeToCrystalConfiguration = new();

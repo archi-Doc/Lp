@@ -66,7 +66,7 @@ public static class PathHelper
         }
     }
 
-    public static string GetRootedFile(string root, string file)
+    public static string GetRootedFile(string rootDirectory, string file)
     {
         if (Path.IsPathRooted(file))
         {
@@ -74,7 +74,7 @@ public static class PathHelper
         }
         else
         {
-            return Path.Combine(root, file);
+            return Path.Combine(rootDirectory, file);
         }
     }
 }

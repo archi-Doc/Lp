@@ -22,4 +22,7 @@ public abstract partial record FilerConfiguration
 
     [Key(0)]
     public string File { get; init; }
+
+    public FilerConfiguration CombinePath(string path)
+        => this with { File = Path.Combine(this.File, path), };
 }

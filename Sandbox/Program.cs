@@ -27,6 +27,12 @@ public class Program
         };
 
         var builder = new CrystalControl.Builder()
+            .Preload(context =>
+            {
+                context.DataDirectory = "Data";
+                // var options = context.GetOrCreateOptions<UnitOptions>();
+                // options.DataDirectory = "Data";
+            })
             .Configure(context =>
             {
                 context.AddSingleton<TestClass>();
@@ -46,7 +52,10 @@ public class Program
                     {
                         datumRegistry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
                     }, BigCrystalOptions.Default),
-                    new(Crystalization.Manual, new LocalFilerConfiguration()));
+                    new(
+                        Crystalization.Manual,
+                        new LocalFilerConfiguration("Crystal"),
+                        new SimpleStorageConfiguration(new LocalFilerConfiguration("Storage"))));
             })
             .SetupOptions<CrystalizerOptions>((context, options) =>
             {// CrystalizerOptions

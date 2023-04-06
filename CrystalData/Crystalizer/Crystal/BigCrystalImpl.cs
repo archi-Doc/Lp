@@ -14,8 +14,8 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
         this.himoGoshujin = new(this);
         this.logger = crystalizer.UnitLogger.GetLogger<IBigCrystal<TData>>();
 
-        this.storageFileConfiguration = this.CrystalConfiguration.FilerConfiguration with { File = this.BigCrystalOptions.StorageFilePath, };
-        this.crystalFileConfiguration = this.CrystalConfiguration.FilerConfiguration with { File = this.BigCrystalOptions.CrystalFilePath, };
+        this.storageFileConfiguration = this.CrystalConfiguration.FilerConfiguration.CombinePath(this.BigCrystalOptions.StorageFile);
+        this.crystalFileConfiguration = this.CrystalConfiguration.FilerConfiguration.CombinePath(this.BigCrystalOptions.CrystalFile);
 
         this.InitializeRoot();
     }
@@ -54,7 +54,7 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
 
             if (param.FromScratch)
             {
-                await this.StorageGroup.PrepareAndCheck(this.BigCrystalOptions, param, null).ConfigureAwait(false);
+                await this.StorageGroup.PrepareAndCheck(this.CrystalConfiguration.StorageConfiguration, param, null).ConfigureAwait(false);
 
                 await this.DeleteAllAsync();
                 this.InitializeRoot();
@@ -63,7 +63,7 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
             }
 
             // Load CrystalStorage
-            var result = await this.LoadCrystalStorage(param).ConfigureAwait(false);
+            var result = await this.LoadStorageGroup(param).ConfigureAwait(false);
             if (result != CrystalStartResult.Success)
             {
                 return result;
@@ -107,10 +107,16 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
             await this.StorageGroup.SaveStorage().ConfigureAwait(false);
 
             // Save data
-            await this.Save(this.BigCrystalOptions.CrystalFilePath, this.BigCrystalOptions.CrystalBackupPath).ConfigureAwait(false);
+            if (this.crystalFiler != null)
+            {
+                await this.Save(this.crystalFiler).ConfigureAwait(false);
+            }
 
             // Save storage
-            await this.StorageGroup.SaveGroup(this.BigCrystalOptions.StorageFilePath, this.BigCrystalOptions.StorageBackupPath).ConfigureAwait(false);
+            if (this.storageFiler != null)
+            {
+                await this.StorageGroup.SaveGroup(this.storageFiler).ConfigureAwait(false);
+            }
 
             this.StorageGroup.Clear();
 
@@ -132,19 +138,9 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
         this.obj?.Delete();
         this.himoGoshujin.Clear();
 
-        PathHelper.TryDeleteFile(this.BigCrystalOptions.CrystalFilePath);
-        PathHelper.TryDeleteFile(this.BigCrystalOptions.CrystalBackupPath);
-        PathHelper.TryDeleteFile(this.BigCrystalOptions.StorageFilePath);
-        PathHelper.TryDeleteFile(this.BigCrystalOptions.StorageBackupPath);
+        this.crystalFiler?.Delete();
+        this.storageFiler?.Delete();
         await this.StorageGroup.DeleteAllAsync();
-
-        try
-        {
-            Directory.Delete(this.BigCrystalOptions.RootPath);
-        }
-        catch
-        {
-        }
 
         this.InitializeRoot();
     }
@@ -155,7 +151,7 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
         this.obj.Initialize(this, null, true);
     }
 
-    private async Task<CrystalStartResult> LoadCrystalStorage(CrystalStartParam param)
+    private async Task<CrystalStartResult> LoadStorageGroup(CrystalStartParam param)
     {// await this.semaphore.WaitAsync().ConfigureAwait(false)
         CrystalStartResult result;
 
@@ -165,7 +161,7 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
         {
             if (await param.Query(CrystalStartResult.DirectoryNotFound).ConfigureAwait(false) == AbortOrComplete.Complete)
             {
-                result = await this.StorageGroup.PrepareAndCheck(this.BigCrystalOptions, param, null).ConfigureAwait(false);
+                result = await this.StorageGroup.PrepareAndCheck(this.CrystalConfiguration.StorageConfiguration, param, null).ConfigureAwait(false);
                 if (result == CrystalStartResult.Success || param.ForceStart)
                 {
                     return CrystalStartResult.Success;
@@ -179,7 +175,7 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
             }
         }
 
-        result = await this.StorageGroup.PrepareAndCheck(this.BigCrystalOptions, param, memory).ConfigureAwait(false);
+        result = await this.StorageGroup.PrepareAndCheck(this.CrystalConfiguration.StorageConfiguration, param, memory).ConfigureAwait(false);
         if (result == CrystalStartResult.Success || param.ForceStart)
         {
             return CrystalStartResult.Success;
@@ -190,34 +186,9 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
 
     private async Task<CrystalStartResult> LoadCrystal(CrystalStartParam param)
     {// await this.semaphore.WaitAsync().ConfigureAwait(false)
-     // Load
-        byte[]? data;
-        try
-        {
-            data = await File.ReadAllBytesAsync(this.BigCrystalOptions.CrystalFilePath).ConfigureAwait(false);
-        }
-        catch
-        {
-            goto LoadBackup;
-        }
-
-        // Checksum
-        if (!HashHelper.CheckFarmHashAndGetData(data.AsMemory(), out var memory))
-        {
-            goto LoadBackup;
-        }
-
-        if (this.DeserializeCrystal(memory))
-        {
-            return CrystalStartResult.Success;
-        }
-
-LoadBackup:
-        try
-        {
-            data = await File.ReadAllBytesAsync(this.BigCrystalOptions.CrystalBackupPath).ConfigureAwait(false);
-        }
-        catch
+        var filerResult = await this.crystalFiler!.ReadAsync(0, -1).ConfigureAwait(false);
+        if (filerResult.IsFailure ||
+            !HashHelper.CheckFarmHashAndGetData(filerResult.Data.Memory, out var memory))
         {
             if (await param.Query(CrystalStartResult.FileNotFound).ConfigureAwait(false) == AbortOrComplete.Complete)
             {
@@ -229,20 +200,6 @@ LoadBackup:
             }
         }
 
-        // Checksum
-        if (!HashHelper.CheckFarmHashAndGetData(data.AsMemory(), out memory))
-        {
-            if (await param.Query(CrystalStartResult.FileError).ConfigureAwait(false) == AbortOrComplete.Complete)
-            {
-                return CrystalStartResult.Success;
-            }
-            else
-            {
-                return CrystalStartResult.FileError;
-            }
-        }
-
-        // Deserialize
         if (!this.DeserializeCrystal(memory))
         {
             if (await param.Query(CrystalStartResult.FileError).ConfigureAwait(false) == AbortOrComplete.Complete)
@@ -273,9 +230,9 @@ LoadBackup:
         return true;
     }
 
-    private async Task Save(string path, string? backupPath)
+    private async Task Save(IFiler filer)
     {
         var byteArray = TinyhandSerializer.Serialize(this.obj);
-        await HashHelper.GetFarmHashAndSaveAsync(byteArray, path, backupPath).ConfigureAwait(false);
+        await HashHelper.GetFarmHashAndSaveAsync(byteArray, filer).ConfigureAwait(false);
     }
 }

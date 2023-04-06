@@ -15,11 +15,6 @@ public static class TestHelper
 {
     public static async Task<LpCrystal> CreateAndStartCrystal()
     {
-        var options = new BigCrystalOptions() with
-        {
-            CrystalDirectory = $"Crystal[{RandomVault.Pseudo.NextUInt32():x4}]",
-        };
-
         var builder = new CrystalControl.Builder();
         builder
             .Configure(context =>
@@ -27,9 +22,20 @@ public static class TestHelper
                 context.AddSingleton<LpCrystal>();
                 context.Services.Add(ServiceDescriptor.Transient(typeof(LpData), x => x.GetRequiredService<LpCrystal>().Object.Data));
             })
-            .SetupOptions<BigCrystalOptions>((context, options) =>
+            .ConfigureCrystal(context =>
             {
-                options.CrystalDirectory = $"Crystal[{RandomVault.Pseudo.NextUInt32():x4}]";
+                var directory = $"Crystal[{RandomVault.Pseudo.NextUInt32():x4}]";
+                context.AddBigCrystal<MergerData>(
+                    new(
+                        datumRegistry =>
+                        {
+                            datumRegistry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
+                        },
+                        BigCrystalOptions.Default),
+                    new(
+                        Crystalization.Manual,
+                        new LocalFilerConfiguration(directory),
+                        new SimpleStorageConfiguration(new LocalFilerConfiguration(directory))));
             });
 
         var unit = builder.Build();
@@ -61,9 +67,23 @@ public static class TestHelper
                 context.AddSingleton<MergerCrystal>();
                 context.Services.Add(ServiceDescriptor.Transient(typeof(LpData), x => x.GetRequiredService<MergerCrystal>().Object));
             })
+            .ConfigureCrystal(context =>
+            {
+                var directory = $"Crystal[{RandomVault.Pseudo.NextUInt32():x4}]";
+                context.AddBigCrystal<MergerData>(
+                    new(
+                        datumRegistry =>
+                        {
+                            datumRegistry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
+                        },
+                        BigCrystalOptions.Default),
+                    new(
+                        Crystalization.Manual,
+                        new LocalFilerConfiguration(directory),
+                        new SimpleStorageConfiguration(new LocalFilerConfiguration(directory))));
+            })
             .SetupOptions<BigCrystalOptions>((context, options) =>
             {
-                options.CrystalDirectory = $"Crystal[{RandomVault.Pseudo.NextUInt32():x4}]";
                 options.MaxParentInMemory = maxParent;
             });
 

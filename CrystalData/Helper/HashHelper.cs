@@ -95,6 +95,32 @@ internal static class HashHelper
     /// Calculates a hash value of the data and save the 8-byte hash value and data to a file.
     /// </summary>
     /// <param name="data">Data.</param>
+    /// <param name="filer">IFiler.</param>
+    /// <returns><see langword="true"/>; Success.</returns>
+    public static async Task<bool> GetFarmHashAndSaveAsync(byte[] data, IFiler filer)
+    {
+        var hash = new byte[8];
+        BitConverter.TryWriteBytes(hash, Arc.Crypto.FarmHash.Hash64(data.AsSpan()));
+
+        var result = await filer.WriteAsync(0, new(hash)).ConfigureAwait(false);
+        if (result != CrystalResult.Success)
+        {
+            return false;
+        }
+
+        result = await filer.WriteAsync(hash.Length, new(data)).ConfigureAwait(false);
+        if (result != CrystalResult.Success)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Calculates a hash value of the data and save the 8-byte hash value and data to a file.
+    /// </summary>
+    /// <param name="data">Data.</param>
     /// <param name="path">Output path.</param>
     /// <param name="backupPath">Backup path.</param>
     /// <returns><see langword="true"/>; Success.</returns>

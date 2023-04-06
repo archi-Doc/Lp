@@ -41,7 +41,8 @@ internal class RawFilerToFiler : IFiler
     {
         this.Crystalizer = crystalizer;
         this.RawFiler = rawFiler;
-        this.File = filerConfiguration.File;
+        // this.File = filerConfiguration.File;
+        this.File = PathHelper.GetRootedFile(this.Crystalizer.RootDirectory, filerConfiguration.File);
     }
 
     public Crystalizer Crystalizer { get; }

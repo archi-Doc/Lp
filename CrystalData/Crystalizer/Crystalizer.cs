@@ -276,7 +276,6 @@ public class Crystalizer
             ThrowTypeNotRegistered(type);
         }
 
-        configuration!.BigCrystalOptions.SetRootPath(this.RootDirectory);
         return configuration!;
     }
 
