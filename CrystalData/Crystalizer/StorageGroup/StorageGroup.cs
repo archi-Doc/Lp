@@ -320,7 +320,7 @@ public sealed class StorageGroup
             byteArray = TinyhandSerializer.Serialize(this.storages);
         }
 
-        await HashHelper.GetFarmHashAndSaveAsync(byteArray, filer).ConfigureAwait(false);
+        await PathHelper.SaveData(byteArray, filer, 0).ConfigureAwait(false);
     }
 
     internal void Clear()

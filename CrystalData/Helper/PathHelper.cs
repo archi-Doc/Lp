@@ -6,6 +6,93 @@ namespace CrystalData;
 
 public static class PathHelper
 {
+    public const string CheckExtension = "check";
+    public const int CheckLength = 16;
+
+    public static async Task<(CrystalMemoryOwnerResult Result, ulong Position)> LoadData(IFiler? filer)
+    {
+        if (filer == null)
+        {
+            return (new(CrystalResult.NoFiler), 0);
+        }
+
+        var result = await filer.ReadAsync(0, -1).ConfigureAwait(false);
+        if (result.IsFailure)
+        {
+            return (new(result.Result), 0);
+        }
+
+        // Load check
+        var checkFiler = filer.CloneWithExtension(CheckExtension);
+        var checkResult = await checkFiler.ReadAsync(0, -1).ConfigureAwait(false);
+        if (checkResult.IsFailure || checkResult.Data.Memory.Length != CheckLength)
+        {// No check
+            return (result, 0);
+        }
+
+        ulong hash;
+        ulong position;
+        try
+        {
+            hash = BitConverter.ToUInt64(checkResult.Data.Memory.Span);
+            position = BitConverter.ToUInt64(checkResult.Data.Memory.Span.Slice(sizeof(ulong)));
+        }
+        catch
+        {
+            return (result, 0);
+        }
+
+        if (FarmHash.Hash64(result.Data.Memory.Span) != hash)
+        {// Hash does not match
+            return (new(CrystalResult.CorruptedData), 0);
+        }
+
+        return (result, position);
+    }
+
+    public static Task<CrystalResult> SaveData<T>(T? obj, IFiler? filer, ulong position)
+        where T : ITinyhandSerialize<T>
+    {
+        if (obj == null)
+        {
+            return Task.FromResult(CrystalResult.NoData);
+        }
+        else if (filer == null)
+        {
+            return Task.FromResult(CrystalResult.NoFiler);
+        }
+
+        var data = TinyhandSerializer.SerializeObject(obj);
+        return SaveData(data, filer, position);
+    }
+
+    public static async Task<CrystalResult> SaveData(byte[]? data, IFiler? filer, ulong position)
+    {
+        if (data == null)
+        {
+            return CrystalResult.NoData;
+        }
+        else if (filer == null)
+        {
+            return CrystalResult.NoFiler;
+        }
+
+        var result = await filer.WriteAsync(0, new(data));
+        if (result != CrystalResult.Success)
+        {
+            return result;
+        }
+
+        var hashAndPosition = new byte[CheckLength];
+        var hash = FarmHash.Hash64(data.AsSpan());
+        BitConverter.TryWriteBytes(hashAndPosition.AsSpan(), hash);
+        BitConverter.TryWriteBytes(hashAndPosition.AsSpan(sizeof(ulong)), position);
+
+        var chckFiler = filer.CloneWithExtension(CheckExtension);
+        result = await chckFiler.WriteAsync(0, new(hashAndPosition));
+        return result;
+    }
+
     /// <summary>
     /// Deletes the specified file (no exception will be thrown).
     /// </summary>

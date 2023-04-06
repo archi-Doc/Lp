@@ -12,6 +12,13 @@ internal class RawFilerToFiler : IFiler
         // this.File = PathHelper.GetRootedFile(this.Crystalizer.RootDirectory, filerConfiguration.Path);
     }
 
+    internal RawFilerToFiler(Crystalizer crystalizer, IRawFiler rawFiler, string path)
+    {
+        this.Crystalizer = crystalizer;
+        this.RawFiler = rawFiler;
+        this.Path = path;
+    }
+
     public Crystalizer Crystalizer { get; }
 
     public IRawFiler RawFiler { get; }
@@ -37,6 +44,21 @@ internal class RawFilerToFiler : IFiler
 
     Task<CrystalResult> IFiler.WriteAsync(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait, bool truncate)
         => this.RawFiler.WriteAsync(this.Path, offset, dataToBeShared, timeToWait, truncate);
+
+    IFiler IFiler.CloneWithExtension(string extension)
+    {
+        string path;
+        try
+        {
+            path = System.IO.Path.ChangeExtension(this.Path, extension);
+        }
+        catch
+        {
+            path = $"{this.Path}.{extension}";
+        }
+
+        return new RawFilerToFiler(this.Crystalizer, this.RawFiler, path);
+    }
 
     public override string ToString()
         => $"RawFilerToFile({this.RawFiler.ToString()}) Path:{this.Path}";

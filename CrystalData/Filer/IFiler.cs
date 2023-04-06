@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using CrystalData.Filer;
-
 namespace CrystalData;
 
 public interface IFiler
@@ -28,4 +26,6 @@ public interface IFiler
 
     Task<CrystalResult> DeleteAsync()
         => this.DeleteAsync();
+
+    IFiler CloneWithExtension(string extension);
 }

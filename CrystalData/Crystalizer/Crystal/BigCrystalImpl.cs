@@ -60,6 +60,8 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
                 return CrystalStartResult.Success;
             }
 
+            var rr = PathHelper.LoadData2(this.storageFiler);
+
             // Load CrystalStorage
             var result = await this.LoadStorageGroup(param).ConfigureAwait(false);
             if (result != CrystalStartResult.Success)
@@ -104,13 +106,10 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
             // Stop storage
             await this.StorageGroup.SaveStorage().ConfigureAwait(false);
 
-            // Save data
-            if (this.crystalFiler != null)
-            {
-                await this.SaveCrystal(this.crystalFiler).ConfigureAwait(false);
-            }
+            // Save crystal
+            await PathHelper.SaveData(this.obj, this.crystalFiler, 0).ConfigureAwait(false);
 
-            // Save storage
+            // Save storage group
             if (this.storageFiler != null)
             {
                 await this.StorageGroup.SaveGroup(this.storageFiler).ConfigureAwait(false);
@@ -230,9 +229,9 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
         return true;
     }
 
-    private async Task SaveCrystal(IFiler filer)
+    /*private async Task SaveCrystal(IFiler filer)
     {
         var byteArray = TinyhandSerializer.Serialize(this.obj);
         await HashHelper.GetFarmHashAndSaveAsync(byteArray, filer).ConfigureAwait(false);
-    }
+    }*/
 }
