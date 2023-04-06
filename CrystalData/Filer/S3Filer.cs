@@ -31,11 +31,10 @@ public class S3Filer : TaskWorker<FilerWork>, IRawFiler
         });
     }
 
-    public S3Filer(string bucket, string path)
+    public S3Filer(string bucket)
         : this()
     {
         this.bucket = bucket;
-        this.path = path.TrimEnd('/');
     }
 
     public static AddStorageResult Check(StorageGroup storageGroup, string bucket, string path)
@@ -49,17 +48,13 @@ public class S3Filer : TaskWorker<FilerWork>, IRawFiler
     }
 
     public override string ToString()
-        => $"S3Filer Bucket: {this.bucket}, Path: {this.path}";
+        => $"S3Filer Bucket: {this.bucket}";
 
     #region FieldAndProperty
 
     private ILogger? logger;
 
-    [Key(0)]
     private string bucket = string.Empty;
-
-    [Key(1)]
-    private string path = string.Empty;
 
     private AmazonS3Client? client;
 
@@ -76,7 +71,7 @@ public class S3Filer : TaskWorker<FilerWork>, IRawFiler
 
         var tryCount = 0;
         work.Result = CrystalResult.Started;
-        var filePath = worker.GetPath(work.Path);
+        var filePath = work.Path;
         if (work.Type == FilerWork.WorkType.Write)
         {// Write
 TryWrite:
@@ -185,25 +180,27 @@ TryWrite:
 
     async Task<CrystalResult> IRawFiler.PrepareAndCheck(Crystalizer crystalizer, FilerConfiguration configuration)
     {
-        this.client?.Dispose();
-        if (!crystalizer.StorageKey.TryGetKey(this.bucket, out var accessKeyPair))
-        {
-            return CrystalResult.NoStorageKey;
-        }
+        if (this.client == null)
+        {// Create AmazonS3Client
+            if (!crystalizer.StorageKey.TryGetKey(this.bucket, out var accessKeyPair))
+            {
+                return CrystalResult.NoStorageKey;
+            }
 
-        try
-        {
-            this.client = new AmazonS3Client(accessKeyPair.AccessKeyId, accessKeyPair.SecretAccessKey);
-        }
-        catch
-        {
-            return CrystalResult.NoStorageKey;
+            try
+            {
+                this.client = new AmazonS3Client(accessKeyPair.AccessKeyId, accessKeyPair.SecretAccessKey);
+            }
+            catch
+            {
+                return CrystalResult.NoStorageKey;
+            }
         }
 
         // Write test
         using (var ms = new MemoryStream())
         {
-            var request = new Amazon.S3.Model.PutObjectRequest() { BucketName = this.bucket, Key = this.GetPath(WriteTestFile), InputStream = ms, };
+            var request = new Amazon.S3.Model.PutObjectRequest() { BucketName = this.bucket, Key = WriteTestFile, InputStream = ms, };
             var response = await this.client.PutObjectAsync(request).ConfigureAwait(false);
             if (response.HttpStatusCode != System.Net.HttpStatusCode.OK)
             {
@@ -211,9 +208,10 @@ TryWrite:
             }
         }
 
+        // Logger
         if (crystalizer.EnableLogger)
         {
-            this.logger = crystalizer.UnitLogger.GetLogger<S3Filer>();
+            this.logger ??= crystalizer.UnitLogger.GetLogger<S3Filer>();
         }
 
         return CrystalResult.Success;
@@ -303,16 +301,4 @@ TryWrite:
     }
 
     #endregion
-
-    private string GetPath(string file)
-    {
-        if (string.IsNullOrEmpty(this.path))
-        {
-            return file;
-        }
-        else
-        {
-            return $"{this.path}/{file}";
-        }
-    }
 }

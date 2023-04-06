@@ -221,7 +221,7 @@ DeleteAndExit:
 
         if (crystalizer.EnableLogger)
         {
-            this.logger = crystalizer.UnitLogger.GetLogger<LocalFiler>();
+            this.logger ??= crystalizer.UnitLogger.GetLogger<LocalFiler>();
         }
 
         return CrystalResult.Success;

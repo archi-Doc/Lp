@@ -101,7 +101,7 @@ public class Crystalizer
             {// S3 filer
                 if (!this.bucketToS3Filer.TryGetValue(s3FilerConfiguration.Bucket, out var filer))
                 {
-                    filer = new S3Filer(s3FilerConfiguration.Bucket, string.Empty);
+                    filer = new S3Filer(s3FilerConfiguration.Bucket);
                     this.bucketToS3Filer.TryAdd(s3FilerConfiguration.Bucket, filer);
                 }
 

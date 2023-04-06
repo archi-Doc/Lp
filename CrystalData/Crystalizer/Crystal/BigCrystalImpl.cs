@@ -50,7 +50,9 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
         using (this.semaphore.Lock())
         {
             this.storageFiler ??= this.Crystalizer.ResolveFiler(this.storageFileConfiguration);
+            await this.storageFiler.PrepareAndCheck(this.Crystalizer, this.storageFileConfiguration);
             this.crystalFiler ??= this.Crystalizer.ResolveFiler(this.crystalFileConfiguration);
+            await this.crystalFiler.PrepareAndCheck(this.Crystalizer, this.crystalFileConfiguration);
 
             if (param.FromScratch)
             {
@@ -86,11 +88,11 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
         }
     }
 
-    public async Task StopAsync(CrystalStopParam param)
+    async Task<CrystalResult> ICrystal.Save()
     {
         using (this.semaphore.Lock())
         {
-            if (param.RemoveAll)
+            /*if (param.RemoveAll)
             {
                 await this.DeleteAllAsync();
 
@@ -98,7 +100,7 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
                 this.StorageGroup.Clear();
 
                 return;
-            }
+            }*/
 
             // Save & Unload datum and metadaba.
             this.obj?.Save(true);
@@ -122,6 +124,8 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
 
             this.logger.TryGet()?.Log($"Crystal stop - {this.himoGoshujin.MemoryUsage}");
         }
+
+        return CrystalResult.Success;
     }
 
     public async Task Abort()
