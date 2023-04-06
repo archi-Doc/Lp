@@ -43,7 +43,7 @@ public partial class HimoGoshujinClass
 
                 this.himoGoshujin.memoryUsage += newSize - this.currentSize;
                 this.currentSize = newSize;
-                if (this.himoGoshujin.memoryUsage > this.dataInternal.BigCrystal.BigCrystalOptions.MemorySizeLimit)
+                if (this.himoGoshujin.memoryUsage > this.dataInternal.BigCrystal.BigCrystalConfiguration.MemorySizeLimit)
                 {
                     unloadFlag = true;
                 }
@@ -117,7 +117,7 @@ public partial class HimoGoshujinClass
         lock (this.syncParentData)
         {
             node = this.parentDataList.AddLast(data);
-            if (this.parentDataList.Count > this.bigCrystal.BigCrystalOptions.MaxParentInMemory)
+            if (this.parentDataList.Count > this.bigCrystal.BigCrystalConfiguration.MaxParentInMemory)
             {
                 unloadFlag = true;
             }
@@ -158,7 +158,7 @@ public partial class HimoGoshujinClass
 
     private void UnloadData()
     {
-        var limit = Math.Max(MemoryMargin, this.bigCrystal.BigCrystalOptions.MemorySizeLimit - MemoryMargin);
+        var limit = Math.Max(MemoryMargin, this.bigCrystal.BigCrystalConfiguration.MemorySizeLimit - MemoryMargin);
         if (Volatile.Read(ref this.memoryUsage) <= limit)
         {
             return;
@@ -189,7 +189,7 @@ public partial class HimoGoshujinClass
 
     private void UnloadParent()
     {
-        if (this.parentDataList.Count <= this.bigCrystal.BigCrystalOptions.MaxParentInMemory)
+        if (this.parentDataList.Count <= this.bigCrystal.BigCrystalConfiguration.MaxParentInMemory)
         {
             return;
         }
@@ -223,7 +223,7 @@ public partial class HimoGoshujinClass
                 }
             }
         }
-        while (this.parentDataList.Count > this.bigCrystal.BigCrystalOptions.MaxParentInMemory);
+        while (this.parentDataList.Count > this.bigCrystal.BigCrystalConfiguration.MaxParentInMemory);
     }
 
     private IBigCrystal bigCrystal;

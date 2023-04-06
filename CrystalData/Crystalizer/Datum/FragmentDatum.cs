@@ -30,7 +30,7 @@ public class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDa
 
     CrystalResult FragmentDatum<TIdentifier>.Set(TIdentifier fragmentId, ReadOnlySpan<byte> span)
     {
-        if (span.Length > this.dataInternal.BigCrystalOptions.MaxFragmentSize)
+        if (span.Length > this.dataInternal.BigCrystalConfiguration.MaxFragmentSize)
         {
             return CrystalResult.OverSizeLimit;
         }
@@ -44,7 +44,7 @@ public class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDa
         {
             return CrystalResult.SerializeError;
         }
-        else if (memoryOwner.Memory.Length > this.dataInternal.BigCrystalOptions.MaxFragmentSize)
+        else if (memoryOwner.Memory.Length > this.dataInternal.BigCrystalConfiguration.MaxFragmentSize)
         {
             return CrystalResult.OverSizeLimit;
         }
@@ -146,7 +146,7 @@ public class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDa
         }
 
         this.fragments = new();
-        var max = this.dataInternal.BigCrystalOptions.MaxFragmentCount;
+        var max = this.dataInternal.BigCrystalConfiguration.MaxFragmentCount;
         var reader = new Tinyhand.IO.TinyhandReader(memoryOwner.Memory.Span);
         var options = TinyhandSerializerOptions.Standard;
         var memoryDifference = 0;
@@ -237,7 +237,7 @@ public class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDa
         FragmentObject<TIdentifier>? fragmentData;
         if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragmentData))
         {// New
-            if (this.fragments.Count >= this.dataInternal.BigCrystalOptions.MaxFragmentCount)
+            if (this.fragments.Count >= this.dataInternal.BigCrystalConfiguration.MaxFragmentCount)
             {
                 return CrystalResult.OverNumberLimit;
             }
@@ -260,7 +260,7 @@ public class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDa
         FragmentObject<TIdentifier>? fragmentObject;
         if (!this.fragments.IdChain.TryGetValue(fragmentId, out fragmentObject))
         {// New
-            if (this.fragments.IdChain.Count >= this.dataInternal.BigCrystalOptions.MaxFragmentCount)
+            if (this.fragments.IdChain.Count >= this.dataInternal.BigCrystalConfiguration.MaxFragmentCount)
             {
                 return CrystalResult.OverNumberLimit;
             }

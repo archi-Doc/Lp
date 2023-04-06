@@ -65,7 +65,7 @@ public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
             var tc = await data.FragmentDatum().GetObject<TestFragment>(Identifier.One);
         }
 
-        var byteArray = new byte[BigCrystalOptions.DefaultMaxDataSize];
+        var byteArray = new byte[BigCrystalConfiguration.DefaultMaxDataSize];
         for (var i = 0; i < 10; i++)
         {
             data = this.crystal.Object.GetOrCreateChild(new(i));

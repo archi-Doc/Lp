@@ -4,9 +4,9 @@ namespace CrystalData;
 
 public interface IUnitCrystalContext
 {
-    void AddCrystal<TData>(CrystalConfiguration crystalConfiguration)
+    void AddCrystal<TData>(CrystalConfiguration configuration)
         where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>;
 
-    void AddBigCrystal<TData>(BigCrystalConfiguration crystalConfiguration, CrystalConfiguration dataConfiguration)
+    void AddBigCrystal<TData>(BigCrystalConfiguration configuration)
         where TData : BaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>;
 }

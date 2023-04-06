@@ -72,7 +72,7 @@ public sealed class StorageGroup
             return (AddStorageResult.WriteError, 0);
         }
 
-        var relative = Path.GetRelativePath(this.Crystalizer.Configuration.RootPath, path);
+        var relative = Path.GetRelativePath(this.Crystalizer.RootDirectory, path);
         if (!relative.StartsWith("..\\"))
         {
             path = relative;
@@ -88,7 +88,7 @@ public sealed class StorageGroup
         lock (this.syncObject)
         {
             id = this.GetFreeStorageId();
-            var configuration = new SimpleStorageConfiguration(new LocalFilerConfiguration(path));
+            var configuration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration(path));
 
             var storageObject = new StorageObject(id, configuration);
             storageObject.StorageCapacity = capacity;
@@ -122,7 +122,7 @@ public sealed class StorageGroup
         {
             id = this.GetFreeStorageId();
 
-            var configuration = new SimpleStorageConfiguration(new S3FilerConfiguration(bucket, path));
+            var configuration = new SimpleStorageConfiguration(new S3DirectoryConfiguration(bucket, path));
 
             var storageObject = new StorageObject(id, configuration);
             storageObject.StorageCapacity = capacity;
@@ -229,7 +229,7 @@ public sealed class StorageGroup
         storageObject.Storage?.Delete(ref fileId);
     }
 
-    internal async Task<CrystalStartResult> PrepareAndCheck(BigCrystalOptions options, CrystalStartParam param, ReadOnlyMemory<byte>? data)
+    internal async Task<CrystalStartResult> PrepareAndCheck(StorageConfiguration configuration, CrystalStartParam param, ReadOnlyMemory<byte>? data)
     {// semaphore
         StorageObject.GoshujinClass? goshujin = null;
         if (data != null)
@@ -277,7 +277,6 @@ public sealed class StorageGroup
             try
             {
                 var id = this.GetFreeStorageId();
-                var configuration = new SimpleStorageConfiguration(new LocalFilerConfiguration(options.CrystalDirectory));
                 var storageObject = new StorageObject(id, configuration);
                 await storageObject.PrepareAndCheck(this, true).ConfigureAwait(false);
                 storageObject.Goshujin = goshujin;
@@ -313,7 +312,7 @@ public sealed class StorageGroup
         await Task.WhenAll(tasks).ConfigureAwait(false);
     }
 
-    internal async Task SaveGroup(string path, string? backupPath)
+    internal async Task SaveGroup(IFiler filer)
     {// Save storage information
         byte[] byteArray;
         lock (this.syncObject)
@@ -321,7 +320,7 @@ public sealed class StorageGroup
             byteArray = TinyhandSerializer.Serialize(this.storages);
         }
 
-        await HashHelper.GetFarmHashAndSaveAsync(byteArray, path, backupPath).ConfigureAwait(false);
+        await HashHelper.GetFarmHashAndSaveAsync(byteArray, filer).ConfigureAwait(false);
     }
 
     internal void Clear()

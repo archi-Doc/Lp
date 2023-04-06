@@ -24,6 +24,7 @@ public class CrystalControl
                 // Main services
                 context.AddSingleton<CrystalControl>();
                 context.AddSingleton<CrystalizerConfiguration>();
+                context.AddSingleton<CrystalizerOptions>();
                 context.AddSingleton<Crystalizer>();
                 context.AddSingleton<IStorageKey, StorageKey>();
 
@@ -38,9 +39,15 @@ public class CrystalControl
             });
         }
 
-        public new Builder Configure(Action<IUnitConfigurationContext> configureDelegate)
+        public new Builder Preload(Action<IUnitPreloadContext> @delegate)
         {
-            base.Configure(configureDelegate);
+            base.Preload(@delegate);
+            return this;
+        }
+
+        public new Builder Configure(Action<IUnitConfigurationContext> @delegate)
+        {
+            base.Configure(@delegate);
             return this;
         }
 

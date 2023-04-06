@@ -13,7 +13,7 @@ public class CrystalImpl<TData> : ICrystal<TData>
     internal CrystalImpl(Crystalizer crystalizer)
     {
         this.Crystalizer = crystalizer;
-        this.CrystalConfiguration = CrystalConfiguration.Default;
+        this.CrystalConfiguration = crystalizer.GetCrystalConfiguration(typeof(TData));
     }
 
     #region FieldAndProperty
@@ -29,8 +29,6 @@ public class CrystalImpl<TData> : ICrystal<TData>
     #region ICrystal
 
     public Crystalizer Crystalizer { get; }
-
-    public CrystalizerConfiguration CrystalOptions => this.Crystalizer.Configuration;
 
     public CrystalConfiguration CrystalConfiguration { get; private set; }
 
@@ -114,11 +112,11 @@ public class CrystalImpl<TData> : ICrystal<TData>
         }
     }
 
-    void ICrystal.ConfigureFiler(FilerConfiguration configuration)
+    void ICrystal.ConfigureFile(FileConfiguration configuration)
     {
         using (this.semaphore.Lock())
         {
-            this.CrystalConfiguration = this.CrystalConfiguration with { FilerConfiguration = configuration, };
+            this.CrystalConfiguration = this.CrystalConfiguration with { FileConfiguration = configuration, };
             this.filer = null;
         }
     }
@@ -177,7 +175,7 @@ public class CrystalImpl<TData> : ICrystal<TData>
 
     #endregion
 
-    private async Task<CrystalStartResult> PrepareAndLoadInternal(CrystalStartParam? param)
+    protected async Task<CrystalStartResult> PrepareAndLoadInternal(CrystalStartParam? param)
     {// this.semaphore.Lock()
         if (this.obj != null)
         {
@@ -187,12 +185,12 @@ public class CrystalImpl<TData> : ICrystal<TData>
         param ??= CrystalStartParam.Default;
 
         this.ResolveFiler();
-        if (this.CrystalConfiguration.FilerConfiguration is EmptyFilerConfiguration)
+        if (this.CrystalConfiguration.FileConfiguration is EmptyFileConfiguration)
         {
             return CrystalStartResult.Success;
         }
 
-        var result = await this.filer.PrepareAndCheck(this.Crystalizer, this.CrystalConfiguration.FilerConfiguration).ConfigureAwait(false);
+        var result = await this.filer.PrepareAndCheck(this.Crystalizer, this.CrystalConfiguration.FileConfiguration).ConfigureAwait(false);
         if (result != CrystalResult.Success)
         {
             return CrystalStartResult.DirectoryError;
@@ -241,14 +239,14 @@ Reconstruct:
 
     [MemberNotNull(nameof(filer))]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ResolveFiler()
+    protected void ResolveFiler()
     {
-        this.filer ??= this.Crystalizer.ResolveFiler(this.CrystalConfiguration.FilerConfiguration);
+        this.filer ??= this.Crystalizer.ResolveFiler(this.CrystalConfiguration.FileConfiguration);
     }
 
     [MemberNotNull(nameof(storage))]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ResolveStorage()
+    protected void ResolveStorage()
     {
         this.storage ??= this.Crystalizer.ResolveStorage(this.CrystalConfiguration.StorageConfiguration);
     }

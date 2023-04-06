@@ -181,7 +181,9 @@ TryWrite:
 
     #region IFiler
 
-    async Task<CrystalResult> IRawFiler.PrepareAndCheck(Crystalizer crystalizer, FilerConfiguration configuration)
+    bool IRawFiler.SupportPartialWrite => false;
+
+    async Task<CrystalResult> IRawFiler.PrepareAndCheck(Crystalizer crystalizer, PathConfiguration configuration)
     {
         this.client?.Dispose();
         if (!crystalizer.StorageKey.TryGetKey(this.bucket, out var accessKeyPair))
@@ -209,7 +211,7 @@ TryWrite:
             }
         }
 
-        if (crystalizer.Configuration.EnableLogger)
+        if (crystalizer.EnableLogger)
         {
             this.logger = crystalizer.UnitLogger.GetLogger<S3Filer>();
         }

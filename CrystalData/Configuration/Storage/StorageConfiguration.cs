@@ -6,11 +6,11 @@ namespace CrystalData;
 [TinyhandUnion(1, typeof(SimpleStorageConfiguration))]
 public abstract partial record StorageConfiguration
 {
-    public StorageConfiguration(FilerConfiguration filerConfiguration)
+    public StorageConfiguration(DirectoryConfiguration filerConfiguration)
     {
-        this.FilerConfiguration = filerConfiguration;
+        this.DirectoryConfiguration = filerConfiguration;
     }
 
     [Key(0)]
-    public FilerConfiguration FilerConfiguration { get; private set; }
+    public DirectoryConfiguration DirectoryConfiguration { get; private set; }
 }

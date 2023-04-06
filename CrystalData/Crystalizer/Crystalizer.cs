@@ -6,18 +6,45 @@ using System.Runtime.CompilerServices;
 using CrystalData.Filer;
 using CrystalData.Storage;
 
+#pragma warning disable SA1204
+
 namespace CrystalData;
 
 public class Crystalizer
 {
-    public Crystalizer(CrystalizerConfiguration configuration, ILogger logger, UnitLogger unitLogger, IStorageKey storageKey)
+    public Crystalizer(CrystalizerConfiguration configuration, CrystalizerOptions options, ILogger logger, UnitLogger unitLogger, IStorageKey storageKey)
     {
-        this.Configuration = configuration;
+        this.configuration = configuration;
+        this.EnableLogger = options.EnableLogger;
+        this.RootDirectory = options.RootPath;
+        if (string.IsNullOrEmpty(this.RootDirectory))
+        {
+            this.RootDirectory = Directory.GetCurrentDirectory();
+        }
+
         this.logger = logger;
         this.UnitLogger = unitLogger;
         this.StorageKey = storageKey;
 
-        foreach (var x in this.Configuration.BigCrystalConfigurations)
+        foreach (var x in this.configuration.CrystalConfigurations)
+        {
+            ICrystal? crystal;
+            if (x.Value is BigCrystalConfiguration)
+            {// new BigCrystalImpl<TData>
+                crystal = (IBigCrystal)Activator.CreateInstance(typeof(BigCrystalImpl<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
+            }
+            else
+            {// new CrystalImpl<TData>
+                crystal = (ICrystal)Activator.CreateInstance(typeof(CrystalImpl<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
+            }
+
+            crystal.Configure(x.Value);
+
+            this.typeToCrystal.TryAdd(x.Key, crystal);
+            this.crystals.TryAdd(crystal, 0);
+        }
+
+        /*foreach (var x in this.configuration.BigCrystalConfigurations)
         {
             // (IBigCrystal) new CrystalDataImpl<TData>
             var bigCrystal = (IBigCrystal)Activator.CreateInstance(typeof(BigCrystalImpl<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
@@ -25,7 +52,7 @@ public class Crystalizer
             this.typeToBigCrystal.TryAdd(x.Key, bigCrystal);
         }
 
-        foreach (var x in this.Configuration.CrystalConfigurations)
+        foreach (var x in this.configuration.CrystalConfigurations)
         {
             ICrystal? crystal;
             if (!this.typeToBigCrystal.TryGetValue(x.Key, out var bigCrystal))
@@ -42,21 +69,24 @@ public class Crystalizer
 
             this.typeToCrystal.TryAdd(x.Key, crystal);
             this.crystals.TryAdd(crystal, 0);
-        }
+        }*/
     }
 
     #region FieldAndProperty
 
-    public CrystalizerConfiguration Configuration { get; }
+    public bool EnableLogger { get; }
+
+    public string RootDirectory { get; }
 
     public IStorageKey StorageKey { get; }
 
     internal UnitLogger UnitLogger { get; }
 
+    private CrystalizerConfiguration configuration;
     private ILogger logger;
     private ThreadsafeTypeKeyHashTable<ICrystal> typeToCrystal = new();
     private ConcurrentDictionary<ICrystal, int> crystals = new();
-    private ThreadsafeTypeKeyHashTable<IBigCrystal> typeToBigCrystal = new();
+    // private ThreadsafeTypeKeyHashTable<IBigCrystal> typeToBigCrystal = new();
     // private ConcurrentDictionary<IBigCrystal, int> bigCrystals = new();
 
     private object syncObject = new();
@@ -67,19 +97,21 @@ public class Crystalizer
 
     #region Resolvers
 
-    public IFiler ResolveFiler(FilerConfiguration configuration)
+    public IFiler ResolveFiler(PathConfiguration configuration)
         => new RawFilerToFiler(this, this.ResolveRawFiler(configuration), configuration);
 
-    public IRawFiler ResolveRawFiler(FilerConfiguration configuration)
+    public IRawFiler ResolveRawFiler(PathConfiguration configuration)
     {
         lock (this.syncObject)
         {
-            if (configuration is EmptyFilerConfiguration emptyFilerConfiguration)
-            {// Empty filer
+            if (configuration is EmptyFileConfiguration ||
+                configuration is EmptyDirectoryConfiguration)
+            {// Empty file or directory
                 return EmptyFiler.Default;
             }
-            else if (configuration is LocalFilerConfiguration localFilerConfiguration)
-            {// Local filer
+            else if (configuration is LocalFileConfiguration ||
+                configuration is LocalDirectoryConfiguration)
+            {// Local file or directory
                 if (this.localFiler == null)
                 {
                     this.localFiler ??= new LocalFiler();
@@ -87,21 +119,30 @@ public class Crystalizer
 
                 return this.localFiler;
             }
-            else if (configuration is S3FilerConfiguration s3FilerConfiguration)
-            {// S3 filer
-                if (!this.bucketToS3Filer.TryGetValue(s3FilerConfiguration.Bucket, out var filer))
-                {
-                    filer = new S3Filer(s3FilerConfiguration.Bucket, string.Empty);
-                    this.bucketToS3Filer.TryAdd(s3FilerConfiguration.Bucket, filer);
-                }
-
-                return filer;
+            else if (configuration is S3FileConfiguration s3FilerConfiguration)
+            {// S3 file
+                return ResolveS3Filer(s3FilerConfiguration.Bucket);
+            }
+            else if (configuration is S3DirectoryConfiguration s3DirectoryConfiguration)
+            {// S3 directory
+                return ResolveS3Filer(s3DirectoryConfiguration.Bucket);
             }
             else
             {
                 ThrowConfigurationNotRegistered(configuration.GetType());
                 return default!;
             }
+        }
+
+        IRawFiler ResolveS3Filer(string bucket)
+        {
+            if (!this.bucketToS3Filer.TryGetValue(bucket, out var filer))
+            {
+                filer = new S3Filer(bucket, string.Empty);
+                this.bucketToS3Filer.TryAdd(bucket, filer);
+            }
+
+            return filer;
         }
     }
 
@@ -190,6 +231,12 @@ public class Crystalizer
 
     #region Misc
 
+    public string GetRootedFile(string file)
+        => PathHelper.GetRootedFile(this.RootDirectory, file);
+
+    public static string GetRootedFile(Crystalizer? crystalizer, string file)
+        => crystalizer == null ? file : PathHelper.GetRootedFile(crystalizer.RootDirectory, file);
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void ThrowIfNotRegistered<TData>()
     {
@@ -227,7 +274,7 @@ public class Crystalizer
         return crystal!;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    /*[MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal IBigCrystal GetBigCrystal(Type type)
     {
         if (!this.typeToBigCrystal.TryGetValue(type, out var crystal))
@@ -236,7 +283,7 @@ public class Crystalizer
         }
 
         return crystal!;
-    }
+    }*/
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal object GetObject(Type type)
@@ -249,14 +296,30 @@ public class Crystalizer
         return crystal!.Object;
     }
 
-    internal BigCrystalConfiguration GetCrystalConfiguration(Type type)
+    internal CrystalConfiguration GetCrystalConfiguration(Type type)
     {
-        if (!this.Configuration.BigCrystalConfigurations.TryGetValue(type, out var crystalConfiguration))
+        if (!this.configuration.CrystalConfigurations.TryGetValue(type, out var configuration))
         {
             ThrowTypeNotRegistered(type);
         }
 
-        return crystalConfiguration!;
+        return configuration!;
+    }
+
+    internal BigCrystalConfiguration GetBigCrystalConfiguration(Type type)
+    {
+        if (!this.configuration.CrystalConfigurations.TryGetValue(type, out var configuration))
+        {
+            ThrowTypeNotRegistered(type);
+        }
+
+        if (configuration is not BigCrystalConfiguration bigCrystalConfiguration)
+        {
+            ThrowTypeNotRegistered(type);
+            return default!;
+        }
+
+        return bigCrystalConfiguration;
     }
 
     #endregion

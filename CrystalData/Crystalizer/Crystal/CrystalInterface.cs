@@ -6,8 +6,6 @@ public interface ICrystal
 {
     Crystalizer Crystalizer { get; }
 
-    CrystalizerConfiguration CrystalOptions { get; }
-
     CrystalConfiguration CrystalConfiguration { get; }
 
     object Object { get; }
@@ -18,7 +16,7 @@ public interface ICrystal
 
     void Configure(CrystalConfiguration configuration);
 
-    void ConfigureFiler(FilerConfiguration configuration);
+    void ConfigureFile(FileConfiguration configuration);
 
     Task<CrystalStartResult> PrepareAndLoad(CrystalStartParam? param = null);
 
