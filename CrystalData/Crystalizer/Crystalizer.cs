@@ -234,7 +234,7 @@ public class Crystalizer
         }
     }
 
-    public ICrystal<TData> Create<TData>()
+    public ICrystal<TData> CreateCrystal<TData>()
         where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
         if (!this.typeToCrystal.TryGetValue(typeof(TData), out _))
@@ -247,15 +247,44 @@ public class Crystalizer
         return crystal;
     }
 
-    public ICrystal<TData> Get<TData>()
-        where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+    public ICrystal<TData> CreateBigCrystal<TData>()
+        where TData : BaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
-        if (!this.typeToCrystal.TryGetValue(typeof(TData), out var crystal))
+        if (!this.typeToCrystal.TryGetValue(typeof(TData), out var c) ||
+            c is not IBigCrystal)
         {
             ThrowTypeNotRegistered(typeof(TData));
         }
 
-        return (ICrystal<TData>)crystal!;
+        var crystal = new BigCrystalImpl<TData>(this);
+        this.crystals.TryAdd(crystal, 0);
+        return crystal;
+    }
+
+    public ICrystal<TData> GetCrystal<TData>()
+        where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+    {
+        if (!this.typeToCrystal.TryGetValue(typeof(TData), out var c) ||
+            c is not ICrystal<TData> crystal)
+        {
+            ThrowTypeNotRegistered(typeof(TData));
+            return default!;
+        }
+
+        return crystal;
+    }
+
+    public IBigCrystal<TData> GetBigCrystal<TData>()
+        where TData : BaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+    {
+        if (!this.typeToCrystal.TryGetValue(typeof(TData), out var c) ||
+            c is not IBigCrystal<TData> crystal)
+        {
+            ThrowTypeNotRegistered(typeof(TData));
+            return default!;
+        }
+
+        return crystal;
     }
 
     public ICrystal[] GetArray()

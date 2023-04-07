@@ -31,7 +31,7 @@ public partial class CrystalTest
     {
         var identifier = default(Identifier);
         var crystal = await TestHelper.CreateAndStartCrystal();
-        var data = crystal.Object.Data;
+        var data = crystal.Object;
 
         var f = data.TryGetChild(Identifier.Zero);
         f.IsNull();
@@ -123,7 +123,7 @@ public partial class CrystalTest
     public async Task Test2()
     {
         var crystal = await TestHelper.CreateAndStartCrystal();
-        var data = crystal.Object.Data;
+        var data = crystal.Object;
         LpData? flake;
         // data.Delete().IsTrue();
 
@@ -152,7 +152,7 @@ public partial class CrystalTest
         // Get flakes and check
         for (var i = 0; i < N; i++)
         {
-            flake = crystal.Data.TryGetChild(new(i));
+            flake = data.TryGetChild(new(i));
             flake.IsNotNull();
 
             var result = await flake!.BlockDatum().Get();
@@ -169,7 +169,7 @@ public partial class CrystalTest
     public async Task Test3()
     {
         var crystal = await TestHelper.CreateAndStartCrystal();
-        var data = crystal.Object.Data;
+        var data = crystal.Object;
 
         var t1 = new TestObject(1, "1");
         var t2 = new TestObject(2, "2");

@@ -59,7 +59,7 @@ internal class TestClass
         manualClass.Id = 1;
         Console.WriteLine(manualClass.ToString());
 
-        var manualCrystal2 = this.crystalizer.Create<ManualClass>();
+        var manualCrystal2 = this.crystalizer.CreateCrystal<ManualClass>();
         var manualClass2 = manualCrystal2.Object;
         manualClass2.Id = 2;
         Console.WriteLine(manualClass.ToString());
