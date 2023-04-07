@@ -51,7 +51,7 @@ internal class TestClass
     {
         Console.WriteLine("Sandbox test1");
 
-        await this.crystalizer.PrepareAndLoad();
+        await this.crystalizer.PrepareAndLoadAll();
 
         // this.manualCrystal.Configure(new(Crystalization.Manual, new LocalFilerConfiguration("test")));
 
@@ -73,7 +73,7 @@ internal class TestClass
 
         await combinedCrystal.Save();
 
-        await this.crystalizer.SaveAndTerminate();
+        // await this.crystalizer.SaveAll();
     }
 
     private Crystalizer crystalizer;

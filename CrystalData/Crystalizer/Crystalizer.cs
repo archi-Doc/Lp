@@ -90,8 +90,8 @@ public class Crystalizer
     // private ConcurrentDictionary<IBigCrystal, int> bigCrystals = new();
 
     private object syncObject = new();
-    private LocalFiler? localFiler;
-    private Dictionary<string, S3Filer> bucketToS3Filer = new();
+    private IRawFiler? localFiler;
+    private Dictionary<string, IRawFiler> bucketToS3Filer = new();
 
     #endregion
 
@@ -170,7 +170,7 @@ public class Crystalizer
 
     #region Main
 
-    public async Task<CrystalStartResult> PrepareAndLoad(CrystalStartParam? param = null)
+    public async Task<CrystalStartResult> PrepareAndLoadAll(CrystalStartParam? param = null)
     {
         param ??= CrystalStartParam.Default;
 
@@ -187,14 +187,50 @@ public class Crystalizer
         return CrystalStartResult.Success;
     }
 
-    public async Task SaveAndTerminate(CrystalStopParam? param = null)
+    public async Task SaveAll(bool unload = false)
     {
-        param ??= CrystalStopParam.Default;
-
         var crystals = this.crystals.Keys.ToArray();
         foreach (var x in crystals)
         {
-            await x.Save().ConfigureAwait(false);
+            await x.Save(unload).ConfigureAwait(false);
+        }
+    }
+
+    public async Task SaveAllAndTerminate()
+    {
+        var crystals = this.crystals.Keys.ToArray();
+        foreach (var x in crystals)
+        {
+            await x.Save(true).ConfigureAwait(false);
+        }
+
+        // Terminate filers
+        var tasks = new List<Task>();
+        lock (this.syncObject)
+        {
+            if (this.localFiler is not null)
+            {
+                tasks.Add(this.localFiler.Terminate());
+                this.localFiler = null;
+            }
+
+            foreach (var x in this.bucketToS3Filer.Values)
+            {
+                tasks.Add(x.Terminate());
+            }
+
+            this.bucketToS3Filer.Clear();
+        }
+
+        await Task.WhenAll(tasks).ConfigureAwait(false);
+    }
+
+    public void DeleteAll()
+    {
+        var crystals = this.crystals.Keys.ToArray();
+        foreach (var x in crystals)
+        {
+            x.Delete();
         }
     }
 

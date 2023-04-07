@@ -43,14 +43,16 @@ public static class TestHelper
         return crystal;
     }
 
-    public static async Task StopCrystal(IBigCrystal crystal, bool removeAll = true)
+    public static async Task UnloadAll(IBigCrystal crystal)
     {
-        // await crystal.StopAsync(new(RemoveAll: removeAll)); // tempcode
+        // await crystal.Crystalizer.SaveAll(true);
+        await crystal.Save(true);
         crystal.MemoryUsage.Is(0);
     }
 
     public static async Task StopAndStartCrystal(IBigCrystal crystal)
     {
+        // await crystal.Crystalizer.SaveAll(true);
         await crystal.Save(true);
         crystal.MemoryUsage.Is(0);
         // await crystal.StartAsync(new()); // tempcode

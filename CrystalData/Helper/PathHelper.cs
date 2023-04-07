@@ -9,7 +9,7 @@ public static class PathHelper
     public const string CheckExtension = "check";
     public const int CheckLength = 16;
 
-    public static async Task<(CrystalMemoryOwnerResult Result, ulong Position)> LoadData(IFiler? filer)
+    public static async Task<(CrystalMemoryOwnerResult Result, ulong Location)> LoadData(IFiler? filer)
     {
         if (filer == null)
         {
@@ -22,20 +22,20 @@ public static class PathHelper
             return (new(result.Result), 0);
         }
 
-        // Load check
+        // Load check file (hash/location)
         var checkFiler = filer.CloneWithExtension(CheckExtension);
         var checkResult = await checkFiler.ReadAsync(0, -1).ConfigureAwait(false);
         if (checkResult.IsFailure || checkResult.Data.Memory.Length != CheckLength)
-        {// No check
+        {// No check file
             return (result, 0);
         }
 
         ulong hash;
-        ulong position;
+        ulong location;
         try
         {
             hash = BitConverter.ToUInt64(checkResult.Data.Memory.Span);
-            position = BitConverter.ToUInt64(checkResult.Data.Memory.Span.Slice(sizeof(ulong)));
+            location = BitConverter.ToUInt64(checkResult.Data.Memory.Span.Slice(sizeof(ulong)));
         }
         catch
         {
@@ -47,7 +47,7 @@ public static class PathHelper
             return (new(CrystalResult.CorruptedData), 0);
         }
 
-        return (result, position);
+        return (result, location);
     }
 
     public static Task<CrystalResult> SaveData<T>(T? obj, IFiler? filer, ulong position)

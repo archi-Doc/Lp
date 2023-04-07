@@ -134,7 +134,7 @@ public class CrystalImpl<TData> : ICrystal<TData>
         }
     }
 
-    async Task<CrystalResult> ICrystal.Save()
+    async Task<CrystalResult> ICrystal.Save(bool unload)
     {
         using (this.semaphore.Lock())
         {
