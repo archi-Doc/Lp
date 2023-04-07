@@ -20,7 +20,7 @@ public interface ICrystal
 
     Task<CrystalStartResult> PrepareAndLoad(CrystalStartParam? param = null);
 
-    Task<CrystalResult> Save();
+    Task<CrystalResult> Save(bool unload);
 
     void Delete();
 

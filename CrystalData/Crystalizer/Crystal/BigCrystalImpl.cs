@@ -60,8 +60,6 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
                 return CrystalStartResult.Success;
             }
 
-            var rr = PathHelper.LoadData2(this.storageFiler);
-
             // Load CrystalStorage
             var result = await this.LoadStorageGroup(param).ConfigureAwait(false);
             if (result != CrystalStartResult.Success)
@@ -154,9 +152,8 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
     {// await this.semaphore.WaitAsync().ConfigureAwait(false)
         CrystalStartResult result;
 
-        var filerResult = await this.storageFiler!.ReadAsync(0, -1).ConfigureAwait(false);
-        if (filerResult.IsFailure ||
-            !HashHelper.CheckFarmHashAndGetData(filerResult.Data.Memory, out var memory))
+        var (filerResult, _) = await PathHelper.LoadData(this.storageFiler).ConfigureAwait(false);
+        if (filerResult.IsFailure)
         {
             if (await param.Query(CrystalStartResult.DirectoryNotFound).ConfigureAwait(false) == AbortOrComplete.Complete)
             {
@@ -174,7 +171,7 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
             }
         }
 
-        result = await this.StorageGroup.PrepareAndCheck(this.CrystalConfiguration.StorageConfiguration, param, memory).ConfigureAwait(false);
+        result = await this.StorageGroup.PrepareAndCheck(this.CrystalConfiguration.StorageConfiguration, param, filerResult.Data.Memory).ConfigureAwait(false);
         if (result == CrystalStartResult.Success || param.ForceStart)
         {
             return CrystalStartResult.Success;

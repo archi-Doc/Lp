@@ -51,7 +51,7 @@ public static class TestHelper
 
     public static async Task StopAndStartCrystal(IBigCrystal crystal)
     {
-        // await crystal.StopAsync(new()); // tempcode
+        await crystal.Save(true);
         crystal.MemoryUsage.Is(0);
         // await crystal.StartAsync(new()); // tempcode
     }
