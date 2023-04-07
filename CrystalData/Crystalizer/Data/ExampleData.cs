@@ -5,12 +5,12 @@
 namespace CrystalData;
 
 /// <summary>
-/// A sample data class.<br/>
+/// A example data class.<br/>
 /// This is the idea that each data are arranged in the ordered structure and constitute a single crystal.
 /// </summary>
 [TinyhandObject(ExplicitKeyOnly = true)]
 [ValueLinkObject]
-internal partial class ExampleData : BaseData
+public partial class ExampleData : BaseData
 {
     public ExampleData(IBigCrystal crystal, BaseData? parent, string name)
         : base(crystal, parent)
@@ -46,8 +46,6 @@ internal partial class ExampleData : BaseData
                 data = new ExampleData(this.BigCrystal, this, name);
                 this.children.Add(data);
             }
-
-            data.NameValue = "test";
         }
 
         return data;

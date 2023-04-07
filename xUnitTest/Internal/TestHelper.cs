@@ -40,11 +40,11 @@ public static class TestHelper
         return crystal;
     }
 
-    public static async Task UnloadAll(IBigCrystal crystal)
+    public static async Task UnloadAndDeleteAll(IBigCrystal crystal)
     {
         await crystal.Crystalizer.SaveAll(true);
-        // await crystal.Save(true);
         crystal.MemoryUsage.Is(0);
+        crystal.Crystalizer.DeleteAll();
     }
 
     public static async Task StopAndStartCrystal(IBigCrystal crystal)

@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using System.Runtime.CompilerServices;
 using CrystalData.Filer;
 
@@ -11,8 +12,6 @@ namespace CrystalData.Storage;
 internal partial class SimpleStorage : IStorage
 {
     private const string SimpleStorageMain = "Simple.main";
-    private const string SimpleStorageBack = "Simple.back";
-    private const string SimpleStorageHash = "Simple.hash";
 
     public SimpleStorage()
     {
@@ -25,8 +24,9 @@ internal partial class SimpleStorage : IStorage
 
     public long StorageUsage { get; private set; } // lock (this.syncObject)
 
-    private string directoryPath = string.Empty;
-    private IRawFiler? filer;
+    private string directory = string.Empty;
+    private IFiler? filer;
+    private IRawFiler? rawFiler;
 
     private object syncObject = new();
     private Dictionary<uint, int> fileToSize = new();
@@ -37,66 +37,73 @@ internal partial class SimpleStorage : IStorage
 
     async Task<CrystalResult> IStorage.PrepareAndCheck(Crystalizer crystalizer, StorageConfiguration storageConfiguration, bool createNew)
     {
-        if (!string.IsNullOrEmpty(storageConfiguration.DirectoryConfiguration.Path))
+        this.directory = storageConfiguration.DirectoryConfiguration.Path;
+        if (!string.IsNullOrEmpty(this.directory) && !this.directory.EndsWith('/'))
         {
-            this.directoryPath = storageConfiguration.DirectoryConfiguration.Path;
+            this.directory += "/";
         }
 
-        if (string.IsNullOrEmpty(this.directoryPath))
-        {
-            this.directoryPath = crystalizer.RootDirectory;
-        }
-
-        this.filer = crystalizer.ResolveRawFiler(storageConfiguration.DirectoryConfiguration);
+        this.filer = crystalizer.ResolveFiler(storageConfiguration.DirectoryConfiguration.CombinePath(SimpleStorageMain));
+        this.rawFiler = crystalizer.ResolveRawFiler(storageConfiguration.DirectoryConfiguration);
 
         if (createNew)
         {
             return CrystalResult.Success;
         }
 
-        var hash = await HashHelper.TryLoadFarmHash(this.filer, SimpleStorageHash).ConfigureAwait(false);
-
-        var result = await this.TryLoad(SimpleStorageMain, hash).ConfigureAwait(false);
-        if (result != CrystalResult.Success)
+        var (result, location) = await PathHelper.LoadData(this.filer).ConfigureAwait(false);
+        if (result.IsFailure)
         {
-            result = await this.TryLoad(SimpleStorageBack, hash).ConfigureAwait(false);
+            return result.Result;
         }
 
-        return result;
+        try
+        {
+            if (TinyhandSerializer.Deserialize<Dictionary<uint, int>>(result.Data.Memory.Span) is { } dictionary)
+            {
+                this.fileToSize = dictionary;
+            }
+        }
+        catch
+        {
+            return CrystalResult.DeserializeError;
+        }
+        finally
+        {
+            result.Return();
+        }
+
+        return CrystalResult.Success;
     }
 
     async Task IStorage.Save()
     {
-        byte[] byteArray;
-        lock (this.syncObject)
-        {
-            byteArray = TinyhandSerializer.Serialize(this.fileToSize);
-        }
-
-        var hash = HashHelper.GetFarmHash(byteArray);
-
         if (this.filer != null)
         {
-            await this.filer.WriteAsync(SimpleStorageMain, 0, new(byteArray), TimeSpan.MinValue);
-            await this.filer.WriteAsync(SimpleStorageBack, 0, new(byteArray), TimeSpan.MinValue);
-            await this.filer.WriteAsync(SimpleStorageHash, 0, new(hash), TimeSpan.MinValue);
+            byte[] byteArray;
+            lock (this.syncObject)
+            {
+                byteArray = TinyhandSerializer.Serialize(this.fileToSize);
+            }
+
+            await PathHelper.SaveData(byteArray, this.filer, 0);
         }
     }
 
     CrystalResult IStorage.Put(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
     {
-        if (this.filer == null)
+        if (this.rawFiler == null)
         {
             return CrystalResult.NoFiler;
         }
 
         this.PutInternal(ref fileId, dataToBeShared.Memory.Length);
-        return this.filer.Write(FileToPath(FileIdToFile(fileId)), 0, dataToBeShared);
+        return this.rawFiler.Write(this.FileToPath(FileIdToFile(fileId)), 0, dataToBeShared);
     }
 
     CrystalResult IStorage.Delete(ref ulong fileId)
     {
-        if (this.filer == null)
+        if (this.rawFiler == null)
         {
             return CrystalResult.NoFiler;
         }
@@ -119,12 +126,12 @@ internal partial class SimpleStorage : IStorage
         }
 
         fileId = 0;
-        return this.filer.Delete(FileToPath(file));
+        return this.rawFiler.Delete(this.FileToPath(file));
     }
 
     Task<CrystalMemoryOwnerResult> IStorage.GetAsync(ref ulong fileId, TimeSpan timeToWait)
     {
-        if (this.filer == null)
+        if (this.rawFiler == null)
         {
             return Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.NoFiler));
         }
@@ -140,23 +147,23 @@ internal partial class SimpleStorage : IStorage
             }
         }
 
-        return this.filer.ReadAsync(FileToPath(file), 0, size, timeToWait);
+        return this.rawFiler.ReadAsync(this.FileToPath(file), 0, size, timeToWait);
     }
 
     Task<CrystalResult> IStorage.PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait)
     {
-        if (this.filer == null)
+        if (this.rawFiler == null)
         {
             return Task.FromResult(CrystalResult.NoFiler);
         }
 
         this.PutInternal(ref fileId, dataToBeShared.Memory.Length);
-        return this.filer.WriteAsync(FileToPath(FileIdToFile(fileId)), 0, dataToBeShared, timeToWait);
+        return this.rawFiler.WriteAsync(this.FileToPath(FileIdToFile(fileId)), 0, dataToBeShared, timeToWait);
     }
 
     Task<CrystalResult> IStorage.DeleteAsync(ref ulong fileId, TimeSpan timeToWait)
     {
-        if (this.filer == null)
+        if (this.rawFiler == null)
         {
             return Task.FromResult(CrystalResult.NoFiler);
         }
@@ -173,49 +180,10 @@ internal partial class SimpleStorage : IStorage
         }
 
         fileId = 0;
-        return this.filer.DeleteAsync(FileToPath(file), timeToWait);
+        return this.rawFiler.DeleteAsync(this.FileToPath(file), timeToWait);
     }
 
     #endregion
-
-    private async Task<CrystalResult> TryLoad(string path, ulong hash)
-    {
-        if (this.filer == null)
-        {
-            return CrystalResult.NoFiler;
-        }
-
-        var result = await this.filer.ReadAsync(path, 0, -1, TimeSpan.MinValue);
-        if (!result.IsSuccess)
-        {
-            return result.Result;
-        }
-
-        var memory = result.Data.Memory;
-        if (!HashHelper.CheckFarmHash(memory.Span, hash))
-        {
-            result.Return();
-            return CrystalResult.CorruptedData;
-        }
-
-        try
-        {
-            if (TinyhandSerializer.Deserialize<Dictionary<uint, int>>(memory.Span) is { } dictionary)
-            {
-                this.fileToSize = dictionary;
-            }
-        }
-        catch
-        {
-            return CrystalResult.DeserializeError;
-        }
-        finally
-        {
-            result.Return();
-        }
-
-        return CrystalResult.Success;
-    }
 
     #region Helper
 
@@ -225,7 +193,7 @@ internal partial class SimpleStorage : IStorage
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static ulong FileToFileId(uint file) => (ulong)file << 32;
 
-    private static string FileToPath(uint file)
+    private string FileToPath(uint file)
     {
         Span<char> c = stackalloc char[9];
         var n = 0;
@@ -242,7 +210,7 @@ internal partial class SimpleStorage : IStorage
         c[n++] = UInt32ToChar(file >> 4);
         c[n++] = UInt32ToChar(file);
 
-        return c.ToString();
+        return this.directory + c.ToString();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -50,7 +50,7 @@ public static class PathHelper
         return (result, location);
     }
 
-    public static Task<CrystalResult> SaveData<T>(T? obj, IFiler? filer, ulong position)
+    public static Task<CrystalResult> SaveData<T>(T? obj, IFiler? filer, ulong location)
         where T : ITinyhandSerialize<T>
     {
         if (obj == null)
@@ -63,10 +63,10 @@ public static class PathHelper
         }
 
         var data = TinyhandSerializer.SerializeObject(obj);
-        return SaveData(data, filer, position);
+        return SaveData(data, filer, location);
     }
 
-    public static async Task<CrystalResult> SaveData(byte[]? data, IFiler? filer, ulong position)
+    public static async Task<CrystalResult> SaveData(byte[]? data, IFiler? filer, ulong location)
     {
         if (data == null)
         {
@@ -86,7 +86,7 @@ public static class PathHelper
         var hashAndPosition = new byte[CheckLength];
         var hash = FarmHash.Hash64(data.AsSpan());
         BitConverter.TryWriteBytes(hashAndPosition.AsSpan(), hash);
-        BitConverter.TryWriteBytes(hashAndPosition.AsSpan(sizeof(ulong)), position);
+        BitConverter.TryWriteBytes(hashAndPosition.AsSpan(sizeof(ulong)), location);
 
         var chckFiler = filer.CloneWithExtension(CheckExtension);
         result = await chckFiler.WriteAsync(0, new(hashAndPosition));

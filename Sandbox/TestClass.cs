@@ -35,7 +35,7 @@ internal partial class CombinedClass
 
 internal class TestClass
 {
-    public TestClass(Crystalizer crystalizer, ICrystal<ManualClass> manualCrystal, ICrystal<CombinedClass> combinedCrystal, ManualClass manualClass, IBigCrystal<BaseData> crystalData)
+    public TestClass(Crystalizer crystalizer, ICrystal<ManualClass> manualCrystal, ICrystal<CombinedClass> combinedCrystal, ManualClass manualClass, IBigCrystal<BaseData> crystalData, ExampleData exampleData)
     {
         this.crystalizer = crystalizer;
 
@@ -45,6 +45,7 @@ internal class TestClass
         // this.manualCrystal.Setup();
         this.combinedCrystal = combinedCrystal;
         this.manualClass0 = manualClass;
+        this.exampleData = exampleData;
     }
 
     public async Task Test1()
@@ -73,6 +74,12 @@ internal class TestClass
 
         await combinedCrystal.Save();
 
+        var a = this.exampleData.GetOrCreateChild("a");
+        a.BlockDatum().Set(new byte[] { 0, 1, 2, });
+
+        var a2 = this.exampleData.TryGetChild("a");
+        var b2 = this.exampleData.TryGetChild("b");
+
         // await this.crystalizer.SaveAll();
     }
 
@@ -80,4 +87,5 @@ internal class TestClass
     private ManualClass manualClass0;
     private ICrystal<ManualClass> manualCrystal;
     private ICrystal<CombinedClass> combinedCrystal;
+    private ExampleData exampleData;
 }

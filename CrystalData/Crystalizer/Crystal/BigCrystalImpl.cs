@@ -132,9 +132,14 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
         }
     }
 
-    /*void ICrystal.Delete()
+    void ICrystal.Delete()
     {
-    }*/
+        this.DeleteAllAsync().Wait();
+
+        // Clear
+        this.CrystalConfiguration = CrystalConfiguration.Default;
+        this.filer = null;
+    }
 
     internal async Task DeleteAllAsync()
     {
@@ -142,7 +147,11 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
         this.himoGoshujin.Clear();
 
         this.crystalFiler?.Delete();
+        this.crystalFiler = null;
+
         this.storageFiler?.Delete();
+        this.storageFiler = null;
+
         await this.StorageGroup.DeleteAllAsync();
 
         this.InitializeRoot();

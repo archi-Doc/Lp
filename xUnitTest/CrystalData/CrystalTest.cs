@@ -116,7 +116,7 @@ public partial class CrystalTest
 
         f!.FragmentDatum().Set(identifier, buffer).Is(CrystalResult.OverNumberLimit);
 
-        await TestHelper.UnloadAll(crystal);
+        await TestHelper.UnloadAndDeleteAll(crystal);
     }
 
     [Fact]
@@ -159,7 +159,7 @@ public partial class CrystalTest
             result.DataEquals(bin.AsSpan(0, i)).IsTrue();
         }
 
-        await TestHelper.UnloadAll(crystal);
+        await TestHelper.UnloadAndDeleteAll(crystal);
     }
 
     [TinyhandObject(ImplicitKeyAsName = true)]
@@ -233,6 +233,6 @@ public partial class CrystalTest
         flake.BlockDatum().Set(new byte[] { 0, 1, }).Is(CrystalResult.Deleted);
         (await flake.BlockDatum().Get()).Result.Is(CrystalResult.Deleted);
 
-        await TestHelper.UnloadAll(crystal);
+        await TestHelper.UnloadAndDeleteAll(crystal);
     }
 }

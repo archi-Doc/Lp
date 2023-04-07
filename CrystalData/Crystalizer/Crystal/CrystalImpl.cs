@@ -30,7 +30,7 @@ public class CrystalImpl<TData> : ICrystal<TData>
 
     public Crystalizer Crystalizer { get; }
 
-    public CrystalConfiguration CrystalConfiguration { get; private set; }
+    public CrystalConfiguration CrystalConfiguration { get; protected set; }
 
     object ICrystal.Object => ((ICrystal<TData>)this).Object;
 

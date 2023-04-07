@@ -56,6 +56,16 @@ public class Program
                     DirectoryConfiguration = new LocalDirectoryConfiguration("Crystal"),
                     StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Storage")),
                 });
+
+                context.AddBigCrystal<ExampleData>(new BigCrystalConfiguration() with
+                {
+                    RegisterDatum = registry =>
+                    {
+                        registry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
+                    },
+                    DirectoryConfiguration = new LocalDirectoryConfiguration("Example"),
+                    StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Example")),
+                });
             })
             .SetupOptions<CrystalizerOptions>((context, options) =>
             {// CrystalizerOptions
