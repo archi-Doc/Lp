@@ -46,18 +46,21 @@ public class CrystalImpl<TData> : ICrystal<TData>
             using (this.semaphore.Lock())
             {
                 // Load
-                this.PrepareAndLoadInternal(null).Wait();
+                this.PrepareAndLoadInternal_IfNotPrepared();
+
                 if (this.obj != null)
                 {
                     return this.obj;
                 }
 
                 // Finally, reconstruct
-                TinyhandSerializer.ReconstructObject<TData>(ref this.obj);
+                this.ReconstructObject();
                 return this.obj;
             }
         }
     }
+
+    public bool Prepared { get; protected set; }
 
     public IFiler Filer
     {
@@ -109,6 +112,7 @@ public class CrystalImpl<TData> : ICrystal<TData>
         {
             this.CrystalConfiguration = configuration;
             this.filer = null;
+            this.Prepared = false;
         }
     }
 
@@ -118,12 +122,13 @@ public class CrystalImpl<TData> : ICrystal<TData>
         {
             this.CrystalConfiguration = this.CrystalConfiguration with { FileConfiguration = configuration, };
             this.filer = null;
+            this.Prepared = false;
         }
     }
 
     async Task<CrystalStartResult> ICrystal.PrepareAndLoad(CrystalStartParam? param)
     {
-        if (this.obj != null)
+        if (this.Prepared)
         {// Prepared
             return CrystalStartResult.Success;
         }
@@ -138,6 +143,8 @@ public class CrystalImpl<TData> : ICrystal<TData>
     {
         using (this.semaphore.Lock())
         {
+            this.PrepareAndLoadInternal_IfNotPrepared();
+
             var byteArray = TinyhandSerializer.SerializeObject<TData>(this.obj);
             var hash = FarmHash.Hash64(byteArray.AsSpan());
             if (this.savedHash == hash)
@@ -158,6 +165,8 @@ public class CrystalImpl<TData> : ICrystal<TData>
     {
         using (this.semaphore.Lock())
         {
+            this.PrepareAndLoadInternal_IfNotPrepared();
+
             // Delete file
             this.ResolveFiler();
             this.filer.Delete();
@@ -175,9 +184,9 @@ public class CrystalImpl<TData> : ICrystal<TData>
 
     #endregion
 
-    protected async Task<CrystalStartResult> PrepareAndLoadInternal(CrystalStartParam? param)
+    protected virtual async Task<CrystalStartResult> PrepareAndLoadInternal(CrystalStartParam? param)
     {// this.semaphore.Lock()
-        if (this.obj != null)
+        if (this.Prepared)
         {
             return CrystalStartResult.Success;
         }
@@ -187,6 +196,7 @@ public class CrystalImpl<TData> : ICrystal<TData>
         this.ResolveFiler();
         if (this.CrystalConfiguration.FileConfiguration is EmptyFileConfiguration)
         {
+            this.Prepared = true;
             return CrystalStartResult.Success;
         }
 
@@ -228,13 +238,22 @@ public class CrystalImpl<TData> : ICrystal<TData>
             memoryResult.Return();
         }
 
+        this.Prepared = true;
         return CrystalStartResult.Success;
 
 Reconstruct:
 // Reconstruct
         TinyhandSerializer.ReconstructObject<TData>(ref this.obj);
         this.savedHash = FarmHash.Hash64(TinyhandSerializer.SerializeObject<TData>(this.obj));
+
+        this.Prepared = true;
         return CrystalStartResult.Success;
+    }
+
+    [MemberNotNull(nameof(obj))]
+    protected virtual void ReconstructObject()
+    {
+        TinyhandSerializer.ReconstructObject<TData>(ref this.obj);
     }
 
     [MemberNotNull(nameof(filer))]
@@ -249,5 +268,14 @@ Reconstruct:
     protected void ResolveStorage()
     {
         this.storage ??= this.Crystalizer.ResolveStorage(this.CrystalConfiguration.StorageConfiguration);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    protected void PrepareAndLoadInternal_IfNotPrepared()
+    {
+        if (!this.Prepared)
+        {
+            this.PrepareAndLoadInternal(null).Wait();
+        }
     }
 }

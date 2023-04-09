@@ -21,7 +21,6 @@ public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
         var mono = new Mono();
 
         var sw = Stopwatch.StartNew();
-        // await this.crystal.StartAsync(new()); // tempcode
         Console.WriteLine($"Start: {sw.ElapsedMilliseconds} ms");
 
         var data = this.crystal.Object.GetOrCreateChild(Identifier.Zero);
@@ -87,7 +86,7 @@ public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
 
         // await Task.Delay(10000);
 
-        // await this.crystal.StopAsync(new()); // tempcode
+        await this.crystal.Save(true);
         Console.WriteLine($"{sw.ElapsedMilliseconds} ms");
     }
 

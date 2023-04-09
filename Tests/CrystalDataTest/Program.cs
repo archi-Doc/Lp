@@ -4,6 +4,8 @@ global using Arc.Threading;
 global using CrystalData;
 global using LP;
 using Arc.Unit;
+using CrystalData.Datum;
+using LP.Crystal;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleCommandLine;
 
@@ -33,6 +35,21 @@ public class Program
                 context.AddCommand(typeof(MonoTestSubcommand));
 
                 // Services
+            })
+            .ConfigureCrystal(context =>
+            {
+                context.AddBigCrystal<LpData>(new BigCrystalConfiguration() with
+                {// LpData
+                    RegisterDatum = registry =>
+                    {
+                        registry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
+                        registry.Register<FragmentDatum<Identifier>>(2, x => new FragmentDatumImpl<Identifier>(x));
+                    },
+                    DirectoryConfiguration = new LocalDirectoryConfiguration("Data"),
+                    StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Crystal")),
+                    CrystalFile = "Crystal.main",
+                    StorageFile = "CrystalStorage.main",
+                });
             });
 
         var unit = builder.Build();
@@ -47,6 +64,7 @@ public class Program
         await SimpleParser.ParseAndRunAsync(unit.Context.Commands, args, parserOptions); // Main process
 
         ThreadCore.Root.Terminate();
+        await unit.Context.ServiceProvider.GetRequiredService<Crystalizer>().SaveAllAndTerminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
         unit.Context.ServiceProvider.GetService<UnitLogger>()?.FlushAndTerminate();
         ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).

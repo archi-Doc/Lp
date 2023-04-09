@@ -10,6 +10,8 @@ public interface ICrystal
 
     object Object { get; }
 
+    bool Prepared { get; }
+
     IFiler Filer { get; }
 
     IStorage Storage { get; }
