@@ -9,4 +9,6 @@ public interface IUnitCrystalContext
 
     void AddBigCrystal<TData>(BigCrystalConfiguration configuration)
         where TData : BaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>;
+
+    void SetJournal(JournalConfiguration configuration);
 }

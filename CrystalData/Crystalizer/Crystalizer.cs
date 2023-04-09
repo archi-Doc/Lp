@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using CrystalData.Filer;
+using CrystalData.Journal;
 using CrystalData.Storage;
 
 #pragma warning disable SA1204
@@ -77,6 +78,8 @@ public class Crystalizer
     public bool EnableLogger { get; }
 
     public string RootDirectory { get; }
+
+    public IJournal? Journal { get; private set; }
 
     public IStorageKey StorageKey { get; }
 
@@ -169,6 +172,34 @@ public class Crystalizer
     #endregion
 
     #region Main
+
+    public async Task<CrystalStartResult> PrepareJournal()
+    {
+        if (this.Journal == null)
+        {// New journal
+            var configuration = this.configuration.JournalConfiguration;
+            if (configuration is EmptyJournalConfiguration)
+            {
+                return CrystalStartResult.Success;
+            }
+            else if (configuration is SimpleJournalConfiguration simpleJournalConfiguration)
+            {
+                var simpleJournal = new SimpleJournal(simpleJournalConfiguration);
+                return await simpleJournal.Prepare();
+            }
+
+            return CrystalStartResult.NoJournal;
+        }
+
+        if (this.Journal.Prepared)
+        {
+            return CrystalStartResult.Success;
+        }
+        else
+        {// Prepare
+            return await this.Journal.Prepare();
+        }
+    }
 
     public async Task<CrystalStartResult> PrepareAndLoadAll(CrystalStartParam? param = null)
     {

@@ -7,6 +7,7 @@ global using LP;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
 using CrystalData.Datum;
+using Tinyhand.IO;
 
 namespace Sandbox;
 
@@ -39,6 +40,8 @@ public class Program
             })
             .ConfigureCrystal(context =>
             {
+                context.SetJournal(new SimpleJournalConfiguration(new LocalDirectoryConfiguration("Journal")));
+
                 context.AddCrystal<ManualClass>(new(Crystalization.Manual, new LocalFileConfiguration("manual.data")));
 
                 context.AddCrystal<CombinedClass>(
@@ -77,17 +80,6 @@ public class Program
 
         var tc = unit.Context.ServiceProvider.GetRequiredService<TestClass>();
         await tc.Test1();
-
-        /*var param = new CrystalControl.Unit.Param();
-
-        var parserOptions = SimpleParserOptions.Standard with
-        {
-            ServiceProvider = unit.Context.ServiceProvider,
-            RequireStrictCommandName = false,
-            RequireStrictOptionName = true,
-        };
-
-        await SimpleParser.ParseAndRunAsync(unit.Context.Commands, args, parserOptions); // Main process*/
 
         ThreadCore.Root.Terminate();
         await unit.Context.ServiceProvider.GetRequiredService<Crystalizer>().SaveAllAndTerminate();

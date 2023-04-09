@@ -2,9 +2,6 @@
 
 namespace CrystalData;
 
-public interface IJournal
+public interface IJournalWriter
 {
-    Task<CrystalStartResult> Prepare();
-
-    bool Prepared { get; }
 }

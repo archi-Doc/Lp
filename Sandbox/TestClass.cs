@@ -1,4 +1,6 @@
-﻿namespace Sandbox;
+﻿using Tinyhand.IO;
+
+namespace Sandbox;
 
 [TinyhandObject]
 internal partial class CrystalClass
@@ -50,6 +52,7 @@ internal class TestClass
 
     public async Task Test1()
     {
+        q
         Console.WriteLine("Sandbox test1");
 
         await this.crystalizer.PrepareAndLoadAll();
@@ -81,6 +84,25 @@ internal class TestClass
         var b2 = this.exampleData.TryGetChild("b");
 
         // await this.crystalizer.SaveAll();
+
+        void Journal()
+        {
+            TinyhandWriter writer = new TinyhandWriter();
+            writer.WriteInt16(21);
+
+            // Record
+            if (this.crystalizer.TryGetJournal(out TinyhandWriter writer))
+            {// SetValue, AddObject, DeleteObject, Check
+                this.WriteLocator(ref writer); // Locator
+                writer.WriteInt16(21); // Value
+            }
+
+            // Read
+            while (journal.Position != journal.End)
+            {
+                obj.ReadJournal(journal);
+            }
+        }
     }
 
     private Crystalizer crystalizer;

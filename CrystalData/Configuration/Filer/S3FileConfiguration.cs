@@ -17,5 +17,5 @@ public partial record S3FileConfiguration : FileConfiguration
     }
 
     [Key(1)]
-    public string Bucket { get; private set; }
+    public string Bucket { get; protected set; }
 }

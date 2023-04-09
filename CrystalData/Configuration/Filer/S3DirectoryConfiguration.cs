@@ -17,7 +17,7 @@ public partial record S3DirectoryConfiguration : DirectoryConfiguration
     }
 
     [Key(1)]
-    public string Bucket { get; private set; }
+    public string Bucket { get; protected set; }
 
     public override S3FileConfiguration CombinePath(string file)
         => new S3FileConfiguration { Path = System.IO.Path.Combine(this.Path, file), };
