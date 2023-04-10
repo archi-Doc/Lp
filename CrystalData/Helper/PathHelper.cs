@@ -9,7 +9,7 @@ public static class PathHelper
     public const string CheckExtension = "check";
     public const int CheckLength = 16;
 
-    public static async Task<(CrystalMemoryOwnerResult Result, ulong Location)> LoadData(IFiler? filer)
+    public static async Task<(CrystalMemoryOwnerResult Result, ulong Waypoint)> LoadData(IFiler? filer)
     {
         if (filer == null)
         {
@@ -50,7 +50,7 @@ public static class PathHelper
         return (result, location);
     }
 
-    public static Task<CrystalResult> SaveData<T>(T? obj, IFiler? filer, ulong location)
+    public static Task<CrystalResult> SaveData<T>(T? obj, IFiler? filer, ulong waypoint)
         where T : ITinyhandSerialize<T>
     {
         if (obj == null)
@@ -63,10 +63,10 @@ public static class PathHelper
         }
 
         var data = TinyhandSerializer.SerializeObject(obj);
-        return SaveData(data, filer, location);
+        return SaveData(data, filer, waypoint);
     }
 
-    public static async Task<CrystalResult> SaveData(byte[]? data, IFiler? filer, ulong location)
+    public static async Task<CrystalResult> SaveData(byte[]? data, IFiler? filer, ulong waypoint)
     {
         if (data == null)
         {
@@ -83,13 +83,13 @@ public static class PathHelper
             return result;
         }
 
-        var hashAndPosition = new byte[CheckLength];
+        var hashAndWaypoint = new byte[CheckLength];
         var hash = FarmHash.Hash64(data.AsSpan());
-        BitConverter.TryWriteBytes(hashAndPosition.AsSpan(), hash);
-        BitConverter.TryWriteBytes(hashAndPosition.AsSpan(sizeof(ulong)), location);
+        BitConverter.TryWriteBytes(hashAndWaypoint.AsSpan(), hash);
+        BitConverter.TryWriteBytes(hashAndWaypoint.AsSpan(sizeof(ulong)), waypoint);
 
         var chckFiler = filer.CloneWithExtension(CheckExtension);
-        result = await chckFiler.WriteAsync(0, new(hashAndPosition));
+        result = await chckFiler.WriteAsync(0, new(hashAndWaypoint));
         return result;
     }
 

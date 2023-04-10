@@ -51,7 +51,7 @@ internal partial class SimpleStorage : IStorage
             return CrystalResult.Success;
         }
 
-        var (result, location) = await PathHelper.LoadData(this.filer).ConfigureAwait(false);
+        var (result, waypoint) = await PathHelper.LoadData(this.filer).ConfigureAwait(false);
         if (result.IsFailure)
         {
             return result.Result;

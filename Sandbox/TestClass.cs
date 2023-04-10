@@ -1,4 +1,5 @@
-﻿using Tinyhand.IO;
+﻿using CrystalData.Journal;
+using Tinyhand.IO;
 
 namespace Sandbox;
 
@@ -52,10 +53,10 @@ internal class TestClass
 
     public async Task Test1()
     {
-        q
         Console.WriteLine("Sandbox test1");
 
         await this.crystalizer.PrepareAndLoadAll();
+        await this.crystalizer.PrepareJournal();
 
         // this.manualCrystal.Configure(new(Crystalization.Manual, new LocalFilerConfiguration("test")));
 
@@ -83,25 +84,31 @@ internal class TestClass
         var a2 = this.exampleData.TryGetChild("a");
         var b2 = this.exampleData.TryGetChild("b");
 
+        Journal();
+
         // await this.crystalizer.SaveAll();
 
         void Journal()
         {
-            TinyhandWriter writer = new TinyhandWriter();
-            writer.WriteInt16(21);
-
             // Record
-            if (this.crystalizer.TryGetJournal(out TinyhandWriter writer))
+            /*if (this.crystalizer.TryGetJournal(out TinyhandWriter writer))
             {// SetValue, AddObject, DeleteObject, Check
                 this.WriteLocator(ref writer); // Locator
                 writer.WriteInt16(21); // Value
+            }*/
+            if (this.crystalizer.Journal is { } journal)
+            {
+                journal.GetJournalWriter(JournalRecordType.SetValue, out var writer);
+                // this.WriteLocator(ref record); // Locator
+                writer.WriteInt16(32); // Value
+                journal.AddRecord(in writer);
             }
 
             // Read
-            while (journal.Position != journal.End)
+            /*while (journal.Position != journal.End)
             {
                 obj.ReadJournal(journal);
-            }
+            }*/
         }
     }
 

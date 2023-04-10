@@ -79,11 +79,15 @@ public class Crystalizer
 
     public string RootDirectory { get; }
 
-    public IJournal? Journal { get; private set; }
+    public IJournal? Journal => this.JournalInternal;
 
     public IStorageKey StorageKey { get; }
 
     internal UnitLogger UnitLogger { get; }
+
+#pragma warning disable SA1401 // Fields should be private
+    internal IJournalInternal? JournalInternal;
+#pragma warning restore SA1401 // Fields should be private
 
     private CrystalizerConfiguration configuration;
     private ILogger logger;
@@ -175,7 +179,7 @@ public class Crystalizer
 
     public async Task<CrystalStartResult> PrepareJournal()
     {
-        if (this.Journal == null)
+        if (this.JournalInternal == null)
         {// New journal
             var configuration = this.configuration.JournalConfiguration;
             if (configuration is EmptyJournalConfiguration)
@@ -184,22 +188,36 @@ public class Crystalizer
             }
             else if (configuration is SimpleJournalConfiguration simpleJournalConfiguration)
             {
-                var simpleJournal = new SimpleJournal(simpleJournalConfiguration);
-                return await simpleJournal.Prepare();
+                var simpleJournal = new SimpleJournal(this, simpleJournalConfiguration);
+                this.JournalInternal = simpleJournal;
             }
-
-            return CrystalStartResult.NoJournal;
+            else
+            {
+                return CrystalStartResult.NoJournal;
+            }
         }
 
-        if (this.Journal.Prepared)
+        if (this.JournalInternal.Prepared)
         {
             return CrystalStartResult.Success;
         }
         else
         {// Prepare
-            return await this.Journal.Prepare();
+            return await this.JournalInternal.Prepare().ConfigureAwait(false);
         }
     }
+
+    /*public bool TryGetJournalWriter(JournalRecordType recordType, out JournalRecord record)
+    {
+        if (this.Journal == null)
+        {
+            record = default;
+            return false;
+        }
+
+        this.Journal.GetJournalWriter(recordType, out record);
+        return true;
+    }*/
 
     public async Task<CrystalStartResult> PrepareAndLoadAll(CrystalStartParam? param = null)
     {
