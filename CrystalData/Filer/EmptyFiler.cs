@@ -28,4 +28,7 @@ public partial class EmptyFiler : IRawFiler
 
     Task<CrystalResult> IRawFiler.WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait, bool truncate)
         => Task.FromResult(CrystalResult.Success);
+
+    Task<List<FileInformation>> IRawFiler.ListAsync(string path, string? pattern, TimeSpan timeToWait)
+        => Task.FromResult(new List<FileInformation>());
 }

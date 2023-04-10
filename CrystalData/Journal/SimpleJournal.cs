@@ -1,19 +1,17 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Buffers;
 using System.Runtime.CompilerServices;
 using CrystalData.Filer;
 using Tinyhand.IO;
 
 namespace CrystalData.Journal;
 
-public class SimpleJournal : IJournalInternal
+public partial class SimpleJournal : IJournalInternal
 {
-    public const int MaxRecordSize = 1024 * 16; // 16 KB
-    public const int BookLength = 1024 * 1024 * 16; // 16 MB
-
-    public const int RecordBufferLength = 1024 * 4; // 4 KB
-    public const int RecordBufferNumber = 32;
+    public const int MaxRecordLength = 1024 * 16; // 16 KB
+    public const int MaxBookLength = 1024 * 1024 * 16; // 16 MB
+    public const int MaxMemoryLength = 1024 * 1024 * 64; // 64 MB
+    public const string BookSuffix = ".book";
 
     [ThreadStatic]
     private static byte[] initialBuffer = new byte[1024 * 16]; // 16 KB
@@ -22,13 +20,21 @@ public class SimpleJournal : IJournalInternal
     {
         this.crystalizer = crystalizer;
         this.SimpleJournalConfiguration = configuration;
-
-        // this.bufferPool = ArrayPool<byte>.Create(RecordBufferLength, RecordBufferNumber);
     }
 
-    public async Task<CrystalStartResult> Prepare()
+    public async Task<CrystalStartResult> Prepare(Crystalizer crystalizer)
     {
-        this.rawFiler ??= this.crystalizer.ResolveRawFiler(this.SimpleJournalConfiguration.DirectoryConfiguration);
+        var configuration = this.SimpleJournalConfiguration.DirectoryConfiguration;
+
+        this.rawFiler ??= this.crystalizer.ResolveRawFiler(configuration);
+        var result = await this.rawFiler.PrepareAndCheck(crystalizer, configuration).ConfigureAwait(false);
+        if (result != CrystalResult.Success)
+        {
+            return CrystalStartResult.FileError;
+        }
+
+        // List journal books
+        var list = await this.rawFiler.ListAsync(configuration.Path, "*" + BookSuffix).ConfigureAwait(false);
 
         return CrystalStartResult.Success;
     }
@@ -37,10 +43,6 @@ public class SimpleJournal : IJournalInternal
     {
         writer = new(initialBuffer);
         writer.Write(Unsafe.As<JournalRecordType, byte>(ref recordType));
-
-        /*var buffer = this.bufferPool.Rent(RecordBufferLength);
-        record = new(this, buffer);
-        record.Writer.Write(Unsafe.As<JournalRecordType, byte>(ref recordType));}*/
     }
 
     ulong IJournal.AddRecord(in TinyhandWriter writer)
@@ -48,21 +50,18 @@ public class SimpleJournal : IJournalInternal
         writer.FlushAndGetMemory(out var memory, out var useInitialBuffer);
         writer.Dispose();
 
-        lock (this.syncJournal)
+        if (memory.Length > MaxRecordLength)
         {
+            throw new InvalidOperationException($"The maximum length per record is {MaxRecordLength} bytes.");
+        }
+
+        lock (this.syncObject)
+        {
+            SimpleJournalBook book = this.EnsureBook();
+            var waypoint = book.AppendData(memory.Span);
         }
 
         return 0;
-
-        /*record.Writer.FlushAndGetMemory(out var memory, out _);
-        record.Writer.Dispose();
-
-        lock (this.syncJournal)
-        {
-        }
-
-        this.bufferPool.Return(record.Buffer);
-        return 0;*/
     }
 
     public SimpleJournalConfiguration SimpleJournalConfiguration { get; }
@@ -72,9 +71,25 @@ public class SimpleJournal : IJournalInternal
     private Crystalizer crystalizer;
     private IRawFiler? rawFiler;
 
-    // private ArrayPool<byte> bufferPool;
-
     // Journal
-    private object syncJournal = new();
+    private object syncObject = new();
     private SimpleJournalBook.GoshujinClass books = new();
+    private ulong memoryUsage;
+
+    private SimpleJournalBook EnsureBook()
+    {// lock (this.syncJournal)
+        SimpleJournalBook book;
+
+        if (this.books.Count == 0)
+        {// Empty
+            book = SimpleJournalBook.AppendNewBook(this, null);
+        }
+        else
+        {
+            book = this.books.BookStartChain.Last!;
+            book.EnsureBuffer(MaxRecordLength);
+        }
+
+        return book;
+    }
 }

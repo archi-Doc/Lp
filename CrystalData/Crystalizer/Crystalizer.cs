@@ -203,7 +203,7 @@ public class Crystalizer
         }
         else
         {// Prepare
-            return await this.JournalInternal.Prepare().ConfigureAwait(false);
+            return await this.JournalInternal.Prepare(this).ConfigureAwait(false);
         }
     }
 

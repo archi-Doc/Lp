@@ -2,6 +2,7 @@
 
 #pragma warning disable SA1124 // Do not use regions
 
+using System.IO;
 using CrystalData.Results;
 
 namespace CrystalData.Filer;
@@ -174,7 +175,7 @@ TryWrite:
             }
         }
         else if (work.Type == FilerWork.WorkType.Delete)
-        {
+        {// Delete
             try
             {
                 File.Delete(filePath);
@@ -187,6 +188,30 @@ TryWrite:
             finally
             {
             }
+        }
+        else if (work.Type == FilerWork.WorkType.List)
+        {// List
+            var list = new List<FileInformation>();
+            var pattern = work.InputObject as string;
+            try
+            {
+                foreach (var x in Directory.EnumerateFiles(filePath, pattern ?? "*", SearchOption.TopDirectoryOnly))
+                {
+                    try
+                    {
+                        var info = new System.IO.FileInfo(x);
+                        list.Add(new(x, info.Length));
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            work.OutputObject = list;
         }
 
         return;
@@ -272,6 +297,21 @@ DeleteAndExit:
         var workInterface = this.AddLast(work);
         await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
         return work.Result;
+    }
+
+    async Task<List<FileInformation>> IRawFiler.ListAsync(string path, string? pattern, TimeSpan timeToWait)
+    {
+        var work = new FilerWork(path, pattern);
+        var workInterface = this.AddLast(work);
+        await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
+        if (work.OutputObject is List<FileInformation> list)
+        {
+            return list;
+        }
+        else
+        {
+            return new List<FileInformation>();
+        }
     }
 
     #endregion

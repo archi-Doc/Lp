@@ -159,7 +159,7 @@ TryWrite:
             worker.logger?.TryGet()?.Log($"Read exception {filePath}");
         }
         else if (work.Type == FilerWork.WorkType.Delete)
-        {
+        {// Delete
             try
             {
                 var request = new Amazon.S3.Model.DeleteObjectRequest() { BucketName = worker.bucket, Key = filePath, };
@@ -174,6 +174,33 @@ TryWrite:
             }
 
             work.Result = CrystalResult.DeleteError;
+        }
+        else if (work.Type == FilerWork.WorkType.List)
+        {// List
+            var list = new List<FileInformation>();
+            var pattern = work.InputObject as string;
+            try
+            {
+                string continuationToken = string.Empty;
+RepeatList:
+                var request = new Amazon.S3.Model.ListObjectsV2Request() { BucketName = worker.bucket, Prefix = filePath, ContinuationToken = continuationToken, MaxKeys = 2, };
+
+                var response = await worker.client.ListObjectsV2Async(request, worker.CancellationToken).ConfigureAwait(false);
+                foreach (var x in response.S3Objects)
+                {
+                    list.Add(new(x.Key, x.Size));
+                }
+
+                if (response.IsTruncated)
+                {
+                    goto RepeatList;
+                }
+            }
+            catch
+            {
+            }
+
+            work.OutputObject = list;
         }
 
         return;
@@ -305,6 +332,21 @@ TryWrite:
         var workInterface = this.AddLast(work);
         await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
         return work.Result;
+    }
+
+    async Task<List<FileInformation>> IRawFiler.ListAsync(string path, string? pattern, TimeSpan timeToWait)
+    {
+        var work = new FilerWork(path, pattern);
+        var workInterface = this.AddLast(work);
+        await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
+        if (work.OutputObject is List<FileInformation> list)
+        {
+            return list;
+        }
+        else
+        {
+            return new List<FileInformation>();
+        }
     }
 
     #endregion
