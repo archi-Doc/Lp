@@ -11,4 +11,7 @@ public partial record EmptyFileConfiguration : FileConfiguration
         : base()
     {
     }
+
+    public override string ToString()
+        => $"Empty file";
 }

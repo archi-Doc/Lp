@@ -20,5 +20,24 @@ public partial record S3DirectoryConfiguration : DirectoryConfiguration
     public string Bucket { get; protected set; }
 
     public override S3FileConfiguration CombinePath(string file)
-        => new S3FileConfiguration { Path = System.IO.Path.Combine(this.Path, file), };
+    {
+        string newPath;
+        if (string.IsNullOrEmpty(this.Path))
+        {
+            newPath = file;
+        }
+        else if (this.Path.EndsWith('/'))
+        {
+            newPath = this.Path + file;
+        }
+        else
+        {
+            newPath = this.Path + "/" + file;
+        }
+
+        return new S3FileConfiguration(this.Bucket, newPath);
+    }
+
+    public override string ToString()
+        => $"S3 directory: {this.Bucket}/{this.Path}";
 }

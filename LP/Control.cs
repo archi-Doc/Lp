@@ -13,7 +13,6 @@ global using Tinyhand;
 using CrystalData.Datum;
 using LP.Crystal;
 using LP.Data;
-using LP.Logging;
 using LP.Services;
 using LP.T3CS;
 using Microsoft.Extensions.DependencyInjection;
@@ -56,6 +55,7 @@ public class Control : ILogInformation
 
                 // Crystal
                 context.AddSingleton<Mono>();
+                context.Services.TryAddSingleton<IBigCrystal>(x => x.GetRequiredService<Control>().BigCrystal);
 
                 // RPC / Services
                 context.AddSingleton<NetServices.AuthorizedTerminalFactory>();
@@ -361,9 +361,11 @@ public class Control : ILogInformation
         if (this.LPBase.Mode == LPMode.Merger)
         {// Merger
             this.MergerProvider.Create(context);
+            this.BigCrystal = context.ServiceProvider.GetRequiredService<IBigCrystal<MergerData>>();
         }
         else
         {
+            this.BigCrystal = context.ServiceProvider.GetRequiredService<IBigCrystal<LpData>>();
         }
 
         this.Core = core;
@@ -615,6 +617,8 @@ public class Control : ILogInformation
     public Merger.Provider MergerProvider { get; }
 
     public Crystalizer Crystalizer { get; }
+
+    public IBigCrystal BigCrystal { get; }
 
     public Mono Mono { get; }
 

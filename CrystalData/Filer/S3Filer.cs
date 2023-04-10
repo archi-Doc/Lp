@@ -31,11 +31,10 @@ public class S3Filer : TaskWorker<FilerWork>, IRawFiler
         });
     }
 
-    public S3Filer(string bucket, string path)
+    public S3Filer(string bucket)
         : this()
     {
         this.bucket = bucket;
-        this.path = path.TrimEnd('/');
     }
 
     public static AddStorageResult Check(StorageGroup storageGroup, string bucket, string path)
@@ -49,7 +48,7 @@ public class S3Filer : TaskWorker<FilerWork>, IRawFiler
     }
 
     public override string ToString()
-        => $"S3Filer Bucket: {this.bucket}, Path: {this.path}";
+        => $"S3Filer Bucket: {this.bucket}";
 
     #region FieldAndProperty
 
@@ -76,7 +75,7 @@ public class S3Filer : TaskWorker<FilerWork>, IRawFiler
 
         var tryCount = 0;
         work.Result = CrystalResult.Started;
-        var filePath = worker.GetPath(work.Path);
+        var filePath = work.Path;
         if (work.Type == FilerWork.WorkType.Write)
         {// Write
 TryWrite:
@@ -212,25 +211,37 @@ RepeatList:
 
     async Task<CrystalResult> IRawFiler.PrepareAndCheck(Crystalizer crystalizer, PathConfiguration configuration)
     {
-        this.client?.Dispose();
         if (!crystalizer.StorageKey.TryGetKey(this.bucket, out var accessKeyPair))
         {
             return CrystalResult.NoStorageKey;
         }
 
-        try
+        if (this.client == null)
         {
-            this.client = new AmazonS3Client(accessKeyPair.AccessKeyId, accessKeyPair.SecretAccessKey);
-        }
-        catch
-        {
-            return CrystalResult.NoStorageKey;
+            try
+            {
+                this.client = new AmazonS3Client(accessKeyPair.AccessKeyId, accessKeyPair.SecretAccessKey);
+            }
+            catch
+            {
+                return CrystalResult.NoStorageKey;
+            }
         }
 
-        // Write test
+        // Write test. // tempcode
+        var path = Path.GetDirectoryName(configuration.Path);
+        if (string.IsNullOrEmpty(path))
+        {
+            path = WriteTestFile;
+        }
+        else
+        {
+            path = path + "/" + WriteTestFile;
+        }
+
         using (var ms = new MemoryStream())
         {
-            var request = new Amazon.S3.Model.PutObjectRequest() { BucketName = this.bucket, Key = this.GetPath(WriteTestFile), InputStream = ms, };
+            var request = new Amazon.S3.Model.PutObjectRequest() { BucketName = this.bucket, Key = path, InputStream = ms, };
             var response = await this.client.PutObjectAsync(request).ConfigureAwait(false);
             if (response.HttpStatusCode != System.Net.HttpStatusCode.OK)
             {
@@ -350,16 +361,4 @@ RepeatList:
     }
 
     #endregion
-
-    private string GetPath(string file)
-    {
-        if (string.IsNullOrEmpty(this.path))
-        {
-            return file;
-        }
-        else
-        {
-            return $"{this.path}/{file}";
-        }
-    }
 }

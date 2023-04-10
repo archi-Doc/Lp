@@ -20,7 +20,7 @@ internal partial class StorageObject
     }
 
     public override string ToString()
-        => $"Id: {this.StorageId:x4} {this.Storage?.ToString()}";
+        => $"Id: {this.StorageId:x4} {this.Storage?.ToString()} ({this.StorageConfiguration.DirectoryConfiguration.ToString()})";
 
     #region FieldAndProperty
 
