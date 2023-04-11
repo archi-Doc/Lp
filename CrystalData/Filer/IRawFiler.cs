@@ -14,6 +14,9 @@ public readonly struct FileInformation
 
     public readonly string File;
     public readonly long Length;
+
+    public override string ToString()
+        => $"{this.File} ({this.Length})";
 }
 
 public interface IRawFiler

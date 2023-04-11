@@ -42,7 +42,11 @@ public class Program
             {
                 context.SetJournal(new SimpleJournalConfiguration(new LocalDirectoryConfiguration("Journal")));
 
-                context.AddCrystal<ManualClass>(new(Crystalization.Manual, new LocalFileConfiguration("manual.data")));
+                context.AddCrystal<ManualClass>(
+                    new(
+                        Crystalization.Manual,
+                        new LocalFileConfiguration("manual.data")
+                        ));
 
                 context.AddCrystal<CombinedClass>(
                     new(

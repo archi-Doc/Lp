@@ -58,6 +58,15 @@ internal class TestClass
         await this.crystalizer.PrepareAndLoadAll();
         await this.crystalizer.PrepareJournal();
 
+        var config = new S3DirectoryConfiguration("kiokubako", "lp2");
+        var s3filer = this.crystalizer.ResolveRawFiler(config);
+        await s3filer.PrepareAndCheck(crystalizer, config);
+        var result = await s3filer.ListAsync("lp2", null);
+        foreach (var x in result)
+        {
+            await Console.Out.WriteLineAsync(x.File);
+        }
+
         // this.manualCrystal.Configure(new(Crystalization.Manual, new LocalFilerConfiguration("test")));
 
         var manualClass = this.manualCrystal.Object;

@@ -54,10 +54,8 @@ public class S3Filer : TaskWorker<FilerWork>, IRawFiler
 
     private ILogger? logger;
 
-    [Key(0)]
     private string bucket = string.Empty;
 
-    [Key(1)]
     private string path = string.Empty;
 
     private AmazonS3Client? client;
@@ -177,12 +175,11 @@ TryWrite:
         else if (work.Type == FilerWork.WorkType.List)
         {// List
             var list = new List<FileInformation>();
-            var pattern = work.InputObject as string;
             try
             {
-                string continuationToken = string.Empty;
+                string? continuationToken = null;
 RepeatList:
-                var request = new Amazon.S3.Model.ListObjectsV2Request() { BucketName = worker.bucket, Prefix = filePath, ContinuationToken = continuationToken, MaxKeys = 2, };
+                var request = new Amazon.S3.Model.ListObjectsV2Request() { BucketName = worker.bucket, Prefix = filePath, ContinuationToken = continuationToken, };
 
                 var response = await worker.client.ListObjectsV2Async(request, worker.CancellationToken).ConfigureAwait(false);
                 foreach (var x in response.S3Objects)
@@ -192,6 +189,7 @@ RepeatList:
 
                 if (response.IsTruncated)
                 {
+                    continuationToken = response.NextContinuationToken;
                     goto RepeatList;
                 }
             }
@@ -228,17 +226,8 @@ RepeatList:
             }
         }
 
-        // Write test. // tempcode
-        var path = Path.GetDirectoryName(configuration.Path);
-        if (string.IsNullOrEmpty(path))
-        {
-            path = WriteTestFile;
-        }
-        else
-        {
-            path = path + "/" + WriteTestFile;
-        }
-
+        // Write test.
+        var path = PathHelper.CombineWithSlash(configuration.Path, WriteTestFile);
         using (var ms = new MemoryStream())
         {
             var request = new Amazon.S3.Model.PutObjectRequest() { BucketName = this.bucket, Key = path, InputStream = ms, };

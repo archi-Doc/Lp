@@ -8,6 +8,65 @@ public static class PathHelper
 {
     public const string CheckExtension = "check";
     public const int CheckLength = 16;
+    public const char Slash = '/';
+    public const char Backslash = '\\';
+    public const char Colon = ':';
+
+    public static string CombineWithBackslash(string path1, string path2)
+        => CombineWith(Backslash, path1, path2);
+
+    public static string CombineWithSlash(string path1, string path2)
+        => CombineWith(Slash, path1, path2);
+
+    public static string CombineWith(char separator, string path1, string path2)
+    {
+        var omitLast1 = false;
+        if (path1.Length > 0)
+        {
+            var c1 = path1[path1.Length - 1];
+            if (IsSeparator(c1))
+            {
+                omitLast1 = true;
+            }
+        }
+
+        var omitFirst2 = false;
+        if (path2.Length > 0)
+        {
+            var c2 = path2[01];
+            if (IsSeparator(c2))
+            {
+                omitFirst2 = true;
+            }
+        }
+
+        if (omitLast1)
+        {
+            if (omitFirst2)
+            {// path1/ + /path2
+                return path1 + path2.Substring(1);
+            }
+            else
+            {// path1/ + path2
+                return path1 + path2;
+            }
+        }
+        else
+        {
+            if (omitFirst2)
+            {// path1 + /path2
+                return path1 + path2;
+            }
+            else
+            {// path1 + path2
+                return path1 + separator + path2;
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsSeparator(char c)
+        => c == Slash || c == Backslash || c == Colon;
 
     public static async Task<(CrystalMemoryOwnerResult Result, ulong Waypoint)> LoadData(IFiler? filer)
     {
