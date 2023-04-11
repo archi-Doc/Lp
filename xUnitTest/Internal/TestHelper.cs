@@ -13,23 +13,19 @@ namespace xUnitTest;
 
 public static class TestHelper
 {
-    public static async Task<LpCrystal> CreateAndStartCrystal()
+    public static async Task<IBigCrystal<LpData>> CreateAndStartCrystal()
     {
         var builder = new CrystalControl.Builder();
         builder
-            .Configure(context =>
-            {
-                context.AddSingleton<LpCrystal>();
-                context.Services.Add(ServiceDescriptor.Transient(typeof(LpData), x => x.GetRequiredService<LpCrystal>().Object.Data));
-            })
             .ConfigureCrystal(context =>
             {
                 var directory = $"Crystal[{RandomVault.Pseudo.NextUInt32():x4}]";
-                context.AddBigCrystal<MergerData>(
+                context.AddBigCrystal<LpData>(
                     new(
                         datumRegistry =>
                         {
                             datumRegistry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
+                            datumRegistry.Register<FragmentDatum<Identifier>>(2, x => new FragmentDatumImpl<Identifier>(x));
                         },
                         Crystalization.None,
                         new LocalDirectoryConfiguration(directory),
@@ -37,34 +33,32 @@ public static class TestHelper
             });
 
         var unit = builder.Build();
-        var crystal = unit.Context.ServiceProvider.GetRequiredService<LpCrystal>();
-        crystal.DatumRegistry.Register<FragmentDatum<Identifier>>(2, x => new FragmentDatumImpl<Identifier>(x));
+        var crystalizer = unit.Context.ServiceProvider.GetRequiredService<Crystalizer>();
+
+        var crystal = crystalizer.GetBigCrystal<LpData>();
         await crystal.PrepareAndLoad(new(FromScratch: true));
         return crystal;
     }
 
-    public static async Task StopCrystal(IBigCrystal crystal, bool removeAll = true)
+    public static async Task UnloadAndDeleteAll(IBigCrystal crystal)
     {
-        // await crystal.StopAsync(new(RemoveAll: removeAll)); // tempcode
+        await crystal.Crystalizer.SaveAll(true);
         crystal.MemoryUsage.Is(0);
+        crystal.Crystalizer.DeleteAll();
     }
 
     public static async Task StopAndStartCrystal(IBigCrystal crystal)
     {
-        // await crystal.StopAsync(new()); // tempcode
+        await crystal.Crystalizer.SaveAll(true);
+        // await crystal.Save(true);
         crystal.MemoryUsage.Is(0);
         // await crystal.StartAsync(new()); // tempcode
     }
 
-    public static async Task<MergerCrystal> CreateAndStartMerger(int maxParent)
+    public static async Task<IBigCrystal<MergerData>> CreateAndStartMerger(int maxParent)
     {
         var builder = new CrystalControl.Builder();
         builder
-            .Configure(context =>
-            {
-                context.AddSingleton<MergerCrystal>();
-                context.Services.Add(ServiceDescriptor.Transient(typeof(LpData), x => x.GetRequiredService<MergerCrystal>().Object));
-            })
             .ConfigureCrystal(context =>
             {
                 var directory = $"Crystal[{RandomVault.Pseudo.NextUInt32():x4}]";
@@ -81,7 +75,9 @@ public static class TestHelper
             });
 
         var unit = builder.Build();
-        var crystal = unit.Context.ServiceProvider.GetRequiredService<MergerCrystal>();
+        var crystalizer = unit.Context.ServiceProvider.GetRequiredService<Crystalizer>();
+
+        var crystal = crystalizer.GetBigCrystal<MergerData>();
         await crystal.PrepareAndLoad(new(FromScratch: true));
         return crystal;
     }

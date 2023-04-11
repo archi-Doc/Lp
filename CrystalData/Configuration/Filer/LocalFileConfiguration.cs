@@ -14,4 +14,7 @@ public partial record LocalFileConfiguration : FileConfiguration
         : base(file)
     {
     }
+
+    public override string ToString()
+        => $"Local file: {this.Path}";
 }

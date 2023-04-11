@@ -203,7 +203,7 @@ public sealed class StorageGroup
             }
         }
 
-        var task = storageObject.Storage?.GetAsync(ref fileId, TimeSpan.MinValue);
+        var task = storageObject.Storage?.GetAsync(ref fileId);
         if (task == null)
         {
             return Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.NoStorage));
@@ -320,7 +320,7 @@ public sealed class StorageGroup
             byteArray = TinyhandSerializer.Serialize(this.storages);
         }
 
-        await HashHelper.GetFarmHashAndSaveAsync(byteArray, filer).ConfigureAwait(false);
+        await PathHelper.SaveData(byteArray, filer, 0).ConfigureAwait(false);
     }
 
     internal void Clear()

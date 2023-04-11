@@ -18,4 +18,7 @@ public abstract partial record FileConfiguration : PathConfiguration
     }
 
     public override Type PathType => Type.File;
+
+    public override string ToString()
+        => $"File: {this.Path}";
 }

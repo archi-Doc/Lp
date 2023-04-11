@@ -9,6 +9,8 @@ public class FilerWork : IEquatable<FilerWork>
         Write,
         Read,
         Delete,
+        DeleteDirectory,
+        List,
     }
 
     public WorkType Type { get; }
@@ -21,15 +23,20 @@ public class FilerWork : IEquatable<FilerWork>
 
     public int Length { get; }
 
+    public bool Truncate { get; }
+
     public ByteArrayPool.ReadOnlyMemoryOwner WriteData { get; }
 
     public ByteArrayPool.MemoryOwner ReadData { get; internal set; }
 
-    public FilerWork(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
+    public object? OutputObject { get; internal set; }
+
+    public FilerWork(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate)
     {// Write
         this.Type = WorkType.Write;
         this.Path = path;
         this.Offset = offset;
+        this.Truncate = truncate;
         this.WriteData = dataToBeShared.IncrementAndShare();
     }
 
@@ -41,9 +48,9 @@ public class FilerWork : IEquatable<FilerWork>
         this.Length = length;
     }
 
-    public FilerWork(string path)
-    {// Delete
-        this.Type = WorkType.Delete;
+    public FilerWork(WorkType workType, string path)
+    {// Delete/List
+        this.Type = workType;
         this.Path = path;
     }
 

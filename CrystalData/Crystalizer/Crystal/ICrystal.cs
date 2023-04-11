@@ -10,6 +10,8 @@ public interface ICrystal
 
     object Object { get; }
 
+    bool Prepared { get; }
+
     IFiler Filer { get; }
 
     IStorage Storage { get; }
@@ -18,9 +20,11 @@ public interface ICrystal
 
     void ConfigureFile(FileConfiguration configuration);
 
+    void ConfigureStorage(StorageConfiguration configuration);
+
     Task<CrystalStartResult> PrepareAndLoad(CrystalStartParam? param = null);
 
-    Task<CrystalResult> Save();
+    Task<CrystalResult> Save(bool unload = false);
 
     void Delete();
 
@@ -32,8 +36,3 @@ public interface ICrystal<TData> : ICrystal
 {
     public new TData Object { get; }
 }
-
-/*internal class CrystalFactory<TData> : ICrystal<TData>
-    where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
-{
-}*/

@@ -1,12 +1,21 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using CrystalData.Journal;
+using Tinyhand.IO;
+
 namespace CrystalData;
 
 public interface IJournal
 {
+    Task<CrystalStartResult> Prepare(Crystalizer crystalizer);
+
+    bool Prepared { get; }
+
+    void GetJournalWriter(JournalRecordType recordType, out TinyhandWriter writer);
+
+    ulong AddRecord(in TinyhandWriter writer);
 }
 
-/*public interface IJournal<TData> : IJournal
-    where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+internal interface IJournalInternal : IJournal
 {
-}*/
+}

@@ -10,9 +10,9 @@ global using BigMachines;
 global using CrystalData;
 global using LP;
 global using Tinyhand;
+using CrystalData.Datum;
 using LP.Crystal;
 using LP.Data;
-using LP.Logging;
 using LP.Services;
 using LP.T3CS;
 using Microsoft.Extensions.DependencyInjection;
@@ -55,11 +55,7 @@ public class Control : ILogInformation
 
                 // Crystal
                 context.AddSingleton<Mono>();
-                context.AddSingleton<LpCrystal>();
-                context.AddSingleton<MergerCrystal>();
-                context.Services.TryAddSingleton<IBigCrystal>(x => x.GetRequiredService<Control>().Crystal);
-                // context.Services.TryAddSingleton<LpData>(x => x.GetRequiredService<Control>().LpRoot);
-                // context.Services.TryAddSingleton<MergerData>(x => x.GetRequiredService<Control>().MergerRoot);
+                context.Services.TryAddSingleton<IBigCrystal>(x => x.GetRequiredService<Control>().BigCrystal);
 
                 // RPC / Services
                 context.AddSingleton<NetServices.AuthorizedTerminalFactory>();
@@ -179,8 +175,38 @@ public class Control : ILogInformation
                 options.RootPath = lpOptions.RootDirectory;
             });
 
+            var crystalControlBuilder = new CrystalControl.Builder()
+            .ConfigureCrystal(context =>
+            {
+                context.AddBigCrystal<LpData>(new BigCrystalConfiguration() with
+                {// LpData
+                    RegisterDatum = registry =>
+                    {
+                        registry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
+                        registry.Register<FragmentDatum<Identifier>>(2, x => new FragmentDatumImpl<Identifier>(x));
+                    },
+                    DirectoryConfiguration = new LocalDirectoryConfiguration("Data"),
+                    StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Crystal")),
+                    CrystalFile = "Crystal.main",
+                    StorageFile = "CrystalStorage.main",
+                });
+
+                context.AddBigCrystal<MergerData>(new BigCrystalConfiguration() with
+                {// MergerData
+                    RegisterDatum = registry =>
+                    {
+                        registry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
+                        registry.Register<FragmentDatum<Identifier>>(2, x => new FragmentDatumImpl<Identifier>(x));
+                    },
+                    DirectoryConfiguration = new LocalDirectoryConfiguration("Data"),
+                    StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Merger")),
+                    CrystalFile = "Merger.main",
+                    StorageFile = "MergerStorage.main",
+                });
+            });
+
             this.AddBuilder(new NetControl.Builder());
-            this.AddBuilder(new CrystalControl.Builder());
+            this.AddBuilder(crystalControlBuilder);
             this.AddBuilder(new LP.Logging.LPLogger.Builder());
         }
 
@@ -318,7 +344,7 @@ public class Control : ILogInformation
         }
     }
 
-    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, Mono mono, Vault vault, Authority authority)
+    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, Crystalizer crystalizer, Mono mono, Vault vault, Authority authority)
     {
         this.Logger = logger;
         this.UserInterfaceService = userInterfaceService;
@@ -326,6 +352,7 @@ public class Control : ILogInformation
         this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
         this.NetControl = netsphere;
         this.NetControl.SetupServer(() => new NetServices.LPServerContext(), () => new NetServices.LPCallContext());
+        this.Crystalizer = crystalizer;
         this.Mono = mono;
         this.Vault = vault;
         this.Authority = authority;
@@ -333,18 +360,12 @@ public class Control : ILogInformation
         this.MergerProvider = new();
         if (this.LPBase.Mode == LPMode.Merger)
         {// Merger
-            var mergerCrystal = context.ServiceProvider.GetRequiredService<MergerCrystal>();
-            this.Crystal = mergerCrystal;
-            this.LpRoot = default!;
-            this.MergerRoot = mergerCrystal.Object;
             this.MergerProvider.Create(context);
+            this.BigCrystal = context.ServiceProvider.GetRequiredService<IBigCrystal<MergerData>>();
         }
         else
         {
-            var lpCrystal = context.ServiceProvider.GetRequiredService<LpCrystal>();
-            this.Crystal = lpCrystal;
-            this.LpRoot = lpCrystal.Object.Data;
-            this.MergerRoot = default!;
+            this.BigCrystal = context.ServiceProvider.GetRequiredService<IBigCrystal<LpData>>();
         }
 
         this.Core = core;
@@ -373,7 +394,7 @@ public class Control : ILogInformation
             await this.Mono.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Mono.DefaultMonoBackup)).ConfigureAwait(false);
         }
 
-        var result = await this.Crystal.PrepareAndLoad(new());
+        var result = await this.Crystalizer.PrepareAndLoadAll(new());
         if (result != CrystalStartResult.Success)
         {
             throw new PanicException();
@@ -396,10 +417,9 @@ public class Control : ILogInformation
         await this.NetControl.EssentialNode.SaveAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
         await this.Mono.SaveAsync(Path.Combine(this.LPBase.DataDirectory, Mono.DefaultMonoFile), Path.Combine(this.LPBase.DataDirectory, Mono.DefaultMonoBackup));
 
-        // await this.Crystal.StopAsync(new()); // tempcode
-        await this.Crystal.Save();
-
         await context.SendSaveAsync(new(this.LPBase.DataDirectory));
+
+        await this.Crystalizer.SaveAllAndTerminate();
     }
 
     public async Task RunAsync(UnitContext context)
@@ -596,11 +616,9 @@ public class Control : ILogInformation
 
     public Merger.Provider MergerProvider { get; }
 
-    public IBigCrystal Crystal { get; }
+    public Crystalizer Crystalizer { get; }
 
-    public LpData LpRoot { get; }
-
-    public MergerData MergerRoot { get; }
+    public IBigCrystal BigCrystal { get; }
 
     public Mono Mono { get; }
 

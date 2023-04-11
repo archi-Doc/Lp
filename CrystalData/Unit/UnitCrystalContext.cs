@@ -17,6 +17,11 @@ internal class UnitCrystalContext : IUnitCrystalContext
         // this.typeToBigCrystalConfiguration[typeof(TData)] = configuration;
     }
 
+    void IUnitCrystalContext.SetJournal(JournalConfiguration configuration)
+    {
+        this.journalConfiguration = configuration;
+    }
+
     internal void Configure(IUnitConfigurationContext context)
     {
         foreach (var x in this.typeToCrystalConfiguration)
@@ -49,7 +54,7 @@ internal class UnitCrystalContext : IUnitCrystalContext
             context.Services.Add(ServiceDescriptor.Singleton(x.Key, provider => provider.GetRequiredService<Crystalizer>().GetBigObject(x.Key)));
         }*/
 
-        var configuration = new CrystalizerConfiguration(this.typeToCrystalConfiguration);
+        var configuration = new CrystalizerConfiguration(this.typeToCrystalConfiguration, this.journalConfiguration);
         context.SetOptions(configuration);
 
         var options = new CrystalizerOptions();
@@ -59,4 +64,5 @@ internal class UnitCrystalContext : IUnitCrystalContext
 
     private Dictionary<Type, CrystalConfiguration> typeToCrystalConfiguration = new();
     private Dictionary<Type, BigCrystalConfiguration> typeToBigCrystalConfiguration = new();
+    private JournalConfiguration journalConfiguration = EmptyJournalConfiguration.Default;
 }

@@ -31,4 +31,7 @@ public abstract partial record PathConfiguration
 
     [Key(0)]
     public string Path { get; init; }
+
+    public override string ToString()
+        => $"Path: {this.Path}";
 }

@@ -6,6 +6,8 @@ public partial interface IStorage
 {
     long StorageUsage { get; }
 
+    void SetTimeout(TimeSpan timeout);
+
     Task<CrystalResult> PrepareAndCheck(Crystalizer crystalizer, StorageConfiguration storageConfiguration, bool createNew);
 
     Task Save();
@@ -14,23 +16,11 @@ public partial interface IStorage
 
     CrystalResult Delete(ref ulong fileId);
 
-    Task<CrystalMemoryOwnerResult> GetAsync(ref ulong fileId, TimeSpan timeToWait);
+    Task<CrystalMemoryOwnerResult> GetAsync(ref ulong fileId);
 
-    Task<CrystalResult> PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared, TimeSpan timeToWait);
+    Task<CrystalResult> PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared);
 
-    Task<CrystalResult> DeleteAsync(ref ulong fileId, TimeSpan timeToWait);
+    Task<CrystalResult> DeleteAsync(ref ulong fileId);
 
-    Task<CrystalMemoryOwnerResult> GetAsync(ref ulong fileId)
-        => this.GetAsync(ref fileId, TimeSpan.MinValue);
-
-    Task<CrystalResult> PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
-        => this.PutAsync(ref fileId, memoryToBeShared, TimeSpan.MinValue);
-
-    Task<CrystalResult> DeleteAsync(ref ulong fileId)
-        => this.DeleteAsync(ref fileId, TimeSpan.MinValue);
+    Task<CrystalResult> DeleteAllAsync();
 }
-
-/*public interface IStorage<TData> : IStorage
-    where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
-{
-}*/

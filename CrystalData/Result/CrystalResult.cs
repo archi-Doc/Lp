@@ -24,6 +24,6 @@ public enum CrystalResult
     ReadError,
     WriteError,
     DeleteError,
-    NoOffsetSupport,
+    NoPartialWriteSupport,
     NoStorageKey,
 }

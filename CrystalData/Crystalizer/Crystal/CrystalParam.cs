@@ -24,6 +24,7 @@ public enum CrystalStartResult
     DirectoryError,
     NoDirectoryAvailable,
     DeserializeError,
+    NoJournal,
 }
 
 public delegate Task<AbortOrComplete> CrystalStartQueryDelegate(CrystalStartResult query, string[]? list);

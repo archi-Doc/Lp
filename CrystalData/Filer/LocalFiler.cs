@@ -3,6 +3,7 @@
 #pragma warning disable SA1124 // Do not use regions
 
 using CrystalData.Results;
+using static CrystalData.Filer.FilerWork;
 
 namespace CrystalData.Filer;
 
@@ -75,16 +76,20 @@ TryWrite:
                     await RandomAccess.WriteAsync(handle, work.WriteData.Memory, work.Offset, worker.CancellationToken).ConfigureAwait(false);
                     worker.logger?.TryGet()?.Log($"Written[{work.WriteData.Memory.Length}] {work.Path}");
 
-                    /*try
+                    if (work.Truncate)
                     {
-                        if (RandomAccess.GetLength(handle) > work.WriteData.Memory.Length)
+                        try
                         {
-                            RandomAccess.SetLength(handle, work.WriteData.Memory.Length);
+                            var newSize = work.Offset + work.WriteData.Memory.Length;
+                            if (RandomAccess.GetLength(handle) > newSize)
+                            {
+                                RandomAccess.SetLength(handle, newSize);
+                            }
+                        }
+                        catch
+                        {
                         }
                     }
-                    catch
-                    {
-                    }*/
 
                     work.Result = CrystalResult.Success;
                 }
@@ -146,13 +151,16 @@ TryWrite:
                     var read = await RandomAccess.ReadAsync(handle, memoryOwner.Memory, offset, worker.CancellationToken).ConfigureAwait(false);
                     if (read != lengthToRead)
                     {
+                        File.Delete(filePath);
+                        worker.logger?.TryGet()?.Log($"DeleteAndExit {work.Path}");
                         work.Result = CrystalResult.ReadError;
-                        goto DeleteAndExit;
+                        return;
                     }
 
                     work.Result = CrystalResult.Success;
                     work.ReadData = memoryOwner;
                     worker.logger?.TryGet()?.Log($"Read[{memoryOwner.Memory.Length}] {work.Path}");
+                    return;
                 }
             }
             catch (OperationCanceledException)
@@ -170,7 +178,7 @@ TryWrite:
             }
         }
         else if (work.Type == FilerWork.WorkType.Delete)
-        {
+        {// Delete
             try
             {
                 File.Delete(filePath);
@@ -184,17 +192,42 @@ TryWrite:
             {
             }
         }
-
-        return;
-
-DeleteAndExit:
-        if (filePath != null)
+        else if (work.Type == WorkType.DeleteDirectory)
         {
-            File.Delete(filePath);
-            worker.logger?.TryGet()?.Log($"DeleteAndExit {work.Path}");
+            try
+            {
+                Directory.Delete(filePath, true);
+                work.Result = CrystalResult.Success;
+            }
+            catch
+            {
+                work.Result = CrystalResult.DeleteError;
+            }
         }
+        else if (work.Type == FilerWork.WorkType.List)
+        {// List
+            var list = new List<PathInformation>();
+            try
+            {
+                var directoryInfo = new DirectoryInfo(filePath);
+                foreach (var x in directoryInfo.EnumerateFileSystemInfos())
+                {
+                    if (x is FileInfo fi)
+                    {
+                        list.Add(new(fi.FullName, fi.Length));
+                    }
+                    else if (x is DirectoryInfo di)
+                    {
+                        list.Add(new(di.FullName));
+                    }
+                }
+            }
+            catch
+            {
+            }
 
-        return;
+            work.OutputObject = list;
+        }
     }
 
     #region IFiler
@@ -204,21 +237,6 @@ DeleteAndExit:
     async Task<CrystalResult> IRawFiler.PrepareAndCheck(Crystalizer crystalizer, PathConfiguration configuration)
     {
         this.crystalizer = crystalizer;
-
-        /*string? directory = null;
-        try
-        {
-            directory = Path.GetDirectoryName(this.crystalizer.GetRootedFile(configuration.Path));
-        }
-        catch
-        {
-        }
-
-        var result = CheckPath(crystalizer, directory ?? string.Empty);
-        if (!result.Success)
-        {
-            return CrystalResult.WriteError;
-        }*/
 
         if (crystalizer.EnableLogger)
         {
@@ -234,15 +252,15 @@ DeleteAndExit:
         this.Dispose();
     }
 
-    CrystalResult IRawFiler.Write(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
+    CrystalResult IRawFiler.Write(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate)
     {
-        this.AddLast(new(path, offset, dataToBeShared));
+        this.AddLast(new(path, offset, dataToBeShared, truncate));
         return CrystalResult.Started;
     }
 
     CrystalResult IRawFiler.Delete(string path)
     {
-        this.AddLast(new(path));
+        this.AddLast(new(WorkType.Delete, path));
         return CrystalResult.Started;
     }
 
@@ -254,9 +272,9 @@ DeleteAndExit:
         return new(work.Result, work.ReadData.AsReadOnly());
     }
 
-    async Task<CrystalResult> IRawFiler.WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait)
+    async Task<CrystalResult> IRawFiler.WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait, bool truncate)
     {
-        var work = new FilerWork(path, offset, dataToBeShared);
+        var work = new FilerWork(path, offset, dataToBeShared, truncate);
         var workInterface = this.AddLast(work);
         await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
         return work.Result;
@@ -264,10 +282,33 @@ DeleteAndExit:
 
     async Task<CrystalResult> IRawFiler.DeleteAsync(string path, TimeSpan timeToWait)
     {
-        var work = new FilerWork(path);
+        var work = new FilerWork(WorkType.Delete, path);
         var workInterface = this.AddLast(work);
         await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
         return work.Result;
+    }
+
+    async Task<CrystalResult> IRawFiler.DeleteDirectoryAsync(string path, TimeSpan timeToWait)
+    {
+        var work = new FilerWork(WorkType.DeleteDirectory, path);
+        var workInterface = this.AddLast(work);
+        await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
+        return work.Result;
+    }
+
+    async Task<List<PathInformation>> IRawFiler.ListAsync(string path, TimeSpan timeToWait)
+    {
+        var work = new FilerWork(WorkType.List, path);
+        var workInterface = this.AddLast(work);
+        await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
+        if (work.OutputObject is List<PathInformation> list)
+        {
+            return list;
+        }
+        else
+        {
+            return new List<PathInformation>();
+        }
     }
 
     #endregion
@@ -295,34 +336,4 @@ DeleteAndExit:
 
         return (false, rootedPath);
     }
-
-    #region IDisposable Support
-
-    /*/// <summary>
-    /// Finalizes an instance of the <see cref="LocalFiler"/> class.
-    /// </summary>
-    ~LocalFiler()
-    {
-        this.Dispose(false);
-    }
-
-    /// <summary>
-    /// free managed/native resources.
-    /// </summary>
-    /// <param name="disposing">true: free managed resources.</param>
-    protected override void Dispose(bool disposing)
-    {
-        if (!this.disposed)
-        {
-            if (disposing)
-            {
-                // free managed resources.
-                this.Dispose();
-            }
-
-            // free native resources here if there are any.
-            this.disposed = true;
-        }
-    }*/
-    #endregion
 }

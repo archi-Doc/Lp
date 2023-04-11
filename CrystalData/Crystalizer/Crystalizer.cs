@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using CrystalData.Filer;
+using CrystalData.Journal;
 using CrystalData.Storage;
 
 #pragma warning disable SA1204
@@ -17,6 +18,7 @@ public class Crystalizer
         this.configuration = configuration;
         this.EnableLogger = options.EnableLogger;
         this.RootDirectory = options.RootPath;
+        this.DefaultTimeout = options.DefaultTimeout;
         if (string.IsNullOrEmpty(this.RootDirectory))
         {
             this.RootDirectory = Directory.GetCurrentDirectory();
@@ -78,9 +80,17 @@ public class Crystalizer
 
     public string RootDirectory { get; }
 
+    public TimeSpan DefaultTimeout { get; }
+
+    public IJournal? Journal => this.JournalInternal;
+
     public IStorageKey StorageKey { get; }
 
     internal UnitLogger UnitLogger { get; }
+
+#pragma warning disable SA1401 // Fields should be private
+    internal IJournalInternal? JournalInternal;
+#pragma warning restore SA1401 // Fields should be private
 
     private CrystalizerConfiguration configuration;
     private ILogger logger;
@@ -90,8 +100,8 @@ public class Crystalizer
     // private ConcurrentDictionary<IBigCrystal, int> bigCrystals = new();
 
     private object syncObject = new();
-    private LocalFiler? localFiler;
-    private Dictionary<string, S3Filer> bucketToS3Filer = new();
+    private IRawFiler? localFiler;
+    private Dictionary<string, IRawFiler> bucketToS3Filer = new();
 
     #endregion
 
@@ -138,7 +148,7 @@ public class Crystalizer
         {
             if (!this.bucketToS3Filer.TryGetValue(bucket, out var filer))
             {
-                filer = new S3Filer(bucket, string.Empty);
+                filer = new S3Filer(bucket);
                 this.bucketToS3Filer.TryAdd(bucket, filer);
             }
 
@@ -150,19 +160,23 @@ public class Crystalizer
     {
         lock (this.syncObject)
         {
+            IStorage storage;
             if (configuration is EmptyStorageConfiguration emptyStorageConfiguration)
             {// Empty storage
-                return EmptyStorage.Default;
+                storage = EmptyStorage.Default;
             }
             else if (configuration is SimpleStorageConfiguration simpleStorageConfiguration)
             {
-                return new SimpleStorage();
+                storage = new SimpleStorage();
             }
             else
             {
                 ThrowConfigurationNotRegistered(configuration.GetType());
                 return default!;
             }
+
+            storage.SetTimeout(this.DefaultTimeout);
+            return storage;
         }
     }
 
@@ -170,7 +184,49 @@ public class Crystalizer
 
     #region Main
 
-    public async Task<CrystalStartResult> PrepareAndLoad(CrystalStartParam? param = null)
+    public async Task<CrystalStartResult> PrepareJournal()
+    {
+        if (this.JournalInternal == null)
+        {// New journal
+            var configuration = this.configuration.JournalConfiguration;
+            if (configuration is EmptyJournalConfiguration)
+            {
+                return CrystalStartResult.Success;
+            }
+            else if (configuration is SimpleJournalConfiguration simpleJournalConfiguration)
+            {
+                var simpleJournal = new SimpleJournal(this, simpleJournalConfiguration);
+                this.JournalInternal = simpleJournal;
+            }
+            else
+            {
+                return CrystalStartResult.NoJournal;
+            }
+        }
+
+        if (this.JournalInternal.Prepared)
+        {
+            return CrystalStartResult.Success;
+        }
+        else
+        {// Prepare
+            return await this.JournalInternal.Prepare(this).ConfigureAwait(false);
+        }
+    }
+
+    /*public bool TryGetJournalWriter(JournalRecordType recordType, out JournalRecord record)
+    {
+        if (this.Journal == null)
+        {
+            record = default;
+            return false;
+        }
+
+        this.Journal.GetJournalWriter(recordType, out record);
+        return true;
+    }*/
+
+    public async Task<CrystalStartResult> PrepareAndLoadAll(CrystalStartParam? param = null)
     {
         param ??= CrystalStartParam.Default;
 
@@ -187,18 +243,54 @@ public class Crystalizer
         return CrystalStartResult.Success;
     }
 
-    public async Task SaveAndTerminate(CrystalStopParam? param = null)
+    public async Task SaveAll(bool unload = false)
     {
-        param ??= CrystalStopParam.Default;
-
         var crystals = this.crystals.Keys.ToArray();
         foreach (var x in crystals)
         {
-            await x.Save().ConfigureAwait(false);
+            await x.Save(unload).ConfigureAwait(false);
         }
     }
 
-    public ICrystal<TData> Create<TData>()
+    public async Task SaveAllAndTerminate()
+    {
+        var crystals = this.crystals.Keys.ToArray();
+        foreach (var x in crystals)
+        {
+            await x.Save(true).ConfigureAwait(false);
+        }
+
+        // Terminate filers
+        var tasks = new List<Task>();
+        lock (this.syncObject)
+        {
+            if (this.localFiler is not null)
+            {
+                tasks.Add(this.localFiler.Terminate());
+                this.localFiler = null;
+            }
+
+            foreach (var x in this.bucketToS3Filer.Values)
+            {
+                tasks.Add(x.Terminate());
+            }
+
+            this.bucketToS3Filer.Clear();
+        }
+
+        await Task.WhenAll(tasks).ConfigureAwait(false);
+    }
+
+    public void DeleteAll()
+    {
+        var crystals = this.crystals.Keys.ToArray();
+        foreach (var x in crystals)
+        {
+            x.Delete();
+        }
+    }
+
+    public ICrystal<TData> CreateCrystal<TData>()
         where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
         if (!this.typeToCrystal.TryGetValue(typeof(TData), out _))
@@ -211,15 +303,44 @@ public class Crystalizer
         return crystal;
     }
 
-    public ICrystal<TData> Get<TData>()
-        where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+    public ICrystal<TData> CreateBigCrystal<TData>()
+        where TData : BaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
-        if (!this.typeToCrystal.TryGetValue(typeof(TData), out var crystal))
+        if (!this.typeToCrystal.TryGetValue(typeof(TData), out var c) ||
+            c is not IBigCrystal)
         {
             ThrowTypeNotRegistered(typeof(TData));
         }
 
-        return (ICrystal<TData>)crystal!;
+        var crystal = new BigCrystalImpl<TData>(this);
+        this.crystals.TryAdd(crystal, 0);
+        return crystal;
+    }
+
+    public ICrystal<TData> GetCrystal<TData>()
+        where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+    {
+        if (!this.typeToCrystal.TryGetValue(typeof(TData), out var c) ||
+            c is not ICrystal<TData> crystal)
+        {
+            ThrowTypeNotRegistered(typeof(TData));
+            return default!;
+        }
+
+        return crystal;
+    }
+
+    public IBigCrystal<TData> GetBigCrystal<TData>()
+        where TData : BaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+    {
+        if (!this.typeToCrystal.TryGetValue(typeof(TData), out var c) ||
+            c is not IBigCrystal<TData> crystal)
+        {
+            ThrowTypeNotRegistered(typeof(TData));
+            return default!;
+        }
+
+        return crystal;
     }
 
     public ICrystal[] GetArray()

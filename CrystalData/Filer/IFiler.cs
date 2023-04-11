@@ -1,31 +1,31 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using CrystalData.Filer;
-
 namespace CrystalData;
 
 public interface IFiler
 {
     bool SupportPartialWrite { get; }
 
+    void SetTimeout(TimeSpan timeout);
+
+    IFiler CloneWithExtension(string extension);
+
+    /// <summary>
+    /// Prepare the filer and check if the path is valid.<br/>
+    /// This method may be called multiple times.
+    /// </summary>
+    /// <param name="crystalizer"><see cref="Crystalizer"/>.</param>
+    /// <param name="configuration"><see cref="PathConfiguration"/>.</param>
+    /// <returns><see cref="CrystalResult"/>.</returns>
     Task<CrystalResult> PrepareAndCheck(Crystalizer crystalizer, PathConfiguration configuration);
 
-    CrystalResult Write(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared);
+    CrystalResult Write(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate);
 
     CrystalResult Delete();
 
-    Task<CrystalMemoryOwnerResult> ReadAsync(long offset, int length, TimeSpan timeToWait);
+    Task<CrystalMemoryOwnerResult> ReadAsync(long offset, int length);
 
-    Task<CrystalMemoryOwnerResult> ReadAsync(long offset, int length)
-        => this.ReadAsync(offset, length, TimeSpan.MinValue);
+    Task<CrystalResult> WriteAsync(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate = true);
 
-    Task<CrystalResult> WriteAsync(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait);
-
-    Task<CrystalResult> WriteAsync(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
-        => this.WriteAsync(offset, dataToBeShared, TimeSpan.MinValue);
-
-    Task<CrystalResult> DeleteAsync(TimeSpan timeToWait);
-
-    Task<CrystalResult> DeleteAsync()
-        => this.DeleteAsync();
+    Task<CrystalResult> DeleteAsync();
 }

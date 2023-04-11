@@ -1,7 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Collections.Concurrent;
 using Amazon.S3;
+using Amazon.S3.Model;
 using CrystalData.Results;
+using static CrystalData.Filer.FilerWork;
 
 #pragma warning disable SA1124 // Do not use regions
 
@@ -31,11 +34,10 @@ public class S3Filer : TaskWorker<FilerWork>, IRawFiler
         });
     }
 
-    public S3Filer(string bucket, string path)
+    public S3Filer(string bucket)
         : this()
     {
         this.bucket = bucket;
-        this.path = path.TrimEnd('/');
     }
 
     public static AddStorageResult Check(StorageGroup storageGroup, string bucket, string path)
@@ -49,19 +51,19 @@ public class S3Filer : TaskWorker<FilerWork>, IRawFiler
     }
 
     public override string ToString()
-        => $"S3Filer Bucket: {this.bucket}, Path: {this.path}";
+        => $"S3Filer Bucket: {this.bucket}";
 
     #region FieldAndProperty
 
     private ILogger? logger;
 
-    [Key(0)]
     private string bucket = string.Empty;
 
-    [Key(1)]
     private string path = string.Empty;
 
     private AmazonS3Client? client;
+
+    private ConcurrentDictionary<string, int> checkedPath = new();
 
     #endregion
 
@@ -76,7 +78,7 @@ public class S3Filer : TaskWorker<FilerWork>, IRawFiler
 
         var tryCount = 0;
         work.Result = CrystalResult.Started;
-        var filePath = worker.GetPath(work.Path);
+        var filePath = work.Path;
         if (work.Type == FilerWork.WorkType.Write)
         {// Write
 TryWrite:
@@ -159,7 +161,7 @@ TryWrite:
             worker.logger?.TryGet()?.Log($"Read exception {filePath}");
         }
         else if (work.Type == FilerWork.WorkType.Delete)
-        {
+        {// Delete
             try
             {
                 var request = new Amazon.S3.Model.DeleteObjectRequest() { BucketName = worker.bucket, Key = filePath, };
@@ -175,6 +177,80 @@ TryWrite:
 
             work.Result = CrystalResult.DeleteError;
         }
+        else if (work.Type == WorkType.DeleteDirectory)
+        {
+            if (!filePath.EndsWith(PathHelper.Slash))
+            {
+                filePath += PathHelper.Slash;
+            }
+
+            while (true)
+            {
+                var listRequest = new ListObjectsV2Request() { BucketName = worker.bucket, Prefix = filePath, };
+                var listResponse = await worker.client.ListObjectsV2Async(listRequest).ConfigureAwait(false);
+                if (listResponse.HttpStatusCode != System.Net.HttpStatusCode.OK)
+                {
+                    work.Result = CrystalResult.DeleteError;
+                    return;
+                }
+
+                if (listResponse.KeyCount == 0)
+                {// No file left
+                    work.Result = CrystalResult.Success;
+                    return;
+                }
+
+                var deleteRequest = new DeleteObjectsRequest() { BucketName = worker.bucket, };
+                foreach (var x in listResponse.S3Objects)
+                {
+                    deleteRequest.AddKey(x.Key);
+                }
+
+                var deleteResponse = await worker.client.DeleteObjectsAsync(deleteRequest).ConfigureAwait(false);
+                if (deleteResponse.HttpStatusCode != System.Net.HttpStatusCode.OK)
+                {
+                    work.Result = CrystalResult.DeleteError;
+                    return;
+                }
+            }
+        }
+        else if (work.Type == FilerWork.WorkType.List)
+        {// List
+            var list = new List<PathInformation>();
+            if (!filePath.EndsWith(PathHelper.Slash))
+            {
+                filePath += PathHelper.Slash;
+            }
+
+            try
+            {
+                string? continuationToken = null;
+RepeatList:
+                var request = new Amazon.S3.Model.ListObjectsV2Request() { BucketName = worker.bucket, Prefix = filePath, Delimiter = PathHelper.SlashString, ContinuationToken = continuationToken, };
+
+                var response = await worker.client.ListObjectsV2Async(request, worker.CancellationToken).ConfigureAwait(false);
+                foreach (var x in response.S3Objects)
+                {
+                    list.Add(new(x.Key, x.Size));
+                }
+
+                foreach (var x in response.CommonPrefixes)
+                {
+                    list.Add(new(x));
+                }
+
+                if (response.IsTruncated)
+                {
+                    continuationToken = response.NextContinuationToken;
+                    goto RepeatList;
+                }
+            }
+            catch
+            {
+            }
+
+            work.OutputObject = list;
+        }
 
         return;
     }
@@ -185,27 +261,40 @@ TryWrite:
 
     async Task<CrystalResult> IRawFiler.PrepareAndCheck(Crystalizer crystalizer, PathConfiguration configuration)
     {
-        this.client?.Dispose();
         if (!crystalizer.StorageKey.TryGetKey(this.bucket, out var accessKeyPair))
         {
             return CrystalResult.NoStorageKey;
         }
 
-        try
+        if (this.client == null)
         {
-            this.client = new AmazonS3Client(accessKeyPair.AccessKeyId, accessKeyPair.SecretAccessKey);
-        }
-        catch
-        {
-            return CrystalResult.NoStorageKey;
+            try
+            {
+                this.client = new AmazonS3Client(accessKeyPair.AccessKeyId, accessKeyPair.SecretAccessKey);
+            }
+            catch
+            {
+                return CrystalResult.NoStorageKey;
+            }
         }
 
-        // Write test
-        using (var ms = new MemoryStream())
+        // Write test.
+        if (this.checkedPath.TryAdd(configuration.Path, 0))
         {
-            var request = new Amazon.S3.Model.PutObjectRequest() { BucketName = this.bucket, Key = this.GetPath(WriteTestFile), InputStream = ms, };
-            var response = await this.client.PutObjectAsync(request).ConfigureAwait(false);
-            if (response.HttpStatusCode != System.Net.HttpStatusCode.OK)
+            try
+            {
+                var path = PathHelper.CombineWithSlash(configuration.Path, WriteTestFile);
+                using (var ms = new MemoryStream())
+                {
+                    var request = new Amazon.S3.Model.PutObjectRequest() { BucketName = this.bucket, Key = path, InputStream = ms, };
+                    var response = await this.client.PutObjectAsync(request).ConfigureAwait(false);
+                    if (response.HttpStatusCode != System.Net.HttpStatusCode.OK)
+                    {
+                        return CrystalResult.WriteError;
+                    }
+                }
+            }
+            catch
             {
                 return CrystalResult.WriteError;
             }
@@ -226,50 +315,20 @@ TryWrite:
         this.Dispose();
     }
 
-    /*async Task<CrystalResult> IRawFiler.DeleteAllAsync()
+    CrystalResult IRawFiler.Write(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate)
     {
-        if (this.client == null)
-        {
-            return CrystalResult.NoFiler;
+        if (offset != 0 || !truncate)
+        {// Not supported
+            return CrystalResult.NoPartialWriteSupport;
         }
 
-        while (true)
-        {
-            var listRequest = new ListObjectsV2Request() { BucketName = this.bucket, MaxKeys = 1000, Prefix = this.path, };
-            var listResponse = await this.client.ListObjectsV2Async(listRequest).ConfigureAwait(false);
-            if (listResponse.HttpStatusCode != System.Net.HttpStatusCode.OK)
-            {
-                return CrystalResult.DeleteError;
-            }
-
-            if (listResponse.KeyCount == 0)
-            {// No file left
-                return CrystalResult.Success;
-            }
-
-            var deleteRequest = new DeleteObjectsRequest() { BucketName = this.bucket, };
-            foreach (var x in listResponse.S3Objects)
-            {
-                deleteRequest.AddKey(x.Key);
-            }
-
-            var deleteResponse = await this.client.DeleteObjectsAsync(deleteRequest).ConfigureAwait(false);
-            if (deleteResponse.HttpStatusCode != System.Net.HttpStatusCode.OK)
-            {
-                return CrystalResult.DeleteError;
-            }
-        }
-    }*/
-
-    CrystalResult IRawFiler.Write(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
-    {
-        this.AddLast(new(path, offset, dataToBeShared));
+        this.AddLast(new(path, offset, dataToBeShared, truncate));
         return CrystalResult.Started;
     }
 
     CrystalResult IRawFiler.Delete(string path)
     {
-        this.AddLast(new(path));
+        this.AddLast(new(WorkType.Delete, path));
         return CrystalResult.Started;
     }
 
@@ -281,14 +340,14 @@ TryWrite:
         return new(work.Result, work.ReadData.AsReadOnly());
     }
 
-    async Task<CrystalResult> IRawFiler.WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait)
+    async Task<CrystalResult> IRawFiler.WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait, bool truncate)
     {
-        if (offset != 0)
+        if (offset != 0 || !truncate)
         {// Not supported
-            return CrystalResult.NoOffsetSupport;
+            return CrystalResult.NoPartialWriteSupport;
         }
 
-        var work = new FilerWork(path, offset, dataToBeShared);
+        var work = new FilerWork(path, offset, dataToBeShared, truncate);
         var workInterface = this.AddLast(work);
         await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
         return work.Result;
@@ -296,23 +355,34 @@ TryWrite:
 
     async Task<CrystalResult> IRawFiler.DeleteAsync(string path, TimeSpan timeToWait)
     {
-        var work = new FilerWork(path);
+        var work = new FilerWork(WorkType.Delete, path);
         var workInterface = this.AddLast(work);
         await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
         return work.Result;
     }
 
-    #endregion
-
-    private string GetPath(string file)
+    async Task<CrystalResult> IRawFiler.DeleteDirectoryAsync(string path, TimeSpan timeToWait)
     {
-        if (string.IsNullOrEmpty(this.path))
+        var work = new FilerWork(WorkType.DeleteDirectory, path);
+        var workInterface = this.AddLast(work);
+        await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
+        return work.Result;
+    }
+
+    async Task<List<PathInformation>> IRawFiler.ListAsync(string path, TimeSpan timeToWait)
+    {
+        var work = new FilerWork(WorkType.List, path);
+        var workInterface = this.AddLast(work);
+        await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
+        if (work.OutputObject is List<PathInformation> list)
         {
-            return file;
+            return list;
         }
         else
         {
-            return $"{this.path}/{file}";
+            return new List<PathInformation>();
         }
     }
+
+    #endregion
 }

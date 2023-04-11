@@ -68,6 +68,6 @@ public partial class MergerTest
             result.Data.Span.SequenceEqual(byteArray).IsTrue();
         }
 
-        await TestHelper.StopCrystal(crystal);
+        await TestHelper.UnloadAndDeleteAll(crystal);
     }
 }

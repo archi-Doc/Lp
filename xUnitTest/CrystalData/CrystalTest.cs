@@ -31,7 +31,7 @@ public partial class CrystalTest
     {
         var identifier = default(Identifier);
         var crystal = await TestHelper.CreateAndStartCrystal();
-        var data = crystal.Object.Data;
+        var data = crystal.Object;
 
         var f = data.TryGetChild(Identifier.Zero);
         f.IsNull();
@@ -116,14 +116,14 @@ public partial class CrystalTest
 
         f!.FragmentDatum().Set(identifier, buffer).Is(CrystalResult.OverNumberLimit);
 
-        await TestHelper.StopCrystal(crystal);
+        await TestHelper.UnloadAndDeleteAll(crystal);
     }
 
     [Fact]
     public async Task Test2()
     {
         var crystal = await TestHelper.CreateAndStartCrystal();
-        var data = crystal.Object.Data;
+        var data = crystal.Object;
         LpData? flake;
         // data.Delete().IsTrue();
 
@@ -152,14 +152,14 @@ public partial class CrystalTest
         // Get flakes and check
         for (var i = 0; i < N; i++)
         {
-            flake = crystal.Data.TryGetChild(new(i));
+            flake = data.TryGetChild(new(i));
             flake.IsNotNull();
 
             var result = await flake!.BlockDatum().Get();
             result.DataEquals(bin.AsSpan(0, i)).IsTrue();
         }
 
-        await TestHelper.StopCrystal(crystal);
+        await TestHelper.UnloadAndDeleteAll(crystal);
     }
 
     [TinyhandObject(ImplicitKeyAsName = true)]
@@ -169,7 +169,7 @@ public partial class CrystalTest
     public async Task Test3()
     {
         var crystal = await TestHelper.CreateAndStartCrystal();
-        var data = crystal.Object.Data;
+        var data = crystal.Object;
 
         var t1 = new TestObject(1, "1");
         var t2 = new TestObject(2, "2");
@@ -233,6 +233,6 @@ public partial class CrystalTest
         flake.BlockDatum().Set(new byte[] { 0, 1, }).Is(CrystalResult.Deleted);
         (await flake.BlockDatum().Get()).Result.Is(CrystalResult.Deleted);
 
-        await TestHelper.StopCrystal(crystal);
+        await TestHelper.UnloadAndDeleteAll(crystal);
     }
 }

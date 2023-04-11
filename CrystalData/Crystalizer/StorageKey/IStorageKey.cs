@@ -4,5 +4,7 @@ namespace CrystalData;
 
 public interface IStorageKey
 {
+    bool AddKey(string bucket, AccessKeyPair accessKeyPair);
+
     bool TryGetKey(string bucket, out AccessKeyPair accessKeyPair);
 }

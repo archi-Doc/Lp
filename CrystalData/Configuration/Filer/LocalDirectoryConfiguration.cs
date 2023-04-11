@@ -19,4 +19,7 @@ public partial record LocalDirectoryConfiguration : DirectoryConfiguration
 
     public override LocalFileConfiguration CombinePath(string file)
         => new LocalFileConfiguration { Path = System.IO.Path.Combine(this.Path, file), };
+
+    public override string ToString()
+        => $"Local directory: {this.Path}";
 }

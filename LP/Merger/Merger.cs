@@ -25,7 +25,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable, IUnitS
                 context,
                 context.ServiceProvider.GetRequiredService<ILogger<Merger>>(),
                 context.ServiceProvider.GetRequiredService<LPBase>(),
-                context.ServiceProvider.GetRequiredService<MergerCrystal>());
+                context.ServiceProvider.GetRequiredService<IBigCrystal<MergerData>>());
 
             return this.merger;
         }
@@ -33,7 +33,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable, IUnitS
         private Merger? merger;
     }
 
-    public Merger(UnitContext context, ILogger<Merger> logger, LPBase lpBase, MergerCrystal crystal)
+    public Merger(UnitContext context, ILogger<Merger> logger, LPBase lpBase, IBigCrystal<MergerData> crystal)
         : base(context)
     {
         this.logger = logger;
@@ -125,5 +125,5 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable, IUnitS
 
     private ILogger logger;
     private LPBase lpBase;
-    private MergerCrystal crystal;
+    private IBigCrystal<MergerData> crystal;
 }

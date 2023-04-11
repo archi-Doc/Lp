@@ -9,7 +9,15 @@ internal class RawFilerToFiler : IFiler
         this.Crystalizer = crystalizer;
         this.RawFiler = rawFiler;
         this.Path = configuration.Path;
-        // this.File = PathHelper.GetRootedFile(this.Crystalizer.RootDirectory, filerConfiguration.Path);
+        this.timeout = crystalizer.DefaultTimeout;
+    }
+
+    internal RawFilerToFiler(Crystalizer crystalizer, IRawFiler rawFiler, string path)
+    {
+        this.Crystalizer = crystalizer;
+        this.RawFiler = rawFiler;
+        this.Path = path;
+        this.timeout = crystalizer.DefaultTimeout;
     }
 
     public Crystalizer Crystalizer { get; }
@@ -20,24 +28,46 @@ internal class RawFilerToFiler : IFiler
 
     bool IFiler.SupportPartialWrite => this.RawFiler.SupportPartialWrite;
 
+    void IFiler.SetTimeout(TimeSpan timeout)
+    {
+        this.timeout = timeout;
+    }
+
     CrystalResult IFiler.Delete()
         => this.RawFiler.Delete(this.Path);
 
-    Task<CrystalResult> IFiler.DeleteAsync(TimeSpan timeToWait)
-        => this.RawFiler.DeleteAsync(this.Path, timeToWait);
+    Task<CrystalResult> IFiler.DeleteAsync()
+        => this.RawFiler.DeleteAsync(this.Path, this.timeout);
 
     Task<CrystalResult> IFiler.PrepareAndCheck(Crystalizer crystalizer, PathConfiguration configuration)
          => this.RawFiler.PrepareAndCheck(crystalizer, configuration);
 
-    Task<CrystalMemoryOwnerResult> IFiler.ReadAsync(long offset, int length, TimeSpan timeToWait)
-        => this.RawFiler.ReadAsync(this.Path, offset, length, timeToWait);
+    Task<CrystalMemoryOwnerResult> IFiler.ReadAsync(long offset, int length)
+        => this.RawFiler.ReadAsync(this.Path, offset, length, this.timeout);
 
-    CrystalResult IFiler.Write(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
-        => this.RawFiler.Write(this.Path, offset, dataToBeShared);
+    CrystalResult IFiler.Write(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate)
+        => this.RawFiler.Write(this.Path, offset, dataToBeShared, truncate);
 
-    Task<CrystalResult> IFiler.WriteAsync(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait)
-        => this.RawFiler.WriteAsync(this.Path, offset, dataToBeShared, timeToWait);
+    Task<CrystalResult> IFiler.WriteAsync(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate)
+        => this.RawFiler.WriteAsync(this.Path, offset, dataToBeShared, this.timeout, truncate);
+
+    IFiler IFiler.CloneWithExtension(string extension)
+    {
+        string path;
+        try
+        {
+            path = System.IO.Path.ChangeExtension(this.Path, extension);
+        }
+        catch
+        {
+            path = $"{this.Path}.{extension}";
+        }
+
+        return new RawFilerToFiler(this.Crystalizer, this.RawFiler, path);
+    }
 
     public override string ToString()
         => $"RawFilerToFile({this.RawFiler.ToString()}) Path:{this.Path}";
+
+    private TimeSpan timeout;
 }

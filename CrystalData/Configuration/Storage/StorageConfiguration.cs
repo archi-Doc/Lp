@@ -12,5 +12,5 @@ public abstract partial record StorageConfiguration
     }
 
     [Key(0)]
-    public DirectoryConfiguration DirectoryConfiguration { get; private set; }
+    public DirectoryConfiguration DirectoryConfiguration { get; protected set; }
 }

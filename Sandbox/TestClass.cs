@@ -1,4 +1,7 @@
-﻿namespace Sandbox;
+﻿using CrystalData.Journal;
+using Tinyhand.IO;
+
+namespace Sandbox;
 
 [TinyhandObject]
 internal partial class CrystalClass
@@ -35,7 +38,7 @@ internal partial class CombinedClass
 
 internal class TestClass
 {
-    public TestClass(Crystalizer crystalizer, ICrystal<ManualClass> manualCrystal, ICrystal<CombinedClass> combinedCrystal, ManualClass manualClass, IBigCrystal<BaseData> crystalData)
+    public TestClass(Crystalizer crystalizer, ICrystal<ManualClass> manualCrystal, ICrystal<CombinedClass> combinedCrystal, ManualClass manualClass, IBigCrystal<BaseData> crystalData, ExampleData exampleData)
     {
         this.crystalizer = crystalizer;
 
@@ -45,13 +48,24 @@ internal class TestClass
         // this.manualCrystal.Setup();
         this.combinedCrystal = combinedCrystal;
         this.manualClass0 = manualClass;
+        this.exampleData = exampleData;
     }
 
     public async Task Test1()
     {
         Console.WriteLine("Sandbox test1");
 
-        await this.crystalizer.PrepareAndLoad();
+        await this.crystalizer.PrepareAndLoadAll();
+        await this.crystalizer.PrepareJournal();
+
+        /*var config = new LocalDirectoryConfiguration(""); // new S3DirectoryConfiguration("kiokubako", "lp2");
+        var s3filer = this.crystalizer.ResolveRawFiler(config);
+        await s3filer.PrepareAndCheck(crystalizer, config);
+        var result = await s3filer.ListAsync("Example");
+        foreach (var x in result)
+        {
+            await Console.Out.WriteLineAsync(x.ToString());
+        }*/
 
         // this.manualCrystal.Configure(new(Crystalization.Manual, new LocalFilerConfiguration("test")));
 
@@ -59,7 +73,7 @@ internal class TestClass
         manualClass.Id = 1;
         Console.WriteLine(manualClass.ToString());
 
-        var manualCrystal2 = this.crystalizer.Create<ManualClass>();
+        var manualCrystal2 = this.crystalizer.CreateCrystal<ManualClass>();
         var manualClass2 = manualCrystal2.Object;
         manualClass2.Id = 2;
         Console.WriteLine(manualClass.ToString());
@@ -73,11 +87,43 @@ internal class TestClass
 
         await combinedCrystal.Save();
 
-        await this.crystalizer.SaveAndTerminate();
+        var a = this.exampleData.GetOrCreateChild("a");
+        a.BlockDatum().Set(new byte[] { 0, 1, 2, });
+
+        var a2 = this.exampleData.TryGetChild("a");
+        var b2 = this.exampleData.TryGetChild("b");
+
+        Journal();
+
+        // await this.crystalizer.SaveAll();
+
+        void Journal()
+        {
+            // Record
+            /*if (this.crystalizer.TryGetJournal(out TinyhandWriter writer))
+            {// SetValue, AddObject, DeleteObject, Check
+                this.WriteLocator(ref writer); // Locator
+                writer.WriteInt16(21); // Value
+            }*/
+            if (this.crystalizer.Journal is { } journal)
+            {
+                journal.GetJournalWriter(JournalRecordType.SetValue, out var writer);
+                // this.WriteLocator(ref record); // Locator
+                writer.WriteInt16(32); // Value
+                journal.AddRecord(in writer);
+            }
+
+            // Read
+            /*while (journal.Position != journal.End)
+            {
+                obj.ReadJournal(journal);
+            }*/
+        }
     }
 
     private Crystalizer crystalizer;
     private ManualClass manualClass0;
     private ICrystal<ManualClass> manualCrystal;
     private ICrystal<CombinedClass> combinedCrystal;
+    private ExampleData exampleData;
 }
