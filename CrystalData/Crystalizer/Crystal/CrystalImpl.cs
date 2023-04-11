@@ -78,9 +78,23 @@ public class CrystalImpl<TData> : ICrystal<TData>
                     return this.filer;
                 }
 
-                this.ResolveFiler();
+                this.ResolveAndPrepareFiler();
                 return this.filer;
             }
+        }
+    }
+
+    protected IFiler FilerInternal
+    {
+        get
+        {
+            if (this.filer != null)
+            {
+                return this.filer;
+            }
+
+            this.ResolveAndPrepareFiler();
+            return this.filer;
         }
     }
 
@@ -156,8 +170,7 @@ public class CrystalImpl<TData> : ICrystal<TData>
                 this.savedHash = hash;
             }
 
-            this.ResolveFiler();
-            return await this.filer.WriteAsync(0, new(byteArray)).ConfigureAwait(false);
+            return await this.FilerInternal.WriteAsync(0, new(byteArray)).ConfigureAwait(false);
         }
     }
 
@@ -168,8 +181,7 @@ public class CrystalImpl<TData> : ICrystal<TData>
             this.PrepareAndLoadInternal_IfNotPrepared();
 
             // Delete file
-            this.ResolveFiler();
-            this.filer.Delete();
+            this.FilerInternal.Delete();
 
             // Clear
             this.CrystalConfiguration = CrystalConfiguration.Default;
@@ -258,10 +270,25 @@ Reconstruct:
 
     [MemberNotNull(nameof(filer))]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected void ResolveFiler()
+    protected void ResolveAndPrepareFiler()
     {
-        this.filer ??= this.Crystalizer.ResolveFiler(this.CrystalConfiguration.FileConfiguration);
+        if (this.filer == null)
+        {
+            this.filer = this.Crystalizer.ResolveFiler(this.CrystalConfiguration.FileConfiguration);
+            this.filer.PrepareAndCheck(this.Crystalizer, this.CrystalConfiguration.FileConfiguration).Wait();
+        }
     }
+
+    /*[MemberNotNull(nameof(filer))]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    protected async ValueTask ResolveAndPrepareFilerAsync()
+    {
+        if (this.filer == null)
+        {
+            this.filer = this.Crystalizer.ResolveFiler(this.CrystalConfiguration.FileConfiguration);
+            await this.filer.PrepareAndCheck(this.Crystalizer, this.CrystalConfiguration.FileConfiguration).ConfigureAwait(false);
+        }
+    }*/
 
     [MemberNotNull(nameof(storage))]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

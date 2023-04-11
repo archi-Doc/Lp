@@ -110,6 +110,13 @@ public class Crystalizer
     public IFiler ResolveFiler(PathConfiguration configuration)
         => new RawFilerToFiler(this, this.ResolveRawFiler(configuration), configuration);
 
+    public async Task<IFiler> ResolveAndPrepareFiler(PathConfiguration configuration)
+    {
+        var filer = (IFiler)new RawFilerToFiler(this, this.ResolveRawFiler(configuration), configuration);
+        await filer.PrepareAndCheck(this, configuration);
+        return filer;
+    }
+
     public IRawFiler ResolveRawFiler(PathConfiguration configuration)
     {
         lock (this.syncObject)

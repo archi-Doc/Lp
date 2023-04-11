@@ -1,13 +1,18 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.IO;
-
 namespace CrystalData.Filer;
 
 public interface IRawFiler
 {
     bool SupportPartialWrite { get; }
 
+    /// <summary>
+    /// Prepare the filer and check if the path is valid.<br/>
+    /// This method may be called multiple times.
+    /// </summary>
+    /// <param name="crystalizer"><see cref="Crystalizer"/>.</param>
+    /// <param name="configuration"><see cref="PathConfiguration"/>.</param>
+    /// <returns><see cref="CrystalResult"/>.</returns>
     Task<CrystalResult> PrepareAndCheck(Crystalizer crystalizer, PathConfiguration configuration);
 
     Task Terminate();

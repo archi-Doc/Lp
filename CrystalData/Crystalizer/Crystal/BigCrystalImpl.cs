@@ -123,7 +123,11 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
 
         param ??= CrystalStartParam.Default;
 
-        this.storageFiler ??= this.Crystalizer.ResolveFiler(this.storageFileConfiguration);
+        if (this.storageFiler == null)
+        {// this.storageFiler ??= this.Crystalizer.ResolveFiler(this.storageFileConfiguration);
+            this.storageFiler = await this.Crystalizer.ResolveAndPrepareFiler(this.storageFileConfiguration).ConfigureAwait(false);
+        }
+
         this.crystalFiler ??= this.Crystalizer.ResolveFiler(this.crystalFileConfiguration);
 
         if (param.FromScratch)
