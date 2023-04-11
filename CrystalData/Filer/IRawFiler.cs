@@ -1,23 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.IO;
-
 namespace CrystalData.Filer;
-
-public readonly struct FileInformation
-{
-    public FileInformation(string file, long length)
-    {
-        this.File = file;
-        this.Length = length;
-    }
-
-    public readonly string File;
-    public readonly long Length;
-
-    public override string ToString()
-        => $"{this.File} ({this.Length})";
-}
 
 public interface IRawFiler
 {
@@ -42,7 +25,7 @@ public interface IRawFiler
 
     Task<CrystalResult> DeleteAsync(string path, TimeSpan timeToWait);
 
-    Task<List<FileInformation>> ListAsync(string path, string? pattern, TimeSpan timeToWait);
+    Task<List<PathInformation>> ListAsync(string path, TimeSpan timeToWait);
 
     Task<CrystalMemoryOwnerResult> ReadAsync(string path, long offset, int length)
         => this.ReadAsync(path, offset, length, TimeSpan.MinValue);
@@ -53,6 +36,6 @@ public interface IRawFiler
     Task<CrystalResult> DeleteAsync(string path)
         => this.DeleteAsync(path, TimeSpan.MinValue);
 
-    Task<List<FileInformation>> ListAsync(string path, string? pattern)
-        => this.ListAsync(path, pattern, TimeSpan.MinValue);
+    Task<List<PathInformation>> ListAsync(string path)
+        => this.ListAsync(path, TimeSpan.MinValue);
 }

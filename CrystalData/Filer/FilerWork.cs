@@ -28,8 +28,6 @@ public class FilerWork : IEquatable<FilerWork>
 
     public ByteArrayPool.MemoryOwner ReadData { get; internal set; }
 
-    public object? InputObject { get; }
-
     public object? OutputObject { get; internal set; }
 
     public FilerWork(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate)
@@ -49,17 +47,10 @@ public class FilerWork : IEquatable<FilerWork>
         this.Length = length;
     }
 
-    public FilerWork(string path)
-    {// Delete
-        this.Type = WorkType.Delete;
+    public FilerWork(WorkType workType, string path)
+    {// Delete/List
+        this.Type = workType;
         this.Path = path;
-    }
-
-    public FilerWork(string path, string? pattern)
-    {// List
-        this.Type = WorkType.List;
-        this.Path = path;
-        this.InputObject = pattern;
     }
 
     public override int GetHashCode()

@@ -4,6 +4,7 @@
 
 using System.IO;
 using CrystalData.Results;
+using static CrystalData.Filer.FilerWork;
 
 namespace CrystalData.Filer;
 
@@ -191,11 +192,10 @@ TryWrite:
         }
         else if (work.Type == FilerWork.WorkType.List)
         {// List
-            var list = new List<FileInformation>();
-            var pattern = work.InputObject as string;
+            var list = new List<PathInformation>();
             try
             {
-                foreach (var x in Directory.EnumerateFiles(filePath, pattern ?? "*", SearchOption.TopDirectoryOnly))
+                foreach (var x in Directory.EnumerateFiles(filePath, "*", SearchOption.TopDirectoryOnly))
                 {
                     try
                     {
@@ -271,7 +271,7 @@ DeleteAndExit:
 
     CrystalResult IRawFiler.Delete(string path)
     {
-        this.AddLast(new(path));
+        this.AddLast(new(WorkType.Delete, path));
         return CrystalResult.Started;
     }
 
@@ -293,24 +293,24 @@ DeleteAndExit:
 
     async Task<CrystalResult> IRawFiler.DeleteAsync(string path, TimeSpan timeToWait)
     {
-        var work = new FilerWork(path);
+        var work = new FilerWork(WorkType.Delete, path);
         var workInterface = this.AddLast(work);
         await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
         return work.Result;
     }
 
-    async Task<List<FileInformation>> IRawFiler.ListAsync(string path, string? pattern, TimeSpan timeToWait)
+    async Task<List<PathInformation>> IRawFiler.ListAsync(string path, TimeSpan timeToWait)
     {
-        var work = new FilerWork(path, pattern);
+        var work = new FilerWork(WorkType.List, path);
         var workInterface = this.AddLast(work);
         await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
-        if (work.OutputObject is List<FileInformation> list)
+        if (work.OutputObject is List<PathInformation> list)
         {
             return list;
         }
         else
         {
-            return new List<FileInformation>();
+            return new List<PathInformation>();
         }
     }
 
