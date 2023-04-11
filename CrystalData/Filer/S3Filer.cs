@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Collections.Concurrent;
 using Amazon.S3;
 using CrystalData.Results;
 using static CrystalData.Filer.FilerWork;
@@ -60,6 +61,8 @@ public class S3Filer : TaskWorker<FilerWork>, IRawFiler
     private string path = string.Empty;
 
     private AmazonS3Client? client;
+
+    private ConcurrentDictionary<string, int> checkedPath = new();
 
     #endregion
 
@@ -176,16 +179,26 @@ TryWrite:
         else if (work.Type == FilerWork.WorkType.List)
         {// List
             var list = new List<PathInformation>();
+            if (!filePath.EndsWith(PathHelper.Slash))
+            {
+                filePath += PathHelper.Slash;
+            }
+
             try
             {
                 string? continuationToken = null;
 RepeatList:
-                var request = new Amazon.S3.Model.ListObjectsV2Request() { BucketName = worker.bucket, Prefix = filePath, ContinuationToken = continuationToken, };
+                var request = new Amazon.S3.Model.ListObjectsV2Request() { BucketName = worker.bucket, Prefix = filePath, Delimiter = PathHelper.SlashString, ContinuationToken = continuationToken, };
 
                 var response = await worker.client.ListObjectsV2Async(request, worker.CancellationToken).ConfigureAwait(false);
                 foreach (var x in response.S3Objects)
                 {
                     list.Add(new(x.Key, x.Size));
+                }
+
+                foreach (var x in response.CommonPrefixes)
+                {
+                    list.Add(new(x));
                 }
 
                 if (response.IsTruncated)
@@ -228,12 +241,22 @@ RepeatList:
         }
 
         // Write test.
-        var path = PathHelper.CombineWithSlash(configuration.Path, WriteTestFile);
-        using (var ms = new MemoryStream())
+        if (this.checkedPath.TryAdd(configuration.Path, 0))
         {
-            var request = new Amazon.S3.Model.PutObjectRequest() { BucketName = this.bucket, Key = path, InputStream = ms, };
-            var response = await this.client.PutObjectAsync(request).ConfigureAwait(false);
-            if (response.HttpStatusCode != System.Net.HttpStatusCode.OK)
+            try
+            {
+                var path = PathHelper.CombineWithSlash(configuration.Path, WriteTestFile);
+                using (var ms = new MemoryStream())
+                {
+                    var request = new Amazon.S3.Model.PutObjectRequest() { BucketName = this.bucket, Key = path, InputStream = ms, };
+                    var response = await this.client.PutObjectAsync(request).ConfigureAwait(false);
+                    if (response.HttpStatusCode != System.Net.HttpStatusCode.OK)
+                    {
+                        return CrystalResult.WriteError;
+                    }
+                }
+            }
+            catch
             {
                 return CrystalResult.WriteError;
             }

@@ -160,19 +160,23 @@ public class Crystalizer
     {
         lock (this.syncObject)
         {
+            IStorage storage;
             if (configuration is EmptyStorageConfiguration emptyStorageConfiguration)
             {// Empty storage
-                return EmptyStorage.Default;
+                storage = EmptyStorage.Default;
             }
             else if (configuration is SimpleStorageConfiguration simpleStorageConfiguration)
             {
-                return new SimpleStorage();
+                storage = new SimpleStorage();
             }
             else
             {
                 ThrowConfigurationNotRegistered(configuration.GetType());
                 return default!;
             }
+
+            storage.SetTimeout(this.DefaultTimeout);
+            return storage;
         }
     }
 

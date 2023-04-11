@@ -7,11 +7,16 @@ namespace LP;
 internal class StorageKeyVault : IStorageKey
 {
     private const string Prefix = "S3Bucket/";
-    private const char Separator = '=';
 
     public StorageKeyVault(Vault vault)
     {
         this.vault = vault;
+    }
+
+    bool IStorageKey.AddKey(string bucket, AccessKeyPair accessKeyPair)
+    {
+        var decrypted = this.utf8.GetBytes(accessKeyPair.ToString());
+        return this.vault.TryAdd(Prefix + bucket, decrypted);
     }
 
     bool IStorageKey.TryGetKey(string bucket, out AccessKeyPair accessKeyPair)
@@ -25,10 +30,8 @@ internal class StorageKeyVault : IStorageKey
         try
         {
             var st = this.utf8.GetString(decrypted);
-            var array = st.Split(Separator);
-            if (array.Length >= 2)
+            if (AccessKeyPair.TryParse(st, out accessKeyPair))
             {
-                accessKeyPair = new(array[0], array[1]);
                 return true;
             }
         }

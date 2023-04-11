@@ -4,10 +4,16 @@ namespace CrystalData.Filer;
 
 public readonly struct PathInformation
 {
-    public PathInformation(string path, long length)
-    {
-        this.Path = path;
+    public PathInformation(string file, long length)
+    {// File
+        this.Path = file;
         this.Length = length;
+    }
+
+    public PathInformation(string directory)
+    {// Directory
+        this.Path = directory;
+        this.Length = -1;
     }
 
     public readonly string Path;

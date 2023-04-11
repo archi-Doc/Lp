@@ -8,11 +8,12 @@ public class StorageKey : IStorageKey
     {
     }
 
-    public void AddKey(string bucket, AccessKeyPair accessKeyPair)
+    public bool AddKey(string bucket, AccessKeyPair accessKeyPair)
     {
         lock(this.syncObject)
         {
             this.dictionary[bucket] = accessKeyPair;
+            return true;
         }
     }
 

@@ -195,7 +195,20 @@ TryWrite:
             var list = new List<PathInformation>();
             try
             {
-                foreach (var x in Directory.EnumerateFiles(filePath, "*", SearchOption.TopDirectoryOnly))
+                var directoryInfo = new DirectoryInfo(filePath);
+                foreach (var x in directoryInfo.EnumerateFileSystemInfos())
+                {
+                    if (x is FileInfo fi)
+                    {
+                        list.Add(new(fi.FullName, fi.Length));
+                    }
+                    else if (x is DirectoryInfo di)
+                    {
+                        list.Add(new(di.FullName));
+                    }
+                }
+
+                /*foreach (var x in Directory.EnumerateFiles(filePath, "*", SearchOption.TopDirectoryOnly))
                 {
                     try
                     {
@@ -205,7 +218,7 @@ TryWrite:
                     catch
                     {
                     }
-                }
+                }*/
             }
             catch
             {

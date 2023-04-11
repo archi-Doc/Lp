@@ -11,6 +11,9 @@ public static class PathHelper
     public const char Slash = '/';
     public const char Backslash = '\\';
     public const char Colon = ':';
+    public const string SlashString = "/";
+    public const string BackslashString = "\\";
+    public const string ColonString = ":";
 
     public static string CombineWithBackslash(string path1, string path2)
         => CombineWith(Backslash, path1, path2);

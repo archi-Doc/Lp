@@ -8,6 +8,8 @@ using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
 using CrystalData.Datum;
 using Tinyhand.IO;
+using CrystalData.Storage;
+using SimpleCommandLine;
 
 namespace Sandbox;
 
@@ -31,8 +33,6 @@ public class Program
             .Preload(context =>
             {
                 context.DataDirectory = "Data";
-                // var options = context.GetOrCreateOptions<UnitOptions>();
-                // options.DataDirectory = "Data";
             })
             .Configure(context =>
             {
@@ -81,6 +81,14 @@ public class Program
             });
 
         var unit = builder.Build();
+
+        if (SimpleParserHelper.TryGetAndRemoveArgument(ref args, "storagekey", out var bucketKeyPair))
+        {
+            if (AccessKeyPair.TryParse(bucketKeyPair, out var bucket, out var accessKeyPair))
+            {
+                unit.Context.ServiceProvider.GetRequiredService<IStorageKey>().AddKey(bucket, accessKeyPair);
+            }
+        }
 
         var tc = unit.Context.ServiceProvider.GetRequiredService<TestClass>();
         await tc.Test1();
