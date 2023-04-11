@@ -11,13 +11,13 @@ public partial class EmptyFiler : IRawFiler
     CrystalResult IRawFiler.Delete(string path)
         => CrystalResult.Success;
 
-    Task<CrystalResult> IRawFiler.DeleteAsync(string path, TimeSpan timeToWait)
+    Task<CrystalResult> IRawFiler.DeleteAsync(string path, TimeSpan timeout)
         => Task.FromResult(CrystalResult.Success);
 
     Task<CrystalResult> IRawFiler.PrepareAndCheck(Crystalizer crystalizer, PathConfiguration configuration)
         => Task.FromResult(CrystalResult.Success);
 
-    Task<CrystalMemoryOwnerResult> IRawFiler.ReadAsync(string path, long offset, int length, TimeSpan timeToWait)
+    Task<CrystalMemoryOwnerResult> IRawFiler.ReadAsync(string path, long offset, int length, TimeSpan timeout)
         => Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.Success));
 
     Task IRawFiler.Terminate()
@@ -26,9 +26,9 @@ public partial class EmptyFiler : IRawFiler
     CrystalResult IRawFiler.Write(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate)
         => CrystalResult.Success;
 
-    Task<CrystalResult> IRawFiler.WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait, bool truncate)
+    Task<CrystalResult> IRawFiler.WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeout, bool truncate)
         => Task.FromResult(CrystalResult.Success);
 
-    Task<List<PathInformation>> IRawFiler.ListAsync(string path, string? pattern, TimeSpan timeToWait)
+    Task<List<PathInformation>> IRawFiler.ListAsync(string path, TimeSpan timeout)
         => Task.FromResult(new List<PathInformation>());
 }

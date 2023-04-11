@@ -203,7 +203,7 @@ public sealed class StorageGroup
             }
         }
 
-        var task = storageObject.Storage?.GetAsync(ref fileId, TimeSpan.MinValue);
+        var task = storageObject.Storage?.GetAsync(ref fileId);
         if (task == null)
         {
             return Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.NoStorage));

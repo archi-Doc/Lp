@@ -234,21 +234,6 @@ DeleteAndExit:
     {
         this.crystalizer = crystalizer;
 
-        /*string? directory = null;
-        try
-        {
-            directory = Path.GetDirectoryName(this.crystalizer.GetRootedFile(configuration.Path));
-        }
-        catch
-        {
-        }
-
-        var result = CheckPath(crystalizer, directory ?? string.Empty);
-        if (!result.Success)
-        {
-            return CrystalResult.WriteError;
-        }*/
-
         if (crystalizer.EnableLogger)
         {
             this.logger ??= crystalizer.UnitLogger.GetLogger<LocalFiler>();
@@ -339,34 +324,4 @@ DeleteAndExit:
 
         return (false, rootedPath);
     }
-
-    #region IDisposable Support
-
-    /*/// <summary>
-    /// Finalizes an instance of the <see cref="LocalFiler"/> class.
-    /// </summary>
-    ~LocalFiler()
-    {
-        this.Dispose(false);
-    }
-
-    /// <summary>
-    /// free managed/native resources.
-    /// </summary>
-    /// <param name="disposing">true: free managed resources.</param>
-    protected override void Dispose(bool disposing)
-    {
-        if (!this.disposed)
-        {
-            if (disposing)
-            {
-                // free managed resources.
-                this.Dispose();
-            }
-
-            // free native resources here if there are any.
-            this.disposed = true;
-        }
-    }*/
-    #endregion
 }

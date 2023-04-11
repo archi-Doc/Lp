@@ -34,7 +34,7 @@ public partial class SimpleJournal : IJournalInternal
         }
 
         // List journal books
-        var list = await this.rawFiler.ListAsync(configuration.Path, "*" + BookSuffix).ConfigureAwait(false);
+        var list = await this.rawFiler.ListAsync(configuration.Path).ConfigureAwait(false);
 
         return CrystalStartResult.Success;
     }

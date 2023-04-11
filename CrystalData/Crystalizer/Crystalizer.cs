@@ -18,6 +18,7 @@ public class Crystalizer
         this.configuration = configuration;
         this.EnableLogger = options.EnableLogger;
         this.RootDirectory = options.RootPath;
+        this.DefaultTimeout = options.DefaultTimeout;
         if (string.IsNullOrEmpty(this.RootDirectory))
         {
             this.RootDirectory = Directory.GetCurrentDirectory();
@@ -78,6 +79,8 @@ public class Crystalizer
     public bool EnableLogger { get; }
 
     public string RootDirectory { get; }
+
+    public TimeSpan DefaultTimeout { get; }
 
     public IJournal? Journal => this.JournalInternal;
 

@@ -15,6 +15,7 @@ internal partial class SimpleStorage : IStorage
 
     public SimpleStorage()
     {
+        this.timeout = TimeSpan.MinValue;
     }
 
     public override string ToString()
@@ -29,11 +30,17 @@ internal partial class SimpleStorage : IStorage
     private IRawFiler? rawFiler;
 
     private object syncObject = new();
+    private TimeSpan timeout;
     private Dictionary<uint, int> fileToSize = new();
 
     #endregion
 
     #region IStorage
+
+    void IStorage.SetTimeout(TimeSpan timeout)
+    {
+        this.timeout = timeout;
+    }
 
     async Task<CrystalResult> IStorage.PrepareAndCheck(Crystalizer crystalizer, StorageConfiguration storageConfiguration, bool createNew)
     {
@@ -141,7 +148,7 @@ internal partial class SimpleStorage : IStorage
         return this.rawFiler.Delete(this.FileToPath(file));
     }
 
-    Task<CrystalMemoryOwnerResult> IStorage.GetAsync(ref ulong fileId, TimeSpan timeToWait)
+    Task<CrystalMemoryOwnerResult> IStorage.GetAsync(ref ulong fileId)
     {
         if (this.rawFiler == null)
         {
@@ -159,10 +166,10 @@ internal partial class SimpleStorage : IStorage
             }
         }
 
-        return this.rawFiler.ReadAsync(this.FileToPath(file), 0, size, timeToWait);
+        return this.rawFiler.ReadAsync(this.FileToPath(file), 0, size, this.timeout);
     }
 
-    Task<CrystalResult> IStorage.PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait)
+    Task<CrystalResult> IStorage.PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
     {
         if (this.rawFiler == null)
         {
@@ -170,10 +177,10 @@ internal partial class SimpleStorage : IStorage
         }
 
         this.PutInternal(ref fileId, dataToBeShared.Memory.Length);
-        return this.rawFiler.WriteAsync(this.FileToPath(FileIdToFile(fileId)), 0, dataToBeShared, timeToWait);
+        return this.rawFiler.WriteAsync(this.FileToPath(FileIdToFile(fileId)), 0, dataToBeShared, this.timeout);
     }
 
-    Task<CrystalResult> IStorage.DeleteAsync(ref ulong fileId, TimeSpan timeToWait)
+    Task<CrystalResult> IStorage.DeleteAsync(ref ulong fileId)
     {
         if (this.rawFiler == null)
         {
@@ -192,7 +199,7 @@ internal partial class SimpleStorage : IStorage
         }
 
         fileId = 0;
-        return this.rawFiler.DeleteAsync(this.FileToPath(file), timeToWait);
+        return this.rawFiler.DeleteAsync(this.FileToPath(file), this.timeout);
     }
 
     #endregion

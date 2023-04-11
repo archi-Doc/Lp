@@ -6,9 +6,12 @@ public class CrystalizerOptions
 {
     public CrystalizerOptions()
     {
+        this.DefaultTimeout = TimeSpan.MinValue; // TimeSpan.FromSeconds(3);
     }
 
     public bool EnableLogger { get; set; }
 
     public string RootPath { get; set; } = string.Empty;
+
+    public TimeSpan DefaultTimeout { get; set; }
 }
