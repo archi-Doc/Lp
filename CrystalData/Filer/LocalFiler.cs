@@ -2,7 +2,6 @@
 
 #pragma warning disable SA1124 // Do not use regions
 
-using System.IO;
 using CrystalData.Results;
 using static CrystalData.Filer.FilerWork;
 
@@ -152,13 +151,16 @@ TryWrite:
                     var read = await RandomAccess.ReadAsync(handle, memoryOwner.Memory, offset, worker.CancellationToken).ConfigureAwait(false);
                     if (read != lengthToRead)
                     {
+                        File.Delete(filePath);
+                        worker.logger?.TryGet()?.Log($"DeleteAndExit {work.Path}");
                         work.Result = CrystalResult.ReadError;
-                        goto DeleteAndExit;
+                        return;
                     }
 
                     work.Result = CrystalResult.Success;
                     work.ReadData = memoryOwner;
                     worker.logger?.TryGet()?.Log($"Read[{memoryOwner.Memory.Length}] {work.Path}");
+                    return;
                 }
             }
             catch (OperationCanceledException)
@@ -190,6 +192,18 @@ TryWrite:
             {
             }
         }
+        else if (work.Type == WorkType.DeleteDirectory)
+        {
+            try
+            {
+                Directory.Delete(filePath, true);
+                work.Result = CrystalResult.Success;
+            }
+            catch
+            {
+                work.Result = CrystalResult.DeleteError;
+            }
+        }
         else if (work.Type == FilerWork.WorkType.List)
         {// List
             var list = new List<PathInformation>();
@@ -207,18 +221,6 @@ TryWrite:
                         list.Add(new(di.FullName));
                     }
                 }
-
-                /*foreach (var x in Directory.EnumerateFiles(filePath, "*", SearchOption.TopDirectoryOnly))
-                {
-                    try
-                    {
-                        var info = new System.IO.FileInfo(x);
-                        list.Add(new(x, info.Length));
-                    }
-                    catch
-                    {
-                    }
-                }*/
             }
             catch
             {
@@ -226,17 +228,6 @@ TryWrite:
 
             work.OutputObject = list;
         }
-
-        return;
-
-DeleteAndExit:
-        if (filePath != null)
-        {
-            File.Delete(filePath);
-            worker.logger?.TryGet()?.Log($"DeleteAndExit {work.Path}");
-        }
-
-        return;
     }
 
     #region IFiler
@@ -292,6 +283,14 @@ DeleteAndExit:
     async Task<CrystalResult> IRawFiler.DeleteAsync(string path, TimeSpan timeToWait)
     {
         var work = new FilerWork(WorkType.Delete, path);
+        var workInterface = this.AddLast(work);
+        await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
+        return work.Result;
+    }
+
+    async Task<CrystalResult> IRawFiler.DeleteDirectoryAsync(string path, TimeSpan timeToWait)
+    {
+        var work = new FilerWork(WorkType.DeleteDirectory, path);
         var workInterface = this.AddLast(work);
         await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
         return work.Result;

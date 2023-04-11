@@ -32,6 +32,8 @@ public interface IRawFiler
 
     Task<CrystalResult> DeleteAsync(string path, TimeSpan timeout);
 
+    Task<CrystalResult> DeleteDirectoryAsync(string path, TimeSpan timeout);
+
     Task<List<PathInformation>> ListAsync(string path, TimeSpan timeout);
 
     Task<CrystalMemoryOwnerResult> ReadAsync(string path, long offset, int length)
@@ -42,6 +44,9 @@ public interface IRawFiler
 
     Task<CrystalResult> DeleteAsync(string path)
         => this.DeleteAsync(path, TimeSpan.MinValue);
+
+    Task<CrystalResult> DeleteDirectoryAsync(string path)
+        => this.DeleteDirectoryAsync(path, TimeSpan.MinValue);
 
     Task<List<PathInformation>> ListAsync(string path)
     => this.ListAsync(path, TimeSpan.MinValue);

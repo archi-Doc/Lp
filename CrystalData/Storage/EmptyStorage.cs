@@ -33,4 +33,7 @@ public partial class EmptyStorage : IStorage
 
     Task IStorage.Save()
         => Task.CompletedTask;
+
+    Task<CrystalResult> IStorage.DeleteAllAsync()
+        => Task.FromResult(CrystalResult.Success);
 }

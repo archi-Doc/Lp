@@ -2,6 +2,7 @@
 
 using System.Collections.Concurrent;
 using Amazon.S3;
+using Amazon.S3.Model;
 using CrystalData.Results;
 using static CrystalData.Filer.FilerWork;
 
@@ -176,6 +177,43 @@ TryWrite:
 
             work.Result = CrystalResult.DeleteError;
         }
+        else if (work.Type == WorkType.DeleteDirectory)
+        {
+            if (!filePath.EndsWith(PathHelper.Slash))
+            {
+                filePath += PathHelper.Slash;
+            }
+
+            while (true)
+            {
+                var listRequest = new ListObjectsV2Request() { BucketName = worker.bucket, Prefix = filePath, };
+                var listResponse = await worker.client.ListObjectsV2Async(listRequest).ConfigureAwait(false);
+                if (listResponse.HttpStatusCode != System.Net.HttpStatusCode.OK)
+                {
+                    work.Result = CrystalResult.DeleteError;
+                    return;
+                }
+
+                if (listResponse.KeyCount == 0)
+                {// No file left
+                    work.Result = CrystalResult.Success;
+                    return;
+                }
+
+                var deleteRequest = new DeleteObjectsRequest() { BucketName = worker.bucket, };
+                foreach (var x in listResponse.S3Objects)
+                {
+                    deleteRequest.AddKey(x.Key);
+                }
+
+                var deleteResponse = await worker.client.DeleteObjectsAsync(deleteRequest).ConfigureAwait(false);
+                if (deleteResponse.HttpStatusCode != System.Net.HttpStatusCode.OK)
+                {
+                    work.Result = CrystalResult.DeleteError;
+                    return;
+                }
+            }
+        }
         else if (work.Type == FilerWork.WorkType.List)
         {// List
             var list = new List<PathInformation>();
@@ -277,41 +315,6 @@ RepeatList:
         this.Dispose();
     }
 
-    /*async Task<CrystalResult> IRawFiler.DeleteAllAsync()
-    {
-        if (this.client == null)
-        {
-            return CrystalResult.NoFiler;
-        }
-
-        while (true)
-        {
-            var listRequest = new ListObjectsV2Request() { BucketName = this.bucket, MaxKeys = 1000, Prefix = this.path, };
-            var listResponse = await this.client.ListObjectsV2Async(listRequest).ConfigureAwait(false);
-            if (listResponse.HttpStatusCode != System.Net.HttpStatusCode.OK)
-            {
-                return CrystalResult.DeleteError;
-            }
-
-            if (listResponse.KeyCount == 0)
-            {// No file left
-                return CrystalResult.Success;
-            }
-
-            var deleteRequest = new DeleteObjectsRequest() { BucketName = this.bucket, };
-            foreach (var x in listResponse.S3Objects)
-            {
-                deleteRequest.AddKey(x.Key);
-            }
-
-            var deleteResponse = await this.client.DeleteObjectsAsync(deleteRequest).ConfigureAwait(false);
-            if (deleteResponse.HttpStatusCode != System.Net.HttpStatusCode.OK)
-            {
-                return CrystalResult.DeleteError;
-            }
-        }
-    }*/
-
     CrystalResult IRawFiler.Write(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate)
     {
         if (offset != 0 || !truncate)
@@ -353,6 +356,14 @@ RepeatList:
     async Task<CrystalResult> IRawFiler.DeleteAsync(string path, TimeSpan timeToWait)
     {
         var work = new FilerWork(WorkType.Delete, path);
+        var workInterface = this.AddLast(work);
+        await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
+        return work.Result;
+    }
+
+    async Task<CrystalResult> IRawFiler.DeleteDirectoryAsync(string path, TimeSpan timeToWait)
+    {
+        var work = new FilerWork(WorkType.DeleteDirectory, path);
         var workInterface = this.AddLast(work);
         await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
         return work.Result;

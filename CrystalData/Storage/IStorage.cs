@@ -21,4 +21,6 @@ public partial interface IStorage
     Task<CrystalResult> PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared);
 
     Task<CrystalResult> DeleteAsync(ref ulong fileId);
+
+    Task<CrystalResult> DeleteAllAsync();
 }

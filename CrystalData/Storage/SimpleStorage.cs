@@ -202,6 +202,16 @@ internal partial class SimpleStorage : IStorage
         return this.rawFiler.DeleteAsync(this.FileToPath(file), this.timeout);
     }
 
+    async Task<CrystalResult> IStorage.DeleteAllAsync()
+    {
+        if (this.rawFiler == null)
+        {
+            return CrystalResult.NoFiler;
+        }
+
+        return await this.rawFiler.DeleteDirectoryAsync(this.directory).ConfigureAwait(false);
+    }
+
     #endregion
 
     #region Helper

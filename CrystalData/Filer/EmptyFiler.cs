@@ -14,6 +14,9 @@ public partial class EmptyFiler : IRawFiler
     Task<CrystalResult> IRawFiler.DeleteAsync(string path, TimeSpan timeout)
         => Task.FromResult(CrystalResult.Success);
 
+    Task<CrystalResult> IRawFiler.DeleteDirectoryAsync(string path, TimeSpan timeout)
+        => Task.FromResult(CrystalResult.Success);
+
     Task<CrystalResult> IRawFiler.PrepareAndCheck(Crystalizer crystalizer, PathConfiguration configuration)
         => Task.FromResult(CrystalResult.Success);
 

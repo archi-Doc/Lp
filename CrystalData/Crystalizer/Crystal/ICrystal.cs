@@ -20,6 +20,8 @@ public interface ICrystal
 
     void ConfigureFile(FileConfiguration configuration);
 
+    void ConfigureStorage(StorageConfiguration configuration);
+
     Task<CrystalStartResult> PrepareAndLoad(CrystalStartParam? param = null);
 
     Task<CrystalResult> Save(bool unload = false);
@@ -34,8 +36,3 @@ public interface ICrystal<TData> : ICrystal
 {
     public new TData Object { get; }
 }
-
-/*internal class CrystalFactory<TData> : ICrystal<TData>
-    where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
-{
-}*/
