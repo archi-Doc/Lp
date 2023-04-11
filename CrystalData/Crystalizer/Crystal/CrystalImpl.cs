@@ -205,7 +205,7 @@ public class CrystalImpl<TData> : ICrystal<TData>
 
         param ??= CrystalStartParam.Default;
 
-        this.ResolveFiler();
+        this.FilerInternal;
         if (this.CrystalConfiguration.FileConfiguration is EmptyFileConfiguration)
         {
             this.Prepared = true;
