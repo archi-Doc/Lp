@@ -9,28 +9,13 @@ using CrystalData.Results;
 
 namespace CrystalData.Filer;
 
-public class S3Filer : TaskWorker<FilerWork>, IRawFiler
+public class S3Filer : FilerBase, IRawFiler
 {// Vault: S3Bucket/BucketName "AccessKeyId=SecretAccessKey"
-    private const int DefaultConcurrentTasks = 4;
     private const string WriteTestFile = "Write.test";
 
     public S3Filer()
-        : base(null, Process, true)
+        : base(Process)
     {
-        this.NumberOfConcurrentTasks = DefaultConcurrentTasks;
-        this.SetCanStartConcurrentlyDelegate((workInterface, workingList) =>
-        {// Lock IO order
-            var path = workInterface.Work.Path;
-            foreach (var x in workingList)
-            {
-                if (x.Work.Path == path)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        });
     }
 
     public S3Filer(string bucket)
@@ -54,14 +39,8 @@ public class S3Filer : TaskWorker<FilerWork>, IRawFiler
 
     #region FieldAndProperty
 
-    private ILogger? logger;
-
     private string bucket = string.Empty;
-
-    private string path = string.Empty;
-
     private AmazonS3Client? client;
-
     private ConcurrentDictionary<string, int> checkedPath = new();
 
     #endregion
@@ -97,7 +76,7 @@ TryWrite:
                     var response = await worker.client.PutObjectAsync(request, worker.CancellationToken).ConfigureAwait(false);
                     if (response.HttpStatusCode == System.Net.HttpStatusCode.OK)
                     {
-                        worker.logger?.TryGet()?.Log($"Written {filePath}, {work.WriteData.Memory.Length}");
+                        worker.Logger?.TryGet()?.Log($"Written {filePath}, {work.WriteData.Memory.Length}");
                         work.Result = CrystalResult.Success;
                         return;
                     }
@@ -117,7 +96,7 @@ TryWrite:
             }
 
             // Retry
-            worker.logger?.TryGet()?.Log($"Retry {filePath}");
+            worker.Logger?.TryGet()?.Log($"Retry {filePath}");
             goto TryWrite;
         }
         else if (work.Type == FilerWork.WorkType.Read)
@@ -139,7 +118,7 @@ TryWrite:
                         response.ResponseStream.CopyTo(ms);
                         work.Result = CrystalResult.Success;
                         work.ReadData = new(ms.ToArray());
-                        worker.logger?.TryGet()?.Log($"Read {filePath}, {work.ReadData.Memory.Length}");
+                        worker.Logger?.TryGet()?.Log($"Read {filePath}, {work.ReadData.Memory.Length}");
                         return;
                     }
                 }
@@ -157,7 +136,7 @@ TryWrite:
             }
 
             work.Result = CrystalResult.ReadError;
-            worker.logger?.TryGet()?.Log($"Read exception {filePath}");
+            worker.Logger?.TryGet()?.Log($"Read exception {filePath}");
         }
         else if (work.Type == FilerWork.WorkType.Delete)
         {// Delete
@@ -216,7 +195,7 @@ TryWrite:
         else if (work.Type == FilerWork.WorkType.List)
         {// List
             var list = new List<PathInformation>();
-            if (!filePath.EndsWith(PathHelper.Slash))
+            if (!filePath.EndsWith(PathHelper.Slash) && !string.IsNullOrEmpty(filePath))
             {
                 filePath += PathHelper.Slash;
             }
@@ -254,12 +233,12 @@ RepeatList:
         return;
     }
 
-    #region IFiler
-
     bool IRawFiler.SupportPartialWrite => false;
 
     async Task<CrystalResult> IRawFiler.PrepareAndCheck(Crystalizer crystalizer, PathConfiguration configuration)
     {
+        this.Crystalizer = crystalizer;
+
         if (!crystalizer.StorageKey.TryGetKey(this.bucket, out var accessKeyPair))
         {
             return CrystalResult.NoStorageKey;
@@ -278,11 +257,12 @@ RepeatList:
         }
 
         // Write test.
-        if (this.checkedPath.TryAdd(configuration.Path, 0))
+        var directoryPath = configuration is FileConfiguration ? Path.GetDirectoryName(configuration.Path) ?? string.Empty : configuration.Path;
+        if (this.checkedPath.TryAdd(directoryPath, 0))
         {
             try
             {
-                var path = PathHelper.CombineWithSlash(configuration.Path, WriteTestFile);
+                var path = PathHelper.CombineWithSlash(directoryPath, WriteTestFile);
                 using (var ms = new MemoryStream())
                 {
                     var request = new Amazon.S3.Model.PutObjectRequest() { BucketName = this.bucket, Key = path, InputStream = ms, };
@@ -301,7 +281,7 @@ RepeatList:
 
         if (crystalizer.EnableLogger)
         {
-            this.logger = crystalizer.UnitLogger.GetLogger<S3Filer>();
+            this.Logger = crystalizer.UnitLogger.GetLogger<S3Filer>();
         }
 
         return CrystalResult.Success;
@@ -311,77 +291,7 @@ RepeatList:
     {
         await this.WaitForCompletionAsync().ConfigureAwait(false);
         this.client?.Dispose();
+        this.client = null;
         this.Dispose();
     }
-
-    CrystalResult IRawFiler.WriteAndForget(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate)
-    {
-        if (offset != 0 || !truncate)
-        {// Not supported
-            return CrystalResult.NoPartialWriteSupport;
-        }
-
-        this.AddLast(new(path, offset, dataToBeShared, truncate));
-        return CrystalResult.Started;
-    }
-
-    CrystalResult IRawFiler.DeleteAndForget(string path)
-    {
-        this.AddLast(new(FilerWork.WorkType.Delete, path));
-        return CrystalResult.Started;
-    }
-
-    async Task<CrystalMemoryOwnerResult> IRawFiler.ReadAsync(string path, long offset, int length, TimeSpan timeToWait)
-    {
-        var work = new FilerWork(path, offset, length);
-        var workInterface = this.AddLast(work);
-        await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
-        return new(work.Result, work.ReadData.AsReadOnly());
-    }
-
-    async Task<CrystalResult> IRawFiler.WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait, bool truncate)
-    {
-        if (offset != 0 || !truncate)
-        {// Not supported
-            return CrystalResult.NoPartialWriteSupport;
-        }
-
-        var work = new FilerWork(path, offset, dataToBeShared, truncate);
-        var workInterface = this.AddLast(work);
-        await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
-        return work.Result;
-    }
-
-    async Task<CrystalResult> IRawFiler.DeleteAsync(string path, TimeSpan timeToWait)
-    {
-        var work = new FilerWork(FilerWork.WorkType.Delete, path);
-        var workInterface = this.AddLast(work);
-        await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
-        return work.Result;
-    }
-
-    async Task<CrystalResult> IRawFiler.DeleteDirectoryAsync(string path, TimeSpan timeToWait)
-    {
-        var work = new FilerWork(FilerWork.WorkType.DeleteDirectory, path);
-        var workInterface = this.AddLast(work);
-        await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
-        return work.Result;
-    }
-
-    async Task<List<PathInformation>> IRawFiler.ListAsync(string path, TimeSpan timeToWait)
-    {
-        var work = new FilerWork(FilerWork.WorkType.List, path);
-        var workInterface = this.AddLast(work);
-        await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
-        if (work.OutputObject is List<PathInformation> list)
-        {
-            return list;
-        }
-        else
-        {
-            return new List<PathInformation>();
-        }
-    }
-
-    #endregion
 }

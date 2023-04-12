@@ -12,9 +12,8 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
         this.storageGroup = new(crystalizer);
         this.himoGoshujin = new(this);
         this.logger = crystalizer.UnitLogger.GetLogger<IBigCrystal<TData>>();
-
-        this.storageFileConfiguration = this.BigCrystalConfiguration.DirectoryConfiguration.CombinePath(this.BigCrystalConfiguration.StorageFile);
-        this.crystalFileConfiguration = this.BigCrystalConfiguration.DirectoryConfiguration.CombinePath(this.BigCrystalConfiguration.CrystalFile);
+        this.storageFileConfiguration = EmptyFileConfiguration.Default;
+        this.crystalFileConfiguration = EmptyFileConfiguration.Default;
     }
 
     #region FieldAndProperty
@@ -46,8 +45,12 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
         using (this.semaphore.Lock())
         {
             this.BigCrystalConfiguration = configuration;
-            this.BigCrystalConfiguration.RegisterDatum(this.DatumRegistry);
             this.CrystalConfiguration = configuration;
+
+            this.BigCrystalConfiguration.RegisterDatum(this.DatumRegistry);
+            this.storageFileConfiguration = this.BigCrystalConfiguration.DirectoryConfiguration.CombinePath(this.BigCrystalConfiguration.StorageFile);
+            this.crystalFileConfiguration = this.BigCrystalConfiguration.DirectoryConfiguration.CombinePath(this.BigCrystalConfiguration.CrystalFile);
+
             this.filer = null;
             this.storage = null;
             this.Prepared = false;
