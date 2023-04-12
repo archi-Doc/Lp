@@ -281,13 +281,11 @@ public class Crystalizer
         await Task.WhenAll(tasks).ConfigureAwait(false);
     }
 
-    public void DeleteAll()
+    public async Task<CrystalResult[]> DeleteAll()
     {
-        var crystals = this.crystals.Keys.ToArray();
-        foreach (var x in crystals)
-        {
-            x.Delete();
-        }
+        var tasks = this.crystals.Keys.Select(x => x.Delete()).ToArray();
+        var results = await Task.WhenAll(tasks).ConfigureAwait(false);
+        return results;
     }
 
     public ICrystal<TData> CreateCrystal<TData>()

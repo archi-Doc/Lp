@@ -139,7 +139,7 @@ public static class PathHelper
             return CrystalResult.NoFiler;
         }
 
-        var result = await filer.WriteAsync(0, new(data));
+        var result = await filer.WriteAsync(0, new(data)).ConfigureAwait(false);
         if (result != CrystalResult.Success)
         {
             return result;
@@ -151,7 +151,7 @@ public static class PathHelper
         BitConverter.TryWriteBytes(hashAndWaypoint.AsSpan(sizeof(ulong)), waypoint);
 
         var chckFiler = filer.CloneWithExtension(CheckExtension);
-        result = await chckFiler.WriteAsync(0, new(hashAndWaypoint));
+        result = await chckFiler.WriteAsync(0, new(hashAndWaypoint)).ConfigureAwait(false);
         return result;
     }
 

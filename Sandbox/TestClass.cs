@@ -93,6 +93,8 @@ internal class TestClass
         var a2 = this.exampleData.TryGetChild("a");
         var b2 = this.exampleData.TryGetChild("b");
 
+        await manualCrystal.Delete();
+
         Journal();
 
         // await this.crystalizer.SaveAll();

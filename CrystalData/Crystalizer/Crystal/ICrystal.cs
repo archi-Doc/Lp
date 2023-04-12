@@ -26,7 +26,7 @@ public interface ICrystal
 
     Task<CrystalResult> Save(bool unload = false);
 
-    void Delete();
+    Task<CrystalResult> Delete();
 
     void Terminate();
 }
