@@ -74,6 +74,7 @@ internal class TestClass
         Console.WriteLine(manualClass.ToString());
 
         var manualCrystal2 = this.crystalizer.CreateCrystal<ManualClass>();
+        manualCrystal2.Configure(new(Crystalization.Manual, new LocalFileConfiguration("test2")));
         var manualClass2 = manualCrystal2.Object;
         manualClass2.Id = 2;
         Console.WriteLine(manualClass.ToString());
@@ -93,6 +94,7 @@ internal class TestClass
         var a2 = this.exampleData.TryGetChild("a");
         var b2 = this.exampleData.TryGetChild("b");
 
+        // await manualCrystal.Delete();
         await manualCrystal.Delete();
 
         Journal();

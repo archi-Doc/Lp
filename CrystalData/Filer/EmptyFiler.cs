@@ -21,7 +21,7 @@ public partial class EmptyFiler : IRawFiler
         => Task.FromResult(CrystalResult.Success);
 
     Task<CrystalMemoryOwnerResult> IRawFiler.ReadAsync(string path, long offset, int length, TimeSpan timeout)
-        => Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.Success));
+        => Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.NoFile));
 
     Task IRawFiler.Terminate()
         => Task.CompletedTask;

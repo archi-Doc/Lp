@@ -13,7 +13,7 @@ public class CrystalImpl<TData> : ICrystal<TData>
     internal CrystalImpl(Crystalizer crystalizer)
     {
         this.Crystalizer = crystalizer;
-        this.CrystalConfiguration = crystalizer.GetCrystalConfiguration(typeof(TData));
+        this.CrystalConfiguration = CrystalConfiguration.Default; // crystalizer.GetCrystalConfiguration(typeof(TData));
     }
 
     #region FieldAndProperty
@@ -115,6 +115,7 @@ public class CrystalImpl<TData> : ICrystal<TData>
         {
             this.CrystalConfiguration = configuration;
             this.filer = null;
+            this.storage = null;
             this.Prepared = false;
         }
     }
@@ -158,10 +159,11 @@ public class CrystalImpl<TData> : ICrystal<TData>
         {
             if (!this.Prepared)
             {
-                if (await this.PrepareAndLoadInternal(null).ConfigureAwait(false) != CrystalStartResult.Success)
+                return CrystalResult.NotPrepared;
+                /*if (await this.PrepareAndLoadInternal(null).ConfigureAwait(false) != CrystalStartResult.Success)
                 {
                     return CrystalResult.NoData;
-                }
+                }*/
             }
 
             var byteArray = TinyhandSerializer.SerializeObject<TData>(this.obj);
@@ -205,6 +207,7 @@ public class CrystalImpl<TData> : ICrystal<TData>
             this.filer = null;
             this.storage = null;
 
+            this.Prepared = false;
             return CrystalResult.Success;
         }
     }
@@ -248,27 +251,28 @@ public class CrystalImpl<TData> : ICrystal<TData>
                 return CrystalStartResult.FileNotFound;
             }
         }
-
-        // Deserialize
-        try
-        {
-            TinyhandSerializer.DeserializeObject<TData>(memoryResult.Data.Memory.Span, ref this.obj);
-            this.savedHash = FarmHash.Hash64(memoryResult.Data.Memory.Span);
-        }
-        catch
-        {
-            if (await param.Query(CrystalStartResult.FileNotFound).ConfigureAwait(false) == AbortOrComplete.Complete)
+        else
+        {// Deserialize
+            try
             {
-                ReconstructObject();
+                TinyhandSerializer.DeserializeObject<TData>(memoryResult.Data.Memory.Span, ref this.obj);
+                this.savedHash = FarmHash.Hash64(memoryResult.Data.Memory.Span);
             }
-            else
+            catch
             {
-                return CrystalStartResult.DeserializeError;
+                if (await param.Query(CrystalStartResult.FileNotFound).ConfigureAwait(false) == AbortOrComplete.Complete)
+                {
+                    ReconstructObject();
+                }
+                else
+                {
+                    return CrystalStartResult.DeserializeError;
+                }
             }
-        }
-        finally
-        {
-            memoryResult.Return();
+            finally
+            {
+                memoryResult.Return();
+            }
         }
 
         // Storage

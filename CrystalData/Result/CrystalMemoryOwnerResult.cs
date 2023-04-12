@@ -25,4 +25,7 @@ public readonly struct CrystalMemoryOwnerResult
     public readonly CrystalResult Result;
 
     public readonly ByteArrayPool.ReadOnlyMemoryOwner Data;
+
+    public override string ToString()
+        => $"{this.Result} Data[{this.Data.Memory.Length}]";
 }

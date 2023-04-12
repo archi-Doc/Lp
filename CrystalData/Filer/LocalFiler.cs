@@ -182,6 +182,7 @@ TryWrite:
             try
             {
                 File.Delete(filePath);
+                worker.logger?.TryGet()?.Log($"Deleted {work.Path}");
                 work.Result = CrystalResult.Success;
             }
             catch

@@ -143,12 +143,11 @@ public sealed class StorageGroup
         lock (this.syncObject)
         {
             foreach (var x in this.storages)
-            {// tempcode
-                /*var task = x.Filer?.DeleteAllAsync();
-                if (task != null)
+            {
+                if (x.Storage?.DeleteAllAsync() is { } task)
                 {
                     list.Add(task);
-                }*/
+                }
             }
         }
 

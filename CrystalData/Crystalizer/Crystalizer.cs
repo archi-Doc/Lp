@@ -31,16 +31,17 @@ public class Crystalizer
         foreach (var x in this.configuration.CrystalConfigurations)
         {
             ICrystal? crystal;
-            if (x.Value is BigCrystalConfiguration)
+            if (x.Value is BigCrystalConfiguration bigCrystalConfiguration)
             {// new BigCrystalImpl<TData>
-                crystal = (IBigCrystal)Activator.CreateInstance(typeof(BigCrystalImpl<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
+                var bigCrystal = (IBigCrystal)Activator.CreateInstance(typeof(BigCrystalImpl<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
+                crystal = bigCrystal;
+                bigCrystal.Configure(bigCrystalConfiguration);
             }
             else
             {// new CrystalImpl<TData>
                 crystal = (ICrystal)Activator.CreateInstance(typeof(CrystalImpl<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
+                crystal.Configure(x.Value);
             }
-
-            crystal.Configure(x.Value);
 
             this.typeToCrystal.TryAdd(x.Key, crystal);
             this.crystals.TryAdd(crystal, 0);

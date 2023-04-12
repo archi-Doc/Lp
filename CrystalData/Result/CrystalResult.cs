@@ -26,4 +26,5 @@ public enum CrystalResult
     DeleteError,
     NoPartialWriteSupport,
     NoStorageKey,
+    NotPrepared,
 }

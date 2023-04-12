@@ -13,6 +13,8 @@ public interface IBigCrystal : ICrystal
     HimoGoshujinClass Himo { get; }
 
     long MemoryUsage { get; }
+
+    void Configure(BigCrystalConfiguration configuration);
 }
 
 public interface IBigCrystal<TData> : IBigCrystal, ICrystal<TData>

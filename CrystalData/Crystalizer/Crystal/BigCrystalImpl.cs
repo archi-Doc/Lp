@@ -8,8 +8,7 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
     public BigCrystalImpl(Crystalizer crystalizer)
         : base(crystalizer)
     {
-        this.BigCrystalConfiguration = crystalizer.GetBigCrystalConfiguration(typeof(TData));
-        this.BigCrystalConfiguration.RegisterDatum(this.DatumRegistry);
+        this.BigCrystalConfiguration = BigCrystalConfiguration.Default; // crystalizer.GetBigCrystalConfiguration(typeof(TData));
         this.storageGroup = new(crystalizer);
         this.himoGoshujin = new(this);
         this.logger = crystalizer.UnitLogger.GetLogger<IBigCrystal<TData>>();
@@ -20,7 +19,7 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
 
     #region FieldAndProperty
 
-    public BigCrystalConfiguration BigCrystalConfiguration { get; }
+    public BigCrystalConfiguration BigCrystalConfiguration { get; protected set; }
 
     public DatumRegistry DatumRegistry { get; } = new();
 
@@ -41,6 +40,19 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
     #endregion
 
     #region ICrystal
+
+    void IBigCrystal.Configure(BigCrystalConfiguration configuration)
+    {
+        using (this.semaphore.Lock())
+        {
+            this.BigCrystalConfiguration = configuration;
+            this.BigCrystalConfiguration.RegisterDatum(this.DatumRegistry);
+            this.CrystalConfiguration = configuration;
+            this.filer = null;
+            this.storage = null;
+            this.Prepared = false;
+        }
+    }
 
     async Task<CrystalResult> ICrystal.Save(bool unload)
     {
