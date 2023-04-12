@@ -122,10 +122,10 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
         this.obj?.Delete();
         this.himoGoshujin.Clear();
 
-        this.crystalFiler?.Delete();
+        this.crystalFiler?.DeleteAndForget();
         this.crystalFiler = null;
 
-        this.storageGroupFiler?.Delete();
+        this.storageGroupFiler?.DeleteAndForget();
         this.storageGroupFiler = null;
 
         await this.StorageGroup.DeleteAllAsync();

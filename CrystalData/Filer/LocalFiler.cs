@@ -3,7 +3,6 @@
 #pragma warning disable SA1124 // Do not use regions
 
 using CrystalData.Results;
-using static CrystalData.Filer.FilerWork;
 
 namespace CrystalData.Filer;
 
@@ -193,7 +192,7 @@ TryWrite:
             {
             }
         }
-        else if (work.Type == WorkType.DeleteDirectory)
+        else if (work.Type == FilerWork.WorkType.DeleteDirectory)
         {
             try
             {
@@ -253,15 +252,15 @@ TryWrite:
         this.Dispose();
     }
 
-    CrystalResult IRawFiler.Write(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate)
+    CrystalResult IRawFiler.WriteAndForget(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate)
     {
         this.AddLast(new(path, offset, dataToBeShared, truncate));
         return CrystalResult.Started;
     }
 
-    CrystalResult IRawFiler.Delete(string path)
+    CrystalResult IRawFiler.DeleteAndForget(string path)
     {
-        this.AddLast(new(WorkType.Delete, path));
+        this.AddLast(new(FilerWork.WorkType.Delete, path));
         return CrystalResult.Started;
     }
 
@@ -283,7 +282,7 @@ TryWrite:
 
     async Task<CrystalResult> IRawFiler.DeleteAsync(string path, TimeSpan timeToWait)
     {
-        var work = new FilerWork(WorkType.Delete, path);
+        var work = new FilerWork(FilerWork.WorkType.Delete, path);
         var workInterface = this.AddLast(work);
         await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
         return work.Result;
@@ -291,7 +290,7 @@ TryWrite:
 
     async Task<CrystalResult> IRawFiler.DeleteDirectoryAsync(string path, TimeSpan timeToWait)
     {
-        var work = new FilerWork(WorkType.DeleteDirectory, path);
+        var work = new FilerWork(FilerWork.WorkType.DeleteDirectory, path);
         var workInterface = this.AddLast(work);
         await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
         return work.Result;
@@ -299,7 +298,7 @@ TryWrite:
 
     async Task<List<PathInformation>> IRawFiler.ListAsync(string path, TimeSpan timeToWait)
     {
-        var work = new FilerWork(WorkType.List, path);
+        var work = new FilerWork(FilerWork.WorkType.List, path);
         var workInterface = this.AddLast(work);
         await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
         if (work.OutputObject is List<PathInformation> list)

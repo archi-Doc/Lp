@@ -17,14 +17,14 @@ public interface IRawFiler
 
     Task Terminate();
 
-    CrystalResult Write(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate = true);
+    CrystalResult WriteAndForget(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate = true);
 
     /// <summary>
     /// Delete the file matching the path.
     /// </summary>
     /// <param name="path">The file path.</param>
     /// <returns><see cref="CrystalResult"/>.</returns>
-    CrystalResult Delete(string path);
+    CrystalResult DeleteAndForget(string path);
 
     Task<CrystalMemoryOwnerResult> ReadAsync(string path, long offset, int length, TimeSpan timeout);
 

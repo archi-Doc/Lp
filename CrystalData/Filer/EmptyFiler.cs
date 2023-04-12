@@ -8,7 +8,7 @@ public partial class EmptyFiler : IRawFiler
 
     bool IRawFiler.SupportPartialWrite => true;
 
-    CrystalResult IRawFiler.Delete(string path)
+    CrystalResult IRawFiler.DeleteAndForget(string path)
         => CrystalResult.Success;
 
     Task<CrystalResult> IRawFiler.DeleteAsync(string path, TimeSpan timeout)
@@ -26,7 +26,7 @@ public partial class EmptyFiler : IRawFiler
     Task IRawFiler.Terminate()
         => Task.CompletedTask;
 
-    CrystalResult IRawFiler.Write(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate)
+    CrystalResult IRawFiler.WriteAndForget(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate)
         => CrystalResult.Success;
 
     Task<CrystalResult> IRawFiler.WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeout, bool truncate)

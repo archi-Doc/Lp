@@ -117,7 +117,7 @@ internal partial class SimpleStorage : IStorage
         }
 
         this.PutInternal(ref fileId, dataToBeShared.Memory.Length);
-        return this.rawFiler.Write(this.FileToPath(FileIdToFile(fileId)), 0, dataToBeShared);
+        return this.rawFiler.WriteAndForget(this.FileToPath(FileIdToFile(fileId)), 0, dataToBeShared);
     }
 
     CrystalResult IStorage.Delete(ref ulong fileId)
@@ -145,7 +145,7 @@ internal partial class SimpleStorage : IStorage
         }
 
         fileId = 0;
-        return this.rawFiler.Delete(this.FileToPath(file));
+        return this.rawFiler.DeleteAndForget(this.FileToPath(file));
     }
 
     Task<CrystalMemoryOwnerResult> IStorage.GetAsync(ref ulong fileId)
