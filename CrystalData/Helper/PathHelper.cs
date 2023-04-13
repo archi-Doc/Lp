@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.CompilerServices;
+using CrystalData.Journal;
 
 namespace CrystalData;
 
@@ -112,47 +113,76 @@ public static class PathHelper
         return (result, location);
     }
 
-    public static Task<CrystalResult> SaveData<T>(T? obj, IFiler? filer, ulong waypoint)
+    public static Task<(CrystalResult Result, Waypoint Waypoiint)> SaveData<T>(Crystalizer crystalizer, T? obj, IFiler? filer, uint journalToken)
         where T : ITinyhandSerialize<T>
     {
         if (obj == null)
         {
-            return Task.FromResult(CrystalResult.NoData);
+            return Task.FromResult((CrystalResult.NoData, default(Waypoint)));
         }
         else if (filer == null)
         {
-            return Task.FromResult(CrystalResult.NoFiler);
+            return Task.FromResult((CrystalResult.NoFiler, default(Waypoint)));
         }
 
+        // var option = TinyhandSerializer.DefaultOptions with { JournalToken = journalToken, };
         var data = TinyhandSerializer.SerializeObject(obj);
-        return SaveData(data, filer, waypoint);
+        return SaveData(crystalizer, data, filer, journalToken);
     }
 
-    public static async Task<CrystalResult> SaveData(byte[]? data, IFiler? filer, ulong waypoint)
+    public static async Task<(CrystalResult Result, Waypoint Waypoiint)> SaveData(Crystalizer crystalizer, byte[]? data, IFiler? filer, uint journalToken)
     {
         if (data == null)
         {
-            return CrystalResult.NoData;
+            return (CrystalResult.NoData, default(Waypoint));
         }
         else if (filer == null)
         {
-            return CrystalResult.NoFiler;
+            return (CrystalResult.NoFiler, default(Waypoint));
         }
 
         var result = await filer.WriteAsync(0, new(data)).ConfigureAwait(false);
         if (result != CrystalResult.Success)
         {
-            return result;
+            return (result, default(Waypoint));
         }
 
-        var hashAndWaypoint = new byte[CheckLength];
         var hash = FarmHash.Hash64(data.AsSpan());
-        BitConverter.TryWriteBytes(hashAndWaypoint.AsSpan(), hash);
-        BitConverter.TryWriteBytes(hashAndWaypoint.AsSpan(sizeof(ulong)), waypoint);
 
-        var chckFiler = filer.CloneWithExtension(CheckExtension);
-        result = await chckFiler.WriteAsync(0, new(hashAndWaypoint)).ConfigureAwait(false);
-        return result;
+        ulong journalPosition;
+        if (crystalizer.Journal != null)
+        {
+            journalPosition = AddJournal();
+        }
+        else
+        {
+            journalPosition = 0;
+        }
+
+        var waypoint = new Waypoint(journalPosition, journalToken, hash);
+        var chckFiler = filer.CloneWithExtension(Waypoint.Extension);
+        result = await chckFiler.WriteAsync(0, new(waypoint.ToByteArray())).ConfigureAwait(false);
+        return (result, waypoint);
+
+        ulong AddJournal()
+        {
+            var hash = FarmHash.Hash64(data.AsSpan());
+
+            ulong journalPosition;
+            if (crystalizer.Journal == null)
+            {
+                journalPosition = 0;
+            }
+            else
+            {
+                crystalizer.Journal.GetJournalWriter(JournalRecordType.Check, out var writer);
+                writer.Write(journalToken);
+                writer.Write(hash);
+                journalPosition = crystalizer.Journal.AddRecord(writer);
+            }
+
+            return journalPosition;
+        }
     }
 
     /// <summary>
