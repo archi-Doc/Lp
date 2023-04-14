@@ -7,6 +7,7 @@ public readonly struct Waypoint : IEquatable<Waypoint>
     public const string Extension = "waypoint";
     public const int Length = 20; // 8 + 4 + 8
     public static readonly Waypoint Invalid = default;
+    public static readonly Waypoint Empty = new(1, 0, 0);
 
     public Waypoint(ulong journalPosition, uint journalToken, ulong hash)
     {
@@ -43,7 +44,7 @@ public readonly struct Waypoint : IEquatable<Waypoint>
     public readonly uint JournalToken;
     public readonly ulong Hash;
 
-    // public bool IsValid => this.JournalPosition != 0;
+    public bool IsValid => this.JournalPosition != 0;
 
     public byte[] ToByteArray()
     {

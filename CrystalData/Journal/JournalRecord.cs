@@ -9,7 +9,7 @@ public enum JournalRecordType : byte
     SetValue,
     AddObject,
     DeleteObject,
-    Check,
+    Waypoint,
 }
 
 public readonly ref struct JournalRecord

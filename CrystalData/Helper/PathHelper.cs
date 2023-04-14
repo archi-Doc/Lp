@@ -83,7 +83,7 @@ public static class PathHelper
             return (new(result.Result), Waypoint.Invalid);
         }
 
-        // Load check file (hash/location)
+        // Load waypoint.
         var waypointFiler = filer.CloneWithExtension(Waypoint.Extension);
         var waypointResult = await waypointFiler.ReadAsync(0, -1).ConfigureAwait(false);
         if (waypointResult.IsFailure ||
@@ -153,8 +153,7 @@ public static class PathHelper
 
         ulong AddJournal()
         {
-            crystalizer.Journal.GetWriter(JournalRecordType.Check, out var writer);
-            writer.Write(journalToken);
+            crystalizer.Journal.GetWriter(JournalRecordType.Waypoint, journalToken, out var writer);
             writer.Write(hash);
             journalPosition = crystalizer.Journal.Add(writer);
 

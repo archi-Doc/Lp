@@ -11,7 +11,9 @@ public interface IJournal
 
     bool Prepared { get; }
 
-    void GetWriter(JournalRecordType recordType, out TinyhandWriter writer);
+    void UpdateToken(ref Waypoint waypoint);
+
+    void GetWriter(JournalRecordType recordType, uint token, out TinyhandWriter writer);
 
     ulong Add(in TinyhandWriter writer);
 }

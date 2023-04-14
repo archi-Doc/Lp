@@ -41,11 +41,16 @@ public partial class SimpleJournal : IJournalInternal
         return CrystalStartResult.Success;
     }
 
-    void IJournal.GetWriter(JournalRecordType recordType, out TinyhandWriter writer)
+    void IJournal.UpdateToken(ref Waypoint waypoint)
+    {
+    }
+
+    void IJournal.GetWriter(JournalRecordType recordType, uint token, out TinyhandWriter writer)
     {
         writer = new(initialBuffer);
         writer.Advance(3); // Size (0-16MB)
         writer.RawWriteUInt8(Unsafe.As<JournalRecordType, byte>(ref recordType)); // JournalRecordType
+        writer.RawWriteUInt32(token); // JournalToken
     }
 
     ulong IJournal.Add(in TinyhandWriter writer)

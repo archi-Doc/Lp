@@ -31,8 +31,7 @@ public interface ICrystal
     void Terminate();
 }
 
-public interface ICrystal<TData> : ICrystal
-    where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+public interface ICrystal<TData> : ICrystal // where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
     public new TData Object { get; }
 }

@@ -17,12 +17,14 @@ public class EmptyJournal : IJournalInternal
         return 0;
     }
 
-    void IJournal.GetWriter(JournalRecordType recordType, out TinyhandWriter writer)
+    void IJournal.GetWriter(JournalRecordType recordType, uint token, out TinyhandWriter writer)
     {
         writer = default(TinyhandWriter);
     }
 
-    public bool Prepared { get; private set; }
+    void IJournal.UpdateToken(ref Waypoint waypoint)
+    {
+    }
 
-    bool IJournal.Prepared => throw new NotImplementedException();
+    public bool Prepared { get; private set; }
 }

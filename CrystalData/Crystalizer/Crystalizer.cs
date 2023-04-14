@@ -39,7 +39,7 @@ public class Crystalizer
             }
             else
             {// new CrystalImpl<TData>
-                crystal = (ICrystal)Activator.CreateInstance(typeof(CrystalImpl<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
+                crystal = (ICrystal)Activator.CreateInstance(typeof(CrystalObject<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
                 crystal.Configure(x.Value);
             }
 
@@ -297,7 +297,7 @@ public class Crystalizer
             ThrowTypeNotRegistered(typeof(TData));
         }
 
-        var crystal = new CrystalImpl<TData>(this);
+        var crystal = new CrystalObject<TData>(this);
         this.crystals.TryAdd(crystal, 0);
         return crystal;
     }

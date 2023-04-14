@@ -2,7 +2,7 @@
 
 namespace CrystalData;
 
-public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICrystal
+public class BigCrystalImpl<TData> : CrystalObject<TData>, IBigCrystal<TData>, ICrystal
     where TData : BaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
     public BigCrystalImpl(Crystalizer crystalizer)
