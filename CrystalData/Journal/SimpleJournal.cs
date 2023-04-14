@@ -39,13 +39,13 @@ public partial class SimpleJournal : IJournalInternal
         return CrystalStartResult.Success;
     }
 
-    void IJournal.GetJournalWriter(JournalRecordType recordType, out TinyhandWriter writer)
+    void IJournal.GetWriter(JournalRecordType recordType, out TinyhandWriter writer)
     {
         writer = new(initialBuffer);
         writer.Write(Unsafe.As<JournalRecordType, byte>(ref recordType));
     }
 
-    ulong IJournal.AddRecord(in TinyhandWriter writer)
+    ulong IJournal.Add(in TinyhandWriter writer)
     {
         writer.FlushAndGetMemory(out var memory, out var useInitialBuffer);
         writer.Dispose();

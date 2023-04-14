@@ -45,7 +45,7 @@ public class Program
                 context.AddCrystal<ManualClass>(
                     new(
                         Crystalization.Manual,
-                        new LocalFileConfiguration("manual.data")
+                        new LocalFileConfiguration("Data/manual.data")
                         ));
 
                 context.AddCrystal<CombinedClass>(

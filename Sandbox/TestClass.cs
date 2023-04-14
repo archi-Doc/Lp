@@ -95,7 +95,6 @@ internal class TestClass
         var b2 = this.exampleData.TryGetChild("b");
 
         // await manualCrystal.Delete();
-        await manualCrystal.Delete();
 
         Journal();
 
@@ -111,10 +110,10 @@ internal class TestClass
             }*/
             if (this.crystalizer.Journal is { } journal)
             {
-                journal.GetJournalWriter(JournalRecordType.SetValue, out var writer);
+                journal.GetWriter(JournalRecordType.SetValue, out var writer);
                 // this.WriteLocator(ref record); // Locator
                 writer.WriteInt16(32); // Value
-                journal.AddRecord(in writer);
+                journal.Add(in writer);
             }
 
             // Read

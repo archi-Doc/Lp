@@ -25,12 +25,13 @@ internal partial class SimpleStorage : IStorage
 
     public long StorageUsage { get; private set; } // lock (this.syncObject)
 
+    private Crystalizer? crystalizer;
     private string directory = string.Empty;
     private IFiler? filer;
     private IRawFiler? rawFiler;
+    private TimeSpan timeout;
 
     private object syncObject = new();
-    private TimeSpan timeout;
     private Dictionary<uint, int> fileToSize = new();
 
     #endregion
@@ -44,6 +45,7 @@ internal partial class SimpleStorage : IStorage
 
     async Task<CrystalResult> IStorage.PrepareAndCheck(Crystalizer crystalizer, StorageConfiguration storageConfiguration, bool createNew)
     {
+        this.crystalizer = crystalizer;
         this.directory = storageConfiguration.DirectoryConfiguration.Path;
         if (!string.IsNullOrEmpty(this.directory) && !this.directory.EndsWith('/'))
         {
@@ -105,7 +107,7 @@ internal partial class SimpleStorage : IStorage
                 byteArray = TinyhandSerializer.Serialize(this.fileToSize);
             }
 
-            await PathHelper.SaveData(byteArray, this.filer, 0);
+            await PathHelper.SaveData(this.crystalizer!, byteArray, this.filer, 0);
         }
     }
 

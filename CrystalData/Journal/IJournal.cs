@@ -11,9 +11,9 @@ public interface IJournal
 
     bool Prepared { get; }
 
-    void GetJournalWriter(JournalRecordType recordType, out TinyhandWriter writer);
+    void GetWriter(JournalRecordType recordType, out TinyhandWriter writer);
 
-    ulong AddRecord(in TinyhandWriter writer);
+    ulong Add(in TinyhandWriter writer);
 }
 
 internal interface IJournalInternal : IJournal

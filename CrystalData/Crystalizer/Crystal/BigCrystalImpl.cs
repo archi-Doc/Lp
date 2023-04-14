@@ -73,7 +73,7 @@ public class BigCrystalImpl<TData> : CrystalImpl<TData>, IBigCrystal<TData>, ICr
             await this.StorageGroup.SaveStorage().ConfigureAwait(false);
 
             // Save crystal
-            await PathHelper.SaveData(this.obj, this.crystalFiler, 0).ConfigureAwait(false);
+            await PathHelper.SaveData(this.Crystalizer, this.obj, this.crystalFiler, 0).ConfigureAwait(false);
 
             // Save storage group
             if (this.storageGroupFiler != null)

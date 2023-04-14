@@ -319,7 +319,7 @@ public sealed class StorageGroup
             byteArray = TinyhandSerializer.Serialize(this.storages);
         }
 
-        await PathHelper.SaveData(byteArray, filer, 0).ConfigureAwait(false);
+        await PathHelper.SaveData(this.Crystalizer, byteArray, filer, 0).ConfigureAwait(false);
     }
 
     internal void Clear()

@@ -6,6 +6,7 @@ public readonly struct Waypoint : IEquatable<Waypoint>
 {
     public const string Extension = "waypoint";
     public const int Length = 20; // 8 + 4 + 8
+    public static readonly Waypoint Invalid = default;
 
     public Waypoint(ulong journalPosition, uint journalToken, ulong hash)
     {
@@ -14,9 +15,35 @@ public readonly struct Waypoint : IEquatable<Waypoint>
         this.Hash = hash;
     }
 
+    public static bool TryParse(ReadOnlySpan<byte> span, out Waypoint waypoint)
+    {
+        if (span.Length >= Length)
+        {
+            try
+            {
+                var journalPosition = BitConverter.ToUInt64(span);
+                span = span.Slice(sizeof(ulong));
+                var journalToken = BitConverter.ToUInt32(span);
+                span = span.Slice(sizeof(uint));
+                var hash = BitConverter.ToUInt64(span);
+
+                waypoint = new(journalPosition, journalToken, hash);
+                return true;
+            }
+            catch
+            {
+            }
+        }
+
+        waypoint = default;
+        return false;
+    }
+
     public readonly ulong JournalPosition;
     public readonly uint JournalToken;
     public readonly ulong Hash;
+
+    // public bool IsValid => this.JournalPosition != 0;
 
     public byte[] ToByteArray()
     {
@@ -28,7 +55,7 @@ public readonly struct Waypoint : IEquatable<Waypoint>
         span = span.Slice(sizeof(uint));
         BitConverter.TryWriteBytes(span, this.Hash);
 
-        return span.ToArray();
+        return byteArray;
     }
 
     public bool Equals(Waypoint other)

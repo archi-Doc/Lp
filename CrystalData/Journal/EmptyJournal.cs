@@ -12,12 +12,12 @@ public class EmptyJournal : IJournalInternal
         return Task.FromResult(CrystalStartResult.Success);
     }
 
-    ulong IJournal.AddRecord(in TinyhandWriter writer)
+    ulong IJournal.Add(in TinyhandWriter writer)
     {
         return 0;
     }
 
-    void IJournal.GetJournalWriter(JournalRecordType recordType, out TinyhandWriter writer)
+    void IJournal.GetWriter(JournalRecordType recordType, out TinyhandWriter writer)
     {
         writer = default(TinyhandWriter);
     }
