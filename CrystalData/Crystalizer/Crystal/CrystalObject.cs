@@ -3,13 +3,14 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using CrystalData.Journal;
+using Tinyhand.IO;
 
 #pragma warning disable SA1401
 
 namespace CrystalData;
 
 // Data + Journal/Waypoint + Filer/FileConfiguration + Storage/StorageConfiguration
-public class CrystalObject<TData> : ICrystal<TData> // where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+public class CrystalObject<TData> : ICrystal<TData>, IJournalObject // where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
     public CrystalObject(Crystalizer crystalizer)
     {
@@ -168,7 +169,12 @@ public class CrystalObject<TData> : ICrystal<TData> // where TData : ITinyhandSe
                 }*/
             }
 
-            this.Crystalizer.Journal?.UpdateToken(ref this.waypoint);
+            if (this.Crystalizer.Journal is { } journal)
+            {
+                var newToken = journal.UpdateToken(this.waypoint.JournalToken, this);
+                this.waypoint = new(this.waypoint.JournalPosition, newToken, this.waypoint.Hash);
+            }
+
             // var options = TinyhandSerializerOptions.Standard with { Token = this.waypoint.JournalToken, };
             var byteArray = TinyhandSerializer.Serialize(this.obj);
             hash = FarmHash.Hash64(byteArray.AsSpan());
@@ -225,6 +231,10 @@ public class CrystalObject<TData> : ICrystal<TData> // where TData : ITinyhandSe
                 await task2.ConfigureAwait(false);
             }
 
+            // Journal/Waypoint
+            this.Crystalizer.Journal?.UnregisterToken(this.waypoint.JournalToken);
+            this.waypoint = default;
+
             // Clear
             this.CrystalConfiguration = CrystalConfiguration.Default;
             this.obj = TinyhandSerializer.Reconstruct<TData>();
@@ -265,6 +275,17 @@ public class CrystalObject<TData> : ICrystal<TData> // where TData : ITinyhandSe
             }
         }
 
+        // Storage
+        if (this.storage == null)
+        {
+            this.storage = this.Crystalizer.ResolveStorage(this.CrystalConfiguration.StorageConfiguration);
+            var result = await this.storage.PrepareAndCheck(this.Crystalizer, this.CrystalConfiguration.StorageConfiguration, false).ConfigureAwait(false);
+            if (result != CrystalResult.Success)
+            {
+                return CrystalStartResult.DirectoryError;
+            }
+        }
+
         // Load waypoint
         if (!this.waypoint.IsValid)
         {
@@ -273,12 +294,14 @@ public class CrystalObject<TData> : ICrystal<TData> // where TData : ITinyhandSe
             if (waypointResult.IsFailure ||
                 !Waypoint.TryParse(waypointResult.Data.Memory.Span, out var waypoint))
             {// No waypoint file
-                if (await param.Query(CrystalStartResult.FileNotFound).ConfigureAwait(false) == AbortOrComplete.Abort)
+                if (await param.Query(CrystalStartResult.FileNotFound).ConfigureAwait(false) == AbortOrComplete.Complete)
+                {
+                    return DataLost();
+                }
+                else
                 {
                     return CrystalStartResult.DirectoryError;
                 }
-
-                waypoint = Waypoint.Empty;
             }
 
             this.waypoint = waypoint;
@@ -290,7 +313,7 @@ public class CrystalObject<TData> : ICrystal<TData> // where TData : ITinyhandSe
         { // Data read error or Hash does not match
             if (await param.Query(CrystalStartResult.FileNotFound).ConfigureAwait(false) == AbortOrComplete.Complete)
             {
-                ReconstructObject();
+                return DataLost();
             }
             else
             {
@@ -307,7 +330,7 @@ public class CrystalObject<TData> : ICrystal<TData> // where TData : ITinyhandSe
             {
                 if (await param.Query(CrystalStartResult.FileNotFound).ConfigureAwait(false) == AbortOrComplete.Complete)
                 {
-                    ReconstructObject();
+                    return DataLost();
                 }
                 else
                 {
@@ -320,24 +343,28 @@ public class CrystalObject<TData> : ICrystal<TData> // where TData : ITinyhandSe
             }
         }
 
-        // Storage
-        if (this.storage == null)
-        {
-            this.storage = this.Crystalizer.ResolveStorage(this.CrystalConfiguration.StorageConfiguration);
-            var result = await this.storage.PrepareAndCheck(this.Crystalizer, this.CrystalConfiguration.StorageConfiguration, false).ConfigureAwait(false);
-            if (result != CrystalResult.Success)
-            {
-                return CrystalStartResult.DirectoryError;
-            }
-        }
+        this.Crystalizer.Journal?.RegisterToken(this.waypoint.JournalToken, this);
 
         this.Prepared = true;
         return CrystalStartResult.Success;
 
-        void ReconstructObject()
+        CrystalStartResult DataLost()
         {
             this.obj = TinyhandSerializer.Reconstruct<TData>();
-            this.savedHash = FarmHash.Hash64(TinyhandSerializer.Serialize(this.obj));
+            var hash = FarmHash.Hash64(TinyhandSerializer.Serialize(this.obj));
+
+            ulong journalPosition = 1;
+            uint journalToken = 0;
+            if (this.Crystalizer.Journal is { } journal)
+            {
+                journalToken = journal.NewToken(this);
+                journal.GetWriter(JournalRecordType.Waypoint, journalToken, out var writer);
+                journalPosition = journal.Add(writer);
+            }
+
+            this.waypoint = new(journalPosition, journalToken, hash);
+
+            return CrystalStartResult.Success;
         }
     }
 
@@ -367,5 +394,9 @@ public class CrystalObject<TData> : ICrystal<TData> // where TData : ITinyhandSe
             this.storage = this.Crystalizer.ResolveStorage(this.CrystalConfiguration.StorageConfiguration);
             this.storage.PrepareAndCheck(this.Crystalizer, this.CrystalConfiguration.StorageConfiguration, false).Wait();
         }
+    }
+
+    void IJournalObject.ReadJournal(ref TinyhandReader reader)
+    {
     }
 }

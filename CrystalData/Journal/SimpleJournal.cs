@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using CrystalData.Filer;
 using Tinyhand.IO;
@@ -41,10 +43,6 @@ public partial class SimpleJournal : IJournalInternal
         return CrystalStartResult.Success;
     }
 
-    void IJournal.UpdateToken(ref Waypoint waypoint)
-    {
-    }
-
     void IJournal.GetWriter(JournalRecordType recordType, uint token, out TinyhandWriter writer)
     {
         writer = new(initialBuffer);
@@ -69,7 +67,7 @@ public partial class SimpleJournal : IJournalInternal
         span[1] = (byte)(memory.Length >> 8);
         span[0] = (byte)(memory.Length >> 16);
 
-        lock (this.syncObject)
+        lock (this.syncJournal)
         {
             SimpleJournalBook book = this.EnsureBook();
             var waypoint = book.AppendData(memory.Span);
@@ -78,15 +76,63 @@ public partial class SimpleJournal : IJournalInternal
         return 0;
     }
 
+    uint IJournal.NewToken(IJournalObject journalObject)
+    {
+        while (true)
+        {
+            var token = RandomVault.Pseudo.NextUInt32();
+            if (token != 0 && this.tokenToObjects.TryAdd(token, journalObject))
+            {// Success
+                return token;
+            }
+        }
+    }
+
+    bool IJournal.RegisterToken(uint token, IJournalObject journalObject)
+    {
+        if (token == 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(token));
+        }
+
+        return this.tokenToObjects.TryAdd(token, journalObject);
+    }
+
+    uint IJournal.UpdateToken(uint oldToken, IJournalObject journalObject)
+    {
+        if (oldToken == 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(oldToken));
+        }
+
+        this.tokenToObjects.TryRemove(oldToken, out _);
+        return ((IJournal)this).NewToken(journalObject);
+    }
+
+    bool IJournal.UnregisterToken(uint token)
+    {
+        if (token == 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(token));
+        }
+
+        return this.tokenToObjects.TryRemove(token, out _);
+    }
+
     public SimpleJournalConfiguration SimpleJournalConfiguration { get; }
 
     public bool Prepared { get; private set; }
 
+    bool IJournal.Prepared => throw new NotImplementedException();
+
     private Crystalizer crystalizer;
     private IRawFiler? rawFiler;
 
+    // Token
+    private ConcurrentDictionary<uint, IJournalObject> tokenToObjects = new();
+
     // Journal
-    private object syncObject = new();
+    private object syncJournal = new();
     private SimpleJournalBook.GoshujinClass books = new();
     private ulong memoryUsage;
 

@@ -22,9 +22,27 @@ public class EmptyJournal : IJournalInternal
         writer = default(TinyhandWriter);
     }
 
-    void IJournal.UpdateToken(ref Waypoint waypoint)
+    uint IJournal.NewToken(IJournalObject journalObject)
     {
+        return 1;
+    }
+
+    bool IJournal.RegisterToken(uint token, IJournalObject journalObject)
+    {
+        return true;
+    }
+
+    uint IJournal.UpdateToken(uint oldToken, IJournalObject journalObject)
+    {
+        return 1;
+    }
+
+    bool IJournal.UnregisterToken(uint token)
+    {
+        return true;
     }
 
     public bool Prepared { get; private set; }
+
+    bool IJournal.Prepared => throw new NotImplementedException();
 }

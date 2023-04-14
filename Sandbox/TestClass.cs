@@ -93,35 +93,6 @@ internal class TestClass
 
         var a2 = this.exampleData.TryGetChild("a");
         var b2 = this.exampleData.TryGetChild("b");
-
-        // await manualCrystal.Delete();
-
-        Journal();
-
-        // await this.crystalizer.SaveAll();
-
-        void Journal()
-        {
-            // Record
-            /*if (this.crystalizer.TryGetJournal(out TinyhandWriter writer))
-            {// SetValue, AddObject, DeleteObject, Check
-                this.WriteLocator(ref writer); // Locator
-                writer.WriteInt16(21); // Value
-            }*/
-            if (this.crystalizer.Journal is { } journal)
-            {
-                journal.GetWriter(JournalRecordType.SetValue, out var writer);
-                // this.WriteLocator(ref record); // Locator
-                writer.WriteInt16(32); // Value
-                journal.Add(in writer);
-            }
-
-            // Read
-            /*while (journal.Position != journal.End)
-            {
-                obj.ReadJournal(journal);
-            }*/
-        }
     }
 
     private Crystalizer crystalizer;

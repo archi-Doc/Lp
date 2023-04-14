@@ -11,7 +11,13 @@ public interface IJournal
 
     bool Prepared { get; }
 
-    void UpdateToken(ref Waypoint waypoint);
+    uint NewToken(IJournalObject journalObject);
+
+    bool RegisterToken(uint token, IJournalObject journalObject);
+
+    uint UpdateToken(uint oldToken, IJournalObject journalObject);
+
+    bool UnregisterToken(uint token);
 
     void GetWriter(JournalRecordType recordType, uint token, out TinyhandWriter writer);
 
