@@ -13,6 +13,8 @@ public partial class SimpleJournal : IJournalInternal
     public const int MaxMemoryLength = 1024 * 1024 * 64; // 64 MB
     public const string BookSuffix = ".book";
 
+    private const int HeaderLength = 10;
+
     [ThreadStatic]
     private static byte[] initialBuffer = new byte[1024 * 16]; // 16 KB
 
@@ -42,7 +44,8 @@ public partial class SimpleJournal : IJournalInternal
     void IJournal.GetWriter(JournalRecordType recordType, out TinyhandWriter writer)
     {
         writer = new(initialBuffer);
-        writer.Write(Unsafe.As<JournalRecordType, byte>(ref recordType));
+        writer.Advance(3); // Size (0-16MB)
+        writer.RawWriteUInt8(Unsafe.As<JournalRecordType, byte>(ref recordType)); // JournalRecordType
     }
 
     ulong IJournal.Add(in TinyhandWriter writer)
@@ -54,6 +57,12 @@ public partial class SimpleJournal : IJournalInternal
         {
             throw new InvalidOperationException($"The maximum length per record is {MaxRecordLength} bytes.");
         }
+
+        // Size (0-16MB)
+        var span = memory.Span;
+        span[2] = (byte)memory.Length;
+        span[1] = (byte)(memory.Length >> 8);
+        span[0] = (byte)(memory.Length >> 16);
 
         lock (this.syncObject)
         {
