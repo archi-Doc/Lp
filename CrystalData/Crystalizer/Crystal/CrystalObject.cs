@@ -369,6 +369,7 @@ public class CrystalObject<TData> : ICrystal<TData>
 
             this.waypoint = new(journalPosition, journalToken, hash);
 
+            this.Prepared = true;
             return CrystalStartResult.Success;
         }
     }

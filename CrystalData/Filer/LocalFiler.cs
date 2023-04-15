@@ -69,7 +69,16 @@ TryWrite:
             {
                 if (Path.GetDirectoryName(filePath) is string directoryPath)
                 {// Create directory
-                    Directory.CreateDirectory(directoryPath);
+                    try
+                    {
+                        Directory.CreateDirectory(directoryPath);
+                    }
+                    catch
+                    {
+                        work.Result = CrystalResult.WriteError;
+                        return;
+                    }
+
                     worker.Logger?.TryGet()?.Log($"CreateDirectory {directoryPath}");
                 }
                 else

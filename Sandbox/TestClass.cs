@@ -74,9 +74,10 @@ internal class TestClass
         Console.WriteLine(manualClass.ToString());
 
         var manualCrystal2 = this.crystalizer.CreateCrystal<ManualClass>();
-        manualCrystal2.Configure(new(Crystalization.Manual, new LocalFileConfiguration("test2")));
+        manualCrystal2.Configure(new(Crystalization.Manual, new LocalFileConfiguration("test2/manual2")));
         var manualClass2 = manualCrystal2.Object;
         manualClass2.Id = 2;
+        await manualCrystal2.Save();
         Console.WriteLine(manualClass.ToString());
         Console.WriteLine(manualClass2.ToString());
 

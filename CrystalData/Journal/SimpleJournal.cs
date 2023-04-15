@@ -17,8 +17,8 @@ public partial class SimpleJournal : IJournal
 
     private const int HeaderLength = 10;
 
-    [ThreadStatic]
-    private static byte[] initialBuffer = new byte[1024 * 16]; // 16 KB
+    // [ThreadStatic]
+    // private static readonly byte[] initialBuffer = new byte[1024 * 16]; // 16 KB
 
     public SimpleJournal(Crystalizer crystalizer, SimpleJournalConfiguration configuration)
     {
@@ -45,7 +45,7 @@ public partial class SimpleJournal : IJournal
 
     void IJournal.GetWriter(JournalRecordType recordType, uint token, out TinyhandWriter writer)
     {
-        writer = new(initialBuffer);
+        writer = default;
         writer.Advance(3); // Size (0-16MB)
         writer.RawWriteUInt8(Unsafe.As<JournalRecordType, byte>(ref recordType)); // JournalRecordType
         writer.RawWriteUInt32(token); // JournalToken
@@ -122,8 +122,6 @@ public partial class SimpleJournal : IJournal
     public SimpleJournalConfiguration SimpleJournalConfiguration { get; }
 
     public bool Prepared { get; private set; }
-
-    bool IJournal.Prepared => throw new NotImplementedException();
 
     private Crystalizer crystalizer;
     private IRawFiler? rawFiler;
