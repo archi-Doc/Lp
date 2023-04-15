@@ -4,13 +4,13 @@ namespace CrystalData.Filer;
 
 internal class RawFilerToFiler : IFiler
 {
-    public RawFilerToFiler(Crystalizer crystalizer, IRawFiler rawFiler, PathConfiguration configuration)
+    /*public RawFilerToFiler(Crystalizer crystalizer, IRawFiler rawFiler, PathConfiguration configuration)
     {
         this.Crystalizer = crystalizer;
         this.RawFiler = rawFiler;
         this.Path = configuration.Path;
         this.timeout = crystalizer.DefaultTimeout;
-    }
+    }*/
 
     internal RawFilerToFiler(Crystalizer crystalizer, IRawFiler rawFiler, string path)
     {

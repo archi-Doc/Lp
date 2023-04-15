@@ -13,6 +13,8 @@ namespace CrystalData;
 
 public class Crystalizer
 {
+    public const string Extension = "data";
+
     public Crystalizer(CrystalizerConfiguration configuration, CrystalizerOptions options, ILogger logger, UnitLogger unitLogger, IStorageKey storageKey)
     {
         this.configuration = configuration;
@@ -105,7 +107,21 @@ public class Crystalizer
     #region Resolvers
 
     public IFiler ResolveFiler(PathConfiguration configuration)
-        => new RawFilerToFiler(this, this.ResolveRawFiler(configuration), configuration);
+    {// new RawFilerToFiler(this, this.ResolveRawFiler(configuration), configuration);
+        string path = configuration.Path;
+        try
+        {
+            if (string.IsNullOrEmpty(Path.GetExtension(configuration.Path)))
+            {
+                path += "." + Extension;
+            }
+        }
+        catch
+        {
+        }
+
+        return new RawFilerToFiler(this, this.ResolveRawFiler(configuration), path);
+    }
 
     public IRawFiler ResolveRawFiler(PathConfiguration configuration)
     {

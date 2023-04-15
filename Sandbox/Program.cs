@@ -10,6 +10,7 @@ using CrystalData.Datum;
 using Tinyhand.IO;
 using CrystalData.Storage;
 using SimpleCommandLine;
+using static CrystalData.CrystalConfiguration;
 
 namespace Sandbox;
 
@@ -44,13 +45,13 @@ public class Program
 
                 context.AddCrystal<ManualClass>(
                     new(
-                        Crystalization.Manual,
-                        new LocalFileConfiguration("Data/manual.data")
+                        SaveMethod.Manual,
+                        new LocalFileConfiguration("Data/manual")
                         ));
 
                 context.AddCrystal<CombinedClass>(
                     new(
-                        Crystalization.Periodic,
+                        SaveMethod.Periodic,
                         new LocalFileConfiguration("combined.data"),
                         new SimpleStorageConfiguration(new LocalDirectoryConfiguration("simple"))));
 
@@ -89,6 +90,9 @@ public class Program
                 unit.Context.ServiceProvider.GetRequiredService<IStorageKey>().AddKey(bucket, accessKeyPair);
             }
         }
+
+        // var sc = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Storage"));
+        // var st = TinyhandSerializer.SerializeToString(sc);
 
         var tc = unit.Context.ServiceProvider.GetRequiredService<TestClass>();
         await tc.Test1();

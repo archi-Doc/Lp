@@ -20,8 +20,8 @@ public record BigCrystalConfiguration : CrystalConfiguration
         this.RegisterDatum = registry => { };
     }
 
-    public BigCrystalConfiguration(Action<DatumRegistry> registerDatum, Crystalization crystalization, DirectoryConfiguration directoryConfiguration, StorageConfiguration storageConfiguration)
-        : base(crystalization, EmptyFileConfiguration.Default)
+    public BigCrystalConfiguration(Action<DatumRegistry> registerDatum, SaveMethod saveMethod, DirectoryConfiguration directoryConfiguration, StorageConfiguration storageConfiguration)
+        : base(saveMethod, EmptyFileConfiguration.Default)
     {
         this.RegisterDatum = registerDatum;
         this.DirectoryConfiguration = directoryConfiguration;
@@ -42,11 +42,7 @@ public record BigCrystalConfiguration : CrystalConfiguration
 
     public int MaxParentInMemory { get; set; } = DefaultMaxParentInMemory;
 
-    public string CrystalFile { get; init; } = "Crystal.main";
+    public string CrystalFile { get; init; } = "Crystal";
 
-    public string CrystalBackup { get; init; } = "Crystal.back";
-
-    public string StorageFile { get; init; } = "Storage.main";
-
-    public string StorageBackup { get; init; } = "Storage.back";
+    public string StorageFile { get; init; } = "Storage";
 }

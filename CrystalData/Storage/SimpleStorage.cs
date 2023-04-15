@@ -11,7 +11,7 @@ namespace CrystalData.Storage;
 
 internal partial class SimpleStorage : IStorage
 {
-    private const string SimpleStorageMain = "Simple.main";
+    private const string SimpleStorageFile = "Simple";
 
     public SimpleStorage()
     {
@@ -52,7 +52,7 @@ internal partial class SimpleStorage : IStorage
             this.directory += "/";
         }
 
-        var filerConfiguration = storageConfiguration.DirectoryConfiguration.CombinePath(SimpleStorageMain);
+        var filerConfiguration = storageConfiguration.DirectoryConfiguration.CombinePath(SimpleStorageFile);
         this.filer = crystalizer.ResolveFiler(filerConfiguration);
         var resultFiler = await this.filer.PrepareAndCheck(crystalizer, filerConfiguration).ConfigureAwait(false);
         if (resultFiler != CrystalResult.Success)

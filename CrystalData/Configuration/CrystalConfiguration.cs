@@ -2,7 +2,7 @@
 
 namespace CrystalData;
 
-public enum Crystalization
+public enum SaveMethod
 {
     None,
     Manual,
@@ -18,14 +18,14 @@ public record CrystalConfiguration
 
     public CrystalConfiguration()
     {
-        this.Crystalization = Crystalization.None;
+        this.Save = SaveMethod.None;
         this.FileConfiguration = EmptyFileConfiguration.Default;
         this.StorageConfiguration = EmptyStorageConfiguration.Default;
     }
 
-    public CrystalConfiguration(Crystalization crystalization, FileConfiguration filerConfiguration, StorageConfiguration? storageConfiguration = null)
+    public CrystalConfiguration(SaveMethod saveMethod, FileConfiguration filerConfiguration, StorageConfiguration? storageConfiguration = null)
     {
-        this.Crystalization = crystalization;
+        this.Save = saveMethod;
         this.Interval = DefaultInterval;
         this.FileConfiguration = filerConfiguration;
         this.StorageConfiguration = storageConfiguration ?? EmptyStorageConfiguration.Default;
@@ -33,17 +33,19 @@ public record CrystalConfiguration
 
     public CrystalConfiguration(TimeSpan interval, FileConfiguration fileConfiguration, StorageConfiguration? storageConfiguration = null)
     {
-        this.Crystalization = Crystalization.Periodic;
+        this.Save = SaveMethod.Periodic;
         this.Interval = interval;
         this.FileConfiguration = fileConfiguration;
         this.StorageConfiguration = storageConfiguration ?? EmptyStorageConfiguration.Default;
     }
 
-    public Crystalization Crystalization { get; init; }
+    public SaveMethod Save { get; init; }
 
     public TimeSpan Interval { get; init; }
 
     public FileConfiguration FileConfiguration { get; init; }
 
     public StorageConfiguration StorageConfiguration { get; init; }
+
+    public bool AddDefaultExtension { get; init; } = true;
 }
