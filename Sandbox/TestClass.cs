@@ -4,7 +4,7 @@ using Tinyhand.IO;
 namespace Sandbox;
 
 [TinyhandObject]
-internal partial class CrystalClass
+internal partial class CrystalClass: IJournalObject
 {
     [Key(0)]
     public int Id { get; set; }
@@ -14,7 +14,7 @@ internal partial class CrystalClass
 }
 
 [TinyhandObject]
-internal partial class ManualClass
+internal partial class ManualClass : IJournalObject
 {
     [Key(0)]
     public int Id { get; set; }
@@ -24,7 +24,7 @@ internal partial class ManualClass
 }
 
 [TinyhandObject]
-internal partial class CombinedClass
+internal partial class CombinedClass: IJournalObject
 {
     [Key(0)]
     public ManualClass Manual1 { get; set; } = default!;

@@ -4,7 +4,7 @@ using Tinyhand.IO;
 
 namespace CrystalData.Journal;
 
-public class EmptyJournal : IJournalInternal
+public class EmptyJournal : IJournal
 {
     Task<CrystalStartResult> IJournal.Prepare(Crystalizer crystalizer)
     {

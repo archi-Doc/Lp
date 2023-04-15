@@ -3,7 +3,7 @@
 namespace CrystalData;
 
 public class BigCrystalImpl<TData> : CrystalObject<TData>, IBigCrystal<TData>, ICrystal
-    where TData : BaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+    where TData : BaseData, IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
     public BigCrystalImpl(Crystalizer crystalizer)
         : base(crystalizer)

@@ -10,7 +10,8 @@ using Tinyhand.IO;
 namespace CrystalData;
 
 // Data + Journal/Waypoint + Filer/FileConfiguration + Storage/StorageConfiguration
-public class CrystalObject<TData> : ICrystal<TData>, IJournalObject // where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+public class CrystalObject<TData> : ICrystal<TData>
+    where TData : IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
     public CrystalObject(Crystalizer crystalizer)
     {
@@ -171,12 +172,12 @@ public class CrystalObject<TData> : ICrystal<TData>, IJournalObject // where TDa
 
             if (this.Crystalizer.Journal is { } journal)
             {
-                var newToken = journal.UpdateToken(this.waypoint.JournalToken, this);
+                var newToken = journal.UpdateToken(this.waypoint.JournalToken, this.obj);
                 this.waypoint = new(this.waypoint.JournalPosition, newToken, this.waypoint.Hash);
             }
 
             // var options = TinyhandSerializerOptions.Standard with { Token = this.waypoint.JournalToken, };
-            var byteArray = TinyhandSerializer.Serialize(this.obj);
+            var byteArray = TinyhandSerializer.SerializeObject(this.obj);
             hash = FarmHash.Hash64(byteArray.AsSpan());
 
             if (this.waypoint.Hash != hash)
@@ -237,7 +238,7 @@ public class CrystalObject<TData> : ICrystal<TData>, IJournalObject // where TDa
 
             // Clear
             this.CrystalConfiguration = CrystalConfiguration.Default;
-            this.obj = TinyhandSerializer.Reconstruct<TData>();
+            TinyhandSerializer.ReconstructObject<TData>(ref this.obj);
             this.filer = null;
             this.storage = null;
 
@@ -324,7 +325,11 @@ public class CrystalObject<TData> : ICrystal<TData>, IJournalObject // where TDa
         {// Deserialize
             try
             {
-                this.obj = TinyhandSerializer.Deserialize<TData>(memoryResult.Data.Memory.Span);
+                TinyhandSerializer.DeserializeObject(memoryResult.Data.Memory.Span, ref this.obj);
+                if (this.obj == null)
+                {
+                    return DataLost();
+                }
             }
             catch
             {
@@ -343,21 +348,21 @@ public class CrystalObject<TData> : ICrystal<TData>, IJournalObject // where TDa
             }
         }
 
-        this.Crystalizer.Journal?.RegisterToken(this.waypoint.JournalToken, this);
+        this.Crystalizer.Journal?.RegisterToken(this.waypoint.JournalToken, this.obj);
 
         this.Prepared = true;
         return CrystalStartResult.Success;
 
         CrystalStartResult DataLost()
         {
-            this.obj = TinyhandSerializer.Reconstruct<TData>();
-            var hash = FarmHash.Hash64(TinyhandSerializer.Serialize(this.obj));
+            TinyhandSerializer.ReconstructObject<TData>(ref this.obj);
+            var hash = FarmHash.Hash64(TinyhandSerializer.SerializeObject(this.obj));
 
             ulong journalPosition = 1;
             uint journalToken = 0;
             if (this.Crystalizer.Journal is { } journal)
             {
-                journalToken = journal.NewToken(this);
+                journalToken = journal.NewToken(this.obj);
                 journal.GetWriter(JournalRecordType.Waypoint, journalToken, out var writer);
                 journalPosition = journal.Add(writer);
             }
@@ -371,7 +376,7 @@ public class CrystalObject<TData> : ICrystal<TData>, IJournalObject // where TDa
     [MemberNotNull(nameof(obj))]
     protected virtual void ReconstructObject()
     {
-        this.obj = TinyhandSerializer.Reconstruct<TData>()!;
+        TinyhandSerializer.ReconstructObject<TData>(ref this.obj);
     }
 
     [MemberNotNull(nameof(filer))]
@@ -394,9 +399,5 @@ public class CrystalObject<TData> : ICrystal<TData>, IJournalObject // where TDa
             this.storage = this.Crystalizer.ResolveStorage(this.CrystalConfiguration.StorageConfiguration);
             this.storage.PrepareAndCheck(this.Crystalizer, this.CrystalConfiguration.StorageConfiguration, false).Wait();
         }
-    }
-
-    void IJournalObject.ReadJournal(ref TinyhandReader reader)
-    {
     }
 }

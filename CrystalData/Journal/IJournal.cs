@@ -23,7 +23,3 @@ public interface IJournal
 
     ulong Add(in TinyhandWriter writer);
 }
-
-internal interface IJournalInternal : IJournal
-{
-}

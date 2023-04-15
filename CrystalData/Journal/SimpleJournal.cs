@@ -8,7 +8,7 @@ using Tinyhand.IO;
 
 namespace CrystalData.Journal;
 
-public partial class SimpleJournal : IJournalInternal
+public partial class SimpleJournal : IJournal
 {
     public const int MaxRecordLength = 1024 * 16; // 16 KB
     public const int MaxBookLength = 1024 * 1024 * 16; // 16 MB

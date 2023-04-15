@@ -2,9 +2,9 @@
 
 using Tinyhand.IO;
 
-namespace CrystalData.Journal;
+namespace CrystalData;
 
 public interface IJournalObject
 {
-    void ReadJournal(ref TinyhandReader reader);
+    // void ReadJournal(ref TinyhandReader reader);
 }
