@@ -10,6 +10,8 @@ public enum JournalRecordType : byte
     AddObject,
     DeleteObject,
     Waypoint,
+    StartSave,
+    EndSave,
 }
 
 /*public readonly ref struct JournalRecord

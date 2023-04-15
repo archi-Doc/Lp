@@ -3,7 +3,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using CrystalData.Journal;
-using Tinyhand.IO;
 
 #pragma warning disable SA1401
 
@@ -41,14 +40,14 @@ public class CrystalObject<TData> : ICrystal<TData>
     {
         get
         {
-            if (this.obj != null)
+            if (this.obj is { } v)
             {
-                return this.obj;
+                return v;
             }
 
             using (this.semaphore.Lock())
             {
-                // Load
+                // Prepare and load
                 if (!this.Prepared)
                 {
                     this.PrepareAndLoadInternal(null).Wait();
@@ -72,9 +71,9 @@ public class CrystalObject<TData> : ICrystal<TData>
     {
         get
         {
-            if (this.filer != null)
+            if (this.filer is { } v)
             {
-                return this.filer;
+                return v;
             }
 
             using (this.semaphore.Lock())
@@ -94,9 +93,9 @@ public class CrystalObject<TData> : ICrystal<TData>
     {
         get
         {
-            if (this.storage != null)
+            if (this.storage is { } v)
             {
-                return this.storage;
+                return v;
             }
 
             using (this.semaphore.Lock())
@@ -159,6 +158,7 @@ public class CrystalObject<TData> : ICrystal<TData>
     async Task<CrystalResult> ICrystal.Save(bool unload)
     {
         ulong hash;
+        CrystalResult result;
         using (this.semaphore.Lock())
         {
             if (!this.Prepared || this.obj == null)
@@ -182,7 +182,7 @@ public class CrystalObject<TData> : ICrystal<TData>
 
             if (this.waypoint.Hash != hash)
             {// Save
-                var result = await this.filer!.WriteAsync(0, new(byteArray)).ConfigureAwait(false);
+                result = await this.filer!.WriteAsync(0, new(byteArray)).ConfigureAwait(false);
                 if (result != CrystalResult.Success)
                 {// Write error
                     return result;
@@ -200,7 +200,10 @@ public class CrystalObject<TData> : ICrystal<TData>
             }
 
             this.waypoint = new(journalPosition, this.waypoint.JournalToken, hash);
-            return CrystalResult.Success;
+
+            var waypointFiler = this.filer!.CloneWithExtension(Waypoint.Extension);
+            result = await waypointFiler.WriteAsync(0, new(this.waypoint.ToByteArray())).ConfigureAwait(false);
+            return result;
         }
 
         ulong AddJournal()

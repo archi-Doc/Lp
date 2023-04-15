@@ -14,11 +14,10 @@ public partial class SimpleJournal : IJournal
     public const int MaxBookLength = 1024 * 1024 * 16; // 16 MB
     public const int MaxMemoryLength = 1024 * 1024 * 64; // 64 MB
     public const string BookSuffix = ".book";
+    private const int InitialBufferSize = 32 * 1024; // 32 KB
 
-    private const int HeaderLength = 10;
-
-    // [ThreadStatic]
-    // private static readonly byte[] initialBuffer = new byte[1024 * 16]; // 16 KB
+    [ThreadStatic]
+    private static byte[]? initialBuffer;
 
     public SimpleJournal(Crystalizer crystalizer, SimpleJournalConfiguration configuration)
     {
@@ -45,7 +44,12 @@ public partial class SimpleJournal : IJournal
 
     void IJournal.GetWriter(JournalRecordType recordType, uint token, out TinyhandWriter writer)
     {
-        writer = default;
+        if (initialBuffer == null)
+        {
+            initialBuffer = new byte[InitialBufferSize];
+        }
+
+        writer = new(initialBuffer);
         writer.Advance(3); // Size (0-16MB)
         writer.RawWriteUInt8(Unsafe.As<JournalRecordType, byte>(ref recordType)); // JournalRecordType
         writer.RawWriteUInt32(token); // JournalToken
@@ -100,12 +104,11 @@ public partial class SimpleJournal : IJournal
 
     uint IJournal.UpdateToken(uint oldToken, IJournalObject journalObject)
     {
-        if (oldToken == 0)
+        if (oldToken != 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(oldToken));
+            this.tokenToObjects.TryRemove(oldToken, out _);
         }
 
-        this.tokenToObjects.TryRemove(oldToken, out _);
         return ((IJournal)this).NewToken(journalObject);
     }
 
