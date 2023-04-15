@@ -143,12 +143,11 @@ public sealed class StorageGroup
         lock (this.syncObject)
         {
             foreach (var x in this.storages)
-            {// tempcode
-                /*var task = x.Filer?.DeleteAllAsync();
-                if (task != null)
+            {
+                if (x.Storage?.DeleteAllAsync() is { } task)
                 {
                     list.Add(task);
-                }*/
+                }
             }
         }
 
@@ -320,7 +319,7 @@ public sealed class StorageGroup
             byteArray = TinyhandSerializer.Serialize(this.storages);
         }
 
-        await PathHelper.SaveData(byteArray, filer, 0).ConfigureAwait(false);
+        await PathHelper.SaveData(this.Crystalizer, byteArray, filer, 0).ConfigureAwait(false);
     }
 
     internal void Clear()

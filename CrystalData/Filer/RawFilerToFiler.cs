@@ -33,8 +33,8 @@ internal class RawFilerToFiler : IFiler
         this.timeout = timeout;
     }
 
-    CrystalResult IFiler.Delete()
-        => this.RawFiler.Delete(this.Path);
+    CrystalResult IFiler.DeleteAndForget()
+        => this.RawFiler.DeleteAndForget(this.Path);
 
     Task<CrystalResult> IFiler.DeleteAsync()
         => this.RawFiler.DeleteAsync(this.Path, this.timeout);
@@ -45,8 +45,8 @@ internal class RawFilerToFiler : IFiler
     Task<CrystalMemoryOwnerResult> IFiler.ReadAsync(long offset, int length)
         => this.RawFiler.ReadAsync(this.Path, offset, length, this.timeout);
 
-    CrystalResult IFiler.Write(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate)
-        => this.RawFiler.Write(this.Path, offset, dataToBeShared, truncate);
+    CrystalResult IFiler.WriteAndForget(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate)
+        => this.RawFiler.WriteAndForget(this.Path, offset, dataToBeShared, truncate);
 
     Task<CrystalResult> IFiler.WriteAsync(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate)
         => this.RawFiler.WriteAsync(this.Path, offset, dataToBeShared, this.timeout, truncate);

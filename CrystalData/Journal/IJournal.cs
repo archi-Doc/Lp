@@ -11,11 +11,15 @@ public interface IJournal
 
     bool Prepared { get; }
 
-    void GetJournalWriter(JournalRecordType recordType, out TinyhandWriter writer);
+    uint NewToken(IJournalObject journalObject);
 
-    ulong AddRecord(in TinyhandWriter writer);
-}
+    bool RegisterToken(uint token, IJournalObject journalObject);
 
-internal interface IJournalInternal : IJournal
-{
+    uint UpdateToken(uint oldToken, IJournalObject journalObject);
+
+    bool UnregisterToken(uint token);
+
+    void GetWriter(JournalRecordType recordType, uint token, out TinyhandWriter writer);
+
+    ulong Add(in TinyhandWriter writer);
 }

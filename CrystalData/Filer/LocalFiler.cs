@@ -1,33 +1,14 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-#pragma warning disable SA1124 // Do not use regions
-
 using CrystalData.Results;
-using static CrystalData.Filer.FilerWork;
 
 namespace CrystalData.Filer;
 
-public class LocalFiler : TaskWorker<FilerWork>, IRawFiler
+public class LocalFiler : FilerBase, IRawFiler
 {
-    public const int DefaultConcurrentTasks = 4;
-
     public LocalFiler()
-        : base(null, Process, true)
+        : base(Process)
     {
-        this.NumberOfConcurrentTasks = DefaultConcurrentTasks;
-        this.SetCanStartConcurrentlyDelegate((workInterface, workingList) =>
-        {// Lock IO order
-            var path = workInterface.Work.Path;
-            foreach (var x in workingList)
-            {
-                if (x.Work.Path == path)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        });
     }
 
     public static AddStorageResult Check(Crystalizer crystalizer, string directory)
@@ -41,22 +22,12 @@ public class LocalFiler : TaskWorker<FilerWork>, IRawFiler
         return AddStorageResult.Success;
     }
 
-    public override string ToString()
-        => $"LocalFiler";
-
-    #region FieldAndProperty
-
-    private Crystalizer? crystalizer;
-    private ILogger? logger;
-
-    #endregion
-
     public static async Task Process(TaskWorker<FilerWork> w, FilerWork work)
     {
         var worker = (LocalFiler)w;
         var tryCount = 0;
 
-        var filePath = Crystalizer.GetRootedFile(worker.crystalizer, work.Path);
+        var filePath = Crystalizer.GetRootedFile(worker.Crystalizer, work.Path);
         work.Result = CrystalResult.Started;
         if (work.Type == FilerWork.WorkType.Write)
         {// Write
@@ -74,7 +45,7 @@ TryWrite:
                 using (var handle = File.OpenHandle(filePath, mode: FileMode.OpenOrCreate, access: FileAccess.Write))
                 {
                     await RandomAccess.WriteAsync(handle, work.WriteData.Memory, work.Offset, worker.CancellationToken).ConfigureAwait(false);
-                    worker.logger?.TryGet()?.Log($"Written[{work.WriteData.Memory.Length}] {work.Path}");
+                    worker.Logger?.TryGet()?.Log($"Written[{work.WriteData.Memory.Length}] {work.Path}");
 
                     if (work.Truncate)
                     {
@@ -98,8 +69,17 @@ TryWrite:
             {
                 if (Path.GetDirectoryName(filePath) is string directoryPath)
                 {// Create directory
-                    Directory.CreateDirectory(directoryPath);
-                    worker.logger?.TryGet()?.Log($"CreateDirectory {directoryPath}");
+                    try
+                    {
+                        Directory.CreateDirectory(directoryPath);
+                    }
+                    catch
+                    {
+                        work.Result = CrystalResult.WriteError;
+                        return;
+                    }
+
+                    worker.Logger?.TryGet()?.Log($"CreateDirectory {directoryPath}");
                 }
                 else
                 {
@@ -116,7 +96,7 @@ TryWrite:
             }
             catch
             {
-                worker.logger?.TryGet()?.Log($"Retry {work.Path}");
+                worker.Logger?.TryGet()?.Log($"Retry {work.Path}");
                 goto TryWrite;
             }
             finally
@@ -152,14 +132,14 @@ TryWrite:
                     if (read != lengthToRead)
                     {
                         File.Delete(filePath);
-                        worker.logger?.TryGet()?.Log($"DeleteAndExit {work.Path}");
+                        worker.Logger?.TryGet()?.Log($"DeleteAndExit {work.Path}");
                         work.Result = CrystalResult.ReadError;
                         return;
                     }
 
                     work.Result = CrystalResult.Success;
                     work.ReadData = memoryOwner;
-                    worker.logger?.TryGet()?.Log($"Read[{memoryOwner.Memory.Length}] {work.Path}");
+                    worker.Logger?.TryGet()?.Log($"Read[{memoryOwner.Memory.Length}] {work.Path}");
                     return;
                 }
             }
@@ -171,7 +151,7 @@ TryWrite:
             catch
             {
                 work.Result = CrystalResult.ReadError;
-                worker.logger?.TryGet()?.Log($"Read exception {work.Path}");
+                worker.Logger?.TryGet()?.Log($"Read exception {work.Path}");
             }
             finally
             {
@@ -182,6 +162,7 @@ TryWrite:
             try
             {
                 File.Delete(filePath);
+                worker.Logger?.TryGet()?.Log($"Deleted {work.Path}");
                 work.Result = CrystalResult.Success;
             }
             catch
@@ -192,7 +173,7 @@ TryWrite:
             {
             }
         }
-        else if (work.Type == WorkType.DeleteDirectory)
+        else if (work.Type == FilerWork.WorkType.DeleteDirectory)
         {
             try
             {
@@ -230,88 +211,10 @@ TryWrite:
         }
     }
 
-    #region IFiler
-
     bool IRawFiler.SupportPartialWrite => true;
 
-    async Task<CrystalResult> IRawFiler.PrepareAndCheck(Crystalizer crystalizer, PathConfiguration configuration)
-    {
-        this.crystalizer = crystalizer;
-
-        if (crystalizer.EnableLogger)
-        {
-            this.logger ??= crystalizer.UnitLogger.GetLogger<LocalFiler>();
-        }
-
-        return CrystalResult.Success;
-    }
-
-    async Task IRawFiler.Terminate()
-    {
-        await this.WaitForCompletionAsync().ConfigureAwait(false);
-        this.Dispose();
-    }
-
-    CrystalResult IRawFiler.Write(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate)
-    {
-        this.AddLast(new(path, offset, dataToBeShared, truncate));
-        return CrystalResult.Started;
-    }
-
-    CrystalResult IRawFiler.Delete(string path)
-    {
-        this.AddLast(new(WorkType.Delete, path));
-        return CrystalResult.Started;
-    }
-
-    async Task<CrystalMemoryOwnerResult> IRawFiler.ReadAsync(string path, long offset, int length, TimeSpan timeToWait)
-    {
-        var work = new FilerWork(path, offset, length);
-        var workInterface = this.AddLast(work);
-        await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
-        return new(work.Result, work.ReadData.AsReadOnly());
-    }
-
-    async Task<CrystalResult> IRawFiler.WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeToWait, bool truncate)
-    {
-        var work = new FilerWork(path, offset, dataToBeShared, truncate);
-        var workInterface = this.AddLast(work);
-        await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
-        return work.Result;
-    }
-
-    async Task<CrystalResult> IRawFiler.DeleteAsync(string path, TimeSpan timeToWait)
-    {
-        var work = new FilerWork(WorkType.Delete, path);
-        var workInterface = this.AddLast(work);
-        await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
-        return work.Result;
-    }
-
-    async Task<CrystalResult> IRawFiler.DeleteDirectoryAsync(string path, TimeSpan timeToWait)
-    {
-        var work = new FilerWork(WorkType.DeleteDirectory, path);
-        var workInterface = this.AddLast(work);
-        await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
-        return work.Result;
-    }
-
-    async Task<List<PathInformation>> IRawFiler.ListAsync(string path, TimeSpan timeToWait)
-    {
-        var work = new FilerWork(WorkType.List, path);
-        var workInterface = this.AddLast(work);
-        await workInterface.WaitForCompletionAsync(timeToWait).ConfigureAwait(false);
-        if (work.OutputObject is List<PathInformation> list)
-        {
-            return list;
-        }
-        else
-        {
-            return new List<PathInformation>();
-        }
-    }
-
-    #endregion
+    public override string ToString()
+        => $"LocalFiler";
 
     private static (bool Success, string RootedPath) CheckPath(Crystalizer crystalizer, string file)
     {

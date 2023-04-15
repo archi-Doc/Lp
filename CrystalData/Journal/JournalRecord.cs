@@ -9,12 +9,12 @@ public enum JournalRecordType : byte
     SetValue,
     AddObject,
     DeleteObject,
-    Check,
+    Waypoint,
 }
 
-public readonly ref struct JournalRecord
+/*public readonly ref struct JournalRecord
 {
-    internal JournalRecord(IJournalInternal journal, byte[] buffer)
+    internal JournalRecord(IJournal journal, byte[] buffer)
     {
         this.Buffer = buffer;
         this.journal = journal;
@@ -27,12 +27,7 @@ public readonly ref struct JournalRecord
         return 0;
     }
 
-    /*public void Dispose()
-    {
-        this.Close();
-    }*/
-
     public readonly TinyhandWriter Writer;
     internal readonly byte[] Buffer;
-    private readonly IJournalInternal journal;
-}
+    private readonly IJournal journal;
+}*/

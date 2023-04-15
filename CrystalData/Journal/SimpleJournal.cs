@@ -1,20 +1,24 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using CrystalData.Filer;
 using Tinyhand.IO;
 
 namespace CrystalData.Journal;
 
-public partial class SimpleJournal : IJournalInternal
+public partial class SimpleJournal : IJournal
 {
     public const int MaxRecordLength = 1024 * 16; // 16 KB
     public const int MaxBookLength = 1024 * 1024 * 16; // 16 MB
     public const int MaxMemoryLength = 1024 * 1024 * 64; // 64 MB
     public const string BookSuffix = ".book";
 
-    [ThreadStatic]
-    private static byte[] initialBuffer = new byte[1024 * 16]; // 16 KB
+    private const int HeaderLength = 10;
+
+    // [ThreadStatic]
+    // private static readonly byte[] initialBuffer = new byte[1024 * 16]; // 16 KB
 
     public SimpleJournal(Crystalizer crystalizer, SimpleJournalConfiguration configuration)
     {
@@ -39,13 +43,15 @@ public partial class SimpleJournal : IJournalInternal
         return CrystalStartResult.Success;
     }
 
-    void IJournal.GetJournalWriter(JournalRecordType recordType, out TinyhandWriter writer)
+    void IJournal.GetWriter(JournalRecordType recordType, uint token, out TinyhandWriter writer)
     {
-        writer = new(initialBuffer);
-        writer.Write(Unsafe.As<JournalRecordType, byte>(ref recordType));
+        writer = default;
+        writer.Advance(3); // Size (0-16MB)
+        writer.RawWriteUInt8(Unsafe.As<JournalRecordType, byte>(ref recordType)); // JournalRecordType
+        writer.RawWriteUInt32(token); // JournalToken
     }
 
-    ulong IJournal.AddRecord(in TinyhandWriter writer)
+    ulong IJournal.Add(in TinyhandWriter writer)
     {
         writer.FlushAndGetMemory(out var memory, out var useInitialBuffer);
         writer.Dispose();
@@ -55,13 +61,62 @@ public partial class SimpleJournal : IJournalInternal
             throw new InvalidOperationException($"The maximum length per record is {MaxRecordLength} bytes.");
         }
 
-        lock (this.syncObject)
+        // Size (0-16MB)
+        var span = memory.Span;
+        span[2] = (byte)memory.Length;
+        span[1] = (byte)(memory.Length >> 8);
+        span[0] = (byte)(memory.Length >> 16);
+
+        lock (this.syncJournal)
         {
             SimpleJournalBook book = this.EnsureBook();
             var waypoint = book.AppendData(memory.Span);
         }
 
         return 0;
+    }
+
+    uint IJournal.NewToken(IJournalObject journalObject)
+    {
+        while (true)
+        {
+            var token = RandomVault.Pseudo.NextUInt32();
+            if (token != 0 && this.tokenToObjects.TryAdd(token, journalObject))
+            {// Success
+                return token;
+            }
+        }
+    }
+
+    bool IJournal.RegisterToken(uint token, IJournalObject journalObject)
+    {
+        if (token == 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(token));
+        }
+
+        return this.tokenToObjects.TryAdd(token, journalObject);
+    }
+
+    uint IJournal.UpdateToken(uint oldToken, IJournalObject journalObject)
+    {
+        if (oldToken == 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(oldToken));
+        }
+
+        this.tokenToObjects.TryRemove(oldToken, out _);
+        return ((IJournal)this).NewToken(journalObject);
+    }
+
+    bool IJournal.UnregisterToken(uint token)
+    {
+        if (token == 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(token));
+        }
+
+        return this.tokenToObjects.TryRemove(token, out _);
     }
 
     public SimpleJournalConfiguration SimpleJournalConfiguration { get; }
@@ -71,8 +126,11 @@ public partial class SimpleJournal : IJournalInternal
     private Crystalizer crystalizer;
     private IRawFiler? rawFiler;
 
+    // Token
+    private ConcurrentDictionary<uint, IJournalObject> tokenToObjects = new();
+
     // Journal
-    private object syncObject = new();
+    private object syncJournal = new();
     private SimpleJournalBook.GoshujinClass books = new();
     private ulong memoryUsage;
 

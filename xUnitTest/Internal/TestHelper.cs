@@ -44,7 +44,7 @@ public static class TestHelper
     {
         await crystal.Crystalizer.SaveAll(true);
         crystal.MemoryUsage.Is(0);
-        crystal.Crystalizer.DeleteAll();
+        await crystal.Crystalizer.DeleteAll();
     }
 
     public static async Task StopAndStartCrystal(IBigCrystal crystal)

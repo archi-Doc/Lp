@@ -1,13 +1,12 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.CompilerServices;
+using CrystalData.Journal;
 
 namespace CrystalData;
 
 public static class PathHelper
 {
-    public const string CheckExtension = "check";
-    public const int CheckLength = 16;
     public const char Slash = '/';
     public const char Backslash = '\\';
     public const char Colon = ':';
@@ -71,88 +70,95 @@ public static class PathHelper
     public static bool IsSeparator(char c)
         => c == Slash || c == Backslash || c == Colon;
 
-    public static async Task<(CrystalMemoryOwnerResult Result, ulong Waypoint)> LoadData(IFiler? filer)
+    public static async Task<(CrystalMemoryOwnerResult Result, Waypoint Waypoint)> LoadData(IFiler? filer)
     {
         if (filer == null)
         {
-            return (new(CrystalResult.NoFiler), 0);
+            return (new(CrystalResult.NoFiler), Waypoint.Invalid);
         }
 
         var result = await filer.ReadAsync(0, -1).ConfigureAwait(false);
         if (result.IsFailure)
         {
-            return (new(result.Result), 0);
+            return (new(result.Result), Waypoint.Invalid);
         }
 
-        // Load check file (hash/location)
-        var checkFiler = filer.CloneWithExtension(CheckExtension);
-        var checkResult = await checkFiler.ReadAsync(0, -1).ConfigureAwait(false);
-        if (checkResult.IsFailure || checkResult.Data.Memory.Length != CheckLength)
-        {// No check file
-            return (result, 0);
+        // Load waypoint.
+        var waypointFiler = filer.CloneWithExtension(Waypoint.Extension);
+        var waypointResult = await waypointFiler.ReadAsync(0, -1).ConfigureAwait(false);
+        if (waypointResult.IsFailure ||
+            !Waypoint.TryParse(waypointResult.Data.Memory.Span, out var waypoint))
+        {// No waypoint file
+            return (result, Waypoint.Invalid);
         }
 
-        ulong hash;
-        ulong location;
-        try
-        {
-            hash = BitConverter.ToUInt64(checkResult.Data.Memory.Span);
-            location = BitConverter.ToUInt64(checkResult.Data.Memory.Span.Slice(sizeof(ulong)));
-        }
-        catch
-        {
-            return (result, 0);
-        }
-
-        if (FarmHash.Hash64(result.Data.Memory.Span) != hash)
+        if (FarmHash.Hash64(result.Data.Memory.Span) != waypoint.Hash)
         {// Hash does not match
-            return (new(CrystalResult.CorruptedData), 0);
+            return (new(CrystalResult.CorruptedData), waypoint);
         }
 
-        return (result, location);
+        return (result, waypoint);
     }
 
-    public static Task<CrystalResult> SaveData<T>(T? obj, IFiler? filer, ulong waypoint)
+    public static Task<(CrystalResult Result, Waypoint Waypoiint)> SaveData<T>(Crystalizer crystalizer, T? obj, IFiler? filer, uint journalToken)
         where T : ITinyhandSerialize<T>
     {
         if (obj == null)
         {
-            return Task.FromResult(CrystalResult.NoData);
+            return Task.FromResult((CrystalResult.NoData, Waypoint.Invalid));
         }
         else if (filer == null)
         {
-            return Task.FromResult(CrystalResult.NoFiler);
+            return Task.FromResult((CrystalResult.NoFiler, Waypoint.Invalid));
         }
 
+        // var option = TinyhandSerializer.DefaultOptions with { JournalToken = journalToken, };
         var data = TinyhandSerializer.SerializeObject(obj);
-        return SaveData(data, filer, waypoint);
+        return SaveData(crystalizer, data, filer, journalToken);
     }
 
-    public static async Task<CrystalResult> SaveData(byte[]? data, IFiler? filer, ulong waypoint)
+    public static async Task<(CrystalResult Result, Waypoint Waypoiint)> SaveData(Crystalizer crystalizer, byte[]? data, IFiler? filer, uint journalToken)
     {
         if (data == null)
         {
-            return CrystalResult.NoData;
+            return (CrystalResult.NoData, Waypoint.Invalid);
         }
         else if (filer == null)
         {
-            return CrystalResult.NoFiler;
+            return (CrystalResult.NoFiler, Waypoint.Invalid);
         }
 
-        var result = await filer.WriteAsync(0, new(data));
+        var result = await filer.WriteAsync(0, new(data)).ConfigureAwait(false);
         if (result != CrystalResult.Success)
         {
-            return result;
+            return (result, Waypoint.Invalid);
         }
 
-        var hashAndWaypoint = new byte[CheckLength];
         var hash = FarmHash.Hash64(data.AsSpan());
-        BitConverter.TryWriteBytes(hashAndWaypoint.AsSpan(), hash);
-        BitConverter.TryWriteBytes(hashAndWaypoint.AsSpan(sizeof(ulong)), waypoint);
 
-        var chckFiler = filer.CloneWithExtension(CheckExtension);
-        result = await chckFiler.WriteAsync(0, new(hashAndWaypoint));
-        return result;
+        ulong journalPosition;
+        if (crystalizer.Journal != null)
+        {
+            journalPosition = AddJournal();
+        }
+        else
+        {
+            journalPosition = 0;
+        }
+
+        var waypoint = new Waypoint(journalPosition, journalToken, hash);
+        var chckFiler = filer.CloneWithExtension(Waypoint.Extension);
+        result = await chckFiler.WriteAsync(0, new(waypoint.ToByteArray())).ConfigureAwait(false);
+        return (result, waypoint);
+
+        ulong AddJournal()
+        {
+            crystalizer.Journal.GetWriter(JournalRecordType.Waypoint, journalToken, out var writer);
+            writer.Write(hash);
+            journalPosition = crystalizer.Journal.Add(writer);
+
+            return journalPosition;
+        }
     }
 
     /// <summary>

@@ -31,16 +31,17 @@ public class Crystalizer
         foreach (var x in this.configuration.CrystalConfigurations)
         {
             ICrystal? crystal;
-            if (x.Value is BigCrystalConfiguration)
+            if (x.Value is BigCrystalConfiguration bigCrystalConfiguration)
             {// new BigCrystalImpl<TData>
-                crystal = (IBigCrystal)Activator.CreateInstance(typeof(BigCrystalImpl<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
+                var bigCrystal = (IBigCrystal)Activator.CreateInstance(typeof(BigCrystalImpl<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
+                crystal = bigCrystal;
+                bigCrystal.Configure(bigCrystalConfiguration);
             }
             else
             {// new CrystalImpl<TData>
-                crystal = (ICrystal)Activator.CreateInstance(typeof(CrystalImpl<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
+                crystal = (ICrystal)Activator.CreateInstance(typeof(CrystalObject<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
+                crystal.Configure(x.Value);
             }
-
-            crystal.Configure(x.Value);
 
             this.typeToCrystal.TryAdd(x.Key, crystal);
             this.crystals.TryAdd(crystal, 0);
@@ -82,15 +83,11 @@ public class Crystalizer
 
     public TimeSpan DefaultTimeout { get; }
 
-    public IJournal? Journal => this.JournalInternal;
+    public IJournal? Journal { get; private set; }
 
     public IStorageKey StorageKey { get; }
 
     internal UnitLogger UnitLogger { get; }
-
-#pragma warning disable SA1401 // Fields should be private
-    internal IJournalInternal? JournalInternal;
-#pragma warning restore SA1401 // Fields should be private
 
     private CrystalizerConfiguration configuration;
     private ILogger logger;
@@ -186,7 +183,7 @@ public class Crystalizer
 
     public async Task<CrystalStartResult> PrepareJournal()
     {
-        if (this.JournalInternal == null)
+        if (this.Journal == null)
         {// New journal
             var configuration = this.configuration.JournalConfiguration;
             if (configuration is EmptyJournalConfiguration)
@@ -196,7 +193,7 @@ public class Crystalizer
             else if (configuration is SimpleJournalConfiguration simpleJournalConfiguration)
             {
                 var simpleJournal = new SimpleJournal(this, simpleJournalConfiguration);
-                this.JournalInternal = simpleJournal;
+                this.Journal = simpleJournal;
             }
             else
             {
@@ -204,13 +201,13 @@ public class Crystalizer
             }
         }
 
-        if (this.JournalInternal.Prepared)
+        if (this.Journal.Prepared)
         {
             return CrystalStartResult.Success;
         }
         else
         {// Prepare
-            return await this.JournalInternal.Prepare(this).ConfigureAwait(false);
+            return await this.Journal.Prepare(this).ConfigureAwait(false);
         }
     }
 
@@ -281,30 +278,28 @@ public class Crystalizer
         await Task.WhenAll(tasks).ConfigureAwait(false);
     }
 
-    public void DeleteAll()
+    public async Task<CrystalResult[]> DeleteAll()
     {
-        var crystals = this.crystals.Keys.ToArray();
-        foreach (var x in crystals)
-        {
-            x.Delete();
-        }
+        var tasks = this.crystals.Keys.Select(x => x.Delete()).ToArray();
+        var results = await Task.WhenAll(tasks).ConfigureAwait(false);
+        return results;
     }
 
     public ICrystal<TData> CreateCrystal<TData>()
-        where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+        where TData : IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
         if (!this.typeToCrystal.TryGetValue(typeof(TData), out _))
         {
             ThrowTypeNotRegistered(typeof(TData));
         }
 
-        var crystal = new CrystalImpl<TData>(this);
+        var crystal = new CrystalObject<TData>(this);
         this.crystals.TryAdd(crystal, 0);
         return crystal;
     }
 
     public ICrystal<TData> CreateBigCrystal<TData>()
-        where TData : BaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+        where TData : BaseData, IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
         if (!this.typeToCrystal.TryGetValue(typeof(TData), out var c) ||
             c is not IBigCrystal)
@@ -318,7 +313,7 @@ public class Crystalizer
     }
 
     public ICrystal<TData> GetCrystal<TData>()
-        where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+        where TData : IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
         if (!this.typeToCrystal.TryGetValue(typeof(TData), out var c) ||
             c is not ICrystal<TData> crystal)

@@ -26,13 +26,13 @@ public interface ICrystal
 
     Task<CrystalResult> Save(bool unload = false);
 
-    void Delete();
+    Task<CrystalResult> Delete();
 
     void Terminate();
 }
 
 public interface ICrystal<TData> : ICrystal
-    where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+    where TData : IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
     public new TData Object { get; }
 }

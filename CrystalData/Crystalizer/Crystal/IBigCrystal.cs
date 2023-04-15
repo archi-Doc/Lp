@@ -13,9 +13,11 @@ public interface IBigCrystal : ICrystal
     HimoGoshujinClass Himo { get; }
 
     long MemoryUsage { get; }
+
+    void Configure(BigCrystalConfiguration configuration);
 }
 
 public interface IBigCrystal<TData> : IBigCrystal, ICrystal<TData>
-    where TData : BaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+    where TData : BaseData, IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
 }

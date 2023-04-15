@@ -4,7 +4,7 @@ using Tinyhand.IO;
 namespace Sandbox;
 
 [TinyhandObject]
-internal partial class CrystalClass
+internal partial class CrystalClass: IJournalObject
 {
     [Key(0)]
     public int Id { get; set; }
@@ -14,7 +14,7 @@ internal partial class CrystalClass
 }
 
 [TinyhandObject]
-internal partial class ManualClass
+internal partial class ManualClass : IJournalObject
 {
     [Key(0)]
     public int Id { get; set; }
@@ -24,7 +24,7 @@ internal partial class ManualClass
 }
 
 [TinyhandObject]
-internal partial class CombinedClass
+internal partial class CombinedClass: IJournalObject
 {
     [Key(0)]
     public ManualClass Manual1 { get; set; } = default!;
@@ -58,10 +58,10 @@ internal class TestClass
         await this.crystalizer.PrepareAndLoadAll();
         await this.crystalizer.PrepareJournal();
 
-        /*var config = new LocalDirectoryConfiguration(""); // new S3DirectoryConfiguration("kiokubako", "lp2");
+        /*var config = new S3DirectoryConfiguration("kiokubako", "lp2");
         var s3filer = this.crystalizer.ResolveRawFiler(config);
         await s3filer.PrepareAndCheck(crystalizer, config);
-        var result = await s3filer.ListAsync("Example");
+        var result = await s3filer.ListAsync("");
         foreach (var x in result)
         {
             await Console.Out.WriteLineAsync(x.ToString());
@@ -74,8 +74,10 @@ internal class TestClass
         Console.WriteLine(manualClass.ToString());
 
         var manualCrystal2 = this.crystalizer.CreateCrystal<ManualClass>();
+        manualCrystal2.Configure(new(Crystalization.Manual, new LocalFileConfiguration("test2/manual2")));
         var manualClass2 = manualCrystal2.Object;
         manualClass2.Id = 2;
+        await manualCrystal2.Save();
         Console.WriteLine(manualClass.ToString());
         Console.WriteLine(manualClass2.ToString());
 
@@ -92,33 +94,6 @@ internal class TestClass
 
         var a2 = this.exampleData.TryGetChild("a");
         var b2 = this.exampleData.TryGetChild("b");
-
-        Journal();
-
-        // await this.crystalizer.SaveAll();
-
-        void Journal()
-        {
-            // Record
-            /*if (this.crystalizer.TryGetJournal(out TinyhandWriter writer))
-            {// SetValue, AddObject, DeleteObject, Check
-                this.WriteLocator(ref writer); // Locator
-                writer.WriteInt16(21); // Value
-            }*/
-            if (this.crystalizer.Journal is { } journal)
-            {
-                journal.GetJournalWriter(JournalRecordType.SetValue, out var writer);
-                // this.WriteLocator(ref record); // Locator
-                writer.WriteInt16(32); // Value
-                journal.AddRecord(in writer);
-            }
-
-            // Read
-            /*while (journal.Position != journal.End)
-            {
-                obj.ReadJournal(journal);
-            }*/
-        }
     }
 
     private Crystalizer crystalizer;
