@@ -14,8 +14,9 @@ namespace CrystalData;
 public class Crystalizer
 {
     public const string Extension = "data";
+    public const string CheckFile = "Crystal.check";
 
-    public Crystalizer(CrystalizerConfiguration configuration, CrystalizerOptions options, ILogger logger, UnitLogger unitLogger, IStorageKey storageKey)
+    public Crystalizer(CrystalizerConfiguration configuration, CrystalizerOptions options, ILogger logger, UnitLogger unitLogger, IStorageKey storageKey, CrystalCheck crystalCheck)
     {
         this.configuration = configuration;
         this.EnableLogger = options.EnableLogger;
@@ -29,6 +30,8 @@ public class Crystalizer
 
         this.logger = logger;
         this.UnitLogger = unitLogger;
+        this.CrystalCheck = crystalCheck;
+        this.CrystalCheck.Load(Path.Combine(this.RootDirectory, CheckFile));
         this.StorageKey = storageKey;
 
         foreach (var x in this.configuration.CrystalConfigurations)
@@ -93,6 +96,8 @@ public class Crystalizer
     public IStorageKey StorageKey { get; }
 
     internal UnitLogger UnitLogger { get; }
+
+    internal CrystalCheck CrystalCheck { get; }
 
     private CrystalizerConfiguration configuration;
     private ILogger logger;
