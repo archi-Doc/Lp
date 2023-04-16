@@ -20,7 +20,7 @@ public record BigCrystalConfiguration : CrystalConfiguration
         this.RegisterDatum = registry => { };
     }
 
-    public BigCrystalConfiguration(Action<DatumRegistry> registerDatum, SaveMethod saveMethod, DirectoryConfiguration directoryConfiguration, StorageConfiguration storageConfiguration)
+    public BigCrystalConfiguration(Action<DatumRegistry> registerDatum, SavePolicy saveMethod, DirectoryConfiguration directoryConfiguration, StorageConfiguration storageConfiguration)
         : base(saveMethod, EmptyFileConfiguration.Default)
     {
         this.RegisterDatum = registerDatum;

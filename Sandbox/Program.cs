@@ -45,13 +45,13 @@ public class Program
 
                 context.AddCrystal<ManualClass>(
                     new(
-                        SaveMethod.Manual,
+                        SavePolicy.Manual,
                         new LocalFileConfiguration("Data/manual")
                         ));
 
                 context.AddCrystal<CombinedClass>(
                     new(
-                        SaveMethod.Periodic,
+                        SavePolicy.Periodic,
                         new LocalFileConfiguration("combined.data"),
                         new SimpleStorageConfiguration(new LocalDirectoryConfiguration("simple"))));
 

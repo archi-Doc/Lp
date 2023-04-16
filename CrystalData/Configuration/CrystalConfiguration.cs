@@ -2,7 +2,7 @@
 
 namespace CrystalData;
 
-public enum SaveMethod
+public enum SavePolicy
 {
     None,
     Manual,
@@ -18,14 +18,14 @@ public record CrystalConfiguration
 
     public CrystalConfiguration()
     {
-        this.Save = SaveMethod.None;
+        this.Save = SavePolicy.None;
         this.FileConfiguration = EmptyFileConfiguration.Default;
         this.StorageConfiguration = EmptyStorageConfiguration.Default;
     }
 
-    public CrystalConfiguration(SaveMethod saveMethod, FileConfiguration filerConfiguration, StorageConfiguration? storageConfiguration = null)
+    public CrystalConfiguration(SavePolicy savePolicy, FileConfiguration filerConfiguration, StorageConfiguration? storageConfiguration = null)
     {
-        this.Save = saveMethod;
+        this.Save = savePolicy;
         this.Interval = DefaultInterval;
         this.FileConfiguration = filerConfiguration;
         this.StorageConfiguration = storageConfiguration ?? EmptyStorageConfiguration.Default;
@@ -33,19 +33,17 @@ public record CrystalConfiguration
 
     public CrystalConfiguration(TimeSpan interval, FileConfiguration fileConfiguration, StorageConfiguration? storageConfiguration = null)
     {
-        this.Save = SaveMethod.Periodic;
+        this.Save = SavePolicy.Periodic;
         this.Interval = interval;
         this.FileConfiguration = fileConfiguration;
         this.StorageConfiguration = storageConfiguration ?? EmptyStorageConfiguration.Default;
     }
 
-    public SaveMethod Save { get; init; }
+    public SavePolicy Save { get; init; }
 
     public TimeSpan Interval { get; init; }
 
     public FileConfiguration FileConfiguration { get; init; }
 
     public StorageConfiguration StorageConfiguration { get; init; }
-
-    public bool AddDefaultExtension { get; init; } = true;
 }

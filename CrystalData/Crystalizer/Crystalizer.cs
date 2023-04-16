@@ -19,6 +19,7 @@ public class Crystalizer
     {
         this.configuration = configuration;
         this.EnableLogger = options.EnableLogger;
+        this.AddExtension = options.AddExtension;
         this.RootDirectory = options.RootPath;
         this.DefaultTimeout = options.DefaultTimeout;
         if (string.IsNullOrEmpty(this.RootDirectory))
@@ -81,6 +82,8 @@ public class Crystalizer
 
     public bool EnableLogger { get; }
 
+    public bool AddExtension { get; init; } = true;
+
     public string RootDirectory { get; }
 
     public TimeSpan DefaultTimeout { get; }
@@ -109,15 +112,19 @@ public class Crystalizer
     public IFiler ResolveFiler(PathConfiguration configuration)
     {// new RawFilerToFiler(this, this.ResolveRawFiler(configuration), configuration);
         string path = configuration.Path;
-        try
+
+        if (this.AddExtension)
         {
-            if (string.IsNullOrEmpty(Path.GetExtension(configuration.Path)))
+            try
             {
-                path += "." + Extension;
+                if (string.IsNullOrEmpty(Path.GetExtension(configuration.Path)))
+                {
+                    path += "." + Extension;
+                }
             }
-        }
-        catch
-        {
+            catch
+            {
+            }
         }
 
         return new RawFilerToFiler(this, this.ResolveRawFiler(configuration), path);
@@ -212,6 +219,8 @@ public class Crystalizer
     public async Task<CrystalStartResult> PrepareAndLoadAll(CrystalStartParam? param = null)
     {
         param ??= CrystalStartParam.Default;
+
+        var journalResult = await this.PrepareJournal().ConfigureAwait(false);
 
         var crystals = this.crystals.Keys.ToArray();
         foreach (var x in crystals)
