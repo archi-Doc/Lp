@@ -25,7 +25,7 @@ public partial class SimpleJournal : IJournal
         this.SimpleJournalConfiguration = configuration;
     }
 
-    public async Task<CrystalStartResult> Prepare(Crystalizer crystalizer)
+    public async Task<CrystalResult> Prepare(Crystalizer crystalizer)
     {
         var configuration = this.SimpleJournalConfiguration.DirectoryConfiguration;
 
@@ -33,13 +33,13 @@ public partial class SimpleJournal : IJournal
         var result = await this.rawFiler.PrepareAndCheck(crystalizer, configuration).ConfigureAwait(false);
         if (result != CrystalResult.Success)
         {
-            return CrystalStartResult.FileError;
+            return result;
         }
 
         // List journal books
         var list = await this.rawFiler.ListAsync(configuration.Path).ConfigureAwait(false);
 
-        return CrystalStartResult.Success;
+        return CrystalResult.Success;
     }
 
     void IJournal.GetWriter(JournalRecordType recordType, uint token, out TinyhandWriter writer)

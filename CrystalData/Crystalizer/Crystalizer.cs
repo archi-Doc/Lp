@@ -197,36 +197,6 @@ public class Crystalizer
 
     #region Main
 
-    public async Task<CrystalStartResult> PrepareJournal()
-    {
-        if (this.Journal == null)
-        {// New journal
-            var configuration = this.configuration.JournalConfiguration;
-            if (configuration is EmptyJournalConfiguration)
-            {
-                return CrystalStartResult.Success;
-            }
-            else if (configuration is SimpleJournalConfiguration simpleJournalConfiguration)
-            {
-                var simpleJournal = new SimpleJournal(this, simpleJournalConfiguration);
-                this.Journal = simpleJournal;
-            }
-            else
-            {
-                return CrystalStartResult.NoJournal;
-            }
-        }
-
-        if (this.Journal.Prepared)
-        {
-            return CrystalStartResult.Success;
-        }
-        else
-        {// Prepare
-            return await this.Journal.Prepare(this).ConfigureAwait(false);
-        }
-    }
-
     /*public bool TryGetJournalWriter(JournalRecordType recordType, out JournalRecord record)
     {
         if (this.Journal == null)
@@ -452,6 +422,36 @@ public class Crystalizer
         }
 
         return bigCrystalConfiguration;
+    }
+
+    private async Task<CrystalResult> PrepareJournal()
+    {
+        if (this.Journal == null)
+        {// New journal
+            var configuration = this.configuration.JournalConfiguration;
+            if (configuration is EmptyJournalConfiguration)
+            {
+                return CrystalResult.Success;
+            }
+            else if (configuration is SimpleJournalConfiguration simpleJournalConfiguration)
+            {
+                var simpleJournal = new SimpleJournal(this, simpleJournalConfiguration);
+                this.Journal = simpleJournal;
+            }
+            else
+            {
+                return CrystalResult.InvalidConfiguration;
+            }
+        }
+
+        if (this.Journal.Prepared)
+        {
+            return CrystalResult.Success;
+        }
+        else
+        {// Prepare
+            return await this.Journal.Prepare(this).ConfigureAwait(false);
+        }
     }
 
     #endregion

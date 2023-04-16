@@ -6,10 +6,10 @@ namespace CrystalData.Journal;
 
 public class EmptyJournal : IJournal
 {
-    Task<CrystalStartResult> IJournal.Prepare(Crystalizer crystalizer)
+    Task<CrystalResult> IJournal.Prepare(Crystalizer crystalizer)
     {
         this.Prepared = true;
-        return Task.FromResult(CrystalStartResult.Success);
+        return Task.FromResult(CrystalResult.Success);
     }
 
     ulong IJournal.Add(in TinyhandWriter writer)
