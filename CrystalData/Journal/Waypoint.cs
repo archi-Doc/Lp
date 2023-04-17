@@ -42,7 +42,9 @@ public readonly struct Waypoint : IEquatable<Waypoint>
 
     public readonly ulong JournalPosition;
     public readonly uint JournalToken;
+    // public readonly uint PreviousToken;
     // public readonly uint CurrentToken;
+    // public readonly uint NextToken; // Où allons-nous
     public readonly ulong Hash;
 
     public bool IsValid => this.JournalPosition != 0;

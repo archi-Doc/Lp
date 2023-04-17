@@ -3,6 +3,7 @@
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using CrystalData.Check;
 using CrystalData.Filer;
 using CrystalData.Journal;
 using CrystalData.Storage;
@@ -16,7 +17,7 @@ public class Crystalizer
     public const string Extension = "data";
     public const string CheckFile = "Crystal.check";
 
-    public Crystalizer(CrystalizerConfiguration configuration, CrystalizerOptions options, ILogger logger, UnitLogger unitLogger, IStorageKey storageKey, CrystalCheck crystalCheck)
+    public Crystalizer(CrystalizerConfiguration configuration, CrystalizerOptions options, ILogger logger, UnitLogger unitLogger, IStorageKey storageKey)
     {
         this.configuration = configuration;
         this.EnableLogger = options.EnableLogger;
@@ -30,7 +31,7 @@ public class Crystalizer
 
         this.logger = logger;
         this.UnitLogger = unitLogger;
-        this.CrystalCheck = crystalCheck;
+        this.CrystalCheck = new(this.UnitLogger.GetLogger<CrystalCheck>());
         this.CrystalCheck.Load(Path.Combine(this.RootDirectory, CheckFile));
         this.StorageKey = storageKey;
 
@@ -242,6 +243,8 @@ public class Crystalizer
 
     public async Task SaveAll(bool unload = false)
     {
+        this.CrystalCheck.Save();
+
         var crystals = this.crystals.Keys.ToArray();
         foreach (var x in crystals)
         {
@@ -251,6 +254,8 @@ public class Crystalizer
 
     public async Task SaveAllAndTerminate()
     {
+        this.CrystalCheck.Save();
+
         var crystals = this.crystals.Keys.ToArray();
         foreach (var x in crystals)
         {
