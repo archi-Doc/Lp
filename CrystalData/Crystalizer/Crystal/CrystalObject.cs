@@ -142,7 +142,7 @@ public class CrystalObject<TData> : ICrystal<TData>
         }
     }
 
-    async Task<CrystalStartResult> ICrystal.PrepareAndLoad(CrystalStartParam? param)
+    async Task<CrystalStartResult> ICrystal.PrepareAndLoad(CrystalPrepareParam? param)
     {
         using (this.semaphore.Lock())
         {
@@ -256,14 +256,14 @@ public class CrystalObject<TData> : ICrystal<TData>
 
     #endregion
 
-    protected virtual async Task<CrystalStartResult> PrepareAndLoadInternal(CrystalStartParam? param)
+    protected virtual async Task<CrystalStartResult> PrepareAndLoadInternal(CrystalPrepareParam? param)
     {// this.semaphore.Lock()
         if (this.Prepared)
         {
             return CrystalStartResult.Success;
         }
 
-        param ??= CrystalStartParam.Default;
+        param ??= CrystalPrepareParam.Default;
 
         // Filer
         if (this.filer == null)

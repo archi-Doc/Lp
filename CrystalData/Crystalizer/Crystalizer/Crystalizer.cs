@@ -40,7 +40,7 @@ public class Crystalizer
             ICrystal? crystal;
             if (x.Value is BigCrystalConfiguration bigCrystalConfiguration)
             {// new BigCrystalImpl<TData>
-                var bigCrystal = (IBigCrystal)Activator.CreateInstance(typeof(BigCrystalImpl<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
+                var bigCrystal = (IBigCrystal)Activator.CreateInstance(typeof(BigCrystalObject<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
                 crystal = bigCrystal;
                 bigCrystal.Configure(bigCrystalConfiguration);
             }
@@ -222,9 +222,9 @@ public class Crystalizer
         return true;
     }*/
 
-    public async Task<CrystalStartResult> PrepareAndLoadAll(CrystalStartParam? param = null)
+    public async Task<CrystalStartResult> PrepareAndLoadAll(CrystalPrepareParam? param = null)
     {
-        param ??= CrystalStartParam.Default;
+        param ??= CrystalPrepareParam.Default;
 
         var journalResult = await this.PrepareJournal().ConfigureAwait(false);
 
@@ -312,7 +312,7 @@ public class Crystalizer
             ThrowTypeNotRegistered(typeof(TData));
         }
 
-        var crystal = new BigCrystalImpl<TData>(this);
+        var crystal = new BigCrystalObject<TData>(this);
         this.crystals.TryAdd(crystal, 0);
         return crystal;
     }

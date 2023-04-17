@@ -9,12 +9,12 @@ internal class CrystalCheck
         this.logger = logger;
     }
 
-    internal void RegisterDataAndConfiguration(DataAndConfigurationIdentifier identifier, out bool newlyRegistered)
+    public void RegisterDataAndConfiguration(DataAndConfigurationIdentifier identifier, out bool newlyRegistered)
     {
         newlyRegistered = this.checkData.DataAndConfigurations.TryAdd(identifier, 0);
     }
 
-    internal void Load(string filePath)
+    public void Load(string filePath)
     {
         try
         {
@@ -32,7 +32,7 @@ internal class CrystalCheck
         }
     }
 
-    internal void Save()
+    public void Save()
     {
         try
         {

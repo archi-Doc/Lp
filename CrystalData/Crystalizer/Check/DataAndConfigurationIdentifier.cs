@@ -5,22 +5,22 @@ namespace CrystalData.Check;
 [TinyhandObject]
 public readonly partial struct DataAndConfigurationIdentifier : IEquatable<DataAndConfigurationIdentifier>
 {
-    public DataAndConfigurationIdentifier(string typeFullName, PathConfiguration configuration)
+    public DataAndConfigurationIdentifier(string dataTypeName, PathConfiguration configuration)
     {
-        this.TypeFullName = typeFullName;
+        this.DataTypeName = dataTypeName;
         this.PathConfiguration = configuration;
     }
 
     [Key(0)]
-    public readonly string TypeFullName;
+    public readonly string DataTypeName;
 
     [Key(1)]
     public readonly PathConfiguration PathConfiguration;
 
     public override int GetHashCode()
-        => HashCode.Combine(this.TypeFullName, this.PathConfiguration);
+        => HashCode.Combine(this.DataTypeName, this.PathConfiguration);
 
     public bool Equals(DataAndConfigurationIdentifier other)
-        => this.TypeFullName.Equals(other.TypeFullName) &&
+        => this.DataTypeName.Equals(other.DataTypeName) &&
         this.PathConfiguration.Equals(other.PathConfiguration);
 }

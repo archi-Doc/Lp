@@ -2,10 +2,10 @@
 
 namespace CrystalData;
 
-public class BigCrystalImpl<TData> : CrystalObject<TData>, IBigCrystal<TData>, ICrystal
+public class BigCrystalObject<TData> : CrystalObject<TData>, IBigCrystal<TData>, ICrystal
     where TData : BaseData, IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
-    public BigCrystalImpl(Crystalizer crystalizer)
+    public BigCrystalObject(Crystalizer crystalizer)
         : base(crystalizer)
     {
         this.BigCrystalConfiguration = BigCrystalConfiguration.Default; // crystalizer.GetBigCrystalConfiguration(typeof(TData));
@@ -138,9 +138,9 @@ public class BigCrystalImpl<TData> : CrystalObject<TData>, IBigCrystal<TData>, I
 
     #endregion
 
-    protected override async Task<CrystalStartResult> PrepareAndLoadInternal(CrystalStartParam? param)
+    protected override async Task<CrystalStartResult> PrepareAndLoadInternal(CrystalPrepareParam? param)
     {// this.semaphore.Lock()
-        param ??= CrystalStartParam.Default;
+        param ??= CrystalPrepareParam.Default;
         if (param.FromScratch)
         {
             await this.StorageGroup.PrepareAndCheck(this.CrystalConfiguration.StorageConfiguration, param, null).ConfigureAwait(false);
@@ -213,7 +213,7 @@ public class BigCrystalImpl<TData> : CrystalObject<TData>, IBigCrystal<TData>, I
         this.obj.Initialize(this, null, true);
     }
 
-    private async Task<CrystalStartResult> LoadStorageGroup(CrystalStartParam param)
+    private async Task<CrystalStartResult> LoadStorageGroup(CrystalPrepareParam param)
     {// await this.semaphore.WaitAsync().ConfigureAwait(false)
         CrystalStartResult result;
 
@@ -245,7 +245,7 @@ public class BigCrystalImpl<TData> : CrystalObject<TData>, IBigCrystal<TData>, I
         return result;
     }
 
-    private async Task<CrystalStartResult> LoadCrystal(CrystalStartParam param)
+    private async Task<CrystalStartResult> LoadCrystal(CrystalPrepareParam param)
     {// await this.semaphore.WaitAsync().ConfigureAwait(false)
         var (dataResult, _) = await PathHelper.LoadData(this.crystalFiler).ConfigureAwait(false);
         if (dataResult.IsFailure)

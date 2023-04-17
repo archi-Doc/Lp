@@ -29,7 +29,7 @@ public abstract partial record PathConfiguration
 
     public virtual Type PathType => Type.Unknown;
 
-    [Key(0)]
+    [KeyAsName]
     public string Path { get; init; }
 
     public override string ToString()
