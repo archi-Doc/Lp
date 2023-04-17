@@ -222,9 +222,9 @@ public class Crystalizer
         return true;
     }*/
 
-    public async Task<CrystalStartResult> PrepareAndLoadAll(CrystalPrepareParam? param = null)
+    public async Task<CrystalStartResult> PrepareAndLoadAll(CrystalPrepare? param = null)
     {
-        param ??= CrystalPrepareParam.Default;
+        param ??= CrystalPrepare.Default;
 
         var journalResult = await this.PrepareJournal().ConfigureAwait(false);
 
@@ -442,6 +442,10 @@ public class Crystalizer
 
         return bigCrystalConfiguration;
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal PrepareParam CreatePrepareParam<TData>(CrystalPrepare? prepare)
+        => new(this, typeof(TData));
 
     private async Task<CrystalResult> PrepareJournal()
     {

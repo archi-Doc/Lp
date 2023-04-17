@@ -138,9 +138,9 @@ public class BigCrystalObject<TData> : CrystalObject<TData>, IBigCrystal<TData>,
 
     #endregion
 
-    protected override async Task<CrystalStartResult> PrepareAndLoadInternal(CrystalPrepareParam? param)
+    protected override async Task<CrystalStartResult> PrepareAndLoadInternal(CrystalPrepare? param)
     {// this.semaphore.Lock()
-        param ??= CrystalPrepareParam.Default;
+        param ??= CrystalPrepare.Default;
         if (param.FromScratch)
         {
             await this.StorageGroup.PrepareAndCheck(this.CrystalConfiguration.StorageConfiguration, param, null).ConfigureAwait(false);
@@ -213,7 +213,7 @@ public class BigCrystalObject<TData> : CrystalObject<TData>, IBigCrystal<TData>,
         this.obj.Initialize(this, null, true);
     }
 
-    private async Task<CrystalStartResult> LoadStorageGroup(CrystalPrepareParam param)
+    private async Task<CrystalStartResult> LoadStorageGroup(CrystalPrepare param)
     {// await this.semaphore.WaitAsync().ConfigureAwait(false)
         CrystalStartResult result;
 
@@ -245,7 +245,7 @@ public class BigCrystalObject<TData> : CrystalObject<TData>, IBigCrystal<TData>,
         return result;
     }
 
-    private async Task<CrystalStartResult> LoadCrystal(CrystalPrepareParam param)
+    private async Task<CrystalStartResult> LoadCrystal(CrystalPrepare param)
     {// await this.semaphore.WaitAsync().ConfigureAwait(false)
         var (dataResult, _) = await PathHelper.LoadData(this.crystalFiler).ConfigureAwait(false);
         if (dataResult.IsFailure)

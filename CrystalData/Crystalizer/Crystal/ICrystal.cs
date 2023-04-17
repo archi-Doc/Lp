@@ -22,7 +22,7 @@ public interface ICrystal
 
     void ConfigureStorage(StorageConfiguration configuration);
 
-    Task<CrystalStartResult> PrepareAndLoad(CrystalPrepareParam? param = null);
+    Task<CrystalStartResult> PrepareAndLoad(CrystalPrepare? param = null);
 
     Task<CrystalResult> Save(bool unload = false);
 

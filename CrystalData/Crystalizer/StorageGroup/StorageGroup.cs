@@ -228,7 +228,7 @@ public sealed class StorageGroup
         storageObject.Storage?.Delete(ref fileId);
     }
 
-    internal async Task<CrystalStartResult> PrepareAndCheck(StorageConfiguration configuration, CrystalPrepareParam param, ReadOnlyMemory<byte>? data)
+    internal async Task<CrystalStartResult> PrepareAndCheck(StorageConfiguration configuration, CrystalPrepare param, ReadOnlyMemory<byte>? data)
     {// semaphore
         StorageObject.GoshujinClass? goshujin = null;
         if (data != null)

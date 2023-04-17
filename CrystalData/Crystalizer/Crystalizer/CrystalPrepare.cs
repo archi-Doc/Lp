@@ -2,9 +2,9 @@
 
 namespace CrystalData;
 
-public record CrystalPrepareParam(bool ForceStart = false, CrystalStartQueryDelegate? QueryDelegate = null, bool FromScratch = false)
+public record CrystalPrepare(bool ForceStart = false, CrystalStartQueryDelegate? QueryDelegate = null, bool FromScratch = false)
 {
-    public static readonly CrystalPrepareParam Default = new(true);
+    public static readonly CrystalPrepare Default = new(true);
 
     public Task<AbortOrComplete> Query(CrystalStartResult query, string[]? list = null)
         => this.QueryDelegate == null || this.ForceStart ? Task.FromResult(AbortOrComplete.Complete) : this.QueryDelegate(query, list);
