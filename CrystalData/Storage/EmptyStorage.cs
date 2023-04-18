@@ -22,7 +22,7 @@ public partial class EmptyStorage : IStorage
     Task<CrystalMemoryOwnerResult> IStorage.GetAsync(ref ulong fileId)
         => Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.Success));
 
-    Task<CrystalResult> IStorage.PrepareAndCheck(Crystalizer crystalizer, StorageConfiguration storageConfiguration, bool createNew)
+    Task<CrystalResult> IStorage.PrepareAndCheck(PrepareParam param, StorageConfiguration storageConfiguration, bool createNew)
         => Task.FromResult(CrystalResult.Success);
 
     CrystalResult IStorage.Put(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)

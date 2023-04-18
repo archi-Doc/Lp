@@ -8,7 +8,7 @@ public partial interface IStorage
 
     void SetTimeout(TimeSpan timeout);
 
-    Task<CrystalResult> PrepareAndCheck(Crystalizer crystalizer, StorageConfiguration storageConfiguration, bool createNew);
+    Task<CrystalResult> PrepareAndCheck(PrepareParam param, StorageConfiguration storageConfiguration, bool createNew);
 
     Task Save();
 

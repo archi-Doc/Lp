@@ -25,8 +25,31 @@ public partial class SimpleJournal : IJournal
         this.SimpleJournalConfiguration = configuration;
     }
 
+    #region PropertyAndField
+
+    public SimpleJournalConfiguration SimpleJournalConfiguration { get; }
+
+    private Crystalizer crystalizer;
+    private bool prepared;
+    private IRawFiler? rawFiler;
+
+    // Token
+    private ConcurrentDictionary<uint, IJournalObject> tokenToObjects = new();
+
+    // Journal
+    private object syncJournal = new();
+    private SimpleJournalBook.GoshujinClass books = new();
+    private ulong memoryUsage;
+
+    #endregion
+
     public async Task<CrystalResult> Prepare(PrepareParam param)
     {
+        if (this.prepared)
+        {
+            return CrystalResult.Success;
+        }
+
         var configuration = this.SimpleJournalConfiguration.DirectoryConfiguration;
 
         this.rawFiler ??= this.crystalizer.ResolveRawFiler(configuration);
@@ -39,6 +62,7 @@ public partial class SimpleJournal : IJournal
         // List journal books
         var list = await this.rawFiler.ListAsync(configuration.Path).ConfigureAwait(false);
 
+        this.prepared = true;
         return CrystalResult.Success;
     }
 
@@ -121,21 +145,6 @@ public partial class SimpleJournal : IJournal
 
         return this.tokenToObjects.TryRemove(token, out _);
     }
-
-    public SimpleJournalConfiguration SimpleJournalConfiguration { get; }
-
-    public bool Prepared { get; private set; }
-
-    private Crystalizer crystalizer;
-    private IRawFiler? rawFiler;
-
-    // Token
-    private ConcurrentDictionary<uint, IJournalObject> tokenToObjects = new();
-
-    // Journal
-    private object syncJournal = new();
-    private SimpleJournalBook.GoshujinClass books = new();
-    private ulong memoryUsage;
 
     private SimpleJournalBook EnsureBook()
     {// lock (this.syncJournal)

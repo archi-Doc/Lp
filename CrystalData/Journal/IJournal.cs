@@ -9,8 +9,6 @@ public interface IJournal
 {
     Task<CrystalResult> Prepare(PrepareParam param);
 
-    bool Prepared { get; }
-
     uint NewToken(IJournalObject journalObject);
 
     bool RegisterToken(uint token, IJournalObject journalObject);

@@ -42,7 +42,7 @@ internal partial class StorageObject
 
     #endregion
 
-    public async Task<CrystalResult> PrepareAndCheck(StorageGroup storageGroup, bool createNew)
+    public async Task<CrystalResult> PrepareAndCheck(StorageGroup storageGroup, PrepareParam param, bool createNew)
     {
         var crystalizer = storageGroup.Crystalizer;
 
@@ -51,7 +51,7 @@ internal partial class StorageObject
             this.Storage = storageGroup.Crystalizer.ResolveStorage(this.StorageConfiguration);
         }
 
-        var result = await this.Storage.PrepareAndCheck(crystalizer, this.StorageConfiguration, createNew).ConfigureAwait(false);
+        var result = await this.Storage.PrepareAndCheck(param, this.StorageConfiguration, createNew).ConfigureAwait(false);
         if (result != CrystalResult.Success)
         {
             return result;

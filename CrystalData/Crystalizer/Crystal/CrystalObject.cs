@@ -256,15 +256,14 @@ public class CrystalObject<TData> : ICrystal<TData>
 
     #endregion
 
-    protected virtual async Task<CrystalStartResult> PrepareAndLoadInternal(CrystalPrepare? param)
+    protected virtual async Task<CrystalStartResult> PrepareAndLoadInternal(CrystalPrepare? prepare)
     {// this.semaphore.Lock()
         if (this.Prepared)
         {
             return CrystalStartResult.Success;
         }
 
-        var p = this.Crystalizer.CreatePrepareParam<TData>(param);
-        param ??= CrystalPrepare.Default;
+        var param = this.Crystalizer.CreatePrepareParam<TData>(prepare);
 
         // Filer
         if (this.filer == null)
@@ -284,7 +283,7 @@ public class CrystalObject<TData> : ICrystal<TData>
         if (this.storage == null)
         {
             this.storage = this.Crystalizer.ResolveStorage(this.CrystalConfiguration.StorageConfiguration);
-            var result = await this.storage.PrepareAndCheck(this.Crystalizer, this.CrystalConfiguration.StorageConfiguration, false).ConfigureAwait(false);
+            var result = await this.storage.PrepareAndCheck(param, this.CrystalConfiguration.StorageConfiguration, false).ConfigureAwait(false);
             if (result != CrystalResult.Success)
             {
                 return CrystalStartResult.DirectoryError;
@@ -402,7 +401,7 @@ public class CrystalObject<TData> : ICrystal<TData>
         if (this.storage == null)
         {
             this.storage = this.Crystalizer.ResolveStorage(this.CrystalConfiguration.StorageConfiguration);
-            this.storage.PrepareAndCheck(this.Crystalizer, this.CrystalConfiguration.StorageConfiguration, false).Wait();
+            this.storage.PrepareAndCheck(this.Crystalizer.CreatePrepareParam<TData>(null), this.CrystalConfiguration.StorageConfiguration, false).Wait();
         }
     }
 }

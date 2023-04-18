@@ -8,7 +8,6 @@ public class EmptyJournal : IJournal
 {
     Task<CrystalResult> IJournal.Prepare(PrepareParam param)
     {
-        this.Prepared = true;
         return Task.FromResult(CrystalResult.Success);
     }
 
@@ -41,8 +40,4 @@ public class EmptyJournal : IJournal
     {
         return true;
     }
-
-    public bool Prepared { get; private set; }
-
-    bool IJournal.Prepared => throw new NotImplementedException();
 }

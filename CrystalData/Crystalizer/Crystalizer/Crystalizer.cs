@@ -193,7 +193,7 @@ public class Crystalizer
             }
             else if (configuration is SimpleStorageConfiguration simpleStorageConfiguration)
             {
-                storage = new SimpleStorage();
+                storage = new SimpleStorage(this);
             }
             else
             {
@@ -227,6 +227,10 @@ public class Crystalizer
         param ??= CrystalPrepare.Default;
 
         var journalResult = await this.PrepareJournal(param).ConfigureAwait(false);
+        if (journalResult.IsFailure())
+        {
+            return CrystalStartResult.NoJournal;
+        }
 
         var crystals = this.crystals.Keys.ToArray();
         foreach (var x in crystals)
@@ -445,7 +449,7 @@ public class Crystalizer
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal PrepareParam CreatePrepareParam<TData>(CrystalPrepare? prepare)
-        => new(this, typeof(TData));
+        => new(this, typeof(TData), prepare);
 
     private async Task<CrystalResult> PrepareJournal(CrystalPrepare prepare)
     {
@@ -467,14 +471,7 @@ public class Crystalizer
             }
         }
 
-        if (this.Journal.Prepared)
-        {
-            return CrystalResult.Success;
-        }
-        else
-        {// Prepare
-            return await this.Journal.Prepare(this.CreatePrepareParam<Crystalizer>(prepare)).ConfigureAwait(false);
-        }
+        return await this.Journal.Prepare(this.CreatePrepareParam<Crystalizer>(prepare)).ConfigureAwait(false);
     }
 
     #endregion

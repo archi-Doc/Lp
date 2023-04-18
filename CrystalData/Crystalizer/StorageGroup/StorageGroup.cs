@@ -3,7 +3,6 @@
 using System.Runtime.CompilerServices;
 using CrystalData.Filer;
 using CrystalData.Results;
-using CrystalData.Storage;
 
 namespace CrystalData;
 
@@ -25,6 +24,7 @@ public sealed class StorageGroup
     public IStorageKey StorageKey { get; }
 
     private object syncObject = new();
+    private PrepareParam? prepareParam;
     private StorageObject.GoshujinClass storages = new();  // lock(syncObject)
     private StorageObject? currentStorage; // lock(syncObject)
     private int storageRotationCount; // lock(syncObject)
@@ -61,6 +61,11 @@ public sealed class StorageGroup
 
     public (AddStorageResult Result, ushort Id) AddStorage_SimpleLocal(string path, long capacity)
     {
+        if (this.prepareParam == null)
+        {// tempcode
+            return (AddStorageResult.WriteError, 0);
+        }
+
         if (capacity < 0)
         {
             capacity = DefaultStorageCapacity;
@@ -92,7 +97,7 @@ public sealed class StorageGroup
 
             var storageObject = new StorageObject(id, configuration);
             storageObject.StorageCapacity = capacity;
-            if (storageObject.PrepareAndCheck(this, true).Result != CrystalResult.Success)
+            if (storageObject.PrepareAndCheck(this, this.prepareParam, true).Result != CrystalResult.Success)
             {
                 return (AddStorageResult.DuplicatePath, 0);
             }
@@ -126,7 +131,7 @@ public sealed class StorageGroup
 
             var storageObject = new StorageObject(id, configuration);
             storageObject.StorageCapacity = capacity;
-            if (storageObject.PrepareAndCheck(this, true).Result != CrystalResult.Success)
+            if (storageObject.PrepareAndCheck(this, this.prepareParam, true).Result != CrystalResult.Success)
             {
                 return (AddStorageResult.DuplicatePath, 0);
             }
@@ -228,8 +233,10 @@ public sealed class StorageGroup
         storageObject.Storage?.Delete(ref fileId);
     }
 
-    internal async Task<CrystalStartResult> PrepareAndCheck(StorageConfiguration configuration, CrystalPrepare param, ReadOnlyMemory<byte>? data)
+    internal async Task<CrystalStartResult> PrepareAndCheck(StorageConfiguration configuration, PrepareParam param, ReadOnlyMemory<byte>? data)
     {// semaphore
+        this.prepareParam = param;
+
         StorageObject.GoshujinClass? goshujin = null;
         if (data != null)
         {
@@ -250,7 +257,7 @@ public sealed class StorageGroup
         List<StorageObject>? errorList = null;
         foreach (var x in goshujin.StorageIdChain)
         {
-            if (await x.PrepareAndCheck(this, false) != CrystalResult.Success)
+            if (await x.PrepareAndCheck(this, param, false) != CrystalResult.Success)
             {
                 errorList ??= new();
                 errorList.Add(x);
@@ -277,7 +284,7 @@ public sealed class StorageGroup
             {
                 var id = this.GetFreeStorageId();
                 var storageObject = new StorageObject(id, configuration);
-                await storageObject.PrepareAndCheck(this, true).ConfigureAwait(false);
+                await storageObject.PrepareAndCheck(this, param, true).ConfigureAwait(false);
                 storageObject.Goshujin = goshujin;
             }
             catch

@@ -2,7 +2,7 @@
 
 namespace CrystalData;
 
-public record CrystalPrepare(bool ForceStart = false, CrystalStartQueryDelegate? QueryDelegate = null, bool FromScratch = false)
+public record CrystalPrepare(bool ForceStart = false, CrystalPrepareQueryDelegate? QueryDelegate = null, bool FromScratch = false)
 {
     public static readonly CrystalPrepare Default = new(true);
 
@@ -27,4 +27,4 @@ public enum CrystalStartResult
     NoJournal,
 }
 
-public delegate Task<AbortOrComplete> CrystalStartQueryDelegate(CrystalStartResult query, string[]? list);
+public delegate Task<AbortOrComplete> CrystalPrepareQueryDelegate(CrystalStartResult query, string[]? list);

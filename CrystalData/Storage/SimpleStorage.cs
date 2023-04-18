@@ -13,8 +13,9 @@ internal partial class SimpleStorage : IStorage
 {
     private const string SimpleStorageFile = "Simple";
 
-    public SimpleStorage()
+    public SimpleStorage(Crystalizer crystalizer)
     {
+        this.crystalizer = crystalizer;
         this.timeout = TimeSpan.MinValue;
     }
 
@@ -25,7 +26,7 @@ internal partial class SimpleStorage : IStorage
 
     public long StorageUsage { get; private set; } // lock (this.syncObject)
 
-    private Crystalizer? crystalizer;
+    private Crystalizer crystalizer;
     private string directory = string.Empty;
     private IFiler? filer;
     private IRawFiler? rawFiler;
@@ -43,9 +44,8 @@ internal partial class SimpleStorage : IStorage
         this.timeout = timeout;
     }
 
-    async Task<CrystalResult> IStorage.PrepareAndCheck(Crystalizer crystalizer, StorageConfiguration storageConfiguration, bool createNew)
+    async Task<CrystalResult> IStorage.PrepareAndCheck(PrepareParam param, StorageConfiguration storageConfiguration, bool createNew)
     {
-        this.crystalizer = crystalizer;
         this.directory = storageConfiguration.DirectoryConfiguration.Path;
         if (!string.IsNullOrEmpty(this.directory) && !this.directory.EndsWith('/'))
         {
@@ -53,15 +53,15 @@ internal partial class SimpleStorage : IStorage
         }
 
         var filerConfiguration = storageConfiguration.DirectoryConfiguration.CombinePath(SimpleStorageFile);
-        this.filer = crystalizer.ResolveFiler(filerConfiguration);
-        var resultFiler = await this.filer.PrepareAndCheck(crystalizer, filerConfiguration).ConfigureAwait(false);
+        this.filer = this.crystalizer.ResolveFiler(filerConfiguration);
+        var resultFiler = await this.filer.PrepareAndCheck(this.crystalizer, filerConfiguration).ConfigureAwait(false);
         if (resultFiler != CrystalResult.Success)
         {
             return resultFiler;
         }
 
-        this.rawFiler = crystalizer.ResolveRawFiler(storageConfiguration.DirectoryConfiguration);
-        resultFiler = await this.rawFiler.PrepareAndCheck(crystalizer, filerConfiguration).ConfigureAwait(false);
+        this.rawFiler = this.crystalizer.ResolveRawFiler(storageConfiguration.DirectoryConfiguration);
+        resultFiler = await this.rawFiler.PrepareAndCheck(this.crystalizer, filerConfiguration).ConfigureAwait(false);
         if (resultFiler != CrystalResult.Success)
         {
             return resultFiler;
