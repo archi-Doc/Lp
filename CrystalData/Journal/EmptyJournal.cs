@@ -6,7 +6,7 @@ namespace CrystalData.Journal;
 
 public class EmptyJournal : IJournal
 {
-    Task<CrystalResult> IJournal.Prepare(Crystalizer crystalizer)
+    Task<CrystalResult> IJournal.Prepare(PrepareParam param)
     {
         this.Prepared = true;
         return Task.FromResult(CrystalResult.Success);

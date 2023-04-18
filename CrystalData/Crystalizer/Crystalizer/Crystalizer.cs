@@ -226,7 +226,7 @@ public class Crystalizer
     {
         param ??= CrystalPrepare.Default;
 
-        var journalResult = await this.PrepareJournal().ConfigureAwait(false);
+        var journalResult = await this.PrepareJournal(param).ConfigureAwait(false);
 
         var crystals = this.crystals.Keys.ToArray();
         foreach (var x in crystals)
@@ -447,7 +447,7 @@ public class Crystalizer
     internal PrepareParam CreatePrepareParam<TData>(CrystalPrepare? prepare)
         => new(this, typeof(TData));
 
-    private async Task<CrystalResult> PrepareJournal()
+    private async Task<CrystalResult> PrepareJournal(CrystalPrepare prepare)
     {
         if (this.Journal == null)
         {// New journal
@@ -473,7 +473,7 @@ public class Crystalizer
         }
         else
         {// Prepare
-            return await this.Journal.Prepare(this).ConfigureAwait(false);
+            return await this.Journal.Prepare(this.CreatePrepareParam<Crystalizer>(prepare)).ConfigureAwait(false);
         }
     }
 

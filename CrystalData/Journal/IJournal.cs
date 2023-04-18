@@ -7,7 +7,7 @@ namespace CrystalData;
 
 public interface IJournal
 {
-    Task<CrystalResult> Prepare(Crystalizer crystalizer);
+    Task<CrystalResult> Prepare(PrepareParam param);
 
     bool Prepared { get; }
 

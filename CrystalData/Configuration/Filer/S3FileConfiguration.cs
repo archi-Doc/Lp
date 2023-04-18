@@ -16,7 +16,7 @@ public partial record S3FileConfiguration : FileConfiguration
         this.Bucket = bucket;
     }
 
-    [KeyAsName]
+    [Key("Bucket")]
     public string Bucket { get; protected set; }
 
     public override string ToString()
