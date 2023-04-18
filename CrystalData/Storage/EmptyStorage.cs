@@ -13,7 +13,7 @@ public partial class EmptyStorage : IStorage
     void IStorage.SetTimeout(TimeSpan timeout)
         => Expression.Empty();
 
-    CrystalResult IStorage.Delete(ref ulong fileId)
+    CrystalResult IStorage.DeleteAndForget(ref ulong fileId)
         => CrystalResult.Success;
 
     Task<CrystalResult> IStorage.DeleteAsync(ref ulong fileId)

@@ -19,13 +19,13 @@ public interface IFiler
     /// <returns><see cref="CrystalResult"/>.</returns>
     Task<CrystalResult> PrepareAndCheck(Crystalizer crystalizer, PathConfiguration configuration);
 
-    CrystalResult WriteAndForget(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate = true);
-
-    CrystalResult DeleteAndForget();
-
     Task<CrystalMemoryOwnerResult> ReadAsync(long offset, int length);
 
     Task<CrystalResult> WriteAsync(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate = true);
+
+    CrystalResult WriteAndForget(long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate = true);
+
+    CrystalResult DeleteAndForget();
 
     Task<CrystalResult> DeleteAsync();
 }

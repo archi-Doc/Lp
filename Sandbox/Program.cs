@@ -91,8 +91,8 @@ public class Program
             }
         }
 
-        var sc = new SimpleJournalConfiguration(new LocalDirectoryConfiguration("Storage"));
-        var st = TinyhandSerializer.SerializeToString((JournalConfiguration)sc);
+        // var sc = new SimpleJournalConfiguration(new LocalDirectoryConfiguration("Storage"));
+        // var st = TinyhandSerializer.SerializeToString((JournalConfiguration)sc);
 
         var tc = unit.Context.ServiceProvider.GetRequiredService<TestClass>();
         await tc.Test1();

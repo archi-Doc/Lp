@@ -230,7 +230,7 @@ public sealed class StorageGroup
             }
         }
 
-        storageObject.Storage?.Delete(ref fileId);
+        storageObject.Storage?.DeleteAndForget(ref fileId);
     }
 
     internal async Task<CrystalStartResult> PrepareAndCheck(StorageConfiguration configuration, PrepareParam param, ReadOnlyMemory<byte>? data)

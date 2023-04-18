@@ -14,7 +14,7 @@ public partial interface IStorage
 
     CrystalResult Put(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared);
 
-    CrystalResult Delete(ref ulong fileId);
+    CrystalResult DeleteAndForget(ref ulong fileId);
 
     Task<CrystalMemoryOwnerResult> GetAsync(ref ulong fileId);
 

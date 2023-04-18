@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
 using System.Runtime.CompilerServices;
 using CrystalData.Filer;
 
@@ -28,12 +27,12 @@ internal partial class SimpleStorage : IStorage
 
     private Crystalizer crystalizer;
     private string directory = string.Empty;
+    private ICrystal<SimpleStorageData>? crystal;
     private IFiler? filer;
     private IRawFiler? rawFiler;
     private TimeSpan timeout;
 
     private object syncObject = new();
-    private Dictionary<uint, int> fileToSize = new();
 
     #endregion
 
@@ -122,7 +121,7 @@ internal partial class SimpleStorage : IStorage
         return this.rawFiler.WriteAndForget(this.FileToPath(FileIdToFile(fileId)), 0, dataToBeShared);
     }
 
-    CrystalResult IStorage.Delete(ref ulong fileId)
+    CrystalResult IStorage.DeleteAndForget(ref ulong fileId)
     {
         if (this.rawFiler == null)
         {
