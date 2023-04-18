@@ -297,10 +297,10 @@ public class Crystalizer
     public ICrystal<TData> CreateCrystal<TData>()
         where TData : IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
-        if (!this.typeToCrystal.TryGetValue(typeof(TData), out _))
+        /*if (!this.typeToCrystal.TryGetValue(typeof(TData), out _))
         {
             ThrowTypeNotRegistered(typeof(TData));
-        }
+        }*/
 
         var crystal = new CrystalObject<TData>(this);
         this.crystals.TryAdd(crystal, 0);
@@ -310,11 +310,11 @@ public class Crystalizer
     public ICrystal<TData> CreateBigCrystal<TData>()
         where TData : BaseData, IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
-        if (!this.typeToCrystal.TryGetValue(typeof(TData), out var c) ||
+        /*if (!this.typeToCrystal.TryGetValue(typeof(TData), out var c) ||
             c is not IBigCrystal)
         {
             ThrowTypeNotRegistered(typeof(TData));
-        }
+        }*/
 
         var crystal = new BigCrystalObject<TData>(this);
         this.crystals.TryAdd(crystal, 0);

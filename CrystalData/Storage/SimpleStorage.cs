@@ -23,16 +23,14 @@ internal partial class SimpleStorage : IStorage
 
     #region FieldAndProperty
 
-    public long StorageUsage { get; private set; } // lock (this.syncObject)
+    public long StorageUsage => this.data == null ? 0 : this.data.StorageUsage;
 
     private Crystalizer crystalizer;
     private string directory = string.Empty;
     private ICrystal<SimpleStorageData>? crystal;
-    private IFiler? filer;
+    private SimpleStorageData? data;
     private IRawFiler? rawFiler;
     private TimeSpan timeout;
-
-    private object syncObject = new();
 
     #endregion
 
@@ -52,45 +50,29 @@ internal partial class SimpleStorage : IStorage
         }
 
         var filerConfiguration = storageConfiguration.DirectoryConfiguration.CombinePath(SimpleStorageFile);
-        this.filer = this.crystalizer.ResolveFiler(filerConfiguration);
-        var resultFiler = await this.filer.PrepareAndCheck(this.crystalizer, filerConfiguration).ConfigureAwait(false);
-        if (resultFiler != CrystalResult.Success)
-        {
-            return resultFiler;
-        }
-
         this.rawFiler = this.crystalizer.ResolveRawFiler(storageConfiguration.DirectoryConfiguration);
-        resultFiler = await this.rawFiler.PrepareAndCheck(this.crystalizer, filerConfiguration).ConfigureAwait(false);
+        var resultFiler = await this.rawFiler.PrepareAndCheck(this.crystalizer, filerConfiguration).ConfigureAwait(false);
         if (resultFiler != CrystalResult.Success)
         {
             return resultFiler;
         }
 
-        if (createNew)
+        if (this.crystal == null)
         {
-            return CrystalResult.Success;
-        }
-
-        var (result, waypoint) = await PathHelper.LoadData(this.filer).ConfigureAwait(false);
-        if (result.IsFailure)
-        {
-            return result.Result;
-        }
-
-        try
-        {
-            if (TinyhandSerializer.Deserialize<Dictionary<uint, int>>(result.Data.Memory.Span) is { } dictionary)
+            this.crystal = this.crystalizer.CreateCrystal<SimpleStorageData>();
+            this.crystal.Configure(new(SavePolicy.Manual, filerConfiguration));
+            var resultCrystal = await this.crystal.PrepareAndLoad(null).ConfigureAwait(false); // tempcode
+            if (resultCrystal != CrystalStartResult.Success)
             {
-                this.fileToSize = dictionary;
+                if (createNew)
+                {// tempcode
+                    return CrystalResult.Success;
+                }
+
+                return CrystalResult.NoData;
             }
-        }
-        catch
-        {
-            return CrystalResult.DeserializeError;
-        }
-        finally
-        {
-            result.Return();
+
+            this.data = this.crystal.Object;
         }
 
         return CrystalResult.Success;
@@ -98,15 +80,9 @@ internal partial class SimpleStorage : IStorage
 
     async Task IStorage.Save()
     {
-        if (this.filer != null)
+        if (this.crystal != null)
         {
-            byte[] byteArray;
-            lock (this.syncObject)
-            {
-                byteArray = TinyhandSerializer.Serialize(this.fileToSize);
-            }
-
-            await PathHelper.SaveData(this.crystalizer!, byteArray, this.filer, 0);
+            await this.crystal.Save(true).ConfigureAwait(false);
         }
     }
 
@@ -134,9 +110,9 @@ internal partial class SimpleStorage : IStorage
             return CrystalResult.NoFile;
         }
 
-        lock (this.syncObject)
+        if (this.data != null)
         {
-            if (!this.fileToSize.Remove(file))
+            if (this.data.Remove(file))
             {// Not found
                 fileId = 0;
                 return CrystalResult.NoFile;
@@ -151,20 +127,17 @@ internal partial class SimpleStorage : IStorage
 
     Task<CrystalMemoryOwnerResult> IStorage.GetAsync(ref ulong fileId)
     {
-        if (this.rawFiler == null)
+        if (this.rawFiler == null || this.data == null)
         {
             return Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.NoFiler));
         }
 
         var file = FileIdToFile(fileId);
         int size;
-        lock (this.syncObject)
-        {
-            if (!this.fileToSize.TryGetValue(file, out size))
-            {// Not found
-                fileId = 0;
-                return Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.NoFile));
-            }
+        if (!this.data.TryGetValue(file, out size))
+        {// Not found
+            fileId = 0;
+            return Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.NoFile));
         }
 
         return this.rawFiler.ReadAsync(this.FileToPath(file), 0, size, this.timeout);
@@ -183,7 +156,7 @@ internal partial class SimpleStorage : IStorage
 
     Task<CrystalResult> IStorage.DeleteAsync(ref ulong fileId)
     {
-        if (this.rawFiler == null)
+        if (this.rawFiler == null || this.data == null)
         {
             return Task.FromResult(CrystalResult.NoFiler);
         }
@@ -194,10 +167,7 @@ internal partial class SimpleStorage : IStorage
             return Task.FromResult(CrystalResult.NoFile);
         }
 
-        lock (this.syncObject)
-        {
-            this.fileToSize.Remove(file);
-        }
+        this.data.Remove(file);
 
         fileId = 0;
         return this.rawFiler.DeleteAsync(this.FileToPath(file), this.timeout);
@@ -263,39 +233,14 @@ internal partial class SimpleStorage : IStorage
 
     private void PutInternal(ref ulong fileId, int dataSize)
     {
+        if (this.data == null)
+        {
+            return;
+        }
+
         var file = FileIdToFile(fileId);
-        lock (this.syncObject)
-        {
-            if (file != 0 && this.fileToSize.TryGetValue(file, out var size))
-            {
-                if (dataSize > size)
-                {
-                    this.StorageUsage += dataSize - size;
-                }
-
-                this.fileToSize[file] = dataSize;
-            }
-            else
-            {// Not found
-                file = this.NewFile(dataSize);
-                this.StorageUsage += dataSize;
-            }
-        }
-
+        this.data.Put(file, dataSize);
         fileId = FileToFileId(file);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private uint NewFile(int size)
-    {// lock (this.syncObject)
-        while (true)
-        {
-            var file = RandomVault.Pseudo.NextUInt32();
-            if (this.fileToSize.TryAdd(file, size))
-            {
-                return file;
-            }
-        }
     }
 
     #endregion

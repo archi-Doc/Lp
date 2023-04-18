@@ -12,8 +12,15 @@ internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>
     {
     }
 
+    #region PropertyAndField
+
+    public long StorageUsage => this.storageUsage;
+
     private object syncObject = new();
+    private long storageUsage;
     private Dictionary<uint, int> fileToSize = new();
+
+    #endregion
 
     static void ITinyhandSerialize<SimpleStorageData>.Serialize(ref TinyhandWriter writer, scoped ref SimpleStorageData? value, TinyhandSerializerOptions options)
     {
@@ -25,6 +32,8 @@ internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>
 
         lock (value.syncObject)
         {
+            writer.Write(value.storageUsage);
+
             writer.WriteMapHeader(value.fileToSize.Count);
             foreach (var x in value.fileToSize)
             {
@@ -44,11 +53,68 @@ internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>
         value ??= new();
         lock (value.syncObject)
         {
+            value.storageUsage = reader.ReadInt64();
+
             var count = reader.ReadMapHeader();
             value.fileToSize = new(count);
             for (var i = 0; i < count; i++)
             {
                 value.fileToSize.TryAdd(reader.ReadUInt32(), reader.ReadInt32());
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool Remove(uint file)
+    {
+        lock (this.syncObject)
+        {
+            return this.fileToSize.Remove(file);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool TryGetValue(uint file, out int size)
+    {
+        lock (this.syncObject)
+        {
+            return this.fileToSize.TryGetValue(file, out size);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public uint NewFile(int size)
+    {
+        lock (this.syncObject)
+        {
+            while (true)
+            {
+                var file = RandomVault.Pseudo.NextUInt32();
+                if (this.fileToSize.TryAdd(file, size))
+                {
+                    return file;
+                }
+            }
+        }
+    }
+
+    public void Put(uint file, int dataSize)
+    {
+        lock (this.syncObject)
+        {
+            if (file != 0 && this.fileToSize.TryGetValue(file, out var size))
+            {
+                if (dataSize > size)
+                {
+                    this.storageUsage += dataSize - size;
+                }
+
+                this.fileToSize[file] = dataSize;
+            }
+            else
+            {// Not found
+                file = this.NewFile(dataSize);
+                this.storageUsage += dataSize;
             }
         }
     }
