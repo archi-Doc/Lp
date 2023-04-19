@@ -88,12 +88,15 @@ internal partial class SimpleStorage : IStorage
 
     CrystalResult IStorage.Put(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
     {
-        if (this.rawFiler == null)
+        if (this.rawFiler == null || this.data == null)
         {
             return CrystalResult.NoFiler;
         }
 
-        this.PutInternal(ref fileId, dataToBeShared.Memory.Length);
+        var file = FileIdToFile(fileId);
+        this.data.Put(ref file, dataToBeShared.Memory.Length);
+        fileId = FileToFileId(file);
+
         return this.rawFiler.WriteAndForget(this.FileToPath(FileIdToFile(fileId)), 0, dataToBeShared);
     }
 
@@ -145,12 +148,15 @@ internal partial class SimpleStorage : IStorage
 
     Task<CrystalResult> IStorage.PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
     {
-        if (this.rawFiler == null)
+        if (this.rawFiler == null || this.data == null)
         {
             return Task.FromResult(CrystalResult.NoFiler);
         }
 
-        this.PutInternal(ref fileId, dataToBeShared.Memory.Length);
+        var file = FileIdToFile(fileId);
+        this.data.Put(ref file, dataToBeShared.Memory.Length);
+        fileId = FileToFileId(file);
+
         return this.rawFiler.WriteAsync(this.FileToPath(FileIdToFile(fileId)), 0, dataToBeShared, this.timeout);
     }
 
@@ -225,22 +231,6 @@ internal partial class SimpleStorage : IStorage
         {
             return (char)('W' + a);
         }
-    }
-
-    #endregion
-
-    #region Internal
-
-    private void PutInternal(ref ulong fileId, int dataSize)
-    {
-        if (this.data == null)
-        {
-            return;
-        }
-
-        var file = FileIdToFile(fileId);
-        this.data.Put(file, dataSize);
-        fileId = FileToFileId(file);
     }
 
     #endregion

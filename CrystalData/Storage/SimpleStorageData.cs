@@ -82,16 +82,16 @@ internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    /*[MethodImpl(MethodImplOptions.AggressiveInlining)]
     public uint NewFile(int size)
     {
         lock (this.syncObject)
         {
             return this.NewFileInternal(size);
         }
-    }
+    }*/
 
-    public void Put(uint file, int dataSize)
+    public void Put(ref uint file, int dataSize)
     {
         lock (this.syncObject)
         {
