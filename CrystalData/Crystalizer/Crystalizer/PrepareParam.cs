@@ -2,16 +2,16 @@
 
 namespace CrystalData;
 
-public class PrepareParam
+public class PrepareParam : CrystalPrepare
 {
-    public PrepareParam(Crystalizer crystalizer, Type dataType, CrystalPrepare? prepare)
-    {
-        prepare ??= CrystalPrepare.Default;
+    public static new PrepareParam NoQuery<TData>(Crystalizer crystalizer)
+        => CrystalPrepare.NoQuery.ToParam<TData>(crystalizer);
 
+    internal PrepareParam(Crystalizer crystalizer, Type dataType)
+    {
         this.Crystalizer = crystalizer;
         this.DataType = dataType;
         this.DataTypeName = this.DataType.FullName ?? string.Empty;
-        this.QueryDelegate = prepare.QueryDelegate;
     }
 
     public void RegisterConfiguration(PathConfiguration configuration, out bool newlyRegistered)
@@ -24,14 +24,9 @@ public class PrepareParam
     /*public DataAndConfigurationIdentifier GetDataAndConfiguration(PathConfiguration configuration)
         => new DataAndConfigurationIdentifier(this.DataTypeName, configuration);*/
 
-    public Task<AbortOrComplete> Query(CrystalStartResult query, string[]? list = null)
-        => this.QueryDelegate == null ? Task.FromResult(AbortOrComplete.Complete) : this.QueryDelegate(query, list);
-
     public Crystalizer Crystalizer { get; }
 
     public Type DataType { get; }
 
     public string DataTypeName { get; }
-
-    public CrystalPrepareQueryDelegate? QueryDelegate { get; }
 }

@@ -2,18 +2,30 @@
 
 namespace CrystalData;
 
-public record CrystalPrepare(bool ForceStart = false, CrystalPrepareQueryDelegate? QueryDelegate = null, bool FromScratch = false)
-{
-    public static readonly CrystalPrepare Default = new(true);
+public delegate ValueTask<AbortOrContinue> CrystalPrepareQueryDelegate(CrystalStartResult query, string[]? list);
 
-    public Task<AbortOrComplete> Query(CrystalStartResult query, string[]? list = null)
-        => this.QueryDelegate == null || this.ForceStart ? Task.FromResult(AbortOrComplete.Complete) : this.QueryDelegate(query, list);
+public class CrystalPrepare
+{
+    public static readonly CrystalPrepare NoQuery = new();
+
+    public static readonly CrystalPrepare New = new() { CreateNew = true, };
+
+    // public bool ForceStart { get; protected set; }
+
+    public bool CreateNew { get; init; } = false;
+
+    public CrystalPrepareQueryDelegate? QueryDelegate { get; init; } = null;
+
+    public ValueTask<AbortOrContinue> Query(CrystalStartResult query, string[]? list = null)
+        => this.QueryDelegate == null ? ValueTask.FromResult(AbortOrContinue.Continue) : this.QueryDelegate(query, list);
+
+    public PrepareParam ToParam<TData>(Crystalizer crystalizer)
+        => new PrepareParam(crystalizer, typeof(TData))
+        {
+            CreateNew = this.CreateNew,
+            QueryDelegate = this.QueryDelegate,
+        };
 }
-
-/*public record CrystalStopParam(bool RemoveAll = false)
-{
-    public static readonly CrystalStopParam Default = new(false);
-}*/
 
 public enum CrystalStartResult
 {
@@ -26,5 +38,3 @@ public enum CrystalStartResult
     DeserializeError,
     NoJournal,
 }
-
-public delegate Task<AbortOrComplete> CrystalPrepareQueryDelegate(CrystalStartResult query, string[]? list);

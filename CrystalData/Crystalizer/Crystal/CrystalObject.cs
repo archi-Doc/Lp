@@ -50,7 +50,7 @@ public class CrystalObject<TData> : ICrystal<TData>
                 // Prepare and load
                 if (!this.Prepared)
                 {
-                    this.PrepareAndLoadInternal(null).Wait();
+                    this.PrepareAndLoadInternal(CrystalPrepare.NoQuery).Wait();
                 }
 
                 if (this.obj != null)
@@ -142,7 +142,7 @@ public class CrystalObject<TData> : ICrystal<TData>
         }
     }
 
-    async Task<CrystalStartResult> ICrystal.PrepareAndLoad(CrystalPrepare? param)
+    async Task<CrystalStartResult> ICrystal.PrepareAndLoad(CrystalPrepare param)
     {
         using (this.semaphore.Lock())
         {
@@ -221,7 +221,7 @@ public class CrystalObject<TData> : ICrystal<TData>
         {
             if (!this.Prepared)
             {
-                await this.PrepareAndLoadInternal(null).ConfigureAwait(false);
+                await this.PrepareAndLoadInternal(CrystalPrepare.NoQuery).ConfigureAwait(false);
             }
 
             // Delete file/storage
@@ -256,14 +256,14 @@ public class CrystalObject<TData> : ICrystal<TData>
 
     #endregion
 
-    protected virtual async Task<CrystalStartResult> PrepareAndLoadInternal(CrystalPrepare? prepare)
+    protected virtual async Task<CrystalStartResult> PrepareAndLoadInternal(CrystalPrepare prepare)
     {// this.semaphore.Lock()
         if (this.Prepared)
         {
             return CrystalStartResult.Success;
         }
 
-        var param = this.Crystalizer.CreatePrepareParam<TData>(prepare);
+        var param = prepare.ToParam<TData>(this.Crystalizer);
 
         // Filer
         if (this.filer == null)
@@ -272,7 +272,7 @@ public class CrystalObject<TData> : ICrystal<TData>
             var result = await this.filer.PrepareAndCheck(this.Crystalizer, this.CrystalConfiguration.FileConfiguration).ConfigureAwait(false);
             if (result != CrystalResult.Success)
             {// Filer error
-                if (await param.Query(CrystalStartResult.FileNotFound).ConfigureAwait(false) == AbortOrComplete.Abort)
+                if (await param.Query(CrystalStartResult.FileNotFound).ConfigureAwait(false) == AbortOrContinue.Abort)
                 {
                     return CrystalStartResult.DirectoryError;
                 }
@@ -298,7 +298,7 @@ public class CrystalObject<TData> : ICrystal<TData>
             if (waypointResult.IsFailure ||
                 !Waypoint.TryParse(waypointResult.Data.Memory.Span, out var waypoint))
             {// No waypoint file
-                if (await param.Query(CrystalStartResult.FileNotFound).ConfigureAwait(false) == AbortOrComplete.Complete)
+                if (await param.Query(CrystalStartResult.FileNotFound).ConfigureAwait(false) == AbortOrContinue.Continue)
                 {
                     return DataLost();
                 }
@@ -315,7 +315,7 @@ public class CrystalObject<TData> : ICrystal<TData>
         var memoryResult = await this.filer.ReadAsync(0, -1).ConfigureAwait(false);
         if (memoryResult.IsFailure || FarmHash.Hash64(memoryResult.Data.Memory.Span) != this.waypoint.Hash)
         { // Data read error or Hash does not match
-            if (await param.Query(CrystalStartResult.FileNotFound).ConfigureAwait(false) == AbortOrComplete.Complete)
+            if (await param.Query(CrystalStartResult.FileNotFound).ConfigureAwait(false) == AbortOrContinue.Continue)
             {
                 return DataLost();
             }
@@ -336,7 +336,7 @@ public class CrystalObject<TData> : ICrystal<TData>
             }
             catch
             {
-                if (await param.Query(CrystalStartResult.FileNotFound).ConfigureAwait(false) == AbortOrComplete.Complete)
+                if (await param.Query(CrystalStartResult.FileNotFound).ConfigureAwait(false) == AbortOrContinue.Continue)
                 {
                     return DataLost();
                 }
@@ -401,7 +401,7 @@ public class CrystalObject<TData> : ICrystal<TData>
         if (this.storage == null)
         {
             this.storage = this.Crystalizer.ResolveStorage(this.CrystalConfiguration.StorageConfiguration);
-            this.storage.PrepareAndCheck(this.Crystalizer.CreatePrepareParam<TData>(null), this.CrystalConfiguration.StorageConfiguration, false).Wait();
+            this.storage.PrepareAndCheck(PrepareParam.NoQuery<TData>(this.Crystalizer), this.CrystalConfiguration.StorageConfiguration, false).Wait();
         }
     }
 }

@@ -61,7 +61,7 @@ internal partial class SimpleStorage : IStorage
         {
             this.crystal = this.crystalizer.CreateCrystal<SimpleStorageData>();
             this.crystal.Configure(new(SavePolicy.Manual, filerConfiguration));
-            var resultCrystal = await this.crystal.PrepareAndLoad(null).ConfigureAwait(false); // tempcode
+            var resultCrystal = await this.crystal.PrepareAndLoad(param).ConfigureAwait(false); // tempcode
             if (resultCrystal != CrystalStartResult.Success)
             {
                 if (createNew)

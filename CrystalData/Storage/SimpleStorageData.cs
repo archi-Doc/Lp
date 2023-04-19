@@ -17,8 +17,8 @@ internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>
     public long StorageUsage => this.storageUsage;
 
     private object syncObject = new();
-    private long storageUsage;
-    private Dictionary<uint, int> fileToSize = new();
+    private long storageUsage; // syncObject
+    private Dictionary<uint, int> fileToSize = new(); // syncObject
 
     #endregion
 
@@ -87,14 +87,7 @@ internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>
     {
         lock (this.syncObject)
         {
-            while (true)
-            {
-                var file = RandomVault.Pseudo.NextUInt32();
-                if (this.fileToSize.TryAdd(file, size))
-                {
-                    return file;
-                }
-            }
+            return this.NewFileInternal(size);
         }
     }
 
@@ -104,7 +97,7 @@ internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>
         {
             if (file != 0 && this.fileToSize.TryGetValue(file, out var size))
             {
-                if (dataSize > size)
+                // if (dataSize > size)
                 {
                     this.storageUsage += dataSize - size;
                 }
@@ -113,8 +106,21 @@ internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>
             }
             else
             {// Not found
-                file = this.NewFile(dataSize);
+                file = this.NewFileInternal(dataSize);
                 this.storageUsage += dataSize;
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public uint NewFileInternal(int size)
+    {// this.syncObject
+        while (true)
+        {
+            var file = RandomVault.Pseudo.NextUInt32();
+            if (this.fileToSize.TryAdd(file, size))
+            {
+                return file;
             }
         }
     }

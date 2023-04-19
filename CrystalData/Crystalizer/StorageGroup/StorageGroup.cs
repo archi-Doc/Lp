@@ -110,6 +110,11 @@ public sealed class StorageGroup
 
     public (AddStorageResult Result, ushort Id) AddStorage_SimpleS3(string bucket, string path, long capacity)
     {
+        if (this.prepareParam == null)
+        {// tempcode
+            return (AddStorageResult.WriteError, 0);
+        }
+
         if (capacity < 0)
         {
             capacity = DefaultStorageCapacity;
@@ -246,7 +251,7 @@ public sealed class StorageGroup
             }
             catch
             {
-                if (await param.Query(CrystalStartResult.FileError).ConfigureAwait(false) == AbortOrComplete.Abort)
+                if (await param.Query(CrystalStartResult.FileError).ConfigureAwait(false) == AbortOrContinue.Abort)
                 {
                     return CrystalStartResult.FileError;
                 }
@@ -265,7 +270,7 @@ public sealed class StorageGroup
         }
 
         if (errorList != null &&
-            await param.Query(CrystalStartResult.DirectoryError, errorList.Select(x => x.ToString()).ToArray()).ConfigureAwait(false) == AbortOrComplete.Abort)
+            await param.Query(CrystalStartResult.DirectoryError, errorList.Select(x => x.ToString()).ToArray()).ConfigureAwait(false) == AbortOrContinue.Abort)
         {
             return CrystalStartResult.FileError;
         }

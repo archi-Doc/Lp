@@ -224,7 +224,7 @@ public class Crystalizer
 
     public async Task<CrystalStartResult> PrepareAndLoadAll(CrystalPrepare? param = null)
     {
-        param ??= CrystalPrepare.Default;
+        param ??= CrystalPrepare.NoQuery;
 
         var journalResult = await this.PrepareJournal(param).ConfigureAwait(false);
         if (journalResult.IsFailure())
@@ -447,10 +447,6 @@ public class Crystalizer
         return bigCrystalConfiguration;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal PrepareParam CreatePrepareParam<TData>(CrystalPrepare? prepare)
-        => new(this, typeof(TData), prepare);
-
     private async Task<CrystalResult> PrepareJournal(CrystalPrepare prepare)
     {
         if (this.Journal == null)
@@ -471,7 +467,7 @@ public class Crystalizer
             }
         }
 
-        return await this.Journal.Prepare(this.CreatePrepareParam<Crystalizer>(prepare)).ConfigureAwait(false);
+        return await this.Journal.Prepare(prepare.ToParam<Crystalizer>(this)).ConfigureAwait(false);
     }
 
     #endregion
