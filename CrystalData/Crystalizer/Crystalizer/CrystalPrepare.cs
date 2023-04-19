@@ -27,7 +27,7 @@ public class CrystalPrepare
         };
 }
 
-public enum CrystalStartResult
+/*public enum CrystalStartResult
 {
     Success,
     FileNotFound,
@@ -37,4 +37,4 @@ public enum CrystalStartResult
     NoDirectoryAvailable,
     DeserializeError,
     NoJournal,
-}
+}*/

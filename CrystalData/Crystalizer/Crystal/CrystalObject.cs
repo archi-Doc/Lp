@@ -142,13 +142,13 @@ public class CrystalObject<TData> : ICrystal<TData>
         }
     }
 
-    async Task<CrystalStartResult> ICrystal.PrepareAndLoad(CrystalPrepare param)
+    async Task<CrystalResult> ICrystal.PrepareAndLoad(CrystalPrepare param)
     {
         using (this.semaphore.Lock())
         {
             if (this.Prepared)
             {// Prepared
-                return CrystalStartResult.Success;
+                return CrystalResult.Success;
             }
 
             return await this.PrepareAndLoadInternal(param).ConfigureAwait(false);
@@ -256,11 +256,11 @@ public class CrystalObject<TData> : ICrystal<TData>
 
     #endregion
 
-    protected virtual async Task<CrystalStartResult> PrepareAndLoadInternal(CrystalPrepare prepare)
+    protected virtual async Task<CrystalResult> PrepareAndLoadInternal(CrystalPrepare prepare)
     {// this.semaphore.Lock()
         if (this.Prepared)
         {
-            return CrystalStartResult.Success;
+            return CrystalResult.Success;
         }
 
         var param = prepare.ToParam<TData>(this.Crystalizer);
@@ -354,9 +354,9 @@ public class CrystalObject<TData> : ICrystal<TData>
         this.Crystalizer.Journal?.RegisterToken(this.waypoint.JournalToken, this.obj);
 
         this.Prepared = true;
-        return CrystalStartResult.Success;
+        return CrystalResult.Success;
 
-        CrystalStartResult DataLost()
+        CrystalResult DataLost()
         {
             TinyhandSerializer.ReconstructObject<TData>(ref this.obj);
             var hash = FarmHash.Hash64(TinyhandSerializer.SerializeObject(this.obj));
@@ -373,7 +373,7 @@ public class CrystalObject<TData> : ICrystal<TData>
             this.waypoint = new(journalPosition, journalToken, hash);
 
             this.Prepared = true;
-            return CrystalStartResult.Success;
+            return CrystalResult.Success;
         }
     }
 
