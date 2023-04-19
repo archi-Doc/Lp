@@ -15,7 +15,7 @@ public interface IRawFiler
     /// <returns><see cref="CrystalResult"/>.</returns>
     Task<CrystalResult> PrepareAndCheck(PrepareParam param, PathConfiguration configuration);
 
-    Task Terminate();
+    Task TerminateAsync();
 
     Task<CrystalMemoryOwnerResult> ReadAsync(string path, long offset, int length, TimeSpan timeout);
 
@@ -36,10 +36,10 @@ public interface IRawFiler
 
     Task<List<PathInformation>> ListAsync(string path, TimeSpan timeout);
 
+    #region InfiniteTimeout
+
     Task<CrystalMemoryOwnerResult> ReadAsync(string path, long offset, int length)
         => this.ReadAsync(path, offset, length, TimeSpan.MinValue);
-
-    #region InfiniteTimeout
 
     Task<CrystalResult> WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate = true)
         => this.WriteAsync(path, offset, dataToBeShared, TimeSpan.MinValue, truncate);

@@ -35,7 +35,7 @@ TryWrite:
             tryCount++;
             if (tryCount > 2)
             {
-                work.Result = CrystalResult.WriteError;
+                work.Result = CrystalResult.FileOperationError;
                 work.WriteData.Return();
                 return;
             }
@@ -75,7 +75,7 @@ TryWrite:
                     }
                     catch
                     {
-                        work.Result = CrystalResult.WriteError;
+                        work.Result = CrystalResult.FileOperationError;
                         return;
                     }
 
@@ -83,7 +83,7 @@ TryWrite:
                 }
                 else
                 {
-                    work.Result = CrystalResult.WriteError;
+                    work.Result = CrystalResult.FileOperationError;
                     return;
                 }
 
@@ -120,7 +120,7 @@ TryWrite:
                     }
                     catch
                     {
-                        work.Result = CrystalResult.ReadError;
+                        work.Result = CrystalResult.FileOperationError;
                         return;
                     }
                 }
@@ -133,7 +133,7 @@ TryWrite:
                     {
                         File.Delete(filePath);
                         worker.Logger?.TryGet()?.Log($"DeleteAndExit {work.Path}");
-                        work.Result = CrystalResult.ReadError;
+                        work.Result = CrystalResult.FileOperationError;
                         return;
                     }
 
@@ -150,7 +150,7 @@ TryWrite:
             }
             catch
             {
-                work.Result = CrystalResult.ReadError;
+                work.Result = CrystalResult.FileOperationError;
                 worker.Logger?.TryGet()?.Log($"Read exception {work.Path}");
             }
             finally
@@ -167,7 +167,7 @@ TryWrite:
             }
             catch
             {
-                work.Result = CrystalResult.DeleteError;
+                work.Result = CrystalResult.FileOperationError;
             }
             finally
             {
@@ -182,7 +182,7 @@ TryWrite:
             }
             catch
             {
-                work.Result = CrystalResult.DeleteError;
+                work.Result = CrystalResult.FileOperationError;
             }
         }
         else if (work.Type == FilerWork.WorkType.List)

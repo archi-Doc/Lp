@@ -50,7 +50,7 @@ public class S3Filer : FilerBase, IRawFiler
         var worker = (S3Filer)w;
         if (worker.client == null)
         {
-            work.Result = CrystalResult.NoFiler;
+            work.Result = CrystalResult.NotPrepared;
             return;
         }
 
@@ -63,7 +63,7 @@ TryWrite:
             tryCount++;
             if (tryCount > 1)
             {
-                work.Result = CrystalResult.WriteError;
+                work.Result = CrystalResult.FileOperationError;
                 work.WriteData.Return();
                 return;
             }
@@ -135,7 +135,7 @@ TryWrite:
             {
             }
 
-            work.Result = CrystalResult.ReadError;
+            work.Result = CrystalResult.FileOperationError;
             worker.Logger?.TryGet()?.Log($"Read exception {filePath}");
         }
         else if (work.Type == FilerWork.WorkType.Delete)
@@ -153,7 +153,7 @@ TryWrite:
             {
             }
 
-            work.Result = CrystalResult.DeleteError;
+            work.Result = CrystalResult.FileOperationError;
         }
         else if (work.Type == FilerWork.WorkType.DeleteDirectory)
         {
@@ -168,7 +168,7 @@ TryWrite:
                 var listResponse = await worker.client.ListObjectsV2Async(listRequest).ConfigureAwait(false);
                 if (listResponse.HttpStatusCode != System.Net.HttpStatusCode.OK)
                 {
-                    work.Result = CrystalResult.DeleteError;
+                    work.Result = CrystalResult.FileOperationError;
                     return;
                 }
 
@@ -187,7 +187,7 @@ TryWrite:
                 var deleteResponse = await worker.client.DeleteObjectsAsync(deleteRequest).ConfigureAwait(false);
                 if (deleteResponse.HttpStatusCode != System.Net.HttpStatusCode.OK)
                 {
-                    work.Result = CrystalResult.DeleteError;
+                    work.Result = CrystalResult.FileOperationError;
                     return;
                 }
             }
@@ -269,13 +269,13 @@ RepeatList:
                     var response = await this.client.PutObjectAsync(request).ConfigureAwait(false);
                     if (response.HttpStatusCode != System.Net.HttpStatusCode.OK)
                     {
-                        return CrystalResult.WriteError;
+                        return CrystalResult.FileOperationError;
                     }
                 }
             }
             catch
             {
-                return CrystalResult.WriteError;
+                return CrystalResult.FileOperationError;
             }
         }
 
@@ -287,7 +287,7 @@ RepeatList:
         return CrystalResult.Success;
     }
 
-    async Task IRawFiler.Terminate()
+    async Task IRawFiler.TerminateAsync()
     {
         await this.WaitForCompletionAsync().ConfigureAwait(false);
         this.client?.Dispose();

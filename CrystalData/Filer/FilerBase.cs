@@ -52,7 +52,7 @@ public abstract class FilerBase : TaskWorker<FilerWork>, IRawFiler
         return CrystalResult.Success;
     }
 
-    async Task IRawFiler.Terminate()
+    async Task IRawFiler.TerminateAsync()
     {
         await this.WaitForCompletionAsync().ConfigureAwait(false);
         this.Dispose();

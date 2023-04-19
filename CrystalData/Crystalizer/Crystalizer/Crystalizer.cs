@@ -272,13 +272,13 @@ public class Crystalizer
         {
             if (this.localFiler is not null)
             {
-                tasks.Add(this.localFiler.Terminate());
+                tasks.Add(this.localFiler.TerminateAsync());
                 this.localFiler = null;
             }
 
             foreach (var x in this.bucketToS3Filer.Values)
             {
-                tasks.Add(x.Terminate());
+                tasks.Add(x.TerminateAsync());
             }
 
             this.bucketToS3Filer.Clear();
@@ -463,7 +463,7 @@ public class Crystalizer
             }
             else
             {
-                return CrystalResult.InvalidConfiguration;
+                return CrystalResult.NotFound;
             }
         }
 

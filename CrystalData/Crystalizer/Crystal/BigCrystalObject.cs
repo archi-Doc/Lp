@@ -66,14 +66,19 @@ public class BigCrystalObject<TData> : CrystalObject<TData>, IBigCrystal<TData>,
                 await this.PrepareAndLoadInternal(CrystalPrepare.NoQuery).ConfigureAwait(false);
             }
 
-            // Save & Unload datum and metadata.
-            this.obj?.Save(unload);
-
             // Save storages
             await this.StorageGroup.SaveStorage().ConfigureAwait(false);
 
-            // Save crystal
-            await PathHelper.SaveData(this.Crystalizer, this.obj, this.crystalFiler, 0).ConfigureAwait(false);
+            if (this.obj is not null)
+            {
+                // Save & Unload datum and metadata.
+                this.obj.Save(unload);
+
+                if (this.crystalFiler is not null)
+                {// Save crystal
+                    await PathHelper.SaveData(this.Crystalizer, this.obj, this.crystalFiler, 0).ConfigureAwait(false);
+                }
+            }
 
             // Save storage group
             if (this.storageGroupFiler != null)

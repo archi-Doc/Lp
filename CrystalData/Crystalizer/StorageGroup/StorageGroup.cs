@@ -197,7 +197,7 @@ public sealed class StorageGroup
             storage.MemoryStat.Add(memoryToBeShared.Memory.Length);
         }
 
-        storage.Storage?.Put(ref fileId, memoryToBeShared);
+        storage.Storage?.PutAndForget(ref fileId, memoryToBeShared);
     }
 
     public Task<CrystalMemoryOwnerResult> Load(ushort storageId, ulong fileId)
@@ -208,14 +208,14 @@ public sealed class StorageGroup
             storageObject = this.GetStorageFromId(storageId);
             if (storageObject == null)
             {
-                return Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.NoStorage));
+                return Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.NotFound));
             }
         }
 
         var task = storageObject.Storage?.GetAsync(ref fileId);
         if (task == null)
         {
-            return Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.NoStorage));
+            return Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.NotFound));
         }
 
         return task;

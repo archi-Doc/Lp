@@ -12,13 +12,13 @@ public partial interface IStorage
 
     Task Save();
 
-    CrystalResult Put(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared);
-
-    CrystalResult DeleteAndForget(ref ulong fileId);
-
     Task<CrystalMemoryOwnerResult> GetAsync(ref ulong fileId);
 
+    CrystalResult PutAndForget(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared);
+
     Task<CrystalResult> PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared);
+
+    CrystalResult DeleteAndForget(ref ulong fileId);
 
     Task<CrystalResult> DeleteAsync(ref ulong fileId);
 

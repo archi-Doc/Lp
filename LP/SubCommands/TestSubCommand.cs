@@ -61,7 +61,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         bb = token.ValidateAndVerifyWithoutPublicKey();
 
         originator.CreateSignature(value, out var signature);
-        this.userInterfaceService.WriteLine(HashedString.FromEnum(CrystalResult.NoStorage));
+        // this.userInterfaceService.WriteLine(HashedString.FromEnum(CrystalResult.NoStorage));
 
         using (var terminal = this.control.NetControl.Terminal.Create(Netsphere.NodeAddress.Alternative))
         {

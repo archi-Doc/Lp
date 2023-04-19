@@ -25,10 +25,11 @@ internal partial class SimpleStorage : IStorage
 
     public long StorageUsage => this.data == null ? 0 : this.data.StorageUsage;
 
+    private SimpleStorageData? data => this.crystal?.Object;
+
     private Crystalizer crystalizer;
     private string directory = string.Empty;
     private ICrystal<SimpleStorageData>? crystal;
-    private SimpleStorageData? data;
     private IRawFiler? rawFiler;
     private TimeSpan timeout;
 
@@ -43,15 +44,15 @@ internal partial class SimpleStorage : IStorage
 
     async Task<CrystalResult> IStorage.PrepareAndCheck(PrepareParam param, StorageConfiguration storageConfiguration, bool createNew)
     {
-        this.directory = storageConfiguration.DirectoryConfiguration.Path;
+        var directoryConfiguration = storageConfiguration.DirectoryConfiguration;
+        this.directory = directoryConfiguration.Path;
         if (!string.IsNullOrEmpty(this.directory) && !this.directory.EndsWith('/'))
         {
             this.directory += "/";
         }
 
-        var filerConfiguration = storageConfiguration.DirectoryConfiguration.CombinePath(SimpleStorageFile);
-        this.rawFiler = this.crystalizer.ResolveRawFiler(storageConfiguration.DirectoryConfiguration);
-        var resultFiler = await this.rawFiler.PrepareAndCheck(param, filerConfiguration).ConfigureAwait(false);
+        this.rawFiler = this.crystalizer.ResolveRawFiler(directoryConfiguration);
+        var resultFiler = await this.rawFiler.PrepareAndCheck(param, directoryConfiguration).ConfigureAwait(false);
         if (resultFiler != CrystalResult.Success)
         {
             return resultFiler;
@@ -60,8 +61,10 @@ internal partial class SimpleStorage : IStorage
         if (this.crystal == null)
         {
             this.crystal = this.crystalizer.CreateCrystal<SimpleStorageData>();
+            var filerConfiguration = directoryConfiguration.CombinePath(SimpleStorageFile);
             this.crystal.Configure(new(SavePolicy.Manual, filerConfiguration));
-            var resultCrystal = await this.crystal.PrepareAndLoad(param).ConfigureAwait(false); // tempcode
+
+            var resultCrystal = await this.crystal.PrepareAndLoad(param).ConfigureAwait(false);
             if (resultCrystal != CrystalStartResult.Success)
             {
                 if (createNew)
@@ -71,8 +74,6 @@ internal partial class SimpleStorage : IStorage
 
                 return CrystalResult.NoData;
             }
-
-            this.data = this.crystal.Object;
         }
 
         return CrystalResult.Success;
@@ -82,15 +83,15 @@ internal partial class SimpleStorage : IStorage
     {
         if (this.crystal != null)
         {
-            await this.crystal.Save(true).ConfigureAwait(false);
+            await this.crystal.Save().ConfigureAwait(false);
         }
     }
 
-    CrystalResult IStorage.Put(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
+    CrystalResult IStorage.PutAndForget(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
     {
         if (this.rawFiler == null || this.data == null)
         {
-            return CrystalResult.NoFiler;
+            return CrystalResult.NotPrepared;
         }
 
         var file = FileIdToFile(fileId);
@@ -104,13 +105,13 @@ internal partial class SimpleStorage : IStorage
     {
         if (this.rawFiler == null)
         {
-            return CrystalResult.NoFiler;
+            return CrystalResult.NotPrepared;
         }
 
         var file = FileIdToFile(fileId);
         if (file == 0)
         {
-            return CrystalResult.NoFile;
+            return CrystalResult.NotFound;
         }
 
         if (this.data != null)
@@ -118,7 +119,7 @@ internal partial class SimpleStorage : IStorage
             if (this.data.Remove(file))
             {// Not found
                 fileId = 0;
-                return CrystalResult.NoFile;
+                return CrystalResult.NotFound;
             }
 
             // this.dictionary.Add(file, -1);
@@ -132,7 +133,7 @@ internal partial class SimpleStorage : IStorage
     {
         if (this.rawFiler == null || this.data == null)
         {
-            return Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.NoFiler));
+            return Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.NotPrepared));
         }
 
         var file = FileIdToFile(fileId);
@@ -140,7 +141,7 @@ internal partial class SimpleStorage : IStorage
         if (!this.data.TryGetValue(file, out size))
         {// Not found
             fileId = 0;
-            return Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.NoFile));
+            return Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.NotFound));
         }
 
         return this.rawFiler.ReadAsync(this.FileToPath(file), 0, size, this.timeout);
@@ -150,7 +151,7 @@ internal partial class SimpleStorage : IStorage
     {
         if (this.rawFiler == null || this.data == null)
         {
-            return Task.FromResult(CrystalResult.NoFiler);
+            return Task.FromResult(CrystalResult.NotPrepared);
         }
 
         var file = FileIdToFile(fileId);
@@ -164,13 +165,13 @@ internal partial class SimpleStorage : IStorage
     {
         if (this.rawFiler == null || this.data == null)
         {
-            return Task.FromResult(CrystalResult.NoFiler);
+            return Task.FromResult(CrystalResult.NotPrepared);
         }
 
         var file = FileIdToFile(fileId);
         if (file == 0)
         {
-            return Task.FromResult(CrystalResult.NoFile);
+            return Task.FromResult(CrystalResult.NotFound);
         }
 
         this.data.Remove(file);
@@ -183,7 +184,7 @@ internal partial class SimpleStorage : IStorage
     {
         if (this.rawFiler == null)
         {
-            return CrystalResult.NoFiler;
+            return CrystalResult.NotPrepared;
         }
 
         return await this.rawFiler.DeleteDirectoryAsync(this.directory).ConfigureAwait(false);

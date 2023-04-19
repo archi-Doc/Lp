@@ -92,12 +92,12 @@ public partial class BaseData : IDataInternal, IJournalObject
         var datumObject = this.TryGetDatumObject<TDatum>();
         if (!datumObject.IsValid)
         {
-            return new(CrystalResult.NoDatum);
+            return new(CrystalResult.NotFound);
         }
 
         if (!datumObject.IsValidStorage)
         {
-            return new(CrystalResult.NoStorage);
+            return new(CrystalResult.NotFound);
         }
 
         return await this.BigCrystal.StorageGroup.Load(datumObject.StorageId, datumObject.FileId).ConfigureAwait(false);

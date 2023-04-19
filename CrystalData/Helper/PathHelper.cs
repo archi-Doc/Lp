@@ -74,7 +74,7 @@ public static class PathHelper
     {
         if (filer == null)
         {
-            return (new(CrystalResult.NoFiler), Waypoint.Invalid);
+            return (new(CrystalResult.NotPrepared), Waypoint.Invalid);
         }
 
         var result = await filer.ReadAsync(0, -1).ConfigureAwait(false);
@@ -100,34 +100,16 @@ public static class PathHelper
         return (result, waypoint);
     }
 
-    public static Task<(CrystalResult Result, Waypoint Waypoiint)> SaveData<T>(Crystalizer crystalizer, T? obj, IFiler? filer, uint journalToken)
+    public static Task<(CrystalResult Result, Waypoint Waypoiint)> SaveData<T>(Crystalizer crystalizer, T obj, IFiler filer, uint journalToken)
         where T : ITinyhandSerialize<T>
     {
-        if (obj == null)
-        {
-            return Task.FromResult((CrystalResult.NoData, Waypoint.Invalid));
-        }
-        else if (filer == null)
-        {
-            return Task.FromResult((CrystalResult.NoFiler, Waypoint.Invalid));
-        }
-
         // var option = TinyhandSerializer.DefaultOptions with { JournalToken = journalToken, };
         var data = TinyhandSerializer.SerializeObject(obj);
         return SaveData(crystalizer, data, filer, journalToken);
     }
 
-    public static async Task<(CrystalResult Result, Waypoint Waypoiint)> SaveData(Crystalizer crystalizer, byte[]? data, IFiler? filer, uint journalToken)
+    public static async Task<(CrystalResult Result, Waypoint Waypoiint)> SaveData(Crystalizer crystalizer, byte[] data, IFiler filer, uint journalToken)
     {
-        if (data == null)
-        {
-            return (CrystalResult.NoData, Waypoint.Invalid);
-        }
-        else if (filer == null)
-        {
-            return (CrystalResult.NoFiler, Waypoint.Invalid);
-        }
-
         var result = await filer.WriteAsync(0, new(data)).ConfigureAwait(false);
         if (result != CrystalResult.Success)
         {
