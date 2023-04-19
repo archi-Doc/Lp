@@ -40,13 +40,13 @@ public abstract class FilerBase : TaskWorker<FilerWork>, IRawFiler
 
     #endregion
 
-    async Task<CrystalResult> IRawFiler.PrepareAndCheck(Crystalizer crystalizer, PathConfiguration configuration)
+    async Task<CrystalResult> IRawFiler.PrepareAndCheck(PrepareParam param, PathConfiguration configuration)
     {
-        this.Crystalizer = crystalizer;
+        this.Crystalizer = param.Crystalizer;
 
-        if (crystalizer.EnableLogger)
+        if (this.Crystalizer.EnableLogger)
         {
-            this.Logger ??= crystalizer.UnitLogger.GetLogger<LocalFiler>();
+            this.Logger ??= this.Crystalizer.UnitLogger.GetLogger<LocalFiler>();
         }
 
         return CrystalResult.Success;

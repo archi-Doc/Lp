@@ -10,10 +10,10 @@ public interface IRawFiler
     /// Prepare the filer and check if the path is valid.<br/>
     /// This method may be called multiple times.
     /// </summary>
-    /// <param name="crystalizer"><see cref="Crystalizer"/>.</param>
+    /// <param name="param"><see cref="PrepareParam"/>.</param>
     /// <param name="configuration"><see cref="PathConfiguration"/>.</param>
     /// <returns><see cref="CrystalResult"/>.</returns>
-    Task<CrystalResult> PrepareAndCheck(Crystalizer crystalizer, PathConfiguration configuration);
+    Task<CrystalResult> PrepareAndCheck(PrepareParam param, PathConfiguration configuration);
 
     Task Terminate();
 

@@ -269,7 +269,7 @@ public class CrystalObject<TData> : ICrystal<TData>
         if (this.filer == null)
         {
             this.filer = this.Crystalizer.ResolveFiler(this.CrystalConfiguration.FileConfiguration);
-            var result = await this.filer.PrepareAndCheck(this.Crystalizer, this.CrystalConfiguration.FileConfiguration).ConfigureAwait(false);
+            var result = await this.filer.PrepareAndCheck(param, this.CrystalConfiguration.FileConfiguration).ConfigureAwait(false);
             if (result != CrystalResult.Success)
             {// Filer error
                 if (await param.Query(CrystalStartResult.FileNotFound).ConfigureAwait(false) == AbortOrContinue.Abort)
@@ -390,7 +390,7 @@ public class CrystalObject<TData> : ICrystal<TData>
         if (this.filer == null)
         {
             this.filer = this.Crystalizer.ResolveFiler(this.CrystalConfiguration.FileConfiguration);
-            this.filer.PrepareAndCheck(this.Crystalizer, this.CrystalConfiguration.FileConfiguration).Wait();
+            this.filer.PrepareAndCheck(PrepareParam.NoQuery<TData>(this.Crystalizer), this.CrystalConfiguration.FileConfiguration).Wait();
         }
     }
 

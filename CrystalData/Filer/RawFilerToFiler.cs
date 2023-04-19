@@ -39,8 +39,8 @@ internal class RawFilerToFiler : IFiler
     Task<CrystalResult> IFiler.DeleteAsync()
         => this.RawFiler.DeleteAsync(this.Path, this.timeout);
 
-    Task<CrystalResult> IFiler.PrepareAndCheck(Crystalizer crystalizer, PathConfiguration configuration)
-         => this.RawFiler.PrepareAndCheck(crystalizer, configuration);
+    Task<CrystalResult> IFiler.PrepareAndCheck(PrepareParam param, PathConfiguration configuration)
+         => this.RawFiler.PrepareAndCheck(param, configuration);
 
     Task<CrystalMemoryOwnerResult> IFiler.ReadAsync(long offset, int length)
         => this.RawFiler.ReadAsync(this.Path, offset, length, this.timeout);

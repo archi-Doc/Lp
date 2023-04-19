@@ -235,11 +235,11 @@ RepeatList:
 
     bool IRawFiler.SupportPartialWrite => false;
 
-    async Task<CrystalResult> IRawFiler.PrepareAndCheck(Crystalizer crystalizer, PathConfiguration configuration)
+    async Task<CrystalResult> IRawFiler.PrepareAndCheck(PrepareParam param, PathConfiguration configuration)
     {
-        this.Crystalizer = crystalizer;
+        this.Crystalizer = param.Crystalizer;
 
-        if (!crystalizer.StorageKey.TryGetKey(this.bucket, out var accessKeyPair))
+        if (!this.Crystalizer.StorageKey.TryGetKey(this.bucket, out var accessKeyPair))
         {
             return CrystalResult.NoStorageKey;
         }
@@ -279,9 +279,9 @@ RepeatList:
             }
         }
 
-        if (crystalizer.EnableLogger)
+        if (this.Crystalizer.EnableLogger)
         {
-            this.Logger = crystalizer.UnitLogger.GetLogger<S3Filer>();
+            this.Logger = this.Crystalizer.UnitLogger.GetLogger<S3Filer>();
         }
 
         return CrystalResult.Success;

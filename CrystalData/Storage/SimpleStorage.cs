@@ -51,7 +51,7 @@ internal partial class SimpleStorage : IStorage
 
         var filerConfiguration = storageConfiguration.DirectoryConfiguration.CombinePath(SimpleStorageFile);
         this.rawFiler = this.crystalizer.ResolveRawFiler(storageConfiguration.DirectoryConfiguration);
-        var resultFiler = await this.rawFiler.PrepareAndCheck(this.crystalizer, filerConfiguration).ConfigureAwait(false);
+        var resultFiler = await this.rawFiler.PrepareAndCheck(param, filerConfiguration).ConfigureAwait(false);
         if (resultFiler != CrystalResult.Success)
         {
             return resultFiler;

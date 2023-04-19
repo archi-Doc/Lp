@@ -53,7 +53,7 @@ public partial class SimpleJournal : IJournal
         var configuration = this.SimpleJournalConfiguration.DirectoryConfiguration;
 
         this.rawFiler ??= this.crystalizer.ResolveRawFiler(configuration);
-        var result = await this.rawFiler.PrepareAndCheck(this.crystalizer, configuration).ConfigureAwait(false);
+        var result = await this.rawFiler.PrepareAndCheck(param, configuration).ConfigureAwait(false);
         if (result != CrystalResult.Success)
         {
             return result;
