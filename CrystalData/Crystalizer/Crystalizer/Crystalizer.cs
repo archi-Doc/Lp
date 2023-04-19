@@ -222,27 +222,27 @@ public class Crystalizer
         return true;
     }*/
 
-    public async Task<CrystalStartResult> PrepareAndLoadAll(CrystalPrepare? param = null)
+    public async Task<CrystalResult> PrepareAndLoadAll(CrystalPrepare? param = null)
     {
         param ??= CrystalPrepare.NoQuery;
 
-        var journalResult = await this.PrepareJournal(param).ConfigureAwait(false);
-        if (journalResult.IsFailure())
+        var result = await this.PrepareJournal(param).ConfigureAwait(false);
+        if (result.IsFailure())
         {
-            return CrystalStartResult.NoJournal;
+            return result;
         }
 
         var crystals = this.crystals.Keys.ToArray();
         foreach (var x in crystals)
         {
-            var result = await x.PrepareAndLoad(param).ConfigureAwait(false);
-            if (result != CrystalStartResult.Success)
+            result = await x.PrepareAndLoad(param).ConfigureAwait(false);
+            if (result.IsFailure())
             {
                 return result;
             }
         }
 
-        return CrystalStartResult.Success;
+        return CrystalResult.Success;
     }
 
     public async Task SaveAll(bool unload = false)

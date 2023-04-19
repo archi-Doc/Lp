@@ -70,13 +70,8 @@ public static class PathHelper
     public static bool IsSeparator(char c)
         => c == Slash || c == Backslash || c == Colon;
 
-    public static async Task<(CrystalMemoryOwnerResult Result, Waypoint Waypoint)> LoadData(IFiler? filer)
+    public static async Task<(CrystalMemoryOwnerResult Result, Waypoint Waypoint)> LoadData(IFiler filer)
     {
-        if (filer == null)
-        {
-            return (new(CrystalResult.NotPrepared), Waypoint.Invalid);
-        }
-
         var result = await filer.ReadAsync(0, -1).ConfigureAwait(false);
         if (result.IsFailure)
         {

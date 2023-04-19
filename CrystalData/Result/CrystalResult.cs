@@ -15,7 +15,6 @@ public enum CrystalResult
     DatumNotRegistered, // Checked
     Deleted, // Checked
     NotFound, // Checked
-    NoData,
     CorruptedData, // Checked
     SerializeError, // Checked
     DeserializeError, // Checked

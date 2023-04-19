@@ -2,7 +2,7 @@
 
 namespace CrystalData;
 
-public delegate ValueTask<AbortOrContinue> CrystalPrepareQueryDelegate(CrystalStartResult query, string[]? list);
+public delegate ValueTask<AbortOrContinue> CrystalPrepareQueryDelegate(PathConfiguration configuration, CrystalResult result);
 
 public class CrystalPrepare
 {
@@ -16,8 +16,8 @@ public class CrystalPrepare
 
     public CrystalPrepareQueryDelegate? QueryDelegate { get; init; } = null;
 
-    public ValueTask<AbortOrContinue> Query(CrystalStartResult query, string[]? list = null)
-        => this.QueryDelegate == null ? ValueTask.FromResult(AbortOrContinue.Continue) : this.QueryDelegate(query, list);
+    public ValueTask<AbortOrContinue> Query(PathConfiguration configuration, CrystalResult result)
+        => this.QueryDelegate == null ? ValueTask.FromResult(AbortOrContinue.Continue) : this.QueryDelegate(configuration, result);
 
     public PrepareParam ToParam<TData>(Crystalizer crystalizer)
         => new PrepareParam(crystalizer, typeof(TData))

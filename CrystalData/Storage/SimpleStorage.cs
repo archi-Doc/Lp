@@ -44,6 +44,7 @@ internal partial class SimpleStorage : IStorage
 
     async Task<CrystalResult> IStorage.PrepareAndCheck(PrepareParam param, StorageConfiguration storageConfiguration, bool createNew)
     {
+        CrystalResult result;
         var directoryConfiguration = storageConfiguration.DirectoryConfiguration;
         this.directory = directoryConfiguration.Path;
         if (!string.IsNullOrEmpty(this.directory) && !this.directory.EndsWith('/'))
@@ -52,10 +53,10 @@ internal partial class SimpleStorage : IStorage
         }
 
         this.rawFiler = this.crystalizer.ResolveRawFiler(directoryConfiguration);
-        var resultFiler = await this.rawFiler.PrepareAndCheck(param, directoryConfiguration).ConfigureAwait(false);
-        if (resultFiler != CrystalResult.Success)
+        result = await this.rawFiler.PrepareAndCheck(param, directoryConfiguration).ConfigureAwait(false);
+        if (result.IsFailure())
         {
-            return resultFiler;
+            return result;
         }
 
         if (this.crystal == null)
@@ -64,16 +65,8 @@ internal partial class SimpleStorage : IStorage
             var filerConfiguration = directoryConfiguration.CombinePath(SimpleStorageFile);
             this.crystal.Configure(new(SavePolicy.Manual, filerConfiguration));
 
-            var resultCrystal = await this.crystal.PrepareAndLoad(param).ConfigureAwait(false);
-            if (resultCrystal != CrystalStartResult.Success)
-            {
-                if (createNew)
-                {// tempcode
-                    return CrystalResult.Success;
-                }
-
-                return CrystalResult.NoData;
-            }
+            result = await this.crystal.PrepareAndLoad(param).ConfigureAwait(false);
+            return result;
         }
 
         return CrystalResult.Success;

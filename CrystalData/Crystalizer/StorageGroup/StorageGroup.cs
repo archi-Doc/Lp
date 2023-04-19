@@ -238,7 +238,7 @@ public sealed class StorageGroup
         storageObject.Storage?.DeleteAndForget(ref fileId);
     }
 
-    internal async Task<CrystalResult> PrepareAndCheck(StorageConfiguration configuration, PrepareParam param, ReadOnlyMemory<byte>? data)
+    internal async Task<CrystalResult> PrepareAndCheck(StorageConfiguration defaultConfiguration, PrepareParam param, ReadOnlyMemory<byte>? data)
     {// semaphore
         this.prepareParam = param;
 
@@ -251,9 +251,9 @@ public sealed class StorageGroup
             }
             catch
             {
-                if (await param.Query(CrystalStartResult.FileError).ConfigureAwait(false) == AbortOrContinue.Abort)
+                if (await param.Query(defaultConfiguration, CrystalResult.DeserializeError).ConfigureAwait(false) == AbortOrContinue.Abort)
                 {
-                    return CrystalStartResult.FileError;
+                    return CrystalResult.DeserializeError;
                 }
             }
         }
@@ -288,7 +288,7 @@ public sealed class StorageGroup
             try
             {
                 var id = this.GetFreeStorageId();
-                var storageObject = new StorageObject(id, configuration);
+                var storageObject = new StorageObject(id, defaultConfiguration);
                 await storageObject.PrepareAndCheck(this, param, true).ConfigureAwait(false);
                 storageObject.Goshujin = goshujin;
             }
@@ -299,7 +299,7 @@ public sealed class StorageGroup
 
         if (goshujin.StorageIdChain.Count == 0)
         {
-            return CrystalStartResult.NoDirectoryAvailable;
+            return CrystalResult.NotPrepared;
         }
 
         lock (this.syncObject)
@@ -309,7 +309,7 @@ public sealed class StorageGroup
             this.currentStorage = null;
         }
 
-        return CrystalStartResult.Success;
+        return CrystalResult.Success;
     }
 
     internal async Task SaveStorage()
