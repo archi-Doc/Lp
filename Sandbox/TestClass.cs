@@ -1,10 +1,7 @@
-﻿using CrystalData.Journal;
-using Tinyhand.IO;
-
-namespace Sandbox;
+﻿namespace Sandbox;
 
 [TinyhandObject]
-internal partial class CrystalClass: IJournalObject
+internal partial class CrystalClass : IJournalObject
 {
     [Key(0)]
     public int Id { get; set; }
@@ -24,7 +21,7 @@ internal partial class ManualClass : IJournalObject
 }
 
 [TinyhandObject]
-internal partial class CombinedClass: IJournalObject
+internal partial class CombinedClass : IJournalObject
 {
     [Key(0)]
     public ManualClass Manual1 { get; set; } = default!;
@@ -45,7 +42,6 @@ internal class TestClass
         this.manualCrystal = manualCrystal;
         // this.manualCrystal.ConfigureFiler(new LocalFilerConfiguration("Manual2.data"));
 
-        // this.manualCrystal.Setup();
         this.combinedCrystal = combinedCrystal;
         this.manualClass0 = manualClass;
         this.exampleData = exampleData;
@@ -56,17 +52,6 @@ internal class TestClass
         Console.WriteLine("Sandbox test1");
 
         await this.crystalizer.PrepareAndLoadAll();
-
-        /*var config = new S3DirectoryConfiguration("kiokubako", "lp2");
-        var s3filer = this.crystalizer.ResolveRawFiler(config);
-        await s3filer.PrepareAndCheck(crystalizer, config);
-        var result = await s3filer.ListAsync("");
-        foreach (var x in result)
-        {
-            await Console.Out.WriteLineAsync(x.ToString());
-        }*/
-
-        // this.manualCrystal.Configure(new(Crystalization.Manual, new LocalFilerConfiguration("test")));
 
         var manualClass = this.manualCrystal.Object;
         manualClass.Id = 1;

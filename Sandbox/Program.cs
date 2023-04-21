@@ -37,6 +37,7 @@ public class Program
             })
             .Configure(context =>
             {
+                context.AddSingleton<TestClass0>();
                 context.AddSingleton<TestClass>();
             })
             .ConfigureCrystal(context =>
@@ -49,7 +50,7 @@ public class Program
                         new LocalFileConfiguration("Data/manual")
                         ));
 
-                context.AddCrystal<CombinedClass>(
+                /*context.AddCrystal<CombinedClass>(
                     new(
                         SavePolicy.Periodic,
                         new LocalFileConfiguration("combined.data"),
@@ -73,7 +74,7 @@ public class Program
                     },
                     DirectoryConfiguration = new LocalDirectoryConfiguration("Example"),
                     StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Example")),
-                });
+                });*/
             })
             .SetupOptions<CrystalizerOptions>((context, options) =>
             {// CrystalizerOptions
@@ -94,7 +95,7 @@ public class Program
         // var sc = new SimpleJournalConfiguration(new LocalDirectoryConfiguration("Storage"));
         // var st = TinyhandSerializer.SerializeToString((JournalConfiguration)sc);
 
-        var tc = unit.Context.ServiceProvider.GetRequiredService<TestClass>();
+        var tc = unit.Context.ServiceProvider.GetRequiredService<TestClass0>();
         await tc.Test1();
 
         ThreadCore.Root.Terminate();
