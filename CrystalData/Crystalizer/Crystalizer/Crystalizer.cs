@@ -224,7 +224,7 @@ public class Crystalizer
 
     public async Task<CrystalResult> PrepareAndLoadAll(CrystalPrepare? param = null)
     {
-        param ??= CrystalPrepare.NoQuery;
+        param ??= CrystalPrepare.ContinueAll;
 
         var result = await this.PrepareJournal(param).ConfigureAwait(false);
         if (result.IsFailure())

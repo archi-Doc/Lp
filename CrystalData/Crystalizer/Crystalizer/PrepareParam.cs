@@ -4,8 +4,8 @@ namespace CrystalData;
 
 public class PrepareParam : CrystalPrepare
 {
-    public static new PrepareParam NoQuery<TData>(Crystalizer crystalizer)
-        => CrystalPrepare.NoQuery.ToParam<TData>(crystalizer);
+    public static new PrepareParam ContinueAll<TData>(Crystalizer crystalizer)
+        => CrystalPrepare.ContinueAll.ToParam<TData>(crystalizer);
 
     internal PrepareParam(Crystalizer crystalizer, Type dataType)
     {

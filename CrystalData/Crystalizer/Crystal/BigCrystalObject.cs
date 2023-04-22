@@ -60,7 +60,7 @@ public class BigCrystalObject<TData> : CrystalObject<TData>, IBigCrystal<TData>,
         {
             if (!this.Prepared)
             {
-                await this.PrepareAndLoadInternal(CrystalPrepare.NoQuery).ConfigureAwait(false);
+                await this.PrepareAndLoadInternal(CrystalPrepare.ContinueAll).ConfigureAwait(false);
             }
 
             // Save storages
@@ -92,7 +92,7 @@ public class BigCrystalObject<TData> : CrystalObject<TData>, IBigCrystal<TData>,
         {
             if (!this.Prepared)
             {
-                await this.PrepareAndLoadInternal(CrystalPrepare.NoQuery).ConfigureAwait(false);
+                await this.PrepareAndLoadInternal(CrystalPrepare.ContinueAll).ConfigureAwait(false);
             }
 
             await this.StorageGroup.SaveStorage().ConfigureAwait(false);
@@ -106,7 +106,7 @@ public class BigCrystalObject<TData> : CrystalObject<TData>, IBigCrystal<TData>,
         {
             if (!this.Prepared)
             {
-                await this.PrepareAndLoadInternal(CrystalPrepare.NoQuery).ConfigureAwait(false);
+                await this.PrepareAndLoadInternal(CrystalPrepare.ContinueAll).ConfigureAwait(false);
             }
 
             await this.DeleteAllInternal().ConfigureAwait(false);

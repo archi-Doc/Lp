@@ -12,18 +12,21 @@ public delegate ValueTask<AbortOrContinue> CrystalPrepareQueryDelegate(PathConfi
 
 public class CrystalPrepare
 {
-    public static readonly CrystalPrepare NoQuery = new();
+    public static readonly CrystalPrepare ContinueAll = new();
 
     public static readonly CrystalPrepare New = new() { CreateNew = true, };
 
-    // public bool ForceStart { get; protected set; }
+    public CrystalPrepare()
+    {
+        this.QueryDelegate = (configuration, result) => ValueTask.FromResult(AbortOrContinue.Continue); // Continue all
+    }
 
     public bool CreateNew { get; init; } = false;
 
-    public CrystalPrepareQueryDelegate? QueryDelegate { get; init; } = null;
+    public CrystalPrepareQueryDelegate QueryDelegate { get; init; }
 
     public ValueTask<AbortOrContinue> Query(PathConfiguration configuration, CrystalResult result)
-        => this.QueryDelegate == null ? ValueTask.FromResult(AbortOrContinue.Continue) : this.QueryDelegate(configuration, result);
+        => this.QueryDelegate(configuration, result);
 
     public PrepareParam ToParam<TData>(Crystalizer crystalizer)
         => new PrepareParam(crystalizer, typeof(TData))
@@ -32,15 +35,3 @@ public class CrystalPrepare
             QueryDelegate = this.QueryDelegate,
         };
 }
-
-/*public enum CrystalStartResult
-{
-    Success,
-    FileNotFound,
-    FileError,
-    DirectoryNotFound,
-    DirectoryError,
-    NoDirectoryAvailable,
-    DeserializeError,
-    NoJournal,
-}*/

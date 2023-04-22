@@ -50,7 +50,7 @@ public class CrystalObject<TData> : ICrystal<TData>
                 // Prepare and load
                 if (!this.Prepared)
                 {
-                    this.PrepareAndLoadInternal(CrystalPrepare.NoQuery).Wait();
+                    this.PrepareAndLoadInternal(CrystalPrepare.ContinueAll).Wait();
                 }
 
                 if (this.obj != null)
@@ -221,7 +221,7 @@ public class CrystalObject<TData> : ICrystal<TData>
         {
             if (!this.Prepared)
             {
-                await this.PrepareAndLoadInternal(CrystalPrepare.NoQuery).ConfigureAwait(false);
+                await this.PrepareAndLoadInternal(CrystalPrepare.ContinueAll).ConfigureAwait(false);
             }
 
             // Delete file/storage
@@ -364,7 +364,7 @@ public class CrystalObject<TData> : ICrystal<TData>
         if (this.filer == null)
         {
             this.filer = this.Crystalizer.ResolveFiler(this.CrystalConfiguration.FileConfiguration);
-            this.filer.PrepareAndCheck(PrepareParam.NoQuery<TData>(this.Crystalizer), this.CrystalConfiguration.FileConfiguration).Wait();
+            this.filer.PrepareAndCheck(PrepareParam.ContinueAll<TData>(this.Crystalizer), this.CrystalConfiguration.FileConfiguration).Wait();
         }
     }
 
@@ -375,7 +375,7 @@ public class CrystalObject<TData> : ICrystal<TData>
         if (this.storage == null)
         {
             this.storage = this.Crystalizer.ResolveStorage(this.CrystalConfiguration.StorageConfiguration);
-            this.storage.PrepareAndCheck(PrepareParam.NoQuery<TData>(this.Crystalizer), this.CrystalConfiguration.StorageConfiguration, false).Wait();
+            this.storage.PrepareAndCheck(PrepareParam.ContinueAll<TData>(this.Crystalizer), this.CrystalConfiguration.StorageConfiguration, false).Wait();
         }
     }
 }
