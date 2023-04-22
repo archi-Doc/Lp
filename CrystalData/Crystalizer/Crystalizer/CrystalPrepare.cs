@@ -2,6 +2,12 @@
 
 namespace CrystalData;
 
+public enum AbortOrContinue
+{
+    Abort,
+    Continue,
+}
+
 public delegate ValueTask<AbortOrContinue> CrystalPrepareQueryDelegate(PathConfiguration configuration, CrystalResult result);
 
 public class CrystalPrepare
