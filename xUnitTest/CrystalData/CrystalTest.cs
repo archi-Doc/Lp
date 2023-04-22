@@ -40,8 +40,8 @@ public partial class CrystalTest
 
         f.IsDeleted.IsFalse();
 
-        using (var op = f.Lock<BlockDatum>())
-        {
+        using (var op = await f.LockAsync<BlockDatum>().ConfigureAwait(false))
+        {// tempcode
             op.Datum.IsNotNull();
             op.Result.Is(CrystalResult.Success);
         }
