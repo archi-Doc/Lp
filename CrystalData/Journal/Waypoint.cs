@@ -1,18 +1,21 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
+
 namespace CrystalData.Journal;
 
 public readonly struct Waypoint : IEquatable<Waypoint>
 {
     public const string Extension = "waypoint";
-    public const int Length = 20; // 8 + 4 + 8
+    public const int Length = 24; // 8 + 4 + 4 + 8
     public static readonly Waypoint Invalid = default;
-    public static readonly Waypoint Empty = new(1, 0, 0);
+    public static readonly Waypoint Empty = new(1, 0, 0, 0);
 
-    public Waypoint(ulong journalPosition, uint journalToken, ulong hash)
+    public Waypoint(ulong journalPosition, uint currentPlane, uint nextPlane, ulong hash)
     {
         this.JournalPosition = journalPosition;
-        this.JournalToken = journalToken;
+        this.CurrentPlane = currentPlane;
+        this.NextPlane = nextPlane;
         this.Hash = hash;
     }
 
@@ -24,11 +27,13 @@ public readonly struct Waypoint : IEquatable<Waypoint>
             {
                 var journalPosition = BitConverter.ToUInt64(span);
                 span = span.Slice(sizeof(ulong));
-                var journalToken = BitConverter.ToUInt32(span);
+                var currentPlane = BitConverter.ToUInt32(span);
+                span = span.Slice(sizeof(uint));
+                var nextPlane = BitConverter.ToUInt32(span);
                 span = span.Slice(sizeof(uint));
                 var hash = BitConverter.ToUInt64(span);
 
-                waypoint = new(journalPosition, journalToken, hash);
+                waypoint = new(journalPosition, currentPlane, nextPlane, hash);
                 return true;
             }
             catch
@@ -41,9 +46,8 @@ public readonly struct Waypoint : IEquatable<Waypoint>
     }
 
     public readonly ulong JournalPosition;
-    public readonly uint JournalToken;
-    // public readonly uint CurrentPlane;
-    // public readonly uint NextPlane; // Où allons-nous
+    public readonly uint CurrentPlane;
+    public readonly uint NextPlane; // Où allons-nous
     public readonly ulong Hash;
 
     public bool IsValid => this.JournalPosition != 0;
@@ -51,21 +55,37 @@ public readonly struct Waypoint : IEquatable<Waypoint>
     public byte[] ToByteArray()
     {
         var byteArray = new byte[Length];
-        var span = byteArray.AsSpan();
-        BitConverter.TryWriteBytes(span, this.JournalPosition);
-        span = span.Slice(sizeof(ulong));
-        BitConverter.TryWriteBytes(span, this.JournalToken);
-        span = span.Slice(sizeof(uint));
-        BitConverter.TryWriteBytes(span, this.Hash);
+        this.WriteSpan(byteArray.AsSpan());
 
         return byteArray;
     }
 
+    public string ToBase64Url()
+    {
+        Span<byte> span = stackalloc byte[Length];
+        this.WriteSpan(span);
+
+        return Base64.Url.FromByteArrayToString(span);
+    }
+
     public bool Equals(Waypoint other)
         => this.JournalPosition == other.JournalPosition &&
-        this.JournalToken == other.JournalToken &&
+        this.CurrentPlane == other.CurrentPlane &&
+        this.NextPlane == other.NextPlane &&
         this.Hash == other.Hash;
 
     public override int GetHashCode()
-        => HashCode.Combine(this.JournalPosition, this.JournalToken, this.Hash);
+        => HashCode.Combine(this.JournalPosition, this.CurrentPlane, this.NextPlane, this.Hash);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void WriteSpan(Span<byte> span)
+    {
+        BitConverter.TryWriteBytes(span, this.JournalPosition);
+        span = span.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(span, this.CurrentPlane);
+        span = span.Slice(sizeof(uint));
+        BitConverter.TryWriteBytes(span, this.NextPlane);
+        span = span.Slice(sizeof(uint));
+        BitConverter.TryWriteBytes(span, this.Hash);
+    }
 }

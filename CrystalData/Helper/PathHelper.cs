@@ -123,7 +123,7 @@ public static class PathHelper
             journalPosition = 0;
         }
 
-        var waypoint = new Waypoint(journalPosition, journalToken, hash);
+        var waypoint = new Waypoint(journalPosition, journalToken, 0, hash);
         var chckFiler = filer.CloneWithExtension(Waypoint.Extension);
         result = await chckFiler.WriteAsync(0, new(waypoint.ToByteArray())).ConfigureAwait(false);
         return (result, waypoint);

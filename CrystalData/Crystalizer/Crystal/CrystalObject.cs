@@ -24,7 +24,7 @@ public class CrystalObject<TData> : ICrystal<TData>
     protected TData? obj;
     protected IFiler? filer;
     protected IStorage? storage;
-    internal Waypoint waypoint;
+    protected Waypoint waypoint;
 
     #endregion
 
@@ -164,16 +164,9 @@ public class CrystalObject<TData> : ICrystal<TData>
             if (!this.Prepared || this.obj == null)
             {
                 return CrystalResult.NotPrepared;
-                /*if (await this.PrepareAndLoadInternal(null).ConfigureAwait(false) != CrystalStartResult.Success)
-                {
-                    return CrystalResult.NoData;
-                }*/
             }
 
-            var newToken = this.Crystalizer.UpdateToken(this.waypoint.JournalToken, this.obj);
-            this.waypoint = new(this.waypoint.JournalPosition, newToken, this.waypoint.Hash);
-
-            // var options = TinyhandSerializerOptions.Standard with { Token = this.waypoint.JournalToken, };
+            // var options = TinyhandSerializerOptions.Standard with { Token = this.waypoint.NextPlane, };
             var byteArray = TinyhandSerializer.SerializeObject(this.obj);
             hash = FarmHash.Hash64(byteArray.AsSpan());
 
@@ -186,29 +179,11 @@ public class CrystalObject<TData> : ICrystal<TData>
                 }
             }
 
-            ulong journalPosition;
-            if (this.Crystalizer.Journal != null)
-            {
-                journalPosition = AddJournal();
-            }
-            else
-            {
-                journalPosition = 0;
-            }
+            this.Crystalizer.UpdatePlane(this, ref this.waypoint, hash);
 
-            this.waypoint = new(journalPosition, this.waypoint.JournalToken, hash);
-
-            var waypointFiler = this.filer!.CloneWithExtension(Waypoint.Extension);
-            result = await waypointFiler.WriteAsync(0, new(this.waypoint.ToByteArray())).ConfigureAwait(false);
-            return result;
-        }
-
-        ulong AddJournal()
-        {
-            this.Crystalizer.Journal.GetWriter(JournalRecordType.Waypoint, this.waypoint.JournalToken, out var writer);
-            writer.Write(this.waypoint.JournalToken);
-            writer.Write(hash);
-            return this.Crystalizer.Journal.Add(writer);
+            // var waypointFiler = this.filer!.CloneWithExtension(Waypoint.Extension);
+            // result = await waypointFiler.WriteAsync(0, new(this.Waypoint.ToByteArray())).ConfigureAwait(false);
+            return CrystalResult.Success;
         }
     }
 
@@ -233,7 +208,7 @@ public class CrystalObject<TData> : ICrystal<TData>
             }
 
             // Journal/Waypoint
-            this.Crystalizer.UnregisterToken(this.waypoint.JournalToken);
+            this.Crystalizer.RemovePlane(this.waypoint);
             this.waypoint = default;
 
             // Clear
@@ -319,7 +294,10 @@ public class CrystalObject<TData> : ICrystal<TData>
             data.Result.Return();
         }
 
-        this.Crystalizer.RegisterToken(this.waypoint.JournalToken, this.obj);
+        // Filename to waypoint
+        this.waypoint = default;
+
+        this.Crystalizer.SetPlane(this, ref this.waypoint);
 
         this.Prepared = true;
         return CrystalResult.Success;
@@ -329,17 +307,8 @@ public class CrystalObject<TData> : ICrystal<TData>
             TinyhandSerializer.ReconstructObject<TData>(ref this.obj);
             var hash = FarmHash.Hash64(TinyhandSerializer.SerializeObject(this.obj));
 
-            ulong journalPosition = 1;
-            uint journalToken = 0;
-
-            journalToken = this.Crystalizer.NewToken(this.obj);
-            if (this.Crystalizer.Journal is { } journal)
-            {
-                journal.GetWriter(JournalRecordType.Waypoint, journalToken, out var writer);
-                journalPosition = journal.Add(writer);
-            }
-
-            this.waypoint = new(journalPosition, journalToken, hash);
+            this.Crystalizer.UpdatePlane(this, ref this.waypoint, hash);
+            var st = this.waypoint.ToBase64Url();
 
             this.Prepared = true;
             return CrystalResult.Success;

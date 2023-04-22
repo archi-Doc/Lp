@@ -79,57 +79,9 @@ public class Crystalizer
     private ConcurrentDictionary<ICrystal, int> crystals = new(); // All crystals
     private ConcurrentDictionary<uint, ICrystal> planeToCrystal = new(); // Plane to crystal
 
-    private ConcurrentDictionary<uint, IJournalObject> tokenToObjects = new();
-
     private object syncFiler = new();
     private IRawFiler? localFiler;
     private Dictionary<string, IRawFiler> bucketToS3Filer = new();
-
-    #endregion
-
-    #region Waypoint/Plane
-
-    public uint NewToken(IJournalObject journalObject)
-    {
-        while (true)
-        {
-            var token = RandomVault.Pseudo.NextUInt32();
-            if (token != 0 && this.tokenToObjects.TryAdd(token, journalObject))
-            {// Success
-                return token;
-            }
-        }
-    }
-
-    public bool RegisterToken(uint token, IJournalObject journalObject)
-    {
-        if (token == 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(token));
-        }
-
-        return this.tokenToObjects.TryAdd(token, journalObject);
-    }
-
-    public uint UpdateToken(uint oldToken, IJournalObject journalObject)
-    {
-        if (oldToken != 0)
-        {
-            this.tokenToObjects.TryRemove(oldToken, out _);
-        }
-
-        return ((IJournal)this).NewToken(journalObject);
-    }
-
-    public bool UnregisterToken(uint token)
-    {
-        if (token == 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(token));
-        }
-
-        return this.tokenToObjects.TryRemove(token, out _);
-    }
 
     #endregion
 
@@ -354,9 +306,88 @@ public class Crystalizer
 
     #endregion
 
+    #region Waypoint/Plane
+
+    internal void UpdatePlane(ICrystal crystal, ref Waypoint waypoint, ulong hash)
+    {
+        // Add journal
+        ulong journalPosition;
+        if (this.Journal != null)
+        {
+            this.Journal.GetWriter(JournalRecordType.Waypoint, waypoint.CurrentPlane, out var writer);
+            writer.Write(waypoint.NextPlane);
+            writer.Write(hash);
+            journalPosition = this.Journal.Add(writer);
+        }
+        else
+        {
+            journalPosition = 0;
+        }
+
+        if (waypoint.CurrentPlane != 0)
+        {// Remove current plane
+            this.planeToCrystal.TryRemove(waypoint.CurrentPlane, out _);
+        }
+
+        // Next plane
+        var nextPlane = waypoint.NextPlane;
+        if (nextPlane == 0)
+        {
+            while (true)
+            {
+                nextPlane = RandomVault.Pseudo.NextUInt32();
+                if (nextPlane != 0 && this.planeToCrystal.TryAdd(nextPlane, crystal))
+                {// Success
+                    break;
+                }
+            }
+        }
+
+        // New plane
+        uint newPlane;
+        while (true)
+        {
+            newPlane = RandomVault.Pseudo.NextUInt32();
+            if (newPlane != 0 && this.planeToCrystal.TryAdd(newPlane, crystal))
+            {// Success
+                break;
+            }
+        }
+
+        waypoint = new(journalPosition, nextPlane, newPlane, hash);
+    }
+
+    internal void RemovePlane(Waypoint waypoint)
+    {
+        if (waypoint.CurrentPlane != 0)
+        {
+            this.planeToCrystal.TryRemove(waypoint.CurrentPlane, out _);
+        }
+
+        if (waypoint.NextPlane != 0)
+        {
+            this.planeToCrystal.TryRemove(waypoint.NextPlane, out _);
+        }
+    }
+
+    internal void SetPlane(ICrystal crystal, ref Waypoint waypoint)
+    {
+        if (waypoint.CurrentPlane != 0)
+        {
+            this.planeToCrystal[waypoint.CurrentPlane] = crystal;
+        }
+
+        if (waypoint.NextPlane != 0)
+        {
+            this.planeToCrystal[waypoint.NextPlane] = crystal;
+        }
+    }
+
+    #endregion
+
     #region Misc
 
-    public static string GetRootedFile(Crystalizer? crystalizer, string file)
+    internal static string GetRootedFile(Crystalizer? crystalizer, string file)
         => crystalizer == null ? file : PathHelper.GetRootedFile(crystalizer.RootDirectory, file);
 
     [MethodImpl(MethodImplOptions.NoInlining)]

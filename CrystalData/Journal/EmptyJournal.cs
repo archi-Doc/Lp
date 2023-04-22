@@ -20,24 +20,4 @@ public class EmptyJournal : IJournal
     {
         writer = default(TinyhandWriter);
     }
-
-    uint IJournal.NewToken(IJournalObject journalObject)
-    {
-        return 1;
-    }
-
-    bool IJournal.RegisterToken(uint token, IJournalObject journalObject)
-    {
-        return true;
-    }
-
-    uint IJournal.UpdateToken(uint oldToken, IJournalObject journalObject)
-    {
-        return 1;
-    }
-
-    bool IJournal.UnregisterToken(uint token)
-    {
-        return true;
-    }
 }
