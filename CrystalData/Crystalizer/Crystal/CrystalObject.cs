@@ -24,7 +24,7 @@ public class CrystalObject<TData> : ICrystal<TData>
     protected TData? obj;
     protected IFiler? filer;
     protected IStorage? storage;
-    protected Waypoint waypoint;
+    internal Waypoint waypoint;
 
     #endregion
 
@@ -170,11 +170,8 @@ public class CrystalObject<TData> : ICrystal<TData>
                 }*/
             }
 
-            if (this.Crystalizer.Journal is { } journal)
-            {
-                var newToken = journal.UpdateToken(this.waypoint.JournalToken, this.obj);
-                this.waypoint = new(this.waypoint.JournalPosition, newToken, this.waypoint.Hash);
-            }
+            var newToken = this.Crystalizer.UpdateToken(this.waypoint.JournalToken, this.obj);
+            this.waypoint = new(this.waypoint.JournalPosition, newToken, this.waypoint.Hash);
 
             // var options = TinyhandSerializerOptions.Standard with { Token = this.waypoint.JournalToken, };
             var byteArray = TinyhandSerializer.SerializeObject(this.obj);
@@ -236,7 +233,7 @@ public class CrystalObject<TData> : ICrystal<TData>
             }
 
             // Journal/Waypoint
-            this.Crystalizer.Journal?.UnregisterToken(this.waypoint.JournalToken);
+            this.Crystalizer.UnregisterToken(this.waypoint.JournalToken);
             this.waypoint = default;
 
             // Clear
@@ -322,7 +319,7 @@ public class CrystalObject<TData> : ICrystal<TData>
             data.Result.Return();
         }
 
-        this.Crystalizer.Journal?.RegisterToken(this.waypoint.JournalToken, this.obj);
+        this.Crystalizer.RegisterToken(this.waypoint.JournalToken, this.obj);
 
         this.Prepared = true;
         return CrystalResult.Success;
@@ -334,9 +331,10 @@ public class CrystalObject<TData> : ICrystal<TData>
 
             ulong journalPosition = 1;
             uint journalToken = 0;
+
+            journalToken = this.Crystalizer.NewToken(this.obj);
             if (this.Crystalizer.Journal is { } journal)
             {
-                journalToken = journal.NewToken(this.obj);
                 journal.GetWriter(JournalRecordType.Waypoint, journalToken, out var writer);
                 journalPosition = journal.Add(writer);
             }
