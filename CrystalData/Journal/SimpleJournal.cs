@@ -33,9 +33,6 @@ public partial class SimpleJournal : IJournal
     private bool prepared;
     private IRawFiler? rawFiler;
 
-    // Token
-    private ConcurrentDictionary<uint, IJournalObject> tokenToObjects = new();
-
     // Journal
     private object syncJournal = new();
     private SimpleJournalBook.GoshujinClass books = new();
@@ -102,48 +99,6 @@ public partial class SimpleJournal : IJournal
         }
 
         return 0;
-    }
-
-    uint IJournal.NewToken(IJournalObject journalObject)
-    {
-        while (true)
-        {
-            var token = RandomVault.Pseudo.NextUInt32();
-            if (token != 0 && this.tokenToObjects.TryAdd(token, journalObject))
-            {// Success
-                return token;
-            }
-        }
-    }
-
-    bool IJournal.RegisterToken(uint token, IJournalObject journalObject)
-    {
-        if (token == 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(token));
-        }
-
-        return this.tokenToObjects.TryAdd(token, journalObject);
-    }
-
-    uint IJournal.UpdateToken(uint oldToken, IJournalObject journalObject)
-    {
-        if (oldToken != 0)
-        {
-            this.tokenToObjects.TryRemove(oldToken, out _);
-        }
-
-        return ((IJournal)this).NewToken(journalObject);
-    }
-
-    bool IJournal.UnregisterToken(uint token)
-    {
-        if (token == 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(token));
-        }
-
-        return this.tokenToObjects.TryRemove(token, out _);
     }
 
     private SimpleJournalBook EnsureBook()

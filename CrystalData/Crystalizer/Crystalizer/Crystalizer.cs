@@ -53,33 +53,6 @@ public class Crystalizer
             this.typeToCrystal.TryAdd(x.Key, crystal);
             this.crystals.TryAdd(crystal, 0);
         }
-
-        /*foreach (var x in this.configuration.BigCrystalConfigurations)
-        {
-            // (IBigCrystal) new CrystalDataImpl<TData>
-            var bigCrystal = (IBigCrystal)Activator.CreateInstance(typeof(BigCrystalImpl<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
-
-            this.typeToBigCrystal.TryAdd(x.Key, bigCrystal);
-        }
-
-        foreach (var x in this.configuration.CrystalConfigurations)
-        {
-            ICrystal? crystal;
-            if (!this.typeToBigCrystal.TryGetValue(x.Key, out var bigCrystal))
-            {// Crystal
-                // (ICrystal) new CrystalImpl<TData>
-                crystal = (ICrystal)Activator.CreateInstance(typeof(CrystalImpl<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
-            }
-            else
-            {// BigCrystal
-                crystal = (ICrystal)bigCrystal;
-            }
-
-            crystal.Configure(x.Value);
-
-            this.typeToCrystal.TryAdd(x.Key, crystal);
-            this.crystals.TryAdd(crystal, 0);
-        }*/
     }
 
     #region FieldAndProperty
@@ -102,14 +75,61 @@ public class Crystalizer
 
     private CrystalizerConfiguration configuration;
     private ILogger logger;
-    private ThreadsafeTypeKeyHashTable<ICrystal> typeToCrystal = new();
-    private ConcurrentDictionary<ICrystal, int> crystals = new();
-    // private ThreadsafeTypeKeyHashTable<IBigCrystal> typeToBigCrystal = new();
-    // private ConcurrentDictionary<IBigCrystal, int> bigCrystals = new();
+    private ThreadsafeTypeKeyHashTable<ICrystal> typeToCrystal = new(); // Type to ICrystal
+    private ConcurrentDictionary<ICrystal, int> crystals = new(); // All crystals
+    private ConcurrentDictionary<uint, ICrystal> planeToCrystal = new(); // Plane to crystal
 
-    private object syncObject = new();
+    private ConcurrentDictionary<uint, IJournalObject> tokenToObjects = new();
+
+    private object syncFiler = new();
     private IRawFiler? localFiler;
     private Dictionary<string, IRawFiler> bucketToS3Filer = new();
+
+    #endregion
+
+    #region Waypoint/Plane
+
+    public uint NewToken(IJournalObject journalObject)
+    {
+        while (true)
+        {
+            var token = RandomVault.Pseudo.NextUInt32();
+            if (token != 0 && this.tokenToObjects.TryAdd(token, journalObject))
+            {// Success
+                return token;
+            }
+        }
+    }
+
+    public bool RegisterToken(uint token, IJournalObject journalObject)
+    {
+        if (token == 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(token));
+        }
+
+        return this.tokenToObjects.TryAdd(token, journalObject);
+    }
+
+    public uint UpdateToken(uint oldToken, IJournalObject journalObject)
+    {
+        if (oldToken != 0)
+        {
+            this.tokenToObjects.TryRemove(oldToken, out _);
+        }
+
+        return ((IJournal)this).NewToken(journalObject);
+    }
+
+    public bool UnregisterToken(uint token)
+    {
+        if (token == 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(token));
+        }
+
+        return this.tokenToObjects.TryRemove(token, out _);
+    }
 
     #endregion
 
@@ -138,7 +158,7 @@ public class Crystalizer
 
     public IRawFiler ResolveRawFiler(PathConfiguration configuration)
     {
-        lock (this.syncObject)
+        lock (this.syncFiler)
         {
             if (configuration is EmptyFileConfiguration ||
                 configuration is EmptyDirectoryConfiguration)
@@ -184,7 +204,7 @@ public class Crystalizer
 
     public IStorage ResolveStorage(StorageConfiguration configuration)
     {
-        lock (this.syncObject)
+        lock (this.syncFiler)
         {
             IStorage storage;
             if (configuration is EmptyStorageConfiguration emptyStorageConfiguration)
@@ -226,12 +246,14 @@ public class Crystalizer
     {
         param ??= CrystalPrepare.ContinueAll;
 
+        // Journal
         var result = await this.PrepareJournal(param).ConfigureAwait(false);
         if (result.IsFailure())
         {
             return result;
         }
 
+        // Crystals
         var crystals = this.crystals.Keys.ToArray();
         foreach (var x in crystals)
         {
@@ -258,17 +280,11 @@ public class Crystalizer
 
     public async Task SaveAllAndTerminate()
     {
-        this.CrystalCheck.Save();
-
-        var crystals = this.crystals.Keys.ToArray();
-        foreach (var x in crystals)
-        {
-            await x.Save(true).ConfigureAwait(false);
-        }
+        await this.SaveAll(true).ConfigureAwait(false);
 
         // Terminate filers
         var tasks = new List<Task>();
-        lock (this.syncObject)
+        lock (this.syncFiler)
         {
             if (this.localFiler is not null)
             {
@@ -297,11 +313,6 @@ public class Crystalizer
     public ICrystal<TData> CreateCrystal<TData>()
         where TData : IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
-        /*if (!this.typeToCrystal.TryGetValue(typeof(TData), out _))
-        {
-            ThrowTypeNotRegistered(typeof(TData));
-        }*/
-
         var crystal = new CrystalObject<TData>(this);
         this.crystals.TryAdd(crystal, 0);
         return crystal;
@@ -310,12 +321,6 @@ public class Crystalizer
     public ICrystal<TData> CreateBigCrystal<TData>()
         where TData : BaseData, IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
-        /*if (!this.typeToCrystal.TryGetValue(typeof(TData), out var c) ||
-            c is not IBigCrystal)
-        {
-            ThrowTypeNotRegistered(typeof(TData));
-        }*/
-
         var crystal = new BigCrystalObject<TData>(this);
         this.crystals.TryAdd(crystal, 0);
         return crystal;
@@ -347,29 +352,12 @@ public class Crystalizer
         return crystal;
     }
 
-    public ICrystal[] GetArray()
-    {
-        return this.crystals.Keys.ToArray();
-    }
-
     #endregion
 
     #region Misc
 
-    public string GetRootedFile(string file)
-        => PathHelper.GetRootedFile(this.RootDirectory, file);
-
     public static string GetRootedFile(Crystalizer? crystalizer, string file)
         => crystalizer == null ? file : PathHelper.GetRootedFile(crystalizer.RootDirectory, file);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void ThrowIfNotRegistered<TData>()
-    {
-        if (!this.typeToCrystal.TryGetValue(typeof(TData), out _))
-        {
-            ThrowTypeNotRegistered(typeof(TData));
-        }
-    }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     internal static void ThrowTypeNotRegistered(Type type)
@@ -399,17 +387,6 @@ public class Crystalizer
         return crystal!;
     }
 
-    /*[MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal IBigCrystal GetBigCrystal(Type type)
-    {
-        if (!this.typeToBigCrystal.TryGetValue(type, out var crystal))
-        {
-            ThrowTypeNotRegistered(type);
-        }
-
-        return crystal!;
-    }*/
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal object GetObject(Type type)
     {
@@ -421,7 +398,7 @@ public class Crystalizer
         return crystal!.Object;
     }
 
-    internal CrystalConfiguration GetCrystalConfiguration(Type type)
+    /*internal CrystalConfiguration GetCrystalConfiguration(Type type)
     {
         if (!this.configuration.CrystalConfigurations.TryGetValue(type, out var configuration))
         {
@@ -445,7 +422,7 @@ public class Crystalizer
         }
 
         return bigCrystalConfiguration;
-    }
+    }*/
 
     private async Task<CrystalResult> PrepareJournal(CrystalPrepare prepare)
     {

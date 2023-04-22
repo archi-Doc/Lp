@@ -9,15 +9,7 @@ public interface IJournal
 {
     Task<CrystalResult> Prepare(PrepareParam param);
 
-    uint NewToken(IJournalObject journalObject);
-
-    bool RegisterToken(uint token, IJournalObject journalObject);
-
-    uint UpdateToken(uint oldToken, IJournalObject journalObject);
-
-    bool UnregisterToken(uint token);
-
-    void GetWriter(JournalRecordType recordType, uint token, out TinyhandWriter writer);
+    void GetWriter(JournalRecordType recordType, uint plane, out TinyhandWriter writer);
 
     ulong Add(in TinyhandWriter writer);
 }
