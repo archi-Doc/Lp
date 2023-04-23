@@ -8,17 +8,17 @@ public partial interface IStorage
 
     void SetTimeout(TimeSpan timeout);
 
-    Task<CrystalResult> PrepareAndCheck(Crystalizer crystalizer, StorageConfiguration storageConfiguration, bool createNew);
+    Task<CrystalResult> PrepareAndCheck(PrepareParam param, StorageConfiguration storageConfiguration, bool createNew);
 
     Task Save();
 
-    CrystalResult Put(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared);
-
-    CrystalResult Delete(ref ulong fileId);
-
     Task<CrystalMemoryOwnerResult> GetAsync(ref ulong fileId);
 
+    CrystalResult PutAndForget(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared);
+
     Task<CrystalResult> PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared);
+
+    CrystalResult DeleteAndForget(ref ulong fileId);
 
     Task<CrystalResult> DeleteAsync(ref ulong fileId);
 

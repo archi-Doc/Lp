@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Tinyhand.IO;
-
 namespace CrystalData.Journal;
 
 public enum JournalRecordType : byte
@@ -10,6 +8,8 @@ public enum JournalRecordType : byte
     AddObject,
     DeleteObject,
     Waypoint,
+    StartSave,
+    EndSave,
 }
 
 /*public readonly ref struct JournalRecord

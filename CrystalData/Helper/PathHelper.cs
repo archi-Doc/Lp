@@ -14,6 +14,23 @@ public static class PathHelper
     public const string BackslashString = "\\";
     public const string ColonString = ":";
 
+    public static (string Directory, string File) PathToDirectoryAndFile(string path)
+    {
+        var span = path.AsSpan();
+        for (var i = span.Length - 1; i >= 1; i--)
+        {
+            if (span[i] == Slash || span[i] == Backslash)
+            {
+                var st = span[0..0].ToString();
+                var st2 = span[0..1].ToString();
+                var st3 = span[span.Length..].ToString();
+                return (span[0..i].ToString(), span[(i + 1)..].ToString());
+            }
+        }
+
+        return (string.Empty, path);
+    }
+
     public static string CombineWithBackslash(string path1, string path2)
         => CombineWith(Backslash, path1, path2);
 
@@ -70,13 +87,8 @@ public static class PathHelper
     public static bool IsSeparator(char c)
         => c == Slash || c == Backslash || c == Colon;
 
-    public static async Task<(CrystalMemoryOwnerResult Result, Waypoint Waypoint)> LoadData(IFiler? filer)
+    public static async Task<(CrystalMemoryOwnerResult Result, Waypoint Waypoint)> LoadData(IFiler filer)
     {
-        if (filer == null)
-        {
-            return (new(CrystalResult.NoFiler), Waypoint.Invalid);
-        }
-
         var result = await filer.ReadAsync(0, -1).ConfigureAwait(false);
         if (result.IsFailure)
         {
@@ -100,34 +112,16 @@ public static class PathHelper
         return (result, waypoint);
     }
 
-    public static Task<(CrystalResult Result, Waypoint Waypoiint)> SaveData<T>(Crystalizer crystalizer, T? obj, IFiler? filer, uint journalToken)
+    public static Task<(CrystalResult Result, Waypoint Waypoiint)> SaveData<T>(Crystalizer crystalizer, T obj, IFiler filer, uint journalToken)
         where T : ITinyhandSerialize<T>
     {
-        if (obj == null)
-        {
-            return Task.FromResult((CrystalResult.NoData, Waypoint.Invalid));
-        }
-        else if (filer == null)
-        {
-            return Task.FromResult((CrystalResult.NoFiler, Waypoint.Invalid));
-        }
-
         // var option = TinyhandSerializer.DefaultOptions with { JournalToken = journalToken, };
         var data = TinyhandSerializer.SerializeObject(obj);
         return SaveData(crystalizer, data, filer, journalToken);
     }
 
-    public static async Task<(CrystalResult Result, Waypoint Waypoiint)> SaveData(Crystalizer crystalizer, byte[]? data, IFiler? filer, uint journalToken)
+    public static async Task<(CrystalResult Result, Waypoint Waypoiint)> SaveData(Crystalizer crystalizer, byte[] data, IFiler filer, uint journalToken)
     {
-        if (data == null)
-        {
-            return (CrystalResult.NoData, Waypoint.Invalid);
-        }
-        else if (filer == null)
-        {
-            return (CrystalResult.NoFiler, Waypoint.Invalid);
-        }
-
         var result = await filer.WriteAsync(0, new(data)).ConfigureAwait(false);
         if (result != CrystalResult.Success)
         {
@@ -146,7 +140,7 @@ public static class PathHelper
             journalPosition = 0;
         }
 
-        var waypoint = new Waypoint(journalPosition, journalToken, hash);
+        var waypoint = new Waypoint(journalPosition, journalToken, 0, hash);
         var chckFiler = filer.CloneWithExtension(Waypoint.Extension);
         result = await chckFiler.WriteAsync(0, new(waypoint.ToByteArray())).ConfigureAwait(false);
         return (result, waypoint);

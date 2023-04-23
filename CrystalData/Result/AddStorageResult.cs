@@ -5,8 +5,6 @@ namespace CrystalData.Results;
 public enum AddStorageResult
 {
     Success,
-    Running,
-    DuplicateId,
     DuplicatePath,
     WriteError,
     NoStorageKey,

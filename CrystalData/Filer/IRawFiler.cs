@@ -10,14 +10,18 @@ public interface IRawFiler
     /// Prepare the filer and check if the path is valid.<br/>
     /// This method may be called multiple times.
     /// </summary>
-    /// <param name="crystalizer"><see cref="Crystalizer"/>.</param>
+    /// <param name="param"><see cref="PrepareParam"/>.</param>
     /// <param name="configuration"><see cref="PathConfiguration"/>.</param>
     /// <returns><see cref="CrystalResult"/>.</returns>
-    Task<CrystalResult> PrepareAndCheck(Crystalizer crystalizer, PathConfiguration configuration);
+    Task<CrystalResult> PrepareAndCheck(PrepareParam param, PathConfiguration configuration);
 
-    Task Terminate();
+    Task TerminateAsync();
+
+    Task<CrystalMemoryOwnerResult> ReadAsync(string path, long offset, int length, TimeSpan timeout);
 
     CrystalResult WriteAndForget(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, bool truncate = true);
+
+    Task<CrystalResult> WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeout, bool truncate = true);
 
     /// <summary>
     /// Delete the file matching the path.
@@ -26,15 +30,13 @@ public interface IRawFiler
     /// <returns><see cref="CrystalResult"/>.</returns>
     CrystalResult DeleteAndForget(string path);
 
-    Task<CrystalMemoryOwnerResult> ReadAsync(string path, long offset, int length, TimeSpan timeout);
-
-    Task<CrystalResult> WriteAsync(string path, long offset, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared, TimeSpan timeout, bool truncate = true);
-
     Task<CrystalResult> DeleteAsync(string path, TimeSpan timeout);
 
     Task<CrystalResult> DeleteDirectoryAsync(string path, TimeSpan timeout);
 
-    Task<List<PathInformation>> ListAsync(string path, TimeSpan timeout);
+    Task<List<PathInformation>> ListAsync(string directory, TimeSpan timeout);
+
+    #region InfiniteTimeout
 
     Task<CrystalMemoryOwnerResult> ReadAsync(string path, long offset, int length)
         => this.ReadAsync(path, offset, length, TimeSpan.MinValue);
@@ -48,6 +50,8 @@ public interface IRawFiler
     Task<CrystalResult> DeleteDirectoryAsync(string path)
         => this.DeleteDirectoryAsync(path, TimeSpan.MinValue);
 
-    Task<List<PathInformation>> ListAsync(string path)
-    => this.ListAsync(path, TimeSpan.MinValue);
+    Task<List<PathInformation>> ListAsync(string directory)
+    => this.ListAsync(directory, TimeSpan.MinValue);
+
+    #endregion
 }

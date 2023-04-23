@@ -14,11 +14,10 @@ public partial class SimpleJournal : IJournal
     public const int MaxBookLength = 1024 * 1024 * 16; // 16 MB
     public const int MaxMemoryLength = 1024 * 1024 * 64; // 64 MB
     public const string BookSuffix = ".book";
+    private const int InitialBufferSize = 32 * 1024; // 32 KB
 
-    private const int HeaderLength = 10;
-
-    // [ThreadStatic]
-    // private static readonly byte[] initialBuffer = new byte[1024 * 16]; // 16 KB
+    [ThreadStatic]
+    private static byte[]? initialBuffer;
 
     public SimpleJournal(Crystalizer crystalizer, SimpleJournalConfiguration configuration)
     {
@@ -26,26 +25,52 @@ public partial class SimpleJournal : IJournal
         this.SimpleJournalConfiguration = configuration;
     }
 
-    public async Task<CrystalStartResult> Prepare(Crystalizer crystalizer)
+    #region PropertyAndField
+
+    public SimpleJournalConfiguration SimpleJournalConfiguration { get; }
+
+    private Crystalizer crystalizer;
+    private bool prepared;
+    private IRawFiler? rawFiler;
+
+    // Journal
+    private object syncJournal = new();
+    private SimpleJournalBook.GoshujinClass books = new();
+    private ulong memoryUsage;
+
+    #endregion
+
+    public async Task<CrystalResult> Prepare(PrepareParam param)
     {
+        if (this.prepared)
+        {
+            return CrystalResult.Success;
+        }
+
         var configuration = this.SimpleJournalConfiguration.DirectoryConfiguration;
 
         this.rawFiler ??= this.crystalizer.ResolveRawFiler(configuration);
-        var result = await this.rawFiler.PrepareAndCheck(crystalizer, configuration).ConfigureAwait(false);
+        var result = await this.rawFiler.PrepareAndCheck(param, configuration).ConfigureAwait(false);
         if (result != CrystalResult.Success)
         {
-            return CrystalStartResult.FileError;
+            return result;
         }
 
         // List journal books
         var list = await this.rawFiler.ListAsync(configuration.Path).ConfigureAwait(false);
 
-        return CrystalStartResult.Success;
+        this.prepared = true;
+        return CrystalResult.Success;
     }
 
     void IJournal.GetWriter(JournalRecordType recordType, uint token, out TinyhandWriter writer)
     {
-        writer = default;
+        if (initialBuffer == null)
+        {
+            initialBuffer = new byte[InitialBufferSize];
+        }
+
+        writer = new(initialBuffer);
         writer.Advance(3); // Size (0-16MB)
         writer.RawWriteUInt8(Unsafe.As<JournalRecordType, byte>(ref recordType)); // JournalRecordType
         writer.RawWriteUInt32(token); // JournalToken
@@ -75,64 +100,6 @@ public partial class SimpleJournal : IJournal
 
         return 0;
     }
-
-    uint IJournal.NewToken(IJournalObject journalObject)
-    {
-        while (true)
-        {
-            var token = RandomVault.Pseudo.NextUInt32();
-            if (token != 0 && this.tokenToObjects.TryAdd(token, journalObject))
-            {// Success
-                return token;
-            }
-        }
-    }
-
-    bool IJournal.RegisterToken(uint token, IJournalObject journalObject)
-    {
-        if (token == 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(token));
-        }
-
-        return this.tokenToObjects.TryAdd(token, journalObject);
-    }
-
-    uint IJournal.UpdateToken(uint oldToken, IJournalObject journalObject)
-    {
-        if (oldToken == 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(oldToken));
-        }
-
-        this.tokenToObjects.TryRemove(oldToken, out _);
-        return ((IJournal)this).NewToken(journalObject);
-    }
-
-    bool IJournal.UnregisterToken(uint token)
-    {
-        if (token == 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(token));
-        }
-
-        return this.tokenToObjects.TryRemove(token, out _);
-    }
-
-    public SimpleJournalConfiguration SimpleJournalConfiguration { get; }
-
-    public bool Prepared { get; private set; }
-
-    private Crystalizer crystalizer;
-    private IRawFiler? rawFiler;
-
-    // Token
-    private ConcurrentDictionary<uint, IJournalObject> tokenToObjects = new();
-
-    // Journal
-    private object syncJournal = new();
-    private SimpleJournalBook.GoshujinClass books = new();
-    private ulong memoryUsage;
 
     private SimpleJournalBook EnsureBook()
     {// lock (this.syncJournal)

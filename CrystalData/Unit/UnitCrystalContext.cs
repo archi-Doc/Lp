@@ -37,22 +37,7 @@ internal class UnitCrystalContext : IUnitCrystalContext
                 // Singleton: IBigCrystal<T> => Crystalizer.GetCrystal<T>()
                 context.Services.Add(ServiceDescriptor.Singleton(typeof(IBigCrystal<>).MakeGenericType(x.Key), provider => provider.GetRequiredService<Crystalizer>().GetCrystal(x.Key)));
             }
-
-            // Transient: IFiler<TData> => Crystalizer.GetCrystal<T>().Filer
-            // context.Services.Add(ServiceDescriptor.Transient(typeof(IFiler<>).MakeGenericType(x.Key), provider => provider.GetRequiredService<Crystalizer>().GetCrystal(x.Key).Filer));
-
-            // Transient: IStorage<TData> => Crystalizer.GetCrystal<T>().Storage
-            // context.Services.Add(ServiceDescriptor.Transient(typeof(IStorage<>).MakeGenericType(x.Key), provider => provider.GetRequiredService<Crystalizer>().GetCrystal(x.Key).Storage));
         }
-
-        /*foreach (var x in this.typeToBigCrystalConfiguration)
-        {
-            // Singleton: IBigCrystal<T> => Crystalizer.GetBigCrystal<T>()
-            context.Services.Add(ServiceDescriptor.Singleton(typeof(IBigCrystal<>).MakeGenericType(x.Key), provider => provider.GetRequiredService<Crystalizer>().GetBigCrystal(x.Key)));
-
-            // Singleton: T => Crystalizer.GetBigObject<T>()
-            context.Services.Add(ServiceDescriptor.Singleton(x.Key, provider => provider.GetRequiredService<Crystalizer>().GetBigObject(x.Key)));
-        }*/
 
         var configuration = new CrystalizerConfiguration(this.typeToCrystalConfiguration, this.journalConfiguration);
         context.SetOptions(configuration);
@@ -63,6 +48,5 @@ internal class UnitCrystalContext : IUnitCrystalContext
     }
 
     private Dictionary<Type, CrystalConfiguration> typeToCrystalConfiguration = new();
-    private Dictionary<Type, BigCrystalConfiguration> typeToBigCrystalConfiguration = new();
     private JournalConfiguration journalConfiguration = EmptyJournalConfiguration.Default;
 }

@@ -2,8 +2,8 @@
 
 namespace CrystalData;
 
-[TinyhandUnion(0, typeof(EmptyStorageConfiguration))]
-[TinyhandUnion(1, typeof(SimpleStorageConfiguration))]
+[TinyhandUnion("EmptyStorage", typeof(EmptyStorageConfiguration))]
+[TinyhandUnion("SimpleStorage", typeof(SimpleStorageConfiguration))]
 public abstract partial record StorageConfiguration
 {
     public StorageConfiguration(DirectoryConfiguration filerConfiguration)
@@ -11,6 +11,6 @@ public abstract partial record StorageConfiguration
         this.DirectoryConfiguration = filerConfiguration;
     }
 
-    [Key(0)]
+    [Key("Directory")]
     public DirectoryConfiguration DirectoryConfiguration { get; protected set; }
 }

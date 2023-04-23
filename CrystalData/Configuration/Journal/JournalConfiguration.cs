@@ -2,8 +2,8 @@
 
 namespace CrystalData;
 
-[TinyhandUnion(0, typeof(EmptyJournalConfiguration))]
-[TinyhandUnion(1, typeof(SimpleJournalConfiguration))]
+[TinyhandUnion("EmptyJournal", typeof(EmptyJournalConfiguration))]
+[TinyhandUnion("SimpleJournal", typeof(SimpleJournalConfiguration))]
 public abstract partial record JournalConfiguration
 {
     public JournalConfiguration()

@@ -13,26 +13,26 @@ public partial class EmptyStorage : IStorage
     void IStorage.SetTimeout(TimeSpan timeout)
         => Expression.Empty();
 
-    CrystalResult IStorage.Delete(ref ulong fileId)
-        => CrystalResult.Success;
-
-    Task<CrystalResult> IStorage.DeleteAsync(ref ulong fileId)
+    Task<CrystalResult> IStorage.PrepareAndCheck(PrepareParam param, StorageConfiguration storageConfiguration, bool createNew)
         => Task.FromResult(CrystalResult.Success);
+
+    Task IStorage.Save()
+        => Task.CompletedTask;
 
     Task<CrystalMemoryOwnerResult> IStorage.GetAsync(ref ulong fileId)
         => Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.Success));
 
-    Task<CrystalResult> IStorage.PrepareAndCheck(Crystalizer crystalizer, StorageConfiguration storageConfiguration, bool createNew)
-        => Task.FromResult(CrystalResult.Success);
-
-    CrystalResult IStorage.Put(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
+    CrystalResult IStorage.PutAndForget(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
         => CrystalResult.Success;
 
     Task<CrystalResult> IStorage.PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
         => Task.FromResult(CrystalResult.Success);
 
-    Task IStorage.Save()
-        => Task.CompletedTask;
+    CrystalResult IStorage.DeleteAndForget(ref ulong fileId)
+        => CrystalResult.Success;
+
+    Task<CrystalResult> IStorage.DeleteAsync(ref ulong fileId)
+        => Task.FromResult(CrystalResult.Success);
 
     Task<CrystalResult> IStorage.DeleteAllAsync()
         => Task.FromResult(CrystalResult.Success);

@@ -92,12 +92,12 @@ public partial class BaseData : IDataInternal, IJournalObject
         var datumObject = this.TryGetDatumObject<TDatum>();
         if (!datumObject.IsValid)
         {
-            return new(CrystalResult.NoDatum);
+            return new(CrystalResult.NotFound);
         }
 
         if (!datumObject.IsValidStorage)
         {
-            return new(CrystalResult.NoStorage);
+            return new(CrystalResult.NotFound);
         }
 
         return await this.BigCrystal.StorageGroup.Load(datumObject.StorageId, datumObject.FileId).ConfigureAwait(false);
@@ -149,6 +149,31 @@ public partial class BaseData : IDataInternal, IJournalObject
         var operation = new LockOperation<TDatum>(this);
 
         operation.Enter();
+        if (this.IsDeleted)
+        {// Removed
+            operation.SetResult(CrystalResult.Deleted);
+            operation.Exit();
+            return operation;
+        }
+
+        var dataObject = this.GetOrCreateDatumObject<TDatum>();
+        if (dataObject.Datum is not TDatum data)
+        {// No data
+            operation.SetResult(CrystalResult.DatumNotRegistered);
+            operation.Exit();
+            return operation;
+        }
+
+        operation.SetData(data);
+        return operation;
+    }
+
+    public async Task<LockOperation<TDatum>> LockAsync<TDatum>()
+       where TDatum : IDatum
+    {
+        var operation = new LockOperation<TDatum>(this);
+
+        await operation.EnterAsync().ConfigureAwait(false);
         if (this.IsDeleted)
         {// Removed
             operation.SetResult(CrystalResult.Deleted);

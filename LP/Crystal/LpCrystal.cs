@@ -2,7 +2,7 @@
 
 namespace LP.Crystal;
 
-public class LpCrystal : BigCrystalImpl<LpRootData>
+public class LpCrystal : BigCrystalObject<LpRootData>
 {
     public LpCrystal(Crystalizer crystalizer)
         : base(crystalizer)

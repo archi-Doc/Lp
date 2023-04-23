@@ -24,9 +24,9 @@ public partial record SimpleJournalConfiguration : JournalConfiguration
         }
     }
 
-    [Key(0)]
+    [Key("Directory")]
     public DirectoryConfiguration DirectoryConfiguration { get; protected set; }
 
-    [Key(1)]
+    [Key("JournalSizeInMbs")]
     public int MaxJournalSizeInMBs { get; protected set; }
 }

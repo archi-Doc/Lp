@@ -2,6 +2,10 @@
 
 namespace CrystalData;
 
-public interface IJournalWriter
+public enum CrystalSource
 {
+    NoSource,
+    File,
+    Storage,
+    Journal,
 }

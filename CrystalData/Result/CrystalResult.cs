@@ -7,24 +7,18 @@ public enum CrystalResult
     Success,
     NotStarted,
     Started,
+    NotPrepared,
     Aborted,
 
-    OverSizeLimit,
-    OverNumberLimit,
-    DatumNotRegistered,
-    Deleted,
-    NoDatum,
-    NoData,
-    NoStorage,
-    NoFiler,
-    NoFile,
-    CorruptedData,
-    SerializeError,
-    DeserializeError,
-    ReadError,
-    WriteError,
-    DeleteError,
-    NoPartialWriteSupport,
-    NoStorageKey,
-    NotPrepared,
+    OverSizeLimit, // Checked
+    OverNumberLimit, // Checked
+    DatumNotRegistered, // Checked
+    Deleted, // Checked
+    NotFound, // Checked
+    CorruptedData, // Checked
+    SerializeError, // Checked
+    DeserializeError, // Checked
+    FileOperationError, // Checked
+    NoPartialWriteSupport, // Checked
+    NoStorageKey, // Checked
 }

@@ -10,6 +10,7 @@ using CrystalData.Datum;
 using Tinyhand.IO;
 using CrystalData.Storage;
 using SimpleCommandLine;
+using static CrystalData.CrystalConfiguration;
 
 namespace Sandbox;
 
@@ -36,6 +37,7 @@ public class Program
             })
             .Configure(context =>
             {
+                context.AddSingleton<TestClass0>();
                 context.AddSingleton<TestClass>();
             })
             .ConfigureCrystal(context =>
@@ -44,13 +46,13 @@ public class Program
 
                 context.AddCrystal<ManualClass>(
                     new(
-                        Crystalization.Manual,
-                        new LocalFileConfiguration("Data/manual.data")
+                        SavePolicy.Manual,
+                        new LocalFileConfiguration("Data/manual")
                         ));
 
-                context.AddCrystal<CombinedClass>(
+                /*context.AddCrystal<CombinedClass>(
                     new(
-                        Crystalization.Periodic,
+                        SavePolicy.Periodic,
                         new LocalFileConfiguration("combined.data"),
                         new SimpleStorageConfiguration(new LocalDirectoryConfiguration("simple"))));
 
@@ -72,7 +74,7 @@ public class Program
                     },
                     DirectoryConfiguration = new LocalDirectoryConfiguration("Example"),
                     StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Example")),
-                });
+                });*/
             })
             .SetupOptions<CrystalizerOptions>((context, options) =>
             {// CrystalizerOptions
@@ -90,7 +92,10 @@ public class Program
             }
         }
 
-        var tc = unit.Context.ServiceProvider.GetRequiredService<TestClass>();
+        // var sc = new SimpleJournalConfiguration(new LocalDirectoryConfiguration("Storage"));
+        // var st = TinyhandSerializer.SerializeToString((JournalConfiguration)sc);
+
+        var tc = unit.Context.ServiceProvider.GetRequiredService<TestClass0>();
         await tc.Test1();
 
         ThreadCore.Root.Terminate();

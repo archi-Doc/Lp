@@ -2,12 +2,12 @@
 
 namespace CrystalData;
 
-[TinyhandUnion(0, typeof(EmptyFileConfiguration))]
-[TinyhandUnion(1, typeof(EmptyDirectoryConfiguration))]
-[TinyhandUnion(2, typeof(LocalFileConfiguration))]
-[TinyhandUnion(3, typeof(LocalDirectoryConfiguration))]
-[TinyhandUnion(4, typeof(S3FileConfiguration))]
-[TinyhandUnion(5, typeof(S3DirectoryConfiguration))]
+[TinyhandUnion("EmptyFile", typeof(EmptyFileConfiguration))]
+[TinyhandUnion("EmptyDirectory", typeof(EmptyDirectoryConfiguration))]
+[TinyhandUnion("LocalFile", typeof(LocalFileConfiguration))]
+[TinyhandUnion("LocalDirectory", typeof(LocalDirectoryConfiguration))]
+[TinyhandUnion("S3File", typeof(S3FileConfiguration))]
+[TinyhandUnion("S3Directory", typeof(S3DirectoryConfiguration))]
 public abstract partial record PathConfiguration
 {
     public enum Type
@@ -29,7 +29,7 @@ public abstract partial record PathConfiguration
 
     public virtual Type PathType => Type.Unknown;
 
-    [Key(0)]
+    [Key("Path")]
     public string Path { get; init; }
 
     public override string ToString()

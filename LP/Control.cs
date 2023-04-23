@@ -395,7 +395,7 @@ public class Control : ILogInformation
         }
 
         var result = await this.Crystalizer.PrepareAndLoadAll(new());
-        if (result != CrystalStartResult.Success)
+        if (result != CrystalResult.Success)
         {
             throw new PanicException();
         }

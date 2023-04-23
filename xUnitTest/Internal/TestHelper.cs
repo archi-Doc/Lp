@@ -27,7 +27,7 @@ public static class TestHelper
                             datumRegistry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
                             datumRegistry.Register<FragmentDatum<Identifier>>(2, x => new FragmentDatumImpl<Identifier>(x));
                         },
-                        Crystalization.None,
+                        SavePolicy.None,
                         new LocalDirectoryConfiguration(directory),
                         new SimpleStorageConfiguration(new LocalDirectoryConfiguration(directory))));
             });
@@ -36,7 +36,7 @@ public static class TestHelper
         var crystalizer = unit.Context.ServiceProvider.GetRequiredService<Crystalizer>();
 
         var crystal = crystalizer.GetBigCrystal<LpData>();
-        await crystal.PrepareAndLoad(new(FromScratch: true));
+        await crystal.PrepareAndLoad(new());
         return crystal;
     }
 
@@ -78,7 +78,7 @@ public static class TestHelper
         var crystalizer = unit.Context.ServiceProvider.GetRequiredService<Crystalizer>();
 
         var crystal = crystalizer.GetBigCrystal<MergerData>();
-        await crystal.PrepareAndLoad(new(FromScratch: true));
+        await crystal.PrepareAndLoad(CrystalPrepare.New);
         return crystal;
     }
 

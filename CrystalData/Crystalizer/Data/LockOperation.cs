@@ -38,6 +38,17 @@ public partial class BaseData
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal async Task<bool> EnterAsync()
+        {
+            if (!this.lockTaken)
+            {
+                this.lockTaken = await this.data.semaphore.EnterAsync().ConfigureAwait(false);
+            }
+
+            return this.lockTaken;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void Exit()
         {
             this.datum = default;
