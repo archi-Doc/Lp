@@ -2,6 +2,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using Amazon.Runtime;
 using CrystalData.Filer;
 using CrystalData.Journal;
 
@@ -158,51 +159,44 @@ public class CrystalObject<TData> : ICrystal<TData>
 
     async Task<CrystalResult> ICrystal.Save(bool unload)
     {
-        ulong hash;
-        CrystalResult result;
-        using (this.semaphore.Lock())
+        var obj = Volatile.Read(ref this.obj);
+        var filer = Volatile.Read(ref this.crystalFiler);
+        var currentWaypoint = this.waypoint;
+
+        if (!this.Prepared || obj == null || filer == null)
         {
-            if (!this.Prepared || this.obj == null || this.crystalFiler == null)
-            {
-                return CrystalResult.NotPrepared;
-            }
+            return CrystalResult.NotPrepared;
+        }
 
-            var obj = Volatile.Read(ref this.obj);
-            var filer = Volatile.Read(ref this.crystalFiler);
-            var currentWaypoint = this.waypoint;
+RetrySave:
+// var options = TinyhandSerializerOptions.Standard with { Token = this.waypoint.NextPlane, };
+        var byteArray = TinyhandSerializer.SerializeObject(obj);
+        var hash = FarmHash.Hash64(byteArray.AsSpan());
 
-            // !!! EXIT !!!
-            this.semaphore.Exit();
-            try
-            {
-                // var options = TinyhandSerializerOptions.Standard with { Token = this.waypoint.NextPlane, };
-                var byteArray = TinyhandSerializer.SerializeObject(obj);
-                hash = FarmHash.Hash64(byteArray.AsSpan());
-
-                if (currentWaypoint.Hash != hash)
-                {// Save
-                    result = await filer.Save(byteArray).ConfigureAwait(false);
-                    if (result != CrystalResult.Success)
-                    {// Write error
-                        return result;
-                    }
-                }
-            }
-            finally
-            {
-                this.semaphore.Enter();
-            }
-
-            // !!! ENTERED !!!
-
-            if (this.waypoint.Equals(currentWaypoint))
-            {// Waypoint not changed
-                this.Crystalizer.UpdatePlane(this, ref this.waypoint, hash);
-            }
-
-            _ = filer.LimitNumberOfFiles(1 + this.CrystalConfiguration.NumberOfBackups);
+        if (currentWaypoint.Hash == hash)
+        {// Identical data
             return CrystalResult.Success;
         }
+
+        using (this.semaphore.Lock())
+        {
+            if (!this.waypoint.Equals(currentWaypoint))
+            {// Waypoint changed
+                goto RetrySave;
+            }
+
+            this.Crystalizer.UpdatePlane(this, ref this.waypoint, hash);
+            currentWaypoint = this.waypoint;
+        }
+
+        var result = await filer.Save(byteArray, currentWaypoint).ConfigureAwait(false);
+        if (result != CrystalResult.Success)
+        {// Write error
+            return result;
+        }
+
+        _ = filer.LimitNumberOfFiles(1 + this.CrystalConfiguration.NumberOfBackups);
+        return CrystalResult.Success;
     }
 
     async Task<CrystalResult> ICrystal.Delete()

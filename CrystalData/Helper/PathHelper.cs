@@ -84,6 +84,10 @@ public static class PathHelper
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool EndsWithSlashOrBackslash(string path)
+        => path.EndsWith(Slash) || path.EndsWith(Backslash);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsSeparator(char c)
         => c == Slash || c == Backslash || c == Colon;
 

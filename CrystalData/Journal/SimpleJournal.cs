@@ -57,7 +57,13 @@ public partial class SimpleJournal : IJournal
         }
 
         // List journal books
-        var list = await this.rawFiler.ListAsync(configuration.Path).ConfigureAwait(false);
+        var path = configuration.Path;
+        if (!PathHelper.EndsWithSlashOrBackslash(path))
+        {
+            path = path + PathHelper.Slash;
+        }
+
+        var list = await this.rawFiler.ListAsync(path).ConfigureAwait(false);
 
         this.prepared = true;
         return CrystalResult.Success;

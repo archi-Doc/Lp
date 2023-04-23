@@ -70,6 +70,11 @@ public class CrystalFiler
         lock (this.syncObject)
         {
             array = this.waypoints.Take(this.waypoints.Count - numberOfFiles).ToArray();
+            if (array.Length == 0)
+            {
+                return Task.FromResult(CrystalResult.Success);
+            }
+
             pathArray = array.Select(x => this.GetFilePath(x)).ToArray();
 
             foreach (var x in array)
