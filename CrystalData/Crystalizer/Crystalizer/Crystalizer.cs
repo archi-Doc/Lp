@@ -21,7 +21,7 @@ public class Crystalizer
     {
         this.configuration = configuration;
         this.EnableLogger = options.EnableLogger;
-        this.AddExtension = options.AddExtension;
+        // this.AddExtension = options.AddExtension;
         this.RootDirectory = options.RootPath;
         this.DefaultTimeout = options.DefaultTimeout;
         if (string.IsNullOrEmpty(this.RootDirectory))
@@ -59,7 +59,7 @@ public class Crystalizer
 
     public bool EnableLogger { get; }
 
-    public bool AddExtension { get; init; } = true;
+    // public bool AddExtension { get; init; } = true;
 
     public string RootDirectory { get; }
 
@@ -91,7 +91,7 @@ public class Crystalizer
     {// new RawFilerToFiler(this, this.ResolveRawFiler(configuration), configuration);
         string path = configuration.Path;
 
-        if (this.AddExtension)
+        /*if (this.AddExtension)
         {
             try
             {
@@ -103,7 +103,7 @@ public class Crystalizer
             catch
             {
             }
-        }
+        }*/
 
         return new RawFilerToFiler(this, this.ResolveRawFiler(configuration), path);
     }
@@ -263,7 +263,7 @@ public class Crystalizer
     }
 
     public ICrystal<TData> CreateCrystal<TData>()
-        where TData : IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+        where TData : class, IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
         var crystal = new CrystalObject<TData>(this);
         this.crystals.TryAdd(crystal, 0);
@@ -279,7 +279,7 @@ public class Crystalizer
     }
 
     public ICrystal<TData> GetCrystal<TData>()
-        where TData : IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+        where TData : class, IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
         if (!this.typeToCrystal.TryGetValue(typeof(TData), out var c) ||
             c is not ICrystal<TData> crystal)

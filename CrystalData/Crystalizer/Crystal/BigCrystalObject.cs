@@ -48,7 +48,6 @@ public class BigCrystalObject<TData> : CrystalObject<TData>, IBigCrystal<TData>,
             this.StorageGroup.Configure(this.BigCrystalConfiguration.DirectoryConfiguration.CombinePath(this.BigCrystalConfiguration.StorageFile));
             this.crystalFileConfiguration = this.BigCrystalConfiguration.DirectoryConfiguration.CombinePath(this.BigCrystalConfiguration.CrystalFile);
 
-            this.filer = null;
             this.storage = null;
             this.Prepared = false;
         }
@@ -113,7 +112,6 @@ public class BigCrystalObject<TData> : CrystalObject<TData>, IBigCrystal<TData>,
 
             // Clear
             this.CrystalConfiguration = CrystalConfiguration.Default;
-            this.filer = null;
 
             return CrystalResult.Success;
         }
@@ -190,7 +188,7 @@ public class BigCrystalObject<TData> : CrystalObject<TData>, IBigCrystal<TData>,
     }
 
     protected override void ReconstructObject(bool createNew)
-    {
+    {// this.semaphore.Lock()
         if (this.obj == null || createNew)
         {
             this.obj = TinyhandSerializer.Reconstruct<TData>();

@@ -2,9 +2,9 @@
 
 using System.Runtime.CompilerServices;
 
-namespace CrystalData.Journal;
+namespace CrystalData;
 
-public readonly struct Waypoint : IEquatable<Waypoint>
+public readonly struct Waypoint : IEquatable<Waypoint>, IComparable<Waypoint>
 {
     public const string Extension = "waypoint";
     public const int Length = 24; // 8 + 4 + 4 + 8
@@ -17,6 +17,12 @@ public readonly struct Waypoint : IEquatable<Waypoint>
         this.CurrentPlane = currentPlane;
         this.NextPlane = nextPlane;
         this.Hash = hash;
+    }
+
+    public static bool TryParse(string base64Url, out Waypoint waypoint)
+    {
+        var byteArray = Base64.Url.FromStringToByteArray(base64Url);
+        return TryParse(byteArray, out waypoint);
     }
 
     public static bool TryParse(ReadOnlySpan<byte> span, out Waypoint waypoint)
@@ -73,6 +79,47 @@ public readonly struct Waypoint : IEquatable<Waypoint>
         this.CurrentPlane == other.CurrentPlane &&
         this.NextPlane == other.NextPlane &&
         this.Hash == other.Hash;
+
+    public int CompareTo(Waypoint other)
+    {
+        if (this.JournalPosition < other.JournalPosition)
+        {
+            return -1;
+        }
+        else if (this.JournalPosition > other.JournalPosition)
+        {
+            return 1;
+        }
+
+        if (this.CurrentPlane < other.CurrentPlane)
+        {
+            return -1;
+        }
+        else if (this.CurrentPlane > other.CurrentPlane)
+        {
+            return 1;
+        }
+
+        if (this.NextPlane < other.NextPlane)
+        {
+            return -1;
+        }
+        else if (this.NextPlane > other.NextPlane)
+        {
+            return 1;
+        }
+
+        if (this.Hash < other.Hash)
+        {
+            return -1;
+        }
+        else if (this.Hash > other.Hash)
+        {
+            return 1;
+        }
+
+        return 0;
+    }
 
     public override int GetHashCode()
         => HashCode.Combine(this.JournalPosition, this.CurrentPlane, this.NextPlane, this.Hash);

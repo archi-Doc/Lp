@@ -190,16 +190,34 @@ TryWrite:
             var list = new List<PathInformation>();
             try
             {
-                var directoryInfo = new DirectoryInfo(filePath);
+                string directory = string.Empty;
+                string prefix = string.Empty;
+
+                if (Directory.Exists(filePath))
+                {// filePath is a directory
+                    directory = filePath;
+                }
+                else
+                {// "Directory/Prefix"
+                    (directory, prefix) = PathHelper.PathToDirectoryAndFile(filePath);
+                }
+
+                var directoryInfo = new DirectoryInfo(directory);
                 foreach (var x in directoryInfo.EnumerateFileSystemInfos())
                 {
                     if (x is FileInfo fi)
                     {
-                        list.Add(new(fi.FullName, fi.Length));
+                        if (string.IsNullOrEmpty(prefix) || fi.FullName.StartsWith(prefix))
+                        {
+                            list.Add(new(fi.FullName, fi.Length));
+                        }
                     }
                     else if (x is DirectoryInfo di)
                     {
-                        list.Add(new(di.FullName));
+                        if (string.IsNullOrEmpty(prefix) || di.FullName.StartsWith(prefix))
+                        {
+                            list.Add(new(di.FullName));
+                        }
                     }
                 }
             }

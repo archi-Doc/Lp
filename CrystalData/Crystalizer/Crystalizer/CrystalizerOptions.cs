@@ -13,7 +13,7 @@ public class CrystalizerOptions
 
     public string RootPath { get; set; } = string.Empty;
 
-    public bool AddExtension { get; init; } = false;
+    // public bool AddExtension { get; init; } = false;
 
     public TimeSpan DefaultTimeout { get; set; }
 }

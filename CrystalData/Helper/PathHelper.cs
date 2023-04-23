@@ -14,6 +14,23 @@ public static class PathHelper
     public const string BackslashString = "\\";
     public const string ColonString = ":";
 
+    public static (string Directory, string File) PathToDirectoryAndFile(string path)
+    {
+        var span = path.AsSpan();
+        for (var i = span.Length - 1; i >= 1; i--)
+        {
+            if (span[i] == Slash || span[i] == Backslash)
+            {
+                var st = span[0..0].ToString();
+                var st2 = span[0..1].ToString();
+                var st3 = span[span.Length..].ToString();
+                return (span[0..i].ToString(), span[(i + 1)..].ToString());
+            }
+        }
+
+        return (string.Empty, path);
+    }
+
     public static string CombineWithBackslash(string path1, string path2)
         => CombineWith(Backslash, path1, path2);
 

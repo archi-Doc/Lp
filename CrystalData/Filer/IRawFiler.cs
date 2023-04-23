@@ -34,7 +34,7 @@ public interface IRawFiler
 
     Task<CrystalResult> DeleteDirectoryAsync(string path, TimeSpan timeout);
 
-    Task<List<PathInformation>> ListAsync(string path, TimeSpan timeout);
+    Task<List<PathInformation>> ListAsync(string directory, TimeSpan timeout);
 
     #region InfiniteTimeout
 
@@ -50,8 +50,8 @@ public interface IRawFiler
     Task<CrystalResult> DeleteDirectoryAsync(string path)
         => this.DeleteDirectoryAsync(path, TimeSpan.MinValue);
 
-    Task<List<PathInformation>> ListAsync(string path)
-    => this.ListAsync(path, TimeSpan.MinValue);
+    Task<List<PathInformation>> ListAsync(string directory)
+    => this.ListAsync(directory, TimeSpan.MinValue);
 
     #endregion
 }

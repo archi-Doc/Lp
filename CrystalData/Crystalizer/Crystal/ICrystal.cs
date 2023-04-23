@@ -12,7 +12,7 @@ public interface ICrystal
 
     bool Prepared { get; }
 
-    IFiler Filer { get; }
+    // IFiler Filer { get; }
 
     IStorage Storage { get; }
 
@@ -32,7 +32,7 @@ public interface ICrystal
 }
 
 public interface ICrystal<TData> : ICrystal
-    where TData : IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+    where TData : class, IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
     public new TData Object { get; }
 }

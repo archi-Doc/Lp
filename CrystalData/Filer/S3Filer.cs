@@ -195,10 +195,10 @@ TryWrite:
         else if (work.Type == FilerWork.WorkType.List)
         {// List
             var list = new List<PathInformation>();
-            if (!filePath.EndsWith(PathHelper.Slash) && !string.IsNullOrEmpty(filePath))
+            /*if (!filePath.EndsWith(PathHelper.Slash) && !string.IsNullOrEmpty(filePath))
             {
                 filePath += PathHelper.Slash;
-            }
+            }*/
 
             try
             {
