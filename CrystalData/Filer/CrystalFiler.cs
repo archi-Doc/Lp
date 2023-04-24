@@ -147,14 +147,15 @@ public class CrystalFiler
             return Task.FromResult(CrystalResult.NotPrepared);
         }
 
-        string[] pathArray;
+        List<string> pathList;
         lock (this.syncObject)
         {
-            pathArray = this.waypoints.Select(x => this.GetFilePath(x)).ToArray();
+            pathList = this.waypoints.Select(x => this.GetFilePath(x)).ToList();
+            pathList.Add(this.GetFilePath());
             this.waypoints.Clear();
         }
 
-        var tasks = pathArray.Select(x => this.rawFiler.DeleteAsync(x)).ToArray();
+        var tasks = pathList.Select(x => this.rawFiler.DeleteAsync(x)).ToArray();
         return Task.WhenAll(tasks).ContinueWith(x => CrystalResult.Success);
     }
 

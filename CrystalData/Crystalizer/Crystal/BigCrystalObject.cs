@@ -12,7 +12,6 @@ public class BigCrystalObject<TData> : CrystalObject<TData>, IBigCrystal<TData>,
         this.storageGroup = new(crystalizer);
         this.himoGoshujin = new(this);
         this.logger = crystalizer.UnitLogger.GetLogger<IBigCrystal<TData>>();
-        this.crystalFileConfiguration = EmptyFileConfiguration.Default;
     }
 
     #region FieldAndProperty
@@ -30,8 +29,6 @@ public class BigCrystalObject<TData> : CrystalObject<TData>, IBigCrystal<TData>,
     private StorageGroup storageGroup;
     private HimoGoshujinClass himoGoshujin;
     private ILogger logger;
-    private PathConfiguration crystalFileConfiguration;
-    private IFiler? crystalFiler;
 
     #endregion
 
@@ -117,20 +114,23 @@ public class BigCrystalObject<TData> : CrystalObject<TData>, IBigCrystal<TData>,
         }
     }
 
-    internal async Task DeleteAllInternal()
+    #endregion
+
+    protected override async Task DeleteAllInternal()
     {
         this.obj?.Delete();
         this.himoGoshujin.Clear();
 
-        this.crystalFiler?.DeleteAndForget();
-        this.crystalFiler = null;
+        if (this.crystalFiler is { } filer)
+        {
+            await filer.DeleteAllAsync().ConfigureAwait(false);
+            this.crystalFiler = null;
+        }
 
-        await this.StorageGroup.DeleteAllAsync();
+        await this.StorageGroup.DeleteAllAsync().ConfigureAwait(false);
 
         this.ReconstructObject(true);
     }
-
-    #endregion
 
     protected override async Task<CrystalResult> PrepareAndLoadInternal(CrystalPrepare prepare)
     {// this.semaphore.Lock()

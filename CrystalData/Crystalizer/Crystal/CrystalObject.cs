@@ -256,6 +256,17 @@ public class CrystalObject<TData> : ICrystal<TData>
 
     #endregion
 
+    protected virtual async Task DeleteAllInternal()
+    {
+        if (this.crystalFiler is { } filer)
+        {
+            await filer.DeleteAllAsync().ConfigureAwait(false);
+            this.crystalFiler = null;
+        }
+
+        this.ReconstructObject(true);
+    }
+
     protected virtual async Task<CrystalResult> PrepareAndLoadInternal(CrystalPrepare prepare)
     {// this.semaphore.Lock()
         if (this.Prepared)
@@ -265,6 +276,15 @@ public class CrystalObject<TData> : ICrystal<TData>
 
         CrystalResult result;
         var param = prepare.ToParam<TData>(this.Crystalizer);
+
+        if (prepare.CreateNew)
+        {
+            await this.DeleteAllInternal();
+            this.ReconstructObject(true);
+
+            this.Prepared = true;
+            return CrystalResult.Success;
+        }
 
         // CrystalFiler
         if (this.crystalFiler == null)
