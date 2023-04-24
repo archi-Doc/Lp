@@ -10,7 +10,14 @@ public enum SavePolicy
     Instant,
 }
 
-public record CrystalConfiguration
+public enum SaveFormat
+{
+    Binary,
+    Utf8,
+}
+
+[TinyhandObject(ImplicitKeyAsName = true, IncludePrivateMembers = true)]
+public partial record CrystalConfiguration
 {
     public static readonly TimeSpan DefaultInterval = TimeSpan.FromHours(1);
 
@@ -31,21 +38,21 @@ public record CrystalConfiguration
         this.StorageConfiguration = storageConfiguration ?? EmptyStorageConfiguration.Default;
     }
 
-    public CrystalConfiguration(TimeSpan interval, FileConfiguration fileConfiguration, StorageConfiguration? storageConfiguration = null)
+    public SaveFormat SaveFormat { get; protected set; }
+
+    public SavePolicy SavePolicy { get; protected set; }
+
+    public TimeSpan SaveInterval { get; protected set; }
+
+    public int NumberOfBackups { get; protected set; } = 1;
+
+    public FileConfiguration FileConfiguration { get; protected set; }
+
+    public StorageConfiguration StorageConfiguration { get; protected set; }
+
+    internal void ConfigureInternal(FileConfiguration filerConfiguration, StorageConfiguration storageConfiguration)
     {
-        this.SavePolicy = SavePolicy.Periodic;
-        this.SaveInterval = interval;
-        this.FileConfiguration = fileConfiguration;
-        this.StorageConfiguration = storageConfiguration ?? EmptyStorageConfiguration.Default;
+        this.FileConfiguration = filerConfiguration;
+        this.StorageConfiguration = storageConfiguration;
     }
-
-    public SavePolicy SavePolicy { get; init; }
-
-    public TimeSpan SaveInterval { get; init; }
-
-    public int NumberOfBackups { get; init; } = 1;
-
-    public FileConfiguration FileConfiguration { get; init; }
-
-    public StorageConfiguration StorageConfiguration { get; init; }
 }

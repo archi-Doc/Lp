@@ -30,7 +30,7 @@ public abstract partial record PathConfiguration
     public virtual Type PathType => Type.Unknown;
 
     [Key("Path")]
-    public string Path { get; init; }
+    public string Path { get; protected set; }
 
     public override string ToString()
         => $"Path: {this.Path}";

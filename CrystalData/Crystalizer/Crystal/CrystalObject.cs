@@ -126,7 +126,11 @@ public class CrystalObject<TData> : ICrystal<TData>
     {
         using (this.semaphore.Lock())
         {
-            this.CrystalConfiguration = this.CrystalConfiguration with { FileConfiguration = configuration, };
+            // this.CrystalConfiguration = this.CrystalConfiguration with { FileConfiguration = configuration, };
+            var newConfiguration = this.CrystalConfiguration with { };
+            newConfiguration.ConfigureInternal(configuration, newConfiguration.StorageConfiguration);
+            this.CrystalConfiguration = newConfiguration;
+
             this.crystalFiler = null;
             this.Prepared = false;
         }
@@ -136,7 +140,11 @@ public class CrystalObject<TData> : ICrystal<TData>
     {
         using (this.semaphore.Lock())
         {
-            this.CrystalConfiguration = this.CrystalConfiguration with { StorageConfiguration = configuration, };
+            // this.CrystalConfiguration = this.CrystalConfiguration with { StorageConfiguration = configuration, };
+            var newConfiguration = this.CrystalConfiguration with { };
+            newConfiguration.ConfigureInternal(newConfiguration.FileConfiguration, configuration);
+            this.CrystalConfiguration = newConfiguration;
+
             this.storage = null;
             this.Prepared = false;
         }
