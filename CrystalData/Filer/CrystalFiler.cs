@@ -49,6 +49,11 @@ public class CrystalFiler
             return Task.FromResult(CrystalResult.NotPrepared);
         }
 
+        lock (this.syncObject)
+        {
+            this.waypoints.Add(waypoint);
+        }
+
         var path = this.GetFilePath(waypoint);
         return this.rawFiler.WriteAsync(path, 0, new(data));
     }

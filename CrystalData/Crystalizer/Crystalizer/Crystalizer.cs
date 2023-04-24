@@ -321,7 +321,7 @@ public class Crystalizer
         }
         else
         {
-            journalPosition = 0;
+            journalPosition = waypoint.JournalPosition + 1;
         }
 
         if (waypoint.CurrentPlane != 0)

@@ -2,9 +2,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using Amazon.Runtime;
 using CrystalData.Filer;
-using CrystalData.Journal;
 
 #pragma warning disable SA1401
 
@@ -168,8 +166,8 @@ public class CrystalObject<TData> : ICrystal<TData>
             return CrystalResult.NotPrepared;
         }
 
-RetrySave:
-// var options = TinyhandSerializerOptions.Standard with { Token = this.waypoint.NextPlane, };
+        // RetrySave:
+        // var options = TinyhandSerializerOptions.Standard with { Token = this.waypoint.NextPlane, };
         var byteArray = TinyhandSerializer.SerializeObject(obj);
         var hash = FarmHash.Hash64(byteArray.AsSpan());
 
@@ -182,7 +180,8 @@ RetrySave:
         {
             if (!this.waypoint.Equals(currentWaypoint))
             {// Waypoint changed
-                goto RetrySave;
+                // goto RetrySave;
+                return CrystalResult.Success;
             }
 
             this.Crystalizer.UpdatePlane(this, ref this.waypoint, hash);
@@ -317,6 +316,7 @@ RetrySave:
         {// Reconstruct
             TinyhandSerializer.ReconstructObject<TData>(ref this.obj);
             var hash = FarmHash.Hash64(TinyhandSerializer.SerializeObject(this.obj));
+            this.waypoint = default;
 
             this.Crystalizer.UpdatePlane(this, ref this.waypoint, hash);
 

@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Buffers.Binary;
 using System.Runtime.CompilerServices;
 
 namespace CrystalData;
@@ -31,7 +32,7 @@ public readonly struct Waypoint : IEquatable<Waypoint>, IComparable<Waypoint>
         {
             try
             {
-                var journalPosition = BitConverter.ToUInt64(span);
+                var journalPosition = BinaryPrimitives.ReverseEndianness(BitConverter.ToUInt64(span));
                 span = span.Slice(sizeof(ulong));
                 var currentPlane = BitConverter.ToUInt32(span);
                 span = span.Slice(sizeof(uint));
@@ -124,10 +125,27 @@ public readonly struct Waypoint : IEquatable<Waypoint>, IComparable<Waypoint>
     public override int GetHashCode()
         => HashCode.Combine(this.JournalPosition, this.CurrentPlane, this.NextPlane, this.Hash);
 
+    private static void WriteBigEndian(ulong value, Span<byte> span)
+    {
+        unchecked
+        {
+            // Write to highest index first so the JIT skips bounds checks on subsequent writes.
+            span[7] = (byte)value;
+            span[6] = (byte)(value >> 8);
+            span[5] = (byte)(value >> 16);
+            span[4] = (byte)(value >> 24);
+            span[3] = (byte)(value >> 32);
+            span[2] = (byte)(value >> 40);
+            span[1] = (byte)(value >> 48);
+            span[0] = (byte)(value >> 56);
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void WriteSpan(Span<byte> span)
     {
-        BitConverter.TryWriteBytes(span, this.JournalPosition);
+        // BitConverter.TryWriteBytes(span, this.JournalPosition);
+        WriteBigEndian(this.JournalPosition, span);
         span = span.Slice(sizeof(ulong));
         BitConverter.TryWriteBytes(span, this.CurrentPlane);
         span = span.Slice(sizeof(uint));
