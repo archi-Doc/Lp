@@ -55,9 +55,9 @@ public class Program
                     new(
                         SavePolicy.Periodic,
                         new LocalFileConfiguration("Data/combined"),
-                        new SimpleStorageConfiguration(new LocalDirectoryConfiguration("simple"))));
+                        new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Data/Simple"))));
 
-                /*context.AddBigCrystal<BaseData>(new BigCrystalConfiguration() with
+                context.AddBigCrystal<BaseData>(new BigCrystalConfiguration() with
                 {
                     RegisterDatum = registry =>
                     {
@@ -67,7 +67,7 @@ public class Program
                     StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Storage")),
                 });
 
-                context.AddBigCrystal<ExampleData>(new BigCrystalConfiguration() with
+                /*context.AddBigCrystal<ExampleData>(new BigCrystalConfiguration() with
                 {
                     RegisterDatum = registry =>
                     {

@@ -85,7 +85,7 @@ public class BigCrystalObject<TData> : CrystalObject<TData>, IBigCrystal<TData>,
         return CrystalResult.Success;
     }
 
-    public async Task Abort()
+    /*public async Task Abort()
     {
         using (this.semaphore.Lock())
         {
@@ -97,7 +97,7 @@ public class BigCrystalObject<TData> : CrystalObject<TData>, IBigCrystal<TData>,
             await this.StorageGroup.SaveStorage().ConfigureAwait(false);
             this.StorageGroup.Clear();
         }
-    }
+    }*/
 
     async Task<CrystalResult> ICrystal.Delete()
     {

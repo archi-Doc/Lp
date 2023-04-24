@@ -63,7 +63,7 @@ internal partial class SimpleStorage : IStorage
         {
             this.crystal = this.crystalizer.CreateCrystal<SimpleStorageData>();
             var filerConfiguration = directoryConfiguration.CombinePath(SimpleStorageFile);
-            this.crystal.Configure(new(SavePolicy.Manual, filerConfiguration));
+            this.crystal.Configure(new CrystalConfiguration(SavePolicy.Manual, filerConfiguration));
 
             result = await this.crystal.PrepareAndLoad(param).ConfigureAwait(false);
             return result;
