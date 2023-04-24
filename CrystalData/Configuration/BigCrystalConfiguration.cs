@@ -28,21 +28,21 @@ public record BigCrystalConfiguration : CrystalConfiguration
         this.StorageConfiguration = storageConfiguration;
     }
 
-    public DirectoryConfiguration DirectoryConfiguration { get; protected set; }
+    public DirectoryConfiguration DirectoryConfiguration { get; init; }
 
-    public Action<DatumRegistry> RegisterDatum { get; protected set; }
+    public Action<DatumRegistry> RegisterDatum { get; init; }
 
-    public int MaxDataSize { get; protected set; } = DefaultMaxDataSize;
+    public int MaxDataSize { get; init; } = DefaultMaxDataSize;
 
-    public int MaxFragmentSize { get; protected set; } = DefaultMaxFragmentSize;
+    public int MaxFragmentSize { get; init; } = DefaultMaxFragmentSize;
 
-    public int MaxFragmentCount { get; protected set; } = DefaultMaxFragmentCount;
+    public int MaxFragmentCount { get; init; } = DefaultMaxFragmentCount;
 
-    public long MemorySizeLimit { get; protected set; } = DefaultMemorySizeLimit;
+    public long MemorySizeLimit { get; init; } = DefaultMemorySizeLimit;
 
-    public int MaxParentInMemory { get; protected set; } = DefaultMaxParentInMemory;
+    public int MaxParentInMemory { get; init; } = DefaultMaxParentInMemory;
 
-    public string CrystalFile { get; protected set; } = "Crystal";
+    public string CrystalFile { get; init; } = "Crystal";
 
-    public string StorageFile { get; protected set; } = "Storage";
+    public string StorageFile { get; init; } = "Storage";
 }

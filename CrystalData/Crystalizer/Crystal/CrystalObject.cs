@@ -126,10 +126,10 @@ public class CrystalObject<TData> : ICrystal<TData>
     {
         using (this.semaphore.Lock())
         {
-            // this.CrystalConfiguration = this.CrystalConfiguration with { FileConfiguration = configuration, };
-            var newConfiguration = this.CrystalConfiguration with { };
+            this.CrystalConfiguration = this.CrystalConfiguration with { FileConfiguration = configuration, };
+            /*var newConfiguration = this.CrystalConfiguration with { };
             newConfiguration.ConfigureInternal(configuration, newConfiguration.StorageConfiguration);
-            this.CrystalConfiguration = newConfiguration;
+            this.CrystalConfiguration = newConfiguration;*/
 
             this.crystalFiler = null;
             this.Prepared = false;
@@ -140,10 +140,10 @@ public class CrystalObject<TData> : ICrystal<TData>
     {
         using (this.semaphore.Lock())
         {
-            // this.CrystalConfiguration = this.CrystalConfiguration with { StorageConfiguration = configuration, };
-            var newConfiguration = this.CrystalConfiguration with { };
+            this.CrystalConfiguration = this.CrystalConfiguration with { StorageConfiguration = configuration, };
+            /*var newConfiguration = this.CrystalConfiguration with { };
             newConfiguration.ConfigureInternal(newConfiguration.FileConfiguration, configuration);
-            this.CrystalConfiguration = newConfiguration;
+            this.CrystalConfiguration = newConfiguration;*/
 
             this.storage = null;
             this.Prepared = false;
@@ -176,7 +176,16 @@ public class CrystalObject<TData> : ICrystal<TData>
 
         // RetrySave:
         // var options = TinyhandSerializerOptions.Standard with { Token = this.waypoint.NextPlane, };
-        var byteArray = TinyhandSerializer.SerializeObject(obj);
+        byte[] byteArray;
+        if (this.CrystalConfiguration.SaveFormat == SaveFormat.Utf8)
+        {
+            byteArray = TinyhandSerializer.SerializeObjectToUtf8(obj);
+        }
+        else
+        {
+            byteArray = TinyhandSerializer.SerializeObject(obj);
+        }
+
         var hash = FarmHash.Hash64(byteArray.AsSpan());
 
         if (currentWaypoint.Hash == hash)
@@ -202,7 +211,7 @@ public class CrystalObject<TData> : ICrystal<TData>
             return result;
         }
 
-        _ = filer.LimitNumberOfFiles(1 + this.CrystalConfiguration.NumberOfBackups);
+        _ = filer.LimitNumberOfFiles();
         return CrystalResult.Success;
     }
 
@@ -261,7 +270,7 @@ public class CrystalObject<TData> : ICrystal<TData>
         if (this.crystalFiler == null)
         {
             this.crystalFiler = new(this.Crystalizer);
-            result = await this.crystalFiler.PrepareAndCheck(param, this.CrystalConfiguration.FileConfiguration).ConfigureAwait(false);
+            result = await this.crystalFiler.PrepareAndCheck(param, this.CrystalConfiguration).ConfigureAwait(false);
             if (result.IsFailure())
             {
                 return result;
@@ -286,7 +295,7 @@ public class CrystalObject<TData> : ICrystal<TData>
         }
 
         var filer = Volatile.Read(ref this.crystalFiler);
-        var configuration = this.CrystalConfiguration.FileConfiguration;
+        var configuration = this.CrystalConfiguration;
 
         // !!! EXIT !!!
         this.semaphore.Exit();
@@ -312,7 +321,7 @@ public class CrystalObject<TData> : ICrystal<TData>
 
         if (loadResult.Data is { } data)
         {// Loaded
-            // Filename to waypoint
+            this.obj = data;
             this.waypoint = loadResult.Waypoint;
 
             this.Crystalizer.SetPlane(this, ref this.waypoint);
@@ -334,14 +343,14 @@ public class CrystalObject<TData> : ICrystal<TData>
     }
 
 #pragma warning disable SA1204 // Static elements should appear before instance elements
-    protected static async Task<(CrystalResult Result, TData? Data, Waypoint Waypoint)> LoadAndDeserializeNotInternal(CrystalFiler filer, PrepareParam param, FileConfiguration configuration)
+    protected static async Task<(CrystalResult Result, TData? Data, Waypoint Waypoint)> LoadAndDeserializeNotInternal(CrystalFiler filer, PrepareParam param, CrystalConfiguration configuration)
 #pragma warning restore SA1204 // Static elements should appear before instance elements
     {
         // Load data
         var data = await filer.LoadLatest().ConfigureAwait(false);
         if (data.Result.IsFailure)
         {
-            if (await param.Query(configuration, data.Result.Result).ConfigureAwait(false) == AbortOrContinue.Abort)
+            if (await param.Query(configuration.FileConfiguration, data.Result.Result).ConfigureAwait(false) == AbortOrContinue.Abort)
             {
                 return (data.Result.Result, default, default);
             }
@@ -353,7 +362,15 @@ public class CrystalObject<TData> : ICrystal<TData>
         TData? obj = default;
         try
         {
-            TinyhandSerializer.DeserializeObject(data.Result.Data.Memory.Span, ref obj);
+            if (configuration.SaveFormat == SaveFormat.Utf8)
+            {
+                TinyhandSerializer.DeserializeObjectFromUtf8(data.Result.Data.Memory.Span, ref obj);
+            }
+            else
+            {
+                TinyhandSerializer.DeserializeObject(data.Result.Data.Memory.Span, ref obj);
+            }
+
             if (obj == null)
             {
                 return (CrystalResult.Success, default, default); // Reconstruct
@@ -361,7 +378,7 @@ public class CrystalObject<TData> : ICrystal<TData>
         }
         catch
         {
-            if (await param.Query(configuration, CrystalResult.DeserializeError).ConfigureAwait(false) == AbortOrContinue.Abort)
+            if (await param.Query(configuration.FileConfiguration, CrystalResult.DeserializeError).ConfigureAwait(false) == AbortOrContinue.Abort)
             {
                 return (CrystalResult.DeserializeError, default, default);
             }
