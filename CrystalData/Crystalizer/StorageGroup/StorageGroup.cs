@@ -166,7 +166,7 @@ public sealed class StorageGroup
         {
             foreach (var x in this.storages)
             {
-                if (x.Storage?.DeleteAllAsync() is { } task)
+                if (x.Storage?.DeleteStorageAsync() is { } task)
                 {
                     list.Add(task);
                 }
@@ -176,7 +176,7 @@ public sealed class StorageGroup
         await Task.WhenAll(list).ConfigureAwait(false);
     }
 
-    public void Save(ref ushort storageId, ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared, ushort datumId)
+    public void PutAndForget(ref ushort storageId, ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared, ushort datumId)
     {
         StorageObject? storage;
         lock (this.syncObject)
@@ -212,7 +212,7 @@ public sealed class StorageGroup
         storage.Storage?.PutAndForget(ref fileId, memoryToBeShared);
     }
 
-    public Task<CrystalMemoryOwnerResult> Load(ushort storageId, ulong fileId)
+    public Task<CrystalMemoryOwnerResult> GetAsync(ushort storageId, ulong fileId)
     {
         StorageObject? storageObject;
         lock (this.syncObject)
@@ -233,7 +233,7 @@ public sealed class StorageGroup
         return task;
     }
 
-    public void Delete(ref ushort storageId, ref ulong fileId)
+    public void DeleteAndForget(ref ushort storageId, ref ulong fileId)
     {
         StorageObject? storageObject;
         lock (this.syncObject)

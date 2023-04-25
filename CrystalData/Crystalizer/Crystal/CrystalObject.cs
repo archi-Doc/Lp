@@ -230,7 +230,7 @@ public class CrystalObject<TData> : ICrystal<TData>
                 await task.ConfigureAwait(false);
             }
 
-            if (this.storage?.DeleteAllAsync() is { } task2)
+            if (this.storage?.DeleteStorageAsync() is { } task2)
             {
                 await task2.ConfigureAwait(false);
             }

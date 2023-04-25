@@ -64,7 +64,7 @@ internal partial class StorageObject
     {
         if (this.Storage != null)
         {
-            await this.Storage.Save();
+            await this.Storage.SaveStorage();
         }
     }
 

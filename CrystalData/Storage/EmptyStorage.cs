@@ -16,7 +16,7 @@ public partial class EmptyStorage : IStorage
     Task<CrystalResult> IStorage.PrepareAndCheck(PrepareParam param, StorageConfiguration storageConfiguration, bool createNew)
         => Task.FromResult(CrystalResult.Success);
 
-    Task IStorage.Save()
+    Task IStorage.SaveStorage()
         => Task.CompletedTask;
 
     Task<CrystalMemoryOwnerResult> IStorage.GetAsync(ref ulong fileId)
@@ -34,6 +34,6 @@ public partial class EmptyStorage : IStorage
     Task<CrystalResult> IStorage.DeleteAsync(ref ulong fileId)
         => Task.FromResult(CrystalResult.Success);
 
-    Task<CrystalResult> IStorage.DeleteAllAsync()
+    Task<CrystalResult> IStorage.DeleteStorageAsync()
         => Task.FromResult(CrystalResult.Success);
 }
