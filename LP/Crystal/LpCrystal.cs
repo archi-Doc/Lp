@@ -2,7 +2,7 @@
 
 namespace LP.Crystal;
 
-public class LpCrystal : BigCrystalObject<LpRootData>
+/*public class LpCrystal : BigCrystalObject<LpRootData>
 {
     public LpCrystal(Crystalizer crystalizer)
         : base(crystalizer)
@@ -11,7 +11,7 @@ public class LpCrystal : BigCrystalObject<LpRootData>
     }
 
     public LpData Data => this.Object.Data;
-}
+}*/
 
 [TinyhandObject]
 public partial class LpRootData : BaseData

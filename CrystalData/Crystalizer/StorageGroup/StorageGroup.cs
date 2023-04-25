@@ -29,7 +29,7 @@ public sealed class StorageGroup
 
     private object syncObject = new();
     private PrepareParam? prepareParam;
-    private StorageObject.GoshujinClass storages = new();  // lock(syncObject)
+    private StorageObject.GoshujinClass storages = new(); // lock(syncObject)
     private StorageObject? currentStorage; // lock(syncObject)
     private int storageRotationCount; // lock(syncObject)
 
