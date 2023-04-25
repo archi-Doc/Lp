@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-#pragma warning disable SA1401
-
 namespace CrystalData;
 
 public sealed class BigCrystalObject<TData> : IBigCrystal<TData>
@@ -10,9 +8,9 @@ public sealed class BigCrystalObject<TData> : IBigCrystal<TData>
     public BigCrystalObject(Crystalizer crystalizer)
     {
         this.Crystalizer = crystalizer;
-        this.crystal = new CrystalObject<TData>(this.Crystalizer);
-        this.CrystalConfiguration = CrystalConfiguration.Default;
         this.BigCrystalConfiguration = BigCrystalConfiguration.Default;
+
+        this.crystal = new CrystalObject<TData>(this.Crystalizer);
         this.storageGroup = new(crystalizer);
         this.himoGoshujin = new(this); // tempcode
         this.logger = crystalizer.UnitLogger.GetLogger<IBigCrystal<TData>>();
@@ -32,7 +30,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystal<TData>
 
     public Crystalizer Crystalizer { get; }
 
-    public CrystalConfiguration CrystalConfiguration { get; private set; }
+    public CrystalConfiguration CrystalConfiguration => this.crystal.CrystalConfiguration;
 
     public BigCrystalConfiguration BigCrystalConfiguration { get; private set; }
 
@@ -57,13 +55,33 @@ public sealed class BigCrystalObject<TData> : IBigCrystal<TData>
         using (this.semaphore.Lock())
         {
             this.BigCrystalConfiguration = configuration;
-            this.CrystalConfiguration = configuration;
-
             this.BigCrystalConfiguration.RegisterDatum(this.DatumRegistry);
             this.StorageGroup.Configure(this.BigCrystalConfiguration.DirectoryConfiguration.CombinePath(this.BigCrystalConfiguration.StorageFile));
             this.crystal.Configure(configuration);
 
             this.Prepared = false;
+        }
+    }
+
+    void ICrystal.Configure(CrystalConfiguration configuration)
+        => this.crystal.Configure(configuration);
+
+    void ICrystal.ConfigureFile(FileConfiguration configuration)
+        => this.crystal.ConfigureFile(configuration);
+
+    void ICrystal.ConfigureStorage(StorageConfiguration configuration)
+        => this.crystal.ConfigureStorage(configuration);
+
+    async Task<CrystalResult> ICrystal.PrepareAndLoad(CrystalPrepare param)
+    {
+        using (this.semaphore.Lock())
+        {
+            if (this.Prepared)
+            {// Prepared
+                return CrystalResult.Success;
+            }
+
+            return await this.PrepareAndLoadInternal(param).ConfigureAwait(false);
         }
     }
 
@@ -106,38 +124,9 @@ public sealed class BigCrystalObject<TData> : IBigCrystal<TData>
             await this.DeleteAllInternal().ConfigureAwait(false);
 
             // Clear
-            this.CrystalConfiguration = CrystalConfiguration.Default;
             this.BigCrystalConfiguration = BigCrystalConfiguration.Default;
 
             return CrystalResult.Success;
-        }
-    }
-
-    void ICrystal.Configure(CrystalConfiguration configuration)
-    {
-        throw new NotImplementedException();
-    }
-
-    void ICrystal.ConfigureFile(FileConfiguration configuration)
-    {
-        throw new NotImplementedException();
-    }
-
-    void ICrystal.ConfigureStorage(StorageConfiguration configuration)
-    {
-        throw new NotImplementedException();
-    }
-
-    async Task<CrystalResult> ICrystal.PrepareAndLoad(CrystalPrepare param)
-    {
-        using (this.semaphore.Lock())
-        {
-            if (this.Prepared)
-            {// Prepared
-                return CrystalResult.Success;
-            }
-
-            return await this.PrepareAndLoadInternal(param).ConfigureAwait(false);
         }
     }
 
@@ -146,15 +135,6 @@ public sealed class BigCrystalObject<TData> : IBigCrystal<TData>
     }
 
     #endregion
-
-    private async Task DeleteAllInternal()
-    {
-        await this.crystal.Delete().ConfigureAwait(false);
-        this.himoGoshujin.Clear();
-        await this.StorageGroup.DeleteAllAsync().ConfigureAwait(false);
-
-        this.Object.Initialize(this, null, true);
-    }
 
     private async Task<CrystalResult> PrepareAndLoadInternal(CrystalPrepare prepare)
     {// this.semaphore.Lock()
@@ -199,5 +179,14 @@ public sealed class BigCrystalObject<TData> : IBigCrystal<TData>
 
         this.Prepared = true;
         return result;
+    }
+
+    private async Task DeleteAllInternal()
+    {
+        await this.crystal.Delete().ConfigureAwait(false);
+        this.himoGoshujin.Clear();
+        await this.StorageGroup.DeleteAllAsync().ConfigureAwait(false);
+
+        this.Object.Initialize(this, null, true);
     }
 }

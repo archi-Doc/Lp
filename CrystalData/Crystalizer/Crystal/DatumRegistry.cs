@@ -65,6 +65,12 @@ public class DatumRegistry
         this.datumIdToDatumInfo.TryAdd(datumId, info);
     }
 
+    public void Clear()
+    {
+        this.typeToDatumInfo = new();
+        this.datumIdToDatumInfo.Clear();
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool TryGetDatumInfo<TDatum>(out DatumInfo info)
         where TDatum : IDatum
