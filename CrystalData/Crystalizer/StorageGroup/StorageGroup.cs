@@ -265,8 +265,8 @@ public sealed class StorageGroup
             }
         }
 
+        bool createNew = false;
         StorageObject.GoshujinClass? goshujin = null;
-        var createNew = param.CreateNew;
         var (dataResult, _) = await PathHelper.LoadData(this.storageGroupFiler).ConfigureAwait(false);
         if (dataResult.IsFailure)
         {
@@ -275,10 +275,10 @@ public sealed class StorageGroup
                 return dataResult.Result;
             }
 
-            createNew |= true;
+            createNew = true;
         }
 
-        if (!param.CreateNew)
+        if (!createNew)
         {
             try
             {

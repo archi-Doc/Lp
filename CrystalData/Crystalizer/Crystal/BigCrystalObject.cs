@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using static Arc.Unit.UnitMessage;
+
 namespace CrystalData;
 
 public sealed class BigCrystalObject<TData> : IBigCrystal<TData>
@@ -120,6 +122,8 @@ public sealed class BigCrystalObject<TData> : IBigCrystal<TData>
             {
                 await this.PrepareAndLoadInternal(CrystalPrepare.ContinueAll).ConfigureAwait(false);
             }
+
+            var param = PrepareParam.ContinueAll<TData>(this.Crystalizer);
 
             await this.crystal.Delete().ConfigureAwait(false);
             this.himoGoshujin.Clear();

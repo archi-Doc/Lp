@@ -78,7 +78,7 @@ public static class TestHelper
         var crystalizer = unit.Context.ServiceProvider.GetRequiredService<Crystalizer>();
 
         var crystal = crystalizer.GetBigCrystal<MergerData>();
-        await crystal.PrepareAndLoad(CrystalPrepare.New);
+        await crystal.PrepareAndLoad(CrystalPrepare.ContinueAll);
         return crystal;
     }
 

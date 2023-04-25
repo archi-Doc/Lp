@@ -164,7 +164,7 @@ public partial class BaseData : IDataInternal, IJournalObject
             return operation;
         }
 
-        operation.SetData(data);
+        operation.SetDatum(data);
         return operation;
     }
 
@@ -189,7 +189,7 @@ public partial class BaseData : IDataInternal, IJournalObject
             return operation;
         }
 
-        operation.SetData(data);
+        operation.SetDatum(data);
         return operation;
     }
 

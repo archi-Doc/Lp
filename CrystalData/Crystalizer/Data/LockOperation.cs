@@ -60,8 +60,8 @@ public partial class BaseData
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SetData(TDatum data)
-            => this.datum = data;
+        internal void SetDatum(TDatum datum)
+            => this.datum = datum;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void SetResult(CrystalResult result)
