@@ -14,14 +14,10 @@ public class CrystalPrepare
 {
     public static readonly CrystalPrepare ContinueAll = new();
 
-    public static readonly CrystalPrepare New = new() { CreateNew = true, };
-
     public CrystalPrepare()
     {
         this.QueryDelegate = (configuration, result) => ValueTask.FromResult(AbortOrContinue.Continue); // Continue all
     }
-
-    public bool CreateNew { get; init; } = false;
 
     public CrystalPrepareQueryDelegate QueryDelegate { get; init; }
 
@@ -31,7 +27,6 @@ public class CrystalPrepare
     public PrepareParam ToParam<TData>(Crystalizer crystalizer)
         => new PrepareParam(crystalizer, typeof(TData))
         {
-            CreateNew = this.CreateNew,
             QueryDelegate = this.QueryDelegate,
         };
 }

@@ -310,22 +310,8 @@ public class Crystalizer
 
     internal void UpdatePlane(ICrystal crystal, ref Waypoint waypoint, ulong hash)
     {
-        // Add journal
-        ulong journalPosition;
-        if (this.Journal != null)
-        {
-            this.Journal.GetWriter(JournalRecordType.Waypoint, waypoint.CurrentPlane, out var writer);
-            writer.Write(waypoint.NextPlane);
-            writer.Write(hash);
-            journalPosition = this.Journal.Add(writer);
-        }
-        else
-        {
-            journalPosition = waypoint.JournalPosition + 1;
-        }
-
         if (waypoint.CurrentPlane != 0)
-        {// Remove current plane
+        {// Remove the current plane
             this.planeToCrystal.TryRemove(waypoint.CurrentPlane, out _);
         }
 
@@ -352,6 +338,22 @@ public class Crystalizer
             {// Success
                 break;
             }
+        }
+
+        // Current/Next -> Next/New
+
+        // Add journal
+        ulong journalPosition;
+        if (this.Journal != null)
+        {
+            this.Journal.GetWriter(JournalRecordType.Waypoint, nextPlane, out var writer);
+            writer.Write(newPlane);
+            writer.Write(hash);
+            journalPosition = this.Journal.Add(writer);
+        }
+        else
+        {
+            journalPosition = waypoint.JournalPosition + 1;
         }
 
         waypoint = new(journalPosition, nextPlane, newPlane, hash);

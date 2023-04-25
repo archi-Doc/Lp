@@ -91,7 +91,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystal<TData>
         {
             if (!this.Prepared)
             {
-                await this.PrepareAndLoadInternal(CrystalPrepare.ContinueAll).ConfigureAwait(false);
+                return CrystalResult.NotPrepared;
             }
 
             // Save storages
@@ -121,10 +121,13 @@ public sealed class BigCrystalObject<TData> : IBigCrystal<TData>
                 await this.PrepareAndLoadInternal(CrystalPrepare.ContinueAll).ConfigureAwait(false);
             }
 
-            await this.DeleteAllInternal().ConfigureAwait(false);
+            await this.crystal.Delete().ConfigureAwait(false);
+            this.himoGoshujin.Clear();
 
-            // Clear
-            this.BigCrystalConfiguration = BigCrystalConfiguration.Default;
+            await this.StorageGroup.PrepareAndLoad(this.CrystalConfiguration.StorageConfiguration, param).ConfigureAwait(false);
+            await this.StorageGroup.DeleteAllAsync().ConfigureAwait(false);
+
+            this.Object.Initialize(this, null, true);
 
             return CrystalResult.Success;
         }
@@ -140,22 +143,6 @@ public sealed class BigCrystalObject<TData> : IBigCrystal<TData>
     {// this.semaphore.Lock()
         CrystalResult result;
         var param = prepare.ToParam<TData>(this.Crystalizer);
-
-        if (prepare.CreateNew)
-        {
-            await this.StorageGroup.PrepareAndLoad(this.CrystalConfiguration.StorageConfiguration, param).ConfigureAwait(false);
-            await this.crystal.PrepareAndLoad(param).ConfigureAwait(false);
-
-            await this.DeleteAllInternal();
-
-            this.Prepared = true;
-            return CrystalResult.Success;
-        }
-
-        if (this.Prepared)
-        {
-            return CrystalResult.Success;
-        }
 
         result = await this.StorageGroup.PrepareAndLoad(this.CrystalConfiguration.StorageConfiguration, param).ConfigureAwait(false);
         if (result.IsFailure())
@@ -180,14 +167,5 @@ public sealed class BigCrystalObject<TData> : IBigCrystal<TData>
 
         this.Prepared = true;
         return result;
-    }
-
-    private async Task DeleteAllInternal()
-    {
-        await this.crystal.Delete().ConfigureAwait(false);
-        this.himoGoshujin.Clear();
-        await this.StorageGroup.DeleteAllAsync().ConfigureAwait(false);
-
-        this.Object.Initialize(this, null, true);
     }
 }
