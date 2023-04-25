@@ -144,6 +144,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystal<TData>
         if (prepare.CreateNew)
         {
             await this.StorageGroup.PrepareAndLoad(this.CrystalConfiguration.StorageConfiguration, param).ConfigureAwait(false);
+            await this.crystal.PrepareAndLoad(param).ConfigureAwait(false);
 
             await this.DeleteAllInternal();
 
