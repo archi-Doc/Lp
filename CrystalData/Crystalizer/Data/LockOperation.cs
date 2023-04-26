@@ -60,6 +60,10 @@ public partial class BaseData
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void SetLockTaken(bool lockTaken)
+            => this.lockTaken = lockTaken;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void SetDatum(TDatum datum)
             => this.datum = datum;
 

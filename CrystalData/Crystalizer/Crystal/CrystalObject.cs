@@ -6,10 +6,9 @@ using CrystalData.Filer;
 
 namespace CrystalData;
 
-// Data + Journal/Waypoint + Filer/FileConfiguration + Storage/StorageConfiguration
 public sealed class CrystalObject<TData> : ICrystal<TData>
     where TData : class, IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
-{
+{// Data + Journal/Waypoint + Filer/FileConfiguration + Storage/StorageConfiguration
     public CrystalObject(Crystalizer crystalizer)
     {
         this.Crystalizer = crystalizer;

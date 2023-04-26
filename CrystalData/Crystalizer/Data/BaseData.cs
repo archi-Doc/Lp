@@ -173,7 +173,11 @@ public partial class BaseData : IDataInternal, IJournalObject
     {
         var operation = new LockOperation<TDatum>(this);
 
-        await operation.EnterAsync().ConfigureAwait(false);
+        if (await operation.EnterAsync().ConfigureAwait(false))
+        {
+            operation.SetLockTaken(true);
+        }
+
         if (this.IsDeleted)
         {// Removed
             operation.SetResult(CrystalResult.Deleted);

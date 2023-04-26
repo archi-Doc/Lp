@@ -41,7 +41,7 @@ public partial class CrystalTest
         f.IsDeleted.IsFalse();
 
         using (var op = await f.LockAsync<BlockDatum>())
-        {
+        {// LockAsync
             op.Datum.IsNotNull();
             op.Result.Is(CrystalResult.Success);
         }

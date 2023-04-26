@@ -63,8 +63,8 @@ public class Program
                     {
                         registry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
                     },
-                    DirectoryConfiguration = new LocalDirectoryConfiguration("Local/Crystal"),
-                    StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/Storage")),
+                    DirectoryConfiguration = new LocalDirectoryConfiguration("Local/BaseData/Crystal"),
+                    StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/BaseData/Storage")),
                 });
 
                 /*context.AddBigCrystal<ExampleData>(new BigCrystalConfiguration() with

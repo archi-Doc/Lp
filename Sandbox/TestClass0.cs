@@ -2,12 +2,13 @@
 
 internal class TestClass0
 {
-    public TestClass0(Crystalizer crystalizer, ICrystal<ManualClass> manualCrystal, ICrystal<CombinedClass> combinedCrystal)
+    public TestClass0(Crystalizer crystalizer, ICrystal<ManualClass> manualCrystal, ICrystal<CombinedClass> combinedCrystal, IBigCrystal<BaseData> crystalData)
     {
         this.crystalizer = crystalizer;
 
         this.manualCrystal = manualCrystal;
         this.combinedCrystal = combinedCrystal;
+        this.crystalData = crystalData;
     }
 
     public async Task Test1()
@@ -30,9 +31,12 @@ internal class TestClass0
 
         ulong fileId = 0;
         combinedCrystal.Storage.PutAndForget(ref fileId, new(new byte[] { 1, 2, 3, }));
+
+        var data = this.crystalData.Object;
     }
 
     private Crystalizer crystalizer;
     private ICrystal<ManualClass> manualCrystal;
     private ICrystal<CombinedClass> combinedCrystal;
+    private IBigCrystal<BaseData> crystalData;
 }
