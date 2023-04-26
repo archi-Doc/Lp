@@ -16,7 +16,7 @@ internal class TestClass0
 
         // this.crystalizer.ResetConfigurations();
         // await this.crystalizer.SaveConfigurations(new LocalFileConfiguration("Local/Configuration.tinyhand"));
-        await this.crystalizer.LoadConfigurations(new LocalFileConfiguration("Local/Configuration.tinyhand"));
+        // await this.crystalizer.LoadConfigurations(new LocalFileConfiguration("Local/Configuration.tinyhand"));
 
         await this.crystalizer.PrepareAndLoadAll();
 

@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using static Arc.Unit.UnitMessage;
-
 namespace CrystalData;
 
 public sealed class BigCrystalObject<TData> : IBigCrystal<TData>
@@ -20,8 +18,8 @@ public sealed class BigCrystalObject<TData> : IBigCrystal<TData>
 
     #region FieldAndProperty
 
-    private SemaphoreLock semaphore = new();
     private ICrystal<TData> crystal;
+    private SemaphoreLock semaphore = new();
     private StorageGroup storageGroup;
     private HimoGoshujinClass himoGoshujin;
     private ILogger logger;
@@ -54,12 +52,13 @@ public sealed class BigCrystalObject<TData> : IBigCrystal<TData>
 
     void IBigCrystal.Configure(BigCrystalConfiguration configuration)
     {
+        this.crystal.Configure(configuration);
+
         using (this.semaphore.Lock())
         {
             this.BigCrystalConfiguration = configuration;
             this.BigCrystalConfiguration.RegisterDatum(this.DatumRegistry);
             this.StorageGroup.Configure(this.BigCrystalConfiguration.DirectoryConfiguration.CombinePath(this.BigCrystalConfiguration.StorageFile));
-            this.crystal.Configure(configuration);
 
             this.Prepared = false;
         }

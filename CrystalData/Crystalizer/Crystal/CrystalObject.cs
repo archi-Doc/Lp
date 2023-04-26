@@ -177,8 +177,7 @@ public sealed class CrystalObject<TData> : ICrystal<TData>
         }
 
         var hash = FarmHash.Hash64(byteArray.AsSpan());
-
-        if (currentWaypoint.Hash == hash)
+        if (hash == currentWaypoint.Hash)
         {// Identical data
             return CrystalResult.Success;
         }

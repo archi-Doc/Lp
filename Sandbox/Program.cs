@@ -47,15 +47,15 @@ public class Program
                 context.AddCrystal<ManualClass>(
                     new(
                         SavePolicy.Manual,
-                        new LocalFileConfiguration("Data/manual.tinyhand")
+                        new LocalFileConfiguration("Local/manual.tinyhand")
                         )
                     { SaveFormat = SaveFormat.Utf8, NumberOfBackups = 0, });
 
                 context.AddCrystal<CombinedClass>(
                     new(
                         SavePolicy.Periodic,
-                        new LocalFileConfiguration("Data/combined"),
-                        new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Data/Simple"))));
+                        new LocalFileConfiguration("Local/combined"),
+                        new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/Simple"))));
 
                 context.AddBigCrystal<BaseData>(new BigCrystalConfiguration() with
                 {
@@ -63,8 +63,8 @@ public class Program
                     {
                         registry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
                     },
-                    DirectoryConfiguration = new LocalDirectoryConfiguration("Crystal"),
-                    StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Storage")),
+                    DirectoryConfiguration = new LocalDirectoryConfiguration("Local/Crystal"),
+                    StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/Storage")),
                 });
 
                 /*context.AddBigCrystal<ExampleData>(new BigCrystalConfiguration() with
