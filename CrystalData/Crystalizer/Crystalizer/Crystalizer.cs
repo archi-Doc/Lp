@@ -182,6 +182,94 @@ public class Crystalizer
 
     #region Main
 
+    public void ResetConfigurations()
+    {
+        foreach (var x in this.configuration.CrystalConfigurations)
+        {
+            if (this.typeToCrystal.TryGetValue(x.Key, out var crystal))
+            {
+                crystal.Configure(x.Value);
+            }
+        }
+    }
+
+    public async Task<CrystalResult> SaveConfigurations(FileConfiguration configuration)
+    {
+        var dictionary = new Dictionary<string, CrystalConfiguration>();
+        foreach (var x in this.configuration.CrystalConfigurations)
+        {
+            if (this.typeToCrystal.TryGetValue(x.Key, out var crystal) &&
+                x.Key.FullName is { } name)
+            {
+                dictionary[name] = crystal.CrystalConfiguration;
+            }
+        }
+
+        var filer = this.ResolveFiler(configuration);
+        var result = await filer.PrepareAndCheck(PrepareParam.ContinueAll<Crystalizer>(this), configuration).ConfigureAwait(false);
+        if (result.IsFailure())
+        {
+            return result;
+        }
+
+        var bytes = TinyhandSerializer.SerializeToUtf8(dictionary);
+        result = await filer.WriteAsync(0, new(bytes)).ConfigureAwait(false);
+
+        return result;
+    }
+
+    public async Task<CrystalResult> LoadConfigurations(FileConfiguration configuration)
+    {
+        var filer = this.ResolveFiler(configuration);
+        var result = await filer.PrepareAndCheck(PrepareParam.ContinueAll<Crystalizer>(this), configuration).ConfigureAwait(false);
+        if (result.IsFailure())
+        {
+            return result;
+        }
+
+        var readResult = await filer.ReadAsync(0, -1).ConfigureAwait(false);
+        if (readResult.IsFailure)
+        {
+            return readResult.Result;
+        }
+
+        try
+        {
+            var dictionary = TinyhandSerializer.DeserializeFromUtf8<Dictionary<string, CrystalConfiguration>>(readResult.Data.Memory);
+            if (dictionary == null)
+            {
+                return CrystalResult.DeserializeError;
+            }
+
+            var nameToCrystal = new Dictionary<string, ICrystal>();
+            foreach (var x in this.typeToCrystal.ToArray())
+            {
+                if (x.Key.FullName is { } name)
+                {
+                    nameToCrystal[name] = x.Value;
+                }
+            }
+
+            foreach (var x in dictionary)
+            {
+                if (nameToCrystal.TryGetValue(x.Key, out var crystal))
+                {
+                    crystal.Configure(x.Value);
+                }
+            }
+
+            return CrystalResult.Success;
+        }
+        catch
+        {
+            return CrystalResult.DeserializeError;
+        }
+        finally
+        {
+            readResult.Return();
+        }
+    }
+
     /*public bool TryGetJournalWriter(JournalRecordType recordType, out JournalRecord record)
     {
         if (this.Journal == null)

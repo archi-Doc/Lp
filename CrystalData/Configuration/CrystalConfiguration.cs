@@ -16,7 +16,7 @@ public enum SaveFormat
     Utf8,
 }
 
-[TinyhandObject(ImplicitKeyAsName = true)]
+[TinyhandObject(ImplicitKeyAsName = true, EnumAsString = true)]
 public partial record CrystalConfiguration
 {
     public static readonly TimeSpan DefaultInterval = TimeSpan.FromHours(1);
