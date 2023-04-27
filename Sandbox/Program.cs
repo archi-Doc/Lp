@@ -61,9 +61,9 @@ public class Program
                 {
                     RegisterDatum = registry =>
                     {
-                        registry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
+                        registry.Register<ObjectDatum<LocalFileConfiguration>>(1, x => new ObjectDatumImpl<LocalFileConfiguration>(x));
                     },
-                    DirectoryConfiguration = new LocalDirectoryConfiguration("Local/BaseData/Crystal"),
+                    FileConfiguration = new LocalFileConfiguration("Local/BaseData/Crystal"),
                     StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/BaseData/Storage")),
                 });
 

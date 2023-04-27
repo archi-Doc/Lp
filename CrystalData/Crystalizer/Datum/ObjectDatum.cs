@@ -64,9 +64,9 @@ public class ObjectDatumImpl<TObject> : HimoGoshujinClass.Himo, ObjectDatum<TObj
         if (!this.isSaved)
         {// Not saved.
             if (this.obj != null &&
-                !SerializeHelper.TrySerialize(this.obj, out var owner))
+                SerializeHelper.TrySerialize(this.obj, out var owner))
             {
-                this.dataInternal.DatumToStorage<ExampleDatum>(owner.AsReadOnly());
+                this.dataInternal.DatumToStorage<ObjectDatum<TObject>>(owner.AsReadOnly());
                 owner.Return();
             }
 

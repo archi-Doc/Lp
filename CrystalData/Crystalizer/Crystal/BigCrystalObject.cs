@@ -58,7 +58,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystal<TData>
         {
             this.BigCrystalConfiguration = configuration;
             this.BigCrystalConfiguration.RegisterDatum(this.DatumRegistry);
-            this.StorageGroup.Configure(this.BigCrystalConfiguration.DirectoryConfiguration.CombinePath(this.BigCrystalConfiguration.StorageFile));
+            this.StorageGroup.Configure(this.BigCrystalConfiguration.FileConfiguration.AppendPath(this.BigCrystalConfiguration.StorageGroupExtension));
 
             this.Prepared = false;
         }

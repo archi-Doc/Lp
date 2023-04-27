@@ -2,9 +2,9 @@
 
 namespace CrystalData;
 
-public record BigCrystalConfiguration : CrystalConfiguration
+[TinyhandObject(ImplicitKeyAsName = true)]
+public partial record BigCrystalConfiguration : CrystalConfiguration
 {
-    public const string DefaultCrystalDirectory = "Crystal";
     public const int DefaultMaxDataSize = 1024 * 1024 * 4; // 4MB
     public const int DefaultMaxFragmentSize = 1024 * 4; // 4KB
     public const int DefaultMaxFragmentCount = 1000;
@@ -14,22 +14,18 @@ public record BigCrystalConfiguration : CrystalConfiguration
     public static new readonly BigCrystalConfiguration Default = new BigCrystalConfiguration();
 
     public BigCrystalConfiguration()
+        : base()
     {
-        this.DirectoryConfiguration = EmptyDirectoryConfiguration.Default;
-        this.StorageConfiguration = EmptyStorageConfiguration.Default;
         this.RegisterDatum = registry => { };
     }
 
-    public BigCrystalConfiguration(Action<DatumRegistry> registerDatum, SavePolicy saveMethod, DirectoryConfiguration directoryConfiguration, StorageConfiguration storageConfiguration)
-        : base(saveMethod, EmptyFileConfiguration.Default)
+    public BigCrystalConfiguration(Action<DatumRegistry> registerDatum, SavePolicy saveMethod, FileConfiguration fileConfiguration, StorageConfiguration storageConfiguration)
+        : base(saveMethod, fileConfiguration, storageConfiguration)
     {
         this.RegisterDatum = registerDatum;
-        this.DirectoryConfiguration = directoryConfiguration;
-        this.StorageConfiguration = storageConfiguration;
     }
 
-    public DirectoryConfiguration DirectoryConfiguration { get; init; }
-
+    [IgnoreMember]
     public Action<DatumRegistry> RegisterDatum { get; init; }
 
     public int MaxDataSize { get; init; } = DefaultMaxDataSize;
@@ -44,5 +40,5 @@ public record BigCrystalConfiguration : CrystalConfiguration
 
     public string CrystalFile { get; init; } = "Crystal";
 
-    public string StorageFile { get; init; } = "Storage";
+    public string StorageGroupExtension { get; init; } = ".Storages";
 }

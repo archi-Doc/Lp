@@ -1,4 +1,6 @@
-﻿namespace Sandbox;
+﻿using CrystalData.Datum;
+
+namespace Sandbox;
 
 internal class TestClass0
 {
@@ -16,7 +18,7 @@ internal class TestClass0
         Console.WriteLine("Sandbox test0");
 
         // this.crystalizer.ResetConfigurations();
-        // await this.crystalizer.SaveConfigurations(new LocalFileConfiguration("Local/Configuration.tinyhand"));
+        await this.crystalizer.SaveConfigurations(new LocalFileConfiguration("Local/Configuration.tinyhand"));
         // await this.crystalizer.LoadConfigurations(new LocalFileConfiguration("Local/Configuration.tinyhand"));
 
         await this.crystalizer.PrepareAndLoadAll();
@@ -33,6 +35,13 @@ internal class TestClass0
         combinedCrystal.Storage.PutAndForget(ref fileId, new(new byte[] { 1, 2, 3, }));
 
         var data = this.crystalData.Object;
+        using (var op = data.Lock<ObjectDatum<LocalFileConfiguration>>())
+        {
+            if (op.Datum is not null)
+            {
+                op.Datum.Set(new LocalFileConfiguration("test"));
+            }
+        }
     }
 
     private Crystalizer crystalizer;

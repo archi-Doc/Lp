@@ -28,7 +28,7 @@ public static class TestHelper
                             datumRegistry.Register<FragmentDatum<Identifier>>(2, x => new FragmentDatumImpl<Identifier>(x));
                         },
                         SavePolicy.None,
-                        new LocalDirectoryConfiguration(directory),
+                        new LocalFileConfiguration(Path.Combine(directory, "Crystal")),
                         new SimpleStorageConfiguration(new LocalDirectoryConfiguration(directory))));
             });
 
@@ -68,7 +68,7 @@ public static class TestHelper
                     {
                         registry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
                     },
-                    DirectoryConfiguration = new LocalDirectoryConfiguration(directory),
+                    FileConfiguration = new LocalFileConfiguration(Path.Combine(directory, "Crystal")),
                     StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration(directory)),
                     MaxParentInMemory = maxParent,
                 });
