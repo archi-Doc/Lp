@@ -42,31 +42,32 @@ public class Program
             })
             .ConfigureCrystal(context =>
             {
-                context.SetJournal(new SimpleJournalConfiguration(new LocalDirectoryConfiguration("Journal")));
+                // context.SetJournal(new SimpleJournalConfiguration(new LocalDirectoryConfiguration("Journal")));
 
                 context.AddCrystal<ManualClass>(
                     new(
                         SavePolicy.Manual,
-                        new LocalFileConfiguration("Data/manual")
-                        ));
+                        new LocalFileConfiguration("Local/manual.tinyhand")
+                        )
+                    { SaveFormat = SaveFormat.Utf8, NumberOfBackups = 0, });
 
-                /*context.AddCrystal<CombinedClass>(
+                context.AddCrystal<CombinedClass>(
                     new(
                         SavePolicy.Periodic,
-                        new LocalFileConfiguration("combined.data"),
-                        new SimpleStorageConfiguration(new LocalDirectoryConfiguration("simple"))));
+                        new LocalFileConfiguration("Local/combined"),
+                        new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/Simple"))));
 
                 context.AddBigCrystal<BaseData>(new BigCrystalConfiguration() with
                 {
                     RegisterDatum = registry =>
                     {
-                        registry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
+                        registry.Register<ObjectDatum<LocalFileConfiguration>>(1, x => new ObjectDatumImpl<LocalFileConfiguration>(x));
                     },
-                    DirectoryConfiguration = new LocalDirectoryConfiguration("Crystal"),
-                    StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Storage")),
+                    FileConfiguration = new LocalFileConfiguration("Local/BaseData/Crystal"),
+                    StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/BaseData/Storage")),
                 });
 
-                context.AddBigCrystal<ExampleData>(new BigCrystalConfiguration() with
+                /*context.AddBigCrystal<ExampleData>(new BigCrystalConfiguration() with
                 {
                     RegisterDatum = registry =>
                     {

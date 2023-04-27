@@ -13,7 +13,7 @@ public partial record EmptyDirectoryConfiguration : DirectoryConfiguration
     }
 
     public override EmptyFileConfiguration CombinePath(string file)
-        => new EmptyFileConfiguration { Path = System.IO.Path.Combine(this.Path, file), };
+        => new EmptyFileConfiguration(System.IO.Path.Combine(this.Path, file));
 
     public override string ToString()
         => $"Empty directory";

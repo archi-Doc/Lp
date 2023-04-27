@@ -15,6 +15,9 @@ public partial record LocalFileConfiguration : FileConfiguration
     {
     }
 
+    public override LocalFileConfiguration AppendPath(string file)
+        => new LocalFileConfiguration(this.Path + file);
+
     public override string ToString()
         => $"Local file: {this.Path}";
 }

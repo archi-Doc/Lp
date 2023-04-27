@@ -34,7 +34,15 @@ public interface IRawFiler
 
     Task<CrystalResult> DeleteDirectoryAsync(string path, TimeSpan timeout);
 
-    Task<List<PathInformation>> ListAsync(string directory, TimeSpan timeout);
+    /// <summary>
+    /// List files and directories matching the path.
+    /// </summary>
+    /// <param name="path">Specify the path of the search criteria.<br/>
+    /// Directory: "Directory/"<br/>
+    /// Directory and prefix: "Directory/Prefix".</param>
+    /// <param name="timeout">A <see cref="TimeSpan"/> that represents the number of milliseconds to wait, or a <see cref="TimeSpan"/> that represents -1 milliseconds to wait indefinitely.</param>
+    /// <returns>A list of directories and files that match the search criteria.</returns>
+    Task<List<PathInformation>> ListAsync(string path, TimeSpan timeout);
 
     #region InfiniteTimeout
 
@@ -50,8 +58,8 @@ public interface IRawFiler
     Task<CrystalResult> DeleteDirectoryAsync(string path)
         => this.DeleteDirectoryAsync(path, TimeSpan.MinValue);
 
-    Task<List<PathInformation>> ListAsync(string directory)
-    => this.ListAsync(directory, TimeSpan.MinValue);
+    Task<List<PathInformation>> ListAsync(string path)
+    => this.ListAsync(path, TimeSpan.MinValue);
 
     #endregion
 }

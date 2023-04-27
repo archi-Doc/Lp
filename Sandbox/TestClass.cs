@@ -13,7 +13,7 @@ internal partial class CrystalClass : IJournalObject
 [TinyhandObject]
 internal partial class ManualClass : IJournalObject
 {
-    [Key(0)]
+    [KeyAsName]
     public int Id { get; set; }
 
     public override string ToString()

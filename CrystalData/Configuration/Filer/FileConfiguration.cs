@@ -19,6 +19,8 @@ public abstract partial record FileConfiguration : PathConfiguration, IEquatable
 
     public override Type PathType => Type.File;
 
+    public abstract FileConfiguration AppendPath(string file);
+
     public override string ToString()
         => $"File: {this.Path}";
 }

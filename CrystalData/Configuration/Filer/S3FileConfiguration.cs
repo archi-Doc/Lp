@@ -19,6 +19,9 @@ public partial record S3FileConfiguration : FileConfiguration
     [Key("Bucket")]
     public string Bucket { get; protected set; }
 
+    public override S3FileConfiguration AppendPath(string file)
+        => new S3FileConfiguration(this.Bucket, this.Path + file);
+
     public override string ToString()
         => $"S3 file: {this.Bucket}/{this.Path}";
 }

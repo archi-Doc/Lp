@@ -63,7 +63,7 @@ internal partial class SimpleStorage : IStorage
         {
             this.crystal = this.crystalizer.CreateCrystal<SimpleStorageData>();
             var filerConfiguration = directoryConfiguration.CombinePath(SimpleStorageFile);
-            this.crystal.Configure(new(SavePolicy.Manual, filerConfiguration));
+            this.crystal.Configure(new CrystalConfiguration(SavePolicy.Manual, filerConfiguration));
 
             result = await this.crystal.PrepareAndLoad(param).ConfigureAwait(false);
             return result;
@@ -72,7 +72,7 @@ internal partial class SimpleStorage : IStorage
         return CrystalResult.Success;
     }
 
-    async Task IStorage.Save()
+    async Task IStorage.SaveStorage()
     {
         if (this.crystal != null)
         {
@@ -173,7 +173,7 @@ internal partial class SimpleStorage : IStorage
         return this.rawFiler.DeleteAsync(this.FileToPath(file), this.timeout);
     }
 
-    async Task<CrystalResult> IStorage.DeleteAllAsync()
+    async Task<CrystalResult> IStorage.DeleteStorageAsync()
     {
         if (this.rawFiler == null)
         {

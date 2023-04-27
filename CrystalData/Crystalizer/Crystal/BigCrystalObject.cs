@@ -2,22 +2,37 @@
 
 namespace CrystalData;
 
-public class BigCrystalObject<TData> : CrystalObject<TData>, IBigCrystal<TData>, ICrystal
+public sealed class BigCrystalObject<TData> : IBigCrystal<TData>
     where TData : BaseData, IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
-{
+{// BigCrystalObject = CrystalObject + Datum + StorageGroup (+ Himo)
     public BigCrystalObject(Crystalizer crystalizer)
-        : base(crystalizer)
     {
-        this.BigCrystalConfiguration = BigCrystalConfiguration.Default; // crystalizer.GetBigCrystalConfiguration(typeof(TData));
+        this.Crystalizer = crystalizer;
+        this.BigCrystalConfiguration = BigCrystalConfiguration.Default;
+
+        this.crystal = new CrystalObject<TData>(this.Crystalizer);
         this.storageGroup = new(crystalizer);
-        this.himoGoshujin = new(this);
+        this.himoGoshujin = new(this); // tempcode
         this.logger = crystalizer.UnitLogger.GetLogger<IBigCrystal<TData>>();
-        this.crystalFileConfiguration = EmptyFileConfiguration.Default;
     }
 
     #region FieldAndProperty
 
-    public BigCrystalConfiguration BigCrystalConfiguration { get; protected set; }
+    private ICrystal<TData> crystal;
+    private SemaphoreLock semaphore = new();
+    private StorageGroup storageGroup;
+    private HimoGoshujinClass himoGoshujin;
+    private ILogger logger;
+
+    #endregion
+
+    #region ICrystal
+
+    public Crystalizer Crystalizer { get; }
+
+    public CrystalConfiguration CrystalConfiguration => this.crystal.CrystalConfiguration;
+
+    public BigCrystalConfiguration BigCrystalConfiguration { get; private set; }
 
     public DatumRegistry DatumRegistry { get; } = new();
 
@@ -27,29 +42,47 @@ public class BigCrystalObject<TData> : CrystalObject<TData>, IBigCrystal<TData>,
 
     public long MemoryUsage => this.himoGoshujin.MemoryUsage;
 
-    private StorageGroup storageGroup;
-    private HimoGoshujinClass himoGoshujin;
-    private ILogger logger;
-    private PathConfiguration crystalFileConfiguration;
-    private IFiler? crystalFiler;
+    public bool Prepared { get; private set; }
 
-    #endregion
+    public TData Object => this.crystal.Object;
 
-    #region ICrystal
+    object ICrystal.Object => this.crystal.Object;
+
+    public IStorage Storage => this.crystal.Storage;
 
     void IBigCrystal.Configure(BigCrystalConfiguration configuration)
     {
+        this.crystal.Configure(configuration);
+
         using (this.semaphore.Lock())
         {
             this.BigCrystalConfiguration = configuration;
-            this.CrystalConfiguration = configuration;
-
             this.BigCrystalConfiguration.RegisterDatum(this.DatumRegistry);
-            this.StorageGroup.Configure(this.BigCrystalConfiguration.DirectoryConfiguration.CombinePath(this.BigCrystalConfiguration.StorageFile));
-            this.crystalFileConfiguration = this.BigCrystalConfiguration.DirectoryConfiguration.CombinePath(this.BigCrystalConfiguration.CrystalFile);
+            this.StorageGroup.Configure(this.BigCrystalConfiguration.FileConfiguration.AppendPath(this.BigCrystalConfiguration.StorageGroupExtension));
 
-            this.storage = null;
             this.Prepared = false;
+        }
+    }
+
+    void ICrystal.Configure(CrystalConfiguration configuration)
+        => this.crystal.Configure(configuration);
+
+    void ICrystal.ConfigureFile(FileConfiguration configuration)
+        => this.crystal.ConfigureFile(configuration);
+
+    void ICrystal.ConfigureStorage(StorageConfiguration configuration)
+        => this.crystal.ConfigureStorage(configuration);
+
+    async Task<CrystalResult> ICrystal.PrepareAndLoad(CrystalPrepare param)
+    {
+        using (this.semaphore.Lock())
+        {
+            if (this.Prepared)
+            {// Prepared
+                return CrystalResult.Success;
+            }
+
+            return await this.PrepareAndLoadInternal(param).ConfigureAwait(false);
         }
     }
 
@@ -59,22 +92,17 @@ public class BigCrystalObject<TData> : CrystalObject<TData>, IBigCrystal<TData>,
         {
             if (!this.Prepared)
             {
-                await this.PrepareAndLoadInternal(CrystalPrepare.ContinueAll).ConfigureAwait(false);
+                return CrystalResult.NotPrepared;
             }
 
             // Save storages
             await this.StorageGroup.SaveStorage().ConfigureAwait(false);
 
-            if (this.obj is not null)
-            {
-                // Save & Unload datum and metadata.
-                this.obj.Save(unload);
+            // Save & Unload datum and metadata.
+            this.Object.Save(unload);
 
-                if (this.crystalFiler is not null)
-                {// Save crystal
-                    await PathHelper.SaveData(this.Crystalizer, this.obj, this.crystalFiler, 0).ConfigureAwait(false);
-                }
-            }
+            // Save crystal
+            await this.crystal.Save(unload);
 
             // Save storage group
             await this.StorageGroup.SaveGroup().ConfigureAwait(false);
@@ -83,20 +111,6 @@ public class BigCrystalObject<TData> : CrystalObject<TData>, IBigCrystal<TData>,
         }
 
         return CrystalResult.Success;
-    }
-
-    public async Task Abort()
-    {
-        using (this.semaphore.Lock())
-        {
-            if (!this.Prepared)
-            {
-                await this.PrepareAndLoadInternal(CrystalPrepare.ContinueAll).ConfigureAwait(false);
-            }
-
-            await this.StorageGroup.SaveStorage().ConfigureAwait(false);
-            this.StorageGroup.Clear();
-        }
     }
 
     async Task<CrystalResult> ICrystal.Delete()
@@ -108,50 +122,30 @@ public class BigCrystalObject<TData> : CrystalObject<TData>, IBigCrystal<TData>,
                 await this.PrepareAndLoadInternal(CrystalPrepare.ContinueAll).ConfigureAwait(false);
             }
 
-            await this.DeleteAllInternal().ConfigureAwait(false);
+            var param = PrepareParam.ContinueAll<TData>(this.Crystalizer);
 
-            // Clear
-            this.CrystalConfiguration = CrystalConfiguration.Default;
+            await this.crystal.Delete().ConfigureAwait(false);
+            this.himoGoshujin.Clear();
+
+            await this.StorageGroup.PrepareAndLoad(this.CrystalConfiguration.StorageConfiguration, param).ConfigureAwait(false);
+            await this.StorageGroup.DeleteAllAsync().ConfigureAwait(false);
+
+            this.Object.Initialize(this, null, true);
 
             return CrystalResult.Success;
         }
     }
 
-    internal async Task DeleteAllInternal()
+    void ICrystal.Terminate()
     {
-        this.obj?.Delete();
-        this.himoGoshujin.Clear();
-
-        this.crystalFiler?.DeleteAndForget();
-        this.crystalFiler = null;
-
-        await this.StorageGroup.DeleteAllAsync();
-
-        this.ReconstructObject(true);
     }
 
     #endregion
 
-    protected override async Task<CrystalResult> PrepareAndLoadInternal(CrystalPrepare prepare)
+    private async Task<CrystalResult> PrepareAndLoadInternal(CrystalPrepare prepare)
     {// this.semaphore.Lock()
         CrystalResult result;
         var param = prepare.ToParam<TData>(this.Crystalizer);
-
-        if (prepare.CreateNew)
-        {
-            await this.StorageGroup.PrepareAndLoad(this.CrystalConfiguration.StorageConfiguration, param).ConfigureAwait(false);
-
-            await this.DeleteAllInternal();
-            this.ReconstructObject(true);
-
-            this.Prepared = true;
-            return CrystalResult.Success;
-        }
-
-        if (this.Prepared)
-        {
-            return CrystalResult.Success;
-        }
 
         result = await this.StorageGroup.PrepareAndLoad(this.CrystalConfiguration.StorageConfiguration, param).ConfigureAwait(false);
         if (result.IsFailure())
@@ -159,82 +153,22 @@ public class BigCrystalObject<TData> : CrystalObject<TData>, IBigCrystal<TData>,
             return result;
         }
 
+        result = await this.crystal.PrepareAndLoad(param).ConfigureAwait(false);
+        if (result.IsFailure())
+        {
+            return result;
+        }
+
+        this.Object.Initialize(this, null, true);
+        this.himoGoshujin.Clear();
+
         var info = this.StorageGroup.GetInformation();
         foreach (var x in info)
         {
             this.logger.TryGet()?.Log(x);
         }
 
-        // Crystal filer
-        if (this.crystalFiler == null)
-        {
-            this.crystalFiler = this.Crystalizer.ResolveFiler(this.crystalFileConfiguration);
-            result = await this.crystalFiler.PrepareAndCheck(param, this.crystalFileConfiguration).ConfigureAwait(false);
-            if (result.IsFailure())
-            {
-                return result;
-            }
-        }
-
-        // Load Crystal
-        result = await this.LoadCrystal(prepare).ConfigureAwait(false);
-        if (result.IsFailure())
-        {
-            return result;
-        }
-
         this.Prepared = true;
         return result;
-    }
-
-    protected override void ReconstructObject(bool createNew)
-    {// this.semaphore.Lock()
-        if (this.obj == null || createNew)
-        {
-            this.obj = TinyhandSerializer.Reconstruct<TData>();
-            this.obj.Initialize(this, null, true);
-            this.himoGoshujin.Clear();
-        }
-    }
-
-    private async Task<CrystalResult> LoadCrystal(CrystalPrepare param)
-    {// await this.semaphore.WaitAsync().ConfigureAwait(false)
-        var (dataResult, _) = await PathHelper.LoadData(this.crystalFiler!).ConfigureAwait(false);
-        if (dataResult.IsFailure)
-        {
-            if (await param.Query(this.crystalFileConfiguration, dataResult.Result).ConfigureAwait(false) == AbortOrContinue.Abort)
-            {
-                return dataResult.Result;
-            }
-
-            this.ReconstructObject(false);
-        }
-
-        if (!this.DeserializeCrystal(dataResult.Data.Memory))
-        {
-            if (await param.Query(this.crystalFileConfiguration, CrystalResult.DeserializeError).ConfigureAwait(false) == AbortOrContinue.Abort)
-            {
-                return CrystalResult.DeserializeError;
-            }
-
-            this.ReconstructObject(false);
-        }
-
-        return CrystalResult.Success;
-    }
-
-    private bool DeserializeCrystal(ReadOnlyMemory<byte> data)
-    {
-        if (!TinyhandSerializer.TryDeserialize<TData>(data.Span, out var tdata))
-        {
-            return false;
-        }
-
-        tdata.Initialize(this, null, true);
-        this.obj = tdata;
-
-        this.himoGoshujin.Clear();
-
-        return true;
     }
 }

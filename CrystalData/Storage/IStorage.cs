@@ -10,7 +10,7 @@ public partial interface IStorage
 
     Task<CrystalResult> PrepareAndCheck(PrepareParam param, StorageConfiguration storageConfiguration, bool createNew);
 
-    Task Save();
+    Task SaveStorage();
 
     Task<CrystalMemoryOwnerResult> GetAsync(ref ulong fileId);
 
@@ -22,5 +22,5 @@ public partial interface IStorage
 
     Task<CrystalResult> DeleteAsync(ref ulong fileId);
 
-    Task<CrystalResult> DeleteAllAsync();
+    Task<CrystalResult> DeleteStorageAsync();
 }

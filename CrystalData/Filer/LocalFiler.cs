@@ -193,28 +193,26 @@ TryWrite:
                 string directory = string.Empty;
                 string prefix = string.Empty;
 
-                if (Directory.Exists(filePath))
+                /*if (Directory.Exists(filePath))
                 {// filePath is a directory
                     directory = filePath;
                 }
                 else
                 {// "Directory/Prefix"
                     (directory, prefix) = PathHelper.PathToDirectoryAndFile(filePath);
-                }
+                }*/
 
+                (directory, prefix) = PathHelper.PathToDirectoryAndFile(filePath);
                 var directoryInfo = new DirectoryInfo(directory);
                 foreach (var x in directoryInfo.EnumerateFileSystemInfos())
                 {
-                    if (x is FileInfo fi)
+                    if (string.IsNullOrEmpty(prefix) || x.Name.StartsWith(prefix))
                     {
-                        if (string.IsNullOrEmpty(prefix) || fi.FullName.StartsWith(prefix))
+                        if (x is FileInfo fi)
                         {
                             list.Add(new(fi.FullName, fi.Length));
                         }
-                    }
-                    else if (x is DirectoryInfo di)
-                    {
-                        if (string.IsNullOrEmpty(prefix) || di.FullName.StartsWith(prefix))
+                        else if (x is DirectoryInfo di)
                         {
                             list.Add(new(di.FullName));
                         }

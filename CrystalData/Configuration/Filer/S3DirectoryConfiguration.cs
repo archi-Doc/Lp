@@ -21,21 +21,24 @@ public partial record S3DirectoryConfiguration : DirectoryConfiguration
 
     public override S3FileConfiguration CombinePath(string file)
     {
-        string newPath;
-        if (string.IsNullOrEmpty(this.Path))
-        {
-            newPath = file;
-        }
-        else if (this.Path.EndsWith('/'))
-        {
-            newPath = this.Path + file;
-        }
-        else
-        {
-            newPath = this.Path + "/" + file;
-        }
-
+        var newPath = PathHelper.CombineWithSlash(this.Path, file);
         return new S3FileConfiguration(this.Bucket, newPath);
+
+        /* string newPath;
+         if (string.IsNullOrEmpty(this.Path))
+         {
+             newPath = file;
+         }
+         else if (this.Path.EndsWith('/'))
+         {
+             newPath = this.Path + file;
+         }
+         else
+         {
+             newPath = this.Path + "/" + file;
+         }
+
+         return new S3FileConfiguration(this.Bucket, newPath);*/
     }
 
     public override string ToString()

@@ -24,12 +24,12 @@ public sealed class StorageGroup
 
     public IStorageKey StorageKey { get; }
 
-    private PathConfiguration storageGroupConfiguration;
+    private FileConfiguration storageGroupConfiguration;
     private IFiler? storageGroupFiler;
 
     private object syncObject = new();
     private PrepareParam? prepareParam;
-    private StorageObject.GoshujinClass storages = new();  // lock(syncObject)
+    private StorageObject.GoshujinClass storages = new(); // lock(syncObject)
     private StorageObject? currentStorage; // lock(syncObject)
     private int storageRotationCount; // lock(syncObject)
 
@@ -166,7 +166,7 @@ public sealed class StorageGroup
         {
             foreach (var x in this.storages)
             {
-                if (x.Storage?.DeleteAllAsync() is { } task)
+                if (x.Storage?.DeleteStorageAsync() is { } task)
                 {
                     list.Add(task);
                 }
@@ -176,7 +176,7 @@ public sealed class StorageGroup
         await Task.WhenAll(list).ConfigureAwait(false);
     }
 
-    public void Save(ref ushort storageId, ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared, ushort datumId)
+    public void PutAndForget(ref ushort storageId, ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared, ushort datumId)
     {
         StorageObject? storage;
         lock (this.syncObject)
@@ -212,7 +212,7 @@ public sealed class StorageGroup
         storage.Storage?.PutAndForget(ref fileId, memoryToBeShared);
     }
 
-    public Task<CrystalMemoryOwnerResult> Load(ushort storageId, ulong fileId)
+    public Task<CrystalMemoryOwnerResult> GetAsync(ushort storageId, ulong fileId)
     {
         StorageObject? storageObject;
         lock (this.syncObject)
@@ -233,7 +233,7 @@ public sealed class StorageGroup
         return task;
     }
 
-    public void Delete(ref ushort storageId, ref ulong fileId)
+    public void DeleteAndForget(ref ushort storageId, ref ulong fileId)
     {
         StorageObject? storageObject;
         lock (this.syncObject)
@@ -265,9 +265,10 @@ public sealed class StorageGroup
             }
         }
 
+        bool createNew = false;
         StorageObject.GoshujinClass? goshujin = null;
-        var createNew = param.CreateNew;
-        var (dataResult, _) = await PathHelper.LoadData(this.storageGroupFiler).ConfigureAwait(false);
+        // var (dataResult, _) = await PathHelper.LoadData(this.storageGroupFiler).ConfigureAwait(false);
+        var dataResult = await this.storageGroupFiler.ReadAsync(0, -1).ConfigureAwait(false);
         if (dataResult.IsFailure)
         {
             if (await param.Query(this.storageGroupConfiguration, dataResult.Result).ConfigureAwait(false) == AbortOrContinue.Abort)
@@ -275,22 +276,26 @@ public sealed class StorageGroup
                 return dataResult.Result;
             }
 
-            createNew |= true;
+            createNew = true;
         }
 
-        if (!param.CreateNew)
+        try
         {
-            try
+            if (!createNew)
             {
                 goshujin = TinyhandSerializer.Deserialize<StorageObject.GoshujinClass>(dataResult.Data.Memory);
             }
-            catch
+        }
+        catch
+        {
+            if (await param.Query(this.storageGroupConfiguration, CrystalResult.DeserializeError).ConfigureAwait(false) == AbortOrContinue.Abort)
             {
-                if (await param.Query(this.storageGroupConfiguration, CrystalResult.DeserializeError).ConfigureAwait(false) == AbortOrContinue.Abort)
-                {
-                    return CrystalResult.DeserializeError;
-                }
+                return CrystalResult.DeserializeError;
             }
+        }
+        finally
+        {
+            dataResult.Return();
         }
 
         goshujin ??= TinyhandSerializer.Reconstruct<StorageObject.GoshujinClass>();
@@ -356,7 +361,8 @@ public sealed class StorageGroup
                 byteArray = TinyhandSerializer.Serialize(this.storages);
             }
 
-            await PathHelper.SaveData(this.Crystalizer, byteArray, this.storageGroupFiler, 0).ConfigureAwait(false);
+            await this.storageGroupFiler.WriteAsync(0, new(byteArray)).ConfigureAwait(false);
+            // await PathHelper.SaveData(this.Crystalizer, byteArray, this.storageGroupFiler, 0).ConfigureAwait(false);
         }
     }
 

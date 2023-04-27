@@ -185,10 +185,8 @@ public class Control : ILogInformation
                         registry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
                         registry.Register<FragmentDatum<Identifier>>(2, x => new FragmentDatumImpl<Identifier>(x));
                     },
-                    DirectoryConfiguration = new LocalDirectoryConfiguration("Data"),
+                    FileConfiguration = new LocalFileConfiguration("Data/Crystal"),
                     StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Crystal")),
-                    CrystalFile = "Crystal.main",
-                    StorageFile = "CrystalStorage.main",
                 });
 
                 context.AddBigCrystal<MergerData>(new BigCrystalConfiguration() with
@@ -198,10 +196,8 @@ public class Control : ILogInformation
                         registry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
                         registry.Register<FragmentDatum<Identifier>>(2, x => new FragmentDatumImpl<Identifier>(x));
                     },
-                    DirectoryConfiguration = new LocalDirectoryConfiguration("Data"),
+                    FileConfiguration = new LocalFileConfiguration("Data/Merger"),
                     StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Merger")),
-                    CrystalFile = "Merger.main",
-                    StorageFile = "MergerStorage.main",
                 });
             });
 

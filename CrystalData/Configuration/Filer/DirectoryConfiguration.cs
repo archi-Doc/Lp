@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.IO;
+
 namespace CrystalData;
 
 [TinyhandUnion("EmptyDirectory", typeof(EmptyDirectoryConfiguration))]
@@ -13,7 +15,7 @@ public abstract partial record DirectoryConfiguration : PathConfiguration
     }
 
     public DirectoryConfiguration(string directory)
-        : base(directory)
+        : base(PathHelper.EndsWithSlashOrBackslash(directory) ? directory : directory + PathHelper.Slash)
     {
     }
 

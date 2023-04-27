@@ -81,7 +81,7 @@ public partial class BaseData : IDataInternal, IJournalObject
         {
             if (this.datumObject[i].DatumId == info.DatumId)
             {
-                this.BigCrystal.StorageGroup.Save(ref this.datumObject[i].StorageId, ref this.datumObject[i].FileId, memoryToBeShared, info.DatumId);
+                this.BigCrystal.StorageGroup.PutAndForget(ref this.datumObject[i].StorageId, ref this.datumObject[i].FileId, memoryToBeShared, info.DatumId);
                 return;
             }
         }
@@ -100,7 +100,7 @@ public partial class BaseData : IDataInternal, IJournalObject
             return new(CrystalResult.NotFound);
         }
 
-        return await this.BigCrystal.StorageGroup.Load(datumObject.StorageId, datumObject.FileId).ConfigureAwait(false);
+        return await this.BigCrystal.StorageGroup.GetAsync(datumObject.StorageId, datumObject.FileId).ConfigureAwait(false);
     }
 
     void IDataInternal.DeleteStorage<TDatum>()
@@ -108,7 +108,7 @@ public partial class BaseData : IDataInternal, IJournalObject
         var datumObject = this.TryGetDatumObject<TDatum>();
         if (datumObject.IsValid)
         {
-            this.BigCrystal.StorageGroup.Delete(ref datumObject.StorageId, ref datumObject.FileId);
+            this.BigCrystal.StorageGroup.DeleteAndForget(ref datumObject.StorageId, ref datumObject.FileId);
             return;
         }
     }
@@ -164,7 +164,7 @@ public partial class BaseData : IDataInternal, IJournalObject
             return operation;
         }
 
-        operation.SetData(data);
+        operation.SetDatum(data);
         return operation;
     }
 
@@ -173,7 +173,11 @@ public partial class BaseData : IDataInternal, IJournalObject
     {
         var operation = new LockOperation<TDatum>(this);
 
-        await operation.EnterAsync().ConfigureAwait(false);
+        if (await operation.EnterAsync().ConfigureAwait(false))
+        {
+            operation.SetLockTaken(true);
+        }
+
         if (this.IsDeleted)
         {// Removed
             operation.SetResult(CrystalResult.Deleted);
@@ -189,7 +193,7 @@ public partial class BaseData : IDataInternal, IJournalObject
             return operation;
         }
 
-        operation.SetData(data);
+        operation.SetDatum(data);
         return operation;
     }
 
@@ -256,7 +260,7 @@ public partial class BaseData : IDataInternal, IJournalObject
 
             for (var i = 0; i < this.datumObject.Length; i++)
             {
-                this.BigCrystal.StorageGroup.Delete(ref this.datumObject[i].StorageId, ref this.datumObject[i].FileId);
+                this.BigCrystal.StorageGroup.DeleteAndForget(ref this.datumObject[i].StorageId, ref this.datumObject[i].FileId);
                 this.datumObject[i].Datum?.Unload();
                 this.datumObject[i].Datum = null;
                 this.datumObject[i].FileId = 0;
