@@ -47,8 +47,6 @@ public class Program
                     },
                     FileConfiguration = new LocalFileConfiguration("Data/Crystal"),
                     StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Crystal")),
-                    CrystalFile = "Crystal.main",
-                    StorageFile = "CrystalStorage.main",
                 });
             });
 

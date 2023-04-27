@@ -38,7 +38,5 @@ public partial record BigCrystalConfiguration : CrystalConfiguration
 
     public int MaxParentInMemory { get; init; } = DefaultMaxParentInMemory;
 
-    public string CrystalFile { get; init; } = "Crystal";
-
     public string StorageGroupExtension { get; init; } = ".Storages";
 }
