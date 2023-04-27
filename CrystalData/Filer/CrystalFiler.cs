@@ -47,8 +47,10 @@ public class CrystalFiler
         this.extension = Path.GetExtension(fileConfiguration.Path) ?? string.Empty;
         this.prefix = fileConfiguration.Path.Substring(0, fileConfiguration.Path.Length - this.extension.Length) + ".";
 
-        // List data
-        await this.ListData();
+        if (this.IsProtected)
+        {// List data
+            await this.ListData();
+        }
 
         return CrystalResult.Success;
     }
@@ -112,7 +114,6 @@ public class CrystalFiler
             return (new(CrystalResult.NotPrepared), Waypoint.Invalid);
         }
 
-        var array = this.GetReverseWaypointArray();
         string path;
         CrystalMemoryOwnerResult result;
 
@@ -124,8 +125,12 @@ public class CrystalFiler
             {
                 return (result, default);
             }
+
+            // List data
+            await this.ListData();
         }
 
+        var array = this.GetReverseWaypointArray();
         foreach (var x in array)
         {
             path = this.GetFilePath(x);

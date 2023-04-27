@@ -24,7 +24,7 @@ public sealed class StorageGroup
 
     public IStorageKey StorageKey { get; }
 
-    private PathConfiguration storageGroupConfiguration;
+    private FileConfiguration storageGroupConfiguration;
     private IFiler? storageGroupFiler;
 
     private object syncObject = new();
@@ -267,7 +267,8 @@ public sealed class StorageGroup
 
         bool createNew = false;
         StorageObject.GoshujinClass? goshujin = null;
-        var (dataResult, _) = await PathHelper.LoadData(this.storageGroupFiler).ConfigureAwait(false);
+        // var (dataResult, _) = await PathHelper.LoadData(this.storageGroupFiler).ConfigureAwait(false);
+        var dataResult = await this.storageGroupFiler.ReadAsync(0, -1).ConfigureAwait(false);
         if (dataResult.IsFailure)
         {
             if (await param.Query(this.storageGroupConfiguration, dataResult.Result).ConfigureAwait(false) == AbortOrContinue.Abort)
@@ -278,19 +279,23 @@ public sealed class StorageGroup
             createNew = true;
         }
 
-        if (!createNew)
+        try
         {
-            try
+            if (!createNew)
             {
                 goshujin = TinyhandSerializer.Deserialize<StorageObject.GoshujinClass>(dataResult.Data.Memory);
             }
-            catch
+        }
+        catch
+        {
+            if (await param.Query(this.storageGroupConfiguration, CrystalResult.DeserializeError).ConfigureAwait(false) == AbortOrContinue.Abort)
             {
-                if (await param.Query(this.storageGroupConfiguration, CrystalResult.DeserializeError).ConfigureAwait(false) == AbortOrContinue.Abort)
-                {
-                    return CrystalResult.DeserializeError;
-                }
+                return CrystalResult.DeserializeError;
             }
+        }
+        finally
+        {
+            dataResult.Return();
         }
 
         goshujin ??= TinyhandSerializer.Reconstruct<StorageObject.GoshujinClass>();
@@ -356,7 +361,8 @@ public sealed class StorageGroup
                 byteArray = TinyhandSerializer.Serialize(this.storages);
             }
 
-            await PathHelper.SaveData(this.Crystalizer, byteArray, this.storageGroupFiler, 0).ConfigureAwait(false);
+            await this.storageGroupFiler.WriteAsync(0, new(byteArray)).ConfigureAwait(false);
+            // await PathHelper.SaveData(this.Crystalizer, byteArray, this.storageGroupFiler, 0).ConfigureAwait(false);
         }
     }
 

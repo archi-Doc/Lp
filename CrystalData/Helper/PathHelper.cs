@@ -116,14 +116,6 @@ public static class PathHelper
         return (result, waypoint);
     }
 
-    /*public static Task<(CrystalResult Result, Waypoint Waypoiint)> SaveData<T>(Crystalizer crystalizer, T obj, IFiler filer, uint journalToken)
-        where T : ITinyhandSerialize<T>
-    {
-        // var option = TinyhandSerializer.DefaultOptions with { JournalToken = journalToken, };
-        var data = TinyhandSerializer.SerializeObject(obj);
-        return SaveData(crystalizer, data, filer, journalToken);
-    }*/
-
     public static async Task<(CrystalResult Result, Waypoint Waypoiint)> SaveData(Crystalizer crystalizer, byte[] data, IFiler filer, uint journalToken)
     {
         var result = await filer.WriteAsync(0, new(data)).ConfigureAwait(false);
