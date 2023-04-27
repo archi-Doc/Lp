@@ -8,8 +8,6 @@ public partial record BigCrystalConfiguration : CrystalConfiguration
     public const int DefaultMaxDataSize = 1024 * 1024 * 4; // 4MB
     public const int DefaultMaxFragmentSize = 1024 * 4; // 4KB
     public const int DefaultMaxFragmentCount = 1000;
-    public const int DefaultMemorySizeLimit = 1024 * 1024 * 500; // 500MB
-    public const int DefaultMaxParentInMemory = 10_000;
 
     public static new readonly BigCrystalConfiguration Default = new BigCrystalConfiguration();
 
@@ -34,9 +32,9 @@ public partial record BigCrystalConfiguration : CrystalConfiguration
 
     public int MaxFragmentCount { get; init; } = DefaultMaxFragmentCount;
 
-    public long MemorySizeLimit { get; init; } = DefaultMemorySizeLimit;
+    public long MemorySizeLimit { get; init; } = CrystalizerOptions.DefaultMemorySizeLimit; // Crystalizer
 
-    public int MaxParentInMemory { get; init; } = DefaultMaxParentInMemory;
+    public int MaxParentInMemory { get; init; } = CrystalizerOptions.DefaultMaxParentInMemory; // Crystalizer
 
     public string StorageGroupExtension { get; init; } = ".Storages";
 }

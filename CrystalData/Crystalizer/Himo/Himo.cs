@@ -26,7 +26,7 @@ public partial class HimoGoshujinClass
         public virtual ushort Id { get; }
 
         public void UpdateHimo(int newSize)
-        {// using (Flake.semaphore)
+        {// using (Object.semaphore)
             var unloadFlag = false;
 
             lock (this.himoGoshujin.syncObject)
@@ -56,7 +56,7 @@ public partial class HimoGoshujinClass
         }
 
         public void UpdateHimo()
-        {// using (Flake.semaphore)
+        {// using (Object.semaphore)
             lock (this.himoGoshujin.syncObject)
             {
                 if (this.Goshujin == null)
@@ -72,7 +72,7 @@ public partial class HimoGoshujinClass
         }
 
         public void RemoveHimo()
-        {// using (Flake.semaphore)
+        {// using (Object.semaphore)
             lock (this.himoGoshujin.syncObject)
             {
                 this.Goshujin = null;
