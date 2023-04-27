@@ -17,9 +17,9 @@ internal class TestClass0
     {
         Console.WriteLine("Sandbox test0");
 
-        // this.crystalizer.ResetConfigurations();
-        await this.crystalizer.SaveConfigurations(new LocalFileConfiguration("Local/Configuration.tinyhand"));
-        // await this.crystalizer.LoadConfigurations(new LocalFileConfiguration("Local/Configuration.tinyhand"));
+        this.crystalizer.ResetConfigurations();
+        await this.crystalizer.LoadConfigurations(new LocalFileConfiguration("Local/Configurations.tinyhand"));
+        // await this.crystalizer.SaveConfigurations(new LocalFileConfiguration("Local/Configurations.tinyhand"));
 
         await this.crystalizer.PrepareAndLoadAll();
 

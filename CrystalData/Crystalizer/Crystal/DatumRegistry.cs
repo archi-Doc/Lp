@@ -48,10 +48,11 @@ public class DatumRegistry
         }
         else if (this.datumIdToDatumInfo.TryGetValue(datumId, out var datumInfo))
         {
-            /*if (datumInfo.DatumId == datumId)
+            if (datumInfo.DatumId == datumId &&
+                datumInfo.Constructor == construtor)
             {// Identical
                 return;
-            }*/
+            }
 
             throw new ArgumentOutOfRangeException(nameof(datumId), "The same datum id is already registered");
         }

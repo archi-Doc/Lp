@@ -14,16 +14,16 @@ namespace CrystalData;
 
 public class Crystalizer
 {
-    public const string Extension = "data";
     public const string CheckFile = "Crystal.check";
 
     public Crystalizer(CrystalizerConfiguration configuration, CrystalizerOptions options, ILogger logger, UnitLogger unitLogger, IStorageKey storageKey)
     {
         this.configuration = configuration;
         this.EnableLogger = options.EnableLogger;
-        // this.AddExtension = options.AddExtension;
         this.RootDirectory = options.RootPath;
         this.DefaultTimeout = options.DefaultTimeout;
+        this.MemorySizeLimit = options.MemorySizeLimit;
+        this.MaxParentInMemory = options.MaxParentInMemory;
         if (string.IsNullOrEmpty(this.RootDirectory))
         {
             this.RootDirectory = Directory.GetCurrentDirectory();
@@ -59,11 +59,13 @@ public class Crystalizer
 
     public bool EnableLogger { get; }
 
-    // public bool AddExtension { get; init; } = true;
-
     public string RootDirectory { get; }
 
     public TimeSpan DefaultTimeout { get; }
+
+    public long MemorySizeLimit { get; }
+
+    public int MaxParentInMemory { get; }
 
     public IJournal? Journal { get; private set; }
 
@@ -188,12 +190,52 @@ public class Crystalizer
         {
             if (this.typeToCrystal.TryGetValue(x.Key, out var crystal))
             {
-                crystal.Configure(x.Value);
+                if (x.Value is BigCrystalConfiguration bigCrystalConfiguration &&
+                    crystal is IBigCrystal bigCrystal)
+                {
+                    bigCrystal.Configure(bigCrystalConfiguration);
+                }
+                else
+                {
+                    crystal.Configure(x.Value);
+                }
             }
         }
     }
 
     public async Task<CrystalResult> SaveConfigurations(FileConfiguration configuration)
+    {
+        var data = TinyhandSerializer.ReconstructObject<CrystalizerConfigurationData>();
+        foreach (var x in this.configuration.CrystalConfigurations)
+        {
+            if (this.typeToCrystal.TryGetValue(x.Key, out var crystal) &&
+                x.Key.FullName is { } name)
+            {
+                if (crystal.CrystalConfiguration is BigCrystalConfiguration bigCrystalConfiguration)
+                {
+                    data.BigCrystalConfigurations[name] = bigCrystalConfiguration;
+                }
+                else
+                {
+                    data.CrystalConfigurations[name] = crystal.CrystalConfiguration;
+                }
+            }
+        }
+
+        var filer = this.ResolveFiler(configuration);
+        var result = await filer.PrepareAndCheck(PrepareParam.ContinueAll<Crystalizer>(this), configuration).ConfigureAwait(false);
+        if (result.IsFailure())
+        {
+            return result;
+        }
+
+        var bytes = TinyhandSerializer.SerializeToUtf8(data);
+        result = await filer.WriteAsync(0, new(bytes)).ConfigureAwait(false);
+
+        return result;
+    }
+
+    public async Task<CrystalResult> SaveConfigurationsObsolete(FileConfiguration configuration)
     {
         var dictionary = new Dictionary<string, CrystalConfiguration>();
         foreach (var x in this.configuration.CrystalConfigurations)
@@ -219,6 +261,67 @@ public class Crystalizer
     }
 
     public async Task<CrystalResult> LoadConfigurations(FileConfiguration configuration)
+    {
+        var filer = this.ResolveFiler(configuration);
+        var result = await filer.PrepareAndCheck(PrepareParam.ContinueAll<Crystalizer>(this), configuration).ConfigureAwait(false);
+        if (result.IsFailure())
+        {
+            return result;
+        }
+
+        var readResult = await filer.ReadAsync(0, -1).ConfigureAwait(false);
+        if (readResult.IsFailure)
+        {
+            return readResult.Result;
+        }
+
+        try
+        {
+            var data = TinyhandSerializer.DeserializeFromUtf8<CrystalizerConfigurationData>(readResult.Data.Memory);
+            if (data == null)
+            {
+                return CrystalResult.DeserializeError;
+            }
+
+            var nameToCrystal = new Dictionary<string, ICrystal>();
+            foreach (var x in this.typeToCrystal.ToArray())
+            {
+                if (x.Key.FullName is { } name)
+                {
+                    nameToCrystal[name] = x.Value;
+                }
+            }
+
+            foreach (var x in data.CrystalConfigurations)
+            {
+                if (nameToCrystal.TryGetValue(x.Key, out var crystal))
+                {
+                    crystal.Configure(x.Value);
+                }
+            }
+
+            foreach (var x in data.BigCrystalConfigurations)
+            {
+                if (nameToCrystal.TryGetValue(x.Key, out var crystal) &&
+                    crystal is IBigCrystal bigCrystal)
+                {
+                    bigCrystal.Configure(x.Value);
+                }
+            }
+
+            return CrystalResult.Success;
+        }
+        catch
+        {
+            return CrystalResult.DeserializeError;
+        }
+        finally
+        {
+            readResult.Return();
+        }
+    }
+
+    public async Task<CrystalResult> LoadConfigurationsObsolete(FileConfiguration configuration)
     {
         var filer = this.ResolveFiler(configuration);
         var result = await filer.PrepareAndCheck(PrepareParam.ContinueAll<Crystalizer>(this), configuration).ConfigureAwait(false);

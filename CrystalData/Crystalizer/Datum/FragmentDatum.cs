@@ -176,7 +176,7 @@ public class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDa
     }
 
     private FragmentObject<TIdentifier>.GoshujinClass PrepareFragments()
-    {// using (Flake.semaphore)
+    {// using (Object.semaphore)
         if (this.fragments != null)
         {
             return this.fragments;
@@ -195,7 +195,7 @@ public class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDa
     }
 
     private async Task<FragmentObject<TIdentifier>.GoshujinClass> PrepareFragmentsAsync()
-    {// using (Flake.semaphore)
+    {// using (Object.semaphore)
         if (this.fragments != null)
         {
             return this.fragments;
@@ -251,7 +251,7 @@ public class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDa
     }
 
     private CrystalResult SetMemoryOwner(TIdentifier fragmentId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeMoved, object? obj, bool clearSavedFlag)
-    {// using (Flake.semaphore)
+    {// using (Object.semaphore)
         if (this.fragments == null)
         {
             this.fragments = this.PrepareFragments();
