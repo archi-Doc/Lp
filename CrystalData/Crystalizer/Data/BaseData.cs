@@ -225,6 +225,28 @@ public partial class BaseData : IDataInternal, IJournalObject
         }
     }
 
+    public void Unload()
+    {
+        using (this.semaphore.Lock())
+        {
+            if (this.IsDeleted)
+            {
+                return;
+            }
+
+            foreach (var x in this.ChildrenInternal)
+            {
+                x.Unload();
+            }
+
+            for (var i = 0; i < this.datumObject.Length; i++)
+            {
+                this.datumObject[i].Datum?.Unload();
+                this.datumObject[i].Datum = null;
+            }
+        }
+    }
+
     /// <summary>
     /// Delete this <see cref="BaseData"/> from the parent and delete the data.
     /// </summary>

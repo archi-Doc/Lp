@@ -20,7 +20,7 @@ public partial class HimoGoshujinClass
         public Himo(IDataInternal dataInternal)
         {
             this.dataInternal = dataInternal;
-            this.himoGoshujin = dataInternal.BigCrystal.Himo;
+            this.himoGoshujin = dataInternal.BigCrystal.Crystalizer.Himo;
         }
 
         public virtual ushort Id { get; }
@@ -101,9 +101,9 @@ public partial class HimoGoshujinClass
         private int currentSize; // Current memory usage
     }
 
-    public HimoGoshujinClass(IBigCrystal bigCrystal)
+    public HimoGoshujinClass(Crystalizer crystalizer)
     {
-        this.bigCrystal = bigCrystal;
+        this.crystalizer = crystalizer;
 
         this.unloadData = new(() => this.UnloadData());
         this.unloadParent = new(() => this.UnloadParent());
@@ -117,7 +117,7 @@ public partial class HimoGoshujinClass
         lock (this.syncParentData)
         {
             node = this.parentDataList.AddLast(data);
-            if (this.parentDataList.Count > this.bigCrystal.BigCrystalConfiguration.MaxParentInMemory)
+            if (this.parentDataList.Count > this.crystalizer.MaxParentInMemory)
             {
                 unloadFlag = true;
             }
@@ -158,13 +158,13 @@ public partial class HimoGoshujinClass
 
     private void UnloadData()
     {
-        var limit = Math.Max(MemoryMargin, this.bigCrystal.BigCrystalConfiguration.MemorySizeLimit - MemoryMargin);
+        var limit = Math.Max(MemoryMargin, this.crystalizer.MemorySizeLimit - MemoryMargin);
         if (Volatile.Read(ref this.memoryUsage) <= limit)
         {
             return;
         }
 
-        var array = new (IDataInternal? FlakeInternal, ushort Id)[UnloadNumber];
+        var array = new (IDataInternal? DataInternal, ushort Id)[UnloadNumber];
         do
         {
             int count;
@@ -173,7 +173,7 @@ public partial class HimoGoshujinClass
                 this.goshujin.UnloadQueueChain.TryPeek(out var himo);
                 for (count = 0; himo != null && count < UnloadNumber; count++)
                 {
-                    array[count].FlakeInternal = himo.dataInternal;
+                    array[count].DataInternal = himo.dataInternal;
                     array[count].Id = himo.Id;
                     himo = himo.UnloadQueueLink.Next;
                 }
@@ -181,7 +181,7 @@ public partial class HimoGoshujinClass
 
             for (var i = 0; i < count; i++)
             {
-                array[i].FlakeInternal?.SaveDatum(array[i].Id, true);
+                array[i].DataInternal?.SaveDatum(array[i].Id, true);
             }
         }
         while (Volatile.Read(ref this.memoryUsage) > limit);
@@ -189,7 +189,7 @@ public partial class HimoGoshujinClass
 
     private void UnloadParent()
     {
-        if (this.parentDataList.Count <= this.bigCrystal.BigCrystalConfiguration.MaxParentInMemory)
+        if (this.parentDataList.Count <= this.crystalizer.MaxParentInMemory)
         {
             return;
         }
@@ -223,10 +223,10 @@ public partial class HimoGoshujinClass
                 }
             }
         }
-        while (this.parentDataList.Count > this.bigCrystal.BigCrystalConfiguration.MaxParentInMemory);
+        while (this.parentDataList.Count > this.crystalizer.MaxParentInMemory);
     }
 
-    private IBigCrystal bigCrystal;
+    private Crystalizer crystalizer;
 
     private object syncObject = new();
     private long memoryUsage; // lock(this.syncObject)

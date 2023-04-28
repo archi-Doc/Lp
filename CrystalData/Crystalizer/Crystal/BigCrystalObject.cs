@@ -12,7 +12,6 @@ public sealed class BigCrystalObject<TData> : IBigCrystal<TData>
 
         this.crystal = new CrystalObject<TData>(this.Crystalizer);
         this.storageGroup = new(crystalizer);
-        this.himoGoshujin = new(this); // tempcode
         this.logger = crystalizer.UnitLogger.GetLogger<IBigCrystal<TData>>();
     }
 
@@ -21,7 +20,6 @@ public sealed class BigCrystalObject<TData> : IBigCrystal<TData>
     private ICrystal<TData> crystal;
     private SemaphoreLock semaphore = new();
     private StorageGroup storageGroup;
-    private HimoGoshujinClass himoGoshujin;
     private ILogger logger;
 
     #endregion
@@ -37,10 +35,6 @@ public sealed class BigCrystalObject<TData> : IBigCrystal<TData>
     public DatumRegistry DatumRegistry { get; } = new();
 
     public StorageGroup StorageGroup => this.storageGroup;
-
-    public HimoGoshujinClass Himo => this.himoGoshujin;
-
-    public long MemoryUsage => this.himoGoshujin.MemoryUsage;
 
     public bool Prepared { get; private set; }
 
@@ -106,8 +100,6 @@ public sealed class BigCrystalObject<TData> : IBigCrystal<TData>
 
             // Save storage group
             await this.StorageGroup.SaveGroup().ConfigureAwait(false);
-
-            this.logger.TryGet()?.Log($"Crystal stop - {this.himoGoshujin.MemoryUsage}");
         }
 
         return CrystalResult.Success;
@@ -124,8 +116,8 @@ public sealed class BigCrystalObject<TData> : IBigCrystal<TData>
 
             var param = PrepareParam.ContinueAll<TData>(this.Crystalizer);
 
+            this.Object.Unload();
             await this.crystal.Delete().ConfigureAwait(false);
-            this.himoGoshujin.Clear();
 
             await this.StorageGroup.PrepareAndLoad(this.CrystalConfiguration.StorageConfiguration, param).ConfigureAwait(false);
             await this.StorageGroup.DeleteAllAsync().ConfigureAwait(false);
@@ -160,7 +152,6 @@ public sealed class BigCrystalObject<TData> : IBigCrystal<TData>
         }
 
         this.Object.Initialize(this, null, true);
-        this.himoGoshujin.Clear();
 
         var info = this.StorageGroup.GetInformation();
         foreach (var x in info)
