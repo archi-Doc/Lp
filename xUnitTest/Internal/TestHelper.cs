@@ -43,7 +43,7 @@ public static class TestHelper
     public static async Task UnloadAndDeleteAll(IBigCrystal crystal)
     {
         await crystal.Crystalizer.SaveAll(true);
-        crystal.MemoryUsage.Is(0);
+        crystal.Crystalizer.Himo.MemoryUsage.Is(0);
         await crystal.Crystalizer.DeleteAll();
     }
 
@@ -51,7 +51,7 @@ public static class TestHelper
     {
         await crystal.Crystalizer.SaveAll(true);
         // await crystal.Save(true);
-        crystal.MemoryUsage.Is(0);
+        crystal.Crystalizer.Himo.MemoryUsage.Is(0);
         // await crystal.StartAsync(new()); // tempcode
     }
 
@@ -70,8 +70,11 @@ public static class TestHelper
                     },
                     FileConfiguration = new LocalFileConfiguration(Path.Combine(directory, "Crystal")),
                     StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration(directory)),
-                    MaxParentInMemory = maxParent,
                 });
+            })
+            .SetupOptions<CrystalizerOptions>((context, options) =>
+            {// CrystalizerOptions
+                options.MaxParentInMemory = maxParent;
             });
 
         var unit = builder.Build();
