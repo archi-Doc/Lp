@@ -170,7 +170,7 @@ public partial class MergerData : BaseData
 
         if (this.node != null)
         {
-            this.BigCrystal.Himo.RemoveParentData(this.node);
+            this.BigCrystal.Crystalizer.Himo.RemoveParentData(this.node);
             this.node = null;
         }
     }
@@ -206,7 +206,7 @@ public partial class MergerData : BaseData
 
         if (this.node != null && unload)
         {
-            this.BigCrystal.Himo.RemoveParentData(this.node);
+            this.BigCrystal.Crystalizer.Himo.RemoveParentData(this.node);
             this.node = null;
         }
     }
@@ -220,7 +220,7 @@ public partial class MergerData : BaseData
     {
         if (this.node == null && this.Parent != null)
         {
-            this.node = this.BigCrystal.Himo.AddParentData(this);
+            this.node = this.BigCrystal.Crystalizer.Himo.AddParentData(this);
         }
 
         if (this.children != null)

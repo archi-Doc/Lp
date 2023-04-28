@@ -10,10 +10,6 @@ public interface IBigCrystal : ICrystal
 
     StorageGroup StorageGroup { get; }
 
-    HimoGoshujinClass Himo { get; }
-
-    long MemoryUsage { get; }
-
     void Configure(BigCrystalConfiguration configuration);
 }
 

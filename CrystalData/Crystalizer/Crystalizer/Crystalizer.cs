@@ -33,6 +33,7 @@ public class Crystalizer
         this.UnitLogger = unitLogger;
         this.CrystalCheck = new(this.UnitLogger.GetLogger<CrystalCheck>());
         this.CrystalCheck.Load(Path.Combine(this.RootDirectory, CheckFile));
+        this.Himo = new(this);
         this.StorageKey = storageKey;
 
         foreach (var x in this.configuration.CrystalConfigurations)
@@ -70,6 +71,8 @@ public class Crystalizer
     public IJournal? Journal { get; private set; }
 
     public IStorageKey StorageKey { get; }
+
+    public HimoGoshujinClass Himo { get; }
 
     internal UnitLogger UnitLogger { get; }
 
@@ -444,6 +447,8 @@ public class Crystalizer
         }
 
         await Task.WhenAll(tasks).ConfigureAwait(false);
+
+        this.logger.TryGet()?.Log($"Crystal stop - {this.Himo.MemoryUsage}");
     }
 
     public async Task<CrystalResult[]> DeleteAll()
