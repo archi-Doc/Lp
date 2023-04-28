@@ -9,7 +9,6 @@ namespace CrystalData;
 
 public partial class HimoGoshujinClass
 {
-    public const int UnloadInterval = 100; // 100 ms
     public const int UnloadNumber = 10;
     public const long MemoryMargin = 1024 * 1024 * 100; // 100 MB
 
