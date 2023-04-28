@@ -9,7 +9,7 @@ public class Seedphrase
 {
     public const int SeedphraseDefaultLength = 16;
     public const int SeedphraseMinimumLength = 12;
-    private const string TinyhandPath = "Strings.english.tinyhand";
+    private const string SeedphrasesPath = "Strings.Seedphrases";
 
     public Seedphrase()
     {
