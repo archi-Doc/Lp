@@ -34,7 +34,7 @@ public class Program
             })
             .ConfigureCrystal(context =>
             {
-                // context.SetJournal(new SimpleJournalConfiguration(new LocalDirectoryConfiguration("Journal")));
+                context.SetJournal(new SimpleJournalConfiguration(new LocalDirectoryConfiguration("Journal")));
 
                 context.AddCrystal<ManualClass>(
                     new(SavePolicy.Manual, new LocalFileConfiguration("Local/manual.tinyhand"))
