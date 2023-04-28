@@ -3,14 +3,10 @@
 global using Arc.Threading;
 global using CrystalData;
 global using Tinyhand;
-global using LP;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
 using CrystalData.Datum;
-using Tinyhand.IO;
-using CrystalData.Storage;
 using SimpleCommandLine;
-using static CrystalData.CrystalConfiguration;
 
 namespace Sandbox;
 
@@ -31,10 +27,6 @@ public class Program
         };
 
         var builder = new CrystalControl.Builder()
-            .Preload(context =>
-            {
-                context.DataDirectory = "Data";
-            })
             .Configure(context =>
             {
                 context.AddSingleton<TestClass0>();
@@ -102,9 +94,9 @@ public class Program
         ThreadCore.Root.Terminate();
         await unit.Context.ServiceProvider.GetRequiredService<Crystalizer>().SaveAllAndTerminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
-        if (unit.Context.ServiceProvider.GetService<UnitLogger>()?.FlushAndTerminate() is { } task)
+        if (unit.Context.ServiceProvider.GetService<UnitLogger>() is { } unitLogger)
         {
-            await task;
+            await unitLogger.FlushAndTerminate();
         }
 
         ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).
