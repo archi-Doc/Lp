@@ -37,17 +37,18 @@ public class Program
                 // context.SetJournal(new SimpleJournalConfiguration(new LocalDirectoryConfiguration("Journal")));
 
                 context.AddCrystal<ManualClass>(
-                    new(
-                        SavePolicy.Manual,
-                        new LocalFileConfiguration("Local/manual.tinyhand")
-                        )
-                    { SaveFormat = SaveFormat.Utf8, NumberOfBackups = 0, });
+                    new(SavePolicy.Manual, new LocalFileConfiguration("Local/manual.tinyhand"))
+                    {
+                        SaveFormat = SaveFormat.Utf8,
+                        NumberOfBackups = 0,
+                    });
 
                 context.AddCrystal<CombinedClass>(
                     new(
                         SavePolicy.Periodic,
                         new LocalFileConfiguration("Local/combined"),
-                        new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/Simple"))));
+                        new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/Simple"))
+                        ));
 
                 context.AddBigCrystal<BaseData>(new BigCrystalConfiguration() with
                 {

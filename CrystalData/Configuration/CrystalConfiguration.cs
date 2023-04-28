@@ -4,7 +4,6 @@ namespace CrystalData;
 
 public enum SavePolicy
 {
-    None,
     Manual,
     Periodic,
     Instant,
@@ -25,7 +24,7 @@ public partial record CrystalConfiguration
 
     public CrystalConfiguration()
     {
-        this.SavePolicy = SavePolicy.None;
+        this.SavePolicy = SavePolicy.Manual;
         this.FileConfiguration = EmptyFileConfiguration.Default;
         this.StorageConfiguration = EmptyStorageConfiguration.Default;
     }
@@ -49,10 +48,4 @@ public partial record CrystalConfiguration
     public FileConfiguration FileConfiguration { get; init; }
 
     public StorageConfiguration StorageConfiguration { get; init; }
-
-    /*internal void ConfigureInternal(FileConfiguration filerConfiguration, StorageConfiguration storageConfiguration)
-    {
-        this.FileConfiguration = filerConfiguration;
-        this.StorageConfiguration = storageConfiguration;
-    }*/
 }

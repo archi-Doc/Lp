@@ -27,7 +27,7 @@ public static class TestHelper
                             datumRegistry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
                             datumRegistry.Register<FragmentDatum<Identifier>>(2, x => new FragmentDatumImpl<Identifier>(x));
                         },
-                        SavePolicy.None,
+                        SavePolicy.Manual,
                         new LocalFileConfiguration(Path.Combine(directory, "Crystal")),
                         new SimpleStorageConfiguration(new LocalDirectoryConfiguration(directory))));
             });

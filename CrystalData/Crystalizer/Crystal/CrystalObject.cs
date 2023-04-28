@@ -56,7 +56,7 @@ public sealed class CrystalObject<TData> : ICrystal<TData>
                 }
 
                 // Finally, reconstruct
-                TinyhandSerializer.ReconstructObject<TData>(ref this.obj);
+                this.ReconstructObject();
                 return this.obj;
             }
         }
@@ -310,11 +310,7 @@ public sealed class CrystalObject<TData> : ICrystal<TData>
         }
         else
         {// Reconstruct
-            TinyhandSerializer.ReconstructObject<TData>(ref this.obj);
-            var hash = FarmHash.Hash64(TinyhandSerializer.SerializeObject(this.obj));
-            this.waypoint = default;
-
-            this.Crystalizer.UpdatePlane(this, ref this.waypoint, hash);
+            this.ReconstructObject();
 
             this.Prepared = true;
             return CrystalResult.Success;
@@ -406,5 +402,16 @@ public sealed class CrystalObject<TData> : ICrystal<TData>
             this.storage = this.Crystalizer.ResolveStorage(this.CrystalConfiguration.StorageConfiguration);
             this.storage.PrepareAndCheck(PrepareParam.ContinueAll<TData>(this.Crystalizer), this.CrystalConfiguration.StorageConfiguration, false).Wait();
         }
+    }
+
+    [MemberNotNull(nameof(obj))]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ReconstructObject()
+    {
+        TinyhandSerializer.ReconstructObject<TData>(ref this.obj);
+
+        var hash = FarmHash.Hash64(TinyhandSerializer.SerializeObject(this.obj));
+        this.waypoint = default;
+        this.Crystalizer.UpdatePlane(this, ref this.waypoint, hash);
     }
 }
