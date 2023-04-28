@@ -16,7 +16,7 @@ public class Seedphrase
         var assembly = System.Reflection.Assembly.GetExecutingAssembly();
         try
         {
-            using (var stream = assembly.GetManifestResourceStream(assembly.GetName().Name + "." + TinyhandPath))
+            using (var stream = assembly.GetManifestResourceStream(assembly.GetName().Name + "." + SeedphrasesPath))
             {
                 if (stream != null)
                 {

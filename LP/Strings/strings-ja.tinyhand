@@ -1,25 +1,104 @@
 // identifier = "string" /* null: Use the default value. */
 
+Dialog = {
+    ConfirmExit = "本当に終了しますか？"
+    ConfirmOverwrite = "本当に '{0}' を上書きしますか？"
+
+    Password = {
+    Enter = "パスワードを入力してください"
+    EnterCurrent = "現在のパスワードを入力してください"
+    EnterNew = "新しいパスワードを入力してください"
+    Confirm = "パスワードを確認してください"
+    EmptyWarning = "空のパスワードは使用しないでください。"
+    EmptyConfirm = "パスワードなしで続行してもよろしいですか？"
+    NotMatch = "パスワードが一致しませんでした。もう一度お試しください。"
+    Changed = "パスワードが正常に変更されました。"
+    }
+}
+
 Success = {
-    Output = "Output: {0}"
-    Loaded = "Loaded: {0}"
-    Deserialized = "Deserialized: {0}"
+  Output = "出力: {0}"
+  Loaded = "読み込み完了: {0}"
+  Deserialized = "復号化完了: {0}"
+  NodeAdded = "ノード追加: {0}"
 }
 
 Error = {
     Load = "Could not load '{0}'"
     Deserialize = "Could not deserialize '{0}'"
+    KeyVault = "Could not deserialize '{0}'"
+    Parse = "Could not parse '{0}'"
+    InvalidAddress = "{0} is not valid address."
+    Connect = "Could not connect to '{0}'"
+    Authorization = "Authorization error"
 }
 
-Services = {
-    KeyVault = {
-        AskNew = "Do you want to create a new keyvault?"
-        EnterPassword = "Enter password"
-    }
+Vault = {
+    AskNew = "Do you want to create new Vault?"
+    Create = "Creating new Vault"
+    EnterPassword = "Enter Vault password"
+    ChangePassword = "Changing Vault password"
+    NoData = "Vault could not get '{0}'"
+    NoRestore = "Vault could not restore data '{0}'"
+    NotFound = "{0} is not found"
+    AddSuccess = "{0} is successfully added"
+    DeleteSuccess = "{0} is successfully deleted"
+    AlreadyExists = "{0} already exists"
+}
+
+Authority = {
+    AlreadyExists = "Authority '{0}' already exists"
+    Created = "Authority '{0}' is successfully created"
+    Removed = "Authority '{0}' is successfully removed"
+    NotFound = "Authority '{0}' is not found"
+    NotAvailable = "Could not get Authority '{0}'"
+    EnterPassword = "Enter Authority '{0}' password"
+}
+
+Seedphrase = {
+    Invalid = "Seedphrase '{0}' is invaid"
+}
+
+Custom = {
+    AlreadyExists = "Customized command '{0}' already exists"
+    NotFound = "Customized command '{0}' is not found"
+    Created = "Customized command '{0}' is successfully created"
+    Removed = "Customized command '{0}' is successfully removed"
+    Set = "Customized command '{0}' is successfully set"
 }
 
 Subcommands = {
+    DevStage = "This feature is in the dev stage"
     GC = {
         Start = "GC.Collect"
     }
+
+    NodeKey = {
+        Changed = "Node key changed: {0}"
+        InvalidKey = "'{0}' is invalid. Enter a valid private key or seedphrase"
+    }
+}
+
+Storage = 
+{
+    CreateLocal = "Creating storage with local filer"
+    CreateS3 = "Creating storage with S3 filer"
+    EnterPath = "Enter storage path"
+    EnterBucket = "Enter S3 bucket name"
+    InvalidFiler = "Filer type '{0}' is invalid"
+    InvalidId = "Storage with specified Id '{0}' is not found"
+    DeleteConfirm = "Are you sure you want to delete the storage"
+    Deleted = "Storage deleted: {0}"
+}
+
+CrystalResult = {
+    NoDirectory = "Directory not found"
+}
+
+AddStorageResult = {
+    Success = "Success"
+    Running = ""
+    DuplicateId = "Duplicate id is found"
+    DuplicatePath = "Duplicate path is found"
+    WriteError = "Could not write to the path"
 }
