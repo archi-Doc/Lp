@@ -19,10 +19,11 @@ public partial class SimpleJournal
         private static async Task Process(object? parameter)
         {
             var core = (SimpleJournalTask)parameter!;
-            while (await core.Delay(1000).ConfigureAwait(false))
+            while (await core.Delay(1_000).ConfigureAwait(false))
             {
-                lock (core.simpleJournal.syncObject)
+                lock (core.simpleJournal.syncBooks)
                 {
+                    // Save all books
                     Book? book = core.simpleJournal.books.PositionChain.First;
                     while (book != null && !book.IsSaved)
                     {

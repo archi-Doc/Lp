@@ -3,30 +3,27 @@
 using System.Buffers.Binary;
 using System.Runtime.CompilerServices;
 
-namespace CrystalData;
+namespace CrystalData.Journal;
 
-public readonly struct Waypoint : IEquatable<Waypoint>, IComparable<Waypoint>
-{// JournalPosition, Current plane, Next plane, Hash
-    public const string Extension = "waypoint";
-    public const int Length = 24; // 8 + 4 + 4 + 8
-    public static readonly Waypoint Invalid = default;
-    public static readonly Waypoint Empty = new(1, 0, 0, 0);
+internal readonly struct BookTitle : IEquatable<BookTitle>, IComparable<BookTitle>
+{// JournalPosition, Hash, Reserved
+    public const int Length = 20; // 8 + 8 + 4
+    public static readonly BookTitle Invalid = default;
 
-    public Waypoint(ulong journalPosition, uint currentPlane, uint nextPlane, ulong hash)
+    public BookTitle(ulong journalPosition, ulong hash)
     {
         this.JournalPosition = journalPosition;
-        this.CurrentPlane = currentPlane;
-        this.NextPlane = nextPlane;
         this.Hash = hash;
+        this.Reserved = 0;
     }
 
-    public static bool TryParse(string base64Url, out Waypoint waypoint)
+    public static bool TryParse(string base64Url, out BookTitle bookTitle)
     {
         var byteArray = Base64.Url.FromStringToByteArray(base64Url);
-        return TryParse(byteArray, out waypoint);
+        return TryParse(byteArray, out bookTitle);
     }
 
-    public static bool TryParse(ReadOnlySpan<byte> span, out Waypoint waypoint)
+    public static bool TryParse(ReadOnlySpan<byte> span, out BookTitle bookTitle)
     {
         if (span.Length >= Length)
         {
@@ -34,13 +31,11 @@ public readonly struct Waypoint : IEquatable<Waypoint>, IComparable<Waypoint>
             {
                 var journalPosition = BinaryPrimitives.ReverseEndianness(BitConverter.ToUInt64(span));
                 span = span.Slice(sizeof(ulong));
-                var currentPlane = BitConverter.ToUInt32(span);
-                span = span.Slice(sizeof(uint));
-                var nextPlane = BitConverter.ToUInt32(span);
-                span = span.Slice(sizeof(uint));
                 var hash = BitConverter.ToUInt64(span);
+                span = span.Slice(sizeof(ulong));
+                var reserved = BitConverter.ToUInt32(span);
 
-                waypoint = new(journalPosition, currentPlane, nextPlane, hash);
+                bookTitle = new(journalPosition, hash);
                 return true;
             }
             catch
@@ -48,14 +43,13 @@ public readonly struct Waypoint : IEquatable<Waypoint>, IComparable<Waypoint>
             }
         }
 
-        waypoint = default;
+        bookTitle = default;
         return false;
     }
 
     public readonly ulong JournalPosition;
-    public readonly uint CurrentPlane;
-    public readonly uint NextPlane; // Où allons-nous
     public readonly ulong Hash;
+    public readonly uint Reserved;
 
     public bool IsValid => this.JournalPosition != 0;
 
@@ -75,37 +69,18 @@ public readonly struct Waypoint : IEquatable<Waypoint>, IComparable<Waypoint>
         return Base64.Url.FromByteArrayToString(span);
     }
 
-    public bool Equals(Waypoint other)
+    public bool Equals(BookTitle other)
         => this.JournalPosition == other.JournalPosition &&
-        this.CurrentPlane == other.CurrentPlane &&
-        this.NextPlane == other.NextPlane &&
-        this.Hash == other.Hash;
+        this.Hash == other.Hash &&
+        this.Reserved == other.Reserved;
 
-    public int CompareTo(Waypoint other)
+    public int CompareTo(BookTitle other)
     {
         if (this.JournalPosition < other.JournalPosition)
         {
             return -1;
         }
         else if (this.JournalPosition > other.JournalPosition)
-        {
-            return 1;
-        }
-
-        if (this.CurrentPlane < other.CurrentPlane)
-        {
-            return -1;
-        }
-        else if (this.CurrentPlane > other.CurrentPlane)
-        {
-            return 1;
-        }
-
-        if (this.NextPlane < other.NextPlane)
-        {
-            return -1;
-        }
-        else if (this.NextPlane > other.NextPlane)
         {
             return 1;
         }
@@ -119,11 +94,20 @@ public readonly struct Waypoint : IEquatable<Waypoint>, IComparable<Waypoint>
             return 1;
         }
 
+        if (this.Reserved < other.Reserved)
+        {
+            return -1;
+        }
+        else if (this.Reserved > other.Reserved)
+        {
+            return 1;
+        }
+
         return 0;
     }
 
     public override int GetHashCode()
-        => HashCode.Combine(this.JournalPosition, this.CurrentPlane, this.NextPlane, this.Hash);
+        => HashCode.Combine(this.JournalPosition, this.Hash, this.Reserved);
 
     private static void WriteBigEndian(ulong value, Span<byte> span)
     {
@@ -144,13 +128,10 @@ public readonly struct Waypoint : IEquatable<Waypoint>, IComparable<Waypoint>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void WriteSpan(Span<byte> span)
     {
-        // BitConverter.TryWriteBytes(span, this.JournalPosition);
         WriteBigEndian(this.JournalPosition, span);
         span = span.Slice(sizeof(ulong));
-        BitConverter.TryWriteBytes(span, this.CurrentPlane);
-        span = span.Slice(sizeof(uint));
-        BitConverter.TryWriteBytes(span, this.NextPlane);
-        span = span.Slice(sizeof(uint));
         BitConverter.TryWriteBytes(span, this.Hash);
+        span = span.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(span, this.Reserved);
     }
 }

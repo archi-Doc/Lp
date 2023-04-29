@@ -26,7 +26,7 @@ public partial class SimpleJournal
         {
             BookType bookType = BookType.Unfinished;
 
-            // File Base64.book
+            // BookTitle.finished or BookTitle.unfinished
             var fileName = Path.GetFileName(pathInformation.Path);
             if (fileName.EndsWith(FinishedSuffix))
             {
@@ -43,40 +43,30 @@ public partial class SimpleJournal
                 return null;
             }
 
-            var bytes = Base64.Url.FromStringToByteArray(fileName);
-            if (bytes.Length != PositionLength)
+            if (!BookTitle.TryParse(fileName, out var bookTitle))
             {
                 return null;
             }
 
-            var position = BitConverter.ToUInt64(bytes);
             var book = new Book(simpleJournal);
-            book.position = position;
-            book.length = (ulong)pathInformation.Length;
+            book.position = bookTitle.JournalPosition;
+            book.length = (int)pathInformation.Length;
             book.path = pathInformation.Path;
+            book.hash = bookTitle.Hash;
             book.bookType = bookType;
-            book.Goshujin = simpleJournal.books;
 
             return book;
         }
 
-        public static Book AppendNewBook(SimpleJournal simpleJournal, Book? previousBook)
+        public static Book AppendNewBook(SimpleJournal simpleJournal, ulong position, byte[] data, int dataLength)
         {
             var book = new Book(simpleJournal);
+            book.position = position;
+            book.length = dataLength;
+            book.bookType = BookType.Unfinished;
 
-            if (previousBook == null)
-            {
-                book.position = 1;
-            }
-            else
-            {
-                book.position = previousBook.position + previousBook.length;
-            }
-
-            book.buffer = ArrayPool<byte>.Shared.Rent(SimpleJournal.FinishedBookLength);
-
-            simpleJournal.books.Add(book);
-            simpleJournal.books.InMemoryChain.AddLast(book);
+            book.buffer = ArrayPool<byte>.Shared.Rent(data.Length);
+            data.AsSpan().CopyTo(book.buffer);
 
             return book;
         }
@@ -91,7 +81,7 @@ public partial class SimpleJournal
             var position = this.position + (ulong)this.bufferPosition;
             data.CopyTo(this.buffer.AsSpan(this.bufferPosition));
             this.bufferPosition += data.Length;
-            this.length += (ulong)data.Length;
+            this.length += data.Length;
             return position;
         }
 
@@ -127,10 +117,12 @@ public partial class SimpleJournal
 
             this.buffer = newBuffer;
 
+            // BookTitle
+            var bookTitle = new BookTitle(this.position, FarmHash.Hash64(this.buffer));
+            var name = bookTitle.ToBase64Url() + (this.bookType == BookType.Finished ? FinishedSuffix : UnfinishedSuffix);
+
             // Write
-            Span<byte> span = stackalloc byte[PositionLength];
-            BitConverter.TryWriteBytes(span, this.position);
-            this.path = PathHelper.CombineWithSlash(this.simpleJournal.SimpleJournalConfiguration.DirectoryConfiguration.Path, Base64.Url.FromByteArrayToString(span));
+            this.path = PathHelper.CombineWithSlash(this.simpleJournal.SimpleJournalConfiguration.DirectoryConfiguration.Path, name);
             this.simpleJournal.rawFiler.WriteAndForget(this.path, 0, new(this.buffer));
         }
 
@@ -151,18 +143,21 @@ public partial class SimpleJournal
 
         #region PropertyAndField
 
-        internal ulong Length => this.length;
+        internal int Length => this.length;
 
         internal bool IsSaved => this.path != null;
+
+        internal int MemoryUsage => this.buffer == null ? 0 : this.buffer.Length;
 
         private SimpleJournal simpleJournal;
 
         [Link(Primary = true, Type = ChainType.Ordered)]
         private ulong position;
 
-        private ulong length;
+        private int length;
         private BookType bookType;
         private string? path;
+        private ulong hash;
         private byte[]? buffer;
         private int bufferPosition;
 

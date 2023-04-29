@@ -5,6 +5,7 @@ namespace CrystalData;
 public enum SavePolicy
 {
     Manual,
+    Volatile,
     Periodic,
     Instant,
 }

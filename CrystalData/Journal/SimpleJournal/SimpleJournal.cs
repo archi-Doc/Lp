@@ -3,6 +3,7 @@
 using System.Runtime.CompilerServices;
 using CrystalData.Filer;
 using Tinyhand.IO;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace CrystalData.Journal;
 
@@ -10,7 +11,7 @@ public partial class SimpleJournal : IJournal
 {
     public const string FinishedSuffix = ".finished";
     public const string UnfinishedSuffix = ".unfinished";
-    public const int PositionLength = sizeof(ulong);
+    public const int TemporaryBufferLength = 1024 * 1024 * 1; // 1MB
 
     [ThreadStatic]
     private static byte[]? initialBuffer;
@@ -29,8 +30,16 @@ public partial class SimpleJournal : IJournal
     private bool prepared;
     private IRawFiler? rawFiler;
 
-    // Journal
-    private object syncObject = new();
+    // Temporary buffer
+    private object syncTemporary = new();
+    private byte[] temporaryBuffer = new byte[TemporaryBufferLength];
+    private ulong temporaryPosition = 0; // JournalPosition
+    private int temporaryLength = 0;
+
+    private int temporaryRemaining => TemporaryBufferLength - this.temporaryLength;
+
+    // Books
+    private object syncBooks = new();
     private Book.GoshujinClass books = new();
     private ulong memoryUsage;
 
@@ -88,15 +97,29 @@ public partial class SimpleJournal : IJournal
         span[1] = (byte)(memory.Length >> 8);
         span[0] = (byte)(memory.Length >> 16);
 
-        lock (this.syncObject)
+        lock (this.syncTemporary)
         {
-            Book book = this.EnsureBook();
-            var position = book.AppendData(memory.Span);
-            return position;
+            if (this.temporaryRemaining < this.SimpleJournalConfiguration.MaxRecordLength)
+            {
+                var book = Book.AppendNewBook(this, this.temporaryPosition, this.temporaryBuffer, this.temporaryLength);
+                lock (this.syncBooks)
+                {
+                    this.books.Add(book);
+                    this.books.InMemoryChain.AddLast(book);
+                    this.memoryUsage += (ulong)book.MemoryUsage;
+                }
+
+                this.temporaryPosition += (ulong)this.temporaryLength;
+                this.temporaryLength = 0;
+            }
+
+            span.CopyTo(this.temporaryBuffer.AsSpan(this.temporaryLength));
+            this.temporaryLength += span.Length;
+            return this.temporaryPosition + (ulong)this.temporaryLength;
         }
     }
 
-    private Book EnsureBook()
+    /*private Book EnsureBook()
     {// lock (this.syncJournal)
         Book book;
 
@@ -111,7 +134,7 @@ public partial class SimpleJournal : IJournal
         }
 
         return book;
-    }
+    }*/
 
     private async Task ListBooks()
     {
@@ -126,13 +149,17 @@ public partial class SimpleJournal : IJournal
             return;
         }
 
-        lock (this.syncObject)
+        lock (this.syncBooks)
         {
             this.books.Clear();
 
             foreach (var x in list)
             {
-                Book.TryAdd(this, x);
+                var book = Book.TryAdd(this, x);
+                if (book != null)
+                {
+                    book.Goshujin = this.books;
+                }
             }
 
             this.CheckBooksInternal();
@@ -152,7 +179,7 @@ public partial class SimpleJournal : IJournal
                 toDelete = previous;
             }
 
-            nextPosition = book.PositionValue + book.Length;
+            nextPosition = book.PositionValue + (ulong)book.Length;
             previous = book;
         }
 
