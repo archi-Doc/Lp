@@ -21,6 +21,9 @@ public partial class SimpleJournal
             var core = (SimpleJournalTask)parameter!;
             while (await core.Delay(1_000).ConfigureAwait(false))
             {
+                // Flush record buffer
+                core.simpleJournal.FlushRecordBuffer();
+
                 lock (core.simpleJournal.syncBooks)
                 {
                     // Save all books
@@ -35,6 +38,9 @@ public partial class SimpleJournal
                         book.SaveInternal();
                         book = book.PositionLink.Next;
                     }
+
+                    // Merge books
+                    core.simpleJournal.MergeInternal();
                 }
             }
         }

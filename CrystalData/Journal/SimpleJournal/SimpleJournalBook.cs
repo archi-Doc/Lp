@@ -17,10 +17,34 @@ public partial class SimpleJournal
     private partial class Book
     {
         [Link(Type = ChainType.LinkedList, Name = "InMemory", AutoLink = false)]
+        [Link(Type = ChainType.LinkedList, Name = "Unfinished", AutoLink = false)]
         private Book(SimpleJournal simpleJournal)
         {
             this.simpleJournal = simpleJournal;
         }
+
+        #region PropertyAndField
+
+        internal int Length => this.length;
+
+        internal bool IsSaved => this.path != null;
+
+        internal bool IsUnfinished => this.bookType == BookType.Unfinished;
+
+        internal int MemoryUsage => this.buffer == null ? 0 : this.buffer.Length;
+
+        private SimpleJournal simpleJournal;
+
+        [Link(Primary = true, Type = ChainType.Ordered)]
+        private ulong position;
+
+        private int length;
+        private BookType bookType;
+        private string? path;
+        private ulong hash;
+        private byte[]? buffer;
+
+        #endregion
 
         public static Book? TryAdd(SimpleJournal simpleJournal, PathInformation pathInformation)
         {
@@ -55,6 +79,12 @@ public partial class SimpleJournal
             book.hash = bookTitle.Hash;
             book.bookType = bookType;
 
+            book.Goshujin = simpleJournal.books;
+            if (book.IsUnfinished)
+            {
+                book.Goshujin.UnfinishedChain.AddLast(book);
+            }
+
             return book;
         }
 
@@ -67,11 +97,20 @@ public partial class SimpleJournal
 
             book.buffer = ArrayPool<byte>.Shared.Rent(data.Length);
             data.AsSpan().CopyTo(book.buffer);
+            book.hash = FarmHash.Hash64(book.buffer);
+
+            lock (simpleJournal.syncBooks)
+            {
+                book.Goshujin = simpleJournal.books;
+                book.Goshujin.InMemoryChain.AddLast(book);
+                book.Goshujin.UnfinishedChain.AddLast(book);
+                simpleJournal.memoryUsage += (ulong)book.MemoryUsage;
+            }
 
             return book;
         }
 
-        public ulong AppendData(ReadOnlySpan<byte> data)
+        /*public ulong AppendData(ReadOnlySpan<byte> data)
         {
             if (this.buffer == null || (this.buffer.Length - this.bufferPosition) < data.Length)
             {
@@ -83,24 +122,15 @@ public partial class SimpleJournal
             this.bufferPosition += data.Length;
             this.length += data.Length;
             return position;
-        }
-
-        public bool EnsureBuffer(int length)
-        {
-            if (this.buffer == null)
-            {
-            }
-
-            return true;
-        }
+        }*/
 
         public void SaveInternal()
-        {
+        {// lock (core.simpleJournal.syncBooks)
             if (this.IsSaved)
             {
                 return;
             }
-            else if (this.bufferPosition == 0 || this.buffer == null)
+            else if (this.buffer == null)
             {
                 return;
             }
@@ -110,20 +140,31 @@ public partial class SimpleJournal
             }
 
             // Fix buffer
-            var newBuffer = ArrayPool<byte>.Shared.Rent(this.bufferPosition);
+            /*var newBuffer = ArrayPool<byte>.Shared.Rent(this.bufferPosition);
             this.buffer.AsSpan(0, this.bufferPosition).CopyTo(newBuffer);
             this.bufferPosition = 0;
             ArrayPool<byte>.Shared.Return(this.buffer);
 
-            this.buffer = newBuffer;
+            this.buffer = newBuffer;*/
 
             // BookTitle
-            var bookTitle = new BookTitle(this.position, FarmHash.Hash64(this.buffer));
+            var bookTitle = new BookTitle(this.position, this.hash);
             var name = bookTitle.ToBase64Url() + (this.bookType == BookType.Finished ? FinishedSuffix : UnfinishedSuffix);
 
-            // Write
+            // Write (IsSaved -> true)
             this.path = PathHelper.CombineWithSlash(this.simpleJournal.SimpleJournalConfiguration.DirectoryConfiguration.Path, name);
             this.simpleJournal.rawFiler.WriteAndForget(this.path, 0, new(this.buffer));
+        }
+
+        public void FreeInternal()
+        {
+            if (this.buffer is not null)
+            {
+                this.simpleJournal.memoryUsage -= (ulong)this.buffer.Length;
+                ArrayPool<byte>.Shared.Return(this.buffer);
+            }
+
+            this.Goshujin = null;
         }
 
         public void DeleteInternal()
@@ -133,34 +174,7 @@ public partial class SimpleJournal
                 this.simpleJournal.rawFiler.DeleteAndForget(this.path);
             }
 
-            if (this.buffer is not null)
-            {
-                ArrayPool<byte>.Shared.Return(this.buffer);
-            }
-
-            this.Goshujin = null;
+            this.FreeInternal();
         }
-
-        #region PropertyAndField
-
-        internal int Length => this.length;
-
-        internal bool IsSaved => this.path != null;
-
-        internal int MemoryUsage => this.buffer == null ? 0 : this.buffer.Length;
-
-        private SimpleJournal simpleJournal;
-
-        [Link(Primary = true, Type = ChainType.Ordered)]
-        private ulong position;
-
-        private int length;
-        private BookType bookType;
-        private string? path;
-        private ulong hash;
-        private byte[]? buffer;
-        private int bufferPosition;
-
-        #endregion
     }
 }
