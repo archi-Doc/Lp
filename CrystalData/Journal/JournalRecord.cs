@@ -4,10 +4,10 @@ namespace CrystalData.Journal;
 
 public enum JournalRecordType : byte
 {
+    Waypoint,
     SetValue,
     AddObject,
     DeleteObject,
-    Waypoint,
     StartSave,
     EndSave,
 }

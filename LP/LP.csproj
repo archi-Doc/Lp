@@ -26,7 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Strings\english.tinyhand" />
+    <EmbeddedResource Include="Strings\Seedphrases" />
     <EmbeddedResource Include="Strings\strings-en.tinyhand" />
     <EmbeddedResource Include="Strings\strings-ja.tinyhand" />
   </ItemGroup>

@@ -32,9 +32,5 @@ public partial record BigCrystalConfiguration : CrystalConfiguration
 
     public int MaxFragmentCount { get; init; } = DefaultMaxFragmentCount;
 
-    public long MemorySizeLimit { get; init; } = CrystalizerOptions.DefaultMemorySizeLimit; // Crystalizer
-
-    public int MaxParentInMemory { get; init; } = CrystalizerOptions.DefaultMaxParentInMemory; // Crystalizer
-
     public string StorageGroupExtension { get; init; } = ".Storages";
 }
