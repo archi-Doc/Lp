@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using System.Buffers;
 using CrystalData.Filer;
 
@@ -31,7 +32,11 @@ public partial class SimpleJournal
 
         internal int Length => this.length;
 
+        internal string? Path => this.path;
+
         internal bool IsSaved => this.path != null;
+
+        internal bool IsInMemory => this.buffer != null;
 
         internal bool IsUnfinished => this.bookType == BookType.Unfinished;
 
@@ -53,7 +58,7 @@ public partial class SimpleJournal
             BookType bookType = BookType.Unfinished;
 
             // BookTitle.finished or BookTitle.unfinished
-            var fileName = Path.GetFileName(pathInformation.Path);
+            var fileName = System.IO.Path.GetFileName(pathInformation.Path);
             if (fileName.EndsWith(FinishedSuffix))
             {
                 bookType = BookType.Finished;
@@ -163,14 +168,34 @@ public partial class SimpleJournal
                 return;
             }
 
-            // BookTitle
-            var bookTitle = new BookTitle(this.position, this.hash);
-            var name = bookTitle.ToBase64Url() + (this.bookType == BookType.Finished ? FinishedSuffix : UnfinishedSuffix);
-
             // Write (IsSaved -> true)
-            this.path = PathHelper.CombineWithSlash(this.simpleJournal.SimpleJournalConfiguration.DirectoryConfiguration.Path, name);
-            var owner = new ByteArrayPool.Owner(this.buffer);
+            this.path = PathHelper.CombineWithSlash(this.simpleJournal.SimpleJournalConfiguration.DirectoryConfiguration.Path, this.GetFileName());
+            var owner = new ByteArrayPool.Owner(this.buffer); // tempcode
             this.simpleJournal.rawFiler.WriteAndForget(this.path, 0, owner.ToReadOnlyMemoryOwner(0, this.length));
+        }
+
+        public bool TryReadBufferInternal(ulong position, Span<byte> destination, out int readLength)
+        {
+            readLength = 0;
+            if (position < this.position || position >= this.NextPosition)
+            {
+                return false;
+            }
+
+            var length = (int)(this.NextPosition - position);
+            if (destination.Length < length)
+            {
+                return false;
+            }
+
+            if (this.buffer == null)
+            {
+                return false;
+            }
+
+            this.buffer.AsSpan((int)(position - this.position), length).CopyTo(destination);
+            readLength = length;
+            return true;
         }
 
         public async Task<bool> SaveAsync()
@@ -188,12 +213,8 @@ public partial class SimpleJournal
                 return false;
             }
 
-            // BookTitle
-            var bookTitle = new BookTitle(this.position, this.hash);
-            var name = bookTitle.ToBase64Url() + (this.bookType == BookType.Finished ? FinishedSuffix : UnfinishedSuffix);
-
             // Write (IsSaved -> true)
-            this.path = PathHelper.CombineWithSlash(this.simpleJournal.SimpleJournalConfiguration.DirectoryConfiguration.Path, name);
+            this.path = PathHelper.CombineWithSlash(this.simpleJournal.SimpleJournalConfiguration.DirectoryConfiguration.Path, this.GetFileName());
             var owner = new ByteArrayPool.Owner(this.buffer);
             var result = await this.simpleJournal.rawFiler.WriteAsync(this.path, 0, owner.ToReadOnlyMemoryOwner(0, this.length)).ConfigureAwait(false);
 
@@ -210,6 +231,26 @@ public partial class SimpleJournal
             this.Goshujin = null;
         }
 
+        public bool TrySetBuffer(ReadOnlyMemory<byte> data)
+        {
+            if (this.buffer != null)
+            {
+                return false;
+            }
+            else if (this.length != data.Length)
+            {
+                return false;
+            }
+
+            this.buffer = new byte[this.length];
+            data.Span.CopyTo(this.buffer);
+
+            this.simpleJournal.books.InMemoryChain.AddLast(this);
+            this.InMemoryLinkAdded();
+
+            return true;
+        }
+
         protected bool UnfinishedLinkPredicate()
             => this.IsUnfinished;
 
@@ -224,13 +265,13 @@ public partial class SimpleJournal
         }
 
         protected bool InMemoryLinkPredicate()
-            => this.buffer != null;
+            => this.IsInMemory;
 
         protected void InMemoryLinkAdded()
         {
             if (this.buffer is not null)
             {
-                this.simpleJournal.memoryUsage += (ulong)this.length;
+                this.simpleJournal.memoryUsage += this.length;
             }
         }
 
@@ -238,10 +279,16 @@ public partial class SimpleJournal
         {
             if (this.buffer is not null)
             {
-                this.simpleJournal.memoryUsage -= (ulong)this.length;
+                this.simpleJournal.memoryUsage -= this.length;
                 ArrayPool<byte>.Shared.Return(this.buffer);
                 this.buffer = null;
             }
+        }
+
+        private string GetFileName()
+        {
+            var bookTitle = new BookTitle(this.position, this.hash);
+            return bookTitle.ToBase64Url() + (this.bookType == BookType.Finished ? FinishedSuffix : UnfinishedSuffix);
         }
     }
 }

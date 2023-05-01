@@ -45,7 +45,7 @@ public partial class SimpleJournal : IJournal
     // Books
     private object syncBooks = new();
     private Book.GoshujinClass books = new();
-    private ulong memoryUsage;
+    private int memoryUsage;
     private ulong unfinishedSize;
 
     internal ILogger logger { get; private set; }
@@ -130,12 +130,110 @@ public partial class SimpleJournal : IJournal
 
     public async Task<bool> ReadJournalAsync(ulong start, ulong end, Memory<byte> data)
     {
-        lock (this.books)
+        var length = (int)(end - start);
+        if (data.Length < length)
         {
-            var range = this.books.PositionChain.GetRange(start, end - 1);
+            return false;
         }
 
-        return true;
+        List<(ulong Position, string Path)> loadList = new();
+        while (true)
+        {
+            lock (this.books)
+            {
+                var range = this.books.PositionChain.GetRange(start, end - 1);
+                if (range.Upper is null)
+                {
+                    return false;
+                }
+                else if (range.Lower is null)
+                {
+                    range.Lower = range.Upper.PositionLink.Previous ?? range.Upper;
+                }
+
+                if (start < range.Lower.Position)
+                {
+                    return false;
+                }
+
+                // range.Lower.Position <= start, range.Upper.Position < end
+
+                // Check
+                loadList.Clear();
+                for (var book = range.Lower; book != null; book = book.PositionLink.Next)
+                {
+                    if (!book.IsInMemory)
+                    {// Load (start, path)
+                        if (book.Path is not null)
+                        {
+                            loadList.Add((book.Position, book.Path));
+                        }
+                    }
+
+                    if (book == range.Upper)
+                    {
+                        break;
+                    }
+                }
+
+                // Load
+                if (loadList.Count > 0)
+                {
+                    goto Load;
+                }
+
+                // Read
+                var dataPosition = 0;
+                for (var book = range.Lower; book != null; book = book.PositionLink.Next)
+                {
+                    if (!book.TryReadBufferInternal(start, data.Span.Slice(dataPosition), out var readLength))
+                    {// Fatal
+                        return false;
+                    }
+
+                    dataPosition += readLength;
+                    start += (ulong)readLength;
+
+                    if (book == range.Upper)
+                    {// Complete
+                        return true;
+                    }
+                }
+            }
+
+Load:
+            if (this.rawFiler == null)
+            {
+                return false;
+            }
+
+            foreach (var x in loadList)
+            {
+                var result = await this.rawFiler.ReadAsync(x.Path, 0, -1).ConfigureAwait(false);
+                if (result.IsFailure)
+                {
+                    return false;
+                }
+
+                try
+                {
+                    lock (this.syncBooks)
+                    {
+                        var book = this.books.PositionChain.FindFirst(x.Position);
+                        if (book is not null)
+                        {
+                            book.TrySetBuffer(result.Data.Memory); // tempcode
+                        }
+                    }
+                }
+                finally
+                {
+                    result.Return();
+                }
+            }
+
+            return true;
+        }
     }
 
     internal void FlushRecordBuffer()
@@ -164,6 +262,15 @@ public partial class SimpleJournal : IJournal
             {
                 book.SaveInternal();
                 book = book.PositionLink.Next;
+            }
+
+            // Limit memory usage
+            while (this.memoryUsage > this.SimpleJournalConfiguration.MaxMemoryCapacity)
+            {
+                if (this.books.InMemoryChain.First is { } b)
+                {
+                    b.Goshujin = null;
+                }
             }
 
             if (!merge)
