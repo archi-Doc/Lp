@@ -16,8 +16,8 @@ public partial class SimpleJournal
     [ValueLinkObject]
     private partial class Book
     {
-        [Link(Type = ChainType.LinkedList, Name = "InMemory", AutoLink = false)]
-        [Link(Type = ChainType.LinkedList, Name = "Unfinished", AutoLink = false)]
+        [Link(Type = ChainType.LinkedList, Name = "InMemory")]
+        [Link(Type = ChainType.LinkedList, Name = "Unfinished")]
         private Book(SimpleJournal simpleJournal)
         {
             this.simpleJournal = simpleJournal;
@@ -102,9 +102,6 @@ public partial class SimpleJournal
             lock (simpleJournal.syncBooks)
             {
                 book.Goshujin = simpleJournal.books;
-                book.Goshujin.InMemoryChain.AddLast(book);
-                book.Goshujin.UnfinishedChain.AddLast(book);
-                simpleJournal.memoryUsage += (ulong)book.MemoryUsage;
             }
 
             return book;
@@ -158,12 +155,6 @@ public partial class SimpleJournal
 
         public void FreeInternal()
         {
-            if (this.buffer is not null)
-            {
-                this.simpleJournal.memoryUsage -= (ulong)this.buffer.Length;
-                ArrayPool<byte>.Shared.Return(this.buffer);
-            }
-
             this.Goshujin = null;
         }
 
@@ -175,6 +166,40 @@ public partial class SimpleJournal
             }
 
             this.FreeInternal();
+        }
+
+        protected bool UnfinishedLinkPredicate()
+            => this.IsUnfinished;
+
+        protected void UnfinishedLinkAdded()
+        {
+            this.simpleJournal.unfinishedSize += (ulong)this.length;
+        }
+
+        protected void UnfinishedLinkRemoved()
+        {
+            this.simpleJournal.unfinishedSize -= (ulong)this.length;
+        }
+
+        protected bool InMemoryLinkPredicate()
+            => this.buffer != null;
+
+        protected void InMemoryLinkAdded()
+        {
+            if (this.buffer is not null)
+            {
+                this.simpleJournal.memoryUsage += (ulong)this.buffer.Length;
+            }
+        }
+
+        protected void InMemoryLinkRemoved()
+        {
+            if (this.buffer is not null)
+            {
+                this.simpleJournal.memoryUsage -= (ulong)this.buffer.Length;
+                ArrayPool<byte>.Shared.Return(this.buffer);
+                this.buffer = null;
+            }
         }
     }
 }

@@ -24,6 +24,7 @@ public partial class SimpleJournal
                 // Flush record buffer
                 core.simpleJournal.FlushRecordBuffer();
 
+                var merge = false;
                 lock (core.simpleJournal.syncBooks)
                 {
                     // Save all books
@@ -39,8 +40,16 @@ public partial class SimpleJournal
                         book = book.PositionLink.Next;
                     }
 
-                    // Merge books
-                    core.simpleJournal.MergeInternal();
+                    if (core.simpleJournal.books.UnfinishedChain.Count >= MergeThresholdNumber ||
+                    core.simpleJournal.unfinishedSize >= (ulong)core.simpleJournal.SimpleJournalConfiguration.FinishedBookLength)
+                    {
+                        merge = true;
+                    }
+                }
+
+                if (merge)
+                { // Merge books
+                    await core.simpleJournal.Merge();
                 }
             }
         }

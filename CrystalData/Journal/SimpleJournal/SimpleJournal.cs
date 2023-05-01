@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Buffers;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using CrystalData.Filer;
 using Tinyhand.IO;
@@ -33,7 +34,7 @@ public partial class SimpleJournal : IJournal
     private bool prepared;
     private IRawFiler? rawFiler;
 
-    // Temporary buffer
+    // Record buffer
     private object syncRecordBuffer = new(); // syncRecordBuffer -> syncBooks
     private byte[] recordBuffer = new byte[RecordBufferLength];
     private ulong recordBufferPosition = 0; // JournalPosition
@@ -45,6 +46,7 @@ public partial class SimpleJournal : IJournal
     private object syncBooks = new();
     private Book.GoshujinClass books = new();
     private ulong memoryUsage;
+    private ulong unfinishedSize;
 
     #endregion
 
@@ -117,8 +119,10 @@ public partial class SimpleJournal : IJournal
     {
         lock (this.books)
         {
-            this.books.PositionChain.GetRange(start, end - 1);
+            var range = this.books.PositionChain.GetRange(start, end - 1);
         }
+
+        return true;
     }
 
     internal void FlushRecordBuffer()
@@ -129,41 +133,44 @@ public partial class SimpleJournal : IJournal
         }
     }
 
-    internal async Task MergeInternal()
-    {// lock (this.syncBooks)
+    internal async Task Merge()
+    {
         var book = this.books.UnfinishedChain.First;
         var unfinishedCount = 0;
         var unfinishedLength = 0;
         Book? lastBook = null; // The last book to be merged.
         var lastLength = 0;
-        while (book != null)
+        ulong start, end;
+
+        lock (this.syncBooks)
         {
-            unfinishedCount++;
-            unfinishedLength += book.Length;
-            if (unfinishedLength <= this.SimpleJournalConfiguration.FinishedBookLength)
+            while (book != null)
             {
-                lastBook = book;
-                lastLength = unfinishedLength;
+                unfinishedCount++;
+                unfinishedLength += book.Length;
+                if (unfinishedLength <= this.SimpleJournalConfiguration.FinishedBookLength)
+                {
+                    lastBook = book;
+                    lastLength = unfinishedLength;
+                }
             }
+
+            Debug.Assert(unfinishedCount == this.books.UnfinishedChain.Count);
+            if (unfinishedCount < MergeThresholdNumber ||
+                unfinishedLength < this.SimpleJournalConfiguration.FinishedBookLength)
+            {
+                return;
+            }
+
+            start = this.books.UnfinishedChain.First!.PositionValue;
+            end = start + (ulong)lastLength;
         }
-
-        if (unfinishedCount < MergeThresholdNumber ||
-            unfinishedLength < this.SimpleJournalConfiguration.FinishedBookLength)
-        {
-            return;
-        }
-
-        var start = this.books.UnfinishedChain.First!.PositionValue;
-        var end = start + (ulong)lastLength;
-
-        // Exit
 
         var buffer = ArrayPool<byte>.Shared.Rent(lastLength);
         if (!await this.ReadJournalAsync(start, end, buffer).ConfigureAwait(false))
         {
             return;
         }
-
     }
 
     private void FlushRecordBufferInternal()
