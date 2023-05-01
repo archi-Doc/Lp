@@ -25,17 +25,19 @@ public partial class SimpleJournal
 
         #region PropertyAndField
 
+        internal ulong Position => this.position;
+
+        internal ulong NextPosition => this.position + (ulong)this.length;
+
         internal int Length => this.length;
 
         internal bool IsSaved => this.path != null;
 
         internal bool IsUnfinished => this.bookType == BookType.Unfinished;
 
-        internal int MemoryUsage => this.buffer == null ? 0 : this.buffer.Length;
-
         private SimpleJournal simpleJournal;
 
-        [Link(Primary = true, Type = ChainType.Ordered)]
+        [Link(Primary = true, Type = ChainType.Ordered, NoValue = true)]
         private ulong position;
 
         private int length;
@@ -80,10 +82,6 @@ public partial class SimpleJournal
             book.bookType = bookType;
 
             book.Goshujin = simpleJournal.books;
-            if (book.IsUnfinished)
-            {
-                book.Goshujin.UnfinishedChain.AddLast(book);
-            }
 
             return book;
         }
@@ -95,9 +93,9 @@ public partial class SimpleJournal
             book.length = dataLength;
             book.bookType = BookType.Unfinished;
 
-            book.buffer = ArrayPool<byte>.Shared.Rent(data.Length);
-            data.AsSpan().CopyTo(book.buffer);
-            book.hash = FarmHash.Hash64(book.buffer);
+            book.buffer = ArrayPool<byte>.Shared.Rent(dataLength);
+            data.AsSpan(0, dataLength).CopyTo(book.buffer);
+            book.hash = FarmHash.Hash64(book.buffer.AsSpan(0, dataLength));
 
             lock (simpleJournal.syncBooks)
             {
@@ -150,7 +148,7 @@ public partial class SimpleJournal
 
             // Write (IsSaved -> true)
             this.path = PathHelper.CombineWithSlash(this.simpleJournal.SimpleJournalConfiguration.DirectoryConfiguration.Path, name);
-            this.simpleJournal.rawFiler.WriteAndForget(this.path, 0, new(this.buffer));
+            this.simpleJournal.rawFiler.WriteAndForget(this.path, 0, new(this.length));
         }
 
         public void FreeInternal()
@@ -188,7 +186,7 @@ public partial class SimpleJournal
         {
             if (this.buffer is not null)
             {
-                this.simpleJournal.memoryUsage += (ulong)this.buffer.Length;
+                this.simpleJournal.memoryUsage += (ulong)this.length;
             }
         }
 
@@ -196,7 +194,7 @@ public partial class SimpleJournal
         {
             if (this.buffer is not null)
             {
-                this.simpleJournal.memoryUsage -= (ulong)this.buffer.Length;
+                this.simpleJournal.memoryUsage -= (ulong)this.length;
                 ArrayPool<byte>.Shared.Return(this.buffer);
                 this.buffer = null;
             }

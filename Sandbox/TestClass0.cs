@@ -42,6 +42,8 @@ internal class TestClass0
                 op.Datum.Set(new LocalFileConfiguration("test"));
             }
         }
+
+        await Task.Delay(3000);
     }
 
     private Crystalizer crystalizer;

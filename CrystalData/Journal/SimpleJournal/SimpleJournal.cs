@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using CrystalData.Filer;
 using Tinyhand.IO;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace CrystalData.Journal;
 
@@ -15,7 +14,6 @@ public partial class SimpleJournal : IJournal
     public const string UnfinishedSuffix = ".unfinished";
     public const int RecordBufferLength = 1024 * 1024 * 1; // 1MB
     private const int MergeThresholdNumber = 100;
-    private const int MergeThresholdLength = 100;
 
     [ThreadStatic]
     private static byte[]? initialBuffer;
@@ -33,11 +31,12 @@ public partial class SimpleJournal : IJournal
     private Crystalizer crystalizer;
     private bool prepared;
     private IRawFiler? rawFiler;
+    private SimpleJournalTask? task;
 
     // Record buffer
     private object syncRecordBuffer = new(); // syncRecordBuffer -> syncBooks
     private byte[] recordBuffer = new byte[RecordBufferLength];
-    private ulong recordBufferPosition = 0; // JournalPosition
+    private ulong recordBufferPosition = 1; // JournalPosition
     private int recordBufferLength = 0;
 
     private int recordBufferRemaining => RecordBufferLength - this.recordBufferLength;
@@ -68,6 +67,8 @@ public partial class SimpleJournal : IJournal
 
         // List journal books
         await this.ListBooks();
+
+        this.task ??= new(this);
 
         this.prepared = true;
         return CrystalResult.Success;
@@ -115,6 +116,15 @@ public partial class SimpleJournal : IJournal
         }
     }
 
+    async Task IJournal.TerminateAsync()
+    {
+        if (this.task is { } task)
+        {
+            task.Terminate();
+            await task.WaitForTerminationAsync(-1);
+        }
+    }
+
     public async Task<bool> ReadJournalAsync(ulong start, ulong end, Memory<byte> data)
     {
         lock (this.books)
@@ -130,6 +140,39 @@ public partial class SimpleJournal : IJournal
         lock (this.syncRecordBuffer)
         {
             this.FlushRecordBufferInternal();
+        }
+    }
+
+    internal async Task SaveBooksAsync(bool merge)
+    {
+        lock (this.syncBooks)
+        {
+            // Save all books
+            Book? book = this.books.PositionChain.First;
+            Book? next = null;
+            while (book != null && !book.IsSaved)
+            {
+                next = book;
+                book = book.PositionLink.Previous;
+            }
+
+            book = next;
+            while (book != null)
+            {
+                book.SaveInternal();
+                book = book.PositionLink.Next;
+            }
+
+            if (this.books.UnfinishedChain.Count >= MergeThresholdNumber ||
+            this.unfinishedSize >= (ulong)this.SimpleJournalConfiguration.FinishedBookLength)
+            {
+                merge = true;
+            }
+        }
+
+        if (merge)
+        { // Merge books
+            await this.Merge();
         }
     }
 
@@ -162,7 +205,7 @@ public partial class SimpleJournal : IJournal
                 return;
             }
 
-            start = this.books.UnfinishedChain.First!.PositionValue;
+            start = this.books.UnfinishedChain.First!.Position;
             end = start + (ulong)lastLength;
         }
 
@@ -175,6 +218,11 @@ public partial class SimpleJournal : IJournal
 
     private void FlushRecordBufferInternal()
     {// lock (this.syncRecordBuffer)
+        if (this.recordBufferLength == 0)
+        {// Empty
+            return;
+        }
+
         var book = Book.AppendNewBook(this, this.recordBufferPosition, this.recordBuffer, this.recordBufferLength);
 
         this.recordBufferPosition += (ulong)this.recordBufferLength;
@@ -209,28 +257,49 @@ public partial class SimpleJournal : IJournal
 
     private void CheckBooksInternal()
     {// lock (this.syncObject)
-        ulong nextPosition = 0;
+        ulong previousPosition = 0;
         Book? previous = null;
         Book? toDelete = null;
 
         foreach (var book in this.books)
         {
-            if (previous != null && book.PositionValue != nextPosition)
+            if (previous != null && book.Position != previousPosition)
             {
                 toDelete = previous;
             }
 
-            nextPosition = book.PositionValue + (ulong)book.Length;
+            previousPosition = book.NextPosition;
             previous = book;
         }
 
         if (toDelete == null)
         {// Ok
+            if (this.books.PositionChain.Last is not null)
+            {
+                this.recordBufferPosition = this.books.PositionChain.Last.NextPosition;
+            }
+            else
+            {// Initial position
+                this.recordBufferPosition = 1;
+            }
+
             return;
+        }
+        else
+        {
+            var nextBook = toDelete.PositionLink.Next;
+            if (nextBook is not null)
+            {
+                this.recordBufferPosition = nextBook.NextPosition;
+            }
+            else
+            {
+                this.recordBufferPosition = toDelete.NextPosition;
+            }
         }
 
         while (true)
-        {// Delete books that have lost consistency.
+        {// Delete books that have lost journal consistency.
             var first = this.books.PositionChain.First;
             if (first == null)
             {

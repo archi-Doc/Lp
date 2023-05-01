@@ -12,4 +12,6 @@ public interface IJournal
     void GetWriter(JournalRecordType recordType, uint plane, out TinyhandWriter writer);
 
     ulong Add(in TinyhandWriter writer);
+
+    Task TerminateAsync();
 }
