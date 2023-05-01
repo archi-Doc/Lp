@@ -27,6 +27,8 @@ public class LocalFiler : FilerBase, IRawFiler
         var worker = (LocalFiler)w;
         var tryCount = 0;
 
+        await Task.Delay(100);
+
         var filePath = Crystalizer.GetRootedFile(worker.Crystalizer, work.Path);
         work.Result = CrystalResult.Started;
         if (work.Type == FilerWork.WorkType.Write)

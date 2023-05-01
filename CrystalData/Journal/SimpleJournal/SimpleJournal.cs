@@ -148,7 +148,7 @@ public partial class SimpleJournal : IJournal
         lock (this.syncBooks)
         {
             // Save all books
-            Book? book = this.books.PositionChain.First;
+            Book? book = this.books.PositionChain.Last;
             Book? next = null;
             while (book != null && !book.IsSaved)
             {
@@ -161,6 +161,11 @@ public partial class SimpleJournal : IJournal
             {
                 book.SaveInternal();
                 book = book.PositionLink.Next;
+            }
+
+            if (!merge)
+            {
+                return;
             }
 
             if (this.books.UnfinishedChain.Count >= MergeThresholdNumber ||
@@ -178,7 +183,7 @@ public partial class SimpleJournal : IJournal
 
     internal async Task Merge()
     {
-        var book = this.books.UnfinishedChain.First;
+        var book = this.books.UnfinishedChain.Last;
         var unfinishedCount = 0;
         var unfinishedLength = 0;
         Book? lastBook = null; // The last book to be merged.
@@ -196,6 +201,8 @@ public partial class SimpleJournal : IJournal
                     lastBook = book;
                     lastLength = unfinishedLength;
                 }
+
+                book = book.UnfinishedLink.Previous;
             }
 
             Debug.Assert(unfinishedCount == this.books.UnfinishedChain.Count);

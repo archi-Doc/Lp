@@ -43,7 +43,7 @@ internal class TestClass0
             }
         }
 
-        await Task.Delay(3000);
+        await Task.Delay(1000);
     }
 
     private Crystalizer crystalizer;

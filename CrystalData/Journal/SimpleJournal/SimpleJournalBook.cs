@@ -148,7 +148,8 @@ public partial class SimpleJournal
 
             // Write (IsSaved -> true)
             this.path = PathHelper.CombineWithSlash(this.simpleJournal.SimpleJournalConfiguration.DirectoryConfiguration.Path, name);
-            this.simpleJournal.rawFiler.WriteAndForget(this.path, 0, new(this.length));
+            var owner = new ByteArrayPool.Owner(this.buffer);
+            this.simpleJournal.rawFiler.WriteAndForget(this.path, 0, owner.ToReadOnlyMemoryOwner(0, this.length));
         }
 
         public void FreeInternal()
