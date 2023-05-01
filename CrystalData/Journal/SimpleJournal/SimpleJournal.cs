@@ -117,7 +117,7 @@ public partial class SimpleJournal : IJournal
     {
         lock (this.books)
         {
-            this.books
+            this.books.PositionChain.GetRange(start, end - 1);
         }
     }
 
