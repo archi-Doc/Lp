@@ -18,10 +18,11 @@ public partial class SimpleJournal : IJournal
     [ThreadStatic]
     private static byte[]? initialBuffer;
 
-    public SimpleJournal(Crystalizer crystalizer, SimpleJournalConfiguration configuration)
+    public SimpleJournal(Crystalizer crystalizer, SimpleJournalConfiguration configuration, ILogger<SimpleJournal> logger)
     {
         this.crystalizer = crystalizer;
         this.SimpleJournalConfiguration = configuration;
+        this.logger = logger;
     }
 
     #region PropertyAndField
@@ -46,6 +47,8 @@ public partial class SimpleJournal : IJournal
     private Book.GoshujinClass books = new();
     private ulong memoryUsage;
     private ulong unfinishedSize;
+
+    internal ILogger logger { get; private set; }
 
     #endregion
 
@@ -121,7 +124,7 @@ public partial class SimpleJournal : IJournal
         if (this.task is { } task)
         {
             task.Terminate();
-            await task.WaitForTerminationAsync(-1);
+            await task.WaitForTerminationAsync(-1).ConfigureAwait(false);
         }
     }
 
@@ -177,7 +180,7 @@ public partial class SimpleJournal : IJournal
 
         if (merge)
         { // Merge books
-            await this.Merge();
+            await this.Merge().ConfigureAwait(false);
         }
     }
 
@@ -221,6 +224,8 @@ public partial class SimpleJournal : IJournal
         {
             return;
         }
+
+        await Book.MergeBooks(this, start, end, buffer, lastLength).ConfigureAwait(false);
     }
 
     private void FlushRecordBufferInternal()

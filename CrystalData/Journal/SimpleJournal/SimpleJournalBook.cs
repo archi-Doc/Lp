@@ -105,19 +105,48 @@ public partial class SimpleJournal
             return book;
         }
 
-        /*public ulong AppendData(ReadOnlySpan<byte> data)
+        public static async Task MergeBooks(SimpleJournal simpleJournal, ulong start, ulong end, byte[] data, int dataLength)
         {
-            if (this.buffer == null || (this.buffer.Length - this.bufferPosition) < data.Length)
-            {
-                throw new InvalidOperationException();
-            }
+            var book = new Book(simpleJournal);
+            book.position = start;
+            book.length = (int)(end - start);
+            book.bookType = BookType.Finished;
 
-            var position = this.position + (ulong)this.bufferPosition;
-            data.CopyTo(this.buffer.AsSpan(this.bufferPosition));
-            this.bufferPosition += data.Length;
-            this.length += data.Length;
-            return position;
-        }*/
+            book.buffer = data;
+            book.hash = FarmHash.Hash64(data.AsSpan(0, dataLength));
+
+            // Save the book first
+            await book.SaveAsync().ConfigureAwait(false);
+
+            lock (simpleJournal.syncBooks)
+            {
+                var range = simpleJournal.books.PositionChain.GetRange(start, end - 1);
+                if (range.Lower == null || range.Upper == null)
+                {
+                    return;
+                }
+                else if (range.Lower.position != start || range.Upper.NextPosition != end)
+                {
+                    return;
+                }
+
+                // Delete books
+                var b = range.Lower;
+                while (b != null)
+                {
+                    var b2 = b.PositionLink.Next;
+                    b.DeleteInternal();
+                    if (b == range.Upper)
+                    {
+                        break;
+                    }
+
+                    b = b2;
+                }
+
+                book.Goshujin = simpleJournal.books;
+            }
+        }
 
         public void SaveInternal()
         {// lock (core.simpleJournal.syncBooks)
@@ -134,14 +163,6 @@ public partial class SimpleJournal
                 return;
             }
 
-            // Fix buffer
-            /*var newBuffer = ArrayPool<byte>.Shared.Rent(this.bufferPosition);
-            this.buffer.AsSpan(0, this.bufferPosition).CopyTo(newBuffer);
-            this.bufferPosition = 0;
-            ArrayPool<byte>.Shared.Return(this.buffer);
-
-            this.buffer = newBuffer;*/
-
             // BookTitle
             var bookTitle = new BookTitle(this.position, this.hash);
             var name = bookTitle.ToBase64Url() + (this.bookType == BookType.Finished ? FinishedSuffix : UnfinishedSuffix);
@@ -152,9 +173,31 @@ public partial class SimpleJournal
             this.simpleJournal.rawFiler.WriteAndForget(this.path, 0, owner.ToReadOnlyMemoryOwner(0, this.length));
         }
 
-        public void FreeInternal()
+        public async Task<bool> SaveAsync()
         {
-            this.Goshujin = null;
+            if (this.IsSaved)
+            {
+                return false;
+            }
+            else if (this.buffer == null)
+            {
+                return false;
+            }
+            else if (this.simpleJournal.rawFiler == null)
+            {
+                return false;
+            }
+
+            // BookTitle
+            var bookTitle = new BookTitle(this.position, this.hash);
+            var name = bookTitle.ToBase64Url() + (this.bookType == BookType.Finished ? FinishedSuffix : UnfinishedSuffix);
+
+            // Write (IsSaved -> true)
+            this.path = PathHelper.CombineWithSlash(this.simpleJournal.SimpleJournalConfiguration.DirectoryConfiguration.Path, name);
+            var owner = new ByteArrayPool.Owner(this.buffer);
+            var result = await this.simpleJournal.rawFiler.WriteAsync(this.path, 0, owner.ToReadOnlyMemoryOwner(0, this.length)).ConfigureAwait(false);
+
+            return result.IsSuccess();
         }
 
         public void DeleteInternal()
@@ -164,7 +207,7 @@ public partial class SimpleJournal
                 this.simpleJournal.rawFiler.DeleteAndForget(this.path);
             }
 
-            this.FreeInternal();
+            this.Goshujin = null;
         }
 
         protected bool UnfinishedLinkPredicate()

@@ -581,7 +581,7 @@ public class Crystalizer
             }
             else if (configuration is SimpleJournalConfiguration simpleJournalConfiguration)
             {
-                var simpleJournal = new SimpleJournal(this, simpleJournalConfiguration);
+                var simpleJournal = new SimpleJournal(this, simpleJournalConfiguration, this.UnitLogger.GetLogger<SimpleJournal>());
                 this.Journal = simpleJournal;
             }
             else

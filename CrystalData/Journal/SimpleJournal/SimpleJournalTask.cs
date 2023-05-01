@@ -2,6 +2,7 @@
 
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using CrystalData.Filer;
 
 namespace CrystalData.Journal;
@@ -27,12 +28,13 @@ public partial class SimpleJournal
                 await core.simpleJournal.SaveBooksAsync(true);
             }
 
-            // Terminate
-
             // Flush record buffer
             core.simpleJournal.FlushRecordBuffer();
 
             await core.simpleJournal.SaveBooksAsync(false);
+
+            // Terminate
+            core.simpleJournal.logger.TryGet()?.Log($"SimpleJournal terminated - {core.simpleJournal.memoryUsage}");
         }
 
         private SimpleJournal simpleJournal;
