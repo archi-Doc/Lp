@@ -36,7 +36,7 @@ public partial class SimpleJournal
 
         internal bool IsSaved => this.path != null;
 
-        internal bool IsInMemory => this.buffer != null;
+        internal bool IsInMemory => this.memoryOwner.Memory.Length > 0;
 
         internal bool IsUnfinished => this.bookType == BookType.Unfinished;
 
@@ -49,7 +49,7 @@ public partial class SimpleJournal
         private BookType bookType;
         private string? path;
         private ulong hash;
-        private byte[]? buffer;
+        private ByteArrayPool.MemoryOwner memoryOwner;
 
         #endregion
 
@@ -98,9 +98,9 @@ public partial class SimpleJournal
             book.length = dataLength;
             book.bookType = BookType.Unfinished;
 
-            book.buffer = ArrayPool<byte>.Shared.Rent(dataLength);
-            data.AsSpan(0, dataLength).CopyTo(book.buffer);
-            book.hash = FarmHash.Hash64(book.buffer.AsSpan(0, dataLength));
+            book.memoryOwner = ByteArrayPool.Default.Rent(dataLength).ToMemoryOwner(0, dataLength);
+            data.AsSpan(0, dataLength).CopyTo(book.memoryOwner.Memory.Span);
+            book.hash = FarmHash.Hash64(book.memoryOwner.Memory.Span);
 
             lock (simpleJournal.syncBooks)
             {
@@ -110,15 +110,15 @@ public partial class SimpleJournal
             return book;
         }
 
-        public static async Task MergeBooks(SimpleJournal simpleJournal, ulong start, ulong end, byte[] data, int dataLength)
+        public static async Task MergeBooks(SimpleJournal simpleJournal, ulong start, ulong end, ByteArrayPool.MemoryOwner toBeMoved, int dataLength)
         {
             var book = new Book(simpleJournal);
             book.position = start;
             book.length = (int)(end - start);
             book.bookType = BookType.Finished;
 
-            book.buffer = data;
-            book.hash = FarmHash.Hash64(data.AsSpan(0, dataLength));
+            book.memoryOwner = toBeMoved;
+            book.hash = FarmHash.Hash64(toBeMoved.Memory.Span);
 
             // Save the book first
             await book.SaveAsync().ConfigureAwait(false);
@@ -159,7 +159,7 @@ public partial class SimpleJournal
             {
                 return;
             }
-            else if (this.buffer == null)
+            else if (!this.IsInMemory)
             {
                 return;
             }
@@ -170,8 +170,7 @@ public partial class SimpleJournal
 
             // Write (IsSaved -> true)
             this.path = PathHelper.CombineWithSlash(this.simpleJournal.SimpleJournalConfiguration.DirectoryConfiguration.Path, this.GetFileName());
-            var owner = new ByteArrayPool.Owner(this.buffer); // tempcode
-            this.simpleJournal.rawFiler.WriteAndForget(this.path, 0, owner.ToReadOnlyMemoryOwner(0, this.length));
+            this.simpleJournal.rawFiler.WriteAndForget(this.path, 0, this.memoryOwner.IncrementAndShareReadOnly());
         }
 
         public bool TryReadBufferInternal(ulong position, Span<byte> destination, out int readLength)
@@ -188,12 +187,12 @@ public partial class SimpleJournal
                 return false;
             }
 
-            if (this.buffer == null)
+            if (!this.IsInMemory)
             {
                 return false;
             }
 
-            this.buffer.AsSpan((int)(position - this.position), length).CopyTo(destination);
+            this.memoryOwner.Memory.Span.Slice((int)(position - this.position), length).CopyTo(destination);
             readLength = length;
             return true;
         }
@@ -204,7 +203,7 @@ public partial class SimpleJournal
             {
                 return false;
             }
-            else if (this.buffer == null)
+            else if (!this.IsInMemory)
             {
                 return false;
             }
@@ -215,8 +214,8 @@ public partial class SimpleJournal
 
             // Write (IsSaved -> true)
             this.path = PathHelper.CombineWithSlash(this.simpleJournal.SimpleJournalConfiguration.DirectoryConfiguration.Path, this.GetFileName());
-            var owner = new ByteArrayPool.Owner(this.buffer);
-            var result = await this.simpleJournal.rawFiler.WriteAsync(this.path, 0, owner.ToReadOnlyMemoryOwner(0, this.length)).ConfigureAwait(false);
+            var owner = this.memoryOwner.IncrementAndShareReadOnly();
+            var result = await this.simpleJournal.rawFiler.WriteAsync(this.path, 0, owner).ConfigureAwait(false);
 
             return result.IsSuccess();
         }
@@ -231,20 +230,18 @@ public partial class SimpleJournal
             this.Goshujin = null;
         }
 
-        public bool TrySetBuffer(ReadOnlyMemory<byte> data)
+        public bool TrySetBuffer(ByteArrayPool.ReadOnlyMemoryOwner data)
         {
-            if (this.buffer != null)
+            if (this.IsInMemory)
             {
                 return false;
             }
-            else if (this.length != data.Length)
+            else if (this.length != data.Memory.Length)
             {
                 return false;
             }
 
-            this.buffer = new byte[this.length];
-            data.Span.CopyTo(this.buffer);
-
+            this.memoryOwner = data.IncrementAndShare();
             this.simpleJournal.books.InMemoryChain.AddLast(this);
             this.InMemoryLinkAdded();
 
@@ -269,20 +266,13 @@ public partial class SimpleJournal
 
         protected void InMemoryLinkAdded()
         {
-            if (this.buffer is not null)
-            {
-                this.simpleJournal.memoryUsage += this.length;
-            }
+            this.simpleJournal.memoryUsage += this.memoryOwner.Memory.Length;
         }
 
         protected void InMemoryLinkRemoved()
         {
-            if (this.buffer is not null)
-            {
-                this.simpleJournal.memoryUsage -= this.length;
-                ArrayPool<byte>.Shared.Return(this.buffer);
-                this.buffer = null;
-            }
+            this.simpleJournal.memoryUsage -= this.memoryOwner.Memory.Length;
+            this.memoryOwner = this.memoryOwner.Return();
         }
 
         private string GetFileName()

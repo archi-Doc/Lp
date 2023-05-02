@@ -222,7 +222,7 @@ Load:
                         var book = this.books.PositionChain.FindFirst(x.Position);
                         if (book is not null)
                         {
-                            book.TrySetBuffer(result.Data.Memory); // tempcode
+                            book.TrySetBuffer(result.Data); // tempcode
                         }
                     }
                 }
@@ -326,6 +326,7 @@ Load:
             end = start + (ulong)lastLength;
         }
 
+        var memoryOwner = ByteArrayPool.Default.Rent(lastLength);
         var buffer = ArrayPool<byte>.Shared.Rent(lastLength);
         if (!await this.ReadJournalAsync(start, end, buffer).ConfigureAwait(false))
         {
