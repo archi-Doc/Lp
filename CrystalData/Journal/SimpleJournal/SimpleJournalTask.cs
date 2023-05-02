@@ -32,9 +32,6 @@ public partial class SimpleJournal
             core.simpleJournal.FlushRecordBuffer();
 
             await core.simpleJournal.SaveBooksAsync(false);
-
-            // Terminate
-            core.simpleJournal.logger.TryGet()?.Log($"SimpleJournal terminated - {core.simpleJournal.memoryUsage}");
         }
 
         private SimpleJournal simpleJournal;

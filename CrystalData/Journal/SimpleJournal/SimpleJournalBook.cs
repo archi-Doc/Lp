@@ -49,7 +49,7 @@ public partial class SimpleJournal
         private BookType bookType;
         private string? path;
         private ulong hash;
-        private ByteArrayPool.MemoryOwner memoryOwner;
+        private ByteArrayPool.ReadOnlyMemoryOwner memoryOwner;
 
         #endregion
 
@@ -98,8 +98,9 @@ public partial class SimpleJournal
             book.length = dataLength;
             book.bookType = BookType.Unfinished;
 
-            book.memoryOwner = ByteArrayPool.Default.Rent(dataLength).ToMemoryOwner(0, dataLength);
-            data.AsSpan(0, dataLength).CopyTo(book.memoryOwner.Memory.Span);
+            var owner = ByteArrayPool.Default.Rent(dataLength);
+            data.AsSpan(0, dataLength).CopyTo(owner.ByteArray.AsSpan());
+            book.memoryOwner = owner.ToReadOnlyMemoryOwner(0, dataLength);
             book.hash = FarmHash.Hash64(book.memoryOwner.Memory.Span);
 
             lock (simpleJournal.syncBooks)
@@ -110,7 +111,7 @@ public partial class SimpleJournal
             return book;
         }
 
-        public static async Task MergeBooks(SimpleJournal simpleJournal, ulong start, ulong end, ByteArrayPool.MemoryOwner toBeMoved, int dataLength)
+        public static async Task MergeBooks(SimpleJournal simpleJournal, ulong start, ulong end, ByteArrayPool.ReadOnlyMemoryOwner toBeMoved)
         {
             var book = new Book(simpleJournal);
             book.position = start;
@@ -170,7 +171,7 @@ public partial class SimpleJournal
 
             // Write (IsSaved -> true)
             this.path = PathHelper.CombineWithSlash(this.simpleJournal.SimpleJournalConfiguration.DirectoryConfiguration.Path, this.GetFileName());
-            this.simpleJournal.rawFiler.WriteAndForget(this.path, 0, this.memoryOwner.IncrementAndShareReadOnly());
+            this.simpleJournal.rawFiler.WriteAndForget(this.path, 0, this.memoryOwner);
         }
 
         public bool TryReadBufferInternal(ulong position, Span<byte> destination, out int readLength)
@@ -214,7 +215,7 @@ public partial class SimpleJournal
 
             // Write (IsSaved -> true)
             this.path = PathHelper.CombineWithSlash(this.simpleJournal.SimpleJournalConfiguration.DirectoryConfiguration.Path, this.GetFileName());
-            var owner = this.memoryOwner.IncrementAndShareReadOnly();
+            var owner = this.memoryOwner.IncrementAndShare();
             var result = await this.simpleJournal.rawFiler.WriteAsync(this.path, 0, owner).ConfigureAwait(false);
 
             return result.IsSuccess();

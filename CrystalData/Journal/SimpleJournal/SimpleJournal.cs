@@ -126,6 +126,18 @@ public partial class SimpleJournal : IJournal
             task.Terminate();
             await task.WaitForTerminationAsync(-1).ConfigureAwait(false);
         }
+
+        lock (this.syncBooks)
+        {
+            var array = this.books.ToArray();
+            foreach (var x in array)
+            {
+                x.Goshujin = null;
+            }
+        }
+
+        // Terminate
+        this.logger.TryGet()?.Log($"SimpleJournal terminated - {this.memoryUsage}");
     }
 
     public async Task<bool> ReadJournalAsync(ulong start, ulong end, Memory<byte> data)
@@ -326,14 +338,14 @@ Load:
             end = start + (ulong)lastLength;
         }
 
-        var memoryOwner = ByteArrayPool.Default.Rent(lastLength);
-        var buffer = ArrayPool<byte>.Shared.Rent(lastLength);
-        if (!await this.ReadJournalAsync(start, end, buffer).ConfigureAwait(false))
+        var owner = ByteArrayPool.Default.Rent(lastLength);
+        if (!await this.ReadJournalAsync(start, end, owner.ByteArray.AsMemory(0, lastLength)).ConfigureAwait(false))
         {
+            owner.Return();
             return;
         }
 
-        await Book.MergeBooks(this, start, end, buffer, lastLength).ConfigureAwait(false);
+        await Book.MergeBooks(this, start, end, owner.ToReadOnlyMemoryOwner(0, lastLength)).ConfigureAwait(false);
     }
 
     private void FlushRecordBufferInternal()
