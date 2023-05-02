@@ -417,6 +417,14 @@ public class Crystalizer
         return crystal;
     }
 
+    public async Task MergeJournalForDebug()
+    {
+        if (this.Journal is SimpleJournal simpleJournal)
+        {
+            await simpleJournal.Merge(true);
+        }
+    }
+
     #endregion
 
     #region Waypoint/Plane

@@ -43,7 +43,21 @@ internal class TestClass0
             }
         }
 
+        if (this.crystalizer.Journal is { } journal)
+        {
+            TestJournal(journal);
+            await journal.SaveJournalAsync();
+            await crystalizer.MergeJournalForDebug();
+        }
+
         await Task.Delay(1000);
+
+        void TestJournal(IJournal journal)
+        {
+            journal.GetWriter(CrystalData.Journal.JournalRecordType.SetValue, 1, out var writer);
+            writer.Write("111aaaaaaaaaaaaaaaaaaaaaa");
+            journal.Add(writer);
+        }
     }
 
     private Crystalizer crystalizer;

@@ -55,7 +55,7 @@ public partial class SimpleJournal
 
         public static Book? TryAdd(SimpleJournal simpleJournal, PathInformation pathInformation)
         {
-            BookType bookType = BookType.Unfinished;
+            BookType bookType;
 
             // BookTitle.finished or BookTitle.unfinished
             var fileName = System.IO.Path.GetFileName(pathInformation.Path);
@@ -83,10 +83,13 @@ public partial class SimpleJournal
             book.position = bookTitle.JournalPosition;
             book.length = (int)pathInformation.Length;
             book.path = pathInformation.Path;
+            book.bookType = BookType.Finished;
             book.hash = bookTitle.Hash;
-            book.bookType = bookType;
 
             book.Goshujin = simpleJournal.books;
+
+            // Delay setting the book type for sorting later.
+            book.bookType = bookType;
 
             return book;
         }
@@ -101,7 +104,7 @@ public partial class SimpleJournal
             var owner = ByteArrayPool.Default.Rent(dataLength);
             data.AsSpan(0, dataLength).CopyTo(owner.ByteArray.AsSpan());
             book.memoryOwner = owner.ToReadOnlyMemoryOwner(0, dataLength);
-            book.hash = FarmHash.Hash64(book.memoryOwner.Memory.Span);
+            book.hash = FarmHash.Hash64(book.memoryOwner.Span);
 
             lock (simpleJournal.syncBooks)
             {
@@ -116,13 +119,23 @@ public partial class SimpleJournal
             var book = new Book(simpleJournal);
             book.position = start;
             book.length = (int)(end - start);
-            book.bookType = BookType.Finished;
+            if (book.length < (simpleJournal.SimpleJournalConfiguration.FinishedBookLength / 2))
+            {// Length < (FinishedBookLength/2) -> Unfinished
+                book.bookType = BookType.Unfinished;
+            }
+            else
+            {// Length >= (FinishedBookLength/2) -> Finished
+                book.bookType = BookType.Finished;
+            }
 
             book.memoryOwner = toBeMoved;
             book.hash = FarmHash.Hash64(toBeMoved.Memory.Span);
 
-            // Save the book first
-            await book.SaveAsync().ConfigureAwait(false);
+            // Save the merged book first
+            if (await book.SaveAsync().ConfigureAwait(false) == false)
+            {
+                return;
+            }
 
             lock (simpleJournal.syncBooks)
             {
@@ -150,6 +163,7 @@ public partial class SimpleJournal
                     b = b2;
                 }
 
+                // Add the merged book
                 book.Goshujin = simpleJournal.books;
             }
         }
@@ -215,8 +229,7 @@ public partial class SimpleJournal
 
             // Write (IsSaved -> true)
             this.path = PathHelper.CombineWithSlash(this.simpleJournal.SimpleJournalConfiguration.DirectoryConfiguration.Path, this.GetFileName());
-            var owner = this.memoryOwner.IncrementAndShare();
-            var result = await this.simpleJournal.rawFiler.WriteAsync(this.path, 0, owner).ConfigureAwait(false);
+            var result = await this.simpleJournal.rawFiler.WriteAsync(this.path, 0, this.memoryOwner).ConfigureAwait(false);
 
             return result.IsSuccess();
         }

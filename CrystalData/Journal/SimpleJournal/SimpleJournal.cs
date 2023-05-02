@@ -119,6 +119,11 @@ public partial class SimpleJournal : IJournal
         }
     }
 
+    async Task IJournal.SaveJournalAsync()
+    {
+        await this.SaveJournalAsync(true).ConfigureAwait(false);
+    }
+
     async Task IJournal.TerminateAsync()
     {
         if (this.task is { } task)
@@ -148,118 +153,112 @@ public partial class SimpleJournal : IJournal
             return false;
         }
 
+        var retry = 0;
         List<(ulong Position, string Path)> loadList = new();
-        while (true)
-        {
-            lock (this.books)
-            {
-                var range = this.books.PositionChain.GetRange(start, end - 1);
-                if (range.Upper is null)
-                {
-                    return false;
-                }
-                else if (range.Lower is null)
-                {
-                    range.Lower = range.Upper.PositionLink.Previous ?? range.Upper;
-                }
-
-                if (start < range.Lower.Position)
-                {
-                    return false;
-                }
-
-                // range.Lower.Position <= start, range.Upper.Position < end
-
-                // Check
-                loadList.Clear();
-                for (var book = range.Lower; book != null; book = book.PositionLink.Next)
-                {
-                    if (!book.IsInMemory)
-                    {// Load (start, path)
-                        if (book.Path is not null)
-                        {
-                            loadList.Add((book.Position, book.Path));
-                        }
-                    }
-
-                    if (book == range.Upper)
-                    {
-                        break;
-                    }
-                }
-
-                // Load
-                if (loadList.Count > 0)
-                {
-                    goto Load;
-                }
-
-                // Read
-                var dataPosition = 0;
-                for (var book = range.Lower; book != null; book = book.PositionLink.Next)
-                {
-                    if (!book.TryReadBufferInternal(start, data.Span.Slice(dataPosition), out var readLength))
-                    {// Fatal
-                        return false;
-                    }
-
-                    dataPosition += readLength;
-                    start += (ulong)readLength;
-
-                    if (book == range.Upper)
-                    {// Complete
-                        return true;
-                    }
-                }
-            }
 
 Load:
-            if (this.rawFiler == null)
+        if (retry++ >= 2 || this.rawFiler == null)
+        {
+            return false;
+        }
+
+        foreach (var x in loadList)
+        {
+            var result = await this.rawFiler.ReadAsync(x.Path, 0, -1).ConfigureAwait(false);
+            if (result.IsFailure)
             {
                 return false;
             }
 
-            foreach (var x in loadList)
+            try
             {
-                var result = await this.rawFiler.ReadAsync(x.Path, 0, -1).ConfigureAwait(false);
-                if (result.IsFailure)
+                lock (this.syncBooks)
                 {
-                    return false;
-                }
-
-                try
-                {
-                    lock (this.syncBooks)
+                    var book = this.books.PositionChain.FindFirst(x.Position);
+                    if (book is not null)
                     {
-                        var book = this.books.PositionChain.FindFirst(x.Position);
-                        if (book is not null)
-                        {
-                            book.TrySetBuffer(result.Data); // tempcode
-                        }
+                        book.TrySetBuffer(result.Data);
                     }
                 }
-                finally
+            }
+            finally
+            {
+                result.Return();
+            }
+        }
+
+        lock (this.syncBooks)
+        {
+            var range = this.books.PositionChain.GetRange(start, end - 1);
+            if (range.Upper is null)
+            {
+                return false;
+            }
+            else if (range.Lower is null)
+            {
+                range.Lower = range.Upper.PositionLink.Previous ?? range.Upper;
+            }
+
+            if (start < range.Lower.Position)
+            {
+                return false;
+            }
+
+            // range.Lower.Position <= start, range.Upper.Position < end
+
+            // Check
+            loadList.Clear();
+            for (var book = range.Lower; book != null; book = book.PositionLink.Next)
+            {
+                if (!book.IsInMemory)
+                {// Load (start, path)
+                    if (book.Path is not null)
+                    {
+                        loadList.Add((book.Position, book.Path));
+                    }
+                }
+
+                if (book == range.Upper)
                 {
-                    result.Return();
+                    break;
                 }
             }
 
-            return true;
+            // Load
+            if (loadList.Count > 0)
+            {
+                goto Load;
+            }
+
+            // Read
+            var dataPosition = 0;
+            for (var book = range.Lower; book != null; book = book.PositionLink.Next)
+            {
+                if (!book.TryReadBufferInternal(start, data.Span.Slice(dataPosition), out var readLength))
+                {// Fatal
+                    return false;
+                }
+
+                dataPosition += readLength;
+                start += (ulong)readLength;
+
+                if (book == range.Upper)
+                {// Complete
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 
-    internal void FlushRecordBuffer()
-    {
-        lock (this.syncRecordBuffer)
-        {
-            this.FlushRecordBufferInternal();
-        }
-    }
-
-    internal async Task SaveBooksAsync(bool merge)
+    internal async Task SaveJournalAsync(bool merge)
     {
         lock (this.syncBooks)
         {
+            // Flush record buffer
+            this.FlushRecordBufferInternal();
+
             // Save all books
             Book? book = this.books.PositionChain.Last;
             Book? next = null;
@@ -295,20 +294,23 @@ Load:
             {
                 merge = true;
             }
+            else
+            {
+                merge = false;
+            }
         }
 
         if (merge)
         { // Merge books
-            await this.Merge().ConfigureAwait(false);
+            await this.Merge(false).ConfigureAwait(false);
         }
     }
 
-    internal async Task Merge()
+    internal async Task Merge(bool forceMerge)
     {
         var book = this.books.UnfinishedChain.Last;
         var unfinishedCount = 0;
         var unfinishedLength = 0;
-        Book? lastBook = null; // The last book to be merged.
         var lastLength = 0;
         ulong start, end;
 
@@ -320,7 +322,6 @@ Load:
                 unfinishedLength += book.Length;
                 if (unfinishedLength <= this.SimpleJournalConfiguration.FinishedBookLength)
                 {
-                    lastBook = book;
                     lastLength = unfinishedLength;
                 }
 
@@ -328,10 +329,14 @@ Load:
             }
 
             Debug.Assert(unfinishedCount == this.books.UnfinishedChain.Count);
-            if (unfinishedCount < MergeThresholdNumber ||
-                unfinishedLength < this.SimpleJournalConfiguration.FinishedBookLength)
+
+            if (!forceMerge)
             {
-                return;
+                if (unfinishedCount < MergeThresholdNumber ||
+                    unfinishedLength < this.SimpleJournalConfiguration.FinishedBookLength)
+                {
+                    return;
+                }
             }
 
             start = this.books.UnfinishedChain.First!.Position;
@@ -355,7 +360,7 @@ Load:
             return;
         }
 
-        var book = Book.AppendNewBook(this, this.recordBufferPosition, this.recordBuffer, this.recordBufferLength);
+        Book.AppendNewBook(this, this.recordBufferPosition, this.recordBuffer, this.recordBufferLength);
 
         this.recordBufferPosition += (ulong)this.recordBufferLength;
         this.recordBufferLength = 0;
@@ -381,6 +386,14 @@ Load:
             foreach (var x in list)
             {
                 var book = Book.TryAdd(this, x);
+            }
+
+            foreach (var x in this.books)
+            {
+                if (x.IsUnfinished)
+                {
+                    this.books.UnfinishedChain.AddLast(x);
+                }
             }
 
             this.CheckBooksInternal();
