@@ -417,7 +417,7 @@ public class Crystalizer
         return crystal;
     }
 
-    public async Task MergeJournalForDebug()
+    public async Task MergeJournalForTest()
     {
         if (this.Journal is SimpleJournal simpleJournal)
         {

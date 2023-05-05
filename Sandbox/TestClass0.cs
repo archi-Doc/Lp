@@ -47,10 +47,10 @@ internal class TestClass0
         {
             TestJournal(journal);
             await journal.SaveJournalAsync();
-            await crystalizer.MergeJournalForDebug();
+            // await crystalizer.MergeJournalForTest();
         }
 
-        await Task.Delay(1000);
+        await Task.Delay(100);
 
         void TestJournal(IJournal journal)
         {

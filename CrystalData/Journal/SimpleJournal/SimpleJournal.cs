@@ -73,6 +73,8 @@ public partial class SimpleJournal : IJournal
 
         this.task ??= new(this);
 
+        Console.WriteLine($"Journal prepared: {this.books.PositionChain.First?.Position} - {this.books.PositionChain.Last?.Position} ({this.books.PositionChain.Count})");
+
         this.prepared = true;
         return CrystalResult.Success;
     }
@@ -341,6 +343,11 @@ Load:
 
             start = this.books.UnfinishedChain.First!.Position;
             end = start + (ulong)lastLength;
+        }
+
+        if (unfinishedCount < 2)
+        {
+            return;
         }
 
         var owner = ByteArrayPool.Default.Rent(lastLength);

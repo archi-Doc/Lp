@@ -23,7 +23,7 @@
 
   <ItemGroup>
     <PackageReference Include="Arc.Threading" Version="0.22.1" />
-    <PackageReference Include="Arc.Crypto" Version="1.14.0" />
+    <PackageReference Include="Arc.Crypto" Version="1.15.0" />
     <PackageReference Include="Arc.Unit" Version="0.6.0" />
     <PackageReference Include="AWSSDK.S3" Version="3.7.104.10" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
