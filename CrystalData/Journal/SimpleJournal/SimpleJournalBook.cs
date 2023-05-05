@@ -292,7 +292,7 @@ public partial class SimpleJournal
         private string GetFileName()
         {
             var bookTitle = new BookTitle(this.position, this.hash);
-            return bookTitle.ToBase32Sort() + (this.bookType == BookType.Finished ? FinishedSuffix : UnfinishedSuffix);
+            return bookTitle.ToBase32() + (this.bookType == BookType.Finished ? FinishedSuffix : UnfinishedSuffix);
         }
     }
 }

@@ -17,9 +17,9 @@ internal readonly struct BookTitle : IEquatable<BookTitle>, IComparable<BookTitl
         this.Reserved = 0;
     }
 
-    public static bool TryParse(string base32Sort, out BookTitle bookTitle)
+    public static bool TryParse(string base32, out BookTitle bookTitle)
     {
-        var byteArray = Base32Sort.Default.FromStringToByteArray(base32Sort);
+        var byteArray = Base32File.Default.FromStringToByteArray(base32);
         return TryParse(byteArray, out bookTitle);
     }
 
@@ -61,12 +61,12 @@ internal readonly struct BookTitle : IEquatable<BookTitle>, IComparable<BookTitl
         return byteArray;
     }
 
-    public string ToBase32Sort()
+    public string ToBase32()
     {
         Span<byte> span = stackalloc byte[Length];
         this.WriteSpan(span);
 
-        return Base32Sort.Default.FromByteArrayToString(span);
+        return Base32File.Default.FromByteArrayToString(span);
     }
 
     public bool Equals(BookTitle other)
