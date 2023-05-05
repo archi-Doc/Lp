@@ -171,7 +171,7 @@ public class CrystalFiler
 
     private string GetFilePath(Waypoint waypoint)
     {
-        return $"{this.prefix}{waypoint.ToBase64Url()}{this.extension}";
+        return $"{this.prefix}{waypoint.ToBase32Sort()}{this.extension}";
     }
 
     private Waypoint[] GetReverseWaypointArray()
