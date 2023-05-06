@@ -69,11 +69,13 @@ public partial class SimpleJournal : IJournal
         }
 
         // List journal books
-        await this.ListBooks();
+        await this.ListBooks().ConfigureAwait(false);
 
         this.task ??= new(this);
 
-        Console.WriteLine($"Journal prepared: {this.books.PositionChain.First?.Position} - {this.books.PositionChain.Last?.Position} ({this.books.PositionChain.Count})");
+        this.logger.TryGet()?.Log($"Prepared: {this.books.PositionChain.First?.Position} - {this.books.PositionChain.Last?.Position} ({this.books.PositionChain.Count})");
+
+        await this.Merge(false).ConfigureAwait(false);
 
         this.prepared = true;
         return CrystalResult.Success;
@@ -144,7 +146,7 @@ public partial class SimpleJournal : IJournal
         }
 
         // Terminate
-        this.logger.TryGet()?.Log($"SimpleJournal terminated - {this.memoryUsage}");
+        this.logger.TryGet()?.Log($"Terminated - {this.memoryUsage}");
     }
 
     public async Task<bool> ReadJournalAsync(ulong start, ulong end, Memory<byte> data)
@@ -357,7 +359,10 @@ Load:
             return;
         }
 
-        await Book.MergeBooks(this, start, end, owner.ToReadOnlyMemoryOwner(0, lastLength)).ConfigureAwait(false);
+        if (await Book.MergeBooks(this, start, end, owner.ToReadOnlyMemoryOwner(0, lastLength)).ConfigureAwait(false))
+        {// Success
+            this.logger.TryGet()?.Log($"Merged: {start} - {end}");
+        }
     }
 
     private void FlushRecordBufferInternal()

@@ -96,7 +96,7 @@ TryWrite:
             }
             catch
             {
-                worker.Logger?.TryGet()?.Log($"Retry {work.Path}");
+                worker.Logger?.TryGet(LogLevel.Warning)?.Log($"Retry {work.Path}");
                 goto TryWrite;
             }
             finally

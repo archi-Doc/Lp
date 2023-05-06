@@ -114,7 +114,7 @@ public partial class SimpleJournal
             return book;
         }
 
-        public static async Task MergeBooks(SimpleJournal simpleJournal, ulong start, ulong end, ByteArrayPool.ReadOnlyMemoryOwner toBeMoved)
+        public static async Task<bool> MergeBooks(SimpleJournal simpleJournal, ulong start, ulong end, ByteArrayPool.ReadOnlyMemoryOwner toBeMoved)
         {
             var book = new Book(simpleJournal);
             book.position = start;
@@ -134,7 +134,7 @@ public partial class SimpleJournal
             // Save the merged book first
             if (await book.SaveAsync().ConfigureAwait(false) == false)
             {
-                return;
+                return false;
             }
 
             lock (simpleJournal.syncBooks)
@@ -142,11 +142,11 @@ public partial class SimpleJournal
                 var range = simpleJournal.books.PositionChain.GetRange(start, end - 1);
                 if (range.Lower == null || range.Upper == null)
                 {
-                    return;
+                    return false;
                 }
                 else if (range.Lower.position != start || range.Upper.NextPosition != end)
                 {
-                    return;
+                    return false;
                 }
 
                 // Delete books
@@ -166,6 +166,8 @@ public partial class SimpleJournal
                 // Add the merged book
                 book.Goshujin = simpleJournal.books;
             }
+
+            return true; // Success
         }
 
         public void SaveInternal()

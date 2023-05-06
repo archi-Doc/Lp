@@ -4,6 +4,11 @@ namespace CrystalData.Filer;
 
 public class CrystalFiler
 {
+    private class Destination
+    {
+
+    }
+
     public CrystalFiler(Crystalizer crystalizer)
     {
         this.crystalizer = crystalizer;
@@ -19,6 +24,7 @@ public class CrystalFiler
     private Crystalizer crystalizer;
     private CrystalConfiguration configuration;
     private IRawFiler? rawFiler;
+    private IRawFiler? backupFiler;
     private string prefix; // "Directory/File."
     private string extension; // string.Empty or ".extension"
 
@@ -36,6 +42,16 @@ public class CrystalFiler
         if (this.rawFiler == null)
         {
             this.rawFiler = this.crystalizer.ResolveRawFiler(fileConfiguration);
+            var result = await this.rawFiler.PrepareAndCheck(param, fileConfiguration).ConfigureAwait(false);
+            if (result.IsFailure())
+            {
+                return result;
+            }
+        }
+
+        if (this.configuration.BackupFileConfiguration != null && this.backupFiler == null)
+        {
+            this.backupFiler = this.crystalizer.ResolveRawFiler(fileConfiguration);
             var result = await this.rawFiler.PrepareAndCheck(param, fileConfiguration).ConfigureAwait(false);
             if (result.IsFailure())
             {

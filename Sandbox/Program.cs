@@ -31,6 +31,9 @@ public class Program
             {
                 context.AddSingleton<TestClass0>();
                 context.AddSingleton<TestClass>();
+                context.AddLoggerResolver(context =>
+                {
+                });
             })
             .ConfigureCrystal(context =>
             {
@@ -47,8 +50,9 @@ public class Program
                     new(
                         SavePolicy.Periodic,
                         new LocalFileConfiguration("Local/combined"),
-                        new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/Simple"))
-                        ));
+                        new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/Simple")),
+                        new LocalFileConfiguration("Local/backup"))
+                        );
 
                 context.AddBigCrystal<BaseData>(new BigCrystalConfiguration() with
                 {
