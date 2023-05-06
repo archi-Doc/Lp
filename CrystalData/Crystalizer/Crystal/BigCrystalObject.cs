@@ -2,7 +2,7 @@
 
 namespace CrystalData;
 
-public sealed class BigCrystalObject<TData> : IBigCrystal<TData>
+public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
     where TData : BaseData, IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {// BigCrystalObject = CrystalObject + Datum + StorageGroup (+ Himo)
     public BigCrystalObject(Crystalizer crystalizer)
@@ -132,7 +132,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystal<TData>
     {
     }
 
-    bool ICrystal.CheckPeriodicSave(DateTime utc)
+    bool ICrystalInternal.CheckPeriodicSave(DateTime utc)
     {
         if (this.CrystalConfiguration.SavePolicy != SavePolicy.Periodic)
         {

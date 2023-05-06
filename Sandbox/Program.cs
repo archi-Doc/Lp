@@ -57,7 +57,7 @@ public class Program
                         new LocalFileConfiguration("Local/combined"),
                         new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/Simple"), new LocalDirectoryConfiguration("Backup/Simple")))
                     {
-                        SaveInterval = TimeSpan.FromSeconds(1),
+                        SaveInterval = TimeSpan.FromSeconds(10),
                         BackupFileConfiguration = new LocalFileConfiguration("Backup/combined")
                     });
 

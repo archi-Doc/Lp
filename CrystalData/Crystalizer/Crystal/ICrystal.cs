@@ -29,12 +29,20 @@ public interface ICrystal
     Task<CrystalResult> Delete();
 
     void Terminate();
-
-    bool CheckPeriodicSave(DateTime utc);
 }
 
 public interface ICrystal<TData> : ICrystal
     where TData : class, IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
     public new TData Object { get; }
+}
+
+internal interface ICrystalInternal : ICrystal
+{
+    bool CheckPeriodicSave(DateTime utc);
+}
+
+internal interface ICrystalInternal<TData> : ICrystal<TData>, ICrystalInternal
+    where TData : class, IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+{
 }

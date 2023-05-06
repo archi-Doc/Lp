@@ -6,7 +6,7 @@ using CrystalData.Filer;
 
 namespace CrystalData;
 
-public sealed class CrystalObject<TData> : ICrystal<TData>
+public sealed class CrystalObject<TData> : ICrystalInternal<TData>
     where TData : class, IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {// Data + Journal/Waypoint + Filer/FileConfiguration + Storage/StorageConfiguration
     public CrystalObject(Crystalizer crystalizer)
@@ -239,7 +239,7 @@ public sealed class CrystalObject<TData> : ICrystal<TData>
     {
     }
 
-    bool ICrystal.CheckPeriodicSave(DateTime utc)
+    bool ICrystalInternal.CheckPeriodicSave(DateTime utc)
     {
         if (this.CrystalConfiguration.SavePolicy != SavePolicy.Periodic)
         {

@@ -15,7 +15,7 @@ namespace CrystalData;
 public class Crystalizer
 {
     public const string CheckFile = "Crystal.check";
-    public const int TaskIntervalInMilliseconds = 1_000;
+    public const int TaskIntervalInMilliseconds = 10_000;
 
     private class CrystalizerTask : TaskCore
     {
@@ -60,16 +60,16 @@ public class Crystalizer
 
         foreach (var x in this.configuration.CrystalConfigurations)
         {
-            ICrystal? crystal;
+            ICrystalInternal? crystal;
             if (x.Value is BigCrystalConfiguration bigCrystalConfiguration)
             {// new BigCrystalImpl<TData>
-                var bigCrystal = (IBigCrystal)Activator.CreateInstance(typeof(BigCrystalObject<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
+                var bigCrystal = (IBigCrystalInternal)Activator.CreateInstance(typeof(BigCrystalObject<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
                 crystal = bigCrystal;
                 bigCrystal.Configure(bigCrystalConfiguration);
             }
             else
             {// new CrystalImpl<TData>
-                crystal = (ICrystal)Activator.CreateInstance(typeof(CrystalObject<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
+                crystal = (ICrystalInternal)Activator.CreateInstance(typeof(CrystalObject<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
                 crystal.Configure(x.Value);
             }
 
@@ -103,9 +103,9 @@ public class Crystalizer
     private CrystalizerConfiguration configuration;
     private ILogger logger;
     private CrystalizerTask task;
-    private ThreadsafeTypeKeyHashTable<ICrystal> typeToCrystal = new(); // Type to ICrystal
-    private ConcurrentDictionary<ICrystal, int> crystals = new(); // All crystals
-    private ConcurrentDictionary<uint, ICrystal> planeToCrystal = new(); // Plane to crystal
+    private ThreadsafeTypeKeyHashTable<ICrystalInternal> typeToCrystal = new(); // Type to ICrystal
+    private ConcurrentDictionary<ICrystalInternal, int> crystals = new(); // All crystals
+    private ConcurrentDictionary<uint, ICrystalInternal> planeToCrystal = new(); // Plane to crystal
 
     private object syncFiler = new();
     private IRawFiler? localFiler;
@@ -436,7 +436,7 @@ public class Crystalizer
 
     #region Waypoint/Plane
 
-    internal void UpdatePlane(ICrystal crystal, ref Waypoint waypoint, ulong hash)
+    internal void UpdatePlane(ICrystalInternal crystal, ref Waypoint waypoint, ulong hash)
     {
         if (waypoint.CurrentPlane != 0)
         {// Remove the current plane
@@ -500,7 +500,7 @@ public class Crystalizer
         }
     }
 
-    internal void SetPlane(ICrystal crystal, ref Waypoint waypoint)
+    internal void SetPlane(ICrystalInternal crystal, ref Waypoint waypoint)
     {
         if (waypoint.CurrentPlane != 0)
         {
@@ -532,7 +532,7 @@ public class Crystalizer
         throw new InvalidOperationException($"The specified configuration type '{type.Name}' is not registered.");
     }
 
-    internal bool DeleteInternal(ICrystal crystal)
+    internal bool DeleteInternal(ICrystalInternal crystal)
     {
         return this.crystals.TryRemove(crystal, out _);
     }
