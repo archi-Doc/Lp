@@ -33,6 +33,13 @@ public class Program
                 context.AddSingleton<TestClass>();
                 context.AddLoggerResolver(context =>
                 {
+                    if (context.LogLevel == LogLevel.Debug)
+                    {
+                        context.SetOutput<FileLogger<FileLoggerOptions>>();
+                        return;
+                    }
+
+                    context.SetOutput<ConsoleAndFileLogger>();
                 });
             })
             .ConfigureCrystal(context =>
@@ -85,6 +92,12 @@ public class Program
             {// CrystalizerOptions
                 options.EnableLogger = true;
                 options.RootPath = Directory.GetCurrentDirectory();
+            })
+            .SetupOptions<FileLoggerOptions>((context, options) =>
+            {// FileLoggerOptions
+                var logfile = "Logs/Log.txt";
+                options.Path = Path.Combine(context.RootDirectory, logfile);
+                options.MaxLogCapacity = 2;
             });
 
         var unit = builder.Build();

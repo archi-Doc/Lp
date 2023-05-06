@@ -176,7 +176,7 @@ internal partial class SimpleStorage : IStorage
             return Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.NotFound));
         }
 
-        return this.mainFiler.ReadAsync(this.FileToPath(file), 0, size, this.timeout);
+        return this.mainFiler.ReadAsync(this.MainFile(this.FileToPath(file)), 0, size, this.timeout);
     }
 
     Task<CrystalResult> IStorage.PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)

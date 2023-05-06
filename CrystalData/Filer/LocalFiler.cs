@@ -45,7 +45,7 @@ TryWrite:
                 using (var handle = File.OpenHandle(filePath, mode: FileMode.OpenOrCreate, access: FileAccess.Write))
                 {
                     await RandomAccess.WriteAsync(handle, work.WriteData.Memory, work.Offset, worker.CancellationToken).ConfigureAwait(false);
-                    worker.Logger?.TryGet()?.Log($"Written[{work.WriteData.Memory.Length}] {work.Path}");
+                    worker.Logger?.TryGet(LogLevel.Debug)?.Log($"Written[{work.WriteData.Memory.Length}] {work.Path}");
 
                     if (work.Truncate)
                     {
@@ -79,7 +79,7 @@ TryWrite:
                         return;
                     }
 
-                    worker.Logger?.TryGet()?.Log($"CreateDirectory {directoryPath}");
+                    worker.Logger?.TryGet(LogLevel.Debug)?.Log($"Directory created: {directoryPath}");
                 }
                 else
                 {
@@ -132,14 +132,14 @@ TryWrite:
                     if (read != lengthToRead)
                     {
                         File.Delete(filePath);
-                        worker.Logger?.TryGet()?.Log($"DeleteAndExit {work.Path}");
+                        worker.Logger?.TryGet(LogLevel.Error)?.Log($"Read error and deleted: {work.Path}");
                         work.Result = CrystalResult.FileOperationError;
                         return;
                     }
 
                     work.Result = CrystalResult.Success;
                     work.ReadData = memoryOwner;
-                    worker.Logger?.TryGet()?.Log($"Read[{memoryOwner.Memory.Length}] {work.Path}");
+                    worker.Logger?.TryGet(LogLevel.Debug)?.Log($"Read[{memoryOwner.Memory.Length}] {work.Path}");
                     return;
                 }
             }
@@ -151,7 +151,7 @@ TryWrite:
             catch
             {
                 work.Result = CrystalResult.FileOperationError;
-                worker.Logger?.TryGet()?.Log($"Read exception {work.Path}");
+                worker.Logger?.TryGet(LogLevel.Error)?.Log($"Read exception {work.Path}");
             }
             finally
             {
@@ -162,7 +162,7 @@ TryWrite:
             try
             {
                 File.Delete(filePath);
-                worker.Logger?.TryGet()?.Log($"Deleted {work.Path}");
+                worker.Logger?.TryGet(LogLevel.Debug)?.Log($"Deleted: {work.Path}");
                 work.Result = CrystalResult.Success;
             }
             catch

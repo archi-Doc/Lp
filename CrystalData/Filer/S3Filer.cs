@@ -76,7 +76,7 @@ TryWrite:
                     var response = await worker.client.PutObjectAsync(request, worker.CancellationToken).ConfigureAwait(false);
                     if (response.HttpStatusCode == System.Net.HttpStatusCode.OK)
                     {
-                        worker.Logger?.TryGet()?.Log($"Written {filePath}, {work.WriteData.Memory.Length}");
+                        worker.Logger?.TryGet(LogLevel.Debug)?.Log($"Written {filePath}, {work.WriteData.Memory.Length}");
                         work.Result = CrystalResult.Success;
                         return;
                     }
@@ -96,7 +96,7 @@ TryWrite:
             }
 
             // Retry
-            worker.Logger?.TryGet()?.Log($"Retry {filePath}");
+            worker.Logger?.TryGet(LogLevel.Warning)?.Log($"Retry {filePath}");
             goto TryWrite;
         }
         else if (work.Type == FilerWork.WorkType.Read)
@@ -118,7 +118,7 @@ TryWrite:
                         response.ResponseStream.CopyTo(ms);
                         work.Result = CrystalResult.Success;
                         work.ReadData = new(ms.ToArray());
-                        worker.Logger?.TryGet()?.Log($"Read {filePath}, {work.ReadData.Memory.Length}");
+                        worker.Logger?.TryGet(LogLevel.Debug)?.Log($"Read {filePath}, {work.ReadData.Memory.Length}");
                         return;
                     }
                 }
@@ -136,7 +136,7 @@ TryWrite:
             }
 
             work.Result = CrystalResult.FileOperationError;
-            worker.Logger?.TryGet()?.Log($"Read exception {filePath}");
+            worker.Logger?.TryGet(LogLevel.Error)?.Log($"Read exception {filePath}");
         }
         else if (work.Type == FilerWork.WorkType.Delete)
         {// Delete
