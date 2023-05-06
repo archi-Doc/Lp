@@ -9,6 +9,12 @@ internal readonly struct BookTitle : IEquatable<BookTitle>, IComparable<BookTitl
 {// JournalPosition, Hash, Reserved
     public const int Length = 20; // 8 + 8 + 4
     public static readonly BookTitle Invalid = default;
+    public static readonly int LengthInBase32;
+
+    static BookTitle()
+    {
+        LengthInBase32 = Base32Sort.GetEncodedLength(Length);
+    }
 
     public BookTitle(ulong journalPosition, ulong hash)
     {
