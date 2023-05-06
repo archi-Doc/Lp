@@ -8,6 +8,7 @@ global using Arc.Unit;
 global using Tinyhand;
 global using ValueLink;
 using CrystalData.Storage;
+using CrystalData.UserInterface;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace CrystalData;
@@ -26,8 +27,8 @@ public class CrystalControl
                 context.AddSingleton<CrystalizerConfiguration>();
                 context.AddSingleton<CrystalizerOptions>();
                 context.AddSingleton<Crystalizer>();
-                // context.AddSingleton<CrystalCheck>();
                 context.AddSingleton<IStorageKey, StorageKey>();
+                context.TryAddSingleton<ICrystalDataQuery, CrystalDataQueryImpl>();
 
                 // Crystalizer
                 var crystalContext = new UnitCrystalContext();
