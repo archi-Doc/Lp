@@ -28,7 +28,7 @@ public readonly struct Waypoint : IEquatable<Waypoint>, IComparable<Waypoint>
 
     public static bool TryParse(string base32, out Waypoint waypoint)
     {
-        var byteArray = Base32File.Default.FromStringToByteArray(base32);
+        var byteArray = Base32Sort.Default.FromStringToByteArray(base32);
         return TryParse(byteArray, out waypoint);
     }
 
@@ -78,7 +78,7 @@ public readonly struct Waypoint : IEquatable<Waypoint>, IComparable<Waypoint>
         Span<byte> span = stackalloc byte[Length];
         this.WriteSpan(span);
 
-        return Base32File.Default.FromByteArrayToString(span);
+        return Base32Sort.Default.FromByteArrayToString(span);
     }
 
     public bool Equals(Waypoint other)
