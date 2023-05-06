@@ -31,24 +31,35 @@ public class Program
             {
                 context.AddSingleton<TestClass0>();
                 context.AddSingleton<TestClass>();
+                context.AddLoggerResolver(context =>
+                {
+                });
             })
             .ConfigureCrystal(context =>
             {
-                context.SetJournal(new SimpleJournalConfiguration(new LocalDirectoryConfiguration("Journal")));
+                context.SetJournal(
+                    new SimpleJournalConfiguration(new LocalDirectoryConfiguration("Journal"))
+                    {
+                        BackupDirectoryConfiguration = new LocalDirectoryConfiguration("Backup/Journal"),
+                    });
 
                 context.AddCrystal<ManualClass>(
                     new(SavePolicy.Manual, new LocalFileConfiguration("Local/manual.tinyhand"))
                     {
                         SaveFormat = SaveFormat.Utf8,
-                        NumberOfBackups = 0,
+                        NumberOfFiles = 0,
+                        BackupFileConfiguration = new LocalFileConfiguration("Backup/manual.tinyhand")
                     });
 
                 context.AddCrystal<CombinedClass>(
                     new(
                         SavePolicy.Periodic,
                         new LocalFileConfiguration("Local/combined"),
-                        new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/Simple"))
-                        ));
+                        new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/Simple"), new LocalDirectoryConfiguration("Backup/Simple")))
+                    {
+                        SaveInterval = TimeSpan.FromSeconds(10),
+                        BackupFileConfiguration = new LocalFileConfiguration("Backup/combined")
+                    });
 
                 context.AddBigCrystal<BaseData>(new BigCrystalConfiguration() with
                 {

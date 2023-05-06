@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Buffers;
 using CrystalData.Filer;
 
 namespace CrystalData.Journal;
@@ -9,15 +8,15 @@ public partial class SimpleJournal
 {
     private enum BookType
     {
-        Unfinished,
-        Finished,
+        Incomplete,
+        Complete,
     }
 
     [ValueLinkObject]
     private partial class Book
     {
-        [Link(Type = ChainType.LinkedList, Name = "InMemory", AutoLink = false)]
-        [Link(Type = ChainType.LinkedList, Name = "Unfinished", AutoLink = false)]
+        [Link(Type = ChainType.LinkedList, Name = "InMemory")]
+        [Link(Type = ChainType.LinkedList, Name = "Incomplete")]
         private Book(SimpleJournal simpleJournal)
         {
             this.simpleJournal = simpleJournal;
@@ -25,42 +24,51 @@ public partial class SimpleJournal
 
         #region PropertyAndField
 
+        internal ulong Position => this.position;
+
+        internal ulong NextPosition => this.position + (ulong)this.length;
+
         internal int Length => this.length;
+
+        internal string? Path => this.path;
+
+        // internal string? BackupPath => this.backupPath;
 
         internal bool IsSaved => this.path != null;
 
-        internal bool IsUnfinished => this.bookType == BookType.Unfinished;
+        internal bool IsInMemory => this.memoryOwner.Memory.Length > 0;
 
-        internal int MemoryUsage => this.buffer == null ? 0 : this.buffer.Length;
+        internal bool IsIncomplete => this.bookType == BookType.Incomplete;
 
         private SimpleJournal simpleJournal;
 
-        [Link(Primary = true, Type = ChainType.Ordered)]
+        [Link(Primary = true, Type = ChainType.Ordered, NoValue = true)]
         private ulong position;
 
         private int length;
         private BookType bookType;
         private string? path;
+        private string? backupPath;
         private ulong hash;
-        private byte[]? buffer;
+        private ByteArrayPool.ReadOnlyMemoryOwner memoryOwner;
 
         #endregion
 
-        public static Book? TryAdd(SimpleJournal simpleJournal, PathInformation pathInformation)
+        public static Book? TryAdd(SimpleJournal simpleJournal, Book.GoshujinClass books, PathInformation pathInformation)
         {
-            BookType bookType = BookType.Unfinished;
+            BookType bookType;
 
-            // BookTitle.finished or BookTitle.unfinished
-            var fileName = Path.GetFileName(pathInformation.Path);
-            if (fileName.EndsWith(FinishedSuffix))
+            // BookTitle.complete or BookTitle.incomplete
+            var fileName = System.IO.Path.GetFileName(pathInformation.Path);
+            if (fileName.EndsWith(CompleteSuffix))
             {
-                bookType = BookType.Finished;
-                fileName = fileName.Substring(0, fileName.Length - FinishedSuffix.Length);
+                bookType = BookType.Complete;
+                fileName = fileName.Substring(0, fileName.Length - CompleteSuffix.Length);
             }
-            else if (fileName.EndsWith(UnfinishedSuffix))
+            else if (fileName.EndsWith(IncompleteSuffix))
             {
-                bookType = BookType.Unfinished;
-                fileName = fileName.Substring(0, fileName.Length - UnfinishedSuffix.Length);
+                bookType = BookType.Incomplete;
+                fileName = fileName.Substring(0, fileName.Length - IncompleteSuffix.Length);
             }
             else
             {
@@ -76,14 +84,13 @@ public partial class SimpleJournal
             book.position = bookTitle.JournalPosition;
             book.length = (int)pathInformation.Length;
             book.path = pathInformation.Path;
+            book.bookType = BookType.Complete;
             book.hash = bookTitle.Hash;
-            book.bookType = bookType;
 
-            book.Goshujin = simpleJournal.books;
-            if (book.IsUnfinished)
-            {
-                book.Goshujin.UnfinishedChain.AddLast(book);
-            }
+            book.Goshujin = books;
+
+            // Delay setting the book type for sorting later.
+            book.bookType = bookType;
 
             return book;
         }
@@ -93,36 +100,76 @@ public partial class SimpleJournal
             var book = new Book(simpleJournal);
             book.position = position;
             book.length = dataLength;
-            book.bookType = BookType.Unfinished;
+            book.bookType = BookType.Incomplete;
 
-            book.buffer = ArrayPool<byte>.Shared.Rent(data.Length);
-            data.AsSpan().CopyTo(book.buffer);
-            book.hash = FarmHash.Hash64(book.buffer);
+            var owner = ByteArrayPool.Default.Rent(dataLength);
+            data.AsSpan(0, dataLength).CopyTo(owner.ByteArray.AsSpan());
+            book.memoryOwner = owner.ToReadOnlyMemoryOwner(0, dataLength);
+            book.hash = FarmHash.Hash64(book.memoryOwner.Span);
 
             lock (simpleJournal.syncBooks)
             {
                 book.Goshujin = simpleJournal.books;
-                book.Goshujin.InMemoryChain.AddLast(book);
-                book.Goshujin.UnfinishedChain.AddLast(book);
-                simpleJournal.memoryUsage += (ulong)book.MemoryUsage;
             }
 
             return book;
         }
 
-        /*public ulong AppendData(ReadOnlySpan<byte> data)
+        public static async Task<bool> MergeBooks(SimpleJournal simpleJournal, ulong start, ulong end, ByteArrayPool.ReadOnlyMemoryOwner toBeMoved)
         {
-            if (this.buffer == null || (this.buffer.Length - this.bufferPosition) < data.Length)
-            {
-                throw new InvalidOperationException();
+            var book = new Book(simpleJournal);
+            book.position = start;
+            book.length = (int)(end - start);
+            if (book.length < (simpleJournal.SimpleJournalConfiguration.CompleteBookLength / 2))
+            {// Length < (CompleteBookLength/2) -> Incomplete
+                book.bookType = BookType.Incomplete;
+            }
+            else
+            {// Length >= (CompleteBookLength/2) -> Complete
+                book.bookType = BookType.Complete;
             }
 
-            var position = this.position + (ulong)this.bufferPosition;
-            data.CopyTo(this.buffer.AsSpan(this.bufferPosition));
-            this.bufferPosition += data.Length;
-            this.length += data.Length;
-            return position;
-        }*/
+            book.memoryOwner = toBeMoved;
+            book.hash = FarmHash.Hash64(toBeMoved.Memory.Span);
+
+            // Save the merged book first
+            if (await book.SaveAsync().ConfigureAwait(false) == false)
+            {
+                return false;
+            }
+
+            lock (simpleJournal.syncBooks)
+            {
+                var range = simpleJournal.books.PositionChain.GetRange(start, end - 1);
+                if (range.Lower == null || range.Upper == null)
+                {
+                    return false;
+                }
+                else if (range.Lower.position != start || range.Upper.NextPosition != end)
+                {
+                    return false;
+                }
+
+                // Delete books
+                var b = range.Lower;
+                while (b != null)
+                {
+                    var b2 = b.PositionLink.Next;
+                    b.DeleteInternal();
+                    if (b == range.Upper)
+                    {
+                        break;
+                    }
+
+                    b = b2;
+                }
+
+                // Add the merged book
+                book.Goshujin = simpleJournal.books;
+            }
+
+            return true; // Success
+        }
 
         public void SaveInternal()
         {// lock (core.simpleJournal.syncBooks)
@@ -130,7 +177,7 @@ public partial class SimpleJournal
             {
                 return;
             }
-            else if (this.buffer == null)
+            else if (!this.IsInMemory)
             {
                 return;
             }
@@ -139,42 +186,137 @@ public partial class SimpleJournal
                 return;
             }
 
-            // Fix buffer
-            /*var newBuffer = ArrayPool<byte>.Shared.Rent(this.bufferPosition);
-            this.buffer.AsSpan(0, this.bufferPosition).CopyTo(newBuffer);
-            this.bufferPosition = 0;
-            ArrayPool<byte>.Shared.Return(this.buffer);
-
-            this.buffer = newBuffer;*/
-
-            // BookTitle
-            var bookTitle = new BookTitle(this.position, this.hash);
-            var name = bookTitle.ToBase64Url() + (this.bookType == BookType.Finished ? FinishedSuffix : UnfinishedSuffix);
-
             // Write (IsSaved -> true)
-            this.path = PathHelper.CombineWithSlash(this.simpleJournal.SimpleJournalConfiguration.DirectoryConfiguration.Path, name);
-            this.simpleJournal.rawFiler.WriteAndForget(this.path, 0, new(this.buffer));
+            this.path = PathHelper.CombineWithSlash(this.simpleJournal.SimpleJournalConfiguration.DirectoryConfiguration.Path, this.GetFileName());
+            this.simpleJournal.rawFiler.WriteAndForget(this.path, 0, this.memoryOwner);
+
+            if (this.simpleJournal.SimpleJournalConfiguration.BackupDirectoryConfiguration is { } backupConfiguration &&
+                this.simpleJournal.backupFiler is not null)
+            {
+                this.backupPath ??= PathHelper.CombineWithSlash(backupConfiguration.Path, this.GetFileName());
+                this.simpleJournal.backupFiler.WriteAndForget(this.backupPath, 0, this.memoryOwner);
+            }
         }
 
-        public void FreeInternal()
+        public bool TryReadBufferInternal(ulong position, Span<byte> destination, out int readLength)
         {
-            if (this.buffer is not null)
+            readLength = 0;
+            if (position < this.position || position >= this.NextPosition)
             {
-                this.simpleJournal.memoryUsage -= (ulong)this.buffer.Length;
-                ArrayPool<byte>.Shared.Return(this.buffer);
+                return false;
+            }
+
+            var length = (int)(this.NextPosition - position);
+            if (destination.Length < length)
+            {
+                return false;
+            }
+
+            if (!this.IsInMemory)
+            {
+                return false;
+            }
+
+            this.memoryOwner.Memory.Span.Slice((int)(position - this.position), length).CopyTo(destination);
+            readLength = length;
+            return true;
+        }
+
+        public async Task<bool> SaveAsync()
+        {
+            if (this.IsSaved)
+            {
+                return false;
+            }
+            else if (!this.IsInMemory)
+            {
+                return false;
+            }
+            else if (this.simpleJournal.rawFiler == null)
+            {
+                return false;
+            }
+
+            // Write (IsSaved -> true)
+            this.path = PathHelper.CombineWithSlash(this.simpleJournal.SimpleJournalConfiguration.DirectoryConfiguration.Path, this.GetFileName());
+            var result = await this.simpleJournal.rawFiler.WriteAsync(this.path, 0, this.memoryOwner).ConfigureAwait(false);
+
+            if (this.simpleJournal.BackupConfiguration is not null &&
+                this.simpleJournal.backupFiler is not null)
+            {
+                this.backupPath ??= PathHelper.CombineWithSlash(this.simpleJournal.BackupConfiguration.Path, this.GetFileName());
+                _ = this.simpleJournal.backupFiler.WriteAsync(this.backupPath, 0, this.memoryOwner);
+            }
+
+            return result.IsSuccess();
+        }
+
+        public void DeleteInternal()
+        {
+            if (this.path != null && this.simpleJournal.rawFiler is { } rawFiler)
+            {
+                rawFiler.DeleteAndForget(this.path);
+            }
+
+            if (this.simpleJournal.backupFiler is not null &&
+                this.simpleJournal.BackupConfiguration is not null)
+            {
+                this.backupPath ??= PathHelper.CombineWithSlash(this.simpleJournal.BackupConfiguration.Path, this.GetFileName());
+                this.simpleJournal.backupFiler.DeleteAndForget(this.backupPath);
             }
 
             this.Goshujin = null;
         }
 
-        public void DeleteInternal()
+        public bool TrySetBuffer(ByteArrayPool.ReadOnlyMemoryOwner data)
         {
-            if (this.simpleJournal.rawFiler is { } rawFiler && this.path != null)
+            if (this.IsInMemory)
             {
-                this.simpleJournal.rawFiler.DeleteAndForget(this.path);
+                return false;
+            }
+            else if (this.length != data.Memory.Length)
+            {
+                return false;
             }
 
-            this.FreeInternal();
+            this.memoryOwner = data.IncrementAndShare();
+            this.simpleJournal.books.InMemoryChain.AddLast(this);
+            this.InMemoryLinkAdded();
+
+            return true;
+        }
+
+        protected bool IncompleteLinkPredicate()
+            => this.IsIncomplete;
+
+        protected void IncompleteLinkAdded()
+        {
+            this.simpleJournal.incompleteSize += (ulong)this.length;
+        }
+
+        protected void IncompleteLinkRemoved()
+        {
+            this.simpleJournal.incompleteSize -= (ulong)this.length;
+        }
+
+        protected bool InMemoryLinkPredicate()
+            => this.IsInMemory;
+
+        protected void InMemoryLinkAdded()
+        {
+            this.simpleJournal.memoryUsage += this.memoryOwner.Memory.Length;
+        }
+
+        protected void InMemoryLinkRemoved()
+        {
+            this.simpleJournal.memoryUsage -= this.memoryOwner.Memory.Length;
+            this.memoryOwner = this.memoryOwner.Return();
+        }
+
+        private string GetFileName()
+        {
+            var bookTitle = new BookTitle(this.position, this.hash);
+            return bookTitle.ToBase32() + (this.bookType == BookType.Complete ? CompleteSuffix : IncompleteSuffix);
         }
     }
 }

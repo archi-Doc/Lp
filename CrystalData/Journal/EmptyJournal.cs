@@ -20,4 +20,14 @@ public class EmptyJournal : IJournal
     {
         writer = default(TinyhandWriter);
     }
+
+    Task IJournal.SaveJournalAsync()
+    {
+        return Task.CompletedTask;
+    }
+
+    Task IJournal.TerminateAsync()
+    {
+        return Task.CompletedTask;
+    }
 }

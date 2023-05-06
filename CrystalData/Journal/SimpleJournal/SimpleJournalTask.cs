@@ -1,13 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Buffers;
-using System.Diagnostics.CodeAnalysis;
-using CrystalData.Filer;
-
 namespace CrystalData.Journal;
 
 public partial class SimpleJournal
 {
+    private const int SaveIntervalInMilliseconds = 1_000;
+
     private class SimpleJournalTask : TaskCore
     {
         public SimpleJournalTask(SimpleJournal simpleJournal)
@@ -19,30 +17,12 @@ public partial class SimpleJournal
         private static async Task Process(object? parameter)
         {
             var core = (SimpleJournalTask)parameter!;
-            while (await core.Delay(1_000).ConfigureAwait(false))
+            while (await core.Delay(SaveIntervalInMilliseconds).ConfigureAwait(false))
             {
-                // Flush record buffer
-                core.simpleJournal.FlushRecordBuffer();
-
-                lock (core.simpleJournal.syncBooks)
-                {
-                    // Save all books
-                    Book? book = core.simpleJournal.books.PositionChain.First;
-                    while (book != null && !book.IsSaved)
-                    {
-                        book = book.PositionLink.Previous;
-                    }
-
-                    while (book != null)
-                    {
-                        book.SaveInternal();
-                        book = book.PositionLink.Next;
-                    }
-
-                    // Merge books
-                    core.simpleJournal.MergeInternal();
-                }
+                await core.simpleJournal.SaveJournalAsync(true);
             }
+
+            await core.simpleJournal.SaveJournalAsync(false);
         }
 
         private SimpleJournal simpleJournal;

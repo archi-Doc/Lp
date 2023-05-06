@@ -11,6 +11,12 @@ public readonly struct Waypoint : IEquatable<Waypoint>, IComparable<Waypoint>
     public const int Length = 24; // 8 + 4 + 4 + 8
     public static readonly Waypoint Invalid = default;
     public static readonly Waypoint Empty = new(1, 0, 0, 0);
+    public static readonly int LengthInBase32;
+
+    static Waypoint()
+    {
+        LengthInBase32 = Base32Sort.GetEncodedLength(Length);
+    }
 
     public Waypoint(ulong journalPosition, uint currentPlane, uint nextPlane, ulong hash)
     {
@@ -20,9 +26,9 @@ public readonly struct Waypoint : IEquatable<Waypoint>, IComparable<Waypoint>
         this.Hash = hash;
     }
 
-    public static bool TryParse(string base64Url, out Waypoint waypoint)
+    public static bool TryParse(string base32, out Waypoint waypoint)
     {
-        var byteArray = Base64.Url.FromStringToByteArray(base64Url);
+        var byteArray = Base32Sort.Default.FromStringToByteArray(base32);
         return TryParse(byteArray, out waypoint);
     }
 
@@ -67,12 +73,12 @@ public readonly struct Waypoint : IEquatable<Waypoint>, IComparable<Waypoint>
         return byteArray;
     }
 
-    public string ToBase64Url()
+    public string ToBase32()
     {
         Span<byte> span = stackalloc byte[Length];
         this.WriteSpan(span);
 
-        return Base64.Url.FromByteArrayToString(span);
+        return Base32Sort.Default.FromByteArrayToString(span);
     }
 
     public bool Equals(Waypoint other)

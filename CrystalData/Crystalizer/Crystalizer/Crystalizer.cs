@@ -15,6 +15,27 @@ namespace CrystalData;
 public class Crystalizer
 {
     public const string CheckFile = "Crystal.check";
+    public const int TaskIntervalInMilliseconds = 10_000;
+
+    private class CrystalizerTask : TaskCore
+    {
+        public CrystalizerTask(Crystalizer crystalizer)
+            : base(null, Process)
+        {
+            this.crystalizer = crystalizer;
+        }
+
+        private static async Task Process(object? parameter)
+        {
+            var core = (CrystalizerTask)parameter!;
+            while (await core.Delay(TaskIntervalInMilliseconds).ConfigureAwait(false))
+            {
+                await core.crystalizer.PeriodicSave();
+            }
+        }
+
+        private Crystalizer crystalizer;
+    }
 
     public Crystalizer(CrystalizerConfiguration configuration, CrystalizerOptions options, ILogger logger, UnitLogger unitLogger, IStorageKey storageKey)
     {
@@ -30,6 +51,7 @@ public class Crystalizer
         }
 
         this.logger = logger;
+        this.task = new(this);
         this.UnitLogger = unitLogger;
         this.CrystalCheck = new(this.UnitLogger.GetLogger<CrystalCheck>());
         this.CrystalCheck.Load(Path.Combine(this.RootDirectory, CheckFile));
@@ -38,16 +60,16 @@ public class Crystalizer
 
         foreach (var x in this.configuration.CrystalConfigurations)
         {
-            ICrystal? crystal;
+            ICrystalInternal? crystal;
             if (x.Value is BigCrystalConfiguration bigCrystalConfiguration)
             {// new BigCrystalImpl<TData>
-                var bigCrystal = (IBigCrystal)Activator.CreateInstance(typeof(BigCrystalObject<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
+                var bigCrystal = (IBigCrystalInternal)Activator.CreateInstance(typeof(BigCrystalObject<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
                 crystal = bigCrystal;
                 bigCrystal.Configure(bigCrystalConfiguration);
             }
             else
             {// new CrystalImpl<TData>
-                crystal = (ICrystal)Activator.CreateInstance(typeof(CrystalObject<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
+                crystal = (ICrystalInternal)Activator.CreateInstance(typeof(CrystalObject<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
                 crystal.Configure(x.Value);
             }
 
@@ -80,9 +102,10 @@ public class Crystalizer
 
     private CrystalizerConfiguration configuration;
     private ILogger logger;
-    private ThreadsafeTypeKeyHashTable<ICrystal> typeToCrystal = new(); // Type to ICrystal
-    private ConcurrentDictionary<ICrystal, int> crystals = new(); // All crystals
-    private ConcurrentDictionary<uint, ICrystal> planeToCrystal = new(); // Plane to crystal
+    private CrystalizerTask task;
+    private ThreadsafeTypeKeyHashTable<ICrystalInternal> typeToCrystal = new(); // Type to ICrystal
+    private ConcurrentDictionary<ICrystalInternal, int> crystals = new(); // All crystals
+    private ConcurrentDictionary<uint, ICrystalInternal> planeToCrystal = new(); // Plane to crystal
 
     private object syncFiler = new();
     private IRawFiler? localFiler;
@@ -93,24 +116,8 @@ public class Crystalizer
     #region Resolvers
 
     public IFiler ResolveFiler(PathConfiguration configuration)
-    {// new RawFilerToFiler(this, this.ResolveRawFiler(configuration), configuration);
-        string path = configuration.Path;
-
-        /*if (this.AddExtension)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(Path.GetExtension(configuration.Path)))
-                {
-                    path += "." + Extension;
-                }
-            }
-            catch
-            {
-            }
-        }*/
-
-        return new RawFilerToFiler(this, this.ResolveRawFiler(configuration), path);
+    {
+        return new RawFilerToFiler(this, this.ResolveRawFiler(configuration), configuration.Path);
     }
 
     public IRawFiler ResolveRawFiler(PathConfiguration configuration)
@@ -238,31 +245,6 @@ public class Crystalizer
         return result;
     }
 
-    public async Task<CrystalResult> SaveConfigurationsObsolete(FileConfiguration configuration)
-    {
-        var dictionary = new Dictionary<string, CrystalConfiguration>();
-        foreach (var x in this.configuration.CrystalConfigurations)
-        {
-            if (this.typeToCrystal.TryGetValue(x.Key, out var crystal) &&
-                x.Key.FullName is { } name)
-            {
-                dictionary[name] = crystal.CrystalConfiguration;
-            }
-        }
-
-        var filer = this.ResolveFiler(configuration);
-        var result = await filer.PrepareAndCheck(PrepareParam.ContinueAll<Crystalizer>(this), configuration).ConfigureAwait(false);
-        if (result.IsFailure())
-        {
-            return result;
-        }
-
-        var bytes = TinyhandSerializer.SerializeToUtf8(dictionary);
-        result = await filer.WriteAsync(0, new(bytes)).ConfigureAwait(false);
-
-        return result;
-    }
-
     public async Task<CrystalResult> LoadConfigurations(FileConfiguration configuration)
     {
         var filer = this.ResolveFiler(configuration);
@@ -324,70 +306,6 @@ public class Crystalizer
         }
     }
 
-    public async Task<CrystalResult> LoadConfigurationsObsolete(FileConfiguration configuration)
-    {
-        var filer = this.ResolveFiler(configuration);
-        var result = await filer.PrepareAndCheck(PrepareParam.ContinueAll<Crystalizer>(this), configuration).ConfigureAwait(false);
-        if (result.IsFailure())
-        {
-            return result;
-        }
-
-        var readResult = await filer.ReadAsync(0, -1).ConfigureAwait(false);
-        if (readResult.IsFailure)
-        {
-            return readResult.Result;
-        }
-
-        try
-        {
-            var dictionary = TinyhandSerializer.DeserializeFromUtf8<Dictionary<string, CrystalConfiguration>>(readResult.Data.Memory);
-            if (dictionary == null)
-            {
-                return CrystalResult.DeserializeError;
-            }
-
-            var nameToCrystal = new Dictionary<string, ICrystal>();
-            foreach (var x in this.typeToCrystal.ToArray())
-            {
-                if (x.Key.FullName is { } name)
-                {
-                    nameToCrystal[name] = x.Value;
-                }
-            }
-
-            foreach (var x in dictionary)
-            {
-                if (nameToCrystal.TryGetValue(x.Key, out var crystal))
-                {
-                    crystal.Configure(x.Value);
-                }
-            }
-
-            return CrystalResult.Success;
-        }
-        catch
-        {
-            return CrystalResult.DeserializeError;
-        }
-        finally
-        {
-            readResult.Return();
-        }
-    }
-
-    /*public bool TryGetJournalWriter(JournalRecordType recordType, out JournalRecord record)
-    {
-        if (this.Journal == null)
-        {
-            record = default;
-            return false;
-        }
-
-        this.Journal.GetJournalWriter(recordType, out record);
-        return true;
-    }*/
-
     public async Task<CrystalResult> PrepareAndLoadAll(CrystalPrepare? param = null)
     {
         param ??= CrystalPrepare.ContinueAll;
@@ -428,7 +346,13 @@ public class Crystalizer
     {
         await this.SaveAll(true).ConfigureAwait(false);
 
-        // Terminate filers
+        // Terminate journal
+        if (this.Journal is { } journal)
+        {
+            await journal.TerminateAsync().ConfigureAwait(false);
+        }
+
+        // Terminate filers/journal
         var tasks = new List<Task>();
         lock (this.syncFiler)
         {
@@ -500,11 +424,19 @@ public class Crystalizer
         return crystal;
     }
 
+    public async Task MergeJournalForTest()
+    {
+        if (this.Journal is SimpleJournal simpleJournal)
+        {
+            await simpleJournal.Merge(true);
+        }
+    }
+
     #endregion
 
     #region Waypoint/Plane
 
-    internal void UpdatePlane(ICrystal crystal, ref Waypoint waypoint, ulong hash)
+    internal void UpdatePlane(ICrystalInternal crystal, ref Waypoint waypoint, ulong hash)
     {
         if (waypoint.CurrentPlane != 0)
         {// Remove the current plane
@@ -568,7 +500,7 @@ public class Crystalizer
         }
     }
 
-    internal void SetPlane(ICrystal crystal, ref Waypoint waypoint)
+    internal void SetPlane(ICrystalInternal crystal, ref Waypoint waypoint)
     {
         if (waypoint.CurrentPlane != 0)
         {
@@ -600,7 +532,7 @@ public class Crystalizer
         throw new InvalidOperationException($"The specified configuration type '{type.Name}' is not registered.");
     }
 
-    internal bool DeleteInternal(ICrystal crystal)
+    internal bool DeleteInternal(ICrystalInternal crystal)
     {
         return this.crystals.TryRemove(crystal, out _);
     }
@@ -664,7 +596,7 @@ public class Crystalizer
             }
             else if (configuration is SimpleJournalConfiguration simpleJournalConfiguration)
             {
-                var simpleJournal = new SimpleJournal(this, simpleJournalConfiguration);
+                var simpleJournal = new SimpleJournal(this, simpleJournalConfiguration, this.UnitLogger.GetLogger<SimpleJournal>());
                 this.Journal = simpleJournal;
             }
             else
@@ -674,6 +606,22 @@ public class Crystalizer
         }
 
         return await this.Journal.Prepare(prepare.ToParam<Crystalizer>(this)).ConfigureAwait(false);
+    }
+
+    private Task PeriodicSave()
+    {
+        var tasks = new List<Task>();
+        var crystals = this.crystals.Keys.ToArray();
+        var utc = DateTime.UtcNow;
+        foreach (var x in crystals)
+        {
+            if (x.CheckPeriodicSave(utc))
+            {
+                tasks.Add(x.Save(false));
+            }
+        }
+
+        return Task.WhenAll(tasks);
     }
 
     #endregion

@@ -44,9 +44,11 @@ public partial record CrystalConfiguration
 
     public TimeSpan SaveInterval { get; init; }
 
-    public int NumberOfBackups { get; init; } = 1;
+    public int NumberOfFiles { get; init; } = 1;
 
     public FileConfiguration FileConfiguration { get; init; }
+
+    public FileConfiguration? BackupFileConfiguration { get; init; }
 
     public StorageConfiguration StorageConfiguration { get; init; }
 }
