@@ -28,6 +28,9 @@ public partial record SimpleJournalConfiguration : JournalConfiguration
     public DirectoryConfiguration DirectoryConfiguration { get; protected set; }
 
     [KeyAsName]
+    public DirectoryConfiguration? BackupDirectoryConfiguration { get; init; }
+
+    [KeyAsName]
     public int JournalCapacityInMBs { get; protected set; }
 
     [IgnoreMember]

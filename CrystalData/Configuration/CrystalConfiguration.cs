@@ -30,13 +30,12 @@ public partial record CrystalConfiguration
         this.StorageConfiguration = EmptyStorageConfiguration.Default;
     }
 
-    public CrystalConfiguration(SavePolicy savePolicy, FileConfiguration fileConfiguration, StorageConfiguration? storageConfiguration = null, FileConfiguration? backupFileConfiguration = null)
+    public CrystalConfiguration(SavePolicy savePolicy, FileConfiguration fileConfiguration, StorageConfiguration? storageConfiguration = null)
     {
         this.SavePolicy = savePolicy;
         this.SaveInterval = DefaultInterval;
         this.FileConfiguration = fileConfiguration;
         this.StorageConfiguration = storageConfiguration ?? EmptyStorageConfiguration.Default;
-        this.BackupFileConfiguration = backupFileConfiguration;
     }
 
     public SaveFormat SaveFormat { get; init; }
@@ -45,11 +44,13 @@ public partial record CrystalConfiguration
 
     public TimeSpan SaveInterval { get; init; }
 
-    public int NumberOfBackups { get; init; } = 1;
+    public int NumberOfFiles { get; init; } = 1;
 
     public FileConfiguration FileConfiguration { get; init; }
 
+    public FileConfiguration? BackupFileConfiguration { get; init; }
+
     public StorageConfiguration StorageConfiguration { get; init; }
 
-    public FileConfiguration? BackupFileConfiguration { get; init; }
+    public StorageConfiguration? BackupStorageConfiguration { get; init; }
 }

@@ -134,7 +134,7 @@ public class CrystalFiler
                 return Task.FromResult(CrystalResult.Success);
             }
 
-            var numberOfFiles = 1 + this.crystalFiler.configuration.NumberOfBackups;
+            var numberOfFiles = 1 + this.crystalFiler.configuration.NumberOfFiles;
 
             Waypoint[] array;
             string[] pathArray;
@@ -266,7 +266,7 @@ public class CrystalFiler
 
     #region PropertyAndField
 
-    public bool IsProtected => this.configuration.NumberOfBackups > 0;
+    public bool IsProtected => this.configuration.NumberOfFiles > 0;
 
     private Crystalizer crystalizer;
     private CrystalConfiguration configuration;
