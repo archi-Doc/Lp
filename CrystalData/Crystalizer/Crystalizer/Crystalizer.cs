@@ -15,6 +15,27 @@ namespace CrystalData;
 public class Crystalizer
 {
     public const string CheckFile = "Crystal.check";
+    public const int TaskIntervalInMilliseconds = 1_000;
+
+    private class CrystalizerTask : TaskCore
+    {
+        public CrystalizerTask(Crystalizer crystalizer)
+            : base(null, Process)
+        {
+            this.crystalizer = crystalizer;
+        }
+
+        private static async Task Process(object? parameter)
+        {
+            var core = (CrystalizerTask)parameter!;
+            while (await core.Delay(TaskIntervalInMilliseconds).ConfigureAwait(false))
+            {
+                await core.crystalizer.PeriodicSave();
+            }
+        }
+
+        private Crystalizer crystalizer;
+    }
 
     public Crystalizer(CrystalizerConfiguration configuration, CrystalizerOptions options, ILogger logger, UnitLogger unitLogger, IStorageKey storageKey)
     {
@@ -30,6 +51,7 @@ public class Crystalizer
         }
 
         this.logger = logger;
+        this.task = new(this);
         this.UnitLogger = unitLogger;
         this.CrystalCheck = new(this.UnitLogger.GetLogger<CrystalCheck>());
         this.CrystalCheck.Load(Path.Combine(this.RootDirectory, CheckFile));
@@ -80,6 +102,7 @@ public class Crystalizer
 
     private CrystalizerConfiguration configuration;
     private ILogger logger;
+    private CrystalizerTask task;
     private ThreadsafeTypeKeyHashTable<ICrystal> typeToCrystal = new(); // Type to ICrystal
     private ConcurrentDictionary<ICrystal, int> crystals = new(); // All crystals
     private ConcurrentDictionary<uint, ICrystal> planeToCrystal = new(); // Plane to crystal
@@ -93,24 +116,8 @@ public class Crystalizer
     #region Resolvers
 
     public IFiler ResolveFiler(PathConfiguration configuration)
-    {// new RawFilerToFiler(this, this.ResolveRawFiler(configuration), configuration);
-        string path = configuration.Path;
-
-        /*if (this.AddExtension)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(Path.GetExtension(configuration.Path)))
-                {
-                    path += "." + Extension;
-                }
-            }
-            catch
-            {
-            }
-        }*/
-
-        return new RawFilerToFiler(this, this.ResolveRawFiler(configuration), path);
+    {
+        return new RawFilerToFiler(this, this.ResolveRawFiler(configuration), configuration.Path);
     }
 
     public IRawFiler ResolveRawFiler(PathConfiguration configuration)
@@ -599,6 +606,22 @@ public class Crystalizer
         }
 
         return await this.Journal.Prepare(prepare.ToParam<Crystalizer>(this)).ConfigureAwait(false);
+    }
+
+    private Task PeriodicSave()
+    {
+        var tasks = new List<Task>();
+        var crystals = this.crystals.Keys.ToArray();
+        var utc = DateTime.UtcNow;
+        foreach (var x in crystals)
+        {
+            if (x.CheckPeriodicSave(utc))
+            {
+                tasks.Add(x.Save(false));
+            }
+        }
+
+        return Task.WhenAll(tasks);
     }
 
     #endregion

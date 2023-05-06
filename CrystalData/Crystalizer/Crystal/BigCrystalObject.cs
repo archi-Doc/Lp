@@ -21,6 +21,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystal<TData>
     private SemaphoreLock semaphore = new();
     private StorageGroup storageGroup;
     private ILogger logger;
+    private DateTime lastSaveTime;
 
     #endregion
 
@@ -129,6 +130,23 @@ public sealed class BigCrystalObject<TData> : IBigCrystal<TData>
 
     void ICrystal.Terminate()
     {
+    }
+
+    bool ICrystal.CheckPeriodicSave(DateTime utc)
+    {
+        if (this.CrystalConfiguration.SavePolicy != SavePolicy.Periodic)
+        {
+            return false;
+        }
+
+        var elapsed = utc - this.lastSaveTime;
+        if (elapsed < this.CrystalConfiguration.SaveInterval)
+        {
+            return false;
+        }
+
+        this.lastSaveTime = utc;
+        return true;
     }
 
     #endregion

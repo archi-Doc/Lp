@@ -22,6 +22,7 @@ public sealed class CrystalObject<TData> : ICrystal<TData>
     private CrystalFiler? crystalFiler;
     private IStorage? storage;
     private Waypoint waypoint;
+    private DateTime lastSaveTime;
 
     #endregion
 
@@ -236,6 +237,23 @@ public sealed class CrystalObject<TData> : ICrystal<TData>
 
     void ICrystal.Terminate()
     {
+    }
+
+    bool ICrystal.CheckPeriodicSave(DateTime utc)
+    {
+        if (this.CrystalConfiguration.SavePolicy != SavePolicy.Periodic)
+        {
+            return false;
+        }
+
+        var elapsed = utc - this.lastSaveTime;
+        if (elapsed < this.CrystalConfiguration.SaveInterval)
+        {
+            return false;
+        }
+
+        this.lastSaveTime = utc;
+        return true;
     }
 
     #endregion

@@ -29,6 +29,8 @@ public interface ICrystal
     Task<CrystalResult> Delete();
 
     void Terminate();
+
+    bool CheckPeriodicSave(DateTime utc);
 }
 
 public interface ICrystal<TData> : ICrystal

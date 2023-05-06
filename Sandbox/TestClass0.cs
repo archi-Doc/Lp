@@ -50,7 +50,7 @@ internal class TestClass0
             // await crystalizer.MergeJournalForTest();
         }
 
-        await Task.Delay(100);
+        await Task.Delay(10_000);
 
         void TestJournal(IJournal journal)
         {
