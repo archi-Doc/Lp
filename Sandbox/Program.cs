@@ -44,6 +44,7 @@ public class Program
                     {
                         SaveFormat = SaveFormat.Utf8,
                         NumberOfBackups = 0,
+                        BackupFileConfiguration = new LocalFileConfiguration("Local/backup.tinyhand")
                     });
 
                 context.AddCrystal<CombinedClass>(
