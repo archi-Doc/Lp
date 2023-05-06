@@ -29,9 +29,14 @@ public partial class SimpleJournal : IJournal
 
     public SimpleJournalConfiguration SimpleJournalConfiguration { get; }
 
+    public DirectoryConfiguration MainConfiguration => this.SimpleJournalConfiguration.DirectoryConfiguration;
+
+    public DirectoryConfiguration? BackupConfiguration => this.SimpleJournalConfiguration.BackupDirectoryConfiguration;
+
     private Crystalizer crystalizer;
     private bool prepared;
     private IRawFiler? rawFiler;
+    private IRawFiler? backupFiler;
     private SimpleJournalTask? task;
 
     // Record buffer
@@ -59,17 +64,33 @@ public partial class SimpleJournal : IJournal
             return CrystalResult.Success;
         }
 
-        var configuration = this.SimpleJournalConfiguration.DirectoryConfiguration;
-
-        this.rawFiler ??= this.crystalizer.ResolveRawFiler(configuration);
-        var result = await this.rawFiler.PrepareAndCheck(param, configuration).ConfigureAwait(false);
+        this.rawFiler ??= this.crystalizer.ResolveRawFiler(this.MainConfiguration);
+        var result = await this.rawFiler.PrepareAndCheck(param, this.MainConfiguration).ConfigureAwait(false);
         if (result != CrystalResult.Success)
         {
             return result;
         }
 
-        // List journal books
-        await this.ListBooks().ConfigureAwait(false);
+        if (this.BackupConfiguration is not null)
+        {
+            this.backupFiler ??= this.crystalizer.ResolveRawFiler(this.BackupConfiguration);
+            result = await this.backupFiler.PrepareAndCheck(param, this.BackupConfiguration).ConfigureAwait(false);
+            if (result != CrystalResult.Success)
+            {
+                return result;
+            }
+        }
+
+        // List main books
+        var mainList = await this.ListBooks(this.rawFiler, this.MainConfiguration).ConfigureAwait(false);
+        this.books = mainList.Books;
+        this.recordBufferPosition = mainList.Position;
+
+        // List backup books
+        if (this.backupFiler is not null && this.BackupConfiguration is not null)
+        {
+            var backupList = await this.ListBooks(this.backupFiler, this.BackupConfiguration).ConfigureAwait(false);
+        }
 
         this.task ??= new(this);
 
@@ -378,47 +399,40 @@ Load:
         this.recordBufferLength = 0;
     }
 
-    private async Task ListBooks()
+    private async Task<(Book.GoshujinClass Books, ulong Position)> ListBooks(IRawFiler rawFiler, DirectoryConfiguration directoryConfiguration)
     {
-        if (this.rawFiler == null)
-        {
-            return;
-        }
-
-        var list = await this.rawFiler.ListAsync(this.SimpleJournalConfiguration.DirectoryConfiguration.Path).ConfigureAwait(false);
+        var list = await rawFiler.ListAsync(directoryConfiguration.Path).ConfigureAwait(false);
         if (list == null)
         {
-            return;
+            return (new Book.GoshujinClass(), 1);
         }
 
-        lock (this.syncBooks)
+        Book.GoshujinClass books = new();
+        foreach (var x in list)
         {
-            this.books.Clear();
-
-            foreach (var x in list)
-            {
-                var book = Book.TryAdd(this, x);
-            }
-
-            foreach (var x in this.books)
-            {
-                if (x.IsUnfinished)
-                {
-                    this.books.UnfinishedChain.AddLast(x);
-                }
-            }
-
-            this.CheckBooksInternal();
+            var book = Book.TryAdd(this, books, x);
         }
+
+        foreach (var x in books)
+        {
+            if (x.IsUnfinished)
+            {
+                books.UnfinishedChain.AddLast(x);
+            }
+        }
+
+        var position = this.CheckBooksInternal(books);
+        return (books, position);
     }
 
-    private void CheckBooksInternal()
-    {// lock (this.syncObject)
+    private ulong CheckBooksInternal(Book.GoshujinClass books)
+    {
+        ulong position = 1; // Initial position
         ulong previousPosition = 0;
         Book? previous = null;
         Book? toDelete = null;
 
-        foreach (var book in this.books)
+        foreach (var book in books)
         {
             if (previous != null && book.Position != previousPosition)
             {
@@ -431,42 +445,40 @@ Load:
 
         if (toDelete == null)
         {// Ok
-            if (this.books.PositionChain.Last is not null)
+            if (books.PositionChain.Last is not null)
             {
-                this.recordBufferPosition = this.books.PositionChain.Last.NextPosition;
+                return books.PositionChain.Last.NextPosition;
             }
             else
             {// Initial position
-                this.recordBufferPosition = 1;
+                return position;
             }
-
-            return;
         }
         else
         {
             var nextBook = toDelete.PositionLink.Next;
             if (nextBook is not null)
             {
-                this.recordBufferPosition = nextBook.NextPosition;
+                position = nextBook.NextPosition;
             }
             else
             {
-                this.recordBufferPosition = toDelete.NextPosition;
+                position = toDelete.NextPosition;
             }
         }
 
         while (true)
         {// Delete books that have lost journal consistency.
-            var first = this.books.PositionChain.First;
+            var first = books.PositionChain.First;
             if (first == null)
             {
-                return;
+                return position;
             }
 
             first.DeleteInternal();
             if (first == toDelete)
             {
-                return;
+                return position;
             }
         }
     }

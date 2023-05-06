@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
-using System.Buffers;
 using CrystalData.Filer;
 
 namespace CrystalData.Journal;
@@ -34,6 +32,8 @@ public partial class SimpleJournal
 
         internal string? Path => this.path;
 
+        // internal string? BackupPath => this.backupPath;
+
         internal bool IsSaved => this.path != null;
 
         internal bool IsInMemory => this.memoryOwner.Memory.Length > 0;
@@ -48,12 +48,13 @@ public partial class SimpleJournal
         private int length;
         private BookType bookType;
         private string? path;
+        private string? backupPath;
         private ulong hash;
         private ByteArrayPool.ReadOnlyMemoryOwner memoryOwner;
 
         #endregion
 
-        public static Book? TryAdd(SimpleJournal simpleJournal, PathInformation pathInformation)
+        public static Book? TryAdd(SimpleJournal simpleJournal, Book.GoshujinClass books, PathInformation pathInformation)
         {
             BookType bookType;
 
@@ -86,7 +87,7 @@ public partial class SimpleJournal
             book.bookType = BookType.Finished;
             book.hash = bookTitle.Hash;
 
-            book.Goshujin = simpleJournal.books;
+            book.Goshujin = books;
 
             // Delay setting the book type for sorting later.
             book.bookType = bookType;
@@ -188,6 +189,13 @@ public partial class SimpleJournal
             // Write (IsSaved -> true)
             this.path = PathHelper.CombineWithSlash(this.simpleJournal.SimpleJournalConfiguration.DirectoryConfiguration.Path, this.GetFileName());
             this.simpleJournal.rawFiler.WriteAndForget(this.path, 0, this.memoryOwner);
+
+            if (this.simpleJournal.SimpleJournalConfiguration.BackupDirectoryConfiguration is { } backupConfiguration &&
+                this.simpleJournal.backupFiler is not null)
+            {
+                this.backupPath ??= PathHelper.CombineWithSlash(backupConfiguration.Path, this.GetFileName());
+                this.simpleJournal.backupFiler.WriteAndForget(this.backupPath, 0, this.memoryOwner);
+            }
         }
 
         public bool TryReadBufferInternal(ulong position, Span<byte> destination, out int readLength)
@@ -233,14 +241,28 @@ public partial class SimpleJournal
             this.path = PathHelper.CombineWithSlash(this.simpleJournal.SimpleJournalConfiguration.DirectoryConfiguration.Path, this.GetFileName());
             var result = await this.simpleJournal.rawFiler.WriteAsync(this.path, 0, this.memoryOwner).ConfigureAwait(false);
 
+            if (this.simpleJournal.BackupConfiguration is not null &&
+                this.simpleJournal.backupFiler is not null)
+            {
+                this.backupPath ??= PathHelper.CombineWithSlash(this.simpleJournal.BackupConfiguration.Path, this.GetFileName());
+                _ = this.simpleJournal.backupFiler.WriteAsync(this.backupPath, 0, this.memoryOwner);
+            }
+
             return result.IsSuccess();
         }
 
         public void DeleteInternal()
         {
-            if (this.simpleJournal.rawFiler is { } rawFiler && this.path != null)
+            if (this.path != null && this.simpleJournal.rawFiler is { } rawFiler)
             {
-                this.simpleJournal.rawFiler.DeleteAndForget(this.path);
+                rawFiler.DeleteAndForget(this.path);
+            }
+
+            if (this.simpleJournal.backupFiler is not null &&
+                this.simpleJournal.BackupConfiguration is not null)
+            {
+                this.backupPath ??= PathHelper.CombineWithSlash(this.simpleJournal.BackupConfiguration.Path, this.GetFileName());
+                this.simpleJournal.backupFiler.DeleteAndForget(this.backupPath);
             }
 
             this.Goshujin = null;
