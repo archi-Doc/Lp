@@ -23,7 +23,7 @@ public class CrystalFiler
     private string extension; // string.Empty or ".extension"
 
     private object syncObject = new();
-    private SortedSet<Waypoint> waypoints = new();
+    private SortedSet<Waypoint>? waypoints;
 
     #endregion
 
@@ -69,6 +69,7 @@ public class CrystalFiler
 
         lock (this.syncObject)
         {
+            this.waypoints ??= new();
             this.waypoints.Add(waypoint);
         }
 
@@ -81,6 +82,10 @@ public class CrystalFiler
         if (this.rawFiler == null)
         {
             return Task.FromResult(CrystalResult.NotPrepared);
+        }
+        else if (this.waypoints == null)
+        {
+            return Task.FromResult(CrystalResult.Success);
         }
 
         var numberOfFiles = 1 + this.configuration.NumberOfBackups;
@@ -151,6 +156,10 @@ public class CrystalFiler
         {
             return Task.FromResult(CrystalResult.NotPrepared);
         }
+        else if (this.waypoints == null)
+        {
+            return Task.FromResult(CrystalResult.Success);
+        }
 
         List<string> pathList;
         lock (this.syncObject)
@@ -178,6 +187,11 @@ public class CrystalFiler
     {
         lock (this.syncObject)
         {
+            if (this.waypoints == null)
+            {
+                return Array.Empty<Waypoint>();
+            }
+
             return this.waypoints.Reverse().ToArray();
         }
     }
@@ -186,7 +200,7 @@ public class CrystalFiler
     {
         lock (this.syncObject)
         {
-            if (this.waypoints.Count == 0)
+            if (this.waypoints == null || this.waypoints.Count == 0)
             {
                 waypoint = default;
                 return false;
@@ -203,16 +217,20 @@ public class CrystalFiler
         {
             return;
         }
+        else if (this.waypoints != null)
+        {// Already loaded
+            return;
+        }
 
         var listResult = await this.rawFiler.ListAsync(this.prefix).ConfigureAwait(false); // "Folder/Data."
 
         lock (this.syncObject)
         {
-            this.waypoints.Clear();
+            this.waypoints ??= new();
 
             foreach (var x in listResult.Where(a => a.IsFile))
             {
-                var path = x.Path;
+                var path = x.Path; // {this.prefix}.waypoint{this.extension}
                 if (!string.IsNullOrEmpty(this.extension))
                 {
                     if (path.EndsWith(this.extension))
@@ -225,15 +243,19 @@ public class CrystalFiler
                     }
                 }
 
-                var index = path.LastIndexOf('.');
-                if (index < 0)
+                if (path.Length < (Waypoint.LengthInBase32 + this.prefix.Length))
                 {
                     continue;
                 }
 
-                index++;
-                path = path.Substring(index, path.Length - index);
-                if (Waypoint.TryParse(path, out var waypoint))
+                var waypointString = path.Substring(path.Length - Waypoint.LengthInBase32, Waypoint.LengthInBase32);
+                path = path.Substring(0, path.Length - Waypoint.LengthInBase32);
+                if (path.EndsWith(this.prefix))
+                {
+                    continue;
+                }
+
+                if (Waypoint.TryParse(waypointString, out var waypoint))
                 {// Data.Waypoint.Extension
                     this.waypoints.Add(waypoint);
                 }

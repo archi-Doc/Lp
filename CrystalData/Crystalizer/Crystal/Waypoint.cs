@@ -11,6 +11,12 @@ public readonly struct Waypoint : IEquatable<Waypoint>, IComparable<Waypoint>
     public const int Length = 24; // 8 + 4 + 4 + 8
     public static readonly Waypoint Invalid = default;
     public static readonly Waypoint Empty = new(1, 0, 0, 0);
+    public static readonly int LengthInBase32;
+
+    static Waypoint()
+    {
+        LengthInBase32 = Base32Sort.GetEncodedLength(Length);
+    }
 
     public Waypoint(ulong journalPosition, uint currentPlane, uint nextPlane, ulong hash)
     {
