@@ -5,8 +5,8 @@ namespace CrystalData;
 [TinyhandObject]
 public partial record SimpleStorageConfiguration : StorageConfiguration
 {
-    public SimpleStorageConfiguration(DirectoryConfiguration configuration)
-        : base(configuration)
+    public SimpleStorageConfiguration(DirectoryConfiguration configuration, DirectoryConfiguration? backupConfiguration = null)
+        : base(configuration, backupConfiguration)
     {
     }
 }

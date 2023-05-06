@@ -51,6 +51,4 @@ public partial record CrystalConfiguration
     public FileConfiguration? BackupFileConfiguration { get; init; }
 
     public StorageConfiguration StorageConfiguration { get; init; }
-
-    public StorageConfiguration? BackupStorageConfiguration { get; init; }
 }

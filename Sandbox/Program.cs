@@ -55,7 +55,7 @@ public class Program
                     new(
                         SavePolicy.Periodic,
                         new LocalFileConfiguration("Local/combined"),
-                        new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/Simple")))
+                        new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/Simple"), new LocalDirectoryConfiguration("Backup/Simple")))
                     {
                         BackupFileConfiguration = new LocalFileConfiguration("Backup/combined")
                     });
