@@ -8,15 +8,15 @@ public partial class SimpleJournal
 {
     private enum BookType
     {
-        Unfinished,
-        Finished,
+        Incomplete,
+        Complete,
     }
 
     [ValueLinkObject]
     private partial class Book
     {
         [Link(Type = ChainType.LinkedList, Name = "InMemory")]
-        [Link(Type = ChainType.LinkedList, Name = "Unfinished")]
+        [Link(Type = ChainType.LinkedList, Name = "Incomplete")]
         private Book(SimpleJournal simpleJournal)
         {
             this.simpleJournal = simpleJournal;
@@ -38,7 +38,7 @@ public partial class SimpleJournal
 
         internal bool IsInMemory => this.memoryOwner.Memory.Length > 0;
 
-        internal bool IsUnfinished => this.bookType == BookType.Unfinished;
+        internal bool IsIncomplete => this.bookType == BookType.Incomplete;
 
         private SimpleJournal simpleJournal;
 
@@ -58,17 +58,17 @@ public partial class SimpleJournal
         {
             BookType bookType;
 
-            // BookTitle.finished or BookTitle.unfinished
+            // BookTitle.complete or BookTitle.incomplete
             var fileName = System.IO.Path.GetFileName(pathInformation.Path);
-            if (fileName.EndsWith(FinishedSuffix))
+            if (fileName.EndsWith(CompleteSuffix))
             {
-                bookType = BookType.Finished;
-                fileName = fileName.Substring(0, fileName.Length - FinishedSuffix.Length);
+                bookType = BookType.Complete;
+                fileName = fileName.Substring(0, fileName.Length - CompleteSuffix.Length);
             }
-            else if (fileName.EndsWith(UnfinishedSuffix))
+            else if (fileName.EndsWith(IncompleteSuffix))
             {
-                bookType = BookType.Unfinished;
-                fileName = fileName.Substring(0, fileName.Length - UnfinishedSuffix.Length);
+                bookType = BookType.Incomplete;
+                fileName = fileName.Substring(0, fileName.Length - IncompleteSuffix.Length);
             }
             else
             {
@@ -84,7 +84,7 @@ public partial class SimpleJournal
             book.position = bookTitle.JournalPosition;
             book.length = (int)pathInformation.Length;
             book.path = pathInformation.Path;
-            book.bookType = BookType.Finished;
+            book.bookType = BookType.Complete;
             book.hash = bookTitle.Hash;
 
             book.Goshujin = books;
@@ -100,7 +100,7 @@ public partial class SimpleJournal
             var book = new Book(simpleJournal);
             book.position = position;
             book.length = dataLength;
-            book.bookType = BookType.Unfinished;
+            book.bookType = BookType.Incomplete;
 
             var owner = ByteArrayPool.Default.Rent(dataLength);
             data.AsSpan(0, dataLength).CopyTo(owner.ByteArray.AsSpan());
@@ -120,13 +120,13 @@ public partial class SimpleJournal
             var book = new Book(simpleJournal);
             book.position = start;
             book.length = (int)(end - start);
-            if (book.length < (simpleJournal.SimpleJournalConfiguration.FinishedBookLength / 2))
-            {// Length < (FinishedBookLength/2) -> Unfinished
-                book.bookType = BookType.Unfinished;
+            if (book.length < (simpleJournal.SimpleJournalConfiguration.CompleteBookLength / 2))
+            {// Length < (CompleteBookLength/2) -> Incomplete
+                book.bookType = BookType.Incomplete;
             }
             else
-            {// Length >= (FinishedBookLength/2) -> Finished
-                book.bookType = BookType.Finished;
+            {// Length >= (CompleteBookLength/2) -> Complete
+                book.bookType = BookType.Complete;
             }
 
             book.memoryOwner = toBeMoved;
@@ -286,17 +286,17 @@ public partial class SimpleJournal
             return true;
         }
 
-        protected bool UnfinishedLinkPredicate()
-            => this.IsUnfinished;
+        protected bool IncompleteLinkPredicate()
+            => this.IsIncomplete;
 
-        protected void UnfinishedLinkAdded()
+        protected void IncompleteLinkAdded()
         {
-            this.simpleJournal.unfinishedSize += (ulong)this.length;
+            this.simpleJournal.incompleteSize += (ulong)this.length;
         }
 
-        protected void UnfinishedLinkRemoved()
+        protected void IncompleteLinkRemoved()
         {
-            this.simpleJournal.unfinishedSize -= (ulong)this.length;
+            this.simpleJournal.incompleteSize -= (ulong)this.length;
         }
 
         protected bool InMemoryLinkPredicate()
@@ -316,7 +316,7 @@ public partial class SimpleJournal
         private string GetFileName()
         {
             var bookTitle = new BookTitle(this.position, this.hash);
-            return bookTitle.ToBase32() + (this.bookType == BookType.Finished ? FinishedSuffix : UnfinishedSuffix);
+            return bookTitle.ToBase32() + (this.bookType == BookType.Complete ? CompleteSuffix : IncompleteSuffix);
         }
     }
 }

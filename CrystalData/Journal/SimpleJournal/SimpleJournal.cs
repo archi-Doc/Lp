@@ -10,8 +10,8 @@ namespace CrystalData.Journal;
 
 public partial class SimpleJournal : IJournal
 {
-    public const string FinishedSuffix = ".finished";
-    public const string UnfinishedSuffix = ".unfinished";
+    public const string CompleteSuffix = ".complete";
+    public const string IncompleteSuffix = ".incomplete";
     public const int RecordBufferLength = 1024 * 1024 * 1; // 1MB
     private const int MergeThresholdNumber = 100;
 
@@ -51,7 +51,7 @@ public partial class SimpleJournal : IJournal
     private object syncBooks = new();
     private Book.GoshujinClass books = new();
     private int memoryUsage;
-    private ulong unfinishedSize;
+    private ulong incompleteSize;
 
     internal ILogger logger { get; private set; }
 
@@ -314,8 +314,8 @@ Load:
                 return;
             }
 
-            if (this.books.UnfinishedChain.Count >= MergeThresholdNumber ||
-            this.unfinishedSize >= (ulong)this.SimpleJournalConfiguration.FinishedBookLength)
+            if (this.books.IncompleteChain.Count >= MergeThresholdNumber ||
+            this.incompleteSize >= (ulong)this.SimpleJournalConfiguration.CompleteBookLength)
             {
                 merge = true;
             }
@@ -333,9 +333,9 @@ Load:
 
     internal async Task Merge(bool forceMerge)
     {
-        var book = this.books.UnfinishedChain.Last;
-        var unfinishedCount = 0;
-        var unfinishedLength = 0;
+        var book = this.books.IncompleteChain.Last;
+        var incompleteCount = 0;
+        var incompleteLength = 0;
         var lastLength = 0;
         ulong start, end;
 
@@ -343,32 +343,32 @@ Load:
         {
             while (book != null)
             {
-                unfinishedCount++;
-                unfinishedLength += book.Length;
-                if (unfinishedLength <= this.SimpleJournalConfiguration.FinishedBookLength)
+                incompleteCount++;
+                incompleteLength += book.Length;
+                if (incompleteLength <= this.SimpleJournalConfiguration.CompleteBookLength)
                 {
-                    lastLength = unfinishedLength;
+                    lastLength = incompleteLength;
                 }
 
-                book = book.UnfinishedLink.Previous;
+                book = book.IncompleteLink.Previous;
             }
 
-            Debug.Assert(unfinishedCount == this.books.UnfinishedChain.Count);
+            Debug.Assert(incompleteCount == this.books.IncompleteChain.Count);
 
             if (!forceMerge)
             {
-                if (unfinishedCount < MergeThresholdNumber ||
-                    unfinishedLength < this.SimpleJournalConfiguration.FinishedBookLength)
+                if (incompleteCount < MergeThresholdNumber ||
+                    incompleteLength < this.SimpleJournalConfiguration.CompleteBookLength)
                 {
                     return;
                 }
             }
 
-            start = this.books.UnfinishedChain.First!.Position;
+            start = this.books.IncompleteChain.First!.Position;
             end = start + (ulong)lastLength;
         }
 
-        if (unfinishedCount < 2)
+        if (incompleteCount < 2)
         {
             return;
         }
@@ -415,9 +415,9 @@ Load:
 
         foreach (var x in books)
         {
-            if (x.IsUnfinished)
+            if (x.IsIncomplete)
             {
-                books.UnfinishedChain.AddLast(x);
+                books.IncompleteChain.AddLast(x);
             }
         }
 

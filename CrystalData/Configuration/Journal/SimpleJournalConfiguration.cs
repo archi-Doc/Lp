@@ -37,7 +37,7 @@ public partial record SimpleJournalConfiguration : JournalConfiguration
     public int MaxRecordLength { get; protected set; } = 1024 * 16; // 16 KB
 
     [IgnoreMember]
-    public int FinishedBookLength { get; protected set; } = 1024 * 1024 * 16; // 16 MB
+    public int CompleteBookLength { get; protected set; } = 1024 * 1024 * 16; // 16 MB
 
     [IgnoreMember]
     public int MaxMemoryCapacity { get; protected set; } = 1024 * 1024 * 64; // 64 MB
