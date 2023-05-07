@@ -28,7 +28,7 @@ public class CrystalControl
                 context.AddSingleton<CrystalizerOptions>();
                 context.AddSingleton<Crystalizer>();
                 context.AddSingleton<IStorageKey, StorageKey>();
-                context.TryAddSingleton<ICrystalDataQuery, CrystalDataQueryImpl>();
+                context.TryAddSingleton<ICrystalDataQuery, CrystalDataQueryDefault>();
 
                 // Crystalizer
                 var crystalContext = new UnitCrystalContext();

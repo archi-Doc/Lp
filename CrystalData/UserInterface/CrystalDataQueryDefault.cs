@@ -2,7 +2,7 @@
 
 namespace CrystalData.UserInterface;
 
-internal class CrystalDataQueryImpl : ICrystalDataQuery
+internal class CrystalDataQueryDefault : ICrystalDataQuery
 {
     async Task<AbortOrContinue> ICrystalDataQuery.NoCheckFile()
     {

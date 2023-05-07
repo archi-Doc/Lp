@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using CrystalData.Filer;
+
 namespace CrystalData;
 
 public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
@@ -12,7 +14,6 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
 
         this.crystal = new CrystalObject<TData>(this.Crystalizer);
         this.storageGroup = new(crystalizer);
-        this.logger = crystalizer.UnitLogger.GetLogger<IBigCrystal<TData>>();
     }
 
     #region FieldAndProperty
@@ -20,7 +21,6 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
     private ICrystal<TData> crystal;
     private SemaphoreLock semaphore = new();
     private StorageGroup storageGroup;
-    private ILogger logger;
     private DateTime lastSaveTime;
 
     #endregion
@@ -151,6 +151,16 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
 
     #endregion
 
+    public void Status()
+    {
+        var logger = this.Crystalizer.UnitLogger.GetLogger<IBigCrystal<TData>>();
+        var info = this.StorageGroup.GetInformation();
+        foreach (var x in info)
+        {
+            logger.TryGet()?.Log(x);
+        }
+    }
+
     private async Task<CrystalResult> PrepareAndLoadInternal(CrystalPrepare prepare)
     {// this.semaphore.Lock()
         CrystalResult result;
@@ -169,12 +179,6 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
         }
 
         this.Object.Initialize(this, null, true);
-
-        var info = this.StorageGroup.GetInformation();
-        foreach (var x in info)
-        {
-            this.logger.TryGet()?.Log(x);
-        }
 
         this.Prepared = true;
         return result;

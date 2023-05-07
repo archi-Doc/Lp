@@ -28,7 +28,7 @@ internal class CrystalCheck
         }
         catch
         {
-            this.logger.TryGet(LogLevel.Error)?.Log($"Could not read check file: {this.filePath}");
+            this.logger.TryGet(LogLevel.Error)?.Log($"Could not load check file: {this.filePath}");
         }
     }
 

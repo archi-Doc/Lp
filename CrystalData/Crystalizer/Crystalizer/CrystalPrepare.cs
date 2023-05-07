@@ -21,7 +21,7 @@ public class CrystalPrepare
 
     public CrystalPrepareQueryDelegate QueryDelegate { get; init; }
 
-    public ValueTask<AbortOrContinue> Query(PathConfiguration configuration, CrystalResult result)
+    public ValueTask<AbortOrContinue> QueryObsolete(PathConfiguration configuration, CrystalResult result)
         => this.QueryDelegate(configuration, result);
 
     public PrepareParam ToParam<TData>(Crystalizer crystalizer)

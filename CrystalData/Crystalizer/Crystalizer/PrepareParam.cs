@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using CrystalData.UserInterface;
+
 namespace CrystalData;
 
 public class PrepareParam : CrystalPrepare
@@ -25,6 +27,8 @@ public class PrepareParam : CrystalPrepare
         => new DataAndConfigurationIdentifier(this.DataTypeName, configuration);*/
 
     public Crystalizer Crystalizer { get; }
+
+    public ICrystalDataQuery Query => this.Crystalizer.Query;
 
     public Type DataType { get; }
 

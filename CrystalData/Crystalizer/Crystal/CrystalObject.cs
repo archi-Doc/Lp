@@ -343,7 +343,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         var data = await filer.LoadLatest().ConfigureAwait(false);
         if (data.Result.IsFailure)
         {
-            if (await param.Query(configuration.FileConfiguration, data.Result.Result).ConfigureAwait(false) == AbortOrContinue.Abort)
+            if (await param.QueryObsolete(configuration.FileConfiguration, data.Result.Result).ConfigureAwait(false) == AbortOrContinue.Abort)
             {
                 return (data.Result.Result, default, default);
             }
@@ -385,7 +385,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         }
         catch
         {
-            if (await param.Query(configuration.FileConfiguration, CrystalResult.DeserializeError).ConfigureAwait(false) == AbortOrContinue.Abort)
+            if (await param.QueryObsolete(configuration.FileConfiguration, CrystalResult.DeserializeError).ConfigureAwait(false) == AbortOrContinue.Abort)
             {
                 return (CrystalResult.DeserializeError, default, default);
             }

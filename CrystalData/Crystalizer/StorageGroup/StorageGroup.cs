@@ -271,7 +271,7 @@ public sealed class StorageGroup
         var dataResult = await this.storageGroupFiler.ReadAsync(0, -1).ConfigureAwait(false);
         if (dataResult.IsFailure)
         {
-            if (await param.Query(this.storageGroupConfiguration, dataResult.Result).ConfigureAwait(false) == AbortOrContinue.Abort)
+            if (await param.QueryObsolete(this.storageGroupConfiguration, dataResult.Result).ConfigureAwait(false) == AbortOrContinue.Abort)
             {
                 return dataResult.Result;
             }
@@ -288,7 +288,7 @@ public sealed class StorageGroup
         }
         catch
         {
-            if (await param.Query(this.storageGroupConfiguration, CrystalResult.DeserializeError).ConfigureAwait(false) == AbortOrContinue.Abort)
+            if (await param.QueryObsolete(this.storageGroupConfiguration, CrystalResult.DeserializeError).ConfigureAwait(false) == AbortOrContinue.Abort)
             {
                 return CrystalResult.DeserializeError;
             }
@@ -304,7 +304,7 @@ public sealed class StorageGroup
             var result = await x.PrepareAndCheck(this, param, false).ConfigureAwait(false);
             if (result != CrystalResult.Success)
             {
-                if (await param.Query(this.storageGroupConfiguration, result).ConfigureAwait(false) == AbortOrContinue.Abort)
+                if (await param.QueryObsolete(this.storageGroupConfiguration, result).ConfigureAwait(false) == AbortOrContinue.Abort)
                 {
                     return CrystalResult.FileOperationError;
                 }
