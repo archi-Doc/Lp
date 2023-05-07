@@ -7,7 +7,7 @@ internal class CrystalDataQueryDefault : ICrystalDataQuery
     async Task<AbortOrContinue> ICrystalDataQuery.NoCheckFile()
     {
         this.WriteLine("Check file not found.");
-        var result = await this.RequestYesOrNo($"Is this the first launch, or do you want to force a launch without check file?").ConfigureAwait(false);
+        var result = await this.RequestYesOrNo($"Do you want to force a launch? (enter 'y' if this is the first launch)").ConfigureAwait(false);
         return result.ToAbortOrContinue();
     }
 

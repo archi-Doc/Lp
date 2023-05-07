@@ -24,11 +24,12 @@ internal class CrystalCheck
             if (data != null)
             {
                 this.checkData = data;
+                this.SuccessfullyLoaded = true;
             }
         }
         catch
         {
-            this.logger.TryGet(LogLevel.Error)?.Log($"Could not load check file: {this.filePath}");
+            this.logger.TryGet(LogLevel.Error)?.Log($"Could not load the check file: {this.filePath}");
         }
     }
 
@@ -40,9 +41,11 @@ internal class CrystalCheck
         }
         catch
         {
-            this.logger.TryGet(LogLevel.Error)?.Log($"Could not write check file: {this.filePath}");
+            this.logger.TryGet(LogLevel.Error)?.Log($"Could not write the check file: {this.filePath}");
         }
     }
+
+    public bool SuccessfullyLoaded { get; private set; }
 
     private ILogger logger;
     private string filePath = string.Empty;

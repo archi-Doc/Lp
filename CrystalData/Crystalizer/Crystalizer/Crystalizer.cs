@@ -54,6 +54,7 @@ public class Crystalizer
         this.logger = logger;
         this.task = new(this);
         this.Query = query;
+        this.queryContinue = new CrystalDataQueryContinue();
         this.UnitLogger = unitLogger;
         this.CrystalCheck = new(this.UnitLogger.GetLogger<CrystalCheck>());
         this.CrystalCheck.Load(Path.Combine(this.RootDirectory, CheckFile));
@@ -104,6 +105,7 @@ public class Crystalizer
 
     internal CrystalCheck CrystalCheck { get; }
 
+    private ICrystalDataQuery queryContinue;
     private CrystalizerConfiguration configuration;
     private ILogger logger;
     private CrystalizerTask task;
@@ -313,6 +315,15 @@ public class Crystalizer
     public async Task<CrystalResult> PrepareAndLoadAll(CrystalPrepare? param = null)
     {
         param ??= CrystalPrepare.ContinueAll;
+
+        // Check file
+        if (this.CrystalCheck.SuccessfullyLoaded)
+        {
+            if (await this.Query.NoCheckFile() == AbortOrContinue.Abort)
+            {
+                return CrystalResult.NotFound;
+            }
+        }
 
         // Journal
         var result = await this.PrepareJournal(param).ConfigureAwait(false);
