@@ -20,6 +20,11 @@ public class CrystalControl
         public Builder()
             : base()
         {
+            this.Preload(context =>
+            {
+                this.LoadStrings();
+            });
+
             this.Configure(context =>
             {
                 // Main services
@@ -57,6 +62,19 @@ public class CrystalControl
         {
             this.crystalActions.Add(@delegate);
             return this;
+        }
+
+        private void LoadStrings()
+        {// Load strings
+            var asm = System.Reflection.Assembly.GetExecutingAssembly();
+            try
+            {
+                HashedString.LoadAssembly(null, asm, "UserInterface.Strings.strings-en.tinyhand");
+                HashedString.LoadAssembly("ja", asm, "UserInterface.Strings.strings-ja.tinyhand");
+            }
+            catch
+            {
+            }
         }
 
         private List<Action<IUnitCrystalContext>> crystalActions = new();

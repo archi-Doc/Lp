@@ -1,0 +1,6 @@
+// identifier = "string" /* null: Use the default value. */
+
+CrystalDataQueryDefault = {
+  NoCheckFile = "Check file not found."
+  NoCheckFileQuery = "Do you want to force a launch? (enter 'y' if this is the first launch)"
+}

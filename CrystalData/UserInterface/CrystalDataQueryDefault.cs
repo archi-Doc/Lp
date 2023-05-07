@@ -6,18 +6,24 @@ internal class CrystalDataQueryDefault : ICrystalDataQuery
 {
     async Task<AbortOrContinue> ICrystalDataQuery.NoCheckFile()
     {
-        this.WriteLine("Check file not found.");
-        var result = await this.RequestYesOrNo($"Do you want to force a launch? (enter 'y' if this is the first launch)").ConfigureAwait(false);
+        this.WriteLine(CrystalDataHashed.CrystalDataQueryDefault.NoCheckFile);
+        var result = await this.RequestYesOrNo(CrystalDataHashed.CrystalDataQueryDefault.NoCheckFileQuery).ConfigureAwait(false);
         return result.ToAbortOrContinue();
     }
 
     #region Misc
 
-    private void Write(string? message = null)
+    private void WriteRaw(string? message = null)
         => Console.Write(message);
 
-    private void WriteLine(string? message = null)
+    private void WriteLineRaw(string? message = null)
         => Console.WriteLine(message);
+
+    private void Write(ulong hashed)
+        => this.WriteRaw(HashedString.Get(hashed));
+
+    private void WriteLine(ulong hashed)
+        => this.WriteLineRaw(HashedString.Get(hashed));
 
     private string? ReadLine()
     {
@@ -31,11 +37,12 @@ internal class CrystalDataQueryDefault : ICrystalDataQuery
         }
     }
 
-    private async Task<bool?> RequestYesOrNoInternal(string? description)
+    private async Task<bool?> RequestYesOrNoInternal(ulong hashed)
     {
+        var description = HashedString.Get(hashed);
         if (!string.IsNullOrEmpty(description))
         {
-            this.WriteLine(description + " [Y/n]");
+            this.WriteLineRaw(description + " [Y/n]");
         }
 
         while (true)
@@ -43,7 +50,7 @@ internal class CrystalDataQueryDefault : ICrystalDataQuery
             var input = Console.ReadLine();
             if (input == null)
             {// Ctrl+C
-                this.WriteLine();
+                this.WriteLineRaw();
                 return null; // throw new PanicException();
             }
 
@@ -58,13 +65,13 @@ internal class CrystalDataQueryDefault : ICrystalDataQuery
             }
             else
             {
-                this.WriteLine("[Y/n]");
+                this.WriteLineRaw("[Y/n]");
             }
         }
     }
 
-    private Task<bool?> RequestYesOrNo(string? description)
-       => this.RequestYesOrNoInternal(description);
+    private Task<bool?> RequestYesOrNo(ulong hashed)
+       => this.RequestYesOrNoInternal(hashed);
 
     #endregion
 }

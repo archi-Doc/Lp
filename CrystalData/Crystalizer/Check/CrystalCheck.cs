@@ -35,6 +35,11 @@ internal class CrystalCheck
 
     public void Save()
     {
+        if (!this.SuccessfullyLoaded)
+        {
+            return;
+        }
+
         try
         {
             File.WriteAllBytes(this.filePath, TinyhandSerializer.Serialize(this.checkData));
@@ -45,7 +50,7 @@ internal class CrystalCheck
         }
     }
 
-    public bool SuccessfullyLoaded { get; private set; }
+    public bool SuccessfullyLoaded { get; internal set; }
 
     private ILogger logger;
     private string filePath = string.Empty;

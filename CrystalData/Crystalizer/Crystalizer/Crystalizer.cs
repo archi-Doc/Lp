@@ -317,11 +317,15 @@ public class Crystalizer
         param ??= CrystalPrepare.ContinueAll;
 
         // Check file
-        if (this.CrystalCheck.SuccessfullyLoaded)
+        if (!this.CrystalCheck.SuccessfullyLoaded)
         {
             if (await this.Query.NoCheckFile() == AbortOrContinue.Abort)
             {
                 return CrystalResult.NotFound;
+            }
+            else
+            {
+                this.CrystalCheck.SuccessfullyLoaded = true;
             }
         }
 
