@@ -1,13 +1,29 @@
-﻿namespace Sandbox;
+﻿using Tinyhand.IO;
+
+namespace Sandbox;
 
 [TinyhandObject]
-internal partial class CrystalClass : IJournalObject
+internal partial class CrystalClass : IJournalObject, ICrystalData
 {
     [Key(0)]
     public int Id { get; set; }
 
+    [IgnoreMember]
+    public ICrystal? Crystal { get; set; }
+
+    [IgnoreMember]
+    public uint CurrentPlane { get; set; }
+
     public override string ToString()
         => $"Crystal class {this.Id}";
+
+    void ICrystalData.ReadRecord(ref TinyhandReader reader)
+    {
+    }
+
+    void ICrystalData.WriteLocator(ref TinyhandWriter writer)
+    {
+    }
 }
 
 [TinyhandObject]
