@@ -321,7 +321,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         {
             if (loadResult.Waypoint.JournalPosition > journal.GetCurrentPosition())
             {
-                var query = await param.Query.InconsistentJournal().ConfigureAwait(false);
+                var query = await param.Query.InconsistentJournal(this.CrystalConfiguration.FileConfiguration.Path).ConfigureAwait(false);
                 if (query == AbortOrContinue.Abort)
                 {
                     return CrystalResult.CorruptedData;

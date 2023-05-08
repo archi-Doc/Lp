@@ -4,38 +4,32 @@ namespace CrystalData.UserInterface;
 
 internal class CrystalDataQueryDefault : ICrystalDataQuery
 {
-    private enum YesOrNo
-    {
-        Invalid,
-        Yes,
-        No,
-    }
+    #region FieldAndProperty
 
-    private enum YesOrNoOrYesToAll
-    {
-        Invalid,
-        Yes,
-        No,
-        YesToAll,
-    }
+    private Dictionary<ulong, YesOrNo> yesOrNoCache = new();
+
+    #endregion
 
     async Task<AbortOrContinue> ICrystalDataQuery.NoCheckFile()
     {
-        this.WriteLine(CrystalDataHashed.CrystalDataQueryDefault.NoCheckFile);
-        var result = await this.RequestYesOrNo(CrystalDataHashed.CrystalDataQueryDefault.NoCheckFileQuery).ConfigureAwait(false);
+        var result = await this.RequestYesOrNo(CrystalDataHashed.CrystalDataQueryDefault.NoCheckFile).ConfigureAwait(false);
         return result.ToAbortOrContinue();
     }
 
-    async Task<AbortOrContinue> ICrystalDataQuery.InconsistentJournal()
+    async Task<AbortOrContinue> ICrystalDataQuery.InconsistentJournal(string path)
     {// yes/no/all
-        var response = this.GetCache();
-        if (response == YesOrNo.Yes)
+        var hash = CrystalDataHashed.CrystalDataQueryDefault.InconsistentJournal;
+        if (this.yesOrNoCache.TryGetValue(hash, out var response))
         {
-            return AbortOrContinue.Continue;
+            return response.ToAbortOrContinue();
         }
 
-        response = await this.RequestYesOrNo(CrystalDataHashed.CrystalDataQueryDefault.InconsistentJournal).ConfigureAwait(false);
-        this.Cache(response);
+        response = await this.RequestYesOrNo(CrystalDataHashed.CrystalDataQueryDefault.InconsistentJournal, path).ConfigureAwait(false);
+        if (response == YesOrNo.Yes)
+        {
+            this.yesOrNoCache[hash] = response;
+        }
+
         return response.ToAbortOrContinue();
     }
 
@@ -65,9 +59,9 @@ internal class CrystalDataQueryDefault : ICrystalDataQuery
         }
     }
 
-    private async Task<bool?> RequestYesOrNoInternal(ulong hashed)
+    private async Task<YesOrNo> RequestYesOrNoInternal(string message)
     {
-        var description = HashedString.Get(hashed);
+        var description = message;
         if (!string.IsNullOrEmpty(description))
         {
             this.WriteLineRaw(description + " [Y/n]");
@@ -79,17 +73,17 @@ internal class CrystalDataQueryDefault : ICrystalDataQuery
             if (input == null)
             {// Ctrl+C
                 this.WriteLineRaw();
-                return null; // throw new PanicException();
+                return YesOrNo.Invalid; // throw new PanicException();
             }
 
             input = input.CleanupInput().ToLower();
             if (input == "y" || input == "yes")
             {
-                return true;
+                return YesOrNo.Yes;
             }
             else if (input == "n" || input == "no")
             {
-                return false;
+                return YesOrNo.No;
             }
             else
             {
@@ -98,8 +92,11 @@ internal class CrystalDataQueryDefault : ICrystalDataQuery
         }
     }
 
-    private Task<bool?> RequestYesOrNo(ulong hashed)
-       => this.RequestYesOrNoInternal(hashed);
+    private Task<YesOrNo> RequestYesOrNo(ulong hash)
+       => this.RequestYesOrNoInternal(HashedString.Get(hash));
+
+    private Task<YesOrNo> RequestYesOrNo(ulong hash, object obj1)
+       => this.RequestYesOrNoInternal(string.Format(HashedString.Get(hash), obj1));
 
     #endregion
 }

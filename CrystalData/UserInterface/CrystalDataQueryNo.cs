@@ -7,6 +7,6 @@ internal class CrystalDataQueryNo : ICrystalDataQuery
     Task<AbortOrContinue> ICrystalDataQuery.NoCheckFile()
         => Task.FromResult(AbortOrContinue.Continue);
 
-    Task<AbortOrContinue> ICrystalDataQuery.InconsistentJournal()
+    Task<AbortOrContinue> ICrystalDataQuery.InconsistentJournal(string path)
         => Task.FromResult(AbortOrContinue.Continue);
 }
