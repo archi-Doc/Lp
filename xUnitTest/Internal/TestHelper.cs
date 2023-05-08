@@ -36,7 +36,7 @@ public static class TestHelper
         var crystalizer = unit.Context.ServiceProvider.GetRequiredService<Crystalizer>();
 
         var crystal = crystalizer.GetBigCrystal<LpData>();
-        await crystal.PrepareAndLoad(new());
+        await crystal.PrepareAndLoad(false);
         return crystal;
     }
 
@@ -50,9 +50,7 @@ public static class TestHelper
     public static async Task StopAndStartCrystal(IBigCrystal crystal)
     {
         await crystal.Crystalizer.SaveAll(true);
-        // await crystal.Save(true);
         crystal.Crystalizer.Himo.MemoryUsage.Is(0);
-        // await crystal.StartAsync(new()); // tempcode
     }
 
     public static async Task<IBigCrystal<MergerData>> CreateAndStartMerger(int maxParent)
@@ -81,7 +79,7 @@ public static class TestHelper
         var crystalizer = unit.Context.ServiceProvider.GetRequiredService<Crystalizer>();
 
         var crystal = crystalizer.GetBigCrystal<MergerData>();
-        await crystal.PrepareAndLoad(CrystalPrepare.ContinueAll);
+        await crystal.PrepareAndLoad(false);
         return crystal;
     }
 

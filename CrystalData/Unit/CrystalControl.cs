@@ -8,6 +8,7 @@ global using Arc.Unit;
 global using Tinyhand;
 global using ValueLink;
 using CrystalData.Storage;
+using CrystalData.UserInterface;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace CrystalData;
@@ -19,6 +20,11 @@ public class CrystalControl
         public Builder()
             : base()
         {
+            this.Preload(context =>
+            {
+                this.LoadStrings();
+            });
+
             this.Configure(context =>
             {
                 // Main services
@@ -26,8 +32,8 @@ public class CrystalControl
                 context.AddSingleton<CrystalizerConfiguration>();
                 context.AddSingleton<CrystalizerOptions>();
                 context.AddSingleton<Crystalizer>();
-                // context.AddSingleton<CrystalCheck>();
                 context.AddSingleton<IStorageKey, StorageKey>();
+                context.TryAddSingleton<ICrystalDataQuery, CrystalDataQueryDefault>();
 
                 // Crystalizer
                 var crystalContext = new UnitCrystalContext();
@@ -56,6 +62,19 @@ public class CrystalControl
         {
             this.crystalActions.Add(@delegate);
             return this;
+        }
+
+        private void LoadStrings()
+        {// Load strings
+            var asm = System.Reflection.Assembly.GetExecutingAssembly();
+            try
+            {
+                HashedString.LoadAssembly(null, asm, "UserInterface.Strings.strings-en.tinyhand");
+                HashedString.LoadAssembly("ja", asm, "UserInterface.Strings.strings-ja.tinyhand");
+            }
+            catch
+            {
+            }
         }
 
         private List<Action<IUnitCrystalContext>> crystalActions = new();

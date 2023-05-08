@@ -6,9 +6,9 @@ namespace CrystalData.Filer;
 
 public class CrystalFiler
 {
-    private class Destination
+    private class Output
     {
-        public Destination(CrystalFiler crystalFiler, FileConfiguration fileConfiguration)
+        public Output(CrystalFiler crystalFiler, FileConfiguration fileConfiguration)
         {
             this.crystalFiler = crystalFiler;
             this.fileConfiguration = fileConfiguration;
@@ -270,8 +270,8 @@ public class CrystalFiler
 
     private Crystalizer crystalizer;
     private CrystalConfiguration configuration;
-    private Destination? main;
-    private Destination? backup;
+    private Output? main;
+    private Output? backup;
 
     #endregion
 
@@ -279,7 +279,7 @@ public class CrystalFiler
     {
         this.configuration = configuration;
 
-        // Destination
+        // Output
         this.main ??= new(this, this.configuration.FileConfiguration);
         var result = await this.main.PrepareAndCheck(param, this.configuration).ConfigureAwait(false);
         if (result.IsFailure())

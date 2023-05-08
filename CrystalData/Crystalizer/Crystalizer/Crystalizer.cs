@@ -7,6 +7,7 @@ using CrystalData.Check;
 using CrystalData.Filer;
 using CrystalData.Journal;
 using CrystalData.Storage;
+using CrystalData.UserInterface;
 
 #pragma warning disable SA1204
 
@@ -37,7 +38,7 @@ public class Crystalizer
         private Crystalizer crystalizer;
     }
 
-    public Crystalizer(CrystalizerConfiguration configuration, CrystalizerOptions options, ILogger logger, UnitLogger unitLogger, IStorageKey storageKey)
+    public Crystalizer(CrystalizerConfiguration configuration, CrystalizerOptions options, ICrystalDataQuery query, ILogger<Crystalizer> logger, UnitLogger unitLogger, IStorageKey storageKey)
     {
         this.configuration = configuration;
         this.EnableLogger = options.EnableLogger;
@@ -52,6 +53,8 @@ public class Crystalizer
 
         this.logger = logger;
         this.task = new(this);
+        this.Query = query;
+        this.QueryContinue = new CrystalDataQueryNo();
         this.UnitLogger = unitLogger;
         this.CrystalCheck = new(this.UnitLogger.GetLogger<CrystalCheck>());
         this.CrystalCheck.Load(Path.Combine(this.RootDirectory, CheckFile));
@@ -95,6 +98,10 @@ public class Crystalizer
     public IStorageKey StorageKey { get; }
 
     public HimoGoshujinClass Himo { get; }
+
+    internal ICrystalDataQuery Query { get; }
+
+    internal ICrystalDataQuery QueryContinue { get; }
 
     internal UnitLogger UnitLogger { get; }
 
@@ -233,7 +240,7 @@ public class Crystalizer
         }
 
         var filer = this.ResolveFiler(configuration);
-        var result = await filer.PrepareAndCheck(PrepareParam.ContinueAll<Crystalizer>(this), configuration).ConfigureAwait(false);
+        var result = await filer.PrepareAndCheck(PrepareParam.NoQuery<Crystalizer>(this), configuration).ConfigureAwait(false);
         if (result.IsFailure())
         {
             return result;
@@ -248,7 +255,7 @@ public class Crystalizer
     public async Task<CrystalResult> LoadConfigurations(FileConfiguration configuration)
     {
         var filer = this.ResolveFiler(configuration);
-        var result = await filer.PrepareAndCheck(PrepareParam.ContinueAll<Crystalizer>(this), configuration).ConfigureAwait(false);
+        var result = await filer.PrepareAndCheck(PrepareParam.NoQuery<Crystalizer>(this), configuration).ConfigureAwait(false);
         if (result.IsFailure())
         {
             return result;
@@ -306,12 +313,23 @@ public class Crystalizer
         }
     }
 
-    public async Task<CrystalResult> PrepareAndLoadAll(CrystalPrepare? param = null)
+    public async Task<CrystalResult> PrepareAndLoadAll(bool useQuery = true)
     {
-        param ??= CrystalPrepare.ContinueAll;
+        // Check file
+        if (!this.CrystalCheck.SuccessfullyLoaded)
+        {
+            if (await this.Query.NoCheckFile() == AbortOrContinue.Abort)
+            {
+                return CrystalResult.NotFound;
+            }
+            else
+            {
+                this.CrystalCheck.SuccessfullyLoaded = true;
+            }
+        }
 
         // Journal
-        var result = await this.PrepareJournal(param).ConfigureAwait(false);
+        var result = await this.PrepareJournal(useQuery).ConfigureAwait(false);
         if (result.IsFailure())
         {
             return result;
@@ -319,14 +337,19 @@ public class Crystalizer
 
         // Crystals
         var crystals = this.crystals.Keys.ToArray();
+        var list = new List<string>();
         foreach (var x in crystals)
         {
-            result = await x.PrepareAndLoad(param).ConfigureAwait(false);
+            result = await x.PrepareAndLoad(useQuery).ConfigureAwait(false);
             if (result.IsFailure())
             {
                 return result;
             }
+
+            list.Add(x.Object.GetType().Name);
         }
+
+        this.logger.TryGet()?.Log($"Prepared - {string.Join(", ", list)}");
 
         return CrystalResult.Success;
     }
@@ -372,7 +395,7 @@ public class Crystalizer
 
         await Task.WhenAll(tasks).ConfigureAwait(false);
 
-        this.logger.TryGet()?.Log($"Crystal stop - {this.Himo.MemoryUsage}");
+        this.logger.TryGet()?.Log($"Terminated - {this.Himo.MemoryUsage}");
     }
 
     public async Task<CrystalResult[]> DeleteAll()
@@ -585,7 +608,7 @@ public class Crystalizer
         return bigCrystalConfiguration;
     }*/
 
-    private async Task<CrystalResult> PrepareJournal(CrystalPrepare prepare)
+    private async Task<CrystalResult> PrepareJournal(bool useQuery = true)
     {
         if (this.Journal == null)
         {// New journal
@@ -605,7 +628,7 @@ public class Crystalizer
             }
         }
 
-        return await this.Journal.Prepare(prepare.ToParam<Crystalizer>(this)).ConfigureAwait(false);
+        return await this.Journal.Prepare(PrepareParam.New<Crystalizer>(this, useQuery)).ConfigureAwait(false);
     }
 
     private Task PeriodicSave()

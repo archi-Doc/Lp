@@ -21,7 +21,11 @@ internal class TestClass0
         await this.crystalizer.LoadConfigurations(new LocalFileConfiguration("Local/Configurations.tinyhand"));
         // await this.crystalizer.SaveConfigurations(new LocalFileConfiguration("Local/Configurations.tinyhand"));
 
-        await this.crystalizer.PrepareAndLoadAll();
+        var result = await this.crystalizer.PrepareAndLoadAll();
+        if (result.IsFailure())
+        {
+            return;
+        }
 
         var manualClass = this.manualCrystal.Object;
         manualClass.Id++;

@@ -11,10 +11,11 @@ public sealed class StorageGroup
     public const long DefaultStorageCapacity = 1024L * 1024 * 1024 * 10; // 10GB
     public const int StorageRotationThreshold = (int)StorageHelper.Megabytes * 100; // 100 MB
 
-    internal StorageGroup(Crystalizer crystalizer)
+    internal StorageGroup(Crystalizer crystalizer, Type dataType)
     {
         this.Crystalizer = crystalizer;
         this.StorageKey = crystalizer.StorageKey;
+        this.dataType = dataType;
         this.storageGroupConfiguration = EmptyFileConfiguration.Default;
     }
 
@@ -24,11 +25,11 @@ public sealed class StorageGroup
 
     public IStorageKey StorageKey { get; }
 
+    private Type dataType;
     private FileConfiguration storageGroupConfiguration;
     private IFiler? storageGroupFiler;
 
     private object syncObject = new();
-    private PrepareParam? prepareParam;
     private StorageObject.GoshujinClass storages = new(); // lock(syncObject)
     private StorageObject? currentStorage; // lock(syncObject)
     private int storageRotationCount; // lock(syncObject)
@@ -70,11 +71,6 @@ public sealed class StorageGroup
 
     public (AddStorageResult Result, ushort Id) AddStorage_SimpleLocal(string path, long capacity)
     {
-        if (this.prepareParam == null)
-        {// tempcode
-            return (AddStorageResult.WriteError, 0);
-        }
-
         if (capacity < 0)
         {
             capacity = DefaultStorageCapacity;
@@ -106,7 +102,7 @@ public sealed class StorageGroup
 
             var storageObject = new StorageObject(id, configuration);
             storageObject.StorageCapacity = capacity;
-            if (storageObject.PrepareAndCheck(this, this.prepareParam, true).Result != CrystalResult.Success)
+            if (storageObject.PrepareAndCheck(this, PrepareParam.New(this.Crystalizer, this.dataType, true), true).Result != CrystalResult.Success)
             {
                 return (AddStorageResult.DuplicatePath, 0);
             }
@@ -119,11 +115,6 @@ public sealed class StorageGroup
 
     public (AddStorageResult Result, ushort Id) AddStorage_SimpleS3(string bucket, string path, long capacity)
     {
-        if (this.prepareParam == null)
-        {// tempcode
-            return (AddStorageResult.WriteError, 0);
-        }
-
         if (capacity < 0)
         {
             capacity = DefaultStorageCapacity;
@@ -145,7 +136,7 @@ public sealed class StorageGroup
 
             var storageObject = new StorageObject(id, configuration);
             storageObject.StorageCapacity = capacity;
-            if (storageObject.PrepareAndCheck(this, this.prepareParam, true).Result != CrystalResult.Success)
+            if (storageObject.PrepareAndCheck(this, PrepareParam.New(this.Crystalizer, this.dataType, true), true).Result != CrystalResult.Success)
             {
                 return (AddStorageResult.DuplicatePath, 0);
             }
@@ -252,8 +243,6 @@ public sealed class StorageGroup
 
     internal async Task<CrystalResult> PrepareAndLoad(StorageConfiguration defaultConfiguration, PrepareParam param)
     {// semaphore
-        this.prepareParam = param;
-
         // Storage group filer
         if (this.storageGroupFiler == null)
         {
@@ -271,10 +260,10 @@ public sealed class StorageGroup
         var dataResult = await this.storageGroupFiler.ReadAsync(0, -1).ConfigureAwait(false);
         if (dataResult.IsFailure)
         {
-            if (await param.Query(this.storageGroupConfiguration, dataResult.Result).ConfigureAwait(false) == AbortOrContinue.Abort)
+            /*if (await param.QueryObsolete(this.storageGroupConfiguration, dataResult.Result).ConfigureAwait(false) == AbortOrContinue.Abort)
             {
                 return dataResult.Result;
-            }
+            }*/
 
             createNew = true;
         }
@@ -288,10 +277,10 @@ public sealed class StorageGroup
         }
         catch
         {
-            if (await param.Query(this.storageGroupConfiguration, CrystalResult.DeserializeError).ConfigureAwait(false) == AbortOrContinue.Abort)
+            /*if (await param.QueryObsolete(this.storageGroupConfiguration, CrystalResult.DeserializeError).ConfigureAwait(false) == AbortOrContinue.Abort)
             {
                 return CrystalResult.DeserializeError;
-            }
+            }*/
         }
         finally
         {
@@ -304,10 +293,10 @@ public sealed class StorageGroup
             var result = await x.PrepareAndCheck(this, param, false).ConfigureAwait(false);
             if (result != CrystalResult.Success)
             {
-                if (await param.Query(this.storageGroupConfiguration, result).ConfigureAwait(false) == AbortOrContinue.Abort)
+                /*if (await param.QueryObsolete(this.storageGroupConfiguration, result).ConfigureAwait(false) == AbortOrContinue.Abort)
                 {
                     return CrystalResult.FileOperationError;
-                }
+                }*/
             }
         }
 

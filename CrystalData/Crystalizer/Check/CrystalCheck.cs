@@ -24,25 +24,33 @@ internal class CrystalCheck
             if (data != null)
             {
                 this.checkData = data;
+                this.SuccessfullyLoaded = true;
             }
         }
         catch
         {
-            this.logger.TryGet(LogLevel.Error)?.Log($"Could not read check file: {this.filePath}");
+            this.logger.TryGet(LogLevel.Error)?.Log($"Could not load the check file: {this.filePath}");
         }
     }
 
     public void Save()
     {
+        if (!this.SuccessfullyLoaded)
+        {
+            return;
+        }
+
         try
         {
             File.WriteAllBytes(this.filePath, TinyhandSerializer.Serialize(this.checkData));
         }
         catch
         {
-            this.logger.TryGet(LogLevel.Error)?.Log($"Could not write check file: {this.filePath}");
+            this.logger.TryGet(LogLevel.Error)?.Log($"Could not write the check file: {this.filePath}");
         }
     }
+
+    public bool SuccessfullyLoaded { get; internal set; }
 
     private ILogger logger;
     private string filePath = string.Empty;

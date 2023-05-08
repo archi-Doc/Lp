@@ -170,6 +170,26 @@ public partial class SimpleJournal : IJournal
         this.logger.TryGet()?.Log($"Terminated - {this.memoryUsage}");
     }
 
+    ulong IJournal.GetCurrentPosition()
+        => this.recordBufferPosition + (ulong)this.recordBufferLength;
+
+    void IJournal.ResetJournal(ulong position)
+    {
+        lock (this.syncBooks)
+        {
+            var array = this.books.ToArray();
+            foreach (var x in array)
+            {
+                x.DeleteInternal();
+            }
+
+            this.books.Clear();
+
+            this.recordBufferPosition = position;
+            this.recordBufferLength = 0;
+        }
+    }
+
     public async Task<bool> ReadJournalAsync(ulong start, ulong end, Memory<byte> data)
     {
         var length = (int)(end - start);
