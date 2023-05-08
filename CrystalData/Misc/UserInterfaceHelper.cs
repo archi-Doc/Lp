@@ -2,14 +2,14 @@
 
 namespace CrystalData.UserInterface;
 
-internal enum YesOrNo
+public enum YesOrNo
 {
     Invalid,
     Yes,
     No,
 }
 
-internal enum YesOrNoOrYesToAll
+public enum YesOrNoOrYesToAll
 {
     Invalid,
     Yes,

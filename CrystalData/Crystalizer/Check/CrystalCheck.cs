@@ -56,5 +56,5 @@ internal class CrystalCheck
 
     private ILogger logger;
     private string filePath = string.Empty;
-    private CrystalCheckData checkData = new();
+    private CrystalCheckData checkData = TinyhandSerializer.Reconstruct<CrystalCheckData>();
 }

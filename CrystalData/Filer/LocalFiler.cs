@@ -229,6 +229,18 @@ TryWrite:
 
     bool IRawFiler.SupportPartialWrite => true;
 
+    async Task<CrystalResult> IRawFiler.PrepareAndCheck(PrepareParam param, PathConfiguration configuration)
+    {
+        this.Crystalizer = param.Crystalizer;
+
+        if (this.Crystalizer.EnableLogger)
+        {
+            this.Logger ??= this.Crystalizer.UnitLogger.GetLogger<LocalFiler>();
+        }
+
+        return CrystalResult.Success;
+    }
+
     public override string ToString()
         => $"LocalFiler";
 

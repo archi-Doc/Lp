@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using static System.Runtime.InteropServices.JavaScript.JSType;
-
 namespace CrystalData.Filer;
 
 public class CrystalFiler
@@ -26,6 +24,9 @@ public class CrystalFiler
         private SortedSet<Waypoint>? waypoints;
 
         #endregion
+
+        public Waypoint GetLatestWaypoint()
+            => this.waypoints == null ? Waypoint.Invalid : this.waypoints.LastOrDefault();
 
         public async Task<CrystalResult> PrepareAndCheck(PrepareParam param, CrystalConfiguration configuration)
         {
@@ -158,11 +159,11 @@ public class CrystalFiler
             return Task.WhenAll(tasks).ContinueWith(x => CrystalResult.Success);
         }
 
-        public async Task<(CrystalMemoryOwnerResult Result, Waypoint Waypoint)> LoadLatest()
+        public async Task<(CrystalMemoryOwnerResult Result, Waypoint Waypoint, string Path)> LoadLatest(PrepareParam param)
         {
             if (this.rawFiler == null)
             {
-                return (new(CrystalResult.NotPrepared), Waypoint.Invalid);
+                return (new(CrystalResult.NotPrepared), Waypoint.Invalid, string.Empty);
             }
 
             string path;
@@ -174,7 +175,7 @@ public class CrystalFiler
                 result = await this.rawFiler.ReadAsync(path, 0, -1).ConfigureAwait(false);
                 if (result.IsSuccess)
                 {
-                    return (result, default);
+                    return (result, default, path);
                 }
 
                 // List data
@@ -189,11 +190,11 @@ public class CrystalFiler
                 if (result.IsSuccess &&
                     FarmHash.Hash64(result.Data.Memory.Span) == x.Hash)
                 {// Success
-                    return (result, x);
+                    return (result, x, path);
                 }
             }
 
-            return (new(CrystalResult.NotFound), Waypoint.Invalid);
+            return (new(CrystalResult.NotFound), Waypoint.Invalid, string.Empty);
         }
 
         public Task<CrystalResult> DeleteAllAsync()
@@ -262,6 +263,7 @@ public class CrystalFiler
     {
         this.crystalizer = crystalizer;
         this.configuration = CrystalConfiguration.Default;
+        this.logger = this.crystalizer.UnitLogger.GetLogger<CrystalFiler>();
     }
 
     #region PropertyAndField
@@ -269,6 +271,7 @@ public class CrystalFiler
     public bool IsProtected => this.configuration.NumberOfFiles > 0;
 
     private Crystalizer crystalizer;
+    private ILogger logger;
     private CrystalConfiguration configuration;
     private Output? main;
     private Output? backup;
@@ -330,15 +333,49 @@ public class CrystalFiler
         return result;
     }
 
-    public async Task<(CrystalMemoryOwnerResult Result, Waypoint Waypoint)> LoadLatest()
+    public async Task<(CrystalMemoryOwnerResult Result, Waypoint Waypoint, string Path)> LoadLatest(PrepareParam param)
     {
         if (this.main is null)
         {
-            return (new(CrystalResult.NotPrepared), Waypoint.Invalid);
+            return (new(CrystalResult.NotPrepared), Waypoint.Invalid, string.Empty);
         }
 
-        var result = await this.main.LoadLatest().ConfigureAwait(false);
-        return result;
+        if (!this.IsProtected)
+        {// Not protected
+            var result = await this.main.LoadLatest(param).ConfigureAwait(false);
+            if (result.Result.IsFailure && this.backup is not null)
+            {// Load backup
+                result = await this.backup.LoadLatest(param).ConfigureAwait(false);
+                if (result.Result.IsSuccess)
+                {// Backup restored
+                    this.logger.TryGet(LogLevel.Warning)?.Log(string.Format(HashedString.Get(CrystalDataHashed.CrystalFiler.BackupLoaded), result.Path));
+                }
+            }
+
+            return result;
+        }
+        else
+        {// Protected
+            if (this.backup is not null)
+            {
+                var mainLatest = this.main.GetLatestWaypoint();
+                var backupLatest = this.backup.GetLatestWaypoint();
+                if (backupLatest > mainLatest)
+                {// Backup ahead
+                    var resultBackup = await this.backup.LoadLatest(param).ConfigureAwait(false);
+                    if (resultBackup.Result.IsSuccess)
+                    {
+                        if (await param.Query.LoadBackup(resultBackup.Path).ConfigureAwait(false) == UserInterface.YesOrNo.Yes)
+                        {
+                            return resultBackup;
+                        }
+                    }
+                }
+            }
+
+            var result = await this.main.LoadLatest(param).ConfigureAwait(false);
+            return result;
+        }
     }
 
     public async Task<CrystalResult> DeleteAllAsync()

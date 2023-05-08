@@ -12,8 +12,6 @@ public interface ICrystal
 
     bool Prepared { get; }
 
-    // IFiler Filer { get; }
-
     IStorage Storage { get; }
 
     void Configure(CrystalConfiguration configuration);

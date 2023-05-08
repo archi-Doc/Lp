@@ -9,4 +9,10 @@ internal class CrystalDataQueryNo : ICrystalDataQuery
 
     Task<AbortOrContinue> ICrystalDataQuery.InconsistentJournal(string path)
         => Task.FromResult(AbortOrContinue.Continue);
+
+    Task<AbortOrContinue> ICrystalDataQuery.LoadFailure(FileConfiguration configuration, CrystalResult result)
+        => Task.FromResult(AbortOrContinue.Continue);
+
+    Task<YesOrNo> ICrystalDataQuery.LoadBackup(string path)
+        => Task.FromResult(YesOrNo.Yes);
 }

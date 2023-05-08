@@ -7,4 +7,8 @@ public interface ICrystalDataQuery
     Task<AbortOrContinue> NoCheckFile();
 
     Task<AbortOrContinue> InconsistentJournal(string path);
+
+    Task<AbortOrContinue> LoadFailure(FileConfiguration configuration, CrystalResult result);
+
+    Task<YesOrNo> LoadBackup(string path);
 }

@@ -20,5 +20,5 @@ public enum CrystalResult
     DeserializeError, // Checked
     FileOperationError, // Checked
     NoPartialWriteSupport, // Checked
-    NoStorageKey, // Checked
+    NoAccess, // Checked
 }

@@ -39,6 +39,7 @@ public class S3Filer : FilerBase, IRawFiler
 
     #region FieldAndProperty
 
+    private ILogger? logger;
     private string bucket = string.Empty;
     private AmazonS3Client? client;
     private ConcurrentDictionary<string, int> checkedPath = new();
@@ -237,11 +238,14 @@ RepeatList:
 
     async Task<CrystalResult> IRawFiler.PrepareAndCheck(PrepareParam param, PathConfiguration configuration)
     {
+        var directoryPath = string.Empty;
         this.Crystalizer = param.Crystalizer;
+        this.logger ??= this.Crystalizer.UnitLogger.GetLogger<S3Filer>();
 
         if (!this.Crystalizer.StorageKey.TryGetKey(this.bucket, out var accessKeyPair))
-        {
-            return CrystalResult.NoStorageKey;
+        {// No access key
+            this.logger?.TryGet(LogLevel.Fatal)?.Log(CrystalDataHashed.S3Filer.NoAccessKey, this.bucket);
+            return CrystalResult.NoAccess;
         }
 
         if (this.client == null)
@@ -252,12 +256,12 @@ RepeatList:
             }
             catch
             {
-                return CrystalResult.NoStorageKey;
+                goto NoAccess;
             }
         }
 
         // Write test.
-        var directoryPath = configuration is FileConfiguration ? Path.GetDirectoryName(configuration.Path) ?? string.Empty : configuration.Path;
+        directoryPath = configuration is FileConfiguration ? Path.GetDirectoryName(configuration.Path) ?? string.Empty : configuration.Path;
         if (this.checkedPath.TryAdd(directoryPath, 0))
         {
             try
@@ -269,13 +273,13 @@ RepeatList:
                     var response = await this.client.PutObjectAsync(request).ConfigureAwait(false);
                     if (response.HttpStatusCode != System.Net.HttpStatusCode.OK)
                     {
-                        return CrystalResult.FileOperationError;
+                        goto NoAccess;
                     }
                 }
             }
             catch
             {
-                return CrystalResult.FileOperationError;
+                goto NoAccess;
             }
         }
 
@@ -285,6 +289,10 @@ RepeatList:
         }
 
         return CrystalResult.Success;
+
+NoAccess:
+        this.logger?.TryGet(LogLevel.Fatal)?.Log(CrystalDataHashed.S3Filer.FailedToAccess, this.bucket, directoryPath);
+        return CrystalResult.NoAccess;
     }
 
     async Task IRawFiler.TerminateAsync()

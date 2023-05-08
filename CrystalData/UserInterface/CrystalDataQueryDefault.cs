@@ -12,8 +12,8 @@ internal class CrystalDataQueryDefault : ICrystalDataQuery
 
     async Task<AbortOrContinue> ICrystalDataQuery.NoCheckFile()
     {
-        var result = await this.RequestYesOrNo(CrystalDataHashed.CrystalDataQueryDefault.NoCheckFile).ConfigureAwait(false);
-        return result.ToAbortOrContinue();
+        var response = await this.RequestYesOrNo(CrystalDataHashed.CrystalDataQueryDefault.NoCheckFile).ConfigureAwait(false);
+        return response.ToAbortOrContinue();
     }
 
     async Task<AbortOrContinue> ICrystalDataQuery.InconsistentJournal(string path)
@@ -31,6 +31,18 @@ internal class CrystalDataQueryDefault : ICrystalDataQuery
         }
 
         return response.ToAbortOrContinue();
+    }
+
+    async Task<AbortOrContinue> ICrystalDataQuery.LoadFailure(FileConfiguration configuration, CrystalResult result)
+    {
+        var response = await this.RequestYesOrNo(CrystalDataHashed.CrystalDataQueryDefault.LoadError, configuration.Path, result.ToString()).ConfigureAwait(false);
+        return response.ToAbortOrContinue();
+    }
+
+    async Task<YesOrNo> ICrystalDataQuery.LoadBackup(string path)
+    {
+        var response = await this.RequestYesOrNo(CrystalDataHashed.CrystalDataQueryDefault.BackupAhead, path).ConfigureAwait(false);
+        return response;
     }
 
     #region Misc
@@ -87,7 +99,7 @@ internal class CrystalDataQueryDefault : ICrystalDataQuery
             }
             else
             {
-                this.WriteLineRaw("[Y/n]");
+                this.WriteLineRaw("Yes or No [Y/n]");
             }
         }
     }
@@ -97,6 +109,9 @@ internal class CrystalDataQueryDefault : ICrystalDataQuery
 
     private Task<YesOrNo> RequestYesOrNo(ulong hash, object obj1)
        => this.RequestYesOrNoInternal(string.Format(HashedString.Get(hash), obj1));
+
+    private Task<YesOrNo> RequestYesOrNo(ulong hash, object obj1, object obj2)
+       => this.RequestYesOrNoInternal(string.Format(HashedString.Get(hash), obj1, obj2));
 
     #endregion
 }
