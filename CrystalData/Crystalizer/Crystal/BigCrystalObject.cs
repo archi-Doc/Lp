@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using CrystalData.Filer;
-
 namespace CrystalData;
 
 public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
@@ -13,7 +11,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
         this.BigCrystalConfiguration = BigCrystalConfiguration.Default;
 
         this.crystal = new CrystalObject<TData>(this.Crystalizer);
-        this.storageGroup = new(crystalizer);
+        this.storageGroup = new(crystalizer, typeof(TData));
     }
 
     #region FieldAndProperty

@@ -50,9 +50,7 @@ public static class TestHelper
     public static async Task StopAndStartCrystal(IBigCrystal crystal)
     {
         await crystal.Crystalizer.SaveAll(true);
-        // await crystal.Save(true);
         crystal.Crystalizer.Himo.MemoryUsage.Is(0);
-        // await crystal.StartAsync(new()); // tempcode
     }
 
     public static async Task<IBigCrystal<MergerData>> CreateAndStartMerger(int maxParent)
