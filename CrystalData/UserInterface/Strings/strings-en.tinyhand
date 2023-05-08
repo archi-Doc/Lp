@@ -14,6 +14,10 @@ CrystalFiler = {
   BackupLoaded = "The backup file '{0}' has been loaded."
 }
 
+LocalFiler = {
+  FailedToAccess = "Failed to access files in directory '{0}"
+}
+
 S3Filer = {
   NoAccessKey = "No access key for bucket '{0}'"
   FailedToAccess = "Failed to access files in bucket '{0}/{1}'"

@@ -42,7 +42,7 @@ public class S3Filer : FilerBase, IRawFiler
     private ILogger? logger;
     private string bucket = string.Empty;
     private AmazonS3Client? client;
-    private ConcurrentDictionary<string, int> checkedPath = new();
+    private ConcurrentDictionary<string, bool> checkedPath = new();
 
     #endregion
 
@@ -77,7 +77,7 @@ TryWrite:
                     var response = await worker.client.PutObjectAsync(request, worker.CancellationToken).ConfigureAwait(false);
                     if (response.HttpStatusCode == System.Net.HttpStatusCode.OK)
                     {
-                        worker.Logger?.TryGet(LogLevel.Debug)?.Log($"Written {filePath}, {work.WriteData.Memory.Length}");
+                        worker.logger?.TryGet(LogLevel.Debug)?.Log($"Written {filePath}, {work.WriteData.Memory.Length}");
                         work.Result = CrystalResult.Success;
                         return;
                     }
@@ -97,7 +97,7 @@ TryWrite:
             }
 
             // Retry
-            worker.Logger?.TryGet(LogLevel.Warning)?.Log($"Retry {filePath}");
+            worker.logger?.TryGet(LogLevel.Warning)?.Log($"Retry {filePath}");
             goto TryWrite;
         }
         else if (work.Type == FilerWork.WorkType.Read)
@@ -119,7 +119,7 @@ TryWrite:
                         response.ResponseStream.CopyTo(ms);
                         work.Result = CrystalResult.Success;
                         work.ReadData = new(ms.ToArray());
-                        worker.Logger?.TryGet(LogLevel.Debug)?.Log($"Read {filePath}, {work.ReadData.Memory.Length}");
+                        worker.logger?.TryGet(LogLevel.Debug)?.Log($"Read {filePath}, {work.ReadData.Memory.Length}");
                         return;
                     }
                 }
@@ -137,7 +137,7 @@ TryWrite:
             }
 
             work.Result = CrystalResult.FileOperationError;
-            worker.Logger?.TryGet(LogLevel.Error)?.Log($"Read exception {filePath}");
+            worker.logger?.TryGet(LogLevel.Error)?.Log($"Read exception {filePath}");
         }
         else if (work.Type == FilerWork.WorkType.Delete)
         {// Delete
@@ -262,7 +262,7 @@ RepeatList:
 
         // Write test.
         directoryPath = configuration is FileConfiguration ? Path.GetDirectoryName(configuration.Path) ?? string.Empty : configuration.Path;
-        if (this.checkedPath.TryAdd(directoryPath, 0))
+        if (!this.checkedPath.TryGetValue(directoryPath, out var accessible))
         {
             try
             {
@@ -273,19 +273,18 @@ RepeatList:
                     var response = await this.client.PutObjectAsync(request).ConfigureAwait(false);
                     if (response.HttpStatusCode != System.Net.HttpStatusCode.OK)
                     {
+                        this.checkedPath.TryAdd(directoryPath, false);
                         goto NoAccess;
                     }
                 }
             }
             catch
             {
+                this.checkedPath.TryAdd(directoryPath, false);
                 goto NoAccess;
             }
-        }
 
-        if (this.Crystalizer.EnableLogger)
-        {
-            this.Logger = this.Crystalizer.UnitLogger.GetLogger<S3Filer>();
+            this.checkedPath.TryAdd(directoryPath, true);
         }
 
         return CrystalResult.Success;

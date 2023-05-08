@@ -36,7 +36,8 @@ public static class TestHelper
         var crystalizer = unit.Context.ServiceProvider.GetRequiredService<Crystalizer>();
 
         var crystal = crystalizer.GetBigCrystal<LpData>();
-        await crystal.PrepareAndLoad(false);
+        var result = await crystal.PrepareAndLoad(false);
+        result.Is(CrystalResult.Success);
         return crystal;
     }
 

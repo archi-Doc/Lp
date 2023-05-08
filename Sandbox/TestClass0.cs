@@ -54,8 +54,6 @@ internal class TestClass0
             // await crystalizer.MergeJournalForTest();
         }
 
-        await Task.Delay(1_000);
-
         void TestJournal(IJournal journal)
         {
             journal.GetWriter(CrystalData.Journal.JournalRecordType.SetValue, 1, out var writer);
