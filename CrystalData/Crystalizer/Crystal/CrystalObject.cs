@@ -316,6 +316,23 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
             return loadResult.Result;
         }
 
+        // Check journal position
+        if (this.Crystalizer.Journal is { } journal)
+        {
+            if (loadResult.Waypoint.JournalPosition > journal.GetCurrentPosition())
+            {
+                var query = await param.Query.InconsistentJournal().ConfigureAwait(false);
+                if (query == AbortOrContinue.Abort)
+                {
+                    return CrystalResult.CorruptedData;
+                }
+                else
+                {
+                    journal.ResetJournal(loadResult.Waypoint.JournalPosition);
+                }
+            }
+        }
+
         if (loadResult.Data is { } data)
         {// Loaded
             this.obj = data;

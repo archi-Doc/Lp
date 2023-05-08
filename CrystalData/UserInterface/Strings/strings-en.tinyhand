@@ -3,4 +3,6 @@
 CrystalDataQueryDefault = {
   NoCheckFile = "Check file not found."
   NoCheckFileQuery = "Do you want to force a launch? (enter 'y' if this is the first launch)"
+  InconsistentJournal = """Journal file is inconsistent with data file.
+Would you like to clear the journal file and proceed with loading the data?"""
 }

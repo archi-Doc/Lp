@@ -4,11 +4,39 @@ namespace CrystalData.UserInterface;
 
 internal class CrystalDataQueryDefault : ICrystalDataQuery
 {
+    private enum YesOrNo
+    {
+        Invalid,
+        Yes,
+        No,
+    }
+
+    private enum YesOrNoOrYesToAll
+    {
+        Invalid,
+        Yes,
+        No,
+        YesToAll,
+    }
+
     async Task<AbortOrContinue> ICrystalDataQuery.NoCheckFile()
     {
         this.WriteLine(CrystalDataHashed.CrystalDataQueryDefault.NoCheckFile);
         var result = await this.RequestYesOrNo(CrystalDataHashed.CrystalDataQueryDefault.NoCheckFileQuery).ConfigureAwait(false);
         return result.ToAbortOrContinue();
+    }
+
+    async Task<AbortOrContinue> ICrystalDataQuery.InconsistentJournal()
+    {// yes/no/all
+        var response = this.GetCache();
+        if (response == YesOrNo.Yes)
+        {
+            return AbortOrContinue.Continue;
+        }
+
+        response = await this.RequestYesOrNo(CrystalDataHashed.CrystalDataQueryDefault.InconsistentJournal).ConfigureAwait(false);
+        this.Cache(response);
+        return response.ToAbortOrContinue();
     }
 
     #region Misc

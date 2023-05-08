@@ -16,7 +16,6 @@ public class CrystalDataSubcommandDeleteAll : ISimpleCommandAsync
     public async Task RunAsync(string[] args)
     {// tempcode
         await this.crystalizer.DeleteAll();
-        await this.crystalizer.PrepareAndLoadAll();
 
         this.consoleService.WriteLine("Deleted");
     }

@@ -16,4 +16,8 @@ public interface IJournal
     Task SaveJournalAsync();
 
     Task TerminateAsync();
+
+    ulong GetCurrentPosition();
+
+    void ResetJournal(ulong position);
 }

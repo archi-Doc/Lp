@@ -5,4 +5,6 @@ namespace CrystalData.UserInterface;
 public interface ICrystalDataQuery
 {
     Task<AbortOrContinue> NoCheckFile();
+
+    Task<AbortOrContinue> InconsistentJournal();
 }

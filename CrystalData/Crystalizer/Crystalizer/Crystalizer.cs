@@ -54,7 +54,7 @@ public class Crystalizer
         this.logger = logger;
         this.task = new(this);
         this.Query = query;
-        this.QueryContinue = new CrystalDataQueryContinue();
+        this.QueryContinue = new CrystalDataQueryNo();
         this.UnitLogger = unitLogger;
         this.CrystalCheck = new(this.UnitLogger.GetLogger<CrystalCheck>());
         this.CrystalCheck.Load(Path.Combine(this.RootDirectory, CheckFile));

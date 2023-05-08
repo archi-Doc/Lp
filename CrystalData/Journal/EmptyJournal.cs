@@ -30,4 +30,10 @@ public class EmptyJournal : IJournal
     {
         return Task.CompletedTask;
     }
+
+    ulong IJournal.GetCurrentPosition() => 1;
+
+    void IJournal.ResetJournal(ulong position)
+    {
+    }
 }
