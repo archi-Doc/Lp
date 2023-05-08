@@ -4,16 +4,20 @@ using CrystalData.UserInterface;
 
 namespace CrystalData;
 
-public class PrepareParam : CrystalPrepare
+public class PrepareParam
 {
-    public static new PrepareParam ContinueAll<TData>(Crystalizer crystalizer)
-        => CrystalPrepare.ContinueAll.ToParam<TData>(crystalizer);
+    internal static PrepareParam NoQuery<TData>(Crystalizer crystalizer)
+        => new(crystalizer, typeof(TData), false);
 
-    internal PrepareParam(Crystalizer crystalizer, Type dataType)
+    internal static PrepareParam New<TData>(Crystalizer crystalizer, bool useQuery)
+        => new(crystalizer, typeof(TData), useQuery);
+
+    private PrepareParam(Crystalizer crystalizer, Type dataType, bool useQuery)
     {
         this.Crystalizer = crystalizer;
         this.DataType = dataType;
         this.DataTypeName = this.DataType.FullName ?? string.Empty;
+        this.UseQuery = useQuery;
     }
 
     public void RegisterConfiguration(PathConfiguration configuration, out bool newlyRegistered)
@@ -28,7 +32,10 @@ public class PrepareParam : CrystalPrepare
 
     public Crystalizer Crystalizer { get; }
 
-    public ICrystalDataQuery Query => this.Crystalizer.Query;
+    public bool UseQuery { get; }
+
+    public ICrystalDataQuery Query
+        => this.UseQuery ? this.Crystalizer.Query : this.Crystalizer.QueryContinue;
 
     public Type DataType { get; }
 

@@ -67,7 +67,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
     void ICrystal.ConfigureStorage(StorageConfiguration configuration)
         => this.crystal.ConfigureStorage(configuration);
 
-    async Task<CrystalResult> ICrystal.PrepareAndLoad(CrystalPrepare param)
+    async Task<CrystalResult> ICrystal.PrepareAndLoad(bool useQuery)
     {
         using (this.semaphore.Lock())
         {
@@ -76,7 +76,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
                 return CrystalResult.Success;
             }
 
-            return await this.PrepareAndLoadInternal(param).ConfigureAwait(false);
+            return await this.PrepareAndLoadInternal(useQuery).ConfigureAwait(false);
         }
     }
 
@@ -111,10 +111,10 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
         {
             if (!this.Prepared)
             {
-                await this.PrepareAndLoadInternal(CrystalPrepare.ContinueAll).ConfigureAwait(false);
+                await this.PrepareAndLoadInternal(false).ConfigureAwait(false);
             }
 
-            var param = PrepareParam.ContinueAll<TData>(this.Crystalizer);
+            var param = PrepareParam.NoQuery<TData>(this.Crystalizer);
 
             this.Object.Unload();
             await this.crystal.Delete().ConfigureAwait(false);
@@ -161,10 +161,10 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
         }
     }
 
-    private async Task<CrystalResult> PrepareAndLoadInternal(CrystalPrepare prepare)
+    private async Task<CrystalResult> PrepareAndLoadInternal(bool useQuery = true)
     {// this.semaphore.Lock()
         CrystalResult result;
-        var param = prepare.ToParam<TData>(this.Crystalizer);
+        var param = PrepareParam.New<TData>(this.Crystalizer, useQuery);
 
         result = await this.StorageGroup.PrepareAndLoad(this.CrystalConfiguration.StorageConfiguration, param).ConfigureAwait(false);
         if (result.IsFailure())
@@ -172,7 +172,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
             return result;
         }
 
-        result = await this.crystal.PrepareAndLoad(param).ConfigureAwait(false);
+        result = await this.crystal.PrepareAndLoad(useQuery).ConfigureAwait(false);
         if (result.IsFailure())
         {
             return result;

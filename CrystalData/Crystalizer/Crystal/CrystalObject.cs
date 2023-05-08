@@ -48,7 +48,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
                 // Prepare and load
                 if (!this.Prepared)
                 {
-                    this.PrepareAndLoadInternal(CrystalPrepare.ContinueAll).Wait();
+                    this.PrepareAndLoadInternal(false).Wait();
                 }
 
                 if (this.obj != null)
@@ -140,7 +140,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         }
     }
 
-    async Task<CrystalResult> ICrystal.PrepareAndLoad(CrystalPrepare param)
+    async Task<CrystalResult> ICrystal.PrepareAndLoad(bool useQuery)
     {
         using (this.semaphore.Lock())
         {
@@ -149,7 +149,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
                 return CrystalResult.Success;
             }
 
-            return await this.PrepareAndLoadInternal(param).ConfigureAwait(false);
+            return await this.PrepareAndLoadInternal(useQuery).ConfigureAwait(false);
         }
     }
 
@@ -210,7 +210,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         {
             if (!this.Prepared)
             {
-                await this.PrepareAndLoadInternal(CrystalPrepare.ContinueAll).ConfigureAwait(false);
+                await this.PrepareAndLoadInternal(false).ConfigureAwait(false);
             }
 
             // Delete file
@@ -258,10 +258,10 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
 
     #endregion
 
-    private async Task<CrystalResult> PrepareAndLoadInternal(CrystalPrepare prepare)
+    private async Task<CrystalResult> PrepareAndLoadInternal(bool useQuery)
     {// this.semaphore.Lock()
         CrystalResult result;
-        var param = prepare.ToParam<TData>(this.Crystalizer);
+        var param = PrepareParam.New<TData>(this.Crystalizer, useQuery);
 
         // CrystalFiler
         if (this.crystalFiler == null)
@@ -343,10 +343,10 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         var data = await filer.LoadLatest().ConfigureAwait(false);
         if (data.Result.IsFailure)
         {
-            if (await param.QueryObsolete(configuration.FileConfiguration, data.Result.Result).ConfigureAwait(false) == AbortOrContinue.Abort)
+            /*if (await param.QueryObsolete(configuration.FileConfiguration, data.Result.Result).ConfigureAwait(false) == AbortOrContinue.Abort)
             {
                 return (data.Result.Result, default, default);
-            }
+            }*/
 
             return (CrystalResult.Success, default, default); // Reconstruct
         }
@@ -385,10 +385,10 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         }
         catch
         {
-            if (await param.QueryObsolete(configuration.FileConfiguration, CrystalResult.DeserializeError).ConfigureAwait(false) == AbortOrContinue.Abort)
+            /*if (await param.QueryObsolete(configuration.FileConfiguration, CrystalResult.DeserializeError).ConfigureAwait(false) == AbortOrContinue.Abort)
             {
                 return (CrystalResult.DeserializeError, default, default);
-            }
+            }*/
 
             return (CrystalResult.Success, default, default); // Reconstruct
         }
@@ -407,7 +407,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         if (this.crystalFiler == null)
         {
             this.crystalFiler = new(this.Crystalizer);
-            this.crystalFiler.PrepareAndCheck(PrepareParam.ContinueAll<TData>(this.Crystalizer), this.CrystalConfiguration).Wait();
+            this.crystalFiler.PrepareAndCheck(PrepareParam.NoQuery<TData>(this.Crystalizer), this.CrystalConfiguration).Wait();
         }
     }
 
@@ -418,7 +418,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         if (this.storage == null)
         {
             this.storage = this.Crystalizer.ResolveStorage(this.CrystalConfiguration.StorageConfiguration);
-            this.storage.PrepareAndCheck(PrepareParam.ContinueAll<TData>(this.Crystalizer), this.CrystalConfiguration.StorageConfiguration, false).Wait();
+            this.storage.PrepareAndCheck(PrepareParam.NoQuery<TData>(this.Crystalizer), this.CrystalConfiguration.StorageConfiguration, false).Wait();
         }
     }
 

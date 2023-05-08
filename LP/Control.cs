@@ -390,7 +390,7 @@ public class Control : ILogInformation
             await this.Mono.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Mono.DefaultMonoBackup)).ConfigureAwait(false);
         }
 
-        var result = await this.Crystalizer.PrepareAndLoadAll(new());
+        var result = await this.Crystalizer.PrepareAndLoadAll();
         if (result != CrystalResult.Success)
         {
             throw new PanicException();

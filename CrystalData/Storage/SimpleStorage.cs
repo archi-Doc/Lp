@@ -89,7 +89,7 @@ internal partial class SimpleStorage : IStorage
                 BackupFileConfiguration = backupConfiguration,
             });
 
-            result = await this.crystal.PrepareAndLoad(param).ConfigureAwait(false);
+            result = await this.crystal.PrepareAndLoad(param.UseQuery).ConfigureAwait(false);
             return result;
         }
 
