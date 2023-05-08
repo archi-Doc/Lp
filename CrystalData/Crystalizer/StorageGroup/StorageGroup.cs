@@ -264,7 +264,7 @@ public sealed class StorageGroup
         if (dataResult.IsFailure)
         {
             if (!newlyRegistered &&
-                await param.Query.LoadFailure(this.storageGroupConfiguration, dataResult.Result).ConfigureAwait(false) == AbortOrContinue.Abort)
+                await param.Query.FailedToLoad(this.storageGroupConfiguration, dataResult.Result).ConfigureAwait(false) == AbortOrContinue.Abort)
             {
                 return dataResult.Result;
             }
@@ -281,7 +281,7 @@ public sealed class StorageGroup
         }
         catch
         {
-            if (await param.Query.LoadFailure(this.storageGroupConfiguration, dataResult.Result).ConfigureAwait(false) == AbortOrContinue.Abort)
+            if (await param.Query.FailedToLoad(this.storageGroupConfiguration, dataResult.Result).ConfigureAwait(false) == AbortOrContinue.Abort)
             {
                 return dataResult.Result;
             }

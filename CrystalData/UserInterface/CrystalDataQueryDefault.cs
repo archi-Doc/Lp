@@ -4,11 +4,7 @@ namespace CrystalData.UserInterface;
 
 internal class CrystalDataQueryDefault : ICrystalDataQuery
 {
-    #region FieldAndProperty
-
     private Dictionary<ulong, YesOrNo> yesOrNoCache = new();
-
-    #endregion
 
     async Task<AbortOrContinue> ICrystalDataQuery.NoCheckFile()
     {
@@ -33,7 +29,7 @@ internal class CrystalDataQueryDefault : ICrystalDataQuery
         return response.ToAbortOrContinue();
     }
 
-    async Task<AbortOrContinue> ICrystalDataQuery.LoadFailure(FileConfiguration configuration, CrystalResult result)
+    async Task<AbortOrContinue> ICrystalDataQuery.FailedToLoad(FileConfiguration configuration, CrystalResult result)
     {
         var response = await this.RequestYesOrNo(CrystalDataHashed.CrystalDataQueryDefault.LoadError, configuration.Path, result.ToString()).ConfigureAwait(false);
         return response.ToAbortOrContinue();
