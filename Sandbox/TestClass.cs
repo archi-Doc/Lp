@@ -1,16 +1,19 @@
 ﻿using CrystalData.Journal;
-using LP.T3CS;
 using Tinyhand.IO;
 
 namespace Sandbox;
 
 [TinyhandObject]
-internal partial class CrystalClass : IJournalObject, ICrystalData
+// [TinyhandObject(CrystalData = true)]
+internal partial class CrystalClass : ICrystalData
 {
+    // [Key(0)]
+    [Key(0, PropertyName = "Ids")]
     private int id;
+
     private HashSet<string> names = new();
 
-    [Key(0)]
+    [IgnoreMember]
     public int Id
     {
         get => this.id;
@@ -116,7 +119,7 @@ internal partial class CrystalClass : IJournalObject, ICrystalData
 }
 
 [TinyhandObject]
-internal partial class ManualClass : IJournalObject
+internal partial class ManualClass
 {
     [KeyAsName]
     public int Id { get; set; }
@@ -126,7 +129,7 @@ internal partial class ManualClass : IJournalObject
 }
 
 [TinyhandObject]
-internal partial class CombinedClass : IJournalObject
+internal partial class CombinedClass
 {
     [Key(0)]
     public ManualClass Manual1 { get; set; } = default!;

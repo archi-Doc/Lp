@@ -75,6 +75,7 @@ public class Program
                         registry.Register<ObjectDatum<LocalFileConfiguration>>(1, x => new ObjectDatumImpl<LocalFileConfiguration>(x));
                     },
                     FileConfiguration = new LocalFileConfiguration("Local/BaseData/Crystal"),
+                    BackupFileConfiguration = new LocalFileConfiguration("Backup/BaseData/Crystal"),
                     StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/BaseData/Storage"), new LocalDirectoryConfiguration("Backup/BaseData/Storage")),
                 });
 

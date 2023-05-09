@@ -421,7 +421,7 @@ public class Crystalizer
     }
 
     public ICrystal<TData> CreateCrystal<TData>()
-        where TData : class, IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+        where TData : class, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
         var crystal = new CrystalObject<TData>(this);
         this.crystals.TryAdd(crystal, 0);
@@ -429,7 +429,7 @@ public class Crystalizer
     }
 
     public ICrystal<TData> CreateBigCrystal<TData>()
-        where TData : BaseData, IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+        where TData : BaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
         var crystal = new BigCrystalObject<TData>(this);
         this.crystals.TryAdd(crystal, 0);
@@ -437,7 +437,7 @@ public class Crystalizer
     }
 
     public ICrystal<TData> GetCrystal<TData>()
-        where TData : class, IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+        where TData : class, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
         if (!this.typeToCrystal.TryGetValue(typeof(TData), out var c) ||
             c is not ICrystal<TData> crystal)

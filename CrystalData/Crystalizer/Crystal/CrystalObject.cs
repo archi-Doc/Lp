@@ -7,7 +7,7 @@ using CrystalData.Filer;
 namespace CrystalData;
 
 public sealed class CrystalObject<TData> : ICrystalInternal<TData>
-    where TData : class, IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+    where TData : class, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {// Data + Journal/Waypoint + Filer/FileConfiguration + Storage/StorageConfiguration
     public CrystalObject(Crystalizer crystalizer)
     {
@@ -23,6 +23,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
     private IStorage? storage;
     private Waypoint waypoint;
     private DateTime lastSaveTime;
+    private bool forceSave = false;
 
     #endregion
 
@@ -200,13 +201,14 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         }
 
         var hash = FarmHash.Hash64(byteArray.AsSpan());
-        if (hash == currentWaypoint.Hash)
+        if (!this.forceSave && hash == currentWaypoint.Hash)
         {// Identical data
             return CrystalResult.Success;
         }
 
         using (this.semaphore.Lock())
         {
+            this.forceSave = false;
             if (!this.waypoint.Equals(currentWaypoint))
             {// Waypoint changed
                 // goto RetrySave;
@@ -480,5 +482,6 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         var hash = FarmHash.Hash64(TinyhandSerializer.SerializeObject(this.obj));
         this.waypoint = default;
         this.Crystalizer.UpdatePlane(this, ref this.waypoint, hash);
+        this.forceSave = true;
     }
 }

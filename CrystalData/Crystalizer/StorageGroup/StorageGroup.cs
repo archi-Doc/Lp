@@ -3,7 +3,6 @@
 using System.Runtime.CompilerServices;
 using CrystalData.Filer;
 using CrystalData.Results;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace CrystalData;
 
@@ -17,7 +16,8 @@ public sealed class StorageGroup
         this.Crystalizer = crystalizer;
         this.StorageKey = crystalizer.StorageKey;
         this.dataType = dataType;
-        this.storageGroupConfiguration = EmptyFileConfiguration.Default;
+        this.crystal = this.Crystalizer.CreateCrystal<StorageObject.GoshujinClass>();
+        this.storageGroupConfiguration = CrystalConfiguration.Default;
     }
 
     #region PropertyAndField
@@ -27,19 +27,28 @@ public sealed class StorageGroup
     public IStorageKey StorageKey { get; }
 
     private Type dataType;
-    private FileConfiguration storageGroupConfiguration;
-    private IFiler? storageGroupFiler;
+    private CrystalConfiguration storageGroupConfiguration;
+
+    private StorageObject.GoshujinClass storages => this.crystal.Object;
 
     private object syncObject = new();
-    private StorageObject.GoshujinClass storages = new(); // lock(syncObject)
+    private ICrystal<StorageObject.GoshujinClass> crystal; // lock(syncObject)
     private StorageObject? currentStorage; // lock(syncObject)
     private int storageRotationCount; // lock(syncObject)
 
     #endregion
 
-    public void Configure(FileConfiguration configuration)
+    public void Configure(BigCrystalConfiguration configuration)
     {
-        this.storageGroupConfiguration = configuration;
+        var fileConfiguration = configuration.FileConfiguration.AppendPath(configuration.StorageGroupExtension);
+        var backupConfiguration = configuration.BackupFileConfiguration?.AppendPath(configuration.StorageGroupExtension);
+        this.storageGroupConfiguration = new CrystalConfiguration(SavePolicy.Manual, fileConfiguration)
+        {
+            BackupFileConfiguration = backupConfiguration,
+            NumberOfFiles = 0,
+        };
+
+        this.crystal.Configure(this.storageGroupConfiguration);
     }
 
     public string[] GetInformation()
@@ -150,9 +159,6 @@ public sealed class StorageGroup
 
     public async Task DeleteAllAsync()
     {
-        this.storageGroupFiler?.DeleteAndForget();
-        this.storageGroupFiler = null;
-
         var list = new List<Task>();
         lock (this.syncObject)
         {
@@ -165,6 +171,7 @@ public sealed class StorageGroup
             }
         }
 
+        await this.crystal.Delete().ConfigureAwait(false);
         await Task.WhenAll(list).ConfigureAwait(false);
     }
 
@@ -244,55 +251,13 @@ public sealed class StorageGroup
 
     internal async Task<CrystalResult> PrepareAndLoad(StorageConfiguration defaultConfiguration, PrepareParam param)
     {// semaphore
-        param.RegisterConfiguration(this.storageGroupConfiguration, out var newlyRegistered);
-
-        // Storage group filer
-        if (this.storageGroupFiler == null)
+        if (this.crystal.State == CrystalState.Initial)
         {
-            this.storageGroupFiler = this.Crystalizer.ResolveFiler(this.storageGroupConfiguration);
-            var result = await this.storageGroupFiler.PrepareAndCheck(param, this.storageGroupConfiguration).ConfigureAwait(false);
-            if (result.IsFailure())
-            {
-                return result;
-            }
+            var result = await this.crystal.PrepareAndLoad(param.UseQuery).ConfigureAwait(false);
+            return result;
         }
 
-        bool createNew = false;
-        StorageObject.GoshujinClass? goshujin = null;
-        // var (dataResult, _) = await PathHelper.LoadData(this.storageGroupFiler).ConfigureAwait(false);
-        var dataResult = await this.storageGroupFiler.ReadAsync(0, -1).ConfigureAwait(false);
-        if (dataResult.IsFailure)
-        {
-            if (!newlyRegistered &&
-                await param.Query.FailedToLoad(this.storageGroupConfiguration, dataResult.Result).ConfigureAwait(false) == AbortOrContinue.Abort)
-            {
-                return dataResult.Result;
-            }
-
-            createNew = true;
-        }
-
-        try
-        {
-            if (!createNew)
-            {
-                goshujin = TinyhandSerializer.Deserialize<StorageObject.GoshujinClass>(dataResult.Data.Memory);
-            }
-        }
-        catch
-        {
-            if (await param.Query.FailedToLoad(this.storageGroupConfiguration, dataResult.Result).ConfigureAwait(false) == AbortOrContinue.Abort)
-            {
-                return dataResult.Result;
-            }
-        }
-        finally
-        {
-            dataResult.Return();
-        }
-
-        goshujin ??= TinyhandSerializer.Reconstruct<StorageObject.GoshujinClass>();
-        foreach (var x in goshujin.StorageIdChain)
+        foreach (var x in this.storages.StorageIdChain)
         {
             var result = await x.PrepareAndCheck(this, param, false).ConfigureAwait(false);
             if (result != CrystalResult.Success)
@@ -304,29 +269,27 @@ public sealed class StorageGroup
             }
         }
 
-        if (goshujin.StorageIdChain.Count == 0)
+        if (this.storages.StorageIdChain.Count == 0)
         {
             try
             {
                 var id = this.GetFreeStorageId();
                 var storageObject = new StorageObject(id, defaultConfiguration);
                 await storageObject.PrepareAndCheck(this, param, true).ConfigureAwait(false);
-                storageObject.Goshujin = goshujin;
+                storageObject.Goshujin = this.storages;
             }
             catch
             {
             }
         }
 
-        if (goshujin.StorageIdChain.Count == 0)
+        if (this.storages.StorageIdChain.Count == 0)
         {
             return CrystalResult.NotPrepared;
         }
 
         lock (this.syncObject)
         {
-            this.storages.Clear();
-            this.storages = goshujin;
             this.currentStorage = null;
         }
 
@@ -346,17 +309,7 @@ public sealed class StorageGroup
 
     internal async Task SaveGroup()
     {// Save storage information
-        if (this.storageGroupFiler != null)
-        {
-            byte[] byteArray;
-            lock (this.syncObject)
-            {
-                byteArray = TinyhandSerializer.Serialize(this.storages);
-            }
-
-            await this.storageGroupFiler.WriteAsync(0, new(byteArray)).ConfigureAwait(false);
-            // await PathHelper.SaveData(this.Crystalizer, byteArray, this.storageGroupFiler, 0).ConfigureAwait(false);
-        }
+        await this.crystal.Save().ConfigureAwait(false);
     }
 
     internal void Clear()

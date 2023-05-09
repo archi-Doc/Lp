@@ -32,7 +32,7 @@ public interface ICrystal
 }
 
 public interface ICrystal<TData> : ICrystal
-    where TData : class, IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+    where TData : class, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
     public new TData Object { get; }
 }
@@ -43,6 +43,6 @@ internal interface ICrystalInternal : ICrystal
 }
 
 internal interface ICrystalInternal<TData> : ICrystal<TData>, ICrystalInternal
-    where TData : class, IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+    where TData : class, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
 }

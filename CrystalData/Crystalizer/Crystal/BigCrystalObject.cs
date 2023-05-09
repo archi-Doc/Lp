@@ -3,7 +3,7 @@
 namespace CrystalData;
 
 public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
-    where TData : BaseData, IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+    where TData : BaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {// BigCrystalObject = CrystalObject + Datum + StorageGroup (+ Himo)
     public BigCrystalObject(Crystalizer crystalizer)
     {
@@ -52,7 +52,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
             this.crystal.Configure(configuration);
             this.BigCrystalConfiguration = configuration;
             this.BigCrystalConfiguration.RegisterDatum(this.DatumRegistry);
-            this.StorageGroup.Configure(this.BigCrystalConfiguration.FileConfiguration.AppendPath(this.BigCrystalConfiguration.StorageGroupExtension));
+            this.StorageGroup.Configure(this.BigCrystalConfiguration);
 
             this.State = CrystalState.Initial;
         }
