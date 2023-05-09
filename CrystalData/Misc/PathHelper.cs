@@ -151,6 +151,22 @@ public static class PathHelper
         }
     }
 
+    public static bool IsDirectoryWritable(string directory)
+    {
+        try
+        {
+            using (var fs = File.Create(Path.Combine(directory, Path.GetRandomFileName()), 1, FileOptions.DeleteOnClose))
+            {
+            }
+
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     /// <summary>
     /// Deletes the specified file (no exception will be thrown).
     /// </summary>

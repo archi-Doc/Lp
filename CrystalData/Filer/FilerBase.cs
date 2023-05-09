@@ -36,20 +36,11 @@ public abstract class FilerBase : TaskWorker<FilerWork>, IRawFiler
 
     protected Crystalizer? Crystalizer { get; set; }
 
-    protected ILogger? Logger { get; set; }
-
     #endregion
 
     async Task<CrystalResult> IRawFiler.PrepareAndCheck(PrepareParam param, PathConfiguration configuration)
     {
-        this.Crystalizer = param.Crystalizer;
-
-        if (this.Crystalizer.EnableLogger)
-        {
-            this.Logger ??= this.Crystalizer.UnitLogger.GetLogger<LocalFiler>();
-        }
-
-        return CrystalResult.Success;
+        throw new NotImplementedException();
     }
 
     async Task IRawFiler.TerminateAsync()

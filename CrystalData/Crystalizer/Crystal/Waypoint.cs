@@ -87,6 +87,12 @@ public readonly struct Waypoint : IEquatable<Waypoint>, IComparable<Waypoint>
         this.NextPlane == other.NextPlane &&
         this.Hash == other.Hash;
 
+    public static bool operator >(Waypoint w1, Waypoint w2)
+        => w1.CompareTo(w2) > 0;
+
+    public static bool operator <(Waypoint w1, Waypoint w2)
+        => w1.CompareTo(w2) < 0;
+
     public int CompareTo(Waypoint other)
     {
         if (this.JournalPosition < other.JournalPosition)

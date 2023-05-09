@@ -3,6 +3,7 @@
 using System.Runtime.CompilerServices;
 using CrystalData.Filer;
 using CrystalData.Results;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace CrystalData;
 
@@ -243,6 +244,8 @@ public sealed class StorageGroup
 
     internal async Task<CrystalResult> PrepareAndLoad(StorageConfiguration defaultConfiguration, PrepareParam param)
     {// semaphore
+        param.RegisterConfiguration(this.storageGroupConfiguration, out var newlyRegistered);
+
         // Storage group filer
         if (this.storageGroupFiler == null)
         {
@@ -260,10 +263,11 @@ public sealed class StorageGroup
         var dataResult = await this.storageGroupFiler.ReadAsync(0, -1).ConfigureAwait(false);
         if (dataResult.IsFailure)
         {
-            /*if (await param.QueryObsolete(this.storageGroupConfiguration, dataResult.Result).ConfigureAwait(false) == AbortOrContinue.Abort)
+            if (!newlyRegistered &&
+                await param.Query.FailedToLoad(this.storageGroupConfiguration, dataResult.Result).ConfigureAwait(false) == AbortOrContinue.Abort)
             {
                 return dataResult.Result;
-            }*/
+            }
 
             createNew = true;
         }
@@ -277,10 +281,10 @@ public sealed class StorageGroup
         }
         catch
         {
-            /*if (await param.QueryObsolete(this.storageGroupConfiguration, CrystalResult.DeserializeError).ConfigureAwait(false) == AbortOrContinue.Abort)
+            if (await param.Query.FailedToLoad(this.storageGroupConfiguration, dataResult.Result).ConfigureAwait(false) == AbortOrContinue.Abort)
             {
-                return CrystalResult.DeserializeError;
-            }*/
+                return dataResult.Result;
+            }
         }
         finally
         {

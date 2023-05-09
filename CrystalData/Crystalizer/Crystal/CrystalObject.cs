@@ -321,7 +321,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         {
             if (loadResult.Waypoint.JournalPosition > journal.GetCurrentPosition())
             {
-                var query = await param.Query.InconsistentJournal().ConfigureAwait(false);
+                var query = await param.Query.InconsistentJournal(this.CrystalConfiguration.FileConfiguration.Path).ConfigureAwait(false);
                 if (query == AbortOrContinue.Abort)
                 {
                     return CrystalResult.CorruptedData;
@@ -356,14 +356,17 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
     private static async Task<(CrystalResult Result, TData? Data, Waypoint Waypoint)> LoadAndDeserializeNotInternal(CrystalFiler filer, PrepareParam param, CrystalConfiguration configuration)
 #pragma warning restore SA1204 // Static elements should appear before instance elements
     {
+        param.RegisterConfiguration(configuration.FileConfiguration, out var newlyRegistered);
+
         // Load data
-        var data = await filer.LoadLatest().ConfigureAwait(false);
+        var data = await filer.LoadLatest(param).ConfigureAwait(false);
         if (data.Result.IsFailure)
         {
-            /*if (await param.QueryObsolete(configuration.FileConfiguration, data.Result.Result).ConfigureAwait(false) == AbortOrContinue.Abort)
+            if (!newlyRegistered &&
+                await param.Query.FailedToLoad(configuration.FileConfiguration, data.Result.Result).ConfigureAwait(false) == AbortOrContinue.Abort)
             {
                 return (data.Result.Result, default, default);
-            }*/
+            }
 
             return (CrystalResult.Success, default, default); // Reconstruct
         }
@@ -402,10 +405,10 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         }
         catch
         {
-            /*if (await param.QueryObsolete(configuration.FileConfiguration, CrystalResult.DeserializeError).ConfigureAwait(false) == AbortOrContinue.Abort)
+            if (await param.Query.FailedToLoad(configuration.FileConfiguration, data.Result.Result).ConfigureAwait(false) == AbortOrContinue.Abort)
             {
-                return (CrystalResult.DeserializeError, default, default);
-            }*/
+                return (data.Result.Result, default, default);
+            }
 
             return (CrystalResult.Success, default, default); // Reconstruct
         }

@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Collections.Concurrent;
 using CrystalData.Results;
+using static CrystalData.CrystalDataHashed;
 
 namespace CrystalData.Filer;
 
@@ -45,7 +47,7 @@ TryWrite:
                 using (var handle = File.OpenHandle(filePath, mode: FileMode.OpenOrCreate, access: FileAccess.Write))
                 {
                     await RandomAccess.WriteAsync(handle, work.WriteData.Memory, work.Offset, worker.CancellationToken).ConfigureAwait(false);
-                    worker.Logger?.TryGet(LogLevel.Debug)?.Log($"Written[{work.WriteData.Memory.Length}] {work.Path}");
+                    worker.logger?.TryGet(LogLevel.Debug)?.Log($"Written[{work.WriteData.Memory.Length}] {work.Path}");
 
                     if (work.Truncate)
                     {
@@ -79,7 +81,7 @@ TryWrite:
                         return;
                     }
 
-                    worker.Logger?.TryGet(LogLevel.Debug)?.Log($"Directory created: {directoryPath}");
+                    worker.logger?.TryGet(LogLevel.Debug)?.Log($"Directory created: {directoryPath}");
                 }
                 else
                 {
@@ -96,7 +98,7 @@ TryWrite:
             }
             catch
             {
-                worker.Logger?.TryGet(LogLevel.Warning)?.Log($"Retry {work.Path}");
+                worker.logger?.TryGet(LogLevel.Warning)?.Log($"Retry {work.Path}");
                 goto TryWrite;
             }
             finally
@@ -132,14 +134,14 @@ TryWrite:
                     if (read != lengthToRead)
                     {
                         File.Delete(filePath);
-                        worker.Logger?.TryGet(LogLevel.Error)?.Log($"Read error and deleted: {work.Path}");
+                        worker.logger?.TryGet(LogLevel.Error)?.Log($"Read error and deleted: {work.Path}");
                         work.Result = CrystalResult.FileOperationError;
                         return;
                     }
 
                     work.Result = CrystalResult.Success;
                     work.ReadData = memoryOwner;
-                    worker.Logger?.TryGet(LogLevel.Debug)?.Log($"Read[{memoryOwner.Memory.Length}] {work.Path}");
+                    worker.logger?.TryGet(LogLevel.Debug)?.Log($"Read[{memoryOwner.Memory.Length}] {work.Path}");
                     return;
                 }
             }
@@ -151,7 +153,7 @@ TryWrite:
             catch
             {
                 work.Result = CrystalResult.FileOperationError;
-                worker.Logger?.TryGet(LogLevel.Error)?.Log($"Read exception {work.Path}");
+                worker.logger?.TryGet(LogLevel.Error)?.Log($"Read exception {work.Path}");
             }
             finally
             {
@@ -162,7 +164,7 @@ TryWrite:
             try
             {
                 File.Delete(filePath);
-                worker.Logger?.TryGet(LogLevel.Debug)?.Log($"Deleted: {work.Path}");
+                worker.logger?.TryGet(LogLevel.Debug)?.Log($"Deleted: {work.Path}");
                 work.Result = CrystalResult.Success;
             }
             catch
@@ -227,7 +229,45 @@ TryWrite:
         }
     }
 
+    #region FieldAndProperty
+
     bool IRawFiler.SupportPartialWrite => true;
+
+    private ILogger? logger;
+    private ConcurrentDictionary<string, bool> checkedPath = new();
+
+    #endregion
+
+    async Task<CrystalResult> IRawFiler.PrepareAndCheck(PrepareParam param, PathConfiguration configuration)
+    {
+        this.Crystalizer = param.Crystalizer;
+        this.logger ??= this.Crystalizer.UnitLogger.GetLogger<LocalFiler>();
+
+        var directoryPath = Path.GetDirectoryName(PathHelper.GetRootedFile(this.Crystalizer.RootDirectory, configuration.Path));
+        if (directoryPath is null)
+        {
+            return CrystalResult.NoAccess;
+        }
+
+        if (!this.checkedPath.TryGetValue(directoryPath, out var accessible))
+        {
+            Directory.CreateDirectory(directoryPath);
+            accessible = PathHelper.IsDirectoryWritable(directoryPath);
+            this.checkedPath.TryAdd(directoryPath, accessible);
+
+            if (!accessible)
+            {
+                this.logger.TryGet(LogLevel.Fatal)?.Log(CrystalDataHashed.LocalFiler.FailedToAccess, directoryPath);
+            }
+        }
+
+        if (!accessible)
+        {
+            return CrystalResult.NoAccess;
+        }
+
+        return CrystalResult.Success;
+    }
 
     public override string ToString()
         => $"LocalFiler";

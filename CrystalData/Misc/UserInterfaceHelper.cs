@@ -1,9 +1,30 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace CrystalData;
+namespace CrystalData.UserInterface;
 
-public static class UserInterfaceHelper
+public enum YesOrNo
 {
+    Invalid,
+    Yes,
+    No,
+}
+
+public enum YesOrNoOrYesToAll
+{
+    Invalid,
+    Yes,
+    No,
+    YesToAll,
+}
+
+internal static class UserInterfaceHelper
+{
+    public static AbortOrContinue ToAbortOrContinue(this YesOrNo yesOrNo)
+        => yesOrNo == YesOrNo.Yes ? AbortOrContinue.Continue : AbortOrContinue.Abort;
+
+    public static AbortOrContinue ToAbortOrContinue(this YesOrNoOrYesToAll yesOrNo)
+        => (yesOrNo == YesOrNoOrYesToAll.Yes || yesOrNo == YesOrNoOrYesToAll.YesToAll) ? AbortOrContinue.Continue : AbortOrContinue.Abort;
+
     public static AbortOrContinue ToAbortOrContinue(this bool? yesOrNo)
         => yesOrNo == true ? AbortOrContinue.Continue : AbortOrContinue.Abort;
 

@@ -52,7 +52,9 @@ internal class CrystalCheck
 
     public bool SuccessfullyLoaded { get; internal set; }
 
+    public string FilePath => this.filePath;
+
     private ILogger logger;
     private string filePath = string.Empty;
-    private CrystalCheckData checkData = new();
+    private CrystalCheckData checkData = TinyhandSerializer.Reconstruct<CrystalCheckData>();
 }

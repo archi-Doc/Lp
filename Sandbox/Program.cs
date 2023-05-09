@@ -75,7 +75,7 @@ public class Program
                         registry.Register<ObjectDatum<LocalFileConfiguration>>(1, x => new ObjectDatumImpl<LocalFileConfiguration>(x));
                     },
                     FileConfiguration = new LocalFileConfiguration("Local/BaseData/Crystal"),
-                    StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/BaseData/Storage")),
+                    StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/BaseData/Storage"), new LocalDirectoryConfiguration("Backup/BaseData/Storage")),
                 });
 
                 /*context.AddBigCrystal<ExampleData>(new BigCrystalConfiguration() with

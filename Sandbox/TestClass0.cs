@@ -43,7 +43,7 @@ internal class TestClass0
         {
             if (op.Datum is not null)
             {
-                op.Datum.Set(new LocalFileConfiguration("test"));
+                op.Datum.Set(new LocalFileConfiguration("test1"));
             }
         }
 
@@ -53,8 +53,6 @@ internal class TestClass0
             await journal.SaveJournalAsync();
             // await crystalizer.MergeJournalForTest();
         }
-
-        await Task.Delay(1_000);
 
         void TestJournal(IJournal journal)
         {
