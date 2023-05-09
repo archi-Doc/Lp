@@ -497,7 +497,7 @@ public class Crystalizer
         ulong journalPosition;
         if (this.Journal != null)
         {
-            this.Journal.GetWriter(JournalRecordType.Waypoint, nextPlane, out var writer);
+            this.Journal.GetWriter(JournalType.Waypoint, nextPlane, out var writer);
             writer.Write(newPlane);
             writer.Write(hash);
             journalPosition = this.Journal.Add(writer);
@@ -557,7 +557,12 @@ public class Crystalizer
 
     internal bool DeleteInternal(ICrystalInternal crystal)
     {
-        return this.crystals.TryRemove(crystal, out _);
+        if (!this.typeToCrystal.TryGetValue(crystal.ObjectType, out _))
+        {// Created crystals
+            return this.crystals.TryRemove(crystal, out _);
+        }
+
+        return true;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -638,9 +643,9 @@ public class Crystalizer
         var utc = DateTime.UtcNow;
         foreach (var x in crystals)
         {
-            if (x.CheckPeriodicSave(utc))
+            if (x.TryPeriodicSave(utc) is { } task)
             {
-                tasks.Add(x.Save(false));
+                tasks.Add(task);
             }
         }
 

@@ -32,6 +32,8 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
 
     public CrystalConfiguration CrystalConfiguration { get; private set; }
 
+    public Type ObjectType => typeof(TData);
+
     object ICrystal.Object => ((ICrystal<TData>)this).Object!;
 
     public TData Object
@@ -155,6 +157,11 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
 
     async Task<CrystalResult> ICrystal.Save(bool unload)
     {
+        if (this.CrystalConfiguration.SavePolicy == SavePolicy.Volatile)
+        {
+            return CrystalResult.Success;
+        }
+
         var obj = Volatile.Read(ref this.obj);
         var filer = Volatile.Read(ref this.crystalFiler);
         var currentWaypoint = this.waypoint;
@@ -204,6 +211,10 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         return CrystalResult.Success;
     }
 
+    void ICrystal.AddToSaveQueue()
+    {
+    }
+
     async Task<CrystalResult> ICrystal.Delete()
     {
         using (this.semaphore.Lock())
@@ -231,29 +242,31 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
             // TinyhandSerializer.ReconstructObject<TData>(ref this.obj);
 
             this.Prepared = false;
-            return CrystalResult.Success;
         }
+
+        this.Crystalizer.DeleteInternal(this);
+        return CrystalResult.Success;
     }
 
     void ICrystal.Terminate()
     {
     }
 
-    bool ICrystalInternal.CheckPeriodicSave(DateTime utc)
+    Task? ICrystalInternal.TryPeriodicSave(DateTime utc)
     {
         if (this.CrystalConfiguration.SavePolicy != SavePolicy.Periodic)
         {
-            return false;
+            return null;
         }
 
         var elapsed = utc - this.lastSaveTime;
         if (elapsed < this.CrystalConfiguration.SaveInterval)
         {
-            return false;
+            return null;
         }
 
         this.lastSaveTime = utc;
-        return true;
+        return ((ICrystal)this).Save(false);
     }
 
     #endregion

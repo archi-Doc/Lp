@@ -37,6 +37,8 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
 
     public bool Prepared { get; private set; }
 
+    public Type ObjectType => typeof(TData);
+
     public TData Object => this.crystal.Object;
 
     object ICrystal.Object => this.crystal.Object;
@@ -130,21 +132,21 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
     {
     }
 
-    bool ICrystalInternal.CheckPeriodicSave(DateTime utc)
+    Task? ICrystalInternal.TryPeriodicSave(DateTime utc)
     {
         if (this.CrystalConfiguration.SavePolicy != SavePolicy.Periodic)
         {
-            return false;
+            return null;
         }
 
         var elapsed = utc - this.lastSaveTime;
         if (elapsed < this.CrystalConfiguration.SaveInterval)
         {
-            return false;
+            return null;
         }
 
         this.lastSaveTime = utc;
-        return true;
+        return ((ICrystal)this).Save(false);
     }
 
     #endregion

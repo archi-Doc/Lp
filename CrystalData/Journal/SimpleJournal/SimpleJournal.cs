@@ -102,7 +102,7 @@ public partial class SimpleJournal : IJournal
         return CrystalResult.Success;
     }
 
-    void IJournal.GetWriter(JournalRecordType recordType, uint plane, out TinyhandWriter writer)
+    void IJournal.GetWriter(JournalType recordType, uint plane, out TinyhandWriter writer)
     {
         if (initialBuffer == null)
         {
@@ -111,7 +111,7 @@ public partial class SimpleJournal : IJournal
 
         writer = new(initialBuffer);
         writer.Advance(3); // Size(0-16MB): byte[3]
-        writer.RawWriteUInt8(Unsafe.As<JournalRecordType, byte>(ref recordType)); // JournalRecordType: byte
+        writer.RawWriteUInt8(Unsafe.As<JournalType, byte>(ref recordType)); // JournalRecordType: byte
         writer.RawWriteUInt32(plane); // Plane: byte[4]
     }
 

@@ -8,6 +8,8 @@ public interface ICrystal
 
     CrystalConfiguration CrystalConfiguration { get; }
 
+    Type ObjectType { get; }
+
     object Object { get; }
 
     bool Prepared { get; }
@@ -24,6 +26,8 @@ public interface ICrystal
 
     Task<CrystalResult> Save(bool unload = false);
 
+    void AddToSaveQueue();
+
     Task<CrystalResult> Delete();
 
     void Terminate();
@@ -37,7 +41,7 @@ public interface ICrystal<TData> : ICrystal
 
 internal interface ICrystalInternal : ICrystal
 {
-    bool CheckPeriodicSave(DateTime utc);
+    Task? TryPeriodicSave(DateTime utc);
 }
 
 internal interface ICrystalInternal<TData> : ICrystal<TData>, ICrystalInternal

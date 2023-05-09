@@ -56,7 +56,7 @@ internal class TestClass0
 
         void TestJournal(IJournal journal)
         {
-            journal.GetWriter(CrystalData.Journal.JournalRecordType.SetValue, 1, out var writer);
+            journal.GetWriter(CrystalData.Journal.JournalType.SetValue, 1, out var writer);
             writer.Write("111aaaaaaaaaaaaaaaaaaaaaa");
             journal.Add(writer);
         }

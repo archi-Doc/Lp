@@ -16,12 +16,12 @@ internal partial class CrystalClass : IJournalObject, ICrystalData
         get => this.id;
         set
         {
-            using (this.semaphore.Lock())
+            // using (this.semaphore.Lock())
             {
                 this.id = value;
                 if (this.Crystal?.Crystalizer.Journal is { } journal)
                 {
-                    journal.GetWriter(JournalRecordType.LocatorKeyValue, this.CurrentPlane, out var writer);
+                    journal.GetWriter(JournalType.Record, this.CurrentPlane, out var writer);
                     writer.Write_Key();
                     writer.Write(0);
                     writer.Write_Value();
@@ -30,7 +30,10 @@ internal partial class CrystalClass : IJournalObject, ICrystalData
                 }
             }
 
-            this.Crystal?.AddToSaveQueue();
+            if (this.Crystal?.CrystalConfiguration.SavePolicy == SavePolicy.OnChanged)
+            {
+                this.Crystal.AddToSaveQueue();
+            }
         }
     }
 
@@ -46,7 +49,7 @@ internal partial class CrystalClass : IJournalObject, ICrystalData
 
         if (this.Crystal?.Crystalizer.Journal is { } journal)
         {
-            journal.GetWriter(JournalRecordType.LocatorKeyValue, this.CurrentPlane, out var writer);
+            journal.GetWriter(JournalType.Record, this.CurrentPlane, out var writer);
             writer.Write_Key();
             writer.Write(1);
             writer.Write_Add();
@@ -70,8 +73,8 @@ internal partial class CrystalClass : IJournalObject, ICrystalData
         }
 
         // Generated
-        var dataType = reader.Read_LocatorKeyValue();
-        if (dataType == LocatorKeyValue.Key)
+        var dataType = reader.Read_Record();
+        if (dataType == JournalRecord.Key)
         {
             var key = reader.ReadInt32();
             if (key == 0)
@@ -91,7 +94,7 @@ internal partial class CrystalClass : IJournalObject, ICrystalData
         var key = reader.ReadInt32();
         if (key == 1)
         {// names
-            var dataType = reader.Read_LocatorKeyValue();
+            var dataType = reader.Read_Record();
             if (dataType == AddName)
             {
                 var name = reader.ReadString();

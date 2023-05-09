@@ -16,7 +16,7 @@ public class EmptyJournal : IJournal
         return 0;
     }
 
-    void IJournal.GetWriter(JournalRecordType recordType, uint token, out TinyhandWriter writer)
+    void IJournal.GetWriter(JournalType recordType, uint token, out TinyhandWriter writer)
     {
         writer = default(TinyhandWriter);
     }
