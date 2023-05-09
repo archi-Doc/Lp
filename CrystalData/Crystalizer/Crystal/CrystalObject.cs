@@ -120,6 +120,20 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
     {
         using (this.semaphore.Lock())
         {
+            if (this.Crystalizer.GlobalBackup is { } globalBackup)
+            {
+                if (configuration.BackupFileConfiguration == null)
+                {
+                    configuration = configuration with { BackupFileConfiguration = globalBackup.CombinePath(configuration.FileConfiguration.Path) };
+                }
+
+                if (configuration.StorageConfiguration.BackupDirectoryConfiguration == null)
+                {
+                    // var storageConfiguration = configuration.StorageConfiguration with { BackupDirectoryConfiguration = globalBackup.CombinePath(), };
+                    // configuration = configuration with { BackupFileConfiguration = globalBackup.CombinePath(configuration.FileConfiguration.Path) };
+                }
+            }
+
             this.CrystalConfiguration = configuration;
             this.crystalFiler = null;
             this.storage = null;

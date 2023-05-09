@@ -47,7 +47,7 @@ public class Program
                 context.SetJournal(
                     new SimpleJournalConfiguration(new LocalDirectoryConfiguration("Journal"))
                     {
-                        BackupDirectoryConfiguration = new LocalDirectoryConfiguration("Backup/Journal"),
+                        // BackupDirectoryConfiguration = new LocalDirectoryConfiguration("Backup/Journal"),
                     });
 
                 context.AddCrystal<ManualClass>(
@@ -55,7 +55,7 @@ public class Program
                     {
                         SaveFormat = SaveFormat.Utf8,
                         NumberOfFiles = 0,
-                        BackupFileConfiguration = new LocalFileConfiguration("Backup/manual.tinyhand")
+                        // BackupFileConfiguration = new LocalFileConfiguration("Backup/manual.tinyhand")
                     });
 
                 context.AddCrystal<CombinedClass>(
@@ -93,6 +93,7 @@ public class Program
             {// CrystalizerOptions
                 options.EnableLogger = true;
                 options.RootPath = Directory.GetCurrentDirectory();
+                options.GlobalBackup = new LocalDirectoryConfiguration("Backup2");
             })
             .SetupOptions<FileLoggerOptions>((context, options) =>
             {// FileLoggerOptions
