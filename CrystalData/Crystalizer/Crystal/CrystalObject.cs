@@ -129,7 +129,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
 
                 if (configuration.StorageConfiguration.BackupDirectoryConfiguration == null)
                 {
-                    // var storageConfiguration = configuration.StorageConfiguration with { BackupDirectoryConfiguration = globalBackup.CombinePath(), };
+                    var storageConfiguration = configuration.StorageConfiguration with { BackupDirectoryConfiguration = globalBackup.CombinePath(), };
                     // configuration = configuration with { BackupFileConfiguration = globalBackup.CombinePath(configuration.FileConfiguration.Path) };
                 }
             }
