@@ -16,7 +16,8 @@ namespace CrystalData;
 public class Crystalizer
 {
     public const string CheckFile = "Crystal.check";
-    public const int TaskIntervalInMilliseconds = 10_000;
+    public const int TaskIntervalInMilliseconds = 1_000;
+    public const int PeriodicSaveInMilliseconds = 10_000;
 
     private class CrystalizerTask : TaskCore
     {
@@ -29,9 +30,17 @@ public class Crystalizer
         private static async Task Process(object? parameter)
         {
             var core = (CrystalizerTask)parameter!;
+            int elapsedMilliseconds = 0;
             while (await core.Delay(TaskIntervalInMilliseconds).ConfigureAwait(false))
             {
-                await core.crystalizer.PeriodicSave();
+                await core.crystalizer.QueuedSave();
+
+                elapsedMilliseconds += TaskIntervalInMilliseconds;
+                if (elapsedMilliseconds >= PeriodicSaveInMilliseconds)
+                {
+                    elapsedMilliseconds = 0;
+                    await core.crystalizer.PeriodicSave();
+                }
             }
         }
 
@@ -113,6 +122,7 @@ public class Crystalizer
     private ThreadsafeTypeKeyHashTable<ICrystalInternal> typeToCrystal = new(); // Type to ICrystal
     private ConcurrentDictionary<ICrystalInternal, int> crystals = new(); // All crystals
     private ConcurrentDictionary<uint, ICrystalInternal> planeToCrystal = new(); // Plane to crystal
+    private ConcurrentDictionary<ICrystal, int> saveQueue = new(); // Save queue
 
     private object syncFiler = new();
     private IRawFiler? localFiler;
@@ -398,6 +408,11 @@ public class Crystalizer
         this.logger.TryGet()?.Log($"Terminated - {this.Himo.MemoryUsage}");
     }
 
+    public void AddToSaveQueue(ICrystal crystal)
+    {
+        this.saveQueue.TryAdd(crystal, 0);
+    }
+
     public async Task<CrystalResult[]> DeleteAll()
     {
         var tasks = this.crystals.Keys.Select(x => x.Delete()).ToArray();
@@ -646,6 +661,22 @@ public class Crystalizer
             if (x.TryPeriodicSave(utc) is { } task)
             {
                 tasks.Add(task);
+            }
+        }
+
+        return Task.WhenAll(tasks);
+    }
+
+    private Task QueuedSave()
+    {
+        var tasks = new List<Task>();
+        var array = this.saveQueue.Keys.ToArray();
+        this.saveQueue.Clear();
+        foreach (var x in array)
+        {
+            if (x.State == CrystalState.Prepared)
+            {
+                tasks.Add(x.Save(false));
             }
         }
 

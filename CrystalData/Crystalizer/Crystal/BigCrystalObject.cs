@@ -35,7 +35,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
 
     public StorageGroup StorageGroup => this.storageGroup;
 
-    public bool Prepared { get; private set; }
+    public CrystalState State { get; private set; }
 
     public Type ObjectType => typeof(TData);
 
@@ -54,7 +54,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
             this.BigCrystalConfiguration.RegisterDatum(this.DatumRegistry);
             this.StorageGroup.Configure(this.BigCrystalConfiguration.FileConfiguration.AppendPath(this.BigCrystalConfiguration.StorageGroupExtension));
 
-            this.Prepared = false;
+            this.State = CrystalState.Initial;
         }
     }
 
@@ -71,9 +71,13 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
     {
         using (this.semaphore.Lock())
         {
-            if (this.Prepared)
+            if (this.State == CrystalState.Prepared)
             {// Prepared
                 return CrystalResult.Success;
+            }
+            else if (this.State == CrystalState.Deleted)
+            {// Deleted
+                return CrystalResult.Deleted;
             }
 
             return await this.PrepareAndLoadInternal(useQuery).ConfigureAwait(false);
@@ -84,9 +88,13 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
     {
         using (this.semaphore.Lock())
         {
-            if (!this.Prepared)
-            {
+            if (this.State == CrystalState.Initial)
+            {// Initial
                 return CrystalResult.NotPrepared;
+            }
+            else if (this.State == CrystalState.Deleted)
+            {// Deleted
+                return CrystalResult.Deleted;
             }
 
             // Save storages
@@ -109,9 +117,13 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
     {
         using (this.semaphore.Lock())
         {
-            if (!this.Prepared)
-            {
+            if (this.State == CrystalState.Initial)
+            {// Initial
                 await this.PrepareAndLoadInternal(false).ConfigureAwait(false);
+            }
+            else if (this.State == CrystalState.Deleted)
+            {// Deleted
+                return CrystalResult.Success;
             }
 
             var param = PrepareParam.NoQuery<TData>(this.Crystalizer);
@@ -124,6 +136,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
 
             this.Object.Initialize(this, null, true);
 
+            this.State = CrystalState.Deleted;
             return CrystalResult.Success;
         }
     }
@@ -180,7 +193,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
 
         this.Object.Initialize(this, null, true);
 
-        this.Prepared = true;
+        this.State = CrystalState.Prepared;
         return result;
     }
 }

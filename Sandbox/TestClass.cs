@@ -32,7 +32,7 @@ internal partial class CrystalClass : IJournalObject, ICrystalData
 
             if (this.Crystal?.CrystalConfiguration.SavePolicy == SavePolicy.OnChanged)
             {
-                this.Crystal.AddToSaveQueue();
+                this.Crystal.Crystalizer.AddToSaveQueue(this.Crystal);
             }
         }
     }
@@ -94,8 +94,8 @@ internal partial class CrystalClass : IJournalObject, ICrystalData
         var key = reader.ReadInt32();
         if (key == 1)
         {// names
-            var dataType = reader.Read_Record();
-            if (dataType == AddName)
+            var record = reader.Read_Record();
+            if (record == JournalRecord.Add)
             {
                 var name = reader.ReadString();
                 if (name != null)

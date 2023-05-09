@@ -47,10 +47,14 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
 
             using (this.semaphore.Lock())
             {
-                // Prepare and load
-                if (!this.Prepared)
-                {
+                if (this.State == CrystalState.Initial)
+                {// Initial
                     this.PrepareAndLoadInternal(false).Wait();
+                }
+                else if (this.State == CrystalState.Deleted)
+                {// Deleted
+                    TinyhandSerializer.ReconstructObject<TData>(ref this.obj);
+                    return this.obj;
                 }
 
                 if (this.obj != null)
@@ -65,7 +69,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         }
     }
 
-    public bool Prepared { get; private set; }
+    public CrystalState State { get; private set; }
 
     /*public IFiler Filer
     {
@@ -118,7 +122,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
             this.CrystalConfiguration = configuration;
             this.crystalFiler = null;
             this.storage = null;
-            this.Prepared = false;
+            this.State = CrystalState.Initial;
         }
     }
 
@@ -128,7 +132,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         {
             this.CrystalConfiguration = this.CrystalConfiguration with { FileConfiguration = configuration, };
             this.crystalFiler = null;
-            this.Prepared = false;
+            this.State = CrystalState.Initial;
         }
     }
 
@@ -138,7 +142,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         {
             this.CrystalConfiguration = this.CrystalConfiguration with { StorageConfiguration = configuration, };
             this.storage = null;
-            this.Prepared = false;
+            this.State = CrystalState.Initial;
         }
     }
 
@@ -146,9 +150,13 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
     {
         using (this.semaphore.Lock())
         {
-            if (this.Prepared)
+            if (this.State == CrystalState.Prepared)
             {// Prepared
                 return CrystalResult.Success;
+            }
+            else if (this.State == CrystalState.Deleted)
+            {// Deleted
+                return CrystalResult.Deleted;
             }
 
             return await this.PrepareAndLoadInternal(useQuery).ConfigureAwait(false);
@@ -166,7 +174,15 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         var filer = Volatile.Read(ref this.crystalFiler);
         var currentWaypoint = this.waypoint;
 
-        if (!this.Prepared || obj == null || filer == null)
+        if (this.State == CrystalState.Initial)
+        {// Initial
+            return CrystalResult.NotPrepared;
+        }
+        else if (this.State == CrystalState.Deleted)
+        {// Deleted
+            return CrystalResult.Deleted;
+        }
+        else if (obj == null || filer == null)
         {
             return CrystalResult.NotPrepared;
         }
@@ -211,17 +227,17 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         return CrystalResult.Success;
     }
 
-    void ICrystal.AddToSaveQueue()
-    {
-    }
-
     async Task<CrystalResult> ICrystal.Delete()
     {
         using (this.semaphore.Lock())
         {
-            if (!this.Prepared)
-            {
+            if (this.State == CrystalState.Initial)
+            {// Initial
                 await this.PrepareAndLoadInternal(false).ConfigureAwait(false);
+            }
+            else if (this.State == CrystalState.Deleted)
+            {// Deleted
+                return CrystalResult.Success;
             }
 
             // Delete file
@@ -241,7 +257,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
             // this.obj = default;
             // TinyhandSerializer.ReconstructObject<TData>(ref this.obj);
 
-            this.Prepared = false;
+            this.State = CrystalState.Deleted;
         }
 
         this.Crystalizer.DeleteInternal(this);
@@ -353,14 +369,14 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
 
             this.Crystalizer.SetPlane(this, ref this.waypoint);
 
-            this.Prepared = true;
+            this.State = CrystalState.Prepared;
             return CrystalResult.Success;
         }
         else
         {// Reconstruct
             this.ReconstructObject();
 
-            this.Prepared = true;
+            this.State = CrystalState.Prepared;
             return CrystalResult.Success;
         }
     }

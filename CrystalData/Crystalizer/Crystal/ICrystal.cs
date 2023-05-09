@@ -12,7 +12,7 @@ public interface ICrystal
 
     object Object { get; }
 
-    bool Prepared { get; }
+    CrystalState State { get; }
 
     IStorage Storage { get; }
 
@@ -25,8 +25,6 @@ public interface ICrystal
     Task<CrystalResult> PrepareAndLoad(bool useQuery);
 
     Task<CrystalResult> Save(bool unload = false);
-
-    void AddToSaveQueue();
 
     Task<CrystalResult> Delete();
 
