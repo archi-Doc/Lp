@@ -16,7 +16,8 @@ namespace CrystalData;
 public class Crystalizer
 {
     public const string CheckFile = "Crystal.check";
-    public const int TaskIntervalInMilliseconds = 10_000;
+    public const int TaskIntervalInMilliseconds = 1_000;
+    public const int PeriodicSaveInMilliseconds = 10_000;
 
     private class CrystalizerTask : TaskCore
     {
@@ -29,9 +30,17 @@ public class Crystalizer
         private static async Task Process(object? parameter)
         {
             var core = (CrystalizerTask)parameter!;
+            int elapsedMilliseconds = 0;
             while (await core.Delay(TaskIntervalInMilliseconds).ConfigureAwait(false))
             {
-                await core.crystalizer.PeriodicSave();
+                await core.crystalizer.QueuedSave();
+
+                elapsedMilliseconds += TaskIntervalInMilliseconds;
+                if (elapsedMilliseconds >= PeriodicSaveInMilliseconds)
+                {
+                    elapsedMilliseconds = 0;
+                    await core.crystalizer.PeriodicSave();
+                }
             }
         }
 
@@ -41,6 +50,7 @@ public class Crystalizer
     public Crystalizer(CrystalizerConfiguration configuration, CrystalizerOptions options, ICrystalDataQuery query, ILogger<Crystalizer> logger, UnitLogger unitLogger, IStorageKey storageKey)
     {
         this.configuration = configuration;
+        this.GlobalBackup = options.GlobalBackup;
         this.EnableLogger = options.EnableLogger;
         this.RootDirectory = options.RootPath;
         this.DefaultTimeout = options.DefaultTimeout;
@@ -83,6 +93,8 @@ public class Crystalizer
 
     #region FieldAndProperty
 
+    public DirectoryConfiguration? GlobalBackup { get; }
+
     public bool EnableLogger { get; }
 
     public string RootDirectory { get; }
@@ -113,6 +125,7 @@ public class Crystalizer
     private ThreadsafeTypeKeyHashTable<ICrystalInternal> typeToCrystal = new(); // Type to ICrystal
     private ConcurrentDictionary<ICrystalInternal, int> crystals = new(); // All crystals
     private ConcurrentDictionary<uint, ICrystalInternal> planeToCrystal = new(); // Plane to crystal
+    private ConcurrentDictionary<ICrystal, int> saveQueue = new(); // Save queue
 
     private object syncFiler = new();
     private IRawFiler? localFiler;
@@ -398,6 +411,11 @@ public class Crystalizer
         this.logger.TryGet()?.Log($"Terminated - {this.Himo.MemoryUsage}");
     }
 
+    public void AddToSaveQueue(ICrystal crystal)
+    {
+        this.saveQueue.TryAdd(crystal, 0);
+    }
+
     public async Task<CrystalResult[]> DeleteAll()
     {
         var tasks = this.crystals.Keys.Select(x => x.Delete()).ToArray();
@@ -406,7 +424,7 @@ public class Crystalizer
     }
 
     public ICrystal<TData> CreateCrystal<TData>()
-        where TData : class, IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+        where TData : class, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
         var crystal = new CrystalObject<TData>(this);
         this.crystals.TryAdd(crystal, 0);
@@ -414,7 +432,7 @@ public class Crystalizer
     }
 
     public ICrystal<TData> CreateBigCrystal<TData>()
-        where TData : BaseData, IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+        where TData : BaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
         var crystal = new BigCrystalObject<TData>(this);
         this.crystals.TryAdd(crystal, 0);
@@ -422,7 +440,7 @@ public class Crystalizer
     }
 
     public ICrystal<TData> GetCrystal<TData>()
-        where TData : class, IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+        where TData : class, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
         if (!this.typeToCrystal.TryGetValue(typeof(TData), out var c) ||
             c is not ICrystal<TData> crystal)
@@ -497,7 +515,7 @@ public class Crystalizer
         ulong journalPosition;
         if (this.Journal != null)
         {
-            this.Journal.GetWriter(JournalRecordType.Waypoint, nextPlane, out var writer);
+            this.Journal.GetWriter(JournalType.Waypoint, nextPlane, out var writer);
             writer.Write(newPlane);
             writer.Write(hash);
             journalPosition = this.Journal.Add(writer);
@@ -557,7 +575,12 @@ public class Crystalizer
 
     internal bool DeleteInternal(ICrystalInternal crystal)
     {
-        return this.crystals.TryRemove(crystal, out _);
+        if (!this.typeToCrystal.TryGetValue(crystal.ObjectType, out _))
+        {// Created crystals
+            return this.crystals.TryRemove(crystal, out _);
+        }
+
+        return true;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -638,7 +661,23 @@ public class Crystalizer
         var utc = DateTime.UtcNow;
         foreach (var x in crystals)
         {
-            if (x.CheckPeriodicSave(utc))
+            if (x.TryPeriodicSave(utc) is { } task)
+            {
+                tasks.Add(task);
+            }
+        }
+
+        return Task.WhenAll(tasks);
+    }
+
+    private Task QueuedSave()
+    {
+        var tasks = new List<Task>();
+        var array = this.saveQueue.Keys.ToArray();
+        this.saveQueue.Clear();
+        foreach (var x in array)
+        {
+            if (x.State == CrystalState.Prepared)
             {
                 tasks.Add(x.Save(false));
             }

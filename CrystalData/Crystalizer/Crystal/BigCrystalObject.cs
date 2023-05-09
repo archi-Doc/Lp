@@ -3,7 +3,7 @@
 namespace CrystalData;
 
 public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
-    where TData : BaseData, IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+    where TData : BaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {// BigCrystalObject = CrystalObject + Datum + StorageGroup (+ Himo)
     public BigCrystalObject(Crystalizer crystalizer)
     {
@@ -35,7 +35,9 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
 
     public StorageGroup StorageGroup => this.storageGroup;
 
-    public bool Prepared { get; private set; }
+    public CrystalState State { get; private set; }
+
+    public Type ObjectType => typeof(TData);
 
     public TData Object => this.crystal.Object;
 
@@ -50,9 +52,9 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
             this.crystal.Configure(configuration);
             this.BigCrystalConfiguration = configuration;
             this.BigCrystalConfiguration.RegisterDatum(this.DatumRegistry);
-            this.StorageGroup.Configure(this.BigCrystalConfiguration.FileConfiguration.AppendPath(this.BigCrystalConfiguration.StorageGroupExtension));
+            this.StorageGroup.Configure(this.BigCrystalConfiguration);
 
-            this.Prepared = false;
+            this.State = CrystalState.Initial;
         }
     }
 
@@ -69,9 +71,13 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
     {
         using (this.semaphore.Lock())
         {
-            if (this.Prepared)
+            if (this.State == CrystalState.Prepared)
             {// Prepared
                 return CrystalResult.Success;
+            }
+            else if (this.State == CrystalState.Deleted)
+            {// Deleted
+                return CrystalResult.Deleted;
             }
 
             return await this.PrepareAndLoadInternal(useQuery).ConfigureAwait(false);
@@ -82,9 +88,13 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
     {
         using (this.semaphore.Lock())
         {
-            if (!this.Prepared)
-            {
+            if (this.State == CrystalState.Initial)
+            {// Initial
                 return CrystalResult.NotPrepared;
+            }
+            else if (this.State == CrystalState.Deleted)
+            {// Deleted
+                return CrystalResult.Deleted;
             }
 
             // Save storages
@@ -107,9 +117,13 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
     {
         using (this.semaphore.Lock())
         {
-            if (!this.Prepared)
-            {
+            if (this.State == CrystalState.Initial)
+            {// Initial
                 await this.PrepareAndLoadInternal(false).ConfigureAwait(false);
+            }
+            else if (this.State == CrystalState.Deleted)
+            {// Deleted
+                return CrystalResult.Success;
             }
 
             var param = PrepareParam.NoQuery<TData>(this.Crystalizer);
@@ -122,6 +136,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
 
             this.Object.Initialize(this, null, true);
 
+            this.State = CrystalState.Deleted;
             return CrystalResult.Success;
         }
     }
@@ -130,21 +145,21 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
     {
     }
 
-    bool ICrystalInternal.CheckPeriodicSave(DateTime utc)
+    Task? ICrystalInternal.TryPeriodicSave(DateTime utc)
     {
         if (this.CrystalConfiguration.SavePolicy != SavePolicy.Periodic)
         {
-            return false;
+            return null;
         }
 
         var elapsed = utc - this.lastSaveTime;
         if (elapsed < this.CrystalConfiguration.SaveInterval)
         {
-            return false;
+            return null;
         }
 
         this.lastSaveTime = utc;
-        return true;
+        return ((ICrystal)this).Save(false);
     }
 
     #endregion
@@ -178,7 +193,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
 
         this.Object.Initialize(this, null, true);
 
-        this.Prepared = true;
+        this.State = CrystalState.Prepared;
         return result;
     }
 }

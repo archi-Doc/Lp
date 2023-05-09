@@ -8,9 +8,11 @@ public interface ICrystal
 
     CrystalConfiguration CrystalConfiguration { get; }
 
+    Type ObjectType { get; }
+
     object Object { get; }
 
-    bool Prepared { get; }
+    CrystalState State { get; }
 
     IStorage Storage { get; }
 
@@ -30,17 +32,17 @@ public interface ICrystal
 }
 
 public interface ICrystal<TData> : ICrystal
-    where TData : class, IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+    where TData : class, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
     public new TData Object { get; }
 }
 
 internal interface ICrystalInternal : ICrystal
 {
-    bool CheckPeriodicSave(DateTime utc);
+    Task? TryPeriodicSave(DateTime utc);
 }
 
 internal interface ICrystalInternal<TData> : ICrystal<TData>, ICrystalInternal
-    where TData : class, IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+    where TData : class, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
 }

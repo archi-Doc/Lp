@@ -46,20 +46,6 @@ internal class TestClass0
                 op.Datum.Set(new LocalFileConfiguration("test1"));
             }
         }
-
-        if (this.crystalizer.Journal is { } journal)
-        {
-            TestJournal(journal);
-            await journal.SaveJournalAsync();
-            // await crystalizer.MergeJournalForTest();
-        }
-
-        void TestJournal(IJournal journal)
-        {
-            journal.GetWriter(CrystalData.Journal.JournalRecordType.SetValue, 1, out var writer);
-            writer.Write("111aaaaaaaaaaaaaaaaaaaaaa");
-            journal.Add(writer);
-        }
     }
 
     private Crystalizer crystalizer;

@@ -7,7 +7,7 @@ public enum SavePolicy
     Manual,
     Volatile,
     Periodic,
-    Instant,
+    OnChanged,
 }
 
 public enum SaveFormat

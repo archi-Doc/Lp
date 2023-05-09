@@ -2,22 +2,20 @@
 
 namespace CrystalData.Journal;
 
-public enum JournalRecordType : byte
+public enum JournalType : byte
 {
     Waypoint,
-    LocatorKeyValue,
-    SetValue,
-    AddObject,
-    DeleteObject,
-    StartSave,
-    EndSave,
+    Record,
 }
 
-public enum LocatorKeyValue : byte
+public enum JournalRecord : byte
 {
     Locator,
     Key,
     Value,
+    Add,
+    Remove,
+    Clear,
 }
 
 /*public readonly ref struct JournalRecord

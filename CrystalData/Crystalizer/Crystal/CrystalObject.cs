@@ -7,7 +7,7 @@ using CrystalData.Filer;
 namespace CrystalData;
 
 public sealed class CrystalObject<TData> : ICrystalInternal<TData>
-    where TData : class, IJournalObject, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+    where TData : class, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {// Data + Journal/Waypoint + Filer/FileConfiguration + Storage/StorageConfiguration
     public CrystalObject(Crystalizer crystalizer)
     {
@@ -23,6 +23,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
     private IStorage? storage;
     private Waypoint waypoint;
     private DateTime lastSaveTime;
+    private bool forceSave = false;
 
     #endregion
 
@@ -31,6 +32,8 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
     public Crystalizer Crystalizer { get; }
 
     public CrystalConfiguration CrystalConfiguration { get; private set; }
+
+    public Type ObjectType => typeof(TData);
 
     object ICrystal.Object => ((ICrystal<TData>)this).Object!;
 
@@ -45,10 +48,14 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
 
             using (this.semaphore.Lock())
             {
-                // Prepare and load
-                if (!this.Prepared)
-                {
+                if (this.State == CrystalState.Initial)
+                {// Initial
                     this.PrepareAndLoadInternal(false).Wait();
+                }
+                else if (this.State == CrystalState.Deleted)
+                {// Deleted
+                    TinyhandSerializer.ReconstructObject<TData>(ref this.obj);
+                    return this.obj;
                 }
 
                 if (this.obj != null)
@@ -63,7 +70,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         }
     }
 
-    public bool Prepared { get; private set; }
+    public CrystalState State { get; private set; }
 
     /*public IFiler Filer
     {
@@ -113,10 +120,24 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
     {
         using (this.semaphore.Lock())
         {
+            if (this.Crystalizer.GlobalBackup is { } globalBackup)
+            {
+                if (configuration.BackupFileConfiguration == null)
+                {
+                    configuration = configuration with { BackupFileConfiguration = globalBackup.CombinePath(configuration.FileConfiguration.Path) };
+                }
+
+                if (configuration.StorageConfiguration.BackupDirectoryConfiguration == null)
+                {
+                    var storageConfiguration = configuration.StorageConfiguration with { BackupDirectoryConfiguration = globalBackup.CombinePath(), };
+                    // configuration = configuration with { BackupFileConfiguration = globalBackup.CombinePath(configuration.FileConfiguration.Path) };
+                }
+            }
+
             this.CrystalConfiguration = configuration;
             this.crystalFiler = null;
             this.storage = null;
-            this.Prepared = false;
+            this.State = CrystalState.Initial;
         }
     }
 
@@ -126,7 +147,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         {
             this.CrystalConfiguration = this.CrystalConfiguration with { FileConfiguration = configuration, };
             this.crystalFiler = null;
-            this.Prepared = false;
+            this.State = CrystalState.Initial;
         }
     }
 
@@ -136,7 +157,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         {
             this.CrystalConfiguration = this.CrystalConfiguration with { StorageConfiguration = configuration, };
             this.storage = null;
-            this.Prepared = false;
+            this.State = CrystalState.Initial;
         }
     }
 
@@ -144,9 +165,13 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
     {
         using (this.semaphore.Lock())
         {
-            if (this.Prepared)
+            if (this.State == CrystalState.Prepared)
             {// Prepared
                 return CrystalResult.Success;
+            }
+            else if (this.State == CrystalState.Deleted)
+            {// Deleted
+                return CrystalResult.Deleted;
             }
 
             return await this.PrepareAndLoadInternal(useQuery).ConfigureAwait(false);
@@ -155,11 +180,24 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
 
     async Task<CrystalResult> ICrystal.Save(bool unload)
     {
+        if (this.CrystalConfiguration.SavePolicy == SavePolicy.Volatile)
+        {
+            return CrystalResult.Success;
+        }
+
         var obj = Volatile.Read(ref this.obj);
         var filer = Volatile.Read(ref this.crystalFiler);
         var currentWaypoint = this.waypoint;
 
-        if (!this.Prepared || obj == null || filer == null)
+        if (this.State == CrystalState.Initial)
+        {// Initial
+            return CrystalResult.NotPrepared;
+        }
+        else if (this.State == CrystalState.Deleted)
+        {// Deleted
+            return CrystalResult.Deleted;
+        }
+        else if (obj == null || filer == null)
         {
             return CrystalResult.NotPrepared;
         }
@@ -177,13 +215,14 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         }
 
         var hash = FarmHash.Hash64(byteArray.AsSpan());
-        if (hash == currentWaypoint.Hash)
+        if (!this.forceSave && hash == currentWaypoint.Hash)
         {// Identical data
             return CrystalResult.Success;
         }
 
         using (this.semaphore.Lock())
         {
+            this.forceSave = false;
             if (!this.waypoint.Equals(currentWaypoint))
             {// Waypoint changed
                 // goto RetrySave;
@@ -208,9 +247,13 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
     {
         using (this.semaphore.Lock())
         {
-            if (!this.Prepared)
-            {
+            if (this.State == CrystalState.Initial)
+            {// Initial
                 await this.PrepareAndLoadInternal(false).ConfigureAwait(false);
+            }
+            else if (this.State == CrystalState.Deleted)
+            {// Deleted
+                return CrystalResult.Success;
             }
 
             // Delete file
@@ -230,30 +273,32 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
             // this.obj = default;
             // TinyhandSerializer.ReconstructObject<TData>(ref this.obj);
 
-            this.Prepared = false;
-            return CrystalResult.Success;
+            this.State = CrystalState.Deleted;
         }
+
+        this.Crystalizer.DeleteInternal(this);
+        return CrystalResult.Success;
     }
 
     void ICrystal.Terminate()
     {
     }
 
-    bool ICrystalInternal.CheckPeriodicSave(DateTime utc)
+    Task? ICrystalInternal.TryPeriodicSave(DateTime utc)
     {
         if (this.CrystalConfiguration.SavePolicy != SavePolicy.Periodic)
         {
-            return false;
+            return null;
         }
 
         var elapsed = utc - this.lastSaveTime;
         if (elapsed < this.CrystalConfiguration.SaveInterval)
         {
-            return false;
+            return null;
         }
 
         this.lastSaveTime = utc;
-        return true;
+        return ((ICrystal)this).Save(false);
     }
 
     #endregion
@@ -340,14 +385,14 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
 
             this.Crystalizer.SetPlane(this, ref this.waypoint);
 
-            this.Prepared = true;
+            this.State = CrystalState.Prepared;
             return CrystalResult.Success;
         }
         else
         {// Reconstruct
             this.ReconstructObject();
 
-            this.Prepared = true;
+            this.State = CrystalState.Prepared;
             return CrystalResult.Success;
         }
     }
@@ -451,5 +496,6 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         var hash = FarmHash.Hash64(TinyhandSerializer.SerializeObject(this.obj));
         this.waypoint = default;
         this.Crystalizer.UpdatePlane(this, ref this.waypoint, hash);
+        this.forceSave = true;
     }
 }

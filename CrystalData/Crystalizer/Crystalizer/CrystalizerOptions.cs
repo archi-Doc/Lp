@@ -21,4 +21,6 @@ public class CrystalizerOptions
     public long MemorySizeLimit { get; set; } = DefaultMemorySizeLimit;
 
     public int MaxParentInMemory { get; set; } = DefaultMaxParentInMemory;
+
+    public DirectoryConfiguration? GlobalBackup { get; set; }
 }

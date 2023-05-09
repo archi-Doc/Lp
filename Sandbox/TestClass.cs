@@ -1,27 +1,30 @@
 ﻿using CrystalData.Journal;
-using LP.T3CS;
 using Tinyhand.IO;
 
 namespace Sandbox;
 
 [TinyhandObject]
-internal partial class CrystalClass : IJournalObject, ICrystalData
+// [TinyhandObject(CrystalData = true)]
+internal partial class CrystalClass : ICrystalData
 {
+    // [Key(0)]
+    [Key(0, PropertyName = "Ids")]
     private int id;
+
     private HashSet<string> names = new();
 
-    [Key(0)]
+    [IgnoreMember]
     public int Id
     {
         get => this.id;
         set
         {
-            using (this.semaphore.Lock())
+            // using (this.semaphore.Lock())
             {
                 this.id = value;
                 if (this.Crystal?.Crystalizer.Journal is { } journal)
                 {
-                    journal.GetWriter(JournalRecordType.LocatorKeyValue, this.CurrentPlane, out var writer);
+                    journal.GetWriter(JournalType.Record, this.CurrentPlane, out var writer);
                     writer.Write_Key();
                     writer.Write(0);
                     writer.Write_Value();
@@ -30,7 +33,10 @@ internal partial class CrystalClass : IJournalObject, ICrystalData
                 }
             }
 
-            this.Crystal?.AddToSaveQueue();
+            if (this.Crystal?.CrystalConfiguration.SavePolicy == SavePolicy.OnChanged)
+            {
+                this.Crystal.Crystalizer.AddToSaveQueue(this.Crystal);
+            }
         }
     }
 
@@ -46,7 +52,7 @@ internal partial class CrystalClass : IJournalObject, ICrystalData
 
         if (this.Crystal?.Crystalizer.Journal is { } journal)
         {
-            journal.GetWriter(JournalRecordType.LocatorKeyValue, this.CurrentPlane, out var writer);
+            journal.GetWriter(JournalType.Record, this.CurrentPlane, out var writer);
             writer.Write_Key();
             writer.Write(1);
             writer.Write_Add();
@@ -70,8 +76,8 @@ internal partial class CrystalClass : IJournalObject, ICrystalData
         }
 
         // Generated
-        var dataType = reader.Read_LocatorKeyValue();
-        if (dataType == LocatorKeyValue.Key)
+        var dataType = reader.Read_Record();
+        if (dataType == JournalRecord.Key)
         {
             var key = reader.ReadInt32();
             if (key == 0)
@@ -91,8 +97,8 @@ internal partial class CrystalClass : IJournalObject, ICrystalData
         var key = reader.ReadInt32();
         if (key == 1)
         {// names
-            var dataType = reader.Read_LocatorKeyValue();
-            if (dataType == AddName)
+            var record = reader.Read_Record();
+            if (record == JournalRecord.Add)
             {
                 var name = reader.ReadString();
                 if (name != null)
@@ -113,7 +119,7 @@ internal partial class CrystalClass : IJournalObject, ICrystalData
 }
 
 [TinyhandObject]
-internal partial class ManualClass : IJournalObject
+internal partial class ManualClass
 {
     [KeyAsName]
     public int Id { get; set; }
@@ -123,7 +129,7 @@ internal partial class ManualClass : IJournalObject
 }
 
 [TinyhandObject]
-internal partial class CombinedClass : IJournalObject
+internal partial class CombinedClass
 {
     [Key(0)]
     public ManualClass Manual1 { get; set; } = default!;
