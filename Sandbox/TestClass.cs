@@ -1,12 +1,38 @@
-﻿using Tinyhand.IO;
+﻿using CrystalData.Journal;
+using LP.T3CS;
+using Tinyhand.IO;
 
 namespace Sandbox;
 
 [TinyhandObject]
 internal partial class CrystalClass : IJournalObject, ICrystalData
 {
+    private int id;
+    private HashSet<string> names = new();
+
     [Key(0)]
-    public int Id { get; set; }
+    public int Id
+    {
+        get => this.id;
+        set
+        {
+            using (this.semaphore.Lock())
+            {
+                this.id = value;
+                if (this.Crystal?.Crystalizer.Journal is { } journal)
+                {
+                    journal.GetWriter(JournalRecordType.LocatorKeyValue, this.CurrentPlane, out var writer);
+                    writer.Write_Key();
+                    writer.Write(0);
+                    writer.Write_Value();
+                    writer.Write(this.id);
+                    journal.Add(writer);
+                }
+            }
+
+            this.Crystal?.AddToSaveQueue();
+        }
+    }
 
     [IgnoreMember]
     public ICrystal? Crystal { get; set; }
@@ -14,11 +40,71 @@ internal partial class CrystalClass : IJournalObject, ICrystalData
     [IgnoreMember]
     public uint CurrentPlane { get; set; }
 
+    public bool AddName(string name)
+    {
+        var result = this.names.Add(name);
+
+        if (this.Crystal?.Crystalizer.Journal is { } journal)
+        {
+            journal.GetWriter(JournalRecordType.LocatorKeyValue, this.CurrentPlane, out var writer);
+            writer.Write_Key();
+            writer.Write(1);
+            writer.Write_Add();
+            writer.Write(name);
+            journal.Add(writer);
+        }
+
+        return result;
+    }
+
     public override string ToString()
         => $"Crystal class {this.Id}";
 
     void ICrystalData.ReadRecord(ref TinyhandReader reader)
     {
+        // Custom
+        var fork = reader.Fork();
+        if (this.ReadCustomRecord(ref fork))
+        {
+            return;
+        }
+
+        // Generated
+        var dataType = reader.Read_LocatorKeyValue();
+        if (dataType == LocatorKeyValue.Key)
+        {
+            var key = reader.ReadInt32();
+            if (key == 0)
+            {
+                reader.Read_Value();
+                this.id = reader.ReadInt32();
+            }
+            else if (key == 1)
+            {
+            }
+        }
+    }
+
+    private bool ReadCustomRecord(ref TinyhandReader reader)
+    {
+        reader.Read_Key();
+        var key = reader.ReadInt32();
+        if (key == 1)
+        {// names
+            var dataType = reader.Read_LocatorKeyValue();
+            if (dataType == AddName)
+            {
+                var name = reader.ReadString();
+                if (name != null)
+                {
+                    this.names.Add(name);
+                }
+
+                return true;
+            }
+        }
+
+        return false;
     }
 
     void ICrystalData.WriteLocator(ref TinyhandWriter writer)
