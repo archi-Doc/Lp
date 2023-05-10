@@ -253,8 +253,7 @@ public sealed class StorageGroup
     {// semaphore
         if (this.crystal.State == CrystalState.Initial)
         {
-            var result = await this.crystal.PrepareAndLoad(param.UseQuery).ConfigureAwait(false);
-            return result;
+            _ = await this.crystal.PrepareAndLoad(param.UseQuery).ConfigureAwait(false);
         }
 
         foreach (var x in this.storages.StorageIdChain)
