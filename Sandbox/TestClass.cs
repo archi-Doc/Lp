@@ -142,13 +142,29 @@ internal partial class ManualClass
 }
 
 [TinyhandObject]
-internal partial class CombinedClass
+internal partial class CombinedClass : ITinyhandJournal
 {
     [Key(0)]
     public ManualClass Manual1 { get; set; } = default!;
 
     [Key(1)]
     public ManualClass Manual2 { get; set; } = default!;
+
+    [IgnoreMember]
+    public ITinyhandCrystal? Crystal { get; set; }
+
+    [IgnoreMember]
+    public uint CurrentPlane { get; set; }
+
+    bool ITinyhandJournal.ReadRecord(ref TinyhandReader reader)
+    {
+        return false;
+    }
+
+    public bool ReadRecord(ref TinyhandReader reader)
+    {
+        throw new NotImplementedException();
+    }
 
     public override string ToString()
         => $"{this.Manual1.ToString()} {this.Manual2.ToString()}";

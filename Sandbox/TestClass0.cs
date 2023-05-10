@@ -35,6 +35,11 @@ internal class TestClass0
         combinedClass.Manual2.Id += 2;
         Console.WriteLine(combinedClass.ToString());
 
+        if (this.combinedCrystal.Object is ITinyhandJournal journal)
+        {
+            journal.Crystal = (ITinyhandCrystal)this.combinedCrystal;
+        }   
+
         ulong fileId = 0;
         combinedCrystal.Storage.PutAndForget(ref fileId, new(new byte[] { 1, 2, 3, }));
 
