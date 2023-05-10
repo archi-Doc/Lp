@@ -642,6 +642,17 @@ public class Crystalizer
             }
             else if (configuration is SimpleJournalConfiguration simpleJournalConfiguration)
             {
+                if (this.GlobalBackup is { } globalBackup)
+                {
+                    if (simpleJournalConfiguration.BackupDirectoryConfiguration == null)
+                    {
+                        simpleJournalConfiguration = simpleJournalConfiguration with
+                        {
+                            BackupDirectoryConfiguration = globalBackup.CombineDirectory(simpleJournalConfiguration.DirectoryConfiguration),
+                        };
+                    }
+                }
+
                 var simpleJournal = new SimpleJournal(this, simpleJournalConfiguration, this.UnitLogger.GetLogger<SimpleJournal>());
                 this.Journal = simpleJournal;
             }

@@ -82,8 +82,8 @@ internal partial class SimpleStorage : IStorage
         if (this.crystal == null)
         {
             this.crystal = this.crystalizer.CreateCrystal<SimpleStorageData>();
-            var mainConfiguration = directoryConfiguration.CombinePath(SimpleStorageFile);
-            var backupConfiguration = backupDirectoryConfiguration?.CombinePath(SimpleStorageFile);
+            var mainConfiguration = directoryConfiguration.CombineFile(SimpleStorageFile);
+            var backupConfiguration = backupDirectoryConfiguration?.CombineFile(SimpleStorageFile);
             this.crystal.Configure(new CrystalConfiguration(SavePolicy.Manual, mainConfiguration)
             {
                 BackupFileConfiguration = backupConfiguration,

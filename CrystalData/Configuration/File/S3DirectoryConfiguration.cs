@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.IO;
+
 namespace CrystalData;
 
 [TinyhandObject]
@@ -19,26 +21,16 @@ public partial record S3DirectoryConfiguration : DirectoryConfiguration
     [Key("Bucket")]
     public string Bucket { get; protected set; }
 
-    public override S3FileConfiguration CombinePath(string file)
+    public override S3FileConfiguration CombineFile(string file)
     {
-        var newPath = PathHelper.CombineWithSlash(this.Path, file);
+        var newPath = PathHelper.CombineWithSlash(this.Path, PathHelper.GetPathNotRoot(file));
         return new S3FileConfiguration(this.Bucket, newPath);
+    }
 
-        /* string newPath;
-         if (string.IsNullOrEmpty(this.Path))
-         {
-             newPath = file;
-         }
-         else if (this.Path.EndsWith('/'))
-         {
-             newPath = this.Path + file;
-         }
-         else
-         {
-             newPath = this.Path + "/" + file;
-         }
-
-         return new S3FileConfiguration(this.Bucket, newPath);*/
+    public override S3DirectoryConfiguration CombineDirectory(DirectoryConfiguration directory)
+    {
+        var newPath = PathHelper.CombineWithSlash(this.Path, PathHelper.GetPathNotRoot(directory.Path));
+        return new S3DirectoryConfiguration(this.Bucket, newPath);
     }
 
     public override string ToString()

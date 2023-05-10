@@ -21,7 +21,9 @@ public abstract partial record DirectoryConfiguration : PathConfiguration
 
     public override Type PathType => Type.Directory;
 
-    public abstract FileConfiguration CombinePath(string file);
+    public abstract FileConfiguration CombineFile(string file);
+
+    public abstract DirectoryConfiguration CombineDirectory(DirectoryConfiguration directory);
 
     public override string ToString()
         => $"Directory: {this.Path}";

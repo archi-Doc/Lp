@@ -14,6 +14,22 @@ public static class PathHelper
     public const string BackslashString = "\\";
     public const string ColonString = ":";
 
+    public static string GetPathNotRoot(string path)
+    {
+        if (!Path.IsPathRooted(path))
+        {
+            return path;
+        }
+
+        var root = Path.GetPathRoot(path);
+        if (string.IsNullOrEmpty(root))
+        {
+            return path;
+        }
+
+        return path.Substring(root.Length);
+    }
+
     public static (string Directory, string File) PathToDirectoryAndFile(string path)
     {
         var span = path.AsSpan();
