@@ -107,7 +107,7 @@ public static class PathHelper
     public static bool IsSeparator(char c)
         => c == Slash || c == Backslash || c == Colon;
 
-    public static async Task<(CrystalMemoryOwnerResult Result, Waypoint Waypoint)> LoadData(IFiler filer)
+    /*public static async Task<(CrystalMemoryOwnerResult Result, Waypoint Waypoint)> LoadData(IFiler filer)
     {
         var result = await filer.ReadAsync(0, -1).ConfigureAwait(false);
         if (result.IsFailure)
@@ -159,13 +159,13 @@ public static class PathHelper
 
         ulong AddJournal()
         {
-            crystalizer.Journal.GetWriter(JournalType.Waypoint, journalToken, out var writer);
+            crystalizer.Journal.GetWriter(Tinyhand.IO.JournalType.Waypoint, journalToken, out var writer);
             writer.Write(hash);
             journalPosition = crystalizer.Journal.Add(writer);
 
             return journalPosition;
         }
-    }
+    }*/
 
     public static bool IsDirectoryWritable(string directory)
     {

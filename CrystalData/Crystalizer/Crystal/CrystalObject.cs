@@ -3,10 +3,11 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using CrystalData.Filer;
+using Tinyhand.IO;
 
 namespace CrystalData;
 
-public sealed class CrystalObject<TData> : ICrystalInternal<TData>
+public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITinyhandCrystal
     where TData : class, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {// Data + Journal/Waypoint + Filer/FileConfiguration + Storage/StorageConfiguration
     public CrystalObject(Crystalizer crystalizer)
@@ -299,6 +300,49 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
 
         this.lastSaveTime = utc;
         return ((ICrystal)this).Save(false);
+    }
+
+    #endregion
+
+    #region ITinyhandCrystal
+
+    bool ITinyhandCrystal.TryGetJournalWriter(JournalType recordType, uint plane, out TinyhandWriter writer)
+    {
+        if (this.Crystalizer.Journal is not null)
+        {
+            this.Crystalizer.Journal.GetWriter(recordType, plane, out writer);
+            return true;
+        }
+        else
+        {
+            writer = default;
+            return false;
+        }
+    }
+
+    ulong ITinyhandCrystal.AddJournal(in TinyhandWriter writer)
+    {
+        if (this.Crystalizer.Journal is not null)
+        {
+            return this.Crystalizer.Journal.Add(writer);
+        }
+        else
+        {
+            return 0;
+        }
+    }
+
+    bool ITinyhandCrystal.TryAddToSaveQueue()
+    {
+        if (this.CrystalConfiguration.SavePolicy == SavePolicy.OnChanged)
+        {
+            this.Crystalizer.AddToSaveQueue(this);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     #endregion

@@ -1,11 +1,11 @@
-﻿using CrystalData.Journal;
+﻿using Tinyhand;
 using Tinyhand.IO;
 
 namespace Sandbox;
 
 [TinyhandObject]
 // [TinyhandObject(CrystalData = true)]
-internal partial class CrystalClass : ICrystalData
+internal partial class CrystalClass : ITinyhandJournal
 {
     // [Key(0)]
     [Key(0, PropertyName = "Ids")]
@@ -19,7 +19,7 @@ internal partial class CrystalClass : ICrystalData
         get => this.id;
         set
         {
-            // using (this.semaphore.Lock())
+            /*// using (this.semaphore.Lock())
             {
                 this.id = value;
                 if (this.Crystal?.Crystalizer.Journal is { } journal)
@@ -36,12 +36,27 @@ internal partial class CrystalClass : ICrystalData
             if (this.Crystal?.CrystalConfiguration.SavePolicy == SavePolicy.OnChanged)
             {
                 this.Crystal.Crystalizer.AddToSaveQueue(this.Crystal);
+            }*/
+
+            // using (this.semaphore.Lock())
+            {
+                this.id = value;
+                if (this.Crystal is not null && this.Crystal.TryGetJournalWriter(JournalType.Record, this.CurrentPlane, out var writer))
+                {
+                    writer.Write_Key();
+                    writer.Write(0);
+                    writer.Write_Value();
+                    writer.Write(this.id);
+                    this.Crystal.AddJournal(writer);
+                }
             }
+
+            this.Crystal?.TryAddToSaveQueue();
         }
     }
 
     [IgnoreMember]
-    public ICrystal? Crystal { get; set; }
+    public ITinyhandCrystal? Crystal { get; set; }
 
     [IgnoreMember]
     public uint CurrentPlane { get; set; }
@@ -50,14 +65,13 @@ internal partial class CrystalClass : ICrystalData
     {
         var result = this.names.Add(name);
 
-        if (this.Crystal?.Crystalizer.Journal is { } journal)
+        if (this.Crystal is not null && this.Crystal.TryGetJournalWriter(JournalType.Record, this.CurrentPlane, out var writer))
         {
-            journal.GetWriter(JournalType.Record, this.CurrentPlane, out var writer);
             writer.Write_Key();
             writer.Write(1);
             writer.Write_Add();
             writer.Write(name);
-            journal.Add(writer);
+            this.Crystal.AddJournal(writer);
         }
 
         return result;
@@ -66,13 +80,13 @@ internal partial class CrystalClass : ICrystalData
     public override string ToString()
         => $"Crystal class {this.Id}";
 
-    void ICrystalData.ReadRecord(ref TinyhandReader reader)
+    bool ITinyhandJournal.ReadRecord(ref TinyhandReader reader)
     {
         // Custom
         var fork = reader.Fork();
         if (this.ReadCustomRecord(ref fork))
         {
-            return;
+            return true;
         }
 
         // Generated
@@ -84,11 +98,14 @@ internal partial class CrystalClass : ICrystalData
             {
                 reader.Read_Value();
                 this.id = reader.ReadInt32();
+                return true;
             }
             else if (key == 1)
             {
             }
         }
+
+        return false;
     }
 
     private bool ReadCustomRecord(ref TinyhandReader reader)
@@ -111,10 +128,6 @@ internal partial class CrystalClass : ICrystalData
         }
 
         return false;
-    }
-
-    void ICrystalData.WriteLocator(ref TinyhandWriter writer)
-    {
     }
 }
 
