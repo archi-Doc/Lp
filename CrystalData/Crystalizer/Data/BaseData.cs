@@ -13,7 +13,7 @@ namespace CrystalData;
 /// <summary>
 /// <see cref="BaseData"/> is an independent class that holds data at a single point in the hierarchical structure.
 /// </summary>
-[TinyhandObject(ExplicitKeyOnly = true, LockObject = "semaphore", ReservedKeys = 3)]
+[TinyhandObject(ExplicitKeyOnly = true, LockObject = "semaphore", ReservedKeys = 3, Journaling = true)]
 public partial class BaseData : IDataInternal
 {
     protected BaseData()
@@ -32,16 +32,13 @@ public partial class BaseData : IDataInternal
 
     public BaseData? Parent { get; private set; }
 
-    public bool IsDeleted => this.DataId == -1;
+    public bool IsDeleted => this.dataId == -1;
 
-    [Key(0)]
-    public int DataId; // -1: Deleted
+    [Key(0, PropertyName = "DataId")]
+    private int dataId; // -1: Deleted
 
     [Key(1)]
     protected DatumObject[] datumObject = Array.Empty<DatumObject>();
-
-    // [Key(2, PropertyName = "TestN")]
-    // public int testN;
 
 #pragma warning disable SA1214 // Readonly fields should appear before non-readonly fields
     protected readonly SemaphoreLock semaphore = new();
@@ -293,7 +290,7 @@ public partial class BaseData : IDataInternal
 
             this.datumObject = Array.Empty<DatumObject>();
             this.Parent = null;
-            this.DataId = -1;
+            this.dataId = -1;
         }
     }
 

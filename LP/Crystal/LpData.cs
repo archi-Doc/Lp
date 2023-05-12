@@ -28,6 +28,8 @@ public partial class LpData : BaseData
     {
     }
 
+    #region FieldAndProperty
+
     public new LpDataId DataId
     {
         get => (LpDataId)base.DataId;
@@ -43,6 +45,8 @@ public partial class LpData : BaseData
 
     [Key(5)]
     private GoshujinClass? children;
+
+    #endregion
 
     public int Count(LpDataId id)
     {
