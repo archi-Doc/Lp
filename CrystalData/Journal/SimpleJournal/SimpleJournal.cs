@@ -190,6 +190,37 @@ public partial class SimpleJournal : IJournal
         }
     }
 
+    public async Task<(ulong NextPosition, ByteArrayPool.MemoryOwner Data)> ReadJournalAsync(ulong position)
+    {
+        ulong length, nextPosition;
+        lock (this.syncBooks)
+        {
+            var startBook = this.books.PositionChain.GetUpperBound(position);
+            if (startBook == null || startBook.NextPosition <= position)
+            {
+                return (0, default);
+            }
+
+            var endBook = this.books.PositionChain.GetUpperBound(position + (ulong)this.SimpleJournalConfiguration.CompleteBookLength);
+            if (endBook == null)
+            {
+                return (0, default);
+            }
+
+            length = endBook.NextPosition - position; // > 0
+            nextPosition = endBook.NextPosition;
+        }
+
+        var memoryOwner = ByteArrayPool.Default.Rent((int)length).ToMemoryOwner(0, (int)length);
+        var success = await this.ReadJournalAsync(position, nextPosition, memoryOwner.Memory).ConfigureAwait(false);
+        if (!success)
+        {
+            return (0, default);
+        }
+
+        return (nextPosition, memoryOwner);
+    }
+
     public async Task<bool> ReadJournalAsync(ulong start, ulong end, Memory<byte> data)
     {
         var length = (int)(end - start);

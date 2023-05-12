@@ -302,6 +302,9 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITinyhandCry
         return ((ICrystal)this).Save(false);
     }
 
+    ulong ICrystalInternal.GetPosition()
+        => this.waypoint.JournalPosition;
+
     #endregion
 
     #region ITinyhandCrystal
@@ -428,6 +431,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITinyhandCry
             this.waypoint = loadResult.Waypoint;
 
             this.Crystalizer.SetPlane(this, ref this.waypoint);
+            this.SetCrystalAndPlane();
 
             this.State = CrystalState.Prepared;
             return CrystalResult.Success;
@@ -541,5 +545,17 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITinyhandCry
         this.waypoint = default;
         this.Crystalizer.UpdatePlane(this, ref this.waypoint, hash);
         this.forceSave = true;
+
+        this.SetCrystalAndPlane();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void SetCrystalAndPlane()
+    {
+        if (this.obj is ITinyhandJournal journalObject)
+        {
+            journalObject.Crystal = this;
+            journalObject.CurrentPlane = this.waypoint.CurrentPlane;
+        }
     }
 }

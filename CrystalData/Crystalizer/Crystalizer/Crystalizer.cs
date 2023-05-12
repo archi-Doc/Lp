@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Collections.Concurrent;
+using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using CrystalData.Check;
@@ -8,6 +9,7 @@ using CrystalData.Filer;
 using CrystalData.Journal;
 using CrystalData.Storage;
 using CrystalData.UserInterface;
+using Tinyhand.IO;
 
 #pragma warning disable SA1204
 
@@ -362,6 +364,30 @@ public class Crystalizer
             list.Add(x.Object.GetType().Name);
         }
 
+        if (this.Journal is { } journal)
+        {// Load journal
+            var position = crystals.Where(x => x.GetPosition() != 0).Min(x => x.GetPosition());
+            while (position != 0)
+            {
+                var journalResult = await journal.ReadJournalAsync(position).ConfigureAwait(false);
+                if (journalResult.NextPosition == 0)
+                {
+                    break;
+                }
+
+                try
+                {
+                    this.ReadJournal(position, journalResult.Data.Memory);
+                }
+                finally
+                {
+                    journalResult.Data.Return();
+                }
+
+                position = journalResult.NextPosition;
+            }
+        }
+
         this.logger.TryGet()?.Log($"Prepared - {string.Join(", ", list)}");
 
         return CrystalResult.Success;
@@ -695,6 +721,75 @@ public class Crystalizer
         }
 
         return Task.WhenAll(tasks);
+    }
+
+    private void ReadJournal(ulong position, Memory<byte> data)
+    {
+        var reader = new TinyhandReader(data.Span);
+
+        while (true)
+        {
+            if (!TryReadRecord(reader, out var length, out var journalType, out var plane))
+            {
+                return;
+            }
+
+            var fork = reader.Fork();
+            try
+            {
+                if (journalType == JournalType.Record)
+                {
+                    if (this.planeToCrystal.TryGetValue(plane, out var crystal))
+                    {
+                        if (crystal is ITinyhandJournal journalObject)
+                        {
+                            journalObject.ReadRecord(ref reader);
+                        }
+                    }
+                }
+                else if (journalType == JournalType.Waypoint)
+                {
+                    reader.ReadUInt32();
+                    reader.ReadUInt64();
+                }
+                else
+                {
+                }
+            }
+            catch
+            {
+            }
+            finally
+            {
+                reader = fork;
+                reader.Advance(length);
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool TryReadRecord(in TinyhandReader reader, out int length, out JournalType journalType, out uint plane)
+    {
+        try
+        {
+            Span<byte> span = stackalloc byte[3];
+            span[0] = reader.ReadUInt8();
+            span[1] = reader.ReadUInt8();
+            span[2] = reader.ReadUInt8();
+            length = span[0] << 16 | span[1] << 8 | span[2];
+
+            journalType = (JournalType)reader.ReadUInt8();
+            plane = reader.ReadUInt32();
+        }
+        catch
+        {
+            length = 0;
+            journalType = default;
+            plane = 0;
+            return false;
+        }
+
+        return true;
     }
 
     #endregion

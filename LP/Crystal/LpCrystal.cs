@@ -13,7 +13,7 @@ namespace LP.Crystal;
     public LpData Data => this.Object.Data;
 }*/
 
-[TinyhandObject]
+[TinyhandObject(ExplicitKeyOnly = true)]
 public partial class LpRootData : BaseData
 {
     public LpRootData(IBigCrystal crystal, BaseData? parent)

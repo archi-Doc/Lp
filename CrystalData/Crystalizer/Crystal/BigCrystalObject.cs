@@ -16,7 +16,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
 
     #region FieldAndProperty
 
-    private ICrystal<TData> crystal;
+    private ICrystalInternal<TData> crystal;
     private SemaphoreLock semaphore = new();
     private StorageGroup storageGroup;
     private DateTime lastSaveTime;
@@ -161,6 +161,9 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
         this.lastSaveTime = utc;
         return ((ICrystal)this).Save(false);
     }
+
+    ulong ICrystalInternal.GetPosition()
+        => this.crystal.GetPosition();
 
     #endregion
 

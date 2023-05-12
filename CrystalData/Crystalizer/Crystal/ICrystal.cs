@@ -40,6 +40,8 @@ public interface ICrystal<TData> : ICrystal
 internal interface ICrystalInternal : ICrystal
 {
     Task? TryPeriodicSave(DateTime utc);
+
+    ulong GetPosition();
 }
 
 internal interface ICrystalInternal<TData> : ICrystal<TData>, ICrystalInternal

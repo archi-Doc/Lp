@@ -19,4 +19,6 @@ public interface IJournal
     ulong GetCurrentPosition();
 
     void ResetJournal(ulong position);
+
+    Task<(ulong NextPosition, ByteArrayPool.MemoryOwner Data)> ReadJournalAsync(ulong position);
 }

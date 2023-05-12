@@ -35,10 +35,13 @@ public partial class BaseData : IDataInternal
     public bool IsDeleted => this.DataId == -1;
 
     [Key(0)]
-    public int DataId { get; set; } // -1: Deleted
+    public int DataId; // -1: Deleted
 
     [Key(1)]
     protected DatumObject[] datumObject = Array.Empty<DatumObject>();
+
+    // [Key(2, PropertyName = "TestN")]
+    // public int testN;
 
 #pragma warning disable SA1214 // Readonly fields should appear before non-readonly fields
     protected readonly SemaphoreLock semaphore = new();
