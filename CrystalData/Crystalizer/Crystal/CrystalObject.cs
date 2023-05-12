@@ -204,7 +204,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITinyhandCry
         }
 
         // RetrySave:
-        // var options = TinyhandSerializerOptions.Standard with { Token = this.waypoint.NextPlane, };
+        var options = TinyhandSerializerOptions.Standard with { Plane = this.waypoint.NextPlane, };
         byte[] byteArray;
         if (this.CrystalConfiguration.SaveFormat == SaveFormat.Utf8)
         {
@@ -494,7 +494,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITinyhandCry
         }
         catch
         {
-            if (await param.Query.FailedToLoad(configuration.FileConfiguration, data.Result.Result).ConfigureAwait(false) == AbortOrContinue.Abort)
+            if (await param.Query.FailedToLoad(configuration.FileConfiguration, CrystalResult.DeserializeError).ConfigureAwait(false) == AbortOrContinue.Abort)
             {
                 return (data.Result.Result, default, default);
             }

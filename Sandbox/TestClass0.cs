@@ -38,7 +38,7 @@ internal class TestClass0
         if (this.combinedCrystal.Object is ITinyhandJournal journal)
         {
             journal.Crystal = (ITinyhandCrystal)this.combinedCrystal;
-        }   
+        }
 
         ulong fileId = 0;
         combinedCrystal.Storage.PutAndForget(ref fileId, new(new byte[] { 1, 2, 3, }));

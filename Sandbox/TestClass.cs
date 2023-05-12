@@ -69,7 +69,7 @@ internal partial class CrystalClass : ITinyhandJournal
         {
             writer.Write_Key();
             writer.Write(1);
-            writer.Write_Add();
+            writer.Write_Value();
             writer.Write(name);
             this.Crystal.AddJournal(writer);
         }
@@ -131,14 +131,14 @@ internal partial class CrystalClass : ITinyhandJournal
     }
 }
 
-[TinyhandObject]
+[TinyhandObject (Journaling = true)]
 internal partial class ManualClass
 {
-    [KeyAsName]
-    public int Id { get; set; }
+    [Key(0, PropertyName = "Id")]
+    private int id;
 
     public override string ToString()
-        => $"Manual class {this.Id}";
+        => $"Manual class {this.id}";
 }
 
 [TinyhandObject]
