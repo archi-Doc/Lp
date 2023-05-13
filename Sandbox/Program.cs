@@ -51,7 +51,7 @@ public class Program
                     });
 
                 context.AddCrystal<ManualClass>(
-                    new(SavePolicy.Manual, new LocalFileConfiguration("Local/manual.tinyhand"))
+                    new(SavePolicy.OnChanged, new LocalFileConfiguration("Local/manual.tinyhand"))
                     {
                         SaveFormat = SaveFormat.Utf8,
                         NumberOfFiles = 0,
@@ -119,7 +119,7 @@ public class Program
         await tc.Test1();
 
         ThreadCore.Root.Terminate();
-        await unit.Context.ServiceProvider.GetRequiredService<Crystalizer>().SaveAllAndTerminate();
+        // tempcode await unit.Context.ServiceProvider.GetRequiredService<Crystalizer>().SaveAllAndTerminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
         if (unit.Context.ServiceProvider.GetService<UnitLogger>() is { } unitLogger)
         {

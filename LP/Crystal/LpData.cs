@@ -10,7 +10,7 @@ namespace LP.Crystal;
 
 [TinyhandObject(ExplicitKeyOnly = true, Journaling = true)]
 [ValueLinkObject]
-public partial class LpData : BaseData, ITinyhandCustomJournal
+public partial class LpData : BaseData
 {
     public enum LpDataId
     {
@@ -49,14 +49,14 @@ public partial class LpData : BaseData, ITinyhandCustomJournal
 
     #endregion
 
-    void ITinyhandCustomJournal.WriteCustomRecord(ref TinyhandWriter writer)
+    /*void ITinyhandCustomJournal.WriteCustomRecord(ref TinyhandWriter writer)
     {
     }
 
     bool ITinyhandCustomJournal.ReadCustomRecord(ref TinyhandReader reader)
     {
         return false;
-    }
+    }*/
 
     public int Count(LpDataId id)
     {
