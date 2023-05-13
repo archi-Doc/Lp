@@ -54,7 +54,7 @@ public class Program
                     new(SavePolicy.OnChanged, new LocalFileConfiguration("Local/manual.tinyhand"))
                     {
                         SaveFormat = SaveFormat.Utf8,
-                        NumberOfFiles = 0,
+                        NumberOfFiles = 2,
                         // BackupFileConfiguration = new LocalFileConfiguration("Backup/manual.tinyhand")
                     });
 
@@ -119,7 +119,7 @@ public class Program
         await tc.Test1();
 
         ThreadCore.Root.Terminate();
-        // tempcode await unit.Context.ServiceProvider.GetRequiredService<Crystalizer>().SaveAllAndTerminate();
+        await unit.Context.ServiceProvider.GetRequiredService<Crystalizer>().SaveAllAndTerminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
         if (unit.Context.ServiceProvider.GetService<UnitLogger>() is { } unitLogger)
         {

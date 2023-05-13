@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Amazon.S3.Model.Internal.MarshallTransformations;
 using CrystalData.Check;
 using CrystalData.Filer;
 using CrystalData.Journal;
@@ -729,7 +730,11 @@ public class Crystalizer
 
         while (true)
         {
-            if (!TryReadRecord(reader, out var length, out var journalType, out var plane))
+            if (!TryReadRecord(ref reader, out var length, out var journalType, out var plane))
+            {
+                return;
+            }
+            else if (length == 0)
             {
                 return;
             }
@@ -768,7 +773,7 @@ public class Crystalizer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool TryReadRecord(in TinyhandReader reader, out int length, out JournalType journalType, out uint plane)
+    private static bool TryReadRecord(ref TinyhandReader reader, out int length, out JournalType journalType, out uint plane)
     {
         try
         {
@@ -778,8 +783,9 @@ public class Crystalizer
             span[2] = reader.ReadUInt8();
             length = span[0] << 16 | span[1] << 8 | span[2];
 
-            journalType = (JournalType)reader.ReadUInt8();
-            plane = reader.ReadUInt32();
+            reader.TryRead(out byte code);
+            journalType = (JournalType)code;
+            reader.TryReadBigEndian(out plane);
         }
         catch
         {

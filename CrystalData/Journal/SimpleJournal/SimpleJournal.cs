@@ -222,7 +222,7 @@ public partial class SimpleJournal : IJournal
     }
 
     public async Task<bool> ReadJournalAsync(ulong start, ulong end, Memory<byte> data)
-    {
+    {// [start, end) = [start, end -1]
         var length = (int)(end - start);
         if (data.Length < length)
         {
@@ -265,17 +265,13 @@ Load:
 
         lock (this.syncBooks)
         {
-            var range = this.books.PositionChain.GetRange(start, end - 1);
-            if (range.Upper is null)
+            var startBook = this.books.PositionChain.GetUpperBound(start);
+            var endBook = this.books.PositionChain.GetUpperBound(end - 1);
+            if (startBook is null || endBook is null)
             {
                 return false;
             }
-            else if (range.Lower is null)
-            {
-                range.Lower = range.Upper.PositionLink.Previous ?? range.Upper;
-            }
-
-            if (start < range.Lower.Position)
+            else if (endBook.NextPosition < end)
             {
                 return false;
             }
@@ -284,7 +280,7 @@ Load:
 
             // Check
             loadList.Clear();
-            for (var book = range.Lower; book != null; book = book.PositionLink.Next)
+            for (var book = startBook; book != null; book = book.PositionLink.Next)
             {
                 if (!book.IsInMemory)
                 {// Load (start, path)
@@ -294,7 +290,7 @@ Load:
                     }
                 }
 
-                if (book == range.Upper)
+                if (book == endBook)
                 {
                     break;
                 }
@@ -308,7 +304,7 @@ Load:
 
             // Read
             var dataPosition = 0;
-            for (var book = range.Lower; book != null; book = book.PositionLink.Next)
+            for (var book = startBook; book != null; book = book.PositionLink.Next)
             {
                 if (!book.TryReadBufferInternal(start, data.Span.Slice(dataPosition), out var readLength))
                 {// Fatal
@@ -318,7 +314,7 @@ Load:
                 dataPosition += readLength;
                 start += (ulong)readLength;
 
-                if (book == range.Upper)
+                if (book == endBook)
                 {// Complete
                     return true;
                 }
