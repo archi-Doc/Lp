@@ -3,6 +3,7 @@
 using System.Collections;
 using System.Runtime.CompilerServices;
 using CrystalData.Datum;
+using Tinyhand.IO;
 
 namespace CrystalData;
 
@@ -14,7 +15,7 @@ namespace CrystalData;
 /// <see cref="BaseData"/> is an independent class that holds data at a single point in the hierarchical structure.
 /// </summary>
 [TinyhandObject(ExplicitKeyOnly = true, LockObject = "semaphore", ReservedKeys = 3, Journaling = true)]
-public partial class BaseData : IDataInternal
+public partial class BaseData : IDataInternal, ITinyhandCustomJournal
 {
     protected BaseData()
     {
@@ -137,6 +138,22 @@ public partial class BaseData : IDataInternal
                 }
             }
         }
+    }
+
+    #endregion
+
+    #region Journal
+
+    void ITinyhandCustomJournal.WriteCustomRecord(ref TinyhandWriter writer)
+    {
+    }
+
+    bool ITinyhandCustomJournal.ReadCustomRecord(ref TinyhandReader reader)
+        => this.ReadRecordBase(ref reader);
+
+    protected bool ReadRecordBase(ref TinyhandReader reader)
+    {
+        return false;
     }
 
     #endregion

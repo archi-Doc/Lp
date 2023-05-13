@@ -3,13 +3,14 @@
 #pragma warning disable SA1124 // Do not use regions
 
 using CrystalData.Datum;
+using Tinyhand.IO;
 using ValueLink;
 
 namespace LP.Crystal;
 
-[TinyhandObject(ExplicitKeyOnly = true)]
+[TinyhandObject(ExplicitKeyOnly = true, Journaling = true)]
 [ValueLinkObject]
-public partial class LpData : BaseData
+public partial class LpData : BaseData, ITinyhandCustomJournal
 {
     public enum LpDataId
     {
@@ -47,6 +48,15 @@ public partial class LpData : BaseData
     private GoshujinClass? children;
 
     #endregion
+
+    void ITinyhandCustomJournal.WriteCustomRecord(ref TinyhandWriter writer)
+    {
+    }
+
+    bool ITinyhandCustomJournal.ReadCustomRecord(ref TinyhandReader reader)
+    {
+        return false;
+    }
 
     public int Count(LpDataId id)
     {
