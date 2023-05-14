@@ -120,6 +120,11 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITinyhandCry
     {
         using (this.semaphore.Lock())
         {
+            if (configuration.FileConfiguration is RelativeFileConfiguration relativeFile)
+            {
+                configuration = configuration with { FileConfiguration = this.Crystalizer.GlobalMain.CombineFile(relativeFile.Path) };
+            }
+
             if (this.Crystalizer.GlobalBackup is { } globalBackup)
             {
                 if (configuration.BackupFileConfiguration == null)

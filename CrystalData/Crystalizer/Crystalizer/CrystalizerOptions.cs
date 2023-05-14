@@ -22,5 +22,7 @@ public class CrystalizerOptions
 
     public int MaxParentInMemory { get; set; } = DefaultMaxParentInMemory;
 
+    public DirectoryConfiguration GlobalMain { get; set; } = new LocalDirectoryConfiguration();
+
     public DirectoryConfiguration? GlobalBackup { get; set; }
 }

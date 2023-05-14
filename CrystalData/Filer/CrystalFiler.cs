@@ -26,7 +26,12 @@ public class CrystalFiler
         #endregion
 
         public Waypoint GetLatestWaypoint()
-            => this.waypoints == null ? Waypoint.Invalid : this.waypoints.LastOrDefault();
+        {
+            lock (this.syncObject)
+            {
+                return this.waypoints == null ? Waypoint.Invalid : this.waypoints.LastOrDefault();
+            }
+        }
 
         public async Task<CrystalResult> PrepareAndCheck(PrepareParam param, CrystalConfiguration configuration)
         {

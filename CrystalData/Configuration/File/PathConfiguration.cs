@@ -8,6 +8,8 @@ namespace CrystalData;
 [TinyhandUnion("LocalDirectory", typeof(LocalDirectoryConfiguration))]
 [TinyhandUnion("S3File", typeof(S3FileConfiguration))]
 [TinyhandUnion("S3Directory", typeof(S3DirectoryConfiguration))]
+[TinyhandUnion("RelativeFile", typeof(RelativeFileConfiguration))]
+[TinyhandUnion("RelativeDirectory", typeof(RelativeDirectoryConfiguration))]
 public abstract partial record PathConfiguration
 {
     public enum Type

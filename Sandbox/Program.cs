@@ -51,11 +51,11 @@ public class Program
                     });
 
                 context.AddCrystal<ManualClass>(
-                    new(SavePolicy.OnChanged, new LocalFileConfiguration("Local/manual.tinyhand"))
+                    new(SavePolicy.OnChanged, new RelativeFileConfiguration("Local/manual.tinyhand"))
                     {
                         SaveFormat = SaveFormat.Utf8,
                         NumberOfFiles = 2,
-                        // BackupFileConfiguration = new LocalFileConfiguration("Backup/manual.tinyhand")
+                        BackupFileConfiguration = new LocalFileConfiguration("Backup/manual.tinyhand")
                     });
 
                 context.AddCrystal<CombinedClass>(
@@ -93,6 +93,7 @@ public class Program
             {// CrystalizerOptions
                 options.EnableLogger = true;
                 options.RootPath = Directory.GetCurrentDirectory();
+                options.GlobalMain = new LocalDirectoryConfiguration("Relative");
                 // options.GlobalBackup = new LocalDirectoryConfiguration("Backup2");
             })
             .SetupOptions<FileLoggerOptions>((context, options) =>

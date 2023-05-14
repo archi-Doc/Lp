@@ -53,6 +53,7 @@ public class Crystalizer
     public Crystalizer(CrystalizerConfiguration configuration, CrystalizerOptions options, ICrystalDataQuery query, ILogger<Crystalizer> logger, UnitLogger unitLogger, IStorageKey storageKey)
     {
         this.configuration = configuration;
+        this.GlobalMain = options.GlobalMain;
         this.GlobalBackup = options.GlobalBackup;
         this.EnableLogger = options.EnableLogger;
         this.RootDirectory = options.RootPath;
@@ -95,6 +96,8 @@ public class Crystalizer
     }
 
     #region FieldAndProperty
+
+    public DirectoryConfiguration GlobalMain { get; }
 
     public DirectoryConfiguration? GlobalBackup { get; }
 
