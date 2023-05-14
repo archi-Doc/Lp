@@ -24,7 +24,6 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITinyhandCry
     private IStorage? storage;
     private Waypoint waypoint;
     private DateTime lastSaveTime;
-    private bool forceSave = false;
 
     #endregion
 
@@ -216,14 +215,13 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITinyhandCry
         }
 
         var hash = FarmHash.Hash64(byteArray.AsSpan());
-        if (!this.forceSave && hash == currentWaypoint.Hash)
+        if (hash == currentWaypoint.Hash)
         {// Identical data
             return CrystalResult.Success;
         }
 
         using (this.semaphore.Lock())
         {
-            this.forceSave = false;
             if (!this.waypoint.Equals(currentWaypoint))
             {// Waypoint changed
                 // goto RetrySave;
@@ -554,7 +552,6 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITinyhandCry
         var hash = FarmHash.Hash64(byteArray);
         this.waypoint = default;
         this.Crystalizer.UpdatePlane(this, ref this.waypoint, hash);
-        this.forceSave = true;
 
         this.SetCrystalAndPlane();
 
