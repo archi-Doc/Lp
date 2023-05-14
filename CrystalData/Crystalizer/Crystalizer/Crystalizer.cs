@@ -368,6 +368,9 @@ public class Crystalizer
         // Read journal
         await this.ReadJournal(crystals).ConfigureAwait(false);
 
+        // Save crystal check
+        this.CrystalCheck.Save();
+
         this.logger.TryGet()?.Log($"Prepared - {string.Join(", ", list)}");
 
         return CrystalResult.Success;
