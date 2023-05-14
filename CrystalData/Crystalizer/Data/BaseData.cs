@@ -35,7 +35,7 @@ public partial class BaseData : IDataInternal, ITinyhandCustomJournal
 
     public bool IsDeleted => this.dataId == -1;
 
-    [Key(0, PropertyName = "DataId")]
+    [Key(0, AddProperty = "DataId")]
     private int dataId; // -1: Deleted
 
     [Key(1)]

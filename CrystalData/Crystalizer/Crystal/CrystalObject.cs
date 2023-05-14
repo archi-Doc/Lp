@@ -208,11 +208,11 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITinyhandCry
         byte[] byteArray;
         if (this.CrystalConfiguration.SaveFormat == SaveFormat.Utf8)
         {
-            byteArray = TinyhandSerializer.SerializeObjectToUtf8(obj);
+            byteArray = TinyhandSerializer.SerializeObjectToUtf8(obj, options);
         }
         else
         {
-            byteArray = TinyhandSerializer.SerializeObject(obj);
+            byteArray = TinyhandSerializer.SerializeObject(obj, options);
         }
 
         var hash = FarmHash.Hash64(byteArray.AsSpan());
@@ -541,12 +541,25 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITinyhandCry
     {
         TinyhandSerializer.ReconstructObject<TData>(ref this.obj);
 
-        var hash = FarmHash.Hash64(TinyhandSerializer.SerializeObject(this.obj));
+        byte[] byteArray;
+        if (this.CrystalConfiguration.SaveFormat == SaveFormat.Utf8)
+        {
+            byteArray = TinyhandSerializer.SerializeObjectToUtf8(this.obj);
+        }
+        else
+        {
+            byteArray = TinyhandSerializer.SerializeObject(this.obj);
+        }
+
+        var hash = FarmHash.Hash64(byteArray);
         this.waypoint = default;
         this.Crystalizer.UpdatePlane(this, ref this.waypoint, hash);
         this.forceSave = true;
 
         this.SetCrystalAndPlane();
+
+        // Save immediately to fix the waypoint.
+        _ = this.crystalFiler?.Save(byteArray, this.waypoint);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

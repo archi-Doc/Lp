@@ -14,6 +14,12 @@ CrystalFiler = {
   BackupLoaded = "The backup file '{0}' has been loaded."
 }
 
+Journal = {
+  Corrupted = "Reading journal was aborted because the journal file is corrupted."
+  ReadSuccess = "The journal file has recovered a part of the data."
+  ReadFailure = "Journal file was read, but data recovery failed."
+}
+
 LocalFiler = {
   FailedToAccess = "Failed to access files in directory '{0}"
 }

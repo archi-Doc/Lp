@@ -119,7 +119,8 @@ public class Program
         await tc.Test1();
 
         ThreadCore.Root.Terminate();
-        await unit.Context.ServiceProvider.GetRequiredService<Crystalizer>().SaveAllAndTerminate();
+        // await unit.Context.ServiceProvider.GetRequiredService<Crystalizer>().SaveAllAndTerminate();
+        await unit.Context.ServiceProvider.GetRequiredService<Crystalizer>().SaveJournalOnlyForTest();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
         if (unit.Context.ServiceProvider.GetService<UnitLogger>() is { } unitLogger)
         {

@@ -188,6 +188,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
             return result;
         }
 
+        this.crystal.ConfigureStorage(EmptyStorageConfiguration.Default); // Avoid duplication with the storage configuration of StorageGroup.
         result = await this.crystal.PrepareAndLoad(useQuery).ConfigureAwait(false);
         if (result.IsFailure())
         {

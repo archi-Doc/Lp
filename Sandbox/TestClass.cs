@@ -8,7 +8,7 @@ namespace Sandbox;
 internal partial class CrystalClass : ITinyhandJournal
 {
     // [Key(0)]
-    [Key(0, PropertyName = "Ids")]
+    [Key(0, AddProperty = "Ids")]
     private int id;
 
     private HashSet<string> names = new();
@@ -134,7 +134,7 @@ internal partial class CrystalClass : ITinyhandJournal
 [TinyhandObject (Journaling = true)]
 internal partial class ManualClass
 {
-    [Key(0, PropertyName = "Id")]
+    [Key(0, AddProperty = "Id")]
     private int id;
 
     public override string ToString()

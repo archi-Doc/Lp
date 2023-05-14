@@ -34,7 +34,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>
     [Key(1)]
     public PublicKey Originator { get; private set; } = default!;
 
-    [Key(2, PropertyName = "Mergers")]
+    [Key(2, AddProperty = "Mergers")]
     [MaxLength(MaxMergers)]
     private PublicKey[] mergers = default!;
 

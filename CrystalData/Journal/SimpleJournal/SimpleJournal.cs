@@ -127,9 +127,10 @@ public partial class SimpleJournal : IJournal
 
         // Size (0-16MB)
         var span = memory.Span;
-        span[2] = (byte)memory.Length;
-        span[1] = (byte)(memory.Length >> 8);
-        span[0] = (byte)(memory.Length >> 16);
+        var length = memory.Length - 8;
+        span[2] = (byte)length;
+        span[1] = (byte)(length >> 8);
+        span[0] = (byte)(length >> 16);
 
         lock (this.syncRecordBuffer)
         {

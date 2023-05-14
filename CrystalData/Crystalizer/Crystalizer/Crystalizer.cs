@@ -365,29 +365,8 @@ public class Crystalizer
             list.Add(x.Object.GetType().Name);
         }
 
-        if (this.Journal is { } journal)
-        {// Load journal
-            var position = crystals.Where(x => x.GetPosition() != 0).Min(x => x.GetPosition());
-            while (position != 0)
-            {
-                var journalResult = await journal.ReadJournalAsync(position).ConfigureAwait(false);
-                if (journalResult.NextPosition == 0)
-                {
-                    break;
-                }
-
-                try
-                {
-                    this.ReadJournal(position, journalResult.Data.Memory);
-                }
-                finally
-                {
-                    journalResult.Data.Return();
-                }
-
-                position = journalResult.NextPosition;
-            }
-        }
+        // Read journal
+        await this.ReadJournal(crystals).ConfigureAwait(false);
 
         this.logger.TryGet()?.Log($"Prepared - {string.Join(", ", list)}");
 
@@ -407,35 +386,12 @@ public class Crystalizer
 
     public async Task SaveAllAndTerminate()
     {
-        await this.SaveAll(true).ConfigureAwait(false);
+        await this.SaveAndTerminate(true, true);
+    }
 
-        // Terminate journal
-        if (this.Journal is { } journal)
-        {
-            await journal.TerminateAsync().ConfigureAwait(false);
-        }
-
-        // Terminate filers/journal
-        var tasks = new List<Task>();
-        lock (this.syncFiler)
-        {
-            if (this.localFiler is not null)
-            {
-                tasks.Add(this.localFiler.TerminateAsync());
-                this.localFiler = null;
-            }
-
-            foreach (var x in this.bucketToS3Filer.Values)
-            {
-                tasks.Add(x.TerminateAsync());
-            }
-
-            this.bucketToS3Filer.Clear();
-        }
-
-        await Task.WhenAll(tasks).ConfigureAwait(false);
-
-        this.logger.TryGet()?.Log($"Terminated - {this.Himo.MemoryUsage}");
+    public async Task SaveJournalOnlyForTest()
+    {
+        await this.SaveAndTerminate(false, true);
     }
 
     public void AddToSaveQueue(ICrystal crystal)
@@ -632,31 +588,82 @@ public class Crystalizer
         return crystal!.Object;
     }
 
-    /*internal CrystalConfiguration GetCrystalConfiguration(Type type)
+    private Task PeriodicSave()
     {
-        if (!this.configuration.CrystalConfigurations.TryGetValue(type, out var configuration))
+        var tasks = new List<Task>();
+        var crystals = this.crystals.Keys.ToArray();
+        var utc = DateTime.UtcNow;
+        foreach (var x in crystals)
         {
-            ThrowTypeNotRegistered(type);
+            if (x.TryPeriodicSave(utc) is { } task)
+            {
+                tasks.Add(task);
+            }
         }
 
-        return configuration!;
+        return Task.WhenAll(tasks);
     }
 
-    internal BigCrystalConfiguration GetBigCrystalConfiguration(Type type)
+    private Task QueuedSave()
     {
-        if (!this.configuration.CrystalConfigurations.TryGetValue(type, out var configuration))
+        var tasks = new List<Task>();
+        var array = this.saveQueue.Keys.ToArray();
+        this.saveQueue.Clear();
+        foreach (var x in array)
         {
-            ThrowTypeNotRegistered(type);
+            if (x.State == CrystalState.Prepared)
+            {
+                tasks.Add(x.Save(false));
+            }
         }
 
-        if (configuration is not BigCrystalConfiguration bigCrystalConfiguration)
+        return Task.WhenAll(tasks);
+    }
+
+    private async Task SaveAndTerminate(bool saveData, bool saveJournal)
+    {
+        if (saveData)
         {
-            ThrowTypeNotRegistered(type);
-            return default!;
+            await this.SaveAll(true).ConfigureAwait(false);
         }
 
-        return bigCrystalConfiguration;
-    }*/
+        // Save/Terminate journal
+        if (this.Journal is { } journal)
+        {
+            if (saveJournal)
+            {
+                await journal.SaveJournalAsync().ConfigureAwait(false);
+            }
+
+            await journal.TerminateAsync().ConfigureAwait(false);
+        }
+
+        // Terminate filers/journal
+        var tasks = new List<Task>();
+        lock (this.syncFiler)
+        {
+            if (this.localFiler is not null)
+            {
+                tasks.Add(this.localFiler.TerminateAsync());
+                this.localFiler = null;
+            }
+
+            foreach (var x in this.bucketToS3Filer.Values)
+            {
+                tasks.Add(x.TerminateAsync());
+            }
+
+            this.bucketToS3Filer.Clear();
+        }
+
+        await Task.WhenAll(tasks).ConfigureAwait(false);
+
+        this.logger.TryGet()?.Log($"Terminated - {this.Himo.MemoryUsage}");
+    }
+
+    #endregion
+
+    #region Journal
 
     private async Task<CrystalResult> PrepareJournal(bool useQuery = true)
     {
@@ -692,50 +699,49 @@ public class Crystalizer
         return await this.Journal.Prepare(PrepareParam.New<Crystalizer>(this, useQuery)).ConfigureAwait(false);
     }
 
-    private Task PeriodicSave()
+    private async Task ReadJournal(ICrystalInternal[] crystals)
     {
-        var tasks = new List<Task>();
-        var crystals = this.crystals.Keys.ToArray();
-        var utc = DateTime.UtcNow;
-        foreach (var x in crystals)
-        {
-            if (x.TryPeriodicSave(utc) is { } task)
+        if (this.Journal is { } journal)
+        {// Load journal
+            var position = crystals.Where(x => x.GetPosition() != 0).Min(x => x.GetPosition());
+            while (position != 0)
             {
-                tasks.Add(task);
+                var journalResult = await journal.ReadJournalAsync(position).ConfigureAwait(false);
+                if (journalResult.NextPosition == 0)
+                {
+                    break;
+                }
+
+                try
+                {
+                    this.ReadJournal(position, journalResult.Data.Memory);
+                }
+                finally
+                {
+                    journalResult.Data.Return();
+                }
+
+                position = journalResult.NextPosition;
             }
         }
-
-        return Task.WhenAll(tasks);
-    }
-
-    private Task QueuedSave()
-    {
-        var tasks = new List<Task>();
-        var array = this.saveQueue.Keys.ToArray();
-        this.saveQueue.Clear();
-        foreach (var x in array)
-        {
-            if (x.State == CrystalState.Prepared)
-            {
-                tasks.Add(x.Save(false));
-            }
-        }
-
-        return Task.WhenAll(tasks);
     }
 
     private void ReadJournal(ulong position, Memory<byte> data)
     {
         var reader = new TinyhandReader(data.Span);
+        var success = false;
+        var failure = false;
 
-        while (true)
+        while (reader.Consumed < data.Length)
         {
             if (!TryReadRecord(ref reader, out var length, out var journalType, out var plane))
             {
+                this.logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.Journal.Corrupted);
                 return;
             }
             else if (length == 0)
             {
+                this.logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.Journal.Corrupted);
                 return;
             }
 
@@ -746,9 +752,16 @@ public class Crystalizer
                 {
                     if (this.planeToCrystal.TryGetValue(plane, out var crystal))
                     {
-                        if (crystal is ITinyhandJournal journalObject)
+                        if (crystal.Object is ITinyhandJournal journalObject)
                         {
-                            journalObject.ReadRecord(ref reader);
+                            if (journalObject.ReadRecord(ref reader))
+                            {// Success
+                                success = true;
+                            }
+                            else
+                            {// Failure
+                                failure = true;
+                            }
                         }
                     }
                 }
@@ -769,6 +782,15 @@ public class Crystalizer
                 reader = fork;
                 reader.Advance(length);
             }
+        }
+
+        if (failure)
+        {
+            this.logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.Journal.ReadFailure);
+        }
+        else if (success)
+        {
+            this.logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.Journal.ReadSuccess);
         }
     }
 

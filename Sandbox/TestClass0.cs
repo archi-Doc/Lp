@@ -30,6 +30,7 @@ internal class TestClass0
         var manualClass = this.manualCrystal.Object;
         manualClass.Id++;
         Console.WriteLine(manualClass.ToString());
+        Console.WriteLine(manualClass.CurrentPlane);
 
         var combinedClass = this.combinedCrystal.Object;
         combinedClass.Manual2.Id += 2;

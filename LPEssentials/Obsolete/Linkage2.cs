@@ -27,11 +27,11 @@ public sealed partial class Linkage2 : IValidatable // , IEquatable<Linkage>
     [Key(2)]
     public PublicKey Originator { get; private set; } = default!;
 
-    [Key(3, PropertyName = "Mergers")]
+    [Key(3, AddProperty = "Mergers")]
     [MaxLength(MaxMergers)]
     private PublicKey[] mergers = default!;
 
-    /*[Key(4, Marker = true, PropertyName = "Signs")]
+    /*[Key(4, Marker = true, AddProperty = "Signs")]
     [MaxLength(MaxMergers + 1, Authority.PublicKeyLength)]
     private byte[][] signs = default!;*/
 
