@@ -11,6 +11,7 @@ global using LP.Block;
 global using LP.Data;
 global using Tinyhand;
 global using ValueLink;
+using CrystalData;
 using System.Collections.Concurrent;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Logging;
@@ -58,6 +59,19 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddSubcommand(typeof(LP.Subcommands.NetTestSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.NetCleanSubcommand));
             });
+
+            var crystalDataBuilder = new CrystalData.CrystalControl.Builder();
+            crystalDataBuilder.ConfigureCrystal(context =>
+            {
+                context.AddCrystal<PublicIPMachine.Data>(new CrystalConfiguration() with
+                {
+                    SaveFormat = SaveFormat.Utf8,
+                    FileConfiguration = new RelativeFileConfiguration("PublicIP.tinyhand"),
+                    NumberOfHistoryFiles = 0,
+                });
+            });
+
+            this.AddBuilder(crystalDataBuilder);
         }
     }
 

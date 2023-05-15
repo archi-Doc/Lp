@@ -173,6 +173,7 @@ public class Control : ILogInformation
             {// CrystalizerOptions
                 context.GetOptions<LPOptions>(out var lpOptions);
                 options.RootPath = lpOptions.RootDirectory;
+                options.GlobalMain = new LocalDirectoryConfiguration("Local");
             });
 
             var crystalControlBuilder = new CrystalControl.Builder()
@@ -185,8 +186,8 @@ public class Control : ILogInformation
                         registry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
                         registry.Register<FragmentDatum<Identifier>>(2, x => new FragmentDatumImpl<Identifier>(x));
                     },
-                    FileConfiguration = new LocalFileConfiguration("Data/Crystal"),
-                    StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Crystal")),
+                    FileConfiguration = new RelativeFileConfiguration("Data/Crystal"),
+                    StorageConfiguration = new SimpleStorageConfiguration(new RelativeDirectoryConfiguration("Data/Storage")),
                 });
 
                 context.AddBigCrystal<MergerData>(new BigCrystalConfiguration() with
@@ -196,8 +197,8 @@ public class Control : ILogInformation
                         registry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
                         registry.Register<FragmentDatum<Identifier>>(2, x => new FragmentDatumImpl<Identifier>(x));
                     },
-                    FileConfiguration = new LocalFileConfiguration("Data/Merger"),
-                    StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Merger")),
+                    FileConfiguration = new RelativeFileConfiguration("Merger/Crystal"),
+                    StorageConfiguration = new SimpleStorageConfiguration(new RelativeDirectoryConfiguration("Merger/Storage")),
                 });
             });
 

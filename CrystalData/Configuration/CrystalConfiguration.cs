@@ -26,6 +26,7 @@ public partial record CrystalConfiguration
     public CrystalConfiguration()
     {
         this.SavePolicy = SavePolicy.Manual;
+        this.SaveInterval = DefaultInterval;
         this.FileConfiguration = EmptyFileConfiguration.Default;
         this.StorageConfiguration = EmptyStorageConfiguration.Default;
     }

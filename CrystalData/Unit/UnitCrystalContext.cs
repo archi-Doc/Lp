@@ -14,8 +14,17 @@ internal class UnitCrystalContext : IUnitCrystalContext
     void IUnitCrystalContext.AddBigCrystal<TData>(BigCrystalConfiguration configuration)
     {
         this.typeToCrystalConfiguration[typeof(TData)] = configuration;
-        // this.typeToBigCrystalConfiguration[typeof(TData)] = configuration;
     }
+
+    /*bool IUnitCrystalContext.TryAddCrystal<TData>(CrystalConfiguration configuration)
+    {
+        return this.typeToCrystalConfiguration.TryAdd(typeof(TData), configuration);
+    }
+
+    bool IUnitCrystalContext.TryAddBigCrystal<TData>(BigCrystalConfiguration configuration)
+    {
+        return this.typeToCrystalConfiguration.TryAdd(typeof(TData), configuration);
+    }*/
 
     void IUnitCrystalContext.SetJournal(JournalConfiguration configuration)
     {
@@ -39,8 +48,18 @@ internal class UnitCrystalContext : IUnitCrystalContext
             }
         }
 
-        var configuration = new CrystalizerConfiguration(this.typeToCrystalConfiguration, this.journalConfiguration);
-        context.SetOptions(configuration);
+        if (!context.TryGetOptions<CrystalizerConfiguration>(out var configuration))
+        {// New
+            configuration = new CrystalizerConfiguration(this.typeToCrystalConfiguration, this.journalConfiguration);
+            context.SetOptions(configuration);
+        }
+        else
+        {// Existing
+            foreach (var x in this.typeToCrystalConfiguration)
+            {
+                configuration.CrystalConfigurations[x.Key] = x.Value;
+            }
+        }
 
         var options = new CrystalizerOptions();
         options.RootPath = context.DataDirectory;
