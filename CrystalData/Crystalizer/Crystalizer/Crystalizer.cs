@@ -150,6 +150,15 @@ public class Crystalizer
     {
         lock (this.syncFiler)
         {
+            if (configuration is RelativeFileConfiguration)
+            {// Relative file
+                configuration = this.GlobalMain.CombineFile(configuration.Path);
+            }
+            else if (configuration is RelativeDirectoryConfiguration directoryConfiguration)
+            {// Relative directory
+                configuration = this.GlobalMain.CombineDirectory(directoryConfiguration);
+            }
+
             if (configuration is EmptyFileConfiguration ||
                 configuration is EmptyDirectoryConfiguration)
             {// Empty file or directory
