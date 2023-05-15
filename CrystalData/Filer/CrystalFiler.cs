@@ -37,7 +37,7 @@ public class CrystalFiler
         {
             if (this.rawFiler == null)
             {
-                this.rawFiler = this.crystalFiler.crystalizer.ResolveRawFiler(this.fileConfiguration);
+                (this.rawFiler, this.fileConfiguration) = this.crystalFiler.crystalizer.ResolveRawFiler(this.fileConfiguration);
                 var result = await this.rawFiler.PrepareAndCheck(param, this.fileConfiguration).ConfigureAwait(false);
                 if (result.IsFailure())
                 {
@@ -140,7 +140,7 @@ public class CrystalFiler
                 return Task.FromResult(CrystalResult.Success);
             }
 
-            var numberOfFiles = 1 + this.crystalFiler.configuration.NumberOfFiles;
+            var numberOfFiles = 1 + this.crystalFiler.configuration.NumberOfHistoryFiles;
 
             Waypoint[] array;
             string[] pathArray;
@@ -273,7 +273,7 @@ public class CrystalFiler
 
     #region PropertyAndField
 
-    public bool IsProtected => this.configuration.NumberOfFiles > 0;
+    public bool IsProtected => this.configuration.NumberOfHistoryFiles > 0;
 
     private Crystalizer crystalizer;
     private ILogger logger;

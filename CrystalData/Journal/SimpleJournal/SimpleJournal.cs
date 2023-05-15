@@ -22,6 +22,8 @@ public partial class SimpleJournal : IJournal
     {
         this.crystalizer = crystalizer;
         this.SimpleJournalConfiguration = configuration;
+        this.MainConfiguration = this.SimpleJournalConfiguration.DirectoryConfiguration;
+        this.BackupConfiguration = this.SimpleJournalConfiguration.BackupDirectoryConfiguration;
         this.logger = logger;
     }
 
@@ -29,9 +31,9 @@ public partial class SimpleJournal : IJournal
 
     public SimpleJournalConfiguration SimpleJournalConfiguration { get; }
 
-    public DirectoryConfiguration MainConfiguration => this.SimpleJournalConfiguration.DirectoryConfiguration;
+    public DirectoryConfiguration MainConfiguration { get; private set; }
 
-    public DirectoryConfiguration? BackupConfiguration => this.SimpleJournalConfiguration.BackupDirectoryConfiguration;
+    public DirectoryConfiguration? BackupConfiguration { get; private set; }
 
     private Crystalizer crystalizer;
     private bool prepared;
@@ -64,17 +66,21 @@ public partial class SimpleJournal : IJournal
             return CrystalResult.Success;
         }
 
-        this.rawFiler ??= this.crystalizer.ResolveRawFiler(this.MainConfiguration);
-        var result = await this.rawFiler.PrepareAndCheck(param, this.MainConfiguration).ConfigureAwait(false);
-        if (result != CrystalResult.Success)
+        if (this.rawFiler == null)
         {
-            return result;
+            (this.rawFiler, this.MainConfiguration) = this.crystalizer.ResolveRawFiler(this.MainConfiguration);
+            var result = await this.rawFiler.PrepareAndCheck(param, this.MainConfiguration).ConfigureAwait(false);
+            if (result != CrystalResult.Success)
+            {
+                return result;
+            }
         }
 
-        if (this.BackupConfiguration is not null)
+        if (this.BackupConfiguration is not null &&
+            this.backupFiler == null)
         {
-            this.backupFiler ??= this.crystalizer.ResolveRawFiler(this.BackupConfiguration);
-            result = await this.backupFiler.PrepareAndCheck(param, this.BackupConfiguration).ConfigureAwait(false);
+            (this.backupFiler, this.BackupConfiguration) = this.crystalizer.ResolveRawFiler(this.BackupConfiguration);
+            var result = await this.backupFiler.PrepareAndCheck(param, this.BackupConfiguration).ConfigureAwait(false);
             if (result != CrystalResult.Success)
             {
                 return result;

@@ -54,11 +54,14 @@ internal partial class SimpleStorage : IStorage
             this.directory += "/";
         }
 
-        this.mainFiler ??= this.crystalizer.ResolveRawFiler(directoryConfiguration);
-        result = await this.mainFiler.PrepareAndCheck(param, directoryConfiguration).ConfigureAwait(false);
-        if (result.IsFailure())
+        if (this.mainFiler is null)
         {
-            return result;
+            (this.mainFiler, directoryConfiguration) = this.crystalizer.ResolveRawFiler(directoryConfiguration);
+            result = await this.mainFiler.PrepareAndCheck(param, directoryConfiguration).ConfigureAwait(false);
+            if (result.IsFailure())
+            {
+                return result;
+            }
         }
 
         // Backup
@@ -71,11 +74,14 @@ internal partial class SimpleStorage : IStorage
                 this.backupDirectory += "/";
             }
 
-            this.backupFiler ??= this.crystalizer.ResolveRawFiler(backupDirectoryConfiguration);
-            result = await this.backupFiler.PrepareAndCheck(param, backupDirectoryConfiguration).ConfigureAwait(false);
-            if (result.IsFailure())
+            if (this.backupFiler is null)
             {
-                return result;
+                (this.backupFiler, backupDirectoryConfiguration) = this.crystalizer.ResolveRawFiler(backupDirectoryConfiguration);
+                result = await this.backupFiler.PrepareAndCheck(param, backupDirectoryConfiguration).ConfigureAwait(false);
+                if (result.IsFailure())
+                {
+                    return result;
+                }
             }
         }
 

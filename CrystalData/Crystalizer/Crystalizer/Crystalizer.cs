@@ -141,12 +141,25 @@ public class Crystalizer
 
     #region Resolvers
 
-    public IFiler ResolveFiler(PathConfiguration configuration)
+    /*public (IFiler Filer, PathConfiguration FixedConfiguration) ResolveFiler(PathConfiguration configuration)
     {
-        return new RawFilerToFiler(this, this.ResolveRawFiler(configuration), configuration.Path);
+        var resolved = this.ResolveRawFiler(configuration);
+        return (new RawFilerToFiler(this, resolved.RawFiler, resolved.FixedConfiguration.Path), resolved.FixedConfiguration);
+    }*/
+
+    public (IFiler Filer, FileConfiguration FixedConfiguration) ResolveFiler(FileConfiguration configuration)
+    {
+        var resolved = this.ResolveRawFiler(configuration);
+        return (new RawFilerToFiler(this, resolved.RawFiler, resolved.FixedConfiguration.Path), resolved.FixedConfiguration);
     }
 
-    public IRawFiler ResolveRawFiler(PathConfiguration configuration)
+    public (IFiler Filer, DirectoryConfiguration FixedConfiguration) ResolveFiler(DirectoryConfiguration configuration)
+    {
+        var resolved = this.ResolveRawFiler(configuration);
+        return (new RawFilerToFiler(this, resolved.RawFiler, resolved.FixedConfiguration.Path), resolved.FixedConfiguration);
+    }
+
+    /*public (IRawFiler RawFiler, PathConfiguration FixedConfiguration) ResolveRawFiler(PathConfiguration configuration)
     {
         lock (this.syncFiler)
         {
@@ -162,7 +175,7 @@ public class Crystalizer
             if (configuration is EmptyFileConfiguration ||
                 configuration is EmptyDirectoryConfiguration)
             {// Empty file or directory
-                return EmptyFiler.Default;
+                return (EmptyFiler.Default, configuration);
             }
             else if (configuration is LocalFileConfiguration ||
                 configuration is LocalDirectoryConfiguration)
@@ -172,15 +185,15 @@ public class Crystalizer
                     this.localFiler ??= new LocalFiler();
                 }
 
-                return this.localFiler;
+                return (this.localFiler, configuration);
             }
             else if (configuration is S3FileConfiguration s3FilerConfiguration)
             {// S3 file
-                return ResolveS3Filer(s3FilerConfiguration.Bucket);
+                return (ResolveS3Filer(s3FilerConfiguration.Bucket), configuration);
             }
             else if (configuration is S3DirectoryConfiguration s3DirectoryConfiguration)
             {// S3 directory
-                return ResolveS3Filer(s3DirectoryConfiguration.Bucket);
+                return (ResolveS3Filer(s3DirectoryConfiguration.Bucket), configuration);
             }
             else
             {
@@ -198,6 +211,86 @@ public class Crystalizer
             }
 
             return filer;
+        }
+    }*/
+
+    public (IRawFiler RawFiler, FileConfiguration FixedConfiguration) ResolveRawFiler(FileConfiguration configuration)
+    {
+        lock (this.syncFiler)
+        {
+            if (configuration is RelativeFileConfiguration)
+            {// Relative file
+                configuration = this.GlobalMain.CombineFile(configuration.Path);
+            }
+
+            if (configuration is EmptyFileConfiguration)
+            {// Empty file
+                return (EmptyFiler.Default, configuration);
+            }
+            else if (configuration is LocalFileConfiguration)
+            {// Local file
+                if (this.localFiler == null)
+                {
+                    this.localFiler ??= new LocalFiler();
+                }
+
+                return (this.localFiler, configuration);
+            }
+            else if (configuration is S3FileConfiguration s3Configuration)
+            {// S3 file
+                if (!this.bucketToS3Filer.TryGetValue(s3Configuration.Bucket, out var filer))
+                {
+                    filer = new S3Filer(s3Configuration.Bucket);
+                    this.bucketToS3Filer.TryAdd(s3Configuration.Bucket, filer);
+                }
+
+                return (filer, configuration);
+            }
+            else
+            {
+                ThrowConfigurationNotRegistered(configuration.GetType());
+                return default!;
+            }
+        }
+    }
+
+    public (IRawFiler RawFiler, DirectoryConfiguration FixedConfiguration) ResolveRawFiler(DirectoryConfiguration configuration)
+    {
+        lock (this.syncFiler)
+        {
+            if (configuration is RelativeDirectoryConfiguration)
+            {// Relative directory
+                configuration = this.GlobalMain.CombineDirectory(configuration);
+            }
+
+            if (configuration is EmptyDirectoryConfiguration)
+            {// Empty directory
+                return (EmptyFiler.Default, configuration);
+            }
+            else if (configuration is LocalDirectoryConfiguration)
+            {// Local directory
+                if (this.localFiler == null)
+                {
+                    this.localFiler ??= new LocalFiler();
+                }
+
+                return (this.localFiler, configuration);
+            }
+            else if (configuration is S3DirectoryConfiguration s3Configuration)
+            {// S3 directory
+                if (!this.bucketToS3Filer.TryGetValue(s3Configuration.Bucket, out var filer))
+                {
+                    filer = new S3Filer(s3Configuration.Bucket);
+                    this.bucketToS3Filer.TryAdd(s3Configuration.Bucket, filer);
+                }
+
+                return (filer, configuration);
+            }
+            else
+            {
+                ThrowConfigurationNotRegistered(configuration.GetType());
+                return default!;
+            }
         }
     }
 
@@ -267,29 +360,29 @@ public class Crystalizer
             }
         }
 
-        var filer = this.ResolveFiler(configuration);
-        var result = await filer.PrepareAndCheck(PrepareParam.NoQuery<Crystalizer>(this), configuration).ConfigureAwait(false);
+        var resolved = this.ResolveFiler(configuration);
+        var result = await resolved.Filer.PrepareAndCheck(PrepareParam.NoQuery<Crystalizer>(this), resolved.FixedConfiguration).ConfigureAwait(false);
         if (result.IsFailure())
         {
             return result;
         }
 
         var bytes = TinyhandSerializer.SerializeToUtf8(data);
-        result = await filer.WriteAsync(0, new(bytes)).ConfigureAwait(false);
+        result = await resolved.Filer.WriteAsync(0, new(bytes)).ConfigureAwait(false);
 
         return result;
     }
 
     public async Task<CrystalResult> LoadConfigurations(FileConfiguration configuration)
     {
-        var filer = this.ResolveFiler(configuration);
-        var result = await filer.PrepareAndCheck(PrepareParam.NoQuery<Crystalizer>(this), configuration).ConfigureAwait(false);
+        var resolved = this.ResolveFiler(configuration);
+        var result = await resolved.Filer.PrepareAndCheck(PrepareParam.NoQuery<Crystalizer>(this), resolved.FixedConfiguration).ConfigureAwait(false);
         if (result.IsFailure())
         {
             return result;
         }
 
-        var readResult = await filer.ReadAsync(0, -1).ConfigureAwait(false);
+        var readResult = await resolved.Filer.ReadAsync(0, -1).ConfigureAwait(false);
         if (readResult.IsFailure)
         {
             return readResult.Result;
