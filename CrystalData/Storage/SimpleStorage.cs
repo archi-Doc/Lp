@@ -25,7 +25,7 @@ internal partial class SimpleStorage : IStorage
 
     public long StorageUsage => this.data == null ? 0 : this.data.StorageUsage;
 
-    private SimpleStorageData? data => this.crystal?.Object;
+    private SimpleStorageData? data => this.crystal?.Data;
 
     private Crystalizer crystalizer;
     private string directory = string.Empty;

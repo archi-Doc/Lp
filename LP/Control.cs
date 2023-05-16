@@ -200,6 +200,13 @@ public class Control : ILogInformation
                     FileConfiguration = new RelativeFileConfiguration("Merger/Crystal"),
                     StorageConfiguration = new SimpleStorageConfiguration(new RelativeDirectoryConfiguration("Merger/Storage")),
                 });
+
+                context.AddCrystal<PublicIPMachine.Data>(new CrystalConfiguration() with
+                {
+                    SaveFormat = SaveFormat.Utf8,
+                    FileConfiguration = new RelativeFileConfiguration("PublicIP2.tinyhand"),
+                    NumberOfHistoryFiles = 0,
+                });
             });
 
             this.AddBuilder(new NetControl.Builder());

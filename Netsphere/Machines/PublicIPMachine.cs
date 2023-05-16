@@ -19,13 +19,25 @@ public partial class PublicIPMachine : Machine<Identifier>
         public IPAddress? IPAddress { get; set; }
     }
 
-    public PublicIPMachine(ILogger<PublicIPMachine> logger, BigMachine<Identifier> bigMachine, LPBase lpBase, NetControl netControl, ICrystal<Data> crystal)
+    public PublicIPMachine(ILogger<PublicIPMachine> logger, BigMachine<Identifier> bigMachine, LPBase lpBase, NetControl netControl, Crystalizer crystalizer)
         : base(bigMachine)
     {
         this.logger = logger;
         this.lpBase = lpBase;
         this.netControl = netControl;
-        this.crystal = crystal;
+        this.crystal = crystalizer.CreateCrystal<Data>();
+
+        if (!this.crystal.IsConfigured)
+        {
+            var configuration = new CrystalConfiguration() with
+            {
+                SaveFormat = SaveFormat.Utf8,
+                FileConfiguration = new RelativeFileConfiguration(Filename),
+                NumberOfHistoryFiles = 0,
+            };
+
+            this.crystal.Configure(configuration);
+        }
 
         // this.DefaultTimeout = TimeSpan.FromSeconds(5);
     }
@@ -33,10 +45,10 @@ public partial class PublicIPMachine : Machine<Identifier>
     [StateMethod(0)]
     protected async Task<StateResult> Initial(StateParameter parameter)
     {
-        if (this.crystal.Object.IPAddress is not null &&
-            Mics.IsInPeriodToUtcNow(this.crystal.Object.Mics, Mics.FromMinutes(5)))
+        if (this.crystal.Data.IPAddress is not null &&
+            Mics.IsInPeriodToUtcNow(this.crystal.Data.Mics, Mics.FromMinutes(5)))
         {
-            var nodeAddress = new NodeAddress(this.crystal.Object.IPAddress, (ushort)this.netControl.NetBase.NetsphereOptions.Port);
+            var nodeAddress = new NodeAddress(this.crystal.Data.IPAddress, (ushort)this.netControl.NetBase.NetsphereOptions.Port);
             this.netControl.NetStatus.ReportMyNodeAddress(nodeAddress);
             this.logger?.TryGet()?.Log($"{nodeAddress.ToString()} from file");
             return StateResult.Terminate;
@@ -60,8 +72,8 @@ public partial class PublicIPMachine : Machine<Identifier>
         this.netControl.NetStatus.ReportMyNodeAddress(nodeAddress);
         this.logger?.TryGet()?.Log($"{nodeAddress.ToString()} from {uri}");
 
-        this.crystal.Object.Mics = Mics.GetUtcNow();
-        this.crystal.Object.IPAddress = ipAddress;
+        this.crystal.Data.Mics = Mics.GetUtcNow();
+        this.crystal.Data.IPAddress = ipAddress;
         await this.crystal.Save();
     }
 

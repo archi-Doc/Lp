@@ -467,7 +467,7 @@ public class Crystalizer
                 return result;
             }
 
-            list.Add(x.Object.GetType().Name);
+            list.Add(x.Data.GetType().Name);
         }
 
         // Read journal
@@ -519,6 +519,11 @@ public class Crystalizer
     {
         var crystal = new CrystalObject<TData>(this);
         this.crystals.TryAdd(crystal, 0);
+        if (this.configuration.CrystalConfigurations.TryGetValue(typeof(TData), out var configuration))
+        {
+            ((ICrystal)crystal).Configure(configuration);
+        }
+
         return crystal;
     }
 
@@ -527,6 +532,11 @@ public class Crystalizer
     {
         var crystal = new BigCrystalObject<TData>(this);
         this.crystals.TryAdd(crystal, 0);
+        if (this.configuration.CrystalConfigurations.TryGetValue(typeof(TData), out var configuration))
+        {
+            ((ICrystal)crystal).Configure(configuration);
+        }
+
         return crystal;
     }
 
@@ -666,7 +676,7 @@ public class Crystalizer
 
     internal bool DeleteInternal(ICrystalInternal crystal)
     {
-        if (!this.typeToCrystal.TryGetValue(crystal.ObjectType, out _))
+        if (!this.typeToCrystal.TryGetValue(crystal.DataType, out _))
         {// Created crystals
             return this.crystals.TryRemove(crystal, out _);
         }
@@ -693,7 +703,7 @@ public class Crystalizer
             ThrowTypeNotRegistered(type);
         }
 
-        return crystal!.Object;
+        return crystal!.Data;
     }
 
     private Task PeriodicSave()
@@ -860,7 +870,7 @@ public class Crystalizer
                 {
                     if (this.planeToCrystal.TryGetValue(plane, out var crystal))
                     {
-                        if (crystal.Object is ITinyhandJournal journalObject)
+                        if (crystal.Data is ITinyhandJournal journalObject)
                         {
                             if (journalObject.ReadRecord(ref reader))
                             {// Success

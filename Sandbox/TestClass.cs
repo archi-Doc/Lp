@@ -62,19 +62,19 @@ internal class TestClass
 
         await this.crystalizer.PrepareAndLoadAll();
 
-        var manualClass = this.manualCrystal.Object;
+        var manualClass = this.manualCrystal.Data;
         manualClass.Id = 1;
         Console.WriteLine(manualClass.ToString());
 
         var manualCrystal2 = this.crystalizer.CreateCrystal<ManualClass>();
         manualCrystal2.Configure(new(SavePolicy.Manual, new LocalFileConfiguration("test2/manual2")));
-        var manualClass2 = manualCrystal2.Object;
+        var manualClass2 = manualCrystal2.Data;
         manualClass2.Id = 2;
         await manualCrystal2.Save();
         Console.WriteLine(manualClass.ToString());
         Console.WriteLine(manualClass2.ToString());
 
-        var combinedClass = this.combinedCrystal.Object;
+        var combinedClass = this.combinedCrystal.Data;
         combinedClass.Manual2.Id = 2;
         Console.WriteLine(combinedClass.ToString());
 

@@ -29,7 +29,7 @@ public sealed class StorageGroup
     private Type dataType;
     private CrystalConfiguration storageGroupConfiguration;
 
-    private StorageObject.GoshujinClass storages => this.crystal.Object;
+    private StorageObject.GoshujinClass storages => this.crystal.Data;
 
     private object syncObject = new();
     private ICrystal<StorageObject.GoshujinClass> crystal; // lock(syncObject)

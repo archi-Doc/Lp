@@ -2,13 +2,14 @@
 
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
+using CrystalData;
 using ValueLink;
 
 namespace LP;
 
 public partial class NtpCorrection : UnitBase, IUnitPreparable, IUnitSerializable
 {
-    private const string FileName = "NtpNode.tinyhand";
+    private const string Filename = "NtpNode.tinyhand";
     private const int ParallelNumber = 2;
     private const int MaxRoundtripMilliseconds = 1000;
     private readonly string[] hostNames =
@@ -21,6 +22,11 @@ public partial class NtpCorrection : UnitBase, IUnitPreparable, IUnitSerializabl
         "ntp.nict.jp",
         "time-a-g.nist.gov",
     };
+
+    [TinyhandObject]
+    public sealed partial class Data
+    {
+    }
 
     [TinyhandObject]
     [ValueLinkObject]
@@ -51,11 +57,24 @@ public partial class NtpCorrection : UnitBase, IUnitPreparable, IUnitSerializabl
         private int roundtripMilliseconds = MaxRoundtripMilliseconds;
     }
 
-    public NtpCorrection(UnitContext context, ILogger<NtpCorrection> logger)
+    public NtpCorrection(UnitContext context, ILogger<NtpCorrection> logger, Crystalizer crystalizer)
         : base(context)
     {
         this.logger = null; // logger;
         this.ResetHostnames();
+
+        this.crystal = crystalizer.CreateCrystal<Data>();
+        if (!this.crystal.IsConfigured)
+        {
+            var configuration = new CrystalConfiguration() with
+            {
+                SaveFormat = SaveFormat.Utf8,
+                FileConfiguration = new RelativeFileConfiguration(Filename),
+                NumberOfHistoryFiles = 0,
+            };
+
+            this.crystal.Configure(configuration);
+        }
     }
 
     public void Prepare(UnitMessage.Prepare message)
@@ -147,7 +166,7 @@ Retry:
 
     public async Task LoadAsync(UnitMessage.LoadAsync message)
     {
-        var path = Path.Combine(message.DataPath, FileName);
+        var path = Path.Combine(message.DataPath, Filename);
         try
         {
             if (File.Exists(path))
@@ -190,7 +209,7 @@ Retry:
 
     public async Task SaveAsync(UnitMessage.SaveAsync message)
     {
-        var path = Path.Combine(message.DataPath, FileName);
+        var path = Path.Combine(message.DataPath, Filename);
         try
         {
             using (var file = File.Open(path, FileMode.Create))
@@ -278,4 +297,5 @@ Retry:
     private int timeoffsetCount;
     private long meanTimeoffset;
     private ILogger<NtpCorrection>? logger;
+    private ICrystal<Data> crystal;
 }

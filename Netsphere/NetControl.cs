@@ -61,7 +61,7 @@ public class NetControl : UnitBase, IUnitPreparable
             });
 
             var crystalDataBuilder = new CrystalData.CrystalControl.Builder();
-            crystalDataBuilder.ConfigureCrystal(context =>
+            /*crystalDataBuilder.ConfigureCrystal(context =>
             {
                 context.AddCrystal<PublicIPMachine.Data>(new CrystalConfiguration() with
                 {
@@ -69,7 +69,7 @@ public class NetControl : UnitBase, IUnitPreparable
                     FileConfiguration = new RelativeFileConfiguration("PublicIP.tinyhand"),
                     NumberOfHistoryFiles = 0,
                 });
-            });
+            });*/
 
             this.AddBuilder(crystalDataBuilder);
         }

@@ -86,7 +86,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable, IUnitS
         }
 
         // Get LpData
-        var root = this.crystal.Object;
+        var root = this.crystal.Data;
         var identifier = param.token.PublicKey.ToIdentifier();
         var credit = root.TryGetChild(identifier);
         if (credit != null)
@@ -116,7 +116,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable, IUnitS
     {
         this.logger.TryGet()?.Log("Merger started");
 
-        var numberOfCredits = this.crystal.Object.Count(LpData.LpDataId.Credit);
+        var numberOfCredits = this.crystal.Data.Count(LpData.LpDataId.Credit);
         this.logger.TryGet()?.Log($"Credits: {numberOfCredits}");
 
         // this.logger.TryGet(LogLevel.Fatal)?.Log("Merger fatal");

@@ -27,18 +27,18 @@ internal class TestClass0
             return;
         }
 
-        var manualClass = this.manualCrystal.Object;
+        var manualClass = this.manualCrystal.Data;
         manualClass.Id++;
         Console.WriteLine(manualClass.ToString());
 
-        var combinedClass = this.combinedCrystal.Object;
+        var combinedClass = this.combinedCrystal.Data;
         combinedClass.Manual2.Id += 2;
         Console.WriteLine(combinedClass.ToString());
 
         ulong fileId = 0;
         combinedCrystal.Storage.PutAndForget(ref fileId, new(new byte[] { 1, 2, 3, }));
 
-        var data = this.crystalData.Object;
+        var data = this.crystalData.Data;
         using (var op = data.Lock<ObjectDatum<LocalFileConfiguration>>())
         {
             if (op.Datum is not null)

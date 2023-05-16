@@ -8,9 +8,11 @@ public interface ICrystal
 
     CrystalConfiguration CrystalConfiguration { get; }
 
-    Type ObjectType { get; }
+    bool IsConfigured => this.CrystalConfiguration != CrystalConfiguration.Default;
 
-    object Object { get; }
+    Type DataType { get; }
+
+    object Data { get; }
 
     CrystalState State { get; }
 
@@ -34,7 +36,7 @@ public interface ICrystal
 public interface ICrystal<TData> : ICrystal
     where TData : class, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
-    public new TData Object { get; }
+    public new TData Data { get; }
 }
 
 internal interface ICrystalInternal : ICrystal
