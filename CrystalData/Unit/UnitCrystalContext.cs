@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CrystalData;
 
-internal class UnitCrystalContext : IUnitCrystalContext
+internal class UnitCrystalContext : IUnitCrystalContext, IUnitCustomContext
 {
     void IUnitCrystalContext.AddCrystal<TData>(CrystalConfiguration configuration)
     {
@@ -31,7 +31,7 @@ internal class UnitCrystalContext : IUnitCrystalContext
         this.journalConfiguration = configuration;
     }
 
-    internal void Configure(IUnitConfigurationContext context)
+    void IUnitCustomContext.Configure(IUnitConfigurationContext context)
     {
         foreach (var x in this.typeToCrystalConfiguration)
         {// This is slow, but it is Singleton anyway.

@@ -40,16 +40,18 @@ public class CrystalControl
                     context.AddSingleton<IStorageKey, StorageKey>();
                     context.TryAddSingleton<ICrystalDataQuery, CrystalDataQueryDefault>();
                 }
+            });
 
-                // Crystalizer
-                var crystalContext = new UnitCrystalContext();
+            this.CustomConfigure = context =>
+            {
+                var crystalContext = context.GetCustomContext<UnitCrystalContext>();
                 foreach (var x in this.crystalActions)
                 {
                     x(crystalContext);
                 }
 
-                crystalContext.Configure(context);
-            });
+                // crystalContext.Configure(context);
+            };
         }
 
         public new Builder Preload(Action<IUnitPreloadContext> @delegate)

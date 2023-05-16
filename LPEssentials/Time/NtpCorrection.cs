@@ -29,10 +29,11 @@ public partial class NtpCorrection : UnitBase, IUnitPreparable
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
 #pragma warning disable SA1401 // Fields should be private
         public object syncObject = new();
-        [Key(0)]
-        public Item.GoshujinClass goshujin = new();
         public int timeoffsetCount;
         public long meanTimeoffset;
+
+        [Key(0)]
+        public Item.GoshujinClass goshujin = new();
 #pragma warning restore SA1401 // Fields should be private
 #pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
     }
@@ -71,20 +72,15 @@ public partial class NtpCorrection : UnitBase, IUnitPreparable
     {
         this.logger = null; // logger;
 
-        this.crystal = crystalizer.CreateCrystal<Data>();
-        if (!this.crystal.IsConfigured)
+        this.crystal = crystalizer.GetOrCreateCrystal<Data>(new CrystalConfiguration() with
         {
-            var configuration = new CrystalConfiguration() with
-            {
-                SaveFormat = SaveFormat.Utf8,
-                FileConfiguration = new RelativeFileConfiguration(Filename),
-                NumberOfHistoryFiles = 0,
-            };
-
-            this.crystal.Configure(configuration);
-        }
+            SaveFormat = SaveFormat.Utf8,
+            FileConfiguration = new RelativeFileConfiguration(Filename),
+            NumberOfHistoryFiles = 0,
+        });
 
         this.data = this.crystal.Data;
+
         this.ResetHostnames();
     }
 
