@@ -1,13 +1,16 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Collections.Concurrent;
+using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Amazon.S3.Model.Internal.MarshallTransformations;
 using CrystalData.Check;
 using CrystalData.Filer;
 using CrystalData.Journal;
 using CrystalData.Storage;
 using CrystalData.UserInterface;
+using Tinyhand.IO;
 
 #pragma warning disable SA1204
 
@@ -50,6 +53,7 @@ public class Crystalizer
     public Crystalizer(CrystalizerConfiguration configuration, CrystalizerOptions options, ICrystalDataQuery query, ILogger<Crystalizer> logger, UnitLogger unitLogger, IStorageKey storageKey)
     {
         this.configuration = configuration;
+        this.GlobalMain = options.GlobalMain;
         this.GlobalBackup = options.GlobalBackup;
         this.EnableLogger = options.EnableLogger;
         this.RootDirectory = options.RootPath;
@@ -93,6 +97,8 @@ public class Crystalizer
 
     #region FieldAndProperty
 
+    public DirectoryConfiguration GlobalMain { get; }
+
     public DirectoryConfiguration? GlobalBackup { get; }
 
     public bool EnableLogger { get; }
@@ -135,19 +141,41 @@ public class Crystalizer
 
     #region Resolvers
 
-    public IFiler ResolveFiler(PathConfiguration configuration)
+    /*public (IFiler Filer, PathConfiguration FixedConfiguration) ResolveFiler(PathConfiguration configuration)
     {
-        return new RawFilerToFiler(this, this.ResolveRawFiler(configuration), configuration.Path);
+        var resolved = this.ResolveRawFiler(configuration);
+        return (new RawFilerToFiler(this, resolved.RawFiler, resolved.FixedConfiguration.Path), resolved.FixedConfiguration);
+    }*/
+
+    public (IFiler Filer, FileConfiguration FixedConfiguration) ResolveFiler(FileConfiguration configuration)
+    {
+        var resolved = this.ResolveRawFiler(configuration);
+        return (new RawFilerToFiler(this, resolved.RawFiler, resolved.FixedConfiguration.Path), resolved.FixedConfiguration);
     }
 
-    public IRawFiler ResolveRawFiler(PathConfiguration configuration)
+    public (IFiler Filer, DirectoryConfiguration FixedConfiguration) ResolveFiler(DirectoryConfiguration configuration)
+    {
+        var resolved = this.ResolveRawFiler(configuration);
+        return (new RawFilerToFiler(this, resolved.RawFiler, resolved.FixedConfiguration.Path), resolved.FixedConfiguration);
+    }
+
+    /*public (IRawFiler RawFiler, PathConfiguration FixedConfiguration) ResolveRawFiler(PathConfiguration configuration)
     {
         lock (this.syncFiler)
         {
+            if (configuration is RelativeFileConfiguration)
+            {// Relative file
+                configuration = this.GlobalMain.CombineFile(configuration.Path);
+            }
+            else if (configuration is RelativeDirectoryConfiguration directoryConfiguration)
+            {// Relative directory
+                configuration = this.GlobalMain.CombineDirectory(directoryConfiguration);
+            }
+
             if (configuration is EmptyFileConfiguration ||
                 configuration is EmptyDirectoryConfiguration)
             {// Empty file or directory
-                return EmptyFiler.Default;
+                return (EmptyFiler.Default, configuration);
             }
             else if (configuration is LocalFileConfiguration ||
                 configuration is LocalDirectoryConfiguration)
@@ -157,15 +185,15 @@ public class Crystalizer
                     this.localFiler ??= new LocalFiler();
                 }
 
-                return this.localFiler;
+                return (this.localFiler, configuration);
             }
             else if (configuration is S3FileConfiguration s3FilerConfiguration)
             {// S3 file
-                return ResolveS3Filer(s3FilerConfiguration.Bucket);
+                return (ResolveS3Filer(s3FilerConfiguration.Bucket), configuration);
             }
             else if (configuration is S3DirectoryConfiguration s3DirectoryConfiguration)
             {// S3 directory
-                return ResolveS3Filer(s3DirectoryConfiguration.Bucket);
+                return (ResolveS3Filer(s3DirectoryConfiguration.Bucket), configuration);
             }
             else
             {
@@ -183,6 +211,86 @@ public class Crystalizer
             }
 
             return filer;
+        }
+    }*/
+
+    public (IRawFiler RawFiler, FileConfiguration FixedConfiguration) ResolveRawFiler(FileConfiguration configuration)
+    {
+        lock (this.syncFiler)
+        {
+            if (configuration is RelativeFileConfiguration)
+            {// Relative file
+                configuration = this.GlobalMain.CombineFile(configuration.Path);
+            }
+
+            if (configuration is EmptyFileConfiguration)
+            {// Empty file
+                return (EmptyFiler.Default, configuration);
+            }
+            else if (configuration is LocalFileConfiguration)
+            {// Local file
+                if (this.localFiler == null)
+                {
+                    this.localFiler ??= new LocalFiler();
+                }
+
+                return (this.localFiler, configuration);
+            }
+            else if (configuration is S3FileConfiguration s3Configuration)
+            {// S3 file
+                if (!this.bucketToS3Filer.TryGetValue(s3Configuration.Bucket, out var filer))
+                {
+                    filer = new S3Filer(s3Configuration.Bucket);
+                    this.bucketToS3Filer.TryAdd(s3Configuration.Bucket, filer);
+                }
+
+                return (filer, configuration);
+            }
+            else
+            {
+                ThrowConfigurationNotRegistered(configuration.GetType());
+                return default!;
+            }
+        }
+    }
+
+    public (IRawFiler RawFiler, DirectoryConfiguration FixedConfiguration) ResolveRawFiler(DirectoryConfiguration configuration)
+    {
+        lock (this.syncFiler)
+        {
+            if (configuration is RelativeDirectoryConfiguration)
+            {// Relative directory
+                configuration = this.GlobalMain.CombineDirectory(configuration);
+            }
+
+            if (configuration is EmptyDirectoryConfiguration)
+            {// Empty directory
+                return (EmptyFiler.Default, configuration);
+            }
+            else if (configuration is LocalDirectoryConfiguration)
+            {// Local directory
+                if (this.localFiler == null)
+                {
+                    this.localFiler ??= new LocalFiler();
+                }
+
+                return (this.localFiler, configuration);
+            }
+            else if (configuration is S3DirectoryConfiguration s3Configuration)
+            {// S3 directory
+                if (!this.bucketToS3Filer.TryGetValue(s3Configuration.Bucket, out var filer))
+                {
+                    filer = new S3Filer(s3Configuration.Bucket);
+                    this.bucketToS3Filer.TryAdd(s3Configuration.Bucket, filer);
+                }
+
+                return (filer, configuration);
+            }
+            else
+            {
+                ThrowConfigurationNotRegistered(configuration.GetType());
+                return default!;
+            }
         }
     }
 
@@ -252,29 +360,29 @@ public class Crystalizer
             }
         }
 
-        var filer = this.ResolveFiler(configuration);
-        var result = await filer.PrepareAndCheck(PrepareParam.NoQuery<Crystalizer>(this), configuration).ConfigureAwait(false);
+        var resolved = this.ResolveFiler(configuration);
+        var result = await resolved.Filer.PrepareAndCheck(PrepareParam.NoQuery<Crystalizer>(this), resolved.FixedConfiguration).ConfigureAwait(false);
         if (result.IsFailure())
         {
             return result;
         }
 
         var bytes = TinyhandSerializer.SerializeToUtf8(data);
-        result = await filer.WriteAsync(0, new(bytes)).ConfigureAwait(false);
+        result = await resolved.Filer.WriteAsync(0, new(bytes)).ConfigureAwait(false);
 
         return result;
     }
 
     public async Task<CrystalResult> LoadConfigurations(FileConfiguration configuration)
     {
-        var filer = this.ResolveFiler(configuration);
-        var result = await filer.PrepareAndCheck(PrepareParam.NoQuery<Crystalizer>(this), configuration).ConfigureAwait(false);
+        var resolved = this.ResolveFiler(configuration);
+        var result = await resolved.Filer.PrepareAndCheck(PrepareParam.NoQuery<Crystalizer>(this), resolved.FixedConfiguration).ConfigureAwait(false);
         if (result.IsFailure())
         {
             return result;
         }
 
-        var readResult = await filer.ReadAsync(0, -1).ConfigureAwait(false);
+        var readResult = await resolved.Filer.ReadAsync(0, -1).ConfigureAwait(false);
         if (readResult.IsFailure)
         {
             return readResult.Result;
@@ -359,8 +467,14 @@ public class Crystalizer
                 return result;
             }
 
-            list.Add(x.Object.GetType().Name);
+            list.Add(x.Data.GetType().Name);
         }
+
+        // Read journal
+        await this.ReadJournal(crystals).ConfigureAwait(false);
+
+        // Save crystal check
+        this.CrystalCheck.Save();
 
         this.logger.TryGet()?.Log($"Prepared - {string.Join(", ", list)}");
 
@@ -380,35 +494,12 @@ public class Crystalizer
 
     public async Task SaveAllAndTerminate()
     {
-        await this.SaveAll(true).ConfigureAwait(false);
+        await this.SaveAndTerminate(true, true);
+    }
 
-        // Terminate journal
-        if (this.Journal is { } journal)
-        {
-            await journal.TerminateAsync().ConfigureAwait(false);
-        }
-
-        // Terminate filers/journal
-        var tasks = new List<Task>();
-        lock (this.syncFiler)
-        {
-            if (this.localFiler is not null)
-            {
-                tasks.Add(this.localFiler.TerminateAsync());
-                this.localFiler = null;
-            }
-
-            foreach (var x in this.bucketToS3Filer.Values)
-            {
-                tasks.Add(x.TerminateAsync());
-            }
-
-            this.bucketToS3Filer.Clear();
-        }
-
-        await Task.WhenAll(tasks).ConfigureAwait(false);
-
-        this.logger.TryGet()?.Log($"Terminated - {this.Himo.MemoryUsage}");
+    public async Task SaveJournalOnlyForTest()
+    {
+        await this.SaveAndTerminate(false, true);
     }
 
     public void AddToSaveQueue(ICrystal crystal)
@@ -428,7 +519,27 @@ public class Crystalizer
     {
         var crystal = new CrystalObject<TData>(this);
         this.crystals.TryAdd(crystal, 0);
+        if (this.configuration.CrystalConfigurations.TryGetValue(typeof(TData), out var configuration))
+        {
+            ((ICrystal)crystal).Configure(configuration);
+        }
+
         return crystal;
+    }
+
+    public ICrystal<TData> GetOrCreateCrystal<TData>(CrystalConfiguration configuration)
+        where TData : class, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+    {
+        if (this.typeToCrystal.TryGetValue(typeof(TData), out var crystal) &&
+            crystal is ICrystal<TData> crystalData)
+        {
+            return crystalData;
+        }
+
+        var crystalObject = new CrystalObject<TData>(this);
+        this.crystals.TryAdd(crystalObject, 0);
+        ((ICrystal)crystalObject).Configure(configuration);
+        return crystalObject;
     }
 
     public ICrystal<TData> CreateBigCrystal<TData>()
@@ -436,6 +547,11 @@ public class Crystalizer
     {
         var crystal = new BigCrystalObject<TData>(this);
         this.crystals.TryAdd(crystal, 0);
+        if (this.configuration.CrystalConfigurations.TryGetValue(typeof(TData), out var configuration))
+        {
+            ((ICrystal)crystal).Configure(configuration);
+        }
+
         return crystal;
     }
 
@@ -575,7 +691,7 @@ public class Crystalizer
 
     internal bool DeleteInternal(ICrystalInternal crystal)
     {
-        if (!this.typeToCrystal.TryGetValue(crystal.ObjectType, out _))
+        if (!this.typeToCrystal.TryGetValue(crystal.DataType, out _))
         {// Created crystals
             return this.crystals.TryRemove(crystal, out _);
         }
@@ -602,56 +718,7 @@ public class Crystalizer
             ThrowTypeNotRegistered(type);
         }
 
-        return crystal!.Object;
-    }
-
-    /*internal CrystalConfiguration GetCrystalConfiguration(Type type)
-    {
-        if (!this.configuration.CrystalConfigurations.TryGetValue(type, out var configuration))
-        {
-            ThrowTypeNotRegistered(type);
-        }
-
-        return configuration!;
-    }
-
-    internal BigCrystalConfiguration GetBigCrystalConfiguration(Type type)
-    {
-        if (!this.configuration.CrystalConfigurations.TryGetValue(type, out var configuration))
-        {
-            ThrowTypeNotRegistered(type);
-        }
-
-        if (configuration is not BigCrystalConfiguration bigCrystalConfiguration)
-        {
-            ThrowTypeNotRegistered(type);
-            return default!;
-        }
-
-        return bigCrystalConfiguration;
-    }*/
-
-    private async Task<CrystalResult> PrepareJournal(bool useQuery = true)
-    {
-        if (this.Journal == null)
-        {// New journal
-            var configuration = this.configuration.JournalConfiguration;
-            if (configuration is EmptyJournalConfiguration)
-            {
-                return CrystalResult.Success;
-            }
-            else if (configuration is SimpleJournalConfiguration simpleJournalConfiguration)
-            {
-                var simpleJournal = new SimpleJournal(this, simpleJournalConfiguration, this.UnitLogger.GetLogger<SimpleJournal>());
-                this.Journal = simpleJournal;
-            }
-            else
-            {
-                return CrystalResult.NotFound;
-            }
-        }
-
-        return await this.Journal.Prepare(PrepareParam.New<Crystalizer>(this, useQuery)).ConfigureAwait(false);
+        return crystal!.Data;
     }
 
     private Task PeriodicSave()
@@ -684,6 +751,206 @@ public class Crystalizer
         }
 
         return Task.WhenAll(tasks);
+    }
+
+    private async Task SaveAndTerminate(bool saveData, bool saveJournal)
+    {
+        if (saveData)
+        {
+            await this.SaveAll(true).ConfigureAwait(false);
+        }
+
+        // Save/Terminate journal
+        if (this.Journal is { } journal)
+        {
+            if (saveJournal)
+            {
+                await journal.SaveJournalAsync().ConfigureAwait(false);
+            }
+
+            await journal.TerminateAsync().ConfigureAwait(false);
+        }
+
+        // Terminate filers/journal
+        var tasks = new List<Task>();
+        lock (this.syncFiler)
+        {
+            if (this.localFiler is not null)
+            {
+                tasks.Add(this.localFiler.TerminateAsync());
+                this.localFiler = null;
+            }
+
+            foreach (var x in this.bucketToS3Filer.Values)
+            {
+                tasks.Add(x.TerminateAsync());
+            }
+
+            this.bucketToS3Filer.Clear();
+        }
+
+        await Task.WhenAll(tasks).ConfigureAwait(false);
+
+        this.logger.TryGet()?.Log($"Terminated - {this.Himo.MemoryUsage}");
+    }
+
+    #endregion
+
+    #region Journal
+
+    private async Task<CrystalResult> PrepareJournal(bool useQuery = true)
+    {
+        if (this.Journal == null)
+        {// New journal
+            var configuration = this.configuration.JournalConfiguration;
+            if (configuration is EmptyJournalConfiguration)
+            {
+                return CrystalResult.Success;
+            }
+            else if (configuration is SimpleJournalConfiguration simpleJournalConfiguration)
+            {
+                if (this.GlobalBackup is { } globalBackup)
+                {
+                    if (simpleJournalConfiguration.BackupDirectoryConfiguration == null)
+                    {
+                        simpleJournalConfiguration = simpleJournalConfiguration with
+                        {
+                            BackupDirectoryConfiguration = globalBackup.CombineDirectory(simpleJournalConfiguration.DirectoryConfiguration),
+                        };
+                    }
+                }
+
+                var simpleJournal = new SimpleJournal(this, simpleJournalConfiguration, this.UnitLogger.GetLogger<SimpleJournal>());
+                this.Journal = simpleJournal;
+            }
+            else
+            {
+                return CrystalResult.NotFound;
+            }
+        }
+
+        return await this.Journal.Prepare(PrepareParam.New<Crystalizer>(this, useQuery)).ConfigureAwait(false);
+    }
+
+    private async Task ReadJournal(ICrystalInternal[] crystals)
+    {
+        if (this.Journal is { } journal)
+        {// Load journal
+            var position = crystals.Where(x => x.GetPosition() != 0).Min(x => x.GetPosition());
+            while (position != 0)
+            {
+                var journalResult = await journal.ReadJournalAsync(position).ConfigureAwait(false);
+                if (journalResult.NextPosition == 0)
+                {
+                    break;
+                }
+
+                try
+                {
+                    this.ReadJournal(position, journalResult.Data.Memory);
+                }
+                finally
+                {
+                    journalResult.Data.Return();
+                }
+
+                position = journalResult.NextPosition;
+            }
+        }
+    }
+
+    private void ReadJournal(ulong position, Memory<byte> data)
+    {
+        var reader = new TinyhandReader(data.Span);
+        var success = false;
+        var failure = false;
+
+        while (reader.Consumed < data.Length)
+        {
+            if (!TryReadRecord(ref reader, out var length, out var journalType, out var plane))
+            {
+                this.logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.Journal.Corrupted);
+                return;
+            }
+            else if (length == 0)
+            {
+                this.logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.Journal.Corrupted);
+                return;
+            }
+
+            var fork = reader.Fork();
+            try
+            {
+                if (journalType == JournalType.Record)
+                {
+                    if (this.planeToCrystal.TryGetValue(plane, out var crystal))
+                    {
+                        if (crystal.Data is ITinyhandJournal journalObject)
+                        {
+                            if (journalObject.ReadRecord(ref reader))
+                            {// Success
+                                success = true;
+                            }
+                            else
+                            {// Failure
+                                failure = true;
+                            }
+                        }
+                    }
+                }
+                else if (journalType == JournalType.Waypoint)
+                {
+                    reader.ReadUInt32();
+                    reader.ReadUInt64();
+                }
+                else
+                {
+                }
+            }
+            catch
+            {
+            }
+            finally
+            {
+                reader = fork;
+                reader.Advance(length);
+            }
+        }
+
+        if (failure)
+        {
+            this.logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.Journal.ReadFailure);
+        }
+        else if (success)
+        {
+            this.logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.Journal.ReadSuccess);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool TryReadRecord(ref TinyhandReader reader, out int length, out JournalType journalType, out uint plane)
+    {
+        try
+        {
+            Span<byte> span = stackalloc byte[3];
+            span[0] = reader.ReadUInt8();
+            span[1] = reader.ReadUInt8();
+            span[2] = reader.ReadUInt8();
+            length = span[0] << 16 | span[1] << 8 | span[2];
+
+            reader.TryRead(out byte code);
+            journalType = (JournalType)code;
+            reader.TryReadBigEndian(out plane);
+        }
+        catch
+        {
+            length = 0;
+            journalType = default;
+            plane = 0;
+            return false;
+        }
+
+        return true;
     }
 
     #endregion

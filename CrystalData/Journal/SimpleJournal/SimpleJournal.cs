@@ -22,6 +22,8 @@ public partial class SimpleJournal : IJournal
     {
         this.crystalizer = crystalizer;
         this.SimpleJournalConfiguration = configuration;
+        this.MainConfiguration = this.SimpleJournalConfiguration.DirectoryConfiguration;
+        this.BackupConfiguration = this.SimpleJournalConfiguration.BackupDirectoryConfiguration;
         this.logger = logger;
     }
 
@@ -29,9 +31,9 @@ public partial class SimpleJournal : IJournal
 
     public SimpleJournalConfiguration SimpleJournalConfiguration { get; }
 
-    public DirectoryConfiguration MainConfiguration => this.SimpleJournalConfiguration.DirectoryConfiguration;
+    public DirectoryConfiguration MainConfiguration { get; private set; }
 
-    public DirectoryConfiguration? BackupConfiguration => this.SimpleJournalConfiguration.BackupDirectoryConfiguration;
+    public DirectoryConfiguration? BackupConfiguration { get; private set; }
 
     private Crystalizer crystalizer;
     private bool prepared;
@@ -64,17 +66,21 @@ public partial class SimpleJournal : IJournal
             return CrystalResult.Success;
         }
 
-        this.rawFiler ??= this.crystalizer.ResolveRawFiler(this.MainConfiguration);
-        var result = await this.rawFiler.PrepareAndCheck(param, this.MainConfiguration).ConfigureAwait(false);
-        if (result != CrystalResult.Success)
+        if (this.rawFiler == null)
         {
-            return result;
+            (this.rawFiler, this.MainConfiguration) = this.crystalizer.ResolveRawFiler(this.MainConfiguration);
+            var result = await this.rawFiler.PrepareAndCheck(param, this.MainConfiguration).ConfigureAwait(false);
+            if (result != CrystalResult.Success)
+            {
+                return result;
+            }
         }
 
-        if (this.BackupConfiguration is not null)
+        if (this.BackupConfiguration is not null &&
+            this.backupFiler == null)
         {
-            this.backupFiler ??= this.crystalizer.ResolveRawFiler(this.BackupConfiguration);
-            result = await this.backupFiler.PrepareAndCheck(param, this.BackupConfiguration).ConfigureAwait(false);
+            (this.backupFiler, this.BackupConfiguration) = this.crystalizer.ResolveRawFiler(this.BackupConfiguration);
+            var result = await this.backupFiler.PrepareAndCheck(param, this.BackupConfiguration).ConfigureAwait(false);
             if (result != CrystalResult.Success)
             {
                 return result;
@@ -127,9 +133,10 @@ public partial class SimpleJournal : IJournal
 
         // Size (0-16MB)
         var span = memory.Span;
-        span[2] = (byte)memory.Length;
-        span[1] = (byte)(memory.Length >> 8);
-        span[0] = (byte)(memory.Length >> 16);
+        var length = memory.Length - 8;
+        span[2] = (byte)length;
+        span[1] = (byte)(length >> 8);
+        span[0] = (byte)(length >> 16);
 
         lock (this.syncRecordBuffer)
         {
@@ -190,8 +197,39 @@ public partial class SimpleJournal : IJournal
         }
     }
 
-    public async Task<bool> ReadJournalAsync(ulong start, ulong end, Memory<byte> data)
+    public async Task<(ulong NextPosition, ByteArrayPool.MemoryOwner Data)> ReadJournalAsync(ulong position)
     {
+        ulong length, nextPosition;
+        lock (this.syncBooks)
+        {
+            var startBook = this.books.PositionChain.GetUpperBound(position);
+            if (startBook == null || startBook.NextPosition <= position)
+            {
+                return (0, default);
+            }
+
+            var endBook = this.books.PositionChain.GetUpperBound(position + (ulong)this.SimpleJournalConfiguration.CompleteBookLength);
+            if (endBook == null)
+            {
+                return (0, default);
+            }
+
+            length = endBook.NextPosition - position; // > 0
+            nextPosition = endBook.NextPosition;
+        }
+
+        var memoryOwner = ByteArrayPool.Default.Rent((int)length).ToMemoryOwner(0, (int)length);
+        var success = await this.ReadJournalAsync(position, nextPosition, memoryOwner.Memory).ConfigureAwait(false);
+        if (!success)
+        {
+            return (0, default);
+        }
+
+        return (nextPosition, memoryOwner);
+    }
+
+    public async Task<bool> ReadJournalAsync(ulong start, ulong end, Memory<byte> data)
+    {// [start, end) = [start, end -1]
         var length = (int)(end - start);
         if (data.Length < length)
         {
@@ -234,17 +272,13 @@ Load:
 
         lock (this.syncBooks)
         {
-            var range = this.books.PositionChain.GetRange(start, end - 1);
-            if (range.Upper is null)
+            var startBook = this.books.PositionChain.GetUpperBound(start);
+            var endBook = this.books.PositionChain.GetUpperBound(end - 1);
+            if (startBook is null || endBook is null)
             {
                 return false;
             }
-            else if (range.Lower is null)
-            {
-                range.Lower = range.Upper.PositionLink.Previous ?? range.Upper;
-            }
-
-            if (start < range.Lower.Position)
+            else if (endBook.NextPosition < end)
             {
                 return false;
             }
@@ -253,7 +287,7 @@ Load:
 
             // Check
             loadList.Clear();
-            for (var book = range.Lower; book != null; book = book.PositionLink.Next)
+            for (var book = startBook; book != null; book = book.PositionLink.Next)
             {
                 if (!book.IsInMemory)
                 {// Load (start, path)
@@ -263,7 +297,7 @@ Load:
                     }
                 }
 
-                if (book == range.Upper)
+                if (book == endBook)
                 {
                     break;
                 }
@@ -277,7 +311,7 @@ Load:
 
             // Read
             var dataPosition = 0;
-            for (var book = range.Lower; book != null; book = book.PositionLink.Next)
+            for (var book = startBook; book != null; book = book.PositionLink.Next)
             {
                 if (!book.TryReadBufferInternal(start, data.Span.Slice(dataPosition), out var readLength))
                 {// Fatal
@@ -287,7 +321,7 @@ Load:
                 dataPosition += readLength;
                 start += (ulong)readLength;
 
-                if (book == range.Upper)
+                if (book == endBook)
                 {// Complete
                     return true;
                 }

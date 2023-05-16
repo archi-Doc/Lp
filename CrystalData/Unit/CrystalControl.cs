@@ -22,28 +22,36 @@ public class CrystalControl
         {
             this.Preload(context =>
             {
-                this.LoadStrings();
+                if (context.FirstBuilderRun)
+                {
+                    this.LoadStrings();
+                }
             });
 
             this.Configure(context =>
             {
-                // Main services
-                context.AddSingleton<CrystalControl>();
-                context.AddSingleton<CrystalizerConfiguration>();
-                context.AddSingleton<CrystalizerOptions>();
-                context.AddSingleton<Crystalizer>();
-                context.AddSingleton<IStorageKey, StorageKey>();
-                context.TryAddSingleton<ICrystalDataQuery, CrystalDataQueryDefault>();
+                if (context.FirstBuilderRun)
+                {
+                    // Main services
+                    context.AddSingleton<CrystalControl>();
+                    context.AddSingleton<CrystalizerConfiguration>();
+                    context.AddSingleton<CrystalizerOptions>();
+                    context.AddSingleton<Crystalizer>();
+                    context.AddSingleton<IStorageKey, StorageKey>();
+                    context.TryAddSingleton<ICrystalDataQuery, CrystalDataQueryDefault>();
+                }
+            });
 
-                // Crystalizer
-                var crystalContext = new UnitCrystalContext();
+            this.CustomConfigure = context =>
+            {
+                var crystalContext = context.GetCustomContext<UnitCrystalContext>();
                 foreach (var x in this.crystalActions)
                 {
                     x(crystalContext);
                 }
 
-                crystalContext.Configure(context);
-            });
+                // crystalContext.Configure(context);
+            };
         }
 
         public new Builder Preload(Action<IUnitPreloadContext> @delegate)

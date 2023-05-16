@@ -19,10 +19,10 @@ public partial class MergerTest
     public async Task Test1()
     {
         var crystal = await TestHelper.CreateAndStartMerger(MaxParent);
-        var root = crystal.Object;
+        var root = crystal.Data;
         var byteArray = new byte[] { 0, 1, 2, };
         await TestHelper.StopAndStartCrystal(crystal);
-        root = crystal.Object;
+        root = crystal.Data;
 
         for (var i = 0; i < N; i++)
         {

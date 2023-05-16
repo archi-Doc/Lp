@@ -16,7 +16,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
 
     #region FieldAndProperty
 
-    private ICrystal<TData> crystal;
+    private ICrystalInternal<TData> crystal;
     private SemaphoreLock semaphore = new();
     private StorageGroup storageGroup;
     private DateTime lastSaveTime;
@@ -37,11 +37,11 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
 
     public CrystalState State { get; private set; }
 
-    public Type ObjectType => typeof(TData);
+    public Type DataType => typeof(TData);
 
-    public TData Object => this.crystal.Object;
+    public TData Data => this.crystal.Data;
 
-    object ICrystal.Object => this.crystal.Object;
+    object ICrystal.Data => this.crystal.Data;
 
     public IStorage Storage => this.crystal.Storage;
 
@@ -101,7 +101,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
             await this.StorageGroup.SaveStorage().ConfigureAwait(false);
 
             // Save & Unload datum and metadata.
-            this.Object.Save(unload);
+            this.Data.Save(unload);
 
             // Save crystal
             await this.crystal.Save(unload);
@@ -128,13 +128,13 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
 
             var param = PrepareParam.NoQuery<TData>(this.Crystalizer);
 
-            this.Object.Unload();
+            this.Data.Unload();
             await this.crystal.Delete().ConfigureAwait(false);
 
             await this.StorageGroup.PrepareAndLoad(this.CrystalConfiguration.StorageConfiguration, param).ConfigureAwait(false);
             await this.StorageGroup.DeleteAllAsync().ConfigureAwait(false);
 
-            this.Object.Initialize(this, null, true);
+            this.Data.Initialize(this, null, true);
 
             this.State = CrystalState.Deleted;
             return CrystalResult.Success;
@@ -162,6 +162,9 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
         return ((ICrystal)this).Save(false);
     }
 
+    ulong ICrystalInternal.GetPosition()
+        => this.crystal.GetPosition();
+
     #endregion
 
     public void Status()
@@ -185,13 +188,14 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
             return result;
         }
 
+        this.crystal.ConfigureStorage(EmptyStorageConfiguration.Default); // Avoid duplication with the storage configuration of StorageGroup.
         result = await this.crystal.PrepareAndLoad(useQuery).ConfigureAwait(false);
         if (result.IsFailure())
         {
             return result;
         }
 
-        this.Object.Initialize(this, null, true);
+        this.Data.Initialize(this, null, true);
 
         this.State = CrystalState.Prepared;
         return result;

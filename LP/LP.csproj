@@ -32,9 +32,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Generated\*" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Netsphere\Netsphere.csproj" />
     <ProjectReference Include="..\NetsphereGenerator\NetsphereGenerator.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
-    <ProjectReference Include="..\CrystalData\CrystalData.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -42,10 +45,6 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Remove="Generated\*" />
   </ItemGroup>
 
 </Project>

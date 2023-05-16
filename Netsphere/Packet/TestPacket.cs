@@ -30,7 +30,7 @@ public partial class TestPacket : IPacket
     [Key(1)]
     public string Message { get; set; } = string.Empty;
 
-    [Key(2, PropertyName = "Data", PropertyAccessibility = PropertyAccessibility.ProtectedSetter)]
+    [Key(2, AddProperty = "Data", PropertyAccessibility = PropertyAccessibility.ProtectedSetter)]
     [MaxLength(1000)]
     private byte[] _data = Array.Empty<byte>();
 

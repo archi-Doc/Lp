@@ -23,7 +23,7 @@ public partial class PacketPing : IPacket
         this.Text = text;
     }
 
-    [Key(0, PropertyName = "Text", PropertyAccessibility = PropertyAccessibility.ProtectedSetter)]
+    [Key(0, AddProperty = "Text", PropertyAccessibility = PropertyAccessibility.ProtectedSetter)]
     [MaxLength(TextMaxLength)]
     private string _text = string.Empty;
 
@@ -47,7 +47,7 @@ public partial class PacketPingResponse : IPacket
         this.Text = text;
     }
 
-    [Key(0, PropertyName = "Text", PropertyAccessibility = PropertyAccessibility.ProtectedSetter)]
+    [Key(0, AddProperty = "Text", PropertyAccessibility = PropertyAccessibility.ProtectedSetter)]
     [MaxLength(PacketPing.TextMaxLength)]
     private string _text = string.Empty;
 

@@ -29,7 +29,7 @@ public sealed class StorageGroup
     private Type dataType;
     private CrystalConfiguration storageGroupConfiguration;
 
-    private StorageObject.GoshujinClass storages => this.crystal.Object;
+    private StorageObject.GoshujinClass storages => this.crystal.Data;
 
     private object syncObject = new();
     private ICrystal<StorageObject.GoshujinClass> crystal; // lock(syncObject)
@@ -45,7 +45,7 @@ public sealed class StorageGroup
         this.storageGroupConfiguration = new CrystalConfiguration(SavePolicy.Manual, fileConfiguration)
         {
             BackupFileConfiguration = backupConfiguration,
-            NumberOfFiles = 0,
+            NumberOfHistoryFiles = 0,
         };
 
         this.crystal.Configure(this.storageGroupConfiguration);
@@ -253,8 +253,7 @@ public sealed class StorageGroup
     {// semaphore
         if (this.crystal.State == CrystalState.Initial)
         {
-            var result = await this.crystal.PrepareAndLoad(param.UseQuery).ConfigureAwait(false);
-            return result;
+            _ = await this.crystal.PrepareAndLoad(param.UseQuery).ConfigureAwait(false);
         }
 
         foreach (var x in this.storages.StorageIdChain)

@@ -1,141 +1,42 @@
-﻿using CrystalData.Journal;
+﻿using Tinyhand;
 using Tinyhand.IO;
 
 namespace Sandbox;
 
-[TinyhandObject]
-// [TinyhandObject(CrystalData = true)]
-internal partial class CrystalClass : ICrystalData
-{
-    // [Key(0)]
-    [Key(0, PropertyName = "Ids")]
-    private int id;
-
-    private HashSet<string> names = new();
-
-    [IgnoreMember]
-    public int Id
-    {
-        get => this.id;
-        set
-        {
-            // using (this.semaphore.Lock())
-            {
-                this.id = value;
-                if (this.Crystal?.Crystalizer.Journal is { } journal)
-                {
-                    journal.GetWriter(JournalType.Record, this.CurrentPlane, out var writer);
-                    writer.Write_Key();
-                    writer.Write(0);
-                    writer.Write_Value();
-                    writer.Write(this.id);
-                    journal.Add(writer);
-                }
-            }
-
-            if (this.Crystal?.CrystalConfiguration.SavePolicy == SavePolicy.OnChanged)
-            {
-                this.Crystal.Crystalizer.AddToSaveQueue(this.Crystal);
-            }
-        }
-    }
-
-    [IgnoreMember]
-    public ICrystal? Crystal { get; set; }
-
-    [IgnoreMember]
-    public uint CurrentPlane { get; set; }
-
-    public bool AddName(string name)
-    {
-        var result = this.names.Add(name);
-
-        if (this.Crystal?.Crystalizer.Journal is { } journal)
-        {
-            journal.GetWriter(JournalType.Record, this.CurrentPlane, out var writer);
-            writer.Write_Key();
-            writer.Write(1);
-            writer.Write_Add();
-            writer.Write(name);
-            journal.Add(writer);
-        }
-
-        return result;
-    }
-
-    public override string ToString()
-        => $"Crystal class {this.Id}";
-
-    void ICrystalData.ReadRecord(ref TinyhandReader reader)
-    {
-        // Custom
-        var fork = reader.Fork();
-        if (this.ReadCustomRecord(ref fork))
-        {
-            return;
-        }
-
-        // Generated
-        var dataType = reader.Read_Record();
-        if (dataType == JournalRecord.Key)
-        {
-            var key = reader.ReadInt32();
-            if (key == 0)
-            {
-                reader.Read_Value();
-                this.id = reader.ReadInt32();
-            }
-            else if (key == 1)
-            {
-            }
-        }
-    }
-
-    private bool ReadCustomRecord(ref TinyhandReader reader)
-    {
-        reader.Read_Key();
-        var key = reader.ReadInt32();
-        if (key == 1)
-        {// names
-            var record = reader.Read_Record();
-            if (record == JournalRecord.Add)
-            {
-                var name = reader.ReadString();
-                if (name != null)
-                {
-                    this.names.Add(name);
-                }
-
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    void ICrystalData.WriteLocator(ref TinyhandWriter writer)
-    {
-    }
-}
-
-[TinyhandObject]
+[TinyhandObject (Journaling = true)]
 internal partial class ManualClass
 {
-    [KeyAsName]
-    public int Id { get; set; }
+    [Key(0, AddProperty = "Id")]
+    private int id;
 
     public override string ToString()
-        => $"Manual class {this.Id}";
+        => $"Manual class {this.id}";
 }
 
 [TinyhandObject]
-internal partial class CombinedClass
+internal partial class CombinedClass : ITinyhandJournal
 {
     [Key(0)]
     public ManualClass Manual1 { get; set; } = default!;
 
     [Key(1)]
     public ManualClass Manual2 { get; set; } = default!;
+
+    [IgnoreMember]
+    public ITinyhandCrystal? Crystal { get; set; }
+
+    [IgnoreMember]
+    public uint CurrentPlane { get; set; }
+
+    bool ITinyhandJournal.ReadRecord(ref TinyhandReader reader)
+    {
+        return false;
+    }
+
+    public bool ReadRecord(ref TinyhandReader reader)
+    {
+        throw new NotImplementedException();
+    }
 
     public override string ToString()
         => $"{this.Manual1.ToString()} {this.Manual2.ToString()}";
@@ -161,19 +62,19 @@ internal class TestClass
 
         await this.crystalizer.PrepareAndLoadAll();
 
-        var manualClass = this.manualCrystal.Object;
+        var manualClass = this.manualCrystal.Data;
         manualClass.Id = 1;
         Console.WriteLine(manualClass.ToString());
 
         var manualCrystal2 = this.crystalizer.CreateCrystal<ManualClass>();
         manualCrystal2.Configure(new(SavePolicy.Manual, new LocalFileConfiguration("test2/manual2")));
-        var manualClass2 = manualCrystal2.Object;
+        var manualClass2 = manualCrystal2.Data;
         manualClass2.Id = 2;
         await manualCrystal2.Save();
         Console.WriteLine(manualClass.ToString());
         Console.WriteLine(manualClass2.ToString());
 
-        var combinedClass = this.combinedCrystal.Object;
+        var combinedClass = this.combinedCrystal.Data;
         combinedClass.Manual2.Id = 2;
         Console.WriteLine(combinedClass.ToString());
 

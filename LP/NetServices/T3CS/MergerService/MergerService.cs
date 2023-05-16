@@ -20,7 +20,7 @@ public partial interface IMergerService : IAuthorizedService
         {
         }
 
-        [Key(0, PropertyName = "Name")]
+        [Key(0, AddProperty = "Name")]
         [MaxLength(16)]
         private string name = default!;
     }

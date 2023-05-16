@@ -23,7 +23,7 @@ public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
         var sw = Stopwatch.StartNew();
         Console.WriteLine($"Start: {sw.ElapsedMilliseconds} ms");
 
-        var data = this.crystal.Object.GetOrCreateChild(Identifier.Zero);
+        var data = this.crystal.Data.GetOrCreateChild(Identifier.Zero);
         if (data != null)
         {
             data.BlockDatum().Set(new byte[] { 0, 1, });
@@ -40,7 +40,7 @@ public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
             }
         }
 
-        data = this.crystal.Object.GetOrCreateChild(Identifier.One);
+        data = this.crystal.Data.GetOrCreateChild(Identifier.One);
         if (data != null)
         {
             data.BlockDatum().SetObject(new TestFragment());
@@ -67,7 +67,7 @@ public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
         var byteArray = new byte[BigCrystalConfiguration.DefaultMaxDataSize];
         for (var i = 0; i < 10; i++)
         {
-            data = this.crystal.Object.GetOrCreateChild(new(i));
+            data = this.crystal.Data.GetOrCreateChild(new(i));
             if (data != null)
             {
                 var dt = await data.BlockDatum().Get();
@@ -80,7 +80,7 @@ public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
 
         for (var i = 0; i < 1_000_000; i++)
         {
-            data = this.crystal.Object.GetOrCreateChild(new(i));
+            data = this.crystal.Data.GetOrCreateChild(new(i));
             // flake.SetData(new byte[] { 2, 3, });
         }
 

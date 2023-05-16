@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using CrystalData.Journal;
 using Tinyhand.IO;
 
 namespace CrystalData;
@@ -20,4 +19,6 @@ public interface IJournal
     ulong GetCurrentPosition();
 
     void ResetJournal(ulong position);
+
+    Task<(ulong NextPosition, ByteArrayPool.MemoryOwner Data)> ReadJournalAsync(ulong position);
 }

@@ -29,7 +29,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>
     [Key(0)]
     public PublicKey Originator { get; private set; } = default!;
 
-    [Key(1, PropertyName = "Mergers")]
+    [Key(1, AddProperty = "Mergers")]
     [MaxLength(MaxMergers)]
     private PublicKey[] mergers = Array.Empty<PublicKey>();
 

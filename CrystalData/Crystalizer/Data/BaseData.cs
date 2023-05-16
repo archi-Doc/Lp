@@ -3,6 +3,7 @@
 using System.Collections;
 using System.Runtime.CompilerServices;
 using CrystalData.Datum;
+using Tinyhand.IO;
 
 namespace CrystalData;
 
@@ -13,8 +14,8 @@ namespace CrystalData;
 /// <summary>
 /// <see cref="BaseData"/> is an independent class that holds data at a single point in the hierarchical structure.
 /// </summary>
-[TinyhandObject(ExplicitKeyOnly = true, LockObject = "semaphore", ReservedKeys = 3)]
-public partial class BaseData : IDataInternal
+[TinyhandObject(ExplicitKeyOnly = true, LockObject = "semaphore", ReservedKeys = 3, Journaling = true)]
+public partial class BaseData : IDataInternal, ITinyhandCustomJournal
 {
     protected BaseData()
     {
@@ -32,10 +33,10 @@ public partial class BaseData : IDataInternal
 
     public BaseData? Parent { get; private set; }
 
-    public bool IsDeleted => this.DataId == -1;
+    public bool IsDeleted => this.dataId == -1;
 
-    [Key(0)]
-    public int DataId { get; set; } // -1: Deleted
+    [Key(0, AddProperty = "DataId")]
+    private int dataId; // -1: Deleted
 
     [Key(1)]
     protected DatumObject[] datumObject = Array.Empty<DatumObject>();
@@ -137,6 +138,22 @@ public partial class BaseData : IDataInternal
                 }
             }
         }
+    }
+
+    #endregion
+
+    #region Journal
+
+    void ITinyhandCustomJournal.WriteCustomRecord(ref TinyhandWriter writer)
+    {
+    }
+
+    bool ITinyhandCustomJournal.ReadCustomRecord(ref TinyhandReader reader)
+        => this.ReadRecordBase(ref reader);
+
+    protected bool ReadRecordBase(ref TinyhandReader reader)
+    {
+        return false;
     }
 
     #endregion
@@ -290,7 +307,7 @@ public partial class BaseData : IDataInternal
 
             this.datumObject = Array.Empty<DatumObject>();
             this.Parent = null;
-            this.DataId = -1;
+            this.dataId = -1;
         }
     }
 

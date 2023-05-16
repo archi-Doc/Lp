@@ -9,14 +9,26 @@ public partial class Vault
 {
     public const string Filename = "Vault.tinyhand";
 
-    public Vault(ILogger<Vault> logger, IUserInterfaceService userInterfaceService, Seedphrase sp)
+    public Vault(ILogger<Vault> logger, IUserInterfaceService userInterfaceService, Data data)
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
+        this.data = data;
+    }
+
+    [TinyhandObject(ExplicitKeyOnly = true)]
+    public sealed partial class Data
+    {
+        internal readonly object syncObject = new();
+
+        [Key(0)]
+        internal KeyValueList<string, EncryptedItem> items;
+
+        internal OrderedMap<string, DecryptedItem> nameToDecrypted = new();
     }
 
     [TinyhandObject]
-    private partial struct DecryptedItem
+    internal partial struct DecryptedItem
     {
         public DecryptedItem()
         {
@@ -54,14 +66,14 @@ public partial class Vault
 
     public bool TryAdd(string name, byte[] decrypted)
     {
-        lock (this.syncObject)
+        lock (this.data.syncObject)
         {
-            if (this.nameToDecrypted.ContainsKey(name))
+            if (this.data.nameToDecrypted.ContainsKey(name))
             {// Already exists.
                 return false;
             }
 
-            this.nameToDecrypted.Add(name, new(decrypted));
+            this.data.nameToDecrypted.Add(name, new(decrypted));
             return true;
         }
     }
@@ -80,39 +92,39 @@ public partial class Vault
 
     public bool Add(string name, byte[] decrypted)
     {
-        lock (this.syncObject)
+        lock (this.data.syncObject)
         {
-            if (this.nameToDecrypted.TryGetValue(name, out var item))
+            if (this.data.nameToDecrypted.TryGetValue(name, out var item))
             {
-                this.nameToDecrypted.Remove(name);
+                this.data.nameToDecrypted.Remove(name);
             }
 
-            this.nameToDecrypted.Add(name, new(decrypted));
+            this.data.nameToDecrypted.Add(name, new(decrypted));
             return true;
         }
     }
 
     public bool Exists(string name)
     {
-        lock (this.syncObject)
+        lock (this.data.syncObject)
         {
-            return this.nameToDecrypted.ContainsKey(name);
+            return this.data.nameToDecrypted.ContainsKey(name);
         }
     }
 
     public bool Remove(string name)
     {
-        lock (this.syncObject)
+        lock (this.data.syncObject)
         {
-            return this.nameToDecrypted.Remove(name);
+            return this.data.nameToDecrypted.Remove(name);
         }
     }
 
     public bool TryGet(string name, [MaybeNullWhen(false)] out byte[] decrypted)
     {
-        lock (this.syncObject)
+        lock (this.data.syncObject)
         {
-            if (!this.nameToDecrypted.TryGetValue(name, out var item))
+            if (!this.data.nameToDecrypted.TryGetValue(name, out var item))
             {// Not found
                 decrypted = null;
                 return false;
@@ -145,17 +157,17 @@ public partial class Vault
 
     public string[] GetNames()
     {
-        lock (this.syncObject)
+        lock (this.data.syncObject)
         {
-            return this.nameToDecrypted.Select(x => x.Key).ToArray();
+            return this.data.nameToDecrypted.Select(x => x.Key).ToArray();
         }
     }
 
     public string[] GetNames(string prefix)
     {
-        lock (this.syncObject)
+        lock (this.data.syncObject)
         {
-            (var lower, var upper) = this.nameToDecrypted.GetRange(prefix, prefix + "\uffff");
+            (var lower, var upper) = this.data.nameToDecrypted.GetRange(prefix, prefix + "\uffff");
             if (lower == null || upper == null)
             {
                 return Array.Empty<string>();
@@ -182,36 +194,10 @@ public partial class Vault
         }
     }
 
-    public async Task<bool> LoadAsync(string path, string? lppass)
+    public async Task<bool> LoadAsync(string? lppass)
     {
-        byte[] data;
-        try
-        {
-            data = await File.ReadAllBytesAsync(path).ConfigureAwait(false);
-        }
-        catch
-        {
-            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.Load, path);
-            return false;
-        }
-
-        KeyValueList<string, EncryptedItem>? items = null;
-        try
-        {
-            items = TinyhandSerializer.DeserializeFromUtf8<KeyValueList<string, EncryptedItem>>(data);
-        }
-        catch
-        {
-        }
-
-        if (items == null)
-        {
-            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.Deserialize, path);
-            return false;
-        }
-
         string? password = lppass;
-        foreach (var x in items)
+        foreach (var x in this.data.items)
         {
             if (PasswordEncrypt.TryDecrypt(x.Value.Encrypted, string.Empty, out var decrypted))
             {// No password
@@ -274,17 +260,17 @@ RetryPassword:
 
     public void Create(string password)
     {
-        lock (this.syncObject)
+        lock (this.data.syncObject)
         {
             this.Created = true;
             this.password = password;
-            this.nameToDecrypted.Clear();
+            this.data.nameToDecrypted.Clear();
         }
     }
 
     public bool CheckPassword(string password)
     {
-        lock (this.syncObject)
+        lock (this.data.syncObject)
         {
             return this.password == password;
         }
@@ -292,7 +278,7 @@ RetryPassword:
 
     public bool ChangePassword(string currentPassword, string newPassword)
     {
-        lock (this.syncObject)
+        lock (this.data.syncObject)
         {
             if (this.password == currentPassword)
             {
@@ -309,10 +295,10 @@ RetryPassword:
     private KeyValueList<string, EncryptedItem> GetEncrypted()
     {
         var hint = PasswordEncrypt.GetPasswordHint(this.password);
-        lock (this.syncObject)
+        lock (this.data.syncObject)
         {
             var list = new KeyValueList<string, EncryptedItem>();
-            foreach (var x in this.nameToDecrypted)
+            foreach (var x in this.data.nameToDecrypted)
             {
                 var encrypted = PasswordEncrypt.Encrypt(x.Value.Decrypted, this.password);
                 list.Add(new(x.Key, new(hint, encrypted)));
@@ -322,9 +308,8 @@ RetryPassword:
         }
     }
 
-    private readonly object syncObject = new();
-    private readonly ILogger<Vault> logger;
+    private readonly ILogger logger;
     private readonly IUserInterfaceService userInterfaceService;
-    private readonly OrderedMap<string, DecryptedItem> nameToDecrypted = new();
+    private Data data;
     private string password = string.Empty;
 }

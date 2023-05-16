@@ -18,29 +18,29 @@ public sealed partial class Linkage : IValidatable, IEquatable<Linkage>
     [Key(0)]
     public Identifier LinkageId { get; private set; }
 
-    [Key(1, PropertyName = "LeftOwners")]
+    [Key(1, AddProperty = "LeftOwners")]
     [MaxLength(MaxOwners)]
     private PublicKey[] leftOwners = default!;
 
     [Key(2)]
     public Value? LeftValue { get; private set; } = default!;
 
-    [Key(3, PropertyName = "LeftString")]
+    [Key(3, AddProperty = "LeftString")]
     [MaxLength(MaxStringLength)]
     private string leftString = string.Empty;
 
-    [Key(4, PropertyName = "RightOwners")]
+    [Key(4, AddProperty = "RightOwners")]
     [MaxLength(MaxOwners)]
     private PublicKey[] rightOwners = default!;
 
     [Key(5)]
     public Value? RightValue { get; private set; } = default!;
 
-    [Key(6, PropertyName = "RightString")]
+    [Key(6, AddProperty = "RightString")]
     [MaxLength(MaxStringLength)]
     private string rightString = string.Empty;
 
-    [Key(7, PropertyName = "Signatures", Condition = false)]
+    [Key(7, AddProperty = "Signatures", Condition = false)]
     [MaxLength((MaxOwners + 1 + Value.MaxMergers) * 2)]
     private byte[] signatures = default!;
 

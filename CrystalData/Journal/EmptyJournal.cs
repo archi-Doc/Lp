@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Threading.Tasks;
 using Tinyhand.IO;
 
 namespace CrystalData.Journal;
@@ -36,4 +37,7 @@ public class EmptyJournal : IJournal
     void IJournal.ResetJournal(ulong position)
     {
     }
+
+    Task<(ulong NextPosition, ByteArrayPool.MemoryOwner Data)> IJournal.ReadJournalAsync(ulong position)
+        => Task.FromResult((default(ulong), default(ByteArrayPool.MemoryOwner)));
 }

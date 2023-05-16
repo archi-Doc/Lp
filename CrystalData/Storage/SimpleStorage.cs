@@ -25,7 +25,7 @@ internal partial class SimpleStorage : IStorage
 
     public long StorageUsage => this.data == null ? 0 : this.data.StorageUsage;
 
-    private SimpleStorageData? data => this.crystal?.Object;
+    private SimpleStorageData? data => this.crystal?.Data;
 
     private Crystalizer crystalizer;
     private string directory = string.Empty;
@@ -54,11 +54,14 @@ internal partial class SimpleStorage : IStorage
             this.directory += "/";
         }
 
-        this.mainFiler ??= this.crystalizer.ResolveRawFiler(directoryConfiguration);
-        result = await this.mainFiler.PrepareAndCheck(param, directoryConfiguration).ConfigureAwait(false);
-        if (result.IsFailure())
+        if (this.mainFiler is null)
         {
-            return result;
+            (this.mainFiler, directoryConfiguration) = this.crystalizer.ResolveRawFiler(directoryConfiguration);
+            result = await this.mainFiler.PrepareAndCheck(param, directoryConfiguration).ConfigureAwait(false);
+            if (result.IsFailure())
+            {
+                return result;
+            }
         }
 
         // Backup
@@ -71,19 +74,22 @@ internal partial class SimpleStorage : IStorage
                 this.backupDirectory += "/";
             }
 
-            this.backupFiler ??= this.crystalizer.ResolveRawFiler(backupDirectoryConfiguration);
-            result = await this.backupFiler.PrepareAndCheck(param, backupDirectoryConfiguration).ConfigureAwait(false);
-            if (result.IsFailure())
+            if (this.backupFiler is null)
             {
-                return result;
+                (this.backupFiler, backupDirectoryConfiguration) = this.crystalizer.ResolveRawFiler(backupDirectoryConfiguration);
+                result = await this.backupFiler.PrepareAndCheck(param, backupDirectoryConfiguration).ConfigureAwait(false);
+                if (result.IsFailure())
+                {
+                    return result;
+                }
             }
         }
 
         if (this.crystal == null)
         {
             this.crystal = this.crystalizer.CreateCrystal<SimpleStorageData>();
-            var mainConfiguration = directoryConfiguration.CombinePath(SimpleStorageFile);
-            var backupConfiguration = backupDirectoryConfiguration?.CombinePath(SimpleStorageFile);
+            var mainConfiguration = directoryConfiguration.CombineFile(SimpleStorageFile);
+            var backupConfiguration = backupDirectoryConfiguration?.CombineFile(SimpleStorageFile);
             this.crystal.Configure(new CrystalConfiguration(SavePolicy.Manual, mainConfiguration)
             {
                 BackupFileConfiguration = backupConfiguration,

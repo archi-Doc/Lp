@@ -9,7 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace LP;
 
-public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable, IUnitSerializable
+public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 {
     public class Provider
     {
@@ -25,7 +25,8 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable, IUnitS
                 context,
                 context.ServiceProvider.GetRequiredService<ILogger<Merger>>(),
                 context.ServiceProvider.GetRequiredService<LPBase>(),
-                context.ServiceProvider.GetRequiredService<IBigCrystal<MergerData>>());
+                context.ServiceProvider.GetRequiredService<IBigCrystal<MergerData>>(),
+                context.ServiceProvider.GetRequiredService<MergerInformation>());
 
             return this.merger;
         }
@@ -33,14 +34,15 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable, IUnitS
         private Merger? merger;
     }
 
-    public Merger(UnitContext context, ILogger<Merger> logger, LPBase lpBase, IBigCrystal<MergerData> crystal)
+    public Merger(UnitContext context, ILogger<Merger> logger, LPBase lpBase, IBigCrystal<MergerData> crystal, MergerInformation mergerInformation)
         : base(context)
     {
         this.logger = logger;
         this.lpBase = lpBase;
         this.crystal = crystal;
 
-        this.Information = TinyhandSerializer.Reconstruct<MergerInformation>();
+        this.Information = mergerInformation;
+        this.Check();
     }
 
     public void Prepare(UnitMessage.Prepare message)
@@ -58,21 +60,6 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable, IUnitS
         this.logger.TryGet()?.Log("Merger terminated");
     }
 
-    public async Task LoadAsync(UnitMessage.LoadAsync message)
-    {
-        if (SerializeHelper.TryReadAndDeserialize<MergerInformation>(Path.Combine(this.lpBase.DataDirectory, MergerInformation.TinyhandName)) is { } information)
-        {
-            this.Information = information;
-        }
-
-        await this.Check();
-    }
-
-    public async Task SaveAsync(UnitMessage.SaveAsync message)
-    {
-        await SerializeHelper.TrySerializeAndWrite(this.Information, Path.Combine(this.lpBase.DataDirectory, MergerInformation.TinyhandName));
-    }
-
     [TinyhandObject]
     public partial record CreateCreditParams(
         [property: Key(0)] Token token);
@@ -86,7 +73,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable, IUnitS
         }
 
         // Get LpData
-        var root = this.crystal.Object;
+        var root = this.crystal.Data;
         var identifier = param.token.PublicKey.ToIdentifier();
         var credit = root.TryGetChild(identifier);
         if (credit != null)
@@ -112,11 +99,11 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable, IUnitS
 
     public MergerInformation Information { get; private set; }
 
-    private async Task Check()
+    private void Check()
     {
         this.logger.TryGet()?.Log("Merger started");
 
-        var numberOfCredits = this.crystal.Object.Count(LpData.LpDataId.Credit);
+        var numberOfCredits = this.crystal.Data.Count(LpData.LpDataId.Credit);
         this.logger.TryGet()?.Log($"Credits: {numberOfCredits}");
 
         // this.logger.TryGet(LogLevel.Fatal)?.Log("Merger fatal");

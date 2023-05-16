@@ -51,11 +51,11 @@ public class Program
                     });
 
                 context.AddCrystal<ManualClass>(
-                    new(SavePolicy.Manual, new LocalFileConfiguration("Local/manual.tinyhand"))
+                    new(SavePolicy.OnChanged, new RelativeFileConfiguration("Local/manual.tinyhand"))
                     {
                         SaveFormat = SaveFormat.Utf8,
-                        NumberOfFiles = 0,
-                        // BackupFileConfiguration = new LocalFileConfiguration("Backup/manual.tinyhand")
+                        NumberOfHistoryFiles = 2,
+                        BackupFileConfiguration = new LocalFileConfiguration("Backup/manual.tinyhand")
                     });
 
                 context.AddCrystal<CombinedClass>(
@@ -93,7 +93,8 @@ public class Program
             {// CrystalizerOptions
                 options.EnableLogger = true;
                 options.RootPath = Directory.GetCurrentDirectory();
-                options.GlobalBackup = new LocalDirectoryConfiguration("Backup2");
+                options.GlobalMain = new LocalDirectoryConfiguration("Relative");
+                // options.GlobalBackup = new LocalDirectoryConfiguration("Backup2");
             })
             .SetupOptions<FileLoggerOptions>((context, options) =>
             {// FileLoggerOptions
@@ -120,6 +121,7 @@ public class Program
 
         ThreadCore.Root.Terminate();
         await unit.Context.ServiceProvider.GetRequiredService<Crystalizer>().SaveAllAndTerminate();
+        // await unit.Context.ServiceProvider.GetRequiredService<Crystalizer>().SaveJournalOnlyForTest();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
         if (unit.Context.ServiceProvider.GetService<UnitLogger>() is { } unitLogger)
         {

@@ -13,8 +13,8 @@ public abstract partial record StorageConfiguration
     }
 
     [Key("Directory")]
-    public DirectoryConfiguration DirectoryConfiguration { get; protected set; }
+    public DirectoryConfiguration DirectoryConfiguration { get; init; }
 
     [Key("BackupDirectory")]
-    public DirectoryConfiguration? BackupDirectoryConfiguration { get; protected set; }
+    public DirectoryConfiguration? BackupDirectoryConfiguration { get; init; }
 }

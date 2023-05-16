@@ -173,11 +173,36 @@ public class Control : ILogInformation
             {// CrystalizerOptions
                 context.GetOptions<LPOptions>(out var lpOptions);
                 options.RootPath = lpOptions.RootDirectory;
+                options.GlobalMain = new LocalDirectoryConfiguration("Local");
             });
 
             var crystalControlBuilder = new CrystalControl.Builder()
             .ConfigureCrystal(context =>
             {
+                context.AddCrystal<LPSettings>(new CrystalConfiguration() with
+                {// LPSettings
+                    SaveFormat = SaveFormat.Utf8,
+                    FileConfiguration = new RelativeFileConfiguration(LPSettings.Filename),
+                    NumberOfHistoryFiles = 0,
+                    Required = true,
+                });
+
+                context.AddCrystal<Vault.Data>(new CrystalConfiguration() with
+                {// Vault
+                    SaveFormat = SaveFormat.Utf8,
+                    FileConfiguration = new RelativeFileConfiguration(Vault.Filename),
+                    NumberOfHistoryFiles = 0,
+                    Required = true,
+                });
+
+                context.AddCrystal<MergerInformation>(new CrystalConfiguration() with
+                {// MergerInformation
+                    SaveFormat = SaveFormat.Utf8,
+                    FileConfiguration = new RelativeFileConfiguration(MergerInformation.Filename),
+                    NumberOfHistoryFiles = 0,
+                    Required = true,
+                });
+
                 context.AddBigCrystal<LpData>(new BigCrystalConfiguration() with
                 {// LpData
                     RegisterDatum = registry =>
@@ -185,8 +210,9 @@ public class Control : ILogInformation
                         registry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
                         registry.Register<FragmentDatum<Identifier>>(2, x => new FragmentDatumImpl<Identifier>(x));
                     },
-                    FileConfiguration = new LocalFileConfiguration("Data/Crystal"),
-                    StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Crystal")),
+                    FileConfiguration = new RelativeFileConfiguration("Data/Crystal"),
+                    StorageConfiguration = new SimpleStorageConfiguration(new RelativeDirectoryConfiguration("Data/Storage")),
+                    Required = true,
                 });
 
                 context.AddBigCrystal<MergerData>(new BigCrystalConfiguration() with
@@ -196,9 +222,17 @@ public class Control : ILogInformation
                         registry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
                         registry.Register<FragmentDatum<Identifier>>(2, x => new FragmentDatumImpl<Identifier>(x));
                     },
-                    FileConfiguration = new LocalFileConfiguration("Data/Merger"),
-                    StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Merger")),
+                    FileConfiguration = new RelativeFileConfiguration("Merger/Crystal"),
+                    StorageConfiguration = new SimpleStorageConfiguration(new RelativeDirectoryConfiguration("Merger/Storage")),
+                    Required = true,
                 });
+
+                /*context.AddCrystal<PublicIPMachine.Data>(new CrystalConfiguration() with
+                {
+                    SaveFormat = SaveFormat.Utf8,
+                    FileConfiguration = new RelativeFileConfiguration("PublicIP2.tinyhand"),
+                    NumberOfHistoryFiles = 0,
+                });*/
             });
 
             this.AddBuilder(new NetControl.Builder());
@@ -282,12 +316,17 @@ public class Control : ILogInformation
 
         public async Task RunAsync(LPOptions options)
         {
+            // Crystalizer
+            var crystalizer = this.Context.ServiceProvider.GetRequiredService<Crystalizer>();
+            var result = await crystalizer.PrepareAndLoadAll();
+            if (result != CrystalResult.Success)
+            {
+                return;
+            }
+
             var control = this.Context.ServiceProvider.GetRequiredService<Control>();
             try
             {
-                // Settings
-                await control.LoadSettingsAsync();
-
                 // Vault
                 await control.LoadVaultAsync();
 
@@ -340,7 +379,7 @@ public class Control : ILogInformation
         }
     }
 
-    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, Crystalizer crystalizer, Mono mono, Vault vault, Authority authority)
+    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, Crystalizer crystalizer, Mono mono, Vault vault, Authority authority, LPSettings settings)
     {
         this.Logger = logger;
         this.UserInterfaceService = userInterfaceService;
@@ -352,6 +391,7 @@ public class Control : ILogInformation
         this.Mono = mono;
         this.Vault = vault;
         this.Authority = authority;
+        this.LPBase.Settings = settings;
 
         this.MergerProvider = new();
         if (this.LPBase.Mode == LPMode.Merger)
@@ -381,19 +421,10 @@ public class Control : ILogInformation
 
     public async Task LoadAsync(UnitContext context)
     {
-        // Netsphere
-        await this.NetControl.EssentialNode.LoadAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
-
         // CrystalData
         if (!await this.Mono.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Mono.DefaultMonoFile)).ConfigureAwait(false))
         {
             await this.Mono.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Mono.DefaultMonoBackup)).ConfigureAwait(false);
-        }
-
-        var result = await this.Crystalizer.PrepareAndLoadAll();
-        if (result != CrystalResult.Success)
-        {
-            throw new PanicException();
         }
 
         await context.SendLoadAsync(new(this.LPBase.DataDirectory));
@@ -408,9 +439,7 @@ public class Control : ILogInformation
     {
         Directory.CreateDirectory(this.LPBase.DataDirectory);
 
-        await this.SaveSettingsAsync();
         await this.SaveKeyVaultAsync();
-        await this.NetControl.EssentialNode.SaveAsync(Path.Combine(this.LPBase.DataDirectory, EssentialNode.FileName)).ConfigureAwait(false);
         await this.Mono.SaveAsync(Path.Combine(this.LPBase.DataDirectory, Mono.DefaultMonoFile), Path.Combine(this.LPBase.DataDirectory, Mono.DefaultMonoBackup));
 
         await context.SendSaveAsync(new(this.LPBase.DataDirectory));
@@ -631,7 +660,7 @@ public class Control : ILogInformation
         }
         else
         {
-            var result = await this.Vault.LoadAsync(this.LPBase.CombineDataPath(this.LPBase.Options.Vault, Vault.Filename), this.LPBase.Options.Pass).ConfigureAwait(false);
+            var result = await this.Vault.LoadAsync(this.LPBase.Options.Pass).ConfigureAwait(false);
             if (result)
             {
                 goto LoadKeyVaultObjects;
@@ -690,51 +719,5 @@ LoadKeyVaultObjects:
         this.Vault.Add(NodePrivateKey.PrivateKeyPath, this.NetControl.NetBase.SerializeNodeKey());
 
         await this.Vault.SaveAsync(this.LPBase.CombineDataPath(this.LPBase.Options.Vault, Vault.Filename));
-    }
-
-    private async Task LoadSettingsAsync()
-    {
-        if (this.LPBase.IsFirstRun)
-        {
-            return;
-        }
-
-        var path = Path.Combine(this.LPBase.DataDirectory, LPSettings.DefaultSettingsName);
-        byte[] data;
-        try
-        {
-            data = File.ReadAllBytes(path);
-        }
-        catch
-        {
-            return;
-        }
-
-        LPSettings? settings;
-        try
-        {
-            settings = TinyhandSerializer.DeserializeFromUtf8<LPSettings>(data);
-            if (settings != null)
-            {
-                this.LPBase.Settings = settings;
-            }
-        }
-        catch
-        {
-            this.Logger.Get<DefaultLog>(LogLevel.Error).Log(Hashed.Error.Deserialize, path);
-        }
-    }
-
-    private async Task SaveSettingsAsync()
-    {
-        try
-        {
-            var path = Path.Combine(this.LPBase.DataDirectory, LPSettings.DefaultSettingsName);
-            var bytes = TinyhandSerializer.SerializeToUtf8(this.LPBase.Settings);
-            await File.WriteAllBytesAsync(path, bytes);
-        }
-        catch
-        {
-        }
     }
 }

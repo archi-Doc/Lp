@@ -8,6 +8,8 @@ namespace CrystalData;
 [TinyhandUnion("LocalDirectory", typeof(LocalDirectoryConfiguration))]
 [TinyhandUnion("S3File", typeof(S3FileConfiguration))]
 [TinyhandUnion("S3Directory", typeof(S3DirectoryConfiguration))]
+[TinyhandUnion("RelativeFile", typeof(RelativeFileConfiguration))]
+[TinyhandUnion("RelativeDirectory", typeof(RelativeDirectoryConfiguration))]
 public abstract partial record PathConfiguration
 {
     public enum Type
@@ -31,6 +33,9 @@ public abstract partial record PathConfiguration
 
     [Key("Path")]
     public string Path { get; protected set; }
+
+    public bool IsPathRooted
+        => System.IO.Path.IsPathRooted(this.Path);
 
     public override string ToString()
         => $"Path: {this.Path}";

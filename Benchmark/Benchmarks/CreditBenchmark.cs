@@ -30,7 +30,7 @@ public sealed partial class Credit
     [Key(0)]
     public PublicKey Originator { get; private set; } = default!;
 
-    [Key(1, PropertyName = "Mergers")]
+    [Key(1, AddProperty = "Mergers")]
     [MaxLength(MaxMergers)]
     private LP.T3CS.PublicKey[] mergers = Array.Empty<PublicKey>();
 
