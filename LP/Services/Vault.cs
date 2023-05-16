@@ -16,17 +16,19 @@ public partial class Vault
         this.data = data;
     }
 
-    [TinyhandObject]
+    [TinyhandObject(ExplicitKeyOnly = true)]
     public sealed partial class Data
     {
         internal readonly object syncObject = new();
 
         [Key(0)]
+        internal KeyValueList<string, EncryptedItem> items;
+
         internal OrderedMap<string, DecryptedItem> nameToDecrypted = new();
     }
 
     [TinyhandObject]
-    private partial struct DecryptedItem
+    internal partial struct DecryptedItem
     {
         public DecryptedItem()
         {
@@ -192,36 +194,10 @@ public partial class Vault
         }
     }
 
-    public async Task<bool> LoadAsync(string path, string? lppass)
+    public async Task<bool> LoadAsync(string? lppass)
     {
-        byte[] data;
-        try
-        {
-            data = await File.ReadAllBytesAsync(path).ConfigureAwait(false);
-        }
-        catch
-        {
-            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.Load, path);
-            return false;
-        }
-
-        KeyValueList<string, EncryptedItem>? items = null;
-        try
-        {
-            items = TinyhandSerializer.DeserializeFromUtf8<KeyValueList<string, EncryptedItem>>(data);
-        }
-        catch
-        {
-        }
-
-        if (items == null)
-        {
-            this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Error.Deserialize, path);
-            return false;
-        }
-
         string? password = lppass;
-        foreach (var x in items)
+        foreach (var x in this.data.items)
         {
             if (PasswordEncrypt.TryDecrypt(x.Value.Encrypted, string.Empty, out var decrypted))
             {// No password

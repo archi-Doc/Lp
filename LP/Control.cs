@@ -187,7 +187,7 @@ public class Control : ILogInformation
                     Required = true,
                 });
 
-                context.AddCrystal<Vault>(new CrystalConfiguration() with
+                context.AddCrystal<Vault.Data>(new CrystalConfiguration() with
                 {// Vault
                     SaveFormat = SaveFormat.Utf8,
                     FileConfiguration = new RelativeFileConfiguration(Vault.Filename),
@@ -660,7 +660,7 @@ public class Control : ILogInformation
         }
         else
         {
-            var result = await this.Vault.LoadAsync(this.LPBase.CombineDataPath(this.LPBase.Options.Vault, Vault.Filename), this.LPBase.Options.Pass).ConfigureAwait(false);
+            var result = await this.Vault.LoadAsync(this.LPBase.Options.Pass).ConfigureAwait(false);
             if (result)
             {
                 goto LoadKeyVaultObjects;
