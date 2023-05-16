@@ -454,6 +454,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITinyhandCry
         if (data.Result.IsFailure)
         {
             if (!newlyRegistered &&
+                configuration.Required &&
                 await param.Query.FailedToLoad(configuration.FileConfiguration, data.Result.Result).ConfigureAwait(false) == AbortOrContinue.Abort)
             {
                 return (data.Result.Result, default, default);
@@ -496,7 +497,8 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITinyhandCry
         }
         catch
         {
-            if (await param.Query.FailedToLoad(configuration.FileConfiguration, CrystalResult.DeserializeError).ConfigureAwait(false) == AbortOrContinue.Abort)
+            if (configuration.Required &&
+                await param.Query.FailedToLoad(configuration.FileConfiguration, CrystalResult.DeserializeError).ConfigureAwait(false) == AbortOrContinue.Abort)
             {
                 return (data.Result.Result, default, default);
             }

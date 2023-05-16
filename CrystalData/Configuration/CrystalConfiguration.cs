@@ -52,4 +52,6 @@ public partial record CrystalConfiguration
     public FileConfiguration? BackupFileConfiguration { get; init; }
 
     public StorageConfiguration StorageConfiguration { get; init; }
+
+    public bool Required { get; init; } = false;
 }

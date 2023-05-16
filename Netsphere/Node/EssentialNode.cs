@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using CrystalData;
 
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
 #pragma warning disable SA1401 // Fields should be private
@@ -13,85 +14,71 @@ public enum NodeConnectionResult
     Failure,
 }
 
-public class EssentialNode
+public partial class EssentialNode
 {
-    public const string FileName = "EssentialNode.tinyhand";
-    public const int ValidTimeInMinutes = 5;
+    private const string Filename = "EssentialNode.tinyhand";
+    private const int ValidTimeInMinutes = 5;
 
-    public EssentialNode(UnitLogger logger, NetBase netBase)
+    [TinyhandObject(LockObject = "syncObject", ExplicitKeyOnly = true)]
+    private sealed partial class Data
     {
-        this.logger = logger;
-        this.NetBase = netBase;
+#pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
+#pragma warning disable SA1401 // Fields should be private
+        public object syncObject = new();
+
+        [Key(0)]
+        public EssentialNodeAddress.GoshujinClass goshujin = new();
+#pragma warning restore SA1401 // Fields should be private
+#pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
     }
 
-    public async Task LoadAsync(string filename)
+    public EssentialNode(UnitLogger logger, NetBase netBase, Crystalizer crystalizer)
     {
-        try
-        {
-            if (File.Exists(filename))
-            {
-                var bytes = await File.ReadAllBytesAsync(filename).ConfigureAwait(false);
-                // this.essentialNodes = TinyhandSerializer.Deserialize<EssentialNodeAddress.GoshujinClass>(bytes);
-                var g = TinyhandSerializer.DeserializeFromUtf8<EssentialNodeAddress.GoshujinClass>(bytes);
-                if (g != null)
-                {
-                    this.essentialNodes = g;
-                }
-            }
-        }
-        catch
-        {
-            this.logger.TryGet<EssentialNode>(LogLevel.Error)?.Log($"Load error: {FileName}");
-        }
+        this.logger = logger;
+        this.netBase = netBase;
 
+        this.crystal = crystalizer.GetOrCreateCrystal<Data>(new CrystalConfiguration() with
+        {
+            SaveFormat = SaveFormat.Utf8,
+            FileConfiguration = new RelativeFileConfiguration(Filename),
+            NumberOfHistoryFiles = 0,
+        });
+
+        this.data = this.crystal.Data;
+
+        this.Prepare();
+    }
+
+    public void Prepare()
+    {
         // Load NetsphereOptions.Nodes
-        var nodes = this.NetBase.NetsphereOptions.Nodes;
+        var nodes = this.netBase.NetsphereOptions.Nodes;
         foreach (var x in nodes.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
             if (NodeAddress.TryParse(x, out var address))
             {
-                if (!this.essentialNodes.AddressChain.ContainsKey(address))
+                if (!this.data.goshujin.AddressChain.ContainsKey(address))
                 {
-                    this.essentialNodes.Add(new EssentialNodeAddress(address));
+                    this.data.goshujin.Add(new EssentialNodeAddress(address));
                 }
             }
         }
 
         // Unchecked Queue
         var mics = Mics.GetSystem();
-        this.essentialNodes.UncheckedChain.Clear();
-        foreach (var x in this.essentialNodes.LinkedListChain)
+        this.data.goshujin.UncheckedChain.Clear();
+        foreach (var x in this.data.goshujin.LinkedListChain)
         {
             if (x.ValidMics <= mics && mics <= (x.ValidMics + Mics.FromMinutes(ValidTimeInMinutes)))
             {// [x.ValidMics, x.ValidMics + Mics.FromMinutes(ValidTimeInMinutes)]
             }
             else
             {
-                this.essentialNodes.UncheckedChain.Enqueue(x);
+                this.data.goshujin.UncheckedChain.Enqueue(x);
             }
         }
 
         this.Validate();
-    }
-
-    public async Task SaveAsync(string filename)
-    {
-        try
-        {
-            using (var file = File.Open(filename, FileMode.Create))
-            {
-                byte[] b;
-                lock (this.essentialNodes)
-                {
-                    b = TinyhandSerializer.SerializeToUtf8(this.essentialNodes); // TinyhandSerializer.Serialize(this.essentialNodes)
-                }
-
-                file.Write(b);
-            }
-        }
-        catch
-        {
-        }
     }
 
     public bool TryAdd(NodeAddress nodeAddress)
@@ -101,16 +88,16 @@ public class EssentialNode
             return false;
         }
 
-        lock (this.essentialNodes)
+        lock (this.data.syncObject)
         {
-            if (this.essentialNodes.AddressChain.ContainsKey(nodeAddress))
+            if (this.data.goshujin.AddressChain.ContainsKey(nodeAddress))
             {// Already exists
                 return false;
             }
 
             var x = new EssentialNodeAddress(nodeAddress);
-            this.essentialNodes.Add(x);
-            this.essentialNodes.UncheckedChain.Enqueue(x);
+            this.data.goshujin.Add(x);
+            this.data.goshujin.UncheckedChain.Enqueue(x);
         }
 
         return true;
@@ -119,11 +106,11 @@ public class EssentialNode
     public bool GetUncheckedNode([NotNullWhen(true)] out NodeAddress? nodeAddress)
     {
         nodeAddress = null;
-        lock (this.essentialNodes)
+        lock (this.data.syncObject)
         {
-            if (this.essentialNodes.UncheckedChain.TryDequeue(out var node))
+            if (this.data.goshujin.UncheckedChain.TryDequeue(out var node))
             {
-                this.essentialNodes.UncheckedChain.Enqueue(node);
+                this.data.goshujin.UncheckedChain.Enqueue(node);
                 nodeAddress = node.Address;
                 return true;
             }
@@ -135,13 +122,13 @@ public class EssentialNode
     public bool GetNode([NotNullWhen(true)] out NodeAddress? nodeAddress)
     {
         nodeAddress = null;
-        lock (this.essentialNodes)
+        lock (this.data.syncObject)
         {
-            var node = this.essentialNodes.LinkedListChain.First;
+            var node = this.data.goshujin.LinkedListChain.First;
             if (node != null)
             {
-                this.essentialNodes.LinkedListChain.Remove(node);
-                this.essentialNodes.LinkedListChain.AddLast(node);
+                this.data.goshujin.LinkedListChain.Remove(node);
+                this.data.goshujin.LinkedListChain.AddLast(node);
                 nodeAddress = node.Address;
                 return true;
             }
@@ -152,9 +139,9 @@ public class EssentialNode
 
     public void Report(NodeAddress nodeAddress, NodeConnectionResult result)
     {
-        lock (this.essentialNodes)
+        lock (this.data.syncObject)
         {
-            var node = this.essentialNodes.AddressChain.FindFirst(nodeAddress);
+            var node = this.data.goshujin.AddressChain.FindFirst(nodeAddress);
             if (node != null)
             {
                 if (node.UncheckedLink.IsLinked)
@@ -162,7 +149,7 @@ public class EssentialNode
                     if (result == NodeConnectionResult.Success)
                     {// Success
                         node.UpdateValidMics();
-                        this.essentialNodes.UncheckedChain.Remove(node);
+                        this.data.goshujin.UncheckedChain.Remove(node);
                     }
                     else
                     {// Failure
@@ -187,9 +174,9 @@ public class EssentialNode
     {
         List<string> list = new();
 
-        lock (this.essentialNodes)
+        lock (this.data.syncObject)
         {
-            foreach (var x in this.essentialNodes)
+            foreach (var x in this.data.goshujin)
             {
                 list.Add(x.ToString()!);
             }
@@ -198,13 +185,11 @@ public class EssentialNode
         return list;
     }
 
-    public NetBase NetBase { get; }
-
     private void Validate()
     {
         // Validate essential nodes.
         List<EssentialNodeAddress> toDelete = new();
-        foreach (var x in this.essentialNodes.LinkedListChain)
+        foreach (var x in this.data.goshujin.LinkedListChain)
         {
             if (!x.Address.IsValid())
             {
@@ -218,8 +203,10 @@ public class EssentialNode
         }
     }
 
+    private NetBase netBase;
     private UnitLogger logger;
-    private EssentialNodeAddress.GoshujinClass essentialNodes = new();
+    private ICrystal<Data> crystal;
+    private Data data;
 }
 
 /// <summary>

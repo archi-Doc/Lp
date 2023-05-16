@@ -5,7 +5,7 @@ namespace LP.Data;
 [TinyhandObject(ImplicitKeyAsName = true)]
 public partial record LPSettings
 {
-    public const string DefaultSettingsName = "Settings.tinyhand";
+    public const string Filename = "Settings.tinyhand";
 
     public LPFlags Flags { get; set; } = default!;
 }
