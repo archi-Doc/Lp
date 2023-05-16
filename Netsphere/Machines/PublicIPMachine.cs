@@ -25,19 +25,15 @@ public partial class PublicIPMachine : Machine<Identifier>
         this.logger = logger;
         this.lpBase = lpBase;
         this.netControl = netControl;
-        this.crystal = crystalizer.CreateCrystal<Data>();
 
-        if (!this.crystal.IsConfigured)
+        var configuration = new CrystalConfiguration() with
         {
-            var configuration = new CrystalConfiguration() with
-            {
-                SaveFormat = SaveFormat.Utf8,
-                FileConfiguration = new RelativeFileConfiguration(Filename),
-                NumberOfHistoryFiles = 0,
-            };
+            SaveFormat = SaveFormat.Utf8,
+            FileConfiguration = new RelativeFileConfiguration(Filename),
+            NumberOfHistoryFiles = 0,
+        };
 
-            this.crystal.Configure(configuration);
-        }
+        this.crystal = crystalizer.GetOrCreateCrystal<Data>(configuration);
 
         // this.DefaultTimeout = TimeSpan.FromSeconds(5);
     }

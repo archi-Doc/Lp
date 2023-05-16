@@ -527,6 +527,21 @@ public class Crystalizer
         return crystal;
     }
 
+    public ICrystal<TData> GetOrCreateCrystal<TData>(CrystalConfiguration configuration)
+        where TData : class, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+    {
+        if (this.typeToCrystal.TryGetValue(typeof(TData), out var crystal) &&
+            crystal is ICrystal<TData> crystalData)
+        {
+            return crystalData;
+        }
+
+        var crystalObject = new CrystalObject<TData>(this);
+        this.crystals.TryAdd(crystalObject, 0);
+        ((ICrystal)crystalObject).Configure(configuration);
+        return crystalObject;
+    }
+
     public ICrystal<TData> CreateBigCrystal<TData>()
         where TData : BaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
