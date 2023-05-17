@@ -42,17 +42,16 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         this.crystal = crystal;
 
         this.Information = mergerInformation;
-        this.Check();
     }
 
     public void Prepare(UnitMessage.Prepare message)
     {
-        // this.logger.TryGet()?.Log("Merger prepared");
+        this.Check();
+        this.logger.TryGet()?.Log(this.Information.ToString());
     }
 
     public async Task RunAsync(UnitMessage.RunAsync message)
     {
-        this.logger.TryGet()?.Log(this.Information.ToString());
     }
 
     public async Task TerminateAsync(UnitMessage.TerminateAsync message)

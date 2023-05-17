@@ -180,7 +180,6 @@ public class Control : ILogInformation
             .ConfigureCrystal(context =>
             {
                 context.AddCrystal<LPSettings>(CrystalConfiguration.SingleUtf8(true, new RelativeFileConfiguration(LPSettings.Filename)));
-                context.AddCrystal<Vault.Data>(CrystalConfiguration.SingleUtf8(true, new RelativeFileConfiguration(Vault.Filename)));
                 context.AddCrystal<MergerInformation>(CrystalConfiguration.SingleUtf8(true, new RelativeFileConfiguration(MergerInformation.Filename)));
 
                 context.AddBigCrystal<LpData>(new BigCrystalConfiguration() with
@@ -296,22 +295,34 @@ public class Control : ILogInformation
 
         public async Task RunAsync(LPOptions options)
         {
-            // Crystalizer
-            var crystalizer = this.Context.ServiceProvider.GetRequiredService<Crystalizer>();
-            var result = await crystalizer.PrepareAndLoadAll();
-            if (result != CrystalResult.Success)
+            try
             {
+                // Vault
+                var vault = this.Context.ServiceProvider.GetRequiredService<Vault>();
+                await vault.LoadAsync();
+
+                // Crystalizer
+                var crystalizer = this.Context.ServiceProvider.GetRequiredService<Crystalizer>();
+                var result = await crystalizer.PrepareAndLoadAll();
+                if (result != CrystalResult.Success)
+                {
+                    throw new PanicException();
+                }
+            }
+            catch
+            {
+                ThreadCore.Root.Terminate();
                 return;
             }
 
             var control = this.Context.ServiceProvider.GetRequiredService<Control>();
             try
             {
-                // Vault
-                await control.LoadVaultAsync();
-
                 // Start
                 control.Logger.Get<DefaultLog>().Log($"LP ({Version.Get()})");
+
+                // Vault -> NodeKey
+                await control.LoadKeyVault_NodeKey();
 
                 // Create optional instances
                 this.Context.CreateInstances();
@@ -419,7 +430,10 @@ public class Control : ILogInformation
     {
         Directory.CreateDirectory(this.LPBase.DataDirectory);
 
-        await this.SaveKeyVaultAsync();
+        // Vault
+        this.Vault.Add(NodePrivateKey.PrivateKeyPath, this.NetControl.NetBase.SerializeNodeKey());
+        await this.Vault.SaveAsync();
+
         await this.Mono.SaveAsync(Path.Combine(this.LPBase.DataDirectory, Mono.DefaultMonoFile), Path.Combine(this.LPBase.DataDirectory, Mono.DefaultMonoBackup));
 
         await context.SendSaveAsync(new(this.LPBase.DataDirectory));
@@ -633,48 +647,6 @@ public class Control : ILogInformation
 
     private SimpleParser subcommandParser;
 
-    private async Task LoadVaultAsync()
-    {
-        if (this.LPBase.IsFirstRun)
-        {// First run
-        }
-        else
-        {
-            var result = await this.Vault.LoadAsync(this.LPBase.Options.Pass).ConfigureAwait(false);
-            if (result)
-            {
-                goto LoadKeyVaultObjects;
-            }
-
-            // Could not load Vault
-            var reply = await this.UserInterfaceService.RequestYesOrNo(Hashed.Vault.AskNew);
-            if (reply != true)
-            {// No
-                throw new PanicException();
-            }
-        }
-
-        this.UserInterfaceService.WriteLine(HashedString.Get(Hashed.Vault.Create));
-        // await this.UserInterfaceService.Notify(UserInterfaceNotifyLevel.Information, Hashed.KeyVault.Create);
-
-        // New Vault
-        var password = this.LPBase.Options.Pass;
-        if (string.IsNullOrEmpty(password))
-        {
-            password = await this.UserInterfaceService.RequestPasswordAndConfirm(Hashed.Vault.EnterPassword, Hashed.Dialog.Password.Confirm);
-        }
-
-        if (password == null)
-        {
-            throw new PanicException();
-        }
-
-        this.Vault.Create(password);
-
-LoadKeyVaultObjects:
-        await this.LoadKeyVault_NodeKey();
-    }
-
     private async Task LoadKeyVault_NodeKey()
     {
         if (!this.Vault.TryGetAndDeserialize<NodePrivateKey>(NodePrivateKey.PrivateKeyPath, out var key))
@@ -692,12 +664,5 @@ LoadKeyVaultObjects:
             await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoRestore, NodePrivateKey.PrivateKeyPath);
             return;
         }
-    }
-
-    private async Task SaveKeyVaultAsync()
-    {
-        this.Vault.Add(NodePrivateKey.PrivateKeyPath, this.NetControl.NetBase.SerializeNodeKey());
-
-        await this.Vault.SaveAsync(this.LPBase.CombineDataPath(this.LPBase.Options.Vault, Vault.Filename));
     }
 }
