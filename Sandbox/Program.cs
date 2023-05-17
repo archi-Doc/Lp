@@ -91,7 +91,6 @@ public class Program
             })
             .SetupOptions<CrystalizerOptions>((context, options) =>
             {// CrystalizerOptions
-                options.EnableLogger = true;
                 options.RootPath = Directory.GetCurrentDirectory();
                 options.GlobalMain = new LocalDirectoryConfiguration("Relative");
                 // options.GlobalBackup = new LocalDirectoryConfiguration("Backup2");

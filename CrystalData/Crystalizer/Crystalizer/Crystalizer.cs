@@ -55,7 +55,7 @@ public class Crystalizer
         this.configuration = configuration;
         this.GlobalMain = options.GlobalMain;
         this.GlobalBackup = options.GlobalBackup;
-        this.EnableLogger = options.EnableLogger;
+        this.EnableFilerLogger = options.EnableFilerLogger;
         this.RootDirectory = options.RootPath;
         this.DefaultTimeout = options.DefaultTimeout;
         this.MemorySizeLimit = options.MemorySizeLimit;
@@ -101,7 +101,7 @@ public class Crystalizer
 
     public DirectoryConfiguration? GlobalBackup { get; }
 
-    public bool EnableLogger { get; }
+    public bool EnableFilerLogger { get; }
 
     public string RootDirectory { get; }
 

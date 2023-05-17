@@ -240,7 +240,10 @@ RepeatList:
     {
         var directoryPath = string.Empty;
         this.Crystalizer = param.Crystalizer;
-        this.logger ??= this.Crystalizer.UnitLogger.GetLogger<S3Filer>();
+        if (this.Crystalizer.EnableFilerLogger)
+        {
+            this.logger ??= this.Crystalizer.UnitLogger.GetLogger<S3Filer>();
+        }
 
         if (!this.Crystalizer.StorageKey.TryGetKey(this.bucket, out var accessKeyPair))
         {// No access key
