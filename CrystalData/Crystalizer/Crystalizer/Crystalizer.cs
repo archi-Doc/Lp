@@ -476,7 +476,7 @@ public class Crystalizer
         // Save crystal check
         this.CrystalCheck.Save();
 
-        this.logger.TryGet()?.Log($"Prepared - {string.Join(", ", list)}");
+        // this.logger.TryGet()?.Log($"Prepared - {string.Join(", ", list)}");
 
         return CrystalResult.Success;
     }
