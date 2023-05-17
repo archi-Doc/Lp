@@ -13,19 +13,27 @@ public partial class Vault
     {
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
+
+        // var crystal = crystalizer.GetOrCreateCrystal<Data>(CrystalConfiguration.SingleUtf8(true, new RelativeFileConfiguration(Filename)));
         this.data = data;
     }
 
+#pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
+#pragma warning disable SA1401 // Fields should be private
+
     [TinyhandObject(ExplicitKeyOnly = true)]
-    public sealed partial class Data
+    internal sealed partial class Data
     {
-        internal readonly object syncObject = new();
+        public readonly object syncObject = new();
 
         [Key(0)]
-        internal KeyValueList<string, EncryptedItem> items;
+        public KeyValueList<string, EncryptedItem> items = default!;
 
-        internal OrderedMap<string, DecryptedItem> nameToDecrypted = new();
+        public OrderedMap<string, DecryptedItem> nameToDecrypted = new();
     }
+
+#pragma warning restore SA1401 // Fields should be private
+#pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
 
     [TinyhandObject]
     internal partial struct DecryptedItem
@@ -44,7 +52,7 @@ public partial class Vault
     }
 
     [TinyhandObject]
-    private partial struct EncryptedItem
+    internal partial struct EncryptedItem
     {
         public EncryptedItem()
         {

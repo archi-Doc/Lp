@@ -23,20 +23,22 @@ public partial class NtpCorrection : UnitBase, IUnitPreparable
         "time-a-g.nist.gov",
     };
 
+#pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
+#pragma warning disable SA1401 // Fields should be private
+
     [TinyhandObject(LockObject = "syncObject", ExplicitKeyOnly = true)]
     private sealed partial class Data
     {
-#pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
-#pragma warning disable SA1401 // Fields should be private
         public object syncObject = new();
         public int timeoffsetCount;
         public long meanTimeoffset;
 
         [Key(0)]
         public Item.GoshujinClass goshujin = new();
+    }
+
 #pragma warning restore SA1401 // Fields should be private
 #pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
-    }
 
     [TinyhandObject]
     [ValueLinkObject]

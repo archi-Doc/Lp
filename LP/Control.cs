@@ -179,29 +179,9 @@ public class Control : ILogInformation
             var crystalControlBuilder = new CrystalControl.Builder()
             .ConfigureCrystal(context =>
             {
-                context.AddCrystal<LPSettings>(new CrystalConfiguration() with
-                {// LPSettings
-                    SaveFormat = SaveFormat.Utf8,
-                    FileConfiguration = new RelativeFileConfiguration(LPSettings.Filename),
-                    NumberOfHistoryFiles = 0,
-                    Required = true,
-                });
-
-                context.AddCrystal<Vault.Data>(new CrystalConfiguration() with
-                {// Vault
-                    SaveFormat = SaveFormat.Utf8,
-                    FileConfiguration = new RelativeFileConfiguration(Vault.Filename),
-                    NumberOfHistoryFiles = 0,
-                    Required = true,
-                });
-
-                context.AddCrystal<MergerInformation>(new CrystalConfiguration() with
-                {// MergerInformation
-                    SaveFormat = SaveFormat.Utf8,
-                    FileConfiguration = new RelativeFileConfiguration(MergerInformation.Filename),
-                    NumberOfHistoryFiles = 0,
-                    Required = true,
-                });
+                context.AddCrystal<LPSettings>(CrystalConfiguration.SingleUtf8(true, new RelativeFileConfiguration(LPSettings.Filename)));
+                context.AddCrystal<Vault.Data>(CrystalConfiguration.SingleUtf8(true, new RelativeFileConfiguration(Vault.Filename)));
+                context.AddCrystal<MergerInformation>(CrystalConfiguration.SingleUtf8(true, new RelativeFileConfiguration(MergerInformation.Filename)));
 
                 context.AddBigCrystal<LpData>(new BigCrystalConfiguration() with
                 {// LpData
