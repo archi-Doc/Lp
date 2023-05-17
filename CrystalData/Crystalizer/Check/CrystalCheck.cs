@@ -35,10 +35,10 @@ internal class CrystalCheck
 
     public void Save()
     {
-        if (!this.SuccessfullyLoaded)
+        /*if (!this.SuccessfullyLoaded)
         {
             return;
-        }
+        }*/
 
         try
         {
@@ -50,7 +50,7 @@ internal class CrystalCheck
         }
     }
 
-    public bool SuccessfullyLoaded { get; internal set; }
+    public bool SuccessfullyLoaded { get; internal set; } = false;
 
     public string FilePath => this.filePath;
 

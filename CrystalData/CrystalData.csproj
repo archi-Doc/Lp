@@ -7,7 +7,7 @@
     <PackageId>CrystalData</PackageId>
     <Authors>archi-Doc</Authors>
     <Product>CrystalData</Product>
-    <Description>CrystalData is a simple and flexible storage engine for C#.</Description>
+    <Description>CrystalData is a simple and versatile storage engine for C#.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/archi-Doc/LP</PackageProjectUrl>
     <RepositoryUrl>https://github.com/archi-Doc/LP</RepositoryUrl>

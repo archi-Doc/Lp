@@ -33,6 +33,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CrystalDataTest", "Tests\Cr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CrystalData", "CrystalData\CrystalData.csproj", "{C9A0B281-AB9A-401D-8123-ECB989AD813C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickStart", "QuickStart\QuickStart.csproj", "{56071732-C09A-474A-A499-7958DB3DC278}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -95,6 +97,10 @@ Global
 		{C9A0B281-AB9A-401D-8123-ECB989AD813C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C9A0B281-AB9A-401D-8123-ECB989AD813C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C9A0B281-AB9A-401D-8123-ECB989AD813C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{56071732-C09A-474A-A499-7958DB3DC278}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{56071732-C09A-474A-A499-7958DB3DC278}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{56071732-C09A-474A-A499-7958DB3DC278}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{56071732-C09A-474A-A499-7958DB3DC278}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

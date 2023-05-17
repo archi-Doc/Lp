@@ -755,6 +755,8 @@ public class Crystalizer
 
     private async Task SaveAndTerminate(bool saveData, bool saveJournal)
     {
+        this.CrystalCheck.Save();
+
         if (saveData)
         {
             await this.SaveAll(true).ConfigureAwait(false);

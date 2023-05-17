@@ -1,10 +1,85 @@
-## CrystalData
+## CrystalData is a storage engine for C#
 
-CrystalData is a simple and versatile storage engine for C# and it covers a wide range of storage needs.
+- Very versatile and easy to use.
+- Covers a wide range of storage needs.
+
+- Full serialization features integrated with [Tinyhand](https://github.com/archi-Doc/Tinyhand).
+
+
+
+## Table of Contents
+
+- [Requirements](#requirements)
+- [Quick Start](#quick-start)
+
+
+
+## Requirements
+
+**Visual Studio 2022** or later for Source Generator V2.
+
+**C# 11** or later for generated codes.
+
+**.NET 7** or later target framework.
 
 
 
 ## Quick start
+
+Install CrystalData using Package Manager Console.
+
+```
+Install-Package CrystalData
+```
+
+This is a small example code to use CrystalData.
+
+```csharp
+// First, create a class to represent the data content.
+[TinyhandObject] // Annotate TinyhandObject attribute to make this class serializable.
+public partial class FirstData
+{
+    [Key(0)] // The key attribute specifies the index at serialization
+    public int Id { get; set; }
+
+    [Key(1)]
+    [DefaultValue("Hoge")] // The default value for the name property.
+    public string Name { get; set; } = string.Empty;
+
+    public override string ToString()
+        => $"Id: {this.Id}, Name: {this.Name}";
+}
+```
+
+```csharp
+// Create a builder to organize dependencies and register data configurations.
+var builder = new CrystalControl.Builder()
+    .ConfigureCrystal(context =>
+    {
+        // Register SimpleData configuration.
+        context.AddCrystal<FirstData>(
+            new CrystalConfiguration()
+            {
+                SavePolicy = SavePolicy.Manual, // Timing of saving data is controlled by the application.
+                SaveFormat = SaveFormat.Utf8, // Format is utf8 text.
+                NumberOfHistoryFiles = 0, // No history file.
+                FileConfiguration = new LocalFileConfiguration("Local/SimpleExample/SimpleData.tinyhand"), // Specify the file name to save.
+            });
+    });
+
+var unit = builder.Build(); // Build.
+var crystalizer = unit.Context.ServiceProvider.GetRequiredService<Crystalizer>(); // Obtains a Crystalizer instance for data storage operations.
+await crystalizer.PrepareAndLoadAll(false); // Prepare resources for storage operations and read data from files.
+
+var data = unit.Context.ServiceProvider.GetRequiredService<FirstData>(); // Retrieve a data instance from the service provider.
+
+Console.WriteLine($"Load {data.ToString()}"); // Id: 0 Name: Hoge
+data.Id = 1;
+data.Name = "Fuga";
+Console.WriteLine($"Save {data.ToString()}"); // Id: 1 Name: Fuga
+
+await crystalizer.SaveAll(); // Save all data.
+```
 
 
 
