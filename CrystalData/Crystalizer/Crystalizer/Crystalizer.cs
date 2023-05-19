@@ -589,6 +589,15 @@ public class Crystalizer
         }
     }
 
+    public async Task TestJournalAll()
+    {
+        var crystals = this.crystals.Keys.ToArray();
+        foreach (var x in crystals)
+        {
+            await x.TestJournal().ConfigureAwait(false);
+        }
+    }
+
     #endregion
 
     #region Waypoint/Plane
@@ -949,7 +958,7 @@ public class Crystalizer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool TryReadRecord(ref TinyhandReader reader, out int length, out JournalType journalType, out uint plane)
+    internal static bool TryReadRecord(ref TinyhandReader reader, out int length, out JournalType journalType, out uint plane)
     {
         try
         {

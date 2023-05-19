@@ -2,7 +2,7 @@
 
 namespace CrystalData;
 
-public partial interface IStorage
+public interface IStorage
 {
     long StorageUsage { get; }
 

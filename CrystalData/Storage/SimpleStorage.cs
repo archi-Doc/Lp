@@ -8,7 +8,7 @@ using CrystalData.Filer;
 
 namespace CrystalData.Storage;
 
-internal partial class SimpleStorage : IStorage
+internal partial class SimpleStorage : IStorage, IStorageInternal
 {
     private const string SimpleStorageFile = "Simple";
 
@@ -93,6 +93,7 @@ internal partial class SimpleStorage : IStorage
             this.crystal.Configure(new CrystalConfiguration(SavePolicy.Manual, mainConfiguration)
             {
                 BackupFileConfiguration = backupConfiguration,
+                NumberOfHistoryFiles = storageConfiguration.NumberOfHistoryFiles,
             });
 
             result = await this.crystal.PrepareAndLoad(param.UseQuery).ConfigureAwait(false);
@@ -242,6 +243,14 @@ internal partial class SimpleStorage : IStorage
 
         _ = this.backupFiler?.DeleteDirectoryAsync(this.backupDirectory).ConfigureAwait(false);
         return await this.mainFiler.DeleteDirectoryAsync(this.directory).ConfigureAwait(false);
+    }
+
+    async Task IStorageInternal.TestJournal()
+    {
+        if (this.crystal is ICrystalInternal crystalInternal)
+        {
+            await crystalInternal.TestJournal().ConfigureAwait(false);
+        }
     }
 
     #endregion

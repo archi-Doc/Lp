@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using CrystalData.Filer;
@@ -306,6 +307,90 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITinyhandCry
     ulong ICrystalInternal.GetPosition()
         => this.waypoint.JournalPosition;
 
+    async Task ICrystalInternal.TestJournal()
+    {
+        if (this.Crystalizer.Journal is not CrystalData.Journal.SimpleJournal journal)
+        {// No journaling
+            return;
+        }
+
+        using (this.semaphore.Lock())
+        {
+            if (this.crystalFiler is null ||
+                this.crystalFiler.Main is not { } main)
+            {
+                return;
+            }
+
+            var waypoints = main.GetWaypoints();
+            if (waypoints.Length <= 1)
+            {// No or single waypoint
+                return;
+            }
+
+            var logger = this.Crystalizer.UnitLogger.GetLogger<TData>();
+            CrystalMemoryOwnerResult previous1 = default;
+            for (var i = 0; i < waypoints.Length; i++)
+            {// waypoint[i] -> waypoint[i + 1]
+                var base32 = waypoints[i].ToBase32();
+
+                // Load
+                var result = await main.LoadWaypoint(waypoints[i]).ConfigureAwait(false);
+                if (result.IsFailure)
+                {// Loading error
+                    logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.TestJournal.LoadingFailure, base32);
+                    break;
+                }
+
+                if (i > 0)
+                {// Compare previous data
+                    if (result.Data.Span.SequenceEqual(previous.Data.Span))
+                    {// Success
+                        logger.TryGet(LogLevel.Information)?.Log(CrystalDataHashed.TestJournal.Success, base32);
+                    }
+                    else
+                    {// Failure
+                        logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.TestJournal.Failure, base32);
+                    }
+
+                    previous.Return();
+                }
+
+                if (i == waypoints.Length - 1)
+                {
+                    result.Return();
+                    break;
+                }
+
+                // Deserialize
+                var data = this.TryDeserialize(result.Data.Span);
+                if (data is null)
+                {// Deserialization error
+                    logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.TestJournal.DeserializationFailure, base32);
+                    break;
+                }
+
+                if (data is not ITinyhandJournal journalObject)
+                {
+                    break;
+                }
+
+                journalObject.CurrentPlane = waypoints[i].CurrentPlane;
+
+                // Read journal [waypoints[i].StartingPosition, waypoints[i + 1].JournalPosition)
+                var length = (int)(waypoints[i + 1].JournalPosition - waypoints[i].StartingPosition);
+                var memoryOwner = ByteArrayPool.Default.Rent(length).ToMemoryOwner(0, length);
+                var journalResult = await journal.ReadJournalAsync(waypoints[i].StartingPosition, waypoints[i + 1].JournalPosition, memoryOwner.Memory).ConfigureAwait(false);
+                if (!journalResult)
+                {// Journal error
+                    break;
+                }
+
+                this.ReadJournal(journalObject, memoryOwner.Memory);
+            }
+        }
+    }
+
     #endregion
 
     #region ITinyhandCrystal
@@ -350,6 +435,79 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITinyhandCry
     }
 
     #endregion
+
+    private bool ReadJournal(ITinyhandJournal journalObject, ReadOnlyMemory<byte> data)
+    {
+        var reader = new TinyhandReader(data.Span);
+        var success = true;
+
+        while (reader.Consumed < data.Length)
+        {
+            if (!Crystalizer.TryReadRecord(ref reader, out var length, out var journalType, out var plane))
+            {
+                return false;
+            }
+
+            var fork = reader.Fork();
+            try
+            {
+                if (journalType == JournalType.Record &&
+                    journalObject.CurrentPlane == plane)
+                {
+                    if (journalObject.ReadRecord(ref reader))
+                    {// Success
+                    }
+                    else
+                    {// Failure
+                        success = false;
+                    }
+                }
+                else
+                {
+                }
+            }
+            catch
+            {
+                success = false;
+            }
+            finally
+            {
+                reader = fork;
+                reader.Advance(length);
+            }
+        }
+
+        return success;
+    }
+
+    private TData? TryDeserialize(ReadOnlySpan<byte> span)
+    {
+        TData? data = default;
+        if (this.CrystalConfiguration.SaveFormat == SaveFormat.Utf8)
+        {
+            try
+            {
+                TinyhandSerializer.DeserializeObjectFromUtf8(span, ref data);
+            }
+            catch
+            {// Maybe binary...
+                TinyhandSerializer.DeserializeObject(span, ref data);
+            }
+        }
+        else
+        {
+            try
+            {
+                TinyhandSerializer.DeserializeObject(span, ref data);
+            }
+            catch
+            {// Maybe utf8...
+                TinyhandSerializer.DeserializeObjectFromUtf8(span, ref data);
+            }
+        }
+
+        return data;
+    }
 
     private async Task<CrystalResult> PrepareAndLoadInternal(bool useQuery)
     {// this.semaphore.Lock()

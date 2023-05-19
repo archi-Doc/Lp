@@ -43,6 +43,8 @@ internal interface ICrystalInternal : ICrystal
 {
     Task? TryPeriodicSave(DateTime utc);
 
+    Task TestJournal();
+
     ulong GetPosition();
 }
 

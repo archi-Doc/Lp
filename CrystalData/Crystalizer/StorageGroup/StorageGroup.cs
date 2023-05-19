@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using CrystalData.Filer;
 using CrystalData.Results;
 
@@ -316,6 +317,23 @@ public sealed class StorageGroup
         lock (this.syncObject)
         {
             this.storages.Clear();
+        }
+    }
+
+    internal async Task TestJournal()
+    {
+        IStorage?[] array;
+        lock (this.syncObject)
+        {
+            array = this.storages.Select(x => x.Storage).ToArray();
+        }
+
+        foreach (var x in array)
+        {
+            if (x is IStorageInternal storageInternal)
+            {
+                await storageInternal.TestJournal().ConfigureAwait(false);
+            }
         }
     }
 

@@ -2,7 +2,6 @@
 
 using System.Collections.Concurrent;
 using CrystalData.Results;
-using static CrystalData.CrystalDataHashed;
 
 namespace CrystalData.Filer;
 
