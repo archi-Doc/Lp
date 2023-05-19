@@ -647,7 +647,7 @@ public class Crystalizer
             journalPosition = this.Journal.Add(writer);
 
             depth = journalPosition - startingPosition;
-            if (depth < 0 || depth > Waypoint.MaxDepth)
+            if (depth < 0 || depth > Waypoint.MaxDepth || startingPosition == 0)
             {
                 depth = 0;
             }
@@ -899,7 +899,7 @@ public class Crystalizer
 
         while (reader.Consumed < data.Length)
         {
-            if (!TryReadRecord(ref reader, out var length, out var journalType, out var plane))
+            if (!reader.TryReadRecord(out var length, out var journalType, out var plane))
             {
                 this.logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.Journal.Corrupted);
                 return;
@@ -955,32 +955,6 @@ public class Crystalizer
         {
             this.logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.Journal.ReadSuccess);
         }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static bool TryReadRecord(ref TinyhandReader reader, out int length, out JournalType journalType, out uint plane)
-    {
-        try
-        {
-            Span<byte> span = stackalloc byte[3];
-            span[0] = reader.ReadUInt8();
-            span[1] = reader.ReadUInt8();
-            span[2] = reader.ReadUInt8();
-            length = span[0] << 16 | span[1] << 8 | span[2];
-
-            reader.TryRead(out byte code);
-            journalType = (JournalType)code;
-            reader.TryReadBigEndian(out plane);
-        }
-        catch
-        {
-            length = 0;
-            journalType = default;
-            plane = 0;
-            return false;
-        }
-
-        return true;
     }
 
     #endregion

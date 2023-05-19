@@ -329,7 +329,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITinyhandCry
             }
 
             var logger = this.Crystalizer.UnitLogger.GetLogger<TData>();
-            CrystalMemoryOwnerResult previous1 = default;
+            TData? previousObject = default;
             for (var i = 0; i < waypoints.Length; i++)
             {// waypoint[i] -> waypoint[i + 1]
                 var base32 = waypoints[i].ToBase32();
@@ -342,9 +342,28 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITinyhandCry
                     break;
                 }
 
-                if (i > 0)
-                {// Compare previous data
-                    if (result.Data.Span.SequenceEqual(previous.Data.Span))
+                // Deserialize
+                (var currentObject, var currentFormat) = this.TryDeserialize(result.Data.Span);
+                if (currentObject is null)
+                {// Deserialization error
+                    result.Return();
+                    logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.TestJournal.DeserializationFailure, base32);
+                    break;
+                }
+
+                if (previousObject is not null)
+                {// Compare the previous data
+                    bool compare;
+                    if (currentFormat == SaveFormat.Binary)
+                    {// Previous (previousObject), Current (currentObject/result.Data.Span): Binary
+                        compare = result.Data.Span.SequenceEqual(TinyhandSerializer.Serialize(previousObject));
+                    }
+                    else
+                    {// Previous (previousObject), Current (currentObject/result.Data.Span): Utf8
+                        compare = result.Data.Span.SequenceEqual(TinyhandSerializer.SerializeToUtf8(previousObject));
+                    }
+
+                    if (compare)
                     {// Success
                         logger.TryGet(LogLevel.Information)?.Log(CrystalDataHashed.TestJournal.Success, base32);
                     }
@@ -352,25 +371,15 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITinyhandCry
                     {// Failure
                         logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.TestJournal.Failure, base32);
                     }
-
-                    previous.Return();
                 }
 
+                result.Return();
                 if (i == waypoints.Length - 1)
                 {
-                    result.Return();
                     break;
                 }
 
-                // Deserialize
-                var data = this.TryDeserialize(result.Data.Span);
-                if (data is null)
-                {// Deserialization error
-                    logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.TestJournal.DeserializationFailure, base32);
-                    break;
-                }
-
-                if (data is not ITinyhandJournal journalObject)
+                if (currentObject is not ITinyhandJournal journalObject)
                 {
                     break;
                 }
@@ -387,6 +396,8 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITinyhandCry
                 }
 
                 this.ReadJournal(journalObject, memoryOwner.Memory);
+
+                previousObject = currentObject;
             }
         }
     }
@@ -443,7 +454,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITinyhandCry
 
         while (reader.Consumed < data.Length)
         {
-            if (!Crystalizer.TryReadRecord(ref reader, out var length, out var journalType, out var plane))
+            if (!reader.TryReadRecord(out var length, out var journalType, out var plane))
             {
                 return false;
             }
@@ -480,14 +491,16 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITinyhandCry
         return success;
     }
 
-    private TData? TryDeserialize(ReadOnlySpan<byte> span)
+    private (TData? Data, SaveFormat Format) TryDeserialize(ReadOnlySpan<byte> span)
     {
         TData? data = default;
+        SaveFormat format = SaveFormat.Binary;
         if (this.CrystalConfiguration.SaveFormat == SaveFormat.Utf8)
         {
             try
             {
                 TinyhandSerializer.DeserializeObjectFromUtf8(span, ref data);
+                format = SaveFormat.Utf8;
             }
             catch
             {// Maybe binary...
@@ -503,10 +516,11 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITinyhandCry
             catch
             {// Maybe utf8...
                 TinyhandSerializer.DeserializeObjectFromUtf8(span, ref data);
+                format = SaveFormat.Utf8;
             }
         }
 
-        return data;
+        return (data, format);
     }
 
     private async Task<CrystalResult> PrepareAndLoadInternal(bool useQuery)

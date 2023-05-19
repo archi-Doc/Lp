@@ -90,6 +90,9 @@ public readonly struct Waypoint : IEquatable<Waypoint>, IComparable<Waypoint>
         return Base32Sort.Default.FromByteArrayToString(span);
     }
 
+    public override string ToString()
+        => $"Position: {this.JournalPosition}, {this.CurrentPlane} -> {this.NextPlane}, {this.Depth}";
+
     public bool Equals(Waypoint other)
         => this.JournalPosition == other.JournalPosition &&
         this.CurrentPlane == other.CurrentPlane &&
