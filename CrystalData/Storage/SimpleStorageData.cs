@@ -162,11 +162,15 @@ internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>
             var diff = reader.ReadInt32();
             this.fileToSize[file] = size;
             this.storageUsage += diff;
+
+            return true;
         }
         else if (record == JournalRecord.Remove)
         {
             var file = reader.ReadUInt32();
             this.fileToSize.Remove(file);
+
+            return true;
         }
 
         return false;

@@ -54,7 +54,7 @@ public class Program
                     new(SavePolicy.OnChanged, new RelativeFileConfiguration("Local/manual.tinyhand"))
                     {
                         SaveFormat = SaveFormat.Utf8,
-                        NumberOfHistoryFiles = 3,
+                        NumberOfHistoryFiles = 2,
                         BackupFileConfiguration = new LocalFileConfiguration("Backup/manual.tinyhand")
                     });
 
