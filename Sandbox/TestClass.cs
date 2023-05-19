@@ -43,12 +43,30 @@ internal partial class CombinedClass : ITinyhandCustomJournal
 
     public bool ReadCustomRecord(ref TinyhandReader reader)
     {
-        reader.Read_Key();
-        if (reader.ReadInt32() == 1)
+        var record = reader.Read_Record();
+        if (record == JournalRecord.Key)
         {
-            reader.Read_Value();
-            this.Manual2 = TinyhandSerializer.DeserializeObject<ManualClass>(ref reader, TinyhandSerializerOptions.Standard)!;
+            if (reader.ReadInt32() == 1)
+            {
+                reader.Read_Value();
+                this.Manual2 = TinyhandSerializer.DeserializeObject<ManualClass>(ref reader, TinyhandSerializerOptions.Standard)!;
+                return true;
+            }
         }
+        else if (record == JournalRecord.Locator)
+        {// tempcode
+            var key = reader.ReadInt32();
+            var journal = key switch
+            {
+                0 => this.Manual1 as ITinyhandJournal,
+                1 => this.Manual2 as ITinyhandJournal,
+                _ => default,
+            };
+
+            journal?.ReadRecord(ref reader);
+
+        }
+        
         return false;
     }
 }
