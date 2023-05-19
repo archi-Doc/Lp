@@ -202,8 +202,11 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITinyhandCry
             return CrystalResult.NotPrepared;
         }
 
+        // Starting point
+        var startingPosition = this.Crystalizer.AddStartingPoint(currentWaypoint.CurrentPlane);
+
         // RetrySave:
-        var options = TinyhandSerializerOptions.Standard with { Plane = this.waypoint.NextPlane, };
+        var options = TinyhandSerializerOptions.Standard with { Plane = currentWaypoint.NextPlane, };
         byte[] byteArray;
         if (this.CrystalConfiguration.SaveFormat == SaveFormat.Utf8)
         {
@@ -228,7 +231,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITinyhandCry
                 return CrystalResult.Success;
             }
 
-            this.Crystalizer.UpdatePlane(this, ref this.waypoint, hash);
+            this.Crystalizer.UpdatePlane(this, ref this.waypoint, hash, startingPosition);
             currentWaypoint = this.waypoint;
         }
 
@@ -553,7 +556,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITinyhandCry
 
         var hash = FarmHash.Hash64(byteArray);
         this.waypoint = default;
-        this.Crystalizer.UpdatePlane(this, ref this.waypoint, hash);
+        this.Crystalizer.UpdatePlane(this, ref this.waypoint, hash, 0);
 
         this.SetCrystalAndPlane();
 
