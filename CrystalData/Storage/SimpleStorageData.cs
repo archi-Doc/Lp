@@ -6,7 +6,7 @@ using Tinyhand.IO;
 namespace CrystalData.Storage;
 
 [TinyhandObject]
-internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>
+internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>, ITinyhandJournal
 {
     public SimpleStorageData()
     {
@@ -124,4 +124,17 @@ internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>
             }
         }
     }
+
+    #region Journal
+
+    ITinyhandCrystal? ITinyhandJournal.Crystal { get; set; }
+
+    uint ITinyhandJournal.CurrentPlane { get; set; }
+
+    bool ITinyhandJournal.ReadRecord(ref TinyhandReader reader)
+    {
+        return false;
+    }
+
+    #endregion
 }

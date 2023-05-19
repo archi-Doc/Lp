@@ -7,7 +7,7 @@
     <PackageId>CrystalData</PackageId>
     <Authors>archi-Doc</Authors>
     <Product>CrystalData</Product>
-    <Description>CrystalData is a simple and flexible storage engine for C#.</Description>
+    <Description>CrystalData is a simple and versatile storage engine for C#.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/archi-Doc/LP</PackageProjectUrl>
     <RepositoryUrl>https://github.com/archi-Doc/LP</RepositoryUrl>
@@ -25,10 +25,10 @@
     <PackageReference Include="Arc.Threading" Version="0.22.1" />
     <PackageReference Include="Arc.Crypto" Version="1.16.0" />
     <PackageReference Include="Arc.Unit" Version="0.7.0" />
-    <PackageReference Include="AWSSDK.S3" Version="3.7.104.14" />
+    <PackageReference Include="AWSSDK.S3" Version="3.7.104.17" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
     <PackageReference Include="SimpleCommandLine" Version="0.18.0" />
-    <PackageReference Include="Tinyhand" Version="0.52.1" />
+    <PackageReference Include="Tinyhand" Version="0.52.3" />
     <PackageReference Include="ValueLink" Version="0.34.0" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.435">
       <PrivateAssets>all</PrivateAssets>

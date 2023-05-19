@@ -2,7 +2,6 @@
 
 using System.Collections.Concurrent;
 using CrystalData.Results;
-using static CrystalData.CrystalDataHashed;
 
 namespace CrystalData.Filer;
 
@@ -241,7 +240,10 @@ TryWrite:
     async Task<CrystalResult> IRawFiler.PrepareAndCheck(PrepareParam param, PathConfiguration configuration)
     {
         this.Crystalizer = param.Crystalizer;
-        this.logger ??= this.Crystalizer.UnitLogger.GetLogger<LocalFiler>();
+        if (this.Crystalizer.EnableFilerLogger)
+        {
+            this.logger ??= this.Crystalizer.UnitLogger.GetLogger<LocalFiler>();
+        }
 
         var directoryPath = Path.GetDirectoryName(PathHelper.GetRootedFile(this.Crystalizer.RootDirectory, configuration.Path));
         if (directoryPath is null)
@@ -257,7 +259,7 @@ TryWrite:
 
             if (!accessible)
             {
-                this.logger.TryGet(LogLevel.Fatal)?.Log(CrystalDataHashed.LocalFiler.FailedToAccess, directoryPath);
+                this.logger?.TryGet(LogLevel.Fatal)?.Log(CrystalDataHashed.LocalFiler.FailedToAccess, directoryPath);
             }
         }
 

@@ -178,7 +178,12 @@ public partial class SimpleJournal : IJournal
     }
 
     ulong IJournal.GetCurrentPosition()
-        => this.recordBufferPosition + (ulong)this.recordBufferLength;
+    {
+        lock (this.syncRecordBuffer)
+        {
+            return this.recordBufferPosition + (ulong)this.recordBufferLength;
+        }
+    }
 
     void IJournal.ResetJournal(ulong position)
     {

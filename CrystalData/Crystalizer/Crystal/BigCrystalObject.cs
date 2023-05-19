@@ -165,6 +165,12 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
     ulong ICrystalInternal.GetPosition()
         => this.crystal.GetPosition();
 
+    async Task ICrystalInternal.TestJournal()
+    {
+        await this.crystal.TestJournal().ConfigureAwait(false);
+        await this.storageGroup.TestJournal().ConfigureAwait(false);
+    }
+
     #endregion
 
     public void Status()

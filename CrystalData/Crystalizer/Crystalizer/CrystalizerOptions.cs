@@ -12,7 +12,7 @@ public class CrystalizerOptions
         this.DefaultTimeout = TimeSpan.MinValue; // TimeSpan.FromSeconds(3);
     }
 
-    public bool EnableLogger { get; set; }
+    public bool EnableFilerLogger { get; set; } = false;
 
     public string RootPath { get; set; } = string.Empty;
 

@@ -209,7 +209,7 @@ public partial class SimpleJournal
             var length = (int)(this.NextPosition - position);
             if (destination.Length < length)
             {
-                return false;
+                length = destination.Length;
             }
 
             if (!this.IsInMemory)

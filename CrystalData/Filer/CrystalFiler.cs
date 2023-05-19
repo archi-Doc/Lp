@@ -1,10 +1,12 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.IO;
+
 namespace CrystalData.Filer;
 
 public class CrystalFiler
 {
-    private class Output
+    internal class Output
     {
         public Output(CrystalFiler crystalFiler, FileConfiguration fileConfiguration)
         {
@@ -225,6 +227,37 @@ public class CrystalFiler
             return Task.WhenAll(tasks).ContinueWith(x => CrystalResult.Success);
         }
 
+        internal Waypoint[] GetWaypoints()
+        {
+            lock (this.syncObject)
+            {
+                return this.waypoints == null ? Array.Empty<Waypoint>() : this.waypoints.ToArray();
+            }
+        }
+
+        internal async Task<CrystalMemoryOwnerResult> LoadWaypoint(Waypoint waypoint)
+        {
+            if (this.rawFiler is null)
+            {
+                return new(CrystalResult.NotPrepared);
+            }
+
+            var path = this.GetFilePath(waypoint);
+            var result = await this.rawFiler.ReadAsync(path, 0, -1).ConfigureAwait(false);
+            if (result.IsFailure)
+            {
+                return result;
+            }
+
+            if (FarmHash.Hash64(result.Data.Memory.Span) != waypoint.Hash)
+            {
+                return new(CrystalResult.CorruptedData);
+            }
+
+            // Success
+            return result;
+        }
+
         private string GetFilePath()
         {
             return $"{this.prefix.Substring(0, this.prefix.Length - 1)}{this.extension}";
@@ -274,6 +307,8 @@ public class CrystalFiler
     #region PropertyAndField
 
     public bool IsProtected => this.configuration.NumberOfHistoryFiles > 0;
+
+    internal Output? Main => this.main;
 
     private Crystalizer crystalizer;
     private ILogger logger;

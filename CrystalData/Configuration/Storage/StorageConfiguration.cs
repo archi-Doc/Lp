@@ -17,4 +17,7 @@ public abstract partial record StorageConfiguration
 
     [Key("BackupDirectory")]
     public DirectoryConfiguration? BackupDirectoryConfiguration { get; init; }
+
+    [KeyAsName]
+    public int NumberOfHistoryFiles { get; init; } = 2;
 }

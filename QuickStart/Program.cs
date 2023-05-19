@@ -1,0 +1,43 @@
+﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+
+global using Arc.Threading;
+global using Arc.Unit;
+global using CrystalData;
+global using Microsoft.Extensions.DependencyInjection;
+global using Tinyhand;
+
+namespace QuickStart;
+
+public partial class Program
+{
+    public static async Task Main(string[] args)
+    {
+        AppDomain.CurrentDomain.ProcessExit += (s, e) =>
+        {// Console window closing or process terminated.
+            ThreadCore.Root.Terminate(); // Send a termination signal to the root.
+            ThreadCore.Root.TerminationEvent.WaitOne(2000); // Wait until the termination process is complete (#1).
+        };
+
+        Console.CancelKeyPress += (s, e) =>
+        {// Ctrl+C pressed
+            e.Cancel = true;
+            ThreadCore.Root.Terminate(); // Send a termination signal to the root.
+        };
+
+        // var unit = await FirstExample();
+        var unit = await SecondExample();
+
+        ThreadCore.Root.Terminate();
+        if (unit is not null)
+        {
+            await unit.Context.ServiceProvider.GetRequiredService<Crystalizer>().SaveAllAndTerminate();
+        }
+        await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
+        if (unit?.Context.ServiceProvider.GetService<UnitLogger>() is { } unitLogger)
+        {
+            await unitLogger.FlushAndTerminate();
+        }
+
+        ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).
+    }
+}
