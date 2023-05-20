@@ -8,7 +8,7 @@ using Tinyhand.IO;
 
 namespace CrystalData;
 
-public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITinyhandCrystal
+public sealed class CrystalObject<TData> : ICrystalInternal<TData>
     where TData : class, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {// Data + Journal/Waypoint + Filer/FileConfiguration + Storage/StorageConfiguration
     public CrystalObject(Crystalizer crystalizer)

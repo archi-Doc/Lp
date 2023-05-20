@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Tinyhand.IO;
+
 namespace CrystalData;
 
 public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
@@ -169,6 +171,49 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
     {
         await this.crystal.TestJournal().ConfigureAwait(false);
         await this.storageGroup.TestJournal().ConfigureAwait(false);
+    }
+
+    #endregion
+
+    #region ITinyhandCrystal
+
+    bool ITinyhandCrystal.TryGetJournalWriter(JournalType recordType, uint plane, out TinyhandWriter writer)
+    {
+        if (this.Crystalizer.Journal is not null)
+        {
+            this.Crystalizer.Journal.GetWriter(recordType, plane, out writer);
+            return true;
+        }
+        else
+        {
+            writer = default;
+            return false;
+        }
+    }
+
+    ulong ITinyhandCrystal.AddJournal(in TinyhandWriter writer)
+    {
+        if (this.Crystalizer.Journal is not null)
+        {
+            return this.Crystalizer.Journal.Add(writer);
+        }
+        else
+        {
+            return 0;
+        }
+    }
+
+    bool ITinyhandCrystal.TryAddToSaveQueue()
+    {
+        if (this.CrystalConfiguration.SavePolicy == SavePolicy.OnChanged)
+        {
+            this.Crystalizer.AddToSaveQueue(this);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     #endregion

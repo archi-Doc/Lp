@@ -56,7 +56,9 @@ public partial class Program
 {
     public static async Task<BuiltUnit?> SecondExample()
     {
-        var builder = new CrystalControl.Builder()
+        var myBuilder = new UnitBuilder();
+
+        var crystalDataBuilder = new CrystalControl.Builder()
             .Configure(context =>
             {
                 context.TryAddSingleton<SecondExample>(); // Register SecondExample class.
@@ -97,7 +99,9 @@ public partial class Program
                 options.MaxLogCapacity = 2;
             });
 
-        var unit = builder.Build(); // Build.
+        myBuilder.AddBuilder(crystalDataBuilder);
+
+        var unit = myBuilder.Build(); // Build.
         var crystalizer = unit.Context.ServiceProvider.GetRequiredService<Crystalizer>();
         var result = await crystalizer.PrepareAndLoadAll(true); // Use the default query.
         if (result.IsFailure())
