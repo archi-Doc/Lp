@@ -93,7 +93,7 @@ Data persistence is a core feature of CrystalData and its timing is critical. Th
 The following code is for preparation.
 
 ```csharp
-[TinyhandObject]
+[TinyhandObject(Journaling = true)] // Journaling feature is necessary to allow the function to save data when properties are changed.
 public partial class SaveTimingData
 {
     [Key(0, AddProperty = "Id")] // Add a property to save data when the value is changed.
@@ -217,24 +217,33 @@ Create a **CrystalControl.Builder** and register Data using the **ConfigureCryst
 
 ```csharp
 var builder = new CrystalControl.Builder()
+    .Configure(context =>
+    {
+        context.AddSingleton<ConfigurationExampleClass>();
+    })
     .ConfigureCrystal(context =>
     {
-        context.AddCrystal<ManualClass>(
-            new(SavePolicy.Manual, new RelativeFileConfiguration("Local/manual.tinyhand"))
+        // Register SimpleData configuration.
+        context.AddCrystal<FirstData>(
+            new CrystalConfiguration()
             {
-                SaveFormat = SaveFormat.Utf8,
-                NumberOfHistoryFiles = 2,
-                BackupFileConfiguration = new LocalFileConfiguration("Backup/manual.tinyhand")
+                SavePolicy = SavePolicy.Manual, // Timing of saving data is controlled by the application.
+                SaveFormat = SaveFormat.Utf8, // Format is utf8 text.
+                NumberOfHistoryFiles = 0, // No history file.
+                FileConfiguration = new LocalFileConfiguration("Local/FirstExample/FirstData.tinyhand"), // Specify the file name to save.
             });
     });
-var unit = builder.Build();
+
+var unit = builder.Build(); // Build.
 ```
 
 ```csharp
-internal class TestClass
+public class ConfigurationExampleClass
 {
-    public TestClass(ManualClass manualClass)
+    public ConfigurationExampleClass(Crystalizer crystalizer, FirstData firstData)
     {
+        this.crystalizer = crystalizer;
+        this.firstData = firstData;
     }
 }
 ```
@@ -247,23 +256,28 @@ Create an **ICrystal** object using the **Crystalizer**.
 If it's a new instance, make sure to register the configuration. If it has already been registered with the Builder, utilize the registered configuration.
 
 ```csharp
-public NtpCorrection(UnitContext context, ILogger<NtpCorrection> logger, Crystalizer crystalizer)
-        : base(context)
-    {
-        this.logger = null; // logger;
+// Get or create an ICrystal interface of the data.
+var crystal = this.crystalizer.GetOrCreateCrystal<SecondData>(
+    new CrystalConfiguration(
+        SavePolicy.Manual,
+        new LocalFileConfiguration("Local/ConfigurationTimingExample/SecondData.tinyhand")));
+var secondData = crystal.Data;
 
-        this.crystal = crystalizer.GetOrCreateCrystal<Data>(new CrystalConfiguration() with
-        {
-            SaveFormat = SaveFormat.Utf8,
-            FileConfiguration = new RelativeFileConfiguration(Filename),
-            NumberOfHistoryFiles = 0,
-        });
-
-        this.data = this.crystal.Data;
-
-        this.ResetHostnames();
-    }
+// You can create multiple crystals from single data class.
+var crystal2 = this.crystalizer.CreateCrystal<SecondData>();
+crystal2.Configure(new CrystalConfiguration(
+        SavePolicy.Manual,
+        new LocalFileConfiguration("Local/ConfigurationTimingExample/SecondData2.tinyhand")));
+var secondData2 = crystal2.Data;
 ```
+
+
+
+## Specifying a path
+
+### Local path
+
+### Relative path
 
 
 
@@ -274,5 +288,15 @@ public class Data
 
 Add lock object:
 If you need exclusive access for multi-threading, please add Lock object
+
+
+
+## Journaling
+
+
+
+## AWS S3
+
+
 
 ## Template data class

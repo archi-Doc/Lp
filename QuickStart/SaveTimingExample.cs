@@ -2,7 +2,7 @@
 
 namespace QuickStart;
 
-[TinyhandObject(Journaling = true)]
+[TinyhandObject(Journaling = true)] // Journaling feature is necessary to allow the function to save data when properties are changed.
 public partial class SaveTimingData
 {
     [Key(0, AddProperty = "Id")] // Add a property to save data when the value is changed.
@@ -46,7 +46,8 @@ public partial class Program
         // On changed
         data.Id += 2; // Add to the save queue when the value is changed
 
-        data.id += 2; // Alternative
+        // On changed - alternative
+        data.id += 2; 
         crystal.TryAddToSaveQueue();
 
         // Manual...

@@ -458,7 +458,7 @@ public class Crystalizer
 
         // Crystals
         var crystals = this.crystals.Keys.ToArray();
-        var list = new List<string>();
+        // var list = new List<string>();
         foreach (var x in crystals)
         {
             result = await x.PrepareAndLoad(useQuery).ConfigureAwait(false);
@@ -467,7 +467,7 @@ public class Crystalizer
                 return result;
             }
 
-            list.Add(x.Data.GetType().Name);
+            // list.Add(x.Data.GetType().Name);
         }
 
         // Read journal
@@ -868,7 +868,16 @@ public class Crystalizer
     {
         if (this.Journal is { } journal)
         {// Load journal
-            var position = crystals.Where(x => x.GetPosition() != 0).Min(x => x.GetPosition());
+            ulong position = 0;
+            for (var i = 0; i < crystals.Length; i++)
+            {
+                var x = crystals[i].GetPosition();
+                if ((x != 0 && position > x) || position == 0)
+                {
+                    position = x;
+                }
+            }
+
             while (position != 0)
             {
                 var journalResult = await journal.ReadJournalAsync(position).ConfigureAwait(false);
