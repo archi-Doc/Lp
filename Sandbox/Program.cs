@@ -33,11 +33,11 @@ public class Program
                 context.AddSingleton<TestClass>();
                 context.AddLoggerResolver(context =>
                 {
-                    if (context.LogLevel == LogLevel.Debug)
+                    /*if (context.LogLevel == LogLevel.Debug)
                     {
                         context.SetOutput<FileLogger<FileLoggerOptions>>();
                         return;
-                    }
+                    }*/
 
                     context.SetOutput<ConsoleAndFileLogger>();
                 });
@@ -91,6 +91,7 @@ public class Program
             })
             .SetupOptions<CrystalizerOptions>((context, options) =>
             {// CrystalizerOptions
+                options.EnableFilerLogger = true;
                 options.RootPath = Directory.GetCurrentDirectory();
                 options.GlobalMain = new LocalDirectoryConfiguration("Relative");
                 // options.GlobalBackup = new LocalDirectoryConfiguration("Backup2");
