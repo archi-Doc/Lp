@@ -4,12 +4,12 @@ namespace Sandbox;
 
 internal class TestClass0
 {
-    public TestClass0(Crystalizer crystalizer, ICrystal<ManualClass> manualCrystal, ICrystal<CombinedClass> combinedCrystal, IBigCrystal<BaseData> crystalData)
+    public TestClass0(Crystalizer crystalizer, ICrystal<ManualClass> manualCrystal, /*ICrystal<CombinedClass> combinedCrystal, */IBigCrystal<BaseData> crystalData)
     {
         this.crystalizer = crystalizer;
 
         this.manualCrystal = manualCrystal;
-        this.combinedCrystal = combinedCrystal;
+        // this.combinedCrystal = combinedCrystal;
         this.crystalData = crystalData;
     }
 
@@ -27,20 +27,20 @@ internal class TestClass0
             return;
         }
 
-        await this.crystalizer.TestJournalAll();
+        // await this.crystalizer.TestJournalAll();
 
         var manualClass = this.manualCrystal.Data;
         manualClass.Id++;
         Console.WriteLine(manualClass.ToString());
 
-        var combinedClass = this.combinedCrystal.Data;
+        /*var combinedClass = this.combinedCrystal.Data;
         combinedClass.Manual2.Id += 2;
-        Console.WriteLine(combinedClass.ToString());
+        Console.WriteLine(combinedClass.ToString());*/
 
         // combinedClass.WriteRecord(); // -> Locator
 
-        ulong fileId = 0;
-        combinedCrystal.Storage.PutAndForget(ref fileId, new(new byte[] { 1, 2, 3, }));
+        // ulong fileId = 0;
+        // combinedCrystal.Storage.PutAndForget(ref fileId, new(new byte[] { 1, 2, 3, }));
 
         var data = this.crystalData.Data;
         using (var op = data.Lock<ObjectDatum<LocalFileConfiguration>>())
@@ -54,6 +54,6 @@ internal class TestClass0
 
     private Crystalizer crystalizer;
     private ICrystal<ManualClass> manualCrystal;
-    private ICrystal<CombinedClass> combinedCrystal;
+    // private ICrystal<CombinedClass> combinedCrystal;
     private IBigCrystal<BaseData> crystalData;
 }
