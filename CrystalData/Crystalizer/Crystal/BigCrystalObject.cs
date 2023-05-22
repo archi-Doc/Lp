@@ -69,7 +69,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
     void ICrystal.ConfigureStorage(StorageConfiguration configuration)
         => this.crystal.ConfigureStorage(configuration);
 
-    async Task<CrystalResult> ICrystal.PrepareAndLoad(bool useQuery)
+    async Task<CrystalResult> ICrystal.PrepareAndLoad(bool useQuery, bool readJournal)
     {
         using (this.semaphore.Lock())
         {
@@ -82,7 +82,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
                 return CrystalResult.Deleted;
             }
 
-            return await this.PrepareAndLoadInternal(useQuery).ConfigureAwait(false);
+            return await this.PrepareAndLoadInternal(useQuery, readJournal).ConfigureAwait(false);
         }
     }
 
@@ -121,7 +121,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
         {
             if (this.State == CrystalState.Initial)
             {// Initial
-                await this.PrepareAndLoadInternal(false).ConfigureAwait(false);
+                await this.PrepareAndLoadInternal(false, false).ConfigureAwait(false);
             }
             else if (this.State == CrystalState.Deleted)
             {// Deleted
@@ -228,7 +228,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
         }
     }
 
-    private async Task<CrystalResult> PrepareAndLoadInternal(bool useQuery = true)
+    private async Task<CrystalResult> PrepareAndLoadInternal(bool useQuery, bool readJournal)
     {// this.semaphore.Lock()
         CrystalResult result;
         var param = PrepareParam.New<TData>(this.Crystalizer, useQuery);
@@ -240,7 +240,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
         }
 
         this.crystal.ConfigureStorage(EmptyStorageConfiguration.Default); // Avoid duplication with the storage configuration of StorageGroup.
-        result = await this.crystal.PrepareAndLoad(useQuery).ConfigureAwait(false);
+        result = await this.crystal.PrepareAndLoad(useQuery, readJournal).ConfigureAwait(false);
         if (result.IsFailure())
         {
             return result;

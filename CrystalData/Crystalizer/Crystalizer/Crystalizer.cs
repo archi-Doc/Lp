@@ -461,7 +461,7 @@ public class Crystalizer
         // var list = new List<string>();
         foreach (var x in crystals)
         {
-            result = await x.PrepareAndLoad(useQuery).ConfigureAwait(false);
+            result = await x.PrepareAndLoad(useQuery, false).ConfigureAwait(false);
             if (result.IsFailure())
             {
                 return result;
@@ -676,11 +676,13 @@ public class Crystalizer
         if (waypoint.CurrentPlane != 0)
         {
             this.planeToCrystal.TryRemove(waypoint.CurrentPlane, out _);
+            this.CrystalCheck.TryRemovePlane(waypoint.CurrentPlane);
         }
 
         if (waypoint.NextPlane != 0)
         {
             this.planeToCrystal.TryRemove(waypoint.NextPlane, out _);
+            this.CrystalCheck.TryRemovePlane(waypoint.NextPlane);
         }
     }
 
@@ -796,12 +798,13 @@ public class Crystalizer
 
     private async Task SaveAndTerminate(bool saveData, bool saveJournal)
     {
-        this.CrystalCheck.Save();
-
         if (saveData)
         {
             await this.SaveAll(true).ConfigureAwait(false);
         }
+
+        ClearUnusedPlane();
+        this.CrystalCheck.Save();
 
         // Save/Terminate journal
         if (this.Journal is { } journal)
@@ -908,6 +911,8 @@ public class Crystalizer
 
                 position = journalResult.NextPosition;
             }
+
+            UpdateCrystalPosition();
         }
     }
 
@@ -942,6 +947,9 @@ public class Crystalizer
                     {
                         if (crystal.Data is ITinyhandJournal journalObject)
                         {
+                            var currentPosition = position + (ulong)reader.Consumed;
+                            CheckPosition();
+
                             if (journalObject.ReadRecord(ref reader))
                             {// Success
                                 // this.logger.TryGet(LogLevel.Debug)?.Log($"Journal read, Plane: {plane}, Length: {length} => {crystal.GetType().FullName}");

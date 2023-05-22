@@ -51,7 +51,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
             {
                 if (this.State == CrystalState.Initial)
                 {// Initial
-                    this.PrepareAndLoadInternal(false).Wait();
+                    this.PrepareAndLoadInternal(false, true).Wait();
                 }
                 else if (this.State == CrystalState.Deleted)
                 {// Deleted
@@ -162,7 +162,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         }
     }
 
-    async Task<CrystalResult> ICrystal.PrepareAndLoad(bool useQuery)
+    async Task<CrystalResult> ICrystal.PrepareAndLoad(bool useQuery, bool readJournal)
     {
         using (this.semaphore.Lock())
         {
@@ -175,7 +175,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
                 return CrystalResult.Deleted;
             }
 
-            return await this.PrepareAndLoadInternal(useQuery).ConfigureAwait(false);
+            return await this.PrepareAndLoadInternal(useQuery, readJournal).ConfigureAwait(false);
         }
     }
 
@@ -256,7 +256,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         {
             if (this.State == CrystalState.Initial)
             {// Initial
-                await this.PrepareAndLoadInternal(false).ConfigureAwait(false);
+                await this.PrepareAndLoadInternal(false, false).ConfigureAwait(false);
             }
             else if (this.State == CrystalState.Deleted)
             {// Deleted
@@ -609,6 +609,12 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
 
             this.Crystalizer.SetPlane(this, ref this.waypoint);
             this.SetCrystalAndPlane();
+
+            // Read journal
+            if (readJournal)
+            {
+
+            }
 
             this.DebugDump("Load");
             this.State = CrystalState.Prepared;

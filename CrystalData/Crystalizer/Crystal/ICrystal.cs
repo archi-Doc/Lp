@@ -24,7 +24,7 @@ public interface ICrystal : ITinyhandCrystal
 
     void ConfigureStorage(StorageConfiguration configuration);
 
-    Task<CrystalResult> PrepareAndLoad(bool useQuery);
+    Task<CrystalResult> PrepareAndLoad(bool useQuery, bool readJournal);
 
     Task<CrystalResult> Save(bool unload = false);
 
