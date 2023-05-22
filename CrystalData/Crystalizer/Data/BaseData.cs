@@ -82,7 +82,13 @@ public partial class BaseData : IDataInternal, ITinyhandCustomJournal
         {
             if (this.datumObject[i].DatumId == info.DatumId)
             {
-                this.BigCrystal.StorageGroup.PutAndForget(ref this.datumObject[i].StorageId, ref this.datumObject[i].FileId, memoryToBeShared, info.DatumId);
+                var checksum = FarmHash.Hash64(memoryToBeShared.Span);
+                if (checksum != this.datumObject[i].FileChecksum)
+                {
+                    this.datumObject[i].FileChecksum = checksum;
+                    this.BigCrystal.StorageGroup.PutAndForget(ref this.datumObject[i].StorageId, ref this.datumObject[i].FileId, memoryToBeShared, info.DatumId);
+                }
+
                 return;
             }
         }
@@ -101,7 +107,20 @@ public partial class BaseData : IDataInternal, ITinyhandCustomJournal
             return new(CrystalResult.NotFound);
         }
 
-        return await this.BigCrystal.StorageGroup.GetAsync(datumObject.StorageId, datumObject.FileId).ConfigureAwait(false);
+        var result = await this.BigCrystal.StorageGroup.GetAsync(datumObject.StorageId, datumObject.FileId).ConfigureAwait(false);
+        if (result.IsFailure)
+        {
+            return result;
+        }
+
+        var checksum = FarmHash.Hash64(result.Data.Span);
+        if (checksum != datumObject.FileChecksum)
+        {
+            return new(CrystalResult.CorruptedData);
+        }
+
+        // Success
+        return result;
     }
 
     void IDataInternal.DeleteStorage<TDatum>()

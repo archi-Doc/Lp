@@ -142,7 +142,11 @@ public class CrystalFiler
                 return Task.FromResult(CrystalResult.Success);
             }
 
-            var numberOfFiles = 1 + this.crystalFiler.configuration.NumberOfHistoryFiles;
+            var numberOfFiles = this.crystalFiler.configuration.NumberOfHistoryFiles;
+            if (numberOfFiles < 1)
+            {
+                numberOfFiles = 1;
+            }
 
             Waypoint[] array;
             string[] pathArray;

@@ -33,11 +33,11 @@ public class Program
                 context.AddSingleton<TestClass>();
                 context.AddLoggerResolver(context =>
                 {
-                    if (context.LogLevel == LogLevel.Debug)
+                    /*if (context.LogLevel == LogLevel.Debug)
                     {
                         context.SetOutput<FileLogger<FileLoggerOptions>>();
                         return;
-                    }
+                    }*/
 
                     context.SetOutput<ConsoleAndFileLogger>();
                 });
@@ -50,12 +50,12 @@ public class Program
                         // BackupDirectoryConfiguration = new LocalDirectoryConfiguration("Backup/Journal"),
                     });
 
-                context.AddCrystal<ManualClass>(
+                /*context.AddCrystal<ManualClass>(
                     new(SavePolicy.OnChanged, new RelativeFileConfiguration("Local/manual.tinyhand"))
                     {
                         SaveFormat = SaveFormat.Utf8,
                         NumberOfHistoryFiles = 2,
-                        BackupFileConfiguration = new LocalFileConfiguration("Backup/manual.tinyhand")
+                        // BackupFileConfiguration = new LocalFileConfiguration("Backup/manual.tinyhand")
                     });
 
                 context.AddCrystal<CombinedClass>(
@@ -65,8 +65,8 @@ public class Program
                         new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/Simple"), new LocalDirectoryConfiguration("Backup/Simple")))
                     {
                         SaveInterval = TimeSpan.FromSeconds(10),
-                        BackupFileConfiguration = new LocalFileConfiguration("Backup/combined")
-                    });
+                        // BackupFileConfiguration = new LocalFileConfiguration("Backup/combined")
+                    });*/
 
                 context.AddBigCrystal<BaseData>(new BigCrystalConfiguration() with
                 {
@@ -75,8 +75,8 @@ public class Program
                         registry.Register<ObjectDatum<LocalFileConfiguration>>(1, x => new ObjectDatumImpl<LocalFileConfiguration>(x));
                     },
                     FileConfiguration = new LocalFileConfiguration("Local/BaseData/Crystal"),
-                    BackupFileConfiguration = new LocalFileConfiguration("Backup/BaseData/Crystal"),
-                    StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/BaseData/Storage"), new LocalDirectoryConfiguration("Backup/BaseData/Storage")),
+                    // BackupFileConfiguration = new LocalFileConfiguration("Backup/BaseData/Crystal"),
+                    StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/BaseData/Storage")/*, new LocalDirectoryConfiguration("Backup/BaseData/Storage")*/),
                 });
 
                 /*context.AddBigCrystal<ExampleData>(new BigCrystalConfiguration() with
@@ -91,6 +91,7 @@ public class Program
             })
             .SetupOptions<CrystalizerOptions>((context, options) =>
             {// CrystalizerOptions
+                options.EnableFilerLogger = true;
                 options.RootPath = Directory.GetCurrentDirectory();
                 options.GlobalMain = new LocalDirectoryConfiguration("Relative");
                 // options.GlobalBackup = new LocalDirectoryConfiguration("Backup2");

@@ -8,8 +8,10 @@ internal class CrystalDataQueryDefault : ICrystalDataQuery
 
     async Task<AbortOrContinue> ICrystalDataQuery.NoCheckFile()
     {
-        var response = await this.RequestYesOrNo(CrystalDataHashed.CrystalDataQueryDefault.NoCheckFile).ConfigureAwait(false);
-        return response.ToAbortOrContinue();
+        return AbortOrContinue.Continue;
+
+        // var response = await this.RequestYesOrNo(CrystalDataHashed.CrystalDataQueryDefault.NoCheckFile).ConfigureAwait(false);
+        // return response.ToAbortOrContinue();
     }
 
     async Task<AbortOrContinue> ICrystalDataQuery.InconsistentJournal(string path)

@@ -32,6 +32,6 @@ S3Filer = {
 TestJournal = {
   LoadingFailure = "Could not load: {0}"
   DeserializationFailure = "Could not deserialize: {0}"
-  Success = "Journal test: Success, Waypoint -> {0}"
-  Failure = "Journal test: Failure, Waypoint -> {0}"
+  Success = "Journal test: Success, Waypoint: {0}"
+  Failure = "Journal test: Failure, Waypoint: {0}"
 }

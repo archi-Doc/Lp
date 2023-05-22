@@ -13,8 +13,8 @@ internal partial class ManualClass
         => $"Manual class {this.id}";
 }
 
-[TinyhandObject]
-internal partial class CombinedClass : ITinyhandJournal
+[TinyhandObject(Journaling = true)]
+internal partial class CombinedClass : ITinyhandCustomJournal
 {
     [Key(0)]
     public ManualClass Manual1 { get; set; } = default!;
@@ -22,24 +22,53 @@ internal partial class CombinedClass : ITinyhandJournal
     [Key(1)]
     public ManualClass Manual2 { get; set; } = default!;
 
-    [IgnoreMember]
-    public ITinyhandCrystal? Crystal { get; set; }
-
-    [IgnoreMember]
-    public uint CurrentPlane { get; set; }
-
-    bool ITinyhandJournal.ReadRecord(ref TinyhandReader reader)
+    public void WriteRecord()
     {
-        return false;
-    }
-
-    public bool ReadRecord(ref TinyhandReader reader)
-    {
-        throw new NotImplementedException();
+        if (this.Crystal?.TryGetJournalWriter(JournalType.Record, this.CurrentPlane, out var writer) == true)
+        {
+            writer.Write_Key();
+            writer.Write(1);
+            writer.Write_Value();
+            TinyhandSerializer.SerializeObject(ref writer, this.Manual2);
+            this.Crystal.AddJournal(writer);
+        }
     }
 
     public override string ToString()
         => $"{this.Manual1.ToString()} {this.Manual2.ToString()}";
+
+    public void WriteCustomRecord(ref TinyhandWriter writer)
+    {
+    }
+
+    public bool ReadCustomRecord(ref TinyhandReader reader)
+    {
+        var record = reader.Read_Record();
+        if (record == JournalRecord.Key)
+        {
+            if (reader.ReadInt32() == 1)
+            {
+                reader.Read_Value();
+                this.Manual2 = TinyhandSerializer.DeserializeObject<ManualClass>(ref reader, TinyhandSerializerOptions.Standard)!;
+                return true;
+            }
+        }
+        else if (record == JournalRecord.Locator)
+        {// tempcode
+            var key = reader.ReadInt32();
+            var journal = key switch
+            {
+                0 => this.Manual1 as ITinyhandJournal,
+                1 => this.Manual2 as ITinyhandJournal,
+                _ => default,
+            };
+
+            journal?.ReadRecord(ref reader);
+
+        }
+        
+        return false;
+    }
 }
 
 internal class TestClass

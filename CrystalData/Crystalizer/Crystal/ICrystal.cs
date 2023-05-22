@@ -2,7 +2,7 @@
 
 namespace CrystalData;
 
-public interface ICrystal
+public interface ICrystal : ITinyhandCrystal
 {
     Crystalizer Crystalizer { get; }
 

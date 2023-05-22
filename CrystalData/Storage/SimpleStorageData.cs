@@ -5,8 +5,8 @@ using Tinyhand.IO;
 
 namespace CrystalData.Storage;
 
-[TinyhandObject]
-internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>, ITinyhandJournal
+[TinyhandObject(Journaling = true)]
+internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>, ITinyhandCustomJournal
 {
     public SimpleStorageData()
     {
@@ -69,6 +69,13 @@ internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>
     {
         lock (this.syncObject)
         {
+            if (this.Crystal?.TryGetJournalWriter(JournalType.Record, this.CurrentPlane, out var writer) == true)
+            {
+                writer.Write_Remove();
+                writer.Write(file);
+                this.Crystal.AddJournal(writer);
+            }
+
             return this.fileToSize.Remove(file);
         }
     }
@@ -97,12 +104,19 @@ internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>
         {
             if (file != 0 && this.fileToSize.TryGetValue(file, out var size))
             {
-                // if (dataSize > size)
-                {
-                    this.storageUsage += dataSize - size;
-                }
+                var sizeDiff = dataSize - size;
+                this.storageUsage += sizeDiff;
 
                 this.fileToSize[file] = dataSize;
+
+                if (sizeDiff != 0 && this.Crystal?.TryGetJournalWriter(JournalType.Record, this.CurrentPlane, out var writer) == true)
+                {
+                    writer.Write_Add();
+                    writer.Write(file);
+                    writer.Write(dataSize);
+                    writer.Write(sizeDiff);
+                    this.Crystal.AddJournal(writer);
+                }
             }
             else
             {// Not found
@@ -120,21 +134,45 @@ internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>
             var file = RandomVault.Pseudo.NextUInt32();
             if (this.fileToSize.TryAdd(file, size))
             {
+                if (this.Crystal?.TryGetJournalWriter(JournalType.Record, this.CurrentPlane, out var writer) == true)
+                {
+                    writer.Write_Add();
+                    writer.Write(file);
+                    writer.Write(size);
+                    writer.Write(size);
+                    this.Crystal.AddJournal(writer);
+                }
+
                 return file;
             }
         }
     }
 
-    #region Journal
-
-    ITinyhandCrystal? ITinyhandJournal.Crystal { get; set; }
-
-    uint ITinyhandJournal.CurrentPlane { get; set; }
-
-    bool ITinyhandJournal.ReadRecord(ref TinyhandReader reader)
+    void ITinyhandCustomJournal.WriteCustomRecord(ref TinyhandWriter writer)
     {
-        return false;
     }
 
-    #endregion
+    bool ITinyhandCustomJournal.ReadCustomRecord(ref TinyhandReader reader)
+    {
+        var record = reader.Read_Record();
+        if (record == JournalRecord.Add)
+        {
+            var file = reader.ReadUInt32();
+            var size = reader.ReadInt32();
+            var diff = reader.ReadInt32();
+            this.fileToSize[file] = size;
+            this.storageUsage += diff;
+
+            return true;
+        }
+        else if (record == JournalRecord.Remove)
+        {
+            var file = reader.ReadUInt32();
+            this.fileToSize.Remove(file);
+
+            return true;
+        }
+
+        return false;
+    }
 }

@@ -13,4 +13,7 @@ internal partial class CrystalCheckData
 
     [Key(0)]
     public ConcurrentDictionary<DataAndConfigurationIdentifier, int> DataAndConfigurations { get; private set; } = default!;
+
+    [Key(1)]
+    public ConcurrentDictionary<uint, ulong> PlaneToJournalPosition { get; private set; } = default!;
 }
