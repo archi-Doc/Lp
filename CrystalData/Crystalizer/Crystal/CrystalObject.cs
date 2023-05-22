@@ -527,7 +527,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         return (data, format);
     }
 
-    private async Task<CrystalResult> PrepareAndLoadInternal(bool useQuery)
+    private async Task<CrystalResult> PrepareAndLoadInternal(bool useQuery, bool readJournal)
     {// this.semaphore.Lock()
         CrystalResult result;
         var param = PrepareParam.New<TData>(this.Crystalizer, useQuery);
