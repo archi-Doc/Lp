@@ -99,14 +99,14 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
                 return CrystalResult.Deleted;
             }
 
-            // Save storages
-            await this.StorageGroup.SaveStorage().ConfigureAwait(false);
-
             // Save & Unload datum and metadata.
             this.Data.Save(unload);
 
             // Save crystal
             await this.crystal.Save(unload);
+
+            // Save storages
+            await this.StorageGroup.SaveStorage().ConfigureAwait(false);
 
             // Save storage group
             await this.StorageGroup.SaveGroup().ConfigureAwait(false);

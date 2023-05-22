@@ -24,7 +24,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
     private CrystalFiler? crystalFiler;
     private IStorage? storage;
     private Waypoint waypoint;
-    private DateTime lastSaveTime;
+    private DateTime lastSavedTime;
 
     #endregion
 
@@ -203,6 +203,8 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
             return CrystalResult.NotPrepared;
         }
 
+        this.lastSavedTime = DateTime.UtcNow;
+
         // Starting point
         var startingPosition = this.Crystalizer.AddStartingPoint(currentWaypoint.CurrentPlane);
 
@@ -221,6 +223,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         var hash = FarmHash.Hash64(byteArray.AsSpan());
         if (hash == currentWaypoint.Hash)
         {// Identical data
+            this.DebugDump("Identical");
             return CrystalResult.Success;
         }
 
@@ -243,6 +246,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         }
 
         _ = filer.LimitNumberOfFiles();
+        this.DebugDump("Save");
         return CrystalResult.Success;
     }
 
@@ -294,13 +298,13 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
             return null;
         }
 
-        var elapsed = utc - this.lastSaveTime;
+        var elapsed = utc - this.lastSavedTime;
         if (elapsed < this.CrystalConfiguration.SaveInterval)
         {
             return null;
         }
 
-        this.lastSaveTime = utc;
+        this.lastSavedTime = utc;
         return ((ICrystal)this).Save(false);
     }
 
@@ -582,7 +586,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         }
 
         // Check journal position
-        if (this.Crystalizer.Journal is { } journal)
+        if (loadResult.Waypoint.IsValid && this.Crystalizer.Journal is { } journal)
         {
             if (loadResult.Waypoint.JournalPosition > journal.GetCurrentPosition())
             {
@@ -606,6 +610,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
             this.Crystalizer.SetPlane(this, ref this.waypoint);
             this.SetCrystalAndPlane();
 
+            this.DebugDump("Load");
             this.State = CrystalState.Prepared;
             return CrystalResult.Success;
         }
@@ -613,6 +618,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         {// Reconstruct
             this.ReconstructObject();
 
+            this.DebugDump("Reconstruct");
             this.State = CrystalState.Prepared;
             return CrystalResult.Success;
         }
@@ -744,5 +750,11 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
             journalObject.Crystal = this;
             journalObject.CurrentPlane = this.waypoint.CurrentPlane;
         }
+    }
+
+    private void DebugDump(string prefix)
+    {
+        var logger = this.Crystalizer.UnitLogger.GetLogger<TData>();
+        logger.TryGet(LogLevel.Error)?.Log($"{prefix}, {this.waypoint.ToString()}");
     }
 }

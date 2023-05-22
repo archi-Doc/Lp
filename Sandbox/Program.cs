@@ -50,7 +50,7 @@ public class Program
                         // BackupDirectoryConfiguration = new LocalDirectoryConfiguration("Backup/Journal"),
                     });
 
-                context.AddCrystal<ManualClass>(
+                /*context.AddCrystal<ManualClass>(
                     new(SavePolicy.OnChanged, new RelativeFileConfiguration("Local/manual.tinyhand"))
                     {
                         SaveFormat = SaveFormat.Utf8,
@@ -58,7 +58,7 @@ public class Program
                         // BackupFileConfiguration = new LocalFileConfiguration("Backup/manual.tinyhand")
                     });
 
-                /*context.AddCrystal<CombinedClass>(
+                context.AddCrystal<CombinedClass>(
                     new(
                         SavePolicy.Periodic,
                         new LocalFileConfiguration("Local/combined"),

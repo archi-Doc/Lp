@@ -109,7 +109,7 @@ internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>
 
                 this.fileToSize[file] = dataSize;
 
-                if (this.Crystal?.TryGetJournalWriter(JournalType.Record, this.CurrentPlane, out var writer) == true)
+                if (sizeDiff != 0 && this.Crystal?.TryGetJournalWriter(JournalType.Record, this.CurrentPlane, out var writer) == true)
                 {
                     writer.Write_Add();
                     writer.Write(file);

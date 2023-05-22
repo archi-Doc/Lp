@@ -470,6 +470,9 @@ public class Crystalizer
             // list.Add(x.Data.GetType().Name);
         }
 
+        // Dump Plane
+        // this.DumpPlane();
+
         // Read journal
         await this.ReadJournal(crystals).ConfigureAwait(false);
 
@@ -514,11 +517,15 @@ public class Crystalizer
         return results;
     }
 
-    public ICrystal<TData> CreateCrystal<TData>()
+    public ICrystal<TData> CreateCrystal<TData>(bool managedByCrystalizer = true)
         where TData : class, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
         var crystal = new CrystalObject<TData>(this);
-        this.crystals.TryAdd(crystal, 0);
+        if (managedByCrystalizer)
+        {
+            this.crystals.TryAdd(crystal, 0);
+        }
+
         if (this.configuration.CrystalConfigurations.TryGetValue(typeof(TData), out var configuration))
         {
             ((ICrystal)crystal).Configure(configuration);
@@ -542,11 +549,15 @@ public class Crystalizer
         return crystalObject;
     }
 
-    public ICrystal<TData> CreateBigCrystal<TData>()
+    public ICrystal<TData> CreateBigCrystal<TData>(bool managedByCrystalizer = true)
         where TData : BaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
         var crystal = new BigCrystalObject<TData>(this);
-        this.crystals.TryAdd(crystal, 0);
+        if (managedByCrystalizer)
+        {
+            this.crystals.TryAdd(crystal, 0);
+        }
+
         if (this.configuration.CrystalConfigurations.TryGetValue(typeof(TData), out var configuration))
         {
             ((ICrystal)crystal).Configure(configuration);
@@ -888,7 +899,7 @@ public class Crystalizer
 
                 try
                 {
-                    this.ReadJournal(position, journalResult.Data.Memory);
+                    this.ProcessJournal(position, journalResult.Data.Memory);
                 }
                 finally
                 {
@@ -900,7 +911,7 @@ public class Crystalizer
         }
     }
 
-    private void ReadJournal(ulong position, Memory<byte> data)
+    private void ProcessJournal(ulong position, Memory<byte> data)
     {
         var reader = new TinyhandReader(data.Span);
         var success = false;
@@ -933,6 +944,7 @@ public class Crystalizer
                         {
                             if (journalObject.ReadRecord(ref reader))
                             {// Success
+                                // this.logger.TryGet(LogLevel.Debug)?.Log($"Journal read, Plane: {plane}, Length: {length} => {crystal.GetType().FullName}");
                                 success = true;
                             }
                             else
@@ -967,4 +979,12 @@ public class Crystalizer
     }
 
     #endregion
+
+    private void DumpPlane()
+    {
+        foreach (var x in this.planeToCrystal)
+        {
+            this.logger.TryGet(LogLevel.Debug)?.Log($"Plane: {x.Key} = {x.Value.GetType().FullName}");
+        }
+    }
 }

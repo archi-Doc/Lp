@@ -4,12 +4,12 @@ namespace Sandbox;
 
 internal class TestClass0
 {
-    public TestClass0(Crystalizer crystalizer, ICrystal<ManualClass> manualCrystal, /*ICrystal<CombinedClass> combinedCrystal, */IBigCrystal<BaseData> crystalData)
+    public TestClass0(Crystalizer crystalizer, /*ICrystal<ManualClass> manualCrystal, ICrystal<CombinedClass> combinedCrystal, */IBigCrystal<BaseData> crystalData)
     {
         this.crystalizer = crystalizer;
 
-        this.manualCrystal = manualCrystal;
-        // this.combinedCrystal = combinedCrystal;
+        /*this.manualCrystal = manualCrystal;
+        this.combinedCrystal = combinedCrystal;*/
         this.crystalData = crystalData;
     }
 
@@ -29,11 +29,11 @@ internal class TestClass0
 
         // await this.crystalizer.TestJournalAll();
 
-        var manualClass = this.manualCrystal.Data;
+        /*var manualClass = this.manualCrystal.Data;
         manualClass.Id++;
         Console.WriteLine(manualClass.ToString());
 
-        /*var combinedClass = this.combinedCrystal.Data;
+        var combinedClass = this.combinedCrystal.Data;
         combinedClass.Manual2.Id += 2;
         Console.WriteLine(combinedClass.ToString());*/
 
@@ -47,13 +47,14 @@ internal class TestClass0
         {
             if (op.Datum is not null)
             {
+                var datum = op.Datum.Get();
                 op.Datum.Set(new LocalFileConfiguration("test1"));
             }
         }
     }
 
     private Crystalizer crystalizer;
-    private ICrystal<ManualClass> manualCrystal;
+    // private ICrystal<ManualClass> manualCrystal;
     // private ICrystal<CombinedClass> combinedCrystal;
     private IBigCrystal<BaseData> crystalData;
 }
