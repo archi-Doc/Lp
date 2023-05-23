@@ -25,6 +25,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
     private IStorage? storage;
     private Waypoint waypoint;
     private DateTime lastSavedTime;
+    private ulong journalPosition;
 
     #endregion
 
@@ -308,8 +309,19 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         return ((ICrystal)this).Save(false);
     }
 
-    ulong ICrystalInternal.GetPosition()
-        => this.waypoint.JournalPosition;
+    ulong ICrystalInternal.GetJournalPosition()
+        => this.journalPosition;
+
+    void ICrystalInternal.SetJournalPosition(ulong position)
+    {
+        using (this.semaphore.Lock())
+        {
+            if (this.journalPosition < position)
+            {
+                this.journalPosition = position;
+            }
+        }
+    }
 
     async Task ICrystalInternal.TestJournal()
     {
@@ -557,6 +569,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         // Data
         if (this.data is not null)
         {
+            ReadJournalInternal();
             return CrystalResult.Success;
         }
 
@@ -613,7 +626,8 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
             // Read journal
             if (readJournal)
             {
-
+                ReadJournalInternal();
+                var startPosition = ((ICrystalInternal)this).GetJournalPosition();
             }
 
             this.DebugDump("Load");
@@ -627,6 +641,114 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
             this.DebugDump("Reconstruct");
             this.State = CrystalState.Prepared;
             return CrystalResult.Success;
+        }
+
+        async Task ReadJournalInternal()
+        {
+            if (this.Crystalizer.Journal is not { } journal)
+            {
+                return;
+            }
+
+            if (!this.Crystalizer.CrystalCheck.TryGetPlanePosition(this.waypoint.CurrentPlane, out var position))
+            {
+                position = 0;
+            }
+
+            if (this.waypoint.JournalPosition > position)
+            {
+                position = this.waypoint.JournalPosition;
+            }
+
+            var startPosition = position;
+            var endPosition = position;
+            while (position != 0)
+            {
+                var journalResult = await journal.ReadJournalAsync(position).ConfigureAwait(false);
+                if (journalResult.NextPosition == 0)
+                {
+                    break;
+                }
+
+                try
+                {
+                    this.ProcessJournal(position, journalResult.Data.Memory);
+                }
+                finally
+                {
+                    journalResult.Data.Return();
+                }
+
+                endPosition = position;
+                position = journalResult.NextPosition;
+            }
+
+            this.logger.TryGet(LogLevel.Debug)?.Log($"Journal read {startPosition} - {endPosition}");
+        }
+    }
+
+    private void ProcessJournal(ulong position, Memory<byte> data)
+    {
+        if (this.data is not ITinyhandJournal journalObject)
+        {
+            return;
+        })
+
+        var reader = new TinyhandReader(data.Span);
+        var success = false;
+        var failure = false;
+        while (reader.Consumed < data.Length)
+        {
+            if (!reader.TryReadRecord(out var length, out var journalType, out var plane))
+            {
+                // this.logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.Journal.Corrupted);
+                return;
+            }
+            else if (plane != this.waypoint.CurrentPlane &&
+                plane != this.waypoint.NextPlane)
+            {
+                continue;
+            }
+
+            var fork = reader.Fork();
+            try
+            {
+                if (journalType == JournalType.Record)
+                {
+                    var currentPosition = position + (ulong)reader.Consumed;
+                    if (currentPosition > this.GetJournalPosition())
+                    {
+                        if (journalObject.ReadRecord(ref reader))
+                        {// Success
+                         // this.logger.TryGet(LogLevel.Debug)?.Log($"Journal read, Plane: {plane}, Length: {length} => {crystal.GetType().FullName}");
+                            success = true;
+                        }
+                        else
+                        {// Failure
+                            failure = true;
+                        }
+                    }
+                }
+                else
+                {
+                }
+            }
+            catch
+            {
+            }
+            finally
+            {
+                reader = fork;
+                reader.Advance(length);
+            }
+        }
+
+        if (failure)
+        {
+            // this.logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.Journal.ReadFailure);
+        }
+        else if (success)
+        {
         }
     }
 

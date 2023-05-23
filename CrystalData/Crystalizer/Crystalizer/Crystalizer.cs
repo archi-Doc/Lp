@@ -803,7 +803,7 @@ public class Crystalizer
             await this.SaveAll(true).ConfigureAwait(false);
         }
 
-        ClearUnusedPlane();
+        // ClearUnusedPlane();
         this.CrystalCheck.Save();
 
         // Save/Terminate journal
@@ -885,13 +885,15 @@ public class Crystalizer
             ulong position = 0;
             for (var i = 0; i < crystals.Length; i++)
             {
-                var x = crystals[i].GetPosition();
+                var x = crystals[i].GetJournalPosition();
                 if ((x != 0 && position > x) || position == 0)
                 {
                     position = x;
                 }
             }
 
+            var startPosition = position;
+            var endPosition = position;
             while (position != 0)
             {
                 var journalResult = await journal.ReadJournalAsync(position).ConfigureAwait(false);
@@ -909,10 +911,15 @@ public class Crystalizer
                     journalResult.Data.Return();
                 }
 
+                endPosition = position;
                 position = journalResult.NextPosition;
             }
 
-            UpdateCrystalPosition();
+            this.logger.TryGet(LogLevel.Debug)?.Log($"Journal read {startPosition} - {endPosition}");
+            foreach (var x in this.crystals.Keys)
+            {
+                this.CrystalCheck.SetPlanePosition(x.Plane, endPosition);
+            }
         }
     }
 
@@ -948,16 +955,17 @@ public class Crystalizer
                         if (crystal.Data is ITinyhandJournal journalObject)
                         {
                             var currentPosition = position + (ulong)reader.Consumed;
-                            CheckPosition();
-
-                            if (journalObject.ReadRecord(ref reader))
-                            {// Success
-                                // this.logger.TryGet(LogLevel.Debug)?.Log($"Journal read, Plane: {plane}, Length: {length} => {crystal.GetType().FullName}");
-                                success = true;
-                            }
-                            else
-                            {// Failure
-                                failure = true;
+                            if (currentPosition > crystal.GetJournalPosition())
+                            {
+                                if (journalObject.ReadRecord(ref reader))
+                                {// Success
+                                 // this.logger.TryGet(LogLevel.Debug)?.Log($"Journal read, Plane: {plane}, Length: {length} => {crystal.GetType().FullName}");
+                                    success = true;
+                                }
+                                else
+                                {// Failure
+                                    failure = true;
+                                }
                             }
                         }
                     }

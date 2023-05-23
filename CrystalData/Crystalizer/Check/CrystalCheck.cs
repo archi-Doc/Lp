@@ -22,7 +22,7 @@ internal class CrystalCheck
     public void SetPlanePosition(uint plane, ulong position)
         => this.data.PlaneToJournalPosition[plane] = position;
 
-    public void TryGetPlanePosition(uint plane, out ulong position)
+    public bool TryGetPlanePosition(uint plane, out ulong position)
         => this.data.PlaneToJournalPosition.TryGetValue(plane, out position);
 
     public void Load(string filePath)
