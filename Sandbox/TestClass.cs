@@ -37,7 +37,7 @@ internal partial class CombinedClass : ITinyhandCustomJournal
     public override string ToString()
         => $"{this.Manual1.ToString()} {this.Manual2.ToString()}";
 
-    public void WriteCustomRecord(ref TinyhandWriter writer)
+    public void WriteCustomLocator(ref TinyhandWriter writer)
     {
     }
 

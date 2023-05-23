@@ -163,7 +163,7 @@ public partial class BaseData : IDataInternal, ITinyhandCustomJournal
 
     #region Journal
 
-    void ITinyhandCustomJournal.WriteCustomRecord(ref TinyhandWriter writer)
+    void ITinyhandCustomJournal.WriteCustomLocator(ref TinyhandWriter writer)
     {
     }
 

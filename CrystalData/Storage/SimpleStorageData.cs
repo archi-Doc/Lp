@@ -148,7 +148,7 @@ internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>
         }
     }
 
-    void ITinyhandCustomJournal.WriteCustomRecord(ref TinyhandWriter writer)
+    void ITinyhandCustomJournal.WriteCustomLocator(ref TinyhandWriter writer)
     {
     }
 
