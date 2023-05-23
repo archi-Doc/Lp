@@ -461,7 +461,7 @@ public class Crystalizer
         // var list = new List<string>();
         foreach (var x in crystals)
         {
-            result = await x.PrepareAndLoad(useQuery, false).ConfigureAwait(false);
+            result = await x.PrepareAndLoad(useQuery).ConfigureAwait(false);
             if (result.IsFailure())
             {
                 return result;
@@ -478,6 +478,7 @@ public class Crystalizer
 
         // Save crystal check
         this.CrystalCheck.Save();
+        this.CrystalCheck.ClearPlanePosition();
 
         // this.logger.TryGet()?.Log($"Prepared - {string.Join(", ", list)}");
 
@@ -676,13 +677,13 @@ public class Crystalizer
         if (waypoint.CurrentPlane != 0)
         {
             this.planeToCrystal.TryRemove(waypoint.CurrentPlane, out _);
-            this.CrystalCheck.TryRemovePlane(waypoint.CurrentPlane);
+            // this.CrystalCheck.TryRemovePlane(waypoint.CurrentPlane);
         }
 
         if (waypoint.NextPlane != 0)
         {
             this.planeToCrystal.TryRemove(waypoint.NextPlane, out _);
-            this.CrystalCheck.TryRemovePlane(waypoint.NextPlane);
+            // this.CrystalCheck.TryRemovePlane(waypoint.NextPlane);
         }
     }
 
@@ -803,7 +804,6 @@ public class Crystalizer
             await this.SaveAll(true).ConfigureAwait(false);
         }
 
-        // ClearUnusedPlane();
         this.CrystalCheck.Save();
 
         // Save/Terminate journal
@@ -885,7 +885,7 @@ public class Crystalizer
             ulong position = 0;
             for (var i = 0; i < crystals.Length; i++)
             {
-                var x = crystals[i].GetJournalPosition();
+                var x = crystals[i].GetPosition();
                 if ((x != 0 && position > x) || position == 0)
                 {
                     position = x;
@@ -955,7 +955,7 @@ public class Crystalizer
                         if (crystal.Data is ITinyhandJournal journalObject)
                         {
                             var currentPosition = position + (ulong)reader.Consumed;
-                            if (currentPosition > crystal.GetJournalPosition())
+                            if (currentPosition > crystal.GetPosition())
                             {
                                 if (journalObject.ReadRecord(ref reader))
                                 {// Success

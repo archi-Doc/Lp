@@ -96,7 +96,7 @@ internal partial class SimpleStorage : IStorage, IStorageInternal
                 NumberOfHistoryFiles = storageConfiguration.NumberOfHistoryFiles,
             });
 
-            result = await this.crystal.PrepareAndLoad(param.UseQuery, true).ConfigureAwait(false);
+            result = await this.crystal.PrepareAndLoad(param.UseQuery).ConfigureAwait(false);
             return result;
         }
 

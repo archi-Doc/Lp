@@ -14,10 +14,13 @@ internal class CrystalCheck
         newlyRegistered = this.data.DataAndConfigurations.TryAdd(identifier, 0);
     }
 
-    public bool TryRemovePlane(uint plane)
+    /*public bool TryRemovePlane(uint plane)
     {
         return this.data.PlaneToJournalPosition.TryRemove(plane, out _);
-    }
+    }*/
+
+    public void ClearPlanePosition()
+        => this.data.PlaneToJournalPosition.Clear();
 
     public void SetPlanePosition(uint plane, ulong position)
         => this.data.PlaneToJournalPosition[plane] = position;

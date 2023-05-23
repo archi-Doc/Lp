@@ -36,7 +36,7 @@ public static class TestHelper
         var crystalizer = unit.Context.ServiceProvider.GetRequiredService<Crystalizer>();
 
         var crystal = crystalizer.GetBigCrystal<LpData>();
-        var result = await crystal.PrepareAndLoad(false, true);
+        var result = await crystal.PrepareAndLoad(false);
         result.Is(CrystalResult.Success);
         return crystal;
     }
@@ -80,7 +80,7 @@ public static class TestHelper
         var crystalizer = unit.Context.ServiceProvider.GetRequiredService<Crystalizer>();
 
         var crystal = crystalizer.GetBigCrystal<MergerData>();
-        var result = await crystal.PrepareAndLoad(false, true);
+        var result = await crystal.PrepareAndLoad(false);
         result.Is(CrystalResult.Success);
         return crystal;
     }

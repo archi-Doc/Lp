@@ -25,7 +25,6 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
     private IStorage? storage;
     private Waypoint waypoint;
     private DateTime lastSavedTime;
-    private ulong journalPosition;
 
     #endregion
 
@@ -52,7 +51,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
             {
                 if (this.State == CrystalState.Initial)
                 {// Initial
-                    this.PrepareAndLoadInternal(false, true).Wait();
+                    this.PrepareAndLoadInternal(false).Wait();
                 }
                 else if (this.State == CrystalState.Deleted)
                 {// Deleted
@@ -163,7 +162,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         }
     }
 
-    async Task<CrystalResult> ICrystal.PrepareAndLoad(bool useQuery, bool readJournal)
+    async Task<CrystalResult> ICrystal.PrepareAndLoad(bool useQuery)
     {
         using (this.semaphore.Lock())
         {
@@ -176,7 +175,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
                 return CrystalResult.Deleted;
             }
 
-            return await this.PrepareAndLoadInternal(useQuery, readJournal).ConfigureAwait(false);
+            return await this.PrepareAndLoadInternal(useQuery).ConfigureAwait(false);
         }
     }
 
@@ -208,6 +207,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
 
         // Starting point
         var startingPosition = this.Crystalizer.AddStartingPoint(currentWaypoint.CurrentPlane);
+        this.Crystalizer.CrystalCheck.SetPlanePosition(currentWaypoint.CurrentPlane, startingPosition);
 
         // RetrySave:
         var options = TinyhandSerializerOptions.Standard with { Plane = currentWaypoint.NextPlane, };
@@ -246,6 +246,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
             return result;
         }
 
+        this.Crystalizer.CrystalCheck.SetPlanePosition(currentWaypoint.CurrentPlane, startingPosition);
         _ = filer.LimitNumberOfFiles();
         this.DebugDump("Save");
         return CrystalResult.Success;
@@ -257,7 +258,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         {
             if (this.State == CrystalState.Initial)
             {// Initial
-                await this.PrepareAndLoadInternal(false, false).ConfigureAwait(false);
+                await this.PrepareAndLoadInternal(false).ConfigureAwait(false);
             }
             else if (this.State == CrystalState.Deleted)
             {// Deleted
@@ -309,19 +310,8 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         return ((ICrystal)this).Save(false);
     }
 
-    ulong ICrystalInternal.GetJournalPosition()
-        => this.journalPosition;
-
-    void ICrystalInternal.SetJournalPosition(ulong position)
-    {
-        using (this.semaphore.Lock())
-        {
-            if (this.journalPosition < position)
-            {
-                this.journalPosition = position;
-            }
-        }
-    }
+    ulong ICrystalInternal.GetPosition()
+        => this.waypoint.JournalPosition;
 
     async Task ICrystalInternal.TestJournal()
     {
@@ -539,7 +529,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         return (data, format);
     }
 
-    private async Task<CrystalResult> PrepareAndLoadInternal(bool useQuery, bool readJournal)
+    private async Task<CrystalResult> PrepareAndLoadInternal(bool useQuery)
     {// this.semaphore.Lock()
         CrystalResult result;
         var param = PrepareParam.New<TData>(this.Crystalizer, useQuery);
@@ -569,7 +559,6 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         // Data
         if (this.data is not null)
         {
-            ReadJournalInternal();
             return CrystalResult.Success;
         }
 
@@ -623,13 +612,6 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
             this.Crystalizer.SetPlane(this, ref this.waypoint);
             this.SetCrystalAndPlane();
 
-            // Read journal
-            if (readJournal)
-            {
-                ReadJournalInternal();
-                var startPosition = ((ICrystalInternal)this).GetJournalPosition();
-            }
-
             this.DebugDump("Load");
             this.State = CrystalState.Prepared;
             return CrystalResult.Success;
@@ -641,114 +623,6 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
             this.DebugDump("Reconstruct");
             this.State = CrystalState.Prepared;
             return CrystalResult.Success;
-        }
-
-        async Task ReadJournalInternal()
-        {
-            if (this.Crystalizer.Journal is not { } journal)
-            {
-                return;
-            }
-
-            if (!this.Crystalizer.CrystalCheck.TryGetPlanePosition(this.waypoint.CurrentPlane, out var position))
-            {
-                position = 0;
-            }
-
-            if (this.waypoint.JournalPosition > position)
-            {
-                position = this.waypoint.JournalPosition;
-            }
-
-            var startPosition = position;
-            var endPosition = position;
-            while (position != 0)
-            {
-                var journalResult = await journal.ReadJournalAsync(position).ConfigureAwait(false);
-                if (journalResult.NextPosition == 0)
-                {
-                    break;
-                }
-
-                try
-                {
-                    this.ProcessJournal(position, journalResult.Data.Memory);
-                }
-                finally
-                {
-                    journalResult.Data.Return();
-                }
-
-                endPosition = position;
-                position = journalResult.NextPosition;
-            }
-
-            this.logger.TryGet(LogLevel.Debug)?.Log($"Journal read {startPosition} - {endPosition}");
-        }
-    }
-
-    private void ProcessJournal(ulong position, Memory<byte> data)
-    {
-        if (this.data is not ITinyhandJournal journalObject)
-        {
-            return;
-        })
-
-        var reader = new TinyhandReader(data.Span);
-        var success = false;
-        var failure = false;
-        while (reader.Consumed < data.Length)
-        {
-            if (!reader.TryReadRecord(out var length, out var journalType, out var plane))
-            {
-                // this.logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.Journal.Corrupted);
-                return;
-            }
-            else if (plane != this.waypoint.CurrentPlane &&
-                plane != this.waypoint.NextPlane)
-            {
-                continue;
-            }
-
-            var fork = reader.Fork();
-            try
-            {
-                if (journalType == JournalType.Record)
-                {
-                    var currentPosition = position + (ulong)reader.Consumed;
-                    if (currentPosition > this.GetJournalPosition())
-                    {
-                        if (journalObject.ReadRecord(ref reader))
-                        {// Success
-                         // this.logger.TryGet(LogLevel.Debug)?.Log($"Journal read, Plane: {plane}, Length: {length} => {crystal.GetType().FullName}");
-                            success = true;
-                        }
-                        else
-                        {// Failure
-                            failure = true;
-                        }
-                    }
-                }
-                else
-                {
-                }
-            }
-            catch
-            {
-            }
-            finally
-            {
-                reader = fork;
-                reader.Advance(length);
-            }
-        }
-
-        if (failure)
-        {
-            // this.logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.Journal.ReadFailure);
-        }
-        else if (success)
-        {
         }
     }
 

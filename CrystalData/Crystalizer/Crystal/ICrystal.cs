@@ -24,7 +24,7 @@ public interface ICrystal : ITinyhandCrystal
 
     void ConfigureStorage(StorageConfiguration configuration);
 
-    Task<CrystalResult> PrepareAndLoad(bool useQuery, bool readJournal);
+    Task<CrystalResult> PrepareAndLoad(bool useQuery);
 
     Task<CrystalResult> Save(bool unload = false);
 
@@ -45,9 +45,7 @@ internal interface ICrystalInternal : ICrystal
 
     Task TestJournal();
 
-    ulong GetJournalPosition();
-
-    void SetJournalPosition(ulong position);
+    ulong GetPosition();
 }
 
 internal interface ICrystalInternal<TData> : ICrystal<TData>, ICrystalInternal
