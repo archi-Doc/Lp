@@ -164,8 +164,14 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
         return ((ICrystal)this).Save(false);
     }
 
-    ulong ICrystalInternal.GetPosition()
-        => this.crystal.GetPosition();
+    ulong ICrystalInternal.JournalPosition
+    {
+        get => this.crystal.JournalPosition;
+        set => this.crystal.JournalPosition = value;
+    }
+
+    Waypoint ICrystalInternal.Waypoint
+        => this.crystal.Waypoint;
 
     async Task ICrystalInternal.TestJournal()
     {

@@ -474,7 +474,7 @@ public class Crystalizer
         // this.DumpPlane();
 
         // Read journal
-        await this.ReadJournal(crystals).ConfigureAwait(false);
+        await this.ReadJournal().ConfigureAwait(false);
 
         // Save crystal check
         this.CrystalCheck.Save();
@@ -878,24 +878,36 @@ public class Crystalizer
         return await this.Journal.Prepare(PrepareParam.New<Crystalizer>(this, useQuery)).ConfigureAwait(false);
     }
 
-    private async Task ReadJournal(ICrystalInternal[] crystals)
+    private async Task ReadJournal()
     {
         if (this.Journal is { } journal)
         {// Load journal
-            ulong position = 0;
-            for (var i = 0; i < crystals.Length; i++)
+            ulong position = journal.GetCurrentPosition();
+
+            var array = this.planeToCrystal.ToArray();
+            for (var i = 0; i < array.Length; i++)
             {
-                var x = crystals[i].GetPosition();
-                if ((x != 0 && position > x) || position == 0)
+                var waypoint = array[i].Value.Waypoint;
+                if (!this.CrystalCheck.TryGetPlanePosition(waypoint.CurrentPlane, out var planePosition))
                 {
-                    position = x;
+                    this.logger.TryGet(LogLevel.Error)?.Log($"No plane position: {array[i].Value.DataType.Name}");
                 }
+
+                var max = planePosition > waypoint.JournalPosition ? planePosition : waypoint.JournalPosition;
+                array[i].Value.JournalPosition = max;
+                if (position > max)
+                {
+                    position = max;
+                }
+
+                this.logger.TryGet(LogLevel.Debug)?.Log($"JournalPosition {array[i].Value.DataType.Name}: {max}");
             }
 
             var startPosition = position;
-            var endPosition = position;
+            ulong endPosition = 0;
             while (position != 0)
             {
+                endPosition = position;
                 var journalResult = await journal.ReadJournalAsync(position).ConfigureAwait(false);
                 if (journalResult.NextPosition == 0)
                 {
@@ -911,14 +923,13 @@ public class Crystalizer
                     journalResult.Data.Return();
                 }
 
-                endPosition = position;
                 position = journalResult.NextPosition;
             }
 
             this.logger.TryGet(LogLevel.Debug)?.Log($"Journal read {startPosition} - {endPosition}");
             foreach (var x in this.crystals.Keys)
-            {
-                this.CrystalCheck.SetPlanePosition(x.Plane, endPosition);
+            {// Update journal position
+                x.JournalPosition = endPosition;
             }
         }
     }
@@ -955,7 +966,7 @@ public class Crystalizer
                         if (crystal.Data is ITinyhandJournal journalObject)
                         {
                             var currentPosition = position + (ulong)reader.Consumed;
-                            if (currentPosition > crystal.GetPosition())
+                            if (currentPosition > crystal.JournalPosition)
                             {
                                 if (journalObject.ReadRecord(ref reader))
                                 {// Success

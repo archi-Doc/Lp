@@ -25,6 +25,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
     private IStorage? storage;
     private Waypoint waypoint;
     private DateTime lastSavedTime;
+    private ulong journalPosition;
 
     #endregion
 
@@ -207,6 +208,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
 
         // Starting point
         var startingPosition = this.Crystalizer.AddStartingPoint(currentWaypoint.CurrentPlane);
+        this.journalPosition = startingPosition;
         this.Crystalizer.CrystalCheck.SetPlanePosition(currentWaypoint.CurrentPlane, startingPosition);
 
         // RetrySave:
@@ -310,8 +312,14 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         return ((ICrystal)this).Save(false);
     }
 
-    ulong ICrystalInternal.GetPosition()
-        => this.waypoint.JournalPosition;
+    ulong ICrystalInternal.JournalPosition
+    {
+        get => this.journalPosition;
+        set => this.journalPosition = value;
+    }
+
+    Waypoint ICrystalInternal.Waypoint
+        => this.waypoint;
 
     async Task ICrystalInternal.TestJournal()
     {
