@@ -900,7 +900,7 @@ public class Crystalizer
                     position = max;
                 }
 
-                this.logger.TryGet(LogLevel.Debug)?.Log($"JournalPosition {array[i].Value.DataType.Name}: {max}");
+                // this.logger.TryGet(LogLevel.Debug)?.Log($"JournalPosition {array[i].Value.DataType.Name}: {max}");
             }
 
             var startPosition = position;

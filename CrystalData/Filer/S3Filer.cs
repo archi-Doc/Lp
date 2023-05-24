@@ -26,7 +26,7 @@ public class S3Filer : FilerBase, IRawFiler
 
     public static AddStorageResult Check(StorageGroup storageGroup, string bucket, string path)
     {
-        if (!storageGroup.StorageKey.TryGetKey(bucket, out var accessKeyPair))
+        if (!storageGroup.Crystalizer.StorageKey.TryGetKey(bucket, out var accessKeyPair))
         {
             return AddStorageResult.NoStorageKey;
         }

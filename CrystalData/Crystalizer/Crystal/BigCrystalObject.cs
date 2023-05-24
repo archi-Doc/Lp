@@ -176,7 +176,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
     async Task ICrystalInternal.TestJournal()
     {
         await this.crystal.TestJournal().ConfigureAwait(false);
-        await this.storageGroup.TestJournal().ConfigureAwait(false);
+        await this.StorageGroup.TestJournal().ConfigureAwait(false);
     }
 
     #endregion

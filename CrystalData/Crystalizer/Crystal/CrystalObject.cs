@@ -226,7 +226,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         var hash = FarmHash.Hash64(byteArray.AsSpan());
         if (hash == currentWaypoint.Hash)
         {// Identical data
-            this.DebugDump("Identical");
+            // this.LogWaypoint("Identical");
             return CrystalResult.Success;
         }
 
@@ -250,7 +250,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
 
         this.Crystalizer.CrystalCheck.SetPlanePosition(currentWaypoint.CurrentPlane, startingPosition);
         _ = filer.LimitNumberOfFiles();
-        this.DebugDump("Save");
+        // this.LogWaypoint("Save");
         return CrystalResult.Success;
     }
 
@@ -620,7 +620,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
             this.Crystalizer.SetPlane(this, ref this.waypoint);
             this.SetCrystalAndPlane();
 
-            this.DebugDump("Load");
+            // this.LogWaypoint("Load");
             this.State = CrystalState.Prepared;
             return CrystalResult.Success;
         }
@@ -628,7 +628,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         {// Reconstruct
             this.ReconstructObject();
 
-            this.DebugDump("Reconstruct");
+            // this.LogWaypoint("Reconstruct");
             this.State = CrystalState.Prepared;
             return CrystalResult.Success;
         }
@@ -762,7 +762,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         }
     }
 
-    private void DebugDump(string prefix)
+    private void LogWaypoint(string prefix)
     {
         var logger = this.Crystalizer.UnitLogger.GetLogger<TData>();
         logger.TryGet(LogLevel.Error)?.Log($"{prefix}, {this.waypoint.ToString()}");

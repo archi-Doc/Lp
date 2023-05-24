@@ -15,7 +15,6 @@ public sealed class StorageGroup
     internal StorageGroup(Crystalizer crystalizer, Type dataType)
     {
         this.Crystalizer = crystalizer;
-        this.StorageKey = crystalizer.StorageKey;
         this.dataType = dataType;
         this.crystal = this.Crystalizer.CreateCrystal<StorageObject.GoshujinClass>(false);
         this.storageGroupConfiguration = CrystalConfiguration.Default;
@@ -24,8 +23,6 @@ public sealed class StorageGroup
     #region PropertyAndField
 
     public Crystalizer Crystalizer { get; }
-
-    public IStorageKey StorageKey { get; }
 
     private Type dataType;
     private CrystalConfiguration storageGroupConfiguration;
