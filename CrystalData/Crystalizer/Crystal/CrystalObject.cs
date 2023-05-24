@@ -573,6 +573,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         // Data
         if (this.data is not null)
         {
+            this.State = CrystalState.Prepared;
             return CrystalResult.Success;
         }
 
