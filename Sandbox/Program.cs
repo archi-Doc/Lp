@@ -67,6 +67,11 @@ public class Program
                         SaveInterval = TimeSpan.FromSeconds(10),
                         // BackupFileConfiguration = new LocalFileConfiguration("Backup/combined")
                     });*/
+                context.AddCrystal<KeyValueStore<int, string>>(
+                    CrystalConfiguration.SingleUtf8(false, new LocalFileConfiguration("Local/KeyValueStore")));
+
+                context.AddCrystal<KeyValueStore<int, ManualClass>>(
+                    CrystalConfiguration.SingleUtf8(false, new LocalFileConfiguration("Local/KeyValueStore2")));
 
                 context.AddBigCrystal<BaseData>(new BigCrystalConfiguration() with
                 {

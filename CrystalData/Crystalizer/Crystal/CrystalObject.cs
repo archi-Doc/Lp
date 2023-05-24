@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using CrystalData.Filer;
@@ -357,7 +356,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
                 }
 
                 // Deserialize
-                (var currentObject, var currentFormat) = this.TryDeserialize(result.Data.Span);
+                (var currentObject, var currentFormat) = TryDeserialize(result.Data.Span, this.CrystalConfiguration.SaveFormat);
                 if (currentObject is null)
                 {// Deserialization error
                     result.Return();
@@ -505,11 +504,18 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         return success;
     }
 
-    private (TData? Data, SaveFormat Format) TryDeserialize(ReadOnlySpan<byte> span)
+    private static (TData? Data, SaveFormat Format) TryDeserialize(ReadOnlySpan<byte> span, SaveFormat formatHint)
     {
         TData? data = default;
         SaveFormat format = SaveFormat.Binary;
-        if (this.CrystalConfiguration.SaveFormat == SaveFormat.Utf8)
+
+        if (span.Length == 0)
+        {// Empty
+            data = TinyhandSerializer.ReconstructObject<TData>();
+            return (data, format);
+        }
+
+        if (formatHint == SaveFormat.Utf8)
         {
             try
             {
@@ -655,53 +661,26 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         }
 
         // Deserialize
-        TData? obj = default;
         try
         {
-            if (configuration.SaveFormat == SaveFormat.Utf8)
+            var deserializeResult = TryDeserialize(data.Result.Data.Memory.Span, configuration.SaveFormat);
+            if (deserializeResult.Data == null)
             {
-                try
+                if (configuration.Required &&
+                    await param.Query.FailedToLoad(configuration.FileConfiguration, CrystalResult.DeserializeError).ConfigureAwait(false) == AbortOrContinue.Abort)
                 {
-                    TinyhandSerializer.DeserializeObjectFromUtf8(data.Result.Data.Memory.Span, ref obj);
+                    return (data.Result.Result, default, default);
                 }
-                catch
-                {// Maybe binary...
-                    TinyhandSerializer.DeserializeObject(data.Result.Data.Memory.Span, ref obj);
-                }
-            }
-            else
-            {
-                try
-                {
-                    TinyhandSerializer.DeserializeObject(data.Result.Data.Memory.Span, ref obj);
-                }
-                catch
-                {// Maybe utf8...
-                    TinyhandSerializer.DeserializeObjectFromUtf8(data.Result.Data.Memory.Span, ref obj);
-                }
-            }
 
-            if (obj == null)
-            {
                 return (CrystalResult.Success, default, default); // Reconstruct
             }
-        }
-        catch
-        {
-            if (configuration.Required &&
-                await param.Query.FailedToLoad(configuration.FileConfiguration, CrystalResult.DeserializeError).ConfigureAwait(false) == AbortOrContinue.Abort)
-            {
-                return (data.Result.Result, default, default);
-            }
 
-            return (CrystalResult.Success, default, default); // Reconstruct
+            return (CrystalResult.Success, deserializeResult.Data, data.Waypoint);
         }
         finally
         {
             data.Result.Return();
         }
-
-        return (CrystalResult.Success, obj, data.Waypoint);
     }
 
     [MemberNotNull(nameof(crystalFiler))]
