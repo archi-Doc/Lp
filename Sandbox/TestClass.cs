@@ -25,7 +25,7 @@ internal partial class ValueClass : ITinyhandCustomJournal
             var id = reader.ReadInt32();
             if (this.Goshujin?.IdChain.FindFirst(id) is ITinyhandJournal journalObject)
             {
-                journalObject.ReadRecord(ref reader);
+                return journalObject.ReadRecord(ref reader);
             }
         }
         /*else if (record == JournalRecord.Key)
@@ -53,20 +53,26 @@ internal partial class ValueClass : ITinyhandCustomJournal
         {// ValueLink
             if (reader.TryReadBytes(out var span))
             {
-                var obj = TinyhandSerializer.DeserializeObject<ValueClass>(span);
-                if (obj is not null)
+                try
                 {
-                    obj.Goshujin = this.Goshujin; // this
-                    return true;
+                    var obj = TinyhandSerializer.DeserializeObject<ValueClass>(span);
+                    if (obj is not null)
+                    {
+                        obj.Goshujin = this.Goshujin; // this
+                        return true;
+                    }
                 }
+                catch { }
             }
         }
         else if (record == JournalRecord.Remove)
         {// ValueLink
+            TinyhandSerializer.DeserializeObject<int>(ref reader, );
             var id = reader.ReadInt32();
-            if (this.Goshujin?.IdChain.FindFirst(id) is { } tc)
+            if (this.Goshujin?.IdChain.FindFirst(id) is { } obj)
             {
-                tc.Goshujin = null;
+                obj.Goshujin = null;
+                return true;
             }
         }
         return false;
