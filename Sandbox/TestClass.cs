@@ -67,7 +67,7 @@ internal partial class ValueClass : ITinyhandCustomJournal
         }
         else if (record == JournalRecord.Remove)
         {// ValueLink
-            TinyhandSerializer.DeserializeObject<int>(ref reader, );
+            // TinyhandSerializer.DeserializeObject<int>(ref reader, );
             var id = reader.ReadInt32();
             if (this.Goshujin?.IdChain.FindFirst(id) is { } obj)
             {

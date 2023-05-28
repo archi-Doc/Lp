@@ -206,9 +206,9 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         this.lastSavedTime = DateTime.UtcNow;
 
         // Starting point
-        var startingPosition = this.Crystalizer.AddStartingPoint(currentWaypoint.CurrentPlane);
+        var startingPosition = this.Crystalizer.AddStartingPoint(currentWaypoint.NextPlane);
         this.journalPosition = startingPosition;
-        this.Crystalizer.CrystalCheck.SetPlanePosition(currentWaypoint.CurrentPlane, startingPosition);
+        this.Crystalizer.CrystalCheck.SetPlanePosition(currentWaypoint.NextPlane, startingPosition);
 
         // RetrySave:
         var options = TinyhandSerializerOptions.Standard with { Plane = currentWaypoint.NextPlane, };
@@ -247,7 +247,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
             return result;
         }
 
-        this.Crystalizer.CrystalCheck.SetPlanePosition(currentWaypoint.CurrentPlane, startingPosition);
+        // this.Crystalizer.CrystalCheck.SetPlanePosition(currentWaypoint.CurrentPlane, startingPosition);
         _ = filer.LimitNumberOfFiles();
         // this.LogWaypoint("Save");
         return CrystalResult.Success;
@@ -460,6 +460,45 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
 
     #endregion
 
+    private static (TData? Data, SaveFormat Format) TryDeserialize(ReadOnlySpan<byte> span, SaveFormat formatHint)
+    {
+        TData? data = default;
+        SaveFormat format = SaveFormat.Binary;
+
+        if (span.Length == 0)
+        {// Empty
+            data = TinyhandSerializer.ReconstructObject<TData>();
+            return (data, format);
+        }
+
+        if (formatHint == SaveFormat.Utf8)
+        {
+            try
+            {
+                TinyhandSerializer.DeserializeObjectFromUtf8(span, ref data);
+                format = SaveFormat.Utf8;
+            }
+            catch
+            {// Maybe binary...
+                TinyhandSerializer.DeserializeObject(span, ref data);
+            }
+        }
+        else
+        {
+            try
+            {
+                TinyhandSerializer.DeserializeObject(span, ref data);
+            }
+            catch
+            {// Maybe utf8...
+                TinyhandSerializer.DeserializeObjectFromUtf8(span, ref data);
+                format = SaveFormat.Utf8;
+            }
+        }
+
+        return (data, format);
+    }
+
     private bool ReadJournal(ITinyhandJournal journalObject, ReadOnlyMemory<byte> data)
     {
         var reader = new TinyhandReader(data.Span);
@@ -502,45 +541,6 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         }
 
         return success;
-    }
-
-    private static (TData? Data, SaveFormat Format) TryDeserialize(ReadOnlySpan<byte> span, SaveFormat formatHint)
-    {
-        TData? data = default;
-        SaveFormat format = SaveFormat.Binary;
-
-        if (span.Length == 0)
-        {// Empty
-            data = TinyhandSerializer.ReconstructObject<TData>();
-            return (data, format);
-        }
-
-        if (formatHint == SaveFormat.Utf8)
-        {
-            try
-            {
-                TinyhandSerializer.DeserializeObjectFromUtf8(span, ref data);
-                format = SaveFormat.Utf8;
-            }
-            catch
-            {// Maybe binary...
-                TinyhandSerializer.DeserializeObject(span, ref data);
-            }
-        }
-        else
-        {
-            try
-            {
-                TinyhandSerializer.DeserializeObject(span, ref data);
-            }
-            catch
-            {// Maybe utf8...
-                TinyhandSerializer.DeserializeObjectFromUtf8(span, ref data);
-                format = SaveFormat.Utf8;
-            }
-        }
-
-        return (data, format);
     }
 
     private async Task<CrystalResult> PrepareAndLoadInternal(bool useQuery)
