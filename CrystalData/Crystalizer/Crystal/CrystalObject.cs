@@ -208,7 +208,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         // Starting point
         var startingPosition = this.Crystalizer.AddStartingPoint(currentWaypoint.NextPlane);
         this.journalPosition = startingPosition;
-        this.Crystalizer.CrystalCheck.SetPlanePosition(currentWaypoint.NextPlane, startingPosition);
+        this.Crystalizer.CrystalCheck.SetPlanePosition(currentWaypoint.CurrentPlane, startingPosition);
 
         // RetrySave:
         var options = TinyhandSerializerOptions.Standard with { Plane = currentWaypoint.NextPlane, };

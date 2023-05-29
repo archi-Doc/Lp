@@ -5,167 +5,28 @@ using ValueLink;
 
 namespace Sandbox;
 
-[TinyhandObject(Journaling = true)]
+[TinyhandObject(Journaling = true, LockObject = "syncObject")]
 [ValueLinkObject]
-internal partial class ValueClass : ITinyhandCustomJournal
+internal partial class ValueClass // : ITinyhandCustomJournal
 {
     [Key(0, AddProperty = "Id")]
-    [Link(Type = ChainType.Unordered, Primary = true, Accessibility = ValueLinkAccessibility.Public)]
+    [Link(Primary = true, Type = ChainType.Unordered, NoValue = true)]
     private int id;
 
     [Key(1, AddProperty = "Name")]
-    [Link(Type = ChainType.Ordered, Accessibility = ValueLinkAccessibility.Public)]
+    [Link(Type = ChainType.Ordered, NoValue = true)]
     private string name = string.Empty;
 
-    bool ReadRecordGoshujin(ref TinyhandReader reader)
-    {
-        var record = reader.Read_Record();
-        if (record == JournalRecord.Locator)
-        {
-            var id = reader.ReadInt32();
-            if (this.Goshujin?.IdChain.FindFirst(id) is ITinyhandJournal journalObject)
-            {
-                return journalObject.ReadRecord(ref reader);
-            }
-        }
-        /*else if (record == JournalRecord.Key)
-        {// Tinyhand
-            var options = TinyhandSerializerOptions.Standard;
-            var key = reader.ReadInt32();
-            if (key == 0)
-            {
-                reader.Read_Value();
-                this.IdValue = reader.ReadInt32();
-                return true;
-            }
-            else if (key == 1)
-            {
-                reader.Read_Value();
-                this.name = reader.ReadString() ?? string.Empty;
-                return true;
-            }
-            else
-            {
-                reader.Skip();
-            }
-        }*/
-        else if (record == JournalRecord.Add)
-        {// ValueLink
-            if (reader.TryReadBytes(out var span))
-            {
-                try
-                {
-                    var obj = TinyhandSerializer.DeserializeObject<ValueClass>(span);
-                    if (obj is not null)
-                    {
-                        obj.Goshujin = this.Goshujin; // this
-                        return true;
-                    }
-                }
-                catch { }
-            }
-        }
-        else if (record == JournalRecord.Remove)
-        {// ValueLink
-            // TinyhandSerializer.DeserializeObject<int>(ref reader, );
-            var id = reader.ReadInt32();
-            if (this.Goshujin?.IdChain.FindFirst(id) is { } obj)
-            {
-                obj.Goshujin = null;
-                return true;
-            }
-        }
-        return false;
-    }
+    [Key(2, AddProperty = "Age")]
+    private double age;
 
     [IgnoreMember]
-    public int IdCombined
-    {
-        get => this.id;
-        set
-        {
-            if (value != this.id)
-            {
-                // ValueLink
-                this.id = value;
-                // this.__gen_cl_identifier__002?.IdChain.Add(this.id, this);
-                this.Goshujin?.IdChain.Add(this.id, this);
-
-                // Tinyhand
-                if (this.Crystal is not null && this.Crystal.TryGetJournalWriter(JournalType.Record, this.CurrentPlane, out var writer))
-                {
-                    if (this is ITinyhandCustomJournal custom)
-                    {
-                        custom.WriteCustomLocator(ref writer);
-                    }
-
-                    writer.Write_Key();
-                    writer.Write(0);
-                    writer.Write_Value();
-                    writer.Write(this.id);
-                    this.Crystal.AddJournal(writer);
-                }
-            }
-        }
-    }
-
-    [IgnoreMember]
-    public GoshujinClass? Goshujin2
-    {
-        get => this.__gen_cl_identifier__002;
-        set
-        {
-            if (value != this.__gen_cl_identifier__002)
-            {
-                if (this.__gen_cl_identifier__002 != null)
-                {// ValueLink
-                    this.__gen_cl_identifier__002.IdChain.Remove(this);
-                    this.__gen_cl_identifier__002.NameChain.Remove(this);
-
-                    // ValueLink
-                    if (this.Crystal is not null && this.Crystal.TryGetJournalWriter(JournalType.Record, this.CurrentPlane, out var writer))
-                    {
-                        // Remove
-                        if (this is ITinyhandCustomJournal custom)
-                        {
-                            custom.WriteCustomLocator(ref writer);
-                        }
-
-                        writer.Write_Remove();
-                        writer.Write(this.id);
-                        this.Crystal.AddJournal(writer);
-                    }
-                }
-
-                this.__gen_cl_identifier__002 = value;
-                if (value != null)
-                {
-                    // ValueLink
-                    value.IdChain.Add(this.id, this);
-                    value.NameChain.Add(this.name, this);
-
-                    // ValueLink
-                    if (this.Crystal is not null && this.Crystal.TryGetJournalWriter(JournalType.Record, this.CurrentPlane, out var writer))
-                    {
-                        // Add
-                        if (this is ITinyhandCustomJournal custom)
-                        {
-                            custom.WriteCustomLocator(ref writer);
-                        }
-
-                        writer.Write_Add();
-                        writer.Write(TinyhandSerializer.SerializeObject(this));
-                        this.Crystal.AddJournal(writer);
-                    }
-                }
-            }
-        }
-    }
+    private object syncObject = new();
 
     public override string ToString()
         => $"Value class {this.id}: {this.name}";
 
-    void ITinyhandCustomJournal.WriteCustomLocator(ref TinyhandWriter writer)
+    /*void ITinyhandCustomJournal.WriteCustomLocator(ref TinyhandWriter writer)
     {
         writer.Write_Locator();
         writer.Write(this.id);
@@ -173,15 +34,15 @@ internal partial class ValueClass : ITinyhandCustomJournal
 
     bool ITinyhandCustomJournal.ReadCustomRecord(ref TinyhandReader reader)
     {
-        /*var record = reader.Read_Record();
+        var record = reader.Read_Record();
         if (record == JournalRecord.Locator)
         {
             var id = reader.ReadInt32();
             return true;
-        }*/
+        }
 
         return false;
-    }
+    }*/
 }
 
 [TinyhandObject(Journaling = true)]

@@ -55,13 +55,16 @@ internal class TestClass0
 
         var n = this.valueClassGoshujin.Count;
         var tc = new ValueClass();
-        tc.NameValue = n.ToString();
-        tc.IdValue = n;
-        this.valueClassGoshujin.Add(tc);
+        // using (tc.Lock())
+        {
 
-        tc.Goshujin?.IdChain.Add(1, tc);
-
-        tc.Goshujin?.NameChain.Add("2", tc);
+        }
+        tc.Name = "Test" + n.ToString();
+        tc.Id = n;
+        lock (this.valueClassGoshujin)
+        {
+            this.valueClassGoshujin.Add(tc);
+        }
     }
 
     private Crystalizer crystalizer;
