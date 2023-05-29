@@ -5,7 +5,7 @@ using LP;
 using Tinyhand;
 using Xunit;
 
-namespace xUnitTest.CrystalTest;
+namespace xUnitTest.CrystalDataTest;
 
 [TinyhandObject]
 public partial class TestData : IMonoData
