@@ -6,7 +6,7 @@ using ValueLink;
 namespace Sandbox;
 
 [TinyhandObject(Journaling = true, LockObject = "syncObject")]
-[ValueLinkObject]
+[ValueLinkObject(Lock = true)]
 internal partial class ValueClass // : ITinyhandCustomJournal
 {
     [Key(0, AddProperty = "Id")]

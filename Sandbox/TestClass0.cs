@@ -1,4 +1,5 @@
-﻿using CrystalData.Datum;
+﻿using Arc.Threading;
+using CrystalData.Datum;
 
 namespace Sandbox;
 
@@ -55,10 +56,7 @@ internal class TestClass0
 
         var n = this.valueClassGoshujin.Count;
         var tc = new ValueClass();
-        // using (tc.Lock())
-        {
-
-        }
+        var semaphore = new SemaphoreLock();
         tc.Name = "Test" + n.ToString();
         tc.Id = n;
         lock (this.valueClassGoshujin)
