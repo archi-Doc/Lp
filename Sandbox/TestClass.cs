@@ -20,6 +20,10 @@ internal partial class ValueClass // : ITinyhandCustomJournal
     [Key(2, AddProperty = "Age")]
     private double age;
 
+    [Key(3, AddProperty = "Ttl")]
+    [Link(Type = ChainType.Ordered, NoValue = true)]
+    private int ttl;
+
     [IgnoreMember]
     private object syncObject = new();
 

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using CrystalData.Datum;
 using SimpleCommandLine;
 using LP.Crystal;
+using Tinyhand;
 
 namespace CrystalDataTest;
 
@@ -76,18 +77,19 @@ public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
         }
 
         await Console.Out.WriteLineAsync("1M flakes");
-        sw.Restart();
-
         for (var i = 0; i < 1_000_000; i++)
         {
             data = this.crystal.Data.GetOrCreateChild(new(i));
             // flake.SetData(new byte[] { 2, 3, });
         }
 
-        // await Task.Delay(10000);
+        sw.Restart();
+        var bin = TinyhandSerializer.SerializeObject(this.crystal.Data);
+        Console.WriteLine($"Serialize {(bin.Length / 1_000_000).ToString()} MB, {sw.ElapsedMilliseconds} ms");
 
+        sw.Restart();
         await this.crystal.Save(true);
-        Console.WriteLine($"{sw.ElapsedMilliseconds} ms");
+        Console.WriteLine($"Save {sw.ElapsedMilliseconds} ms");
     }
 
     public CrystalControl CrystalControl { get; set; }

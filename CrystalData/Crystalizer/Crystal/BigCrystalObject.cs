@@ -41,9 +41,28 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
 
     public Type DataType => typeof(TData);
 
-    public TData Data => this.crystal.Data;
+    public TData Data
+    {
+        get
+        {
+            if (this.State == CrystalState.Prepared)
+            {
+                return this.crystal.Data;
+            }
 
-    object ICrystal.Data => this.crystal.Data;
+            using (this.semaphore.Lock())
+            {
+                if (this.State == CrystalState.Initial)
+                {// Initial
+                    this.PrepareAndLoadInternal(false).Wait();
+                }
+
+                return this.crystal.Data;
+            }
+        }
+    }
+
+    object ICrystal.Data => this.Data;
 
     public IStorage Storage => this.crystal.Storage;
 
@@ -252,7 +271,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
             return result;
         }
 
-        this.Data.Initialize(this, null, true);
+        this.crystal.Data.Initialize(this, null, true);
 
         this.State = CrystalState.Prepared;
         return result;
