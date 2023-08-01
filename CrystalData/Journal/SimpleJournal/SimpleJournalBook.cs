@@ -42,7 +42,7 @@ public partial class SimpleJournal
 
         private SimpleJournal simpleJournal;
 
-        [Link(Primary = true, Type = ChainType.Ordered, NoValue = true)]
+        [Link(Primary = true, Type = ChainType.Ordered, AddValue = false)]
         private ulong position;
 
         private int length;

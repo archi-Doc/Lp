@@ -480,7 +480,15 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
             }
             catch
             {// Maybe binary...
-                TinyhandSerializer.DeserializeObject(span, ref data);
+                data = default;
+                try
+                {
+                    TinyhandSerializer.DeserializeObject(span, ref data);
+                }
+                catch
+                {
+                    data = default;
+                }
             }
         }
         else
@@ -491,8 +499,16 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
             }
             catch
             {// Maybe utf8...
-                TinyhandSerializer.DeserializeObjectFromUtf8(span, ref data);
-                format = SaveFormat.Utf8;
+                data = default;
+                try
+                {
+                    TinyhandSerializer.DeserializeObjectFromUtf8(span, ref data);
+                    format = SaveFormat.Utf8;
+                }
+                catch
+                {
+                    data = default;
+                }
             }
         }
 

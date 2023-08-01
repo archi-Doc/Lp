@@ -59,7 +59,7 @@ public partial class Flake2<TIdentifier>
     }
 
     [Key(0)]
-    [Link(Name = "Id", NoValue = true, Type = ChainType.Unordered)]
+    [Link(Name = "Id", AddValue = false, Type = ChainType.Unordered)]
     [Link(Name = "OrderedId", Type = ChainType.Ordered)]
     internal TIdentifier identifier = default!;
 
@@ -90,7 +90,7 @@ public partial class Flake<TIdentifier>
     }
 
     [Key(0)]
-    [Link(Name = "Id", NoValue = true, Type = ChainType.Unordered)]
+    [Link(Name = "Id", AddValue = false, Type = ChainType.Unordered)]
     [Link(Name = "OrderedId", Type = ChainType.Ordered)]
     internal TIdentifier identifier = default!;
 

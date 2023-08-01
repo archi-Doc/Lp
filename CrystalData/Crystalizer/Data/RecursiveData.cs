@@ -23,8 +23,8 @@ public partial class RecursiveData<TKey> : BaseData
     #region FieldAndProperty
 
     [Key(4, AddProperty = "Key")]
-    [Link(Primary = true, Name = "Key", NoValue = true, Type = ChainType.Unordered)]
-    [Link(Name = "OrderedKey", NoValue = true, Type = ChainType.Ordered)]
+    [Link(Primary = true, Name = "Key", AddValue = false, Type = ChainType.Unordered)]
+    [Link(Name = "OrderedKey", AddValue = false, Type = ChainType.Ordered)]
     private TKey key = default!;
 
     [Key(5)]

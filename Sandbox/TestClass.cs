@@ -1,27 +1,25 @@
-﻿using System.Threading.Tasks.Sources;
-using Tinyhand;
-using Tinyhand.IO;
+﻿using Tinyhand.IO;
 using ValueLink;
 
 namespace Sandbox;
 
 [TinyhandObject(Journaling = true, LockObject = "syncObject")]
-[ValueLinkObject(Lock = true)]
+[ValueLinkObject]
 internal partial class ValueClass // : ITinyhandCustomJournal
 {
     [Key(0, AddProperty = "Id")]
-    [Link(Primary = true, Type = ChainType.Unordered, NoValue = true)]
+    [Link(Primary = true, Type = ChainType.Unordered, AddValue = false)]
     private int id;
 
     [Key(1, AddProperty = "Name")]
-    [Link(Type = ChainType.Ordered, NoValue = true)]
+    [Link(Type = ChainType.Ordered, AddValue = false)]
     private string name = string.Empty;
 
     [Key(2, AddProperty = "Age")]
     private double age;
 
     [Key(3, AddProperty = "Ttl")]
-    [Link(Type = ChainType.Ordered, NoValue = true)]
+    [Link(Type = ChainType.Ordered, AddValue = false)]
     private int ttl;
 
     [IgnoreMember]

@@ -27,7 +27,7 @@ public partial class LpData : BaseData
     public Identifier Identifier => this.identifier;
 
     [Key(4)]
-    [Link(Name = "Id", NoValue = true, Type = ChainType.Unordered)]
+    [Link(Name = "Id", AddValue = false, Type = ChainType.Unordered)]
     [Link(Name = "OrderedId", Type = ChainType.Ordered)]
     private Identifier identifier = default!;
 

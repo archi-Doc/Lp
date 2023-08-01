@@ -28,7 +28,7 @@ internal partial class StorageObject
     public IStorage? Storage { get; set; }
 
     [Key(0)]
-    [Link(Type = ChainType.Unordered, Primary = true, NoValue = true)]
+    [Link(Type = ChainType.Unordered, Primary = true, AddValue = false)]
     public ushort StorageId { get; set; }
 
     [Key(1)]

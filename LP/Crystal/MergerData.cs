@@ -33,7 +33,7 @@ public partial class MergerData : BaseData
     public Identifier Identifier => this.identifier;
 
     [Key(4)]
-    [Link(Primary = true, Name = "Id", NoValue = true, Type = ChainType.Unordered)]
+    [Link(Primary = true, Name = "Id", AddValue = false, Type = ChainType.Unordered)]
     [Link(Name = "OrderedId", Type = ChainType.Ordered)]
     private Identifier identifier = default!;
 
