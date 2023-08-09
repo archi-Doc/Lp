@@ -70,6 +70,9 @@ public class Program
                 context.AddCrystal<ValueClass.GoshujinClass>(
                     CrystalConfiguration.SingleUtf8(false, new LocalFileConfiguration("Local/ValueClass.tinyhand")));
 
+                context.AddCrystal<StandardData.GoshujinClass>(
+                    CrystalConfiguration.SingleUtf8(false, new LocalFileConfiguration("Local/StandardData.tinyhand")));
+
                 context.AddBigCrystal<BaseData>(new BigCrystalConfiguration() with
                 {
                     RegisterDatum = registry =>

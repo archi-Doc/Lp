@@ -3,6 +3,22 @@ using ValueLink;
 
 namespace Sandbox;
 
+[TinyhandObject(Journaling = true)]
+[ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
+internal partial record StandardData
+{
+    public StandardData()
+    {
+    }
+
+    [Key(0)]
+    [Link(Primary = true, Unique = true, Type = ChainType.Ordered)]
+    private int id;
+
+    [Key(1)]
+    private string name = string.Empty;
+}
+
 [TinyhandObject(Journaling = true, LockObject = "syncObject")]
 [ValueLinkObject]
 internal partial class ValueClass // : ITinyhandCustomJournal

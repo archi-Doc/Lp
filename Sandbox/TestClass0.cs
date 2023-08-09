@@ -5,7 +5,7 @@ namespace Sandbox;
 
 internal class TestClass0
 {
-    public TestClass0(Crystalizer crystalizer, /*ICrystal<ManualClass> manualCrystal, ICrystal<CombinedClass> combinedCrystal, */IBigCrystal<BaseData> crystalData, ValueClass.GoshujinClass valueClassGoshujin)
+    public TestClass0(Crystalizer crystalizer, /*ICrystal<ManualClass> manualCrystal, ICrystal<CombinedClass> combinedCrystal, */IBigCrystal<BaseData> crystalData, ValueClass.GoshujinClass valueClassGoshujin, StandardData.GoshujinClass standardGoshujin)
     {
         this.crystalizer = crystalizer;
 
@@ -13,6 +13,7 @@ internal class TestClass0
         this.combinedCrystal = combinedCrystal;*/
         this.crystalData = crystalData;
         this.valueClassGoshujin = valueClassGoshujin;
+        this.standardGoshujin = standardGoshujin;
     }
 
     public async Task Test1()
@@ -27,6 +28,15 @@ internal class TestClass0
         if (result.IsFailure())
         {
             return;
+        }
+
+        using (var w = this.standardGoshujin.TryLock(0, ValueLink.TryLockMode.GetOrCreate))
+        {
+            if (w is not null)
+            {
+                w.Name = "Zero";
+                w.Commit();
+            }
         }
 
         // await this.crystalizer.TestJournalAll();
@@ -70,4 +80,5 @@ internal class TestClass0
     // private ICrystal<CombinedClass> combinedCrystal;
     private IBigCrystal<BaseData> crystalData;
     private ValueClass.GoshujinClass valueClassGoshujin;
+    private StandardData.GoshujinClass standardGoshujin;
 }

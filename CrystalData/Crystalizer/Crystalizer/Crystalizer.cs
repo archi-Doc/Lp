@@ -991,7 +991,11 @@ public class Crystalizer
             finally
             {
                 reader = fork;
-                reader.Advance(length);
+                if (!reader.TryAdvance(length))
+                {
+                    failure = true;
+                    reader.TryAdvance(reader.Remaining);
+                }
             }
         }
 
