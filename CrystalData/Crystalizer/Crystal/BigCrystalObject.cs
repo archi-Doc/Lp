@@ -200,13 +200,13 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
 
     #endregion
 
-    #region ITinyhandCrystal
+    #region ITinyhandJournal
 
-    bool ITinyhandCrystal.TryGetJournalWriter(JournalType recordType, uint plane, out TinyhandWriter writer)
+    bool ITinyhandJournal.TryGetJournalWriter(JournalType recordType, out TinyhandWriter writer)
     {
         if (this.Crystalizer.Journal is not null)
         {
-            this.Crystalizer.Journal.GetWriter(recordType, plane, out writer);
+            this.Crystalizer.Journal.GetWriter(recordType, out writer);
             return true;
         }
         else
@@ -216,7 +216,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
         }
     }
 
-    ulong ITinyhandCrystal.AddJournal(in TinyhandWriter writer)
+    ulong ITinyhandJournal.AddJournal(in TinyhandWriter writer)
     {
         if (this.Crystalizer.Journal is not null)
         {
@@ -228,7 +228,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
         }
     }
 
-    bool ITinyhandCrystal.TryAddToSaveQueue()
+    bool ITinyhandJournal.TryAddToSaveQueue()
     {
         if (this.CrystalConfiguration.SavePolicy == SavePolicy.OnChanged)
         {

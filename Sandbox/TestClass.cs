@@ -8,7 +8,7 @@ namespace Sandbox;
 internal partial class ValueClass // : ITinyhandCustomJournal
 {
     [Key(0, AddProperty = "Id")]
-    [Link(Primary = true, Type = ChainType.Unordered, AddValue = false)]
+    [Link(Primary = true, Unique = true, Type = ChainType.Unordered, AddValue = false)]
     private int id;
 
     [Key(1, AddProperty = "Name")]
@@ -68,13 +68,13 @@ internal partial class CombinedClass : ITinyhandCustomJournal
 
     public void WriteRecord()
     {
-        if (this.Crystal?.TryGetJournalWriter(JournalType.Record, this.CurrentPlane, out var writer) == true)
+        if (((IJournalObject)this).TryGetJournalWriter(out var journal, out var writer))
         {
             writer.Write_Key();
             writer.Write(1);
             writer.Write_Value();
             TinyhandSerializer.SerializeObject(ref writer, this.Manual2);
-            this.Crystal.AddJournal(writer);
+            journal.AddJournal(writer);
         }
     }
 
@@ -102,8 +102,8 @@ internal partial class CombinedClass : ITinyhandCustomJournal
             var key = reader.ReadInt32();
             var journal = key switch
             {
-                0 => this.Manual1 as ITinyhandJournal,
-                1 => this.Manual2 as ITinyhandJournal,
+                0 => this.Manual1 as IJournalObject,
+                1 => this.Manual2 as IJournalObject,
                 _ => default,
             };
 

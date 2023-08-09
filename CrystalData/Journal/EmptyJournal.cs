@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Threading.Tasks;
 using Tinyhand.IO;
 
 namespace CrystalData.Journal;
@@ -17,7 +16,7 @@ public class EmptyJournal : IJournal
         return 0;
     }
 
-    void IJournal.GetWriter(JournalType recordType, uint token, out TinyhandWriter writer)
+    void IJournal.GetWriter(JournalType recordType, out TinyhandWriter writer)
     {
         writer = default(TinyhandWriter);
     }

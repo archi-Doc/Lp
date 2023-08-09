@@ -392,12 +392,12 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
                     break;
                 }
 
-                if (currentObject is not ITinyhandJournal journalObject)
+                if (currentObject is not IJournalObject journalObject)
                 {
                     break;
                 }
 
-                journalObject.CurrentPlane = waypoints[i].CurrentPlane;
+                // journalObject.CurrentPlane = waypoints[i].CurrentPlane;
 
                 // Read journal [waypoints[i].StartingPosition, waypoints[i + 1].JournalPosition)
                 var length = (int)(waypoints[i + 1].JournalPosition - waypoints[i].StartingPosition);
@@ -417,13 +417,13 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
 
     #endregion
 
-    #region ITinyhandCrystal
+    #region ITinyhandJournal
 
-    bool ITinyhandCrystal.TryGetJournalWriter(JournalType recordType, uint plane, out TinyhandWriter writer)
+    bool ITinyhandJournal.TryGetJournalWriter(JournalType recordType, out TinyhandWriter writer)
     {
         if (this.Crystalizer.Journal is not null)
         {
-            this.Crystalizer.Journal.GetWriter(recordType, plane, out writer);
+            this.Crystalizer.Journal.GetWriter(recordType, out writer);
             return true;
         }
         else
@@ -433,7 +433,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         }
     }
 
-    ulong ITinyhandCrystal.AddJournal(in TinyhandWriter writer)
+    ulong ITinyhandJournal.AddJournal(in TinyhandWriter writer)
     {
         if (this.Crystalizer.Journal is not null)
         {
@@ -445,7 +445,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         }
     }
 
-    bool ITinyhandCrystal.TryAddToSaveQueue()
+    bool ITinyhandJournal.TryAddToSaveQueue()
     {
         if (this.CrystalConfiguration.SavePolicy == SavePolicy.OnChanged)
         {
@@ -515,7 +515,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         return (data, format);
     }
 
-    private bool ReadJournal(ITinyhandJournal journalObject, ReadOnlyMemory<byte> data)
+    private bool ReadJournal(IJournalObject journalObject, ReadOnlyMemory<byte> data)
     {
         var reader = new TinyhandReader(data.Span);
         var success = true;
@@ -530,8 +530,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
             var fork = reader.Fork();
             try
             {
-                if (journalType == JournalType.Record &&
-                    journalObject.CurrentPlane == plane)
+                if (journalType == JournalType.Record)
                 {
                     if (journalObject.ReadRecord(ref reader))
                     {// Success
@@ -751,10 +750,10 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void SetCrystalAndPlane()
     {
-        if (this.data is ITinyhandJournal journalObject)
+        if (this.data is IJournalObject journalObject)
         {
-            journalObject.Crystal = this;
-            journalObject.CurrentPlane = this.waypoint.CurrentPlane;
+            journalObject.Journal = this;
+            // journalObject.CurrentPlane = this.waypoint.CurrentPlane;
         }
     }
 

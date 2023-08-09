@@ -653,7 +653,7 @@ public class Crystalizer
         ulong depth = 0;
         if (this.Journal != null)
         {
-            this.Journal.GetWriter(JournalType.Waypoint, nextPlane, out var writer);
+            this.Journal.GetWriter(JournalType.Waypoint, out var writer);
             writer.Write(newPlane);
             writer.Write(hash);
             journalPosition = this.Journal.Add(writer);
@@ -705,7 +705,7 @@ public class Crystalizer
     {
         if (this.Journal is { } journal)
         {
-            journal.GetWriter(JournalType.Startingpoint, plane, out var writer);
+            journal.GetWriter(JournalType.Startingpoint, out var writer);
             return journal.Add(writer);
         }
         else
@@ -963,7 +963,7 @@ public class Crystalizer
                 {
                     if (this.planeToCrystal.TryGetValue(plane, out var crystal))
                     {
-                        if (crystal.Data is ITinyhandJournal journalObject)
+                        if (crystal.Data is IJournalObject journalObject)
                         {
                             var currentPosition = position + (ulong)reader.Consumed;
                             if (currentPosition > crystal.JournalPosition)
