@@ -118,7 +118,6 @@ public partial class SimpleJournal : IJournal
         writer = new(initialBuffer);
         writer.Advance(3); // Size(0-16MB): byte[3]
         writer.RawWriteUInt8(Unsafe.As<JournalType, byte>(ref recordType)); // JournalRecordType: byte
-        // writer.RawWriteUInt32(plane); // Plane: byte[4]
     }
 
     ulong IJournal.Add(in TinyhandWriter writer)

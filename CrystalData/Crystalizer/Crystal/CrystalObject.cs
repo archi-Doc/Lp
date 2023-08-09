@@ -522,7 +522,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
 
         while (reader.Consumed < data.Length)
         {
-            if (!reader.TryReadRecord(out var length, out var journalType, out var plane))
+            if (!reader.TryReadRecord(out var length, out var journalType))
             {
                 return false;
             }

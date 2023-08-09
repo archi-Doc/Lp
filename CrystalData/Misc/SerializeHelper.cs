@@ -18,32 +18,6 @@ public static class SerializeHelper
 
     public static TinyhandSerializerOptions SerializerOptions { get; } = TinyhandSerializerOptions.Standard;
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool TryReadRecord(this ref TinyhandReader reader, out int length, out JournalType journalType, out uint plane)
-    {
-        try
-        {
-            Span<byte> span = stackalloc byte[3];
-            span[0] = reader.ReadUInt8();
-            span[1] = reader.ReadUInt8();
-            span[2] = reader.ReadUInt8();
-            length = span[0] << 16 | span[1] << 8 | span[2];
-
-            reader.TryRead(out byte code);
-            journalType = (JournalType)code;
-            reader.TryReadBigEndian(out plane);
-        }
-        catch
-        {
-            length = 0;
-            journalType = default;
-            plane = 0;
-            return false;
-        }
-
-        return true;
-    }
-
     public static T? TryReadAndDeserialize<T>(string path)
         where T : ITinyhandSerialize<T>
     {
