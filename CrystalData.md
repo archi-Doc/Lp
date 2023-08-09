@@ -293,6 +293,10 @@ If you need exclusive access for multi-threading, please add Lock object
 
 ## Journaling
 
+CrystalData supports limited journaling feature.
+
+The purpose is to improve data durability, i.e., to reduce data loss from one hour to one second in the event of a failure.
+
 
 
 ## AWS S3

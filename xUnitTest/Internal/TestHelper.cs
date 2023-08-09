@@ -1,18 +1,48 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Arc.Crypto;
-using Arc.Unit;
 using CrystalData;
 using CrystalData.Datum;
 using LP;
 using LP.Crystal;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
+using xUnitTest.CrystalDataTest;
 
 namespace xUnitTest;
 
 public static class TestHelper
 {
+    public static async Task<IBigCrystal<SimpleData>> CreateAndStartSimple(bool prepare = true)
+    {
+        var builder = new CrystalControl.Builder();
+        builder
+            .ConfigureCrystal(context =>
+            {
+                var directory = $"Simple[{RandomVault.Pseudo.NextUInt32():x4}]";
+                context.AddBigCrystal<SimpleData>(
+                    new(
+                        datumRegistry =>
+                        {
+                            datumRegistry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
+                        },
+                        SavePolicy.Manual,
+                        new LocalFileConfiguration(Path.Combine(directory, "Simple")),
+                        new SimpleStorageConfiguration(new LocalDirectoryConfiguration(directory))));
+            });
+
+        var unit = builder.Build();
+        var crystalizer = unit.Context.ServiceProvider.GetRequiredService<Crystalizer>();
+
+        if (prepare)
+        {
+            var result = await crystalizer.PrepareAndLoadAll(false);
+            result.Is(CrystalResult.Success);
+        }
+
+        return crystalizer.GetBigCrystal<SimpleData>();
+    }
+
     public static async Task<IBigCrystal<LpData>> CreateAndStartCrystal()
     {
         var builder = new CrystalControl.Builder();

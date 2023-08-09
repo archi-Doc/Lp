@@ -100,7 +100,7 @@ public partial class SimpleJournal : IJournal
 
         this.task ??= new(this);
 
-        this.logger.TryGet()?.Log($"Prepared: {this.books.PositionChain.First?.Position} - {this.books.PositionChain.Last?.Position} ({this.books.PositionChain.Count})");
+        this.logger.TryGet()?.Log($"Prepared: {this.books.PositionChain.First?.Position} - {this.books.PositionChain.Last?.NextPosition} ({this.books.PositionChain.Count})");
 
         await this.Merge(false).ConfigureAwait(false);
 
@@ -108,7 +108,7 @@ public partial class SimpleJournal : IJournal
         return CrystalResult.Success;
     }
 
-    void IJournal.GetWriter(JournalType recordType, uint plane, out TinyhandWriter writer)
+    void IJournal.GetWriter(JournalType recordType, out TinyhandWriter writer)
     {
         if (initialBuffer == null)
         {
@@ -118,7 +118,7 @@ public partial class SimpleJournal : IJournal
         writer = new(initialBuffer);
         writer.Advance(3); // Size(0-16MB): byte[3]
         writer.RawWriteUInt8(Unsafe.As<JournalType, byte>(ref recordType)); // JournalRecordType: byte
-        writer.RawWriteUInt32(plane); // Plane: byte[4]
+        // writer.RawWriteUInt32(plane); // Plane: byte[4]
     }
 
     ulong IJournal.Add(in TinyhandWriter writer)
@@ -128,12 +128,14 @@ public partial class SimpleJournal : IJournal
 
         if (memory.Length > this.SimpleJournalConfiguration.MaxRecordLength)
         {
-            throw new InvalidOperationException($"The maximum length per record is {this.SimpleJournalConfiguration.MaxRecordLength} bytes.");
+            // throw new InvalidOperationException($"The maximum length per record is {this.SimpleJournalConfiguration.MaxRecordLength} bytes.");
+            this.logger.TryGet(LogLevel.Error)?.Log($"The maximum length per record is {this.SimpleJournalConfiguration.MaxRecordLength} bytes.");
+            return ((IJournal)this).GetCurrentPosition();
         }
 
         // Size (0-16MB)
         var span = memory.Span;
-        var length = memory.Length - 8;
+        var length = memory.Length - 4;
         span[2] = (byte)length;
         span[1] = (byte)(length >> 8);
         span[0] = (byte)(length >> 16);

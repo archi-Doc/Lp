@@ -12,7 +12,7 @@ internal partial class FragmentObject<TIdentifier> : MemoryObject
         this.Identifier = identifier;
     }
 
-    [Link(Primary = true, NoValue = true, Name = "Id", Type = ChainType.Unordered)]
+    [Link(Primary = true, AddValue = false, Name = "Id", Type = ChainType.Unordered)]
     [Link(Name = "OrderedId", Type = ChainType.Ordered)]
     public TIdentifier Identifier { get; private set; }
 }

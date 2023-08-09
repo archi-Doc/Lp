@@ -17,6 +17,9 @@ namespace CrystalData;
 [TinyhandObject(ExplicitKeyOnly = true, LockObject = "semaphore", ReservedKeys = 3, Journaling = true)]
 public partial class BaseData : IDataInternal, ITinyhandCustomJournal
 {
+    public const int DataIdKey = 0;
+    public const int DatumObjectKey = 1;
+
     protected BaseData()
     {
     }
@@ -35,10 +38,10 @@ public partial class BaseData : IDataInternal, ITinyhandCustomJournal
 
     public bool IsDeleted => this.dataId == -1;
 
-    [Key(0, AddProperty = "DataId")]
+    [Key(DataIdKey, AddProperty = "DataId")]
     private int dataId; // -1: Deleted
 
-    [Key(1)]
+    [Key(DatumObjectKey)]
     protected DatumObject[] datumObject = Array.Empty<DatumObject>();
 
 #pragma warning disable SA1214 // Readonly fields should appear before non-readonly fields
@@ -87,6 +90,8 @@ public partial class BaseData : IDataInternal, ITinyhandCustomJournal
                 {
                     this.datumObject[i].FileChecksum = checksum;
                     this.BigCrystal.StorageGroup.PutAndForget(ref this.datumObject[i].StorageId, ref this.datumObject[i].FileId, memoryToBeShared, info.DatumId);
+
+                    this.RecordDatumObject(i);
                 }
 
                 return;
@@ -129,7 +134,6 @@ public partial class BaseData : IDataInternal, ITinyhandCustomJournal
         if (datumObject.IsValid)
         {
             this.BigCrystal.StorageGroup.DeleteAndForget(ref datumObject.StorageId, ref datumObject.FileId);
-            return;
         }
     }
 
@@ -163,7 +167,7 @@ public partial class BaseData : IDataInternal, ITinyhandCustomJournal
 
     #region Journal
 
-    void ITinyhandCustomJournal.WriteCustomRecord(ref TinyhandWriter writer)
+    void ITinyhandCustomJournal.WriteCustomLocator(ref TinyhandWriter writer)
     {
     }
 
@@ -172,6 +176,28 @@ public partial class BaseData : IDataInternal, ITinyhandCustomJournal
 
     protected bool ReadRecordBase(ref TinyhandReader reader)
     {
+        var record = reader.Read_Record();
+        if (record == JournalRecord.Key)
+        {
+            var key = reader.ReadInt32();
+            if (key == DatumObjectKey)
+            {
+                record = reader.Read_Record();
+                if (record == JournalRecord.Value)
+                {
+                    var index = reader.ReadInt32();
+                    if (index >= this.datumObject.Length)
+                    {
+                        Array.Resize(ref this.datumObject, index + 1);
+                    }
+
+                    var datumObject = TinyhandSerializer.DeserializeObject<DatumObject>(ref reader, TinyhandSerializerOptions.Standard);
+                    this.datumObject[index] = datumObject;
+                    return true;
+                }
+            }
+        }
+
         return false;
     }
 
@@ -399,6 +425,9 @@ public partial class BaseData : IDataInternal, ITinyhandCustomJournal
         var n = this.datumObject.Length;
         Array.Resize(ref this.datumObject, n + 1);
         this.datumObject[n] = newObject;
+
+        this.RecordDatumObject(n);
+
         return newObject;
     }
 
@@ -420,5 +449,18 @@ public partial class BaseData : IDataInternal, ITinyhandCustomJournal
         }
 
         return default;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void RecordDatumObject(int index)
+    {
+        if (this.Crystal is not null && this.Crystal.TryGetJournalWriter(JournalType.Record, this.CurrentPlane, out var writer))
+        {
+            writer.Write_Key();
+            writer.Write(DatumObjectKey);
+            writer.Write_Value();
+            writer.Write(index);
+            TinyhandSerializer.SerializeObject(ref writer, this.datumObject[index]);
+        }
     }
 }

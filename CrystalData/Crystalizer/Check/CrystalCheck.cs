@@ -11,8 +11,27 @@ internal class CrystalCheck
 
     public void RegisterDataAndConfiguration(DataAndConfigurationIdentifier identifier, out bool newlyRegistered)
     {
-        newlyRegistered = this.checkData.DataAndConfigurations.TryAdd(identifier, 0);
+        newlyRegistered = this.data.DataAndConfigurations.TryAdd(identifier, 0);
     }
+
+    /*public bool TryRemovePlane(uint plane)
+    {
+        return this.data.PlaneToJournalPosition.TryRemove(plane, out _);
+    }*/
+
+    public void ClearPlanePosition()
+        => this.data.PlaneToJournalPosition.Clear();
+
+    public void SetPlanePosition(uint plane, ulong position)
+    {
+        if (plane != 0)
+        {
+            this.data.PlaneToJournalPosition[plane] = position;
+        }
+    }
+
+    public bool TryGetPlanePosition(uint plane, out ulong position)
+        => this.data.PlaneToJournalPosition.TryGetValue(plane, out position);
 
     public void Load(string filePath)
     {
@@ -23,7 +42,7 @@ internal class CrystalCheck
             var data = TinyhandSerializer.Deserialize<CrystalCheckData>(bytes);
             if (data != null)
             {
-                this.checkData = data;
+                this.data = data;
                 this.SuccessfullyLoaded = true;
             }
         }
@@ -42,7 +61,7 @@ internal class CrystalCheck
 
         try
         {
-            File.WriteAllBytes(this.filePath, TinyhandSerializer.Serialize(this.checkData));
+            File.WriteAllBytes(this.filePath, TinyhandSerializer.Serialize(this.data));
         }
         catch
         {
@@ -56,5 +75,5 @@ internal class CrystalCheck
 
     private ILogger logger;
     private string filePath = string.Empty;
-    private CrystalCheckData checkData = TinyhandSerializer.Reconstruct<CrystalCheckData>();
+    private CrystalCheckData data = TinyhandSerializer.Reconstruct<CrystalCheckData>();
 }

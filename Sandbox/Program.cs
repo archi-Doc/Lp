@@ -67,6 +67,8 @@ public class Program
                         SaveInterval = TimeSpan.FromSeconds(10),
                         // BackupFileConfiguration = new LocalFileConfiguration("Backup/combined")
                     });*/
+                context.AddCrystal<ValueClass.GoshujinClass>(
+                    CrystalConfiguration.SingleUtf8(false, new LocalFileConfiguration("Local/ValueClass.tinyhand")));
 
                 context.AddBigCrystal<BaseData>(new BigCrystalConfiguration() with
                 {

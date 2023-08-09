@@ -1,16 +1,18 @@
-﻿using CrystalData.Datum;
+﻿using Arc.Threading;
+using CrystalData.Datum;
 
 namespace Sandbox;
 
 internal class TestClass0
 {
-    public TestClass0(Crystalizer crystalizer, /*ICrystal<ManualClass> manualCrystal, ICrystal<CombinedClass> combinedCrystal, */IBigCrystal<BaseData> crystalData)
+    public TestClass0(Crystalizer crystalizer, /*ICrystal<ManualClass> manualCrystal, ICrystal<CombinedClass> combinedCrystal, */IBigCrystal<BaseData> crystalData, ValueClass.GoshujinClass valueClassGoshujin)
     {
         this.crystalizer = crystalizer;
 
         /*this.manualCrystal = manualCrystal;
         this.combinedCrystal = combinedCrystal;*/
         this.crystalData = crystalData;
+        this.valueClassGoshujin = valueClassGoshujin;
     }
 
     public async Task Test1()
@@ -51,10 +53,21 @@ internal class TestClass0
                 op.Datum.Set(new LocalFileConfiguration("test1"));
             }
         }
+
+        var n = this.valueClassGoshujin.Count;
+        var tc = new ValueClass();
+        var semaphore = new SemaphoreLock();
+        tc.Name = "Test" + n.ToString();
+        tc.Id = n;
+        lock (this.valueClassGoshujin)
+        {
+            this.valueClassGoshujin.Add(tc);
+        }
     }
 
     private Crystalizer crystalizer;
     // private ICrystal<ManualClass> manualCrystal;
     // private ICrystal<CombinedClass> combinedCrystal;
     private IBigCrystal<BaseData> crystalData;
+    private ValueClass.GoshujinClass valueClassGoshujin;
 }

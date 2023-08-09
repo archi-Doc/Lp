@@ -2,7 +2,7 @@
 
 using CrystalData.Datum;
 
-namespace CrystalData;
+namespace xUnitTest.CrystalDataTest;
 
 public interface InvalidDatum : IDatum
 {

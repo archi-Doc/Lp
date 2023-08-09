@@ -8,7 +8,7 @@ public interface IJournal
 {
     Task<CrystalResult> Prepare(PrepareParam param);
 
-    void GetWriter(JournalType recordType, uint plane, out TinyhandWriter writer);
+    void GetWriter(JournalType recordType, out TinyhandWriter writer);
 
     ulong Add(in TinyhandWriter writer);
 

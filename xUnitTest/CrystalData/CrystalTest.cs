@@ -8,7 +8,7 @@ using LP.Crystal;
 using Tinyhand;
 using Xunit;
 
-namespace xUnitTest.CrystalTest;
+namespace xUnitTest.CrystalDataTest;
 
 public partial class CrystalTest
 {

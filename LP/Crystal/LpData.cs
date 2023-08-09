@@ -3,7 +3,6 @@
 #pragma warning disable SA1124 // Do not use regions
 
 using CrystalData.Datum;
-using Tinyhand.IO;
 using ValueLink;
 
 namespace LP.Crystal;
@@ -24,7 +23,7 @@ public partial class LpData : BaseData
         this.identifier = identifier;
     }
 
-    [Link(Primary = true, Name = "GetQueue", Type = ChainType.QueueList)]
+    [Link(Name = "GetQueue", Type = ChainType.QueueList)]
     public LpData()
     {
     }
@@ -39,9 +38,9 @@ public partial class LpData : BaseData
 
     public Identifier Identifier => this.identifier;
 
-    [Key(4)]
-    [Link(Name = "Id", NoValue = true, Type = ChainType.Unordered)]
-    [Link(Name = "OrderedId", Type = ChainType.Ordered)]
+    [Key(4, AddProperty = "Id")]
+    [Link(Primary = true, Name = "Id", AddValue = false, Type = ChainType.Unordered)]
+    [Link(Name = "OrderedId", AddValue = false, Type = ChainType.Ordered)]
     private Identifier identifier = default!;
 
     [Key(5)]
