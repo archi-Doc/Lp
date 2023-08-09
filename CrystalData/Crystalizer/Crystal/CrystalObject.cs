@@ -208,18 +208,17 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         // Starting point
         var startingPosition = this.Crystalizer.AddStartingPoint(currentWaypoint.NextPlane);
         this.journalPosition = startingPosition;
-        this.Crystalizer.CrystalCheck.SetPlanePosition(currentWaypoint.CurrentPlane, startingPosition);
+        this.Crystalizer.CrystalCheck.SetPlanePosition(currentWaypoint.Plane, startingPosition);
 
         // RetrySave:
-        var options = TinyhandSerializerOptions.Standard with { Plane = currentWaypoint.NextPlane, };
         byte[] byteArray;
         if (this.CrystalConfiguration.SaveFormat == SaveFormat.Utf8)
         {
-            byteArray = TinyhandSerializer.SerializeObjectToUtf8(obj, options);
+            byteArray = TinyhandSerializer.SerializeObjectToUtf8(obj);
         }
         else
         {
-            byteArray = TinyhandSerializer.SerializeObject(obj, options);
+            byteArray = TinyhandSerializer.SerializeObject(obj);
         }
 
         var hash = FarmHash.Hash64(byteArray.AsSpan());

@@ -6,12 +6,12 @@ using System.Runtime.CompilerServices;
 namespace CrystalData;
 
 public readonly struct Waypoint : IEquatable<Waypoint>, IComparable<Waypoint>
-{// JournalPosition, Current plane, Next plane, Hash
+{// JournalPosition, Plane, Hash
     public const string Extension = "waypoint";
-    public const int Length = 28; // 8 + 4 + 4 + 8 + 4
+    public const int Length = 24; // 8 + 4 + 8 + 4
     public const uint MaxDepth = uint.MaxValue;
     public static readonly Waypoint Invalid = default;
-    public static readonly Waypoint Empty = new(1, 0, 0, 0, 0);
+    public static readonly Waypoint Empty = new(1, 0, 0);
     public static readonly int LengthInBase32;
 
     static Waypoint()
@@ -19,14 +19,12 @@ public readonly struct Waypoint : IEquatable<Waypoint>, IComparable<Waypoint>
         LengthInBase32 = Base32Sort.GetEncodedLength(Length);
     }
 
-    public Waypoint(ulong journalPosition, uint currentPlane, uint nextPlane, ulong hash, uint depth)
+    public Waypoint(ulong journalPosition, uint plane, ulong hash)
     {
         this.JournalPosition = journalPosition;
-        this.CurrentPlane = currentPlane;
-        this.NextPlane = nextPlane;
+        this.Plane = plane;
         this.Hash = hash;
-        this.Depth = depth;
-        // this.Reserved = 0;
+        this.Reserved = 0;
     }
 
     public static bool TryParse(string base32, out Waypoint waypoint)
@@ -43,15 +41,10 @@ public readonly struct Waypoint : IEquatable<Waypoint>, IComparable<Waypoint>
             {
                 var journalPosition = BinaryPrimitives.ReverseEndianness(BitConverter.ToUInt64(span));
                 span = span.Slice(sizeof(ulong));
-                var currentPlane = BitConverter.ToUInt32(span);
-                span = span.Slice(sizeof(uint));
-                var nextPlane = BitConverter.ToUInt32(span);
+                var plane = BitConverter.ToUInt32(span);
                 span = span.Slice(sizeof(uint));
                 var hash = BitConverter.ToUInt64(span);
-                span = span.Slice(sizeof(ulong));
-                var depth = BitConverter.ToUInt32(span);
-
-                waypoint = new(journalPosition, currentPlane, nextPlane, hash, depth);
+                waypoint = new(journalPosition, plane, hash);
                 return true;
             }
             catch
@@ -64,15 +57,11 @@ public readonly struct Waypoint : IEquatable<Waypoint>, IComparable<Waypoint>
     }
 
     public readonly ulong JournalPosition;
-    public readonly uint CurrentPlane;
-    public readonly uint NextPlane; // Où allons-nous
+    public readonly uint Plane; // Où allons-nous
     public readonly ulong Hash;
-    public readonly uint Depth;
-    // public readonly uint Reserved;
+    public readonly uint Reserved;
 
     public bool IsValid => this.JournalPosition != 0;
-
-    public ulong StartingPosition => this.JournalPosition - this.Depth;
 
     public byte[] ToByteArray()
     {
@@ -91,14 +80,12 @@ public readonly struct Waypoint : IEquatable<Waypoint>, IComparable<Waypoint>
     }
 
     public override string ToString()
-        => $"Position: {this.JournalPosition}, {this.CurrentPlane} -> {this.NextPlane}, {this.Depth}";
+        => $"Position: {this.JournalPosition}, Plane: {this.Plane}";
 
     public bool Equals(Waypoint other)
         => this.JournalPosition == other.JournalPosition &&
-        this.CurrentPlane == other.CurrentPlane &&
-        this.NextPlane == other.NextPlane &&
-        this.Hash == other.Hash &&
-        this.Depth == other.Depth;
+        this.Plane == other.Plane &&
+        this.Hash == other.Hash;
 
     public static bool operator >(Waypoint w1, Waypoint w2)
         => w1.CompareTo(w2) > 0;
@@ -117,20 +104,11 @@ public readonly struct Waypoint : IEquatable<Waypoint>, IComparable<Waypoint>
             return 1;
         }
 
-        if (this.CurrentPlane < other.CurrentPlane)
+        if (this.Plane < other.Plane)
         {
             return -1;
         }
-        else if (this.CurrentPlane > other.CurrentPlane)
-        {
-            return 1;
-        }
-
-        if (this.NextPlane < other.NextPlane)
-        {
-            return -1;
-        }
-        else if (this.NextPlane > other.NextPlane)
+        else if (this.Plane > other.Plane)
         {
             return 1;
         }
@@ -144,20 +122,11 @@ public readonly struct Waypoint : IEquatable<Waypoint>, IComparable<Waypoint>
             return 1;
         }
 
-        if (this.Depth < other.Depth)
-        {
-            return -1;
-        }
-        else if (this.Depth > other.Depth)
-        {
-            return 1;
-        }
-
         return 0;
     }
 
     public override int GetHashCode()
-        => HashCode.Combine(this.JournalPosition, this.CurrentPlane, this.NextPlane, this.Hash, this.Depth);
+        => HashCode.Combine(this.JournalPosition, this.Plane, this.Hash);
 
     private static void WriteBigEndian(ulong value, Span<byte> span)
     {
@@ -181,14 +150,10 @@ public readonly struct Waypoint : IEquatable<Waypoint>, IComparable<Waypoint>
         // BitConverter.TryWriteBytes(span, this.JournalPosition);
         WriteBigEndian(this.JournalPosition, span);
         span = span.Slice(sizeof(ulong));
-        BitConverter.TryWriteBytes(span, this.CurrentPlane);
-        span = span.Slice(sizeof(uint));
-        BitConverter.TryWriteBytes(span, this.NextPlane);
+        BitConverter.TryWriteBytes(span, this.Plane);
         span = span.Slice(sizeof(uint));
         BitConverter.TryWriteBytes(span, this.Hash);
         span = span.Slice(sizeof(ulong));
-        BitConverter.TryWriteBytes(span, this.Depth);
-        // span = span.Slice(sizeof(uint));
-        // BitConverter.TryWriteBytes(span, this.Reserved);
+        BitConverter.TryWriteBytes(span, this.Reserved);
     }
 }

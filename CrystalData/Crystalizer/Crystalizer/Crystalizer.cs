@@ -614,7 +614,7 @@ public class Crystalizer
 
     #region Waypoint/Plane
 
-    internal void UpdatePlane(ICrystalInternal crystal, ref Waypoint waypoint, ulong hash, ulong startingPosition)
+    /*internal void UpdatePlane(ICrystalInternal crystal, ref Waypoint waypoint, ulong hash, ulong startingPosition)
     {
         if (waypoint.CurrentPlane != 0)
         {// Remove the current plane
@@ -670,33 +670,22 @@ public class Crystalizer
         }
 
         waypoint = new(journalPosition, nextPlane, newPlane, hash, (uint)depth);
-    }
+    }*/
 
     internal void RemovePlane(Waypoint waypoint)
     {
-        if (waypoint.CurrentPlane != 0)
+        if (waypoint.Plane != 0)
         {
-            this.planeToCrystal.TryRemove(waypoint.CurrentPlane, out _);
+            this.planeToCrystal.TryRemove(waypoint.Plane, out _);
             // this.CrystalCheck.TryRemovePlane(waypoint.CurrentPlane);
-        }
-
-        if (waypoint.NextPlane != 0)
-        {
-            this.planeToCrystal.TryRemove(waypoint.NextPlane, out _);
-            // this.CrystalCheck.TryRemovePlane(waypoint.NextPlane);
         }
     }
 
     internal void SetPlane(ICrystalInternal crystal, ref Waypoint waypoint)
     {
-        if (waypoint.CurrentPlane != 0)
+        if (waypoint.Plane != 0)
         {
-            this.planeToCrystal[waypoint.CurrentPlane] = crystal;
-        }
-
-        if (waypoint.NextPlane != 0)
-        {
-            this.planeToCrystal[waypoint.NextPlane] = crystal;
+            this.planeToCrystal[waypoint.Plane] = crystal;
         }
     }
 
