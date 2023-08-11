@@ -7,13 +7,14 @@ using Tinyhand.IO;
 
 namespace CrystalData;
 
-public sealed class CrystalObject<TData> : ICrystalInternal<TData>
+public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObject
     where TData : class, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {// Data + Journal/Waypoint + Filer/FileConfiguration + Storage/StorageConfiguration
     public CrystalObject(Crystalizer crystalizer)
     {
         this.Crystalizer = crystalizer;
         this.CrystalConfiguration = CrystalConfiguration.Default;
+        ((IJournalObject)this).Journal = this;
     }
 
     #region FieldAndProperty
@@ -56,6 +57,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
                 else if (this.State == CrystalState.Deleted)
                 {// Deleted
                     TinyhandSerializer.ReconstructObject<TData>(ref this.data);
+                    this.SetJournal();
                     return this.data;
                 }
 
@@ -320,6 +322,18 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
     Waypoint ICrystalInternal.Waypoint
         => this.waypoint;
 
+    ITinyhandJournal? IJournalObject.Journal { get; set; }
+
+    IJournalObject? IJournalObject.Parent { get; set; } = null;
+
+    int IJournalObject.Key { get; set; } = -1;
+
+    void IJournalObject.WriteLocator(ref Tinyhand.IO.TinyhandWriter writer)
+    {
+        writer.Write_Locator();
+        writer.Write(this.waypoint.Plane);
+    }
+
     async Task ICrystalInternal.TestJournal()
     {
         if (this.Crystalizer.Journal is not CrystalData.Journal.SimpleJournal journal)
@@ -337,7 +351,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
 
             var waypoints = main.GetWaypoints();
             if (waypoints.Length <= 1)
-            {// No or single waypoint
+            {// The number of waypoints is 1 or less.
                 return;
             }
 
@@ -399,10 +413,10 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
 
                 // journalObject.CurrentPlane = waypoints[i].CurrentPlane;
 
-                // Read journal [waypoints[i].StartingPosition, waypoints[i + 1].JournalPosition)
-                var length = (int)(waypoints[i + 1].JournalPosition - waypoints[i].StartingPosition);
+                // Read journal [waypoints[i].JournalPosition, waypoints[i + 1].JournalPosition)
+                var length = (int)(waypoints[i + 1].JournalPosition - waypoints[i].JournalPosition);
                 var memoryOwner = ByteArrayPool.Default.Rent(length).ToMemoryOwner(0, length);
-                var journalResult = await journal.ReadJournalAsync(waypoints[i].StartingPosition, waypoints[i + 1].JournalPosition, memoryOwner.Memory).ConfigureAwait(false);
+                var journalResult = await journal.ReadJournalAsync(waypoints[i].JournalPosition, waypoints[i + 1].JournalPosition, memoryOwner.Memory).ConfigureAwait(false);
                 if (!journalResult)
                 {// Journal error
                     break;
@@ -640,7 +654,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
             this.waypoint = loadResult.Waypoint;
 
             this.Crystalizer.SetPlane(this, ref this.waypoint);
-            this.SetCrystalAndPlane();
+            this.SetJournal();
 
             // this.LogWaypoint("Load");
             this.State = CrystalState.Prepared;
@@ -741,18 +755,19 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
         this.waypoint = default;
         this.Crystalizer.UpdateWaypoint(this, ref this.waypoint, hash, 0);
 
-        this.SetCrystalAndPlane();
+        this.SetJournal();
 
         // Save immediately to fix the waypoint.
         _ = this.crystalFiler?.Save(byteArray, this.waypoint);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void SetCrystalAndPlane()
+    private void SetJournal()
     {
         if (this.data is IJournalObject journalObject)
         {
             journalObject.Journal = this;
+            journalObject.SetParent(this);
             // journalObject.CurrentPlane = this.waypoint.CurrentPlane;
         }
     }

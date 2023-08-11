@@ -976,7 +976,7 @@ public class Crystalizer
 
         while (reader.Consumed < data.Length)
         {
-            if (!reader.TryReadRecord(out var length, out var journalType, out var plane))
+            if (!reader.TryReadRecord(out var length, out var journalType))
             {
                 this.logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.Journal.Corrupted);
                 return;
@@ -995,6 +995,8 @@ public class Crystalizer
                 }
                 else if (journalType == JournalType.Record)
                 {
+                    reader.Read_Locator();
+                    var plane = reader.ReadUInt32();
                     if (this.planeToCrystal.TryGetValue(plane, out var crystal))
                     {
                         if (crystal.Data is IJournalObject journalObject)
