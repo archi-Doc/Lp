@@ -205,12 +205,10 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
 
         this.lastSavedTime = DateTime.UtcNow;
 
-        // Starting point
-        var startingPosition = this.Crystalizer.AddStartingPoint(currentWaypoint.NextPlane);
-        this.journalPosition = startingPosition;
-        this.Crystalizer.CrystalCheck.SetPlanePosition(currentWaypoint.Plane, startingPosition);
+        // Starting position
+        var startingPosition = this.Crystalizer.GetJournalPosition();
 
-        // RetrySave:
+        // Serialize
         byte[] byteArray;
         if (this.CrystalConfiguration.SaveFormat == SaveFormat.Utf8)
         {
@@ -221,6 +219,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
             byteArray = TinyhandSerializer.SerializeObject(obj);
         }
 
+        // Get hash
         var hash = FarmHash.Hash64(byteArray.AsSpan());
         if (hash == currentWaypoint.Hash)
         {// Identical data
@@ -228,16 +227,10 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
             return CrystalResult.Success;
         }
 
-        using (this.semaphore.Lock())
-        {
-            if (!this.waypoint.Equals(currentWaypoint))
-            {// Waypoint changed
-                // goto RetrySave;
-                return CrystalResult.Success;
-            }
-
-            this.Crystalizer.UpdatePlane(this, ref this.waypoint, hash, startingPosition);
-            currentWaypoint = this.waypoint;
+        var waypoint = this.waypoint;
+        if (!waypoint.Equals(currentWaypoint))
+        {// Waypoint changed
+            return CrystalResult.Success;
         }
 
         var result = await filer.Save(byteArray, currentWaypoint).ConfigureAwait(false);
@@ -246,7 +239,15 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
             return result;
         }
 
-        // this.Crystalizer.CrystalCheck.SetPlanePosition(currentWaypoint.CurrentPlane, startingPosition);
+        using (this.semaphore.Lock())
+        {// Update waypoint and plane position.
+            this.Crystalizer.UpdateWaypoint(this, ref this.waypoint, hash, startingPosition);
+            currentWaypoint = this.waypoint;
+
+            this.journalPosition = startingPosition;
+            this.Crystalizer.CrystalCheck.SetPlanePosition(currentWaypoint.Plane, startingPosition);
+        }
+
         _ = filer.LimitNumberOfFiles();
         // this.LogWaypoint("Save");
         return CrystalResult.Success;
@@ -738,7 +739,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>
 
         var hash = FarmHash.Hash64(byteArray);
         this.waypoint = default;
-        this.Crystalizer.UpdatePlane(this, ref this.waypoint, hash, 0);
+        this.Crystalizer.UpdateWaypoint(this, ref this.waypoint, hash, 0);
 
         this.SetCrystalAndPlane();
 

@@ -614,6 +614,38 @@ public class Crystalizer
 
     #region Waypoint/Plane
 
+    internal void UpdateWaypoint(ICrystalInternal crystal, ref Waypoint waypoint, ulong hash, ulong startingPosition)
+    {
+        var plane = waypoint.Plane;
+        if (plane == 0)
+        {
+            while (true)
+            {
+                plane = RandomVault.Pseudo.NextUInt32();
+                if (plane != 0 && this.planeToCrystal.TryAdd(plane, crystal))
+                {// Success
+                    break;
+                }
+            }
+        }
+
+        // Add journal
+        ulong journalPosition;
+        if (this.Journal != null)
+        {
+            this.Journal.GetWriter(JournalType.Waypoint, out var writer);
+            writer.Write(plane);
+            writer.Write(hash);
+            journalPosition = this.Journal.Add(writer);
+        }
+        else
+        {
+            journalPosition = waypoint.JournalPosition + 1;
+        }
+
+        waypoint = new(journalPosition, plane, hash);
+    }
+
     /*internal void UpdatePlane(ICrystalInternal crystal, ref Waypoint waypoint, ulong hash, ulong startingPosition)
     {
         if (waypoint.CurrentPlane != 0)
@@ -696,6 +728,19 @@ public class Crystalizer
         {
             journal.GetWriter(JournalType.Startingpoint, out var writer);
             return journal.Add(writer);
+        }
+        else
+        {
+            return 0;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal ulong GetJournalPosition()
+    {
+        if (this.Journal is { } journal)
+        {
+            return journal.GetCurrentPosition();
         }
         else
         {
@@ -877,7 +922,7 @@ public class Crystalizer
             for (var i = 0; i < array.Length; i++)
             {
                 var waypoint = array[i].Value.Waypoint;
-                if (!this.CrystalCheck.TryGetPlanePosition(waypoint.CurrentPlane, out var planePosition))
+                if (!this.CrystalCheck.TryGetPlanePosition(waypoint.Plane, out var planePosition))
                 {
                     this.logger.TryGet(LogLevel.Error)?.Log($"No plane position: {array[i].Value.DataType.Name}");
                 }
