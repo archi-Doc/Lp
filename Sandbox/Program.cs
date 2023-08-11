@@ -50,15 +50,15 @@ public class Program
                         // BackupDirectoryConfiguration = new LocalDirectoryConfiguration("Backup/Journal"),
                     });
 
-                /*context.AddCrystal<ManualClass>(
+                context.AddCrystal<ManualClass>(
                     new(SavePolicy.OnChanged, new RelativeFileConfiguration("Local/manual.tinyhand"))
                     {
                         SaveFormat = SaveFormat.Utf8,
-                        NumberOfHistoryFiles = 2,
+                        NumberOfHistoryFiles = 1,
                         // BackupFileConfiguration = new LocalFileConfiguration("Backup/manual.tinyhand")
                     });
 
-                context.AddCrystal<CombinedClass>(
+                /*context.AddCrystal<CombinedClass>(
                     new(
                         SavePolicy.Periodic,
                         new LocalFileConfiguration("Local/combined"),
@@ -67,7 +67,8 @@ public class Program
                         SaveInterval = TimeSpan.FromSeconds(10),
                         // BackupFileConfiguration = new LocalFileConfiguration("Backup/combined")
                     });*/
-                context.AddCrystal<ValueClass.GoshujinClass>(
+
+                /*context.AddCrystal<ValueClass.GoshujinClass>(
                     CrystalConfiguration.SingleUtf8(false, new LocalFileConfiguration("Local/ValueClass.tinyhand")));
 
                 context.AddCrystal<StandardData.GoshujinClass>(
@@ -81,8 +82,8 @@ public class Program
                     },
                     FileConfiguration = new LocalFileConfiguration("Local/BaseData/Crystal"),
                     // BackupFileConfiguration = new LocalFileConfiguration("Backup/BaseData/Crystal"),
-                    StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/BaseData/Storage")/*, new LocalDirectoryConfiguration("Backup/BaseData/Storage")*/),
-                });
+                    StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/BaseData/Storage")),
+                });*/
 
                 /*context.AddBigCrystal<ExampleData>(new BigCrystalConfiguration() with
                 {

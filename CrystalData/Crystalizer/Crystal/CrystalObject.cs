@@ -235,6 +235,8 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObje
             return CrystalResult.Success;
         }
 
+        this.Crystalizer.UpdateWaypoint(this, ref currentWaypoint, hash, startingPosition);
+
         var result = await filer.Save(byteArray, currentWaypoint).ConfigureAwait(false);
         if (result != CrystalResult.Success)
         {// Write error
@@ -243,9 +245,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObje
 
         using (this.semaphore.Lock())
         {// Update waypoint and plane position.
-            this.Crystalizer.UpdateWaypoint(this, ref this.waypoint, hash, startingPosition);
-            currentWaypoint = this.waypoint;
-
+            this.waypoint = currentWaypoint;
             this.journalPosition = startingPosition;
             this.Crystalizer.CrystalCheck.SetPlanePosition(currentWaypoint.Plane, startingPosition);
         }
