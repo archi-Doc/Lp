@@ -328,11 +328,11 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObje
 
     int IJournalObject.Key { get; set; } = -1;
 
-    void IJournalObject.WriteLocator(ref Tinyhand.IO.TinyhandWriter writer)
+    /*void IJournalObject.WriteLocator(ref Tinyhand.IO.TinyhandWriter writer)
     {
         writer.Write_Locator();
         writer.Write(this.waypoint.Plane);
-    }
+    }*/
 
     async Task ICrystalInternal.TestJournal()
     {
@@ -422,7 +422,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObje
                     break;
                 }
 
-                this.ReadJournal(journalObject, memoryOwner.Memory);
+                this.ReadJournal(journalObject, memoryOwner.Memory, waypoints[i].Plane);
 
                 previousObject = currentObject;
             }
@@ -439,7 +439,6 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObje
         {
             this.Crystalizer.Journal.GetWriter(recordType, out writer);
 
-            // This code is redundant.
             writer.Write_Locator();
             writer.Write(this.waypoint.Plane);
             return true;
@@ -533,7 +532,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObje
         return (data, format);
     }
 
-    private bool ReadJournal(IJournalObject journalObject, ReadOnlyMemory<byte> data)
+    private bool ReadJournal(IJournalObject journalObject, ReadOnlyMemory<byte> data, uint currentPlane)
     {
         var reader = new TinyhandReader(data.Span);
         var success = true;
@@ -550,12 +549,18 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObje
             {
                 if (journalType == JournalType.Record)
                 {
-                    if (journalObject.ReadRecord(ref reader))
-                    {// Success
-                    }
-                    else
-                    {// Failure
-                        success = false;
+                    reader.Read_Locator();
+                    var plane = reader.ReadUInt32();
+
+                    if (plane == currentPlane)
+                    {
+                        if (journalObject.ReadRecord(ref reader))
+                        {// Success
+                        }
+                        else
+                        {// Failure
+                            success = false;
+                        }
                     }
                 }
                 else

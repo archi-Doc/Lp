@@ -23,6 +23,8 @@ internal class TestClass0
             return;
         }
 
+        await this.crystalizer.TestJournalAll();
+
         var m = this.manualCrystal.Data;
         m.Id++;
         Console.WriteLine($"Manual id: {m.Id}");
