@@ -23,7 +23,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObje
     private SemaphoreLock semaphore = new();
     private TData? data;
     private CrystalFiler? crystalFiler;
-    private IStorage? storage;
+    // private IStorage? storage;
     private Waypoint waypoint;
     private DateTime lastSavedTime;
 
