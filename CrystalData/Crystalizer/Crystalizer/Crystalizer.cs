@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text;
 using Amazon.S3.Model.Internal.MarshallTransformations;
 using CrystalData.Check;
 using CrystalData.Filer;
@@ -922,28 +923,24 @@ public class Crystalizer
             for (var i = 0; i < array.Length; i++)
             {
                 var waypoint = array[i].Value.Waypoint;
-                if (!this.CrystalCheck.TryGetPlanePosition(waypoint.Plane, out var planePosition))
+                if (!this.CrystalCheck.TryGetPlanePosition(waypoint.Plane, out var journalPosition))
                 {
                     this.logger.TryGet(LogLevel.Error)?.Log($"No plane position: {array[i].Value.DataType.Name}");
                 }
 
-                /*var max = planePosition > waypoint.JournalPosition ? planePosition : waypoint.JournalPosition;
+                journalPosition = 0; // tempcode
+                var max = journalPosition > waypoint.JournalPosition ? journalPosition : waypoint.JournalPosition;
                 array[i].Value.JournalPosition = max;
                 if (position > max)
                 {
                     position = max;
-                }*/
-
-                var min = planePosition < waypoint.JournalPosition ? planePosition : waypoint.JournalPosition;
-                array[i].Value.JournalPosition = min;
-                if (position == 0 || position > min)
-                {
-                    position = min;
                 }
 
                 // this.logger.TryGet(LogLevel.Debug)?.Log($"JournalPosition {array[i].Value.DataType.Name}: {max}");
             }
 
+            HashSet<uint> restored = new();
+            var failure = false;
             var startPosition = position;
             ulong endPosition = 0;
             while (position != 0)
@@ -957,7 +954,7 @@ public class Crystalizer
 
                 try
                 {
-                    this.ProcessJournal(position, journalResult.Data.Memory);
+                    this.ProcessJournal(position, journalResult.Data.Memory, ref restored, ref failure);
                 }
                 finally
                 {
@@ -968,19 +965,35 @@ public class Crystalizer
             }
 
             this.logger.TryGet(LogLevel.Debug)?.Log($"Journal read {startPosition} - {endPosition}");
-            foreach (var x in this.crystals.Keys)
+            if (failure)
+            {
+                this.logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.Journal.ReadFailure);
+            }
+
+            if (restored.Count > 0)
+            {
+                var sb = new StringBuilder();
+                foreach (var x in restored)
+                {
+                    if (this.planeToCrystal.TryGetValue(x, out var crystal))
+                    {
+                        sb.Append($"{crystal.DataType.FullName}, ");
+                    }
+                }
+
+                this.logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.Journal.Restored, sb.ToString());
+            }
+
+            /*foreach (var x in this.crystals.Keys)
             {// Update journal position
                 x.JournalPosition = endPosition;
-            }
+            }*/
         }
     }
 
-    private void ProcessJournal(ulong position, Memory<byte> data)
+    private void ProcessJournal(ulong position, Memory<byte> data, ref HashSet<uint> restored, ref bool failure)
     {
         var reader = new TinyhandReader(data.Span);
-        var success = false;
-        var failure = false;
-
         while (reader.Consumed < data.Length)
         {
             if (!reader.TryReadRecord(out var length, out var journalType))
@@ -1006,7 +1019,6 @@ public class Crystalizer
                     var plane = reader.ReadUInt32();
                     if (this.planeToCrystal.TryGetValue(plane, out var crystal))
                     {
-                        crystal.Get
                         if (crystal.Data is IJournalObject journalObject)
                         {
                             var currentPosition = position + (ulong)reader.Consumed;
@@ -1014,8 +1026,8 @@ public class Crystalizer
                             {
                                 if (journalObject.ReadRecord(ref reader))
                                 {// Success
-                                 // this.logger.TryGet(LogLevel.Debug)?.Log($"Journal read, Plane: {plane}, Length: {length} => {crystal.GetType().FullName}");
-                                    success = true;
+                                    // this.logger.TryGet(LogLevel.Debug)?.Log($"Journal read, Plane: {plane}, Length: {length} => {crystal.GetType().FullName}");
+                                    restored.Add(plane);
                                 }
                                 else
                                 {// Failure
@@ -1041,15 +1053,6 @@ public class Crystalizer
                     reader.TryAdvance(reader.Remaining);
                 }
             }
-        }
-
-        if (failure)
-        {
-            this.logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.Journal.ReadFailure);
-        }
-        else if (success)
-        {
-            this.logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.Journal.ReadSuccess);
         }
     }
 

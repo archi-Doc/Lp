@@ -74,7 +74,7 @@ internal partial class ManualClass
 }
 
 [TinyhandObject(Journaling = true)]
-internal partial class CombinedClass : ITinyhandCustomJournal
+internal partial class CombinedClass
 {
     [Key(0)]
     public ManualClass Manual1 { get; set; } = default!;
@@ -82,51 +82,6 @@ internal partial class CombinedClass : ITinyhandCustomJournal
     [Key(1)]
     public ManualClass Manual2 { get; set; } = default!;
 
-    public void WriteRecord()
-    {
-        if (((IJournalObject)this).TryGetJournalWriter(out var journal, out var writer))
-        {
-            writer.Write_Key();
-            writer.Write(1);
-            writer.Write_Value();
-            TinyhandSerializer.SerializeObject(ref writer, this.Manual2);
-            journal.AddJournal(writer);
-        }
-    }
-
     public override string ToString()
         => $"{this.Manual1.ToString()} {this.Manual2.ToString()}";
-
-    public void WriteCustomLocator(ref TinyhandWriter writer)
-    {
-    }
-
-    public bool ReadCustomRecord(ref TinyhandReader reader)
-    {
-        var record = reader.Read_Record();
-        if (record == JournalRecord.Key)
-        {
-            if (reader.ReadInt32() == 1)
-            {
-                reader.Read_Value();
-                this.Manual2 = TinyhandSerializer.DeserializeObject<ManualClass>(ref reader, TinyhandSerializerOptions.Standard)!;
-                return true;
-            }
-        }
-        else if (record == JournalRecord.Locator)
-        {// tempcode
-            var key = reader.ReadInt32();
-            var journal = key switch
-            {
-                0 => this.Manual1 as IJournalObject,
-                1 => this.Manual2 as IJournalObject,
-                _ => default,
-            };
-
-            journal?.ReadRecord(ref reader);
-
-        }
-
-        return false;
-    }
 }

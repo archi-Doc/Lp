@@ -16,7 +16,7 @@ CrystalFiler = {
 
 Journal = {
   Corrupted = "Reading the journal was aborted due to a corrupted journal file."
-  ReadSuccess = "Data has been restored from the journal file."
+  Restored = "Data has been restored from the journal file: {0}"
   ReadFailure = "The journal file was read, but data recovery was unsuccessful."
 }
 
