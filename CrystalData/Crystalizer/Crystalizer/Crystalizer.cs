@@ -1006,6 +1006,7 @@ public class Crystalizer
                     var plane = reader.ReadUInt32();
                     if (this.planeToCrystal.TryGetValue(plane, out var crystal))
                     {
+                        crystal.Get
                         if (crystal.Data is IJournalObject journalObject)
                         {
                             var currentPosition = position + (ulong)reader.Consumed;
