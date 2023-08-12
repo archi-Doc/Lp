@@ -2,7 +2,7 @@
 
 namespace CrystalData;
 
-public interface ICrystal : ITinyhandCrystal
+public interface ICrystal : ITinyhandJournal
 {
     Crystalizer Crystalizer { get; }
 
@@ -44,8 +44,6 @@ internal interface ICrystalInternal : ICrystal
     Task? TryPeriodicSave(DateTime utc);
 
     Task TestJournal();
-
-    ulong JournalPosition { get; set; }
 
     Waypoint Waypoint { get; }
 }

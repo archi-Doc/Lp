@@ -69,11 +69,11 @@ internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>
     {
         lock (this.syncObject)
         {
-            if (this.Crystal?.TryGetJournalWriter(JournalType.Record, this.CurrentPlane, out var writer) == true)
+            if (((IJournalObject)this).TryGetJournalWriter(out var journal, out var writer, false))
             {
                 writer.Write_Remove();
                 writer.Write(file);
-                this.Crystal.AddJournal(writer);
+                journal.AddJournal(writer);
             }
 
             return this.fileToSize.Remove(file);
@@ -109,13 +109,13 @@ internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>
 
                 this.fileToSize[file] = dataSize;
 
-                if (sizeDiff != 0 && this.Crystal?.TryGetJournalWriter(JournalType.Record, this.CurrentPlane, out var writer) == true)
+                if (sizeDiff != 0 && ((IJournalObject)this).TryGetJournalWriter(out var journal, out var writer, false))
                 {
                     writer.Write_Add();
                     writer.Write(file);
                     writer.Write(dataSize);
                     writer.Write(sizeDiff);
-                    this.Crystal.AddJournal(writer);
+                    journal.AddJournal(writer);
                 }
             }
             else
@@ -134,13 +134,13 @@ internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>
             var file = RandomVault.Pseudo.NextUInt32();
             if (this.fileToSize.TryAdd(file, size))
             {
-                if (this.Crystal?.TryGetJournalWriter(JournalType.Record, this.CurrentPlane, out var writer) == true)
+                if (((IJournalObject)this).TryGetJournalWriter(out var journal, out var writer, false))
                 {
                     writer.Write_Add();
                     writer.Write(file);
                     writer.Write(size);
                     writer.Write(size);
-                    this.Crystal.AddJournal(writer);
+                    journal.AddJournal(writer);
                 }
 
                 return file;

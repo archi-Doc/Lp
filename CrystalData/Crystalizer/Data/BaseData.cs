@@ -454,7 +454,7 @@ public partial class BaseData : IDataInternal, ITinyhandCustomJournal
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RecordDatumObject(int index)
     {
-        if (this.Crystal is not null && this.Crystal.TryGetJournalWriter(JournalType.Record, this.CurrentPlane, out var writer))
+        if (((IJournalObject)this).TryGetJournalWriter(out var journal, out var writer))
         {
             writer.Write_Key();
             writer.Write(DatumObjectKey);

@@ -3,9 +3,9 @@
 CrystalDataQueryDefault = {
   NoCheckFile = """Check file not found. Do you want to force a launch? (enter 'y' if this is the first launch)"""
   InconsistentJournal = """Journal file is inconsistent with data file '{0}'
-Would you like to clear the journal file and proceed with loading the data?"""
+Would you like to clear the journal file and continue loading the data?"""
   LoadError = """Failed to load file '{0}' ({1})
-Do you want to create new data file?"""
+Do you want to create a new data file?"""
   BackupAhead = """The backup file '{0}' is ahead of the main file.
 Do you want to load the backup file?"""
 }
@@ -15,9 +15,9 @@ CrystalFiler = {
 }
 
 Journal = {
-  Corrupted = "Reading journal was aborted because the journal file is corrupted."
-  ReadSuccess = "The journal file has recovered a part of the data."
-  ReadFailure = "Journal file was read, but data recovery failed."
+  Corrupted = "Reading the journal was aborted due to a corrupted journal file."
+  Restored = "Data has been restored from the journal file: {0}"
+  ReadFailure = "The journal file was read, but data recovery was unsuccessful."
 }
 
 LocalFiler = {

@@ -15,5 +15,5 @@ internal partial class CrystalCheckData
     public ConcurrentDictionary<DataAndConfigurationIdentifier, int> DataAndConfigurations { get; private set; } = default!;
 
     [Key(1)]
-    public ConcurrentDictionary<uint, ulong> PlaneToJournalPosition { get; private set; } = default!;
+    public ConcurrentDictionary<Waypoint, ulong> WaypointToShortcutPosition { get; private set; } = default!;
 }

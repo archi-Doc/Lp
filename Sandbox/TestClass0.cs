@@ -1,27 +1,24 @@
-﻿using Arc.Threading;
-using CrystalData.Datum;
+﻿using ValueLink;
 
 namespace Sandbox;
 
 internal class TestClass0
 {
-    public TestClass0(Crystalizer crystalizer, /*ICrystal<ManualClass> manualCrystal, ICrystal<CombinedClass> combinedCrystal, */IBigCrystal<BaseData> crystalData, ValueClass.GoshujinClass valueClassGoshujin)
+    public TestClass0(Crystalizer crystalizer, ICrystal<ManualClass> manualCrystal, ICrystal<CombinedClass> combinedCrystal, ICrystal<StandardData.GoshujinClass> standardCrystal/*, IBigCrystal<BaseData> crystalData, ValueClass.GoshujinClass valueClassGoshujin, StandardData.GoshujinClass standardGoshujin*/)
     {
         this.crystalizer = crystalizer;
 
-        /*this.manualCrystal = manualCrystal;
-        this.combinedCrystal = combinedCrystal;*/
-        this.crystalData = crystalData;
+        this.manualCrystal = manualCrystal;
+        this.combinedCrystal = combinedCrystal;
+        this.standardCrystal = standardCrystal;
+        /*this.crystalData = crystalData;
         this.valueClassGoshujin = valueClassGoshujin;
+        this.standardGoshujin = standardGoshujin;*/
     }
 
     public async Task Test1()
     {
         Console.WriteLine("Sandbox test0");
-
-        this.crystalizer.ResetConfigurations();
-        await this.crystalizer.LoadConfigurations(new LocalFileConfiguration("Local/Configurations.tinyhand"));
-        // await this.crystalizer.SaveConfigurations(new LocalFileConfiguration("Local/Configurations.tinyhand"));
 
         var result = await this.crystalizer.PrepareAndLoadAll();
         if (result.IsFailure())
@@ -31,43 +28,32 @@ internal class TestClass0
 
         // await this.crystalizer.TestJournalAll();
 
-        /*var manualClass = this.manualCrystal.Data;
-        manualClass.Id++;
-        Console.WriteLine(manualClass.ToString());
+        var m = this.manualCrystal.Data;
+        // m.Id++;
+        Console.WriteLine($"Manual id: {m.Id}");
 
-        var combinedClass = this.combinedCrystal.Data;
-        combinedClass.Manual2.Id += 2;
-        Console.WriteLine(combinedClass.ToString());*/
+        var c = this.combinedCrystal.Data;
+        c.Manual1.Id++;
+        c.Manual2.Id += 2;
+        Console.WriteLine($"Combined: {c.ToString()}");
 
-        // combinedClass.WriteRecord(); // -> Locator
-
-        // ulong fileId = 0;
-        // combinedCrystal.Storage.PutAndForget(ref fileId, new(new byte[] { 1, 2, 3, }));
-
-        var data = this.crystalData.Data;
-        using (var op = data.Lock<ObjectDatum<LocalFileConfiguration>>())
+        var g = this.standardCrystal.Data;
+        using (var w = g.TryLock(0, ValueLink.TryLockMode.GetOrCreate))
         {
-            if (op.Datum is not null)
+            if (w is not null)
             {
-                var datum = op.Datum.Get();
-                op.Datum.Set(new LocalFileConfiguration("test1"));
+                w.Name = "Zero";
+                w.Age += 1d;
+                Console.WriteLine(w.Commit());
             }
-        }
-
-        var n = this.valueClassGoshujin.Count;
-        var tc = new ValueClass();
-        var semaphore = new SemaphoreLock();
-        tc.Name = "Test" + n.ToString();
-        tc.Id = n;
-        lock (this.valueClassGoshujin)
-        {
-            this.valueClassGoshujin.Add(tc);
         }
     }
 
     private Crystalizer crystalizer;
-    // private ICrystal<ManualClass> manualCrystal;
-    // private ICrystal<CombinedClass> combinedCrystal;
-    private IBigCrystal<BaseData> crystalData;
-    private ValueClass.GoshujinClass valueClassGoshujin;
+    private ICrystal<ManualClass> manualCrystal;
+    private ICrystal<CombinedClass> combinedCrystal;
+    private ICrystal<StandardData.GoshujinClass> standardCrystal;
+    // private IBigCrystal<BaseData> crystalData;
+    // private ValueClass.GoshujinClass valueClassGoshujin;
+    // private StandardData.GoshujinClass standardGoshujin;
 }
