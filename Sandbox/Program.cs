@@ -58,15 +58,23 @@ public class Program
                         // BackupFileConfiguration = new LocalFileConfiguration("Backup/manual.tinyhand")
                     });
 
-                /*context.AddCrystal<CombinedClass>(
+                context.AddCrystal<CombinedClass>(
                     new(
                         SavePolicy.Periodic,
                         new LocalFileConfiguration("Local/combined"),
                         new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/Simple"), new LocalDirectoryConfiguration("Backup/Simple")))
                     {
                         SaveInterval = TimeSpan.FromSeconds(10),
+                        NumberOfHistoryFiles = 2,
                         // BackupFileConfiguration = new LocalFileConfiguration("Backup/combined")
-                    });*/
+                    });
+
+                context.AddCrystal<StandardData.GoshujinClass>(
+                    new(SavePolicy.Periodic, new RelativeFileConfiguration("Local/standard.tinyhand"))
+                    {
+                        SaveFormat = SaveFormat.Utf8,
+                        NumberOfHistoryFiles = 2,
+                    });
 
                 /*context.AddCrystal<ValueClass.GoshujinClass>(
                     CrystalConfiguration.SingleUtf8(false, new LocalFileConfiguration("Local/ValueClass.tinyhand")));

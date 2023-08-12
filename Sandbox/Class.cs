@@ -17,6 +17,12 @@ internal partial record StandardData
 
     [Key(1)]
     private string name = string.Empty;
+
+    [Key(2)]
+    private double age;
+
+    public override string ToString()
+        => $"{this.id} {this.name} ({this.age.ToString()})";
 }
 
 [TinyhandObject(Journaling = true, LockObject = "syncObject")]

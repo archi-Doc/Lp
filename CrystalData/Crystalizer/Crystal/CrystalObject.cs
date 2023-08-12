@@ -3,6 +3,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using CrystalData.Filer;
+using CrystalData.Storage;
 using Tinyhand.IO;
 
 namespace CrystalData;
@@ -25,7 +26,6 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObje
     private IStorage? storage;
     private Waypoint waypoint;
     private DateTime lastSavedTime;
-    private ulong journalPosition;
 
     #endregion
 
@@ -205,6 +205,11 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObje
             return CrystalResult.NotPrepared;
         }
 
+        if (this.storage is { } storage && storage is not EmptyStorage)
+        {
+            await storage.SaveStorage();
+        }
+
         this.lastSavedTime = DateTime.UtcNow;
 
         // Starting position
@@ -225,7 +230,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObje
         var hash = FarmHash.Hash64(byteArray.AsSpan());
         if (hash == currentWaypoint.Hash)
         {// Identical data
-            // this.LogWaypoint("Identical");
+            this.Crystalizer.CrystalCheck.SetShortcutPosition(currentWaypoint, startingPosition);
             return CrystalResult.Success;
         }
 
@@ -246,12 +251,10 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObje
         using (this.semaphore.Lock())
         {// Update waypoint and plane position.
             this.waypoint = currentWaypoint;
-            this.journalPosition = startingPosition;
-            this.Crystalizer.CrystalCheck.SetPlanePosition(currentWaypoint.Plane, startingPosition);
+            this.Crystalizer.CrystalCheck.SetShortcutPosition(currentWaypoint, startingPosition);
         }
 
         _ = filer.LimitNumberOfFiles();
-        // this.LogWaypoint("Save");
         return CrystalResult.Success;
     }
 
@@ -311,12 +314,6 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObje
 
         this.lastSavedTime = utc;
         return ((ICrystal)this).Save(false);
-    }
-
-    ulong ICrystalInternal.JournalPosition
-    {
-        get => this.journalPosition;
-        set => this.journalPosition = value;
     }
 
     Waypoint ICrystalInternal.Waypoint

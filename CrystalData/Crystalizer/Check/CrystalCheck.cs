@@ -14,19 +14,14 @@ internal class CrystalCheck
         newlyRegistered = this.data.DataAndConfigurations.TryAdd(identifier, 0);
     }
 
-    public void ClearPlanePosition()
-        => this.data.PlaneToJournalPosition.Clear();
+    public void ClearShortcutPosition()
+        => this.data.WaypointToShortcutPosition.Clear();
 
-    public void SetPlanePosition(uint plane, ulong position)
-    {
-        if (plane != 0)
-        {
-            this.data.PlaneToJournalPosition[plane] = position;
-        }
-    }
+    public void SetShortcutPosition(Waypoint waypoint, ulong position)
+        => this.data.WaypointToShortcutPosition[waypoint] = position;
 
-    public bool TryGetPlanePosition(uint plane, out ulong position)
-        => this.data.PlaneToJournalPosition.TryGetValue(plane, out position);
+    public bool TryGetPlanePosition(Waypoint waypoint, out ulong position)
+        => this.data.WaypointToShortcutPosition.TryGetValue(waypoint, out position);
 
     public void Load(string filePath)
     {

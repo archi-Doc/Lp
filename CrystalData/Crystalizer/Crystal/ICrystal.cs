@@ -45,8 +45,6 @@ internal interface ICrystalInternal : ICrystal
 
     Task TestJournal();
 
-    ulong JournalPosition { get; set; }
-
     Waypoint Waypoint { get; }
 }
 

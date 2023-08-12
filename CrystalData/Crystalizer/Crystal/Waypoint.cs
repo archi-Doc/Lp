@@ -5,7 +5,8 @@ using System.Runtime.CompilerServices;
 
 namespace CrystalData;
 
-public readonly struct Waypoint : IEquatable<Waypoint>, IComparable<Waypoint>
+[TinyhandObject]
+public readonly partial struct Waypoint : IEquatable<Waypoint>, IComparable<Waypoint>
 {// JournalPosition, Plane, Hash
     public const string Extension = "waypoint";
     public const int Length = 24; // 8 + 4 + 8 + 4
@@ -17,6 +18,10 @@ public readonly struct Waypoint : IEquatable<Waypoint>, IComparable<Waypoint>
     static Waypoint()
     {
         LengthInBase32 = Base32Sort.GetEncodedLength(Length);
+    }
+
+    public Waypoint()
+    {
     }
 
     public Waypoint(ulong journalPosition, uint plane, ulong hash)
@@ -56,9 +61,16 @@ public readonly struct Waypoint : IEquatable<Waypoint>, IComparable<Waypoint>
         return false;
     }
 
+    [Key(0)]
     public readonly ulong JournalPosition;
+
+    [Key(1)]
     public readonly uint Plane; // Où allons-nous
+
+    [Key(2)]
     public readonly ulong Hash;
+
+    [Key(3)]
     public readonly uint Reserved;
 
     public bool IsValid => this.JournalPosition != 0;

@@ -479,7 +479,7 @@ public class Crystalizer
 
         // Save crystal check
         this.CrystalCheck.Save();
-        this.CrystalCheck.ClearPlanePosition();
+        this.CrystalCheck.ClearShortcutPosition();
 
         // this.logger.TryGet()?.Log($"Prepared - {string.Join(", ", list)}");
 
@@ -919,24 +919,21 @@ public class Crystalizer
         {// Load journal
             ulong position = journal.GetCurrentPosition();
 
-            var array = this.planeToCrystal.ToArray();
+            var array = this.crystals.Keys.ToArray();
             for (var i = 0; i < array.Length; i++)
             {
-                var waypoint = array[i].Value.Waypoint;
-                if (!this.CrystalCheck.TryGetPlanePosition(waypoint.Plane, out var journalPosition))
+                var waypoint = array[i].Waypoint;
+                this.CrystalCheck.TryGetPlanePosition(waypoint, out var shortcutPosition);
+                /*f (!this.CrystalCheck.TryGetPlanePosition(waypoint, out var shortcutPosition))
                 {
-                    this.logger.TryGet(LogLevel.Error)?.Log($"No plane position: {array[i].Value.DataType.Name}");
-                }
+                    this.logger.TryGet(LogLevel.Error)?.Log($"No shortcut position: {array[i].Value.DataType.Name}");
+                }*/
 
-                journalPosition = 0; // tempcode
-                var max = journalPosition > waypoint.JournalPosition ? journalPosition : waypoint.JournalPosition;
-                array[i].Value.JournalPosition = max;
+                var max = shortcutPosition > waypoint.JournalPosition ? shortcutPosition : waypoint.JournalPosition;
                 if (position > max)
                 {
                     position = max;
                 }
-
-                // this.logger.TryGet(LogLevel.Debug)?.Log($"JournalPosition {array[i].Value.DataType.Name}: {max}");
             }
 
             HashSet<uint> restored = new();
@@ -983,11 +980,6 @@ public class Crystalizer
 
                 this.logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.Journal.Restored, sb.ToString());
             }
-
-            /*foreach (var x in this.crystals.Keys)
-            {// Update journal position
-                x.JournalPosition = endPosition;
-            }*/
         }
     }
 
@@ -1022,7 +1014,7 @@ public class Crystalizer
                         if (crystal.Data is IJournalObject journalObject)
                         {
                             var currentPosition = position + (ulong)reader.Consumed;
-                            if (currentPosition > crystal.JournalPosition)
+                            if (currentPosition > crystal.Waypoint.JournalPosition)
                             {
                                 if (journalObject.ReadRecord(ref reader))
                                 {// Success
