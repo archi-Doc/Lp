@@ -927,11 +927,18 @@ public class Crystalizer
                     this.logger.TryGet(LogLevel.Error)?.Log($"No plane position: {array[i].Value.DataType.Name}");
                 }
 
-                var max = planePosition > waypoint.JournalPosition ? planePosition : waypoint.JournalPosition;
+                /*var max = planePosition > waypoint.JournalPosition ? planePosition : waypoint.JournalPosition;
                 array[i].Value.JournalPosition = max;
                 if (position > max)
                 {
                     position = max;
+                }*/
+
+                var min = planePosition < waypoint.JournalPosition ? planePosition : waypoint.JournalPosition;
+                array[i].Value.JournalPosition = min;
+                if (position == 0 || position > min)
+                {
+                    position = min;
                 }
 
                 // this.logger.TryGet(LogLevel.Debug)?.Log($"JournalPosition {array[i].Value.DataType.Name}: {max}");

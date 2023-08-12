@@ -1,7 +1,4 @@
-﻿using Arc.Threading;
-using CrystalData.Datum;
-
-namespace Sandbox;
+﻿namespace Sandbox;
 
 internal class TestClass0
 {
@@ -28,6 +25,7 @@ internal class TestClass0
 
         var m = this.manualCrystal.Data;
         m.Id++;
+        Console.WriteLine($"Manual id: {m.Id}");
     }
 
     private Crystalizer crystalizer;

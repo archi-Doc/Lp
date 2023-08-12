@@ -438,6 +438,10 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObje
         if (this.Crystalizer.Journal is not null)
         {
             this.Crystalizer.Journal.GetWriter(recordType, out writer);
+
+            // This code is redundant.
+            writer.Write_Locator();
+            writer.Write(this.waypoint.Plane);
             return true;
         }
         else
