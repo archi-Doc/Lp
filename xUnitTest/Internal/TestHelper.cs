@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.IO;
 using Arc.Crypto;
 using CrystalData;
 using CrystalData.Datum;
@@ -71,6 +72,25 @@ public static class TestHelper
         return crystal;
     }
 
+    public static async Task UnloadAndDeleteAll(ICrystal crystal)
+    {
+        await crystal.Crystalizer.SaveAll(true);
+        crystal.Crystalizer.Himo.MemoryUsage.Is(0);
+        await crystal.Crystalizer.DeleteAll();
+
+        if (crystal.Crystalizer.JournalConfiguration is SimpleJournalConfiguration journalConfiguration)
+        {
+            Directory.Delete(journalConfiguration.DirectoryConfiguration.Path, true);
+        }
+
+        var directory = Path.GetDirectoryName(crystal.CrystalConfiguration.FileConfiguration.Path);
+        if (directory is not null)
+        {
+            Directory.EnumerateFileSystemEntries(directory).Any().IsFalse(); // Directory is empty
+            Directory.Delete(directory, true);
+        }
+    }
+
     public static async Task UnloadAndDeleteAll(IBigCrystal crystal)
     {
         await crystal.Crystalizer.SaveAll(true);
@@ -82,6 +102,7 @@ public static class TestHelper
     {
         await crystal.Crystalizer.SaveAll(true);
         crystal.Crystalizer.Himo.MemoryUsage.Is(0);
+        await crystal.PrepareAndLoad(false);
     }
 
     public static async Task<IBigCrystal<MergerData>> CreateAndStartMerger(int maxParent)

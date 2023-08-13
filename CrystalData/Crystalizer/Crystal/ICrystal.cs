@@ -43,7 +43,7 @@ internal interface ICrystalInternal : ICrystal
 {
     Task? TryPeriodicSave(DateTime utc);
 
-    Task TestJournal();
+    Task<bool> TestJournal();
 
     Waypoint Waypoint { get; }
 }
