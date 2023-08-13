@@ -150,6 +150,7 @@ public partial class CrystalTest
         await TestHelper.StopAndStartCrystal(crystal);
 
         // Get flakes and check
+        data = crystal.Data;
         for (var i = 0; i < N; i++)
         {
             flake = data.TryGetChild(new(i));
@@ -204,6 +205,8 @@ public partial class CrystalTest
         nested.FragmentDatum().Set(new(2), TinyhandSerializer.SerializeObject(t2));
 
         await TestHelper.StopAndStartCrystal(crystal);
+        data = crystal.Data;
+        flake = data.GetOrCreateChild(new(1));
 
         result = await flake.BlockDatum().GetObject<TestObject>();
         result.Object.IsStructuralEqual(t1);

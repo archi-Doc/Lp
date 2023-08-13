@@ -3,6 +3,7 @@
 using CrystalData;
 using Tinyhand;
 using Xunit;
+using static Netsphere.Machines.PublicIPMachine;
 
 namespace xUnitTest.CrystalDataTest;
 
@@ -46,6 +47,7 @@ public partial class MergerTest
         (count <= MaxParent).IsTrue();
 
         await TestHelper.StopAndStartCrystal(crystal);
+        root = crystal.Data;
 
         count = 0;
         for (var i = 0; i < N; i++)

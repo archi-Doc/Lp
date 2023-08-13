@@ -230,14 +230,13 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObje
         var hash = FarmHash.Hash64(byteArray.AsSpan());
         if (hash == currentWaypoint.Hash)
         {// Identical data
-            this.Crystalizer.CrystalCheck.SetShortcutPosition(currentWaypoint, startingPosition);
-            return CrystalResult.Success;
+            goto Exit;
         }
 
         var waypoint = this.waypoint;
         if (!waypoint.Equals(currentWaypoint))
         {// Waypoint changed
-            return CrystalResult.Success;
+            goto Exit;
         }
 
         this.Crystalizer.UpdateWaypoint(this, ref currentWaypoint, hash, startingPosition);
@@ -252,9 +251,27 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObje
         {// Update waypoint and plane position.
             this.waypoint = currentWaypoint;
             this.Crystalizer.CrystalCheck.SetShortcutPosition(currentWaypoint, startingPosition);
+            if (unload)
+            {
+                this.data = null;
+                this.State = CrystalState.Initial;
+            }
         }
 
         _ = filer.LimitNumberOfFiles();
+        return CrystalResult.Success;
+
+Exit:
+        using (this.semaphore.Lock())
+        {
+            this.Crystalizer.CrystalCheck.SetShortcutPosition(currentWaypoint, startingPosition);
+            if (unload)
+            {
+                this.data = null;
+                this.State = CrystalState.Initial;
+            }
+        }
+
         return CrystalResult.Success;
     }
 

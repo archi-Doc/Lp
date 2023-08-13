@@ -129,6 +129,11 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
 
             // Save storage group
             await this.StorageGroup.SaveGroup().ConfigureAwait(false);
+
+            if (unload)
+            {
+                this.State = CrystalState.Initial;
+            }
         }
 
         return CrystalResult.Success;
