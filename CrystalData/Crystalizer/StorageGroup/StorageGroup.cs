@@ -317,7 +317,7 @@ public sealed class StorageGroup
         }
     }
 
-    internal async Task TestJournal()
+    internal async Task<bool> TestJournal()
     {
         IStorage?[] array;
         lock (this.syncObject)
@@ -325,13 +325,19 @@ public sealed class StorageGroup
             array = this.storages.Select(x => x.Storage).ToArray();
         }
 
+        var result = true;
         foreach (var x in array)
         {
             if (x is IStorageInternal storageInternal)
             {
-                await storageInternal.TestJournal().ConfigureAwait(false);
+                if (await storageInternal.TestJournal().ConfigureAwait(false) == false)
+                {
+                    result = false;
+                }
             }
         }
+
+        return result;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

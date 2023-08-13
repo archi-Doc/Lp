@@ -51,6 +51,7 @@ public class JournalTest
         }
 
         await c.Save(true);
+        await c.Crystalizer.SaveJournal();
 
         // g2: empty
         await c.PrepareAndLoad(false);
@@ -63,6 +64,7 @@ public class JournalTest
         }
 
         await c.Save(true);
+        await c.Crystalizer.SaveJournal();
 
         // g3: Zero
         await c.PrepareAndLoad(false);
@@ -78,7 +80,31 @@ public class JournalTest
         }
 
         await c.Save(true);
-        c.Crystalizer.TestJournalAll();
+        await c.Crystalizer.SaveJournal();
+        var result = await c.Crystalizer.TestJournalAll();
+        result.IsTrue();
+
+        // g4: 1, 2, 3, 4
+        await c.PrepareAndLoad(false);
+        var g4 = c.Data;
+        lock (g4.SyncObject)
+        {
+            g4.Add(new(1, "1", 1d));
+            g4.Add(new(4, "4", 4d));
+            g4.Add(new(3, "3", 3d));
+            g4.Add(new(2, "2", 2d));
+
+            var d = g4.IdChain.FindFirst(3)!;
+            d.Goshujin = null;
+
+            d = g4.IdChain.FindFirst(0)!;
+            d.Id = 100;
+        }
+
+        await c.Save(true);
+        await c.Crystalizer.SaveJournal();
+        result = await c.Crystalizer.TestJournalAll();
+        result.IsTrue();
 
         await TestHelper.UnloadAndDeleteAll(c);
     }
@@ -90,6 +116,7 @@ public class JournalTest
             .ConfigureCrystal(context =>
             {
                 var directory = $"Crystal[{RandomVault.Pseudo.NextUInt32():x4}]";
+                context.SetJournal(new SimpleJournalConfiguration(new LocalDirectoryConfiguration(Path.Combine(directory, "Journal"))));
                 context.AddCrystal<SerializableData.GoshujinClass>(
                     new(SavePolicy.Manual, new LocalFileConfiguration(Path.Combine(directory, "Test.tinyhand")))
                     {
@@ -102,7 +129,7 @@ public class JournalTest
         var crystalizer = unit.Context.ServiceProvider.GetRequiredService<Crystalizer>();
 
         var crystal = crystalizer.GetCrystal<SerializableData.GoshujinClass>();
-        var result = await crystal.PrepareAndLoad(false);
+        var result = await crystalizer.PrepareAndLoadAll(false);
         result.Is(CrystalResult.Success);
         return crystal;
     }

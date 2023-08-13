@@ -245,11 +245,15 @@ internal partial class SimpleStorage : IStorage, IStorageInternal
         return await this.mainFiler.DeleteDirectoryAsync(this.directory).ConfigureAwait(false);
     }
 
-    async Task IStorageInternal.TestJournal()
+    async Task<bool> IStorageInternal.TestJournal()
     {
         if (this.crystal is ICrystalInternal crystalInternal)
         {
-            await crystalInternal.TestJournal().ConfigureAwait(false);
+            return await crystalInternal.TestJournal().ConfigureAwait(false);
+        }
+        else
+        {
+            return true;
         }
     }
 

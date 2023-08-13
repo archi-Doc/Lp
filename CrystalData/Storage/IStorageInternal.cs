@@ -4,5 +4,5 @@ namespace CrystalData;
 
 internal interface IStorageInternal
 {
-    Task TestJournal();
+    Task<bool> TestJournal();
 }

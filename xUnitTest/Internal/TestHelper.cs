@@ -78,6 +78,11 @@ public static class TestHelper
         crystal.Crystalizer.Himo.MemoryUsage.Is(0);
         await crystal.Crystalizer.DeleteAll();
 
+        if (crystal.Crystalizer.JournalConfiguration is SimpleJournalConfiguration journalConfiguration)
+        {
+            Directory.Delete(journalConfiguration.DirectoryConfiguration.Path, true);
+        }
+
         var directory = Path.GetDirectoryName(crystal.CrystalConfiguration.FileConfiguration.Path);
         if (directory is not null)
         {

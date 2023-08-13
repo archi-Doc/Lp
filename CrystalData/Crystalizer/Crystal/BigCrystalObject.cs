@@ -191,10 +191,20 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
     Waypoint ICrystalInternal.Waypoint
         => this.crystal.Waypoint;
 
-    async Task ICrystalInternal.TestJournal()
+    async Task<bool> ICrystalInternal.TestJournal()
     {
-        await this.crystal.TestJournal().ConfigureAwait(false);
-        await this.StorageGroup.TestJournal().ConfigureAwait(false);
+        var result = true;
+        if (await this.crystal.TestJournal().ConfigureAwait(false) == false)
+        {
+            result = false;
+        }
+
+        if (await this.StorageGroup.TestJournal().ConfigureAwait(false) == false)
+        {
+            result = false;
+        }
+
+        return result;
     }
 
     #endregion

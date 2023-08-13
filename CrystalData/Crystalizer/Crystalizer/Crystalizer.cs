@@ -114,6 +114,8 @@ public class Crystalizer
 
     public IJournal? Journal { get; private set; }
 
+    public JournalConfiguration? JournalConfiguration { get; private set; }
+
     public IStorageKey StorageKey { get; }
 
     public HimoGoshujinClass Himo { get; }
@@ -502,11 +504,6 @@ public class Crystalizer
         await this.SaveAndTerminate(true, true);
     }
 
-    public async Task SaveJournalOnlyForTest()
-    {
-        await this.SaveAndTerminate(false, true);
-    }
-
     public void AddToSaveQueue(ICrystal crystal)
     {
         this.saveQueue.TryAdd(crystal, 0);
@@ -602,12 +599,27 @@ public class Crystalizer
         }
     }
 
-    public async Task TestJournalAll()
+    public async Task<bool> TestJournalAll()
     {
         var crystals = this.crystals.Keys.ToArray();
+        var result = true;
         foreach (var x in crystals)
         {
-            await x.TestJournal().ConfigureAwait(false);
+            if (await x.TestJournal().ConfigureAwait(false) == false)
+            {
+                result = false;
+            }
+        }
+
+        return result;
+    }
+
+    public async Task SaveJournal()
+    {
+        // Save journal
+        if (this.Journal is { } journal)
+        {
+            await journal.SaveJournalAsync().ConfigureAwait(false);
         }
     }
 
@@ -903,6 +915,7 @@ public class Crystalizer
 
                 var simpleJournal = new SimpleJournal(this, simpleJournalConfiguration, this.UnitLogger.GetLogger<SimpleJournal>());
                 this.Journal = simpleJournal;
+                this.JournalConfiguration = simpleJournalConfiguration;
             }
             else
             {

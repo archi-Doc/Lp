@@ -348,25 +348,26 @@ Exit:
         writer.Write(this.waypoint.Plane);
     }*/
 
-    async Task ICrystalInternal.TestJournal()
+    async Task<bool> ICrystalInternal.TestJournal()
     {
         if (this.Crystalizer.Journal is not CrystalData.Journal.SimpleJournal journal)
         {// No journaling
-            return;
+            return true;
         }
 
+        var testResult = true;
         using (this.semaphore.Lock())
         {
             if (this.crystalFiler is null ||
                 this.crystalFiler.Main is not { } main)
             {
-                return;
+                return testResult;
             }
 
             var waypoints = main.GetWaypoints();
             if (waypoints.Length <= 1)
             {// The number of waypoints is 1 or less.
-                return;
+                return testResult;
             }
 
             var logger = this.Crystalizer.UnitLogger.GetLogger<TData>();
@@ -380,6 +381,7 @@ Exit:
                 if (result.IsFailure)
                 {// Loading error
                     logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.TestJournal.LoadingFailure, base32);
+                    testResult = false;
                     break;
                 }
 
@@ -389,6 +391,7 @@ Exit:
                 {// Deserialization error
                     result.Return();
                     logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.TestJournal.DeserializationFailure, base32);
+                    testResult = false;
                     break;
                 }
 
@@ -411,6 +414,7 @@ Exit:
                     else
                     {// Failure
                         logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.TestJournal.Failure, base32);
+                        testResult = false;
                     }
                 }
 
@@ -433,6 +437,7 @@ Exit:
                 var journalResult = await journal.ReadJournalAsync(waypoints[i].JournalPosition, waypoints[i + 1].JournalPosition, memoryOwner.Memory).ConfigureAwait(false);
                 if (!journalResult)
                 {// Journal error
+                    testResult = false;
                     break;
                 }
 
@@ -441,6 +446,8 @@ Exit:
                 previousObject = currentObject;
             }
         }
+
+        return testResult;
     }
 
     #endregion
