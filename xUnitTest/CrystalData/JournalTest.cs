@@ -6,12 +6,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Tinyhand;
 using ValueLink;
 using Xunit;
+using static CrystalData.CrystalDataHashed;
 
 namespace xUnitTest.CrystalDataTest;
 
-[TinyhandObject(Journaling = true)]
+[TinyhandObject(Journal = true)]
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
-internal partial record SerializableData
+internal partial record SerializableData : IEquatableObject<SerializableData>
 {
     public SerializableData()
     {
@@ -36,6 +37,9 @@ internal partial record SerializableData
 
     public override string ToString()
         => $"{this.id} {this.name} ({this.age.ToString()})";
+
+    public bool ObjectEquals(SerializableData other)
+        => this.id == other.id && this.name == other.name && this.age == other.age;
 }
 
 public class JournalTest
@@ -56,6 +60,8 @@ public class JournalTest
         // g2: empty
         await c.PrepareAndLoad(false);
         var g2 = c.Data;
+        g2.GoshujinEquals(g1).IsTrue();
+
         lock (g2.SyncObject)
         {
             g2.Count.Is(0);
@@ -69,6 +75,8 @@ public class JournalTest
         // g3: Zero
         await c.PrepareAndLoad(false);
         var g3 = c.Data;
+        g3.GoshujinEquals(g2).IsTrue();
+
         lock (g3.SyncObject)
         {
             g3.Count.Is(1);
@@ -87,6 +95,7 @@ public class JournalTest
         // g4: 1, 2, 3, 4
         await c.PrepareAndLoad(false);
         var g4 = c.Data;
+        g4.GoshujinEquals(g3).IsTrue();
         lock (g4.SyncObject)
         {
             g4.Add(new(1, "1", 1d));
@@ -99,6 +108,25 @@ public class JournalTest
 
             d = g4.IdChain.FindFirst(0)!;
             d.Id = 100;
+        }
+
+        await c.Save(true);
+        await c.Crystalizer.SaveJournal();
+        result = await c.Crystalizer.TestJournalAll();
+        result.IsTrue();
+
+        // g5
+        await c.PrepareAndLoad(false);
+        var g5 = c.Data;
+        g5.GoshujinEquals(g4).IsTrue();
+        lock (g5.SyncObject)
+        {
+            var d = g5.IdChain.FindFirst(1)!;
+            d.Name = "One";
+
+            g5.IdChain.FindFirst(0).IsNull();
+            d = g5.IdChain.FindFirst(100)!;
+            d.Name = "100";
         }
 
         await c.Save(true);

@@ -7,7 +7,7 @@ using ValueLink;
 
 namespace LP.Crystal;
 
-[TinyhandObject(ExplicitKeyOnly = true, Journaling = true)]
+[TinyhandObject(ExplicitKeyOnly = true, Journal = true)]
 [ValueLinkObject]
 public partial class LpData : BaseData
 {

@@ -3,10 +3,11 @@
 #pragma warning disable SA1124 // Do not use regions
 
 using CrystalData.Datum;
+using static CrystalData.CrystalDataHashed;
 
 namespace CrystalData;
 
-[TinyhandObject(ExplicitKeyOnly = true, Journaling = true)]
+[TinyhandObject(ExplicitKeyOnly = true, Journal = true)]
 [ValueLinkObject]
 public partial class RecursiveData<TKey> : BaseData
 {
