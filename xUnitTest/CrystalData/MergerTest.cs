@@ -3,7 +3,6 @@
 using CrystalData;
 using Tinyhand;
 using Xunit;
-using static Netsphere.Machines.PublicIPMachine;
 
 namespace xUnitTest.CrystalDataTest;
 

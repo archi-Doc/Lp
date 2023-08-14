@@ -57,11 +57,7 @@ internal partial record StandardData : IEquatableObject<StandardData>
 
         if (this.children is null)
         {
-            if (other.children is null)
-            {
-                return true;
-            }
-            else
+            if (other.children is not null)
             {
                 return false;
             }
@@ -72,11 +68,13 @@ internal partial record StandardData : IEquatableObject<StandardData>
             {
                 return false;
             }
-            else
+            else if (!this.children.GoshujinEquals(other.children))
             {
-                return this.children.GoshujinEquals(other.children);
+                return false;
             }
         }
+
+        return true;
     }
 }
 

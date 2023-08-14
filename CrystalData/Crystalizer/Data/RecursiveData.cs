@@ -3,7 +3,6 @@
 #pragma warning disable SA1124 // Do not use regions
 
 using CrystalData.Datum;
-using static CrystalData.CrystalDataHashed;
 
 namespace CrystalData;
 
