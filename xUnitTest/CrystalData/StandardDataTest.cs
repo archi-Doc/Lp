@@ -111,7 +111,7 @@ public class StandardDataTest
         var result = await c.Crystalizer.TestJournalAll();
         result.IsTrue();
 
-        // g3: Zero
+        // g3: Zero, 1, 2
         await c.PrepareAndLoad(false);
         var g3 = c.Data;
         g3.GoshujinEquals(g2).IsTrue();
@@ -125,11 +125,29 @@ public class StandardDataTest
         {
             w.Name = "1";
             w.Children = new();
-            /*using (var w2 = w.Children.TryLock(11, TryLockMode.GetOrCreate)!)
+            w.Commit();
+        }
+
+        using (var w = g3.TryLock(2, TryLockMode.GetOrCreate)!)
+        {
+            w.Name = "2";
+            w.Children = new();
+            using (var w2 = w.Children.TryLock(22, TryLockMode.GetOrCreate)!)
             {
-                w2.Name = "11";
+                w2.Name = "22";
                 w2.Commit();
-            }*/
+            }
+
+            w.Commit();
+        }
+
+        using (var w = g3.TryLock(2, TryLockMode.GetOrCreate)!)
+        {
+            using (var w2 = w.Children!.TryLock(33, TryLockMode.GetOrCreate)!)
+            {
+                w2.Name = "33";
+                w2.Commit();
+            }
 
             w.Commit();
         }
