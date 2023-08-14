@@ -2,10 +2,11 @@
 
 using System.Runtime.CompilerServices;
 using Tinyhand.IO;
+using static CrystalData.CrystalDataHashed;
 
 namespace CrystalData.Storage;
 
-[TinyhandObject(Journaling = true)]
+[TinyhandObject(Journal = true)]
 internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>, ITinyhandCustomJournal
 {
     public SimpleStorageData()

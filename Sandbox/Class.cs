@@ -3,7 +3,7 @@ using ValueLink;
 
 namespace Sandbox;
 
-[TinyhandObject(Journaling = true)]
+[TinyhandObject(Journal = true)]
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
 internal partial record StandardData
 {
@@ -25,7 +25,7 @@ internal partial record StandardData
         => $"{this.id} {this.name} ({this.age.ToString()})";
 }
 
-[TinyhandObject(Journaling = true, LockObject = "syncObject")]
+[TinyhandObject(Journal = true, LockObject = "syncObject")]
 [ValueLinkObject]
 internal partial class ValueClass // : ITinyhandCustomJournal
 {
@@ -69,7 +69,7 @@ internal partial class ValueClass // : ITinyhandCustomJournal
     }*/
 }
 
-[TinyhandObject(Journaling = true)]
+[TinyhandObject(Journal = true)]
 internal partial class ManualClass
 {
     [Key(0, AddProperty = "Id")]
@@ -79,7 +79,7 @@ internal partial class ManualClass
         => $"Manual class {this.id}";
 }
 
-[TinyhandObject(Journaling = true)]
+[TinyhandObject(Journal = true)]
 internal partial class CombinedClass
 {
     [Key(0)]

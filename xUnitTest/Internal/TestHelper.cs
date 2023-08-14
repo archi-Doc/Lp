@@ -7,6 +7,7 @@ using CrystalData.Datum;
 using LP;
 using LP.Crystal;
 using Microsoft.Extensions.DependencyInjection;
+using Tinyhand;
 using Xunit;
 using xUnitTest.CrystalDataTest;
 
@@ -14,6 +15,32 @@ namespace xUnitTest;
 
 public static class TestHelper
 {
+    public static async Task<ICrystal<TData>> CreateAndStartCrystal<TData>()
+        where TData : class, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+    {
+        var builder = new CrystalControl.Builder();
+        builder
+            .ConfigureCrystal(context =>
+            {
+                var directory = $"Crystal[{RandomVault.Pseudo.NextUInt32():x4}]";
+                context.SetJournal(new SimpleJournalConfiguration(new LocalDirectoryConfiguration(Path.Combine(directory, "Journal"))));
+                context.AddCrystal<TData>(
+                    new(SavePolicy.Manual, new LocalFileConfiguration(Path.Combine(directory, "Test.tinyhand")))
+                    {
+                        SaveFormat = SaveFormat.Utf8,
+                        NumberOfHistoryFiles = 5,
+                    });
+            });
+
+        var unit = builder.Build();
+        var crystalizer = unit.Context.ServiceProvider.GetRequiredService<Crystalizer>();
+
+        var crystal = crystalizer.GetCrystal<TData>();
+        var result = await crystalizer.PrepareAndLoadAll(false);
+        result.Is(CrystalResult.Success);
+        return crystal;
+    }
+
     public static async Task<IBigCrystal<SimpleData>> CreateAndStartSimple(bool prepare = true)
     {
         var builder = new CrystalControl.Builder();

@@ -14,7 +14,7 @@ namespace CrystalData;
 /// <summary>
 /// <see cref="BaseData"/> is an independent class that holds data at a single point in the hierarchical structure.
 /// </summary>
-[TinyhandObject(ExplicitKeyOnly = true, LockObject = "semaphore", ReservedKeys = 3, Journaling = true)]
+[TinyhandObject(ExplicitKeyOnly = true, LockObject = "semaphore", ReservedKeys = 3, Journal = true)]
 public partial class BaseData : IDataInternal, ITinyhandCustomJournal
 {
     public const int DataIdKey = 0;
