@@ -1,8 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Arc.Crypto;
-using CrystalData;
-using Microsoft.Extensions.DependencyInjection;
 using Tinyhand;
 using ValueLink;
 using Xunit;
@@ -78,7 +75,7 @@ public class JournalTest
     [Fact]
     public async Task TestSerializable()
     {
-        var c = await this.CreateAndStartCrystal<SerializableData.GoshujinClass>();
+        var c = await TestHelper.CreateAndStartCrystal<SerializableData.GoshujinClass>();
         var g1 = c.Data;
         lock (g1.SyncObject)
         {
@@ -170,7 +167,7 @@ public class JournalTest
     [Fact]
     public async Task TestRepeatable()
     {
-        var c = await this.CreateAndStartCrystal<RepeatableData.GoshujinClass>();
+        var c = await TestHelper.CreateAndStartCrystal<RepeatableData.GoshujinClass>();
         var g1 = c.Data;
         lock (g1.SyncObject)
         {
@@ -260,31 +257,5 @@ public class JournalTest
         result.IsTrue();
 
         await TestHelper.UnloadAndDeleteAll(c);
-    }
-
-    private async Task<ICrystal<TData>> CreateAndStartCrystal<TData>()
-        where TData : class, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
-    {
-        var builder = new CrystalControl.Builder();
-        builder
-            .ConfigureCrystal(context =>
-            {
-                var directory = $"Crystal[{RandomVault.Pseudo.NextUInt32():x4}]";
-                context.SetJournal(new SimpleJournalConfiguration(new LocalDirectoryConfiguration(Path.Combine(directory, "Journal"))));
-                context.AddCrystal<TData>(
-                    new(SavePolicy.Manual, new LocalFileConfiguration(Path.Combine(directory, "Test.tinyhand")))
-                    {
-                        SaveFormat = SaveFormat.Utf8,
-                        NumberOfHistoryFiles = 5,
-                    });
-            });
-
-        var unit = builder.Build();
-        var crystalizer = unit.Context.ServiceProvider.GetRequiredService<Crystalizer>();
-
-        var crystal = crystalizer.GetCrystal<TData>();
-        var result = await crystalizer.PrepareAndLoadAll(false);
-        result.Is(CrystalResult.Success);
-        return crystal;
     }
 }
