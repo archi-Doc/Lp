@@ -150,6 +150,19 @@ public class StandardDataTest
             w.Commit();
         }
 
+        using (var w = g3.TryLock(3, TryLockMode.GetOrCreate)!)
+        {
+            w.Name = "3";
+            w.Children = new();
+            w.Commit();
+
+            using (var w2 = w.Children.TryLock(333, TryLockMode.GetOrCreate)!)
+            {
+                w2.Name = "333";
+                w2.Commit();
+            }
+        }
+
         await c.Save(true);
         await c.Crystalizer.SaveJournal();
         result = await c.Crystalizer.TestJournalAll();
