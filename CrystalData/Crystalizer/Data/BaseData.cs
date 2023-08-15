@@ -51,7 +51,7 @@ public partial record BaseData : IDataInternal, ITinyhandCustomJournal
     [IgnoreMember]
     private BaseData? parent;
 
-    [Key(DataIdKey, AddProperty = "DataId")]
+    [Key(DataIdKey)]
     protected int dataId; // -1: Deleted
 
     [Key(DatumObjectKey)]
@@ -59,28 +59,6 @@ public partial record BaseData : IDataInternal, ITinyhandCustomJournal
 
     [IgnoreMember]
     protected readonly SemaphoreLock semaphore = new();
-
-    #endregion
-
-    #region Enumerable
-
-    private readonly struct Enumerator : IEnumerable<BaseData>
-    {
-        public Enumerator(BaseData baseData)
-        {
-            this.baseData = baseData;
-        }
-
-        public IEnumerator<BaseData> GetEnumerator()
-            => this.baseData.EnumerateInternal();
-
-        IEnumerator IEnumerable.GetEnumerator()
-            => this.GetEnumerator();
-
-        private readonly BaseData baseData;
-    }
-
-    protected IEnumerable<BaseData> ChildrenInternal => new Enumerator(this);
 
     #endregion
 
@@ -103,7 +81,7 @@ public partial record BaseData : IDataInternal, ITinyhandCustomJournal
                     this.datumObject[i].FileChecksum = checksum;
                     this.BigCrystal.StorageGroup.PutAndForget(ref this.datumObject[i].StorageId, ref this.datumObject[i].FileId, memoryToBeShared, info.DatumId);
 
-                    this.RecordDatumObject(i);
+                    this.WriteDatumObject(i);
                 }
 
                 return;
@@ -213,9 +191,26 @@ public partial record BaseData : IDataInternal, ITinyhandCustomJournal
         return false;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void WriteDatumObject(int index)
+    {
+        if (((IJournalObject)this).TryGetJournalWriter(out var journal, out var writer))
+        {
+            writer.Write_Key();
+            writer.Write(DatumObjectKey);
+            writer.Write_Value();
+            writer.Write(index);
+            TinyhandSerializer.SerializeObject(ref writer, this.datumObject[index]);
+            journal.AddJournal(writer);
+        }
+    }
+
     #endregion
 
     #region Main
+
+    public virtual BaseData[] GetChildren()
+        => Array.Empty<BaseData>();
 
     public LockOperation<TDatum> Lock<TDatum>()
        where TDatum : IDatum
@@ -280,7 +275,7 @@ public partial record BaseData : IDataInternal, ITinyhandCustomJournal
                 return;
             }
 
-            foreach (var x in this.ChildrenInternal)
+            foreach (var x in this.GetChildren())
             {
                 x.Save(unload);
             }
@@ -308,7 +303,7 @@ public partial record BaseData : IDataInternal, ITinyhandCustomJournal
                 return;
             }
 
-            foreach (var x in this.ChildrenInternal)
+            foreach (var x in this.GetChildren())
             {
                 x.Unload();
             }
@@ -346,7 +341,7 @@ public partial record BaseData : IDataInternal, ITinyhandCustomJournal
     {// using (this.Parent.semaphore.Lock())
         using (this.semaphore.Lock())
         {
-            var array = this.ChildrenInternal.ToArray();
+            var array = this.GetChildren();
             foreach (var x in array)
             {
                 x.DeleteActual();
@@ -372,11 +367,6 @@ public partial record BaseData : IDataInternal, ITinyhandCustomJournal
 
     #region Abstract
 
-    protected virtual IEnumerator<BaseData> EnumerateInternal()
-    {
-        yield break;
-    }
-
     protected virtual void DeleteInternal()
     {
     }
@@ -398,7 +388,7 @@ public partial record BaseData : IDataInternal, ITinyhandCustomJournal
 
         if (initializeChildren)
         {
-            foreach (var x in this.ChildrenInternal)
+            foreach (var x in this.GetChildren())
             {
                 x.Initialize(crystal, this, initializeChildren);
             }
@@ -438,7 +428,7 @@ public partial record BaseData : IDataInternal, ITinyhandCustomJournal
         Array.Resize(ref this.datumObject, n + 1);
         this.datumObject[n] = newObject;
 
-        this.RecordDatumObject(n);
+        this.WriteDatumObject(n);
 
         return newObject;
     }
@@ -461,19 +451,5 @@ public partial record BaseData : IDataInternal, ITinyhandCustomJournal
         }
 
         return default;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void RecordDatumObject(int index)
-    {
-        if (((IJournalObject)this).TryGetJournalWriter(out var journal, out var writer))
-        {
-            writer.Write_Key();
-            writer.Write(DatumObjectKey);
-            writer.Write_Value();
-            writer.Write(index);
-            TinyhandSerializer.SerializeObject(ref writer, this.datumObject[index]);
-            journal.AddJournal(writer);
-        }
     }
 }

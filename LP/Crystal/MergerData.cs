@@ -24,10 +24,11 @@ public partial record MergerData : BaseData
     {
     }
 
-    public new LpData.LpDataId DataId
+    [IgnoreMember]
+    public LpData.LpDataId DataId
     {
-        get => (LpData.LpDataId)base.DataId;
-        set => base.DataId = (int)value;
+        get => (LpData.LpDataId)this.dataId;
+        set => this.dataId = (int)value;
     }
 
     public Identifier Identifier => this.identifier;
@@ -53,9 +54,9 @@ public partial record MergerData : BaseData
         var count = 0;
         using (this.semaphore.Lock())
         {
-            foreach (var x in this.ChildrenInternal)
+            foreach (var x in this.GetChildren())
             {
-                if (x.DataId == intId)
+                // if (x.dataId == intId)
                 {
                     count++;
                 }
@@ -145,23 +146,6 @@ public partial record MergerData : BaseData
     }
 
     #endregion
-
-    protected override IEnumerator<BaseData> EnumerateInternal()
-    {
-        if (this.children == null)
-        {
-            this.TryLoadChildren();
-            if (this.children == null)
-            {
-                yield break;
-            }
-        }
-
-        foreach (var x in this.children)
-        {
-            yield return x;
-        }
-    }
 
     protected override void DeleteInternal()
     {

@@ -87,19 +87,6 @@ public partial record ExampleData : BaseData
 
     #endregion
 
-    protected override IEnumerator<BaseData> EnumerateInternal()
-    {
-        if (this.children == null)
-        {
-            yield break;
-        }
-
-        foreach (var x in this.children)
-        {
-            yield return x;
-        }
-    }
-
     protected override void DeleteInternal()
     {
         this.children = null;
