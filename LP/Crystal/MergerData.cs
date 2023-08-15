@@ -9,7 +9,7 @@ using ValueLink;
 
 namespace LP.Crystal;
 
-[TinyhandObject(ExplicitKeyOnly = true)]
+[TinyhandObject(Journal = true, ExplicitKeyOnly = true)]
 [ValueLinkObject]
 public partial record MergerData : BaseData
 {
@@ -27,14 +27,14 @@ public partial record MergerData : BaseData
     [IgnoreMember]
     public LpData.LpDataId DataId
     {
-        get => (LpData.LpDataId)this.dataId;
-        set => this.dataId = (int)value;
+        get => (LpData.LpDataId)this.BaseDataId;
+        set => this.BaseDataId = (int)value;
     }
 
     public Identifier Identifier => this.identifier;
 
     [Key(4)]
-    [Link(Primary = true, Name = "Id", AddValue = false, Type = ChainType.Unordered)]
+    [Link(Primary = true, Unique = true, Name = "Id", AddValue = false, Type = ChainType.Unordered)]
     [Link(Name = "OrderedId", Type = ChainType.Ordered)]
     private Identifier identifier = default!;
 
@@ -56,7 +56,7 @@ public partial record MergerData : BaseData
         {
             foreach (var x in this.GetChildren())
             {
-                // if (x.dataId == intId)
+                if (x.BaseDataId == intId)
                 {
                     count++;
                 }

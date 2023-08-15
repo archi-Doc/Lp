@@ -13,7 +13,7 @@ namespace CrystalData;
 /// <summary>
 /// <see cref="BaseData"/> is an independent class that holds data at a single point in the hierarchical structure.
 /// </summary>
-[TinyhandObject(Journal = true, ReservedKeys = 3)]
+[TinyhandObject(ExplicitKeyOnly = true, ReservedKeys = 3)]
 public partial record BaseData : IDataInternal, ITinyhandCustomJournal
 {
     public const int DataIdKey = 0;
@@ -31,33 +31,32 @@ public partial record BaseData : IDataInternal, ITinyhandCustomJournal
 
     #region FieldAndProperty
 
-    [IgnoreMember]
     public IBigCrystal BigCrystal { get; private set; } = default!;
 
-    [IgnoreMember]
     public BaseData? Parent
     {
         get => this.parent;
         set
         {
             this.parent = value;
-            ((IJournalObject)this).SetParent(value);
+            if (this is IJournalObject obj &&
+                value is IJournalObject parent)
+            {
+                obj.SetParent(parent);
+            }
         }
     }
 
-    [IgnoreMember]
     public bool IsDeleted => this.dataId == -1;
 
-    [IgnoreMember]
     private BaseData? parent;
 
-    [Key(DataIdKey)]
+    [Key(DataIdKey, AddProperty = "BaseDataId")]
     protected int dataId; // -1: Deleted
 
     [Key(DatumObjectKey)]
     protected DatumObject[] datumObject = Array.Empty<DatumObject>();
 
-    [IgnoreMember]
     protected readonly SemaphoreLock semaphore = new();
 
     #endregion
@@ -208,9 +207,6 @@ public partial record BaseData : IDataInternal, ITinyhandCustomJournal
     #endregion
 
     #region Main
-
-    public virtual BaseData[] GetChildren()
-        => Array.Empty<BaseData>();
 
     public LockOperation<TDatum> Lock<TDatum>()
        where TDatum : IDatum
@@ -366,6 +362,9 @@ public partial record BaseData : IDataInternal, ITinyhandCustomJournal
     #endregion
 
     #region Abstract
+
+    public virtual BaseData[] GetChildren()
+        => Array.Empty<BaseData>();
 
     protected virtual void DeleteInternal()
     {

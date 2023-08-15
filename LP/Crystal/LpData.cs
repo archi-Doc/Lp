@@ -33,8 +33,8 @@ public partial record LpData : BaseData
     [IgnoreMember]
     public LpDataId DataId
     {
-        get => (LpDataId)this.dataId;
-        set => this.dataId = (int)value;
+        get => (LpDataId)this.BaseDataId;
+        set => this.BaseDataId = (int)value;
     }
 
     public Identifier Identifier => this.identifier;
