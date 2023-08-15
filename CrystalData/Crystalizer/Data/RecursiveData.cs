@@ -8,7 +8,7 @@ namespace CrystalData;
 
 [TinyhandObject(ExplicitKeyOnly = true, Journal = true)]
 [ValueLinkObject]
-public partial class RecursiveData<TKey> : BaseData
+public partial record RecursiveData<TKey> : BaseData
 {
     public RecursiveData(IBigCrystal crystal, BaseData? parent, TKey key)
         : base(crystal, parent)

@@ -11,7 +11,7 @@ namespace LP.Crystal;
 
 [TinyhandObject(ExplicitKeyOnly = true)]
 [ValueLinkObject]
-public partial class MergerData : BaseData
+public partial record MergerData : BaseData
 {
     public MergerData(IBigCrystal crystal, BaseData? parent, Identifier identifier)
         : base(crystal, parent)

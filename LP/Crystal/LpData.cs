@@ -9,7 +9,7 @@ namespace LP.Crystal;
 
 [TinyhandObject(ExplicitKeyOnly = true, Journal = true)]
 [ValueLinkObject]
-public partial class LpData : BaseData
+public partial record LpData : BaseData
 {
     public enum LpDataId
     {

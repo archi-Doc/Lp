@@ -14,8 +14,8 @@ namespace CrystalData;
 /// <summary>
 /// <see cref="BaseData"/> is an independent class that holds data at a single point in the hierarchical structure.
 /// </summary>
-[TinyhandObject(ExplicitKeyOnly = true, LockObject = "semaphore", ReservedKeys = 3, Journal = true)]
-public partial class BaseData : IDataInternal, ITinyhandCustomJournal
+[TinyhandObject(Journal = true, ExplicitKeyOnly = true, ReservedKeys = 3)]
+public partial record BaseData : IDataInternal, ITinyhandCustomJournal
 {
     public const int DataIdKey = 0;
     public const int DatumObjectKey = 1;
@@ -34,9 +34,19 @@ public partial class BaseData : IDataInternal, ITinyhandCustomJournal
 
     public IBigCrystal BigCrystal { get; private set; } = default!;
 
-    public BaseData? Parent { get; private set; }
+    public BaseData? Parent
+    {
+        get => this.parent;
+        set
+        {
+            this.parent = value;
+            ((IJournalObject)this).SetParent(value);
+        }
+    }
 
     public bool IsDeleted => this.dataId == -1;
+
+    private BaseData? parent;
 
     [Key(DataIdKey, AddProperty = "DataId")]
     private int dataId; // -1: Deleted

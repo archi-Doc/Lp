@@ -5,7 +5,7 @@ using CrystalData.Datum;
 
 namespace CrystalData;
 
-public partial class BaseData
+public partial record BaseData
 {
     public struct LockOperation<TDatum> : IDisposable
         where TDatum : IDatum

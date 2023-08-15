@@ -9,8 +9,8 @@ namespace CrystalData;
 /// This is the idea that each data are arranged in the ordered structure and constitute a single crystal.
 /// </summary>
 [TinyhandObject(ExplicitKeyOnly = true)]
-[ValueLinkObject]
-public partial class ExampleData : BaseData
+[ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
+public partial record ExampleData : BaseData
 {
     public ExampleData(IBigCrystal crystal, BaseData? parent, string name)
         : base(crystal, parent)
@@ -23,7 +23,7 @@ public partial class ExampleData : BaseData
     }
 
     [Key(4)]
-    [Link(Primary = true, Type = ChainType.Unordered)]
+    [Link(Primary = true, Unique = true, Type = ChainType.Unordered)]
     private string name = string.Empty;
 
     [Key(5)]
