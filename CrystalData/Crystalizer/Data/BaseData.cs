@@ -8,13 +8,12 @@ using Tinyhand.IO;
 namespace CrystalData;
 
 #pragma warning disable SA1124 // Do not use regions
-#pragma warning disable SA1202 // Elements should be ordered by access
 #pragma warning disable SA1401
 
 /// <summary>
 /// <see cref="BaseData"/> is an independent class that holds data at a single point in the hierarchical structure.
 /// </summary>
-[TinyhandObject(Journal = true, ExplicitKeyOnly = true, ReservedKeys = 3)]
+[TinyhandObject(Journal = true, ReservedKeys = 3)]
 public partial record BaseData : IDataInternal, ITinyhandCustomJournal
 {
     public const int DataIdKey = 0;
@@ -32,8 +31,10 @@ public partial record BaseData : IDataInternal, ITinyhandCustomJournal
 
     #region FieldAndProperty
 
+    [IgnoreMember]
     public IBigCrystal BigCrystal { get; private set; } = default!;
 
+    [IgnoreMember]
     public BaseData? Parent
     {
         get => this.parent;
@@ -44,19 +45,20 @@ public partial record BaseData : IDataInternal, ITinyhandCustomJournal
         }
     }
 
+    [IgnoreMember]
     public bool IsDeleted => this.dataId == -1;
 
+    [IgnoreMember]
     private BaseData? parent;
 
     [Key(DataIdKey, AddProperty = "DataId")]
-    private int dataId; // -1: Deleted
+    protected int dataId; // -1: Deleted
 
     [Key(DatumObjectKey)]
     protected DatumObject[] datumObject = Array.Empty<DatumObject>();
 
-#pragma warning disable SA1214 // Readonly fields should appear before non-readonly fields
+    [IgnoreMember]
     protected readonly SemaphoreLock semaphore = new();
-#pragma warning restore SA1214 // Readonly fields should appear before non-readonly fields
 
     #endregion
 
@@ -471,6 +473,7 @@ public partial record BaseData : IDataInternal, ITinyhandCustomJournal
             writer.Write_Value();
             writer.Write(index);
             TinyhandSerializer.SerializeObject(ref writer, this.datumObject[index]);
+            journal.AddJournal(writer);
         }
     }
 }

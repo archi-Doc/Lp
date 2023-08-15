@@ -11,7 +11,7 @@ namespace LP.Crystal;
 
 [TinyhandObject]
 [ValueLinkObject]
-public partial class LpData : BaseData
+public partial record LpData : BaseData
 {
     public LpData(IBigCrystal crystal, BaseData? parent, Identifier identifier)
         : base(crystal, parent)
