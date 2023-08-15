@@ -2,7 +2,7 @@
 
 namespace GeneratorOption;
 
-[TinyhandGeneratorOption(AttachDebugger = false, GenerateToFile = false)]
+[ValueLinkGeneratorOption(AttachDebugger = false, GenerateToFile = false)]
 internal class GeneratorOption
 {
 }

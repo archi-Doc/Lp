@@ -147,6 +147,17 @@ public partial record MergerData : BaseData
 
     #endregion
 
+    public override MergerData[] GetChildren()
+    {
+        if (this.children == null)
+        {
+            return Array.Empty<MergerData>();
+        }
+
+        return this.children.ToArray();
+        // return this.children.GetArray();
+    }
+
     protected override void DeleteInternal()
     {
         this.children = null;
@@ -224,7 +235,7 @@ public partial record MergerData : BaseData
                     {
                         foreach (var x in goshujin)
                         {
-                            x.Initialize(this.BigCrystal, this, true);
+                            ((IBaseData)x).Initialize(this.BigCrystal, this, true);
                         }
                     }
                 }
@@ -262,7 +273,7 @@ public partial record MergerData : BaseData
                     {
                         foreach (var x in goshujin)
                         {
-                            x.Initialize(this.BigCrystal, this, true);
+                            ((IBaseData)x).Initialize(this.BigCrystal, this, true);
                         }
 
                         this.children = goshujin;

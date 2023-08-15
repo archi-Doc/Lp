@@ -14,7 +14,7 @@ namespace CrystalData;
 /// <see cref="BaseData"/> is an independent class that holds data at a single point in the hierarchical structure.
 /// </summary>
 [TinyhandObject(ExplicitKeyOnly = true, ReservedKeys = 3)]
-public partial record BaseData : IDataInternal, ITinyhandCustomJournal
+public partial record BaseData : IBaseData, IDataInternal, ITinyhandCustomJournal
 {
     public const int DataIdKey = 0;
     public const int DatumObjectKey = 1;
@@ -33,7 +33,8 @@ public partial record BaseData : IDataInternal, ITinyhandCustomJournal
 
     public IBigCrystal BigCrystal { get; private set; } = default!;
 
-    public BaseData? Parent
+    [IgnoreMember] // tempcode
+    public IBaseData? Parent
     {
         get => this.parent;
         set
@@ -49,7 +50,7 @@ public partial record BaseData : IDataInternal, ITinyhandCustomJournal
 
     public bool IsDeleted => this.dataId == -1;
 
-    private BaseData? parent;
+    private IBaseData? parent;
 
     [Key(DataIdKey, AddProperty = "BaseDataId")]
     protected int dataId; // -1: Deleted
@@ -324,7 +325,7 @@ public partial record BaseData : IDataInternal, ITinyhandCustomJournal
         }
         else
         {
-            using (this.Parent.semaphore.Lock())
+            // using (this.Parent.semaphore.Lock()) // tempcode
             {
                 this.DeleteActual();
             }
@@ -380,7 +381,7 @@ public partial record BaseData : IDataInternal, ITinyhandCustomJournal
 
     #endregion
 
-    protected internal void Initialize(IBigCrystal crystal, BaseData? parent, bool initializeChildren)
+    void IBaseData.Initialize(IBigCrystal crystal, IBaseData? parent, bool initializeChildren)
     {
         this.BigCrystal = crystal;
         this.Parent = parent;
@@ -389,7 +390,7 @@ public partial record BaseData : IDataInternal, ITinyhandCustomJournal
         {
             foreach (var x in this.GetChildren())
             {
-                x.Initialize(crystal, this, initializeChildren);
+                ((IBaseData)x).Initialize(crystal, this, initializeChildren);
             }
         }
     }

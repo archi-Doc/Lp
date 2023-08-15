@@ -172,7 +172,7 @@ public partial record LpData : BaseData
             return Array.Empty<LpData>();
         }
 
-        return Array.Empty<LpData>();
+        return this.children.ToArray();
         // return this.children.GetArray();
     }
 
