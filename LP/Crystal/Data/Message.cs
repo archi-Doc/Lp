@@ -53,11 +53,6 @@ public partial class Message : IIdentifierValidatable<Message>
     [Key(8, AddProperty = "Signature", Condition = false)]
     private Signature signature = default!;
 
-    [Link(Type = ChainType.Ordered)]
-    [IgnoreMember]
-    public long SignedMics
-    {
-        get => this.signature.SignedMics;
-        set { }
-    }
+    [Link(Type = ChainType.Ordered, AddValue = false)]
+    public long SignedMics => this.signature.SignedMics;
 }
