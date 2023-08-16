@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Tinyhand.IO;
+
 namespace LP;
 
 /// <summary>
@@ -17,6 +19,10 @@ public interface IIdentifierValidatable<T>
     {
         try
         {
+            var writer = new TinyhandWriter(byte[]);
+            TinyhandSerializer.SerializeObject(ref writer, (T)this, TinyhandSerializerOptions.Signature);
+            writer.FlushAndGetReadOnlySpan();
+
             var bin = TinyhandSerializer.SerializeObject((T)this, TinyhandSerializerOptions.Signature);
             var hash = Hash.ObjectPool.Get();
             var identifier = hash.GetHash(bin);
