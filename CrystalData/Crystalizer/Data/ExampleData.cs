@@ -2,6 +2,8 @@
 
 #pragma warning disable SA1124 // Do not use regions
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace CrystalData;
 
 /// <summary>
@@ -47,19 +49,36 @@ public partial record ExampleData : BaseData
         }
     }
 
+    public ExampleData? TryGetChild(string name)
+        => this.children?.TryGet(name);
+
+    public WriterClass? TryLockChild(string name, TryLockMode mode)
+    {
+        if (mode == TryLockMode.Get)
+        {
+            return this.children?.TryLock(name, mode);
+        }
+
+        if (this.children is null)
+        {
+            this.EnsureChildren();
+        }
+
+        return this.children.TryLock(name, mode);
+    }
+
     public bool DeleteChild(string name)
     {
-        using (this.semaphore.Lock())
+        if (this.children is not null)
         {
-            if (this.children == null)
+            using (var w = this.children.TryLock(name))
             {
-                return false;
-            }
-
-            if (this.children.NameChain.TryGetValue(name, out var data))
-            {
-                data.DeleteActual();
-                return true;
+                if (w is not null)
+                {
+                    w.Goshujin = null;
+                    w.Commit()?.DeleteActual();
+                    return true;
+                }
             }
         }
 
@@ -72,5 +91,31 @@ public partial record ExampleData : BaseData
     {
         this.children = null;
         this.Goshujin = null;
+    }
+
+    [MemberNotNull(nameof(children))]
+    private void EnsureChildren()
+    {
+        if (this.Parent is ExampleData parent &&
+               parent.Children is { } c)
+        {
+            using (var w = c.TryLock(this.Name, TryLockMode.Get))
+            {
+                if (w is not null)
+                {
+                    if (w.Children is not null)
+                    {
+                        this.children = w.Children;
+                    }
+                    else
+                    {
+                        w.Children ??= new();
+                        this.children = w.Commit()?.children;
+                    }
+                }
+            }
+        }
+
+        this.children ??= new();
     }
 }

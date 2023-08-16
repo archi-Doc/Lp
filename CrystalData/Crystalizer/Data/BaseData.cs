@@ -33,11 +33,11 @@ public partial record BaseData : IBaseData, IDataInternal, ITinyhandCustomJourna
 
     public IBigCrystal BigCrystal { get; private set; } = default!;
 
-    [IgnoreMember] // tempcode
+    // [IgnoreMember] // tempcode
     public IBaseData? Parent
     {
         get => this.parent;
-        set
+        private set
         {
             this.parent = value;
             if (this is IJournalObject obj &&
