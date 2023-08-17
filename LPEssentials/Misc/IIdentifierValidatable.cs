@@ -19,13 +19,8 @@ public interface IIdentifierValidatable<T>
     {
         try
         {
-            var writer = new TinyhandWriter(byte[]);
-            TinyhandSerializer.SerializeObject(ref writer, (T)this, TinyhandSerializerOptions.Signature);
-            writer.FlushAndGetReadOnlySpan();
-
-            var bin = TinyhandSerializer.SerializeObject((T)this, TinyhandSerializerOptions.Signature);
             var hash = Hash.ObjectPool.Get();
-            var identifier = hash.GetHash(bin);
+            var identifier = hash.GetIdentifier((T)this, TinyhandSerializerOptions.Signature);
             Hash.ObjectPool.Return(hash);
 
             return this.GetIdentifier().Equals(identifier);
