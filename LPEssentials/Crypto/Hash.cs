@@ -31,7 +31,14 @@ public class Hash : Sha3_256
         where T : ITinyhandSerialize<T>
     {
         var writer = new TinyhandWriter(this.buffer);
-        TinyhandSerializer.SerializeObject(ref writer, value, options);
-        return new Identifier(this.GetHashUInt64(writer.FlushAndGetReadOnlySpan()));
+        try
+        {
+            TinyhandSerializer.SerializeObject(ref writer, value, options);
+            return new Identifier(this.GetHashUInt64(writer.FlushAndGetReadOnlySpan()));
+        }
+        finally
+        {
+            writer.Dispose();
+        }
     }
 }

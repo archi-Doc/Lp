@@ -7,7 +7,7 @@ namespace LP.Crystal;
 
 [TinyhandObject]
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
-public partial class Message : IIdentifierValidatable<Message>
+public partial class Message : ISignatureVerifiable<Message>
 {
     public const int MaxTitleLength = 100;
     public const int MaxNameLength = 50;
@@ -25,8 +25,14 @@ public partial class Message : IIdentifierValidatable<Message>
     public Identifier GetIdentifier()
         => this.Identifier;
 
-    public bool ValidateIdentifier()
-        => ((IIdentifierValidatable<Message>)this).Validate();
+    public bool VerifyIdentifier()
+        => ((IIdentifierVerifiable<Message>)this).VerifyIdentifierDefault();
+
+    public Signature GetSignature()
+        => this.Signature;
+
+    public bool VerifySignature()
+        => ((ISignatureVerifiable<Message>)this).VerifySignatureDefault();
 
     [Key(0, AddProperty = "Identifier")]
     [Link(Primary = true, Unique = true, Type = ChainType.Unordered, AddValue = false)]

@@ -13,35 +13,40 @@ public readonly partial struct Signature
         Affirmative,
     }
 
-    public Signature(Type signatureType, long signedMics)
+    public Signature(PublicKey publicKey, Type signatureType, long signedMics)
     {
+        this.PublicKey = publicKey;
         this.SignatureType = signatureType;
         this.SignedMics = signedMics;
-        this.sign = null;
+        this.Sign = null;
     }
 
-    public Signature(Type signatureType, long signedMics, byte[] sign)
+    public Signature(PublicKey publicKey, Type signatureType, long signedMics, byte[] sign)
     {
+        this.PublicKey = publicKey;
         this.SignatureType = signatureType;
         this.SignedMics = signedMics;
 
         if (sign.Length == PublicKey.PublicKeyLength)
         {
-            this.sign = sign;
+            this.Sign = sign;
         }
         else
         {
-            this.sign = null;
+            this.Sign = null;
         }
     }
 
     [Key(0)]
-    public readonly Type SignatureType;
+    public readonly PublicKey PublicKey;
 
     [Key(1)]
-    public readonly long SignedMics;
+    public readonly Type SignatureType;
 
     [Key(2)]
+    public readonly long SignedMics;
+
+    [Key(3)]
     [DefaultValue(null)]
-    private readonly byte[]? sign;
+    public readonly byte[]? Sign;
 }

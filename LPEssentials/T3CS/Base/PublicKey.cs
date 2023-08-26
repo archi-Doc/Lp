@@ -1,7 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using Tinyhand.IO;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace LP.T3CS;
 
@@ -154,6 +158,24 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         }
 
         var result = ecdsa.VerifyData(data, sign, HashAlgorithmName);
+        this.CacheEcdsa(ecdsa);
+        return result;
+    }
+
+    public unsafe bool VerifyIdentifier(Identifier identifier, ReadOnlySpan<byte> sign)
+    {
+        if (sign.Length != PublicKey.SignLength)
+        {
+            return false;
+        }
+
+        var ecdsa = this.TryGetEcdsa();
+        if (ecdsa == null)
+        {
+            return false;
+        }
+
+        var result = ecdsa.VerifyHash(new ReadOnlySpan<byte>(Unsafe.AsPointer(ref identifier), sizeof(Identifier)), sign);
         this.CacheEcdsa(ecdsa);
         return result;
     }

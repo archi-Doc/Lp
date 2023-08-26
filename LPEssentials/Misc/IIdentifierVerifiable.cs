@@ -8,14 +8,14 @@ namespace LP;
 /// Validate that object members are appropriate.
 /// </summary>
 /// <typeparam name="T">.</typeparam>
-public interface IIdentifierValidatable<T>
+public interface IIdentifierVerifiable<T>
     where T : ITinyhandSerialize<T>
 {
     Identifier GetIdentifier();
 
-    bool ValidateIdentifier();
+    bool VerifyIdentifier();
 
-    bool Validate()
+    bool VerifyIdentifierDefault()
     {
         try
         {
