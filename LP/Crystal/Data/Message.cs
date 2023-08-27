@@ -31,8 +31,11 @@ public partial class Message : ISignatureVerifiable<Message>, IVerifiable
     [Key(1, AddProperty = "MessageBoardIdentifier")]
     private Identifier messageBoardIdentifier;
 
-    [Key(2, AddProperty = "Signature", Condition = false)]
+    [Key(2, AddProperty = "Signature")]
     private Signature signature = default!;
+
+    [Key(3, AddProperty = "ValueToken")]
+    private ValueToken valueToken = ValueToken.Default;
 
     [Key(4, AddProperty = "Type")]
     private MessageType type;

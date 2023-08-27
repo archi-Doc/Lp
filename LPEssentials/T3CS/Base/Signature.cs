@@ -10,7 +10,7 @@ public readonly partial struct Signature
     public enum Type
     {
         Invalid,
-        Affirmative,
+        Attest,
     }
 
     public Signature(PublicKey publicKey, Type signatureType, long signedMics)
@@ -47,6 +47,9 @@ public readonly partial struct Signature
     public readonly long SignedMics;
 
     [Key(3)]
+    public readonly long ExpirationMics;
+
+    [Key(4, Condition = false)]
     [DefaultValue(null)]
     public readonly byte[]? Sign;
 }

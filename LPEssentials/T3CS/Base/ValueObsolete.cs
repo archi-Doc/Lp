@@ -2,6 +2,7 @@
 
 namespace LP.T3CS;
 
+/*
 /// <summary>
 /// Represents a value (Owner#Point@Originator:Standard/Mergers).
 /// </summary>
@@ -10,6 +11,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>
 {
     public const long MaxPoint = 1_000_000_000_000_000_000; // k, m, g, t, p, e, 1z
     public const long MinPoint = 0; // -MaxPoint;
+    public const int MaxMergers = 4;
 
     public Value()
     {
@@ -18,7 +20,8 @@ public sealed partial class Value : IValidatable, IEquatable<Value>
     public Value(long point, PublicKey originator, PublicKey[] mergers)
     {
         this.Point = point;
-        this.Credit = new(originator, mergers);
+        this.Originator = originator;
+        this.mergers = mergers;
 
         if (!this.Validate())
         {
@@ -27,27 +30,39 @@ public sealed partial class Value : IValidatable, IEquatable<Value>
     }
 
     [Key(0)]
-    public PublicKey Owner { get; private set; }
-
-    [Key(1)]
     public long Point { get; private set; }
 
-    [Key(2)]
-    public Credit Credit { get; private set; } = Credit.Default;
+    [Key(1)]
+    public PublicKey Originator { get; private set; } = default!;
+
+    [Key(2, AddProperty = "Mergers")]
+    [MaxLength(MaxMergers)]
+    private PublicKey[] mergers = default!;
 
     public bool Validate()
     {
-        if (!this.Owner.Validate())
+        if (this.Point < MinPoint || this.Point > MaxPoint)
         {
             return false;
         }
-        else if (this.Point < MinPoint || this.Point > MaxPoint)
+        else if (!this.Originator.Validate())
         {
             return false;
         }
-        else if (!this.Credit.Validate())
+        else if (this.mergers == null ||
+            this.mergers.Length == 0 ||
+            this.mergers.Length > MaxMergers)
         {
             return false;
+        }
+
+        var keyVersion = this.Originator.KeyVersion;
+        for (var i = 0; i < this.mergers.Length; i++)
+        {
+            if (this.mergers[i].KeyVersion != keyVersion || !this.mergers[i].Validate())
+            {
+                return false;
+            }
         }
 
         return true;
@@ -59,17 +74,21 @@ public sealed partial class Value : IValidatable, IEquatable<Value>
         {
             return false;
         }
-        else if (!this.Owner.Equals(other.Owner))
+        else if (!this.Originator.Equals(other.Originator))
         {
             return false;
         }
-        else if (this.Point != other.Point)
+        else if (this.mergers.Length != other.mergers.Length)
         {
             return false;
         }
-        else if (!this.Credit.Equals(other.Credit))
+
+        for (var i = 0; i < this.mergers.Length; i++)
         {
-            return false;
+            if (!this.mergers[i].Equals(other.mergers[i]))
+            {
+                return false;
+            }
         }
 
         return true;
@@ -78,10 +97,15 @@ public sealed partial class Value : IValidatable, IEquatable<Value>
     public override int GetHashCode()
     {
         var hash = default(HashCode);
-        hash.Add(this.Owner);
         hash.Add(this.Point);
-        hash.Add(this.Credit);
+        hash.Add(this.Originator);
+
+        foreach (var x in this.mergers)
+        {
+            hash.Add(x);
+        }
 
         return hash.ToHashCode();
     }
 }
+*/

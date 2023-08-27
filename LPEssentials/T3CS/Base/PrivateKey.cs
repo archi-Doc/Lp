@@ -112,7 +112,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         }
 
         var mics = Mics.GetCorrected();
-        signature = new Signature(this.ToPublicKey(), Signature.Type.Affirmative, mics, sign);
+        signature = new Signature(this.ToPublicKey(), Signature.Type.Attest, mics, sign);
         return true;
     }
 
