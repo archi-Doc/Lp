@@ -40,7 +40,7 @@ public sealed partial class Linkage : IValidatable, IEquatable<Linkage>
     [MaxLength(MaxStringLength)]
     private string rightString = string.Empty;
 
-    [Key(7, AddProperty = "Signatures", Condition = false)]
+    [Key(7, AddProperty = "Signatures", Level = 0)]
     [MaxLength((MaxOwners + 1 + Credit.MaxMergers) * 2)]
     private byte[] signatures = default!;
 

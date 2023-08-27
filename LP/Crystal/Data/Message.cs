@@ -31,10 +31,10 @@ public partial class Message : ISignatureVerifiable<Message>, IVerifiable
     [Key(1, AddProperty = "MessageBoardIdentifier")]
     private Identifier messageBoardIdentifier;
 
-    [Key(2, AddProperty = "Signature")]
+    [Key(2, AddProperty = "Signature", Level = 0)]
     private Signature signature = default!;
 
-    [Key(3, AddProperty = "ValueToken")]
+    [Key(3, AddProperty = "ValueToken", Level = 2)]
     private ValueToken valueToken = ValueToken.Default;
 
     [Key(4, AddProperty = "Type")]
@@ -69,7 +69,7 @@ public partial class Message : ISignatureVerifiable<Message>, IVerifiable
         {
             return false;
         }
-        else if (!((ISignatureVerifiable<Message>)this).VerifySignature())
+        else if (!((ISignatureVerifiable<Message>)this).VerifySignature(1))
         {
             return false;
         }

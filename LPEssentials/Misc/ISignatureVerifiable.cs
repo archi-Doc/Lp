@@ -13,12 +13,12 @@ public interface ISignatureVerifiable<T> : IIdentifierVerifiable<T>
 {
     Signature GetSignature();
 
-    bool VerifySignature()
+    bool VerifySignature(int level)
     {
         try
         {
             var hash = Hash.ObjectPool.Get();
-            var identifier = hash.GetIdentifier((T)this, TinyhandSerializerOptions.Signature);
+            var identifier = hash.GetIdentifier((T)this, level);
             Hash.ObjectPool.Return(hash);
 
             if (!this.GetIdentifier().Equals(identifier))

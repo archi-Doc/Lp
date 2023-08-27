@@ -63,7 +63,7 @@ public class SignatureBenchmark
     public Identifier GetIdentifier2()
     {
         var hash = Hash.ObjectPool.Get();
-        var identifier = hash.GetIdentifier(this.Class, TinyhandSerializerOptions.Signature);
+        var identifier = hash.GetIdentifier(this.Class, 0x40000000);
         Hash.ObjectPool.Return(hash);
         return identifier;
     }

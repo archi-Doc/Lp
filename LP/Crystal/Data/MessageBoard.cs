@@ -23,6 +23,6 @@ public partial record MessageBoard
     [Key(1, AddProperty = "Description")]
     private Message description = default!;
 
-    [Key(2, AddProperty = "Messages", Condition = false)]
+    [Key(2, AddProperty = "Messages")]
     private Message.GoshujinClass messages = default!;
 }

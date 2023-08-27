@@ -27,13 +27,13 @@ public class Hash : Sha3_256
         return new Identifier(this.HashFinalUInt64());
     }
 
-    public Identifier GetIdentifier<T>(T? value, TinyhandSerializerOptions? options)
+    public Identifier GetIdentifier<T>(T? value, int level)
         where T : ITinyhandSerialize<T>
     {
-        var writer = new TinyhandWriter(this.buffer);
+        var writer = new TinyhandWriter(this.buffer) { Level = level, };
         try
         {
-            TinyhandSerializer.SerializeObject(ref writer, value, options);
+            TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
             return new Identifier(this.GetHashUInt64(writer.FlushAndGetReadOnlySpan()));
         }
         finally

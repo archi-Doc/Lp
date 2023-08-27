@@ -61,7 +61,7 @@ public sealed partial class Token // : IVerifiable // , IEquatable<Token>
     [Key(5)]
     public Linkage? TargetLinkage { get; private set; }
 
-    [Key(6, AddProperty = "Signature", Condition = false)]
+    [Key(6, AddProperty = "Signature", Level = 0)]
     [MaxLength(PublicKey.SignLength)]
     private byte[] signature = Array.Empty<byte>();
 
