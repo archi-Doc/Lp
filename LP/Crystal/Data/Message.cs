@@ -31,17 +31,17 @@ public partial class Message : ISignatureVerifiable<Message>, IVerifiable
     [Key(1, AddProperty = "MessageBoardIdentifier")]
     private Identifier messageBoardIdentifier;
 
-    [Key(8, AddProperty = "Signature", Condition = false)]
+    [Key(2, AddProperty = "Signature", Condition = false)]
     private Signature signature = default!;
 
-    [Key(3, AddProperty = "Type")]
+    [Key(4, AddProperty = "Type")]
     private MessageType type;
 
-    [Key(6, AddProperty = "Name")]
+    [Key(5, AddProperty = "Name")]
     [MaxLength(MaxNameLength)]
     private string name = default!;
 
-    [Key(5, AddProperty = "Title")]
+    [Key(6, AddProperty = "Title")]
     [MaxLength(MaxTitleLength)]
     private string title = default!;
 
@@ -57,14 +57,8 @@ public partial class Message : ISignatureVerifiable<Message>, IVerifiable
     public Identifier GetIdentifier()
         => this.Identifier;
 
-    public bool VerifyIdentifier()
-        => ((IIdentifierVerifiable<Message>)this).VerifyIdentifierDefault();
-
     public Signature GetSignature()
         => this.Signature;
-
-    public bool VerifySignature()
-        => ((ISignatureVerifiable<Message>)this).VerifySignatureDefault();
 
     public bool ValidateAndVerify()
     {
@@ -72,7 +66,7 @@ public partial class Message : ISignatureVerifiable<Message>, IVerifiable
         {
             return false;
         }
-        else if (!((ISignatureVerifiable<Message>)this).VerifySignatureDefault())
+        else if (!((ISignatureVerifiable<Message>)this).VerifySignature())
         {
             return false;
         }

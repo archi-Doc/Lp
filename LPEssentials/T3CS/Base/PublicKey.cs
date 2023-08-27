@@ -2,13 +2,13 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Security.Cryptography;
-using Tinyhand.IO;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace LP.T3CS;
 
+/// <summary>
+/// Represents pure public key data. Compressed to 33 bytes.
+/// </summary>
 [TinyhandObject]
 public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 {
@@ -119,6 +119,8 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         this.x3 = x3;
     }
 
+    #region FieldAndProperty
+
     [Key(0)]
     private readonly byte keyValue;
 
@@ -137,6 +139,8 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
     public uint KeyVersion => KeyHelper.ToKeyVersion(this.keyValue);
 
     public uint YTilde => KeyHelper.ToYTilde(this.keyValue);
+
+    #endregion
 
     public bool IsValid() =>
         this.x0 != 0 &&

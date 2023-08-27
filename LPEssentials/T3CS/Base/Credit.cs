@@ -3,7 +3,7 @@
 namespace LP.T3CS;
 
 /// <summary>
-/// Credit (Originator/Merger:Standard).
+/// Represents a credit information (@Originator:Standard/Mergers).
 /// </summary>
 [TinyhandObject]
 public sealed partial class Credit : IValidatable, IEquatable<Credit>
@@ -26,19 +26,29 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>
         }
     }
 
+    #region FieldAndProperty
+
     [Key(0)]
     public PublicKey Originator { get; private set; } = default!;
 
-    [Key(1, AddProperty = "Mergers")]
+    [Key(1)]
+    public PublicKey Standard { get; private set; } = default!;
+
+    [Key(2, AddProperty = "Mergers")]
     [MaxLength(MaxMergers)]
     private PublicKey[] mergers = Array.Empty<PublicKey>();
 
-    [Key(2)]
-    public PublicKey Standard { get; private set; } = default!;
+    #endregion
 
     public bool Validate()
     {
         if (!this.Originator.Validate())
+        {
+            return false;
+        }
+
+        var keyVersion = this.Originator.KeyVersion;
+        if (this.Standard.KeyVersion != keyVersion || !this.Standard.Validate())
         {
             return false;
         }
@@ -48,12 +58,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>
         {
             return false;
         }
-        else if (!this.Standard.Validate())
-        {
-            return false;
-        }
 
-        var keyVersion = this.Originator.KeyVersion;
         for (var i = 0; i < this.mergers.Length; i++)
         {
             if (this.mergers[i].KeyVersion != keyVersion || !this.mergers[i].Validate())
@@ -100,13 +105,13 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>
     {
         var hash = default(HashCode);
         hash.Add(this.Originator);
+        hash.Add(this.Standard);
 
         foreach (var x in this.mergers)
         {
             hash.Add(x);
         }
 
-        hash.Add(this.Standard);
         return hash.ToHashCode();
     }
 }

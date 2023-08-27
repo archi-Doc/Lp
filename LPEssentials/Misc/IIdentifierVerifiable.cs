@@ -13,9 +13,7 @@ public interface IIdentifierVerifiable<T>
 {
     Identifier GetIdentifier();
 
-    bool VerifyIdentifier();
-
-    bool VerifyIdentifierDefault()
+    bool VerifyIdentifier()
     {
         try
         {

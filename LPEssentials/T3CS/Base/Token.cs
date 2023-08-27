@@ -41,6 +41,32 @@ public sealed partial class Token // : IVerifiable // , IEquatable<Token>
         this.TokenType = type;
     }
 
+    #region FieldAndProperty
+
+    [Key(0)]
+    public Type TokenType { get; private set; }
+
+    [Key(1)]
+    public ulong Salt { get; private set; }
+
+    [Key(2)]
+    public long ExpirationMics { get; private set; }
+
+    [Key(3)]
+    public PublicKey PublicKey { get; private set; } = default!;
+
+    [Key(4)]
+    public Identifier TargetIdentifier { get; private set; }
+
+    [Key(5)]
+    public Linkage? TargetLinkage { get; private set; }
+
+    [Key(6, AddProperty = "Signature", Condition = false)]
+    [MaxLength(PublicKey.SignLength)]
+    private byte[] signature = Array.Empty<byte>();
+
+    #endregion
+
     public bool Validate()
     {
         if (this.PublicKey.Validate() != true)
@@ -114,26 +140,4 @@ public sealed partial class Token // : IVerifiable // , IEquatable<Token>
 
         return this.ValidateAndVerifyWithoutPublicKey();
     }
-
-    [Key(0)]
-    public Type TokenType { get; private set; }
-
-    [Key(1)]
-    public ulong Salt { get; private set; }
-
-    [Key(2)]
-    public long ExpirationMics { get; private set; }
-
-    [Key(3)]
-    public PublicKey PublicKey { get; private set; } = default!;
-
-    [Key(4)]
-    public Identifier TargetIdentifier { get; private set; }
-
-    [Key(5)]
-    public Linkage? TargetLinkage { get; private set; }
-
-    [Key(6, AddProperty = "Signature", Condition = false)]
-    [MaxLength(PublicKey.SignLength)]
-    private byte[] signature = Array.Empty<byte>();
 }

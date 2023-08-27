@@ -13,9 +13,7 @@ public interface ISignatureVerifiable<T> : IIdentifierVerifiable<T>
 {
     Signature GetSignature();
 
-    bool VerifySignature();
-
-    bool VerifySignatureDefault()
+    bool VerifySignature()
     {
         try
         {
