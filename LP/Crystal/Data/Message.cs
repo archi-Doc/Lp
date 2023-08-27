@@ -7,7 +7,7 @@ namespace LP.Crystal;
 
 [TinyhandObject]
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
-public partial class Message : ISignatureVerifiable<Message>
+public partial class Message : ISignatureVerifiable<Message>, IVerifiable
 {
     public const int MaxTitleLength = 100;
     public const int MaxNameLength = 50;
@@ -15,12 +15,44 @@ public partial class Message : ISignatureVerifiable<Message>
 
     public enum MessageType
     {
-        Standard,
+        Default,
     }
 
     public Message()
     {
     }
+
+    #region FieldAndProperty
+
+    [Key(0, AddProperty = "Identifier")]
+    [Link(Primary = true, Unique = true, Type = ChainType.Unordered, AddValue = false)]
+    private Identifier identifier;
+
+    [Key(1, AddProperty = "MessageBoardIdentifier")]
+    private Identifier messageBoardIdentifier;
+
+    [Key(8, AddProperty = "Signature", Condition = false)]
+    private Signature signature = default!;
+
+    [Key(3, AddProperty = "Type")]
+    private MessageType type;
+
+    [Key(6, AddProperty = "Name")]
+    [MaxLength(MaxNameLength)]
+    private string name = default!;
+
+    [Key(5, AddProperty = "Title")]
+    [MaxLength(MaxTitleLength)]
+    private string title = default!;
+
+    [Key(7, AddProperty = "Content")]
+    [MaxLength(MaxContentLength)]
+    private string content = default!;
+
+    [Link(Type = ChainType.Ordered, AddValue = false)]
+    public long SignedMics => this.signature.SignedMics;
+
+    #endregion
 
     public Identifier GetIdentifier()
         => this.Identifier;
@@ -34,31 +66,30 @@ public partial class Message : ISignatureVerifiable<Message>
     public bool VerifySignature()
         => ((ISignatureVerifiable<Message>)this).VerifySignatureDefault();
 
-    [Key(0, AddProperty = "Identifier")]
-    [Link(Primary = true, Unique = true, Type = ChainType.Unordered, AddValue = false)]
-    private Identifier identifier;
+    public bool ValidateAndVerify()
+    {
+        if (!this.Validate())
+        {
+            return false;
+        }
+        else if (!((ISignatureVerifiable<Message>)this).VerifySignatureDefault())
+        {
+            return false;
+        }
 
-    [Key(1, AddProperty = "ParentIdentifier")]
-    private Identifier parentIdentifier;
+        return true;
+    }
 
-    [Key(3, AddProperty = "Type")]
-    private MessageType type;
+    public bool Validate()
+    {
+        if (this.type == MessageType.Default)
+        {
+        }
+        else
+        {
+            return false;
+        }
 
-    [Key(5, AddProperty = "Title")]
-    [MaxLength(MaxTitleLength)]
-    private string title = default!;
-
-    [Key(6, AddProperty = "Name")]
-    [MaxLength(MaxNameLength)]
-    private string name = default!;
-
-    [Key(7, AddProperty = "Content")]
-    [MaxLength(MaxContentLength)]
-    private string content = default!;
-
-    [Key(8, AddProperty = "Signature", Condition = false)]
-    private Signature signature = default!;
-
-    [Link(Type = ChainType.Ordered, AddValue = false)]
-    public long SignedMics => this.signature.SignedMics;
+        return true;
+    }
 }
