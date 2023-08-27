@@ -4,7 +4,7 @@ using Tinyhand.IO;
 
 namespace LP;
 
-/// <summary>
+/*/// <summary>
 /// Validate that object members are appropriate.
 /// </summary>
 /// <typeparam name="T">.</typeparam>
@@ -29,3 +29,4 @@ public interface IIdentifierVerifiable<T>
         }
     }
 }
+*/

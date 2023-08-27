@@ -4,7 +4,7 @@ using LP.T3CS;
 
 namespace LP;
 
-/// <summary>
+/*/// <summary>
 /// Validate that object members are appropriate.
 /// </summary>
 /// <typeparam name="T">.</typeparam>
@@ -35,3 +35,4 @@ public interface ISignatureVerifiable<T> : IIdentifierVerifiable<T>
         }
     }
 }
+*/

@@ -24,7 +24,7 @@ public sealed partial class ValueToken : IValidatable, IEquatable<ValueToken>
     [Key(2)]
     public Credit Credit { get; private set; } = Credit.Default;
 
-    [Key(3, Level = 0)]
+    [Key(3)]
     public Signature Signature { get; private set; }
 
     public bool Validate()

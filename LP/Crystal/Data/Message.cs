@@ -7,7 +7,7 @@ namespace LP.Crystal;
 
 [TinyhandObject]
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
-public partial class Message : ISignatureVerifiable<Message>, IVerifiable
+public partial class Message : IVerifiable
 {
     public const int MaxTitleLength = 100;
     public const int MaxNameLength = 50;
@@ -69,7 +69,15 @@ public partial class Message : ISignatureVerifiable<Message>, IVerifiable
         {
             return false;
         }
-        else if (!((ISignatureVerifiable<Message>)this).VerifySignature(1))
+        else if (!this.VerifyIdentifierAndSignature(1, this.Identifier, this.Signature))
+        {
+            return false;
+        }
+        else if (this.ValueToken.Signature.SignatureType != Signature.Type.Attest)
+        {
+            return false;
+        }
+        else if (!this.VerifyValueToken(3, this.ValueToken))
         {
             return false;
         }
