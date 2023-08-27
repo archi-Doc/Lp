@@ -49,7 +49,7 @@ public readonly partial struct Signature
     [Key(3)]
     public readonly long ExpirationMics;
 
-    [Key(4, Condition = false)]
+    [Key(4)]
     [DefaultValue(null)]
     public readonly byte[]? Sign;
 }
