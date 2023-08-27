@@ -3,27 +3,16 @@
 namespace LP.T3CS;
 
 /// <summary>
-/// Represents a value (Owner#Point@Originator:Standard/Mergers).
+/// Represents a value token (Owner#Point@Originator:Standard/Mergers + Signature).
 /// </summary>
 [TinyhandObject]
-public sealed partial class Value : IValidatable, IEquatable<Value>
+public sealed partial class ValueToken : IValidatable, IEquatable<ValueToken>
 {
-    public const long MaxPoint = 1_000_000_000_000_000_000; // k, m, g, t, p, e, 1z
-    public const long MinPoint = 0; // -MaxPoint;
+    public const long MaximumMics = Mics.MicsPerYear * 1;
+    public static readonly ValueToken Default = new();
 
-    public Value()
+    public ValueToken()
     {
-    }
-
-    public Value(long point, PublicKey originator, PublicKey[] mergers)
-    {
-        this.Point = point;
-        this.Credit = new(originator, mergers);
-
-        if (!this.Validate())
-        {
-            throw new ArgumentOutOfRangeException();
-        }
     }
 
     [Key(0)]
@@ -35,13 +24,16 @@ public sealed partial class Value : IValidatable, IEquatable<Value>
     [Key(2)]
     public Credit Credit { get; private set; } = Credit.Default;
 
+    [Key(3)]
+    public Signature Signature { get; private set; }
+
     public bool Validate()
     {
         if (!this.Owner.Validate())
         {
             return false;
         }
-        else if (this.Point < MinPoint || this.Point > MaxPoint)
+        else if (this.Point < Value.MinPoint || this.Point > Value.MaxPoint)
         {
             return false;
         }
@@ -53,7 +45,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>
         return true;
     }
 
-    public bool Equals(Value? other)
+    public bool Equals(ValueToken? other)
     {
         if (other == null)
         {
@@ -68,6 +60,10 @@ public sealed partial class Value : IValidatable, IEquatable<Value>
             return false;
         }
         else if (!this.Credit.Equals(other.Credit))
+        {
+            return false;
+        }
+        else if (!this.Signature.Equals(other.Signature))
         {
             return false;
         }

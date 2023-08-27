@@ -28,7 +28,7 @@ public sealed partial class Credential : IValidatable, IEquatable<Credential>
     public Type CredentialType { get; private set; }
 
     [Key(5, AddProperty = "Signatures", Condition = false)]
-    [MaxLength((1 + Value.MaxMergers) * 2)]
+    [MaxLength((1 + Credit.MaxMergers) * 2)]
     private byte[] signatures = default!;
 
     public bool Validate()

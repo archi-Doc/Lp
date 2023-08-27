@@ -9,9 +9,9 @@ using ValueLink;
 
 namespace LP.Crystal;
 
-[TinyhandObject(ExplicitKeyOnly = true)]
+[TinyhandObject(Journal = true, ExplicitKeyOnly = true)]
 [ValueLinkObject]
-public partial class MergerData : BaseData
+public partial record MergerData : BaseData
 {
     public MergerData(IBigCrystal crystal, BaseData? parent, Identifier identifier)
         : base(crystal, parent)
@@ -24,16 +24,17 @@ public partial class MergerData : BaseData
     {
     }
 
-    public new LpData.LpDataId DataId
+    [IgnoreMember]
+    public LpData.LpDataId DataId
     {
-        get => (LpData.LpDataId)base.DataId;
-        set => base.DataId = (int)value;
+        get => (LpData.LpDataId)this.BaseDataId;
+        set => this.BaseDataId = (int)value;
     }
 
     public Identifier Identifier => this.identifier;
 
     [Key(4)]
-    [Link(Primary = true, Name = "Id", AddValue = false, Type = ChainType.Unordered)]
+    [Link(Primary = true, Unique = true, Name = "Id", AddValue = false, Type = ChainType.Unordered)]
     [Link(Name = "OrderedId", Type = ChainType.Ordered)]
     private Identifier identifier = default!;
 
@@ -53,9 +54,9 @@ public partial class MergerData : BaseData
         var count = 0;
         using (this.semaphore.Lock())
         {
-            foreach (var x in this.ChildrenInternal)
+            foreach (var x in this.GetChildren())
             {
-                if (x.DataId == intId)
+                if (x.BaseDataId == intId)
                 {
                     count++;
                 }
@@ -146,21 +147,15 @@ public partial class MergerData : BaseData
 
     #endregion
 
-    protected override IEnumerator<BaseData> EnumerateInternal()
+    public override MergerData[] GetChildren()
     {
         if (this.children == null)
         {
-            this.TryLoadChildren();
-            if (this.children == null)
-            {
-                yield break;
-            }
+            return Array.Empty<MergerData>();
         }
 
-        foreach (var x in this.children)
-        {
-            yield return x;
-        }
+        return this.children.ToArray();
+        // return this.children.GetArray();
     }
 
     protected override void DeleteInternal()
@@ -240,7 +235,7 @@ public partial class MergerData : BaseData
                     {
                         foreach (var x in goshujin)
                         {
-                            x.Initialize(this.BigCrystal, this, true);
+                            ((IBaseData)x).Initialize(this.BigCrystal, this, true);
                         }
                     }
                 }
@@ -278,7 +273,7 @@ public partial class MergerData : BaseData
                     {
                         foreach (var x in goshujin)
                         {
-                            x.Initialize(this.BigCrystal, this, true);
+                            ((IBaseData)x).Initialize(this.BigCrystal, this, true);
                         }
 
                         this.children = goshujin;

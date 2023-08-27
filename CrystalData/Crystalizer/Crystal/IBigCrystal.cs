@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using CrystalData.Datum;
+
 namespace CrystalData;
 
 public interface IBigCrystal : ICrystal
@@ -14,7 +16,7 @@ public interface IBigCrystal : ICrystal
 }
 
 public interface IBigCrystal<TData> : IBigCrystal, ICrystal<TData>
-    where TData : BaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+    where TData : class, IBaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
 }
 
@@ -23,6 +25,6 @@ internal interface IBigCrystalInternal : IBigCrystal, ICrystalInternal
 }
 
 internal interface IBigCrystalInternal<TData> : IBigCrystal<TData>, IBigCrystalInternal
-    where TData : BaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+    where TData : class, IBaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {
 }

@@ -9,7 +9,7 @@ namespace LP.Crystal;
 
 [TinyhandObject(ExplicitKeyOnly = true, Journal = true)]
 [ValueLinkObject]
-public partial class LpData : BaseData
+public partial record LpData : BaseData
 {
     public enum LpDataId
     {
@@ -30,10 +30,11 @@ public partial class LpData : BaseData
 
     #region FieldAndProperty
 
-    public new LpDataId DataId
+    [IgnoreMember]
+    public LpDataId DataId
     {
-        get => (LpDataId)base.DataId;
-        set => base.DataId = (int)value;
+        get => (LpDataId)this.BaseDataId;
+        set => this.BaseDataId = (int)value;
     }
 
     public Identifier Identifier => this.identifier;
@@ -57,13 +58,13 @@ public partial class LpData : BaseData
         return false;
     }*/
 
-    public int Count(LpDataId id)
+    /*public int Count(LpDataId id)
     {
         var intId = (int)id;
         var count = 0;
         using (this.semaphore.Lock())
         {
-            foreach (var x in this.ChildrenInternal)
+            foreach (var x in this.GetChildren())
             {
                 if (x.DataId == intId)
                 {
@@ -73,7 +74,7 @@ public partial class LpData : BaseData
         }
 
         return count;
-    }
+    }*/
 
     #region Child
 
@@ -164,17 +165,15 @@ public partial class LpData : BaseData
 
     #endregion
 
-    protected override IEnumerator<BaseData> EnumerateInternal()
+    public override LpData[] GetChildren()
     {
         if (this.children == null)
         {
-            yield break;
+            return Array.Empty<LpData>();
         }
 
-        foreach (var x in this.children)
-        {
-            yield return x;
-        }
+        return this.children.ToArray();
+        // return this.children.GetArray();
     }
 
     protected override void DeleteInternal()

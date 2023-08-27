@@ -11,7 +11,7 @@ namespace LP.Crystal;
 
 [TinyhandObject]
 [ValueLinkObject]
-public partial class LpData : BaseData
+public partial record LpData : BaseData
 {
     public LpData(IBigCrystal crystal, BaseData? parent, Identifier identifier)
         : base(crystal, parent)
@@ -34,7 +34,7 @@ public partial class LpData : BaseData
     [Key(5)]
     private GoshujinClass? children;
 
-    #region Child
+    #region Children
 
     public LockOperation<TDatum> LockChild<TDatum>(Identifier id)
         where TDatum : IDatum
@@ -122,18 +122,6 @@ public partial class LpData : BaseData
     }
 
     #endregion
-    protected override IEnumerator<BaseData> EnumerateInternal()
-    {
-        if (this.children == null)
-        {
-            yield break;
-        }
-
-        foreach (var x in this.children)
-        {
-            yield return x;
-        }
-    }
 
     protected override void DeleteInternal()
     {

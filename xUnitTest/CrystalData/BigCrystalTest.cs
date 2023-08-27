@@ -9,7 +9,7 @@ namespace xUnitTest.CrystalDataTest;
 
 [TinyhandObject]
 [ValueLinkObject]
-public partial class SimpleData : BaseData
+public partial record SimpleData : BaseData
 {
     public SimpleData(IBigCrystal crystal, BaseData? parent, string name)
         : base(crystal, parent)

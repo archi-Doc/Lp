@@ -549,7 +549,7 @@ public class Crystalizer
     }
 
     public ICrystal<TData> CreateBigCrystal<TData>(bool managedByCrystalizer = true)
-        where TData : BaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+        where TData : class, IBaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
         var crystal = new BigCrystalObject<TData>(this);
         if (managedByCrystalizer)
@@ -579,7 +579,7 @@ public class Crystalizer
     }
 
     public IBigCrystal<TData> GetBigCrystal<TData>()
-        where TData : BaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+        where TData : class, IBaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
         if (!this.typeToCrystal.TryGetValue(typeof(TData), out var c) ||
             c is not IBigCrystal<TData> crystal)

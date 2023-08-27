@@ -93,15 +93,15 @@ public class Program
                     StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/BaseData/Storage")),
                 });*/
 
-                /*context.AddBigCrystal<ExampleData>(new BigCrystalConfiguration() with
+                context.AddBigCrystal<ExampleData>(new BigCrystalConfiguration() with
                 {
                     RegisterDatum = registry =>
                     {
                         registry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
                     },
-                    DirectoryConfiguration = new LocalDirectoryConfiguration("Example"),
+                    FileConfiguration = new LocalFileConfiguration("Example/File"),
                     StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Example")),
-                });*/
+                });
             })
             .SetupOptions<CrystalizerOptions>((context, options) =>
             {// CrystalizerOptions

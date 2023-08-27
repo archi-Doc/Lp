@@ -4,7 +4,7 @@ using CrystalData.Datum;
 
 namespace CrystalData;
 
-public partial class BaseData
+public partial record BaseData
 {
     public readonly struct BlockDatumMethods
     {

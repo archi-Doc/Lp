@@ -338,9 +338,9 @@ Exit:
 
     ITinyhandJournal? IJournalObject.Journal { get; set; }
 
-    IJournalObject? IJournalObject.Parent { get; set; } = null;
+    IJournalObject? IJournalObject.JournalParent { get; set; } = null;
 
-    int IJournalObject.Key { get; set; } = -1;
+    int IJournalObject.JournalKey { get; set; } = -1;
 
     /*void IJournalObject.WriteLocator(ref Tinyhand.IO.TinyhandWriter writer)
     {

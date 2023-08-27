@@ -2,21 +2,24 @@
 
 namespace LP.T3CS;
 
+/*
 /// <summary>
-/// Represents a credit information (@Originator:Standard/Mergers).
+/// Represents a value (Owner#Point@Originator:Standard/Mergers).
 /// </summary>
 [TinyhandObject]
-public sealed partial class Credit : IValidatable, IEquatable<Credit>
+public sealed partial class Value : IValidatable, IEquatable<Value>
 {
+    public const long MaxPoint = 1_000_000_000_000_000_000; // k, m, g, t, p, e, 1z
+    public const long MinPoint = 0; // -MaxPoint;
     public const int MaxMergers = 4;
-    public static readonly Credit Default = new();
 
-    public Credit()
+    public Value()
     {
     }
 
-    public Credit(PublicKey originator, PublicKey[] mergers)
+    public Value(long point, PublicKey originator, PublicKey[] mergers)
     {
+        this.Point = point;
         this.Originator = originator;
         this.mergers = mergers;
 
@@ -26,29 +29,23 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>
         }
     }
 
-    #region FieldAndProperty
-
     [Key(0)]
-    public PublicKey Originator { get; private set; } = default!;
+    public long Point { get; private set; }
 
     [Key(1)]
-    public PublicKey Standard { get; private set; } = default!;
+    public PublicKey Originator { get; private set; } = default!;
 
     [Key(2, AddProperty = "Mergers")]
     [MaxLength(MaxMergers)]
-    private PublicKey[] mergers = Array.Empty<PublicKey>();
-
-    #endregion
+    private PublicKey[] mergers = default!;
 
     public bool Validate()
     {
-        if (!this.Originator.Validate())
+        if (this.Point < MinPoint || this.Point > MaxPoint)
         {
             return false;
         }
-
-        var keyVersion = this.Originator.KeyVersion;
-        if (this.Standard.KeyVersion != keyVersion || !this.Standard.Validate())
+        else if (!this.Originator.Validate())
         {
             return false;
         }
@@ -59,6 +56,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>
             return false;
         }
 
+        var keyVersion = this.Originator.KeyVersion;
         for (var i = 0; i < this.mergers.Length; i++)
         {
             if (this.mergers[i].KeyVersion != keyVersion || !this.mergers[i].Validate())
@@ -70,7 +68,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>
         return true;
     }
 
-    public bool Equals(Credit? other)
+    public bool Equals(Value? other)
     {
         if (other == null)
         {
@@ -93,19 +91,14 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>
             }
         }
 
-        if (!this.Standard.Equals(other.Standard))
-        {
-            return false;
-        }
-
         return true;
     }
 
     public override int GetHashCode()
     {
         var hash = default(HashCode);
+        hash.Add(this.Point);
         hash.Add(this.Originator);
-        hash.Add(this.Standard);
 
         foreach (var x in this.mergers)
         {
@@ -115,3 +108,4 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>
         return hash.ToHashCode();
     }
 }
+*/

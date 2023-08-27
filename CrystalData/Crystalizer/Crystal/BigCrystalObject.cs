@@ -4,8 +4,19 @@ using Tinyhand.IO;
 
 namespace CrystalData;
 
+public interface IBaseData
+{
+    void Initialize(IBigCrystal crystal, IBaseData? parent, bool initializeChildren);
+
+    void Save(bool unload = false);
+
+    void Unload();
+
+    bool Delete();
+}
+
 public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
-    where TData : BaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+    where TData : class, IBaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {// BigCrystalObject = CrystalObject + Datum + StorageGroup (+ Himo)
     public BigCrystalObject(Crystalizer crystalizer)
     {

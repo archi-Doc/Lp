@@ -3,13 +3,12 @@
 #pragma warning disable SA1124 // Do not use regions
 
 using CrystalData.Datum;
-using static CrystalData.CrystalDataHashed;
 
 namespace CrystalData;
 
 [TinyhandObject(ExplicitKeyOnly = true, Journal = true)]
 [ValueLinkObject]
-public partial class RecursiveData<TKey> : BaseData
+public partial record RecursiveData<TKey> : BaseData
 {
     public RecursiveData(IBigCrystal crystal, BaseData? parent, TKey key)
         : base(crystal, parent)
@@ -110,19 +109,6 @@ public partial class RecursiveData<TKey> : BaseData
     }
 
     #endregion
-
-    protected override IEnumerator<BaseData> EnumerateInternal()
-    {
-        if (this.children == null)
-        {
-            yield break;
-        }
-
-        foreach (var x in this.children)
-        {
-            yield return x;
-        }
-    }
 
     protected override void DeleteInternal()
     {

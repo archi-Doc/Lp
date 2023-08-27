@@ -1,10 +1,14 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 
 namespace LP.T3CS;
 
+/// <summary>
+/// Represents pure public key data. Compressed to 33 bytes.
+/// </summary>
 [TinyhandObject]
 public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 {
@@ -115,6 +119,8 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         this.x3 = x3;
     }
 
+    #region FieldAndProperty
+
     [Key(0)]
     private readonly byte keyValue;
 
@@ -133,6 +139,8 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
     public uint KeyVersion => KeyHelper.ToKeyVersion(this.keyValue);
 
     public uint YTilde => KeyHelper.ToYTilde(this.keyValue);
+
+    #endregion
 
     public bool IsValid() =>
         this.x0 != 0 &&
@@ -154,6 +162,24 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         }
 
         var result = ecdsa.VerifyData(data, sign, HashAlgorithmName);
+        this.CacheEcdsa(ecdsa);
+        return result;
+    }
+
+    public unsafe bool VerifyIdentifier(Identifier identifier, ReadOnlySpan<byte> sign)
+    {
+        if (sign.Length != PublicKey.SignLength)
+        {
+            return false;
+        }
+
+        var ecdsa = this.TryGetEcdsa();
+        if (ecdsa == null)
+        {
+            return false;
+        }
+
+        var result = ecdsa.VerifyHash(new ReadOnlySpan<byte>(Unsafe.AsPointer(ref identifier), sizeof(Identifier)), sign);
         this.CacheEcdsa(ecdsa);
         return result;
     }

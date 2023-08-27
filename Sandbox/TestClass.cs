@@ -40,11 +40,11 @@ internal class TestClass
 
         await combinedCrystal.Save();
 
-        var a = this.exampleData.GetOrCreateChild("a");
+        /*var a = this.exampleData.GetOrCreateChild("a");
         a.BlockDatum().Set(new byte[] { 0, 1, 2, });
 
         var a2 = this.exampleData.TryGetChild("a");
-        var b2 = this.exampleData.TryGetChild("b");
+        var b2 = this.exampleData.TryGetChild("b");*/
     }
 
     private Crystalizer crystalizer;
