@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Reflection.Emit;
 using LP.T3CS;
+using Tinyhand.IO;
 
 namespace LP;
 
@@ -9,6 +11,22 @@ public static class LPExtentions
     public static string To4Hex(this ulong gene) => $"{(ushort)gene:x4}";
 
     public static string To4Hex(this uint id) => $"{(ushort)id:x4}";
+
+    public static ulong GetFarmHash<T>(this T value)
+        where T : ITinyhandSerialize<T>, IUnity
+    {
+        if (value.Hash != 0)
+        {
+            return value.Hash;
+        }
+
+        var hash = Hash.ObjectPool.Get();
+        var farmhash = hash.GetFarmHash(value);
+        Hash.ObjectPool.Return(hash);
+        value.Hash = farmhash;
+
+        return farmhash;
+    }
 
     public static bool VerifySignature<T>(this T value, int level, Signature signature)
         where T : ITinyhandSerialize<T>

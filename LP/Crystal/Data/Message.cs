@@ -53,15 +53,9 @@ public partial class Message : IVerifiable
     private string content = default!;
 
     [Link(Type = ChainType.Ordered, AddValue = false)]
-    public long SignedMics => this.signature.SignedMics;
+    public long SignedMics => this.valueToken.Signature.SignedMics;
 
     #endregion
-
-    public Identifier GetIdentifier()
-        => this.Identifier;
-
-    public Signature GetSignature()
-        => this.Signature;
 
     public bool ValidateAndVerify()
     {

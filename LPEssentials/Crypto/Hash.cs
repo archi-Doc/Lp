@@ -41,4 +41,19 @@ public class Hash : Sha3_256
             writer.Dispose();
         }
     }
+
+    public ulong GetFarmHash<T>(T? value)
+        where T : ITinyhandSerialize<T>
+    {
+        var writer = new TinyhandWriter(this.buffer);
+        try
+        {
+            TinyhandSerializer.SerializeObject(ref writer, value);
+            return FarmHash.Hash64(writer.FlushAndGetReadOnlySpan());
+        }
+        finally
+        {
+            writer.Dispose();
+        }
+    }
 }

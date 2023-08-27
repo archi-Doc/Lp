@@ -8,12 +8,10 @@ namespace LP.Crystal;
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
 public partial record MessageBoard
 {
+    public const int MaxMessages = 1_000;
+
     public MessageBoard()
     {
-        lock (this.messages.SyncObject)
-        {
-            this.messages.Add(new());
-        }
     }
 
     [Key(0, AddProperty = "Identifier")]
