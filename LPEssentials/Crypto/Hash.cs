@@ -48,7 +48,7 @@ public class Hash : Sha3_256
         var writer = new TinyhandWriter(this.buffer);
         try
         {
-            TinyhandSerializer.SerializeObject(ref writer, value);
+            TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Selection);
             return FarmHash.Hash64(writer.FlushAndGetReadOnlySpan());
         }
         finally

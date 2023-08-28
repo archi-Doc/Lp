@@ -7,7 +7,7 @@ namespace LP.Crystal;
 
 [TinyhandObject]
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
-public partial class Message : IVerifiable
+public partial class Message : IVerifiable, IUnity
 {
     public const int MaxTitleLength = 100;
     public const int MaxNameLength = 50;
@@ -54,6 +54,9 @@ public partial class Message : IVerifiable
 
     [Link(Type = ChainType.Ordered, AddValue = false)]
     public long SignedMics => this.valueToken.Signature.SignedMics;
+
+    [IgnoreMember]
+    public ulong Hash { get; set; }
 
     #endregion
 
