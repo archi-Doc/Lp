@@ -15,7 +15,7 @@ public interface IAuthorizedService : INetService
 public class AuthorizedService : IAuthorizedService
 {
     public async NetTask<NetResult> Authorize(Token token)
-    {
+    {// -> Engage
         if (CallContext.Current.ServerContext.Terminal.ValidateAndVerifyToken(token) &&
             token.TokenType == Token.Type.Authorize)
         {
