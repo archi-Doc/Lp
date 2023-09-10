@@ -12,6 +12,7 @@ public enum CreditOpenness
 public enum CreditEvol
 {
     Unrestricted,
+    Exchange,
     Constant,
     Linear,
     Ratio,
