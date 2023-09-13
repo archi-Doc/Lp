@@ -22,6 +22,20 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
     {
         this.logger.TryGet()?.Log($"Test subcommand: {options.ToString()}");
 
+        await this.TestLinkageKey();
+    }
+
+    private async Task TestLinkageKey()
+    {
+        var privateKey = PrivateKey.Create();
+        var publicKey = privateKey.ToPublicKey();
+
+        this.userInterfaceService.WriteLine($"Private: {privateKey.ToUnsafeString()}");
+        this.userInterfaceService.WriteLine($"Public: {publicKey.ToString()}");
+    }
+
+    private async Task Test0()
+    {
         ECParameters key = default;
         key.Curve = ECCurve.CreateFromFriendlyName(PublicKey.CurveInstance.CurveName);
 

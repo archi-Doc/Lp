@@ -3,12 +3,15 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using Arc.Crypto.EC;
+using LP.Obsolete;
+using Tinyhand.IO;
 
 namespace LP.T3CS;
 
 /// <summary>
-/// Represents pure public key data. Compressed to 33 bytes.
+/// Represents a public key data. Compressed to 33 bytes.
 /// </summary>
 [TinyhandObject]
 public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
@@ -100,6 +103,12 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         }
     }*/
 
+    public LinkageKey ToLinkageKey()
+        => new(this);
+
+    public LinkageKey ToLinkageKey(NodePublicKey encryptionKey)
+        => new(this, encryptionKey);
+
     internal PublicKey(PrivateKey privateKey)
     {
         this.keyValue = KeyHelper.CheckPublicKeyValue(privateKey.KeyValue);
@@ -144,6 +153,22 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
     public uint YTilde => KeyHelper.ToYTilde(this.keyValue);
 
     #endregion
+
+    public unsafe ulong GetChecksum()
+    {
+        return FarmHash.Hash64(new ReadOnlySpan<byte>(Unsafe.AsPointer(ref Unsafe.AsRef(this)), sizeof(PublicKey)));
+
+        /*var writer = default(TinyhandWriter);
+        try
+        {
+            TinyhandSerializer.SerializeObject(ref writer, this);
+            return FarmHash.Hash64(writer.FlushAndGetReadOnlySpan());
+        }
+        finally
+        {
+            writer.Dispose();
+        }*/
+    }
 
     public bool IsValid() =>
         this.x0 != 0 &&
