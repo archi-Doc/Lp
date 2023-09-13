@@ -23,7 +23,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         this.logger.TryGet()?.Log($"Test subcommand: {options.ToString()}");
 
         ECParameters key = default;
-        key.Curve = ECCurve.CreateFromFriendlyName(PublicKey.ECCurveName);
+        key.Curve = ECCurve.CreateFromFriendlyName(PublicKey.CurveInstance.CurveName);
 
         var st = this.seedPhrase.Create();
         var seed = this.seedPhrase.TryGetSeed(st);

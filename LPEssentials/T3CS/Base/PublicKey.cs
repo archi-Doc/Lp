@@ -3,6 +3,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
+using Arc.Crypto.EC;
 
 namespace LP.T3CS;
 
@@ -12,15 +13,16 @@ namespace LP.T3CS;
 [TinyhandObject]
 public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 {
-    public const string ECCurveName = "secp256r1";
+    // public const string ECCurveName = "secp256r1"; // CurveInstance
     public const int PublicKeyLength = 64;
     public const int PublicKeyHalfLength = PublicKeyLength / 2;
     public const int PrivateKeyLength = 32;
     public const int SignLength = 64;
     public const int PublicKeyEncodedLength = 1 + (sizeof(ulong) * 4);
-    private const int MaxPublicKeyCache = 100;
+    public const int MaxPublicKeyCache = 100;
 
-    public static HashAlgorithmName HashAlgorithmName { get; }
+    public static readonly HashAlgorithmName HashAlgorithmName;
+    public static readonly ECCurveBase CurveInstance;
 
     internal static ECCurve ECCurve { get; }
 
@@ -28,7 +30,8 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
     static PublicKey()
     {
-        ECCurve = ECCurve.CreateFromFriendlyName(ECCurveName);
+        CurveInstance = P256R1Curve.Instance;
+        ECCurve = ECCurve.CreateFromFriendlyName(CurveInstance.CurveName);
         HashAlgorithmName = HashAlgorithmName.SHA256;
     }
 
