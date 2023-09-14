@@ -1,12 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using Arc.Crypto.EC;
-using LP.Obsolete;
-using Tinyhand.IO;
 
 namespace LP.T3CS;
 
@@ -21,7 +19,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
     public const int PublicKeyHalfLength = PublicKeyLength / 2;
     public const int PrivateKeyLength = 32;
     public const int SignLength = 64;
-    public const int PublicKeyEncodedLength = 1 + (sizeof(ulong) * 4);
+    public const int EncodedLength = 1 + (sizeof(ulong) * 4);
     public const int MaxPublicKeyCache = 100;
 
     public static readonly HashAlgorithmName HashAlgorithmName;
@@ -47,7 +45,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
         publicKey = default;
         var bytes = Base64.Url.FromStringToByteArray(chars);
-        if (bytes.Length != PublicKeyEncodedLength)
+        if (bytes.Length != EncodedLength)
         {
             return false;
         }
@@ -152,11 +150,17 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
     public uint YTilde => KeyHelper.ToYTilde(this.keyValue);
 
+    internal byte KeyValue => this.keyValue;
+
     #endregion
 
     public unsafe ulong GetChecksum()
     {
-        return FarmHash.Hash64(new ReadOnlySpan<byte>(Unsafe.AsPointer(ref Unsafe.AsRef(this)), sizeof(PublicKey)));
+        Span<byte> span = stackalloc byte[EncodedLength];
+        this.TryWriteBytes(span, out _);
+        return FarmHash.Hash64(span);
+
+        // FarmHash.Hash64(new ReadOnlySpan<byte>(Unsafe.AsPointer(ref Unsafe.AsRef(this)), sizeof(PublicKey)));
 
         /*var writer = default(TinyhandWriter);
         try
@@ -278,9 +282,25 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
     public string ToBase64()
     {
-        Span<byte> bytes = stackalloc byte[1 + (sizeof(ulong) * 4)]; // scoped
-        var b = bytes;
+        Span<byte> span = stackalloc byte[EncodedLength];
+        this.TryWriteBytes(span, out _);
+        return $"{Base64.Url.FromByteArrayToString(span)}";
+    }
 
+    public Identifier ToIdentifier()
+    {
+        return new(this.x0, this.x1, this.x2, this.x3);
+    }
+
+    public bool TryWriteBytes(Span<byte> span, out int written)
+    {
+        if (span.Length < EncodedLength)
+        {
+            written = 0;
+            return false;
+        }
+
+        var b = span;
         b[0] = this.keyValue;
         b = b.Slice(1);
         BitConverter.TryWriteBytes(b, this.x0);
@@ -292,12 +312,8 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         BitConverter.TryWriteBytes(b, this.x3);
         b = b.Slice(sizeof(ulong));
 
-        return $"{Base64.Url.FromByteArrayToString(bytes)}";
-    }
-
-    public Identifier ToIdentifier()
-    {
-        return new(this.x0, this.x1, this.x2, this.x3);
+        written = EncodedLength;
+        return true;
     }
 
     private ECDsa? TryGetEcdsa()

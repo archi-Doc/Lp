@@ -32,6 +32,11 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
         this.userInterfaceService.WriteLine($"Private: {privateKey.ToUnsafeString()}");
         this.userInterfaceService.WriteLine($"Public: {publicKey.ToString()}");
+
+        var rawKey = publicKey.ToLinkageKey();
+        this.userInterfaceService.WriteLine($"Raw: {rawKey.ToString()}");
+        var encryptedKey = publicKey.ToLinkageKey(NodePrivateKey.AlternativePrivateKey.ToPublicKey());
+        this.userInterfaceService.WriteLine($"Encrypted: {encryptedKey.ToString()}");
     }
 
     private async Task Test0()
