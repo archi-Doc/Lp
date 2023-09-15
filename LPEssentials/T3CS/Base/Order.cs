@@ -59,7 +59,7 @@ public sealed partial class Order : IValidatable, IEquatable<Order>
 
     [Key(6, AddProperty = "Signature", Level = 0)]
     [MaxLength(PublicKey.SignLength)]
-    private byte[] signature = Array.Empty<byte>();
+    private byte[] signature = [];
 
     public bool Validate()
     {
