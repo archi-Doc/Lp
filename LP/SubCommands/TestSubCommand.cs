@@ -27,15 +27,19 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
     private async Task TestLinkageKey()
     {
-        var privateKey = PrivateKey.Create();
+        var privateKey = PrivateKey.CreateVerificationKey();
         var publicKey = privateKey.ToPublicKey();
+        this.userInterfaceService.WriteLine($"Private(verification): {privateKey.ToUnsafeString()}");
+        this.userInterfaceService.WriteLine($"Public(verification): {publicKey.ToString()}");
 
-        this.userInterfaceService.WriteLine($"Private: {privateKey.ToUnsafeString()}");
-        this.userInterfaceService.WriteLine($"Public: {publicKey.ToString()}");
+        var privateKey2 = PrivateKey.CreateEncryptionKey();
+        var publicKey2 = privateKey2.ToPublicKey();
+        this.userInterfaceService.WriteLine($"Private(encryption): {privateKey2.ToUnsafeString()}");
+        this.userInterfaceService.WriteLine($"Public(encryption): {publicKey2.ToString()}");
 
         var rawKey = publicKey.ToLinkageKey();
         this.userInterfaceService.WriteLine($"Raw: {rawKey.ToString()}");
-        var encryptedKey = publicKey.ToLinkageKey(NodePrivateKey.AlternativePrivateKey.ToPublicKey());
+        var encryptedKey = publicKey.ToLinkageKey(publicKey2);
         this.userInterfaceService.WriteLine($"Encrypted: {encryptedKey.ToString()}");
     }
 
@@ -48,7 +52,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         var seed = this.seedPhrase.TryGetSeed(st);
         if (seed != null)
         {
-            var pk = PrivateKey.Create(seed);
+            var pk = PrivateKey.CreateVerificationKey(seed);
         }
 
         var privateKey = NodePrivateKey.AlternativePrivateKey;

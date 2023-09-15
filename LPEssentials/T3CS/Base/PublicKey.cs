@@ -104,12 +104,12 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
     public LinkageKey ToLinkageKey()
         => new(this);
 
-    public LinkageKey ToLinkageKey(NodePublicKey encryptionKey)
+    public LinkageKey ToLinkageKey(PublicKey encryptionKey)
         => new(this, encryptionKey);
 
     internal PublicKey(PrivateKey privateKey)
     {
-        this.keyValue = KeyHelper.CheckPublicKeyValue(privateKey.KeyValue);
+        this.keyValue = KeyHelper.ToPublicKeyValue(privateKey.KeyValue);
         var span = privateKey.X.AsSpan();
         this.x0 = BitConverter.ToUInt64(span);
         span = span.Slice(sizeof(ulong));
@@ -122,7 +122,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
     private PublicKey(byte keyValue, ulong x0, ulong x1, ulong x2, ulong x3)
     {
-        this.keyValue = KeyHelper.CheckPublicKeyValue(keyValue);
+        this.keyValue = KeyHelper.ToPublicKeyValue(keyValue);
         this.x0 = x0;
         this.x1 = x1;
         this.x2 = x2;
@@ -146,9 +146,9 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
     [Key(4)]
     private readonly ulong x3;
 
-    public uint KeyVersion => KeyHelper.ToKeyVersion(this.keyValue);
+    public uint KeyVersion => KeyHelper.GetKeyVersion(this.keyValue);
 
-    public uint YTilde => KeyHelper.ToYTilde(this.keyValue);
+    public uint YTilde => KeyHelper.GetYTilde(this.keyValue);
 
     internal byte KeyValue => this.keyValue;
 
@@ -179,6 +179,10 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         this.x1 != 0 &&
         this.x2 != 0 &&
         this.x3 != 0;
+
+    public bool IsVerificationKey => KeyHelper.IsVerification(this.keyValue);
+
+    public bool IsEncryptionKey => KeyHelper.IsEncryption(this.keyValue);
 
     public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> sign)
     {
@@ -316,6 +320,56 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         return true;
     }
 
+    internal void WriteX(Span<byte> span)
+    {
+        var b = span;
+        BitConverter.TryWriteBytes(b, this.x0);
+        b = b.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(b, this.x1);
+        b = b.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(b, this.x2);
+        b = b.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(b, this.x3);
+    }
+
+    internal ECDiffieHellman? TryGetEcdh()
+    {
+        if (!KeyHelper.IsEncryption(this.KeyValue))
+        {
+            return default;
+        }
+
+        var x = new byte[32];
+        var span = x.AsSpan();
+        BitConverter.TryWriteBytes(span, this.x0);
+        span = span.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(span, this.x1);
+        span = span.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(span, this.x2);
+        span = span.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(span, this.x3);
+
+        var y = PublicKey.CurveInstance.TryDecompressY(x, this.YTilde);
+        if (y == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            ECParameters p = default;
+            p.Curve = ECCurve;
+            p.Q.X = x;
+            p.Q.Y = y;
+            return ECDiffieHellman.Create(p);
+        }
+        catch
+        {
+        }
+
+        return null;
+    }
+
     private ECDsa? TryGetEcdsa()
     {
         if (PublicKeyToEcdsa.TryGet(this) is { } ecdsa)
@@ -340,7 +394,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
             span = span.Slice(sizeof(ulong));
             BitConverter.TryWriteBytes(span, this.x3);
 
-            var y = Arc.Crypto.EC.P256R1Curve.Instance.TryDecompressY(x, this.YTilde);
+            var y = PublicKey.CurveInstance.TryDecompressY(x, this.YTilde);
             if (y == null)
             {
                 return null;

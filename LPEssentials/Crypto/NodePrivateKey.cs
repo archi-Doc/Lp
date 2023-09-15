@@ -123,7 +123,7 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
         this.d = d;
 
         var yTilde = this.CompressY();
-        this.keyValue = KeyHelper.ToPrivateKeyValue(keyVersion, yTilde);
+        this.keyValue = KeyHelper.ToPrivateKeyValue(1, keyVersion, yTilde);
     }
 
     public NodePublicKey ToPublicKey()
@@ -177,9 +177,9 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
     [Key(3)]
     private readonly byte[] d = Array.Empty<byte>();
 
-    public uint KeyVersion => KeyHelper.ToKeyVersion(this.keyValue);
+    public uint KeyVersion => KeyHelper.GetKeyVersion(this.keyValue);
 
-    public uint YTilde => KeyHelper.ToYTilde(this.keyValue);
+    public uint YTilde => KeyHelper.GetYTilde(this.keyValue);
 
     public byte[] X => this.x;
 

@@ -64,7 +64,7 @@ public sealed partial class AuthorityKey
     public PublicKey PublicKey => this.GetOrCreatePrivateKey().ToPublicKey();
 
     [Key(0)]
-    private byte[] seed = Array.Empty<byte>();
+    private byte[] seed = [];
 
     [Key(1)]
     public AuthorityLifetime Lifetime { get; private set; }
@@ -92,7 +92,7 @@ public sealed partial class AuthorityKey
             var seed = hash.HashFinal();
             Hash.ObjectPool.Return(hash);
 
-            privateKey = PrivateKey.Create(seed);
+            privateKey = PrivateKey.CreateVerificationKey(seed);
         }
 
         return privateKey;

@@ -7,7 +7,7 @@ namespace LP;
 
 public class Seedphrase
 {
-    public const int SeedphraseDefaultLength = 16;
+    public const int SeedphraseDefaultLength = 20;
     public const int SeedphraseMinimumLength = 12;
     private const string SeedphrasesPath = "Strings.Seedphrases";
 

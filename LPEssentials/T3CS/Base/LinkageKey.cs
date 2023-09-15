@@ -3,6 +3,7 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using Tinyhand.IO;
 using Tinyhand.Tree;
 
@@ -22,14 +23,45 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
         this.Checksum = (uint)publicKey.GetChecksum();
     }
 
-    public LinkageKey(PublicKey publicKey, NodePublicKey encryptionKey)
+    public LinkageKey(PublicKey publicKey, PublicKey encryptionKey)
     {// Encrypt
         this.Checksum = (uint)publicKey.GetChecksum();
-        this.Key = Unsafe.As<NodePublicKey, PublicKey>(ref encryptionKey);
+        this.Key = encryptionKey;
         this.IsEncrypted = true;
         this.keyValue = publicKey.KeyValue;
 
-        encryptionKey.TryGetEcdh();
+        var newKey = PrivateKey.CreateEncryptionKey();
+        using (var ecdh = newKey.TryGetEcdh())
+        using (var ecdh2 = encryptionKey.TryGetEcdh())
+        {
+            if (ecdh is null || ecdh2 is null)
+            {
+                throw new InvalidOperationException();
+            }
+
+            var material = ecdh.DeriveKeyMaterial(ecdh2.PublicKey);
+
+            using (var aes = Aes.Create())
+            {
+                aes.KeySize = 256;
+                aes.Key = material;
+
+                Span<byte> source = stackalloc byte[32];
+                publicKey.WriteX(source);
+                Span<byte> iv = stackalloc byte[16];
+                Span<byte> destination = stackalloc byte[32];
+                aes.TryEncryptCbc(source, iv, destination, out _, PaddingMode.None);
+
+                var b = destination;
+                this.encrypted0 = BitConverter.ToUInt64(b);
+                b = b.Slice(sizeof(ulong));
+                this.encrypted1 = BitConverter.ToUInt64(b);
+                b = b.Slice(sizeof(ulong));
+                this.encrypted2 = BitConverter.ToUInt64(b);
+                b = b.Slice(sizeof(ulong));
+                this.encrypted3 = BitConverter.ToUInt64(b);
+            }
+        }
     }
 
     #region FieldAndProperty
@@ -62,7 +94,7 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
 
     public override string ToString()
     {
-        Span<byte> span = stackalloc byte[EncodedLength]; // scoped
+        Span<byte> span = stackalloc byte[EncodedLength];
         this.TryWriteBytes(span, out var written);
         span = span.Slice(0, written);
         return this.IsEncrypted ? $"[{Base64.Url.FromByteArrayToString(span)}]" : $"[!{Base64.Url.FromByteArrayToString(span)}]";
@@ -70,7 +102,7 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
 
     public string ToBase64()
     {
-        Span<byte> span = stackalloc byte[EncodedLength]; // scoped
+        Span<byte> span = stackalloc byte[EncodedLength];
         this.TryWriteBytes(span, out var written);
         span = span.Slice(0, written);
         return $"{Base64.Url.FromByteArrayToString(span)}";
