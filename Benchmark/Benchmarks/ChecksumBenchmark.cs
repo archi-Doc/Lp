@@ -65,7 +65,6 @@ public readonly partial struct ChecksumStruct
 
         return FarmHash.Hash64(buffer);
     }
-
 }
 
 [Config(typeof(BenchmarkConfig))]
