@@ -301,7 +301,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
 
     internal ECDiffieHellman? TryGetEcdh()
     {
-        if (!KeyHelper.IsEncryption(this.KeyValue))
+        if (!KeyHelper.IsEncryptionKey(this.KeyValue))
         {
             return default;
         }

@@ -9,7 +9,7 @@ using Arc.Crypto.EC;
 namespace LP.T3CS;
 
 /// <summary>
-/// Represents a public key data. Compressed to 33 bytes.
+/// Represents a public key data. Compressed to 33 bytes (memory usage 40 bytes).
 /// </summary>
 [TinyhandObject]
 public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
@@ -101,12 +101,6 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         }
     }*/
 
-    public LinkageKey ToLinkageKey()
-        => new(this);
-
-    public LinkageKey ToLinkageKey(PublicKey encryptionKey)
-        => new(this, encryptionKey);
-
     internal PublicKey(PrivateKey privateKey)
     {
         this.keyValue = KeyHelper.ToPublicKeyValue(privateKey.KeyValue);
@@ -118,6 +112,19 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         this.x2 = BitConverter.ToUInt64(span);
         span = span.Slice(sizeof(ulong));
         this.x3 = BitConverter.ToUInt64(span);
+    }
+
+    internal PublicKey(byte keyValue, ReadOnlySpan<byte> x)
+    {
+        this.keyValue = KeyHelper.ToPublicKeyValue(keyValue);
+        var b = x;
+        this.x0 = BitConverter.ToUInt64(b);
+        b = b.Slice(sizeof(ulong));
+        this.x1 = BitConverter.ToUInt64(b);
+        b = b.Slice(sizeof(ulong));
+        this.x2 = BitConverter.ToUInt64(b);
+        b = b.Slice(sizeof(ulong));
+        this.x3 = BitConverter.ToUInt64(b);
     }
 
     private PublicKey(byte keyValue, ulong x0, ulong x1, ulong x2, ulong x3)
@@ -180,9 +187,9 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         this.x2 != 0 &&
         this.x3 != 0;
 
-    public bool IsVerificationKey => KeyHelper.IsVerification(this.keyValue);
+    public bool IsVerificationKey => KeyHelper.IsVerificationKey(this.keyValue);
 
-    public bool IsEncryptionKey => KeyHelper.IsEncryption(this.keyValue);
+    public bool IsEncryptionKey => KeyHelper.IsEncryptionKey(this.keyValue);
 
     public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> sign)
     {
@@ -334,7 +341,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
     internal ECDiffieHellman? TryGetEcdh()
     {
-        if (!KeyHelper.IsEncryption(this.KeyValue))
+        if (!KeyHelper.IsEncryptionKey(this.KeyValue))
         {
             return default;
         }

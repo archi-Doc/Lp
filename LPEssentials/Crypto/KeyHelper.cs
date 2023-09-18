@@ -33,10 +33,10 @@ internal static class KeyHelper
         => (keyValue & 128) == 0;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsEncryption(byte keyValue)
+    public static bool IsEncryptionKey(byte keyValue)
         => (keyValue & 64) != 0;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsVerification(byte keyValue)
+    public static bool IsVerificationKey(byte keyValue)
         => (keyValue & 64) == 0;
 }

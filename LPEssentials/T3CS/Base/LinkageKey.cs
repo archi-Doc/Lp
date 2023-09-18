@@ -1,9 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using Tinyhand.IO;
 using Tinyhand.Tree;
 
@@ -17,18 +19,12 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
 {
     public const int EncodedLength = PublicKey.EncodedLength + sizeof(uint) + sizeof(byte) + (sizeof(ulong) * 4);
 
-    public LinkageKey(PublicKey publicKey)
-    {// Raw
-        this.Key = publicKey;
-        this.Checksum = (uint)publicKey.GetChecksum();
-    }
+    public static LinkageKey CreateRaw(PublicKey publicKey)
+        => new(publicKey);
 
-    public LinkageKey(PublicKey publicKey, PublicKey encryptionKey)
-    {// Encrypt
-        this.Checksum = (uint)publicKey.GetChecksum();
-        this.Key = encryptionKey;
-        this.IsEncrypted = true;
-        this.keyValue = publicKey.KeyValue;
+    public static LinkageKey CreateEncrypted(PublicKey publicKey, PublicKey encryptionKey)
+    {
+        Span<byte> destination = stackalloc byte[32];
 
         var newKey = PrivateKey.CreateEncryptionKey();
         using (var ecdh = newKey.TryGetEcdh())
@@ -40,28 +36,54 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
             }
 
             var material = ecdh.DeriveKeyMaterial(ecdh2.PublicKey);
-
             using (var aes = Aes.Create())
             {
                 aes.KeySize = 256;
                 aes.Key = material;
 
                 Span<byte> source = stackalloc byte[32];
-                publicKey.WriteX(source);
                 Span<byte> iv = stackalloc byte[16];
-                Span<byte> destination = stackalloc byte[32];
+                publicKey.WriteX(source);
                 aes.TryEncryptCbc(source, iv, destination, out _, PaddingMode.None);
-
-                var b = destination;
-                this.encrypted0 = BitConverter.ToUInt64(b);
-                b = b.Slice(sizeof(ulong));
-                this.encrypted1 = BitConverter.ToUInt64(b);
-                b = b.Slice(sizeof(ulong));
-                this.encrypted2 = BitConverter.ToUInt64(b);
-                b = b.Slice(sizeof(ulong));
-                this.encrypted3 = BitConverter.ToUInt64(b);
             }
         }
+
+        return new(publicKey, newKey, destination);
+    }
+
+    public LinkageKey()
+    {
+    }
+
+    private LinkageKey(PublicKey publicKey)
+    {// Raw
+        this.Key = publicKey;
+        this.Checksum = (uint)publicKey.GetChecksum();
+    }
+
+    private LinkageKey(PublicKey publicKey, PrivateKey newKey, ReadOnlySpan<byte> encrypted)
+    {// Encrypted
+        this.Key = newKey.ToPublicKey();
+        this.Checksum = (uint)publicKey.GetChecksum();
+        this.IsEncrypted = true;
+        this.originalKeyValue = publicKey.KeyValue;
+
+        var b = encrypted;
+        this.encrypted0 = BitConverter.ToUInt64(b);
+        b = b.Slice(sizeof(ulong));
+        this.encrypted1 = BitConverter.ToUInt64(b);
+        b = b.Slice(sizeof(ulong));
+        this.encrypted2 = BitConverter.ToUInt64(b);
+        b = b.Slice(sizeof(ulong));
+        this.encrypted3 = BitConverter.ToUInt64(b);
+    }
+
+    private LinkageKey(PublicKey publicKey, PublicKey encryptionKey)
+    {// Encrypt
+        this.Checksum = (uint)publicKey.GetChecksum();
+        this.Key = encryptionKey;
+        this.IsEncrypted = true;
+        this.originalKeyValue = publicKey.KeyValue;
     }
 
     #region FieldAndProperty
@@ -76,7 +98,7 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
     public readonly bool IsEncrypted;
 
     [Key(3)]
-    private readonly byte keyValue;
+    private readonly byte originalKeyValue;
 
     [Key(4)]
     private readonly ulong encrypted0;
@@ -91,6 +113,56 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
     private readonly ulong encrypted3;
 
     #endregion
+
+    public bool TryDecrypt(PrivateKey encryptionKey, out PublicKey decrypted)
+    {
+        if (!this.IsEncrypted)
+        {
+            decrypted = this.Key;
+            return true;
+        }
+
+        Span<byte> destination = stackalloc byte[32];
+
+        using (var ecdh = encryptionKey.TryGetEcdh())
+        using (var ecdh2 = this.Key.TryGetEcdh())
+        {
+            if (ecdh is null || ecdh2 is null)
+            {
+                throw new InvalidOperationException();
+            }
+
+            var material = ecdh.DeriveKeyMaterial(ecdh2.PublicKey);
+            using (var aes = Aes.Create())
+            {
+                aes.KeySize = 256;
+                aes.Key = material;
+
+                Span<byte> source = stackalloc byte[32];
+                Span<byte> iv = stackalloc byte[16];
+
+                var b = source;
+                BitConverter.TryWriteBytes(b, this.encrypted0);
+                b = b.Slice(sizeof(ulong));
+                BitConverter.TryWriteBytes(b, this.encrypted1);
+                b = b.Slice(sizeof(ulong));
+                BitConverter.TryWriteBytes(b, this.encrypted2);
+                b = b.Slice(sizeof(ulong));
+                BitConverter.TryWriteBytes(b, this.encrypted3);
+
+                aes.TryDecryptCbc(source, iv, destination, out _, PaddingMode.None);
+            }
+        }
+
+        decrypted = new(this.originalKeyValue, destination);
+        if ((uint)decrypted.GetChecksum() != this.Checksum)
+        {
+            decrypted = default;
+            return false;
+        }
+
+        return true;
+    }
 
     public override string ToString()
     {
@@ -124,7 +196,7 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
         b = b.Slice(sizeof(uint));
         if (this.IsEncrypted)
         {
-            b[0] = this.keyValue;
+            b[0] = this.originalKeyValue;
             b = b.Slice(1);
             BitConverter.TryWriteBytes(b, this.encrypted0);
             b = b.Slice(sizeof(ulong));

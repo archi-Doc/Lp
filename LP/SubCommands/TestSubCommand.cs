@@ -32,15 +32,18 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         this.userInterfaceService.WriteLine($"Private(verification): {privateKey.ToUnsafeString()}");
         this.userInterfaceService.WriteLine($"Public(verification): {publicKey.ToString()}");
 
-        var privateKey2 = PrivateKey.CreateEncryptionKey();
-        var publicKey2 = privateKey2.ToPublicKey();
-        this.userInterfaceService.WriteLine($"Private(encryption): {privateKey2.ToUnsafeString()}");
-        this.userInterfaceService.WriteLine($"Public(encryption): {publicKey2.ToString()}");
+        var privateEncryptionKey = PrivateKey.CreateEncryptionKey();
+        var publicEncryptionKey = privateEncryptionKey.ToPublicKey();
+        this.userInterfaceService.WriteLine($"Private(encryption): {privateEncryptionKey.ToUnsafeString()}");
+        this.userInterfaceService.WriteLine($"Public(encryption): {publicEncryptionKey.ToString()}");
 
-        var rawKey = publicKey.ToLinkageKey();
-        this.userInterfaceService.WriteLine($"Raw: {rawKey.ToString()}");
-        var encryptedKey = publicKey.ToLinkageKey(publicKey2);
-        this.userInterfaceService.WriteLine($"Encrypted: {encryptedKey.ToString()}");
+        var rawLinkageKey = LinkageKey.CreateRaw(publicKey);
+        this.userInterfaceService.WriteLine($"Raw: {rawLinkageKey.ToString()}");
+        var encryptedLinkageKey = LinkageKey.CreateEncrypted(publicKey, publicEncryptionKey);
+        this.userInterfaceService.WriteLine($"Encrypted: {encryptedLinkageKey.ToString()}");
+
+        encryptedLinkageKey.TryDecrypt(privateEncryptionKey, out var decryptedLinkageKey);
+        this.userInterfaceService.WriteLine($"Decrypted: {decryptedLinkageKey.ToString()}");
     }
 
     private async Task Test0()

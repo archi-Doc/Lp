@@ -8,6 +8,7 @@ namespace LP.T3CS;
 [TinyhandObject]
 public sealed partial class Credit : IValidatable, IEquatable<Credit>
 {
+    public const char Identifier = '@';
     public const int MaxMergers = 4;
     public static readonly Credit Default = new();
 
