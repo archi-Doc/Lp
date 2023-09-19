@@ -36,6 +36,21 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
             }
 
             var material = ecdh.DeriveKeyMaterial(ecdh2.PublicKey);
+
+            // Hash key material
+            var hash = Hash.ObjectPool.Get();
+            var hv = hash.GetHashUInt64(material);
+            Hash.ObjectPool.Return(hash);
+
+            var b = material.AsSpan();
+            BitConverter.TryWriteBytes(b, hv.Hash0);
+            b = b.Slice(sizeof(ulong));
+            BitConverter.TryWriteBytes(b, hv.Hash1);
+            b = b.Slice(sizeof(ulong));
+            BitConverter.TryWriteBytes(b, hv.Hash2);
+            b = b.Slice(sizeof(ulong));
+            BitConverter.TryWriteBytes(b, hv.Hash3);
+
             using (var aes = Aes.Create())
             {
                 aes.KeySize = 256;
@@ -133,6 +148,21 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
             }
 
             var material = ecdh.DeriveKeyMaterial(ecdh2.PublicKey);
+
+            // Hash key material
+            var hash = Hash.ObjectPool.Get();
+            var hv = hash.GetHashUInt64(material);
+            Hash.ObjectPool.Return(hash);
+
+            var b = material.AsSpan();
+            BitConverter.TryWriteBytes(b, hv.Hash0);
+            b = b.Slice(sizeof(ulong));
+            BitConverter.TryWriteBytes(b, hv.Hash1);
+            b = b.Slice(sizeof(ulong));
+            BitConverter.TryWriteBytes(b, hv.Hash2);
+            b = b.Slice(sizeof(ulong));
+            BitConverter.TryWriteBytes(b, hv.Hash3);
+
             using (var aes = Aes.Create())
             {
                 aes.KeySize = 256;
@@ -141,14 +171,14 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
                 Span<byte> source = stackalloc byte[32];
                 Span<byte> iv = stackalloc byte[16];
 
-                var b = source;
-                BitConverter.TryWriteBytes(b, this.encrypted0);
-                b = b.Slice(sizeof(ulong));
-                BitConverter.TryWriteBytes(b, this.encrypted1);
-                b = b.Slice(sizeof(ulong));
-                BitConverter.TryWriteBytes(b, this.encrypted2);
-                b = b.Slice(sizeof(ulong));
-                BitConverter.TryWriteBytes(b, this.encrypted3);
+                var c = source;
+                BitConverter.TryWriteBytes(c, this.encrypted0);
+                c = c.Slice(sizeof(ulong));
+                BitConverter.TryWriteBytes(c, this.encrypted1);
+                c = c.Slice(sizeof(ulong));
+                BitConverter.TryWriteBytes(c, this.encrypted2);
+                c = c.Slice(sizeof(ulong));
+                BitConverter.TryWriteBytes(c, this.encrypted3);
 
                 aes.TryDecryptCbc(source, iv, destination, out _, PaddingMode.None);
             }

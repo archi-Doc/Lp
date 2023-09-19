@@ -2,20 +2,32 @@
 
 namespace LP.T3CS;
 
+[TinyhandObject]
+public partial class EngageProof : Proof
+{
+    public EngageProof()
+    {
+    }
+
+    [Key(5)]
+    public long Salt { get; protected set; }
+}
+
 /// <summary>
 /// Represents a proof object.
 /// </summary>
-[TinyhandObject]
-public sealed partial class Proof : IValidatable, IEquatable<Proof>
+[TinyhandUnion(0, typeof(EngageProof))]
+public abstract partial class Proof // : IValidatable, IEquatable<Proof>
 {
-    public static readonly Proof Default = new();
+    // public static readonly Proof Default = new();
 
     public enum Kind
     {
         CreateCredit,
+        Engage,
         Transfer,
-        Change,
-        CloseAccount,
+        Merge,
+        CloseBorrower,
     }
 
     public Proof()
@@ -23,21 +35,24 @@ public sealed partial class Proof : IValidatable, IEquatable<Proof>
     }
 
     [Key(0)]
-    public Proof? InnerProof { get; private set; }
+    public Proof? InnerProof { get; protected set; }
+
+    // [Key(1)]
+    // public Kind ProofKind { get; protected set; }
 
     [Key(1)]
-    public Kind ProofKind { get; private set; }
+    public PublicKey PublicKey { get; protected set; }
 
     [Key(2)]
-    public PublicKey ProofKey { get; private set; }
+    public byte[] Sign { get; protected set; } = Array.Empty<byte>();
 
     [Key(3)]
-    public byte[] ProofSign { get; private set; } = Array.Empty<byte>();
+    public long ExpirationMics { get; protected set; }
 
     [Key(4)]
-    public long Point { get; private set; }
+    public long Fee { get; protected set; }
 
-    public bool Validate()
+    /*public bool Validate()
     {
         if (!this.ProofKey.Validate())
         {
@@ -72,10 +87,10 @@ public sealed partial class Proof : IValidatable, IEquatable<Proof>
     public override int GetHashCode()
     {
         var hash = default(HashCode);
-        /*hash.Add(this.Owner);
+        hash.Add(this.Owner);
         hash.Add(this.Point);
-        hash.Add(this.Credit);*/
+        hash.Add(this.Credit);
 
         return hash.ToHashCode();
-    }
+    }*/
 }
