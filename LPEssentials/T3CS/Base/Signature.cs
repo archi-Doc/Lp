@@ -37,6 +37,8 @@ public readonly partial struct Signature
         }
     }
 
+    #region FieldAndProperty
+
     [Key(0)]
     public readonly PublicKey PublicKey;
 
@@ -52,4 +54,6 @@ public readonly partial struct Signature
     [Key(4, Level = 1)]
     [DefaultValue(null)]
     public readonly byte[]? Sign;
+
+    #endregion
 }

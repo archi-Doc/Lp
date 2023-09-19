@@ -5,13 +5,13 @@ using Arc.Collections;
 namespace LP.T3CS;
 
 [TinyhandObject]
-public sealed partial class AuthorityKey
+public sealed partial class AuthoritySeed
 {
-    public AuthorityKey(string? seedPhrase, AuthorityLifetime lifetime, long lifeMics)
+    public AuthoritySeed(string? seedPhrase, AuthorityLifetime lifetime, long lifeMics)
     {
         if (seedPhrase == null)
         {
-            this.seed = new byte[Hash.HashBytes];
+            this.seed = new byte[Hash.HashBytes]; // 32 bytes
             RandomVault.Crypto.NextBytes(this.seed);
         }
         else
@@ -26,7 +26,7 @@ public sealed partial class AuthorityKey
         this.LifeMics = lifeMics;
     }
 
-    internal AuthorityKey()
+    internal AuthoritySeed()
     {
     }
 

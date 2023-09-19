@@ -17,13 +17,13 @@ public class AuthoritySubcommandTest : ISimpleCommandAsync<AuthoritySubcommandTe
 
     public async Task RunAsync(AuthoritySubcommandTestOptions option, string[] args)
     {
-        if (await this.Control.Authority.GetKey(option.Name) is { } authorityKey)
+        if (await this.Control.Authority.GetAuthority(option.Name) is { } authoritySeed)
         {
-            var signature = authorityKey.SignData(new Credit(), Array.Empty<byte>());
+            var signature = authoritySeed.SignData(new Credit(), Array.Empty<byte>());
             if (signature != null)
             {
                 this.userInterfaceService.WriteLine(signature.ToString());
-                this.userInterfaceService.WriteLine(authorityKey.VerifyData(new Credit(), Array.Empty<byte>(), signature).ToString());
+                this.userInterfaceService.WriteLine(authoritySeed.VerifyData(new Credit(), Array.Empty<byte>(), signature).ToString());
             }
         }
     }

@@ -209,6 +209,8 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
     public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> sign)
         => this.ToPublicKey().VerifyData(data, sign);
 
+    #region FieldAndProperty
+
     [Key(0)]
     private readonly byte keyValue;
 
@@ -228,6 +230,8 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
     public byte[] X => this.x;
 
     public byte[] Y => this.y;
+
+    #endregion
 
     public bool Validate()
     {

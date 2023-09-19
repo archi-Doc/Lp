@@ -15,21 +15,21 @@ internal sealed class AuthorityInterface
 
     public long ExpirationMics { get; private set; }
 
-    internal async Task<AuthorityKey?> Prepare()
+    internal async Task<AuthoritySeed?> Prepare()
     {
-        if (this.authorityKey != null)
+        if (this.authoritySeed != null)
         {
-            if (this.authorityKey.Lifetime == AuthorityLifetime.PeriodOfTime)
+            if (this.authoritySeed.Lifetime == AuthorityLifetime.PeriodOfTime)
             {// Periof of time
                 if (Mics.GetUtcNow() > this.ExpirationMics)
                 {// Expired
-                    this.authorityKey = null;
+                    this.authoritySeed = null;
                 }
             }
 
-            if (this.authorityKey != null)
+            if (this.authoritySeed != null)
             {
-                return this.authorityKey;
+                return this.authoritySeed;
             }
         }
 
@@ -54,20 +54,20 @@ internal sealed class AuthorityInterface
         // Deserialize
         try
         {
-            this.authorityKey = TinyhandSerializer.Deserialize<AuthorityKey>(decrypted);
+            this.authoritySeed = TinyhandSerializer.Deserialize<AuthoritySeed>(decrypted);
         }
         catch
         {
         }
 
-        if (this.authorityKey != null)
+        if (this.authoritySeed != null)
         {
-            if (this.authorityKey.Lifetime == AuthorityLifetime.PeriodOfTime)
+            if (this.authoritySeed.Lifetime == AuthorityLifetime.PeriodOfTime)
             {
-                this.ExpirationMics = Mics.GetUtcNow() + this.authorityKey.LifeMics;
+                this.ExpirationMics = Mics.GetUtcNow() + this.authoritySeed.LifeMics;
             }
 
-            return this.authorityKey;
+            return this.authoritySeed;
         }
         else
         {
@@ -77,5 +77,5 @@ internal sealed class AuthorityInterface
 
     private Authority authority;
     private byte[] encrypted;
-    private AuthorityKey? authorityKey;
+    private AuthoritySeed? authoritySeed;
 }
