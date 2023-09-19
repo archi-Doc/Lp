@@ -114,7 +114,7 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
 
     #endregion
 
-    public bool TryDecrypt(PrivateKey encryptionKey, out PublicKey decrypted)
+    public bool TryDecrypt(ECDiffieHellman ecdh, out PublicKey decrypted)
     {
         if (!this.IsEncrypted)
         {
@@ -124,12 +124,12 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
 
         Span<byte> destination = stackalloc byte[32];
 
-        using (var ecdh = encryptionKey.TryGetEcdh())
         using (var ecdh2 = this.Key.TryGetEcdh())
         {
             if (ecdh is null || ecdh2 is null)
             {
-                throw new InvalidOperationException();
+                decrypted = default;
+                return false;
             }
 
             var material = ecdh.DeriveKeyMaterial(ecdh2.PublicKey);
@@ -162,6 +162,18 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
         }
 
         return true;
+    }
+
+    public bool TryDecrypt(PrivateKey encryptionKey, out PublicKey decrypted)
+    {
+        var ecdh = encryptionKey.TryGetEcdh();
+        if (ecdh == null)
+        {
+            decrypted = default;
+            return false;
+        }
+
+        return this.TryDecrypt(ecdh, out decrypted);
     }
 
     public override string ToString()

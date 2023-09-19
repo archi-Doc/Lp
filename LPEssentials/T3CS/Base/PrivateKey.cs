@@ -299,7 +299,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
 
     internal byte KeyValue => this.keyValue;
 
-    internal ECDiffieHellman? TryGetEcdh()
+    public ECDiffieHellman? TryGetEcdh()
     {
         if (!KeyHelper.IsEncryptionKey(this.KeyValue))
         {

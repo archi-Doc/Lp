@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace LP;
 
@@ -73,9 +74,9 @@ public class BenchTimer
             return this.GetText(timestamp, caption);
         }
 
-        var min = (int)((double)this.records.Min() * this.frequencyR * 1000);
-        var max = (int)((double)this.records.Max() * this.frequencyR * 1000);
-        var average = (int)((double)this.records.Average() * this.frequencyR * 1000);
+        var min = this.TicksToString(this.records.Min());
+        var max = this.TicksToString(this.records.Max());
+        var average = this.DoubleToString(this.records.Average());
 
         if (caption == null)
         {// 123 ms [4] (Min 100 ms, Max 150 ms)
@@ -101,15 +102,34 @@ public class BenchTimer
 
     private string GetText(long timestamp, string? caption)
     {
-        var ms = (int)((double)timestamp * this.frequencyR * 1000);
-
         if (caption == null)
         {// 123 ms
-            return $"{ms} ms";
+            return $"{this.TicksToString(timestamp)} ms";
         }
         else
         {// caption: 123 ms
-            return $"{caption}: {ms} ms";
+            return $"{caption}: {this.TicksToString(timestamp)} ms";
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private string TicksToString(long ticks)
+        => this.DoubleToString((double)ticks * this.frequencyR * 1000);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private string DoubleToString(double ms)
+    {
+        if (ms < 10d)
+        {// 0.12, 1.23
+            return ms.ToString("F2");
+        }
+        else if (ms < 100d)
+        {// 12.3
+            return ms.ToString("F1");
+        }
+        else
+        {
+            return ms.ToString("F0");
         }
     }
 

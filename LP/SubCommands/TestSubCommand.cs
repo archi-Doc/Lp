@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics;
 using System.Security.Cryptography;
 using LP.NetServices;
 using LP.T3CS;
@@ -27,23 +28,39 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
     private async Task TestLinkageKey()
     {
+        var bt = new BenchTimer();
         var privateKey = PrivateKey.CreateVerificationKey();
         var publicKey = privateKey.ToPublicKey();
         this.userInterfaceService.WriteLine($"Private(verification): {privateKey.ToUnsafeString()}");
         this.userInterfaceService.WriteLine($"Public(verification): {publicKey.ToString()}");
 
+        bt.Start();
         var privateEncryptionKey = PrivateKey.CreateEncryptionKey();
+        this.userInterfaceService.WriteLine($"Create encryption key: {bt.StopAndGetText()}");
+
         var publicEncryptionKey = privateEncryptionKey.ToPublicKey();
         this.userInterfaceService.WriteLine($"Private(encryption): {privateEncryptionKey.ToUnsafeString()}");
         this.userInterfaceService.WriteLine($"Public(encryption): {publicEncryptionKey.ToString()}");
 
         var rawLinkageKey = LinkageKey.CreateRaw(publicKey);
         this.userInterfaceService.WriteLine($"Raw: {rawLinkageKey.ToString()}");
+        bt.Start();
         var encryptedLinkageKey = LinkageKey.CreateEncrypted(publicKey, publicEncryptionKey);
+        this.userInterfaceService.WriteLine($"Create encrypted linkage key: {bt.StopAndGetText()}");
         this.userInterfaceService.WriteLine($"Encrypted: {encryptedLinkageKey.ToString()}");
 
+        bt.Start();
         encryptedLinkageKey.TryDecrypt(privateEncryptionKey, out var decryptedLinkageKey);
+        this.userInterfaceService.WriteLine($"Decrypt linkage key: {bt.StopAndGetText()}");
         this.userInterfaceService.WriteLine($"Decrypted: {decryptedLinkageKey.ToString()}");
+
+        var ecdh = privateEncryptionKey.TryGetEcdh()!;
+        bt.Start();
+        encryptedLinkageKey.TryDecrypt(ecdh, out decryptedLinkageKey);
+        this.userInterfaceService.WriteLine($"Decrypt linkage key2: {bt.StopAndGetText()}");
+        bt.Start();
+        encryptedLinkageKey.TryDecrypt(ecdh, out decryptedLinkageKey);
+        this.userInterfaceService.WriteLine($"Decrypt linkage key2: {bt.StopAndGetText()}");
     }
 
     private async Task Test0()
