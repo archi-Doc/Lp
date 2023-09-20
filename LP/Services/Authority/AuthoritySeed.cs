@@ -5,28 +5,26 @@ using Arc.Collections;
 namespace LP.T3CS;
 
 [TinyhandObject]
-public sealed partial class AuthorityKey
+public sealed partial class AuthoritySeed
 {
-    public AuthorityKey(string? seedPhrase, AuthorityLifetime lifetime, long lifeMics)
+    public AuthoritySeed(string? seedPhrase, AuthorityLifetime lifetime, long lifeMics)
     {
         if (seedPhrase == null)
         {
-            this.seed = new byte[Hash.HashBytes];
+            this.seed = new byte[Hash.HashBytes]; // 32 bytes
             RandomVault.Crypto.NextBytes(this.seed);
         }
         else
         {
-            var hash = Hash.ObjectPool.Get();
             var utf8 = System.Text.Encoding.UTF8.GetBytes(seedPhrase);
-            this.seed = hash.GetHash(hash.GetHash(utf8));
-            Hash.ObjectPool.Return(hash);
+            this.seed = Sha3Helper.Get256_ByteArray(Sha3Helper.Get256_ByteArray(utf8));
         }
 
         this.Lifetime = lifetime;
         this.LifeMics = lifeMics;
     }
 
-    internal AuthorityKey()
+    internal AuthoritySeed()
     {
     }
 
@@ -64,7 +62,7 @@ public sealed partial class AuthorityKey
     public PublicKey PublicKey => this.GetOrCreatePrivateKey().ToPublicKey();
 
     [Key(0)]
-    private byte[] seed = Array.Empty<byte>();
+    private byte[] seed = [];
 
     [Key(1)]
     public AuthorityLifetime Lifetime { get; private set; }
@@ -92,7 +90,7 @@ public sealed partial class AuthorityKey
             var seed = hash.HashFinal();
             Hash.ObjectPool.Return(hash);
 
-            privateKey = PrivateKey.Create(seed);
+            privateKey = PrivateKey.CreateVerificationKey(seed);
         }
 
         return privateKey;

@@ -17,11 +17,12 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        DebugRun<SignatureBenchmark>();
+        DebugRun<ChecksumBenchmark>();
 
         // var summary = BenchmarkRunner.Run<TestBenchmark>();
         var switcher = new BenchmarkSwitcher(new[]
         {
+            typeof(ChecksumBenchmark),
             typeof(SignatureBenchmark),
             typeof(FlakeBenchmark),
             typeof(CreditBenchmark),

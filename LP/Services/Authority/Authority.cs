@@ -20,7 +20,7 @@ public class Authority
     public string[] GetNames()
         => this.vault.GetNames(VaultPrefix).Select(x => x.Substring(VaultPrefix.Length)).ToArray();
 
-    public async Task<AuthorityKey?> GetKey(string name)
+    public async Task<AuthoritySeed?> GetAuthority(string name)
     {
         AuthorityInterface? authorityInterface;
         lock (this.syncObject)
@@ -41,7 +41,7 @@ public class Authority
         return await authorityInterface.Prepare().ConfigureAwait(false);
     }
 
-    public AuthorityResult NewAuthority(string name, string passPhrase, AuthorityKey authorityKey)
+    public AuthorityResult NewAuthority(string name, string passPhrase, AuthoritySeed authoritySeed)
     {
         var vaultName = GetVaultName(name);
 
@@ -52,7 +52,7 @@ public class Authority
                 return AuthorityResult.AlreadyExists;
             }
 
-            var encrypted = PasswordEncrypt.Encrypt(TinyhandSerializer.Serialize(authorityKey), passPhrase);
+            var encrypted = PasswordEncrypt.Encrypt(TinyhandSerializer.Serialize(authoritySeed), passPhrase);
             if (this.vault.TryAdd(vaultName, encrypted))
             {
                 return AuthorityResult.Success;

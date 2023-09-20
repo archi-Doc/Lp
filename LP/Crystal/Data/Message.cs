@@ -7,7 +7,7 @@ namespace LP.Crystal;
 
 [TinyhandObject]
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
-public partial class Message : ISignatureVerifiable<Message>, IVerifiable
+public partial class Message : IVerifiable, IUnity
 {
     public const int MaxTitleLength = 100;
     public const int MaxNameLength = 50;
@@ -31,10 +31,10 @@ public partial class Message : ISignatureVerifiable<Message>, IVerifiable
     [Key(1, AddProperty = "MessageBoardIdentifier")]
     private Identifier messageBoardIdentifier;
 
-    [Key(2, AddProperty = "Signature")]
+    [Key(2, AddProperty = "Signature", Level = 0)]
     private Signature signature = default!;
 
-    [Key(3, AddProperty = "ValueToken")]
+    [Key(3, AddProperty = "ValueToken", Level = 2)]
     private ValueToken valueToken = ValueToken.Default;
 
     [Key(4, AddProperty = "Type")]
@@ -53,15 +53,12 @@ public partial class Message : ISignatureVerifiable<Message>, IVerifiable
     private string content = default!;
 
     [Link(Type = ChainType.Ordered, AddValue = false)]
-    public long SignedMics => this.signature.SignedMics;
+    public long SignedMics => this.valueToken.Signature.SignedMics;
+
+    [IgnoreMember]
+    public ulong Hash { get; set; }
 
     #endregion
-
-    public Identifier GetIdentifier()
-        => this.Identifier;
-
-    public Signature GetSignature()
-        => this.Signature;
 
     public bool ValidateAndVerify()
     {
@@ -69,7 +66,15 @@ public partial class Message : ISignatureVerifiable<Message>, IVerifiable
         {
             return false;
         }
-        else if (!((ISignatureVerifiable<Message>)this).VerifySignature())
+        else if (!this.VerifyIdentifierAndSignature(1, this.Identifier, this.Signature))
+        {
+            return false;
+        }
+        else if (this.ValueToken.Signature.SignatureType != Signature.Type.Attest)
+        {
+            return false;
+        }
+        else if (!this.VerifyValueToken(3, this.ValueToken))
         {
             return false;
         }

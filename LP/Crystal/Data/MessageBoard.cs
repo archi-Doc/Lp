@@ -8,12 +8,10 @@ namespace LP.Crystal;
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
 public partial record MessageBoard
 {
+    public const int MaxMessages = 1_000;
+
     public MessageBoard()
     {
-        lock (this.messages.SyncObject)
-        {
-            this.messages.Add(new());
-        }
     }
 
     [Key(0, AddProperty = "Identifier")]
@@ -23,6 +21,6 @@ public partial record MessageBoard
     [Key(1, AddProperty = "Description")]
     private Message description = default!;
 
-    [Key(2, AddProperty = "Messages", Condition = false)]
+    [Key(2, AddProperty = "Messages", Selection = false)]
     private Message.GoshujinClass messages = default!;
 }

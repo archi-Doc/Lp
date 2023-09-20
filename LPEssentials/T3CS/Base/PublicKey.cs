@@ -1,26 +1,29 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
+using Arc.Crypto.EC;
 
 namespace LP.T3CS;
 
 /// <summary>
-/// Represents pure public key data. Compressed to 33 bytes.
+/// Represents a public key data. Compressed to 33 bytes (memory usage 40 bytes).
 /// </summary>
 [TinyhandObject]
 public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 {
-    public const string ECCurveName = "secp256r1";
+    // public const string ECCurveName = "secp256r1"; // CurveInstance
     public const int PublicKeyLength = 64;
     public const int PublicKeyHalfLength = PublicKeyLength / 2;
     public const int PrivateKeyLength = 32;
     public const int SignLength = 64;
-    public const int PublicKeyEncodedLength = 1 + (sizeof(ulong) * 4);
-    private const int MaxPublicKeyCache = 100;
+    public const int EncodedLength = 1 + (sizeof(ulong) * 4);
+    public const int MaxPublicKeyCache = 100;
 
-    public static HashAlgorithmName HashAlgorithmName { get; }
+    public static readonly HashAlgorithmName HashAlgorithmName;
+    public static readonly ECCurveBase CurveInstance;
 
     internal static ECCurve ECCurve { get; }
 
@@ -28,7 +31,8 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
     static PublicKey()
     {
-        ECCurve = ECCurve.CreateFromFriendlyName(ECCurveName);
+        CurveInstance = P256R1Curve.Instance;
+        ECCurve = ECCurve.CreateFromFriendlyName(CurveInstance.CurveName);
         HashAlgorithmName = HashAlgorithmName.SHA256;
     }
 
@@ -41,7 +45,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
         publicKey = default;
         var bytes = Base64.Url.FromStringToByteArray(chars);
-        if (bytes.Length != PublicKeyEncodedLength)
+        if (bytes.Length != EncodedLength)
         {
             return false;
         }
@@ -99,7 +103,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
     internal PublicKey(PrivateKey privateKey)
     {
-        this.keyValue = KeyHelper.CheckPublicKeyValue(privateKey.KeyValue);
+        this.keyValue = KeyHelper.ToPublicKeyValue(privateKey.KeyValue);
         var span = privateKey.X.AsSpan();
         this.x0 = BitConverter.ToUInt64(span);
         span = span.Slice(sizeof(ulong));
@@ -110,9 +114,22 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         this.x3 = BitConverter.ToUInt64(span);
     }
 
+    internal PublicKey(byte keyValue, ReadOnlySpan<byte> x)
+    {
+        this.keyValue = KeyHelper.ToPublicKeyValue(keyValue);
+        var b = x;
+        this.x0 = BitConverter.ToUInt64(b);
+        b = b.Slice(sizeof(ulong));
+        this.x1 = BitConverter.ToUInt64(b);
+        b = b.Slice(sizeof(ulong));
+        this.x2 = BitConverter.ToUInt64(b);
+        b = b.Slice(sizeof(ulong));
+        this.x3 = BitConverter.ToUInt64(b);
+    }
+
     private PublicKey(byte keyValue, ulong x0, ulong x1, ulong x2, ulong x3)
     {
-        this.keyValue = KeyHelper.CheckPublicKeyValue(keyValue);
+        this.keyValue = KeyHelper.ToPublicKeyValue(keyValue);
         this.x0 = x0;
         this.x1 = x1;
         this.x2 = x2;
@@ -136,17 +153,43 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
     [Key(4)]
     private readonly ulong x3;
 
-    public uint KeyVersion => KeyHelper.ToKeyVersion(this.keyValue);
+    public uint KeyVersion => KeyHelper.GetKeyVersion(this.keyValue);
 
-    public uint YTilde => KeyHelper.ToYTilde(this.keyValue);
+    public uint YTilde => KeyHelper.GetYTilde(this.keyValue);
+
+    internal byte KeyValue => this.keyValue;
 
     #endregion
+
+    public unsafe ulong GetChecksum()
+    {
+        Span<byte> span = stackalloc byte[EncodedLength];
+        this.TryWriteBytes(span, out _);
+        return FarmHash.Hash64(span);
+
+        // FarmHash.Hash64(new ReadOnlySpan<byte>(Unsafe.AsPointer(ref Unsafe.AsRef(this)), sizeof(PublicKey)));
+
+        /*var writer = default(TinyhandWriter);
+        try
+        {
+            TinyhandSerializer.SerializeObject(ref writer, this);
+            return FarmHash.Hash64(writer.FlushAndGetReadOnlySpan());
+        }
+        finally
+        {
+            writer.Dispose();
+        }*/
+    }
 
     public bool IsValid() =>
         this.x0 != 0 &&
         this.x1 != 0 &&
         this.x2 != 0 &&
         this.x3 != 0;
+
+    public bool IsVerificationKey => KeyHelper.IsVerificationKey(this.keyValue);
+
+    public bool IsEncryptionKey => KeyHelper.IsEncryptionKey(this.keyValue);
 
     public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> sign)
     {
@@ -250,9 +293,25 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
     public string ToBase64()
     {
-        Span<byte> bytes = stackalloc byte[1 + (sizeof(ulong) * 4)]; // scoped
-        var b = bytes;
+        Span<byte> span = stackalloc byte[EncodedLength];
+        this.TryWriteBytes(span, out _);
+        return $"{Base64.Url.FromByteArrayToString(span)}";
+    }
 
+    public Identifier ToIdentifier()
+    {
+        return new(this.x0, this.x1, this.x2, this.x3);
+    }
+
+    public bool TryWriteBytes(Span<byte> span, out int written)
+    {
+        if (span.Length < EncodedLength)
+        {
+            written = 0;
+            return false;
+        }
+
+        var b = span;
         b[0] = this.keyValue;
         b = b.Slice(1);
         BitConverter.TryWriteBytes(b, this.x0);
@@ -264,12 +323,58 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         BitConverter.TryWriteBytes(b, this.x3);
         b = b.Slice(sizeof(ulong));
 
-        return $"{Base64.Url.FromByteArrayToString(bytes)}";
+        written = EncodedLength;
+        return true;
     }
 
-    public Identifier ToIdentifier()
+    internal void WriteX(Span<byte> span)
     {
-        return new(this.x0, this.x1, this.x2, this.x3);
+        var b = span;
+        BitConverter.TryWriteBytes(b, this.x0);
+        b = b.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(b, this.x1);
+        b = b.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(b, this.x2);
+        b = b.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(b, this.x3);
+    }
+
+    internal ECDiffieHellman? TryGetEcdh()
+    {
+        if (!KeyHelper.IsEncryptionKey(this.KeyValue))
+        {
+            return default;
+        }
+
+        var x = new byte[32];
+        var span = x.AsSpan();
+        BitConverter.TryWriteBytes(span, this.x0);
+        span = span.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(span, this.x1);
+        span = span.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(span, this.x2);
+        span = span.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(span, this.x3);
+
+        var y = PublicKey.CurveInstance.TryDecompressY(x, this.YTilde);
+        if (y == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            ECParameters p = default;
+            p.Curve = ECCurve;
+            p.Q.X = x;
+            p.Q.Y = y;
+            return ECDiffieHellman.Create(p);
+        }
+        catch
+        {
+        }
+
+        return null;
     }
 
     private ECDsa? TryGetEcdsa()
@@ -296,7 +401,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
             span = span.Slice(sizeof(ulong));
             BitConverter.TryWriteBytes(span, this.x3);
 
-            var y = Arc.Crypto.EC.P256R1Curve.Instance.TryDecompressY(x, this.YTilde);
+            var y = PublicKey.CurveInstance.TryDecompressY(x, this.YTilde);
             if (y == null)
             {
                 return null;

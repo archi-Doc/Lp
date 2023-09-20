@@ -37,6 +37,8 @@ public readonly partial struct Signature
         }
     }
 
+    #region FieldAndProperty
+
     [Key(0)]
     public readonly PublicKey PublicKey;
 
@@ -49,7 +51,9 @@ public readonly partial struct Signature
     [Key(3)]
     public readonly long ExpirationMics;
 
-    [Key(4, Condition = false)]
+    [Key(4, Level = 1)]
     [DefaultValue(null)]
     public readonly byte[]? Sign;
+
+    #endregion
 }

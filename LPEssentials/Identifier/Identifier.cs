@@ -20,12 +20,7 @@ public readonly partial struct Identifier : IEquatable<Identifier>, IComparable<
     public static readonly Identifier Three = new(3);
 
     public static Identifier FromReadOnlySpan(ReadOnlySpan<byte> input)
-    {
-        var hash = Hash.ObjectPool.Get();
-        var identifier = new Identifier(hash.GetHashUInt64(input)); // hash.GetIdentifier(input);
-        Hash.ObjectPool.Return(hash);
-        return identifier;
-    }
+        => new(Sha3Helper.Get256_UInt64(input));
 
     public Identifier()
     {

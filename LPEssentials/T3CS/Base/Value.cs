@@ -9,7 +9,7 @@ namespace LP.T3CS;
 public sealed partial class Value : IValidatable, IEquatable<Value>
 {
     public const long MaxPoint = 1_000_000_000_000_000_000; // k, m, g, t, p, e, 1z
-    public const long MinPoint = 0; // -MaxPoint;
+    public const long MinPoint = 1; // -MaxPoint;
 
     public Value()
     {

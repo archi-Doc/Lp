@@ -105,7 +105,7 @@ public class CreditBenchmark
 
     public CreditBenchmark()
     {
-        this.PrivateKey = PrivateKey.Create(new byte[] { 0, 1, 2, 3, });
+        this.PrivateKey = PrivateKey.CreateVerificationKey(new byte[] { 0, 1, 2, 3, });
         this.PublicKey = this.PrivateKey.ToPublicKey();
 
         this.Credit1 = new(this.PublicKey, 1);

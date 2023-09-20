@@ -7,7 +7,7 @@ namespace LP;
 
 public class Seedphrase
 {
-    public const int SeedphraseDefaultLength = 16;
+    public const int SeedphraseDefaultLength = 20;
     public const int SeedphraseMinimumLength = 12;
     private const string SeedphrasesPath = "Strings.Seedphrases";
 
@@ -98,9 +98,7 @@ public class Seedphrase
             return null;
         }
 
-        var hash = Hash.ObjectPool.Get();
-        var seed = hash.GetHash(System.Text.Encoding.UTF8.GetBytes(phrase));
-        Hash.ObjectPool.Return(hash);
+        var seed = Sha3Helper.Get256_ByteArray(System.Text.Encoding.UTF8.GetBytes(phrase));
         return seed;
     }
 

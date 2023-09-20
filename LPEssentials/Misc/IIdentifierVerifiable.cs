@@ -4,7 +4,7 @@ using Tinyhand.IO;
 
 namespace LP;
 
-/// <summary>
+/*/// <summary>
 /// Validate that object members are appropriate.
 /// </summary>
 /// <typeparam name="T">.</typeparam>
@@ -13,12 +13,12 @@ public interface IIdentifierVerifiable<T>
 {
     Identifier GetIdentifier();
 
-    bool VerifyIdentifier()
+    bool VerifyIdentifier(int level)
     {
         try
         {
             var hash = Hash.ObjectPool.Get();
-            var identifier = hash.GetIdentifier((T)this, TinyhandSerializerOptions.Signature);
+            var identifier = hash.GetIdentifier((T)this, level);
             Hash.ObjectPool.Return(hash);
 
             return this.GetIdentifier().Equals(identifier);
@@ -29,3 +29,4 @@ public interface IIdentifierVerifiable<T>
         }
     }
 }
+*/

@@ -8,41 +8,48 @@ namespace LP.T3CS;
 [TinyhandObject]
 public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
 {
-    public const int MaxNameLength = 16;
     private const int MaxPrivateKeyCache = 10;
 
     private static ObjectCache<PrivateKey, ECDsa> PrivateKeyToEcdsa { get; } = new(MaxPrivateKeyCache);
 
-    public static PrivateKey Create()
+    public static PrivateKey CreateVerificationKey()
     {
         using (var ecdsa = ECDsa.Create(PublicKey.ECCurve))
         {
             var key = ecdsa.ExportParameters(true);
-            return new PrivateKey(0, key.Q.X!, key.Q.Y!, key.D!);
+            return new PrivateKey(0, 0, key.Q.X!, key.Q.Y!, key.D!);
         }
     }
 
-    public static PrivateKey Create(ReadOnlySpan<byte> seed)
+    public static PrivateKey CreateEncryptionKey()
+    {
+        using (var ecdh = ECDiffieHellman.Create(PublicKey.ECCurve))
+        {
+            var key = ecdh.ExportParameters(true);
+            return new PrivateKey(1, 0, key.Q.X!, key.Q.Y!, key.D!);
+        }
+    }
+
+    public static PrivateKey CreateVerificationKey(ReadOnlySpan<byte> seed)
     {
         ECParameters key = default;
         key.Curve = PublicKey.ECCurve;
 
         byte[]? d = null;
-        var hash = Hash.ObjectPool.Get();
         while (true)
         {
             try
             {
                 if (d == null)
                 {
-                    d = hash.GetHash(seed);
+                    d = Sha3Helper.Get256_ByteArray(seed);
                 }
                 else
                 {
-                    d = hash.GetHash(d);
+                    d = Sha3Helper.Get256_ByteArray(d);
                 }
 
-                if (!Arc.Crypto.EC.P256R1Curve.Instance.IsValidSeed(d))
+                if (!PublicKey.CurveInstance.IsValidSeed(d))
                 {
                     continue;
                 }
@@ -59,8 +66,46 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
             }
         }
 
-        Hash.ObjectPool.Return(hash);
-        return new PrivateKey(0, key.Q.X!, key.Q.Y!, key.D!);
+        return new PrivateKey(0, 0, key.Q.X!, key.Q.Y!, key.D!);
+    }
+
+    public static PrivateKey CreateEncryptionKey(ReadOnlySpan<byte> seed)
+    {
+        ECParameters key = default;
+        key.Curve = PublicKey.ECCurve;
+
+        byte[]? d = null;
+        while (true)
+        {
+            try
+            {
+                if (d == null)
+                {
+                    d = Sha3Helper.Get256_ByteArray(seed);
+                }
+                else
+                {
+                    d = Sha3Helper.Get256_ByteArray(d);
+                }
+
+                if (!PublicKey.CurveInstance.IsValidSeed(d))
+                {
+                    continue;
+                }
+
+                key.D = d;
+                using (var ecdh = ECDiffieHellman.Create(key))
+                {
+                    key = ecdh.ExportParameters(true);
+                    break;
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        return new PrivateKey(1, 0, key.Q.X!, key.Q.Y!, key.D!);
     }
 
     public static PrivateKey Create(string passphrase)
@@ -72,21 +117,21 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         passBytes.CopyTo(span.Slice(sizeof(ulong)));
         passBytes.CopyTo(span.Slice((sizeof(ulong) * 2) + passBytes.Length));
 
-        return Create(span);
+        return CreateVerificationKey(span);
     }
 
     internal PrivateKey()
     {
     }
 
-    private PrivateKey(uint keyVersion, byte[] x, byte[] y, byte[] d)
+    private PrivateKey(uint encryption, uint keyVersion, byte[] x, byte[] y, byte[] d)
     {
         this.x = x;
         this.y = y;
         this.d = d;
 
         var yTilde = this.CompressY();
-        this.keyValue = KeyHelper.ToPrivateKeyValue(keyVersion, yTilde);
+        this.keyValue = KeyHelper.ToPrivateKeyValue(encryption, keyVersion, yTilde);
     }
 
     public PublicKey ToPublicKey()
@@ -160,6 +205,8 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
     public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> sign)
         => this.ToPublicKey().VerifyData(data, sign);
 
+    #region FieldAndProperty
+
     [Key(0)]
     private readonly byte keyValue;
 
@@ -172,13 +219,15 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
     [Key(3)]
     private readonly byte[] d = Array.Empty<byte>();
 
-    public uint KeyVersion => KeyHelper.ToKeyVersion(this.keyValue);
+    public uint KeyVersion => KeyHelper.GetKeyVersion(this.keyValue);
 
-    public uint YTilde => KeyHelper.ToYTilde(this.keyValue);
+    public uint YTilde => KeyHelper.GetYTilde(this.keyValue);
 
     public byte[] X => this.x;
 
     public byte[] Y => this.y;
+
+    #endregion
 
     public bool Validate()
     {
@@ -240,7 +289,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
     {
         if (this.KeyVersion == 0)
         {
-            return Arc.Crypto.EC.P256R1Curve.Instance.CompressY(this.y);
+            return PublicKey.CurveInstance.CompressY(this.y);
         }
         else
         {
@@ -249,6 +298,27 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
     }
 
     internal byte KeyValue => this.keyValue;
+
+    public ECDiffieHellman? TryGetEcdh()
+    {
+        if (!KeyHelper.IsEncryptionKey(this.KeyValue))
+        {
+            return default;
+        }
+
+        try
+        {
+            ECParameters p = default;
+            p.Curve = PublicKey.ECCurve;
+            p.D = this.d;
+            return ECDiffieHellman.Create(p);
+        }
+        catch
+        {
+        }
+
+        return null;
+    }
 
     private ECDsa? TryGetEcdsa()
     {

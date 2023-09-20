@@ -2,21 +2,23 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
+using Arc.Crypto.EC;
 
 namespace LP;
 
 [TinyhandObject]
 public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePublicKey>
 {
-    public const string ECCurveName = "secp256r1";
+    // public const string ECCurveName = "secp256r1"; // CurveInstance
     public const int PublicKeyLength = 64;
     public const int PublicKeyHalfLength = PublicKeyLength / 2;
     public const int PrivateKeyLength = 32;
     public const int SignLength = 64;
     public const int PublicKeyEncodedLength = 1 + (sizeof(ulong) * 4);
-    private const int MaxPublicKeyCache = 100;
+    public const int MaxPublicKeyCache = 100;
 
-    public static HashAlgorithmName HashAlgorithmName { get; }
+    public static readonly HashAlgorithmName HashAlgorithmName;
+    public static readonly ECCurveBase CurveInstance;
 
     internal static ECCurve ECCurve { get; }
 
@@ -24,7 +26,8 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
 
     static NodePublicKey()
     {
-        ECCurve = ECCurve.CreateFromFriendlyName(ECCurveName);
+        CurveInstance = P256R1Curve.Instance;
+        ECCurve = ECCurve.CreateFromFriendlyName(CurveInstance.CurveName);
         HashAlgorithmName = HashAlgorithmName.SHA256;
     }
 
@@ -69,7 +72,7 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
 
     internal NodePublicKey(NodePrivateKey privateKey)
     {
-        this.keyValue = KeyHelper.CheckPublicKeyValue(privateKey.KeyValue);
+        this.keyValue = KeyHelper.ToPublicKeyValue(privateKey.KeyValue);
         var span = privateKey.X.AsSpan();
         this.x0 = BitConverter.ToUInt64(span);
         span = span.Slice(sizeof(ulong));
@@ -82,7 +85,7 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
 
     private NodePublicKey(byte keyValue, ulong x0, ulong x1, ulong x2, ulong x3)
     {
-        this.keyValue = KeyHelper.CheckPublicKeyValue(keyValue);
+        this.keyValue = KeyHelper.ToPublicKeyValue(keyValue);
         this.x0 = x0;
         this.x1 = x1;
         this.x2 = x2;
@@ -104,9 +107,9 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
     [Key(4)]
     private readonly ulong x3;
 
-    public uint KeyVersion => KeyHelper.ToKeyVersion(this.keyValue);
+    public uint KeyVersion => KeyHelper.GetKeyVersion(this.keyValue);
 
-    public uint YTilde => KeyHelper.ToYTilde(this.keyValue);
+    public uint YTilde => KeyHelper.GetYTilde(this.keyValue);
 
     public bool Validate()
     {

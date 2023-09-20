@@ -24,8 +24,8 @@ public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandResta
             return;
         }
 
-        var authorityKey = await this.authority.GetKey(options.Authority);
-        if (authorityKey == null)
+        var authoritySeed = await this.authority.GetAuthority(options.Authority);
+        if (authoritySeed == null)
         {
             this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Authority.NotFound, options.Authority);
             return;
@@ -47,7 +47,7 @@ public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandResta
                 return;
             }
 
-            authorityKey.SignToken(token);
+            authoritySeed.SignToken(token);
             if (!token.ValidateAndVerifyWithoutPublicKey())
             {
                 return;

@@ -13,28 +13,31 @@ public class Hash : Sha3_256
 
     public static ObjectPool<Hash> ObjectPool { get; } = new(static () => new Hash());
 
-    public static ObjectPool<Sha3_384> Sha3_384Pool { get; } = new(static () => new Sha3_384());
-
     private byte[] buffer = new byte[BufferLength];
 
-    public Identifier GetIdentifier(ReadOnlySpan<byte> input)
+    public Identifier GetIdentifier<T>(T? value, int level)
+        where T : ITinyhandSerialize<T>
     {
-        return new Identifier(this.GetHashUInt64(input));
+        var writer = new TinyhandWriter(this.buffer) { Level = level, };
+        try
+        {
+            TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
+            return new Identifier(Sha3Helper.Get256_UInt64(writer.FlushAndGetReadOnlySpan()));
+        }
+        finally
+        {
+            writer.Dispose();
+        }
     }
 
-    public Identifier IdentifierFinal()
-    {
-        return new Identifier(this.HashFinalUInt64());
-    }
-
-    public Identifier GetIdentifier<T>(T? value, TinyhandSerializerOptions? options)
+    public ulong GetFarmHash<T>(T? value)
         where T : ITinyhandSerialize<T>
     {
         var writer = new TinyhandWriter(this.buffer);
         try
         {
-            TinyhandSerializer.SerializeObject(ref writer, value, options);
-            return new Identifier(this.GetHashUInt64(writer.FlushAndGetReadOnlySpan()));
+            TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Selection);
+            return FarmHash.Hash64(writer.FlushAndGetReadOnlySpan());
         }
         finally
         {

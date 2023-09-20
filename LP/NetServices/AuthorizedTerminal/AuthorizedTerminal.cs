@@ -16,8 +16,8 @@ public class AuthorizedTerminalFactory
         where TService : IAuthorizedService
     {
         // Authority key
-        var authorityKey = await this.authority.GetKey(authorityName);
-        if (authorityKey == null)
+        var authoritySeed = await this.authority.GetAuthority(authorityName);
+        if (authoritySeed == null)
         {
             logger?.TryGet(LogLevel.Error)?.Log(Hashed.Authority.NotFound, authorityName);
             return null; // AuthorizedTerminal<TService>.Invalid;
@@ -36,7 +36,7 @@ public class AuthorizedTerminalFactory
         // Service & authorize
         var service = clientTerminal.GetService<TService>();
         var token = await clientTerminal.CreateToken(Token.Type.Authorize);
-        authorityKey.SignToken(token);
+        authoritySeed.SignToken(token);
         var response = await service.Authorize(token).ResponseAsync;
         if (!response.IsSuccess || response.Value != NetResult.Success)
         {
@@ -44,7 +44,7 @@ public class AuthorizedTerminalFactory
             return null; // AuthorizedTerminal<TService>.Invalid;
         }
 
-        return new(clientTerminal, authorityKey, service, logger);
+        return new(clientTerminal, authoritySeed, service, logger);
     }
 
     private Authority authority;
@@ -53,10 +53,10 @@ public class AuthorizedTerminalFactory
 public class AuthorizedTerminal<TService> : IDisposable, IEquatable<AuthorizedTerminal<TService>>
     where TService : IAuthorizedService
 {
-    internal AuthorizedTerminal(ClientTerminal terminal, AuthorityKey authorityKey, TService service, ILogger? logger)
+    internal AuthorizedTerminal(ClientTerminal terminal, AuthoritySeed authoritySeed, TService service, ILogger? logger)
     {
         this.Terminal = terminal;
-        this.Key = authorityKey;
+        this.Key = authoritySeed;
         this.Service = service;
         this.logger = logger;
     }
@@ -82,7 +82,7 @@ public class AuthorizedTerminal<TService> : IDisposable, IEquatable<AuthorizedTe
 
     public TService Service { get; private set; }
 
-    public AuthorityKey Key { get; private set; }
+    public AuthoritySeed Key { get; private set; }
 
     private ILogger? logger;
 
