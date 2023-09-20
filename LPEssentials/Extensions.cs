@@ -15,14 +15,11 @@ public static class LPExtentions
     public static ulong GetFarmHash<T>(this T value)
         where T : ITinyhandSerialize<T>
     {
-        var hash = Hash.ObjectPool.Get();
-        var farmhash = hash.GetFarmHash(value);
-        Hash.ObjectPool.Return(hash);
-
-        return farmhash;
+        TinyhandSerializer.SerializeObjectAndGetTemporarySpan(value, out var temporary, TinyhandSerializerOptions.Selection);
+        return FarmHash.Hash64(temporary);
     }
 
-    public static ulong GetFarmHash<T>(this T value)
+    /*public static ulong GetFarmHash<T>(this T value)
         where T : ITinyhandSerialize<T>, IUnity
     {
         if (value.Hash != 0)
@@ -36,7 +33,7 @@ public static class LPExtentions
         value.Hash = farmhash;
 
         return farmhash;
-    }
+    }*/
 
     public static bool VerifySignature<T>(this T value, int level, Signature signature)
         where T : ITinyhandSerialize<T>
