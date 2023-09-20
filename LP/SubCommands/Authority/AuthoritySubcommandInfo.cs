@@ -15,10 +15,10 @@ public class AuthoritySubcommandInfo : ISimpleCommandAsync<AuthoritySubcommandNa
 
     public async Task RunAsync(AuthoritySubcommandNameOptions option, string[] args)
     {
-        var authoritySeed = await this.Control.Authority.GetAuthority(option.Name);
-        if (authoritySeed != null)
+        var authority = await this.Control.AuthorityVault.GetAuthority(option.Name);
+        if (authority != null)
         {
-            this.logger.TryGet()?.Log($"{option.Name}: {authoritySeed.ToString()}");
+            this.logger.TryGet()?.Log($"{option.Name}: {authority.ToString()}");
         }
         else
         {

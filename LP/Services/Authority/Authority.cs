@@ -1,97 +1,106 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Runtime.CompilerServices;
+using Arc.Collections;
 
 namespace LP.T3CS;
 
-/// <summary>
-/// Class used to create/delete authority, and get AuthorityInterface using Vault.
-/// </summary>
-public class Authority
+[TinyhandObject]
+public sealed partial class Authority
 {
-    public const string VaultPrefix = "Authority\\";
-
-    public Authority(IUserInterfaceService userInterfaceService, Vault vault)
+    public Authority(string? seedPhrase, AuthorityLifetime lifetime, long lifeMics)
     {
-        this.UserInterfaceService = userInterfaceService;
-        this.vault = vault;
-    }
-
-    public string[] GetNames()
-        => this.vault.GetNames(VaultPrefix).Select(x => x.Substring(VaultPrefix.Length)).ToArray();
-
-    public async Task<AuthoritySeed?> GetAuthority(string name)
-    {
-        AuthorityInterface? authorityInterface;
-        lock (this.syncObject)
+        if (seedPhrase == null)
         {
-            if (!this.nameToInterface.TryGetValue(name, out authorityInterface))
-            {// New interface
-                var vaultName = GetVaultName(name);
-                if (!this.vault.TryGet(vaultName, out var decrypted))
-                {// Not found
-                    return null;
-                }
-
-                authorityInterface = new AuthorityInterface(this, name, decrypted);
-                this.nameToInterface.Add(name, authorityInterface);
-            }
+            this.seed = new byte[Hash.HashBytes]; // 32 bytes
+            RandomVault.Crypto.NextBytes(this.seed);
+        }
+        else
+        {
+            var utf8 = System.Text.Encoding.UTF8.GetBytes(seedPhrase);
+            this.seed = Sha3Helper.Get256_ByteArray(Sha3Helper.Get256_ByteArray(utf8));
         }
 
-        return await authorityInterface.Prepare().ConfigureAwait(false);
+        this.Lifetime = lifetime;
+        this.LifeMics = lifeMics;
     }
 
-    public AuthorityResult NewAuthority(string name, string passPhrase, AuthoritySeed authoritySeed)
+    internal Authority()
     {
-        var vaultName = GetVaultName(name);
-
-        lock (this.syncObject)
-        {
-            if (this.vault.Exists(vaultName))
-            {
-                return AuthorityResult.AlreadyExists;
-            }
-
-            var encrypted = PasswordEncrypt.Encrypt(TinyhandSerializer.Serialize(authoritySeed), passPhrase);
-            if (this.vault.TryAdd(vaultName, encrypted))
-            {
-                return AuthorityResult.Success;
-            }
-            else
-            {
-                return AuthorityResult.AlreadyExists;
-            }
-        }
     }
 
-    public bool Exists(string name)
-        => this.vault.Exists(GetVaultName(name));
+    public override int GetHashCode()
+        => this.hash != 0 ? this.hash : (this.hash = (int)FarmHash.Hash64(this.seed));
 
-    public AuthorityResult RemoveAuthority(string name)
+    public void SignToken(Token token)
     {
-        lock (this.syncObject)
-        {
-            var authorityRemoved = this.nameToInterface.Remove(name);
-            var vaultRemoved = this.vault.Remove(GetVaultName(name));
-
-            if (vaultRemoved)
-            {
-                return AuthorityResult.Success;
-            }
-            else
-            {
-                return AuthorityResult.NotFound;
-            }
-        }
+        var privateKey = this.GetOrCreatePrivateKey();
+        token.Sign(privateKey);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static string GetVaultName(string name) => VaultPrefix + name;
+    public void SignToken(Credit credit, Token token)
+    {
+        var privateKey = this.GetOrCreatePrivateKey(credit);
+        token.Sign(privateKey);
+    }
 
-#pragma warning disable SA1401
-    internal IUserInterfaceService UserInterfaceService;
-#pragma warning restore SA1401
-    private Vault vault;
-    private object syncObject = new();
-    private Dictionary<string, AuthorityInterface> nameToInterface = new();
+    public byte[]? SignData(Credit credit, byte[] data)
+    {
+        var privateKey = this.GetOrCreatePrivateKey(credit);
+        var signature = privateKey.SignData(data);
+        this.CachePrivateKey(credit, privateKey);
+        return signature;
+    }
+
+    public bool VerifyData(Credit credit, byte[] data, byte[] signature)
+    {
+        var privateKey = this.GetOrCreatePrivateKey(credit);
+        var result = privateKey.VerifyData(data, signature);
+        this.CachePrivateKey(credit, privateKey);
+        return result;
+    }
+
+    public PublicKey PublicKey => this.GetOrCreatePrivateKey().ToPublicKey();
+
+    [Key(0)]
+    private byte[] seed = [];
+
+    [Key(1)]
+    public AuthorityLifetime Lifetime { get; private set; }
+
+    [Key(2)]
+    public long LifeMics { get; private set; }
+
+    [Key(3)]
+    // public Value[] Values { get; private set; } = Array.Empty<Value>();
+    public Value Values { get; private set; } = default!;
+
+    private int hash;
+
+    private PrivateKey GetOrCreatePrivateKey()
+        => this.GetOrCreatePrivateKey(Credit.Default);
+
+    private PrivateKey GetOrCreatePrivateKey(Credit credit)
+    {
+        var privateKey = this.privateKeyCache.TryGet(credit);
+        if (privateKey == null)
+        {// Create private key.
+            var hash = Hash.ObjectPool.Get();
+            hash.HashUpdate(this.seed);
+            hash.HashUpdate(TinyhandSerializer.Serialize(credit));
+            var seed = hash.HashFinal();
+            Hash.ObjectPool.Return(hash);
+
+            privateKey = PrivateKey.CreateVerificationKey(seed);
+        }
+
+        return privateKey;
+    }
+
+    private void CachePrivateKey(Credit credit, PrivateKey privateKey)
+        => this.privateKeyCache.Cache(credit, privateKey);
+
+    private ObjectCache<Credit, PrivateKey> privateKeyCache = new(10);
+
+    public override string ToString()
+        => $"PublicKey: {this.GetOrCreatePrivateKey().ToPublicKey()}, Lifetime: {this.Lifetime}, LifeMics: {this.LifeMics}";
 }

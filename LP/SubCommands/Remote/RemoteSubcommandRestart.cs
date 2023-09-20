@@ -10,11 +10,11 @@ namespace LP.Subcommands;
 [SimpleCommand("restart")]
 public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandRestartOptions>
 {
-    public RemoteSubcommandRestart(ILogger<RemoteSubcommandRestart> logger, Terminal terminal, Authority authority)
+    public RemoteSubcommandRestart(ILogger<RemoteSubcommandRestart> logger, Terminal terminal, AuthorityVault authorityVault)
     {
         this.logger = logger;
         this.terminal = terminal;
-        this.authority = authority;
+        this.authorityVault = authorityVault;
     }
 
     public async Task RunAsync(RemoteSubcommandRestartOptions options, string[] args)
@@ -24,8 +24,8 @@ public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandResta
             return;
         }
 
-        var authoritySeed = await this.authority.GetAuthority(options.Authority);
-        if (authoritySeed == null)
+        var authority = await this.authorityVault.GetAuthority(options.Authority);
+        if (authority == null)
         {
             this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Authority.NotFound, options.Authority);
             return;
@@ -47,7 +47,7 @@ public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandResta
                 return;
             }
 
-            authoritySeed.SignToken(token);
+            authority.SignToken(token);
             if (!token.ValidateAndVerifyWithoutPublicKey())
             {
                 return;
@@ -68,7 +68,7 @@ public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandResta
 
     private ILogger logger;
     private Terminal terminal;
-    private Authority authority;
+    private AuthorityVault authorityVault;
 }
 
 public record RemoteSubcommandRestartOptions

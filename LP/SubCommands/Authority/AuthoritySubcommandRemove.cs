@@ -16,7 +16,7 @@ public class AuthoritySubcommandRemove : ISimpleCommandAsync<AuthoritySubcommand
 
     public async Task RunAsync(AuthoritySubcommandNameOptions option, string[] args)
     {
-        var result = this.Control.Authority.RemoveAuthority(option.Name);
+        var result = this.Control.AuthorityVault.RemoveAuthority(option.Name);
 
         if (result == AuthorityResult.Success)
         {

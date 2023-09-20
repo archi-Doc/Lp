@@ -48,7 +48,7 @@ public class Control : ILogInformation
                 context.Services.TryAddSingleton<IUserInterfaceService, ConsoleUserInterfaceService>();
                 context.AddSingleton<Vault>();
                 context.AddSingleton<IStorageKey, StorageKeyVault>();
-                context.AddSingleton<Authority>();
+                context.AddSingleton<AuthorityVault>();
                 context.AddSingleton<Seedphrase>();
                 // context.AddSingleton<Merger>();
                 context.Services.TryAddSingleton<Merger.Provider>(x => x.GetRequiredService<Control>().MergerProvider);
@@ -370,7 +370,7 @@ public class Control : ILogInformation
         }
     }
 
-    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, Crystalizer crystalizer, Mono mono, Vault vault, Authority authority, LPSettings settings)
+    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, Crystalizer crystalizer, Mono mono, Vault vault, AuthorityVault authorityVault, LPSettings settings)
     {
         this.Logger = logger;
         this.UserInterfaceService = userInterfaceService;
@@ -381,7 +381,7 @@ public class Control : ILogInformation
         this.Crystalizer = crystalizer;
         this.Mono = mono;
         this.Vault = vault;
-        this.Authority = authority;
+        this.AuthorityVault = authorityVault;
         this.LPBase.Settings = settings;
 
         this.MergerProvider = new();
@@ -643,7 +643,7 @@ public class Control : ILogInformation
 
     public Vault Vault { get; }
 
-    public Authority Authority { get; }
+    public AuthorityVault AuthorityVault { get; }
 
     private SimpleParser subcommandParser;
 

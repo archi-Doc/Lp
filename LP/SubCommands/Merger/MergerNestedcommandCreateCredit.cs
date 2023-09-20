@@ -11,12 +11,12 @@ namespace LP.Subcommands;
 [SimpleCommand("create-credit")]
 public class MergerNestedcommandCreateCredit : ISimpleCommandAsync<CreateCreditOptions>
 {
-    public MergerNestedcommandCreateCredit(ILogger<MergerNestedcommandCreateCredit> logger, Terminal terminal, MergerNestedcommand nestedcommand, Authority authority, AuthorizedTerminalFactory authorizedTerminalFactory)
+    public MergerNestedcommandCreateCredit(ILogger<MergerNestedcommandCreateCredit> logger, Terminal terminal, MergerNestedcommand nestedcommand, AuthorityVault authorityVault, AuthorizedTerminalFactory authorizedTerminalFactory)
     {
         this.logger = logger;
         this.terminal = terminal;
         this.nestedcommand = nestedcommand;
-        this.authority = authority;
+        this.authorityVault = authorityVault;
         this.authorizedTerminalFactory = authorizedTerminalFactory;
     }
 
@@ -45,7 +45,7 @@ public class MergerNestedcommandCreateCredit : ISimpleCommandAsync<CreateCreditO
     private ILogger logger;
     private Terminal terminal;
     private MergerNestedcommand nestedcommand;
-    private Authority authority;
+    private AuthorityVault authorityVault;
     private AuthorizedTerminalFactory authorizedTerminalFactory;
 }
 
