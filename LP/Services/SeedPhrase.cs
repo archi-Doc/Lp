@@ -98,9 +98,7 @@ public class Seedphrase
             return null;
         }
 
-        var hash = Hash.ObjectPool.Get();
-        var seed = hash.GetHash(System.Text.Encoding.UTF8.GetBytes(phrase));
-        Hash.ObjectPool.Return(hash);
+        var seed = Sha3Helper.Get256_ByteArray(System.Text.Encoding.UTF8.GetBytes(phrase));
         return seed;
     }
 

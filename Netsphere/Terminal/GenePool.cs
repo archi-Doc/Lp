@@ -84,16 +84,15 @@ internal class GenePool : IDisposable
             buffer = buffer.Slice(sizeof(ulong));
             source.CopyTo(buffer);
 
-            var sha = Hash.Sha3_384Pool.Get();
-            var keyIv = sha.GetHash(span);
-            Hash.Sha3_384Pool.Return(sha);
+            Span<byte> keyIv = stackalloc byte[48];
+            Sha3Helper.Get384_Span(span, keyIv);
 
             if (this.encryptor != null)
             {
                 this.encryptor.Dispose();
             }
 
-            this.encryptor = Aes256.NoPadding.CreateEncryptor(keyIv.AsSpan(0, 32).ToArray(), keyIv.AsSpan(32, 16).ToArray());
+            this.encryptor = Aes256.NoPadding.CreateEncryptor(keyIv.Slice(0, 32).ToArray(), keyIv.Slice(32, 16).ToArray());
             this.EnsurePool();
         }
     }

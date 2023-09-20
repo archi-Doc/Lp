@@ -36,18 +36,17 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         key.Curve = PublicKey.ECCurve;
 
         byte[]? d = null;
-        var hash = Hash.ObjectPool.Get();
         while (true)
         {
             try
             {
                 if (d == null)
                 {
-                    d = hash.GetHash(seed);
+                    d = Sha3Helper.Get256_ByteArray(seed);
                 }
                 else
                 {
-                    d = hash.GetHash(d);
+                    d = Sha3Helper.Get256_ByteArray(d);
                 }
 
                 if (!PublicKey.CurveInstance.IsValidSeed(d))
@@ -67,7 +66,6 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
             }
         }
 
-        Hash.ObjectPool.Return(hash);
         return new PrivateKey(0, 0, key.Q.X!, key.Q.Y!, key.D!);
     }
 
@@ -77,18 +75,17 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         key.Curve = PublicKey.ECCurve;
 
         byte[]? d = null;
-        var hash = Hash.ObjectPool.Get();
         while (true)
         {
             try
             {
                 if (d == null)
                 {
-                    d = hash.GetHash(seed);
+                    d = Sha3Helper.Get256_ByteArray(seed);
                 }
                 else
                 {
-                    d = hash.GetHash(d);
+                    d = Sha3Helper.Get256_ByteArray(d);
                 }
 
                 if (!PublicKey.CurveInstance.IsValidSeed(d))
@@ -108,7 +105,6 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
             }
         }
 
-        Hash.ObjectPool.Return(hash);
         return new PrivateKey(1, 0, key.Q.X!, key.Q.Y!, key.D!);
     }
 

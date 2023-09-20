@@ -77,18 +77,17 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
         key.Curve = NodePublicKey.ECCurve;
 
         byte[]? d = null;
-        var hash = Hash.ObjectPool.Get();
         while (true)
         {
             try
             {
                 if (d == null)
                 {
-                    d = hash.GetHash(seed);
+                    d = Sha3Helper.Get256_ByteArray(seed);
                 }
                 else
                 {
-                    d = hash.GetHash(d);
+                    d = Sha3Helper.Get256_ByteArray(d);
                 }
 
                 if (!Arc.Crypto.EC.P256R1Curve.Instance.IsValidSeed(d))
@@ -108,7 +107,6 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
             }
         }
 
-        Hash.ObjectPool.Return(hash);
         return new NodePrivateKey(1, key.Q.X!, key.Q.Y!, key.D!);
     }
 

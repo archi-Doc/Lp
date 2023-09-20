@@ -16,10 +16,8 @@ public sealed partial class AuthoritySeed
         }
         else
         {
-            var hash = Hash.ObjectPool.Get();
             var utf8 = System.Text.Encoding.UTF8.GetBytes(seedPhrase);
-            this.seed = hash.GetHash(hash.GetHash(utf8));
-            Hash.ObjectPool.Return(hash);
+            this.seed = Sha3Helper.Get256_ByteArray(Sha3Helper.Get256_ByteArray(utf8));
         }
 
         this.Lifetime = lifetime;

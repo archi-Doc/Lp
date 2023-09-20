@@ -13,6 +13,16 @@ public static class LPExtentions
     public static string To4Hex(this uint id) => $"{(ushort)id:x4}";
 
     public static ulong GetFarmHash<T>(this T value)
+        where T : ITinyhandSerialize<T>
+    {
+        var hash = Hash.ObjectPool.Get();
+        var farmhash = hash.GetFarmHash(value);
+        Hash.ObjectPool.Return(hash);
+
+        return farmhash;
+    }
+
+    public static ulong GetFarmHash<T>(this T value)
         where T : ITinyhandSerialize<T>, IUnity
     {
         if (value.Hash != 0)

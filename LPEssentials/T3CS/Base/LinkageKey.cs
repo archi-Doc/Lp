@@ -38,18 +38,7 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
             var material = ecdh.DeriveKeyMaterial(ecdh2.PublicKey);
 
             // Hash key material
-            var hash = Hash.ObjectPool.Get();
-            var hv = hash.GetHashUInt64(material);
-            Hash.ObjectPool.Return(hash);
-
-            var b = material.AsSpan();
-            BitConverter.TryWriteBytes(b, hv.Hash0);
-            b = b.Slice(sizeof(ulong));
-            BitConverter.TryWriteBytes(b, hv.Hash1);
-            b = b.Slice(sizeof(ulong));
-            BitConverter.TryWriteBytes(b, hv.Hash2);
-            b = b.Slice(sizeof(ulong));
-            BitConverter.TryWriteBytes(b, hv.Hash3);
+            Sha3Helper.Get256_Span(material, material);
 
             using (var aes = Aes.Create())
             {
@@ -150,18 +139,7 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
             var material = ecdh.DeriveKeyMaterial(ecdh2.PublicKey);
 
             // Hash key material
-            var hash = Hash.ObjectPool.Get();
-            var hv = hash.GetHashUInt64(material);
-            Hash.ObjectPool.Return(hash);
-
-            var b = material.AsSpan();
-            BitConverter.TryWriteBytes(b, hv.Hash0);
-            b = b.Slice(sizeof(ulong));
-            BitConverter.TryWriteBytes(b, hv.Hash1);
-            b = b.Slice(sizeof(ulong));
-            BitConverter.TryWriteBytes(b, hv.Hash2);
-            b = b.Slice(sizeof(ulong));
-            BitConverter.TryWriteBytes(b, hv.Hash3);
+            Sha3Helper.Get256_Span(material, material);
 
             using (var aes = Aes.Create())
             {

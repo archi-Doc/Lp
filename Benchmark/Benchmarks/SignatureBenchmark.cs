@@ -53,18 +53,13 @@ public class SignatureBenchmark
     public Identifier GetIdentifier()
     {
         var bin = TinyhandSerializer.SerializeObject(this.Class, TinyhandSerializerOptions.Signature);
-        var hash = Hash.ObjectPool.Get();
-        var identifier = hash.GetIdentifier(bin);
-        Hash.ObjectPool.Return(hash);
-        return identifier;
+        return Identifier.FromReadOnlySpan(bin);
     }
 
-    [Benchmark]
+    /*[Benchmark]
     public Identifier GetIdentifier2()
     {
-        var hash = Hash.ObjectPool.Get();
-        var identifier = hash.GetIdentifier(this.Class, 0x40000000);
-        Hash.ObjectPool.Return(hash);
+        var identifier = Hash.GetIdentifier(this.Class, 0x40000000);
         return identifier;
-    }
+    }*/
 }

@@ -154,9 +154,7 @@ public partial class NetTerminal : IDisposable
         b = b.Slice(sizeof(ulong));
         BitConverter.TryWriteBytes(b, saltA2);
 
-        var hash = Hash.ObjectPool.Get();
-        (var hash0, _, _, _) = hash.GetHashUInt64(span);
-        Hash.ObjectPool.Return(hash);
+        (var hash0, _, _, _) = Sha3Helper.Get256_UInt64(span);
 
         this.Logger?.Log($"-> {hash0 & EventIdMask:X4}");
         this.Salt = hash0;
@@ -310,9 +308,7 @@ public partial class NetTerminal : IDisposable
             span = span.Slice(sizeof(ulong));
             BitConverter.TryWriteBytes(span, salt2);
 
-            var sha = Hash.Sha3_384Pool.Get();
-            this.embryo = sha.GetHash(buffer);
-            Hash.Sha3_384Pool.Return(sha);
+            this.embryo = Sha3Helper.Get384_ByteArray(buffer);
 
             this.GenePool.SetEmbryo(this.embryo);
             this.Logger?.Log("Embryo created.");

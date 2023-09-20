@@ -13,19 +13,7 @@ public class Hash : Sha3_256
 
     public static ObjectPool<Hash> ObjectPool { get; } = new(static () => new Hash());
 
-    public static ObjectPool<Sha3_384> Sha3_384Pool { get; } = new(static () => new Sha3_384());
-
     private byte[] buffer = new byte[BufferLength];
-
-    public Identifier GetIdentifier(ReadOnlySpan<byte> input)
-    {
-        return new Identifier(this.GetHashUInt64(input));
-    }
-
-    public Identifier IdentifierFinal()
-    {
-        return new Identifier(this.HashFinalUInt64());
-    }
 
     public Identifier GetIdentifier<T>(T? value, int level)
         where T : ITinyhandSerialize<T>
@@ -34,7 +22,7 @@ public class Hash : Sha3_256
         try
         {
             TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
-            return new Identifier(this.GetHashUInt64(writer.FlushAndGetReadOnlySpan()));
+            return new Identifier(Sha3Helper.Get256_UInt64(writer.FlushAndGetReadOnlySpan()));
         }
         finally
         {
