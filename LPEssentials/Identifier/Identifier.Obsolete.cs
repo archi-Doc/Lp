@@ -9,6 +9,7 @@ namespace LP.Obsolete;
 public partial class Identifier : IEquatable<Identifier>, IComparable<Identifier>
 {
     public const string Name = "Identifier";
+    public const int Length = 32;
 
     public static Identifier Zero { get; } = new();
 
@@ -58,9 +59,9 @@ public partial class Identifier : IEquatable<Identifier>, IComparable<Identifier
 
     public Identifier(byte[] byteArray)
     {
-        if (byteArray.Length < Hash.HashBytes)
+        if (byteArray.Length < Length)
         {
-            throw new ArgumentException($"Length of a byte array must be at least {Hash.HashBytes}");
+            throw new ArgumentException($"Length of a byte array must be at least {Length}");
         }
 
         var s = byteArray.AsSpan();
@@ -87,9 +88,9 @@ public partial class Identifier : IEquatable<Identifier>, IComparable<Identifier
 
     public bool TryWriteBytes(Span<byte> destination)
     {
-        if (destination.Length <= Hash.HashBytes)
+        if (destination.Length <= Length)
         {
-            throw new ArgumentException($"Length of a byte array must be at least {Hash.HashBytes}");
+            throw new ArgumentException($"Length of a byte array must be at least {Length}");
         }
 
         var d = destination;

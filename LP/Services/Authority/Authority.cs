@@ -11,7 +11,7 @@ public sealed partial class Authority
     {
         if (seedPhrase == null)
         {
-            this.seed = new byte[Hash.HashBytes]; // 32 bytes
+            this.seed = new byte[32]; // 32 bytes
             RandomVault.Crypto.NextBytes(this.seed);
         }
         else
@@ -84,13 +84,22 @@ public sealed partial class Authority
         var privateKey = this.privateKeyCache.TryGet(credit);
         if (privateKey == null)
         {// Create private key.
-            var hash = Hash.ObjectPool.Get();
-            hash.HashUpdate(this.seed);
-            hash.HashUpdate(TinyhandSerializer.Serialize(credit));
-            var seed = hash.HashFinal();
-            Hash.ObjectPool.Return(hash);
+            var buffer = TinyhandHelper.RentBuffer();
+            var writer = new Tinyhand.IO.TinyhandWriter(buffer);
+            try
+            {
+                writer.WriteSpan(this.seed);
+                TinyhandSerializer.SerializeObject(ref writer, credit);
 
-            privateKey = PrivateKey.CreateVerificationKey(seed);
+                Span<byte> span = stackalloc byte[32];
+                Sha3Helper.Get256_Span(writer.FlushAndGetReadOnlySpan(), span);
+                privateKey = PrivateKey.CreateVerificationKey(span);
+            }
+            finally
+            {
+                writer.Dispose();
+                TinyhandHelper.ReturnBuffer(buffer);
+            }
         }
 
         return privateKey;

@@ -72,9 +72,9 @@ public readonly partial struct Identifier : IEquatable<Identifier>, IComparable<
 
     public Identifier(byte[] byteArray)
     {
-        if (byteArray.Length < Hash.HashBytes)
+        if (byteArray.Length < Length)
         {
-            throw new ArgumentException($"Length of a byte array must be at least {Hash.HashBytes}");
+            throw new ArgumentException($"Length of a byte array must be at least {Length}");
         }
 
         var s = byteArray.AsSpan();
