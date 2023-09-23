@@ -64,8 +64,21 @@ public static class TinyhandHelper
         try
         {
             var identifier2 = value.GetIdentifier(level);
-
             return signature.PublicKey.VerifyIdentifier(identifier2, signature.Sign);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public static bool VerifySign<T>(this T value, int level, PublicKey publicKey, byte[] sign)
+        where T : ITinyhandSerialize<T>
+    {
+        try
+        {
+            var identifier2 = value.GetIdentifier(level);
+            return publicKey.VerifyIdentifier(identifier2, sign);
         }
         catch
         {
@@ -79,7 +92,6 @@ public static class TinyhandHelper
         try
         {
             var identifier2 = value.GetIdentifier(level);
-
             if (!identifier2.Equals(identifier))
             {
                 return false;

@@ -10,14 +10,17 @@ public partial class EngageProof : Proof
     }
 
     [Key(5)]
-    public long Salt { get; protected set; }
+    public PublicKey ProofKey { get; set; }
+
+    // public long Salt { get; protected set; }
 }
 
 /// <summary>
 /// Represents a proof object.
 /// </summary>
-[TinyhandUnion(0, typeof(EngageProof))]
-public abstract partial class Proof // : IValidatable, IEquatable<Proof>
+// [TinyhandUnion(0, typeof(EngageProof))]
+[TinyhandObject]
+public partial class Proof : IVerifiable, IEquatable<Proof>
 {
     // public static readonly Proof Default = new();
 
@@ -34,36 +37,49 @@ public abstract partial class Proof // : IValidatable, IEquatable<Proof>
     {
     }
 
-    [Key(0)]
-    public Proof? InnerProof { get; protected set; }
+    #region FieldAndProperty
 
-    // [Key(1)]
-    // public Kind ProofKind { get; protected set; }
+    [Key(0)]
+    public long ProofMics { get; protected set; }
 
     [Key(1)]
-    public PublicKey PublicKey { get; protected set; }
-
-    [Key(2)]
     public byte[] Sign { get; protected set; } = Array.Empty<byte>();
+
+    /*[Key(0)]
+    public Proof? InnerProof { get; protected set; }
+
+    [Key(1)]
+    public Kind ProofKind { get; protected set; }
+
+    [Key(1)]
+    public PublicKey PublicKey { get; protected set; }*/
 
     [Key(3)]
     public long ExpirationMics { get; protected set; }
 
-    [Key(4)]
-    public long Fee { get; protected set; }
+    public virtual PublicKey ProofKey { get; }
 
-    /*public bool Validate()
+    #endregion
+
+    public bool Validate()
     {
-        if (!this.ProofKey.Validate())
-        {
-            return false;
-        }
-        else if (this.Point < Value.MinPoint || this.Point > Value.MaxPoint)
+        if (this.ProofMics == 0)
         {
             return false;
         }
 
         return true;
+    }
+
+    public bool ValidateAndVerify()
+    {
+        if (!this.Validate())
+        {
+            return false;
+        }
+
+        var serialize = (ITinyhandSerialize)this;
+        return this.VerifySign(0, this.ProofKey, this.Sign);
     }
 
     public bool Equals(Proof? other)
@@ -72,19 +88,20 @@ public abstract partial class Proof // : IValidatable, IEquatable<Proof>
         {
             return false;
         }
-        else if (!this.ProofKey.Equals(other.ProofKey))
+        else if (this.ProofMics != other.ProofMics)
         {
             return false;
         }
-        else if (this.Point != other.Point)
+
+        /*else if (this.Point != other.Point)
         {
             return false;
-        }
+        }*/
 
         return true;
     }
 
-    public override int GetHashCode()
+    /*public override int GetHashCode()
     {
         var hash = default(HashCode);
         hash.Add(this.Owner);
