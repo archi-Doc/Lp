@@ -58,6 +58,10 @@ public partial class Message : IVerifiable, IUnity
     [IgnoreMember]
     public ulong Hash { get; set; }
 
+    PublicKey IVerifiable.PublicKey => this.signature.PublicKey;
+
+    byte[] IVerifiable.Signature => this.signature.Sign!;
+
     #endregion
 
     public bool ValidateAndVerify()

@@ -320,7 +320,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         return null;
     }
 
-    private ECDsa? TryGetEcdsa()
+    internal ECDsa? TryGetEcdsa()
     {
         if (PrivateKeyToEcdsa.TryGet(this) is { } ecdsa)
         {

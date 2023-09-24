@@ -4,10 +4,13 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Emit;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using LP.T3CS;
 using Tinyhand.IO;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace LP;
 
@@ -122,6 +125,66 @@ public static class TinyhandHelper
         catch
         {
             return false;
+        }
+    }
+
+    public static bool SignProof<T>(this T value, PrivateKey privateKey, long proofMics)
+        where T : Proof, ITinyhandSerialize<T>
+    {
+        var ecdsa = privateKey.TryGetEcdsa();
+        if (ecdsa == null)
+        {
+            return false;
+        }
+
+        var buffer = RentBuffer();
+        var writer = new TinyhandWriter(buffer) { Level = 0, };
+        try
+        {
+            value.SetInternal(privateKey, proofMics);
+            TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
+            var sign = new byte[PublicKey.SignLength];
+            if (!ecdsa.TrySignData(writer.FlushAndGetReadOnlySpan(), sign.AsSpan(), PublicKey.HashAlgorithmName, out var written))
+            {
+                return false;
+            }
+
+            value.SignInternal(sign);
+            return true;
+        }
+        finally
+        {
+            writer.Dispose();
+            ReturnBuffer(buffer);
+        }
+    }
+
+    /// <summary>
+    /// Validate object members and verify that the signature is appropriate.
+    /// </summary>
+    /// <param name="value">The object to be verified.</param>
+    /// <typeparam name="T">The type of the object.</typeparam>
+    /// <returns><see langword="true" />: Success.</returns>
+    public static bool ValidateAndVerify<T>(this T value)
+        where T : ITinyhandSerialize<T>, IVerifiable
+    {
+        if (!value.Validate())
+        {
+            return false;
+        }
+
+        var buffer = RentBuffer();
+        var writer = new TinyhandWriter(buffer) { Level = 0, };
+        try
+        {
+            TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
+            var sign = new byte[PublicKey.SignLength];
+            return value.PublicKey.VerifyData(writer.FlushAndGetReadOnlySpan(), value.Signature);
+        }
+        finally
+        {
+            writer.Dispose();
+            ReturnBuffer(buffer);
         }
     }
 }

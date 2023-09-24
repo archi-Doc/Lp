@@ -61,6 +61,10 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         bt.Start();
         encryptedLinkageKey.TryDecrypt(ecdh, out decryptedLinkageKey);
         this.userInterfaceService.WriteLine($"Decrypt linkage key2: {bt.StopAndGetText()}");
+
+        var engageProof = new EngageProof(1);
+        engageProof.SignProof(privateKey, 1);
+        var result = engageProof.ValidateAndVerify();
     }
 
     private async Task Test0()

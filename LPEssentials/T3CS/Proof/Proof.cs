@@ -2,25 +2,16 @@
 
 namespace LP.T3CS;
 
-[TinyhandObject]
-public partial class EngageProof : Proof
+public static class ProofHelper
 {
-    public EngageProof()
-    {
-    }
-
-    [Key(5)]
-    public PublicKey ProofKey { get; set; }
-
-    // public long Salt { get; protected set; }
 }
 
 /// <summary>
 /// Represents a proof object.
 /// </summary>
 // [TinyhandUnion(0, typeof(EngageProof))]
-[TinyhandObject]
-public partial class Proof : IVerifiable, IEquatable<Proof>
+[TinyhandObject(ReservedKeys = 4)]
+public abstract partial class Proof : IVerifiable, IEquatable<Proof>
 {
     // public static readonly Proof Default = new();
 
@@ -40,28 +31,20 @@ public partial class Proof : IVerifiable, IEquatable<Proof>
     #region FieldAndProperty
 
     [Key(0)]
+    public PublicKey PublicKey { get; protected set; }
+
+    [Key(1, Level = 1)]
+    public byte[] Signature { get; protected set; } = Array.Empty<byte>();
+
+    [Key(2)]
     public long ProofMics { get; protected set; }
 
-    [Key(1)]
-    public byte[] Sign { get; protected set; } = Array.Empty<byte>();
-
-    /*[Key(0)]
-    public Proof? InnerProof { get; protected set; }
-
-    [Key(1)]
-    public Kind ProofKind { get; protected set; }
-
-    [Key(1)]
-    public PublicKey PublicKey { get; protected set; }*/
-
-    [Key(3)]
-    public long ExpirationMics { get; protected set; }
-
-    public virtual PublicKey ProofKey { get; }
+    // [Key(3)]
+    // public long ExpirationMics { get; protected set; }
 
     #endregion
 
-    public bool Validate()
+    public virtual bool Validate()
     {
         if (this.ProofMics == 0)
         {
@@ -69,17 +52,6 @@ public partial class Proof : IVerifiable, IEquatable<Proof>
         }
 
         return true;
-    }
-
-    public bool ValidateAndVerify()
-    {
-        if (!this.Validate())
-        {
-            return false;
-        }
-
-        var serialize = (ITinyhandSerialize)this;
-        return this.VerifySign(0, this.ProofKey, this.Sign);
     }
 
     public bool Equals(Proof? other)
@@ -110,4 +82,15 @@ public partial class Proof : IVerifiable, IEquatable<Proof>
 
         return hash.ToHashCode();
     }*/
+
+    internal void SetInternal(PrivateKey privateKey, long proofMics)
+    {
+        this.PublicKey = privateKey.ToPublicKey();
+        this.ProofMics = proofMics;
+    }
+
+    internal void SignInternal(byte[] sign)
+    {
+        this.Signature = sign;
+    }
 }
