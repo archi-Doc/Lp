@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
@@ -9,12 +8,14 @@ using Arc.Crypto.EC;
 namespace LP.T3CS;
 
 /// <summary>
-/// Represents a public key data. Compressed to 33 bytes (memory usage 40 bytes).
+/// Represents a public key data. Compressed to 33 bytes (memory usage 40 bytes).<br/>
+/// Key class 0: T3CS key for encryption (ECDH).<br/>
+/// Key class 1: T3CS key for signature (ECDsa).<br/>
+/// Key class 2: Node key for encryption (ECDH).
 /// </summary>
 [TinyhandObject]
 public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 {
-    // public const string ECCurveName = "secp256r1"; // CurveInstance
     public const int PublicKeyLength = 64;
     public const int PublicKeyHalfLength = PublicKeyLength / 2;
     public const int PrivateKeyLength = 32;
@@ -205,6 +206,24 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         }
 
         var result = ecdsa.VerifyData(data, sign, HashAlgorithmName);
+        this.CacheEcdsa(ecdsa);
+        return result;
+    }
+
+    public bool VerifyHash(ReadOnlySpan<byte> hash, ReadOnlySpan<byte> sign)
+    {
+        if (sign.Length != PublicKey.SignLength)
+        {
+            return false;
+        }
+
+        var ecdsa = this.TryGetEcdsa();
+        if (ecdsa == null)
+        {
+            return false;
+        }
+
+        var result = ecdsa.VerifyHash(hash, sign);
         this.CacheEcdsa(ecdsa);
         return result;
     }

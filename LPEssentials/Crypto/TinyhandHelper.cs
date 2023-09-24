@@ -143,8 +143,11 @@ public static class TinyhandHelper
         {
             value.SetInternal(privateKey, proofMics);
             TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
+            Span<byte> hash = stackalloc byte[32];
+            Sha3Helper.Get256_Span(writer.FlushAndGetReadOnlySpan(), hash);
+
             var sign = new byte[PublicKey.SignLength];
-            if (!ecdsa.TrySignData(writer.FlushAndGetReadOnlySpan(), sign.AsSpan(), PublicKey.HashAlgorithmName, out var written))
+            if (!ecdsa.TrySignHash(hash, sign.AsSpan(), out var written))
             {
                 return false;
             }
@@ -178,8 +181,10 @@ public static class TinyhandHelper
         try
         {
             TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
-            var sign = new byte[PublicKey.SignLength];
-            return value.PublicKey.VerifyData(writer.FlushAndGetReadOnlySpan(), value.Signature);
+            Span<byte> hash = stackalloc byte[32];
+            Sha3Helper.Get256_Span(writer.FlushAndGetReadOnlySpan(), hash);
+
+            return value.PublicKey.VerifyHash(hash, value.Signature);
         }
         finally
         {
