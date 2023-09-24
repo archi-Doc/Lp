@@ -67,7 +67,7 @@ public sealed partial class Order : IValidatable, IEquatable<Order>
         {
             return false;
         }
-        else if (!this.Authority.Validate())
+        else if (!this.Authority.Validate(KeyClass.T3CS_Signature))
         {
             return false;
         }

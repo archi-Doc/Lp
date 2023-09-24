@@ -33,7 +33,7 @@ public partial class Linkage : IValidatable // , IEquatable<Linkage>, IComparabl
         {
             return false;
         }
-        else if (!this.Owner.Validate())
+        else if (!this.Owner.Validate(KeyClass.T3CS_Signature))
         {
             return false;
         }
@@ -48,7 +48,7 @@ public partial class Linkage : IValidatable // , IEquatable<Linkage>, IComparabl
 
         for (var i = 0; i < this.Mergers.Length; i++)
         {
-            if (!this.Mergers[i].Validate())
+            if (!this.Mergers[i].Validate(KeyClass.T3CS_Signature))
             {
                 return false;
             }

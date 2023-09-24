@@ -93,7 +93,7 @@ public sealed partial class Authority
 
                 Span<byte> span = stackalloc byte[32];
                 Sha3Helper.Get256_Span(writer.FlushAndGetReadOnlySpan(), span);
-                privateKey = PrivateKey.CreateVerificationKey(span);
+                privateKey = PrivateKey.CreateSignatureKey(span);
             }
             finally
             {

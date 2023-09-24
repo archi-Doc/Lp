@@ -8,10 +8,7 @@ using Arc.Crypto.EC;
 namespace LP.T3CS;
 
 /// <summary>
-/// Represents a public key data. Compressed to 33 bytes (memory usage 40 bytes).<br/>
-/// Key class 0: T3CS key for encryption (ECDH).<br/>
-/// Key class 1: T3CS key for signature (ECDsa).<br/>
-/// Key class 2: Node key for encryption (ECDH).
+/// Represents a public key data. Compressed to 33 bytes (memory usage 40 bytes).
 /// </summary>
 [TinyhandObject]
 public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
@@ -154,7 +151,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
     [Key(4)]
     private readonly ulong x3;
 
-    public uint KeyVersion => KeyHelper.GetKeyVersion(this.keyValue);
+    public KeyClass KeyClass => KeyHelper.GetKeyClass(this.keyValue);
 
     public uint YTilde => KeyHelper.GetYTilde(this.keyValue);
 
@@ -167,30 +164,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         Span<byte> span = stackalloc byte[EncodedLength];
         this.TryWriteBytes(span, out _);
         return FarmHash.Hash64(span);
-
-        // FarmHash.Hash64(new ReadOnlySpan<byte>(Unsafe.AsPointer(ref Unsafe.AsRef(this)), sizeof(PublicKey)));
-
-        /*var writer = default(TinyhandWriter);
-        try
-        {
-            TinyhandSerializer.SerializeObject(ref writer, this);
-            return FarmHash.Hash64(writer.FlushAndGetReadOnlySpan());
-        }
-        finally
-        {
-            writer.Dispose();
-        }*/
     }
-
-    public bool IsValid() =>
-        this.x0 != 0 &&
-        this.x1 != 0 &&
-        this.x2 != 0 &&
-        this.x3 != 0;
-
-    public bool IsVerificationKey => KeyHelper.IsVerificationKey(this.keyValue);
-
-    public bool IsEncryptionKey => KeyHelper.IsEncryptionKey(this.keyValue);
 
     public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> sign)
     {
@@ -248,12 +222,26 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
     public bool Validate()
     {
-        if (this.KeyVersion == 0)
+        if (this.KeyClass > KeyHelper.UpperKeyClass)
         {
-            return true;
+            return false;
+        }
+        else if (this.x0 == 0 || this.x1 == 0 || this.x2 == 0 || this.x3 == 0)
+        {
+            return false;
         }
 
-        return false;
+        return true;
+    }
+
+    public bool Validate(KeyClass keyClass)
+    {
+        if (this.KeyClass != keyClass)
+        {
+            return false;
+        }
+
+        return this.Validate();
     }
 
     public bool IsSameKey(PrivateKey privateKey)
@@ -360,7 +348,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
     internal ECDiffieHellman? TryGetEcdh()
     {
-        if (!KeyHelper.IsEncryptionKey(this.KeyValue))
+        if (this.KeyClass != KeyClass.T3CS_Encryption)
         {
             return default;
         }
@@ -408,7 +396,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
             return null;
         }
 
-        if (this.KeyVersion == 0)
+        if (this.KeyClass == 0)
         {
             var x = new byte[32];
             var span = x.AsSpan();

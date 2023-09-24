@@ -39,7 +39,7 @@ public partial record RunnerInformation
         }
         else
         {
-            this.RemotePublicKey = PrivateKey.CreateVerificationKey().ToPublicKey();
+            this.RemotePublicKey = PrivateKey.CreateSignatureKey().ToPublicKey();
             this.RemotePublicKeyBase64 = this.RemotePublicKey.ToString();
         }
 
@@ -50,7 +50,7 @@ public partial record RunnerInformation
         this.HostPort = this.HostPort == 0 ? 49152 : this.HostPort;
         this.DestinationDirectory = string.IsNullOrEmpty(this.DestinationDirectory) ? "/lp" : this.DestinationDirectory;
         this.DestinationPort = this.DestinationPort == 0 ? 49152 : this.DestinationPort;
-        this.RemotePublicKeyBase64 = string.IsNullOrEmpty(this.RemotePublicKeyBase64) ? PrivateKey.CreateVerificationKey().ToPublicKey().ToString() : this.RemotePublicKeyBase64;
+        this.RemotePublicKeyBase64 = string.IsNullOrEmpty(this.RemotePublicKeyBase64) ? PrivateKey.CreateSignatureKey().ToPublicKey().ToString() : this.RemotePublicKeyBase64;
         this.NetsphereOptions = string.IsNullOrEmpty(this.NetsphereOptions) ? "-test false -alternative false -logger false" : this.NetsphereOptions;
 
         return this;

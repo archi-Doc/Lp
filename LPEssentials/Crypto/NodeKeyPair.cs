@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using LP.T3CS;
+
 namespace LP;
 
 public readonly partial struct NodeKeyPair : IEquatable<NodeKeyPair>
@@ -19,7 +21,7 @@ public readonly partial struct NodeKeyPair : IEquatable<NodeKeyPair>
             return material;
         }
 
-        if (this.privateKey.KeyVersion != 1)
+        if (this.privateKey.KeyClass != KeyClass.Node_Encryption)
         {
             return null;
         }

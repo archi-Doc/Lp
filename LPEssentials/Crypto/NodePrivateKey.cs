@@ -58,7 +58,7 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
             return false;
         }
 
-        privateKey = new NodePrivateKey(1, key.Q.X!, key.Q.Y!, key.D!);
+        privateKey = new NodePrivateKey(key.Q.X!, key.Q.Y!, key.D!);
         return true;
     }
 
@@ -67,7 +67,7 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
         using (var ecdh = ECDiffieHellman.Create(NodePublicKey.ECCurve))
         {
             var key = ecdh.ExportParameters(true);
-            return new NodePrivateKey(1, key.Q.X!, key.Q.Y!, key.D!);
+            return new NodePrivateKey(key.Q.X!, key.Q.Y!, key.D!);
         }
     }
 
@@ -107,21 +107,21 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
             }
         }
 
-        return new NodePrivateKey(1, key.Q.X!, key.Q.Y!, key.D!);
+        return new NodePrivateKey(key.Q.X!, key.Q.Y!, key.D!);
     }
 
     internal NodePrivateKey()
     {
     }
 
-    private NodePrivateKey(uint keyVersion, byte[] x, byte[] y, byte[] d)
+    private NodePrivateKey(byte[] x, byte[] y, byte[] d)
     {
         this.x = x;
         this.y = y;
         this.d = d;
 
         var yTilde = this.CompressY();
-        this.keyValue = KeyHelper.ToPrivateKeyValue(1, keyVersion, yTilde);
+        this.keyValue = KeyHelper.CreatePrivateKeyValue(KeyClass.Node_Encryption, yTilde);
     }
 
     public NodePublicKey ToPublicKey()
@@ -129,7 +129,7 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
 
     public byte[]? DeriveKeyMaterial(NodePublicKey publicKey)
     {
-        if (this.KeyVersion != 1)
+        if (this.KeyClass != KeyClass.Node_Encryption)
         {
             return null;
         }
@@ -175,7 +175,7 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
     [Key(3)]
     private readonly byte[] d = Array.Empty<byte>();
 
-    public uint KeyVersion => KeyHelper.GetKeyVersion(this.keyValue);
+    public KeyClass KeyClass => KeyHelper.GetKeyClass(this.keyValue);
 
     public uint YTilde => KeyHelper.GetYTilde(this.keyValue);
 
@@ -185,7 +185,7 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
 
     public bool Validate()
     {
-        if (this.KeyVersion != 1)
+        if (this.KeyClass != KeyClass.Node_Encryption)
         {
             return false;
         }
@@ -238,7 +238,7 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
 
     internal uint CompressY()
     {
-        if (this.KeyVersion == 1)
+        if (this.KeyClass == KeyClass.Node_Encryption)
         {
             return Arc.Crypto.EC.P256R1Curve.Instance.CompressY(this.y);
         }

@@ -3,6 +3,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using Arc.Crypto.EC;
+using LP.T3CS;
 
 namespace LP;
 
@@ -107,13 +108,13 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
     [Key(4)]
     private readonly ulong x3;
 
-    public uint KeyVersion => KeyHelper.GetKeyVersion(this.keyValue);
+    public KeyClass KeyClass => KeyHelper.GetKeyClass(this.keyValue);
 
     public uint YTilde => KeyHelper.GetYTilde(this.keyValue);
 
     public bool Validate()
     {
-        if (this.KeyVersion == 1)
+        if (this.KeyClass == KeyClass.Node_Encryption)
         {
             return true;
         }
@@ -162,7 +163,7 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
             return null;
         }
 
-        if (this.KeyVersion == 1)
+        if (this.KeyClass == KeyClass.Node_Encryption)
         {
             var x = new byte[32];
             var span = x.AsSpan();

@@ -29,7 +29,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
     private async Task TestLinkageKey()
     {
         var bt = new BenchTimer();
-        var privateKey = PrivateKey.CreateVerificationKey();
+        var privateKey = PrivateKey.CreateSignatureKey();
         var publicKey = privateKey.ToPublicKey();
         this.userInterfaceService.WriteLine($"Private(verification): {privateKey.ToUnsafeString()}");
         this.userInterfaceService.WriteLine($"Public(verification): {publicKey.ToString()}");
@@ -76,7 +76,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         var seed = this.seedPhrase.TryGetSeed(st);
         if (seed != null)
         {
-            var pk = PrivateKey.CreateVerificationKey(seed);
+            var pk = PrivateKey.CreateSignatureKey(seed);
         }
 
         var privateKey = NodePrivateKey.AlternativePrivateKey;

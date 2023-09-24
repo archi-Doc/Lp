@@ -43,13 +43,13 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>
 
     public bool Validate()
     {
-        if (!this.Originator.Validate())
+        if (!this.Originator.Validate(KeyClass.T3CS_Signature))
         {
             return false;
         }
 
-        var keyVersion = this.Originator.KeyVersion;
-        if (this.Standard.KeyVersion != keyVersion || !this.Standard.Validate())
+        var keyVersion = this.Originator.KeyClass;
+        if (this.Standard.KeyClass != keyVersion || !this.Standard.Validate(KeyClass.T3CS_Signature))
         {
             return false;
         }
@@ -62,7 +62,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>
 
         for (var i = 0; i < this.mergers.Length; i++)
         {
-            if (this.mergers[i].KeyVersion != keyVersion || !this.mergers[i].Validate())
+            if (this.mergers[i].KeyClass != keyVersion || !this.mergers[i].Validate(KeyClass.T3CS_Signature))
             {
                 return false;
             }
