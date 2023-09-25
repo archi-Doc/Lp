@@ -70,7 +70,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
     private async Task Test0()
     {
         ECParameters key = default;
-        key.Curve = ECCurve.CreateFromFriendlyName(PublicKey.CurveInstance.CurveName);
+        key.Curve = ECCurve.CreateFromFriendlyName(KeyHelper.CurveInstance.CurveName);
 
         var st = this.seedPhrase.Create();
         var seed = this.seedPhrase.TryGetSeed(st);

@@ -17,7 +17,7 @@ namespace LP.T3CS;
 [TinyhandObject]
 public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageKey>
 {
-    public const int EncodedLength = PublicKey.EncodedLength + sizeof(uint) + sizeof(byte) + (sizeof(ulong) * 4);
+    public const int EncodedLength = KeyHelper.EncodedLength + sizeof(uint) + sizeof(byte) + (sizeof(ulong) * 4);
 
     public static LinkageKey CreateRaw(PublicKey publicKey)
         => new(publicKey);
@@ -210,7 +210,7 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
 
         var b = span;
         this.Key.TryWriteBytes(b, out _);
-        b = b.Slice(PublicKey.EncodedLength);
+        b = b.Slice(KeyHelper.EncodedLength);
 
         BitConverter.TryWriteBytes(b, this.Checksum);
         b = b.Slice(sizeof(uint));
@@ -231,7 +231,7 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
         }
         else
         {
-            written = PublicKey.EncodedLength + sizeof(uint);
+            written = KeyHelper.EncodedLength + sizeof(uint);
             return true;
         }
     }

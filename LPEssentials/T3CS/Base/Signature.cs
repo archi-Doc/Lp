@@ -27,7 +27,7 @@ public readonly partial struct Signature
         this.SignatureType = signatureType;
         this.SignedMics = signedMics;
 
-        if (sign.Length == PublicKey.PublicKeyLength)
+        if (sign.Length == KeyHelper.PublicKeyLength)
         {
             this.Sign = sign;
         }

@@ -3,7 +3,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
-using Arc.Crypto.EC;
 
 namespace LP.T3CS;
 
@@ -13,26 +12,7 @@ namespace LP.T3CS;
 [TinyhandObject]
 public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 {
-    public const int PublicKeyLength = 64;
-    public const int PublicKeyHalfLength = PublicKeyLength / 2;
-    public const int PrivateKeyLength = 32;
-    public const int SignLength = 64;
-    public const int EncodedLength = 1 + (sizeof(ulong) * 4);
-    public const int MaxPublicKeyCache = 100;
-
-    public static readonly HashAlgorithmName HashAlgorithmName;
-    public static readonly ECCurveBase CurveInstance;
-
-    internal static ECCurve ECCurve { get; }
-
-    private static ObjectCache<PublicKey, ECDsa> PublicKeyToEcdsa { get; } = new(MaxPublicKeyCache);
-
-    static PublicKey()
-    {
-        CurveInstance = P256R1Curve.Instance;
-        ECCurve = ECCurve.CreateFromFriendlyName(CurveInstance.CurveName);
-        HashAlgorithmName = HashAlgorithmName.SHA256;
-    }
+    private static ObjectCache<PublicKey, ECDsa> PublicKeyToEcdsa { get; } = new(100);
 
     public static bool TryParse(ReadOnlySpan<char> chars, [MaybeNullWhen(false)] out PublicKey publicKey)
     {
@@ -43,7 +23,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
         publicKey = default;
         var bytes = Base64.Url.FromStringToByteArray(chars);
-        if (bytes.Length != EncodedLength)
+        if (bytes.Length != KeyHelper.EncodedLength)
         {
             return false;
         }
@@ -161,14 +141,14 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
     public unsafe ulong GetChecksum()
     {
-        Span<byte> span = stackalloc byte[EncodedLength];
+        Span<byte> span = stackalloc byte[KeyHelper.EncodedLength];
         this.TryWriteBytes(span, out _);
         return FarmHash.Hash64(span);
     }
 
     public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> sign)
     {
-        if (sign.Length != PublicKey.SignLength)
+        if (sign.Length != KeyHelper.SignLength)
         {
             return false;
         }
@@ -179,14 +159,14 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
             return false;
         }
 
-        var result = ecdsa.VerifyData(data, sign, HashAlgorithmName);
+        var result = ecdsa.VerifyData(data, sign, KeyHelper.HashAlgorithmName);
         this.CacheEcdsa(ecdsa);
         return result;
     }
 
     public bool VerifyHash(ReadOnlySpan<byte> hash, ReadOnlySpan<byte> sign)
     {
-        if (sign.Length != PublicKey.SignLength)
+        if (sign.Length != KeyHelper.SignLength)
         {
             return false;
         }
@@ -204,7 +184,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
     public unsafe bool VerifyIdentifier(Identifier identifier, ReadOnlySpan<byte> sign)
     {
-        if (sign.Length != PublicKey.SignLength)
+        if (sign.Length != KeyHelper.SignLength)
         {
             return false;
         }
@@ -247,7 +227,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
     public bool IsSameKey(PrivateKey privateKey)
     {
         var span = privateKey.X.AsSpan();
-        if (span.Length != PublicKeyHalfLength)
+        if (span.Length != KeyHelper.PublicKeyHalfLength)
         {
             return false;
         }
@@ -300,7 +280,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
     public string ToBase64()
     {
-        Span<byte> span = stackalloc byte[EncodedLength];
+        Span<byte> span = stackalloc byte[KeyHelper.EncodedLength];
         this.TryWriteBytes(span, out _);
         return $"{Base64.Url.FromByteArrayToString(span)}";
     }
@@ -312,7 +292,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
     public bool TryWriteBytes(Span<byte> span, out int written)
     {
-        if (span.Length < EncodedLength)
+        if (span.Length < KeyHelper.EncodedLength)
         {
             written = 0;
             return false;
@@ -330,7 +310,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         BitConverter.TryWriteBytes(b, this.x3);
         b = b.Slice(sizeof(ulong));
 
-        written = EncodedLength;
+        written = KeyHelper.EncodedLength;
         return true;
     }
 
@@ -363,7 +343,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         span = span.Slice(sizeof(ulong));
         BitConverter.TryWriteBytes(span, this.x3);
 
-        var y = PublicKey.CurveInstance.TryDecompressY(x, this.YTilde);
+        var y = KeyHelper.CurveInstance.TryDecompressY(x, this.YTilde);
         if (y == null)
         {
             return null;
@@ -372,7 +352,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         try
         {
             ECParameters p = default;
-            p.Curve = ECCurve;
+            p.Curve = KeyHelper.ECCurve;
             p.Q.X = x;
             p.Q.Y = y;
             return ECDiffieHellman.Create(p);
@@ -408,7 +388,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
             span = span.Slice(sizeof(ulong));
             BitConverter.TryWriteBytes(span, this.x3);
 
-            var y = PublicKey.CurveInstance.TryDecompressY(x, this.YTilde);
+            var y = KeyHelper.CurveInstance.TryDecompressY(x, this.YTilde);
             if (y == null)
             {
                 return null;
@@ -417,7 +397,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
             try
             {
                 ECParameters p = default;
-                p.Curve = ECCurve;
+                p.Curve = KeyHelper.ECCurve;
                 p.Q.X = x;
                 p.Q.Y = y;
                 return ECDsa.Create(p);

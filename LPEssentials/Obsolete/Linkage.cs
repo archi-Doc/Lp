@@ -56,7 +56,7 @@ public partial class Linkage : IValidatable // , IEquatable<Linkage>, IComparabl
 
         for (var i = 0; i < this.Signs.Length; i++)
         {
-            if (this.Signs[i] == null || this.Signs[i].Length != PublicKey.PublicKeyLength)
+            if (this.Signs[i] == null || this.Signs[i].Length != KeyHelper.PublicKeyLength)
             {
                 return false;
             }

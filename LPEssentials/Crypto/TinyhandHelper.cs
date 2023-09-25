@@ -146,7 +146,7 @@ public static class TinyhandHelper
             Span<byte> hash = stackalloc byte[32];
             Sha3Helper.Get256_Span(writer.FlushAndGetReadOnlySpan(), hash);
 
-            var sign = new byte[PublicKey.SignLength];
+            var sign = new byte[KeyHelper.SignLength];
             if (!ecdsa.TrySignHash(hash, sign.AsSpan(), out var written))
             {
                 return false;

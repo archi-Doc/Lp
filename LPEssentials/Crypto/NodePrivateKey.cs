@@ -38,14 +38,14 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
         }
 
         var privateBytes = Base64.Url.FromStringToByteArray(span.Slice(0, bracePosition));
-        if (privateBytes == null || privateBytes.Length != (PublicKey.PrivateKeyLength + 1))
+        if (privateBytes == null || privateBytes.Length != (KeyHelper.PrivateKeyLength + 1))
         {
             return false;
         }
 
         ECParameters key = default;
         key.Curve = NodePublicKey.ECCurve;
-        key.D = privateBytes[1..(PublicKey.PrivateKeyLength + 1)];
+        key.D = privateBytes[1..(KeyHelper.PrivateKeyLength + 1)];
         try
         {
             using (var ecdh = ECDiffieHellman.Create(key))

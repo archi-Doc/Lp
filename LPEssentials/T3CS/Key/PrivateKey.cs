@@ -14,7 +14,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
 
     public static PrivateKey CreateSignatureKey()
     {
-        using (var ecdsa = ECDsa.Create(PublicKey.ECCurve))
+        using (var ecdsa = ECDsa.Create(KeyHelper.ECCurve))
         {
             var key = ecdsa.ExportParameters(true);
             return new PrivateKey(KeyClass.T3CS_Signature, key.Q.X!, key.Q.Y!, key.D!);
@@ -23,7 +23,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
 
     public static PrivateKey CreateEncryptionKey()
     {
-        using (var ecdh = ECDiffieHellman.Create(PublicKey.ECCurve))
+        using (var ecdh = ECDiffieHellman.Create(KeyHelper.ECCurve))
         {
             var key = ecdh.ExportParameters(true);
             return new PrivateKey(KeyClass.T3CS_Encryption, key.Q.X!, key.Q.Y!, key.D!);
@@ -33,7 +33,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
     public static PrivateKey CreateSignatureKey(ReadOnlySpan<byte> seed)
     {
         ECParameters key = default;
-        key.Curve = PublicKey.ECCurve;
+        key.Curve = KeyHelper.ECCurve;
 
         byte[]? d = null;
         while (true)
@@ -49,7 +49,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
                     d = Sha3Helper.Get256_ByteArray(d);
                 }
 
-                if (!PublicKey.CurveInstance.IsValidSeed(d))
+                if (!KeyHelper.CurveInstance.IsValidSeed(d))
                 {
                     continue;
                 }
@@ -72,7 +72,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
     public static PrivateKey CreateEncryptionKey(ReadOnlySpan<byte> seed)
     {
         ECParameters key = default;
-        key.Curve = PublicKey.ECCurve;
+        key.Curve = KeyHelper.ECCurve;
 
         byte[]? d = null;
         while (true)
@@ -88,7 +88,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
                     d = Sha3Helper.Get256_ByteArray(d);
                 }
 
-                if (!PublicKey.CurveInstance.IsValidSeed(d))
+                if (!KeyHelper.CurveInstance.IsValidSeed(d))
                 {
                     continue;
                 }
@@ -149,8 +149,8 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
 
         var target = TinyhandSerializer.SerializeObject(data, TinyhandSerializerOptions.Signature);
 
-        var sign = new byte[PublicKey.SignLength];
-        if (!ecdsa.TrySignData(target, sign.AsSpan(), PublicKey.HashAlgorithmName, out var written))
+        var sign = new byte[KeyHelper.SignLength];
+        if (!ecdsa.TrySignData(target, sign.AsSpan(), KeyHelper.HashAlgorithmName, out var written))
         {
             signature = default;
             return false;
@@ -169,8 +169,8 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
             return null;
         }
 
-        var sign = new byte[PublicKey.SignLength];
-        if (!ecdsa.TrySignData(data, sign.AsSpan(), PublicKey.HashAlgorithmName, out var written))
+        var sign = new byte[KeyHelper.SignLength];
+        if (!ecdsa.TrySignData(data, sign.AsSpan(), KeyHelper.HashAlgorithmName, out var written))
         {
             return null;
         }
@@ -182,7 +182,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
     public bool SignData(ReadOnlySpan<byte> data, Span<byte> signature, out int written)
     {
         written = 0;
-        if (signature.Length < PublicKey.SignLength)
+        if (signature.Length < KeyHelper.SignLength)
         {
             return false;
         }
@@ -193,7 +193,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
             return false;
         }
 
-        if (!ecdsa.TrySignData(data, signature, PublicKey.HashAlgorithmName, out written))
+        if (!ecdsa.TrySignData(data, signature, KeyHelper.HashAlgorithmName, out written))
         {
             return false;
         }
@@ -235,15 +235,15 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         {
             return false;
         }
-        else if (this.x == null || this.x.Length != PublicKey.PublicKeyHalfLength)
+        else if (this.x == null || this.x.Length != KeyHelper.PublicKeyHalfLength)
         {
             return false;
         }
-        else if (this.y == null || this.y.Length != PublicKey.PublicKeyHalfLength)
+        else if (this.y == null || this.y.Length != KeyHelper.PublicKeyHalfLength)
         {
             return false;
         }
-        else if (this.d == null || this.d.Length != PublicKey.PrivateKeyLength)
+        else if (this.d == null || this.d.Length != KeyHelper.PrivateKeyLength)
         {
             return false;
         }
@@ -289,7 +289,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
     {
         if (this.KeyClass == 0)
         {
-            return PublicKey.CurveInstance.CompressY(this.y);
+            return KeyHelper.CurveInstance.CompressY(this.y);
         }
         else
         {
@@ -309,7 +309,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         try
         {
             ECParameters p = default;
-            p.Curve = PublicKey.ECCurve;
+            p.Curve = KeyHelper.ECCurve;
             p.D = this.d;
             return ECDiffieHellman.Create(p);
         }
@@ -335,7 +335,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         try
         {
             ECParameters p = default;
-            p.Curve = PublicKey.ECCurve;
+            p.Curve = KeyHelper.ECCurve;
             p.D = this.d;
             return ECDsa.Create(p);
         }
