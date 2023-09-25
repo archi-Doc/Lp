@@ -249,8 +249,8 @@ internal static class PacketService
             *(PacketHeader*)pb = header;
         }
 
-        writer.FlushAndGetArray(out var array, out var arrayLength);
-        if (array != arrayOwner.ByteArray)
+        writer.FlushAndGetArray(out var array, out var arrayLength, out var isInitialBuffer);
+        if (!isInitialBuffer)
         {
             arrayOwner = new(array);
         }
@@ -282,8 +282,8 @@ internal static class PacketService
             *(PacketHeader*)(pb + PacketService.HeaderSize) = header;
         }
 
-        writer.FlushAndGetArray(out var array, out var arrayLength);
-        if (array != arrayOwner.ByteArray)
+        writer.FlushAndGetArray(out var array, out var arrayLength, out var isInitialBuffer);
+        if (!isInitialBuffer)
         {
             arrayOwner = new(array);
         }

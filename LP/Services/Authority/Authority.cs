@@ -92,7 +92,8 @@ public sealed partial class Authority
                 TinyhandSerializer.SerializeObject(ref writer, credit);
 
                 Span<byte> span = stackalloc byte[32];
-                Sha3Helper.Get256_Span(writer.FlushAndGetReadOnlySpan(), span);
+                writer.FlushAndGetReadOnlySpan(out var input, out _);
+                Sha3Helper.Get256_Span(input, span);
                 privateKey = PrivateKey.CreateSignatureKey(span);
             }
             finally

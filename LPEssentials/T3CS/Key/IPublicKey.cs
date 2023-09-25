@@ -6,13 +6,13 @@ public interface IPublicKey
 {
     byte KeyValue { get; }
 
-    long X0 { get; }
+    ulong X0 { get; }
 
-    long X1 { get; }
+    ulong X1 { get; }
 
-    long X2 { get; }
+    ulong X2 { get; }
 
-    long X3 { get; }
+    ulong X3 { get; }
 }
 
 /*

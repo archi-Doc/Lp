@@ -24,8 +24,8 @@ public static class BlockService
             var writer = new Tinyhand.IO.TinyhandWriter(arrayOwner.ByteArray);
             TinyhandSerializer.Serialize(ref writer, value, SerializerOptions);
 
-            writer.FlushAndGetArray(out var array, out var arrayLength);
-            if (array != arrayOwner.ByteArray)
+            writer.FlushAndGetArray(out var array, out var arrayLength, out var isInitialBuffer);
+            if (!isInitialBuffer)
             {
                 arrayOwner.Return();
                 if (arrayLength > MaxBlockSize)

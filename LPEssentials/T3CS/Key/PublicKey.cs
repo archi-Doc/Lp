@@ -61,11 +61,12 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>, 
     [Key(4)]
     private readonly ulong x3;
 
+    public byte KeyValue => this.keyValue;
+
     public KeyClass KeyClass => KeyHelper.GetKeyClass(this.keyValue);
 
     public uint YTilde => KeyHelper.GetYTilde(this.keyValue);
 
-    internal byte KeyValue => this.keyValue;
 
     #endregion
 

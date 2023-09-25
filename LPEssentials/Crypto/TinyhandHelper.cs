@@ -35,7 +35,8 @@ public static class TinyhandHelper
         try
         {
             TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
-            return new Identifier(Sha3Helper.Get256_UInt64(writer.FlushAndGetReadOnlySpan()));
+            writer.FlushAndGetReadOnlySpan(out var span, out _);
+            return new Identifier(Sha3Helper.Get256_UInt64(span));
         }
         finally
         {
@@ -52,7 +53,8 @@ public static class TinyhandHelper
         try
         {
             TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Selection);
-            return FarmHash.Hash64(writer.FlushAndGetReadOnlySpan());
+            writer.FlushAndGetReadOnlySpan(out var span, out _);
+            return FarmHash.Hash64(span);
         }
         finally
         {
@@ -144,7 +146,8 @@ public static class TinyhandHelper
             value.SetInternal(privateKey, proofMics);
             TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
             Span<byte> hash = stackalloc byte[32];
-            Sha3Helper.Get256_Span(writer.FlushAndGetReadOnlySpan(), hash);
+            writer.FlushAndGetReadOnlySpan(out var span, out _);
+            Sha3Helper.Get256_Span(span, hash);
 
             var sign = new byte[KeyHelper.SignLength];
             if (!ecdsa.TrySignHash(hash, sign.AsSpan(), out var written))
@@ -182,7 +185,8 @@ public static class TinyhandHelper
         {
             TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
             Span<byte> hash = stackalloc byte[32];
-            Sha3Helper.Get256_Span(writer.FlushAndGetReadOnlySpan(), hash);
+            writer.FlushAndGetReadOnlySpan(out var span, out _);
+            Sha3Helper.Get256_Span(span, hash);
 
             return value.PublicKey.VerifyHash(hash, value.Signature);
         }

@@ -38,7 +38,8 @@ public readonly partial struct ChecksumStruct
         try
         {
             TinyhandSerializer.SerializeObject(ref writer, this);
-            return FarmHash.Hash64(writer.FlushAndGetReadOnlySpan());
+            writer.FlushAndGetReadOnlySpan(out var span, out _);
+            return FarmHash.Hash64(span);
         }
         finally
         {
