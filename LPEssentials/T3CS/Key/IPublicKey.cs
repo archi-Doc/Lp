@@ -2,17 +2,23 @@
 
 namespace LP.T3CS;
 
-public interface IPublicKey
+public interface IPublicKey<T>
+    where T : IPublicKey<T>
 {
-    byte KeyValue { get; }
+    static abstract bool TryWriteBytes(ref T obj, Span<byte> destination, out int written);
 
-    ulong X0 { get; }
+    /*static abstract void ToPublicKey(out T obj, byte keyValue, ReadOnlySpan<byte> input);
 
-    ulong X1 { get; }
+    static void ToPublicKey(out T obj, ReadOnlySpan<byte> input)
+    {
+        if (input.Length == 0)
+        {
+            obj = default;
+            return;
+        }
 
-    ulong X2 { get; }
-
-    ulong X3 { get; }
+        T.ToPublicKey(out obj, input[0], input.Slice(1));
+    }*/
 }
 
 /*

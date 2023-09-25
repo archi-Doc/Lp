@@ -37,7 +37,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>
 
     public bool Validate()
     {
-        if (!this.Owner.Validate(KeyClass.T3CS_Signature))
+        if (!this.Owner.Validate())
         {
             return false;
         }

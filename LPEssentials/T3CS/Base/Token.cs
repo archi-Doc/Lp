@@ -69,7 +69,7 @@ public sealed partial class Token // : IVerifiable // , IEquatable<Token>
 
     public bool Validate()
     {
-        if (!this.PublicKey.Validate(KeyClass.T3CS_Signature))
+        if (!this.PublicKey.Validate())
         {
             return false;
         }

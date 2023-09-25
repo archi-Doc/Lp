@@ -29,7 +29,7 @@ public sealed partial class ValueToken : IValidatable, IEquatable<ValueToken>
 
     public bool Validate()
     {
-        if (!this.Owner.Validate(KeyClass.T3CS_Signature))
+        if (!this.Owner.Validate())
         {
             return false;
         }

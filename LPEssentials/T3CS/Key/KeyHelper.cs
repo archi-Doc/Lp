@@ -30,14 +30,15 @@ public static class KeyHelper
 
     public static ReadOnlySpan<char> PrivateKeyBrace => "!!!";
 
-    public static unsafe ulong GetChecksum(this IPublicKey publicKey)
+    public static ulong GetChecksum<T>(this T obj)
+        where T : IPublicKey<T>
     {
         Span<byte> span = stackalloc byte[KeyHelper.EncodedLength];
-        publicKey.TryWriteBytes(span, out _);
+        T.TryWriteBytes(ref obj, span, out _);
         return FarmHash.Hash64(span);
     }
 
-    public static bool TryWriteBytes(this IPublicKey publicKey, Span<byte> span, out int written)
+    /*public static bool TryWriteBytes(this IPublicKey publicKey, Span<byte> span, out int written)
     {
         if (span.Length < KeyHelper.EncodedLength)
         {
@@ -59,7 +60,7 @@ public static class KeyHelper
 
         written = KeyHelper.EncodedLength;
         return true;
-    }
+    }*/
 
     public static bool TryParsePublicKey(ReadOnlySpan<char> chars, out byte keyValue, out ReadOnlySpan<byte> x)
     {

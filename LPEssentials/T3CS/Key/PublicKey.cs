@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
@@ -10,7 +11,7 @@ namespace LP.T3CS;
 /// Represents a public key data. Compressed to 33 bytes (memory usage 40 bytes).
 /// </summary>
 [TinyhandObject]
-public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>, IPublicKey
+public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>, IPublicKey<PublicKey>
 {
     private static ObjectCache<PublicKey, ECDsa> PublicKeyToEcdsa { get; } = new(100);
 
@@ -67,8 +68,34 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>, 
 
     public uint YTilde => KeyHelper.GetYTilde(this.keyValue);
 
-
     #endregion
+
+    static bool IPublicKey<PublicKey>.TryWriteBytes(ref PublicKey obj, Span<byte> destination, out int written)
+        => obj.TryWriteBytes(destination, out written);
+
+    public bool TryWriteBytes(Span<byte> destination, out int written)
+    {
+        if (destination.Length < KeyHelper.EncodedLength)
+        {
+            written = 0;
+            return false;
+        }
+
+        var b = destination;
+        b[0] = this.keyValue;
+        b = b.Slice(1);
+        BitConverter.TryWriteBytes(b, this.x0);
+        b = b.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(b, this.x1);
+        b = b.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(b, this.x2);
+        b = b.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(b, this.x3);
+        b = b.Slice(sizeof(ulong));
+
+        written = KeyHelper.EncodedLength;
+        return true;
+    }
 
     public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> sign)
     {
@@ -125,28 +152,8 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>, 
     }
 
     public bool Validate()
-    {
-        if (this.KeyClass > KeyHelper.UpperKeyClass)
-        {
-            return false;
-        }
-        else if (this.x0 == 0 || this.x1 == 0 || this.x2 == 0 || this.x3 == 0)
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    public bool Validate(KeyClass keyClass)
-    {
-        if (this.KeyClass != keyClass)
-        {
-            return false;
-        }
-
-        return this.Validate();
-    }
+        => this.KeyClass == KeyClass.T3CS_Signature &&
+            this.x0 == 0 && this.x1 == 0 && this.x2 == 0 && this.x3 == 0;
 
     public bool IsSameKey(PrivateKey privateKey)
     {
@@ -192,15 +199,10 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>, 
 
     public bool Equals(PublicKey other)
         => this.keyValue == other.keyValue &&
-        this.x0 == other.x0 &&
-        this.x1 == other.x1 &&
-        this.x2 == other.x2 &&
-        this.x3 == other.x3;
+        this.x0 == other.x0 && this.x1 == other.x1 && this.x2 == other.x2 && this.x3 == other.x3;
 
     public override string ToString()
-    {
-        return $"({this.ToBase64()})";
-    }
+        => $"({this.ToBase64()})";
 
     public string ToBase64()
     {
@@ -210,9 +212,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>, 
     }
 
     public Identifier ToIdentifier()
-    {
-        return new(this.x0, this.x1, this.x2, this.x3);
-    }
+        => new(this.x0, this.x1, this.x2, this.x3);
 
     internal void WriteX(Span<byte> span)
     {
