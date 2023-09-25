@@ -16,80 +16,19 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
     public static bool TryParse(ReadOnlySpan<char> chars, [MaybeNullWhen(false)] out PublicKey publicKey)
     {
-        if (chars.Length >= 2 && chars[0] == '(' && chars[chars.Length - 1] == ')')
+        if (KeyHelper.TryParsePublicKey(chars, out var keyValue, out var x) &&
+            KeyHelper.GetKeyClass(keyValue) == KeyClass.T3CS_Signature)
         {
-            chars = chars.Slice(1, chars.Length - 2);
+            publicKey = new(keyValue, x);
+            return true;
         }
 
         publicKey = default;
-        var bytes = Base64.Url.FromStringToByteArray(chars);
-        if (bytes.Length != KeyHelper.EncodedLength)
-        {
-            return false;
-        }
-
-        var b = bytes.AsSpan();
-        var keyValue = b[0];
-        b = b.Slice(1);
-        var x0 = BitConverter.ToUInt64(b);
-        b = b.Slice(sizeof(ulong));
-        var x1 = BitConverter.ToUInt64(b);
-        b = b.Slice(sizeof(ulong));
-        var x2 = BitConverter.ToUInt64(b);
-        b = b.Slice(sizeof(ulong));
-        var x3 = BitConverter.ToUInt64(b);
-        b = b.Slice(sizeof(ulong));
-
-        publicKey = new(keyValue, x0, x1, x2, x3);
-        return true;
+        return false;
     }
 
     public PublicKey()
     {
-        this.keyValue = 0;
-        this.x0 = 0;
-        this.x1 = 0;
-        this.x2 = 0;
-        this.x3 = 0;
-    }
-
-    /*public PublicKey(string base64url)
-    {
-        var bytes = Arc.Crypto.Base64.Url.FromStringToByteArray(base64url);
-        if (bytes.Length == (PublicKeyHalfLength + 1))
-        {
-            var span = bytes.AsSpan();
-            this.keyValue = span[0];
-            span = span.Slice(1);
-            this.x0 = BitConverter.ToUInt64(span);
-            span = span.Slice(sizeof(ulong));
-            this.x1 = BitConverter.ToUInt64(span);
-            span = span.Slice(sizeof(ulong));
-            this.x2 = BitConverter.ToUInt64(span);
-            span = span.Slice(sizeof(ulong));
-            this.x3 = BitConverter.ToUInt64(span);
-        }
-        else
-        {
-            this.keyValue = 0;
-            this.x0 = 0;
-            this.x1 = 0;
-            this.x2 = 0;
-            this.x3 = 0;
-        }
-    }*/
-
-    internal PublicKey(PrivateKey privateKey)
-    {
-        this.keyValue = KeyHelper.ToPublicKeyValue(privateKey.KeyValue);
-        var span = privateKey.X.AsSpan();
-        this.x0 = BitConverter.ToUInt64(span);
-        span = span.Slice(sizeof(ulong));
-        this.x1 = BitConverter.ToUInt64(span);
-        span = span.Slice(sizeof(ulong));
-        this.x2 = BitConverter.ToUInt64(span);
-        span = span.Slice(sizeof(ulong));
-        this.x3 = BitConverter.ToUInt64(span);
     }
 
     internal PublicKey(byte keyValue, ReadOnlySpan<byte> x)
@@ -103,15 +42,6 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         this.x2 = BitConverter.ToUInt64(b);
         b = b.Slice(sizeof(ulong));
         this.x3 = BitConverter.ToUInt64(b);
-    }
-
-    private PublicKey(byte keyValue, ulong x0, ulong x1, ulong x2, ulong x3)
-    {
-        this.keyValue = KeyHelper.ToPublicKeyValue(keyValue);
-        this.x0 = x0;
-        this.x1 = x1;
-        this.x2 = x2;
-        this.x3 = x3;
     }
 
     #region FieldAndProperty

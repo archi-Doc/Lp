@@ -7,6 +7,50 @@ using Arc.Crypto.EC;
 
 namespace LP.T3CS;
 
+public interface IPublicKey
+{
+    byte KeyValue { get; }
+
+    long X0 { get; }
+
+    long X1 { get; }
+
+    long X2 { get; }
+
+    long X3 { get; }
+
+    public unsafe ulong GetChecksum()
+    {
+        Span<byte> span = stackalloc byte[KeyHelper.EncodedLength];
+        this.TryWriteBytes(span, out _);
+        return FarmHash.Hash64(span);
+    }
+
+    public bool TryWriteBytes(Span<byte> span, out int written)
+    {
+        if (span.Length < KeyHelper.EncodedLength)
+        {
+            written = 0;
+            return false;
+        }
+
+        var b = span;
+        b[0] = this.KeyValue;
+        b = b.Slice(1);
+        BitConverter.TryWriteBytes(b, this.X0);
+        b = b.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(b, this.X1);
+        b = b.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(b, this.X2);
+        b = b.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(b, this.X3);
+        b = b.Slice(sizeof(ulong));
+
+        written = KeyHelper.EncodedLength;
+        return true;
+    }
+}
+
 /*
 /// <summary>
 /// Represents a public key data. Compressed to 33 bytes (memory usage 40 bytes).

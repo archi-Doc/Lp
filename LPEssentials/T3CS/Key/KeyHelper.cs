@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using Arc.Crypto.EC;
@@ -28,6 +29,27 @@ public static class KeyHelper
     }
 
     public static ReadOnlySpan<char> PrivateKeyBrace => "!!!";
+
+    public static bool TryParsePublicKey(ReadOnlySpan<char> chars, out byte keyValue, out ReadOnlySpan<byte> x)
+    {
+        if (chars.Length >= 2 && chars[0] == '(' && chars[chars.Length - 1] == ')')
+        {
+            chars = chars.Slice(1, chars.Length - 2);
+        }
+
+        var bytes = Base64.Url.FromStringToByteArray(chars);
+        if (bytes.Length != KeyHelper.EncodedLength)
+        {
+            keyValue = default;
+            x = default;
+            return false;
+        }
+
+        var b = bytes.AsSpan();
+        keyValue = b[0];
+        x = b.Slice(1);
+        return true;
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static byte ToPublicKeyValue(byte keyValue)

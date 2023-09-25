@@ -135,7 +135,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
     }
 
     public PublicKey ToPublicKey()
-        => new(this);
+        => new(this.keyValue, this.x.AsSpan());
 
     public bool CreateSignature<T>(T data, out Signature signature)
         where T : ITinyhandSerialize<T>
