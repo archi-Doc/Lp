@@ -10,7 +10,7 @@ namespace LP.T3CS;
 /// Represents a public key data. Compressed to 33 bytes (memory usage 40 bytes).
 /// </summary>
 [TinyhandObject]
-public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
+public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>, IPublicKey
 {
     private static ObjectCache<PublicKey, ECDsa> PublicKeyToEcdsa { get; } = new(100);
 
@@ -68,13 +68,6 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
     internal byte KeyValue => this.keyValue;
 
     #endregion
-
-    public unsafe ulong GetChecksum()
-    {
-        Span<byte> span = stackalloc byte[KeyHelper.EncodedLength];
-        this.TryWriteBytes(span, out _);
-        return FarmHash.Hash64(span);
-    }
 
     public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> sign)
     {
@@ -218,30 +211,6 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
     public Identifier ToIdentifier()
     {
         return new(this.x0, this.x1, this.x2, this.x3);
-    }
-
-    public bool TryWriteBytes(Span<byte> span, out int written)
-    {
-        if (span.Length < KeyHelper.EncodedLength)
-        {
-            written = 0;
-            return false;
-        }
-
-        var b = span;
-        b[0] = this.keyValue;
-        b = b.Slice(1);
-        BitConverter.TryWriteBytes(b, this.x0);
-        b = b.Slice(sizeof(ulong));
-        BitConverter.TryWriteBytes(b, this.x1);
-        b = b.Slice(sizeof(ulong));
-        BitConverter.TryWriteBytes(b, this.x2);
-        b = b.Slice(sizeof(ulong));
-        BitConverter.TryWriteBytes(b, this.x3);
-        b = b.Slice(sizeof(ulong));
-
-        written = KeyHelper.EncodedLength;
-        return true;
     }
 
     internal void WriteX(Span<byte> span)
