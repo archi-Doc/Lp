@@ -10,7 +10,7 @@ public sealed partial class SignaturePrivateKey : PrivateKey, IEquatable<Signatu
 {
     #region Unique
 
-    private static ObjectCache<SignaturePrivateKey, ECDsa> PrivateKeyToEcdsa { get; } = new(10);
+    private ECDsa? ecdsa;
 
     public static SignaturePrivateKey Create()
     {
@@ -31,12 +31,7 @@ public sealed partial class SignaturePrivateKey : PrivateKey, IEquatable<Signatu
 
     public ECDsa? TryGetEcdsa()
     {
-        if (PrivateKeyToEcdsa.TryGet(this) is { } ecdsa)
-        {
-            return ecdsa;
-        }
-
-        return KeyHelper.CreateEcdsaFromD(this.d);
+        return this.ecdsa ??= KeyHelper.CreateEcdsaFromD(this.d);
     }
 
     public bool CreateSignature<T>(T data, out Signature signature)
@@ -77,7 +72,6 @@ public sealed partial class SignaturePrivateKey : PrivateKey, IEquatable<Signatu
             return null;
         }
 
-        PrivateKeyToEcdsa.Cache(this, ecdsa);
         return sign;
     }
 
@@ -100,7 +94,6 @@ public sealed partial class SignaturePrivateKey : PrivateKey, IEquatable<Signatu
             return false;
         }
 
-        PrivateKeyToEcdsa.Cache(this, ecdsa);
         return true;
     }
 

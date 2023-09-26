@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 
 #pragma warning disable SA1202
@@ -17,7 +16,7 @@ public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<En
 {
     #region Unique
 
-    private static ObjectCache<EncryptionPublicKey, ECDiffieHellman> Cache { get; } = new(100);
+    // private static ObjectCache<EncryptionPublicKey, ECDiffieHellman> Cache { get; } = new(100);
 
     public ECDiffieHellman? TryGetEcdh()
     {

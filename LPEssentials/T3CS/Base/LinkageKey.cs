@@ -114,7 +114,9 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
 
         Span<byte> destination = stackalloc byte[32];
 
-        using (var ecdh2 = this.Key.TryGetEcdh())
+        var key = this.Key;
+        var encryptionKey = Unsafe.As<SignaturePublicKey, EncryptionPublicKey>(ref key);
+        using (var ecdh2 = encryptionKey.TryGetEcdh())
         {
             if (ecdh is null || ecdh2 is null)
             {
@@ -156,18 +158,6 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
         }
 
         return true;
-    }
-
-    public bool TryDecrypt(SignaturePrivateKey encryptionKey, out SignaturePublicKey decrypted)
-    {
-        var ecdh = encryptionKey.TryGetEcdh();
-        if (ecdh == null)
-        {
-            decrypted = default;
-            return false;
-        }
-
-        return this.TryDecrypt(ecdh, out decrypted);
     }
 
     public override string ToString()

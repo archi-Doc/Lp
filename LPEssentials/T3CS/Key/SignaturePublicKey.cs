@@ -17,7 +17,7 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
 {
     #region Unique
 
-    private static ObjectCache<SignaturePublicKey, ECDsa> EcdsaCache { get; } = new(100);
+    private static ObjectCache<SignaturePublicKey, ECDsa> Cache { get; } = new(100);
 
     public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> signature)
     {
@@ -35,7 +35,7 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
         Span<byte> hash = stackalloc byte[32];
         Sha3Helper.Get256_Span(data, hash);
         var result = ecdsa.VerifyHash(hash, signature);
-        EcdsaCache.Cache(this, ecdsa);
+        Cache.Cache(this, ecdsa);
         return result;
     }
 
@@ -53,20 +53,13 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
         }
 
         var result = ecdsa.VerifyHash(new ReadOnlySpan<byte>(Unsafe.AsPointer(ref identifier), sizeof(Identifier)), signature);
-        EcdsaCache.Cache(this, ecdsa);
+        Cache.Cache(this, ecdsa);
         return result;
-    }
-
-    public ECDiffieHellman? TryGetEcdh()
-    {
-        var x = new byte[32];
-        this.WriteX(x);
-        return KeyHelper.CreateEcdhFromX(x, this.YTilde);
     }
 
     private ECDsa? TryGetEcdsa()
     {
-        if (EcdsaCache.TryGet(this) is { } ecdsa)
+        if (Cache.TryGet(this) is { } ecdsa)
         {
             return ecdsa;
         }
