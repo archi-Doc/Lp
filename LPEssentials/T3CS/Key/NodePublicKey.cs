@@ -10,27 +10,7 @@ namespace LP;
 [TinyhandObject]
 public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePublicKey>
 {
-    // public const string ECCurveName = "secp256r1"; // CurveInstance
-    public const int PublicKeyLength = 64;
-    public const int PublicKeyHalfLength = PublicKeyLength / 2;
-    public const int PrivateKeyLength = 32;
-    public const int SignLength = 64;
-    public const int PublicKeyEncodedLength = 1 + (sizeof(ulong) * 4);
-    public const int MaxPublicKeyCache = 100;
-
-    public static readonly HashAlgorithmName HashAlgorithmName;
-    public static readonly ECCurveBase CurveInstance;
-
-    internal static ECCurve ECCurve { get; }
-
-    private static ObjectCache<NodePublicKey, ECDiffieHellman> PublicKeyToEcdh { get; } = new(MaxPublicKeyCache);
-
-    static NodePublicKey()
-    {
-        CurveInstance = P256R1Curve.Instance;
-        ECCurve = ECCurve.CreateFromFriendlyName(CurveInstance.CurveName);
-        HashAlgorithmName = HashAlgorithmName.SHA256;
-    }
+    private static ObjectCache<NodePublicKey, ECDiffieHellman> PublicKeyToEcdh { get; } = new(100);
 
     public static bool TryParse(ReadOnlySpan<char> chars, [MaybeNullWhen(false)] out NodePublicKey publicKey)
     {
@@ -41,7 +21,7 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
 
         publicKey = default;
         var bytes = Base64.Url.FromStringToByteArray(chars);
-        if (bytes.Length != PublicKeyEncodedLength)
+        if (bytes.Length != KeyHelper.EncodedLength)
         {
             return false;
         }
@@ -184,7 +164,7 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
             try
             {
                 ECParameters p = default;
-                p.Curve = ECCurve;
+                p.Curve = KeyHelper.ECCurve;
                 p.Q.X = x;
                 p.Q.Y = y;
                 return ECDiffieHellman.Create(p);

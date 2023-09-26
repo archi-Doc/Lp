@@ -44,7 +44,7 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
         }
 
         ECParameters key = default;
-        key.Curve = NodePublicKey.ECCurve;
+        key.Curve = KeyHelper.ECCurve;
         key.D = privateBytes[1..(KeyHelper.PrivateKeyLength + 1)];
         try
         {
@@ -64,7 +64,7 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
 
     public static NodePrivateKey Create()
     {
-        using (var ecdh = ECDiffieHellman.Create(NodePublicKey.ECCurve))
+        using (var ecdh = ECDiffieHellman.Create(KeyHelper.ECCurve))
         {
             var key = ecdh.ExportParameters(true);
             return new NodePrivateKey(key.Q.X!, key.Q.Y!, key.D!);
@@ -74,7 +74,7 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
     public static NodePrivateKey Create(ReadOnlySpan<byte> seed)
     {
         ECParameters key = default;
-        key.Curve = NodePublicKey.ECCurve;
+        key.Curve = KeyHelper.ECCurve;
 
         byte[]? d = null;
         while (true)
@@ -189,15 +189,15 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
         {
             return false;
         }
-        else if (this.x == null || this.x.Length != NodePublicKey.PublicKeyHalfLength)
+        else if (this.x == null || this.x.Length != KeyHelper.PublicKeyHalfLength)
         {
             return false;
         }
-        else if (this.y == null || this.y.Length != NodePublicKey.PublicKeyHalfLength)
+        else if (this.y == null || this.y.Length != KeyHelper.PublicKeyHalfLength)
         {
             return false;
         }
-        else if (this.d == null || this.d.Length != NodePublicKey.PrivateKeyLength)
+        else if (this.d == null || this.d.Length != KeyHelper.PrivateKeyLength)
         {
             return false;
         }
@@ -230,7 +230,7 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
 
     public string ToUnsafeString()
     {
-        Span<byte> bytes = stackalloc byte[1 + NodePublicKey.PrivateKeyLength]; // scoped
+        Span<byte> bytes = stackalloc byte[1 + KeyHelper.PrivateKeyLength]; // scoped
         bytes[0] = this.keyValue;
         this.d.CopyTo(bytes.Slice(1));
         return $"!!!{Base64.Url.FromByteArrayToString(bytes)}!!!({this.ToPublicKey().ToString()})";
@@ -265,7 +265,7 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
         try
         {
             ECParameters p = default;
-            p.Curve = NodePublicKey.ECCurve;
+            p.Curve = KeyHelper.ECCurve;
             p.D = this.d;
             return ECDiffieHellman.Create(p);
         }

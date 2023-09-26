@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using Arc.Crypto.EC;
@@ -29,6 +28,52 @@ public static class KeyHelper
     }
 
     public static ReadOnlySpan<char> PrivateKeyBrace => "!!!";
+
+    public static ECDiffieHellman? CreateEcdhFromX(byte[] x, uint yTilde)
+    {
+        var y = KeyHelper.CurveInstance.TryDecompressY(x, yTilde);
+        if (y == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            ECParameters p = default;
+            p.Curve = KeyHelper.ECCurve;
+            p.Q.X = x;
+            p.Q.Y = y;
+            return ECDiffieHellman.Create(p);
+        }
+        catch
+        {
+        }
+
+        return null;
+    }
+
+    public static ECDsa? CreateEcdsaFromX(byte[] x, uint yTilde)
+    {
+        var y = KeyHelper.CurveInstance.TryDecompressY(x, yTilde);
+        if (y == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            ECParameters p = default;
+            p.Curve = KeyHelper.ECCurve;
+            p.Q.X = x;
+            p.Q.Y = y;
+            return ECDsa.Create(p);
+        }
+        catch
+        {
+        }
+
+        return null;
+    }
 
     public static bool TryParsePublicKey(ReadOnlySpan<char> chars, out byte keyValue, out ReadOnlySpan<byte> x)
     {

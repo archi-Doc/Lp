@@ -5,6 +5,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 
+#pragma warning disable SA1202
+
 namespace LP.T3CS;
 
 /// <summary>
@@ -15,7 +17,74 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 {
     #region Specific
 
-    private static ObjectCache<PublicKey, ECDsa> PublicKeyToEcdsa { get; } = new(100);
+    private static ObjectCache<PublicKey, ECDsa> EcdsaCache { get; } = new(100);
+
+    public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> sign)
+    {
+        if (sign.Length != KeyHelper.SignLength)
+        {
+            return false;
+        }
+
+        var ecdsa = this.TryGetEcdsa();
+        if (ecdsa == null)
+        {
+            return false;
+        }
+
+        Span<byte> hash = stackalloc byte[32];
+        Sha3Helper.Get256_Span(data, hash);
+        var result = ecdsa.VerifyHash(hash, sign);
+        EcdsaCache.Cache(this, ecdsa);
+        return result;
+    }
+
+    public unsafe bool VerifyIdentifier(Identifier identifier, ReadOnlySpan<byte> sign)
+    {
+        if (sign.Length != KeyHelper.SignLength)
+        {
+            return false;
+        }
+
+        var ecdsa = this.TryGetEcdsa();
+        if (ecdsa == null)
+        {
+            return false;
+        }
+
+        var result = ecdsa.VerifyHash(new ReadOnlySpan<byte>(Unsafe.AsPointer(ref identifier), sizeof(Identifier)), sign);
+        EcdsaCache.Cache(this, ecdsa);
+        return result;
+    }
+
+    internal ECDiffieHellman? TryGetEcdh()
+    {
+        if (this.KeyClass != KeyClass.T3CS_Encryption)
+        {
+            return default;
+        }
+
+        var x = new byte[32];
+        this.WriteX(x);
+        return KeyHelper.CreateEcdhFromX(x, this.YTilde);
+    }
+
+    private ECDsa? TryGetEcdsa()
+    {
+        if (this.KeyClass != KeyClass.T3CS_Signature)
+        {
+            return default;
+        }
+
+        if (EcdsaCache.TryGet(this) is { } ecdsa)
+        {
+            return ecdsa;
+        }
+
+        var x = new byte[32];
+        this.WriteX(x);
+        return KeyHelper.CreateEcdsaFromX(x, this.YTilde);
+    }
 
     #endregion
 
@@ -50,10 +119,6 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         b = b.Slice(sizeof(ulong));
         this.x3 = BitConverter.ToUInt64(b);
     }
-
-    public bool Validate()
-        => this.KeyClass == KeyClass.T3CS_Signature &&
-            this.x0 != 0 && this.x1 != 0 && this.x2 != 0 && this.x3 != 0;
 
     public bool IsSameKey(PrivateKey privateKey)
     {
@@ -93,6 +158,10 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
         return true;
     }
+
+    public bool Validate()
+        => this.KeyClass == KeyClass.T3CS_Signature &&
+            this.x0 != 0 && this.x1 != 0 && this.x2 != 0 && this.x3 != 0;
 
     public bool Equals(PublicKey other)
         => this.keyValue == other.keyValue &&
@@ -176,145 +245,4 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         => (int)this.x0;
 
     #endregion
-
-    public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> sign)
-    {
-        if (sign.Length != KeyHelper.SignLength)
-        {
-            return false;
-        }
-
-        var ecdsa = this.TryGetEcdsa();
-        if (ecdsa == null)
-        {
-            return false;
-        }
-
-        var result = ecdsa.VerifyData(data, sign, KeyHelper.HashAlgorithmName);
-        this.CacheEcdsa(ecdsa);
-        return result;
-    }
-
-    public bool VerifyHash(ReadOnlySpan<byte> hash, ReadOnlySpan<byte> sign)
-    {
-        if (sign.Length != KeyHelper.SignLength)
-        {
-            return false;
-        }
-
-        var ecdsa = this.TryGetEcdsa();
-        if (ecdsa == null)
-        {
-            return false;
-        }
-
-        var result = ecdsa.VerifyHash(hash, sign);
-        this.CacheEcdsa(ecdsa);
-        return result;
-    }
-
-    public unsafe bool VerifyIdentifier(Identifier identifier, ReadOnlySpan<byte> sign)
-    {
-        if (sign.Length != KeyHelper.SignLength)
-        {
-            return false;
-        }
-
-        var ecdsa = this.TryGetEcdsa();
-        if (ecdsa == null)
-        {
-            return false;
-        }
-
-        var result = ecdsa.VerifyHash(new ReadOnlySpan<byte>(Unsafe.AsPointer(ref identifier), sizeof(Identifier)), sign);
-        this.CacheEcdsa(ecdsa);
-        return result;
-    }
-
-    internal ECDiffieHellman? TryGetEcdh()
-    {
-        if (this.KeyClass != KeyClass.T3CS_Encryption)
-        {
-            return default;
-        }
-
-        var x = new byte[32];
-        var span = x.AsSpan();
-        BitConverter.TryWriteBytes(span, this.x0);
-        span = span.Slice(sizeof(ulong));
-        BitConverter.TryWriteBytes(span, this.x1);
-        span = span.Slice(sizeof(ulong));
-        BitConverter.TryWriteBytes(span, this.x2);
-        span = span.Slice(sizeof(ulong));
-        BitConverter.TryWriteBytes(span, this.x3);
-
-        var y = KeyHelper.CurveInstance.TryDecompressY(x, this.YTilde);
-        if (y == null)
-        {
-            return null;
-        }
-
-        try
-        {
-            ECParameters p = default;
-            p.Curve = KeyHelper.ECCurve;
-            p.Q.X = x;
-            p.Q.Y = y;
-            return ECDiffieHellman.Create(p);
-        }
-        catch
-        {
-        }
-
-        return null;
-    }
-
-    private ECDsa? TryGetEcdsa()
-    {
-        if (PublicKeyToEcdsa.TryGet(this) is { } ecdsa)
-        {
-            return ecdsa;
-        }
-
-        if (!this.Validate())
-        {
-            return null;
-        }
-
-        if (this.KeyClass == 0)
-        {
-            var x = new byte[32];
-            var span = x.AsSpan();
-            BitConverter.TryWriteBytes(span, this.x0);
-            span = span.Slice(sizeof(ulong));
-            BitConverter.TryWriteBytes(span, this.x1);
-            span = span.Slice(sizeof(ulong));
-            BitConverter.TryWriteBytes(span, this.x2);
-            span = span.Slice(sizeof(ulong));
-            BitConverter.TryWriteBytes(span, this.x3);
-
-            var y = KeyHelper.CurveInstance.TryDecompressY(x, this.YTilde);
-            if (y == null)
-            {
-                return null;
-            }
-
-            try
-            {
-                ECParameters p = default;
-                p.Curve = KeyHelper.ECCurve;
-                p.Q.X = x;
-                p.Q.Y = y;
-                return ECDsa.Create(p);
-            }
-            catch
-            {
-            }
-        }
-
-        return null;
-    }
-
-    private void CacheEcdsa(ECDsa ecdsa)
-        => PublicKeyToEcdsa.Cache(this, ecdsa);
 }

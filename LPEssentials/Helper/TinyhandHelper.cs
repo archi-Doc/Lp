@@ -183,11 +183,8 @@ public static class TinyhandHelper
         try
         {
             TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
-            Span<byte> hash = stackalloc byte[32];
             writer.FlushAndGetReadOnlySpan(out var span, out _);
-            Sha3Helper.Get256_Span(span, hash);
-
-            return value.PublicKey.VerifyHash(hash, value.Signature);
+            return value.PublicKey.VerifyData(span, value.Signature);
         }
         finally
         {
