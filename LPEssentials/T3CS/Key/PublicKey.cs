@@ -11,9 +11,15 @@ namespace LP.T3CS;
 /// Represents a public key data. Compressed to 33 bytes (memory usage 40 bytes).
 /// </summary>
 [TinyhandObject]
-public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>, IPublicKey<PublicKey>
+public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 {
+    #region Specific
+
     private static ObjectCache<PublicKey, ECDsa> PublicKeyToEcdsa { get; } = new(100);
+
+    #endregion
+
+    #region TypeSpecific
 
     public static bool TryParse(ReadOnlySpan<char> chars, [MaybeNullWhen(false)] out PublicKey publicKey)
     {
@@ -45,7 +51,59 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>, 
         this.x3 = BitConverter.ToUInt64(b);
     }
 
-    #region FieldAndProperty
+    public bool Validate()
+        => this.KeyClass == KeyClass.T3CS_Signature &&
+            this.x0 != 0 && this.x1 != 0 && this.x2 != 0 && this.x3 != 0;
+
+    public bool IsSameKey(PrivateKey privateKey)
+    {
+        if (KeyHelper.ToPublicKeyValue(privateKey.KeyValue) != this.KeyValue)
+        {
+            return false;
+        }
+
+        var span = privateKey.X.AsSpan();
+        if (span.Length != KeyHelper.PublicKeyHalfLength)
+        {
+            return false;
+        }
+
+        if (this.x0 != BitConverter.ToUInt64(span))
+        {
+            return false;
+        }
+
+        span = span.Slice(sizeof(ulong));
+        if (this.x1 != BitConverter.ToUInt64(span))
+        {
+            return false;
+        }
+
+        span = span.Slice(sizeof(ulong));
+        if (this.x2 != BitConverter.ToUInt64(span))
+        {
+            return false;
+        }
+
+        span = span.Slice(sizeof(ulong));
+        if (this.x3 != BitConverter.ToUInt64(span))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    public bool Equals(PublicKey other)
+        => this.keyValue == other.keyValue &&
+        this.x0 == other.x0 && this.x1 == other.x1 && this.x2 == other.x2 && this.x3 == other.x3;
+
+    public override string ToString()
+        => $"({this.ToBase64()})";
+
+    #endregion
+
+    #region Common
 
     [Key(0)]
     private readonly byte keyValue;
@@ -68,11 +126,6 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>, 
 
     public uint YTilde => KeyHelper.GetYTilde(this.keyValue);
 
-    #endregion
-
-    static bool IPublicKey<PublicKey>.TryWriteBytes(ref PublicKey obj, Span<byte> destination, out int written)
-        => obj.TryWriteBytes(destination, out written);
-
     public bool TryWriteBytes(Span<byte> destination, out int written)
     {
         if (destination.Length < KeyHelper.EncodedLength)
@@ -84,6 +137,15 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>, 
         var b = destination;
         b[0] = this.keyValue;
         b = b.Slice(1);
+        this.WriteX(b);
+
+        written = KeyHelper.EncodedLength;
+        return true;
+    }
+
+    public void WriteX(Span<byte> span)
+    {
+        var b = span;
         BitConverter.TryWriteBytes(b, this.x0);
         b = b.Slice(sizeof(ulong));
         BitConverter.TryWriteBytes(b, this.x1);
@@ -91,11 +153,29 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>, 
         BitConverter.TryWriteBytes(b, this.x2);
         b = b.Slice(sizeof(ulong));
         BitConverter.TryWriteBytes(b, this.x3);
-        b = b.Slice(sizeof(ulong));
-
-        written = KeyHelper.EncodedLength;
-        return true;
     }
+
+    public ulong GetChecksum()
+    {
+        Span<byte> span = stackalloc byte[KeyHelper.EncodedLength];
+        this.TryWriteBytes(span, out _);
+        return FarmHash.Hash64(span);
+    }
+
+    public string ToBase64()
+    {
+        Span<byte> span = stackalloc byte[KeyHelper.EncodedLength];
+        this.TryWriteBytes(span, out _);
+        return $"{Base64.Url.FromByteArrayToString(span)}";
+    }
+
+    public Identifier ToIdentifier()
+        => new(this.x0, this.x1, this.x2, this.x3);
+
+    public override int GetHashCode()
+        => (int)this.x0;
+
+    #endregion
 
     public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> sign)
     {
@@ -149,81 +229,6 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>, 
         var result = ecdsa.VerifyHash(new ReadOnlySpan<byte>(Unsafe.AsPointer(ref identifier), sizeof(Identifier)), sign);
         this.CacheEcdsa(ecdsa);
         return result;
-    }
-
-    public bool Validate()
-        => this.KeyClass == KeyClass.T3CS_Signature &&
-            this.x0 == 0 && this.x1 == 0 && this.x2 == 0 && this.x3 == 0;
-
-    public bool IsSameKey(PrivateKey privateKey)
-    {
-        var span = privateKey.X.AsSpan();
-        if (span.Length != KeyHelper.PublicKeyHalfLength)
-        {
-            return false;
-        }
-
-        if (this.x0 != BitConverter.ToUInt64(span))
-        {
-            return false;
-        }
-
-        span = span.Slice(sizeof(ulong));
-        if (this.x1 != BitConverter.ToUInt64(span))
-        {
-            return false;
-        }
-
-        span = span.Slice(sizeof(ulong));
-        if (this.x2 != BitConverter.ToUInt64(span))
-        {
-            return false;
-        }
-
-        span = span.Slice(sizeof(ulong));
-        if (this.x3 != BitConverter.ToUInt64(span))
-        {
-            return false;
-        }
-
-        if (this.YTilde != privateKey.YTilde)
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    public override int GetHashCode()
-        => (int)this.x0;
-
-    public bool Equals(PublicKey other)
-        => this.keyValue == other.keyValue &&
-        this.x0 == other.x0 && this.x1 == other.x1 && this.x2 == other.x2 && this.x3 == other.x3;
-
-    public override string ToString()
-        => $"({this.ToBase64()})";
-
-    public string ToBase64()
-    {
-        Span<byte> span = stackalloc byte[KeyHelper.EncodedLength];
-        this.TryWriteBytes(span, out _);
-        return $"{Base64.Url.FromByteArrayToString(span)}";
-    }
-
-    public Identifier ToIdentifier()
-        => new(this.x0, this.x1, this.x2, this.x3);
-
-    internal void WriteX(Span<byte> span)
-    {
-        var b = span;
-        BitConverter.TryWriteBytes(b, this.x0);
-        b = b.Slice(sizeof(ulong));
-        BitConverter.TryWriteBytes(b, this.x1);
-        b = b.Slice(sizeof(ulong));
-        BitConverter.TryWriteBytes(b, this.x2);
-        b = b.Slice(sizeof(ulong));
-        BitConverter.TryWriteBytes(b, this.x3);
     }
 
     internal ECDiffieHellman? TryGetEcdh()

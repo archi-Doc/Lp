@@ -10,7 +10,6 @@ using System.Text;
 using System.Threading.Tasks;
 using LP.T3CS;
 using Tinyhand.IO;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace LP;
 
