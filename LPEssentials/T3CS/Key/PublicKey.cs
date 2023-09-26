@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
@@ -15,13 +14,13 @@ namespace LP.T3CS;
 [TinyhandObject]
 public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 {
-    #region Specific
+    #region Unique
 
     private static ObjectCache<PublicKey, ECDsa> EcdsaCache { get; } = new(100);
 
-    public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> sign)
+    public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> signature)
     {
-        if (sign.Length != KeyHelper.SignLength)
+        if (signature.Length != KeyHelper.SignatureLength)
         {
             return false;
         }
@@ -34,14 +33,14 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
         Span<byte> hash = stackalloc byte[32];
         Sha3Helper.Get256_Span(data, hash);
-        var result = ecdsa.VerifyHash(hash, sign);
+        var result = ecdsa.VerifyHash(hash, signature);
         EcdsaCache.Cache(this, ecdsa);
         return result;
     }
 
-    public unsafe bool VerifyIdentifier(Identifier identifier, ReadOnlySpan<byte> sign)
+    public unsafe bool VerifyIdentifier(Identifier identifier, ReadOnlySpan<byte> signature)
     {
-        if (sign.Length != KeyHelper.SignLength)
+        if (signature.Length != KeyHelper.SignatureLength)
         {
             return false;
         }
@@ -52,18 +51,13 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
             return false;
         }
 
-        var result = ecdsa.VerifyHash(new ReadOnlySpan<byte>(Unsafe.AsPointer(ref identifier), sizeof(Identifier)), sign);
+        var result = ecdsa.VerifyHash(new ReadOnlySpan<byte>(Unsafe.AsPointer(ref identifier), sizeof(Identifier)), signature);
         EcdsaCache.Cache(this, ecdsa);
         return result;
     }
 
-    internal ECDiffieHellman? TryGetEcdh()
+    public ECDiffieHellman? TryGetEcdh()
     {
-        if (this.KeyClass != KeyClass.T3CS_Encryption)
-        {
-            return default;
-        }
-
         var x = new byte[32];
         this.WriteX(x);
         return KeyHelper.CreateEcdhFromX(x, this.YTilde);
@@ -71,11 +65,6 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
     private ECDsa? TryGetEcdsa()
     {
-        if (this.KeyClass != KeyClass.T3CS_Signature)
-        {
-            return default;
-        }
-
         if (EcdsaCache.TryGet(this) is { } ecdsa)
         {
             return ecdsa;

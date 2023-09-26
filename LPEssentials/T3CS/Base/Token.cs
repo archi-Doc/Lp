@@ -62,7 +62,7 @@ public sealed partial class Token // : IVerifiable // , IEquatable<Token>
     public Linkage? TargetLinkage { get; private set; }
 
     [Key(6, AddProperty = "Signature", Level = 0)]
-    [MaxLength(KeyHelper.SignLength)]
+    [MaxLength(KeyHelper.SignatureLength)]
     private byte[] signature = Array.Empty<byte>();
 
     #endregion
@@ -73,7 +73,7 @@ public sealed partial class Token // : IVerifiable // , IEquatable<Token>
         {
             return false;
         }
-        else if (this.signature.Length != KeyHelper.SignLength)
+        else if (this.signature.Length != KeyHelper.SignatureLength)
         {
             return false;
         }

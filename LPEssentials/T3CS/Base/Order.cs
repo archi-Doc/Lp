@@ -58,7 +58,7 @@ public sealed partial class Order : IValidatable, IEquatable<Order>
     public long ExpirationMics { get; private set; }
 
     [Key(6, AddProperty = "Signature", Level = 0)]
-    [MaxLength(KeyHelper.SignLength)]
+    [MaxLength(KeyHelper.SignatureLength)]
     private byte[] signature = [];
 
     public bool Validate()

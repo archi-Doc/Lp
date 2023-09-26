@@ -11,9 +11,8 @@ public static class KeyHelper
     public const int PublicKeyLength = 64;
     public const int PublicKeyHalfLength = PublicKeyLength / 2;
     public const int PrivateKeyLength = 32;
-    public const int SignLength = 64;
+    public const int SignatureLength = 64;
     public const int EncodedLength = 1 + (sizeof(ulong) * 4);
-    public const KeyClass UpperKeyClass = KeyClass.Node_Encryption;
 
     public static readonly HashAlgorithmName HashAlgorithmName;
     public static readonly ECCurveBase CurveInstance;
@@ -112,11 +111,11 @@ public static class KeyHelper
     internal static uint GetYTilde(byte keyValue)
         => (uint)(keyValue & 1);
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    /*[MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static bool IsPrivate(byte keyValue)
         => (keyValue & 128) != 0;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static bool IsPublic(byte keyValue)
-        => (keyValue & 128) == 0;
+        => (keyValue & 128) == 0;*/
 }

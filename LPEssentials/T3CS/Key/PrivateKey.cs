@@ -149,7 +149,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
 
         var target = TinyhandSerializer.SerializeObject(data, TinyhandSerializerOptions.Signature);
 
-        var sign = new byte[KeyHelper.SignLength];
+        var sign = new byte[KeyHelper.SignatureLength];
         if (!ecdsa.TrySignData(target, sign.AsSpan(), KeyHelper.HashAlgorithmName, out var written))
         {
             signature = default;
@@ -169,7 +169,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
             return null;
         }
 
-        var sign = new byte[KeyHelper.SignLength];
+        var sign = new byte[KeyHelper.SignatureLength];
         if (!ecdsa.TrySignData(data, sign.AsSpan(), KeyHelper.HashAlgorithmName, out var written))
         {
             return null;
@@ -182,7 +182,7 @@ public sealed partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
     public bool SignData(ReadOnlySpan<byte> data, Span<byte> signature, out int written)
     {
         written = 0;
-        if (signature.Length < KeyHelper.SignLength)
+        if (signature.Length < KeyHelper.SignatureLength)
         {
             return false;
         }
