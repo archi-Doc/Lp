@@ -64,7 +64,6 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
         var encryptionPublicKey = encryptionKey.ToPublicKey();
         this.Key = Unsafe.As<EncryptionPublicKey, SignaturePublicKey>(ref encryptionPublicKey);
         this.Checksum = (uint)publicKey.GetChecksum();
-        this.IsEncrypted = true;
         this.originalKeyValue = publicKey.KeyValue;
 
         var b = encrypted;
@@ -86,22 +85,22 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
     public readonly uint Checksum; // (uint)FarmHash.Hash64(RawKey)
 
     [Key(2)]
-    public readonly bool IsEncrypted;
-
-    [Key(3)]
     private readonly byte originalKeyValue;
 
-    [Key(4)]
+    [Key(3)]
     private readonly ulong encrypted0;
 
-    [Key(5)]
+    [Key(4)]
     private readonly ulong encrypted1;
 
-    [Key(6)]
+    [Key(5)]
     private readonly ulong encrypted2;
 
-    [Key(7)]
+    [Key(6)]
     private readonly ulong encrypted3;
+
+    public bool IsEncrypted
+        => KeyHelper.GetKeyClass(this.Key.KeyValue) == KeyClass.T3CS_Encryption;
 
     #endregion
 
