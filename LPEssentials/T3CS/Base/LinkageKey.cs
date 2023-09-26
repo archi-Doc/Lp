@@ -22,14 +22,14 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
 
         var newKey = EncryptionPrivateKey.Create();
         using (var ecdh = newKey.TryGetEcdh())
-        using (var ecdh2 = encryptionKey.TryGetEcdh())
+        using (var cache2 = encryptionKey.TryGetEcdh())
         {
-            if (ecdh is null || ecdh2 is null)
+            if (ecdh is null || cache2.Object is null)
             {
                 throw new InvalidOperationException();
             }
 
-            var material = ecdh.DeriveKeyMaterial(ecdh2.PublicKey);
+            var material = ecdh.DeriveKeyMaterial(cache2.Object.PublicKey);
 
             // Hash key material
             Sha3Helper.Get256_Span(material, material);
@@ -116,15 +116,15 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
 
         var key = this.Key;
         var encryptionKey = Unsafe.As<SignaturePublicKey, EncryptionPublicKey>(ref key);
-        using (var ecdh2 = encryptionKey.TryGetEcdh())
+        using (var cache2 = encryptionKey.TryGetEcdh())
         {
-            if (ecdh is null || ecdh2 is null)
+            if (ecdh is null || cache2.Object is null)
             {
                 decrypted = default;
                 return false;
             }
 
-            var material = ecdh.DeriveKeyMaterial(ecdh2.PublicKey);
+            var material = ecdh.DeriveKeyMaterial(cache2.Object.PublicKey);
 
             // Hash key material
             Sha3Helper.Get256_Span(material, material);

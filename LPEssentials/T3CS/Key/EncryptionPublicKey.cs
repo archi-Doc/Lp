@@ -16,13 +16,15 @@ public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<En
 {
     #region Unique
 
-    // private static ObjectCache<EncryptionPublicKey, ECDiffieHellman> Cache { get; } = new(100);
+    private static ObjectCache<EncryptionPublicKey, ECDiffieHellman> Cache { get; } = new(100);
 
-    public ECDiffieHellman? TryGetEcdh()
+    public ObjectCache<EncryptionPublicKey, ECDiffieHellman>.Interface TryGetEcdh()
     {
         var x = new byte[32];
         this.WriteX(x);
-        return KeyHelper.CreateEcdhFromX(x, this.YTilde);
+
+        var e = Cache.TryGet(this) ?? KeyHelper.CreateEcdhFromX(x, this.YTilde);
+        return Cache.CreateInterface(this, e);
     }
 
     #endregion

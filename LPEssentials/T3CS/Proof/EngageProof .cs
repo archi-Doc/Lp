@@ -30,4 +30,14 @@ public partial class EngageProof : Proof
 
         return true;
     }
+
+    public bool ValidateAndVerify(long salt)
+    {
+        if (this.Salt != salt)
+        {
+            return false;
+        }
+
+        return this.ValidateAndVerify();
+    }
 }

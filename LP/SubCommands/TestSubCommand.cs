@@ -64,7 +64,8 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
 
         var engageProof = new EngageProof(1);
         engageProof.SignProof(privateKey, 1);
-        var result = engageProof.ValidateAndVerify();
+        var result = engageProof.ValidateAndVerify(1);
+        this.userInterfaceService.WriteLine($"{result}");
     }
 
     private async Task Test0()

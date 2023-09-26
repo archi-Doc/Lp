@@ -26,17 +26,18 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
             return false;
         }
 
-        var ecdsa = this.TryGetEcdsa();
-        if (ecdsa == null)
+        using (var cache = this.TryGetEcdsa())
         {
-            return false;
-        }
+            if (cache.Object is null)
+            {
+                return false;
+            }
 
-        Span<byte> hash = stackalloc byte[32];
-        Sha3Helper.Get256_Span(data, hash);
-        var result = ecdsa.VerifyHash(hash, signature);
-        Cache.Cache(this, ecdsa);
-        return result;
+            Span<byte> hash = stackalloc byte[32];
+            Sha3Helper.Get256_Span(data, hash);
+            var result = cache.Object.VerifyHash(hash, signature);
+            return result;
+        }
     }
 
     public unsafe bool VerifyIdentifier(Identifier identifier, ReadOnlySpan<byte> signature)
@@ -46,27 +47,28 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
             return false;
         }
 
-        var ecdsa = this.TryGetEcdsa();
-        if (ecdsa == null)
+        using (var cache = this.TryGetEcdsa())
         {
-            return false;
-        }
+            if (cache.Object is null)
+            {
+                return false;
+            }
 
-        var result = ecdsa.VerifyHash(new ReadOnlySpan<byte>(Unsafe.AsPointer(ref identifier), sizeof(Identifier)), signature);
-        Cache.Cache(this, ecdsa);
-        return result;
+            var result = cache.Object.VerifyHash(new ReadOnlySpan<byte>(Unsafe.AsPointer(ref identifier), sizeof(Identifier)), signature);
+            return result;
+        }
     }
 
-    private ECDsa? TryGetEcdsa()
+    private ObjectCache<SignaturePublicKey, ECDsa>.Interface TryGetEcdsa()
     {
-        if (Cache.TryGet(this) is { } ecdsa)
+        if (Cache.TryGet(this) is not { } e)
         {
-            return ecdsa;
+            var x = new byte[32];
+            this.WriteX(x);
+            e = KeyHelper.CreateEcdsaFromX(x, this.YTilde);
         }
 
-        var x = new byte[32];
-        this.WriteX(x);
-        return KeyHelper.CreateEcdsaFromX(x, this.YTilde);
+        return Cache.CreateInterface(this, e);
     }
 
     #endregion
