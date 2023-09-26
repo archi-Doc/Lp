@@ -29,13 +29,13 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
     private async Task TestLinkageKey()
     {
         var bt = new BenchTimer();
-        var privateKey = SignaturePrivateKey.CreateSignatureKey();
+        var privateKey = SignaturePrivateKey.Create();
         var publicKey = privateKey.ToPublicKey();
         this.userInterfaceService.WriteLine($"Private(verification): {privateKey.UnsafeToString()}");
         this.userInterfaceService.WriteLine($"Public(verification): {publicKey.ToString()}");
 
         bt.Start();
-        var privateEncryptionKey = SignaturePrivateKey.CreateEncryptionKey();
+        var privateEncryptionKey = EncryptionPrivateKey.Create();
         this.userInterfaceService.WriteLine($"Create encryption key: {bt.StopAndGetText()}");
 
         var publicEncryptionKey = privateEncryptionKey.ToPublicKey();
@@ -50,7 +50,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         this.userInterfaceService.WriteLine($"Encrypted: {encryptedLinkageKey.ToString()}");
 
         bt.Start();
-        encryptedLinkageKey.TryDecrypt(privateEncryptionKey, out var decryptedLinkageKey);
+        encryptedLinkageKey.TryDecrypt(privateEncryptionKey.TryGetEcdh()!, out var decryptedLinkageKey);
         this.userInterfaceService.WriteLine($"Decrypt linkage key: {bt.StopAndGetText()}");
         this.userInterfaceService.WriteLine($"Decrypted: {decryptedLinkageKey.ToString()}");
 
@@ -76,13 +76,13 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         var seed = this.seedPhrase.TryGetSeed(st);
         if (seed != null)
         {
-            var pk = SignaturePrivateKey.CreateSignatureKey(seed);
+            var pk = SignaturePrivateKey.Create(seed);
         }
 
         var privateKey = NodePrivateKey.AlternativePrivateKey;
         var publicKey = privateKey.ToPublicKey();
 
-        this.userInterfaceService.WriteLine($"Alternative(private): {privateKey.ToUnsafeString()}");
+        this.userInterfaceService.WriteLine($"Alternative(private): {privateKey.UnsafeToString()}");
         this.userInterfaceService.WriteLine($"Length: {TinyhandSerializer.Serialize(privateKey).Length.ToString()}");
         this.userInterfaceService.WriteLine(TinyhandSerializer.SerializeToString(privateKey));
         this.userInterfaceService.WriteLine();
@@ -91,7 +91,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         this.userInterfaceService.WriteLine($"Length: {TinyhandSerializer.Serialize(publicKey).Length.ToString()}");
         this.userInterfaceService.WriteLine(TinyhandSerializer.SerializeToString(publicKey));
 
-        var originator = SignaturePrivateKey.CreateSignatureKey();
+        var originator = SignaturePrivateKey.Create();
         var pub = originator.ToPublicKey();
         var value = new Value(1, pub, new[] { pub, });
         this.userInterfaceService.WriteLine(value.GetHashCode().ToString());

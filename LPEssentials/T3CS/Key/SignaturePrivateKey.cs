@@ -12,13 +12,13 @@ public sealed partial class SignaturePrivateKey : PrivateKey, IEquatable<Signatu
 
     private static ObjectCache<SignaturePrivateKey, ECDsa> PrivateKeyToEcdsa { get; } = new(10);
 
-    public static SignaturePrivateKey CreateSignatureKey()
+    public static SignaturePrivateKey Create()
     {
         var p = KeyHelper.CreateEcdsaParameters();
         return new SignaturePrivateKey(p.Q.X!, p.Q.Y!, p.D!);
     }
 
-    public static SignaturePrivateKey CreateSignatureKey(ReadOnlySpan<byte> seed)
+    public static SignaturePrivateKey Create(ReadOnlySpan<byte> seed)
     {
         var p = KeyHelper.CreateEcdsaParameters(seed);
         return new SignaturePrivateKey(p.Q.X!, p.Q.Y!, p.D!);

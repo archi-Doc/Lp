@@ -1,13 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
-using Tinyhand.IO;
-using Tinyhand.Tree;
 
 namespace LP.T3CS;
 
@@ -22,11 +16,11 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
     public static LinkageKey CreateRaw(SignaturePublicKey publicKey)
         => new(publicKey);
 
-    public static LinkageKey CreateEncrypted(SignaturePublicKey publicKey, SignaturePublicKey encryptionKey)
+    public static LinkageKey CreateEncrypted(SignaturePublicKey publicKey, EncryptionPublicKey encryptionKey)
     {
         Span<byte> destination = stackalloc byte[32];
 
-        var newKey = EncryptionPrivateKey.CreateEncryptionKey();
+        var newKey = EncryptionPrivateKey.Create();
         using (var ecdh = newKey.TryGetEcdh())
         using (var ecdh2 = encryptionKey.TryGetEcdh())
         {
@@ -65,9 +59,10 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
         this.Checksum = (uint)publicKey.GetChecksum();
     }
 
-    private LinkageKey(SignaturePublicKey publicKey, EncryptionPrivateKey newKey, ReadOnlySpan<byte> encrypted)
+    private LinkageKey(SignaturePublicKey publicKey, EncryptionPrivateKey encryptionKey, ReadOnlySpan<byte> encrypted)
     {// Encrypted
-        this.Key = newKey.ToPublicKey();
+        var encryptionPublicKey = encryptionKey.ToPublicKey();
+        this.Key = Unsafe.As<EncryptionPublicKey, SignaturePublicKey>(ref encryptionPublicKey);
         this.Checksum = (uint)publicKey.GetChecksum();
         this.IsEncrypted = true;
         this.originalKeyValue = publicKey.KeyValue;
@@ -80,14 +75,6 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
         this.encrypted2 = BitConverter.ToUInt64(b);
         b = b.Slice(sizeof(ulong));
         this.encrypted3 = BitConverter.ToUInt64(b);
-    }
-
-    private LinkageKey(SignaturePublicKey publicKey, SignaturePublicKey encryptionKey)
-    {// Encrypt
-        this.Checksum = (uint)publicKey.GetChecksum();
-        this.Key = encryptionKey;
-        this.IsEncrypted = true;
-        this.originalKeyValue = publicKey.KeyValue;
     }
 
     #region FieldAndProperty

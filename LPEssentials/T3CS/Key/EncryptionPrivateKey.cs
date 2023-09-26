@@ -12,13 +12,13 @@ public sealed partial class EncryptionPrivateKey : PrivateKey, IEquatable<Encryp
 
     private ECDiffieHellman? ecdh;
 
-    public static EncryptionPrivateKey CreateEncryptionKey()
+    public static EncryptionPrivateKey Create()
     {
         var p = KeyHelper.CreateEcdhParameters();
         return new EncryptionPrivateKey(p.Q.X!, p.Q.Y!, p.D!);
     }
 
-    public static EncryptionPrivateKey CreateEncryptionKey(ReadOnlySpan<byte> seed)
+    public static EncryptionPrivateKey Create(ReadOnlySpan<byte> seed)
     {
         var p = KeyHelper.CreateEcdhParameters(seed);
         return new EncryptionPrivateKey(p.Q.X!, p.Q.Y!, p.D!);

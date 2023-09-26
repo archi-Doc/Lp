@@ -228,7 +228,7 @@ public sealed partial class NodePrivateKey : IValidatable, IEquatable<NodePrivat
         return hash;
     }
 
-    public string ToUnsafeString()
+    public string UnsafeToString()
     {
         Span<byte> bytes = stackalloc byte[1 + KeyHelper.PrivateKeyLength]; // scoped
         bytes[0] = this.keyValue;

@@ -35,7 +35,7 @@ public class NodeKeySubcommandNew : ISimpleCommand<NodeKeySubcommandNewOptions>
             nodeKey = NodePrivateKey.Create(seed);
         }
 
-        this.userInterfaceService.WriteLine(nodeKey.ToUnsafeString());
+        this.userInterfaceService.WriteLine(nodeKey.UnsafeToString());
         this.logger.TryGet()?.Log(nodeKey.ToPublicKey().ToString());
     }
 

@@ -87,7 +87,7 @@ public abstract partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         return hash;
     }
 
-    public string ToUnsafeString()
+    public string UnsafeToString()
     {
         Span<byte> privateSpan = stackalloc byte[1 + KeyHelper.PrivateKeyLength]; // scoped
         privateSpan[0] = this.keyValue;
