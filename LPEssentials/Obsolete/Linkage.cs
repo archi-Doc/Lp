@@ -72,10 +72,10 @@ public partial class Linkage : IValidatable // , IEquatable<Linkage>, IComparabl
     public Type LinkageType { get; private set; }
 
     [Key(2)]
-    public PublicKey Owner { get; private set; }
+    public SignaturePublicKey Owner { get; private set; }
 
     [Key(3)]
-    public PublicKey[] Mergers { get; private set; }
+    public SignaturePublicKey[] Mergers { get; private set; }
 
     [Key(4, Level = 0)]
     public byte[][] Signs { get; private set; }

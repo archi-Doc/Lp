@@ -59,7 +59,7 @@ public sealed partial class Authority
         return result;
     }
 
-    public PublicKey PublicKey => this.GetOrCreatePrivateKey().ToPublicKey();
+    public SignaturePublicKey PublicKey => this.GetOrCreatePrivateKey().ToPublicKey();
 
     [Key(0)]
     private byte[] seed = [];
@@ -76,10 +76,10 @@ public sealed partial class Authority
 
     private int hash;
 
-    private PrivateKey GetOrCreatePrivateKey()
+    private SignaturePrivateKey GetOrCreatePrivateKey()
         => this.GetOrCreatePrivateKey(Credit.Default);
 
-    private PrivateKey GetOrCreatePrivateKey(Credit credit)
+    private SignaturePrivateKey GetOrCreatePrivateKey(Credit credit)
     {
         var privateKey = this.privateKeyCache.TryGet(credit);
         if (privateKey == null)
@@ -94,7 +94,7 @@ public sealed partial class Authority
                 Span<byte> span = stackalloc byte[32];
                 writer.FlushAndGetReadOnlySpan(out var input, out _);
                 Sha3Helper.Get256_Span(input, span);
-                privateKey = PrivateKey.CreateSignatureKey(span);
+                privateKey = SignaturePrivateKey.CreateSignatureKey(span);
             }
             finally
             {
@@ -106,10 +106,10 @@ public sealed partial class Authority
         return privateKey;
     }
 
-    private void CachePrivateKey(Credit credit, PrivateKey privateKey)
+    private void CachePrivateKey(Credit credit, SignaturePrivateKey privateKey)
         => this.privateKeyCache.Cache(credit, privateKey);
 
-    private ObjectCache<Credit, PrivateKey> privateKeyCache = new(10);
+    private ObjectCache<Credit, SignaturePrivateKey> privateKeyCache = new(10);
 
     public override string ToString()
         => $"PublicKey: {this.GetOrCreatePrivateKey().ToPublicKey()}, Lifetime: {this.Lifetime}, LifeMics: {this.LifeMics}";

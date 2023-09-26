@@ -9,7 +9,7 @@ namespace LP;
 /// </summary>
 public interface IVerifiable : IValidatable
 {
-    PublicKey PublicKey { get; }
+    SignaturePublicKey PublicKey { get; }
 
     byte[] Signature { get; }
 }

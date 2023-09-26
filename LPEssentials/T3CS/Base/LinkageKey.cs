@@ -19,14 +19,14 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
 {
     public const int EncodedLength = KeyHelper.EncodedLength + sizeof(uint) + sizeof(byte) + (sizeof(ulong) * 4);
 
-    public static LinkageKey CreateRaw(PublicKey publicKey)
+    public static LinkageKey CreateRaw(SignaturePublicKey publicKey)
         => new(publicKey);
 
-    public static LinkageKey CreateEncrypted(PublicKey publicKey, PublicKey encryptionKey)
+    public static LinkageKey CreateEncrypted(SignaturePublicKey publicKey, SignaturePublicKey encryptionKey)
     {
         Span<byte> destination = stackalloc byte[32];
 
-        var newKey = PrivateKey.CreateEncryptionKey();
+        var newKey = EncryptionPrivateKey.CreateEncryptionKey();
         using (var ecdh = newKey.TryGetEcdh())
         using (var ecdh2 = encryptionKey.TryGetEcdh())
         {
@@ -59,13 +59,13 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
     {
     }
 
-    private LinkageKey(PublicKey publicKey)
+    private LinkageKey(SignaturePublicKey publicKey)
     {// Raw
         this.Key = publicKey;
         this.Checksum = (uint)publicKey.GetChecksum();
     }
 
-    private LinkageKey(PublicKey publicKey, PrivateKey newKey, ReadOnlySpan<byte> encrypted)
+    private LinkageKey(SignaturePublicKey publicKey, EncryptionPrivateKey newKey, ReadOnlySpan<byte> encrypted)
     {// Encrypted
         this.Key = newKey.ToPublicKey();
         this.Checksum = (uint)publicKey.GetChecksum();
@@ -82,7 +82,7 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
         this.encrypted3 = BitConverter.ToUInt64(b);
     }
 
-    private LinkageKey(PublicKey publicKey, PublicKey encryptionKey)
+    private LinkageKey(SignaturePublicKey publicKey, SignaturePublicKey encryptionKey)
     {// Encrypt
         this.Checksum = (uint)publicKey.GetChecksum();
         this.Key = encryptionKey;
@@ -93,7 +93,7 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
     #region FieldAndProperty
 
     [Key(0)]
-    public readonly PublicKey Key;
+    public readonly SignaturePublicKey Key;
 
     [Key(1)]
     public readonly uint Checksum; // (uint)FarmHash.Hash64(RawKey)
@@ -118,7 +118,7 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
 
     #endregion
 
-    public bool TryDecrypt(ECDiffieHellman ecdh, out PublicKey decrypted)
+    public bool TryDecrypt(ECDiffieHellman ecdh, out SignaturePublicKey decrypted)
     {
         if (!this.IsEncrypted)
         {
@@ -172,7 +172,7 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
         return true;
     }
 
-    public bool TryDecrypt(PrivateKey encryptionKey, out PublicKey decrypted)
+    public bool TryDecrypt(SignaturePrivateKey encryptionKey, out SignaturePublicKey decrypted)
     {
         var ecdh = encryptionKey.TryGetEcdh();
         if (ecdh == null)

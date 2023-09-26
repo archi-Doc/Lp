@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 
 #pragma warning disable SA1202
+#pragma warning disable SA1204
 
 namespace LP.T3CS;
 
@@ -12,11 +13,11 @@ namespace LP.T3CS;
 /// Represents a public key data. Compressed to 33 bytes (memory usage 40 bytes).
 /// </summary>
 [TinyhandObject]
-public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
+public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<SignaturePublicKey>
 {
     #region Unique
 
-    private static ObjectCache<PublicKey, ECDsa> EcdsaCache { get; } = new(100);
+    private static ObjectCache<SignaturePublicKey, ECDsa> EcdsaCache { get; } = new(100);
 
     public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> signature)
     {
@@ -79,7 +80,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
 
     #region TypeSpecific
 
-    public static bool TryParse(ReadOnlySpan<char> chars, [MaybeNullWhen(false)] out PublicKey publicKey)
+    public static bool TryParse(ReadOnlySpan<char> chars, [MaybeNullWhen(false)] out SignaturePublicKey publicKey)
     {
         if (KeyHelper.TryParsePublicKey(chars, out var keyValue, out var x) &&
             KeyHelper.GetKeyClass(keyValue) == KeyClass.T3CS_Signature)
@@ -92,11 +93,11 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         return false;
     }
 
-    public PublicKey()
+    public SignaturePublicKey()
     {
     }
 
-    internal PublicKey(byte keyValue, ReadOnlySpan<byte> x)
+    internal SignaturePublicKey(byte keyValue, ReadOnlySpan<byte> x)
     {
         this.keyValue = KeyHelper.ToPublicKeyValue(keyValue);
         var b = x;
@@ -109,7 +110,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         this.x3 = BitConverter.ToUInt64(b);
     }
 
-    public bool IsSameKey(PrivateKey privateKey)
+    public bool IsSameKey(SignaturePrivateKey privateKey)
     {
         if (KeyHelper.ToPublicKeyValue(privateKey.KeyValue) != this.KeyValue)
         {
@@ -152,7 +153,7 @@ public readonly partial struct PublicKey : IValidatable, IEquatable<PublicKey>
         => this.KeyClass == KeyClass.T3CS_Signature &&
             this.x0 != 0 && this.x1 != 0 && this.x2 != 0 && this.x3 != 0;
 
-    public bool Equals(PublicKey other)
+    public bool Equals(SignaturePublicKey other)
         => this.keyValue == other.keyValue &&
         this.x0 == other.x0 && this.x1 == other.x1 && this.x2 == other.x2 && this.x3 == other.x3;
 

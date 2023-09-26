@@ -28,6 +28,98 @@ public static class KeyHelper
 
     public static ReadOnlySpan<char> PrivateKeyBrace => "!!!";
 
+    public static ECParameters CreateEcdhParameters()
+    {
+        using (var e = ECDiffieHellman.Create(KeyHelper.ECCurve))
+        {
+            var key = e.ExportParameters(true);
+            return key;
+        }
+    }
+
+    public static ECParameters CreateEcdhParameters(ReadOnlySpan<byte> seed)
+    {
+        ECParameters key = default;
+        key.Curve = KeyHelper.ECCurve;
+
+        byte[]? d = null;
+        while (true)
+        {
+            try
+            {
+                if (d == null)
+                {
+                    d = Sha3Helper.Get256_ByteArray(seed);
+                }
+                else
+                {
+                    d = Sha3Helper.Get256_ByteArray(d);
+                }
+
+                if (!KeyHelper.CurveInstance.IsValidSeed(d))
+                {
+                    continue;
+                }
+
+                key.D = d;
+                using (var e = ECDiffieHellman.Create(key))
+                {
+                    key = e.ExportParameters(true);
+                    return key;
+                }
+            }
+            catch
+            {
+            }
+        }
+    }
+
+    public static ECParameters CreateEcdsaParameters()
+    {
+        using (var e = ECDsa.Create(KeyHelper.ECCurve))
+        {
+            var key = e.ExportParameters(true);
+            return key;
+        }
+    }
+
+    public static ECParameters CreateEcdsaParameters(ReadOnlySpan<byte> seed)
+    {
+        ECParameters key = default;
+        key.Curve = KeyHelper.ECCurve;
+
+        byte[]? d = null;
+        while (true)
+        {
+            try
+            {
+                if (d == null)
+                {
+                    d = Sha3Helper.Get256_ByteArray(seed);
+                }
+                else
+                {
+                    d = Sha3Helper.Get256_ByteArray(d);
+                }
+
+                if (!KeyHelper.CurveInstance.IsValidSeed(d))
+                {
+                    continue;
+                }
+
+                key.D = d;
+                using (var e = ECDsa.Create(key))
+                {
+                    key = e.ExportParameters(true);
+                    return key;
+                }
+            }
+            catch
+            {
+            }
+        }
+    }
+
     public static ECDiffieHellman? CreateEcdhFromX(byte[] x, uint yTilde)
     {
         var y = KeyHelper.CurveInstance.TryDecompressY(x, yTilde);
@@ -51,6 +143,22 @@ public static class KeyHelper
         return null;
     }
 
+    public static ECDiffieHellman? CreateEcdhFromD(byte[] d)
+    {
+        try
+        {
+            ECParameters p = default;
+            p.Curve = KeyHelper.ECCurve;
+            p.D = d;
+            return ECDiffieHellman.Create(p);
+        }
+        catch
+        {
+        }
+
+        return null;
+    }
+
     public static ECDsa? CreateEcdsaFromX(byte[] x, uint yTilde)
     {
         var y = KeyHelper.CurveInstance.TryDecompressY(x, yTilde);
@@ -65,6 +173,22 @@ public static class KeyHelper
             p.Curve = KeyHelper.ECCurve;
             p.Q.X = x;
             p.Q.Y = y;
+            return ECDsa.Create(p);
+        }
+        catch
+        {
+        }
+
+        return null;
+    }
+
+    public static ECDsa? CreateEcdsaFromD(byte[] d)
+    {
+        try
+        {
+            ECParameters p = default;
+            p.Curve = KeyHelper.ECCurve;
+            p.D = d;
             return ECDsa.Create(p);
         }
         catch

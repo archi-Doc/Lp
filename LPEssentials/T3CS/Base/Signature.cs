@@ -13,7 +13,7 @@ public readonly partial struct Signature
         Attest,
     }
 
-    public Signature(PublicKey publicKey, Type signatureType, long signedMics)
+    public Signature(SignaturePublicKey publicKey, Type signatureType, long signedMics)
     {
         this.PublicKey = publicKey;
         this.SignatureType = signatureType;
@@ -21,7 +21,7 @@ public readonly partial struct Signature
         this.Sign = null;
     }
 
-    public Signature(PublicKey publicKey, Type signatureType, long signedMics, byte[] sign)
+    public Signature(SignaturePublicKey publicKey, Type signatureType, long signedMics, byte[] sign)
     {
         this.PublicKey = publicKey;
         this.SignatureType = signatureType;
@@ -40,7 +40,7 @@ public readonly partial struct Signature
     #region FieldAndProperty
 
     [Key(0)]
-    public readonly PublicKey PublicKey;
+    public readonly SignaturePublicKey PublicKey;
 
     [Key(1)]
     public readonly Type SignatureType;

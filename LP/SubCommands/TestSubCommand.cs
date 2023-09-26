@@ -29,17 +29,17 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
     private async Task TestLinkageKey()
     {
         var bt = new BenchTimer();
-        var privateKey = PrivateKey.CreateSignatureKey();
+        var privateKey = SignaturePrivateKey.CreateSignatureKey();
         var publicKey = privateKey.ToPublicKey();
-        this.userInterfaceService.WriteLine($"Private(verification): {privateKey.ToUnsafeString()}");
+        this.userInterfaceService.WriteLine($"Private(verification): {privateKey.UnsafeToString()}");
         this.userInterfaceService.WriteLine($"Public(verification): {publicKey.ToString()}");
 
         bt.Start();
-        var privateEncryptionKey = PrivateKey.CreateEncryptionKey();
+        var privateEncryptionKey = SignaturePrivateKey.CreateEncryptionKey();
         this.userInterfaceService.WriteLine($"Create encryption key: {bt.StopAndGetText()}");
 
         var publicEncryptionKey = privateEncryptionKey.ToPublicKey();
-        this.userInterfaceService.WriteLine($"Private(encryption): {privateEncryptionKey.ToUnsafeString()}");
+        this.userInterfaceService.WriteLine($"Private(encryption): {privateEncryptionKey.UnsafeToString()}");
         this.userInterfaceService.WriteLine($"Public(encryption): {publicEncryptionKey.ToString()}");
 
         var rawLinkageKey = LinkageKey.CreateRaw(publicKey);
@@ -76,7 +76,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         var seed = this.seedPhrase.TryGetSeed(st);
         if (seed != null)
         {
-            var pk = PrivateKey.CreateSignatureKey(seed);
+            var pk = SignaturePrivateKey.CreateSignatureKey(seed);
         }
 
         var privateKey = NodePrivateKey.AlternativePrivateKey;
@@ -91,7 +91,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         this.userInterfaceService.WriteLine($"Length: {TinyhandSerializer.Serialize(publicKey).Length.ToString()}");
         this.userInterfaceService.WriteLine(TinyhandSerializer.SerializeToString(publicKey));
 
-        var originator = PrivateKey.Create("originator");
+        var originator = SignaturePrivateKey.CreateSignatureKey();
         var pub = originator.ToPublicKey();
         var value = new Value(1, pub, new[] { pub, });
         this.userInterfaceService.WriteLine(value.GetHashCode().ToString());

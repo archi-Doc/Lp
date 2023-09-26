@@ -49,7 +49,7 @@ public sealed partial class Order : IValidatable, IEquatable<Order>
     public Credit Credit { get; private set; } = default!;
 
     [Key(3)]
-    public PublicKey Authority { get; private set; }
+    public SignaturePublicKey Authority { get; private set; }
 
     [Key(4)]
     public Condition OrderCondition { get; private set; }

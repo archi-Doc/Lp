@@ -53,7 +53,7 @@ public sealed partial class Token // : IVerifiable // , IEquatable<Token>
     public long ExpirationMics { get; private set; }
 
     [Key(3)]
-    public PublicKey PublicKey { get; private set; } = default!;
+    public SignaturePublicKey PublicKey { get; private set; } = default!;
 
     [Key(4)]
     public Identifier TargetIdentifier { get; private set; }
@@ -87,7 +87,7 @@ public sealed partial class Token // : IVerifiable // , IEquatable<Token>
         return true;
     }
 
-    public bool Sign(PrivateKey privateKey)
+    public bool Sign(SignaturePrivateKey privateKey)
     {
         this.PublicKey = privateKey.ToPublicKey();
 
@@ -127,7 +127,7 @@ public sealed partial class Token // : IVerifiable // , IEquatable<Token>
         }
     }
 
-    public bool ValidateAndVerifyWithoutSalt(PublicKey publicKey)
+    public bool ValidateAndVerifyWithoutSalt(SignaturePublicKey publicKey)
     {
         if (!publicKey.Validate())
         {

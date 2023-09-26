@@ -20,7 +20,7 @@ public sealed partial class Linkage : IValidatable, IEquatable<Linkage>
 
     [Key(1, AddProperty = "LeftOwners")]
     [MaxLength(MaxOwners)]
-    private PublicKey[] leftOwners = default!;
+    private SignaturePublicKey[] leftOwners = default!;
 
     [Key(2)]
     public Value? LeftValue { get; private set; } = default!;
@@ -31,7 +31,7 @@ public sealed partial class Linkage : IValidatable, IEquatable<Linkage>
 
     [Key(4, AddProperty = "RightOwners")]
     [MaxLength(MaxOwners)]
-    private PublicKey[] rightOwners = default!;
+    private SignaturePublicKey[] rightOwners = default!;
 
     [Key(5)]
     public Value? RightValue { get; private set; } = default!;

@@ -31,7 +31,7 @@ public abstract partial class Proof : IVerifiable, IEquatable<Proof>
     #region FieldAndProperty
 
     [Key(0)]
-    public PublicKey PublicKey { get; protected set; }
+    public SignaturePublicKey PublicKey { get; protected set; }
 
     [Key(1, Level = 1)]
     public byte[] Signature { get; protected set; } = Array.Empty<byte>();
@@ -83,7 +83,7 @@ public abstract partial class Proof : IVerifiable, IEquatable<Proof>
         return hash.ToHashCode();
     }*/
 
-    internal void SetInternal(PrivateKey privateKey, long proofMics)
+    internal void SetInternal(SignaturePrivateKey privateKey, long proofMics)
     {
         this.PublicKey = privateKey.ToPublicKey();
         this.ProofMics = proofMics;

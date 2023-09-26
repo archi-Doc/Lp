@@ -16,7 +16,7 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>
     {
     }
 
-    public Credit(PublicKey originator, PublicKey[] mergers)
+    public Credit(SignaturePublicKey originator, SignaturePublicKey[] mergers)
     {
         this.Originator = originator;
         this.mergers = mergers;
@@ -30,14 +30,14 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>
     #region FieldAndProperty
 
     [Key(0)]
-    public PublicKey Originator { get; private set; } = default!;
+    public SignaturePublicKey Originator { get; private set; } = default!;
 
     [Key(1)]
-    public PublicKey Standard { get; private set; } = default!;
+    public SignaturePublicKey Standard { get; private set; } = default!;
 
     [Key(2, AddProperty = "Mergers")]
     [MaxLength(MaxMergers)]
-    private PublicKey[] mergers = Array.Empty<PublicKey>();
+    private SignaturePublicKey[] mergers = Array.Empty<SignaturePublicKey>();
 
     #endregion
 

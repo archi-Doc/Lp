@@ -76,7 +76,7 @@ public static class TinyhandHelper
         }
     }
 
-    public static bool VerifySign<T>(this T value, int level, PublicKey publicKey, byte[] sign)
+    public static bool VerifySign<T>(this T value, int level, SignaturePublicKey publicKey, byte[] sign)
         where T : ITinyhandSerialize<T>
     {
         try
@@ -129,7 +129,7 @@ public static class TinyhandHelper
         }
     }
 
-    public static bool SignProof<T>(this T value, PrivateKey privateKey, long proofMics)
+    public static bool SignProof<T>(this T value, SignaturePrivateKey privateKey, long proofMics)
         where T : Proof, ITinyhandSerialize<T>
     {
         var ecdsa = privateKey.TryGetEcdsa();

@@ -26,5 +26,5 @@ public class AuthorizedService : IAuthorizedService
         return NetResult.NotAuthorized;
     }
 
-    public PublicKey AuthorizedKey { get; private set; }
+    public SignaturePublicKey AuthorizedKey { get; private set; }
 }

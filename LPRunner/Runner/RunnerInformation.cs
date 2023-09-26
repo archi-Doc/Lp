@@ -33,13 +33,13 @@ public partial record RunnerInformation
         }
 
         if (!string.IsNullOrEmpty(this.RemotePublicKeyBase64) &&
-            PublicKey.TryParse(this.RemotePublicKeyBase64, out var publicKey))
+            SignaturePublicKey.TryParse(this.RemotePublicKeyBase64, out var publicKey))
         {
             this.RemotePublicKey = publicKey;
         }
         else
         {
-            this.RemotePublicKey = PrivateKey.CreateSignatureKey().ToPublicKey();
+            this.RemotePublicKey = SignaturePrivateKey.CreateSignatureKey().ToPublicKey();
             this.RemotePublicKeyBase64 = this.RemotePublicKey.ToString();
         }
 
@@ -50,7 +50,7 @@ public partial record RunnerInformation
         this.HostPort = this.HostPort == 0 ? 49152 : this.HostPort;
         this.DestinationDirectory = string.IsNullOrEmpty(this.DestinationDirectory) ? "/lp" : this.DestinationDirectory;
         this.DestinationPort = this.DestinationPort == 0 ? 49152 : this.DestinationPort;
-        this.RemotePublicKeyBase64 = string.IsNullOrEmpty(this.RemotePublicKeyBase64) ? PrivateKey.CreateSignatureKey().ToPublicKey().ToString() : this.RemotePublicKeyBase64;
+        this.RemotePublicKeyBase64 = string.IsNullOrEmpty(this.RemotePublicKeyBase64) ? SignaturePrivateKey.CreateSignatureKey().ToPublicKey().ToString() : this.RemotePublicKeyBase64;
         this.NetsphereOptions = string.IsNullOrEmpty(this.NetsphereOptions) ? "-test false -alternative false -logger false" : this.NetsphereOptions;
 
         return this;
@@ -115,7 +115,7 @@ public partial record RunnerInformation
     internal NodePrivateKey NodeKey { get; set; } = default!;
 
     [IgnoreMember]
-    internal PublicKey RemotePublicKey { get; set; } = default!;
+    internal SignaturePublicKey RemotePublicKey { get; set; } = default!;
 
     internal NodeAddress? TryGetNodeAddress()
     {

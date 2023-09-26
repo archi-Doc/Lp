@@ -2,7 +2,6 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
-using Arc.Crypto.EC;
 using LP.T3CS;
 
 namespace LP;
