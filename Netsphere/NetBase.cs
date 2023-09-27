@@ -34,7 +34,8 @@ public class NetBase : UnitBase, IUnitPreparable
         }
 
         // Node key
-        if (this.NodePrivateKey == null)
+        if (this.NodePrivateKey == null ||
+            !this.NodePrivateKey.Validate())
         {
             this.NodePrivateKey = NodePrivateKey.Create();
             this.NodePublicKey = this.NodePrivateKey.ToPublicKey();

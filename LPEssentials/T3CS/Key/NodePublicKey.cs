@@ -18,20 +18,16 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
 
     private static ObjectCache<NodePublicKey, ECDiffieHellman> Cache { get; } = new(100);
 
-    internal ECDiffieHellman? TryGetEcdh()
+    internal ObjectCache<NodePublicKey, ECDiffieHellman>.Interface TryGetEcdh()
     {
-        if (Cache.TryGet(this) is { } ecdh)
+        if (Cache.TryGet(this) is not { } e)
         {
-            return ecdh;
-        }
-        else if (!this.Validate())
-        {
-            return null;
+            var x = new byte[32];
+            this.WriteX(x);
+            e = KeyHelper.CreateEcdhFromX(x, this.YTilde);
         }
 
-        var x = new byte[32];
-        this.WriteX(x);
-        return KeyHelper.CreateEcdhFromX(x, this.YTilde);
+        return Cache.CreateInterface(this, e);
     }
 
     internal void CacheEcdh(ECDiffieHellman ecdh)

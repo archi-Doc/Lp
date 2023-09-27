@@ -1,12 +1,13 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Security.Cryptography;
 using LP.T3CS;
 
 namespace LP;
 
 public readonly partial struct NodeKeyPair : IEquatable<NodeKeyPair>
 {
-    private const int MaxMaterialCache = 1_000;
+    private const int MaxCache = 1_000;
 
     public NodeKeyPair(NodePrivateKey privateKey, NodePublicKey publicKey)
     {
@@ -16,53 +17,50 @@ public readonly partial struct NodeKeyPair : IEquatable<NodeKeyPair>
 
     public byte[]? DeriveKeyMaterial()
     {
-        if (KeyPairToMaterial.TryGet(this) is { } material)
+        if (Cache.TryGet(this) is { } material)
         {
+            Cache.Cache(this, material);
             return material;
         }
 
-        if (this.privateKey.KeyClass != KeyClass.Node_Encryption)
+        if (this.privateKey.KeyClass != KeyClass.Node_Encryption ||
+            this.publicKey.KeyClass != KeyClass.Node_Encryption)
         {
             return null;
         }
 
-        var publicEcdh = this.publicKey.TryGetEcdh();
-        if (publicEcdh == null)
+        using (var cache = this.publicKey.TryGetEcdh())
         {
-            return null;
-        }
+            if (cache.Object == null)
+            {
+                return null;
+            }
 
-        var privateEcdh = this.privateKey.TryGetEcdh();
-        if (privateEcdh == null)
-        {
-            this.publicKey.CacheEcdh(publicEcdh);
-            return null;
-        }
+            var privateEcdh = this.privateKey.TryGetEcdh();
+            if (privateEcdh == null)
+            {
+                return null;
+            }
 
-        try
-        {
-            material = privateEcdh.DeriveKeyMaterial(publicEcdh.PublicKey);
-        }
-        catch
-        {
-            this.publicKey.CacheEcdh(publicEcdh);
-            return null;
-        }
+            try
+            {
+                material = privateEcdh.DeriveKeyMaterial(cache.Object.PublicKey);
+            }
+            catch
+            {
+                return null;
+            }
 
-        this.privateKey.CacheEcdh(privateEcdh);
-        this.publicKey.CacheEcdh(publicEcdh);
-        KeyPairToMaterial.Cache(this, material);
-        return material;
+            Cache.Cache(this, material);
+            return material;
+        }
     }
 
-    private static ObjectCache<NodeKeyPair, byte[]> KeyPairToMaterial { get; } = new(MaxMaterialCache);
+    private static ObjectCache<NodeKeyPair, byte[]> Cache { get; } = new(MaxCache);
 
     private readonly NodePrivateKey privateKey;
     private readonly NodePublicKey publicKey;
 
     public bool Equals(NodeKeyPair other)
-    {
-        return this.privateKey.Equals(other.privateKey) &&
-            this.publicKey.Equals(other.publicKey);
-    }
+        => this.privateKey.Equals(other.privateKey) && this.publicKey.Equals(other.publicKey);
 }

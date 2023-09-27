@@ -17,8 +17,6 @@ public sealed partial class NodePrivateKey : PrivateKey, IEquatable<NodePrivateK
     public static NodePrivateKey AlternativePrivateKey
         => alternativePrivateKey ??= NodePrivateKey.Create();
 
-    private static ObjectCache<NodePrivateKey, ECDiffieHellman> PrivateKeyToEcdh { get; } = new(10);
-
     private ECDiffieHellman? ecdh;
 
     public static bool TryParse(string base64url, [MaybeNullWhen(false)] out NodePrivateKey privateKey)
@@ -79,9 +77,6 @@ public sealed partial class NodePrivateKey : PrivateKey, IEquatable<NodePrivateK
     {
         return this.ecdh ??= KeyHelper.CreateEcdhFromD(this.d);
     }
-
-    internal void CacheEcdh(ECDiffieHellman ecdh)
-        => PrivateKeyToEcdh.Cache(this, ecdh);
 
     #endregion
 
