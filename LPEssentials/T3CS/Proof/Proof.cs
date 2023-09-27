@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Tinyhand.IO;
+
 namespace LP.T3CS;
 
 public static class ProofHelper
@@ -83,13 +85,49 @@ public abstract partial class Proof : IVerifiable, IEquatable<Proof>
         return hash.ToHashCode();
     }*/
 
-    internal void SetInternal(SignaturePrivateKey privateKey, long proofMics)
+    /*public bool Sign(SignaturePrivateKey privateKey, long proofMics)
+    {
+        var ecdsa = privateKey.TryGetEcdsa();
+        if (ecdsa == null)
+        {
+            return false;
+        }
+
+        var buffer = TinyhandHelper.RentBuffer();
+        var writer = new TinyhandWriter(buffer) { Level = 0, };
+        try
+        {
+            this.PublicKey = privateKey.ToPublicKey();
+            this.ProofMics = proofMics;
+
+            TinyhandSerializer.Serialize(ref writer, this, TinyhandSerializerOptions.Signature);
+            Span<byte> hash = stackalloc byte[32];
+            writer.FlushAndGetReadOnlySpan(out var span, out _);
+            Sha3Helper.Get256_Span(span, hash);
+
+            var sign = new byte[KeyHelper.SignatureLength];
+            if (!ecdsa.TrySignHash(hash, sign.AsSpan(), out var written))
+            {
+                return false;
+            }
+
+            this.Signature = sign;
+            return true;
+        }
+        finally
+        {
+            writer.Dispose();
+            TinyhandHelper.ReturnBuffer(buffer);
+        }
+    }*/
+
+    internal void SetInformationInternal(SignaturePrivateKey privateKey, long proofMics)
     {
         this.PublicKey = privateKey.ToPublicKey();
         this.ProofMics = proofMics;
     }
 
-    internal void SignInternal(byte[] sign)
+    internal void SetSignInternal(byte[] sign)
     {
         this.Signature = sign;
     }

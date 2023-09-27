@@ -63,7 +63,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         this.userInterfaceService.WriteLine($"Decrypt linkage key2: {bt.StopAndGetText()}");
 
         var engageProof = new EngageProof(1);
-        engageProof.SignProof(privateKey, 1);
+        engageProof.SignProof(privateKey, Mics.GetCorrected());
         var result = engageProof.ValidateAndVerify(1);
         this.userInterfaceService.WriteLine($"{result}");
     }

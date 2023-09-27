@@ -35,13 +35,12 @@ public class AuthorizedTerminalFactory
 
         // Service & authorize
         var service = clientTerminal.GetService<TService>();
-        //var token = await clientTerminal.CreateToken(Token.Type.Authorize);
+        // var token = await clientTerminal.CreateToken(Token.Type.Authorize);
         // authority.SignToken(token);
         // var response = await service.Authorize(token).ResponseAsync;
 
         var proof = new EngageProof(clientTerminal.Salt);
-        var privateKey = authority.GetOrCreatePrivateKey();
-        proof.SignProof(privateKey, 1);
+        authority.SignProof(proof, Mics.GetCorrected()); // proof.SignProof(privateKey, Mics.GetCorrected());
         var response = await service.Engage(proof).ResponseAsync;
         if (!response.IsSuccess || response.Value != NetResult.Success)
         {
@@ -61,7 +60,7 @@ public class AuthorizedTerminal<TService> : IDisposable, IEquatable<AuthorizedTe
     internal AuthorizedTerminal(ClientTerminal terminal, Authority authority, TService service, ILogger? logger)
     {
         this.Terminal = terminal;
-        this.Key = authority;
+        this.Authority = authority;
         this.Service = service;
         this.logger = logger;
     }
@@ -75,19 +74,19 @@ public class AuthorizedTerminal<TService> : IDisposable, IEquatable<AuthorizedTe
 
         return this.Terminal == other.Terminal &&
             typeof(TService) == other.Service.GetType() &&
-            this.Key == other.Key;
+            this.Authority == other.Authority;
     }
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(this.Terminal, typeof(TService), this.Key);
+        return HashCode.Combine(this.Terminal, typeof(TService), this.Authority);
     }
 
     public ClientTerminal Terminal { get; private set; }
 
     public TService Service { get; private set; }
 
-    public Authority Key { get; private set; }
+    public Authority Authority { get; private set; }
 
     private ILogger? logger;
 
@@ -128,7 +127,7 @@ public class AuthorizedTerminal<TService> : IDisposable, IEquatable<AuthorizedTe
 
             this.Terminal = default!;
             this.Service = default!;
-            this.Key = default!;
+            this.Authority = default!;
 
             // free native resources here if there are any.
             this.disposed = true;

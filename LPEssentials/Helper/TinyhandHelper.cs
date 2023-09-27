@@ -142,7 +142,7 @@ public static class TinyhandHelper
         var writer = new TinyhandWriter(buffer) { Level = 0, };
         try
         {
-            value.SetInternal(privateKey, proofMics);
+            value.SetInformationInternal(privateKey, proofMics);
             TinyhandSerializer.SerializeObject(ref writer, value, TinyhandSerializerOptions.Signature);
             Span<byte> hash = stackalloc byte[32];
             writer.FlushAndGetReadOnlySpan(out var span, out _);
@@ -154,7 +154,7 @@ public static class TinyhandHelper
                 return false;
             }
 
-            value.SignInternal(sign);
+            value.SetSignInternal(sign);
             return true;
         }
         finally
@@ -170,7 +170,7 @@ public static class TinyhandHelper
     /// <param name="value">The object to be verified.</param>
     /// <typeparam name="T">The type of the object.</typeparam>
     /// <returns><see langword="true" />: Success.</returns>
-    public static bool ValidateAndVerify<T>(this T value)
+    public static bool ValidateAndVerify<T>(T value)
         where T : ITinyhandSerialize<T>, IVerifiable
     {
         if (!value.Validate())

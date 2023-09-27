@@ -31,6 +31,13 @@ public sealed partial class Authority
     public override int GetHashCode()
         => this.hash != 0 ? this.hash : (this.hash = (int)FarmHash.Hash64(this.seed));
 
+    public void SignProof<T>(T proof, long proofMics)
+        where T : Proof, ITinyhandSerialize<T>
+    {
+        var privateKey = this.GetOrCreatePrivateKey();
+        proof.SignProof<T>(privateKey, proofMics);
+    }
+
     public void SignToken(Token token)
     {
         var privateKey = this.GetOrCreatePrivateKey();
@@ -76,7 +83,7 @@ public sealed partial class Authority
 
     private int hash;
 
-    public SignaturePrivateKey GetOrCreatePrivateKey()//
+    private SignaturePrivateKey GetOrCreatePrivateKey()
         => this.GetOrCreatePrivateKey(Credit.Default);
 
     private SignaturePrivateKey GetOrCreatePrivateKey(Credit credit)

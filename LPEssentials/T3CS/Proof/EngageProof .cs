@@ -38,6 +38,6 @@ public partial class EngageProof : Proof
             return false;
         }
 
-        return this.ValidateAndVerify();
+        return TinyhandHelper.ValidateAndVerify(this);
     }
 }
