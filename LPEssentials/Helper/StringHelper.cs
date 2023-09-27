@@ -2,7 +2,7 @@
 
 namespace LP;
 
-public static class StringExtention
+public static class StringHelper
 {
     /// <summary>
     /// Removes control characters and leading white-space and trailing white-space.

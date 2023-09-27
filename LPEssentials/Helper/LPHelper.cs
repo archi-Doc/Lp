@@ -2,10 +2,14 @@
 
 namespace LP;
 
-public static partial class LPHelper
+public static class LPHelper
 {
     internal const char Quote = '\"';
     internal const string TripleQuotes = "\"\"\"";
+
+    public static string To4Hex(this ulong gene) => $"{(ushort)gene:x4}";
+
+    public static string To4Hex(this uint id) => $"{(ushort)id:x4}";
 
     public static string TrimQuotes(this string text)
     {

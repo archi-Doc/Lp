@@ -176,7 +176,7 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
         return $"{Base64.Url.FromByteArrayToString(span)}";
     }
 
-    internal bool TryWriteBytes(Span<byte> span, out int written)
+    private bool TryWriteBytes(Span<byte> span, out int written)
     {
         if (span.Length < EncodedLength)
         {

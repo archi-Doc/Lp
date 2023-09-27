@@ -90,11 +90,11 @@ public partial class NodeInformation : NodeAddress, IEquatable<NodeInformation>
     {
         if (this.Address.Equals(IPAddress.None))
         {
-            return $"None:{this.Port}({this.PublicKey.ToString()})";
+            return $"None:{this.Port}{this.PublicKey.ToString()}";
         }
         else
         {
-            return $"{this.Address}:{this.Port}({this.PublicKey.ToString()})";
+            return $"{this.Address}:{this.Port}{this.PublicKey.ToString()}";
         }
     }
 

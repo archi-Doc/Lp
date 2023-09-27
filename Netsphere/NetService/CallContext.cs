@@ -49,7 +49,7 @@ public class CallContext
     }
 
     public Token CreateToken(Token.Type tokenType)
-        => new Token(tokenType, this.ServerContext.Terminal.Salt, Mics.GetCorrected() + Token.DefaultMics, Identifier.Zero, null);
+        => new Token(tokenType, this.ServerContext.Terminal.Salt, Mics.GetCorrected() + Token.DefaultMics, Identifier.Zero);
 
     internal void Initialize(ServerContext serviceContext, ByteArrayPool.MemoryOwner rentData, ulong dataId)
     {

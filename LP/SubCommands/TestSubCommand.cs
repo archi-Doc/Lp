@@ -104,7 +104,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         this.userInterfaceService.WriteLine($"Originator: {originator.ToString()}, {flag.ToString()}");
         this.userInterfaceService.WriteLine($"{pub.ToString()}");
 
-        var token = new Token(Token.Type.Identification, 0, 0, Identifier.Three, null);
+        var token = new Token(Token.Type.Identification, 0, 0, Identifier.Three);
         var bb = token.Sign(originator);
         bb = token.ValidateAndVerifyWithoutPublicKey();
 

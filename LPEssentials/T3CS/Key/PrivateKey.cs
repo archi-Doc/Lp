@@ -97,6 +97,6 @@ public abstract partial class PrivateKey : IValidatable, IEquatable<PrivateKey>
         publicSpan[0] = KeyHelper.ToPublicKeyValue(this.keyValue);
         this.x.CopyTo(publicSpan.Slice(1));
 
-        return $"!!!{Base64.Url.FromByteArrayToString(privateSpan)}!!!{Base64.Url.FromByteArrayToString(publicSpan)}";
+        return $"!!!{Base64.Url.FromByteArrayToString(privateSpan)}!!!({Base64.Url.FromByteArrayToString(publicSpan)})";
     }
 }

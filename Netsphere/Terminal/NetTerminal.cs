@@ -117,7 +117,7 @@ public partial class NetTerminal : IDisposable
             }
         }
 
-        return new Token(tokenType, this.Salt, Mics.GetCorrected() + Token.DefaultMics, Identifier.Zero, null);
+        return new Token(tokenType, this.Salt, Mics.GetCorrected() + Token.DefaultMics, Identifier.Zero);
     }
 
     public bool ValidateAndVerifyToken(Token token, SignaturePublicKey publicKey)

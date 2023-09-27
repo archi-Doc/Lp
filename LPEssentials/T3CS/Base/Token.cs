@@ -27,13 +27,13 @@ public sealed partial class Token // : IVerifiable // , IEquatable<Token>
     {
     }
 
-    public Token(Token.Type type, ulong salt, long expirationMics, Identifier targetIdentifier, Linkage? targetLinkage)
+    public Token(Token.Type type, ulong salt, long expirationMics, Identifier targetIdentifier)
     {
         this.TokenType = type;
         this.Salt = salt;
         this.ExpirationMics = expirationMics;
         this.TargetIdentifier = targetIdentifier;
-        this.TargetLinkage = targetLinkage;
+        // this.TargetLinkage = targetLinkage;
     }
 
     internal Token(Token.Type type)
@@ -58,8 +58,8 @@ public sealed partial class Token // : IVerifiable // , IEquatable<Token>
     [Key(4)]
     public Identifier TargetIdentifier { get; private set; }
 
-    [Key(5)]
-    public Linkage? TargetLinkage { get; private set; }
+    // [Key(5)]
+    // public Linkage? TargetLinkage { get; private set; }
 
     [Key(6, AddProperty = "Signature", Level = 0)]
     [MaxLength(KeyHelper.SignatureLength)]
