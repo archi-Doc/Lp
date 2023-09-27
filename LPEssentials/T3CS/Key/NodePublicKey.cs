@@ -106,9 +106,8 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
         return true;
     }
 
-    public bool Validate()
-        => this.KeyClass == KeyClass.Node_Encryption &&
-            this.x0 != 0 && this.x1 != 0 && this.x2 != 0 && this.x3 != 0;
+    public bool Validate() // this.x0 != 0 && this.x1 != 0 && this.x2 != 0 && this.x3 != 0;
+        => this.KeyClass == KeyClass.Node_Encryption;
 
     public bool Equals(NodePublicKey other)
         => this.keyValue == other.keyValue &&

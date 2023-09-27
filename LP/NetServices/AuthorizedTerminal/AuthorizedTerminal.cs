@@ -35,9 +35,14 @@ public class AuthorizedTerminalFactory
 
         // Service & authorize
         var service = clientTerminal.GetService<TService>();
-        var token = await clientTerminal.CreateToken(Token.Type.Authorize);
-        authority.SignToken(token);
-        var response = await service.Authorize(token).ResponseAsync;
+        //var token = await clientTerminal.CreateToken(Token.Type.Authorize);
+        // authority.SignToken(token);
+        // var response = await service.Authorize(token).ResponseAsync;
+
+        var proof = new EngageProof(clientTerminal.Salt);
+        var privateKey = authority.GetOrCreatePrivateKey();
+        proof.SignProof(privateKey, 1);
+        var response = await service.Engage(proof).ResponseAsync;
         if (!response.IsSuccess || response.Value != NetResult.Success)
         {
             logger?.TryGet(LogLevel.Error)?.Log(Hashed.Error.Authorization);

@@ -9,13 +9,13 @@ public partial class EngageProof : Proof
     {
     }
 
-    public EngageProof(long salt)
+    public EngageProof(ulong salt)
     {
         this.Salt = salt;
     }
 
     [Key(5)]
-    public long Salt { get; protected set; }
+    public ulong Salt { get; protected set; }
 
     public override bool Validate()
     {
@@ -31,7 +31,7 @@ public partial class EngageProof : Proof
         return true;
     }
 
-    public bool ValidateAndVerify(long salt)
+    public bool ValidateAndVerify(ulong salt)
     {
         if (this.Salt != salt)
         {

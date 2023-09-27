@@ -76,7 +76,7 @@ public sealed partial class Authority
 
     private int hash;
 
-    private SignaturePrivateKey GetOrCreatePrivateKey()
+    public SignaturePrivateKey GetOrCreatePrivateKey()//
         => this.GetOrCreatePrivateKey(Credit.Default);
 
     private SignaturePrivateKey GetOrCreatePrivateKey(Credit credit)

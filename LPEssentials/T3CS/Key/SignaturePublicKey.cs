@@ -144,9 +144,8 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
         return true;
     }
 
-    public bool Validate()
-        => this.KeyClass == KeyClass.T3CS_Signature &&
-            this.x0 != 0 && this.x1 != 0 && this.x2 != 0 && this.x3 != 0;
+    public bool Validate() // this.x0 != 0 && this.x1 != 0 && this.x2 != 0 && this.x3 != 0;
+        => this.KeyClass == KeyClass.T3CS_Signature;
 
     public bool Equals(SignaturePublicKey other)
         => this.keyValue == other.keyValue &&

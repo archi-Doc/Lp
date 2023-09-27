@@ -30,6 +30,16 @@ public class MergerNestedcommandCreateCredit : ISimpleCommandAsync<CreateCreditO
                 return;
             }
 
+            var service = authorized.Terminal.GetService<IMergerService>();
+
+            var response = await service.GetInformation().ResponseAsync;
+            if (response.IsSuccess && response.Value is { } informationResult)
+            {
+                this.logger.TryGet()?.Log(informationResult.Name);
+            }
+
+            return;
+
             var token = await authorized.Terminal.CreateToken(Token.Type.CreateCredit);
             authorized.Key.SignToken(token);
             var param = new Merger.CreateCreditParams(

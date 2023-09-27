@@ -10,6 +10,10 @@ namespace Netsphere;
 public interface IAuthorizedService : INetService
 {
     NetTask<NetResult> Authorize(Token token);
+
+    NetTask<NetResult> Engage(EngageProof proof);
+
+    // bool Engaged { get; }
 }
 
 public class AuthorizedService : IAuthorizedService
@@ -20,11 +24,28 @@ public class AuthorizedService : IAuthorizedService
             token.TokenType == Token.Type.Authorize)
         {
             this.AuthorizedKey = token.PublicKey;
+            this.Engaged = true;
             return NetResult.Success;
         }
 
+        this.Engaged = false;
+        return NetResult.NotAuthorized;
+    }
+
+    public async NetTask<NetResult> Engage(EngageProof proof)
+    {// -> Engage
+        if (proof.ValidateAndVerify(CallContext.Current.ServerContext.Terminal.Salt))
+        {
+            this.AuthorizedKey = proof.PublicKey;
+            this.Engaged = true;
+            return NetResult.Success;
+        }
+
+        this.Engaged = false;
         return NetResult.NotAuthorized;
     }
 
     public SignaturePublicKey AuthorizedKey { get; private set; }
+
+    public bool Engaged { get; private set; }
 }
