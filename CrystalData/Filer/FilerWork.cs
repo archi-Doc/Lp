@@ -69,4 +69,7 @@ public class FilerWork : IEquatable<FilerWork>
             this.WriteData.Memory.Span.SequenceEqual(other.WriteData.Memory.Span) &&
             this.Length == other.Length;
     }
+
+    public override string ToString()
+        => $"{this.Type.ToString()}:{this.Path}";
 }

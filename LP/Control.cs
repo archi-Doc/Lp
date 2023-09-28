@@ -174,7 +174,7 @@ public class Control : ILogInformation
                 context.GetOptions<LPOptions>(out var lpOptions);
                 options.RootPath = lpOptions.RootDirectory;
                 options.GlobalMain = new LocalDirectoryConfiguration("Local");
-                options.EnableFilerLogger = true;
+                options.EnableFilerLogger = false;
             });
 
             var crystalControlBuilder = new CrystalControl.Builder()

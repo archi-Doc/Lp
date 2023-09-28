@@ -30,6 +30,7 @@ public class LocalFiler : FilerBase, IRawFiler
 
         var filePath = Crystalizer.GetRootedFile(worker.Crystalizer, work.Path);
         work.Result = CrystalResult.Started;
+        Console.WriteLine($"{work.ToString()} -> {filePath}");
         if (work.Type == FilerWork.WorkType.Write)
         {// Write
 TryWrite:
@@ -130,6 +131,7 @@ TryWrite:
                 {
                     var memoryOwner = ByteArrayPool.Default.Rent(lengthToRead).ToMemoryOwner(0, lengthToRead);
                     var read = await RandomAccess.ReadAsync(handle, memoryOwner.Memory, offset, worker.CancellationToken).ConfigureAwait(false);
+                    Console.WriteLine($"Read {filePath} {read.ToString()}");
                     if (read != lengthToRead)
                     {
                         File.Delete(filePath);
