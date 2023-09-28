@@ -80,11 +80,9 @@ public class CrystalFiler
                     Console.WriteLine($"Parse waipoint: {path} - '{this.prefix}'");
                     if (!string.IsNullOrEmpty(this.extension))
                     {
-                        Console.WriteLine($"Parse waipoint2: {path} - '{this.prefix}'");
                         if (path.EndsWith(this.extension))
                         {// Prefix/Data.Waypoint.Extension or Prefix/Data.Extension
                             path = path.Substring(0, path.Length - this.extension.Length);
-                            Console.WriteLine($"Parse waipoint3: {path} - '{this.prefix}'");
                         }
                         else
                         {// No .Extension
@@ -92,6 +90,7 @@ public class CrystalFiler
                         }
                     }
 
+                    Console.WriteLine($"{path.Length} - {Waypoint.LengthInBase32} - {this.prefix.Length}");
                     if (path.Length < (Waypoint.LengthInBase32 + this.prefix.Length))
                     {
                         continue;
@@ -99,6 +98,7 @@ public class CrystalFiler
 
                     var waypointString = path.Substring(path.Length - Waypoint.LengthInBase32, Waypoint.LengthInBase32);
                     path = path.Substring(0, path.Length - Waypoint.LengthInBase32);
+                    Console.WriteLine($"Pre {path.Length} - {waypointString}");
                     if (path.EndsWith(this.prefix))
                     {
                         continue;
