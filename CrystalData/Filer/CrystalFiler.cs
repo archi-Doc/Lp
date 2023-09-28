@@ -77,7 +77,6 @@ public class CrystalFiler
                 foreach (var x in listResult.Where(a => a.IsFile))
                 {
                     var path = x.Path; // {this.prefix}.waypoint{this.extension}
-                    Console.WriteLine($"Parse waipoint: {path} - '{this.prefix}'");
                     if (!string.IsNullOrEmpty(this.extension))
                     {
                         if (path.EndsWith(this.extension))
@@ -90,7 +89,6 @@ public class CrystalFiler
                         }
                     }
 
-                    Console.WriteLine($"{path.Length} - {Waypoint.LengthInBase32} - {this.prefix.Length}");
                     if (path.Length < (Waypoint.LengthInBase32 + this.prefix.Length))
                     {
                         continue;
@@ -98,16 +96,14 @@ public class CrystalFiler
 
                     var waypointString = path.Substring(path.Length - Waypoint.LengthInBase32, Waypoint.LengthInBase32);
                     path = path.Substring(0, path.Length - Waypoint.LengthInBase32);
-                    Console.WriteLine($"Pre {path.Length} - {waypointString}");
-                    if (path.EndsWith(this.prefix))
+                    // Console.WriteLine($"Pre {path} - {waypointString} - {this.prefix}");
+                    /*if (!path.EndsWith(this.prefix))
                     {
                         continue;
-                    }
+                    }*/
 
-                    Console.WriteLine($"Parse waipoint2: {path} - '{this.prefix}'");
                     if (Waypoint.TryParse(waypointString, out var waypoint))
                     {// Data.Waypoint.Extension
-                        // Console.WriteLine($"Add waipoint: {waypointString}");
                         this.waypoints.Add(waypoint);
                     }
                 }
@@ -199,7 +195,6 @@ public class CrystalFiler
             }
 
             var array = this.GetReverseWaypointArray();
-            Console.WriteLine($"LoadLatest {this.prefix} --- {this.GetFilePath()}: {array.Length}");
             foreach (var x in array)
             {
                 path = this.GetFilePath(x);

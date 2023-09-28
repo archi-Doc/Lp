@@ -213,7 +213,6 @@ TryWrite:
                     {
                         if (x is FileInfo fi)
                         {
-                            Console.WriteLine($"ListFile {fi.FullName}");
                             list.Add(new(fi.FullName, fi.Length));
                         }
                         else if (x is DirectoryInfo di)
