@@ -77,12 +77,14 @@ public class CrystalFiler
                 foreach (var x in listResult.Where(a => a.IsFile))
                 {
                     var path = x.Path; // {this.prefix}.waypoint{this.extension}
-                    Console.WriteLine($"Parse waipoint: {path}");
+                    Console.WriteLine($"Parse waipoint: {path} - '{this.prefix}'");
                     if (!string.IsNullOrEmpty(this.extension))
                     {
+                        Console.WriteLine($"Parse waipoint2: {path} - '{this.prefix}'");
                         if (path.EndsWith(this.extension))
                         {// Prefix/Data.Waypoint.Extension or Prefix/Data.Extension
                             path = path.Substring(0, path.Length - this.extension.Length);
+                            Console.WriteLine($"Parse waipoint3: {path} - '{this.prefix}'");
                         }
                         else
                         {// No .Extension
@@ -105,7 +107,7 @@ public class CrystalFiler
                     Console.WriteLine($"Parse waipoint2: {path} - '{this.prefix}'");
                     if (Waypoint.TryParse(waypointString, out var waypoint))
                     {// Data.Waypoint.Extension
-                        Console.WriteLine($"Add waipoint: {waypointString}");
+                        // Console.WriteLine($"Add waipoint: {waypointString}");
                         this.waypoints.Add(waypoint);
                     }
                 }
