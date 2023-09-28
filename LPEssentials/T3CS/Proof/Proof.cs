@@ -11,7 +11,8 @@ public static class ProofHelper
 /// <summary>
 /// Represents a proof object.
 /// </summary>
-// [TinyhandUnion(0, typeof(EngageProof))]
+[TinyhandUnion(0, typeof(EngageProof))]
+[TinyhandUnion(1, typeof(CreateCreditProof))]
 [TinyhandObject(ReservedKeys = 4)]
 public abstract partial class Proof : IVerifiable, IEquatable<Proof>
 {

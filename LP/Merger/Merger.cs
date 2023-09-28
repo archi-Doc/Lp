@@ -101,6 +101,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     {
         this.logger.TryGet()?.Log("Merger started");
 
+        this.crystal.Data.TryGetChild(default); // tempcode (preload)
         var numberOfCredits = this.crystal.Data.Count(LpData.LpDataId.Credit);
         this.logger.TryGet()?.Log($"Credits: {numberOfCredits}");
 
