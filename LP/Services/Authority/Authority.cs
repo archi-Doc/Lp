@@ -69,7 +69,7 @@ public sealed partial class Authority
     public SignaturePublicKey PublicKey => this.GetOrCreatePrivateKey().ToPublicKey();
 
     [Key(0)]
-    private byte[] seed = [];
+    private byte[] seed = Array.Empty<byte>();
 
     [Key(1)]
     public AuthorityLifetime Lifetime { get; private set; }
