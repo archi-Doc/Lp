@@ -131,7 +131,7 @@ TryWrite:
                 {
                     var memoryOwner = ByteArrayPool.Default.Rent(lengthToRead).ToMemoryOwner(0, lengthToRead);
                     var read = await RandomAccess.ReadAsync(handle, memoryOwner.Memory, offset, worker.CancellationToken).ConfigureAwait(false);
-                    Console.WriteLine($"Read {filePath} {read.ToString()}");
+                    // Console.WriteLine($"Read {filePath} {read.ToString()}");
                     if (read != lengthToRead)
                     {
                         File.Delete(filePath);
@@ -213,6 +213,7 @@ TryWrite:
                     {
                         if (x is FileInfo fi)
                         {
+                            Console.WriteLine($"ListFile {fi.FullName}");
                             list.Add(new(fi.FullName, fi.Length));
                         }
                         else if (x is DirectoryInfo di)
