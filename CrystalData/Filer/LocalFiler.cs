@@ -29,7 +29,6 @@ public class LocalFiler : FilerBase, IRawFiler
         var tryCount = 0;
 
         var filePath = Crystalizer.GetRootedFile(worker.Crystalizer, work.Path);
-        await Console.Out.WriteLineAsync(filePath);
         work.Result = CrystalResult.Started;
         if (work.Type == FilerWork.WorkType.Write)
         {// Write
@@ -204,6 +203,7 @@ TryWrite:
                     (directory, prefix) = PathHelper.PathToDirectoryAndFile(filePath);
                 }*/
 
+                Console.WriteLine($"List: {filePath}");
                 (directory, prefix) = PathHelper.PathToDirectoryAndFile(filePath);
                 var directoryInfo = new DirectoryInfo(directory);
                 foreach (var x in directoryInfo.EnumerateFileSystemInfos())
@@ -212,10 +212,12 @@ TryWrite:
                     {
                         if (x is FileInfo fi)
                         {
+                            Console.WriteLine($"File: {fi.FullName}");
                             list.Add(new(fi.FullName, fi.Length));
                         }
                         else if (x is DirectoryInfo di)
                         {
+                            Console.WriteLine($"Dir: {di.FullName}");
                             list.Add(new(di.FullName));
                         }
                     }
