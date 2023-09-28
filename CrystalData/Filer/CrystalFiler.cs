@@ -188,13 +188,13 @@ public class CrystalFiler
                 {
                     return (result, default, path);
                 }
+
+                // List data
+                await this.ListData();
             }
 
-            // List data
-            await this.ListData();
-
             var array = this.GetReverseWaypointArray();
-            Console.WriteLine(array.Length);
+            Console.WriteLine($"LoadLatest {this.prefix} --- {this.GetFilePath()}: {array.Length}");
             foreach (var x in array)
             {
                 path = this.GetFilePath(x);
