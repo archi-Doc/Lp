@@ -74,6 +74,11 @@ public class CrystalFiler
             {
                 this.waypoints ??= new();
 
+                foreach (var x in listResult)
+                {
+                    Console.WriteLine($"Parse : {x.Path} - {x.Length}");
+                }
+
                 foreach (var x in listResult.Where(a => a.IsFile))
                 {
                     var path = x.Path; // {this.prefix}.waypoint{this.extension}
