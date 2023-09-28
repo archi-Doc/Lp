@@ -74,11 +74,6 @@ public class CrystalFiler
             {
                 this.waypoints ??= new();
 
-                foreach (var x in listResult)
-                {
-                    Console.WriteLine($"Parse : {x.Path} - {x.Length}");
-                }
-
                 foreach (var x in listResult.Where(a => a.IsFile))
                 {
                     var path = x.Path; // {this.prefix}.waypoint{this.extension}
@@ -107,6 +102,7 @@ public class CrystalFiler
                         continue;
                     }
 
+                    Console.WriteLine($"Parse waipoint2: {path} - '{this.prefix}'");
                     if (Waypoint.TryParse(waypointString, out var waypoint))
                     {// Data.Waypoint.Extension
                         Console.WriteLine($"Add waipoint: {waypointString}");
