@@ -45,8 +45,8 @@ public class LPLogger
                 {
                     if (context.LogLevel == LogLevel.Debug)
                     {// Debug -> no output
-                        context.SetOutput<EmptyLogger>();
-                        return;
+                        // context.SetOutput<EmptyLogger>();
+                        // return;
                     }
 
                     if (IsSubclassOfRawGeneric(typeof(BigMachines.Machine<>), context.LogSourceType))

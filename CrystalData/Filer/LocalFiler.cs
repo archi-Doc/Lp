@@ -203,7 +203,6 @@ TryWrite:
                     (directory, prefix) = PathHelper.PathToDirectoryAndFile(filePath);
                 }*/
 
-                Console.WriteLine($"List: {filePath}");
                 (directory, prefix) = PathHelper.PathToDirectoryAndFile(filePath);
                 var directoryInfo = new DirectoryInfo(directory);
                 foreach (var x in directoryInfo.EnumerateFileSystemInfos())
@@ -212,12 +211,10 @@ TryWrite:
                     {
                         if (x is FileInfo fi)
                         {
-                            Console.WriteLine($"File: {fi.FullName}");
                             list.Add(new(fi.FullName, fi.Length));
                         }
                         else if (x is DirectoryInfo di)
                         {
-                            Console.WriteLine($"Dir: {di.FullName}");
                             list.Add(new(di.FullName));
                         }
                     }
