@@ -194,9 +194,11 @@ public class CrystalFiler
             }
 
             var array = this.GetReverseWaypointArray();
+            Console.WriteLine(array.Length);
             foreach (var x in array)
             {
                 path = this.GetFilePath(x);
+                Console.WriteLine(path);
                 result = await this.rawFiler.ReadAsync(path, 0, -1).ConfigureAwait(false);
                 if (result.IsSuccess &&
                     FarmHash.Hash64(result.Data.Memory.Span) == x.Hash)

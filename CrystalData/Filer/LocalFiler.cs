@@ -30,7 +30,7 @@ public class LocalFiler : FilerBase, IRawFiler
 
         var filePath = Crystalizer.GetRootedFile(worker.Crystalizer, work.Path);
         work.Result = CrystalResult.Started;
-        Console.WriteLine($"{work.ToString()} -> {filePath}");
+        // Console.WriteLine($"{work.ToString()} -> {filePath}");
         if (work.Type == FilerWork.WorkType.Write)
         {// Write
 TryWrite:
@@ -213,7 +213,7 @@ TryWrite:
                     {
                         if (x is FileInfo fi)
                         {
-                            Console.WriteLine($"ListFile {fi.FullName}");
+                            // Console.WriteLine($"ListFile {fi.FullName}");
                             list.Add(new(fi.FullName, fi.Length));
                         }
                         else if (x is DirectoryInfo di)
