@@ -85,6 +85,19 @@ await crystalizer.SaveAll(); // Save all data.
 
 ## CrystalConfiguration
 
+By assigning a **CrystalConfiguration** to the data class, you can specify the timing, format of data save, the number of history files, and the file path.
+
+```csharp
+context.AddCrystal<FirstData>(
+    new CrystalConfiguration()
+    {
+        SavePolicy = SavePolicy.Manual, // Timing of saving data is controlled by the application.
+        SaveFormat = SaveFormat.Utf8, // Format is utf8 text.
+        NumberOfHistoryFiles = 0, // No history file.
+        FileConfiguration = new LocalFileConfiguration("Local/FirstExample/FirstData.tinyhand"), // Specify the file name to save.
+    });
+```
+
 
 
 
@@ -111,12 +124,21 @@ var data = crystal.Data;
 
 
 
-### Instant save
+### Save manually
 
-Save the data after it has been changed, and wait until the process is complete.
+Save the data manually after it has been changed, and wait until the save process is complete.
 
 ```csharp
-// Save instantly
+context.AddCrystal<SaveTimingData>(
+    new CrystalConfiguration()
+    {
+        SavePolicy = SavePolicy.Manual, // Timing of saving data is controlled by the application.
+        FileConfiguration = new LocalFileConfiguration("Local/SaveTimingExample/SaveTimingData.tinyhand"), // Specify the file name to save.
+    });
+```
+
+```csharp
+// Save manually
 data.id += 1;
 await crystal.Save();
 ```
@@ -143,25 +165,6 @@ data.Id += 2;
 // Alternative
 data.id += 2;
 crystal.TryAddToSaveQueue();
-```
-
-
-
-
-### Manual
-Timing of saving data is controlled by the application.
-
-```csharp
-context.AddCrystal<SaveTimingData>(
-    new CrystalConfiguration()
-    {
-        SavePolicy = SavePolicy.Manual, // Timing of saving data is controlled by the application.
-        FileConfiguration = new LocalFileConfiguration("Local/SaveTimingExample/SaveTimingData.tinyhand"), // Specify the file name to save.
-    });
-```
-
-```csharp
-await crystal.Save();
 ```
 
 
@@ -275,27 +278,41 @@ var secondData2 = crystal2.Data;
 
 ## Specifying a path
 
+You can set the path to save the data by specifying the **FileConfiguration** of **CrystalConfiguration**.
+
+The path can be a basic local absolute path, a relative path, or an AWS S3 path.
+
+```csharp
+context.AddCrystal<FirstData>(
+    new CrystalConfiguration()
+    {
+        FileConfiguration = new LocalFileConfiguration("Local/FirstExample/FirstData.tinyhand"), // Specify the file name to save.
+    });
+```
+
+
+
 ### Local path
+
+
+
+```csharp
+FileConfiguration = new LocalFileConfiguration("Local/FirstExample/FirstData.tinyhand"), // Specify the file name to save.
+```
+
+
 
 ### Relative path
 
 
 
-## Data class
-public class Data
-{
-}
-
-Add lock object:
-If you need exclusive access for multi-threading, please add Lock object
-
 
 
 ## Journaling
 
-CrystalData supports limited journaling feature.
+CrystalData offers a limited journaling feature to enhance data durability.
 
-The purpose is to improve data durability, i.e., to reduce data loss from one hour to one second in the event of a failure.
+The goal is to minimize data loss in the event of a failure, reducing potential loss from one hour to one second.
 
 
 
