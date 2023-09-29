@@ -28,7 +28,8 @@ public partial class Program
         // var unit = await SecondExample();
         // var unit = await SaveTimingExample();
         // var unit = await ConfigurationTimingExample();
-        var unit = await JournalExample();
+        // var unit = await JournalExample();
+        var unit = await IntegratedExample();
 
         ThreadCore.Root.Terminate();
         if (unit is not null)

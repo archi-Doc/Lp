@@ -4,11 +4,11 @@ using ValueLink;
 
 namespace QuickStart;
 
-[TinyhandObject(Journal = true)] // Enable the journaling feature.
-[ValueLinkObject] // You can use ValuLink to handle a collection of objects.
-public partial class JournalData
+[TinyhandObject(Journal = true)]
+[ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
+public partial record IntegratedData
 {
-    [Key(0, AddProperty = "Id")] // Additional property is required.
+    [Key(0, AddProperty = "Id")]
     [Link(Primary = true, Unique = true, Type = ChainType.Unordered)]
     private int id;
 
@@ -18,11 +18,14 @@ public partial class JournalData
     [Key(2, AddProperty = "Count")]
     private int count;
 
-    public JournalData()
+    public IntegratedData()
     {
+        // Tinyhand: Object serialization.
+        // ValueLink: Object collection.
+        // CrystalData: Object persistence.
     }
 
-    public JournalData(int id, string name)
+    public IntegratedData(int id, string name)
     {
         this.id = id;
         this.name = name;
@@ -34,51 +37,53 @@ public partial class JournalData
 
 public partial class Program
 {
-    public static async Task<BuiltUnit?> JournalExample()
+    public static async Task<BuiltUnit?> IntegratedExample()
     {
         // Create a builder to organize dependencies and register data configurations.
         var builder = new CrystalControl.Builder()
             .ConfigureCrystal(context =>
             {
                 // Register SimpleData configuration.
-                context.AddCrystal<JournalData.GoshujinClass>(
+                context.AddCrystal<IntegratedData.GoshujinClass>(
                     new CrystalConfiguration()
                     {
                         SavePolicy = SavePolicy.Manual, // Timing of saving data is controlled by the application.
                         SaveFormat = SaveFormat.Utf8, // Format is utf8 text.
                         NumberOfFileHistories = 1, // The journaling feature is integrated with file history (snapshots), so please set it to 1 or more.
-                        FileConfiguration = new LocalFileConfiguration("Local/JournalExample/JournalData.tinyhand"), // Specify the file name to save.
+                        FileConfiguration = new LocalFileConfiguration("Local/IntegratedExample/IntegratedData.tinyhand"), // Specify the file name to save.
                     });
 
-                context.SetJournal(new SimpleJournalConfiguration(new LocalDirectoryConfiguration("Local/JournalExample/Journal")));
+                context.SetJournal(new SimpleJournalConfiguration(new LocalDirectoryConfiguration("Local/IntegratedExample/Journal")));
             });
 
         var unit = builder.Build(); // Build.
         var crystalizer = unit.Context.ServiceProvider.GetRequiredService<Crystalizer>(); // Obtains a Crystalizer instance for data storage operations.
         await crystalizer.PrepareAndLoadAll(false); // Prepare resources for storage operations and read data from files.
 
-        var goshujin = unit.Context.ServiceProvider.GetRequiredService<JournalData.GoshujinClass>(); // Retrieve a data instance from the service provider.
+        var goshujin = unit.Context.ServiceProvider.GetRequiredService<IntegratedData.GoshujinClass>(); // Retrieve a data instance from the service provider.
 
-        Console.WriteLine("Journal example:");
+        Console.WriteLine("Integrated example:");
 
-        var max = 0;
-        foreach (var x in goshujin)
+        var array = goshujin.GetArray();
+        foreach (var x in array)
         {
             Console.WriteLine(x.ToString());
-            x.Count++;
-
-            max = max > x.Id ? max : x.Id;
         }
 
-        max++;
-        var data = new JournalData(max, max.ToString());
-        goshujin.Add(data);
+        using (var w = await goshujin.TryLockAsync(0, TryLockMode.GetOrCreate))
+        {
+            if (w is not null)
+            {
+                w.Count++;
+                w.Commit();
+            }
+        }
 
-        Console.WriteLine();
+        /*Console.WriteLine();
         Console.WriteLine("Waiting for the journal writing process to complete...");
         await Task.Delay(CrystalData.Journal.SimpleJournal.SaveIntervalInMilliseconds + 500);
-        Console.WriteLine("Done.");
+        Console.WriteLine("Done.");*/
 
-        return null; // Exit without saving data.
+        return unit; // Exit without saving data.
     }
 }
