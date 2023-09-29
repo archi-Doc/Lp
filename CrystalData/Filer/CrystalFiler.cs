@@ -96,11 +96,10 @@ public class CrystalFiler
 
                     var waypointString = path.Substring(path.Length - Waypoint.LengthInBase32, Waypoint.LengthInBase32);
                     path = path.Substring(0, path.Length - Waypoint.LengthInBase32);
-                    // Console.WriteLine($"Pre {path} - {waypointString} - {this.prefix}");
-                    /*if (!path.EndsWith(this.prefix))
+                    if (!PathHelper.EndsWith_SlashInseisitive(path, this.prefix))
                     {
                         continue;
-                    }*/
+                    }
 
                     if (Waypoint.TryParse(waypointString, out var waypoint))
                     {// Data.Waypoint.Extension
