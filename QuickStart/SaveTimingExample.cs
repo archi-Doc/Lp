@@ -27,7 +27,7 @@ public partial class Program
                         SavePolicy = SavePolicy.Periodic, // Data will be saved at regular intervals.
                         SaveInterval = TimeSpan.FromMinutes(1), // The interval at which data is stored.
                         SaveFormat = SaveFormat.Utf8, // Format is utf8 text.
-                        NumberOfHistoryFiles = 0, // No history file.
+                        NumberOfFileHistories = 0, // No history file.
                         FileConfiguration = new LocalFileConfiguration("Local/SaveTimingExample/SaveTimingData.tinyhand"), // Specify the file name to save.
                     });
             });

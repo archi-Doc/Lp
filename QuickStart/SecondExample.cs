@@ -81,7 +81,7 @@ public partial class Program
                     {
                         SavePolicy = SavePolicy.Manual, // Timing of saving data is controlled by the application.
                         SaveFormat = SaveFormat.Utf8, // Format is utf8 text.
-                        NumberOfHistoryFiles = 2, // 2 history files.
+                        NumberOfFileHistories = 2, // 2 history files.
                         FileConfiguration = new LocalFileConfiguration("Local/SecondExample/SecondData.tinyhand"), // Specify the file name to save.
                         BackupFileConfiguration = new LocalFileConfiguration("Backup/SecondExample/SecondData.tinyhand"), // The backup file name.
                         Required = true,

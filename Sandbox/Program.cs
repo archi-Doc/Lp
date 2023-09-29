@@ -54,7 +54,7 @@ public class Program
                     new(SavePolicy.OnChanged, new RelativeFileConfiguration("Local/manual.tinyhand"))
                     {
                         SaveFormat = SaveFormat.Utf8,
-                        NumberOfHistoryFiles = 3,
+                        NumberOfFileHistories = 3,
                         // BackupFileConfiguration = new LocalFileConfiguration("Backup/manual.tinyhand")
                     });
 
@@ -65,7 +65,7 @@ public class Program
                         new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/Simple"), new LocalDirectoryConfiguration("Backup/Simple")))
                     {
                         SaveInterval = TimeSpan.FromSeconds(10),
-                        NumberOfHistoryFiles = 2,
+                        NumberOfFileHistories = 2,
                         // BackupFileConfiguration = new LocalFileConfiguration("Backup/combined")
                     });
 
@@ -73,7 +73,7 @@ public class Program
                     new(SavePolicy.Periodic, new RelativeFileConfiguration("Local/standard.tinyhand"))
                     {
                         SaveFormat = SaveFormat.Utf8,
-                        NumberOfHistoryFiles = 2,
+                        NumberOfFileHistories = 2,
                     });
 
                 /*context.AddCrystal<ValueClass.GoshujinClass>(

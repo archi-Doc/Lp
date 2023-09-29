@@ -41,7 +41,7 @@ public partial record CrystalConfiguration
     public static CrystalConfiguration SingleUtf8(bool required, FileConfiguration fileConfiguration)
         => new CrystalConfiguration(SavePolicy.Manual, fileConfiguration)
         with
-        { SaveFormat = SaveFormat.Utf8, NumberOfHistoryFiles = 0, Required = required, };
+        { SaveFormat = SaveFormat.Utf8, NumberOfFileHistories = 0, Required = required, };
 
     public CrystalConfiguration()
     {
@@ -65,7 +65,7 @@ public partial record CrystalConfiguration
 
     public TimeSpan SaveInterval { get; init; }
 
-    public int NumberOfHistoryFiles { get; init; } = 1;
+    public int NumberOfFileHistories { get; init; } = 1;
 
     public FileConfiguration FileConfiguration { get; init; }
 

@@ -942,7 +942,7 @@ public class Crystalizer
                     this.logger.TryGet(LogLevel.Error)?.Log($"No shortcut position: {array[i].Value.DataType.Name}");
                 }*/
 
-                var max = shortcutPosition > waypoint.JournalPosition ? shortcutPosition : waypoint.JournalPosition;
+                var max = Math.Max(Math.Max(shortcutPosition, waypoint.JournalPosition), 1);
                 if (position > max)
                 {
                     position = max;

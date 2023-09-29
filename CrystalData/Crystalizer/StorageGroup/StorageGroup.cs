@@ -43,7 +43,7 @@ public sealed class StorageGroup
         this.storageGroupConfiguration = new CrystalConfiguration(SavePolicy.Manual, fileConfiguration)
         {
             BackupFileConfiguration = backupConfiguration,
-            NumberOfHistoryFiles = 0,
+            NumberOfFileHistories = 0,
         };
 
         this.crystal.Configure(this.storageGroupConfiguration);

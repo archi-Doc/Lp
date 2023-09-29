@@ -4,8 +4,6 @@ namespace CrystalData.Journal;
 
 public partial class SimpleJournal
 {
-    private const int SaveIntervalInMilliseconds = 1_000;
-
     private class SimpleJournalTask : TaskCore
     {
         public SimpleJournalTask(SimpleJournal simpleJournal)

@@ -314,6 +314,58 @@ CrystalData offers a limited journaling feature to enhance data durability.
 
 The goal is to minimize data loss in the event of a failure, reducing potential loss from one hour to one second.
 
+Here is an example class.
+
+```csharp
+[TinyhandObject(Journal = true)] // Enable the journaling feature.
+[ValueLinkObject] // You can use ValuLink to handle a collection of objects.
+public partial class JournalData
+{
+    [Key(0, AddProperty = "Id")] // Additional property is required.
+    [Link(Primary = true, Unique = true, Type = ChainType.Unordered)]
+    private int id;
+
+    [Key(1, AddProperty = "Name")]
+    private string name = string.Empty;
+
+    [Key(2, AddProperty = "Count")]
+    private int count;
+
+    public JournalData()
+    {
+    }
+
+    public JournalData(int id, string name)
+    {
+        this.id = id;
+        this.name = name;
+    }
+
+    public override string ToString()
+        => $"Id: {this.id}, Name: {this.name}, Count: {this.count}";
+}
+```
+
+To use the journal feature, please set `NumberOfFileHistories` to more than 1 in `CrystalConfiguration` and configure the journal with `context.SetJournal()`.
+
+```csharp
+var builder = new CrystalControl.Builder()
+    .ConfigureCrystal(context =>
+    {
+        // Register SimpleData configuration.
+        context.AddCrystal<JournalData.GoshujinClass>(
+            new CrystalConfiguration()
+            {
+                SavePolicy = SavePolicy.Manual, // Timing of saving data is controlled by the application.
+                SaveFormat = SaveFormat.Utf8, // Format is utf8 text.
+                NumberOfFileHistories = 1, // The journaling feature is integrated with file history (snapshots), so please set it to 1 or more.
+                FileConfiguration = new LocalFileConfiguration("Local/JournalExample/JournalData.tinyhand"), // Specify the file name to save.
+            });
+
+        context.SetJournal(new SimpleJournalConfiguration(new LocalDirectoryConfiguration("Local/JournalExample/Journal")));
+    });
+```
+
 
 
 ## AWS S3

@@ -30,7 +30,7 @@ public partial class PublicIPMachine : Machine<Identifier>
         {
             SaveFormat = SaveFormat.Utf8,
             FileConfiguration = new RelativeFileConfiguration(Filename),
-            NumberOfHistoryFiles = 0,
+            NumberOfFileHistories = 0,
         };
 
         this.crystal = crystalizer.GetOrCreateCrystal<Data>(configuration);
