@@ -1,7 +1,36 @@
-﻿using Tinyhand.IO;
+﻿using LP;
+using Tinyhand.IO;
 using ValueLink;
 
 namespace Sandbox;
+
+[TinyhandObject(ReservedKeys = 1)]
+// [ValueLinkObject]
+public abstract partial class TtlBase
+{
+    public TtlBase()
+    {
+        var g = new TtlData.GoshujinClass();
+        g.NameChain.FindFirst
+    }
+
+    [Key(0)]
+    public long ExpirationMics { get; set; }
+}
+
+[TinyhandObject]
+[ValueLinkObject]
+public partial class TtlData : TtlBase
+{
+    public TtlData()
+    {
+    }
+
+    [Key(2)]
+    [Link(Primary = true, Type = ChainType.Unordered)]
+    public string Name { get; set; } = string.Empty;
+
+}
 
 [TinyhandObject(Journal = true)]
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
