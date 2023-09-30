@@ -27,13 +27,13 @@ public sealed partial class Token // : IVerifiable // , IEquatable<Token>
     {
     }
 
-    public Token(Token.Type type, ulong salt, long expirationMics, Identifier targetIdentifier, Linkage? targetLinkage)
+    public Token(Token.Type type, ulong salt, long expirationMics, Identifier targetIdentifier)
     {
         this.TokenType = type;
         this.Salt = salt;
         this.ExpirationMics = expirationMics;
         this.TargetIdentifier = targetIdentifier;
-        this.TargetLinkage = targetLinkage;
+        // this.TargetLinkage = targetLinkage;
     }
 
     internal Token(Token.Type type)
@@ -53,27 +53,27 @@ public sealed partial class Token // : IVerifiable // , IEquatable<Token>
     public long ExpirationMics { get; private set; }
 
     [Key(3)]
-    public PublicKey PublicKey { get; private set; } = default!;
+    public SignaturePublicKey PublicKey { get; private set; } = default!;
 
     [Key(4)]
     public Identifier TargetIdentifier { get; private set; }
 
-    [Key(5)]
-    public Linkage? TargetLinkage { get; private set; }
+    // [Key(5)]
+    // public Linkage? TargetLinkage { get; private set; }
 
     [Key(6, AddProperty = "Signature", Level = 0)]
-    [MaxLength(PublicKey.SignLength)]
+    [MaxLength(KeyHelper.SignatureLength)]
     private byte[] signature = Array.Empty<byte>();
 
     #endregion
 
     public bool Validate()
     {
-        if (this.PublicKey.Validate() != true)
+        if (!this.PublicKey.Validate())
         {
             return false;
         }
-        else if (this.signature.Length != PublicKey.SignLength)
+        else if (this.signature.Length != KeyHelper.SignatureLength)
         {
             return false;
         }
@@ -87,7 +87,7 @@ public sealed partial class Token // : IVerifiable // , IEquatable<Token>
         return true;
     }
 
-    public bool Sign(PrivateKey privateKey)
+    public bool Sign(SignaturePrivateKey privateKey)
     {
         this.PublicKey = privateKey.ToPublicKey();
 
@@ -127,9 +127,9 @@ public sealed partial class Token // : IVerifiable // , IEquatable<Token>
         }
     }
 
-    public bool ValidateAndVerifyWithoutSalt(PublicKey publicKey)
+    public bool ValidateAndVerifyWithoutSalt(SignaturePublicKey publicKey)
     {
-        if (!publicKey.IsValid())
+        if (!publicKey.Validate())
         {
             return false;
         }

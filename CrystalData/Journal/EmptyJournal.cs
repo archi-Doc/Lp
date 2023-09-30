@@ -31,6 +31,8 @@ public class EmptyJournal : IJournal
         return Task.CompletedTask;
     }
 
+    ulong IJournal.GetStartingPosition() => 1;
+
     ulong IJournal.GetCurrentPosition() => 1;
 
     void IJournal.ResetJournal(ulong position)

@@ -61,19 +61,18 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
     [TinyhandObject]
     public partial record CreateCreditParams(
-        [property: Key(0)] Token token);
+        [property: Key(0)] CreateCreditProof Proof);
 
     public MergerResult CreateCredit(LPServerContext context, CreateCreditParams param)
     {
-        if (param.token.TokenType != Token.Type.CreateCredit ||
-            !context.Terminal.ValidateAndVerifyToken(param.token))
+        if (!param.Proof.ValidateAndVerify())
         {
             return MergerResult.InvalidToken;
         }
 
         // Get LpData
         var root = this.crystal.Data;
-        var identifier = param.token.PublicKey.ToIdentifier();
+        var identifier = param.Proof.PublicKey.ToIdentifier();
         var credit = root.TryGetChild(identifier);
         if (credit != null)
         {
@@ -90,7 +89,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
             }
 
             credit.DataId = LpData.LpDataId.Credit;
-            op.Datum.SetObject(new CreditBlock(param.token.PublicKey));
+            op.Datum.SetObject(new CreditBlock(param.Proof.PublicKey));
         }
 
         return MergerResult.Success;
@@ -102,6 +101,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     {
         this.logger.TryGet()?.Log("Merger started");
 
+        this.crystal.Data.TryGetChild(default); // tempcode (preload)
         var numberOfCredits = this.crystal.Data.Count(LpData.LpDataId.Credit);
         this.logger.TryGet()?.Log($"Credits: {numberOfCredits}");
 

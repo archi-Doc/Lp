@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using LP.T3CS;
 using SimpleCommandLine;
 
 namespace LP.Subcommands;
@@ -35,7 +36,7 @@ public class NodeKeySubcommandNew : ISimpleCommand<NodeKeySubcommandNewOptions>
             nodeKey = NodePrivateKey.Create(seed);
         }
 
-        this.userInterfaceService.WriteLine(nodeKey.ToUnsafeString());
+        this.userInterfaceService.WriteLine(nodeKey.UnsafeToString());
         this.logger.TryGet()?.Log(nodeKey.ToPublicKey().ToString());
     }
 

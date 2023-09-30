@@ -117,10 +117,10 @@ public partial class NetTerminal : IDisposable
             }
         }
 
-        return new Token(tokenType, this.Salt, Mics.GetCorrected() + Token.DefaultMics, Identifier.Zero, null);
+        return new Token(tokenType, this.Salt, Mics.GetCorrected() + Token.DefaultMics, Identifier.Zero);
     }
 
-    public bool ValidateAndVerifyToken(Token token, PublicKey publicKey)
+    public bool ValidateAndVerifyToken(Token token, SignaturePublicKey publicKey)
     {
         if (token.Salt != this.Salt)
         {
@@ -296,14 +296,14 @@ public partial class NetTerminal : IDisposable
             // this.Log($"Material {material[0]} ({salt.To4Hex()}/{salt2.To4Hex()}), {this.NodeInformation.PublicKeyX[0]}, {this.Terminal.NodePrivateKey.X[0]}");
 
             // ulong Salt, Salt2, byte[] material, ulong Salt, Salt2
-            Span<byte> buffer = stackalloc byte[sizeof(ulong) + sizeof(ulong) + PublicKey.PrivateKeyLength + sizeof(ulong) + sizeof(ulong)];
+            Span<byte> buffer = stackalloc byte[sizeof(ulong) + sizeof(ulong) + KeyHelper.PrivateKeyLength + sizeof(ulong) + sizeof(ulong)];
             var span = buffer;
             BitConverter.TryWriteBytes(span, salt);
             span = span.Slice(sizeof(ulong));
             BitConverter.TryWriteBytes(span, salt2);
             span = span.Slice(sizeof(ulong));
             material.AsSpan().CopyTo(span);
-            span = span.Slice(PublicKey.PrivateKeyLength);
+            span = span.Slice(KeyHelper.PrivateKeyLength);
             BitConverter.TryWriteBytes(span, salt);
             span = span.Slice(sizeof(ulong));
             BitConverter.TryWriteBytes(span, salt2);

@@ -7,17 +7,17 @@ namespace LP.NetServices;
 
 public class AuthorizedTerminalFactory
 {
-    public AuthorizedTerminalFactory(Authority authority)
+    public AuthorizedTerminalFactory(AuthorityVault authorityVault)
     {
-        this.authority = authority;
+        this.authorityVault = authorityVault;
     }
 
     public async Task<AuthorizedTerminal<TService>?> Create<TService>(Terminal terminal, NodeInformation nodeInformation, string authorityName, ILogger? logger)
         where TService : IAuthorizedService
     {
         // Authority key
-        var authoritySeed = await this.authority.GetAuthority(authorityName);
-        if (authoritySeed == null)
+        var authority = await this.authorityVault.GetAuthority(authorityName);
+        if (authority == null)
         {
             logger?.TryGet(LogLevel.Error)?.Log(Hashed.Authority.NotFound, authorityName);
             return null; // AuthorizedTerminal<TService>.Invalid;
@@ -35,28 +35,32 @@ public class AuthorizedTerminalFactory
 
         // Service & authorize
         var service = clientTerminal.GetService<TService>();
-        var token = await clientTerminal.CreateToken(Token.Type.Authorize);
-        authoritySeed.SignToken(token);
-        var response = await service.Authorize(token).ResponseAsync;
+        // var token = await clientTerminal.CreateToken(Token.Type.Authorize);
+        // authority.SignToken(token);
+        // var response = await service.Authorize(token).ResponseAsync;
+
+        var proof = new EngageProof(clientTerminal.Salt);
+        authority.SignProof(proof, Mics.GetCorrected()); // proof.SignProof(privateKey, Mics.GetCorrected());
+        var response = await service.Engage(proof).ResponseAsync;
         if (!response.IsSuccess || response.Value != NetResult.Success)
         {
             logger?.TryGet(LogLevel.Error)?.Log(Hashed.Error.Authorization);
             return null; // AuthorizedTerminal<TService>.Invalid;
         }
 
-        return new(clientTerminal, authoritySeed, service, logger);
+        return new(clientTerminal, authority, service, logger);
     }
 
-    private Authority authority;
+    private AuthorityVault authorityVault;
 }
 
 public class AuthorizedTerminal<TService> : IDisposable, IEquatable<AuthorizedTerminal<TService>>
     where TService : IAuthorizedService
 {
-    internal AuthorizedTerminal(ClientTerminal terminal, AuthoritySeed authoritySeed, TService service, ILogger? logger)
+    internal AuthorizedTerminal(ClientTerminal terminal, Authority authority, TService service, ILogger? logger)
     {
         this.Terminal = terminal;
-        this.Key = authoritySeed;
+        this.Authority = authority;
         this.Service = service;
         this.logger = logger;
     }
@@ -70,19 +74,19 @@ public class AuthorizedTerminal<TService> : IDisposable, IEquatable<AuthorizedTe
 
         return this.Terminal == other.Terminal &&
             typeof(TService) == other.Service.GetType() &&
-            this.Key == other.Key;
+            this.Authority == other.Authority;
     }
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(this.Terminal, typeof(TService), this.Key);
+        return HashCode.Combine(this.Terminal, typeof(TService), this.Authority);
     }
 
     public ClientTerminal Terminal { get; private set; }
 
     public TService Service { get; private set; }
 
-    public AuthoritySeed Key { get; private set; }
+    public Authority Authority { get; private set; }
 
     private ILogger? logger;
 
@@ -123,7 +127,7 @@ public class AuthorizedTerminal<TService> : IDisposable, IEquatable<AuthorizedTe
 
             this.Terminal = default!;
             this.Service = default!;
-            this.Key = default!;
+            this.Authority = default!;
 
             // free native resources here if there are any.
             this.disposed = true;

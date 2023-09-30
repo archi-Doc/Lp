@@ -1,97 +1,123 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Runtime.CompilerServices;
+using Arc.Collections;
 
 namespace LP.T3CS;
 
-/// <summary>
-/// Class used to create/delete authority, and get AuthorityInterface using Vault.
-/// </summary>
-public class Authority
+[TinyhandObject]
+public sealed partial class Authority
 {
-    public const string VaultPrefix = "Authority\\";
-
-    public Authority(IUserInterfaceService userInterfaceService, Vault vault)
+    public Authority(string? seedPhrase, AuthorityLifetime lifetime, long lifeMics)
     {
-        this.UserInterfaceService = userInterfaceService;
-        this.vault = vault;
+        if (seedPhrase == null)
+        {
+            this.seed = new byte[32]; // 32 bytes
+            RandomVault.Crypto.NextBytes(this.seed);
+        }
+        else
+        {
+            var utf8 = System.Text.Encoding.UTF8.GetBytes(seedPhrase);
+            this.seed = Sha3Helper.Get256_ByteArray(Sha3Helper.Get256_ByteArray(utf8));
+        }
+
+        this.Lifetime = lifetime;
+        this.LifeMics = lifeMics;
     }
 
-    public string[] GetNames()
-        => this.vault.GetNames(VaultPrefix).Select(x => x.Substring(VaultPrefix.Length)).ToArray();
-
-    public async Task<AuthoritySeed?> GetAuthority(string name)
+    internal Authority()
     {
-        AuthorityInterface? authorityInterface;
-        lock (this.syncObject)
-        {
-            if (!this.nameToInterface.TryGetValue(name, out authorityInterface))
-            {// New interface
-                var vaultName = GetVaultName(name);
-                if (!this.vault.TryGet(vaultName, out var decrypted))
-                {// Not found
-                    return null;
-                }
+    }
 
-                authorityInterface = new AuthorityInterface(this, name, decrypted);
-                this.nameToInterface.Add(name, authorityInterface);
+    public override int GetHashCode()
+        => this.hash != 0 ? this.hash : (this.hash = (int)FarmHash.Hash64(this.seed));
+
+    public void SignProof<T>(T proof, long proofMics)
+        where T : Proof, ITinyhandSerialize<T>
+    {
+        var privateKey = this.GetOrCreatePrivateKey();
+        proof.SignProof<T>(privateKey, proofMics);
+    }
+
+    public void SignToken(Token token)
+    {
+        var privateKey = this.GetOrCreatePrivateKey();
+        token.Sign(privateKey);
+    }
+
+    public void SignToken(Credit credit, Token token)
+    {
+        var privateKey = this.GetOrCreatePrivateKey(credit);
+        token.Sign(privateKey);
+    }
+
+    public byte[]? SignData(Credit credit, byte[] data)
+    {
+        var privateKey = this.GetOrCreatePrivateKey(credit);
+        var signature = privateKey.SignData(data);
+        this.CachePrivateKey(credit, privateKey);
+        return signature;
+    }
+
+    public bool VerifyData(Credit credit, byte[] data, byte[] signature)
+    {
+        var privateKey = this.GetOrCreatePrivateKey(credit);
+        var result = privateKey.VerifyData(data, signature);
+        this.CachePrivateKey(credit, privateKey);
+        return result;
+    }
+
+    public SignaturePublicKey PublicKey => this.GetOrCreatePrivateKey().ToPublicKey();
+
+    [Key(0)]
+    private byte[] seed = Array.Empty<byte>();
+
+    [Key(1)]
+    public AuthorityLifetime Lifetime { get; private set; }
+
+    [Key(2)]
+    public long LifeMics { get; private set; }
+
+    [Key(3)]
+    // public Value[] Values { get; private set; } = Array.Empty<Value>();
+    public Value Values { get; private set; } = default!;
+
+    private int hash;
+
+    private SignaturePrivateKey GetOrCreatePrivateKey()
+        => this.GetOrCreatePrivateKey(Credit.Default);
+
+    private SignaturePrivateKey GetOrCreatePrivateKey(Credit credit)
+    {
+        var privateKey = this.privateKeyCache.TryGet(credit);
+        if (privateKey == null)
+        {// Create private key.
+            var buffer = TinyhandHelper.RentBuffer();
+            var writer = new Tinyhand.IO.TinyhandWriter(buffer);
+            try
+            {
+                writer.WriteSpan(this.seed);
+                TinyhandSerializer.SerializeObject(ref writer, credit);
+
+                Span<byte> span = stackalloc byte[32];
+                writer.FlushAndGetReadOnlySpan(out var input, out _);
+                Sha3Helper.Get256_Span(input, span);
+                privateKey = SignaturePrivateKey.Create(span);
+            }
+            finally
+            {
+                writer.Dispose();
+                TinyhandHelper.ReturnBuffer(buffer);
             }
         }
 
-        return await authorityInterface.Prepare().ConfigureAwait(false);
+        return privateKey;
     }
 
-    public AuthorityResult NewAuthority(string name, string passPhrase, AuthoritySeed authoritySeed)
-    {
-        var vaultName = GetVaultName(name);
+    private void CachePrivateKey(Credit credit, SignaturePrivateKey privateKey)
+        => this.privateKeyCache.Cache(credit, privateKey);
 
-        lock (this.syncObject)
-        {
-            if (this.vault.Exists(vaultName))
-            {
-                return AuthorityResult.AlreadyExists;
-            }
+    private ObjectCache<Credit, SignaturePrivateKey> privateKeyCache = new(10);
 
-            var encrypted = PasswordEncrypt.Encrypt(TinyhandSerializer.Serialize(authoritySeed), passPhrase);
-            if (this.vault.TryAdd(vaultName, encrypted))
-            {
-                return AuthorityResult.Success;
-            }
-            else
-            {
-                return AuthorityResult.AlreadyExists;
-            }
-        }
-    }
-
-    public bool Exists(string name)
-        => this.vault.Exists(GetVaultName(name));
-
-    public AuthorityResult RemoveAuthority(string name)
-    {
-        lock (this.syncObject)
-        {
-            var authorityRemoved = this.nameToInterface.Remove(name);
-            var vaultRemoved = this.vault.Remove(GetVaultName(name));
-
-            if (vaultRemoved)
-            {
-                return AuthorityResult.Success;
-            }
-            else
-            {
-                return AuthorityResult.NotFound;
-            }
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static string GetVaultName(string name) => VaultPrefix + name;
-
-#pragma warning disable SA1401
-    internal IUserInterfaceService UserInterfaceService;
-#pragma warning restore SA1401
-    private Vault vault;
-    private object syncObject = new();
-    private Dictionary<string, AuthorityInterface> nameToInterface = new();
+    public override string ToString()
+        => $"PublicKey: {this.GetOrCreatePrivateKey().ToPublicKey()}, Lifetime: {this.Lifetime}, LifeMics: {this.LifeMics}";
 }

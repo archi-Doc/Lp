@@ -13,6 +13,37 @@ public static class PathHelper
     public const string BackslashString = "\\";
     public const string ColonString = ":";
 
+    public static bool EndsWith_SlashInseisitive(string path, string value)
+    {
+        if (path.Length < value.Length)
+        {
+            return false;
+        }
+
+        var pathSpan = path.AsSpan(path.Length - value.Length);
+        var valueSpan = value.AsSpan();
+        for (var i = valueSpan.Length - 1; i >= 0; i--)
+        {
+            if (pathSpan[i] == Slash || pathSpan[i] == Backslash)
+            {
+                if (valueSpan[i] == Slash || valueSpan[i] == Backslash)
+                {
+                    continue;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else if (pathSpan[i] != valueSpan[i])
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public static string GetPathNotRoot(string path)
     {
         if (!Path.IsPathRooted(path))

@@ -58,7 +58,7 @@ public class LPBase : ILogInformation
 
     public string NodeName { get; private set; } = default!;
 
-    public PublicKey RemotePublicKey { get; private set; }
+    public SignaturePublicKey RemotePublicKey { get; private set; }
 
     public LPOptions Options { get; private set; } = default!;
 
@@ -164,7 +164,7 @@ public class LPBase : ILogInformation
         }
 
         // Remote public key
-        PublicKey.TryParse(options.RemotePublicKeyBase64, out var remoteKey);
+        SignaturePublicKey.TryParse(options.RemotePublicKeyBase64, out var remoteKey);
         this.RemotePublicKey = remoteKey;
     }
 

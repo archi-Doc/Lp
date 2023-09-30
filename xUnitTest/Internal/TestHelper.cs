@@ -28,7 +28,7 @@ public static class TestHelper
                     new(SavePolicy.Manual, new LocalFileConfiguration(Path.Combine(directory, "Test.tinyhand")))
                     {
                         SaveFormat = SaveFormat.Utf8,
-                        NumberOfHistoryFiles = 5,
+                        NumberOfFileHistories = 5,
                     });
             });
 

@@ -32,7 +32,7 @@ public partial class Program
                     {
                         SavePolicy = SavePolicy.Manual, // Timing of saving data is controlled by the application.
                         SaveFormat = SaveFormat.Utf8, // Format is utf8 text.
-                        NumberOfHistoryFiles = 0, // No history file.
+                        NumberOfFileHistories = 0, // No history file.
                         FileConfiguration = new LocalFileConfiguration("Local/FirstExample/FirstData.tinyhand"), // Specify the file name to save.
                     });
             });

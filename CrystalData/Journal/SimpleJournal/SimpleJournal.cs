@@ -10,6 +10,7 @@ namespace CrystalData.Journal;
 
 public partial class SimpleJournal : IJournal
 {
+    public const int SaveIntervalInMilliseconds = 1_000;
     public const string CompleteSuffix = ".complete";
     public const string IncompleteSuffix = ".incomplete";
     public const int RecordBufferLength = 1024 * 1024 * 1; // 1MB
@@ -176,6 +177,21 @@ public partial class SimpleJournal : IJournal
 
         // Terminate
         this.logger.TryGet()?.Log($"Terminated - {this.memoryUsage}");
+    }
+
+    ulong IJournal.GetStartingPosition()
+    {
+        lock (this.syncBooks)
+        {
+            if (this.books.PositionChain.First is { } firstBook)
+            {
+                return firstBook.Position;
+            }
+            else
+            {
+                return 0;
+            }
+        }
     }
 
     ulong IJournal.GetCurrentPosition()

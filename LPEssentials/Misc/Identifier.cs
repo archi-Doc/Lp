@@ -72,9 +72,9 @@ public readonly partial struct Identifier : IEquatable<Identifier>, IComparable<
 
     public Identifier(byte[] byteArray)
     {
-        if (byteArray.Length < Hash.HashBytes)
+        if (byteArray.Length < Length)
         {
-            throw new ArgumentException($"Length of a byte array must be at least {Hash.HashBytes}");
+            throw new ArgumentException($"Length of a byte array must be at least {Length}");
         }
 
         var s = byteArray.AsSpan();
@@ -121,9 +121,7 @@ public readonly partial struct Identifier : IEquatable<Identifier>, IComparable<
         => this.Id0 == 0 && this.Id1 == 0 && this.Id2 == 0 && this.Id3 == 0;
 
     public bool Equals(Identifier other)
-    {
-        return this.Id0 == other.Id0 && this.Id1 == other.Id1 && this.Id2 == other.Id2 && this.Id3 == other.Id3;
-    }
+        => this.Id0 == other.Id0 && this.Id1 == other.Id1 && this.Id2 == other.Id2 && this.Id3 == other.Id3;
 
     public override int GetHashCode() => (int)this.Id0; // HashCode.Combine(this.Id0, this.Id1, this.Id2, this.Id3);
 

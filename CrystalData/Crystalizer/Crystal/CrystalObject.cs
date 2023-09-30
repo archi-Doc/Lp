@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using CrystalData.Filer;
@@ -67,7 +68,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObje
                 }
 
                 // Finally, reconstruct
-                this.ReconstructObject();
+                this.ResetWaypoint(true);
                 return this.data;
             }
         }
@@ -239,7 +240,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObje
             goto Exit;
         }
 
-        this.Crystalizer.UpdateWaypoint(this, ref currentWaypoint, hash, startingPosition);
+        this.Crystalizer.UpdateWaypoint(this, ref currentWaypoint, hash);
 
         var result = await filer.Save(byteArray, currentWaypoint).ConfigureAwait(false);
         if (result != CrystalResult.Success)
@@ -682,9 +683,15 @@ Exit:
         {// Loaded
             this.data = data;
             this.waypoint = loadResult.Waypoint;
-
-            this.Crystalizer.SetPlane(this, ref this.waypoint);
-            this.SetJournal();
+            if (this.waypoint.IsValid)
+            {// Valid waypoint
+                this.Crystalizer.SetPlane(this, ref this.waypoint);
+                this.SetJournal();
+            }
+            else
+            {// Invalid waypoint
+                this.ResetWaypoint(false, );
+            }
 
             // this.LogWaypoint("Load");
             this.State = CrystalState.Prepared;
@@ -692,7 +699,7 @@ Exit:
         }
         else
         {// Reconstruct
-            this.ReconstructObject();
+            this.ResetWaypoint(true);
 
             // this.LogWaypoint("Reconstruct");
             this.State = CrystalState.Prepared;
@@ -766,10 +773,12 @@ Exit:
     }
 
     [MemberNotNull(nameof(data))]
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ReconstructObject()
+    private void ResetWaypoint(bool reconstructObject)
     {
-        TinyhandSerializer.ReconstructObject<TData>(ref this.data);
+        if (reconstructObject || this.data is null)
+        {
+            TinyhandSerializer.ReconstructObject<TData>(ref this.data);
+        }
 
         byte[] byteArray;
         if (this.CrystalConfiguration.SaveFormat == SaveFormat.Utf8)

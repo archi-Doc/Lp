@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Arc.Crypto;
+using LP.T3CS;
 
 namespace Netsphere;
 
@@ -33,7 +34,8 @@ public class NetBase : UnitBase, IUnitPreparable
         }
 
         // Node key
-        if (this.NodePrivateKey == null)
+        if (this.NodePrivateKey == null ||
+            !this.NodePrivateKey.Validate())
         {
             this.NodePrivateKey = NodePrivateKey.Create();
             this.NodePublicKey = this.NodePrivateKey.ToPublicKey();

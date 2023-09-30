@@ -93,7 +93,7 @@ internal partial class SimpleStorage : IStorage, IStorageInternal
             this.crystal.Configure(new CrystalConfiguration(SavePolicy.Manual, mainConfiguration)
             {
                 BackupFileConfiguration = backupConfiguration,
-                NumberOfHistoryFiles = storageConfiguration.NumberOfHistoryFiles,
+                NumberOfFileHistories = storageConfiguration.NumberOfHistoryFiles,
             });
 
             result = await this.crystal.PrepareAndLoad(param.UseQuery).ConfigureAwait(false);

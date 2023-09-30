@@ -11,12 +11,12 @@ namespace LP.Subcommands;
 [SimpleCommand("create-credit")]
 public class MergerNestedcommandCreateCredit : ISimpleCommandAsync<CreateCreditOptions>
 {
-    public MergerNestedcommandCreateCredit(ILogger<MergerNestedcommandCreateCredit> logger, Terminal terminal, MergerNestedcommand nestedcommand, Authority authority, AuthorizedTerminalFactory authorizedTerminalFactory)
+    public MergerNestedcommandCreateCredit(ILogger<MergerNestedcommandCreateCredit> logger, Terminal terminal, MergerNestedcommand nestedcommand, AuthorityVault authorityVault, AuthorizedTerminalFactory authorizedTerminalFactory)
     {
         this.logger = logger;
         this.terminal = terminal;
         this.nestedcommand = nestedcommand;
-        this.authority = authority;
+        this.authorityVault = authorityVault;
         this.authorizedTerminalFactory = authorizedTerminalFactory;
     }
 
@@ -30,10 +30,24 @@ public class MergerNestedcommandCreateCredit : ISimpleCommandAsync<CreateCreditO
                 return;
             }
 
-            var token = await authorized.Terminal.CreateToken(Token.Type.CreateCredit);
-            authorized.Key.SignToken(token);
-            var param = new Merger.CreateCreditParams(
-                token);
+            var service = authorized.Terminal.GetService<IMergerService>();
+
+            /*var response = await service.GetInformation().ResponseAsync;
+            if (response.IsSuccess && response.Value is { } informationResult)
+            {
+                this.logger.TryGet()?.Log(informationResult.Name);
+            }
+
+            return;*/
+
+            /*var token = await authorized.Terminal.CreateToken(Token.Type.CreateCredit);
+            authorized.Authority.SignToken(token);
+            var param = new Merger.CreateCreditParams(token);*/
+
+            var proof = new CreateCreditProof();
+            authorized.Authority.SignProof(proof, Mics.GetCorrected());
+            var param = new Merger.CreateCreditParams(proof);
+
             var response2 = await authorized.Service.CreateCredit(param).ResponseAsync;
             if (response2.IsSuccess && response2.Value is { } result2)
             {
@@ -45,7 +59,7 @@ public class MergerNestedcommandCreateCredit : ISimpleCommandAsync<CreateCreditO
     private ILogger logger;
     private Terminal terminal;
     private MergerNestedcommand nestedcommand;
-    private Authority authority;
+    private AuthorityVault authorityVault;
     private AuthorizedTerminalFactory authorizedTerminalFactory;
 }
 

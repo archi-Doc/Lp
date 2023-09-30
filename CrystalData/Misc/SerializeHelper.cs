@@ -65,16 +65,18 @@ public static class SerializeHelper
             var writer = new Tinyhand.IO.TinyhandWriter(arrayOwner.ByteArray);
             TinyhandSerializer.SerializeObject(ref writer, obj, SerializerOptions);
 
-            writer.FlushAndGetArray(out var array, out var arrayLength);
-            if (array != arrayOwner.ByteArray)
+            writer.FlushAndGetArray(out var array, out var arrayLength, out var isInitialBuffer);
+            if (isInitialBuffer)
+            {
+                owner = arrayOwner.ToMemoryOwner(0, arrayLength);
+                return true;
+            }
+            else
             {
                 arrayOwner.Return();
                 owner = new ByteArrayPool.MemoryOwner(array);
                 return true;
             }
-
-            owner = arrayOwner.ToMemoryOwner(0, arrayLength);
-            return true;
         }
         catch
         {

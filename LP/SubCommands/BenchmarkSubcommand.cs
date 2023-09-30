@@ -20,7 +20,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
         try
         {
             // var testKeyString = TinyhandSerializer.SerializeToString(AuthorityPrivateKey.Create());
-            this.privateKey = TinyhandSerializer.DeserializeFromString<PrivateKey>(TestKeyString);
+            this.privateKey = TinyhandSerializer.DeserializeFromString<SignaturePrivateKey>(TestKeyString);
         }
         catch
         {
@@ -143,7 +143,7 @@ public class BenchmarkSubcommand : ISimpleCommandAsync<BenchmarkOptions>
 
     private IUserInterfaceService userInterfaceService;
     private ILogger<BenchmarkSubcommand> logger;
-    private PrivateKey? privateKey;
+    private SignaturePrivateKey? privateKey;
 }
 
 public record BenchmarkOptions

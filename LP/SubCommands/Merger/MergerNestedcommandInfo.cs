@@ -18,8 +18,8 @@ public class MergerNestedcommandInfo : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        /*var authoritySeed = await this.authority.GetKeyAsync(options.Authority);
-        if (authoritySeed == null)
+        /*var authority = await this.authority.GetKeyAsync(options.Authority);
+        if (authority == null)
         {
             this.logger.TryGet(LogLevel.Error)?.Log(Hashed.Authority.NotFound, options.Authority);
             return;

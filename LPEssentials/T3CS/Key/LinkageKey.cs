@@ -1,13 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
-using Tinyhand.IO;
-using Tinyhand.Tree;
 
 namespace LP.T3CS;
 
@@ -17,25 +11,25 @@ namespace LP.T3CS;
 [TinyhandObject]
 public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageKey>
 {
-    public const int EncodedLength = PublicKey.EncodedLength + sizeof(uint) + sizeof(byte) + (sizeof(ulong) * 4);
+    public const int EncodedLength = KeyHelper.EncodedLength + sizeof(uint) + sizeof(byte) + (sizeof(ulong) * 4);
 
-    public static LinkageKey CreateRaw(PublicKey publicKey)
+    public static LinkageKey CreateRaw(SignaturePublicKey publicKey)
         => new(publicKey);
 
-    public static LinkageKey CreateEncrypted(PublicKey publicKey, PublicKey encryptionKey)
+    public static LinkageKey CreateEncrypted(SignaturePublicKey publicKey, EncryptionPublicKey encryptionKey)
     {
         Span<byte> destination = stackalloc byte[32];
 
-        var newKey = PrivateKey.CreateEncryptionKey();
+        var newKey = EncryptionPrivateKey.Create();
         using (var ecdh = newKey.TryGetEcdh())
-        using (var ecdh2 = encryptionKey.TryGetEcdh())
+        using (var cache2 = encryptionKey.TryGetEcdh())
         {
-            if (ecdh is null || ecdh2 is null)
+            if (ecdh is null || cache2.Object is null)
             {
                 throw new InvalidOperationException();
             }
 
-            var material = ecdh.DeriveKeyMaterial(ecdh2.PublicKey);
+            var material = ecdh.DeriveKeyMaterial(cache2.Object.PublicKey);
 
             // Hash key material
             Sha3Helper.Get256_Span(material, material);
@@ -59,17 +53,17 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
     {
     }
 
-    private LinkageKey(PublicKey publicKey)
+    private LinkageKey(SignaturePublicKey publicKey)
     {// Raw
         this.Key = publicKey;
         this.Checksum = (uint)publicKey.GetChecksum();
     }
 
-    private LinkageKey(PublicKey publicKey, PrivateKey newKey, ReadOnlySpan<byte> encrypted)
+    private LinkageKey(SignaturePublicKey publicKey, EncryptionPrivateKey encryptionKey, ReadOnlySpan<byte> encrypted)
     {// Encrypted
-        this.Key = newKey.ToPublicKey();
+        var encryptionPublicKey = encryptionKey.ToPublicKey();
+        this.Key = Unsafe.As<EncryptionPublicKey, SignaturePublicKey>(ref encryptionPublicKey);
         this.Checksum = (uint)publicKey.GetChecksum();
-        this.IsEncrypted = true;
         this.originalKeyValue = publicKey.KeyValue;
 
         var b = encrypted;
@@ -82,43 +76,35 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
         this.encrypted3 = BitConverter.ToUInt64(b);
     }
 
-    private LinkageKey(PublicKey publicKey, PublicKey encryptionKey)
-    {// Encrypt
-        this.Checksum = (uint)publicKey.GetChecksum();
-        this.Key = encryptionKey;
-        this.IsEncrypted = true;
-        this.originalKeyValue = publicKey.KeyValue;
-    }
-
     #region FieldAndProperty
 
     [Key(0)]
-    public readonly PublicKey Key;
+    public readonly SignaturePublicKey Key;
 
     [Key(1)]
     public readonly uint Checksum; // (uint)FarmHash.Hash64(RawKey)
 
     [Key(2)]
-    public readonly bool IsEncrypted;
-
-    [Key(3)]
     private readonly byte originalKeyValue;
 
-    [Key(4)]
+    [Key(3)]
     private readonly ulong encrypted0;
 
-    [Key(5)]
+    [Key(4)]
     private readonly ulong encrypted1;
 
-    [Key(6)]
+    [Key(5)]
     private readonly ulong encrypted2;
 
-    [Key(7)]
+    [Key(6)]
     private readonly ulong encrypted3;
+
+    public bool IsEncrypted
+        => KeyHelper.GetKeyClass(this.Key.KeyValue) == KeyClass.T3CS_Encryption;
 
     #endregion
 
-    public bool TryDecrypt(ECDiffieHellman ecdh, out PublicKey decrypted)
+    public bool TryDecrypt(ECDiffieHellman ecdh, out SignaturePublicKey decrypted)
     {
         if (!this.IsEncrypted)
         {
@@ -128,15 +114,17 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
 
         Span<byte> destination = stackalloc byte[32];
 
-        using (var ecdh2 = this.Key.TryGetEcdh())
+        var key = this.Key;
+        var encryptionKey = Unsafe.As<SignaturePublicKey, EncryptionPublicKey>(ref key);
+        using (var cache2 = encryptionKey.TryGetEcdh())
         {
-            if (ecdh is null || ecdh2 is null)
+            if (ecdh is null || cache2.Object is null)
             {
                 decrypted = default;
                 return false;
             }
 
-            var material = ecdh.DeriveKeyMaterial(ecdh2.PublicKey);
+            var material = ecdh.DeriveKeyMaterial(cache2.Object.PublicKey);
 
             // Hash key material
             Sha3Helper.Get256_Span(material, material);
@@ -172,18 +160,6 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
         return true;
     }
 
-    public bool TryDecrypt(PrivateKey encryptionKey, out PublicKey decrypted)
-    {
-        var ecdh = encryptionKey.TryGetEcdh();
-        if (ecdh == null)
-        {
-            decrypted = default;
-            return false;
-        }
-
-        return this.TryDecrypt(ecdh, out decrypted);
-    }
-
     public override string ToString()
     {
         Span<byte> span = stackalloc byte[EncodedLength];
@@ -200,7 +176,7 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
         return $"{Base64.Url.FromByteArrayToString(span)}";
     }
 
-    internal bool TryWriteBytes(Span<byte> span, out int written)
+    private bool TryWriteBytes(Span<byte> span, out int written)
     {
         if (span.Length < EncodedLength)
         {
@@ -210,7 +186,7 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
 
         var b = span;
         this.Key.TryWriteBytes(b, out _);
-        b = b.Slice(PublicKey.EncodedLength);
+        b = b.Slice(KeyHelper.EncodedLength);
 
         BitConverter.TryWriteBytes(b, this.Checksum);
         b = b.Slice(sizeof(uint));
@@ -231,7 +207,7 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
         }
         else
         {
-            written = PublicKey.EncodedLength + sizeof(uint);
+            written = KeyHelper.EncodedLength + sizeof(uint);
             return true;
         }
     }

@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace LP;
+namespace LP.Obsolete;
 
 /// <summary>
 /// Provides a set of methods to treat local file paths and cloud paths in the same way.<br/>

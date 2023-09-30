@@ -15,7 +15,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>
     {
     }
 
-    public Value(long point, PublicKey originator, PublicKey[] mergers)
+    public Value(long point, SignaturePublicKey originator, SignaturePublicKey[] mergers)
     {
         this.Point = point;
         this.Credit = new(originator, mergers);
@@ -27,7 +27,7 @@ public sealed partial class Value : IValidatable, IEquatable<Value>
     }
 
     [Key(0)]
-    public PublicKey Owner { get; private set; }
+    public SignaturePublicKey Owner { get; private set; }
 
     [Key(1)]
     public long Point { get; private set; }

@@ -49,7 +49,7 @@ public sealed partial class Order : IValidatable, IEquatable<Order>
     public Credit Credit { get; private set; } = default!;
 
     [Key(3)]
-    public PublicKey Authority { get; private set; }
+    public SignaturePublicKey Authority { get; private set; }
 
     [Key(4)]
     public Condition OrderCondition { get; private set; }
@@ -58,8 +58,8 @@ public sealed partial class Order : IValidatable, IEquatable<Order>
     public long ExpirationMics { get; private set; }
 
     [Key(6, AddProperty = "Signature", Level = 0)]
-    [MaxLength(PublicKey.SignLength)]
-    private byte[] signature = [];
+    [MaxLength(KeyHelper.SignatureLength)]
+    private byte[] signature = Array.Empty<byte>();
 
     public bool Validate()
     {

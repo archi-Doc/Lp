@@ -22,14 +22,14 @@ public sealed partial class Linkage2 : IValidatable // , IEquatable<Linkage>
     public long Point { get; private set; }
 
     [Key(1)]
-    public PublicKey Owner { get; private set; } = default!;
+    public SignaturePublicKey Owner { get; private set; } = default!;
 
     [Key(2)]
-    public PublicKey Originator { get; private set; } = default!;
+    public SignaturePublicKey Originator { get; private set; } = default!;
 
     [Key(3, AddProperty = "Mergers")]
     [MaxLength(MaxMergers)]
-    private PublicKey[] mergers = default!;
+    private SignaturePublicKey[] mergers = default!;
 
     /*[Key(4, Marker = true, AddProperty = "Signs")]
     [MaxLength(MaxMergers + 1, Authority.PublicKeyLength)]

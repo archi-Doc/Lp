@@ -78,7 +78,7 @@ public partial class NtpCorrection : UnitBase, IUnitPreparable
         {
             SaveFormat = SaveFormat.Utf8,
             FileConfiguration = new RelativeFileConfiguration(Filename),
-            NumberOfHistoryFiles = 0,
+            NumberOfFileHistories = 0,
         });
 
         this.data = this.crystal.Data;

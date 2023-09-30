@@ -627,7 +627,7 @@ public class Crystalizer
 
     #region Waypoint/Plane
 
-    internal void UpdateWaypoint(ICrystalInternal crystal, ref Waypoint waypoint, ulong hash, ulong startingPosition)
+    internal void UpdateWaypoint(ICrystalInternal crystal, ref Waypoint waypoint, ulong hash)
     {
         var plane = waypoint.Plane;
         if (plane == 0)
@@ -942,7 +942,7 @@ public class Crystalizer
                     this.logger.TryGet(LogLevel.Error)?.Log($"No shortcut position: {array[i].Value.DataType.Name}");
                 }*/
 
-                var max = shortcutPosition > waypoint.JournalPosition ? shortcutPosition : waypoint.JournalPosition;
+                var max = Math.Max(Math.Max(shortcutPosition, waypoint.JournalPosition), 1);
                 if (position > max)
                 {
                     position = max;

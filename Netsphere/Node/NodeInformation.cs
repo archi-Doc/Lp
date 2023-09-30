@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using LP.T3CS;
 
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
 #pragma warning disable SA1401 // Fields should be private
@@ -89,11 +90,11 @@ public partial class NodeInformation : NodeAddress, IEquatable<NodeInformation>
     {
         if (this.Address.Equals(IPAddress.None))
         {
-            return $"None:{this.Port}({this.PublicKey.ToString()})";
+            return $"None:{this.Port}{this.PublicKey.ToString()}";
         }
         else
         {
-            return $"{this.Address}:{this.Port}({this.PublicKey.ToString()})";
+            return $"{this.Address}:{this.Port}{this.PublicKey.ToString()}";
         }
     }
 

@@ -44,7 +44,7 @@ public class MergerServiceImpl : AuthorizedService, IMergerService
 
     public async NetTask<MergerResult> CreateCredit(Merger.CreateCreditParams param)
     {
-        if (!this.AuthorizedKey.IsValid())
+        if (!this.Engaged)
         {
             return MergerResult.NotAuthorized;
         }

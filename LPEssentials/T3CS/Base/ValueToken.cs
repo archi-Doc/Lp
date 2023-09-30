@@ -16,7 +16,7 @@ public sealed partial class ValueToken : IValidatable, IEquatable<ValueToken>
     }
 
     [Key(0)]
-    public PublicKey Owner { get; private set; }
+    public SignaturePublicKey Owner { get; private set; }
 
     [Key(1)]
     public long Point { get; private set; }

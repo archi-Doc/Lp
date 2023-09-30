@@ -15,10 +15,10 @@ public sealed partial class Credit
     {
     }
 
-    public Credit(PublicKey key, int mergers)
+    public Credit(SignaturePublicKey key, int mergers)
     {
         this.Originator = key;
-        this.mergers = new PublicKey[mergers];
+        this.mergers = new SignaturePublicKey[mergers];
         for (var i = 0; i < mergers; i++)
         {
             this.mergers[i] = key;
@@ -28,14 +28,14 @@ public sealed partial class Credit
     }
 
     [Key(0)]
-    public PublicKey Originator { get; private set; } = default!;
+    public SignaturePublicKey Originator { get; private set; } = default!;
 
     [Key(1, AddProperty = "Mergers")]
     [MaxLength(MaxMergers)]
-    private LP.T3CS.PublicKey[] mergers = Array.Empty<PublicKey>();
+    private LP.T3CS.SignaturePublicKey[] mergers = Array.Empty<SignaturePublicKey>();
 
     [Key(2)]
-    public PublicKey Standard { get; private set; } = default!;
+    public SignaturePublicKey Standard { get; private set; } = default!;
 }
 
 [TinyhandObject]
@@ -47,7 +47,7 @@ public sealed partial class CreditB
     {
     }
 
-    public CreditB(PublicKey key, int mergers)
+    public CreditB(SignaturePublicKey key, int mergers)
     {
         this.Originator = key;
         this.Standard = key;
@@ -65,13 +65,13 @@ public sealed partial class CreditB
     }
 
     [Key(0)]
-    public PublicKey Originator { get; private set; } = default!;
+    public SignaturePublicKey Originator { get; private set; } = default!;
 
     [Key(1)]
-    public PublicKey Standard { get; private set; } = default!;
+    public SignaturePublicKey Standard { get; private set; } = default!;
 
     [Key(2)]
-    public PublicKey Merger1 { get; private set; } = default!;
+    public SignaturePublicKey Merger1 { get; private set; } = default!;
 
     /*[Key(3)]
     public LP.T3CS.PublicKey? Merger2 { get; private set; } = default!;
@@ -83,9 +83,9 @@ public sealed partial class CreditB
 [Config(typeof(BenchmarkConfig))]
 public class CreditBenchmark
 {
-    public PrivateKey PrivateKey { get; private set; }
+    public SignaturePrivateKey PrivateKey { get; private set; }
 
-    public PublicKey PublicKey { get; private set; }
+    public SignaturePublicKey PublicKey { get; private set; }
 
     public Benchmark.Credit Credit1 { get; private set; }
 
@@ -105,7 +105,7 @@ public class CreditBenchmark
 
     public CreditBenchmark()
     {
-        this.PrivateKey = PrivateKey.CreateVerificationKey(new byte[] { 0, 1, 2, 3, });
+        this.PrivateKey = SignaturePrivateKey.Create(new byte[] { 0, 1, 2, 3, });
         this.PublicKey = this.PrivateKey.ToPublicKey();
 
         this.Credit1 = new(this.PublicKey, 1);

@@ -46,6 +46,7 @@ public class FragmentDatumImpl<TIdentifier> : HimoGoshujinClass.Himo, FragmentDa
         }
         else if (memoryOwner.Memory.Length > this.dataInternal.BigCrystalConfiguration.MaxFragmentSize)
         {
+            memoryOwner.Return();
             return CrystalResult.OverSizeLimit;
         }
 

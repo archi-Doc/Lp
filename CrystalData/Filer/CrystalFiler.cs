@@ -96,7 +96,7 @@ public class CrystalFiler
 
                     var waypointString = path.Substring(path.Length - Waypoint.LengthInBase32, Waypoint.LengthInBase32);
                     path = path.Substring(0, path.Length - Waypoint.LengthInBase32);
-                    if (path.EndsWith(this.prefix))
+                    if (!PathHelper.EndsWith_SlashInseisitive(path, this.prefix))
                     {
                         continue;
                     }
@@ -142,7 +142,7 @@ public class CrystalFiler
                 return Task.FromResult(CrystalResult.Success);
             }
 
-            var numberOfFiles = this.crystalFiler.configuration.NumberOfHistoryFiles;
+            var numberOfFiles = this.crystalFiler.configuration.NumberOfFileHistories;
             if (numberOfFiles < 1)
             {
                 numberOfFiles = 1;
@@ -310,7 +310,7 @@ public class CrystalFiler
 
     #region PropertyAndField
 
-    public bool IsProtected => this.configuration.NumberOfHistoryFiles > 0;
+    public bool IsProtected => this.configuration.NumberOfFileHistories > 0;
 
     internal Output? Main => this.main;
 

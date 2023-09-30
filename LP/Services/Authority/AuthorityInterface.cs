@@ -4,9 +4,9 @@ namespace LP.T3CS;
 
 internal sealed class AuthorityInterface
 {
-    public AuthorityInterface(Authority authority, string name, byte[] encrypted)
+    public AuthorityInterface(AuthorityVault authorityVault, string name, byte[] encrypted)
     {
-        this.authority = authority;
+        this.authorityVault = authorityVault;
         this.Name = name;
         this.encrypted = encrypted;
     }
@@ -15,21 +15,21 @@ internal sealed class AuthorityInterface
 
     public long ExpirationMics { get; private set; }
 
-    internal async Task<AuthoritySeed?> Prepare()
+    internal async Task<Authority?> Prepare()
     {
-        if (this.authoritySeed != null)
+        if (this.authority != null)
         {
-            if (this.authoritySeed.Lifetime == AuthorityLifetime.PeriodOfTime)
+            if (this.authority.Lifetime == AuthorityLifetime.PeriodOfTime)
             {// Periof of time
                 if (Mics.GetUtcNow() > this.ExpirationMics)
                 {// Expired
-                    this.authoritySeed = null;
+                    this.authority = null;
                 }
             }
 
-            if (this.authoritySeed != null)
+            if (this.authority != null)
             {
-                return this.authoritySeed;
+                return this.authority;
             }
         }
 
@@ -38,7 +38,7 @@ internal sealed class AuthorityInterface
         {
             while (true)
             {
-                var passPhrase = await this.authority.UserInterfaceService.RequestPassword(Hashed.Authority.EnterPassword, this.Name).ConfigureAwait(false);
+                var passPhrase = await this.authorityVault.UserInterfaceService.RequestPassword(Hashed.Authority.EnterPassword, this.Name).ConfigureAwait(false);
                 if (passPhrase == null)
                 {// Canceled
                     return null;
@@ -54,20 +54,20 @@ internal sealed class AuthorityInterface
         // Deserialize
         try
         {
-            this.authoritySeed = TinyhandSerializer.Deserialize<AuthoritySeed>(decrypted);
+            this.authority = TinyhandSerializer.Deserialize<Authority>(decrypted);
         }
         catch
         {
         }
 
-        if (this.authoritySeed != null)
+        if (this.authority != null)
         {
-            if (this.authoritySeed.Lifetime == AuthorityLifetime.PeriodOfTime)
+            if (this.authority.Lifetime == AuthorityLifetime.PeriodOfTime)
             {
-                this.ExpirationMics = Mics.GetUtcNow() + this.authoritySeed.LifeMics;
+                this.ExpirationMics = Mics.GetUtcNow() + this.authority.LifeMics;
             }
 
-            return this.authoritySeed;
+            return this.authority;
         }
         else
         {
@@ -75,7 +75,7 @@ internal sealed class AuthorityInterface
         }
     }
 
-    private Authority authority;
+    private AuthorityVault authorityVault;
     private byte[] encrypted;
-    private AuthoritySeed? authoritySeed;
+    private Authority? authority;
 }
