@@ -79,6 +79,6 @@ public partial class Program
         await Task.Delay(CrystalData.Journal.SimpleJournal.SaveIntervalInMilliseconds + 500);
         Console.WriteLine("Done.");
 
-        return null; // Exit without saving data.
+        return unit; // Exit without saving data.
     }
 }

@@ -627,7 +627,7 @@ public class Crystalizer
 
     #region Waypoint/Plane
 
-    internal void UpdateWaypoint(ICrystalInternal crystal, ref Waypoint waypoint, ulong hash, ulong startingPosition)
+    internal void UpdateWaypoint(ICrystalInternal crystal, ref Waypoint waypoint, ulong hash)
     {
         var plane = waypoint.Plane;
         if (plane == 0)

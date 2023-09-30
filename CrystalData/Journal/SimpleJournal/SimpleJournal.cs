@@ -179,6 +179,21 @@ public partial class SimpleJournal : IJournal
         this.logger.TryGet()?.Log($"Terminated - {this.memoryUsage}");
     }
 
+    ulong IJournal.GetStartingPosition()
+    {
+        lock (this.syncBooks)
+        {
+            if (this.books.PositionChain.First is { } firstBook)
+            {
+                return firstBook.Position;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+    }
+
     ulong IJournal.GetCurrentPosition()
     {
         lock (this.syncRecordBuffer)

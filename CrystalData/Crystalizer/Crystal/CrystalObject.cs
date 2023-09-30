@@ -240,7 +240,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObje
             goto Exit;
         }
 
-        this.Crystalizer.UpdateWaypoint(this, ref currentWaypoint, hash, startingPosition);
+        this.Crystalizer.UpdateWaypoint(this, ref currentWaypoint, hash);
 
         var result = await filer.Save(byteArray, currentWaypoint).ConfigureAwait(false);
         if (result != CrystalResult.Success)
@@ -690,7 +690,7 @@ Exit:
             }
             else
             {// Invalid waypoint
-                this.ResetWaypoint(false);
+                this.ResetWaypoint(false, );
             }
 
             // this.LogWaypoint("Load");
@@ -773,9 +773,9 @@ Exit:
     }
 
     [MemberNotNull(nameof(data))]
-    private void ResetWaypoint(bool reconstruct)
+    private void ResetWaypoint(bool reconstructObject)
     {
-        if (reconstruct || this.data is null)
+        if (reconstructObject || this.data is null)
         {
             TinyhandSerializer.ReconstructObject<TData>(ref this.data);
         }
