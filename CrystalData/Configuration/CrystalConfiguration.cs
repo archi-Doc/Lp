@@ -74,4 +74,6 @@ public partial record CrystalConfiguration
     public StorageConfiguration StorageConfiguration { get; init; }
 
     public bool Required { get; init; } = false;
+
+    public bool IsProtected => this.NumberOfFileHistories > 0;
 }

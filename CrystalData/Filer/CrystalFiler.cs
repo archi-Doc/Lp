@@ -310,7 +310,7 @@ public class CrystalFiler
 
     #region PropertyAndField
 
-    public bool IsProtected => this.configuration.NumberOfFileHistories > 0;
+    public bool IsProtected => this.configuration.IsProtected;
 
     internal Output? Main => this.main;
 

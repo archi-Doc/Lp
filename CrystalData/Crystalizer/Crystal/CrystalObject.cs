@@ -683,14 +683,17 @@ Exit:
         {// Loaded
             this.data = data;
             this.waypoint = loadResult.Waypoint;
-            if (this.waypoint.IsValid)
-            {// Valid waypoint
-                this.Crystalizer.SetPlane(this, ref this.waypoint);
-                this.SetJournal();
-            }
-            else
-            {// Invalid waypoint
-                this.ResetWaypoint(false, );
+            if (this.CrystalConfiguration.IsProtected)
+            {
+                if (this.waypoint.IsValid)
+                {// Valid waypoint
+                    this.Crystalizer.SetPlane(this, ref this.waypoint);
+                    this.SetJournal();
+                }
+                else
+                {// Invalid waypoint
+                    this.ResetWaypoint(false);
+                }
             }
 
             // this.LogWaypoint("Load");
@@ -792,7 +795,7 @@ Exit:
 
         var hash = FarmHash.Hash64(byteArray);
         this.waypoint = default;
-        this.Crystalizer.UpdateWaypoint(this, ref this.waypoint, hash, 0);
+        this.Crystalizer.UpdateWaypoint(this, ref this.waypoint, hash);
 
         this.SetJournal();
 
@@ -805,9 +808,8 @@ Exit:
     {
         if (this.data is IJournalObject journalObject)
         {
-            journalObject.Journal = this;
+            // journalObject.Journal = this;
             journalObject.SetParent(this);
-            // journalObject.CurrentPlane = this.waypoint.CurrentPlane;
         }
     }
 

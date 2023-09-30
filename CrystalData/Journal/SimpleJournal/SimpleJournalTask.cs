@@ -15,7 +15,7 @@ public partial class SimpleJournal
         private static async Task Process(object? parameter)
         {
             var core = (SimpleJournalTask)parameter!;
-            while (await core.Delay(SaveIntervalInMilliseconds).ConfigureAwait(false))
+            while (await core.Delay(core.simpleJournal.SimpleJournalConfiguration.SaveIntervalInMilliseconds).ConfigureAwait(false))
             {
                 await core.simpleJournal.SaveJournalAsync(true);
             }

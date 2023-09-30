@@ -10,7 +10,6 @@ namespace CrystalData.Journal;
 
 public partial class SimpleJournal : IJournal
 {
-    public const int SaveIntervalInMilliseconds = 1_000;
     public const string CompleteSuffix = ".complete";
     public const string IncompleteSuffix = ".incomplete";
     public const int RecordBufferLength = 1024 * 1024 * 1; // 1MB
