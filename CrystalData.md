@@ -277,7 +277,7 @@ var secondData2 = crystal2.Data;
 
 
 
-### Specifying a path
+### Specifying the path
 
 You can set the path to save the data by specifying the **FileConfiguration** of **CrystalConfiguration**.
 
@@ -295,17 +295,60 @@ context.AddCrystal<FirstData>(
 
 #### Local path
 
-
+If a relative path is specified, it combines the root directory of Crystalizer with the path to create an absolute path.
 
 ```csharp
-FileConfiguration = new LocalFileConfiguration("Local/FirstExample/FirstData.tinyhand"), // Specify the file name to save.
+FileConfiguration = new LocalFileConfiguration("Local/PathExample/FirstData.tinyhand"),
+```
+
+The absolute path will be used as is.
+
+```csharp
+FileConfiguration = new LocalFileConfiguration("C:\\Local/PathExample/FirstData.tinyhand"),
 ```
 
 
 
 #### Relative path
 
+When specifying RelativeFileConfiguration, the path will be combined with GlobalMain of CrystalizerOptions to create an absolute path.
 
+```csharp
+FileConfiguration = new RelativeFileConfiguration("Relative/FirstData.tinyhand"),
+```
+
+```csharp
+var builder = new CrystalControl.Builder()
+    .ConfigureCrystal(context =>
+    {
+    })
+    .SetupOptions<CrystalizerOptions>((context, options) =>
+    {// You can change the root directory of the CrystalData by modifying CrystalizerOptions.
+        context.GetOptions<UnitOptions>(out var unitOptions);// Get the application root directory.
+        if (unitOptions is not null)
+        {
+            // options.RootPath = Path.Combine(unitOptions.RootDirectory, "Additional"); // Root directory
+            options.GlobalMain = new LocalDirectoryConfiguration(Path.Combine(unitOptions.RootDirectory, "Global")); // Global directory
+        }
+    });
+```
+
+
+
+#### AWS S3
+
+You can also save data on AWS S3. Please enter authentication information using IStorageKey.
+
+```csharp
+FileConfiguration = new S3FileConfiguration(BucketName, "Test/FirstData.tinyhand"),
+```
+
+```csharp
+if (AccessKeyPair.TryParse(KeyPair, out var accessKeyPair))
+{// AccessKeyId=SecretAccessKey
+    unit.Context.ServiceProvider.GetRequiredService<IStorageKey>().AddKey(BucketName, accessKeyPair);
+}
+```
 
 
 
@@ -368,9 +411,3 @@ var builder = new CrystalControl.Builder()
 ```
 
 
-
-## AWS S3
-
-
-
-## Template data class

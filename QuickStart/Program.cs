@@ -28,17 +28,18 @@ public partial class Program
         // var unit = await SecondExample();
         // var unit = await SaveTimingExample();
         // var unit = await ConfigurationTimingExample();
-        var unit = await JournalExample();
+        // var unit = await JournalExample();
+        var unit = await PathExample();
         // var unit = await IntegratedExample();
 
         ThreadCore.Root.Terminate();
         if (unit is not null)
-        {
+        {// Save all data managed by CrystalData.
             await unit.Context.ServiceProvider.GetRequiredService<Crystalizer>().SaveAllAndTerminate();
         }
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
         if (unit?.Context.ServiceProvider.GetService<UnitLogger>() is { } unitLogger)
-        {
+        {// Flush the buffered logs and then shut down the logger.
             await unitLogger.FlushAndTerminate();
         }
 
