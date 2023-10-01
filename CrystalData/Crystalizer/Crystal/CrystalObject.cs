@@ -124,7 +124,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObje
     {
         using (this.semaphore.Lock())
         {
-            if (this.Crystalizer.GlobalBackup is { } globalBackup)
+            if (this.Crystalizer.DefaultBackup is { } globalBackup)
             {
                 if (configuration.BackupFileConfiguration == null)
                 {

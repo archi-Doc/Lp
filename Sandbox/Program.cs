@@ -107,7 +107,7 @@ public class Program
             {// CrystalizerOptions
                 options.EnableFilerLogger = true;
                 options.RootPath = Directory.GetCurrentDirectory();
-                options.GlobalMain = new LocalDirectoryConfiguration("Global");
+                options.GlobalDirectory = new LocalDirectoryConfiguration("Global");
                 // options.GlobalBackup = new LocalDirectoryConfiguration("Backup2");
             })
             .SetupOptions<FileLoggerOptions>((context, options) =>

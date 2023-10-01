@@ -173,7 +173,7 @@ public class Control : ILogInformation
             {// CrystalizerOptions
                 context.GetOptions<LPOptions>(out var lpOptions);
                 options.RootPath = lpOptions.RootDirectory;
-                options.GlobalMain = new LocalDirectoryConfiguration("Local");
+                options.GlobalDirectory = new LocalDirectoryConfiguration("Local");
                 options.EnableFilerLogger = false;
             });
 

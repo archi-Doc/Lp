@@ -54,8 +54,8 @@ public class Crystalizer
     public Crystalizer(CrystalizerConfiguration configuration, CrystalizerOptions options, ICrystalDataQuery query, ILogger<Crystalizer> logger, UnitLogger unitLogger, IStorageKey storageKey)
     {
         this.configuration = configuration;
-        this.GlobalMain = options.GlobalMain;
-        this.GlobalBackup = options.GlobalBackup;
+        this.GlobalDirectory = options.GlobalDirectory;
+        this.DefaultBackup = options.DefaultBackup;
         this.EnableFilerLogger = options.EnableFilerLogger;
         this.RootDirectory = options.RootPath;
         this.DefaultTimeout = options.DefaultTimeout;
@@ -98,9 +98,9 @@ public class Crystalizer
 
     #region FieldAndProperty
 
-    public DirectoryConfiguration GlobalMain { get; }
+    public DirectoryConfiguration GlobalDirectory { get; }
 
-    public DirectoryConfiguration? GlobalBackup { get; }
+    public DirectoryConfiguration? DefaultBackup { get; }
 
     public bool EnableFilerLogger { get; }
 
@@ -223,7 +223,7 @@ public class Crystalizer
         {
             if (configuration is GlobalFileConfiguration)
             {// Global file
-                configuration = this.GlobalMain.CombineFile(configuration.Path);
+                configuration = this.GlobalDirectory.CombineFile(configuration.Path);
             }
 
             if (configuration is EmptyFileConfiguration)
@@ -263,7 +263,7 @@ public class Crystalizer
         {
             if (configuration is GlobalDirectoryConfiguration)
             {// Global directory
-                configuration = this.GlobalMain.CombineDirectory(configuration);
+                configuration = this.GlobalDirectory.CombineDirectory(configuration);
             }
 
             if (configuration is EmptyDirectoryConfiguration)
@@ -902,7 +902,7 @@ public class Crystalizer
             }
             else if (configuration is SimpleJournalConfiguration simpleJournalConfiguration)
             {
-                if (this.GlobalBackup is { } globalBackup)
+                if (this.DefaultBackup is { } globalBackup)
                 {
                     if (simpleJournalConfiguration.BackupDirectoryConfiguration == null)
                     {

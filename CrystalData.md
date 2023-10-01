@@ -311,7 +311,7 @@ FileConfiguration = new LocalFileConfiguration("C:\\Local/PathExample/FirstData.
 
 #### Global path
 
-When specifying GlobalFileConfiguration, the path will be combined with GlobalMain of CrystalizerOptions to create an absolute path.
+When specifying GlobalFileConfiguration, the path will be combined with GlobalDirectory of CrystalizerOptions to create an absolute path.
 
 ```csharp
 FileConfiguration = new GlobalFileConfiguration("Global/FirstData.tinyhand"),
@@ -328,7 +328,7 @@ var builder = new CrystalControl.Builder()
         if (unitOptions is not null)
         {
             // options.RootPath = Path.Combine(unitOptions.RootDirectory, "Additional"); // Root directory
-            options.GlobalMain = new LocalDirectoryConfiguration(Path.Combine(unitOptions.RootDirectory, "Global")); // Global directory
+            options.GlobalDirectory = new LocalDirectoryConfiguration(Path.Combine(unitOptions.RootDirectory, "Global")); // Global directory
         }
     });
 ```
@@ -349,6 +349,48 @@ if (AccessKeyPair.TryParse(KeyPair, out var accessKeyPair))
     unit.Context.ServiceProvider.GetRequiredService<IStorageKey>().AddKey(BucketName, accessKeyPair);
 }
 ```
+
+
+
+### Backup
+
+By setting up a backup configuration, you can recover data from the backup file even if the main file is lost.
+
+```csharp
+context.AddCrystal<BackupData>(
+    new()
+    {
+        SaveFormat = SaveFormat.Utf8, // Format is utf8 text.
+        NumberOfFileHistories = 3,
+        FileConfiguration = new LocalFileConfiguration("Local/BackupExample/BackupData.tinyhand"),
+
+        // Specify the location to save the backup files individually.
+        BackupFileConfiguration = new LocalFileConfiguration("Local/BackupExample/Backup/BackupData.tinyhand"),
+    });
+```
+
+```csharp
+.SetupOptions<CrystalizerOptions>((context, options) =>
+{
+    context.GetOptions<UnitOptions>(out var unitOptions);// Get the application root directory.
+    if (unitOptions is not null)
+    {
+        // When you set DefaultBackup, the backup for all data (for which BackupFileConfiguration has not been specified individually) will be saved in the directory.
+        options.DefaultBackup = new LocalDirectoryConfiguration(Path.Combine(unitOptions.RootDirectory, "DefaultBackup"));
+    }
+});
+```
+
+
+
+The process of loading data is as follows:
+
+1. Load the main file.
+2. If it fails, load the backup file.
+3. If there are history files (main or backup), load the latest history file.
+4. When Journaling is set (detailed later), load the Journal to update to the most recent data.
+
+By performing the above processes, CrystalData tries to minimize data loss.
 
 
 

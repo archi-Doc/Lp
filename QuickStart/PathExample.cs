@@ -20,7 +20,7 @@ public partial class Program
                 if (unitOptions is not null)
                 {
                     // options.RootPath = Path.Combine(unitOptions.RootDirectory, "Additional"); // Root directory
-                    options.GlobalMain = new LocalDirectoryConfiguration(Path.Combine(unitOptions.RootDirectory, "Global")); // Global directory
+                    options.GlobalDirectory = new LocalDirectoryConfiguration(Path.Combine(unitOptions.RootDirectory, "Global")); // Global directory
                 }
             });
 
@@ -50,7 +50,8 @@ public partial class Program
             unit.Context.ServiceProvider.GetRequiredService<IStorageKey>().AddKey(BucketName, accessKeyPair);
         }
 
-        await crystal.PrepareAndLoad(false); // It needs to be loaded manually as it is outside the management of crystalizer.
+        // await crystalizer.PrepareAndLoadAll(false); // Prepare resources for storage operations and read data from files.
+        await crystal.PrepareAndLoad(false); // You can also prepare and load data individually through the ICrystal interface.
         var data = crystal.Data;
 
         // Unit root directory

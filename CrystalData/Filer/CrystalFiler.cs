@@ -347,7 +347,10 @@ public class CrystalFiler
         if (this.IsProtected)
         {// List data
             await this.main.ListData();
-            _ = this.backup?.ListData();
+            if (this.backup is not null)
+            {
+                await this.backup.ListData();
+            }
         }
 
         return CrystalResult.Success;

@@ -29,7 +29,8 @@ public partial class Program
         // var unit = await SaveTimingExample();
         // var unit = await ConfigurationTimingExample();
         // var unit = await JournalExample();
-        var unit = await PathExample();
+        // var unit = await PathExample();
+        var unit = await BackupExample();
         // var unit = await IntegratedExample();
 
         ThreadCore.Root.Terminate();
