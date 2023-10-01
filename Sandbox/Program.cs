@@ -51,7 +51,7 @@ public class Program
                     });
 
                 context.AddCrystal<ManualClass>(
-                    new(SavePolicy.OnChanged, new RelativeFileConfiguration("Local/manual.tinyhand"))
+                    new(SavePolicy.OnChanged, new GlobalFileConfiguration("Local/manual.tinyhand"))
                     {
                         SaveFormat = SaveFormat.Utf8,
                         NumberOfFileHistories = 3,
@@ -70,7 +70,7 @@ public class Program
                     });
 
                 context.AddCrystal<StandardData.GoshujinClass>(
-                    new(SavePolicy.Periodic, new RelativeFileConfiguration("Local/standard.tinyhand"))
+                    new(SavePolicy.Periodic, new GlobalFileConfiguration("Local/standard.tinyhand"))
                     {
                         SaveFormat = SaveFormat.Utf8,
                         NumberOfFileHistories = 2,
@@ -107,7 +107,7 @@ public class Program
             {// CrystalizerOptions
                 options.EnableFilerLogger = true;
                 options.RootPath = Directory.GetCurrentDirectory();
-                options.GlobalMain = new LocalDirectoryConfiguration("Relative");
+                options.GlobalMain = new LocalDirectoryConfiguration("Global");
                 // options.GlobalBackup = new LocalDirectoryConfiguration("Backup2");
             })
             .SetupOptions<FileLoggerOptions>((context, options) =>

@@ -166,12 +166,12 @@ public class Crystalizer
     {
         lock (this.syncFiler)
         {
-            if (configuration is RelativeFileConfiguration)
-            {// Relative file
+            if (configuration is GlobalFileConfiguration)
+            {// Global file
                 configuration = this.GlobalMain.CombineFile(configuration.Path);
             }
-            else if (configuration is RelativeDirectoryConfiguration directoryConfiguration)
-            {// Relative directory
+            else if (configuration is GlobalDirectoryConfiguration directoryConfiguration)
+            {// Global directory
                 configuration = this.GlobalMain.CombineDirectory(directoryConfiguration);
             }
 
@@ -221,8 +221,8 @@ public class Crystalizer
     {
         lock (this.syncFiler)
         {
-            if (configuration is RelativeFileConfiguration)
-            {// Relative file
+            if (configuration is GlobalFileConfiguration)
+            {// Global file
                 configuration = this.GlobalMain.CombineFile(configuration.Path);
             }
 
@@ -261,8 +261,8 @@ public class Crystalizer
     {
         lock (this.syncFiler)
         {
-            if (configuration is RelativeDirectoryConfiguration)
-            {// Relative directory
+            if (configuration is GlobalDirectoryConfiguration)
+            {// Global directory
                 configuration = this.GlobalMain.CombineDirectory(configuration);
             }
 

@@ -90,10 +90,10 @@ public sealed class StorageGroup
             return (AddStorageResult.WriteError, 0);
         }
 
-        var relative = Path.GetRelativePath(this.Crystalizer.RootDirectory, path);
-        if (!relative.StartsWith("..\\"))
+        var relativePath = Path.GetRelativePath(this.Crystalizer.RootDirectory, path);
+        if (!relativePath.StartsWith("..\\"))
         {
-            path = relative;
+            path = relativePath;
         }
 
         var result = LocalFiler.Check(this.Crystalizer, path);

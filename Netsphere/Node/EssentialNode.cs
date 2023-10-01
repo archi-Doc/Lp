@@ -40,7 +40,7 @@ public partial class EssentialNode
         this.crystal = crystalizer.GetOrCreateCrystal<Data>(new CrystalConfiguration() with
         {
             SaveFormat = SaveFormat.Utf8,
-            FileConfiguration = new RelativeFileConfiguration(Filename),
+            FileConfiguration = new GlobalFileConfiguration(Filename),
             NumberOfFileHistories = 0,
         });
 

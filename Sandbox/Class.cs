@@ -11,7 +11,6 @@ public abstract partial class TtlBase
     public TtlBase()
     {
         var g = new TtlData.GoshujinClass();
-        g.NameChain.FindFirst
     }
 
     [Key(0)]

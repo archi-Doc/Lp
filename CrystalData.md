@@ -309,12 +309,12 @@ FileConfiguration = new LocalFileConfiguration("C:\\Local/PathExample/FirstData.
 
 
 
-#### Relative path
+#### Global path
 
-When specifying RelativeFileConfiguration, the path will be combined with GlobalMain of CrystalizerOptions to create an absolute path.
+When specifying GlobalFileConfiguration, the path will be combined with GlobalMain of CrystalizerOptions to create an absolute path.
 
 ```csharp
-FileConfiguration = new RelativeFileConfiguration("Relative/FirstData.tinyhand"),
+FileConfiguration = new GlobalFileConfiguration("Global/FirstData.tinyhand"),
 ```
 
 ```csharp
@@ -409,5 +409,4 @@ var builder = new CrystalControl.Builder()
         context.SetJournal(new SimpleJournalConfiguration(new LocalDirectoryConfiguration("Local/JournalExample/Journal")));
     });
 ```
-
 

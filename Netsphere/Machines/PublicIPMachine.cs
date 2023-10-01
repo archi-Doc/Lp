@@ -29,7 +29,7 @@ public partial class PublicIPMachine : Machine<Identifier>
         var configuration = new CrystalConfiguration() with
         {
             SaveFormat = SaveFormat.Utf8,
-            FileConfiguration = new RelativeFileConfiguration(Filename),
+            FileConfiguration = new GlobalFileConfiguration(Filename),
             NumberOfFileHistories = 0,
         };
 

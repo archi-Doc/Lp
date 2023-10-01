@@ -38,8 +38,8 @@ public partial class Program
                 // The absolute path will be used as is.
                 // FileConfiguration = new LocalFileConfiguration("C:\\Local/PathExample/FirstData.tinyhand"),
 
-                // When specifying RelativeFileConfiguration, the path will be combined with GlobalMain of CrystalizerOptions to create an absolute path.
-                // FileConfiguration = new RelativeFileConfiguration("Relative/FirstData.tinyhand"),
+                // When specifying GlobalFileConfiguration, the path will be combined with GlobalMain of CrystalizerOptions to create an absolute path.
+                // FileConfiguration = new GlobalFileConfiguration("Global/FirstData.tinyhand"),
 
                 // You can also save data on AWS S3. Please enter authentication information using IStorageKey.
                 // FileConfiguration = new S3FileConfiguration(BucketName, "Test/FirstData.tinyhand"),
