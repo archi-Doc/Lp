@@ -31,7 +31,7 @@ public partial class Program
                 context.AddCrystal<FirstData>(
                     new()
                     {
-                        SaveFormat = SaveFormat.Utf8, // Format is utf8 text.
+                        SaveFormat = SaveFormat.Utf8,
                         NumberOfFileHistories = 3,
                         FileConfiguration = new LocalFileConfiguration("Local/BackupExample/FirstData.tinyhand"),
                     });
@@ -39,7 +39,7 @@ public partial class Program
                 context.AddCrystal<BackupData>(
                     new()
                     {
-                        SaveFormat = SaveFormat.Utf8, // Format is utf8 text.
+                        SaveFormat = SaveFormat.Utf8,
                         NumberOfFileHistories = 3,
                         FileConfiguration = new LocalFileConfiguration("Local/BackupExample/BackupData.tinyhand"),
 
