@@ -190,7 +190,7 @@ public class CrystalFiler
                 }
 
                 // List data
-                await this.ListData();
+                await this.ListData().ConfigureAwait(false);
             }
 
             var array = this.GetReverseWaypointArray();
@@ -346,10 +346,10 @@ public class CrystalFiler
 
         if (this.IsProtected)
         {// List data
-            await this.main.ListData();
+            await this.main.ListData().ConfigureAwait(false);
             if (this.backup is not null)
             {
-                await this.backup.ListData();
+                await this.backup.ListData().ConfigureAwait(false);
             }
         }
 

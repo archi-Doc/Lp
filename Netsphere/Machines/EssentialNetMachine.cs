@@ -43,8 +43,8 @@ public partial class EssentialNetMachine : Machine<Identifier>
             // nodeAddress = NodeAddress.Alternative;
             using (var terminal = this.NetControl.Terminal.Create(nodeAddress))
             {
-                // await terminal.EncryptConnectionAsync();
-                var result = await terminal.SendPacketAndReceiveAsync<PacketPunch, PacketPunchResponse>(new PacketPunch(null));
+                // await terminal.EncryptConnectionAsync().ConfigureAwait(false);
+                var result = await terminal.SendPacketAndReceiveAsync<PacketPunch, PacketPunchResponse>(new PacketPunch(null)).ConfigureAwait(false);
                 if (result.Result == NetResult.Success && result.Value is { } value)
                 {// Success
                     if (this.EnableLogger)

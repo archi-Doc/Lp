@@ -106,7 +106,7 @@ internal partial class StreamLoggerWorker : TaskCore
             await worker.Flush(false).ConfigureAwait(false);
         }
 
-        await worker.Flush(false);
+        await worker.Flush(false).ConfigureAwait(false);
     }
 
     public void Add(StreamLoggerWork work)

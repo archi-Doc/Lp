@@ -17,10 +17,10 @@ public partial class SimpleJournal
             var core = (SimpleJournalTask)parameter!;
             while (await core.Delay(core.simpleJournal.SimpleJournalConfiguration.SaveIntervalInMilliseconds).ConfigureAwait(false))
             {
-                await core.simpleJournal.SaveJournalAsync(true);
+                await core.simpleJournal.SaveJournalAsync(true).ConfigureAwait(false);
             }
 
-            await core.simpleJournal.SaveJournalAsync(false);
+            await core.simpleJournal.SaveJournalAsync(false).ConfigureAwait(false);
         }
 
         private SimpleJournal simpleJournal;

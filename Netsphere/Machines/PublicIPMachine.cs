@@ -70,7 +70,7 @@ public partial class PublicIPMachine : Machine<Identifier>
 
         this.crystal.Data.Mics = Mics.GetUtcNow();
         this.crystal.Data.IPAddress = ipAddress;
-        await this.crystal.Save();
+        await this.crystal.Save().ConfigureAwait(false);
     }
 
     private async Task<bool> GetIcanhazip()
@@ -86,7 +86,7 @@ public partial class PublicIPMachine : Machine<Identifier>
                     return false;
                 }
 
-                await this.ReportIpAddress(ipAddress, IcanhazipUri);
+                await this.ReportIpAddress(ipAddress, IcanhazipUri).ConfigureAwait(false);
                 return true;
             }
         }
@@ -122,7 +122,7 @@ public partial class PublicIPMachine : Machine<Identifier>
                     return false;
                 }
 
-                await this.ReportIpAddress(ipAddress, DynDnsUri);
+                await this.ReportIpAddress(ipAddress, DynDnsUri).ConfigureAwait(false);
                 return true;
             }
         }

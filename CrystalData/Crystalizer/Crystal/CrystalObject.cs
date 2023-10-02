@@ -208,7 +208,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObje
 
         if (this.storage is { } storage && storage is not EmptyStorage)
         {
-            await storage.SaveStorage();
+            await storage.SaveStorage().ConfigureAwait(false);
         }
 
         this.lastSavedTime = DateTime.UtcNow;

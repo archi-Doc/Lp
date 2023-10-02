@@ -37,13 +37,13 @@ public class Crystalizer
             int elapsedMilliseconds = 0;
             while (await core.Delay(TaskIntervalInMilliseconds).ConfigureAwait(false))
             {
-                await core.crystalizer.QueuedSave();
+                await core.crystalizer.QueuedSave().ConfigureAwait(false);
 
                 elapsedMilliseconds += TaskIntervalInMilliseconds;
                 if (elapsedMilliseconds >= PeriodicSaveInMilliseconds)
                 {
                     elapsedMilliseconds = 0;
-                    await core.crystalizer.PeriodicSave();
+                    await core.crystalizer.PeriodicSave().ConfigureAwait(false);
                 }
             }
         }
@@ -442,7 +442,7 @@ public class Crystalizer
         // Check file
         if (!this.CrystalCheck.SuccessfullyLoaded)
         {
-            if (await this.Query.NoCheckFile() == AbortOrContinue.Abort)
+            if (await this.Query.NoCheckFile().ConfigureAwait(false) == AbortOrContinue.Abort)
             {
                 return CrystalResult.NotFound;
             }
@@ -501,7 +501,7 @@ public class Crystalizer
 
     public async Task SaveAllAndTerminate()
     {
-        await this.SaveAndTerminate(true, true);
+        await this.SaveAndTerminate(true, true).ConfigureAwait(false);
     }
 
     public void AddToSaveQueue(ICrystal crystal)
@@ -610,7 +610,7 @@ public class Crystalizer
     {
         if (this.Journal is SimpleJournal simpleJournal)
         {
-            await simpleJournal.Merge(true);
+            await simpleJournal.Merge(true).ConfigureAwait(false);
         }
     }
 

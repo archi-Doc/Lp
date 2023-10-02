@@ -107,7 +107,7 @@ Retry:
             return;
         }
 
-        await Parallel.ForEachAsync(hostnames, this.Process);
+        await Parallel.ForEachAsync(hostnames, this.Process).ConfigureAwait(false);
         if (this.data.timeoffsetCount == 0)
         {
             this.logger?.TryGet(LogLevel.Error)?.Log("Retry");
@@ -129,8 +129,8 @@ Retry:
             {
                 client.Connect(hostname, 123);
                 var packet = NtpPacket.CreateSendPacket();
-                await client.SendAsync(packet.PacketData, cancellationToken);
-                var result = await client.ReceiveAsync().WaitAsync(TimeSpan.FromSeconds(1), cancellationToken);
+                await client.SendAsync(packet.PacketData, cancellationToken).ConfigureAwait(false);
+                var result = await client.ReceiveAsync().WaitAsync(TimeSpan.FromSeconds(1), cancellationToken).ConfigureAwait(false);
             }
             catch
             {
@@ -201,8 +201,8 @@ Retry:
             {
                 client.Connect(hostname, 123);
                 var packet = NtpPacket.CreateSendPacket();
-                await client.SendAsync(packet.PacketData, cancellationToken);
-                var result = await client.ReceiveAsync().WaitAsync(TimeSpan.FromSeconds(1), cancellationToken);
+                await client.SendAsync(packet.PacketData, cancellationToken).ConfigureAwait(false);
+                var result = await client.ReceiveAsync().WaitAsync(TimeSpan.FromSeconds(1), cancellationToken).ConfigureAwait(false);
                 packet = new NtpPacket(result.Buffer);
 
                 this.logger?.TryGet()?.Log($"{hostname}, RoundtripTime: {(int)packet.RoundtripTime.TotalMilliseconds} ms, TimeOffset: {(int)packet.TimeOffset.TotalMilliseconds} ms");
