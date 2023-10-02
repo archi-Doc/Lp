@@ -18,7 +18,7 @@ public interface IBaseData
 public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
     where TData : class, IBaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {// BigCrystalObject = CrystalObject + Datum + StorageGroup (+ Himo)
-    public BigCrystalObject(Crystalizer crystalizer)
+    internal BigCrystalObject(Crystalizer crystalizer)
     {
         this.Crystalizer = crystalizer;
         this.BigCrystalConfiguration = BigCrystalConfiguration.Default;

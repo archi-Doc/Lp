@@ -12,7 +12,7 @@ namespace CrystalData;
 public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObject
     where TData : class, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {// Data + Journal/Waypoint + Filer/FileConfiguration + Storage/StorageConfiguration
-    public CrystalObject(Crystalizer crystalizer)
+    internal CrystalObject(Crystalizer crystalizer)
     {
         this.Crystalizer = crystalizer;
         this.CrystalConfiguration = CrystalConfiguration.Default;
