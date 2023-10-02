@@ -24,8 +24,7 @@ internal class TestClass
         manualClass.Id = 1;
         Console.WriteLine(manualClass.ToString());
 
-        var manualCrystal2 = this.crystalizer.CreateCrystal<ManualClass>();
-        manualCrystal2.Configure(new(SavePolicy.Manual, new LocalFileConfiguration("test2/manual2")));
+        var manualCrystal2 = this.crystalizer.CreateCrystal<ManualClass>(new(SavePolicy.Manual, new LocalFileConfiguration("test2/manual2")));
         var manualClass2 = manualCrystal2.Data;
         manualClass2.Id = 2;
         await manualCrystal2.Save();

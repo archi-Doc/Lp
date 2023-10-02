@@ -16,7 +16,7 @@ public sealed class StorageGroup
     {
         this.Crystalizer = crystalizer;
         this.dataType = dataType;
-        this.crystal = this.Crystalizer.CreateCrystal<StorageObject.GoshujinClass>(false);
+        this.crystal = this.Crystalizer.CreateCrystal<StorageObject.GoshujinClass>(null, false);
         this.storageGroupConfiguration = CrystalConfiguration.Default;
     }
 

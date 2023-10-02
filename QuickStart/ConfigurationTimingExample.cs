@@ -28,8 +28,8 @@ public class ConfigurationExampleClass
         Console.WriteLine($"Second: {secondData.ToString()}");
 
         // You can create multiple crystals from single data class.
-        var crystal2 = this.crystalizer.CreateCrystal<SecondData>();
-        crystal2.Configure(new CrystalConfiguration(
+        var crystal2 = this.crystalizer.CreateCrystal<SecondData>(
+            new CrystalConfiguration(
                 SavePolicy.Manual,
                 new LocalFileConfiguration("Local/ConfigurationTimingExample/SecondData2.tinyhand")));
         var secondData2 = crystal2.Data;

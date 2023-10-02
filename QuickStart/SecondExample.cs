@@ -40,8 +40,8 @@ public class SecondExample
 
         await this.crystal.Save(); // Save data.
 
-        var firstCrystal = this.crystalizer.CreateCrystal<FirstData>();
-        firstCrystal.Configure(CrystalConfiguration.SingleUtf8(false, new LocalFileConfiguration("Local/SecondExample/FirstData.tinyhand")));
+        var firstCrystal = this.crystalizer.CreateCrystal<FirstData>(
+            CrystalConfiguration.SingleUtf8(false, new LocalFileConfiguration("Local/SecondExample/FirstData.tinyhand")));
         firstCrystal.Data.Id++;
         firstCrystal.Data.Name += "Nupo";
 

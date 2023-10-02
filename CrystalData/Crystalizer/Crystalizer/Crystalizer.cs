@@ -516,7 +516,7 @@ public class Crystalizer
         return results;
     }
 
-    public ICrystal<TData> CreateCrystal<TData>(bool managedByCrystalizer = true)
+    public ICrystal<TData> CreateCrystal<TData>(CrystalConfiguration? configuration = null, bool managedByCrystalizer = true)
         where TData : class, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
         var crystal = new CrystalObject<TData>(this);
@@ -525,7 +525,7 @@ public class Crystalizer
             this.crystals.TryAdd(crystal, 0);
         }
 
-        if (this.configuration.CrystalConfigurations.TryGetValue(typeof(TData), out var configuration))
+        if (configuration is not null)
         {
             ((ICrystal)crystal).Configure(configuration);
         }
@@ -548,7 +548,22 @@ public class Crystalizer
         return crystalObject;
     }
 
-    public ICrystal<TData> CreateBigCrystal<TData>(bool managedByCrystalizer = true)
+    public IBigCrystal<TData> GetOrCreateBigCrystal<TData>(CrystalConfiguration configuration)
+        where TData : class, IBaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+    {
+        if (this.typeToCrystal.TryGetValue(typeof(TData), out var crystal) &&
+            crystal is IBigCrystal<TData> crystalData)
+        {
+            return crystalData;
+        }
+
+        var crystalObject = new BigCrystalObject<TData>(this);
+        this.crystals.TryAdd(crystalObject, 0);
+        ((ICrystal)crystalObject).Configure(configuration);
+        return crystalObject;
+    }
+
+    public ICrystal<TData> CreateBigCrystal<TData>(CrystalConfiguration? configuration = null, bool managedByCrystalizer = true)
         where TData : class, IBaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
         var crystal = new BigCrystalObject<TData>(this);
@@ -557,7 +572,7 @@ public class Crystalizer
             this.crystals.TryAdd(crystal, 0);
         }
 
-        if (this.configuration.CrystalConfigurations.TryGetValue(typeof(TData), out var configuration))
+        if (configuration is not null)
         {
             ((ICrystal)crystal).Configure(configuration);
         }
