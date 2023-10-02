@@ -257,8 +257,6 @@ public class ConfigurationExampleClass
 #### Crystalizer
 Create an **ICrystal** object using the **Crystalizer**.
 
-If it's a new instance, make sure to register the configuration. If it has already been registered with the Builder, utilize the registered configuration.
-
 ```csharp
 // Get or create an ICrystal interface of the data.
 var crystal = this.crystalizer.GetOrCreateCrystal<SecondData>(
@@ -268,8 +266,8 @@ var crystal = this.crystalizer.GetOrCreateCrystal<SecondData>(
 var secondData = crystal.Data;
 
 // You can create multiple crystals from single data class.
-var crystal2 = this.crystalizer.CreateCrystal<SecondData>();
-crystal2.Configure(new CrystalConfiguration(
+var crystal2 = this.crystalizer.CreateCrystal<SecondData>(
+    new CrystalConfiguration(
         SavePolicy.Manual,
         new LocalFileConfiguration("Local/ConfigurationTimingExample/SecondData2.tinyhand")));
 var secondData2 = crystal2.Data;

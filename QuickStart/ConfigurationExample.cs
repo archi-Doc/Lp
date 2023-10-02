@@ -45,7 +45,7 @@ public class ConfigurationExampleClass
 
 public partial class Program
 {
-    public static async Task<BuiltUnit> ConfigurationTimingExample()
+    public static async Task<BuiltUnit> ConfigurationExample()
     {
         var builder = new CrystalControl.Builder()
             .Configure(context =>
