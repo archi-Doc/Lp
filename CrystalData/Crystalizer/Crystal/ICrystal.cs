@@ -26,9 +26,7 @@ public interface ICrystal : ITinyhandJournal
 
     Task<CrystalResult> PrepareAndLoad(bool useQuery);
 
-    Task<CrystalResult> Save(bool unload = false);
-
-    Task<CrystalResult> Save(UnloadMode unloadMode); // = UnloadMode.NoUnload
+    Task<CrystalResult> Save(UnloadMode unloadMode = UnloadMode.NoUnload);
 
     Task<CrystalResult> Delete();
 

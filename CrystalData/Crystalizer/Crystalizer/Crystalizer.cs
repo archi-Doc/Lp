@@ -488,14 +488,14 @@ public class Crystalizer
         return CrystalResult.Success;
     }
 
-    public async Task SaveAll(bool unload = false)
+    public async Task SaveAll(UnloadMode unloadMode = UnloadMode.NoUnload)
     {
         this.CrystalCheck.Save();
 
         var crystals = this.crystals.Keys.ToArray();
         foreach (var x in crystals)
         {
-            await x.Save(unload).ConfigureAwait(false);
+            await x.Save(unloadMode).ConfigureAwait(false);
         }
     }
 
@@ -852,7 +852,7 @@ public class Crystalizer
         {
             if (x.State == CrystalState.Prepared)
             {
-                tasks.Add(x.Save(false));
+                tasks.Add(x.Save());
             }
         }
 
@@ -863,7 +863,7 @@ public class Crystalizer
     {
         if (saveData)
         {
-            await this.SaveAll(true).ConfigureAwait(false);
+            await this.SaveAll(UnloadMode.ForceUnload).ConfigureAwait(false);
         }
 
         this.CrystalCheck.Save();

@@ -182,100 +182,6 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObje
         }
     }
 
-    async Task<CrystalResult> ICrystal.Save(bool unload)
-    {
-        if (this.CrystalConfiguration.SavePolicy == SavePolicy.Volatile)
-        {
-            return CrystalResult.Success;
-        }
-
-        var obj = Volatile.Read(ref this.data);
-        var filer = Volatile.Read(ref this.crystalFiler);
-        var currentWaypoint = this.waypoint;
-
-        if (this.State == CrystalState.Initial)
-        {// Initial
-            return CrystalResult.NotPrepared;
-        }
-        else if (this.State == CrystalState.Deleted)
-        {// Deleted
-            return CrystalResult.Deleted;
-        }
-        else if (obj == null || filer == null)
-        {
-            return CrystalResult.NotPrepared;
-        }
-
-        if (this.storage is { } storage && storage is not EmptyStorage)
-        {
-            await storage.SaveStorage().ConfigureAwait(false);
-        }
-
-        this.lastSavedTime = DateTime.UtcNow;
-
-        // Starting position
-        var startingPosition = this.Crystalizer.GetJournalPosition();
-
-        // Serialize
-        byte[] byteArray;
-        if (this.CrystalConfiguration.SaveFormat == SaveFormat.Utf8)
-        {
-            byteArray = TinyhandSerializer.SerializeObjectToUtf8(obj);
-        }
-        else
-        {
-            byteArray = TinyhandSerializer.SerializeObject(obj);
-        }
-
-        // Get hash
-        var hash = FarmHash.Hash64(byteArray.AsSpan());
-        if (hash == currentWaypoint.Hash)
-        {// Identical data
-            goto Exit;
-        }
-
-        var waypoint = this.waypoint;
-        if (!waypoint.Equals(currentWaypoint))
-        {// Waypoint changed
-            goto Exit;
-        }
-
-        this.Crystalizer.UpdateWaypoint(this, ref currentWaypoint, hash);
-
-        var result = await filer.Save(byteArray, currentWaypoint).ConfigureAwait(false);
-        if (result != CrystalResult.Success)
-        {// Write error
-            return result;
-        }
-
-        using (this.semaphore.Lock())
-        {// Update waypoint and plane position.
-            this.waypoint = currentWaypoint;
-            this.Crystalizer.CrystalCheck.SetShortcutPosition(currentWaypoint, startingPosition);
-            if (unload)
-            {
-                this.data = null;
-                this.State = CrystalState.Initial;
-            }
-        }
-
-        _ = filer.LimitNumberOfFiles();
-        return CrystalResult.Success;
-
-Exit:
-        using (this.semaphore.Lock())
-        {
-            this.Crystalizer.CrystalCheck.SetShortcutPosition(currentWaypoint, startingPosition);
-            if (unload)
-            {
-                this.data = null;
-                this.State = CrystalState.Initial;
-            }
-        }
-
-        return CrystalResult.Success;
-    }
-
     async Task<CrystalResult> ICrystal.Save(UnloadMode unloadMode)
     {
         if (this.CrystalConfiguration.SavePolicy == SavePolicy.Volatile)
@@ -459,7 +365,7 @@ Exit:
         }
 
         this.lastSavedTime = utc;
-        return ((ICrystal)this).Save(false);
+        return ((ICrystal)this).Save(UnloadMode.NoUnload);
     }
 
     Waypoint ICrystalInternal.Waypoint
