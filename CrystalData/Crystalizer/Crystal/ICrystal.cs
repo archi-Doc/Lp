@@ -28,6 +28,8 @@ public interface ICrystal : ITinyhandJournal
 
     Task<CrystalResult> Save(bool unload = false);
 
+    Task<CrystalResult> Save(UnloadMode unloadMode); // = UnloadMode.NoUnload
+
     Task<CrystalResult> Delete();
 
     void Terminate();

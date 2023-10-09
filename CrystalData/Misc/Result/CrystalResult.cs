@@ -21,4 +21,6 @@ public enum CrystalResult
     FileOperationError, // Checked
     NoPartialWriteSupport, // Checked
     NoAccess, // Checked
+    DataIsLocked,
+    DataIsObsolete,
 }

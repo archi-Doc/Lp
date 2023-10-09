@@ -276,6 +276,134 @@ Exit:
         return CrystalResult.Success;
     }
 
+    async Task<CrystalResult> ICrystal.Save(UnloadMode unloadMode)
+    {
+        if (this.CrystalConfiguration.SavePolicy == SavePolicy.Volatile)
+        {// Volatile
+            if (unloadMode != UnloadMode.NoUnload)
+            {// Unload
+                using (this.semaphore.Lock())
+                {
+                    this.data = null;
+                    this.State = CrystalState.Initial;
+                }
+            }
+
+            return CrystalResult.Success;
+        }
+
+        var obj = Volatile.Read(ref this.data);
+        var filer = Volatile.Read(ref this.crystalFiler);
+        var currentWaypoint = this.waypoint;
+
+        if (this.State == CrystalState.Initial)
+        {// Initial
+            return CrystalResult.NotPrepared;
+        }
+        else if (this.State == CrystalState.Deleted)
+        {// Deleted
+            return CrystalResult.Deleted;
+        }
+        else if (obj == null || filer == null)
+        {
+            return CrystalResult.NotPrepared;
+        }
+
+        var semaphore = obj as IGoshujinSemaphore;
+        if (semaphore is not null)
+        {
+            if (unloadMode == UnloadMode.TryUnload)
+            {
+                semaphore.LockAndTryUnload(out var state);
+                if (state == GoshujinState.Valid)
+                {// Cannot unload because a WriterClass is still present.
+                    return CrystalResult.DataIsLocked;
+                }
+                else if (state == GoshujinState.Unloading)
+                {// Unload (Success)
+                }
+                else
+                {// Obsolete
+                    return CrystalResult.DataIsObsolete;
+                }
+            }
+            else if (unloadMode == UnloadMode.ForceUnload)
+            {
+                semaphore.LockAndForceUnload();
+            }
+        }
+
+        if (this.storage is { } storage && storage is not EmptyStorage)
+        {
+            await storage.SaveStorage().ConfigureAwait(false);
+        }
+
+        this.lastSavedTime = DateTime.UtcNow;
+
+        // Starting position
+        var startingPosition = this.Crystalizer.GetJournalPosition();
+
+        // Serialize
+        byte[] byteArray;
+        var options = unloadMode == UnloadMode.NoUnload ? TinyhandSerializerOptions.Standard : TinyhandSerializerOptions.Unload;
+        if (this.CrystalConfiguration.SaveFormat == SaveFormat.Utf8)
+        {
+            byteArray = TinyhandSerializer.SerializeObjectToUtf8(obj, options);
+        }
+        else
+        {
+            byteArray = TinyhandSerializer.SerializeObject(obj, options);
+        }
+
+        // Get hash
+        var hash = FarmHash.Hash64(byteArray.AsSpan());
+        if (hash == currentWaypoint.Hash)
+        {// Identical data
+            goto Exit;
+        }
+
+        var waypoint = this.waypoint;
+        if (!waypoint.Equals(currentWaypoint))
+        {// Waypoint changed
+            goto Exit;
+        }
+
+        this.Crystalizer.UpdateWaypoint(this, ref currentWaypoint, hash);
+
+        var result = await filer.Save(byteArray, currentWaypoint).ConfigureAwait(false);
+        if (result != CrystalResult.Success)
+        {// Write error
+            return result;
+        }
+
+        using (this.semaphore.Lock())
+        {// Update waypoint and plane position.
+            this.waypoint = currentWaypoint;
+            this.Crystalizer.CrystalCheck.SetShortcutPosition(currentWaypoint, startingPosition);
+            if (unloadMode != UnloadMode.NoUnload)
+            {// Unload
+                this.data = null;
+                this.State = CrystalState.Initial;
+            }
+        }
+
+        _ = filer.LimitNumberOfFiles();
+        return CrystalResult.Success;
+
+Exit:
+        using (this.semaphore.Lock())
+        {
+            this.Crystalizer.CrystalCheck.SetShortcutPosition(currentWaypoint, startingPosition);
+            if (unloadMode != UnloadMode.NoUnload)
+            {// Unload
+                this.data = null;
+                this.State = CrystalState.Initial;
+            }
+        }
+
+        return CrystalResult.Success;
+    }
+
     async Task<CrystalResult> ICrystal.Delete()
     {
         using (this.semaphore.Lock())

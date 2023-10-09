@@ -25,4 +25,7 @@ public static class CrystalExtensions
 
     public static bool IsFailure(this CrystalResult result)
         => result != CrystalResult.Success;
+
+    public static bool IsUnload(this UnloadMode unloadMode)
+        => unloadMode != UnloadMode.NoUnload;
 }
