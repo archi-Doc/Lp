@@ -2,7 +2,7 @@
 
 using Tinyhand.IO;
 
-namespace CrystalData.Unloadable;
+namespace CrystalData.Unload;
 
 public class Unloadable<TData> : IUnloadable, ITinyhandSerialize<Unloadable<TData>>
     where TData : ITinyhandSerialize<TData>

@@ -227,6 +227,10 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObje
                 }
                 else if (state == GoshujinState.Unloading)
                 {// Unload (Success)
+                    if (semaphore.SemaphoreCount > 0)
+                    {
+                        return CrystalResult.DataIsLocked;
+                    }
                 }
                 else
                 {// Obsolete

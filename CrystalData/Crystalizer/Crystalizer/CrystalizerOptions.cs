@@ -9,18 +9,23 @@ public class CrystalizerOptions
 
     public CrystalizerOptions()
     {
-        this.DefaultTimeout = TimeSpan.MinValue; // TimeSpan.FromSeconds(3);
+        this.FilerTimeout = TimeSpan.MinValue; // TimeSpan.FromSeconds(3);
+        this.UnloadTimeout = TimeSpan.FromSeconds(10);
     }
 
     public bool EnableFilerLogger { get; set; } = false;
 
     public string RootPath { get; set; } = string.Empty;
 
-    public TimeSpan DefaultTimeout { get; set; }
+    public TimeSpan FilerTimeout { get; set; }
 
     public long MemorySizeLimit { get; set; } = DefaultMemorySizeLimit;
 
     public int MaxParentInMemory { get; set; } = DefaultMaxParentInMemory;
+
+    public int ConcurrentUnload { get; set; } = 8;
+
+    public TimeSpan UnloadTimeout { get; set; }
 
     public DirectoryConfiguration GlobalDirectory { get; set; } = new LocalDirectoryConfiguration();
 

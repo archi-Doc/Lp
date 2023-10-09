@@ -48,9 +48,17 @@ internal class TestClass0
             }
         }
 
-        await this.standardCrystal.Save(UnloadMode.TryUnload);
+        _ = Task.Run(async () =>
+        {
+            using (var w = g.TryLock(0, ValueLink.TryLockMode.GetOrCreate))
+            {
+                await Task.Delay(2000);
+            }
+        });
+
+        /*await this.standardCrystal.Save(UnloadMode.TryUnload);
         var st = ((IGoshujinSemaphore)g).State;
-        var w2 = g.TryLock(0, ValueLink.TryLockMode.GetOrCreate);
+        var w2 = g.TryLock(0, ValueLink.TryLockMode.GetOrCreate);*/
     }
 
     private Crystalizer crystalizer;
