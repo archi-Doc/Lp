@@ -280,7 +280,7 @@ Exit:
     {
         if (this.CrystalConfiguration.SavePolicy == SavePolicy.Volatile)
         {// Volatile
-            if (unloadMode != UnloadMode.NoUnload)
+            if (unloadMode.IsUnload())
             {// Unload
                 using (this.semaphore.Lock())
                 {
@@ -380,7 +380,7 @@ Exit:
         {// Update waypoint and plane position.
             this.waypoint = currentWaypoint;
             this.Crystalizer.CrystalCheck.SetShortcutPosition(currentWaypoint, startingPosition);
-            if (unloadMode != UnloadMode.NoUnload)
+            if (unloadMode.IsUnload())
             {// Unload
                 this.data = null;
                 this.State = CrystalState.Initial;
@@ -394,7 +394,7 @@ Exit:
         using (this.semaphore.Lock())
         {
             this.Crystalizer.CrystalCheck.SetShortcutPosition(currentWaypoint, startingPosition);
-            if (unloadMode != UnloadMode.NoUnload)
+            if (unloadMode.IsUnload())
             {// Unload
                 this.data = null;
                 this.State = CrystalState.Initial;

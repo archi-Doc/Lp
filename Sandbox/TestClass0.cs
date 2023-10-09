@@ -47,6 +47,10 @@ internal class TestClass0
                 Console.WriteLine(w.Commit());
             }
         }
+
+        await this.standardCrystal.Save(UnloadMode.TryUnload);
+        var st = ((IGoshujinSemaphore)g).State;
+        var w2 = g.TryLock(0, ValueLink.TryLockMode.GetOrCreate);
     }
 
     private Crystalizer crystalizer;

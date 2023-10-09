@@ -291,6 +291,11 @@ public partial record BaseData : IBaseData, IDataInternal, ITinyhandCustomJourna
         }
     }
 
+    public void Save(UnloadMode unloadMode = UnloadMode.NoUnload)
+    {
+        this.Save(unloadMode.IsUnload());
+    }
+
     public void Unload()
     {
         using (this.semaphore.Lock())
