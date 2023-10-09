@@ -11,6 +11,7 @@
 
 - [Requirements](#requirements)
 - [Quick Start](#quick-start)
+- [Configuration](#configuration)
 
 
 
@@ -83,7 +84,7 @@ await crystalizer.SaveAll(); // Save all data.
 
 
 
-## CrystalConfiguration
+## Configuration
 
 By assigning a **CrystalConfiguration** to the data class, you can specify the timing, format of data save, the number of history files, and the file path.
 
@@ -101,7 +102,7 @@ context.AddCrystal<FirstData>(
 
 
 
-## Timing of data persistence
+### Timing of data persistence
 Data persistence is a core feature of CrystalData and its timing is critical. There are several options for when to save data.
 The following code is for preparation.
 
@@ -124,7 +125,7 @@ var data = crystal.Data;
 
 
 
-### Save manually
+#### Save manually
 
 Save the data manually after it has been changed, and wait until the save process is complete.
 
@@ -145,7 +146,7 @@ await crystal.Save();
 
 
 
-### On changed
+#### On changed
 
 When data is changed, it is registered in the save queue and will be saved in a second.
 
@@ -169,7 +170,7 @@ crystal.TryAddToSaveQueue();
 
 
 
-### Periodic
+#### Periodic
 
 By setting **SavePolicy** to **Periodic** in **CrystalConfiguration**, data can be saved at regular intervals.
 
@@ -188,7 +189,7 @@ context.AddCrystal<SaveTimingData>(
 
 
 
-### When exiting the application
+#### When exiting the application
 Add the following code to save all data and release resources when the application exits.
 
 ```csharp
@@ -197,7 +198,7 @@ await unit.Context.ServiceProvider.GetRequiredService<Crystalizer>().SaveAllAndT
 
 
 
-### Volatile
+#### Volatile
 
 Data is volatile and not saved.
 
@@ -213,9 +214,9 @@ context.AddCrystal<SaveTimingData>(
 
 
 
-## Timing of configuration and instantiation
+### Timing of configuration and instantiation
 
-### Builder pattern
+#### Builder pattern
 Create a **CrystalControl.Builder** and register Data using the **ConfigureCrystal()** and **AddCrystal()** methods. As Data is registered in the DI container, it can be easily used.
 
 ```csharp
@@ -253,10 +254,8 @@ public class ConfigurationExampleClass
 
 
 
-### Crystalizer
+#### Crystalizer
 Create an **ICrystal** object using the **Crystalizer**.
-
-If it's a new instance, make sure to register the configuration. If it has already been registered with the Builder, utilize the registered configuration.
 
 ```csharp
 // Get or create an ICrystal interface of the data.
@@ -267,8 +266,8 @@ var crystal = this.crystalizer.GetOrCreateCrystal<SecondData>(
 var secondData = crystal.Data;
 
 // You can create multiple crystals from single data class.
-var crystal2 = this.crystalizer.CreateCrystal<SecondData>();
-crystal2.Configure(new CrystalConfiguration(
+var crystal2 = this.crystalizer.CreateCrystal<SecondData>(
+    new CrystalConfiguration(
         SavePolicy.Manual,
         new LocalFileConfiguration("Local/ConfigurationTimingExample/SecondData2.tinyhand")));
 var secondData2 = crystal2.Data;
@@ -276,7 +275,7 @@ var secondData2 = crystal2.Data;
 
 
 
-## Specifying a path
+### Specifying the path
 
 You can set the path to save the data by specifying the **FileConfiguration** of **CrystalConfiguration**.
 
@@ -292,19 +291,104 @@ context.AddCrystal<FirstData>(
 
 
 
-### Local path
+#### Local path
 
-
+If a relative path is specified, it combines the root directory of Crystalizer with the path to create an absolute path.
 
 ```csharp
-FileConfiguration = new LocalFileConfiguration("Local/FirstExample/FirstData.tinyhand"), // Specify the file name to save.
+FileConfiguration = new LocalFileConfiguration("Local/PathExample/FirstData.tinyhand"),
+```
+
+The absolute path will be used as is.
+
+```csharp
+FileConfiguration = new LocalFileConfiguration("C:\\Local/PathExample/FirstData.tinyhand"),
 ```
 
 
 
-### Relative path
+#### Global path
+
+When specifying GlobalFileConfiguration, the path will be combined with GlobalDirectory of CrystalizerOptions to create an absolute path.
+
+```csharp
+FileConfiguration = new GlobalFileConfiguration("Global/FirstData.tinyhand"),
+```
+
+```csharp
+var builder = new CrystalControl.Builder()
+    .ConfigureCrystal(context =>
+    {
+    })
+    .SetupOptions<CrystalizerOptions>((context, options) =>
+    {// You can change the root directory of the CrystalData by modifying CrystalizerOptions.
+        context.GetOptions<UnitOptions>(out var unitOptions);// Get the application root directory.
+        if (unitOptions is not null)
+        {
+            // options.RootPath = Path.Combine(unitOptions.RootDirectory, "Additional"); // Root directory
+            options.GlobalDirectory = new LocalDirectoryConfiguration(Path.Combine(unitOptions.RootDirectory, "Global")); // Global directory
+        }
+    });
+```
 
 
+
+#### AWS S3
+
+You can also save data on AWS S3. Please enter authentication information using IStorageKey.
+
+```csharp
+FileConfiguration = new S3FileConfiguration(BucketName, "Test/FirstData.tinyhand"),
+```
+
+```csharp
+if (AccessKeyPair.TryParse(KeyPair, out var accessKeyPair))
+{// AccessKeyId=SecretAccessKey
+    unit.Context.ServiceProvider.GetRequiredService<IStorageKey>().AddKey(BucketName, accessKeyPair);
+}
+```
+
+
+
+### Backup
+
+By setting up a backup configuration, you can recover data from the backup file even if the main file is lost.
+
+```csharp
+context.AddCrystal<BackupData>(
+    new()
+    {
+        SaveFormat = SaveFormat.Utf8, // Format is utf8 text.
+        NumberOfFileHistories = 3,
+        FileConfiguration = new LocalFileConfiguration("Local/BackupExample/BackupData.tinyhand"),
+
+        // Specify the location to save the backup files individually.
+        BackupFileConfiguration = new LocalFileConfiguration("Local/BackupExample/Backup/BackupData.tinyhand"),
+    });
+```
+
+```csharp
+.SetupOptions<CrystalizerOptions>((context, options) =>
+{
+    context.GetOptions<UnitOptions>(out var unitOptions);// Get the application root directory.
+    if (unitOptions is not null)
+    {
+        // When you set DefaultBackup, the backup for all data (for which BackupFileConfiguration has not been specified individually) will be saved in the directory.
+        options.DefaultBackup = new LocalDirectoryConfiguration(Path.Combine(unitOptions.RootDirectory, "DefaultBackup"));
+    }
+});
+```
+
+
+
+The process of loading data is as follows:
+
+1. Load the main file.
+2. If it fails, load the backup file.
+3. If there are history files (main or backup), load the latest history file.
+4. When Journaling is set (detailed later), load the Journal to update to the most recent data.
+
+By performing the above processes, CrystalData tries to minimize data loss.
 
 
 
@@ -346,7 +430,7 @@ public partial class JournalData
 }
 ```
 
-To use the journal feature, please set `NumberOfFileHistories` to more than 1 in `CrystalConfiguration` and configure the journal with `context.SetJournal()`.
+To use the journal feature, please set `NumberOfFileHistories` to greater than or equal to 1 in `CrystalConfiguration` and configure the journal with `context.SetJournal()`.
 
 ```csharp
 var builder = new CrystalControl.Builder()
@@ -366,10 +450,3 @@ var builder = new CrystalControl.Builder()
     });
 ```
 
-
-
-## AWS S3
-
-
-
-## Template data class

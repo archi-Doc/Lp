@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using CrystalData;
 using ValueLink;
 
 namespace QuickStart;
@@ -44,13 +45,13 @@ public partial class Program
                 context.AddCrystal<JournalData.GoshujinClass>(
                     new CrystalConfiguration()
                     {
-                        SavePolicy = SavePolicy.Manual, // Timing of saving data is controlled by the application.
-                        SaveFormat = SaveFormat.Utf8, // Format is utf8 text.
-                        NumberOfFileHistories = 1, // The journaling feature is integrated with file history (snapshots), so please set it to 1 or more.
+                        SavePolicy = SavePolicy.Manual,
+                        SaveFormat = SaveFormat.Utf8,
+                        NumberOfFileHistories = 3, // The journaling feature is integrated with file history (snapshots), so please set it to 1 or more.
                         FileConfiguration = new LocalFileConfiguration("Local/JournalExample/JournalData.tinyhand"), // Specify the file name to save.
                     });
 
-                context.SetJournal(new SimpleJournalConfiguration(new LocalDirectoryConfiguration("Local/JournalExample/Journal")));
+                context.SetJournal(new SimpleJournalConfiguration(new LocalDirectoryConfiguration("Local/JournalExample/Journal"), 256));
             });
 
         var unit = builder.Build(); // Build.
@@ -76,9 +77,9 @@ public partial class Program
 
         Console.WriteLine();
         Console.WriteLine("Waiting for the journal writing process to complete...");
-        await Task.Delay(CrystalData.Journal.SimpleJournal.SaveIntervalInMilliseconds + 500);
+        await Task.Delay(SimpleJournalConfiguration.DefaultSaveIntervalInMilliseconds + 500);
         Console.WriteLine("Done.");
 
-        return unit; // Exit without saving data.
+        return null; // Exit without saving data.
     }
 }

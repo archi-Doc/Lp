@@ -7,6 +7,7 @@ namespace LP.T3CS;
 /// <summary>
 /// Immutable linkage object.
 /// </summary>
+/// <typeparam name="T">The type of a linkage target.</typeparam>
 [TinyhandObject(ReservedKeys = 4)]
 public partial class Linkage<T> : IValidatable
     where T : IValidatable, ITinyhandSerialize<T>

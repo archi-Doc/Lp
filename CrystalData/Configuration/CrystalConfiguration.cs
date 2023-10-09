@@ -5,7 +5,7 @@ namespace CrystalData;
 public enum SavePolicy
 {
     /// <summary>
-    /// Timing of saving data is controlled by the application.
+    /// Timing of saving data is controlled by the application [default].
     /// </summary>
     Manual,
 
@@ -59,12 +59,20 @@ public partial record CrystalConfiguration
         this.StorageConfiguration = storageConfiguration ?? EmptyStorageConfiguration.Default;
     }
 
+    /// <summary>
+    /// Gets the format of the data to save.<br/>
+    /// It can be binary or UTF8, with binary being the default.
+    /// </summary>
     public SaveFormat SaveFormat { get; init; }
 
     public SavePolicy SavePolicy { get; init; }
 
     public TimeSpan SaveInterval { get; init; }
 
+    /// <summary>
+    /// Gets the number of file histories (snapshots).<br/>
+    /// Default value is 1.
+    /// </summary>
     public int NumberOfFileHistories { get; init; } = 1;
 
     public FileConfiguration FileConfiguration { get; init; }
@@ -74,4 +82,6 @@ public partial record CrystalConfiguration
     public StorageConfiguration StorageConfiguration { get; init; }
 
     public bool Required { get; init; } = false;
+
+    public bool IsProtected => this.NumberOfFileHistories > 0;
 }

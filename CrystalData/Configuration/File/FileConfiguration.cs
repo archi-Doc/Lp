@@ -5,7 +5,7 @@ namespace CrystalData;
 [TinyhandUnion("EmptyFile", typeof(EmptyFileConfiguration))]
 [TinyhandUnion("LocalFile", typeof(LocalFileConfiguration))]
 [TinyhandUnion("S3File", typeof(S3FileConfiguration))]
-[TinyhandUnion("RelativeFile", typeof(RelativeFileConfiguration))]
+[TinyhandUnion("GlobalFile", typeof(GlobalFileConfiguration))]
 public abstract partial record FileConfiguration : PathConfiguration, IEquatable<FileConfiguration>
 {
     public FileConfiguration()

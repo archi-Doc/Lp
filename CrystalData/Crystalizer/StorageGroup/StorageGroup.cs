@@ -16,7 +16,7 @@ public sealed class StorageGroup
     {
         this.Crystalizer = crystalizer;
         this.dataType = dataType;
-        this.crystal = this.Crystalizer.CreateCrystal<StorageObject.GoshujinClass>(false);
+        this.crystal = this.Crystalizer.CreateCrystal<StorageObject.GoshujinClass>(null, false);
         this.storageGroupConfiguration = CrystalConfiguration.Default;
     }
 
@@ -90,10 +90,10 @@ public sealed class StorageGroup
             return (AddStorageResult.WriteError, 0);
         }
 
-        var relative = Path.GetRelativePath(this.Crystalizer.RootDirectory, path);
-        if (!relative.StartsWith("..\\"))
+        var relativePath = Path.GetRelativePath(this.Crystalizer.RootDirectory, path);
+        if (!relativePath.StartsWith("..\\"))
         {
-            path = relative;
+            path = relativePath;
         }
 
         var result = LocalFiler.Check(this.Crystalizer, path);
@@ -304,9 +304,9 @@ public sealed class StorageGroup
         await Task.WhenAll(tasks).ConfigureAwait(false);
     }
 
-    internal async Task SaveGroup()
+    internal async Task SaveGroup(UnloadMode unloadMode)
     {// Save storage information
-        await this.crystal.Save().ConfigureAwait(false);
+        await this.crystal.Save(unloadMode).ConfigureAwait(false);
     }
 
     internal void Clear()

@@ -37,13 +37,13 @@ public class Crystalizer
             int elapsedMilliseconds = 0;
             while (await core.Delay(TaskIntervalInMilliseconds).ConfigureAwait(false))
             {
-                await core.crystalizer.QueuedSave();
+                await core.crystalizer.QueuedSave().ConfigureAwait(false);
 
                 elapsedMilliseconds += TaskIntervalInMilliseconds;
                 if (elapsedMilliseconds >= PeriodicSaveInMilliseconds)
                 {
                     elapsedMilliseconds = 0;
-                    await core.crystalizer.PeriodicSave();
+                    await core.crystalizer.PeriodicSave().ConfigureAwait(false);
                 }
             }
         }
@@ -54,8 +54,8 @@ public class Crystalizer
     public Crystalizer(CrystalizerConfiguration configuration, CrystalizerOptions options, ICrystalDataQuery query, ILogger<Crystalizer> logger, UnitLogger unitLogger, IStorageKey storageKey)
     {
         this.configuration = configuration;
-        this.GlobalMain = options.GlobalMain;
-        this.GlobalBackup = options.GlobalBackup;
+        this.GlobalDirectory = options.GlobalDirectory;
+        this.DefaultBackup = options.DefaultBackup;
         this.EnableFilerLogger = options.EnableFilerLogger;
         this.RootDirectory = options.RootPath;
         this.DefaultTimeout = options.DefaultTimeout;
@@ -98,9 +98,9 @@ public class Crystalizer
 
     #region FieldAndProperty
 
-    public DirectoryConfiguration GlobalMain { get; }
+    public DirectoryConfiguration GlobalDirectory { get; }
 
-    public DirectoryConfiguration? GlobalBackup { get; }
+    public DirectoryConfiguration? DefaultBackup { get; }
 
     public bool EnableFilerLogger { get; }
 
@@ -166,12 +166,12 @@ public class Crystalizer
     {
         lock (this.syncFiler)
         {
-            if (configuration is RelativeFileConfiguration)
-            {// Relative file
+            if (configuration is GlobalFileConfiguration)
+            {// Global file
                 configuration = this.GlobalMain.CombineFile(configuration.Path);
             }
-            else if (configuration is RelativeDirectoryConfiguration directoryConfiguration)
-            {// Relative directory
+            else if (configuration is GlobalDirectoryConfiguration directoryConfiguration)
+            {// Global directory
                 configuration = this.GlobalMain.CombineDirectory(directoryConfiguration);
             }
 
@@ -221,9 +221,9 @@ public class Crystalizer
     {
         lock (this.syncFiler)
         {
-            if (configuration is RelativeFileConfiguration)
-            {// Relative file
-                configuration = this.GlobalMain.CombineFile(configuration.Path);
+            if (configuration is GlobalFileConfiguration)
+            {// Global file
+                configuration = this.GlobalDirectory.CombineFile(configuration.Path);
             }
 
             if (configuration is EmptyFileConfiguration)
@@ -261,9 +261,9 @@ public class Crystalizer
     {
         lock (this.syncFiler)
         {
-            if (configuration is RelativeDirectoryConfiguration)
-            {// Relative directory
-                configuration = this.GlobalMain.CombineDirectory(configuration);
+            if (configuration is GlobalDirectoryConfiguration)
+            {// Global directory
+                configuration = this.GlobalDirectory.CombineDirectory(configuration);
             }
 
             if (configuration is EmptyDirectoryConfiguration)
@@ -442,7 +442,7 @@ public class Crystalizer
         // Check file
         if (!this.CrystalCheck.SuccessfullyLoaded)
         {
-            if (await this.Query.NoCheckFile() == AbortOrContinue.Abort)
+            if (await this.Query.NoCheckFile().ConfigureAwait(false) == AbortOrContinue.Abort)
             {
                 return CrystalResult.NotFound;
             }
@@ -501,7 +501,7 @@ public class Crystalizer
 
     public async Task SaveAllAndTerminate()
     {
-        await this.SaveAndTerminate(true, true);
+        await this.SaveAndTerminate(true, true).ConfigureAwait(false);
     }
 
     public void AddToSaveQueue(ICrystal crystal)
@@ -516,7 +516,7 @@ public class Crystalizer
         return results;
     }
 
-    public ICrystal<TData> CreateCrystal<TData>(bool managedByCrystalizer = true)
+    public ICrystal<TData> CreateCrystal<TData>(CrystalConfiguration? configuration = null, bool managedByCrystalizer = true)
         where TData : class, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
         var crystal = new CrystalObject<TData>(this);
@@ -525,7 +525,7 @@ public class Crystalizer
             this.crystals.TryAdd(crystal, 0);
         }
 
-        if (this.configuration.CrystalConfigurations.TryGetValue(typeof(TData), out var configuration))
+        if (configuration is not null)
         {
             ((ICrystal)crystal).Configure(configuration);
         }
@@ -548,7 +548,22 @@ public class Crystalizer
         return crystalObject;
     }
 
-    public ICrystal<TData> CreateBigCrystal<TData>(bool managedByCrystalizer = true)
+    public IBigCrystal<TData> GetOrCreateBigCrystal<TData>(CrystalConfiguration configuration)
+        where TData : class, IBaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+    {
+        if (this.typeToCrystal.TryGetValue(typeof(TData), out var crystal) &&
+            crystal is IBigCrystal<TData> crystalData)
+        {
+            return crystalData;
+        }
+
+        var crystalObject = new BigCrystalObject<TData>(this);
+        this.crystals.TryAdd(crystalObject, 0);
+        ((ICrystal)crystalObject).Configure(configuration);
+        return crystalObject;
+    }
+
+    public ICrystal<TData> CreateBigCrystal<TData>(CrystalConfiguration? configuration = null, bool managedByCrystalizer = true)
         where TData : class, IBaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
         var crystal = new BigCrystalObject<TData>(this);
@@ -557,7 +572,7 @@ public class Crystalizer
             this.crystals.TryAdd(crystal, 0);
         }
 
-        if (this.configuration.CrystalConfigurations.TryGetValue(typeof(TData), out var configuration))
+        if (configuration is not null)
         {
             ((ICrystal)crystal).Configure(configuration);
         }
@@ -595,7 +610,7 @@ public class Crystalizer
     {
         if (this.Journal is SimpleJournal simpleJournal)
         {
-            await simpleJournal.Merge(true);
+            await simpleJournal.Merge(true).ConfigureAwait(false);
         }
     }
 
@@ -902,7 +917,7 @@ public class Crystalizer
             }
             else if (configuration is SimpleJournalConfiguration simpleJournalConfiguration)
             {
-                if (this.GlobalBackup is { } globalBackup)
+                if (this.DefaultBackup is { } globalBackup)
                 {
                     if (simpleJournalConfiguration.BackupDirectoryConfiguration == null)
                     {

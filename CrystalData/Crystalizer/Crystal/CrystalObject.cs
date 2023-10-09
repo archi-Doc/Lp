@@ -12,7 +12,7 @@ namespace CrystalData;
 public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObject
     where TData : class, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {// Data + Journal/Waypoint + Filer/FileConfiguration + Storage/StorageConfiguration
-    public CrystalObject(Crystalizer crystalizer)
+    internal CrystalObject(Crystalizer crystalizer)
     {
         this.Crystalizer = crystalizer;
         this.CrystalConfiguration = CrystalConfiguration.Default;
@@ -124,7 +124,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObje
     {
         using (this.semaphore.Lock())
         {
-            if (this.Crystalizer.GlobalBackup is { } globalBackup)
+            if (this.Crystalizer.DefaultBackup is { } globalBackup)
             {
                 if (configuration.BackupFileConfiguration == null)
                 {
@@ -208,7 +208,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObje
 
         if (this.storage is { } storage && storage is not EmptyStorage)
         {
-            await storage.SaveStorage();
+            await storage.SaveStorage().ConfigureAwait(false);
         }
 
         this.lastSavedTime = DateTime.UtcNow;
@@ -268,6 +268,134 @@ Exit:
             this.Crystalizer.CrystalCheck.SetShortcutPosition(currentWaypoint, startingPosition);
             if (unload)
             {
+                this.data = null;
+                this.State = CrystalState.Initial;
+            }
+        }
+
+        return CrystalResult.Success;
+    }
+
+    async Task<CrystalResult> ICrystal.Save(UnloadMode unloadMode)
+    {
+        if (this.CrystalConfiguration.SavePolicy == SavePolicy.Volatile)
+        {// Volatile
+            if (unloadMode != UnloadMode.NoUnload)
+            {// Unload
+                using (this.semaphore.Lock())
+                {
+                    this.data = null;
+                    this.State = CrystalState.Initial;
+                }
+            }
+
+            return CrystalResult.Success;
+        }
+
+        var obj = Volatile.Read(ref this.data);
+        var filer = Volatile.Read(ref this.crystalFiler);
+        var currentWaypoint = this.waypoint;
+
+        if (this.State == CrystalState.Initial)
+        {// Initial
+            return CrystalResult.NotPrepared;
+        }
+        else if (this.State == CrystalState.Deleted)
+        {// Deleted
+            return CrystalResult.Deleted;
+        }
+        else if (obj == null || filer == null)
+        {
+            return CrystalResult.NotPrepared;
+        }
+
+        var semaphore = obj as IGoshujinSemaphore;
+        if (semaphore is not null)
+        {
+            if (unloadMode == UnloadMode.TryUnload)
+            {
+                semaphore.LockAndTryUnload(out var state);
+                if (state == GoshujinState.Valid)
+                {// Cannot unload because a WriterClass is still present.
+                    return CrystalResult.DataIsLocked;
+                }
+                else if (state == GoshujinState.Unloading)
+                {// Unload (Success)
+                }
+                else
+                {// Obsolete
+                    return CrystalResult.DataIsObsolete;
+                }
+            }
+            else if (unloadMode == UnloadMode.ForceUnload)
+            {
+                semaphore.LockAndForceUnload();
+            }
+        }
+
+        if (this.storage is { } storage && storage is not EmptyStorage)
+        {
+            await storage.SaveStorage().ConfigureAwait(false);
+        }
+
+        this.lastSavedTime = DateTime.UtcNow;
+
+        // Starting position
+        var startingPosition = this.Crystalizer.GetJournalPosition();
+
+        // Serialize
+        byte[] byteArray;
+        var options = unloadMode == UnloadMode.NoUnload ? TinyhandSerializerOptions.Standard : TinyhandSerializerOptions.Unload;
+        if (this.CrystalConfiguration.SaveFormat == SaveFormat.Utf8)
+        {
+            byteArray = TinyhandSerializer.SerializeObjectToUtf8(obj, options);
+        }
+        else
+        {
+            byteArray = TinyhandSerializer.SerializeObject(obj, options);
+        }
+
+        // Get hash
+        var hash = FarmHash.Hash64(byteArray.AsSpan());
+        if (hash == currentWaypoint.Hash)
+        {// Identical data
+            goto Exit;
+        }
+
+        var waypoint = this.waypoint;
+        if (!waypoint.Equals(currentWaypoint))
+        {// Waypoint changed
+            goto Exit;
+        }
+
+        this.Crystalizer.UpdateWaypoint(this, ref currentWaypoint, hash);
+
+        var result = await filer.Save(byteArray, currentWaypoint).ConfigureAwait(false);
+        if (result != CrystalResult.Success)
+        {// Write error
+            return result;
+        }
+
+        using (this.semaphore.Lock())
+        {// Update waypoint and plane position.
+            this.waypoint = currentWaypoint;
+            this.Crystalizer.CrystalCheck.SetShortcutPosition(currentWaypoint, startingPosition);
+            if (unloadMode != UnloadMode.NoUnload)
+            {// Unload
+                this.data = null;
+                this.State = CrystalState.Initial;
+            }
+        }
+
+        _ = filer.LimitNumberOfFiles();
+        return CrystalResult.Success;
+
+Exit:
+        using (this.semaphore.Lock())
+        {
+            this.Crystalizer.CrystalCheck.SetShortcutPosition(currentWaypoint, startingPosition);
+            if (unloadMode != UnloadMode.NoUnload)
+            {// Unload
                 this.data = null;
                 this.State = CrystalState.Initial;
             }
@@ -683,14 +811,17 @@ Exit:
         {// Loaded
             this.data = data;
             this.waypoint = loadResult.Waypoint;
-            if (this.waypoint.IsValid)
-            {// Valid waypoint
-                this.Crystalizer.SetPlane(this, ref this.waypoint);
-                this.SetJournal();
-            }
-            else
-            {// Invalid waypoint
-                this.ResetWaypoint(false, );
+            if (this.CrystalConfiguration.IsProtected)
+            {
+                if (this.waypoint.IsValid)
+                {// Valid waypoint
+                    this.Crystalizer.SetPlane(this, ref this.waypoint);
+                    this.SetJournal();
+                }
+                else
+                {// Invalid waypoint
+                    this.ResetWaypoint(false);
+                }
             }
 
             // this.LogWaypoint("Load");
@@ -792,7 +923,7 @@ Exit:
 
         var hash = FarmHash.Hash64(byteArray);
         this.waypoint = default;
-        this.Crystalizer.UpdateWaypoint(this, ref this.waypoint, hash, 0);
+        this.Crystalizer.UpdateWaypoint(this, ref this.waypoint, hash);
 
         this.SetJournal();
 
@@ -805,9 +936,8 @@ Exit:
     {
         if (this.data is IJournalObject journalObject)
         {
-            journalObject.Journal = this;
+            // journalObject.Journal = this;
             journalObject.SetParent(this);
-            // journalObject.CurrentPlane = this.waypoint.CurrentPlane;
         }
     }
 

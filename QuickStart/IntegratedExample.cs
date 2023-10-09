@@ -79,11 +79,6 @@ public partial class Program
             }
         }
 
-        /*Console.WriteLine();
-        Console.WriteLine("Waiting for the journal writing process to complete...");
-        await Task.Delay(CrystalData.Journal.SimpleJournal.SaveIntervalInMilliseconds + 500);
-        Console.WriteLine("Done.");*/
-
-        return unit; // Exit without saving data.
+        return unit;
     }
 }

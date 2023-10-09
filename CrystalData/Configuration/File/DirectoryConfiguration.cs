@@ -7,7 +7,7 @@ namespace CrystalData;
 [TinyhandUnion("EmptyDirectory", typeof(EmptyDirectoryConfiguration))]
 [TinyhandUnion("LocalDirectory", typeof(LocalDirectoryConfiguration))]
 [TinyhandUnion("S3Directory", typeof(S3DirectoryConfiguration))]
-[TinyhandUnion("RelativeDirectory", typeof(RelativeDirectoryConfiguration))]
+[TinyhandUnion("GlobalDirectory", typeof(GlobalDirectoryConfiguration))]
 public abstract partial record DirectoryConfiguration : PathConfiguration
 {
     public DirectoryConfiguration()

@@ -8,7 +8,7 @@ public interface IBaseData
 {
     void Initialize(IBigCrystal crystal, IBaseData? parent, bool initializeChildren);
 
-    void Save(bool unload = false);
+    void Save(UnloadMode unloadMode = UnloadMode.NoUnload);
 
     void Unload();
 
@@ -18,7 +18,7 @@ public interface IBaseData
 public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
     where TData : class, IBaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {// BigCrystalObject = CrystalObject + Datum + StorageGroup (+ Himo)
-    public BigCrystalObject(Crystalizer crystalizer)
+    internal BigCrystalObject(Crystalizer crystalizer)
     {
         this.Crystalizer = crystalizer;
         this.BigCrystalConfiguration = BigCrystalConfiguration.Default;
@@ -130,18 +130,52 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
             }
 
             // Save & Unload datum and metadata.
-            this.Data.Save(unload);
+            this.Data.Save(unload ? UnloadMode.TryUnload : UnloadMode.NoUnload);
 
             // Save crystal
-            await this.crystal.Save(unload);
+            await this.crystal.Save(unload).ConfigureAwait(false);
 
             // Save storages
             await this.StorageGroup.SaveStorage().ConfigureAwait(false);
 
             // Save storage group
-            await this.StorageGroup.SaveGroup().ConfigureAwait(false);
+            await this.StorageGroup.SaveGroup(UnloadMode.NoUnload).ConfigureAwait(false);
 
             if (unload)
+            {
+                this.State = CrystalState.Initial;
+            }
+        }
+
+        return CrystalResult.Success;
+    }
+
+    async Task<CrystalResult> ICrystal.Save(UnloadMode unloadMode)
+    {
+        using (this.semaphore.Lock())
+        {
+            if (this.State == CrystalState.Initial)
+            {// Initial
+                return CrystalResult.NotPrepared;
+            }
+            else if (this.State == CrystalState.Deleted)
+            {// Deleted
+                return CrystalResult.Deleted;
+            }
+
+            // Save & Unload datum and metadata.
+            this.Data.Save(unloadMode);
+
+            // Save crystal
+            await this.crystal.Save(unloadMode).ConfigureAwait(false);
+
+            // Save storages
+            await this.StorageGroup.SaveStorage().ConfigureAwait(false);
+
+            // Save storage group
+            await this.StorageGroup.SaveGroup(UnloadMode.NoUnload).ConfigureAwait(false);
+
+            if (unloadMode.IsUnload())
             {
                 this.State = CrystalState.Initial;
             }

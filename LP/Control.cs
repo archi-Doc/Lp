@@ -173,15 +173,15 @@ public class Control : ILogInformation
             {// CrystalizerOptions
                 context.GetOptions<LPOptions>(out var lpOptions);
                 options.RootPath = lpOptions.RootDirectory;
-                options.GlobalMain = new LocalDirectoryConfiguration("Local");
+                options.GlobalDirectory = new LocalDirectoryConfiguration("Local");
                 options.EnableFilerLogger = false;
             });
 
             var crystalControlBuilder = new CrystalControl.Builder()
             .ConfigureCrystal(context =>
             {
-                context.AddCrystal<LPSettings>(CrystalConfiguration.SingleUtf8(true, new RelativeFileConfiguration(LPSettings.Filename)));
-                context.AddCrystal<MergerInformation>(CrystalConfiguration.SingleUtf8(true, new RelativeFileConfiguration(MergerInformation.Filename)));
+                context.AddCrystal<LPSettings>(CrystalConfiguration.SingleUtf8(true, new GlobalFileConfiguration(LPSettings.Filename)));
+                context.AddCrystal<MergerInformation>(CrystalConfiguration.SingleUtf8(true, new GlobalFileConfiguration(MergerInformation.Filename)));
 
                 context.AddBigCrystal<LpData>(new BigCrystalConfiguration() with
                 {// LpData
@@ -190,8 +190,8 @@ public class Control : ILogInformation
                         registry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
                         registry.Register<FragmentDatum<Identifier>>(2, x => new FragmentDatumImpl<Identifier>(x));
                     },
-                    FileConfiguration = new RelativeFileConfiguration("Data/Crystal"),
-                    StorageConfiguration = new SimpleStorageConfiguration(new RelativeDirectoryConfiguration("Data/Storage")),
+                    FileConfiguration = new GlobalFileConfiguration("Data/Crystal"),
+                    StorageConfiguration = new SimpleStorageConfiguration(new GlobalDirectoryConfiguration("Data/Storage")),
                     Required = true,
                 });
 
@@ -202,15 +202,15 @@ public class Control : ILogInformation
                         registry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
                         registry.Register<FragmentDatum<Identifier>>(2, x => new FragmentDatumImpl<Identifier>(x));
                     },
-                    FileConfiguration = new RelativeFileConfiguration("Merger/Crystal"),
-                    StorageConfiguration = new SimpleStorageConfiguration(new RelativeDirectoryConfiguration("Merger/Storage")),
+                    FileConfiguration = new GlobalFileConfiguration("Merger/Crystal"),
+                    StorageConfiguration = new SimpleStorageConfiguration(new GlobalDirectoryConfiguration("Merger/Storage")),
                     Required = true,
                 });
 
                 /*context.AddCrystal<PublicIPMachine.Data>(new CrystalConfiguration() with
                 {
                     SaveFormat = SaveFormat.Utf8,
-                    FileConfiguration = new RelativeFileConfiguration("PublicIP2.tinyhand"),
+                    FileConfiguration = new GlobalFileConfiguration("PublicIP2.tinyhand"),
                     NumberOfHistoryFiles = 0,
                 });*/
             });

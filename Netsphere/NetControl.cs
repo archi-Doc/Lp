@@ -67,7 +67,7 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddCrystal<PublicIPMachine.Data>(new CrystalConfiguration() with
                 {
                     SaveFormat = SaveFormat.Utf8,
-                    FileConfiguration = new RelativeFileConfiguration("PublicIP.tinyhand"),
+                    FileConfiguration = new GlobalFileConfiguration("PublicIP.tinyhand"),
                     NumberOfHistoryFiles = 0,
                 });
             });*/

@@ -64,7 +64,7 @@ internal partial class StorageObject
     {
         if (this.Storage != null)
         {
-            await this.Storage.SaveStorage();
+            await this.Storage.SaveStorage().ConfigureAwait(false);
         }
     }
 

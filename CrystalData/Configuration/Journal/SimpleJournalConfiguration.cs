@@ -6,13 +6,14 @@ namespace CrystalData;
 public partial record SimpleJournalConfiguration : JournalConfiguration
 {
     public const int DefaultJournalCapacityInMBs = 256; // 256 MB
+    public const int DefaultSaveIntervalInMilliseconds = 1_000;
 
     public SimpleJournalConfiguration()
         : this(EmptyDirectoryConfiguration.Default, 0)
     {
     }
 
-    public SimpleJournalConfiguration(DirectoryConfiguration configuration, int journalCapacityInMBs = DefaultJournalCapacityInMBs)
+    public SimpleJournalConfiguration(DirectoryConfiguration configuration, int journalCapacityInMBs = DefaultJournalCapacityInMBs, int saveIntervalInMilliseconds = DefaultSaveIntervalInMilliseconds)
         : base()
     {
         this.DirectoryConfiguration = configuration;
@@ -21,6 +22,12 @@ public partial record SimpleJournalConfiguration : JournalConfiguration
         if (this.JournalCapacityInMBs < DefaultJournalCapacityInMBs)
         {
             this.JournalCapacityInMBs = DefaultJournalCapacityInMBs;
+        }
+
+        this.SaveIntervalInMilliseconds = saveIntervalInMilliseconds;
+        if (this.SaveIntervalInMilliseconds < DefaultSaveIntervalInMilliseconds)
+        {
+            this.SaveIntervalInMilliseconds = DefaultSaveIntervalInMilliseconds;
         }
     }
 
@@ -32,6 +39,9 @@ public partial record SimpleJournalConfiguration : JournalConfiguration
 
     [KeyAsName]
     public int JournalCapacityInMBs { get; protected set; }
+
+    [KeyAsName]
+    public int SaveIntervalInMilliseconds { get; protected set; }
 
     [IgnoreMember]
     public int MaxRecordLength { get; protected set; } = 1024 * 16; // 16 KB
