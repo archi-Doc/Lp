@@ -7,7 +7,7 @@ using Tinyhand.IO;
 public static class CrystalExtensions
 {// -> implicit extension...
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool TryGetJournalWriter(this IJournalObject obj, out TinyhandWriter writer)
+    public static bool TryGetJournalWriter(this ITreeObject obj, out TinyhandWriter writer)
     {
         if (obj.Journal is not null)
         {

@@ -28,7 +28,7 @@ public partial class DesignClass
 /// </summary>
 /// <typeparam name="TData">The type of data.</typeparam>
 [TinyhandObject]
-public sealed partial class UnloadableData<TData> : ITinyhandSerialize<UnloadableData<TData>>, IJournalObject
+public sealed partial class UnloadableData<TData> : ITinyhandSerialize<UnloadableData<TData>>, ITreeObject
 // where TData : ITinyhandSerialize<TData>
 {
     public UnloadableData()
@@ -92,16 +92,16 @@ public sealed partial class UnloadableData<TData> : ITinyhandSerialize<Unloadabl
 
     #endregion
 
-    #region IJournalObject
+    #region ITreeObject
 
     [IgnoreMember]
-    ITinyhandJournal? IJournalObject.Journal { get; set; }
+    ITreeRoot? ITreeObject.TreeRoot { get; set; }
 
     [IgnoreMember]
-    IJournalObject? IJournalObject.JournalParent { get; set; }
+    ITreeObject? ITreeObject.TreeParent { get; set; }
 
     [IgnoreMember]
-    int IJournalObject.JournalKey { get; set; }
+    int ITreeObject.TreeKey { get; set; }
 
     #endregion
 

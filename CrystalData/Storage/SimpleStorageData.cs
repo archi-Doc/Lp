@@ -69,7 +69,7 @@ internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>
     {
         lock (this.syncObject)
         {
-            if (((IJournalObject)this).TryGetJournalWriter(out var journal, out var writer, false))
+            if (((ITreeObject)this).TryGetJournalWriter(out var journal, out var writer, false))
             {
                 writer.Write_Remove();
                 writer.Write(file);
@@ -109,7 +109,7 @@ internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>
 
                 this.fileToSize[file] = dataSize;
 
-                if (sizeDiff != 0 && ((IJournalObject)this).TryGetJournalWriter(out var journal, out var writer, false))
+                if (sizeDiff != 0 && ((ITreeObject)this).TryGetJournalWriter(out var journal, out var writer, false))
                 {
                     writer.Write_Add();
                     writer.Write(file);
@@ -134,7 +134,7 @@ internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>
             var file = RandomVault.Pseudo.NextUInt32();
             if (this.fileToSize.TryAdd(file, size))
             {
-                if (((IJournalObject)this).TryGetJournalWriter(out var journal, out var writer, false))
+                if (((ITreeObject)this).TryGetJournalWriter(out var journal, out var writer, false))
                 {
                     writer.Write_Add();
                     writer.Write(file);

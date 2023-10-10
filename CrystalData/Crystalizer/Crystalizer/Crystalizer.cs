@@ -5,7 +5,6 @@ using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
-using Amazon.S3.Model.Internal.MarshallTransformations;
 using CrystalData.Check;
 using CrystalData.Filer;
 using CrystalData.Journal;
@@ -1053,7 +1052,7 @@ public class Crystalizer
                     var plane = reader.ReadUInt32();
                     if (this.planeToCrystal.TryGetValue(plane, out var crystal))
                     {
-                        if (crystal.Data is IJournalObject journalObject)
+                        if (crystal.Data is ITreeObject journalObject)
                         {
                             var currentPosition = position + (ulong)reader.Consumed;
                             if (currentPosition > crystal.Waypoint.JournalPosition)

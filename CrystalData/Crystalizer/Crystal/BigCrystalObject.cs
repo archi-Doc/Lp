@@ -220,9 +220,9 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
 
     #endregion
 
-    #region ITinyhandJournal
+    #region ITreeRoot
 
-    bool ITinyhandJournal.TryGetJournalWriter(JournalType recordType, out TinyhandWriter writer)
+    bool ITreeRoot.TryGetJournalWriter(JournalType recordType, out TinyhandWriter writer)
     {
         if (this.Crystalizer.Journal is not null)
         {
@@ -236,7 +236,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
         }
     }
 
-    ulong ITinyhandJournal.AddJournal(in TinyhandWriter writer)
+    ulong ITreeRoot.AddJournal(in TinyhandWriter writer)
     {
         if (this.Crystalizer.Journal is not null)
         {
@@ -248,7 +248,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
         }
     }
 
-    bool ITinyhandJournal.TryAddToSaveQueue()
+    bool ITreeRoot.TryAddToSaveQueue()
     {
         if (this.CrystalConfiguration.SavePolicy == SavePolicy.OnChanged)
         {

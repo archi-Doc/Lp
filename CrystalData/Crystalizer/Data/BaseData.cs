@@ -40,8 +40,8 @@ public partial record BaseData : IBaseData, IDataInternal, ITinyhandCustomJourna
         private set
         {
             this.parent = value;
-            if (this is IJournalObject obj &&
-                value is IJournalObject parent)
+            if (this is ITreeObject obj &&
+                value is ITreeObject parent)
             {
                 obj.SetParent(parent);
             }
@@ -194,7 +194,7 @@ public partial record BaseData : IBaseData, IDataInternal, ITinyhandCustomJourna
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void WriteDatumObject(int index)
     {
-        if (((IJournalObject)this).TryGetJournalWriter(out var journal, out var writer))
+        if (((ITreeObject)this).TryGetJournalWriter(out var journal, out var writer))
         {
             writer.Write_Key();
             writer.Write(DatumObjectKey);

@@ -9,14 +9,14 @@ using Tinyhand.IO;
 
 namespace CrystalData;
 
-public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObject
+public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITreeObject
     where TData : class, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {// Data + Journal/Waypoint + Filer/FileConfiguration + Storage/StorageConfiguration
     internal CrystalObject(Crystalizer crystalizer)
     {
         this.Crystalizer = crystalizer;
         this.CrystalConfiguration = CrystalConfiguration.Default;
-        ((IJournalObject)this).Journal = this;
+        ((ITreeObject)this).Journal = this;
     }
 
     #region FieldAndProperty
@@ -375,13 +375,13 @@ Exit:
     Waypoint ICrystalInternal.Waypoint
         => this.waypoint;
 
-    ITinyhandJournal? IJournalObject.Journal { get; set; }
+    ITreeRoot? ITreeObject.Journal { get; set; }
 
-    IJournalObject? IJournalObject.JournalParent { get; set; } = null;
+    ITreeObject? ITreeObject.TreeParent { get; set; } = null;
 
-    int IJournalObject.JournalKey { get; set; } = -1;
+    int ITreeObject.TreeKey { get; set; } = -1;
 
-    /*void IJournalObject.WriteLocator(ref Tinyhand.IO.TinyhandWriter writer)
+    /*void ITreeObject.WriteLocator(ref Tinyhand.IO.TinyhandWriter writer)
     {
         writer.Write_Locator();
         writer.Write(this.waypoint.Plane);
@@ -463,7 +463,7 @@ Exit:
                     break;
                 }
 
-                if (currentObject is not IJournalObject journalObject)
+                if (currentObject is not ITreeObject journalObject)
                 {
                     break;
                 }
@@ -491,9 +491,9 @@ Exit:
 
     #endregion
 
-    #region ITinyhandJournal
+    #region ITreeRoot
 
-    bool ITinyhandJournal.TryGetJournalWriter(JournalType recordType, out TinyhandWriter writer)
+    bool ITreeRoot.TryGetJournalWriter(JournalType recordType, out TinyhandWriter writer)
     {
         if (this.Crystalizer.Journal is not null)
         {
@@ -510,7 +510,7 @@ Exit:
         }
     }
 
-    ulong ITinyhandJournal.AddJournal(in TinyhandWriter writer)
+    ulong ITreeRoot.AddJournal(in TinyhandWriter writer)
     {
         if (this.Crystalizer.Journal is not null)
         {
@@ -522,7 +522,7 @@ Exit:
         }
     }
 
-    bool ITinyhandJournal.TryAddToSaveQueue()
+    bool ITreeRoot.TryAddToSaveQueue()
     {
         if (this.CrystalConfiguration.SavePolicy == SavePolicy.OnChanged)
         {
@@ -592,7 +592,7 @@ Exit:
         return (data, format);
     }
 
-    private bool ReadJournal(IJournalObject journalObject, ReadOnlyMemory<byte> data, uint currentPlane)
+    private bool ReadJournal(ITreeObject journalObject, ReadOnlyMemory<byte> data, uint currentPlane)
     {
         var reader = new TinyhandReader(data.Span);
         var success = true;
@@ -844,7 +844,7 @@ Exit:
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void SetJournal()
     {
-        if (this.data is IJournalObject journalObject)
+        if (this.data is ITreeObject journalObject)
         {
             // journalObject.Journal = this;
             journalObject.SetParent(this);
