@@ -192,7 +192,7 @@ public class Control : ILogInformation
                     },
                     FileConfiguration = new GlobalFileConfiguration("Data/Crystal"),
                     StorageConfiguration = new SimpleStorageConfiguration(new GlobalDirectoryConfiguration("Data/Storage")),
-                    Required = true,
+                    RequiredForLoading = true,
                 });
 
                 context.AddBigCrystal<MergerData>(new BigCrystalConfiguration() with
@@ -204,7 +204,7 @@ public class Control : ILogInformation
                     },
                     FileConfiguration = new GlobalFileConfiguration("Merger/Crystal"),
                     StorageConfiguration = new SimpleStorageConfiguration(new GlobalDirectoryConfiguration("Merger/Storage")),
-                    Required = true,
+                    RequiredForLoading = true,
                 });
 
                 /*context.AddCrystal<PublicIPMachine.Data>(new CrystalConfiguration() with

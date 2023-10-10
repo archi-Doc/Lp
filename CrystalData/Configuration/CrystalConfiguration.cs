@@ -41,7 +41,7 @@ public partial record CrystalConfiguration
     public static CrystalConfiguration SingleUtf8(bool required, FileConfiguration fileConfiguration)
         => new CrystalConfiguration(SavePolicy.Manual, fileConfiguration)
         with
-        { SaveFormat = SaveFormat.Utf8, NumberOfFileHistories = 0, Required = required, };
+        { SaveFormat = SaveFormat.Utf8, NumberOfFileHistories = 0, RequiredForLoading = required, };
 
     public CrystalConfiguration()
     {
@@ -81,7 +81,7 @@ public partial record CrystalConfiguration
 
     public StorageConfiguration StorageConfiguration { get; init; }
 
-    public bool Required { get; init; } = false;
+    public bool RequiredForLoading { get; init; } = false;
 
-    public bool IsProtected => this.NumberOfFileHistories > 0;
+    public bool HasFileHistories => this.NumberOfFileHistories > 0;
 }

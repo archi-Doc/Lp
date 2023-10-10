@@ -721,7 +721,7 @@ Exit:
         {// Loaded
             this.data = data;
             this.waypoint = loadResult.Waypoint;
-            if (this.CrystalConfiguration.IsProtected)
+            if (this.CrystalConfiguration.HasFileHistories)
             {
                 if (this.waypoint.IsValid)
                 {// Valid waypoint
@@ -759,7 +759,7 @@ Exit:
         if (data.Result.IsFailure)
         {
             if (!newlyRegistered &&
-                configuration.Required &&
+                configuration.RequiredForLoading &&
                 await param.Query.FailedToLoad(configuration.FileConfiguration, data.Result.Result).ConfigureAwait(false) == AbortOrContinue.Abort)
             {
                 return (data.Result.Result, default, default);
@@ -774,7 +774,7 @@ Exit:
             var deserializeResult = TryDeserialize(data.Result.Data.Memory.Span, configuration.SaveFormat);
             if (deserializeResult.Data == null)
             {
-                if (configuration.Required &&
+                if (configuration.RequiredForLoading &&
                     await param.Query.FailedToLoad(configuration.FileConfiguration, CrystalResult.DeserializeError).ConfigureAwait(false) == AbortOrContinue.Abort)
                 {
                     return (data.Result.Result, default, default);
