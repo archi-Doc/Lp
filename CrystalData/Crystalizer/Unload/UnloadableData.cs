@@ -2,7 +2,7 @@
 
 using Tinyhand.IO;
 
-namespace CrystalData.Unload;
+namespace CrystalData;
 
 [TinyhandObject(Journal = true)]
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
@@ -10,7 +10,7 @@ public partial class DesignClass
 {
     public DesignClass()
     {
-        this.UnloadableClass = new(this);
+        this.UnloadableClass = new();
     }
 
     [Key(0)]
@@ -20,23 +20,22 @@ public partial class DesignClass
     public DesignClass Class { get; set; } = new();
 
     [Key(2)]
-    public Unloadable<DesignClass> UnloadableClass { get; set; }
+    public UnloadableData<DesignClass> UnloadableClass { get; set; }
 }
 
+/// <summary>
+/// <see cref="UnloadableData{TData}"/> is a subset of <see cref="CrystalObject{TData}"/>, allowing for the persistence of partial data.
+/// </summary>
+/// <typeparam name="TData">The type of data.</typeparam>
 [TinyhandObject]
-public sealed partial class Unloadable<TData> : ITinyhandSerialize<Unloadable<TData>>, IJournalObject
+public sealed partial class UnloadableData<TData> : ITinyhandSerialize<UnloadableData<TData>>, IJournalObject
 // where TData : ITinyhandSerialize<TData>
 {
-    public Unloadable()
+    public UnloadableData()
     {
     }
 
-    public Unloadable(IJournalObject parent)
-    {
-        this.parent = parent;
-    }
-
-    static void ITinyhandSerialize<Unloadable<TData>>.Serialize(ref TinyhandWriter writer, scoped ref Unloadable<TData>? v, TinyhandSerializerOptions options)
+    static void ITinyhandSerialize<UnloadableData<TData>>.Serialize(ref TinyhandWriter writer, scoped ref UnloadableData<TData>? v, TinyhandSerializerOptions options)
     {
         if (v == null)
         {
@@ -49,29 +48,29 @@ public sealed partial class Unloadable<TData> : ITinyhandSerialize<Unloadable<TD
             writer.WriteArrayHeader(3);
         }
 
-        writer.Write(v.storage);
-        if (v.fileConfiguration is null)
+        if (v.storageConfiguration is null)
         {
             writer.WriteNil();
         }
         else
         {
-            TinyhandSerializer.SerializeObject(ref writer, v.fileConfiguration, options);
+            TinyhandSerializer.SerializeObject(ref writer, v.storageConfiguration, options);
         }
+
+        TinyhandSerializer.SerializeObject(ref writer, v.storagePoint, options);
+        TinyhandSerializer.Serialize(ref writer, v.data, options);
     }
 
-    static void ITinyhandSerialize<Unloadable<TData>>.Deserialize(ref TinyhandReader reader, scoped ref Unloadable<TData>? value, TinyhandSerializerOptions options)
+    static void ITinyhandSerialize<UnloadableData<TData>>.Deserialize(ref TinyhandReader reader, scoped ref UnloadableData<TData>? value, TinyhandSerializerOptions options)
     {
         throw new NotImplementedException();
     }
 
     #region FieldAndProperty
 
-    private readonly IJournalObject parent;
+    private StorageConfiguration? storageConfiguration;
+    private StoragePoint storagePoint;
     private TData? data;
-
-    private int storage;
-    private FileConfiguration? fileConfiguration;
 
     public TData Data
     {
@@ -122,39 +121,3 @@ public sealed partial class Unloadable<TData> : ITinyhandSerialize<Unloadable<TD
         this.data = default;
     }
 }
-
-/*public struct Unloadable<TData>
-    where TData : ITinyhandSerialize<TData>
-{
-    public Unloadable(BaseData baseData)
-    {
-        this.baseData = baseData;
-    }
-
-    public TData Data
-    {
-        get
-        {
-            if (this.data is { } data)
-            {
-                return data;
-            }
-
-            // lock (baseData.SemaphoreLock)
-            {
-
-            }
-
-            return default!;
-        }
-    }
-
-    public bool TryUnload()
-    {
-        var bin = TinyhandSerializer.Serialize<TData>(Data, TinyhandSerializerOptions.Unload);
-        return true;
-    }
-
-    private readonly BaseData baseData;
-    private TData? data;
-}*/
