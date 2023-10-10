@@ -16,7 +16,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITreeObject
     {
         this.Crystalizer = crystalizer;
         this.CrystalConfiguration = CrystalConfiguration.Default;
-        ((ITreeObject)this).Journal = this;
+        ((ITreeObject)this).TreeRoot = this;
     }
 
     #region FieldAndProperty
@@ -375,7 +375,7 @@ Exit:
     Waypoint ICrystalInternal.Waypoint
         => this.waypoint;
 
-    ITreeRoot? ITreeObject.Journal { get; set; }
+    ITreeRoot? ITreeObject.TreeRoot { get; set; }
 
     ITreeObject? ITreeObject.TreeParent { get; set; } = null;
 

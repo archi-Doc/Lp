@@ -9,9 +9,9 @@ public static class CrystalExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool TryGetJournalWriter(this ITreeObject obj, out TinyhandWriter writer)
     {
-        if (obj.Journal is not null)
+        if (obj.TreeRoot is not null)
         {
-            return obj.Journal.TryGetJournalWriter(JournalType.Record, out writer);
+            return obj.TreeRoot.TryGetJournalWriter(JournalType.Record, out writer);
         }
         else
         {
