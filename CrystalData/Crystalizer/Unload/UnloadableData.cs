@@ -2,6 +2,8 @@
 
 using Tinyhand.IO;
 
+#pragma warning disable SA1202 // Elements should be ordered by access
+
 namespace CrystalData;
 
 [TinyhandObject(Journal = true)]
@@ -10,7 +12,6 @@ public partial class DesignClass
 {
     public DesignClass()
     {
-        this.UnloadableClass = new();
     }
 
     [Key(0)]
@@ -20,7 +21,7 @@ public partial class DesignClass
     public DesignClass Class { get; set; } = new();
 
     [Key(2)]
-    public UnloadableData<DesignClass> UnloadableClass { get; set; }
+    public UnloadableData<DesignClass> UnloadableClass { get; set; } = new();
 }
 
 /// <summary>
@@ -31,10 +32,64 @@ public partial class DesignClass
 public sealed partial class UnloadableData<TData> : ITinyhandSerialize<UnloadableData<TData>>, ITreeObject
 // where TData : ITinyhandSerialize<TData>
 {
+    #region FieldAndProperty
+
+    private StorageConfiguration? storageConfiguration;
+    private StoragePoint storagePoint;
+    private TData? data;
+    private bool dataChanged;
+
+    private object syncObject => this;
+
+    public TData Data
+    {
+        get
+        {
+            if (this.data is { } data)
+            {
+                return data;
+            }
+
+            // lock (baseData.SemaphoreLock)
+            {
+
+            }
+
+            return TinyhandSerializer.Reconstruct<TData>();
+        }
+    }
+
+    #endregion
+
     public UnloadableData()
     {
     }
 
+    public async Task<bool> Save(UnloadMode unloadMode)
+    {
+        if (!Volatile.Read(ref this.dataChanged))
+        {// No change
+            if (unloadMode.IsUnload())
+            {// Unload
+            }
+
+            return true;
+        }
+
+        var treeObject = this.Data as ITreeObject;
+        if (treeObject is not null)
+        {
+            var result = await treeObject.Save(unloadMode);
+            if (!result)
+            {
+                return false;
+            }
+        }
+
+        var bin = TinyhandSerializer.Serialize<TData>(this.Data, TinyhandSerializerOptions.Unload);
+    }
+
+    #region ITinyhandSerialize
     static void ITinyhandSerialize<UnloadableData<TData>>.Serialize(ref TinyhandWriter writer, scoped ref UnloadableData<TData>? v, TinyhandSerializerOptions options)
     {
         if (v == null)
@@ -66,30 +121,6 @@ public sealed partial class UnloadableData<TData> : ITinyhandSerialize<Unloadabl
         throw new NotImplementedException();
     }
 
-    #region FieldAndProperty
-
-    private StorageConfiguration? storageConfiguration;
-    private StoragePoint storagePoint;
-    private TData? data;
-
-    public TData Data
-    {
-        get
-        {
-            if (this.data is { } data)
-            {
-                return data;
-            }
-
-            // lock (baseData.SemaphoreLock)
-            {
-
-            }
-
-            return default!;
-        }
-    }
-
     #endregion
 
     #region ITreeObject
@@ -103,21 +134,10 @@ public sealed partial class UnloadableData<TData> : ITinyhandSerialize<Unloadabl
     [IgnoreMember]
     int ITreeObject.TreeKey { get; set; }
 
+    void ITreeObject.NotifyDataChanged()
+    {
+        Volatile.Write(ref this.dataChanged, true);
+    }
+
     #endregion
-
-    public bool TryUnload()
-    {
-        var bin = TinyhandSerializer.Serialize<TData>(Data, TinyhandSerializerOptions.Unload);
-        return true;
-    }
-
-    public void Save()
-    {
-        throw new NotImplementedException();
-    }
-
-    public void Unload()
-    {
-        this.data = default;
-    }
 }
