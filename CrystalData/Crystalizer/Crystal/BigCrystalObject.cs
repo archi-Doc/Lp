@@ -116,40 +116,6 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
         }
     }
 
-    async Task<CrystalResult> ICrystal.Save(bool unload)
-    {
-        using (this.semaphore.Lock())
-        {
-            if (this.State == CrystalState.Initial)
-            {// Initial
-                return CrystalResult.NotPrepared;
-            }
-            else if (this.State == CrystalState.Deleted)
-            {// Deleted
-                return CrystalResult.Deleted;
-            }
-
-            // Save & Unload datum and metadata.
-            this.Data.Save(unload ? UnloadMode.TryUnload : UnloadMode.NoUnload);
-
-            // Save crystal
-            await this.crystal.Save(unload).ConfigureAwait(false);
-
-            // Save storages
-            await this.StorageGroup.SaveStorage().ConfigureAwait(false);
-
-            // Save storage group
-            await this.StorageGroup.SaveGroup(UnloadMode.NoUnload).ConfigureAwait(false);
-
-            if (unload)
-            {
-                this.State = CrystalState.Initial;
-            }
-        }
-
-        return CrystalResult.Success;
-    }
-
     async Task<CrystalResult> ICrystal.Save(UnloadMode unloadMode)
     {
         using (this.semaphore.Lock())
@@ -230,7 +196,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
         }
 
         this.lastSaveTime = utc;
-        return ((ICrystal)this).Save(false);
+        return ((ICrystal)this).Save(UnloadMode.NoUnload);
     }
 
     Waypoint ICrystalInternal.Waypoint
@@ -254,9 +220,9 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
 
     #endregion
 
-    #region ITinyhandJournal
+    #region ITreeRoot
 
-    bool ITinyhandJournal.TryGetJournalWriter(JournalType recordType, out TinyhandWriter writer)
+    bool ITreeRoot.TryGetJournalWriter(JournalType recordType, out TinyhandWriter writer)
     {
         if (this.Crystalizer.Journal is not null)
         {
@@ -270,7 +236,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
         }
     }
 
-    ulong ITinyhandJournal.AddJournal(in TinyhandWriter writer)
+    ulong ITreeRoot.AddJournal(in TinyhandWriter writer)
     {
         if (this.Crystalizer.Journal is not null)
         {
@@ -282,7 +248,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
         }
     }
 
-    bool ITinyhandJournal.TryAddToSaveQueue()
+    bool ITreeRoot.TryAddToSaveQueue()
     {
         if (this.CrystalConfiguration.SavePolicy == SavePolicy.OnChanged)
         {

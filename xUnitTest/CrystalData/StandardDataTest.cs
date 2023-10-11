@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using CrystalData;
 using Tinyhand;
 using ValueLink;
 using Xunit;
@@ -88,7 +89,7 @@ public class StandardDataTest
         // g1: empty
         var g1 = c.Data;
 
-        await c.Save(true);
+        await c.Save(UnloadMode.ForceUnload);
         await c.Crystalizer.SaveJournal();
 
         // g2: Zero
@@ -104,7 +105,7 @@ public class StandardDataTest
             w.Commit();
         }*/
 
-        await c.Save(true);
+        await c.Save(UnloadMode.ForceUnload);
         await c.Crystalizer.SaveJournal();
         var result = await c.Crystalizer.TestJournalAll();
         result.IsTrue();
@@ -163,7 +164,7 @@ public class StandardDataTest
             }
         }
 
-        await c.Save(true);
+        await c.Save(UnloadMode.ForceUnload);
         await c.Crystalizer.SaveJournal();
         result = await c.Crystalizer.TestJournalAll();
         result.IsTrue();

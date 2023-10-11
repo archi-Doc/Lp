@@ -88,7 +88,7 @@ public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
         Console.WriteLine($"Serialize {(bin.Length / 1_000_000).ToString()} MB, {sw.ElapsedMilliseconds} ms");
 
         sw.Restart();
-        await this.crystal.Save(true);
+        await this.crystal.Save(UnloadMode.ForceUnload);
         Console.WriteLine($"Save {sw.ElapsedMilliseconds} ms");
     }
 

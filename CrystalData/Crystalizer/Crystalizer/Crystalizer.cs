@@ -5,11 +5,11 @@ using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
-using Amazon.S3.Model.Internal.MarshallTransformations;
 using CrystalData.Check;
 using CrystalData.Filer;
 using CrystalData.Journal;
 using CrystalData.Storage;
+using CrystalData.Unload;
 using CrystalData.UserInterface;
 using Tinyhand.IO;
 
@@ -58,15 +58,17 @@ public class Crystalizer
         this.DefaultBackup = options.DefaultBackup;
         this.EnableFilerLogger = options.EnableFilerLogger;
         this.RootDirectory = options.RootPath;
-        this.DefaultTimeout = options.DefaultTimeout;
+        this.FilerTimeout = options.FilerTimeout;
         this.MemorySizeLimit = options.MemorySizeLimit;
         this.MaxParentInMemory = options.MaxParentInMemory;
+        this.ConcurrentUnload = options.ConcurrentUnload;
+        this.UnloadTimeout = options.UnloadTimeout;
         if (string.IsNullOrEmpty(this.RootDirectory))
         {
             this.RootDirectory = Directory.GetCurrentDirectory();
         }
 
-        this.logger = logger;
+        this.Logger = logger;
         this.task = new(this);
         this.Query = query;
         this.QueryContinue = new CrystalDataQueryNo();
@@ -106,11 +108,15 @@ public class Crystalizer
 
     public string RootDirectory { get; }
 
-    public TimeSpan DefaultTimeout { get; }
+    public TimeSpan FilerTimeout { get; }
 
     public long MemorySizeLimit { get; }
 
     public int MaxParentInMemory { get; }
+
+    public int ConcurrentUnload { get; }
+
+    public TimeSpan UnloadTimeout { get; }
 
     public IJournal? Journal { get; private set; }
 
@@ -126,10 +132,12 @@ public class Crystalizer
 
     internal UnitLogger UnitLogger { get; }
 
+    internal ILogger Logger { get; }
+
     internal CrystalCheck CrystalCheck { get; }
 
     private CrystalizerConfiguration configuration;
-    private ILogger logger;
+
     private CrystalizerTask task;
     private ThreadsafeTypeKeyHashTable<ICrystalInternal> typeToCrystal = new(); // Type to ICrystal
     private ConcurrentDictionary<ICrystalInternal, int> crystals = new(); // All crystals
@@ -316,7 +324,7 @@ public class Crystalizer
                 return default!;
             }
 
-            storage.SetTimeout(this.DefaultTimeout);
+            storage.SetTimeout(this.FilerTimeout);
             return storage;
         }
     }
@@ -488,20 +496,68 @@ public class Crystalizer
         return CrystalResult.Success;
     }
 
-    public async Task SaveAll(bool unload = false)
+    public async Task SaveAll()
     {
-        this.CrystalCheck.Save();
-
         var crystals = this.crystals.Keys.ToArray();
         foreach (var x in crystals)
         {
-            await x.Save(unload).ConfigureAwait(false);
+            await x.Save(UnloadMode.NoUnload).ConfigureAwait(false);
         }
+
+        this.CrystalCheck.Save();
+    }
+
+    public async Task SaveAndUnloadAll()
+    {
+        var goshujin = new UnloadTask.GoshujinClass();
+        foreach (var x in this.crystals.Keys)
+        {
+            goshujin.Add(new(x));
+        }
+
+        var unloadTasks = new Task[this.ConcurrentUnload];
+        for (var i = 0; i < this.ConcurrentUnload; i++)
+        {
+            unloadTasks[i] = UnloadTaskExtension.UnloadTask(this, goshujin);
+        }
+
+        await Task.WhenAll(unloadTasks).ConfigureAwait(false);
+
+        this.CrystalCheck.Save();
     }
 
     public async Task SaveAllAndTerminate()
     {
-        await this.SaveAndTerminate(true, true).ConfigureAwait(false);
+        await this.SaveAndUnloadAll();
+
+        // Save/Terminate journal
+        if (this.Journal is { } journal)
+        {
+            await journal.SaveJournalAsync().ConfigureAwait(false);
+            await journal.TerminateAsync().ConfigureAwait(false);
+        }
+
+        // Terminate filers/journal
+        var tasks = new List<Task>();
+        lock (this.syncFiler)
+        {
+            if (this.localFiler is not null)
+            {
+                tasks.Add(this.localFiler.TerminateAsync());
+                this.localFiler = null;
+            }
+
+            foreach (var x in this.bucketToS3Filer.Values)
+            {
+                tasks.Add(x.TerminateAsync());
+            }
+
+            this.bucketToS3Filer.Clear();
+        }
+
+        await Task.WhenAll(tasks).ConfigureAwait(false);
+
+        this.Logger.TryGet()?.Log($"Terminated - {this.Himo.MemoryUsage}");
     }
 
     public void AddToSaveQueue(ICrystal crystal)
@@ -852,54 +908,11 @@ public class Crystalizer
         {
             if (x.State == CrystalState.Prepared)
             {
-                tasks.Add(x.Save(false));
+                tasks.Add(x.Save());
             }
         }
 
         return Task.WhenAll(tasks);
-    }
-
-    private async Task SaveAndTerminate(bool saveData, bool saveJournal)
-    {
-        if (saveData)
-        {
-            await this.SaveAll(true).ConfigureAwait(false);
-        }
-
-        this.CrystalCheck.Save();
-
-        // Save/Terminate journal
-        if (this.Journal is { } journal)
-        {
-            if (saveJournal)
-            {
-                await journal.SaveJournalAsync().ConfigureAwait(false);
-            }
-
-            await journal.TerminateAsync().ConfigureAwait(false);
-        }
-
-        // Terminate filers/journal
-        var tasks = new List<Task>();
-        lock (this.syncFiler)
-        {
-            if (this.localFiler is not null)
-            {
-                tasks.Add(this.localFiler.TerminateAsync());
-                this.localFiler = null;
-            }
-
-            foreach (var x in this.bucketToS3Filer.Values)
-            {
-                tasks.Add(x.TerminateAsync());
-            }
-
-            this.bucketToS3Filer.Clear();
-        }
-
-        await Task.WhenAll(tasks).ConfigureAwait(false);
-
-        this.logger.TryGet()?.Log($"Terminated - {this.Himo.MemoryUsage}");
     }
 
     #endregion
@@ -989,10 +1002,10 @@ public class Crystalizer
                 position = journalResult.NextPosition;
             }
 
-            this.logger.TryGet(LogLevel.Debug)?.Log($"Journal read {startPosition} - {endPosition}");
+            this.Logger.TryGet(LogLevel.Debug)?.Log($"Journal read {startPosition} - {endPosition}");
             if (failure)
             {
-                this.logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.Journal.ReadFailure);
+                this.Logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.Journal.ReadFailure);
             }
 
             if (restored.Count > 0)
@@ -1006,7 +1019,7 @@ public class Crystalizer
                     }
                 }
 
-                this.logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.Journal.Restored, sb.ToString());
+                this.Logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.Journal.Restored, sb.ToString());
             }
         }
     }
@@ -1018,7 +1031,7 @@ public class Crystalizer
         {
             if (!reader.TryReadRecord(out var length, out var journalType))
             {
-                this.logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.Journal.Corrupted);
+                this.Logger.TryGet(LogLevel.Error)?.Log(CrystalDataHashed.Journal.Corrupted);
                 return;
             }
 
@@ -1039,7 +1052,7 @@ public class Crystalizer
                     var plane = reader.ReadUInt32();
                     if (this.planeToCrystal.TryGetValue(plane, out var crystal))
                     {
-                        if (crystal.Data is IJournalObject journalObject)
+                        if (crystal.Data is ITreeObject journalObject)
                         {
                             var currentPosition = position + (ulong)reader.Consumed;
                             if (currentPosition > crystal.Waypoint.JournalPosition)
@@ -1082,7 +1095,7 @@ public class Crystalizer
     {
         foreach (var x in this.planeToCrystal)
         {
-            this.logger.TryGet(LogLevel.Debug)?.Log($"Plane: {x.Key} = {x.Value.GetType().FullName}");
+            this.Logger.TryGet(LogLevel.Debug)?.Log($"Plane: {x.Key} = {x.Value.GetType().FullName}");
         }
     }
 }

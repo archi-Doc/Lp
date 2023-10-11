@@ -101,7 +101,7 @@ public static class TestHelper
 
     public static async Task UnloadAndDeleteAll(ICrystal crystal)
     {
-        await crystal.Crystalizer.SaveAll(true);
+        await crystal.Crystalizer.SaveAndUnloadAll();
         crystal.Crystalizer.Himo.MemoryUsage.Is(0);
         await crystal.Crystalizer.DeleteAll();
 
@@ -120,14 +120,14 @@ public static class TestHelper
 
     public static async Task UnloadAndDeleteAll(IBigCrystal crystal)
     {
-        await crystal.Crystalizer.SaveAll(true);
+        await crystal.Crystalizer.SaveAndUnloadAll();
         crystal.Crystalizer.Himo.MemoryUsage.Is(0);
         await crystal.Crystalizer.DeleteAll();
     }
 
     public static async Task StopAndStartCrystal(IBigCrystal crystal)
     {
-        await crystal.Crystalizer.SaveAll(true);
+        await crystal.Crystalizer.SaveAndUnloadAll();
         crystal.Crystalizer.Himo.MemoryUsage.Is(0);
         await crystal.PrepareAndLoad(false);
     }

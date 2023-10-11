@@ -9,14 +9,14 @@ using Tinyhand.IO;
 
 namespace CrystalData;
 
-public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObject
+public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITreeObject
     where TData : class, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {// Data + Journal/Waypoint + Filer/FileConfiguration + Storage/StorageConfiguration
     internal CrystalObject(Crystalizer crystalizer)
     {
         this.Crystalizer = crystalizer;
         this.CrystalConfiguration = CrystalConfiguration.Default;
-        ((IJournalObject)this).Journal = this;
+        ((ITreeObject)this).TreeRoot = this;
     }
 
     #region FieldAndProperty
@@ -182,105 +182,11 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IJournalObje
         }
     }
 
-    async Task<CrystalResult> ICrystal.Save(bool unload)
-    {
-        if (this.CrystalConfiguration.SavePolicy == SavePolicy.Volatile)
-        {
-            return CrystalResult.Success;
-        }
-
-        var obj = Volatile.Read(ref this.data);
-        var filer = Volatile.Read(ref this.crystalFiler);
-        var currentWaypoint = this.waypoint;
-
-        if (this.State == CrystalState.Initial)
-        {// Initial
-            return CrystalResult.NotPrepared;
-        }
-        else if (this.State == CrystalState.Deleted)
-        {// Deleted
-            return CrystalResult.Deleted;
-        }
-        else if (obj == null || filer == null)
-        {
-            return CrystalResult.NotPrepared;
-        }
-
-        if (this.storage is { } storage && storage is not EmptyStorage)
-        {
-            await storage.SaveStorage().ConfigureAwait(false);
-        }
-
-        this.lastSavedTime = DateTime.UtcNow;
-
-        // Starting position
-        var startingPosition = this.Crystalizer.GetJournalPosition();
-
-        // Serialize
-        byte[] byteArray;
-        if (this.CrystalConfiguration.SaveFormat == SaveFormat.Utf8)
-        {
-            byteArray = TinyhandSerializer.SerializeObjectToUtf8(obj);
-        }
-        else
-        {
-            byteArray = TinyhandSerializer.SerializeObject(obj);
-        }
-
-        // Get hash
-        var hash = FarmHash.Hash64(byteArray.AsSpan());
-        if (hash == currentWaypoint.Hash)
-        {// Identical data
-            goto Exit;
-        }
-
-        var waypoint = this.waypoint;
-        if (!waypoint.Equals(currentWaypoint))
-        {// Waypoint changed
-            goto Exit;
-        }
-
-        this.Crystalizer.UpdateWaypoint(this, ref currentWaypoint, hash);
-
-        var result = await filer.Save(byteArray, currentWaypoint).ConfigureAwait(false);
-        if (result != CrystalResult.Success)
-        {// Write error
-            return result;
-        }
-
-        using (this.semaphore.Lock())
-        {// Update waypoint and plane position.
-            this.waypoint = currentWaypoint;
-            this.Crystalizer.CrystalCheck.SetShortcutPosition(currentWaypoint, startingPosition);
-            if (unload)
-            {
-                this.data = null;
-                this.State = CrystalState.Initial;
-            }
-        }
-
-        _ = filer.LimitNumberOfFiles();
-        return CrystalResult.Success;
-
-Exit:
-        using (this.semaphore.Lock())
-        {
-            this.Crystalizer.CrystalCheck.SetShortcutPosition(currentWaypoint, startingPosition);
-            if (unload)
-            {
-                this.data = null;
-                this.State = CrystalState.Initial;
-            }
-        }
-
-        return CrystalResult.Success;
-    }
-
     async Task<CrystalResult> ICrystal.Save(UnloadMode unloadMode)
     {
         if (this.CrystalConfiguration.SavePolicy == SavePolicy.Volatile)
         {// Volatile
-            if (unloadMode != UnloadMode.NoUnload)
+            if (unloadMode.IsUnload())
             {// Unload
                 using (this.semaphore.Lock())
                 {
@@ -321,6 +227,10 @@ Exit:
                 }
                 else if (state == GoshujinState.Unloading)
                 {// Unload (Success)
+                    if (semaphore.SemaphoreCount > 0)
+                    {
+                        return CrystalResult.DataIsLocked;
+                    }
                 }
                 else
                 {// Obsolete
@@ -380,7 +290,7 @@ Exit:
         {// Update waypoint and plane position.
             this.waypoint = currentWaypoint;
             this.Crystalizer.CrystalCheck.SetShortcutPosition(currentWaypoint, startingPosition);
-            if (unloadMode != UnloadMode.NoUnload)
+            if (unloadMode.IsUnload())
             {// Unload
                 this.data = null;
                 this.State = CrystalState.Initial;
@@ -394,7 +304,7 @@ Exit:
         using (this.semaphore.Lock())
         {
             this.Crystalizer.CrystalCheck.SetShortcutPosition(currentWaypoint, startingPosition);
-            if (unloadMode != UnloadMode.NoUnload)
+            if (unloadMode.IsUnload())
             {// Unload
                 this.data = null;
                 this.State = CrystalState.Initial;
@@ -459,19 +369,19 @@ Exit:
         }
 
         this.lastSavedTime = utc;
-        return ((ICrystal)this).Save(false);
+        return ((ICrystal)this).Save(UnloadMode.NoUnload);
     }
 
     Waypoint ICrystalInternal.Waypoint
         => this.waypoint;
 
-    ITinyhandJournal? IJournalObject.Journal { get; set; }
+    ITreeRoot? ITreeObject.TreeRoot { get; set; }
 
-    IJournalObject? IJournalObject.JournalParent { get; set; } = null;
+    ITreeObject? ITreeObject.TreeParent { get; set; } = null;
 
-    int IJournalObject.JournalKey { get; set; } = -1;
+    int ITreeObject.TreeKey { get; set; } = -1;
 
-    /*void IJournalObject.WriteLocator(ref Tinyhand.IO.TinyhandWriter writer)
+    /*void ITreeObject.WriteLocator(ref Tinyhand.IO.TinyhandWriter writer)
     {
         writer.Write_Locator();
         writer.Write(this.waypoint.Plane);
@@ -553,7 +463,7 @@ Exit:
                     break;
                 }
 
-                if (currentObject is not IJournalObject journalObject)
+                if (currentObject is not ITreeObject journalObject)
                 {
                     break;
                 }
@@ -581,9 +491,9 @@ Exit:
 
     #endregion
 
-    #region ITinyhandJournal
+    #region ITreeRoot
 
-    bool ITinyhandJournal.TryGetJournalWriter(JournalType recordType, out TinyhandWriter writer)
+    bool ITreeRoot.TryGetJournalWriter(JournalType recordType, out TinyhandWriter writer)
     {
         if (this.Crystalizer.Journal is not null)
         {
@@ -600,7 +510,7 @@ Exit:
         }
     }
 
-    ulong ITinyhandJournal.AddJournal(in TinyhandWriter writer)
+    ulong ITreeRoot.AddJournal(in TinyhandWriter writer)
     {
         if (this.Crystalizer.Journal is not null)
         {
@@ -612,7 +522,7 @@ Exit:
         }
     }
 
-    bool ITinyhandJournal.TryAddToSaveQueue()
+    bool ITreeRoot.TryAddToSaveQueue()
     {
         if (this.CrystalConfiguration.SavePolicy == SavePolicy.OnChanged)
         {
@@ -682,7 +592,7 @@ Exit:
         return (data, format);
     }
 
-    private bool ReadJournal(IJournalObject journalObject, ReadOnlyMemory<byte> data, uint currentPlane)
+    private bool ReadJournal(ITreeObject journalObject, ReadOnlyMemory<byte> data, uint currentPlane)
     {
         var reader = new TinyhandReader(data.Span);
         var success = true;
@@ -811,7 +721,7 @@ Exit:
         {// Loaded
             this.data = data;
             this.waypoint = loadResult.Waypoint;
-            if (this.CrystalConfiguration.IsProtected)
+            if (this.CrystalConfiguration.HasFileHistories)
             {
                 if (this.waypoint.IsValid)
                 {// Valid waypoint
@@ -849,7 +759,7 @@ Exit:
         if (data.Result.IsFailure)
         {
             if (!newlyRegistered &&
-                configuration.Required &&
+                configuration.RequiredForLoading &&
                 await param.Query.FailedToLoad(configuration.FileConfiguration, data.Result.Result).ConfigureAwait(false) == AbortOrContinue.Abort)
             {
                 return (data.Result.Result, default, default);
@@ -864,7 +774,7 @@ Exit:
             var deserializeResult = TryDeserialize(data.Result.Data.Memory.Span, configuration.SaveFormat);
             if (deserializeResult.Data == null)
             {
-                if (configuration.Required &&
+                if (configuration.RequiredForLoading &&
                     await param.Query.FailedToLoad(configuration.FileConfiguration, CrystalResult.DeserializeError).ConfigureAwait(false) == AbortOrContinue.Abort)
                 {
                     return (data.Result.Result, default, default);
@@ -934,7 +844,7 @@ Exit:
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void SetJournal()
     {
-        if (this.data is IJournalObject journalObject)
+        if (this.data is ITreeObject journalObject)
         {
             // journalObject.Journal = this;
             journalObject.SetParent(this);

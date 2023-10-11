@@ -2,7 +2,7 @@
 
 namespace CrystalData;
 
-public enum UnloadMode
+/*public enum UnloadMode
 {
     /// <summary>
     /// The data is persisted. The data in memory remains unchanged.
@@ -18,4 +18,4 @@ public enum UnloadMode
     /// The data is persisted and forcibly unloaded.
     /// </summary>
     ForceUnload,
-}
+}*/

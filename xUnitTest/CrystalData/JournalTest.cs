@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using CrystalData;
 using Tinyhand;
 using ValueLink;
 using Xunit;
@@ -81,7 +82,7 @@ public class JournalTest
         {
         }
 
-        await c.Save(true);
+        await c.Save(UnloadMode.ForceUnload);
         await c.Crystalizer.SaveJournal();
 
         // g2: empty
@@ -96,7 +97,7 @@ public class JournalTest
             g2.Add(new(0, "Zero", 0));
         }
 
-        await c.Save(true);
+        await c.Save(UnloadMode.ForceUnload);
         await c.Crystalizer.SaveJournal();
 
         // g3: Zero
@@ -114,7 +115,7 @@ public class JournalTest
             d.Age.Is(0d);
         }
 
-        await c.Save(true);
+        await c.Save(UnloadMode.ForceUnload);
         await c.Crystalizer.SaveJournal();
         var result = await c.Crystalizer.TestJournalAll();
         result.IsTrue();
@@ -137,7 +138,7 @@ public class JournalTest
             d.Id = 100;
         }
 
-        await c.Save(true);
+        await c.Save(UnloadMode.ForceUnload);
         await c.Crystalizer.SaveJournal();
         result = await c.Crystalizer.TestJournalAll();
         result.IsTrue();
@@ -156,7 +157,7 @@ public class JournalTest
             d.Name = "100";
         }
 
-        await c.Save(true);
+        await c.Save(UnloadMode.ForceUnload);
         await c.Crystalizer.SaveJournal();
         result = await c.Crystalizer.TestJournalAll();
         result.IsTrue();
@@ -173,7 +174,7 @@ public class JournalTest
         {
         }
 
-        await c.Save(true);
+        await c.Save(UnloadMode.ForceUnload);
         await c.Crystalizer.SaveJournal();
 
         // g2: empty
@@ -184,7 +185,7 @@ public class JournalTest
         g2.Count.Is(0);
         g2.Add(new(0, "Zero", 0));
 
-        await c.Save(true);
+        await c.Save(UnloadMode.ForceUnload);
         await c.Crystalizer.SaveJournal();
 
         // g3: Zero
@@ -200,7 +201,7 @@ public class JournalTest
             d.Age.Is(0d);
         }
 
-        await c.Save(true);
+        await c.Save(UnloadMode.ForceUnload);
         await c.Crystalizer.SaveJournal();
         var result = await c.Crystalizer.TestJournalAll();
         result.IsTrue();
@@ -228,7 +229,7 @@ public class JournalTest
             }
         }
 
-        await c.Save(true);
+        await c.Save(UnloadMode.ForceUnload);
         await c.Crystalizer.SaveJournal();
         result = await c.Crystalizer.TestJournalAll();
         result.IsTrue();
@@ -251,7 +252,7 @@ public class JournalTest
             }
         }
 
-        await c.Save(true);
+        await c.Save(UnloadMode.ForceUnload);
         await c.Crystalizer.SaveJournal();
         result = await c.Crystalizer.TestJournalAll();
         result.IsTrue();
