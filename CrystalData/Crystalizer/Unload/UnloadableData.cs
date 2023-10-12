@@ -27,9 +27,9 @@ public partial class DesignSerializable
 
 [TinyhandObject(Journal = true)]
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
-public partial record DesignRepeatable
-{
-    public DesignRepeatable()
+public partial record CrystalClass
+{// This is it. This class is the crystal of state-of-the-art data management technology.
+    public CrystalClass()
     {
     }
 
@@ -38,10 +38,17 @@ public partial record DesignRepeatable
     public int Id { get; set; }
 
     [Key(1)]
-    public DesignRepeatable Class { get; set; } = new();
+    [Link(Type = ChainType.Ordered)]
+    public string Name { get; set; } = string.Empty;
 
     [Key(2)]
-    public UnloadableData<DesignRepeatable> UnloadableClass { get; set; } = new();
+    public UnloadableData<CrystalClass> Child { get; set; } = new();
+
+    [Key(3)]
+    public UnloadableData<CrystalClass.GoshujinClass> Children { get; set; } = new();
+
+    [Key(4)]
+    public UnloadableData<byte[]> ByteArray { get; set; } = new();
 }
 
 /// <summary>
@@ -58,7 +65,7 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
     private StorageConfiguration? storageConfiguration; // using (this.Lock())
 
     [Key(1)]
-    private StoragePoint storagePoint; // using (this.Lock())
+    private StorageId storagePoint; // using (this.Lock())
 
     [Key(2)]
     private TData? data; // using (this.Lock())
