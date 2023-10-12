@@ -7,7 +7,7 @@ namespace CrystalData;
 
 [TinyhandObject]
 public readonly partial struct StorageId : IEquatable<StorageId>, IComparable<StorageId>
-{// JournalPosition, Hash
+{// StorageId: JournalPosition 8 bytes, Hash 7 bytes, SubId 1 byte.
     public const string Extension = "storage";
     public const int Length = 16; // 8 + 8
     public const ulong HashMask = 0xFFFF_FFFF_FFFF_FF00;
@@ -74,7 +74,7 @@ public readonly partial struct StorageId : IEquatable<StorageId>, IComparable<St
 
     public bool IsValid => this.JournalPosition != 0;
 
-    public bool CompareHash(ulong hash)
+    public bool HashEquals(ulong hash)
         => (hash & HashMask) == (this.hashAndSubId & HashMask);
 
     public byte[] ToByteArray()

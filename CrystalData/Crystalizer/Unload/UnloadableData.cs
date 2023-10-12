@@ -59,19 +59,27 @@ public partial record CrystalClass
 public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
 // where TData : ITinyhandSerialize<TData>
 {
+    public const int MaxHistories = 4;
+
     #region FieldAndProperty
 
     [Key(0)]
     private StorageConfiguration? storageConfiguration; // using (this.Lock())
 
     [Key(1)]
-    private StorageId storagePoint; // using (this.Lock())
-
-    [Key(2)]
     private TData? data; // using (this.Lock())
 
-    [IgnoreMember]
-    private bool dataChanged;
+    [Key(2)]
+    private StorageId storageId0;
+
+    [Key(3)]
+    private StorageId storageId1;
+
+    [Key(4)]
+    private StorageId storageId2;
+
+    [Key(5)]
+    private StorageId storageId3;
 
     [IgnoreMember]
     ITreeRoot? ITreeObject.TreeRoot { get; set; }
@@ -106,7 +114,6 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
             if (this.data is null)
             {// Reconstruct
                 this.data = TinyhandSerializer.Reconstruct<TData>();
-                this.dataChanged = true;
             }
 
             return this.data;
@@ -122,7 +129,6 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
         using (this.Lock())
         {
             this.data = data;
-            this.dataChanged = true;
         }
     }
 
@@ -131,27 +137,25 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
         using (this.Lock())
         {
             this.storageConfiguration = storageConfiguration;
-            this.dataChanged = true;
         }
     }
 
     public async Task<bool> Save(UnloadMode unloadMode)
     {
-        using (this.Lock())
+        await this.EnterAsync().ConfigureAwait(false); // using (this.Lock())
+        try
         {
             if (this.data is null)
             {// No data
                 return true;
             }
-            else if (!this.dataChanged)
-            {// No change
-                goto Exit;
-            }
-            else
-            {
-                this.dataChanged = false;
+
+            if (((ITreeObject)this).TreeRoot is not ICrystal crystal)
+            {// No root
+                return true;
             }
 
+            // Save children
             var treeObject = this.data as ITreeObject;
             if (treeObject is not null)
             {
@@ -162,12 +166,72 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
                 }
             }
 
-            var bin = TinyhandSerializer.Serialize<TData>(this.data, TinyhandSerializerOptions.Unload);
+            var journalPosition = crystal.AddJournal();
 
-Exit:
+            // Serialize and get hash.
+            var options = unloadMode.IsUnload() ? TinyhandSerializerOptions.Unload : TinyhandSerializerOptions.Standard;
+            SerializeHelper.Serialize<TData>(this.data, options, out var owner);
+            var byteArray = TinyhandSerializer.Serialize(this.data, options);
+            var hash = FarmHash.Hash64(byteArray);
+
+            if (!this.storageId0.HashEquals(hash))
+            {// Different data
+                // Put
+                var storage = crystal.GetStorage(this.storageConfiguration);
+                var storageId = new StorageId(journalPosition, hash, 0);
+                storage.PutAndForget(ref storageId, owner.AsReadOnly());
+
+                // Update histories
+                var numberOfHistories = 3;
+                if (numberOfHistories <= 1)
+                {
+                    this.storageId0 = storageId;
+                }
+                else if (numberOfHistories == 2)
+                {
+                    if (this.storageId1.IsValid)
+                    {
+                        storage.DeleteAndForget(ref this.storageId1);
+                    }
+
+                    this.storageId1 = this.storageId0;
+                    this.storageId0 = storageId;
+                }
+                else if (numberOfHistories == 3)
+                {
+                    if (this.storageId2.IsValid)
+                    {
+                        storage.DeleteAndForget(ref this.storageId2);
+                    }
+
+                    this.storageId2 = this.storageId1;
+                    this.storageId1 = this.storageId0;
+                    this.storageId0 = storageId;
+                }
+                else if (numberOfHistories >= MaxHistories)
+                {
+                    if (this.storageId3.IsValid)
+                    {
+                        storage.DeleteAndForget(ref this.storageId3);
+                    }
+
+                    this.storageId3 = this.storageId2;
+                    this.storageId2 = this.storageId1;
+                    this.storageId1 = this.storageId0;
+                    this.storageId0 = storageId;
+                }
+            }
+
+            owner.Return();
+
             if (unloadMode.IsUnload())
             {// Unload
+                this.data = default;
             }
+        }
+        finally
+        {
+            this.Exit();
         }
 
         return true;
@@ -184,7 +248,6 @@ Exit:
 
             this.storagePoint = default;
             this.data = default;
-            this.dataChanged = true;
         }
 
         if (((ITreeObject)this).TreeRoot is ICrystal crystal)
@@ -197,14 +260,6 @@ Exit:
         if (treeObject is not null)
         {
             treeObject.Delete();
-        }
-    }
-
-    public void NotifyDataChanged()
-    {
-        // using (this.Lock())
-        {
-            this.dataChanged = true;
         }
     }
 
@@ -228,7 +283,6 @@ Exit:
         // Deserialize
         try
         {
-            this.dataChanged = false;
             this.data = TinyhandSerializer.Deserialize<TData>(result.Data.Span);
         }
         catch
@@ -238,9 +292,5 @@ Exit:
         {
             result.Return();
         }
-    }
-
-    private void Unload(bool delete)
-    {
     }
 }
