@@ -24,6 +24,8 @@ public interface ICrystal : ITreeRoot
 
     void ConfigureStorage(StorageConfiguration configuration);
 
+    IStorage GetStorage(StorageConfiguration? configuration);
+
     Task<CrystalResult> PrepareAndLoad(bool useQuery);
 
     Task<CrystalResult> Save(UnloadMode unloadMode = UnloadMode.NoUnload);

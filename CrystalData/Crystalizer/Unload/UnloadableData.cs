@@ -63,7 +63,17 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
     [Key(2)]
     private TData? data; // using (this.Lock())
 
+    [IgnoreMember]
     private bool dataChanged;
+
+    [IgnoreMember]
+    ITreeRoot? ITreeObject.TreeRoot { get; set; }
+
+    [IgnoreMember]
+    ITreeObject? ITreeObject.TreeParent { get; set; }
+
+    [IgnoreMember]
+    int ITreeObject.TreeKey { get; set; }
 
     #endregion
 
@@ -159,20 +169,23 @@ Exit:
     public void Delete()
     {
         ITreeObject? treeObject;
-
+        StorageConfiguration? configuration;
         using (this.Lock())
         {
             treeObject = this.data as ITreeObject;
+            configuration = this.storageConfiguration;
 
             this.storagePoint = default;
             this.data = default;
             this.dataChanged = true;
         }
 
-        Crystalizer crystalizer = default!;
-        var storage = crystalizer.ResolveStorage(this.storageConfiguration!);
-        var storageId = 123ul;
-        storage.DeleteAndForget(ref storageId);
+        if (((ITreeObject)this).TreeRoot is ICrystal crystal)
+        {// Delete storage
+            var storage = crystal.GetStorage(configuration);
+            var storageId = 123ul;
+            storage.DeleteAndForget(ref storageId);
+        }
 
         if (treeObject is not null)
         {
@@ -187,87 +200,6 @@ Exit:
             this.dataChanged = true;
         }
     }
-
-    /*
-    #region ITinyhandSerialize
-
-    static void ITinyhandSerialize<UnloadableData<TData>>.Serialize(ref TinyhandWriter writer, scoped ref UnloadableData<TData>? v, TinyhandSerializerOptions options)
-    {
-        if (v == null)
-        {
-            writer.WriteNil();
-            return;
-        }
-
-        if (!options.IsSignatureMode)
-        {
-            writer.WriteArrayHeader(3);
-        }
-
-        if (v.storageConfiguration is null)
-        {
-            writer.WriteNil();
-        }
-        else
-        {
-            TinyhandSerializer.SerializeObject(ref writer, v.storageConfiguration, options);
-        }
-
-        TinyhandSerializer.SerializeObject(ref writer, v.storagePoint, options);
-        TinyhandSerializer.Serialize(ref writer, v.data, options);
-    }
-
-    static unsafe void ITinyhandSerialize<UnloadableData<TData>>.Deserialize(ref TinyhandReader reader, scoped ref UnloadableData<TData>? v, TinyhandSerializerOptions options)
-    {
-        if (reader.TryReadNil())
-        {
-            return;
-        }
-
-        var numberOfData = reader.ReadArrayHeader();
-        options.Security.DepthStep(ref reader);
-        try
-        {
-            if (numberOfData-- > 0 && !reader.TryReadNil())
-            {
-
-                ulong vd;
-                vd = reader.ReadUInt64();
-                fixed (ulong* ptr = &v.JournalPosition) *ptr = vd;
-            }
-            if (numberOfData-- > 0 && !reader.TryReadNil())
-            {
-                ulong vd;
-                vd = reader.ReadUInt64();
-                fixed (ulong* ptr = &v.Hash) *ptr = vd;
-            }
-
-            while (numberOfData-- > 0)
-            {
-                reader.Skip();
-            }
-        }
-        finally
-        {
-            reader.Depth--;
-        }
-    }
-
-    #endregion
-    */
-
-    #region ITreeObject
-
-    [IgnoreMember]
-    ITreeRoot? ITreeObject.TreeRoot { get; set; }
-
-    [IgnoreMember]
-    ITreeObject? ITreeObject.TreeParent { get; set; }
-
-    [IgnoreMember]
-    int ITreeObject.TreeKey { get; set; }
-
-    #endregion
 
     private async Task PrepareAndLoadInternal()
     {// using (this.Lock())
