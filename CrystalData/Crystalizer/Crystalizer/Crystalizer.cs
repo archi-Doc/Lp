@@ -305,11 +305,11 @@ public class Crystalizer
         }
     }
 
-    public IStorage ResolveStorage(StorageConfiguration configuration)
+    public IStorageObsolete ResolveStorage(StorageConfiguration configuration)
     {
         lock (this.syncFiler)
         {
-            IStorage storage;
+            IStorageObsolete storage;
             if (configuration is EmptyStorageConfiguration emptyStorageConfiguration)
             {// Empty storage
                 storage = EmptyStorage.Default;

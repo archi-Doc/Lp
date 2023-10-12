@@ -75,7 +75,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
 
     object ICrystal.Data => this.Data;
 
-    public IStorage Storage => this.crystal.Storage;
+    public IStorageObsolete Storage => this.crystal.Storage;
 
     void IBigCrystal.Configure(BigCrystalConfiguration configuration)
     {
@@ -258,6 +258,18 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
         else
         {
             return false;
+        }
+    }
+
+    ulong ICrystal.AddStartingPoint()
+    {
+        if (this.Crystalizer.Journal is not null)
+        {
+            return this.Crystalizer.Journal.AddStartingPoint();
+        }
+        else
+        {
+            return 0;
         }
     }
 

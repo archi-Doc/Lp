@@ -12,6 +12,8 @@ public interface IJournal
 
     ulong Add(in TinyhandWriter writer);
 
+    ulong AddStartingPoint();
+
     Task SaveJournalAsync();
 
     Task TerminateAsync();

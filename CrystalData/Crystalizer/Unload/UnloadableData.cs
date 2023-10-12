@@ -166,7 +166,7 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
                 }
             }
 
-            var journalPosition = crystal.AddJournal();
+            var startingPoint = crystal.AddStartingPoint();
 
             // Serialize and get hash.
             var options = unloadMode.IsUnload() ? TinyhandSerializerOptions.Unload : TinyhandSerializerOptions.Standard;
@@ -177,9 +177,10 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
             if (!this.storageId0.HashEquals(hash))
             {// Different data
                 // Put
-                var storage = crystal.GetStorage(this.storageConfiguration);
-                var storageId = new StorageId(journalPosition, hash, 0);
-                storage.PutAndForget(ref storageId, owner.AsReadOnly());
+                var storage = GetStorage(); // crystal.GetStorage(this.storageConfiguration);
+                var storageId = new StorageId(startingPoint, hash, 0);
+                storage.Main.PutAndForget(ref storageId, owner.AsReadOnly());
+                storage.Backup?.PutAndForget(ref storageId, owner.AsReadOnly());
 
                 // Update histories
                 var numberOfHistories = 3;
@@ -191,7 +192,8 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
                 {
                     if (this.storageId1.IsValid)
                     {
-                        storage.DeleteAndForget(ref this.storageId1);
+                        storage.Main.DeleteAndForget(ref this.storageId1);
+                        storage.Backup?.DeleteAndForget(ref this.storageId1);
                     }
 
                     this.storageId1 = this.storageId0;
@@ -201,7 +203,8 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
                 {
                     if (this.storageId2.IsValid)
                     {
-                        storage.DeleteAndForget(ref this.storageId2);
+                        storage.Main.DeleteAndForget(ref this.storageId2);
+                        storage.Backup?.DeleteAndForget(ref this.storageId2);
                     }
 
                     this.storageId2 = this.storageId1;
@@ -212,7 +215,8 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
                 {
                     if (this.storageId3.IsValid)
                     {
-                        storage.DeleteAndForget(ref this.storageId3);
+                        storage.Main.DeleteAndForget(ref this.storageId3);
+                        storage.Backup?.DeleteAndForget(ref this.storageId3);
                     }
 
                     this.storageId3 = this.storageId2;
@@ -235,31 +239,76 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
         }
 
         return true;
+
+        (IStorage Main, IStorage? Backup) GetStorage()
+        {// tempcode
+            return (default!, default!);
+        }
     }
 
     public void Delete()
     {
         ITreeObject? treeObject;
         StorageConfiguration? configuration;
+        StorageId id0;
+        StorageId id1;
+        StorageId id2;
+        StorageId id3;
+
         using (this.Lock())
         {
             treeObject = this.data as ITreeObject;
             configuration = this.storageConfiguration;
 
-            this.storagePoint = default;
+            id0 = this.storageId0;
+            id1 = this.storageId1;
+            id2 = this.storageId2;
+            id3 = this.storageId3;
+
             this.data = default;
+            this.storageId0 = default;
+            this.storageId1 = default;
+            this.storageId2 = default;
+            this.storageId3 = default;
         }
 
         if (((ITreeObject)this).TreeRoot is ICrystal crystal)
         {// Delete storage
-            var storage = crystal.GetStorage(configuration);
-            var storageId = 123ul;
-            storage.DeleteAndForget(ref storageId);
+            var storage = GetStorage();
+
+            if (id0.IsValid)
+            {
+                storage.Main.DeleteAndForget(ref id0);
+                storage.Backup?.DeleteAndForget(ref id0);
+            }
+
+            if (id1.IsValid)
+            {
+                storage.Main.DeleteAndForget(ref id1);
+                storage.Backup?.DeleteAndForget(ref id1);
+            }
+
+            if (id2.IsValid)
+            {
+                storage.Main.DeleteAndForget(ref id2);
+                storage.Backup?.DeleteAndForget(ref id2);
+            }
+
+            if (id3.IsValid)
+            {
+                storage.Main.DeleteAndForget(ref id3);
+                storage.Backup?.DeleteAndForget(ref id3);
+            }
         }
 
         if (treeObject is not null)
         {
             treeObject.Delete();
+        }
+
+        (IStorage Main, IStorage? Backup) GetStorage()
+        {// tempcode
+            return (default!, default!);
         }
     }
 

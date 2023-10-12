@@ -4,36 +4,36 @@ using System.Linq.Expressions;
 
 namespace CrystalData.Storage;
 
-public partial class EmptyStorage : IStorage
+public partial class EmptyStorage : IStorageObsolete
 {
     public static readonly EmptyStorage Default = new();
 
-    long IStorage.StorageUsage => 0;
+    long IStorageObsolete.StorageUsage => 0;
 
-    void IStorage.SetTimeout(TimeSpan timeout)
+    void IStorageObsolete.SetTimeout(TimeSpan timeout)
         => Expression.Empty();
 
-    Task<CrystalResult> IStorage.PrepareAndCheck(PrepareParam param, StorageConfiguration storageConfiguration, bool createNew)
+    Task<CrystalResult> IStorageObsolete.PrepareAndCheck(PrepareParam param, StorageConfiguration storageConfiguration, bool createNew)
         => Task.FromResult(CrystalResult.Success);
 
-    Task IStorage.SaveStorage()
+    Task IStorageObsolete.SaveStorage()
         => Task.CompletedTask;
 
-    Task<CrystalMemoryOwnerResult> IStorage.GetAsync(ref ulong fileId)
+    Task<CrystalMemoryOwnerResult> IStorageObsolete.GetAsync(ref ulong fileId)
         => Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.Success));
 
-    CrystalResult IStorage.PutAndForget(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
+    CrystalResult IStorageObsolete.PutAndForget(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
         => CrystalResult.Success;
 
-    Task<CrystalResult> IStorage.PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
+    Task<CrystalResult> IStorageObsolete.PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared)
         => Task.FromResult(CrystalResult.Success);
 
-    CrystalResult IStorage.DeleteAndForget(ref ulong fileId)
+    CrystalResult IStorageObsolete.DeleteAndForget(ref ulong fileId)
         => CrystalResult.Success;
 
-    Task<CrystalResult> IStorage.DeleteAsync(ref ulong fileId)
+    Task<CrystalResult> IStorageObsolete.DeleteAsync(ref ulong fileId)
         => Task.FromResult(CrystalResult.Success);
 
-    Task<CrystalResult> IStorage.DeleteStorageAsync()
+    Task<CrystalResult> IStorageObsolete.DeleteStorageAsync()
         => Task.FromResult(CrystalResult.Success);
 }

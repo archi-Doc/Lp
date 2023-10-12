@@ -12,15 +12,15 @@ public interface IStorage
 
     Task SaveStorage();
 
-    Task<CrystalMemoryOwnerResult> GetAsync(ref ulong fileId);
+    Task<CrystalMemoryOwnerResult> GetAsync(ref StorageId storageId);
 
-    CrystalResult PutAndForget(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared);
+    CrystalResult PutAndForget(ref StorageId storageId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared);
 
-    Task<CrystalResult> PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared);
+    Task<CrystalResult> PutAsync(ref StorageId storageId, ByteArrayPool.ReadOnlyMemoryOwner memoryToBeShared);
 
-    CrystalResult DeleteAndForget(ref ulong fileId);
+    CrystalResult DeleteAndForget(ref StorageId storageId);
 
-    Task<CrystalResult> DeleteAsync(ref ulong fileId);
+    Task<CrystalResult> DeleteAsync(ref StorageId storageId);
 
     Task<CrystalResult> DeleteStorageAsync();
 }

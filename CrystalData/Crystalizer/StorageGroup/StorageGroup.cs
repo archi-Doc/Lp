@@ -319,7 +319,7 @@ public sealed class StorageGroup
 
     internal async Task<bool> TestJournal()
     {
-        IStorage?[] array;
+        IStorageObsolete?[] array;
         lock (this.syncObject)
         {
             array = this.storages.Select(x => x.Storage).ToArray();
