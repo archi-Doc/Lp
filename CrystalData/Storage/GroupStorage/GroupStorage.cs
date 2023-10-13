@@ -1,18 +1,17 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using CrystalData.Filer;
 using CrystalData.Results;
 
 namespace CrystalData;
 
-public sealed class StorageGroup
+public sealed class GroupStorage
 {
     public const long DefaultStorageCapacity = 1024L * 1024 * 1024 * 10; // 10GB
     public const int StorageRotationThreshold = (int)StorageHelper.Megabytes * 100; // 100 MB
 
-    internal StorageGroup(Crystalizer crystalizer, Type dataType)
+    internal GroupStorage(Crystalizer crystalizer, Type dataType)
     {
         this.Crystalizer = crystalizer;
         this.dataType = dataType;

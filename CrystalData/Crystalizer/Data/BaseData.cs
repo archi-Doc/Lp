@@ -79,7 +79,7 @@ public partial record BaseData : IBaseData, IDataInternal, ITinyhandCustomJourna
                 if (checksum != this.datumObject[i].FileChecksum)
                 {
                     this.datumObject[i].FileChecksum = checksum;
-                    this.BigCrystal.StorageGroup.PutAndForget(ref this.datumObject[i].StorageId, ref this.datumObject[i].FileId, memoryToBeShared, info.DatumId);
+                    this.BigCrystal.GroupStorage.PutAndForget(ref this.datumObject[i].StorageId, ref this.datumObject[i].FileId, memoryToBeShared, info.DatumId);
 
                     this.WriteDatumObject(i);
                 }
@@ -102,7 +102,7 @@ public partial record BaseData : IBaseData, IDataInternal, ITinyhandCustomJourna
             return new(CrystalResult.NotFound);
         }
 
-        var result = await this.BigCrystal.StorageGroup.GetAsync(datumObject.StorageId, datumObject.FileId).ConfigureAwait(false);
+        var result = await this.BigCrystal.GroupStorage.GetAsync(datumObject.StorageId, datumObject.FileId).ConfigureAwait(false);
         if (result.IsFailure)
         {
             return result;
@@ -123,7 +123,7 @@ public partial record BaseData : IBaseData, IDataInternal, ITinyhandCustomJourna
         var datumObject = this.TryGetDatumObject<TDatum>();
         if (datumObject.IsValid)
         {
-            this.BigCrystal.StorageGroup.DeleteAndForget(ref datumObject.StorageId, ref datumObject.FileId);
+            this.BigCrystal.GroupStorage.DeleteAndForget(ref datumObject.StorageId, ref datumObject.FileId);
         }
     }
 
@@ -353,7 +353,7 @@ public partial record BaseData : IBaseData, IDataInternal, ITinyhandCustomJourna
 
             for (var i = 0; i < this.datumObject.Length; i++)
             {
-                this.BigCrystal.StorageGroup.DeleteAndForget(ref this.datumObject[i].StorageId, ref this.datumObject[i].FileId);
+                this.BigCrystal.GroupStorage.DeleteAndForget(ref this.datumObject[i].StorageId, ref this.datumObject[i].FileId);
                 this.datumObject[i].Datum?.Unload();
                 this.datumObject[i].Datum = null;
                 this.datumObject[i].FileId = 0;

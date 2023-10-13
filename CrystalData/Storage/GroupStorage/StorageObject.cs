@@ -38,11 +38,11 @@ internal partial class StorageObject
     public MemoryStat MemoryStat { get; private set; } = default!;
 
     [Key(3)]
-    public long StorageCapacity { get; set; } = StorageGroup.DefaultStorageCapacity;
+    public long StorageCapacity { get; set; } = GroupStorage.DefaultStorageCapacity;
 
     #endregion
 
-    public async Task<CrystalResult> PrepareAndCheck(StorageGroup storageGroup, PrepareParam param, bool createNew)
+    public async Task<CrystalResult> PrepareAndCheck(GroupStorage storageGroup, PrepareParam param, bool createNew)
     {
         var crystalizer = storageGroup.Crystalizer;
 

@@ -29,6 +29,16 @@ public partial class DesignSerializable
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
 public partial record CrystalClass
 {// This is it. This class is the crystal of state-of-the-art data management technology.
+    public static void Register(IUnitCrystalContext context)
+    {
+        context.AddCrystal<CrystalClass>(
+            new(SavePolicy.Manual, new GlobalFileConfiguration("CrystalClass.tinyhand"))
+            {
+                SaveFormat = SaveFormat.Utf8,
+                NumberOfFileHistories = 2,
+            });
+    }
+
     public CrystalClass()
     {
     }

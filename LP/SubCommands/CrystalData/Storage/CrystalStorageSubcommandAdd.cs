@@ -56,7 +56,7 @@ EnterPath:
             goto EnterPath;
         }
 
-        var resultAdd = this.crystal.StorageGroup.AddStorage_SimpleLocal(path, options.capacityInBytes);
+        var resultAdd = this.crystal.GroupStorage.AddStorage_SimpleLocal(path, options.capacityInBytes);
         if (resultAdd.Result == AddStorageResult.Success)
         {
             this.logger.TryGet()?.Log($"Storage added: {resultAdd.Id:x4}");
@@ -76,7 +76,7 @@ EnterBucket:
             return;
         }
 
-        var resultCheck = S3Filer.Check(this.crystal.StorageGroup, bucket, string.Empty);
+        var resultCheck = S3Filer.Check(this.crystal.GroupStorage, bucket, string.Empty);
         if (resultCheck != AddStorageResult.Success)
         {
             this.userInterfaceService.WriteLine(HashedString.FromEnum(resultCheck));
@@ -90,7 +90,7 @@ EnterBucket:
             return;
         }
 
-        var resultAdd = this.crystal.StorageGroup.AddStorage_SimpleS3(bucket, path, options.capacityInBytes);
+        var resultAdd = this.crystal.GroupStorage.AddStorage_SimpleS3(bucket, path, options.capacityInBytes);
         if (resultAdd.Result == AddStorageResult.Success)
         {
             this.logger.TryGet()?.Log($"Storage added: {resultAdd.Id:x4}");
@@ -117,5 +117,5 @@ public record CrystalStorageOptionsAdd
     [SimpleOption("capacity", Description = "Directory capacity in GB")]
     public int Capacity { get; set; } = 0;
 
-    internal long capacityInBytes { get; set; } = StorageGroup.DefaultStorageCapacity;
+    internal long capacityInBytes { get; set; } = GroupStorage.DefaultStorageCapacity;
 }
