@@ -1,10 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Tinyhand.IO;
-
-#pragma warning disable SA1202 // Elements should be ordered by access
-#pragma warning disable SA1204
-
 namespace CrystalData;
 
 [TinyhandObject(Journal = true)]
@@ -39,17 +34,13 @@ public partial record CrystalClass
                 SaveInterval = TimeSpan.FromMinutes(10),
                 FileConfiguration = new GlobalFileConfiguration("Main.tinyhand"),
                 BackupFileConfiguration = new GlobalFileConfiguration("Backup.tinyhand"),
-                StorageConfiguration = new SimpleStorageConfiguration(
+                /*StorageConfiguration = new SimpleStorageConfiguration(
                     new GlobalDirectoryConfiguration("MainStorage"),
-                    new GlobalDirectoryConfiguration("BackupStorage")),
+                    new GlobalDirectoryConfiguration("BackupStorage")),*/
                 NumberOfFileHistories = 2,
             });
-    }
 
-    public static async Task Test(CrystalClass c)
-    {
-        var child = await c.Child.Get();
-        child.Name = "test";
+        context.TrySetJournal(new SimpleJournalConfiguration(new S3DirectoryConfiguration("TestBucket", "Journal")));
     }
 
     public CrystalClass()
@@ -57,11 +48,11 @@ public partial record CrystalClass
     }
 
     [Key(0, AddProperty = "Id")]
-    [Link(Unique = true, Primary = true, Type = ChainType.Unordered, AddValue = false)]
+    [Link(Unique = true, Primary = true, Type = ChainType.Unordered)]
     private int id;
 
     [Key(1, AddProperty = "Name")]
-    [Link(Type = ChainType.Ordered, AddValue = false)]
+    [Link(Type = ChainType.Ordered)]
     private string name = string.Empty;
 
     [Key(2, AddProperty = "Child")]
@@ -194,10 +185,9 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
             // Serialize and get hash.
             var options = unloadMode.IsUnload() ? TinyhandSerializerOptions.Unload : TinyhandSerializerOptions.Standard;
             SerializeHelper.Serialize<TData>(this.data, options, out var owner);
-            var byteArray = TinyhandSerializer.Serialize(this.data, options);
-            var hash = FarmHash.Hash64(byteArray);
+            var hash = FarmHash.Hash64(owner.Span);
 
-            if (hash == this.storageId0.Hash)
+            if (hash != this.storageId0.Hash)
             {// Different data
                 // Put
                 var storage = crystal.Storage;
@@ -332,8 +322,32 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
         }
 
         var storage = crystal.Storage;
-        var storageId = 123ul;
-        var result = await storage.GetAsync(ref storageId).ConfigureAwait(false);
+        ulong fileId = 0;
+        CrystalMemoryOwnerResult result;
+        if (this.storageId0.IsValid)
+        {
+            fileId = this.storageId0.FileId;
+            result = await storage.GetAsync(ref fileId).ConfigureAwait(false);
+            if (result.IsFailure && this.storageId1.IsValid)
+            {
+                fileId = this.storageId1.FileId;
+                result = await storage.GetAsync(ref fileId).ConfigureAwait(false);
+                if (result.IsFailure && this.storageId2.IsValid)
+                {
+                    fileId = this.storageId2.FileId;
+                    result = await storage.GetAsync(ref fileId).ConfigureAwait(false);
+                    if (result.IsFailure && this.storageId3.IsValid)
+                    {
+                        fileId = this.storageId3.FileId;
+                        result = await storage.GetAsync(ref fileId).ConfigureAwait(false);
+                    }
+                }
+            }
+        }
+        else
+        {
+            result = new(CrystalResult.NotFound);
+        }
 
         if (result.IsFailure)
         {

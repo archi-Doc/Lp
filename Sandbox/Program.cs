@@ -102,6 +102,8 @@ public class Program
                     FileConfiguration = new LocalFileConfiguration("Example/File"),
                     StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Example")),
                 });
+
+                CrystalClass.Register(context);
             })
             .SetupOptions<CrystalizerOptions>((context, options) =>
             {// CrystalizerOptions

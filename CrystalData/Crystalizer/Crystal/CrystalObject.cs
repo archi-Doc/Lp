@@ -133,7 +133,8 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITreeObject
                     configuration = configuration with { BackupFileConfiguration = globalBackup.CombineFile(configuration.FileConfiguration.Path) };
                 }
 
-                if (configuration.StorageConfiguration.BackupDirectoryConfiguration == null)
+                if (configuration.StorageConfiguration is not null &&
+                    configuration.StorageConfiguration.BackupDirectoryConfiguration == null)
                 {
                     var storageConfiguration = configuration.StorageConfiguration with { BackupDirectoryConfiguration = globalBackup.CombineDirectory(configuration.StorageConfiguration.DirectoryConfiguration), };
                     configuration = configuration with { StorageConfiguration = storageConfiguration, };
@@ -674,8 +675,9 @@ Exit:
         // Storage
         if (this.storage == null)
         {
-            this.storage = this.Crystalizer.ResolveStorage(this.CrystalConfiguration.StorageConfiguration);
-            result = await this.storage.PrepareAndCheck(param, this.CrystalConfiguration.StorageConfiguration, false).ConfigureAwait(false);
+            var storageConfiguration = this.CrystalConfiguration.StorageConfiguration ?? this.Crystalizer.DefaultStorage;
+            this.storage = this.Crystalizer.ResolveStorage(storageConfiguration);
+            result = await this.storage.PrepareAndCheck(param, storageConfiguration, false).ConfigureAwait(false);
             if (result.IsFailure())
             {
                 return result;
@@ -822,8 +824,10 @@ Exit:
     {
         if (this.storage == null)
         {
-            this.storage = this.Crystalizer.ResolveStorage(this.CrystalConfiguration.StorageConfiguration);
-            this.storage.PrepareAndCheck(PrepareParam.NoQuery<TData>(this.Crystalizer), this.CrystalConfiguration.StorageConfiguration, false).Wait();
+            var storageConfiguration = this.CrystalConfiguration.StorageConfiguration ?? this.Crystalizer.DefaultStorage;
+
+            this.storage = this.Crystalizer.ResolveStorage(storageConfiguration);
+            this.storage.PrepareAndCheck(PrepareParam.NoQuery<TData>(this.Crystalizer), storageConfiguration, false).Wait();
         }
     }
 

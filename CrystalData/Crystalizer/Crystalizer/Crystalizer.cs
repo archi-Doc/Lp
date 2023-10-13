@@ -56,6 +56,7 @@ public class Crystalizer
         this.configuration = configuration;
         this.GlobalDirectory = options.GlobalDirectory;
         this.DefaultBackup = options.DefaultBackup;
+        this.DefaultStorage = options.DefaultStorage;
         this.EnableFilerLogger = options.EnableFilerLogger;
         this.RootDirectory = options.RootPath;
         this.FilerTimeout = options.FilerTimeout;
@@ -104,6 +105,8 @@ public class Crystalizer
 
     public DirectoryConfiguration? DefaultBackup { get; }
 
+    public StorageConfiguration DefaultStorage { get; }
+
     public bool EnableFilerLogger { get; }
 
     public string RootDirectory { get; }
@@ -144,9 +147,10 @@ public class Crystalizer
     private ConcurrentDictionary<uint, ICrystalInternal> planeToCrystal = new(); // Plane to crystal
     private ConcurrentDictionary<ICrystal, int> saveQueue = new(); // Save queue
 
-    private object syncFiler = new();
+    private object syncObject = new();
     private IRawFiler? localFiler;
     private Dictionary<string, IRawFiler> bucketToS3Filer = new();
+    private Dictionary<StorageConfiguration, IStorage> configurationToStorage = new();
 
     #endregion
 
@@ -227,7 +231,7 @@ public class Crystalizer
 
     public (IRawFiler RawFiler, FileConfiguration FixedConfiguration) ResolveRawFiler(FileConfiguration configuration)
     {
-        lock (this.syncFiler)
+        lock (this.syncObject)
         {
             if (configuration is GlobalFileConfiguration)
             {// Global file
@@ -267,7 +271,7 @@ public class Crystalizer
 
     public (IRawFiler RawFiler, DirectoryConfiguration FixedConfiguration) ResolveRawFiler(DirectoryConfiguration configuration)
     {
-        lock (this.syncFiler)
+        lock (this.syncObject)
         {
             if (configuration is GlobalDirectoryConfiguration)
             {// Global directory
@@ -307,16 +311,20 @@ public class Crystalizer
 
     public IStorage ResolveStorage(StorageConfiguration configuration)
     {
-        lock (this.syncFiler)
+        lock (this.syncObject)
         {
-            IStorage storage;
+            IStorage? storage;
             if (configuration is EmptyStorageConfiguration emptyStorageConfiguration)
             {// Empty storage
                 storage = EmptyStorage.Default;
             }
             else if (configuration is SimpleStorageConfiguration simpleStorageConfiguration)
             {
-                storage = new SimpleStorage(this);
+                if (!this.configurationToStorage.TryGetValue(configuration, out storage))
+                {
+                    storage = new SimpleStorage(this);
+                    this.configurationToStorage.TryAdd(configuration, storage);
+                }
             }
             else
             {
@@ -539,7 +547,7 @@ public class Crystalizer
 
         // Terminate filers/journal
         var tasks = new List<Task>();
-        lock (this.syncFiler)
+        lock (this.syncObject)
         {
             if (this.localFiler is not null)
             {
