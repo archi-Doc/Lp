@@ -16,7 +16,9 @@ public interface ICrystal : ITreeRoot
 
     CrystalState State { get; }
 
-    IStorageObsolete Storage { get; }
+    IStorage Storage { get; }
+
+    IJournal? Journal { get; }
 
     void Configure(CrystalConfiguration configuration);
 
@@ -33,8 +35,6 @@ public interface ICrystal : ITreeRoot
     Task<CrystalResult> Delete();
 
     void Terminate();
-
-    ulong AddStartingPoint();
 }
 
 public interface ICrystal<TData> : ICrystal

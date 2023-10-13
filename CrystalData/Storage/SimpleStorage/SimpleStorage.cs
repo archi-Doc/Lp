@@ -8,7 +8,7 @@ using CrystalData.Filer;
 
 namespace CrystalData.Storage;
 
-internal partial class SimpleStorage : IStorageObsolete, IStorageInternal
+internal partial class SimpleStorage : IStorage, IStorageInternal
 {
     private const string SimpleStorageFile = "Simple";
 
@@ -39,12 +39,12 @@ internal partial class SimpleStorage : IStorageObsolete, IStorageInternal
 
     #region IStorage
 
-    void IStorageObsolete.SetTimeout(TimeSpan timeout)
+    void IStorage.SetTimeout(TimeSpan timeout)
     {
         this.timeout = timeout;
     }
 
-    async Task<CrystalResult> IStorageObsolete.PrepareAndCheck(PrepareParam param, StorageConfiguration storageConfiguration, bool createNew)
+    async Task<CrystalResult> IStorage.PrepareAndCheck(PrepareParam param, StorageConfiguration storageConfiguration, bool createNew)
     {
         CrystalResult result;
         var directoryConfiguration = storageConfiguration.DirectoryConfiguration;
@@ -103,7 +103,7 @@ internal partial class SimpleStorage : IStorageObsolete, IStorageInternal
         return CrystalResult.Success;
     }
 
-    async Task IStorageObsolete.SaveStorage()
+    async Task IStorage.SaveStorage()
     {
         if (this.crystal != null)
         {
@@ -111,7 +111,7 @@ internal partial class SimpleStorage : IStorageObsolete, IStorageInternal
         }
     }
 
-    CrystalResult IStorageObsolete.PutAndForget(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
+    CrystalResult IStorage.PutAndForget(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
     {
         if (this.mainFiler == null || this.data == null)
         {
@@ -132,7 +132,7 @@ internal partial class SimpleStorage : IStorageObsolete, IStorageInternal
         return result;
     }
 
-    CrystalResult IStorageObsolete.DeleteAndForget(ref ulong fileId)
+    CrystalResult IStorage.DeleteAndForget(ref ulong fileId)
     {
         if (this.mainFiler == null)
         {
@@ -168,7 +168,7 @@ internal partial class SimpleStorage : IStorageObsolete, IStorageInternal
         return result;
     }
 
-    Task<CrystalMemoryOwnerResult> IStorageObsolete.GetAsync(ref ulong fileId)
+    Task<CrystalMemoryOwnerResult> IStorage.GetAsync(ref ulong fileId)
     {
         if (this.mainFiler == null || this.data == null)
         {
@@ -186,7 +186,7 @@ internal partial class SimpleStorage : IStorageObsolete, IStorageInternal
         return this.mainFiler.ReadAsync(this.MainFile(this.FileToPath(file)), 0, size, this.timeout);
     }
 
-    Task<CrystalResult> IStorageObsolete.PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
+    Task<CrystalResult> IStorage.PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)
     {
         if (this.mainFiler == null || this.data == null)
         {
@@ -207,7 +207,7 @@ internal partial class SimpleStorage : IStorageObsolete, IStorageInternal
         return task;
     }
 
-    Task<CrystalResult> IStorageObsolete.DeleteAsync(ref ulong fileId)
+    Task<CrystalResult> IStorage.DeleteAsync(ref ulong fileId)
     {
         if (this.mainFiler == null || this.data == null)
         {
@@ -234,7 +234,7 @@ internal partial class SimpleStorage : IStorageObsolete, IStorageInternal
         return task;
     }
 
-    async Task<CrystalResult> IStorageObsolete.DeleteStorageAsync()
+    async Task<CrystalResult> IStorage.DeleteStorageAsync()
     {
         if (this.mainFiler == null)
         {

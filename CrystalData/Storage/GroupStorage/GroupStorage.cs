@@ -318,7 +318,7 @@ public sealed class GroupStorage
 
     internal async Task<bool> TestJournal()
     {
-        IStorageObsolete?[] array;
+        IStorage?[] array;
         lock (this.syncObject)
         {
             array = this.storages.Select(x => x.Storage).ToArray();

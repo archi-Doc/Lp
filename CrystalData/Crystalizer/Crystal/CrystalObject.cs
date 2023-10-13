@@ -24,7 +24,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITreeObject
     private SemaphoreLock semaphore = new();
     private TData? data;
     private CrystalFiler? crystalFiler;
-    private IStorageObsolete? storage;
+    private IStorage? storage;
     private Waypoint waypoint;
     private DateTime lastSavedTime;
 
@@ -98,7 +98,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITreeObject
         }
     }*/
 
-    public IStorageObsolete Storage
+    public IStorage Storage
     {
         get
         {
@@ -119,6 +119,8 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITreeObject
             }
         }
     }
+
+    public IJournal? Journal => this.Crystalizer.Journal;
 
     void ICrystal.Configure(CrystalConfiguration configuration)
     {
@@ -535,7 +537,7 @@ Exit:
         }
     }
 
-    ulong ICrystal.AddStartingPoint()
+    /*ulong ICrystal.AddStartingPoint()
     {
         if (this.Crystalizer.Journal is not null)
         {
@@ -545,7 +547,7 @@ Exit:
         {
             return 0;
         }
-    }
+    }*/
 
     #endregion
 

@@ -305,11 +305,11 @@ public class Crystalizer
         }
     }
 
-    public IStorageObsolete ResolveStorage(StorageConfiguration configuration)
+    public IStorage ResolveStorage(StorageConfiguration configuration)
     {
         lock (this.syncFiler)
         {
-            IStorageObsolete storage;
+            IStorage storage;
             if (configuration is EmptyStorageConfiguration emptyStorageConfiguration)
             {// Empty storage
                 storage = EmptyStorage.Default;
@@ -805,7 +805,7 @@ public class Crystalizer
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    /*[MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal ulong AddStartingPoint(uint plane)
     {
         if (this.Journal is { } journal)
@@ -817,7 +817,7 @@ public class Crystalizer
         {
             return 0;
         }
-    }
+    }*/
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal ulong GetJournalPosition()

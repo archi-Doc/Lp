@@ -152,29 +152,6 @@ public partial class SimpleJournal : IJournal
         }
     }
 
-    ulong IJournal.AddStartingPoint()
-    {
-        Span<byte> span = stackalloc byte[4];
-        var recordType = JournalType.Startingpoint;
-
-        span[3] = Unsafe.As<JournalType, byte>(ref recordType);
-        span[2] = 0;
-        span[1] = 0;
-        span[0] = 0;
-
-        lock (this.syncRecordBuffer)
-        {
-            if (this.recordBufferRemaining < span.Length)
-            {
-                this.FlushRecordBufferInternal();
-            }
-
-            span.CopyTo(this.recordBuffer.AsSpan(this.recordBufferLength));
-            this.recordBufferLength += span.Length;
-            return this.recordBufferPosition + (ulong)this.recordBufferLength;
-        }
-    }
-
     async Task IJournal.SaveJournalAsync()
     {
         await this.SaveJournalAsync(true).ConfigureAwait(false);

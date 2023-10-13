@@ -25,7 +25,7 @@ internal partial class StorageObject
     #region FieldAndProperty
 
     [IgnoreMember]
-    public IStorageObsolete? Storage { get; set; }
+    public IStorage? Storage { get; set; }
 
     [Key(0)]
     [Link(Type = ChainType.Unordered, Primary = true, AddValue = false)]

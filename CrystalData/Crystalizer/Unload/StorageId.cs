@@ -7,13 +7,11 @@ namespace CrystalData;
 
 [TinyhandObject]
 public readonly partial struct StorageId : IEquatable<StorageId>, IComparable<StorageId>
-{// StorageId: JournalPosition 8 bytes, Hash 7 bytes, SubId 1 byte.
+{// StorageId: JournalPosition 8 bytes, File id 8 bytes, Hash 8 bytes
     public const string Extension = "storage";
-    public const int Length = 16; // 8 + 8
-    public const ulong HashMask = 0xFFFF_FFFF_FFFF_FF00;
-    public const ulong SubIdMask = 0x0000_0000_0000_00FF;
+    public const int Length = 24; // 8 + 8 + 8
     public static readonly StorageId Invalid = default;
-    public static readonly StorageId Empty = new(1, 0);
+    public static readonly StorageId Empty = new(1, 0, 0);
     public static readonly int LengthInBase32;
 
     static StorageId()
@@ -25,16 +23,11 @@ public readonly partial struct StorageId : IEquatable<StorageId>, IComparable<St
     {
     }
 
-    public StorageId(ulong journalPosition, ulong hashAndSubId)
+    public StorageId(ulong journalPosition, ulong fileId, ulong hash)
     {
         this.JournalPosition = journalPosition;
-        this.hashAndSubId = hashAndSubId;
-    }
-
-    public StorageId(ulong journalPosition, ulong hash, byte subId)
-    {
-        this.JournalPosition = journalPosition;
-        this.hashAndSubId = (hash & HashMask) | subId;
+        this.FileId = fileId;
+        this.Hash = hash;
     }
 
     public static bool TryParse(string base32, out StorageId storageId)
@@ -51,8 +44,10 @@ public readonly partial struct StorageId : IEquatable<StorageId>, IComparable<St
             {
                 var journalPosition = BinaryPrimitives.ReverseEndianness(BitConverter.ToUInt64(span));
                 span = span.Slice(sizeof(ulong));
+                var fileId = BitConverter.ToUInt64(span);
+                span = span.Slice(sizeof(ulong));
                 var hash = BitConverter.ToUInt64(span);
-                storageId = new(journalPosition, hash);
+                storageId = new(journalPosition, fileId, hash);
                 return true;
             }
             catch
@@ -68,14 +63,12 @@ public readonly partial struct StorageId : IEquatable<StorageId>, IComparable<St
     public readonly ulong JournalPosition;
 
     [Key(1)]
-    private readonly ulong hashAndSubId;
+    public readonly ulong FileId;
 
-    public byte SubId => (byte)(this.hashAndSubId & SubIdMask);
+    [Key(2)]
+    public readonly ulong Hash;
 
     public bool IsValid => this.JournalPosition != 0;
-
-    public bool HashEquals(ulong hash)
-        => (hash & HashMask) == (this.hashAndSubId & HashMask);
 
     public byte[] ToByteArray()
     {
@@ -94,11 +87,12 @@ public readonly partial struct StorageId : IEquatable<StorageId>, IComparable<St
     }
 
     public override string ToString()
-        => $"Position: {this.JournalPosition}, HashAndSubId: {this.hashAndSubId}";
+        => $"Position: {this.JournalPosition}, File id: {this.FileId}";
 
     public bool Equals(StorageId other)
         => this.JournalPosition == other.JournalPosition &&
-        this.hashAndSubId == other.hashAndSubId;
+        this.FileId == other.FileId &&
+        this.Hash == other.Hash;
 
     public static bool operator >(StorageId w1, StorageId w2)
         => w1.CompareTo(w2) > 0;
@@ -108,20 +102,26 @@ public readonly partial struct StorageId : IEquatable<StorageId>, IComparable<St
 
     public int CompareTo(StorageId other)
     {
-        if (this.JournalPosition < other.JournalPosition)
+        var cmp = this.JournalPosition.CircularCompareTo(other.JournalPosition);
+        if (cmp != 0)
+        {
+            return cmp;
+        }
+
+        if (this.FileId < other.FileId)
         {
             return -1;
         }
-        else if (this.JournalPosition > other.JournalPosition)
+        else if (this.FileId > other.FileId)
         {
             return 1;
         }
 
-        if (this.hashAndSubId < other.hashAndSubId)
+        if (this.Hash < other.Hash)
         {
             return -1;
         }
-        else if (this.hashAndSubId > other.hashAndSubId)
+        else if (this.Hash > other.Hash)
         {
             return 1;
         }
@@ -130,7 +130,7 @@ public readonly partial struct StorageId : IEquatable<StorageId>, IComparable<St
     }
 
     public override int GetHashCode()
-        => HashCode.Combine(this.JournalPosition, this.hashAndSubId);
+        => HashCode.Combine(this.JournalPosition, this.Hash);
 
     private static void WriteBigEndian(ulong value, Span<byte> span)
     {
@@ -153,6 +153,6 @@ public readonly partial struct StorageId : IEquatable<StorageId>, IComparable<St
     {
         WriteBigEndian(this.JournalPosition, span);
         span = span.Slice(sizeof(ulong));
-        BitConverter.TryWriteBytes(span, this.hashAndSubId);
+        BitConverter.TryWriteBytes(span, this.Hash);
     }
 }

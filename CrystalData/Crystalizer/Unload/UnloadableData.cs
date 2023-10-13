@@ -32,33 +32,46 @@ public partial record CrystalClass
     public static void Register(IUnitCrystalContext context)
     {
         context.AddCrystal<CrystalClass>(
-            new(SavePolicy.Manual, new GlobalFileConfiguration("CrystalClass.tinyhand"))
+            new()
             {
                 SaveFormat = SaveFormat.Utf8,
+                SavePolicy = SavePolicy.Periodic,
+                SaveInterval = TimeSpan.FromMinutes(10),
+                FileConfiguration = new GlobalFileConfiguration("Main.tinyhand"),
+                BackupFileConfiguration = new GlobalFileConfiguration("Backup.tinyhand"),
+                StorageConfiguration = new SimpleStorageConfiguration(
+                    new GlobalDirectoryConfiguration("MainStorage"),
+                    new GlobalDirectoryConfiguration("BackupStorage")),
                 NumberOfFileHistories = 2,
             });
+    }
+
+    public static async Task Test(CrystalClass c)
+    {
+        var child = await c.Child.Get();
+        child.Name = "test";
     }
 
     public CrystalClass()
     {
     }
 
-    [Key(0)]
-    [Link(Unique = true, Primary = true, Type = ChainType.Unordered)]
-    public int Id { get; set; }
+    [Key(0, AddProperty = "Id")]
+    [Link(Unique = true, Primary = true, Type = ChainType.Unordered, AddValue = false)]
+    private int id;
 
-    [Key(1)]
-    [Link(Type = ChainType.Ordered)]
-    public string Name { get; set; } = string.Empty;
+    [Key(1, AddProperty = "Name")]
+    [Link(Type = ChainType.Ordered, AddValue = false)]
+    private string name = string.Empty;
 
-    [Key(2)]
-    public UnloadableData<CrystalClass> Child { get; set; } = new();
+    [Key(2, AddProperty = "Child")]
+    private UnloadableData<CrystalClass> child = new();
 
-    [Key(3)]
-    public UnloadableData<CrystalClass.GoshujinClass> Children { get; set; } = new();
+    [Key(3, AddProperty = "Children")]
+    private UnloadableData<CrystalClass.GoshujinClass> children = new();
 
-    [Key(4)]
-    public UnloadableData<byte[]> ByteArray { get; set; } = new();
+    [Key(4, AddProperty = "ByteArray")]
+    private UnloadableData<byte[]> byteArray = new();
 }
 
 /// <summary>
@@ -73,22 +86,22 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
 
     #region FieldAndProperty
 
-    [Key(0)]
-    private StorageConfiguration? storageConfiguration; // using (this.Lock())
+    // [Key(0)]
+    // private StorageConfiguration? storageConfiguration; // using (this.Lock())
 
-    [Key(1)]
+    [Key(0)]
     private TData? data; // using (this.Lock())
 
-    [Key(2)]
+    [Key(1)]
     private StorageId storageId0;
 
-    [Key(3)]
+    [Key(2)]
     private StorageId storageId1;
 
-    [Key(4)]
+    [Key(3)]
     private StorageId storageId2;
 
-    [Key(5)]
+    [Key(4)]
     private StorageId storageId3;
 
     [IgnoreMember]
@@ -142,13 +155,13 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
         }
     }
 
-    public void SetStorageConfiguration(StorageConfiguration storageConfiguration)
+    /*public void SetStorageConfiguration(StorageConfiguration storageConfiguration)
     {
         using (this.Lock())
         {
             this.storageConfiguration = storageConfiguration;
         }
-    }
+    }*/
 
     public async Task<bool> Save(UnloadMode unloadMode)
     {
@@ -161,7 +174,7 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
             }
 
             if (((ITreeObject)this).TreeRoot is not ICrystal crystal)
-            {// No root
+            {// No crystal
                 return true;
             }
 
@@ -176,7 +189,7 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
                 }
             }
 
-            var startingPoint = crystal.AddStartingPoint();
+            var currentPosition = crystal.Journal is null ? 0 : crystal.Journal.GetCurrentPosition();
 
             // Serialize and get hash.
             var options = unloadMode.IsUnload() ? TinyhandSerializerOptions.Unload : TinyhandSerializerOptions.Standard;
@@ -184,13 +197,13 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
             var byteArray = TinyhandSerializer.Serialize(this.data, options);
             var hash = FarmHash.Hash64(byteArray);
 
-            if (!this.storageId0.HashEquals(hash))
+            if (hash == this.storageId0.Hash)
             {// Different data
                 // Put
-                var storage = GetStorage(); // crystal.GetStorage(this.storageConfiguration);
-                var storageId = new StorageId(startingPoint, hash, 0);
-                storage.Main.PutAndForget(ref storageId, owner.AsReadOnly());
-                storage.Backup?.PutAndForget(ref storageId, owner.AsReadOnly());
+                var storage = crystal.Storage;
+                ulong fileId = 0;
+                storage.PutAndForget(ref fileId, owner.AsReadOnly());
+                var storageId = new StorageId(currentPosition, fileId, hash);
 
                 // Update histories
                 var numberOfHistories = 3;
@@ -202,8 +215,8 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
                 {
                     if (this.storageId1.IsValid)
                     {
-                        storage.Main.DeleteAndForget(ref this.storageId1);
-                        storage.Backup?.DeleteAndForget(ref this.storageId1);
+                        fileId = this.storageId1.FileId;
+                        storage.DeleteAndForget(ref fileId);
                     }
 
                     this.storageId1 = this.storageId0;
@@ -213,8 +226,8 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
                 {
                     if (this.storageId2.IsValid)
                     {
-                        storage.Main.DeleteAndForget(ref this.storageId2);
-                        storage.Backup?.DeleteAndForget(ref this.storageId2);
+                        fileId = this.storageId2.FileId;
+                        storage.DeleteAndForget(ref fileId);
                     }
 
                     this.storageId2 = this.storageId1;
@@ -225,8 +238,8 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
                 {
                     if (this.storageId3.IsValid)
                     {
-                        storage.Main.DeleteAndForget(ref this.storageId3);
-                        storage.Backup?.DeleteAndForget(ref this.storageId3);
+                        fileId = this.storageId3.FileId;
+                        storage.DeleteAndForget(ref fileId);
                     }
 
                     this.storageId3 = this.storageId2;
@@ -249,31 +262,24 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
         }
 
         return true;
-
-        (IStorage Main, IStorage? Backup) GetStorage()
-        {// tempcode
-            return (default!, default!);
-        }
     }
 
     public void Delete()
     {
         ITreeObject? treeObject;
-        StorageConfiguration? configuration;
-        StorageId id0;
-        StorageId id1;
-        StorageId id2;
-        StorageId id3;
+        ulong id0;
+        ulong id1;
+        ulong id2;
+        ulong id3;
 
         using (this.Lock())
         {
             treeObject = this.data as ITreeObject;
-            configuration = this.storageConfiguration;
 
-            id0 = this.storageId0;
-            id1 = this.storageId1;
-            id2 = this.storageId2;
-            id3 = this.storageId3;
+            id0 = this.storageId0.FileId;
+            id1 = this.storageId1.FileId;
+            id2 = this.storageId2.FileId;
+            id3 = this.storageId3.FileId;
 
             this.data = default;
             this.storageId0 = default;
@@ -284,41 +290,32 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
 
         if (((ITreeObject)this).TreeRoot is ICrystal crystal)
         {// Delete storage
-            var storage = GetStorage();
+            var storage = crystal.Storage;
 
-            if (id0.IsValid)
+            if (id0 != 0)
             {
-                storage.Main.DeleteAndForget(ref id0);
-                storage.Backup?.DeleteAndForget(ref id0);
+                storage.DeleteAndForget(ref id0);
             }
 
-            if (id1.IsValid)
+            if (id1 != 0)
             {
-                storage.Main.DeleteAndForget(ref id1);
-                storage.Backup?.DeleteAndForget(ref id1);
+                storage.DeleteAndForget(ref id1);
             }
 
-            if (id2.IsValid)
+            if (id2 != 0)
             {
-                storage.Main.DeleteAndForget(ref id2);
-                storage.Backup?.DeleteAndForget(ref id2);
+                storage.DeleteAndForget(ref id2);
             }
 
-            if (id3.IsValid)
+            if (id3 != 0)
             {
-                storage.Main.DeleteAndForget(ref id3);
-                storage.Backup?.DeleteAndForget(ref id3);
+                storage.DeleteAndForget(ref id3);
             }
         }
 
         if (treeObject is not null)
         {
             treeObject.Delete();
-        }
-
-        (IStorage Main, IStorage? Backup) GetStorage()
-        {// tempcode
-            return (default!, default!);
         }
     }
 
@@ -329,8 +326,12 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
             return;
         }
 
-        Crystalizer crystalizer = default!;
-        var storage = crystalizer.ResolveStorage(this.storageConfiguration!);
+        if (((ITreeObject)this).TreeRoot is not ICrystal crystal)
+        {// No crystal
+            return;
+        }
+
+        var storage = crystal.Storage;
         var storageId = 123ul;
         var result = await storage.GetAsync(ref storageId).ConfigureAwait(false);
 
