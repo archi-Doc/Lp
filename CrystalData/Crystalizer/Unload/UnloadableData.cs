@@ -47,7 +47,7 @@ public partial record CrystalClass
     {
     }
 
-    [Key(0, AddProperty = "Id")]
+    [Key(0, AddProperty = "Id", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
     [Link(Unique = true, Primary = true, Type = ChainType.Unordered)]
     private int id;
 
@@ -55,13 +55,13 @@ public partial record CrystalClass
     [Link(Type = ChainType.Ordered)]
     private string name = string.Empty;
 
-    [Key(2, AddProperty = "Child")]
+    [Key(2, AddProperty = "Child", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
     private UnloadableData<CrystalClass> child = new();
 
-    [Key(3, AddProperty = "Children")]
+    [Key(3, AddProperty = "Children", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
     private UnloadableData<CrystalClass.GoshujinClass> children = new();
 
-    [Key(4, AddProperty = "ByteArray")]
+    [Key(4, AddProperty = "ByteArray", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
     private UnloadableData<byte[]> byteArray = new();
 }
 
@@ -81,7 +81,7 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
     // private StorageConfiguration? storageConfiguration; // using (this.Lock())
 
     [Key(0)]
-    private TData? data; // using (this.Lock())
+    private TData? data;
 
     [Key(1)]
     private StorageId storageId0;
@@ -139,7 +139,7 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
     }
 
     public void Set(TData data)
-    {
+    {// Journal not implemented.
         using (this.Lock())
         {
             this.data = data;
