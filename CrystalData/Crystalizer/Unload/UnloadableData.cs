@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Tinyhand.IO;
+
 namespace CrystalData;
 
 [TinyhandObject(Journal = true)]
@@ -308,6 +310,31 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
             treeObject.Delete();
         }
     }
+
+    #region Journal
+
+    bool ITreeObject.ReadRecord(ref TinyhandReader reader)
+    {
+        if (this.data is null)
+        {
+            this.data = this.Get().Result;
+        }
+
+        if (this.data is ITreeObject treeObject)
+        {
+            return treeObject.ReadRecord(ref reader);
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    void ITreeObject.WriteLocator(ref TinyhandWriter writer)
+    {
+    }
+
+    #endregion
 
     private async Task PrepareAndLoadInternal()
     {// using (this.Lock())
