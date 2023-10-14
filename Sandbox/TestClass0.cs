@@ -74,6 +74,7 @@ internal class TestClass0
             if (w is not null)
             {
                 w.Name = "One";
+                w.Children = default!;
                 w.Commit();
             }
         }
