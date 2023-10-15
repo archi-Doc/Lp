@@ -55,7 +55,7 @@ public partial record CrystalConfiguration
         this.SavePolicy = savePolicy;
         this.SaveInterval = DefaultInterval;
         this.FileConfiguration = fileConfiguration;
-        this.StorageConfiguration = storageConfiguration;
+        this.StorageConfiguration = storageConfiguration ?? EmptyStorageConfiguration.Default;
     }
 
     /// <summary>
@@ -78,7 +78,7 @@ public partial record CrystalConfiguration
 
     public FileConfiguration? BackupFileConfiguration { get; init; }
 
-    public StorageConfiguration? StorageConfiguration { get; init; }
+    public StorageConfiguration StorageConfiguration { get; init; } = EmptyStorageConfiguration.Default;
 
     public bool RequiredForLoading { get; init; } = false;
 

@@ -99,7 +99,6 @@ internal partial class SimpleStorage : IStorage, IStorageInternal
             {
                 BackupFileConfiguration = backupConfiguration,
                 NumberOfFileHistories = storageConfiguration.NumberOfHistoryFiles,
-                StorageConfiguration = new EmptyStorageConfiguration(), // Specify EmptyStorageConfiguration without fail, as recursive calls can lead to stack overflow.
             });
 
             result = await this.crystal.PrepareAndLoad(param.UseQuery).ConfigureAwait(false);
@@ -109,14 +108,13 @@ internal partial class SimpleStorage : IStorage, IStorageInternal
         return CrystalResult.Success;
     }
 
-    async Task IStorage.SaveStorage(ICrystal? parentCrystal)
+    async Task IStorage.SaveStorage(ICrystal? callingCrystal)
     {
-        if (!StorageHelper.CheckPrimaryCrystal(ref this.primaryCrystal, ref parentCrystal))
+        if (!StorageHelper.CheckPrimaryCrystal(ref this.primaryCrystal, ref callingCrystal))
         {
             return;
         }
 
-        Console.WriteLine($"SaveStorage {this.crystal.CrystalConfiguration.ToString()}");
         if (this.crystal != null)
         {
             await this.crystal.Save().ConfigureAwait(false);

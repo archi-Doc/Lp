@@ -34,8 +34,9 @@ public partial record CrystalClass
                 SaveFormat = SaveFormat.Utf8,
                 SavePolicy = SavePolicy.Periodic,
                 SaveInterval = TimeSpan.FromMinutes(10),
-                FileConfiguration = new GlobalFileConfiguration("Main.tinyhand"),
-                BackupFileConfiguration = new GlobalFileConfiguration("Backup.tinyhand"),
+                FileConfiguration = new GlobalFileConfiguration("CrystalClassMain.tinyhand"),
+                BackupFileConfiguration = new GlobalFileConfiguration("CrystalClassBackup.tinyhand"),
+                StorageConfiguration = GlobalStorageConfiguration.Default,
                 /*StorageConfiguration = new SimpleStorageConfiguration(
                     new GlobalDirectoryConfiguration("MainStorage"),
                     new GlobalDirectoryConfiguration("BackupStorage")),*/
@@ -82,19 +83,18 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
     // [Key(0)]
     // private StorageConfiguration? storageConfiguration; // using (this.Lock())
 
-    [Key(0)]
     private TData? data;
 
-    [Key(1)]
+    [Key(0)]
     private StorageId storageId0;
 
-    [Key(2)]
+    [Key(1)]
     private StorageId storageId1;
 
-    [Key(3)]
+    [Key(2)]
     private StorageId storageId2;
 
-    [Key(4)]
+    [Key(3)]
     private StorageId storageId3;
 
     [IgnoreMember]

@@ -56,7 +56,7 @@ public class Crystalizer
         this.configuration = configuration;
         this.GlobalDirectory = options.GlobalDirectory;
         this.DefaultBackup = options.DefaultBackup;
-        this.DefaultStorage = options.DefaultStorage;
+        this.GlobalStorage = options.GlobalStorage;
         this.EnableFilerLogger = options.EnableFilerLogger;
         this.RootDirectory = options.RootPath;
         this.FilerTimeout = options.FilerTimeout;
@@ -105,7 +105,7 @@ public class Crystalizer
 
     public DirectoryConfiguration? DefaultBackup { get; }
 
-    public StorageConfiguration DefaultStorage { get; }
+    public StorageConfiguration GlobalStorage { get; }
 
     public bool EnableFilerLogger { get; }
 
@@ -309,11 +309,23 @@ public class Crystalizer
         }
     }
 
-    public IStorage ResolveStorage(StorageConfiguration configuration)
+    public IStorage ResolveStorage(ref StorageConfiguration configuration)
     {
         lock (this.syncObject)
         {
             IStorage? storage;
+            if (configuration is GlobalStorageConfiguration globalStorageConfiguration)
+            {// Default storage
+                if (this.GlobalStorage is GlobalStorageConfiguration)
+                {// Recursive
+                    configuration = EmptyStorageConfiguration.Default;
+                }
+                else
+                {
+                    configuration = this.GlobalStorage;
+                }
+            }
+
             if (configuration is EmptyStorageConfiguration emptyStorageConfiguration)
             {// Empty storage
                 storage = EmptyStorage.Default;

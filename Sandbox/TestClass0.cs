@@ -84,6 +84,9 @@ internal class TestClass0
         await c.Children.Save(UnloadMode.TryUnload);
 
         r = (await c.Children.Get()).TryGet(1);
+
+        var bin = TinyhandSerializer.SerializeToUtf8(c);
+        var c2 = TinyhandSerializer.DeserializeFromUtf8<CrystalClass>(bin);
     }
 
     private Crystalizer crystalizer;

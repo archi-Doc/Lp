@@ -16,7 +16,7 @@ public partial class EmptyStorage : IStorage
     Task<CrystalResult> IStorage.PrepareAndCheck(PrepareParam param, StorageConfiguration storageConfiguration)
         => Task.FromResult(CrystalResult.Success);
 
-    Task IStorage.SaveStorage(ICrystal? parentCrystal)
+    Task IStorage.SaveStorage(ICrystal? callingCrystal)
         => Task.CompletedTask;
 
     Task<CrystalMemoryOwnerResult> IStorage.GetAsync(ref ulong fileId)

@@ -170,7 +170,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
             this.Data.Unload();
             await this.crystal.Delete().ConfigureAwait(false);
 
-            await this.GroupStorage.PrepareAndLoad(this.CrystalConfiguration.StorageConfiguration ?? this.Crystalizer.DefaultStorage, param).ConfigureAwait(false);
+            await this.GroupStorage.PrepareAndLoad(this.CrystalConfiguration.StorageConfiguration, param).ConfigureAwait(false);
             await this.GroupStorage.DeleteAllAsync().ConfigureAwait(false);
 
             this.Data.Initialize(this, null, true);
@@ -292,7 +292,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
         CrystalResult result;
         var param = PrepareParam.New<TData>(this.Crystalizer, useQuery);
 
-        result = await this.GroupStorage.PrepareAndLoad(this.CrystalConfiguration.StorageConfiguration ?? this.Crystalizer.DefaultStorage, param).ConfigureAwait(false);
+        result = await this.GroupStorage.PrepareAndLoad(this.CrystalConfiguration.StorageConfiguration, param).ConfigureAwait(false);
         if (result.IsFailure())
         {
             return result;

@@ -7,23 +7,27 @@ public static class StorageHelper
     public const long Megabytes = 1024 * 1024;
     public const long Gigabytes = 1024 * 1024 * 1024;
 
-    public static bool CheckPrimaryCrystal(ref ICrystal? primaryCrystal, ref ICrystal? crystal)
+    public static bool CheckPrimaryCrystal(ref ICrystal? primaryCrystal, ref ICrystal? callingCrystal)
     {
-        if (crystal is null)
+        if (callingCrystal is null)
         {// Force save
             return true;
         }
         else if (primaryCrystal is null || primaryCrystal.State == CrystalState.Deleted)
         {
-            primaryCrystal = crystal;
+            primaryCrystal = callingCrystal;
+            return true;
+        }
+        else if (primaryCrystal == callingCrystal)
+        {
             return true;
         }
 
         var primaryInterval = GetInterval(primaryCrystal);
-        var interval = GetInterval(crystal);
+        var interval = GetInterval(callingCrystal);
         if (primaryInterval > interval)
         {
-            primaryCrystal = crystal;
+            primaryCrystal = callingCrystal;
             return true;
         }
         else

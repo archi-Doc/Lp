@@ -31,5 +31,5 @@ public class CrystalizerOptions
 
     public DirectoryConfiguration? DefaultBackup { get; set; }
 
-    public StorageConfiguration DefaultStorage { get; set; } = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Storage"));
+    public StorageConfiguration GlobalStorage { get; set; } = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Storage"));
 }

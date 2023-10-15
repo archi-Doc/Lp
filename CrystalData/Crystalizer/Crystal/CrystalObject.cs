@@ -675,8 +675,8 @@ Exit:
         // Storage
         if (this.storage == null)
         {
-            var storageConfiguration = this.CrystalConfiguration.StorageConfiguration ?? this.Crystalizer.DefaultStorage;
-            this.storage = this.Crystalizer.ResolveStorage(storageConfiguration);
+            var storageConfiguration = this.CrystalConfiguration.StorageConfiguration;
+            this.storage = this.Crystalizer.ResolveStorage(ref storageConfiguration);
             result = await this.storage.PrepareAndCheck(param, storageConfiguration).ConfigureAwait(false);
             if (result.IsFailure())
             {
@@ -824,9 +824,8 @@ Exit:
     {
         if (this.storage == null)
         {
-            var storageConfiguration = this.CrystalConfiguration.StorageConfiguration ?? this.Crystalizer.DefaultStorage;
-
-            this.storage = this.Crystalizer.ResolveStorage(storageConfiguration);
+            var storageConfiguration = this.CrystalConfiguration.StorageConfiguration;
+            this.storage = this.Crystalizer.ResolveStorage(ref storageConfiguration);
             this.storage.PrepareAndCheck(PrepareParam.NoQuery<TData>(this.Crystalizer), storageConfiguration).Wait();
         }
     }
