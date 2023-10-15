@@ -4,7 +4,7 @@ using System.ComponentModel;
 
 namespace QuickStart;
 
-[TinyhandObject(Journal = true)]
+[TinyhandObject(Tree = true)]
 public partial class BackupData
 {
     [Key(0, AddProperty = "Id")]

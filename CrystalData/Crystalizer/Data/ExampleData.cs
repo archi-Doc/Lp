@@ -10,7 +10,7 @@ namespace CrystalData;
 /// A example data class.<br/>
 /// This is the idea that each data are arranged in the ordered structure and constitute a single crystal.
 /// </summary>
-[TinyhandObject(Journal = true, ExplicitKeyOnly = true)]
+[TinyhandObject(Tree = true, ExplicitKeyOnly = true)]
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
 public partial record ExampleData : BaseData
 {

@@ -194,14 +194,14 @@ public partial record BaseData : IBaseData, IDataInternal, ITinyhandCustomJourna
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void WriteDatumObject(int index)
     {
-        if (((ITreeObject)this).TryGetJournalWriter(out var journal, out var writer))
+        if (((ITreeObject)this).TryGetJournalWriter(out var root, out var writer))
         {
             writer.Write_Key();
             writer.Write(DatumObjectKey);
             writer.Write_Value();
             writer.Write(index);
             TinyhandSerializer.SerializeObject(ref writer, this.datumObject[index]);
-            journal.AddJournal(writer);
+            root.AddJournal(writer);
         }
     }
 

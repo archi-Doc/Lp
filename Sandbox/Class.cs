@@ -31,7 +31,7 @@ public partial class TtlData : TtlBase
 
 }
 
-[TinyhandObject(Journal = true)]
+[TinyhandObject(Tree = true)]
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
 internal partial record StandardData
 {
@@ -53,7 +53,7 @@ internal partial record StandardData
         => $"{this.id} {this.name} ({this.age.ToString()})";
 }
 
-[TinyhandObject(Journal = true, LockObject = "syncObject")]
+[TinyhandObject(Tree = true, LockObject = "syncObject")]
 [ValueLinkObject]
 internal partial class ValueClass // : ITinyhandCustomJournal
 {
@@ -97,7 +97,7 @@ internal partial class ValueClass // : ITinyhandCustomJournal
     }*/
 }
 
-[TinyhandObject(Journal = true)]
+[TinyhandObject(Tree = true)]
 internal partial class ManualClass
 {
     [Key(0, AddProperty = "Id")]
@@ -107,7 +107,7 @@ internal partial class ManualClass
         => $"Manual class {this.id}";
 }
 
-[TinyhandObject(Journal = true)]
+[TinyhandObject(Tree = true)]
 internal partial class CombinedClass
 {
     [Key(0)]

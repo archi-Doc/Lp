@@ -4,7 +4,7 @@ using Tinyhand.IO;
 
 namespace CrystalData;
 
-[TinyhandObject(Journal = true)]
+[TinyhandObject(Tree = true)]
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
 public partial class DesignSerializable
 {
@@ -22,7 +22,7 @@ public partial class DesignSerializable
     public UnloadableData<DesignSerializable> UnloadableClass { get; set; } = new();
 }
 
-[TinyhandObject(Journal = true)]
+[TinyhandObject(Tree = true)]
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
 public partial record CrystalClass
 {// This is it. This class is the crystal of state-of-the-art data management technology.
@@ -185,8 +185,7 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
             var currentPosition = crystal.Journal is null ? 0 : crystal.Journal.GetCurrentPosition();
 
             // Serialize and get hash.
-            var options = unloadMode.IsUnload() ? TinyhandSerializerOptions.Unload : TinyhandSerializerOptions.Standard;
-            SerializeHelper.Serialize<TData>(this.data, options, out var owner);
+            SerializeHelper.Serialize<TData>(this.data, TinyhandSerializerOptions.Standard, out var owner);
             var hash = FarmHash.Hash64(owner.Span);
 
             if (hash != this.storageId0.Hash)
@@ -307,7 +306,7 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
 
         if (treeObject is not null)
         {
-            treeObject.Delete();
+            treeObject.Erase();
         }
     }
 

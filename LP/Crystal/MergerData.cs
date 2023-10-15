@@ -9,7 +9,7 @@ using ValueLink;
 
 namespace LP.Crystal;
 
-[TinyhandObject(Journal = true, ExplicitKeyOnly = true)]
+[TinyhandObject(Tree = true, ExplicitKeyOnly = true)]
 [ValueLinkObject]
 public partial record MergerData : BaseData
 {

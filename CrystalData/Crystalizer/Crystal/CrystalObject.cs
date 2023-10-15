@@ -258,14 +258,14 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITreeObject
 
         // Serialize
         byte[] byteArray;
-        var options = unloadMode == UnloadMode.NoUnload ? TinyhandSerializerOptions.Standard : TinyhandSerializerOptions.Unload;
+        // var options = unloadMode == UnloadMode.NoUnload ? TinyhandSerializerOptions.Standard : TinyhandSerializerOptions.Unload;
         if (this.CrystalConfiguration.SaveFormat == SaveFormat.Utf8)
         {
-            byteArray = TinyhandSerializer.SerializeObjectToUtf8(obj, options);
+            byteArray = TinyhandSerializer.SerializeObjectToUtf8(obj);
         }
         else
         {
-            byteArray = TinyhandSerializer.SerializeObject(obj, options);
+            byteArray = TinyhandSerializer.SerializeObject(obj);
         }
 
         // Get hash

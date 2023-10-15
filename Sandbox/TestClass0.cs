@@ -74,7 +74,7 @@ internal class TestClass0
             if (w is not null)
             {
                 w.Name = "One";
-                w.Delete();
+                w.RemoveAndErase();
                 w.Commit();
             }
         }
