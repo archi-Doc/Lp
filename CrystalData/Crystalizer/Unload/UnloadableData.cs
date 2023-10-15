@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Reflection.PortableExecutable;
+using System.Runtime.CompilerServices;
 using Tinyhand.IO;
 
 namespace CrystalData;
@@ -125,11 +127,13 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
             if (this.data is null)
             {// PrepareAndLoad
                 await this.PrepareAndLoadInternal().ConfigureAwait(false);
+                this.PrepareData();
             }
 
             if (this.data is null)
             {// Reconstruct
                 this.data = TinyhandSerializer.Reconstruct<TData>();
+                this.PrepareData();
             }
 
             return this.data;
@@ -399,6 +403,15 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
         finally
         {
             result.Return();
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void PrepareData()
+    {
+        if (this.data is ITreeObject treeObject)
+        {
+            treeObject.SetParent(this);
         }
     }
 }

@@ -15,22 +15,26 @@ namespace xUnitTest;
 
 public static class TestHelper
 {
-    public static async Task<ICrystal<TData>> CreateAndStartCrystal<TData>()
+    public static async Task<ICrystal<TData>> CreateAndStartCrystal<TData>(bool addStorage = false)
         where TData : class, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
+        var directory = $"Crystal[{RandomVault.Pseudo.NextUInt32():x4}]";
+        StorageConfiguration storageConfiguration = addStorage ?
+            new SimpleStorageConfiguration(new LocalDirectoryConfiguration(Path.Combine(directory, "Storage"))) :
+            EmptyStorageConfiguration.Default;
+
         var builder = new CrystalControl.Builder();
-        builder
-            .ConfigureCrystal(context =>
-            {
-                var directory = $"Crystal[{RandomVault.Pseudo.NextUInt32():x4}]";
-                context.SetJournal(new SimpleJournalConfiguration(new LocalDirectoryConfiguration(Path.Combine(directory, "Journal"))));
-                context.AddCrystal<TData>(
-                    new(SavePolicy.Manual, new LocalFileConfiguration(Path.Combine(directory, "Test.tinyhand")))
-                    {
-                        SaveFormat = SaveFormat.Utf8,
-                        NumberOfFileHistories = 5,
-                    });
-            });
+        builder.ConfigureCrystal(context =>
+        {
+            context.SetJournal(new SimpleJournalConfiguration(new LocalDirectoryConfiguration(Path.Combine(directory, "Journal"))));
+            context.AddCrystal<TData>(
+                new(SavePolicy.Manual, new LocalFileConfiguration(Path.Combine(directory, "Test.tinyhand")))
+                {
+                    SaveFormat = SaveFormat.Utf8,
+                    NumberOfFileHistories = 5,
+                    StorageConfiguration = storageConfiguration,
+                });
+        });
 
         var unit = builder.Build();
         var crystalizer = unit.Context.ServiceProvider.GetRequiredService<Crystalizer>();
