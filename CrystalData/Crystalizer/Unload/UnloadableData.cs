@@ -197,7 +197,7 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
                 var storageId = new StorageId(currentPosition, fileId, hash);
 
                 // Update histories
-                var numberOfHistories = 3;
+                var numberOfHistories = crystal.CrystalConfiguration.NumberOfFileHistories;
                 if (numberOfHistories <= 1)
                 {
                     this.storageId0 = storageId;
@@ -255,7 +255,7 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
         return true;
     }
 
-    public void Delete()
+    public void Erase()
     {
         ITreeObject? treeObject;
         ulong id0;
@@ -308,12 +308,20 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
         {
             treeObject.Erase();
         }
+
+        ((ITreeObject)this).AddJournal_Remove(true);
     }
 
     #region Journal
 
     bool ITreeObject.ReadRecord(ref TinyhandReader reader)
     {
+        if (reader.IsNext_Remove())
+        {// Remove, RemoveAndErase
+            this.Erase();
+            return true;
+        }
+
         if (this.data is null)
         {
             this.data = this.Get().Result;
