@@ -138,7 +138,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
             await this.crystal.Save(unloadMode).ConfigureAwait(false);
 
             // Save storages
-            await this.GroupStorage.SaveStorage().ConfigureAwait(false);
+            await this.GroupStorage.SaveStorage(this).ConfigureAwait(false);
 
             // Save storage group
             await this.GroupStorage.SaveGroup(UnloadMode.NoUnload).ConfigureAwait(false);

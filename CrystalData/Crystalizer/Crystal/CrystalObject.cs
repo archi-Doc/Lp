@@ -248,7 +248,7 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITreeObject
 
         if (this.storage is { } storage && storage is not EmptyStorage)
         {
-            await storage.SaveStorage().ConfigureAwait(false);
+            await storage.SaveStorage(this).ConfigureAwait(false);
         }
 
         this.lastSavedTime = DateTime.UtcNow;
@@ -677,7 +677,7 @@ Exit:
         {
             var storageConfiguration = this.CrystalConfiguration.StorageConfiguration ?? this.Crystalizer.DefaultStorage;
             this.storage = this.Crystalizer.ResolveStorage(storageConfiguration);
-            result = await this.storage.PrepareAndCheck(param, storageConfiguration, false).ConfigureAwait(false);
+            result = await this.storage.PrepareAndCheck(param, storageConfiguration).ConfigureAwait(false);
             if (result.IsFailure())
             {
                 return result;
@@ -827,7 +827,7 @@ Exit:
             var storageConfiguration = this.CrystalConfiguration.StorageConfiguration ?? this.Crystalizer.DefaultStorage;
 
             this.storage = this.Crystalizer.ResolveStorage(storageConfiguration);
-            this.storage.PrepareAndCheck(PrepareParam.NoQuery<TData>(this.Crystalizer), storageConfiguration, false).Wait();
+            this.storage.PrepareAndCheck(PrepareParam.NoQuery<TData>(this.Crystalizer), storageConfiguration).Wait();
         }
     }
 

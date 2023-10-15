@@ -51,7 +51,7 @@ internal partial class StorageObject
             this.Storage = storageGroup.Crystalizer.ResolveStorage(this.StorageConfiguration);
         }
 
-        var result = await this.Storage.PrepareAndCheck(param, this.StorageConfiguration, createNew).ConfigureAwait(false);
+        var result = await this.Storage.PrepareAndCheck(param, this.StorageConfiguration).ConfigureAwait(false);
         if (result != CrystalResult.Success)
         {
             return result;
@@ -60,11 +60,11 @@ internal partial class StorageObject
         return CrystalResult.Success;
     }
 
-    public async Task Save()
+    public async Task Save(ICrystal? parentCrystal)
     {
         if (this.Storage != null)
         {
-            await this.Storage.SaveStorage().ConfigureAwait(false);
+            await this.Storage.SaveStorage(parentCrystal).ConfigureAwait(false);
         }
     }
 

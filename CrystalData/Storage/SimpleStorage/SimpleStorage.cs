@@ -28,6 +28,7 @@ internal partial class SimpleStorage : IStorage, IStorageInternal
     private SimpleStorageData? data => this.crystal?.Data;
 
     private Crystalizer crystalizer;
+    private ICrystal? primaryCrystal;
     private string directory = string.Empty;
     private string backupDirectory = string.Empty;
     private ICrystal<SimpleStorageData>? crystal;
@@ -44,14 +45,18 @@ internal partial class SimpleStorage : IStorage, IStorageInternal
         this.timeout = timeout;
     }
 
-    async Task<CrystalResult> IStorage.PrepareAndCheck(PrepareParam param, StorageConfiguration storageConfiguration, bool createNew)
+    async Task<CrystalResult> IStorage.PrepareAndCheck(PrepareParam param, StorageConfiguration storageConfiguration)
     {
         CrystalResult result;
         var directoryConfiguration = storageConfiguration.DirectoryConfiguration;
-        this.directory = directoryConfiguration.Path;
-        if (!string.IsNullOrEmpty(this.directory) && !this.directory.EndsWith('/'))
+
+        if (string.IsNullOrEmpty(this.directory))
         {
-            this.directory += "/";
+            this.directory = directoryConfiguration.Path;
+            if (!string.IsNullOrEmpty(this.directory) && !this.directory.EndsWith('/'))
+            {
+                this.directory += "/";
+            }
         }
 
         if (this.mainFiler is null)
@@ -94,6 +99,7 @@ internal partial class SimpleStorage : IStorage, IStorageInternal
             {
                 BackupFileConfiguration = backupConfiguration,
                 NumberOfFileHistories = storageConfiguration.NumberOfHistoryFiles,
+                StorageConfiguration = new EmptyStorageConfiguration(), // Specify EmptyStorageConfiguration without fail, as recursive calls can lead to stack overflow.
             });
 
             result = await this.crystal.PrepareAndLoad(param.UseQuery).ConfigureAwait(false);
@@ -103,8 +109,14 @@ internal partial class SimpleStorage : IStorage, IStorageInternal
         return CrystalResult.Success;
     }
 
-    async Task IStorage.SaveStorage()
+    async Task IStorage.SaveStorage(ICrystal? parentCrystal)
     {
+        if (!StorageHelper.CheckPrimaryCrystal(ref this.primaryCrystal, ref parentCrystal))
+        {
+            return;
+        }
+
+        Console.WriteLine($"SaveStorage {this.crystal.CrystalConfiguration.ToString()}");
         if (this.crystal != null)
         {
             await this.crystal.Save().ConfigureAwait(false);

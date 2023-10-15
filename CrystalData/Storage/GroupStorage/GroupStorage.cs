@@ -292,12 +292,12 @@ public sealed class GroupStorage
         return CrystalResult.Success;
     }
 
-    internal async Task SaveStorage()
+    internal async Task SaveStorage(ICrystal? parentCrystal)
     {// Save
         Task[] tasks;
         lock (this.syncObject)
         {
-            tasks = this.storages.Select(x => x.Save()).ToArray();
+            tasks = this.storages.Select(x => x.Save(parentCrystal)).ToArray();
         }
 
         await Task.WhenAll(tasks).ConfigureAwait(false);
