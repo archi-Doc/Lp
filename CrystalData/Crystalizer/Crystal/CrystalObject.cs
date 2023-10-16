@@ -120,6 +120,8 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITreeObject
         }
     }
 
+    public IJournal? Journal => this.Crystalizer.Journal;
+
     void ICrystal.Configure(CrystalConfiguration configuration)
     {
         using (this.semaphore.Lock())
@@ -131,7 +133,8 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITreeObject
                     configuration = configuration with { BackupFileConfiguration = globalBackup.CombineFile(configuration.FileConfiguration.Path) };
                 }
 
-                if (configuration.StorageConfiguration.BackupDirectoryConfiguration == null)
+                if (configuration.StorageConfiguration is not null &&
+                    configuration.StorageConfiguration.BackupDirectoryConfiguration == null)
                 {
                     var storageConfiguration = configuration.StorageConfiguration with { BackupDirectoryConfiguration = globalBackup.CombineDirectory(configuration.StorageConfiguration.DirectoryConfiguration), };
                     configuration = configuration with { StorageConfiguration = storageConfiguration, };
@@ -243,9 +246,17 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITreeObject
             }
         }
 
+        if (obj is ITreeObject treeObject)
+        {
+            if (await treeObject.Save(unloadMode).ConfigureAwait(false) == false)
+            {
+                return CrystalResult.DataIsLocked;
+            }
+        }
+
         if (this.storage is { } storage && storage is not EmptyStorage)
         {
-            await storage.SaveStorage().ConfigureAwait(false);
+            await storage.SaveStorage(this).ConfigureAwait(false);
         }
 
         this.lastSavedTime = DateTime.UtcNow;
@@ -255,14 +266,14 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITreeObject
 
         // Serialize
         byte[] byteArray;
-        var options = unloadMode == UnloadMode.NoUnload ? TinyhandSerializerOptions.Standard : TinyhandSerializerOptions.Unload;
+        // var options = unloadMode == UnloadMode.NoUnload ? TinyhandSerializerOptions.Standard : TinyhandSerializerOptions.Unload;
         if (this.CrystalConfiguration.SaveFormat == SaveFormat.Utf8)
         {
-            byteArray = TinyhandSerializer.SerializeObjectToUtf8(obj, options);
+            byteArray = TinyhandSerializer.SerializeObjectToUtf8(obj);
         }
         else
         {
-            byteArray = TinyhandSerializer.SerializeObject(obj, options);
+            byteArray = TinyhandSerializer.SerializeObject(obj);
         }
 
         // Get hash
@@ -434,6 +445,11 @@ Exit:
                     break;
                 }
 
+                if (currentObject is ITreeObject treeObject)
+                {
+                    treeObject.SetParent(this);
+                }
+
                 if (previousObject is not null)
                 {// Compare the previous data
                     bool compare;
@@ -534,6 +550,18 @@ Exit:
             return false;
         }
     }
+
+    /*ulong ICrystal.AddStartingPoint()
+    {
+        if (this.Crystalizer.Journal is not null)
+        {
+            return this.Crystalizer.Journal.AddStartingPoint();
+        }
+        else
+        {
+            return 0;
+        }
+    }*/
 
     #endregion
 
@@ -660,8 +688,9 @@ Exit:
         // Storage
         if (this.storage == null)
         {
-            this.storage = this.Crystalizer.ResolveStorage(this.CrystalConfiguration.StorageConfiguration);
-            result = await this.storage.PrepareAndCheck(param, this.CrystalConfiguration.StorageConfiguration, false).ConfigureAwait(false);
+            var storageConfiguration = this.CrystalConfiguration.StorageConfiguration;
+            this.storage = this.Crystalizer.ResolveStorage(ref storageConfiguration);
+            result = await this.storage.PrepareAndCheck(param, storageConfiguration).ConfigureAwait(false);
             if (result.IsFailure())
             {
                 return result;
@@ -703,7 +732,7 @@ Exit:
         // Check journal position
         if (loadResult.Waypoint.IsValid && this.Crystalizer.Journal is { } journal)
         {
-            if (loadResult.Waypoint.JournalPosition > journal.GetCurrentPosition())
+            if (loadResult.Waypoint.JournalPosition.CircularCompareTo(journal.GetCurrentPosition()) > 0)
             {
                 var query = await param.Query.InconsistentJournal(this.CrystalConfiguration.FileConfiguration.Path).ConfigureAwait(false);
                 if (query == AbortOrContinue.Abort)
@@ -808,8 +837,9 @@ Exit:
     {
         if (this.storage == null)
         {
-            this.storage = this.Crystalizer.ResolveStorage(this.CrystalConfiguration.StorageConfiguration);
-            this.storage.PrepareAndCheck(PrepareParam.NoQuery<TData>(this.Crystalizer), this.CrystalConfiguration.StorageConfiguration, false).Wait();
+            var storageConfiguration = this.CrystalConfiguration.StorageConfiguration;
+            this.storage = this.Crystalizer.ResolveStorage(ref storageConfiguration);
+            this.storage.PrepareAndCheck(PrepareParam.NoQuery<TData>(this.Crystalizer), storageConfiguration).Wait();
         }
     }
 

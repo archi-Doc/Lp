@@ -38,20 +38,15 @@ internal partial class StorageObject
     public MemoryStat MemoryStat { get; private set; } = default!;
 
     [Key(3)]
-    public long StorageCapacity { get; set; } = StorageGroup.DefaultStorageCapacity;
+    public long StorageCapacity { get; set; } = GroupStorage.DefaultStorageCapacity;
 
     #endregion
 
-    public async Task<CrystalResult> PrepareAndCheck(StorageGroup storageGroup, PrepareParam param, bool createNew)
+    public async Task<CrystalResult> PrepareAndCheck(GroupStorage storageGroup, PrepareParam param, bool createNew)
     {
-        var crystalizer = storageGroup.Crystalizer;
-
-        if (this.Storage == null)
-        {
-            this.Storage = storageGroup.Crystalizer.ResolveStorage(this.StorageConfiguration);
-        }
-
-        var result = await this.Storage.PrepareAndCheck(param, this.StorageConfiguration, createNew).ConfigureAwait(false);
+        var storageConfiguration = this.StorageConfiguration;
+        this.Storage = storageGroup.Crystalizer.ResolveStorage(ref storageConfiguration);
+        var result = await this.Storage.PrepareAndCheck(param, storageConfiguration).ConfigureAwait(false);
         if (result != CrystalResult.Success)
         {
             return result;
@@ -60,11 +55,11 @@ internal partial class StorageObject
         return CrystalResult.Success;
     }
 
-    public async Task Save()
+    public async Task Save(ICrystal? callingCrystal)
     {
         if (this.Storage != null)
         {
-            await this.Storage.SaveStorage().ConfigureAwait(false);
+            await this.Storage.SaveStorage(callingCrystal).ConfigureAwait(false);
         }
     }
 

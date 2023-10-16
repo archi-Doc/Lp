@@ -31,6 +31,17 @@ internal class UnitCrystalContext : IUnitCrystalContext, IUnitCustomContext
         this.journalConfiguration = configuration;
     }
 
+    bool IUnitCrystalContext.TrySetJournal(JournalConfiguration configuration)
+    {
+        if (this.journalConfiguration != EmptyJournalConfiguration.Default)
+        {
+            return false;
+        }
+
+        this.journalConfiguration = configuration;
+        return true;
+    }
+
     void IUnitCustomContext.Configure(IUnitConfigurationContext context)
     {
         foreach (var x in this.typeToCrystalConfiguration)

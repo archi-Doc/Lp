@@ -1,8 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Runtime.CompilerServices;
-using Tinyhand.IO;
-
 namespace CrystalData;
 
 public interface ISimpleSerializable
@@ -14,7 +11,7 @@ public interface ISimpleSerializable
 
 public static class SerializeHelper
 {
-    public const int StandardFragmentSize = 1024 * 2; // 2KB
+    public const int StandardFragmentSize = 1024 * 4; // 4KB
 
     public static TinyhandSerializerOptions SerializerOptions { get; } = TinyhandSerializerOptions.Standard;
 
@@ -64,6 +61,35 @@ public static class SerializeHelper
         {
             var writer = new Tinyhand.IO.TinyhandWriter(arrayOwner.ByteArray);
             TinyhandSerializer.SerializeObject(ref writer, obj, SerializerOptions);
+
+            writer.FlushAndGetArray(out var array, out var arrayLength, out var isInitialBuffer);
+            if (isInitialBuffer)
+            {
+                owner = arrayOwner.ToMemoryOwner(0, arrayLength);
+                return true;
+            }
+            else
+            {
+                arrayOwner.Return();
+                owner = new ByteArrayPool.MemoryOwner(array);
+                return true;
+            }
+        }
+        catch
+        {
+            arrayOwner.Return();
+            owner = default;
+            return false;
+        }
+    }
+
+    public static bool Serialize<T>(T obj, TinyhandSerializerOptions options, out ByteArrayPool.MemoryOwner owner)
+    {
+        var arrayOwner = ByteArrayPool.Default.Rent(StandardFragmentSize);
+        try
+        {
+            var writer = new Tinyhand.IO.TinyhandWriter(arrayOwner.ByteArray);
+            TinyhandSerializer.Serialize(ref writer, obj, options);
 
             writer.FlushAndGetArray(out var array, out var arrayLength, out var isInitialBuffer);
             if (isInitialBuffer)

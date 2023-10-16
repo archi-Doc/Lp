@@ -25,11 +25,11 @@
     <PackageReference Include="Arc.Threading" Version="0.25.1" />
     <PackageReference Include="Arc.Crypto" Version="1.18.0" />
     <PackageReference Include="Arc.Unit" Version="0.7.0" />
-    <PackageReference Include="AWSSDK.S3" Version="3.7.205.9" />
+    <PackageReference Include="AWSSDK.S3" Version="3.7.205.10" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
     <PackageReference Include="SimpleCommandLine" Version="0.18.0" />
-    <PackageReference Include="Tinyhand" Version="0.62.1" />
-    <PackageReference Include="ValueLink" Version="0.45.1" />
+    <PackageReference Include="Tinyhand" Version="0.65.1" />
+    <PackageReference Include="ValueLink" Version="0.47.0" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.507">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

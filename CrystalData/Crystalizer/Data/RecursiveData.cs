@@ -6,7 +6,7 @@ using CrystalData.Datum;
 
 namespace CrystalData;
 
-[TinyhandObject(ExplicitKeyOnly = true, Journal = true)]
+[TinyhandObject(ExplicitKeyOnly = true, Tree = true)]
 [ValueLinkObject]
 public partial record RecursiveData<TKey> : BaseData
 {

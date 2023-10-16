@@ -18,11 +18,15 @@ public interface ICrystal : ITreeRoot
 
     IStorage Storage { get; }
 
+    IJournal? Journal { get; }
+
     void Configure(CrystalConfiguration configuration);
 
     void ConfigureFile(FileConfiguration configuration);
 
     void ConfigureStorage(StorageConfiguration configuration);
+
+    // IStorageObsolete GetStorage(StorageConfiguration? configuration);
 
     Task<CrystalResult> PrepareAndLoad(bool useQuery);
 

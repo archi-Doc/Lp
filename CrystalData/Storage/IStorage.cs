@@ -8,9 +8,16 @@ public interface IStorage
 
     void SetTimeout(TimeSpan timeout);
 
-    Task<CrystalResult> PrepareAndCheck(PrepareParam param, StorageConfiguration storageConfiguration, bool createNew);
+    /// <summary>
+    /// Prepare the storage.<br/>
+    /// This method may be called multiple times.
+    /// </summary>
+    /// <param name="param"><see cref="PrepareParam"/>.</param>
+    /// <param name="storageConfiguration"><see cref="StorageConfiguration"/>.</param>
+    /// <returns><see cref="CrystalResult"/>.</returns>
+    Task<CrystalResult> PrepareAndCheck(PrepareParam param, StorageConfiguration storageConfiguration);
 
-    Task SaveStorage();
+    Task SaveStorage(ICrystal? callingCrystal);
 
     Task<CrystalMemoryOwnerResult> GetAsync(ref ulong fileId);
 

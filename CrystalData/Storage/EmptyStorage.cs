@@ -13,10 +13,10 @@ public partial class EmptyStorage : IStorage
     void IStorage.SetTimeout(TimeSpan timeout)
         => Expression.Empty();
 
-    Task<CrystalResult> IStorage.PrepareAndCheck(PrepareParam param, StorageConfiguration storageConfiguration, bool createNew)
+    Task<CrystalResult> IStorage.PrepareAndCheck(PrepareParam param, StorageConfiguration storageConfiguration)
         => Task.FromResult(CrystalResult.Success);
 
-    Task IStorage.SaveStorage()
+    Task IStorage.SaveStorage(ICrystal? callingCrystal)
         => Task.CompletedTask;
 
     Task<CrystalMemoryOwnerResult> IStorage.GetAsync(ref ulong fileId)

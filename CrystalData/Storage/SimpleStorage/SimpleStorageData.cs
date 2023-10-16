@@ -5,7 +5,7 @@ using Tinyhand.IO;
 
 namespace CrystalData.Storage;
 
-[TinyhandObject(Journal = true)]
+[TinyhandObject(Tree = true)]
 internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>, ITinyhandCustomJournal
 {
     public SimpleStorageData()
@@ -69,11 +69,11 @@ internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>
     {
         lock (this.syncObject)
         {
-            if (((ITreeObject)this).TryGetJournalWriter(out var journal, out var writer, false))
+            if (((ITreeObject)this).TryGetJournalWriter(out var root, out var writer, false))
             {
-                writer.Write_Remove();
+                writer.Write(JournalRecord.Remove);
                 writer.Write(file);
-                journal.AddJournal(writer);
+                root.AddJournal(writer);
             }
 
             return this.fileToSize.Remove(file);
@@ -109,13 +109,13 @@ internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>
 
                 this.fileToSize[file] = dataSize;
 
-                if (sizeDiff != 0 && ((ITreeObject)this).TryGetJournalWriter(out var journal, out var writer, false))
+                if (sizeDiff != 0 && ((ITreeObject)this).TryGetJournalWriter(out var root, out var writer, false))
                 {
                     writer.Write_Add();
                     writer.Write(file);
                     writer.Write(dataSize);
                     writer.Write(sizeDiff);
-                    journal.AddJournal(writer);
+                    root.AddJournal(writer);
                 }
             }
             else
@@ -134,13 +134,13 @@ internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>
             var file = RandomVault.Pseudo.NextUInt32();
             if (this.fileToSize.TryAdd(file, size))
             {
-                if (((ITreeObject)this).TryGetJournalWriter(out var journal, out var writer, false))
+                if (((ITreeObject)this).TryGetJournalWriter(out var root, out var writer, false))
                 {
                     writer.Write_Add();
                     writer.Write(file);
                     writer.Write(size);
                     writer.Write(size);
-                    journal.AddJournal(writer);
+                    root.AddJournal(writer);
                 }
 
                 return file;
@@ -154,7 +154,11 @@ internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>
 
     bool ITinyhandCustomJournal.ReadCustomRecord(ref TinyhandReader reader)
     {
-        var record = reader.Read_Record();
+        if (!reader.TryRead(out JournalRecord record))
+        {
+            return false;
+        }
+
         if (record == JournalRecord.Add)
         {
             var file = reader.ReadUInt32();

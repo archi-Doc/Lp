@@ -6,36 +6,37 @@ using System.Runtime.CompilerServices;
 namespace CrystalData;
 
 [TinyhandObject]
-public readonly partial struct StoragePoint : IEquatable<StoragePoint>, IComparable<StoragePoint>
-{// JournalPosition, Hash
+public readonly partial struct StorageId : IEquatable<StorageId>, IComparable<StorageId>
+{// StorageId: JournalPosition 8 bytes, File id 8 bytes, Hash 8 bytes
     public const string Extension = "storage";
-    public const int Length = 16; // 8 + 8
-    public static readonly StoragePoint Invalid = default;
-    public static readonly StoragePoint Empty = new(1, 0);
+    public const int Length = 24; // 8 + 8 + 8
+    public static readonly StorageId Invalid = default;
+    public static readonly StorageId Empty = new(1, 0, 0);
     public static readonly int LengthInBase32;
 
-    static StoragePoint()
+    static StorageId()
     {
         LengthInBase32 = Base32Sort.GetEncodedLength(Length);
     }
 
-    public StoragePoint()
+    public StorageId()
     {
     }
 
-    public StoragePoint(ulong journalPosition, ulong hash)
+    public StorageId(ulong journalPosition, ulong fileId, ulong hash)
     {
         this.JournalPosition = journalPosition;
+        this.FileId = fileId;
         this.Hash = hash;
     }
 
-    public static bool TryParse(string base32, out StoragePoint waypoint)
+    public static bool TryParse(string base32, out StorageId storageId)
     {
         var byteArray = Base32Sort.Default.FromStringToByteArray(base32);
-        return TryParse(byteArray, out waypoint);
+        return TryParse(byteArray, out storageId);
     }
 
-    public static bool TryParse(ReadOnlySpan<byte> span, out StoragePoint waypoint)
+    public static bool TryParse(ReadOnlySpan<byte> span, out StorageId storageId)
     {
         if (span.Length >= Length)
         {
@@ -43,8 +44,10 @@ public readonly partial struct StoragePoint : IEquatable<StoragePoint>, ICompara
             {
                 var journalPosition = BinaryPrimitives.ReverseEndianness(BitConverter.ToUInt64(span));
                 span = span.Slice(sizeof(ulong));
+                var fileId = BitConverter.ToUInt64(span);
+                span = span.Slice(sizeof(ulong));
                 var hash = BitConverter.ToUInt64(span);
-                waypoint = new(journalPosition, hash);
+                storageId = new(journalPosition, fileId, hash);
                 return true;
             }
             catch
@@ -52,7 +55,7 @@ public readonly partial struct StoragePoint : IEquatable<StoragePoint>, ICompara
             }
         }
 
-        waypoint = default;
+        storageId = default;
         return false;
     }
 
@@ -60,6 +63,9 @@ public readonly partial struct StoragePoint : IEquatable<StoragePoint>, ICompara
     public readonly ulong JournalPosition;
 
     [Key(1)]
+    public readonly ulong FileId;
+
+    [Key(2)]
     public readonly ulong Hash;
 
     public bool IsValid => this.JournalPosition != 0;
@@ -81,25 +87,32 @@ public readonly partial struct StoragePoint : IEquatable<StoragePoint>, ICompara
     }
 
     public override string ToString()
-        => $"Position: {this.JournalPosition}, Hash: {this.Hash}";
+        => $"Position: {this.JournalPosition}, File id: {this.FileId}";
 
-    public bool Equals(StoragePoint other)
+    public bool Equals(StorageId other)
         => this.JournalPosition == other.JournalPosition &&
+        this.FileId == other.FileId &&
         this.Hash == other.Hash;
 
-    public static bool operator >(StoragePoint w1, StoragePoint w2)
+    public static bool operator >(StorageId w1, StorageId w2)
         => w1.CompareTo(w2) > 0;
 
-    public static bool operator <(StoragePoint w1, StoragePoint w2)
+    public static bool operator <(StorageId w1, StorageId w2)
         => w1.CompareTo(w2) < 0;
 
-    public int CompareTo(StoragePoint other)
+    public int CompareTo(StorageId other)
     {
-        if (this.JournalPosition < other.JournalPosition)
+        var cmp = this.JournalPosition.CircularCompareTo(other.JournalPosition);
+        if (cmp != 0)
+        {
+            return cmp;
+        }
+
+        if (this.FileId < other.FileId)
         {
             return -1;
         }
-        else if (this.JournalPosition > other.JournalPosition)
+        else if (this.FileId > other.FileId)
         {
             return 1;
         }

@@ -79,7 +79,7 @@ public partial record BaseData : IBaseData, IDataInternal, ITinyhandCustomJourna
                 if (checksum != this.datumObject[i].FileChecksum)
                 {
                     this.datumObject[i].FileChecksum = checksum;
-                    this.BigCrystal.StorageGroup.PutAndForget(ref this.datumObject[i].StorageId, ref this.datumObject[i].FileId, memoryToBeShared, info.DatumId);
+                    this.BigCrystal.GroupStorage.PutAndForget(ref this.datumObject[i].StorageId, ref this.datumObject[i].FileId, memoryToBeShared, info.DatumId);
 
                     this.WriteDatumObject(i);
                 }
@@ -102,7 +102,7 @@ public partial record BaseData : IBaseData, IDataInternal, ITinyhandCustomJourna
             return new(CrystalResult.NotFound);
         }
 
-        var result = await this.BigCrystal.StorageGroup.GetAsync(datumObject.StorageId, datumObject.FileId).ConfigureAwait(false);
+        var result = await this.BigCrystal.GroupStorage.GetAsync(datumObject.StorageId, datumObject.FileId).ConfigureAwait(false);
         if (result.IsFailure)
         {
             return result;
@@ -123,7 +123,7 @@ public partial record BaseData : IBaseData, IDataInternal, ITinyhandCustomJourna
         var datumObject = this.TryGetDatumObject<TDatum>();
         if (datumObject.IsValid)
         {
-            this.BigCrystal.StorageGroup.DeleteAndForget(ref datumObject.StorageId, ref datumObject.FileId);
+            this.BigCrystal.GroupStorage.DeleteAndForget(ref datumObject.StorageId, ref datumObject.FileId);
         }
     }
 
@@ -166,13 +166,21 @@ public partial record BaseData : IBaseData, IDataInternal, ITinyhandCustomJourna
 
     protected bool ReadRecordBase(ref TinyhandReader reader)
     {
-        var record = reader.Read_Record();
+        if (!reader.TryRead(out JournalRecord record))
+        {
+            return false;
+        }
+
         if (record == JournalRecord.Key)
         {
             var key = reader.ReadInt32();
             if (key == DatumObjectKey)
             {
-                record = reader.Read_Record();
+                if (!reader.TryRead(out record))
+                {
+                    return false;
+                }
+
                 if (record == JournalRecord.Value)
                 {
                     var index = reader.ReadInt32();
@@ -194,14 +202,14 @@ public partial record BaseData : IBaseData, IDataInternal, ITinyhandCustomJourna
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void WriteDatumObject(int index)
     {
-        if (((ITreeObject)this).TryGetJournalWriter(out var journal, out var writer))
+        if (((ITreeObject)this).TryGetJournalWriter(out var root, out var writer))
         {
             writer.Write_Key();
             writer.Write(DatumObjectKey);
             writer.Write_Value();
             writer.Write(index);
             TinyhandSerializer.SerializeObject(ref writer, this.datumObject[index]);
-            journal.AddJournal(writer);
+            root.AddJournal(writer);
         }
     }
 
@@ -353,7 +361,7 @@ public partial record BaseData : IBaseData, IDataInternal, ITinyhandCustomJourna
 
             for (var i = 0; i < this.datumObject.Length; i++)
             {
-                this.BigCrystal.StorageGroup.DeleteAndForget(ref this.datumObject[i].StorageId, ref this.datumObject[i].FileId);
+                this.BigCrystal.GroupStorage.DeleteAndForget(ref this.datumObject[i].StorageId, ref this.datumObject[i].FileId);
                 this.datumObject[i].Datum?.Unload();
                 this.datumObject[i].Datum = null;
                 this.datumObject[i].FileId = 0;

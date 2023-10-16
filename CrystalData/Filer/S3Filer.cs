@@ -24,7 +24,7 @@ public class S3Filer : FilerBase, IRawFiler
         this.bucket = bucket;
     }
 
-    public static AddStorageResult Check(StorageGroup storageGroup, string bucket, string path)
+    public static AddStorageResult Check(GroupStorage storageGroup, string bucket, string path)
     {
         if (!storageGroup.Crystalizer.StorageKey.TryGetKey(bucket, out var accessKeyPair))
         {

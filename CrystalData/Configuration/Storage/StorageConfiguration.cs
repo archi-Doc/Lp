@@ -4,6 +4,7 @@ namespace CrystalData;
 
 [TinyhandUnion("EmptyStorage", typeof(EmptyStorageConfiguration))]
 [TinyhandUnion("SimpleStorage", typeof(SimpleStorageConfiguration))]
+[TinyhandUnion("GlobalStorage", typeof(GlobalStorageConfiguration))]
 public abstract partial record StorageConfiguration
 {
     public StorageConfiguration(DirectoryConfiguration directoryConfiguration, DirectoryConfiguration? backupDirectoryConfiguration = null)

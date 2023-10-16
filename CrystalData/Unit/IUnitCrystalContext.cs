@@ -17,4 +17,6 @@ public interface IUnitCrystalContext
         where TData : BaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>;*/
 
     void SetJournal(JournalConfiguration configuration);
+
+    bool TrySetJournal(JournalConfiguration configuration);
 }

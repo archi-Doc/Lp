@@ -56,6 +56,7 @@ public class Crystalizer
         this.configuration = configuration;
         this.GlobalDirectory = options.GlobalDirectory;
         this.DefaultBackup = options.DefaultBackup;
+        this.GlobalStorage = options.GlobalStorage;
         this.EnableFilerLogger = options.EnableFilerLogger;
         this.RootDirectory = options.RootPath;
         this.FilerTimeout = options.FilerTimeout;
@@ -104,6 +105,8 @@ public class Crystalizer
 
     public DirectoryConfiguration? DefaultBackup { get; }
 
+    public StorageConfiguration GlobalStorage { get; }
+
     public bool EnableFilerLogger { get; }
 
     public string RootDirectory { get; }
@@ -144,9 +147,10 @@ public class Crystalizer
     private ConcurrentDictionary<uint, ICrystalInternal> planeToCrystal = new(); // Plane to crystal
     private ConcurrentDictionary<ICrystal, int> saveQueue = new(); // Save queue
 
-    private object syncFiler = new();
+    private object syncObject = new();
     private IRawFiler? localFiler;
     private Dictionary<string, IRawFiler> bucketToS3Filer = new();
+    private Dictionary<StorageConfiguration, IStorage> configurationToStorage = new();
 
     #endregion
 
@@ -227,7 +231,7 @@ public class Crystalizer
 
     public (IRawFiler RawFiler, FileConfiguration FixedConfiguration) ResolveRawFiler(FileConfiguration configuration)
     {
-        lock (this.syncFiler)
+        lock (this.syncObject)
         {
             if (configuration is GlobalFileConfiguration)
             {// Global file
@@ -267,7 +271,7 @@ public class Crystalizer
 
     public (IRawFiler RawFiler, DirectoryConfiguration FixedConfiguration) ResolveRawFiler(DirectoryConfiguration configuration)
     {
-        lock (this.syncFiler)
+        lock (this.syncObject)
         {
             if (configuration is GlobalDirectoryConfiguration)
             {// Global directory
@@ -305,18 +309,34 @@ public class Crystalizer
         }
     }
 
-    public IStorage ResolveStorage(StorageConfiguration configuration)
+    public IStorage ResolveStorage(ref StorageConfiguration configuration)
     {
-        lock (this.syncFiler)
+        lock (this.syncObject)
         {
-            IStorage storage;
+            IStorage? storage;
+            if (configuration is GlobalStorageConfiguration globalStorageConfiguration)
+            {// Default storage
+                if (this.GlobalStorage is GlobalStorageConfiguration)
+                {// Recursive
+                    configuration = EmptyStorageConfiguration.Default;
+                }
+                else
+                {
+                    configuration = this.GlobalStorage;
+                }
+            }
+
             if (configuration is EmptyStorageConfiguration emptyStorageConfiguration)
             {// Empty storage
                 storage = EmptyStorage.Default;
             }
             else if (configuration is SimpleStorageConfiguration simpleStorageConfiguration)
             {
-                storage = new SimpleStorage(this);
+                if (!this.configurationToStorage.TryGetValue(configuration, out storage))
+                {
+                    storage = new SimpleStorage(this);
+                    this.configurationToStorage.TryAdd(configuration, storage);
+                }
             }
             else
             {
@@ -539,7 +559,7 @@ public class Crystalizer
 
         // Terminate filers/journal
         var tasks = new List<Task>();
-        lock (this.syncFiler)
+        lock (this.syncObject)
         {
             if (this.localFiler is not null)
             {
@@ -805,7 +825,7 @@ public class Crystalizer
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    /*[MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal ulong AddStartingPoint(uint plane)
     {
         if (this.Journal is { } journal)
@@ -817,7 +837,7 @@ public class Crystalizer
         {
             return 0;
         }
-    }
+    }*/
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal ulong GetJournalPosition()
@@ -970,8 +990,9 @@ public class Crystalizer
                     this.logger.TryGet(LogLevel.Error)?.Log($"No shortcut position: {array[i].Value.DataType.Name}");
                 }*/
 
-                var max = Math.Max(Math.Max(shortcutPosition, waypoint.JournalPosition), 1);
-                if (position > max)
+                var max = shortcutPosition.CircularCompareTo(waypoint.JournalPosition) > 0 ? shortcutPosition : waypoint.JournalPosition;
+                max = Math.Max(max, 1);
+                if (position.CircularCompareTo(max) > 0)
                 {
                     position = max;
                 }
@@ -1055,7 +1076,7 @@ public class Crystalizer
                         if (crystal.Data is ITreeObject journalObject)
                         {
                             var currentPosition = position + (ulong)reader.Consumed;
-                            if (currentPosition > crystal.Waypoint.JournalPosition)
+                            if (currentPosition.CircularCompareTo(crystal.Waypoint.JournalPosition) > 0)
                             {
                                 if (journalObject.ReadRecord(ref reader))
                                 {// Success

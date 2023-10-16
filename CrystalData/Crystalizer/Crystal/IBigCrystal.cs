@@ -8,7 +8,7 @@ public interface IBigCrystal : ICrystal
 
     DatumRegistry DatumRegistry { get; }
 
-    StorageGroup StorageGroup { get; }
+    GroupStorage GroupStorage { get; }
 
     void Configure(BigCrystalConfiguration configuration);
 }

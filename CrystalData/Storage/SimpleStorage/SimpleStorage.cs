@@ -28,6 +28,7 @@ internal partial class SimpleStorage : IStorage, IStorageInternal
     private SimpleStorageData? data => this.crystal?.Data;
 
     private Crystalizer crystalizer;
+    private ICrystal? primaryCrystal;
     private string directory = string.Empty;
     private string backupDirectory = string.Empty;
     private ICrystal<SimpleStorageData>? crystal;
@@ -44,14 +45,18 @@ internal partial class SimpleStorage : IStorage, IStorageInternal
         this.timeout = timeout;
     }
 
-    async Task<CrystalResult> IStorage.PrepareAndCheck(PrepareParam param, StorageConfiguration storageConfiguration, bool createNew)
+    async Task<CrystalResult> IStorage.PrepareAndCheck(PrepareParam param, StorageConfiguration storageConfiguration)
     {
         CrystalResult result;
         var directoryConfiguration = storageConfiguration.DirectoryConfiguration;
-        this.directory = directoryConfiguration.Path;
-        if (!string.IsNullOrEmpty(this.directory) && !this.directory.EndsWith('/'))
+
+        if (string.IsNullOrEmpty(this.directory))
         {
-            this.directory += "/";
+            this.directory = directoryConfiguration.Path;
+            if (!string.IsNullOrEmpty(this.directory) && !this.directory.EndsWith('/'))
+            {
+                this.directory += "/";
+            }
         }
 
         if (this.mainFiler is null)
@@ -103,8 +108,13 @@ internal partial class SimpleStorage : IStorage, IStorageInternal
         return CrystalResult.Success;
     }
 
-    async Task IStorage.SaveStorage()
+    async Task IStorage.SaveStorage(ICrystal? callingCrystal)
     {
+        if (!StorageHelper.CheckPrimaryCrystal(ref this.primaryCrystal, ref callingCrystal))
+        {
+            return;
+        }
+
         if (this.crystal != null)
         {
             await this.crystal.Save().ConfigureAwait(false);
@@ -183,7 +193,18 @@ internal partial class SimpleStorage : IStorage, IStorageInternal
             return Task.FromResult(new CrystalMemoryOwnerResult(CrystalResult.NotFound));
         }
 
-        return this.mainFiler.ReadAsync(this.MainFile(this.FileToPath(file)), 0, size, this.timeout);
+        return ReadTask();
+
+        async Task<CrystalMemoryOwnerResult> ReadTask()
+        {
+            var result = await this.mainFiler.ReadAsync(this.MainFile(this.FileToPath(file)), 0, size, this.timeout).ConfigureAwait(false);
+            if (result.IsFailure && this.backupFiler is not null)
+            {
+                result = await this.backupFiler.ReadAsync(this.BackupFile(this.FileToPath(file)), 0, size, this.timeout).ConfigureAwait(false);
+            }
+
+            return result;
+        }
     }
 
     Task<CrystalResult> IStorage.PutAsync(ref ulong fileId, ByteArrayPool.ReadOnlyMemoryOwner dataToBeShared)

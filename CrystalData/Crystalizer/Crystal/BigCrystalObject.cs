@@ -17,7 +17,7 @@ public interface IBaseData
 
 public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
     where TData : class, IBaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
-{// BigCrystalObject = CrystalObject + Datum + StorageGroup (+ Himo)
+{// BigCrystalObject = CrystalObject + Datum + GroupStorage (+ Himo)
     internal BigCrystalObject(Crystalizer crystalizer)
     {
         this.Crystalizer = crystalizer;
@@ -31,7 +31,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
 
     private ICrystalInternal<TData> crystal;
     private SemaphoreLock semaphore = new();
-    private StorageGroup storageGroup;
+    private GroupStorage storageGroup;
     private DateTime lastSaveTime;
 
     #endregion
@@ -46,7 +46,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
 
     public DatumRegistry DatumRegistry { get; } = new();
 
-    public StorageGroup StorageGroup => this.storageGroup;
+    public GroupStorage GroupStorage => this.storageGroup;
 
     public CrystalState State { get; private set; }
 
@@ -77,6 +77,8 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
 
     public IStorage Storage => this.crystal.Storage;
 
+    public IJournal? Journal => this.Crystalizer.Journal;
+
     void IBigCrystal.Configure(BigCrystalConfiguration configuration)
     {
         using (this.semaphore.Lock())
@@ -84,7 +86,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
             this.crystal.Configure(configuration);
             this.BigCrystalConfiguration = configuration;
             this.BigCrystalConfiguration.RegisterDatum(this.DatumRegistry);
-            this.StorageGroup.Configure(this.BigCrystalConfiguration);
+            this.GroupStorage.Configure(this.BigCrystalConfiguration);
 
             this.State = CrystalState.Initial;
         }
@@ -136,10 +138,10 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
             await this.crystal.Save(unloadMode).ConfigureAwait(false);
 
             // Save storages
-            await this.StorageGroup.SaveStorage().ConfigureAwait(false);
+            await this.GroupStorage.SaveStorage(this).ConfigureAwait(false);
 
             // Save storage group
-            await this.StorageGroup.SaveGroup(UnloadMode.NoUnload).ConfigureAwait(false);
+            await this.GroupStorage.SaveGroup(UnloadMode.NoUnload).ConfigureAwait(false);
 
             if (unloadMode.IsUnload())
             {
@@ -168,8 +170,8 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
             this.Data.Unload();
             await this.crystal.Delete().ConfigureAwait(false);
 
-            await this.StorageGroup.PrepareAndLoad(this.CrystalConfiguration.StorageConfiguration, param).ConfigureAwait(false);
-            await this.StorageGroup.DeleteAllAsync().ConfigureAwait(false);
+            await this.GroupStorage.PrepareAndLoad(this.CrystalConfiguration.StorageConfiguration, param).ConfigureAwait(false);
+            await this.GroupStorage.DeleteAllAsync().ConfigureAwait(false);
 
             this.Data.Initialize(this, null, true);
 
@@ -210,7 +212,7 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
             result = false;
         }
 
-        if (await this.StorageGroup.TestJournal().ConfigureAwait(false) == false)
+        if (await this.GroupStorage.TestJournal().ConfigureAwait(false) == false)
         {
             result = false;
         }
@@ -261,12 +263,24 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
         }
     }
 
+    /*ulong ICrystal.AddStartingPoint()
+    {
+        if (this.Crystalizer.Journal is not null)
+        {
+            return this.Crystalizer.Journal.AddStartingPoint();
+        }
+        else
+        {
+            return 0;
+        }
+    }*/
+
     #endregion
 
     public void Status()
     {
         var logger = this.Crystalizer.UnitLogger.GetLogger<IBigCrystal<TData>>();
-        var info = this.StorageGroup.GetInformation();
+        var info = this.GroupStorage.GetInformation();
         foreach (var x in info)
         {
             logger.TryGet()?.Log(x);
@@ -278,13 +292,13 @@ public sealed class BigCrystalObject<TData> : IBigCrystalInternal<TData>
         CrystalResult result;
         var param = PrepareParam.New<TData>(this.Crystalizer, useQuery);
 
-        result = await this.StorageGroup.PrepareAndLoad(this.CrystalConfiguration.StorageConfiguration, param).ConfigureAwait(false);
+        result = await this.GroupStorage.PrepareAndLoad(this.CrystalConfiguration.StorageConfiguration, param).ConfigureAwait(false);
         if (result.IsFailure())
         {
             return result;
         }
 
-        this.crystal.ConfigureStorage(EmptyStorageConfiguration.Default); // Avoid duplication with the storage configuration of StorageGroup.
+        this.crystal.ConfigureStorage(EmptyStorageConfiguration.Default); // Avoid duplication with the storage configuration of GroupStorage.
         result = await this.crystal.PrepareAndLoad(useQuery).ConfigureAwait(false);
         if (result.IsFailure())
         {

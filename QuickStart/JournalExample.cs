@@ -5,7 +5,7 @@ using ValueLink;
 
 namespace QuickStart;
 
-[TinyhandObject(Journal = true)] // Enable the journaling feature.
+[TinyhandObject(Tree = true)] // Enable the journaling feature.
 [ValueLinkObject] // You can use ValuLink to handle a collection of objects.
 public partial class JournalData
 {
