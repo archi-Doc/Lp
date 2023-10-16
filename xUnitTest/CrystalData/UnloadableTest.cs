@@ -24,13 +24,13 @@ public partial record UnloadableClass : IEquatableObject<UnloadableClass>, IEqua
     private string name = string.Empty;
 
     [Key(2, AddProperty = "Child", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
-    private UnloadableData<UnloadableClass> child = new();
+    private StorageData<UnloadableClass> child = new();
 
     [Key(3, AddProperty = "Children", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
-    private UnloadableData<UnloadableClass.GoshujinClass> children = new();
+    private StorageData<UnloadableClass.GoshujinClass> children = new();
 
     [Key(4, AddProperty = "ByteArray", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
-    private UnloadableData<byte[]> byteArray = new();
+    private StorageData<byte[]> byteArray = new();
 
     bool IEquatableObject<UnloadableClass>.ObjectEquals(UnloadableClass other)
         => ((IEquatable<UnloadableClass>)this).Equals(other);

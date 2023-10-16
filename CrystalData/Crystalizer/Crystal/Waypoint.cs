@@ -106,13 +106,10 @@ public readonly partial struct Waypoint : IEquatable<Waypoint>, IComparable<Wayp
 
     public int CompareTo(Waypoint other)
     {
-        if (this.JournalPosition < other.JournalPosition)
+        var cmp = this.JournalPosition.CircularCompareTo(other.JournalPosition);
+        if (cmp != 0)
         {
-            return -1;
-        }
-        else if (this.JournalPosition > other.JournalPosition)
-        {
-            return 1;
+            return cmp;
         }
 
         if (this.Plane < other.Plane)

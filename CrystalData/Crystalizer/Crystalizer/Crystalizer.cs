@@ -990,8 +990,9 @@ public class Crystalizer
                     this.logger.TryGet(LogLevel.Error)?.Log($"No shortcut position: {array[i].Value.DataType.Name}");
                 }*/
 
-                var max = Math.Max(Math.Max(shortcutPosition, waypoint.JournalPosition), 1);
-                if (position > max)
+                var max = shortcutPosition.CircularCompareTo(waypoint.JournalPosition) > 0 ? shortcutPosition : waypoint.JournalPosition;
+                max = Math.Max(max, 1);
+                if (position.CircularCompareTo(max) > 0)
                 {
                     position = max;
                 }
@@ -1075,7 +1076,7 @@ public class Crystalizer
                         if (crystal.Data is ITreeObject journalObject)
                         {
                             var currentPosition = position + (ulong)reader.Consumed;
-                            if (currentPosition > crystal.Waypoint.JournalPosition)
+                            if (currentPosition.CircularCompareTo(crystal.Waypoint.JournalPosition) > 0)
                             {
                                 if (journalObject.ReadRecord(ref reader))
                                 {// Success

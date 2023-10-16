@@ -724,7 +724,7 @@ Exit:
         // Check journal position
         if (loadResult.Waypoint.IsValid && this.Crystalizer.Journal is { } journal)
         {
-            if (loadResult.Waypoint.JournalPosition > journal.GetCurrentPosition())
+            if (loadResult.Waypoint.JournalPosition.CircularCompareTo(journal.GetCurrentPosition()) > 0)
             {
                 var query = await param.Query.InconsistentJournal(this.CrystalConfiguration.FileConfiguration.Path).ConfigureAwait(false);
                 if (query == AbortOrContinue.Abort)

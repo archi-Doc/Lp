@@ -21,13 +21,13 @@ public partial class DesignSerializable
     public DesignSerializable Class { get; set; } = new();
 
     [Key(2)]
-    public UnloadableData<DesignSerializable> UnloadableClass { get; set; } = new();
+    public StorageData<DesignSerializable> UnloadableClass { get; set; } = new();
 }
 
 [TinyhandObject(Tree = true)]
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
 public partial record CrystalClass
-{// This is it. This class is the crystal of state-of-the-art data management technology.
+{// This is it. This class is the crystal of the most advanced data management architecture I've reached so far.
     public static void Register(IUnitCrystalContext context)
     {
         context.AddCrystal<CrystalClass>(
@@ -61,21 +61,21 @@ public partial record CrystalClass
     private string name = string.Empty;
 
     [Key(2, AddProperty = "Child", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
-    private UnloadableData<CrystalClass> child = new();
+    private StorageData<CrystalClass> child = new();
 
     [Key(3, AddProperty = "Children", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
-    private UnloadableData<CrystalClass.GoshujinClass> children = new();
+    private StorageData<CrystalClass.GoshujinClass> children = new();
 
     [Key(4, AddProperty = "ByteArray", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
-    private UnloadableData<byte[]> byteArray = new();
+    private StorageData<byte[]> byteArray = new();
 }
 
 /// <summary>
-/// <see cref="UnloadableData{TData}"/> is a subset of <see cref="CrystalObject{TData}"/>, allowing for the persistence of partial data.
+/// <see cref="StorageData{TData}"/> is a subset of <see cref="CrystalObject{TData}"/>, allowing for the persistence of partial data.
 /// </summary>
 /// <typeparam name="TData">The type of data.</typeparam>
 [TinyhandObject(ExplicitKeyOnly = true)]
-public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
+public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
 // where TData : ITinyhandSerialize<TData>
 {
     public const int MaxHistories = 4;
@@ -110,7 +110,7 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
 
     #endregion
 
-    public UnloadableData()
+    public StorageData()
     {
     }
 
