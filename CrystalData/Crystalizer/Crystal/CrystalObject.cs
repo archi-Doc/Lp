@@ -437,6 +437,11 @@ Exit:
                     break;
                 }
 
+                if (currentObject is ITreeObject treeObject)
+                {
+                    treeObject.SetParent(this);
+                }
+
                 if (previousObject is not null)
                 {// Compare the previous data
                     bool compare;

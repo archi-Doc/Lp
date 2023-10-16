@@ -261,58 +261,7 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
 
     public void Erase()
     {
-        ITreeObject? treeObject;
-        ulong id0;
-        ulong id1;
-        ulong id2;
-        ulong id3;
-
-        using (this.Lock())
-        {
-            treeObject = this.data as ITreeObject;
-
-            id0 = this.storageId0.FileId;
-            id1 = this.storageId1.FileId;
-            id2 = this.storageId2.FileId;
-            id3 = this.storageId3.FileId;
-
-            this.data = default;
-            this.storageId0 = default;
-            this.storageId1 = default;
-            this.storageId2 = default;
-            this.storageId3 = default;
-        }
-
-        if (((ITreeObject)this).TreeRoot is ICrystal crystal)
-        {// Delete storage
-            var storage = crystal.Storage;
-
-            if (id0 != 0)
-            {
-                storage.DeleteAndForget(ref id0);
-            }
-
-            if (id1 != 0)
-            {
-                storage.DeleteAndForget(ref id1);
-            }
-
-            if (id2 != 0)
-            {
-                storage.DeleteAndForget(ref id2);
-            }
-
-            if (id3 != 0)
-            {
-                storage.DeleteAndForget(ref id3);
-            }
-        }
-
-        if (treeObject is not null)
-        {
-            treeObject.Erase();
-        }
-
+        this.EraseInternal();
         ((ITreeObject)this).AddJournal_Remove(true);
     }
 
@@ -322,7 +271,7 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
     {
         if (reader.IsNext_Remove())
         {// Remove, RemoveAndErase
-            this.Erase();
+            this.EraseInternal();
             return true;
         }
 
@@ -412,6 +361,61 @@ public sealed partial class UnloadableData<TData> : SemaphoreLock, ITreeObject
         if (this.data is ITreeObject treeObject)
         {
             treeObject.SetParent(this);
+        }
+    }
+
+    private void EraseInternal()
+    {
+        ITreeObject? treeObject;
+        ulong id0;
+        ulong id1;
+        ulong id2;
+        ulong id3;
+
+        using (this.Lock())
+        {
+            treeObject = this.data as ITreeObject;
+
+            id0 = this.storageId0.FileId;
+            id1 = this.storageId1.FileId;
+            id2 = this.storageId2.FileId;
+            id3 = this.storageId3.FileId;
+
+            this.data = default;
+            this.storageId0 = default;
+            this.storageId1 = default;
+            this.storageId2 = default;
+            this.storageId3 = default;
+        }
+
+        if (((ITreeObject)this).TreeRoot is ICrystal crystal)
+        {// Delete storage
+            var storage = crystal.Storage;
+
+            if (id0 != 0)
+            {
+                storage.DeleteAndForget(ref id0);
+            }
+
+            if (id1 != 0)
+            {
+                storage.DeleteAndForget(ref id1);
+            }
+
+            if (id2 != 0)
+            {
+                storage.DeleteAndForget(ref id2);
+            }
+
+            if (id3 != 0)
+            {
+                storage.DeleteAndForget(ref id3);
+            }
+        }
+
+        if (treeObject is not null)
+        {
+            treeObject.Erase();
         }
     }
 }
