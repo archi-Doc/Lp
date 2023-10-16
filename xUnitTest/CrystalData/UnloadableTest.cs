@@ -95,6 +95,8 @@ public class UnloadableTest
             w2.Commit();
         }
 
+        await r.Children.Save(UnloadMode.ForceUnload);
+
         // Save & Test journal
         await crystal.Save(UnloadMode.ForceUnload);
         await crystal.Crystalizer.SaveJournal();

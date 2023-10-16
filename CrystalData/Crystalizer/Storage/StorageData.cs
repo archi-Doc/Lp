@@ -163,6 +163,11 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
 
     public async Task<bool> Save(UnloadMode unloadMode)
     {
+        if (this.data is null)
+        {// No data
+            return true;
+        }
+
         await this.EnterAsync().ConfigureAwait(false); // using (this.Lock())
         try
         {
@@ -238,7 +243,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
     public void Erase()
     {
         this.EraseInternal();
-        ((ITreeObject)this).AddJournalRecord(JournalRecord.RemoveAndErase);
+        ((ITreeObject)this).AddJournalRecord(JournalRecord.EraseStorage);
     }
 
     #region Journal

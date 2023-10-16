@@ -246,6 +246,14 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITreeObject
             }
         }
 
+        if (obj is ITreeObject treeObject)
+        {
+            if (await treeObject.Save(unloadMode).ConfigureAwait(false) == false)
+            {
+                return CrystalResult.DataIsLocked;
+            }
+        }
+
         if (this.storage is { } storage && storage is not EmptyStorage)
         {
             await storage.SaveStorage(this).ConfigureAwait(false);
