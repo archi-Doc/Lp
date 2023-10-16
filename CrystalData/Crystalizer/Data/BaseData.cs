@@ -166,13 +166,21 @@ public partial record BaseData : IBaseData, IDataInternal, ITinyhandCustomJourna
 
     protected bool ReadRecordBase(ref TinyhandReader reader)
     {
-        var record = reader.Read_Record();
+        if (!reader.TryRead(out JournalRecord record))
+        {
+            return false;
+        }
+
         if (record == JournalRecord.Key)
         {
             var key = reader.ReadInt32();
             if (key == DatumObjectKey)
             {
-                record = reader.Read_Record();
+                if (!reader.TryRead(out record))
+                {
+                    return false;
+                }
+
                 if (record == JournalRecord.Value)
                 {
                     var index = reader.ReadInt32();

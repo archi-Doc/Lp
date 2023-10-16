@@ -10,6 +10,8 @@ public readonly partial struct Waypoint : IEquatable<Waypoint>, IComparable<Wayp
 {// JournalPosition, Plane, Hash
     public const string Extension = "waypoint";
     public const int Length = 24; // 8 + 4 + 8 + 4
+    public const ulong InvalidJournalPosition = 0;
+    public const ulong ValidJournalPosition = 1;
     public static readonly Waypoint Invalid = default;
     public static readonly Waypoint Empty = new(1, 0, 0);
     public static readonly int LengthInBase32;

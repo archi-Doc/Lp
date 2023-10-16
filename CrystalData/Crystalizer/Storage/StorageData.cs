@@ -85,6 +85,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
     // [Key(0)]
     // private StorageConfiguration? storageConfiguration; // using (this.Lock())
 
+    [IgnoreMember]
     private TData? data;
 
     [Key(0)]
@@ -145,7 +146,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
     }
 
     public void Set(TData data)
-    {// Journal not implemented.
+    {// Journaling is not supported.
         using (this.Lock())
         {
             this.data = data;
@@ -176,8 +177,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
             }
 
             // Save children
-            var treeObject = this.data as ITreeObject;
-            if (treeObject is not null)
+            if (this.data is ITreeObject treeObject)
             {
                 var result = await treeObject.Save(unloadMode).ConfigureAwait(false);
                 if (!result)
@@ -186,7 +186,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
                 }
             }
 
-            var currentPosition = crystal.Journal is null ? 0 : crystal.Journal.GetCurrentPosition();
+            var currentPosition = crystal.Journal is null ? Waypoint.ValidJournalPosition : crystal.Journal.GetCurrentPosition();
 
             // Serialize and get hash.
             SerializeHelper.Serialize<TData>(this.data, TinyhandSerializerOptions.Standard, out var owner);
@@ -195,52 +195,28 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
             if (hash != this.storageId0.Hash)
             {// Different data
                 // Put
-                var storage = crystal.Storage;
                 ulong fileId = 0;
-                storage.PutAndForget(ref fileId, owner.AsReadOnly());
+                crystal.Storage.PutAndForget(ref fileId, owner.AsReadOnly());
                 var storageId = new StorageId(currentPosition, fileId, hash);
 
                 // Update histories
-                var numberOfHistories = crystal.CrystalConfiguration.NumberOfFileHistories;
-                if (numberOfHistories <= 1)
-                {
-                    this.storageId0 = storageId;
-                }
-                else if (numberOfHistories == 2)
-                {
-                    if (this.storageId1.IsValid)
-                    {
-                        fileId = this.storageId1.FileId;
-                        storage.DeleteAndForget(ref fileId);
-                    }
+                this.AddInternal(crystal, storageId);
 
-                    this.storageId1 = this.storageId0;
-                    this.storageId0 = storageId;
-                }
-                else if (numberOfHistories == 3)
+                // Journal
+                AddJournal();
+                void AddJournal()
                 {
-                    if (this.storageId2.IsValid)
+                    if (((ITreeObject)this).TreeParent?.TryGetJournalWriter(out var root, out var writer, false) == true)
                     {
-                        fileId = this.storageId2.FileId;
-                        storage.DeleteAndForget(ref fileId);
-                    }
+                        if (this is ITinyhandCustomJournal tinyhandCustomJournal)
+                        {
+                            tinyhandCustomJournal.WriteCustomLocator(ref writer);
+                        }
 
-                    this.storageId2 = this.storageId1;
-                    this.storageId1 = this.storageId0;
-                    this.storageId0 = storageId;
-                }
-                else if (numberOfHistories >= MaxHistories)
-                {
-                    if (this.storageId3.IsValid)
-                    {
-                        fileId = this.storageId3.FileId;
-                        storage.DeleteAndForget(ref fileId);
+                        writer.Write(JournalRecord.AddStorage);
+                        TinyhandSerializer.SerializeObject(ref writer, storageId);
+                        root.AddJournal(writer);
                     }
-
-                    this.storageId3 = this.storageId2;
-                    this.storageId2 = this.storageId1;
-                    this.storageId1 = this.storageId0;
-                    this.storageId0 = storageId;
                 }
             }
 
@@ -262,16 +238,32 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
     public void Erase()
     {
         this.EraseInternal();
-        ((ITreeObject)this).AddJournal_Remove(true);
+        ((ITreeObject)this).AddJournalRecord(JournalRecord.RemoveAndErase);
     }
 
     #region Journal
 
     bool ITreeObject.ReadRecord(ref TinyhandReader reader)
     {
-        if (reader.IsNext_Remove())
-        {// Remove, RemoveAndErase
+        if (!reader.TryPeek(out JournalRecord record))
+        {
+            return false;
+        }
+
+        if (record == JournalRecord.EraseStorage)
+        {// Erase storage
             this.EraseInternal();
+            return true;
+        }
+        else if (record == JournalRecord.AddStorage)
+        {
+            if (((ITreeObject)this).TreeRoot is not ICrystal crystal)
+            {// No crystal
+                return true;
+            }
+
+            var storageId = TinyhandSerializer.DeserializeObject<StorageId>(ref reader);
+            this.AddInternal(crystal, storageId);
             return true;
         }
 
@@ -361,6 +353,54 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
         if (this.data is ITreeObject treeObject)
         {
             treeObject.SetParent(this);
+        }
+    }
+
+    private void AddInternal(ICrystal crystal, StorageId storageId)
+    {
+        var numberOfHistories = crystal.CrystalConfiguration.NumberOfFileHistories;
+        ulong fileId;
+        var storage = crystal.Storage;
+
+        if (numberOfHistories <= 1)
+        {
+            this.storageId0 = storageId;
+        }
+        else if (numberOfHistories == 2)
+        {
+            if (this.storageId1.IsValid)
+            {
+                fileId = this.storageId1.FileId;
+                storage.DeleteAndForget(ref fileId);
+            }
+
+            this.storageId1 = this.storageId0;
+            this.storageId0 = storageId;
+        }
+        else if (numberOfHistories == 3)
+        {
+            if (this.storageId2.IsValid)
+            {
+                fileId = this.storageId2.FileId;
+                storage.DeleteAndForget(ref fileId);
+            }
+
+            this.storageId2 = this.storageId1;
+            this.storageId1 = this.storageId0;
+            this.storageId0 = storageId;
+        }
+        else if (numberOfHistories >= MaxHistories)
+        {
+            if (this.storageId3.IsValid)
+            {
+                fileId = this.storageId3.FileId;
+                storage.DeleteAndForget(ref fileId);
+            }
+
+            this.storageId3 = this.storageId2;
+            this.storageId2 = this.storageId1;
+            this.storageId1 = this.storageId0;
+            this.storageId0 = storageId;
         }
     }
 
