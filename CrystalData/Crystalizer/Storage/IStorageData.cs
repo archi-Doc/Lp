@@ -4,5 +4,5 @@ namespace CrystalData;
 
 public interface IStorageData
 {
-    ValueTask<bool> Unload();
+    Task<bool> Unload();
 }

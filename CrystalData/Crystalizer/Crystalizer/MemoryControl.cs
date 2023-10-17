@@ -10,7 +10,10 @@ public partial class MemoryControl
     public MemoryControl(Crystalizer crystalizer)
     {
         this.crystalizer = crystalizer;
+        this.unloader = new(this);
     }
+
+    #region Unloader
 
     private class Unloader : TaskCore
     {
@@ -28,9 +31,9 @@ public partial class MemoryControl
 
             while (!core.IsTerminated)
             {
-                if (memoryControl.AvailableMemory > 0)
+                if (memoryControl.MemoryUsage < crystalizer.MemoryUsageLimit)
                 {// Sleep
-                    await Task.Delay(UnloadIntervalInMilliseconds);
+                    await core.Delay(UnloadIntervalInMilliseconds);
                     continue;
                 }
 
@@ -59,10 +62,10 @@ public partial class MemoryControl
                 {// Success
                     lock (memoryControl.items.SyncObject)
                     {// Get the item.
-                        if (memoryControl.items.StorageDataChain.FindFirst(storageData) is { } i)
+                        if (memoryControl.items.StorageDataChain.FindFirst(storageData) is { } item)
                         {// Remove the item from the chain.
-                            memoryControl.memoryUsage -= i.Size;
-                            i.Goshujin = null;
+                            memoryControl.memoryUsage -= item.DataSize;
+                            item.Goshujin = null;
                         }
                     }
                 }
@@ -75,25 +78,28 @@ public partial class MemoryControl
         private readonly MemoryControl memoryControl;
     }
 
+    #endregion
+
     [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
     private partial class Item
     {
         [Link(Name = "UnloadQueue", Type = ChainType.QueueList)]
-        public Item(IStorageData storageData, int size)
+        public Item(IStorageData storageData, int dataSize)
         {
             this.StorageData = storageData;
-            this.Size = size;
+            this.DataSize = dataSize;
         }
 
         [Link(Type = ChainType.Unordered)]
         public IStorageData StorageData { get; private set; }
 
-        public int Size { get; set; }
+        public int DataSize { get; set; }
     }
 
     #region FieldAndProperty
 
     private readonly Crystalizer crystalizer;
+    private readonly Unloader unloader;
 
     // Items
     private readonly Item.GoshujinClass items = new();
@@ -138,9 +144,9 @@ public partial class MemoryControl
                 this.items.UnloadQueueChain.Enqueue(item);
             }
 
-            this.memoryUsage -= item.Size;
-            item.Size = dataSize;
-            this.memoryUsage += item.Size;
+            this.memoryUsage -= item.DataSize;
+            item.DataSize = dataSize;
+            this.memoryUsage += item.DataSize;
         }
     }
 }

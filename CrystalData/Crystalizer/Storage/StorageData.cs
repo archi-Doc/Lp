@@ -75,7 +75,7 @@ public partial record CrystalClass
 /// </summary>
 /// <typeparam name="TData">The type of data.</typeparam>
 [TinyhandObject(ExplicitKeyOnly = true)]
-public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
+public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject, IStorageData
 // where TData : ITinyhandSerialize<TData>
 {
     public const int MaxHistories = 3; // 4
@@ -164,6 +164,9 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
             this.storageConfiguration = storageConfiguration;
         }
     }*/
+
+    public Task<bool> Unload()
+        => this.Save(UnloadMode.TryUnload);
 
     public async Task<bool> Save(UnloadMode unloadMode)
     {
