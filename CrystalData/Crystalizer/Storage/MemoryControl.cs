@@ -122,6 +122,8 @@ public partial class MemoryControl
 
     #region FieldAndProperty
 
+    internal bool IsActive { get; set; } = true;
+
     private readonly Crystalizer crystalizer;
     private readonly Unloader unloader;
 
@@ -155,6 +157,11 @@ public partial class MemoryControl
 
     public void ReportUnloaded(IStorageData storageData, int dataSize)
     {
+        if (!this.IsActive)
+        {
+            return;
+        }
+
         lock (this.syncObject)
         {
             if (this.items.StorageDataChain.FindFirst(storageData) is { } item)
@@ -176,6 +183,11 @@ public partial class MemoryControl
 
     public void Register(IStorageData storageData, int dataSize)
     {
+        if (!this.IsActive)
+        {
+            return;
+        }
+
         lock (this.syncObject)
         {
             if (dataSize == 0)

@@ -480,11 +480,8 @@ Exit:
                 }
                 else if (i == waypoints.Length - 1)
                 {
-                    // await journalObject.Save(UnloadMode.ForceUnload).ConfigureAwait(false);
                     break;
                 }
-
-                // journalObject.CurrentPlane = waypoints[i].CurrentPlane;
 
                 // Read journal [waypoints[i].JournalPosition, waypoints[i + 1].JournalPosition)
                 var length = (int)(waypoints[i + 1].JournalPosition - waypoints[i].JournalPosition);
@@ -496,9 +493,9 @@ Exit:
                     break;
                 }
 
+                this.Crystalizer.Memory.IsActive = false;
                 this.ReadJournal(journalObject, memoryOwner.Memory, waypoints[i].Plane);
-
-                // await journalObject.Save(UnloadMode.ForceUnload).ConfigureAwait(false);
+                this.Crystalizer.Memory.IsActive = true;
 
                 previousObject = currentObject;
             }
