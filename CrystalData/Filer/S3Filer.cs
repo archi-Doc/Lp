@@ -24,7 +24,7 @@ public class S3Filer : FilerBase, IRawFiler
         this.bucket = bucket;
     }
 
-    public static AddStorageResult Check(GroupStorage storageGroup, string bucket, string path)
+    /*public static AddStorageResult Check(GroupStorage storageGroup, string bucket, string path)
     {
         if (!storageGroup.Crystalizer.StorageKey.TryGetKey(bucket, out var accessKeyPair))
         {
@@ -32,7 +32,7 @@ public class S3Filer : FilerBase, IRawFiler
         }
 
         return AddStorageResult.Success;
-    }
+    }*/
 
     public override string ToString()
         => $"S3Filer Bucket: {this.bucket}";

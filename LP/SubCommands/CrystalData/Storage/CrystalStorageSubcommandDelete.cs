@@ -5,7 +5,7 @@ using SimpleCommandLine;
 
 namespace LP.Subcommands.CrystalData;
 
-[SimpleCommand("delete", Description = "Delete storage.")]
+/*[SimpleCommand("delete", Description = "Delete storage.")]
 public class CrystalStorageSubcommandDelete : ISimpleCommandAsync<CrystalStorageOptionsDelete>
 {
     public CrystalStorageSubcommandDelete(ILogger<CrystalStorageSubcommandAdd> logger, IUserInterfaceService userInterfaceService, CrystalControl crystalControl, IBigCrystal crystal, CrystalStorageSubcommandLs crystalDirSubcommandLs)
@@ -52,4 +52,4 @@ public record CrystalStorageOptionsDelete
 {
     [SimpleOption("id", Required = true, Description = "Storage id")]
     public string Id { get; init; } = string.Empty;
-}
+}*/

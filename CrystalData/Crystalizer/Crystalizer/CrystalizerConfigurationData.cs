@@ -10,6 +10,4 @@ public partial class CrystalizerConfigurationData
     }
 
     public Dictionary<string, CrystalConfiguration> CrystalConfigurations { get; private set; } = default!;
-
-    public Dictionary<string, BigCrystalConfiguration> BigCrystalConfigurations { get; private set; } = default!;
 }

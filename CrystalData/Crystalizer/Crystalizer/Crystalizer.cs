@@ -76,24 +76,14 @@ public class Crystalizer
         this.UnitLogger = unitLogger;
         this.CrystalCheck = new(this.UnitLogger.GetLogger<CrystalCheck>());
         this.CrystalCheck.Load(Path.Combine(this.RootDirectory, CheckFile));
-        this.Himo = new(this);
         this.Memory = new(this, this.CrystalCheck.MemoryStats);
         this.StorageKey = storageKey;
 
         foreach (var x in this.configuration.CrystalConfigurations)
         {
-            ICrystalInternal? crystal;
-            if (x.Value is BigCrystalConfiguration bigCrystalConfiguration)
-            {// new BigCrystalImpl<TData>
-                var bigCrystal = (IBigCrystalInternal)Activator.CreateInstance(typeof(BigCrystalObject<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
-                crystal = bigCrystal;
-                bigCrystal.Configure(bigCrystalConfiguration);
-            }
-            else
-            {// new CrystalImpl<TData>
-                crystal = (ICrystalInternal)Activator.CreateInstance(typeof(CrystalObject<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
-                crystal.Configure(x.Value);
-            }
+            // new CrystalImpl<TData>
+            var crystal = (ICrystalInternal)Activator.CreateInstance(typeof(CrystalObject<>).MakeGenericType(x.Key), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, new object[] { this, }, null)!;
+            crystal.Configure(x.Value);
 
             this.typeToCrystal.TryAdd(x.Key, crystal);
             this.crystals.TryAdd(crystal, 0);
@@ -127,8 +117,6 @@ public class Crystalizer
     public JournalConfiguration? JournalConfiguration { get; private set; }
 
     public IStorageKey StorageKey { get; }
-
-    public HimoGoshujinClass Himo { get; }
 
     public MemoryControl Memory { get; }
 
@@ -362,15 +350,7 @@ public class Crystalizer
         {
             if (this.typeToCrystal.TryGetValue(x.Key, out var crystal))
             {
-                if (x.Value is BigCrystalConfiguration bigCrystalConfiguration &&
-                    crystal is IBigCrystal bigCrystal)
-                {
-                    bigCrystal.Configure(bigCrystalConfiguration);
-                }
-                else
-                {
-                    crystal.Configure(x.Value);
-                }
+                crystal.Configure(x.Value);
             }
         }
     }
@@ -383,14 +363,7 @@ public class Crystalizer
             if (this.typeToCrystal.TryGetValue(x.Key, out var crystal) &&
                 x.Key.FullName is { } name)
             {
-                if (crystal.CrystalConfiguration is BigCrystalConfiguration bigCrystalConfiguration)
-                {
-                    data.BigCrystalConfigurations[name] = bigCrystalConfiguration;
-                }
-                else
-                {
-                    data.CrystalConfigurations[name] = crystal.CrystalConfiguration;
-                }
+                data.CrystalConfigurations[name] = crystal.CrystalConfiguration;
             }
         }
 
@@ -444,15 +417,6 @@ public class Crystalizer
                 if (nameToCrystal.TryGetValue(x.Key, out var crystal))
                 {
                     crystal.Configure(x.Value);
-                }
-            }
-
-            foreach (var x in data.BigCrystalConfigurations)
-            {
-                if (nameToCrystal.TryGetValue(x.Key, out var crystal) &&
-                    crystal is IBigCrystal bigCrystal)
-                {
-                    bigCrystal.Configure(x.Value);
                 }
             }
 
@@ -628,56 +592,11 @@ public class Crystalizer
         return crystalObject;
     }
 
-    public IBigCrystal<TData> GetOrCreateBigCrystal<TData>(CrystalConfiguration configuration)
-        where TData : class, IBaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
-    {
-        if (this.typeToCrystal.TryGetValue(typeof(TData), out var crystal) &&
-            crystal is IBigCrystal<TData> crystalData)
-        {
-            return crystalData;
-        }
-
-        var crystalObject = new BigCrystalObject<TData>(this);
-        this.crystals.TryAdd(crystalObject, 0);
-        ((ICrystal)crystalObject).Configure(configuration);
-        return crystalObject;
-    }
-
-    public ICrystal<TData> CreateBigCrystal<TData>(CrystalConfiguration? configuration = null, bool managedByCrystalizer = true)
-        where TData : class, IBaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
-    {
-        var crystal = new BigCrystalObject<TData>(this);
-        if (managedByCrystalizer)
-        {
-            this.crystals.TryAdd(crystal, 0);
-        }
-
-        if (configuration is not null)
-        {
-            ((ICrystal)crystal).Configure(configuration);
-        }
-
-        return crystal;
-    }
-
     public ICrystal<TData> GetCrystal<TData>()
         where TData : class, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
     {
         if (!this.typeToCrystal.TryGetValue(typeof(TData), out var c) ||
             c is not ICrystal<TData> crystal)
-        {
-            ThrowTypeNotRegistered(typeof(TData));
-            return default!;
-        }
-
-        return crystal;
-    }
-
-    public IBigCrystal<TData> GetBigCrystal<TData>()
-        where TData : class, IBaseData, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
-    {
-        if (!this.typeToCrystal.TryGetValue(typeof(TData), out var c) ||
-            c is not IBigCrystal<TData> crystal)
         {
             ThrowTypeNotRegistered(typeof(TData));
             return default!;

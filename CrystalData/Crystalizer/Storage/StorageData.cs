@@ -1,28 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
 using Tinyhand.IO;
 
 namespace CrystalData;
-
-[TinyhandObject(Tree = true)]
-[ValueLinkObject(Isolation = IsolationLevel.Serializable)]
-public partial class DesignSerializable
-{
-    public DesignSerializable()
-    {
-    }
-
-    [Key(0)]
-    public int Id { get; set; }
-
-    [Key(1)]
-    public DesignSerializable Class { get; set; } = new();
-
-    [Key(2)]
-    public StorageData<DesignSerializable> UnloadableClass { get; set; } = new();
-}
 
 [TinyhandObject(Tree = true)]
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]

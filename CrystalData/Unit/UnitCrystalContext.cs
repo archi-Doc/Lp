@@ -11,11 +11,6 @@ internal class UnitCrystalContext : IUnitCrystalContext, IUnitCustomContext
         this.typeToCrystalConfiguration[typeof(TData)] = configuration;
     }
 
-    void IUnitCrystalContext.AddBigCrystal<TData>(BigCrystalConfiguration configuration)
-    {
-        this.typeToCrystalConfiguration[typeof(TData)] = configuration;
-    }
-
     /*bool IUnitCrystalContext.TryAddCrystal<TData>(CrystalConfiguration configuration)
     {
         return this.typeToCrystalConfiguration.TryAdd(typeof(TData), configuration);
@@ -51,12 +46,6 @@ internal class UnitCrystalContext : IUnitCrystalContext, IUnitCustomContext
 
             // Singleton: T => Crystalizer.GetObject<T>()
             context.Services.Add(ServiceDescriptor.Singleton(x.Key, provider => provider.GetRequiredService<Crystalizer>().GetObject(x.Key)));
-
-            if (x.Value is BigCrystalConfiguration bigCrystalConfiguration)
-            {
-                // Singleton: IBigCrystal<T> => Crystalizer.GetCrystal<T>()
-                context.Services.Add(ServiceDescriptor.Singleton(typeof(IBigCrystal<>).MakeGenericType(x.Key), provider => provider.GetRequiredService<Crystalizer>().GetCrystal(x.Key)));
-            }
         }
 
         if (!context.TryGetOptions<CrystalizerConfiguration>(out var configuration))

@@ -4,7 +4,7 @@ using SimpleCommandLine;
 
 namespace LP.Subcommands.CrystalData;
 
-[SimpleCommand("ls", Description = "List storages.")]
+/*[SimpleCommand("ls", Description = "List storages.")]
 public class CrystalStorageSubcommandLs : ISimpleCommandAsync
 {
     public CrystalStorageSubcommandLs(IConsoleService consoleService, IBigCrystal crystal)
@@ -25,4 +25,4 @@ public class CrystalStorageSubcommandLs : ISimpleCommandAsync
 
     private IConsoleService consoleService;
     private IBigCrystal crystal;
-}
+}*/

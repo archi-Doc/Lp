@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using CrystalData.Datum;
-using LP.Crystal;
 using LP.NetServices;
 using LP.NetServices.T3CS;
 using LP.T3CS;
@@ -25,7 +23,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
                 context,
                 context.ServiceProvider.GetRequiredService<ILogger<Merger>>(),
                 context.ServiceProvider.GetRequiredService<LPBase>(),
-                context.ServiceProvider.GetRequiredService<IBigCrystal<MergerData>>(),
+                // context.ServiceProvider.GetRequiredService<IBigCrystal<MergerData>>(),
                 context.ServiceProvider.GetRequiredService<MergerInformation>());
 
             return this.merger;
@@ -34,12 +32,11 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         private Merger? merger;
     }
 
-    public Merger(UnitContext context, ILogger<Merger> logger, LPBase lpBase, IBigCrystal<MergerData> crystal, MergerInformation mergerInformation)
+    public Merger(UnitContext context, ILogger<Merger> logger, LPBase lpBase, /*IBigCrystal<MergerData> crystal, */MergerInformation mergerInformation)
         : base(context)
     {
         this.logger = logger;
         this.lpBase = lpBase;
-        this.crystal = crystal;
 
         this.Information = mergerInformation;
     }
@@ -71,7 +68,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         }
 
         // Get LpData
-        var root = this.crystal.Data;
+        /*var root = this.crystal.Data;
         var identifier = param.Proof.PublicKey.ToIdentifier();
         var credit = root.TryGetChild(identifier);
         if (credit != null)
@@ -90,7 +87,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
             credit.DataId = LpData.LpDataId.Credit;
             op.Datum.SetObject(new CreditBlock(param.Proof.PublicKey));
-        }
+        }*/
 
         return MergerResult.Success;
     }
@@ -101,15 +98,12 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     {
         this.logger.TryGet()?.Log("Merger started");
 
-        this.crystal.Data.TryGetChild(default); // tempcode (preload)
+        /*this.crystal.Data.TryGetChild(default);
         var numberOfCredits = this.crystal.Data.Count(LpData.LpDataId.Credit);
-        this.logger.TryGet()?.Log($"Credits: {numberOfCredits}");
-
-        // this.logger.TryGet(LogLevel.Fatal)?.Log("Merger fatal");
-        // throw new PanicException();
+        this.logger.TryGet()?.Log($"Credits: {numberOfCredits}");*/
     }
 
     private ILogger logger;
     private LPBase lpBase;
-    private IBigCrystal<MergerData> crystal;
+    // private IBigCrystal<MergerData> crystal;
 }

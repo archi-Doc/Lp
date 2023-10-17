@@ -473,13 +473,14 @@ Exit:
                 }
 
                 result.Return();
-                if (i == waypoints.Length - 1)
-                {
-                    break;
-                }
 
                 if (currentObject is not ITreeObject journalObject)
                 {
+                    break;
+                }
+                else if (i == waypoints.Length - 1)
+                {
+                    // await journalObject.Save(UnloadMode.ForceUnload).ConfigureAwait(false);
                     break;
                 }
 
@@ -496,6 +497,8 @@ Exit:
                 }
 
                 this.ReadJournal(journalObject, memoryOwner.Memory, waypoints[i].Plane);
+
+                // await journalObject.Save(UnloadMode.ForceUnload).ConfigureAwait(false);
 
                 previousObject = currentObject;
             }
