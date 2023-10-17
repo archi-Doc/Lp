@@ -78,7 +78,7 @@ public partial record CrystalClass
 public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
 // where TData : ITinyhandSerialize<TData>
 {
-    public const int MaxHistories = 4;
+    public const int MaxHistories = 3; // 4
 
     #region FieldAndProperty
 
@@ -97,8 +97,8 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
     [Key(2)]
     private StorageId storageId2;
 
-    [Key(3)]
-    private StorageId storageId3;
+    // [Key(3)]
+    // private StorageId storageId3;
 
     [IgnoreMember]
     ITreeRoot? ITreeObject.TreeRoot { get; set; }
@@ -325,11 +325,11 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
                 {
                     fileId = this.storageId2.FileId;
                     result = await storage.GetAsync(ref fileId).ConfigureAwait(false);
-                    if (result.IsFailure && this.storageId3.IsValid)
+                    /*if (result.IsFailure && this.storageId3.IsValid)
                     {
                         fileId = this.storageId3.FileId;
                         result = await storage.GetAsync(ref fileId).ConfigureAwait(false);
-                    }
+                    }*/
                 }
             }
         }
@@ -387,7 +387,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
             this.storageId1 = this.storageId0;
             this.storageId0 = storageId;
         }
-        else if (numberOfHistories == 3)
+        else
         {
             if (this.storageId2.IsValid)
             {
@@ -399,7 +399,8 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
             this.storageId1 = this.storageId0;
             this.storageId0 = storageId;
         }
-        else if (numberOfHistories >= MaxHistories)
+
+        /*else
         {
             if (this.storageId3.IsValid)
             {
@@ -411,7 +412,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
             this.storageId2 = this.storageId1;
             this.storageId1 = this.storageId0;
             this.storageId0 = storageId;
-        }
+        }*/
     }
 
     private void EraseInternal()
@@ -420,7 +421,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
         ulong id0;
         ulong id1;
         ulong id2;
-        ulong id3;
+        // ulong id3;
 
         using (this.Lock())
         {
@@ -429,13 +430,13 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
             id0 = this.storageId0.FileId;
             id1 = this.storageId1.FileId;
             id2 = this.storageId2.FileId;
-            id3 = this.storageId3.FileId;
+            // id3 = this.storageId3.FileId;
 
             this.data = default;
             this.storageId0 = default;
             this.storageId1 = default;
             this.storageId2 = default;
-            this.storageId3 = default;
+            // this.storageId3 = default;
         }
 
         if (((ITreeObject)this).TreeRoot is ICrystal crystal)
@@ -457,10 +458,10 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
                 storage.DeleteAndForget(ref id2);
             }
 
-            if (id3 != 0)
+            /*if (id3 != 0)
             {
                 storage.DeleteAndForget(ref id3);
-            }
+            }*/
         }
 
         if (treeObject is not null)

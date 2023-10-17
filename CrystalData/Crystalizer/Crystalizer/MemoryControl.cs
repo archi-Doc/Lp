@@ -4,9 +4,8 @@ namespace CrystalData;
 
 public partial class MemoryControl
 {
-    private const int MinimumSize = 1024;
+    private const int MinimumDataSize = 1024;
     private const int UnloadIntervalInMilliseconds = 1_000;
-    // private const double MarginRatio = 0.1d;
 
     public MemoryControl(Crystalizer crystalizer)
     {
@@ -26,7 +25,6 @@ public partial class MemoryControl
             var core = (Unloader)parameter!;
             var memoryControl = core.memoryControl;
             var crystalizer = core.memoryControl.crystalizer;
-            // var margin = crystalizer.MemoryUsageLimit * MarginRatio;
 
             while (!core.IsTerminated)
             {
@@ -37,7 +35,7 @@ public partial class MemoryControl
                 }
 
                 IStorageData? storageData;
-                lock (memoryControl.syncObject)
+                lock (memoryControl.items.SyncObject)
                 {// Get the first item.
                     if (memoryControl.items.UnloadQueueChain.TryPeek(out var item))
                     {
@@ -59,7 +57,7 @@ public partial class MemoryControl
 
                 if (await storageData.Unload())
                 {// Success
-                    lock (memoryControl.syncObject)
+                    lock (memoryControl.items.SyncObject)
                     {// Get the item.
                         if (memoryControl.items.StorageDataChain.FindFirst(storageData) is { } i)
                         {// Remove the item from the chain.
@@ -96,9 +94,9 @@ public partial class MemoryControl
     #region FieldAndProperty
 
     private readonly Crystalizer crystalizer;
-    private readonly Item.GoshujinClass items = new();
-    private readonly object syncObject = new();
 
+    // Items
+    private readonly Item.GoshujinClass items = new();
     private long memoryUsage;
 
     #endregion
@@ -115,19 +113,23 @@ public partial class MemoryControl
         }
     }
 
-    public void Report(IStorageData storageData, int size)
+    public void Report(Type dataType, int dataSize)
     {
-        if (size == 0)
+    }
+
+    public void Register(IStorageData storageData, int dataSize)
+    {
+        if (dataSize == 0)
         {// Estimate the data size.
         }
 
-        size = size > MinimumSize ? size : MinimumSize;
+        dataSize = dataSize > MinimumDataSize ? dataSize : MinimumDataSize;
 
         lock (this.items.SyncObject)
         {
             if (this.items.StorageDataChain.FindFirst(storageData) is not { } item)
             {
-                item = new(storageData, size);
+                item = new(storageData, dataSize);
                 item.Goshujin = this.items;
             }
             else
@@ -137,7 +139,7 @@ public partial class MemoryControl
             }
 
             this.memoryUsage -= item.Size;
-            item.Size = size;
+            item.Size = dataSize;
             this.memoryUsage += item.Size;
         }
     }
