@@ -357,13 +357,13 @@ public class Crystalizer
 
     public async Task<CrystalResult> SaveConfigurations(FileConfiguration configuration)
     {
-        var data = TinyhandSerializer.ReconstructObject<CrystalizerConfigurationData>();
+        var data = new Dictionary<string, CrystalConfiguration>();
         foreach (var x in this.configuration.CrystalConfigurations)
         {
             if (this.typeToCrystal.TryGetValue(x.Key, out var crystal) &&
                 x.Key.FullName is { } name)
             {
-                data.CrystalConfigurations[name] = crystal.CrystalConfiguration;
+                data[name] = crystal.CrystalConfiguration;
             }
         }
 
@@ -397,7 +397,7 @@ public class Crystalizer
 
         try
         {
-            var data = TinyhandSerializer.DeserializeFromUtf8<CrystalizerConfigurationData>(readResult.Data.Memory);
+            var data = TinyhandSerializer.DeserializeFromUtf8<Dictionary<string, CrystalConfiguration>>(readResult.Data.Memory);
             if (data == null)
             {
                 return CrystalResult.DeserializeError;
@@ -412,7 +412,7 @@ public class Crystalizer
                 }
             }
 
-            foreach (var x in data.CrystalConfigurations)
+            foreach (var x in data)
             {
                 if (nameToCrystal.TryGetValue(x.Key, out var crystal))
                 {

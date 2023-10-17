@@ -21,6 +21,8 @@ internal class TestClass0
     {
         Console.WriteLine("Sandbox test0");
 
+        // await this.crystalizer.SaveConfigurations(new LocalFileConfiguration("CrystalConfiguration.tinyhand"));
+
         var result = await this.crystalizer.PrepareAndLoadAll();
         if (result.IsFailure())
         {
