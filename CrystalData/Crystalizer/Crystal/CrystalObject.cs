@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using CrystalData.Filer;
@@ -436,7 +435,7 @@ Exit:
                 }
 
                 // Deserialize
-                (var currentObject, var currentFormat) = TryDeserialize(result.Data.Span, this.CrystalConfiguration.SaveFormat);
+                (var currentObject, var currentFormat) = SerializeHelper.TryDeserialize<TData>(result.Data.Span, this.CrystalConfiguration.SaveFormat, true);
                 if (currentObject is null)
                 {// Deserialization error
                     result.Return();
@@ -564,61 +563,6 @@ Exit:
     }*/
 
     #endregion
-
-    private static (TData? Data, SaveFormat Format) TryDeserialize(ReadOnlySpan<byte> span, SaveFormat formatHint)
-    {
-        TData? data = default;
-        SaveFormat format = SaveFormat.Binary;
-
-        if (span.Length == 0)
-        {// Empty
-            data = TinyhandSerializer.ReconstructObject<TData>();
-            return (data, format);
-        }
-
-        if (formatHint == SaveFormat.Utf8)
-        {
-            try
-            {
-                TinyhandSerializer.DeserializeObjectFromUtf8(span, ref data);
-                format = SaveFormat.Utf8;
-            }
-            catch
-            {// Maybe binary...
-                data = default;
-                try
-                {
-                    TinyhandSerializer.DeserializeObject(span, ref data);
-                }
-                catch
-                {
-                    data = default;
-                }
-            }
-        }
-        else
-        {
-            try
-            {
-                TinyhandSerializer.DeserializeObject(span, ref data);
-            }
-            catch
-            {// Maybe utf8...
-                data = default;
-                try
-                {
-                    TinyhandSerializer.DeserializeObjectFromUtf8(span, ref data);
-                    format = SaveFormat.Utf8;
-                }
-                catch
-                {
-                    data = default;
-                }
-            }
-        }
-
-        return (data, format);
-    }
 
     private bool ReadJournal(ITreeObject journalObject, ReadOnlyMemory<byte> data, uint currentPlane)
     {
@@ -800,7 +744,7 @@ Exit:
         // Deserialize
         try
         {
-            var deserializeResult = TryDeserialize(data.Result.Data.Memory.Span, configuration.SaveFormat);
+            var deserializeResult = SerializeHelper.TryDeserialize<TData>(data.Result.Data.Memory.Span, configuration.SaveFormat, true);
             if (deserializeResult.Data == null)
             {
                 if (configuration.RequiredForLoading &&

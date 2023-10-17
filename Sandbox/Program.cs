@@ -42,7 +42,7 @@ public class Program
                     context.SetOutput<ConsoleAndFileLogger>();
                 });
             })
-            .ConfigureCrystal(context =>
+            .ConfigureCrystal((Action<IUnitCrystalContext>)(context =>
             {
                 context.SetJournal(
                     new SimpleJournalConfiguration(new LocalDirectoryConfiguration("Journal"))
@@ -103,8 +103,8 @@ public class Program
                     StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Example")),
                 });
 
-                CrystalClass.Register(context);
-            })
+                AdvancedClass.Register(context);
+            }))
             .SetupOptions<CrystalizerOptions>((context, options) =>
             {// CrystalizerOptions
                 options.EnableFilerLogger = true;

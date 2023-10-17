@@ -1,16 +1,21 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+#pragma warning disable SA1202
+
 namespace CrystalData;
 
 public partial class MemoryControl
 {
     private const int MinimumDataSize = 1024;
     private const int UnloadIntervalInMilliseconds = 1_000;
+    private const double StatRatio = 0.9d;
+    private const double StatSumRev = (1 - StatRatio) / StatRatio;
 
-    public MemoryControl(Crystalizer crystalizer)
+    internal MemoryControl(Crystalizer crystalizer, Stat.GoshujinClass memoryStats)
     {
         this.crystalizer = crystalizer;
         this.unloader = new(this);
+        this.stats = memoryStats;
     }
 
     #region Unloader
@@ -38,7 +43,7 @@ public partial class MemoryControl
                 }
 
                 IStorageData? storageData;
-                lock (memoryControl.items.SyncObject)
+                lock (memoryControl.syncObject)
                 {// Get the first item.
                     if (memoryControl.items.UnloadQueueChain.TryPeek(out var item))
                     {
@@ -53,21 +58,13 @@ public partial class MemoryControl
                 }
 
                 if (storageData is null)
-                {
-                    await Task.Delay(UnloadIntervalInMilliseconds);
+                {// Sleep
+                    await core.Delay(UnloadIntervalInMilliseconds);
                     continue;
                 }
 
-                if (await storageData.Unload())
-                {// Success
-                    lock (memoryControl.items.SyncObject)
-                    {// Get the item.
-                        if (memoryControl.items.StorageDataChain.FindFirst(storageData) is { } item)
-                        {// Remove the item from the chain.
-                            memoryControl.memoryUsage -= item.DataSize;
-                            item.Goshujin = null;
-                        }
-                    }
+                if (await storageData.Save(UnloadMode.TryUnload))
+                {// Success (deletion will be done via ReportUnload() from StorageData)
                 }
                 else
                 {// Failure
@@ -80,7 +77,34 @@ public partial class MemoryControl
 
     #endregion
 
-    [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
+    [ValueLinkObject]
+    [TinyhandObject]
+    internal partial class Stat
+    {
+        public Stat()
+        {
+        }
+
+        public Stat(int typeHash)
+        {
+            this.TypeHash = typeHash;
+        }
+
+        [Key(0)]
+        [Link(Primary = true, Type = ChainType.Unordered)]
+        public int TypeHash { get; private set; }
+
+        [Key(1)]
+        public double Accumulation { get; private set; }
+
+        public int EstimatedSize
+            => (int)(this.Accumulation * StatSumRev);
+
+        public void Add(int dataSize)
+            => this.Accumulation = (this.Accumulation * StatRatio) + (dataSize * (1 - StatRatio));
+    }
+
+    [ValueLinkObject]
     private partial class Item
     {
         [Link(Name = "UnloadQueue", Type = ChainType.QueueList)]
@@ -101,8 +125,10 @@ public partial class MemoryControl
     private readonly Crystalizer crystalizer;
     private readonly Unloader unloader;
 
-    // Items
+    // Items/Stats
+    private readonly object syncObject = new();
     private readonly Item.GoshujinClass items = new();
+    private readonly Stat.GoshujinClass stats;
     private long memoryUsage;
 
     #endregion
@@ -119,20 +145,49 @@ public partial class MemoryControl
         }
     }
 
-    public void Report(Type dataType, int dataSize)
+    public (long MemoryUsage, int MemoryCount) GetStat()
     {
+        lock (this.syncObject)
+        {
+            return (this.memoryUsage, this.items.UnloadQueueChain.Count);
+        }
+    }
+
+    public void ReportUnloaded(IStorageData storageData, int dataSize)
+    {
+        lock (this.syncObject)
+        {
+            if (this.items.StorageDataChain.FindFirst(storageData) is { } item)
+            {
+                this.memoryUsage -= item.DataSize;
+                item.Goshujin = null;
+            }
+
+            var typeHash = storageData.DataType.GetHashCode();
+            if (this.stats.TypeHashChain.FindFirst(typeHash) is not { } stat)
+            {
+                stat = new(typeHash);
+                stat.Goshujin = this.stats;
+            }
+
+            stat.Add(dataSize);
+        }
     }
 
     public void Register(IStorageData storageData, int dataSize)
     {
-        if (dataSize == 0)
-        {// Estimate the data size.
-        }
-
-        dataSize = dataSize > MinimumDataSize ? dataSize : MinimumDataSize;
-
-        lock (this.items.SyncObject)
+        lock (this.syncObject)
         {
+            if (dataSize == 0)
+            {// Estimate the data size.
+                if (this.stats.TypeHashChain.FindFirst(storageData.DataType.GetHashCode()) is { } stat)
+                {
+                    dataSize = stat.EstimatedSize;
+                }
+            }
+
+            dataSize = dataSize > MinimumDataSize ? dataSize : MinimumDataSize;
+
             if (this.items.StorageDataChain.FindFirst(storageData) is not { } item)
             {
                 item = new(storageData, dataSize);
@@ -142,9 +197,9 @@ public partial class MemoryControl
             {
                 this.items.UnloadQueueChain.Remove(item);
                 this.items.UnloadQueueChain.Enqueue(item);
+                this.memoryUsage -= item.DataSize;
             }
 
-            this.memoryUsage -= item.DataSize;
             item.DataSize = dataSize;
             this.memoryUsage += item.DataSize;
         }

@@ -26,11 +26,11 @@ public partial class DesignSerializable
 
 [TinyhandObject(Tree = true)]
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
-public partial record CrystalClass
+public partial record AdvancedClass
 {// This is it. This class is the crystal of the most advanced data management architecture I've reached so far.
     public static void Register(IUnitCrystalContext context)
     {
-        context.AddCrystal<CrystalClass>(
+        context.AddCrystal<AdvancedClass>(
             new()
             {
                 SaveFormat = SaveFormat.Utf8,
@@ -48,7 +48,7 @@ public partial record CrystalClass
         context.TrySetJournal(new SimpleJournalConfiguration(new S3DirectoryConfiguration("TestBucket", "Journal")));
     }
 
-    public CrystalClass()
+    public AdvancedClass()
     {
     }
 
@@ -61,10 +61,10 @@ public partial record CrystalClass
     private string name = string.Empty;
 
     [Key(2, AddProperty = "Child", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
-    private StorageData<CrystalClass> child = new();
+    private StorageData<AdvancedClass> child = new();
 
     [Key(3, AddProperty = "Children", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
-    private StorageData<CrystalClass.GoshujinClass> children = new();
+    private StorageData<AdvancedClass.GoshujinClass> children = new();
 
     [Key(4, AddProperty = "ByteArray", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
     private StorageData<byte[]> byteArray = new();
@@ -128,13 +128,13 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject, ISt
             if (this.data is null)
             {// PrepareAndLoad
                 await this.PrepareAndLoadInternal().ConfigureAwait(false);
-                this.PrepareData();
+                // this.PrepareData() is called from PrepareAndLoadInternal().
             }
 
             if (this.data is null)
             {// Reconstruct
                 this.data = TinyhandSerializer.Reconstruct<TData>();
-                this.PrepareData();
+                this.PrepareData(0);
             }
 
             return this.data;
@@ -165,8 +165,8 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject, ISt
         }
     }*/
 
-    public Task<bool> Unload()
-        => this.Save(UnloadMode.TryUnload);
+    public Type DataType
+        => typeof(TData);
 
     public async Task<bool> Save(UnloadMode unloadMode)
     {
@@ -202,6 +202,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject, ISt
 
             // Serialize and get hash.
             SerializeHelper.Serialize<TData>(this.data, TinyhandSerializerOptions.Standard, out var owner);
+            var dataSize = owner.Span.Length;
             var hash = FarmHash.Hash64(owner.Span);
 
             if (hash != this.storageId0.Hash)
@@ -236,6 +237,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject, ISt
 
             if (unloadMode.IsUnload())
             {// Unload
+                crystal.Crystalizer.Memory.ReportUnloaded(this, dataSize);
                 this.data = default;
             }
         }
@@ -350,6 +352,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject, ISt
         try
         {
             this.data = TinyhandSerializer.Deserialize<TData>(result.Data.Span);
+            this.PrepareData(result.Data.Span.Length);
         }
         catch
         {
@@ -361,11 +364,16 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject, ISt
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void PrepareData()
+    private void PrepareData(int dataSize)
     {
         if (this.data is ITreeObject treeObject)
         {
             treeObject.SetParent(this);
+        }
+
+        if (((ITreeObject)this).TreeRoot is ICrystal crystal)
+        {
+            crystal.Crystalizer.Memory.Register(this, dataSize);
         }
     }
 

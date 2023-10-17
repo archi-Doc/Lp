@@ -15,6 +15,66 @@ public static class SerializeHelper
 
     public static TinyhandSerializerOptions SerializerOptions { get; } = TinyhandSerializerOptions.Standard;
 
+    public static (TData? Data, SaveFormat Format) TryDeserialize<TData>(ReadOnlySpan<byte> span, SaveFormat formatHint, bool reconstructIfEmpty)
+        where TData : ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
+    {
+        TData? data = default;
+        SaveFormat format = SaveFormat.Binary;
+
+        if (span.Length == 0)
+        {// Empty
+            if (reconstructIfEmpty)
+            {
+                data = TinyhandSerializer.ReconstructObject<TData>();
+            }
+
+            return (data, format);
+        }
+
+        if (formatHint == SaveFormat.Utf8)
+        {
+            try
+            {
+                TinyhandSerializer.DeserializeObjectFromUtf8(span, ref data);
+                format = SaveFormat.Utf8;
+            }
+            catch
+            {// Maybe binary...
+                data = default;
+                try
+                {
+                    TinyhandSerializer.DeserializeObject(span, ref data);
+                }
+                catch
+                {
+                    data = default;
+                }
+            }
+        }
+        else
+        {
+            try
+            {
+                TinyhandSerializer.DeserializeObject(span, ref data);
+            }
+            catch
+            {// Maybe utf8...
+                data = default;
+                try
+                {
+                    TinyhandSerializer.DeserializeObjectFromUtf8(span, ref data);
+                    format = SaveFormat.Utf8;
+                }
+                catch
+                {
+                    data = default;
+                }
+            }
+        }
+
+        return (data, format);
+    }
+
     public static T? TryReadAndDeserialize<T>(string path)
         where T : ITinyhandSerialize<T>
     {

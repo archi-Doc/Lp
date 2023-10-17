@@ -77,7 +77,7 @@ public class Crystalizer
         this.CrystalCheck = new(this.UnitLogger.GetLogger<CrystalCheck>());
         this.CrystalCheck.Load(Path.Combine(this.RootDirectory, CheckFile));
         this.Himo = new(this);
-        this.Memory = new(this);
+        this.Memory = new(this, this.CrystalCheck.MemoryStats);
         this.StorageKey = storageKey;
 
         foreach (var x in this.configuration.CrystalConfigurations)
@@ -580,7 +580,8 @@ public class Crystalizer
 
         await Task.WhenAll(tasks).ConfigureAwait(false);
 
-        this.Logger.TryGet()?.Log($"Terminated - {this.Himo.MemoryUsage}");
+        var stat = this.Memory.GetStat();
+        this.Logger.TryGet()?.Log($"Terminated - {stat.MemoryUsage} ({stat.MemoryCount})"); // {this.MemoryUsageLimit}
     }
 
     public void AddToSaveQueue(ICrystal crystal)
