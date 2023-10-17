@@ -16,4 +16,7 @@ internal partial class CrystalCheckData
 
     [Key(1)]
     public ConcurrentDictionary<Waypoint, ulong> WaypointToShortcutPosition { get; private set; } = default!;
+
+    [Key(2)]
+    public MemoryControl.Stat.GoshujinClass MemoryStats { get; private set; } = default!;
 }

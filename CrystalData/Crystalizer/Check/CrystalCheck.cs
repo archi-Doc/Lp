@@ -4,6 +4,8 @@ namespace CrystalData.Check;
 
 internal class CrystalCheck
 {
+    private static readonly SaveFormat Format = SaveFormat.Binary;
+
     public CrystalCheck(ILogger<CrystalCheck> logger)
     {
         this.logger = logger;
@@ -23,16 +25,20 @@ internal class CrystalCheck
     public bool TryGetPlanePosition(Waypoint waypoint, out ulong position)
         => this.data.WaypointToShortcutPosition.TryGetValue(waypoint, out position);
 
+    public MemoryControl.Stat.GoshujinClass MemoryStats
+        => this.data.MemoryStats;
+
     public void Load(string filePath)
     {
         try
         {
             this.filePath = filePath;
             var bytes = File.ReadAllBytes(filePath);
-            var data = TinyhandSerializer.Deserialize<CrystalCheckData>(bytes);
-            if (data != null)
+
+            var result = SerializeHelper.TryDeserialize<CrystalCheckData>(bytes, Format, false);
+            if (result.Data != null)
             {
-                this.data = data;
+                this.data = result.Data;
                 this.SuccessfullyLoaded = true;
             }
         }
@@ -51,7 +57,17 @@ internal class CrystalCheck
 
         try
         {
-            File.WriteAllBytes(this.filePath, TinyhandSerializer.Serialize(this.data));
+            byte[] b;
+            if (Format == SaveFormat.Binary)
+            {
+                b = TinyhandSerializer.Serialize(this.data);
+            }
+            else
+            {
+                b = TinyhandSerializer.SerializeToUtf8(this.data);
+            }
+
+            File.WriteAllBytes(this.filePath, b);
         }
         catch
         {

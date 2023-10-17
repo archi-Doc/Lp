@@ -1,17 +1,56 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
-using CrystalData.Datum;
 using SimpleCommandLine;
-using LP.Crystal;
 using Tinyhand;
+using ValueLink;
 
 namespace CrystalDataTest;
+
+[TinyhandObject(Tree = true)]
+[ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
+public partial record TestClass
+{// This is it. This class is the crystal of the most advanced data management architecture I've reached so far.
+    public static void Register(IUnitCrystalContext context)
+    {
+        context.AddCrystal<TestClass.GoshujinClass>(
+            new()
+            {
+                SaveFormat = SaveFormat.Binary,
+                SavePolicy = SavePolicy.Manual,
+                FileConfiguration = new GlobalFileConfiguration("TestClass/Main"),
+                // BackupFileConfiguration = new GlobalFileConfiguration("TestClass.tinyhand"),
+                StorageConfiguration = GlobalStorageConfiguration.Default,
+                NumberOfFileHistories = 2,
+            });
+    }
+
+    public TestClass()
+    {
+    }
+
+    [Key(0, AddProperty = "Id", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
+    [Link(Unique = true, Primary = true, Type = ChainType.Unordered)]
+    private int id;
+
+    [Key(1, AddProperty = "Name")]
+    [Link(Type = ChainType.Ordered)]
+    private string name = string.Empty;
+
+    [Key(2, AddProperty = "Child", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
+    private StorageData<TestClass> child = new();
+
+    [Key(3, AddProperty = "Children", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
+    private StorageData<TestClass.GoshujinClass> children = new();
+
+    [Key(4, AddProperty = "ByteArray", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
+    private StorageData<byte[]> byteArray = new();
+}
 
 [SimpleCommand("crystaltest")]
 public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
 {
-    public CrystalTestSubcommand(CrystalControl crystalControl, IBigCrystal<LpData> crystal)
+    public CrystalTestSubcommand(CrystalControl crystalControl, ICrystal<TestClass.GoshujinClass> crystal)
     {
         this.CrystalControl = crystalControl;
         this.crystal = crystal;
@@ -24,64 +63,23 @@ public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
         var sw = Stopwatch.StartNew();
         Console.WriteLine($"Start: {sw.ElapsedMilliseconds} ms");
 
-        var data = this.crystal.Data.GetOrCreateChild(Identifier.Zero);
-        if (data != null)
-        {
-            data.BlockDatum().Set(new byte[] { 0, 1, });
-            data.Save(true);
-            var result = await data.BlockDatum().Get();
-            data.Delete();
+        sw.Restart();
+        var data = this.crystal.Data;
+        Console.WriteLine($"Load: {sw.ElapsedMilliseconds} ms");
 
-            using (var block = data.Lock<BlockDatum>())
-            {// lock(flake.syncObject)
-                if (block.Datum is { } blockData)
+        sw.Restart();
+        for (var i = 0; i < 100_000; i++)
+        {
+            using (var w = data.TryLock(i, TryLockMode.GetOrCreate))
+            {
+                if (w is not null)
                 {
-                    blockData.Set(new byte[] { 0, });
+                    w.Commit();
                 }
             }
         }
 
-        data = this.crystal.Data.GetOrCreateChild(Identifier.One);
-        if (data != null)
-        {
-            data.BlockDatum().SetObject(new TestFragment());
-            var t = await data.BlockDatum().GetObject<TestFragment>();
-
-            data.Save(true);
-            t = await data.BlockDatum().GetObject<TestFragment>();
-
-            data.FragmentDatum().Set(Identifier.One, new byte[] { 2, 3, });
-            var result = await data.FragmentDatum().Get(Identifier.One);
-            data.Save(true);
-            result = await data.FragmentDatum().Get(Identifier.One);
-            data.FragmentDatum().Remove(Identifier.One);
-            data.Save(true);
-            result = await data.FragmentDatum().Get(Identifier.One);
-            data.Save(true);
-
-            var tf = new TestFragment();
-            tf.Name = "A";
-            data.FragmentDatum().SetObject(Identifier.One, tf);
-            var tc = await data.FragmentDatum().GetObject<TestFragment>(Identifier.One);
-        }
-
-        var byteArray = new byte[BigCrystalConfiguration.DefaultMaxDataSize];
-        for (var i = 0; i < 10; i++)
-        {
-            data = this.crystal.Data.GetOrCreateChild(new(i));
-            if (data != null)
-            {
-                var dt = await data.BlockDatum().Get();
-                data.BlockDatum().Set(byteArray);
-            }
-        }
-
-        await Console.Out.WriteLineAsync("1M flakes");
-        for (var i = 0; i < 1_000_000; i++)
-        {
-            data = this.crystal.Data.GetOrCreateChild(new(i));
-            // flake.SetData(new byte[] { 2, 3, });
-        }
+        Console.WriteLine($"GetOrCreate: {sw.ElapsedMilliseconds} ms");
 
         sw.Restart();
         var bin = TinyhandSerializer.SerializeObject(this.crystal.Data);
@@ -94,7 +92,7 @@ public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
 
     public CrystalControl CrystalControl { get; set; }
 
-    private IBigCrystal<LpData> crystal;
+    private ICrystal<TestClass.GoshujinClass> crystal;
 }
 
 public record CrystalTestOptions

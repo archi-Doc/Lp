@@ -1,36 +1,17 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
 using Tinyhand.IO;
 
 namespace CrystalData;
 
 [TinyhandObject(Tree = true)]
-[ValueLinkObject(Isolation = IsolationLevel.Serializable)]
-public partial class DesignSerializable
-{
-    public DesignSerializable()
-    {
-    }
-
-    [Key(0)]
-    public int Id { get; set; }
-
-    [Key(1)]
-    public DesignSerializable Class { get; set; } = new();
-
-    [Key(2)]
-    public StorageData<DesignSerializable> UnloadableClass { get; set; } = new();
-}
-
-[TinyhandObject(Tree = true)]
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
-public partial record CrystalClass
+public partial record AdvancedClass
 {// This is it. This class is the crystal of the most advanced data management architecture I've reached so far.
     public static void Register(IUnitCrystalContext context)
     {
-        context.AddCrystal<CrystalClass>(
+        context.AddCrystal<AdvancedClass>(
             new()
             {
                 SaveFormat = SaveFormat.Utf8,
@@ -48,7 +29,7 @@ public partial record CrystalClass
         context.TrySetJournal(new SimpleJournalConfiguration(new S3DirectoryConfiguration("TestBucket", "Journal")));
     }
 
-    public CrystalClass()
+    public AdvancedClass()
     {
     }
 
@@ -61,10 +42,10 @@ public partial record CrystalClass
     private string name = string.Empty;
 
     [Key(2, AddProperty = "Child", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
-    private StorageData<CrystalClass> child = new();
+    private StorageData<AdvancedClass> child = new();
 
     [Key(3, AddProperty = "Children", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
-    private StorageData<CrystalClass.GoshujinClass> children = new();
+    private StorageData<AdvancedClass.GoshujinClass> children = new();
 
     [Key(4, AddProperty = "ByteArray", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
     private StorageData<byte[]> byteArray = new();
@@ -75,10 +56,10 @@ public partial record CrystalClass
 /// </summary>
 /// <typeparam name="TData">The type of data.</typeparam>
 [TinyhandObject(ExplicitKeyOnly = true)]
-public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
+public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject, IStorageData
 // where TData : ITinyhandSerialize<TData>
 {
-    public const int MaxHistories = 4;
+    public const int MaxHistories = 3; // 4
 
     #region FieldAndProperty
 
@@ -97,8 +78,8 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
     [Key(2)]
     private StorageId storageId2;
 
-    [Key(3)]
-    private StorageId storageId3;
+    // [Key(3)]
+    // private StorageId storageId3;
 
     [IgnoreMember]
     ITreeRoot? ITreeObject.TreeRoot { get; set; }
@@ -128,13 +109,13 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
             if (this.data is null)
             {// PrepareAndLoad
                 await this.PrepareAndLoadInternal().ConfigureAwait(false);
-                this.PrepareData();
+                // this.PrepareData() is called from PrepareAndLoadInternal().
             }
 
             if (this.data is null)
             {// Reconstruct
                 this.data = TinyhandSerializer.Reconstruct<TData>();
-                this.PrepareData();
+                this.PrepareData(0);
             }
 
             return this.data;
@@ -145,11 +126,15 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
         }
     }
 
-    public void Set(TData data)
+    public void Set(TData data, int sizeHint = 0)
     {// Journaling is not supported.
         using (this.Lock())
         {
             this.data = data;
+        }
+
+        if (sizeHint > 0)
+        {
         }
     }
 
@@ -160,6 +145,9 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
             this.storageConfiguration = storageConfiguration;
         }
     }*/
+
+    public Type DataType
+        => typeof(TData);
 
     public async Task<bool> Save(UnloadMode unloadMode)
     {
@@ -195,6 +183,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
 
             // Serialize and get hash.
             SerializeHelper.Serialize<TData>(this.data, TinyhandSerializerOptions.Standard, out var owner);
+            var dataSize = owner.Span.Length;
             var hash = FarmHash.Hash64(owner.Span);
 
             if (hash != this.storageId0.Hash)
@@ -211,7 +200,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
                 AddJournal();
                 void AddJournal()
                 {
-                    if (((ITreeObject)this).TreeParent?.TryGetJournalWriter(out var root, out var writer, false) == true)
+                    if (((ITreeObject)this).TryGetJournalWriter(out var root, out var writer, true) == true)
                     {
                         if (this is ITinyhandCustomJournal tinyhandCustomJournal)
                         {
@@ -229,6 +218,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
 
             if (unloadMode.IsUnload())
             {// Unload
+                crystal.Crystalizer.Memory.ReportUnloaded(this, dataSize);
                 this.data = default;
             }
         }
@@ -267,6 +257,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
                 return true;
             }
 
+            reader.TryRead(out record);
             var storageId = TinyhandSerializer.DeserializeObject<StorageId>(ref reader);
             this.AddInternal(crystal, storageId);
             return true;
@@ -320,11 +311,11 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
                 {
                     fileId = this.storageId2.FileId;
                     result = await storage.GetAsync(ref fileId).ConfigureAwait(false);
-                    if (result.IsFailure && this.storageId3.IsValid)
+                    /*if (result.IsFailure && this.storageId3.IsValid)
                     {
                         fileId = this.storageId3.FileId;
                         result = await storage.GetAsync(ref fileId).ConfigureAwait(false);
-                    }
+                    }*/
                 }
             }
         }
@@ -342,6 +333,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
         try
         {
             this.data = TinyhandSerializer.Deserialize<TData>(result.Data.Span);
+            this.PrepareData(result.Data.Span.Length);
         }
         catch
         {
@@ -353,11 +345,16 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void PrepareData()
+    private void PrepareData(int dataSize)
     {
         if (this.data is ITreeObject treeObject)
         {
             treeObject.SetParent(this);
+        }
+
+        if (((ITreeObject)this).TreeRoot is ICrystal crystal)
+        {
+            crystal.Crystalizer.Memory.Register(this, dataSize);
         }
     }
 
@@ -382,7 +379,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
             this.storageId1 = this.storageId0;
             this.storageId0 = storageId;
         }
-        else if (numberOfHistories == 3)
+        else
         {
             if (this.storageId2.IsValid)
             {
@@ -394,7 +391,8 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
             this.storageId1 = this.storageId0;
             this.storageId0 = storageId;
         }
-        else if (numberOfHistories >= MaxHistories)
+
+        /*else
         {
             if (this.storageId3.IsValid)
             {
@@ -406,7 +404,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
             this.storageId2 = this.storageId1;
             this.storageId1 = this.storageId0;
             this.storageId0 = storageId;
-        }
+        }*/
     }
 
     private void EraseInternal()
@@ -415,7 +413,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
         ulong id0;
         ulong id1;
         ulong id2;
-        ulong id3;
+        // ulong id3;
 
         using (this.Lock())
         {
@@ -424,13 +422,13 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
             id0 = this.storageId0.FileId;
             id1 = this.storageId1.FileId;
             id2 = this.storageId2.FileId;
-            id3 = this.storageId3.FileId;
+            // id3 = this.storageId3.FileId;
 
             this.data = default;
             this.storageId0 = default;
             this.storageId1 = default;
             this.storageId2 = default;
-            this.storageId3 = default;
+            // this.storageId3 = default;
         }
 
         if (((ITreeObject)this).TreeRoot is ICrystal crystal)
@@ -452,10 +450,10 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
                 storage.DeleteAndForget(ref id2);
             }
 
-            if (id3 != 0)
+            /*if (id3 != 0)
             {
                 storage.DeleteAndForget(ref id3);
-            }
+            }*/
         }
 
         if (treeObject is not null)

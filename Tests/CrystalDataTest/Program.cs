@@ -4,8 +4,6 @@ global using Arc.Threading;
 global using CrystalData;
 global using LP;
 using Arc.Unit;
-using CrystalData.Datum;
-using LP.Crystal;
 using Microsoft.Extensions.DependencyInjection;
 using SimpleCommandLine;
 
@@ -38,16 +36,8 @@ public class Program
             })
             .ConfigureCrystal(context =>
             {
-                context.AddBigCrystal<LpData>(new BigCrystalConfiguration() with
-                {// LpData
-                    RegisterDatum = registry =>
-                    {
-                        registry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
-                        registry.Register<FragmentDatum<Identifier>>(2, x => new FragmentDatumImpl<Identifier>(x));
-                    },
-                    FileConfiguration = new LocalFileConfiguration("Data/Crystal"),
-                    StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Crystal")),
-                });
+                // Crystal
+                TestClass.Register(context);
             });
 
         var unit = builder.Build();

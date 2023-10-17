@@ -10,7 +10,6 @@ global using BigMachines;
 global using CrystalData;
 global using LP;
 global using Tinyhand;
-using CrystalData.Datum;
 using LP.Crystal;
 using LP.Data;
 using LP.Services;
@@ -55,7 +54,6 @@ public class Control : ILogInformation
 
                 // Crystal
                 context.AddSingleton<Mono>();
-                context.Services.TryAddSingleton<IBigCrystal>(x => x.GetRequiredService<Control>().BigCrystal);
 
                 // RPC / Services
                 context.AddSingleton<NetServices.AuthorizedTerminalFactory>();
@@ -83,7 +81,7 @@ public class Control : ILogInformation
                 context.AddSubcommand(typeof(LP.Subcommands.SeedphraseSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.MergerSubcommand));
 
-                LP.Subcommands.CrystalData.CrystalStorageSubcommand.Configure(context);
+                // LP.Subcommands.CrystalData.CrystalStorageSubcommand.Configure(context);
                 LP.Subcommands.CrystalData.CrystalDataSubcommand.Configure(context);
 
                 LP.Subcommands.TemplateSubcommand.Configure(context);
@@ -182,30 +180,6 @@ public class Control : ILogInformation
             {
                 context.AddCrystal<LPSettings>(CrystalConfiguration.SingleUtf8(true, new GlobalFileConfiguration(LPSettings.Filename)));
                 context.AddCrystal<MergerInformation>(CrystalConfiguration.SingleUtf8(true, new GlobalFileConfiguration(MergerInformation.Filename)));
-
-                context.AddBigCrystal<LpData>(new BigCrystalConfiguration() with
-                {// LpData
-                    RegisterDatum = registry =>
-                    {
-                        registry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
-                        registry.Register<FragmentDatum<Identifier>>(2, x => new FragmentDatumImpl<Identifier>(x));
-                    },
-                    FileConfiguration = new GlobalFileConfiguration("Data/Crystal"),
-                    StorageConfiguration = new SimpleStorageConfiguration(new GlobalDirectoryConfiguration("Data/Storage")),
-                    RequiredForLoading = true,
-                });
-
-                context.AddBigCrystal<MergerData>(new BigCrystalConfiguration() with
-                {// MergerData
-                    RegisterDatum = registry =>
-                    {
-                        registry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
-                        registry.Register<FragmentDatum<Identifier>>(2, x => new FragmentDatumImpl<Identifier>(x));
-                    },
-                    FileConfiguration = new GlobalFileConfiguration("Merger/Crystal"),
-                    StorageConfiguration = new SimpleStorageConfiguration(new GlobalDirectoryConfiguration("Merger/Storage")),
-                    RequiredForLoading = true,
-                });
 
                 /*context.AddCrystal<PublicIPMachine.Data>(new CrystalConfiguration() with
                 {
@@ -389,11 +363,11 @@ public class Control : ILogInformation
         if (this.LPBase.Mode == LPMode.Merger)
         {// Merger
             this.MergerProvider.Create(context);
-            this.BigCrystal = context.ServiceProvider.GetRequiredService<IBigCrystal<MergerData>>();
+            // this.BigCrystal = context.ServiceProvider.GetRequiredService<IBigCrystal<MergerData>>();
         }
         else
         {
-            this.BigCrystal = context.ServiceProvider.GetRequiredService<IBigCrystal<LpData>>();
+            // this.BigCrystal = context.ServiceProvider.GetRequiredService<IBigCrystal<LpData>>();
         }
 
         this.Core = core;
@@ -637,8 +611,6 @@ public class Control : ILogInformation
     public Merger.Provider MergerProvider { get; }
 
     public Crystalizer Crystalizer { get; }
-
-    public IBigCrystal BigCrystal { get; }
 
     public Mono Mono { get; }
 

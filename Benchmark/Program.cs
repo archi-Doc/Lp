@@ -5,7 +5,6 @@
  */
 
 using System.Reflection;
-using Benchmark.Flake;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 
@@ -25,7 +24,6 @@ public class Program
             typeof(PublicKeyBenchmark),
             typeof(ChecksumBenchmark),
             typeof(SignatureBenchmark),
-            typeof(FlakeBenchmark),
             typeof(CreditBenchmark),
             typeof(DoubleDecimalBenchmark),
             typeof(ZenIOBenchmark),

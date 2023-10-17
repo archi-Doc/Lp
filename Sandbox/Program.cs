@@ -5,7 +5,6 @@ global using CrystalData;
 global using Tinyhand;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
-using CrystalData.Datum;
 using SimpleCommandLine;
 
 namespace Sandbox;
@@ -30,7 +29,6 @@ public class Program
             .Configure(context =>
             {
                 context.AddSingleton<TestClass0>();
-                context.AddSingleton<TestClass>();
                 context.AddLoggerResolver(context =>
                 {
                     /*if (context.LogLevel == LogLevel.Debug)
@@ -42,7 +40,7 @@ public class Program
                     context.SetOutput<ConsoleAndFileLogger>();
                 });
             })
-            .ConfigureCrystal(context =>
+            .ConfigureCrystal((Action<IUnitCrystalContext>)(context =>
             {
                 context.SetJournal(
                     new SimpleJournalConfiguration(new LocalDirectoryConfiguration("Journal"))
@@ -93,18 +91,8 @@ public class Program
                     StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/BaseData/Storage")),
                 });*/
 
-                context.AddBigCrystal<ExampleData>(new BigCrystalConfiguration() with
-                {
-                    RegisterDatum = registry =>
-                    {
-                        registry.Register<BlockDatum>(1, x => new BlockDatumImpl(x));
-                    },
-                    FileConfiguration = new LocalFileConfiguration("Example/File"),
-                    StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Example")),
-                });
-
-                CrystalClass.Register(context);
-            })
+                AdvancedClass.Register(context);
+            }))
             .SetupOptions<CrystalizerOptions>((context, options) =>
             {// CrystalizerOptions
                 options.EnableFilerLogger = true;

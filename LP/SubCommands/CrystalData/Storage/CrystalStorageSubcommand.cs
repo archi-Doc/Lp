@@ -4,7 +4,7 @@ using SimpleCommandLine;
 
 namespace LP.Subcommands.CrystalData;
 
-[SimpleCommand("storage", IsSubcommand = true, Description = "Crystal storage subcommand")]
+/*[SimpleCommand("storage", IsSubcommand = true, Description = "Crystal storage subcommand")]
 public class CrystalStorageSubcommand : SimpleCommandGroup<CrystalStorageSubcommand>
 {
     public static void Configure(IUnitConfigurationContext context)
@@ -19,4 +19,4 @@ public class CrystalStorageSubcommand : SimpleCommandGroup<CrystalStorageSubcomm
         : base(context, "ls")
     {
     }
-}
+}*/

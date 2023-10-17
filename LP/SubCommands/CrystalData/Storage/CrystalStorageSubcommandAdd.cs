@@ -6,7 +6,7 @@ using SimpleCommandLine;
 
 namespace LP.Subcommands.CrystalData;
 
-[SimpleCommand("add", Description = "Add storage.")]
+/*[SimpleCommand("add", Description = "Add storage.")]
 public class CrystalStorageSubcommandAdd : ISimpleCommandAsync<CrystalStorageOptionsAdd>
 {
     public CrystalStorageSubcommandAdd(ILogger<CrystalStorageSubcommandAdd> logger, IUserInterfaceService userInterfaceService, IBigCrystal crystal, CrystalStorageSubcommandLs crystalDirSubcommandLs)
@@ -118,4 +118,4 @@ public record CrystalStorageOptionsAdd
     public int Capacity { get; set; } = 0;
 
     internal long capacityInBytes { get; set; } = GroupStorage.DefaultStorageCapacity;
-}
+}*/

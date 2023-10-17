@@ -4,7 +4,7 @@ namespace Sandbox;
 
 internal class TestClass0
 {
-    public TestClass0(Crystalizer crystalizer, ICrystal<ManualClass> manualCrystal, ICrystal<CombinedClass> combinedCrystal, ICrystal<StandardData.GoshujinClass> standardCrystal, CrystalClass crystalClass)
+    public TestClass0(Crystalizer crystalizer, ICrystal<ManualClass> manualCrystal, ICrystal<CombinedClass> combinedCrystal, ICrystal<StandardData.GoshujinClass> standardCrystal, AdvancedClass crystalClass)
     {
         this.crystalizer = crystalizer;
 
@@ -20,6 +20,8 @@ internal class TestClass0
     public async Task Test1()
     {
         Console.WriteLine("Sandbox test0");
+
+        // await this.crystalizer.SaveConfigurations(new LocalFileConfiguration("CrystalConfiguration.tinyhand"));
 
         var result = await this.crystalizer.PrepareAndLoadAll();
         if (result.IsFailure())
@@ -64,7 +66,7 @@ internal class TestClass0
         var w2 = g.TryLock(0, ValueLink.TryLockMode.GetOrCreate);*/
     }
 
-    private async Task TestCrystal(CrystalClass c)
+    private async Task TestCrystal(AdvancedClass c)
     {
         var child = await c.Child.Get();
 
@@ -90,7 +92,7 @@ internal class TestClass0
     private ICrystal<ManualClass> manualCrystal;
     private ICrystal<CombinedClass> combinedCrystal;
     private ICrystal<StandardData.GoshujinClass> standardCrystal;
-    private CrystalClass crystalClass;
+    private AdvancedClass crystalClass;
     // private IBigCrystal<BaseData> crystalData;
     // private ValueClass.GoshujinClass valueClassGoshujin;
     // private StandardData.GoshujinClass standardGoshujin;
