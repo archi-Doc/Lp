@@ -60,7 +60,7 @@ public class Crystalizer
         this.EnableFilerLogger = options.EnableFilerLogger;
         this.RootDirectory = options.RootPath;
         this.FilerTimeout = options.FilerTimeout;
-        this.MemorySizeLimit = options.MemorySizeLimit;
+        this.MemoryUsageLimit = options.MemoryUsageLimit;
         this.MaxParentInMemory = options.MaxParentInMemory;
         this.ConcurrentUnload = options.ConcurrentUnload;
         this.UnloadTimeout = options.UnloadTimeout;
@@ -77,6 +77,7 @@ public class Crystalizer
         this.CrystalCheck = new(this.UnitLogger.GetLogger<CrystalCheck>());
         this.CrystalCheck.Load(Path.Combine(this.RootDirectory, CheckFile));
         this.Himo = new(this);
+        this.Memory = new(this);
         this.StorageKey = storageKey;
 
         foreach (var x in this.configuration.CrystalConfigurations)
@@ -113,7 +114,7 @@ public class Crystalizer
 
     public TimeSpan FilerTimeout { get; }
 
-    public long MemorySizeLimit { get; }
+    public long MemoryUsageLimit { get; }
 
     public int MaxParentInMemory { get; }
 
@@ -128,6 +129,8 @@ public class Crystalizer
     public IStorageKey StorageKey { get; }
 
     public HimoGoshujinClass Himo { get; }
+
+    public MemoryControl Memory { get; }
 
     internal ICrystalDataQuery Query { get; }
 

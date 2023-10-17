@@ -4,7 +4,7 @@ namespace CrystalData;
 
 public class CrystalizerOptions
 {
-    public const int DefaultMemorySizeLimit = 1024 * 1024 * 500; // 500MB
+    public const int DefaultMemoryUsageLimit = 1024 * 1024 * 500; // 500MB
     public const int DefaultMaxParentInMemory = 10_000;
 
     public CrystalizerOptions()
@@ -19,7 +19,7 @@ public class CrystalizerOptions
 
     public TimeSpan FilerTimeout { get; set; }
 
-    public long MemorySizeLimit { get; set; } = DefaultMemorySizeLimit;
+    public long MemoryUsageLimit { get; set; } = DefaultMemoryUsageLimit;
 
     public int MaxParentInMemory { get; set; } = DefaultMaxParentInMemory;
 

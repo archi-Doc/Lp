@@ -42,7 +42,7 @@ public partial class HimoGoshujinClass
 
                 this.himoGoshujin.memoryUsage += newSize - this.currentSize;
                 this.currentSize = newSize;
-                if (this.himoGoshujin.memoryUsage > this.dataInternal.BigCrystal.Crystalizer.MemorySizeLimit)
+                if (this.himoGoshujin.memoryUsage > this.dataInternal.BigCrystal.Crystalizer.MemoryUsageLimit)
                 {
                     unloadFlag = true;
                 }
@@ -174,7 +174,7 @@ public partial class HimoGoshujinClass
 
     private void UnloadData()
     {
-        var limit = Math.Max(MemoryMargin, this.crystalizer.MemorySizeLimit - MemoryMargin);
+        var limit = Math.Max(MemoryMargin, this.crystalizer.MemoryUsageLimit - MemoryMargin);
         if (Volatile.Read(ref this.memoryUsage) <= limit)
         {
             return;

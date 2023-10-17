@@ -145,11 +145,15 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
         }
     }
 
-    public void Set(TData data)
+    public void Set(TData data, int sizeHint = 0)
     {// Journaling is not supported.
         using (this.Lock())
         {
             this.data = data;
+        }
+
+        if (sizeHint > 0)
+        {
         }
     }
 
@@ -243,18 +247,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
     public void Erase()
     {
         this.EraseInternal();
-
-        // ((ITreeObject)this).AddJournalRecord(JournalRecord.EraseStorage);
-        if (((ITreeObject)this).TryGetJournalWriter(out var root, out TinyhandWriter writer, includeCurrent: true))
-        {
-            if (this is ITinyhandCustomJournal tinyhandCustomJournal)
-            {
-                tinyhandCustomJournal.WriteCustomLocator(ref writer);
-            }
-
-            writer.Write(JournalRecord.EraseStorage);
-            root.AddJournal(in writer);
-        }
+        ((ITreeObject)this).AddJournalRecord(JournalRecord.EraseStorage);
     }
 
     #region Journal
