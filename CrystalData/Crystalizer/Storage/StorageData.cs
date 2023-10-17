@@ -211,7 +211,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
                 AddJournal();
                 void AddJournal()
                 {
-                    if (((ITreeObject)this).TreeParent?.TryGetJournalWriter(out var root, out var writer, false) == true)
+                    if (((ITreeObject)this).TryGetJournalWriter(out var root, out var writer, true) == true)
                     {
                         if (this is ITinyhandCustomJournal tinyhandCustomJournal)
                         {
@@ -243,7 +243,18 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
     public void Erase()
     {
         this.EraseInternal();
-        ((ITreeObject)this).AddJournalRecord(JournalRecord.EraseStorage);
+
+        // ((ITreeObject)this).AddJournalRecord(JournalRecord.EraseStorage);
+        if (((ITreeObject)this).TryGetJournalWriter(out var root, out TinyhandWriter writer, includeCurrent: true))
+        {
+            if (this is ITinyhandCustomJournal tinyhandCustomJournal)
+            {
+                tinyhandCustomJournal.WriteCustomLocator(ref writer);
+            }
+
+            writer.Write(JournalRecord.EraseStorage);
+            root.AddJournal(in writer);
+        }
     }
 
     #region Journal
@@ -267,6 +278,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject
                 return true;
             }
 
+            reader.TryRead(out record);
             var storageId = TinyhandSerializer.DeserializeObject<StorageId>(ref reader);
             this.AddInternal(crystal, storageId);
             return true;
