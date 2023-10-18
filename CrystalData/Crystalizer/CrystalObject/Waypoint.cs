@@ -36,10 +36,10 @@ public readonly partial struct Waypoint : IEquatable<Waypoint>, IComparable<Wayp
     public static bool TryParse(string base32, out Waypoint waypoint)
     {
         var byteArray = Base32Sort.Default.FromStringToByteArray(base32);
-        return TryParse(byteArray, out waypoint);
+        return TryRead(byteArray, out waypoint);
     }
 
-    public static bool TryParse(ReadOnlySpan<byte> span, out Waypoint waypoint)
+    public static bool TryRead(ReadOnlySpan<byte> span, out Waypoint waypoint)
     {
         if (span.Length >= Length)
         {

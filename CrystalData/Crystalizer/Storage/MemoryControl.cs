@@ -190,7 +190,7 @@ public partial class MemoryControl
 
         lock (this.syncObject)
         {
-            if (dataSize == 0)
+            if (dataSize <= 0)
             {// Estimate the data size.
                 if (this.stats.TypeHashChain.FindFirst(storageData.DataType.GetHashCode()) is { } stat)
                 {

@@ -53,7 +53,7 @@ public partial record MergerInformation : ITinyhandSerializationCallback
         }
         else
         {
-            this.SingleCreditString = this.SingleCredit.ToBase64();
+            this.SingleCreditString = this.SingleCredit.TryFormat();
         }
     }
 

@@ -133,8 +133,9 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject, ISt
             this.data = data;
         }
 
-        if (sizeHint > 0)
+        if (((ITreeObject)this).TreeRoot is ICrystal crystal)
         {
+            crystal.Crystalizer.Memory.Register(this, sizeHint);
         }
     }
 
