@@ -68,26 +68,20 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         }
 
         // Get LpData
-        /*var root = this.crystal.Data;
+        var g = this.crystal.Data;
         var identifier = param.Proof.PublicKey.ToIdentifier();
-        var credit = root.TryGetChild(identifier);
-        if (credit != null)
+        /*if (g.Contains(Credit.Default))
         {
             return MergerResult.AlreadyExists;
-        }
-
-        // Set CreditBlock
-        credit = root.GetOrCreateChild(identifier);
-        using (var op = credit.Lock<BlockDatum>())
-        {
-            if (op.Datum == null)
-            {
-                return MergerResult.NoData;
-            }
-
-            credit.DataId = LpData.LpDataId.Credit;
-            op.Datum.SetObject(new CreditBlock(param.Proof.PublicKey));
         }*/
+
+        using (var w = g.TryLock(Credit.Default, ValueLink.TryLockMode.Create))
+        {
+            if (w is null)
+            {
+                return MergerResult.AlreadyExists;
+            }
+        }
 
         return MergerResult.Success;
     }
@@ -98,9 +92,11 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     {
         this.logger.TryGet()?.Log("Merger started");
 
-        /*this.crystal.Data.TryGetChild(default);
-        var numberOfCredits = this.crystal.Data.Count(LpData.LpDataId.Credit);
-        this.logger.TryGet()?.Log($"Credits: {numberOfCredits}");*/
+        this.Information.SingleCredit = Credit.Default;
+
+        this.logger.TryGet()?.Log($"Credits: {this.crystal.Data.Count}");
+
+        // throw new PanicException();
     }
 
     private ILogger logger;
