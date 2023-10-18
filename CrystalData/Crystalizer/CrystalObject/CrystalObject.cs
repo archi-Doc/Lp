@@ -727,7 +727,7 @@ Exit:
     {
         param.RegisterConfiguration(configuration.FileConfiguration, out var newlyRegistered);
 
-        // Load data
+        // Load data (the hash is checked by CrystalFiler)
         var data = await filer.LoadLatest(param).ConfigureAwait(false);
         if (data.Result.IsFailure)
         {
@@ -756,7 +756,15 @@ Exit:
                 return (CrystalResult.Success, default, default); // Reconstruct
             }
 
-            return (CrystalResult.Success, deserializeResult.Data, data.Waypoint);
+            if (configuration.HasFileHistories)
+            {
+                return (CrystalResult.Success, deserializeResult.Data, data.Waypoint);
+            }
+            else
+            {// Calculate a hash to prevent saving the same data.
+                var waypoint = data.Waypoint.WithHash(FarmHash.Hash64(data.Result.Data.Memory.Span));
+                return (CrystalResult.Success, deserializeResult.Data, waypoint);
+            }
         }
         finally
         {

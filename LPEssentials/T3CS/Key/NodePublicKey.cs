@@ -4,7 +4,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 
 #pragma warning disable SA1202
-#pragma warning disable SA1204
 
 namespace LP.T3CS;
 

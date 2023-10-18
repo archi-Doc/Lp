@@ -30,6 +30,8 @@ public enum CreditRule
 [TinyhandObject]
 public sealed partial class CreditPolicy : IValidatable, IEquatable<CreditPolicy>
 {
+    public static readonly CreditPolicy Default = new();
+
     public CreditPolicy()
     {
     }

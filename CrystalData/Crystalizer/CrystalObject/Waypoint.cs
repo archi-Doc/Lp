@@ -76,6 +76,9 @@ public readonly partial struct Waypoint : IEquatable<Waypoint>, IComparable<Wayp
 
     public bool IsValid => this.JournalPosition != 0;
 
+    public Waypoint WithHash(ulong hash)
+        => new(this.JournalPosition, this.Plane, hash);
+
     public byte[] ToByteArray()
     {
         var byteArray = new byte[Length];

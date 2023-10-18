@@ -93,7 +93,6 @@ internal class TestClass0
     private ICrystal<CombinedClass> combinedCrystal;
     private ICrystal<StandardData.GoshujinClass> standardCrystal;
     private AdvancedClass crystalClass;
-    // private IBigCrystal<BaseData> crystalData;
     // private ValueClass.GoshujinClass valueClassGoshujin;
     // private StandardData.GoshujinClass standardGoshujin;
 }

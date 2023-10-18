@@ -10,7 +10,6 @@ global using BigMachines;
 global using CrystalData;
 global using LP;
 global using Tinyhand;
-using LP.Crystal;
 using LP.Data;
 using LP.Services;
 using LP.T3CS;
@@ -180,6 +179,17 @@ public class Control : ILogInformation
             {
                 context.AddCrystal<LPSettings>(CrystalConfiguration.SingleUtf8(true, new GlobalFileConfiguration(LPSettings.Filename)));
                 context.AddCrystal<MergerInformation>(CrystalConfiguration.SingleUtf8(true, new GlobalFileConfiguration(MergerInformation.Filename)));
+
+                context.AddCrystal<CreditData.GoshujinClass>(new()
+                {
+                    SavePolicy = SavePolicy.Periodic,
+                    SaveInterval = TimeSpan.FromMinutes(10),
+                    SaveFormat = SaveFormat.Binary,
+                    NumberOfFileHistories = 3,
+                    FileConfiguration = new GlobalFileConfiguration("Merger/Credits"),
+                    StorageConfiguration = new SimpleStorageConfiguration(
+                        new GlobalDirectoryConfiguration("Merger/Storage")),
+                });
 
                 /*context.AddCrystal<PublicIPMachine.Data>(new CrystalConfiguration() with
                 {

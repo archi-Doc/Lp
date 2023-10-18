@@ -20,9 +20,9 @@ public partial interface IMergerService : IAuthorizedService
         {
         }
 
-        [Key(0, AddProperty = "Name")]
+        [Key(0, AddProperty = "MergerName")]
         [MaxLength(16)]
-        private string name = default!;
+        private string mergerName = default!;
     }
 
     NetTask<MergerResult> CreateCredit(Merger.CreateCreditParams param);

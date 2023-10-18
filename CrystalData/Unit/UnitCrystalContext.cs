@@ -14,11 +14,6 @@ internal class UnitCrystalContext : IUnitCrystalContext, IUnitCustomContext
     /*bool IUnitCrystalContext.TryAddCrystal<TData>(CrystalConfiguration configuration)
     {
         return this.typeToCrystalConfiguration.TryAdd(typeof(TData), configuration);
-    }
-
-    bool IUnitCrystalContext.TryAddBigCrystal<TData>(BigCrystalConfiguration configuration)
-    {
-        return this.typeToCrystalConfiguration.TryAdd(typeof(TData), configuration);
     }*/
 
     void IUnitCrystalContext.SetJournal(JournalConfiguration configuration)

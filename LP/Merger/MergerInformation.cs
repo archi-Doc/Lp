@@ -2,6 +2,7 @@
 
 using System.ComponentModel;
 using LP.NetServices.T3CS;
+using LP.T3CS;
 
 namespace LP;
 
@@ -24,19 +25,21 @@ public partial record MergerInformation : ITinyhandSerializationCallback
 
     public IMergerService.InformationResult ToInformationResult()
     {
-        return new IMergerService.InformationResult() with { Name = this.Name, };
+        return new IMergerService.InformationResult() with { MergerName = this.MergerName, };
     }
 
     [DefaultValue(DefaultName)]
-    public string Name { get; set; } = default!;
+    public string MergerName { get; set; } = default!;
 
     public Type MergerType { get; set; }
+
+    public Credit? SingleCredit { get; set; }
 
     [DefaultValue(DefaultMaxCredit)]
     public int MaxCredits { get; set; }
 
     public override string ToString()
-        => $"{this.Name}: {this.MergerType}({this.MaxCredits})";
+        => $"{this.MergerName}: {this.MergerType}({this.MaxCredits})";
 
     public void OnBeforeSerialize()
     {

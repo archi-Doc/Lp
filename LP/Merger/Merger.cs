@@ -23,7 +23,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
                 context,
                 context.ServiceProvider.GetRequiredService<ILogger<Merger>>(),
                 context.ServiceProvider.GetRequiredService<LPBase>(),
-                // context.ServiceProvider.GetRequiredService<IBigCrystal<MergerData>>(),
+                context.ServiceProvider.GetRequiredService<ICrystal<CreditData.GoshujinClass>>(),
                 context.ServiceProvider.GetRequiredService<MergerInformation>());
 
             return this.merger;
@@ -32,12 +32,12 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         private Merger? merger;
     }
 
-    public Merger(UnitContext context, ILogger<Merger> logger, LPBase lpBase, /*IBigCrystal<MergerData> crystal, */MergerInformation mergerInformation)
+    public Merger(UnitContext context, ILogger<Merger> logger, LPBase lpBase, ICrystal<CreditData.GoshujinClass> crystal, MergerInformation mergerInformation)
         : base(context)
     {
         this.logger = logger;
         this.lpBase = lpBase;
-
+        this.crystal = crystal;
         this.Information = mergerInformation;
     }
 
@@ -105,5 +105,5 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
     private ILogger logger;
     private LPBase lpBase;
-    // private IBigCrystal<MergerData> crystal;
+    private ICrystal<CreditData.GoshujinClass> crystal;
 }
