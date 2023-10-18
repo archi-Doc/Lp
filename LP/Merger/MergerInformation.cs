@@ -33,7 +33,11 @@ public partial record MergerInformation : ITinyhandSerializationCallback
 
     public Type MergerType { get; set; }
 
+    [IgnoreMember]
     public Credit? SingleCredit { get; set; }
+
+    [Key("SingleCredit")]
+    public string SingleCreditString { get; set; } = string.Empty;
 
     [DefaultValue(DefaultMaxCredit)]
     public int MaxCredits { get; set; }
@@ -43,6 +47,14 @@ public partial record MergerInformation : ITinyhandSerializationCallback
 
     public void OnBeforeSerialize()
     {
+        if (this.SingleCredit is null)
+        {
+            this.SingleCreditString = string.Empty;
+        }
+        else
+        {
+            this.SingleCreditString = this.SingleCredit.ToBase64();
+        }
     }
 
     public void OnAfterDeserialize()
@@ -54,6 +66,16 @@ public partial record MergerInformation : ITinyhandSerializationCallback
         else if (this.MaxCredits < 0)
         {
             this.MaxCredits = DefaultMaxCredit;
+        }
+
+        if (!string.IsNullOrEmpty(this.SingleCreditString) &&
+            Credit.TryParse(this.SingleCreditString, out var credit))
+        {
+            this.SingleCredit = credit;
+        }
+        else
+        {
+            this.SingleCredit = null;
         }
     }
 }

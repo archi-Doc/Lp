@@ -16,6 +16,7 @@ public static class KeyHelper
 
     public static readonly HashAlgorithmName HashAlgorithmName;
     public static readonly ECCurveBase CurveInstance;
+    public static readonly int PublicKeyLengthInBase64;
 
     internal static ECCurve ECCurve { get; }
 
@@ -24,6 +25,7 @@ public static class KeyHelper
         CurveInstance = P256R1Curve.Instance;
         ECCurve = ECCurve.CreateFromFriendlyName(CurveInstance.CurveName);
         HashAlgorithmName = HashAlgorithmName.SHA256;
+        PublicKeyLengthInBase64 =   10;
     }
 
     public static ReadOnlySpan<char> PrivateKeyBrace => "!!!";

@@ -45,15 +45,15 @@ public sealed partial class LinkageAddress // : IValidatable, IEquatable<Linkage
         var key = this.Key.ToString();
         if (this.CreditName is not null)
         {
-            return $"{key}{Credit.Identifier}{this.CreditName}";
+            return $"{key}{Credit.CreditSymbol}{this.CreditName}";
         }
         else if (this.Credit is not null)
         {
-            return $"{key}{Credit.Identifier}{this.Credit.ToString()}";
+            return $"{key}{Credit.CreditSymbol}{this.Credit.ToString()}";
         }
         else
         {
-            return $"{key}{Credit.Identifier}";
+            return $"{key}{Credit.CreditSymbol}";
         }
     }
 }

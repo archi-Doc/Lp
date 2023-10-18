@@ -1,16 +1,49 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
+using System.Text;
+
 namespace LP.T3CS;
 
 /// <summary>
-/// Represents a credit information (@Originator:Standard/Mergers).
+/// Represents a credit information (@Originator:Standard/Merger1+Merger2).
 /// </summary>
 [TinyhandObject]
 public sealed partial class Credit : IValidatable, IEquatable<Credit>
 {
-    public const char Identifier = '@';
+    public const char CreditSymbol = '@';
+    public const char StandardSymbol = ':';
+    public const char MergerSymbol = '/';
+    public const char MergerSeparator = '+';
     public const int MaxMergers = 4;
     public static readonly Credit Default = new();
+
+    public static bool TryParse(ReadOnlySpan<char> chars, [MaybeNullWhen(false)] out Credit instance)
+    {
+        instance = default;
+        var span = chars.Trim();
+
+        if (span.Length < 1 || span[0] != CreditSymbol)
+        {// @
+            return false;
+        }
+
+        span = span.Slice(1);
+        if (span.Length < KeyHelper.PublicKeyLengthInBase64 || !SignaturePublicKey.TryParse(span, out var originator))
+        {// Originator
+            return false;
+        }
+
+        span = span.Slice(KeyHelper.PublicKeyLengthInBase64);
+        if (span.Length < 1 || span[0] != StandardSymbol)
+        {// :
+            return false;
+        }
+
+        instance = new Credit();
+        instance.Originator = originator;
+        return true;
+    }
 
     public Credit()
     {
@@ -114,5 +147,30 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>
         }
 
         return hash.ToHashCode();
+    }
+
+    public string ToBase64()
+    {
+        var sb = new StringBuilder();
+
+        sb.Append(CreditSymbol);
+        sb.Append(this.Originator.ToBase64());
+        sb.Append(StandardSymbol);
+        sb.Append(this.Standard.ToBase64());
+
+        if (this.mergers.Length == 0)
+        {
+            return sb.ToString();
+        }
+        else
+        {
+            sb.Append(MergerSymbol);
+            for (var i = 0; i < this.mergers.Length; i++, sb.Append(MergerSeparator))
+            {
+                sb.Append(this.mergers[i].ToBase64());
+            }
+
+            return sb.ToString();
+        }
     }
 }
