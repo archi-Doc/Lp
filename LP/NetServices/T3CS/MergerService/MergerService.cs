@@ -42,11 +42,11 @@ public class MergerServiceImpl : AuthorizedService, IMergerService
         return this.merger.Information.ToInformationResult();
     }
 
-    public async NetTask<MergerResult> CreateCredit(Merger.CreateCreditParams param)
+    public NetTask<MergerResult> CreateCredit(Merger.CreateCreditParams param)
     {
         if (!this.Engaged)
         {
-            return MergerResult.NotAuthorized;
+            return new(MergerResult.NotAuthorized);
         }
 
         return this.merger.CreateCredit(LPCallContext.Current.ServerContext, param);

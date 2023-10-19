@@ -4,6 +4,7 @@ using LP.NetServices;
 using LP.NetServices.T3CS;
 using LP.T3CS;
 using Microsoft.Extensions.DependencyInjection;
+using Netsphere;
 
 namespace LP;
 
@@ -60,7 +61,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     public partial record CreateCreditParams(
         [property: Key(0)] CreateCreditProof Proof);
 
-    public MergerResult CreateCredit(LPServerContext context, CreateCreditParams param)
+    public async NetTask<MergerResult> CreateCredit(LPServerContext context, CreateCreditParams param)
     {
         if (!param.Proof.ValidateAndVerify())
         {
@@ -81,6 +82,9 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
             {
                 return MergerResult.AlreadyExists;
             }
+
+            var borrowers = await w.Borrowers.Get();
+            w.Commit();
         }
 
         return MergerResult.Success;
