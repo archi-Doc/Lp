@@ -39,8 +39,7 @@ public partial record CrystalConfiguration
     public static readonly CrystalConfiguration Default = new();
 
     public static CrystalConfiguration SingleUtf8(bool required, FileConfiguration fileConfiguration)
-        => new CrystalConfiguration(SavePolicy.Manual, fileConfiguration)
-        with
+        => new CrystalConfiguration(SavePolicy.Manual, fileConfiguration) with
         { SaveFormat = SaveFormat.Utf8, NumberOfFileHistories = 0, RequiredForLoading = required, };
 
     public CrystalConfiguration()

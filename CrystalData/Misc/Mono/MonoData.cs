@@ -54,6 +54,11 @@ public partial class MonoData<TIdentifier, TDatum> : IMonoData<TIdentifier, TDat
 
     static void ITinyhandSerialize<MonoData<TIdentifier, TDatum>>.Deserialize(ref TinyhandReader reader, scoped ref MonoData<TIdentifier, TDatum>? value, TinyhandSerializerOptions options)
     {
+        if (reader.TryReadNil())
+        {
+            return;
+        }
+
         value ??= new();
         Item.GoshujinClass? g = default;
         try

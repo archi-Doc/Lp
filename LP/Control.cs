@@ -167,7 +167,7 @@ public class Control : ILogInformation
             {// CrystalizerOptions
                 context.GetOptions<LPOptions>(out var lpOptions);
                 options.RootPath = lpOptions.RootDirectory;
-                options.GlobalDirectory = new LocalDirectoryConfiguration("Local");
+                options.GlobalDirectory = new LocalDirectoryConfiguration(LPBase.DataDirectoryName);
                 options.EnableFilerLogger = false;
             });
 
@@ -185,6 +185,13 @@ public class Control : ILogInformation
                 {
                     context.AddCrystal<LPSettings>(CrystalConfiguration.SingleUtf8(true, new GlobalFileConfiguration(LPSettings.Filename)));
                     context.AddCrystal<MergerInformation>(CrystalConfiguration.SingleUtf8(true, new GlobalFileConfiguration(MergerInformation.Filename)));
+
+                    /*context.AddCrystal<CrystalDataInterface>(new()
+                    {
+                        SavePolicy = SavePolicy.OnChanged,
+                        NumberOfFileHistories = 0,
+                        FileConfiguration = new GlobalFileConfiguration("Vault.Filename.tinyhand"),
+                    });*/
 
                     context.AddCrystal<Mono>(new()
                     {
@@ -293,12 +300,15 @@ public class Control : ILogInformation
         {
             try
             {
+                // Crystalizer
+                var crystalizer = this.Context.ServiceProvider.GetRequiredService<Crystalizer>();
+
                 // Vault
                 var vault = this.Context.ServiceProvider.GetRequiredService<Vault>();
                 await vault.LoadAsync();
+                ((StorageKeyVault)this.Context.ServiceProvider.GetRequiredService<IStorageKey>()).Vault = vault;
 
-                // Crystalizer
-                var crystalizer = this.Context.ServiceProvider.GetRequiredService<Crystalizer>();
+                // Load
                 var result = await crystalizer.PrepareAndLoadAll();
                 if (result != CrystalResult.Success)
                 {

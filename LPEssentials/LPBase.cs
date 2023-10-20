@@ -25,7 +25,7 @@ public enum LPMode
 
 public class LPBase : ILogInformation
 {
-    public const string DataDirectoryName = "Data";
+    public const string DataDirectoryName = "Local";
 
     public static void Configure(IUnitConfigurationContext context)
     {

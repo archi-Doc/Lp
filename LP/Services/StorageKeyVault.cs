@@ -8,21 +8,31 @@ internal class StorageKeyVault : IStorageKey
 {
     private const string Prefix = "S3Bucket/";
 
-    public StorageKeyVault(Vault vault)
+    public StorageKeyVault()
     {
-        this.vault = vault;
     }
 
     bool IStorageKey.AddKey(string bucket, AccessKeyPair accessKeyPair)
     {
+        if (this.Vault is not { } vault)
+        {
+            return false;
+        }
+
         var decrypted = this.utf8.GetBytes(accessKeyPair.ToString());
-        return this.vault.TryAdd(Prefix + bucket, decrypted);
+        return vault.TryAdd(Prefix + bucket, decrypted);
     }
 
     bool IStorageKey.TryGetKey(string bucket, out AccessKeyPair accessKeyPair)
     {
         accessKeyPair = default;
-        if (!this.vault.TryGet(Prefix + bucket, out var decrypted))
+
+        if (this.Vault is not { } vault)
+        {
+            return false;
+        }
+
+        if (!vault.TryGet(Prefix + bucket, out var decrypted))
         {
             return false;
         }
@@ -42,6 +52,7 @@ internal class StorageKeyVault : IStorageKey
         return false;
     }
 
-    private Vault vault;
+    public Vault? Vault { get; set; }
+
     private Encoding utf8 = new UTF8Encoding(true, false);
 }
