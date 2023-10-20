@@ -1,14 +1,14 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace LP;
+namespace CrystalData;
 
 /// <summary>
 /// Monolithic data store.
 /// </summary>
 [TinyhandObject]
-public sealed partial class Mono
+internal sealed partial class MonoTemplate
 {
-    public Mono()
+    public MonoTemplate()
     {
     }
 

@@ -2,8 +2,28 @@
 
 using System.Diagnostics.CodeAnalysis;
 using Arc.Collections;
+using Tinyhand.IO;
 
 namespace LP;
+
+[TinyhandObject]
+public class CrystalDataInterface : ITinyhandSerialize<CrystalDataInterface>, ITinyhandReconstruct<CrystalDataInterface>
+{
+    static void ITinyhandSerialize<CrystalDataInterface>.Deserialize(ref TinyhandReader reader, ref CrystalDataInterface? value, TinyhandSerializerOptions options)
+    {
+        throw new NotImplementedException();
+    }
+
+    static void ITinyhandReconstruct<CrystalDataInterface>.Reconstruct(ref CrystalDataInterface? value, TinyhandSerializerOptions options)
+    {
+        throw new NotImplementedException();
+    }
+
+    static void ITinyhandSerialize<CrystalDataInterface>.Serialize(ref TinyhandWriter writer, ref CrystalDataInterface? value, TinyhandSerializerOptions options)
+    {
+        throw new NotImplementedException();
+    }
+}
 
 public partial class Vault
 {
