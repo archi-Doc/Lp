@@ -148,10 +148,6 @@ internal partial class SimpleStorageData : ITinyhandSerialize<SimpleStorageData>
         }
     }
 
-    void ITinyhandCustomJournal.WriteCustomLocator(ref TinyhandWriter writer)
-    {
-    }
-
     bool ITinyhandCustomJournal.ReadCustomRecord(ref TinyhandReader reader)
     {
         if (!reader.TryRead(out JournalRecord record))

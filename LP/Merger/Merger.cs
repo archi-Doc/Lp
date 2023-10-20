@@ -76,7 +76,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
             return MergerResult.AlreadyExists;
         }*/
 
-        using (var w = g.TryLock(Credit.Default, ValueLink.TryLockMode.Create))
+        /*using (var w = g.TryLock(Credit.Default, ValueLink.TryLockMode.Create))
         {
             if (w is null)
             {
@@ -85,7 +85,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
             var borrowers = await w.Borrowers.Get();
             w.Commit();
-        }
+        }*/
 
         return MergerResult.Success;
     }

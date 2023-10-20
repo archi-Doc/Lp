@@ -5,9 +5,9 @@ using ValueLink;
 
 namespace LP.T3CS;
 
-[TinyhandObject(Tree = true)]
+[TinyhandObject(Tree = false)]
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
-public sealed partial record Borrower : ITinyhandCustomJournal
+public sealed partial record Borrower // : ITinyhandCustomJournal
 {
     public Borrower()
     {
@@ -17,6 +17,7 @@ public sealed partial record Borrower : ITinyhandCustomJournal
     [Link(Unique = true, Primary = true, Type = ChainType.Unordered)]
     private SignaturePublicKey borrowerKey;
 
+    /*
     void ITinyhandCustomJournal.WriteCustomLocator(ref TinyhandWriter writer)
     {
     }
@@ -24,5 +25,5 @@ public sealed partial record Borrower : ITinyhandCustomJournal
     bool ITinyhandCustomJournal.ReadCustomRecord(ref TinyhandReader reader)
     {
         return false;
-    }
+    }*/
 }
