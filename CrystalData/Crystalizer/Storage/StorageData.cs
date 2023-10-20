@@ -5,66 +5,16 @@ using Tinyhand.IO;
 
 namespace CrystalData;
 
-[TinyhandObject(Tree = true)]
-[ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
-public partial record AdvancedClass
-{// This is it. This class is the crystal of the most advanced data management architecture I've reached so far.
-    public static void Register(IUnitCrystalContext context)
-    {
-        context.AddCrystal<AdvancedClass>(
-            new()
-            {
-                SaveFormat = SaveFormat.Utf8,
-                SavePolicy = SavePolicy.Periodic,
-                SaveInterval = TimeSpan.FromMinutes(10),
-                FileConfiguration = new GlobalFileConfiguration("CrystalClassMain.tinyhand"),
-                BackupFileConfiguration = new GlobalFileConfiguration("CrystalClassBackup.tinyhand"),
-                StorageConfiguration = GlobalStorageConfiguration.Default,
-                /*StorageConfiguration = new SimpleStorageConfiguration(
-                    new GlobalDirectoryConfiguration("MainStorage"),
-                    new GlobalDirectoryConfiguration("BackupStorage")),*/
-                NumberOfFileHistories = 2,
-            });
-
-        context.TrySetJournal(new SimpleJournalConfiguration(new S3DirectoryConfiguration("TestBucket", "Journal")));
-    }
-
-    public AdvancedClass()
-    {
-    }
-
-    [Key(0, AddProperty = "Id", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
-    [Link(Unique = true, Primary = true, Type = ChainType.Unordered)]
-    private int id;
-
-    [Key(1, AddProperty = "Name")]
-    [Link(Type = ChainType.Ordered)]
-    private string name = string.Empty;
-
-    [Key(2, AddProperty = "Child", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
-    private StorageData<AdvancedClass> child = new();
-
-    [Key(3, AddProperty = "Children", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
-    private StorageData<AdvancedClass.GoshujinClass> children = new();
-
-    [Key(4, AddProperty = "ByteArray", PropertyAccessibility = PropertyAccessibility.GetterOnly)]
-    private StorageData<byte[]> byteArray = new();
-}
-
 /// <summary>
 /// <see cref="StorageData{TData}"/> is a subset of <see cref="CrystalObject{TData}"/>, allowing for the persistence of partial data.
 /// </summary>
 /// <typeparam name="TData">The type of data.</typeparam>
 [TinyhandObject(ExplicitKeyOnly = true)]
 public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject, IStorageData
-// where TData : ITinyhandSerialize<TData>
 {
     public const int MaxHistories = 3; // 4
 
     #region FieldAndProperty
-
-    // [Key(0)]
-    // private StorageConfiguration? storageConfiguration; // using (this.Lock())
 
     [IgnoreMember]
     private TData? data;
