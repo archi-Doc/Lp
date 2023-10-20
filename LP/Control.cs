@@ -186,7 +186,7 @@ public class Control : ILogInformation
                     context.AddCrystal<LPSettings>(CrystalConfiguration.SingleUtf8(true, new GlobalFileConfiguration(LPSettings.Filename)));
                     context.AddCrystal<MergerInformation>(CrystalConfiguration.SingleUtf8(true, new GlobalFileConfiguration(MergerInformation.Filename)));
 
-                    context.AddCrystal<Mono<Identifier>>(new()
+                    context.AddCrystal<Mono>(new()
                     {
                         SavePolicy = SavePolicy.Periodic,
                         SaveInterval = TimeSpan.FromMinutes(10),
