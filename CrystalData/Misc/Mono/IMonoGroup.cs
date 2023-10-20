@@ -14,7 +14,7 @@ public partial class Mono<TIdentifier>
         bool Remove(in TIdentifier id);
     }
 
-    public interface IMonoGroup : ISimpleSerializable
+    public interface IMonoGroup : ITinyhandSerialize
     {
         void SetCapacity(int capacity);
 

@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using Tinyhand.IO;
 
 namespace CrystalData;
 
@@ -8,11 +10,52 @@ namespace CrystalData;
 /// Monolithic data store.
 /// </summary>
 /// <typeparam name="TIdentifier">The type of an identifier.</typeparam>
-public partial class Mono<TIdentifier>
+public partial class Mono<TIdentifier> : ITinyhandSerialize<Mono<TIdentifier>>, ITinyhandReconstruct<Mono<TIdentifier>>
     where TIdentifier : IEquatable<TIdentifier>, ITinyhandSerialize<TIdentifier>
 {
     public Mono()
     {
+    }
+
+    static void ITinyhandSerialize<Mono<TIdentifier>>.Serialize(ref TinyhandWriter writer, scoped ref Mono<TIdentifier>? value, TinyhandSerializerOptions options)
+    {
+        if (value is null)
+        {
+            writer.WriteNil();
+            return;
+        }
+
+        foreach (var x in value.idToGroup)
+        {
+            writer.Write(x.Key); // Id
+            x.Value.Serialize(ref writer, options);
+        }
+    }
+
+    static void ITinyhandSerialize<Mono<TIdentifier>>.Deserialize(ref TinyhandReader reader, scoped ref Mono<TIdentifier>? value, TinyhandSerializerOptions options)
+    {
+        value ??= new();
+
+        try
+        {
+            while (reader.Remaining > 0)
+            {
+                var id = reader.ReadUInt64();
+
+                if (value.idToGroup.TryGetValue(id, out var x))
+                {
+                    x.Deserialize(ref reader, options);
+                }
+            }
+        }
+        catch
+        {
+        }
+    }
+
+    static void ITinyhandReconstruct<Mono<TIdentifier>>.Reconstruct([NotNull] scoped ref Mono<TIdentifier>? value, TinyhandSerializerOptions options)
+    {
+        value ??= new();
     }
 
     public void Register<TMonoData>(IMonoGroup<TMonoData> group)
@@ -67,9 +110,10 @@ public partial class Mono<TIdentifier>
         where TMonoData : IMonoData
     {
         var writer = default(Tinyhand.IO.TinyhandWriter);
+        var options = TinyhandSerializerOptions.Standard;
         try
         {
-            this.GetGroup<TMonoData>().Serialize(ref writer);
+            this.GetGroup<TMonoData>().Serialize(ref writer, options);
             return writer.FlushAndGetArray();
         }
         finally
@@ -78,13 +122,15 @@ public partial class Mono<TIdentifier>
         }
     }
 
-    public bool Deserialize<TMonoData>(ReadOnlySpan<byte> span)
+    public void Deserialize<TMonoData>(ReadOnlySpan<byte> span)
         where TMonoData : IMonoData
     {
-        return this.GetGroup<TMonoData>().Deserialize(span, out _);
+        var reader = new TinyhandReader(span);
+        var options = TinyhandSerializerOptions.Standard;
+        this.GetGroup<TMonoData>().Deserialize(ref reader, options);
     }
 
-    public async Task<bool> LoadAsync(string path)
+    /*public async Task<bool> LoadAsync(string path)
     {
         try
         {
@@ -157,8 +203,8 @@ public partial class Mono<TIdentifier>
         }
 
         return result;
-    }
+    }*/
 
-    private readonly Dictionary<ulong, ISimpleSerializable> idToGroup = new();
+    private readonly Dictionary<ulong, ITinyhandSerialize> idToGroup = new();
     private readonly ThreadsafeTypeKeyHashTable<IMonoGroup> typeToGroup = new();
 }

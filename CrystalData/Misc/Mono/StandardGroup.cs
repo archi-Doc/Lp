@@ -2,6 +2,9 @@
 
 #pragma warning disable SA1401 // Fields should be private
 
+using System;
+using Tinyhand.IO;
+
 namespace CrystalData;
 
 public partial class Mono<TIdentifier>
@@ -104,25 +107,31 @@ public partial class Mono<TIdentifier>
             }
         }
 
-        public void Serialize(ref Tinyhand.IO.TinyhandWriter writer)
+        void ITinyhandSerialize.Serialize(ref TinyhandWriter writer, TinyhandSerializerOptions options)
         {
             lock (this.goshujin)
             {
-                TinyhandSerializer.Serialize(ref writer, this.goshujin);
+                TinyhandSerializer.Serialize(ref writer, this.goshujin, options);
             }
         }
 
-        public bool Deserialize(ReadOnlySpan<byte> span, out int bytesRead)
+        void ITinyhandSerialize.Deserialize(ref TinyhandReader reader, TinyhandSerializerOptions options)
         {
             lock (this.goshujin)
             {
-                if (!TinyhandSerializer.TryDeserialize<Item.GoshujinClass>(span, out var newGoshujin, out bytesRead))
+                Item.GoshujinClass? g = default;
+                try
                 {
-                    return false;
+                    g = TinyhandSerializer.Deserialize<Item.GoshujinClass>(ref reader, options);
+                }
+                catch
+                {
                 }
 
-                this.goshujin = newGoshujin;
-                return true;
+                if (g is not null)
+                {
+                    this.goshujin = g;
+                }
             }
         }
 

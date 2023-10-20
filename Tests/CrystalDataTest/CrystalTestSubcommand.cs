@@ -58,8 +58,6 @@ public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
 
     public async Task RunAsync(CrystalTestOptions options, string[] args)
     {
-        var mono = new Mono();
-
         var sw = Stopwatch.StartNew();
         Console.WriteLine($"Start: {sw.ElapsedMilliseconds} ms");
 

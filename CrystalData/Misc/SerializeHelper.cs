@@ -172,7 +172,7 @@ public static class SerializeHelper
         }
     }
 
-    public static byte[] Serialize(Dictionary<ulong, ISimpleSerializable> dictionary)
+    /*public static byte[] Serialize(Dictionary<ulong, ISimpleSerializable> dictionary)
     {
         var writer = default(Tinyhand.IO.TinyhandWriter);
         byte[]? byteArray;
@@ -226,5 +226,5 @@ public static class SerializeHelper
         }
 
         return true;
-    }
+    }*/
 }
