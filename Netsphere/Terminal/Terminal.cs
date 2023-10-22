@@ -398,8 +398,6 @@ public class Terminal : UnitBase, IUnitExecutable
             return;
         }
 
-        this.logger.TryGet()?.Log($"Ping From: {packet.ToString()}");
-
         var response = new PacketPingResponse(new(endpoint.Address, (ushort)endpoint.Port, 0), this.NetBase.NodeName);
         var secondGene = GenePool.NextGene(header.Gene);
         // this.TerminalLogger?.Information($"Ping Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");

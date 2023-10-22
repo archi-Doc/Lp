@@ -42,9 +42,6 @@ public partial class PublicIPMachine : Machine<Identifier>
     [StateMethod(0)]
     protected async Task<StateResult> Initial(StateParameter parameter)
     {
-        await this.GetIcanhazipIPv6().ConfigureAwait(false);
-        return StateResult.Terminate;
-
         if (this.crystal.Data.IPAddress is not null &&
             Mics.IsInPeriodToUtcNow(this.crystal.Data.Mics, Mics.FromMinutes(5)))
         {
@@ -107,8 +104,6 @@ public partial class PublicIPMachine : Machine<Identifier>
             using (var httpClient = new HttpClient())
             {
                 var result = await httpClient.GetStringAsync(IcanhazipUriIPv6, this.CancellationToken).ConfigureAwait(false);
-                this.logger?.TryGet()?.Log($"GetIcanhazipIPv6: {result}");
-                throw new Exception();
                 var ipString = result.Replace("\\r\\n", string.Empty).Replace("\\n", string.Empty).Trim();
                 if (!IPAddress.TryParse(ipString, out var ipAddress))
                 {
@@ -119,9 +114,8 @@ public partial class PublicIPMachine : Machine<Identifier>
                 return true;
             }
         }
-        catch (Exception e)
+        catch
         {
-            this.logger?.TryGet()?.Log($"GetIcanhazipIPv6: {e.ToString()}");
             return false;
         }
     }
