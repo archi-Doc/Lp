@@ -57,7 +57,7 @@ internal class UnitCrystalContext : IUnitCrystalContext, IUnitCustomContext
         }
 
         var options = new CrystalizerOptions();
-        options.RootPath = context.DataDirectory;
+        options.RootPath = context.RootDirectory;
         context.SetOptions(options);
     }
 

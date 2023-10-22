@@ -23,7 +23,7 @@ public partial class Vault
         }
         else
         {
-            this.path = options.GlobalDirectory.CombineFile(Filename).Path;
+            this.path = PathHelper.GetRootedFile(this.lpBase.RootDirectory, options.GlobalDirectory.CombineFile(Filename).Path);
         }
     }
 
@@ -217,12 +217,10 @@ public partial class Vault
             var items = this.GetEncrypted();
             var bytes = TinyhandSerializer.SerializeToUtf8(items);
             // this.vaultData.Data = bytes;
-            this.logger.TryGet(LogLevel.Information)?.Log($"Writing vault: {this.path}");
             await File.WriteAllBytesAsync(this.path, bytes).ConfigureAwait(false);
         }
         catch
         {
-            this.logger.TryGet(LogLevel.Error)?.Log($"Writing vault error");
         }
     }
 

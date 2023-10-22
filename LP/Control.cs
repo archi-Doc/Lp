@@ -166,7 +166,7 @@ public class Control : ILogInformation
             this.SetupOptions<CrystalizerOptions>((context, options) =>
             {// CrystalizerOptions
                 context.GetOptions<LPOptions>(out var lpOptions);
-                options.RootPath = lpOptions.RootDirectory;
+                // options.RootPath = lpOptions.RootDirectory;
                 options.GlobalDirectory = new LocalDirectoryConfiguration(LPBase.DataDirectoryName);
                 options.EnableFilerLogger = false;
             });

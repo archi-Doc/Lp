@@ -20,7 +20,7 @@ namespace Netsphere;
 public partial class NodeAddress : IEquatable<NodeAddress>
 {
     public const int AlternativePort = 49151;
-    public static readonly NodeAddress Alternative = new(IPAddress.Loopback, AlternativePort);
+    public static readonly NodeAddress Alternative = new(IPAddress.Loopback, AlternativePort); // new(IPAddress.IPv6Loopback, AlternativePort);
 
     public static bool TryParse(string text, [NotNullWhen(true)] out NodeAddress? node)
         => TryParse(text, out node, out _);
