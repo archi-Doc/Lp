@@ -42,10 +42,9 @@ public partial class PublicIPMachine : Machine<Identifier>
     [StateMethod(0)]
     protected async Task<StateResult> Initial(StateParameter parameter)
     {
-        if (await this.GetIcanhazipIPv6().ConfigureAwait(false) == true)
-        {
-            return StateResult.Terminate;
-        }
+        await this.GetIcanhazipIPv6().ConfigureAwait(false);
+        this.logger?.TryGet()?.Log($"GetIcanhazipIPv6");
+        return StateResult.Terminate;
 
         if (this.crystal.Data.IPAddress is not null &&
             Mics.IsInPeriodToUtcNow(this.crystal.Data.Mics, Mics.FromMinutes(5)))
