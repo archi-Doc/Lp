@@ -398,7 +398,7 @@ public class Terminal : UnitBase, IUnitExecutable
             return;
         }
 
-        // this.logger.TryGet()?.Log($"Ping From: {packet.ToString()}");
+        this.logger.TryGet()?.Log($"Ping From: {packet.ToString()}");
 
         var response = new PacketPingResponse(new(endpoint.Address, (ushort)endpoint.Port, 0), this.NetBase.NodeName);
         var secondGene = GenePool.NextGene(header.Gene);
