@@ -204,7 +204,7 @@ public class NetSocket
 
     private void PrepareUdpClient(int port)
     {
-        var udp = new UdpClient(port);
+        var udp = new UdpClient(port, AddressFamily.InterNetworkV6); // tempcode
         try
         {
             const int SIO_UDP_CONNRESET = -1744830452;
