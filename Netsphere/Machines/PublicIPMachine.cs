@@ -8,7 +8,8 @@ namespace Netsphere.Machines;
 public partial class PublicIPMachine : Machine<Identifier>
 {
     private const string Filename = "PublicIP.tinyhand";
-    private const string IcanhazipUri = "http://ipv4.icanhazip.com"; // "http://icanhazip.com"
+    private const string IcanhazipUriIPv4 = "http://ipv4.icanhazip.com"; // "http://icanhazip.com"
+    private const string IcanhazipUriIPv6 = "http://ipv6.icanhazip.com";
     private const string DynDnsUri = "http://checkip.dyndns.org";
 
     [TinyhandObject(ImplicitKeyAsName = true)]
@@ -41,6 +42,11 @@ public partial class PublicIPMachine : Machine<Identifier>
     [StateMethod(0)]
     protected async Task<StateResult> Initial(StateParameter parameter)
     {
+        if (await this.GetIcanhazipIPv6().ConfigureAwait(false) == true)
+        {
+            return StateResult.Terminate;
+        }
+
         if (this.crystal.Data.IPAddress is not null &&
             Mics.IsInPeriodToUtcNow(this.crystal.Data.Mics, Mics.FromMinutes(5)))
         {
@@ -50,7 +56,7 @@ public partial class PublicIPMachine : Machine<Identifier>
             return StateResult.Terminate;
         }
 
-        if (await this.GetIcanhazip().ConfigureAwait(false) == true)
+        if (await this.GetIcanhazipIPv4().ConfigureAwait(false) == true)
         {
             return StateResult.Terminate;
         }
@@ -73,20 +79,43 @@ public partial class PublicIPMachine : Machine<Identifier>
         await this.crystal.Save().ConfigureAwait(false);
     }
 
-    private async Task<bool> GetIcanhazip()
+    private async Task<bool> GetIcanhazipIPv4()
     {
         try
         {
             using (var httpClient = new HttpClient())
             {
-                var result = await httpClient.GetStringAsync(IcanhazipUri, this.CancellationToken).ConfigureAwait(false);
+                var result = await httpClient.GetStringAsync(IcanhazipUriIPv4, this.CancellationToken).ConfigureAwait(false);
                 var ipString = result.Replace("\\r\\n", string.Empty).Replace("\\n", string.Empty).Trim();
                 if (!IPAddress.TryParse(ipString, out var ipAddress))
                 {
                     return false;
                 }
 
-                await this.ReportIpAddress(ipAddress, IcanhazipUri).ConfigureAwait(false);
+                await this.ReportIpAddress(ipAddress, IcanhazipUriIPv4).ConfigureAwait(false);
+                return true;
+            }
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private async Task<bool> GetIcanhazipIPv6()
+    {
+        try
+        {
+            using (var httpClient = new HttpClient())
+            {
+                var result = await httpClient.GetStringAsync(IcanhazipUriIPv6, this.CancellationToken).ConfigureAwait(false);
+                var ipString = result.Replace("\\r\\n", string.Empty).Replace("\\n", string.Empty).Trim();
+                if (!IPAddress.TryParse(ipString, out var ipAddress))
+                {
+                    return false;
+                }
+
+                await this.ReportIpAddress(ipAddress, IcanhazipUriIPv6).ConfigureAwait(false);
                 return true;
             }
         }

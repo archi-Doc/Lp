@@ -23,12 +23,12 @@ public class NetSocket
             if (core.socket.UnsafeUdpClient?.Client.AddressFamily == AddressFamily.InterNetwork)
             {
                 Console.WriteLine($"Socket ipv4"); // tempcode
-                anyEP = new IPEndPoint(IPAddress.Any, 0);
+                anyEP = new IPEndPoint(IPAddress.Any, 0); // IPEndPoint.MinPort
             }
             else
             {
                 Console.WriteLine($"Socket ipv6"); // tempcode
-                anyEP = new IPEndPoint(IPAddress.IPv6Any, 0);
+                anyEP = new IPEndPoint(IPAddress.IPv6Any, 0); // IPEndPoint.MinPort
             }
 
             ByteArrayPool.Owner? arrayOwner = null;
