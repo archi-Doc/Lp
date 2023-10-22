@@ -22,10 +22,12 @@ public class NetSocket
             IPEndPoint anyEP;
             if (core.socket.UnsafeUdpClient?.Client.AddressFamily == AddressFamily.InterNetwork)
             {
+                Console.WriteLine($"Socket ipv4"); // tempcode
                 anyEP = new IPEndPoint(IPAddress.Any, IPEndPoint.MinPort);
             }
             else
             {
+                Console.WriteLine($"Socket ipv6"); // tempcode
                 anyEP = new IPEndPoint(IPAddress.IPv6Any, IPEndPoint.MinPort);
             }
 
@@ -51,6 +53,7 @@ public class NetSocket
                     arrayOwner ??= PacketPool.Rent();
                     var received = udp.Client.ReceiveFrom(arrayOwner.ByteArray, 0, arrayOwner.ByteArray.Length, SocketFlags.None, ref remoteEP);
                     // ValueTask<SocketReceiveFromResult> vt = udp.Client.ReceiveFromAsync(arrayOwner.ByteArray.AsMemory(), SocketFlags.None, remoteEP);
+                    Console.WriteLine($"Socket recv; {received}"); // tempcode
                     if (received <= NetControl.MaxPayload)
                     {
                         core.socket.terminal.ProcessReceive((IPEndPoint)remoteEP, arrayOwner, received, Mics.GetSystem());

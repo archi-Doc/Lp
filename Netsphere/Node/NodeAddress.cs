@@ -39,13 +39,13 @@ public partial class NodeAddress : IEquatable<NodeAddress>
         if (span.StartsWith("["))
         {
             index = span.IndexOf(']');
-            if (index < 0 || index >= (span.Length - 1))
+            if (index < 0 || index >= span.Length)
             {
                 return false;
             }
 
             address = span.Slice(1, index - 1);
-            span = span.Slice(index + 2);
+            span = span.Slice(index + 1);
         }
         else
         {
