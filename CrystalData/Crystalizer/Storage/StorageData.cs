@@ -10,7 +10,7 @@ namespace CrystalData;
 /// </summary>
 /// <typeparam name="TData">The type of data.</typeparam>
 [TinyhandObject(ExplicitKeyOnly = true)]
-public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject, IStorageData
+public sealed partial class StorageData<TData> : SemaphoreLock, IStructualObject, IStorageData
 {
     public const int MaxHistories = 3; // 4
 
@@ -32,13 +32,13 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject, ISt
     // private StorageId storageId3;
 
     [IgnoreMember]
-    ITreeRoot? ITreeObject.TreeRoot { get; set; }
+    IStructualRoot? IStructualObject.StructualRoot { get; set; }
 
     [IgnoreMember]
-    ITreeObject? ITreeObject.TreeParent { get; set; }
+    IStructualObject? IStructualObject.StructualParent { get; set; }
 
     [IgnoreMember]
-    int ITreeObject.TreeKey { get; set; }
+    int IStructualObject.StructualKey { get; set; }
 
     #endregion
 
@@ -83,7 +83,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject, ISt
             this.data = data;
         }
 
-        if (((ITreeObject)this).TreeRoot is ICrystal crystal)
+        if (((IStructualObject)this).StructualRoot is ICrystal crystal)
         {
             crystal.Crystalizer.Memory.Register(this, sizeHint);
         }
@@ -115,15 +115,15 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject, ISt
                 return true;
             }
 
-            if (((ITreeObject)this).TreeRoot is not ICrystal crystal)
+            if (((IStructualObject)this).StructualRoot is not ICrystal crystal)
             {// No crystal
                 return true;
             }
 
             // Save children
-            if (this.data is ITreeObject treeObject)
+            if (this.data is IStructualObject structualObject)
             {
-                var result = await treeObject.Save(unloadMode).ConfigureAwait(false);
+                var result = await structualObject.Save(unloadMode).ConfigureAwait(false);
                 if (!result)
                 {
                     return false;
@@ -151,7 +151,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject, ISt
                 AddJournal();
                 void AddJournal()
                 {
-                    if (((ITreeObject)this).TryGetJournalWriter(out var root, out var writer, true) == true)
+                    if (((IStructualObject)this).TryGetJournalWriter(out var root, out var writer, true) == true)
                     {
                         if (this is ITinyhandCustomJournal tinyhandCustomJournal)
                         {
@@ -184,12 +184,12 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject, ISt
     public void Erase()
     {
         this.EraseInternal();
-        ((ITreeObject)this).AddJournalRecord(JournalRecord.EraseStorage);
+        ((IStructualObject)this).AddJournalRecord(JournalRecord.EraseStorage);
     }
 
     #region Journal
 
-    bool ITreeObject.ReadRecord(ref TinyhandReader reader)
+    bool IStructualObject.ReadRecord(ref TinyhandReader reader)
     {
         if (!reader.TryPeek(out JournalRecord record))
         {
@@ -203,7 +203,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject, ISt
         }
         else if (record == JournalRecord.AddStorage)
         {
-            if (((ITreeObject)this).TreeRoot is not ICrystal crystal)
+            if (((IStructualObject)this).StructualRoot is not ICrystal crystal)
             {// No crystal
                 return true;
             }
@@ -219,9 +219,9 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject, ISt
             this.data = this.Get().Result;
         }
 
-        if (this.data is ITreeObject treeObject)
+        if (this.data is IStructualObject structualObject)
         {
-            return treeObject.ReadRecord(ref reader);
+            return structualObject.ReadRecord(ref reader);
         }
         else
         {
@@ -229,7 +229,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject, ISt
         }
     }
 
-    void ITreeObject.WriteLocator(ref TinyhandWriter writer)
+    void IStructualObject.WriteLocator(ref TinyhandWriter writer)
     {
     }
 
@@ -242,7 +242,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject, ISt
             return;
         }
 
-        if (((ITreeObject)this).TreeRoot is not ICrystal crystal)
+        if (((IStructualObject)this).StructualRoot is not ICrystal crystal)
         {// No crystal
             return;
         }
@@ -298,12 +298,12 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject, ISt
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void PrepareData(int dataSize)
     {
-        if (this.data is ITreeObject treeObject)
+        if (this.data is IStructualObject structualObject)
         {
-            treeObject.SetParent(this);
+            structualObject.SetParent(this);
         }
 
-        if (((ITreeObject)this).TreeRoot is ICrystal crystal)
+        if (((IStructualObject)this).StructualRoot is ICrystal crystal)
         {
             crystal.Crystalizer.Memory.Register(this, dataSize);
         }
@@ -360,7 +360,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject, ISt
 
     private void EraseInternal()
     {
-        ITreeObject? treeObject;
+        IStructualObject? structualObject;
         ulong id0;
         ulong id1;
         ulong id2;
@@ -368,7 +368,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject, ISt
 
         using (this.Lock())
         {
-            treeObject = this.data as ITreeObject;
+            structualObject = this.data as IStructualObject;
 
             id0 = this.storageId0.FileId;
             id1 = this.storageId1.FileId;
@@ -382,7 +382,7 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject, ISt
             // this.storageId3 = default;
         }
 
-        if (((ITreeObject)this).TreeRoot is ICrystal crystal)
+        if (((IStructualObject)this).StructualRoot is ICrystal crystal)
         {// Delete storage
             var storage = crystal.Storage;
 
@@ -407,9 +407,9 @@ public sealed partial class StorageData<TData> : SemaphoreLock, ITreeObject, ISt
             }*/
         }
 
-        if (treeObject is not null)
+        if (structualObject is not null)
         {
-            treeObject.Erase();
+            structualObject.Erase();
         }
     }
 }

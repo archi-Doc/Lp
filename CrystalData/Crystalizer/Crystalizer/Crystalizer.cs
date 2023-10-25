@@ -995,7 +995,7 @@ public class Crystalizer
                     var plane = reader.ReadUInt32();
                     if (this.planeToCrystal.TryGetValue(plane, out var crystal))
                     {
-                        if (crystal.Data is ITreeObject journalObject)
+                        if (crystal.Data is IStructualObject journalObject)
                         {
                             var currentPosition = position + (ulong)reader.Consumed;
                             if (currentPosition.CircularCompareTo(crystal.Waypoint.JournalPosition) > 0)

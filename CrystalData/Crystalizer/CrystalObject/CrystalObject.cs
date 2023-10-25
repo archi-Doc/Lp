@@ -8,14 +8,14 @@ using Tinyhand.IO;
 
 namespace CrystalData;
 
-public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITreeObject
+public sealed class CrystalObject<TData> : ICrystalInternal<TData>, IStructualObject
     where TData : class, ITinyhandSerialize<TData>, ITinyhandReconstruct<TData>
 {// Data + Journal/Waypoint + Filer/FileConfiguration + Storage/StorageConfiguration
     internal CrystalObject(Crystalizer crystalizer)
     {
         this.Crystalizer = crystalizer;
         this.CrystalConfiguration = CrystalConfiguration.Default;
-        ((ITreeObject)this).TreeRoot = this;
+        ((IStructualObject)this).StructualRoot = this;
     }
 
     #region FieldAndProperty
@@ -245,9 +245,9 @@ public sealed class CrystalObject<TData> : ICrystalInternal<TData>, ITreeObject
             }
         }
 
-        if (obj is ITreeObject treeObject)
+        if (obj is IStructualObject structualObject)
         {
-            if (await treeObject.Save(unloadMode).ConfigureAwait(false) == false)
+            if (await structualObject.Save(unloadMode).ConfigureAwait(false) == false)
             {
                 return CrystalResult.DataIsLocked;
             }
@@ -385,13 +385,13 @@ Exit:
     Waypoint ICrystalInternal.Waypoint
         => this.waypoint;
 
-    ITreeRoot? ITreeObject.TreeRoot { get; set; }
+    IStructualRoot? IStructualObject.StructualRoot { get; set; }
 
-    ITreeObject? ITreeObject.TreeParent { get; set; } = null;
+    IStructualObject? IStructualObject.StructualParent { get; set; } = null;
 
-    int ITreeObject.TreeKey { get; set; } = -1;
+    int IStructualObject.StructualKey { get; set; } = -1;
 
-    /*void ITreeObject.WriteLocator(ref Tinyhand.IO.TinyhandWriter writer)
+    /*void IStructualObject.WriteLocator(ref Tinyhand.IO.TinyhandWriter writer)
     {
         writer.Write_Locator();
         writer.Write(this.waypoint.Plane);
@@ -444,9 +444,9 @@ Exit:
                     break;
                 }
 
-                if (currentObject is ITreeObject treeObject)
+                if (currentObject is IStructualObject structualObject)
                 {
-                    treeObject.SetParent(this);
+                    structualObject.SetParent(this);
                 }
 
                 if (previousObject is not null)
@@ -474,7 +474,7 @@ Exit:
 
                 result.Return();
 
-                if (currentObject is not ITreeObject journalObject)
+                if (currentObject is not IStructualObject journalObject)
                 {
                     break;
                 }
@@ -506,9 +506,9 @@ Exit:
 
     #endregion
 
-    #region ITreeRoot
+    #region Structual
 
-    bool ITreeRoot.TryGetJournalWriter(JournalType recordType, out TinyhandWriter writer)
+    bool IStructualRoot.TryGetJournalWriter(JournalType recordType, out TinyhandWriter writer)
     {
         if (this.Crystalizer.Journal is not null)
         {
@@ -525,7 +525,7 @@ Exit:
         }
     }
 
-    ulong ITreeRoot.AddJournal(in TinyhandWriter writer)
+    ulong IStructualRoot.AddJournal(in TinyhandWriter writer)
     {
         if (this.Crystalizer.Journal is not null)
         {
@@ -537,7 +537,7 @@ Exit:
         }
     }
 
-    bool ITreeRoot.TryAddToSaveQueue()
+    bool IStructualRoot.TryAddToSaveQueue()
     {
         if (this.CrystalConfiguration.SavePolicy == SavePolicy.OnChanged)
         {
@@ -564,7 +564,7 @@ Exit:
 
     #endregion
 
-    private bool ReadJournal(ITreeObject journalObject, ReadOnlyMemory<byte> data, uint currentPlane)
+    private bool ReadJournal(IStructualObject journalObject, ReadOnlyMemory<byte> data, uint currentPlane)
     {
         var reader = new TinyhandReader(data.Span);
         var success = true;
@@ -826,7 +826,7 @@ Exit:
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void SetJournal()
     {
-        if (this.data is ITreeObject journalObject)
+        if (this.data is IStructualObject journalObject)
         {
             // journalObject.Journal = this;
             journalObject.SetParent(this);

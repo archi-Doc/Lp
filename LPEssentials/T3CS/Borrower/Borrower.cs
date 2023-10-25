@@ -5,7 +5,7 @@ using ValueLink;
 
 namespace LP.T3CS;
 
-[TinyhandObject(Tree = false)]
+[TinyhandObject(Structual = false)]
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
 public sealed partial record Borrower // : ITinyhandCustomJournal
 {

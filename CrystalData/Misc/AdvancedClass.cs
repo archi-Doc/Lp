@@ -2,7 +2,7 @@
 
 namespace CrystalData;
 
-[TinyhandObject(Tree = true)]
+[TinyhandObject(Structual = true)]
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
 public partial record AdvancedClass
 {// This is it. This class is the crystal of the most advanced data management architecture I've reached so far.

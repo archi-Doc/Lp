@@ -5,7 +5,7 @@ using ValueLink;
 
 namespace LP.T3CS;
 
-[TinyhandObject(Tree = true)]
+[TinyhandObject(Structual = true)]
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
 public partial record CreditData
 {

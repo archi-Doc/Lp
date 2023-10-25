@@ -31,7 +31,7 @@ public partial class TtlData : TtlBase
 
 }
 
-[TinyhandObject(Tree = true)]
+[TinyhandObject(Structual = true)]
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
 internal partial record StandardData
 {
@@ -53,7 +53,7 @@ internal partial record StandardData
         => $"{this.id} {this.name} ({this.age.ToString()})";
 }
 
-[TinyhandObject(Tree = true)]
+[TinyhandObject(Structual = true)]
 internal partial class ManualClass
 {
     [Key(0, AddProperty = "Id")]
@@ -63,7 +63,7 @@ internal partial class ManualClass
         => $"Manual class {this.id}";
 }
 
-[TinyhandObject(Tree = true)]
+[TinyhandObject(Structual = true)]
 internal partial class CombinedClass
 {
     [Key(0)]

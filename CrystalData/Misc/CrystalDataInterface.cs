@@ -6,7 +6,7 @@ using Tinyhand.IO;
 namespace CrystalData;
 
 /*[TinyhandObject]
-public partial class CrystalDataInterface : ITinyhandSerialize<CrystalDataInterface>, ITinyhandReconstruct<CrystalDataInterface>, ITreeObject
+public partial class CrystalDataInterface : ITinyhandSerialize<CrystalDataInterface>, ITinyhandReconstruct<CrystalDataInterface>, IStructualObject
 {
     public CrystalDataInterface()
     {
@@ -52,23 +52,23 @@ public partial class CrystalDataInterface : ITinyhandSerialize<CrystalDataInterf
     }
 
     public bool TryAddToSaveQueue()
-        => ((ITreeObject)this).TreeRoot?.TryAddToSaveQueue() == true;
+        => ((IStructualObject)this).StructualRoot?.TryAddToSaveQueue() == true;
 
     [IgnoreMember]
-    ITreeRoot? ITreeObject.TreeRoot { get; set; }
+    IStructualRoot? IStructualObject.StructualRoot { get; set; }
 
     [IgnoreMember]
-    ITreeObject? ITreeObject.TreeParent { get; set; }
+    IStructualObject? IStructualObject.StructualParent { get; set; }
 
     [IgnoreMember]
-    int ITreeObject.TreeKey { get; set; } = -1;
+    int IStructualObject.StructualKey { get; set; } = -1;
 
-    void ITreeObject.SetParent(ITreeObject? parent, int key)
+    void IStructualObject.SetParent(IStructualObject? parent, int key)
     {
-        ((ITreeObject)this).SetParentActual(parent, key);
+        ((IStructualObject)this).SetParentActual(parent, key);
     }
 
-    bool ITreeObject.ReadRecord(ref TinyhandReader reader)
+    bool IStructualObject.ReadRecord(ref TinyhandReader reader)
     {
         return false;
     }
