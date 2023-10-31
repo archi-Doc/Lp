@@ -24,7 +24,7 @@
     <PackageReference Include="Arc.Crypto" Version="1.19.1" />
     <PackageReference Include="Arc.Unit" Version="0.7.0" />
     <PackageReference Include="BigMachines" Version="0.25.1" />
-    <ProjectReference Include="..\CrystalData\CrystalData.csproj" />
+    <PackageReference Include="CrystalData" Version="0.9.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
     <PackageReference Include="SimpleCommandLine" Version="0.18.0" />
     <PackageReference Include="Tinyhand" Version="0.68.0" />

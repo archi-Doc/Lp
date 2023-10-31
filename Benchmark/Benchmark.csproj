@@ -25,7 +25,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\LPEssentials\LPEssentials.csproj" />
-    <ProjectReference Include="..\CrystalData\CrystalData.csproj" />
   </ItemGroup>
 
 </Project>
