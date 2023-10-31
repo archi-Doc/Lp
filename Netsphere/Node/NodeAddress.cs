@@ -20,7 +20,7 @@ namespace Netsphere;
 public partial class NodeAddress : IEquatable<NodeAddress>
 {
     public const int AlternativePort = 49151;
-    public static readonly NodeAddress Alternative = new(IPAddress.Loopback, AlternativePort);
+    public static readonly NodeAddress Alternative = new(IPAddress.IPv6Loopback, AlternativePort); // new(IPAddress.IPv6Loopback, AlternativePort);
 
     public static bool TryParse(string text, [NotNullWhen(true)] out NodeAddress? node)
         => TryParse(text, out node, out _);
@@ -39,13 +39,13 @@ public partial class NodeAddress : IEquatable<NodeAddress>
         if (span.StartsWith("["))
         {
             index = span.IndexOf(']');
-            if (index < 0 || index >= (span.Length - 1))
+            if (index < 0 || index >= span.Length)
             {
                 return false;
             }
 
             address = span.Slice(1, index - 1);
-            span = span.Slice(index + 2);
+            span = span.Slice(index + 1);
         }
         else
         {

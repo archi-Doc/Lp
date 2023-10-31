@@ -20,9 +20,9 @@ public partial interface IMergerService : IAuthorizedService
         {
         }
 
-        [Key(0, AddProperty = "Name")]
+        [Key(0, AddProperty = "MergerName")]
         [MaxLength(16)]
-        private string name = default!;
+        private string mergerName = default!;
     }
 
     NetTask<MergerResult> CreateCredit(Merger.CreateCreditParams param);
@@ -42,11 +42,11 @@ public class MergerServiceImpl : AuthorizedService, IMergerService
         return this.merger.Information.ToInformationResult();
     }
 
-    public async NetTask<MergerResult> CreateCredit(Merger.CreateCreditParams param)
+    public NetTask<MergerResult> CreateCredit(Merger.CreateCreditParams param)
     {
         if (!this.Engaged)
         {
-            return MergerResult.NotAuthorized;
+            return new(MergerResult.NotAuthorized);
         }
 
         return this.merger.CreateCredit(LPCallContext.Current.ServerContext, param);

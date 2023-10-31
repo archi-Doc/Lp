@@ -3,9 +3,6 @@
 using System.Diagnostics.CodeAnalysis;
 using LP.T3CS;
 
-#pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
-#pragma warning disable SA1401 // Fields should be private
-
 namespace Netsphere;
 
 /// <summary>

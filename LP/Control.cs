@@ -10,7 +10,6 @@ global using BigMachines;
 global using CrystalData;
 global using LP;
 global using Tinyhand;
-using LP.Crystal;
 using LP.Data;
 using LP.Services;
 using LP.T3CS;
@@ -51,9 +50,6 @@ public class Control : ILogInformation
                 context.AddSingleton<Seedphrase>();
                 // context.AddSingleton<Merger>();
                 context.Services.TryAddSingleton<Merger.Provider>(x => x.GetRequiredService<Control>().MergerProvider);
-
-                // Crystal
-                context.AddSingleton<Mono>();
 
                 // RPC / Services
                 context.AddSingleton<NetServices.AuthorizedTerminalFactory>();
@@ -170,28 +166,60 @@ public class Control : ILogInformation
             this.SetupOptions<CrystalizerOptions>((context, options) =>
             {// CrystalizerOptions
                 context.GetOptions<LPOptions>(out var lpOptions);
-                options.RootPath = lpOptions.RootDirectory;
-                options.GlobalDirectory = new LocalDirectoryConfiguration("Local");
+                // options.RootPath = lpOptions.RootDirectory;
+                options.GlobalDirectory = new LocalDirectoryConfiguration(LPBase.DataDirectoryName);
                 options.EnableFilerLogger = false;
             });
 
-            var crystalControlBuilder = new CrystalControl.Builder()
-            .ConfigureCrystal(context =>
-            {
-                context.AddCrystal<LPSettings>(CrystalConfiguration.SingleUtf8(true, new GlobalFileConfiguration(LPSettings.Filename)));
-                context.AddCrystal<MergerInformation>(CrystalConfiguration.SingleUtf8(true, new GlobalFileConfiguration(MergerInformation.Filename)));
-
-                /*context.AddCrystal<PublicIPMachine.Data>(new CrystalConfiguration() with
-                {
-                    SaveFormat = SaveFormat.Utf8,
-                    FileConfiguration = new GlobalFileConfiguration("PublicIP2.tinyhand"),
-                    NumberOfHistoryFiles = 0,
-                });*/
-            });
+            var crystalControlBuilder = this.CrystalBuilder();
 
             this.AddBuilder(new NetControl.Builder());
             this.AddBuilder(crystalControlBuilder);
             this.AddBuilder(new LP.Logging.LPLogger.Builder());
+        }
+
+        private CrystalControl.Builder CrystalBuilder()
+        {
+            return new CrystalControl.Builder()
+                .ConfigureCrystal(context =>
+                {
+                    context.AddCrystal<LPSettings>(CrystalConfiguration.SingleUtf8(true, new GlobalFileConfiguration(LPSettings.Filename)));
+                    context.AddCrystal<MergerInformation>(CrystalConfiguration.SingleUtf8(true, new GlobalFileConfiguration(MergerInformation.Filename)));
+
+                    /*context.AddCrystal<CrystalDataInterface>(new()
+                    {
+                        SavePolicy = SavePolicy.OnChanged,
+                        NumberOfFileHistories = 0,
+                        FileConfiguration = new GlobalFileConfiguration("Vault.Filename.tinyhand"),
+                    });*/
+
+                    context.AddCrystal<Mono>(new()
+                    {
+                        SavePolicy = SavePolicy.Periodic,
+                        SaveInterval = TimeSpan.FromMinutes(10),
+                        SaveFormat = SaveFormat.Binary,
+                        NumberOfFileHistories = 0,
+                        FileConfiguration = new GlobalFileConfiguration("Mono"),
+                    });
+
+                    context.AddCrystal<CreditData.GoshujinClass>(new()
+                    {
+                        SavePolicy = SavePolicy.Periodic,
+                        SaveInterval = TimeSpan.FromMinutes(10),
+                        SaveFormat = SaveFormat.Binary,
+                        NumberOfFileHistories = 3,
+                        FileConfiguration = new GlobalFileConfiguration("Merger/Credits"),
+                        StorageConfiguration = new SimpleStorageConfiguration(
+                            new GlobalDirectoryConfiguration("Merger/Storage")),
+                    });
+
+                    /*context.AddCrystal<PublicIPMachine.Data>(new CrystalConfiguration() with
+                    {
+                        SaveFormat = SaveFormat.Utf8,
+                        FileConfiguration = new GlobalFileConfiguration("PublicIP2.tinyhand"),
+                        NumberOfHistoryFiles = 0,
+                    });*/
+                });
         }
 
         private void LoadStrings()
@@ -272,12 +300,15 @@ public class Control : ILogInformation
         {
             try
             {
+                // Crystalizer
+                var crystalizer = this.Context.ServiceProvider.GetRequiredService<Crystalizer>();
+
                 // Vault
                 var vault = this.Context.ServiceProvider.GetRequiredService<Vault>();
                 await vault.LoadAsync();
+                ((StorageKeyVault)this.Context.ServiceProvider.GetRequiredService<IStorageKey>()).Vault = vault;
 
-                // Crystalizer
-                var crystalizer = this.Context.ServiceProvider.GetRequiredService<Crystalizer>();
+                // Load
                 var result = await crystalizer.PrepareAndLoadAll();
                 if (result != CrystalResult.Success)
                 {
@@ -345,7 +376,7 @@ public class Control : ILogInformation
         }
     }
 
-    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, Crystalizer crystalizer, Mono mono, Vault vault, AuthorityVault authorityVault, LPSettings settings)
+    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, Crystalizer crystalizer, Vault vault, AuthorityVault authorityVault, LPSettings settings)
     {
         this.Logger = logger;
         this.UserInterfaceService = userInterfaceService;
@@ -354,7 +385,6 @@ public class Control : ILogInformation
         this.NetControl = netsphere;
         this.NetControl.SetupServer(() => new NetServices.LPServerContext(), () => new NetServices.LPCallContext());
         this.Crystalizer = crystalizer;
-        this.Mono = mono;
         this.Vault = vault;
         this.AuthorityVault = authorityVault;
         this.LPBase.Settings = settings;
@@ -387,12 +417,6 @@ public class Control : ILogInformation
 
     public async Task LoadAsync(UnitContext context)
     {
-        // CrystalData
-        if (!await this.Mono.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Mono.DefaultMonoFile)).ConfigureAwait(false))
-        {
-            await this.Mono.LoadAsync(Path.Combine(this.LPBase.DataDirectory, Mono.DefaultMonoBackup)).ConfigureAwait(false);
-        }
-
         await context.SendLoadAsync(new(this.LPBase.DataDirectory));
     }
 
@@ -408,8 +432,6 @@ public class Control : ILogInformation
         // Vault
         this.Vault.Add(NodePrivateKey.PrivateKeyPath, this.NetControl.NetBase.SerializeNodeKey());
         await this.Vault.SaveAsync();
-
-        await this.Mono.SaveAsync(Path.Combine(this.LPBase.DataDirectory, Mono.DefaultMonoFile), Path.Combine(this.LPBase.DataDirectory, Mono.DefaultMonoBackup));
 
         await context.SendSaveAsync(new(this.LPBase.DataDirectory));
 
@@ -611,8 +633,6 @@ public class Control : ILogInformation
     public Merger.Provider MergerProvider { get; }
 
     public Crystalizer Crystalizer { get; }
-
-    public Mono Mono { get; }
 
     public Vault Vault { get; }
 

@@ -22,11 +22,11 @@ public class NetSocket
             IPEndPoint anyEP;
             if (core.socket.UnsafeUdpClient?.Client.AddressFamily == AddressFamily.InterNetwork)
             {
-                anyEP = new IPEndPoint(IPAddress.Any, IPEndPoint.MinPort);
+                anyEP = new IPEndPoint(IPAddress.Any, 0); // IPEndPoint.MinPort
             }
             else
             {
-                anyEP = new IPEndPoint(IPAddress.IPv6Any, IPEndPoint.MinPort);
+                anyEP = new IPEndPoint(IPAddress.IPv6Any, 0); // IPEndPoint.MinPort
             }
 
             ByteArrayPool.Owner? arrayOwner = null;
@@ -204,7 +204,7 @@ public class NetSocket
 
     private void PrepareUdpClient(int port)
     {
-        var udp = new UdpClient(port);
+        var udp = new UdpClient(port, AddressFamily.InterNetworkV6); // tempcode
         try
         {
             const int SIO_UDP_CONNRESET = -1744830452;

@@ -74,23 +74,6 @@ public class Program
                         NumberOfFileHistories = 2,
                     });
 
-                /*context.AddCrystal<ValueClass.GoshujinClass>(
-                    CrystalConfiguration.SingleUtf8(false, new LocalFileConfiguration("Local/ValueClass.tinyhand")));
-
-                context.AddCrystal<StandardData.GoshujinClass>(
-                    CrystalConfiguration.SingleUtf8(false, new LocalFileConfiguration("Local/StandardData.tinyhand")));
-
-                context.AddBigCrystal<BaseData>(new BigCrystalConfiguration() with
-                {
-                    RegisterDatum = registry =>
-                    {
-                        registry.Register<ObjectDatum<LocalFileConfiguration>>(1, x => new ObjectDatumImpl<LocalFileConfiguration>(x));
-                    },
-                    FileConfiguration = new LocalFileConfiguration("Local/BaseData/Crystal"),
-                    // BackupFileConfiguration = new LocalFileConfiguration("Backup/BaseData/Crystal"),
-                    StorageConfiguration = new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/BaseData/Storage")),
-                });*/
-
                 AdvancedClass.Register(context);
             }))
             .SetupOptions<CrystalizerOptions>((context, options) =>

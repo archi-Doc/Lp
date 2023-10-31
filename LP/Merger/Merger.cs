@@ -4,6 +4,7 @@ using LP.NetServices;
 using LP.NetServices.T3CS;
 using LP.T3CS;
 using Microsoft.Extensions.DependencyInjection;
+using Netsphere;
 
 namespace LP;
 
@@ -23,7 +24,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
                 context,
                 context.ServiceProvider.GetRequiredService<ILogger<Merger>>(),
                 context.ServiceProvider.GetRequiredService<LPBase>(),
-                // context.ServiceProvider.GetRequiredService<IBigCrystal<MergerData>>(),
+                context.ServiceProvider.GetRequiredService<ICrystal<CreditData.GoshujinClass>>(),
                 context.ServiceProvider.GetRequiredService<MergerInformation>());
 
             return this.merger;
@@ -32,12 +33,12 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         private Merger? merger;
     }
 
-    public Merger(UnitContext context, ILogger<Merger> logger, LPBase lpBase, /*IBigCrystal<MergerData> crystal, */MergerInformation mergerInformation)
+    public Merger(UnitContext context, ILogger<Merger> logger, LPBase lpBase, ICrystal<CreditData.GoshujinClass> crystal, MergerInformation mergerInformation)
         : base(context)
     {
         this.logger = logger;
         this.lpBase = lpBase;
-
+        this.crystal = crystal;
         this.Information = mergerInformation;
     }
 
@@ -60,7 +61,7 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     public partial record CreateCreditParams(
         [property: Key(0)] CreateCreditProof Proof);
 
-    public MergerResult CreateCredit(LPServerContext context, CreateCreditParams param)
+    public async NetTask<MergerResult> CreateCredit(LPServerContext context, CreateCreditParams param)
     {
         if (!param.Proof.ValidateAndVerify())
         {
@@ -68,25 +69,22 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
         }
 
         // Get LpData
-        /*var root = this.crystal.Data;
+        var g = this.crystal.Data;
         var identifier = param.Proof.PublicKey.ToIdentifier();
-        var credit = root.TryGetChild(identifier);
-        if (credit != null)
+        /*if (g.Contains(Credit.Default))
         {
             return MergerResult.AlreadyExists;
-        }
+        }*/
 
-        // Set CreditBlock
-        credit = root.GetOrCreateChild(identifier);
-        using (var op = credit.Lock<BlockDatum>())
+        /*using (var w = g.TryLock(Credit.Default, ValueLink.TryLockMode.Create))
         {
-            if (op.Datum == null)
+            if (w is null)
             {
-                return MergerResult.NoData;
+                return MergerResult.AlreadyExists;
             }
 
-            credit.DataId = LpData.LpDataId.Credit;
-            op.Datum.SetObject(new CreditBlock(param.Proof.PublicKey));
+            var borrowers = await w.Borrowers.Get();
+            w.Commit();
         }*/
 
         return MergerResult.Success;
@@ -98,12 +96,14 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
     {
         this.logger.TryGet()?.Log("Merger started");
 
-        /*this.crystal.Data.TryGetChild(default);
-        var numberOfCredits = this.crystal.Data.Count(LpData.LpDataId.Credit);
-        this.logger.TryGet()?.Log($"Credits: {numberOfCredits}");*/
+        this.Information.SingleCredit = Credit.Default;
+
+        this.logger.TryGet()?.Log($"Credits: {this.crystal.Data.Count}");
+
+        // throw new PanicException();
     }
 
     private ILogger logger;
     private LPBase lpBase;
-    // private IBigCrystal<MergerData> crystal;
+    private ICrystal<CreditData.GoshujinClass> crystal;
 }

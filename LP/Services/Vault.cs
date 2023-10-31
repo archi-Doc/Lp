@@ -5,16 +5,26 @@ using Arc.Collections;
 
 namespace LP;
 
+// public class VaultData : CrystalDataInterface;
+
 public partial class Vault
 {
     public const string Filename = "Vault.tinyhand";
 
-    public Vault(ILogger<Vault> logger, IUserInterfaceService userInterfaceService, LPBase lpBase)
+    public Vault(ILogger<Vault> logger, IUserInterfaceService userInterfaceService, LPBase lpBase, CrystalizerOptions options/*, CrystalDataInterface vaultData*/)
     {// Vault cannot use Crystalizer due to its dependency on IStorageKey.
         this.logger = logger;
         this.userInterfaceService = userInterfaceService;
         this.lpBase = lpBase;
-        this.path = this.lpBase.CombineDataPath(this.lpBase.Options.Vault, Vault.Filename);
+        // this.vaultData = vaultData;
+        if (!string.IsNullOrEmpty(this.lpBase.Options.VaultPath))
+        {
+            this.path = this.lpBase.Options.VaultPath;
+        }
+        else
+        {
+            this.path = PathHelper.GetRootedFile(this.lpBase.RootDirectory, options.GlobalDirectory.CombineFile(Filename).Path);
+        }
     }
 
     #region FieldAndProperty
@@ -24,6 +34,7 @@ public partial class Vault
     private readonly ILogger<Vault> logger;
     private readonly IUserInterfaceService userInterfaceService;
     private readonly LPBase lpBase;
+    // private readonly CrystalDataInterface vaultData;
     private readonly string path;
 
     private readonly object syncObject = new();
@@ -205,6 +216,7 @@ public partial class Vault
         {
             var items = this.GetEncrypted();
             var bytes = TinyhandSerializer.SerializeToUtf8(items);
+            // this.vaultData.Data = bytes;
             await File.WriteAllBytesAsync(this.path, bytes).ConfigureAwait(false);
         }
         catch
@@ -288,6 +300,7 @@ public partial class Vault
         byte[] data;
         try
         {
+            // data = this.vaultData.Data;
             data = await File.ReadAllBytesAsync(this.path).ConfigureAwait(false);
         }
         catch

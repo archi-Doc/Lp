@@ -7,7 +7,7 @@ using ValueLink;
 
 namespace CrystalDataTest;
 
-[TinyhandObject(Tree = true)]
+[TinyhandObject(Structual = true)]
 [ValueLinkObject(Isolation = IsolationLevel.RepeatableRead)]
 public partial record TestClass
 {// This is it. This class is the crystal of the most advanced data management architecture I've reached so far.
@@ -58,8 +58,6 @@ public class CrystalTestSubcommand : ISimpleCommandAsync<CrystalTestOptions>
 
     public async Task RunAsync(CrystalTestOptions options, string[] args)
     {
-        var mono = new Mono();
-
         var sw = Stopwatch.StartNew();
         Console.WriteLine($"Start: {sw.ElapsedMilliseconds} ms");
 

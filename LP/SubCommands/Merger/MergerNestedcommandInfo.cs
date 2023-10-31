@@ -39,7 +39,7 @@ public class MergerNestedcommandInfo : ISimpleCommandAsync
             var response = await service.GetInformation().ResponseAsync;
             if (response.IsSuccess && response.Value is { } informationResult)
             {
-                this.logger.TryGet()?.Log(informationResult.Name);
+                this.logger.TryGet()?.Log(informationResult.MergerName);
             }
 
             /*var token = await terminal.CreateToken(Token.Type.RequestAuthorization);

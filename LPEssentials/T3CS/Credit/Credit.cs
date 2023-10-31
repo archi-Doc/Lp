@@ -1,16 +1,118 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+
 namespace LP.T3CS;
 
+public static class StringConvertibleExtension
+{
+    [SkipLocalsInit]
+    public static string TryFormat<T>(this T obj)
+        where T : IStringConvertible<T>
+    { // MemoryMarshal.CreateSpan<char>(ref MemoryMarshal.GetReference(str.AsSpan()), str.Length);
+        scoped Span<char> destination;
+        var length = obj.GetStringLength();
+        destination = length <= 1024 ? stackalloc char[length] : new char[length];
+
+        obj.TryFormat(destination, out var written);
+        return new string(destination);
+    }
+}
+
 /// <summary>
-/// Represents a credit information (@Originator:Standard/Mergers).
+/// Represents a credit information (@Originator:Standard/Merger1+Merger2).
 /// </summary>
 [TinyhandObject]
-public sealed partial class Credit : IValidatable, IEquatable<Credit>
+public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringConvertible<Credit>
 {
-    public const char Identifier = '@';
+    public const char CreditSymbol = '@';
+    public const char StandardSymbol = ':';
+    public const char MergerSymbol = '/';
+    public const char MergerSeparator = '+';
     public const int MaxMergers = 4;
     public static readonly Credit Default = new();
+
+    public static bool TryParse(ReadOnlySpan<char> source, out Credit? instance)
+    {
+        instance = default;
+        var span = source.Trim();
+
+        if (span.Length < 1 || span[0] != CreditSymbol)
+        {// @
+            return false;
+        }
+
+        span = span.Slice(1);
+        if (span.Length < KeyHelper.PublicKeyLengthInBase64 || !SignaturePublicKey.TryParse(span, out var originator))
+        {// Originator
+            return false;
+        }
+
+        span = span.Slice(KeyHelper.PublicKeyLengthInBase64);
+        if (span.Length < 1 || span[0] != StandardSymbol)
+        {// :
+            return false;
+        }
+
+        instance = new Credit();
+        instance.Originator = originator;
+        return true;
+    }
+
+    public int GetStringLength()
+    {
+        var length = 1 + this.Originator.GetStringLength() + 1 + this.Standard.GetStringLength(); // @Originator:Standard/Merger1+Merger2
+        foreach (var x in this.mergers)
+        {
+            length += 1 + x.GetStringLength();
+        }
+
+        return length;
+    }
+
+    public bool TryFormat(Span<char> destination, out int written)
+    {
+        written = 0;
+        var length = this.GetStringLength();
+        if (destination.Length < length)
+        {
+            return false;
+        }
+
+        var span = destination;
+        span[0] = CreditSymbol;
+        span = span.Slice(1);
+
+        if (!this.Originator.TryFormat(span, out var w))
+        {
+            return false;
+        }
+
+        span = span.Slice(w);
+        span[0] = StandardSymbol;
+        span = span.Slice(1);
+
+        if (!this.Standard.TryFormat(span, out w))
+        {
+            return false;
+        }
+
+        span = span.Slice(w);
+
+        foreach (var x in this.mergers)
+        {
+            if (!x.TryFormat(span, out w))
+            {
+                return false;
+            }
+
+            span = span.Slice(w);
+        }
+
+        written = length;
+        return true;
+    }
 
     public Credit()
     {
