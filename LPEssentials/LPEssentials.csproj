@@ -27,8 +27,8 @@
     <ProjectReference Include="..\CrystalData\CrystalData.csproj" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
     <PackageReference Include="SimpleCommandLine" Version="0.18.0" />
-    <PackageReference Include="Tinyhand" Version="0.67.0" />
-    <PackageReference Include="ValueLink" Version="0.48.0" />
+    <PackageReference Include="Tinyhand" Version="0.68.0" />
+    <PackageReference Include="ValueLink" Version="0.49.0" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.507">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
