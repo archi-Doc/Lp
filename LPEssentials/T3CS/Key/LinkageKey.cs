@@ -49,10 +49,6 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
         return new(publicKey, newKey, destination);
     }
 
-    public LinkageKey()
-    {
-    }
-
     private LinkageKey(SignaturePublicKey publicKey)
     {// Raw
         this.Key = publicKey;

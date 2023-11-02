@@ -104,10 +104,6 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
         return Base64.Url.FromByteArrayToSpan(span, destination, out written);
     }
 
-    public SignaturePublicKey()
-    {
-    }
-
     internal SignaturePublicKey(byte keyValue, ReadOnlySpan<byte> x)
     {
         this.keyValue = KeyHelper.ToPublicKeyValue(keyValue);

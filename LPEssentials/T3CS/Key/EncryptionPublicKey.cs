@@ -43,10 +43,6 @@ public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<En
         return false;
     }
 
-    public EncryptionPublicKey()
-    {
-    }
-
     internal EncryptionPublicKey(byte keyValue, ReadOnlySpan<byte> x)
     {
         this.keyValue = KeyHelper.ToPublicKeyValue(keyValue);

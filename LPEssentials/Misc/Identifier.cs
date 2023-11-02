@@ -22,14 +22,6 @@ public readonly partial struct Identifier : IEquatable<Identifier>, IComparable<
     public static Identifier FromReadOnlySpan(ReadOnlySpan<byte> input)
         => new(Sha3Helper.Get256_UInt64(input));
 
-    public Identifier()
-    {
-        this.Id0 = 0;
-        this.Id1 = 0;
-        this.Id2 = 0;
-        this.Id3 = 0;
-    }
-
     public Identifier(int id0)
     {
         this.Id0 = (ulong)id0;

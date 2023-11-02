@@ -46,10 +46,6 @@ public partial class Vault
     [TinyhandObject]
     private partial struct DecryptedItem
     {
-        public DecryptedItem()
-        {
-        }
-
         public DecryptedItem(byte[] decrypted)
         {
             this.Decrypted = decrypted;
@@ -62,11 +58,6 @@ public partial class Vault
     [TinyhandObject]
     private partial struct EncryptedItem
     {
-        public EncryptedItem()
-        {
-            this.Hint = 0;
-        }
-
         public EncryptedItem(int hint, byte[] encrypted)
         {
             this.Hint = (byte)hint;

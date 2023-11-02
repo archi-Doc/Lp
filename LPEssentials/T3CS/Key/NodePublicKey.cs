@@ -49,10 +49,6 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
         return false;
     }
 
-    public NodePublicKey()
-    {
-    }
-
     internal NodePublicKey(byte keyValue, ReadOnlySpan<byte> x)
     {
         this.keyValue = KeyHelper.ToPublicKeyValue(keyValue);
