@@ -4,8 +4,8 @@ using CrystalData;
 
 namespace Netsphere.Machines;
 
-[MachineObject(0xc701fc35, Group = typeof(SingleGroup<>))]
-public partial class PublicIPMachine : Machine<Identifier>
+[MachineObject(UseServiceProvider = true)]
+public partial class PublicIPMachine : Machine
 {
     private const string Filename = "PublicIP.tinyhand";
     private const string IcanhazipUriIPv4 = "http://ipv4.icanhazip.com"; // "http://icanhazip.com"
@@ -20,8 +20,7 @@ public partial class PublicIPMachine : Machine<Identifier>
         public IPAddress? IPAddress { get; set; }
     }
 
-    public PublicIPMachine(ILogger<PublicIPMachine> logger, BigMachine<Identifier> bigMachine, LPBase lpBase, NetControl netControl, Crystalizer crystalizer)
-        : base(bigMachine)
+    public PublicIPMachine(ILogger<PublicIPMachine> logger, LPBase lpBase, NetControl netControl, Crystalizer crystalizer)
     {
         this.logger = logger;
         this.lpBase = lpBase;

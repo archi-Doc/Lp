@@ -102,7 +102,7 @@ public class NetControl : UnitBase, IUnitPreparable
         }
     }
 
-    public NetControl(UnitContext context, UnitLogger logger, NetBase netBase, BigMachine<Identifier> bigMachine, Terminal terminal, EssentialNode node, NetStatus netStatus)
+    public NetControl(UnitContext context, UnitLogger logger, NetBase netBase, Terminal terminal, EssentialNode node, NetStatus netStatus)
         : base(context)
     {
         this.logger = logger;
@@ -110,7 +110,6 @@ public class NetControl : UnitBase, IUnitPreparable
         this.NewServerContext = () => new ServerContext();
         this.NewCallContext = () => new CallContext();
         this.NetBase = netBase;
-        this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
 
         this.Terminal = terminal;
         if (this.NetBase.NetsphereOptions.EnableAlternative)
@@ -186,8 +185,6 @@ public class NetControl : UnitBase, IUnitPreparable
     public Func<CallContext> NewCallContext { get; private set; }
 
     public NetBase NetBase { get; }
-
-    public BigMachine<Identifier> BigMachine { get; }
 
     public MyStatus MyStatus => this.Terminal.MyStatus;
 

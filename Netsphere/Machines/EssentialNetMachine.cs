@@ -8,11 +8,11 @@ namespace Netsphere.Machines;
 /// 2: Determine MyStatus.ConnectionType.<br/>
 /// 3: Check essential nodes.
 /// </summary>
-[MachineObject(0x4792ab0f, Group = typeof(SingleGroup<>))]
-public partial class EssentialNetMachine : Machine<Identifier>
+[MachineObject(UseServiceProvider = true)]
+public partial class EssentialNetMachine : Machine
 {
-    public EssentialNetMachine(ILogger<EssentialNetMachine> logger, BigMachine<Identifier> bigMachine, LPBase lpBase, NetBase netBase, NetControl netControl)
-        : base(bigMachine)
+    public EssentialNetMachine(ILogger<EssentialNetMachine> logger, LPBase lpBase, NetBase netBase, NetControl netControl)
+        : base()
     {
         this.logger = logger;
         this.NetBase = netBase;

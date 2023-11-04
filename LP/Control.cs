@@ -22,6 +22,10 @@ using SimpleCommandLine;
 
 namespace LP;
 
+[BigMachineObject(Inclusive = true)]
+[AddMachine<Netsphere.Machines.NtpMachine>]
+public partial class BigMachine;
+
 public class Control : ILogInformation
 {
     public class Builder : UnitBuilder<Unit>
