@@ -2,9 +2,15 @@
 
 using Arc.Threading;
 using Arc.Unit;
+using BigMachines;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace LPRunner;
+
+[BigMachineObject(Inclusive = true)]
+public partial class BigMachine
+{
+}
 
 public class Program
 {

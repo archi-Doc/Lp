@@ -24,7 +24,7 @@ namespace LP;
 
 [BigMachineObject(Inclusive = true)]
 [AddMachine<Netsphere.Machines.NtpMachine>]
-public partial class BigMachine;
+public partial class LPBigMachine;
 
 public class Control : ILogInformation
 {
@@ -380,7 +380,7 @@ public class Control : ILogInformation
         }
     }
 
-    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, Crystalizer crystalizer, Vault vault, AuthorityVault authorityVault, LPSettings settings)
+    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, LPBigMachine bigMachine, NetControl netsphere, Crystalizer crystalizer, Vault vault, AuthorityVault authorityVault, LPSettings settings)
     {
         this.Logger = logger;
         this.UserInterfaceService = userInterfaceService;
@@ -444,9 +444,11 @@ public class Control : ILogInformation
 
     public async Task RunAsync(UnitContext context)
     {
-        this.BigMachine.Start();
+        this.BigMachine.
+        this.BigMachine.Start(ThreadCore.Root);
 
         // this.BigMachine.CreateOrGet<EssentialNetMachine.Interface>(Identifier.Zero)?.RunAsync();
+        this.BigMachine.
         this.BigMachine.CreateOrGet<NtpMachine.Interface>(Identifier.Zero)?.RunAsync();
         this.BigMachine.CreateOrGet<PublicIPMachine.Interface>(Identifier.Zero)?.RunAsync();
 
@@ -630,7 +632,7 @@ public class Control : ILogInformation
 
     public LPBase LPBase { get; }
 
-    public BigMachine<Identifier> BigMachine { get; }
+    public LPBigMachine BigMachine { get; }
 
     public NetControl NetControl { get; }
 

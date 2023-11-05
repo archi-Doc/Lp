@@ -11,7 +11,7 @@ namespace LP.NetServices;
 [NetServiceObject]
 internal class RemoteControlService : IRemoteControlService
 {// Remote -> LPRunner
-    public RemoteControlService(ILogger<RemoteControlService> logger, BigMachine<Identifier> bigMachine, Terminal terminal, RunnerInformation information)
+    public RemoteControlService(ILogger<RemoteControlService> logger, BigMachine bigMachine, Terminal terminal, RunnerInformation information)
     {
         this.logger = logger;
         this.bigMachine = bigMachine;
@@ -58,10 +58,10 @@ internal class RemoteControlService : IRemoteControlService
             this.logger.TryGet()?.Log($"Restart: {result}");
             if (result == NetResult.Success)
             {
-                var machine = this.bigMachine.TryGet<RunnerMachine.Interface>(Identifier.Zero);
+                var machine = this.bigMachine.RunnerMachine.Get();
                 if (machine != null)
                 {
-                    _ = machine.CommandAsync(RunnerMachine.Command.Restart);
+                    _ = machine.Command.Restart();
                 }
             }
 
@@ -70,7 +70,7 @@ internal class RemoteControlService : IRemoteControlService
     }
 
     private ILogger<RemoteControlService> logger;
-    private BigMachine<Identifier> bigMachine;
+    private BigMachine bigMachine;
     private Terminal terminal;
     private RunnerInformation information;
     private Token? token;

@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Arc.Threading;
 using Arc.Unit;
 using BigMachines;
 using LP;
@@ -11,7 +12,7 @@ namespace LPRunner;
 [SimpleCommand("run", Default = true)]
 public class ConsoleCommand : ISimpleCommandAsync
 {
-    public ConsoleCommand(ILogger<ConsoleCommand> logger, BigMachine<Identifier> bigMachine, NetControl netControl)
+    public ConsoleCommand(ILogger<ConsoleCommand> logger, BigMachine bigMachine, NetControl netControl)
     {
         this.logger = logger;
         this.bigMachine = bigMachine;
@@ -20,9 +21,8 @@ public class ConsoleCommand : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        var runner = this.bigMachine.CreateOrGet<RunnerMachine.Interface>(Identifier.Zero);
-
-        this.bigMachine.Start();
+        var runner = this.bigMachine.RunnerMachine.Get();
+        this.bigMachine.Start(ThreadCore.Root);
 
         while (!this.bigMachine.Core.IsTerminated)
         {
@@ -41,6 +41,6 @@ public class ConsoleCommand : ISimpleCommandAsync
     }
 
     private ILogger<ConsoleCommand> logger;
-    private BigMachine<Identifier> bigMachine;
+    private BigMachine bigMachine;
     private NetControl netControl;
 }
