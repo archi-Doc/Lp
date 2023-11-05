@@ -22,9 +22,15 @@ using SimpleCommandLine;
 
 namespace LP;
 
+[MachineObject]
+public partial class LPTestMachine : Machine
+{
+}
+
 [BigMachineObject(Inclusive = true)]
 [AddMachine<Netsphere.Machines.NtpMachine>]
-public partial class LPBigMachine;
+[AddMachine<Netsphere.Machines.PublicIPMachine>]
+public partial class BigMachine;
 
 public class Control : ILogInformation
 {
@@ -67,6 +73,7 @@ public class Control : ILogInformation
                 context.AddTransient<NetServices.MergerOrTestFilter>();
 
                 // Machines
+                context.AddSingleton<BigMachine>();
                 context.AddTransient<Machines.SingleMachine>();
                 context.AddTransient<Machines.LogTesterMachine>();
 
@@ -380,7 +387,7 @@ public class Control : ILogInformation
         }
     }
 
-    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, LPBigMachine bigMachine, NetControl netsphere, Crystalizer crystalizer, Vault vault, AuthorityVault authorityVault, LPSettings settings)
+    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine bigMachine, NetControl netsphere, Crystalizer crystalizer, Vault vault, AuthorityVault authorityVault, LPSettings settings)
     {
         this.Logger = logger;
         this.UserInterfaceService = userInterfaceService;
@@ -405,7 +412,6 @@ public class Control : ILogInformation
         }
 
         this.Core = core;
-        this.BigMachine.Core.ChangeParent(this.Core);
 
         SubcommandParserOptions = SimpleParserOptions.Standard with
         {
@@ -444,13 +450,11 @@ public class Control : ILogInformation
 
     public async Task RunAsync(UnitContext context)
     {
-        this.BigMachine.
-        this.BigMachine.Start(ThreadCore.Root);
+        this.BigMachine.Start(null);
 
         // this.BigMachine.CreateOrGet<EssentialNetMachine.Interface>(Identifier.Zero)?.RunAsync();
-        this.BigMachine.
-        this.BigMachine.CreateOrGet<NtpMachine.Interface>(Identifier.Zero)?.RunAsync();
-        this.BigMachine.CreateOrGet<PublicIPMachine.Interface>(Identifier.Zero)?.RunAsync();
+        this.BigMachine.NtpMachine.Get();
+        this.BigMachine.PublicIPMachine.Get();
 
         await context.SendRunAsync(new(this.Core));
 
@@ -632,7 +636,7 @@ public class Control : ILogInformation
 
     public LPBase LPBase { get; }
 
-    public LPBigMachine BigMachine { get; }
+    public BigMachine BigMachine { get; }
 
     public NetControl NetControl { get; }
 

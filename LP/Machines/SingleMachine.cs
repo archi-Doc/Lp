@@ -2,15 +2,14 @@
 
 namespace LP.Machines;
 
-[MachineObject(0x0f0d509d, Group = typeof(SingleGroup<>))]
+[MachineObject(UseServiceProvider = true)]
 // [TinyhandObject(UseServiceProvider = true)]
-public partial class SingleMachine : Machine<Identifier>
+public partial class SingleMachine : Machine
 {
-    public SingleMachine(BigMachine<Identifier> bigMachine, IUserInterfaceService consoleSeuserInterfaceServicevice)
-        : base(bigMachine)
+    public SingleMachine(IUserInterfaceService consoleSeuserInterfaceServicevice)
     {
         this.userInterfaceService = consoleSeuserInterfaceServicevice;
-        this.DefaultTimeout = TimeSpan.FromSeconds(1);
+        this.TimeUntilRun = TimeSpan.FromSeconds(1);
     }
 
     public int Count { get; set; }
