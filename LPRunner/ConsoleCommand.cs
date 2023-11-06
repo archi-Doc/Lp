@@ -24,7 +24,7 @@ public class ConsoleCommand : ISimpleCommandAsync
         var runner = this.bigMachine.RunnerMachine.Get();
         this.bigMachine.Start(ThreadCore.Root);
 
-        while (!this.bigMachine.Core.IsTerminated)
+        while (!((IBigMachine)this.bigMachine).Core.IsTerminated)
         {
             if (!this.bigMachine.IsActive())
             {
@@ -32,7 +32,7 @@ public class ConsoleCommand : ISimpleCommandAsync
             }
             else
             {
-                await this.bigMachine.Core.WaitForTerminationAsync(1000);
+                await ((IBigMachine)this.bigMachine).Core.WaitForTerminationAsync(1000);
             }
         }
 

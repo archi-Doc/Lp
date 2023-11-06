@@ -87,6 +87,9 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
         return false;
     }
 
+    public static int MaxStringLength
+        => KeyHelper.PublicKeyLengthInBase64;
+
     public int GetStringLength()
         => KeyHelper.PublicKeyLengthInBase64;
 
