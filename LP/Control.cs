@@ -453,8 +453,8 @@ public class Control : ILogInformation
         this.BigMachine.Start(null);
 
         // this.BigMachine.CreateOrGet<EssentialNetMachine.Interface>(Identifier.Zero)?.RunAsync();
-        this.BigMachine.NtpMachine.Get();
-        this.BigMachine.PublicIPMachine.Get();
+        _ = this.BigMachine.NtpMachine.Get().RunAsync();
+        _ = this.BigMachine.PublicIPMachine.Get().RunAsync();
 
         await context.SendRunAsync(new(this.Core));
 

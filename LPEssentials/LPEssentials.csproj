@@ -23,7 +23,7 @@
     <PackageReference Include="Arc.Threading" Version="0.26.0" />
     <PackageReference Include="Arc.Crypto" Version="1.19.1" />
     <PackageReference Include="Arc.Unit" Version="0.7.0" />
-    <PackageReference Include="BigMachines" Version="0.26.1" />
+    <PackageReference Include="BigMachines" Version="0.26.2" />
     <PackageReference Include="CrystalData" Version="0.9.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
     <PackageReference Include="SimpleCommandLine" Version="0.19.1" />
