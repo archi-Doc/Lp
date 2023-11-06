@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
 using System.Diagnostics.CodeAnalysis;
 using Arc.Crypto;
 
@@ -33,6 +32,15 @@ public readonly partial struct DualAddress : IStringConvertible<DualAddress>, IV
 
     [Key(6)]
     public readonly ulong Address6B;
+
+    public DualAddress(ushort port4, uint address4, ushort port6, ulong address6a, ulong address6b)
+    {
+        this.Port4 = port4;
+        this.Port6 = port6;
+        this.Address4 = address4;
+        this.Address6A = address6a;
+        this.Address6B = address6b;
+    }
 
     public bool IsValidIpv4 => this.Port4 != 0;
 
@@ -75,6 +83,12 @@ public readonly partial struct DualAddress : IStringConvertible<DualAddress>, IV
 
     public bool TryFormat(Span<char> destination, out int written)
     {// 15 + 1 + 5, 54 + 1 + 5 + 2
+        if (destination.Length < MaxStringLength)
+        {
+            written = 0;
+            return false;
+        }
+
         var span = destination;
         if (this.IsValidIpv4)
         {
@@ -152,15 +166,6 @@ public readonly partial struct DualAddress : IStringConvertible<DualAddress>, IV
     {
         Span<char> span = stackalloc char[MaxStringLength];
         return this.TryFormat(span, out var written) ? span.Slice(0, written).ToString() : string.Empty;
-    }
-
-    private DualAddress(ushort port4, uint address4, ushort port6, ulong address6a, ulong address6b)
-    {
-        this.Port4 = port4;
-        this.Port6 = port6;
-        this.Address4 = address4;
-        this.Address6A = address6a;
-        this.Address6B = address6b;
     }
 
     private static bool TryParseIPv4(ref ReadOnlySpan<char> source, out ushort port4, out uint address4)

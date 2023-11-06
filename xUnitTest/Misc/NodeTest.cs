@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Net;
+using Arc.Crypto;
+using LP.T3CS;
 using Netsphere;
 using Xunit;
 
@@ -34,6 +36,37 @@ public class NodeTest
 
         TestDualAddress("172.217.25.228:49152[2404:6800:4004:80a::2004]:49152", true).IsTrue();
         TestDualAddress("2404:6800:4004:80a::2004:49152", true, false).IsTrue();
+    }
+
+    [Fact]
+    public void DualAddressAndPublicKey1()
+    {
+        TestDualAddressAndPublicKey("127.0.0.1:49999(CFb2uYv8BdB41DV0o3QXn8pKjwYRdqCY6peXyuPc-a8m)", false).IsTrue();
+    }
+
+    [Fact]
+    public void DualAddressAndPublicKeyRandom()
+    {
+        const int N = 10;
+        var r = RandomVault.Pseudo;
+
+        for (var i = 0; i < N; i++)
+        {
+            GenerateDualAddressAndPublicKey(r, 0, out var address);
+            TestDualAddressAndPublicKey(address).IsTrue();
+        }
+
+        for (var i = 0; i < N; i++)
+        {
+            GenerateDualAddressAndPublicKey(r, 1,  out var address);
+            TestDualAddressAndPublicKey(address).IsTrue();
+        }
+
+        for (var i = 0; i < N; i++)
+        {
+            GenerateDualAddressAndPublicKey(r, 2, out var address);
+            TestDualAddressAndPublicKey(address).IsTrue();
+        }
     }
 
     [Fact]
@@ -84,6 +117,69 @@ public class NodeTest
         address.Validate().Is(validation);
 
         return true;
+    }
+
+    private static bool TestDualAddressAndPublicKey(string utf16, bool validation, bool compareUtf16 = true)
+    {
+        DualAddressAndPublicKey.TryParse(utf16, out var addressAndKey).IsTrue();
+
+        Span<char> destination = stackalloc char[DualAddressAndPublicKey.MaxStringLength];
+        addressAndKey.TryFormat(destination, out var written).IsTrue();
+        destination = destination.Slice(0, written);
+
+        if (compareUtf16)
+        {
+            utf16.Is(destination.ToString());
+        }
+
+        DualAddressAndPublicKey.TryParse(destination, out var addressAndKey2).IsTrue();
+        addressAndKey2.Equals(addressAndKey).IsTrue();
+
+        addressAndKey.Validate().Is(validation);
+
+        return true;
+    }
+
+    private static bool TestDualAddressAndPublicKey(DualAddressAndPublicKey addressAndKey)
+    {
+        Span<char> destination = stackalloc char[DualAddressAndPublicKey.MaxStringLength];
+        addressAndKey.TryFormat(destination, out var written).IsTrue();
+        destination = destination.Slice(0, written);
+
+        DualAddressAndPublicKey.TryParse(destination, out var addressAndKey2).IsTrue();
+        addressAndKey2.Equals(addressAndKey).IsTrue();
+
+        // addressAndKey.Validate().Is(true);
+
+        return true;
+    }
+
+    private static void GenerateDualAddressAndPublicKey(RandomVault r, int type, out DualAddressAndPublicKey addressAndKey)
+    {
+        var key = NodePrivateKey.Create();
+
+        if (type == 0)
+        {// IPv4
+            var port4 = (ushort)r.NextInt32(NetControl.MinPort, NetControl.MaxPort);
+            var address4 = r.NextUInt32();
+            addressAndKey = new(new(port4, address4, 0, 0, 0), key.ToPublicKey());
+        }
+        else if (type == 1)
+        {// IPv6
+            var port6 = (ushort)r.NextInt32(NetControl.MinPort, NetControl.MaxPort);
+            var address6a = r.NextUInt64();
+            var address6b = r.NextUInt64();
+            addressAndKey = new(new(0, 0, port6, address6a, address6b), key.ToPublicKey());
+        }
+        else
+        {
+            var port4 = (ushort)r.NextInt32(NetControl.MinPort, NetControl.MaxPort);
+            var address4 = r.NextUInt32();
+            var port6 = (ushort)r.NextInt32(NetControl.MinPort, NetControl.MaxPort);
+            var address6a = r.NextUInt64();
+            var address6b = r.NextUInt64();
+            addressAndKey = new(new(port4, address4, port6, address6a, address6b), key.ToPublicKey());
+        }
     }
 
     private NodeAddress CreateAddress(string address) => new NodeAddress(IPAddress.Parse(address), NetControl.MinPort);
