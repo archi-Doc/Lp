@@ -44,7 +44,7 @@ public partial class Vault
     #endregion
 
     [TinyhandObject]
-    private partial struct DecryptedItem
+    private partial record struct DecryptedItem
     {
         public DecryptedItem(byte[] decrypted)
         {
@@ -56,7 +56,7 @@ public partial class Vault
     }
 
     [TinyhandObject]
-    private partial struct EncryptedItem
+    private partial record struct EncryptedItem
     {
         public EncryptedItem(int hint, byte[] encrypted)
         {

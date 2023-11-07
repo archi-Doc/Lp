@@ -5,7 +5,7 @@ using System.ComponentModel;
 namespace LP.T3CS;
 
 [TinyhandObject]
-public readonly partial struct Signature
+public readonly partial record struct Signature
 {
     public enum Type
     {

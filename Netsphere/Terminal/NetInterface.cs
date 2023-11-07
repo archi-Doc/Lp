@@ -36,7 +36,7 @@ public enum NetResult
 /// <see cref="NetResult.Success"/>: <see cref="NetReceivedData.Received"/> is valid, and it's preferable to call Return() method.<br/>
 /// Other: <see cref="NetReceivedData.Received"/> is default (empty).
 /// </summary>
-public struct NetReceivedData
+public record struct NetReceivedData
 {
     public NetReceivedData(NetResult result, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner received)
     {

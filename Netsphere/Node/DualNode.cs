@@ -11,7 +11,7 @@ namespace Netsphere;
 /// <see cref="DualNode"/> = <see cref="DualAddress"/> + <see cref="NodePublicKey"/>.
 /// </summary>
 [TinyhandObject]
-public readonly partial struct DualNode : IStringConvertible<DualNode>, IValidatable, IEquatable<DualNode>
+public readonly partial record struct DualNode : IStringConvertible<DualNode>, IValidatable
 {
     public DualNode(DualAddress address, NodePublicKey publicKey)
     {
@@ -107,12 +107,6 @@ public readonly partial struct DualNode : IStringConvertible<DualNode>, IValidat
 
     public bool Validate()
         => this.Address.Validate() && this.PublicKey.Validate();
-
-    public bool Equals(DualNode other)
-        => this.Address.Equals(other.Address) && this.PublicKey.Equals(other.PublicKey);
-
-    public override int GetHashCode()
-        => HashCode.Combine(this.Address, this.PublicKey);
 
     public override string ToString()
     {

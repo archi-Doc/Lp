@@ -15,13 +15,17 @@ public class AddressBenchmark
     private readonly DualAddress dualAddress2;
     private readonly DualAddressImplemented dualAddressImplemented;
     private readonly DualAddressImplemented dualAddressImplemented2;
+    private readonly DualAddressRecord dualAddressRecord;
+    private readonly DualAddressRecord dualAddressRecord2;
 
     public AddressBenchmark()
     {
         this.dualAddress = new(1, 22, 33, 4444, 555555);
-        this.dualAddress2 = this.dualAddress;
         this.dualAddressImplemented = new(1, 22, 33, 4444, 555555);
+        this.dualAddressRecord = new(1, 22, 33, 4444, 555555);
+        this.dualAddress2 = this.dualAddress;
         this.dualAddressImplemented2 = this.dualAddressImplemented;
+        this.dualAddressRecord2 = this.dualAddressRecord;
     }
 
     [GlobalSetup]
@@ -55,7 +59,7 @@ public class AddressBenchmark
         var bin = TinyhandSerializer.SerializeObject(node);
         var node2 = TinyhandSerializer.DeserializeObject<NodeAddress>(bin);
         return node2;
-    }
+    }*/
 
     [Benchmark]
     public DualAddress? Serialize_DualAddress()
@@ -64,7 +68,25 @@ public class AddressBenchmark
         var bin = TinyhandSerializer.SerializeObject(node);
         var node2 = TinyhandSerializer.DeserializeObject<DualAddress>(bin);
         return node2;
-    }*/
+    }
+
+    [Benchmark]
+    public DualAddressImplemented? Serialize_DualAddressImplemented()
+    {
+        var node = new DualAddressImplemented(123, 123456, 0, 0, 0);
+        var bin = TinyhandSerializer.SerializeObject(node);
+        var node2 = TinyhandSerializer.DeserializeObject<DualAddressImplemented>(bin);
+        return node2;
+    }
+
+    [Benchmark]
+    public DualAddressRecord? Serialize_DualAddressRecord()
+    {
+        var node = new DualAddressRecord(123, 123456, 0, 0, 0);
+        var bin = TinyhandSerializer.SerializeObject(node);
+        var node2 = TinyhandSerializer.DeserializeObject<DualAddressRecord>(bin);
+        return node2;
+    }
 
     [Benchmark]
     public bool Equals_DualAddress()
@@ -81,6 +103,13 @@ public class AddressBenchmark
     }
 
     [Benchmark]
+    public bool Equals_DualAddressRecord()
+    {
+        var result = this.dualAddressRecord.Equals(this.dualAddressRecord2);
+        return result;
+    }
+
+    [Benchmark]
     public int GetHashCode_DualAddress()
     {
         var result = this.dualAddress.GetHashCode();
@@ -91,6 +120,13 @@ public class AddressBenchmark
     public int GetHashCode_DualAddressImplemented()
     {
         var result = this.dualAddressImplemented.GetHashCode();
+        return result;
+    }
+
+    [Benchmark]
+    public int GetHashCode_DualAddressRecord()
+    {
+        var result = this.dualAddressRecord.GetHashCode();
         return result;
     }
 }

@@ -5,7 +5,7 @@
 
 namespace LP;
 
-public readonly struct MicsRange
+public readonly record struct MicsRange
 {
     /// <summary>
     /// Creates a <see cref="MicsRange"/> from the present mics (<see cref="Mics.GetCorrected"/>) to the present+specified mics.
