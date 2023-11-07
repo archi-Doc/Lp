@@ -11,8 +11,17 @@ public class AddressBenchmark
 {
     public const string Address = "192.168.1.1:1234";
 
+    private readonly DualAddress dualAddress;
+    private readonly DualAddress dualAddress2;
+    private readonly DualAddressImplemented dualAddressImplemented;
+    private readonly DualAddressImplemented dualAddressImplemented2;
+
     public AddressBenchmark()
     {
+        this.dualAddress = new(1, 22, 33, 4444, 555555);
+        this.dualAddress2 = this.dualAddress;
+        this.dualAddressImplemented = new(1, 22, 33, 4444, 555555);
+        this.dualAddressImplemented2 = this.dualAddressImplemented;
     }
 
     [GlobalSetup]
@@ -25,7 +34,7 @@ public class AddressBenchmark
     {
     }
 
-    [Benchmark]
+    /*[Benchmark]
     public string ParseAndFormat_NodeAddress()
     {
         NodeAddress.TryParse(Address, out var node);
@@ -55,5 +64,33 @@ public class AddressBenchmark
         var bin = TinyhandSerializer.SerializeObject(node);
         var node2 = TinyhandSerializer.DeserializeObject<DualAddress>(bin);
         return node2;
+    }*/
+
+    [Benchmark]
+    public bool Equals_DualAddress()
+    {
+        var result = this.dualAddress.Equals(this.dualAddress2);
+        return result;
+    }
+
+    [Benchmark]
+    public bool Equals_DualAddressImplemented()
+    {
+        var result = this.dualAddressImplemented.Equals(this.dualAddressImplemented2);
+        return result;
+    }
+
+    [Benchmark]
+    public int GetHashCode_DualAddress()
+    {
+        var result = this.dualAddress.GetHashCode();
+        return result;
+    }
+
+    [Benchmark]
+    public int GetHashCode_DualAddressImplemented()
+    {
+        var result = this.dualAddressImplemented.GetHashCode();
+        return result;
     }
 }

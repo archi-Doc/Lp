@@ -224,11 +224,18 @@ public class Control : ILogInformation
                             new GlobalDirectoryConfiguration("Merger/Storage")),
                     });
 
+                    context.AddCrystal<Netsphere.State.NetStat>(new CrystalConfiguration() with
+                    {
+                        SaveFormat = SaveFormat.Utf8,
+                        FileConfiguration = new GlobalFileConfiguration("NetStat.tinyhand"),
+                        NumberOfFileHistories = 0,
+                    });
+
                     /*context.AddCrystal<PublicIPMachine.Data>(new CrystalConfiguration() with
                     {
                         SaveFormat = SaveFormat.Utf8,
                         FileConfiguration = new GlobalFileConfiguration("PublicIP2.tinyhand"),
-                        NumberOfHistoryFiles = 0,
+                        NumberOfFileHistories = 0,
                     });*/
                 });
         }

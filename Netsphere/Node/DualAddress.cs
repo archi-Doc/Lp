@@ -10,7 +10,7 @@ namespace Netsphere;
 /// Determine if the address is valid based on whether the port number is greater than zero.
 /// </summary>
 [TinyhandObject]
-public readonly partial struct DualAddress : IStringConvertible<DualAddress>, IValidatable
+public readonly partial struct DualAddress : IStringConvertible<DualAddress>, IValidatable, IEquatable<DualAddress>
 {
     [Key(0)]
     public readonly ushort Engagement4;
@@ -167,6 +167,18 @@ public readonly partial struct DualAddress : IStringConvertible<DualAddress>, IV
         Span<char> span = stackalloc char[MaxStringLength];
         return this.TryFormat(span, out var written) ? span.Slice(0, written).ToString() : string.Empty;
     }
+
+    public bool Equals(DualAddress other)
+        => this.Engagement4 == other.Engagement4 &&
+        this.Engagement6 == other.Engagement6 &&
+        this.Port4 == other.Port4 &&
+        this.Port6 == other.Port6 &&
+        this.Address4 == other.Address4 &&
+        this.Address6A == other.Address6A &&
+        this.Address6B == other.Address6B;
+
+    public override int GetHashCode()
+        => HashCode.Combine(this.Engagement4, this.Engagement6, this.Port4, this.Port6, this.Address4, this.Address6A, this.Address6B);
 
     private static bool TryParseIPv4(ref ReadOnlySpan<char> source, out ushort port4, out uint address4)
     {

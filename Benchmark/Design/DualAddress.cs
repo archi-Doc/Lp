@@ -7,6 +7,52 @@ using Tinyhand;
 
 namespace Netsphere;
 
+[TinyhandObject]
+public readonly partial struct DualAddressImplemented : IEquatable<DualAddressImplemented>
+{
+    [Key(0)]
+    public readonly ushort Engagement4;
+
+    [Key(1)]
+    public readonly ushort Engagement6;
+
+    [Key(2)]
+    public readonly ushort Port4;
+
+    [Key(3)]
+    public readonly ushort Port6;
+
+    [Key(4)]
+    public readonly uint Address4;
+
+    [Key(5)]
+    public readonly ulong Address6A;
+
+    [Key(6)]
+    public readonly ulong Address6B;
+
+    public DualAddressImplemented(ushort port4, uint address4, ushort port6, ulong address6a, ulong address6b)
+    {
+        this.Port4 = port4;
+        this.Port6 = port6;
+        this.Address4 = address4;
+        this.Address6A = address6a;
+        this.Address6B = address6b;
+    }
+
+    public bool Equals(DualAddressImplemented other)
+        => this.Engagement4 == other.Engagement4 &&
+        this.Engagement6 == other.Engagement6 &&
+        this.Port4 == other.Port4 &&
+        this.Port6 == other.Port6 &&
+        this.Address4 == other.Address4 &&
+        this.Address6A == other.Address6A &&
+        this.Address6B == other.Address6B;
+
+    public override int GetHashCode()
+        => HashCode.Combine(this.Engagement4, this.Engagement6, this.Port4, this.Port6, this.Address4, this.Address6A, this.Address6B);
+}
+
 /// <summary>
 /// Represents ipv4/ipv6 address information.<br/>
 /// Determine if the address is valid based on whether the port number is greater than zero.
