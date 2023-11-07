@@ -44,8 +44,8 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddSingleton<Terminal>();
                 context.AddSingleton<EssentialNode>();
                 context.AddSingleton<NetStatus>();
-                context.AddSingleton<EssentialAddress>();
-                context.AddSingleton<NetStat>();
+                // context.AddSingleton<EssentialAddress>();
+                // context.AddSingleton<NetStat>();
                 context.AddTransient<Server>();
                 // context.Services.Add(new ServiceDescriptor(typeof(NetService), x => new NetService(x), ServiceLifetime.Transient));
                 // context.AddTransient<NetService>(); // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
@@ -209,6 +209,5 @@ public class NetControl : UnitBase, IUnitPreparable
     private void Dump(ILog logger)
     {
         logger.Log($"Dump:");
-        logger.Log($"MyStatus: {this.MyStatus.Type}");
     }
 }

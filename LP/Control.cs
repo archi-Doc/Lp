@@ -327,6 +327,7 @@ public class Control : ILogInformation
                 ((StorageKeyVault)this.Context.ServiceProvider.GetRequiredService<IStorageKey>()).Vault = vault;
 
                 // Load
+                var sv = TinyhandSerializer.GetService(typeof(Netsphere.State.NetStat));
                 var result = await crystalizer.PrepareAndLoadAll();
                 if (result != CrystalResult.Success)
                 {

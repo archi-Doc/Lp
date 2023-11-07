@@ -12,6 +12,7 @@ public enum ConnectionResult
     Failure,
 }
 
+/*
 public sealed partial class EssentialAddress
 {
     private const int ValidTimeInMinutes = 5;
@@ -223,3 +224,4 @@ public sealed partial class EssentialAddress
     private UnitLogger logger;
     private Item.GoshujinClass data;
 }
+*/
