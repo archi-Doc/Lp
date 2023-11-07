@@ -2,8 +2,8 @@
 
 namespace Netsphere.State;
 
-[TinyhandObject(UseServiceProvider = true)]
-public partial class NetStat
+[TinyhandObject(UseServiceProvider = true, LockObject = "syncObject")]
+public sealed partial class NetStat
 {
     public NetStat(EssentialAddress essentialAddress)
     {
@@ -11,6 +11,8 @@ public partial class NetStat
     }
 
     #region FieldAndProperty
+
+    private readonly object syncObject = new();
 
     [Key(0)]
     public EssentialAddress EssentialAddress { get; private set; }
