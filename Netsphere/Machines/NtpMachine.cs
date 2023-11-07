@@ -45,7 +45,7 @@ public partial class NtpMachine : Machine
         return StateResult.Continue;
     }
 
-    [StateMethod(1)]
+    [StateMethod]
     protected async Task<StateResult> SafeHoldMode(StateParameter parameter)
     {
         this.logger?.TryGet(LogLevel.Warning)?.Log($"Safe-hold mode");
