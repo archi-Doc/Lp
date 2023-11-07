@@ -52,7 +52,7 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.TryAddSingleton<StreamLoggerOptions>();
 
                 // Machines
-                context.AddTransient<EssentialNetMachine>();
+                // context.AddTransient<EssentialNetMachine>();
                 context.AddTransient<NtpMachine>();
                 context.AddTransient<PublicIPMachine>();
 

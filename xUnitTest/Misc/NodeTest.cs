@@ -41,7 +41,7 @@ public class NodeTest
     [Fact]
     public void DualAddressAndPublicKey1()
     {
-        TestDualAddressAndPublicKey("127.0.0.1:49999(CFb2uYv8BdB41DV0o3QXn8pKjwYRdqCY6peXyuPc-a8m)", false).IsTrue();
+        TestDualNode("127.0.0.1:49999(CFb2uYv8BdB41DV0o3QXn8pKjwYRdqCY6peXyuPc-a8m)", false).IsTrue();
     }
 
     [Fact]
@@ -52,20 +52,20 @@ public class NodeTest
 
         for (var i = 0; i < N; i++)
         {
-            GenerateDualAddressAndPublicKey(r, 0, out var address);
-            TestDualAddressAndPublicKey(address).IsTrue();
+            GenerateDualNode(r, 0, out var address);
+            TestDualNode(address).IsTrue();
         }
 
         for (var i = 0; i < N; i++)
         {
-            GenerateDualAddressAndPublicKey(r, 1,  out var address);
-            TestDualAddressAndPublicKey(address).IsTrue();
+            GenerateDualNode(r, 1,  out var address);
+            TestDualNode(address).IsTrue();
         }
 
         for (var i = 0; i < N; i++)
         {
-            GenerateDualAddressAndPublicKey(r, 2, out var address);
-            TestDualAddressAndPublicKey(address).IsTrue();
+            GenerateDualNode(r, 2, out var address);
+            TestDualNode(address).IsTrue();
         }
     }
 
@@ -119,11 +119,11 @@ public class NodeTest
         return true;
     }
 
-    private static bool TestDualAddressAndPublicKey(string utf16, bool validation, bool compareUtf16 = true)
+    private static bool TestDualNode(string utf16, bool validation, bool compareUtf16 = true)
     {
-        DualAddressAndPublicKey.TryParse(utf16, out var addressAndKey).IsTrue();
+        DualNode.TryParse(utf16, out var addressAndKey).IsTrue();
 
-        Span<char> destination = stackalloc char[DualAddressAndPublicKey.MaxStringLength];
+        Span<char> destination = stackalloc char[DualNode.MaxStringLength];
         addressAndKey.TryFormat(destination, out var written).IsTrue();
         destination = destination.Slice(0, written);
 
@@ -132,7 +132,7 @@ public class NodeTest
             utf16.Is(destination.ToString());
         }
 
-        DualAddressAndPublicKey.TryParse(destination, out var addressAndKey2).IsTrue();
+        DualNode.TryParse(destination, out var addressAndKey2).IsTrue();
         addressAndKey2.Equals(addressAndKey).IsTrue();
 
         addressAndKey.Validate().Is(validation);
@@ -140,13 +140,13 @@ public class NodeTest
         return true;
     }
 
-    private static bool TestDualAddressAndPublicKey(DualAddressAndPublicKey addressAndKey)
+    private static bool TestDualNode(DualNode addressAndKey)
     {
-        Span<char> destination = stackalloc char[DualAddressAndPublicKey.MaxStringLength];
+        Span<char> destination = stackalloc char[DualNode.MaxStringLength];
         addressAndKey.TryFormat(destination, out var written).IsTrue();
         destination = destination.Slice(0, written);
 
-        DualAddressAndPublicKey.TryParse(destination, out var addressAndKey2).IsTrue();
+        DualNode.TryParse(destination, out var addressAndKey2).IsTrue();
         addressAndKey2.Equals(addressAndKey).IsTrue();
 
         // addressAndKey.Validate().Is(true);
@@ -154,7 +154,7 @@ public class NodeTest
         return true;
     }
 
-    private static void GenerateDualAddressAndPublicKey(RandomVault r, int type, out DualAddressAndPublicKey addressAndKey)
+    private static void GenerateDualNode(RandomVault r, int type, out DualNode addressAndKey)
     {
         var key = NodePrivateKey.Create();
 

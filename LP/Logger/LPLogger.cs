@@ -104,10 +104,10 @@ public class LPLogger
 
             public ILog? Filter(LogFilterParameter param)
             {
-                if (param.LogSourceType == typeof(Netsphere.Machines.EssentialNetMachine))
+                /*if (param.LogSourceType == typeof(Netsphere.Machines.EssentialNetMachine))
                 {
                     return this.lpBase.Settings.Flags.LogEssentialNetMachine ? param.OriginalLogger : null;
-                }
+                }*/
 
                 return param.OriginalLogger;
             }

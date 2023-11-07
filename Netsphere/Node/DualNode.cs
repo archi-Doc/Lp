@@ -8,11 +8,13 @@ using LP.T3CS;
 namespace Netsphere;
 
 /// <summary>
+/// Represents ipv4/ipv6 node information.<br/>
+/// <see cref="DualNode"/> = <see cref="DualAddress"/> + <see cref="NodePublicKey"/>.
 /// </summary>
 [TinyhandObject]
-public readonly partial struct DualAddressAndPublicKey : IStringConvertible<DualAddressAndPublicKey>, IValidatable
+public readonly partial struct DualNode : IStringConvertible<DualNode>, IValidatable
 {
-    public DualAddressAndPublicKey(DualAddress address, NodePublicKey publicKey)
+    public DualNode(DualAddress address, NodePublicKey publicKey)
     {
         this.Address = address;
         this.PublicKey = publicKey;
@@ -24,7 +26,7 @@ public readonly partial struct DualAddressAndPublicKey : IStringConvertible<Dual
     [Key(1)]
     public readonly NodePublicKey PublicKey;
 
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out DualAddressAndPublicKey instance)
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out DualNode instance)
     {// Ip address (public key)
         source = source.Trim();
 
