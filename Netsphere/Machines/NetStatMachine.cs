@@ -8,12 +8,12 @@ namespace Netsphere.Machines;
 [MachineObject(UseServiceProvider = true)]
 public partial class NetStatMachine : Machine
 {
-    public NetStatMachine(ILogger<NetStatMachine> logger, LPBase lpBase, NetControl netControl, NetStat netStat)
+    public NetStatMachine(ILogger<NetStatMachine> logger, LPBase lpBase, NetControl netControl, ICrystal<NetStat> netStat)
     {
         this.logger = logger;
         this.lpBase = lpBase;
         this.netControl = netControl;
-        this.netStat = netStat;
+        this.netStat = netStat.Data;
 
         // this.DefaultTimeout = TimeSpan.FromSeconds(5);
     }

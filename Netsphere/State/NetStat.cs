@@ -5,15 +5,15 @@ namespace Netsphere.State;
 [TinyhandObject(UseServiceProvider = true)]
 public partial class NetStat
 {
-    public NetStat(/*EssentialAddress essentialAddress*/)
+    public NetStat(EssentialAddress essentialAddress)
     {
-        // this.EssentialAddress = essentialAddress;
+        this.EssentialAddress = essentialAddress;
     }
 
     #region FieldAndProperty
 
-    // [Key(0)]
-    // public EssentialAddress EssentialAddress { get; private set; }
+    [Key(0)]
+    public EssentialAddress EssentialAddress { get; private set; }
 
     [Key(1)]
     public NodeType Ipv4State { get; private set; }

@@ -17,20 +17,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere;
 using Netsphere.Logging;
-using Netsphere.Machines;
 using SimpleCommandLine;
 
 namespace LP;
-
-[MachineObject]
-public partial class LPTestMachine : Machine
-{
-}
-
-[BigMachineObject(Inclusive = true)]
-[AddMachine<Netsphere.Machines.NtpMachine>]
-[AddMachine<Netsphere.Machines.PublicIPMachine>]
-public partial class BigMachine;
 
 public class Control : ILogInformation
 {
@@ -327,7 +316,6 @@ public class Control : ILogInformation
                 ((StorageKeyVault)this.Context.ServiceProvider.GetRequiredService<IStorageKey>()).Vault = vault;
 
                 // Load
-                var sv = TinyhandSerializer.GetService(typeof(Netsphere.State.NetStat));
                 var result = await crystalizer.PrepareAndLoadAll();
                 if (result != CrystalResult.Success)
                 {
@@ -463,6 +451,7 @@ public class Control : ILogInformation
         // this.BigMachine.CreateOrGet<EssentialNetMachine.Interface>(Identifier.Zero)?.RunAsync();
         _ = this.BigMachine.NtpMachine.Get().RunAsync();
         _ = this.BigMachine.PublicIPMachine.Get().RunAsync();
+        _ = this.BigMachine.NetStatMachine.Get().RunAsync();
 
         await context.SendRunAsync(new(this.Core));
 
