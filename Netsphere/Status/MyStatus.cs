@@ -4,14 +4,6 @@ namespace Netsphere;
 
 public class MyStatus
 {
-    public enum ConnectionType
-    {
-        Unknown,
-        Global,
-        NAT,
-        Symmetric,
-    }
-
     public MyStatus()
     {
     }
@@ -19,8 +11,6 @@ public class MyStatus
     public ulong IncrementServerCount() => Interlocked.Increment(ref this.serverCount);
 
     public ulong ServerCount => Volatile.Read(ref this.serverCount);
-
-    public ConnectionType Type { get; private set; }
 
     public double EstimatedMBPS { get; private set; }
 

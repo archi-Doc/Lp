@@ -8,7 +8,7 @@ global using Arc.Collections;
 global using Arc.Crypto;
 global using Arc.Unit;
 global using Tinyhand;
-
+using BigMachines;
 using LP.Data;
 using LP.T3CS;
 
@@ -30,8 +30,6 @@ public class LPBase : ILogInformation
     public static void Configure(IUnitConfigurationContext context)
     {
         // Base
-        BigMachines.BigMachine<Identifier>.Configure(context);
-        // context.TryAddSingleton<BigMachines.BigMachine<Identifier>>();
 
         // Main
         context.AddSingleton<LPBase>();

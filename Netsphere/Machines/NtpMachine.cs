@@ -2,13 +2,12 @@
 
 namespace Netsphere.Machines;
 
-[MachineObject(0x5e1f81ca, Group = typeof(SingleGroup<>))]
-public partial class NtpMachine : Machine<Identifier>
+[MachineObject(UseServiceProvider = true)]
+public partial class NtpMachine : Machine
 {
     private const string TimestampFormat = "MM-dd HH:mm:ss.fff K";
 
-    public NtpMachine(ILogger<NtpMachine> logger, BigMachine<Identifier> bigMachine, LPBase lpBase, NetBase netBase, NetControl netControl, NtpCorrection ntpCorrection)
-        : base(bigMachine)
+    public NtpMachine(ILogger<NtpMachine> logger, LPBase lpBase, NetBase netBase, NetControl netControl, NtpCorrection ntpCorrection)
     {
         this.logger = logger;
         this.NetBase = netBase;
@@ -42,11 +41,11 @@ public partial class NtpMachine : Machine<Identifier>
         var corrected = this.ntpCorrection.TryGetCorrectedUtcNow(out var utcNow);
         this.logger?.TryGet()?.Log($"Corrected {corrected}, {utcNow.ToString()}");
 
-        this.SetTimeout(TimeSpan.FromHours(1));
+        this.TimeUntilRun = TimeSpan.FromHours(1);
         return StateResult.Continue;
     }
 
-    [StateMethod(1)]
+    [StateMethod]
     protected async Task<StateResult> SafeHoldMode(StateParameter parameter)
     {
         this.logger?.TryGet(LogLevel.Warning)?.Log($"Safe-hold mode");

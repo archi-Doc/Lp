@@ -2,7 +2,7 @@
 
 namespace Netsphere;
 
-public readonly struct ServiceResponse
+public readonly record struct ServiceResponse
 {
     public ServiceResponse(NetResult result)
     {
@@ -18,7 +18,7 @@ public readonly struct ServiceResponse
     private readonly NetResult result;
 }
 
-public readonly struct ServiceResponse<T>
+public readonly record struct ServiceResponse<T>
 {
     public ServiceResponse(T value)
         : this(value, default)

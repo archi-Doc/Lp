@@ -73,8 +73,6 @@ public class Program
                         SaveFormat = SaveFormat.Utf8,
                         NumberOfFileHistories = 2,
                     });
-
-                AdvancedClass.Register(context);
             }))
             .SetupOptions<CrystalizerOptions>((context, options) =>
             {// CrystalizerOptions

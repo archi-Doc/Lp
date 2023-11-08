@@ -18,6 +18,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Logging;
 using Netsphere.Machines;
 using Netsphere.Responder;
+using Netsphere.NetStats;
 
 namespace Netsphere;
 
@@ -43,6 +44,8 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddSingleton<Terminal>();
                 context.AddSingleton<EssentialNode>();
                 context.AddSingleton<NetStatus>();
+                context.AddSingleton<EssentialAddress>();
+                context.AddSingleton<StatsData>();
                 context.AddTransient<Server>();
                 // context.Services.Add(new ServiceDescriptor(typeof(NetService), x => new NetService(x), ServiceLifetime.Transient));
                 // context.AddTransient<NetService>(); // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
@@ -52,9 +55,10 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.TryAddSingleton<StreamLoggerOptions>();
 
                 // Machines
-                context.AddTransient<EssentialNetMachine>();
+                // context.AddTransient<EssentialNetMachine>();
                 context.AddTransient<NtpMachine>();
                 context.AddTransient<PublicIPMachine>();
+                context.AddTransient<NetStatsMachine>();
 
                 // Subcommands
                 context.AddSubcommand(typeof(LP.Subcommands.NetTestSubcommand));
@@ -102,7 +106,7 @@ public class NetControl : UnitBase, IUnitPreparable
         }
     }
 
-    public NetControl(UnitContext context, UnitLogger logger, NetBase netBase, BigMachine<Identifier> bigMachine, Terminal terminal, EssentialNode node, NetStatus netStatus)
+    public NetControl(UnitContext context, UnitLogger logger, NetBase netBase, Terminal terminal, EssentialNode node, NetStatus netStatus)
         : base(context)
     {
         this.logger = logger;
@@ -110,7 +114,6 @@ public class NetControl : UnitBase, IUnitPreparable
         this.NewServerContext = () => new ServerContext();
         this.NewCallContext = () => new CallContext();
         this.NetBase = netBase;
-        this.BigMachine = bigMachine; // Warning: Can't call BigMachine.TryCreate() in a constructor.
 
         this.Terminal = terminal;
         if (this.NetBase.NetsphereOptions.EnableAlternative)
@@ -187,8 +190,6 @@ public class NetControl : UnitBase, IUnitPreparable
 
     public NetBase NetBase { get; }
 
-    public BigMachine<Identifier> BigMachine { get; }
-
     public MyStatus MyStatus => this.Terminal.MyStatus;
 
     public NetStatus NetStatus { get; }
@@ -208,6 +209,5 @@ public class NetControl : UnitBase, IUnitPreparable
     private void Dump(ILog logger)
     {
         logger.Log($"Dump:");
-        logger.Log($"MyStatus: {this.MyStatus.Type}");
     }
 }

@@ -44,12 +44,8 @@ public partial class Vault
     #endregion
 
     [TinyhandObject]
-    private partial struct DecryptedItem
+    private partial record struct DecryptedItem
     {
-        public DecryptedItem()
-        {
-        }
-
         public DecryptedItem(byte[] decrypted)
         {
             this.Decrypted = decrypted;
@@ -60,13 +56,8 @@ public partial class Vault
     }
 
     [TinyhandObject]
-    private partial struct EncryptedItem
+    private partial record struct EncryptedItem
     {
-        public EncryptedItem()
-        {
-            this.Hint = 0;
-        }
-
         public EncryptedItem(int hint, byte[] encrypted)
         {
             this.Hint = (byte)hint;

@@ -24,24 +24,13 @@ public readonly partial struct PrimarySecondaryIdentifier : IEquatable<PrimarySe
     public readonly Identifier SecondaryId;
 
     public bool Equals(PrimarySecondaryIdentifier other)
-    {
-        if (!this.PrimaryId.Equals(other.PrimaryId))
-        {
-            return false;
-        }
-
-        return this.SecondaryId.Equals(other.SecondaryId);
-    }
+        => this.PrimaryId.Equals(other.PrimaryId) && this.SecondaryId.Equals(other.SecondaryId);
 
     public override int GetHashCode()
-    {
-        return (int)(this.PrimaryId.Id0 ^ System.Numerics.BitOperations.RotateLeft(this.SecondaryId.Id0, 32));
-    }
+        => (int)(this.PrimaryId.Id0 ^ System.Numerics.BitOperations.RotateLeft(this.SecondaryId.Id0, 32));
 
     public override string ToString()
-    {
-        return $"Primary {this.PrimaryId.Id0:D4} Secondary {this.SecondaryId.Id0:D4} ";
-    }
+        => $"Primary {this.PrimaryId.Id0:D4} Secondary {this.SecondaryId.Id0:D4} ";
 
     public int CompareTo(PrimarySecondaryIdentifier other)
     {

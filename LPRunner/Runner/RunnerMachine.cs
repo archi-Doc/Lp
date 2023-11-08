@@ -7,8 +7,8 @@ using Netsphere;
 
 namespace LPRunner;
 
-[MachineObject(0x0b5190d7, Group = typeof(SingleGroup<Identifier>))]
-public partial class RunnerMachine : Machine<Identifier>
+[MachineObject(UseServiceProvider = true)]
+public partial class RunnerMachine : Machine
 {
     public enum LPStatus
     {
@@ -17,8 +17,7 @@ public partial class RunnerMachine : Machine<Identifier>
         Running,
     }
 
-    public RunnerMachine(ILogger<RunnerMachine> logger, BigMachine<Identifier> bigMachine, LPBase lPBase, NetControl netControl, RunnerInformation information)
-        : base(bigMachine)
+    public RunnerMachine(ILogger<RunnerMachine> logger, LPBase lPBase, NetControl netControl, RunnerInformation information)
     {
         this.logger = logger;
         this.lpBase = lPBase;
@@ -83,13 +82,13 @@ public partial class RunnerMachine : Machine<Identifier>
                 return StateResult.Terminate;
             }
 
-            this.SetTimeout(TimeSpan.FromSeconds(30));
+            this.TimeUntilRun = TimeSpan.FromSeconds(30);
             return StateResult.Continue;
         }
         else
         {// Container -> Try restart
             await this.docker.RestartContainer();
-            this.SetTimeout(TimeSpan.FromSeconds(10));
+            this.TimeUntilRun = TimeSpan.FromSeconds(10);
             return StateResult.Continue;
         }
     }
@@ -104,12 +103,12 @@ public partial class RunnerMachine : Machine<Identifier>
             this.ChangeState(State.Check);
         }*/
 
-        this.SetTimeout(TimeSpan.FromSeconds(10));
+        this.TimeUntilRun = TimeSpan.FromSeconds(10);
         return StateResult.Continue;
     }
 
-    [CommandMethod(0)]
-    protected async Task Restart()
+    [CommandMethod]
+    protected async Task<CommandResult> Restart()
     {
         this.logger.TryGet()?.Log("RemoteControl -> Restart");
 
@@ -120,6 +119,7 @@ public partial class RunnerMachine : Machine<Identifier>
         }
 
         this.ChangeState(State.Check);
+        return CommandResult.Success;
     }
 
     public RunnerInformation Information { get; private set; }

@@ -2,17 +2,18 @@
 
 namespace Netsphere.Machines;
 
+/*
 /// <summary>
 /// Check essential nodes and determine MyStatus.ConnectionType.<br/>
 /// 1: Connect and get nodes.<br/>
 /// 2: Determine MyStatus.ConnectionType.<br/>
 /// 3: Check essential nodes.
 /// </summary>
-[MachineObject(0x4792ab0f, Group = typeof(SingleGroup<>))]
-public partial class EssentialNetMachine : Machine<Identifier>
+[MachineObject(UseServiceProvider = true)]
+public partial class EssentialNetMachine : Machine
 {
-    public EssentialNetMachine(ILogger<EssentialNetMachine> logger, BigMachine<Identifier> bigMachine, LPBase lpBase, NetBase netBase, NetControl netControl)
-        : base(bigMachine)
+    public EssentialNetMachine(ILogger<EssentialNetMachine> logger, LPBase lpBase, NetBase netBase, NetControl netControl)
+        : base()
     {
         this.logger = logger;
         this.NetBase = netBase;
@@ -32,7 +33,7 @@ public partial class EssentialNetMachine : Machine<Identifier>
     [StateMethod(0)]
     protected async Task<StateResult> Initial(StateParameter parameter)
     {
-        this.logger.TryGet(LogLevel.Information)?.Log($"Essential net madchine {this.count}");
+        this.logger.TryGet(LogLevel.Information)?.Log($"Essential net machine {this.count}");
         this.count++;
 
         if (this.NetControl.EssentialNode.GetUncheckedNode(out var nodeAddress))
@@ -86,4 +87,4 @@ public partial class EssentialNetMachine : Machine<Identifier>
 
     private ILogger<EssentialNetMachine> logger;
     private int count = 1;
-}
+}*/

@@ -17,7 +17,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Netsphere;
 using Netsphere.Logging;
-using Netsphere.Machines;
 using SimpleCommandLine;
 
 namespace LP;
@@ -63,6 +62,8 @@ public class Control : ILogInformation
                 context.AddTransient<NetServices.MergerOrTestFilter>();
 
                 // Machines
+                context.AddSingleton<BigMachine>();
+                context.AddSingleton<BigMachineBase, BigMachine>();
                 context.AddTransient<Machines.SingleMachine>();
                 context.AddTransient<Machines.LogTesterMachine>();
 
@@ -213,11 +214,18 @@ public class Control : ILogInformation
                             new GlobalDirectoryConfiguration("Merger/Storage")),
                     });
 
+                    context.AddCrystal<Netsphere.NetStats.StatsData>(new CrystalConfiguration() with
+                    {
+                        SaveFormat = SaveFormat.Utf8,
+                        FileConfiguration = new GlobalFileConfiguration("NetStat.tinyhand"),
+                        NumberOfFileHistories = 0,
+                    });
+
                     /*context.AddCrystal<PublicIPMachine.Data>(new CrystalConfiguration() with
                     {
                         SaveFormat = SaveFormat.Utf8,
                         FileConfiguration = new GlobalFileConfiguration("PublicIP2.tinyhand"),
-                        NumberOfHistoryFiles = 0,
+                        NumberOfFileHistories = 0,
                     });*/
                 });
         }
@@ -376,7 +384,7 @@ public class Control : ILogInformation
         }
     }
 
-    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine<Identifier> bigMachine, NetControl netsphere, Crystalizer crystalizer, Vault vault, AuthorityVault authorityVault, LPSettings settings)
+    public Control(UnitContext context, UnitCore core, UnitLogger logger, IUserInterfaceService userInterfaceService, LPBase lpBase, BigMachine bigMachine, NetControl netsphere, Crystalizer crystalizer, Vault vault, AuthorityVault authorityVault, LPSettings settings)
     {
         this.Logger = logger;
         this.UserInterfaceService = userInterfaceService;
@@ -401,7 +409,6 @@ public class Control : ILogInformation
         }
 
         this.Core = core;
-        this.BigMachine.Core.ChangeParent(this.Core);
 
         SubcommandParserOptions = SimpleParserOptions.Standard with
         {
@@ -440,11 +447,12 @@ public class Control : ILogInformation
 
     public async Task RunAsync(UnitContext context)
     {
-        this.BigMachine.Start();
+        this.BigMachine.Start(null);
 
         // this.BigMachine.CreateOrGet<EssentialNetMachine.Interface>(Identifier.Zero)?.RunAsync();
-        this.BigMachine.CreateOrGet<NtpMachine.Interface>(Identifier.Zero)?.RunAsync();
-        this.BigMachine.CreateOrGet<PublicIPMachine.Interface>(Identifier.Zero)?.RunAsync();
+        _ = this.BigMachine.NtpMachine.Get().RunAsync();
+        _ = this.BigMachine.PublicIPMachine.Get().RunAsync();
+        _ = this.BigMachine.NetStatsMachine.Get().RunAsync();
 
         await context.SendRunAsync(new(this.Core));
 
@@ -626,7 +634,7 @@ public class Control : ILogInformation
 
     public LPBase LPBase { get; }
 
-    public BigMachine<Identifier> BigMachine { get; }
+    public BigMachine BigMachine { get; }
 
     public NetControl NetControl { get; }
 

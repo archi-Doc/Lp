@@ -16,7 +16,7 @@ public sealed partial class Order : IValidatable, IEquatable<Order>
     }
 
     [TinyhandObject]
-    public readonly partial struct Condition
+    public readonly partial record struct Condition
     {
         public enum Type
         {

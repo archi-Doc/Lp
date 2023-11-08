@@ -87,6 +87,9 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
         return false;
     }
 
+    public static int MaxStringLength
+        => KeyHelper.PublicKeyLengthInBase64;
+
     public int GetStringLength()
         => KeyHelper.PublicKeyLengthInBase64;
 
@@ -102,10 +105,6 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
         Span<byte> span = stackalloc byte[KeyHelper.EncodedLength];
         this.TryWriteBytes(span, out _);
         return Base64.Url.FromByteArrayToSpan(span, destination, out written);
-    }
-
-    public SignaturePublicKey()
-    {
     }
 
     internal SignaturePublicKey(byte keyValue, ReadOnlySpan<byte> x)

@@ -4,14 +4,13 @@ namespace Sandbox;
 
 internal class TestClass0
 {
-    public TestClass0(Crystalizer crystalizer, ICrystal<ManualClass> manualCrystal, ICrystal<CombinedClass> combinedCrystal, ICrystal<StandardData.GoshujinClass> standardCrystal, AdvancedClass crystalClass)
+    public TestClass0(Crystalizer crystalizer, ICrystal<ManualClass> manualCrystal, ICrystal<CombinedClass> combinedCrystal, ICrystal<StandardData.GoshujinClass> standardCrystal)
     {
         this.crystalizer = crystalizer;
 
         this.manualCrystal = manualCrystal;
         this.combinedCrystal = combinedCrystal;
         this.standardCrystal = standardCrystal;
-        this.crystalClass = crystalClass;
         /*this.crystalData = crystalData;
         this.valueClassGoshujin = valueClassGoshujin;
         this.standardGoshujin = standardGoshujin;*/
@@ -28,8 +27,6 @@ internal class TestClass0
         {
             return;
         }
-
-        await this.TestCrystal(this.crystalClass);
 
         // await this.crystalizer.TestJournalAll();
 
@@ -66,33 +63,10 @@ internal class TestClass0
         var w2 = g.TryLock(0, ValueLink.TryLockMode.GetOrCreate);*/
     }
 
-    private async Task TestCrystal(AdvancedClass c)
-    {
-        var child = await c.Child.Get();
-
-        var children = await c.Children.Get();
-        using (var w = await children.TryLockAsync(1, TryLockMode.GetOrCreate))
-        {
-            if (w is not null)
-            {
-                w.Name = "One";
-                w.RemoveAndErase();
-                w.Commit();
-            }
-        }
-
-        var r = children.TryGet(1);
-
-        await c.Children.Save(UnloadMode.TryUnload);
-
-        r = (await c.Children.Get()).TryGet(1);
-    }
-
     private Crystalizer crystalizer;
     private ICrystal<ManualClass> manualCrystal;
     private ICrystal<CombinedClass> combinedCrystal;
     private ICrystal<StandardData.GoshujinClass> standardCrystal;
-    private AdvancedClass crystalClass;
     // private ValueClass.GoshujinClass valueClassGoshujin;
     // private StandardData.GoshujinClass standardGoshujin;
 }

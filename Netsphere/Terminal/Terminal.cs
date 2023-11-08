@@ -14,7 +14,7 @@ public class Terminal : UnitBase, IUnitExecutable
 {
     public delegate Task InvokeServerDelegate(ServerTerminal terminal);
 
-    internal struct RawSend
+    internal record struct RawSend
     {
         public RawSend(IPEndPoint endPoint, ByteArrayPool.MemoryOwner owner)
         {

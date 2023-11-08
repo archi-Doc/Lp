@@ -2,14 +2,12 @@
 
 namespace LP.Machines;
 
-[MachineObject(0xa91505d4, Group = typeof(SingleGroup<>))]
+[MachineObject(UseServiceProvider = true)]
 // [TinyhandObject(UseServiceProvider = true)]
-public partial class LogTesterMachine : Machine<Identifier>
+public partial class LogTesterMachine : Machine
 {
-    public LogTesterMachine(BigMachine<Identifier> bigMachine, Control control, ILogger<LogTesterMachine> logger)
-        : base(bigMachine)
+    public LogTesterMachine(ILogger<LogTesterMachine> logger)
     {
-        this.control = control;
         this.logger = logger;
         this.DefaultTimeout = TimeSpan.FromSeconds(2);
     }
@@ -25,6 +23,5 @@ public partial class LogTesterMachine : Machine<Identifier>
         return StateResult.Continue;
     }
 
-    private Control control;
     private ILogger<LogTesterMachine> logger;
 }

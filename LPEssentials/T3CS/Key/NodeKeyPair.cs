@@ -5,7 +5,7 @@ using LP.T3CS;
 
 namespace LP;
 
-public readonly partial struct NodeKeyPair : IEquatable<NodeKeyPair>
+public readonly partial record struct NodeKeyPair
 {
     private const int MaxCache = 1_000;
 
@@ -60,7 +60,4 @@ public readonly partial struct NodeKeyPair : IEquatable<NodeKeyPair>
 
     private readonly NodePrivateKey privateKey;
     private readonly NodePublicKey publicKey;
-
-    public bool Equals(NodeKeyPair other)
-        => this.privateKey.Equals(other.privateKey) && this.publicKey.Equals(other.publicKey);
 }

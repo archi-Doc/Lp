@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 
 #pragma warning disable SA1204
@@ -11,7 +12,7 @@ namespace LP.T3CS;
 /// Represents a public key data. Compressed to 33 bytes (memory usage 40 bytes).
 /// </summary>
 [TinyhandObject]
-public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<EncryptionPublicKey>
+public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<EncryptionPublicKey>, IStringConvertible<EncryptionPublicKey>
 {
     #region Unique
 
@@ -30,9 +31,9 @@ public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<En
 
     #region TypeSpecific
 
-    public static bool TryParse(ReadOnlySpan<char> chars, [MaybeNullWhen(false)] out EncryptionPublicKey publicKey)
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out EncryptionPublicKey publicKey)
     {
-        if (KeyHelper.TryParsePublicKey(chars, out var keyValue, out var x) &&
+        if (KeyHelper.TryParsePublicKey(source, out var keyValue, out var x) &&
             KeyHelper.GetKeyClass(keyValue) == KeyClass.T3CS_Encryption)
         {
             publicKey = new(keyValue, x);
@@ -43,8 +44,24 @@ public readonly partial struct EncryptionPublicKey : IValidatable, IEquatable<En
         return false;
     }
 
-    public EncryptionPublicKey()
+    public static int MaxStringLength
+        => KeyHelper.PublicKeyLengthInBase64;
+
+    public int GetStringLength()
+        => KeyHelper.PublicKeyLengthInBase64;
+
+    [SkipLocalsInit]
+    public bool TryFormat(Span<char> destination, out int written)
     {
+        if (destination.Length < KeyHelper.PublicKeyLengthInBase64)
+        {
+            written = 0;
+            return false;
+        }
+
+        Span<byte> span = stackalloc byte[KeyHelper.EncodedLength];
+        this.TryWriteBytes(span, out _);
+        return Base64.Url.FromByteArrayToSpan(span, destination, out written);
     }
 
     internal EncryptionPublicKey(byte keyValue, ReadOnlySpan<byte> x)

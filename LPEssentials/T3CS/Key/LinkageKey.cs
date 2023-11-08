@@ -9,7 +9,7 @@ namespace LP.T3CS;
 /// Represents a linkage key.
 /// </summary>
 [TinyhandObject]
-public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageKey>
+public readonly partial record struct LinkageKey
 {
     public const int EncodedLength = KeyHelper.EncodedLength + sizeof(uint) + sizeof(byte) + (sizeof(ulong) * 4);
 
@@ -47,10 +47,6 @@ public readonly partial struct LinkageKey // : IValidatable, IEquatable<LinkageK
         }
 
         return new(publicKey, newKey, destination);
-    }
-
-    public LinkageKey()
-    {
     }
 
     private LinkageKey(SignaturePublicKey publicKey)

@@ -60,6 +60,9 @@ public sealed partial class Credit : IValidatable, IEquatable<Credit>, IStringCo
         return true;
     }
 
+    public static int MaxStringLength
+        => (1 + SignaturePublicKey.MaxStringLength) * (2 + MaxMergers);
+
     public int GetStringLength()
     {
         var length = 1 + this.Originator.GetStringLength() + 1 + this.Standard.GetStringLength(); // @Originator:Standard/Merger1+Merger2
