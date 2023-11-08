@@ -28,4 +28,25 @@ public sealed partial class StatsData
     public void UpdateStats()
     {
     }
+
+    public void AddressFixed()
+    {
+        this.Ipv4State = NodeType.Global;
+        this.Ipv6State = NodeType.Global;
+    }
+
+    public void ReportAddressQuery(AddressQueryResult result)
+    {
+        if (x.Address is { } address)
+        {
+            this.logger.TryGet()?.Log($"{address.ToString()} from {x.Uri}");
+            this.statsData.AddressFixed();
+            if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+            {// Ipv4
+            }
+            else if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+            {// Ipv6
+            }
+        }
+    }
 }
