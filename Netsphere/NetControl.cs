@@ -18,7 +18,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Logging;
 using Netsphere.Machines;
 using Netsphere.Responder;
-using Netsphere.State;
+using Netsphere.NetStats;
 
 namespace Netsphere;
 
@@ -45,7 +45,7 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddSingleton<EssentialNode>();
                 context.AddSingleton<NetStatus>();
                 context.AddSingleton<EssentialAddress>();
-                context.AddSingleton<NetStat>();
+                context.AddSingleton<StatsData>();
                 context.AddTransient<Server>();
                 // context.Services.Add(new ServiceDescriptor(typeof(NetService), x => new NetService(x), ServiceLifetime.Transient));
                 // context.AddTransient<NetService>(); // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
@@ -58,7 +58,7 @@ public class NetControl : UnitBase, IUnitPreparable
                 // context.AddTransient<EssentialNetMachine>();
                 context.AddTransient<NtpMachine>();
                 context.AddTransient<PublicIPMachine>();
-                context.AddTransient<NetStatMachine>();
+                context.AddTransient<NetStatsMachine>();
 
                 // Subcommands
                 context.AddSubcommand(typeof(LP.Subcommands.NetTestSubcommand));

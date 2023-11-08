@@ -5,5 +5,5 @@ namespace LP;
 [BigMachineObject(Inclusive = true)]
 [AddMachine<Netsphere.Machines.NtpMachine>]
 [AddMachine<Netsphere.Machines.PublicIPMachine>]
-[AddMachine<Netsphere.Machines.NetStatMachine>]
+[AddMachine<Netsphere.Machines.NetStatsMachine>]
 public partial class BigMachine;

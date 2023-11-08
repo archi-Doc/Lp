@@ -1,11 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace Netsphere.State;
+namespace Netsphere.NetStats;
 
 [TinyhandObject(UseServiceProvider = true, LockObject = "syncObject")]
-public sealed partial class NetStat
+public sealed partial class StatsData
 {
-    public NetStat(EssentialAddress essentialAddress)
+    public StatsData(EssentialAddress essentialAddress)
     {
         this.EssentialAddress = essentialAddress;
     }
@@ -24,4 +24,8 @@ public sealed partial class NetStat
     public NodeType Ipv6State { get; private set; }
 
     #endregion
+
+    public void UpdateStats()
+    {
+    }
 }

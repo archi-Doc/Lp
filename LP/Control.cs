@@ -63,6 +63,7 @@ public class Control : ILogInformation
 
                 // Machines
                 context.AddSingleton<BigMachine>();
+                context.AddSingleton<BigMachineBase, BigMachine>();
                 context.AddTransient<Machines.SingleMachine>();
                 context.AddTransient<Machines.LogTesterMachine>();
 
@@ -213,7 +214,7 @@ public class Control : ILogInformation
                             new GlobalDirectoryConfiguration("Merger/Storage")),
                     });
 
-                    context.AddCrystal<Netsphere.State.NetStat>(new CrystalConfiguration() with
+                    context.AddCrystal<Netsphere.NetStats.StatsData>(new CrystalConfiguration() with
                     {
                         SaveFormat = SaveFormat.Utf8,
                         FileConfiguration = new GlobalFileConfiguration("NetStat.tinyhand"),
@@ -451,7 +452,7 @@ public class Control : ILogInformation
         // this.BigMachine.CreateOrGet<EssentialNetMachine.Interface>(Identifier.Zero)?.RunAsync();
         _ = this.BigMachine.NtpMachine.Get().RunAsync();
         _ = this.BigMachine.PublicIPMachine.Get().RunAsync();
-        _ = this.BigMachine.NetStatMachine.Get().RunAsync();
+        _ = this.BigMachine.NetStatsMachine.Get().RunAsync();
 
         await context.SendRunAsync(new(this.Core));
 

@@ -2,13 +2,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-namespace Netsphere;
-
-public enum ConnectionResult
-{
-    Success,
-    Failure,
-}
+namespace Netsphere.NetStats;
 
 [TinyhandObject(UseServiceProvider = true)]
 public sealed partial class EssentialAddress : ITinyhandSerializationCallback
@@ -27,6 +21,10 @@ public sealed partial class EssentialAddress : ITinyhandSerializationCallback
 
     [Key(0)]
     private Item.GoshujinClass data = new();
+
+    public int CountIpv4 => this.data.Ipv4ListChain.Count;
+
+    public int CountIpv6 => this.data.Ipv6ListChain.Count;
 
     [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
     [TinyhandObject]
@@ -68,48 +66,6 @@ public sealed partial class EssentialAddress : ITinyhandSerializationCallback
 
         public override string ToString()
             => $"{this.Address.ToString()}, Valid: {Mics.ToString(this.ValidMics)}, Failed: {this.FailureCount}";
-    }
-
-    public void Prepare()
-    {
-        // Load NetsphereOptions.Nodes
-        var nodes = this.netBase.NetsphereOptions.Nodes;
-        foreach (var x in nodes.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-        {
-            if (DualAddress.TryParse(x, out var address))
-            {
-                if (!this.data.AddressChain.ContainsKey(address))
-                {
-                    var item = new Item(address);
-                    this.data.Add(item);
-                    if (address.IsValidIpv4)
-                    {
-                        this.data.Ipv4ListChain.AddLast(item);
-                    }
-
-                    if (address.IsValidIpv6)
-                    {
-                        this.data.Ipv6ListChain.AddLast(item);
-                    }
-                }
-            }
-        }
-
-        // Unchecked Queue
-        var mics = Mics.GetSystem();
-        this.data.UncheckedChain.Clear();
-        foreach (var x in this.data.LinkedListChain)
-        {
-            if (x.ValidMics <= mics && mics <= (x.ValidMics + Mics.FromMinutes(ValidTimeInMinutes)))
-            {// [x.ValidMics, x.ValidMics + Mics.FromMinutes(ValidTimeInMinutes)]
-            }
-            else
-            {
-                this.data.UncheckedChain.Enqueue(x);
-            }
-        }
-
-        this.Validate();
     }
 
     public bool TryAdd(DualAddress address)
@@ -241,5 +197,47 @@ public sealed partial class EssentialAddress : ITinyhandSerializationCallback
     void ITinyhandSerializationCallback.OnAfterDeserialize()
     {
         this.Prepare();
+    }
+
+    private void Prepare()
+    {
+        // Load NetsphereOptions.Nodes
+        var nodes = this.netBase.NetsphereOptions.Nodes;
+        foreach (var x in nodes.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (DualAddress.TryParse(x, out var address))
+            {
+                if (!this.data.AddressChain.ContainsKey(address))
+                {
+                    var item = new Item(address);
+                    this.data.Add(item);
+                    if (address.IsValidIpv4)
+                    {
+                        this.data.Ipv4ListChain.AddLast(item);
+                    }
+
+                    if (address.IsValidIpv6)
+                    {
+                        this.data.Ipv6ListChain.AddLast(item);
+                    }
+                }
+            }
+        }
+
+        // Unchecked Queue
+        var mics = Mics.GetSystem();
+        this.data.UncheckedChain.Clear();
+        foreach (var x in this.data.LinkedListChain)
+        {
+            if (x.ValidMics <= mics && mics <= (x.ValidMics + Mics.FromMinutes(ValidTimeInMinutes)))
+            {// [x.ValidMics, x.ValidMics + Mics.FromMinutes(ValidTimeInMinutes)]
+            }
+            else
+            {
+                this.data.UncheckedChain.Enqueue(x);
+            }
+        }
+
+        this.Validate();
     }
 }
