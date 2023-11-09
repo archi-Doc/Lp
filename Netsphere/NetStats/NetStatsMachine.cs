@@ -33,7 +33,7 @@ public partial class NetStatsMachine : Machine
 
         if (this.statsData.Ipv4State != NodeType.Unknown &&
             this.statsData.Ipv6State != NodeType.Unknown)
-        {
+        {// Fixed
             this.ChangeState(State.AddressFixed, true);
             return StateResult.Continue;
         }
@@ -67,6 +67,13 @@ public partial class NetStatsMachine : Machine
             this.statsData.ReportAddressQuery(x);
         }
 
+        if (this.statsData.Ipv4State != NodeType.Unknown &&
+            this.statsData.Ipv6State != NodeType.Unknown)
+        {// Fixed
+            this.ChangeState(State.AddressFixed, true);
+            return StateResult.Continue;
+        }
+
         return StateResult.Continue;
     }
 
@@ -82,9 +89,6 @@ public partial class NetStatsMachine : Machine
     private readonly LPBase lpBase;
     private readonly NetControl netControl;
     private readonly StatsData statsData;
-
-    private long icanhazipIPv4Used;
-    private long icanhazipIPv6Used;
 
     private void ReportIpAddress(IPAddress ipAddress, string uri)
     {

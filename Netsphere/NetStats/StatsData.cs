@@ -3,7 +3,7 @@
 namespace Netsphere.NetStats;
 
 [TinyhandObject(UseServiceProvider = true, LockObject = "syncObject")]
-public sealed partial class StatsData
+public sealed partial class StatsData : ITinyhandSerializationCallback
 {
     public StatsData(EssentialAddress essentialAddress)
     {
@@ -23,10 +23,27 @@ public sealed partial class StatsData
     [Key(2)]
     public NodeType Ipv6State { get; private set; }
 
+    [Key(3)]
+    public MyAddress MyIpv4Address { get; private set; } = default!;
+
+    [Key(4)]
+    public MyAddress MyIpv6Address { get; private set; } = default!;
+
     #endregion
 
     public void UpdateStats()
     {
+        if (this.MyIpv4Address.AddressState == MyAddress.State.Changed ||
+            this.MyIpv6Address.AddressState == MyAddress.State.Changed)
+        {// Reset
+            this.MyIpv4Address.Clear();
+            this.MyIpv6Address.Clear();
+            this.Ipv4State = NodeType.Unknown;
+            this.Ipv6State = NodeType.Unknown;
+        }
+
+        this.Ipv4State = NodeType.Unknown;
+        this.Ipv6State = NodeType.Unknown; // tempcode
     }
 
     public void AddressFixed()
@@ -37,16 +54,27 @@ public sealed partial class StatsData
 
     public void ReportAddressQuery(AddressQueryResult result)
     {
-        if (x.Address is { } address)
-        {
-            this.logger.TryGet()?.Log($"{address.ToString()} from {x.Uri}");
-            this.statsData.AddressFixed();
-            if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
-            {// Ipv4
-            }
-            else if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
-            {// Ipv6
-            }
+        var priority = result.Uri is not null;
+        if (result.Ipv6)
+        {// Ipv6
+            this.MyIpv6Address.ReportAddress(priority, result.Address);
         }
+        else
+        {// Ipv4
+            this.MyIpv4Address.ReportAddress(priority, result.Address);
+        }
+    }
+
+    public MyAddress.State GetAddressState()
+    {
+        return MyAddress.State.Unknown;
+    }
+
+    void ITinyhandSerializationCallback.OnBeforeSerialize()
+    {
+    }
+
+    void ITinyhandSerializationCallback.OnAfterDeserialize()
+    {
     }
 }
