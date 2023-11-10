@@ -217,6 +217,28 @@ public readonly partial record struct DualAddress : IStringConvertible<DualAddre
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void TryCreateIpv4(ref NetEndPoint endPoint)
+    {
+        if (this.IsValidIpv4)
+        {
+            endPoint = new(new(this.Address4, this.Port4), this.Engagement4);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void TryCreateIpv6(ref NetEndPoint endPoint)
+    {
+        if (this.IsValidIpv6)
+        {
+            Span<byte> ipv6byte = stackalloc byte[16];
+            BitConverter.TryWriteBytes(ipv6byte, this.Address6A);
+            BitConverter.TryWriteBytes(ipv6byte.Slice(sizeof(ulong)), this.Address6B);
+            var ipv6 = new IPAddress(ipv6byte);
+            endPoint = new(new(ipv6, this.Port6), this.Engagement6);
+        }
+    }
+
     public bool Validate()
     {
         if (!this.IsValidIpv4 && !this.IsValidIpv6)

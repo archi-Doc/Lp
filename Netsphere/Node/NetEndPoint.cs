@@ -14,8 +14,10 @@ public readonly partial record struct NetEndPoint
     }
 
     [Key(0)]
-    public readonly IPEndPoint EndPoint;
+    public readonly IPEndPoint? EndPoint;
 
     [Key(1)]
     public readonly ushort Engagement;
+
+    public bool IsValid => this.EndPoint is not null;
 }

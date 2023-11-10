@@ -17,6 +17,7 @@ public enum NetResult
     Closed,
     NoDataToSend,
     NoNodeInformation,
+    NoNetwork,
     NoEncryptedConnection,
     NoSender,
     NoReceiver,

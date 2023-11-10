@@ -147,7 +147,7 @@ public partial class RunnerMachine : Machine
 
     private async Task<NetResult> SendAcknowledge()
     {
-        var nodeAddress = this.Information.TryGetNodeAddress();
+        var nodeAddress = this.Information.TryGetDualAddress();
         if (nodeAddress == null)
         {
             return NetResult.NoNodeInformation;

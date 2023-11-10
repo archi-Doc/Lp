@@ -3,6 +3,7 @@
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using Arc.Crypto;
@@ -46,39 +47,12 @@ public class Terminal : UnitBase, IUnitExecutable
     /// <summary>
     /// Create unmanaged (without public key) NetTerminal instance.
     /// </summary>
-    /// <param name="nodeAddress">NodeAddress.</param>
-    /// <returns>NetTerminal.</returns>
-    public ClientTerminal Create(NodeAddress nodeAddress)
-    {
-        var terminal = new ClientTerminal(this, nodeAddress);
-        lock (this.terminals)
-        {
-            this.terminals.Add(terminal);
-        }
-
-        return terminal;
-    }
-
-    /// <summary>
-    /// Create unmanaged (without public key) NetTerminal instance.
-    /// </summary>
     /// <param name="address">DualAddress.</param>
     /// <returns>NetTerminal.</returns>
     public ClientTerminal? TryCreate(DualAddress address)
     {
-        IPEndPoint? endPoint = default;
-        if (this.statsData.MyIpv6Address.AddressState == MyAddress.State.Fixed ||
-            this.statsData.MyIpv6Address.AddressState == MyAddress.State.Changed)
-        {// Ipv6 supported
-            endPoint = address.TryCreateIpv4();
-            endPoint ??= address.TryCreateIpv6();
-        }
-        else
-        {// Ipv4
-            endPoint = address.TryCreateIpv4();
-        }
-
-        if (endPoint is null)
+        this.DualAddressToEndPoint(in address, out var endPoint);
+        if (!endPoint.IsValid)
         {
             return null;
         }
@@ -97,9 +71,38 @@ public class Terminal : UnitBase, IUnitExecutable
     /// </summary>
     /// <param name="node">NetNode.</param>
     /// <returns>NetTerminal.</returns>
-    public ClientTerminal Create(NetNode node)
+    public ClientTerminal? TryCreate(NetNode node)
     {
-        var terminal = new ClientTerminal(this, node);
+        this.DualAddressToEndPoint(node.Address, out var endPoint);
+        if (!endPoint.IsValid)
+        {
+            return null;
+        }
+
+        var terminal = new ClientTerminal(this, endPoint, node);
+        lock (this.terminals)
+        {
+            this.terminals.Add(terminal);
+        }
+
+        return terminal;
+    }
+
+    /// <summary>
+    /// Create managed (with public key) and encrypted NetTerminal instance.
+    /// </summary>
+    /// <param name="node">NodeInformation.</param>
+    /// <param name="gene">gene.</param>
+    /// <returns>NetTerminal.</returns>
+    public ServerTerminal? TryCreate(NetNode node, ulong gene)
+    {
+        this.DualAddressToEndPoint(node.Address, out var endPoint);
+        if (!endPoint.IsValid)
+        {
+            return default;
+        }
+
+        var terminal = new ServerTerminal(this, endPoint, node, gene);
         lock (this.terminals)
         {
             this.terminals.Add(terminal);
@@ -115,33 +118,16 @@ public class Terminal : UnitBase, IUnitExecutable
     /// <returns>NetTerminal.</returns>
     public async Task<ClientTerminal?> CreateAndEncrypt(NetNode node)
     {
-        var terminal = new ClientTerminal(this, node);
-        lock (this.terminals)
+        var terminal = this.TryCreate(node);
+        if (terminal is null)
         {
-            this.terminals.Add(terminal);
+            return null;
         }
 
         if (await terminal.EncryptConnectionAsync().ConfigureAwait(false) != NetResult.Success)
         {
             terminal.Dispose();
             return null;
-        }
-
-        return terminal;
-    }
-
-    /// <summary>
-    /// Create managed (with public key) and encrypted NetTerminal instance.
-    /// </summary>
-    /// <param name="nodeInformation">NodeInformation.</param>
-    /// <param name="gene">gene.</param>
-    /// <returns>NetTerminal.</returns>
-    public ServerTerminal Create(NodeInformation nodeInformation, ulong gene)
-    {
-        var terminal = new ServerTerminal(this, nodeInformation, gene);
-        lock (this.terminals)
-        {
-            this.terminals.Add(terminal);
         }
 
         return terminal;
@@ -392,7 +378,12 @@ public class Terminal : UnitBase, IUnitExecutable
             var secondGene = GenePool.NextGene(header.Gene);
             PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var sendOwner);
 
-            var terminal = this.Create(packet.Node, firstGene);
+            var terminal = this.TryCreate(packet.Node, firstGene);
+            if (terminal is null)
+            {
+                return;
+            }
+
             var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(terminal, firstGene, owner, secondGene, sendOwner);
             sendOwner.Return();
 
@@ -580,6 +571,25 @@ public class Terminal : UnitBase, IUnitExecutable
                 this.logger.TryGet()?.Log($"Clean netsphere {cleanedGenes} net terminal genes");
             }
         });
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void DualAddressToEndPoint(in DualAddress address, out NetEndPoint endPoint)
+    {
+        endPoint = default;
+        if (this.statsData.MyIpv6Address.AddressState == MyAddress.State.Fixed ||
+            this.statsData.MyIpv6Address.AddressState == MyAddress.State.Changed)
+        {// Ipv6 supported
+            address.TryCreateIpv4(ref endPoint);
+            if (!endPoint.IsValid)
+            {
+                address.TryCreateIpv6(ref endPoint);
+            }
+        }
+        else
+        {// Ipv4
+            address.TryCreateIpv4(ref endPoint);
+        }
     }
 
     internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
