@@ -11,8 +11,8 @@ public class ClientTerminal : NetTerminal
     {// NodeAddress: Unmanaged
     }
 
-    internal ClientTerminal(Terminal terminal, DualAddress address)
-        : base(terminal, address)
+    internal ClientTerminal(Terminal terminal, IPEndPoint endPoint)
+        : base(terminal, endPoint)
     {// NodeAddress: Unmanaged
     }
 

@@ -54,6 +54,18 @@ public partial class NetTerminal : IDisposable
         this.Initialize();
     }
 
+    internal NetTerminal(Terminal terminal, IPEndPoint endPoint)
+    {// NodeAddress: Unmanaged
+        this.Terminal = terminal;
+        this.GenePool = new(RandomVault.Crypto.NextUInt64());
+        this.NodeAddress = default!; // tempcode
+        this.Endpoint = endPoint;
+
+        this.FlowControl = new(this);
+
+        this.Initialize();
+    }
+
     internal NetTerminal(Terminal terminal, NodeInformation nodeInformation, ulong gene)
     {// NodeInformation: Encrypted
         this.Terminal = terminal;

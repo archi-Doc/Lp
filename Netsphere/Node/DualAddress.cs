@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using Arc.Crypto;
 
 namespace Netsphere;
@@ -13,7 +14,7 @@ namespace Netsphere;
 public readonly partial record struct DualAddress : IStringConvertible<DualAddress>, IValidatable
 {
     public const ushort AlternativePort = 49151;
-    public static readonly DualAddress Alternative = new(IPAddress.IPv6Loopback, AlternativePort);
+    public static readonly DualAddress Alternative = new(null, 0, IPAddress.IPv6Loopback, AlternativePort);
 
     [Key(0)]
     public readonly ushort Engagement4;
@@ -158,6 +159,36 @@ public readonly partial record struct DualAddress : IStringConvertible<DualAddre
 
         written = destination.Length - span.Length;
         return true;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public IPEndPoint? TryCreateIpv4()
+    {
+        if (this.IsValidIpv4)
+        {
+            return new(this.Address4, this.Port4);
+        }
+        else
+        {
+            return default;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public IPEndPoint? TryCreateIpv6()
+    {
+        if (this.IsValidIpv6)
+        {
+            Span<byte> ipv6byte = stackalloc byte[16];
+            BitConverter.TryWriteBytes(ipv6byte, this.Address6A);
+            BitConverter.TryWriteBytes(ipv6byte.Slice(sizeof(ulong)), this.Address6B);
+            var ipv6 = new IPAddress(ipv6byte);
+            return new(ipv6, this.Port6);
+        }
+        else
+        {
+            return default;
+        }
     }
 
     public bool Validate()

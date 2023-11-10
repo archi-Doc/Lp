@@ -106,7 +106,7 @@ public class NetControl : UnitBase, IUnitPreparable
         }
     }
 
-    public NetControl(UnitContext context, UnitLogger logger, NetBase netBase, Terminal terminal, EssentialNode node, NetStatus netStatus)
+    public NetControl(UnitContext context, UnitLogger logger, NetBase netBase, Terminal terminal, EssentialNode node, NetStatus netStatus, StatsData statsData)
         : base(context)
     {
         this.logger = logger;
@@ -118,7 +118,7 @@ public class NetControl : UnitBase, IUnitPreparable
         this.Terminal = terminal;
         if (this.NetBase.NetsphereOptions.EnableAlternative)
         {
-            this.Alternative = new(context, logger, netBase, netStatus); // For debug
+            this.Alternative = new(context, logger, netBase, netStatus, statsData); // For debug
         }
 
         this.EssentialNode = node;

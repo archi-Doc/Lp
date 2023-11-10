@@ -431,7 +431,7 @@ public class Control : ILogInformation
 
     public async Task AbortAsync()
     {
-        // await this.Crystal.Abort(); // tempcode
+        // await this.Crystalizer.SaveAllAndTerminate();
     }
 
     public async Task SaveAsync(UnitContext context)

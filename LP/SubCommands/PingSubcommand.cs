@@ -69,8 +69,13 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
         this.logger.TryGet()?.Log($"Ping: {address.ToString()}");
 
         var sw = Stopwatch.StartNew();
-        using (var terminal = this.Control.NetControl.Terminal.Create(address))
+        using (var terminal = this.Control.NetControl.Terminal.TryCreate(address))
         {
+            if (terminal is null)
+            {
+                return;
+            }
+
             var p = new PacketPing("test56789012345678901234567890123456789");
             sw.Restart();
             var result = await terminal.SendPacketAndReceiveAsync<PacketPing, PacketPingResponse>(p);
@@ -78,10 +83,6 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
             if (result.Value != null)
             {
                 this.logger.TryGet()?.Log($"Received: {result.ToString()} - {sw.ElapsedMilliseconds} ms");
-                if (result.Value.NodeAddress is { } nodeAddress)
-                {// tempcode
-                    this.Control.NetControl.NetStatus.ReportMyNodeAddress(nodeAddress);
-                }
             }
             else
             {

@@ -7,6 +7,7 @@ using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using Arc.Crypto;
 using LP.T3CS;
+using Netsphere.NetStats;
 
 namespace Netsphere;
 
@@ -63,9 +64,26 @@ public class Terminal : UnitBase, IUnitExecutable
     /// </summary>
     /// <param name="address">DualAddress.</param>
     /// <returns>NetTerminal.</returns>
-    public ClientTerminal Create(DualAddress address)
+    public ClientTerminal? TryCreate(DualAddress address)
     {
-        var terminal = new ClientTerminal(this, address);
+        IPEndPoint? endPoint = default;
+        if (this.statsData.MyIpv6Address.AddressState == MyAddress.State.Fixed ||
+            this.statsData.MyIpv6Address.AddressState == MyAddress.State.Changed)
+        {// Ipv6 supported
+            endPoint = address.TryCreateIpv4();
+            endPoint ??= address.TryCreateIpv6();
+        }
+        else
+        {// Ipv4
+            endPoint = address.TryCreateIpv4();
+        }
+
+        if (endPoint is null)
+        {
+            return null;
+        }
+
+        var terminal = new ClientTerminal(this, endPoint);
         lock (this.terminals)
         {
             this.terminals.Add(terminal);
@@ -137,7 +155,7 @@ public class Terminal : UnitBase, IUnitExecutable
         }
     }
 
-    public Terminal(UnitContext context, UnitLogger unitLogger, NetBase netBase, NetStatus netStatus)
+    public Terminal(UnitContext context, UnitLogger unitLogger, NetBase netBase, NetStatus netStatus, StatsData statsData)
         : base(context)
     {
         this.UnitLogger = unitLogger;
@@ -146,6 +164,7 @@ public class Terminal : UnitBase, IUnitExecutable
         this.NetStatus = netStatus;
         this.NetSocketIpv4 = new(this);
         this.NetSocketIpv6 = new(this);
+        this.statsData = statsData;
     }
 
     public async Task RunAsync(UnitMessage.RunAsync message)
@@ -580,7 +599,8 @@ public class Terminal : UnitBase, IUnitExecutable
     internal int SendCapacityPerRound;
 #pragma warning restore SA1401 // Fields should be private
 
-    private ILogger<Terminal> logger;
+    private readonly ILogger<Terminal> logger;
+    private readonly StatsData statsData;
     private InvokeServerDelegate? invokeServerDelegate;
     private NetTerminal.GoshujinClass terminals = new();
     private ConcurrentDictionary<ulong, NetTerminalGene> inboundGenes = new();
