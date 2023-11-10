@@ -6,18 +6,13 @@ namespace Netsphere;
 
 public class ClientTerminal : NetTerminal
 {
-    internal ClientTerminal(Terminal terminal, NodeAddress nodeAddress)
-        : base(terminal, nodeAddress)
-    {// NodeAddress: Unmanaged
-    }
-
-    internal ClientTerminal(Terminal terminal, IPEndPoint endPoint)
+    internal ClientTerminal(Terminal terminal, NetEndPoint endPoint)
         : base(terminal, endPoint)
     {// NodeAddress: Unmanaged
     }
 
-    internal ClientTerminal(Terminal terminal, NodeInformation nodeInformation)
-        : base(terminal, nodeInformation, RandomVault.Crypto.NextUInt64())
+    internal ClientTerminal(Terminal terminal, NetEndPoint endPoint, NetNode node)
+        : base(terminal, endPoint, node, RandomVault.Crypto.NextUInt64())
     {// NodeInformation: Managed
     }
 
@@ -27,7 +22,7 @@ public class ClientTerminal : NetTerminal
         {// Encrypted
             return NetResult.Success;
         }
-        else if (this.NodeInformation == null && !this.Terminal.NetBase.AllowUnsafeConnection)
+        else if (this.Node == null && !this.Terminal.NetBase.AllowUnsafeConnection)
         {// Unmanaged
             return NetResult.NoNodeInformation;
         }
@@ -62,7 +57,7 @@ public class ClientTerminal : NetTerminal
                 *(PacketHeader*)bp = header;
             }
 
-            this.Terminal.AddRawSend(this.Endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
+            this.Terminal.AddRawSend(this.Endpoint.EndPoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
             this.Logger?.Log("Send close (client)");
         }
     }

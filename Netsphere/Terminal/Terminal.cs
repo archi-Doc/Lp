@@ -95,11 +95,11 @@ public class Terminal : UnitBase, IUnitExecutable
     /// <summary>
     /// Create managed (with public key) NetTerminal instance.
     /// </summary>
-    /// <param name="nodeInformation">NodeInformation.</param>
+    /// <param name="node">NetNode.</param>
     /// <returns>NetTerminal.</returns>
-    public ClientTerminal Create(NodeInformation nodeInformation)
+    public ClientTerminal Create(NetNode node)
     {
-        var terminal = new ClientTerminal(this, nodeInformation);
+        var terminal = new ClientTerminal(this, node);
         lock (this.terminals)
         {
             this.terminals.Add(terminal);
@@ -111,11 +111,11 @@ public class Terminal : UnitBase, IUnitExecutable
     /// <summary>
     /// Create managed (with public key) NetTerminal instance and create encrypted connection.
     /// </summary>
-    /// <param name="nodeInformation">NodeInformation.</param>
+    /// <param name="node">NodeInformation.</param>
     /// <returns>NetTerminal.</returns>
-    public async Task<ClientTerminal?> CreateAndEncrypt(NodeInformation nodeInformation)
+    public async Task<ClientTerminal?> CreateAndEncrypt(NetNode node)
     {
-        var terminal = new ClientTerminal(this, nodeInformation);
+        var terminal = new ClientTerminal(this, node);
         lock (this.terminals)
         {
             this.terminals.Add(terminal);

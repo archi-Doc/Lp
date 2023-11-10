@@ -121,9 +121,9 @@ public class NodeTest
 
     private static bool TestDualNode(string utf16, bool validation, bool compareUtf16 = true)
     {
-        DualNode.TryParse(utf16, out var addressAndKey).IsTrue();
+        NetNode.TryParse(utf16, out var addressAndKey).IsTrue();
 
-        Span<char> destination = stackalloc char[DualNode.MaxStringLength];
+        Span<char> destination = stackalloc char[NetNode.MaxStringLength];
         addressAndKey.TryFormat(destination, out var written).IsTrue();
         destination = destination.Slice(0, written);
 
@@ -132,7 +132,7 @@ public class NodeTest
             utf16.Is(destination.ToString());
         }
 
-        DualNode.TryParse(destination, out var addressAndKey2).IsTrue();
+        NetNode.TryParse(destination, out var addressAndKey2).IsTrue();
         addressAndKey2.Equals(addressAndKey).IsTrue();
 
         addressAndKey.Validate().Is(validation);
@@ -140,13 +140,13 @@ public class NodeTest
         return true;
     }
 
-    private static bool TestDualNode(DualNode addressAndKey)
+    private static bool TestDualNode(NetNode addressAndKey)
     {
-        Span<char> destination = stackalloc char[DualNode.MaxStringLength];
+        Span<char> destination = stackalloc char[NetNode.MaxStringLength];
         addressAndKey.TryFormat(destination, out var written).IsTrue();
         destination = destination.Slice(0, written);
 
-        DualNode.TryParse(destination, out var addressAndKey2).IsTrue();
+        NetNode.TryParse(destination, out var addressAndKey2).IsTrue();
         addressAndKey2.Equals(addressAndKey).IsTrue();
 
         // addressAndKey.Validate().Is(true);
@@ -154,7 +154,7 @@ public class NodeTest
         return true;
     }
 
-    private static void GenerateDualNode(RandomVault r, int type, out DualNode addressAndKey)
+    private static void GenerateDualNode(RandomVault r, int type, out NetNode addressAndKey)
     {
         var key = NodePrivateKey.Create();
 

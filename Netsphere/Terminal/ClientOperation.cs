@@ -15,7 +15,7 @@ internal class ClientOperation : NetOperation
         {// Encrypted
             return NetResult.Success;
         }
-        else if (this.NetTerminal.NodeInformation == null && !this.Terminal.NetBase.AllowUnsafeConnection)
+        else if (this.NetTerminal.Node == null && !this.Terminal.NetBase.AllowUnsafeConnection)
         {// Unmanaged
             return NetResult.NoNodeInformation;
         }
@@ -28,7 +28,7 @@ internal class ClientOperation : NetOperation
                 return NetResult.Success;
             }
 
-            if (this.NetTerminal.NodeInformation == null)
+            if (this.NetTerminal.Node == null)
             {// Get NodeInformation (Unsafe).
                 var r = await this.SendPacketAndReceiveAsync<PacketGetNodeInformation, PacketGetNodeInformationResponse>(new()).ConfigureAwait(false);
                 if (r.Result != NetResult.Success)

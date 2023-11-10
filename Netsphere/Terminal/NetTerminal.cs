@@ -42,23 +42,10 @@ public partial class NetTerminal : IDisposable
     }
 
     [Link(Type = ChainType.QueueList, Name = "Queue", Primary = true)]
-    internal NetTerminal(Terminal terminal, NodeAddress nodeAddress)
+    internal NetTerminal(Terminal terminal, NetEndPoint endPoint)
     {// NodeAddress: Unmanaged
         this.Terminal = terminal;
         this.GenePool = new(RandomVault.Crypto.NextUInt64());
-        this.NodeAddress = nodeAddress;
-        this.Endpoint = this.NodeAddress.CreateEndpoint();
-
-        this.FlowControl = new(this);
-
-        this.Initialize();
-    }
-
-    internal NetTerminal(Terminal terminal, IPEndPoint endPoint)
-    {// NodeAddress: Unmanaged
-        this.Terminal = terminal;
-        this.GenePool = new(RandomVault.Crypto.NextUInt64());
-        this.NodeAddress = default!; // tempcode
         this.Endpoint = endPoint;
 
         this.FlowControl = new(this);
@@ -66,13 +53,12 @@ public partial class NetTerminal : IDisposable
         this.Initialize();
     }
 
-    internal NetTerminal(Terminal terminal, NodeInformation nodeInformation, ulong gene)
+    internal NetTerminal(Terminal terminal, NetEndPoint endPoint, NetNode node, ulong gene)
     {// NodeInformation: Encrypted
         this.Terminal = terminal;
         this.GenePool = new(gene);
-        this.NodeAddress = nodeInformation;
-        this.NodeInformation = nodeInformation;
-        this.Endpoint = this.NodeAddress.CreateEndpoint();
+        this.Endpoint = endPoint;
+        this.Node = node;
 
         this.FlowControl = new(this);
 
@@ -110,11 +96,9 @@ public partial class NetTerminal : IDisposable
 
     public bool IsClosed { get; internal set; }
 
-    public IPEndPoint Endpoint { get; }
+    public NetEndPoint Endpoint { get; }
 
-    public NodeAddress NodeAddress { get; }
-
-    public NodeInformation? NodeInformation { get; protected set; }
+    public NetNode? Node { get; protected set; }
 
     public ulong Salt { get; private set; }
 
@@ -186,7 +170,7 @@ public partial class NetTerminal : IDisposable
     {
         header = default;
         header.Gene = gene;
-        header.Engagement = this.NodeAddress.Engagement;
+        header.Engagement = this.Endpoint.Engagement;
     }
 
     internal unsafe void SendAck(ulong gene)
@@ -200,7 +184,7 @@ public partial class NetTerminal : IDisposable
             *(PacketHeader*)bp = header;
         }
 
-        this.Terminal.AddRawSend(this.Endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
+        this.Terminal.AddRawSend(this.Endpoint.EndPoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
     }
 
     internal void ProcessSend(long currentMics)
@@ -284,7 +268,7 @@ public partial class NetTerminal : IDisposable
 
     internal NetResult CreateEmbryo(ulong salt, ulong salt2)
     {
-        if (this.NodeInformation == null)
+        if (this.Node == null)
         {
             return NetResult.NoNodeInformation;
         }
@@ -297,7 +281,7 @@ public partial class NetTerminal : IDisposable
             }
 
             // KeyMaterial
-            var pair = new NodeKeyPair(this.Terminal.NodePrivateKey, this.NodeInformation.PublicKey);
+            var pair = new NodeKeyPair(this.Terminal.NodePrivateKey, this.Node.PublicKey);
             var material = pair.DeriveKeyMaterial();
             // var material = this.Terminal.NodePrivateKey.DeriveKeyMaterial(this.NodeInformation.PublicKey);
             if (material == null)

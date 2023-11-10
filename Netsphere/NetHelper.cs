@@ -32,17 +32,17 @@ public static partial class NetHelper
         }
     }
 
-    public static bool TryParseNodeInformation(ILogger? logger, string source, [MaybeNullWhen(false)] out DualNode node)
+    public static bool TryParseNetNode(ILogger? logger, string source, [MaybeNullWhen(false)] out NetNode node)
     {
         node = default;
         if (string.Compare(source, "alternative", true) == 0)
         {
-            node = DualNode.Alternative;
+            node = NetNode.Alternative;
             return true;
         }
         else
         {
-            if (!DualNode.TryParse(source, out var address))
+            if (!NetNode.TryParse(source, out var address))
             {
                 logger?.TryGet(LogLevel.Error)?.Log($"Could not parse: {source.ToString()}");
                 return false;

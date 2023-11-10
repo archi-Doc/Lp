@@ -15,7 +15,7 @@ internal partial class PacketEncrypt : IPacket
     {
     }
 
-    public PacketEncrypt(DualNode node)
+    public PacketEncrypt(NetNode node)
     {
         this.Node = node;
         this.Salt = RandomVault.Crypto.NextUInt64();
@@ -23,7 +23,7 @@ internal partial class PacketEncrypt : IPacket
     }
 
     [Key(0)]
-    public DualNode Node { get; set; }
+    public NetNode Node { get; set; }
 
     [Key(1)]
     public ulong Salt { get; set; }

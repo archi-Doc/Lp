@@ -8,39 +8,43 @@ namespace Netsphere;
 
 /// <summary>
 /// Represents ipv4/ipv6 node information.<br/>
-/// <see cref="DualNode"/> = <see cref="DualAddress"/> + <see cref="NodePublicKey"/>.
+/// <see cref="NetNode"/> = <see cref="DualAddress"/> + <see cref="NodePublicKey"/>.
 /// </summary>
 [TinyhandObject]
-public readonly partial record struct DualNode : IStringConvertible<DualNode>, IValidatable
+public sealed partial class NetNode : IStringConvertible<NetNode>, IValidatable
 {
-    private static DualNode alternative;
+    private static NetNode? alternative;
 
-    public static DualNode Alternative
+    public static NetNode Alternative
     {
         get
         {
-            if (!alternative.Validate())
+            if (alternative is null)
             {
-                alternative = new DualNode(DualAddress.Alternative, NodePrivateKey.AlternativePrivateKey.ToPublicKey());
+                alternative = new NetNode(DualAddress.Alternative, NodePrivateKey.AlternativePrivateKey.ToPublicKey());
             }
 
             return alternative;
         }
     }
 
-    public DualNode(DualAddress address, NodePublicKey publicKey)
+    public NetNode()
+    {
+    }
+
+    public NetNode(DualAddress address, NodePublicKey publicKey)
     {
         this.Address = address;
         this.PublicKey = publicKey;
     }
 
     [Key(0)]
-    public readonly DualAddress Address;
+    public DualAddress Address { get; private set; }
 
     [Key(1)]
-    public readonly NodePublicKey PublicKey;
+    public NodePublicKey PublicKey { get; private set; }
 
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out DualNode instance)
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out NetNode instance)
     {// Ip address (public key)
         source = source.Trim();
 
@@ -123,7 +127,7 @@ public readonly partial record struct DualNode : IStringConvertible<DualNode>, I
     public bool Validate()
         => this.Address.Validate() && this.PublicKey.Validate();
 
-    public DualNode WithIpEndPoint(IPEndPoint ipEndPoint)
+    public NetNode WithIpEndPoint(IPEndPoint ipEndPoint)
     {
         return new(new(ipEndPoint.Address, (ushort)ipEndPoint.Port), this.PublicKey);
     }

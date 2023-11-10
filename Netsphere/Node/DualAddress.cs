@@ -95,6 +95,8 @@ public readonly partial record struct DualAddress : IStringConvertible<DualAddre
 
     public bool IsValidIpv6 => this.Port6 != 0;
 
+    public bool IsValid => this.Port4 != 0 || this.Port6 != 0;
+
     public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out DualAddress instance)
     {// 1.2.3.4:55, []:55, 1.2.3.4:55[]:55
         ushort port4 = 0;
