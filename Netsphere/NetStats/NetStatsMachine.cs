@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System;
+using System.Net;
 using CrystalData;
 using Netsphere.NetStats;
 
@@ -33,7 +34,7 @@ public partial class NetStatsMachine : Machine
 
         if (this.statsData.Ipv4State != NodeType.Unknown &&
             this.statsData.Ipv6State != NodeType.Unknown)
-        {// Fixed
+        {// Address has been fixed.
             this.ChangeState(State.AddressFixed, true);
             return StateResult.Continue;
         }
@@ -64,12 +65,12 @@ public partial class NetStatsMachine : Machine
         var results = await Task.WhenAll(tasks);
         foreach (var x in results)
         {
-            this.statsData.ReportAddressQuery(x);
+            this.statsData.ReportAddress(x);
         }
 
         if (this.statsData.Ipv4State != NodeType.Unknown &&
             this.statsData.Ipv6State != NodeType.Unknown)
-        {// Fixed
+        {// Address has been fixed.
             this.ChangeState(State.AddressFixed, true);
             return StateResult.Continue;
         }
@@ -111,7 +112,7 @@ public partial class NetStatsMachine : Machine
         }
         catch
         {
-            return default;
+            return new(false, IcanhazipUriIPv4, default);
         }
     }
 
@@ -129,7 +130,7 @@ public partial class NetStatsMachine : Machine
         }
         catch
         {
-            return default;
+            return new(true, IcanhazipUriIPv6, default);
         }
     }
 

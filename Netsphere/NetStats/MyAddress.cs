@@ -130,12 +130,6 @@ public partial class MyAddress
 
             counter.Add(weight);
 
-            if (this.counters.WeightChain.Last is { } last)
-            {
-                var myNodeAddress = last.Address;
-                // this.MyNodeInformation.SetAddress(myNodeAddress.Address);
-            }
-
             this.InternalUpdate();
         }
     }

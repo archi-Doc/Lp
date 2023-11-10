@@ -52,7 +52,7 @@ public sealed partial class StatsData : ITinyhandSerializationCallback
         this.Ipv6State = NodeType.Global;
     }
 
-    public void ReportAddressQuery(AddressQueryResult result)
+    public void ReportAddress(AddressQueryResult result)
     {
         var priority = result.Uri is not null;
         if (result.Ipv6)
