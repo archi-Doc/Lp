@@ -2,7 +2,6 @@
 
 using System.Diagnostics;
 using System.Net.Sockets;
-using System.Runtime.CompilerServices;
 
 namespace Netsphere;
 
@@ -163,14 +162,14 @@ public class NetSocket
         this.logger = terminal.UnitLogger.GetLogger<NetSocket>();
     }
 
-    public bool Start(ThreadCoreBase parent, int port)
+    public bool Start(ThreadCoreBase parent, int port, bool ipv6)
     {
         this.recvCore = new NetSocketRecvCore(parent, this);
         this.sendCore = new NetSocketSendCore(parent, this);
 
         try
         {
-            this.PrepareUdpClient(port);
+            this.PrepareUdpClient(port, ipv6);
         }
         catch
         {
@@ -202,9 +201,10 @@ public class NetSocket
         }
     }
 
-    private void PrepareUdpClient(int port)
+    private void PrepareUdpClient(int port, bool ipv6)
     {
-        var udp = new UdpClient(port, AddressFamily.InterNetworkV6); // tempcode
+        var addressFamily = ipv6 ? AddressFamily.InterNetworkV6 : AddressFamily.InterNetwork;
+        var udp = new UdpClient(port, addressFamily);
         try
         {
             const int SIO_UDP_CONNRESET = -1744830452;

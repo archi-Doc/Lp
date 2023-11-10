@@ -128,7 +128,8 @@ public class Terminal : UnitBase, IUnitExecutable
         this.logger = unitLogger.GetLogger<Terminal>();
         this.NetBase = netBase;
         this.NetStatus = netStatus;
-        this.NetSocket = new(this);
+        this.NetSocketIpv4 = new(this);
+        this.NetSocketIpv6 = new(this);
     }
 
     public async Task RunAsync(UnitMessage.RunAsync message)
@@ -140,12 +141,14 @@ public class Terminal : UnitBase, IUnitExecutable
             this.Port = this.NetBase.NetsphereOptions.Port;
         }
 
-        this.NetSocket.Start(this.Core, this.Port);
+        this.NetSocketIpv4.Start(this.Core, this.Port, false);
+        this.NetSocketIpv6.Start(this.Core, this.Port, true);
     }
 
     public async Task TerminateAsync(UnitMessage.TerminateAsync message)
     {
-        this.NetSocket.Stop();
+        this.NetSocketIpv4.Stop();
+        this.NetSocketIpv6.Stop();
         this.Core?.Dispose();
         this.Core = null;
     }
@@ -180,7 +183,7 @@ public class Terminal : UnitBase, IUnitExecutable
         {
             try
             {
-                this.UnsafeUdpClient?.Send(rawSend.SendOwner.Memory.Span, rawSend.Endpoint);
+                this.Send(rawSend.SendOwner.Memory.Span, rawSend.Endpoint);
             }
             catch
             {
@@ -421,6 +424,18 @@ public class Terminal : UnitBase, IUnitExecutable
         this.AddRawSend(endpoint, packetOwner);
     }
 
+    internal void Send(ReadOnlySpan<byte> datagram, IPEndPoint endPoint)
+    {
+        if (endPoint.AddressFamily == AddressFamily.InterNetworkV6)
+        {
+            this.NetSocketIpv6.UnsafeUdpClient?.Send(datagram, endPoint);
+        }
+        else
+        {
+            this.NetSocketIpv4.UnsafeUdpClient?.Send(datagram, endPoint);
+        }
+    }
+
     internal unsafe void SendRawAck(IPEndPoint endpoint, ulong gene)
     {
         PacketHeader header = default;
@@ -539,9 +554,9 @@ public class Terminal : UnitBase, IUnitExecutable
 
     internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
 
-    internal NetSocket NetSocket { get; private set; }
+    internal NetSocket NetSocketIpv4 { get; private set; }
 
-    internal UdpClient? UnsafeUdpClient => this.NetSocket.UnsafeUdpClient;
+    internal NetSocket NetSocketIpv6 { get; private set; }
 
     internal UnitLogger UnitLogger { get; private set; }
 
