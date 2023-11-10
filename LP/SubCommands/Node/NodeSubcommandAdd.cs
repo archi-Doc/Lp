@@ -18,7 +18,7 @@ public class NodeSubcommandAdd : ISimpleCommand
     {
         foreach (var x in args)
         {
-            if (!NodeAddress.TryParse(x, out var nodeAddress))
+            /*if (!NodeAddress.TryParse(x, out var nodeAddress))
             {// Could not parse
                 this.logger.TryGet(LogLevel.Warning)?.Log(Hashed.Error.Parse, x);
                 continue;
@@ -33,7 +33,7 @@ public class NodeSubcommandAdd : ISimpleCommand
             if (this.Control.NetControl.EssentialNode.TryAdd(nodeAddress))
             {// Success
                 this.logger.TryGet()?.Log(Hashed.Success.NodeAdded, x);
-            }
+            }*/
         }
     }
 

@@ -24,8 +24,13 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
             return;
         }
 
-        using (var terminal = this.netControl.Terminal.Create(node))
+        using (var terminal = this.netControl.Terminal.TryCreate(node))
         {
+            if (terminal is null)
+            {
+                return;
+            }
+
             var service = terminal.GetService<IBenchmarkService>();
             if (await service.Register() == NetResult.Success)
             {

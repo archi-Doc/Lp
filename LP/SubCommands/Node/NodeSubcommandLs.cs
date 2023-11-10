@@ -15,11 +15,6 @@ public class NodeSubcommandLs : ISimpleCommand
 
     public void Run(string[] args)
     {
-        var list = this.control.NetControl.EssentialNode.Dump();
-        foreach (var x in list)
-        {
-            this.userInterfaceService.WriteLine(x);
-        }
     }
 
     private Control control;

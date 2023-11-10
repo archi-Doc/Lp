@@ -42,8 +42,6 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddSingleton<NetControl>();
                 context.AddSingleton<NetBase>();
                 context.AddSingleton<Terminal>();
-                context.AddSingleton<EssentialNode>();
-                context.AddSingleton<NetStatus>();
                 context.AddSingleton<EssentialAddress>();
                 context.AddSingleton<StatsData>();
                 context.AddTransient<Server>();
@@ -57,7 +55,6 @@ public class NetControl : UnitBase, IUnitPreparable
                 // Machines
                 // context.AddTransient<EssentialNetMachine>();
                 context.AddTransient<NtpMachine>();
-                context.AddTransient<PublicIPMachine>();
                 context.AddTransient<NetStatsMachine>();
 
                 // Subcommands
@@ -129,12 +126,12 @@ public class NetControl : UnitBase, IUnitPreparable
         if (this.Alternative != null)
         {
             this.Alternative.Initialize(true, NodePrivateKey.AlternativePrivateKey);
-            if (this.NetBase.NetsphereOptions.Port == NodeAddress.Alternative.Port)
+            if (this.NetBase.NetsphereOptions.Port == DualAddress.Alternative.Port4)
             {
-                NodeAddress.Alternative.SetPort((ushort)(this.Terminal.Port + 1));
+                // tempcode, DualAddress.Alternative.SetPort((ushort)(this.Terminal.Port + 1));
             }
 
-            this.Alternative.Port = NodeAddress.Alternative.Port;
+            this.Alternative.Port = DualAddress.Alternative.Port4;
         }
 
         // Responders
@@ -164,7 +161,6 @@ public class NetControl : UnitBase, IUnitPreparable
         async Task InvokeServer(ServerTerminal terminal)
         {
             var server = this.ServiceProvider.GetRequiredService<Server>();
-            terminal.Terminal.MyStatus.IncrementServerCount();
             try
             {
                 await server.Process(terminal).ConfigureAwait(false);

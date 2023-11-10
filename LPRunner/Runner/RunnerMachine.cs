@@ -39,8 +39,8 @@ public partial class RunnerMachine : Machine
 
         this.logger.TryGet()?.Log($"Runner start");
         this.logger.TryGet()?.Log($"Root directory: {this.lpBase.RootDirectory}");
-        var nodeInformation = this.netControl.NetStatus.GetMyNodeInformation(false);
-        this.logger.TryGet()?.Log($"Port: {nodeInformation.Port}, Public key: ({nodeInformation.PublicKey.ToString()})");
+        // var nodeInformation = this.netControl.NetStatus.GetMyNodeInformation(false);
+        // this.logger.TryGet()?.Log($"Port: {nodeInformation.Port}, Public key: ({nodeInformation.PublicKey.ToString()})");
         this.logger.TryGet()?.Log($"{this.Information.ToString()}");
         this.logger.TryGet()?.Log("Press Ctrl+C to exit.");
         await Console.Out.WriteLineAsync();
@@ -148,13 +148,18 @@ public partial class RunnerMachine : Machine
     private async Task<NetResult> SendAcknowledge()
     {
         var nodeAddress = this.Information.TryGetDualAddress();
-        if (nodeAddress == null)
+        if (!nodeAddress.IsValid)
         {
             return NetResult.NoNodeInformation;
         }
 
-        using (var terminal = this.netControl.Terminal.Create(nodeAddress))
+        using (var terminal = this.netControl.Terminal.TryCreate(nodeAddress))
         {
+            if (terminal is null)
+            {
+                return NetResult.NoNetwork;
+            }
+
             var result = await terminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(new());
             this.logger.TryGet()?.Log($"Ping: {result.Result}");
             return result.Result;

@@ -187,6 +187,12 @@ public readonly partial record struct DualAddress : IStringConvertible<DualAddre
         return true;
     }
 
+    public bool IsPrivateOrLocalLoopbackAddress()
+    {
+        return (this.IsValidIpv4 && this.IsPrivateOrLocalLoopbackAddressIPv4()) ||
+            (this.IsValidIpv6 && this.IsLocalLoopbackAddressIPv6());
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public IPEndPoint? TryCreateIpv4()
     {
@@ -509,5 +515,68 @@ public readonly partial record struct DualAddress : IStringConvertible<DualAddre
         }
 
         return true;
+    }
+
+    private bool IsLocalLoopbackAddressIPv4()
+    {
+        Span<byte> address = stackalloc byte[4];
+        if (!BitConverter.TryWriteBytes(address, this.Address4))
+        {
+            return false;
+        }
+
+        return address[0] == 127 && address[1] == 0 && address[2] == 0;
+    }
+
+    private unsafe bool IsLocalLoopbackAddressIPv6()
+    {// tempcode
+        Span<byte> address = stackalloc byte[8];
+        if (!BitConverter.TryWriteBytes(address, this.Address6A))
+        {
+            return false;
+        }
+
+        fixed (byte* b = address)
+        {
+            ulong* u = (ulong*)b;
+            return u[0] == 0 && u[1] == 0x0100000000000000;
+        }
+    }
+
+    private bool IsPrivateOrLocalLoopbackAddressIPv4()
+    {
+        Span<byte> address = stackalloc byte[4];
+        if (!BitConverter.TryWriteBytes(address, this.Address4))
+        {
+            return false;
+        }
+
+        if (address[0] == 10 || address[0] == 127)
+        {// Private network, loopback addresses.
+            return true;
+        }
+        else if (address[0] == 100)
+        {
+            if (address[1] >= 64 && address[1] <= 127)
+            {// Private network
+                return true;
+            }
+        }
+        else if (address[0] == 172)
+        {// Private network
+            if (address[1] >= 16 && address[1] <= 31)
+            {
+                return true;
+            }
+        }
+        else if (address[0] == 192)
+        {
+            if (address[1] == 168)
+            {// Private network
+                return true;
+            }
+        }
+
+        return false;
     }
 }

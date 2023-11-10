@@ -12,7 +12,7 @@ public class AuthorizedTerminalFactory
         this.authorityVault = authorityVault;
     }
 
-    public async Task<AuthorizedTerminal<TService>?> Create<TService>(Terminal terminal, NodeInformation nodeInformation, string authorityName, ILogger? logger)
+    public async Task<AuthorizedTerminal<TService>?> Create<TService>(Terminal terminal, NetNode node, string authorityName, ILogger? logger)
         where TService : IAuthorizedService
     {
         // Authority key
@@ -26,10 +26,10 @@ public class AuthorizedTerminalFactory
         // Try to get a cached terminal
 
         // Terminal
-        var clientTerminal = await terminal.CreateAndEncrypt(nodeInformation);
+        var clientTerminal = await terminal.CreateAndEncrypt(node);
         if (clientTerminal == null)
         {
-            logger?.TryGet(LogLevel.Error)?.Log(Hashed.Error.Connect, nodeInformation.ToString());
+            logger?.TryGet(LogLevel.Error)?.Log(Hashed.Error.Connect, node.ToString());
             return null; // AuthorizedTerminal<TService>.Invalid;
         }
 

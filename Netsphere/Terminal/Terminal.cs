@@ -94,9 +94,8 @@ public class Terminal : UnitBase, IUnitExecutable
     /// <param name="node">NodeInformation.</param>
     /// <param name="gene">gene.</param>
     /// <returns>NetTerminal.</returns>
-    public ServerTerminal? TryCreate(NetNode node, ulong gene)
+    public ServerTerminal? TryCreate(NetEndPoint endPoint, NetNode node, ulong gene)
     {
-        this.DualAddressToEndPoint(node.Address, out var endPoint);
         if (!endPoint.IsValid)
         {
             return default;
@@ -367,52 +366,50 @@ public class Terminal : UnitBase, IUnitExecutable
             return;
         }
 
-        if (!packet.Node.Validate())
+        var response = new PacketEncryptResponse();
+        response.Salt2 = RandomVault.Crypto.NextUInt64();
+        response.SaltA2 = RandomVault.Crypto.NextUInt64();
+        var firstGene = header.Gene;
+        var secondGene = GenePool.NextGene(header.Gene);
+        PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var sendOwner);
+
+        var address = new DualAddress(endpoint.Address, (ushort)endpoint.Port);
+        var node = new NetNode(address, packet.PublicKey);
+        var endPoint = new NetEndPoint(endpoint, 0);
+        var terminal = this.TryCreate(endPoint, node, firstGene);
+        if (terminal is null)
         {
-            packet.Node = packet.Node.WithIpEndPoint(endpoint);
+            return;
+        }
 
-            var response = new PacketEncryptResponse();
-            response.Salt2 = RandomVault.Crypto.NextUInt64();
-            response.SaltA2 = RandomVault.Crypto.NextUInt64();
-            var firstGene = header.Gene;
-            var secondGene = GenePool.NextGene(header.Gene);
-            PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var sendOwner);
+        var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(terminal, firstGene, owner, secondGene, sendOwner);
+        sendOwner.Return();
 
-            var terminal = this.TryCreate(packet.Node, firstGene);
-            if (terminal is null)
+        /*terminal.GenePool.GetSequential();
+        terminal.SetSalt(packet.SaltA, response.SaltA2);
+        terminal.CreateEmbryo(packet.Salt, response.Salt2);
+        terminal.SetReceiverNumber();
+        terminal.Add(netInterface); // Delay sending PacketEncryptResponse until the receiver is ready.
+        if (this.invokeServerDelegate != null)
+        {
+            new ThreadCore(ThreadCore.Root, x =>
             {
-                return;
-            }
+                this.invokeServerDelegate(terminal);
+            });
+        }*/
 
-            var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(terminal, firstGene, owner, secondGene, sendOwner);
-            sendOwner.Return();
-
-            /*terminal.GenePool.GetSequential();
+        _ = Task.Run(async () =>
+        {
+            terminal.GenePool.GetSequential();
             terminal.SetSalt(packet.SaltA, response.SaltA2);
             terminal.CreateEmbryo(packet.Salt, response.Salt2);
             terminal.SetReceiverNumber();
             terminal.Add(netInterface); // Delay sending PacketEncryptResponse until the receiver is ready.
             if (this.invokeServerDelegate != null)
             {
-                new ThreadCore(ThreadCore.Root, x =>
-                {
-                    this.invokeServerDelegate(terminal);
-                });
-            }*/
-
-            _ = Task.Run(async () =>
-            {
-                terminal.GenePool.GetSequential();
-                terminal.SetSalt(packet.SaltA, response.SaltA2);
-                terminal.CreateEmbryo(packet.Salt, response.Salt2);
-                terminal.SetReceiverNumber();
-                terminal.Add(netInterface); // Delay sending PacketEncryptResponse until the receiver is ready.
-                if (this.invokeServerDelegate != null)
-                {
-                    await this.invokeServerDelegate(terminal).ConfigureAwait(false);
-                }
-            });
-        }
+                await this.invokeServerDelegate(terminal).ConfigureAwait(false);
+            }
+        });
     }
 
     internal void ProcessUnmanagedRecv_Ping(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)

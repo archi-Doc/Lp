@@ -161,9 +161,12 @@ public partial class NetTerminal : IDisposable
         this.IsClosed = true;
     }
 
-    internal void MergeNodeInformation(NodeInformation nodeInformation)
+    internal void MergeNode(NetNode node)
     {
-        this.NodeInformation = Netsphere.NodeInformation.Merge(this.NodeAddress, nodeInformation);
+        if (this.Node is not null)
+        {
+            this.Node = new(this.Node.Address, node.PublicKey);
+        }
     }
 
     internal void CreateHeader(out PacketHeader header, ulong gene)

@@ -38,32 +38,6 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
         }
     }
 
-    public async Task Ping(NodeAddress node, PingOptions options)
-    {
-        this.logger.TryGet()?.Log($"Ping: {node.ToString()}");
-
-        var sw = Stopwatch.StartNew();
-        using (var terminal = this.Control.NetControl.Terminal.Create(node))
-        {
-            var p = new PacketPing("test56789012345678901234567890123456789");
-            sw.Restart();
-            var result = await terminal.SendPacketAndReceiveAsync<PacketPing, PacketPingResponse>(p);
-            sw.Stop();
-            if (result.Value != null)
-            {
-                this.logger.TryGet()?.Log($"Received: {result.ToString()} - {sw.ElapsedMilliseconds} ms");
-                if (result.Value.NodeAddress is { } nodeAddress)
-                {// tempcode
-                    this.Control.NetControl.NetStatus.ReportMyNodeAddress(nodeAddress);
-                }
-            }
-            else
-            {
-                this.logger.TryGet(LogLevel.Error)?.Log($"{result}");
-            }
-        }
-    }
-
     public async Task Ping(DualAddress address, PingOptions options)
     {
         this.logger.TryGet()?.Log($"Ping: {address.ToString()}");

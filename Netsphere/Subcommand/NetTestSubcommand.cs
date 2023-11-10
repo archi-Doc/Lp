@@ -17,15 +17,20 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
 
     public async Task RunAsync(NetTestOptions options, string[] args)
     {
-        if (!NetHelper.TryParseNodeAddress(this.logger, options.Node, out var node))
+        if (!NetHelper.TryParseDualAddress(this.logger, options.Node, out var address))
         {
             return;
         }
 
-        this.logger.TryGet()?.Log($"SendData: {node.ToString()}");
+        this.logger.TryGet()?.Log($"SendData: {address.ToString()}");
 
-        using (var terminal = this.NetControl.Terminal.Create(node))
+        using (var terminal = this.NetControl.Terminal.TryCreate(address))
         {
+            if (terminal is null)
+            {
+                return;
+            }
+
             // await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(new PacketPunch());
 
             var p = new PacketPunch(null);

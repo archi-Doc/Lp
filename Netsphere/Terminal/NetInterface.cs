@@ -694,7 +694,7 @@ WaitForSendCompletionWait:
                 if (size >= maxSize)
                 {
                     PacketService.InsertDataSize(rentArray!.ByteArray, (ushort)(size - PacketService.HeaderSize));
-                    this.Terminal.AddRawSend(this.NetTerminal.Endpoint, rentArray!.ToMemoryOwner(0, size));
+                    this.Terminal.AddRawSend(this.NetTerminal.Endpoint.EndPoint, rentArray!.ToMemoryOwner(0, size));
                     rentArray!.Return();
                     // this.NetTerminal.TerminalLogger?.Information($"AACK {size}");
                     size = 0;
@@ -730,7 +730,7 @@ WaitForSendCompletionWait:
         if (size > 0)
         {
             PacketService.InsertDataSize(rentArray!.ByteArray, (ushort)(size - PacketService.HeaderSize));
-            this.Terminal.AddRawSend(this.NetTerminal.Endpoint, rentArray!.ToMemoryOwner(0, size));
+            this.Terminal.AddRawSend(this.NetTerminal.Endpoint.EndPoint, rentArray!.ToMemoryOwner(0, size));
             rentArray!.Return();
             // this.NetTerminal.TerminalLogger?.Information($"AACK {size}");
             size = 0;

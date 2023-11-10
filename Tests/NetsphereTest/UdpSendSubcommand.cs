@@ -11,7 +11,7 @@ using SimpleCommandLine;
 
 namespace NetsphereTest;
 
-[SimpleCommand("udpsend")]
+/*[SimpleCommand("udpsend")]
 public class UdpSendSubcommand : ISimpleCommandAsync<UdpSendOptions>
 {
     public UdpSendSubcommand(ILogger<UdpSendSubcommand> logger)
@@ -21,7 +21,7 @@ public class UdpSendSubcommand : ISimpleCommandAsync<UdpSendOptions>
 
     public async Task RunAsync(UdpSendOptions options, string[] args)
     {
-        if (!NodeAddress.TryParse(options.Node, out var node))
+        if (!DualAddress.TryParse(options.Node, out var node))
         {
             return;
         }
@@ -93,17 +93,6 @@ public class UdpSendSubcommand : ISimpleCommandAsync<UdpSendOptions>
         // Send
         for (var n = 0; n < number; n++)
         {
-            /*var spinner = new SpinWait();
-            while (spinner.Count < 14000)
-            {
-                spinner.SpinOnce(sleep1Threshold: -1);
-            }*/
-
-            /*if (n % 20 == 0)
-            {
-                await Task.Delay(1);
-            }*/
-
             udp.Send(data, this.endpoint);
         }
 
@@ -167,4 +156,4 @@ public record UdpSendOptions
     public int Repeat { get; set; } = 1;
 
     public override string ToString() => $"{this.Node}";
-}
+}*/

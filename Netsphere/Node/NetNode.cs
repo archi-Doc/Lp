@@ -127,11 +127,6 @@ public sealed partial class NetNode : IStringConvertible<NetNode>, IValidatable
     public bool Validate()
         => this.Address.Validate() && this.PublicKey.Validate();
 
-    public NetNode WithIpEndPoint(IPEndPoint ipEndPoint)
-    {
-        return new(new(ipEndPoint.Address, (ushort)ipEndPoint.Port), this.PublicKey);
-    }
-
     public override string ToString()
     {
         Span<char> span = stackalloc char[MaxStringLength];

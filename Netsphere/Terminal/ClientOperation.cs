@@ -36,11 +36,11 @@ internal class ClientOperation : NetOperation
                     return r.Result;
                 }
 
-                this.NetTerminal.MergeNodeInformation(r.Value!.Node);
+                this.NetTerminal.MergeNode(r.Value!.Node);
             }
 
             // Encrypt
-            var p = new PacketEncrypt(this.Terminal.NetStatus.GetMyNodeInformation(this.Terminal.IsAlternative));
+            var p = new PacketEncrypt(this.Terminal.NetBase.NodePublicKey);
             var response = await this.SendPacketAndReceiveAsync<PacketEncrypt, PacketEncryptResponse>(p).ConfigureAwait(false);
             if (response.Result != NetResult.Success)
             {

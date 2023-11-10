@@ -108,7 +108,7 @@ internal class NetTerminalGene
 
             try
             {
-                this.NetInterface.Terminal.Send(this.Owner.Memory.Span, this.NetInterface.NetTerminal.Endpoint);
+                this.NetInterface.Terminal.Send(this.Owner.Memory.Span, this.NetInterface.NetTerminal.Endpoint.EndPoint);
             }
             catch
             {

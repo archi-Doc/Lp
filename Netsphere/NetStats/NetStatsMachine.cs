@@ -94,12 +94,12 @@ public partial class NetStatsMachine : Machine
     private readonly NetControl netControl;
     private readonly StatsData statsData;
 
-    private void ReportIpAddress(IPAddress ipAddress, string uri)
+    /*private void ReportIpAddress(IPAddress ipAddress, string uri)
     {
         var nodeAddress = new NodeAddress(ipAddress, (ushort)this.netControl.NetBase.NetsphereOptions.Port);
         this.netControl.NetStatus.ReportMyNodeAddress(nodeAddress);
         this.logger?.TryGet()?.Log($"{nodeAddress.ToString()} from {uri}");
-    }
+    }*/
 
     private async Task<AddressQueryResult> GetIcanhazipIPv4()
     {

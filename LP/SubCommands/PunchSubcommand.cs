@@ -17,15 +17,15 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
 
     public async Task RunAsync(PunchOptions options, string[] args)
     {
-        if (!NetHelper.TryParseNodeAddress(this.logger, options.Node, out var node))
+        if (!NetHelper.TryParseDualAddress(this.logger, options.Node, out var node))
         {
             return;
         }
 
-        NodeAddress? nextNode = null;
+        DualAddress? nextNode = null;
         if (!string.IsNullOrEmpty(options.NextNode))
         {
-            NetHelper.TryParseNodeAddress(this.logger, options.NextNode, out nextNode);
+            NetHelper.TryParseDualAddress(this.logger, options.NextNode, out nextNode);
         }
 
         for (var n = 0; n < options.Count; n++)
@@ -44,12 +44,12 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
         }
     }
 
-    public async Task Punch(NodeAddress node, NodeAddress? nextNode, PunchOptions options)
+    public async Task Punch(DualAddress node, DualAddress? nextNode, PunchOptions options)
     {
         this.logger.TryGet()?.Log($"Punch: {node.ToString()}");
 
         var sw = Stopwatch.StartNew();
-        using (var terminal = this.Control.NetControl.Terminal.Create(node))
+        using (var terminal = this.Control.NetControl.Terminal.TryCreate(node))
         {
             var p = new PacketPunch(nextNode?.CreateEndpoint());
 

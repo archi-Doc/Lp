@@ -105,7 +105,7 @@ public class Program
                 context.AddCommand(typeof(StressSubcommand));
                 context.AddCommand(typeof(RemoteBenchSubcommand));
                 context.AddCommand(typeof(UdpRecvSubcommand));
-                context.AddCommand(typeof(UdpSendSubcommand));
+                // context.AddCommand(typeof(UdpSendSubcommand));
 
                 // NetService
                 context.AddSingleton<BenchmarkServiceImpl>();

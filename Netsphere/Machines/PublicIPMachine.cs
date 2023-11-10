@@ -4,7 +4,7 @@ using CrystalData;
 
 namespace Netsphere.Machines;
 
-[MachineObject(UseServiceProvider = true)]
+/*[MachineObject(UseServiceProvider = true)]
 public partial class PublicIPMachine : Machine
 {
     private const string Filename = "PublicIP.tinyhand";
@@ -159,4 +159,4 @@ public partial class PublicIPMachine : Machine
     private NetControl netControl;
     private LPBase lpBase;
     private ICrystal<Data> crystal;
-}
+}*/

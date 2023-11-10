@@ -18,10 +18,10 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
 
     public async Task RunAsync(StressOptions options, string[] args)
     {
-        NodeInformation? node = NodeInformation.Alternative;
+        NetNode? node = NetNode.Alternative;
         if (!string.IsNullOrEmpty(options.Node))
         {
-            if (!NetHelper.TryParseNodeInformation(this.logger, options.Node, out node))
+            if (!NetHelper.TryParseNetNode(this.logger, options.Node, out node))
             {
                 return;
             }
@@ -34,7 +34,7 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
 
     public NetControl NetControl { get; set; }
 
-    private async Task Stress1(NodeInformation node, StressOptions options)
+    private async Task Stress1(NetNode node, StressOptions options)
     {
         var data = new byte[100];
         int successCount = 0;
@@ -79,8 +79,13 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
                 for (var j = 0; j < (options.Total / options.Concurrent); j++)
                 {
                     var sw2 = new Stopwatch();
-                    using (var terminal = this.NetControl.Terminal.Create(node))
+                    using (var terminal = this.NetControl.Terminal.TryCreate(node))
                     {
+                        if (terminal is null)
+                        {
+                            return;
+
+                        }
                         /*var p = new PacketPing("test56789012345678901234567890123456789");
                         sw2.Restart();
                         var result = await terminal.SendPacketAndReceiveAsync<PacketPing, PacketPingResponse>(p);
@@ -129,8 +134,13 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
             AverageLatency = (int)(totalLatency / (successCount + failureCount)),
         };
 
-        using (var terminal = this.NetControl.Terminal.Create(node))
+        using (var terminal = this.NetControl.Terminal.TryCreate(node))
         {
+            if (terminal is null)
+            {
+                return;
+
+            }
             var service = terminal.GetService<IBenchmarkService>();
             await service.Report(record);
         }

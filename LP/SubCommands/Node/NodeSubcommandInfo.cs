@@ -8,17 +8,17 @@ namespace LP.Subcommands;
 [SimpleCommand("info")]
 public class NodeSubcommandInfo : ISimpleCommand
 {
-    public NodeSubcommandInfo(ILogger<NodeSubcommandInfo> logger, NetStatus netStatus)
+    public NodeSubcommandInfo(ILogger<NodeSubcommandInfo> logger)
     {
         this.logger = logger;
-        this.netStatus = netStatus;
+        // this.netStatus = netStatus;
     }
 
     public void Run(string[] args)
     {
-        var nodeInformation = this.netStatus.GetMyNodeInformation(false);
+        /*var nodeInformation = this.netStatus.GetMyNodeInformation(false);
         var st = nodeInformation.ToString();
-        this.logger.TryGet()?.Log(st);
+        this.logger.TryGet()?.Log(st);*/
 
         /*if (NodeInformation.TryParse(st, out var n))
         {
@@ -27,5 +27,5 @@ public class NodeSubcommandInfo : ISimpleCommand
     }
 
     private ILogger<NodeSubcommandInfo> logger;
-    private NetStatus netStatus;
+    // private NetStatus netStatus;
 }
