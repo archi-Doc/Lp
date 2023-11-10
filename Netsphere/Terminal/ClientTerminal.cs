@@ -11,6 +11,11 @@ public class ClientTerminal : NetTerminal
     {// NodeAddress: Unmanaged
     }
 
+    internal ClientTerminal(Terminal terminal, DualAddress address)
+        : base(terminal, address)
+    {// NodeAddress: Unmanaged
+    }
+
     internal ClientTerminal(Terminal terminal, NodeInformation nodeInformation)
         : base(terminal, nodeInformation, RandomVault.Crypto.NextUInt64())
     {// NodeInformation: Managed

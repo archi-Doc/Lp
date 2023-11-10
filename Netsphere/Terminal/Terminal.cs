@@ -59,6 +59,22 @@ public class Terminal : UnitBase, IUnitExecutable
     }
 
     /// <summary>
+    /// Create unmanaged (without public key) NetTerminal instance.
+    /// </summary>
+    /// <param name="address">DualAddress.</param>
+    /// <returns>NetTerminal.</returns>
+    public ClientTerminal Create(DualAddress address)
+    {
+        var terminal = new ClientTerminal(this, address);
+        lock (this.terminals)
+        {
+            this.terminals.Add(terminal);
+        }
+
+        return terminal;
+    }
+
+    /// <summary>
     /// Create managed (with public key) NetTerminal instance.
     /// </summary>
     /// <param name="nodeInformation">NodeInformation.</param>

@@ -12,6 +12,9 @@ namespace Netsphere;
 [TinyhandObject]
 public readonly partial record struct DualAddress : IStringConvertible<DualAddress>, IValidatable
 {
+    public const ushort AlternativePort = 49151;
+    public static readonly DualAddress Alternative = new(IPAddress.IPv6Loopback, AlternativePort);
+
     [Key(0)]
     public readonly ushort Engagement4;
 
@@ -40,6 +43,27 @@ public readonly partial record struct DualAddress : IStringConvertible<DualAddre
         this.Address4 = address4;
         this.Address6A = address6a;
         this.Address6B = address6b;
+    }
+
+    public DualAddress(IPAddress? addressIpv4, ushort port4, IPAddress? addressIpv6, ushort port6)
+    {
+        Span<byte> span = stackalloc byte[16];
+
+        if (addressIpv4 is not null &&
+            addressIpv4.TryWriteBytes(span, out _))
+        {
+            this.Address4 = BitConverter.ToUInt32(span);
+            this.Port4 = port4;
+        }
+
+        if (addressIpv6 is not null &&
+            addressIpv6.TryWriteBytes(span, out _))
+        {
+            this.Address6A = BitConverter.ToUInt64(span);
+            span = span.Slice(sizeof(ulong));
+            this.Address6B = BitConverter.ToUInt64(span);
+            this.Port6 = port4;
+        }
     }
 
     public bool IsValidIpv4 => this.Port4 != 0;

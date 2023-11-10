@@ -6,6 +6,32 @@ namespace Netsphere;
 
 public static partial class NetHelper
 {
+    public static bool TryParseDualAddress(ILogger? logger, string node, [MaybeNullWhen(false)] out DualAddress address)
+    {
+        address = default;
+        if (string.Compare(node, "alternative", true) == 0)
+        {
+            address = DualAddress.Alternative;
+            return true;
+        }
+        else
+        {
+            if (!DualAddress.TryParse(node, out address))
+            {
+                logger?.TryGet(LogLevel.Error)?.Log($"Could not parse: {node.ToString()}");
+                return false;
+            }
+
+            if (!address.Validate())
+            {
+                logger?.TryGet(LogLevel.Error)?.Log($"Invalid node address: {node.ToString()}");
+                return false;
+            }
+
+            return true;
+        }
+    }
+
     public static bool TryParseNodeAddress(ILogger? logger, string node, [MaybeNullWhen(false)] out NodeAddress nodeAddress)
     {
         nodeAddress = null;

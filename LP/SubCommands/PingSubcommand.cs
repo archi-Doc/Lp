@@ -17,7 +17,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
 
     public async Task RunAsync(PingOptions options, string[] args)
     {
-        if (!NetHelper.TryParseNodeAddress(this.logger, options.Node, out var node))
+        if (!NetHelper.TryParseDualAddress(this.logger, options.Node, out var address))
         {
             return;
         }
@@ -29,7 +29,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
                 break;
             }
 
-            await this.Ping(node, options);
+            await this.Ping(address, options);
 
             if (n < options.Count - 1)
             {
@@ -62,9 +62,32 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
                 this.logger.TryGet(LogLevel.Error)?.Log($"{result}");
             }
         }
+    }
 
-        // this.Control.Netsphere.NetStatus
-        // this.logger.TryGet()?.Log(System.Environment.OSVersion.ToString());
+    public async Task Ping(DualAddress address, PingOptions options)
+    {
+        this.logger.TryGet()?.Log($"Ping: {address.ToString()}");
+
+        var sw = Stopwatch.StartNew();
+        using (var terminal = this.Control.NetControl.Terminal.Create(address))
+        {
+            var p = new PacketPing("test56789012345678901234567890123456789");
+            sw.Restart();
+            var result = await terminal.SendPacketAndReceiveAsync<PacketPing, PacketPingResponse>(p);
+            sw.Stop();
+            if (result.Value != null)
+            {
+                this.logger.TryGet()?.Log($"Received: {result.ToString()} - {sw.ElapsedMilliseconds} ms");
+                if (result.Value.NodeAddress is { } nodeAddress)
+                {// tempcode
+                    this.Control.NetControl.NetStatus.ReportMyNodeAddress(nodeAddress);
+                }
+            }
+            else
+            {
+                this.logger.TryGet(LogLevel.Error)?.Log($"{result}");
+            }
+        }
     }
 
     public Control Control { get; set; }
