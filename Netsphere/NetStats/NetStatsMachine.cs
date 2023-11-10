@@ -23,6 +23,8 @@ public partial class NetStatsMachine : Machine
         this.statsData = statsData.Data;
 
         this.DefaultTimeout = TimeSpan.FromSeconds(5);
+
+        // var port = this.netControl.NetBase.NetsphereOptions.Port;
     }
 
     [StateMethod(0)]
@@ -32,15 +34,15 @@ public partial class NetStatsMachine : Machine
 
         this.statsData.UpdateStats();
 
-        if (this.statsData.Ipv4State != NodeType.Unknown &&
-            this.statsData.Ipv6State != NodeType.Unknown)
+        if (this.statsData.MyIpv4Address.AddressState != MyAddress.State.Unknown &&
+            this.statsData.MyIpv6Address.AddressState != MyAddress.State.Unknown)
         {// Address has been fixed.
             this.ChangeState(State.AddressFixed, true);
             return StateResult.Continue;
         }
 
         var tasks = new List<Task<AddressQueryResult>>();
-        if (this.statsData.Ipv4State == NodeType.Unknown)
+        if (this.statsData.MyIpv4Address.AddressState == MyAddress.State.Unknown)
         {
             if (this.statsData.EssentialAddress.CountIpv4 < NodeThreshold)
             {
@@ -51,7 +53,7 @@ public partial class NetStatsMachine : Machine
             }
         }
 
-        if (this.statsData.Ipv6State == NodeType.Unknown)
+        if (this.statsData.MyIpv6Address.AddressState == MyAddress.State.Unknown)
         {
             if (this.statsData.EssentialAddress.CountIpv6 < NodeThreshold)
             {
@@ -68,8 +70,8 @@ public partial class NetStatsMachine : Machine
             this.statsData.ReportAddress(x);
         }
 
-        if (this.statsData.Ipv4State != NodeType.Unknown &&
-            this.statsData.Ipv6State != NodeType.Unknown)
+        if (this.statsData.MyIpv4Address.AddressState != MyAddress.State.Unknown &&
+             this.statsData.MyIpv6Address.AddressState != MyAddress.State.Unknown)
         {// Address has been fixed.
             this.ChangeState(State.AddressFixed, true);
             return StateResult.Continue;
@@ -82,6 +84,7 @@ public partial class NetStatsMachine : Machine
     protected async Task<StateResult> AddressFixed(StateParameter parameter)
     {
         this.logger.TryGet()?.Log("AddressFixed");
+        this.logger.TryGet()?.Log(this.statsData.Dump());
 
         return StateResult.Terminate;
     }

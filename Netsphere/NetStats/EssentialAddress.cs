@@ -157,19 +157,15 @@ public sealed partial class EssentialAddress : ITinyhandSerializationCallback
         }
     }
 
-    public List<string> Dump()
+    public string Dump()
     {
-        List<string> list = new();
-
+        string st;
         lock (this.data.SyncObject)
         {
-            foreach (var x in this.data)
-            {
-                list.Add(x.ToString()!);
-            }
+            st = $"Ipv4+Ipv6/Total {this.data.Ipv4ListChain.Count}+{this.data.Ipv6ListChain.Count}/{this.data.LinkedListChain.Count}";
         }
 
-        return list;
+        return st;
     }
 
     public void Validate()

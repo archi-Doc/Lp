@@ -217,8 +217,10 @@ public class Control : ILogInformation
                     context.AddCrystal<Netsphere.NetStats.StatsData>(new CrystalConfiguration() with
                     {
                         SaveFormat = SaveFormat.Utf8,
+                        SavePolicy = SavePolicy.Periodic,
+                        SaveInterval = TimeSpan.FromMinutes(10),
                         FileConfiguration = new GlobalFileConfiguration("NetStat.tinyhand"),
-                        NumberOfFileHistories = 0,
+                        NumberOfFileHistories = 2,
                     });
 
                     /*context.AddCrystal<PublicIPMachine.Data>(new CrystalConfiguration() with

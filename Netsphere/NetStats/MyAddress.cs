@@ -1,19 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using BigMachines;
-using ValueLink;
-
 namespace Netsphere.NetStats;
 
 [TinyhandObject]
 public partial class MyAddress
 {
-    private const int MaxItems = 20;
+    private const int MaxItems = 30;
     private const int PriorityWeight = 10;
 
     public enum State
@@ -73,7 +65,7 @@ public partial class MyAddress
         }
 
         [Key(0)]
-        [Link(Primary = true, Type = ChainType.Unordered)]
+        [Link(Primary = true, Type = ChainType.Unordered, AddValue = false)]
         public IPAddress? Address { get; private set; }
 
         [Key(1)]
@@ -84,18 +76,18 @@ public partial class MyAddress
     #region FieldAndProperty
 
     [IgnoreMember]
-    public State AddressState { get; private set; }
-
-    [IgnoreMember]
-    public IPAddress? Address { get; private set; }
-
-    [IgnoreMember]
     private object syncObject = new();
 
     [Key(0)]
-    private Item.GoshujinClass items = new();
+    public State AddressState { get; private set; }
 
     [Key(1)]
+    public IPAddress? Address { get; private set; }
+
+    [Key(2)]
+    private Item.GoshujinClass items = new();
+
+    [Key(3)]
     private Counter.GoshujinClass counters = new();
 
     #endregion
@@ -134,7 +126,7 @@ public partial class MyAddress
         }
     }
 
-    public void Clear()
+    public void Reset()
     {
         lock (this.syncObject)
         {
@@ -143,6 +135,25 @@ public partial class MyAddress
             this.items.Clear();
             this.counters.Clear();
         }
+    }
+
+    public string Dump()
+    {
+        string st;
+        lock (this.syncObject)
+        {
+            if (this.AddressState == State.Unknown ||
+                this.AddressState == State.Unavailable)
+            {
+                st = $"{this.AddressState}";
+            }
+            else
+            {
+                st = $"{this.AddressState} Address {this.Address?.ToString()}";
+            }
+        }
+
+        return st;
     }
 
     private void InternalUpdate()

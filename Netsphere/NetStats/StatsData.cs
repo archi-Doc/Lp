@@ -5,6 +5,8 @@ namespace Netsphere.NetStats;
 [TinyhandObject(UseServiceProvider = true, LockObject = "syncObject")]
 public sealed partial class StatsData : ITinyhandSerializationCallback
 {
+    private static readonly long ResetMics = Mics.FromMinutes(5);
+
     public StatsData(EssentialAddress essentialAddress)
     {
         this.EssentialAddress = essentialAddress;
@@ -15,13 +17,10 @@ public sealed partial class StatsData : ITinyhandSerializationCallback
     private readonly object syncObject = new();
 
     [Key(0)]
-    public EssentialAddress EssentialAddress { get; private set; }
+    public long LastMics { get; private set; }
 
     [Key(1)]
-    public NodeType Ipv4State { get; private set; }
-
-    [Key(2)]
-    public NodeType Ipv6State { get; private set; }
+    public EssentialAddress EssentialAddress { get; private set; }
 
     [Key(3)]
     public MyAddress MyIpv4Address { get; private set; } = default!;
@@ -36,20 +35,15 @@ public sealed partial class StatsData : ITinyhandSerializationCallback
         if (this.MyIpv4Address.AddressState == MyAddress.State.Changed ||
             this.MyIpv6Address.AddressState == MyAddress.State.Changed)
         {// Reset
-            this.MyIpv4Address.Clear();
-            this.MyIpv6Address.Clear();
-            this.Ipv4State = NodeType.Unknown;
-            this.Ipv6State = NodeType.Unknown;
+            this.MyIpv4Address.Reset();
+            this.MyIpv6Address.Reset();
         }
-
-        this.Ipv4State = NodeType.Unknown;
-        this.Ipv6State = NodeType.Unknown; // tempcode
     }
 
-    public void AddressFixed()
+    public void Reset()
     {
-        this.Ipv4State = NodeType.Global;
-        this.Ipv6State = NodeType.Global;
+        this.MyIpv4Address.Reset();
+        this.MyIpv6Address.Reset();
     }
 
     public void ReportAddress(AddressQueryResult result)
@@ -65,16 +59,23 @@ public sealed partial class StatsData : ITinyhandSerializationCallback
         }
     }
 
-    public MyAddress.State GetAddressState()
+    public string Dump()
     {
-        return MyAddress.State.Unknown;
+        return $"NetStats: EssentialAddress: {this.EssentialAddress.Dump()}, Ipv4 Address: {this.MyIpv4Address.Dump()}, Ipv6 Address: {this.MyIpv6Address.Dump()}, ";
     }
 
     void ITinyhandSerializationCallback.OnBeforeSerialize()
     {
+        this.LastMics = Mics.GetUtcNow();
     }
 
     void ITinyhandSerializationCallback.OnAfterDeserialize()
     {
+        var utcNow = Mics.GetUtcNow();
+        var range = new MicsRange(utcNow - Mics.FromMinutes(1), utcNow);
+        if (!range.IsIn(this.LastMics))
+        {
+            this.Reset();
+        }
     }
 }
