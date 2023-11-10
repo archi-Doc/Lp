@@ -13,6 +13,21 @@ namespace Netsphere;
 [TinyhandObject]
 public readonly partial record struct DualNode : IStringConvertible<DualNode>, IValidatable
 {
+    private static DualNode alternative;
+
+    public static DualNode Alternative
+    {
+        get
+        {
+            if (!alternative.Validate())
+            {
+                alternative = new DualNode(DualAddress.Alternative, NodePrivateKey.AlternativePrivateKey.ToPublicKey());
+            }
+
+            return alternative;
+        }
+    }
+
     public DualNode(DualAddress address, NodePublicKey publicKey)
     {
         this.Address = address;
@@ -107,6 +122,11 @@ public readonly partial record struct DualNode : IStringConvertible<DualNode>, I
 
     public bool Validate()
         => this.Address.Validate() && this.PublicKey.Validate();
+
+    public DualNode WithIpEndPoint(IPEndPoint ipEndPoint)
+    {
+        return new(new(ipEndPoint.Address, (ushort)ipEndPoint.Port), this.PublicKey);
+    }
 
     public override string ToString()
     {

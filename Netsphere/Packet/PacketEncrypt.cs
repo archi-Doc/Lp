@@ -15,15 +15,15 @@ internal partial class PacketEncrypt : IPacket
     {
     }
 
-    public PacketEncrypt(NodeInformation nodeInformation)
+    public PacketEncrypt(DualNode node)
     {
-        this.NodeInformation = nodeInformation;
+        this.Node = node;
         this.Salt = RandomVault.Crypto.NextUInt64();
         this.SaltA = RandomVault.Crypto.NextUInt64();
     }
 
     [Key(0)]
-    public NodeInformation? NodeInformation { get; set; }
+    public DualNode Node { get; set; }
 
     [Key(1)]
     public ulong Salt { get; set; }
@@ -57,8 +57,8 @@ internal partial class PacketEncryptResponse : IPacket
     [Key(1)]
     public ulong SaltA2 { get; set; }
 
-    [Key(2)]
-    public NodeAddress? Handover { get; set; }
+    // [Key(2)]
+    // public NodeAddress? Handover { get; set; }
 
     [Key(3)]
     public bool CanRelay { get; set; }

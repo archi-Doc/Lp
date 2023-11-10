@@ -155,13 +155,12 @@ public class Terminal : UnitBase, IUnitExecutable
         }
     }
 
-    public Terminal(UnitContext context, UnitLogger unitLogger, NetBase netBase, NetStatus netStatus, StatsData statsData)
+    public Terminal(UnitContext context, UnitLogger unitLogger, NetBase netBase, StatsData statsData)
         : base(context)
     {
         this.UnitLogger = unitLogger;
         this.logger = unitLogger.GetLogger<Terminal>();
         this.NetBase = netBase;
-        this.NetStatus = netStatus;
         this.NetSocketIpv4 = new(this);
         this.NetSocketIpv6 = new(this);
         this.statsData = statsData;
@@ -196,10 +195,6 @@ public class Terminal : UnitBase, IUnitExecutable
     public ThreadCoreBase? Core { get; private set; }
 
     public NetBase NetBase { get; }
-
-    public NetStatus NetStatus { get; }
-
-    public MyStatus MyStatus { get; } = new();
 
     public bool IsAlternative { get; private set; }
 
@@ -386,9 +381,9 @@ public class Terminal : UnitBase, IUnitExecutable
             return;
         }
 
-        if (packet.NodeInformation != null)
+        if (!packet.Node.Validate())
         {
-            packet.NodeInformation.SetIPEndPoint(endpoint);
+            packet.Node = packet.Node.WithIpEndPoint(endpoint);
 
             var response = new PacketEncryptResponse();
             response.Salt2 = RandomVault.Crypto.NextUInt64();
@@ -397,7 +392,7 @@ public class Terminal : UnitBase, IUnitExecutable
             var secondGene = GenePool.NextGene(header.Gene);
             PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var sendOwner);
 
-            var terminal = this.Create(packet.NodeInformation, firstGene);
+            var terminal = this.Create(packet.Node, firstGene);
             var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(terminal, firstGene, owner, secondGene, sendOwner);
             sendOwner.Return();
 
@@ -436,7 +431,7 @@ public class Terminal : UnitBase, IUnitExecutable
             return;
         }
 
-        var response = new PacketPingResponse(new(endpoint.Address, (ushort)endpoint.Port, 0), this.NetBase.NodeName);
+        var response = new PacketPingResponse(new(endpoint.Address, (ushort)endpoint.Port), this.NetBase.NodeName);
         var secondGene = GenePool.NextGene(header.Gene);
         // this.TerminalLogger?.Information($"Ping Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
@@ -451,7 +446,7 @@ public class Terminal : UnitBase, IUnitExecutable
             return;
         }
 
-        var response = new PacketGetNodeInformationResponse(this.NetStatus.GetMyNodeInformation(this.IsAlternative));
+        var response = new PacketGetNodeInformationResponse(default); // tempcode, this.NetStatus.GetMyNodeInformation(this.IsAlternative)
         var secondGene = GenePool.NextGene(header.Gene);
         // this.TerminalLogger?.Information($"GetNodeInformation Response {response.Node.PublicKeyX[0]}: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 

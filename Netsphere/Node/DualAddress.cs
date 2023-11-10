@@ -67,6 +67,30 @@ public readonly partial record struct DualAddress : IStringConvertible<DualAddre
         }
     }
 
+    public DualAddress(IPAddress ipAddress, ushort port)
+    {
+        Span<byte> span = stackalloc byte[16];
+
+        if (ipAddress.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+        {
+            if (ipAddress.TryWriteBytes(span, out _))
+            {
+                this.Address6A = BitConverter.ToUInt64(span);
+                span = span.Slice(sizeof(ulong));
+                this.Address6B = BitConverter.ToUInt64(span);
+                this.Port6 = port;
+            }
+        }
+        else
+        {
+            if (ipAddress.TryWriteBytes(span, out _))
+            {
+                this.Address4 = BitConverter.ToUInt32(span);
+                this.Port4 = port;
+            }
+        }
+    }
+
     public bool IsValidIpv4 => this.Port4 != 0;
 
     public bool IsValidIpv6 => this.Port6 != 0;

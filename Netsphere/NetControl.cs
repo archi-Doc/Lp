@@ -106,7 +106,7 @@ public class NetControl : UnitBase, IUnitPreparable
         }
     }
 
-    public NetControl(UnitContext context, UnitLogger logger, NetBase netBase, Terminal terminal, EssentialNode node, NetStatus netStatus, StatsData statsData)
+    public NetControl(UnitContext context, UnitLogger logger, NetBase netBase, Terminal terminal, StatsData statsData)
         : base(context)
     {
         this.logger = logger;
@@ -118,11 +118,8 @@ public class NetControl : UnitBase, IUnitPreparable
         this.Terminal = terminal;
         if (this.NetBase.NetsphereOptions.EnableAlternative)
         {
-            this.Alternative = new(context, logger, netBase, netStatus, statsData); // For debug
+            this.Alternative = new(context, logger, netBase, statsData); // For debug
         }
-
-        this.EssentialNode = node;
-        this.NetStatus = netStatus;
     }
 
     public void Prepare(UnitMessage.Prepare message)
@@ -190,13 +187,7 @@ public class NetControl : UnitBase, IUnitPreparable
 
     public NetBase NetBase { get; }
 
-    public MyStatus MyStatus => this.Terminal.MyStatus;
-
-    public NetStatus NetStatus { get; }
-
     public Terminal Terminal { get; }
-
-    public EssentialNode EssentialNode { get; }
 
     public Terminal? Alternative { get; }
 
