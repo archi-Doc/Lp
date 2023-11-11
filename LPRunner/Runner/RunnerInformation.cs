@@ -117,10 +117,10 @@ public partial record RunnerInformation
     [IgnoreMember]
     internal SignaturePublicKey RemotePublicKey { get; set; } = default!;
 
-    internal DualAddress TryGetDualAddress()
+    internal NetAddress TryGetDualAddress()
     {
         var text = $"127.0.0.1:{this.DestinationPort}";
-        DualAddress.TryParse(text, out var address);
+        NetAddress.TryParse(text, out var address);
         return address;
     }
 

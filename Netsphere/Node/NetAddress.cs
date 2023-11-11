@@ -11,10 +11,10 @@ namespace Netsphere;
 /// Determine if the address is valid based on whether the port number is greater than zero.
 /// </summary>
 [TinyhandObject]
-public readonly partial record struct DualAddress : IStringConvertible<DualAddress>, IValidatable
+public readonly partial record struct NetAddress : IStringConvertible<NetAddress>, IValidatable
 {
     public const ushort AlternativePort = 49151;
-    public static readonly DualAddress Alternative = new(null, 0, IPAddress.IPv6Loopback, AlternativePort);
+    public static readonly NetAddress Alternative = new(null, 0, IPAddress.IPv6Loopback, AlternativePort);
 
     [Key(0)]
     public readonly ushort Engagement4;
@@ -37,7 +37,7 @@ public readonly partial record struct DualAddress : IStringConvertible<DualAddre
     [Key(6)]
     public readonly ulong Address6B;
 
-    public DualAddress(ushort port4, uint address4, ushort port6, ulong address6a, ulong address6b)
+    public NetAddress(ushort port4, uint address4, ushort port6, ulong address6a, ulong address6b)
     {
         this.Port4 = port4;
         this.Port6 = port6;
@@ -46,7 +46,7 @@ public readonly partial record struct DualAddress : IStringConvertible<DualAddre
         this.Address6B = address6b;
     }
 
-    public DualAddress(IPAddress? addressIpv4, ushort port4, IPAddress? addressIpv6, ushort port6)
+    public NetAddress(IPAddress? addressIpv4, ushort port4, IPAddress? addressIpv6, ushort port6)
     {
         Span<byte> span = stackalloc byte[16];
 
@@ -67,7 +67,7 @@ public readonly partial record struct DualAddress : IStringConvertible<DualAddre
         }
     }
 
-    public DualAddress(IPAddress ipAddress, ushort port)
+    public NetAddress(IPAddress ipAddress, ushort port)
     {
         Span<byte> span = stackalloc byte[16];
 
@@ -97,17 +97,17 @@ public readonly partial record struct DualAddress : IStringConvertible<DualAddre
 
     public bool IsValid => this.Port4 != 0 || this.Port6 != 0;
 
-    public static bool TryParseDualAddress(ILogger? logger, string source, [MaybeNullWhen(false)] out DualAddress address)
+    public static bool TryParseDualAddress(ILogger? logger, string source, [MaybeNullWhen(false)] out NetAddress address)
     {
         address = default;
         if (string.Compare(source, "alternative", true) == 0)
         {
-            address = DualAddress.Alternative;
+            address = NetAddress.Alternative;
             return true;
         }
         else
         {
-            if (!DualAddress.TryParse(source, out address))
+            if (!NetAddress.TryParse(source, out address))
             {
                 logger?.TryGet(LogLevel.Error)?.Log($"Could not parse: {source.ToString()}");
                 return false;
@@ -123,7 +123,7 @@ public readonly partial record struct DualAddress : IStringConvertible<DualAddre
         }
     }
 
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out DualAddress instance)
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out NetAddress instance)
     {// 1.2.3.4:55, []:55, 1.2.3.4:55[]:55
         ushort port4 = 0;
         ushort port6 = 0;

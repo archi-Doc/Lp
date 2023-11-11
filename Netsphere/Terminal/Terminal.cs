@@ -45,7 +45,7 @@ public class Terminal : UnitBase, IUnitExecutable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryCreateEndPoint(in DualAddress address, out NetEndPoint endPoint)
+    public bool TryCreateEndPoint(in NetAddress address, out NetEndPoint endPoint)
     {
         endPoint = default;
         if (this.statsData.MyIpv6Address.AddressState == MyAddress.State.Fixed ||
@@ -68,9 +68,9 @@ public class Terminal : UnitBase, IUnitExecutable
     /// <summary>
     /// Create unmanaged (without public key) NetTerminal instance.
     /// </summary>
-    /// <param name="address">DualAddress.</param>
+    /// <param name="address">Address.</param>
     /// <returns>NetTerminal.</returns>
-    public ClientTerminal? TryCreate(DualAddress address)
+    public ClientTerminal? TryCreate(NetAddress address)
     {
         this.TryCreateEndPoint(in address, out var endPoint);
         if (!endPoint.IsValid)
@@ -388,7 +388,7 @@ public class Terminal : UnitBase, IUnitExecutable
         var secondGene = GenePool.NextGene(header.Gene);
         PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var sendOwner);
 
-        var address = new DualAddress(endpoint.Address, (ushort)endpoint.Port);
+        var address = new NetAddress(endpoint.Address, (ushort)endpoint.Port);
         var node = new NetNode(address, packet.PublicKey);
         var endPoint = new NetEndPoint(endpoint, 0);
         var terminal = this.TryCreate(endPoint, node, firstGene);

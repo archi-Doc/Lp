@@ -21,7 +21,7 @@ public class UdpSendSubcommand : ISimpleCommandAsync<UdpSendOptions>
 
     public async Task RunAsync(UdpSendOptions options, string[] args)
     {
-        if (!DualAddress.TryParse(options.Node, out var node))
+        if (!NetAddress.TryParse(options.Node, out var node))
         {
             return;
         }

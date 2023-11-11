@@ -32,7 +32,7 @@ public sealed partial class EssentialAddress : ITinyhandSerializationCallback
     {
         [Link(Type = ChainType.Unordered)]
         [Key(0)]
-        public DualAddress Address { get; private set; }
+        public NetAddress Address { get; private set; }
 
         [Key(1)]
         public long ValidMics { get; private set; }
@@ -44,7 +44,7 @@ public sealed partial class EssentialAddress : ITinyhandSerializationCallback
         [Link(Type = ChainType.QueueList, Name = "Unchecked")]
         [Link(Type = ChainType.LinkedList, Name = "Ipv4List", AutoLink = false)]
         [Link(Type = ChainType.LinkedList, Name = "Ipv6List", AutoLink = false)]
-        public Item(DualAddress address)
+        public Item(NetAddress address)
         {
             this.Address = address;
         }
@@ -68,7 +68,7 @@ public sealed partial class EssentialAddress : ITinyhandSerializationCallback
             => $"{this.Address.ToString()}, Valid: {Mics.ToString(this.ValidMics)}, Failed: {this.FailureCount}";
     }
 
-    public bool TryAdd(DualAddress address)
+    public bool TryAdd(NetAddress address)
     {
         if (!address.Validate())
         {
@@ -90,7 +90,7 @@ public sealed partial class EssentialAddress : ITinyhandSerializationCallback
         return true;
     }
 
-    public bool GetUncheckedNode([NotNullWhen(true)] out DualAddress? address)
+    public bool GetUncheckedNode([NotNullWhen(true)] out NetAddress? address)
     {
         address = null;
         lock (this.data.SyncObject)
@@ -106,7 +106,7 @@ public sealed partial class EssentialAddress : ITinyhandSerializationCallback
         return false;
     }
 
-    public bool GetNode([NotNullWhen(true)] out DualAddress? address)
+    public bool GetNode([NotNullWhen(true)] out NetAddress? address)
     {
         address = null;
         lock (this.data.SyncObject)
@@ -124,7 +124,7 @@ public sealed partial class EssentialAddress : ITinyhandSerializationCallback
         return false;
     }
 
-    public void Report(DualAddress nodeAddress, ConnectionResult result)
+    public void Report(NetAddress nodeAddress, ConnectionResult result)
     {
         lock (this.data.SyncObject)
         {
@@ -201,7 +201,7 @@ public sealed partial class EssentialAddress : ITinyhandSerializationCallback
         var nodes = this.netBase.NetsphereOptions.Nodes;
         foreach (var x in nodes.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
-            if (DualAddress.TryParse(x, out var address))
+            if (NetAddress.TryParse(x, out var address))
             {
                 if (!this.data.AddressChain.ContainsKey(address))
                 {

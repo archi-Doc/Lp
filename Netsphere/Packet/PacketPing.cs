@@ -41,7 +41,7 @@ public partial class PacketPingResponse : IPacket
     {
     }
 
-    public PacketPingResponse(DualAddress address, string text)
+    public PacketPingResponse(NetAddress address, string text)
     {
         this.Address = address;
         this.Text = text;
@@ -52,7 +52,7 @@ public partial class PacketPingResponse : IPacket
     private string _text = string.Empty;
 
     [Key(1)]
-    public DualAddress Address { get; set; }
+    public NetAddress Address { get; set; }
 
     public override string ToString() => $"{this.Text} - {this.Address}";
 }

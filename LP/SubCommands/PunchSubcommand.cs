@@ -17,15 +17,15 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
 
     public async Task RunAsync(PunchOptions options, string[] args)
     {
-        if (!DualAddress.TryParseDualAddress(this.logger, options.Node, out var node))
+        if (!NetAddress.TryParseDualAddress(this.logger, options.Node, out var node))
         {
             return;
         }
 
-        DualAddress nextNode = default;
+        NetAddress nextNode = default;
         if (!string.IsNullOrEmpty(options.NextNode))
         {
-            DualAddress.TryParseDualAddress(this.logger, options.NextNode, out nextNode);
+            NetAddress.TryParseDualAddress(this.logger, options.NextNode, out nextNode);
         }
 
         for (var n = 0; n < options.Count; n++)
@@ -44,7 +44,7 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
         }
     }
 
-    public async Task Punch(DualAddress node, DualAddress nextNode, PunchOptions options)
+    public async Task Punch(NetAddress node, NetAddress nextNode, PunchOptions options)
     {
         this.logger.TryGet()?.Log($"Punch: {node.ToString()}");
 

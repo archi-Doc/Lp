@@ -8,7 +8,7 @@ namespace Netsphere;
 
 /// <summary>
 /// Represents ipv4/ipv6 node information.<br/>
-/// <see cref="NetNode"/> = <see cref="DualAddress"/> + <see cref="NodePublicKey"/>.
+/// <see cref="NetNode"/> = <see cref="NetAddress"/> + <see cref="NodePublicKey"/>.
 /// </summary>
 [TinyhandObject]
 public sealed partial class NetNode : IStringConvertible<NetNode>, IValidatable
@@ -22,7 +22,7 @@ public sealed partial class NetNode : IStringConvertible<NetNode>, IValidatable
         {
             if (alternative is null)
             {
-                alternative = new NetNode(DualAddress.Alternative, NodePrivateKey.AlternativePrivateKey.ToPublicKey());
+                alternative = new NetNode(NetAddress.Alternative, NodePrivateKey.AlternativePrivateKey.ToPublicKey());
             }
 
             return alternative;
@@ -33,14 +33,14 @@ public sealed partial class NetNode : IStringConvertible<NetNode>, IValidatable
     {
     }
 
-    public NetNode(DualAddress address, NodePublicKey publicKey)
+    public NetNode(NetAddress address, NodePublicKey publicKey)
     {
         this.Address = address;
         this.PublicKey = publicKey;
     }
 
     [Key(0)]
-    public DualAddress Address { get; private set; }
+    public NetAddress Address { get; private set; }
 
     [Key(1)]
     public NodePublicKey PublicKey { get; private set; }
@@ -93,7 +93,7 @@ public sealed partial class NetNode : IStringConvertible<NetNode>, IValidatable
         var sourceAddress = source.Slice(0, index);
         var sourcePublicKey = source.Slice(index + 1, index2 - index - 1);
 
-        if (!DualAddress.TryParse(sourceAddress, out var address))
+        if (!NetAddress.TryParse(sourceAddress, out var address))
         {
             instance = default;
             return false;
@@ -110,7 +110,7 @@ public sealed partial class NetNode : IStringConvertible<NetNode>, IValidatable
     }
 
     public static int MaxStringLength
-        => DualAddress.MaxStringLength + SignaturePublicKey.MaxStringLength + 2;
+        => NetAddress.MaxStringLength + SignaturePublicKey.MaxStringLength + 2;
 
     public int GetStringLength()
         => throw new NotImplementedException();

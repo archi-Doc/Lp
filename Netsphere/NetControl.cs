@@ -126,12 +126,12 @@ public class NetControl : UnitBase, IUnitPreparable
         if (this.Alternative != null)
         {
             this.Alternative.Initialize(true, NodePrivateKey.AlternativePrivateKey);
-            if (this.NetBase.NetsphereOptions.Port == DualAddress.Alternative.Port4)
+            if (this.NetBase.NetsphereOptions.Port == NetAddress.Alternative.Port4)
             {
-                // tempcode, DualAddress.Alternative.SetPort((ushort)(this.Terminal.Port + 1));
+                // tempcode, Netddress.Alternative.SetPort((ushort)(this.Terminal.Port + 1));
             }
 
-            this.Alternative.Port = DualAddress.Alternative.Port4;
+            this.Alternative.Port = NetAddress.Alternative.Port4;
         }
 
         // Responders

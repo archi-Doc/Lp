@@ -100,9 +100,9 @@ public class NodeTest
 
     private static bool TestDualAddress(string utf16, bool validation, bool compareUtf16 = true)
     {
-        DualAddress.TryParse(utf16, out var address).IsTrue();
+        NetAddress.TryParse(utf16, out var address).IsTrue();
 
-        Span<char> destination = stackalloc char[DualAddress.MaxStringLength];
+        Span<char> destination = stackalloc char[NetAddress.MaxStringLength];
         address.TryFormat(destination, out var written).IsTrue();
         destination = destination.Slice(0, written);
 
@@ -111,7 +111,7 @@ public class NodeTest
             utf16.Is(destination.ToString());
         }
 
-        DualAddress.TryParse(destination, out var address2).IsTrue();
+        NetAddress.TryParse(destination, out var address2).IsTrue();
         address2.Equals(address).IsTrue();
 
         address.Validate().Is(validation);
@@ -193,5 +193,5 @@ public class NodeTest
         }
     }
 
-    private DualAddress CreateAddress(string address) => new DualAddress(IPAddress.Parse(address), NetControl.MinPort);
+    private NetAddress CreateAddress(string address) => new NetAddress(IPAddress.Parse(address), NetControl.MinPort);
 }
