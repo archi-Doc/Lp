@@ -16,7 +16,7 @@ public class NodeSubcommandGet : ISimpleCommandAsync<NodeSubcommandGetOptions>
 
     public async Task RunAsync(NodeSubcommandGetOptions options, string[] args)
     {
-        if (!NetAddress.TryParseDualAddress(this.logger, options.Node, out var address))
+        if (!NetAddress.TryParse(this.logger, options.Node, out var address))
         {
             return;
         }

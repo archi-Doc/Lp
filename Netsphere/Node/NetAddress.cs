@@ -7,14 +7,13 @@ using Arc.Crypto;
 namespace Netsphere;
 
 /// <summary>
-/// Represents ipv4/ipv6 address information.<br/>
-/// Determine if the address is valid based on whether the port number is greater than zero.
+/// Represents ipv4/ipv6 address information.
 /// </summary>
 [TinyhandObject]
 public readonly partial record struct NetAddress : IStringConvertible<NetAddress>, IValidatable
 {
     public const ushort AlternativePort = 49151;
-    public static readonly NetAddress Alternative = new(AlternativePort, null, IPAddress.IPv6Loopback);
+    public static readonly NetAddress Alternative = new(IPAddress.Loopback, AlternativePort); // IPAddress.IPv6Loopback
 
     [Key(0)]
     public readonly ushort Engagement;
@@ -31,7 +30,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
     [Key(4)]
     public readonly ulong Address6B;
 
-    public NetAddress(ushort port, uint address4, ulong address6a, ulong address6b)
+    public NetAddress(uint address4, ulong address6a, ulong address6b, ushort port)
     {
         this.Port = port;
         this.Address4 = address4;
@@ -39,31 +38,11 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         this.Address6B = address6b;
     }
 
-    public NetAddress(ushort port, IPAddress? addressIpv4, IPAddress? addressIpv6)
-    {
-        Span<byte> span = stackalloc byte[16];
-
-        if (addressIpv4 is not null &&
-            addressIpv4.TryWriteBytes(span, out _))
-        {
-            this.Address4 = BitConverter.ToUInt32(span);
-            this.Port = port;
-        }
-
-        if (addressIpv6 is not null &&
-            addressIpv6.TryWriteBytes(span, out _))
-        {
-            this.Address6A = BitConverter.ToUInt64(span);
-            span = span.Slice(sizeof(ulong));
-            this.Address6B = BitConverter.ToUInt64(span);
-            this.Port = port;
-        }
-    }
-
     public NetAddress(IPAddress ipAddress, ushort port)
     {
         Span<byte> span = stackalloc byte[16];
 
+        this.Port = port;
         if (ipAddress.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
         {
             if (ipAddress.TryWriteBytes(span, out _))
@@ -71,7 +50,6 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
                 this.Address6A = BitConverter.ToUInt64(span);
                 span = span.Slice(sizeof(ulong));
                 this.Address6B = BitConverter.ToUInt64(span);
-                this.Port = port;
             }
         }
         else
@@ -79,18 +57,37 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
             if (ipAddress.TryWriteBytes(span, out _))
             {
                 this.Address4 = BitConverter.ToUInt32(span);
-                this.Port = port;
             }
         }
     }
 
-    public bool IsValidIpv4 => this.Port != 0 && this.Address4 != 0;
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out NetAddress instance)
+    {// 1.2.3.4:55, []:55, 1.2.3.4:55[]:55
+        ushort port = 0;
+        uint address4 = 0;
+        ulong address6a;
+        ulong address6b;
 
-    public bool IsValidIpv6 => this.Port != 0 && (this.Address6A != 0 || this.Address6B != 0);
+        instance = default;
 
-    public bool IsValid => this.Port != 0 && (this.Address4 != 0 || this.Address6A != 0 || this.Address6B != 0);
+        source = source.Trim();
+        if (source.Length == 0)
+        {
+            return false;
+        }
+        else if (IsIpv4Address(source))
+        {// TryParse IPv4
+            TryParseIPv4(ref source, ref port, out address4);
+        }
 
-    public static bool TryParseDualAddress(ILogger? logger, string source, [MaybeNullWhen(false)] out NetAddress address)
+        // TryParse IPv6
+        TryParseIPv6(ref source, ref port, out address6a, out address6b);
+
+        instance = new(address4, address6a, address6b, port);
+        return true;
+    }
+
+    public static bool TryParse(ILogger? logger, string source, [MaybeNullWhen(false)] out NetAddress address)
     {
         address = default;
         if (string.Compare(source, "alternative", true) == 0)
@@ -116,39 +113,17 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         }
     }
 
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out NetAddress instance)
-    {// 1.2.3.4:55, []:55, 1.2.3.4:55[]:55
-        ushort port = 0;
-        uint address4 = 0;
-        ulong address6a = 0;
-        ulong address6b = 0;
+    public bool IsValidIpv4 => this.Port != 0 && this.Address4 != 0;
 
-        instance = default;
+    public bool IsValidIpv6 => this.Port != 0 && (this.Address6A != 0 || this.Address6B != 0);
 
-        source = source.Trim();
-        if (source.Length == 0)
-        {
-            return false;
-        }
-        else if (IsIpv4Address(source))
-        {// TryParse IPv4
-            TryParseIPv4(ref source, ref port, out address4);
-        }
-
-        // TryParse IPv6
-        TryParseIPv6(ref source, ref port, out address6a, out address6b);
-
-        instance = new(port, address4, address6a, address6b);
-        return true;
-    }
+    public bool IsValid => this.Port != 0 && (this.Address4 != 0 || this.Address6A != 0 || this.Address6B != 0);
 
     public static int MaxStringLength
         => (15 + 1 + 5) + (2 + 54 + 1 + 5); // IPv4:12345, [IPv6]:12345
 
     public int GetStringLength()
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotImplementedException();
 
     public bool TryFormat(Span<char> destination, out int written)
     {// 15 + 1 + 5, 54 + 1 + 5 + 2
@@ -208,10 +183,10 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
     public bool IsPrivateOrLocalLoopbackAddress()
     {
         return (this.IsValidIpv4 && this.IsPrivateOrLocalLoopbackAddressIPv4()) ||
-            (this.IsValidIpv6 && this.IsLocalLoopbackAddressIPv6());
+            (this.IsValidIpv6 && this.IsPrivateOrLocalLoopbackAddressIPv6());
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    /*[MethodImpl(MethodImplOptions.AggressiveInlining)]
     public IPEndPoint? TryCreateIpv4()
     {
         if (this.IsValidIpv4)
@@ -239,7 +214,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         {
             return default;
         }
-    }
+    }*/
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryCreateIpv4(ref NetEndPoint endPoint)
@@ -271,12 +246,19 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
 
     public bool Validate()
     {
-        if (!this.IsValidIpv4 && !this.IsValidIpv6)
+        var ipv4 = this.IsValidIpv4;
+        var ipv6 = this.IsValidIpv6;
+        if (!ipv4 && !ipv6)
         {
             return false;
         }
 
-        if (this.IsValidIpv4)
+        if (this.Port < NetControl.MinPort || this.Port > NetControl.MaxPort)
+        {
+            return false;
+        }
+
+        if (ipv4)
         {
             if (!this.Validate4())
             {
@@ -284,7 +266,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
             }
         }
 
-        if (this.IsValidIpv6)
+        if (ipv6)
         {
             if (!this.Validate6())
             {
@@ -447,11 +429,6 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
 
     private bool Validate4()
     {
-        if (this.Port < NetControl.MinPort || this.Port > NetControl.MaxPort)
-        {
-            return false;
-        }
-
         Span<byte> address = stackalloc byte[4];
         BitConverter.TryWriteBytes(address, this.Address4);
 
@@ -506,35 +483,24 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         return true;
     }
 
-    private unsafe bool Validate6()
+    private bool Validate6()
     {
-        if (this.Port < NetControl.MinPort || this.Port > NetControl.MaxPort)
-        {
+        if (this.Address6A == 0 && (this.Address6B == 0 || this.Address6B == 0x0100000000000000))
+        {// Unspecified address, Loopback address
             return false;
         }
 
-        Span<byte> address = stackalloc byte[16];
-        BitConverter.TryWriteBytes(address, this.Address6A);
-        BitConverter.TryWriteBytes(address.Slice(sizeof(ulong)), this.Address6B);
-
-        fixed (byte* b = address)
+        Span<byte> b = stackalloc byte[8];
+        BitConverter.TryWriteBytes(b, this.Address6A);
+        if (b[0] == 0xFC || b[0] == 0xFD)
+        {// Unique local address
+            return false;
+        }
+        else if (b[0] == 0xFE)
         {
-            ulong* u = (ulong*)b;
-            if (u[0] == 0 && (u[1] == 0 || u[1] == 0x0100000000000000))
-            {// Unspecified address, Loopback address
+            if (b[1] >= 0x80 && b[1] <= 0xBF)
+            {// Link-local address
                 return false;
-            }
-
-            if (b[0] == 0xFC || b[0] == 0xFD)
-            {// Unique local address
-                return false;
-            }
-            else if (b[0] == 0xFE)
-            {
-                if (b[1] >= 0x80 && b[1] <= 0xBF)
-                {// Link-local address
-                    return false;
-                }
             }
         }
 
@@ -553,18 +519,8 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
     }
 
     private unsafe bool IsLocalLoopbackAddressIPv6()
-    {// tempcode
-        Span<byte> address = stackalloc byte[8];
-        if (!BitConverter.TryWriteBytes(address, this.Address6A))
-        {
-            return false;
-        }
-
-        fixed (byte* b = address)
-        {
-            ulong* u = (ulong*)b;
-            return u[0] == 0 && u[1] == 0x0100000000000000;
-        }
+    {
+        return this.Address6A == 0 && this.Address6B == 0x0100000000000000;
     }
 
     private bool IsPrivateOrLocalLoopbackAddressIPv4()
@@ -597,6 +553,30 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         {
             if (address[1] == 168)
             {// Private network
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool IsPrivateOrLocalLoopbackAddressIPv6()
+    {
+        if (this.Address6A == 0 && this.Address6B == 0x0100000000000000)
+        {// Loopback address
+            return true;
+        }
+
+        Span<byte> b = stackalloc byte[8];
+        BitConverter.TryWriteBytes(b, this.Address6A);
+        if (b[0] == 0xFC || b[0] == 0xFD)
+        {// Unique local address
+            return true;
+        }
+        else if (b[0] == 0xFE)
+        {
+            if (b[1] >= 0x80 && b[1] <= 0xBF)
+            {// Link-local address
                 return true;
             }
         }

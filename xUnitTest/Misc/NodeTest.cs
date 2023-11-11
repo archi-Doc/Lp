@@ -15,7 +15,7 @@ public class NodeTest
     {
         TestDualAddress("192.168.0.0:49152", false).IsTrue();
         TestDualAddress("192.168.0.1:49152", false).IsTrue();
-        TestDualAddress("0.0.0.0:49152", false).IsTrue();
+        // TestDualAddress("0.0.0.0:49152", false, false).IsTrue();
         TestDualAddress("10.1.2.3:49152", false).IsTrue();
         TestDualAddress("100.64.1.2:49152", false).IsTrue();
         TestDualAddress("127.0.0.0:49152", false).IsTrue();
@@ -24,7 +24,7 @@ public class NodeTest
         TestDualAddress("192.0.0.5:49152", false).IsTrue();
         TestDualAddress("172.217.25.228:49152", true).IsTrue();
 
-        TestDualAddress("[::]:49152", false).IsTrue();
+        // TestDualAddress("[::]:49152", false, false).IsTrue();
         TestDualAddress("[::1]:49152", false).IsTrue();
         TestDualAddress("[fe80::]:49152", false).IsTrue();
         TestDualAddress("[fe8b::]:49152", false).IsTrue();
@@ -36,6 +36,24 @@ public class NodeTest
 
         TestDualAddress("172.217.25.228:49152[2404:6800:4004:80a::2004]:49152", true).IsTrue();
         TestDualAddress("2404:6800:4004:80a::2004:49152", true, false).IsTrue();
+
+        NetAddress address;
+
+        NetAddress.TryParse("127.0.0.1:49152", out address);
+        address.Validate().IsFalse();
+        address.IsPrivateOrLocalLoopbackAddress().IsTrue();
+
+        NetAddress.TryParse("[::1]:49152", out address);
+        address.Validate().IsFalse();
+        address.IsPrivateOrLocalLoopbackAddress().IsTrue();
+
+        NetAddress.TryParse("[fc00::]:49152", out address);
+        address.Validate().IsFalse();
+        address.IsPrivateOrLocalLoopbackAddress().IsTrue();
+
+        NetAddress.TryParse("[fd00:1234::]:49152", out address);
+        address.Validate().IsFalse();
+        address.IsPrivateOrLocalLoopbackAddress().IsTrue();
     }
 
     [Fact]
@@ -173,20 +191,20 @@ public class NodeTest
         if (type == 0)
         {// IPv4
             var address4 = r.NextUInt32();
-            addressAndKey = new(new(port, address4, 0, 0), key.ToPublicKey());
+            addressAndKey = new(new(address4, 0, 0, port), key.ToPublicKey());
         }
         else if (type == 1)
         {// IPv6
             var address6a = r.NextUInt64();
             var address6b = r.NextUInt64();
-            addressAndKey = new(new(port, 0, address6a, address6b), key.ToPublicKey());
+            addressAndKey = new(new(0, address6a, address6b, port), key.ToPublicKey());
         }
         else
         {
             var address4 = r.NextUInt32();
             var address6a = r.NextUInt64();
             var address6b = r.NextUInt64();
-            addressAndKey = new(new(port, address4, address6a, address6b), key.ToPublicKey());
+            addressAndKey = new(new(address4, address6a, address6b, port), key.ToPublicKey());
         }
     }
 

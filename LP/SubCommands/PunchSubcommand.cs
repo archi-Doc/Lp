@@ -17,7 +17,7 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
 
     public async Task RunAsync(PunchOptions options, string[] args)
     {
-        if (!NetAddress.TryParseDualAddress(this.logger, options.Node, out var node))
+        if (!NetAddress.TryParse(this.logger, options.Node, out var node))
         {
             return;
         }
@@ -25,7 +25,7 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
         NetAddress nextNode = default;
         if (!string.IsNullOrEmpty(options.NextNode))
         {
-            NetAddress.TryParseDualAddress(this.logger, options.NextNode, out nextNode);
+            NetAddress.TryParse(this.logger, options.NextNode, out nextNode);
         }
 
         for (var n = 0; n < options.Count; n++)

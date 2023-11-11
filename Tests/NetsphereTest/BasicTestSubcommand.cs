@@ -17,7 +17,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 
     public async Task RunAsync(BasicTestOptions options, string[] args)
     {
-        if (!NetAddress.TryParseDualAddress(this.logger, options.Node, out var node))
+        if (!NetAddress.TryParse(this.logger, options.Node, out var node))
         {
             return;
         }
