@@ -14,39 +14,32 @@ namespace Netsphere;
 public readonly partial record struct NetAddress : IStringConvertible<NetAddress>, IValidatable
 {
     public const ushort AlternativePort = 49151;
-    public static readonly NetAddress Alternative = new(null, 0, IPAddress.IPv6Loopback, AlternativePort);
+    public static readonly NetAddress Alternative = new(AlternativePort, null, IPAddress.IPv6Loopback);
 
     [Key(0)]
-    public readonly ushort Engagement4;
+    public readonly ushort Engagement;
 
     [Key(1)]
-    public readonly ushort Engagement6;
+    public readonly ushort Port;
 
     [Key(2)]
-    public readonly ushort Port4;
-
-    [Key(3)]
-    public readonly ushort Port6;
-
-    [Key(4)]
     public readonly uint Address4;
 
-    [Key(5)]
+    [Key(3)]
     public readonly ulong Address6A;
 
-    [Key(6)]
+    [Key(4)]
     public readonly ulong Address6B;
 
-    public NetAddress(ushort port4, uint address4, ushort port6, ulong address6a, ulong address6b)
+    public NetAddress(ushort port, uint address4, ulong address6a, ulong address6b)
     {
-        this.Port4 = port4;
-        this.Port6 = port6;
+        this.Port = port;
         this.Address4 = address4;
         this.Address6A = address6a;
         this.Address6B = address6b;
     }
 
-    public NetAddress(IPAddress? addressIpv4, ushort port4, IPAddress? addressIpv6, ushort port6)
+    public NetAddress(ushort port, IPAddress? addressIpv4, IPAddress? addressIpv6)
     {
         Span<byte> span = stackalloc byte[16];
 
@@ -54,7 +47,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
             addressIpv4.TryWriteBytes(span, out _))
         {
             this.Address4 = BitConverter.ToUInt32(span);
-            this.Port4 = port4;
+            this.Port = port;
         }
 
         if (addressIpv6 is not null &&
@@ -63,7 +56,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
             this.Address6A = BitConverter.ToUInt64(span);
             span = span.Slice(sizeof(ulong));
             this.Address6B = BitConverter.ToUInt64(span);
-            this.Port6 = port4;
+            this.Port = port;
         }
     }
 
@@ -78,7 +71,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
                 this.Address6A = BitConverter.ToUInt64(span);
                 span = span.Slice(sizeof(ulong));
                 this.Address6B = BitConverter.ToUInt64(span);
-                this.Port6 = port;
+                this.Port = port;
             }
         }
         else
@@ -86,16 +79,16 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
             if (ipAddress.TryWriteBytes(span, out _))
             {
                 this.Address4 = BitConverter.ToUInt32(span);
-                this.Port4 = port;
+                this.Port = port;
             }
         }
     }
 
-    public bool IsValidIpv4 => this.Port4 != 0;
+    public bool IsValidIpv4 => this.Port != 0 && this.Address4 != 0;
 
-    public bool IsValidIpv6 => this.Port6 != 0;
+    public bool IsValidIpv6 => this.Port != 0 && (this.Address6A != 0 || this.Address6B != 0);
 
-    public bool IsValid => this.Port4 != 0 || this.Port6 != 0;
+    public bool IsValid => this.Port != 0 && (this.Address4 != 0 || this.Address6A != 0 || this.Address6B != 0);
 
     public static bool TryParseDualAddress(ILogger? logger, string source, [MaybeNullWhen(false)] out NetAddress address)
     {
@@ -125,8 +118,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
 
     public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out NetAddress instance)
     {// 1.2.3.4:55, []:55, 1.2.3.4:55[]:55
-        ushort port4 = 0;
-        ushort port6 = 0;
+        ushort port = 0;
         uint address4 = 0;
         ulong address6a = 0;
         ulong address6b = 0;
@@ -140,13 +132,13 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         }
         else if (IsIpv4Address(source))
         {// TryParse IPv4
-            TryParseIPv4(ref source, out port4, out address4);
+            TryParseIPv4(ref source, ref port, out address4);
         }
 
         // TryParse IPv6
-        TryParseIPv6(ref source, out port6, out address6a, out address6b);
+        TryParseIPv6(ref source, ref port, out address6a, out address6b);
 
-        instance = new(port4, address4, port6, address6a, address6b);
+        instance = new(port, address4, address6a, address6b);
         return true;
     }
 
@@ -181,7 +173,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
 
             span[0] = ':';
             span = span.Slice(1);
-            this.Port4.TryFormat(span, out written);
+            this.Port.TryFormat(span, out written);
             span = span.Slice(written);
         }
 
@@ -205,7 +197,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
             span[1] = ':';
             span = span.Slice(2);
 
-            this.Port6.TryFormat(span, out written);
+            this.Port.TryFormat(span, out written);
             span = span.Slice(written);
         }
 
@@ -224,7 +216,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
     {
         if (this.IsValidIpv4)
         {
-            return new(this.Address4, this.Port4);
+            return new(this.Address4, this.Port);
         }
         else
         {
@@ -241,7 +233,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
             BitConverter.TryWriteBytes(ipv6byte, this.Address6A);
             BitConverter.TryWriteBytes(ipv6byte.Slice(sizeof(ulong)), this.Address6B);
             var ipv6 = new IPAddress(ipv6byte);
-            return new(ipv6, this.Port6);
+            return new(ipv6, this.Port);
         }
         else
         {
@@ -257,7 +249,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
             return false;
         }
 
-        endPoint = new(new(this.Address4, this.Port4), this.Engagement4);
+        endPoint = new(new(this.Address4, this.Port), this.Engagement);
         return true;
     }
 
@@ -273,7 +265,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         BitConverter.TryWriteBytes(ipv6byte, this.Address6A);
         BitConverter.TryWriteBytes(ipv6byte.Slice(sizeof(ulong)), this.Address6B);
         var ipv6 = new IPAddress(ipv6byte);
-        endPoint = new(new(ipv6, this.Port6), this.Engagement6);
+        endPoint = new(new(ipv6, this.Port), this.Engagement);
         return true;
     }
 
@@ -309,9 +301,8 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         return this.TryFormat(span, out var written) ? span.Slice(0, written).ToString() : string.Empty;
     }
 
-    private static bool TryParseIPv4(ref ReadOnlySpan<char> source, out ushort port4, out uint address4)
+    private static bool TryParseIPv4(ref ReadOnlySpan<char> source, ref ushort port, out uint address4)
     {
-        port4 = 0;
         address4 = 0;
 
         var index = source.IndexOf(':');
@@ -349,17 +340,17 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
 
         address4 = BitConverter.ToUInt32(span);
 
-        if (!ushort.TryParse(sourcePort, out port4))
+        if (!ushort.TryParse(sourcePort, out var p))
         {
             return false;
         }
 
+        port = p;
         return true;
     }
 
-    private static bool TryParseIPv6(ref ReadOnlySpan<char> source, out ushort port6, out ulong address6a, out ulong address6b)
+    private static bool TryParseIPv6(ref ReadOnlySpan<char> source, ref ushort port, out ulong address6a, out ulong address6b)
     {// [ipv6 address]:port
-        port6 = 0;
         address6a = 0;
         address6b = 0;
 
@@ -419,11 +410,12 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         span = span.Slice(sizeof(ulong));
         address6b = BitConverter.ToUInt64(span);
 
-        if (!ushort.TryParse(sourcePort, out port6))
+        if (!ushort.TryParse(sourcePort, out var p))
         {
             return false;
         }
 
+        port = p;
         return true;
     }
 
@@ -455,7 +447,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
 
     private bool Validate4()
     {
-        if (this.Port4 < NetControl.MinPort || this.Port4 > NetControl.MaxPort)
+        if (this.Port < NetControl.MinPort || this.Port > NetControl.MaxPort)
         {
             return false;
         }
@@ -516,7 +508,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
 
     private unsafe bool Validate6()
     {
-        if (this.Port6 < NetControl.MinPort || this.Port6 > NetControl.MaxPort)
+        if (this.Port < NetControl.MinPort || this.Port > NetControl.MaxPort)
         {
             return false;
         }

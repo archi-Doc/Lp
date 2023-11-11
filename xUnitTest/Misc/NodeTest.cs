@@ -169,27 +169,24 @@ public class NodeTest
     {
         var key = NodePrivateKey.Create();
 
+        var port = (ushort)r.NextInt32(NetControl.MinPort, NetControl.MaxPort);
         if (type == 0)
         {// IPv4
-            var port4 = (ushort)r.NextInt32(NetControl.MinPort, NetControl.MaxPort);
             var address4 = r.NextUInt32();
-            addressAndKey = new(new(port4, address4, 0, 0, 0), key.ToPublicKey());
+            addressAndKey = new(new(port, address4, 0, 0), key.ToPublicKey());
         }
         else if (type == 1)
         {// IPv6
-            var port6 = (ushort)r.NextInt32(NetControl.MinPort, NetControl.MaxPort);
             var address6a = r.NextUInt64();
             var address6b = r.NextUInt64();
-            addressAndKey = new(new(0, 0, port6, address6a, address6b), key.ToPublicKey());
+            addressAndKey = new(new(port, 0, address6a, address6b), key.ToPublicKey());
         }
         else
         {
-            var port4 = (ushort)r.NextInt32(NetControl.MinPort, NetControl.MaxPort);
             var address4 = r.NextUInt32();
-            var port6 = (ushort)r.NextInt32(NetControl.MinPort, NetControl.MaxPort);
             var address6a = r.NextUInt64();
             var address6b = r.NextUInt64();
-            addressAndKey = new(new(port4, address4, port6, address6a, address6b), key.ToPublicKey());
+            addressAndKey = new(new(port, address4, address6a, address6b), key.ToPublicKey());
         }
     }
 
