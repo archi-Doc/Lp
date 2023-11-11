@@ -58,7 +58,7 @@ public class NodeTest
 
         for (var i = 0; i < N; i++)
         {
-            GenerateDualNode(r, 1,  out var address);
+            GenerateDualNode(r, 1, out var address);
             TestDualNode(address).IsTrue();
         }
 
@@ -72,30 +72,30 @@ public class NodeTest
     [Fact]
     public void IsValidIPv4()
     {
-        this.CreateAddress("192.168.0.0").IsValid().IsFalse();
-        this.CreateAddress("192.168.0.1").IsValid().IsFalse();
-        this.CreateAddress("0.0.0.0").IsValid().IsFalse();
-        this.CreateAddress("10.1.2.3").IsValid().IsFalse();
-        this.CreateAddress("100.64.1.2").IsValid().IsFalse();
-        this.CreateAddress("127.0.0.0").IsValid().IsFalse();
-        this.CreateAddress("172.30.5.4").IsValid().IsFalse();
-        this.CreateAddress("192.0.1.1").IsValid().IsTrue();
-        this.CreateAddress("192.0.0.5").IsValid().IsFalse();
-        this.CreateAddress("172.217.25.228").IsValid().IsTrue();
+        this.CreateAddress("192.168.0.0").Validate().IsFalse();
+        this.CreateAddress("192.168.0.1").Validate().IsFalse();
+        this.CreateAddress("0.0.0.0").Validate().IsFalse();
+        this.CreateAddress("10.1.2.3").Validate().IsFalse();
+        this.CreateAddress("100.64.1.2").Validate().IsFalse();
+        this.CreateAddress("127.0.0.0").Validate().IsFalse();
+        this.CreateAddress("172.30.5.4").Validate().IsFalse();
+        this.CreateAddress("192.0.1.1").Validate().IsTrue();
+        this.CreateAddress("192.0.0.5").Validate().IsFalse();
+        this.CreateAddress("172.217.25.228").Validate().IsTrue();
     }
 
     [Fact]
     public void IsValidIPv6()
     {
-        this.CreateAddress("::").IsValid().IsFalse();
-        this.CreateAddress("::1").IsValid().IsFalse();
-        this.CreateAddress("fe80::").IsValid().IsFalse();
-        this.CreateAddress("fe8b::").IsValid().IsFalse();
-        this.CreateAddress("febc:1111::").IsValid().IsFalse();
-        this.CreateAddress("fecd:1111::").IsValid().IsTrue();
-        this.CreateAddress("fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff").IsValid().IsFalse();
-        this.CreateAddress("fc00::").IsValid().IsFalse();
-        this.CreateAddress("2404:6800:4004:80a::2004").IsValid().IsTrue();
+        this.CreateAddress("::").Validate().IsFalse();
+        this.CreateAddress("::1").Validate().IsFalse();
+        this.CreateAddress("fe80::").Validate().IsFalse();
+        this.CreateAddress("fe8b::").Validate().IsFalse();
+        this.CreateAddress("febc:1111::").Validate().IsFalse();
+        this.CreateAddress("fecd:1111::").Validate().IsTrue();
+        this.CreateAddress("fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff").Validate().IsFalse();
+        this.CreateAddress("fc00::").Validate().IsFalse();
+        this.CreateAddress("2404:6800:4004:80a::2004").Validate().IsTrue();
     }
 
     private static bool TestDualAddress(string utf16, bool validation, bool compareUtf16 = true)
@@ -121,7 +121,10 @@ public class NodeTest
 
     private static bool TestDualNode(string utf16, bool validation, bool compareUtf16 = true)
     {
-        NetNode.TryParse(utf16, out var addressAndKey).IsTrue();
+        if (!NetNode.TryParse(utf16, out var addressAndKey))
+        {
+            throw new Exception();
+        }
 
         Span<char> destination = stackalloc char[NetNode.MaxStringLength];
         addressAndKey.TryFormat(destination, out var written).IsTrue();
@@ -132,7 +135,11 @@ public class NodeTest
             utf16.Is(destination.ToString());
         }
 
-        NetNode.TryParse(destination, out var addressAndKey2).IsTrue();
+        if (!NetNode.TryParse(destination, out var addressAndKey2))
+        {
+            throw new Exception();
+        }
+
         addressAndKey2.Equals(addressAndKey).IsTrue();
 
         addressAndKey.Validate().Is(validation);
@@ -146,7 +153,11 @@ public class NodeTest
         addressAndKey.TryFormat(destination, out var written).IsTrue();
         destination = destination.Slice(0, written);
 
-        NetNode.TryParse(destination, out var addressAndKey2).IsTrue();
+        if (!NetNode.TryParse(destination, out var addressAndKey2))
+        {
+            throw new Exception();
+        }
+
         addressAndKey2.Equals(addressAndKey).IsTrue();
 
         // addressAndKey.Validate().Is(true);
@@ -182,5 +193,5 @@ public class NodeTest
         }
     }
 
-    private NodeAddress CreateAddress(string address) => new NodeAddress(IPAddress.Parse(address), NetControl.MinPort);
+    private DualAddress CreateAddress(string address) => new DualAddress(IPAddress.Parse(address), NetControl.MinPort);
 }

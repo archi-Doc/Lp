@@ -44,6 +44,27 @@ public class Terminal : UnitBase, IUnitExecutable
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool TryCreateEndPoint(in DualAddress address, out NetEndPoint endPoint)
+    {
+        endPoint = default;
+        if (this.statsData.MyIpv6Address.AddressState == MyAddress.State.Fixed ||
+            this.statsData.MyIpv6Address.AddressState == MyAddress.State.Changed)
+        {// Ipv6 supported
+            address.TryCreateIpv4(ref endPoint);
+            if (endPoint.IsValid)
+            {
+                return true;
+            }
+
+            return address.TryCreateIpv6(ref endPoint);
+        }
+        else
+        {// Ipv4
+            return address.TryCreateIpv4(ref endPoint);
+        }
+    }
+
     /// <summary>
     /// Create unmanaged (without public key) NetTerminal instance.
     /// </summary>
@@ -51,7 +72,7 @@ public class Terminal : UnitBase, IUnitExecutable
     /// <returns>NetTerminal.</returns>
     public ClientTerminal? TryCreate(DualAddress address)
     {
-        this.DualAddressToEndPoint(in address, out var endPoint);
+        this.TryCreateEndPoint(in address, out var endPoint);
         if (!endPoint.IsValid)
         {
             return null;
@@ -73,7 +94,7 @@ public class Terminal : UnitBase, IUnitExecutable
     /// <returns>NetTerminal.</returns>
     public ClientTerminal? TryCreate(NetNode node)
     {
-        this.DualAddressToEndPoint(node.Address, out var endPoint);
+        this.TryCreateEndPoint(node.Address, out var endPoint);
         if (!endPoint.IsValid)
         {
             return null;
@@ -88,12 +109,6 @@ public class Terminal : UnitBase, IUnitExecutable
         return terminal;
     }
 
-    /// <summary>
-    /// Create managed (with public key) and encrypted NetTerminal instance.
-    /// </summary>
-    /// <param name="node">NodeInformation.</param>
-    /// <param name="gene">gene.</param>
-    /// <returns>NetTerminal.</returns>
     public ServerTerminal? TryCreate(NetEndPoint endPoint, NetNode node, ulong gene)
     {
         if (!endPoint.IsValid)
@@ -568,25 +583,6 @@ public class Terminal : UnitBase, IUnitExecutable
                 this.logger.TryGet()?.Log($"Clean netsphere {cleanedGenes} net terminal genes");
             }
         });
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void DualAddressToEndPoint(in DualAddress address, out NetEndPoint endPoint)
-    {
-        endPoint = default;
-        if (this.statsData.MyIpv6Address.AddressState == MyAddress.State.Fixed ||
-            this.statsData.MyIpv6Address.AddressState == MyAddress.State.Changed)
-        {// Ipv6 supported
-            address.TryCreateIpv4(ref endPoint);
-            if (!endPoint.IsValid)
-            {
-                address.TryCreateIpv6(ref endPoint);
-            }
-        }
-        else
-        {// Ipv4
-            address.TryCreateIpv4(ref endPoint);
-        }
     }
 
     internal NodePrivateKey NodePrivateKey { get; private set; } = default!;

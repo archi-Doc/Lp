@@ -17,7 +17,7 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
 
     public async Task RunAsync(NetTestOptions options, string[] args)
     {
-        if (!NetHelper.TryParseDualAddress(this.logger, options.Node, out var address))
+        if (!DualAddress.TryParseDualAddress(this.logger, options.Node, out var address))
         {
             return;
         }
@@ -33,7 +33,7 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
 
             // await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(new PacketPunch());
 
-            var p = new PacketPunch(null);
+            var p = new PacketPunch(default);
 
             var result = await terminal.EncryptConnectionAsync();
 

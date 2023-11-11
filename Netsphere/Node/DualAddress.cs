@@ -97,6 +97,32 @@ public readonly partial record struct DualAddress : IStringConvertible<DualAddre
 
     public bool IsValid => this.Port4 != 0 || this.Port6 != 0;
 
+    public static bool TryParseDualAddress(ILogger? logger, string source, [MaybeNullWhen(false)] out DualAddress address)
+    {
+        address = default;
+        if (string.Compare(source, "alternative", true) == 0)
+        {
+            address = DualAddress.Alternative;
+            return true;
+        }
+        else
+        {
+            if (!DualAddress.TryParse(source, out address))
+            {
+                logger?.TryGet(LogLevel.Error)?.Log($"Could not parse: {source.ToString()}");
+                return false;
+            }
+
+            if (!address.Validate())
+            {
+                logger?.TryGet(LogLevel.Error)?.Log($"Invalid node address: {source.ToString()}");
+                return false;
+            }
+
+            return true;
+        }
+    }
+
     public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out DualAddress instance)
     {// 1.2.3.4:55, []:55, 1.2.3.4:55[]:55
         ushort port4 = 0;
@@ -224,25 +250,31 @@ public readonly partial record struct DualAddress : IStringConvertible<DualAddre
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void TryCreateIpv4(ref NetEndPoint endPoint)
+    public bool TryCreateIpv4(ref NetEndPoint endPoint)
     {
         if (this.IsValidIpv4)
         {
-            endPoint = new(new(this.Address4, this.Port4), this.Engagement4);
+            return false;
         }
+
+        endPoint = new(new(this.Address4, this.Port4), this.Engagement4);
+        return true;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void TryCreateIpv6(ref NetEndPoint endPoint)
+    public bool TryCreateIpv6(ref NetEndPoint endPoint)
     {
         if (this.IsValidIpv6)
         {
-            Span<byte> ipv6byte = stackalloc byte[16];
-            BitConverter.TryWriteBytes(ipv6byte, this.Address6A);
-            BitConverter.TryWriteBytes(ipv6byte.Slice(sizeof(ulong)), this.Address6B);
-            var ipv6 = new IPAddress(ipv6byte);
-            endPoint = new(new(ipv6, this.Port6), this.Engagement6);
+            return false;
         }
+
+        Span<byte> ipv6byte = stackalloc byte[16];
+        BitConverter.TryWriteBytes(ipv6byte, this.Address6A);
+        BitConverter.TryWriteBytes(ipv6byte.Slice(sizeof(ulong)), this.Address6B);
+        var ipv6 = new IPAddress(ipv6byte);
+        endPoint = new(new(ipv6, this.Port6), this.Engagement6);
+        return true;
     }
 
     public bool Validate()

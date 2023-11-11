@@ -17,7 +17,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
 
     public async Task RunAsync(PingOptions options, string[] args)
     {
-        if (!NetHelper.TryParseDualAddress(this.logger, options.Node, out var address))
+        if (!DualAddress.TryParseDualAddress(this.logger, options.Node, out var address))
         {
             return;
         }

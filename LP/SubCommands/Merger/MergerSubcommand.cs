@@ -17,7 +17,7 @@ public class MergerSubcommand : ISimpleCommandAsync<MergerSubcommandOptions>
 
     public async Task RunAsync(MergerSubcommandOptions options, string[] args)
     {
-        if (!NetHelper.TryParseNetNode(this.logger, options.Node, out var node))
+        if (!NetNode.TryParseNetNode(this.logger, options.Node, out var node))
         {
             return;
         }

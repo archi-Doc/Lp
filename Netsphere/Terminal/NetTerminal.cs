@@ -98,7 +98,7 @@ public partial class NetTerminal : IDisposable
 
     public NetEndPoint Endpoint { get; }
 
-    public NetNode? Node { get; protected set; }
+    public NetNode Node { get; protected set; } = NetNode.Default;
 
     public ulong Salt { get; private set; }
 

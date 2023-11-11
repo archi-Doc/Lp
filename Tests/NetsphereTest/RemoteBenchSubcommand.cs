@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics;
 using Arc.Unit;
 using LP.NetServices;
 using SimpleCommandLine;
@@ -19,7 +18,7 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 
     public async Task RunAsync(RemoteBenchOptions options, string[] args)
     {
-        if (!NetHelper.TryParseNetNode(this.logger, options.Node, out var node))
+        if (!NetNode.TryParseNetNode(this.logger, options.Node, out var node))
         {
             return;
         }

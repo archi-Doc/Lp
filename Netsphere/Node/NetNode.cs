@@ -13,6 +13,7 @@ namespace Netsphere;
 [TinyhandObject]
 public sealed partial class NetNode : IStringConvertible<NetNode>, IValidatable
 {
+    public static readonly NetNode Default = new();
     private static NetNode? alternative;
 
     public static NetNode Alternative
@@ -43,6 +44,33 @@ public sealed partial class NetNode : IStringConvertible<NetNode>, IValidatable
 
     [Key(1)]
     public NodePublicKey PublicKey { get; private set; }
+
+    public static bool TryParseNetNode(ILogger? logger, string source, [MaybeNullWhen(false)] out NetNode node)
+    {
+        node = default;
+        if (string.Compare(source, "alternative", true) == 0)
+        {
+            node = NetNode.Alternative;
+            return true;
+        }
+        else
+        {
+            if (!NetNode.TryParse(source, out var address))
+            {
+                logger?.TryGet(LogLevel.Error)?.Log($"Could not parse: {source.ToString()}");
+                return false;
+            }
+
+            if (!address.Address.Validate())
+            {
+                logger?.TryGet(LogLevel.Error)?.Log($"Invalid port: {source.ToString()}");
+                return false;
+            }
+
+            node = address;
+            return true;
+        }
+    }
 
     public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out NetNode instance)
     {// Ip address (public key)

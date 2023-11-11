@@ -21,7 +21,7 @@ public class StressSubcommand : ISimpleCommandAsync<StressOptions>
         NetNode? node = NetNode.Alternative;
         if (!string.IsNullOrEmpty(options.Node))
         {
-            if (!NetHelper.TryParseNetNode(this.logger, options.Node, out node))
+            if (!NetNode.TryParseNetNode(this.logger, options.Node, out node))
             {
                 return;
             }
