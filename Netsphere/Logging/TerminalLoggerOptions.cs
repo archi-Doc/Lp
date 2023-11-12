@@ -10,6 +10,10 @@ public class ServerTerminalLoggerOptions : StreamLoggerOptions
 {
 }
 
+public class TerminalLoggerOptions : StreamLoggerOptions
+{
+}
+
 public class NetSocketLoggerOptions : FileLoggerOptions
 {
 }

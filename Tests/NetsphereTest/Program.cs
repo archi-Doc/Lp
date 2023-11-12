@@ -16,7 +16,8 @@ namespace NetsphereTest;
 
 public class Program
 {
-    // public static Container Container { get; } = new();
+    // basic -node alternative -ns{-alternative true -logger true}
+    // stress -ns{-alternative true -logger true}
 
     public static async Task Main(string[] args)
     {
@@ -137,8 +138,13 @@ public class Program
                         context.SetOutput<StreamLogger<ServerTerminalLoggerOptions>>();
                         return;
                     }
+                    else if (context.LogSourceType == typeof(Terminal))
+                    {// Terminal
+                        context.SetOutput<StreamLogger<TerminalLoggerOptions>>();
+                        return;
+                    }
                     else if (context.LogSourceType == typeof(NetSocket))
-                    {
+                    {// NetSocket
                         /*if (context.TryGetOptions<NetsphereOptions>(out var options) &&
                         options.EnableLogger)
                         {
@@ -146,6 +152,10 @@ public class Program
                         }*/
 
                         return;
+                    }
+                    else
+                    {
+                        context.SetOutput<ConsoleLogger>();
                     }
                 });
             })
@@ -160,6 +170,14 @@ public class Program
             .SetupOptions<ServerTerminalLoggerOptions>((context, options) =>
             {// ServerTerminalLoggerOptions
                 var logfile = "Logs/Server/.txt";
+                options.Path = Path.Combine(context.RootDirectory, logfile);
+                options.MaxLogCapacity = 1;
+                options.MaxStreamCapacity = 1_000;
+                options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffff K";
+            })
+            .SetupOptions<TerminalLoggerOptions>((context, options) =>
+            {// ServerTerminalLoggerOptions
+                var logfile = "Logs/Terminal/.txt";
                 options.Path = Path.Combine(context.RootDirectory, logfile);
                 options.MaxLogCapacity = 1;
                 options.MaxStreamCapacity = 1_000;

@@ -28,9 +28,14 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         // var nodeInformation = NodeInformation.Alternative;
         using (var terminal = this.NetControl.Terminal.TryCreate(node))
         {
-            // await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(new PacketPunch());
+            if (terminal is null)
+            {
+                return;
+            }
 
-            var p = new PacketPunch(null);
+            terminal.SetMaximumResponseTime(1_000_000);
+            var t = await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(new PacketPunch());
+            this.logger.TryGet()?.Log($"{t.ToString()}");
 
             var sw = Stopwatch.StartNew();
             /*var t = terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);

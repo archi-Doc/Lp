@@ -354,7 +354,7 @@ public class Terminal : UnitBase, IUnitExecutable
             var response = new PacketPunchResponse();
             response.UtcMics = Mics.GetUtcNow();
             var secondGene = GenePool.NextGene(header.Gene);
-            // this.TerminalLogger?.Information($"Punch Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
+            this.logger.TryGet()?.Log($"Punch Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
             if (punch.NextEndpoint == null)
             {
                 response.Endpoint = endpoint;
@@ -399,19 +399,6 @@ public class Terminal : UnitBase, IUnitExecutable
 
         var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(terminal, firstGene, owner, secondGene, sendOwner);
         sendOwner.Return();
-
-        /*terminal.GenePool.GetSequential();
-        terminal.SetSalt(packet.SaltA, response.SaltA2);
-        terminal.CreateEmbryo(packet.Salt, response.Salt2);
-        terminal.SetReceiverNumber();
-        terminal.Add(netInterface); // Delay sending PacketEncryptResponse until the receiver is ready.
-        if (this.invokeServerDelegate != null)
-        {
-            new ThreadCore(ThreadCore.Root, x =>
-            {
-                this.invokeServerDelegate(terminal);
-            });
-        }*/
 
         _ = Task.Run(async () =>
         {
