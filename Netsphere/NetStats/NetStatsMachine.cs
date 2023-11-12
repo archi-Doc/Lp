@@ -14,6 +14,7 @@ public partial class NetStatsMachine : Machine
     private const string IcanhazipUriIPv4 = "http://ipv4.icanhazip.com";
     private const string IcanhazipUriIPv6 = "http://ipv6.icanhazip.com";
     private const string DynDnsUri = "http://checkip.dyndns.org";
+    private static readonly TimeSpan GetTimeout = TimeSpan.FromSeconds(2);
 
     public NetStatsMachine(ILogger<NetStatsMachine> logger, LPBase lpBase, NetControl netControl, ICrystal<StatsData> statsData)
     {
@@ -107,7 +108,7 @@ public partial class NetStatsMachine : Machine
         {
             using (var httpClient = new HttpClient())
             {
-                var result = await httpClient.GetStringAsync(IcanhazipUriIPv4, this.CancellationToken).ConfigureAwait(false);
+                var result = await httpClient.GetStringAsync(IcanhazipUriIPv4, this.CancellationToken).WaitAsync(GetTimeout).ConfigureAwait(false);
                 var ipString = result.Replace("\\r\\n", string.Empty).Replace("\\n", string.Empty).Trim();
                 IPAddress.TryParse(ipString, out var ipAddress);
                 return new(false, IcanhazipUriIPv4, ipAddress);
@@ -125,7 +126,7 @@ public partial class NetStatsMachine : Machine
         {
             using (var httpClient = new HttpClient())
             {
-                var result = await httpClient.GetStringAsync(IcanhazipUriIPv6, this.CancellationToken).ConfigureAwait(false);
+                var result = await httpClient.GetStringAsync(IcanhazipUriIPv6, this.CancellationToken).WaitAsync(GetTimeout).ConfigureAwait(false);
                 var ipString = result.Replace("\\r\\n", string.Empty).Replace("\\n", string.Empty).Trim();
                 IPAddress.TryParse(ipString, out var ipAddress);
                 return new(true, IcanhazipUriIPv6, ipAddress);
@@ -143,7 +144,7 @@ public partial class NetStatsMachine : Machine
         {
             using (var httpClient = new HttpClient())
             {
-                var result = await httpClient.GetStringAsync(DynDnsUri, this.CancellationToken).ConfigureAwait(false);
+                var result = await httpClient.GetStringAsync(DynDnsUri, this.CancellationToken).WaitAsync(GetTimeout).ConfigureAwait(false);
 
                 var start = result.IndexOf(':');
                 if (start < 0)
