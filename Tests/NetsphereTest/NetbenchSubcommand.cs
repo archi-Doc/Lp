@@ -18,10 +18,10 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
 
     public async Task RunAsync(NetbenchOptions options, string[] args)
     {
-        NodeAddress? node = NodeAddress.Alternative;
+        NetNode? node = NetNode.Alternative;
         if (!string.IsNullOrEmpty(options.Node))
         {
-            if (!NetHelper.TryParseNodeAddress(this.logger, options.Node, out node))
+            if (!NetNode.TryParseNetNode(this.logger, options.Node, out node))
             {
                 return;
             }
@@ -30,7 +30,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         this.logger.TryGet()?.Log($"Netbench: {node.ToString()}");
 
         // var nodeInformation = NodeInformation.Alternative;
-        using (var terminal = this.NetControl.Terminal.Create(node))
+        using (var terminal = this.NetControl.Terminal.TryCreate(node))
         {
             /*var p = new PacketPunch(null);
             var sw = Stopwatch.StartNew();
@@ -116,7 +116,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         Console.WriteLine();
     }
 
-    private async Task PingpongSmallData2(NodeAddress node)
+    private async Task PingpongSmallData2(NetNode node)
     {// 380ms -> 340ms
         const int N = 50;
         var data = new byte[100];
@@ -125,8 +125,13 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         var count = 0;
         for (var j = 0; j < N; j++)
         {
-            using (var terminal = this.NetControl.Terminal.Create(node))
+            using (var terminal = this.NetControl.Terminal.TryCreate(node))
             {
+                if (terminal is null)
+                {
+                    return;
+
+                }
                 var service = terminal.GetService<IBenchmarkService>();
                 var response = service.Pingpong(data).ResponseAsync;
                 if (response.Result.IsSuccess)
@@ -142,12 +147,12 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
 
         sw.Stop();
 
-        Console.WriteLine(this.NetControl.Alternative?.MyStatus.ServerCount.ToString());
+       // Console.WriteLine(this.NetControl.Alternative?.MyStatus.ServerCount.ToString());
         Console.WriteLine($"PingpongSmallData2 {count}/{N}, {sw.ElapsedMilliseconds.ToString()} ms");
         Console.WriteLine();
     }
 
-    private async Task MassiveSmallData(NodeAddress node)
+    private async Task MassiveSmallData(NetNode node)
     {// 1200ms (release)
         const int Total = 1000;
         const int Concurrent = 50; //50;
@@ -162,8 +167,13 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         {
             for (var j = 0; j < (Total / Concurrent); j++)
             {
-                using (var terminal = this.NetControl.Terminal.Create(node))
+                using (var terminal = this.NetControl.Terminal.TryCreate(node))
                 {
+                    if (terminal is null)
+                    {
+                        return;
+                    }
+
                     var service = terminal.GetService<IBenchmarkService>();
                     var response = service.Pingpong(data).ResponseAsync;
                     if (response.Result.IsSuccess)
@@ -182,7 +192,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
 
         sw.Stop();
 
-        Console.WriteLine(this.NetControl.Alternative?.MyStatus.ServerCount.ToString());
+        // Console.WriteLine(this.NetControl.Alternative?.MyStatus.ServerCount.ToString());
         Console.WriteLine($"MassiveSmallData {count}/{Concurrent}, {sw.ElapsedMilliseconds.ToString()} ms");
         Console.WriteLine();
     }

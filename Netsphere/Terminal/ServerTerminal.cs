@@ -9,8 +9,8 @@ public class ServerTerminal : NetTerminal
     public const ushort DefaultReceiverNumber = 4;
     public const ushort MaxReceiverNumber = 16;
 
-    internal ServerTerminal(Terminal terminal, NodeInformation nodeInformation, ulong gene)
-        : base(terminal, nodeInformation, gene)
+    internal ServerTerminal(Terminal terminal, NetEndPoint endPdoint, NetNode node, ulong gene)
+        : base(terminal, endPdoint, node, gene)
     {// NodeInformation: Managed
     }
 

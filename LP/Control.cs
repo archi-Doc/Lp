@@ -217,8 +217,10 @@ public class Control : ILogInformation
                     context.AddCrystal<Netsphere.NetStats.StatsData>(new CrystalConfiguration() with
                     {
                         SaveFormat = SaveFormat.Utf8,
+                        SavePolicy = SavePolicy.Periodic,
+                        SaveInterval = TimeSpan.FromMinutes(10),
                         FileConfiguration = new GlobalFileConfiguration("NetStat.tinyhand"),
-                        NumberOfFileHistories = 0,
+                        NumberOfFileHistories = 2,
                     });
 
                     /*context.AddCrystal<PublicIPMachine.Data>(new CrystalConfiguration() with
@@ -429,7 +431,7 @@ public class Control : ILogInformation
 
     public async Task AbortAsync()
     {
-        // await this.Crystal.Abort(); // tempcode
+        // await this.Crystalizer.SaveAllAndTerminate();
     }
 
     public async Task SaveAsync(UnitContext context)
@@ -451,7 +453,6 @@ public class Control : ILogInformation
 
         // this.BigMachine.CreateOrGet<EssentialNetMachine.Interface>(Identifier.Zero)?.RunAsync();
         _ = this.BigMachine.NtpMachine.Get().RunAsync();
-        _ = this.BigMachine.PublicIPMachine.Get().RunAsync();
         _ = this.BigMachine.NetStatsMachine.Get().RunAsync();
 
         await context.SendRunAsync(new(this.Core));

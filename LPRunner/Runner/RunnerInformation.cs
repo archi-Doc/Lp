@@ -117,11 +117,11 @@ public partial record RunnerInformation
     [IgnoreMember]
     internal SignaturePublicKey RemotePublicKey { get; set; } = default!;
 
-    internal NodeAddress? TryGetNodeAddress()
+    internal NetAddress TryGetDualAddress()
     {
         var text = $"127.0.0.1:{this.DestinationPort}";
-        NodeAddress.TryParse(text, out var nodeAddress);
-        return nodeAddress;
+        NetAddress.TryParse(text, out var address);
+        return address;
     }
 
     private LPBase lpBase;

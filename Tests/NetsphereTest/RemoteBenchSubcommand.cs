@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics;
 using Arc.Unit;
 using LP.NetServices;
 using SimpleCommandLine;
@@ -19,13 +18,18 @@ public class RemoteBenchSubcommand : ISimpleCommandAsync<RemoteBenchOptions>
 
     public async Task RunAsync(RemoteBenchOptions options, string[] args)
     {
-        if (!NetHelper.TryParseNodeInformation(this.logger, options.Node, out var node))
+        if (!NetNode.TryParseNetNode(this.logger, options.Node, out var node))
         {
             return;
         }
 
-        using (var terminal = this.netControl.Terminal.Create(node))
+        using (var terminal = this.netControl.Terminal.TryCreate(node))
         {
+            if (terminal is null)
+            {
+                return;
+            }
+
             var service = terminal.GetService<IBenchmarkService>();
             if (await service.Register() == NetResult.Success)
             {

@@ -58,7 +58,7 @@ public class ServerOperation : NetOperation
             *(PacketHeader*)bp = header;
         }
 
-        this.Terminal.AddRawSend(this.NetTerminal.Endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
+        this.Terminal.AddRawSend(this.NetTerminal.Endpoint.EndPoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
     }
 
     public async Task<NetReceivedData> ReceiveAsync()

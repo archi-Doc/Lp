@@ -17,15 +17,15 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
 
     public async Task RunAsync(PunchOptions options, string[] args)
     {
-        if (!NetHelper.TryParseNodeAddress(this.logger, options.Node, out var node))
+        if (!NetAddress.TryParse(this.logger, options.Node, out var node))
         {
             return;
         }
 
-        NodeAddress? nextNode = null;
+        NetAddress nextNode = default;
         if (!string.IsNullOrEmpty(options.NextNode))
         {
-            NetHelper.TryParseNodeAddress(this.logger, options.NextNode, out nextNode);
+            NetAddress.TryParse(this.logger, options.NextNode, out nextNode);
         }
 
         for (var n = 0; n < options.Count; n++)
@@ -44,14 +44,24 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
         }
     }
 
-    public async Task Punch(NodeAddress node, NodeAddress? nextNode, PunchOptions options)
+    public async Task Punch(NetAddress node, NetAddress nextNode, PunchOptions options)
     {
         this.logger.TryGet()?.Log($"Punch: {node.ToString()}");
 
         var sw = Stopwatch.StartNew();
-        using (var terminal = this.Control.NetControl.Terminal.Create(node))
+        using (var terminal = this.Control.NetControl.Terminal.TryCreate(node))
         {
-            var p = new PacketPunch(nextNode?.CreateEndpoint());
+            NetEndPoint endPoint;
+            if (terminal is null)
+            {
+                return;
+            }
+            else if (this.Control.NetControl.Terminal.TryCreateEndPoint(nextNode, out endPoint))
+            {
+                return;
+            }
+
+            var p = new PacketPunch(endPoint.EndPoint);
 
             sw.Restart();
             var result = await terminal.SendPacketAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);

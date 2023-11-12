@@ -17,7 +17,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
 
     public async Task RunAsync(PingOptions options, string[] args)
     {
-        if (!NetHelper.TryParseNodeAddress(this.logger, options.Node, out var node))
+        if (!NetAddress.TryParse(this.logger, options.Node, out var address))
         {
             return;
         }
@@ -29,7 +29,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
                 break;
             }
 
-            await this.Ping(node, options);
+            await this.Ping(address, options);
 
             if (n < options.Count - 1)
             {
@@ -38,13 +38,18 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
         }
     }
 
-    public async Task Ping(NodeAddress node, PingOptions options)
+    public async Task Ping(NetAddress address, PingOptions options)
     {
-        this.logger.TryGet()?.Log($"Ping: {node.ToString()}");
+        this.logger.TryGet()?.Log($"Ping: {address.ToString()}");
 
         var sw = Stopwatch.StartNew();
-        using (var terminal = this.Control.NetControl.Terminal.Create(node))
+        using (var terminal = this.Control.NetControl.Terminal.TryCreate(address))
         {
+            if (terminal is null)
+            {
+                return;
+            }
+
             var p = new PacketPing("test56789012345678901234567890123456789");
             sw.Restart();
             var result = await terminal.SendPacketAndReceiveAsync<PacketPing, PacketPingResponse>(p);
@@ -52,19 +57,12 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
             if (result.Value != null)
             {
                 this.logger.TryGet()?.Log($"Received: {result.ToString()} - {sw.ElapsedMilliseconds} ms");
-                if (result.Value.NodeAddress is { } nodeAddress)
-                {// tempcode
-                    this.Control.NetControl.NetStatus.ReportMyNodeAddress(nodeAddress);
-                }
             }
             else
             {
                 this.logger.TryGet(LogLevel.Error)?.Log($"{result}");
             }
         }
-
-        // this.Control.Netsphere.NetStatus
-        // this.logger.TryGet()?.Log(System.Environment.OSVersion.ToString());
     }
 
     public Control Control { get; set; }

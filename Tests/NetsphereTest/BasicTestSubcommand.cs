@@ -17,7 +17,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 
     public async Task RunAsync(BasicTestOptions options, string[] args)
     {
-        if (!NetHelper.TryParseNodeAddress(this.logger, options.Node, out var node))
+        if (!NetAddress.TryParse(this.logger, options.Node, out var node))
         {
             return;
         }
@@ -26,7 +26,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         this.logger.TryGet()?.Log($"{Stopwatch.Frequency}");
 
         // var nodeInformation = NodeInformation.Alternative;
-        using (var terminal = this.NetControl.Terminal.Create(node))
+        using (var terminal = this.NetControl.Terminal.TryCreate(node))
         {
             // await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(new PacketPunch());
 

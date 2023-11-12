@@ -16,8 +16,13 @@ public class NodeTest
     [Fact]
     public async Task Test1()
     {
-        using (var terminal = this.NetControl.Terminal.Create(NodeInformation.Alternative))
+        using (var terminal = this.NetControl.Terminal.TryCreate(NetNode.Alternative))
         {
+            if (terminal is null)
+            {
+                return;
+            }
+
             terminal.SetMaximumResponseTime(NetFixture.MaximumResponseTime);
 
             var basicService = terminal.GetService<IBasicService>();

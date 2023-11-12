@@ -42,8 +42,6 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddSingleton<NetControl>();
                 context.AddSingleton<NetBase>();
                 context.AddSingleton<Terminal>();
-                context.AddSingleton<EssentialNode>();
-                context.AddSingleton<NetStatus>();
                 context.AddSingleton<EssentialAddress>();
                 context.AddSingleton<StatsData>();
                 context.AddTransient<Server>();
@@ -57,7 +55,6 @@ public class NetControl : UnitBase, IUnitPreparable
                 // Machines
                 // context.AddTransient<EssentialNetMachine>();
                 context.AddTransient<NtpMachine>();
-                context.AddTransient<PublicIPMachine>();
                 context.AddTransient<NetStatsMachine>();
 
                 // Subcommands
@@ -106,7 +103,7 @@ public class NetControl : UnitBase, IUnitPreparable
         }
     }
 
-    public NetControl(UnitContext context, UnitLogger logger, NetBase netBase, Terminal terminal, EssentialNode node, NetStatus netStatus)
+    public NetControl(UnitContext context, UnitLogger logger, NetBase netBase, Terminal terminal, StatsData statsData)
         : base(context)
     {
         this.logger = logger;
@@ -118,11 +115,8 @@ public class NetControl : UnitBase, IUnitPreparable
         this.Terminal = terminal;
         if (this.NetBase.NetsphereOptions.EnableAlternative)
         {
-            this.Alternative = new(context, logger, netBase, netStatus); // For debug
+            this.Alternative = new(context, logger, netBase, statsData); // For debug
         }
-
-        this.EssentialNode = node;
-        this.NetStatus = netStatus;
     }
 
     public void Prepare(UnitMessage.Prepare message)
@@ -132,12 +126,12 @@ public class NetControl : UnitBase, IUnitPreparable
         if (this.Alternative != null)
         {
             this.Alternative.Initialize(true, NodePrivateKey.AlternativePrivateKey);
-            if (this.NetBase.NetsphereOptions.Port == NodeAddress.Alternative.Port)
+            if (this.NetBase.NetsphereOptions.Port == NetAddress.Alternative.Port)
             {
-                NodeAddress.Alternative.SetPort((ushort)(this.Terminal.Port + 1));
+                // tempcode, Netddress.Alternative.SetPort((ushort)(this.Terminal.Port + 1));
             }
 
-            this.Alternative.Port = NodeAddress.Alternative.Port;
+            this.Alternative.Port = NetAddress.Alternative.Port;
         }
 
         // Responders
@@ -167,7 +161,6 @@ public class NetControl : UnitBase, IUnitPreparable
         async Task InvokeServer(ServerTerminal terminal)
         {
             var server = this.ServiceProvider.GetRequiredService<Server>();
-            terminal.Terminal.MyStatus.IncrementServerCount();
             try
             {
                 await server.Process(terminal).ConfigureAwait(false);
@@ -190,13 +183,7 @@ public class NetControl : UnitBase, IUnitPreparable
 
     public NetBase NetBase { get; }
 
-    public MyStatus MyStatus => this.Terminal.MyStatus;
-
-    public NetStatus NetStatus { get; }
-
     public Terminal Terminal { get; }
-
-    public EssentialNode EssentialNode { get; }
 
     public Terminal? Alternative { get; }
 

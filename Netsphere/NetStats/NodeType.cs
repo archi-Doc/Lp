@@ -6,6 +6,7 @@ public enum NodeType
 {
     Unknown,
     Unavailable,
+    Available,
     Global,
     Cone,
     Symmetric,

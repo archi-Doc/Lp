@@ -3,10 +3,12 @@
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using Arc.Crypto;
 using LP.T3CS;
+using Netsphere.NetStats;
 
 namespace Netsphere;
 
@@ -42,14 +44,41 @@ public class Terminal : UnitBase, IUnitExecutable
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool TryCreateEndPoint(in NetAddress address, out NetEndPoint endPoint)
+    {
+        endPoint = default;
+        if (this.statsData.MyIpv6Address.AddressState == MyAddress.State.Fixed ||
+            this.statsData.MyIpv6Address.AddressState == MyAddress.State.Changed)
+        {// Ipv6 supported
+            address.TryCreateIpv4(ref endPoint);
+            if (endPoint.IsValid)
+            {
+                return true;
+            }
+
+            return address.TryCreateIpv6(ref endPoint);
+        }
+        else
+        {// Ipv4
+            return address.TryCreateIpv4(ref endPoint);
+        }
+    }
+
     /// <summary>
     /// Create unmanaged (without public key) NetTerminal instance.
     /// </summary>
-    /// <param name="nodeAddress">NodeAddress.</param>
+    /// <param name="address">Address.</param>
     /// <returns>NetTerminal.</returns>
-    public ClientTerminal Create(NodeAddress nodeAddress)
+    public ClientTerminal? TryCreate(NetAddress address)
     {
-        var terminal = new ClientTerminal(this, nodeAddress);
+        this.TryCreateEndPoint(in address, out var endPoint);
+        if (!endPoint.IsValid)
+        {
+            return null;
+        }
+
+        var terminal = new ClientTerminal(this, endPoint);
         lock (this.terminals)
         {
             this.terminals.Add(terminal);
@@ -61,11 +90,33 @@ public class Terminal : UnitBase, IUnitExecutable
     /// <summary>
     /// Create managed (with public key) NetTerminal instance.
     /// </summary>
-    /// <param name="nodeInformation">NodeInformation.</param>
+    /// <param name="node">NetNode.</param>
     /// <returns>NetTerminal.</returns>
-    public ClientTerminal Create(NodeInformation nodeInformation)
+    public ClientTerminal? TryCreate(NetNode node)
     {
-        var terminal = new ClientTerminal(this, nodeInformation);
+        this.TryCreateEndPoint(node.Address, out var endPoint);
+        if (!endPoint.IsValid)
+        {
+            return null;
+        }
+
+        var terminal = new ClientTerminal(this, endPoint, node);
+        lock (this.terminals)
+        {
+            this.terminals.Add(terminal);
+        }
+
+        return terminal;
+    }
+
+    public ServerTerminal? TryCreate(NetEndPoint endPoint, NetNode node, ulong gene)
+    {
+        if (!endPoint.IsValid)
+        {
+            return default;
+        }
+
+        var terminal = new ServerTerminal(this, endPoint, node, gene);
         lock (this.terminals)
         {
             this.terminals.Add(terminal);
@@ -77,37 +128,20 @@ public class Terminal : UnitBase, IUnitExecutable
     /// <summary>
     /// Create managed (with public key) NetTerminal instance and create encrypted connection.
     /// </summary>
-    /// <param name="nodeInformation">NodeInformation.</param>
+    /// <param name="node">NodeInformation.</param>
     /// <returns>NetTerminal.</returns>
-    public async Task<ClientTerminal?> CreateAndEncrypt(NodeInformation nodeInformation)
+    public async Task<ClientTerminal?> CreateAndEncrypt(NetNode node)
     {
-        var terminal = new ClientTerminal(this, nodeInformation);
-        lock (this.terminals)
+        var terminal = this.TryCreate(node);
+        if (terminal is null)
         {
-            this.terminals.Add(terminal);
+            return null;
         }
 
         if (await terminal.EncryptConnectionAsync().ConfigureAwait(false) != NetResult.Success)
         {
             terminal.Dispose();
             return null;
-        }
-
-        return terminal;
-    }
-
-    /// <summary>
-    /// Create managed (with public key) and encrypted NetTerminal instance.
-    /// </summary>
-    /// <param name="nodeInformation">NodeInformation.</param>
-    /// <param name="gene">gene.</param>
-    /// <returns>NetTerminal.</returns>
-    public ServerTerminal Create(NodeInformation nodeInformation, ulong gene)
-    {
-        var terminal = new ServerTerminal(this, nodeInformation, gene);
-        lock (this.terminals)
-        {
-            this.terminals.Add(terminal);
         }
 
         return terminal;
@@ -121,14 +155,15 @@ public class Terminal : UnitBase, IUnitExecutable
         }
     }
 
-    public Terminal(UnitContext context, UnitLogger unitLogger, NetBase netBase, NetStatus netStatus)
+    public Terminal(UnitContext context, UnitLogger unitLogger, NetBase netBase, StatsData statsData)
         : base(context)
     {
         this.UnitLogger = unitLogger;
         this.logger = unitLogger.GetLogger<Terminal>();
         this.NetBase = netBase;
-        this.NetStatus = netStatus;
-        this.NetSocket = new(this);
+        this.NetSocketIpv4 = new(this);
+        this.NetSocketIpv6 = new(this);
+        this.statsData = statsData;
     }
 
     public async Task RunAsync(UnitMessage.RunAsync message)
@@ -140,12 +175,14 @@ public class Terminal : UnitBase, IUnitExecutable
             this.Port = this.NetBase.NetsphereOptions.Port;
         }
 
-        this.NetSocket.Start(this.Core, this.Port);
+        this.NetSocketIpv4.Start(this.Core, this.Port, false);
+        this.NetSocketIpv6.Start(this.Core, this.Port, true);
     }
 
     public async Task TerminateAsync(UnitMessage.TerminateAsync message)
     {
-        this.NetSocket.Stop();
+        this.NetSocketIpv4.Stop();
+        this.NetSocketIpv6.Stop();
         this.Core?.Dispose();
         this.Core = null;
     }
@@ -158,10 +195,6 @@ public class Terminal : UnitBase, IUnitExecutable
     public ThreadCoreBase? Core { get; private set; }
 
     public NetBase NetBase { get; }
-
-    public NetStatus NetStatus { get; }
-
-    public MyStatus MyStatus { get; } = new();
 
     public bool IsAlternative { get; private set; }
 
@@ -180,7 +213,7 @@ public class Terminal : UnitBase, IUnitExecutable
         {
             try
             {
-                this.UnsafeUdpClient?.Send(rawSend.SendOwner.Memory.Span, rawSend.Endpoint);
+                this.Send(rawSend.SendOwner.Memory.Span, rawSend.Endpoint);
             }
             catch
             {
@@ -348,47 +381,50 @@ public class Terminal : UnitBase, IUnitExecutable
             return;
         }
 
-        if (packet.NodeInformation != null)
+        var response = new PacketEncryptResponse();
+        response.Salt2 = RandomVault.Crypto.NextUInt64();
+        response.SaltA2 = RandomVault.Crypto.NextUInt64();
+        var firstGene = header.Gene;
+        var secondGene = GenePool.NextGene(header.Gene);
+        PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var sendOwner);
+
+        var address = new NetAddress(endpoint.Address, (ushort)endpoint.Port);
+        var node = new NetNode(address, packet.PublicKey);
+        var endPoint = new NetEndPoint(endpoint, 0);
+        var terminal = this.TryCreate(endPoint, node, firstGene);
+        if (terminal is null)
         {
-            packet.NodeInformation.SetIPEndPoint(endpoint);
+            return;
+        }
 
-            var response = new PacketEncryptResponse();
-            response.Salt2 = RandomVault.Crypto.NextUInt64();
-            response.SaltA2 = RandomVault.Crypto.NextUInt64();
-            var firstGene = header.Gene;
-            var secondGene = GenePool.NextGene(header.Gene);
-            PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var sendOwner);
+        var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(terminal, firstGene, owner, secondGene, sendOwner);
+        sendOwner.Return();
 
-            var terminal = this.Create(packet.NodeInformation, firstGene);
-            var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(terminal, firstGene, owner, secondGene, sendOwner);
-            sendOwner.Return();
+        /*terminal.GenePool.GetSequential();
+        terminal.SetSalt(packet.SaltA, response.SaltA2);
+        terminal.CreateEmbryo(packet.Salt, response.Salt2);
+        terminal.SetReceiverNumber();
+        terminal.Add(netInterface); // Delay sending PacketEncryptResponse until the receiver is ready.
+        if (this.invokeServerDelegate != null)
+        {
+            new ThreadCore(ThreadCore.Root, x =>
+            {
+                this.invokeServerDelegate(terminal);
+            });
+        }*/
 
-            /*terminal.GenePool.GetSequential();
+        _ = Task.Run(async () =>
+        {
+            terminal.GenePool.GetSequential();
             terminal.SetSalt(packet.SaltA, response.SaltA2);
             terminal.CreateEmbryo(packet.Salt, response.Salt2);
             terminal.SetReceiverNumber();
             terminal.Add(netInterface); // Delay sending PacketEncryptResponse until the receiver is ready.
             if (this.invokeServerDelegate != null)
             {
-                new ThreadCore(ThreadCore.Root, x =>
-                {
-                    this.invokeServerDelegate(terminal);
-                });
-            }*/
-
-            _ = Task.Run(async () =>
-            {
-                terminal.GenePool.GetSequential();
-                terminal.SetSalt(packet.SaltA, response.SaltA2);
-                terminal.CreateEmbryo(packet.Salt, response.Salt2);
-                terminal.SetReceiverNumber();
-                terminal.Add(netInterface); // Delay sending PacketEncryptResponse until the receiver is ready.
-                if (this.invokeServerDelegate != null)
-                {
-                    await this.invokeServerDelegate(terminal).ConfigureAwait(false);
-                }
-            });
-        }
+                await this.invokeServerDelegate(terminal).ConfigureAwait(false);
+            }
+        });
     }
 
     internal void ProcessUnmanagedRecv_Ping(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
@@ -398,7 +434,7 @@ public class Terminal : UnitBase, IUnitExecutable
             return;
         }
 
-        var response = new PacketPingResponse(new(endpoint.Address, (ushort)endpoint.Port, 0), this.NetBase.NodeName);
+        var response = new PacketPingResponse(new(endpoint.Address, (ushort)endpoint.Port), this.NetBase.NodeName);
         var secondGene = GenePool.NextGene(header.Gene);
         // this.TerminalLogger?.Information($"Ping Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
@@ -413,12 +449,29 @@ public class Terminal : UnitBase, IUnitExecutable
             return;
         }
 
-        var response = new PacketGetNodeInformationResponse(this.NetStatus.GetMyNodeInformation(this.IsAlternative));
+        if (this.IsAlternative)
+        {
+            return;
+        }
+
+        var response = new PacketGetNodeInformationResponse(this.statsData.GetMyNetNode()); // tempcode, this.NetStatus.GetMyNodeInformation(this.IsAlternative)
         var secondGene = GenePool.NextGene(header.Gene);
         // this.TerminalLogger?.Information($"GetNodeInformation Response {response.Node.PublicKeyX[0]}: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
         PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var packetOwner);
         this.AddRawSend(endpoint, packetOwner);
+    }
+
+    internal void Send(ReadOnlySpan<byte> datagram, IPEndPoint endPoint)
+    {
+        if (endPoint.AddressFamily == AddressFamily.InterNetworkV6)
+        {
+            this.NetSocketIpv6.UnsafeUdpClient?.Send(datagram, endPoint);
+        }
+        else
+        {
+            this.NetSocketIpv4.UnsafeUdpClient?.Send(datagram, endPoint);
+        }
     }
 
     internal unsafe void SendRawAck(IPEndPoint endpoint, ulong gene)
@@ -539,9 +592,9 @@ public class Terminal : UnitBase, IUnitExecutable
 
     internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
 
-    internal NetSocket NetSocket { get; private set; }
+    internal NetSocket NetSocketIpv4 { get; private set; }
 
-    internal UdpClient? UnsafeUdpClient => this.NetSocket.UnsafeUdpClient;
+    internal NetSocket NetSocketIpv6 { get; private set; }
 
     internal UnitLogger UnitLogger { get; private set; }
 
@@ -549,7 +602,8 @@ public class Terminal : UnitBase, IUnitExecutable
     internal int SendCapacityPerRound;
 #pragma warning restore SA1401 // Fields should be private
 
-    private ILogger<Terminal> logger;
+    private readonly ILogger<Terminal> logger;
+    private readonly StatsData statsData;
     private InvokeServerDelegate? invokeServerDelegate;
     private NetTerminal.GoshujinClass terminals = new();
     private ConcurrentDictionary<ulong, NetTerminalGene> inboundGenes = new();

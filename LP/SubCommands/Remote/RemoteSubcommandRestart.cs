@@ -19,7 +19,7 @@ public class RemoteSubcommandRestart : ISimpleCommandAsync<RemoteSubcommandResta
 
     public async Task RunAsync(RemoteSubcommandRestartOptions options, string[] args)
     {
-        if (!NetHelper.TryParseNodeInformation(this.logger, options.Node, out var nodeInformation))
+        if (!NetNode.TryParseNetNode(this.logger, options.Node, out var nodeInformation))
         {
             return;
         }

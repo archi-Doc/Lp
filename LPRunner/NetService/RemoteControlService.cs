@@ -38,14 +38,19 @@ internal class RemoteControlService : IRemoteControlService
             return NetResult.NotAuthorized;
         }
 
-        var nodeAddress = this.information.TryGetNodeAddress();
-        if (nodeAddress == null)
+        var address = this.information.TryGetDualAddress();
+        if (!address.IsValid)
         {
             return NetResult.NoNodeInformation;
         }
 
-        using (var terminal = this.terminal.Create(nodeAddress))
+        using (var terminal = this.terminal.TryCreate(address))
         {
+            if (terminal is null)
+            {
+                return NetResult.NoNetwork;
+            }
+
             var remoteControl = terminal.GetService<IRemoteControlService>();
             var response = await remoteControl.RequestAuthorization(this.token).ResponseAsync;
             this.logger.TryGet()?.Log($"RequestAuthorization: {response.Result}");

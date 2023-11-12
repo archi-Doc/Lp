@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System;
+using System.Net;
 using CrystalData;
 using Netsphere.NetStats;
 
@@ -22,6 +23,8 @@ public partial class NetStatsMachine : Machine
         this.statsData = statsData.Data;
 
         this.DefaultTimeout = TimeSpan.FromSeconds(5);
+
+        // var port = this.netControl.NetBase.NetsphereOptions.Port;
     }
 
     [StateMethod(0)]
@@ -31,15 +34,15 @@ public partial class NetStatsMachine : Machine
 
         this.statsData.UpdateStats();
 
-        if (this.statsData.Ipv4State != NodeType.Unknown &&
-            this.statsData.Ipv6State != NodeType.Unknown)
-        {
+        if (this.statsData.MyIpv4Address.AddressState != MyAddress.State.Unknown &&
+            this.statsData.MyIpv6Address.AddressState != MyAddress.State.Unknown)
+        {// Address has been fixed.
             this.ChangeState(State.AddressFixed, true);
             return StateResult.Continue;
         }
 
         var tasks = new List<Task<AddressQueryResult>>();
-        if (this.statsData.Ipv4State == NodeType.Unknown)
+        if (this.statsData.MyIpv4Address.AddressState == MyAddress.State.Unknown)
         {
             if (this.statsData.EssentialAddress.CountIpv4 < NodeThreshold)
             {
@@ -50,7 +53,7 @@ public partial class NetStatsMachine : Machine
             }
         }
 
-        if (this.statsData.Ipv6State == NodeType.Unknown)
+        if (this.statsData.MyIpv6Address.AddressState == MyAddress.State.Unknown)
         {
             if (this.statsData.EssentialAddress.CountIpv6 < NodeThreshold)
             {
@@ -64,7 +67,14 @@ public partial class NetStatsMachine : Machine
         var results = await Task.WhenAll(tasks);
         foreach (var x in results)
         {
-            this.statsData.ReportAddressQuery(x);
+            this.statsData.ReportAddress(x);
+        }
+
+        if (this.statsData.MyIpv4Address.AddressState != MyAddress.State.Unknown &&
+             this.statsData.MyIpv6Address.AddressState != MyAddress.State.Unknown)
+        {// Address has been fixed.
+            this.ChangeState(State.AddressFixed, true);
+            return StateResult.Continue;
         }
 
         return StateResult.Continue;
@@ -74,6 +84,7 @@ public partial class NetStatsMachine : Machine
     protected async Task<StateResult> AddressFixed(StateParameter parameter)
     {
         this.logger.TryGet()?.Log("AddressFixed");
+        this.logger.TryGet()?.Log(this.statsData.Dump());
 
         return StateResult.Terminate;
     }
@@ -83,15 +94,12 @@ public partial class NetStatsMachine : Machine
     private readonly NetControl netControl;
     private readonly StatsData statsData;
 
-    private long icanhazipIPv4Used;
-    private long icanhazipIPv6Used;
-
-    private void ReportIpAddress(IPAddress ipAddress, string uri)
+    /*private void ReportIpAddress(IPAddress ipAddress, string uri)
     {
         var nodeAddress = new NodeAddress(ipAddress, (ushort)this.netControl.NetBase.NetsphereOptions.Port);
         this.netControl.NetStatus.ReportMyNodeAddress(nodeAddress);
         this.logger?.TryGet()?.Log($"{nodeAddress.ToString()} from {uri}");
-    }
+    }*/
 
     private async Task<AddressQueryResult> GetIcanhazipIPv4()
     {
@@ -107,7 +115,7 @@ public partial class NetStatsMachine : Machine
         }
         catch
         {
-            return default;
+            return new(false, IcanhazipUriIPv4, default);
         }
     }
 
@@ -125,7 +133,7 @@ public partial class NetStatsMachine : Machine
         }
         catch
         {
-            return default;
+            return new(true, IcanhazipUriIPv6, default);
         }
     }
 

@@ -8,24 +8,71 @@ namespace Netsphere;
 
 /// <summary>
 /// Represents ipv4/ipv6 node information.<br/>
-/// <see cref="DualNode"/> = <see cref="DualAddress"/> + <see cref="NodePublicKey"/>.
+/// <see cref="NetNode"/> = <see cref="NetAddress"/> + <see cref="NodePublicKey"/>.
 /// </summary>
 [TinyhandObject]
-public readonly partial record struct DualNode : IStringConvertible<DualNode>, IValidatable
+public sealed partial class NetNode : IStringConvertible<NetNode>, IValidatable, IEquatable<NetNode>
 {
-    public DualNode(DualAddress address, NodePublicKey publicKey)
+    public static readonly NetNode Default = new();
+    private static NetNode? alternative;
+
+    public static NetNode Alternative
+    {
+        get
+        {
+            if (alternative is null)
+            {
+                alternative = new NetNode(NetAddress.Alternative, NodePrivateKey.AlternativePrivateKey.ToPublicKey());
+            }
+
+            return alternative;
+        }
+    }
+
+    public NetNode()
+    {
+    }
+
+    public NetNode(NetAddress address, NodePublicKey publicKey)
     {
         this.Address = address;
         this.PublicKey = publicKey;
     }
 
     [Key(0)]
-    public readonly DualAddress Address;
+    public NetAddress Address { get; private set; }
 
     [Key(1)]
-    public readonly NodePublicKey PublicKey;
+    public NodePublicKey PublicKey { get; private set; }
 
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out DualNode instance)
+    public static bool TryParseNetNode(ILogger? logger, string source, [MaybeNullWhen(false)] out NetNode node)
+    {
+        node = default;
+        if (string.Compare(source, "alternative", true) == 0)
+        {
+            node = NetNode.Alternative;
+            return true;
+        }
+        else
+        {
+            if (!NetNode.TryParse(source, out var address))
+            {
+                logger?.TryGet(LogLevel.Error)?.Log($"Could not parse: {source.ToString()}");
+                return false;
+            }
+
+            if (!address.Address.Validate())
+            {
+                logger?.TryGet(LogLevel.Error)?.Log($"Invalid port: {source.ToString()}");
+                return false;
+            }
+
+            node = address;
+            return true;
+        }
+    }
+
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out NetNode instance)
     {// Ip address (public key)
         source = source.Trim();
 
@@ -46,7 +93,7 @@ public readonly partial record struct DualNode : IStringConvertible<DualNode>, I
         var sourceAddress = source.Slice(0, index);
         var sourcePublicKey = source.Slice(index + 1, index2 - index - 1);
 
-        if (!DualAddress.TryParse(sourceAddress, out var address))
+        if (!NetAddress.TryParse(sourceAddress, out var address))
         {
             instance = default;
             return false;
@@ -63,7 +110,7 @@ public readonly partial record struct DualNode : IStringConvertible<DualNode>, I
     }
 
     public static int MaxStringLength
-        => DualAddress.MaxStringLength + SignaturePublicKey.MaxStringLength + 2;
+        => NetAddress.MaxStringLength + SignaturePublicKey.MaxStringLength + 2;
 
     public int GetStringLength()
         => throw new NotImplementedException();
@@ -112,5 +159,16 @@ public readonly partial record struct DualNode : IStringConvertible<DualNode>, I
     {
         Span<char> span = stackalloc char[MaxStringLength];
         return this.TryFormat(span, out var written) ? span.Slice(0, written).ToString() : string.Empty;
+    }
+
+    public bool Equals(NetNode? other)
+    {
+        if (other is null)
+        {
+            return false;
+        }
+
+        return this.Address.Equals(other.Address) &&
+            this.PublicKey.Equals(other.PublicKey);
     }
 }

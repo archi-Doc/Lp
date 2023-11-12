@@ -25,5 +25,5 @@ public class MergerNestedcommand : Nestedcommand<MergerNestedcommand>
 
     public override string Prefix => "merger >> "; // $"{this.Node.ToShortString()} >> ";
 
-    public NodeInformation Node { get; set; } = NodeInformation.Alternative;
+    public NetNode Node { get; set; } = NetNode.Alternative;
 }

@@ -120,7 +120,7 @@ public class Server
         TimeCorrection.AddCorrection(punch.UtcMics);
 
         var response = new PacketPunchResponse();
-        response.Endpoint = this.NetTerminal.Endpoint;
+        response.Endpoint = this.NetTerminal.Endpoint.EndPoint;
         response.UtcMics = Mics.GetUtcNow();
 
         var task = operation.SendPacketAsync(response);

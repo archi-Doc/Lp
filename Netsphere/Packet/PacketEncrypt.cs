@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Arc.Crypto;
+using LP.T3CS;
 
 namespace Netsphere;
 
@@ -15,15 +16,15 @@ internal partial class PacketEncrypt : IPacket
     {
     }
 
-    public PacketEncrypt(NodeInformation nodeInformation)
+    public PacketEncrypt(NodePublicKey publicKey)
     {
-        this.NodeInformation = nodeInformation;
+        this.PublicKey = publicKey;
         this.Salt = RandomVault.Crypto.NextUInt64();
         this.SaltA = RandomVault.Crypto.NextUInt64();
     }
 
     [Key(0)]
-    public NodeInformation? NodeInformation { get; set; }
+    public NodePublicKey PublicKey { get; set; }
 
     [Key(1)]
     public ulong Salt { get; set; }
@@ -57,8 +58,8 @@ internal partial class PacketEncryptResponse : IPacket
     [Key(1)]
     public ulong SaltA2 { get; set; }
 
-    [Key(2)]
-    public NodeAddress? Handover { get; set; }
+    // [Key(2)]
+    // public NodeAddress? Handover { get; set; }
 
     [Key(3)]
     public bool CanRelay { get; set; }

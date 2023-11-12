@@ -21,7 +21,7 @@ public partial class PacketGetNodeInformationResponse : IPacket
     {
     }
 
-    public PacketGetNodeInformationResponse(NodeInformation node)
+    public PacketGetNodeInformationResponse(NetNode node)
     {
         this.Node = node;
     }
@@ -31,5 +31,5 @@ public partial class PacketGetNodeInformationResponse : IPacket
     public bool AllowUnencrypted => true;
 
     [Key(0)]
-    public NodeInformation Node { get; set; } = default!;
+    public NetNode Node { get; set; } = default!;
 }

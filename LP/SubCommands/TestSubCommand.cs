@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using LP.NetServices;
 using LP.T3CS;
+using Netsphere;
 using SimpleCommandLine;
 
 namespace LP.Subcommands;
@@ -111,8 +112,13 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         originator.CreateSignature(value, out var signature);
         // this.userInterfaceService.WriteLine(HashedString.FromEnum(CrystalResult.NoStorage));
 
-        using (var terminal = this.control.NetControl.Terminal.Create(Netsphere.NodeAddress.Alternative))
+        using (var terminal = this.control.NetControl.Terminal.TryCreate(NetNode.Alternative))
         {
+            if (terminal is null)
+            {
+                return;
+            }
+
             var service = terminal.GetService<IBenchmarkService>();
             await service.Report(new());
         }

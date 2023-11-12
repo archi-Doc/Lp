@@ -12,7 +12,7 @@ internal class RemoteBenchBroker
         this.terminal = terminal;
     }
 
-    public void Register(NodeInformation? node)
+    public void Register(NetNode? node)
     {
         if (node == null)
         {
@@ -29,7 +29,7 @@ internal class RemoteBenchBroker
 
     public void Start(int total, int concurrent)
     {
-        NodeInformation[] array;
+        NetNode[] array;
         lock (this.syncObject)
         {
             array = this.nodes.Keys.ToArray();
@@ -46,10 +46,15 @@ internal class RemoteBenchBroker
             tasks[i] = Task.Run(() => StartNode(node));
         }
 
-        async void StartNode(NodeInformation node)
+        async void StartNode(NetNode node)
         {
-            using (var t = this.terminal.Create(node))
+            using (var t = this.terminal.TryCreate(node))
             {
+                if (t is null)
+                {
+                    return;
+                }
+
                 var service = t.GetService<IBenchmarkService>();
                 var result = await service.Start(total, concurrent);
                 if (result == NetResult.Success)
@@ -68,7 +73,7 @@ internal class RemoteBenchBroker
         }
     }
 
-    public void Report(NodeInformation? node, IBenchmarkService.ReportRecord record)
+    public void Report(NetNode? node, IBenchmarkService.ReportRecord record)
     {
         if (node == null)
         {
@@ -122,5 +127,5 @@ internal class RemoteBenchBroker
     private Terminal terminal;
 
     private object syncObject = new();
-    private Dictionary<NodeInformation, IBenchmarkService.ReportRecord?> nodes = new();
+    private Dictionary<NetNode, IBenchmarkService.ReportRecord?> nodes = new();
 }
