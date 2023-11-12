@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 #pragma warning disable SA1202 // Elements should be ordered by access
+#pragma warning disable SA1513 // Closing brace should be followed by blank line
 
 namespace Netsphere;
 
@@ -753,9 +754,10 @@ WaitForSendCompletionWait:
                 return;
             }
 
-            this.NetTerminal.SetLastResponseMics(currentMics);
             if (header.Id == PacketId.Ack)
             {// Ack (header.Gene + data(ulong[]))
+                this.NetTerminal.SetLastResponseMics(currentMics);
+
                 gene.ReceiveAck(currentMics);
                 var g = MemoryMarshal.Cast<byte, ulong>(owner.Memory.Span);
                 // this.TerminalLogger?.Information($"Recv Ack 1+{g.Length}, {header.Gene.To4Hex()}");
@@ -775,10 +777,16 @@ WaitForSendCompletionWait:
                 // this.TerminalLogger?.Information($"Close, {header.Gene.To4Hex()}");
                 this.NetTerminal.IsClosed = true;
             }
+            /*else if (header.Id == PacketId.Punch || header.Id == PacketId.Ping || header.Id == PacketId.GetNodeInformation)
+            {
+                this.Terminal.ProcessUnmanagedRecv(owner, endPoint, ref header);
+            }*/
             else
             {// Receive data
                 if (gene.Receive(header.Id, owner, currentMics))
                 {// Received.
+                    this.NetTerminal.SetLastResponseMics(currentMics);
+
                     if (gene.NetInterface.IsReceiveComplete())
                     {
                         this.NetTerminal.ReceiveEvent.Pulse();
