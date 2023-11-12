@@ -354,7 +354,7 @@ public class Terminal : UnitBase, IUnitExecutable
             var response = new PacketPunchResponse();
             response.UtcMics = Mics.GetUtcNow();
             var secondGene = GenePool.NextGene(header.Gene);
-            // this.TerminalLogger?.Information($"Punch Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
+            this.logger.TryGet()?.Log($"Punch Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
             if (punch.NextEndpoint == null)
             {
                 response.Endpoint = endpoint;

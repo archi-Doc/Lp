@@ -33,6 +33,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 return;
             }
 
+            terminal.SetMaximumResponseTime(1_000_000);
             var t = await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(new PacketPunch());
             this.logger.TryGet()?.Log($"{t}");
 

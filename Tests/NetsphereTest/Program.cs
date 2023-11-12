@@ -138,6 +138,11 @@ public class Program
                         context.SetOutput<StreamLogger<ServerTerminalLoggerOptions>>();
                         return;
                     }
+                    else if (context.LogSourceType == typeof(Terminal))
+                    {// Terminal
+                        context.SetOutput<StreamLogger<TerminalLoggerOptions>>();
+                        return;
+                    }
                     else if (context.LogSourceType == typeof(NetSocket))
                     {
                         /*if (context.TryGetOptions<NetsphereOptions>(out var options) &&
@@ -161,6 +166,14 @@ public class Program
             .SetupOptions<ServerTerminalLoggerOptions>((context, options) =>
             {// ServerTerminalLoggerOptions
                 var logfile = "Logs/Server/.txt";
+                options.Path = Path.Combine(context.RootDirectory, logfile);
+                options.MaxLogCapacity = 1;
+                options.MaxStreamCapacity = 1_000;
+                options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffff K";
+            })
+            .SetupOptions<TerminalLoggerOptions>((context, options) =>
+            {// ServerTerminalLoggerOptions
+                var logfile = "Logs/Terminal/.txt";
                 options.Path = Path.Combine(context.RootDirectory, logfile);
                 options.MaxLogCapacity = 1;
                 options.MaxStreamCapacity = 1_000;
