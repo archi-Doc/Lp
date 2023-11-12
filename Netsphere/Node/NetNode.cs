@@ -11,7 +11,7 @@ namespace Netsphere;
 /// <see cref="NetNode"/> = <see cref="NetAddress"/> + <see cref="NodePublicKey"/>.
 /// </summary>
 [TinyhandObject]
-public sealed partial class NetNode : IStringConvertible<NetNode>, IValidatable
+public sealed partial class NetNode : IStringConvertible<NetNode>, IValidatable, IEquatable<NetNode>
 {
     public static readonly NetNode Default = new();
     private static NetNode? alternative;
@@ -159,5 +159,16 @@ public sealed partial class NetNode : IStringConvertible<NetNode>, IValidatable
     {
         Span<char> span = stackalloc char[MaxStringLength];
         return this.TryFormat(span, out var written) ? span.Slice(0, written).ToString() : string.Empty;
+    }
+
+    public bool Equals(NetNode? other)
+    {
+        if (other is null)
+        {
+            return false;
+        }
+
+        return this.Address.Equals(other.Address) &&
+            this.PublicKey.Equals(other.PublicKey);
     }
 }

@@ -7,14 +7,16 @@ public sealed partial class StatsData : ITinyhandSerializationCallback
 {
     private static readonly long ResetMics = Mics.FromMinutes(5);
 
-    public StatsData(EssentialAddress essentialAddress)
+    public StatsData(NetBase netBase, EssentialAddress essentialAddress)
     {
+        this.netBase = netBase;
         this.EssentialAddress = essentialAddress;
     }
 
     #region FieldAndProperty
 
     private readonly object syncObject = new();
+    private readonly NetBase netBase;
 
     [Key(0)]
     public long LastMics { get; private set; }
@@ -23,12 +25,18 @@ public sealed partial class StatsData : ITinyhandSerializationCallback
     public EssentialAddress EssentialAddress { get; private set; }
 
     [Key(3)]
-    public MyAddress MyIpv4Address { get; private set; } = default!;
+    public MyAddress MyIpv4Address { get; private set; } = new();
 
     [Key(4)]
-    public MyAddress MyIpv6Address { get; private set; } = default!;
+    public MyAddress MyIpv6Address { get; private set; } = new();
 
     #endregion
+
+    public NetNode GetMyNetNode()
+    {
+        var address = new NetAddress(this.MyIpv4Address.Address, this.MyIpv6Address.Address, (ushort)this.netBase.NetsphereOptions.Port);
+        return new(address, this.netBase.NodePublicKey);
+    }
 
     public void UpdateStats()
     {

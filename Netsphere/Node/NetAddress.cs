@@ -61,6 +61,27 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         }
     }
 
+    public NetAddress(IPAddress? addressIpv4, IPAddress? addressIpv6, ushort port)
+    {
+        Span<byte> span = stackalloc byte[16];
+
+        if (addressIpv4 is not null &&
+            addressIpv4.TryWriteBytes(span, out _))
+        {
+            this.Address4 = BitConverter.ToUInt32(span);
+            this.Port = port;
+        }
+
+        if (addressIpv6 is not null &&
+            addressIpv6.TryWriteBytes(span, out _))
+        {
+            this.Address6A = BitConverter.ToUInt64(span);
+            span = span.Slice(sizeof(ulong));
+            this.Address6B = BitConverter.ToUInt64(span);
+            this.Port = port;
+        }
+    }
+
     public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out NetAddress instance)
     {// 1.2.3.4:55, []:55, 1.2.3.4:55[]:55
         ushort port = 0;
@@ -219,7 +240,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryCreateIpv4(ref NetEndPoint endPoint)
     {
-        if (this.IsValidIpv4)
+        if (!this.IsValidIpv4)
         {
             return false;
         }
@@ -231,7 +252,7 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryCreateIpv6(ref NetEndPoint endPoint)
     {
-        if (this.IsValidIpv6)
+        if (!this.IsValidIpv6)
         {
             return false;
         }

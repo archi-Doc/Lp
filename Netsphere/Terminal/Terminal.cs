@@ -449,7 +449,12 @@ public class Terminal : UnitBase, IUnitExecutable
             return;
         }
 
-        var response = new PacketGetNodeInformationResponse(default); // tempcode, this.NetStatus.GetMyNodeInformation(this.IsAlternative)
+        if (this.IsAlternative)
+        {
+            return;
+        }
+
+        var response = new PacketGetNodeInformationResponse(this.statsData.GetMyNetNode()); // tempcode, this.NetStatus.GetMyNodeInformation(this.IsAlternative)
         var secondGene = GenePool.NextGene(header.Gene);
         // this.TerminalLogger?.Information($"GetNodeInformation Response {response.Node.PublicKeyX[0]}: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
