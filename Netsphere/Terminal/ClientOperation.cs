@@ -40,7 +40,7 @@ internal class ClientOperation : NetOperation
             }
 
             // Encrypt
-            var p = new PacketEncrypt(this.Terminal.NetBase.NodePublicKey);
+            var p = new PacketEncrypt(this.Terminal.NetBase.NodePublicKey); // tempcode
             var response = await this.SendPacketAndReceiveAsync<PacketEncrypt, PacketEncryptResponse>(p).ConfigureAwait(false);
             if (response.Result != NetResult.Success)
             {

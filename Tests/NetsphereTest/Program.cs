@@ -16,7 +16,8 @@ namespace NetsphereTest;
 
 public class Program
 {
-    // public static Container Container { get; } = new();
+    // basic -node alternative -ns{-alternative true -logger true}
+    // stress -ns{-alternative true -logger true}
 
     public static async Task Main(string[] args)
     {
