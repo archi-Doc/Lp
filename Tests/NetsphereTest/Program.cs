@@ -144,7 +144,7 @@ public class Program
                         return;
                     }
                     else if (context.LogSourceType == typeof(NetSocket))
-                    {
+                    {// NetSocket
                         /*if (context.TryGetOptions<NetsphereOptions>(out var options) &&
                         options.EnableLogger)
                         {
@@ -152,6 +152,10 @@ public class Program
                         }*/
 
                         return;
+                    }
+                    else
+                    {
+                        context.SetOutput<ConsoleLogger>();
                     }
                 });
             })

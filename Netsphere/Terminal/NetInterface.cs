@@ -87,7 +87,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
             ntg.SetSend(sendOwner);
             sendOwner.Return();
 
-            // netTerminal.Logger?.Log($"RegisterSend2  : {sequentialGenes.First.To4Hex()}");
+            netTerminal.Logger?.Log($"RegisterSend2  : {sequentialGenes.First.To4Hex()}");
         }
         else
         {
@@ -101,7 +101,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
             netInterface.RecvGenes = new NetTerminalGene[] { ntg, };
             ntg.SetReceive();
 
-            // netTerminal.TerminalLogger?.Information($"RegisterReceive2:{sequentialGenes.Second.To4Hex()}");
+            netTerminal.Logger?.Log($"RegisterReceive2:{sequentialGenes.Second.To4Hex()}");
         }
 
         netTerminal.Add(netInterface);
@@ -747,7 +747,7 @@ WaitForSendCompletionWait:
                 return;
             }
 
-            if (!this.NetTerminal.Endpoint.Equals(endPoint))
+            if (!this.NetTerminal.Endpoint.EndPointEquals(endPoint))
             {// Endpoint mismatch.
                 // this.TerminalLogger?.Error("Endpoint mismatch.");
                 return;

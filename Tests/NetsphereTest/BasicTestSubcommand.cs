@@ -35,7 +35,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
 
             terminal.SetMaximumResponseTime(1_000_000);
             var t = await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(new PacketPunch());
-            this.logger.TryGet()?.Log($"{t}");
+            this.logger.TryGet()?.Log($"{t.ToString()}");
 
             var sw = Stopwatch.StartNew();
             /*var t = terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
