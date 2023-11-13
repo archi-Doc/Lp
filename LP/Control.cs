@@ -66,6 +66,7 @@ public class Control : ILogInformation
                 context.AddSingleton<BigMachineBase, BigMachine>();
                 context.AddTransient<Machines.SingleMachine>();
                 context.AddTransient<Machines.LogTesterMachine>();
+                context.AddTransient<Machines.LPControlMachine>();
 
                 // Subcommands
                 context.AddSubcommand(typeof(LP.Subcommands.TestSubcommand));
@@ -454,6 +455,7 @@ public class Control : ILogInformation
         // this.BigMachine.CreateOrGet<EssentialNetMachine.Interface>(Identifier.Zero)?.RunAsync();
         _ = this.BigMachine.NtpMachine.Get().RunAsync();
         _ = this.BigMachine.NetStatsMachine.Get().RunAsync();
+        _ = this.BigMachine.LPControlMachine.Get().RunAsync();
 
         await context.SendRunAsync(new(this.Core));
 
@@ -472,31 +474,10 @@ public class Control : ILogInformation
         this.LPBase.LogInformation(logger);
     }
 
-    public async Task TerminateAsync(UnitContext context)
+    public async Task<bool> TryTerminate(bool forceTerminate = false)
     {
-        this.Logger.Get<DefaultLog>().Log("Termination process initiated");
-
-        try
-        {
-            await context.SendTerminateAsync(new());
-        }
-        catch
-        {
-        }
-    }
-
-    public void Terminate(bool abort)
-    {
-        this.Core.Terminate();
-        this.Core.WaitForTermination(-1);
-
-        this.Logger.Get<DefaultLog>().Log(abort ? "Aborted" : "Terminated");
-        this.Logger.FlushAndTerminate().Wait(); // Write logs added after Terminate().
-    }
-
-    public async Task<bool> TryTerminate()
-    {
-        if (!this.LPBase.Options.ConfirmExit)
+        if (forceTerminate ||
+            !this.LPBase.Options.ConfirmExit)
         {// No confirmation
             this.Core.Terminate(); // this.Terminate(false);
             return true;
@@ -666,5 +647,27 @@ public class Control : ILogInformation
             await this.UserInterfaceService.Notify(LogLevel.Error, Hashed.Vault.NoRestore, NodePrivateKey.PrivateKeyPath);
             return;
         }
+    }
+
+    private async Task TerminateAsync(UnitContext context)
+    {
+        this.Logger.Get<DefaultLog>().Log("Termination process initiated");
+
+        try
+        {
+            await context.SendTerminateAsync(new());
+        }
+        catch
+        {
+        }
+    }
+
+    private void Terminate(bool abort)
+    {
+        this.Core.Terminate();
+        this.Core.WaitForTermination(-1);
+
+        this.Logger.Get<DefaultLog>().Log(abort ? "Aborted" : "Terminated");
+        this.Logger.FlushAndTerminate().Wait(); // Write logs added after Terminate().
     }
 }
