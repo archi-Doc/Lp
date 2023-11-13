@@ -88,11 +88,6 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
             return MergerResult.NoData;
         }
 
-        ulong fff = 11704786445771210752ul;
-        var rrr = await this.crystal.Storage.GetAsync(ref fff);
-        var bgs = TinyhandSerializer.Deserialize<Borrower.GoshujinClass>(rrr.Data.Span);
-        rrr.Return();
-
         var borrowers = await creditData.Borrowers.Get();
         using (var w2 = borrowers.TryLock(param.Proof.PublicKey, ValueLink.TryLockMode.Create))
         {
