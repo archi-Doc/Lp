@@ -32,8 +32,8 @@ public class NodeSubcommandGet : ISimpleCommandAsync<NodeSubcommandGetOptions>
             var result = await terminal.SendPacketAndReceiveAsync<PacketGetNodeInformation, PacketGetNodeInformationResponse>(p);
             if (result.Value != null)
             {
-                // var n = NodeInformation.Merge(address, result.Value.Node);
-                // this.logger.TryGet()?.Log($"{n.ToString()}");
+                var node = new NetNode(address, result.Value.Node.PublicKey);
+                this.logger.TryGet()?.Log($"{node.ToString()}");
             }
         }
     }
