@@ -17,9 +17,9 @@ public class Terminal : UnitBase, IUnitExecutable
     public delegate Task InvokeServerDelegate(ServerTerminal terminal);
 
     internal readonly record struct RawSend
-    {
+    {// nspi
         public RawSend(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeMoved)
-        {// nspi
+        {
             this.Endpoint = endPoint;
             this.SendOwner = toBeMoved;
         }
@@ -310,7 +310,7 @@ public class Terminal : UnitBase, IUnitExecutable
                 this.ProcessUnmanagedRecv_Punch(owner, endpoint, ref header);
             }
             else if (header.Id == PacketId.Ping)
-            {// nspi
+            {
                 this.ProcessUnmanagedRecv_Ping(owner, endpoint, ref header);
             }
             else if (header.Id == PacketId.GetNodeInformation)
@@ -397,7 +397,6 @@ public class Terminal : UnitBase, IUnitExecutable
         }
 
         var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(terminal, firstGene, owner, secondGene, sendOwner);
-        sendOwner.Return();
 
         _ = Task.Run(async () =>
         {
@@ -429,7 +428,7 @@ public class Terminal : UnitBase, IUnitExecutable
     }
 
     internal void ProcessUnmanagedRecv_GetNodeInformation(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
-    {// Checked
+    {// nspi
         if (!TinyhandSerializer.TryDeserialize<PacketGetNodeInformation>(owner.Memory.Span, out var packet))
         {
             return;

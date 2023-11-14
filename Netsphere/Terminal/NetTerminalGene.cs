@@ -52,20 +52,21 @@ internal class NetTerminalGene
     public bool IsReceiveComplete
         => this.State == NetTerminalGeneState.SendingAck || this.State == NetTerminalGeneState.ReceiveComplete;
 
-    public bool SetSend(ByteArrayPool.MemoryOwner owner)
+    public bool SetSend(ByteArrayPool.MemoryOwner toBeMoved)
     {
         if (this.IsAvailable)
         {
             this.State = NetTerminalGeneState.WaitingToSend;
             this.Owner.Owner?.Return();
 
-            if (this.NetInterface.NetTerminal.TryEncryptPacket(owner, this.Gene, out var owner2))
+            if (this.NetInterface.NetTerminal.TryEncryptPacket(toBeMoved, this.Gene, out var owner2))
             {// Encrypt
+                toBeMoved.Return();
                 this.Owner = owner2;
             }
             else
-            {
-                this.Owner = owner.IncrementAndShare();
+            {// No encrypt
+                this.Owner = toBeMoved;
             }
 
             this.NetInterface.Terminal.AddInbound(this);

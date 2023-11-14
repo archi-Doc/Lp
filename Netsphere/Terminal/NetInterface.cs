@@ -86,7 +86,6 @@ internal class NetInterface<TSend, TReceive> : NetInterface
             var ntg = new NetTerminalGene(sequentialGenes.First, netInterface);
             netInterface.SendGenes = new NetTerminalGene[] { ntg, };
             ntg.SetSend(sendOwner);
-            sendOwner.Return();
 
             netTerminal.Logger?.Log($"RegisterSend2  : {sequentialGenes.First.To4Hex()}");
         }
@@ -127,7 +126,6 @@ internal class NetInterface<TSend, TReceive> : NetInterface
             var ntg = new NetTerminalGene(sequentialGenes.First, netInterface);
             netInterface.SendGenes = new NetTerminalGene[] { ntg, };
             ntg.SetSend(sendOwner);
-            sendOwner.Return();
 
             netTerminal.Logger?.Log($"RegisterSend   : {sequentialGenes.First.To4Hex()}, {id}");
         }
@@ -190,7 +188,6 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         var ntg = new NetTerminalGene(sequentialGenes.First, netInterface);
         netInterface.SendGenes = new NetTerminalGene[] { ntg, };
         ntg.SetSend(sendOwner);
-        sendOwner.Return();
 
         // netTerminal.TerminalLogger?.Information($"RegisterSend5  : {sequentialGenes.First.To4Hex()}, {response.PacketId}");
 
@@ -212,7 +209,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         return netInterface;
     }
 
-    internal static NetInterface<TSend, TReceive> CreateConnect(NetTerminal netTerminal, ulong gene, ByteArrayPool.MemoryOwner receiveOwner, ulong secondGene, ByteArrayPool.MemoryOwner sendOwner)
+    internal static NetInterface<TSend, TReceive> CreateConnect(NetTerminal netTerminal, ulong gene, ByteArrayPool.MemoryOwner receiveOwner, ulong secondGene, ByteArrayPool.MemoryOwner toBeMoved)
     {// Only for connection.
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
 
@@ -223,7 +220,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
 
         var sendGene = new NetTerminalGene(secondGene, netInterface);
         netInterface.SendGenes = new NetTerminalGene[] { sendGene, };
-        sendGene.SetSend(sendOwner);
+        sendGene.SetSend(toBeMoved);
 
         // netInterface.NetTerminal.Add(netInterface); // Delay
         return netInterface;
@@ -269,7 +266,6 @@ internal class NetInterface<TSend, TReceive> : NetInterface
 
             genes[i] = new(arraySpan[i], netInterface);
             genes[i].SetSend(sendOwner);
-            sendOwner.Return();
         }
 
         return genes;
@@ -317,6 +313,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         }
         else
         {// Packet size limit exceeded.
+            sendOwner.Return();
             return false;
         }
     }
@@ -339,8 +336,6 @@ internal class NetInterface<TSend, TReceive> : NetInterface
             // this.NetTerminal.Logger?.Log($"ntg {ntg.State} {this.SendGenes?.Length}");
             this.SendGenes = new NetTerminalGene[] { ntg, };
             ntg.SetSend(sendOwner);
-            // this.NetTerminal.Logger?.Log($"ntg2 {ntg.State} {this.SendGenes?.Length}");
-            sendOwner.Return();
 
             this.NetTerminal.Logger?.Log($"RegisterSend4  : {gene.To4Hex()}");
             return true;
