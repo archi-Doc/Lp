@@ -16,22 +16,17 @@ public class Terminal : UnitBase, IUnitExecutable
 {
     public delegate Task InvokeServerDelegate(ServerTerminal terminal);
 
-    internal record struct RawSend
+    internal readonly record struct RawSend
     {
-        public RawSend(IPEndPoint endPoint, ByteArrayPool.MemoryOwner owner)
-        {
+        public RawSend(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeMoved)
+        {// nspi
             this.Endpoint = endPoint;
-            this.SendOwner = owner.IncrementAndShare();
+            this.SendOwner = toBeMoved;
         }
 
-        public void Clear()
-        {
-            this.SendOwner = this.SendOwner.Return();
-        }
+        public readonly IPEndPoint Endpoint;
 
-        public IPEndPoint Endpoint { get; }
-
-        public ByteArrayPool.MemoryOwner SendOwner { get; private set; }
+        public readonly ByteArrayPool.MemoryOwner SendOwner;
     }
 
     public void Dump(ILog? logger)
@@ -218,8 +213,10 @@ public class Terminal : UnitBase, IUnitExecutable
             catch
             {
             }
-
-            rawSend.Clear();
+            finally
+            {
+                rawSend.SendOwner.Return();
+            }
 
             if (--rawCapacity <= 0)
             {
@@ -327,7 +324,7 @@ public class Terminal : UnitBase, IUnitExecutable
     }
 
     internal void ProcessUnmanagedRecv_Punch(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
-    {
+    {// nspi
         if (!TinyhandSerializer.TryDeserialize<PacketPunch>(owner.Memory.Span, out var punch))
         {
             return;
@@ -348,7 +345,7 @@ public class Terminal : UnitBase, IUnitExecutable
 
                 this.SendRawAck(endpoint, header.Gene);
                 PacketService.CreatePacket(ref header, punch, punch.PacketId, out var sendOwner);
-                this.AddRawSend(punch.NextEndpoint, sendOwner);
+                this.AddRawSend(punch.NextEndpoint, sendOwner); // nspi
             }
         }
         else
@@ -362,7 +359,7 @@ public class Terminal : UnitBase, IUnitExecutable
                 response.Endpoint = endpoint;
 
                 PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var sendOwner);
-                this.AddRawSend(response.Endpoint, sendOwner);
+                this.AddRawSend(response.Endpoint, sendOwner); // nspi
             }
             else
             {
@@ -371,7 +368,7 @@ public class Terminal : UnitBase, IUnitExecutable
                 this.SendRawAck(endpoint, header.Gene);
                 header.Gene = secondGene;
                 PacketService.CreatePacket(ref header, response, response.PacketId, out var sendOwner);
-                this.AddRawSend(response.Endpoint, sendOwner);
+                this.AddRawSend(response.Endpoint, sendOwner); // nspi
             }
         }
     }
@@ -425,10 +422,10 @@ public class Terminal : UnitBase, IUnitExecutable
 
         var response = new PacketPingResponse(new(endpoint.Address, (ushort)endpoint.Port), this.NetBase.NodeName);
         var secondGene = GenePool.NextGene(header.Gene);
-        // this.TerminalLogger?.Information($"Ping Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
+        // this.logger.TryGet()?.Log($"Ping Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
         PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var packetOwner);
-        this.AddRawSend(endpoint, packetOwner);
+        this.AddRawSend(endpoint, packetOwner); // nspi
     }
 
     internal void ProcessUnmanagedRecv_GetNodeInformation(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
@@ -448,7 +445,7 @@ public class Terminal : UnitBase, IUnitExecutable
         // this.TerminalLogger?.Information($"GetNodeInformation Response {response.Node.PublicKeyX[0]}: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
         PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var packetOwner);
-        this.AddRawSend(endpoint, packetOwner);
+        this.AddRawSend(endpoint, packetOwner); // nspi
     }
 
     internal void Send(ReadOnlySpan<byte> datagram, IPEndPoint endPoint)
@@ -475,13 +472,13 @@ public class Terminal : UnitBase, IUnitExecutable
             *(PacketHeader*)bp = header;
         }
 
-        this.AddRawSend(endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
+        this.AddRawSend(endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize)); // nspi
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void AddRawSend(IPEndPoint endpoint, ByteArrayPool.MemoryOwner owner)
+    internal void AddRawSend(IPEndPoint endpoint, ByteArrayPool.MemoryOwner toBeMoved)
     {// nspi
-        this.rawSends.Enqueue(new RawSend(endpoint, owner));
+        this.rawSends.Enqueue(new RawSend(endpoint, toBeMoved));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -57,7 +57,7 @@ public class ClientTerminal : NetTerminal
                 *(PacketHeader*)bp = header;
             }
 
-            this.Terminal.AddRawSend(this.Endpoint.EndPoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
+            this.Terminal.AddRawSend(this.Endpoint.EndPoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize)); // nspi
             this.Logger?.Log("Send close (client)");
         }
     }
