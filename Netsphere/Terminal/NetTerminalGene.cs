@@ -29,6 +29,21 @@ internal class NetTerminalGene
         this.NetInterface = netInterface;
     }
 
+    public NetInterface NetInterface { get; }
+
+    public NetTerminalGeneState State { get; internal set; }
+
+    public ulong Gene { get; private set; }
+
+    public PacketId ReceivedId { get; private set; }
+
+    /// <summary>
+    ///  Gets the packet (header + data) to send or the received data.
+    /// </summary>
+    public ByteArrayPool.MemoryOwner Owner { get; private set; }
+
+    internal long SentMics;
+
     public bool IsAvailable
         => this.State == NetTerminalGeneState.Initial ||
         this.State == NetTerminalGeneState.SendComplete ||
@@ -223,19 +238,6 @@ internal class NetTerminalGene
         return $"{this.Gene.To4Hex()}, {this.State}, Data: {length}";
     }
 
-    public NetInterface NetInterface { get; }
-
-    public NetTerminalGeneState State { get; internal set; }
-
-    public ulong Gene { get; private set; }
-
-    public PacketId ReceivedId { get; private set; }
-
-    /// <summary>
-    ///  Gets the packet (header + data) to send or the received data.
-    /// </summary>
-    public ByteArrayPool.MemoryOwner Owner { get; private set; }
-
     internal void Clear()
     {// lock (this.NetTerminal.SyncObject)
         /*if (this.State == NetTerminalGeneState.SendingAck || this.State == NetTerminalGeneState.ReceiveComplete)
@@ -248,8 +250,4 @@ internal class NetTerminalGene
         this.ReceivedId = PacketId.Invalid;
         this.Owner = this.Owner.Return();
     }
-
-#pragma warning disable SA1202 // Elements should be ordered by access
-    internal long SentMics;
-#pragma warning restore SA1202 // Elements should be ordered by access
 }

@@ -46,8 +46,8 @@ public class NetSocket
                     if (received <= NetControl.MaxPayload)
                     {// nspi
                         // var systemMics = Mics.GetSystem();
-                        var systemMics = core.socket.SystemMics;
-                        core.socket.terminal.ProcessReceive((IPEndPoint)remoteEP, arrayOwner, received, systemMics);
+                        var currentMics = core.socket.CurrentSystemMics;
+                        core.socket.terminal.ProcessReceive((IPEndPoint)remoteEP, arrayOwner, received, currentMics);
                         if (arrayOwner.Count > 1)
                         {// Byte array is used by multiple owners. Return and rent a new one next time.
                             arrayOwner = arrayOwner.Return();
@@ -139,7 +139,7 @@ public class NetSocket
 
     #region FieldAndProperty
 
-    public long SystemMics => this.systemMics;
+    public long CurrentSystemMics => this.currentSystemMics;
 
     internal ILogger? Logger => this.terminal.IsAlternative ? null : this.logger;
 
@@ -151,14 +151,14 @@ public class NetSocket
     private ILogger logger;
     private NetSocketRecvCore? recvCore;
     private NetSocketSendCore? sendCore;
-    private long systemMics;
+    private long currentSystemMics;
 
     private Stopwatch Stopwatch { get; } = new();
 
     #endregion
 
     public long UpdateSystemMics()
-        => this.systemMics = Mics.GetSystem();
+        => this.currentSystemMics = Mics.GetSystem();
 
     public bool Start(ThreadCoreBase parent, int port, bool ipv6)
     {
