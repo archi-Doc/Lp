@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace Netsphere;
 
-internal enum FlowFunctionType
+/*internal enum FlowFunctionType
 {
     RTT,
     ARR,
@@ -147,4 +147,4 @@ internal class FlowFunction
 
         return Math.Abs(target - value) / target > MinimumDifferenceRatio;
     }
-}
+}*/

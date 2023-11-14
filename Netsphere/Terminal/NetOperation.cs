@@ -10,6 +10,12 @@ public abstract class NetOperation : IDisposable
         this.NetTerminal = netTerminal;
     }
 
+    public Terminal Terminal { get; }
+
+    public NetTerminal NetTerminal { get; }
+
+    private GenePool? genePool;
+
     public ulong GetGene()
     {
         if (this.genePool == null)
@@ -43,17 +49,10 @@ public abstract class NetOperation : IDisposable
         gp.GetSequential(span);
     }
 
-    public virtual async Task<NetResult> EncryptConnectionAsync() => NetResult.NoEncryptedConnection;
+    public virtual async Task<NetResult> EncryptConnectionAsync()
+        => NetResult.NoEncryptedConnection;
 
-    public Terminal Terminal { get; }
-
-    public NetTerminal NetTerminal { get; }
-
-    private GenePool? genePool;
-
-#pragma warning disable SA1124 // Do not use regions
     #region IDisposable Support
-#pragma warning restore SA1124 // Do not use regions
 
     private bool disposed = false; // To detect redundant calls.
 

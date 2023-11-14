@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 
 #pragma warning disable SA1202 // Elements should be ordered by access
 #pragma warning disable SA1513 // Closing brace should be followed by blank line
+#pragma warning disable SA1401 // Fields should be private
 
 namespace Netsphere;
 
@@ -359,9 +360,21 @@ public class NetInterface : IDisposable
         this.NetTerminal = netTerminal;
     }
 
+    #region FiendAndProperty
+
     public Terminal Terminal { get; }
 
     public NetTerminal NetTerminal { get; }
+
+    internal NetTerminalGene[]? SendGenes;
+    internal NetTerminalGene[]? RecvGenes;
+    internal int SendIndex;
+    internal int SendRemaining = -1;
+    internal int RecvCompleteIndex;
+    internal ulong StandbyGene;
+    internal long DisposedMics;
+
+    #endregion
 
     /// <summary>
     /// Wait until the data transmission is completed.
@@ -588,16 +601,6 @@ WaitForSendCompletionWait:
 
         return true;
     }
-
-#pragma warning disable SA1401 // Fields should be private
-    internal NetTerminalGene[]? SendGenes;
-    internal NetTerminalGene[]? RecvGenes;
-    internal int SendIndex;
-    internal int SendRemaining = -1;
-    internal int RecvCompleteIndex;
-    internal ulong StandbyGene;
-    internal long DisposedMics;
-#pragma warning restore SA1401 // Fields should be private
 
     internal void ProcessSend(long currentMics, ref int sendCapacity)
     {// lock (this.NetTerminal.SyncObject)

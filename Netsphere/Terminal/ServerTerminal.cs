@@ -14,6 +14,10 @@ public class ServerTerminal : NetTerminal
     {// NodeInformation: Managed
     }
 
+    public ushort ReceiverNumber { get; private set; } = DefaultReceiverNumber;
+
+    private ConcurrentQueue<ServerOperation> receiverQueue = new();
+
     internal void SetReceiverNumber(ushort receiverNumber = DefaultReceiverNumber)
     {
         if (receiverNumber > MaxReceiverNumber)
@@ -29,91 +33,6 @@ public class ServerTerminal : NetTerminal
         this.EnsureReceiver();
     }
 
-    /*public unsafe override void SendClose()
-    {// Checked
-        if (this.IsClosed)
-        {
-            return;
-        }
-
-        this.IsClosed = true;
-        if (!this.IsEncrypted)
-        {// Not encrypted (connected)
-            return;
-        }
-
-        if (this.senderQueue.TryDequeue(out var operation))
-        {
-            operation.SendClose();
-        }
-    }
-
-    public async Task<NetResult> SendEmpty()
-    {// Checked
-        return await this.SendDataAsync(0, Array.Empty<byte>()).ConfigureAwait(false);
-    }*/
-
-    /*public async Task<NetResult> SendPacketAsync<TSend>(TSend value)
-        where TSend : IPacket
-    {// Checked
-        if (!this.senderQueue.TryDequeue(out var operation))
-        {
-            return NetResult.NoSender;
-        }
-
-        var result = await operation.SendPacketAsync(value).ConfigureAwait(false);
-        operation.Dispose();
-        return result;
-    }
-
-    public async Task<NetResult> SendAsync<TSend>(TSend value)
-    {// Checked
-        if (!this.senderQueue.TryDequeue(out var operation))
-        {
-            return NetResult.NoSender;
-        }
-
-        var result = await operation.SendAsync(value).ConfigureAwait(false);
-        operation.Dispose();
-        return result;
-    }
-
-    public async Task<NetResult> SendDataAsync(ulong dataId, ByteArrayPool.MemoryOwner data)
-    {// Checked
-        if (!this.senderQueue.TryDequeue(out var operation))
-        {
-            return NetResult.NoSender;
-        }
-
-        var result = await operation.SendDataAsync(true, PacketId.Data, dataId, data).ConfigureAwait(false);
-        operation.Dispose();
-        return result;
-    }
-
-    public async Task<NetResult> SendDataAsync(ulong dataId, byte[] data)
-    {// Checked
-        if (!this.senderQueue.TryDequeue(out var operation))
-        {
-            return NetResult.NoSender;
-        }
-
-        var result = await operation.SendDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data)).ConfigureAwait(false);
-        operation.Dispose();
-        return result;
-    }
-
-    public async Task<NetResult> SendServiceAsync(ulong dataId, ByteArrayPool.MemoryOwner data)
-    {// Checked
-        if (!this.senderQueue.TryDequeue(out var operation))
-        {
-            return NetResult.NoSender;
-        }
-
-        var result = await operation.SendDataAsync(true, PacketId.Rpc, dataId, data).ConfigureAwait(false);
-        operation.Dispose();
-        return result;
-    }*/
-
     internal void EnsureReceiver()
     {// Checked
         while (this.receiverQueue.Count < this.ReceiverNumber)
@@ -121,8 +40,6 @@ public class ServerTerminal : NetTerminal
             this.receiverQueue.Enqueue(new ServerOperation(this));
         }
     }
-
-    public ushort ReceiverNumber { get; private set; } = DefaultReceiverNumber;
 
     internal async Task<(ServerOperation? Operation, NetReceivedData Received)> ReceiveAsync()
     {// Checked
@@ -142,6 +59,4 @@ public class ServerTerminal : NetTerminal
             return (default, received);
         }
     }
-
-    private ConcurrentQueue<ServerOperation> receiverQueue = new();
 }
