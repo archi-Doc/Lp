@@ -302,26 +302,28 @@ public class Terminal : UnitBase, IUnitExecutable
             }
         }
 
-        if (header.Id == PacketId.Punch)
-        {
-            this.ProcessUnmanagedRecv_Punch(owner, endpoint, ref header);
-        }
-        else if (header.Id == PacketId.Encrypt && this.NetBase.EnableServer)
+        if (header.Id == PacketId.Encrypt && this.NetBase.EnableServer)
         {
             this.ProcessUnmanagedRecv_Encrypt(owner, endpoint, ref header);
         }
-        else if (header.Id == PacketId.Ping)
-        {
-            this.ProcessUnmanagedRecv_Ping(owner, endpoint, ref header);
+        else if (this.NetBase.NetsphereOptions.EnableEssential)
+        {// Essential function
+            if (header.Id == PacketId.Punch)
+            {
+                this.ProcessUnmanagedRecv_Punch(owner, endpoint, ref header);
+            }
+            else if (header.Id == PacketId.Ping)
+            {// nspi
+                this.ProcessUnmanagedRecv_Ping(owner, endpoint, ref header);
+            }
+            else if (header.Id == PacketId.GetNodeInformation)
+            {
+                this.ProcessUnmanagedRecv_GetNodeInformation(owner, endpoint, ref header);
+            }
         }
-        else if (header.Id == PacketId.GetNodeInformation)
-        {
-            this.ProcessUnmanagedRecv_GetNodeInformation(owner, endpoint, ref header);
-        }
-        else
-        {// Not supported
-            // this.TerminalLogger?.Error($"Unhandled: {header.Gene.To4Hex()} - {header.Id}");
-        }
+
+        // Not supported
+        // this.TerminalLogger?.Error($"Unhandled: {header.Gene.To4Hex()} - {header.Id}");
     }
 
     internal void ProcessUnmanagedRecv_Punch(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
@@ -415,7 +417,7 @@ public class Terminal : UnitBase, IUnitExecutable
     }
 
     internal void ProcessUnmanagedRecv_Ping(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
-    {
+    {// nspi
         if (!TinyhandSerializer.TryDeserialize<PacketPing>(owner.Memory.Span, out var packet))
         {
             return;
@@ -478,7 +480,7 @@ public class Terminal : UnitBase, IUnitExecutable
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void AddRawSend(IPEndPoint endpoint, ByteArrayPool.MemoryOwner owner)
-    {
+    {// nspi
         this.rawSends.Enqueue(new RawSend(endpoint, owner));
     }
 
