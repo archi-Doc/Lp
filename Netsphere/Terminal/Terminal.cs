@@ -206,17 +206,8 @@ public class Terminal : UnitBase, IUnitExecutable
         var rawCapacity = NetConstants.SendCapacityPerRound / 2;
         while (this.rawSends.TryDequeue(out var rawSend))
         {
-            try
-            {
-                this.Send(rawSend.SendOwner.Memory.Span, rawSend.Endpoint);
-            }
-            catch
-            {
-            }
-            finally
-            {
-                rawSend.SendOwner.Return();
-            }
+            this.TrySend(rawSend.SendOwner.Memory.Span, rawSend.Endpoint);
+            rawSend.SendOwner.Return();
 
             if (--rawCapacity <= 0)
             {
@@ -283,13 +274,13 @@ public class Terminal : UnitBase, IUnitExecutable
             gene.NetInterface.ProcessReceive(owner, endPoint, ref header, currentMics, gene);
         }
         else
-        {
+        {// nspi
             this.ProcessUnmanagedRecv(owner, endPoint, ref header);
         }
     }
 
     internal void ProcessUnmanagedRecv(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
-    {
+    {// nspi
         if (header.Id == PacketId.Data)
         {
             if (!PacketService.GetData(ref header, ref owner))
@@ -374,7 +365,7 @@ public class Terminal : UnitBase, IUnitExecutable
     }
 
     internal void ProcessUnmanagedRecv_Encrypt(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
-    {
+    { // nspi
         if (!TinyhandSerializer.TryDeserialize<PacketEncrypt>(owner.Memory.Span, out var packet))
         {
             return;
@@ -447,15 +438,22 @@ public class Terminal : UnitBase, IUnitExecutable
         this.AddRawSend(endpoint, packetOwner); // nspi
     }
 
-    internal void Send(ReadOnlySpan<byte> datagram, IPEndPoint endPoint)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void TrySend(ReadOnlySpan<byte> datagram, IPEndPoint endPoint)
     {
-        if (endPoint.AddressFamily == AddressFamily.InterNetworkV6)
+        try
         {
-            this.NetSocketIpv6.UnsafeUdpClient?.Send(datagram, endPoint);
+            if (endPoint.AddressFamily == AddressFamily.InterNetworkV6)
+            {
+                this.NetSocketIpv6.UnsafeUdpClient?.Send(datagram, endPoint);
+            }
+            else
+            {
+                this.NetSocketIpv4.UnsafeUdpClient?.Send(datagram, endPoint);
+            }
         }
-        else
+        catch
         {
-            this.NetSocketIpv4.UnsafeUdpClient?.Send(datagram, endPoint);
         }
     }
 

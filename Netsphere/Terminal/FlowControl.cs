@@ -43,6 +43,7 @@ public class FlowControl
             this.totalRTT = 0;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void AddRTT(long mics)
         {
             if (mics < this.FlowControl.minRTTThreshold)

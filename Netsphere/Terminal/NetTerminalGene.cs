@@ -107,13 +107,7 @@ internal class NetTerminalGene
                 return true;
             }*/
 
-            try
-            {
-                this.NetInterface.Terminal.Send(this.Owner.Memory.Span, this.NetInterface.NetTerminal.Endpoint.EndPoint);
-            }
-            catch
-            {
-            }
+            this.NetInterface.Terminal.TrySend(this.Owner.Memory.Span, this.NetInterface.NetTerminal.Endpoint.EndPoint);
 
             this.State = NetTerminalGeneState.WaitingForAck;
 
@@ -134,7 +128,7 @@ internal class NetTerminalGene
     }
 
     public bool ReceiveAck(long currentMics)
-    {// lock (this.NetTerminal.SyncObject)
+    {
         /*if (RandomVault.Pseudo.NextDouble() < 0.5)
         {
             this.NetInterface.NetTerminal.Logger?.Log($"Ack cancel: {this.Gene.To4Hex()}");

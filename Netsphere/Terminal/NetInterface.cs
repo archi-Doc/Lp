@@ -732,7 +732,7 @@ WaitForSendCompletionWait:
     }
 
     internal void ProcessReceive(ByteArrayPool.MemoryOwner owner, IPEndPoint endPoint, ref PacketHeader header, long currentMics, NetTerminalGene gene)
-    {
+    {// nspi
         lock (this.NetTerminal.SyncObject)
         {
             if (this.NetTerminal.IsClosed)
@@ -740,8 +740,7 @@ WaitForSendCompletionWait:
                 // this.TerminalLogger?.Error("Closed(receive).");
                 return;
             }
-
-            if (!this.NetTerminal.Endpoint.EndPointEquals(endPoint))
+            else if (!this.NetTerminal.Endpoint.EndPointEquals(endPoint))
             {// Endpoint mismatch.
                 // this.TerminalLogger?.Error("Endpoint mismatch.");
                 return;
