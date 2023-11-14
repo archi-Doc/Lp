@@ -247,7 +247,7 @@ public class Terminal : UnitBase, IUnitExecutable
     }
 
     internal unsafe void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner arrayOwner, int packetSize, long currentMics)
-    {
+    {// nspi
         var packetArray = arrayOwner.ByteArray;
         var position = 0;
         var remaining = packetSize;
@@ -267,7 +267,7 @@ public class Terminal : UnitBase, IUnitExecutable
             }
 
             if (header.Engagement != 0)
-            {
+            {// Not implemented
             }
 
             position += PacketService.HeaderSize;
@@ -279,7 +279,7 @@ public class Terminal : UnitBase, IUnitExecutable
     }
 
     internal void ProcessReceiveCore(ByteArrayPool.MemoryOwner owner, IPEndPoint endPoint, ref PacketHeader header, long currentMics)
-    {
+    {// nspi
         // this.TerminalLogger?.Information($"{header.Gene.To4Hex()}, {header.Id}");
         if (this.inboundGenes.TryGetValue(header.Gene, out var gene))
         {// NetTerminalGene is found.

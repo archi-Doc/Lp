@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 
 namespace Netsphere;
 
@@ -29,13 +30,8 @@ public class NetSocket
             }
 
             ByteArrayPool.Owner? arrayOwner = null;
-            while (true)
+            while (!core.IsTerminated)
             {
-                if (core.IsTerminated)
-                {
-                    break;
-                }
-
                 var udp = core.socket.UnsafeUdpClient;
                 if (udp == null)
                 {
@@ -43,16 +39,16 @@ public class NetSocket
                 }
 
                 try
-                {
-                    // IPEndPoint remoteEP = default!;
-                    // var bytes = udp.Receive(ref remoteEP);
+                {// nspi 10^5
                     var remoteEP = (EndPoint)anyEP;
                     arrayOwner ??= PacketPool.Rent();
                     var received = udp.Client.ReceiveFrom(arrayOwner.ByteArray, 0, arrayOwner.ByteArray.Length, SocketFlags.None, ref remoteEP);
                     // ValueTask<SocketReceiveFromResult> vt = udp.Client.ReceiveFromAsync(arrayOwner.ByteArray.AsMemory(), SocketFlags.None, remoteEP);
                     if (received <= NetControl.MaxPayload)
-                    {
-                        core.socket.terminal.ProcessReceive((IPEndPoint)remoteEP, arrayOwner, received, Mics.GetSystem());
+                    {// nspi
+                        // var systemMics = Mics.GetSystem();
+                        var systemMics = core.socket.SystemMics;
+                        core.socket.terminal.ProcessReceive((IPEndPoint)remoteEP, arrayOwner, received, systemMics);
                         if (arrayOwner.Count > 1)
                         {// Byte array is used by multiple owners. Return and rent a new one next time.
                             arrayOwner = arrayOwner.Return();
@@ -79,13 +75,8 @@ public class NetSocket
         public static void Process(object? parameter)
         {
             var core = (NetSocketSendCore)parameter!;
-            while (true)
+            while (!core.IsTerminated)
             {
-                if (core.IsTerminated)
-                {
-                    break;
-                }
-
                 var prev = Mics.GetSystem();
                 core.ProcessSend();
 
@@ -106,40 +97,24 @@ public class NetSocket
         }
 
         public void ProcessSend()
-        {// Invoked by multiple threads.
-            long currentMics;
-            var taken = false;
-            try
+        {// Invoked by multiple threads(NetSocketSendCore.Process() or MultimediaTimer).
+            lock (this.syncObject)
             {
-                Monitor.TryEnter(this.syncObject, ref taken);
-                if (!taken)
-                {
-                    this.socket.Logger?.TryGet()?.Log($"ProcessSend: Cancelled");
-                    return;
-                }
-
                 // Check interval.
-                currentMics = Mics.GetSystem();
+                var currentMics = this.socket.UpdateSystemMics();
                 var interval = Mics.FromNanoseconds((double)NetConstants.SendIntervalNanoseconds / 2); // Half for margin.
                 if (currentMics < (this.previousMics + interval))
                 {
                     return;
                 }
 
-                if (this.socket.UnsafeUdpClient != null)
+                if (this.socket.UnsafeUdpClient is not null)
                 {
-                    this.socket.Logger?.TryGet()?.Log($"ProcessSend");
+                    // this.socket.Logger?.TryGet()?.Log($"ProcessSend");
                     this.socket.terminal.ProcessSend(currentMics);
                 }
 
                 this.previousMics = currentMics;
-            }
-            finally
-            {
-                if (taken)
-                {
-                    Monitor.Exit(this.syncObject);
-                }
             }
         }
 
@@ -160,7 +135,31 @@ public class NetSocket
     {
         this.terminal = terminal;
         this.logger = terminal.UnitLogger.GetLogger<NetSocket>();
+        this.UpdateSystemMics();
     }
+
+    #region FieldAndProperty
+
+    public long SystemMics => this.systemMics;
+
+    internal ILogger? Logger => this.terminal.IsAlternative ? null : this.logger;
+
+#pragma warning disable SA1401 // Fields should be private
+    internal UdpClient? UnsafeUdpClient;
+#pragma warning restore SA1401 // Fields should be private
+
+    private Terminal terminal;
+    private ILogger logger;
+    private NetSocketRecvCore? recvCore;
+    private NetSocketSendCore? sendCore;
+    private long systemMics;
+
+    private Stopwatch Stopwatch { get; } = new();
+
+    #endregion
+
+    public long UpdateSystemMics()
+        => this.systemMics = Mics.GetSystem();
 
     public bool Start(ThreadCoreBase parent, int port, bool ipv6)
     {
@@ -230,17 +229,4 @@ public class NetSocket
 
         this.UnsafeUdpClient = udp;
     }
-
-    internal ILogger? Logger => this.terminal.IsAlternative ? null : this.logger;
-
-#pragma warning disable SA1401 // Fields should be private
-    internal UdpClient? UnsafeUdpClient;
-#pragma warning restore SA1401 // Fields should be private
-
-    private Terminal terminal;
-    private ILogger logger;
-    private NetSocketRecvCore? recvCore;
-    private NetSocketSendCore? sendCore;
-
-    private Stopwatch Stopwatch { get; } = new();
 }
