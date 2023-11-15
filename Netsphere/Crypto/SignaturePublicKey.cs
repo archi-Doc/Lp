@@ -3,6 +3,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
+using Arc.Collections;
 
 #pragma warning disable SA1202
 
@@ -39,7 +40,7 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
         }
     }
 
-    public unsafe bool VerifyIdentifier(Identifier identifier, ReadOnlySpan<byte> signature)
+    /*public unsafe bool VerifyIdentifier(Identifier identifier, ReadOnlySpan<byte> signature)
     {
         if (signature.Length != KeyHelper.SignatureLength)
         {
@@ -56,7 +57,7 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
             var result = cache.Object.VerifyHash(new ReadOnlySpan<byte>(Unsafe.AsPointer(ref identifier), sizeof(Identifier)), signature);
             return result;
         }
-    }
+    }*/
 
     private ObjectCache<SignaturePublicKey, ECDsa>.Interface TryGetEcdsa()
     {

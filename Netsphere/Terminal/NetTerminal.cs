@@ -2,7 +2,8 @@
 
 using System.Security.Cryptography;
 using Arc.Crypto;
-using LP.T3CS;
+using Netsphere.Crypto;
+using Netsphere.Time;
 
 namespace Netsphere;
 

@@ -18,6 +18,7 @@ using Netsphere.Logging;
 using Netsphere.Machines;
 using Netsphere.Responder;
 using Netsphere.Stats;
+using Netsphere.Time;
 
 namespace Netsphere;
 
@@ -35,8 +36,6 @@ public class NetControl : UnitBase, IUnitPreparable
         {
             this.Configure(context =>
             {
-                LPBase.Configure(context);
-
                 // Main services
                 context.AddSingleton<NetControl>();
                 context.AddSingleton<NetBase>();
@@ -44,6 +43,7 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddSingleton<EssentialAddress>();
                 context.AddSingleton<NetStats>();
                 context.AddTransient<Server>();
+                context.AddSingleton<NtpCorrection>();
                 // context.Services.Add(new ServiceDescriptor(typeof(NetService), x => new NetService(x), ServiceLifetime.Transient));
                 // context.AddTransient<NetService>(); // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
 

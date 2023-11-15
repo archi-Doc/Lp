@@ -2,7 +2,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-namespace LP.Block;
+namespace Netsphere.Block;
 
 public static class BlockService
 {

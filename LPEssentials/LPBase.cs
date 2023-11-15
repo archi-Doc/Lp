@@ -1,16 +1,14 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 #pragma warning disable SA1210 // Using directives should be ordered alphabetically by namespace
-#pragma warning disable SA1208 // System using directives should be placed before other using directives
+
 global using System;
 global using System.IO;
 global using Arc.Collections;
 global using Arc.Crypto;
 global using Arc.Unit;
 global using Tinyhand;
-using BigMachines;
 using LP.Data;
-using LP.T3CS;
 
 namespace LP;
 
@@ -29,16 +27,12 @@ public class LPBase : ILogInformation
 
     public static void Configure(IUnitConfigurationContext context)
     {
-        // Base
-
         // Main
         context.AddSingleton<LPBase>();
-        context.AddSingleton<NtpCorrection>();
     }
 
     public LPBase()
     {
-        TimeCorrection.Start();
         this.Settings = TinyhandSerializer.Reconstruct<LPSettings>();
     }
 
@@ -55,8 +49,6 @@ public class LPBase : ILogInformation
     public bool TestFeatures { get; private set; }
 
     public string NodeName { get; private set; } = default!;
-
-    public SignaturePublicKey RemotePublicKey { get; private set; }
 
     public LPOptions Options { get; private set; } = default!;
 
@@ -160,10 +152,6 @@ public class LPBase : ILogInformation
         {
             this.NodeName = System.Environment.OSVersion.ToString();
         }
-
-        // Remote public key
-        SignaturePublicKey.TryParse(options.RemotePublicKeyBase64, out var remoteKey);
-        this.RemotePublicKey = remoteKey;
     }
 
     public void LogInformation(ILog logger)

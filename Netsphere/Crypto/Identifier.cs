@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace LP;
+namespace Netsphere.Crypto;
 
 /// <summary>
 /// Immutable identifier of objects in LP.

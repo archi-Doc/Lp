@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace LP.T3CS;
+using Netsphere.Time;
+
+namespace Netsphere.Crypto;
 
 /// <summary>
 /// Immutable token object.
