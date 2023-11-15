@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <LangVersion>default</LangVersion>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
@@ -13,8 +13,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Arc.Collections" Version="1.7.2" />
-    <PackageReference Include="Arc.Crypto" Version="1.19.2" />
+    <PackageReference Include="Arc.Collections" Version="1.8.0" />
+    <PackageReference Include="Arc.Crypto" Version="1.20.0" />
     
     <PackageReference Include="BenchmarkDotNet" Version="0.13.10" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.507">

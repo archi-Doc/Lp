@@ -49,7 +49,7 @@ public readonly partial struct ChecksumStruct
 
     public unsafe ulong GetChecksum2()
     {
-        return FarmHash.Hash64(new ReadOnlySpan<byte>(Unsafe.AsPointer(ref Unsafe.AsRef(this)), sizeof(ChecksumStruct)));
+        return FarmHash.Hash64(new ReadOnlySpan<byte>(Unsafe.AsPointer(ref Unsafe.AsRef(in this)), sizeof(ChecksumStruct)));
     }
 
     public unsafe ulong GetChecksum3()
