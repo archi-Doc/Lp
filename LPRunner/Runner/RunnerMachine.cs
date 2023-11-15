@@ -37,7 +37,7 @@ public partial class RunnerMachine : Machine
         }
 
         this.logger.TryGet()?.Log($"Runner start");
-        this.logger.TryGet()?.Log($"Root directory: {this.lpBase.RootDirectory}");
+        // this.logger.TryGet()?.Log($"Root directory: {this.lpBase.RootDirectory}");
         // var nodeInformation = this.netControl.NetStatus.GetMyNodeInformation(false);
         // this.logger.TryGet()?.Log($"Port: {nodeInformation.Port}, Public key: ({nodeInformation.PublicKey.ToString()})");
         this.logger.TryGet()?.Log($"{this.Information.ToString()}");

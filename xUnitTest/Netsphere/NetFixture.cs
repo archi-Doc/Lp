@@ -29,7 +29,7 @@ public class NetFixture : IDisposable
                 context.AddSingleton<NullFilter>();
             });
 
-        var options = new LP.Data.NetsphereOptions();
+        var options = new NetsphereOptions();
         options.EnableAlternative = true;
         options.EnableLogger = false;
 

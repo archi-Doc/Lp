@@ -52,6 +52,8 @@ public class LPBase : ILogInformation
 
     public string NodeName { get; private set; } = default!;
 
+    public SignaturePublicKey RemotePublicKey { get; private set; }
+
     public LPOptions Options { get; private set; } = default!;
 
     public LPSettings Settings { get; set; }
@@ -154,6 +156,10 @@ public class LPBase : ILogInformation
         {
             this.NodeName = System.Environment.OSVersion.ToString();
         }
+
+        // Remote public key
+        SignaturePublicKey.TryParse(options.RemotePublicKeyBase64, out var remoteKey);
+        this.RemotePublicKey = remoteKey;
     }
 
     public void LogInformation(ILog logger)
