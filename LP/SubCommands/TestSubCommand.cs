@@ -4,7 +4,8 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using LP.NetServices;
 using LP.T3CS;
-using Netsphere;
+using Netsphere.Crypto;
+using Netsphere.Misc;
 using SimpleCommandLine;
 
 namespace LP.Subcommands;

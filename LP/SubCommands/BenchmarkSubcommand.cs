@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Netsphere.Crypto;
+using Netsphere.Misc;
 using SimpleCommandLine;
 
 namespace LP.Subcommands;

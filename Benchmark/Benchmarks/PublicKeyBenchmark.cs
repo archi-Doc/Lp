@@ -3,8 +3,7 @@
 using Arc.Collections;
 using Arc.Crypto;
 using BenchmarkDotNet.Attributes;
-using LP;
-using LP.T3CS;
+using Netsphere.Crypto;
 using Tinyhand;
 using Tinyhand.IO;
 
