@@ -51,6 +51,9 @@ public partial record LPOptions : ILogInformation
     [SimpleOption("colorconsole", Description = "Enable color console")]
     public bool ColorConsole { get; init; } = true;
 
+    [SimpleOption("lifespan", Description = "Time in seconds until the application automatically shuts down.")]
+    public long Lifespan { get; init; }
+
     public void LogInformation(ILog log)
     {
         this.NetsphereOptions.LogInformation(log);

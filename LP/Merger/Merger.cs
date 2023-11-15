@@ -70,22 +70,34 @@ public partial class Merger : UnitBase, IUnitPreparable, IUnitExecutable
 
         // Get LpData
         var g = this.crystal.Data;
-        var identifier = param.Proof.PublicKey.ToIdentifier();
-        /*if (g.Contains(Credit.Default))
-        {
-            return MergerResult.AlreadyExists;
-        }*/
+        // var identifier = param.Proof.PublicKey.ToIdentifier();
 
-        /*using (var w = g.TryLock(Credit.Default, ValueLink.TryLockMode.Create))
+        CreditData? creditData;
+        using (var w = g.TryLock(Credit.Default, ValueLink.TryLockMode.GetOrCreate))
         {
             if (w is null)
+            {
+                return MergerResult.NoData;
+            }
+
+            creditData = w.Commit();
+        }
+
+        if (creditData is null)
+        {
+            return MergerResult.NoData;
+        }
+
+        var borrowers = await creditData.Borrowers.Get();
+        using (var w2 = borrowers.TryLock(param.Proof.PublicKey, ValueLink.TryLockMode.Create))
+        {
+            if (w2 is null)
             {
                 return MergerResult.AlreadyExists;
             }
 
-            var borrowers = await w.Borrowers.Get();
-            w.Commit();
-        }*/
+            w2.Commit();
+        }
 
         return MergerResult.Success;
     }

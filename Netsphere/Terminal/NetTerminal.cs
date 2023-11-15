@@ -6,6 +6,8 @@ using LP.T3CS;
 
 namespace Netsphere;
 
+#pragma warning disable SA1124 // Do not use regions
+#pragma warning disable SA1202 // Elements should be ordered by access
 #pragma warning disable SA1401 // Fields should be private
 
 /// <summary>
@@ -15,11 +17,6 @@ namespace Netsphere;
 [ValueLinkObject]
 public partial class NetTerminal : IDisposable
 {
-    /// <summary>
-    /// The default interval time in milliseconds.
-    /// </summary>
-    public const int DefaultInterval = 10;
-
     private const long EventIdMask = 0xFFFF;
 
     private class NetTerminalLogger : ILog
@@ -65,34 +62,18 @@ public partial class NetTerminal : IDisposable
         this.Initialize();
     }
 
-    public override int GetHashCode()
-        => HashCode.Combine(this.Endpoint);
+    #region FieldAndProperty
 
-    public void SetMaximumResponseTime(int milliseconds = 1000)
-    {
-        this.maximumResponseMics = Mics.FromMilliseconds(milliseconds);
-    }
+    protected List<NetInterface> activeInterfaces = new();
+    protected List<NetInterface> disposedInterfaces = new();
+    protected byte[]? embryo; // 48 bytes
+    private Aes? aes;
 
-    public long MaximumResponseMics => this.maximumResponseMics;
-
-    public void SetMinimumBandwidth(double megabytesPerSecond = 0.1)
-    {
-        this.minimumBandwidth = megabytesPerSecond;
-    }
-
-    public double MinimumBandwidth => this.minimumBandwidth;
-
-    public virtual async Task<NetResult> EncryptConnectionAsync() => NetResult.NoEncryptedConnection;
-
-    public virtual void SendClose()
-    {
-    }
-
-    public bool IsEncrypted => this.embryo != null;
-
-    public bool IsSendComplete => false;
-
-    public bool IsReceiveComplete => false;
+    private long maximumResponseMics;
+    private double minimumBandwidth;
+    private long lastSendingAckMics;
+    private long lastResponseMics;
+    private uint resendCount;
 
     public bool IsClosed { get; internal set; }
 
@@ -101,6 +82,67 @@ public partial class NetTerminal : IDisposable
     public NetNode Node { get; protected set; } = NetNode.Default;
 
     public ulong Salt { get; private set; }
+
+    internal Terminal Terminal { get; }
+
+    internal AsyncPulseEvent ReceiveEvent { get; } = new();
+
+    internal FlowControl FlowControl { get; }
+
+    internal object SyncObject { get; } = new();
+
+    internal SemaphoreSlim ConnectionSemaphore { get; } = new(1, 1);
+
+    internal GenePool GenePool { get; }
+
+    public long MaximumResponseMics => this.maximumResponseMics;
+
+    public double MinimumBandwidth => this.minimumBandwidth;
+
+    public bool IsEncrypted => this.embryo != null;
+
+    internal long LastResponseMics => this.lastResponseMics;
+
+    internal ILog? Logger { get; private set; }
+
+    internal bool Disposed => this.disposed;
+
+    #endregion
+
+    internal void ResetLastResponseMics()
+        => this.lastResponseMics = Mics.GetSystem();
+
+    internal void SetLastResponseMics(long mics)
+        => this.lastResponseMics = mics;
+
+    public override int GetHashCode()
+        => HashCode.Combine(this.Endpoint);
+
+    internal GenePool? TryFork()
+        => this.embryo == null ? null : this.GenePool.Fork(this.embryo);
+
+    internal void IncrementResendCount()
+        => Interlocked.Increment(ref this.resendCount);
+
+    internal uint ResendCount
+        => Volatile.Read(ref this.resendCount);
+
+    public void SetMaximumResponseTime(int milliseconds = 1000)
+    {
+        this.maximumResponseMics = Mics.FromMilliseconds(milliseconds);
+    }
+
+    public void SetMinimumBandwidth(double megabytesPerSecond = 0.1)
+    {
+        this.minimumBandwidth = megabytesPerSecond;
+    }
+
+    public virtual async Task<NetResult> EncryptConnectionAsync()
+        => NetResult.NoEncryptedConnection;
+
+    public virtual void SendClose()
+    {
+    }
 
     public async ValueTask<Token> CreateToken(Token.Type tokenType)
     {
@@ -135,12 +177,6 @@ public partial class NetTerminal : IDisposable
 
         return token.ValidateAndVerifyWithoutPublicKey();
     }
-
-    internal Terminal Terminal { get; }
-
-    internal AsyncPulseEvent ReceiveEvent { get; } = new();
-
-    internal FlowControl FlowControl { get; }
 
     internal void SetSalt(ulong saltA, ulong saltA2)
     {
@@ -187,7 +223,7 @@ public partial class NetTerminal : IDisposable
             *(PacketHeader*)bp = header;
         }
 
-        this.Terminal.AddRawSend(this.Endpoint.EndPoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
+        this.Terminal.AddRawSend(this.Endpoint.EndPoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize)); // nspi
     }
 
     internal void ProcessSend(long currentMics)
@@ -262,12 +298,6 @@ public partial class NetTerminal : IDisposable
     {
         return result;
     }
-
-    internal object SyncObject { get; } = new();
-
-    internal SemaphoreSlim ConnectionSemaphore { get; } = new(1, 1);
-
-    internal GenePool GenePool { get; }
 
     internal NetResult CreateEmbryo(ulong salt, ulong salt2)
     {
@@ -408,22 +438,6 @@ public partial class NetTerminal : IDisposable
         return true;
     }
 
-    internal void ResetLastResponseMics() => this.lastResponseMics = Mics.GetSystem();
-
-    internal void SetLastResponseMics(long mics) => this.lastResponseMics = mics;
-
-    internal long LastResponseMics => this.lastResponseMics;
-
-    internal GenePool? TryFork() => this.embryo == null ? null : this.GenePool.Fork(this.embryo);
-
-    internal void IncrementResendCount() => Interlocked.Increment(ref this.resendCount);
-
-    internal uint ResendCount => Volatile.Read(ref this.resendCount);
-
-    internal ILog? Logger { get; private set; }
-
-    internal bool Disposed => this.disposed;
-
     private void Clear()
     {// lock (this.SyncObject)
         foreach (var x in this.activeInterfaces)
@@ -455,23 +469,7 @@ public partial class NetTerminal : IDisposable
         this.ResetLastResponseMics();
     }
 
-    protected List<NetInterface> activeInterfaces = new();
-    protected List<NetInterface> disposedInterfaces = new();
-    protected byte[]? embryo; // 48 bytes
-    private Aes? aes;
-
-    private long maximumResponseMics;
-    private double minimumBandwidth;
-    private long lastSendingAckMics;
-    private long lastResponseMics;
-
-    private uint resendCount;
-
-    // private PacketService packetService = new();
-
-#pragma warning disable SA1124 // Do not use regions
     #region IDisposable Support
-#pragma warning restore SA1124 // Do not use regions
 
     private bool disposed = false; // To detect redundant calls.
 

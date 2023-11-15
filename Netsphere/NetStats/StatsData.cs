@@ -81,7 +81,7 @@ public sealed partial class StatsData : ITinyhandSerializationCallback
     {
         var utcNow = Mics.GetUtcNow();
         var range = new MicsRange(utcNow - Mics.FromMinutes(1), utcNow);
-        if (!range.IsIn(this.LastMics))
+        // if (!range.IsIn(this.LastMics))
         {
             this.Reset();
         }

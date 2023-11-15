@@ -51,7 +51,7 @@ internal class RemoteControlServiceImpl : RemoteControlService
             _ = Task.Run(async () =>
             {
                 await Task.Delay(1000);
-                this.control.Terminate(false);
+                _ = this.control.TryTerminate(true);
             });
 
             return NetResult.Success;

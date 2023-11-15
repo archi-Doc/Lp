@@ -22,6 +22,9 @@ public partial class NetsphereOptions : ILogInformation
     [SimpleOption("logger", Description = "Enable network logger")]
     public bool EnableLogger { get; set; } = false;
 
+    [SimpleOption("essential", Description = "Enable essential network function")]
+    public bool EnableEssential { get; set; } = true;
+
     public void LogInformation(ILog logger)
     {
         logger.Log($"Address: {this.Address}, Port: {this.Port}, Alternative: {this.EnableAlternative}");

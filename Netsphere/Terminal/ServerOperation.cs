@@ -10,6 +10,10 @@ public class ServerOperation : NetOperation
         this.receiverInterface = NetInterface<object, byte[]>.CreateReceive(this);
     }
 
+    private bool disposed = false; // To detect redundant calls.
+    private NetInterface<object, byte[]>? receiverInterface;
+    private NetInterface<object, byte[]>? receiverInterface2;
+
     public async Task<NetResult> SendEmpty()
     {// Checked
         return await this.SendDataAsync(0, Array.Empty<byte>()).ConfigureAwait(false);
@@ -58,7 +62,7 @@ public class ServerOperation : NetOperation
             *(PacketHeader*)bp = header;
         }
 
-        this.Terminal.AddRawSend(this.NetTerminal.Endpoint.EndPoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
+        this.Terminal.AddRawSend(this.NetTerminal.Endpoint.EndPoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize)); // nspi
     }
 
     public async Task<NetReceivedData> ReceiveAsync()
@@ -208,8 +212,4 @@ public class ServerOperation : NetOperation
             base.Dispose(disposing);
         }
     }
-
-    private bool disposed = false; // To detect redundant calls.
-    private NetInterface<object, byte[]>? receiverInterface;
-    private NetInterface<object, byte[]>? receiverInterface2;
 }

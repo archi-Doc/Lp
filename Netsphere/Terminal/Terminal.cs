@@ -16,22 +16,17 @@ public class Terminal : UnitBase, IUnitExecutable
 {
     public delegate Task InvokeServerDelegate(ServerTerminal terminal);
 
-    internal record struct RawSend
-    {
-        public RawSend(IPEndPoint endPoint, ByteArrayPool.MemoryOwner owner)
+    internal readonly record struct RawSend
+    {// nspi
+        public RawSend(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeMoved)
         {
             this.Endpoint = endPoint;
-            this.SendOwner = owner.IncrementAndShare();
+            this.SendOwner = toBeMoved;
         }
 
-        public void Clear()
-        {
-            this.SendOwner = this.SendOwner.Return();
-        }
+        public readonly IPEndPoint Endpoint;
 
-        public IPEndPoint Endpoint { get; }
-
-        public ByteArrayPool.MemoryOwner SendOwner { get; private set; }
+        public readonly ByteArrayPool.MemoryOwner SendOwner;
     }
 
     public void Dump(ILog? logger)
@@ -211,15 +206,8 @@ public class Terminal : UnitBase, IUnitExecutable
         var rawCapacity = NetConstants.SendCapacityPerRound / 2;
         while (this.rawSends.TryDequeue(out var rawSend))
         {
-            try
-            {
-                this.Send(rawSend.SendOwner.Memory.Span, rawSend.Endpoint);
-            }
-            catch
-            {
-            }
-
-            rawSend.Clear();
+            this.TrySend(rawSend.SendOwner.Memory.Span, rawSend.Endpoint);
+            rawSend.SendOwner.Return();
 
             if (--rawCapacity <= 0)
             {
@@ -247,7 +235,7 @@ public class Terminal : UnitBase, IUnitExecutable
     }
 
     internal unsafe void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner arrayOwner, int packetSize, long currentMics)
-    {
+    {// nspi
         var packetArray = arrayOwner.ByteArray;
         var position = 0;
         var remaining = packetSize;
@@ -267,7 +255,7 @@ public class Terminal : UnitBase, IUnitExecutable
             }
 
             if (header.Engagement != 0)
-            {
+            {// Not implemented
             }
 
             position += PacketService.HeaderSize;
@@ -279,20 +267,20 @@ public class Terminal : UnitBase, IUnitExecutable
     }
 
     internal void ProcessReceiveCore(ByteArrayPool.MemoryOwner owner, IPEndPoint endPoint, ref PacketHeader header, long currentMics)
-    {
+    {// nspi
         // this.TerminalLogger?.Information($"{header.Gene.To4Hex()}, {header.Id}");
         if (this.inboundGenes.TryGetValue(header.Gene, out var gene))
         {// NetTerminalGene is found.
             gene.NetInterface.ProcessReceive(owner, endPoint, ref header, currentMics, gene);
         }
         else
-        {
+        {// nspi
             this.ProcessUnmanagedRecv(owner, endPoint, ref header);
         }
     }
 
     internal void ProcessUnmanagedRecv(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
-    {
+    {// nspi
         if (header.Id == PacketId.Data)
         {
             if (!PacketService.GetData(ref header, ref owner))
@@ -302,30 +290,32 @@ public class Terminal : UnitBase, IUnitExecutable
             }
         }
 
-        if (header.Id == PacketId.Punch)
-        {
-            this.ProcessUnmanagedRecv_Punch(owner, endpoint, ref header);
-        }
-        else if (header.Id == PacketId.Encrypt && this.NetBase.EnableServer)
+        if (header.Id == PacketId.Encrypt && this.NetBase.EnableServer)
         {
             this.ProcessUnmanagedRecv_Encrypt(owner, endpoint, ref header);
         }
-        else if (header.Id == PacketId.Ping)
-        {
-            this.ProcessUnmanagedRecv_Ping(owner, endpoint, ref header);
+        else if (this.NetBase.NetsphereOptions.EnableEssential)
+        {// Essential function
+            if (header.Id == PacketId.Punch)
+            {
+                this.ProcessUnmanagedRecv_Punch(owner, endpoint, ref header);
+            }
+            else if (header.Id == PacketId.Ping)
+            {
+                this.ProcessUnmanagedRecv_Ping(owner, endpoint, ref header);
+            }
+            else if (header.Id == PacketId.GetNodeInformation)
+            {
+                this.ProcessUnmanagedRecv_GetNodeInformation(owner, endpoint, ref header);
+            }
         }
-        else if (header.Id == PacketId.GetNodeInformation)
-        {
-            this.ProcessUnmanagedRecv_GetNodeInformation(owner, endpoint, ref header);
-        }
-        else
-        {// Not supported
-            // this.TerminalLogger?.Error($"Unhandled: {header.Gene.To4Hex()} - {header.Id}");
-        }
+
+        // Not supported
+        // this.TerminalLogger?.Error($"Unhandled: {header.Gene.To4Hex()} - {header.Id}");
     }
 
     internal void ProcessUnmanagedRecv_Punch(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
-    {
+    {// nspi
         if (!TinyhandSerializer.TryDeserialize<PacketPunch>(owner.Memory.Span, out var punch))
         {
             return;
@@ -346,7 +336,7 @@ public class Terminal : UnitBase, IUnitExecutable
 
                 this.SendRawAck(endpoint, header.Gene);
                 PacketService.CreatePacket(ref header, punch, punch.PacketId, out var sendOwner);
-                this.AddRawSend(punch.NextEndpoint, sendOwner);
+                this.AddRawSend(punch.NextEndpoint, sendOwner); // nspi
             }
         }
         else
@@ -360,7 +350,7 @@ public class Terminal : UnitBase, IUnitExecutable
                 response.Endpoint = endpoint;
 
                 PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var sendOwner);
-                this.AddRawSend(response.Endpoint, sendOwner);
+                this.AddRawSend(response.Endpoint, sendOwner); // nspi
             }
             else
             {
@@ -369,13 +359,13 @@ public class Terminal : UnitBase, IUnitExecutable
                 this.SendRawAck(endpoint, header.Gene);
                 header.Gene = secondGene;
                 PacketService.CreatePacket(ref header, response, response.PacketId, out var sendOwner);
-                this.AddRawSend(response.Endpoint, sendOwner);
+                this.AddRawSend(response.Endpoint, sendOwner); // nspi
             }
         }
     }
 
     internal void ProcessUnmanagedRecv_Encrypt(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
-    {
+    { // nspi
         if (!TinyhandSerializer.TryDeserialize<PacketEncrypt>(owner.Memory.Span, out var packet))
         {
             return;
@@ -398,7 +388,6 @@ public class Terminal : UnitBase, IUnitExecutable
         }
 
         var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(terminal, firstGene, owner, secondGene, sendOwner);
-        sendOwner.Return();
 
         _ = Task.Run(async () =>
         {
@@ -415,7 +404,7 @@ public class Terminal : UnitBase, IUnitExecutable
     }
 
     internal void ProcessUnmanagedRecv_Ping(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
-    {
+    {// nspi
         if (!TinyhandSerializer.TryDeserialize<PacketPing>(owner.Memory.Span, out var packet))
         {
             return;
@@ -423,14 +412,14 @@ public class Terminal : UnitBase, IUnitExecutable
 
         var response = new PacketPingResponse(new(endpoint.Address, (ushort)endpoint.Port), this.NetBase.NodeName);
         var secondGene = GenePool.NextGene(header.Gene);
-        // this.TerminalLogger?.Information($"Ping Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
+        // this.logger.TryGet()?.Log($"Ping Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
         PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var packetOwner);
-        this.AddRawSend(endpoint, packetOwner);
+        this.AddRawSend(endpoint, packetOwner); // nspi
     }
 
     internal void ProcessUnmanagedRecv_GetNodeInformation(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
-    {// Checked
+    {// nspi
         if (!TinyhandSerializer.TryDeserialize<PacketGetNodeInformation>(owner.Memory.Span, out var packet))
         {
             return;
@@ -441,23 +430,30 @@ public class Terminal : UnitBase, IUnitExecutable
             return;
         }
 
-        var response = new PacketGetNodeInformationResponse(this.statsData.GetMyNetNode()); // tempcode, this.NetStatus.GetMyNodeInformation(this.IsAlternative)
+        var response = new PacketGetNodeInformationResponse(this.statsData.GetMyNetNode());
         var secondGene = GenePool.NextGene(header.Gene);
         // this.TerminalLogger?.Information($"GetNodeInformation Response {response.Node.PublicKeyX[0]}: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
         PacketService.CreateAckAndPacket(ref header, secondGene, response, response.PacketId, out var packetOwner);
-        this.AddRawSend(endpoint, packetOwner);
+        this.AddRawSend(endpoint, packetOwner); // nspi
     }
 
-    internal void Send(ReadOnlySpan<byte> datagram, IPEndPoint endPoint)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void TrySend(ReadOnlySpan<byte> datagram, IPEndPoint endPoint)
     {
-        if (endPoint.AddressFamily == AddressFamily.InterNetworkV6)
+        try
         {
-            this.NetSocketIpv6.UnsafeUdpClient?.Send(datagram, endPoint);
+            if (endPoint.AddressFamily == AddressFamily.InterNetworkV6)
+            {
+                this.NetSocketIpv6.UnsafeUdpClient?.Send(datagram, endPoint);
+            }
+            else
+            {
+                this.NetSocketIpv4.UnsafeUdpClient?.Send(datagram, endPoint);
+            }
         }
-        else
+        catch
         {
-            this.NetSocketIpv4.UnsafeUdpClient?.Send(datagram, endPoint);
         }
     }
 
@@ -473,13 +469,13 @@ public class Terminal : UnitBase, IUnitExecutable
             *(PacketHeader*)bp = header;
         }
 
-        this.AddRawSend(endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize));
+        this.AddRawSend(endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize)); // nspi
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void AddRawSend(IPEndPoint endpoint, ByteArrayPool.MemoryOwner owner)
-    {
-        this.rawSends.Enqueue(new RawSend(endpoint, owner));
+    internal void AddRawSend(IPEndPoint endpoint, ByteArrayPool.MemoryOwner toBeMoved)
+    {// nspi
+        this.rawSends.Enqueue(new RawSend(endpoint, toBeMoved));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

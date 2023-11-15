@@ -31,6 +31,25 @@ public class FlowControl
             this.Reset(startMics, durationMics);
         }
 
+        public FlowControl FlowControl { get; }
+
+        public bool IsValid => this.StartMics != 0;
+
+        public long StartMics { get; private set; }
+
+        public long DurationMics { get; private set; }
+
+        public long EndMics => this.StartMics + this.DurationMics;
+
+        public int SendCount { get; private set; }
+
+        public int ResendCount { get; private set; }
+
+        public double SendCapacityPerRound { get; private set; }
+
+        private int rttCount;
+        private long totalRTT;
+
         public void Reset(long startMics, long durationMics)
         {
             this.StartMics = startMics;
@@ -43,6 +62,7 @@ public class FlowControl
             this.totalRTT = 0;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void AddRTT(long mics)
         {
             if (mics < this.FlowControl.minRTTThreshold)
@@ -59,16 +79,6 @@ public class FlowControl
         internal void IncrementResendCount() => this.ResendCount++;
 
         internal void SetSendCapacityPerRound(double sendCapacityPerRound) => this.SendCapacityPerRound = sendCapacityPerRound;
-
-        public FlowControl FlowControl { get; }
-
-        public bool IsValid => this.StartMics != 0;
-
-        public long StartMics { get; private set; }
-
-        public long DurationMics { get; private set; }
-
-        public long EndMics => this.StartMics + this.DurationMics;
 
         public (int Count, long Mean) MeanRTT
         {
@@ -91,16 +101,7 @@ public class FlowControl
             }
         }
 
-        public int SendCount { get; private set; }
-
-        public int ResendCount { get; private set; }
-
-        public double SendCapacityPerRound { get; private set; }
-
         public override string ToString() => $"{this.StartMics / 1_000_000d,0:F3} - {this.EndMics / 1_000_000d,0:F3} ({this.DurationMics / 1_000,0:F0} ms)";
-
-        private int rttCount;
-        private long totalRTT;
     }
 
     public FlowControl(NetTerminal netTerminal)
@@ -124,6 +125,18 @@ public class FlowControl
     public NetTerminal NetTerminal { get; }
 
     public ControlState State { get; private set; }
+
+    private long lastMics;
+    private int sendPerWindow;
+    private double sendCapacityAccumulated;
+    private long resendMics;
+    private long lastMeanRTT;
+    private double minRTT;
+    private double minRTTThreshold;
+
+    private Window twoPreviousWindow;
+    private Window previousWindow;
+    private Window currentWindow;
 
     internal void Update(long currentMics)
     {// lock (NetTerminal.SyncObject)
@@ -387,17 +400,6 @@ public class FlowControl
         }*/
     }
 
-    private long lastMics;
-    private int sendPerWindow;
-    private double sendCapacityAccumulated;
-    private long resendMics;
-    private long lastMeanRTT;
-    private double minRTT;
-    private double minRTTThreshold;
-
-    private Window twoPreviousWindow;
-    private Window previousWindow;
-    private Window currentWindow;
     // private FlowFunction arrFunction = new(FlowFunctionType.ARR);
     // private FlowFunction rttFunction = new(FlowFunctionType.RTT);
     // private FlowFunction rttFunction2 = new(FlowFunctionType.RTT);
