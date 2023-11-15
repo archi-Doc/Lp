@@ -3,7 +3,6 @@
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
-using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using Arc.Crypto;
@@ -483,9 +482,9 @@ public class Terminal : UnitBase, IUnitExecutable
     {
         foreach (var x in genes)
         {
-            if (x.State == NetTerminalGeneState.WaitingToReceive ||
-                x.State == NetTerminalGeneState.WaitingToSend ||
-                x.State == NetTerminalGeneState.WaitingForAck)
+            if (x.GeneState == NetTerminalGene.State.WaitingToReceive ||
+                x.GeneState == NetTerminalGene.State.WaitingToSend ||
+                x.GeneState == NetTerminalGene.State.WaitingForAck)
             {
                 this.inboundGenes.TryAdd(x.Gene, x);
             }
@@ -495,9 +494,9 @@ public class Terminal : UnitBase, IUnitExecutable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void AddInbound(NetTerminalGene x)
     {
-        if (x.State == NetTerminalGeneState.WaitingToReceive ||
-            x.State == NetTerminalGeneState.WaitingToSend ||
-            x.State == NetTerminalGeneState.WaitingForAck)
+        if (x.GeneState == NetTerminalGene.State.WaitingToReceive ||
+            x.GeneState == NetTerminalGene.State.WaitingToSend ||
+            x.GeneState == NetTerminalGene.State.WaitingForAck)
         {
             this.inboundGenes.TryAdd(x.Gene, x);
         }
