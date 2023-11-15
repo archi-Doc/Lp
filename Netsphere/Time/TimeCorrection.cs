@@ -2,7 +2,7 @@
 
 #pragma warning disable SA1401 // Fields should be private
 
-namespace Netsphere.Time;
+namespace Netsphere.Misc;
 
 [ValueLinkObject]
 internal partial class TimeDifference

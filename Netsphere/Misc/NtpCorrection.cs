@@ -4,7 +4,7 @@ using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using CrystalData;
 
-namespace Netsphere.Time;
+namespace Netsphere.Misc;
 
 public partial class NtpCorrection : UnitBase, IUnitPreparable
 {
