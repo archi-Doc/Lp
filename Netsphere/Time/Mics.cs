@@ -25,6 +25,8 @@ public static class Mics
     {
         TimestampToMics = 1_000_000d / Stopwatch.Frequency;
         FixedMics = GetUtcNow() - (long)(Stopwatch.GetTimestamp() * TimestampToMics);
+
+        TimeCorrection.Start();
     }
 
     /// <summary>

@@ -11,6 +11,7 @@ global using Netsphere;
 global using Netsphere.Crypto;
 global using Tinyhand;
 using LP.Data;
+using Netsphere.Misc;
 
 namespace LP;
 
@@ -36,6 +37,7 @@ public class LPBase : ILogInformation
     public LPBase()
     {
         this.Settings = TinyhandSerializer.Reconstruct<LPSettings>();
+        TimeCorrection.Start();
     }
 
     public bool IsFirstRun { get; private set; }
