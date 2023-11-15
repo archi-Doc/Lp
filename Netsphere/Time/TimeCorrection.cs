@@ -44,6 +44,10 @@ public class TimeCorrection
         timeCorrections = new();
     }
 
+    public static void Start()
+    {// For initialization.
+    }
+
     /// <summary>
     /// Get the corrected <see cref="Mics"/> expressed as UTC.
     /// </summary>

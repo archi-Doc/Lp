@@ -42,9 +42,6 @@ public partial record LPOptions : ILogInformation
     [SimpleOption("ns", Description = "Netsphere option")]
     public NetsphereOptions NetsphereOptions { get; init; } = default!;
 
-    [SimpleOption("cd", Description = "CrystalData option")]
-    public CrystalDataOptions CrystalOptions { get; init; } = default!;
-
     [SimpleOption("confirmexit", Description = "Confirms application exit")]
     public bool ConfirmExit { get; init; } = false;
 
@@ -57,7 +54,6 @@ public partial record LPOptions : ILogInformation
     public void LogInformation(ILog log)
     {
         this.NetsphereOptions.LogInformation(log);
-        this.CrystalOptions.LogInformation(log);
     }
 
     /*public bool TryLoad()
