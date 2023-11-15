@@ -2,7 +2,7 @@
 
 using System.ComponentModel;
 
-namespace LP.T3CS;
+namespace Netsphere.Crypto;
 
 [TinyhandObject]
 public readonly partial record struct Signature

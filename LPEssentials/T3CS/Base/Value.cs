@@ -1,5 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Netsphere;
+using Netsphere.Crypto;
+
 namespace LP.T3CS;
 
 /// <summary>

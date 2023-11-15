@@ -3,6 +3,7 @@
 using LP.NetServices;
 using LP.T3CS;
 using Netsphere;
+using Netsphere.Crypto;
 using SimpleCommandLine;
 
 namespace LP.Subcommands;

@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Netsphere.Time;
+
 namespace Netsphere.Machines;
 
 [MachineObject(UseServiceProvider = true)]
@@ -7,18 +9,15 @@ public partial class NtpMachine : Machine
 {
     private const string TimestampFormat = "MM-dd HH:mm:ss.fff K";
 
-    public NtpMachine(ILogger<NtpMachine> logger, LPBase lpBase, NetBase netBase, NetControl netControl, NtpCorrection ntpCorrection)
+    public NtpMachine(ILogger<NtpMachine> logger, NetBase netBase, NetControl netControl, NtpCorrection ntpCorrection)
     {
         this.logger = logger;
         this.NetBase = netBase;
         this.NetControl = netControl;
-        this.LPBase = lpBase;
         this.ntpCorrection = ntpCorrection;
 
         this.DefaultTimeout = TimeSpan.FromSeconds(5);
     }
-
-    public LPBase LPBase { get; }
 
     public NetBase NetBase { get; }
 

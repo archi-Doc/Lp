@@ -2,7 +2,7 @@
 
 using System.Security.Cryptography;
 
-namespace LP;
+namespace Netsphere.Crypto;
 
 public static class Aes256
 {

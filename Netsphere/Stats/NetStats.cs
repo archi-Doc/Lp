@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Netsphere.Time;
+
 namespace Netsphere.Stats;
 
 [TinyhandObject(UseServiceProvider = true, LockObject = "syncObject")]

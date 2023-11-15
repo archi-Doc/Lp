@@ -16,10 +16,9 @@ public partial class NetStatsMachine : Machine
     private const string DynDnsUri = "http://checkip.dyndns.org";
     private static readonly TimeSpan GetTimeout = TimeSpan.FromSeconds(2);
 
-    public NetStatsMachine(ILogger<NetStatsMachine> logger, LPBase lpBase, NetControl netControl, ICrystal<NetStats> statsData)
+    public NetStatsMachine(ILogger<NetStatsMachine> logger, NetControl netControl, ICrystal<NetStats> statsData)
     {
         this.logger = logger;
-        this.lpBase = lpBase;
         this.netControl = netControl;
         this.statsData = statsData.Data;
 
@@ -91,7 +90,6 @@ public partial class NetStatsMachine : Machine
     }
 
     private readonly ILogger logger;
-    private readonly LPBase lpBase;
     private readonly NetControl netControl;
     private readonly NetStats statsData;
 

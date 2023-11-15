@@ -2,8 +2,9 @@
 
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using Netsphere.Time;
 
-namespace Netsphere.Time;
+namespace Netsphere;
 
 /// <summary>
 /// <see cref="Mics"/> represents time in microseconds (<see cref="long"/>).
@@ -24,8 +25,6 @@ public static class Mics
     {
         TimestampToMics = 1_000_000d / Stopwatch.Frequency;
         FixedMics = GetUtcNow() - (long)(Stopwatch.GetTimestamp() * TimestampToMics);
-
-        TimeCorrection.Start();
     }
 
     /// <summary>

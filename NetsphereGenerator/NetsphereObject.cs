@@ -500,7 +500,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
                 }
                 else
                 {
-                    using (var scopeSerialize = ssb.ScopeBrace($"if (!LP.Block.BlockService.TrySerialize({method.GetParameterNames(NetsphereBody.ArgumentName)}, out var owner))"))
+                    using (var scopeSerialize = ssb.ScopeBrace($"if (!Netsphere.Block.BlockService.TrySerialize({method.GetParameterNames(NetsphereBody.ArgumentName)}, out var owner))"))
                     {
                         AppendReturn("NetResult.SerializationError");
                     }
@@ -761,7 +761,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         }
         else
         {
-            using (var scopeDeserialize = ssb.ScopeBrace($"if (!LP.Block.BlockService.TryDeserialize<{method.GetParameterTypes()}>(context.RentData, out var value))"))
+            using (var scopeDeserialize = ssb.ScopeBrace($"if (!Netsphere.Block.BlockService.TryDeserialize<{method.GetParameterTypes()}>(context.RentData, out var value))"))
             {
                 ssb.AppendLine("context.Result = NetResult.DeserializationError;");
                 ssb.AppendLine("return;");
@@ -817,7 +817,7 @@ public class NetsphereObject : VisceralObjectBase<NetsphereObject>
         }
         else
         {// Other
-            using (var scopeSerialize = ssb.ScopeBrace($"if (!LP.Block.BlockService.TrySerialize(result, out context.RentData))"))
+            using (var scopeSerialize = ssb.ScopeBrace($"if (!Netsphere.Block.BlockService.TrySerialize(result, out context.RentData))"))
             {
                 ssb.AppendLine("context.Result = NetResult.SerializationError;");
             }

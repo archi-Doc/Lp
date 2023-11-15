@@ -1,7 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using BenchmarkDotNet.Attributes;
-using LP.T3CS;
+using Netsphere.Crypto;
 using Tinyhand;
 
 namespace Benchmark;
@@ -32,7 +32,7 @@ public sealed partial class Credit
 
     [Key(1, AddProperty = "Mergers")]
     [MaxLength(MaxMergers)]
-    private LP.T3CS.SignaturePublicKey[] mergers = Array.Empty<SignaturePublicKey>();
+    private SignaturePublicKey[] mergers = Array.Empty<SignaturePublicKey>();
 
     [Key(2)]
     public SignaturePublicKey Standard { get; private set; } = default!;

@@ -40,7 +40,7 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
         }
     }
 
-    /*public unsafe bool VerifyIdentifier(Identifier identifier, ReadOnlySpan<byte> signature)
+    public unsafe bool VerifyIdentifier(Identifier identifier, ReadOnlySpan<byte> signature)
     {
         if (signature.Length != KeyHelper.SignatureLength)
         {
@@ -57,7 +57,7 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
             var result = cache.Object.VerifyHash(new ReadOnlySpan<byte>(Unsafe.AsPointer(ref identifier), sizeof(Identifier)), signature);
             return result;
         }
-    }*/
+    }
 
     private ObjectCache<SignaturePublicKey, ECDsa>.Interface TryGetEcdsa()
     {
@@ -108,7 +108,7 @@ public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<Sig
         return Base64.Url.FromByteArrayToSpan(span, destination, out written);
     }
 
-    internal SignaturePublicKey(byte keyValue, ReadOnlySpan<byte> x)
+    public SignaturePublicKey(byte keyValue, ReadOnlySpan<byte> x)
     {
         this.keyValue = KeyHelper.ToPublicKeyValue(keyValue);
         var b = x;

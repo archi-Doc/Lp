@@ -17,10 +17,9 @@ public partial class RunnerMachine : Machine
         Running,
     }
 
-    public RunnerMachine(ILogger<RunnerMachine> logger, LPBase lPBase, NetControl netControl, RunnerInformation information)
+    public RunnerMachine(ILogger<RunnerMachine> logger, NetControl netControl, RunnerInformation information)
     {
         this.logger = logger;
-        this.lpBase = lPBase;
         this.netControl = netControl;
         this.Information = information;
 
@@ -167,7 +166,6 @@ public partial class RunnerMachine : Machine
     }
 
     private ILogger<RunnerMachine> logger;
-    private LPBase lpBase;
     private NetControl netControl;
     private DockerRunner? docker;
     private int checkRetry;

@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Netsphere.Block;
+
 namespace Netsphere.Responder;
 
 public abstract class NetResponder<TSend, TReceive> : INetResponder

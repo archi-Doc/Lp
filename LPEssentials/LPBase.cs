@@ -7,6 +7,8 @@ global using System.IO;
 global using Arc.Collections;
 global using Arc.Crypto;
 global using Arc.Unit;
+global using Netsphere;
+global using Netsphere.Crypto;
 global using Tinyhand;
 using LP.Data;
 

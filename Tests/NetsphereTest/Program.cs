@@ -6,7 +6,6 @@ global using System.Threading.Tasks;
 global using Arc.Threading;
 global using Netsphere;
 using Arc.Unit;
-using LP.Data;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Logging;
 using LP.NetServices;

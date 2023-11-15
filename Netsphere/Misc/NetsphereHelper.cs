@@ -1,8 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace LP;
+namespace Netsphere;
 
-public static class LPHelper
+public static class NetsphereHelper
 {
     internal const char Quote = '\"';
     internal const string TripleQuotes = "\"\"\"";

@@ -2,6 +2,7 @@
 
 using System.Security.Cryptography;
 using System.Text;
+using Netsphere.Time;
 
 namespace Netsphere.Crypto;
 

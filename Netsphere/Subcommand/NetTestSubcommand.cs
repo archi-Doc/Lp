@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using Netsphere;
+using Netsphere.Block;
 using SimpleCommandLine;
 
 namespace LP.Subcommands;

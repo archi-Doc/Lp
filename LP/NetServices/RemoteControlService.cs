@@ -2,6 +2,7 @@
 
 using LP.T3CS;
 using Netsphere;
+using Netsphere.Crypto;
 
 namespace LP.NetServices;
 
