@@ -7,7 +7,7 @@ using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using Arc.Crypto;
 using LP.T3CS;
-using Netsphere.NetStats;
+using Netsphere.Stats;
 
 namespace Netsphere;
 
@@ -149,7 +149,7 @@ public class Terminal : UnitBase, IUnitExecutable
         }
     }
 
-    public Terminal(UnitContext context, UnitLogger unitLogger, NetBase netBase, StatsData statsData)
+    public Terminal(UnitContext context, UnitLogger unitLogger, NetBase netBase, NetStats statsData)
         : base(context)
     {
         this.UnitLogger = unitLogger;
@@ -585,7 +585,7 @@ public class Terminal : UnitBase, IUnitExecutable
 #pragma warning restore SA1401 // Fields should be private
 
     private readonly ILogger<Terminal> logger;
-    private readonly StatsData statsData;
+    private readonly NetStats statsData;
     private InvokeServerDelegate? invokeServerDelegate;
     private NetTerminal.GoshujinClass terminals = new();
     private ConcurrentDictionary<ulong, NetTerminalGene> inboundGenes = new();

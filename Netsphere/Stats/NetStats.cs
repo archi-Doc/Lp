@@ -1,13 +1,13 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace Netsphere.NetStats;
+namespace Netsphere.Stats;
 
 [TinyhandObject(UseServiceProvider = true, LockObject = "syncObject")]
-public sealed partial class StatsData : ITinyhandSerializationCallback
+public sealed partial class NetStats : ITinyhandSerializationCallback
 {
     private static readonly long ResetMics = Mics.FromMinutes(5);
 
-    public StatsData(NetBase netBase, EssentialAddress essentialAddress)
+    public NetStats(NetBase netBase, EssentialAddress essentialAddress)
     {
         this.netBase = netBase;
         this.EssentialAddress = essentialAddress;

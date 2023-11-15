@@ -18,7 +18,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Logging;
 using Netsphere.Machines;
 using Netsphere.Responder;
-using Netsphere.NetStats;
+using Netsphere.Stats;
 
 namespace Netsphere;
 
@@ -43,7 +43,7 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddSingleton<NetBase>();
                 context.AddSingleton<Terminal>();
                 context.AddSingleton<EssentialAddress>();
-                context.AddSingleton<StatsData>();
+                context.AddSingleton<NetStats>();
                 context.AddTransient<Server>();
                 // context.Services.Add(new ServiceDescriptor(typeof(NetService), x => new NetService(x), ServiceLifetime.Transient));
                 // context.AddTransient<NetService>(); // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
@@ -103,7 +103,7 @@ public class NetControl : UnitBase, IUnitPreparable
         }
     }
 
-    public NetControl(UnitContext context, UnitLogger logger, NetBase netBase, Terminal terminal, StatsData statsData)
+    public NetControl(UnitContext context, UnitLogger logger, NetBase netBase, Terminal terminal, NetStats statsData)
         : base(context)
     {
         this.logger = logger;

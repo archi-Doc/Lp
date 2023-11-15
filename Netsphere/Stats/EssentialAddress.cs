@@ -2,7 +2,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-namespace Netsphere.NetStats;
+namespace Netsphere.Stats;
 
 [TinyhandObject(UseServiceProvider = true)]
 public sealed partial class EssentialAddress : ITinyhandSerializationCallback

@@ -3,7 +3,7 @@
 using System;
 using System.Net;
 using CrystalData;
-using Netsphere.NetStats;
+using Netsphere.Stats;
 
 namespace Netsphere.Machines;
 
@@ -16,7 +16,7 @@ public partial class NetStatsMachine : Machine
     private const string DynDnsUri = "http://checkip.dyndns.org";
     private static readonly TimeSpan GetTimeout = TimeSpan.FromSeconds(2);
 
-    public NetStatsMachine(ILogger<NetStatsMachine> logger, LPBase lpBase, NetControl netControl, ICrystal<StatsData> statsData)
+    public NetStatsMachine(ILogger<NetStatsMachine> logger, LPBase lpBase, NetControl netControl, ICrystal<NetStats> statsData)
     {
         this.logger = logger;
         this.lpBase = lpBase;
@@ -93,7 +93,7 @@ public partial class NetStatsMachine : Machine
     private readonly ILogger logger;
     private readonly LPBase lpBase;
     private readonly NetControl netControl;
-    private readonly StatsData statsData;
+    private readonly NetStats statsData;
 
     /*private void ReportIpAddress(IPAddress ipAddress, string uri)
     {

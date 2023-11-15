@@ -215,7 +215,7 @@ public class Control : ILogInformation
                             new GlobalDirectoryConfiguration("Merger/Storage")),
                     });
 
-                    context.AddCrystal<Netsphere.NetStats.StatsData>(new CrystalConfiguration() with
+                    context.AddCrystal<Netsphere.Stats.NetStats>(new CrystalConfiguration() with
                     {
                         SaveFormat = SaveFormat.Utf8,
                         SavePolicy = SavePolicy.Periodic,
