@@ -6,41 +6,78 @@ using System.Security.Cryptography;
 
 #pragma warning disable SA1202
 
-namespace LP.T3CS;
+namespace Netsphere.Crypto;
 
 /// <summary>
 /// Represents a public key data. Compressed to 33 bytes (memory usage 40 bytes).
 /// </summary>
 [TinyhandObject]
-public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePublicKey>, IStringConvertible<NodePublicKey>
+public readonly partial struct SignaturePublicKey : IValidatable, IEquatable<SignaturePublicKey>, IStringConvertible<SignaturePublicKey>
 {
     #region Unique
 
-    private static ObjectCache<NodePublicKey, ECDiffieHellman> Cache { get; } = new(100);
+    private static ObjectCache<SignaturePublicKey, ECDsa> Cache { get; } = new(100);
 
-    internal ObjectCache<NodePublicKey, ECDiffieHellman>.Interface TryGetEcdh()
+    public bool VerifyData(ReadOnlySpan<byte> data, ReadOnlySpan<byte> signature)
+    {
+        if (signature.Length != KeyHelper.SignatureLength)
+        {
+            return false;
+        }
+
+        using (var cache = this.TryGetEcdsa())
+        {
+            if (cache.Object is null)
+            {
+                return false;
+            }
+
+            Span<byte> hash = stackalloc byte[32];
+            Sha3Helper.Get256_Span(data, hash);
+            var result = cache.Object.VerifyHash(hash, signature);
+            return result;
+        }
+    }
+
+    public unsafe bool VerifyIdentifier(Identifier identifier, ReadOnlySpan<byte> signature)
+    {
+        if (signature.Length != KeyHelper.SignatureLength)
+        {
+            return false;
+        }
+
+        using (var cache = this.TryGetEcdsa())
+        {
+            if (cache.Object is null)
+            {
+                return false;
+            }
+
+            var result = cache.Object.VerifyHash(new ReadOnlySpan<byte>(Unsafe.AsPointer(ref identifier), sizeof(Identifier)), signature);
+            return result;
+        }
+    }
+
+    private ObjectCache<SignaturePublicKey, ECDsa>.Interface TryGetEcdsa()
     {
         if (Cache.TryGet(this) is not { } e)
         {
             var x = new byte[32];
             this.WriteX(x);
-            e = KeyHelper.CreateEcdhFromX(x, this.YTilde);
+            e = KeyHelper.CreateEcdsaFromX(x, this.YTilde);
         }
 
         return Cache.CreateInterface(this, e);
     }
 
-    internal void CacheEcdh(ECDiffieHellman ecdh)
-        => Cache.Cache(this, ecdh);
-
     #endregion
 
     #region TypeSpecific
 
-    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out NodePublicKey publicKey)
+    public static bool TryParse(ReadOnlySpan<char> source, [MaybeNullWhen(false)] out SignaturePublicKey publicKey)
     {
         if (KeyHelper.TryParsePublicKey(source, out var keyValue, out var x) &&
-            KeyHelper.GetKeyClass(keyValue) == KeyClass.Node_Encryption)
+            KeyHelper.GetKeyClass(keyValue) == KeyClass.T3CS_Signature)
         {
             publicKey = new(keyValue, x);
             return true;
@@ -70,7 +107,7 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
         return Base64.Url.FromByteArrayToSpan(span, destination, out written);
     }
 
-    internal NodePublicKey(byte keyValue, ReadOnlySpan<byte> x)
+    internal SignaturePublicKey(byte keyValue, ReadOnlySpan<byte> x)
     {
         this.keyValue = KeyHelper.ToPublicKeyValue(keyValue);
         var b = x;
@@ -83,7 +120,7 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
         this.x3 = BitConverter.ToUInt64(b);
     }
 
-    public bool IsSameKey(NodePrivateKey privateKey)
+    public bool IsSameKey(SignaturePrivateKey privateKey)
     {
         if (KeyHelper.ToPublicKeyValue(privateKey.KeyValue) != this.KeyValue)
         {
@@ -123,9 +160,9 @@ public readonly partial struct NodePublicKey : IValidatable, IEquatable<NodePubl
     }
 
     public bool Validate() // this.x0 != 0 && this.x1 != 0 && this.x2 != 0 && this.x3 != 0;
-        => this.KeyClass == KeyClass.Node_Encryption;
+        => this.KeyClass == KeyClass.T3CS_Signature;
 
-    public bool Equals(NodePublicKey other)
+    public bool Equals(SignaturePublicKey other)
         => this.keyValue == other.keyValue &&
         this.x0 == other.x0 && this.x1 == other.x1 && this.x2 == other.x2 && this.x3 == other.x3;
 

@@ -5,8 +5,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
-using Arc.Crypto;
-using LP.T3CS;
+using Netsphere.Crypto;
 using Netsphere.Stats;
 
 namespace Netsphere;

@@ -29,10 +29,14 @@
     <PackageReference Include="SimpleCommandLine" Version="0.20.0" />
     <PackageReference Include="Tinyhand" Version="0.70.0" />
     <PackageReference Include="ValueLink" Version="0.50.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.507">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <AdditionalFiles Include="..\stylecop.json" Link="stylecop.json" />
   </ItemGroup>
 
   <ItemGroup>

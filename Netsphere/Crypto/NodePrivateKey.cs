@@ -3,7 +3,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 
-namespace LP.T3CS;
+namespace Netsphere.Crypto;
 
 [TinyhandObject]
 public sealed partial class NodePrivateKey : PrivateKey, IEquatable<NodePrivateKey>

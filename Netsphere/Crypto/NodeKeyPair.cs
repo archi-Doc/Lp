@@ -3,7 +3,7 @@
 using System.Security.Cryptography;
 using LP.T3CS;
 
-namespace LP;
+namespace Netsphere.Crypto;
 
 public readonly partial record struct NodeKeyPair
 {

@@ -3,7 +3,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace LP.T3CS;
+namespace Netsphere.Crypto;
 
 [TinyhandObject]
 public sealed partial class SignaturePrivateKey : PrivateKey, IEquatable<SignaturePrivateKey>

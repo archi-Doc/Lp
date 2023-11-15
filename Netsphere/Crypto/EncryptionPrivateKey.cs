@@ -2,7 +2,7 @@
 
 using System.Security.Cryptography;
 
-namespace LP.T3CS;
+namespace Netsphere.Crypto;
 
 [TinyhandObject]
 public sealed partial class EncryptionPrivateKey : PrivateKey, IEquatable<EncryptionPrivateKey>

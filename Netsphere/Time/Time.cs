@@ -2,7 +2,7 @@
 
 using System.Diagnostics;
 
-namespace LP;
+namespace Netsphere.Time;
 
 public static class Time
 {

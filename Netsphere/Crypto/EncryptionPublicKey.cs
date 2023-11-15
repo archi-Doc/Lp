@@ -6,7 +6,7 @@ using System.Security.Cryptography;
 
 #pragma warning disable SA1204
 
-namespace LP.T3CS;
+namespace Netsphere.Crypto;
 
 /// <summary>
 /// Represents a public key data. Compressed to 33 bytes (memory usage 40 bytes).

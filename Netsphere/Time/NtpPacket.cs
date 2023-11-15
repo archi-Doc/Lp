@@ -1,8 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Net;
-
-namespace LP;
+namespace Netsphere.Time;
 
 public class NtpPacket
 {

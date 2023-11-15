@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using Arc.Crypto.EC;
 
-namespace LP.T3CS;
+namespace Netsphere.Crypto;
 
 public static class KeyHelper
 {// KeyValue 1bit: Private, 1bit: ?, 4bits: Key class, 1bit: ?, 1bit: YTilde

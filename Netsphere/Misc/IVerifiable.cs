@@ -1,8 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using LP.T3CS;
+using Netsphere.Crypto;
 
-namespace LP;
+namespace Netsphere;
 
 /// <summary>
 /// Validate that object members and verify that the signature is appropriate.

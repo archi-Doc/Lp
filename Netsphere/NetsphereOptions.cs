@@ -2,7 +2,7 @@
 
 using SimpleCommandLine;
 
-namespace LP.Data;
+namespace Netsphere;
 
 [TinyhandObject(ImplicitKeyAsName = true)]
 public partial class NetsphereOptions : ILogInformation

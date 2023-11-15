@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 #pragma warning disable SA1300 // Element should begin with upper-case letter
 #pragma warning disable CS0649
 
-namespace LP;
+namespace Netsphere.Time;
 
 /// <summary>
 /// Good Old-Fashioned Multimedia Timer.

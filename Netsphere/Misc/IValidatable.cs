@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace LP;
+namespace Netsphere;
 
 /// <summary>
 /// Validate that object members are appropriate.

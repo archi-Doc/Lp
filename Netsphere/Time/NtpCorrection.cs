@@ -3,9 +3,8 @@
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using CrystalData;
-using ValueLink;
 
-namespace LP;
+namespace Netsphere.Time;
 
 public partial class NtpCorrection : UnitBase, IUnitPreparable
 {
