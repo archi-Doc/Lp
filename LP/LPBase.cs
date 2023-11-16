@@ -2,15 +2,8 @@
 
 #pragma warning disable SA1210 // Using directives should be ordered alphabetically by namespace
 
-global using System;
-global using System.IO;
-global using Arc.Collections;
-global using Arc.Crypto;
-global using Arc.Unit;
-global using Netsphere;
-global using Netsphere.Crypto;
-global using Tinyhand;
 using LP.Data;
+using Netsphere.Crypto;
 using Netsphere.Misc;
 
 namespace LP;
