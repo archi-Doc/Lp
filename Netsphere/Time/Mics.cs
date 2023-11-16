@@ -114,5 +114,7 @@ public static class Mics
 
     public static DateTime ToDateTime(long mics) => new DateTime((long)((double)mics * Time.MicsToTicks));
 
+    public static TimeSpan ToTimeSpan(long mics) => new TimeSpan((long)((double)mics * Time.MicsToTicks));
+
     public static string ToString(long mics, string? format = null) => ToDateTime(mics).ToString(format);
 }

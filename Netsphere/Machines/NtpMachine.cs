@@ -26,6 +26,21 @@ public partial class NtpMachine : Machine
     [StateMethod(0)]
     protected async Task<StateResult> Initial(StateParameter parameter)
     {
+        bool corrected;
+        DateTime correctedNow;
+
+        var dif = Mics.GetUtcNow() - this.ntpCorrection.LastCorrectedMics;
+        if (dif > 0 && dif < Mics.FromHours(1))
+        {// Already correctedd
+            corrected = this.ntpCorrection.TryGetCorrectedUtcNow(out correctedNow);
+            this.logger.TryGet()?.Log($"Already corrected {corrected}, {correctedNow.ToString()}");
+
+            var ts = Mics.ToTimeSpan(Mics.FromHours(1) - dif);
+            this.TimeUntilRun = ts;
+            return StateResult.Continue;
+        }
+
+        this.ntpCorrection.LastCorrectedMics = Mics.GetUtcNow();
         await this.ntpCorrection.CorrectAsync(this.CancellationToken).ConfigureAwait(false);
 
         var timeoffset = this.ntpCorrection.GetTimeoffset();
@@ -35,10 +50,10 @@ public partial class NtpMachine : Machine
             return StateResult.Continue;
         }
 
-        this.logger?.TryGet()?.Log($"Timeoffset {timeoffset.MeanTimeoffset} ms [{timeoffset.TimeoffsetCount}]");
+        this.logger.TryGet()?.Log($"Timeoffset {timeoffset.MeanTimeoffset} ms [{timeoffset.TimeoffsetCount}]");
 
-        var corrected = this.ntpCorrection.TryGetCorrectedUtcNow(out var utcNow);
-        this.logger?.TryGet()?.Log($"Corrected {corrected}, {utcNow.ToString()}");
+        corrected = this.ntpCorrection.TryGetCorrectedUtcNow(out correctedNow);
+        this.logger.TryGet()?.Log($"Corrected {corrected}, {correctedNow.ToString()}");
 
         this.TimeUntilRun = TimeSpan.FromHours(1);
         return StateResult.Continue;
@@ -58,6 +73,6 @@ public partial class NtpMachine : Machine
         return StateResult.Continue;
     }
 
-    private ILogger<NtpMachine>? logger;
+    private ILogger<NtpMachine> logger;
     private NtpCorrection ntpCorrection;
 }

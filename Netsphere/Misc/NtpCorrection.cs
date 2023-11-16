@@ -2,13 +2,12 @@
 
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
-using CrystalData;
 
 namespace Netsphere.Misc;
 
-public partial class NtpCorrection : UnitBase, IUnitPreparable
+[TinyhandObject(LockObject = "syncObject", ExplicitKeyOnly = true, UseServiceProvider = true)]
+public sealed partial class NtpCorrection : UnitBase, IUnitPreparable
 {
-    private const string Filename = "NtpNode.tinyhand";
     private const int ParallelNumber = 2;
     private const int MaxRoundtripMilliseconds = 1000;
     private readonly string[] hostNames =
@@ -21,23 +20,6 @@ public partial class NtpCorrection : UnitBase, IUnitPreparable
         "ntp.nict.jp",
         "time-a-g.nist.gov",
     };
-
-#pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
-#pragma warning disable SA1401 // Fields should be private
-
-    [TinyhandObject(LockObject = "syncObject", ExplicitKeyOnly = true)]
-    private sealed partial class Data
-    {
-        public object syncObject = new();
-        public int timeoffsetCount;
-        public long meanTimeoffset;
-
-        [Key(0)]
-        public Item.GoshujinClass goshujin = new();
-    }
-
-#pragma warning restore SA1401 // Fields should be private
-#pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
 
     [TinyhandObject]
     [ValueLinkObject]
@@ -68,19 +50,10 @@ public partial class NtpCorrection : UnitBase, IUnitPreparable
         private int roundtripMilliseconds = MaxRoundtripMilliseconds;
     }
 
-    public NtpCorrection(UnitContext context, ILogger<NtpCorrection> logger, Crystalizer crystalizer)
+    public NtpCorrection(UnitContext context, ILogger<NtpCorrection> logger)
         : base(context)
     {
-        this.logger = null; // logger;
-
-        this.crystal = crystalizer.GetOrCreateCrystal<Data>(new CrystalConfiguration() with
-        {
-            SaveFormat = SaveFormat.Utf8,
-            FileConfiguration = new GlobalFileConfiguration(Filename),
-            NumberOfFileHistories = 0,
-        });
-
-        this.data = this.crystal.Data;
+        this.logger = logger;
 
         this.ResetHostnames();
     }
@@ -94,11 +67,11 @@ public partial class NtpCorrection : UnitBase, IUnitPreparable
     {
 Retry:
         string[] hostnames;
-        lock (this.data.syncObject)
+        lock (this.syncObject)
         {
             var current = Mics.GetFixedUtcNow();
             var range = new MicsRange(current - Mics.FromHours(1), current);
-            hostnames = this.data.goshujin.RoundtripMillisecondsChain.Where(x => !range.IsIn(x.RetrievedMics)).Select(x => x.HostnameValue).Take(ParallelNumber).ToArray();
+            hostnames = this.goshujin.RoundtripMillisecondsChain.Where(x => !range.IsIn(x.RetrievedMics)).Select(x => x.HostnameValue).Take(ParallelNumber).ToArray();
         }
 
         if (hostnames.Length == 0)
@@ -107,7 +80,7 @@ Retry:
         }
 
         await Parallel.ForEachAsync(hostnames, this.Process).ConfigureAwait(false);
-        if (this.data.timeoffsetCount == 0)
+        if (this.timeoffsetCount == 0)
         {
             this.logger?.TryGet(LogLevel.Error)?.Log("Retry");
             goto Retry;
@@ -141,18 +114,18 @@ Retry:
     }
 
     public (long MeanTimeoffset, int TimeoffsetCount) GetTimeoffset()
-        => (this.data.meanTimeoffset, this.data.timeoffsetCount);
+        => (this.meanTimeoffset, this.timeoffsetCount);
 
     public bool TryGetCorrectedUtcNow(out DateTime utcNow)
     {
-        if (this.data.timeoffsetCount == 0)
+        if (this.timeoffsetCount == 0)
         {
             utcNow = Time.GetFixedUtcNow();
             return false;
         }
         else
         {
-            utcNow = Time.GetFixedUtcNow() + TimeSpan.FromMilliseconds(this.data.meanTimeoffset);
+            utcNow = Time.GetFixedUtcNow() + TimeSpan.FromMilliseconds(this.meanTimeoffset);
             return true;
         }
     }
@@ -160,32 +133,32 @@ Retry:
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryGetCorrectedMics(out long mics)
     {
-        if (this.data.timeoffsetCount == 0)
+        if (this.timeoffsetCount == 0)
         {
             mics = Mics.GetFixedUtcNow();
             return false;
         }
         else
         {
-            mics = Mics.GetFixedUtcNow() + Mics.FromMilliseconds(this.data.meanTimeoffset);
+            mics = Mics.GetFixedUtcNow() + Mics.FromMilliseconds(this.meanTimeoffset);
             return true;
         }
     }
 
     public void ResetHostnames()
     {
-        lock (this.data.syncObject)
+        lock (this.syncObject)
         {
             foreach (var x in this.hostNames)
             {
-                if (!this.data.goshujin.HostnameChain.ContainsKey(x))
+                if (!this.goshujin.HostnameChain.ContainsKey(x))
                 {
-                    this.data.goshujin.Add(new Item(x));
+                    this.goshujin.Add(new Item(x));
                 }
             }
 
             // Reset host
-            foreach (var x in this.data.goshujin)
+            foreach (var x in this.goshujin)
             {
                 x.RetrievedMics = 0;
             }
@@ -206,9 +179,9 @@ Retry:
 
                 this.logger?.TryGet()?.Log($"{hostname}, RoundtripTime: {(int)packet.RoundtripTime.TotalMilliseconds} ms, TimeOffset: {(int)packet.TimeOffset.TotalMilliseconds} ms");
 
-                lock (this.data.syncObject)
+                lock (this.syncObject)
                 {
-                    var item = this.data.goshujin.HostnameChain.FindFirst(hostname);
+                    var item = this.goshujin.HostnameChain.FindFirst(hostname);
                     if (item != null)
                     {
                         item.RetrievedMics = Mics.GetFixedUtcNow();
@@ -222,9 +195,9 @@ Retry:
             {
                 this.logger?.TryGet(LogLevel.Error)?.Log($"{hostname}");
 
-                lock (this.data.syncObject)
+                lock (this.syncObject)
                 {
-                    var item = this.data.goshujin.HostnameChain.FindFirst(hostname);
+                    var item = this.goshujin.HostnameChain.FindFirst(hostname);
                     if (item != null)
                     {// Remove item
                         item.Goshujin = null;
@@ -239,24 +212,36 @@ Retry:
         int count = 0;
         long timeoffset = 0;
 
-        foreach (var x in this.data.goshujin.Where(x => x.RetrievedMics != 0))
+        foreach (var x in this.goshujin.Where(x => x.RetrievedMics != 0))
         {
             count++;
             timeoffset += x.TimeoffsetMilliseconds;
         }
 
-        this.data.timeoffsetCount = count;
+        this.timeoffsetCount = count;
         if (count != 0)
         {
-            this.data.meanTimeoffset = timeoffset / count;
+            this.meanTimeoffset = timeoffset / count;
         }
         else
         {
-            this.data.meanTimeoffset = 0;
+            this.meanTimeoffset = 0;
         }
     }
 
     private ILogger<NtpCorrection>? logger;
-    private ICrystal<Data> crystal;
-    private Data data;
+
+    private object syncObject = new();
+
+    [Key(0)]
+    public long LastCorrectedMics { get; set; }
+
+    [Key(1)]
+    private Item.GoshujinClass goshujin = new();
+
+    [Key(2)]
+    private int timeoffsetCount;
+
+    [Key(3)]
+    private long meanTimeoffset;
 }

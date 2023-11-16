@@ -37,6 +37,7 @@ public class Control : ILogInformation
 
             this.Configure(context =>
             {
+                // Base
                 LPBase.Configure(context);
 
                 // Main services
@@ -223,6 +224,15 @@ public class Control : ILogInformation
                         SaveInterval = TimeSpan.FromMinutes(10),
                         FileConfiguration = new GlobalFileConfiguration("NetStat.tinyhand"),
                         NumberOfFileHistories = 2,
+                    });
+
+                    context.AddCrystal<Netsphere.Misc.NtpCorrection>(new CrystalConfiguration() with
+                    {
+                        SaveFormat = SaveFormat.Utf8,
+                        SavePolicy = SavePolicy.Periodic,
+                        SaveInterval = TimeSpan.FromMinutes(10),
+                        FileConfiguration = new GlobalFileConfiguration("NtpCorrection.tinyhand"),
+                        NumberOfFileHistories = 0,
                     });
 
                     /*context.AddCrystal<PublicIPMachine.Data>(new CrystalConfiguration() with
