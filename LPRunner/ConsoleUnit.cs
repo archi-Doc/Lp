@@ -82,8 +82,9 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
 
             this.Context.ServiceProvider.GetRequiredService<RunnerBase>().Information = information;*/
 
+            var unitOptions = this.Context.ServiceProvider.GetRequiredService<UnitOptions>();
             var information = this.Context.ServiceProvider.GetRequiredService<RunnerInformation>();
-            if (!await information.Load(Path.Combine(lpBase.RootDirectory, RunnerInformation.Path)))
+            if (!await information.Load(Path.Combine(unitOptions.RootDirectory, RunnerInformation.Path)))
             {
                 return;
             }
@@ -91,9 +92,9 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             var netBase = this.Context.ServiceProvider.GetRequiredService<NetBase>();
             netBase.SetNodeKey(information.NodeKey);
 
-            var options = new NetsphereOptions();
-            options.Port = information.RunnerPort;
-            var param = new NetControl.Unit.Param(true, () => new ServerContext(), () => new CallContext(), "runner", options, true);
+            var netsphereOptions = new NetsphereOptions();
+            netsphereOptions.Port = information.RunnerPort;
+            var param = new NetControl.Unit.Param(true, () => new ServerContext(), () => new CallContext(), "runner", netsphereOptions, true);
             await this.RunStandalone(param);
 
             var parserOptions = SimpleParserOptions.Standard with

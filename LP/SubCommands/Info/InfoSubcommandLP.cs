@@ -28,6 +28,7 @@ public class InfoSubcommandLP : ISimpleCommand<DumpSubcommandInfoOptions>
         }
         else
         {
+            var saa = DateTime.MinValue.Ticks;
             logger?.Log(Environment.OSVersion.ToString());
             logger?.Log($"Time.GetApplication(): {Time.GetApplication()}");
             logger?.Log($"Time.GetCorrected(): {Time.GetCorrected()}");

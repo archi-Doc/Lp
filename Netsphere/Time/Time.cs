@@ -1,7 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Netsphere.Misc;
+
+#pragma warning disable CA2255
 
 namespace Netsphere;
 
@@ -11,6 +14,14 @@ public static class Time
     public static readonly double MicsToTicks;
     private static readonly long FixedTimestamp; // Fixed timestamp at application startup.
     private static readonly DateTime FixedUtcNow; // Fixed DateTime at application startup.
+
+    [ModuleInitializer]
+    public static void Initialize()
+    {
+        RuntimeHelpers.RunClassConstructor(typeof(Time).TypeHandle);
+        RuntimeHelpers.RunClassConstructor(typeof(Mics).TypeHandle);
+        RuntimeHelpers.RunClassConstructor(typeof(TimeCorrection).TypeHandle);
+    }
 
     static Time()
     {

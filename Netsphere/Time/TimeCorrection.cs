@@ -4,26 +4,7 @@
 
 namespace Netsphere.Misc;
 
-[ValueLinkObject]
-internal partial class TimeDifference
-{
-    [Link(Type = ChainType.QueueList, Name = "Queue")]
-    internal TimeDifference(long difference)
-    {
-        this.Difference = difference;
-    }
-
-    [Link(Type = ChainType.Ordered)]
-    internal long Difference;
-}
-
-public enum CorrectedResult
-{
-    NotCorrected,
-    Corrected,
-}
-
-public class TimeCorrection
+public partial class TimeCorrection
 {
     /// <summary>
     /// The maximum number of time corrections.
@@ -35,6 +16,25 @@ public class TimeCorrection
     /// </summary>
     public const uint MinCorrections = 10;
 
+    public enum Result
+    {
+        NotCorrected,
+        Corrected,
+    }
+
+    [ValueLinkObject]
+    private partial class TimeDifference
+    {
+        [Link(Type = ChainType.QueueList, Name = "Queue")]
+        internal TimeDifference(long difference)
+        {
+            this.Difference = difference;
+        }
+
+        [Link(Type = ChainType.Ordered)]
+        internal long Difference;
+    }
+
     static TimeCorrection()
     {
         InitialUtcMics = Mics.GetUtcNow();
@@ -44,28 +44,24 @@ public class TimeCorrection
         timeCorrections = new();
     }
 
-    public static void Start()
-    {// For initialization.
-    }
-
     /// <summary>
     /// Get the corrected <see cref="Mics"/> expressed as UTC.
     /// </summary>
     /// <param name="correctedMics">The corrected <see cref="Mics"/>.</param>
-    /// <returns><see cref="CorrectedResult"/>.</returns>
-    public static CorrectedResult GetCorrectedMics(out long correctedMics)
+    /// <returns><see cref="Result"/>.</returns>
+    public static Result GetCorrectedMics(out long correctedMics)
     {
         var currentMics = Mics.GetSystem() - InitialSystemMics + InitialUtcMics;
         if (timeCorrections.QueueChain.Count < MinCorrections)
         {
             correctedMics = currentMics;
-            return CorrectedResult.NotCorrected;
+            return Result.NotCorrected;
         }
 
         var difference = GetCollectionDifference(currentMics);
         correctedMics = currentMics + difference;
 
-        return CorrectedResult.Corrected;
+        return Result.Corrected;
     }
 
     public static void AddCorrection(long utcMics)

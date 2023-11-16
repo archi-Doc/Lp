@@ -42,7 +42,7 @@ public partial record RunnerInformation
             this.RemotePublicKeyBase64 = this.RemotePublicKey.ToString();
         }
 
-        this.Image = string.IsNullOrEmpty(this.Image) ? "archidoc422/lpconsole" : this.Image;
+        this.Image = string.IsNullOrEmpty(this.Image) ? "public.ecr.aws/archi-doc/lpdev" : this.Image;
         this.Tag = string.IsNullOrEmpty(this.Tag) ? "latest" : this.Tag;
         this.RunnerPort = this.RunnerPort == 0 ? 49999 : this.RunnerPort;
         this.HostDirectory = string.IsNullOrEmpty(this.HostDirectory) ? "lp" : this.HostDirectory;
