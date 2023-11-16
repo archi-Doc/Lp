@@ -4,25 +4,25 @@
 
 namespace Netsphere;
 
-internal enum NetTerminalGeneState
-{
-    // NetTerminalGeneState:
-    // Send: Initial -> SetSend() -> WaitingToSend -> (Send) -> WaitingForAck -> (Receive Ack) -> SendComplete.
-    // Receive: Initial -> SetReceive() -> WaitingToReceive -> (Receive) -> (Managed: SendingAck) -> (Send Ack) -> ReceiveComplete.
-    Initial,
-    WaitingToSend,
-    WaitingForAck,
-    SendComplete,
-    WaitingToReceive,
-    SendingAck,
-    ReceiveComplete,
-}
-
 /// <summary>
 /// Initializes a new instance of the <see cref="NetTerminalGene"/> class.
 /// </summary>
 internal class NetTerminalGene
 {// NetTerminalGene by Nihei.
+    public enum State
+    {
+        // NetTerminalGeneState:
+        // Send: Initial -> SetSend() -> WaitingToSend -> (Send) -> WaitingForAck -> (Receive Ack) -> SendComplete.
+        // Receive: Initial -> SetReceive() -> WaitingToReceive -> (Receive) -> (Managed: SendingAck) -> (Send Ack) -> ReceiveComplete.
+        Initial,
+        WaitingToSend,
+        WaitingForAck,
+        SendComplete,
+        WaitingToReceive,
+        SendingAck,
+        ReceiveComplete,
+    }
+
     public NetTerminalGene(ulong gene, NetInterface netInterface)
     {
         this.Gene = gene;
@@ -31,7 +31,7 @@ internal class NetTerminalGene
 
     public NetInterface NetInterface { get; }
 
-    public NetTerminalGeneState State { get; internal set; }
+    public State GeneState { get; internal set; }
 
     public ulong Gene { get; private set; }
 
@@ -45,33 +45,34 @@ internal class NetTerminalGene
     internal long SentMics;
 
     public bool IsAvailable
-        => this.State == NetTerminalGeneState.Initial ||
-        this.State == NetTerminalGeneState.SendComplete ||
-        this.State == NetTerminalGeneState.ReceiveComplete;
+        => this.GeneState == State.Initial ||
+        this.GeneState == State.SendComplete ||
+        this.GeneState == State.ReceiveComplete;
 
     public bool IsComplete
-        => this.State == NetTerminalGeneState.SendComplete || this.State == NetTerminalGeneState.ReceiveComplete;
+        => this.GeneState == State.SendComplete || this.GeneState == State.ReceiveComplete;
 
-    public bool IsSend =>
-        this.State == NetTerminalGeneState.WaitingToSend ||
-        this.State == NetTerminalGeneState.WaitingForAck ||
-        this.State == NetTerminalGeneState.SendComplete;
+    public bool IsSend
+        => this.GeneState == State.WaitingToSend ||
+        this.GeneState == State.WaitingForAck ||
+        this.GeneState == State.SendComplete;
 
-    public bool IsSendComplete => this.State == NetTerminalGeneState.SendComplete;
+    public bool IsSendComplete
+        => this.GeneState == State.SendComplete;
 
-    public bool IsReceive =>
-        this.State == NetTerminalGeneState.WaitingToReceive ||
-        this.State == NetTerminalGeneState.SendingAck ||
-        this.State == NetTerminalGeneState.ReceiveComplete;
+    public bool IsReceive
+        => this.GeneState == State.WaitingToReceive ||
+        this.GeneState == State.SendingAck ||
+        this.GeneState == State.ReceiveComplete;
 
     public bool IsReceiveComplete
-        => this.State == NetTerminalGeneState.SendingAck || this.State == NetTerminalGeneState.ReceiveComplete;
+        => this.GeneState == State.SendingAck || this.GeneState == State.ReceiveComplete;
 
     public bool SetSend(ByteArrayPool.MemoryOwner toBeMoved)
     {
         if (this.IsAvailable)
         {
-            this.State = NetTerminalGeneState.WaitingToSend;
+            this.GeneState = State.WaitingToSend;
             this.Owner.Owner?.Return();
 
             if (this.NetInterface.NetTerminal.TryEncryptPacket(toBeMoved, this.Gene, out var owner2))
@@ -95,7 +96,7 @@ internal class NetTerminalGene
     {
         if (this.IsAvailable)
         {
-            this.State = NetTerminalGeneState.WaitingToReceive;
+            this.GeneState = State.WaitingToReceive;
             this.Owner = this.Owner.Return();
 
             this.NetInterface.Terminal.AddInbound(this);
@@ -107,8 +108,8 @@ internal class NetTerminalGene
 
     public bool Send()
     {
-        if (this.State == NetTerminalGeneState.WaitingToSend ||
-            this.State == NetTerminalGeneState.WaitingForAck)
+        if (this.GeneState == State.WaitingToSend ||
+            this.GeneState == State.WaitingForAck)
         {
             var currentCapacity = Interlocked.Decrement(ref this.NetInterface.Terminal.SendCapacityPerRound);
             if (currentCapacity < 0)
@@ -124,7 +125,7 @@ internal class NetTerminalGene
 
             this.NetInterface.Terminal.TrySend(this.Owner.Memory.Span, this.NetInterface.NetTerminal.Endpoint.EndPoint);
 
-            this.State = NetTerminalGeneState.WaitingForAck;
+            this.GeneState = State.WaitingForAck;
 
             if (this.NetInterface.NetTerminal.Logger is { } logger)
             {
@@ -152,10 +153,10 @@ internal class NetTerminalGene
 
         this.NetInterface.NetTerminal.Logger?.Log($"ReceiveAck({this.Gene.To4Hex()})");
 
-        if (this.State == NetTerminalGeneState.WaitingForAck)
+        if (this.GeneState == State.WaitingForAck)
         {
             this.NetInterface.NetTerminal.FlowControl.ReportAck(currentMics, this.SentMics);
-            this.State = NetTerminalGeneState.SendComplete;
+            this.GeneState = State.SendComplete;
             return true;
         }
 
@@ -164,7 +165,7 @@ internal class NetTerminalGene
 
     public bool Receive(PacketId id, ByteArrayPool.MemoryOwner owner, long currentMics)
     {// lock (this.NetTerminal.SyncObject)
-        if (this.State == NetTerminalGeneState.WaitingToReceive)
+        if (this.GeneState == State.WaitingToReceive)
         {// Receive data
             this.ReceivedId = id;
             this.Owner.Owner?.Return();
@@ -192,11 +193,11 @@ internal class NetTerminalGene
 
             return true;
         }
-        else if (this.State == NetTerminalGeneState.SendingAck)
+        else if (this.GeneState == State.SendingAck)
         {// Already received.
             return true;
         }
-        else if (this.State == NetTerminalGeneState.ReceiveComplete)
+        else if (this.GeneState == State.ReceiveComplete)
         {// Resend Ack
             SendAck();
             return true;
@@ -208,7 +209,7 @@ internal class NetTerminalGene
         {
             if (!this.NetInterface.NetTerminal.IsEncrypted && PacketService.IsManualAck(this.ReceivedId))
             {
-                this.State = NetTerminalGeneState.ReceiveComplete;
+                this.GeneState = State.ReceiveComplete;
             }
             else
             {
@@ -216,12 +217,12 @@ internal class NetTerminalGene
                 {
                     // this.NetInterface.NetTerminal.Logger?.Log($"SendAck {this.Gene.To4Hex()}");
                     this.NetInterface.NetTerminal.SendAck(this.Gene);
-                    this.State = NetTerminalGeneState.ReceiveComplete;
+                    this.GeneState = State.ReceiveComplete;
                 }
                 else
                 {
                     // this.NetInterface.NetTerminal.Logger?.Log($"SendingAck {this.Gene.To4Hex()}");
-                    this.State = NetTerminalGeneState.SendingAck;
+                    this.GeneState = State.SendingAck;
                 }
             }
         }
@@ -235,7 +236,7 @@ internal class NetTerminalGene
             length -= PacketService.HeaderSize;
         }
 
-        return $"{this.Gene.To4Hex()}, {this.State}, Data: {length}";
+        return $"{this.Gene.To4Hex()}, {this.GeneState}, Data: {length}";
     }
 
     internal void Clear()
@@ -245,7 +246,7 @@ internal class NetTerminalGene
         }*/
 
         this.NetInterface.Terminal.RemoveInbound(this);
-        this.State = NetTerminalGeneState.Initial;
+        this.GeneState = State.Initial;
         this.Gene = 0;
         this.ReceivedId = PacketId.Invalid;
         this.Owner = this.Owner.Return();

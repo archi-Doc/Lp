@@ -1,7 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Collections.Concurrent;
-using LP.T3CS;
+using Netsphere.Crypto;
 
 namespace Netsphere;
 
@@ -48,8 +48,7 @@ public class CallContext
         }
     }
 
-    public Token CreateToken(Token.Type tokenType)
-        => new Token(tokenType, this.ServerContext.Terminal.Salt, Mics.GetCorrected() + Token.DefaultMics, Identifier.Zero);
+    // public Token CreateToken(Token.Type tokenType) => new Token(tokenType, this.ServerContext.Terminal.Salt, Mics.GetCorrected() + Token.DefaultMics, Identifier.Zero);
 
     internal void Initialize(ServerContext serviceContext, ByteArrayPool.MemoryOwner rentData, ulong dataId)
     {

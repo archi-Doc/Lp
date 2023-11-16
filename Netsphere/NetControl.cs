@@ -2,23 +2,23 @@
 
 #pragma warning disable SA1208 // System using directives should be placed before other using directives
 #pragma warning disable SA1210 // Using directives should be ordered alphabetically by namespace
+
 global using System.Net;
+global using Arc.Crypto;
 global using Arc.Threading;
 global using Arc.Unit;
 global using BigMachines;
-global using LP;
-global using LP.Block;
-global using LP.Data;
 global using Tinyhand;
 global using ValueLink;
 using CrystalData;
 using System.Collections.Concurrent;
-using LP.T3CS;
 using Microsoft.Extensions.DependencyInjection;
+using Netsphere.Crypto;
 using Netsphere.Logging;
 using Netsphere.Machines;
+using Netsphere.Misc;
 using Netsphere.Responder;
-using Netsphere.NetStats;
+using Netsphere.Stats;
 
 namespace Netsphere;
 
@@ -36,15 +36,14 @@ public class NetControl : UnitBase, IUnitPreparable
         {
             this.Configure(context =>
             {
-                LPBase.Configure(context);
-
                 // Main services
                 context.AddSingleton<NetControl>();
                 context.AddSingleton<NetBase>();
                 context.AddSingleton<Terminal>();
                 context.AddSingleton<EssentialAddress>();
-                context.AddSingleton<StatsData>();
+                context.AddSingleton<NetStats>();
                 context.AddTransient<Server>();
+                context.AddSingleton<NtpCorrection>();
                 // context.Services.Add(new ServiceDescriptor(typeof(NetService), x => new NetService(x), ServiceLifetime.Transient));
                 // context.AddTransient<NetService>(); // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
 
@@ -103,7 +102,7 @@ public class NetControl : UnitBase, IUnitPreparable
         }
     }
 
-    public NetControl(UnitContext context, UnitLogger logger, NetBase netBase, Terminal terminal, StatsData statsData)
+    public NetControl(UnitContext context, UnitLogger logger, NetBase netBase, Terminal terminal, NetStats statsData)
         : base(context)
     {
         this.logger = logger;

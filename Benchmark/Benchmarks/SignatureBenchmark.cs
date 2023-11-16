@@ -1,7 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using BenchmarkDotNet.Attributes;
-using LP;
+using Netsphere.Crypto;
 using Tinyhand;
 
 namespace Benchmark;

@@ -1,8 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Arc.Unit;
-using LP;
-using LP.Data;
 using LP.NetServices;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere;
@@ -45,11 +43,6 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
                 });
             });
 
-            this.SetupOptions<LPBase>((context, lpBase) =>
-            {// LPBase
-                lpBase.Initialize(new LPOptions(), true, "karate");
-            });
-
             this.SetupOptions<FileLoggerOptions>((context, options) =>
             {// FileLoggerOptions
                 var logfile = "Logs/Log.txt";
@@ -89,7 +82,6 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
 
             this.Context.ServiceProvider.GetRequiredService<RunnerBase>().Information = information;*/
 
-            var lpBase = this.Context.ServiceProvider.GetRequiredService<LPBase>();
             var information = this.Context.ServiceProvider.GetRequiredService<RunnerInformation>();
             if (!await information.Load(Path.Combine(lpBase.RootDirectory, RunnerInformation.Path)))
             {
@@ -99,7 +91,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             var netBase = this.Context.ServiceProvider.GetRequiredService<NetBase>();
             netBase.SetNodeKey(information.NodeKey);
 
-            var options = new LP.Data.NetsphereOptions();
+            var options = new NetsphereOptions();
             options.Port = information.RunnerPort;
             var param = new NetControl.Unit.Param(true, () => new ServerContext(), () => new CallContext(), "runner", options, true);
             await this.RunStandalone(param);

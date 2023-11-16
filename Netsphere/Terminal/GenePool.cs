@@ -3,7 +3,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
-using Arc.Crypto;
+using Netsphere.Crypto;
 
 namespace Netsphere;
 

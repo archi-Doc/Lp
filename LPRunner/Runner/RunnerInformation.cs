@@ -2,8 +2,8 @@
 
 using Arc.Unit;
 using LP;
-using LP.T3CS;
 using Netsphere;
+using Netsphere.Crypto;
 using Tinyhand;
 
 namespace LPRunner;
@@ -13,9 +13,8 @@ public partial record RunnerInformation
 {
     public const string Path = "RunnerInformation.tinyhand";
 
-    public RunnerInformation(LPBase lpBase, ILogger<RunnerInformation> logger)
+    public RunnerInformation(ILogger<RunnerInformation> logger)
     {
-        this.lpBase = lpBase;
         this.logger = logger;
     }
 
@@ -124,6 +123,5 @@ public partial record RunnerInformation
         return address;
     }
 
-    private LPBase lpBase;
     private ILogger logger;
 }

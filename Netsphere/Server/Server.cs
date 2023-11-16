@@ -1,12 +1,13 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Netsphere.Misc;
+
 namespace Netsphere;
 
 public class Server
 {
-    public Server(LPBase lpBase, NetBase netBase, NetControl netControl)
+    public Server(NetBase netBase, NetControl netControl)
     {// InvokeServer()
-        this.LpBase = lpBase;
         this.NetBase = netBase;
         this.NetControl = netControl;
         this.NetService = new NetService(this.NetControl.ServiceProvider);
@@ -46,10 +47,10 @@ public class Server
                     }
 
                     // Essential (PacketPunch)
-                    if (this.ProcessEssential(operation!, received))
+                    /*if (this.ProcessEssential(operation!, received))
                     {
                         continue;
-                    }
+                    }*/
 
                     continue;
                 }
@@ -78,8 +79,6 @@ public class Server
 
     public ThreadCoreBase? Core => this.NetControl.Terminal.Core;
 
-    public LPBase LpBase { get; }
-
     public NetBase NetBase { get; }
 
     public NetControl NetControl { get; }
@@ -90,7 +89,7 @@ public class Server
 
     public ServerContext ServerContext { get; private set; }
 
-    private bool ProcessEssential(ServerOperation operation, NetReceivedData received)
+    /*private bool ProcessEssential(ServerOperation operation, NetReceivedData received)
     {
         if (received.PacketId == PacketId.Punch)
         {
@@ -106,7 +105,7 @@ public class Server
         }
 
         return false;
-    }
+    }*/
 
     private bool ProcessEssential_Punch(ServerOperation operation, NetReceivedData received)
     {

@@ -2,68 +2,13 @@
 
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using Netsphere.Block;
 
 #pragma warning disable SA1202 // Elements should be ordered by access
 #pragma warning disable SA1513 // Closing brace should be followed by blank line
 #pragma warning disable SA1401 // Fields should be private
 
 namespace Netsphere;
-
-/// <summary>
-/// Represents a result of network transmission.
-/// </summary>
-public enum NetResult
-{
-    Success,
-    Timeout,
-    Closed,
-    NoDataToSend,
-    NoNodeInformation,
-    NoNetwork,
-    NoEncryptedConnection,
-    NoSender,
-    NoReceiver,
-    SerializationError,
-    DeserializationError,
-    PacketSizeLimit,
-    BlockSizeLimit,
-    ReserveError,
-    NoNetService,
-    NoCallContext,
-    UnknownException,
-    NotAuthorized,
-}
-
-/// <summary>
-/// Represents a received data.<br/>
-/// <see cref="NetResult.Success"/>: <see cref="NetReceivedData.Received"/> is valid, and it's preferable to call Return() method.<br/>
-/// Other: <see cref="NetReceivedData.Received"/> is default (empty).
-/// </summary>
-public record struct NetReceivedData
-{
-    public NetReceivedData(NetResult result, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner received)
-    {
-        this.Result = result;
-        this.PacketId = packetId;
-        this.DataId = dataId;
-        this.Received = received;
-    }
-
-    public NetReceivedData(NetResult result)
-    {
-        this.Result = result;
-        this.PacketId = PacketId.Invalid;
-        this.DataId = 0;
-        this.Received = default;
-    }
-
-    public void Return() => this.Received.Return();
-
-    public NetResult Result;
-    public PacketId PacketId;
-    public ulong DataId;
-    public ByteArrayPool.MemoryOwner Received;
-}
 
 internal class NetInterface<TSend, TReceive> : NetInterface
 {
@@ -630,12 +575,12 @@ WaitForSendCompletionWait:
             }
 
             // this.NetTerminal.Logger?.Log($"ProcessSend() {x.Gene.To4Hex()} {x.State}");
-            if (x.State == NetTerminalGeneState.SendComplete)
+            if (x.GeneState == NetTerminalGene.State.SendComplete)
             {
                 this.SendRemaining--;
                 (this.SendGenes[this.SendIndex], this.SendGenes[this.SendRemaining]) = (this.SendGenes[this.SendRemaining], this.SendGenes[this.SendIndex]);
             }
-            else if (x.State == NetTerminalGeneState.WaitingToSend)
+            else if (x.GeneState == NetTerminalGene.State.WaitingToSend)
             {// Send
                 if (x.Send())
                 {
@@ -646,7 +591,7 @@ WaitForSendCompletionWait:
                     this.NetTerminal.FlowControl.ReportSend(currentMics);
                 }
             }
-            else if (x.State == NetTerminalGeneState.WaitingForAck)
+            else if (x.GeneState == NetTerminalGene.State.WaitingForAck)
             {// Resend
                 if (this.NetTerminal.FlowControl.CheckResend(x.SentMics, currentMics))
                 {
@@ -688,7 +633,7 @@ WaitForSendCompletionWait:
         ByteArrayPool.Owner? rentArray = null;
         foreach (var x in this.RecvGenes)
         {
-            if (x.State == NetTerminalGeneState.SendingAck)
+            if (x.GeneState == NetTerminalGene.State.SendingAck)
             {
                 if (size >= maxSize)
                 {
@@ -721,7 +666,7 @@ WaitForSendCompletionWait:
                     size += sizeof(ulong);
                 }
 
-                x.State = NetTerminalGeneState.ReceiveComplete;
+                x.GeneState = NetTerminalGene.State.ReceiveComplete;
             }
         }
 

@@ -9,13 +9,14 @@ global using Arc.Unit;
 global using BigMachines;
 global using CrystalData;
 global using LP;
+global using Netsphere;
 global using Tinyhand;
 using LP.Data;
 using LP.Services;
 using LP.T3CS;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Netsphere;
+using Netsphere.Crypto;
 using Netsphere.Logging;
 using SimpleCommandLine;
 
@@ -215,7 +216,7 @@ public class Control : ILogInformation
                             new GlobalDirectoryConfiguration("Merger/Storage")),
                     });
 
-                    context.AddCrystal<Netsphere.NetStats.StatsData>(new CrystalConfiguration() with
+                    context.AddCrystal<Netsphere.Stats.NetStats>(new CrystalConfiguration() with
                     {
                         SaveFormat = SaveFormat.Utf8,
                         SavePolicy = SavePolicy.Periodic,
