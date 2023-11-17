@@ -118,11 +118,6 @@ public class NetControl : UnitBase, IUnitPreparable
         DefaultResponder.Register(this.Terminal);
     }
 
-    public void CreateMachines()
-    {
-        // Machines
-    }
-
     public void SetupServer(Func<ServerContext>? newServerContext = null, Func<CallContext>? newCallContext = null)
     {
         if (newServerContext != null)

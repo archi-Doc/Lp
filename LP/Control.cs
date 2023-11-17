@@ -347,9 +347,6 @@ public class Control : ILogInformation
 
                 // Prepare
                 this.Context.SendPrepare(new());
-
-                // Machines
-                // control.NetControl.CreateMachines();
             }
             catch
             {
@@ -426,6 +423,30 @@ public class Control : ILogInformation
         this.subcommandParser = new SimpleParser(context.Subcommands, SubcommandParserOptions);
     }
 
+    public static SimpleParserOptions SubcommandParserOptions { get; private set; } = default!;
+
+    public UnitLogger Logger { get; }
+
+    public UnitCore Core { get; }
+
+    public IUserInterfaceService UserInterfaceService { get; }
+
+    public LPBase LPBase { get; }
+
+    public BigMachine BigMachine { get; }
+
+    public NetControl NetControl { get; }
+
+    public Merger.Provider MergerProvider { get; }
+
+    public Crystalizer Crystalizer { get; }
+
+    public Vault Vault { get; }
+
+    public AuthorityVault AuthorityVault { get; }
+
+    private SimpleParser subcommandParser;
+
     public async Task LoadAsync(UnitContext context)
     {
         await context.SendLoadAsync(new(this.LPBase.DataDirectory));
@@ -452,11 +473,7 @@ public class Control : ILogInformation
     public async Task RunAsync(UnitContext context)
     {
         this.BigMachine.Start(null);
-
-        // this.BigMachine.CreateOrGet<EssentialNetMachine.Interface>(Identifier.Zero)?.RunAsync();
-        _ = this.BigMachine.NtpMachine.Get().RunAsync();
-        _ = this.BigMachine.NetStatsMachine.Get().RunAsync();
-        _ = this.BigMachine.LPControlMachine.Get().RunAsync();
+        this.RunMachines();
 
         await context.SendRunAsync(new(this.Core));
 
@@ -607,29 +624,12 @@ public class Control : ILogInformation
         this.UserInterfaceService.ChangeMode(IUserInterfaceService.Mode.View);
     }
 
-    public static SimpleParserOptions SubcommandParserOptions { get; private set; } = default!;
-
-    public UnitLogger Logger { get; }
-
-    public UnitCore Core { get; }
-
-    public IUserInterfaceService UserInterfaceService { get; }
-
-    public LPBase LPBase { get; }
-
-    public BigMachine BigMachine { get; }
-
-    public NetControl NetControl { get; }
-
-    public Merger.Provider MergerProvider { get; }
-
-    public Crystalizer Crystalizer { get; }
-
-    public Vault Vault { get; }
-
-    public AuthorityVault AuthorityVault { get; }
-
-    private SimpleParser subcommandParser;
+    private void RunMachines()
+    {
+        _ = this.BigMachine.NtpMachine.Get().RunAsync();
+        _ = this.BigMachine.NetStatsMachine.Get().RunAsync();
+        _ = this.BigMachine.LPControlMachine.Get().RunAsync();
+    }
 
     private async Task LoadKeyVault_NodeKey()
     {
