@@ -22,9 +22,8 @@ internal class ClientOperation : NetOperation
             return NetResult.NoNodeInformation;
         }
 
-        await this.NetTerminal.ConnectionSemaphore.WaitAsync().ConfigureAwait(false); // Avoid simultaneous invocation.
-        try
-        {
+        using (this.NetTerminal.ConnectionSemaphore.Lock())
+        {// Avoid simultaneous invocation.
             if (this.NetTerminal.IsEncrypted)
             {// Encrypted
                 return NetResult.Success;
@@ -51,10 +50,6 @@ internal class ClientOperation : NetOperation
 
             this.NetTerminal.SetSalt(p.SaltA, response.Value!.SaltA2);
             return this.NetTerminal.CreateEmbryo(p.Salt, response.Value!.Salt2);
-        }
-        finally
-        {
-            this.NetTerminal.ConnectionSemaphore.Release();
         }
     }
 

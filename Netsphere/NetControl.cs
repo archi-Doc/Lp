@@ -115,7 +115,7 @@ public class NetControl : UnitBase, IUnitPreparable
         }
 
         // Responders
-        DefaultResponder.Register(this);
+        DefaultResponder.Register(this.Terminal);
     }
 
     public void CreateMachines()
@@ -152,11 +152,6 @@ public class NetControl : UnitBase, IUnitPreparable
         }
     }
 
-    public bool AddResponder(INetResponder responder)
-    {
-        return this.Responders.TryAdd(responder.GetDataId(), responder);
-    }
-
     public Func<ServerContext> NewServerContext { get; private set; }
 
     public Func<CallContext> NewCallContext { get; private set; }
@@ -166,8 +161,6 @@ public class NetControl : UnitBase, IUnitPreparable
     public Terminal Terminal { get; }
 
     public Terminal? Alternative { get; }
-
-    internal ConcurrentDictionary<ulong, INetResponder> Responders { get; } = new();
 
     internal IServiceProvider ServiceProvider { get; }
 
