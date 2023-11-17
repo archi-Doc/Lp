@@ -2,7 +2,7 @@
 
 using Netsphere.Crypto;
 
-namespace LP.Fragments;
+/*namespace LP.Fragments;
 
 [TinyhandUnion(0, typeof(TestFragment))]
 public abstract partial class FragmentBase
@@ -20,4 +20,4 @@ public abstract partial class FragmentBase
             return false;
         }
     }
-}
+}*/
