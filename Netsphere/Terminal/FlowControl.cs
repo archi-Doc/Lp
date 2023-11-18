@@ -104,10 +104,10 @@ public class FlowControl
         public override string ToString() => $"{this.StartMics / 1_000_000d,0:F3} - {this.EndMics / 1_000_000d,0:F3} ({this.DurationMics / 1_000,0:F0} ms)";
     }
 
-    public FlowControl(NetTerminal netTerminal)
+    public FlowControl(NetTerminalObsolete netTerminal)
     {
         this.NetBase = netTerminal.Terminal.NetBase;
-        this.NetTerminal = netTerminal;
+        this.NetTerminalObsolete = netTerminal;
         this.State = ControlState.Probe;
 
         this.sendCapacityAccumulated = 0;
@@ -122,7 +122,7 @@ public class FlowControl
 
     public NetBase NetBase { get; }
 
-    public NetTerminal NetTerminal { get; }
+    public NetTerminalObsolete NetTerminalObsolete { get; }
 
     public ControlState State { get; private set; }
 
@@ -139,7 +139,7 @@ public class FlowControl
     private Window currentWindow;
 
     internal void Update(long currentMics)
-    {// lock (NetTerminal.SyncObject)
+    {// lock (NetTerminalObsolete.SyncObject)
         if (currentMics <= this.lastMics)
         {
             return;
@@ -165,7 +165,7 @@ public class FlowControl
     }
 
     internal void ReportAck(long currentMics, long sentMics)
-    {// lock (this.NetTerminal.SyncObject)
+    {// lock (this.NetTerminalObsolete.SyncObject)
         var elapsedMics = currentMics - sentMics;
 
         // Find window
@@ -188,7 +188,7 @@ public class FlowControl
     }
 
     internal void ReportSend(long currentMics)
-    {// lock (this.NetTerminal.SyncObject)
+    {// lock (this.NetTerminalObsolete.SyncObject)
         // Find window
         if (currentMics >= this.currentWindow.EndMics)
         {
@@ -209,21 +209,21 @@ public class FlowControl
     }
 
     internal void RentSendCapacity(out int sendCapacity)
-    {// lock (NetTerminal.SyncObject)
+    {// lock (NetTerminalObsolete.SyncObject)
         sendCapacity = (int)this.sendCapacityAccumulated;
         this.sendPerWindow += sendCapacity;
         this.sendCapacityAccumulated -= sendCapacity;
     }
 
     internal void ReturnSendCapacity(int sendCapacity)
-    {// lock (NetTerminal.SyncObject)
+    {// lock (NetTerminalObsolete.SyncObject)
         this.sendPerWindow -= sendCapacity;
         this.sendCapacityAccumulated += sendCapacity;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool CheckResend(long sentMics, long currentMics)
-    {// lock (NetTerminal.SyncObject)
+    {// lock (NetTerminalObsolete.SyncObject)
         if ((currentMics - sentMics) > this.resendMics)
         {
             var window = this.twoPreviousWindow;
@@ -279,7 +279,7 @@ public class FlowControl
         this.sendPerWindow = 0;
         this.resendMics = rtt.Mean * 2;
 
-        if (this.NetBase.Log.FlowControl && !this.NetTerminal.Terminal.IsAlternative)
+        if (this.NetBase.Log.FlowControl && !this.NetTerminalObsolete.Terminal.IsAlternative)
         {
             // Logger.Console.Information($"RTT: {rtt.Mean / 1000d,0:F0} ({rtt.Count}), Resent: {resent} => {sendCapacityPerRound,0:F2}");
         }
@@ -302,7 +302,7 @@ public class FlowControl
 
         var window = this.twoPreviousWindow;
         var sendCapacity = window.SendCapacityPerRound * window.DurationMics * NetConstants.MicsPerRoundRev;
-        if (this.NetBase.Log.FlowControl && !this.NetTerminal.Terminal.IsAlternative)
+        if (this.NetBase.Log.FlowControl && !this.NetTerminalObsolete.Terminal.IsAlternative)
         {
             // Logger.Console.Information($"SendPerWindow: {this.sendPerWindow}, Send: {window.SendCount}/{sendCapacity:F0}");
         }
@@ -325,7 +325,7 @@ public class FlowControl
             if (arr > TargetARR || rtt > TargetRTT)
             {
                 this.State = ControlState.Go;
-                if (this.NetBase.Log.FlowControl && !this.NetTerminal.Terminal.IsAlternative)
+                if (this.NetBase.Log.FlowControl && !this.NetTerminalObsolete.Terminal.IsAlternative)
                 {
                     // Logger.Console.Information($"ControlState.Go ARR:{arr:F2}, RTT:{rtt:F2}");
                 }
@@ -336,7 +336,7 @@ public class FlowControl
 
         if (window.SendCount < (sendCapacity * SendCapacityThreshold))
         {
-            if (this.NetBase.Log.FlowControl && !this.NetTerminal.Terminal.IsAlternative)
+            if (this.NetBase.Log.FlowControl && !this.NetTerminalObsolete.Terminal.IsAlternative)
             {
                 // Logger.Console.Information("Under");
             }
@@ -351,7 +351,7 @@ public class FlowControl
 
         // ControlState.Go
 
-        if (this.NetBase.Log.FlowControl && !this.NetTerminal.Terminal.IsAlternative)
+        if (this.NetBase.Log.FlowControl && !this.NetTerminalObsolete.Terminal.IsAlternative)
         {
             // Logger.Console.Information($"Send: {this.twoPreviousWindow.SendCount}, Resend: {this.twoPreviousWindow.ResendCount}, Capacity: {sendCapacity:F0}");
             // Logger.Console.Information($"ARR:{arr:F2}, RTT:{rtt:F2}");

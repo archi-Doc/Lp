@@ -4,15 +4,15 @@ namespace Netsphere;
 
 public abstract class NetOperation : IDisposable
 {
-    internal NetOperation(NetTerminal netTerminal)
+    internal NetOperation(NetTerminalObsolete netTerminal)
     {
         this.Terminal = netTerminal.Terminal;
-        this.NetTerminal = netTerminal;
+        this.NetTerminalObsolete = netTerminal;
     }
 
     public Terminal Terminal { get; }
 
-    public NetTerminal NetTerminal { get; }
+    public NetTerminalObsolete NetTerminalObsolete { get; }
 
     private GenePool? genePool;
 
@@ -20,10 +20,10 @@ public abstract class NetOperation : IDisposable
     {
         if (this.genePool == null)
         {
-            this.genePool = this.NetTerminal.TryFork();
+            this.genePool = this.NetTerminalObsolete.TryFork();
         }
 
-        var gp = this.genePool ?? this.NetTerminal.GenePool;
+        var gp = this.genePool ?? this.NetTerminalObsolete.GenePool;
         return gp.GetSequential();
     }
 
@@ -31,10 +31,10 @@ public abstract class NetOperation : IDisposable
     {
         if (this.genePool == null)
         {
-            this.genePool = this.NetTerminal.TryFork();
+            this.genePool = this.NetTerminalObsolete.TryFork();
         }
 
-        var gp = this.genePool ?? this.NetTerminal.GenePool;
+        var gp = this.genePool ?? this.NetTerminalObsolete.GenePool;
         return gp.GetSequential2();
     }
 
@@ -42,10 +42,10 @@ public abstract class NetOperation : IDisposable
     {
         if (this.genePool == null)
         {
-            this.genePool = this.NetTerminal.TryFork();
+            this.genePool = this.NetTerminalObsolete.TryFork();
         }
 
-        var gp = this.genePool ?? this.NetTerminal.GenePool;
+        var gp = this.genePool ?? this.NetTerminalObsolete.GenePool;
         gp.GetSequential(span);
     }
 

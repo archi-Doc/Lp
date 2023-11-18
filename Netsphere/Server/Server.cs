@@ -21,11 +21,11 @@ public class Server
     public async Task Process(ServerTerminal terminal)
     {
         this.Terminal = terminal.Terminal;
-        this.NetTerminal = terminal;
-        this.NetTerminal.SetMaximumResponseTime(1000);
+        this.NetTerminalObsolete = terminal;
+        this.NetTerminalObsolete.SetMaximumResponseTime(1000);
         this.ServerContext.Terminal = terminal;
 
-        while (!this.NetTerminal.IsClosed)
+        while (!this.NetTerminalObsolete.IsClosed)
         {
             (var operation, var received) = await terminal.ReceiveAsync().ConfigureAwait(false);
             try
@@ -58,13 +58,13 @@ public class Server
                 else if (received.Result == NetResult.Timeout ||
                     received.Result == NetResult.NoReceiver)
                 {
-                    this.NetTerminal.Logger?.Log($"{received.Result} -> SendClose()");
-                    this.NetTerminal.SendClose();
+                    this.NetTerminalObsolete.Logger?.Log($"{received.Result} -> SendClose()");
+                    this.NetTerminalObsolete.SendClose();
                     break;
                 }
                 else if (received.Result == NetResult.Closed)
                 {
-                    this.NetTerminal.Logger?.Log($"{received.Result}");
+                    this.NetTerminalObsolete.Logger?.Log($"{received.Result}");
                     break;
                 }
             }
@@ -75,7 +75,7 @@ public class Server
             }
         }
 
-        this.NetTerminal.Logger?.Log($"Server offline.");
+        this.NetTerminalObsolete.Logger?.Log($"Server offline.");
     }
 
     public ThreadCoreBase? Core => this.NetControl.Terminal.Core;
@@ -88,7 +88,7 @@ public class Server
 
     public Terminal Terminal { get; private set; } = default!;
 
-    public ServerTerminal NetTerminal { get; private set; } = default!;
+    public ServerTerminal NetTerminalObsolete { get; private set; } = default!;
 
     public ServerContext ServerContext { get; private set; }
 
@@ -117,12 +117,12 @@ public class Server
             return false;
         }
 
-        this.NetTerminal.Logger?.Log("Respond: PacketPunch");
+        this.NetTerminalObsolete.Logger?.Log("Respond: PacketPunch");
 
         TimeCorrection.AddCorrection(punch.UtcMics);
 
         var response = new PacketPunchResponse();
-        response.Endpoint = this.NetTerminal.Endpoint.EndPoint;
+        response.Endpoint = this.NetTerminalObsolete.Endpoint.EndPoint;
         response.UtcMics = Mics.GetUtcNow();
 
         var task = operation.SendPacketAsync(response);
@@ -137,7 +137,7 @@ public class Server
             return false;
         }
 
-        this.NetTerminal.Logger?.Log("Respond: TestPacket");
+        this.NetTerminalObsolete.Logger?.Log("Respond: TestPacket");
 
         var response = TestPacket.Create(2000);
         var task = operation.SendAsync(response);

@@ -6,7 +6,7 @@ namespace Netsphere;
 
 public class ServerOperation : NetOperation
 {
-    internal ServerOperation(NetTerminal netTerminal)
+    internal ServerOperation(NetTerminalObsolete netTerminal)
         : base(netTerminal)
     {
         this.receiverInterface = NetInterface<object, byte[]>.CreateReceive(this);
@@ -38,13 +38,13 @@ public class ServerOperation : NetOperation
 
     public unsafe void SendClose()
     {// Checked
-        if (this.NetTerminal.IsClosed)
+        if (this.NetTerminalObsolete.IsClosed)
         {
             return;
         }
 
-        this.NetTerminal.IsClosed = true;
-        if (!this.NetTerminal.IsEncrypted)
+        this.NetTerminalObsolete.IsClosed = true;
+        if (!this.NetTerminalObsolete.IsEncrypted)
         {// Not encrypted (connected)
             return;
         }
@@ -55,7 +55,7 @@ public class ServerOperation : NetOperation
             return;
         }
 
-        this.NetTerminal.CreateHeader(out var header, netInterface.StandbyGene);
+        this.NetTerminalObsolete.CreateHeader(out var header, netInterface.StandbyGene);
         header.Id = PacketId.Close;
 
         var arrayOwner = PacketPool.Rent();
@@ -64,7 +64,7 @@ public class ServerOperation : NetOperation
             *(PacketHeader*)bp = header;
         }
 
-        this.Terminal.AddRawSend(this.NetTerminal.Endpoint.EndPoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize)); // nspi
+        this.Terminal.AddRawSend(this.NetTerminalObsolete.Endpoint.EndPoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize)); // nspi
     }
 
     public async Task<NetReceivedData> ReceiveAsync()
@@ -105,7 +105,7 @@ public class ServerOperation : NetOperation
     public async Task<NetResult> SendPacketAsync<TSend>(TSend value)
        where TSend : IPacket
     {// Checked
-        if (!value.AllowUnencrypted && !this.NetTerminal.IsEncrypted)
+        if (!value.AllowUnencrypted && !this.NetTerminalObsolete.IsEncrypted)
         {
             return NetResult.NoEncryptedConnection;
         }
@@ -144,7 +144,7 @@ public class ServerOperation : NetOperation
 
     internal async Task<NetResult> SendDataAsync(bool encrypt, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner)
     {// Checked
-        if (!this.NetTerminal.IsEncrypted && encrypt)
+        if (!this.NetTerminalObsolete.IsEncrypted && encrypt)
         {
             return NetResult.NoEncryptedConnection;
         }

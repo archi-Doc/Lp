@@ -4,7 +4,7 @@ using System.Collections.Concurrent;
 
 namespace Netsphere;
 
-public class ServerTerminal : NetTerminal
+public class ServerTerminal : NetTerminalObsolete
 {
     public const ushort DefaultReceiverNumber = 4;
     public const ushort MaxReceiverNumber = 16;
