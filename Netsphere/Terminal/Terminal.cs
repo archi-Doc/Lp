@@ -156,8 +156,8 @@ public class Terminal : UnitBase, IUnitExecutable
         this.UnitLogger = unitLogger;
         this.logger = unitLogger.GetLogger<Terminal>();
         this.NetBase = netBase;
-        this.NetSocketIpv4 = new(this);
-        this.NetSocketIpv6 = new(this);
+        this.NetSocketIpv4 = new(this.ProcessSend, this.ProcessReceive);
+        this.NetSocketIpv6 = new(this.ProcessSend, this.ProcessReceive);
         this.statsData = statsData;
     }
 
@@ -170,8 +170,17 @@ public class Terminal : UnitBase, IUnitExecutable
             this.Port = this.NetBase.NetsphereOptions.Port;
         }
 
-        this.NetSocketIpv4.Start(this.Core, this.Port, false);
-        this.NetSocketIpv6.Start(this.Core, this.Port, true);
+        if (!this.NetSocketIpv4.Start(this.Core, this.Port, false))
+        {
+            this.logger.TryGet(LogLevel.Fatal)?.Log($"Could not create a UDP socket with port {this.Port}.");
+            throw new PanicException();
+        }
+
+        if (!this.NetSocketIpv6.Start(this.Core, this.Port, true))
+        {
+            this.logger.TryGet(LogLevel.Fatal)?.Log($"Could not create a UDP socket with port {this.Port}.");
+            throw new PanicException();
+        }
     }
 
     public async Task TerminateAsync(UnitMessage.TerminateAsync message)
