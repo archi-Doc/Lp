@@ -30,7 +30,6 @@ public class LPBase : ILogInformation
     public LPBase()
     {
         this.Settings = TinyhandSerializer.Reconstruct<LPSettings>();
-        TimeCorrection.Start();
     }
 
     public bool IsFirstRun { get; private set; }

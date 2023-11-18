@@ -10,7 +10,6 @@ global using Arc.Unit;
 global using BigMachines;
 global using Tinyhand;
 global using ValueLink;
-using CrystalData;
 using System.Collections.Concurrent;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Crypto;
@@ -60,19 +59,6 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddSubcommand(typeof(LP.Subcommands.NetTestSubcommand));
                 context.AddSubcommand(typeof(LP.Subcommands.NetCleanSubcommand));
             });
-
-            var crystalDataBuilder = new CrystalData.CrystalControl.Builder();
-            /*crystalDataBuilder.ConfigureCrystal(context =>
-            {
-                context.AddCrystal<PublicIPMachine.Data>(new CrystalConfiguration() with
-                {
-                    SaveFormat = SaveFormat.Utf8,
-                    FileConfiguration = new GlobalFileConfiguration("PublicIP.tinyhand"),
-                    NumberOfHistoryFiles = 0,
-                });
-            });*/
-
-            this.AddBuilder(crystalDataBuilder);
         }
     }
 
@@ -129,12 +115,7 @@ public class NetControl : UnitBase, IUnitPreparable
         }
 
         // Responders
-        DefaultResponder.Register(this);
-    }
-
-    public void CreateMachines()
-    {
-        // Machines
+        DefaultResponder.Register(this.Terminal);
     }
 
     public void SetupServer(Func<ServerContext>? newServerContext = null, Func<CallContext>? newCallContext = null)
@@ -166,11 +147,6 @@ public class NetControl : UnitBase, IUnitPreparable
         }
     }
 
-    public bool AddResponder(INetResponder responder)
-    {
-        return this.Responders.TryAdd(responder.GetDataId(), responder);
-    }
-
     public Func<ServerContext> NewServerContext { get; private set; }
 
     public Func<CallContext> NewCallContext { get; private set; }
@@ -180,8 +156,6 @@ public class NetControl : UnitBase, IUnitPreparable
     public Terminal Terminal { get; }
 
     public Terminal? Alternative { get; }
-
-    internal ConcurrentDictionary<ulong, INetResponder> Responders { get; } = new();
 
     internal IServiceProvider ServiceProvider { get; }
 

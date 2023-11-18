@@ -20,6 +20,7 @@ public class Server
 
     public async Task Process(ServerTerminal terminal)
     {
+        this.Terminal = terminal.Terminal;
         this.NetTerminal = terminal;
         this.NetTerminal.SetMaximumResponseTime(1000);
         this.ServerContext.Terminal = terminal;
@@ -32,7 +33,7 @@ public class Server
                 if (received.Result == NetResult.Success)
                 {// Success
                     if (received.PacketId == PacketId.Data &&
-                        this.NetControl.Responders.TryGetValue(received.DataId, out var responder) &&
+                       this.Terminal.TryGetResponder(received.DataId, out var responder) &&
                         responder.Respond(operation!, received))
                     {// Responder
                         continue;
@@ -84,6 +85,8 @@ public class Server
     public NetControl NetControl { get; }
 
     public NetService NetService { get; }
+
+    public Terminal Terminal { get; private set; } = default!;
 
     public ServerTerminal NetTerminal { get; private set; } = default!;
 

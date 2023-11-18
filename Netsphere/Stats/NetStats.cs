@@ -7,8 +7,9 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
 {
     private static readonly long ResetMics = Mics.FromMinutes(5);
 
-    public NetStats(NetBase netBase, EssentialAddress essentialAddress)
+    public NetStats(ILogger<NetStats> logger, NetBase netBase, EssentialAddress essentialAddress)
     {
+        this.logger = logger;
         this.netBase = netBase;
         this.EssentialAddress = essentialAddress;
     }
@@ -16,6 +17,7 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
     #region FieldAndProperty
 
     private readonly object syncObject = new();
+    private readonly ILogger logger;
     private readonly NetBase netBase;
 
     [Key(0)]
@@ -65,6 +67,8 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
         {// Ipv4
             this.MyIpv4Address.ReportAddress(priority, result.Address);
         }
+
+        this.logger.TryGet()?.Log(result.ToString());
     }
 
     public string Dump()
@@ -81,7 +85,7 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
     {
         var utcNow = Mics.GetUtcNow();
         var range = new MicsRange(utcNow - Mics.FromMinutes(1), utcNow);
-        // if (!range.IsIn(this.LastMics))
+        if (!range.IsIn(this.LastMics))
         {
             this.Reset();
         }

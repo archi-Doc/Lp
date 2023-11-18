@@ -48,7 +48,7 @@ public class MultimediaTimer : IDisposable
     private MultimediaTimer(int intervalMilliseconds, TimerProc timerProc)
     {
         this.timerProc = new Proc((a, b, c, d, e) => { timerProc(); }); // Avoid exception: A callback was made on a garbage collected delegate of type
-        var timerId = timeSetEvent(intervalMilliseconds, 1, this.timerProc, 0, 1);
+        this.timerId = timeSetEvent(intervalMilliseconds, 1, this.timerProc, 0, 1);
     }
 
     private int timerId;

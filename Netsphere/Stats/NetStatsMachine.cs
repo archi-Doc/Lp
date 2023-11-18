@@ -2,7 +2,6 @@
 
 using System;
 using System.Net;
-using CrystalData;
 using Netsphere.Stats;
 
 namespace Netsphere.Machines;
@@ -16,11 +15,11 @@ public partial class NetStatsMachine : Machine
     private const string DynDnsUri = "http://checkip.dyndns.org";
     private static readonly TimeSpan GetTimeout = TimeSpan.FromSeconds(2);
 
-    public NetStatsMachine(ILogger<NetStatsMachine> logger, NetControl netControl, ICrystal<NetStats> statsData)
+    public NetStatsMachine(ILogger<NetStatsMachine> logger, NetControl netControl, NetStats statsData)
     {
         this.logger = logger;
         this.netControl = netControl;
-        this.statsData = statsData.Data;
+        this.statsData = statsData;
 
         this.DefaultTimeout = TimeSpan.FromSeconds(5);
 

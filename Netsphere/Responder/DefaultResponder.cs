@@ -4,8 +4,8 @@ namespace Netsphere.Responder;
 
 internal class DefaultResponder
 {
-    public static void Register(NetControl netControl)
+    public static void Register(Terminal terminal)
     {
-        netControl.AddResponder(TestBlockResponder.Instance);
+        terminal.AddResponder(TestBlockResponder.Instance);
     }
 }

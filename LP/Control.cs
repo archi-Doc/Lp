@@ -37,6 +37,7 @@ public class Control : ILogInformation
 
             this.Configure(context =>
             {
+                // Base
                 LPBase.Configure(context);
 
                 // Main services
@@ -170,6 +171,9 @@ public class Control : ILogInformation
             {// CrystalizerOptions
                 context.GetOptions<LPOptions>(out var lpOptions);
                 // options.RootPath = lpOptions.RootDirectory;
+                options.DefaultSaveFormat = SaveFormat.Utf8;
+                options.DefaultSavePolicy = SavePolicy.Periodic;
+                options.DefaultSaveInterval = TimeSpan.FromMinutes(10);
                 options.GlobalDirectory = new LocalDirectoryConfiguration(LPBase.DataDirectoryName);
                 options.EnableFilerLogger = false;
             });
@@ -186,20 +190,22 @@ public class Control : ILogInformation
             return new CrystalControl.Builder()
                 .ConfigureCrystal(context =>
                 {
-                    context.AddCrystal<LPSettings>(CrystalConfiguration.SingleUtf8(true, new GlobalFileConfiguration(LPSettings.Filename)));
-                    context.AddCrystal<MergerInformation>(CrystalConfiguration.SingleUtf8(true, new GlobalFileConfiguration(MergerInformation.Filename)));
-
-                    /*context.AddCrystal<CrystalDataInterface>(new()
+                    context.AddCrystal<LPSettings>(new()
                     {
-                        SavePolicy = SavePolicy.OnChanged,
                         NumberOfFileHistories = 0,
-                        FileConfiguration = new GlobalFileConfiguration("Vault.Filename.tinyhand"),
-                    });*/
+                        FileConfiguration = new GlobalFileConfiguration(LPSettings.Filename),
+                        RequiredForLoading = true,
+                    });
+
+                    context.AddCrystal<MergerInformation>(new()
+                    {
+                        NumberOfFileHistories = 0,
+                        FileConfiguration = new GlobalFileConfiguration(MergerInformation.Filename),
+                        RequiredForLoading = true,
+                    });
 
                     context.AddCrystal<Mono>(new()
                     {
-                        SavePolicy = SavePolicy.Periodic,
-                        SaveInterval = TimeSpan.FromMinutes(10),
                         SaveFormat = SaveFormat.Binary,
                         NumberOfFileHistories = 0,
                         FileConfiguration = new GlobalFileConfiguration("Mono"),
@@ -207,8 +213,6 @@ public class Control : ILogInformation
 
                     context.AddCrystal<CreditData.GoshujinClass>(new()
                     {
-                        SavePolicy = SavePolicy.Periodic,
-                        SaveInterval = TimeSpan.FromMinutes(10),
                         SaveFormat = SaveFormat.Binary,
                         NumberOfFileHistories = 3,
                         FileConfiguration = new GlobalFileConfiguration("Merger/Credits"),
@@ -218,19 +222,15 @@ public class Control : ILogInformation
 
                     context.AddCrystal<Netsphere.Stats.NetStats>(new CrystalConfiguration() with
                     {
-                        SaveFormat = SaveFormat.Utf8,
-                        SavePolicy = SavePolicy.Periodic,
-                        SaveInterval = TimeSpan.FromMinutes(10),
-                        FileConfiguration = new GlobalFileConfiguration("NetStat.tinyhand"),
                         NumberOfFileHistories = 2,
+                        FileConfiguration = new GlobalFileConfiguration("NetStat.tinyhand"),
                     });
 
-                    /*context.AddCrystal<PublicIPMachine.Data>(new CrystalConfiguration() with
+                    context.AddCrystal<Netsphere.Misc.NtpCorrection>(new CrystalConfiguration() with
                     {
-                        SaveFormat = SaveFormat.Utf8,
-                        FileConfiguration = new GlobalFileConfiguration("PublicIP2.tinyhand"),
                         NumberOfFileHistories = 0,
-                    });*/
+                        FileConfiguration = new GlobalFileConfiguration("NtpCorrection.tinyhand"),
+                    });
                 });
         }
 
@@ -347,9 +347,6 @@ public class Control : ILogInformation
 
                 // Prepare
                 this.Context.SendPrepare(new());
-
-                // Machines
-                // control.NetControl.CreateMachines();
             }
             catch
             {
@@ -426,6 +423,30 @@ public class Control : ILogInformation
         this.subcommandParser = new SimpleParser(context.Subcommands, SubcommandParserOptions);
     }
 
+    public static SimpleParserOptions SubcommandParserOptions { get; private set; } = default!;
+
+    public UnitLogger Logger { get; }
+
+    public UnitCore Core { get; }
+
+    public IUserInterfaceService UserInterfaceService { get; }
+
+    public LPBase LPBase { get; }
+
+    public BigMachine BigMachine { get; }
+
+    public NetControl NetControl { get; }
+
+    public Merger.Provider MergerProvider { get; }
+
+    public Crystalizer Crystalizer { get; }
+
+    public Vault Vault { get; }
+
+    public AuthorityVault AuthorityVault { get; }
+
+    private SimpleParser subcommandParser;
+
     public async Task LoadAsync(UnitContext context)
     {
         await context.SendLoadAsync(new(this.LPBase.DataDirectory));
@@ -452,11 +473,7 @@ public class Control : ILogInformation
     public async Task RunAsync(UnitContext context)
     {
         this.BigMachine.Start(null);
-
-        // this.BigMachine.CreateOrGet<EssentialNetMachine.Interface>(Identifier.Zero)?.RunAsync();
-        _ = this.BigMachine.NtpMachine.Get().RunAsync();
-        _ = this.BigMachine.NetStatsMachine.Get().RunAsync();
-        _ = this.BigMachine.LPControlMachine.Get().RunAsync();
+        this.RunMachines();
 
         await context.SendRunAsync(new(this.Core));
 
@@ -607,29 +624,12 @@ public class Control : ILogInformation
         this.UserInterfaceService.ChangeMode(IUserInterfaceService.Mode.View);
     }
 
-    public static SimpleParserOptions SubcommandParserOptions { get; private set; } = default!;
-
-    public UnitLogger Logger { get; }
-
-    public UnitCore Core { get; }
-
-    public IUserInterfaceService UserInterfaceService { get; }
-
-    public LPBase LPBase { get; }
-
-    public BigMachine BigMachine { get; }
-
-    public NetControl NetControl { get; }
-
-    public Merger.Provider MergerProvider { get; }
-
-    public Crystalizer Crystalizer { get; }
-
-    public Vault Vault { get; }
-
-    public AuthorityVault AuthorityVault { get; }
-
-    private SimpleParser subcommandParser;
+    private void RunMachines()
+    {
+        _ = this.BigMachine.NtpMachine.Get().RunAsync();
+        _ = this.BigMachine.NetStatsMachine.Get().RunAsync();
+        _ = this.BigMachine.LPControlMachine.Get().RunAsync();
+    }
 
     private async Task LoadKeyVault_NodeKey()
     {

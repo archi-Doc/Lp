@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using CrystalData;
-
 namespace Netsphere.Machines;
 
 /*[MachineObject(UseServiceProvider = true)]

@@ -25,8 +25,6 @@ public static class Mics
     {
         TimestampToMics = 1_000_000d / Stopwatch.Frequency;
         FixedMics = GetUtcNow() - (long)(Stopwatch.GetTimestamp() * TimestampToMics);
-
-        TimeCorrection.Start();
     }
 
     /// <summary>
@@ -115,6 +113,8 @@ public static class Mics
     public static long FromNanoseconds(double nanoseconds) => (long)(nanoseconds * MicsPerNanosecond);
 
     public static DateTime ToDateTime(long mics) => new DateTime((long)((double)mics * Time.MicsToTicks));
+
+    public static TimeSpan ToTimeSpan(long mics) => new TimeSpan((long)((double)mics * Time.MicsToTicks));
 
     public static string ToString(long mics, string? format = null) => ToDateTime(mics).ToString(format);
 }

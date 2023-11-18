@@ -91,7 +91,7 @@ public partial class NetTerminal : IDisposable
 
     internal object SyncObject { get; } = new();
 
-    internal SemaphoreSlim ConnectionSemaphore { get; } = new(1, 1);
+    internal SemaphoreLock ConnectionSemaphore { get; } = new();
 
     internal GenePool GenePool { get; }
 
@@ -511,8 +511,6 @@ public partial class NetTerminal : IDisposable
                 {
                     this.Clear();
                 }
-
-                this.ConnectionSemaphore.Dispose();
 
                 // this.Logger?.Log("terminal disposed.");
             }
