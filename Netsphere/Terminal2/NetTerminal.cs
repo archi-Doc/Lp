@@ -1,20 +1,20 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Netsphere.Crypto;
-using Netsphere.Responder;
 using Netsphere.Stats;
 
 namespace Netsphere;
 
 public class NetTerminal
 {
-    public NetTerminal(UnitContext context, UnitLogger unitLogger, NetBase netBase, NetStats statsData)
+    public NetTerminal(UnitLogger unitLogger, NetBase netBase, NetStats statsData)
     {
         this.UnitLogger = unitLogger;
         this.logger = unitLogger.GetLogger<Terminal>();
         this.NetBase = netBase;
-        // this.NetSocketIpv4 = new(this);
-        // this.NetSocketIpv6 = new(this);
+
+        this.NetSocketIpv4 = new(this.ProcessSend, this.ProcessReceive);
+        this.NetSocketIpv6 = new(this.ProcessSend, this.ProcessReceive);
         this.statsData = statsData;
     }
 
@@ -38,4 +38,26 @@ public class NetTerminal
 
     private readonly ILogger logger;
     private readonly NetStats statsData;
+
+    public void Prepare(UnitMessage.Prepare message)
+    {
+        // Terminals
+        this.Terminal.Initialize(false, this.NetBase.NodePrivateKey);
+        if (this.Alternative != null)
+        {
+            this.Alternative.Initialize(true, NodePrivateKey.AlternativePrivateKey);
+            this.Alternative.Port = NetAddress.Alternative.Port;
+        }
+
+        // Responders
+        // DefaultResponder.Register(this.Terminal);
+    }
+
+    private void ProcessSend(long currentMics)
+    {
+    }
+
+    private unsafe void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner arrayOwner, int packetSize, long currentMics)
+    {
+    }
 }
