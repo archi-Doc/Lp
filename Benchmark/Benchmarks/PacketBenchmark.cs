@@ -3,6 +3,7 @@
 using System.Security.Cryptography;
 using Arc.Crypto;
 using BenchmarkDotNet.Attributes;
+using Tinyhand;
 
 namespace Benchmark;
 
@@ -93,5 +94,12 @@ public class PacketBenchmark
         Sha3Helper.Get256_Span(source, hash);
         this.Aes.TryDecryptCbc(this.Encrypted, hash.Slice(0, 16), this.Decrypted, out var written, PaddingMode.None);
         return this.Decrypted;
+    }
+
+    [Benchmark]
+    public byte[] CompressLZ4()
+    {
+        var bin = TinyhandSerializer.Serialize(this.Encrypted, TinyhandSerializerOptions.Lz4);
+        return bin;
     }
 }
