@@ -4,4 +4,10 @@ namespace Netsphere;
 
 public class NetConnection
 {
+    public enum OpenMode
+    {
+        ReuseClosed,
+        ReuseOpened,
+        NoReuse,
+    }
 }
