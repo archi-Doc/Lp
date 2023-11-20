@@ -25,7 +25,7 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
 
         this.logger.TryGet()?.Log($"SendData: {address.ToString()}");
 
-        using (var terminal = this.NetControl.Terminal.TryCreate(address))
+        using (var terminal = this.NetControl.TerminalObsolete.TryCreate(address))
         {
             if (terminal is null)
             {

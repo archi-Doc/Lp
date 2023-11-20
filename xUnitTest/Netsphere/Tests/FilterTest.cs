@@ -16,7 +16,7 @@ public class FilterTest
     [Fact]
     public async Task Test1()
     {
-        using (var terminal = this.NetControl.Terminal.TryCreate(NetNode.Alternative))
+        using (var terminal = this.NetControl.TerminalObsolete.TryCreate(NetNode.Alternative))
         {
             if (terminal is null)
             {

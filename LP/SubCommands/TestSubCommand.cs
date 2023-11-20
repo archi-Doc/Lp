@@ -113,7 +113,7 @@ public class TestSubcommand : ISimpleCommandAsync<TestOptions>
         originator.CreateSignature(value, out var signature);
         // this.userInterfaceService.WriteLine(HashedString.FromEnum(CrystalResult.NoStorage));
 
-        using (var terminal = this.control.NetControl.Terminal.TryCreate(NetNode.Alternative))
+        using (var terminal = this.control.NetControl.TerminalObsolete.TryCreate(NetNode.Alternative))
         {
             if (terminal is null)
             {

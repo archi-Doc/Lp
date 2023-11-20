@@ -43,7 +43,7 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
         this.logger.TryGet()?.Log($"Ping: {address.ToString()}");
 
         var sw = Stopwatch.StartNew();
-        using (var terminal = this.Control.NetControl.Terminal.TryCreate(address))
+        using (var terminal = this.Control.NetControl.TerminalObsolete.TryCreate(address))
         {
             if (terminal is null)
             {

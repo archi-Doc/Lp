@@ -34,10 +34,10 @@ public class InfoSubcommandLP : ISimpleCommand<DumpSubcommandInfoOptions>
             logger?.Log($"Time.GetCorrected(): {Time.GetCorrected()}");
 
             logger?.Log($"Terminal:");
-            this.Control.NetControl.Terminal.Dump(logger);
+            this.Control.NetControl.TerminalObsolete.Dump(logger);
 
             logger?.Log($"Alternative:");
-            if (this.Control.NetControl.Alternative is { } terminal)
+            if (this.Control.NetControl.AlternativeObsolete is { } terminal)
             {
                 terminal.Dump(logger);
             }

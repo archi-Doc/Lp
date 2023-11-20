@@ -88,34 +88,36 @@ public class NetControl : UnitBase, IUnitPreparable
         }
     }
 
-    public NetControl(UnitContext context, UnitLogger logger, NetBase netBase, Terminal terminal, NetStats statsData)
+    public NetControl(UnitContext context, UnitLogger unitLogger, NetBase netBase, NetStats netStats)
         : base(context)
     {
-        this.logger = logger;
+        this.unitLogger = unitLogger;
         this.ServiceProvider = context.ServiceProvider;
         this.NewServerContext = () => new ServerContext();
         this.NewCallContext = () => new CallContext();
         this.NetBase = netBase;
 
-        this.Terminal = terminal;
+        this.Terminal = new(false, context, unitLogger, netBase, netStats);
+        this.TerminalObsolete = new(context, unitLogger, netBase, netStats);
         if (this.NetBase.NetsphereOptions.EnableAlternative)
-        {
-            this.Alternative = new(context, logger, netBase, statsData); // For debug
+        {// For debugging
+            this.Alternative = new(true, context, unitLogger, netBase, netStats);
+            this.AlternativeObsolete = new(context, unitLogger, netBase, netStats);
         }
     }
 
     public void Prepare(UnitMessage.Prepare message)
     {
         // Terminals
-        this.Terminal.Initialize(false, this.NetBase.NodePrivateKey);
-        if (this.Alternative != null)
+        this.TerminalObsolete.Initialize(false, this.NetBase.NodePrivateKey);
+        if (this.AlternativeObsolete != null)
         {
-            this.Alternative.Initialize(true, NodePrivateKey.AlternativePrivateKey);
-            this.Alternative.Port = NetAddress.Alternative.Port;
+            this.AlternativeObsolete.Initialize(true, NodePrivateKey.AlternativePrivateKey);
+            this.AlternativeObsolete.Port = NetAddress.Alternative.Port;
         }
 
         // Responders
-        DefaultResponder.Register(this.Terminal);
+        DefaultResponder.Register(this.TerminalObsolete);
     }
 
     public void SetupServer(Func<ServerContext>? newServerContext = null, Func<CallContext>? newCallContext = null)
@@ -130,8 +132,8 @@ public class NetControl : UnitBase, IUnitPreparable
             this.NewCallContext = newCallContext;
         }
 
-        this.Terminal.SetInvokeServerDelegate(InvokeServer);
-        this.Alternative?.SetInvokeServerDelegate(InvokeServer);
+        this.TerminalObsolete.SetInvokeServerDelegate(InvokeServer);
+        this.AlternativeObsolete?.SetInvokeServerDelegate(InvokeServer);
 
         async Task InvokeServer(ServerTerminal terminal)
         {
@@ -153,13 +155,17 @@ public class NetControl : UnitBase, IUnitPreparable
 
     public NetBase NetBase { get; }
 
-    public Terminal Terminal { get; }
+    public NetTerminal Terminal { get; }
 
-    public Terminal? Alternative { get; }
+    public NetTerminal? Alternative { get; }
+
+    public Terminal TerminalObsolete { get; }
+
+    public Terminal? AlternativeObsolete { get; }
 
     internal IServiceProvider ServiceProvider { get; }
 
-    private UnitLogger logger;
+    private UnitLogger unitLogger;
 
     private void Dump(ILog logger)
     {

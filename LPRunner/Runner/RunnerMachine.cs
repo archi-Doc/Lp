@@ -152,7 +152,7 @@ public partial class RunnerMachine : Machine
             return NetResult.NoNodeInformation;
         }
 
-        using (var terminal = this.netControl.Terminal.TryCreate(nodeAddress))
+        using (var terminal = this.netControl.TerminalObsolete.TryCreate(nodeAddress))
         {
             if (terminal is null)
             {

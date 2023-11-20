@@ -21,7 +21,7 @@ public class NodeSubcommandGet : ISimpleCommandAsync<NodeSubcommandGetOptions>
             return;
         }
 
-        using (var terminal = this.Control.NetControl.Terminal.TryCreate(address))
+        using (var terminal = this.Control.NetControl.TerminalObsolete.TryCreate(address))
         {
             if (terminal is null)
             {

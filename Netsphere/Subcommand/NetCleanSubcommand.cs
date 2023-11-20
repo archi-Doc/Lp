@@ -16,8 +16,8 @@ public class NetCleanSubcommand : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        this.NetControl.Terminal.CleanNetsphere();
-        this.NetControl.Alternative?.CleanNetsphere();
+        this.NetControl.TerminalObsolete.CleanNetsphere();
+        this.NetControl.AlternativeObsolete?.CleanNetsphere();
     }
 
     public NetControl NetControl { get; set; }

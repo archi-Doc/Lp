@@ -49,14 +49,14 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
         this.logger.TryGet()?.Log($"Punch: {node.ToString()}");
 
         var sw = Stopwatch.StartNew();
-        using (var terminal = this.Control.NetControl.Terminal.TryCreate(node))
+        using (var terminal = this.Control.NetControl.TerminalObsolete.TryCreate(node))
         {
             NetEndPoint endPoint;
             if (terminal is null)
             {
                 return;
             }
-            else if (this.Control.NetControl.Terminal.TryCreateEndPoint(nextNode, out endPoint))
+            else if (this.Control.NetControl.TerminalObsolete.TryCreateEndPoint(nextNode, out endPoint))
             {
                 return;
             }
