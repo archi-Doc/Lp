@@ -96,6 +96,7 @@ public class NetControl : UnitBase, IUnitPreparable
         this.NewServerContext = () => new ServerContext();
         this.NewCallContext = () => new CallContext();
         this.NetBase = netBase;
+        this.NetStats = netStats;
 
         this.Terminal = new(false, context, unitLogger, netBase, netStats);
         this.TerminalObsolete = new(context, unitLogger, netBase, netStats);
@@ -154,6 +155,8 @@ public class NetControl : UnitBase, IUnitPreparable
     public Func<CallContext> NewCallContext { get; private set; }
 
     public NetBase NetBase { get; }
+
+    public NetStats NetStats { get; }
 
     public NetTerminal Terminal { get; }
 

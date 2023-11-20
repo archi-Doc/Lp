@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
 using Netsphere.Crypto;
 using Netsphere.Stats;
 
@@ -7,7 +8,7 @@ namespace Netsphere;
 
 public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 {
-    public NetTerminal(bool isAlternative, UnitContext unitContext, UnitLogger unitLogger, NetBase netBase, NetStats statsData)
+    public NetTerminal(bool isAlternative, UnitContext unitContext, UnitLogger unitLogger, NetBase netBase, NetStats netStats)
         : base(unitContext)
     {
         this.IsAlternative = isAlternative;
@@ -17,8 +18,11 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
         this.netSocketIpv4 = new(this.ProcessSend, this.ProcessReceive);
         this.netSocketIpv6 = new(this.ProcessSend, this.ProcessReceive);
-        this.statsData = statsData;
+        this.connections = new(netStats);
+        this.netStats = netStats;
     }
+
+    #region FieldAndProperty
 
     public NetBase NetBase { get; }
 
@@ -29,10 +33,16 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     internal UnitLogger UnitLogger { get; private set; }
 
     private readonly ILogger logger;
-    private readonly NetStats statsData;
+    private readonly NetStats netStats;
     private readonly NetSocket netSocketIpv4;
     private readonly NetSocket netSocketIpv6;
+    private readonly NetConnectionControl connections;
     private NodePrivateKey nodePrivateKey = default!;
+
+    #endregion
+
+    public NetConnection? TryConnect(NetAddress address, NetConnection.ConnectMode mode = NetConnection.ConnectMode.ReuseClosed)
+        => this.connections.TryConnect(address, mode);
 
     void IUnitPreparable.Prepare(UnitMessage.Prepare message)
     {
