@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics;
 using System.Net.Sockets;
 using Netsphere.Misc;
 
@@ -9,15 +8,19 @@ namespace Netsphere;
 /// <summary>
 /// NetSocket provides low-level network service.
 /// </summary>
-public class NetSocket
+public sealed class NetSocket
 {
+    public delegate void ProcessSend(long currentMics);
+
+    public delegate void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner arrayOwner, int packetSize, long currentMics);
+
     private const int ReceiveTimeout = 100;
 
-    internal class NetSocketRecvCore : ThreadCore
+    private class RecvCore : ThreadCore
     {
         public static void Process(object? parameter)
         {
-            var core = (NetSocketRecvCore)parameter!;
+            var core = (RecvCore)parameter!;
 
             IPEndPoint anyEP;
             if (core.socket.UnsafeUdpClient?.Client.AddressFamily == AddressFamily.InterNetwork)
@@ -48,7 +51,7 @@ public class NetSocket
                     {// nspi
                         // var systemMics = Mics.GetSystem();
                         var currentMics = core.socket.CurrentSystemMics;
-                        core.socket.terminal.ProcessReceive((IPEndPoint)remoteEP, arrayOwner, received, currentMics);
+                        core.socket.processReceive((IPEndPoint)remoteEP, arrayOwner, received, currentMics);
                         if (arrayOwner.Count > 1)
                         {// Byte array is used by multiple owners. Return and rent a new one next time.
                             arrayOwner = arrayOwner.Return();
@@ -61,7 +64,7 @@ public class NetSocket
             }
         }
 
-        public NetSocketRecvCore(ThreadCoreBase parent, NetSocket socket)
+        public RecvCore(ThreadCoreBase parent, NetSocket socket)
                 : base(parent, Process, false)
         {
             this.socket = socket;
@@ -70,11 +73,11 @@ public class NetSocket
         private NetSocket socket;
     }
 
-    internal class NetSocketSendCore : ThreadCore
+    private class SendCore : ThreadCore
     {
         public static void Process(object? parameter)
         {
-            var core = (NetSocketSendCore)parameter!;
+            var core = (SendCore)parameter!;
             while (!core.IsTerminated)
             {
                 var prev = Mics.GetSystem();
@@ -83,13 +86,13 @@ public class NetSocket
                 var nano = NetConstants.SendIntervalNanoseconds - ((Mics.GetSystem() - prev) * 1000);
                 if (nano > 0)
                 {
-                    core.socket.Logger?.TryGet()?.Log($"Nanosleep: {nano}");
+                    // core.socket.Logger?.TryGet()?.Log($"Nanosleep: {nano}");
                     core.TryNanoSleep(nano); // Performs better than core.Sleep() on Linux.
                 }
             }
         }
 
-        public NetSocketSendCore(ThreadCoreBase parent, NetSocket socket)
+        public SendCore(ThreadCoreBase parent, NetSocket socket)
                 : base(parent, Process, false)
         {
             this.socket = socket;
@@ -111,7 +114,7 @@ public class NetSocket
                 if (this.socket.UnsafeUdpClient is not null)
                 {
                     // this.socket.Logger?.TryGet()?.Log($"ProcessSend");
-                    this.socket.terminal.ProcessSend(currentMics);
+                    this.socket.processSend(currentMics);
                 }
 
                 this.previousMics = currentMics;
@@ -131,10 +134,10 @@ public class NetSocket
         private long previousMics;
     }
 
-    public NetSocket(Terminal terminal)
+    public NetSocket(ProcessSend processSend, ProcessReceive processReceive)
     {
-        this.terminal = terminal;
-        this.logger = terminal.UnitLogger.GetLogger<NetSocket>();
+        this.processSend = processSend;
+        this.processReceive = processReceive;
         this.UpdateSystemMics();
     }
 
@@ -142,19 +145,16 @@ public class NetSocket
 
     public long CurrentSystemMics => this.currentSystemMics;
 
-    internal ILogger? Logger => this.terminal.IsAlternative ? null : this.logger;
-
 #pragma warning disable SA1401 // Fields should be private
     internal UdpClient? UnsafeUdpClient;
 #pragma warning restore SA1401 // Fields should be private
 
-    private Terminal terminal;
-    private ILogger logger;
-    private NetSocketRecvCore? recvCore;
-    private NetSocketSendCore? sendCore;
-    private long currentSystemMics;
+    private readonly ProcessSend processSend;
+    private readonly ProcessReceive processReceive;
 
-    private Stopwatch Stopwatch { get; } = new();
+    private RecvCore? recvCore;
+    private SendCore? sendCore;
+    private long currentSystemMics;
 
     #endregion
 
@@ -163,8 +163,8 @@ public class NetSocket
 
     public bool Start(ThreadCoreBase parent, int port, bool ipv6)
     {
-        this.recvCore = new NetSocketRecvCore(parent, this);
-        this.sendCore = new NetSocketSendCore(parent, this);
+        this.recvCore ??= new RecvCore(parent, this);
+        this.sendCore ??= new SendCore(parent, this);
 
         try
         {
@@ -172,8 +172,10 @@ public class NetSocket
         }
         catch
         {
-            this.Logger?.TryGet(LogLevel.Fatal)?.Log($"Could not create a UDP socket with port {port}.");
-            throw new PanicException();
+            // this.Logger?.TryGet(LogLevel.Fatal)?.Log($"Could not create a UDP socket with port {port}.");
+            // throw new PanicException();
+
+            return false;
         }
 
         this.recvCore.Start();

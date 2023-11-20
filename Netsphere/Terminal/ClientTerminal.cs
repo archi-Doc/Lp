@@ -4,7 +4,7 @@ using Arc.Crypto;
 
 namespace Netsphere;
 
-public class ClientTerminal : NetTerminal
+public class ClientTerminal : NetTerminalObsolete
 {
     internal ClientTerminal(Terminal terminal, NetEndPoint endPoint)
         : base(terminal, endPoint)

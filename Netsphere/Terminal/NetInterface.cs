@@ -20,7 +20,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
             return null;
         }
 
-        var netTerminal = netOperation.NetTerminal;
+        var netTerminal = netOperation.NetTerminalObsolete;
         interfaceResult = NetResult.Success;
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
         var sequentialGenes = netOperation.Get2Genes(); // Send gene
@@ -60,7 +60,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         (ulong First, ulong Second) sequentialGenes;
         interfaceResult = NetResult.Success;
 
-        var netTerminal = netOperation.NetTerminal;
+        var netTerminal = netOperation.NetTerminalObsolete;
         netTerminal.CreateHeader(out var header, 0); // Set gene in a later code.
         PacketService.CreatePacket(ref header, value, id, out var sendOwner);
         if (sendOwner.Memory.Length <= PacketService.SafeMaxPayloadSize)
@@ -98,7 +98,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
 
     internal static NetInterface<TSend, TReceive> CreateReserve2(NetOperation netOperation, PacketReserve reserve)
     {
-        var netInterface = new NetInterface<TSend, TReceive>(netOperation.NetTerminal);
+        var netInterface = new NetInterface<TSend, TReceive>(netOperation.NetTerminalObsolete);
 
         (var receiveGene, netInterface.StandbyGene) = netOperation.Get2Genes();
 
@@ -114,7 +114,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         }
 
         netInterface.RecvGenes = genes;
-        netInterface.NetTerminal.Add(netInterface);
+        netInterface.NetTerminalObsolete.Add(netInterface);
         return netInterface;
     }
 
@@ -123,7 +123,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         NetInterface<TSend, TReceive>? netInterface;
         (ulong First, ulong Second) sequentialGenes;
 
-        var netTerminal = netOperation.NetTerminal;
+        var netTerminal = netOperation.NetTerminalObsolete;
         sequentialGenes = netOperation.Get2Genes(); // Send gene
 
         var response = new PacketReserveResponse();
@@ -155,7 +155,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         return netInterface;
     }
 
-    internal static NetInterface<TSend, TReceive> CreateConnect(NetTerminal netTerminal, ulong gene, ByteArrayPool.MemoryOwner receiveOwner, ulong secondGene, ByteArrayPool.MemoryOwner toBeMoved)
+    internal static NetInterface<TSend, TReceive> CreateConnect(NetTerminalObsolete netTerminal, ulong gene, ByteArrayPool.MemoryOwner receiveOwner, ulong secondGene, ByteArrayPool.MemoryOwner toBeMoved)
     {// Only for connection.
         var netInterface = new NetInterface<TSend, TReceive>(netTerminal);
 
@@ -168,14 +168,14 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         netInterface.SendGenes = new NetTerminalGene[] { sendGene, };
         sendGene.SetSend(toBeMoved);
 
-        // netInterface.NetTerminal.Add(netInterface); // Delay
+        // netInterface.NetTerminalObsolete.Add(netInterface); // Delay
         return netInterface;
     }
 
     internal static NetTerminalGene[] CreateSendGenes(NetOperation netOperation, NetInterface<TSend, TReceive> netInterface, ulong gene, ByteArrayPool.MemoryOwner owner, PacketId packetId, ulong dataId)
     {
         ReadOnlySpan<byte> span = owner.Memory.Span;
-        var netTerminal = netInterface.NetTerminal;
+        var netTerminal = netInterface.NetTerminalObsolete;
         var info = PacketService.GetDataSize(owner.Memory.Length);
 
         Span<ulong> arraySpan = stackalloc ulong[info.NumberOfGenes];
@@ -219,18 +219,18 @@ internal class NetInterface<TSend, TReceive> : NetInterface
 
     internal static NetInterface<TSend, TReceive> CreateReceive(NetOperation netOperation)
     {// Receive
-        var netInterface = new NetInterface<TSend, TReceive>(netOperation.NetTerminal);
+        var netInterface = new NetInterface<TSend, TReceive>(netOperation.NetTerminalObsolete);
 
         (var receiveGene, netInterface.StandbyGene) = netOperation.Get2Genes();
         var gene = new NetTerminalGene(receiveGene, netInterface);
         netInterface.RecvGenes = new NetTerminalGene[] { gene, };
         gene.SetReceive();
 
-        netInterface.NetTerminal.Add(netInterface);
+        netInterface.NetTerminalObsolete.Add(netInterface);
         return netInterface;
     }
 
-    protected NetInterface(NetTerminal netTerminal)
+    protected NetInterface(NetTerminalObsolete netTerminal)
     : base(netTerminal)
     {
     }
@@ -238,15 +238,15 @@ internal class NetInterface<TSend, TReceive> : NetInterface
     internal bool SetSend<TValue>(TValue value)
         where TValue : IPacket
     {
-        // lock (this.NetTerminal.SyncObject)
+        // lock (this.NetTerminalObsolete.SyncObject)
         if (this.SendGenes != null)
         {
-            this.NetTerminal.Logger?.Log($"SetSend: Fatal");
+            this.NetTerminalObsolete.Logger?.Log($"SetSend: Fatal");
             return false;
         }
 
         var gene = this.StandbyGene;
-        this.NetTerminal.CreateHeader(out var header, gene);
+        this.NetTerminalObsolete.CreateHeader(out var header, gene);
         PacketService.CreatePacket(ref header, value, value.PacketId, out var sendOwner);
         if (sendOwner.Memory.Length <= PacketService.SafeMaxPayloadSize)
         {// Single packet.
@@ -254,7 +254,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
             this.SendGenes = new NetTerminalGene[] { ntg, };
             ntg.SetSend(sendOwner);
 
-            this.NetTerminal.Logger?.Log($"RegisterSend3  : {gene.To4Hex()}");
+            this.NetTerminalObsolete.Logger?.Log($"RegisterSend3  : {gene.To4Hex()}");
             return true;
         }
         else
@@ -266,24 +266,24 @@ internal class NetInterface<TSend, TReceive> : NetInterface
 
     internal bool SetSend(NetOperation netOperation, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner)
     {
-        // lock (this.NetTerminal.SyncObject)
+        // lock (this.NetTerminalObsolete.SyncObject)
         if (this.SendGenes != null)
         {
-            this.NetTerminal.Logger?.Log($"SetSend: Fatal");
+            this.NetTerminalObsolete.Logger?.Log($"SetSend: Fatal");
             return false;
         }
 
         var gene = this.StandbyGene;
-        this.NetTerminal.CreateHeader(out var header, gene);
+        this.NetTerminalObsolete.CreateHeader(out var header, gene);
         if (owner.Memory.Length <= PacketService.SafeMaxPayloadSize)
         {// Single packet.
             PacketService.CreateDataPacket(ref header, packetId, dataId, owner.Memory.Span, out var sendOwner);
             var ntg = new NetTerminalGene(gene, this);
-            // this.NetTerminal.Logger?.Log($"ntg {ntg.State} {this.SendGenes?.Length}");
+            // this.NetTerminalObsolete.Logger?.Log($"ntg {ntg.State} {this.SendGenes?.Length}");
             this.SendGenes = new NetTerminalGene[] { ntg, };
             ntg.SetSend(sendOwner);
 
-            this.NetTerminal.Logger?.Log($"RegisterSend4  : {gene.To4Hex()}");
+            this.NetTerminalObsolete.Logger?.Log($"RegisterSend4  : {gene.To4Hex()}");
             return true;
         }
         else
@@ -299,17 +299,17 @@ public class NetInterface : IDisposable
 {
     public const int IntervalInMilliseconds = 2;
 
-    protected private NetInterface(NetTerminal netTerminal)
+    protected private NetInterface(NetTerminalObsolete netTerminal)
     {
         this.Terminal = netTerminal.Terminal;
-        this.NetTerminal = netTerminal;
+        this.NetTerminalObsolete = netTerminal;
     }
 
     #region FiendAndProperty
 
     public Terminal Terminal { get; }
 
-    public NetTerminal NetTerminal { get; }
+    public NetTerminalObsolete NetTerminalObsolete { get; }
 
     internal NetTerminalGene[]? SendGenes;
     internal NetTerminalGene[]? RecvGenes;
@@ -327,21 +327,21 @@ public class NetInterface : IDisposable
     /// <returns><see cref="NetResult"/>.</returns>
     public async Task<NetResult> WaitForSendCompletionAsync()
     {// Checked
-        this.NetTerminal.ResetLastResponseMics();
+        this.NetTerminalObsolete.ResetLastResponseMics();
 
-        while (this.Terminal.Core?.IsTerminated == false && this.NetTerminal.IsClosed == false)
+        while (this.Terminal.Core?.IsTerminated == false && this.NetTerminalObsolete.IsClosed == false)
         {
-            if (Mics.GetSystem() >= (this.NetTerminal.LastResponseMics + this.NetTerminal.MaximumResponseMics))
+            if (Mics.GetSystem() >= (this.NetTerminalObsolete.LastResponseMics + this.NetTerminalObsolete.MaximumResponseMics))
             {
-                this.NetTerminal.Logger?.Log($"SendAsync: Timeout");
+                this.NetTerminalObsolete.Logger?.Log($"SendAsync: Timeout");
                 return NetResult.Timeout;
             }
 
-            lock (this.NetTerminal.SyncObject)
+            lock (this.NetTerminalObsolete.SyncObject)
             {
                 if (this.SendGenes == null)
                 {
-                    this.NetTerminal.Logger?.Log($"SendAsync: NoData");
+                    this.NetTerminalObsolete.Logger?.Log($"SendAsync: NoData");
                     return NetResult.Success; // NetResult.NoDataToSend;
                 }
 
@@ -353,21 +353,21 @@ public class NetInterface : IDisposable
                     }
                 }
 
-                this.NetTerminal.Logger?.Log($"SendAsync: Success");
+                this.NetTerminalObsolete.Logger?.Log($"SendAsync: Success");
                 return NetResult.Success;
             }
 
 WaitForSendCompletionWait:
             try
             {
-                await this.NetTerminal.ReceiveEvent.WaitAsync(TimeSpan.FromMilliseconds(100), this.Terminal.Core.CancellationToken).ConfigureAwait(false); // tempcode
+                await this.NetTerminalObsolete.ReceiveEvent.WaitAsync(TimeSpan.FromMilliseconds(100), this.Terminal.Core.CancellationToken).ConfigureAwait(false); // tempcode
 
                 // var ct = this.Terminal.Core?.CancellationToken ?? CancellationToken.None;
-                // await Task.WhenAny(this.NetTerminal.ReceiveEvent.WaitAsync(ct), Task.Delay(NetInterface.IntervalInMilliseconds, ct)).ConfigureAwait(false);
+                // await Task.WhenAny(this.NetTerminalObsolete.ReceiveEvent.WaitAsync(ct), Task.Delay(NetInterface.IntervalInMilliseconds, ct)).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
-                this.NetTerminal.Logger?.Log($"SendAsync: Closed2");
+                this.NetTerminalObsolete.Logger?.Log($"SendAsync: Closed2");
                 return NetResult.Closed;
             }
             catch
@@ -375,7 +375,7 @@ WaitForSendCompletionWait:
             }
         }
 
-        this.NetTerminal.Logger?.Log($"SendAsync: Closed {this.Terminal.Core?.IsTerminated}, {this.NetTerminal.IsClosed}");
+        this.NetTerminalObsolete.Logger?.Log($"SendAsync: Closed {this.Terminal.Core?.IsTerminated}, {this.NetTerminalObsolete.IsClosed}");
         return NetResult.Closed;
     }
 
@@ -386,11 +386,11 @@ WaitForSendCompletionWait:
     public async Task<NetReceivedData> ReceiveAsync()
     {// Checked
         ByteArrayPool.MemoryOwner data = default;
-        this.NetTerminal.ResetLastResponseMics();
+        this.NetTerminalObsolete.ResetLastResponseMics();
 
-        while (this.Terminal.Core?.IsTerminated == false && this.NetTerminal.IsClosed == false)
+        while (this.Terminal.Core?.IsTerminated == false && this.NetTerminalObsolete.IsClosed == false)
         {
-            lock (this.NetTerminal.SyncObject)
+            lock (this.NetTerminalObsolete.SyncObject)
             {
                 if (this.ReceivedGeneToData(out var packetId, out var dataId, ref data))
                 {
@@ -398,12 +398,12 @@ WaitForSendCompletionWait:
                 }
             }
 
-            if (Mics.GetSystem() >= (this.NetTerminal.LastResponseMics + this.NetTerminal.MaximumResponseMics))
+            if (Mics.GetSystem() >= (this.NetTerminalObsolete.LastResponseMics + this.NetTerminalObsolete.MaximumResponseMics))
             {
-                if (this.NetTerminal.Logger is { } logger)
+                if (this.NetTerminalObsolete.Logger is { } logger)
                 {
                     string genes;
-                    lock (this.NetTerminal.SyncObject)
+                    lock (this.NetTerminalObsolete.SyncObject)
                     {
                         genes = this.RecvGenes == null ? string.Empty : string.Join(", ", this.RecvGenes.Select(x => x.Gene.To4Hex()));
                     }
@@ -416,14 +416,14 @@ WaitForSendCompletionWait:
 
             try
             {
-                await this.NetTerminal.ReceiveEvent.WaitAsync(TimeSpan.FromMilliseconds(100), this.Terminal.Core.CancellationToken).ConfigureAwait(false); // tempcode
+                await this.NetTerminalObsolete.ReceiveEvent.WaitAsync(TimeSpan.FromMilliseconds(100), this.Terminal.Core.CancellationToken).ConfigureAwait(false); // tempcode
 
                 // var ct = this.Terminal.Core?.CancellationToken ?? CancellationToken.None;
-                // await Task.WhenAny(this.NetTerminal.ReceiveEvent.WaitAsync(ct), Task.Delay(NetInterface.IntervalInMilliseconds, ct)).ConfigureAwait(false);
+                // await Task.WhenAny(this.NetTerminalObsolete.ReceiveEvent.WaitAsync(ct), Task.Delay(NetInterface.IntervalInMilliseconds, ct)).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
-                this.NetTerminal.Logger?.Log($"ReceiveAsync: Closed2");
+                this.NetTerminalObsolete.Logger?.Log($"ReceiveAsync: Closed2");
                 return new NetReceivedData(NetResult.Closed);
             }
             catch
@@ -431,7 +431,7 @@ WaitForSendCompletionWait:
             }
         }
 
-        this.NetTerminal.Logger?.Log($"ReceiveAsync: Closed");
+        this.NetTerminalObsolete.Logger?.Log($"ReceiveAsync: Closed");
         return new NetReceivedData(NetResult.Closed);
     }
 
@@ -470,7 +470,7 @@ WaitForSendCompletionWait:
     }
 
     protected bool ReceivedGeneToData(out PacketId packetId, out ulong dataId, ref ByteArrayPool.MemoryOwner dataMemory)
-    {// lock (this.NetTerminal.SyncObject)
+    {// lock (this.NetTerminalObsolete.SyncObject)
         packetId = PacketId.Invalid;
         dataId = 0;
         if (this.RecvGenes == null)
@@ -484,7 +484,7 @@ WaitForSendCompletionWait:
                 return false;
             }
 
-            // this.NetTerminal.TerminalLogger?.Information($"received {this.RecvGenes[0].Gene.To4Hex()}");
+            // this.NetTerminalObsolete.TerminalLogger?.Information($"received {this.RecvGenes[0].Gene.To4Hex()}");
             packetId = this.RecvGenes[0].ReceivedId;
             dataMemory = this.RecvGenes[0].Owner.IncrementAndShare();
             if (packetId == PacketId.Data)
@@ -548,10 +548,10 @@ WaitForSendCompletionWait:
     }
 
     internal void ProcessSend(long currentMics, ref int sendCapacity)
-    {// lock (this.NetTerminal.SyncObject)
+    {// lock (this.NetTerminalObsolete.SyncObject)
         if (this.SendGenes == null)
         {
-            // this.NetTerminal.Logger?.Log($"ProcessSend No SendGenes");
+            // this.NetTerminalObsolete.Logger?.Log($"ProcessSend No SendGenes");
             return;
         }
 
@@ -564,7 +564,7 @@ WaitForSendCompletionWait:
             return;
         }
 
-        // this.NetTerminal.Logger?.Log($"ProcessSend Capacity: {sendCapacity}, Index: {this.SendIndex}, Length: {this.SendGenes.Length}, Remaining: {this.SendRemaining}");
+        // this.NetTerminalObsolete.Logger?.Log($"ProcessSend Capacity: {sendCapacity}, Index: {this.SendIndex}, Length: {this.SendGenes.Length}, Remaining: {this.SendRemaining}");
         var remaining = this.SendRemaining;
         for (var i = 0; i < remaining; i++)
         {// remaining > 0
@@ -574,7 +574,7 @@ WaitForSendCompletionWait:
                 return;
             }
 
-            // this.NetTerminal.Logger?.Log($"ProcessSend() {x.Gene.To4Hex()} {x.State}");
+            // this.NetTerminalObsolete.Logger?.Log($"ProcessSend() {x.Gene.To4Hex()} {x.State}");
             if (x.GeneState == NetTerminalGene.State.SendComplete)
             {
                 this.SendRemaining--;
@@ -584,24 +584,24 @@ WaitForSendCompletionWait:
             {// Send
                 if (x.Send())
                 {
-                    // this.NetTerminal.Logger?.Log($"Udp Sent({this.Terminal.MaxCapacityPerRound}): {x.ToString()}");
+                    // this.NetTerminalObsolete.Logger?.Log($"Udp Sent({this.Terminal.MaxCapacityPerRound}): {x.ToString()}");
 
                     sendCapacity--;
                     x.SentMics = currentMics;
-                    this.NetTerminal.FlowControl.ReportSend(currentMics);
+                    this.NetTerminalObsolete.FlowControl.ReportSend(currentMics);
                 }
             }
             else if (x.GeneState == NetTerminalGene.State.WaitingForAck)
             {// Resend
-                if (this.NetTerminal.FlowControl.CheckResend(x.SentMics, currentMics))
+                if (this.NetTerminalObsolete.FlowControl.CheckResend(x.SentMics, currentMics))
                 {
                     if (x.Send())
                     {
-                        this.NetTerminal.Logger?.Log($"Udp Resent: {x.ToString()}");
+                        this.NetTerminalObsolete.Logger?.Log($"Udp Resent: {x.ToString()}");
                         sendCapacity--;
                         x.SentMics = currentMics;
-                        this.NetTerminal.FlowControl.ReportSend(currentMics);
-                        this.NetTerminal.IncrementResendCount();
+                        this.NetTerminalObsolete.FlowControl.ReportSend(currentMics);
+                        this.NetTerminalObsolete.IncrementResendCount();
                     }
                 }
             }
@@ -616,7 +616,7 @@ WaitForSendCompletionWait:
         if (this.SendRemaining == 0)
         {
             // this.SendGenes = null; // Causes net terminal gene leakage.
-            this.NetTerminal.Logger?.Log($"ProcessSend() SendGenes done");
+            this.NetTerminalObsolete.Logger?.Log($"ProcessSend() SendGenes done");
         }
     }
 
@@ -638,15 +638,15 @@ WaitForSendCompletionWait:
                 if (size >= maxSize)
                 {
                     PacketService.InsertDataSize(rentArray!.ByteArray, (ushort)(size - PacketService.HeaderSize));
-                    this.Terminal.AddRawSend(this.NetTerminal.Endpoint.EndPoint, rentArray!.ToMemoryOwner(0, size)); // nspi
-                    // this.NetTerminal.TerminalLogger?.Information($"AACK {size}");
+                    this.Terminal.AddRawSend(this.NetTerminalObsolete.Endpoint.EndPoint, rentArray!.ToMemoryOwner(0, size)); // nspi
+                    // this.NetTerminalObsolete.TerminalLogger?.Information($"AACK {size}");
                     size = 0;
                 }
 
-                // this.NetTerminal.TerminalLogger?.Information(x.Gene.To4Hex());
+                // this.NetTerminalObsolete.TerminalLogger?.Information(x.Gene.To4Hex());
                 if (size == 0)
                 {
-                    this.NetTerminal.CreateHeader(out header, x.Gene);
+                    this.NetTerminalObsolete.CreateHeader(out header, x.Gene);
                     header.Id = PacketId.Ack;
 
                     rentArray = PacketPool.Rent();
@@ -673,22 +673,22 @@ WaitForSendCompletionWait:
         if (size > 0)
         {
             PacketService.InsertDataSize(rentArray!.ByteArray, (ushort)(size - PacketService.HeaderSize));
-            this.Terminal.AddRawSend(this.NetTerminal.Endpoint.EndPoint, rentArray!.ToMemoryOwner(0, size)); // nspi
-            // this.NetTerminal.TerminalLogger?.Information($"AACK {size}");
+            this.Terminal.AddRawSend(this.NetTerminalObsolete.Endpoint.EndPoint, rentArray!.ToMemoryOwner(0, size)); // nspi
+            // this.NetTerminalObsolete.TerminalLogger?.Information($"AACK {size}");
             size = 0;
         }
     }
 
     internal void ProcessReceive(ByteArrayPool.MemoryOwner owner, IPEndPoint endPoint, ref PacketHeader header, long currentMics, NetTerminalGene gene)
     {// nspi
-        lock (this.NetTerminal.SyncObject)
+        lock (this.NetTerminalObsolete.SyncObject)
         {
-            if (this.NetTerminal.IsClosed)
+            if (this.NetTerminalObsolete.IsClosed)
             {
                 // this.TerminalLogger?.Error("Closed(receive).");
                 return;
             }
-            else if (!this.NetTerminal.Endpoint.EndPointEquals(endPoint))
+            else if (!this.NetTerminalObsolete.Endpoint.EndPointEquals(endPoint))
             {// Endpoint mismatch.
                 // this.TerminalLogger?.Error("Endpoint mismatch.");
                 return;
@@ -696,7 +696,7 @@ WaitForSendCompletionWait:
 
             if (header.Id == PacketId.Ack)
             {// Ack (header.Gene + data(ulong[]))
-                this.NetTerminal.SetLastResponseMics(currentMics);
+                this.NetTerminalObsolete.SetLastResponseMics(currentMics);
 
                 gene.ReceiveAck(currentMics);
                 var g = MemoryMarshal.Cast<byte, ulong>(owner.Memory.Span);
@@ -705,7 +705,7 @@ WaitForSendCompletionWait:
                 {
                     if (this.Terminal.TryGetInbound(x, out var gene2))
                     {
-                        if (gene2.NetInterface.NetTerminal == this.NetTerminal)
+                        if (gene2.NetInterface.NetTerminalObsolete == this.NetTerminalObsolete)
                         {
                             gene2.ReceiveAck(currentMics);
                         }
@@ -715,7 +715,7 @@ WaitForSendCompletionWait:
             else if (header.Id == PacketId.Close)
             {
                 // this.TerminalLogger?.Information($"Close, {header.Gene.To4Hex()}");
-                this.NetTerminal.IsClosed = true;
+                this.NetTerminalObsolete.IsClosed = true;
             }
             /*else if (header.Id == PacketId.Punch || header.Id == PacketId.Ping || header.Id == PacketId.GetNodeInformation)
             {
@@ -725,11 +725,11 @@ WaitForSendCompletionWait:
             {// Receive data
                 if (gene.Receive(header.Id, owner, currentMics))
                 {// Received.
-                    this.NetTerminal.SetLastResponseMics(currentMics);
+                    this.NetTerminalObsolete.SetLastResponseMics(currentMics);
 
                     if (gene.NetInterface.IsReceiveComplete())
                     {
-                        this.NetTerminal.ReceiveEvent.Pulse();
+                        this.NetTerminalObsolete.ReceiveEvent.Pulse();
                     }
 
                     // this.TerminalLogger?.Information($"Recv data: {header.Id} {gene.ToString()}");
@@ -739,7 +739,7 @@ WaitForSendCompletionWait:
     }
 
     internal void Clear()
-    {// lock (this.NetTerminal.SyncObject)
+    {// lock (this.NetTerminalObsolete.SyncObject)
         if (this.SendGenes != null)
         {
             foreach (var x in this.SendGenes)
@@ -780,11 +780,11 @@ WaitForSendCompletionWait:
     /// <inheritdoc/>
     public void Dispose()
     {
-        lock (this.NetTerminal.SyncObject)
+        lock (this.NetTerminalObsolete.SyncObject)
         {
             if (this.DisposedMics == 0)
             {// Delay the disposal.
-                this.NetTerminal.ActiveToDisposed(this);
+                this.NetTerminalObsolete.ActiveToDisposed(this);
                 this.DisposedMics = Mics.GetSystem();
             }
         }
@@ -807,10 +807,10 @@ WaitForSendCompletionWait:
             if (disposing)
             {
                 // free managed resources.
-                lock (this.NetTerminal.SyncObject)
+                lock (this.NetTerminalObsolete.SyncObject)
                 {
                     this.Clear();
-                    Debug.Assert(this.NetTerminal.RemoveInternal(this) != false);
+                    Debug.Assert(this.NetTerminalObsolete.RemoveInternal(this) != false);
                 }
             }
 

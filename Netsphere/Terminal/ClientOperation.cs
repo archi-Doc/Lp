@@ -6,30 +6,31 @@ namespace Netsphere;
 
 internal class ClientOperation : NetOperation
 {
-    internal ClientOperation(NetTerminal netTerminal)
+    internal ClientOperation(NetTerminalObsolete netTerminal)
         : base(netTerminal)
     {
     }
 
     public override async Task<NetResult> EncryptConnectionAsync()
     {// Checked
-        if (this.NetTerminal.IsEncrypted)
+        if (this.NetTerminalObsolete.IsEncrypted)
         {// Encrypted
             return NetResult.Success;
         }
-        else if (this.NetTerminal.Node == null && !this.Terminal.NetBase.AllowUnsafeConnection)
+        else if (this.NetTerminalObsolete.Node == null && !this.Terminal.NetBase.AllowUnsafeConnection)
         {// Unmanaged
             return NetResult.NoNodeInformation;
         }
 
-        using (this.NetTerminal.ConnectionSemaphore.Lock())
-        {// Avoid simultaneous invocation.
-            if (this.NetTerminal.IsEncrypted)
+        await this.NetTerminalObsolete.ConnectionSemaphore.EnterAsync().ConfigureAwait(false); // Avoid simultaneous invocation.
+        try
+        {
+            if (this.NetTerminalObsolete.IsEncrypted)
             {// Encrypted
                 return NetResult.Success;
             }
 
-            if (this.NetTerminal.Node == null)
+            if (this.NetTerminalObsolete.Node == null)
             {// Get NodeInformation (Unsafe).
                 var r = await this.SendPacketAndReceiveAsync<PacketGetNodeInformation, PacketGetNodeInformationResponse>(new()).ConfigureAwait(false);
                 if (r.Result != NetResult.Success)
@@ -37,7 +38,7 @@ internal class ClientOperation : NetOperation
                     return r.Result;
                 }
 
-                this.NetTerminal.MergeNode(r.Value!.Node);
+                this.NetTerminalObsolete.MergeNode(r.Value!.Node);
             }
 
             // Encrypt
@@ -48,15 +49,19 @@ internal class ClientOperation : NetOperation
                 return response.Result;
             }
 
-            this.NetTerminal.SetSalt(p.SaltA, response.Value!.SaltA2);
-            return this.NetTerminal.CreateEmbryo(p.Salt, response.Value!.Salt2);
+            this.NetTerminalObsolete.SetSalt(p.SaltA, response.Value!.SaltA2);
+            return this.NetTerminalObsolete.CreateEmbryo(p.Salt, response.Value!.Salt2);
+        }
+        finally
+        {
+            this.NetTerminalObsolete.ConnectionSemaphore.Exit();
         }
     }
 
     public async Task<NetResult> SendPacketAsync<TSend>(TSend value)
         where TSend : IPacket
     {// Checked
-        if (!value.AllowUnencrypted && !this.NetTerminal.IsEncrypted)
+        if (!value.AllowUnencrypted && !this.NetTerminalObsolete.IsEncrypted)
         {
             var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
             if (result != NetResult.Success)
@@ -84,7 +89,7 @@ internal class ClientOperation : NetOperation
     public async Task<(NetResult Result, TReceive? Value)> SendPacketAndReceiveAsync<TSend, TReceive>(TSend value)
         where TSend : IPacket
     {// Checked
-        if (!value.AllowUnencrypted && !this.NetTerminal.IsEncrypted)
+        if (!value.AllowUnencrypted && !this.NetTerminalObsolete.IsEncrypted)
         {
             var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
             if (result != NetResult.Success)
@@ -211,7 +216,7 @@ internal class ClientOperation : NetOperation
 
     internal async Task<NetResult> SendDataAsync(bool encrypt, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner)
     {// Checked
-        if (!this.NetTerminal.IsEncrypted && encrypt)
+        if (!this.NetTerminalObsolete.IsEncrypted && encrypt)
         {
             var result = await this.EncryptConnectionAsync().ConfigureAwait(false);
             if (result != NetResult.Success)

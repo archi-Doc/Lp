@@ -11,17 +11,17 @@ namespace Netsphere;
 #pragma warning disable SA1401 // Fields should be private
 
 /// <summary>
-/// Initializes a new instance of the <see cref="NetTerminal"/> class.<br/>
+/// Initializes a new instance of the <see cref="NetTerminalObsolete"/> class.<br/>
 /// NOT thread-safe.
 /// </summary>
 [ValueLinkObject]
-public partial class NetTerminal : IDisposable
+public partial class NetTerminalObsolete : IDisposable
 {
     private const long EventIdMask = 0xFFFF;
 
     private class NetTerminalLogger : ILog
     {
-        public NetTerminalLogger(ILog log, NetTerminal netTerminal)
+        public NetTerminalLogger(ILog log, NetTerminalObsolete netTerminal)
         {
             this.log = log;
             this.netTerminal = netTerminal;
@@ -35,11 +35,11 @@ public partial class NetTerminal : IDisposable
         }
 
         private readonly ILog log;
-        private readonly NetTerminal netTerminal;
+        private readonly NetTerminalObsolete netTerminal;
     }
 
     [Link(Type = ChainType.QueueList, Name = "Queue", Primary = true)]
-    internal NetTerminal(Terminal terminal, NetEndPoint endPoint)
+    internal NetTerminalObsolete(Terminal terminal, NetEndPoint endPoint)
     {// NodeAddress: Unmanaged
         this.Terminal = terminal;
         this.GenePool = new(RandomVault.Crypto.NextUInt64());
@@ -50,7 +50,7 @@ public partial class NetTerminal : IDisposable
         this.Initialize();
     }
 
-    internal NetTerminal(Terminal terminal, NetEndPoint endPoint, NetNode node, ulong gene)
+    internal NetTerminalObsolete(Terminal terminal, NetEndPoint endPoint, NetNode node, ulong gene)
     {// NodeInformation: Encrypted
         this.Terminal = terminal;
         this.GenePool = new(gene);
@@ -474,9 +474,9 @@ public partial class NetTerminal : IDisposable
     private bool disposed = false; // To detect redundant calls.
 
     /// <summary>
-    /// Finalizes an instance of the <see cref="NetTerminal"/> class.
+    /// Finalizes an instance of the <see cref="NetTerminalObsolete"/> class.
     /// </summary>
-    ~NetTerminal()
+    ~NetTerminalObsolete()
     {
         this.Dispose(false);
     }

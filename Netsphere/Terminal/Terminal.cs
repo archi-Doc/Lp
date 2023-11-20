@@ -61,10 +61,10 @@ public class Terminal : UnitBase, IUnitExecutable
     }
 
     /// <summary>
-    /// Create unmanaged (without public key) NetTerminal instance.
+    /// Create unmanaged (without public key) NetTerminalObsolete instance.
     /// </summary>
     /// <param name="address">Address.</param>
-    /// <returns>NetTerminal.</returns>
+    /// <returns>NetTerminalObsolete.</returns>
     public ClientTerminal? TryCreate(NetAddress address)
     {
         this.TryCreateEndPoint(in address, out var endPoint);
@@ -83,10 +83,10 @@ public class Terminal : UnitBase, IUnitExecutable
     }
 
     /// <summary>
-    /// Create managed (with public key) NetTerminal instance.
+    /// Create managed (with public key) NetTerminalObsolete instance.
     /// </summary>
     /// <param name="node">NetNode.</param>
-    /// <returns>NetTerminal.</returns>
+    /// <returns>NetTerminalObsolete.</returns>
     public ClientTerminal? TryCreate(NetNode node)
     {
         this.TryCreateEndPoint(node.Address, out var endPoint);
@@ -121,10 +121,10 @@ public class Terminal : UnitBase, IUnitExecutable
     }
 
     /// <summary>
-    /// Create managed (with public key) NetTerminal instance and create encrypted connection.
+    /// Create managed (with public key) NetTerminalObsolete instance and create encrypted connection.
     /// </summary>
     /// <param name="node">NodeInformation.</param>
-    /// <returns>NetTerminal.</returns>
+    /// <returns>NetTerminalObsolete.</returns>
     public async Task<ClientTerminal?> CreateAndEncrypt(NetNode node)
     {
         var terminal = this.TryCreate(node);
@@ -142,7 +142,7 @@ public class Terminal : UnitBase, IUnitExecutable
         return terminal;
     }
 
-    public void TryRemove(NetTerminal netTerminal)
+    public void TryRemove(NetTerminalObsolete netTerminal)
     {
         lock (this.terminals)
         {
@@ -156,8 +156,8 @@ public class Terminal : UnitBase, IUnitExecutable
         this.UnitLogger = unitLogger;
         this.logger = unitLogger.GetLogger<Terminal>();
         this.NetBase = netBase;
-        this.NetSocketIpv4 = new(this);
-        this.NetSocketIpv6 = new(this);
+        this.NetSocketIpv4 = new(this.ProcessSend, this.ProcessReceive);
+        this.NetSocketIpv6 = new(this.ProcessSend, this.ProcessReceive);
         this.statsData = statsData;
     }
 
@@ -170,8 +170,17 @@ public class Terminal : UnitBase, IUnitExecutable
             this.Port = this.NetBase.NetsphereOptions.Port;
         }
 
-        this.NetSocketIpv4.Start(this.Core, this.Port, false);
-        this.NetSocketIpv6.Start(this.Core, this.Port, true);
+        if (!this.NetSocketIpv4.Start(this.Core, this.Port, false))
+        {
+            this.logger.TryGet(LogLevel.Fatal)?.Log($"Could not create a UDP socket with port {this.Port}.");
+            throw new PanicException();
+        }
+
+        if (!this.NetSocketIpv6.Start(this.Core, this.Port, true))
+        {
+            this.logger.TryGet(LogLevel.Fatal)?.Log($"Could not create a UDP socket with port {this.Port}.");
+            throw new PanicException();
+        }
     }
 
     public async Task TerminateAsync(UnitMessage.TerminateAsync message)
@@ -221,7 +230,7 @@ public class Terminal : UnitBase, IUnitExecutable
             }
         }
 
-        NetTerminal[] array;
+        NetTerminalObsolete[] array;
         lock (this.terminals)
         {
             array = this.terminals.QueueChain.ToArray();
@@ -533,13 +542,13 @@ public class Terminal : UnitBase, IUnitExecutable
     {
         _ = Task.Run(() =>
         {
-            NetTerminal[] array;
+            NetTerminalObsolete[] array;
             lock (this.terminals)
             {
                 array = this.terminals.QueueChain.ToArray();
             }
 
-            List<NetTerminal>? list = null;
+            List<NetTerminalObsolete>? list = null;
             foreach (var x in array)
             {
                 if (x.TryClean(currentMics))
@@ -565,7 +574,7 @@ public class Terminal : UnitBase, IUnitExecutable
             foreach (var x in genes)
             {
                 if (x.NetInterface.Disposed ||
-                x.NetInterface.NetTerminal.Disposed)
+                x.NetInterface.NetTerminalObsolete.Disposed)
                 {
                     x.Clear();
                     cleanedGenes++;
@@ -594,7 +603,7 @@ public class Terminal : UnitBase, IUnitExecutable
     private readonly ILogger<Terminal> logger;
     private readonly NetStats statsData;
     private InvokeServerDelegate? invokeServerDelegate;
-    private NetTerminal.GoshujinClass terminals = new();
+    private NetTerminalObsolete.GoshujinClass terminals = new();
     private ConcurrentDictionary<ulong, NetTerminalGene> inboundGenes = new();
     private ConcurrentQueue<RawSend> rawSends = new();
     private long lastCleanedMics; // The last mics Terminal.CleanNetTerminal() was called.
