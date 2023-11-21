@@ -6,7 +6,7 @@ using Netsphere.Crypto;
 namespace Netsphere;
 
 [TinyhandObject]
-internal partial class PacketEncrypt : IPacket
+internal partial class PacketEncrypt : IPacketObsolete
 {
     public PacketIdObsolete PacketId => PacketIdObsolete.Encrypt;
 
@@ -40,7 +40,7 @@ internal partial class PacketEncrypt : IPacket
 }
 
 [TinyhandObject]
-internal partial class PacketEncryptResponse : IPacket
+internal partial class PacketEncryptResponse : IPacketObsolete
 {
     public PacketIdObsolete PacketId => PacketIdObsolete.EncryptResponse;
 

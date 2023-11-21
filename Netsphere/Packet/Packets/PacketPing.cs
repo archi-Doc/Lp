@@ -6,7 +6,7 @@ namespace Netsphere;
 #pragma warning disable SA1300 // Element should begin with upper-case letter
 
 [TinyhandObject]
-public partial class PacketPing : IPacket
+public partial class PacketPing : IPacketObsolete
 {
     public const int TextMaxLength = 32;
 
@@ -31,7 +31,7 @@ public partial class PacketPing : IPacket
 }
 
 [TinyhandObject]
-public partial class PacketPingResponse : IPacket
+public partial class PacketPingResponse : IPacketObsolete
 {
     public PacketIdObsolete PacketId => PacketIdObsolete.PingResponse;
 

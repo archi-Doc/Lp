@@ -3,7 +3,7 @@
 namespace Netsphere;
 
 [TinyhandObject]
-public partial class PacketGetNodeInformation : IPacket
+public partial class PacketGetNodeInformation : IPacketObsolete
 {
     public PacketGetNodeInformation()
     {
@@ -15,7 +15,7 @@ public partial class PacketGetNodeInformation : IPacket
 }
 
 [TinyhandObject]
-public partial class PacketGetNodeInformationResponse : IPacket
+public partial class PacketGetNodeInformationResponse : IPacketObsolete
 {
     public PacketGetNodeInformationResponse()
     {

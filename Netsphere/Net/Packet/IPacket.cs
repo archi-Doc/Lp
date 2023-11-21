@@ -1,7 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Netsphere.Block;
-
 namespace Netsphere;
 
 /// <summary>
@@ -11,11 +9,18 @@ namespace Netsphere;
 /// 3. Has unique PacketId.<br/>
 /// 4. Length of serialized byte array is less than or equal to <see cref="PacketService.DataPayloadSize"/>.
 /// </summary>
-public interface IPacket : IBlock
+public interface IPacket
 {
-    public PacketIdObsolete PacketId { get; }
+    static abstract PacketType PacketType { get; }
+}
 
-    uint IBlock.BlockId => (uint)this.PacketId;
+[TinyhandObject]
+public sealed partial class PacketClose : IPacket
+{
+    public static PacketType PacketType
+        => PacketType.Close;
 
-    public bool AllowUnencrypted => false;
+    public PacketClose()
+    {
+    }
 }

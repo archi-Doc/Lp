@@ -59,7 +59,7 @@ internal class ClientOperation : NetOperation
     }
 
     public async Task<NetResult> SendPacketAsync<TSend>(TSend value)
-        where TSend : IPacket
+        where TSend : IPacketObsolete
     {// Checked
         if (!value.AllowUnencrypted && !this.NetTerminalObsolete.IsEncrypted)
         {
@@ -87,7 +87,7 @@ internal class ClientOperation : NetOperation
     }
 
     public async Task<(NetResult Result, TReceive? Value)> SendPacketAndReceiveAsync<TSend, TReceive>(TSend value)
-        where TSend : IPacket
+        where TSend : IPacketObsolete
     {// Checked
         if (!value.AllowUnencrypted && !this.NetTerminalObsolete.IsEncrypted)
         {
@@ -162,7 +162,7 @@ internal class ClientOperation : NetOperation
         }
 
         Task<NetResult> task;
-        if (value is IPacket packet)
+        if (value is IPacketObsolete packet)
         {
             task = this.SendDataAsync(!packet.AllowUnencrypted, packet.PacketId, (ulong)packet.PacketId, owner);
         }
@@ -185,7 +185,7 @@ internal class ClientOperation : NetOperation
 
         Task<NetReceivedData> task;
         ulong dataId;
-        if (value is IPacket packet)
+        if (value is IPacketObsolete packet)
         {
             dataId = (ulong)packet.PacketId | ((ulong)BlockService.GetId<TReceive>() << 32);
             task = this.SendAndReceiveDataAsync(!packet.AllowUnencrypted, packet.PacketId, dataId, owner);

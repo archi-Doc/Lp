@@ -63,7 +63,7 @@ public class ClientTerminal : NetTerminalObsolete
     }
 
     public async Task<NetResult> SendPacketAsync<TSend>(TSend value)
-        where TSend : IPacket
+        where TSend : IPacketObsolete
     {// Checked
         using (var operation = this.CreateOperation())
         {
@@ -72,7 +72,7 @@ public class ClientTerminal : NetTerminalObsolete
     }
 
     public async Task<(NetResult Result, TReceive? Value)> SendPacketAndReceiveAsync<TSend, TReceive>(TSend value)
-        where TSend : IPacket
+        where TSend : IPacketObsolete
     {// Checked
         using (var operation = this.CreateOperation())
         {

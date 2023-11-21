@@ -3,7 +3,7 @@
 namespace Netsphere;
 
 [TinyhandObject]
-public partial class PacketPunch : IPacket
+public partial class PacketPunch : IPacketObsolete
 {
     public PacketIdObsolete PacketId => PacketIdObsolete.Punch;
 
@@ -30,7 +30,7 @@ public partial class PacketPunch : IPacket
 }
 
 [TinyhandObject]
-public partial class PacketPunchResponse : IPacket
+public partial class PacketPunchResponse : IPacketObsolete
 {
     public PacketIdObsolete PacketId => PacketIdObsolete.PunchResponse;
 

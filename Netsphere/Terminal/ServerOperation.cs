@@ -103,7 +103,7 @@ public class ServerOperation : NetOperation
     }
 
     public async Task<NetResult> SendPacketAsync<TSend>(TSend value)
-       where TSend : IPacket
+       where TSend : IPacketObsolete
     {// Checked
         if (!value.AllowUnencrypted && !this.NetTerminalObsolete.IsEncrypted)
         {
@@ -128,7 +128,7 @@ public class ServerOperation : NetOperation
         }
 
         Task<NetResult> task;
-        if (value is IPacket packet)
+        if (value is IPacketObsolete packet)
         {
             task = this.SendDataAsync(!packet.AllowUnencrypted, packet.PacketId, (ulong)packet.PacketId, owner);
         }

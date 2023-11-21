@@ -6,7 +6,7 @@ namespace Netsphere;
 #pragma warning disable SA1300 // Element should begin with upper-case letter
 
 [TinyhandObject]
-public partial class TestPacket : IPacket
+public partial class TestPacket : IPacketObsolete
 {
     public static TestPacket Create(int size)
     {

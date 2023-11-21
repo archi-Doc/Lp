@@ -6,13 +6,13 @@ namespace Netsphere;
 
 [StructLayout(LayoutKind.Explicit)]
 internal struct PacketHeader
-{// 16 bytes
+{// 8 bytes
     [FieldOffset(0)]
-    public PacketIdObsolete Id;
+    public uint PacketId;
 
-    [FieldOffset(2)]
+    [FieldOffset(4)]
+    public PacketType PacketType;
+
+    [FieldOffset(6)]
     public ushort DataSize;
-
-    [FieldOffset(8)]
-    public ulong Gene;
 }

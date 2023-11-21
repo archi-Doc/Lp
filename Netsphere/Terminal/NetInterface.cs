@@ -236,7 +236,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
     }
 
     internal bool SetSend<TValue>(TValue value)
-        where TValue : IPacket
+        where TValue : IPacketObsolete
     {
         // lock (this.NetTerminalObsolete.SyncObject)
         if (this.SendGenes != null)
