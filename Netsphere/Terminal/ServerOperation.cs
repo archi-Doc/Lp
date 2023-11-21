@@ -23,17 +23,17 @@ public class ServerOperation : NetOperation
 
     public async Task<NetResult> SendDataAsync(ulong dataId, ByteArrayPool.MemoryOwner data)
     {// Checked
-        return await this.SendDataAsync(true, PacketId.Data, dataId, data).ConfigureAwait(false);
+        return await this.SendDataAsync(true, PacketIdObsolete.Data, dataId, data).ConfigureAwait(false);
     }
 
     public async Task<NetResult> SendDataAsync(ulong dataId, byte[] data)
     {// Checked
-        return await this.SendDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data)).ConfigureAwait(false);
+        return await this.SendDataAsync(true, PacketIdObsolete.Data, dataId, new ByteArrayPool.MemoryOwner(data)).ConfigureAwait(false);
     }
 
     public async Task<NetResult> SendServiceAsync(ulong dataId, ByteArrayPool.MemoryOwner data)
     {// Checked
-        return await this.SendDataAsync(true, PacketId.Rpc, dataId, data).ConfigureAwait(false);
+        return await this.SendDataAsync(true, PacketIdObsolete.Rpc, dataId, data).ConfigureAwait(false);
     }
 
     public unsafe void SendClose()
@@ -56,12 +56,12 @@ public class ServerOperation : NetOperation
         }
 
         this.NetTerminalObsolete.CreateHeader(out var header, netInterface.StandbyGene);
-        header.Id = PacketId.Close;
+        header.Id = PacketIdObsolete.Close;
 
         var arrayOwner = PacketPool.Rent();
         fixed (byte* bp = arrayOwner.ByteArray)
         {
-            *(PacketHeader*)bp = header;
+            *(PacketHeaderObsolete*)bp = header;
         }
 
         this.Terminal.AddRawSend(this.NetTerminalObsolete.Endpoint.EndPoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize)); // nspi
@@ -81,7 +81,7 @@ public class ServerOperation : NetOperation
         }
 
         // Success
-        if (received.PacketId != PacketId.Reserve)
+        if (received.PacketId != PacketIdObsolete.Reserve)
         {
             return received;
         }
@@ -135,14 +135,14 @@ public class ServerOperation : NetOperation
         else
         {
             var dataId = BlockService.GetId<TSend>();
-            task = this.SendDataAsync(true, PacketId.Data, dataId, owner);
+            task = this.SendDataAsync(true, PacketIdObsolete.Data, dataId, owner);
         }
 
         owner.Return();
         return await task.ConfigureAwait(false);
     }
 
-    internal async Task<NetResult> SendDataAsync(bool encrypt, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner)
+    internal async Task<NetResult> SendDataAsync(bool encrypt, PacketIdObsolete packetId, ulong dataId, ByteArrayPool.MemoryOwner owner)
     {// Checked
         if (!this.NetTerminalObsolete.IsEncrypted && encrypt)
         {
@@ -177,7 +177,7 @@ public class ServerOperation : NetOperation
             {// Timeout/Error
                 return received.Result;
             }
-            else if (received.PacketId != PacketId.ReserveResponse)
+            else if (received.PacketId != PacketIdObsolete.ReserveResponse)
             {
                 return NetResult.ReserveError;
             }

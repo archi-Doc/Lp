@@ -13,7 +13,7 @@ namespace Netsphere;
 /// </summary>
 public interface IPacket : IBlock
 {
-    public PacketId PacketId { get; }
+    public PacketIdObsolete PacketId { get; }
 
     uint IBlock.BlockId => (uint)this.PacketId;
 

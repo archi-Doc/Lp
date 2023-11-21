@@ -8,7 +8,7 @@ namespace Netsphere;
 [TinyhandObject]
 internal partial class PacketEncrypt : IPacket
 {
-    public PacketId PacketId => PacketId.Encrypt;
+    public PacketIdObsolete PacketId => PacketIdObsolete.Encrypt;
 
     public bool AllowUnencrypted => true;
 
@@ -42,7 +42,7 @@ internal partial class PacketEncrypt : IPacket
 [TinyhandObject]
 internal partial class PacketEncryptResponse : IPacket
 {
-    public PacketId PacketId => PacketId.EncryptResponse;
+    public PacketIdObsolete PacketId => PacketIdObsolete.EncryptResponse;
 
     public bool AllowUnencrypted => true;
 

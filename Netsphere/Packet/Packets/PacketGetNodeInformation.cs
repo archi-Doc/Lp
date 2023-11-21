@@ -9,7 +9,7 @@ public partial class PacketGetNodeInformation : IPacket
     {
     }
 
-    public PacketId PacketId => PacketId.GetNodeInformation;
+    public PacketIdObsolete PacketId => PacketIdObsolete.GetNodeInformation;
 
     public bool AllowUnencrypted => true;
 }
@@ -26,7 +26,7 @@ public partial class PacketGetNodeInformationResponse : IPacket
         this.Node = node;
     }
 
-    public PacketId PacketId => PacketId.GetNodeInformationResponse;
+    public PacketIdObsolete PacketId => PacketIdObsolete.GetNodeInformationResponse;
 
     public bool AllowUnencrypted => true;
 

@@ -49,12 +49,12 @@ public class ClientTerminal : NetTerminalObsolete
         using (var operation = this.CreateOperation())
         {
             this.CreateHeader(out var header, operation.GetGene());
-            header.Id = PacketId.Close;
+            header.Id = PacketIdObsolete.Close;
 
             var arrayOwner = PacketPool.Rent();
             fixed (byte* bp = arrayOwner.ByteArray)
             {
-                *(PacketHeader*)bp = header;
+                *(PacketHeaderObsolete*)bp = header;
             }
 
             this.Terminal.AddRawSend(this.Endpoint.EndPoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize)); // nspi
@@ -92,7 +92,7 @@ public class ClientTerminal : NetTerminalObsolete
     {// Checked
         using (var operation = this.CreateOperation())
         {
-            return await operation.SendDataAsync(true, PacketId.Data, dataId, data).ConfigureAwait(false);
+            return await operation.SendDataAsync(true, PacketIdObsolete.Data, dataId, data).ConfigureAwait(false);
         }
     }
 
@@ -100,7 +100,7 @@ public class ClientTerminal : NetTerminalObsolete
     {// Checked
         using (var operation = this.CreateOperation())
         {
-            return await operation.SendDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data)).ConfigureAwait(false);
+            return await operation.SendDataAsync(true, PacketIdObsolete.Data, dataId, new ByteArrayPool.MemoryOwner(data)).ConfigureAwait(false);
         }
     }
 
@@ -108,7 +108,7 @@ public class ClientTerminal : NetTerminalObsolete
     {// Checked
         using (var operation = this.CreateOperation())
         {
-            return await operation.SendDataAsync(true, PacketId.Rpc, dataId, data).ConfigureAwait(false);
+            return await operation.SendDataAsync(true, PacketIdObsolete.Rpc, dataId, data).ConfigureAwait(false);
         }
     }
 
@@ -124,7 +124,7 @@ public class ClientTerminal : NetTerminalObsolete
     {// Checked
         using (var operation = this.CreateOperation())
         {
-            var response = await operation.SendAndReceiveDataAsync(true, PacketId.Data, dataId, data).ConfigureAwait(false);
+            var response = await operation.SendAndReceiveDataAsync(true, PacketIdObsolete.Data, dataId, data).ConfigureAwait(false);
             return (response.Result, response.Received);
         }
     }
@@ -133,7 +133,7 @@ public class ClientTerminal : NetTerminalObsolete
     {// Checked
         using (var operation = this.CreateOperation())
         {
-            var response = await operation.SendAndReceiveDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data)).ConfigureAwait(false);
+            var response = await operation.SendAndReceiveDataAsync(true, PacketIdObsolete.Data, dataId, new ByteArrayPool.MemoryOwner(data)).ConfigureAwait(false);
             return (response.Result, response.DataId, response.Received);
         }
     }
@@ -142,7 +142,7 @@ public class ClientTerminal : NetTerminalObsolete
     {// Checked
         using (var operation = this.CreateOperation())
         {
-            var response = await operation.SendAndReceiveDataAsync(true, PacketId.Rpc, dataId, data).ConfigureAwait(false);
+            var response = await operation.SendAndReceiveDataAsync(true, PacketIdObsolete.Rpc, dataId, data).ConfigureAwait(false);
             return (response.Result, response.DataId, response.Received);
         }
     }

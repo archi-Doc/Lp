@@ -5,10 +5,10 @@ using System.Runtime.InteropServices;
 namespace Netsphere;
 
 [StructLayout(LayoutKind.Explicit)]
-internal struct GeneHeader
+internal struct PacketHeader
 {// 16 bytes
     [FieldOffset(0)]
-    public PacketId Id;
+    public PacketIdObsolete Id;
 
     [FieldOffset(2)]
     public ushort DataSize;

@@ -35,7 +35,7 @@ internal class NetTerminalGene
 
     public ulong Gene { get; private set; }
 
-    public PacketId ReceivedId { get; private set; }
+    public PacketIdObsolete ReceivedId { get; private set; }
 
     /// <summary>
     ///  Gets the packet (header + data) to send or the received data.
@@ -132,7 +132,7 @@ internal class NetTerminalGene
                 var span = this.Owner.Memory.Span;
                 if (span.Length > 4)
                 {
-                    var packetId = (PacketId)span[3];
+                    var packetId = (PacketIdObsolete)span[3];
                     logger.Log($"Udp Send({currentCapacity}, {this.Gene.To4Hex()}) Id: {packetId}, Size: {span.Length}, To: {this.NetInterface.NetTerminalObsolete.Endpoint}");
                 }
             }
@@ -163,7 +163,7 @@ internal class NetTerminalGene
         return false;
     }
 
-    public bool Receive(PacketId id, ByteArrayPool.MemoryOwner owner, long currentMics)
+    public bool Receive(PacketIdObsolete id, ByteArrayPool.MemoryOwner owner, long currentMics)
     {// lock (this.NetTerminalObsolete.SyncObject)
         if (this.GeneState == State.WaitingToReceive)
         {// Receive data
@@ -184,7 +184,7 @@ internal class NetTerminalGene
                 var span = this.Owner.Memory.Span;
                 if (span.Length > 4)
                 {
-                    var packetId = (PacketId)span[3];
+                    var packetId = (PacketIdObsolete)span[3];
                     logger.Log($"Receive({this.Gene.To4Hex()}) Id: {this.ReceivedId}, Size: {span.Length}, To: {this.NetInterface.NetTerminalObsolete.Endpoint}");
                 }
             }
@@ -248,7 +248,7 @@ internal class NetTerminalGene
         this.NetInterface.Terminal.RemoveInbound(this);
         this.GeneState = State.Initial;
         this.Gene = 0;
-        this.ReceivedId = PacketId.Invalid;
+        this.ReceivedId = PacketIdObsolete.Invalid;
         this.Owner = this.Owner.Return();
     }
 }

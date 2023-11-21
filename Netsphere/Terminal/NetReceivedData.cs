@@ -9,7 +9,7 @@ namespace Netsphere;
 /// </summary>
 public record struct NetReceivedData
 {
-    public NetReceivedData(NetResult result, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner received)
+    public NetReceivedData(NetResult result, PacketIdObsolete packetId, ulong dataId, ByteArrayPool.MemoryOwner received)
     {
         this.Result = result;
         this.PacketId = packetId;
@@ -20,7 +20,7 @@ public record struct NetReceivedData
     public NetReceivedData(NetResult result)
     {
         this.Result = result;
-        this.PacketId = PacketId.Invalid;
+        this.PacketId = PacketIdObsolete.Invalid;
         this.DataId = 0;
         this.Received = default;
     }
@@ -28,7 +28,7 @@ public record struct NetReceivedData
     public void Return() => this.Received.Return();
 
     public NetResult Result;
-    public PacketId PacketId;
+    public PacketIdObsolete PacketId;
     public ulong DataId;
     public ByteArrayPool.MemoryOwner Received;
 }

@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 namespace Netsphere;
 
 [StructLayout(LayoutKind.Explicit)]
-internal struct PacketHeader
+internal struct PacketHeaderObsolete
 {// 16 bytes
     [FieldOffset(0)]
     public ushort Engagement;
@@ -14,7 +14,7 @@ internal struct PacketHeader
     public byte Cage;
 
     [FieldOffset(3)]
-    public PacketId Id;
+    public PacketIdObsolete Id;
 
     [FieldOffset(4)]
     public ushort DataSize;

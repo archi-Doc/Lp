@@ -7,7 +7,7 @@ internal partial class PacketReserve : IPacket
 {
     public const int MaxGenes = 4096;
 
-    public PacketId PacketId => PacketId.Reserve;
+    public PacketIdObsolete PacketId => PacketIdObsolete.Reserve;
 
     public PacketReserve()
     {
@@ -38,7 +38,7 @@ internal partial class PacketReserve : IPacket
 [TinyhandObject]
 internal partial class PacketReserveResponse : IPacket
 {
-    public PacketId PacketId => PacketId.ReserveResponse;
+    public PacketIdObsolete PacketId => PacketIdObsolete.ReserveResponse;
 
     public PacketReserveResponse()
     {

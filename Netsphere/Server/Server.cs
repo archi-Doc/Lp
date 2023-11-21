@@ -32,13 +32,13 @@ public class Server
             {
                 if (received.Result == NetResult.Success)
                 {// Success
-                    if (received.PacketId == PacketId.Data &&
+                    if (received.PacketId == PacketIdObsolete.Data &&
                        this.Terminal.TryGetResponder(received.DataId, out var responder) &&
                         responder.Respond(operation!, received))
                     {// Responder
                         continue;
                     }
-                    else if (received.PacketId == PacketId.Rpc)
+                    else if (received.PacketId == PacketIdObsolete.Rpc)
                     {// RPC
                         var op = operation!;
                         operation = null;
@@ -77,8 +77,6 @@ public class Server
 
         this.NetTerminalObsolete.Logger?.Log($"Server offline.");
     }
-
-    public ThreadCoreBase? Core => this.NetControl.TerminalObsolete.Core;
 
     public NetBase NetBase { get; }
 

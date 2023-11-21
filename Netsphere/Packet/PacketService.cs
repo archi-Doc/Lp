@@ -9,7 +9,7 @@ internal static class PacketService
 {
     static PacketService()
     {
-        HeaderSize = Marshal.SizeOf(default(PacketHeader));
+        HeaderSize = Marshal.SizeOf(default(PacketHeaderObsolete));
         DataHeaderSize = Marshal.SizeOf(default(DataHeader));
         DataFollowingHeaderSize = Marshal.SizeOf(default(DataFollowingHeader));
         // PacketInfo = new PacketInfo[] { new(typeof(PacketPunch), 0, false), };
@@ -43,15 +43,15 @@ internal static class PacketService
     private const int InitialBufferLength = 2048;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static bool IsManualAck(PacketId packetId) => packetId switch
+    internal static bool IsManualAck(PacketIdObsolete packetId) => packetId switch
     {// Manual ack (only for unencrypted transfer)
-        PacketId.Encrypt => true,
-        PacketId.Punch => true,
-        PacketId.PunchResponse => true,
-        PacketId.Ping => true,
-        PacketId.PingResponse => true,
-        PacketId.GetNodeInformation => true,
-        PacketId.GetNodeInformationResponse => true,
+        PacketIdObsolete.Encrypt => true,
+        PacketIdObsolete.Punch => true,
+        PacketIdObsolete.PunchResponse => true,
+        PacketIdObsolete.Ping => true,
+        PacketIdObsolete.PingResponse => true,
+        PacketIdObsolete.GetNodeInformation => true,
+        PacketIdObsolete.GetNodeInformationResponse => true,
         _ => false,
     };
 
@@ -59,7 +59,7 @@ internal static class PacketService
     {
         fixed (byte* pb = memory.Span)
         {
-            (*(PacketHeader*)pb).Gene = gene;
+            (*(PacketHeaderObsolete*)pb).Gene = gene;
         }
     }
 
@@ -68,7 +68,7 @@ internal static class PacketService
     {
         fixed (byte* pb = memory.Span)
         {
-            (*(PacketHeader*)pb).DataSize = size;
+            (*(PacketHeaderObsolete*)pb).DataSize = size;
         }
     }
 
@@ -91,11 +91,11 @@ internal static class PacketService
         return (n + 1, PacketService.DataPayloadSize, PacketService.DataFollowingPayloadSize, lastDataSize);
     }
 
-    internal static unsafe (ulong DataId, PacketId PacketId, ByteArrayPool.MemoryOwner DataMemory) GetData(ByteArrayPool.MemoryOwner owner)
+    internal static unsafe (ulong DataId, PacketIdObsolete PacketId, ByteArrayPool.MemoryOwner DataMemory) GetData(ByteArrayPool.MemoryOwner owner)
     {
         if (owner.Memory.Length < DataHeaderSize)
         {
-            return (0, PacketId.Invalid, default);
+            return (0, PacketIdObsolete.Invalid, default);
         }
 
         var span = owner.Memory.Span;
@@ -141,9 +141,9 @@ internal static class PacketService
         }
     }
 
-    internal static unsafe bool GetData(ref PacketHeader header, ref ByteArrayPool.MemoryOwner owner)
+    internal static unsafe bool GetData(ref PacketHeaderObsolete header, ref ByteArrayPool.MemoryOwner owner)
     {
-        if (header.Id != PacketId.Data)
+        if (header.Id != PacketIdObsolete.Data)
         {// Not PacketData
             return false;
         }
@@ -170,7 +170,7 @@ internal static class PacketService
         return true;
     }
 
-    internal static unsafe void CreateDataPacket(ref PacketHeader header, PacketId packetId, ulong dataId, ReadOnlySpan<byte> data, out ByteArrayPool.MemoryOwner owner)
+    internal static unsafe void CreateDataPacket(ref PacketHeaderObsolete header, PacketIdObsolete packetId, ulong dataId, ReadOnlySpan<byte> data, out ByteArrayPool.MemoryOwner owner)
     {// PacketHeader, DataHeader, Data
         if (data.Length > PacketService.SafeMaxPayloadSize)
         {
@@ -183,9 +183,9 @@ internal static class PacketService
 
         fixed (byte* pb = span)
         {
-            header.Id = PacketId.Data;
+            header.Id = PacketIdObsolete.Data;
             header.DataSize = (ushort)(PacketService.DataHeaderSize + data.Length);
-            *(PacketHeader*)pb = header;
+            *(PacketHeaderObsolete*)pb = header;
         }
 
         span = span.Slice(PacketService.HeaderSize);
@@ -201,7 +201,7 @@ internal static class PacketService
         owner = arrayOwner.ToMemoryOwner(0, size);
     }
 
-    internal static unsafe void CreateDataFollowingPacket(ref PacketHeader header, ReadOnlySpan<byte> data, out ByteArrayPool.MemoryOwner owner)
+    internal static unsafe void CreateDataFollowingPacket(ref PacketHeaderObsolete header, ReadOnlySpan<byte> data, out ByteArrayPool.MemoryOwner owner)
     {// PacketHeader, DataHeader, Data
         if (data.Length > PacketService.SafeMaxPayloadSize)
         {
@@ -214,9 +214,9 @@ internal static class PacketService
 
         fixed (byte* pb = span)
         {
-            header.Id = PacketId.DataFollowing;
+            header.Id = PacketIdObsolete.DataFollowing;
             header.DataSize = (ushort)(PacketService.DataFollowingHeaderSize + data.Length);
-            *(PacketHeader*)pb = header;
+            *(PacketHeaderObsolete*)pb = header;
         }
 
         span = span.Slice(PacketService.HeaderSize);
@@ -232,7 +232,7 @@ internal static class PacketService
         owner = arrayOwner.ToMemoryOwner(0, size);
     }
 
-    internal static unsafe void CreatePacket<T>(ref PacketHeader header, T value, PacketId rawPacketId, out ByteArrayPool.MemoryOwner owner)
+    internal static unsafe void CreatePacket<T>(ref PacketHeaderObsolete header, T value, PacketIdObsolete rawPacketId, out ByteArrayPool.MemoryOwner owner)
     {
         var arrayOwner = PacketPool.Rent();
         var writer = new Tinyhand.IO.TinyhandWriter(arrayOwner.ByteArray);
@@ -246,7 +246,7 @@ internal static class PacketService
         {
             header.Id = rawPacketId;
             header.DataSize = (ushort)(writer.Written - written);
-            *(PacketHeader*)pb = header;
+            *(PacketHeaderObsolete*)pb = header;
         }
 
         writer.FlushAndGetArray(out var array, out var arrayLength, out var isInitialBuffer);
@@ -259,7 +259,7 @@ internal static class PacketService
         writer.Dispose();
     }
 
-    internal static unsafe void CreateAckAndPacket<T>(ref PacketHeader header, ulong secondGene, T value, PacketId rawPacketId, out ByteArrayPool.MemoryOwner owner)
+    internal static unsafe void CreateAckAndPacket<T>(ref PacketHeaderObsolete header, ulong secondGene, T value, PacketIdObsolete rawPacketId, out ByteArrayPool.MemoryOwner owner)
     {
         var arrayOwner = PacketPool.Rent();
         var writer = new Tinyhand.IO.TinyhandWriter(arrayOwner.ByteArray);
@@ -271,15 +271,15 @@ internal static class PacketService
 
         fixed (byte* pb = span)
         {
-            (*(PacketHeader*)pb).Engagement = header.Engagement;
-            (*(PacketHeader*)pb).Id = PacketId.Ack;
-            (*(PacketHeader*)pb).DataSize = 0;
-            (*(PacketHeader*)pb).Gene = header.Gene;
+            (*(PacketHeaderObsolete*)pb).Engagement = header.Engagement;
+            (*(PacketHeaderObsolete*)pb).Id = PacketIdObsolete.Ack;
+            (*(PacketHeaderObsolete*)pb).DataSize = 0;
+            (*(PacketHeaderObsolete*)pb).Gene = header.Gene;
 
             header.Id = rawPacketId;
             header.DataSize = (ushort)(writer.Written - written);
             header.Gene = secondGene;
-            *(PacketHeader*)(pb + PacketService.HeaderSize) = header;
+            *(PacketHeaderObsolete*)(pb + PacketService.HeaderSize) = header;
         }
 
         writer.FlushAndGetArray(out var array, out var arrayLength, out var isInitialBuffer);

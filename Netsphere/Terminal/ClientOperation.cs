@@ -108,7 +108,7 @@ internal class ClientOperation : NetOperation
         {
             var response = await netInterface.ReceiveAsync().ConfigureAwait(false);
 
-            if (response.PacketId == PacketId.Reserve)
+            if (response.PacketId == PacketIdObsolete.Reserve)
             {
                 // PacketId.Reserve
                 TinyhandSerializer.TryDeserialize<PacketReserve>(response.Received.Memory.Span, out var reserve);
@@ -169,7 +169,7 @@ internal class ClientOperation : NetOperation
         else
         {
             var dataId = BlockService.GetId<TSend>();
-            task = this.SendDataAsync(true, PacketId.Data, dataId, owner);
+            task = this.SendDataAsync(true, PacketIdObsolete.Data, dataId, owner);
         }
 
         owner.Return();
@@ -193,7 +193,7 @@ internal class ClientOperation : NetOperation
         else
         {
             dataId = BlockService.GetId<TSend, TReceive>();
-            task = this.SendAndReceiveDataAsync(true, PacketId.Data, dataId, owner);
+            task = this.SendAndReceiveDataAsync(true, PacketIdObsolete.Data, dataId, owner);
         }
 
         owner.Return();
@@ -214,7 +214,7 @@ internal class ClientOperation : NetOperation
         return (response.Result, received);
     }
 
-    internal async Task<NetResult> SendDataAsync(bool encrypt, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner)
+    internal async Task<NetResult> SendDataAsync(bool encrypt, PacketIdObsolete packetId, ulong dataId, ByteArrayPool.MemoryOwner owner)
     {// Checked
         if (!this.NetTerminalObsolete.IsEncrypted && encrypt)
         {
@@ -258,7 +258,7 @@ internal class ClientOperation : NetOperation
         }
     }
 
-    internal async Task<NetReceivedData> SendAndReceiveDataAsync(bool encrypt, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner)
+    internal async Task<NetReceivedData> SendAndReceiveDataAsync(bool encrypt, PacketIdObsolete packetId, ulong dataId, ByteArrayPool.MemoryOwner owner)
     {// Checked
         if (encrypt)
         {
@@ -296,7 +296,7 @@ internal class ClientOperation : NetOperation
         {
             var response = await netInterface.ReceiveAsync().ConfigureAwait(false);
 
-            if (response.PacketId == PacketId.Reserve)
+            if (response.PacketId == PacketIdObsolete.Reserve)
             {
                 // PacketId.Reserve
                 TinyhandSerializer.TryDeserialize<PacketReserve>(response.Received.Memory.Span, out var reserve);

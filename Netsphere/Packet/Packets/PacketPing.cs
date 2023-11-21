@@ -10,7 +10,7 @@ public partial class PacketPing : IPacket
 {
     public const int TextMaxLength = 32;
 
-    public PacketId PacketId => PacketId.Ping;
+    public PacketIdObsolete PacketId => PacketIdObsolete.Ping;
 
     public bool AllowUnencrypted => true;
 
@@ -33,7 +33,7 @@ public partial class PacketPing : IPacket
 [TinyhandObject]
 public partial class PacketPingResponse : IPacket
 {
-    public PacketId PacketId => PacketId.PingResponse;
+    public PacketIdObsolete PacketId => PacketIdObsolete.PingResponse;
 
     public bool AllowUnencrypted => true;
 

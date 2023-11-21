@@ -205,7 +205,7 @@ public partial class NetTerminalObsolete : IDisposable
         }
     }
 
-    internal void CreateHeader(out PacketHeader header, ulong gene)
+    internal void CreateHeader(out PacketHeaderObsolete header, ulong gene)
     {
         header = default;
         header.Gene = gene;
@@ -215,12 +215,12 @@ public partial class NetTerminalObsolete : IDisposable
     internal unsafe void SendAck(ulong gene)
     {
         this.CreateHeader(out var header, gene);
-        header.Id = PacketId.Ack;
+        header.Id = PacketIdObsolete.Ack;
 
         var arrayOwner = PacketPool.Rent();
         fixed (byte* bp = arrayOwner.ByteArray)
         {
-            *(PacketHeader*)bp = header;
+            *(PacketHeaderObsolete*)bp = header;
         }
 
         this.Terminal.AddRawSend(this.Endpoint.EndPoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize)); // nspi

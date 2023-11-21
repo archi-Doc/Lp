@@ -5,7 +5,7 @@ namespace Netsphere;
 [TinyhandObject]
 public partial class PacketPunch : IPacket
 {
-    public PacketId PacketId => PacketId.Punch;
+    public PacketIdObsolete PacketId => PacketIdObsolete.Punch;
 
     public bool AllowUnencrypted => true;
 
@@ -32,7 +32,7 @@ public partial class PacketPunch : IPacket
 [TinyhandObject]
 public partial class PacketPunchResponse : IPacket
 {
-    public PacketId PacketId => PacketId.PunchResponse;
+    public PacketIdObsolete PacketId => PacketIdObsolete.PunchResponse;
 
     public bool AllowUnencrypted => true;
 
