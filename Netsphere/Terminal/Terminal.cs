@@ -331,7 +331,7 @@ public class Terminal : UnitBase, IUnitExecutable
 
     internal void ProcessUnmanagedRecv_Punch(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeaderObsolete header)
     {// nspi
-        if (!TinyhandSerializer.TryDeserialize<PacketPunch>(owner.Memory.Span, out var punch))
+        if (!TinyhandSerializer.TryDeserialize<PacketPunchObsolete>(owner.Memory.Span, out var punch))
         {
             return;
         }
@@ -356,7 +356,7 @@ public class Terminal : UnitBase, IUnitExecutable
         }
         else
         {
-            var response = new PacketPunchResponse();
+            var response = new PacketPunchResponseObsolete();
             response.UtcMics = Mics.GetUtcNow();
             var secondGene = GenePool.NextGene(header.Gene);
             this.logger.TryGet()?.Log($"Punch Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
@@ -381,12 +381,12 @@ public class Terminal : UnitBase, IUnitExecutable
 
     internal void ProcessUnmanagedRecv_Encrypt(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeaderObsolete header)
     { // nspi
-        if (!TinyhandSerializer.TryDeserialize<PacketEncrypt>(owner.Memory.Span, out var packet))
+        if (!TinyhandSerializer.TryDeserialize<PacketEncryptObsolete>(owner.Memory.Span, out var packet))
         {
             return;
         }
 
-        var response = new PacketEncryptResponse();
+        var response = new PacketEncryptResponseObsolete();
         response.Salt2 = RandomVault.Crypto.NextUInt64();
         response.SaltA2 = RandomVault.Crypto.NextUInt64();
         var firstGene = header.Gene;
@@ -402,7 +402,7 @@ public class Terminal : UnitBase, IUnitExecutable
             return;
         }
 
-        var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(terminal, firstGene, owner, secondGene, sendOwner);
+        var netInterface = NetInterface<PacketEncryptResponseObsolete, PacketEncryptObsolete>.CreateConnect(terminal, firstGene, owner, secondGene, sendOwner);
 
         _ = Task.Run(async () =>
         {
@@ -420,12 +420,12 @@ public class Terminal : UnitBase, IUnitExecutable
 
     internal void ProcessUnmanagedRecv_Ping(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeaderObsolete header)
     {// nspi
-        if (!TinyhandSerializer.TryDeserialize<PacketPing>(owner.Memory.Span, out var packet))
+        if (!TinyhandSerializer.TryDeserialize<PacketPingObsolete>(owner.Memory.Span, out var packet))
         {
             return;
         }
 
-        var response = new PacketPingResponse(new(endpoint.Address, (ushort)endpoint.Port), this.NetBase.NodeName);
+        var response = new PacketPingResponseObsolete(new(endpoint.Address, (ushort)endpoint.Port), this.NetBase.NodeName);
         var secondGene = GenePool.NextGene(header.Gene);
         // this.logger.TryGet()?.Log($"Ping Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
@@ -435,7 +435,7 @@ public class Terminal : UnitBase, IUnitExecutable
 
     internal void ProcessUnmanagedRecv_GetNodeInformation(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeaderObsolete header)
     {// nspi
-        if (!TinyhandSerializer.TryDeserialize<PacketGetNodeInformation>(owner.Memory.Span, out var packet))
+        if (!TinyhandSerializer.TryDeserialize<PacketGetNodeInformationObsolete>(owner.Memory.Span, out var packet))
         {
             return;
         }
@@ -445,7 +445,7 @@ public class Terminal : UnitBase, IUnitExecutable
             return;
         }
 
-        var response = new PacketGetNodeInformationResponse(this.statsData.GetMyNetNode());
+        var response = new PacketGetNodeInformationResponseObsolete(this.statsData.GetMyNetNode());
         var secondGene = GenePool.NextGene(header.Gene);
         // this.TerminalLogger?.Information($"GetNodeInformation Response {response.Node.PublicKeyX[0]}: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 

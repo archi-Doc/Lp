@@ -34,7 +34,7 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
 
             // await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(new PacketPunch());
 
-            var p = new PacketPunch(default);
+            var p = new PacketPunchObsolete(default);
 
             var result = await terminal.EncryptConnectionAsync();
 

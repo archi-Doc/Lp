@@ -98,7 +98,7 @@ public class NetControl : UnitBase, IUnitPreparable
         this.NetBase = netBase;
         this.NetStats = netStats;
 
-        this.Terminal = new(false, context, unitLogger, netBase, netStats);
+        this.NetTerminal = new(false, context, unitLogger, netBase, netStats);
         this.TerminalObsolete = new(context, unitLogger, netBase, netStats);
         if (this.NetBase.NetsphereOptions.EnableAlternative)
         {// For debugging
@@ -158,7 +158,7 @@ public class NetControl : UnitBase, IUnitPreparable
 
     public NetStats NetStats { get; }
 
-    public NetTerminal Terminal { get; }
+    public NetTerminal NetTerminal { get; }
 
     public NetTerminal? Alternative { get; }
 

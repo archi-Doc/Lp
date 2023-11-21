@@ -3,7 +3,7 @@
 namespace Netsphere;
 
 [TinyhandObject]
-internal partial class PacketRelay : IPacketObsolete
+internal partial class PacketRelayObsolete : IPacketObsolete
 {
     public const int EndpointAliveInSeconds = 10;
 

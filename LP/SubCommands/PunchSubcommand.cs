@@ -61,10 +61,10 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
                 return;
             }
 
-            var p = new PacketPunch(endPoint.EndPoint);
+            var p = new PacketPunchObsolete(endPoint.EndPoint);
 
             sw.Restart();
-            var result = await terminal.SendPacketAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
+            var result = await terminal.SendPacketAndReceiveAsync<PacketPunchObsolete, PacketPunchResponseObsolete>(p);
             sw.Stop();
             if (result.Value != null)
             {

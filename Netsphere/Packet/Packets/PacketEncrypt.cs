@@ -6,17 +6,17 @@ using Netsphere.Crypto;
 namespace Netsphere;
 
 [TinyhandObject]
-internal partial class PacketEncrypt : IPacketObsolete
+internal partial class PacketEncryptObsolete : IPacketObsolete
 {
     public PacketIdObsolete PacketId => PacketIdObsolete.Encrypt;
 
     public bool AllowUnencrypted => true;
 
-    public PacketEncrypt()
+    public PacketEncryptObsolete()
     {
     }
 
-    public PacketEncrypt(NodePublicKey publicKey)
+    public PacketEncryptObsolete(NodePublicKey publicKey)
     {
         this.PublicKey = publicKey;
         this.Salt = RandomVault.Crypto.NextUInt64();
@@ -40,7 +40,7 @@ internal partial class PacketEncrypt : IPacketObsolete
 }
 
 [TinyhandObject]
-internal partial class PacketEncryptResponse : IPacketObsolete
+internal partial class PacketEncryptResponseObsolete : IPacketObsolete
 {
     public PacketIdObsolete PacketId => PacketIdObsolete.EncryptResponse;
 
@@ -48,7 +48,7 @@ internal partial class PacketEncryptResponse : IPacketObsolete
 
     // public bool ManualAck => true;
 
-    public PacketEncryptResponse()
+    public PacketEncryptResponseObsolete()
     {
     }
 

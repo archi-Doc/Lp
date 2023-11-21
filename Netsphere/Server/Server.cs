@@ -78,6 +78,8 @@ public class Server
         this.NetTerminalObsolete.Logger?.Log($"Server offline.");
     }
 
+    public ThreadCoreBase? Core => this.NetControl.TerminalObsolete.Core;
+
     public NetBase NetBase { get; }
 
     public NetControl NetControl { get; }
@@ -92,14 +94,14 @@ public class Server
 
     /*private bool ProcessEssential(ServerOperation operation, NetReceivedData received)
     {
-        if (received.PacketId == PacketId.Punch)
+        if (received.PacketId == PacketIdObsolete.Punch)
         {
             return this.ProcessEssential_Punch(operation, received);
         }
 
         if (this.LpBase.TestFeatures)
         {
-            if (received.PacketId == PacketId.Test)
+            if (received.PacketId == PacketIdObsolete.Test)
             {
                 return this.ProcessEssential_Test(operation, received);
             }
@@ -110,7 +112,7 @@ public class Server
 
     private bool ProcessEssential_Punch(ServerOperation operation, NetReceivedData received)
     {
-        if (!TinyhandSerializer.TryDeserialize<PacketPunch>(received.Received.Memory.Span, out var punch))
+        if (!TinyhandSerializer.TryDeserialize<PacketPunchObsolete>(received.Received.Memory.Span, out var punch))
         {
             return false;
         }
@@ -119,7 +121,7 @@ public class Server
 
         TimeCorrection.AddCorrection(punch.UtcMics);
 
-        var response = new PacketPunchResponse();
+        var response = new PacketPunchResponseObsolete();
         response.Endpoint = this.NetTerminalObsolete.Endpoint.EndPoint;
         response.UtcMics = Mics.GetUtcNow();
 

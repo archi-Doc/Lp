@@ -2,7 +2,7 @@
 
 using System.Runtime.InteropServices;
 
-namespace Netsphere;
+namespace Netsphere.Packet;
 
 [StructLayout(LayoutKind.Explicit)]
 internal struct PacketHeader

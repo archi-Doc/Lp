@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace Netsphere;
+namespace Netsphere.Packet;
 
 /// <summary>
 /// Packet class requirements.<br/>
@@ -12,15 +12,4 @@ namespace Netsphere;
 public interface IPacket
 {
     static abstract PacketType PacketType { get; }
-}
-
-[TinyhandObject]
-public sealed partial class PacketClose : IPacket
-{
-    public static PacketType PacketType
-        => PacketType.Close;
-
-    public PacketClose()
-    {
-    }
 }

@@ -1,7 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Runtime.CompilerServices;
 using Netsphere.Crypto;
+using Netsphere.Packet;
 using Netsphere.Stats;
 
 namespace Netsphere;
@@ -18,6 +18,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
         this.netSocketIpv4 = new(this.ProcessSend, this.ProcessReceive);
         this.netSocketIpv6 = new(this.ProcessSend, this.ProcessReceive);
+        this.PacketTerminal = new(this);
         this.connections = new(netStats);
         this.netStats = netStats;
     }
@@ -29,6 +30,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     public bool IsAlternative { get; }
 
     public int Port { get; set; }
+
+    public PacketTerminal PacketTerminal { get; }
 
     internal UnitLogger UnitLogger { get; private set; }
 

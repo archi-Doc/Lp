@@ -16,7 +16,7 @@ internal class NetConnectionControl
     private readonly object syncObject = new();
     private readonly ServerConnection.GoshujinClass closedServerConnections = new();
 
-    public NetConnection? TryConnect(NetAddress address, NetConnection.ConnectMode mode = NetConnection.ConnectMode.ReuseClosed)
+    public ClientConnection? TryConnect(NetAddress address, NetConnection.ConnectMode mode = NetConnection.ConnectMode.ReuseClosed)
     {
         this.netStats.TryCreateEndPoint(in address, out var endPoint);
         if (!endPoint.IsValid)

@@ -87,7 +87,7 @@ public class ServerOperation : NetOperation
         }
 
         // PacketId.Reserve
-        if (!TinyhandSerializer.TryDeserialize<PacketReserve>(received.Received.Memory.Span, out var reserve))
+        if (!TinyhandSerializer.TryDeserialize<PacketReserveObsolete>(received.Received.Memory.Span, out var reserve))
         {
             received.Return();
             return new(NetResult.DeserializationError);
@@ -96,7 +96,7 @@ public class ServerOperation : NetOperation
         received.Return();
         this.receiverInterface2 = NetInterface<object, byte[]>.CreateReserve2(this, reserve);
 
-        this.receiverInterface.SetSend(new PacketReserveResponse());
+        this.receiverInterface.SetSend(new PacketReserveResponseObsolete());
 
         received = await this.receiverInterface2.ReceiveAsync().ConfigureAwait(false);
         return received;
@@ -166,7 +166,7 @@ public class ServerOperation : NetOperation
         }
 
         // Split into multiple packets. Send PacketReserve.
-        var reserve = new PacketReserve(owner.Memory.Length);
+        var reserve = new PacketReserveObsolete(owner.Memory.Length);
         netInterface.SetSend(reserve);
 
         netInterface = NetInterface<object, byte[]>.CreateReceive(this);

@@ -50,9 +50,9 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
                 return;
             }
 
-            var p = new PacketPing("test56789012345678901234567890123456789");
+            var p = new PacketPingObsolete("test56789012345678901234567890123456789");
             sw.Restart();
-            var result = await terminal.SendPacketAndReceiveAsync<PacketPing, PacketPingResponse>(p);
+            var result = await terminal.SendPacketAndReceiveAsync<PacketPingObsolete, PacketPingResponseObsolete>(p);
             sw.Stop();
             if (result.Value != null)
             {

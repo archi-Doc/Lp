@@ -96,7 +96,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         return netInterface;
     }
 
-    internal static NetInterface<TSend, TReceive> CreateReserve2(NetOperation netOperation, PacketReserve reserve)
+    internal static NetInterface<TSend, TReceive> CreateReserve2(NetOperation netOperation, PacketReserveObsolete reserve)
     {
         var netInterface = new NetInterface<TSend, TReceive>(netOperation.NetTerminalObsolete);
 
@@ -118,7 +118,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         return netInterface;
     }
 
-    internal static NetInterface<TSend, TReceive>? CreateReserve(NetOperation netOperation, PacketReserve reserve)
+    internal static NetInterface<TSend, TReceive>? CreateReserve(NetOperation netOperation, PacketReserveObsolete reserve)
     {// Send and Receive(optional) NetTerminalGene.
         NetInterface<TSend, TReceive>? netInterface;
         (ulong First, ulong Second) sequentialGenes;
@@ -126,7 +126,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         var netTerminal = netOperation.NetTerminalObsolete;
         sequentialGenes = netOperation.Get2Genes(); // Send gene
 
-        var response = new PacketReserveResponse();
+        var response = new PacketReserveResponseObsolete();
         netTerminal.CreateHeader(out var header, sequentialGenes.First);
         PacketService.CreatePacket(ref header, response, response.PacketId, out var sendOwner);
 

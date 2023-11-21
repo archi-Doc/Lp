@@ -14,7 +14,7 @@ internal static class PacketService
         DataFollowingHeaderSize = Marshal.SizeOf(default(DataFollowingHeader));
         // PacketInfo = new PacketInfo[] { new(typeof(PacketPunch), 0, false), };
 
-        var relay = new PacketRelay();
+        var relay = new PacketRelayObsolete();
         relay.NextEndpoint = new(IPAddress.IPv6Loopback, NetControl.MaxPort);
         RelayPacketSize = Tinyhand.TinyhandSerializer.Serialize(relay).Length;
         SafeMaxPayloadSize = NetControl.MaxPayload - HeaderSize - DataHeaderSize - RelayPacketSize;

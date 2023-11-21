@@ -6,6 +6,7 @@ global using Tinyhand;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere;
+using SimpleCommandLine;
 
 namespace Sandbox;
 
@@ -44,6 +45,9 @@ public class Program
         var builder = new NetControl.Builder()
             .Configure(context =>
             {
+                // Command
+                context.AddCommand(typeof(BasicTestSubcommand));
+
                 context.AddLoggerResolver(context =>
                 {
                     /*if (context.LogLevel == LogLevel.Debug)
@@ -66,6 +70,15 @@ public class Program
         await Console.Out.WriteLineAsync($"Port: {options.Port.ToString()}");
         var param = new NetControl.Unit.Param(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);
         await unit.RunStandalone(param);
+
+        var parserOptions = SimpleParserOptions.Standard with
+        {
+            ServiceProvider = unit.Context.ServiceProvider,
+            RequireStrictCommandName = false,
+            RequireStrictOptionName = false,
+        };
+
+        await SimpleParser.ParseAndRunAsync(unit.Context.Commands, args, parserOptions); // Main process
 
         ThreadCore.Root.Terminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.

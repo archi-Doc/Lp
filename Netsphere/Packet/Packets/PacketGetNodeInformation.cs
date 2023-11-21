@@ -3,9 +3,9 @@
 namespace Netsphere;
 
 [TinyhandObject]
-public partial class PacketGetNodeInformation : IPacketObsolete
+public partial class PacketGetNodeInformationObsolete : IPacketObsolete
 {
-    public PacketGetNodeInformation()
+    public PacketGetNodeInformationObsolete()
     {
     }
 
@@ -15,13 +15,13 @@ public partial class PacketGetNodeInformation : IPacketObsolete
 }
 
 [TinyhandObject]
-public partial class PacketGetNodeInformationResponse : IPacketObsolete
+public partial class PacketGetNodeInformationResponseObsolete : IPacketObsolete
 {
-    public PacketGetNodeInformationResponse()
+    public PacketGetNodeInformationResponseObsolete()
     {
     }
 
-    public PacketGetNodeInformationResponse(NetNode node)
+    public PacketGetNodeInformationResponseObsolete(NetNode node)
     {
         this.Node = node;
     }
