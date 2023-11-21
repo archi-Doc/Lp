@@ -265,6 +265,30 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         return true;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool TryCreateIPEndPoint([MaybeNullWhen(false)] out IPEndPoint endPoint)
+    {
+        if (this.IsValidIpv4)
+        {
+            endPoint = new(this.Address4, this.Port);
+            return true;
+        }
+        else if (this.IsValidIpv6)
+        {
+            Span<byte> ipv6byte = stackalloc byte[16];
+            BitConverter.TryWriteBytes(ipv6byte, this.Address6A);
+            BitConverter.TryWriteBytes(ipv6byte.Slice(sizeof(ulong)), this.Address6B);
+            var ipv6 = new IPAddress(ipv6byte);
+            endPoint = new(this.Address4, this.Port);
+            return true;
+        }
+        else
+        {
+            endPoint = default;
+            return false;
+        }
+    }
+
     public bool Validate()
     {
         var ipv4 = this.IsValidIpv4;

@@ -1,14 +1,19 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Net.Sockets;
+using Netsphere.Misc;
 
-namespace Netsphere.Net;
+namespace Netsphere;
 
 /// <summary>
 /// NetSocket provides low-level network service.
 /// </summary>
-public sealed class NetSocket
+public sealed class NetSocketObsolete
 {
+    public delegate void ProcessSend(long currentMics);
+
+    public delegate void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner arrayOwner, int packetSize, long currentMics);
+
     private const int ReceiveTimeout = 100;
 
     private class RecvCore : ThreadCore
@@ -44,7 +49,9 @@ public sealed class NetSocket
                     // ValueTask<SocketReceiveFromResult> vt = udp.Client.ReceiveFromAsync(arrayOwner.ByteArray.AsMemory(), SocketFlags.None, remoteEP);
                     if (received <= NetControl.MaxPacketLength)
                     {// nspi
-                        core.socket.netTerminal.ProcessReceive((IPEndPoint)remoteEP, arrayOwner, received);
+                        // var systemMics = Mics.GetSystem();
+                        var currentMics = core.socket.CurrentSystemMics;
+                        core.socket.processReceive((IPEndPoint)remoteEP, arrayOwner, received, currentMics);
                         if (arrayOwner.Count > 1)
                         {// Byte array is used by multiple owners. Return and rent a new one next time.
                             arrayOwner = arrayOwner.Return();
@@ -57,34 +64,107 @@ public sealed class NetSocket
             }
         }
 
-        public RecvCore(ThreadCoreBase parent, NetSocket socket)
+        public RecvCore(ThreadCoreBase parent, NetSocketObsolete socket)
                 : base(parent, Process, false)
         {
             this.socket = socket;
         }
 
-        private NetSocket socket;
+        private NetSocketObsolete socket;
     }
 
-    public NetSocket(NetTerminal netTerminal)
+    private class SendCore : ThreadCore
     {
-        this.netTerminal = netTerminal;
+        public static void Process(object? parameter)
+        {
+            var core = (SendCore)parameter!;
+            while (!core.IsTerminated)
+            {
+                var prev = Mics.GetSystem();
+                core.ProcessSend();
+
+                var nano = NetConstants.SendIntervalNanoseconds - ((Mics.GetSystem() - prev) * 1000);
+                if (nano > 0)
+                {
+                    // core.socket.Logger?.TryGet()?.Log($"Nanosleep: {nano}");
+                    core.TryNanoSleep(nano); // Performs better than core.Sleep() on Linux.
+                }
+            }
+        }
+
+        public SendCore(ThreadCoreBase parent, NetSocketObsolete socket)
+                : base(parent, Process, false)
+        {
+            this.socket = socket;
+            this.timer = MultimediaTimer.TryCreate(NetConstants.SendIntervalMilliseconds, this.ProcessSend); // Use multimedia timer if available.
+        }
+
+        public void ProcessSend()
+        {// Invoked by multiple threads(NetSocketSendCore.Process() or MultimediaTimer).
+            lock (this.syncObject)
+            {
+                // Check interval.
+                var currentMics = this.socket.UpdateSystemMics();
+                var interval = Mics.FromNanoseconds((double)NetConstants.SendIntervalNanoseconds / 2); // Half for margin.
+                if (currentMics < (this.previousMics + interval))
+                {
+                    return;
+                }
+
+                if (this.socket.UnsafeUdpClient is not null)
+                {
+                    // this.socket.Logger?.TryGet()?.Log($"ProcessSend");
+                    this.socket.processSend(currentMics);
+                }
+
+                this.previousMics = currentMics;
+            }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            this.timer?.Dispose();
+            base.Dispose(disposing);
+        }
+
+        private NetSocketObsolete socket;
+        private MultimediaTimer? timer;
+
+        private object syncObject = new();
+        private long previousMics;
+    }
+
+    public NetSocketObsolete(ProcessSend processSend, ProcessReceive processReceive)
+    {
+        this.processSend = processSend;
+        this.processReceive = processReceive;
+        this.UpdateSystemMics();
     }
 
     #region FieldAndProperty
+
+    public long CurrentSystemMics => this.currentSystemMics;
 
 #pragma warning disable SA1401 // Fields should be private
     internal UdpClient? UnsafeUdpClient;
 #pragma warning restore SA1401 // Fields should be private
 
-    private readonly NetTerminal netTerminal;
+    private readonly ProcessSend processSend;
+    private readonly ProcessReceive processReceive;
+
     private RecvCore? recvCore;
+    private SendCore? sendCore;
+    private long currentSystemMics;
 
     #endregion
+
+    public long UpdateSystemMics()
+        => this.currentSystemMics = Mics.GetSystem();
 
     public bool Start(ThreadCoreBase parent, int port, bool ipv6)
     {
         this.recvCore ??= new RecvCore(parent, this);
+        this.sendCore ??= new SendCore(parent, this);
 
         try
         {
@@ -99,6 +179,7 @@ public sealed class NetSocket
         }
 
         this.recvCore.Start();
+        this.sendCore.Start();
 
         return true;
     }
@@ -106,6 +187,7 @@ public sealed class NetSocket
     public void Stop()
     {
         this.recvCore?.Dispose();
+        this.sendCore?.Dispose();
 
         try
         {

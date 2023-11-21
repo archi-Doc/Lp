@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics;
+using System.Net;
 using Arc.Unit;
 using Netsphere;
 using Netsphere.Packet;
@@ -33,8 +34,10 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         var netTerminal = this.NetControl.NetTerminal;
         var packetTerminal = netTerminal.PacketTerminal;
 
+        nodeAddress.TryCreateIPEndPoint(out var endPoint);
+        endPoint = new System.Net.IPEndPoint(IPAddress.Loopback, 50000);
         var p = new PacketPing("test56789");
-        var result = await packetTerminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(p);
+        var result = await packetTerminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(endPoint, p);
 
         using (var connection = netTerminal.TryConnect(nodeAddress))
         {

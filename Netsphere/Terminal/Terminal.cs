@@ -590,9 +590,9 @@ public class Terminal : UnitBase, IUnitExecutable
 
     internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
 
-    internal NetSocket NetSocketIpv4 { get; private set; }
+    internal NetSocketObsolete NetSocketIpv4 { get; private set; }
 
-    internal NetSocket NetSocketIpv6 { get; private set; }
+    internal NetSocketObsolete NetSocketIpv6 { get; private set; }
 
     internal UnitLogger UnitLogger { get; private set; }
 

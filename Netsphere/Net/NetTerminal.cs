@@ -1,10 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Net;
 using Netsphere.Crypto;
+using Netsphere.Net;
 using Netsphere.Packet;
 using Netsphere.Stats;
-using static Arc.Unit.ByteArrayPool;
+
+#pragma warning disable SA1202 // Elements should be ordered by access
 
 namespace Netsphere;
 
@@ -20,8 +21,9 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.logger = unitLogger.GetLogger<Terminal>();
         this.NetBase = netBase;
 
-        this.netSocketIpv4 = new(this.ProcessSend, this.ProcessReceive);
-        this.netSocketIpv6 = new(this.ProcessSend, this.ProcessReceive);
+        this.netSocketIpv4 = new(this);
+        this.netSocketIpv6 = new(this);
+        this.netSender = new(this);
         this.PacketTerminal = new(this);
         this.connections = new(netStats);
         this.netStats = netStats;
@@ -48,8 +50,9 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     private readonly ILogger logger;
     private readonly NetStats netStats;
-    private readonly NetSocket netSocketIpv4;
-    private readonly NetSocket netSocketIpv6;
+    internal readonly NetSocket netSocketIpv4;
+    internal readonly NetSocket netSocketIpv6;
+    private readonly NetSender netSender;
     private readonly NetConnectionControl connections;
     private NodePrivateKey nodePrivateKey = default!;
 
@@ -95,22 +98,26 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
             this.logger.TryGet(LogLevel.Fatal)?.Log($"Could not create a UDP socket with port {this.Port}.");
             throw new PanicException();
         }
+
+        this.netSender.Start(core);
     }
 
     async Task IUnitExecutable.TerminateAsync(UnitMessage.TerminateAsync message)
     {
         this.netSocketIpv4.Stop();
         this.netSocketIpv6.Stop();
+        this.netSender.Stop();
     }
 
-    private void ProcessSend(long currentSystemMics)
+    internal void ProcessSend(NetSender netSender)
     {
         // tempcode
-        this.PacketTerminal.ProcessSend(currentSystemMics);
+        this.PacketTerminal.ProcessSend(netSender);
     }
 
-    private unsafe void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner toBeShared, int packetSize, long currentSystemMics)
+    internal unsafe void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner toBeShared, int packetSize)
     {
+        var currentSystemMics = this.netSender.CurrentSystemMics;
         var owner = toBeShared.ToMemoryOwner(0, packetSize);
 
         // tempcode
