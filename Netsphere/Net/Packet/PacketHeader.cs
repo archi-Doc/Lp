@@ -4,15 +4,9 @@ using System.Runtime.InteropServices;
 
 namespace Netsphere.Packet;
 
-[StructLayout(LayoutKind.Explicit)]
+/*[StructLayout(LayoutKind.Explicit)]
 internal struct PacketHeader
-{// 8 bytes
+{// 8 bytes (0:PacketType, 1-7:PacketId)
     [FieldOffset(0)]
-    public uint PacketId;
-
-    [FieldOffset(4)]
-    public PacketType PacketType;
-
-    [FieldOffset(6)]
-    public ushort DataSize;
-}
+    public ulong PacketId; // 0 byte: PacketType;
+}*/

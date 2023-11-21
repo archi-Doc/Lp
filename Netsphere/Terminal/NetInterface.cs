@@ -510,11 +510,11 @@ WaitForSendCompletionWait:
         {
             if (this.RecvGenes[i].ReceivedId == PacketIdObsolete.Data)
             {// Data
-                totalSize += this.RecvGenes[i].Owner.Memory.Length - PacketService.DataHeaderSize;
+                totalSize += this.RecvGenes[i].Owner.Memory.Length - PacketService.DataHeaderSizeObsolete;
             }
             else
             {// DataFollowing
-                totalSize += this.RecvGenes[i].Owner.Memory.Length - PacketService.DataFollowingHeaderSize;
+                totalSize += this.RecvGenes[i].Owner.Memory.Length - PacketService.DataFollowingHeaderSizeObsolete;
             }
         }
 
@@ -637,7 +637,7 @@ WaitForSendCompletionWait:
             {
                 if (size >= maxSize)
                 {
-                    PacketService.InsertDataSize(rentArray!.ByteArray, (ushort)(size - PacketService.HeaderSize));
+                    PacketService.InsertDataSize(rentArray!.ByteArray, (ushort)(size - PacketService.HeaderSizeObsolete));
                     this.Terminal.AddRawSend(this.NetTerminalObsolete.Endpoint.EndPoint, rentArray!.ToMemoryOwner(0, size)); // nspi
                     // this.NetTerminalObsolete.TerminalLogger?.Information($"AACK {size}");
                     size = 0;
@@ -650,7 +650,7 @@ WaitForSendCompletionWait:
                     header.Id = PacketIdObsolete.Ack;
 
                     rentArray = PacketPool.Rent();
-                    size += PacketService.HeaderSize;
+                    size += PacketService.HeaderSizeObsolete;
                     fixed (byte* bp = rentArray.ByteArray)
                     {
                         *(PacketHeaderObsolete*)bp = header;
@@ -672,7 +672,7 @@ WaitForSendCompletionWait:
 
         if (size > 0)
         {
-            PacketService.InsertDataSize(rentArray!.ByteArray, (ushort)(size - PacketService.HeaderSize));
+            PacketService.InsertDataSize(rentArray!.ByteArray, (ushort)(size - PacketService.HeaderSizeObsolete));
             this.Terminal.AddRawSend(this.NetTerminalObsolete.Endpoint.EndPoint, rentArray!.ToMemoryOwner(0, size)); // nspi
             // this.NetTerminalObsolete.TerminalLogger?.Information($"AACK {size}");
             size = 0;

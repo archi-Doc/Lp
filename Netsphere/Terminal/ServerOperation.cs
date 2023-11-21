@@ -64,7 +64,7 @@ public class ServerOperation : NetOperation
             *(PacketHeaderObsolete*)bp = header;
         }
 
-        this.Terminal.AddRawSend(this.NetTerminalObsolete.Endpoint.EndPoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize)); // nspi
+        this.Terminal.AddRawSend(this.NetTerminalObsolete.Endpoint.EndPoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSizeObsolete)); // nspi
     }
 
     public async Task<NetReceivedData> ReceiveAsync()

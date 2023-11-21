@@ -47,7 +47,7 @@ public sealed class NetSocket
                     arrayOwner ??= PacketPool.Rent();
                     var received = udp.Client.ReceiveFrom(arrayOwner.ByteArray, 0, arrayOwner.ByteArray.Length, SocketFlags.None, ref remoteEP);
                     // ValueTask<SocketReceiveFromResult> vt = udp.Client.ReceiveFromAsync(arrayOwner.ByteArray.AsMemory(), SocketFlags.None, remoteEP);
-                    if (received <= NetControl.MaxPayload)
+                    if (received <= NetControl.MaxPacketLength)
                     {// nspi
                         // var systemMics = Mics.GetSystem();
                         var currentMics = core.socket.CurrentSystemMics;

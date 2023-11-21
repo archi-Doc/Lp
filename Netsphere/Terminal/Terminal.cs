@@ -255,7 +255,7 @@ public class Terminal : UnitBase, IUnitExecutable
         var position = 0;
         var remaining = packetSize;
 
-        while (remaining >= PacketService.HeaderSize)
+        while (remaining >= PacketService.HeaderSizeObsolete)
         {
             PacketHeaderObsolete header;
             fixed (byte* pb = packetArray)
@@ -264,7 +264,7 @@ public class Terminal : UnitBase, IUnitExecutable
             }
 
             var dataSize = header.DataSize;
-            if (remaining < (PacketService.HeaderSize + dataSize))
+            if (remaining < (PacketService.HeaderSizeObsolete + dataSize))
             {// Invalid DataSize
                 return;
             }
@@ -273,11 +273,11 @@ public class Terminal : UnitBase, IUnitExecutable
             {// Not implemented
             }
 
-            position += PacketService.HeaderSize;
+            position += PacketService.HeaderSizeObsolete;
             var memoryOwner = arrayOwner.ToMemoryOwner(position, dataSize);
             this.ProcessReceiveCore(memoryOwner, endPoint, ref header, currentMics);
             position += dataSize;
-            remaining -= PacketService.HeaderSize + dataSize;
+            remaining -= PacketService.HeaderSizeObsolete + dataSize;
         }
     }
 
@@ -484,7 +484,7 @@ public class Terminal : UnitBase, IUnitExecutable
             *(PacketHeaderObsolete*)bp = header;
         }
 
-        this.AddRawSend(endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize)); // nspi
+        this.AddRawSend(endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSizeObsolete)); // nspi
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

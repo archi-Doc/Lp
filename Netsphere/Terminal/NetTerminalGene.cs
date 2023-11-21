@@ -231,9 +231,9 @@ internal class NetTerminalGene
     public override string ToString()
     {
         var length = this.Owner.Memory.Length;
-        if (this.IsSend && length >= PacketService.HeaderSize)
+        if (this.IsSend && length >= PacketService.HeaderSizeObsolete)
         {
-            length -= PacketService.HeaderSize;
+            length -= PacketService.HeaderSizeObsolete;
         }
 
         return $"{this.Gene.To4Hex()}, {this.GeneState}, Data: {length}";
