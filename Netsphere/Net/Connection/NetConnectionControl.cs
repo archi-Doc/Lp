@@ -14,7 +14,7 @@ internal class NetConnectionControl
     private readonly NetStats netStats;
 
     private readonly object syncObject = new();
-    private readonly NetConnection.GoshujinClass connections = new();
+    private readonly ServerConnection.GoshujinClass closedServerConnections = new();
 
     public NetConnection? TryConnect(NetAddress address, NetConnection.ConnectMode mode = NetConnection.ConnectMode.ReuseClosed)
     {
@@ -28,7 +28,7 @@ internal class NetConnectionControl
         {
             if (mode == NetConnection.ConnectMode.ReuseOpened)
             {// Attempt to reuse connections that have already been created and are open.
-                this.connections.NetEndPointChain.TryGetValue(endPoint, out var connection);
+                this.closedServerConnections.EndPointChain.TryGetValue(endPoint, out var connection);
             }
             else if (mode == NetConnection.ConnectMode.ReuseClosed)
             {// Attempt to reuse connections that have already been closed and are awaiting disposal.

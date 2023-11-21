@@ -2,7 +2,6 @@
 
 namespace Netsphere;
 
-[ValueLinkObject]
 public partial class NetConnection
 {
     public enum ConnectMode
@@ -16,6 +15,5 @@ public partial class NetConnection
     {
     }
 
-    [Link(Type = ChainType.Unordered, AddValue = false)]
-    public NetEndPoint NetEndPoint { get; }
+    public NetEndPoint EndPoint { get; }
 }

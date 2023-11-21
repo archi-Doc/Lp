@@ -2,6 +2,11 @@
 
 namespace Netsphere;
 
-public class ServerConnection : NetConnection
+[ValueLinkObject]
+public partial class ServerConnection : NetConnection
 {
+    [Link(TargetMember = "EndPoint", Type = ChainType.Ordered, AddValue = false)]
+    public ServerConnection()
+    {
+    }
 }
