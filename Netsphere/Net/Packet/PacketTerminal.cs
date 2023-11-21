@@ -1,8 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Buffers;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using Tinyhand.IO;
 
 #pragma warning disable SA1204
@@ -15,18 +12,31 @@ public sealed partial class PacketTerminal
     private sealed partial class Item
     {
         [Link(Type = ChainType.QueueList, Name = "SendQueue")]
-        public Item(ulong packetId, ByteArrayPool.MemoryOwner dataToBeMoved)
+        public Item(ByteArrayPool.MemoryOwner dataToBeMoved, TaskCompletionSource<(NetResult Result, ByteArrayPool.MemoryOwner ToBeMoved)>? tcs)
         {
-            this.PacketId = packetId;
+            if (dataToBeMoved.Span.Length < sizeof(ulong))
+            {
+                throw new InvalidOperationException();
+            }
+
+            this.PacketId = BitConverter.ToUInt64(dataToBeMoved.Span);
             this.dataToBeMoved = dataToBeMoved;
+            this.Tcs = tcs;
         }
 
         [Link(Type = ChainType.Unordered, AddValue = false)]
         public ulong PacketId { get; }
 
-        private ByteArrayPool.MemoryOwner dataToBeMoved;
+        public TaskCompletionSource<(NetResult Result, ByteArrayPool.MemoryOwner ToBeMoved)>? Tcs { get; }
+
+        private readonly ByteArrayPool.MemoryOwner dataToBeMoved;
         private ulong sentMics;
         private int sentCount;
+
+        public void Return()
+        {
+            this.dataToBeMoved.Return();
+        }
     }
 
     public PacketTerminal(NetTerminal netTerminal)
@@ -41,7 +51,7 @@ public sealed partial class PacketTerminal
         where TSend : IPacket, ITinyhandSerialize<TSend>
     {
         CreatePacket(0, packet, out var owner);
-        this.TryAdd(owner);
+        this.TryAdd(owner, default);
     }
 
     public async Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(TSend packet)
@@ -50,9 +60,9 @@ public sealed partial class PacketTerminal
     {
         var tcs = new TaskCompletionSource<(NetResult Result, ByteArrayPool.MemoryOwner ToBeMoved)>();
         CreatePacket(0, packet, out var owner);
-        this.TryAdd(owner);
+        this.TryAdd(owner, tcs);
 
-        var task = tcs.Task.Result;
+        var task = await tcs.Task.ConfigureAwait(false);
         if (task.Result != NetResult.Success)
         {
             return new(task.Result, default);
@@ -61,7 +71,7 @@ public sealed partial class PacketTerminal
         TReceive? receive;
         try
         {
-            receive = TinyhandSerializer.DeserializeObject<TReceive>(task.ToBeMoved.Span.Slice(PacketService.PacketHeaderSize));
+            receive = TinyhandSerializer.DeserializeObject<TReceive>(task.ToBeMoved.Span.Slice(sizeof(ulong)));
         }
         catch
         {
@@ -72,51 +82,72 @@ public sealed partial class PacketTerminal
         return (NetResult.Success, receive);
     }
 
-    internal void ProcessReceive(IPEndPoint endPoint, Span<byte> packet, long currentMics)
+    internal void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentMics)
     {
-        if (packet.Length < PacketService.PacketHeaderSize)
+        if (toBeShared.Span.Length < sizeof(ulong))
         {
             return;
         }
 
-        var header = Unsafe.ReadUnaligned<PacketHeader>(ref MemoryMarshal.GetReference(packet));
+        var header = BitConverter.ToUInt64(toBeShared.Span);
+        var packetType = (PacketType)(header & 0xFF);
+        if ((header & 0x80) != 0)
+        {// Reponse
+            Item? item;
+            lock (this.items.SyncObject)
+            {
+                if (this.items.PacketIdChain.TryGetValue(header, out item))
+                {
+                    item.Goshujin = null;
+                }
+            }
+
+            if (item is not null)
+            {
+                item.Return();
+                if (item.Tcs is not null)
+                {
+                    item.Tcs.SetResult((NetResult.Success, toBeShared.IncrementAndShare()));
+                }
+            }
+        }
+        else
+        {
+            if (packetType == PacketType.Ping)
+            {
+            }
+        }
     }
 
-    private bool TryAdd(ByteArrayPool.MemoryOwner dataToBeMoved)
+    private bool TryAdd(ByteArrayPool.MemoryOwner dataToBeMoved, TaskCompletionSource<(NetResult Result, ByteArrayPool.MemoryOwner ToBeMoved)>? tcs)
     {
         if (dataToBeMoved.Span.Length > NetControl.MaxPacketLength)
         {
             return false;
         }
 
-        var item = new Item(dataToBeMoved);
+        var item = new Item(dataToBeMoved, tcs);
         lock (this.items.SyncObject)
         {
-
             item.Goshujin = this.items;
         }
 
         return true;
     }
 
-    private static void CreatePacket<TPacket>(uint packetId, TPacket packet, out ByteArrayPool.MemoryOwner owner)
+    private static void CreatePacket<TPacket>(ulong packetId, TPacket packet, out ByteArrayPool.MemoryOwner owner)
         where TPacket : IPacket, ITinyhandSerialize<TPacket>
     {
-        PacketHeader header = default;
-        header.PacketId = packetId == 0 ? RandomVault.Pseudo.NextUInt32() : packetId;
-        header.PacketType = TPacket.PacketType;
-        header.DataSize = 0;
+        if (packetId == 0)
+        {
+            packetId = RandomVault.Pseudo.NextUInt64();
+        }
 
+        var header = (packetId & 0xFFFF_FFFF_FFFF_FF00) | (ulong)TPacket.PacketType;
         var arrayOwner = PacketPool.Rent();
         var writer = new TinyhandWriter(arrayOwner.ByteArray);
-        var packetHeaderSpan = writer.GetSpan(PacketService.PacketHeaderSize);
-        writer.Advance(PacketService.PacketHeaderSize);
-
-        var written = writer.Written;
+        writer.Write(header);
         TinyhandSerializer.SerializeObject(ref writer, packet);
-
-        header.DataSize = (ushort)(writer.Written - written);
-        Unsafe.WriteUnaligned(ref MemoryMarshal.GetReference(packetHeaderSpan), header);
 
         writer.FlushAndGetArray(out var array, out var arrayLength, out var isInitialBuffer);
         writer.Dispose();

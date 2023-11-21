@@ -10,7 +10,6 @@ internal static class PacketService
 {
     static PacketService()
     {
-        PacketHeaderSize = Marshal.SizeOf(default(PacketHeader));
         // GeneHeaderSize = Marshal.SizeOf(default(GenePacketHeader));
 
         HeaderSizeObsolete = Marshal.SizeOf(default(PacketHeaderObsolete));
@@ -27,8 +26,6 @@ internal static class PacketService
         DataFollowingPayloadSize = 1375; // = SafeMaxPayloadSize
         DataPayloadSize = DataFollowingPayloadSize - DataHeaderSizeObsolete + DataFollowingHeaderSizeObsolete;
     }
-
-    public static int PacketHeaderSize { get; }
 
     public static int GeneHeaderSize { get; }
 

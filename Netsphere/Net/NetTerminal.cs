@@ -96,11 +96,11 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     {
     }
 
-    private unsafe void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner arrayOwner, int packetSize, long currentMics)
+    private unsafe void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner toBeShared, int packetSize, long currentMics)
     {
-        var owner = arrayOwner.ToMemoryOwner(0, packetSize);
+        var owner = toBeShared.ToMemoryOwner(0, packetSize);
 
         // tempcode
-        this.PacketTerminal.ProcessReceive(endPoint, owner.Span, currentMics);
+        this.PacketTerminal.ProcessReceive(endPoint, owner, currentMics);
     }
 }
