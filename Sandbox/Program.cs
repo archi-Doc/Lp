@@ -5,9 +5,25 @@ global using CrystalData;
 global using Tinyhand;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
-using SimpleCommandLine;
+using Netsphere;
 
 namespace Sandbox;
+
+public class TestServerContext : ServerContext
+{
+    public TestServerContext()
+    {
+    }
+}
+
+public class TestCallContext : CallContext<TestServerContext>
+{
+    public static new TestCallContext Current => (TestCallContext)CallContext.Current;
+
+    public TestCallContext()
+    {
+    }
+}
 
 public class Program
 {
@@ -25,10 +41,9 @@ public class Program
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
         };
 
-        var builder = new CrystalControl.Builder()
+        var builder = new NetControl.Builder()
             .Configure(context =>
             {
-                context.AddSingleton<TestClass0>();
                 context.AddLoggerResolver(context =>
                 {
                     /*if (context.LogLevel == LogLevel.Debug)
@@ -40,73 +55,19 @@ public class Program
                     context.SetOutput<ConsoleAndFileLogger>();
                 });
             })
-            .ConfigureCrystal((Action<IUnitCrystalContext>)(context =>
-            {
-                context.SetJournal(
-                    new SimpleJournalConfiguration(new LocalDirectoryConfiguration("Journal"))
-                    {
-                        // BackupDirectoryConfiguration = new LocalDirectoryConfiguration("Backup/Journal"),
-                    });
-
-                context.AddCrystal<ManualClass>(
-                    new(SavePolicy.OnChanged, new GlobalFileConfiguration("Local/manual.tinyhand"))
-                    {
-                        SaveFormat = SaveFormat.Utf8,
-                        NumberOfFileHistories = 3,
-                        // BackupFileConfiguration = new LocalFileConfiguration("Backup/manual.tinyhand")
-                    });
-
-                context.AddCrystal<CombinedClass>(
-                    new(
-                        SavePolicy.Periodic,
-                        new LocalFileConfiguration("Local/combined"),
-                        new SimpleStorageConfiguration(new LocalDirectoryConfiguration("Local/Simple"), new LocalDirectoryConfiguration("Backup/Simple")))
-                    {
-                        SaveInterval = TimeSpan.FromSeconds(10),
-                        NumberOfFileHistories = 2,
-                        // BackupFileConfiguration = new LocalFileConfiguration("Backup/combined")
-                    });
-
-                context.AddCrystal<StandardData.GoshujinClass>(
-                    new(SavePolicy.Periodic, new GlobalFileConfiguration("Local/standard.tinyhand"))
-                    {
-                        SaveFormat = SaveFormat.Utf8,
-                        NumberOfFileHistories = 2,
-                    });
-            }))
-            .SetupOptions<CrystalizerOptions>((context, options) =>
-            {// CrystalizerOptions
-                options.EnableFilerLogger = true;
-                options.RootPath = Directory.GetCurrentDirectory();
-                options.GlobalDirectory = new LocalDirectoryConfiguration("Global");
-                // options.GlobalBackup = new LocalDirectoryConfiguration("Backup2");
-            })
-            .SetupOptions<FileLoggerOptions>((context, options) =>
-            {// FileLoggerOptions
-                var logfile = "Logs/Log.txt";
-                options.Path = Path.Combine(context.RootDirectory, logfile);
-                options.MaxLogCapacity = 2;
+            .SetupOptions<NetsphereOptions>((context, options) =>
+            {// NetsphereOptions
+                options.EnableEssential = true;
+                options.EnableAlternative = true;
             });
 
         var unit = builder.Build();
-
-        if (SimpleParserHelper.TryGetAndRemoveArgument(ref args, "storagekey", out var bucketKeyPair))
-        {
-            if (AccessKeyPair.TryParse(bucketKeyPair, out var bucket, out var accessKeyPair))
-            {
-                unit.Context.ServiceProvider.GetRequiredService<IStorageKey>().AddKey(bucket, accessKeyPair);
-            }
-        }
-
-        // var sc = new SimpleJournalConfiguration(new LocalDirectoryConfiguration("Storage"));
-        // var st = TinyhandSerializer.SerializeToString((JournalConfiguration)sc);
-
-        var tc = unit.Context.ServiceProvider.GetRequiredService<TestClass0>();
-        await tc.Test1();
+        var options = unit.Context.ServiceProvider.GetRequiredService<NetsphereOptions>();
+        await Console.Out.WriteLineAsync($"Port: {options.Port.ToString()}");
+        var param = new NetControl.Unit.Param(true, () => new TestServerContext(), () => new TestCallContext(), "test", options, true);
+        await unit.RunStandalone(param);
 
         ThreadCore.Root.Terminate();
-        await unit.Context.ServiceProvider.GetRequiredService<Crystalizer>().SaveAllAndTerminate();
-        // await unit.Context.ServiceProvider.GetRequiredService<Crystalizer>().SaveJournalOnlyForTest();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
         if (unit.Context.ServiceProvider.GetService<UnitLogger>() is { } unitLogger)
         {
