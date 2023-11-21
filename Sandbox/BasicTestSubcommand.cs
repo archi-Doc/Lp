@@ -34,7 +34,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         var packetTerminal = netTerminal.PacketTerminal;
 
         var p = new PacketPing("test56789");
-        // var result = await packetTerminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(p);
+        var result = await packetTerminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(p);
 
         using (var connection = netTerminal.TryConnect(nodeAddress))
         {

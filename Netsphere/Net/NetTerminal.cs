@@ -1,13 +1,17 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Net;
 using Netsphere.Crypto;
 using Netsphere.Packet;
 using Netsphere.Stats;
+using static Arc.Unit.ByteArrayPool;
 
 namespace Netsphere;
 
 public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 {
+    public const double DefaultResponseTimeoutInSeconds = 2d;
+
     public NetTerminal(bool isAlternative, UnitContext unitContext, UnitLogger unitLogger, NetBase netBase, NetStats netStats)
         : base(unitContext)
     {
@@ -21,9 +25,14 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.PacketTerminal = new(this);
         this.connections = new(netStats);
         this.netStats = netStats;
+
+        this.ResponseTimeout = TimeSpan.FromSeconds(DefaultResponseTimeoutInSeconds);
     }
 
     #region FieldAndProperty
+
+    public CancellationToken CancellationToken
+        => ThreadCore.Root.CancellationToken;
 
     public NetBase NetBase { get; }
 
@@ -32,6 +41,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     public int Port { get; set; }
 
     public PacketTerminal PacketTerminal { get; }
+
+    public TimeSpan ResponseTimeout { get; set; }
 
     internal UnitLogger UnitLogger { get; private set; }
 
@@ -92,15 +103,17 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.netSocketIpv6.Stop();
     }
 
-    private void ProcessSend(long currentMics)
+    private void ProcessSend(long currentSystemMics)
     {
+        // tempcode
+        this.PacketTerminal.ProcessSend(currentSystemMics);
     }
 
-    private unsafe void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner toBeShared, int packetSize, long currentMics)
+    private unsafe void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner toBeShared, int packetSize, long currentSystemMics)
     {
         var owner = toBeShared.ToMemoryOwner(0, packetSize);
 
         // tempcode
-        this.PacketTerminal.ProcessReceive(endPoint, owner, currentMics);
+        this.PacketTerminal.ProcessReceive(endPoint, owner, currentSystemMics);
     }
 }

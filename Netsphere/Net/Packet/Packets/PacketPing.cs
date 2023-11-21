@@ -26,11 +26,9 @@ public sealed partial class PacketPing : IPacket
 }
 
 [TinyhandObject]
-public sealed partial class PacketPingResponse : IPacketObsolete
+public sealed partial class PacketPingResponse : IPacket
 {
-    public PacketIdObsolete PacketId => PacketIdObsolete.PingResponse;
-
-    public bool AllowUnencrypted => true;
+    public static PacketType PacketType => PacketType.PingResponse;
 
     public PacketPingResponse()
     {

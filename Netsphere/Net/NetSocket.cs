@@ -10,9 +10,9 @@ namespace Netsphere;
 /// </summary>
 public sealed class NetSocket
 {
-    public delegate void ProcessSend(long currentMics);
+    public delegate void ProcessSend(long currentSystemMics);
 
-    public delegate void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner arrayOwner, int packetSize, long currentMics);
+    public delegate void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner arrayOwner, int packetSize, long currentSystemMics);
 
     private const int ReceiveTimeout = 100;
 
@@ -50,8 +50,8 @@ public sealed class NetSocket
                     if (received <= NetControl.MaxPacketLength)
                     {// nspi
                         // var systemMics = Mics.GetSystem();
-                        var currentMics = core.socket.CurrentSystemMics;
-                        core.socket.processReceive((IPEndPoint)remoteEP, arrayOwner, received, currentMics);
+                        var currentSystemMics = core.socket.CurrentSystemMics;
+                        core.socket.processReceive((IPEndPoint)remoteEP, arrayOwner, received, currentSystemMics);
                         if (arrayOwner.Count > 1)
                         {// Byte array is used by multiple owners. Return and rent a new one next time.
                             arrayOwner = arrayOwner.Return();
@@ -104,9 +104,9 @@ public sealed class NetSocket
             lock (this.syncObject)
             {
                 // Check interval.
-                var currentMics = this.socket.UpdateSystemMics();
+                var currentSystemMics = this.socket.UpdateSystemMics();
                 var interval = Mics.FromNanoseconds((double)NetConstants.SendIntervalNanoseconds / 2); // Half for margin.
-                if (currentMics < (this.previousMics + interval))
+                if (currentSystemMics < (this.previousSystemMics + interval))
                 {
                     return;
                 }
@@ -114,10 +114,10 @@ public sealed class NetSocket
                 if (this.socket.UnsafeUdpClient is not null)
                 {
                     // this.socket.Logger?.TryGet()?.Log($"ProcessSend");
-                    this.socket.processSend(currentMics);
+                    this.socket.processSend(currentSystemMics);
                 }
 
-                this.previousMics = currentMics;
+                this.previousSystemMics = currentSystemMics;
             }
         }
 
@@ -131,7 +131,7 @@ public sealed class NetSocket
         private MultimediaTimer? timer;
 
         private object syncObject = new();
-        private long previousMics;
+        private long previousSystemMics;
     }
 
     public NetSocket(ProcessSend processSend, ProcessReceive processReceive)

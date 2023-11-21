@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Threading.Tasks;
 using Tinyhand.IO;
 
 #pragma warning disable SA1204
@@ -30,7 +31,7 @@ public sealed partial class PacketTerminal
         public TaskCompletionSource<(NetResult Result, ByteArrayPool.MemoryOwner ToBeMoved)>? Tcs { get; }
 
         private readonly ByteArrayPool.MemoryOwner dataToBeMoved;
-        private ulong sentMics;
+        private long sentMics;
         private int sentCount;
 
         public void Return()
@@ -62,27 +63,41 @@ public sealed partial class PacketTerminal
         CreatePacket(0, packet, out var owner);
         this.TryAdd(owner, tcs);
 
-        var task = await tcs.Task.ConfigureAwait(false);
-        if (task.Result != NetResult.Success)
-        {
-            return new(task.Result, default);
-        }
-
-        TReceive? receive;
         try
         {
-            receive = TinyhandSerializer.DeserializeObject<TReceive>(task.ToBeMoved.Span.Slice(sizeof(ulong)));
+            var task = await tcs.Task.WaitAsync(this.netTerminal.ResponseTimeout, this.netTerminal.CancellationToken).ConfigureAwait(false);
+
+            if (task.Result != NetResult.Success)
+            {
+                task.ToBeMoved.Return();
+                return new(task.Result, default);
+            }
+
+            TReceive? receive;
+            try
+            {
+                receive = TinyhandSerializer.DeserializeObject<TReceive>(task.ToBeMoved.Span.Slice(sizeof(ulong)));
+            }
+            catch
+            {
+                return new(NetResult.DeserializationError, default);
+            }
+
+            task.ToBeMoved.Return();
+            return (NetResult.Success, receive);
         }
         catch
         {
-            return new(NetResult.DeserializationError, default);
+            return (NetResult.Timeout, default);
         }
-
-        task.ToBeMoved.Return();
-        return (NetResult.Success, receive);
     }
 
-    internal void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentMics)
+    internal void ProcessSend(long currentSystemMics)
+    {
+
+    }
+
+    internal void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
     {
         if (toBeShared.Span.Length < sizeof(ulong))
         {
