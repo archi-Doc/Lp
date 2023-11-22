@@ -1,13 +1,14 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Net;
+using System.Runtime.CompilerServices;
 using Netsphere.Misc;
 
 namespace Netsphere.Net;
 
 internal class NetSender
 {// LOG_NETSENDER
-    public readonly struct Item
+    private readonly struct Item
     {
         public Item(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
         {
@@ -67,7 +68,7 @@ internal class NetSender
                     return;
                 }
 
-                this.sender.Initialize();
+                this.sender.Prepare();
 
                 this.sender.netTerminal.ProcessSend(this.sender);
 
@@ -90,12 +91,14 @@ internal class NetSender
         private long previousSystemMics;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Send_NotThreadSafe(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared)
     {
 #if LOG_NETSENDER
         this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} To {endPoint.ToString()}, {toBeShared.Span.Length} bytes");
 #endif
 
+        this.SendCount++;
         if (endPoint.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
         {
             this.itemsIpv4.Enqueue(new(endPoint, toBeShared));
@@ -123,8 +126,8 @@ internal class NetSender
 
     public bool Start(ThreadCoreBase parent)
     {
-        var port = this.netTerminal.Port
-            ;
+        var port = this.netTerminal.Port;
+
         if (!this.netSocketIpv4.Start(parent, port, false))
         {
             this.logger.TryGet(LogLevel.Fatal)?.Log($"Could not create a UDP socket with port {port}.");
@@ -184,7 +187,7 @@ internal class NetSender
         }
     }
 
-    private void Initialize()
+    private void Prepare()
     {
         this.SendCapacity = 50;
         this.SendCount = 0;

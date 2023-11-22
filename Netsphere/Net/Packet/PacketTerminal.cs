@@ -217,7 +217,7 @@ public sealed partial class PacketTerminal
         {
             item.Goshujin = this.items;
 
-            // Send immediately
+            // Send immediately (This enhances performance in a local environment, but since it's meaningless in an actual network, it has been disabled)
             /*var netSender = this.netTerminal.NetSender;
             if (!item.Ack)
             {// Without ack
