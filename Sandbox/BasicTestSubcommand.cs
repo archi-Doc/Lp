@@ -31,6 +31,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             return;
         }
 
+        var sw = Stopwatch.StartNew();
         var netTerminal = this.NetControl.NetTerminal;
         var packetTerminal = netTerminal.PacketTerminal;
 
@@ -38,6 +39,13 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         endPoint = new System.Net.IPEndPoint(IPAddress.Loopback, 50000);
         var p = new PacketPing("test56789");
         var result = await packetTerminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(endPoint, p);
+
+        Console.WriteLine($"{sw.ElapsedMilliseconds} ms, {result.ToString()}");
+
+        p = new PacketPing("test56789");
+        result = await packetTerminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(endPoint, p);
+
+        Console.WriteLine($"{sw.ElapsedMilliseconds} ms, {result.ToString()}");
 
         using (var connection = netTerminal.TryConnect(nodeAddress))
         {

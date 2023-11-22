@@ -23,8 +23,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
         this.netSocketIpv4 = new(this);
         this.netSocketIpv6 = new(this);
-        this.netSender = new(this);
-        this.PacketTerminal = new(this);
+        this.netSender = new(this, unitLogger.GetLogger<NetSender>());
+        this.PacketTerminal = new(this, unitLogger.GetLogger<PacketTerminal>());
         this.connections = new(netStats);
         this.netStats = netStats;
 
@@ -39,6 +39,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     public NetBase NetBase { get; }
 
     public bool IsAlternative { get; }
+
+    public string NetTerminalString => this.IsAlternative ? "Alt" : "Main";
 
     public int Port { get; set; }
 

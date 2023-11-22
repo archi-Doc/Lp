@@ -1,16 +1,16 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Netsphere.Misc;
-using static Netsphere.Net.NetSocket;
 
 namespace Netsphere.Net;
 
 internal class NetSender
-{
-    public NetSender(NetTerminal netTerminal)
+{// LOG_NETSENDER
+    public NetSender(NetTerminal netTerminal, ILogger<NetSender> logger)
     {
         this.UpdateSystemMics();
         this.netTerminal = netTerminal;
+        this.logger = logger;
     }
 
     private class SendCore : ThreadCore
@@ -72,6 +72,10 @@ internal class NetSender
 
     public void Send(IPEndPoint endPoint, Span<byte> data)
     {
+#if LOG_NETSENDER
+        this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} To {endPoint.ToString()}, {data.Length} bytes");
+#endif
+
         if (endPoint.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
         {
             if (this.netTerminal.netSocketIpv4.UnsafeUdpClient is { } client)
@@ -106,6 +110,7 @@ internal class NetSender
     public long CurrentSystemMics => this.currentSystemMics;
 
     private readonly NetTerminal netTerminal;
+    private readonly ILogger logger;
     private SendCore? sendCore;
     private long currentSystemMics;
 }
