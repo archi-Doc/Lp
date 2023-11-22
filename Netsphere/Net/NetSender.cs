@@ -90,6 +90,10 @@ internal class NetSender
                 client.Send(data, endPoint);
             }
         }
+
+#if LOG_NETSENDER
+        this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} To {endPoint.ToString()}, {data.Length} bytes done");
+#endif
     }
 
     public long UpdateSystemMics()

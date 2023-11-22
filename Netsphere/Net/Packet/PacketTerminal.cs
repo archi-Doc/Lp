@@ -15,7 +15,8 @@ public sealed partial class PacketTerminal
     [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
     private sealed partial class Item
     {
-        [Link(Type = ChainType.QueueList, Name = "SendQueue")]
+        [Link(Type = ChainType.LinkedList, Name = "ToSendList", AutoLink = true)]
+        [Link(Type = ChainType.LinkedList, Name = "SentList", AutoLink = false)]
         public Item(IPEndPoint endPoint, ByteArrayPool.MemoryOwner dataToBeMoved, bool ack, TaskCompletionSource<(NetResult Result, ByteArrayPool.MemoryOwner ToBeMoved)>? tcs)
         {
             if (dataToBeMoved.Span.Length < sizeof(ulong))
@@ -108,21 +109,35 @@ public sealed partial class PacketTerminal
     {
         lock (this.items.SyncObject)
         {
-            this.logger.TryGet()?.Log($"{this.netTerminal.NetTerminalString} ProcessSend() - {this.items.Count}");
-            if (this.items.SendQueueChain.TryPeek(out var item))
-            {
-                this.logger.TryGet()?.Log($"{this.netTerminal.NetTerminalString} sending... {item.DataToBeMoved.Span.Length}");
-                if (!item.Ack)
-                {// Without ack
-                    netSender.Send(item.EndPoint, item.DataToBeMoved.Span);
-                    item.Goshujin = null;
-                }
-                else if ((netSender.CurrentSystemMics - item.SentMics) > Mics.FromMilliseconds(500))
-                {
-                    netSender.Send(item.EndPoint, item.DataToBeMoved.Span);
-                    item.SentMics = netSender.CurrentSystemMics;
-                    this.logger.TryGet()?.Log($"{this.netTerminal.NetTerminalString} ProcessSend() - {item.SentMics}");
-                }
+            this.logger.TryGet()?.Log($"{this.netTerminal.NetTerminalString} ProcessSend() - {this.items.ToSendListChain.Count}");
+
+            while (this.items.ToSendListChain.First is { } item)
+            {// To send list
+                SendItem(item);
+            }
+
+            while (this.items.SentListChain.First is { } item && (netSender.CurrentSystemMics - item.SentMics) > Mics.FromMilliseconds(500))
+            {// Sent list
+                SendItem(item);
+            }
+        }
+
+        void SendItem(Item item)
+        {
+            this.logger.TryGet()?.Log($"{this.netTerminal.NetTerminalString} sending... {item.DataToBeMoved.Span.Length}");
+            if (!item.Ack)
+            {// Without ack
+                netSender.Send(item.EndPoint, item.DataToBeMoved.Span);
+                item.Goshujin = null;
+            }
+            else
+            {// Ack (sent list)
+                netSender.Send(item.EndPoint, item.DataToBeMoved.Span);
+                item.SentMics = netSender.CurrentSystemMics;
+                this.items.ToSendListChain.Remove(item);
+                this.items.SentListChain.AddLast(item);
+
+                this.logger.TryGet()?.Log($"{this.netTerminal.NetTerminalString} ProcessSend() - {item.SentMics}");
             }
         }
     }
