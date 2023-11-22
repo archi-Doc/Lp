@@ -21,8 +21,6 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.logger = unitLogger.GetLogger<Terminal>();
         this.NetBase = netBase;
 
-        this.netSocketIpv4 = new(this);
-        this.netSocketIpv6 = new(this);
         this.netSender = new(this, unitLogger.GetLogger<NetSender>());
         this.PacketTerminal = new(this, unitLogger.GetLogger<PacketTerminal>());
         this.connections = new(netStats);
@@ -52,8 +50,6 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     private readonly ILogger logger;
     private readonly NetStats netStats;
-    internal readonly NetSocket netSocketIpv4;
-    internal readonly NetSocket netSocketIpv6;
     private readonly NetSender netSender;
     private readonly NetConnectionControl connections;
     private NodePrivateKey nodePrivateKey = default!;
@@ -89,25 +85,11 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     async Task IUnitExecutable.RunAsync(UnitMessage.RunAsync message)
     {
         var core = message.ParentCore;
-        if (!this.netSocketIpv4.Start(core, this.Port, false))
-        {
-            this.logger.TryGet(LogLevel.Fatal)?.Log($"Could not create a UDP socket with port {this.Port}.");
-            throw new PanicException();
-        }
-
-        if (!this.netSocketIpv6.Start(core, this.Port, true))
-        {
-            this.logger.TryGet(LogLevel.Fatal)?.Log($"Could not create a UDP socket with port {this.Port}.");
-            throw new PanicException();
-        }
-
         this.netSender.Start(core);
     }
 
     async Task IUnitExecutable.TerminateAsync(UnitMessage.TerminateAsync message)
     {
-        this.netSocketIpv4.Stop();
-        this.netSocketIpv6.Stop();
         this.netSender.Stop();
     }
 

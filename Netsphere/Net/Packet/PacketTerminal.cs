@@ -27,7 +27,7 @@ public sealed partial class PacketTerminal
             this.EndPoint = endPoint;
             this.Ack = ack;
             this.PacketId = BitConverter.ToUInt64(dataToBeMoved.Span) & 0xFFFF_FFFF_FFFF_FF00;
-            this.DataToBeMoved = dataToBeMoved;
+            this.MemoryOwner = dataToBeMoved;
             this.Tcs = tcs;
         }
 
@@ -38,16 +38,17 @@ public sealed partial class PacketTerminal
 
         public bool Ack { get; }
 
-        public ByteArrayPool.MemoryOwner DataToBeMoved { get; }
+        public ByteArrayPool.MemoryOwner MemoryOwner { get; }
 
         public TaskCompletionSource<(NetResult Result, ByteArrayPool.MemoryOwner ToBeMoved)>? Tcs { get; }
+
         public long SentMics { get; set; }
 
         public int SentCount { get; set; }
 
         public void Return()
         {
-            this.DataToBeMoved.Return();
+            this.MemoryOwner.Return();
         }
     }
 
@@ -118,15 +119,20 @@ public sealed partial class PacketTerminal
 
             while (this.items.ToSendListChain.First is { } item)
             {// To send list
+                if (!netSender.CanSend)
+                {
+                    return;
+                }
+
                 if (!item.Ack)
                 {// Without ack
-                    netSender.Send(item.EndPoint, item.DataToBeMoved.Span);
+                    netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner);
                     item.Goshujin = null;
                 }
                 else
                 {// Ack (sent list)
                     // this.logger.TryGet()?.Log($"Ack (sent list)");
-                    netSender.Send(item.EndPoint, item.DataToBeMoved.Span);
+                    netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner);
                     item.SentMics = netSender.CurrentSystemMics;
                     item.SentCount++;
                     this.items.ToSendListChain.Remove(item);
@@ -136,14 +142,18 @@ public sealed partial class PacketTerminal
 
             while (this.items.SentListChain.First is { } item && (netSender.CurrentSystemMics - item.SentMics) > Mics.FromMilliseconds(500))
             {// Sent list
+                if (!netSender.CanSend)
+                {
+                    return;
+                }
+
                 if (item.SentCount >= 3)
                 {
                     item.Goshujin = null;
                     continue;
                 }
 
-                this.logger.TryGet()?.Log($"{(netSender.CurrentSystemMics - item.SentMics)}");
-                netSender.Send(item.EndPoint, item.DataToBeMoved.Span);
+                netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner);
                 item.SentMics = netSender.CurrentSystemMics;
                 item.SentCount++;
                 this.items.SentListChain.AddLast(item);
