@@ -41,9 +41,13 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         var result = await packetTerminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(endPoint, p);
 
         Console.WriteLine($"{sw.ElapsedMilliseconds} ms, {result.ToString()}");
+        sw.Restart();
 
-        p = new PacketPing("test56789");
-        result = await packetTerminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(endPoint, p);
+        for (var i = 0; i < 50; i++)
+        {
+            p = new PacketPing("test56789");
+            result = await packetTerminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(endPoint, p);
+        }
 
         Console.WriteLine($"{sw.ElapsedMilliseconds} ms, {result.ToString()}");
 

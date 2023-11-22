@@ -67,8 +67,8 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
             w3.ResponseAsync.Wait();*/
         }
 
-        // await this.PingpongSmallData2(node);
-        await this.MassiveSmallData(node); // 1000 ms
+        await this.PingpongSmallData2(node);
+        // await this.MassiveSmallData(node); // 1000 ms
     }
 
     public NetControl NetControl { get; set; }

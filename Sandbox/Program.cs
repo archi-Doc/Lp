@@ -50,14 +50,22 @@ public class Program
 
                 context.AddLoggerResolver(context =>
                 {
-                    /*if (context.LogLevel == LogLevel.Debug)
+                    if (context.LogLevel == LogLevel.Debug)
                     {
                         context.SetOutput<FileLogger<FileLoggerOptions>>();
                         return;
-                    }*/
+                    }
 
                     context.SetOutput<ConsoleAndFileLogger>();
                 });
+            })
+            .SetupOptions<FileLoggerOptions>((context, options) =>
+            {// FileLoggerOptions
+                var logfile = "Logs/Debug.txt";
+                options.Path = Path.Combine(context.RootDirectory, logfile);
+                options.MaxLogCapacity = 1;
+                options.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffffff K";
+                options.ClearLogsAtStartup = true;
             })
             .SetupOptions<NetsphereOptions>((context, options) =>
             {// NetsphereOptions
