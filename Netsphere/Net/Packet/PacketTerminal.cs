@@ -131,7 +131,6 @@ public sealed partial class PacketTerminal
                 }
                 else
                 {// Ack (sent list)
-                    // this.logger.TryGet()?.Log($"Ack (sent list)");
                     netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner);
                     item.SentMics = netSender.CurrentSystemMics;
                     item.SentCount++;
@@ -217,6 +216,22 @@ public sealed partial class PacketTerminal
         lock (this.items.SyncObject)
         {
             item.Goshujin = this.items;
+
+            // Send immediately
+            /*var netSender = this.netTerminal.NetSender;
+            if (!item.Ack)
+            {// Without ack
+                netSender.SendImmediately(item.EndPoint, item.MemoryOwner.Span);
+                item.Goshujin = null;
+            }
+            else
+            {// Ack (sent list)
+                netSender.SendImmediately(item.EndPoint, item.MemoryOwner.Span);
+                item.SentMics = netSender.CurrentSystemMics;
+                item.SentCount++;
+                this.items.ToSendListChain.Remove(item);
+                this.items.SentListChain.AddLast(item);
+            }*/
         }
 
         return true;

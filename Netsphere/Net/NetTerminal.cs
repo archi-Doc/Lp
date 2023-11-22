@@ -21,7 +21,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.logger = unitLogger.GetLogger<Terminal>();
         this.NetBase = netBase;
 
-        this.netSender = new(this, unitLogger.GetLogger<NetSender>());
+        this.NetSender = new(this, unitLogger.GetLogger<NetSender>());
         this.PacketTerminal = new(this, unitLogger.GetLogger<PacketTerminal>());
         this.connections = new(netStats);
         this.netStats = netStats;
@@ -44,13 +44,14 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public PacketTerminal PacketTerminal { get; }
 
+    internal NetSender NetSender { get; }
+
     public TimeSpan ResponseTimeout { get; set; }
 
     internal UnitLogger UnitLogger { get; private set; }
 
     private readonly ILogger logger;
     private readonly NetStats netStats;
-    private readonly NetSender netSender;
     private readonly NetConnectionControl connections;
     private NodePrivateKey nodePrivateKey = default!;
 
@@ -85,12 +86,12 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     async Task IUnitExecutable.RunAsync(UnitMessage.RunAsync message)
     {
         var core = message.ParentCore;
-        this.netSender.Start(core);
+        this.NetSender.Start(core);
     }
 
     async Task IUnitExecutable.TerminateAsync(UnitMessage.TerminateAsync message)
     {
-        this.netSender.Stop();
+        this.NetSender.Stop();
     }
 
     internal void ProcessSend(NetSender netSender)
@@ -101,7 +102,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     internal unsafe void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner toBeShared, int packetSize)
     {
-        var currentSystemMics = this.netSender.CurrentSystemMics;
+        var currentSystemMics = this.NetSender.CurrentSystemMics;
         var owner = toBeShared.ToMemoryOwner(0, packetSize);
 
         // tempcode

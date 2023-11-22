@@ -130,10 +130,19 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
                 if (terminal is null)
                 {
                     return;
-
                 }
                 var service = terminal.GetService<IBenchmarkService>();
-                var response = service.Pingpong(data).ResponseAsync;
+                var response = await service.Pingpong(data).ResponseAsync;
+                if (response.IsSuccess)
+                {
+                    count++;
+                }
+                else
+                {
+                    Console.WriteLine(response.Result.ToString());
+                }
+
+                /*var response = service.Pingpong(data).ResponseAsync;
                 if (response.Result.IsSuccess)
                 {
                     count++;
@@ -141,7 +150,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
                 else
                 {
                     Console.WriteLine(response.Result.Result.ToString());
-                }
+                }*/
             }
         }
 

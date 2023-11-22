@@ -166,6 +166,24 @@ internal class NetSender
     private Queue<Item> itemsIpv4 = new();
     private Queue<Item> itemsIpv6 = new();
 
+    internal void SendImmediately(IPEndPoint endPoint, Span<byte> data)
+    {
+        if (endPoint.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+        {
+            if (this.netSocketIpv4.UnsafeUdpClient is { } client)
+            {
+                client.Send(data, endPoint);
+            }
+        }
+        else
+        {
+            if (this.netSocketIpv6.UnsafeUdpClient is { } client)
+            {
+                client.Send(data, endPoint);
+            }
+        }
+    }
+
     private void Initialize()
     {
         this.SendCapacity = 50;
