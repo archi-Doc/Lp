@@ -43,7 +43,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         Console.WriteLine($"{sw.ElapsedMilliseconds} ms, {result.ToString()}");
         sw.Restart();
 
-        for (var i = 0; i < 50; i++)
+        for (var i = 0; i < 2; i++)
         {
             p = new PacketPing("test56789");
             result = await packetTerminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(endPoint, p);

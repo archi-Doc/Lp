@@ -38,9 +38,9 @@ internal class NetSender
             while (!core.IsTerminated)
             {
                 var prev = Mics.GetSystem();
-                core.ProcessSend();
+                core.sender.Process();
 
-                var nano = NetConstants.SendIntervalNanoseconds - ((Mics.GetSystem() - prev) * 1000);
+                var nano = NetConstants.SendIntervalNanoseconds - ((Mics.GetSystem() - prev) * 1_000);
                 if (nano > 0)
                 {
                     // core.socket.Logger?.TryGet()?.Log($"Nanosleep: {nano}");
@@ -53,29 +53,7 @@ internal class NetSender
                 : base(parent, Process, false)
         {
             this.sender = sender;
-            this.timer = MultimediaTimer.TryCreate(NetConstants.SendIntervalMilliseconds, this.ProcessSend); // Use multimedia timer if available.
-        }
-
-        public void ProcessSend()
-        {// Invoked by multiple threads(NetSocketSendCore.Process() or MultimediaTimer).
-            lock (this.syncObject)
-            {
-                // Check interval.
-                var currentSystemMics = this.sender.UpdateSystemMics();
-                var interval = Mics.FromNanoseconds((double)NetConstants.SendIntervalNanoseconds / 2); // Half for margin.
-                if (currentSystemMics < (this.previousSystemMics + interval))
-                {
-                    return;
-                }
-
-                this.sender.Prepare();
-
-                this.sender.netTerminal.ProcessSend(this.sender);
-
-                this.sender.Flush();
-
-                this.previousSystemMics = currentSystemMics;
-            }
+            this.timer = MultimediaTimer.TryCreate(NetConstants.SendIntervalMilliseconds, this.sender.Process); // Use multimedia timer if available.
         }
 
         protected override void Dispose(bool disposing)
@@ -86,9 +64,6 @@ internal class NetSender
 
         private NetSender sender;
         private MultimediaTimer? timer;
-
-        private object syncObject = new();
-        private long previousSystemMics;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -115,10 +90,6 @@ internal class NetSender
                 client.Send(data, endPoint);
             }*/
         }
-
-#if LOG_NETSENDER
-        this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} To {endPoint.ToString()}, {toBeShared.Span.Length} bytes done");
-#endif
     }
 
     public long UpdateSystemMics()
@@ -165,11 +136,14 @@ internal class NetSender
     private readonly NetSocket netSocketIpv4;
     private readonly NetSocket netSocketIpv6;
     private SendCore? sendCore;
+
+    private object syncObject = new();
+    private long previousSystemMics;
     private long currentSystemMics;
     private Queue<Item> itemsIpv4 = new();
     private Queue<Item> itemsIpv6 = new();
 
-    internal void SendImmediately(IPEndPoint endPoint, Span<byte> data)
+    /*internal void SendImmediately(IPEndPoint endPoint, Span<byte> data)
     {
         if (endPoint.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
         {
@@ -184,6 +158,35 @@ internal class NetSender
             {
                 client.Send(data, endPoint);
             }
+        }
+    }*/
+
+    private void Process()
+    {// Invoked by multiple threads(SendCore or MultimediaTimer).
+        // Check interval.
+        var currentSystemMics = this.UpdateSystemMics();
+        var interval = Mics.FromNanoseconds((double)NetConstants.SendIntervalNanoseconds / 2); // Half for margin.
+        if (currentSystemMics < (this.previousSystemMics + interval))
+        {
+            return;
+        }
+
+        if (!Monitor.TryEnter(this.syncObject))
+        {
+            return;
+        }
+
+        try
+        {
+            this.Prepare();
+            this.netTerminal.ProcessSend(this);
+            this.Flush();
+
+            this.previousSystemMics = currentSystemMics;
+        }
+        finally
+        {
+            Monitor.Exit(this.syncObject);
         }
     }
 

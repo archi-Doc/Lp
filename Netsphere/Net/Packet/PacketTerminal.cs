@@ -1,8 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Net;
-using System.Net.Sockets;
-using System.Threading.Tasks;
 using Netsphere.Net;
 using Tinyhand.IO;
 
@@ -12,6 +9,8 @@ namespace Netsphere.Packet;
 
 public sealed partial class PacketTerminal
 {
+    private const int PacketHeaderLength = 12; // 
+
     [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
     private sealed partial class Item
     {
@@ -46,9 +45,10 @@ public sealed partial class PacketTerminal
 
         public int SentCount { get; set; }
 
-        public void Return()
+        public void Remove()
         {
             this.MemoryOwner.Return();
+            this.Goshujin = null;
         }
     }
 
@@ -56,7 +56,14 @@ public sealed partial class PacketTerminal
     {
         this.netTerminal = netTerminal;
         this.logger = logger;
+
+        this.ResendIntervalMics = Mics.FromMilliseconds(500);
+        this.SendCountLimit = 3;
     }
+
+    public long ResendIntervalMics { get; set; }
+
+    public int SendCountLimit { get; set; }
 
     private readonly NetTerminal netTerminal;
     private readonly ILogger logger;
@@ -127,7 +134,7 @@ public sealed partial class PacketTerminal
                 if (!item.Ack)
                 {// Without ack
                     netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner);
-                    item.Goshujin = null;
+                    item.Remove();
                 }
                 else
                 {// Ack (sent list)
@@ -139,16 +146,16 @@ public sealed partial class PacketTerminal
                 }
             }
 
-            while (this.items.SentListChain.First is { } item && (netSender.CurrentSystemMics - item.SentMics) > Mics.FromMilliseconds(500))
+            while (this.items.SentListChain.First is { } item && (netSender.CurrentSystemMics - item.SentMics) > this.ResendIntervalMics)
             {// Sent list
                 if (!netSender.CanSend)
                 {
                     return;
                 }
 
-                if (item.SentCount >= 3)
+                if (item.SentCount >= this.SendCountLimit)
                 {
-                    item.Goshujin = null;
+                    item.Remove();
                     continue;
                 }
 
@@ -177,7 +184,7 @@ public sealed partial class PacketTerminal
             {
                 if (this.items.PacketIdChain.TryGetValue(packetId, out item))
                 {
-                    item.Goshujin = null;
+                    item.Remove();
                 }
             }
 
@@ -185,7 +192,6 @@ public sealed partial class PacketTerminal
             {
                 this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString}, Received {toBeShared.Span.Length}");
 
-                item.Return();
                 if (item.Tcs is not null)
                 {
                     item.Tcs.SetResult((NetResult.Success, toBeShared.IncrementAndShare()));

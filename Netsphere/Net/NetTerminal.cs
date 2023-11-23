@@ -96,8 +96,14 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     internal void ProcessSend(NetSender netSender)
     {
-        // tempcode
+        // 1st: Packets
         this.PacketTerminal.ProcessSend(netSender);
+        if (!netSender.CanSend)
+        {
+            return;
+        }
+
+        // 2nd: Genes (NetTransmission)
     }
 
     internal unsafe void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.Owner toBeShared, int packetSize)
