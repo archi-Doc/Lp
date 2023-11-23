@@ -2,6 +2,10 @@
 
 namespace Netsphere;
 
-public class ClientConnection : NetConnection
+[ValueLinkObject]
+public partial class ClientConnection : NetConnection
 {
+    public ClientConnection()
+    {
+    }
 }
