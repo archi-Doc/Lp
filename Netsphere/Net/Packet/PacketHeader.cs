@@ -2,6 +2,8 @@
 
 namespace Netsphere.Packet;
 
+#pragma warning disable CS0649
+
 internal readonly struct PacketHeader
 {// 20 bytes
     public const int Length = 20;

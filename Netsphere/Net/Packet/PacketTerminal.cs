@@ -100,14 +100,17 @@ public sealed partial class PacketTerminal
             TReceive? receive;
             try
             {
-                receive = TinyhandSerializer.DeserializeObject<TReceive>(task.ToBeMoved.Span.Slice(sizeof(ulong)));
+                receive = TinyhandSerializer.DeserializeObject<TReceive>(task.ToBeMoved.Span.Slice(PacketHeader.Length));
             }
             catch
             {
                 return new(NetResult.DeserializationError, default);
             }
+            finally
+            {
+                task.ToBeMoved.Return();
+            }
 
-            task.ToBeMoved.Return();
             return (NetResult.Success, receive);
         }
         catch
@@ -167,11 +170,24 @@ public sealed partial class PacketTerminal
 
     internal void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
     {
-        var header = BitConverter.ToUInt64(toBeShared.Span);
-        var packetId = header & 0xFFFF_FFFF_FFFF_FF00;
-        var packetType = (PacketType)(header & 0xFF);
-        if ((header & 0x80) != 0)
-        {// Reponse
+        var span = toBeShared.Span;
+        var packetUInt16 = BitConverter.ToUInt16(span.Slice(10));
+        var packetType = (PacketType)packetUInt16;
+        var packetId = BitConverter.ToUInt64(span.Slice(12));
+
+        if (packetUInt16 < 127)
+        {// Packet types (0-127)
+            if (packetType == PacketType.Ping)
+            {
+                this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} PacketPingResponse");
+
+                var packet = new PacketPingResponse(new(endPoint.Address, (ushort)endPoint.Port), this.netTerminal.NetBase.NodeName);
+                CreatePacket(packetId, packet, out var owner);
+                this.TryAdd(endPoint, owner, false, default);
+            }
+        }
+        else if (packetUInt16 < 255)
+        {// Packet response types (128-255)
             Item? item;
             lock (this.items.SyncObject)
             {
@@ -193,14 +209,6 @@ public sealed partial class PacketTerminal
         }
         else
         {
-            if (packetType == PacketType.Ping)
-            {
-                this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} PacketPingResponse");
-
-                var packet = new PacketPingResponse(new(endPoint.Address, (ushort)endPoint.Port), this.netTerminal.NetBase.NodeName);
-                CreatePacket(packetId, packet, out var owner);
-                this.TryAdd(endPoint, owner, false, default);
-            }
         }
     }
 
@@ -244,16 +252,34 @@ public sealed partial class PacketTerminal
             packetId = RandomVault.Pseudo.NextUInt64();
         }
 
-        var header = (packetId & 0xFFFF_FFFF_FFFF_FF00) | (ulong)TPacket.PacketType;
         var arrayOwner = PacketPool.Rent();
         var writer = new TinyhandWriter(arrayOwner.ByteArray);
-        var span = writer.GetSpan(sizeof(ulong));
-        BitConverter.TryWriteBytes(span, header);
-        writer.Advance(sizeof(ulong));
+
+        scoped Span<byte> header = stackalloc byte[PacketHeader.Length];
+        var span = header;
+
+        BitConverter.TryWriteBytes(span, 0ul); // Hash
+        span = span.Slice(sizeof(ulong));
+
+        BitConverter.TryWriteBytes(span, (ushort)0); // Engagement
+        span = span.Slice(sizeof(ushort));
+
+        BitConverter.TryWriteBytes(span, (ushort)TPacket.PacketType); // PacketType
+        span = span.Slice(sizeof(ushort));
+
+        BitConverter.TryWriteBytes(span, packetId); // Id
+        span = span.Slice(sizeof(ulong));
+
+        writer.WriteSpan(header);
+
         TinyhandSerializer.SerializeObject(ref writer, packet);
 
         writer.FlushAndGetArray(out var array, out var arrayLength, out var isInitialBuffer);
         writer.Dispose();
+
+        // Get hash
+        span = array.AsSpan(0, arrayLength);
+        BitConverter.TryWriteBytes(span, XxHash3.Hash64(span.Slice(sizeof(ulong))));
 
         if (!isInitialBuffer)
         {
