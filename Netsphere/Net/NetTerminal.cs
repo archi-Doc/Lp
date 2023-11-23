@@ -110,8 +110,31 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     {
         var currentSystemMics = this.NetSender.CurrentSystemMics;
         var owner = toBeShared.ToMemoryOwner(0, packetSize);
+        var span = owner.Span;
 
-        // tempcode
-        this.PacketTerminal.ProcessReceive(endPoint, owner, currentSystemMics);
+        if (packetSize < PacketHeader.Length)
+        {// Check length
+            return;
+        }
+        else if (BitConverter.ToUInt64(span) != XxHash3.Hash64(span.Slice(sizeof(ulong))))
+        {// Check hash
+            return;
+        }
+
+        // Engagement
+        span = span.Slice(sizeof(ulong));
+        var engagement = BitConverter.ToUInt16(span);
+
+        // Packet type
+        span = span.Slice(sizeof(ushort));
+        var packetType = BitConverter.ToUInt16(span);
+
+        if (packetType < 256)
+        {// Packet
+            this.PacketTerminal.ProcessReceive(endPoint, owner, currentSystemMics);
+        }
+        else if (packetType < 511)
+        {// Gene
+        }
     }
 }

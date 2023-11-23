@@ -5,8 +5,7 @@ namespace Netsphere.Packet;
 [TinyhandObject]
 public sealed partial class PacketClose : IPacket
 {
-    public static PacketType PacketType
-        => PacketType.Close;
+    public static PacketType PacketType => PacketType.Close;
 
     public PacketClose()
     {

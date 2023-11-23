@@ -9,8 +9,6 @@ namespace Netsphere.Packet;
 
 public sealed partial class PacketTerminal
 {
-    private const int PacketHeaderLength = 12; // 
-
     [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
     private sealed partial class Item
     {
@@ -18,14 +16,14 @@ public sealed partial class PacketTerminal
         [Link(Type = ChainType.LinkedList, Name = "SentList", AutoLink = false)]
         public Item(IPEndPoint endPoint, ByteArrayPool.MemoryOwner dataToBeMoved, bool ack, TaskCompletionSource<(NetResult Result, ByteArrayPool.MemoryOwner ToBeMoved)>? tcs)
         {
-            if (dataToBeMoved.Span.Length < sizeof(ulong))
+            if (dataToBeMoved.Span.Length < PacketHeader.Length)
             {
                 throw new InvalidOperationException();
             }
 
             this.EndPoint = endPoint;
             this.Ack = ack;
-            this.PacketId = BitConverter.ToUInt64(dataToBeMoved.Span) & 0xFFFF_FFFF_FFFF_FF00;
+            this.PacketId = BitConverter.ToUInt64(dataToBeMoved.Span.Slice(12));
             this.MemoryOwner = dataToBeMoved;
             this.Tcs = tcs;
         }
@@ -169,11 +167,6 @@ public sealed partial class PacketTerminal
 
     internal void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
     {
-        if (toBeShared.Span.Length < sizeof(ulong))
-        {
-            return;
-        }
-
         var header = BitConverter.ToUInt64(toBeShared.Span);
         var packetId = header & 0xFFFF_FFFF_FFFF_FF00;
         var packetType = (PacketType)(header & 0xFF);
@@ -211,7 +204,7 @@ public sealed partial class PacketTerminal
         }
     }
 
-    private bool TryAdd(IPEndPoint endPoint, ByteArrayPool.MemoryOwner dataToBeMoved, bool ack, TaskCompletionSource<(NetResult Result, ByteArrayPool.MemoryOwner ToBeMoved)>? tcs)
+    private unsafe bool TryAdd(IPEndPoint endPoint, ByteArrayPool.MemoryOwner dataToBeMoved, bool ack, TaskCompletionSource<(NetResult Result, ByteArrayPool.MemoryOwner ToBeMoved)>? tcs)
     {
         if (dataToBeMoved.Span.Length > NetControl.MaxPacketLength)
         {

@@ -2,16 +2,23 @@
 
 namespace Netsphere.Packet;
 
-public enum PacketType : byte
+public enum PacketType : ushort
 {
-    Invalid,
-    Ack,
+    // Packet types (0-127)
     Close,
-    Relay,
     Ping,
     Punch,
+    GetInformation,
 
-    // Response type
-    PingResponse = 128,
+    // Packet response types (128-255)
+    CloseResponse = 128,
+    PingResponse,
     PunchResponse,
+    GetInformationResponse,
+
+    // Gene types (256-511)
+    Ack = 256,
+    Block,
+    RPC,
+    Stream,
 }

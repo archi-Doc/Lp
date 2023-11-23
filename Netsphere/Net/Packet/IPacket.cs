@@ -6,8 +6,8 @@ namespace Netsphere.Packet;
 /// Packet class requirements.<br/>
 /// 1. Inherit IPacket interface.<br/>
 /// 2. Has TinyhandObjectAttribute (Tinyhand serializable).<br/>
-/// 3. Has unique PacketId.<br/>
-/// 4. Length of serialized byte array is less than or equal to <see cref="PacketService.DataPayloadSize"/>.
+/// 3. Unique PacketType is defined.<br/>
+/// 4. Length of the serialized byte array is less than or equal to <see cref="PacketHeader.MaxContentLengtgh"/>.
 /// </summary>
 public interface IPacket
 {
