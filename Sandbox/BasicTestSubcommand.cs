@@ -35,10 +35,8 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         var netTerminal = this.NetControl.NetTerminal;
         var packetTerminal = netTerminal.PacketTerminal;
 
-        nodeAddress.TryCreateIPEndPoint(out var endPoint);
-        endPoint = new System.Net.IPEndPoint(IPAddress.Loopback, 50000);
         var p = new PacketPing("test56789");
-        var result = await packetTerminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(endPoint, p);
+        var result = await packetTerminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(nodeAddress, p);
 
         Console.WriteLine($"{sw.ElapsedMilliseconds} ms, {result.ToString()}");
         sw.Restart();
@@ -46,7 +44,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         for (var i = 0; i < 2; i++)
         {
             p = new PacketPing("test56789");
-            result = await packetTerminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(endPoint, p);
+            result = await packetTerminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(nodeAddress, p);
         }
 
         Console.WriteLine($"{sw.ElapsedMilliseconds} ms, {result.ToString()}");

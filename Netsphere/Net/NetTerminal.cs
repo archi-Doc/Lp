@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
 using Netsphere.Crypto;
 using Netsphere.Net;
 using Netsphere.Packet;
@@ -52,10 +53,13 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     private readonly ILogger logger;
     private readonly NetStats netStats;
-    private readonly NetConnectionControl connections;
+    private readonly NetConnectionTerminal connections;
     private NodePrivateKey nodePrivateKey = default!;
 
     #endregion
+
+    public bool TryCreateEndPoint(in NetAddress address, out NetEndPoint endPoint)
+        => this.netStats.TryCreateEndPoint(in address, out endPoint);
 
     public void SetDeliveryFailureRatio(double ratio)
     {
@@ -77,13 +81,11 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         if (!this.IsAlternative)
         {
             this.nodePrivateKey = this.NetBase.NodePrivateKey;
-            this.Port = 49999; // tempcode
         }
         else
         {
             this.nodePrivateKey = NodePrivateKey.AlternativePrivateKey;
             this.Port = NetAddress.Alternative.Port;
-            this.Port = 50000; // tempcode
         }
 
         // Responders

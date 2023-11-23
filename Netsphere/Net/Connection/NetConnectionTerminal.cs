@@ -4,9 +4,9 @@ using Netsphere.Stats;
 
 namespace Netsphere;
 
-internal class NetConnectionControl
+internal class NetConnectionTerminal
 {
-    public NetConnectionControl(NetStats netStats)
+    public NetConnectionTerminal(NetStats netStats)
     {
         this.netStats = netStats;
     }
@@ -18,8 +18,7 @@ internal class NetConnectionControl
 
     public ClientConnection? TryConnect(NetAddress address, NetConnection.ConnectMode mode = NetConnection.ConnectMode.ReuseClosed)
     {
-        this.netStats.TryCreateEndPoint(in address, out var endPoint);
-        if (!endPoint.IsValid)
+        if (!this.netStats.TryCreateEndPoint(in address, out var endPoint))
         {
             return null;
         }

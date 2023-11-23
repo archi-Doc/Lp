@@ -43,13 +43,13 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
         if (this.MyIpv6Address.AddressState == MyAddress.State.Fixed ||
             this.MyIpv6Address.AddressState == MyAddress.State.Changed)
         {// Ipv6 supported
-            address.TryCreateIpv4(ref endPoint);
+            address.TryCreateIpv6(ref endPoint);
             if (endPoint.IsValid)
             {
                 return true;
             }
 
-            return address.TryCreateIpv6(ref endPoint);
+            return address.TryCreateIpv4(ref endPoint);
         }
         else
         {// Ipv4

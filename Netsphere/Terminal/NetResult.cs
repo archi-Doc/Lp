@@ -10,6 +10,7 @@ public enum NetResult
     Success,
     Timeout,
     Closed,
+    InvalidAddress,
     NoDataToSend,
     NoNodeInformation,
     NoNetwork,

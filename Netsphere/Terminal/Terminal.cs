@@ -46,11 +46,11 @@ public class Terminal : UnitBase, IUnitExecutable
         if (this.statsData.MyIpv6Address.AddressState == MyAddress.State.Fixed ||
             this.statsData.MyIpv6Address.AddressState == MyAddress.State.Changed)
         {// Ipv6 supported
-            address.TryCreateIpv4(ref endPoint);
+            /*address.TryCreateIpv4(ref endPoint);
             if (endPoint.IsValid)
             {
                 return true;
-            }
+            }*/
 
             return address.TryCreateIpv6(ref endPoint);
         }
@@ -168,6 +168,15 @@ public class Terminal : UnitBase, IUnitExecutable
         if (this.Port == 0)
         {
             this.Port = this.NetBase.NetsphereOptions.Port;
+        }
+
+        if (this.IsAlternative)
+        {
+            this.Port = 50000; // tempcode
+        }
+        else
+        {
+            this.Port = 49999; // tempcode
         }
 
         if (!this.NetSocketIpv4.Start(this.Core, this.Port, false))

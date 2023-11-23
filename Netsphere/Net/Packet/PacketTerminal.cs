@@ -67,14 +67,19 @@ public sealed partial class PacketTerminal
     private readonly ILogger logger;
     private readonly Item.GoshujinClass items = new();
 
-    public void SendAndForget<TSend>(IPEndPoint endPoint, TSend packet)
+    public void SendAndForget<TSend>(NetAddress address, TSend packet)
         where TSend : IPacket, ITinyhandSerialize<TSend>
     {
+        if (!this.netTerminal.TryCreateEndPoint(in address, out var endPoint))
+        {
+            return;
+        }
+
         CreatePacket(0, packet, out var owner);
-        this.TryAdd(endPoint, owner, true, default);
+        this.TryAdd(endPoint.EndPoint, owner, true, default);
     }
 
-    public async Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(IPEndPoint endPoint, TSend packet)
+    public async Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(NetAddress address, TSend packet)
         where TSend : IPacket, ITinyhandSerialize<TSend>
         where TReceive : IPacket, ITinyhandSerialize<TReceive>
     {
@@ -83,9 +88,14 @@ public sealed partial class PacketTerminal
             return (NetResult.Timeout, default);
         }
 
+        if (!this.netTerminal.TryCreateEndPoint(in address, out var endPoint))
+        {
+            return (NetResult.InvalidAddress, default);
+        }
+
         var tcs = new TaskCompletionSource<(NetResult Result, ByteArrayPool.MemoryOwner ToBeMoved)>();
         CreatePacket(0, packet, out var owner);
-        this.TryAdd(endPoint, owner, true, tcs);
+        this.TryAdd(endPoint.EndPoint, owner, true, tcs);
 
         try
         {

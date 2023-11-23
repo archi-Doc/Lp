@@ -11,24 +11,24 @@ namespace Netsphere;
 /// </summary>
 [TinyhandObject]
 public readonly partial record struct NetAddress : IStringConvertible<NetAddress>, IValidatable
-{
+{// 24 bytes
     public const ushort AlternativePort = 49151;
     public static readonly NetAddress Alternative = new(IPAddress.Loopback, AlternativePort); // IPAddress.IPv6Loopback
 
     [Key(0)]
-    public readonly ushort Engagement;
+    public readonly ushort Engagement; // 2 bytes
 
     [Key(1)]
-    public readonly ushort Port;
+    public readonly ushort Port; // 2 bytes
 
     [Key(2)]
-    public readonly uint Address4;
+    public readonly uint Address4; // 4 bytes
 
     [Key(3)]
-    public readonly ulong Address6A;
+    public readonly ulong Address6A; // 8 bytes
 
     [Key(4)]
-    public readonly ulong Address6B;
+    public readonly ulong Address6B; // 8 bytes
 
     public NetAddress(uint address4, ulong address6a, ulong address6b, ushort port)
     {
