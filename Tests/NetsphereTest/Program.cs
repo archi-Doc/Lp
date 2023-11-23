@@ -99,6 +99,7 @@ public class Program
             .Configure(context =>
             {
                 // Command
+                context.AddCommand(typeof(DeliveryTestSubcommand));
                 context.AddCommand(typeof(BasicTestSubcommand));
                 context.AddCommand(typeof(NetbenchSubcommand));
                 context.AddCommand(typeof(TaskScalingSubcommand));

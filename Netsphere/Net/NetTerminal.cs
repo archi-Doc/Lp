@@ -57,6 +57,13 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     #endregion
 
+    public void SetDeliveryFailureRatio(double ratio)
+    {
+#if DEBUG
+        this.NetSender.SetDeliveryFailureRatio(ratio);
+#endif
+    }
+
     public NetConnection? TryConnect(NetAddress address, NetConnection.ConnectMode mode = NetConnection.ConnectMode.ReuseClosed)
         => this.connections.TryConnect(address, mode);
 

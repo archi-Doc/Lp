@@ -123,6 +123,11 @@ internal class NetSender
         this.sendCore?.Dispose();
     }
 
+    public void SetDeliveryFailureRatio(double ratio)
+    {
+        this.deliveryFailureRatio = ratio;
+    }
+
     public bool CanSend => this.SendCapacity > this.SendCount;
 
     public long CurrentSystemMics => this.currentSystemMics;
@@ -142,6 +147,7 @@ internal class NetSender
     private long currentSystemMics;
     private Queue<Item> itemsIpv4 = new();
     private Queue<Item> itemsIpv6 = new();
+    private double deliveryFailureRatio = 0;
 
     /*internal void SendImmediately(IPEndPoint endPoint, Span<byte> data)
     {
@@ -202,6 +208,11 @@ internal class NetSender
         {
             while (this.itemsIpv4.TryDequeue(out var item))
             {
+                if (this.deliveryFailureRatio != 0 && RandomVault.Pseudo.NextDouble() < this.deliveryFailureRatio)
+                {
+                    continue;
+                }
+
                 ipv4.Send(item.MemoryOwner.Span, item.EndPoint);
                 item.MemoryOwner.Return();
             }
@@ -215,6 +226,11 @@ internal class NetSender
         {
             while (this.itemsIpv6.TryDequeue(out var item))
             {
+                if (this.deliveryFailureRatio != 0 && RandomVault.Pseudo.NextDouble() < this.deliveryFailureRatio)
+                {
+                    continue;
+                }
+
                 ipv6.Send(item.MemoryOwner.Span, item.EndPoint);
                 item.MemoryOwner.Return();
             }
