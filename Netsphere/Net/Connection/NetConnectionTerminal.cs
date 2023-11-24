@@ -57,17 +57,27 @@ internal class NetConnectionTerminal
         }
 
         // Create a new connection
-        var packet = new PacketConnect(this.netTerminal.NetBase.NodePublicKey);
+        var packet = new PacketConnect(0, this.netTerminal.NetBase.NodePublicKey);
         var t = await this.packetTerminal.SendAndReceiveAsync<PacketConnect, PacketConnectResponse>(node.Address, packet).ConfigureAwait(false);
         if (t.Value is null)
         {
             return default;
         }
 
-        return this.PrepareClientSide(node.PublicKey, packet, t.Value);
+        var newConnection = this.PrepareClientSide(endPoint, node.PublicKey, packet, t.Value);
+        if (newConnection is null)
+        {
+            return default;
+        }
+
+        lock (this.clientConnections.SyncObject)
+        {
+            newConnection.Goshujin = this.clientConnections;
+            this.clientConnections.OpenEndPointChain.Add(newConnection.EndPoint, newConnection);
+        }
     }
 
-    internal ClientConnection? PrepareClientSide(NodePublicKey serverPublicKey, PacketConnect p, PacketConnectResponse p2)
+    internal ClientConnection? PrepareClientSide(NetEndPoint endPoint, NodePublicKey serverPublicKey, PacketConnect p, PacketConnectResponse p2)
     {
         // KeyMaterial
         var pair = new NodeKeyPair(this.netTerminal.NetBase.NodePrivateKey, serverPublicKey);
@@ -76,9 +86,15 @@ internal class NetConnectionTerminal
         {
             return default;
         }
+
+        this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
+        var connection = new ClientConnection(connectionId, endPoint);
+        connection.SetEmbryo(embryo);
+
+        return connection;
     }
 
-    internal bool PrepareServerSide(PacketConnect p, PacketConnectResponse p2)
+    internal bool PrepareServerSide(NetEndPoint endPoint, PacketConnect p, PacketConnectResponse p2)
     {
         // KeyMaterial
         var pair = new NodeKeyPair(this.netTerminal.NetBase.NodePrivateKey, p.ClientPublicKey);
@@ -88,8 +104,42 @@ internal class NetConnectionTerminal
             return false;
         }
 
-        var connection = new ServerConnection()
+        this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
+        var connection = new ServerConnection(connectionId, endPoint);
+        connection.SetEmbryo(embryo);
 
         return true;
+    }
+
+    internal void CreateEmbryo(byte[] material, PacketConnect p, PacketConnectResponse p2, out ulong connectionId, out Embryo embryo)
+    {// ClientSalt, ServerSalt, Material, ClientSalt2, ServerSalt2
+        Span<byte> buffer = stackalloc byte[sizeof(ulong) + sizeof(ulong) + KeyHelper.PrivateKeyLength + sizeof(ulong) + sizeof(ulong)];
+        var span = buffer;
+        BitConverter.TryWriteBytes(span, p.ClientSalt);
+        span = span.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(span, p2.ServerSalt);
+        span = span.Slice(sizeof(ulong));
+        material.AsSpan().CopyTo(span);
+        span = span.Slice(KeyHelper.PrivateKeyLength);
+        BitConverter.TryWriteBytes(span, p.ClientSalt2);
+        span = span.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(span, p2.ServerSalt2);
+
+        Span<byte> hash = stackalloc byte[64];
+        Arc.Crypto.Sha3Helper.Get512_Span(buffer, hash);
+
+        var salt = BitConverter.ToUInt64(hash);
+        hash = hash.Slice(sizeof(ulong));
+
+        connectionId = BitConverter.ToUInt64(hash);
+        hash = hash.Slice(sizeof(ulong));
+
+        var key = new byte[32];
+        hash.Slice(0, 32).CopyTo(key);
+        hash = hash.Slice(32);
+
+        var iv = new byte[16];
+        hash.CopyTo(iv);
+        embryo = new(salt, key, iv);
     }
 }

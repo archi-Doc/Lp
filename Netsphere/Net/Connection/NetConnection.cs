@@ -2,13 +2,8 @@
 
 namespace Netsphere;
 
-internal readonly record struct Embryo
-{
-    public readonly ulong Salt;
-    public readonly ulong Salt2;
-    public readonly byte[] Key; // 32 bytes
-    public readonly byte[] Iv; // 16 bytes
-}
+// byte[32] Key, byte[16] Iv
+internal readonly record struct Embryo(ulong Salt, byte[] Key, byte[] Iv);
 
 public class NetConnection : IDisposable
 {
@@ -24,6 +19,9 @@ public class NetConnection : IDisposable
         this.ConnectionId = connectionId;
         this.EndPoint = endPoint;
     }
+
+    internal void SetEmbryo(Embryo embryo)
+        => this.embryo = embryo;
 
     #region FieldAndProperty
 

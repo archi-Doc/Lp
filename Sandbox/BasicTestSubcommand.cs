@@ -55,12 +55,15 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             return;
         }
 
+        netTerminal.PacketTerminal.SendCountLimit = 1; // tempcode
         using (var connection = await netTerminal.TryConnect(netNode))
         {
             if (connection is not null)
             {
             }
         }
+
+        await Task.Delay(1000000000);
 
         /*if (!NetAddress.TryParse(this.logger, nodeString, out var node))
         {

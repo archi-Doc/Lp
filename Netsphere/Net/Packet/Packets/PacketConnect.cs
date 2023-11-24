@@ -13,20 +13,24 @@ internal partial class PacketConnect : IPacket
     {
     }
 
-    public PacketConnect(NodePublicKey clientPublicKey)
+    public PacketConnect(ushort engagement, NodePublicKey clientPublicKey)
     {
+        this.Engagement = engagement;
         this.ClientPublicKey = clientPublicKey;
         this.ClientSalt = RandomVault.Crypto.NextUInt64();
         this.ClientSalt2 = RandomVault.Crypto.NextUInt64();
     }
 
     [Key(0)]
-    public NodePublicKey ClientPublicKey { get; set; }
+    public ushort Engagement { get; set; }
 
     [Key(1)]
-    public ulong ClientSalt { get; set; }
+    public NodePublicKey ClientPublicKey { get; set; }
 
     [Key(2)]
+    public ulong ClientSalt { get; set; }
+
+    [Key(3)]
     public ulong ClientSalt2 { get; set; }
 }
 

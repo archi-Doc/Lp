@@ -206,7 +206,7 @@ public sealed partial class PacketTerminal
                     Task.Run(() =>
                     {
                         var packet = new PacketConnectResponse();
-                        this.netTerminal.NetConnectionTerminal.PrepareServerSide(p, packet);
+                        this.netTerminal.NetConnectionTerminal.PrepareServerSide(new(endPoint, p.Engagement), p, packet);
                         CreatePacket(packetId, packet, out var owner);
                         this.TryAdd(endPoint, owner, false, default);
                     });
