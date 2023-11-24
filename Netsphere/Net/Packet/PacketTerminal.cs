@@ -80,22 +80,35 @@ public sealed partial class PacketTerminal
             return;
         }
 
+        this.SendAndForget(endPoint, packet);
+    }
+
+    public void SendAndForget<TSend>(NetEndPoint endPoint, TSend packet)
+        where TSend : IPacket, ITinyhandSerialize<TSend>
+    {
         CreatePacket(0, packet, out var owner);
         this.TryAdd(endPoint.EndPoint, owner, true, default);
     }
 
-    public async Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(NetAddress address, TSend packet)
+    public Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(NetAddress address, TSend packet)
         where TSend : IPacket, ITinyhandSerialize<TSend>
         where TReceive : IPacket, ITinyhandSerialize<TReceive>
+    {
+        if (!this.netTerminal.TryCreateEndPoint(in address, out var endPoint))
+        {
+            return Task.FromResult<(NetResult Result, TReceive? Value)>((NetResult.InvalidAddress, default));
+        }
+
+        return this.SendAndReceiveAsync<TSend, TReceive>(endPoint, packet);
+    }
+
+    public async Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(NetEndPoint endPoint, TSend packet)
+    where TSend : IPacket, ITinyhandSerialize<TSend>
+    where TReceive : IPacket, ITinyhandSerialize<TReceive>
     {
         if (this.netTerminal.CancellationToken.IsCancellationRequested)
         {
             return (NetResult.Timeout, default);
-        }
-
-        if (!this.netTerminal.TryCreateEndPoint(in address, out var endPoint))
-        {
-            return (NetResult.InvalidAddress, default);
         }
 
         var tcs = new TaskCompletionSource<(NetResult Result, ByteArrayPool.MemoryOwner ToBeMoved)>();

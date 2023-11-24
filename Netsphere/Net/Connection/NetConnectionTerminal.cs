@@ -75,6 +75,8 @@ internal class NetConnectionTerminal
             newConnection.Goshujin = this.clientConnections;
             this.clientConnections.OpenEndPointChain.Add(newConnection.EndPoint, newConnection);
         }
+
+        return newConnection;
     }
 
     internal ClientConnection? PrepareClientSide(NetEndPoint endPoint, NodePublicKey serverPublicKey, PacketConnect p, PacketConnectResponse p2)

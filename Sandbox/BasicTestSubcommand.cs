@@ -60,6 +60,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         {
             if (connection is not null)
             {
+                var r = await connection.SendAndReceiveAsync<PacketPing, PacketPingResponse>(netAddress, p);
             }
         }
 

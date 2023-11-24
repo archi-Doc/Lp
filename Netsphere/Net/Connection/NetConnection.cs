@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Netsphere.Packet;
+
 namespace Netsphere;
 
 // byte[32] Key, byte[16] Iv
@@ -14,11 +16,15 @@ public class NetConnection : IDisposable
         NoReuse,
     }
 
-    public NetConnection(ulong connectionId, NetEndPoint endPoint)
+    public NetConnection(NetTerminal netTerminal, ulong connectionId, NetEndPoint endPoint)
     {
+        this.netTerminal = netTerminal;
         this.ConnectionId = connectionId;
         this.EndPoint = endPoint;
     }
+
+    public void Close()
+        => this.Dispose();
 
     internal void SetEmbryo(Embryo embryo)
         => this.embryo = embryo;
@@ -31,6 +37,7 @@ public class NetConnection : IDisposable
 
     internal long ClosedSystemMics { get; set; }
 
+    private readonly NetTerminal netTerminal;
     private Embryo embryo;
 
     #endregion
@@ -67,6 +74,7 @@ public class NetConnection : IDisposable
             if (disposing)
             {
                 // free managed resources.
+                this.netTerminal.PacketTerminal.SendAndForget(this.EndPoint, new PacketClose());
             }
 
             // free native resources here if there are any.
