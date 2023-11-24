@@ -21,11 +21,11 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.UnitLogger = unitLogger;
         this.logger = unitLogger.GetLogger<Terminal>();
         this.NetBase = netBase;
+        this.NetStats = netStats;
 
         this.NetSender = new(this, unitLogger.GetLogger<NetSender>());
-        this.PacketTerminal = new(this, unitLogger.GetLogger<PacketTerminal>());
-        this.connections = new(netStats);
-        this.netStats = netStats;
+        this.PacketTerminal = new(this.NetBase, this.NetStats, this, unitLogger.GetLogger<PacketTerminal>());
+        this.NetConnectionTerminal = new(this);
 
         this.ResponseTimeout = TimeSpan.FromSeconds(DefaultResponseTimeoutInSeconds);
     }
@@ -43,6 +43,8 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public int Port { get; set; }
 
+    public NetStats NetStats { get; }
+
     public PacketTerminal PacketTerminal { get; }
 
     internal NetSender NetSender { get; }
@@ -51,15 +53,16 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     internal UnitLogger UnitLogger { get; private set; }
 
+    internal NetConnectionTerminal NetConnectionTerminal { get; private set; }
+
     private readonly ILogger logger;
-    private readonly NetStats netStats;
-    private readonly NetConnectionTerminal connections;
+
     private NodePrivateKey nodePrivateKey = default!;
 
     #endregion
 
     public bool TryCreateEndPoint(in NetAddress address, out NetEndPoint endPoint)
-        => this.netStats.TryCreateEndPoint(in address, out endPoint);
+        => this.NetStats.TryCreateEndPoint(in address, out endPoint);
 
     public void SetDeliveryFailureRatio(double ratio)
     {
@@ -68,8 +71,19 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 #endif
     }
 
-    public NetConnection? TryConnect(NetAddress address, NetConnection.ConnectMode mode = NetConnection.ConnectMode.ReuseClosed)
-        => this.connections.TryConnect(address, mode);
+    public async Task<NetNode?> UnsafeGetNetNodeAsync(NetAddress address)
+    {
+        var t = await this.PacketTerminal.SendAndReceiveAsync<PacketGetInformation, PacketGetInformationResponse>(address, new()).ConfigureAwait(false);
+        if (t.Value is null)
+        {
+            return null;
+        }
+
+        return new(address, t.Value.PublicKey);
+    }
+
+    public Task<ClientConnection?> TryConnect(NetNode node, NetConnection.ConnectMode mode = NetConnection.ConnectMode.ReuseClosed)
+        => this.NetConnectionTerminal.TryConnect(node, mode);
 
     void IUnitPreparable.Prepare(UnitMessage.Prepare message)
     {

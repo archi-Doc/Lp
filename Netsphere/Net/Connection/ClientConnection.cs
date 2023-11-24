@@ -13,4 +13,6 @@ public partial class ClientConnection : NetConnection
         : base(connectionId, endPoint)
     {
     }
+
+    // public async Task<(NetResult Result, ulong DataId, ByteArrayPool.MemoryOwner Value)> SendAndReceiveServiceAsync(ulong dataId, ByteArrayPool.MemoryOwner data)
 }

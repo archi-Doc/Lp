@@ -26,7 +26,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             nodeString = "alternative";
         }
 
-        if (!NetAddress.TryParse(this.logger, nodeString, out var nodeAddress))
+        if (!NetAddress.TryParse(this.logger, nodeString, out var netAddress))
         {
             return;
         }
@@ -36,7 +36,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         var packetTerminal = netTerminal.PacketTerminal;
 
         var p = new PacketPing("test56789");
-        var result = await packetTerminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(nodeAddress, p);
+        var result = await packetTerminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(netAddress, p);
 
         Console.WriteLine($"{sw.ElapsedMilliseconds} ms, {result.ToString()}");
         sw.Restart();
@@ -44,12 +44,18 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         for (var i = 0; i < 2; i++)
         {
             p = new PacketPing("test56789");
-            result = await packetTerminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(nodeAddress, p);
+            result = await packetTerminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(netAddress, p);
         }
 
         Console.WriteLine($"{sw.ElapsedMilliseconds} ms, {result.ToString()}");
 
-        using (var connection = netTerminal.TryConnect(nodeAddress))
+        var netNode = await netTerminal.UnsafeGetNetNodeAsync(netAddress);
+        if (netNode is null)
+        {
+            return;
+        }
+
+        using (var connection = await netTerminal.TryConnect(netNode))
         {
             if (connection is not null)
             {

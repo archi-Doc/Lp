@@ -2,6 +2,14 @@
 
 namespace Netsphere;
 
+internal readonly record struct Embryo
+{
+    public readonly ulong Salt;
+    public readonly ulong Salt2;
+    public readonly byte[] Key; // 32 bytes
+    public readonly byte[] Iv; // 16 bytes
+}
+
 public class NetConnection : IDisposable
 {
     public enum ConnectMode
@@ -17,11 +25,17 @@ public class NetConnection : IDisposable
         this.EndPoint = endPoint;
     }
 
+    #region FieldAndProperty
+
     public ulong ConnectionId { get; }
 
     public NetEndPoint EndPoint { get; }
 
     internal long ClosedSystemMics { get; set; }
+
+    private Embryo embryo;
+
+    #endregion
 
 #pragma warning disable SA1124 // Do not use regions
     #region IDisposable Support

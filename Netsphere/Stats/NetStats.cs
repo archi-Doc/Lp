@@ -57,6 +57,27 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool TryCreateEndPoint(NetNode node, out NetEndPoint endPoint)
+    {
+        endPoint = default;
+        if (this.MyIpv6Address.AddressState == MyAddress.State.Fixed ||
+            this.MyIpv6Address.AddressState == MyAddress.State.Changed)
+        {// Ipv6 supported
+            node.Address.TryCreateIpv6(ref endPoint);
+            if (endPoint.IsValid)
+            {
+                return true;
+            }
+
+            return node.Address.TryCreateIpv4(ref endPoint);
+        }
+        else
+        {// Ipv4
+            return node.Address.TryCreateIpv4(ref endPoint);
+        }
+    }
+
     public NetNode GetMyNetNode()
     {
         var address = new NetAddress(this.MyIpv4Address.Address, this.MyIpv6Address.Address, (ushort)this.netBase.NetsphereOptions.Port);

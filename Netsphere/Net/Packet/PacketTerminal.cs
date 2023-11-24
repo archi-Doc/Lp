@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Netsphere.Net;
+using Netsphere.Stats;
 using Tinyhand.IO;
 
 #pragma warning disable SA1204
@@ -50,8 +51,10 @@ public sealed partial class PacketTerminal
         }
     }
 
-    public PacketTerminal(NetTerminal netTerminal, ILogger<PacketTerminal> logger)
+    public PacketTerminal(NetBase netBase, NetStats netStats, NetTerminal netTerminal, ILogger<PacketTerminal> logger)
     {
+        this.netBase = netBase;
+        this.netStats = netStats;
         this.netTerminal = netTerminal;
         this.logger = logger;
 
@@ -63,6 +66,8 @@ public sealed partial class PacketTerminal
 
     public int SendCountLimit { get; set; }
 
+    private readonly NetBase netBase;
+    private readonly NetStats netStats;
     private readonly NetTerminal netTerminal;
     private readonly ILogger logger;
     private readonly Item.GoshujinClass items = new();
@@ -191,15 +196,42 @@ public sealed partial class PacketTerminal
         var packetType = (PacketType)packetUInt16;
         var packetId = BitConverter.ToUInt64(span.Slice(8));
 
+        span = span.Slice(PacketHeader.Length);
         if (packetUInt16 < 127)
         {// Packet types (0-127)
-            if (packetType == PacketType.Ping)
+            if (packetType == PacketType.Connect)
             {
-                this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} PacketPingResponse");
+                if (TinyhandSerializer.TryDeserialize<PacketConnect>(span, out var p))
+                {
+                    Task.Run(() =>
+                    {
+                        var packet = new PacketConnectResponse();
+                        this.netTerminal.NetConnectionTerminal.PrepareServerSide(p, packet);
+                        CreatePacket(packetId, packet, out var owner);
+                        this.TryAdd(endPoint, owner, false, default);
+                    });
 
-                var packet = new PacketPingResponse(new(endPoint.Address, (ushort)endPoint.Port), this.netTerminal.NetBase.NodeName);
-                CreatePacket(packetId, packet, out var owner);
-                this.TryAdd(endPoint, owner, false, default);
+                    return;
+                }
+            }
+            else if (this.netBase.NetsphereOptions.EnableEssential)
+            {
+                if (packetType == PacketType.Ping)
+                {// PacketPing
+                    this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString} to {endPoint.ToString()} PacketPingResponse");
+
+                    var packet = new PacketPingResponse(new(endPoint.Address, (ushort)endPoint.Port), this.netTerminal.NetBase.NodeName);
+                    CreatePacket(packetId, packet, out var owner);
+                    this.TryAdd(endPoint, owner, false, default);
+                    return;
+                }
+                else if (packetType == PacketType.GetInformation)
+                {// PacketGetInformation
+                    var packet = new PacketGetInformationResponse(this.netBase.NodePublicKey);
+                    CreatePacket(packetId, packet, out var owner);
+                    this.TryAdd(endPoint, owner, false, default);
+                    return;
+                }
             }
         }
         else if (packetUInt16 < 255)
