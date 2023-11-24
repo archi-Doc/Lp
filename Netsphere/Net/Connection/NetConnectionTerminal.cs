@@ -5,7 +5,7 @@ using Netsphere.Stats;
 namespace Netsphere;
 
 internal class NetConnectionTerminal
-{
+{// NetConnection: Open(OpenEndPointChain) ->
     public NetConnectionTerminal(NetStats netStats)
     {
         this.netStats = netStats;
@@ -13,7 +13,6 @@ internal class NetConnectionTerminal
 
     private readonly NetStats netStats;
 
-    private readonly object syncObject = new();
     private readonly ClientConnection.GoshujinClass clientConnections = new();
     private readonly ServerConnection.GoshujinClass serverConnections = new();
 
@@ -24,15 +23,31 @@ internal class NetConnectionTerminal
             return null;
         }
 
-        lock (this.syncObject)
+        var systemMics = Mics.GetSystem();
+        lock (this.clientConnections.SyncObject)
         {
-            if (mode == NetConnection.ConnectMode.ReuseOpened)
+            if (mode == NetConnection.ConnectMode.ReuseOpen)
             {// Attempt to reuse connections that have already been created and are open.
-                this.serverConnections.EndPointChain.TryGetValue(endPoint, out var connection);
+                if (this.clientConnections.OpenEndPointChain.TryGetValue(endPoint, out var connection))
+                {
+                    return connection;
+                }
             }
-            else if (mode == NetConnection.ConnectMode.ReuseClosed)
+
+            if (mode == NetConnection.ConnectMode.ReuseOpen ||
+                mode == NetConnection.ConnectMode.ReuseClosed)
             {// Attempt to reuse connections that have already been closed and are awaiting disposal.
+                if (this.clientConnections.ClosedEndPointChain.TryGetValue(endPoint, out var connection))
+                {
+                    if ((connection.ClosedSystemMics + Mics.FromMinutes(1)) > systemMics)
+                    {
+                        return connection;
+                    }
+                }
             }
+
+            // Create a new connection
+            var newConnection = new ClientConnection()
         }
 
         return default;

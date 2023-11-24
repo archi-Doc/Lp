@@ -7,15 +7,21 @@ public class NetConnection : IDisposable
     public enum ConnectMode
     {
         ReuseClosed,
-        ReuseOpened,
+        ReuseOpen,
         NoReuse,
     }
 
-    public NetConnection()
+    public NetConnection(ulong connectionId, NetEndPoint endPoint)
     {
+        this.ConnectionId = connectionId;
+        this.EndPoint = endPoint;
     }
 
+    public ulong ConnectionId { get; }
+
     public NetEndPoint EndPoint { get; }
+
+    internal long ClosedSystemMics { get; set; }
 
 #pragma warning disable SA1124 // Do not use regions
     #region IDisposable Support
