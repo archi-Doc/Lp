@@ -7,7 +7,7 @@ namespace Netsphere.Packet;
 /// 1. Inherit IPacket interface.<br/>
 /// 2. Has TinyhandObjectAttribute (Tinyhand serializable).<br/>
 /// 3. Unique PacketType is defined.<br/>
-/// 4. Length of the serialized byte array is less than or equal to <see cref="PacketHeader.MaxContentLengtgh"/>.
+/// 4. Length of the serialized byte array is less than or equal to <see cref="PacketHeader.MaxPayloadLengtgh"/>.
 /// </summary>
 public interface IPacket
 {

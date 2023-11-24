@@ -5,13 +5,14 @@ namespace Netsphere.Packet;
 #pragma warning disable CS0649
 
 internal readonly struct PacketHeader
-{// 20 bytes
-    public const int Length = 20;
-    public const int MaxContentLengtgh = NetControl.MaxPacketLength - Length;
+{// 16 bytes, PacketHeaderCode
+    public const int Length = 16;
+    public const int MaxPayloadLengtgh = NetControl.MaxPacketLength - Length;
+    public const int MaxFrameLengtgh = (NetControl.MaxPacketLength - Length - 2) / 16 * 16;
 
-    public readonly ulong Hash; // 8 bytes
+    public readonly uint HashSalt; // 4 bytes, Hash / Salt
     public readonly ushort Engagement; // 2 bytes
     public readonly PacketType PacketType; // 2 bytes
     public readonly ulong Id; // 8 bytes, Packet id / Connection id
-    // Content
+    // Payload (2, size)
 }

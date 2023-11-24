@@ -125,17 +125,13 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         {// Check length
             return;
         }
-        else if (BitConverter.ToUInt64(span) != XxHash3.Hash64(span.Slice(sizeof(ulong))))
-        {// Check hash
-            return;
-        }
 
         // Engagement
-        span = span.Slice(sizeof(ulong));
+        span = span.Slice(4);
         var engagement = BitConverter.ToUInt16(span);
 
         // Packet type
-        span = span.Slice(sizeof(ushort));
+        span = span.Slice(2);
         var packetType = BitConverter.ToUInt16(span);
 
         if (packetType < 256)

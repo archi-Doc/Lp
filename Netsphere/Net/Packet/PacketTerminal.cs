@@ -23,7 +23,7 @@ public sealed partial class PacketTerminal
 
             this.EndPoint = endPoint;
             this.Ack = ack;
-            this.PacketId = BitConverter.ToUInt64(dataToBeMoved.Span.Slice(12));
+            this.PacketId = BitConverter.ToUInt64(dataToBeMoved.Span.Slice(8)); // PacketHeaderCode
             this.MemoryOwner = dataToBeMoved;
             this.Tcs = tcs;
         }
@@ -180,10 +180,16 @@ public sealed partial class PacketTerminal
 
     internal void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
     {
+        // PacketHeaderCode
         var span = toBeShared.Span;
-        var packetUInt16 = BitConverter.ToUInt16(span.Slice(10));
+        if (BitConverter.ToUInt32(span) != (uint)XxHash3.Hash64(span.Slice(4)))
+        {// Checksum
+            return;
+        }
+
+        var packetUInt16 = BitConverter.ToUInt16(span.Slice(6));
         var packetType = (PacketType)packetUInt16;
-        var packetId = BitConverter.ToUInt64(span.Slice(12));
+        var packetId = BitConverter.ToUInt64(span.Slice(8));
 
         if (packetUInt16 < 127)
         {// Packet types (0-127)
@@ -265,11 +271,12 @@ public sealed partial class PacketTerminal
         var arrayOwner = PacketPool.Rent();
         var writer = new TinyhandWriter(arrayOwner.ByteArray);
 
+        // PacketHeaderCode
         scoped Span<byte> header = stackalloc byte[PacketHeader.Length];
         var span = header;
 
-        BitConverter.TryWriteBytes(span, 0ul); // Hash
-        span = span.Slice(sizeof(ulong));
+        BitConverter.TryWriteBytes(span, 0u); // Hash
+        span = span.Slice(sizeof(uint));
 
         BitConverter.TryWriteBytes(span, (ushort)0); // Engagement
         span = span.Slice(sizeof(ushort));
@@ -287,9 +294,9 @@ public sealed partial class PacketTerminal
         writer.FlushAndGetArray(out var array, out var arrayLength, out var isInitialBuffer);
         writer.Dispose();
 
-        // Get hash
+        // Get checksum
         span = array.AsSpan(0, arrayLength);
-        BitConverter.TryWriteBytes(span, XxHash3.Hash64(span.Slice(sizeof(ulong))));
+        BitConverter.TryWriteBytes(span, (uint)XxHash3.Hash64(span.Slice(4)));
 
         if (!isInitialBuffer)
         {
