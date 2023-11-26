@@ -3,14 +3,14 @@
 namespace Netsphere;
 
 [ValueLinkObject]
-public partial class ServerConnection : NetConnection
+public partial class ServerConnection : ConnectionBase
 {
     [Link(Primary = true, Type = ChainType.Unordered, TargetMember = "ConnectionId", AddValue = false)]
     [Link(Type = ChainType.Unordered, Name = "OpenEndPoint", TargetMember = "EndPoint", AddValue = false, AutoLink = false)]
     [Link(Type = ChainType.Unordered, Name = "ClosedEndPoint", TargetMember = "EndPoint", AddValue = false, AutoLink = false)]
     [Link(Type = ChainType.LinkedList, Name = "ClosedList", AutoLink = false)]
-    public ServerConnection(ulong connectionId, NetEndPoint endPoint)
-        : base(connectionId, endPoint)
+    public ServerConnection(ConnectionTerminal connectionTerminal, ulong connectionId, NetEndPoint endPoint)
+        : base(connectionTerminal, connectionId, endPoint)
     {
     }
 }

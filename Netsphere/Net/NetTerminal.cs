@@ -53,7 +53,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     internal UnitLogger UnitLogger { get; private set; }
 
-    internal NetConnectionTerminal NetConnectionTerminal { get; private set; }
+    internal ConnectionTerminal NetConnectionTerminal { get; private set; }
 
     private readonly ILogger logger;
 
@@ -82,7 +82,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         return new(address, t.Value.PublicKey);
     }
 
-    public Task<ClientConnection?> TryConnect(NetNode node, NetConnection.ConnectMode mode = NetConnection.ConnectMode.ReuseClosed)
+    public Task<ClientConnection?> TryConnect(NetNode node, ConnectionBase.ConnectMode mode = ConnectionBase.ConnectMode.ReuseClosed)
         => this.NetConnectionTerminal.TryConnect(node, mode);
 
     void IUnitPreparable.Prepare(UnitMessage.Prepare message)

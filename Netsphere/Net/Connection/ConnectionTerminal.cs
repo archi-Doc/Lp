@@ -6,9 +6,9 @@ using Netsphere.Stats;
 
 namespace Netsphere;
 
-internal class NetConnectionTerminal
+public class ConnectionTerminal
 {// NetConnection: Open(OpenEndPointChain) ->
-    public NetConnectionTerminal(NetTerminal netTerminal)
+    public ConnectionTerminal(NetTerminal netTerminal)
     {
         this.netTerminal = netTerminal;
         this.packetTerminal = this.netTerminal.PacketTerminal;
@@ -22,7 +22,7 @@ internal class NetConnectionTerminal
     private readonly ClientConnection.GoshujinClass clientConnections = new();
     private readonly ServerConnection.GoshujinClass serverConnections = new();
 
-    public async Task<ClientConnection?> TryConnect(NetNode node, NetConnection.ConnectMode mode = NetConnection.ConnectMode.ReuseClosed)
+    public async Task<ClientConnection?> TryConnect(NetNode node, ConnectionBase.ConnectMode mode = ConnectionBase.ConnectMode.ReuseClosed)
     {
         if (!this.netStats.TryCreateEndPoint(node, out var endPoint))
         {
@@ -32,7 +32,7 @@ internal class NetConnectionTerminal
         var systemMics = Mics.GetSystem();
         lock (this.clientConnections.SyncObject)
         {
-            if (mode == NetConnection.ConnectMode.ReuseOpen)
+            if (mode == ConnectionBase.ConnectMode.ReuseOpen)
             {// Attempt to reuse connections that have already been created and are open.
                 if (this.clientConnections.OpenEndPointChain.TryGetValue(endPoint, out var connection))
                 {
@@ -40,8 +40,8 @@ internal class NetConnectionTerminal
                 }
             }
 
-            if (mode == NetConnection.ConnectMode.ReuseOpen ||
-                mode == NetConnection.ConnectMode.ReuseClosed)
+            if (mode == ConnectionBase.ConnectMode.ReuseOpen ||
+                mode == ConnectionBase.ConnectMode.ReuseClosed)
             {// Attempt to reuse connections that have already been closed and are awaiting disposal.
                 if (this.clientConnections.ClosedEndPointChain.TryGetValue(endPoint, out var connection))
                 {
@@ -90,7 +90,7 @@ internal class NetConnectionTerminal
         }
 
         this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
-        var connection = new ClientConnection(connectionId, endPoint);
+        var connection = new ClientConnection(this, connectionId, endPoint);
         connection.SetEmbryo(embryo);
 
         return connection;
@@ -107,7 +107,7 @@ internal class NetConnectionTerminal
         }
 
         this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
-        var connection = new ServerConnection(connectionId, endPoint);
+        var connection = new ServerConnection(this, connectionId, endPoint);
         connection.SetEmbryo(embryo);
 
         return true;

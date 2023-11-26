@@ -7,7 +7,7 @@ namespace Netsphere;
 // byte[32] Key, byte[16] Iv
 internal readonly record struct Embryo(ulong Salt, byte[] Key, byte[] Iv);
 
-public class NetConnection : IDisposable
+public abstract class ConnectionBase : IDisposable
 {
     public enum ConnectMode
     {
@@ -16,9 +16,9 @@ public class NetConnection : IDisposable
         NoReuse,
     }
 
-    public NetConnection(NetTerminal netTerminal, ulong connectionId, NetEndPoint endPoint)
+    public ConnectionBase(ConnectionTerminal connectionTerminal, ulong connectionId, NetEndPoint endPoint)
     {
-        this.netTerminal = netTerminal;
+        this.connectionTerminal = connectionTerminal;
         this.ConnectionId = connectionId;
         this.EndPoint = endPoint;
     }
@@ -37,7 +37,7 @@ public class NetConnection : IDisposable
 
     internal long ClosedSystemMics { get; set; }
 
-    private readonly NetTerminal netTerminal;
+    private readonly ConnectionTerminal connectionTerminal;
     private Embryo embryo;
 
     #endregion
@@ -49,9 +49,9 @@ public class NetConnection : IDisposable
     private bool disposed = false; // To detect redundant calls.
 
     /// <summary>
-    /// Finalizes an instance of the <see cref="NetConnection"/> class.
+    /// Finalizes an instance of the <see cref="ConnectionBase"/> class.
     /// </summary>
-    ~NetConnection()
+    ~ConnectionBase()
     {
         this.Dispose(false);
     }
@@ -74,7 +74,7 @@ public class NetConnection : IDisposable
             if (disposing)
             {
                 // free managed resources.
-                this.netTerminal.PacketTerminal.SendAndForget(this.EndPoint, new PacketClose());
+                this.connectionTerminal.SendAndForget(this.EndPoint, new PacketClose());
             }
 
             // free native resources here if there are any.
