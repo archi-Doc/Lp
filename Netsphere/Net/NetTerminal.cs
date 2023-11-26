@@ -24,7 +24,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
         this.NetSender = new(this, unitLogger.GetLogger<NetSender>());
         this.PacketTerminal = new(this.NetBase, this.NetStats, this, unitLogger.GetLogger<PacketTerminal>());
-        this.NetConnectionTerminal = new(this);
+        this.ConnectionTerminal = new(this);
 
         this.ResponseTimeout = TimeSpan.FromSeconds(DefaultResponseTimeoutInSeconds);
     }
@@ -52,7 +52,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     internal UnitLogger UnitLogger { get; private set; }
 
-    internal ConnectionTerminal NetConnectionTerminal { get; private set; }
+    internal ConnectionTerminal ConnectionTerminal { get; private set; }
 
     private readonly ILogger logger;
 
@@ -82,7 +82,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     }
 
     public Task<ClientConnection?> TryConnect(NetNode node, Connection.ConnectMode mode = Connection.ConnectMode.ReuseClosed)
-        => this.NetConnectionTerminal.TryConnect(node, mode);
+        => this.ConnectionTerminal.TryConnect(node, mode);
 
     void IUnitPreparable.Prepare(UnitMessage.Prepare message)
     {
@@ -149,10 +149,11 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
         if (packetType < 256)
         {// Packet
-            this.PacketTerminal.ProcessReceive(endPoint, owner, currentSystemMics);
+            this.PacketTerminal.ProcessReceive(endPoint, packetType, owner, currentSystemMics);
         }
         else if (packetType < 511)
         {// Gene
+            this.ConnectionTerminal.ProcessReceive(endPoint, packetType, owner, currentSystemMics);
         }
     }
 }

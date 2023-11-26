@@ -113,6 +113,12 @@ public class ConnectionTerminal
         var connection = new ServerConnection(this.netTerminal.PacketTerminal, this, connectionId, endPoint);
         connection.Initialize(embryo);
 
+        lock (this.serverConnections.SyncObject)
+        {
+            connection.Goshujin = this.serverConnections;
+            this.serverConnections.OpenEndPointChain.Add(connection.EndPoint, connection);
+        }
+
         return true;
     }
 
@@ -148,7 +154,7 @@ public class ConnectionTerminal
         embryo = new(salt, key, iv);
     }
 
-    internal void CloseInternal(Connection connection, bool dispose)
+    internal void CloseInternal(Connection connection, bool dispose, bool sendCloseFrame)
     {
         if (connection is ClientConnection clientConnection &&
             clientConnection.Goshujin is { } g)
@@ -164,7 +170,11 @@ public class ConnectionTerminal
                 {// -> Close
                     if (connection.State == Connection.ConnectionState.Open)
                     {// Open -> Close
-                        clientConnection.SendCloseFrame();
+                        if (sendCloseFrame)
+                        {
+                            clientConnection.SendCloseFrame();
+                        }
+
                         g.OpenEndPointChain.Remove(clientConnection);
                         g.ClosedEndPointChain.Add(clientConnection.EndPoint, clientConnection);
                         clientConnection.ClosedSystemMics = Mics.GetSystem();
@@ -186,12 +196,51 @@ public class ConnectionTerminal
                 {// -> Close
                     if (connection.State == Connection.ConnectionState.Open)
                     {// Open -> Close
-                        serverConnection.SendCloseFrame();
+                        if (sendCloseFrame)
+                        {
+                            serverConnection.SendCloseFrame();
+                        }
+
                         g2.OpenEndPointChain.Remove(serverConnection);
                         g2.ClosedEndPointChain.Add(serverConnection.EndPoint, serverConnection);
                         serverConnection.ClosedSystemMics = Mics.GetSystem();
                     }
                 }
+            }
+        }
+    }
+
+    internal void ProcessReceive(IPEndPoint endPoint, ushort packetUInt16, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
+    {
+        // PacketHeaderCode
+        var connectionId = BitConverter.ToUInt64(toBeShared.Span.Slice(8)); // ConnectionId
+
+        if (packetUInt16 < 384)
+        {
+            ServerConnection? connection = default;
+            lock (this.serverConnections.SyncObject)
+            {
+                this.serverConnections.ConnectionIdChain.TryGetValue(connectionId, out connection);
+            }
+
+            if (connection is not null &&
+                connection.EndPoint.EndPointEquals(endPoint))
+            {
+                connection.ProcessReceive(endPoint, toBeShared, currentSystemMics);
+            }
+        }
+        else
+        {// Response
+            ClientConnection? connection = default;
+            lock (this.clientConnections.SyncObject)
+            {
+                this.clientConnections.ConnectionIdChain.TryGetValue(connectionId, out connection);
+            }
+
+            if (connection is not null &&
+                connection.EndPoint.EndPointEquals(endPoint))
+            {
+                connection.ProcessReceive(endPoint, toBeShared, currentSystemMics);
             }
         }
     }

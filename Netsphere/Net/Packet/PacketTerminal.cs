@@ -196,7 +196,7 @@ public sealed partial class PacketTerminal
         }
     }
 
-    internal void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
+    internal void ProcessReceive(IPEndPoint endPoint, ushort packetUInt16, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
     {
         // PacketHeaderCode
         var span = toBeShared.Span;
@@ -205,7 +205,6 @@ public sealed partial class PacketTerminal
             return;
         }
 
-        var packetUInt16 = BitConverter.ToUInt16(span.Slice(6));
         var packetType = (PacketType)packetUInt16;
         var packetId = BitConverter.ToUInt64(span.Slice(8));
 
@@ -222,7 +221,7 @@ public sealed partial class PacketTerminal
                         packet.MaxTransmissions = this.netBase.ServerOptions.MaxTransmissions;
                         packet.TransmissionWindow = this.netBase.ServerOptions.TransmissionWindow;
 
-                        this.netTerminal.NetConnectionTerminal.PrepareServerSide(new(endPoint, p.Engagement), p, packet);
+                        this.netTerminal.ConnectionTerminal.PrepareServerSide(new(endPoint, p.Engagement), p, packet);
                         CreatePacket(packetId, packet, out var owner);
                         this.AddSendPacket(endPoint, owner, false, default);
                     });

@@ -3,6 +3,7 @@
 using System.Security.Cryptography;
 using Netsphere.Packet;
 using Netsphere.Transmission;
+using static Arc.Unit.ByteArrayPool;
 
 #pragma warning disable SA1202
 
@@ -87,6 +88,62 @@ public abstract class Connection : IDisposable
         this.packetTerminal.AddSendPacket(this.EndPoint.EndPoint, owner, false, default);
     }
 
+    internal void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
+    {// endPoint: Checked
+        // PacketHeaderCode
+        var span = toBeShared.Span;
+
+        var salt = BitConverter.ToUInt32(span); // Salt
+        span = span.Slice(6);
+
+        var packetType = (PacketType)BitConverter.ToUInt16(span); // PacketType
+        span = span.Slice(10);
+
+        if (span.Length == 0)
+        {// Close frame
+            this.connectionTerminal.CloseInternal(this, false, false);
+            return;
+        }
+
+        if (packetType == PacketType.Encrypted || packetType == PacketType.EncryptedResponse)
+        {
+            Span<byte> iv = stackalloc byte[16];
+            this.embryo.Iv.CopyTo(iv);
+            BitConverter.TryWriteBytes(iv, salt);
+
+            var arrayOwner = PacketPool.Rent();
+            var destination = arrayOwner.ByteArray.AsSpan();
+            if (!this.aes.TryDecryptCbc(span, iv, destination, out var written, PaddingMode.PKCS7))
+            {
+                return;
+            }
+
+            if (written < 2)
+            {
+                return;
+            }
+
+            var owner = arrayOwner.ToMemoryOwner(2, written - 2);
+            var frameType = (FrameType)BitConverter.ToUInt16(span); // FrameType
+            if (frameType == FrameType.Ack)
+            {
+                this.ProcessReceive_Ack(endPoint, owner, currentSystemMics);
+            }
+            else if (frameType == FrameType.Block)
+            {
+                this.ProcessReceive_Block(endPoint, owner, currentSystemMics);
+            }
+        }
+    }
+
+    internal void ProcessReceive_Ack(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
+    {
+    }
+
+    internal void ProcessReceive_Block(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
+    {
+    }
+
     private bool CreatePacket(scoped Span<byte> frame, out ByteArrayPool.MemoryOwner owner)
     {
         if (frame.Length > PacketHeader.MaxFrameLength)
@@ -97,7 +154,7 @@ public abstract class Connection : IDisposable
 
         var arrayOwner = PacketPool.Rent();
         var span = arrayOwner.ByteArray.AsSpan();
-        var salt = RandomVault.Pseudo.NextUInt64();
+        var salt = RandomVault.Pseudo.NextUInt32();
 
         // PacketHeaderCode
         BitConverter.TryWriteBytes(span, salt); // Salt
@@ -112,14 +169,18 @@ public abstract class Connection : IDisposable
         BitConverter.TryWriteBytes(span, this.ConnectionId); // Id
         span = span.Slice(sizeof(ulong));
 
-        Span<byte> iv = stackalloc byte[16];
-        this.embryo.Iv.CopyTo(iv);
-        BitConverter.TryWriteBytes(iv, salt);
-
-        if (!this.aes.TryEncryptCbc(frame, iv, span, out var written, PaddingMode.PKCS7))
+        int written = 0;
+        if (frame.Length > 0)
         {
-            owner = default;
-            return false;
+            Span<byte> iv = stackalloc byte[16];
+            this.embryo.Iv.CopyTo(iv);
+            BitConverter.TryWriteBytes(iv, salt);
+
+            if (!this.aes.TryEncryptCbc(frame, iv, span, out written, PaddingMode.PKCS7))
+            {
+                owner = default;
+                return false;
+            }
         }
 
         owner = arrayOwner.ToMemoryOwner(0, PacketHeader.Length + written);
@@ -129,7 +190,7 @@ public abstract class Connection : IDisposable
     /// <inheritdoc/>
     public void Dispose()
     {
-        this.connectionTerminal.CloseInternal(this, false);
+        this.connectionTerminal.CloseInternal(this, false, true);
     }
 
     internal void DisposeActual()
