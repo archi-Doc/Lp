@@ -41,7 +41,7 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddSingleton<Terminal>();
                 context.AddSingleton<EssentialAddress>();
                 context.AddSingleton<NetStats>();
-                context.AddTransient<Server>();
+                context.AddTransient<ServerObsolete>();
                 context.AddSingleton<NtpCorrection>();
                 // context.Services.Add(new ServiceDescriptor(typeof(NetService), x => new NetService(x), ServiceLifetime.Transient));
                 // context.AddTransient<NetService>(); // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
@@ -138,7 +138,7 @@ public class NetControl : UnitBase, IUnitPreparable
 
         async Task InvokeServer(ServerTerminal terminal)
         {
-            var server = this.ServiceProvider.GetRequiredService<Server>();
+            var server = this.ServiceProvider.GetRequiredService<ServerObsolete>();
             try
             {
                 await server.Process(terminal).ConfigureAwait(false);

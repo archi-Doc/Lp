@@ -1,9 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Runtime.CompilerServices;
 using Netsphere.Crypto;
 using Netsphere.Net;
 using Netsphere.Packet;
+using Netsphere.Server;
 using Netsphere.Stats;
 
 #pragma warning disable SA1202 // Elements should be ordered by access
@@ -37,19 +37,21 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public NetBase NetBase { get; }
 
-    public bool IsAlternative { get; }
-
     public string NetTerminalString => this.IsAlternative ? "Alt" : "Main";
-
-    public int Port { get; set; }
 
     public NetStats NetStats { get; }
 
     public PacketTerminal PacketTerminal { get; }
 
-    internal NetSender NetSender { get; }
+    public bool IsAlternative { get; }
+
+    public int Port { get; set; }
 
     public TimeSpan ResponseTimeout { get; set; }
+
+    public ServerOptions ServerOptions { get; set; }
+
+    internal NetSender NetSender { get; }
 
     internal UnitLogger UnitLogger { get; private set; }
 

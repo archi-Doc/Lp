@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.ComponentModel;
 using Netsphere.Crypto;
 
 namespace Netsphere.Packet;
@@ -50,4 +51,11 @@ internal partial class PacketConnectResponse : IPacket
 
     [Key(1)]
     public ulong ServerSalt2 { get; set; }
+
+    [Key(2)]
+    [DefaultValue(4)]
+    public int MaxTransmissions { get; set; }
+
+    [Key(3)]
+    public int TransmissionWindow { get; set; }
 }

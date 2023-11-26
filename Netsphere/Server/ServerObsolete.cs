@@ -4,9 +4,9 @@ using Netsphere.Misc;
 
 namespace Netsphere;
 
-public class Server
+public class ServerObsolete
 {
-    public Server(NetBase netBase, NetControl netControl)
+    public ServerObsolete(NetBase netBase, NetControl netControl)
     {// InvokeServer()
         this.NetBase = netBase;
         this.NetControl = netControl;
