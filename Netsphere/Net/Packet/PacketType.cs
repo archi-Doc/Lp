@@ -5,22 +5,17 @@ namespace Netsphere.Packet;
 public enum PacketType : ushort
 {
     // Packet types (0-127)
-    Close,
+    Connect = 0,
     Ping,
     Punch,
     GetInformation,
-    Connect,
 
     // Packet response types (128-255)
-    CloseResponse = 128,
+    ConnectResponse = 128,
     PingResponse,
     PunchResponse,
     GetInformationResponse,
-    ConnectResponse,
 
     // Gene types (256-511)
-    Ack = 256,
-    Block,
-    RPC,
-    Stream,
+    Encrypted = 256,
 }

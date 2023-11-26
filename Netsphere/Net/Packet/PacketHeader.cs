@@ -7,8 +7,8 @@ namespace Netsphere.Packet;
 internal readonly struct PacketHeader
 {// 16 bytes, PacketHeaderCode
     public const int Length = 16;
-    public const int MaxPayloadLengtgh = NetControl.MaxPacketLength - Length;
-    public const int MaxFrameLengtgh = (NetControl.MaxPacketLength - Length - 2) / 16 * 16;
+    public const int MaxPayloadLength = NetControl.MaxPacketLength - Length;
+    public const int MaxFrameLength = NetControl.MaxPacketLength - Length - 16; // PKCS7 padding
 
     public readonly uint HashSalt; // 4 bytes, Hash / Salt
     public readonly ushort Engagement; // 2 bytes

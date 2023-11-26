@@ -10,10 +10,13 @@ public class ConnectionTerminal
 {// NetConnection: Open(OpenEndPointChain) ->
     public ConnectionTerminal(NetTerminal netTerminal)
     {
+        this.NetBase = netTerminal.NetBase;
         this.netTerminal = netTerminal;
         this.packetTerminal = this.netTerminal.PacketTerminal;
         this.netStats = this.netTerminal.NetStats;
     }
+
+    public NetBase NetBase { get; }
 
     private readonly NetTerminal netTerminal;
     private readonly PacketTerminal packetTerminal;
@@ -22,7 +25,7 @@ public class ConnectionTerminal
     private readonly ClientConnection.GoshujinClass clientConnections = new();
     private readonly ServerConnection.GoshujinClass serverConnections = new();
 
-    public async Task<ClientConnection?> TryConnect(NetNode node, ConnectionBase.ConnectMode mode = ConnectionBase.ConnectMode.ReuseClosed)
+    public async Task<ClientConnection?> TryConnect(NetNode node, Connection.ConnectMode mode = Connection.ConnectMode.ReuseClosed)
     {
         if (!this.netStats.TryCreateEndPoint(node, out var endPoint))
         {
@@ -32,7 +35,7 @@ public class ConnectionTerminal
         var systemMics = Mics.GetSystem();
         lock (this.clientConnections.SyncObject)
         {
-            if (mode == ConnectionBase.ConnectMode.ReuseOpen)
+            if (mode == Connection.ConnectMode.ReuseOpen)
             {// Attempt to reuse connections that have already been created and are open.
                 if (this.clientConnections.OpenEndPointChain.TryGetValue(endPoint, out var connection))
                 {
@@ -40,8 +43,8 @@ public class ConnectionTerminal
                 }
             }
 
-            if (mode == ConnectionBase.ConnectMode.ReuseOpen ||
-                mode == ConnectionBase.ConnectMode.ReuseClosed)
+            if (mode == Connection.ConnectMode.ReuseOpen ||
+                mode == Connection.ConnectMode.ReuseClosed)
             {// Attempt to reuse connections that have already been closed and are awaiting disposal.
                 if (this.clientConnections.ClosedEndPointChain.TryGetValue(endPoint, out var connection))
                 {
@@ -90,8 +93,8 @@ public class ConnectionTerminal
         }
 
         this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
-        var connection = new ClientConnection(this, connectionId, endPoint);
-        connection.SetEmbryo(embryo);
+        var connection = new ClientConnection(this.netTerminal.PacketTerminal, this, connectionId, endPoint);
+        connection.Initialize(embryo);
 
         return connection;
     }
@@ -107,8 +110,8 @@ public class ConnectionTerminal
         }
 
         this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
-        var connection = new ServerConnection(this, connectionId, endPoint);
-        connection.SetEmbryo(embryo);
+        var connection = new ServerConnection(this.netTerminal.PacketTerminal, this, connectionId, endPoint);
+        connection.Initialize(embryo);
 
         return true;
     }
@@ -143,5 +146,53 @@ public class ConnectionTerminal
         var iv = new byte[16];
         hash.CopyTo(iv);
         embryo = new(salt, key, iv);
+    }
+
+    internal void CloseInternal(Connection connection, bool dispose)
+    {
+        if (connection is ClientConnection clientConnection &&
+            clientConnection.Goshujin is { } g)
+        {
+            lock (g.SyncObject)
+            {
+                if (dispose)
+                {// -> Dispose
+                    clientConnection.Goshujin = null;
+                    clientConnection.DisposeActual();
+                }
+                else
+                {// -> Close
+                    if (connection.State == Connection.ConnectionState.Open)
+                    {// Open -> Close
+                        clientConnection.SendCloseFrame();
+                        g.OpenEndPointChain.Remove(clientConnection);
+                        g.ClosedEndPointChain.Add(clientConnection.EndPoint, clientConnection);
+                        clientConnection.ClosedSystemMics = Mics.GetSystem();
+                    }
+                }
+            }
+        }
+        else if (connection is ServerConnection serverConnection &&
+            serverConnection.Goshujin is { } g2)
+        {
+            lock (g2.SyncObject)
+            {
+                if (dispose)
+                {// -> Dispose
+                    serverConnection.Goshujin = null;
+                    serverConnection.DisposeActual();
+                }
+                else
+                {// -> Close
+                    if (connection.State == Connection.ConnectionState.Open)
+                    {// Open -> Close
+                        serverConnection.SendCloseFrame();
+                        g2.OpenEndPointChain.Remove(serverConnection);
+                        g2.ClosedEndPointChain.Add(serverConnection.EndPoint, serverConnection);
+                        serverConnection.ClosedSystemMics = Mics.GetSystem();
+                    }
+                }
+            }
+        }
     }
 }

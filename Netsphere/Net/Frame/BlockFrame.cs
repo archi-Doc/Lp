@@ -6,7 +6,7 @@ namespace Netsphere.Packet;
 
 internal readonly struct BlockFrame
 {// 18 bytes, BlockFrameCode
-    public const int MaxBlockLength = PacketHeader.MaxFrameLengtgh - 18;
+    public const int MaxBlockLength = PacketHeader.MaxFrameLength - 18;
 
     public readonly FrameType FrameType; // 2 bytes
     public readonly uint TransmissionSerial; // 4 bytes

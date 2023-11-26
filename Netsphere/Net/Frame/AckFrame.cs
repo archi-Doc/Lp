@@ -6,7 +6,7 @@ namespace Netsphere.Packet;
 
 internal readonly struct AckFrame
 {// 16 bytes, AckFrameCode
-    public const int MaxAck = (PacketHeader.MaxFrameLengtgh - 2) / 8;
+    public const int MaxAck = (PacketHeader.MaxFrameLength - 2) / 8;
 
     public readonly FrameType FrameType; // 2 bytes
     public readonly uint TransmissionSerial; // 4 bytes

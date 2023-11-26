@@ -6,15 +6,35 @@ using Netsphere.Packet;
 namespace Netsphere;
 
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
-public partial class ClientConnection : ConnectionBase
+public partial class ClientConnection : Connection
 {
     [Link(Primary = true, Type = ChainType.Unordered, TargetMember = "ConnectionId", AddValue = false)]
     [Link(Type = ChainType.Unordered, Name = "OpenEndPoint", TargetMember = "EndPoint", AddValue = false, AutoLink = false)]
     [Link(Type = ChainType.Unordered, Name = "ClosedEndPoint", TargetMember = "EndPoint", AddValue = false, AutoLink = false)]
     [Link(Type = ChainType.LinkedList, Name = "ClosedList", AutoLink = false)]
-    public ClientConnection(ConnectionTerminal connectionTerminal, ulong connectionId, NetEndPoint endPoint)
-        : base(connectionTerminal, connectionId, endPoint)
+    [Link(Name = "SendQueue", Type = ChainType.QueueList, AutoLink = false)]
+    public ClientConnection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetEndPoint endPoint)
+        : base(packetTerminal, connectionTerminal, connectionId, endPoint)
     {
+    }
+
+    public override ConnectionState State
+    {
+        get
+        {
+            if (this.OpenEndPointLink.IsLinked)
+            {
+                return ConnectionState.Open;
+            }
+            else if (this.ClosedEndPointLink.IsLinked)
+            {
+                return ConnectionState.Closed;
+            }
+            else
+            {
+                return ConnectionState.Disposed;
+            }
+        }
     }
 
     public async Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(TSend packet)
@@ -26,11 +46,12 @@ public partial class ClientConnection : ConnectionBase
             return (NetResult.SerializationError, default);
         }
 
-        var transmission = await this.TryCreateTransmission();
+        return (NetResult.SerializationError, default);
+
+        /*var transmission = await this.TryCreateTransmission();
         if (transmission is null)
         {
             return (NetResult.NoNetwork, default);
-        }
-
+        }*/
     }
 }

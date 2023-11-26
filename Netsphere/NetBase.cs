@@ -1,7 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Arc.Crypto;
 using Netsphere.Crypto;
+using Netsphere.Server;
 
 namespace Netsphere;
 
@@ -11,6 +11,7 @@ public class NetBase : UnitBase, IUnitPreparable
         : base(context)
     {
         this.logger = logger;
+        this.ServerOptions = new();
     }
 
     public void Prepare(UnitMessage.Prepare message)
@@ -51,6 +52,8 @@ public class NetBase : UnitBase, IUnitPreparable
     public bool AllowUnsafeConnection { get; set; } = false;
 
     public NodePublicKey NodePublicKey { get; private set; } = default!;
+
+    public ServerOptions ServerOptions { get; set; }
 
     public class LogFlag
     {

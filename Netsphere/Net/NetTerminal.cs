@@ -3,7 +3,6 @@
 using Netsphere.Crypto;
 using Netsphere.Net;
 using Netsphere.Packet;
-using Netsphere.Server;
 using Netsphere.Stats;
 
 #pragma warning disable SA1202 // Elements should be ordered by access
@@ -49,8 +48,6 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
 
     public TimeSpan ResponseTimeout { get; set; }
 
-    public ServerOptions ServerOptions { get; set; }
-
     internal NetSender NetSender { get; }
 
     internal UnitLogger UnitLogger { get; private set; }
@@ -84,7 +81,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         return new(address, t.Value.PublicKey);
     }
 
-    public Task<ClientConnection?> TryConnect(NetNode node, ConnectionBase.ConnectMode mode = ConnectionBase.ConnectMode.ReuseClosed)
+    public Task<ClientConnection?> TryConnect(NetNode node, Connection.ConnectMode mode = Connection.ConnectMode.ReuseClosed)
         => this.NetConnectionTerminal.TryConnect(node, mode);
 
     void IUnitPreparable.Prepare(UnitMessage.Prepare message)

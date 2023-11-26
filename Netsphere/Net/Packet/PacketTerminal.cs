@@ -87,7 +87,7 @@ public sealed partial class PacketTerminal
         where TSend : IPacket, ITinyhandSerialize<TSend>
     {
         CreatePacket(0, packet, out var owner);
-        this.TryAdd(endPoint.EndPoint, owner, true, default);
+        this.AddSendPacket(endPoint.EndPoint, owner, true, default);
     }
 
     public Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(NetAddress address, TSend packet)
@@ -113,7 +113,7 @@ public sealed partial class PacketTerminal
 
         var tcs = new TaskCompletionSource<(NetResult Result, ByteArrayPool.MemoryOwner ToBeMoved)>();
         CreatePacket(0, packet, out var owner);
-        this.TryAdd(endPoint.EndPoint, owner, true, tcs);
+        this.AddSendPacket(endPoint.EndPoint, owner, true, tcs);
 
         try
         {
@@ -213,18 +213,18 @@ public sealed partial class PacketTerminal
         if (packetUInt16 < 127)
         {// Packet types (0-127)
             if (packetType == PacketType.Connect)
-            {
+            {// PacketConnect
                 if (TinyhandSerializer.TryDeserialize<PacketConnect>(span, out var p))
                 {
                     Task.Run(() =>
                     {
                         var packet = new PacketConnectResponse();
-                        packet.MaxTransmissions = this.netTerminal.ServerOptions.MaxTransmissions;
-                        packet.TransmissionWindow = this.netTerminal.ServerOptions.TransmissionWindow;
+                        packet.MaxTransmissions = this.netBase.ServerOptions.MaxTransmissions;
+                        packet.TransmissionWindow = this.netBase.ServerOptions.TransmissionWindow;
 
                         this.netTerminal.NetConnectionTerminal.PrepareServerSide(new(endPoint, p.Engagement), p, packet);
                         CreatePacket(packetId, packet, out var owner);
-                        this.TryAdd(endPoint, owner, false, default);
+                        this.AddSendPacket(endPoint, owner, false, default);
                     });
 
                     return;
@@ -238,14 +238,14 @@ public sealed partial class PacketTerminal
 
                     var packet = new PacketPingResponse(new(endPoint.Address, (ushort)endPoint.Port), this.netTerminal.NetBase.NodeName);
                     CreatePacket(packetId, packet, out var owner);
-                    this.TryAdd(endPoint, owner, false, default);
+                    this.AddSendPacket(endPoint, owner, false, default);
                     return;
                 }
                 else if (packetType == PacketType.GetInformation)
                 {// PacketGetInformation
                     var packet = new PacketGetInformationResponse(this.netBase.NodePublicKey);
                     CreatePacket(packetId, packet, out var owner);
-                    this.TryAdd(endPoint, owner, false, default);
+                    this.AddSendPacket(endPoint, owner, false, default);
                     return;
                 }
             }
@@ -276,11 +276,11 @@ public sealed partial class PacketTerminal
         }
     }
 
-    private unsafe bool TryAdd(IPEndPoint endPoint, ByteArrayPool.MemoryOwner dataToBeMoved, bool ack, TaskCompletionSource<(NetResult Result, ByteArrayPool.MemoryOwner ToBeMoved)>? tcs)
+    internal unsafe void AddSendPacket(IPEndPoint endPoint, ByteArrayPool.MemoryOwner dataToBeMoved, bool ack, TaskCompletionSource<(NetResult Result, ByteArrayPool.MemoryOwner ToBeMoved)>? tcs)
     {
         if (dataToBeMoved.Span.Length > NetControl.MaxPacketLength)
         {
-            return false;
+            return;
         }
 
         var item = new Item(endPoint, dataToBeMoved, ack, tcs);
@@ -304,8 +304,6 @@ public sealed partial class PacketTerminal
                 this.items.SentListChain.AddLast(item);
             }*/
         }
-
-        return true;
     }
 
     private static void CreatePacket<TPacket>(ulong packetId, TPacket packet, out ByteArrayPool.MemoryOwner owner)
