@@ -25,6 +25,33 @@ public class ConnectionTerminal
     private readonly ClientConnection.GoshujinClass clientConnections = new();
     private readonly ServerConnection.GoshujinClass serverConnections = new();
 
+    public void Clean()
+    {
+        var systemCurrentMics = Mics.GetSystem();
+
+        lock (this.clientConnections.SyncObject)
+        {
+            while (this.clientConnections.ClosedListChain.First is { } connection &&
+                connection.ClosedSystemMics + Mics.FromSeconds(3) < systemCurrentMics)
+            {
+                Console.WriteLine($"Disposed: {connection.ToString()}");
+                connection.Goshujin = null;
+                connection.DisposeActual();
+            }
+        }
+
+        lock (this.serverConnections.SyncObject)
+        {
+            while (this.serverConnections.ClosedListChain.First is { } connection &&
+                connection.ClosedSystemMics + Mics.FromSeconds(3) < systemCurrentMics)
+            {
+                Console.WriteLine($"Disposed: {connection.ToString()}");
+                connection.Goshujin = null;
+                connection.DisposeActual();
+            }
+        }
+    }
+
     public async Task<ClientConnection?> TryConnect(NetNode node, Connection.ConnectMode mode = Connection.ConnectMode.ReuseClosed)
     {
         if (!this.netStats.TryCreateEndPoint(node, out var endPoint))
@@ -177,6 +204,7 @@ public class ConnectionTerminal
 
                         g.OpenEndPointChain.Remove(clientConnection);
                         g.ClosedEndPointChain.Add(clientConnection.EndPoint, clientConnection);
+                        g.ClosedListChain.AddLast(clientConnection);
                         clientConnection.ClosedSystemMics = Mics.GetSystem();
                     }
                 }
@@ -203,6 +231,7 @@ public class ConnectionTerminal
 
                         g2.OpenEndPointChain.Remove(serverConnection);
                         g2.ClosedEndPointChain.Add(serverConnection.EndPoint, serverConnection);
+                        g2.ClosedListChain.AddLast(serverConnection);
                         serverConnection.ClosedSystemMics = Mics.GetSystem();
                     }
                 }

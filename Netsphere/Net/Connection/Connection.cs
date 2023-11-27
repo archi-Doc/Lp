@@ -3,7 +3,6 @@
 using System.Security.Cryptography;
 using Netsphere.Packet;
 using Netsphere.Transmission;
-using static Arc.Unit.ByteArrayPool;
 
 #pragma warning disable SA1202
 
@@ -59,6 +58,8 @@ public abstract class Connection : IDisposable
     public abstract ConnectionState State { get; }
 
     internal long ClosedSystemMics { get; set; }
+
+    internal long ResponseSystemMics { get; set; }
 
     private readonly PacketTerminal packetTerminal;
     private readonly ConnectionTerminal connectionTerminal;
@@ -204,5 +205,20 @@ public abstract class Connection : IDisposable
 
         // tempcode
         // this.sendTransmissions.Dispose();
+    }
+
+    public override string ToString()
+    {
+        var connectionString = "Connection";
+        if (this is ServerConnection)
+        {
+            connectionString = "ServerConnection";
+        }
+        else if (this is ClientConnection)
+        {
+            connectionString = "ClientConnection";
+        }
+
+        return $"{connectionString} Id:{(ushort)this.ConnectionId:x4}, EndPoint:{this.EndPoint.ToString()}";
     }
 }

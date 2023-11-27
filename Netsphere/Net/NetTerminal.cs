@@ -25,6 +25,7 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
         this.NetSender = new(this, unitLogger.GetLogger<NetSender>());
         this.PacketTerminal = new(this.NetBase, this.NetStats, this, unitLogger.GetLogger<PacketTerminal>());
         this.ConnectionTerminal = new(this);
+        this.netCleaner = new(this);
 
         this.ResponseTimeout = TimeSpan.FromSeconds(DefaultResponseTimeoutInSeconds);
     }
@@ -55,10 +56,16 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     internal ConnectionTerminal ConnectionTerminal { get; private set; }
 
     private readonly ILogger logger;
+    private readonly NetCleaner netCleaner;
 
     private NodePrivateKey nodePrivateKey = default!;
 
     #endregion
+
+    public void Clean()
+    {
+        this.ConnectionTerminal.Clean();
+    }
 
     public bool TryCreateEndPoint(in NetAddress address, out NetEndPoint endPoint)
         => this.NetStats.TryCreateEndPoint(in address, out endPoint);
@@ -109,11 +116,13 @@ public class NetTerminal : UnitBase, IUnitPreparable, IUnitExecutable
     {
         var core = message.ParentCore;
         this.NetSender.Start(core);
+        this.netCleaner.Start(core);
     }
 
     async Task IUnitExecutable.TerminateAsync(UnitMessage.TerminateAsync message)
     {
         this.NetSender.Stop();
+        this.netCleaner.Stop();
     }
 
     internal void ProcessSend(NetSender netSender)
