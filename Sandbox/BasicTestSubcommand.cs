@@ -41,7 +41,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         Console.WriteLine($"{sw.ElapsedMilliseconds} ms, {result.ToString()}");
         sw.Restart();
 
-        for (var i = 0; i < 2; i++)
+        for (var i = 0; i < 1; i++)
         {
             p = new PacketPing("test56789");
             result = await packetTerminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(netAddress, p);
@@ -60,7 +60,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         {
             if (connection is not null)
             {
-                connection.Close();
+                // connection.Close();
                 // var r = await connection.SendAndReceiveAsync<PacketPing, PacketPingResponse>(netAddress, p);
             }
         }

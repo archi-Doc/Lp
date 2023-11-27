@@ -102,7 +102,7 @@ public abstract class Connection : IDisposable
 
         if (span.Length == 0)
         {// Close frame
-            this.connectionTerminal.CloseInternal(this, false, false);
+            this.connectionTerminal.CloseInternal(this, false);
             return;
         }
 
@@ -191,7 +191,7 @@ public abstract class Connection : IDisposable
     /// <inheritdoc/>
     public void Dispose()
     {
-        this.connectionTerminal.CloseInternal(this, false, true);
+        this.connectionTerminal.CloseInternal(this, true);
     }
 
     internal void DisposeActual()

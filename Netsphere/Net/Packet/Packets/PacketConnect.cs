@@ -1,7 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.ComponentModel;
+using Netsphere.Block;
 using Netsphere.Crypto;
+using Netsphere.Server;
 
 namespace Netsphere.Packet;
 
@@ -42,8 +44,15 @@ internal partial class PacketConnectResponse : IPacket
 
     public PacketConnectResponse()
     {
+        this.Server = ConnectionRequirementsBlock.Default;
         this.ServerSalt = RandomVault.Crypto.NextUInt64();
         this.ServerSalt2 = RandomVault.Crypto.NextUInt64();
+    }
+
+    public PacketConnectResponse(ServerOptions options)
+        : this()
+    {
+        this.Server = new(options);
     }
 
     [Key(0)]
@@ -53,8 +62,5 @@ internal partial class PacketConnectResponse : IPacket
     public ulong ServerSalt2 { get; set; }
 
     [Key(2)]
-    public int MaxTransmissions { get; set; }
-
-    [Key(3)]
-    public int TransmissionWindow { get; set; }
+    public ConnectionRequirementsBlock Server { get; set; }
 }

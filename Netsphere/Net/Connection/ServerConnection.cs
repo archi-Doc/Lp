@@ -10,7 +10,8 @@ public partial class ServerConnection : Connection
     [Link(Primary = true, Type = ChainType.Unordered, TargetMember = "ConnectionId", AddValue = false)]
     [Link(Type = ChainType.Unordered, Name = "OpenEndPoint", TargetMember = "EndPoint", AddValue = false, AutoLink = false)]
     [Link(Type = ChainType.Unordered, Name = "ClosedEndPoint", TargetMember = "EndPoint", AddValue = false, AutoLink = false)]
-    [Link(Type = ChainType.LinkedList, Name = "ClosedList", AutoLink = false)]
+    [Link(Type = ChainType.LinkedList, Name = "OpenList", AutoLink = false)] // ResponseSystemMics
+    [Link(Type = ChainType.LinkedList, Name = "ClosedList", AutoLink = false)] // ClosedSystemMics
     [Link(Name = "SendQueue", Type = ChainType.QueueList, AutoLink = false)]
     public ServerConnection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetEndPoint endPoint)
         : base(packetTerminal, connectionTerminal, connectionId, endPoint)

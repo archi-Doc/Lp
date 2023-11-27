@@ -217,9 +217,7 @@ public sealed partial class PacketTerminal
                 {
                     Task.Run(() =>
                     {
-                        var packet = new PacketConnectResponse();
-                        packet.MaxTransmissions = this.netBase.ServerOptions.MaxTransmissions;
-                        packet.TransmissionWindow = this.netBase.ServerOptions.TransmissionWindow;
+                        var packet = new PacketConnectResponse(this.netBase.ServerOptions);
 
                         this.netTerminal.ConnectionTerminal.PrepareServerSide(new(endPoint, p.Engagement), p, packet);
                         CreatePacket(packetId, packet, out var owner);
