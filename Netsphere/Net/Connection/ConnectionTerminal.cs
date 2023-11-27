@@ -8,7 +8,8 @@ namespace Netsphere;
 
 public class ConnectionTerminal
 {// ConnectionStateCode: Open -> Closed -> Disposed
-    private static readonly long FromCloseToDisposalMics = Mics.FromSeconds(10);
+    private static readonly long FromOpenToClosedMics = Mics.FromSeconds(5);
+    private static readonly long FromClosedToDisposalMics = Mics.FromSeconds(10);
     private static readonly long AdditionalServerMics = Mics.FromSeconds(1);
 
     public ConnectionTerminal(NetTerminal netTerminal)
@@ -36,17 +37,17 @@ public class ConnectionTerminal
         {
             // Close unused client connections
             while (this.clientConnections.OpenListChain.First is { } clientConnection &&
-                clientConnection.ResponseSystemMics + Mics.FromSeconds(3) < systemCurrentMics)
+                clientConnection.ResponseSystemMics + FromOpenToClosedMics < systemCurrentMics)
             {
-                Console.WriteLine($"Closed: {clientConnection.ToString()}");
+                // Console.WriteLine($"Closed: {clientConnection.ToString()}");
                 this.CloseClientConnection(this.clientConnections, clientConnection);
             }
 
             // Dispose closed client connections
             while (this.clientConnections.ClosedListChain.First is { } connection &&
-                connection.ClosedSystemMics + FromCloseToDisposalMics < systemCurrentMics)
+                connection.ClosedSystemMics + FromClosedToDisposalMics < systemCurrentMics)
             {
-                Console.WriteLine($"Disposed: {connection.ToString()}");
+                // Console.WriteLine($"Disposed: {connection.ToString()}");
                 connection.Goshujin = null;
                 connection.DisposeActual();
             }
@@ -56,17 +57,17 @@ public class ConnectionTerminal
         {
             // Close unused server connections
             while (this.serverConnections.OpenListChain.First is { } serverConnection &&
-                serverConnection.ResponseSystemMics + Mics.FromSeconds(3) < systemCurrentMics)
+                serverConnection.ResponseSystemMics + FromOpenToClosedMics + AdditionalServerMics < systemCurrentMics)
             {
-                Console.WriteLine($"Closed: {serverConnection.ToString()}");
+                // Console.WriteLine($"Closed: {serverConnection.ToString()}");
                 this.CloseServerConnection(this.serverConnections, serverConnection);
             }
 
             // Dispose closed server connections
             while (this.serverConnections.ClosedListChain.First is { } connection &&
-                connection.ClosedSystemMics + FromCloseToDisposalMics + AdditionalServerMics < systemCurrentMics)
+                connection.ClosedSystemMics + FromClosedToDisposalMics + AdditionalServerMics < systemCurrentMics)
             {
-                Console.WriteLine($"Disposed: {connection.ToString()}");
+                // Console.WriteLine($"Disposed: {connection.ToString()}");
                 connection.Goshujin = null;
                 connection.DisposeActual();
             }
@@ -96,7 +97,7 @@ public class ConnectionTerminal
             {// Attempt to reuse connections that have already been closed and are awaiting disposal.
                 if (this.clientConnections.ClosedEndPointChain.TryGetValue(endPoint, out var connection))
                 {
-                    if ((connection.ClosedSystemMics + FromCloseToDisposalMics) > systemMics)
+                    if ((connection.ClosedSystemMics + FromClosedToDisposalMics) > systemMics)
                     {// ConnectionStateCode
                         this.clientConnections.ClosedListChain.Remove(connection);
                         this.clientConnections.ClosedEndPointChain.Remove(connection);

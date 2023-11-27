@@ -36,6 +36,10 @@ public abstract class Connection : IDisposable
         this.EndPoint = endPoint;
     }
 
+    public ValueTask<SendTransmission> GetTransmission()
+    {
+    }
+
     public void Close()
         => this.Dispose();
 
@@ -66,6 +70,7 @@ public abstract class Connection : IDisposable
     private Embryo embryo;
     private Aes aes = default!;
     private SendTransmission.GoshujinClass sendTransmissions = new();
+    private FlexArray<SendTransmission> sendArray = new();
 
     #endregion
 

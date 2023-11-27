@@ -2,7 +2,7 @@
 
 namespace Netsphere.Transmission;
 
-[ValueLinkObject]
+[ValueLinkObject(Isolation = IsolationLevel.Serializable)]
 public partial class SendTransmission
 {
     [Link(Primary = true, Name = "SendQueue", Type = ChainType.QueueList, AutoLink = false)]
