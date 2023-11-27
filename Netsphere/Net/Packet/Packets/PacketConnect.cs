@@ -53,7 +53,6 @@ internal partial class PacketConnectResponse : IPacket
     public ulong ServerSalt2 { get; set; }
 
     [Key(2)]
-    [DefaultValue(4)]
     public int MaxTransmissions { get; set; }
 
     [Key(3)]
