@@ -56,14 +56,16 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         }
 
         netTerminal.PacketTerminal.SendCountLimit = 1; // tempcode
-        using (var connection = await netTerminal.TryConnect(netNode))
+        /*using (var connection = await netTerminal.TryConnect(netNode))
         {
             if (connection is not null)
             {
                 // connection.Close();
                 // var r = await connection.SendAndReceiveAsync<PacketPing, PacketPingResponse>(netAddress, p);
             }
-        }
+        }*/
+
+        var connection = await netTerminal.TryConnect(netNode);
 
         await Task.Delay(1000000000);
 

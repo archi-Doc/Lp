@@ -13,7 +13,7 @@ public partial class ClientConnection : Connection
     [Link(Type = ChainType.Unordered, Name = "ClosedEndPoint", TargetMember = "EndPoint", AddValue = false, AutoLink = false)]
     [Link(Type = ChainType.LinkedList, Name = "OpenList", AutoLink = false)] // ResponseSystemMics
     [Link(Type = ChainType.LinkedList, Name = "ClosedList", AutoLink = false)] // ClosedSystemMics
-    [Link(Name = "SendQueue", Type = ChainType.QueueList, AutoLink = false)]
+    [Link(Type = ChainType.QueueList, Name = "SendQueue", AutoLink = false)]
     public ClientConnection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetEndPoint endPoint)
         : base(packetTerminal, connectionTerminal, connectionId, endPoint)
     {
