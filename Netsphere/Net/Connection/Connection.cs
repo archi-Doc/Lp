@@ -70,7 +70,7 @@ public abstract class Connection : IDisposable
     private Embryo embryo;
     private Aes aes = default!;
     private SendTransmission.GoshujinClass sendTransmissions = new();
-    private FlexArray<SendTransmission> sendArray = new();
+    private SlidingList<SendTransmission> sendArray = new(1);
 
     #endregion
 
