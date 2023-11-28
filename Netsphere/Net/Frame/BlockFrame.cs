@@ -9,7 +9,7 @@ internal readonly struct BlockFrame
     public const int MaxBlockLength = PacketHeader.MaxFrameLength - 18;
 
     public readonly FrameType FrameType; // 2 bytes
-    public readonly uint TransmissionSerial; // 4 bytes
+    public readonly uint TransmissionId; // 4 bytes
     public readonly uint GeneSerial; // 4 bytes
     public readonly uint GeneMax; // 4 bytes
 }

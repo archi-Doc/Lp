@@ -3,6 +3,7 @@
 using System.Security.Cryptography;
 using Netsphere.Packet;
 using Netsphere.Transmission;
+using static FastExpressionCompiler.ImTools.FHashMap;
 
 #pragma warning disable SA1202
 
@@ -36,8 +37,30 @@ public abstract class Connection : IDisposable
         this.EndPoint = endPoint;
     }
 
-    public ValueTask<SendTransmission> GetTransmission()
+    public async ValueTask<SendTransmission> GetTransmission()
     {
+Retry:
+        lock (this.sendTransmissions.SyncObject)
+        {
+            if (this.sendTransmissions.Count >= 4)
+            {
+                goto Wait;
+            }
+
+            uint transmissionId;
+            do
+            {
+                transmissionId = RandomVault.Pseudo.NextUInt32();
+            }
+            while (this.sendTransmissions.TransmissionIdChain.ContainsKey(transmissionId));
+
+            var transmission = new SendTransmission(transmissionId);
+            return transmission;
+        }
+
+Wait:
+        await Task.Delay(100).ConfigureAwait(false); // tempcode
+        goto Retry;
     }
 
     public void Close()
@@ -67,10 +90,13 @@ public abstract class Connection : IDisposable
 
     private readonly PacketTerminal packetTerminal;
     private readonly ConnectionTerminal connectionTerminal;
+
+    // lock (this.Goshujin.SyncObject)
     private Embryo embryo;
     private Aes aes = default!;
+
+    // lock (this.sendTransmissions.SyncObject)
     private SendTransmission.GoshujinClass sendTransmissions = new();
-    private SlidingList<SendTransmission> sendArray = new(1);
 
     #endregion
 

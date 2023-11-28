@@ -6,7 +6,7 @@ using Netsphere.Packet;
 namespace Netsphere;
 
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
-public partial class ClientConnection : Connection
+public sealed partial class ClientConnection : Connection
 {
     [Link(Primary = true, Type = ChainType.Unordered, TargetMember = "ConnectionId", AddValue = false)]
     [Link(Type = ChainType.Unordered, Name = "OpenEndPoint", TargetMember = "EndPoint", AddValue = false, AutoLink = false)]
