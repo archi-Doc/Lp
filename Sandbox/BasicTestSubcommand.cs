@@ -61,15 +61,16 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         {
             if (connection is not null)
             {
-                var service = connection.GetService<ISomeService>();
+                /*var service = connection.GetService<ISomeService>();
                 service.Engage();
                 service.Send();
                 service.EngageAndSend();
-                service.Send(new(Proof, proof));
+                service.Send(new(Proof, proof));*/
 
                 var transmission = await connection.GetTransmission();
                 if (transmission is not null)
                 {
+                    transmission.SendAndForget();
                 }
 
                 // connection.Close();

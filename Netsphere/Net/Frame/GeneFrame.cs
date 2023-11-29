@@ -4,9 +4,9 @@ namespace Netsphere.Packet;
 
 #pragma warning disable CS0649
 
-internal readonly struct BlockFrame
+internal readonly struct GeneFrame
 {// 18 bytes, BlockFrameCode
-    public const int MaxBlockLength = PacketHeader.MaxFrameLength - 18;
+    public const int MaxBlockLength = PacketHeader.MaxFrameLength - 14;
 
     public readonly FrameType FrameType; // 2 bytes
     public readonly uint TransmissionId; // 4 bytes

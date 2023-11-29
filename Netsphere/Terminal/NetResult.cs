@@ -26,4 +26,5 @@ public enum NetResult
     NoCallContext,
     UnknownException,
     NotAuthorized,
+    TransmissionConsumed,
 }

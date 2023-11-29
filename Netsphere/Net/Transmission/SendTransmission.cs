@@ -7,8 +7,8 @@ public sealed partial class SendTransmission : Transmission
 {
     [Link(Primary = true, Type = ChainType.Unordered, TargetMember = "TransmissionId", AddValue = false, Accessibility = ValueLinkAccessibility.Private)]
     [Link(Name = "SendQueue", Type = ChainType.QueueList, AutoLink = false, Accessibility = ValueLinkAccessibility.Private)]
-    public SendTransmission(uint transmissionId)
-        : base(transmissionId)
+    public SendTransmission(Connection connection, uint transmissionId)
+        : base(connection, transmissionId)
     {
     }
 }

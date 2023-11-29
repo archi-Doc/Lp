@@ -61,7 +61,7 @@ Retry:
             }
             while (this.sendTransmissions.TransmissionIdChain.ContainsKey(transmissionId));
 
-            var transmission = new SendTransmission(transmissionId);
+            var transmission = new SendTransmission(this, transmissionId);
             transmission.Goshujin = this.sendTransmissions;
             return transmission;
         }
