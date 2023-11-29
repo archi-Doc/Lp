@@ -5,15 +5,15 @@ using Netsphere.Server;
 namespace Netsphere.Block;
 
 [TinyhandObject]
-public partial class ConnectionRequirementsBlock : IBlock
+public partial class ConnectionAgreementBlock : IBlock
 {
-    public static readonly ConnectionRequirementsBlock Default = new();
+    public static readonly ConnectionAgreementBlock Default = new();
 
-    public ConnectionRequirementsBlock()
+    public ConnectionAgreementBlock()
     {
     }
 
-    public ConnectionRequirementsBlock(ServerOptions options)
+    public ConnectionAgreementBlock(ServerOptions options)
     {
         this.MaxTransmissions = options.MaxTransmissions;
         this.TransmissionWindow = options.TransmissionWindow;

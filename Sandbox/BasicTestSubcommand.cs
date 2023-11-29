@@ -60,13 +60,21 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         {
             if (connection is not null)
             {
+                /*var service = connection.GetService<ISomeService>();
+                service.Engage();
+                service.Send();*/
+
                 var transmission = await connection.GetTransmission();
+                if (transmission is not null)
+                {
+                }
+
                 // connection.Close();
                 // var r = await connection.SendAndReceiveAsync<PacketPing, PacketPingResponse>(netAddress, p);
             }
         }
 
-        await Task.Delay(1000000000);
+        // await Task.Delay(1000000000);
 
         /*if (!NetAddress.TryParse(this.logger, nodeString, out var node))
         {

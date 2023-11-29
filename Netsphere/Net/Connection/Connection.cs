@@ -1,9 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics;
 using System.Security.Cryptography;
+using Netsphere.Block;
 using Netsphere.Packet;
 using Netsphere.Transmission;
-using static FastExpressionCompiler.ImTools.FHashMap;
 
 #pragma warning disable SA1202
 
@@ -28,21 +29,27 @@ public abstract class Connection : IDisposable
         Disposed,
     }
 
-    public Connection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetEndPoint endPoint)
+    public Connection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetEndPoint endPoint, ConnectionAgreementBlock agreement)
     {
         this.NetBase = connectionTerminal.NetBase;
         this.packetTerminal = packetTerminal;
         this.connectionTerminal = connectionTerminal;
         this.ConnectionId = connectionId;
         this.EndPoint = endPoint;
+        this.agreement = agreement;
     }
 
-    public async ValueTask<SendTransmission> GetTransmission()
+    public async ValueTask<SendTransmission?> GetTransmission()
     {
 Retry:
+        if (this.NetBase.CancellationToken.IsCancellationRequested)
+        {
+            return default;
+        }
+
         lock (this.sendTransmissions.SyncObject)
         {
-            if (this.sendTransmissions.Count >= 4)
+            if (this.sendTransmissions.Count >= this.agreement.MaxTransmissions)
             {
                 goto Wait;
             }
@@ -55,11 +62,19 @@ Retry:
             while (this.sendTransmissions.TransmissionIdChain.ContainsKey(transmissionId));
 
             var transmission = new SendTransmission(transmissionId);
+            transmission.Goshujin = this.sendTransmissions;
             return transmission;
         }
 
 Wait:
-        await Task.Delay(100).ConfigureAwait(false); // tempcode
+        try
+        {
+            await this.sendTransmissionsPulse.WaitAsync(TimeSpan.FromSeconds(1), this.NetBase.CancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+        }
+
         goto Retry;
     }
 
@@ -90,10 +105,12 @@ Wait:
 
     private readonly PacketTerminal packetTerminal;
     private readonly ConnectionTerminal connectionTerminal;
+    private readonly AsyncPulseEvent sendTransmissionsPulse = new();
 
     // lock (this.Goshujin.SyncObject)
     private Embryo embryo;
     private Aes aes = default!;
+    private ConnectionAgreementBlock agreement;
 
     // lock (this.sendTransmissions.SyncObject)
     private SendTransmission.GoshujinClass sendTransmissions = new();

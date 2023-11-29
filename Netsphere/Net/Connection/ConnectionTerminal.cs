@@ -148,7 +148,7 @@ public class ConnectionTerminal
         }
 
         this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
-        var connection = new ClientConnection(this.netTerminal.PacketTerminal, this, connectionId, endPoint);
+        var connection = new ClientConnection(this.netTerminal.PacketTerminal, this, connectionId, endPoint, p2.Agreement);
         connection.Initialize(embryo);
 
         return connection;
@@ -165,7 +165,7 @@ public class ConnectionTerminal
         }
 
         this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
-        var connection = new ServerConnection(this.netTerminal.PacketTerminal, this, connectionId, endPoint);
+        var connection = new ServerConnection(this.netTerminal.PacketTerminal, this, connectionId, endPoint, p2.Agreement);
         connection.Initialize(embryo);
 
         lock (this.serverConnections.SyncObject)
