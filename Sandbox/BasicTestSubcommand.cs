@@ -3,6 +3,7 @@
 using System.Diagnostics;
 using System.Net;
 using Arc.Unit;
+using LP.T3CS;
 using Netsphere;
 using Netsphere.Packet;
 using SimpleCommandLine;
@@ -60,9 +61,11 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         {
             if (connection is not null)
             {
-                /*var service = connection.GetService<ISomeService>();
+                var service = connection.GetService<ISomeService>();
                 service.Engage();
-                service.Send();*/
+                service.Send();
+                service.EngageAndSend();
+                service.Send(new(Proof, proof));
 
                 var transmission = await connection.GetTransmission();
                 if (transmission is not null)
