@@ -83,6 +83,18 @@ public class AesBenchmark
         return result;
     }
 
+    [Benchmark]
+    public byte[] PoolEncrypt3()
+    {
+        var aes = this.AesPool.Get();
+        aes.Key = this.Key;
+        this.Source.AsSpan().CopyTo(this.Destination);
+        aes.TryEncryptCbc(this.Destination.AsSpan(0, this.Source.Length), this.Iv, this.Destination, out var written);
+        // aes.TryDecryptCbc(this.Destination.AsSpan(0, written), this.Iv, this.Destination, out written);
+        this.AesPool.Return(aes);
+        return this.Destination;
+    }
+
     /*[Benchmark]
     public byte[] PoolHashEncrypt()
     {
