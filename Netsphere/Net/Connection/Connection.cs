@@ -1,12 +1,16 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using System.Diagnostics;
+using System.Diagnostics.Tracing;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using Netsphere.Block;
 using Netsphere.Packet;
 using Netsphere.Transmission;
 
 #pragma warning disable SA1202
+#pragma warning disable SA1214
 
 namespace Netsphere;
 
@@ -84,9 +88,6 @@ Wait:
     internal void Initialize(Embryo embryo)
     {
         this.embryo = embryo;
-        this.aes = Aes.Create();
-        this.aes.KeySize = 256;
-        this.aes.Key = this.embryo.Key;
     }
 
     #region FieldAndProperty
@@ -107,10 +108,13 @@ Wait:
     private readonly ConnectionTerminal connectionTerminal;
     private readonly AsyncPulseEvent sendTransmissionsPulse = new();
 
-    // lock (this.Goshujin.SyncObject)
     private Embryo embryo;
-    private Aes aes = default!;
     private ConnectionAgreementBlock agreement;
+
+    // lock (this.syncAes)
+    private readonly object syncAes = new();
+    private Aes? aes0;
+    private Aes? aes1;
 
     // lock (this.sendTransmissions.SyncObject)
     private SendTransmission.GoshujinClass sendTransmissions = new();
@@ -162,6 +166,11 @@ Wait:
 
             var arrayOwner = PacketPool.Rent();
             var destination = arrayOwner.ByteArray.AsSpan();
+            if (!this.TryDecryptCbc(salt, span, sourceLength, out var written))
+            {
+                return;
+            }
+
             if (!this.aes.TryDecryptCbc(span, iv, destination, out var written, PaddingMode.PKCS7))
             {
                 return;
@@ -221,7 +230,13 @@ Wait:
         int written = 0;
         if (frame.Length > 0)
         {
-            Span<byte> iv = stackalloc byte[16];
+            if (!this.TryEncryptCbc(salt, span, PacketHeader.Length + frame.Length, out written))
+            {
+                owner = default;
+                return false;
+            }
+
+            /*Span<byte> iv = stackalloc byte[16];
             this.embryo.Iv.CopyTo(iv);
             BitConverter.TryWriteBytes(iv, salt);
 
@@ -229,7 +244,7 @@ Wait:
             {
                 owner = default;
                 return false;
-            }
+            }*/
         }
 
         owner = arrayOwner.ToMemoryOwner(0, PacketHeader.Length + written);
@@ -249,7 +264,8 @@ Wait:
             this.SendCloseFrame();
         }
 
-        this.aes?.Dispose();
+        this.aes0?.Dispose();
+        this.aes1?.Dispose();
 
         // tempcode
         // this.sendTransmissions.Dispose();
@@ -268,5 +284,74 @@ Wait:
         }
 
         return $"{connectionString} Id:{(ushort)this.ConnectionId:x4}, EndPoint:{this.EndPoint.ToString()}";
+    }
+
+    private bool TryEncryptCbc(uint salt, Span<byte> buffer, int sourceLength, out int written)
+    {
+        Span<byte> iv = stackalloc byte[16];
+        this.embryo.Iv.CopyTo(iv);
+        BitConverter.TryWriteBytes(iv, salt);
+
+        var aes = this.RentAes();
+        var result = aes.TryEncryptCbc(buffer.Slice(0, sourceLength), iv, buffer, out written, PaddingMode.PKCS7);
+        this.ReturnAes(aes);
+        return result;
+    }
+
+    private bool TryDecryptCbc(uint salt, Span<byte> buffer, int sourceLength, out int written)
+    {
+        Span<byte> iv = stackalloc byte[16];
+        this.embryo.Iv.CopyTo(iv);
+        BitConverter.TryWriteBytes(iv, salt);
+
+        var aes = this.RentAes();
+        var result = aes.TryDecryptCbc(buffer.Slice(0, sourceLength), iv, buffer, out written, PaddingMode.PKCS7);
+        this.ReturnAes(aes);
+        return result;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private Aes RentAes()
+    {
+        lock (this.syncAes)
+        {
+            Aes aes;
+            if (this.aes0 is not null)
+            {
+                aes = this.aes0;
+                this.aes0 = this.aes1;
+                this.aes1 = default;
+                return aes;
+            }
+            else
+            {
+                aes = Aes.Create();
+                aes.KeySize = 256;
+                aes.Key = this.embryo.Key;
+                return aes;
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ReturnAes(Aes aes)
+    {
+        lock (this.syncAes)
+        {
+            if (this.aes0 is null)
+            {
+                this.aes0 = aes;
+                return;
+            }
+            else if (this.aes1 is null)
+            {
+                this.aes1 = aes;
+                return;
+            }
+            else
+            {
+                aes.Dispose();
+            }
+        }
     }
 }
