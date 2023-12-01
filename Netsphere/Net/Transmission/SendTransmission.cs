@@ -11,4 +11,39 @@ public sealed partial class SendTransmission : Transmission
         : base(connection, transmissionId)
     {
     }
+
+    private readonly object syncObject = new();
+    private NetGene? sendGene; // Single gene
+    private NetGene.GoshujinClass? sendGenes; // Multiple genes
+
+    internal NetResult SendBlock(uint blockType, ulong blockId, ByteArrayPool.MemoryOwner block)
+    {
+        if (this.sendGene is not null || this.sendGenes is not null)
+        {
+            return NetResult.TransmissionConsumed;
+        }
+
+        var size = sizeof(uint) + sizeof(ulong) + block.Span.Length;
+        var blockInfo = CalculateBlock(size);
+
+        lock (this.syncObject)
+        {
+            if (blockInfo.NumberOfBlocks == 1)
+            {// Single gene
+                this.sendGene = new();
+                if (this.CreatePacket(blockInfo.NumberOfBlocks, this.sendGene, block.Span, out var owner))
+                {
+                    this.sendGene.SetSend(owner);
+                }
+            }
+            else
+            {// Multiple genes
+            }
+        }
+
+        // Send queue
+        this.Connection.UpdateSendQueue(this);
+
+        return NetResult.Success;
+    }
 }

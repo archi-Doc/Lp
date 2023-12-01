@@ -2,6 +2,7 @@
 
 using Netsphere.Block;
 using Netsphere.Packet;
+using Netsphere.Transmission;
 
 namespace Netsphere;
 
@@ -35,6 +36,14 @@ public sealed partial class ServerConnection : Connection
             {
                 return ConnectionState.Disposed;
             }
+        }
+    }
+
+    internal override void UpdateSendQueue(SendTransmission transmission)
+    {
+        lock (this.sendTransmissions.SyncObject)
+        {
+            this.sendTransmissions.SendQueueChain.TryEnqueue(transmission);
         }
     }
 }

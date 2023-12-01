@@ -3,7 +3,9 @@
 using System;
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
+using System.Net.Sockets;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Netsphere.Block;
 using Netsphere.Packet;
@@ -105,7 +107,7 @@ Wait:
     internal long ResponseSystemMics { get; set; }
 
     private readonly PacketTerminal packetTerminal;
-    private readonly ConnectionTerminal connectionTerminal;
+    protected readonly ConnectionTerminal connectionTerminal;
     private readonly AsyncPulseEvent sendTransmissionsPulse = new();
 
     private Embryo embryo;
@@ -117,9 +119,13 @@ Wait:
     private Aes? aes1;
 
     // lock (this.sendTransmissions.SyncObject)
-    private SendTransmission.GoshujinClass sendTransmissions = new();
+    protected SendTransmission.GoshujinClass sendTransmissions = new();
 
     #endregion
+
+    internal virtual void UpdateSendQueue(SendTransmission transmission)
+    {
+    }
 
     internal void SendPriorityFrame(scoped Span<byte> frame)
     {// Close, Ack
@@ -160,18 +166,7 @@ Wait:
 
         if (packetType == PacketType.Encrypted || packetType == PacketType.EncryptedResponse)
         {
-            Span<byte> iv = stackalloc byte[16];
-            this.embryo.Iv.CopyTo(iv);
-            BitConverter.TryWriteBytes(iv, salt);
-
-            var arrayOwner = PacketPool.Rent();
-            var destination = arrayOwner.ByteArray.AsSpan();
-            if (!this.TryDecryptCbc(salt, span, sourceLength, out var written))
-            {
-                return;
-            }
-
-            if (!this.aes.TryDecryptCbc(span, iv, destination, out var written, PaddingMode.PKCS7))
+            if (!this.TryDecryptCbc(salt, span, PacketPool.MaxPacketSize - PacketHeader.Length, out var written))
             {
                 return;
             }
@@ -181,7 +176,7 @@ Wait:
                 return;
             }
 
-            var owner = arrayOwner.ToMemoryOwner(2, written - 2);
+            var owner = toBeShared.Slice(PacketHeader.Length + 2, written - 2);
             var frameType = (FrameType)BitConverter.ToUInt16(span); // FrameType
             if (frameType == FrameType.Ack)
             {
@@ -202,7 +197,7 @@ Wait:
     {
     }
 
-    private bool CreatePacket(scoped Span<byte> frame, out ByteArrayPool.MemoryOwner owner)
+    internal bool CreatePacket(scoped Span<byte> frame, out ByteArrayPool.MemoryOwner owner)
     {
         if (frame.Length > PacketHeader.MaxFrameLength)
         {
@@ -230,21 +225,51 @@ Wait:
         int written = 0;
         if (frame.Length > 0)
         {
-            if (!this.TryEncryptCbc(salt, span, PacketHeader.Length + frame.Length, out written))
+            if (!this.TryEncryptCbc(salt, frame, arrayOwner.ByteArray.AsSpan(PacketHeader.Length), out written))
             {
                 owner = default;
                 return false;
             }
+        }
 
-            /*Span<byte> iv = stackalloc byte[16];
-            this.embryo.Iv.CopyTo(iv);
-            BitConverter.TryWriteBytes(iv, salt);
+        owner = arrayOwner.ToMemoryOwner(0, PacketHeader.Length + written);
+        return true;
+    }
 
-            if (!this.aes.TryEncryptCbc(frame, iv, span, out written, PaddingMode.PKCS7))
-            {
-                owner = default;
-                return false;
-            }*/
+    internal bool CreatePacket(scoped Span<byte> frameHeader, scoped Span<byte> frameContent, out ByteArrayPool.MemoryOwner owner)
+    {
+        if ((frameHeader.Length + frameContent.Length) > PacketHeader.MaxFrameLength)
+        {
+            owner = default;
+            return false;
+        }
+
+        var arrayOwner = PacketPool.Rent();
+        var span = arrayOwner.ByteArray.AsSpan();
+        var salt = RandomVault.Pseudo.NextUInt32();
+
+        // PacketHeaderCode
+        BitConverter.TryWriteBytes(span, salt); // Salt
+        span = span.Slice(sizeof(uint));
+
+        BitConverter.TryWriteBytes(span, (ushort)this.EndPoint.Engagement); // Engagement
+        span = span.Slice(sizeof(ushort));
+
+        BitConverter.TryWriteBytes(span, (ushort)PacketType.Encrypted); // PacketType
+        span = span.Slice(sizeof(ushort));
+
+        BitConverter.TryWriteBytes(span, this.ConnectionId); // Id
+        span = span.Slice(sizeof(ulong));
+
+        frameHeader.CopyTo(span);
+        span = span.Slice(frameHeader.Length);
+        frameContent.CopyTo(span);
+        span = span.Slice(frameContent.Length);
+
+        if (!this.TryEncryptCbc(salt, arrayOwner.ByteArray.AsSpan(PacketHeader.Length, frameHeader.Length + frameContent.Length), PacketPool.MaxPacketSize - PacketHeader.Length, out var written))
+        {
+            owner = default;
+            return false;
         }
 
         owner = arrayOwner.ToMemoryOwner(0, PacketHeader.Length + written);
@@ -286,26 +311,38 @@ Wait:
         return $"{connectionString} Id:{(ushort)this.ConnectionId:x4}, EndPoint:{this.EndPoint.ToString()}";
     }
 
-    private bool TryEncryptCbc(uint salt, Span<byte> buffer, int sourceLength, out int written)
+    internal bool TryEncryptCbc(uint salt, Span<byte> source, Span<byte> destination, out int written)
     {
         Span<byte> iv = stackalloc byte[16];
         this.embryo.Iv.CopyTo(iv);
         BitConverter.TryWriteBytes(iv, salt);
 
         var aes = this.RentAes();
-        var result = aes.TryEncryptCbc(buffer.Slice(0, sourceLength), iv, buffer, out written, PaddingMode.PKCS7);
+        var result = aes.TryEncryptCbc(source, iv, destination, out written, PaddingMode.PKCS7);
         this.ReturnAes(aes);
         return result;
     }
 
-    private bool TryDecryptCbc(uint salt, Span<byte> buffer, int sourceLength, out int written)
+    internal bool TryEncryptCbc(uint salt, Span<byte> span, int spanMax, out int written)
     {
         Span<byte> iv = stackalloc byte[16];
         this.embryo.Iv.CopyTo(iv);
         BitConverter.TryWriteBytes(iv, salt);
 
         var aes = this.RentAes();
-        var result = aes.TryDecryptCbc(buffer.Slice(0, sourceLength), iv, buffer, out written, PaddingMode.PKCS7);
+        var result = aes.TryEncryptCbc(span, iv, MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(span), spanMax), out written, PaddingMode.PKCS7);
+        this.ReturnAes(aes);
+        return result;
+    }
+
+    internal bool TryDecryptCbc(uint salt, Span<byte> span, int spanMax, out int written)
+    {
+        Span<byte> iv = stackalloc byte[16];
+        this.embryo.Iv.CopyTo(iv);
+        BitConverter.TryWriteBytes(iv, salt);
+
+        var aes = this.RentAes();
+        var result = aes.TryDecryptCbc(span, iv, MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(span), spanMax), out written, PaddingMode.PKCS7);
         this.ReturnAes(aes);
         return result;
     }

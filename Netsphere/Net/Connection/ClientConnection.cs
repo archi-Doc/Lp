@@ -2,6 +2,7 @@
 
 using Netsphere.Block;
 using Netsphere.Packet;
+using Netsphere.Transmission;
 
 namespace Netsphere;
 
@@ -47,12 +48,27 @@ public sealed partial class ClientConnection : Connection
             return (NetResult.SerializationError, default);
         }
 
-        return (NetResult.SerializationError, default);
+        if (this.NetBase.CancellationToken.IsCancellationRequested)
+        {
+            return default;
+        }
 
-        /*var transmission = await this.TryCreateTransmission();
+        var transmission = await this.GetTransmission().ConfigureAwait(false);
         if (transmission is null)
         {
             return (NetResult.NoNetwork, default);
-        }*/
+        }
+
+        transmission.SendBlock(TSend.PacketType, 0, owner);
+    }
+
+    internal override void UpdateSendQueue(SendTransmission transmission)
+    {
+        lock (this.sendTransmissions.SyncObject)
+        {
+            this.sendTransmissions.SendQueueChain.TryEnqueue(transmission);
+        }
+
+        this.connectionTerminal.UpdateSendQueue(this);
     }
 }

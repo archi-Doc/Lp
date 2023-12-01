@@ -67,6 +67,8 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 service.EngageAndSend();
                 service.Send(new(Proof, proof));*/
 
+                connection.SendAndReceiveAsync();
+
                 var transmission = await connection.GetTransmission();
                 if (transmission is not null)
                 {
