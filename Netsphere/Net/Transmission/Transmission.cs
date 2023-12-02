@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Netsphere.Packet;
 
-namespace Netsphere.Transmission;
+namespace Netsphere.Net;
 
 public abstract class Transmission
 {
@@ -23,11 +23,11 @@ public abstract class Transmission
     #endregion
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static (int NumberOfBlocks, int LastBlockSize) CalculateBlock(int size)
+    internal static (int NumberOfGenes, int LastGeneSize) CalculateGene(int size)
     {
-        var numberOfBLocks = size / GeneFrame.MaxBlockLength;
-        var lastBlockSize = size - (numberOfBLocks * GeneFrame.MaxBlockLength);
-        return (lastBlockSize > 0 ? numberOfBLocks + 1 : numberOfBLocks, lastBlockSize);
+        var numberOfGenes = size / GeneFrame.MaxBlockLength;
+        var lastGeneSize = size - (numberOfGenes * GeneFrame.MaxBlockLength);
+        return (lastGeneSize > 0 ? numberOfGenes + 1 : numberOfGenes, lastGeneSize);
     }
 
     internal bool CreatePacket(int geneTotal, NetGene gene, Span<byte> block, out ByteArrayPool.MemoryOwner owner)

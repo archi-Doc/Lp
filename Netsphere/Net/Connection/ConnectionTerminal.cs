@@ -1,9 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Collections.Concurrent;
 using Netsphere.Crypto;
+using Netsphere.Net;
 using Netsphere.Packet;
 using Netsphere.Stats;
-using Netsphere.Transmission;
 
 namespace Netsphere;
 
@@ -29,6 +30,7 @@ public class ConnectionTerminal
 
     private readonly ClientConnection.GoshujinClass clientConnections = new();
     private readonly ServerConnection.GoshujinClass serverConnections = new();
+    private readonly ConcurrentQueue<SendTransmission> sendQueue = new();
 
     public void Clean()
     {
@@ -296,6 +298,18 @@ public class ConnectionTerminal
             {
                 connection.ProcessReceive(endPoint, toBeShared, currentSystemMics);
             }
+        }
+    }
+
+    internal void AddSend(SendTransmission sendTransmission)
+    {
+        this.sendQueue.Enqueue(sendTransmission);
+    }
+
+    internal void ProcessSend(NetSender netSender)
+    {
+        lock (this.items.SyncObject)
+        {
         }
     }
 

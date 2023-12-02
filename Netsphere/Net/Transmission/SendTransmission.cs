@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-namespace Netsphere.Transmission;
+namespace Netsphere.Net;
 
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
 public sealed partial class SendTransmission : Transmission
@@ -24,14 +24,14 @@ public sealed partial class SendTransmission : Transmission
         }
 
         var size = sizeof(uint) + sizeof(ulong) + block.Span.Length;
-        var blockInfo = CalculateBlock(size);
+        var info = CalculateGene(size);
 
         lock (this.syncObject)
         {
-            if (blockInfo.NumberOfBlocks == 1)
+            if (info.NumberOfGenes == 1)
             {// Single gene
                 this.sendGene = new();
-                if (this.CreatePacket(blockInfo.NumberOfBlocks, this.sendGene, block.Span, out var owner))
+                if (this.CreatePacket(info.NumberOfGenes, this.sendGene, block.Span, out var owner))
                 {
                     this.sendGene.SetSend(owner);
                 }
@@ -41,8 +41,13 @@ public sealed partial class SendTransmission : Transmission
             }
         }
 
-        // Send queue
-        this.Connection.UpdateSendQueue(this);
+        if (info.NumberOfGenes > FlowTerminal.GeneThreshold)
+        {// Flow control
+        }
+        else
+        {
+            this.Connection.ConnectionTerminal.AddSend(this);
+        }
 
         return NetResult.Success;
     }

@@ -1,10 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics;
-using Netsphere.Packet;
-using Tinyhand.IO;
-
-namespace Netsphere.Transmission;
+namespace Netsphere.Net;
 
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
 internal partial class NetGene

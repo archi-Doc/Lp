@@ -1,15 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
-using System.Diagnostics;
-using System.Diagnostics.Tracing;
-using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Netsphere.Block;
+using Netsphere.Net;
 using Netsphere.Packet;
-using Netsphere.Transmission;
 
 #pragma warning disable SA1202
 #pragma warning disable SA1214
@@ -38,8 +34,8 @@ public abstract class Connection : IDisposable
     public Connection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetEndPoint endPoint, ConnectionAgreementBlock agreement)
     {
         this.NetBase = connectionTerminal.NetBase;
-        this.packetTerminal = packetTerminal;
-        this.connectionTerminal = connectionTerminal;
+        this.PacketTerminal = packetTerminal;
+        this.ConnectionTerminal = connectionTerminal;
         this.ConnectionId = connectionId;
         this.EndPoint = endPoint;
         this.agreement = agreement;
@@ -96,6 +92,10 @@ Wait:
 
     public NetBase NetBase { get; }
 
+    public ConnectionTerminal ConnectionTerminal { get; }
+
+    public PacketTerminal PacketTerminal { get; }
+
     public ulong ConnectionId { get; }
 
     public NetEndPoint EndPoint { get; }
@@ -106,8 +106,6 @@ Wait:
 
     internal long ResponseSystemMics { get; set; }
 
-    private readonly PacketTerminal packetTerminal;
-    protected readonly ConnectionTerminal connectionTerminal;
     private readonly AsyncPulseEvent sendTransmissionsPulse = new();
 
     private Embryo embryo;
@@ -119,7 +117,7 @@ Wait:
     private Aes? aes1;
 
     // lock (this.sendTransmissions.SyncObject)
-    protected SendTransmission.GoshujinClass sendTransmissions = new();
+    private SendTransmission.GoshujinClass sendTransmissions = new();
 
     #endregion
 
@@ -134,7 +132,7 @@ Wait:
             return;
         }
 
-        this.packetTerminal.AddSendPacket(this.EndPoint.EndPoint, owner, false, default);
+        this.PacketTerminal.AddSendPacket(this.EndPoint.EndPoint, owner, false, default);
     }
 
     internal void SendCloseFrame()
@@ -144,7 +142,7 @@ Wait:
             return;
         }
 
-        this.packetTerminal.AddSendPacket(this.EndPoint.EndPoint, owner, false, default);
+        this.PacketTerminal.AddSendPacket(this.EndPoint.EndPoint, owner, false, default);
     }
 
     internal void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
@@ -160,7 +158,7 @@ Wait:
 
         if (span.Length == 0)
         {// Close frame
-            this.connectionTerminal.CloseInternal(this, false);
+            this.ConnectionTerminal.CloseInternal(this, false);
             return;
         }
 
@@ -279,7 +277,7 @@ Wait:
     /// <inheritdoc/>
     public void Dispose()
     {
-        this.connectionTerminal.CloseInternal(this, true);
+        this.ConnectionTerminal.CloseInternal(this, true);
     }
 
     internal void DisposeActual()

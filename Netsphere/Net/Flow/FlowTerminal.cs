@@ -2,9 +2,7 @@
 
 namespace Netsphere.Net;
 
-public class ReceiveTransmission
+public class FlowTerminal
 {
-    public ReceiveTransmission()
-    {
-    }
+    public const int GeneThreshold = 3;
 }

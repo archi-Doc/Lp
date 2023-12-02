@@ -6,15 +6,15 @@ using Netsphere.Transmission;
 
 namespace Netsphere;
 
-[ValueLinkObject(Isolation = IsolationLevel.Serializable)]
+[ValueLinkObject(Isolation = IsolationLevel.Serializable, Restricted = true)]
 public sealed partial class ServerConnection : Connection
 {
-    [Link(Primary = true, Type = ChainType.Unordered, TargetMember = "ConnectionId", AddValue = false, Accessibility = ValueLinkAccessibility.Private)]
-    [Link(Type = ChainType.Unordered, Name = "OpenEndPoint", TargetMember = "EndPoint", AddValue = false, AutoLink = false, Accessibility = ValueLinkAccessibility.Private)]
-    [Link(Type = ChainType.Unordered, Name = "ClosedEndPoint", TargetMember = "EndPoint", AddValue = false, AutoLink = false, Accessibility = ValueLinkAccessibility.Private)]
-    [Link(Type = ChainType.LinkedList, Name = "OpenList", AutoLink = false, Accessibility = ValueLinkAccessibility.Private)] // ResponseSystemMics
-    [Link(Type = ChainType.LinkedList, Name = "ClosedList", AutoLink = false, Accessibility = ValueLinkAccessibility.Private)] // ClosedSystemMics
-    [Link(Type = ChainType.QueueList, Name = "SendQueue", AutoLink = false, Accessibility = ValueLinkAccessibility.Private)]
+    [Link(Primary = true, Type = ChainType.Unordered, TargetMember = "ConnectionId")]
+    [Link(Type = ChainType.Unordered, Name = "OpenEndPoint", TargetMember = "EndPoint")]
+    [Link(Type = ChainType.Unordered, Name = "ClosedEndPoint", TargetMember = "EndPoint")]
+    [Link(Type = ChainType.LinkedList, Name = "OpenList", AutoLink = false)] // ResponseSystemMics
+    [Link(Type = ChainType.LinkedList, Name = "ClosedList", AutoLink = false)] // ClosedSystemMics
+    [Link(Type = ChainType.QueueList, Name = "SendQueue", AutoLink = false)]
     public ServerConnection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetEndPoint endPoint, ConnectionAgreementBlock agreement)
         : base(packetTerminal, connectionTerminal, connectionId, endPoint, agreement)
     {
@@ -36,14 +36,6 @@ public sealed partial class ServerConnection : Connection
             {
                 return ConnectionState.Disposed;
             }
-        }
-    }
-
-    internal override void UpdateSendQueue(SendTransmission transmission)
-    {
-        lock (this.sendTransmissions.SyncObject)
-        {
-            this.sendTransmissions.SendQueueChain.TryEnqueue(transmission);
         }
     }
 }
