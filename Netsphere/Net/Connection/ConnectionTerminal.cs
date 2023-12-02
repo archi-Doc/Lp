@@ -31,6 +31,7 @@ public class ConnectionTerminal
     private readonly ClientConnection.GoshujinClass clientConnections = new();
     private readonly ServerConnection.GoshujinClass serverConnections = new();
     private readonly ConcurrentQueue<SendTransmission> sendQueue = new();
+    private readonly ConcurrentQueue<SendTransmission> ackQueue = new();
 
     public void Clean()
     {
