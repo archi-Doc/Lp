@@ -141,22 +141,6 @@ public class ConnectionTerminal
         return newConnection;
     }
 
-    internal void UpdateSendQueue(ClientConnection connection)
-    {
-        lock (this.clientConnections.SyncObject)
-        {
-            this.clientConnections.SendQueueChain.TryEnqueue(connection);
-        }
-    }
-
-    internal void UpdateSendQueue(ServerConnection connection)
-    {
-        lock (this.serverConnections.SyncObject)
-        {
-            this.serverConnections.SendQueueChain.TryEnqueue(connection);
-        }
-    }
-
     internal ClientConnection? PrepareClientSide(NetEndPoint endPoint, NodePublicKey serverPublicKey, PacketConnect p, PacketConnectResponse p2)
     {
         // KeyMaterial
@@ -309,8 +293,12 @@ public class ConnectionTerminal
 
     internal void ProcessSend(NetSender netSender)
     {
-        lock (this.items.SyncObject)
+        while (netSender.SendCapacity > netSender.SendCount + FlowTerminal.GeneThreshold)
         {
+            if (!this.sendQueue.TryDequeue(out var transmission))
+            {
+                return;
+            }
         }
     }
 

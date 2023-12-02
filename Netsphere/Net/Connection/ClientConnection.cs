@@ -2,7 +2,6 @@
 
 using Netsphere.Block;
 using Netsphere.Packet;
-using Netsphere.Transmission;
 
 namespace Netsphere;
 
@@ -14,7 +13,7 @@ public sealed partial class ClientConnection : Connection
     [Link(Type = ChainType.Unordered, Name = "ClosedEndPoint", TargetMember = "EndPoint")]
     [Link(Type = ChainType.LinkedList, Name = "OpenList", AutoLink = false)] // ResponseSystemMics
     [Link(Type = ChainType.LinkedList, Name = "ClosedList", AutoLink = false)] // ClosedSystemMics
-    [Link(Type = ChainType.QueueList, Name = "SendQueue", AutoLink = false)]
+    // [Link(Type = ChainType.QueueList, Name = "SendQueue", AutoLink = false)]
     public ClientConnection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetEndPoint endPoint, ConnectionAgreementBlock agreement)
         : base(packetTerminal, connectionTerminal, connectionId, endPoint, agreement)
     {
@@ -59,6 +58,19 @@ public sealed partial class ClientConnection : Connection
             return (NetResult.NoNetwork, default);
         }
 
-        transmission.SendBlock(TSend.PacketType, 0, owner);
+        transmission.SendBlock((uint)TSend.PacketType, 0, owner);
+
+        NetResponseData response = await transmission.ReceiveBlock().ConfigureAwait(false);
+        if (!response.IsSuccess)
+        {
+            return (response.Result, default);
+        }
+
+        if (!BlockService.TryDeserialize<TReceive>(response.Received, out var receive))
+        {
+            return (NetResult.DeserializationError, default);
+        }
+
+        return (NetResult.Success, receive);
     }
 }

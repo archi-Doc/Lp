@@ -71,7 +71,7 @@ Retry:
 Wait:
         try
         {
-            await this.sendTransmissionsPulse.WaitAsync(TimeSpan.FromSeconds(1), this.NetBase.CancellationToken).ConfigureAwait(false);
+            await this.transmissionsPulse.WaitAsync(TimeSpan.FromSeconds(1), this.NetBase.CancellationToken).ConfigureAwait(false);
         }
         catch
         {
@@ -106,7 +106,7 @@ Wait:
 
     internal long ResponseSystemMics { get; set; }
 
-    private readonly AsyncPulseEvent sendTransmissionsPulse = new();
+    private readonly AsyncPulseEvent transmissionsPulse = new();
 
     private Embryo embryo;
     private ConnectionAgreementBlock agreement;

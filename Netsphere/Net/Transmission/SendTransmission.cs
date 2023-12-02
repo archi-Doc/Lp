@@ -51,4 +51,9 @@ public sealed partial class SendTransmission : Transmission
 
         return NetResult.Success;
     }
+
+    internal async Task<NetResponseData> ReceiveBlock()
+    {
+        return new();
+    }
 }
