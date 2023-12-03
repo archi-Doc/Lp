@@ -5,6 +5,21 @@ namespace Netsphere.Net;
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
 public sealed partial class SendTransmission : Transmission
 {
+    public enum TransmissionMode
+    {
+        SendAndForget,
+        SendAndReceive,
+        ReceiveOnly,
+        ReceiveAndSend,
+    }
+
+    public enum TransmissionState
+    {
+        Initial,
+        Sending,
+        Receiving,
+    }
+
     [Link(Primary = true, Type = ChainType.Unordered, TargetMember = "TransmissionId", AddValue = false, Accessibility = ValueLinkAccessibility.Private)]
     [Link(Name = "SendQueue", Type = ChainType.QueueList, AutoLink = false, Accessibility = ValueLinkAccessibility.Private)]
     public SendTransmission(Connection connection, uint transmissionId)
@@ -12,9 +27,36 @@ public sealed partial class SendTransmission : Transmission
     {
     }
 
+    #region FieldAndProperty
+
+    public TransmissionState State
+    {
+        get
+        {
+            if (this.sendGene is not null ||
+                this.sendGenes is not null)
+            {
+                return TransmissionState.Sending;
+            }
+            else if (this.recvGene is not null ||
+                this.recvGenes is not null)
+            {
+                return TransmissionState.Receiving;
+            }
+            else
+            {
+                return TransmissionState.Initial;
+            }
+        }
+    }
+
     private readonly object syncObject = new();
     private NetGene? sendGene; // Single gene
     private NetGene.GoshujinClass? sendGenes; // Multiple genes
+    private NetGene? recvGene; // Single gene
+    private NetGene.GoshujinClass? recvGenes; // Multiple genes
+
+    #endregion
 
     internal NetResult SendBlock(uint blockType, ulong blockId, ByteArrayPool.MemoryOwner block)
     {

@@ -67,20 +67,21 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 service.EngageAndSend();
                 service.Send(new(Proof, proof));*/
 
-                connection.SendAndReceiveAsync();
+                var p2 = new PacketPing();
+                var response = await connection.SendAndReceiveAsync<PacketPing, PacketPingResponse>(p2);
 
-                var transmission = await connection.GetTransmission();
+                /*var transmission = await connection.GetTransmission();
                 if (transmission is not null)
                 {
                     transmission.SendAndForget();
-                }
+                }*/
 
                 // connection.Close();
                 // var r = await connection.SendAndReceiveAsync<PacketPing, PacketPingResponse>(netAddress, p);
             }
         }
 
-        // await Task.Delay(1000000000);
+        await Task.Delay(1000000000);
 
         /*if (!NetAddress.TryParse(this.logger, nodeString, out var node))
         {
