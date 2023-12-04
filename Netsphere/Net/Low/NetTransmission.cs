@@ -7,7 +7,7 @@ using Netsphere.Packet;
 namespace Netsphere.Net;
 
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
-public sealed partial class SendTransmission
+public sealed partial class NetTransmission
 {
     public enum TransmissionMode
     {
@@ -22,11 +22,13 @@ public sealed partial class SendTransmission
         Initial,
         Sending,
         Receiving,
+        Complete,
+        Disposed,
     }
 
     [Link(Primary = true, Type = ChainType.Unordered, TargetMember = "TransmissionId", AddValue = false, Accessibility = ValueLinkAccessibility.Private)]
     [Link(Name = "SendQueue", Type = ChainType.QueueList, AutoLink = false, Accessibility = ValueLinkAccessibility.Private)]
-    public SendTransmission(Connection connection, uint transmissionId)
+    public NetTransmission(Connection connection, uint transmissionId)
     {
         this.Connection = connection;
         this.TransmissionId = transmissionId;
@@ -38,47 +40,33 @@ public sealed partial class SendTransmission
 
     public uint TransmissionId { get; }
 
-    public TransmissionState State
-    {
-        get
-        {
-            if (this.sendGene is not null ||
-                this.sendGenes is not null)
-            {
-                return TransmissionState.Sending;
-            }
-            else if (this.recvGene is not null ||
-                this.recvGenes is not null)
-            {
-                return TransmissionState.Receiving;
-            }
-            else
-            {
-                return TransmissionState.Initial;
-            }
-        }
-    }
+    public TransmissionState State { get; private set; } // lock (this.syncObject)
 
     private readonly object syncObject = new();
     private NetGene? sendGene; // Single gene
     private NetGene.GoshujinClass? sendGenes; // Multiple genes
     private NetGene? recvGene; // Single gene
     private NetGene.GoshujinClass? recvGenes; // Multiple genes
+    private TaskCompletionSource<NetTransmission>? tcs;
 
     #endregion
 
     internal NetResult SendBlock(uint blockType, ulong blockId, ByteArrayPool.MemoryOwner block)
     {
-        if (this.sendGene is not null || this.sendGenes is not null)
-        {
-            return NetResult.TransmissionConsumed;
-        }
-
         var size = sizeof(uint) + sizeof(ulong) + block.Span.Length;
         var info = CalculateGene(size);
 
         lock (this.syncObject)
         {
+            if (this.State != TransmissionState.Initial)
+            {
+                return NetResult.TransmissionConsumed;
+            }
+            else
+            {
+                this.State = TransmissionState.Sending;
+            }
+
             if (info.NumberOfGenes == 1)
             {// Single gene
                 this.sendGene = new();
@@ -90,6 +78,8 @@ public sealed partial class SendTransmission
             else
             {// Multiple genes
             }
+
+            // this.tcs = 
         }
 
         if (info.NumberOfGenes > FlowTerminal.GeneThreshold)
@@ -106,6 +96,22 @@ public sealed partial class SendTransmission
     internal async Task<NetResponse> ReceiveBlock()
     {
         return new();
+    }
+
+    internal void SendInternal(NetSender netSender)
+    {
+        lock (this.syncObject)
+        {
+            if (this.State != TransmissionState.Sending)
+            {
+                return;
+            }
+
+            if (this.sendGene is not null)
+            {
+                netSender.Send_NotThreadSafe(this.Connection.EndPoint.EndPoint, transmission);
+            }
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

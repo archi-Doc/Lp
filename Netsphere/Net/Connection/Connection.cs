@@ -41,7 +41,7 @@ public abstract class Connection : IDisposable
         this.agreement = agreement;
     }
 
-    public async ValueTask<SendTransmission?> CreateTransmission()
+    public async ValueTask<NetTransmission?> CreateTransmission()
     {
 Retry:
         if (this.NetBase.CancellationToken.IsCancellationRequested)
@@ -63,7 +63,7 @@ Retry:
             }
             while (this.sendTransmissions.TransmissionIdChain.ContainsKey(transmissionId));
 
-            var transmission = new SendTransmission(this, transmissionId);
+            var transmission = new NetTransmission(this, transmissionId);
             transmission.Goshujin = this.sendTransmissions;
             return transmission;
         }
@@ -117,11 +117,11 @@ Wait:
     private Aes? aes1;
 
     // lock (this.sendTransmissions.SyncObject)
-    private SendTransmission.GoshujinClass sendTransmissions = new();
+    private NetTransmission.GoshujinClass sendTransmissions = new();
 
     #endregion
 
-    internal virtual void UpdateSendQueue(SendTransmission transmission)
+    internal virtual void UpdateSendQueue(NetTransmission transmission)
     {
     }
 

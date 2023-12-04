@@ -37,7 +37,7 @@ public sealed partial class ClientConnection : Connection
         }
     }
 
-    public async Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(TSend packet)
+    public async Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(TSend packet, ulong id = 0)
         where TSend : IPacket, ITinyhandSerialize<TSend>
         where TReceive : IPacket, ITinyhandSerialize<TReceive>
     {
@@ -57,9 +57,13 @@ public sealed partial class ClientConnection : Connection
             return (NetResult.NoNetwork, default);
         }
 
-        transmission.SendBlock((uint)TSend.PacketType, 0, owner);
+        var result = transmission.SendBlock((uint)TSend.PacketType, id, owner);
+        if (result != NetResult.Success)
+        {
+            return (result, default);
+        }
 
-        NetResponse response = await transmission.ReceiveBlock().ConfigureAwait(false);
+        var response = await transmission.ReceiveBlock().ConfigureAwait(false);
         if (!response.IsSuccess)
         {
             return (response.Result, default);
