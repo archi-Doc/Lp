@@ -13,7 +13,6 @@ public sealed partial class ServerConnection : Connection
     [Link(Type = ChainType.Unordered, Name = "ClosedEndPoint", TargetMember = "EndPoint")]
     [Link(Type = ChainType.LinkedList, Name = "OpenList", AutoLink = false)] // ResponseSystemMics
     [Link(Type = ChainType.LinkedList, Name = "ClosedList", AutoLink = false)] // ClosedSystemMics
-    // [Link(Type = ChainType.QueueList, Name = "SendQueue", AutoLink = false)]
     public ServerConnection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetEndPoint endPoint, ConnectionAgreementBlock agreement)
         : base(packetTerminal, connectionTerminal, connectionId, endPoint, agreement)
     {

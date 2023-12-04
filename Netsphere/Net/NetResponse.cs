@@ -6,12 +6,12 @@ namespace Netsphere;
 
 /// <summary>
 /// Represents a received data.<br/>
-/// <see cref="NetResult.Success"/>: <see cref="NetResponseData.Received"/> is valid, and it's preferable to call Return() method.<br/>
-/// Other: <see cref="NetResponseData.Received"/> is default (empty).
+/// <see cref="NetResult.Success"/>: <see cref="NetResponse.Received"/> is valid, and it's preferable to call Return() method.<br/>
+/// Other: <see cref="NetResponse.Received"/> is default (empty).
 /// </summary>
-public record struct NetResponseData
+public record struct NetResponse
 {
-    public NetResponseData(NetResult result, PacketType packetId, ulong dataId, ByteArrayPool.MemoryOwner received)
+    public NetResponse(NetResult result, PacketType packetId, ulong dataId, ByteArrayPool.MemoryOwner received)
     {
         this.Result = result;
         this.PacketType = packetId;
@@ -19,7 +19,7 @@ public record struct NetResponseData
         this.Received = received;
     }
 
-    public NetResponseData(NetResult result)
+    public NetResponse(NetResult result)
     {
         this.Result = result;
         this.PacketType = default;

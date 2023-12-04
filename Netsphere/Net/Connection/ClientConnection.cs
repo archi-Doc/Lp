@@ -13,7 +13,6 @@ public sealed partial class ClientConnection : Connection
     [Link(Type = ChainType.Unordered, Name = "ClosedEndPoint", TargetMember = "EndPoint")]
     [Link(Type = ChainType.LinkedList, Name = "OpenList", AutoLink = false)] // ResponseSystemMics
     [Link(Type = ChainType.LinkedList, Name = "ClosedList", AutoLink = false)] // ClosedSystemMics
-    // [Link(Type = ChainType.QueueList, Name = "SendQueue", AutoLink = false)]
     public ClientConnection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetEndPoint endPoint, ConnectionAgreementBlock agreement)
         : base(packetTerminal, connectionTerminal, connectionId, endPoint, agreement)
     {
@@ -52,7 +51,7 @@ public sealed partial class ClientConnection : Connection
             return default;
         }
 
-        var transmission = await this.GetTransmission().ConfigureAwait(false);
+        var transmission = await this.CreateTransmission().ConfigureAwait(false);
         if (transmission is null)
         {
             return (NetResult.NoNetwork, default);
@@ -60,7 +59,7 @@ public sealed partial class ClientConnection : Connection
 
         transmission.SendBlock((uint)TSend.PacketType, 0, owner);
 
-        NetResponseData response = await transmission.ReceiveBlock().ConfigureAwait(false);
+        NetResponse response = await transmission.ReceiveBlock().ConfigureAwait(false);
         if (!response.IsSuccess)
         {
             return (response.Result, default);

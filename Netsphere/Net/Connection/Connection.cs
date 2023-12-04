@@ -41,7 +41,7 @@ public abstract class Connection : IDisposable
         this.agreement = agreement;
     }
 
-    public async ValueTask<SendTransmission?> GetTransmission()
+    public async ValueTask<SendTransmission?> CreateTransmission()
     {
 Retry:
         if (this.NetBase.CancellationToken.IsCancellationRequested)

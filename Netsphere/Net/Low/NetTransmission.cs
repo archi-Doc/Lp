@@ -1,9 +1,13 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using Netsphere.Packet;
+
 namespace Netsphere.Net;
 
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
-public sealed partial class SendTransmission : Transmission
+public sealed partial class SendTransmission
 {
     public enum TransmissionMode
     {
@@ -23,11 +27,16 @@ public sealed partial class SendTransmission : Transmission
     [Link(Primary = true, Type = ChainType.Unordered, TargetMember = "TransmissionId", AddValue = false, Accessibility = ValueLinkAccessibility.Private)]
     [Link(Name = "SendQueue", Type = ChainType.QueueList, AutoLink = false, Accessibility = ValueLinkAccessibility.Private)]
     public SendTransmission(Connection connection, uint transmissionId)
-        : base(connection, transmissionId)
     {
+        this.Connection = connection;
+        this.TransmissionId = transmissionId;
     }
 
     #region FieldAndProperty
+
+    public Connection Connection { get; }
+
+    public uint TransmissionId { get; }
 
     public TransmissionState State
     {
@@ -94,8 +103,39 @@ public sealed partial class SendTransmission : Transmission
         return NetResult.Success;
     }
 
-    internal async Task<NetResponseData> ReceiveBlock()
+    internal async Task<NetResponse> ReceiveBlock()
     {
         return new();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static (int NumberOfGenes, int LastGeneSize) CalculateGene(int size)
+    {
+        var numberOfGenes = size / GeneFrame.MaxBlockLength;
+        var lastGeneSize = size - (numberOfGenes * GeneFrame.MaxBlockLength);
+        return (lastGeneSize > 0 ? numberOfGenes + 1 : numberOfGenes, lastGeneSize);
+    }
+
+    private bool CreatePacket(int geneTotal, NetGene gene, Span<byte> block, out ByteArrayPool.MemoryOwner owner)
+    {
+        Debug.Assert(block.Length <= GeneFrame.MaxBlockLength);
+
+        // GeneFrameeCode
+        Span<byte> frameHeader = stackalloc byte[GeneFrame.Length];
+        var span = frameHeader;
+
+        BitConverter.TryWriteBytes(span, (ushort)FrameType.Block); // Frame type
+        span = span.Slice(sizeof(ushort));
+
+        BitConverter.TryWriteBytes(span, this.TransmissionId); // TransmissionId
+        span = span.Slice(sizeof(uint));
+
+        BitConverter.TryWriteBytes(span, gene.GeneSerial); // GeneSerial
+        span = span.Slice(sizeof(uint));
+
+        BitConverter.TryWriteBytes(span, geneTotal); // GeneMax
+        span = span.Slice(sizeof(uint));
+
+        return this.Connection.CreatePacket(frameHeader, block, out owner);
     }
 }
