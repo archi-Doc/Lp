@@ -7,7 +7,7 @@ using Netsphere.Packet;
 namespace Netsphere.Net;
 
 [ValueLinkObject(Isolation = IsolationLevel.Serializable, Restricted = true)]
-public sealed partial class NetTransmission
+public sealed partial class NetTransmission : IDisposable
 {
     public enum TransmissionMode
     {
@@ -50,6 +50,20 @@ public sealed partial class NetTransmission
     private NetGene.GoshujinClass? recvGenes; // Multiple genes
 
     #endregion
+
+    public void Dispose()
+    {
+        lock (this.syncObject)
+        {
+            if (this.State == TransmissionState.Disposed)
+            {
+                return;
+            }
+
+            this.State = TransmissionState.Disposed;
+            this.tcs?.TrySetResult(NetResult.Closed)
+        }
+    }
 
     internal NetResult SendBlock(uint primaryId, ulong secondaryId, ByteArrayPool.MemoryOwner block, TaskCompletionSource<NetResult>? tcs)
     {
