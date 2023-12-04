@@ -6,7 +6,7 @@ using Netsphere.Packet;
 
 namespace Netsphere.Net;
 
-[ValueLinkObject(Isolation = IsolationLevel.Serializable)]
+[ValueLinkObject(Isolation = IsolationLevel.Serializable, Restricted = true)]
 public sealed partial class NetTransmission
 {
     public enum TransmissionMode
@@ -26,8 +26,7 @@ public sealed partial class NetTransmission
         Disposed,
     }
 
-    [Link(Primary = true, Type = ChainType.Unordered, TargetMember = "TransmissionId", AddValue = false, Accessibility = ValueLinkAccessibility.Private)]
-    [Link(Name = "SendQueue", Type = ChainType.QueueList, AutoLink = false, Accessibility = ValueLinkAccessibility.Private)]
+    [Link(Name = "SendQueue", Type = ChainType.QueueList, AutoLink = false)]
     public NetTransmission(Connection connection, uint transmissionId)
     {
         this.Connection = connection;
@@ -38,20 +37,21 @@ public sealed partial class NetTransmission
 
     public Connection Connection { get; }
 
+    [Link(Primary = true, Type = ChainType.Unordered)]
     public uint TransmissionId { get; }
 
     public TransmissionState State { get; private set; } // lock (this.syncObject)
 
     private readonly object syncObject = new();
+    private TaskCompletionSource<NetResult>? tcs;
     private NetGene? sendGene; // Single gene
     private NetGene.GoshujinClass? sendGenes; // Multiple genes
     private NetGene? recvGene; // Single gene
     private NetGene.GoshujinClass? recvGenes; // Multiple genes
-    private TaskCompletionSource<NetTransmission>? tcs;
 
     #endregion
 
-    internal NetResult SendBlock(uint blockType, ulong blockId, ByteArrayPool.MemoryOwner block)
+    internal NetResult SendBlock(uint primaryId, ulong secondaryId, ByteArrayPool.MemoryOwner block, TaskCompletionSource<NetResult>? tcs)
     {
         var size = sizeof(uint) + sizeof(ulong) + block.Span.Length;
         var info = CalculateGene(size);
@@ -62,10 +62,9 @@ public sealed partial class NetTransmission
             {
                 return NetResult.TransmissionConsumed;
             }
-            else
-            {
-                this.State = TransmissionState.Sending;
-            }
+
+            this.State = TransmissionState.Sending;
+            this.tcs = tcs;
 
             if (info.NumberOfGenes == 1)
             {// Single gene
@@ -78,8 +77,6 @@ public sealed partial class NetTransmission
             else
             {// Multiple genes
             }
-
-            // this.tcs = 
         }
 
         if (info.NumberOfGenes > FlowTerminal.GeneThreshold)

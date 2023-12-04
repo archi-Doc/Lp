@@ -36,4 +36,27 @@ public sealed partial class ServerConnection : Connection
             }
         }
     }
+
+    /*public NetResult SendAndForget<TSend, TReceive>(TSend packet)
+        where TSend : ITinyhandSerialize<TSend>
+    {
+        if (!BlockService.TrySerialize(packet, out var owner))
+        {
+            return NetResult.SerializationError;
+        }
+
+        if (this.NetBase.CancellationToken.IsCancellationRequested)
+        {
+            return default;
+        }
+
+        var transmission = this.TryCreateTransmission();
+        if (transmission is null)
+        {
+            return NetResult.NoTransmission;
+        }
+
+        var result = transmission.SendBlock(0, 0, owner, default);
+        return result;
+    }*/
 }

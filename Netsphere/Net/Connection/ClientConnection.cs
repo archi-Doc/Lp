@@ -37,9 +37,38 @@ public sealed partial class ClientConnection : Connection
         }
     }
 
-    public async Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(TSend packet, ulong id = 0)
-        where TSend : IPacket, ITinyhandSerialize<TSend>
-        where TReceive : IPacket, ITinyhandSerialize<TReceive>
+    public async Task<NetResult> SendAsync<TSend>(TSend packet)
+    where TSend : ITinyhandSerialize<TSend>
+    {
+        if (!BlockService.TrySerialize(packet, out var owner))
+        {
+            return NetResult.SerializationError;
+        }
+
+        if (this.NetBase.CancellationToken.IsCancellationRequested)
+        {
+            return default;
+        }
+
+        var transmission = await this.CreateTransmission().ConfigureAwait(false);
+        if (transmission is null)
+        {
+            return NetResult.NoTransmission;
+        }
+
+        var tcs = new TaskCompletionSource<NetResult>();
+        var result = transmission.SendBlock(0, 0, owner, tcs);
+        if (result != NetResult.Success)
+        {
+            return result;
+        }
+
+        return NetResult.Success;
+    }
+
+    public async Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(TSend packet)
+    where TSend : ITinyhandSerialize<TSend>
+    where TReceive : ITinyhandSerialize<TReceive>
     {
         if (!BlockService.TrySerialize(packet, out var owner))
         {
@@ -54,10 +83,10 @@ public sealed partial class ClientConnection : Connection
         var transmission = await this.CreateTransmission().ConfigureAwait(false);
         if (transmission is null)
         {
-            return (NetResult.NoNetwork, default);
+            return (NetResult.NoTransmission, default);
         }
 
-        var result = transmission.SendBlock((uint)TSend.PacketType, id, owner);
+        var result = transmission.SendBlock(0, 0, owner, default);
         if (result != NetResult.Success)
         {
             return (result, default);

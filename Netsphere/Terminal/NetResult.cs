@@ -27,4 +27,5 @@ public enum NetResult
     UnknownException,
     NotAuthorized,
     TransmissionConsumed,
+    NoTransmission,
 }

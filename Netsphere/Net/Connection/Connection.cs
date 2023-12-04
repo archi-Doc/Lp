@@ -41,6 +41,28 @@ public abstract class Connection : IDisposable
         this.agreement = agreement;
     }
 
+    public NetTransmission? TryCreateTransmission()
+    {
+        lock (this.sendTransmissions.SyncObject)
+        {
+            if (this.sendTransmissions.Count >= this.agreement.MaxTransmissions)
+            {
+                return default;
+            }
+
+            uint transmissionId;
+            do
+            {
+                transmissionId = RandomVault.Pseudo.NextUInt32();
+            }
+            while (this.sendTransmissions.TransmissionIdChain.ContainsKey(transmissionId));
+
+            var transmission = new NetTransmission(this, transmissionId);
+            transmission.Goshujin = this.sendTransmissions;
+            return transmission;
+        }
+    }
+
     public async ValueTask<NetTransmission?> CreateTransmission()
     {
 Retry:
