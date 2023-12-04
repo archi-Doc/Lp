@@ -5,7 +5,7 @@ using System.Diagnostics;
 namespace Netsphere.Net;
 
 [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
-internal partial class NetGene
+internal partial class NetGene : IDisposable
 {
     public enum GeneState
     {
@@ -20,10 +20,10 @@ internal partial class NetGene
         Complete,
     }
 
-    [Link(Type = ChainType.SlidingList, Name = "SlidingList", AddValue = false)]
-    public NetGene()
+    [Link(Primary = true, Type = ChainType.SlidingList, Name = "SlidingList", AddValue = false)]
+    public NetGene(int genePosition)
     {
-        // this.GeneSerial = geneSerial;
+        this.GenePosition = genePosition;
         // this.GeneMax = geneMax;
     }
 
@@ -31,7 +31,7 @@ internal partial class NetGene
 
     public GeneState State { get; private set; }
 
-    public int GeneSerial => this.Goshujin is null ? 0 : this.SlidingListLink.Position;
+    public int GenePosition { get; }
 
     public ByteArrayPool.MemoryOwner Packet { get; private set; }
 
@@ -45,5 +45,11 @@ internal partial class NetGene
 
         this.State = GeneState.WaitingToSend;
         this.Packet = toBeMoved;
+    }
+
+    public void Dispose()
+    {
+        this.State = GeneState.Initial;
+        this.Packet = this.Packet.Return();
     }
 }

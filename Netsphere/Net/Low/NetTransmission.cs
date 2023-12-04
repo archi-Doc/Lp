@@ -44,15 +44,17 @@ public sealed partial class NetTransmission : IDisposable
 
     private readonly object syncObject = new();
     private TaskCompletionSource<NetResult>? tcs;
-    private NetGene? sendGene; // Single gene
-    private NetGene.GoshujinClass? sendGenes; // Multiple genes
-    private NetGene? recvGene; // Single gene
-    private NetGene.GoshujinClass? recvGenes; // Multiple genes
+    private NetGene? gene0; // Gene 0
+    private NetGene? gene1; // Gene 1
+    private NetGene? gene2; // Gene 2
+    private NetGene.GoshujinClass? genes; // Multiple genes
 
     #endregion
 
     public void Dispose()
     {
+        TaskCompletionSource<NetResult>? tcs;
+
         lock (this.syncObject)
         {
             if (this.State == TransmissionState.Disposed)
@@ -61,8 +63,24 @@ public sealed partial class NetTransmission : IDisposable
             }
 
             this.State = TransmissionState.Disposed;
-            this.tcs?.TrySetResult(NetResult.Closed)
+            this.gene0?.Dispose();
+            this.gene1?.Dispose();
+            this.gene2?.Dispose();
+            if (this.genes is not null)
+            {
+                foreach (var x in this.genes)
+                {
+                    x.Dispose();
+                }
+
+                // this.genes.Clear(); // tempcode
+            }
+
+            tcs = this.tcs;
+            this.tcs = default;
         }
+
+        tcs?.TrySetResult(NetResult.Closed);
     }
 
     internal NetResult SendBlock(uint primaryId, ulong secondaryId, ByteArrayPool.MemoryOwner block, TaskCompletionSource<NetResult>? tcs)
@@ -81,12 +99,20 @@ public sealed partial class NetTransmission : IDisposable
             this.tcs = tcs;
 
             if (info.NumberOfGenes == 1)
-            {// Single gene
-                this.sendGene = new();
-                if (this.CreatePacket(info.NumberOfGenes, this.sendGene, block.Span, out var owner))
-                {
-                    this.sendGene.SetSend(owner);
-                }
+            {// gene0
+                this.gene0 = new(0);
+                this.CreatePacket(0, info.NumberOfGenes, primaryId, secondaryId, block.Span, out var owner);
+                this.gene0.SetSend(owner);
+            }
+            else if (info.NumberOfGenes == 2)
+            {// gene0, gene1
+                this.gene0 = new(0);
+                this.CreatePacket(0, info.NumberOfGenes, primaryId, secondaryId, block.Span, out var owner);
+                this.gene0.SetSend(owner);
+
+                this.gene1 = new(1);
+                this.CreatePacket2(1, info.NumberOfGenes, block.Span, out owner);
+                this.gene1.SetSend(owner);
             }
             else
             {// Multiple genes
@@ -118,7 +144,7 @@ public sealed partial class NetTransmission : IDisposable
                 return;
             }
 
-            if (this.sendGene is not null)
+            if (this.gene0 is not null)
             {
                 netSender.Send_NotThreadSafe(this.Connection.EndPoint.EndPoint, transmission);
             }
@@ -126,14 +152,14 @@ public sealed partial class NetTransmission : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static (int NumberOfGenes, int LastGeneSize) CalculateGene(int size)
+    private static (uint NumberOfGenes, uint LastGeneSize) CalculateGene(int size)
     {
-        var numberOfGenes = size / GeneFrame.MaxBlockLength;
-        var lastGeneSize = size - (numberOfGenes * GeneFrame.MaxBlockLength);
+        var numberOfGenes = (uint)(size / GeneFrame.MaxBlockLength);
+        var lastGeneSize = (uint)(size - (numberOfGenes * GeneFrame.MaxBlockLength));
         return (lastGeneSize > 0 ? numberOfGenes + 1 : numberOfGenes, lastGeneSize);
     }
 
-    private bool CreatePacket(int geneTotal, NetGene gene, Span<byte> block, out ByteArrayPool.MemoryOwner owner)
+    private bool CreatePacket(uint genePosition, uint geneTotal, uint primaryId, ulong secondaryId, Span<byte> block, out ByteArrayPool.MemoryOwner owner)
     {
         Debug.Assert(block.Length <= GeneFrame.MaxBlockLength);
 
@@ -147,7 +173,30 @@ public sealed partial class NetTransmission : IDisposable
         BitConverter.TryWriteBytes(span, this.TransmissionId); // TransmissionId
         span = span.Slice(sizeof(uint));
 
-        BitConverter.TryWriteBytes(span, gene.GeneSerial); // GeneSerial
+        BitConverter.TryWriteBytes(span, genePosition); // GenePosition
+        span = span.Slice(sizeof(uint));
+
+        BitConverter.TryWriteBytes(span, geneTotal); // GeneMax
+        span = span.Slice(sizeof(uint));
+
+        return this.Connection.CreatePacket(frameHeader, block, out owner);
+    }
+
+    private bool CreatePacket2(uint genePosition, uint geneTotal, Span<byte> block, out ByteArrayPool.MemoryOwner owner)
+    {
+        Debug.Assert(block.Length <= GeneFrame.MaxBlockLength);
+
+        // GeneFrameeCode
+        Span<byte> frameHeader = stackalloc byte[GeneFrame.Length];
+        var span = frameHeader;
+
+        BitConverter.TryWriteBytes(span, (ushort)FrameType.Block); // Frame type
+        span = span.Slice(sizeof(ushort));
+
+        BitConverter.TryWriteBytes(span, this.TransmissionId); // TransmissionId
+        span = span.Slice(sizeof(uint));
+
+        BitConverter.TryWriteBytes(span, genePosition); // GenePosition
         span = span.Slice(sizeof(uint));
 
         BitConverter.TryWriteBytes(span, geneTotal); // GeneMax

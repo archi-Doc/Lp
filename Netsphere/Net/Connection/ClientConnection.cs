@@ -63,7 +63,7 @@ public sealed partial class ClientConnection : Connection
             return result;
         }
 
-        return NetResult.Success;
+        return await tcs.Task.ConfigureAwait(false);
     }
 
     public async Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(TSend packet)
