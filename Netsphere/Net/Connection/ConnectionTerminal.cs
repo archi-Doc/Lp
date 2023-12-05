@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 using Netsphere.Crypto;
 using Netsphere.Net;
 using Netsphere.Packet;
@@ -288,9 +289,10 @@ public class ConnectionTerminal
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void RegisterSend(NetTransmission transmission)
     {
-        lock (this.syncQueue)
+        // lock (this.syncQueue)
         {
             this.sendQueue.Enqueue(transmission);
         }
@@ -298,7 +300,7 @@ public class ConnectionTerminal
 
     internal void ProcessSend(NetSender netSender)
     {
-        lock (this.syncQueue)
+        // lock (this.syncQueue)
         {
             while (netSender.SendCapacity >= netSender.SendCount + NetTransmission.GeneThreshold)
             {

@@ -207,9 +207,15 @@ public sealed partial class NetTransmission // : IDisposable
 
     internal bool SendInternal(NetSender netSender, out bool sentFlag)
     {
+        sentFlag = false;
+        if (this.Connection.IsClosedOrDisposed)
+        {
+            this.Dispose();
+            return false;
+        }
+
         lock (this.syncObject)
         {
-            sentFlag = false;
             if (this.State != TransmissionState.Sending)
             {
                 return false;
@@ -221,7 +227,6 @@ public sealed partial class NetTransmission // : IDisposable
             this.gene2?.Send(netSender, endpoint, ref sentFlag);
             if (this.genes is not null)
             {
-
             }
 
             return true;

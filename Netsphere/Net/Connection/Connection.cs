@@ -127,6 +127,12 @@ Wait:
 
     public abstract ConnectionState State { get; }
 
+    public bool IsOpen
+        => this.State == ConnectionState.Open;
+
+    public bool IsClosedOrDisposed
+        => this.State == ConnectionState.Closed || this.State == ConnectionState.Disposed;
+
     internal long ClosedSystemMics { get; set; }
 
     internal long ResponseSystemMics { get; set; }
