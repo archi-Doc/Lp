@@ -4,7 +4,7 @@ namespace Netsphere.Server;
 
 public record ServerOptions
 {
-    public int MaxTransmissions { get; init; } = 4;
+    public uint MaxTransmissions { get; init; } = 4;
 
-    public int TransmissionWindow { get; init; } = 4;
+    public uint MaxBlockSize { get; init; } = 4 * 1024 * 1024; // 4MB
 }

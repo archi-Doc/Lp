@@ -39,14 +39,14 @@ public abstract class Connection : IDisposable
         this.ConnectionTerminal = connectionTerminal;
         this.ConnectionId = connectionId;
         this.EndPoint = endPoint;
-        this.agreement = agreement;
+        this.Agreement = agreement;
     }
 
     public NetTransmission? TryCreateTransmission()
     {
         lock (this.transmissions.SyncObject)
         {
-            if (this.transmissions.Count >= this.agreement.MaxTransmissions)
+            if (this.transmissions.Count >= this.Agreement.MaxTransmissions)
             {
                 return default;
             }
@@ -74,7 +74,7 @@ Retry:
 
         lock (this.transmissions.SyncObject)
         {
-            if (this.transmissions.Count >= this.agreement.MaxTransmissions)
+            if (this.transmissions.Count >= this.Agreement.MaxTransmissions)
             {
                 goto Wait;
             }
@@ -123,6 +123,8 @@ Wait:
 
     public NetEndPoint EndPoint { get; }
 
+    public ConnectionAgreementBlock Agreement { get; private set; }
+
     public abstract ConnectionState State { get; }
 
     internal long ClosedSystemMics { get; set; }
@@ -132,7 +134,6 @@ Wait:
     private readonly AsyncPulseEvent transmissionsPulse = new();
 
     private Embryo embryo;
-    private ConnectionAgreementBlock agreement;
 
     // lock (this.syncAes)
     private readonly object syncAes = new();

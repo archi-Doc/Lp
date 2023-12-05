@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Netsphere.Net;
 using Netsphere.Server;
 
 namespace Netsphere.Block;
@@ -16,14 +17,28 @@ public partial class ConnectionAgreementBlock : IBlock
     public ConnectionAgreementBlock(ServerOptions options)
     {
         this.MaxTransmissions = options.MaxTransmissions;
-        this.TransmissionWindow = options.TransmissionWindow;
+        this.MaxBlockSize = options.MaxBlockSize;
     }
 
     public uint BlockId => 0x12345678;
 
     [Key(0)]
-    public int MaxTransmissions { get; set; } = -1;
+    public uint MaxTransmissions { get; set; }
 
     [Key(1)]
-    public int TransmissionWindow { get; set; } = -1;
+    public uint MaxBlockSize
+    {
+        get => this.maxBlockSize;
+        set
+        {
+            this.maxBlockSize = value;
+            var info = NetTransmission.CalculateGene((uint)this.maxBlockSize);
+            this.MaxGenes = info.NumberOfGenes;
+        }
+    }
+
+    [IgnoreMember]
+    public uint MaxGenes { get; private set; }
+
+    private uint maxBlockSize;
 }

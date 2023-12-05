@@ -3,6 +3,7 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Netsphere.Packet;
+using static Arc.Unit.ByteArrayPool;
 
 namespace Netsphere.Net;
 
@@ -78,10 +79,23 @@ public sealed partial class NetTransmission // : IDisposable
         tcs?.TrySetResult(NetResult.Closed);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static (uint NumberOfGenes, uint FirstGeneSize, uint LastGeneSize) CalculateGene(uint size)
+    {// FirstGeneSize, GeneFrame.MaxBlockLength..., LastGeneSize
+        if (size <= GeneFrame.MaxFirstGeneLength)
+        {
+            return (1, size, 0);
+        }
+
+        size -= GeneFrame.MaxFirstGeneLength;
+        var numberOfGenes = size / GeneFrame.MaxGeneLength;
+        var lastGeneSize = size - (numberOfGenes * GeneFrame.MaxGeneLength);
+        return (GeneFrame.MaxFirstGeneLength, lastGeneSize > 0 ? numberOfGenes + 2 : numberOfGenes + 1, lastGeneSize);
+    }
+
     internal NetResult SendBlock(uint primaryId, ulong secondaryId, ByteArrayPool.MemoryOwner block, TaskCompletionSource<NetResult>? tcs)
     {
-        var size = sizeof(uint) + sizeof(ulong) + block.Span.Length;
-        var info = CalculateGene((uint)size);
+        var info = CalculateGene((uint)(sizeof(uint) + sizeof(ulong) + block.Span.Length)); // PrimaryId, SecondaryId, Block
 
         lock (this.syncObject)
         {
@@ -96,43 +110,73 @@ public sealed partial class NetTransmission // : IDisposable
             var span = block.Span;
             if (info.NumberOfGenes == 1)
             {// gene0
-                this.gene0 = new(0);
-                this.CreatePacket(0, info.NumberOfGenes, primaryId, secondaryId, span, out var owner);
+                this.gene0 = new();
+                this.CreateFirstPacket(0, info.NumberOfGenes, primaryId, secondaryId, span, out var owner);
                 this.gene0.SetSend(owner);
             }
             else if (info.NumberOfGenes == 2)
             {// gene0, gene1
-                this.gene0 = new(0);
-                this.CreatePacket(0, info.NumberOfGenes, primaryId, secondaryId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
+                this.gene0 = new();
+                this.CreateFirstPacket(0, info.NumberOfGenes, primaryId, secondaryId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
                 this.gene0.SetSend(owner);
 
                 span = span.Slice((int)info.FirstGeneSize);
-                this.gene1 = new(1);
-                this.CreatePacket2(1, info.NumberOfGenes, span, out owner);
+                Debug.Assert(span.Length == info.LastGeneSize);
+                this.gene1 = new();
+                this.CreateFollowingPacket(1, info.NumberOfGenes, span, out owner);
                 this.gene1.SetSend(owner);
             }
             else if (info.NumberOfGenes == 3)
             {// gene0, gene1, gene2
-                this.gene0 = new(0);
-                this.CreatePacket(0, info.NumberOfGenes, primaryId, secondaryId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
+                this.gene0 = new();
+                this.CreateFirstPacket(0, info.NumberOfGenes, primaryId, secondaryId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
                 this.gene0.SetSend(owner);
 
                 span = span.Slice((int)info.FirstGeneSize);
-                this.gene1 = new(1);
-                this.CreatePacket2(1, info.NumberOfGenes, span.Slice(0, GeneFrame.MaxGeneLength), out owner);
+                this.gene1 = new();
+                this.CreateFollowingPacket(1, info.NumberOfGenes, span.Slice(0, GeneFrame.MaxGeneLength), out owner);
                 this.gene1.SetSend(owner);
 
                 span = span.Slice(GeneFrame.MaxGeneLength);
-                this.gene2 = new(2);
-                this.CreatePacket2(2, info.NumberOfGenes, span, out owner);
+                Debug.Assert(span.Length == info.LastGeneSize);
+                this.gene2 = new();
+                this.CreateFollowingPacket(2, info.NumberOfGenes, span, out owner);
                 this.gene2.SetSend(owner);
             }
             else
             {// Multiple genes
+                if (info.NumberOfGenes > this.Connection.Agreement.MaxGenes)
+                {
+                    return NetResult.BlockSizeLimit;
+                }
+
+                this.genes = new();
+                this.genes.SlidingListChain.Resize((int)info.NumberOfGenes);
+
+                var firstGene = new NetGene();
+                this.CreateFirstPacket(0, info.NumberOfGenes, primaryId, secondaryId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
+                firstGene.SetSend(owner);
+                span = span.Slice((int)info.FirstGeneSize);
+                firstGene.Goshujin = this.genes;
+                this.genes.SlidingListChain.Add(firstGene);
+
+                for (uint i = 1; i < info.NumberOfGenes; i++)
+                {
+                    var size = (int)(i == info.NumberOfGenes - 1 ? info.LastGeneSize : GeneFrame.MaxGeneLength);
+                    var gene = new NetGene();
+                    this.CreateFollowingPacket(i, info.NumberOfGenes, span.Slice(0, size), out owner);
+                    gene.SetSend(owner);
+
+                    span = span.Slice(size);
+                    gene.Goshujin = this.genes;
+                    this.genes.SlidingListChain.Add(gene);
+                }
+
+                Debug.Assert(span.Length == 0);
             }
         }
 
-        if (info.NumberOfGenes > FlowTerminal.GeneThreshold)
+        if (info.NumberOfGenes > GeneThreshold)
         {// Flow control
         }
         else
@@ -148,7 +192,7 @@ public sealed partial class NetTransmission // : IDisposable
         return new();
     }
 
-    internal bool SendInternal(NetSender netSender)
+    internal bool CheckResend()
     {
         lock (this.syncObject)
         {
@@ -157,30 +201,34 @@ public sealed partial class NetTransmission // : IDisposable
                 return false;
             }
 
+            if (this.gene0?.State)
+        }
+    }
+
+    internal bool SendInternal(NetSender netSender, out bool sentFlag)
+    {
+        lock (this.syncObject)
+        {
+            sentFlag = false;
+            if (this.State != TransmissionState.Sending)
+            {
+                return false;
+            }
+
             var endpoint = this.Connection.EndPoint.EndPoint;
-            this.gene0?.Send(netSender, endpoint);
-            this.gene1?.Send(netSender, endpoint);
-            this.gene2?.Send(netSender, endpoint);
+            this.gene0?.Send(netSender, endpoint, ref sentFlag);
+            this.gene1?.Send(netSender, endpoint, ref sentFlag);
+            this.gene2?.Send(netSender, endpoint, ref sentFlag);
+            if (this.genes is not null)
+            {
+
+            }
 
             return true;
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static (uint NumberOfGenes, uint FirstGeneSize, uint LastGeneSize) CalculateGene(uint size)
-    {// FirstGeneSize, GeneFrame.MaxBlockLength..., LastGeneSize
-        if (size <= GeneFrame.MaxFirstGeneLength)
-        {
-            return (1, size, 0);
-        }
-
-        size -= GeneFrame.MaxFirstGeneLength;
-        var numberOfGenes = size / GeneFrame.MaxGeneLength;
-        var lastGeneSize = size - (numberOfGenes * GeneFrame.MaxGeneLength);
-        return (GeneFrame.MaxFirstGeneLength, lastGeneSize > 0 ? numberOfGenes + 2 : numberOfGenes + 1, lastGeneSize);
-    }
-
-    private void CreatePacket(uint genePosition, uint geneTotal, uint primaryId, ulong secondaryId, Span<byte> block, out ByteArrayPool.MemoryOwner owner)
+    private void CreateFirstPacket(uint genePosition, uint geneTotal, uint primaryId, ulong secondaryId, Span<byte> block, out ByteArrayPool.MemoryOwner owner)
     {
         Debug.Assert(block.Length <= (GeneFrame.MaxGeneLength - sizeof(uint) - sizeof(ulong)));
 
@@ -209,7 +257,7 @@ public sealed partial class NetTransmission // : IDisposable
         this.Connection.CreatePacket(frameHeader, block, out owner);
     }
 
-    private void CreatePacket2(uint genePosition, uint geneTotal, Span<byte> block, out ByteArrayPool.MemoryOwner owner)
+    private void CreateFollowingPacket(uint genePosition, uint geneTotal, Span<byte> block, out ByteArrayPool.MemoryOwner owner)
     {
         Debug.Assert(block.Length <= GeneFrame.MaxGeneLength);
 

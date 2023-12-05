@@ -31,9 +31,9 @@ public class ConnectionTerminal
     private readonly ClientConnection.GoshujinClass clientConnections = new();
     private readonly ServerConnection.GoshujinClass serverConnections = new();
 
-    private readonly object syncQueue = new();
-    private readonly Queue<NetTransmission> sendQueue = new();
-    private readonly Queue<NetTransmission> resendQueue = new();
+    // private readonly object syncQueue = new();
+    private readonly ConcurrentQueue<NetTransmission> sendQueue = new();
+    private readonly ConcurrentQueue<NetTransmission> resendQueue = new();
 
     public void Clean()
     {
@@ -259,7 +259,7 @@ public class ConnectionTerminal
         var connectionId = BitConverter.ToUInt64(toBeShared.Span.Slice(8)); // ConnectionId
 
         if (packetUInt16 < 384)
-        {
+        {// Client -> Server
             ServerConnection? connection = default;
             lock (this.serverConnections.SyncObject)
             {
@@ -273,7 +273,7 @@ public class ConnectionTerminal
             }
         }
         else
-        {// Response
+        {// Server -> Client (Response)
             ClientConnection? connection = default;
             lock (this.clientConnections.SyncObject)
             {
@@ -325,7 +325,7 @@ public class ConnectionTerminal
                     transmission = this.resendQueue.Dequeue();
                     if (transmission.SendInternal(netSender, out var sentFlag) &&
                         sentFlag)
-                    {
+                    {// Resend
                         this.resendQueue.Enqueue(transmission);
                     }
                 }
