@@ -4,7 +4,7 @@ using System.Diagnostics;
 
 namespace Netsphere.Net;
 
-[ValueLinkObject(Isolation = IsolationLevel.Serializable)]
+[ValueLinkObject(Isolation = IsolationLevel.Serializable, Restricted = true)]
 internal partial class NetGene : IDisposable
 {
     public enum GeneState
@@ -20,7 +20,9 @@ internal partial class NetGene : IDisposable
         Complete,
     }
 
-    [Link(Primary = true, Type = ChainType.SlidingList, Name = "SlidingList", AddValue = false)]
+    [Link(Primary = true, Type = ChainType.SlidingList, Name = "SlidingList")]
+    // [Link(Name = "SendQueue", Type = ChainType.QueueList, AutoLink = false)]
+    // [Link(Name = "ResendQueue", Type = ChainType.QueueList, AutoLink = false)]
     public NetGene(int genePosition)
     {
         this.GenePosition = genePosition;

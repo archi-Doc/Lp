@@ -9,6 +9,8 @@ namespace Netsphere.Net;
 [ValueLinkObject(Isolation = IsolationLevel.Serializable, Restricted = true)]
 public sealed partial class NetTransmission // : IDisposable
 {
+    internal const int GeneThreshold = 3;
+
     public enum TransmissionState
     {
         Initial,
@@ -18,7 +20,8 @@ public sealed partial class NetTransmission // : IDisposable
         Disposed,
     }
 
-    // [Link(Name = "SendQueue", Type = ChainType.QueueList, AutoLink = false)]
+    [Link(Name = "SendQueue", Type = ChainType.QueueList, AutoLink = false)]
+    [Link(Name = "ResendQueue", Type = ChainType.QueueList, AutoLink = false)]
     public NetTransmission(Connection connection, uint transmissionId)
     {
         this.Connection = connection;

@@ -4,5 +4,4 @@ namespace Netsphere.Net;
 
 public class FlowTerminal
 {
-    public const int GeneThreshold = 3;
 }

@@ -31,8 +31,9 @@ public class ConnectionTerminal
     private readonly ClientConnection.GoshujinClass clientConnections = new();
     private readonly ServerConnection.GoshujinClass serverConnections = new();
 
-    private readonly ConcurrentQueue<NetTransmission> sendQueue = new();
-    private readonly ConcurrentQueue<NetTransmission> ackQueue = new();
+    private readonly object syncQueue = new();
+    private readonly Queue<NetTransmission> sendQueue = new();
+    private readonly Queue<NetTransmission> resendQueue = new();
 
     public void Clean()
     {
@@ -289,21 +290,45 @@ public class ConnectionTerminal
 
     internal void RegisterSend(NetTransmission transmission)
     {
-        this.sendQueue.Enqueue(transmission);
+        lock (this.syncQueue)
+        {
+            this.sendQueue.Enqueue(transmission);
+        }
     }
 
     internal void ProcessSend(NetSender netSender)
     {
-        while (netSender.SendCapacity > netSender.SendCount + FlowTerminal.GeneThreshold)
+        lock (this.syncQueue)
         {
-            if (!this.sendQueue.TryDequeue(out var transmission))
+            while (netSender.SendCapacity >= netSender.SendCount + NetTransmission.GeneThreshold)
             {
-                return;
+                if (!this.sendQueue.TryDequeue(out var transmission))
+                {
+                    return;
+                }
+
+                if (transmission.SendInternal(netSender, out _))
+                {
+                    this.resendQueue.Enqueue(transmission);
+                }
             }
 
-            if (transmission.SendInternal(netSender))
+            while (netSender.SendCapacity >= netSender.SendCount + NetTransmission.GeneThreshold)
             {
-                this.ackQueue.Enqueue(transmission);
+                if (!this.resendQueue.TryPeek(out var transmission))
+                {
+                    break;
+                }
+
+                if (transmission.CheckResend())
+                {
+                    transmission = this.resendQueue.Dequeue();
+                    if (transmission.SendInternal(netSender, out var sentFlag) &&
+                        sentFlag)
+                    {
+                        this.resendQueue.Enqueue(transmission);
+                    }
+                }
             }
         }
     }
