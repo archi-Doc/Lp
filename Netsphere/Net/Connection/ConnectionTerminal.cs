@@ -30,6 +30,8 @@ public class ConnectionTerminal
 
     private readonly ClientConnection.GoshujinClass clientConnections = new();
     private readonly ServerConnection.GoshujinClass serverConnections = new();
+
+    private readonly object syncQueue = new();
     private readonly ConcurrentQueue<NetTransmission> sendQueue = new();
     private readonly ConcurrentQueue<NetTransmission> ackQueue = new();
 
@@ -286,9 +288,9 @@ public class ConnectionTerminal
         }
     }
 
-    internal void AddSend(NetTransmission sendTransmission)
+    internal void RegisterSend(NetTransmission transmission)
     {
-        this.sendQueue.Enqueue(sendTransmission);
+        this.sendQueue.Enqueue(transmission);
     }
 
     internal void ProcessSend(NetSender netSender)
@@ -300,7 +302,10 @@ public class ConnectionTerminal
                 return;
             }
 
-            transmission.SendInternal(netSender);
+            if (transmission.SendInternal(netSender))
+            {
+                this.ackQueue.Enqueue(transmission);
+            }
         }
     }
 

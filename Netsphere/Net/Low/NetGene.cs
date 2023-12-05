@@ -47,6 +47,15 @@ internal partial class NetGene : IDisposable
         this.Packet = toBeMoved;
     }
 
+    public void Send(NetSender netSender, IPEndPoint endPoint)
+    {
+        if (this.State == GeneState.WaitingToSend ||
+            this.State == GeneState.WaitingForAck)
+        {
+            netSender.Send_NotThreadSafe(endPoint, this.Packet);
+        }
+    }
+
     public void Dispose()
     {
         this.State = GeneState.Initial;

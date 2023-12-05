@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -43,9 +44,9 @@ public abstract class Connection : IDisposable
 
     public NetTransmission? TryCreateTransmission()
     {
-        lock (this.sendTransmissions.SyncObject)
+        lock (this.transmissions.SyncObject)
         {
-            if (this.sendTransmissions.Count >= this.agreement.MaxTransmissions)
+            if (this.transmissions.Count >= this.agreement.MaxTransmissions)
             {
                 return default;
             }
@@ -55,10 +56,10 @@ public abstract class Connection : IDisposable
             {
                 transmissionId = RandomVault.Pseudo.NextUInt32();
             }
-            while (this.sendTransmissions.TransmissionIdChain.ContainsKey(transmissionId));
+            while (this.transmissions.TransmissionIdChain.ContainsKey(transmissionId));
 
             var transmission = new NetTransmission(this, transmissionId);
-            transmission.Goshujin = this.sendTransmissions;
+            transmission.Goshujin = this.transmissions;
             return transmission;
         }
     }
@@ -71,9 +72,9 @@ Retry:
             return default;
         }
 
-        lock (this.sendTransmissions.SyncObject)
+        lock (this.transmissions.SyncObject)
         {
-            if (this.sendTransmissions.Count >= this.agreement.MaxTransmissions)
+            if (this.transmissions.Count >= this.agreement.MaxTransmissions)
             {
                 goto Wait;
             }
@@ -83,10 +84,10 @@ Retry:
             {
                 transmissionId = RandomVault.Pseudo.NextUInt32();
             }
-            while (this.sendTransmissions.TransmissionIdChain.ContainsKey(transmissionId));
+            while (this.transmissions.TransmissionIdChain.ContainsKey(transmissionId));
 
             var transmission = new NetTransmission(this, transmissionId);
-            transmission.Goshujin = this.sendTransmissions;
+            transmission.Goshujin = this.transmissions;
             return transmission;
         }
 
@@ -139,7 +140,7 @@ Wait:
     private Aes? aes1;
 
     // lock (this.sendTransmissions.SyncObject)
-    private NetTransmission.GoshujinClass sendTransmissions = new();
+    private NetTransmission.GoshujinClass transmissions = new();
 
     #endregion
 
@@ -256,13 +257,9 @@ Wait:
         return true;
     }
 
-    internal bool CreatePacket(scoped Span<byte> frameHeader, scoped Span<byte> frameContent, out ByteArrayPool.MemoryOwner owner)
+    internal void CreatePacket(scoped Span<byte> frameHeader, scoped Span<byte> frameContent, out ByteArrayPool.MemoryOwner owner)
     {
-        if ((frameHeader.Length + frameContent.Length) > PacketHeader.MaxFrameLength)
-        {
-            owner = default;
-            return false;
-        }
+        Debug.Assert((frameHeader.Length + frameContent.Length) <= PacketHeader.MaxFrameLength);
 
         var arrayOwner = PacketPool.Rent();
         var span = arrayOwner.ByteArray.AsSpan();
@@ -286,14 +283,8 @@ Wait:
         frameContent.CopyTo(span);
         span = span.Slice(frameContent.Length);
 
-        if (!this.TryEncryptCbc(salt, arrayOwner.ByteArray.AsSpan(PacketHeader.Length, frameHeader.Length + frameContent.Length), PacketPool.MaxPacketSize - PacketHeader.Length, out var written))
-        {
-            owner = default;
-            return false;
-        }
-
+        this.TryEncryptCbc(salt, arrayOwner.ByteArray.AsSpan(PacketHeader.Length, frameHeader.Length + frameContent.Length), PacketPool.MaxPacketSize - PacketHeader.Length, out var written);
         owner = arrayOwner.ToMemoryOwner(0, PacketHeader.Length + written);
-        return true;
     }
 
     /// <inheritdoc/>
