@@ -6,6 +6,4 @@ public enum FrameType : ushort
 {
     Ack,
     Gene,
-    RPC,
-    Stream,
 }
