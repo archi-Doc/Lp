@@ -41,6 +41,8 @@ internal partial class NetGene : IDisposable
 
     public long SentMics { get; private set; }
 
+    public bool IsReceived => this.State == GeneState.SendingAck;
+
     #endregion
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -76,6 +78,15 @@ internal partial class NetGene : IDisposable
         }
 
         return false;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SetRecv(ByteArrayPool.MemoryOwner toBeShared)
+    {
+        Debug.Assert(this.State == GeneState.Initial);
+
+        this.State = GeneState.SendingAck;
+        this.Packet = toBeShared.IncrementAndShare();
     }
 
     public void Dispose()

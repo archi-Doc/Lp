@@ -3,7 +3,6 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Netsphere.Packet;
-using static Arc.Unit.ByteArrayPool;
 
 namespace Netsphere.Net;
 
@@ -12,6 +11,13 @@ public sealed partial class NetTransmission // : IDisposable
 {
     internal const int GeneThreshold = 3;
 
+    /* State transitions
+     *  SendAndReceiveAsync: Initial -> Sending -> Receiving -> Complete
+     *  SendAsync                  : Initial -> Sending -> tcs / Complete
+     *  SendAndForget           : Initial -> Sending -> Complete
+     *  Receiving -> Received -> Dispose
+     *  Receiving -> Received -> Sending -> Dispose
+     */
     public enum TransmissionState
     {
         Initial,
@@ -23,10 +29,11 @@ public sealed partial class NetTransmission // : IDisposable
 
     [Link(Name = "SendQueue", Type = ChainType.QueueList, AutoLink = false)]
     [Link(Name = "ResendQueue", Type = ChainType.QueueList, AutoLink = false)]
-    public NetTransmission(Connection connection, uint transmissionId)
+    public NetTransmission(Connection connection, uint transmissionId, TransmissionState state)
     {
         this.Connection = connection;
         this.TransmissionId = transmissionId;
+        this.State = state;
     }
 
     #region FieldAndProperty
@@ -187,8 +194,64 @@ public sealed partial class NetTransmission // : IDisposable
         return NetResult.Success;
     }
 
-    internal void ProcessReceive_Gene(uint genePosition, uint geneTotal, ReadOnlySpan<byte> gene)
+    internal void ProcessReceive_Gene(uint genePosition, uint geneTotal, ByteArrayPool.MemoryOwner toBeShared)
     {
+        if (this.State == TransmissionState.Receiving)
+        {// Set gene
+            lock (this.syncObject)
+            {
+                if (geneTotal <= GeneThreshold)
+                {// Single send
+                    if (genePosition == 0)
+                    {
+                        this.gene0 ??= new();
+                        this.gene0.SetRecv(toBeShared);
+                    }
+                    else if (genePosition == 1)
+                    {
+                        this.gene1 ??= new();
+                        this.gene1.SetRecv(toBeShared);
+                    }
+                    else if (genePosition == 2)
+                    {
+                        this.gene2 ??= new();
+                        this.gene2.SetRecv(toBeShared);
+                    }
+
+                    var completeFlag = false;
+                    if (geneTotal == 0)
+                    {
+                        completeFlag = true;
+                        this.ProcessReceive_GeneComplete();
+                    }
+                    else if (geneTotal == 1)
+                    {
+                        completeFlag = this.gene0?.IsReceived == true;
+                    }
+                    else if (geneTotal == 2)
+                    {
+                        completeFlag = this.gene0?.IsReceived == true &&
+                            this.gene1?.IsReceived == true;
+                    }
+                    else if (geneTotal == 3)
+                    {
+                        completeFlag = this.gene0?.IsReceived == true &&
+                            this.gene0?.IsReceived == true &&
+                            this.gene0?.IsReceived == true;
+                    }
+                }
+                else
+                {// Multiple send
+                }
+            }
+        }
+
+        // Ack
+    }
+
+    internal void ProcessReceive_GeneComplete()
+    {
+
     }
 
     internal async Task<NetResponse> ReceiveBlock()

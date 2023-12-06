@@ -165,15 +165,8 @@ Wait:
         this.PacketTerminal.AddSendPacket(this.EndPoint.EndPoint, owner, false, default);
     }
 
-    internal void SendCloseFrame()
-    {// Close, Ack
-        if (!this.CreatePacket(Array.Empty<byte>(), out var owner))
-        {
-            return;
-        }
-
-        this.PacketTerminal.AddSendPacket(this.EndPoint.EndPoint, owner, false, default);
-    }
+    internal void SendCloseFrame() // Close
+        => this.SendPriorityFrame([]);
 
     internal void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
     {// endPoint: Checked
@@ -245,12 +238,18 @@ Wait:
         lock (this.transmissions.SyncObject)
         {
             if (!this.transmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
-            {
-                return;
+            {// New transmission
+                if (this.transmissions.Count >= this.Agreement.MaxTransmissions)
+                {// Maximum number reached.
+                    return;
+                }
+
+                transmission = new NetTransmission(this, transmissionId, NetTransmission.TransmissionState.Receiving);
+                transmission.Goshujin = this.transmissions;
             }
         }
 
-        transmission.ProcessReceive_Gene(genePosition, geneTotal, span);
+        transmission.ProcessReceive_Gene(genePosition, geneTotal, toBeShared.Slice(12)) ;
     }
 
     internal bool CreatePacket(scoped Span<byte> frame, out ByteArrayPool.MemoryOwner owner)
