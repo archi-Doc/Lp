@@ -10,5 +10,5 @@ internal readonly struct AckFrame
 
     public readonly FrameType FrameType; // 2 bytes
     public readonly uint TransmissionId; // 4 bytes
-    public readonly uint GeneId; // 4 bytes
+    public readonly uint GenePosition; // 4 bytes
 }

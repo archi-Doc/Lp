@@ -98,7 +98,7 @@ public abstract class Connection : IDisposable
             }
             while (this.transmissions.TransmissionIdChain.ContainsKey(transmissionId));
 
-            var transmission = new NetTransmission(this, transmissionId);
+            var transmission = new NetTransmission(this, true, transmissionId);
             transmission.Goshujin = this.transmissions;
             return transmission;
         }
@@ -126,7 +126,7 @@ Retry:
             }
             while (this.transmissions.TransmissionIdChain.ContainsKey(transmissionId));
 
-            var transmission = new NetTransmission(this, transmissionId);
+            var transmission = new NetTransmission(this, true, transmissionId);
             transmission.Goshujin = this.transmissions;
             return transmission;
         }
@@ -141,6 +141,15 @@ Wait:
         }
 
         goto Retry;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void RemoveTransmission(NetTransmission transmission)
+    {
+        lock (this.transmissions.SyncObject)
+        {
+            transmission.Goshujin = null;
+        }
     }
 
     public void Close()
@@ -244,12 +253,12 @@ Wait:
                     return;
                 }
 
-                transmission = new NetTransmission(this, transmissionId, NetTransmission.TransmissionState.Receiving);
+                transmission = new NetTransmission(this, false, transmissionId);
                 transmission.Goshujin = this.transmissions;
             }
         }
 
-        transmission.ProcessReceive_Gene(genePosition, geneTotal, toBeShared.Slice(12)) ;
+        transmission.ProcessReceive_Gene(genePosition, geneTotal, toBeShared.Slice(12));
     }
 
     internal bool CreatePacket(scoped Span<byte> frame, out ByteArrayPool.MemoryOwner owner)

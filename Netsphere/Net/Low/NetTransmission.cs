@@ -12,33 +12,42 @@ public sealed partial class NetTransmission // : IDisposable
     internal const int GeneThreshold = 3;
 
     /* State transitions
-     *  SendAndReceiveAsync: Initial -> Sending -> Receiving -> Complete
-     *  SendAsync                  : Initial -> Sending -> tcs / Complete
-     *  SendAndForget           : Initial -> Sending -> Complete
-     *  Receiving -> Received -> Dispose
-     *  Receiving -> Received -> Sending -> Dispose
+     *  SendAndReceiveAsync (Client) : Sending -> Receiving -> Disposed
+     *  SendAsync                   (Client) : Sending -> tcs / Disposed
+     *  (Server) : Receiving -> Received -> Disposed
+     *  (Server) : Receiving -> Received -> Sending -> tcs / Disposed
      */
     public enum TransmissionState
     {
-        Initial,
         Sending,
         Receiving,
-        Complete,
+        Received,
         Disposed,
     }
 
     [Link(Name = "SendQueue", Type = ChainType.QueueList, AutoLink = false)]
     [Link(Name = "ResendQueue", Type = ChainType.QueueList, AutoLink = false)]
-    public NetTransmission(Connection connection, uint transmissionId, TransmissionState state)
+    public NetTransmission(Connection connection, bool isClient, uint transmissionId)
     {
         this.Connection = connection;
         this.TransmissionId = transmissionId;
-        this.State = state;
+
+        this.IsClient = isClient;
+        if (isClient)
+        {
+            this.State = TransmissionState.Sending;
+        }
+        else
+        {
+            this.State = TransmissionState.Receiving;
+        }
     }
 
     #region FieldAndProperty
 
     public Connection Connection { get; }
+
+    public bool IsClient { get; }
 
     [Link(Primary = true, Type = ChainType.Unordered)]
     public uint TransmissionId { get; }
@@ -58,6 +67,7 @@ public sealed partial class NetTransmission // : IDisposable
     {
         TaskCompletionSource<NetResult>? tcs;
 
+        this.Connection.RemoveTransmission(this);
         lock (this.syncObject)
         {
             if (this.State == TransmissionState.Disposed)
@@ -106,10 +116,7 @@ public sealed partial class NetTransmission // : IDisposable
 
         lock (this.syncObject)
         {
-            if (this.State != TransmissionState.Initial)
-            {
-                return NetResult.TransmissionConsumed;
-            }
+            Debug.Assert(this.State == TransmissionState.Sending);
 
             this.State = TransmissionState.Sending;
             this.tcs = tcs;
@@ -196,12 +203,13 @@ public sealed partial class NetTransmission // : IDisposable
 
     internal void ProcessReceive_Gene(uint genePosition, uint geneTotal, ByteArrayPool.MemoryOwner toBeShared)
     {
-        if (this.State == TransmissionState.Receiving)
-        {// Set gene
-            lock (this.syncObject)
-            {
+        var completeFlag = false;
+        lock (this.syncObject)
+        {
+            if (this.State == TransmissionState.Receiving)
+            {// Set gene
                 if (geneTotal <= GeneThreshold)
-                {// Single send
+                {// Single send/recv
                     if (genePosition == 0)
                     {
                         this.gene0 ??= new();
@@ -218,11 +226,9 @@ public sealed partial class NetTransmission // : IDisposable
                         this.gene2.SetRecv(toBeShared);
                     }
 
-                    var completeFlag = false;
                     if (geneTotal == 0)
                     {
                         completeFlag = true;
-                        this.ProcessReceive_GeneComplete();
                     }
                     else if (geneTotal == 1)
                     {
@@ -236,22 +242,44 @@ public sealed partial class NetTransmission // : IDisposable
                     else if (geneTotal == 3)
                     {
                         completeFlag = this.gene0?.IsReceived == true &&
-                            this.gene0?.IsReceived == true &&
-                            this.gene0?.IsReceived == true;
+                            this.gene1?.IsReceived == true &&
+                            this.gene2?.IsReceived == true;
                     }
                 }
                 else
-                {// Multiple send
+                {// Multiple send/recv
+                }
+
+                if (completeFlag)
+                {// Complete
+                    this.ProcessReceive_GeneComplete();
                 }
             }
         }
 
-        // Ack
+        // Ack (TransmissionId, GenePosition)
     }
 
     internal void ProcessReceive_GeneComplete()
     {
+        if (this.genes is null)
+        {// Single send/recv
 
+        }
+        else
+        {// Multiple send/recv
+
+        }
+
+        if (this.IsClient)
+        {
+            this.Dispose();
+        }
+
+        if (this.tcs is not null)
+        {
+            this.tcs.SetResult
+        }
     }
 
     internal async Task<NetResponse> ReceiveBlock()

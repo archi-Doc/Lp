@@ -92,7 +92,6 @@ public sealed partial class ClientConnection : Connection
             return (result, default);
         }
 
-        await Task.Delay(1000000); // tempcode
         var response = await transmission.ReceiveBlock().ConfigureAwait(false);
         if (!response.IsSuccess)
         {
