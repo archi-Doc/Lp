@@ -9,6 +9,6 @@ internal readonly struct AckFrame
     public const int MaxAck = (PacketHeader.MaxFrameLength - 2) / 8;
 
     public readonly FrameType FrameType; // 2 bytes
-    public readonly uint TransmissionSerial; // 4 bytes
-    public readonly uint GeneSerial; // 4 bytes
+    public readonly uint TransmissionId; // 4 bytes
+    public readonly uint GeneId; // 4 bytes
 }

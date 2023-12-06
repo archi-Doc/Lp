@@ -42,6 +42,46 @@ public abstract class Connection : IDisposable
         this.Agreement = agreement;
     }
 
+    #region FieldAndProperty
+
+    public NetBase NetBase { get; }
+
+    public ConnectionTerminal ConnectionTerminal { get; }
+
+    public PacketTerminal PacketTerminal { get; }
+
+    public ulong ConnectionId { get; }
+
+    public NetEndPoint EndPoint { get; }
+
+    public ConnectionAgreementBlock Agreement { get; private set; }
+
+    public abstract ConnectionState State { get; }
+
+    public bool IsOpen
+        => this.State == ConnectionState.Open;
+
+    public bool IsClosedOrDisposed
+        => this.State == ConnectionState.Closed || this.State == ConnectionState.Disposed;
+
+    internal long ClosedSystemMics { get; set; }
+
+    internal long ResponseSystemMics { get; set; }
+
+    private readonly AsyncPulseEvent transmissionsPulse = new();
+
+    private Embryo embryo;
+
+    // lock (this.syncAes)
+    private readonly object syncAes = new();
+    private Aes? aes0;
+    private Aes? aes1;
+
+    // lock (this.transmissions.SyncObject)
+    private NetTransmission.GoshujinClass transmissions = new();
+
+    #endregion
+
     public NetTransmission? TryCreateTransmission()
     {
         lock (this.transmissions.SyncObject)
@@ -111,46 +151,6 @@ Wait:
         this.embryo = embryo;
     }
 
-    #region FieldAndProperty
-
-    public NetBase NetBase { get; }
-
-    public ConnectionTerminal ConnectionTerminal { get; }
-
-    public PacketTerminal PacketTerminal { get; }
-
-    public ulong ConnectionId { get; }
-
-    public NetEndPoint EndPoint { get; }
-
-    public ConnectionAgreementBlock Agreement { get; private set; }
-
-    public abstract ConnectionState State { get; }
-
-    public bool IsOpen
-        => this.State == ConnectionState.Open;
-
-    public bool IsClosedOrDisposed
-        => this.State == ConnectionState.Closed || this.State == ConnectionState.Disposed;
-
-    internal long ClosedSystemMics { get; set; }
-
-    internal long ResponseSystemMics { get; set; }
-
-    private readonly AsyncPulseEvent transmissionsPulse = new();
-
-    private Embryo embryo;
-
-    // lock (this.syncAes)
-    private readonly object syncAes = new();
-    private Aes? aes0;
-    private Aes? aes1;
-
-    // lock (this.sendTransmissions.SyncObject)
-    private NetTransmission.GoshujinClass transmissions = new();
-
-    #endregion
-
     internal virtual void UpdateSendQueue(NetTransmission transmission)
     {
     }
@@ -177,6 +177,11 @@ Wait:
 
     internal void ProcessReceive(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
     {// endPoint: Checked
+        if (this.State == ConnectionState.Disposed)
+        {
+            return;
+        }
+
         // PacketHeaderCode
         var span = toBeShared.Span;
 
@@ -207,22 +212,45 @@ Wait:
             var owner = toBeShared.Slice(PacketHeader.Length + 2, written - 2);
             var frameType = (FrameType)BitConverter.ToUInt16(span); // FrameType
             if (frameType == FrameType.Ack)
-            {
+            {// Ack
                 this.ProcessReceive_Ack(endPoint, owner, currentSystemMics);
             }
-            else if (frameType == FrameType.Block)
-            {
-                this.ProcessReceive_Block(endPoint, owner, currentSystemMics);
+            else if (frameType == FrameType.Gene)
+            {// Gene
+                this.ProcessReceive_Gene(endPoint, owner, currentSystemMics);
             }
         }
     }
 
     internal void ProcessReceive_Ack(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
-    {
+    {// { uint TransmissionId, uint GenePosition } x n
     }
 
-    internal void ProcessReceive_Block(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
-    {
+    internal void ProcessReceive_Gene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
+    {// uint TransmissionId, uint GenePosition, uint GeneMax, Gene
+        var span = toBeShared.Span;
+        if (span.Length < 12)
+        {
+            return;
+        }
+
+        var transmissionId = BitConverter.ToUInt32(span);
+        span = span.Slice(sizeof(uint));
+        var genePosition = BitConverter.ToUInt32(span);
+        span = span.Slice(sizeof(uint));
+        var geneTotal = BitConverter.ToUInt32(span);
+        span = span.Slice(sizeof(uint));
+
+        NetTransmission? transmission;
+        lock (this.transmissions.SyncObject)
+        {
+            if (!this.transmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
+            {
+                return;
+            }
+        }
+
+        transmission.ProcessReceive_Gene(genePosition, geneTotal, span);
     }
 
     internal bool CreatePacket(scoped Span<byte> frame, out ByteArrayPool.MemoryOwner owner)

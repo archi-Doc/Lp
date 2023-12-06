@@ -187,6 +187,10 @@ public sealed partial class NetTransmission // : IDisposable
         return NetResult.Success;
     }
 
+    internal void ProcessReceive_Gene(uint genePosition, uint geneTotal, ReadOnlySpan<byte> gene)
+    {
+    }
+
     internal async Task<NetResponse> ReceiveBlock()
     {
         return new();
@@ -216,7 +220,7 @@ public sealed partial class NetTransmission // : IDisposable
         return mics;
     }
 
-    internal bool CheckResend(NetSender netSender)
+    /*internal bool CheckResend(NetSender netSender)
     {
         lock (this.syncObject)
         {
@@ -240,7 +244,7 @@ public sealed partial class NetTransmission // : IDisposable
         }
 
         return false;
-    }
+    }*/
 
     internal bool SendInternal(NetSender netSender, out int sentCount)
     {
@@ -259,15 +263,14 @@ public sealed partial class NetTransmission // : IDisposable
             }
 
             var endpoint = this.Connection.EndPoint.EndPoint;
-
-            // Single send
-            this.gene0?.Send(netSender, endpoint, ref sentCount);
-            this.gene1?.Send(netSender, endpoint, ref sentCount);
-            this.gene2?.Send(netSender, endpoint, ref sentCount);
-
-            // Multiple send
-            if (this.genes is not null)
-            {
+            if (this.genes is null)
+            {// Single send
+                this.gene0?.Send(netSender, endpoint, ref sentCount);
+                this.gene1?.Send(netSender, endpoint, ref sentCount);
+                this.gene2?.Send(netSender, endpoint, ref sentCount);
+            }
+            else
+            {// Multiple send
             }
 
             return true;
@@ -282,7 +285,7 @@ public sealed partial class NetTransmission // : IDisposable
         Span<byte> frameHeader = stackalloc byte[GeneFrame.Length + sizeof(uint) + sizeof(ulong)];
         var span = frameHeader;
 
-        BitConverter.TryWriteBytes(span, (ushort)FrameType.Block); // Frame type
+        BitConverter.TryWriteBytes(span, (ushort)FrameType.Gene); // Frame type
         span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, this.TransmissionId); // TransmissionId
@@ -311,7 +314,7 @@ public sealed partial class NetTransmission // : IDisposable
         Span<byte> frameHeader = stackalloc byte[GeneFrame.Length];
         var span = frameHeader;
 
-        BitConverter.TryWriteBytes(span, (ushort)FrameType.Block); // Frame type
+        BitConverter.TryWriteBytes(span, (ushort)FrameType.Gene); // Frame type
         span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, this.TransmissionId); // TransmissionId

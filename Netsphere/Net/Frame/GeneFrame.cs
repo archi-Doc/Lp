@@ -4,6 +4,7 @@ namespace Netsphere.Packet;
 
 #pragma warning disable CS0649
 
+// NetTerminalGene by Nihei.
 internal readonly struct GeneFrame
 {// 14 bytes, GeneFrameCode
     public const int Length = 14;
@@ -12,6 +13,6 @@ internal readonly struct GeneFrame
 
     public readonly FrameType FrameType; // 2 bytes
     public readonly uint TransmissionId; // 4 bytes
-    public readonly uint GeneSerial; // 4 bytes
-    public readonly uint GeneMax; // 4 bytes
+    public readonly uint GenePosition; // 4 bytes
+    public readonly uint GeneTotal; // 4 bytes
 }
