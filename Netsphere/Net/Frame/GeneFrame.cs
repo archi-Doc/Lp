@@ -8,6 +8,7 @@ namespace Netsphere.Packet;
 internal readonly struct FirstGeneFrame
 {// FirstGeneFrameCode
     public const int Length = 22;
+    public const int LengthExceptsFrameType = Length - 2;
     public const int MaxGeneLength = PacketHeader.MaxFrameLength - Length;
 
     public readonly FrameType FrameType; // 2 bytes
@@ -20,6 +21,7 @@ internal readonly struct FirstGeneFrame
 internal readonly struct FollowingGeneFrame
 {// FollowingGeneFrameCode
     public const int Length = 10;
+    public const int LengthExceptsFrameType = Length - 2;
     public const int MaxGeneLength = PacketHeader.MaxFrameLength - Length;
 
     public readonly FrameType FrameType; // 2 bytes

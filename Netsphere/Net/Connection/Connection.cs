@@ -217,9 +217,13 @@ Wait:
             {// Ack
                 this.ProcessReceive_Ack(endPoint, owner, currentSystemMics);
             }
-            else if (frameType == FrameType.Gene)
-            {// Gene
-                this.ProcessReceive_Gene(endPoint, owner, currentSystemMics);
+            else if (frameType == FrameType.FirstGene)
+            {// FirstGene
+                this.ProcessReceive_FirstGene(endPoint, owner, currentSystemMics);
+            }
+            else if (frameType == FrameType.FollowingGene)
+            {// FollowingGene
+                this.ProcessReceive_FollowingGene(endPoint, owner, currentSystemMics);
             }
         }
     }
@@ -228,10 +232,10 @@ Wait:
     {// { uint TransmissionId, uint GenePosition } x n
     }
 
-    internal void ProcessReceive_Gene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
+    internal void ProcessReceive_FirstGene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
     {// uint TransmissionId, uint GenePosition, uint GeneMax, Gene
         var span = toBeShared.Span;
-        if (span.Length < 12)
+        if (span.Length < FirstGeneFrame.LengthExceptsFrameType)
         {
             return;
         }
@@ -258,7 +262,7 @@ Wait:
             }
         }
 
-        transmission.ProcessReceive_Gene(genePosition, geneTotal, toBeShared.Slice(12));
+        transmission.ProcessReceive_Gene(genePosition, geneTotal, toBeShared.Slice(FirstGeneFrame.LengthExceptsFrameType));
     }
 
     internal bool CreatePacket(scoped Span<byte> frame, out ByteArrayPool.MemoryOwner owner)

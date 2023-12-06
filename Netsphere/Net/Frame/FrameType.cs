@@ -5,5 +5,6 @@ namespace Netsphere.Packet;
 public enum FrameType : ushort
 {
     Ack,
-    Gene,
+    FirstGene,
+    FollowingGene,
 }
