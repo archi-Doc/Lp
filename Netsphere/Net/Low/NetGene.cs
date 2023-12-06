@@ -5,9 +5,11 @@ using System.Runtime.CompilerServices;
 
 namespace Netsphere.Net;
 
-[ValueLinkObject(Isolation = IsolationLevel.Serializable, Restricted = true)]
+[ValueLinkObject(Restricted = true)]
 internal partial class NetGene : IDisposable
-{
+{// lock (transmission.syncObject)
+    internal static readonly long ResendMics = Mics.FromMilliseconds(500);
+
     public enum GeneState
     {
         // GeneState:
@@ -27,20 +29,17 @@ internal partial class NetGene : IDisposable
     public NetGene()
     {
         // this.GenePosition = genePosition;
-        // this.GeneMax = geneMax;
     }
 
     #region FieldAndProperty
 
     public GeneState State { get; private set; }
 
-    public int GenePosition => this.SlidingListLink.Position;
+    // public int GenePosition => this.SlidingListLink.Position;
 
     public ByteArrayPool.MemoryOwner Packet { get; private set; }
 
     public long SentMics { get; private set; }
-
-    // public uint GeneMax { get; }
 
     #endregion
 
@@ -54,15 +53,29 @@ internal partial class NetGene : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Send(NetSender netSender, IPEndPoint endPoint, ref bool sentFlag)
+    public void Send(NetSender netSender, IPEndPoint endPoint, ref int sentCount)
     {
         if (this.State == GeneState.WaitingToSend ||
             this.State == GeneState.WaitingForAck)
         {
             netSender.Send_NotThreadSafe(endPoint, this.Packet);
             this.SentMics = netSender.CurrentSystemMics;
-            sentFlag = true;
+            sentCount++;
         }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool CheckResend(NetSender netSender)
+    {
+        if (this.State == GeneState.WaitingForAck)
+        {
+            if (netSender.CurrentSystemMics > this.SentMics + ResendMics)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public void Dispose()

@@ -32,9 +32,9 @@ public class ConnectionTerminal
     private readonly ClientConnection.GoshujinClass clientConnections = new();
     private readonly ServerConnection.GoshujinClass serverConnections = new();
 
-    // private readonly object syncQueue = new();
-    private readonly ConcurrentQueue<NetTransmission> sendQueue = new();
-    private readonly ConcurrentQueue<NetTransmission> resendQueue = new();
+    private readonly object syncQueue = new();
+    private readonly Queue<NetTransmission> sendQueue = new();
+    private readonly Queue<NetTransmission> resendQueue = new();
 
     public void Clean()
     {
@@ -292,7 +292,7 @@ public class ConnectionTerminal
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void RegisterSend(NetTransmission transmission)
     {
-        // lock (this.syncQueue)
+        lock (this.syncQueue)
         {
             this.sendQueue.Enqueue(transmission);
         }
@@ -300,44 +300,54 @@ public class ConnectionTerminal
 
     internal void ProcessSend(NetSender netSender)
     {
-        // lock (this.syncQueue)
+        lock (this.syncQueue)
         {
+            // Send queue
             while (netSender.SendCapacity >= netSender.SendCount + NetTransmission.GeneThreshold)
             {
                 if (!this.sendQueue.TryDequeue(out var transmission))
-                {
+                {// No send queue
                     return;
                 }
 
                 if (transmission.SendInternal(netSender, out _))
-                {
+                {// Success
                     this.resendQueue.Enqueue(transmission);
                 }
             }
 
+            // Resend queue
             while (netSender.SendCapacity >= netSender.SendCount + NetTransmission.GeneThreshold)
             {
                 if (!this.resendQueue.TryPeek(out var transmission))
-                {
+                {// No resend queue
                     break;
                 }
 
-                if (transmission.CheckResend())
-                {
-                    transmission = this.resendQueue.Dequeue();
-                    if (transmission.SendInternal(netSender, out var sentFlag) &&
-                        sentFlag)
-                    {// Resend
-                        this.resendQueue.Enqueue(transmission);
-                    }
+                var sentMics = transmission.GetLargestSentMics();
+                if (netSender.CurrentSystemMics < sentMics + NetGene.ResendMics)
+                {// Wait until ResendMics elapses.
+                    break;
                 }
+
+                transmission = this.resendQueue.Dequeue();
+                if (transmission.SendInternal(netSender, out var sentCount) &&
+                    sentCount > 0)
+                {// Resend
+                    this.resendQueue.Enqueue(transmission);
+                }
+
+                /*if (!transmission.CheckResend(netSender))
+                {
+                    break;
+                }*/
             }
         }
     }
 
     private void CloseClientConnection(ClientConnection.GoshujinClass g, ClientConnection connection)
     {// lock (g.SyncObject)
-        // ConnectionStateCode
+     // ConnectionStateCode
         g.OpenListChain.Remove(connection);
         g.OpenEndPointChain.Remove(connection);
         connection.ResponseSystemMics = 0;
@@ -349,7 +359,7 @@ public class ConnectionTerminal
 
     private void CloseServerConnection(ServerConnection.GoshujinClass g, ServerConnection connection)
     {// lock (g.SyncObject)
-        // ConnectionStateCode
+     // ConnectionStateCode
         g.OpenListChain.Remove(connection);
         g.OpenEndPointChain.Remove(connection);
         connection.ResponseSystemMics = 0;

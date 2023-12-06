@@ -192,7 +192,31 @@ public sealed partial class NetTransmission // : IDisposable
         return new();
     }
 
-    internal bool CheckResend()
+    internal long GetLargestSentMics()
+    {
+        long mics = 0;
+        lock (this.syncObject)
+        {
+            if (this.gene0 is not null)
+            {
+                mics = mics > this.gene0.SentMics ? mics : this.gene0.SentMics;
+            }
+
+            if (this.gene1 is not null)
+            {
+                mics = mics > this.gene1.SentMics ? mics : this.gene1.SentMics;
+            }
+
+            if (this.gene2 is not null)
+            {
+                mics = mics > this.gene2.SentMics ? mics : this.gene2.SentMics;
+            }
+        }
+
+        return mics;
+    }
+
+    internal bool CheckResend(NetSender netSender)
     {
         lock (this.syncObject)
         {
@@ -201,13 +225,26 @@ public sealed partial class NetTransmission // : IDisposable
                 return false;
             }
 
-            if (this.gene0?.State)
+            if (this.gene0 is not null && this.gene0.CheckResend(netSender))
+            {
+                return true;
+            }
+            else if (this.gene1 is not null && this.gene1.CheckResend(netSender))
+            {
+                return true;
+            }
+            else if (this.gene2 is not null && this.gene2.CheckResend(netSender))
+            {
+                return true;
+            }
         }
+
+        return false;
     }
 
-    internal bool SendInternal(NetSender netSender, out bool sentFlag)
+    internal bool SendInternal(NetSender netSender, out int sentCount)
     {
-        sentFlag = false;
+        sentCount = 0;
         if (this.Connection.IsClosedOrDisposed)
         {
             this.Dispose();
@@ -222,9 +259,13 @@ public sealed partial class NetTransmission // : IDisposable
             }
 
             var endpoint = this.Connection.EndPoint.EndPoint;
-            this.gene0?.Send(netSender, endpoint, ref sentFlag);
-            this.gene1?.Send(netSender, endpoint, ref sentFlag);
-            this.gene2?.Send(netSender, endpoint, ref sentFlag);
+
+            // Single send
+            this.gene0?.Send(netSender, endpoint, ref sentCount);
+            this.gene1?.Send(netSender, endpoint, ref sentCount);
+            this.gene2?.Send(netSender, endpoint, ref sentCount);
+
+            // Multiple send
             if (this.genes is not null)
             {
             }
