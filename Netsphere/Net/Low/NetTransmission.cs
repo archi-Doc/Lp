@@ -33,14 +33,7 @@ public sealed partial class NetTransmission // : IDisposable
         this.TransmissionId = transmissionId;
 
         this.IsClient = isClient;
-        if (isClient)
-        {
-            this.State = TransmissionState.Sending;
-        }
-        else
-        {
-            this.State = TransmissionState.Receiving;
-        }
+        this.State = TransmissionState.Sending;
     }
 
     #region FieldAndProperty
@@ -55,6 +48,7 @@ public sealed partial class NetTransmission // : IDisposable
     public TransmissionState State { get; private set; } // lock (this.syncObject)
 
     private readonly object syncObject = new();
+    private uint totalGene;
     private TaskCompletionSource<NetResult>? tcs;
     private NetGene? gene0; // Gene 0
     private NetGene? gene1; // Gene 1
@@ -62,6 +56,12 @@ public sealed partial class NetTransmission // : IDisposable
     private NetGene.GoshujinClass? genes; // Multiple genes
 
     #endregion
+
+    public void SetReceive(uint totalGene)
+    {
+        this.State = TransmissionState.Receiving;
+        this.totalGene = totalGene;
+    }
 
     public void Dispose()
     {
@@ -112,7 +112,7 @@ public sealed partial class NetTransmission // : IDisposable
 
     internal NetResult SendBlock(uint primaryId, ulong secondaryId, ByteArrayPool.MemoryOwner block, TaskCompletionSource<NetResult>? tcs)
     {
-        var info = CalculateGene((uint)(sizeof(uint) + sizeof(ulong) + block.Span.Length)); // PrimaryId, SecondaryId, Block
+        var info = CalculateGene((uint)block.Span.Length);
 
         lock (this.syncObject)
         {
@@ -201,14 +201,14 @@ public sealed partial class NetTransmission // : IDisposable
         return NetResult.Success;
     }
 
-    internal void ProcessReceive_Gene(uint genePosition, uint geneTotal, ByteArrayPool.MemoryOwner toBeShared)
+    internal void ProcessReceive_Gene(uint genePosition, ByteArrayPool.MemoryOwner toBeShared)
     {
         var completeFlag = false;
         lock (this.syncObject)
         {
             if (this.State == TransmissionState.Receiving)
             {// Set gene
-                if (geneTotal <= GeneThreshold)
+                if (this.totalGene <= GeneThreshold)
                 {// Single send/recv
                     if (genePosition == 0)
                     {
@@ -226,20 +226,20 @@ public sealed partial class NetTransmission // : IDisposable
                         this.gene2.SetRecv(toBeShared);
                     }
 
-                    if (geneTotal == 0)
+                    if (this.totalGene == 0)
                     {
                         completeFlag = true;
                     }
-                    else if (geneTotal == 1)
+                    else if (this.totalGene == 1)
                     {
                         completeFlag = this.gene0?.IsReceived == true;
                     }
-                    else if (geneTotal == 2)
+                    else if (this.totalGene == 2)
                     {
                         completeFlag = this.gene0?.IsReceived == true &&
                             this.gene1?.IsReceived == true;
                     }
-                    else if (geneTotal == 3)
+                    else if (this.totalGene == 3)
                     {
                         completeFlag = this.gene0?.IsReceived == true &&
                             this.gene1?.IsReceived == true &&
@@ -264,7 +264,6 @@ public sealed partial class NetTransmission // : IDisposable
     {
         if (this.genes is null)
         {// Single send/recv
-
         }
         else
         {// Multiple send/recv
@@ -278,7 +277,7 @@ public sealed partial class NetTransmission // : IDisposable
 
         if (this.tcs is not null)
         {
-            this.tcs.SetResult
+            // this.tcs.SetResult
         }
     }
 
@@ -376,7 +375,7 @@ public sealed partial class NetTransmission // : IDisposable
         Span<byte> frameHeader = stackalloc byte[FirstGeneFrame.Length];
         var span = frameHeader;
 
-        BitConverter.TryWriteBytes(span, (ushort)FrameType.Gene); // Frame type
+        BitConverter.TryWriteBytes(span, (ushort)FrameType.FirstGene); // Frame type
         span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, this.TransmissionId); // TransmissionId
@@ -403,7 +402,7 @@ public sealed partial class NetTransmission // : IDisposable
         Span<byte> frameHeader = stackalloc byte[FollowingGeneFrame.Length];
         var span = frameHeader;
 
-        BitConverter.TryWriteBytes(span, (ushort)FrameType.Gene); // Frame type
+        BitConverter.TryWriteBytes(span, (ushort)FrameType.FollowingGene); // Frame type
         span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, this.TransmissionId); // TransmissionId

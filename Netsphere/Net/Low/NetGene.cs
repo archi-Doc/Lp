@@ -13,12 +13,11 @@ internal partial class NetGene : IDisposable
     public enum GeneState
     {
         // GeneState:
-        // Send: Initial -> SetSend() -> WaitingToSend -> Send() -> WaitingForAck -> (Receive Ack) -> Complete.
-        // Receive: Initial -> SetReceive() -> WaitingToReceive -> (Receive) -> (Managed: SendingAck) -> (Send Ack) -> ReceiveComplete.
+        // Send: Initial -> SetSend() -> WaitingToSend -> Send() -> WaitingForAck -> (Receive Ack) -> Complete
+        // Receive: Initial -> SetReceive() -> SendingAck -> Complete
         Initial,
         WaitingToSend,
         WaitingForAck,
-        WaitingToReceive,
         SendingAck,
         Complete,
     }

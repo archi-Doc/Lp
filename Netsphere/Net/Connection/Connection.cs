@@ -233,9 +233,44 @@ Wait:
     }
 
     internal void ProcessReceive_FirstGene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
-    {// uint TransmissionId, uint GenePosition, uint GeneMax, Gene
+    {
         var span = toBeShared.Span;
-        if (span.Length < FirstGeneFrame.LengthExceptsFrameType)
+        if (span.Length < FirstGeneFrame.LengthExcludingFrameType)
+        {
+            return;
+        }
+
+        var transmissionId = BitConverter.ToUInt32(span);
+        span = span.Slice(sizeof(uint));
+        var totalGene = BitConverter.ToUInt32(span);
+        span = span.Slice(sizeof(uint));
+
+        NetTransmission? transmission;
+        lock (this.transmissions.SyncObject)
+        {
+            if (this.transmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
+            {
+                return;
+            }
+
+            // New transmission
+            if (this.transmissions.Count >= this.Agreement.MaxTransmissions)
+            {// Maximum number reached.
+                return;
+            }
+
+            transmission = new NetTransmission(this, false, transmissionId);
+            transmission.Goshujin = this.transmissions;
+            transmission.SetReceive(totalGene);
+        }
+
+        transmission.ProcessReceive_Gene(0, toBeShared.Slice(FirstGeneFrame.LengthExcludingFrameType));
+    }
+
+    internal void ProcessReceive_FollowingGene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
+    {// uint TransmissionId, uint GenePosition
+        var span = toBeShared.Span;
+        if (span.Length < FirstGeneFrame.LengthExcludingFrameType)
         {
             return;
         }
@@ -244,25 +279,17 @@ Wait:
         span = span.Slice(sizeof(uint));
         var genePosition = BitConverter.ToUInt32(span);
         span = span.Slice(sizeof(uint));
-        var geneTotal = BitConverter.ToUInt32(span);
-        span = span.Slice(sizeof(uint));
 
         NetTransmission? transmission;
         lock (this.transmissions.SyncObject)
         {
             if (!this.transmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
-            {// New transmission
-                if (this.transmissions.Count >= this.Agreement.MaxTransmissions)
-                {// Maximum number reached.
-                    return;
-                }
-
-                transmission = new NetTransmission(this, false, transmissionId);
-                transmission.Goshujin = this.transmissions;
+            {
+                return;
             }
         }
 
-        transmission.ProcessReceive_Gene(genePosition, geneTotal, toBeShared.Slice(FirstGeneFrame.LengthExceptsFrameType));
+        transmission.ProcessReceive_Gene(genePosition, toBeShared.Slice(FirstGeneFrame.LengthExcludingFrameType));
     }
 
     internal bool CreatePacket(scoped Span<byte> frame, out ByteArrayPool.MemoryOwner owner)
