@@ -1,7 +1,9 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using Netsphere.Block;
 using Netsphere.Packet;
 
 namespace Netsphere.Net;
@@ -206,7 +208,8 @@ public sealed partial class NetTransmission // : IDisposable
         var completeFlag = false;
         lock (this.syncObject)
         {
-            if (this.State == TransmissionState.Receiving)
+            if (this.State == TransmissionState.Receiving &&
+                genePosition < this.totalGene)
             {// Set gene
                 if (this.totalGene <= GeneThreshold)
                 {// Single send/recv
@@ -257,17 +260,104 @@ public sealed partial class NetTransmission // : IDisposable
             }
         }
 
-        // Ack (TransmissionId, GenePosition)
+        if (this.totalGene <= GeneThreshold)
+        {// Fast ack
+            if (completeFlag)
+            {
+                Span<byte> ackFrame = stackalloc byte[2 + (8 * 3)];
+                var span = ackFrame;
+                BitConverter.TryWriteBytes(span, (ushort)FrameType.Ack);
+                span = span.Slice(sizeof(ushort));
+
+                if (this.totalGene == 1)
+                {
+                    BitConverter.TryWriteBytes(span, this.TransmissionId);
+                    span = span.Slice(sizeof(uint));
+                    BitConverter.TryWriteBytes(span, 0u);
+                    span = span.Slice(sizeof(uint));
+                }
+                else if (this.totalGene == 2)
+                {
+                    BitConverter.TryWriteBytes(span, this.TransmissionId);
+                    span = span.Slice(sizeof(uint));
+                    BitConverter.TryWriteBytes(span, 0u);
+                    span = span.Slice(sizeof(uint));
+                    BitConverter.TryWriteBytes(span, this.TransmissionId);
+                    span = span.Slice(sizeof(uint));
+                    BitConverter.TryWriteBytes(span, 1u);
+                    span = span.Slice(sizeof(uint));
+                }
+                else if (this.totalGene == 3)
+                {
+                    BitConverter.TryWriteBytes(span, this.TransmissionId);
+                    span = span.Slice(sizeof(uint));
+                    BitConverter.TryWriteBytes(span, 0u);
+                    span = span.Slice(sizeof(uint));
+                    BitConverter.TryWriteBytes(span, this.TransmissionId);
+                    span = span.Slice(sizeof(uint));
+                    BitConverter.TryWriteBytes(span, 1u);
+                    span = span.Slice(sizeof(uint));
+                    BitConverter.TryWriteBytes(span, this.TransmissionId);
+                    span = span.Slice(sizeof(uint));
+                    BitConverter.TryWriteBytes(span, 2u);
+                    span = span.Slice(sizeof(uint));
+                }
+
+                this.Connection.SendPriorityFrame(ackFrame.Slice(0, 2 + (8 * (int)this.totalGene)));
+            }
+        }
+        else
+        {// Ack (TransmissionId, GenePosition)
+            // this.Connection.AddAck(this.TransmissionId, genePosition);
+        }
     }
 
     internal void ProcessReceive_GeneComplete()
     {
+        int length;
+        ByteArrayPool.MemoryOwner owner = default;
+
         if (this.genes is null)
         {// Single send/recv
+            if (this.totalGene == 0)
+            {
+                length = 0;
+            }
+            else
+            {
+                var firstPacket = this.gene0!.Packet.Slice(12);
+                length = firstPacket.Span.Length;
+                if (this.totalGene == 1)
+                {
+                    owner = firstPacket.IncrementAndShare();
+                }
+                else if (this.totalGene == 2)
+                {
+                    length += this.gene1!.Packet.Span.Length;
+                    owner = ByteArrayPool.Default.Rent(length).ToMemoryOwner(0, length);
+
+                    var span = owner.Span;
+                    firstPacket.Span.CopyTo(span);
+                    span = span.Slice(firstPacket.Span.Length);
+                    this.gene1!.Packet.Span.CopyTo(span);
+                }
+                else if (this.totalGene == 3)
+                {
+                    length += this.gene1!.Packet.Span.Length;
+                    length += this.gene2!.Packet.Span.Length;
+                    owner = ByteArrayPool.Default.Rent(length).ToMemoryOwner(0, length);
+
+                    var span = owner.Span;
+                    firstPacket.Span.CopyTo(span);
+                    span = span.Slice(firstPacket.Span.Length);
+                    this.gene1!.Packet.Span.CopyTo(span);
+                    span = span.Slice(this.gene1!.Packet.Span.Length);
+                    this.gene2!.Packet.Span.CopyTo(span);
+                }
+            }
         }
         else
         {// Multiple send/recv
-
         }
 
         if (this.IsClient)

@@ -230,6 +230,13 @@ Wait:
 
     internal void ProcessReceive_Ack(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
     {// { uint TransmissionId, uint GenePosition } x n
+        var span = toBeShared.Span;
+        var count = toBeShared.Span.Length / 8;
+        NetTransmission? enteredTransmission;
+        while (count-- > 0)
+        {
+
+        }
     }
 
     internal void ProcessReceive_FirstGene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
@@ -249,7 +256,7 @@ Wait:
         lock (this.transmissions.SyncObject)
         {
             if (this.transmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
-            {
+            {// The same TransmissionId already exists.
                 return;
             }
 
@@ -264,7 +271,7 @@ Wait:
             transmission.SetReceive(totalGene);
         }
 
-        transmission.ProcessReceive_Gene(0, toBeShared.Slice(FirstGeneFrame.LengthExcludingFrameType));
+        transmission.ProcessReceive_Gene(0, toBeShared.Slice(FirstGeneFrame.LengthExcludingFrameType - 12));
     }
 
     internal void ProcessReceive_FollowingGene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
@@ -279,12 +286,16 @@ Wait:
         span = span.Slice(sizeof(uint));
         var genePosition = BitConverter.ToUInt32(span);
         span = span.Slice(sizeof(uint));
+        if (genePosition == 0)
+        {
+            return;
+        }
 
         NetTransmission? transmission;
         lock (this.transmissions.SyncObject)
         {
             if (!this.transmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
-            {
+            {// No transmission
                 return;
             }
         }
@@ -311,7 +322,7 @@ Wait:
         BitConverter.TryWriteBytes(span, (ushort)this.EndPoint.Engagement); // Engagement
         span = span.Slice(sizeof(ushort));
 
-        BitConverter.TryWriteBytes(span, (ushort)PacketType.Encrypted); // PacketType
+        BitConverter.TryWriteBytes(span, (ushort)PacketType.EncryptedResponse); // PacketType
         span = span.Slice(sizeof(ushort));
 
         BitConverter.TryWriteBytes(span, this.ConnectionId); // Id
