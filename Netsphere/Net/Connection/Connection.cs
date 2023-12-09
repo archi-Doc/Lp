@@ -231,11 +231,28 @@ Wait:
     internal void ProcessReceive_Ack(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
     {// { uint TransmissionId, uint GenePosition } x n
         var span = toBeShared.Span;
-        var count = toBeShared.Span.Length / 8;
-        NetTransmission? enteredTransmission;
-        while (count-- > 0)
+        lock (this.transmissions.SyncObject)
         {
+            NetTransmission? previous = null;
+            while (span.Length >= 8)
+            {
+                var transmissionId = BitConverter.ToUInt32(span);
+                span = span.Slice(sizeof(uint));
+                var genePosition = BitConverter.ToUInt32(span);
+                span = span.Slice(sizeof(uint));
 
+                NetTransmission? transmission;
+                if (previous is not null && previous.TransmissionId == transmissionId)
+                {
+                    transmission = previous;
+                }
+                else if (!this.transmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
+                {
+                    continue;
+                }
+
+                transmission.ProcessReceive_Ack()
+            }
         }
     }
 
