@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Netsphere.Block;
 using Netsphere.Packet;
-using static Arc.Unit.ByteArrayPool;
 
 namespace Netsphere.Net;
 
