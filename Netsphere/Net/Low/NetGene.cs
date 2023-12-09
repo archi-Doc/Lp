@@ -42,6 +42,8 @@ internal partial class NetGene : IDisposable
 
     public bool IsReceived => this.State == GeneState.SendingAck;
 
+    public bool IsComplete => this.State == GeneState.Complete;
+
     #endregion
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -60,6 +62,7 @@ internal partial class NetGene : IDisposable
             this.State == GeneState.WaitingForAck)
         {
             netSender.Send_NotThreadSafe(endPoint, this.Packet);
+            this.State = GeneState.WaitingForAck;
             this.SentMics = netSender.CurrentSystemMics;
             sentCount++;
         }
@@ -86,6 +89,16 @@ internal partial class NetGene : IDisposable
 
         this.State = GeneState.SendingAck;
         this.Packet = toBeShared.IncrementAndShare();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SetAck()
+    {
+        if (this.State == GeneState.WaitingToSend ||
+            this.State == GeneState.WaitingForAck)
+        {
+            this.State = GeneState.Complete;
+        }
     }
 
     public void Dispose()

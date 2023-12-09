@@ -56,7 +56,7 @@ public sealed partial class ClientConnection : Connection
             return NetResult.NoTransmission;
         }
 
-        var tcs = new TaskCompletionSource<NetResult>();
+        var tcs = new TaskCompletionSource<NetResult>(TaskCreationOptions.RunContinuationsAsynchronously);
         var result = transmission.SendBlock(0, 0, owner, tcs);
         if (result != NetResult.Success)
         {

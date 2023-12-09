@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Netsphere.Block;
 using Netsphere.Packet;
+using static Arc.Unit.ByteArrayPool;
 
 namespace Netsphere.Net;
 
@@ -65,11 +66,10 @@ public sealed partial class NetTransmission // : IDisposable
         this.totalGene = totalGene;
     }
 
-    public void Dispose()
+    internal void DisposeInternal()
     {
         TaskCompletionSource<NetResult>? tcs;
 
-        this.Connection.RemoveTransmission(this);
         lock (this.syncObject)
         {
             if (this.State == TransmissionState.Disposed)
@@ -122,6 +122,7 @@ public sealed partial class NetTransmission // : IDisposable
 
             this.State = TransmissionState.Sending;
             this.tcs = tcs;
+            this.totalGene = info.NumberOfGenes;
 
             var span = block.Span;
             if (info.NumberOfGenes == 1)
@@ -206,6 +207,8 @@ public sealed partial class NetTransmission // : IDisposable
     internal void ProcessReceive_Gene(uint genePosition, ByteArrayPool.MemoryOwner toBeShared)
     {
         var completeFlag = false;
+        var serverFlag = false;
+        ByteArrayPool.MemoryOwner owner;
         lock (this.syncObject)
         {
             if (this.State == TransmissionState.Receiving &&
@@ -235,16 +238,19 @@ public sealed partial class NetTransmission // : IDisposable
                     }
                     else if (this.totalGene == 1)
                     {
-                        completeFlag = this.gene0?.IsReceived == true;
+                        completeFlag =
+                            this.gene0?.IsReceived == true;
                     }
                     else if (this.totalGene == 2)
                     {
-                        completeFlag = this.gene0?.IsReceived == true &&
+                        completeFlag =
+                            this.gene0?.IsReceived == true &&
                             this.gene1?.IsReceived == true;
                     }
                     else if (this.totalGene == 3)
                     {
-                        completeFlag = this.gene0?.IsReceived == true &&
+                        completeFlag =
+                            this.gene0?.IsReceived == true &&
                             this.gene1?.IsReceived == true &&
                             this.gene2?.IsReceived == true;
                     }
@@ -255,7 +261,7 @@ public sealed partial class NetTransmission // : IDisposable
 
                 if (completeFlag)
                 {// Complete
-                    this.ProcessReceive_GeneComplete();
+                    serverFlag = this.ProcessReceive_GeneComplete(out owner);
                 }
             }
         }
@@ -310,12 +316,16 @@ public sealed partial class NetTransmission // : IDisposable
         {// Ack (TransmissionId, GenePosition)
             // this.Connection.AddAck(this.TransmissionId, genePosition);
         }
+
+        if (serverFlag)
+        {// Connection, NetTransmission, Owner
+        }
     }
 
-    internal void ProcessReceive_GeneComplete()
+    internal bool ProcessReceive_GeneComplete(out ByteArrayPool.MemoryOwner toBeMoved)
     {
         int length;
-        ByteArrayPool.MemoryOwner owner = default;
+        toBeMoved = default;
 
         if (this.genes is null)
         {// Single send/recv
@@ -329,14 +339,14 @@ public sealed partial class NetTransmission // : IDisposable
                 length = firstPacket.Span.Length;
                 if (this.totalGene == 1)
                 {
-                    owner = firstPacket.IncrementAndShare();
+                    toBeMoved = firstPacket.IncrementAndShare();
                 }
                 else if (this.totalGene == 2)
                 {
                     length += this.gene1!.Packet.Span.Length;
-                    owner = ByteArrayPool.Default.Rent(length).ToMemoryOwner(0, length);
+                    toBeMoved = ByteArrayPool.Default.Rent(length).ToMemoryOwner(0, length);
 
-                    var span = owner.Span;
+                    var span = toBeMoved.Span;
                     firstPacket.Span.CopyTo(span);
                     span = span.Slice(firstPacket.Span.Length);
                     this.gene1!.Packet.Span.CopyTo(span);
@@ -345,9 +355,9 @@ public sealed partial class NetTransmission // : IDisposable
                 {
                     length += this.gene1!.Packet.Span.Length;
                     length += this.gene2!.Packet.Span.Length;
-                    owner = ByteArrayPool.Default.Rent(length).ToMemoryOwner(0, length);
+                    toBeMoved = ByteArrayPool.Default.Rent(length).ToMemoryOwner(0, length);
 
-                    var span = owner.Span;
+                    var span = toBeMoved.Span;
                     firstPacket.Span.CopyTo(span);
                     span = span.Slice(firstPacket.Span.Length);
                     this.gene1!.Packet.Span.CopyTo(span);
@@ -361,14 +371,85 @@ public sealed partial class NetTransmission // : IDisposable
         }
 
         if (this.IsClient)
-        {
+        {// Client
             this.Dispose();
+        }
+        else
+        {// Server
+            return true;
         }
 
         if (this.tcs is not null)
         {
             // this.tcs.SetResult
         }
+
+        return false;
+    }
+
+    internal bool ProcessReceive_Ack(uint genePosition)
+    {
+        var completeFlag = false;
+        lock (this.syncObject)
+        {
+            if (this.State == TransmissionState.Sending &&
+                genePosition < this.totalGene)
+            {
+                if (this.genes is null)
+                {// Single send/recv
+                    if (genePosition == 0)
+                    {
+                        this.gene0?.SetAck();
+                    }
+                    else if (genePosition == 1)
+                    {
+                        this.gene1?.SetAck();
+                    }
+                    else if (genePosition == 2)
+                    {
+                        this.gene2?.SetAck();
+                    }
+                }
+                else
+                {// Multiple send/recv
+                }
+
+                if (this.totalGene == 0)
+                {
+                    completeFlag = true;
+                }
+                else if (this.totalGene == 1)
+                {
+                    completeFlag =
+                        this.gene0?.IsComplete == true;
+                }
+                else if (this.totalGene == 2)
+                {
+                    completeFlag =
+                        this.gene0?.IsComplete == true &&
+                        this.gene1?.IsComplete == true;
+                }
+                else if (this.totalGene == 3)
+                {
+                    completeFlag =
+                        this.gene0?.IsComplete == true &&
+                        this.gene1?.IsComplete == true &&
+                        this.gene2?.IsComplete == true;
+                }
+
+                if (completeFlag)
+                {
+                    if (this.tcs is null)
+                    {// Receive
+                    }
+                    else
+                    {// Tcs
+                    }
+                }
+            }
+        }
+
+        return completeFlag;
     }
 
     internal async Task<NetResponse> ReceiveBlock()

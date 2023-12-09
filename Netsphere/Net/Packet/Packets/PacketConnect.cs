@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.ComponentModel;
 using Netsphere.Block;
 using Netsphere.Crypto;
 using Netsphere.Server;
@@ -25,15 +24,18 @@ internal partial class PacketConnect : IPacket
     }
 
     [Key(0)]
-    public ushort Engagement { get; set; }
+    public uint NetIdentifier { get; set; }
 
     [Key(1)]
-    public NodePublicKey ClientPublicKey { get; set; }
+    public ushort Engagement { get; set; }
 
     [Key(2)]
-    public ulong ClientSalt { get; set; }
+    public NodePublicKey ClientPublicKey { get; set; }
 
     [Key(3)]
+    public ulong ClientSalt { get; set; }
+
+    [Key(4)]
     public ulong ClientSalt2 { get; set; }
 }
 

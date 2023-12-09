@@ -111,7 +111,7 @@ public sealed partial class PacketTerminal
             return (NetResult.Timeout, default);
         }
 
-        var tcs = new TaskCompletionSource<(NetResult Result, ByteArrayPool.MemoryOwner ToBeMoved)>();
+        var tcs = new TaskCompletionSource<(NetResult Result, ByteArrayPool.MemoryOwner ToBeMoved)>(TaskCreationOptions.RunContinuationsAsynchronously);
         CreatePacket(0, packet, out var owner);
         this.AddSendPacket(endPoint.EndPoint, owner, true, tcs);
 

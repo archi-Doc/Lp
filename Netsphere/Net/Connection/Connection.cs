@@ -143,15 +143,6 @@ Wait:
         goto Retry;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void RemoveTransmission(NetTransmission transmission)
-    {
-        lock (this.transmissions.SyncObject)
-        {
-            transmission.Goshujin = null;
-        }
-    }
-
     public void Close()
         => this.Dispose();
 
@@ -231,6 +222,7 @@ Wait:
     internal void ProcessReceive_Ack(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
     {// { uint TransmissionId, uint GenePosition } x n
         var span = toBeShared.Span;
+        NetTransmission? transmissionToDispose = null;
         lock (this.transmissions.SyncObject)
         {
             NetTransmission? previous = null;
@@ -251,9 +243,15 @@ Wait:
                     continue;
                 }
 
-                transmission.ProcessReceive_Ack()
+                if (transmission.ProcessReceive_Ack(genePosition))
+                {// Dispose the complete transmission
+                    transmissionToDispose = transmission;
+                    transmissionToDispose.Goshujin = null;
+                }
             }
         }
+
+        transmissionToDispose?.DisposeInternal();
     }
 
     internal void ProcessReceive_FirstGene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
