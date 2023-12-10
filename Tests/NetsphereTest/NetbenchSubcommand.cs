@@ -30,7 +30,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         this.logger.TryGet()?.Log($"Netbench: {node.ToString()}");
 
         // var nodeInformation = NodeInformation.Alternative;
-        using (var terminal = this.NetControl.Terminal.TryCreate(node))
+        using (var terminal = this.NetControl.TerminalObsolete.TryCreate(node))
         {
             /*var p = new PacketPunch(null);
             var sw = Stopwatch.StartNew();
@@ -67,8 +67,8 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
             w3.ResponseAsync.Wait();*/
         }
 
-        // await this.PingpongSmallData2(node);
-        await this.MassiveSmallData(node); // 1000 ms
+        await this.PingpongSmallData2(node);
+        // await this.MassiveSmallData(node); // 1000 ms
     }
 
     public NetControl NetControl { get; set; }
@@ -125,15 +125,24 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         var count = 0;
         for (var j = 0; j < N; j++)
         {
-            using (var terminal = this.NetControl.Terminal.TryCreate(node))
+            using (var terminal = this.NetControl.TerminalObsolete.TryCreate(node))
             {
                 if (terminal is null)
                 {
                     return;
-
                 }
                 var service = terminal.GetService<IBenchmarkService>();
-                var response = service.Pingpong(data).ResponseAsync;
+                var response = await service.Pingpong(data).ResponseAsync;
+                if (response.IsSuccess)
+                {
+                    count++;
+                }
+                else
+                {
+                    Console.WriteLine(response.Result.ToString());
+                }
+
+                /*var response = service.Pingpong(data).ResponseAsync;
                 if (response.Result.IsSuccess)
                 {
                     count++;
@@ -141,7 +150,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
                 else
                 {
                     Console.WriteLine(response.Result.Result.ToString());
-                }
+                }*/
             }
         }
 
@@ -167,7 +176,7 @@ public class NetbenchSubcommand : ISimpleCommandAsync<NetbenchOptions>
         {
             for (var j = 0; j < (Total / Concurrent); j++)
             {
-                using (var terminal = this.NetControl.Terminal.TryCreate(node))
+                using (var terminal = this.NetControl.TerminalObsolete.TryCreate(node))
                 {
                     if (terminal is null)
                     {

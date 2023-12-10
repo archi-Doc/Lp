@@ -3,11 +3,11 @@
 namespace Netsphere;
 
 [TinyhandObject]
-internal partial class PacketRelay : IPacket
+internal partial class PacketRelayObsolete : IPacketObsolete
 {
     public const int EndpointAliveInSeconds = 10;
 
-    public PacketId PacketId => PacketId.Relay;
+    public PacketIdObsolete PacketId => PacketIdObsolete.Relay;
 
     [Key(0)]
     public IPEndPoint? NextEndpoint { get; set; }

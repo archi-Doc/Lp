@@ -49,22 +49,22 @@ public class PunchSubcommand : ISimpleCommandAsync<PunchOptions>
         this.logger.TryGet()?.Log($"Punch: {node.ToString()}");
 
         var sw = Stopwatch.StartNew();
-        using (var terminal = this.Control.NetControl.Terminal.TryCreate(node))
+        using (var terminal = this.Control.NetControl.TerminalObsolete.TryCreate(node))
         {
             NetEndPoint endPoint;
             if (terminal is null)
             {
                 return;
             }
-            else if (this.Control.NetControl.Terminal.TryCreateEndPoint(nextNode, out endPoint))
+            else if (this.Control.NetControl.TerminalObsolete.TryCreateEndPoint(nextNode, out endPoint))
             {
                 return;
             }
 
-            var p = new PacketPunch(endPoint.EndPoint);
+            var p = new PacketPunchObsolete(endPoint.EndPoint);
 
             sw.Restart();
-            var result = await terminal.SendPacketAndReceiveAsync<PacketPunch, PacketPunchResponse>(p);
+            var result = await terminal.SendPacketAndReceiveAsync<PacketPunchObsolete, PacketPunchResponseObsolete>(p);
             sw.Stop();
             if (result.Value != null)
             {

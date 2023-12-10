@@ -11,9 +11,9 @@ namespace Netsphere;
 /// 3. Has unique PacketId.<br/>
 /// 4. Length of serialized byte array is less than or equal to <see cref="PacketService.DataPayloadSize"/>.
 /// </summary>
-public interface IPacket : IBlock
+public interface IPacketObsolete : IBlock
 {
-    public PacketId PacketId { get; }
+    public PacketIdObsolete PacketId { get; }
 
     uint IBlock.BlockId => (uint)this.PacketId;
 

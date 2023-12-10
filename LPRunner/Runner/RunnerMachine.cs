@@ -152,14 +152,14 @@ public partial class RunnerMachine : Machine
             return NetResult.NoNodeInformation;
         }
 
-        using (var terminal = this.netControl.Terminal.TryCreate(nodeAddress))
+        using (var terminal = this.netControl.TerminalObsolete.TryCreate(nodeAddress))
         {
             if (terminal is null)
             {
                 return NetResult.NoNetwork;
             }
 
-            var result = await terminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(new());
+            var result = await terminal.SendAndReceiveAsync<PacketPingObsolete, PacketPingResponseObsolete>(new());
             this.logger.TryGet()?.Log($"Ping: {result.Result}");
             return result.Result;
         }

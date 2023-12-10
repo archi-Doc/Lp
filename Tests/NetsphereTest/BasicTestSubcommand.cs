@@ -26,7 +26,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         this.logger.TryGet()?.Log($"{Stopwatch.Frequency}");
 
         // var nodeInformation = NodeInformation.Alternative;
-        using (var terminal = this.NetControl.Terminal.TryCreate(node))
+        using (var terminal = this.NetControl.TerminalObsolete.TryCreate(node))
         {
             if (terminal is null)
             {
@@ -34,7 +34,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             }
 
             // terminal.SetMaximumResponseTime(1_000_000);
-            var t = await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(new PacketPunch());
+            var t = await terminal.SendAndReceiveAsync<PacketPunchObsolete, PacketPunchResponseObsolete>(new PacketPunchObsolete());
             this.logger.TryGet()?.Log($"{t.ToString()}");
 
             var sw = Stopwatch.StartNew();

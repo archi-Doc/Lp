@@ -205,7 +205,7 @@ public partial class NetTerminalObsolete : IDisposable
         }
     }
 
-    internal void CreateHeader(out PacketHeader header, ulong gene)
+    internal void CreateHeader(out PacketHeaderObsolete header, ulong gene)
     {
         header = default;
         header.Gene = gene;
@@ -215,15 +215,15 @@ public partial class NetTerminalObsolete : IDisposable
     internal unsafe void SendAck(ulong gene)
     {
         this.CreateHeader(out var header, gene);
-        header.Id = PacketId.Ack;
+        header.Id = PacketIdObsolete.Ack;
 
         var arrayOwner = PacketPool.Rent();
         fixed (byte* bp = arrayOwner.ByteArray)
         {
-            *(PacketHeader*)bp = header;
+            *(PacketHeaderObsolete*)bp = header;
         }
 
-        this.Terminal.AddRawSend(this.Endpoint.EndPoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize)); // nspi
+        this.Terminal.AddRawSend(this.Endpoint.EndPoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSizeObsolete)); // nspi
     }
 
     internal void ProcessSend(long currentMics)
@@ -397,23 +397,23 @@ public partial class NetTerminalObsolete : IDisposable
 
     internal bool TryEncryptPacket(ByteArrayPool.MemoryOwner plain, ulong gene, out ByteArrayPool.MemoryOwner encrypted)
     {
-        if (this.embryo == null || plain.Memory.Length < PacketService.HeaderSize)
+        if (this.embryo == null || plain.Memory.Length < PacketService.HeaderSizeObsolete)
         {
             encrypted = default;
             return false;
         }
 
         var span = plain.Memory.Span;
-        var source = span.Slice(PacketService.HeaderSize);
+        var source = span.Slice(PacketService.HeaderSizeObsolete);
         Span<byte> iv = stackalloc byte[16];
         BitConverter.TryWriteBytes(iv, gene);
         this.embryo.AsSpan(32, 8).CopyTo(iv.Slice(8));
 
         var packet = PacketPool.Rent();
-        span.Slice(0, PacketService.HeaderSize).CopyTo(packet.ByteArray);
+        span.Slice(0, PacketService.HeaderSizeObsolete).CopyTo(packet.ByteArray);
 
-        this.aes!.TryEncryptCbc(source, iv, packet.ByteArray.AsSpan(PacketService.HeaderSize), out var written, PaddingMode.PKCS7);
-        encrypted = packet.ToMemoryOwner(0, PacketService.HeaderSize + written);
+        this.aes!.TryEncryptCbc(source, iv, packet.ByteArray.AsSpan(PacketService.HeaderSizeObsolete), out var written, PaddingMode.PKCS7);
+        encrypted = packet.ToMemoryOwner(0, PacketService.HeaderSizeObsolete + written);
         PacketService.InsertDataSize(encrypted.Memory, (ushort)written);
 
         return true;

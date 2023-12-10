@@ -8,7 +8,7 @@ namespace Netsphere;
 /// <summary>
 /// NetSocket provides low-level network service.
 /// </summary>
-public sealed class NetSocket
+public sealed class NetSocketObsolete
 {
     public delegate void ProcessSend(long currentMics);
 
@@ -47,7 +47,7 @@ public sealed class NetSocket
                     arrayOwner ??= PacketPool.Rent();
                     var received = udp.Client.ReceiveFrom(arrayOwner.ByteArray, 0, arrayOwner.ByteArray.Length, SocketFlags.None, ref remoteEP);
                     // ValueTask<SocketReceiveFromResult> vt = udp.Client.ReceiveFromAsync(arrayOwner.ByteArray.AsMemory(), SocketFlags.None, remoteEP);
-                    if (received <= NetControl.MaxPayload)
+                    if (received <= NetControl.MaxPacketLength)
                     {// nspi
                         // var systemMics = Mics.GetSystem();
                         var currentMics = core.socket.CurrentSystemMics;
@@ -64,13 +64,13 @@ public sealed class NetSocket
             }
         }
 
-        public RecvCore(ThreadCoreBase parent, NetSocket socket)
+        public RecvCore(ThreadCoreBase parent, NetSocketObsolete socket)
                 : base(parent, Process, false)
         {
             this.socket = socket;
         }
 
-        private NetSocket socket;
+        private NetSocketObsolete socket;
     }
 
     private class SendCore : ThreadCore
@@ -92,7 +92,7 @@ public sealed class NetSocket
             }
         }
 
-        public SendCore(ThreadCoreBase parent, NetSocket socket)
+        public SendCore(ThreadCoreBase parent, NetSocketObsolete socket)
                 : base(parent, Process, false)
         {
             this.socket = socket;
@@ -127,14 +127,14 @@ public sealed class NetSocket
             base.Dispose(disposing);
         }
 
-        private NetSocket socket;
+        private NetSocketObsolete socket;
         private MultimediaTimer? timer;
 
         private object syncObject = new();
         private long previousMics;
     }
 
-    public NetSocket(ProcessSend processSend, ProcessReceive processReceive)
+    public NetSocketObsolete(ProcessSend processSend, ProcessReceive processReceive)
     {
         this.processSend = processSend;
         this.processReceive = processReceive;

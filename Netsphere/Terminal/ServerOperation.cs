@@ -23,17 +23,17 @@ public class ServerOperation : NetOperation
 
     public async Task<NetResult> SendDataAsync(ulong dataId, ByteArrayPool.MemoryOwner data)
     {// Checked
-        return await this.SendDataAsync(true, PacketId.Data, dataId, data).ConfigureAwait(false);
+        return await this.SendDataAsync(true, PacketIdObsolete.Data, dataId, data).ConfigureAwait(false);
     }
 
     public async Task<NetResult> SendDataAsync(ulong dataId, byte[] data)
     {// Checked
-        return await this.SendDataAsync(true, PacketId.Data, dataId, new ByteArrayPool.MemoryOwner(data)).ConfigureAwait(false);
+        return await this.SendDataAsync(true, PacketIdObsolete.Data, dataId, new ByteArrayPool.MemoryOwner(data)).ConfigureAwait(false);
     }
 
     public async Task<NetResult> SendServiceAsync(ulong dataId, ByteArrayPool.MemoryOwner data)
     {// Checked
-        return await this.SendDataAsync(true, PacketId.Rpc, dataId, data).ConfigureAwait(false);
+        return await this.SendDataAsync(true, PacketIdObsolete.Rpc, dataId, data).ConfigureAwait(false);
     }
 
     public unsafe void SendClose()
@@ -56,15 +56,15 @@ public class ServerOperation : NetOperation
         }
 
         this.NetTerminalObsolete.CreateHeader(out var header, netInterface.StandbyGene);
-        header.Id = PacketId.Close;
+        header.Id = PacketIdObsolete.Close;
 
         var arrayOwner = PacketPool.Rent();
         fixed (byte* bp = arrayOwner.ByteArray)
         {
-            *(PacketHeader*)bp = header;
+            *(PacketHeaderObsolete*)bp = header;
         }
 
-        this.Terminal.AddRawSend(this.NetTerminalObsolete.Endpoint.EndPoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize)); // nspi
+        this.Terminal.AddRawSend(this.NetTerminalObsolete.Endpoint.EndPoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSizeObsolete)); // nspi
     }
 
     public async Task<NetReceivedData> ReceiveAsync()
@@ -81,13 +81,13 @@ public class ServerOperation : NetOperation
         }
 
         // Success
-        if (received.PacketId != PacketId.Reserve)
+        if (received.PacketId != PacketIdObsolete.Reserve)
         {
             return received;
         }
 
         // PacketId.Reserve
-        if (!TinyhandSerializer.TryDeserialize<PacketReserve>(received.Received.Memory.Span, out var reserve))
+        if (!TinyhandSerializer.TryDeserialize<PacketReserveObsolete>(received.Received.Memory.Span, out var reserve))
         {
             received.Return();
             return new(NetResult.DeserializationError);
@@ -96,14 +96,14 @@ public class ServerOperation : NetOperation
         received.Return();
         this.receiverInterface2 = NetInterface<object, byte[]>.CreateReserve2(this, reserve);
 
-        this.receiverInterface.SetSend(new PacketReserveResponse());
+        this.receiverInterface.SetSend(new PacketReserveResponseObsolete());
 
         received = await this.receiverInterface2.ReceiveAsync().ConfigureAwait(false);
         return received;
     }
 
     public async Task<NetResult> SendPacketAsync<TSend>(TSend value)
-       where TSend : IPacket
+       where TSend : IPacketObsolete
     {// Checked
         if (!value.AllowUnencrypted && !this.NetTerminalObsolete.IsEncrypted)
         {
@@ -128,21 +128,21 @@ public class ServerOperation : NetOperation
         }
 
         Task<NetResult> task;
-        if (value is IPacket packet)
+        if (value is IPacketObsolete packet)
         {
             task = this.SendDataAsync(!packet.AllowUnencrypted, packet.PacketId, (ulong)packet.PacketId, owner);
         }
         else
         {
             var dataId = BlockService.GetId<TSend>();
-            task = this.SendDataAsync(true, PacketId.Data, dataId, owner);
+            task = this.SendDataAsync(true, PacketIdObsolete.Data, dataId, owner);
         }
 
         owner.Return();
         return await task.ConfigureAwait(false);
     }
 
-    internal async Task<NetResult> SendDataAsync(bool encrypt, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner)
+    internal async Task<NetResult> SendDataAsync(bool encrypt, PacketIdObsolete packetId, ulong dataId, ByteArrayPool.MemoryOwner owner)
     {// Checked
         if (!this.NetTerminalObsolete.IsEncrypted && encrypt)
         {
@@ -166,7 +166,7 @@ public class ServerOperation : NetOperation
         }
 
         // Split into multiple packets. Send PacketReserve.
-        var reserve = new PacketReserve(owner.Memory.Length);
+        var reserve = new PacketReserveObsolete(owner.Memory.Length);
         netInterface.SetSend(reserve);
 
         netInterface = NetInterface<object, byte[]>.CreateReceive(this);
@@ -177,7 +177,7 @@ public class ServerOperation : NetOperation
             {// Timeout/Error
                 return received.Result;
             }
-            else if (received.PacketId != PacketId.ReserveResponse)
+            else if (received.PacketId != PacketIdObsolete.ReserveResponse)
             {
                 return NetResult.ReserveError;
             }

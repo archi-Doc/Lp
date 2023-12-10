@@ -4,9 +4,9 @@ using Netsphere.Misc;
 
 namespace Netsphere;
 
-public class Server
+public class ServerObsolete
 {
-    public Server(NetBase netBase, NetControl netControl)
+    public ServerObsolete(NetBase netBase, NetControl netControl)
     {// InvokeServer()
         this.NetBase = netBase;
         this.NetControl = netControl;
@@ -32,13 +32,13 @@ public class Server
             {
                 if (received.Result == NetResult.Success)
                 {// Success
-                    if (received.PacketId == PacketId.Data &&
+                    if (received.PacketId == PacketIdObsolete.Data &&
                        this.Terminal.TryGetResponder(received.DataId, out var responder) &&
                         responder.Respond(operation!, received))
                     {// Responder
                         continue;
                     }
-                    else if (received.PacketId == PacketId.Rpc)
+                    else if (received.PacketId == PacketIdObsolete.Rpc)
                     {// RPC
                         var op = operation!;
                         operation = null;
@@ -78,7 +78,7 @@ public class Server
         this.NetTerminalObsolete.Logger?.Log($"Server offline.");
     }
 
-    public ThreadCoreBase? Core => this.NetControl.Terminal.Core;
+    public ThreadCoreBase? Core => this.NetControl.TerminalObsolete.Core;
 
     public NetBase NetBase { get; }
 
@@ -94,14 +94,14 @@ public class Server
 
     /*private bool ProcessEssential(ServerOperation operation, NetReceivedData received)
     {
-        if (received.PacketId == PacketId.Punch)
+        if (received.PacketId == PacketIdObsolete.Punch)
         {
             return this.ProcessEssential_Punch(operation, received);
         }
 
         if (this.LpBase.TestFeatures)
         {
-            if (received.PacketId == PacketId.Test)
+            if (received.PacketId == PacketIdObsolete.Test)
             {
                 return this.ProcessEssential_Test(operation, received);
             }
@@ -112,7 +112,7 @@ public class Server
 
     private bool ProcessEssential_Punch(ServerOperation operation, NetReceivedData received)
     {
-        if (!TinyhandSerializer.TryDeserialize<PacketPunch>(received.Received.Memory.Span, out var punch))
+        if (!TinyhandSerializer.TryDeserialize<PacketPunchObsolete>(received.Received.Memory.Span, out var punch))
         {
             return false;
         }
@@ -121,7 +121,7 @@ public class Server
 
         TimeCorrection.AddCorrection(punch.UtcMics);
 
-        var response = new PacketPunchResponse();
+        var response = new PacketPunchResponseObsolete();
         response.Endpoint = this.NetTerminalObsolete.Endpoint.EndPoint;
         response.UtcMics = Mics.GetUtcNow();
 

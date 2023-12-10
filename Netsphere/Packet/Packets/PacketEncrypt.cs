@@ -1,22 +1,21 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Arc.Crypto;
 using Netsphere.Crypto;
 
 namespace Netsphere;
 
 [TinyhandObject]
-internal partial class PacketEncrypt : IPacket
+internal partial class PacketEncryptObsolete : IPacketObsolete
 {
-    public PacketId PacketId => PacketId.Encrypt;
+    public PacketIdObsolete PacketId => PacketIdObsolete.Encrypt;
 
     public bool AllowUnencrypted => true;
 
-    public PacketEncrypt()
+    public PacketEncryptObsolete()
     {
     }
 
-    public PacketEncrypt(NodePublicKey publicKey)
+    public PacketEncryptObsolete(NodePublicKey publicKey)
     {
         this.PublicKey = publicKey;
         this.Salt = RandomVault.Crypto.NextUInt64();
@@ -40,15 +39,15 @@ internal partial class PacketEncrypt : IPacket
 }
 
 [TinyhandObject]
-internal partial class PacketEncryptResponse : IPacket
+internal partial class PacketEncryptResponseObsolete : IPacketObsolete
 {
-    public PacketId PacketId => PacketId.EncryptResponse;
+    public PacketIdObsolete PacketId => PacketIdObsolete.EncryptResponse;
 
     public bool AllowUnencrypted => true;
 
     // public bool ManualAck => true;
 
-    public PacketEncryptResponse()
+    public PacketEncryptResponseObsolete()
     {
     }
 

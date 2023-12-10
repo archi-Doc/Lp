@@ -6,7 +6,7 @@ namespace Netsphere;
 #pragma warning disable SA1300 // Element should begin with upper-case letter
 
 [TinyhandObject]
-public partial class TestPacket : IPacket
+public partial class TestPacket : IPacketObsolete
 {
     public static TestPacket Create(int size)
     {
@@ -36,7 +36,7 @@ public partial class TestPacket : IPacket
 
     public uint BlockId => 0xd75af226;
 
-    public PacketId PacketId => PacketId.Test;
+    public PacketIdObsolete PacketId => PacketIdObsolete.Test;
 
     public override string ToString()
         => $"TestPacket: {this.N}, {this.Message}, Size:{this.Data.Length}, Hash:{Arc.Crypto.FarmHash.Hash64(this.Data).To4Hex()}";

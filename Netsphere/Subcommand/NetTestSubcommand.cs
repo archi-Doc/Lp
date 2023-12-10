@@ -25,7 +25,7 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
 
         this.logger.TryGet()?.Log($"SendData: {address.ToString()}");
 
-        using (var terminal = this.NetControl.Terminal.TryCreate(address))
+        using (var terminal = this.NetControl.TerminalObsolete.TryCreate(address))
         {
             if (terminal is null)
             {
@@ -34,7 +34,7 @@ public class NetTestSubcommand : ISimpleCommandAsync<NetTestOptions>
 
             // await terminal.SendAndReceiveAsync<PacketPunch, PacketPunchResponse>(new PacketPunch());
 
-            var p = new PacketPunch(default);
+            var p = new PacketPunchObsolete(default);
 
             var result = await terminal.EncryptConnectionAsync();
 

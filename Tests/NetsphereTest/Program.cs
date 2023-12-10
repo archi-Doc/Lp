@@ -99,6 +99,7 @@ public class Program
             .Configure(context =>
             {
                 // Command
+                context.AddCommand(typeof(DeliveryTestSubcommand));
                 context.AddCommand(typeof(BasicTestSubcommand));
                 context.AddCommand(typeof(NetbenchSubcommand));
                 context.AddCommand(typeof(TaskScalingSubcommand));
@@ -142,7 +143,7 @@ public class Program
                         context.SetOutput<StreamLogger<TerminalLoggerOptions>>();
                         return;
                     }
-                    else if (context.LogSourceType == typeof(NetSocket))
+                    else if (context.LogSourceType == typeof(NetSocketObsolete))
                     {// NetSocket
                         /*if (context.TryGetOptions<NetsphereOptions>(out var options) &&
                         options.EnableLogger)

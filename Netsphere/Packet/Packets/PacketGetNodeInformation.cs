@@ -3,30 +3,30 @@
 namespace Netsphere;
 
 [TinyhandObject]
-public partial class PacketGetNodeInformation : IPacket
+public partial class PacketGetNodeInformationObsolete : IPacketObsolete
 {
-    public PacketGetNodeInformation()
+    public PacketGetNodeInformationObsolete()
     {
     }
 
-    public PacketId PacketId => PacketId.GetNodeInformation;
+    public PacketIdObsolete PacketId => PacketIdObsolete.GetNodeInformation;
 
     public bool AllowUnencrypted => true;
 }
 
 [TinyhandObject]
-public partial class PacketGetNodeInformationResponse : IPacket
+public partial class PacketGetNodeInformationResponseObsolete : IPacketObsolete
 {
-    public PacketGetNodeInformationResponse()
+    public PacketGetNodeInformationResponseObsolete()
     {
     }
 
-    public PacketGetNodeInformationResponse(NetNode node)
+    public PacketGetNodeInformationResponseObsolete(NetNode node)
     {
         this.Node = node;
     }
 
-    public PacketId PacketId => PacketId.GetNodeInformationResponse;
+    public PacketIdObsolete PacketId => PacketIdObsolete.GetNodeInformationResponse;
 
     public bool AllowUnencrypted => true;
 

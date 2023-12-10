@@ -2,7 +2,7 @@
 
 namespace Netsphere;
 
-public enum PacketId : byte
+public enum PacketIdObsolete : byte
 {
     Invalid,
     Ack,

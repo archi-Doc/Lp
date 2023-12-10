@@ -12,7 +12,7 @@ namespace Netsphere;
 
 internal class NetInterface<TSend, TReceive> : NetInterface
 {
-    internal static NetInterface<TSend, TReceive>? CreateData(NetOperation netOperation, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner, bool receive, out NetResult interfaceResult)
+    internal static NetInterface<TSend, TReceive>? CreateData(NetOperation netOperation, PacketIdObsolete packetId, ulong dataId, ByteArrayPool.MemoryOwner owner, bool receive, out NetResult interfaceResult)
     {// Send and Receive(optional) NetTerminalGene.
         if (owner.Memory.Length > BlockService.MaxBlockSize)
         {
@@ -54,7 +54,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         return netInterface;
     }
 
-    internal static NetInterface<TSend, TReceive>? CreateValue(NetOperation netOperation, TSend value, PacketId id, bool receive, out NetResult interfaceResult)
+    internal static NetInterface<TSend, TReceive>? CreateValue(NetOperation netOperation, TSend value, PacketIdObsolete id, bool receive, out NetResult interfaceResult)
     {// Send and Receive(optional) NetTerminalGene.
         NetInterface<TSend, TReceive>? netInterface;
         (ulong First, ulong Second) sequentialGenes;
@@ -96,7 +96,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         return netInterface;
     }
 
-    internal static NetInterface<TSend, TReceive> CreateReserve2(NetOperation netOperation, PacketReserve reserve)
+    internal static NetInterface<TSend, TReceive> CreateReserve2(NetOperation netOperation, PacketReserveObsolete reserve)
     {
         var netInterface = new NetInterface<TSend, TReceive>(netOperation.NetTerminalObsolete);
 
@@ -118,7 +118,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         return netInterface;
     }
 
-    internal static NetInterface<TSend, TReceive>? CreateReserve(NetOperation netOperation, PacketReserve reserve)
+    internal static NetInterface<TSend, TReceive>? CreateReserve(NetOperation netOperation, PacketReserveObsolete reserve)
     {// Send and Receive(optional) NetTerminalGene.
         NetInterface<TSend, TReceive>? netInterface;
         (ulong First, ulong Second) sequentialGenes;
@@ -126,7 +126,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         var netTerminal = netOperation.NetTerminalObsolete;
         sequentialGenes = netOperation.Get2Genes(); // Send gene
 
-        var response = new PacketReserveResponse();
+        var response = new PacketReserveResponseObsolete();
         netTerminal.CreateHeader(out var header, sequentialGenes.First);
         PacketService.CreatePacket(ref header, response, response.PacketId, out var sendOwner);
 
@@ -162,7 +162,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         var recvGene = new NetTerminalGene(gene, netInterface);
         netInterface.RecvGenes = new NetTerminalGene[] { recvGene, };
         recvGene.SetReceive();
-        recvGene.Receive(PacketId.Encrypt, receiveOwner, Mics.GetSystem());
+        recvGene.Receive(PacketIdObsolete.Encrypt, receiveOwner, Mics.GetSystem());
 
         var sendGene = new NetTerminalGene(secondGene, netInterface);
         netInterface.SendGenes = new NetTerminalGene[] { sendGene, };
@@ -172,7 +172,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         return netInterface;
     }
 
-    internal static NetTerminalGene[] CreateSendGenes(NetOperation netOperation, NetInterface<TSend, TReceive> netInterface, ulong gene, ByteArrayPool.MemoryOwner owner, PacketId packetId, ulong dataId)
+    internal static NetTerminalGene[] CreateSendGenes(NetOperation netOperation, NetInterface<TSend, TReceive> netInterface, ulong gene, ByteArrayPool.MemoryOwner owner, PacketIdObsolete packetId, ulong dataId)
     {
         ReadOnlySpan<byte> span = owner.Memory.Span;
         var netTerminal = netInterface.NetTerminalObsolete;
@@ -236,7 +236,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
     }
 
     internal bool SetSend<TValue>(TValue value)
-        where TValue : IPacket
+        where TValue : IPacketObsolete
     {
         // lock (this.NetTerminalObsolete.SyncObject)
         if (this.SendGenes != null)
@@ -264,7 +264,7 @@ internal class NetInterface<TSend, TReceive> : NetInterface
         }
     }
 
-    internal bool SetSend(NetOperation netOperation, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner)
+    internal bool SetSend(NetOperation netOperation, PacketIdObsolete packetId, ulong dataId, ByteArrayPool.MemoryOwner owner)
     {
         // lock (this.NetTerminalObsolete.SyncObject)
         if (this.SendGenes != null)
@@ -469,9 +469,9 @@ WaitForSendCompletionWait:
         return true;
     }
 
-    protected bool ReceivedGeneToData(out PacketId packetId, out ulong dataId, ref ByteArrayPool.MemoryOwner dataMemory)
+    protected bool ReceivedGeneToData(out PacketIdObsolete packetId, out ulong dataId, ref ByteArrayPool.MemoryOwner dataMemory)
     {// lock (this.NetTerminalObsolete.SyncObject)
-        packetId = PacketId.Invalid;
+        packetId = PacketIdObsolete.Invalid;
         dataId = 0;
         if (this.RecvGenes == null)
         {// Empty
@@ -487,7 +487,7 @@ WaitForSendCompletionWait:
             // this.NetTerminalObsolete.TerminalLogger?.Information($"received {this.RecvGenes[0].Gene.To4Hex()}");
             packetId = this.RecvGenes[0].ReceivedId;
             dataMemory = this.RecvGenes[0].Owner.IncrementAndShare();
-            if (packetId == PacketId.Data)
+            if (packetId == PacketIdObsolete.Data)
             {
                 var data = PacketService.GetData(dataMemory);
                 dataId = data.DataId;
@@ -508,13 +508,13 @@ WaitForSendCompletionWait:
         var totalSize = 0;
         for (var i = 0; i < this.RecvGenes.Length; i++)
         {
-            if (this.RecvGenes[i].ReceivedId == PacketId.Data)
+            if (this.RecvGenes[i].ReceivedId == PacketIdObsolete.Data)
             {// Data
-                totalSize += this.RecvGenes[i].Owner.Memory.Length - PacketService.DataHeaderSize;
+                totalSize += this.RecvGenes[i].Owner.Memory.Length - PacketService.DataHeaderSizeObsolete;
             }
             else
             {// DataFollowing
-                totalSize += this.RecvGenes[i].Owner.Memory.Length - PacketService.DataFollowingHeaderSize;
+                totalSize += this.RecvGenes[i].Owner.Memory.Length - PacketService.DataFollowingHeaderSizeObsolete;
             }
         }
 
@@ -528,7 +528,7 @@ WaitForSendCompletionWait:
         packetId = this.RecvGenes[0].ReceivedId;
         for (var i = 0; i < this.RecvGenes.Length; i++)
         {
-            if (this.RecvGenes[i].ReceivedId == PacketId.Data)
+            if (this.RecvGenes[i].ReceivedId == PacketIdObsolete.Data)
             {// Data
                 var data = PacketService.GetData(this.RecvGenes[i].Owner);
                 dataId = data.DataId;
@@ -627,7 +627,7 @@ WaitForSendCompletionWait:
             return;
         }
 
-        PacketHeader header = default;
+        PacketHeaderObsolete header = default;
         int size = 0;
         int maxSize = PacketService.DataPayloadSize - sizeof(ulong);
         ByteArrayPool.Owner? rentArray = null;
@@ -637,7 +637,7 @@ WaitForSendCompletionWait:
             {
                 if (size >= maxSize)
                 {
-                    PacketService.InsertDataSize(rentArray!.ByteArray, (ushort)(size - PacketService.HeaderSize));
+                    PacketService.InsertDataSize(rentArray!.ByteArray, (ushort)(size - PacketService.HeaderSizeObsolete));
                     this.Terminal.AddRawSend(this.NetTerminalObsolete.Endpoint.EndPoint, rentArray!.ToMemoryOwner(0, size)); // nspi
                     // this.NetTerminalObsolete.TerminalLogger?.Information($"AACK {size}");
                     size = 0;
@@ -647,13 +647,13 @@ WaitForSendCompletionWait:
                 if (size == 0)
                 {
                     this.NetTerminalObsolete.CreateHeader(out header, x.Gene);
-                    header.Id = PacketId.Ack;
+                    header.Id = PacketIdObsolete.Ack;
 
                     rentArray = PacketPool.Rent();
-                    size += PacketService.HeaderSize;
+                    size += PacketService.HeaderSizeObsolete;
                     fixed (byte* bp = rentArray.ByteArray)
                     {
-                        *(PacketHeader*)bp = header;
+                        *(PacketHeaderObsolete*)bp = header;
                     }
                 }
                 else
@@ -672,14 +672,14 @@ WaitForSendCompletionWait:
 
         if (size > 0)
         {
-            PacketService.InsertDataSize(rentArray!.ByteArray, (ushort)(size - PacketService.HeaderSize));
+            PacketService.InsertDataSize(rentArray!.ByteArray, (ushort)(size - PacketService.HeaderSizeObsolete));
             this.Terminal.AddRawSend(this.NetTerminalObsolete.Endpoint.EndPoint, rentArray!.ToMemoryOwner(0, size)); // nspi
             // this.NetTerminalObsolete.TerminalLogger?.Information($"AACK {size}");
             size = 0;
         }
     }
 
-    internal void ProcessReceive(ByteArrayPool.MemoryOwner owner, IPEndPoint endPoint, ref PacketHeader header, long currentMics, NetTerminalGene gene)
+    internal void ProcessReceive(ByteArrayPool.MemoryOwner owner, IPEndPoint endPoint, ref PacketHeaderObsolete header, long currentMics, NetTerminalGene gene)
     {// nspi
         lock (this.NetTerminalObsolete.SyncObject)
         {
@@ -694,7 +694,7 @@ WaitForSendCompletionWait:
                 return;
             }
 
-            if (header.Id == PacketId.Ack)
+            if (header.Id == PacketIdObsolete.Ack)
             {// Ack (header.Gene + data(ulong[]))
                 this.NetTerminalObsolete.SetLastResponseMics(currentMics);
 
@@ -712,7 +712,7 @@ WaitForSendCompletionWait:
                     }
                 }
             }
-            else if (header.Id == PacketId.Close)
+            else if (header.Id == PacketIdObsolete.Close)
             {
                 // this.TerminalLogger?.Information($"Close, {header.Gene.To4Hex()}");
                 this.NetTerminalObsolete.IsClosed = true;

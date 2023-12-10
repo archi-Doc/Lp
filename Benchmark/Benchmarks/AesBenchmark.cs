@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Arc.Collections;
 using Arc.Crypto;
@@ -26,6 +28,10 @@ public class AesBenchmark
     public byte[] Source { get; }
 
     public byte[] Destination { get; }
+
+    private readonly object syncAes = new();
+    private Aes? aes0;
+    private Aes? aes1;
 
     public AesBenchmark()
     {
@@ -74,6 +80,70 @@ public class AesBenchmark
     }
 
     [Benchmark]
+    public byte[] PoolEncrypt2()
+    {
+        var aes = this.AesPool.Get();
+        aes.Key = this.Key;
+        var result = aes.EncryptCbc(this.Source, this.Iv);
+        this.AesPool.Return(aes);
+        return result;
+    }
+
+    [Benchmark]
+    public byte[] PoolEncrypt3()
+    {
+        var aes = this.RentAes();
+        this.Source.AsSpan().CopyTo(this.Destination);
+        aes.TryEncryptCbc(this.Destination.AsSpan(0, this.Source.Length), this.Iv, this.Destination, out var written);
+        this.ReturnAes(aes);
+        return this.Destination;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private Aes RentAes()
+    {
+        lock (this.syncAes)
+        {
+            Aes aes;
+            if (this.aes0 is not null)
+            {
+                aes = this.aes0;
+                this.aes0 = this.aes1;
+                this.aes1 = default;
+                return aes;
+            }
+            else
+            {
+                aes = Aes.Create();
+                aes.Key = this.Key;
+                return aes;
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ReturnAes(Aes aes)
+    {
+        lock (this.syncAes)
+        {
+            if (this.aes0 is null)
+            {
+                this.aes0 = aes;
+                return;
+            }
+            else if (this.aes1 is null)
+            {
+                this.aes1 = aes;
+                return;
+            }
+            else
+            {
+                aes.Dispose();
+            }
+        }
+    }
+
+    /*[Benchmark]
     public byte[] PoolHashEncrypt()
     {
         var aes = this.AesPool.Get();
@@ -86,5 +156,5 @@ public class AesBenchmark
         this.Sha3Pool.Return(sha);
         this.AesPool.Return(aes);
         return this.Destination;
-    }
+    }*/
 }

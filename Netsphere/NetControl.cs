@@ -10,7 +10,6 @@ global using Arc.Unit;
 global using BigMachines;
 global using Tinyhand;
 global using ValueLink;
-using System.Collections.Concurrent;
 using Microsoft.Extensions.DependencyInjection;
 using Netsphere.Crypto;
 using Netsphere.Logging;
@@ -23,7 +22,7 @@ namespace Netsphere;
 
 public class NetControl : UnitBase, IUnitPreparable
 {
-    public const int MaxPayload = 1432; // 1432 bytes
+    public const int MaxPacketLength = 1432; // 1500 - 60 - 8 = 1432 bytes
     public const int MaxDataSize = 4 * 1024 * 1024; // 4 MB
     public const int MinPort = 49152; // Ephemeral port 49152 - 60999
     public const int MaxPort = 60999;
@@ -41,7 +40,7 @@ public class NetControl : UnitBase, IUnitPreparable
                 context.AddSingleton<Terminal>();
                 context.AddSingleton<EssentialAddress>();
                 context.AddSingleton<NetStats>();
-                context.AddTransient<Server>();
+                context.AddTransient<ServerObsolete>();
                 context.AddSingleton<NtpCorrection>();
                 // context.Services.Add(new ServiceDescriptor(typeof(NetService), x => new NetService(x), ServiceLifetime.Transient));
                 // context.AddTransient<NetService>(); // serviceCollection.RegisterDelegate(x => new NetService(container), Reuse.Transient);
@@ -88,34 +87,37 @@ public class NetControl : UnitBase, IUnitPreparable
         }
     }
 
-    public NetControl(UnitContext context, UnitLogger logger, NetBase netBase, Terminal terminal, NetStats statsData)
+    public NetControl(UnitContext context, UnitLogger unitLogger, NetBase netBase, NetStats netStats)
         : base(context)
     {
-        this.logger = logger;
+        this.unitLogger = unitLogger;
         this.ServiceProvider = context.ServiceProvider;
         this.NewServerContext = () => new ServerContext();
         this.NewCallContext = () => new CallContext();
         this.NetBase = netBase;
+        this.NetStats = netStats;
 
-        this.Terminal = terminal;
+        this.NetTerminal = new(false, context, unitLogger, netBase, netStats);
+        this.TerminalObsolete = new(context, unitLogger, netBase, netStats);
         if (this.NetBase.NetsphereOptions.EnableAlternative)
-        {
-            this.Alternative = new(context, logger, netBase, statsData); // For debug
+        {// For debugging
+            this.Alternative = new(true, context, unitLogger, netBase, netStats);
+            this.AlternativeObsolete = new(context, unitLogger, netBase, netStats);
         }
     }
 
     public void Prepare(UnitMessage.Prepare message)
     {
         // Terminals
-        this.Terminal.Initialize(false, this.NetBase.NodePrivateKey);
-        if (this.Alternative != null)
+        this.TerminalObsolete.Initialize(false, this.NetBase.NodePrivateKey);
+        if (this.AlternativeObsolete != null)
         {
-            this.Alternative.Initialize(true, NodePrivateKey.AlternativePrivateKey);
-            this.Alternative.Port = NetAddress.Alternative.Port;
+            this.AlternativeObsolete.Initialize(true, NodePrivateKey.AlternativePrivateKey);
+            this.AlternativeObsolete.Port = NetAddress.Alternative.Port;
         }
 
         // Responders
-        DefaultResponder.Register(this.Terminal);
+        DefaultResponder.Register(this.TerminalObsolete);
     }
 
     public void SetupServer(Func<ServerContext>? newServerContext = null, Func<CallContext>? newCallContext = null)
@@ -130,12 +132,12 @@ public class NetControl : UnitBase, IUnitPreparable
             this.NewCallContext = newCallContext;
         }
 
-        this.Terminal.SetInvokeServerDelegate(InvokeServer);
-        this.Alternative?.SetInvokeServerDelegate(InvokeServer);
+        this.TerminalObsolete.SetInvokeServerDelegate(InvokeServer);
+        this.AlternativeObsolete?.SetInvokeServerDelegate(InvokeServer);
 
         async Task InvokeServer(ServerTerminal terminal)
         {
-            var server = this.ServiceProvider.GetRequiredService<Server>();
+            var server = this.ServiceProvider.GetRequiredService<ServerObsolete>();
             try
             {
                 await server.Process(terminal).ConfigureAwait(false);
@@ -153,13 +155,19 @@ public class NetControl : UnitBase, IUnitPreparable
 
     public NetBase NetBase { get; }
 
-    public Terminal Terminal { get; }
+    public NetStats NetStats { get; }
 
-    public Terminal? Alternative { get; }
+    public NetTerminal NetTerminal { get; }
+
+    public NetTerminal? Alternative { get; }
+
+    public Terminal TerminalObsolete { get; }
+
+    public Terminal? AlternativeObsolete { get; }
 
     internal IServiceProvider ServiceProvider { get; }
 
-    private UnitLogger logger;
+    private UnitLogger unitLogger;
 
     private void Dump(ILog logger)
     {

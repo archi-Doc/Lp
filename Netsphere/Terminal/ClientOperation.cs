@@ -32,7 +32,7 @@ internal class ClientOperation : NetOperation
 
             if (this.NetTerminalObsolete.Node == null)
             {// Get NodeInformation (Unsafe).
-                var r = await this.SendPacketAndReceiveAsync<PacketGetNodeInformation, PacketGetNodeInformationResponse>(new()).ConfigureAwait(false);
+                var r = await this.SendPacketAndReceiveAsync<PacketGetNodeInformationObsolete, PacketGetNodeInformationResponseObsolete>(new()).ConfigureAwait(false);
                 if (r.Result != NetResult.Success)
                 {
                     return r.Result;
@@ -42,8 +42,8 @@ internal class ClientOperation : NetOperation
             }
 
             // Encrypt
-            var p = new PacketEncrypt(this.Terminal.NetBase.NodePublicKey); // tempcode
-            var response = await this.SendPacketAndReceiveAsync<PacketEncrypt, PacketEncryptResponse>(p).ConfigureAwait(false);
+            var p = new PacketEncryptObsolete(this.Terminal.NetBase.NodePublicKey); // tempcode
+            var response = await this.SendPacketAndReceiveAsync<PacketEncryptObsolete, PacketEncryptResponseObsolete>(p).ConfigureAwait(false);
             if (response.Result != NetResult.Success)
             {
                 return response.Result;
@@ -59,7 +59,7 @@ internal class ClientOperation : NetOperation
     }
 
     public async Task<NetResult> SendPacketAsync<TSend>(TSend value)
-        where TSend : IPacket
+        where TSend : IPacketObsolete
     {// Checked
         if (!value.AllowUnencrypted && !this.NetTerminalObsolete.IsEncrypted)
         {
@@ -87,7 +87,7 @@ internal class ClientOperation : NetOperation
     }
 
     public async Task<(NetResult Result, TReceive? Value)> SendPacketAndReceiveAsync<TSend, TReceive>(TSend value)
-        where TSend : IPacket
+        where TSend : IPacketObsolete
     {// Checked
         if (!value.AllowUnencrypted && !this.NetTerminalObsolete.IsEncrypted)
         {
@@ -108,17 +108,17 @@ internal class ClientOperation : NetOperation
         {
             var response = await netInterface.ReceiveAsync().ConfigureAwait(false);
 
-            if (response.PacketId == PacketId.Reserve)
+            if (response.PacketId == PacketIdObsolete.Reserve)
             {
                 // PacketId.Reserve
-                TinyhandSerializer.TryDeserialize<PacketReserve>(response.Received.Memory.Span, out var reserve);
+                TinyhandSerializer.TryDeserialize<PacketReserveObsolete>(response.Received.Memory.Span, out var reserve);
                 response.Return();
                 if (reserve == null)
                 {
                     return new(NetResult.DeserializationError, default);
                 }
 
-                var netInterface2 = NetInterface<PacketReserveResponse, byte[]>.CreateReserve(this, reserve);
+                var netInterface2 = NetInterface<PacketReserveResponseObsolete, byte[]>.CreateReserve(this, reserve);
                 if (netInterface2 == null)
                 {
                     return new(interfaceResult, default);
@@ -162,14 +162,14 @@ internal class ClientOperation : NetOperation
         }
 
         Task<NetResult> task;
-        if (value is IPacket packet)
+        if (value is IPacketObsolete packet)
         {
             task = this.SendDataAsync(!packet.AllowUnencrypted, packet.PacketId, (ulong)packet.PacketId, owner);
         }
         else
         {
             var dataId = BlockService.GetId<TSend>();
-            task = this.SendDataAsync(true, PacketId.Data, dataId, owner);
+            task = this.SendDataAsync(true, PacketIdObsolete.Data, dataId, owner);
         }
 
         owner.Return();
@@ -185,7 +185,7 @@ internal class ClientOperation : NetOperation
 
         Task<NetReceivedData> task;
         ulong dataId;
-        if (value is IPacket packet)
+        if (value is IPacketObsolete packet)
         {
             dataId = (ulong)packet.PacketId | ((ulong)BlockService.GetId<TReceive>() << 32);
             task = this.SendAndReceiveDataAsync(!packet.AllowUnencrypted, packet.PacketId, dataId, owner);
@@ -193,7 +193,7 @@ internal class ClientOperation : NetOperation
         else
         {
             dataId = BlockService.GetId<TSend, TReceive>();
-            task = this.SendAndReceiveDataAsync(true, PacketId.Data, dataId, owner);
+            task = this.SendAndReceiveDataAsync(true, PacketIdObsolete.Data, dataId, owner);
         }
 
         owner.Return();
@@ -214,7 +214,7 @@ internal class ClientOperation : NetOperation
         return (response.Result, received);
     }
 
-    internal async Task<NetResult> SendDataAsync(bool encrypt, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner)
+    internal async Task<NetResult> SendDataAsync(bool encrypt, PacketIdObsolete packetId, ulong dataId, ByteArrayPool.MemoryOwner owner)
     {// Checked
         if (!this.NetTerminalObsolete.IsEncrypted && encrypt)
         {
@@ -230,8 +230,8 @@ internal class ClientOperation : NetOperation
         }
         else if (owner.Memory.Length <= BlockService.MaxBlockSize)
         {// Split into multiple packets. Send PacketReserve.
-            var reserve = new PacketReserve(owner.Memory.Length);
-            var received = await this.SendPacketAndReceiveAsync<PacketReserve, PacketReserveResponse>(reserve).ConfigureAwait(false);
+            var reserve = new PacketReserveObsolete(owner.Memory.Length);
+            var received = await this.SendPacketAndReceiveAsync<PacketReserveObsolete, PacketReserveResponseObsolete>(reserve).ConfigureAwait(false);
             if (received.Result != NetResult.Success)
             {
                 return received.Result;
@@ -258,7 +258,7 @@ internal class ClientOperation : NetOperation
         }
     }
 
-    internal async Task<NetReceivedData> SendAndReceiveDataAsync(bool encrypt, PacketId packetId, ulong dataId, ByteArrayPool.MemoryOwner owner)
+    internal async Task<NetReceivedData> SendAndReceiveDataAsync(bool encrypt, PacketIdObsolete packetId, ulong dataId, ByteArrayPool.MemoryOwner owner)
     {// Checked
         if (encrypt)
         {
@@ -274,8 +274,8 @@ internal class ClientOperation : NetOperation
         }
         else if (owner.Memory.Length <= BlockService.MaxBlockSize)
         {// Split into multiple packets. Send PacketReserve.
-            var reserve = new PacketReserve(owner.Memory.Length);
-            var received = await this.SendPacketAndReceiveAsync<PacketReserve, PacketReserveResponse>(reserve).ConfigureAwait(false);
+            var reserve = new PacketReserveObsolete(owner.Memory.Length);
+            var received = await this.SendPacketAndReceiveAsync<PacketReserveObsolete, PacketReserveResponseObsolete>(reserve).ConfigureAwait(false);
             if (received.Result != NetResult.Success)
             {
                 return new(received.Result);
@@ -296,17 +296,17 @@ internal class ClientOperation : NetOperation
         {
             var response = await netInterface.ReceiveAsync().ConfigureAwait(false);
 
-            if (response.PacketId == PacketId.Reserve)
+            if (response.PacketId == PacketIdObsolete.Reserve)
             {
                 // PacketId.Reserve
-                TinyhandSerializer.TryDeserialize<PacketReserve>(response.Received.Memory.Span, out var reserve);
+                TinyhandSerializer.TryDeserialize<PacketReserveObsolete>(response.Received.Memory.Span, out var reserve);
                 response.Return();
                 if (reserve == null)
                 {
                     return new(NetResult.DeserializationError);
                 }
 
-                var netInterface2 = NetInterface<PacketReserveResponse, byte[]>.CreateReserve(this, reserve);
+                var netInterface2 = NetInterface<PacketReserveResponseObsolete, byte[]>.CreateReserve(this, reserve);
                 if (netInterface2 == null)
                 {
                     return new(interfaceResult);

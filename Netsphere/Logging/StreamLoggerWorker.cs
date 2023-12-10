@@ -145,7 +145,7 @@ internal partial class StreamLoggerWorker : TaskCore
                 }
             }
 
-            var capacity = this.options.ClearLogsOnStartup ? 0 : this.options.MaxStreamCapacity;
+            var capacity = this.options.ClearLogsAtStartup ? 0 : this.options.MaxStreamCapacity;
             this.LimitStream(capacity);
         }
         catch

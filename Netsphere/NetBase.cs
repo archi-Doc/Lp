@@ -1,7 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Arc.Crypto;
 using Netsphere.Crypto;
+using Netsphere.Server;
 
 namespace Netsphere;
 
@@ -11,7 +11,39 @@ public class NetBase : UnitBase, IUnitPreparable
         : base(context)
     {
         this.logger = logger;
+        this.ServerOptions = new();
     }
+
+    #region FieldAndProperty
+
+    public ThreadCoreBase Core => ThreadCore.Root;
+
+    public CancellationToken CancellationToken => this.Core.CancellationToken;
+
+    public NetsphereOptions NetsphereOptions { get; private set; } = default!;
+
+    public bool EnableServer { get; private set; }
+
+    public string NodeName { get; private set; } = default!;
+
+    public bool AllowUnsafeConnection { get; set; } = false;
+
+    public NodePublicKey NodePublicKey { get; private set; } = default!;
+
+    public ServerOptions ServerOptions { get; set; }
+
+    internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
+
+    private UnitLogger logger;
+
+    public class LogFlag
+    {
+        public bool FlowControl { get; set; }
+    }
+
+    public LogFlag Log { get; } = new();
+
+    #endregion
 
     public void Prepare(UnitMessage.Prepare message)
     {
@@ -41,23 +73,6 @@ public class NetBase : UnitBase, IUnitPreparable
             this.NodePublicKey = this.NodePrivateKey.ToPublicKey();
         }
     }
-
-    public bool EnableServer { get; private set; }
-
-    public string NodeName { get; private set; } = default!;
-
-    public NetsphereOptions NetsphereOptions { get; private set; } = default!;
-
-    public bool AllowUnsafeConnection { get; set; } = false;
-
-    public NodePublicKey NodePublicKey { get; private set; } = default!;
-
-    public class LogFlag
-    {
-        public bool FlowControl { get; set; }
-    }
-
-    public LogFlag Log { get; } = new();
 
     public void SetParameter(bool enableServer, string nodeName, NetsphereOptions netsphereOptions)
     {
@@ -93,8 +108,4 @@ public class NetBase : UnitBase, IUnitPreparable
     }
 
     public override string ToString() => $"NetBase: {this.NodeName}";
-
-    internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
-
-    private UnitLogger logger;
 }

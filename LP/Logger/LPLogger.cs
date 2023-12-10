@@ -76,7 +76,7 @@ public class LPLogger
 
                         return;
                     }
-                    else if (context.LogSourceType == typeof(NetSocket))
+                    else if (context.LogSourceType == typeof(NetSocketObsolete))
                     {
                         context.SetOutput<EmptyLogger>();
                         return;

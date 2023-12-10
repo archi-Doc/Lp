@@ -3,17 +3,17 @@
 namespace Netsphere;
 
 [TinyhandObject]
-public partial class PacketPunch : IPacket
+public partial class PacketPunchObsolete : IPacketObsolete
 {
-    public PacketId PacketId => PacketId.Punch;
+    public PacketIdObsolete PacketId => PacketIdObsolete.Punch;
 
     public bool AllowUnencrypted => true;
 
-    public PacketPunch()
+    public PacketPunchObsolete()
     {
     }
 
-    public PacketPunch(IPEndPoint? nextEndpoint)
+    public PacketPunchObsolete(IPEndPoint? nextEndpoint)
     {
         this.UtcMics = Mics.GetUtcNow();
         this.NextEndpoint = nextEndpoint;
@@ -30,9 +30,9 @@ public partial class PacketPunch : IPacket
 }
 
 [TinyhandObject]
-public partial class PacketPunchResponse : IPacket
+public partial class PacketPunchResponseObsolete : IPacketObsolete
 {
-    public PacketId PacketId => PacketId.PunchResponse;
+    public PacketIdObsolete PacketId => PacketIdObsolete.PunchResponse;
 
     public bool AllowUnencrypted => true;
 

@@ -6,19 +6,19 @@ namespace Netsphere;
 #pragma warning disable SA1300 // Element should begin with upper-case letter
 
 [TinyhandObject]
-public partial class PacketPing : IPacket
+public partial class PacketPingObsolete : IPacketObsolete
 {
     public const int TextMaxLength = 32;
 
-    public PacketId PacketId => PacketId.Ping;
+    public PacketIdObsolete PacketId => PacketIdObsolete.Ping;
 
     public bool AllowUnencrypted => true;
 
-    public PacketPing()
+    public PacketPingObsolete()
     {
     }
 
-    public PacketPing(string text)
+    public PacketPingObsolete(string text)
     {
         this.Text = text;
     }
@@ -31,24 +31,24 @@ public partial class PacketPing : IPacket
 }
 
 [TinyhandObject]
-public partial class PacketPingResponse : IPacket
+public partial class PacketPingResponseObsolete : IPacketObsolete
 {
-    public PacketId PacketId => PacketId.PingResponse;
+    public PacketIdObsolete PacketId => PacketIdObsolete.PingResponse;
 
     public bool AllowUnencrypted => true;
 
-    public PacketPingResponse()
+    public PacketPingResponseObsolete()
     {
     }
 
-    public PacketPingResponse(NetAddress address, string text)
+    public PacketPingResponseObsolete(NetAddress address, string text)
     {
         this.Address = address;
         this.Text = text;
     }
 
     [Key(0, AddProperty = "Text", PropertyAccessibility = PropertyAccessibility.ProtectedSetter)]
-    [MaxLength(PacketPing.TextMaxLength)]
+    [MaxLength(PacketPingObsolete.TextMaxLength)]
     private string _text = string.Empty;
 
     [Key(1)]

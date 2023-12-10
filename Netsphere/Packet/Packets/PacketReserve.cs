@@ -3,17 +3,17 @@
 namespace Netsphere;
 
 [TinyhandObject]
-internal partial class PacketReserve : IPacket
+internal partial class PacketReserveObsolete : IPacketObsolete
 {
     public const int MaxGenes = 4096;
 
-    public PacketId PacketId => PacketId.Reserve;
+    public PacketIdObsolete PacketId => PacketIdObsolete.Reserve;
 
-    public PacketReserve()
+    public PacketReserveObsolete()
     {
     }
 
-    public PacketReserve(int totalSize)
+    public PacketReserveObsolete(int totalSize)
     {
         var info = PacketService.GetDataSize(totalSize);
         this.NumberOfGenes = (ushort)info.NumberOfGenes;
@@ -36,11 +36,11 @@ internal partial class PacketReserve : IPacket
 }
 
 [TinyhandObject]
-internal partial class PacketReserveResponse : IPacket
+internal partial class PacketReserveResponseObsolete : IPacketObsolete
 {
-    public PacketId PacketId => PacketId.ReserveResponse;
+    public PacketIdObsolete PacketId => PacketIdObsolete.ReserveResponse;
 
-    public PacketReserveResponse()
+    public PacketReserveResponseObsolete()
     {
     }
 }

@@ -43,16 +43,16 @@ public class PingSubcommand : ISimpleCommandAsync<PingOptions>
         this.logger.TryGet()?.Log($"Ping: {address.ToString()}");
 
         var sw = Stopwatch.StartNew();
-        using (var terminal = this.Control.NetControl.Terminal.TryCreate(address))
+        using (var terminal = this.Control.NetControl.TerminalObsolete.TryCreate(address))
         {
             if (terminal is null)
             {
                 return;
             }
 
-            var p = new PacketPing("test56789012345678901234567890123456789");
+            var p = new PacketPingObsolete("test56789012345678901234567890123456789");
             sw.Restart();
-            var result = await terminal.SendPacketAndReceiveAsync<PacketPing, PacketPingResponse>(p);
+            var result = await terminal.SendPacketAndReceiveAsync<PacketPingObsolete, PacketPingResponseObsolete>(p);
             sw.Stop();
             if (result.Value != null)
             {

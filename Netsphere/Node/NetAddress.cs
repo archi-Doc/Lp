@@ -11,24 +11,24 @@ namespace Netsphere;
 /// </summary>
 [TinyhandObject]
 public readonly partial record struct NetAddress : IStringConvertible<NetAddress>, IValidatable
-{
+{// 24 bytes
     public const ushort AlternativePort = 49151;
     public static readonly NetAddress Alternative = new(IPAddress.Loopback, AlternativePort); // IPAddress.IPv6Loopback
 
     [Key(0)]
-    public readonly ushort Engagement;
+    public readonly ushort Engagement; // 2 bytes
 
     [Key(1)]
-    public readonly ushort Port;
+    public readonly ushort Port; // 2 bytes
 
     [Key(2)]
-    public readonly uint Address4;
+    public readonly uint Address4; // 4 bytes
 
     [Key(3)]
-    public readonly ulong Address6A;
+    public readonly ulong Address6A; // 8 bytes
 
     [Key(4)]
-    public readonly ulong Address6B;
+    public readonly ulong Address6B; // 8 bytes
 
     public NetAddress(uint address4, ulong address6a, ulong address6b, ushort port)
     {
@@ -263,6 +263,30 @@ public readonly partial record struct NetAddress : IStringConvertible<NetAddress
         var ipv6 = new IPAddress(ipv6byte);
         endPoint = new(new(ipv6, this.Port), this.Engagement);
         return true;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool TryCreateIPEndPoint([MaybeNullWhen(false)] out IPEndPoint endPoint)
+    {
+        if (this.IsValidIpv4)
+        {
+            endPoint = new(this.Address4, this.Port);
+            return true;
+        }
+        else if (this.IsValidIpv6)
+        {
+            Span<byte> ipv6byte = stackalloc byte[16];
+            BitConverter.TryWriteBytes(ipv6byte, this.Address6A);
+            BitConverter.TryWriteBytes(ipv6byte.Slice(sizeof(ulong)), this.Address6B);
+            var ipv6 = new IPAddress(ipv6byte);
+            endPoint = new(this.Address4, this.Port);
+            return true;
+        }
+        else
+        {
+            endPoint = default;
+            return false;
+        }
     }
 
     public bool Validate()

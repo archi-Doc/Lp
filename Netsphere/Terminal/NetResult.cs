@@ -10,6 +10,7 @@ public enum NetResult
     Success,
     Timeout,
     Closed,
+    InvalidAddress,
     NoDataToSend,
     NoNodeInformation,
     NoNetwork,
@@ -25,4 +26,6 @@ public enum NetResult
     NoCallContext,
     UnknownException,
     NotAuthorized,
+    TransmissionConsumed,
+    NoTransmission,
 }

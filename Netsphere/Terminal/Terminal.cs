@@ -46,11 +46,11 @@ public class Terminal : UnitBase, IUnitExecutable
         if (this.statsData.MyIpv6Address.AddressState == MyAddress.State.Fixed ||
             this.statsData.MyIpv6Address.AddressState == MyAddress.State.Changed)
         {// Ipv6 supported
-            address.TryCreateIpv4(ref endPoint);
+            /*address.TryCreateIpv4(ref endPoint);
             if (endPoint.IsValid)
             {
                 return true;
-            }
+            }*/
 
             return address.TryCreateIpv6(ref endPoint);
         }
@@ -170,6 +170,15 @@ public class Terminal : UnitBase, IUnitExecutable
             this.Port = this.NetBase.NetsphereOptions.Port;
         }
 
+        if (this.IsAlternative)
+        {
+            this.Port = 50000; // tempcode
+        }
+        else
+        {
+            this.Port = 49999; // tempcode
+        }
+
         if (!this.NetSocketIpv4.Start(this.Core, this.Port, false))
         {
             this.logger.TryGet(LogLevel.Fatal)?.Log($"Could not create a UDP socket with port {this.Port}.");
@@ -255,16 +264,16 @@ public class Terminal : UnitBase, IUnitExecutable
         var position = 0;
         var remaining = packetSize;
 
-        while (remaining >= PacketService.HeaderSize)
+        while (remaining >= PacketService.HeaderSizeObsolete)
         {
-            PacketHeader header;
+            PacketHeaderObsolete header;
             fixed (byte* pb = packetArray)
             {
-                header = *(PacketHeader*)(pb + position);
+                header = *(PacketHeaderObsolete*)(pb + position);
             }
 
             var dataSize = header.DataSize;
-            if (remaining < (PacketService.HeaderSize + dataSize))
+            if (remaining < (PacketService.HeaderSizeObsolete + dataSize))
             {// Invalid DataSize
                 return;
             }
@@ -273,15 +282,15 @@ public class Terminal : UnitBase, IUnitExecutable
             {// Not implemented
             }
 
-            position += PacketService.HeaderSize;
+            position += PacketService.HeaderSizeObsolete;
             var memoryOwner = arrayOwner.ToMemoryOwner(position, dataSize);
             this.ProcessReceiveCore(memoryOwner, endPoint, ref header, currentMics);
             position += dataSize;
-            remaining -= PacketService.HeaderSize + dataSize;
+            remaining -= PacketService.HeaderSizeObsolete + dataSize;
         }
     }
 
-    internal void ProcessReceiveCore(ByteArrayPool.MemoryOwner owner, IPEndPoint endPoint, ref PacketHeader header, long currentMics)
+    internal void ProcessReceiveCore(ByteArrayPool.MemoryOwner owner, IPEndPoint endPoint, ref PacketHeaderObsolete header, long currentMics)
     {// nspi
         // this.TerminalLogger?.Information($"{header.Gene.To4Hex()}, {header.Id}");
         if (this.inboundGenes.TryGetValue(header.Gene, out var gene))
@@ -294,9 +303,9 @@ public class Terminal : UnitBase, IUnitExecutable
         }
     }
 
-    internal void ProcessUnmanagedRecv(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
+    internal void ProcessUnmanagedRecv(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeaderObsolete header)
     {// nspi
-        if (header.Id == PacketId.Data)
+        if (header.Id == PacketIdObsolete.Data)
         {
             if (!PacketService.GetData(ref header, ref owner))
             {// Data packet to other packets (e.g Punch, Encrypt).
@@ -305,21 +314,21 @@ public class Terminal : UnitBase, IUnitExecutable
             }
         }
 
-        if (header.Id == PacketId.Encrypt && this.NetBase.EnableServer)
+        if (header.Id == PacketIdObsolete.Encrypt && this.NetBase.EnableServer)
         {
             this.ProcessUnmanagedRecv_Encrypt(owner, endpoint, ref header);
         }
         else if (this.NetBase.NetsphereOptions.EnableEssential)
         {// Essential function
-            if (header.Id == PacketId.Punch)
+            if (header.Id == PacketIdObsolete.Punch)
             {
                 this.ProcessUnmanagedRecv_Punch(owner, endpoint, ref header);
             }
-            else if (header.Id == PacketId.Ping)
+            else if (header.Id == PacketIdObsolete.Ping)
             {
                 this.ProcessUnmanagedRecv_Ping(owner, endpoint, ref header);
             }
-            else if (header.Id == PacketId.GetNodeInformation)
+            else if (header.Id == PacketIdObsolete.GetNodeInformation)
             {
                 this.ProcessUnmanagedRecv_GetNodeInformation(owner, endpoint, ref header);
             }
@@ -329,9 +338,9 @@ public class Terminal : UnitBase, IUnitExecutable
         // this.TerminalLogger?.Error($"Unhandled: {header.Gene.To4Hex()} - {header.Id}");
     }
 
-    internal void ProcessUnmanagedRecv_Punch(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
+    internal void ProcessUnmanagedRecv_Punch(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeaderObsolete header)
     {// nspi
-        if (!TinyhandSerializer.TryDeserialize<PacketPunch>(owner.Memory.Span, out var punch))
+        if (!TinyhandSerializer.TryDeserialize<PacketPunchObsolete>(owner.Memory.Span, out var punch))
         {
             return;
         }
@@ -356,7 +365,7 @@ public class Terminal : UnitBase, IUnitExecutable
         }
         else
         {
-            var response = new PacketPunchResponse();
+            var response = new PacketPunchResponseObsolete();
             response.UtcMics = Mics.GetUtcNow();
             var secondGene = GenePool.NextGene(header.Gene);
             this.logger.TryGet()?.Log($"Punch Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
@@ -379,14 +388,14 @@ public class Terminal : UnitBase, IUnitExecutable
         }
     }
 
-    internal void ProcessUnmanagedRecv_Encrypt(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
+    internal void ProcessUnmanagedRecv_Encrypt(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeaderObsolete header)
     { // nspi
-        if (!TinyhandSerializer.TryDeserialize<PacketEncrypt>(owner.Memory.Span, out var packet))
+        if (!TinyhandSerializer.TryDeserialize<PacketEncryptObsolete>(owner.Memory.Span, out var packet))
         {
             return;
         }
 
-        var response = new PacketEncryptResponse();
+        var response = new PacketEncryptResponseObsolete();
         response.Salt2 = RandomVault.Crypto.NextUInt64();
         response.SaltA2 = RandomVault.Crypto.NextUInt64();
         var firstGene = header.Gene;
@@ -402,7 +411,7 @@ public class Terminal : UnitBase, IUnitExecutable
             return;
         }
 
-        var netInterface = NetInterface<PacketEncryptResponse, PacketEncrypt>.CreateConnect(terminal, firstGene, owner, secondGene, sendOwner);
+        var netInterface = NetInterface<PacketEncryptResponseObsolete, PacketEncryptObsolete>.CreateConnect(terminal, firstGene, owner, secondGene, sendOwner);
 
         _ = Task.Run(async () =>
         {
@@ -418,14 +427,14 @@ public class Terminal : UnitBase, IUnitExecutable
         });
     }
 
-    internal void ProcessUnmanagedRecv_Ping(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
+    internal void ProcessUnmanagedRecv_Ping(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeaderObsolete header)
     {// nspi
-        if (!TinyhandSerializer.TryDeserialize<PacketPing>(owner.Memory.Span, out var packet))
+        if (!TinyhandSerializer.TryDeserialize<PacketPingObsolete>(owner.Memory.Span, out var packet))
         {
             return;
         }
 
-        var response = new PacketPingResponse(new(endpoint.Address, (ushort)endpoint.Port), this.NetBase.NodeName);
+        var response = new PacketPingResponseObsolete(new(endpoint.Address, (ushort)endpoint.Port), this.NetBase.NodeName);
         var secondGene = GenePool.NextGene(header.Gene);
         // this.logger.TryGet()?.Log($"Ping Response: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
@@ -433,9 +442,9 @@ public class Terminal : UnitBase, IUnitExecutable
         this.AddRawSend(endpoint, packetOwner); // nspi
     }
 
-    internal void ProcessUnmanagedRecv_GetNodeInformation(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeader header)
+    internal void ProcessUnmanagedRecv_GetNodeInformation(ByteArrayPool.MemoryOwner owner, IPEndPoint endpoint, ref PacketHeaderObsolete header)
     {// nspi
-        if (!TinyhandSerializer.TryDeserialize<PacketGetNodeInformation>(owner.Memory.Span, out var packet))
+        if (!TinyhandSerializer.TryDeserialize<PacketGetNodeInformationObsolete>(owner.Memory.Span, out var packet))
         {
             return;
         }
@@ -445,7 +454,7 @@ public class Terminal : UnitBase, IUnitExecutable
             return;
         }
 
-        var response = new PacketGetNodeInformationResponse(this.statsData.GetMyNetNode());
+        var response = new PacketGetNodeInformationResponseObsolete(this.statsData.GetMyNetNode());
         var secondGene = GenePool.NextGene(header.Gene);
         // this.TerminalLogger?.Information($"GetNodeInformation Response {response.Node.PublicKeyX[0]}: {header.Gene.To4Hex()} to {secondGene.To4Hex()}");
 
@@ -474,17 +483,17 @@ public class Terminal : UnitBase, IUnitExecutable
 
     internal unsafe void SendRawAck(IPEndPoint endpoint, ulong gene)
     {
-        PacketHeader header = default;
+        PacketHeaderObsolete header = default;
         header.Gene = gene;
-        header.Id = PacketId.Ack;
+        header.Id = PacketIdObsolete.Ack;
 
         var arrayOwner = PacketPool.Rent();
         fixed (byte* bp = arrayOwner.ByteArray)
         {
-            *(PacketHeader*)bp = header;
+            *(PacketHeaderObsolete*)bp = header;
         }
 
-        this.AddRawSend(endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSize)); // nspi
+        this.AddRawSend(endpoint, arrayOwner.ToMemoryOwner(0, PacketService.HeaderSizeObsolete)); // nspi
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -590,9 +599,9 @@ public class Terminal : UnitBase, IUnitExecutable
 
     internal NodePrivateKey NodePrivateKey { get; private set; } = default!;
 
-    internal NetSocket NetSocketIpv4 { get; private set; }
+    internal NetSocketObsolete NetSocketIpv4 { get; private set; }
 
-    internal NetSocket NetSocketIpv6 { get; private set; }
+    internal NetSocketObsolete NetSocketIpv6 { get; private set; }
 
     internal UnitLogger UnitLogger { get; private set; }
 

@@ -4,13 +4,13 @@ using System.Security.Cryptography;
 
 namespace Netsphere;
 
-internal partial class Embryo
+internal partial class EmbryoControl
 {
     [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
-    private sealed partial class Item
+    private sealed partial class Embryo
     {
-        [Link(Primary = true, Type = ChainType.LinkedList, Name = "Referenced")]
-        public Item(NetEndPoint endPoint, ulong referencedMics)
+        [Link(Primary = true, Type = ChainType.LinkedList, Name = "Lifespan")]
+        public Embryo(NetEndPoint endPoint, ulong referencedMics)
         {
             this.EndPoint = endPoint;
             this.ReferencedMics = referencedMics;
@@ -58,7 +58,7 @@ internal partial class Embryo
         }
     }
 
-    public Embryo()
+    public EmbryoControl()
     {
     }
 
@@ -68,7 +68,7 @@ internal partial class Embryo
         {
             if (this.items.EndPointChain.TryGetValue(endPoint, out var item))
             {
-                this.items.ReferencedChain.AddFirst(item);
+                this.items.LifespanChain.AddFirst(item);
                 item.ReferencedMics = currentMics;
 
                 return item.GetAes();
@@ -89,5 +89,5 @@ internal partial class Embryo
         }
     }
 
-    private Item.GoshujinClass items = new();
+    private Embryo.GoshujinClass items = new();
 }

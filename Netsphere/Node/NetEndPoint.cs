@@ -24,4 +24,7 @@ public readonly partial record struct NetEndPoint
 
     public bool EndPointEquals(IPEndPoint endPoint)
         => this.EndPoint.Equals(endPoint);
+
+    public override string ToString()
+        => this.EndPoint.ToString();
 }

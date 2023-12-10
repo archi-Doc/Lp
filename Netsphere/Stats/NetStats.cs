@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
+
 namespace Netsphere.Stats;
 
 [TinyhandObject(UseServiceProvider = true, LockObject = "syncObject")]
@@ -33,6 +35,48 @@ public sealed partial class NetStats : ITinyhandSerializationCallback
     public MyAddress MyIpv6Address { get; private set; } = new();
 
     #endregion
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool TryCreateEndPoint(in NetAddress address, out NetEndPoint endPoint)
+    {
+        endPoint = default;
+        if (this.MyIpv6Address.AddressState == MyAddress.State.Fixed ||
+            this.MyIpv6Address.AddressState == MyAddress.State.Changed)
+        {// Ipv6 supported
+            address.TryCreateIpv6(ref endPoint);
+            if (endPoint.IsValid)
+            {
+                return true;
+            }
+
+            return address.TryCreateIpv4(ref endPoint);
+        }
+        else
+        {// Ipv4
+            return address.TryCreateIpv4(ref endPoint);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool TryCreateEndPoint(NetNode node, out NetEndPoint endPoint)
+    {
+        endPoint = default;
+        if (this.MyIpv6Address.AddressState == MyAddress.State.Fixed ||
+            this.MyIpv6Address.AddressState == MyAddress.State.Changed)
+        {// Ipv6 supported
+            node.Address.TryCreateIpv6(ref endPoint);
+            if (endPoint.IsValid)
+            {
+                return true;
+            }
+
+            return node.Address.TryCreateIpv4(ref endPoint);
+        }
+        else
+        {// Ipv4
+            return node.Address.TryCreateIpv4(ref endPoint);
+        }
+    }
 
     public NetNode GetMyNetNode()
     {

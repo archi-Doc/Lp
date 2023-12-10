@@ -16,11 +16,12 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        DebugRun<PacketBenchmark>();
+        DebugRun<AesBenchmark>();
 
         // var summary = BenchmarkRunner.Run<TestBenchmark>();
         var switcher = new BenchmarkSwitcher(new[]
         {
+            typeof(NetSenderBenchmark),
             typeof(PacketBenchmark),
             typeof(AddressBenchmark),
             typeof(PublicKeyBenchmark),
