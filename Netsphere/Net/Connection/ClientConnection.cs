@@ -93,17 +93,13 @@ public sealed partial class ClientConnection : Connection
         }
 
         await Task.Delay(1000000);
-        var response = await transmission.ReceiveBlock().ConfigureAwait(false);
-        if (!response.IsSuccess)
-        {
-            return (response.Result, default);
-        }
+        return (NetResult.DeserializationError, default);
 
-        if (!BlockService.TryDeserialize<TReceive>(response.Received, out var receive))
+        /*if (!BlockService.TryDeserialize<TReceive>(response.Received, out var receive))
         {
             return (NetResult.DeserializationError, default);
         }
 
-        return (NetResult.Success, receive);
+        return (NetResult.Success, receive);*/
     }
 }

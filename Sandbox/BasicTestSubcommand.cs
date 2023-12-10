@@ -56,7 +56,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             return;
         }
 
-        netTerminal.PacketTerminal.SendCountLimit = 1; // tempcode
+        netTerminal.PacketTerminal.MaxResendCount = 1; // tempcode
         using (var connection = await netTerminal.TryConnect(netNode))
         {
             if (connection is not null)

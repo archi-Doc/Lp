@@ -65,6 +65,20 @@ public sealed partial class NetTransmission // : IDisposable
         this.totalGene = totalGene;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static (uint NumberOfGenes, uint FirstGeneSize, uint LastGeneSize) CalculateGene(uint size)
+    {// FirstGeneSize, GeneFrame.MaxBlockLength..., LastGeneSize
+        if (size <= FirstGeneFrame.MaxGeneLength)
+        {
+            return (1, size, 0);
+        }
+
+        size -= FirstGeneFrame.MaxGeneLength;
+        var numberOfGenes = size / FollowingGeneFrame.MaxGeneLength;
+        var lastGeneSize = size - (numberOfGenes * FollowingGeneFrame.MaxGeneLength);
+        return (FirstGeneFrame.MaxGeneLength, lastGeneSize > 0 ? numberOfGenes + 2 : numberOfGenes + 1, lastGeneSize);
+    }
+
     internal void DisposeInternal()
     {
         TaskCompletionSource<NetResult>? tcs;
@@ -95,20 +109,6 @@ public sealed partial class NetTransmission // : IDisposable
         }
 
         tcs?.TrySetResult(NetResult.Closed);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static (uint NumberOfGenes, uint FirstGeneSize, uint LastGeneSize) CalculateGene(uint size)
-    {// FirstGeneSize, GeneFrame.MaxBlockLength..., LastGeneSize
-        if (size <= FirstGeneFrame.MaxGeneLength)
-        {
-            return (1, size, 0);
-        }
-
-        size -= FirstGeneFrame.MaxGeneLength;
-        var numberOfGenes = size / FollowingGeneFrame.MaxGeneLength;
-        var lastGeneSize = size - (numberOfGenes * FollowingGeneFrame.MaxGeneLength);
-        return (FirstGeneFrame.MaxGeneLength, lastGeneSize > 0 ? numberOfGenes + 2 : numberOfGenes + 1, lastGeneSize);
     }
 
     internal NetResult SendBlock(uint primaryId, ulong secondaryId, ByteArrayPool.MemoryOwner block, TaskCompletionSource<NetResult>? tcs)
@@ -449,11 +449,6 @@ public sealed partial class NetTransmission // : IDisposable
         }
 
         return completeFlag;
-    }
-
-    internal async Task<NetResponse> ReceiveBlock()
-    {
-        return new();
     }
 
     internal long GetLargestSentMics()

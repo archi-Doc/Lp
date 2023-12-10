@@ -162,7 +162,7 @@ Wait:
             return;
         }
 
-        this.PacketTerminal.AddSendPacket(this.EndPoint.EndPoint, owner, false, default);
+        this.PacketTerminal.AddSendPacket(this.EndPoint.EndPoint, owner, default);
     }
 
     internal void SendCloseFrame() // Close

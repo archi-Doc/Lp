@@ -24,7 +24,7 @@ internal partial class PacketConnect : IPacket
     }
 
     [Key(0)]
-    public uint NetIdentifier { get; set; }
+    public uint NetIdentification { get; set; }
 
     [Key(1)]
     public ushort Engagement { get; set; }

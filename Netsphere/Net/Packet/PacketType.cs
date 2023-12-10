@@ -10,7 +10,7 @@ public enum PacketType : ushort
     Punch,
     GetInformation,
 
-    // Packet response types (128-255)
+    // Response packet types (128-255)
     ConnectResponse = 128,
     PingResponse,
     PunchResponse,

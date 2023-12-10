@@ -4,8 +4,6 @@ using Netsphere.Net;
 using Netsphere.Stats;
 using Tinyhand.IO;
 
-#pragma warning disable SA1204
-
 namespace Netsphere.Packet;
 
 public sealed partial class PacketTerminal
@@ -13,9 +11,9 @@ public sealed partial class PacketTerminal
     [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
     private sealed partial class Item
     {
-        [Link(Type = ChainType.LinkedList, Name = "ToSendList", AutoLink = true)]
-        [Link(Type = ChainType.LinkedList, Name = "SentList", AutoLink = false)]
-        public Item(IPEndPoint endPoint, ByteArrayPool.MemoryOwner dataToBeMoved, bool ack, TaskCompletionSource<(NetResult Result, ByteArrayPool.MemoryOwner ToBeMoved)>? tcs)
+        [Link(Type = ChainType.LinkedList, Name = "WaitingToSendList", AutoLink = true)]
+        [Link(Type = ChainType.LinkedList, Name = "WaitingForResponseList", AutoLink = false)]
+        public Item(IPEndPoint endPoint, ByteArrayPool.MemoryOwner dataToBeMoved, TaskCompletionSource<NetResponse>? tcs)
         {
             if (dataToBeMoved.Span.Length < PacketHeader.Length)
             {
@@ -23,7 +21,6 @@ public sealed partial class PacketTerminal
             }
 
             this.EndPoint = endPoint;
-            this.Ack = ack;
             this.PacketId = BitConverter.ToUInt64(dataToBeMoved.Span.Slice(8)); // PacketHeaderCode
             this.MemoryOwner = dataToBeMoved;
             this.Tcs = tcs;
@@ -34,15 +31,13 @@ public sealed partial class PacketTerminal
 
         public IPEndPoint EndPoint { get; }
 
-        public bool Ack { get; }
-
         public ByteArrayPool.MemoryOwner MemoryOwner { get; }
 
-        public TaskCompletionSource<(NetResult Result, ByteArrayPool.MemoryOwner ToBeMoved)>? Tcs { get; }
+        public TaskCompletionSource<NetResponse>? Tcs { get; }
 
         public long SentMics { get; set; }
 
-        public int SentCount { get; set; }
+        public int ResentCount { get; set; }
 
         public void Remove()
         {
@@ -58,13 +53,13 @@ public sealed partial class PacketTerminal
         this.netTerminal = netTerminal;
         this.logger = logger;
 
-        this.ResendIntervalMics = Mics.FromMilliseconds(500);
-        this.SendCountLimit = 3;
+        this.InitialResendTimeoutMics = Mics.FromMilliseconds(500);
+        this.MaxResendCount = 2;
     }
 
-    public long ResendIntervalMics { get; set; }
+    public long InitialResendTimeoutMics { get; set; }
 
-    public int SendCountLimit { get; set; }
+    public int MaxResendCount { get; set; }
 
     private readonly NetBase netBase;
     private readonly NetStats netStats;
@@ -72,7 +67,7 @@ public sealed partial class PacketTerminal
     private readonly ILogger logger;
     private readonly Item.GoshujinClass items = new();
 
-    public void SendAndForget<TSend>(NetAddress address, TSend packet)
+    /*public void SendAndForget<TSend>(NetAddress address, TSend packet)
         where TSend : IPacket, ITinyhandSerialize<TSend>
     {
         if (!this.netTerminal.TryCreateEndPoint(in address, out var endPoint))
@@ -88,7 +83,7 @@ public sealed partial class PacketTerminal
     {
         CreatePacket(0, packet, out var owner);
         this.AddSendPacket(endPoint.EndPoint, owner, true, default);
-    }
+    }*/
 
     public Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(NetAddress address, TSend packet)
         where TSend : IPacket, ITinyhandSerialize<TSend>
@@ -111,24 +106,23 @@ public sealed partial class PacketTerminal
             return (NetResult.Timeout, default);
         }
 
-        var tcs = new TaskCompletionSource<(NetResult Result, ByteArrayPool.MemoryOwner ToBeMoved)>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var responseTcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
         CreatePacket(0, packet, out var owner);
-        this.AddSendPacket(endPoint.EndPoint, owner, true, tcs);
+        this.AddSendPacket(endPoint.EndPoint, owner, responseTcs);
 
         try
         {
-            var task = await tcs.Task.WaitAsync(this.netTerminal.ResponseTimeout, this.netTerminal.CancellationToken).ConfigureAwait(false);
+            var response = await responseTcs.Task.WaitAsync(this.netTerminal.ResponseTimeout, this.netTerminal.CancellationToken).ConfigureAwait(false);
 
-            if (task.Result != NetResult.Success)
+            if (response.IsFailure)
             {
-                task.ToBeMoved.Return();
-                return new(task.Result, default);
+                return new(response.Result, default);
             }
 
             TReceive? receive;
             try
             {
-                receive = TinyhandSerializer.DeserializeObject<TReceive>(task.ToBeMoved.Span.Slice(PacketHeader.Length));
+                receive = TinyhandSerializer.DeserializeObject<TReceive>(response.Received.Span.Slice(PacketHeader.Length));
             }
             catch
             {
@@ -136,7 +130,7 @@ public sealed partial class PacketTerminal
             }
             finally
             {
-                task.ToBeMoved.Return();
+                response.Return();
             }
 
             return (NetResult.Success, receive);
@@ -153,45 +147,44 @@ public sealed partial class PacketTerminal
         {
             // this.logger.TryGet()?.Log($"{this.netTerminal.NetTerminalString} ProcessSend() - {this.items.ToSendListChain.Count}");
 
-            while (this.items.ToSendListChain.First is { } item)
-            {// To send list
+            while (this.items.WaitingToSendListChain.First is { } item)
+            {// Waiting to send
                 if (!netSender.CanSend)
                 {
                     return;
                 }
 
-                if (!item.Ack)
-                {// Without ack
+                if (item.Tcs is not null)
+                {// WaitingToSend -> WaitingForResponse
+                    netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner);
+                    item.SentMics = netSender.CurrentSystemMics;
+                    this.items.WaitingToSendListChain.Remove(item);
+                    this.items.WaitingForResponseListChain.AddLast(item);
+                }
+                else
+                {// WaitingToSend -> Remove (without response)
                     netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner);
                     item.Remove();
                 }
-                else
-                {// Ack (sent list)
-                    netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner);
-                    item.SentMics = netSender.CurrentSystemMics;
-                    item.SentCount++;
-                    this.items.ToSendListChain.Remove(item);
-                    this.items.SentListChain.AddLast(item);
-                }
             }
 
-            while (this.items.SentListChain.First is { } item && (netSender.CurrentSystemMics - item.SentMics) > this.ResendIntervalMics)
+            while (this.items.WaitingForResponseListChain.First is { } item && (netSender.CurrentSystemMics - item.SentMics) > this.InitialResendTimeoutMics)
             {// Sent list
                 if (!netSender.CanSend)
                 {
                     return;
                 }
 
-                if (item.SentCount >= this.SendCountLimit)
-                {
+                if (item.ResentCount >= this.MaxResendCount)
+                {// The maximum number of resend attempts reached.
                     item.Remove();
                     continue;
                 }
 
                 netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner);
                 item.SentMics = netSender.CurrentSystemMics;
-                item.SentCount++;
-                this.items.SentListChain.AddLast(item);
+                item.ResentCount++;
+                this.items.WaitingForResponseListChain.AddLast(item);
             }
         }
     }
@@ -221,7 +214,7 @@ public sealed partial class PacketTerminal
 
                         this.netTerminal.ConnectionTerminal.PrepareServerSide(new(endPoint, p.Engagement), p, packet);
                         CreatePacket(packetId, packet, out var owner);
-                        this.AddSendPacket(endPoint, owner, false, default);
+                        this.AddSendPacket(endPoint, owner, default);
                     });
 
                     return;
@@ -235,14 +228,14 @@ public sealed partial class PacketTerminal
 
                     var packet = new PacketPingResponse(new(endPoint.Address, (ushort)endPoint.Port), this.netTerminal.NetBase.NodeName);
                     CreatePacket(packetId, packet, out var owner);
-                    this.AddSendPacket(endPoint, owner, false, default);
+                    this.AddSendPacket(endPoint, owner, default);
                     return;
                 }
                 else if (packetType == PacketType.GetInformation)
                 {// PacketGetInformation
                     var packet = new PacketGetInformationResponse(this.netBase.NodePublicKey);
                     CreatePacket(packetId, packet, out var owner);
-                    this.AddSendPacket(endPoint, owner, false, default);
+                    this.AddSendPacket(endPoint, owner, default);
                     return;
                 }
             }
@@ -264,7 +257,8 @@ public sealed partial class PacketTerminal
 
                 if (item.Tcs is not null)
                 {
-                    item.Tcs.SetResult((NetResult.Success, toBeShared.IncrementAndShare()));
+                    var elapsedMics = currentSystemMics > item.SentMics ? currentSystemMics - item.SentMics : 0;
+                    item.Tcs.SetResult(new(NetResult.Success, toBeShared.IncrementAndShare(), elapsedMics));
                 }
             }
         }
@@ -273,14 +267,14 @@ public sealed partial class PacketTerminal
         }
     }
 
-    internal unsafe void AddSendPacket(IPEndPoint endPoint, ByteArrayPool.MemoryOwner dataToBeMoved, bool ack, TaskCompletionSource<(NetResult Result, ByteArrayPool.MemoryOwner ToBeMoved)>? tcs)
+    internal unsafe void AddSendPacket(IPEndPoint endPoint, ByteArrayPool.MemoryOwner dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs)
     {
         if (dataToBeMoved.Span.Length > NetControl.MaxPacketLength)
         {
             return;
         }
 
-        var item = new Item(endPoint, dataToBeMoved, ack, tcs);
+        var item = new Item(endPoint, dataToBeMoved, responseTcs);
         lock (this.items.SyncObject)
         {
             item.Goshujin = this.items;
