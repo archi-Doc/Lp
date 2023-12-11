@@ -83,7 +83,7 @@ public class Program
             .Preload(context =>
             {
                 var original = context.GetOrCreateOptions<NetsphereOptions>();
-                original.EnableAlternative = false;
+                original.EnableAlternative = true;
                 original.EnableLogger = false;
                 original.Port = 49152;
 

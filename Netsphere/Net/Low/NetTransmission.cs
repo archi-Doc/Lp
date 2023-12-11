@@ -371,7 +371,7 @@ public sealed partial class NetTransmission // : IDisposable
 
         if (this.IsClient)
         {// Client
-            this.Dispose();
+            //this.DisposeInternal();
         }
         else
         {// Server
@@ -506,7 +506,7 @@ public sealed partial class NetTransmission // : IDisposable
         sentCount = 0;
         if (this.Connection.IsClosedOrDisposed)
         {
-            this.Dispose();
+            //this.DisposeInternal();
             return false;
         }
 

@@ -42,7 +42,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
         Console.WriteLine($"{sw.ElapsedMilliseconds} ms, {result.ToString()}");
         sw.Restart();
 
-        for (var i = 0; i < 1; i++)
+        for (var i = 0; i < 10; i++)
         {
             p = new PacketPing("test56789");
             result = await packetTerminal.SendAndReceiveAsync<PacketPing, PacketPingResponse>(netAddress, p);
@@ -56,7 +56,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             return;
         }
 
-        netTerminal.PacketTerminal.MaxResendCount = 1; // tempcode
+        netTerminal.PacketTerminal.MaxResendCount = 0; // tempcode
         using (var connection = await netTerminal.TryConnect(netNode))
         {
             if (connection is not null)
@@ -67,8 +67,8 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 service.EngageAndSend();
                 service.Send(new(Proof, proof));*/
 
-                var p2 = new PacketPing();
-                var response = await connection.SendAndReceiveAsync<PacketPing, PacketPingResponse>(p2);
+                // var p2 = new PacketPing();
+                // var response = await connection.SendAndReceiveAsync<PacketPing, PacketPingResponse>(p2);
 
                 /*var transmission = await connection.GetTransmission();
                 if (transmission is not null)
@@ -81,7 +81,7 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
             }
         }
 
-        await Task.Delay(1000000000);
+        // await Task.Delay(1000000000);
 
         /*if (!NetAddress.TryParse(this.logger, nodeString, out var node))
         {
