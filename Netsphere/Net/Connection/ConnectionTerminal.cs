@@ -133,6 +133,7 @@ public class ConnectionTerminal
             return default;
         }
 
+        newConnection.AddRtt(t.RttMics);
         lock (this.clientConnections.SyncObject)
         {// ConnectionStateCode
             newConnection.Goshujin = this.clientConnections;

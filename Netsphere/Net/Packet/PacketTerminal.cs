@@ -11,9 +11,11 @@ public sealed partial class PacketTerminal
     [ValueLinkObject(Isolation = IsolationLevel.Serializable)]
     private sealed partial class Item
     {
+        // ResponseTcs == null: WaitingToSend -> (Send) -> (Remove)
+        // ResponseTcs != null: WaitingToSend -> WaitingForResponse -> Complete or Resend
         [Link(Type = ChainType.LinkedList, Name = "WaitingToSendList", AutoLink = true)]
         [Link(Type = ChainType.LinkedList, Name = "WaitingForResponseList", AutoLink = false)]
-        public Item(IPEndPoint endPoint, ByteArrayPool.MemoryOwner dataToBeMoved, TaskCompletionSource<NetResponse>? tcs)
+        public Item(IPEndPoint endPoint, ByteArrayPool.MemoryOwner dataToBeMoved, TaskCompletionSource<NetResponse>? responseTcs)
         {
             if (dataToBeMoved.Span.Length < PacketHeader.Length)
             {
@@ -23,17 +25,17 @@ public sealed partial class PacketTerminal
             this.EndPoint = endPoint;
             this.PacketId = BitConverter.ToUInt64(dataToBeMoved.Span.Slice(8)); // PacketHeaderCode
             this.MemoryOwner = dataToBeMoved;
-            this.Tcs = tcs;
+            this.ResponseTcs = responseTcs;
         }
 
-        [Link(Primary = true, Type = ChainType.Unordered, AddValue = false)]
-        public ulong PacketId { get; }
+        [Link(Primary = true, Type = ChainType.Unordered)]
+        public ulong PacketId { get; set; }
 
         public IPEndPoint EndPoint { get; }
 
         public ByteArrayPool.MemoryOwner MemoryOwner { get; }
 
-        public TaskCompletionSource<NetResponse>? Tcs { get; }
+        public TaskCompletionSource<NetResponse>? ResponseTcs { get; }
 
         public long SentMics { get; set; }
 
@@ -85,25 +87,25 @@ public sealed partial class PacketTerminal
         this.AddSendPacket(endPoint.EndPoint, owner, true, default);
     }*/
 
-    public Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(NetAddress address, TSend packet)
+    public Task<(NetResult Result, TReceive? Value, long RttMics)> SendAndReceiveAsync<TSend, TReceive>(NetAddress address, TSend packet)
         where TSend : IPacket, ITinyhandSerialize<TSend>
         where TReceive : IPacket, ITinyhandSerialize<TReceive>
     {
         if (!this.netTerminal.TryCreateEndPoint(in address, out var endPoint))
         {
-            return Task.FromResult<(NetResult Result, TReceive? Value)>((NetResult.InvalidAddress, default));
+            return Task.FromResult<(NetResult, TReceive?, long)>((NetResult.InvalidAddress, default, 0));
         }
 
         return this.SendAndReceiveAsync<TSend, TReceive>(endPoint, packet);
     }
 
-    public async Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(NetEndPoint endPoint, TSend packet)
+    public async Task<(NetResult Result, TReceive? Value, long RttMics)> SendAndReceiveAsync<TSend, TReceive>(NetEndPoint endPoint, TSend packet)
     where TSend : IPacket, ITinyhandSerialize<TSend>
     where TReceive : IPacket, ITinyhandSerialize<TReceive>
     {
         if (this.netTerminal.CancellationToken.IsCancellationRequested)
         {
-            return (NetResult.Timeout, default);
+            return (NetResult.Timeout, default, 0);
         }
 
         var responseTcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -116,7 +118,7 @@ public sealed partial class PacketTerminal
 
             if (response.IsFailure)
             {
-                return new(response.Result, default);
+                return new(response.Result, default, 0);
             }
 
             TReceive? receive;
@@ -126,18 +128,18 @@ public sealed partial class PacketTerminal
             }
             catch
             {
-                return new(NetResult.DeserializationError, default);
+                return new(NetResult.DeserializationError, default, 0);
             }
             finally
             {
                 response.Return();
             }
 
-            return (NetResult.Success, receive);
+            return (NetResult.Success, receive, response.ElapsedMics);
         }
         catch
         {
-            return (NetResult.Timeout, default);
+            return (NetResult.Timeout, default, 0);
         }
     }
 
@@ -154,7 +156,7 @@ public sealed partial class PacketTerminal
                     return;
                 }
 
-                if (item.Tcs is not null)
+                if (item.ResponseTcs is not null)
                 {// WaitingToSend -> WaitingForResponse
                     netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner);
                     item.SentMics = netSender.CurrentSystemMics;
@@ -180,6 +182,15 @@ public sealed partial class PacketTerminal
                     item.Remove();
                     continue;
                 }
+
+                // Reset packet id in order to improve the accuracy of RTT measurement.
+                var newPacketId = RandomVault.Pseudo.NextUInt64();
+                item.PacketIdValue = newPacketId;
+
+                // PacketHeaderCode
+                var span = item.MemoryOwner.Span;
+                BitConverter.TryWriteBytes(span.Slice(8), newPacketId);
+                BitConverter.TryWriteBytes(span, (uint)XxHash3.Hash64(span.Slice(4)));
 
                 netSender.Send_NotThreadSafe(item.EndPoint, item.MemoryOwner);
                 item.SentMics = netSender.CurrentSystemMics;
@@ -255,10 +266,10 @@ public sealed partial class PacketTerminal
             {
                 this.logger.TryGet(LogLevel.Debug)?.Log($"{this.netTerminal.NetTerminalString}, Received {toBeShared.Span.Length}");
 
-                if (item.Tcs is not null)
+                if (item.ResponseTcs is not null)
                 {
                     var elapsedMics = currentSystemMics > item.SentMics ? currentSystemMics - item.SentMics : 0;
-                    item.Tcs.SetResult(new(NetResult.Success, toBeShared.IncrementAndShare(), elapsedMics));
+                    item.ResponseTcs.SetResult(new(NetResult.Success, toBeShared.IncrementAndShare(), elapsedMics));
                 }
             }
         }

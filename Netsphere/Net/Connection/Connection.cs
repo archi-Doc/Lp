@@ -18,6 +18,9 @@ internal readonly record struct Embryo(ulong Salt, byte[] Key, byte[] Iv);
 
 public abstract class Connection : IDisposable
 {
+    private static readonly long MinRtt = Mics.FromMilliseconds(1);
+    private static readonly long MaxRtt = Mics.FromMilliseconds(1_000);
+
     public enum ConnectMode
     {
         ReuseClosed,
@@ -153,6 +156,11 @@ Wait:
 
     internal virtual void UpdateSendQueue(NetTransmission transmission)
     {
+    }
+
+    internal void AddRtt(long rttMics)
+    {
+
     }
 
     internal void SendPriorityFrame(scoped Span<byte> frame)
