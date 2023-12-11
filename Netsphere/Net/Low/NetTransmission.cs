@@ -1,9 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Netsphere.Block;
 using Netsphere.Packet;
 
 namespace Netsphere.Net;
@@ -11,7 +9,7 @@ namespace Netsphere.Net;
 [ValueLinkObject(Isolation = IsolationLevel.Serializable, Restricted = true)]
 public sealed partial class NetTransmission // : IDisposable
 {
-    internal const int GeneThreshold = 3;
+    internal const int BlockThreshold = 3;
 
     /* State transitions
      *  SendAndReceiveAsync (Client) : Sending -> Receiving -> Disposed
@@ -192,7 +190,7 @@ public sealed partial class NetTransmission // : IDisposable
             }
         }
 
-        if (info.NumberOfGenes > GeneThreshold)
+        if (info.NumberOfGenes > BlockThreshold)
         {// Flow control
         }
         else
@@ -213,7 +211,7 @@ public sealed partial class NetTransmission // : IDisposable
             if (this.State == TransmissionState.Receiving &&
                 genePosition < this.totalGene)
             {// Set gene
-                if (this.totalGene <= GeneThreshold)
+                if (this.totalGene <= BlockThreshold)
                 {// Single send/recv
                     if (genePosition == 0)
                     {
@@ -265,7 +263,7 @@ public sealed partial class NetTransmission // : IDisposable
             }
         }
 
-        if (this.totalGene <= GeneThreshold)
+        if (this.totalGene <= BlockThreshold)
         {// Fast ack
             if (completeFlag)
             {

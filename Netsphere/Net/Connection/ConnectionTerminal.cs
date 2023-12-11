@@ -304,7 +304,7 @@ public class ConnectionTerminal
         lock (this.syncQueue)
         {
             // Send queue
-            while (netSender.SendCapacity >= netSender.SendCount + NetTransmission.GeneThreshold)
+            while (netSender.SendCapacity >= netSender.SendCount + NetTransmission.BlockThreshold)
             {
                 if (!this.sendQueue.TryDequeue(out var transmission))
                 {// No send queue
@@ -318,7 +318,7 @@ public class ConnectionTerminal
             }
 
             // Resend queue
-            while (netSender.SendCapacity >= netSender.SendCount + NetTransmission.GeneThreshold)
+            while (netSender.SendCapacity >= netSender.SendCount + NetTransmission.BlockThreshold)
             {
                 if (!this.resendQueue.TryPeek(out var transmission))
                 {// No resend queue
