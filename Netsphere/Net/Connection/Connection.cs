@@ -83,6 +83,12 @@ public abstract class Connection : IDisposable
     // lock (this.transmissions.SyncObject)
     private NetTransmission.GoshujinClass transmissions = new();
 
+    // RTT
+    private long minRtt;
+    private long latestRtt;
+    private long smoothedRtt;
+    private long rttvar;
+
     #endregion
 
     public NetTransmission? TryCreateTransmission()
@@ -160,7 +166,30 @@ Wait:
 
     internal void AddRtt(long rttMics)
     {
+        if (rttMics < MinRtt)
+        {
+            rttMics = MinRtt;
+        }
+        else if (rttMics > MaxRtt)
+        {
+            rttMics = MaxRtt;
+        }
 
+        if (this.minRtt == 0)
+        {// Initial
+            this.minRtt = rttMics;
+            this.smoothedRtt = rttMics;
+            this.rttvar = rttMics >> 1;
+        }
+        else if (this.minRtt > rttMics)
+        {// minRtt is greater then the latest rtt.
+            this.minRtt = rttMics;
+        }
+
+        this.latestRtt = rttMics;
+        this.smoothedRtt = ((this.smoothedRtt * 7) >> 3) + (this.latestRtt >> 3);
+        var rttvarSample = Math.Abs(this.smoothedRtt - this.latestRtt);
+        this.rttvar = ((this.rttvar * 3) >> 2) + (rttvarSample >> 2);
     }
 
     internal void SendPriorityFrame(scoped Span<byte> frame)
