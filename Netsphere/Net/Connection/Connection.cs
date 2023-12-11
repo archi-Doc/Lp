@@ -18,8 +18,9 @@ internal readonly record struct Embryo(ulong Salt, byte[] Key, byte[] Iv);
 
 public abstract class Connection : IDisposable
 {
-    private static readonly long MinRtt = Mics.FromMilliseconds(1);
-    private static readonly long MaxRtt = Mics.FromMilliseconds(1_000);
+    private static readonly int LowerRttLimit = (int)Mics.FromMilliseconds(1);
+    private static readonly int UpperRttLimit = (int)Mics.FromMilliseconds(1_000);
+    private static readonly int AckDelay = (int)Mics.FromMilliseconds(10);
 
     public enum ConnectMode
     {
@@ -84,10 +85,9 @@ public abstract class Connection : IDisposable
     private NetTransmission.GoshujinClass transmissions = new();
 
     // RTT
-    private long minRtt;
-    private long latestRtt;
-    private long smoothedRtt;
-    private long rttvar;
+    private long minRtt; // Minimum rtt
+    private long smoothedRtt; // Smoothed rtt
+    private long rttvar; // Rtt variation
 
     #endregion
 
@@ -164,15 +164,15 @@ Wait:
     {
     }
 
-    internal void AddRtt(long rttMics)
+    internal void AddRtt(int rttMics)
     {
-        if (rttMics < MinRtt)
+        if (rttMics < LowerRttLimit)
         {
-            rttMics = MinRtt;
+            rttMics = LowerRttLimit;
         }
-        else if (rttMics > MaxRtt)
+        else if (rttMics > UpperRttLimit)
         {
-            rttMics = MaxRtt;
+            rttMics = UpperRttLimit;
         }
 
         if (this.minRtt == 0)
@@ -186,9 +186,9 @@ Wait:
             this.minRtt = rttMics;
         }
 
-        this.latestRtt = rttMics;
-        this.smoothedRtt = ((this.smoothedRtt * 7) >> 3) + (this.latestRtt >> 3);
-        var rttvarSample = Math.Abs(this.smoothedRtt - this.latestRtt);
+        var adjustedRtt = rttMics; // - ackDelay
+        this.smoothedRtt = ((this.smoothedRtt * 7) >> 3) + (adjustedRtt >> 3);
+        var rttvarSample = Math.Abs(this.smoothedRtt - adjustedRtt);
         this.rttvar = ((this.rttvar * 3) >> 2) + (rttvarSample >> 2);
     }
 

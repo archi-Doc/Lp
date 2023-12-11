@@ -87,19 +87,19 @@ public sealed partial class PacketTerminal
         this.AddSendPacket(endPoint.EndPoint, owner, true, default);
     }*/
 
-    public Task<(NetResult Result, TReceive? Value, long RttMics)> SendAndReceiveAsync<TSend, TReceive>(NetAddress address, TSend packet)
+    public Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceiveAsync<TSend, TReceive>(NetAddress address, TSend packet)
         where TSend : IPacket, ITinyhandSerialize<TSend>
         where TReceive : IPacket, ITinyhandSerialize<TReceive>
     {
         if (!this.netTerminal.TryCreateEndPoint(in address, out var endPoint))
         {
-            return Task.FromResult<(NetResult, TReceive?, long)>((NetResult.InvalidAddress, default, 0));
+            return Task.FromResult<(NetResult, TReceive?, int)>((NetResult.InvalidAddress, default, 0));
         }
 
         return this.SendAndReceiveAsync<TSend, TReceive>(endPoint, packet);
     }
 
-    public async Task<(NetResult Result, TReceive? Value, long RttMics)> SendAndReceiveAsync<TSend, TReceive>(NetEndPoint endPoint, TSend packet)
+    public async Task<(NetResult Result, TReceive? Value, int RttMics)> SendAndReceiveAsync<TSend, TReceive>(NetEndPoint endPoint, TSend packet)
     where TSend : IPacket, ITinyhandSerialize<TSend>
     where TReceive : IPacket, ITinyhandSerialize<TReceive>
     {
@@ -268,7 +268,7 @@ public sealed partial class PacketTerminal
 
                 if (item.ResponseTcs is not null)
                 {
-                    var elapsedMics = currentSystemMics > item.SentMics ? currentSystemMics - item.SentMics : 0;
+                    var elapsedMics = currentSystemMics > item.SentMics ? (int)(currentSystemMics - item.SentMics) : 0;
                     item.ResponseTcs.SetResult(new(NetResult.Success, toBeShared.IncrementAndShare(), elapsedMics));
                 }
             }
