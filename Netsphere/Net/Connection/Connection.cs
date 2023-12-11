@@ -31,19 +31,19 @@ public abstract class Connection : IDisposable
 
     public enum ConnectionState
     {
+        Created,
         Open,
         Closed,
         Disposed,
     }
 
-    public Connection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetEndPoint endPoint, ConnectionAgreementBlock agreement)
+    public Connection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetEndPoint endPoint)
     {
         this.NetBase = connectionTerminal.NetBase;
         this.PacketTerminal = packetTerminal;
         this.ConnectionTerminal = connectionTerminal;
         this.ConnectionId = connectionId;
         this.EndPoint = endPoint;
-        this.Agreement = agreement;
     }
 
     #region FieldAndProperty
@@ -58,7 +58,7 @@ public abstract class Connection : IDisposable
 
     public NetEndPoint EndPoint { get; }
 
-    public ConnectionAgreementBlock Agreement { get; private set; }
+    public ConnectionAgreementBlock Agreement { get; private set; } = ConnectionAgreementBlock.Default;
 
     public abstract ConnectionState State { get; }
 
@@ -155,8 +155,9 @@ Wait:
     public void Close()
         => this.Dispose();
 
-    internal void Initialize(Embryo embryo)
+    internal void Initialize(ConnectionAgreementBlock agreement, Embryo embryo)
     {
+        this.Agreement = agreement;
         this.embryo = embryo;
     }
 

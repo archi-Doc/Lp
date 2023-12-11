@@ -117,6 +117,8 @@ public class ConnectionTerminal
                     }
                 }
             }
+
+            var clientConnection = new ClientConnection(this.packetTerminal, this, 9, endPoint, agreement);
         }
 
         // Create a new connection
@@ -156,8 +158,8 @@ public class ConnectionTerminal
         }
 
         this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
-        var connection = new ClientConnection(this.netTerminal.PacketTerminal, this, connectionId, endPoint, p2.Agreement);
-        connection.Initialize(embryo);
+        var connection = new ClientConnection(this.netTerminal.PacketTerminal, this, connectionId, endPoint);
+        connection.Initialize(p2.Agreement, embryo);
 
         return connection;
     }
@@ -173,8 +175,8 @@ public class ConnectionTerminal
         }
 
         this.CreateEmbryo(material, p, p2, out var connectionId, out var embryo);
-        var connection = new ServerConnection(this.netTerminal.PacketTerminal, this, connectionId, endPoint, p2.Agreement);
-        connection.Initialize(embryo);
+        var connection = new ServerConnection(this.netTerminal.PacketTerminal, this, connectionId, endPoint);
+        connection.Initialize(p2.Agreement, embryo);
 
         lock (this.serverConnections.SyncObject)
         {// ConnectionStateCode
