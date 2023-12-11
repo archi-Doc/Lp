@@ -7,11 +7,12 @@ namespace Netsphere.Packet;
 // NetTerminalGene by Nihei.
 internal readonly struct FirstGeneFrame
 {// FirstGeneFrameCode
-    public const int Length = 22;
+    public const int Length = 26;
     public const int LengthExcludingFrameType = Length - 2;
     public const int MaxGeneLength = PacketHeader.MaxFrameLength - Length;
 
     public readonly FrameType FrameType; // 2 bytes
+    public readonly int InitialRtt; // 4 bytes
     public readonly uint TransmissionId; // 4 bytes
     public readonly uint TotalGene; // 4 bytes
     public readonly uint PrimaryId; // 4 bytes

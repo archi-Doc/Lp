@@ -58,6 +58,8 @@ public class DeliveryTestSubcommand : ISimpleCommandAsync<DeliveryTestOptions>
         await Task.WhenAll(array);
 
         Console.WriteLine($"{sw.ElapsedMilliseconds} ms, {successCount}/{Count}");
+        var expectedSuccess = (int)(Count * (1d - Math.Pow(0.3, 3)));
+        Console.WriteLine($"The expected number of success is {expectedSuccess}");
     }
 
     public NetControl NetControl { get; set; }

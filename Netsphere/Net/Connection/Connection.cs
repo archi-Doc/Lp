@@ -18,6 +18,10 @@ internal readonly record struct Embryo(ulong Salt, byte[] Key, byte[] Iv);
 
 public abstract class Connection : IDisposable
 {
+    private static readonly int LowerRttLimit = (int)Mics.FromMilliseconds(1);
+    private static readonly int UpperRttLimit = (int)Mics.FromMilliseconds(1_000);
+    private static readonly int AckDelay = (int)Mics.FromMilliseconds(10);
+
     public enum ConnectMode
     {
         ReuseClosed,
@@ -27,19 +31,19 @@ public abstract class Connection : IDisposable
 
     public enum ConnectionState
     {
+        Created,
         Open,
         Closed,
         Disposed,
     }
 
-    public Connection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetEndPoint endPoint, ConnectionAgreementBlock agreement)
+    public Connection(PacketTerminal packetTerminal, ConnectionTerminal connectionTerminal, ulong connectionId, NetEndPoint endPoint)
     {
         this.NetBase = connectionTerminal.NetBase;
         this.PacketTerminal = packetTerminal;
         this.ConnectionTerminal = connectionTerminal;
         this.ConnectionId = connectionId;
         this.EndPoint = endPoint;
-        this.Agreement = agreement;
     }
 
     #region FieldAndProperty
@@ -54,7 +58,7 @@ public abstract class Connection : IDisposable
 
     public NetEndPoint EndPoint { get; }
 
-    public ConnectionAgreementBlock Agreement { get; private set; }
+    public ConnectionAgreementBlock Agreement { get; private set; } = ConnectionAgreementBlock.Default;
 
     public abstract ConnectionState State { get; }
 
@@ -79,6 +83,11 @@ public abstract class Connection : IDisposable
 
     // lock (this.transmissions.SyncObject)
     private NetTransmission.GoshujinClass transmissions = new();
+
+    // RTT
+    private long minRtt; // Minimum rtt
+    private long smoothedRtt; // Smoothed rtt
+    private long rttvar; // Rtt variation
 
     #endregion
 
@@ -146,13 +155,42 @@ Wait:
     public void Close()
         => this.Dispose();
 
-    internal void Initialize(Embryo embryo)
+    internal void Initialize(ConnectionAgreementBlock agreement, Embryo embryo)
     {
+        this.Agreement = agreement;
         this.embryo = embryo;
     }
 
     internal virtual void UpdateSendQueue(NetTransmission transmission)
     {
+    }
+
+    internal void AddRtt(int rttMics)
+    {
+        if (rttMics < LowerRttLimit)
+        {
+            rttMics = LowerRttLimit;
+        }
+        else if (rttMics > UpperRttLimit)
+        {
+            rttMics = UpperRttLimit;
+        }
+
+        if (this.minRtt == 0)
+        {// Initial
+            this.minRtt = rttMics;
+            this.smoothedRtt = rttMics;
+            this.rttvar = rttMics >> 1;
+        }
+        else if (this.minRtt > rttMics)
+        {// minRtt is greater then the latest rtt.
+            this.minRtt = rttMics;
+        }
+
+        var adjustedRtt = rttMics; // - ackDelay
+        this.smoothedRtt = ((this.smoothedRtt * 7) >> 3) + (adjustedRtt >> 3);
+        var rttvarSample = Math.Abs(this.smoothedRtt - adjustedRtt);
+        this.rttvar = ((this.rttvar * 3) >> 2) + (rttvarSample >> 2);
     }
 
     internal void SendPriorityFrame(scoped Span<byte> frame)
