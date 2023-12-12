@@ -27,6 +27,7 @@ public sealed partial class NetTransmission // : IDisposable
 
     public enum TransmissionMode
     {
+        Invalid,
         Rama,
         Block,
         Stream,
@@ -64,9 +65,13 @@ public sealed partial class NetTransmission // : IDisposable
                 {
                     return TransmissionMode.Block;
                 }
-                else
+                else if (genes.Count <= this.Connection.Agreement.MaxStreamSize)
                 {
                     return TransmissionMode.Stream;
+                }
+                else
+                {
+                    return TransmissionMode.Invalid;
                 }
             }
             else
@@ -78,7 +83,7 @@ public sealed partial class NetTransmission // : IDisposable
 
     private readonly object syncObject = new();
     private uint totalGene;
-    private TaskCompletionSource<NetResult>? tcs;
+    private TaskCompletionSource<NetResponse>? tcs;
     private NetGene? gene0; // Gene 0
     private NetGene? gene1; // Gene 1
     private NetGene? gene2; // Gene 2
@@ -108,7 +113,7 @@ public sealed partial class NetTransmission // : IDisposable
 
     internal void DisposeInternal()
     {
-        TaskCompletionSource<NetResult>? tcs;
+        TaskCompletionSource<NetResponse>? tcs;
 
         lock (this.syncObject)
         {
@@ -135,10 +140,10 @@ public sealed partial class NetTransmission // : IDisposable
             this.tcs = default;
         }
 
-        tcs?.TrySetResult(NetResult.Closed);
+        tcs?.TrySetResult(new(NetResult.Closed));
     }
 
-    internal NetResult SendBlock(uint primaryId, ulong secondaryId, ByteArrayPool.MemoryOwner block, TaskCompletionSource<NetResult>? tcs)
+    internal NetResult SendBlock(uint primaryId, ulong secondaryId, ByteArrayPool.MemoryOwner block, TaskCompletionSource<NetResponse> tcs, bool requiresResponse)
     {
         var info = CalculateGene(block.Span.Length);
 

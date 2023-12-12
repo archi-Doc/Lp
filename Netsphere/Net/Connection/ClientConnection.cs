@@ -38,7 +38,7 @@ public sealed partial class ClientConnection : Connection
     }
 
     public async Task<NetResult> SendAsync<TSend>(TSend packet)
-    where TSend : ITinyhandSerialize<TSend>
+        where TSend : ITinyhandSerialize<TSend>
     {
         if (!BlockService.TrySerialize(packet, out var owner))
         {
@@ -56,14 +56,16 @@ public sealed partial class ClientConnection : Connection
             return NetResult.NoTransmission;
         }
 
-        var tcs = new TaskCompletionSource<NetResult>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var result = transmission.SendBlock(0, 0, owner, tcs);
+        var responseTcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var result = transmission.SendBlock(0, 0, owner, responseTcs, false);
         if (result != NetResult.Success)
         {
             return result;
         }
 
-        return await tcs.Task.ConfigureAwait(false);
+        var response = await responseTcs.Task.ConfigureAwait(false);
+        response.Return();
+        return response.Result;
     }
 
     public async Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(TSend packet)
@@ -87,7 +89,7 @@ public sealed partial class ClientConnection : Connection
         }
 
         var responseTcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var result = transmission.SendBlock(0, 0, owner, default);
+        var result = transmission.SendBlock(0, 0, owner, responseTcs, true);
         if (result != NetResult.Success)
         {
             return (result, default);
