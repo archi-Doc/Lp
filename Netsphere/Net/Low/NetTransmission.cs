@@ -25,6 +25,13 @@ public sealed partial class NetTransmission // : IDisposable
         Disposed,
     }
 
+    public enum TransmissionMode
+    {
+        Rama,
+        Block,
+        Stream,
+    }
+
     [Link(Name = "SendQueue", Type = ChainType.QueueList, AutoLink = false)]
     [Link(Name = "ResendQueue", Type = ChainType.QueueList, AutoLink = false)]
     public NetTransmission(Connection connection, bool isClient, uint transmissionId)
@@ -47,6 +54,28 @@ public sealed partial class NetTransmission // : IDisposable
 
     public TransmissionState State { get; private set; } // lock (this.syncObject)
 
+    public TransmissionMode Mode
+    {
+        get
+        {
+            if (this.genes is { } genes)
+            {
+                if (genes.Count <= this.Connection.Agreement.MaxBlockGenes)
+                {
+                    return TransmissionMode.Block;
+                }
+                else
+                {
+                    return TransmissionMode.Stream;
+                }
+            }
+            else
+            {
+                return TransmissionMode.Rama;
+            }
+        }
+    }
+
     private readonly object syncObject = new();
     private uint totalGene;
     private TaskCompletionSource<NetResult>? tcs;
@@ -64,16 +93,16 @@ public sealed partial class NetTransmission // : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static (uint NumberOfGenes, uint FirstGeneSize, uint LastGeneSize) CalculateGene(uint size)
+    internal static (uint NumberOfGenes, uint FirstGeneSize, uint LastGeneSize) CalculateGene(long size)
     {// FirstGeneSize, GeneFrame.MaxBlockLength..., LastGeneSize
         if (size <= FirstGeneFrame.MaxGeneLength)
         {
-            return (1, size, 0);
+            return (1, (uint)size, 0);
         }
 
         size -= FirstGeneFrame.MaxGeneLength;
-        var numberOfGenes = size / FollowingGeneFrame.MaxGeneLength;
-        var lastGeneSize = size - (numberOfGenes * FollowingGeneFrame.MaxGeneLength);
+        var numberOfGenes = (uint)(size / FollowingGeneFrame.MaxGeneLength);
+        var lastGeneSize = (uint)(size - (numberOfGenes * FollowingGeneFrame.MaxGeneLength));
         return (FirstGeneFrame.MaxGeneLength, lastGeneSize > 0 ? numberOfGenes + 2 : numberOfGenes + 1, lastGeneSize);
     }
 
@@ -111,7 +140,7 @@ public sealed partial class NetTransmission // : IDisposable
 
     internal NetResult SendBlock(uint primaryId, ulong secondaryId, ByteArrayPool.MemoryOwner block, TaskCompletionSource<NetResult>? tcs)
     {
-        var info = CalculateGene((uint)block.Span.Length);
+        var info = CalculateGene(block.Span.Length);
 
         lock (this.syncObject)
         {
@@ -159,7 +188,7 @@ public sealed partial class NetTransmission // : IDisposable
             }
             else
             {// Multiple genes
-                if (info.NumberOfGenes > this.Connection.Agreement.MaxGenes)
+                if (info.NumberOfGenes > this.Connection.Agreement.MaxBlockGenes)
                 {
                     return NetResult.BlockSizeLimit;
                 }

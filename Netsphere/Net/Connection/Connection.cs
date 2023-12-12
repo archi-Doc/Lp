@@ -182,15 +182,18 @@ Wait:
             this.smoothedRtt = rttMics;
             this.rttvar = rttMics >> 1;
         }
-        else if (this.minRtt > rttMics)
-        {// minRtt is greater then the latest rtt.
-            this.minRtt = rttMics;
-        }
+        else
+        {// Update
+            if (this.minRtt > rttMics)
+            {// minRtt is greater then the latest rtt.
+                this.minRtt = rttMics;
+            }
 
-        var adjustedRtt = rttMics; // - ackDelay
-        this.smoothedRtt = ((this.smoothedRtt * 7) >> 3) + (adjustedRtt >> 3);
-        var rttvarSample = Math.Abs(this.smoothedRtt - adjustedRtt);
-        this.rttvar = ((this.rttvar * 3) >> 2) + (rttvarSample >> 2);
+            var adjustedRtt = rttMics; // - ackDelay
+            this.smoothedRtt = ((this.smoothedRtt * 7) >> 3) + (adjustedRtt >> 3);
+            var rttvarSample = Math.Abs(this.smoothedRtt - adjustedRtt);
+            this.rttvar = ((this.rttvar * 3) >> 2) + (rttvarSample >> 2);
+        }
     }
 
     internal void SendPriorityFrame(scoped Span<byte> frame)

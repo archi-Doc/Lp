@@ -67,8 +67,8 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 service.EngageAndSend();
                 service.Send(new(Proof, proof));*/
 
-                // var p2 = new PacketPing();
-                // var response = await connection.SendAndReceiveAsync<PacketPing, PacketPingResponse>(p2);
+                var p2 = new PacketPing();
+                var response = await connection.SendAndReceiveAsync<PacketPing, PacketPingResponse>(p2);
 
                 /*var transmission = await connection.GetTransmission();
                 if (transmission is not null)
