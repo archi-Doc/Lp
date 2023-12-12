@@ -21,6 +21,7 @@ public enum NetResult
     DeserializationError,
     PacketSizeLimit,
     BlockSizeLimit,
+    StreamSizeLimit,
     ReserveError,
     NoNetService,
     NoCallContext,

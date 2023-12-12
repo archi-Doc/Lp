@@ -91,7 +91,10 @@ public abstract class Connection : IDisposable
 
     #endregion
 
-    public NetTransmission? TryCreateTransmission()
+    public void Close()
+        => this.Dispose();
+
+    internal NetTransmission? TryCreateTransmission()
     {
         lock (this.transmissions.SyncObject)
         {
@@ -113,7 +116,7 @@ public abstract class Connection : IDisposable
         }
     }
 
-    public async ValueTask<NetTransmission?> CreateTransmission()
+    internal async ValueTask<NetTransmission?> CreateTransmission()
     {
 Retry:
         if (this.NetBase.CancellationToken.IsCancellationRequested)
@@ -152,8 +155,21 @@ Wait:
         goto Retry;
     }
 
-    public void Close()
-        => this.Dispose();
+    internal bool RemoveTransmission(NetTransmission transmission)
+    {
+        lock (this.transmissions.SyncObject)
+        {
+            if (transmission.Goshujin == this.transmissions)
+            {
+                transmission.Goshujin = null;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
 
     internal void Initialize(ConnectionAgreementBlock agreement, Embryo embryo)
     {
@@ -323,8 +339,8 @@ Wait:
             }
 
             transmission = new NetTransmission(this, false, transmissionId);
+            transmission.SetState_Receiving(totalGene);
             transmission.Goshujin = this.transmissions;
-            transmission.SetReceive(totalGene);
         }
 
         transmission.ProcessReceive_Gene(0, toBeShared.Slice(FirstGeneFrame.LengthExcludingFrameType - 12));

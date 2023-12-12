@@ -70,15 +70,20 @@ public class BasicTestSubcommand : ISimpleCommandAsync<BasicTestOptions>
                 var p2 = new PacketPing();
                 var response = await connection.SendAndReceiveAsync<PacketPing, PacketPingResponse>(p2);
 
-                var stream = await connection.CreateStream(size);
-                stream.SendAsync(span);
-                stream.Dispose();
+                using (var stream = await connection.CreateStream(1000))
+                {
+                    if (stream is not null)
+                    {
+                        var result2 = await stream.SendAsync([]);
+                        stream.Dispose();
+                    }
+                }
 
-                var transmission = await connection.CreateTransmission();
+                /*var transmission = await connection.CreateTransmission();
                 if (transmission is not null)
                 {
-                    // transmission.SendAndForget();
-                }
+                    transmission.SendAndForget();
+                }*/
 
                 // connection.Close();
                 // var r = await connection.SendAndReceiveAsync<PacketPing, PacketPingResponse>(netAddress, p);

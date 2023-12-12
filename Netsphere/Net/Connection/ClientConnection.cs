@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Netsphere.Block;
+using Netsphere.Net;
 using Netsphere.Packet;
 
 namespace Netsphere;
@@ -50,22 +51,24 @@ public sealed partial class ClientConnection : Connection
             return default;
         }
 
-        var transmission = await this.CreateTransmission().ConfigureAwait(false);
-        if (transmission is null)
+        using (var transmission = await this.CreateTransmission().ConfigureAwait(false))
         {
-            return NetResult.NoTransmission;
-        }
+            if (transmission is null)
+            {
+                return NetResult.NoTransmission;
+            }
 
-        var responseTcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var result = transmission.SendBlock(0, 0, owner, responseTcs, false);
-        if (result != NetResult.Success)
-        {
-            return result;
-        }
+            var responseTcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var result = transmission.SendBlock(0, 0, owner, responseTcs, false);
+            if (result != NetResult.Success)
+            {
+                return result;
+            }
 
-        var response = await responseTcs.Task.ConfigureAwait(false);
-        response.Return();
-        return response.Result;
+            var response = await responseTcs.Task.ConfigureAwait(false);
+            response.Return();
+            return response.Result;
+        }
     }
 
     public async Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(TSend packet)
@@ -82,32 +85,61 @@ public sealed partial class ClientConnection : Connection
             return default;
         }
 
+        using (var transmission = await this.CreateTransmission().ConfigureAwait(false))
+        {
+            if (transmission is null)
+            {
+                return (NetResult.NoTransmission, default);
+            }
+
+            var responseTcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var result = transmission.SendBlock(0, 0, owner, responseTcs, true);
+            if (result != NetResult.Success)
+            {
+                return (result, default);
+            }
+
+            var response = await responseTcs.Task.ConfigureAwait(false);
+            if (response.IsFailure)
+            {
+                return (response.Result, default);
+            }
+
+            if (!BlockService.TryDeserialize<TReceive>(response.Received, out var receive))
+            {
+                response.Return();
+                return (NetResult.DeserializationError, default);
+            }
+
+            response.Return();
+            return (NetResult.Success, receive);
+        }
+    }
+
+    public async Task<NetStream?> CreateStream(long size)
+    {
+        if (this.NetBase.CancellationToken.IsCancellationRequested)
+        {
+            return default;
+        }
+        else if (this.Agreement.MaxStreamSize < size)
+        {
+            return default;
+        }
+
         var transmission = await this.CreateTransmission().ConfigureAwait(false);
         if (transmission is null)
         {
-            return (NetResult.NoTransmission, default);
+            return default;
         }
 
-        var responseTcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var result = transmission.SendBlock(0, 0, owner, responseTcs, true);
+        var result = transmission.SendStream(0, 0, size, false);
         if (result != NetResult.Success)
         {
-            return (result, default);
+            transmission.Dispose();
+            return default;
         }
 
-        var response = await responseTcs.Task.ConfigureAwait(false);
-        if (response.IsFailure)
-        {
-            return (response.Result, default);
-        }
-
-        if (!BlockService.TryDeserialize<TReceive>(response.Received, out var receive))
-        {
-            response.Return();
-            return (NetResult.DeserializationError, default);
-        }
-
-        response.Return();
-        return (NetResult.Success, receive);
+        return transmission;
     }
 }

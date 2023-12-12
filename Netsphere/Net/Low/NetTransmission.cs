@@ -4,23 +4,23 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Netsphere.Block;
 using Netsphere.Packet;
-using static Arc.Unit.ByteArrayPool;
 
 namespace Netsphere.Net;
 
 [ValueLinkObject(Isolation = IsolationLevel.Serializable, Restricted = true)]
-public sealed partial class NetTransmission // : IDisposable
+internal sealed partial class NetTransmission : NetStream, IDisposable
 {
     internal const int BlockThreshold = 3;
 
     /* State transitions
-     *  SendAndReceiveAsync (Client) : Sending -> Receiving -> Disposed
-     *  SendAsync                   (Client) : Sending -> tcs / Disposed
-     *  (Server) : Receiving -> Received -> Disposed
-     *  (Server) : Receiving -> Received -> Sending -> tcs / Disposed
+     *  SendAndReceiveAsync (Client) : Initial -> Sending -> Receiving -> Disposed
+     *  SendAsync                   (Client) : Initial -> Sending -> tcs / Disposed
+     *  (Server) : Initial -> Receiving -> Received -> Disposed
+     *  (Server) : Initial -> Receiving -> Received -> Sending -> tcs / Disposed
      */
     public enum TransmissionState
     {
+        Initial,
         Sending,
         SendingStream,
         Receiving,
@@ -45,7 +45,7 @@ public sealed partial class NetTransmission // : IDisposable
         this.TransmissionId = transmissionId;
 
         this.IsClient = isClient;
-        this.State = TransmissionState.Sending;
+        this.State = TransmissionState.Initial;
     }
 
     #region FieldAndProperty
@@ -95,46 +95,20 @@ public sealed partial class NetTransmission // : IDisposable
 
     #endregion
 
-    #region Public
-
-    /*public async Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(TSend packet)
-        where TSend : ITinyhandSerialize<TSend>
-        where TReceive : ITinyhandSerialize<TReceive>
+    Task<NetResult> NetStream.SendAsync(Span<byte> data)
     {
-        if (!BlockService.TrySerialize(packet, out var owner))
+        if (this.State != TransmissionState.SendingStream)
         {
-            return (NetResult.SerializationError, default);
+            return Task.FromResult(NetResult.Success);
         }
 
-        var responseTcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var result = this.SendBlock(0, 0, owner, responseTcs, true);
-        if (result != NetResult.Success)
-        {
-            return (result, default);
-        }
+        return Task.FromResult(NetResult.Success);
+    }
 
-        var response = await responseTcs.Task.ConfigureAwait(false);
-        if (response.IsFailure)
-        {
-            return (response.Result, default);
-        }
-
-        if (!BlockService.TryDeserialize<TReceive>(response.Received, out var receive))
-        {
-            response.Return();
-            return (NetResult.DeserializationError, default);
-        }
-
-        response.Return();
-        return (NetResult.Success, receive);
-    }*/
-
-    #endregion
-
-    internal void SetReceive(uint totalGene)
+    public void Dispose()
     {
-        this.State = TransmissionState.Receiving;
-        this.totalGene = totalGene;
+        this.Connection.RemoveTransmission(this);
+        this.DisposeInternal();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -149,6 +123,12 @@ public sealed partial class NetTransmission // : IDisposable
         var numberOfGenes = (uint)(size / FollowingGeneFrame.MaxGeneLength);
         var lastGeneSize = (uint)(size - (numberOfGenes * FollowingGeneFrame.MaxGeneLength));
         return (FirstGeneFrame.MaxGeneLength, lastGeneSize > 0 ? numberOfGenes + 2 : numberOfGenes + 1, lastGeneSize);
+    }
+
+    internal void SetState_Receiving(uint totalGene)
+    {
+        this.State = TransmissionState.Receiving;
+        this.totalGene = totalGene;
     }
 
     internal void DisposeInternal()
@@ -189,7 +169,7 @@ public sealed partial class NetTransmission // : IDisposable
 
         lock (this.syncObject)
         {
-            Debug.Assert(this.State == TransmissionState.Sending);
+            Debug.Assert(this.State == TransmissionState.Initial);
 
             this.State = TransmissionState.Sending;
             this.tcs = tcs;
@@ -270,6 +250,26 @@ public sealed partial class NetTransmission // : IDisposable
         else
         {
             this.Connection.ConnectionTerminal.RegisterSend(this);
+        }
+
+        return NetResult.Success;
+    }
+
+    internal NetResult SendStream(uint primaryId, ulong secondaryId, long size, bool requiresResponse)
+    {
+        var info = CalculateGene(size);
+
+        lock (this.syncObject)
+        {
+            Debug.Assert(this.State == TransmissionState.Initial);
+
+            if (info.NumberOfGenes > this.Connection.Agreement.MaxStreamGenes)
+            {
+                return NetResult.StreamSizeLimit;
+            }
+
+            this.State = TransmissionState.SendingStream;
+            this.totalGene = info.NumberOfGenes;
         }
 
         return NetResult.Success;
