@@ -91,16 +91,17 @@ public class ConnectionTerminal
         var systemMics = Mics.GetSystem();
         lock (this.clientConnections.SyncObject)
         {
-            if (mode == Connection.ConnectMode.ReuseOpen)
+            if (mode == Connection.ConnectMode.OnlyConnected)
             {// Attempt to reuse connections that have already been created and are open.
                 if (this.clientConnections.OpenEndPointChain.TryGetValue(endPoint, out var connection))
                 {
                     return connection;
                 }
+
+                return null;
             }
 
-            if (mode == Connection.ConnectMode.ReuseOpen ||
-                mode == Connection.ConnectMode.ReuseClosed)
+            if (mode == Connection.ConnectMode.ReuseClosed)
             {// Attempt to reuse connections that have already been closed and are awaiting disposal.
                 if (this.clientConnections.ClosedEndPointChain.TryGetValue(endPoint, out var connection))
                 {
@@ -117,8 +118,6 @@ public class ConnectionTerminal
                     }
                 }
             }
-
-            var clientConnection = new ClientConnection(this.packetTerminal, this, 9, endPoint, agreement);
         }
 
         // Create a new connection
