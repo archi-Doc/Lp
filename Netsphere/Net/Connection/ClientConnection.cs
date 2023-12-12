@@ -69,8 +69,8 @@ public sealed partial class ClientConnection : Connection
     }
 
     public async Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(TSend packet)
-    where TSend : ITinyhandSerialize<TSend>
-    where TReceive : ITinyhandSerialize<TReceive>
+        where TSend : ITinyhandSerialize<TSend>
+        where TReceive : ITinyhandSerialize<TReceive>
     {
         if (!BlockService.TrySerialize(packet, out var owner))
         {

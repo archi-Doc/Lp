@@ -2,7 +2,9 @@
 
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using Netsphere.Block;
 using Netsphere.Packet;
+using static Arc.Unit.ByteArrayPool;
 
 namespace Netsphere.Net;
 
@@ -20,7 +22,9 @@ public sealed partial class NetTransmission // : IDisposable
     public enum TransmissionState
     {
         Sending,
+        SendingStream,
         Receiving,
+        ReceivingStream,
         Received,
         Disposed,
     }
@@ -55,7 +59,7 @@ public sealed partial class NetTransmission // : IDisposable
 
     public TransmissionState State { get; private set; } // lock (this.syncObject)
 
-    public TransmissionMode Mode
+    /*public TransmissionMode Mode
     {
         get
         {
@@ -79,7 +83,7 @@ public sealed partial class NetTransmission // : IDisposable
                 return TransmissionMode.Rama;
             }
         }
-    }
+    }*/
 
     private readonly object syncObject = new();
     private uint totalGene;
@@ -91,7 +95,43 @@ public sealed partial class NetTransmission // : IDisposable
 
     #endregion
 
-    public void SetReceive(uint totalGene)
+    #region Public
+
+    /*public async Task<(NetResult Result, TReceive? Value)> SendAndReceiveAsync<TSend, TReceive>(TSend packet)
+        where TSend : ITinyhandSerialize<TSend>
+        where TReceive : ITinyhandSerialize<TReceive>
+    {
+        if (!BlockService.TrySerialize(packet, out var owner))
+        {
+            return (NetResult.SerializationError, default);
+        }
+
+        var responseTcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var result = this.SendBlock(0, 0, owner, responseTcs, true);
+        if (result != NetResult.Success)
+        {
+            return (result, default);
+        }
+
+        var response = await responseTcs.Task.ConfigureAwait(false);
+        if (response.IsFailure)
+        {
+            return (response.Result, default);
+        }
+
+        if (!BlockService.TryDeserialize<TReceive>(response.Received, out var receive))
+        {
+            response.Return();
+            return (NetResult.DeserializationError, default);
+        }
+
+        response.Return();
+        return (NetResult.Success, receive);
+    }*/
+
+    #endregion
+
+    internal void SetReceive(uint totalGene)
     {
         this.State = TransmissionState.Receiving;
         this.totalGene = totalGene;
