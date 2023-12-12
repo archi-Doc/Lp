@@ -86,20 +86,26 @@ public sealed partial class ClientConnection : Connection
             return (NetResult.NoTransmission, default);
         }
 
+        var responseTcs = new TaskCompletionSource<NetResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
         var result = transmission.SendBlock(0, 0, owner, default);
         if (result != NetResult.Success)
         {
             return (result, default);
         }
 
-        await Task.Delay(1000000);
-        return (NetResult.DeserializationError, default);
-
-        /*if (!BlockService.TryDeserialize<TReceive>(response.Received, out var receive))
+        var response = await responseTcs.Task.ConfigureAwait(false);
+        if (response.IsFailure)
         {
+            return (response.Result, default);
+        }
+
+        if (!BlockService.TryDeserialize<TReceive>(response.Received, out var receive))
+        {
+            response.Return();
             return (NetResult.DeserializationError, default);
         }
 
-        return (NetResult.Success, receive);*/
+        response.Return();
+        return (NetResult.Success, receive);
     }
 }
