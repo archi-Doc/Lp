@@ -22,7 +22,7 @@ internal partial class NetGene : IDisposable
         Complete,
     }
 
-    [Link(Primary = true, Type = ChainType.SlidingList, Name = "SlidingList")]
+    [Link(Primary = true, Type = ChainType.SlidingList, Name = "GenePositionList")]
     // [Link(Name = "SendQueue", Type = ChainType.QueueList, AutoLink = false)]
     // [Link(Name = "ResendQueue", Type = ChainType.QueueList, AutoLink = false)]
     public NetGene()

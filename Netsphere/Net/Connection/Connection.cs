@@ -18,9 +18,10 @@ internal readonly record struct Embryo(ulong Salt, byte[] Key, byte[] Iv);
 
 public abstract class Connection : IDisposable
 {
-    private static readonly int LowerRttLimit = (int)Mics.FromMilliseconds(1);
-    private static readonly int UpperRttLimit = (int)Mics.FromMilliseconds(1_000);
-    private static readonly int AckDelay = (int)Mics.FromMilliseconds(10);
+    private const int LowerRttLimit = 1_000; // 1ms
+    private const int UpperRttLimit = 1_000_000; // 1000ms
+    // private const int InitialRtt = 200_000; // 200ms
+    // private static readonly int AckDelay = (int)Mics.FromMilliseconds(10);
 
     public enum ConnectMode
     {
@@ -68,6 +69,8 @@ public abstract class Connection : IDisposable
     public bool IsClosedOrDisposed
         => this.State == ConnectionState.Closed || this.State == ConnectionState.Disposed;
 
+    public int SmoothedRtt => this.smoothedRtt;
+
     internal long ClosedSystemMics { get; set; }
 
     internal long ResponseSystemMics { get; set; }
@@ -85,9 +88,9 @@ public abstract class Connection : IDisposable
     private NetTransmission.GoshujinClass transmissions = new();
 
     // RTT
-    private long minRtt; // Minimum rtt
-    private long smoothedRtt; // Smoothed rtt
-    private long rttvar; // Rtt variation
+    private int minRtt; // Minimum rtt
+    private int smoothedRtt; // Smoothed rtt
+    private int rttvar; // Rtt variation
 
     #endregion
 
@@ -319,10 +322,20 @@ Wait:
             return;
         }
 
+        // FirstGeneFrameCode
+        var transmissionMode = BitConverter.ToUInt16(span);
+        span = span.Slice(sizeof(ushort));
         var transmissionId = BitConverter.ToUInt32(span);
         span = span.Slice(sizeof(uint));
-        var totalGene = BitConverter.ToUInt32(span);
+        var rttHint = BitConverter.ToInt32(span);
+        span = span.Slice(sizeof(int));
+        var totalGenes = BitConverter.ToUInt32(span);
         span = span.Slice(sizeof(uint));
+
+        if (rttHint > 0)
+        {
+            this.AddRtt(rttHint);
+        }
 
         NetTransmission? transmission;
         lock (this.transmissions.SyncObject)
@@ -338,12 +351,25 @@ Wait:
                 return;
             }
 
-            transmission = new NetTransmission(this, false, transmissionId);
-            transmission.SetState_Receiving(totalGene);
+            if (transmissionMode == 0 && totalGenes <= this.Agreement.MaxBlockGenes)
+            {
+                transmission = new NetTransmission(this, false, transmissionId);
+                transmission.SetState_Receiving(totalGenes);
+            }
+            else if (transmissionMode == 1 && totalGenes < this.Agreement.MaxStreamGenes)
+            {
+                transmission = new NetTransmission(this, false, transmissionId);
+                transmission.SetState_ReceivingStream(totalGenes);
+            }
+            else
+            {
+                return;
+            }
+
             transmission.Goshujin = this.transmissions;
         }
 
-        transmission.ProcessReceive_Gene(0, toBeShared.Slice(FirstGeneFrame.LengthExcludingFrameType - 12));
+        transmission.ProcessReceive_Gene(0, toBeShared.Slice(FirstGeneFrame.LengthExcludingFrameType - 14)); // FirstGeneFrameCode
     }
 
     internal void ProcessReceive_FollowingGene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)

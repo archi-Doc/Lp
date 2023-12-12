@@ -29,4 +29,5 @@ public enum NetResult
     NotAuthorized,
     TransmissionConsumed,
     NoTransmission,
+    InvalidTransmissionState,
 }

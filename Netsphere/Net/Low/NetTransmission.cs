@@ -10,7 +10,7 @@ namespace Netsphere.Net;
 [ValueLinkObject(Isolation = IsolationLevel.Serializable, Restricted = true)]
 internal sealed partial class NetTransmission : NetStream, IDisposable
 {
-    internal const int BlockThreshold = 3;
+    internal const int RamaGenes = 3;
 
     /* State transitions
      *  SendAndReceiveAsync (Client) : Initial -> Sending -> Receiving -> Disposed
@@ -99,7 +99,7 @@ internal sealed partial class NetTransmission : NetStream, IDisposable
     {
         if (this.State != TransmissionState.SendingStream)
         {
-            return Task.FromResult(NetResult.Success);
+            return Task.FromResult(NetResult.InvalidTransmissionState);
         }
 
         return Task.FromResult(NetResult.Success);
@@ -128,6 +128,12 @@ internal sealed partial class NetTransmission : NetStream, IDisposable
     internal void SetState_Receiving(uint totalGene)
     {
         this.State = TransmissionState.Receiving;
+        this.totalGene = totalGene;
+    }
+
+    internal void SetState_ReceivingStream(uint totalGene)
+    {
+        this.State = TransmissionState.ReceivingStream;
         this.totalGene = totalGene;
     }
 
@@ -179,13 +185,13 @@ internal sealed partial class NetTransmission : NetStream, IDisposable
             if (info.NumberOfGenes == 1)
             {// gene0
                 this.gene0 = new();
-                this.CreateFirstPacket(info.NumberOfGenes, primaryId, secondaryId, span, out var owner);
+                this.CreateFirstPacket(0, info.NumberOfGenes, primaryId, secondaryId, span, out var owner);
                 this.gene0.SetSend(owner);
             }
             else if (info.NumberOfGenes == 2)
             {// gene0, gene1
                 this.gene0 = new();
-                this.CreateFirstPacket(info.NumberOfGenes, primaryId, secondaryId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
+                this.CreateFirstPacket(0, info.NumberOfGenes, primaryId, secondaryId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
                 this.gene0.SetSend(owner);
 
                 span = span.Slice((int)info.FirstGeneSize);
@@ -197,7 +203,7 @@ internal sealed partial class NetTransmission : NetStream, IDisposable
             else if (info.NumberOfGenes == 3)
             {// gene0, gene1, gene2
                 this.gene0 = new();
-                this.CreateFirstPacket(info.NumberOfGenes, primaryId, secondaryId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
+                this.CreateFirstPacket(0, info.NumberOfGenes, primaryId, secondaryId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
                 this.gene0.SetSend(owner);
 
                 span = span.Slice((int)info.FirstGeneSize);
@@ -219,14 +225,14 @@ internal sealed partial class NetTransmission : NetStream, IDisposable
                 }
 
                 this.genes = new();
-                this.genes.SlidingListChain.Resize((int)info.NumberOfGenes);
+                this.genes.GenePositionListChain.Resize((int)info.NumberOfGenes);
 
                 var firstGene = new NetGene();
-                this.CreateFirstPacket(info.NumberOfGenes, primaryId, secondaryId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
+                this.CreateFirstPacket(0, info.NumberOfGenes, primaryId, secondaryId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
                 firstGene.SetSend(owner);
                 span = span.Slice((int)info.FirstGeneSize);
                 firstGene.Goshujin = this.genes;
-                this.genes.SlidingListChain.Add(firstGene);
+                this.genes.GenePositionListChain.Add(firstGene);
 
                 for (uint i = 1; i < info.NumberOfGenes; i++)
                 {
@@ -237,14 +243,14 @@ internal sealed partial class NetTransmission : NetStream, IDisposable
 
                     span = span.Slice(size);
                     gene.Goshujin = this.genes;
-                    this.genes.SlidingListChain.Add(gene);
+                    this.genes.GenePositionListChain.Add(gene);
                 }
 
                 Debug.Assert(span.Length == 0);
             }
         }
 
-        if (info.NumberOfGenes > BlockThreshold)
+        if (info.NumberOfGenes > RamaGenes)
         {// Flow control
         }
         else
@@ -285,7 +291,7 @@ internal sealed partial class NetTransmission : NetStream, IDisposable
             if (this.State == TransmissionState.Receiving &&
                 genePosition < this.totalGene)
             {// Set gene
-                if (this.totalGene <= BlockThreshold)
+                if (this.totalGene <= RamaGenes)
                 {// Single send/recv
                     if (genePosition == 0)
                     {
@@ -337,7 +343,7 @@ internal sealed partial class NetTransmission : NetStream, IDisposable
             }
         }
 
-        if (this.totalGene <= BlockThreshold)
+        if (this.totalGene <= RamaGenes)
         {// Fast ack
             if (completeFlag)
             {
@@ -394,7 +400,7 @@ internal sealed partial class NetTransmission : NetStream, IDisposable
     }
 
     internal bool ProcessReceive_GeneComplete(out ByteArrayPool.MemoryOwner toBeMoved)
-    {
+    {// lock (this.syncObject)
         int length;
         toBeMoved = default;
 
@@ -578,7 +584,7 @@ internal sealed partial class NetTransmission : NetStream, IDisposable
         sentCount = 0;
         if (this.Connection.IsClosedOrDisposed)
         {
-            //this.DisposeInternal();
+            this.Dispose();
             return false;
         }
 
@@ -591,7 +597,7 @@ internal sealed partial class NetTransmission : NetStream, IDisposable
 
             var endpoint = this.Connection.EndPoint.EndPoint;
             if (this.genes is null)
-            {// Single send
+            {// Rama
                 this.gene0?.Send(netSender, endpoint, ref sentCount);
                 this.gene1?.Send(netSender, endpoint, ref sentCount);
                 this.gene2?.Send(netSender, endpoint, ref sentCount);
@@ -604,7 +610,7 @@ internal sealed partial class NetTransmission : NetStream, IDisposable
         }
     }
 
-    private void CreateFirstPacket(uint totalGene, uint primaryId, ulong secondaryId, Span<byte> block, out ByteArrayPool.MemoryOwner owner)
+    private void CreateFirstPacket(ushort transmissionMode, uint totalGene, uint primaryId, ulong secondaryId, Span<byte> block, out ByteArrayPool.MemoryOwner owner)
     {
         Debug.Assert(block.Length <= FirstGeneFrame.MaxGeneLength);
 
@@ -615,8 +621,14 @@ internal sealed partial class NetTransmission : NetStream, IDisposable
         BitConverter.TryWriteBytes(span, (ushort)FrameType.FirstGene); // Frame type
         span = span.Slice(sizeof(ushort));
 
+        BitConverter.TryWriteBytes(span, transmissionMode); // TransmissionMode
+        span = span.Slice(sizeof(ushort));
+
         BitConverter.TryWriteBytes(span, this.TransmissionId); // TransmissionId
         span = span.Slice(sizeof(uint));
+
+        BitConverter.TryWriteBytes(span, this.Connection.SmoothedRtt); // Rtt hint
+        span = span.Slice(sizeof(int));
 
         BitConverter.TryWriteBytes(span, totalGene); // TotalGene
         span = span.Slice(sizeof(uint));
