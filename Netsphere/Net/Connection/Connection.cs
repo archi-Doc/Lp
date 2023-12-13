@@ -324,13 +324,13 @@ Wait:
 
         // FirstGeneFrameCode
         var transmissionMode = BitConverter.ToUInt16(span);
-        span = span.Slice(sizeof(ushort));
+        span = span.Slice(sizeof(ushort)); // 2
         var transmissionId = BitConverter.ToUInt32(span);
-        span = span.Slice(sizeof(uint));
+        span = span.Slice(sizeof(uint)); // 4
         var rttHint = BitConverter.ToInt32(span);
-        span = span.Slice(sizeof(int));
+        span = span.Slice(sizeof(int)); // 4
         var totalGenes = BitConverter.ToUInt32(span);
-        span = span.Slice(sizeof(uint));
+        span = span.Slice(sizeof(uint)); // 4
 
         if (rttHint > 0)
         {
@@ -369,7 +369,7 @@ Wait:
             transmission.Goshujin = this.transmissions;
         }
 
-        transmission.ProcessReceive_Gene(0, toBeShared.Slice(FirstGeneFrame.LengthExcludingFrameType - 14)); // FirstGeneFrameCode
+        transmission.ProcessReceive_Gene(0, toBeShared.Slice(14)); // FirstGeneFrameCode
     }
 
     internal void ProcessReceive_FollowingGene(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)

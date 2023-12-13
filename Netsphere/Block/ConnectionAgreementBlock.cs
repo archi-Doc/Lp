@@ -33,7 +33,7 @@ public partial class ConnectionAgreementBlock : IBlock
         set
         {
             this.maxBlockSize = value;
-            var info = NetTransmission.CalculateGene(this.maxBlockSize);
+            var info = NetHelper.CalculateGene(this.maxBlockSize);
             this.MaxBlockGenes = info.NumberOfGenes;
         }
     }
@@ -45,7 +45,7 @@ public partial class ConnectionAgreementBlock : IBlock
         set
         {
             this.maxStreamSize = value;
-            var info = NetTransmission.CalculateGene(this.maxStreamSize);
+            var info = NetHelper.CalculateGene(this.maxStreamSize);
             this.MaxStreamGenes = info.NumberOfGenes;
         }
     }

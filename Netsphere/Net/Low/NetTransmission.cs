@@ -2,16 +2,13 @@
 
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Netsphere.Block;
 using Netsphere.Packet;
 
 namespace Netsphere.Net;
 
 [ValueLinkObject(Isolation = IsolationLevel.Serializable, Restricted = true)]
-internal sealed partial class NetTransmission : NetStream, IDisposable
+public sealed partial class NetTransmission : NetStream, IDisposable
 {
-    internal const int RamaGenes = 3;
-
     /* State transitions
      *  SendAndReceiveAsync (Client) : Initial -> Sending -> Receiving -> Disposed
      *  SendAsync                   (Client) : Initial -> Sending -> tcs / Disposed
@@ -111,20 +108,6 @@ internal sealed partial class NetTransmission : NetStream, IDisposable
         this.DisposeInternal();
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static (uint NumberOfGenes, uint FirstGeneSize, uint LastGeneSize) CalculateGene(long size)
-    {// FirstGeneSize, GeneFrame.MaxBlockLength..., LastGeneSize
-        if (size <= FirstGeneFrame.MaxGeneLength)
-        {
-            return (1, (uint)size, 0);
-        }
-
-        size -= FirstGeneFrame.MaxGeneLength;
-        var numberOfGenes = (uint)(size / FollowingGeneFrame.MaxGeneLength);
-        var lastGeneSize = (uint)(size - (numberOfGenes * FollowingGeneFrame.MaxGeneLength));
-        return (FirstGeneFrame.MaxGeneLength, lastGeneSize > 0 ? numberOfGenes + 2 : numberOfGenes + 1, lastGeneSize);
-    }
-
     internal void SetState_Receiving(uint totalGene)
     {
         this.State = TransmissionState.Receiving;
@@ -171,7 +154,7 @@ internal sealed partial class NetTransmission : NetStream, IDisposable
 
     internal NetResult SendBlock(uint primaryId, ulong secondaryId, ByteArrayPool.MemoryOwner block, TaskCompletionSource<NetResponse> tcs, bool requiresResponse)
     {
-        var info = CalculateGene(block.Span.Length);
+        var info = NetHelper.CalculateGene(block.Span.Length);
 
         lock (this.syncObject)
         {
@@ -250,7 +233,7 @@ internal sealed partial class NetTransmission : NetStream, IDisposable
             }
         }
 
-        if (info.NumberOfGenes > RamaGenes)
+        if (info.NumberOfGenes > NetHelper.RamaGenes)
         {// Flow control
         }
         else
@@ -263,7 +246,7 @@ internal sealed partial class NetTransmission : NetStream, IDisposable
 
     internal NetResult SendStream(uint primaryId, ulong secondaryId, long size, bool requiresResponse)
     {
-        var info = CalculateGene(size);
+        var info = NetHelper.CalculateGene(size);
 
         lock (this.syncObject)
         {
@@ -284,14 +267,15 @@ internal sealed partial class NetTransmission : NetStream, IDisposable
     internal void ProcessReceive_Gene(uint genePosition, ByteArrayPool.MemoryOwner toBeShared)
     {
         var completeFlag = false;
-        var serverFlag = false;
-        ByteArrayPool.MemoryOwner owner;
+        uint primaryId = 0;
+        ulong secondaryId = 0;
+        ByteArrayPool.MemoryOwner owner = default;
         lock (this.syncObject)
         {
             if (this.State == TransmissionState.Receiving &&
                 genePosition < this.totalGene)
             {// Set gene
-                if (this.totalGene <= RamaGenes)
+                if (this.totalGene <= NetHelper.RamaGenes)
                 {// Single send/recv
                     if (genePosition == 0)
                     {
@@ -338,12 +322,12 @@ internal sealed partial class NetTransmission : NetStream, IDisposable
 
                 if (completeFlag)
                 {// Complete
-                    serverFlag = this.ProcessReceive_GeneComplete(out owner);
+                    this.ProcessReceive_GeneComplete(out primaryId, out secondaryId, out owner);
                 }
             }
         }
 
-        if (this.totalGene <= RamaGenes)
+        if (this.totalGene <= NetHelper.RamaGenes)
         {// Fast ack
             if (completeFlag)
             {
@@ -394,26 +378,43 @@ internal sealed partial class NetTransmission : NetStream, IDisposable
             // this.Connection.AddAck(this.TransmissionId, genePosition);
         }
 
-        if (serverFlag)
-        {// Connection, NetTransmission, Owner
+        if (completeFlag)
+        {// Receive complete
+            if (this.IsClient)
+            {// Client
+                this.Dispose();
+
+                if (this.tcs is not null)
+                {
+                    this.tcs.SetResult(new(NetResult.Success, owner, 0));
+                }
+            }
+            else
+            {// Server: Connection, NetTransmission, Owner
+                var param = new ServerInvocationParam(this.Connection, this, primaryId, secondaryId, owner);
+            }
         }
     }
 
-    internal bool ProcessReceive_GeneComplete(out ByteArrayPool.MemoryOwner toBeMoved)
+    internal void ProcessReceive_GeneComplete(out uint primaryId, out ulong secondaryId, out ByteArrayPool.MemoryOwner toBeMoved)
     {// lock (this.syncObject)
-        int length;
-        toBeMoved = default;
-
         if (this.genes is null)
         {// Single send/recv
             if (this.totalGene == 0)
             {
-                length = 0;
+                primaryId = 0;
+                secondaryId = 0;
+                toBeMoved = default;
             }
             else
             {
+                var span = this.gene0!.Packet.Span;
+                primaryId = BitConverter.ToUInt32(span);
+                span = span.Slice(sizeof(uint));
+                secondaryId = BitConverter.ToUInt64(span);
+
                 var firstPacket = this.gene0!.Packet.Slice(12);
-                length = firstPacket.Span.Length;
+                var length = firstPacket.Span.Length;
                 if (this.totalGene == 1)
                 {
                     toBeMoved = firstPacket.IncrementAndShare();
@@ -423,7 +424,7 @@ internal sealed partial class NetTransmission : NetStream, IDisposable
                     length += this.gene1!.Packet.Span.Length;
                     toBeMoved = ByteArrayPool.Default.Rent(length).ToMemoryOwner(0, length);
 
-                    var span = toBeMoved.Span;
+                    span = toBeMoved.Span;
                     firstPacket.Span.CopyTo(span);
                     span = span.Slice(firstPacket.Span.Length);
                     this.gene1!.Packet.Span.CopyTo(span);
@@ -434,34 +435,25 @@ internal sealed partial class NetTransmission : NetStream, IDisposable
                     length += this.gene2!.Packet.Span.Length;
                     toBeMoved = ByteArrayPool.Default.Rent(length).ToMemoryOwner(0, length);
 
-                    var span = toBeMoved.Span;
+                    span = toBeMoved.Span;
                     firstPacket.Span.CopyTo(span);
                     span = span.Slice(firstPacket.Span.Length);
                     this.gene1!.Packet.Span.CopyTo(span);
                     span = span.Slice(this.gene1!.Packet.Span.Length);
                     this.gene2!.Packet.Span.CopyTo(span);
                 }
+                else
+                {
+                    toBeMoved = default;
+                }
             }
         }
         else
         {// Multiple send/recv
+            primaryId = 0;
+            secondaryId = 0;
+            toBeMoved = default;
         }
-
-        if (this.IsClient)
-        {// Client
-            //this.DisposeInternal();
-        }
-        else
-        {// Server
-            return true;
-        }
-
-        if (this.tcs is not null)
-        {
-            // this.tcs.SetResult
-        }
-
-        return false;
     }
 
     internal bool ProcessReceive_Ack(uint genePosition)
