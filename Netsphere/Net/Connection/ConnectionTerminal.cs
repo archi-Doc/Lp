@@ -2,6 +2,7 @@
 
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
+using Arc.Collections;
 using Netsphere.Crypto;
 using Netsphere.Net;
 using Netsphere.Packet;
@@ -35,6 +36,10 @@ public class ConnectionTerminal
     private readonly object syncQueue = new();
     private readonly Queue<NetTransmission> sendQueue = new();
     private readonly Queue<NetTransmission> resendQueue = new();
+
+    private readonly object syncGenes = new();
+    private readonly Queue<NetGene> sendGenes = new();
+    private readonly OrderedMultiMap<long, NetGene> rtoGenes = new(); // Retransmission timeout genes
 
     public void Clean()
     {
@@ -343,6 +348,55 @@ public class ConnectionTerminal
                 {
                     break;
                 }*/
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void RegisterSend(NetGene gene)
+    {
+        lock (this.syncGenes)
+        {
+            this.sendGenes.Enqueue(gene);
+        }
+    }
+
+    internal void ProcessSend2(NetSender netSender)
+    {
+        lock (this.syncGenes)
+        {
+            // Send queue
+            while (netSender.SendCapacity > netSender.SendCount)
+            {
+                if (!this.sendGenes.TryDequeue(out var gene))
+                {// No send queue
+                    return;
+                }
+
+                if (gene.SendInternal(netSender, out _))
+                {// Success
+                    (gene.rtoNode, _) = this.rtoGenes.Add(1, gene);
+                }
+            }
+
+            // Retransmission timeout
+            while (netSender.SendCapacity > netSender.SendCount)
+            {
+                var firstNode = this.rtoGenes.First;
+                if (firstNode is null ||
+                    firstNode.Key < netSender.CurrentSystemMics)
+                {
+                    return;
+                }
+
+                if (firstNode.Value.SendInternal(netSender, out var sentCount))
+                {// Resend
+                    this.rtoGenes.SetNodeKey(firstNode, 222);
+                }
+                else
+                {// Remove
+                    this.rtoGenes.RemoveNode(firstNode);
+                }
             }
         }
     }

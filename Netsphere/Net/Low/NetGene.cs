@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using Arc.Collections;
 
 namespace Netsphere.Net;
 
@@ -43,6 +44,8 @@ internal partial class NetGene : IDisposable
     public bool IsReceived => this.State == GeneState.SendingAck;
 
     public bool IsComplete => this.State == GeneState.Complete;
+
+    internal OrderedMultiMap<long, NetGene>.Node? rtoNode; // lock (ConnectionTerminal.syncGenes)
 
     #endregion
 
