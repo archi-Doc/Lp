@@ -34,8 +34,8 @@ public sealed partial class NetTransmission : NetStream, IDisposable
         Stream,
     }
 
-    [Link(Name = "SendQueue", Type = ChainType.QueueList, AutoLink = false)]
-    [Link(Name = "ResendQueue", Type = ChainType.QueueList, AutoLink = false)]
+    // [Link(Name = "SendQueue", Type = ChainType.QueueList, AutoLink = false)]
+    // [Link(Name = "ResendQueue", Type = ChainType.QueueList, AutoLink = false)]
     public NetTransmission(Connection connection, bool isClient, uint transmissionId)
     {
         this.Connection = connection;
