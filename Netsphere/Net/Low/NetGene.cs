@@ -31,7 +31,14 @@ internal partial class NetGene : IDisposable
         // this.GenePosition = genePosition;
     }
 
+    public NetGene(FlowControl flowControl)
+    {
+        this.FlowControl = flowControl;
+    }
+
     #region FieldAndProperty
+
+    public FlowControl FlowControl { get; }
 
     public GeneState State { get; private set; }
 
@@ -52,10 +59,14 @@ internal partial class NetGene : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetSend(ByteArrayPool.MemoryOwner toBeMoved)
     {
-        Debug.Assert(this.State == GeneState.Initial);
+        lock (this.FlowControl.SyncObject)
+        {
+            Debug.Assert(this.State == GeneState.Initial);
+            this.State = GeneState.WaitingToSend;
+            this.Packet = toBeMoved;
 
-        this.State = GeneState.WaitingToSend;
-        this.Packet = toBeMoved;
+            this.FlowControl.AddSendInternal(this);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
