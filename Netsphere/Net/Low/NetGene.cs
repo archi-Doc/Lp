@@ -55,7 +55,7 @@ internal partial class NetGene : IDisposable
 
     public bool IsComplete => this.State == GeneState.Complete;
 
-    internal OrderedMultiMap<long, NetGene>.Node? rtoNode; // lock (ConnectionTerminal.syncGenes)
+    internal OrderedMultiMap<long, NetGene>.Node? WaitingForAckNode; // lock (ConnectionTerminal.syncGenes)
 
     #endregion
 
@@ -66,7 +66,7 @@ internal partial class NetGene : IDisposable
         this.State = GeneState.WaitingToSend;
         this.Packet = toBeMoved;
 
-        this.FlowControl.AddSend(this);
+        this.FlowControl.AddSend(this); // Lock-free
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -83,7 +83,7 @@ internal partial class NetGene : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Send(NetSender netSender, ref int sentCount)
+    public bool Send(NetSender netSender, ref int sentCount)
     {
         if (this.State == GeneState.WaitingToSend ||
             this.State == GeneState.WaitingForAck)
@@ -91,6 +91,11 @@ internal partial class NetGene : IDisposable
             netSender.Send_NotThreadSafe(this.Transmission.Connection.EndPoint.EndPoint, this.Packet);
             this.SentMics = netSender.CurrentSystemMics;
             sentCount++;
+            return true;
+        }
+        else
+        {
+            return false;
         }
     }
 
@@ -131,5 +136,6 @@ internal partial class NetGene : IDisposable
     {
         this.State = GeneState.Initial;
         this.Packet = this.Packet.Return();
+        this.FlowControl.Remove(this);
     }
 }

@@ -21,8 +21,6 @@ public class FlowControl
 
     #region FieldAndProperty
 
-    public object SyncObject => this.syncObject;
-
     private readonly int sendCapacityPerRound;
 
     private readonly object syncObject = new();
@@ -39,11 +37,11 @@ public class FlowControl
 
     internal void ProcessSend(NetSender netSender)
     {
+        int sentCount = 0;
         lock (this.syncObject)
         {
-            // Retransmission timeout
             while (netSender.SendCapacity > netSender.SendCount)
-            {
+            {// Retransmission
                 var firstNode = this.waitingForAck.First;
                 if (firstNode is null ||
                     firstNode.Key < netSender.CurrentSystemMics)
@@ -51,7 +49,7 @@ public class FlowControl
                     return;
                 }
 
-                if (firstNode.Value.Send(netSender, out var sentCount))
+                if (firstNode.Value.Send(netSender, ref sentCount))
                 {// Resend
                     this.waitingForAck.SetNodeKey(firstNode, 222);
                 }
@@ -60,19 +58,30 @@ public class FlowControl
                     this.waitingForAck.RemoveNode(firstNode);
                 }
             }
-        }
 
-        // Send queue
-        while (netSender.SendCapacity > netSender.SendCount)
-        {
-            if (!this.waitingToSend.TryDequeue(out var gene))
-            {// No send queue
-                return;
+            // Send queue (ConcurrentQueue)
+            while (netSender.SendCapacity > netSender.SendCount)
+            {
+                if (!this.waitingToSend.TryDequeue(out var gene))
+                {// No send queue
+                    return;
+                }
+
+                if (gene.Send(netSender, ref sentCount))
+                {// Success
+                    (gene.WaitingForAckNode, _) = this.waitingForAck.Add(1, gene);
+                }
             }
+        }
+    }
 
-            if (gene.Send(netSender, out _))
-            {// Success
-                (gene.rtoNode, _) = this.waitingForAck.Add(1, gene);
+    internal void Remove(NetGene gene)
+    {
+        lock (gene.FlowControl.syncObject)
+        {
+            if (gene.WaitingForAckNode is { } node)
+            {
+                this.waitingForAck.RemoveNode(node);
             }
         }
     }
