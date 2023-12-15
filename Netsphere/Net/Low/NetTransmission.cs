@@ -56,33 +56,12 @@ public sealed partial class NetTransmission : NetStream, IDisposable
 
     public TransmissionState State { get; private set; } // lock (this.syncObject)
 
-    /*public TransmissionMode Mode
-    {
-        get
-        {
-            if (this.genes is { } genes)
-            {
-                if (genes.Count <= this.Connection.Agreement.MaxBlockGenes)
-                {
-                    return TransmissionMode.Block;
-                }
-                else if (genes.Count <= this.Connection.Agreement.MaxStreamSize)
-                {
-                    return TransmissionMode.Stream;
-                }
-                else
-                {
-                    return TransmissionMode.Invalid;
-                }
-            }
-            else
-            {
-                return TransmissionMode.Rama;
-            }
-        }
-    }*/
+    public FlowControl FlowControl => this.flowControl ?? FlowControl.Default;
+
+    // internal object SyncObject => this.syncObject;
 
     private readonly object syncObject = new();
+    private FlowControl? flowControl;
     private uint totalGene;
     private TaskCompletionSource<NetResponse>? tcs;
     private NetGene? gene0; // Gene 0

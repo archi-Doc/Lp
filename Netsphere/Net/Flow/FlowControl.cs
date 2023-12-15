@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using Arc.Collections;
 
@@ -25,14 +26,14 @@ public class FlowControl
     private readonly int sendCapacityPerRound;
 
     private readonly object syncObject = new();
-    private readonly Queue<NetGene> waitingToSend = new();
+    private readonly ConcurrentQueue<NetGene> waitingToSend = new();
     private readonly OrderedMultiMap<long, NetGene> waitingForAck = new();
 
     #endregion
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void AddSendInternal(NetGene gene)
-    {// lock (this.syncObject)
+    internal void AddSend(NetGene gene)
+    {
         this.waitingToSend.Enqueue(gene);
     }
 
@@ -50,7 +51,7 @@ public class FlowControl
                     return;
                 }
 
-                if (firstNode.Value.SendInternal(netSender, out var sentCount))
+                if (firstNode.Value.Send(netSender, out var sentCount))
                 {// Resend
                     this.waitingForAck.SetNodeKey(firstNode, 222);
                 }
@@ -59,19 +60,19 @@ public class FlowControl
                     this.waitingForAck.RemoveNode(firstNode);
                 }
             }
+        }
 
-            // Send queue
-            while (netSender.SendCapacity > netSender.SendCount)
-            {
-                if (!this.waitingToSend.TryDequeue(out var gene))
-                {// No send queue
-                    return;
-                }
+        // Send queue
+        while (netSender.SendCapacity > netSender.SendCount)
+        {
+            if (!this.waitingToSend.TryDequeue(out var gene))
+            {// No send queue
+                return;
+            }
 
-                if (gene.SendInternal(netSender, out _))
-                {// Success
-                    (gene.rtoNode, _) = this.waitingForAck.Add(1, gene);
-                }
+            if (gene.Send(netSender, out _))
+            {// Success
+                (gene.rtoNode, _) = this.waitingForAck.Add(1, gene);
             }
         }
     }

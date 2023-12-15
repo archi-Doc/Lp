@@ -31,12 +31,15 @@ internal partial class NetGene : IDisposable
         // this.GenePosition = genePosition;
     }
 
-    public NetGene(FlowControl flowControl)
+    public NetGene(NetTransmission transmission)
     {
-        this.FlowControl = flowControl;
+        this.Transmission = transmission;
+        this.FlowControl = transmission.FlowControl;
     }
 
     #region FieldAndProperty
+
+    public NetTransmission Transmission { get; }
 
     public FlowControl FlowControl { get; }
 
@@ -59,14 +62,11 @@ internal partial class NetGene : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetSend(ByteArrayPool.MemoryOwner toBeMoved)
     {
-        lock (this.FlowControl.SyncObject)
-        {
-            Debug.Assert(this.State == GeneState.Initial);
-            this.State = GeneState.WaitingToSend;
-            this.Packet = toBeMoved;
+        Debug.Assert(this.State == GeneState.Initial);
+        this.State = GeneState.WaitingToSend;
+        this.Packet = toBeMoved;
 
-            this.FlowControl.AddSendInternal(this);
-        }
+        this.FlowControl.AddSend(this);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -77,6 +77,18 @@ internal partial class NetGene : IDisposable
         {
             netSender.Send_NotThreadSafe(endPoint, this.Packet);
             this.State = GeneState.WaitingForAck;
+            this.SentMics = netSender.CurrentSystemMics;
+            sentCount++;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Send(NetSender netSender, ref int sentCount)
+    {
+        if (this.State == GeneState.WaitingToSend ||
+            this.State == GeneState.WaitingForAck)
+        {
+            netSender.Send_NotThreadSafe(this.Transmission.Connection.EndPoint.EndPoint, this.Packet);
             this.SentMics = netSender.CurrentSystemMics;
             sentCount++;
         }
