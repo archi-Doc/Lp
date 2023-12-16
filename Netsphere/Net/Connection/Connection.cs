@@ -62,6 +62,8 @@ public abstract class Connection : IDisposable
 
     public ConnectionAgreementBlock Agreement { get; private set; } = ConnectionAgreementBlock.Default;
 
+    public FlowControl FlowControl => this.flowControl ?? FlowControl.Default;
+
     public abstract ConnectionState State { get; }
 
     public bool IsOpen
@@ -74,7 +76,7 @@ public abstract class Connection : IDisposable
         => this.smoothedRtt;
 
     public int RetransmissionTimeout
-        => this.smoothedRtt + Math.Min(this.rttvar * 4, 1_000) + AckDelay; // 1ms
+        => this.smoothedRtt + Math.Max(this.rttvar * 4, 1_000) + AckDelay; // 1ms
 
     internal long ClosedSystemMics { get; set; }
 
@@ -90,6 +92,7 @@ public abstract class Connection : IDisposable
     private Aes? aes1;
 
     // lock (this.transmissions.SyncObject)
+    private FlowControl? flowControl;
     private NetTransmission.GoshujinClass transmissions = new();
 
     // RTT

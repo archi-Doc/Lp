@@ -87,7 +87,7 @@ public partial class NetTerminalObsolete : IDisposable
 
     internal AsyncPulseEvent ReceiveEvent { get; } = new();
 
-    internal FlowControl FlowControl { get; }
+    internal FlowControlObsolete FlowControl { get; }
 
     internal object SyncObject { get; } = new();
 

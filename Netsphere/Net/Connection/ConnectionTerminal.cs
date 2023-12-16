@@ -1,8 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Collections.Concurrent;
-using System.Runtime.CompilerServices;
-using Arc.Collections;
 using Netsphere.Crypto;
 using Netsphere.Net;
 using Netsphere.Packet;
@@ -32,6 +29,7 @@ public class ConnectionTerminal
 
     private readonly ClientConnection.GoshujinClass clientConnections = new();
     private readonly ServerConnection.GoshujinClass serverConnections = new();
+    private readonly FlowControl.GoshujinClass flowControls = new();
 
     public void Clean()
     {
@@ -250,6 +248,14 @@ public class ConnectionTerminal
                     this.CloseServerConnection(g2, serverConnection);
                 }
             }
+        }
+    }
+
+    internal void ProcessSend(NetSender netSender)
+    {
+        lock (this.flowControls.SyncObject)
+        {
+
         }
     }
 

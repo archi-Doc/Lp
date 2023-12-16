@@ -55,12 +55,9 @@ public sealed partial class NetTransmission : NetStream, IDisposable
 
     public TransmissionState State { get; private set; } // lock (this.syncObject)
 
-    public FlowControl FlowControl => this.flowControl ?? FlowControl.Default;
-
     // internal object SyncObject => this.syncObject;
 
     private readonly object syncObject = new();
-    private FlowControl? flowControl;
     private uint totalGene;
     private TaskCompletionSource<NetResponse>? tcs;
     private NetGene? gene0; // Gene 0

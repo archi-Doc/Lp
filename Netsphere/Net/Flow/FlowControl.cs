@@ -6,7 +6,8 @@ using Arc.Collections;
 
 namespace Netsphere.Net;
 
-public class FlowControl
+[ValueLinkObject(Isolation = IsolationLevel.Serializable, Restricted = true)]
+public partial class FlowControl
 {
     public static readonly FlowControl Default = new(NetConstants.SendCapacityPerRound);
 
@@ -43,8 +44,7 @@ public class FlowControl
             var remaining = this.sendCapacityPerRound;
 
             int rtoSerial = 0; // Increment RTO to create a small difference.
-            while (remaining > 0 &&
-                netSender.SendCapacity > netSender.SendCount)
+            while (remaining > 0 && netSender.CanSend)
             {// Retransmission
                 var firstNode = this.waitingForAck.First;
                 if (firstNode is null ||
@@ -66,8 +66,7 @@ public class FlowControl
             }
 
             // Send queue (ConcurrentQueue)
-            while (remaining > 0 &&
-                netSender.SendCapacity > netSender.SendCount)
+            while (remaining > 0 && netSender.CanSend)
             {
                 if (!this.waitingToSend.TryDequeue(out var gene))
                 {// No send queue

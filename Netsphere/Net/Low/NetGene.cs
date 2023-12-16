@@ -23,7 +23,7 @@ internal partial class NetGene : IDisposable
     public NetGene(NetTransmission transmission)
     {
         this.Transmission = transmission;
-        this.FlowControl = transmission.FlowControl; // Keep FlowControl instance as a member variable, since it may be subject to change.
+        this.FlowControl = transmission.Connection.FlowControl; // Keep FlowControl instance as a member variable, since it may be subject to change.
     }
 
     #region FieldAndProperty
