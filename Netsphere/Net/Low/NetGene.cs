@@ -19,7 +19,7 @@ internal partial class NetGene : IDisposable
         Complete,
     }
 
-    [Link(Primary = true, Type = ChainType.SlidingList, Name = "GenePositionList")]
+    [Link(Primary = true, Type = ChainType.SlidingList, Name = "GeneSerialList")]
     public NetGene(NetTransmission transmission)
     {
         this.Transmission = transmission;

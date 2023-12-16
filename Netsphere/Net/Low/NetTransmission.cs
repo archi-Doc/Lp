@@ -183,14 +183,14 @@ public sealed partial class NetTransmission : NetStream, IDisposable
                 }
 
                 this.genes = new();
-                this.genes.GenePositionListChain.Resize((int)info.NumberOfGenes);
+                this.genes.GeneSerialListChain.Resize((int)info.NumberOfGenes);
 
                 var firstGene = new NetGene(this);
                 this.CreateFirstPacket(0, info.NumberOfGenes, primaryId, secondaryId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
                 firstGene.SetSend(owner);
                 span = span.Slice((int)info.FirstGeneSize);
                 firstGene.Goshujin = this.genes;
-                this.genes.GenePositionListChain.Add(firstGene);
+                this.genes.GeneSerialListChain.Add(firstGene);
 
                 for (uint i = 1; i < info.NumberOfGenes; i++)
                 {
@@ -201,7 +201,7 @@ public sealed partial class NetTransmission : NetStream, IDisposable
 
                     span = span.Slice(size);
                     gene.Goshujin = this.genes;
-                    this.genes.GenePositionListChain.Add(gene);
+                    this.genes.GeneSerialListChain.Add(gene);
                 }
 
                 Debug.Assert(span.Length == 0);

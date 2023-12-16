@@ -102,6 +102,11 @@ public abstract class Connection : IDisposable
 
     #endregion
 
+    public void CreateFlowControl()
+    {
+        this.flowControl ??= new();
+    }
+
     public void Close()
         => this.Dispose();
 

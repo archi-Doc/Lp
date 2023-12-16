@@ -253,9 +253,32 @@ public class ConnectionTerminal
 
     internal void ProcessSend(NetSender netSender)
     {
+        var count = 0;
         lock (this.flowControls.SyncObject)
         {
+            var current = this.flowControls.ListChain.First;
+            while (current is not null)
+            {
+                var next = current.ListLink.Next;
+                if (current.IsEmpty)
+                {// Empty
+                    if (current.MarkedForDeletion)
+                    {// Delete
+                        current.Goshujin = null;
+                    }
+                    else
+                    {// To prevent immediate deletion after creation, just set the deletion flag.
+                        current.MarkedForDeletion = true;
+                    }
+                }
+                else
+                {// Not empty
+                    current.MarkedForDeletion = false;
+                    count++;
+                }
 
+                current = next;
+            }
         }
     }
 

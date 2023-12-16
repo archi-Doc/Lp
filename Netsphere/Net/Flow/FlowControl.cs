@@ -6,7 +6,7 @@ using Arc.Collections;
 
 namespace Netsphere.Net;
 
-[ValueLinkObject(Isolation = IsolationLevel.Serializable, Restricted = true)]
+[ValueLinkObject(Isolation = IsolationLevel.Serializable)]
 public partial class FlowControl
 {
     public static readonly FlowControl Default = new(NetConstants.SendCapacityPerRound);
@@ -15,6 +15,7 @@ public partial class FlowControl
     {
     }
 
+    [Link(Primary = true, Name = "List", Type = ChainType.LinkedList)]
     public FlowControl(int sendCapacityPerRound)
     {
         this.sendCapacityPerRound = sendCapacityPerRound;
@@ -22,12 +23,16 @@ public partial class FlowControl
 
     #region FieldAndProperty
 
+    internal bool MarkedForDeletion { get; set; }
+
     private readonly int sendCapacityPerRound;
 
     private readonly object syncObject = new();
     private readonly ConcurrentQueue<NetGene> waitingToSend = new();
     private readonly OrderedMultiMap<long, NetGene> waitingForAck = new();
     // private readonly SortedDictionary<long, NetGene> waitingForAck = new();
+
+    public bool IsEmpty => this.waitingToSend.IsEmpty && this.waitingForAck.Count == 0;
 
     #endregion
 
