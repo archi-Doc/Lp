@@ -59,6 +59,7 @@ public sealed partial class NetTransmission : NetStream, IDisposable
 
     private readonly object syncObject = new();
     private uint totalGene;
+    private uint maxReceived;
     private TaskCompletionSource<NetResponse>? tcs;
     private NetGene? gene0; // Gene 0
     private NetGene? gene1; // Gene 1
@@ -294,8 +295,9 @@ public sealed partial class NetTransmission : NetStream, IDisposable
             }
         }
 
+        // Send Ack
         if (this.totalGene <= NetHelper.RamaGenes)
-        {// Fast ack
+        {// Fast Ack
             if (completeFlag)
             {
                 Span<byte> ackFrame = stackalloc byte[2 + (8 * 3)];
@@ -342,7 +344,7 @@ public sealed partial class NetTransmission : NetStream, IDisposable
         }
         else
         {// Ack (TransmissionId, GenePosition)
-            // this.Connection.AddAck(this.TransmissionId, genePosition);
+            this.Connection.AddAck(this.TransmissionId, genePosition);
         }
 
         if (completeFlag)

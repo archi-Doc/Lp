@@ -66,7 +66,7 @@ public partial class FlowControl
             {// Retransmission
                 var firstNode = this.waitingForAck.First;
                 if (firstNode is null ||
-                    firstNode.Key < netSender.CurrentSystemMics)
+                    firstNode.Key > netSender.CurrentSystemMics)
                 {
                     break;
                 }

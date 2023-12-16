@@ -31,7 +31,8 @@ public class ConnectionTerminal
     private readonly ServerConnection.GoshujinClass serverConnections = new();
 
     private readonly FlowControl.GoshujinClass flowControls = new();
-    private readonly Queue<FlowControl> activeFlowControls = new();
+
+    private readonly AckBuffer.GoshujinClass ackBuffers = new();
 
     public void Clean()
     {
@@ -262,6 +263,20 @@ public class ConnectionTerminal
                 connection.flowControl = new(connection);
                 connection.flowControl.Goshujin = this.flowControls;
             }
+        }
+    }
+
+    internal void RegisterAck(Connection connection)
+    {
+        lock (this.ackBuffers.SyncObject)
+        {
+            if (this.ackBuffers.ConnectionIdChain.ContainsKey(connection.ConnectionId))
+            {
+                return;
+            }
+
+            var ackBuffer = new AckBuffer(connection);
+            ackBuffer.Goshujin = this.ackBuffers;
         }
     }
 
