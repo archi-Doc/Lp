@@ -21,6 +21,8 @@ internal partial class NetGene : IDisposable
         WaitingForAck,
         SendingAck,
         Complete,
+
+        Sending,
     }
 
     [Link(Primary = true, Type = ChainType.SlidingList, Name = "GenePositionList")]
@@ -55,7 +57,7 @@ internal partial class NetGene : IDisposable
 
     public bool IsComplete => this.State == GeneState.Complete;
 
-    internal OrderedMultiMap<long, NetGene>.Node? WaitingForAckNode; // lock (ConnectionTerminal.syncGenes)
+    // internal OrderedMultiMap<long, NetGene>.Node? WaitingForAckNode; // lock (ConnectionTerminal.syncGenes)
 
     #endregion
 
@@ -66,7 +68,7 @@ internal partial class NetGene : IDisposable
         this.State = GeneState.WaitingToSend;
         this.Packet = toBeMoved;
 
-        this.FlowControl.AddSend(this); // Lock-free
+        this.FlowControl.AddSend_LockFree(this); // Lock-free
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -83,19 +85,20 @@ internal partial class NetGene : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool Send(NetSender netSender, ref int sentCount)
+    public int Send_NotThreadSafe(NetSender netSender)
     {
-        if (this.State == GeneState.WaitingToSend ||
-            this.State == GeneState.WaitingForAck)
+        if (this.State == GeneState.Sending)
         {
-            netSender.Send_NotThreadSafe(this.Transmission.Connection.EndPoint.EndPoint, this.Packet);
+            var connection = this.Transmission.Connection;
+            var rto = connection.RetransmissionTimeout;
+
+            netSender.Send_NotThreadSafe(connection.EndPoint.EndPoint, this.Packet);
             this.SentMics = netSender.CurrentSystemMics;
-            sentCount++;
-            return true;
+            return rto;
         }
         else
         {
-            return false;
+            return 0;
         }
     }
 
@@ -136,6 +139,6 @@ internal partial class NetGene : IDisposable
     {
         this.State = GeneState.Initial;
         this.Packet = this.Packet.Return();
-        this.FlowControl.Remove(this);
+        // this.FlowControl.Remove(this);
     }
 }

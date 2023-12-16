@@ -20,6 +20,7 @@ public abstract class Connection : IDisposable
 {
     private const int LowerRttLimit = 1_000; // 1ms
     private const int UpperRttLimit = 1_000_000; // 1000ms
+    private const int AckDelay = 10_000; // 10ms
     // private const int InitialRtt = 200_000; // 200ms
     // private static readonly int AckDelay = (int)Mics.FromMilliseconds(10);
 
@@ -69,7 +70,11 @@ public abstract class Connection : IDisposable
     public bool IsClosedOrDisposed
         => this.State == ConnectionState.Closed || this.State == ConnectionState.Disposed;
 
-    public int SmoothedRtt => this.smoothedRtt;
+    public int SmoothedRtt
+        => this.smoothedRtt;
+
+    public int RetransmissionTimeout
+        => this.smoothedRtt + Math.Min(this.rttvar * 4, 1_000) + AckDelay; // 1ms
 
     internal long ClosedSystemMics { get; set; }
 
@@ -88,9 +93,9 @@ public abstract class Connection : IDisposable
     private NetTransmission.GoshujinClass transmissions = new();
 
     // RTT
-    private int minRtt; // Minimum rtt
-    private int smoothedRtt; // Smoothed rtt
-    private int rttvar; // Rtt variation
+    private int minRtt; // Minimum rtt (mics)
+    private int smoothedRtt; // Smoothed rtt (mics)
+    private int rttvar; // Rtt variation (mics)
 
     #endregion
 

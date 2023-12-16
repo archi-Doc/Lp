@@ -26,18 +26,18 @@ public class FlowControl
     private readonly object syncObject = new();
     private readonly ConcurrentQueue<NetGene> waitingToSend = new();
     private readonly OrderedMultiMap<long, NetGene> waitingForAck = new();
+    // private readonly SortedDictionary<long, NetGene> waitingForAck = new();
 
     #endregion
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void AddSend(NetGene gene)
+    internal void AddSend_LockFree(NetGene gene)
     {
         this.waitingToSend.Enqueue(gene);
     }
 
     internal void ProcessSend(NetSender netSender)
     {
-        int sentCount = 0;
         lock (this.syncObject)
         {
             while (netSender.SendCapacity > netSender.SendCount)
@@ -46,12 +46,13 @@ public class FlowControl
                 if (firstNode is null ||
                     firstNode.Key < netSender.CurrentSystemMics)
                 {
-                    return;
+                    break;
                 }
 
-                if (firstNode.Value.Send(netSender, ref sentCount))
+                var rto = firstNode.Value.Send_NotThreadSafe(netSender);
+                if (rto > 0)
                 {// Resend
-                    this.waitingForAck.SetNodeKey(firstNode, 222);
+                    this.waitingForAck.SetNodeKey(firstNode, rto);
                 }
                 else
                 {// Remove
@@ -67,21 +68,11 @@ public class FlowControl
                     return;
                 }
 
-                if (gene.Send(netSender, ref sentCount))
+                var rto = gene.Send_NotThreadSafe(netSender);
+                if (rto > 0)
                 {// Success
-                    (gene.WaitingForAckNode, _) = this.waitingForAck.Add(1, gene);
+                    this.waitingForAck.Add(rto, gene);
                 }
-            }
-        }
-    }
-
-    internal void Remove(NetGene gene)
-    {
-        lock (gene.FlowControl.syncObject)
-        {
-            if (gene.WaitingForAckNode is { } node)
-            {
-                this.waitingForAck.RemoveNode(node);
             }
         }
     }
