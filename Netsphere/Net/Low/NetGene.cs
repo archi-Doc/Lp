@@ -2,34 +2,28 @@
 
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Arc.Collections;
 
 namespace Netsphere.Net;
 
 [ValueLinkObject(Restricted = true)]
 internal partial class NetGene : IDisposable
 {// lock (transmission.syncObject)
-    internal static readonly long ResendMics = Mics.FromMilliseconds(500);
-
     public enum GeneState
     {
         // GeneState:
-        // Send: Initial -> SetSend() -> WaitingToSend -> Send() -> WaitingForAck -> (Receive Ack) -> Complete
-        // Receive: Initial -> SetReceive() -> SendingAck -> Complete
+        // Send: Initial -> SetSend() -> Sending -> Send()/Resend() -> (Receive Ack) -> Complete
+        // Receive: Initial -> SetReceive() -> Received -> (Send Ack) -> Complete
         Initial,
-        WaitingToSend,
-        WaitingForAck,
-        SendingAck,
-        Complete,
-
         Sending,
+        Received,
+        Complete,
     }
 
     [Link(Primary = true, Type = ChainType.SlidingList, Name = "GenePositionList")]
     public NetGene(NetTransmission transmission)
     {
         this.Transmission = transmission;
-        this.FlowControl = transmission.FlowControl;
+        this.FlowControl = transmission.FlowControl; // Keep FlowControl instance as a member variable, since it may be subject to change.
     }
 
     #region FieldAndProperty
@@ -46,11 +40,9 @@ internal partial class NetGene : IDisposable
 
     public long SentMics { get; private set; }
 
-    public bool IsReceived => this.State == GeneState.SendingAck;
+    public bool IsReceived => this.State == GeneState.Received;
 
     public bool IsComplete => this.State == GeneState.Complete;
-
-    // internal OrderedMultiMap<long, NetGene>.Node? WaitingForAckNode; // lock (ConnectionTerminal.syncGenes)
 
     #endregion
 
@@ -65,66 +57,40 @@ internal partial class NetGene : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Send(NetSender netSender, IPEndPoint endPoint, ref int sentCount)
-    {
-        if (this.State == GeneState.WaitingToSend ||
-            this.State == GeneState.WaitingForAck)
-        {
-            netSender.Send_NotThreadSafe(endPoint, this.Packet);
-            this.State = GeneState.WaitingForAck;
-            this.SentMics = netSender.CurrentSystemMics;
-            sentCount++;
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public int Send_NotThreadSafe(NetSender netSender)
-    {
-        if (this.State == GeneState.Sending)
-        {
-            var connection = this.Transmission.Connection;
-            var rto = connection.RetransmissionTimeout;
-
-            netSender.Send_NotThreadSafe(connection.EndPoint.EndPoint, this.Packet);
-            this.SentMics = netSender.CurrentSystemMics;
-            return rto;
-        }
-        else
-        {
-            return 0;
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool CheckResend(NetSender netSender)
-    {
-        if (this.State == GeneState.WaitingForAck)
-        {
-            if (netSender.CurrentSystemMics > this.SentMics + ResendMics)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetRecv(ByteArrayPool.MemoryOwner toBeShared)
     {
-        Debug.Assert(this.State == GeneState.Initial);
-
-        this.State = GeneState.SendingAck;
-        this.Packet = toBeShared.IncrementAndShare();
+        if (this.State == GeneState.Initial)
+        {
+            this.State = GeneState.Received;
+            this.Packet = toBeShared.IncrementAndShare();
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetAck()
     {
-        if (this.State == GeneState.WaitingToSend ||
-            this.State == GeneState.WaitingForAck)
+        if (this.State == GeneState.Sending)
         {
             this.State = GeneState.Complete;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public long Send_NotThreadSafe(NetSender netSender)
+    {
+        if (this.State == GeneState.Sending)
+        {
+            var connection = this.Transmission.Connection;
+            var currentMics = netSender.CurrentSystemMics;
+            var rto = connection.RetransmissionTimeout;
+
+            netSender.Send_NotThreadSafe(connection.EndPoint.EndPoint, this.Packet);
+            this.SentMics = currentMics;
+            return currentMics + connection.RetransmissionTimeout;
+        }
+        else
+        {
+            return 0;
         }
     }
 

@@ -12,8 +12,8 @@ public sealed partial class NetTransmission : NetStream, IDisposable
     /* State transitions
      *  SendAndReceiveAsync (Client) : Initial -> Sending -> Receiving -> Disposed
      *  SendAsync                   (Client) : Initial -> Sending -> tcs / Disposed
-     *  (Server) : Initial -> Receiving -> Received -> Disposed
-     *  (Server) : Initial -> Receiving -> Received -> Sending -> tcs / Disposed
+     *  (Server) : Initial -> Receiving -> (Invoke) -> Disposed
+     *  (Server) : Initial -> Receiving -> (Invoke) -> Sending -> tcs / Disposed
      */
     public enum TransmissionState
     {
@@ -22,7 +22,6 @@ public sealed partial class NetTransmission : NetStream, IDisposable
         SendingStream,
         Receiving,
         ReceivingStream,
-        Received,
         Disposed,
     }
 
@@ -363,6 +362,7 @@ public sealed partial class NetTransmission : NetStream, IDisposable
             else
             {// Server: Connection, NetTransmission, Owner
                 var param = new ServerInvocationParam(this.Connection, this, primaryId, secondaryId, owner);
+                Console.WriteLine(owner.Span.Length);
             }
         }
     }
@@ -516,33 +516,7 @@ public sealed partial class NetTransmission : NetStream, IDisposable
         return mics;
     }
 
-    /*internal bool CheckResend(NetSender netSender)
-    {
-        lock (this.syncObject)
-        {
-            if (this.State != TransmissionState.Sending)
-            {
-                return false;
-            }
-
-            if (this.gene0 is not null && this.gene0.CheckResend(netSender))
-            {
-                return true;
-            }
-            else if (this.gene1 is not null && this.gene1.CheckResend(netSender))
-            {
-                return true;
-            }
-            else if (this.gene2 is not null && this.gene2.CheckResend(netSender))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }*/
-
-    internal bool SendInternal(NetSender netSender, out int sentCount)
+    /*internal bool SendInternal(NetSender netSender, out int sentCount)
     {
         sentCount = 0;
         if (this.Connection.IsClosedOrDisposed)
@@ -571,7 +545,7 @@ public sealed partial class NetTransmission : NetStream, IDisposable
 
             return true;
         }
-    }
+    }*/
 
     private void CreateFirstPacket(ushort transmissionMode, uint totalGene, uint primaryId, ulong secondaryId, Span<byte> block, out ByteArrayPool.MemoryOwner owner)
     {
