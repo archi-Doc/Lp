@@ -1,6 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics;
+/*using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Netsphere.Packet;
 
@@ -99,7 +99,7 @@ public sealed partial class SendTransmission : IDisposable
             var span = block.Span;
             if (info.NumberOfGenes == 1)
             {// gene0
-                this.gene0 = new();
+                this.gene0 = new(this);
                 this.CreateFirstPacket(0, info.NumberOfGenes, primaryId, secondaryId, span, out var owner);
                 this.gene0.SetSend(owner);
             }
@@ -369,4 +369,4 @@ public sealed partial class SendTransmission : IDisposable
         Debug.Assert(span.Length == 0);
         this.Connection.CreatePacket(frameHeader, block, out owner);
     }
-}
+}*/

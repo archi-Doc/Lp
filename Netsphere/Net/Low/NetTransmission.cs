@@ -212,14 +212,6 @@ public sealed partial class NetTransmission : NetStream, IDisposable
             }
         }
 
-        if (info.NumberOfGenes > NetHelper.RamaGenes)
-        {// Flow control
-        }
-        else
-        {
-            this.Connection.ConnectionTerminal.RegisterSend(this);
-        }
-
         return NetResult.Success;
     }
 
