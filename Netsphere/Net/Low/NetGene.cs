@@ -26,13 +26,6 @@ internal partial class NetGene : IDisposable
     }
 
     [Link(Primary = true, Type = ChainType.SlidingList, Name = "GenePositionList")]
-    // [Link(Name = "SendQueue", Type = ChainType.QueueList, AutoLink = false)]
-    // [Link(Name = "ResendQueue", Type = ChainType.QueueList, AutoLink = false)]
-    public NetGene()
-    {
-        // this.GenePosition = genePosition;
-    }
-
     public NetGene(NetTransmission transmission)
     {
         this.Transmission = transmission;
@@ -65,7 +58,7 @@ internal partial class NetGene : IDisposable
     public void SetSend(ByteArrayPool.MemoryOwner toBeMoved)
     {
         Debug.Assert(this.State == GeneState.Initial);
-        this.State = GeneState.WaitingToSend;
+        this.State = GeneState.Sending;
         this.Packet = toBeMoved;
 
         this.FlowControl.AddSend_LockFree(this); // Lock-free

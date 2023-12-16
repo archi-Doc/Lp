@@ -146,36 +146,36 @@ public sealed partial class NetTransmission : NetStream, IDisposable
             var span = block.Span;
             if (info.NumberOfGenes == 1)
             {// gene0
-                this.gene0 = new();
+                this.gene0 = new(this);
                 this.CreateFirstPacket(0, info.NumberOfGenes, primaryId, secondaryId, span, out var owner);
                 this.gene0.SetSend(owner);
             }
             else if (info.NumberOfGenes == 2)
             {// gene0, gene1
-                this.gene0 = new();
+                this.gene0 = new(this);
                 this.CreateFirstPacket(0, info.NumberOfGenes, primaryId, secondaryId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
                 this.gene0.SetSend(owner);
 
                 span = span.Slice((int)info.FirstGeneSize);
                 Debug.Assert(span.Length == info.LastGeneSize);
-                this.gene1 = new();
+                this.gene1 = new(this);
                 this.CreateFollowingPacket(1, span, out owner);
                 this.gene1.SetSend(owner);
             }
             else if (info.NumberOfGenes == 3)
             {// gene0, gene1, gene2
-                this.gene0 = new();
+                this.gene0 = new(this);
                 this.CreateFirstPacket(0, info.NumberOfGenes, primaryId, secondaryId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
                 this.gene0.SetSend(owner);
 
                 span = span.Slice((int)info.FirstGeneSize);
-                this.gene1 = new();
+                this.gene1 = new(this);
                 this.CreateFollowingPacket(1, span.Slice(0, FollowingGeneFrame.MaxGeneLength), out owner);
                 this.gene1.SetSend(owner);
 
                 span = span.Slice(FollowingGeneFrame.MaxGeneLength);
                 Debug.Assert(span.Length == info.LastGeneSize);
-                this.gene2 = new();
+                this.gene2 = new(this);
                 this.CreateFollowingPacket(2, span, out owner);
                 this.gene2.SetSend(owner);
             }
@@ -189,7 +189,7 @@ public sealed partial class NetTransmission : NetStream, IDisposable
                 this.genes = new();
                 this.genes.GenePositionListChain.Resize((int)info.NumberOfGenes);
 
-                var firstGene = new NetGene();
+                var firstGene = new NetGene(this);
                 this.CreateFirstPacket(0, info.NumberOfGenes, primaryId, secondaryId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
                 firstGene.SetSend(owner);
                 span = span.Slice((int)info.FirstGeneSize);
@@ -199,7 +199,7 @@ public sealed partial class NetTransmission : NetStream, IDisposable
                 for (uint i = 1; i < info.NumberOfGenes; i++)
                 {
                     var size = (int)(i == info.NumberOfGenes - 1 ? info.LastGeneSize : FollowingGeneFrame.MaxGeneLength);
-                    var gene = new NetGene();
+                    var gene = new NetGene(this);
                     this.CreateFollowingPacket(i, span.Slice(0, size), out owner);
                     gene.SetSend(owner);
 
@@ -258,17 +258,17 @@ public sealed partial class NetTransmission : NetStream, IDisposable
                 {// Single send/recv
                     if (genePosition == 0)
                     {
-                        this.gene0 ??= new();
+                        this.gene0 ??= new(this);
                         this.gene0.SetRecv(toBeShared);
                     }
                     else if (genePosition == 1)
                     {
-                        this.gene1 ??= new();
+                        this.gene1 ??= new(this);
                         this.gene1.SetRecv(toBeShared);
                     }
                     else if (genePosition == 2)
                     {
-                        this.gene2 ??= new();
+                        this.gene2 ??= new(this);
                         this.gene2.SetRecv(toBeShared);
                     }
 
