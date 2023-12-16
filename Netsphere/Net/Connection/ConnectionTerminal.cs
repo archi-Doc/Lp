@@ -29,7 +29,9 @@ public class ConnectionTerminal
 
     private readonly ClientConnection.GoshujinClass clientConnections = new();
     private readonly ServerConnection.GoshujinClass serverConnections = new();
+
     private readonly FlowControl.GoshujinClass flowControls = new();
+    private readonly Queue<FlowControl> activeFlowControls = new();
 
     public void Clean()
     {
@@ -266,7 +268,6 @@ public class ConnectionTerminal
     internal void ProcessSend(NetSender netSender)
     {
         var count = 0;
-        Queue<FlowControl> queue = new();
         lock (this.flowControls.SyncObject)
         {
             var current = this.flowControls.ListChain.First;
@@ -302,7 +303,7 @@ public class ConnectionTerminal
                 {// Not empty
                     current.MarkedForDeletion = false;
                     count++;
-                    queue.Enqueue(current);
+                    netSender.FlowControlQueue.Enqueue(current);
                 }
 
                 current = next;
@@ -311,7 +312,7 @@ public class ConnectionTerminal
 
         // Send
         FlowControl.Default.ProcessSend(netSender);
-        foreach (var x in queue)
+        while (netSender.FlowControlQueue.TryDequeue(out var x))
         {
             x.ProcessSend(netSender);
         }

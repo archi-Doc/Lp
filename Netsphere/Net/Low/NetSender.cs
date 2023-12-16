@@ -128,6 +128,8 @@ internal class NetSender
         this.deliveryFailureRatio = ratio;
     }
 
+    #region FieldAndProperty
+
     public bool CanSend => this.SendCapacity > this.SendCount;
 
     public long CurrentSystemMics => this.currentSystemMics;
@@ -135,6 +137,8 @@ internal class NetSender
     public int SendCapacity { get; private set; }
 
     public int SendCount { get; private set; }
+
+    public Queue<FlowControl> FlowControlQueue { get; } = new();
 
     private readonly NetTerminal netTerminal;
     private readonly ILogger logger;
@@ -148,6 +152,8 @@ internal class NetSender
     private Queue<Item> itemsIpv4 = new();
     private Queue<Item> itemsIpv6 = new();
     private double deliveryFailureRatio = 0;
+
+    #endregion
 
     /*internal void SendImmediately(IPEndPoint endPoint, Span<byte> data)
     {
