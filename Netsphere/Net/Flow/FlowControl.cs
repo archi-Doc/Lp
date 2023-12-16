@@ -11,8 +11,9 @@ public partial class FlowControl
 {
     public static readonly FlowControl Default = new(NetConstants.SendCapacityPerRound);
 
-    public FlowControl()
+    public FlowControl(Connection connection)
     {
+        this.Connection = connection;
     }
 
     [Link(Primary = true, Name = "List", Type = ChainType.LinkedList)]
@@ -22,6 +23,8 @@ public partial class FlowControl
     }
 
     #region FieldAndProperty
+
+    public Connection? Connection { get; private set; }
 
     internal bool MarkedForDeletion { get; set; }
 
@@ -35,6 +38,16 @@ public partial class FlowControl
     public bool IsEmpty => this.waitingToSend.IsEmpty && this.waitingForAck.Count == 0;
 
     #endregion
+
+    public void Clear()
+    {
+        lock (this.syncObject)
+        {
+            this.Connection = default;
+            this.waitingToSend.Clear();
+            this.waitingForAck.Clear();
+        }
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void AddSend_LockFree(NetGene gene)

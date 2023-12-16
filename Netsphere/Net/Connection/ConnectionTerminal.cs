@@ -251,20 +251,47 @@ public class ConnectionTerminal
         }
     }
 
+    internal void CreateFlowControl(Connection connection)
+    {
+        lock (this.flowControls.SyncObject)
+        {
+            if (connection.flowControl is null)
+            {
+                connection.flowControl = new(connection);
+                connection.flowControl.Goshujin = this.flowControls;
+            }
+        }
+    }
+
     internal void ProcessSend(NetSender netSender)
     {
         var count = 0;
+        Queue<FlowControl> queue = new();
         lock (this.flowControls.SyncObject)
         {
             var current = this.flowControls.ListChain.First;
             while (current is not null)
             {
                 var next = current.ListLink.Next;
+
+                if (current.Connection is { } connection)
+                {
+                    if (connection.State == Connection.ConnectionState.Closed ||
+                        connection.State == Connection.ConnectionState.Disposed)
+                    {// Connection closed
+                        current.Goshujin = null;
+                        current.Clear();
+                        current = next;
+                        continue;
+                    }
+                }
+
                 if (current.IsEmpty)
                 {// Empty
                     if (current.MarkedForDeletion)
                     {// Delete
                         current.Goshujin = null;
+                        current.Clear();
                     }
                     else
                     {// To prevent immediate deletion after creation, just set the deletion flag.
@@ -275,10 +302,18 @@ public class ConnectionTerminal
                 {// Not empty
                     current.MarkedForDeletion = false;
                     count++;
+                    queue.Enqueue(current);
                 }
 
                 current = next;
             }
+        }
+
+        // Send
+        FlowControl.Default.ProcessSend(netSender);
+        foreach (var x in queue)
+        {
+            x.ProcessSend(netSender);
         }
     }
 

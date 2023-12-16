@@ -10,6 +10,7 @@ using Netsphere.Packet;
 
 #pragma warning disable SA1202
 #pragma warning disable SA1214
+#pragma warning disable SA1401
 
 namespace Netsphere;
 
@@ -82,6 +83,10 @@ public abstract class Connection : IDisposable
 
     internal long ResponseSystemMics { get; set; }
 
+#pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
+    internal FlowControl? flowControl; // ConnectionTerminal.flowControls.SyncObject
+#pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
+
     private readonly AsyncPulseEvent transmissionsPulse = new();
 
     private Embryo embryo;
@@ -92,7 +97,6 @@ public abstract class Connection : IDisposable
     private Aes? aes1;
 
     // lock (this.transmissions.SyncObject)
-    private FlowControl? flowControl;
     private NetTransmission.GoshujinClass transmissions = new();
 
     // RTT
@@ -104,7 +108,10 @@ public abstract class Connection : IDisposable
 
     public void CreateFlowControl()
     {
-        this.flowControl ??= new();
+        if (this.flowControl is null)
+        {
+            this.ConnectionTerminal.CreateFlowControl(this);
+        }
     }
 
     public void Close()
