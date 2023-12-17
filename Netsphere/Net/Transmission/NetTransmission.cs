@@ -8,12 +8,6 @@ namespace Netsphere.Net;
 [ValueLinkObject(Isolation = IsolationLevel.Serializable, Restricted = true)]
 public sealed partial class NetTransmission : NetStream, IDisposable
 {
-    /* State transitions
-     *  SendAndReceiveAsync (Client) : Initial -> Sending -> Receiving -> Disposed
-     *  SendAsync                   (Client) : Initial -> Sending -> tcs / Disposed
-     *  (Server) : Initial -> Receiving -> (Invoke) -> Disposed
-     *  (Server) : Initial -> Receiving -> (Invoke) -> Sending -> tcs / Disposed
-     */
     public enum TransmissionState
     {
         Initial,
@@ -58,7 +52,6 @@ public sealed partial class NetTransmission : NetStream, IDisposable
 
     private readonly object syncObject = new();
     private uint totalGene;
-    private uint maxReceived;
     private TaskCompletionSource<NetResponse>? tcs;
     private NetGene? gene0; // Gene 0
     private NetGene? gene1; // Gene 1
@@ -359,8 +352,8 @@ public sealed partial class NetTransmission : NetStream, IDisposable
             }
             else
             {// Server: Connection, NetTransmission, Owner
-                var param = new ServerInvocationParam(this.Connection, this, primaryId, secondaryId, owner);
-                Console.WriteLine(owner.Span.Length);
+                // var param = new ServerInvocationParam(this.Connection, this, primaryId, secondaryId, owner);
+                // Console.WriteLine(owner.Span.Length);
             }
         }
     }

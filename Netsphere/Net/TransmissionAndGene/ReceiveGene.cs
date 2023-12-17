@@ -8,25 +8,29 @@ namespace Netsphere.Net;
 internal partial class ReceiveGene
 {// lock (transmission.syncObject)
     [Link(Primary = true, Type = ChainType.SlidingList, Name = "DataPositionList")]
-    public ReceiveGene(NetTransmission transmission)
+    public ReceiveGene(ReceiveTransmission receiveTransmission)
     {
-        this.Transmission = transmission;
+        this.ReceiveTransmission = receiveTransmission;
     }
 
     #region FieldAndProperty
 
-    public NetTransmission Transmission { get; }
+    public ReceiveTransmission ReceiveTransmission { get; }
 
     public ByteArrayPool.MemoryOwner Packet { get; private set; }
 
-    public bool IsReceived => !this.Packet.IsEmpty;
+    public bool IsReceived
+        => !this.Packet.IsEmpty;
 
     #endregion
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetRecv(ByteArrayPool.MemoryOwner toBeShared)
     {
-        this.Packet = toBeShared.IncrementAndShare();
+        if (!this.IsReceived)
+        {
+            this.Packet = toBeShared.IncrementAndShare();
+        }
     }
 
     public void Dispose()

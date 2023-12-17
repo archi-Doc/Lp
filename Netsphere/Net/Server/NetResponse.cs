@@ -9,10 +9,10 @@ namespace Netsphere;
 /// </summary>
 public readonly record struct ServerInvocationParam
 {
-    public ServerInvocationParam(Connection connection, NetTransmission transmission, uint primaryId, ulong secondaryId, ByteArrayPool.MemoryOwner owner)
+    public ServerInvocationParam(Connection connection, ReceiveTransmission receiveTransmission, uint primaryId, ulong secondaryId, ByteArrayPool.MemoryOwner owner)
     {
         this.Connection = connection;
-        this.Transmission = transmission;
+        this.ReceiveTransmission = receiveTransmission;
         this.PrimaryId = primaryId;
         this.SecondaryId = secondaryId;
         this.Owner = owner;
@@ -21,7 +21,7 @@ public readonly record struct ServerInvocationParam
     public void Return() => this.Owner.Return();
 
     public readonly Connection Connection;
-    public readonly NetTransmission Transmission;
+    public readonly ReceiveTransmission ReceiveTransmission;
     public readonly uint PrimaryId;
     public readonly ulong SecondaryId;
     public readonly ByteArrayPool.MemoryOwner Owner;

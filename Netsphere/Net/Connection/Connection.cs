@@ -94,8 +94,9 @@ public abstract class Connection : IDisposable
     private Aes? aes1;
 
     // lock (this.transmissions.SyncObject)
-    private NetTransmission.GoshujinClass transmissions = new();
+    private NetTransmission.GoshujinClass transmissions = new();//
     private SendTransmission.GoshujinClass sendTransmissions = new();
+    private ReceiveTransmission.GoshujinClass receiveTransmissions = new();
 
     // RTT
     private int minRtt; // Minimum rtt (mics)
@@ -200,11 +201,29 @@ Wait:
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool RemoveTransmission(SendTransmission transmission)
     {
         lock (this.sendTransmissions.SyncObject)
         {
             if (transmission.Goshujin == this.sendTransmissions)
+            {
+                transmission.Goshujin = null;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal bool RemoveTransmission(ReceiveTransmission transmission)
+    {
+        lock (this.receiveTransmissions.SyncObject)
+        {
+            if (transmission.Goshujin == this.receiveTransmissions)
             {
                 transmission.Goshujin = null;
                 return true;
