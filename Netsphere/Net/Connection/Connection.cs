@@ -93,10 +93,8 @@ public abstract class Connection : IDisposable
     private Aes? aes0;
     private Aes? aes1;
 
-    // lock (this.transmissions.SyncObject)
-    private NetTransmission.GoshujinClass transmissions = new();//
-    private SendTransmission.GoshujinClass sendTransmissions = new();
-    private ReceiveTransmission.GoshujinClass receiveTransmissions = new();
+    private SendTransmission.GoshujinClass sendTransmissions = new(); // lock (this.sendTransmissions.SyncObject)
+    private ReceiveTransmission.GoshujinClass receiveTransmissions = new(); // lock (this.receiveTransmissions.SyncObject)
 
     // RTT
     private int minRtt; // Minimum rtt (mics)
@@ -116,7 +114,7 @@ public abstract class Connection : IDisposable
     public void Close()
         => this.Dispose();
 
-    internal void AddAck(uint transmissionId, uint geneSerial)
+    internal void AddAck(uint transmissionId, int geneSerial)
     {
         // Add ack
 
@@ -124,11 +122,11 @@ public abstract class Connection : IDisposable
         this.ConnectionTerminal.RegisterAck(this);
     }
 
-    internal NetTransmission? TryCreateTransmission()
+    internal SendTransmission? TryCreateTransmission()
     {
-        lock (this.transmissions.SyncObject)
+        lock (this.sendTransmissions.SyncObject)
         {
-            if (this.transmissions.Count >= this.Agreement.MaxTransmissions)
+            if (this.sendTransmissions.Count >= this.Agreement.MaxTransmissions)
             {
                 return default;
             }
@@ -138,15 +136,15 @@ public abstract class Connection : IDisposable
             {
                 transmissionId = RandomVault.Pseudo.NextUInt32();
             }
-            while (this.transmissions.TransmissionIdChain.ContainsKey(transmissionId));
+            while (this.sendTransmissions.TransmissionIdChain.ContainsKey(transmissionId));
 
-            var transmission = new NetTransmission(this, true, transmissionId);
-            transmission.Goshujin = this.transmissions;
-            return transmission;
+            var sendTransmission = new SendTransmission(this, transmissionId);
+            sendTransmission.Goshujin = this.sendTransmissions;
+            return sendTransmission;
         }
     }
 
-    internal async ValueTask<NetTransmission?> CreateTransmission()
+    internal async ValueTask<SendTransmission?> CreateTransmission()
     {
 Retry:
         if (this.NetBase.CancellationToken.IsCancellationRequested)
@@ -154,9 +152,9 @@ Retry:
             return default;
         }
 
-        lock (this.transmissions.SyncObject)
+        lock (this.sendTransmissions.SyncObject)
         {
-            if (this.transmissions.Count >= this.Agreement.MaxTransmissions)
+            if (this.sendTransmissions.Count >= this.Agreement.MaxTransmissions)
             {
                 goto Wait;
             }
@@ -166,16 +164,16 @@ Retry:
             {
                 transmissionId = RandomVault.Pseudo.NextUInt32();
             }
-            while (this.transmissions.TransmissionIdChain.ContainsKey(transmissionId));
+            while (this.sendTransmissions.TransmissionIdChain.ContainsKey(transmissionId));
 
-            var transmission = new NetTransmission(this, true, transmissionId);
-            transmission.Goshujin = this.transmissions;
-            return transmission;
+            var sendTransmission = new SendTransmission(this, transmissionId);
+            sendTransmission.Goshujin = this.sendTransmissions;
+            return sendTransmission;
         }
 
 Wait:
         try
-        {
+        {// tempcode
             await this.transmissionsPulse.WaitAsync(TimeSpan.FromSeconds(1), this.NetBase.CancellationToken).ConfigureAwait(false);
         }
         catch
@@ -183,22 +181,6 @@ Wait:
         }
 
         goto Retry;
-    }
-
-    internal bool RemoveTransmission(NetTransmission transmission)
-    {
-        lock (this.transmissions.SyncObject)
-        {
-            if (transmission.Goshujin == this.transmissions)
-            {
-                transmission.Goshujin = null;
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -239,10 +221,6 @@ Wait:
     {
         this.Agreement = agreement;
         this.embryo = embryo;
-    }
-
-    internal virtual void UpdateSendQueue(NetTransmission transmission)
-    {
     }
 
     internal void AddRtt(int rttMics)
@@ -341,30 +319,30 @@ Wait:
     }
 
     internal void ProcessReceive_Ack(IPEndPoint endPoint, ByteArrayPool.MemoryOwner toBeShared, long currentSystemMics)
-    {// { uint TransmissionId, uint GenePosition } x n
+    {// { uint TransmissionId, uint GeneSerial } x n
         var span = toBeShared.Span;
-        NetTransmission? transmissionToDispose = null;
-        lock (this.transmissions.SyncObject)
+        SendTransmission? transmissionToDispose = null;
+        lock (this.sendTransmissions.SyncObject)
         {
-            NetTransmission? previous = null;
+            SendTransmission? previous = null;
             while (span.Length >= 8)
             {
                 var transmissionId = BitConverter.ToUInt32(span);
                 span = span.Slice(sizeof(uint));
-                var genePosition = BitConverter.ToUInt32(span);
-                span = span.Slice(sizeof(uint));
+                var geneSerial = BitConverter.ToInt32(span);
+                span = span.Slice(sizeof(int));
 
-                NetTransmission? transmission;
+                SendTransmission? transmission;
                 if (previous is not null && previous.TransmissionId == transmissionId)
                 {
                     transmission = previous;
                 }
-                else if (!this.transmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
+                else if (!this.sendTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
                 {
                     continue;
                 }
 
-                if (transmission.ProcessReceive_Ack(genePosition))
+                if (transmission.ProcessReceive_Ack(geneSerial))
                 {// Dispose the complete transmission
                     transmissionToDispose = transmission;
                     transmissionToDispose.Goshujin = null;
@@ -398,28 +376,28 @@ Wait:
             this.AddRtt(rttHint);
         }
 
-        NetTransmission? transmission;
-        lock (this.transmissions.SyncObject)
+        ReceiveTransmission? transmission;
+        lock (this.receiveTransmissions.SyncObject)
         {
-            if (this.transmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
+            if (this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
             {// The same TransmissionId already exists.
                 return;
             }
 
             // New transmission
-            if (this.transmissions.Count >= this.Agreement.MaxTransmissions)
+            if (this.receiveTransmissions.Count >= this.Agreement.MaxTransmissions)
             {// Maximum number reached.
                 return;
             }
 
             if (transmissionMode == 0 && totalGenes <= this.Agreement.MaxBlockGenes)
-            {
-                transmission = new NetTransmission(this, false, transmissionId);
+            {// Block mode
+                transmission = new(this, transmissionId, true);
                 transmission.SetState_Receiving(totalGenes);
             }
             else if (transmissionMode == 1 && totalGenes < this.Agreement.MaxStreamGenes)
-            {
-                transmission = new NetTransmission(this, false, transmissionId);
+            {// Stream mode
+                transmission = new(this, transmissionId, true);
                 transmission.SetState_ReceivingStream(totalGenes);
             }
             else
@@ -427,7 +405,7 @@ Wait:
                 return;
             }
 
-            transmission.Goshujin = this.transmissions;
+            transmission.Goshujin = this.receiveTransmissions;
         }
 
         transmission.ProcessReceive_Gene(0, toBeShared.Slice(14)); // FirstGeneFrameCode
@@ -443,17 +421,17 @@ Wait:
 
         var transmissionId = BitConverter.ToUInt32(span);
         span = span.Slice(sizeof(uint));
-        var genePosition = BitConverter.ToUInt32(span);
-        span = span.Slice(sizeof(uint));
+        var genePosition = BitConverter.ToInt32(span);
+        span = span.Slice(sizeof(int));
         if (genePosition == 0)
         {
             return;
         }
 
-        NetTransmission? transmission;
-        lock (this.transmissions.SyncObject)
+        ReceiveTransmission? transmission;
+        lock (this.receiveTransmissions.SyncObject)
         {
-            if (!this.transmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
+            if (!this.receiveTransmissions.TransmissionIdChain.TryGetValue(transmissionId, out transmission))
             {// No transmission
                 return;
             }

@@ -86,7 +86,7 @@ public sealed partial class ReceiveTransmission : IDisposable
         tcs?.TrySetResult(new(NetResult.Closed));
     }
 
-    internal void ProcessReceive_Gene(uint genePosition, ByteArrayPool.MemoryOwner toBeShared)
+    internal void ProcessReceive_Gene(int genePosition, ByteArrayPool.MemoryOwner toBeShared)
     {
         var completeFlag = false;
         uint primaryId = 0;

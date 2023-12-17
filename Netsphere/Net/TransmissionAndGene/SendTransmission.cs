@@ -152,7 +152,7 @@ public sealed partial class SendTransmission : IDisposable
                 firstGene.Goshujin = this.genes;
                 this.genes.GeneSerialListChain.Add(firstGene);
 
-                for (uint i = 1; i < info.NumberOfGenes; i++)
+                for (var i = 1; i < info.NumberOfGenes; i++)
                 {
                     var size = (int)(i == info.NumberOfGenes - 1 ? info.LastGeneSize : FollowingGeneFrame.MaxGeneLength);
                     var gene = new SendGene(this);
@@ -285,7 +285,7 @@ public sealed partial class SendTransmission : IDisposable
         this.Connection.CreatePacket(frameHeader, block, out owner);
     }
 
-    private void CreateFollowingPacket(uint genePosition, Span<byte> block, out ByteArrayPool.MemoryOwner owner)
+    private void CreateFollowingPacket(int genePosition, Span<byte> block, out ByteArrayPool.MemoryOwner owner)
     {
         Debug.Assert(block.Length <= FollowingGeneFrame.MaxGeneLength);
 
@@ -300,7 +300,7 @@ public sealed partial class SendTransmission : IDisposable
         span = span.Slice(sizeof(uint));
 
         BitConverter.TryWriteBytes(span, genePosition); // GenePosition
-        span = span.Slice(sizeof(uint));
+        span = span.Slice(sizeof(int));
 
         Debug.Assert(span.Length == 0);
         this.Connection.CreatePacket(frameHeader, block, out owner);

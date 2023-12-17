@@ -31,8 +31,8 @@ public partial class FlowControl
     private readonly int sendCapacityPerRound;
 
     private readonly object syncObject = new();
-    private readonly ConcurrentQueue<NetGene> waitingToSend = new();
-    private readonly OrderedMultiMap<long, NetGene> waitingForAck = new();
+    private readonly ConcurrentQueue<SendGene> waitingToSend = new();
+    private readonly OrderedMultiMap<long, SendGene> waitingForAck = new();
     // private readonly SortedDictionary<long, NetGene> waitingForAck = new();
 
     public bool IsEmpty => this.waitingToSend.IsEmpty && this.waitingForAck.Count == 0;
@@ -50,15 +50,9 @@ public partial class FlowControl
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void AddSend_LockFree(NetGene gene)
-    {
-        this.waitingToSend.Enqueue(gene);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void AddSend_LockFree(SendGene gene)
     {
-        //this.waitingToSend.Enqueue(gene);
+        this.waitingToSend.Enqueue(gene);
     }
 
     internal void ProcessSend(NetSender netSender)
