@@ -95,6 +95,7 @@ public abstract class Connection : IDisposable
 
     // lock (this.transmissions.SyncObject)
     private NetTransmission.GoshujinClass transmissions = new();
+    private SendTransmission.GoshujinClass sendTransmissions = new();
 
     // RTT
     private int minRtt; // Minimum rtt (mics)
@@ -188,6 +189,22 @@ Wait:
         lock (this.transmissions.SyncObject)
         {
             if (transmission.Goshujin == this.transmissions)
+            {
+                transmission.Goshujin = null;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
+
+    internal bool RemoveTransmission(SendTransmission transmission)
+    {
+        lock (this.sendTransmissions.SyncObject)
+        {
+            if (transmission.Goshujin == this.sendTransmissions)
             {
                 transmission.Goshujin = null;
                 return true;

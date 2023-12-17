@@ -8,15 +8,15 @@ namespace Netsphere.Net;
 internal partial class SendGene
 {// lock (transmission.syncObject)
     [Link(Primary = true, Type = ChainType.SlidingList, Name = "GeneSerialList")]
-    public SendGene(NetTransmission transmission)
+    public SendGene(SendTransmission sendTransmission)
     {
-        this.Transmission = transmission;
-        this.FlowControl = transmission.Connection.FlowControl; // Keep FlowControl instance as a member variable, since it may be subject to change.
+        this.SendTransmission = sendTransmission;
+        this.FlowControl = sendTransmission.Connection.FlowControl; // Keep FlowControl instance as a member variable, since it may be subject to change.
     }
 
     #region FieldAndProperty
 
-    public NetTransmission Transmission { get; }
+    public SendTransmission SendTransmission { get; }
 
     public FlowControl FlowControl { get; }
 
@@ -36,7 +36,7 @@ internal partial class SendGene
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long Send_NotThreadSafe(NetSender netSender)
     {
-        var connection = this.Transmission.Connection;
+        var connection = this.SendTransmission.Connection;
         var currentMics = netSender.CurrentSystemMics;
 
         netSender.Send_NotThreadSafe(connection.EndPoint.EndPoint, this.Packet);
