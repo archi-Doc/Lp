@@ -40,7 +40,7 @@ public sealed partial class SendTransmission : IDisposable
     public NetTransmissionMode Mode { get; private set; } // lock (this.syncObject)
 
     private readonly object syncObject = new();
-    private uint totalGene;
+    private int totalGene;
     private TaskCompletionSource<NetResponse>? tcs;
     private SendGene? gene0; // Gene 0
     private SendGene? gene1; // Gene 1
@@ -87,7 +87,7 @@ public sealed partial class SendTransmission : IDisposable
         tcs?.TrySetResult(new(NetResult.Closed));
     }
 
-    internal NetResult SendBlock(uint primaryId, ulong secondaryId, ByteArrayPool.MemoryOwner block, TaskCompletionSource<NetResponse> tcs, bool requiresResponse)
+    internal NetResult SendBlock(uint dataKind, ulong dataId, ByteArrayPool.MemoryOwner block, TaskCompletionSource<NetResponse> tcs, bool requiresResponse)
     {
         var info = NetHelper.CalculateGene(block.Span.Length);
 
@@ -103,13 +103,13 @@ public sealed partial class SendTransmission : IDisposable
             if (info.NumberOfGenes == 1)
             {// gene0
                 this.gene0 = new(this);
-                this.CreateFirstPacket(0, info.NumberOfGenes, primaryId, secondaryId, span, out var owner);
+                this.CreateFirstPacket(0, info.NumberOfGenes, dataKind, dataId, span, out var owner);
                 this.gene0.SetSend(owner);
             }
             else if (info.NumberOfGenes == 2)
             {// gene0, gene1
                 this.gene0 = new(this);
-                this.CreateFirstPacket(0, info.NumberOfGenes, primaryId, secondaryId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
+                this.CreateFirstPacket(0, info.NumberOfGenes, dataKind, dataId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
                 this.gene0.SetSend(owner);
 
                 span = span.Slice((int)info.FirstGeneSize);
@@ -121,7 +121,7 @@ public sealed partial class SendTransmission : IDisposable
             else if (info.NumberOfGenes == 3)
             {// gene0, gene1, gene2
                 this.gene0 = new(this);
-                this.CreateFirstPacket(0, info.NumberOfGenes, primaryId, secondaryId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
+                this.CreateFirstPacket(0, info.NumberOfGenes, dataKind, dataId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
                 this.gene0.SetSend(owner);
 
                 span = span.Slice((int)info.FirstGeneSize);
@@ -146,7 +146,7 @@ public sealed partial class SendTransmission : IDisposable
                 this.genes.GeneSerialListChain.Resize((int)info.NumberOfGenes);
 
                 var firstGene = new SendGene(this);
-                this.CreateFirstPacket(0, info.NumberOfGenes, primaryId, secondaryId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
+                this.CreateFirstPacket(0, info.NumberOfGenes, dataKind, dataId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
                 firstGene.SetSend(owner);
                 span = span.Slice((int)info.FirstGeneSize);
                 firstGene.Goshujin = this.genes;
@@ -171,7 +171,7 @@ public sealed partial class SendTransmission : IDisposable
         return NetResult.Success;
     }
 
-    internal NetResult SendStream(uint primaryId, ulong secondaryId, long size, bool requiresResponse)
+    internal NetResult SendStream(uint dataKind, ulong dataId, long size, bool requiresResponse)
     {
         var info = NetHelper.CalculateGene(size);
 
@@ -252,7 +252,7 @@ public sealed partial class SendTransmission : IDisposable
         return completeFlag;
     }
 
-    private void CreateFirstPacket(ushort transmissionMode, uint totalGene, uint primaryId, ulong secondaryId, Span<byte> block, out ByteArrayPool.MemoryOwner owner)
+    private void CreateFirstPacket(ushort transmissionMode, int totalGene, uint dataKind, ulong dataId, Span<byte> block, out ByteArrayPool.MemoryOwner owner)
     {
         Debug.Assert(block.Length <= FirstGeneFrame.MaxGeneLength);
 
@@ -273,12 +273,12 @@ public sealed partial class SendTransmission : IDisposable
         span = span.Slice(sizeof(int));
 
         BitConverter.TryWriteBytes(span, totalGene); // TotalGene
+        span = span.Slice(sizeof(int));
+
+        BitConverter.TryWriteBytes(span, dataKind); // Data kind
         span = span.Slice(sizeof(uint));
 
-        BitConverter.TryWriteBytes(span, primaryId); // PrimaryId
-        span = span.Slice(sizeof(uint));
-
-        BitConverter.TryWriteBytes(span, secondaryId); // SecondaryId
+        BitConverter.TryWriteBytes(span, dataId); // Data id
         span = span.Slice(sizeof(ulong));
 
         Debug.Assert(span.Length == 0);

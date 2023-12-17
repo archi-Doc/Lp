@@ -51,10 +51,10 @@ public partial class ConnectionAgreementBlock : IBlock
     }
 
     [IgnoreMember]
-    public uint MaxBlockGenes { get; private set; }
+    public int MaxBlockGenes { get; private set; }
 
     [IgnoreMember]
-    public uint MaxStreamGenes { get; private set; }
+    public int MaxStreamGenes { get; private set; }
 
     private int maxBlockSize;
     private long maxStreamSize;

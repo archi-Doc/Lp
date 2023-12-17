@@ -26,7 +26,7 @@ public sealed partial class ReceiveTransmission : IDisposable
     public NetTransmissionMode Mode { get; private set; } // lock (this.syncObject)
 
     private readonly object syncObject = new();
-    private uint totalGene;
+    private int totalGene;
     private uint maxReceived;
     private TaskCompletionSource<NetResponse>? tcs;
     private ReceiveGene? gene0; // Gene 0
@@ -42,13 +42,13 @@ public sealed partial class ReceiveTransmission : IDisposable
         this.DisposeInternal();
     }
 
-    internal void SetState_Receiving(uint totalGene)
+    internal void SetState_Receiving(int totalGene)
     {
         this.Mode = NetTransmissionMode.Block;
         this.totalGene = totalGene;
     }
 
-    internal void SetState_ReceivingStream(uint totalGene)
+    internal void SetState_ReceivingStream(int totalGene)
     {
         this.Mode = NetTransmissionMode.Stream;
         this.totalGene = totalGene;
@@ -146,7 +146,7 @@ public sealed partial class ReceiveTransmission : IDisposable
         }
 
         // Send Ack
-        if (this.totalGene <= NetHelper.RamaGenes)
+        if (this.Mode == NetTransmissionMode.Rama)
         {// Fast Ack
             if (completeFlag)
             {

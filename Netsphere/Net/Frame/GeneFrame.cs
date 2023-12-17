@@ -16,8 +16,8 @@ internal readonly struct FirstGeneFrame
     public readonly uint TransmissionId; // 4 bytes
     public readonly int RttHint; // 4 bytes
     public readonly uint TotalGene; // 4 bytes
-    public readonly uint PrimaryId; // 4 bytes
-    public readonly ulong SecondaryId; // 8 bytes
+    public readonly uint DataKind; // 4 bytes
+    public readonly ulong DataId; // 8 bytes
 }
 
 internal readonly struct FollowingGeneFrame

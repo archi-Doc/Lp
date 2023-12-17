@@ -368,8 +368,8 @@ Wait:
         span = span.Slice(sizeof(uint)); // 4
         var rttHint = BitConverter.ToInt32(span);
         span = span.Slice(sizeof(int)); // 4
-        var totalGenes = BitConverter.ToUInt32(span);
-        span = span.Slice(sizeof(uint)); // 4
+        var totalGenes = BitConverter.ToInt32(span);
+        span = span.Slice(sizeof(int)); // 4
 
         if (rttHint > 0)
         {
