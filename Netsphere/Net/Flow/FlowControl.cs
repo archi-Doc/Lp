@@ -75,7 +75,7 @@ public partial class FlowControl
                 var rto = firstNode.Value.Send_NotThreadSafe(netSender);
                 if (rto > 0)
                 {// Resend
-                    this.waitingForAck.SetNodeKey(firstNode, rto + (rtoSerial++));
+                    this.waitingForAck.SetNodeKey(firstNode, rto + (rtoSerial++));//Limit
                 }
                 else
                 {// Remove

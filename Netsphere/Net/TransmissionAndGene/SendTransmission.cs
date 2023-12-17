@@ -95,45 +95,55 @@ public sealed partial class SendTransmission : IDisposable
         {
             Debug.Assert(this.Mode == NetTransmissionMode.Initial);
 
-            this.Mode = NetTransmissionMode.Block;
             this.tcs = tcs;
             this.totalGene = info.NumberOfGenes;
 
             var span = block.Span;
-            if (info.NumberOfGenes == 1)
-            {// gene0
-                this.gene0 = new(this);
-                this.CreateFirstPacket(0, info.NumberOfGenes, dataKind, dataId, span, out var owner);
-                this.gene0.SetSend(owner);
-            }
-            else if (info.NumberOfGenes == 2)
-            {// gene0, gene1
-                this.gene0 = new(this);
-                this.CreateFirstPacket(0, info.NumberOfGenes, dataKind, dataId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
-                this.gene0.SetSend(owner);
+            if (info.NumberOfGenes <= NetHelper.RamaGenes)
+            {// Rama
+                this.Mode = NetTransmissionMode.Rama;
+                if (info.NumberOfGenes == 1)
+                {// gene0
+                    this.gene0 = new(this);
 
-                span = span.Slice((int)info.FirstGeneSize);
-                Debug.Assert(span.Length == info.LastGeneSize);
-                this.gene1 = new(this);
-                this.CreateFollowingPacket(1, span, out owner);
-                this.gene1.SetSend(owner);
-            }
-            else if (info.NumberOfGenes == 3)
-            {// gene0, gene1, gene2
-                this.gene0 = new(this);
-                this.CreateFirstPacket(0, info.NumberOfGenes, dataKind, dataId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
-                this.gene0.SetSend(owner);
+                    this.CreateFirstPacket(0, info.NumberOfGenes, dataKind, dataId, span, out var owner);
+                    this.gene0.SetSend(owner);
+                }
+                else if (info.NumberOfGenes == 2)
+                {// gene0, gene1
+                    this.gene0 = new(this);
+                    this.gene1 = new(this);
 
-                span = span.Slice((int)info.FirstGeneSize);
-                this.gene1 = new(this);
-                this.CreateFollowingPacket(1, span.Slice(0, FollowingGeneFrame.MaxGeneLength), out owner);
-                this.gene1.SetSend(owner);
+                    this.CreateFirstPacket(0, info.NumberOfGenes, dataKind, dataId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
+                    this.gene0.SetSend(owner);
 
-                span = span.Slice(FollowingGeneFrame.MaxGeneLength);
-                Debug.Assert(span.Length == info.LastGeneSize);
-                this.gene2 = new(this);
-                this.CreateFollowingPacket(2, span, out owner);
-                this.gene2.SetSend(owner);
+                    span = span.Slice((int)info.FirstGeneSize);
+                    Debug.Assert(span.Length == info.LastGeneSize);
+                    this.CreateFollowingPacket(1, span, out owner);
+                    this.gene1.SetSend(owner);
+                }
+                else if (info.NumberOfGenes == 3)
+                {// gene0, gene1, gene2
+                    this.gene0 = new(this);
+                    this.gene1 = new(this);
+                    this.gene2 = new(this);
+
+                    this.CreateFirstPacket(0, info.NumberOfGenes, dataKind, dataId, span.Slice(0, (int)info.FirstGeneSize), out var owner);
+                    this.gene0.SetSend(owner);
+
+                    span = span.Slice((int)info.FirstGeneSize);
+                    this.CreateFollowingPacket(1, span.Slice(0, FollowingGeneFrame.MaxGeneLength), out owner);
+                    this.gene1.SetSend(owner);
+
+                    span = span.Slice(FollowingGeneFrame.MaxGeneLength);
+                    Debug.Assert(span.Length == info.LastGeneSize);
+                    this.CreateFollowingPacket(2, span, out owner);
+                    this.gene2.SetSend(owner);
+                }
+                else
+                {
+                    return NetResult.UnknownException;
+                }
             }
             else
             {// Multiple genes
@@ -141,6 +151,9 @@ public sealed partial class SendTransmission : IDisposable
                 {
                     return NetResult.BlockSizeLimit;
                 }
+
+                this.Mode = NetTransmissionMode.Block;
+                this.Connection.CreateFlowControl();
 
                 this.genes = new();
                 this.genes.GeneSerialListChain.Resize((int)info.NumberOfGenes);
