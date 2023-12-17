@@ -55,6 +55,12 @@ public partial class FlowControl
         this.waitingToSend.Enqueue(gene);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void AddSend_LockFree(SendGene gene)
+    {
+        //this.waitingToSend.Enqueue(gene);
+    }
+
     internal void ProcessSend(NetSender netSender)
     {
         lock (this.syncObject)
