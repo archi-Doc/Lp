@@ -6,9 +6,13 @@ namespace Netsphere.Packet;
 
 internal readonly struct AckFrame
 {// AckFrameCode
-    public const int MaxAck = (PacketHeader.MaxFrameLength - 2) / 8;
+    public const int Length = 2;
+    public const int Margin = 16;
+    public const int MaxGeneLength = PacketHeader.MaxFrameLength - Length;
 
     public readonly FrameType FrameType; // 2 bytes
-    public readonly uint TransmissionId; // 4 bytes
-    public readonly uint GenePosition; // 4 bytes
+    // public readonly uint TransmissionId; // 4 bytes
+    // public readonly ushort NumberOfPairs; // 2 bytes
+    // public readonly int StartGene; // 4 bytes
+    // public readonly int EndGene; // 4 bytes
 }

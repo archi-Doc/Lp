@@ -78,7 +78,7 @@ internal partial class AckBuffer
     }
 
     private void ProcessSend(NetSender netSender, Connection connection, Queue<ulong> ackQueue)
-    {
+    {// AckFrameCode
         ByteArrayPool.Owner? arrayOwner = default;
         int arrayLength = 0;
         uint transmissionId = 0;
@@ -88,7 +88,7 @@ internal partial class AckBuffer
             if (remaining < 16)
             {
                 SendPacket();
-            }                                                                                                                                                                                                       
+            }
 
             arrayOwner = PacketPool.Rent();
         }
