@@ -16,6 +16,7 @@ public class ConnectionTerminal
     public ConnectionTerminal(NetTerminal netTerminal)
     {
         this.NetBase = netTerminal.NetBase;
+        this.AckBuffer = new();
         this.netTerminal = netTerminal;
         this.packetTerminal = this.netTerminal.PacketTerminal;
         this.netStats = this.netTerminal.NetStats;
@@ -24,6 +25,8 @@ public class ConnectionTerminal
     }
 
     public NetBase NetBase { get; }
+
+    internal AckBuffer AckBuffer { get; }
 
     private readonly NetTerminal netTerminal;
     private readonly PacketTerminal packetTerminal;
@@ -34,8 +37,6 @@ public class ConnectionTerminal
     private readonly ServerConnection.GoshujinClass serverConnections = new();
 
     private readonly FlowControl.GoshujinClass flowControls = new();
-
-    private readonly AckBuffer.GoshujinClass ackBuffers = new();
 
     public void Clean()
     {
@@ -270,20 +271,6 @@ public class ConnectionTerminal
                 connection.flowControl = new(connection);
                 connection.flowControl.Goshujin = this.flowControls;
             }
-        }
-    }
-
-    internal void RegisterAck(Connection connection)
-    {
-        lock (this.ackBuffers.SyncObject)
-        {
-            if (this.ackBuffers.ConnectionIdChain.ContainsKey(connection.ConnectionId))
-            {
-                return;
-            }
-
-            var ackBuffer = new AckBuffer(connection);
-            ackBuffer.Goshujin = this.ackBuffers;
         }
     }
 

@@ -101,6 +101,10 @@ public abstract class Connection : IDisposable
     private int smoothedRtt; // Smoothed rtt (mics)
     private int rttvar; // Rtt variation (mics)
 
+    // Ack
+    internal long AckMics; // lock(AckBuffer.syncObject)
+    internal Queue<ulong>? AckQueue; // lock(AckBuffer.syncObject)
+
     #endregion
 
     public void CreateFlowControl()
@@ -113,14 +117,6 @@ public abstract class Connection : IDisposable
 
     public void Close()
         => this.Dispose();
-
-    internal void AddAck(uint transmissionId, int geneSerial)
-    {
-        // Add ack
-
-        // Register connection
-        this.ConnectionTerminal.RegisterAck(this);
-    }
 
     internal SendTransmission? TryCreateTransmission()
     {

@@ -148,7 +148,9 @@ public sealed partial class ReceiveTransmission : IDisposable
         // Send Ack
         if (this.Mode == NetTransmissionMode.Rama)
         {// Fast Ack
-            if (completeFlag)
+            this.Connection.ConnectionTerminal.AckBuffer.Add(this.Connection, this.TransmissionId, genePosition);
+
+            /*if (completeFlag)
             {
                 Span<byte> ackFrame = stackalloc byte[2 + (8 * 3)];
                 var span = ackFrame;
@@ -190,11 +192,11 @@ public sealed partial class ReceiveTransmission : IDisposable
                 }
 
                 this.Connection.SendPriorityFrame(ackFrame.Slice(0, 2 + (8 * (int)this.totalGene)));
-            }
+            }*/
         }
         else
         {// Ack (TransmissionId, GenePosition)
-            this.Connection.AddAck(this.TransmissionId, genePosition);
+            this.Connection.ConnectionTerminal.AckBuffer.Add(this.Connection, this.TransmissionId, genePosition);
         }
 
         if (completeFlag)
